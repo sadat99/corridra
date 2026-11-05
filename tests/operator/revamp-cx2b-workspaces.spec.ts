@@ -126,9 +126,7 @@ const trigger = (page: Page, name: string) =>
   page.getByRole('button', { name: 'Actions for ' + name });
 const axe = async (page: Page) =>
   (
-    await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
-      .analyze()
+    await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()
   ).violations.map((v) => v.id);
 
 test('CX-05 a row menu opens from the keyboard, moves with the arrows and Escape returns focus to its button', async ({
