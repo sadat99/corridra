@@ -259,4 +259,13 @@ describe('Home summary never claims more than the page could read (Codex review 
     );
     expect(view).not.toMatch(/document\.cookie|fetch\(/);
   });
+
+  // Reports became tabs (PR 313): the shortcut for a pasted private link opens Shared With Me, where the
+  // invitation input lives, not the first Reports tab.
+  it('sends the Open a Shared Mission shortcut to the Shared With Me tab', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const html = render(MoveView, { model: buildMoveModel(empty), startHref: '/plan' });
+    expect(html).toContain('Open a Shared Mission');
+    expect(html).toContain('href="/account?view=results&amp;tab=shared"');
+  });
 });

@@ -583,7 +583,7 @@ export function MoveView({
               <small>See progress and replies on a request you sent.</small>
             </span>
           </Link>
-          <Link prefetch={false} className="move-tile" href="/account?view=results">
+          <Link prefetch={false} className="move-tile" href="/account?view=results&tab=shared">
             <span className="move-tile-mark" aria-hidden="true">
               <CorridraIcon name="open" />
             </span>
