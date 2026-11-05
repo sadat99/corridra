@@ -58,6 +58,9 @@ test('A-1 public pages carry no test, sample or invented wording and one main he
   // The privacy notice opens with a contents list whose links reach their sections (UX-14).
   await page.goto('/privacy');
   const contents = page.getByRole('navigation', { name: 'Contents' });
+  // On a narrow screen the contents list is collapsed (layout budget): open it, then count the links.
+  const disclosure = page.locator('details.privacy-contents-details');
+  if (await disclosure.locator('summary').isVisible()) await disclosure.locator('summary').click();
   const links = contents.getByRole('link');
   expect(await links.count()).toBeGreaterThanOrEqual(15);
   for (const href of await links.evaluateAll((all) => all.map((a) => a.getAttribute('href'))))

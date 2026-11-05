@@ -27,6 +27,10 @@ test('public pages and the staff sign-in page keep the full footer', async ({ pa
     await page.goto(path);
     const footer = page.locator('footer.guide-footer');
     await expect(footer, path).toHaveCount(1);
+    // The footer's link groups start collapsed (layout budget); the full footer is two groups to open.
+    for (const group of await footer.locator('details.guide-footer-details').all())
+      if (!(await group.evaluate((node) => (node as HTMLDetailsElement).open)))
+        await group.locator('summary').click();
     for (const href of ['/workspace', '/trust', '/about', '/network', '/institutions', '/privacy'])
       await expect(footer.locator(`a[href="${href}"]`).first(), `${path} ${href}`).toBeVisible();
   }
