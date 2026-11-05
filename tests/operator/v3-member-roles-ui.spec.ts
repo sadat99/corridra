@@ -6,6 +6,22 @@ import { resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import AxeBuilder from '@axe-core/playwright';
 
+// A row's actions sit in its menu: Manage Team opens the team, Leave Workspace asks to confirm.
+async function openMenuItem(page: Page, name: string, item: string) {
+  await page.getByRole('button', { name: 'Actions for ' + name }).click();
+  await page.getByRole('menuitem', { name: item, exact: true }).click();
+}
+const openTeam = (page: Page, name: string) => openMenuItem(page, name, 'Manage Team');
+const openLeave = (page: Page, name: string) => openMenuItem(page, name, 'Leave Workspace');
+async function expectNoMenuItem(page: Page, name: string, item: string) {
+  const trigger = page.getByRole('button', { name: 'Actions for ' + name });
+  if (await trigger.count()) await trigger.click();
+  await expect(page.getByRole('menuitem', { name: item, exact: true })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+}
+const listed = (page: Page, name: string, role: string) =>
+  page.getByRole('row').filter({ hasText: name }).filter({ hasText: role });
+
 // Explicit UI protocol fixtures. Real restricted customer authority has separate database acceptance.
 const issuer = 'https://ep-roles-ui-fixture.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth';
 const owned = {
@@ -53,6 +69,7 @@ test.beforeAll(async () => {
     stdin: {
       contents: `import {createRoot} from 'react-dom/client';
 import {CustomerWorkspaces} from ${JSON.stringify(resolve('apps/web/app/account/customer-workspaces.tsx'))};
+
 const q=new URLSearchParams(location.search),subject=q.get('subject')||'synthetic-alice',issuer=q.get('issuer')||${JSON.stringify(issuer)};
 createRoot(document.getElementById('fixture')).render(<CustomerWorkspaces key={issuer+':'+subject} subject={subject} issuer={issuer} memberRolesEnabled={q.get('roles')!=='off'}/>);`,
       loader: 'tsx',
@@ -114,7 +131,7 @@ async function openOwnerTeam(page: Page, memberships: Member[], query = '') {
     route.fulfill({ json: access(owned.id, memberships) }),
   );
   await page.goto(origin + '/' + query);
-  await page.getByText('Manage team', { exact: true }).click();
+  await openTeam(page, owned.name);
   return page.getByRole('region', { name: 'Team for ' + owned.name, exact: true });
 }
 
@@ -200,7 +217,7 @@ test('role controls are absent without the flag, or when the module is not insta
     route.fulfill({ json: access(owned.id, [legacy]) }),
   );
   await page.goto(origin + '/');
-  await page.getByText('Manage team', { exact: true }).click();
+  await openTeam(page, owned.name);
   const on = page.getByRole('region', { name: 'Team for ' + owned.name, exact: true });
   await expect(on.getByText('Synthetic Dhaka buyer lead · member · active')).toBeVisible();
   await expect(on.getByRole('button', { name: /Make Synthetic/ })).toHaveCount(0);
@@ -287,10 +304,10 @@ test('a non-owner confirms before leaving, sends one exact request, and the work
     });
   });
   await page.goto(origin + '/');
-  await expect(page.getByText(joined.name + ' · member')).toBeVisible();
+  await expect(listed(page, joined.name, 'member')).toBeVisible();
   // The owner-only team section is not offered to a member.
-  await expect(page.getByText('Manage team')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Leave ' + joined.name }).click();
+  await expectNoMenuItem(page, joined.name, 'Manage Team');
+  await openLeave(page, joined.name);
   expect(posts).toHaveLength(0);
   await expect(page.getByText(/You lose access to it straight away/)).toBeVisible();
   expect(
@@ -298,7 +315,7 @@ test('a non-owner confirms before leaving, sends one exact request, and the work
   ).toEqual([]);
   await page.getByRole('button', { name: 'Keep my access' }).click();
   expect(posts).toHaveLength(0);
-  await page.getByRole('button', { name: 'Leave ' + joined.name }).click();
+  await openLeave(page, joined.name);
   await page.getByRole('button', { name: 'Confirm leaving' }).click();
   await expect(page.getByText('No workspaces yet. Create your first one below.')).toBeVisible();
   await expect(page.getByText('You have left the workspace')).toBeVisible();
@@ -322,10 +339,10 @@ test('leaving is retried with the same command, an unconfirmed leave keeps the w
       : route.fulfill({ status, json: { error: 'x' } });
   });
   await page.goto(origin + '/');
-  await page.getByRole('button', { name: 'Leave ' + joined.name }).click();
+  await openLeave(page, joined.name);
   await page.getByRole('button', { name: 'Confirm leaving' }).click();
   await expect(page.getByRole('alert')).toContainText('Leaving was not confirmed');
-  await expect(page.getByText(joined.name + ' · member')).toBeVisible();
+  await expect(listed(page, joined.name, 'member')).toBeVisible();
   status = 503;
   await page.getByRole('button', { name: 'Confirm leaving' }).click();
   await expect(page.getByRole('alert')).toContainText('unavailable');
@@ -336,16 +353,16 @@ test('leaving is retried with the same command, an unconfirmed leave keeps the w
   expect(ids).toHaveLength(3);
   // Flag off: no leave control for a member.
   await page.goto(origin + '/?roles=off');
-  await expect(page.getByText(joined.name + ' · member')).toBeVisible();
-  await expect(page.getByRole('button', { name: /^Leave / })).toHaveCount(0);
+  await expect(listed(page, joined.name, 'member')).toBeVisible();
+  await expectNoMenuItem(page, joined.name, 'Leave Workspace');
   // The owner never gets a leave control.
   await page.unroute('**/api/customer-workspaces');
   await page.route('**/api/customer-workspaces', (route) =>
     route.fulfill({ json: { synthetic: true, workspaces: [owned] } }),
   );
   await page.goto(origin + '/');
-  await expect(page.getByText(owned.name + ' · owner')).toBeVisible();
-  await expect(page.getByRole('button', { name: /^Leave / })).toHaveCount(0);
+  await expect(listed(page, owned.name, 'owner')).toBeVisible();
+  await expectNoMenuItem(page, owned.name, 'Leave Workspace');
 });
 
 test('a leave answered with access denied is not shown as a completed leave', async ({ page }) => {
@@ -356,7 +373,7 @@ test('a leave answered with access denied is not shown as a completed leave', as
     route.fulfill({ status: 403, json: { error: 'x' } }),
   );
   await page.goto(origin + '/');
-  await page.getByRole('button', { name: 'Leave ' + joined.name }).click();
+  await openLeave(page, joined.name);
   await page.getByRole('button', { name: 'Confirm leaving' }).click();
   await expect(
     page.getByText('Your access could not be confirmed. Reload your account'),

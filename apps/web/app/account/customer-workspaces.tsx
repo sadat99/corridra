@@ -157,8 +157,12 @@ export function CustomerWorkspaces({
         try {
           const saved = readDraft(storageKey);
           setPending(saved);
-          if (saved)
+          if (saved) {
             setName(realCustomerInput() ? saved.name : saved.name.slice('Synthetic '.length));
+            // A creation that may already have succeeded is shown at once, so it is retried or
+            // discarded on purpose and never left out of sight.
+            setDialog((d) => d ?? { kind: 'create' });
+          }
           setStorageFailed(false);
           return true;
         } catch {

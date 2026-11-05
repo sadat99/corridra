@@ -544,15 +544,16 @@ test('the plan link appears beside a workspace only when the module is on', asyn
     }),
   );
   await page.goto(origin + '/?view=workspaces');
-  // UX-07: secondary workspace actions sit in the workspace's More menu.
-  await page.locator('details.ux-more-menu > summary').first().click();
-  await expect(page.getByRole('link', { name: 'Plan and billing' })).toHaveAttribute(
+  // Workspace actions sit in the row's actions menu.
+  await page.getByRole('button', { name: 'Actions for Synthetic owner workspace' }).click();
+  await expect(page.getByRole('menuitem', { name: 'Plan and Billing' })).toHaveAttribute(
     'href',
     '/account/billing/' + workspaceId,
   );
   await page.goto(origin + '/?view=workspaces&plans=off');
-  await expect(page.getByText('Synthetic owner workspace')).toBeVisible();
+  await expect(page.getByText('Synthetic owner workspace', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Plan and billing' })).toHaveCount(0);
+  await expect(page.getByRole('menuitem', { name: 'Plan and Billing' })).toHaveCount(0);
 });
 
 for (const width of [320, 390, 768, 1440])

@@ -145,7 +145,7 @@ test('invitation UI preserves one command after lost acknowledgement, supports k
     await expect(page.getByText('No test workspaces yet.', { exact: true })).toBeVisible();
     await page.screenshot({ path: `${directory}/before-${width}.png`, fullPage: true });
     await page.goto(origin);
-    const summary = page.getByText('Join a workspace', { exact: true });
+    const summary = page.getByRole('button', { name: 'Join a Workspace', exact: true });
     await summary.focus();
     await page.keyboard.press('Enter');
     await expect(page.getByLabel('Workspace invitation code', { exact: true })).toBeVisible();
@@ -194,7 +194,7 @@ test('invitation UI preserves one command after lost acknowledgement, supports k
   await expect(
     page.getByRole('heading', { name: 'Existing shared mission section', exact: true }),
   ).toBeVisible();
-  await page.getByText('Join a workspace', { exact: true }).click();
+  await page.getByRole('button', { name: 'Join a Workspace', exact: true }).click();
   await expect(page.getByLabel('Workspace invitation code', { exact: true })).toBeEmpty();
   expect(await page.evaluate(() => location.search)).toBe('');
 });
@@ -211,7 +211,7 @@ test('invitation denial clears the code and stale workspace view without claimin
     );
     await page.goto(origin);
     await expect(page.getByText(workspace.name, { exact: true })).toBeVisible();
-    await page.getByText('Join a workspace', { exact: true }).click();
+    await page.getByRole('button', { name: 'Join a Workspace', exact: true }).click();
     await page.getByLabel('Workspace invitation code', { exact: true }).fill(token);
     await page.getByRole('button', { name: 'Join Workspace', exact: true }).click();
     await expect(page.getByText(workspace.name, { exact: true })).toHaveCount(0);
@@ -247,7 +247,7 @@ test('malformed success never claims membership, and clearing an uncertain code 
       return route.fulfill({ json: response });
     });
     await page.goto(origin);
-    await page.getByText('Join a workspace', { exact: true }).click();
+    await page.getByRole('button', { name: 'Join a Workspace', exact: true }).click();
     await page.getByLabel('Workspace invitation code', { exact: true }).fill(token);
     await page.getByRole('button', { name: 'Join Workspace', exact: true }).click();
     await expect(page.getByRole('alert')).toContainText('Joining was not confirmed');
@@ -282,13 +282,13 @@ test('reload requires code re-entry, preserves the existing grant and sends only
     } else await route.fulfill({ json: joined });
   });
   await page.goto(origin);
-  await page.getByText('Join a workspace', { exact: true }).click();
+  await page.getByRole('button', { name: 'Join a Workspace', exact: true }).click();
   await page.getByLabel('Workspace invitation code', { exact: true }).fill(token);
   await page.getByRole('button', { name: 'Join Workspace', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Joining was not confirmed');
   await page.reload();
   await expect(page.getByText(workspace.name, { exact: true })).toHaveCount(1);
-  await page.getByText('Join a workspace', { exact: true }).click();
+  await page.getByRole('button', { name: 'Join a Workspace', exact: true }).click();
   await expect(page.getByLabel('Workspace invitation code', { exact: true })).toBeEmpty();
   await page.getByLabel('Workspace invitation code', { exact: true }).fill(token);
   await page.getByRole('button', { name: 'Join Workspace', exact: true }).click();
@@ -299,7 +299,7 @@ test('reload requires code re-entry, preserves the existing grant and sends only
   records.length = 0;
   const nextIssuer = issuer.replace('ep-ui-fixture', 'ep-other');
   await page.goto(origin + '?subject=synthetic-bob&issuer=' + encodeURIComponent(nextIssuer));
-  await page.getByText('Join a workspace', { exact: true }).click();
+  await page.getByRole('button', { name: 'Join a Workspace', exact: true }).click();
   await expect(page.getByLabel('Workspace invitation code', { exact: true })).toBeEmpty();
   await expect(page.getByText(workspace.name, { exact: true })).toHaveCount(0);
   expect(posts.length).toBe(2);
