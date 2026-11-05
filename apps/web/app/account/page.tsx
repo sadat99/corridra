@@ -83,7 +83,7 @@ export default async function Page({
         <p>Verify the email address on your account to continue.</p>
         <PendingRequestNotice where="verify" />
         <Link className="primary-link" href="/verify-email">
-          Verify email
+          Verify Email
         </Link>
         <AccountSignout />
       </WorkspaceShell>

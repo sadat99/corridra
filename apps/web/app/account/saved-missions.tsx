@@ -300,7 +300,7 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
               <>
                 <p>Original access expires {displayDate(m.expiresAt)}.</p>
                 <a className="primary-link" href={'/account/missions/' + m.id}>
-                  Open approved commercial report
+                  Open Approved Commercial Report
                 </a>
               </>
             ) : (
@@ -313,7 +313,7 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
               disabled={busy}
               onClick={() => void remove(m.id)}
             >
-              Remove from my saved missions
+              Remove From My Saved Missions
             </button>
           </article>
         ))}
@@ -326,7 +326,7 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
             load(data.nextAfter!);
           }}
         >
-          Load more commercial missions
+          Load More Commercial Missions
         </button>
       )}
       {status === 'ready' && (
@@ -345,7 +345,7 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
               </label>
             </fieldset>
             <button className="primary-link" disabled={busy}>
-              {pending ? 'Retry same invitation' : 'Save invitation to this account'}
+              {pending ? 'Retry Same Invitation' : 'Save Invitation to This Account'}
             </button>
             {pending && (
               <button
@@ -360,7 +360,7 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
                   );
                 }}
               >
-                Clear invitation from this page
+                Clear Invitation From This Page
               </button>
             )}
           </form>

@@ -13,7 +13,9 @@
   gap: var(--space-1) var(--space-4);
   align-items: center;
   min-height: 44px;
-  padding: var(--space-3) var(--space-3);
+  /* The hover surface reaches past the content edge; the words stay on it (actions align to the left edge). */
+  margin-inline: calc(-1 * var(--space-3));
+  padding: var(--space-3);
   color: var(--ink);
   text-decoration: none;
 }
@@ -55,7 +57,7 @@
   }
   .ux-rows-head {
     display: grid;
-    padding: 0 var(--space-3) var(--space-2);
+    padding: 0 0 var(--space-2);
     color: var(--text-2);
     font: 600 var(--text-xs) var(--font-mono);
     letter-spacing: 0.04em;

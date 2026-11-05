@@ -172,11 +172,11 @@ describe('D-06 nothing is created before the acknowledgement', () => {
     for (const label of ['Company', 'Decision', 'Reason', 'Next step', 'Due', 'Source'])
       expect(html, label).toContain(`<dt>${label}</dt>`);
     expect(html.match(/<dt>/g)).toHaveLength(6);
-    expect(html).toContain('Create link');
+    expect(html).toContain('Create Link');
     expect(html).not.toContain('lang="zh"');
     expect(html).toContain('type="checkbox"');
     // The create button is disabled until the box is ticked.
-    expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Create link/);
+    expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Create Link/);
   });
 });
 
@@ -306,7 +306,7 @@ describe('after a link is made', () => {
       'Anyone with this link can see these six fields until it expires or you withdraw it',
     );
     expect(html).toContain('Counts page loads, including automatic link checks');
-    expect(html).toMatch(/Copy link/);
+    expect(html).toMatch(/Copy Link/);
     expect(html).toMatch(/Withdraw/);
     expect(html).toMatch(/UTC|GMT|\(.*UTC[+-]?\d*\)/);
     expect(countsWords(0)).toBe('0 opens. Counts page loads, including automatic link checks.');
@@ -425,8 +425,8 @@ describe('D-09 with the switch off nothing appears and the saved mission page is
       expect(report).toContain(needle);
     const history = read('apps/web/app/account/missions/decision-history.tsx');
     for (const needle of [
-      'Load reviewed decisions',
-      'Refresh reviewed decisions',
+      'Load Reviewed Decisions',
+      'Refresh Reviewed Decisions',
       'aria-label="Reviewed commercial decisions"',
       'Return to your account',
     ])

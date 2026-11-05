@@ -69,3 +69,22 @@ test('Home has one filled action, the New request in the header, and none inside
     page.locator('header.ux-app-header').getByRole('link', { name: 'New request' }),
   ).toBeVisible();
 });
+
+test('actions align to the content left edge: headings, row text and the other links start at the same x', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/account');
+  const left = (selector: string) =>
+    page
+      .locator(selector)
+      .first()
+      .evaluate((el) => Math.round(el.getBoundingClientRect().left));
+  const edge = await left('main h1');
+  expect(await left('main h2:has-text("Your next step")')).toBe(edge);
+  expect(await left('main .ux-row-title')).toBe(edge);
+  expect(await left('main .ux-quick-links strong')).toBe(edge);
+  await page.setViewportSize({ width: 390, height: 844 });
+  const edge390 = await left('main h1');
+  expect(await left('main .ux-row-title')).toBe(edge390);
+});

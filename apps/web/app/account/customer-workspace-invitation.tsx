@@ -159,7 +159,7 @@ export function CustomerWorkspaceInvitation({
           </p>
         )}
         <button className="primary-link" disabled={busy}>
-          {busy ? 'Please wait…' : pending ? 'Retry joining workspace' : 'Join workspace'}
+          {busy ? 'Please Wait…' : pending ? 'Retry Joining Workspace' : 'Join Workspace'}
         </button>
         {pending && (
           <button
@@ -174,7 +174,7 @@ export function CustomerWorkspaceInvitation({
               );
             }}
           >
-            Clear invitation code
+            Clear Invitation Code
           </button>
         )}
       </form>

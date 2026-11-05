@@ -366,7 +366,7 @@ function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false }: Pr
                 void load(next);
               }}
             >
-              Load companies from more missions
+              Load Companies From More Missions
             </button>
           )}
         </>
@@ -383,7 +383,7 @@ function ScopedPortfolio({ subject, issuer, serviceRequestsEnabled = false }: Pr
             void load();
           }}
         >
-          Refresh approved companies
+          Refresh Approved Companies
         </button>
       )}
       <p>

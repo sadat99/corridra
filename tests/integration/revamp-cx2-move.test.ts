@@ -148,7 +148,7 @@ describe('CX-02: Move keeps every destination it had', () => {
     expect(quiet.latest).not.toBeNull();
     expect(html).toContain(`href="${quiet.latest!.href}"`);
     expect(html).toContain('href="/plan/start"');
-    expect(html).toContain('>Start a request<');
+    expect(html).toContain('>Start a Request<');
     expect(html).toContain('>Open<');
   });
 });

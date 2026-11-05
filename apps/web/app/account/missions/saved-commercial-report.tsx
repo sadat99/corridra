@@ -618,8 +618,8 @@ function PrivateReport({
                               disabled={busy || (!!pending && pending.requestId !== q.id)}
                             >
                               {pending?.requestId === q.id
-                                ? 'Retry same response'
-                                : 'Send response'}
+                                ? 'Retry Same Response'
+                                : 'Send Response'}
                             </button>
                             {pending?.requestId === q.id && (
                               <button
@@ -633,7 +633,7 @@ function PrivateReport({
                                   );
                                 }}
                               >
-                                Clear local response retry
+                                Clear Local Response Retry
                               </button>
                             )}
                           </form>
@@ -678,7 +678,7 @@ function PrivateReport({
             read();
           }}
         >
-          Refresh approved commercial report
+          Refresh Approved Commercial Report
         </button>
       )}
       {notice && <p role="status">{notice}</p>}

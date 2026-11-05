@@ -158,7 +158,7 @@ function PrivateConfirmation({ subject, issuer, resourceId }: Props) {
         the next commercial step. It does not authorise a purchase, contract or payment.
       </p>
       <button type="button" disabled={busy} onClick={() => void load()}>
-        Review current requirements
+        Review Current Requirements
       </button>
       {message && <p role="status">{message}</p>}
       {data && data.reviews.length === 0 && (
@@ -207,8 +207,8 @@ function PrivateConfirmation({ subject, issuer, resourceId }: Props) {
                 onClick={() => void confirm(review)}
               >
                 {pending?.requestId === review.requestId
-                  ? 'Retry same confirmation'
-                  : 'Confirm these requirements'}
+                  ? 'Retry Same Confirmation'
+                  : 'Confirm These Requirements'}
               </button>
             </>
           )}

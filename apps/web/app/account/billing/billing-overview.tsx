@@ -247,7 +247,7 @@ function ScopedOverview({ subject, issuer, workspaceId, invoicing = false, sampl
                   className="button button-secondary"
                   onClick={() => void load()}
                 >
-                  Try again
+                  Try Again
                 </button>
               )}
               <a className="text-link" href="/account">
@@ -266,7 +266,7 @@ function ScopedOverview({ subject, issuer, workspaceId, invoicing = false, sampl
                 </div>
                 <div className="ux-state-actions">
                   <button type="button" className="button" onClick={() => void load()}>
-                    Reload this page
+                    Reload This Page
                   </button>
                 </div>
               </div>
@@ -316,13 +316,13 @@ function ScopedOverview({ subject, issuer, workspaceId, invoicing = false, sampl
                       data-intent="destructive"
                       onClick={() => open({ kind: 'cancel' })}
                     >
-                      Cancel at the end of the period
+                      Cancel at the End of the Period
                     </button>
                   )}
                   {can('keep') && current && (
                     <form onSubmit={(e) => submitChange(e, 'keep', current.id)}>
                       <button type="submit" className="button button-secondary" disabled={busy}>
-                        Keep my plan
+                        Keep My Plan
                       </button>
                     </form>
                   )}
@@ -333,7 +333,7 @@ function ScopedOverview({ subject, issuer, workspaceId, invoicing = false, sampl
                       data-intent="destructive"
                       onClick={() => open({ kind: 'withdraw' })}
                     >
-                      Withdraw my request
+                      Withdraw My Request
                     </button>
                   )}
                 </div>
@@ -351,10 +351,10 @@ function ScopedOverview({ subject, issuer, workspaceId, invoicing = false, sampl
                     data-intent="destructive"
                     disabled={busy}
                   >
-                    Confirm cancellation
+                    Confirm Cancellation
                   </button>{' '}
                   <button type="button" className="text-link" onClick={() => open(null)}>
-                    Not now
+                    Not Now
                   </button>
                 </form>
               )}
@@ -369,10 +369,10 @@ function ScopedOverview({ subject, issuer, workspaceId, invoicing = false, sampl
                     data-intent="destructive"
                     disabled={busy}
                   >
-                    Confirm withdrawal
+                    Confirm Withdrawal
                   </button>{' '}
                   <button type="button" className="text-link" onClick={() => open(null)}>
-                    Not now
+                    Not Now
                   </button>
                 </form>
               )}
@@ -475,7 +475,7 @@ function ScopedOverview({ subject, issuer, workspaceId, invoicing = false, sampl
                               className="button button-secondary"
                               onClick={() => open(choosing ? null : { kind: 'request', plan: p })}
                             >
-                              {choosing ? 'Close' : 'Ask for this plan'}
+                              {choosing ? 'Close' : 'Ask for This Plan'}
                             </button>
                           </div>
                         ) : null}
@@ -501,7 +501,7 @@ function ScopedOverview({ subject, issuer, workspaceId, invoicing = false, sampl
                               out.
                             </label>
                             <button type="submit" className="button" disabled={busy || !ack}>
-                              {pending ? 'Send the same request again' : 'Send request'}
+                              {pending ? 'Send the Same Request Again' : 'Send Request'}
                             </button>
                           </form>
                         )}

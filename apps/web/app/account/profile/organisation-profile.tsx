@@ -490,7 +490,7 @@ export function OrganisationProfile(props: {
             </label>
           </fieldset>
           <button type="submit" className="button button-primary" disabled={busy || !ack}>
-            {pending ? 'Retry same save' : 'Save company profile'}
+            {pending ? 'Retry Same Save' : 'Save Company Profile'}
           </button>
         </form>
       )}
@@ -509,7 +509,7 @@ export function OrganisationProfile(props: {
       )}
       {!dirty && !pending && (
         <button type="button" className="text-link" disabled={busy} onClick={() => void request()}>
-          Reload company profile
+          Reload Company Profile
         </button>
       )}
       <a className="text-link" href="/account">

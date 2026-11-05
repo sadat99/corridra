@@ -230,7 +230,7 @@ function PrivateAssignments({ subject, issuer }: SavedMissionScope) {
       {notice && <p role="status">{notice}</p>}
       {pending && !busy && status !== 'denied' && (
         <button className="primary-link" type="button" onClick={() => void accept(pending)}>
-          Retry saving the same report
+          Retry Saving the Same Report
         </button>
       )}
       {data && (
@@ -249,7 +249,7 @@ function PrivateAssignments({ subject, issuer }: SavedMissionScope) {
                   <p>Current report access expires {displayDate(item.expiresAt)}.</p>
                   {item.savedResourceId ? (
                     <a className="primary-link" href={'/account/missions/' + item.savedResourceId}>
-                      Open approved commercial mission
+                      Open Approved Commercial Mission
                     </a>
                   ) : (
                     <form onSubmit={(e) => submit(e, item.id)}>
@@ -258,7 +258,7 @@ function PrivateAssignments({ subject, issuer }: SavedMissionScope) {
                         private shortcut to the approved report. It grants no access to colleagues.
                       </label>
                       <button className="primary-link" disabled={busy} type="submit">
-                        Save and open approved report
+                        Save and Open Approved Report
                       </button>
                     </form>
                   )}
@@ -278,7 +278,7 @@ function PrivateAssignments({ subject, issuer }: SavedMissionScope) {
               disabled={busy}
               onClick={() => load(data.nextAfter!)}
             >
-              Load more delivered missions
+              Load More Delivered Missions
             </button>
           )}
         </>
