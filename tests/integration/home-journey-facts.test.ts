@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { MissionExperience } from '@corridra/delivery/report';
+import type { MissionExperience } from '../../packages/delivery/src/report';
 import {
   experiencesOf,
   organiseFacts,
