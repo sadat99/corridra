@@ -56,8 +56,7 @@
 .ux-app-button:focus-visible,
 .ux-app-link:focus-visible,
 .ux-team-sidebar a:focus-visible,
-.ux-team-sidebar summary:focus-visible,
-.ux-team-toggle:focus-visible {
+.ux-team-sidebar summary:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
@@ -82,24 +81,7 @@
   display: none;
 }
 
-/* Team frame: sidebar beside the page. */
-.ux-team-frame {
-  display: grid;
-  grid-template-columns: minmax(13rem, 15rem) minmax(0, 1fr);
-  gap: var(--space-6);
-  align-items: start;
-}
-.ux-team-page {
-  min-width: 0;
-}
-.ux-team-rail {
-  position: sticky;
-  top: var(--space-4);
-  min-width: 0;
-}
-.ux-team-toggle {
-  display: none;
-}
+/* Team and contributor navigation items (the frame, drawer and icons-only state are in left-nav.css). */
 .ux-team-sidebar ul {
   display: grid;
   gap: var(--space-1);
@@ -161,38 +143,6 @@
   height: 1.25rem;
 }
 
-/* Tablets and phones: the list opens from a button above the page. */
-@media (max-width: 1000px) {
-  .ux-team-frame {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-3);
-  }
-  .ux-team-rail {
-    position: static;
-  }
-  .ux-team-toggle {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-    padding: 0 var(--space-4);
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-sm);
-    background: var(--surface-1);
-    color: var(--brand-deep);
-    font: 600 var(--text-md) var(--font-ui);
-    cursor: pointer;
-  }
-  .ux-team-frame[data-open='false'] .ux-team-sidebar {
-    display: none;
-  }
-  .ux-team-sidebar {
-    margin-top: var(--space-2);
-    padding: var(--space-2);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-sm);
-    background: var(--surface-1);
-  }
-}
 @media (max-width: 700px) {
   .ux-app-header .header-help {
     display: flex;
