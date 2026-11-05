@@ -138,8 +138,13 @@ export function CustomerWorkspaces({
           (el) => el.getAttribute('aria-label') === 'Actions for ' + name,
         )
       : undefined) ?? document.querySelector<HTMLElement>('.ux-ws-head-actions button');
-  const setBusyFor = (key: string) => (busy: boolean) =>
+  // The same keys as a ref, so the window-focus refresh can tell at once that a dialog is still sending.
+  const sending = useRef(new Set<string>());
+  const setBusyFor = (key: string) => (busy: boolean) => {
+    if (busy) sending.current.add(key);
+    else sending.current.delete(key);
     setWorking((current) => (!!current[key] === busy ? current : { ...current, [key]: busy }));
+  };
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
   const linkOverview = useCompanyLinkOverview(
     linksEnabled && status === 'ready',
@@ -196,6 +201,10 @@ export function CustomerWorkspaces({
     );
   }, [storageKey, subject, issuer]);
   const reload = useCallback(() => {
+    // The list is rebuilt, so every dialog is made again: no lock may be carried over from the old ones
+    // (a request that ended while they were being replaced can no longer clear its own).
+    sending.current.clear();
+    setWorking({});
     setRows([]);
     setStatus('loading');
     setMessage(null);
@@ -205,7 +214,8 @@ export function CustomerWorkspaces({
     mounted.current = true;
     void refresh();
     const focus = () => {
-      if (!inFlight.current) void reload();
+      // Not while a creation or a dialog's request is out: the answer must reach its dialog first.
+      if (!inFlight.current && sending.current.size === 0) void reload();
     };
     window.addEventListener('focus', focus);
     return () => {

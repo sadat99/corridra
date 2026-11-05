@@ -373,3 +373,72 @@ test('CX-05 Team cannot be dismissed while sending, then it can be closed and fo
   await expect(trigger(page, 'Synthetic Dhaka Knits')).toBeFocused();
   expect(posts).toBe(1);
 });
+
+test('CX-05 returning to the window while a dialog is sending does not reload the list or strand the lock', async ({
+  page,
+}) => {
+  await open(page);
+  let gets = 0;
+  await page.route('**/api/customer-workspaces', (route) => {
+    if (route.request().method() === 'GET') gets++;
+    return route.fallback();
+  });
+  const { gate, release } = gated();
+  let posts = 0;
+  await page.route('**/api/customer-workspace-members', async (route) => {
+    posts++;
+    await gate;
+    await route.fulfill({
+      json: { workspaceId: memberId, memberId: ownerId, status: 'left' },
+    });
+  });
+  await trigger(page, 'Synthetic Chattogram Dyers').click();
+  await page.getByRole('menuitem', { name: 'Leave Workspace', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: /Leave/ });
+  await dialog.getByRole('button', { name: 'Confirm leaving' }).click();
+  await expect.poll(() => posts).toBe(1);
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await page.waitForTimeout(300);
+  expect(gets).toBe(0);
+  await expect(dialog).toBeVisible();
+  release();
+  await expect(page.getByText('You have left the workspace')).toBeVisible();
+  // With nothing sending, a return to the window refreshes the list again.
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await expect.poll(() => gets).toBe(1);
+});
+
+test('CX-05 a Join that succeeded leaves no lock behind when the dialog is opened again', async ({
+  page,
+}) => {
+  await open(page);
+  const joinedId = '00000000-0000-4000-8000-0000000000f1';
+  await page.route('**/api/customer-workspace-access', async (route) => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    return route.fulfill({
+      json: {
+        workspaceId: joinedId,
+        memberId: ownerId,
+        invitationId: memberId,
+        workspace: {
+          id: joinedId,
+          name: 'Synthetic Invited Mills',
+          role: 'member',
+          synthetic: true,
+          organisationId: null,
+        },
+      },
+    });
+  });
+  await page.getByRole('button', { name: 'Join a Workspace', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Join a Workspace' });
+  await dialog.getByLabel('Workspace invitation code', { exact: true }).fill('T'.repeat(43));
+  await dialog.getByRole('button', { name: 'Join Workspace', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'You have joined' })).toBeVisible();
+  await page.getByRole('button', { name: 'Join a Workspace', exact: true }).click();
+  const again = page.getByRole('dialog', { name: 'Join a Workspace' });
+  await expect(again.getByRole('button', { name: 'Close', exact: true })).toBeEnabled();
+  await expect(again.getByText('Working…')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(again).toBeHidden();
+});
