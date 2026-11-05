@@ -21,8 +21,11 @@ export type OrganiseFacts = {
   participants: number;
   ready: number;
   invitationsOpen: string | null;
+  /** Null unless every shared mission link could be read: a count over some links is never a total. */
   scheduled: number | null;
   qualifiedHeld: number | null;
+  /** How the meeting counts stand: shown as "Partly shared" or "Not shared" when they are not complete. */
+  meetings: 'complete' | 'partial' | 'not_shared';
   conflicts: number;
   startsAt: string | null;
   endsAt: string | null;
@@ -132,7 +135,7 @@ export function sellFacts(experiences: MissionExperience[]): SellFacts {
 
 type Projection = {
   readiness?: { activeParticipants?: unknown; readyParticipants?: unknown };
-  meetings?: { scheduled?: unknown; qualifiedHeld?: unknown };
+  meetings?: { state?: unknown; scheduled?: unknown; qualifiedHeld?: unknown };
   conflicts?: unknown;
   context?: { startsAt?: unknown; endsAt?: unknown; timezone?: unknown } | null;
 };
@@ -150,14 +153,21 @@ export function organiseFacts(
     ? list<{ status?: unknown }>(participants.invitations).filter((i) => i.status === 'ISSUED')
         .length
     : null;
+  // The Organiser Room's own rule: counts are whole only when every shared link was read (AVAILABLE).
+  const complete = projection.meetings?.state === 'AVAILABLE';
   return {
     participants: count(projection.readiness?.activeParticipants) ?? 0,
     ready: count(projection.readiness?.readyParticipants) ?? 0,
     // One page of invitations is read; more pages make the number a floor, said as "or more".
     invitationsOpen:
       open === null ? null : participants?.nextInvitationAfter ? `${open} or more` : String(open),
-    scheduled: count(projection.meetings?.scheduled),
-    qualifiedHeld: count(projection.meetings?.qualifiedHeld),
+    scheduled: complete ? count(projection.meetings?.scheduled) : null,
+    qualifiedHeld: complete ? count(projection.meetings?.qualifiedHeld) : null,
+    meetings: complete
+      ? 'complete'
+      : projection.meetings?.state === 'PARTIAL'
+        ? 'partial'
+        : 'not_shared',
     conflicts: list(projection.conflicts).length,
     startsAt: words(projection.context?.startsAt),
     endsAt: words(projection.context?.endsAt),

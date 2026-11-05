@@ -67,7 +67,12 @@ export function dateRange(start: string, end: string, timeZone: string, locale: 
     : `${a.day} to ${b.day} ${b.month} ${b.year}`;
 }
 
-const shared = (n: number | null) => (n === null ? 'Not shared' : String(n));
+const shared = (n: number | null, state: OrganiseFacts['meetings']) =>
+  n !== null && state === 'complete'
+    ? String(n)
+    : state === 'partial'
+      ? 'Partly shared'
+      : 'Not shared';
 
 function sourceBody(f: SourceFacts) {
   // How each quote is backed is shown on its own card in the report; Home counts the verified ones.
@@ -107,8 +112,8 @@ function organiseBody(f: OrganiseFacts, locale: string) {
         value: String(f.participants),
         label: plural(f.participants, 'participant', 'participants'),
       },
-      { value: shared(f.scheduled), label: 'scheduled' },
-      { value: shared(f.qualifiedHeld), label: 'qualified' },
+      { value: shared(f.scheduled, f.meetings), label: 'scheduled' },
+      { value: shared(f.qualifiedHeld, f.meetings), label: 'qualified' },
     ],
   };
 }

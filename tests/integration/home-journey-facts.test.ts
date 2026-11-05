@@ -236,6 +236,26 @@ describe('Organising numbers on Home', () => {
     });
   });
 
+  // Codex review of PR 310: a count over only the readable links is not a total, as the Organiser Room says.
+  it('shows meeting counts only when every shared link was read, and says partly shared otherwise', () => {
+    const meetings = (state: string) => ({ state, scheduled: 18, qualifiedHeld: 3 });
+    expect(organiseFacts({ meetings: meetings('AVAILABLE') }, null)).toMatchObject({
+      scheduled: 18,
+      qualifiedHeld: 3,
+      meetings: 'complete',
+    });
+    expect(organiseFacts({ meetings: meetings('PARTIAL') }, null)).toMatchObject({
+      scheduled: null,
+      qualifiedHeld: null,
+      meetings: 'partial',
+    });
+    for (const state of ['NOT_SHARED', 'UNAVAILABLE'])
+      expect(organiseFacts({ meetings: meetings(state) }, null)).toMatchObject({
+        scheduled: null,
+        meetings: 'not_shared',
+      });
+  });
+
   it('says "or more" when only the first page of invitations was read, and nothing without the list', () => {
     expect(
       organiseFacts({}, { invitations: [{ status: 'ISSUED' }], nextInvitationAfter: 'x' })
