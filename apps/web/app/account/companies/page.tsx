@@ -55,6 +55,13 @@ export default async function Page() {
         subject={session.data.user.id}
         issuer={issuer}
         serviceRequestsEnabled={customerServiceRequestsEnabled()}
+        emptyAction={
+          customerOrganisationProfilesEnabled() ? (
+            <Link className="button button-secondary" prefetch={false} href="/account/profile">
+              Manage Company Profiles
+            </Link>
+          ) : undefined
+        }
       />
     </CustomerShell>
   );
