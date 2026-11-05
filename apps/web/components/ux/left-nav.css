@@ -1,0 +1,144 @@
+/* The shared left navigation (layout budget section 1). Existing tokens only, no new colour. The look
+   of the items is the Team sidebar's (shells.css .ux-team-sidebar); this file is the frame, the
+   drawer and the icons-only state. */
+.ux-leftnav-frame {
+  display: grid;
+  grid-template-columns: 17rem minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+.ux-leftnav-frame[data-collapsed='true'] {
+  grid-template-columns: 4.25rem minmax(0, 1fr);
+}
+.ux-leftnav-page {
+  min-width: 0;
+}
+.ux-leftnav-rail {
+  position: sticky;
+  top: var(--space-4);
+  min-width: 0;
+  max-height: calc(100vh - var(--space-8));
+  overflow-y: auto;
+}
+.ux-leftnav-close,
+.ux-leftnav-collapse {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--brand-deep);
+  font: 600 var(--text-md) var(--font-ui);
+  text-align: start;
+  cursor: pointer;
+}
+.ux-leftnav-close:hover,
+.ux-leftnav-collapse:hover {
+  background: var(--surface-2);
+}
+.ux-leftnav-close:focus-visible,
+.ux-leftnav-collapse:focus-visible,
+.ux-leftnav-opener:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.ux-leftnav-collapse .operator-icon {
+  transition: transform 120ms ease;
+}
+.ux-leftnav-frame[data-collapsed='false'] .ux-leftnav-collapse .operator-icon {
+  transform: rotate(180deg);
+}
+[dir='rtl'] .ux-leftnav-frame[data-collapsed='false'] .ux-leftnav-collapse .operator-icon {
+  transform: none;
+}
+[dir='rtl'] .ux-leftnav-frame[data-collapsed='true'] .ux-leftnav-collapse .operator-icon {
+  transform: rotate(180deg);
+}
+
+/* 1024 px and wider: the bar is always beside the page, and may collapse to icons. */
+@media (min-width: 1024px) {
+  .ux-leftnav-opener,
+  .ux-leftnav-close,
+  .ux-leftnav-scrim {
+    display: none;
+  }
+  .ux-leftnav-frame[data-collapsed='true'] .ux-leftnav-panel nav a > span,
+  .ux-leftnav-frame[data-collapsed='true'] .ux-leftnav-panel nav summary > span,
+  .ux-leftnav-frame[data-collapsed='true'] .ux-leftnav-collapse > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .ux-leftnav-frame[data-collapsed='true'] .ux-leftnav-panel nav .ux-team-chevron,
+  .ux-leftnav-frame[data-collapsed='true'] .ux-leftnav-panel nav details > ul {
+    display: none;
+  }
+  .ux-leftnav-frame[data-collapsed='true'] .ux-leftnav-panel nav a,
+  .ux-leftnav-frame[data-collapsed='true'] .ux-leftnav-panel nav summary,
+  .ux-leftnav-frame[data-collapsed='true'] .ux-leftnav-collapse {
+    justify-content: center;
+    padding: 0;
+  }
+}
+
+/* Below 1024 px: a left drawer opened from the header menu button. */
+@media (max-width: 1023.98px) {
+  .ux-leftnav-frame {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+  .ux-leftnav-rail {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+  .ux-leftnav-collapse {
+    display: none;
+  }
+  .ux-leftnav-panel {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: 90;
+    width: min(20rem, 88vw);
+    overflow-y: auto;
+    padding: var(--space-3);
+    background: var(--surface-1);
+    border-inline-end: 1px solid var(--line);
+    box-shadow: var(--shadow-3);
+    transform: translateX(-102%);
+    visibility: hidden;
+    /* Closing: slide out, then hide. */
+    transition:
+      transform 160ms ease,
+      visibility 0s linear 160ms;
+  }
+  [dir='rtl'] .ux-leftnav-panel {
+    transform: translateX(102%);
+  }
+  .ux-leftnav-panel[data-open='true'] {
+    transform: none;
+    /* Opening: visible at once, so focus can move in as soon as it opens. */
+    visibility: visible;
+    transition-delay: 0s;
+  }
+  .ux-leftnav-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    background: color-mix(in srgb, var(--ink) 40%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ux-leftnav-panel,
+  .ux-leftnav-collapse .operator-icon {
+    transition: none;
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "recordedOn": "2026-11-05",
+  "track": "Revamp S4 (branch revamp/staff)",
+  "kind": "[shared] L-01 left navigation component and the AppHeader menu slot (owner decision of 4 November 2026, layout budget spec). Component and reference tests only: no page adopts it yet.",
+  "findings": [],
+  "findingsNote": "No GAP id is created or changed.",
+  "sensitive": "no: client-only layout state and presentation. The store holds open, controls and label only; it imports nothing from @corridra and uses no cookie, storage-of-session, fetch or auth code. Collapsed state is a local display preference.",
+  "changed": [
+    "apps/web/components/ux/left-nav-store.ts (client-only drawer store, empty on the server)",
+    "apps/web/components/ux/left-nav.tsx (LeftNavFrame, LeftNavList, LeftNavMenuButton)",
+    "apps/web/components/ux/left-nav.css (rail from 1024px, drawer below, icons-only collapse, RTL, reduced motion)",
+    "apps/web/components/ux/app-header.tsx (one optional slot before the brand link; renders nothing unless a bar is registered)",
+    "tests/ux/left-nav.spec.ts (the L-01 reference spec, 9 browser tests, axe wcag2a and wcag2aa)",
+    "tests/integration/ux-left-nav.test.ts (6 tests: store, no auth code, one slot, signed-out and public headers untouched)"
+  ],
+  "preserved": [
+    "AppHeader brand, app name, status, inbox, language switcher, website link and corner dock are unchanged and in the same order.",
+    "site-header.tsx and shell-header.tsx do not mention the left navigation, so signed-out and public headers render exactly as before.",
+    "Tokens and components only (Atlantic Cobalt); no change to globals.css."
+  ],
+  "verification": {
+    "preflight": "node scripts/preflight.mjs standard on head 903d1fe: format, lint, typecheck, docs-tests, ledger, security-scan, integration-changed, build, operator-affected, ux-gate pass. e2e passed 198 on a clean rerun after one Playwright trace-file ENOENT in a first run (product-experience spec passed alone, 6 of 6).",
+    "leftNavSpec": "9 of 9 pass at 390, 1024 and 1440 wide, left to right and right to left",
+    "integration": "6 of 6 pass"
+  },
+  "reference": "tests/ux/left-nav.spec.ts is the named L-01 reference; customer adoption reuses LeftNavFrame, LeftNavList and the same words object.",
+  "nextAction": "Team and contributor adoption of LeftNavFrame in a second PR."
+}
