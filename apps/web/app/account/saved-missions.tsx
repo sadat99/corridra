@@ -379,7 +379,7 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
         (invite ? (
           <InvitationSlot kind="save">
             {saveForm}
-            {notice && <p role="status">{notice}</p>}
+            {notice && invite?.open && <p role="status">{notice}</p>}
           </InvitationSlot>
         ) : (
           <details className="ux-journey-disclosure">
@@ -387,7 +387,7 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
             {saveForm}
           </details>
         ))}
-      {notice && !(invite && status === 'ready') && <p role="status">{notice}</p>}
+      {notice && !(invite?.open && status === 'ready') && <p role="status">{notice}</p>}
       {!invite && (
         <a className="text-link" href="/account#customer-missions">
           Open an original shared mission invitation

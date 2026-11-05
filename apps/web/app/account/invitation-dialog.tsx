@@ -8,6 +8,7 @@ import { createContext, useCallback, useContext, useId, useState, type ReactNode
 import { createPortal } from 'react-dom';
 import { Dialog } from '../../components/ux/dialog';
 import { revealInSubTabs } from '../../components/ux/sub-tabs';
+import './invitation-dialog.css';
 
 type Context = {
   /** The dialog is showing, so a form's own notice is drawn inside it, where the person is looking. */
@@ -50,7 +51,8 @@ export function InvitationProvider({ children }: { children: ReactNode }) {
         </section>
         <section aria-labelledby={base + '-save'}>
           <h3 id={base + '-save'}>Save It to This Account</h3>
-          <div ref={setSaveSlot} />
+          <div ref={setSaveSlot} className="ux-invite-slot" />
+          <p className="ux-invite-empty">Saving invitations is not available right now.</p>
         </section>
       </Dialog>
     </InvitationContext.Provider>

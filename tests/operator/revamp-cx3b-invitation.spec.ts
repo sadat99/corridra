@@ -195,6 +195,40 @@ test('CX-04 saving an invitation closes the dialog and shows it on the Saved Mis
   await expect(page.getByText('Synthetic approved commercial scope')).toBeVisible();
 });
 
+test('CX-04 a failed removal on the Saved Missions tab says so on the page, with the invitation dialog closed', async ({
+  page,
+}) => {
+  await open(page);
+  stored = true;
+  await page.route('**/api/customer-saved-missions', async (route) => {
+    if (route.request().method() === 'GET')
+      return route.fulfill({ json: { missions: [saved], nextAfter: null, synthetic: true } });
+    return route.fulfill({ status: 500, json: { error: 'failed' } });
+  });
+  await page.reload();
+  await page.getByRole('tab', { name: 'Saved Missions' }).click();
+  await page.getByRole('button', { name: 'Remove From My Saved Missions' }).click();
+  await page.getByRole('button', { name: 'Remove Saved Mission' }).click();
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Removal could not be confirmed' }),
+  ).toBeVisible();
+});
+
+test('CX-02 when saving is not available the dialog says so in one plain line, not an empty section', async ({
+  page,
+}) => {
+  await page.route('**/api/customer-saved-missions', (route) =>
+    route.fulfill({ status: 403, json: { error: 'denied' } }),
+  );
+  await page.route('**/api/customer-missions*', (route) =>
+    route.fulfill({ status: 404, json: { error: 'unavailable' } }),
+  );
+  await page.goto(origin);
+  await page.getByRole('button', { name: 'Open an Invitation', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Open an Invitation' });
+  await expect(dialog.getByText('Saving invitations is not available right now.')).toBeVisible();
+});
+
 for (const [width, height] of [
   [390, 844],
   [1440, 900],

@@ -1,0 +1,4 @@
+/* Shows the plain "not available" line only while the save slot has nothing drawn into it. */
+.ux-invite-slot:not(:empty) + .ux-invite-empty {
+  display: none;
+}
