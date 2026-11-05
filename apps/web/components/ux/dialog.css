@@ -10,7 +10,7 @@
   box-shadow: var(--shadow-3);
 }
 .ux-dialog::backdrop {
-  background: rgb(20 30 50 / 45%);
+  background: color-mix(in srgb, var(--ink) 45%, transparent);
 }
 .ux-dialog-head {
   display: flex;

@@ -56,7 +56,7 @@ test('Home has one filled action, the New request in the header, and none inside
       const bg = css.backgroundColor;
       return bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent' && css.display !== 'none';
     };
-    const inMain = [...document.querySelectorAll('main a, main button')].filter((el) => {
+    const inMain = Array.from(document.querySelectorAll('main a, main button')).filter((el) => {
       const css = getComputedStyle(el);
       const bg = css.backgroundColor;
       // A row link's hover surface is not a filled action; only a solid brand-coloured control counts.
