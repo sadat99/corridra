@@ -1,0 +1,2477 @@
+{
+  "auditedAt": "2026-11-05",
+  "auditedOn": "79953f9 plus PR 300 (74b3681)",
+  "standard": "docs/revamp/specs/crud-standard.md",
+  "generatedAt": "2026-11-05",
+  "repo": "/home/user/corridra",
+  "method": "Read-only grep/read of packages/db migrations (282 CREATE TABLE across 41 migration modules), apps/web/app/api route handlers (63), packages/* services, apps/web UI and tests.",
+  "objects": [
+    {
+      "name": "Customer workspace",
+      "tables": [
+        "customer.workspace",
+        "customer.membership",
+        "customer.provision_request",
+        "app.tenant",
+        "customer_private.personal_workspace"
+      ],
+      "class": "append-only/immutable (rows) - workspace name held in app.tenant, no rename path",
+      "roles": ["customer (any admitted, verified account)"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-workspaces/route.ts:49 -> customerWorkspaces.provision",
+        "sql": "packages/db/customer-real-use-migrations/0002_real_request_authority.sql:482 customer.provision_workspace",
+        "idempotency": "commandId via customer.provision_request PK(principal_id,command_id) packages/db/customer-migrations/0001_synthetic_workspace_authority.sql:49",
+        "concurrency": "n/a (create)",
+        "validation": "name 2-120 chars, no control chars packages/db/customer-real-use-migrations/0002_real_request_authority.sql:496",
+        "ui": "apps/web/app/account/customer-workspaces.tsx:250",
+        "audit": "domain_event+audit_event+outbox packages/db/customer-real-use-migrations/0002_real_request_authority.sql:520"
+      },
+      "readList": {
+        "api": "GET apps/web/app/api/customer-workspaces/route.ts:28",
+        "sql": "packages/db/customer-real-use-migrations/0002_real_request_authority.sql:430 customer.workspaces()",
+        "pagination": "none - returns every membership ordered by created_at packages/db/customer-real-use-migrations/0002_real_request_authority.sql:442",
+        "ui": "components/ux/customer-bar.tsx:36; apps/web/app/account/customer-workspaces.tsx:84"
+      },
+      "readDetail": {
+        "note": "not found as a separate detail endpoint; workspace context is read per module"
+      },
+      "update": {
+        "supported": false,
+        "note": "not found: no rename/settings function; customer.workspace and customer.membership have reject_rewrite triggers",
+        "evidence": "packages/db/customer-migrations/0001_synthetic_workspace_authority.sql:54"
+      },
+      "delete": {
+        "kind": "none",
+        "note": "not found: no archive/close/delete of a workspace; rows are immutable",
+        "evidence": "packages/db/customer-migrations/0001_synthetic_workspace_authority.sql:54-56"
+      },
+      "auditTrail": "app.domain_event/app.audit_event customer.workspace.provisioned",
+      "tests": [
+        "tests/integration/customer-workspaces.test.ts",
+        "tests/operator/v3-customer-workspaces-ui.spec.ts:17"
+      ],
+      "gaps": [
+        {
+          "op": "update",
+          "severity": "medium",
+          "what": "Workspace name cannot be edited after creation (no rename command; tenant/workspace rows have no update path).",
+          "evidence": "packages/db/customer-migrations/0001_synthetic_workspace_authority.sql:54"
+        },
+        {
+          "op": "delete",
+          "severity": "medium",
+          "what": "No archive/close for a workspace; workspaces accumulate and cannot be retired.",
+          "evidence": "packages/db/customer-migrations/0001_synthetic_workspace_authority.sql:54-56"
+        },
+        {
+          "op": "update",
+          "severity": "medium",
+          "what": "Original owner membership is immutable, so workspace ownership cannot be transferred; invited-member roles only allow admin/member.",
+          "evidence": "packages/db/customer-member-role-migrations/0001_workspace_member_roles.sql:2-3"
+        },
+        {
+          "op": "readList",
+          "severity": "low",
+          "what": "Workspace list has no pagination or cap.",
+          "evidence": "packages/db/customer-real-use-migrations/0002_real_request_authority.sql:442"
+        }
+      ]
+    },
+    {
+      "name": "Workspace invitation",
+      "tables": [
+        "customer_private.workspace_invitation",
+        "customer_private.workspace_invitation_acceptance",
+        "customer_private.workspace_access_revocation",
+        "customer_private.workspace_access_request"
+      ],
+      "class": "append-only/immutable (revocation row = withdraw)",
+      "roles": ["workspace owner/admin (invite, revoke)", "invited customer (accept)"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-workspace-access/route.ts (action invite)",
+        "sql": "packages/db/customer-real-use-migrations/0003_real_customer_modules.sql:1972 customer.workspace_access_command",
+        "idempotency": "commandId ledger customer_private.workspace_access_request PK(actor_id,command_id) packages/db/customer-migrations/0002_workspace_collaboration.sql:44",
+        "validation": "zod packages/auth/src/customer-workspaces.ts:35-56; label/token CHECKs packages/db/customer-migrations/0002_workspace_collaboration.sql:6-7",
+        "ui": "apps/web/app/account/customer-workspace-team.tsx:236",
+        "audit": "workspace_access_event (emit) packages/db/customer-migrations/0002_workspace_collaboration.sql:207"
+      },
+      "readList": {
+        "api": "GET apps/web/app/api/customer-workspace-access/route.ts",
+        "sql": "packages/db/customer-real-use-migrations/0003_real_customer_modules.sql:2076 customer.workspace_access_list (keyset pages, page_size)",
+        "ui": "apps/web/app/account/customer-workspace-team.tsx"
+      },
+      "readDetail": {
+        "note": "accept flow reads invitation by code: apps/web/app/account/customer-workspace-invitation.tsx:87"
+      },
+      "update": {
+        "supported": false,
+        "note": "not editable (immutable trigger); expiry 24h; re-issue = new invitation",
+        "evidence": "packages/db/customer-migrations/0002_workspace_collaboration.sql:51"
+      },
+      "delete": {
+        "kind": "withdraw",
+        "how": "revoke kind=invitation inserts workspace_access_revocation",
+        "evidence": "packages/db/customer-migrations/0002_workspace_collaboration.sql:33",
+        "ui": "apps/web/app/account/customer-workspace-team.tsx:555 \"Cancel Invitation for {label}\" and :783",
+        "confirmation": "confirmation panel apps/web/app/account/customer-workspace-team.tsx:700"
+      },
+      "auditTrail": "app.domain_event via customer_private.workspace_access_event",
+      "tests": [
+        "tests/integration/customer-workspace-collaboration.test.ts:41",
+        "tests/operator/v3-workspace-invitation-ui.spec.ts:32",
+        "tests/operator/v3-workspace-team-ui.spec.ts"
+      ],
+      "gaps": []
+    },
+    {
+      "name": "Workspace member (invited) and role",
+      "tables": [
+        "customer_private.workspace_member",
+        "customer_private.workspace_member_role",
+        "customer_private.workspace_member_request",
+        "customer_private.workspace_access_revocation"
+      ],
+      "class": "append-only/immutable (role history; revocation/leave rows)",
+      "roles": ["workspace owner (set_role, revoke membership)", "invited member (leave)"],
+      "create": {
+        "how": "created by accepting an invitation",
+        "sql": "packages/db/customer-real-use-migrations/0003_real_customer_modules.sql:1972"
+      },
+      "readList": {
+        "api": "GET apps/web/app/api/customer-workspace-access/route.ts",
+        "sql": "packages/db/customer-real-use-migrations/0003_real_customer_modules.sql:2076",
+        "pagination": "keyset member_after/page_size"
+      },
+      "readDetail": {
+        "note": "not found as separate detail"
+      },
+      "update": {
+        "api": "POST apps/web/app/api/customer-workspace-members/route.ts:39 action set_role",
+        "sql": "packages/db/customer-member-role-migrations/0001_workspace_member_roles.sql:90 customer.workspace_member_command",
+        "concurrency": "expectedRole compare-and-set packages/db/customer-member-role-migrations/0001_workspace_member_roles.sql:103-106",
+        "idempotency": "commandId workspace_member_request PK packages/db/customer-member-role-migrations/0001_workspace_member_roles.sql:18",
+        "ui": "apps/web/app/account/customer-workspace-team.tsx:332",
+        "confirmation": "apps/web/app/account/customer-workspace-team.tsx:668"
+      },
+      "delete": {
+        "kind": "withdraw",
+        "how": "owner revoke membership (workspace_access_revocation) or member leave",
+        "evidence": "packages/db/customer-member-role-migrations/0001_workspace_member_roles.sql:20",
+        "ui": "apps/web/app/account/customer-workspace-team.tsx:609 \"Remove Invited Membership\"; apps/web/app/account/customer-workspace-leave.tsx:94 \"Leave {name}\" with :121 \"Keep My Access\""
+      },
+      "auditTrail": "domain_event via member command emit packages/db/customer-member-role-migrations/0001_workspace_member_roles.sql:147",
+      "tests": [
+        "tests/integration/customer-member-roles.test.ts:52",
+        "tests/operator/v3-member-roles-ui.spec.ts:131"
+      ],
+      "gaps": []
+    },
+    {
+      "name": "Organisation profile (self-reported company profile)",
+      "tables": [
+        "customer_private.organisation_profile_revision",
+        "customer_private.organisation_profile_command"
+      ],
+      "class": "append-only revisions (edit = new version)",
+      "roles": ["workspace owner/admin (write)", "workspace member (read)"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-organisation-profiles/route.ts:59",
+        "sql": "packages/db/customer-organisation-profile-migrations/0001_private_organisation_profiles.sql:103",
+        "idempotency": "commandId PK(actor_id,command_id) :13",
+        "concurrency": "expectedVersion=head else \"Profile changed; reload\" :123",
+        "validation": "organisation_profile_valid + reason 3-1000 :107-109",
+        "ui": "apps/web/app/account/profile/organisation-profile.tsx:180",
+        "audit": "organisation_profile_event :126"
+      },
+      "readList": {
+        "api": "GET ...?history apps/web/app/api/customer-organisation-profiles/route.ts:38",
+        "sql": "packages/db/customer-organisation-profile-migrations/0001_private_organisation_profiles.sql:133 (history, before_version keyset, page_size<=100)"
+      },
+      "readDetail": {
+        "api": "GET apps/web/app/api/customer-organisation-profiles/route.ts:39",
+        "sql": "packages/db/customer-organisation-profile-migrations/0001_private_organisation_profiles.sql:84"
+      },
+      "update": {
+        "same_as": "create with expectedVersion>=1; new revision row"
+      },
+      "delete": {
+        "kind": "none",
+        "note": "not found: no clear/withdraw of a profile; latest revision always current",
+        "evidence": "packages/db/customer-organisation-profile-migrations/0001_private_organisation_profiles.sql:21"
+      },
+      "auditTrail": "app.domain_event/audit via organisation_profile_event; full revision history readable",
+      "tests": [
+        "tests/integration/customer-organisation-profiles.test.ts",
+        "tests/operator/v3-organisation-profile-ui.spec.ts:151"
+      ],
+      "gaps": [
+        {
+          "op": "delete",
+          "severity": "low",
+          "what": "No way to clear or withdraw a self-reported profile (only overwrite with a new revision).",
+          "evidence": "packages/db/customer-organisation-profile-migrations/0001_private_organisation_profiles.sql:21"
+        }
+      ]
+    },
+    {
+      "name": "Organisation link claim (canonical company link request)",
+      "tables": [
+        "customer_private.organisation_link_claim",
+        "customer_private.organisation_link_event",
+        "customer_private.organisation_link_evidence",
+        "customer_private.organisation_link",
+        "customer_private.organisation_link_request"
+      ],
+      "class": "append-only/immutable (event-sourced claim; withdraw event)",
+      "roles": [
+        "workspace owner/admin (file, add_evidence, withdraw)",
+        "staff owner/admin with fresh MFA (decide)"
+      ],
+      "create": {
+        "api": "POST apps/web/app/api/customer-organisation-links/route.ts:68 action file",
+        "sql": "packages/db/customer-real-use-migrations/0003_real_customer_modules.sql:1151 customer.organisation_link_command",
+        "concurrency": "expectedProfileVersion packages/auth/src/customer-organisation-links.ts:62",
+        "idempotency": "commandId",
+        "ui": "apps/web/app/account/profile/company-link.tsx:263",
+        "audit": "organisation_link_domain_event packages/db/customer-organisation-link-migrations/0001_canonical_organisation_links.sql:456"
+      },
+      "readList": {
+        "api": "GET apps/web/app/api/customer-organisation-links/route.ts:41-51 (view/overview/search)",
+        "sql": "packages/db/customer-organisation-link-migrations/0001_canonical_organisation_links.sql:334 overview; :347 search (LIMIT)",
+        "staff": "GET apps/web/app/api/workspace/customer-organisation-links/route.ts:40 queue"
+      },
+      "readDetail": {
+        "api": "GET view",
+        "sql": "packages/db/customer-organisation-link-migrations/0001_canonical_organisation_links.sql:315"
+      },
+      "update": {
+        "how": "add_evidence appends evidence/event with expectedVersion",
+        "evidence": "packages/db/customer-organisation-link-migrations/0001_canonical_organisation_links.sql:389-392",
+        "ui": "apps/web/app/account/profile/company-link.tsx:281",
+        "staff_decide": "POST apps/web/app/api/workspace/customer-organisation-links/route.ts:51 -> packages/db/customer-real-use-migrations/0003_real_customer_modules.sql:93 (expectedVersion packages/auth/src/customer-organisation-links.ts:226)"
+      },
+      "delete": {
+        "kind": "withdraw",
+        "evidence": "packages/auth/src/customer-organisation-links.ts:85-89",
+        "ui": "apps/web/app/account/profile/company-link.tsx:492 \"Withdraw This Request\" -> :505 \"Confirm Withdrawal\""
+      },
+      "auditTrail": "organisation_link_event table + app.domain_event",
+      "tests": [
+        "tests/integration/customer-organisation-links.test.ts:1146",
+        "tests/operator/v3-organisation-links-ui.spec.ts:133"
+      ],
+      "gaps": []
+    },
+    {
+      "name": "Mission draft (guided request draft)",
+      "tables": [
+        "customer_private.mission_draft",
+        "customer_private.mission_draft_revision",
+        "customer_private.mission_draft_command",
+        "customer_private.mission_draft_close"
+      ],
+      "class": "draft then frozen (revisions until closed SUBMITTED/DISCARDED)",
+      "roles": ["draft author only (customer in own workspace)"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-mission-drafts/route.ts:64 action save (draftId null)",
+        "sql": "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql:138",
+        "idempotency": "commandId :17 with conflict check :151",
+        "validation": "mission_draft_valid :142",
+        "ui": "apps/web/app/account/drafts/guided-request.tsx:354 \"Save Draft\" :1308",
+        "audit": "mission_draft_event :167"
+      },
+      "readList": {
+        "api": "GET apps/web/app/api/customer-mission-drafts/route.ts:39",
+        "sql": "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql:213 (keyset after_id, page_size<=100)"
+      },
+      "readDetail": {
+        "api": "GET ?draftId apps/web/app/api/customer-mission-drafts/route.ts:38",
+        "sql": "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql:199"
+      },
+      "update": {
+        "how": "save with expectedVersion -> new revision",
+        "concurrency": "\"Draft changed; reload\" packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql:163",
+        "closed_guard": ":161"
+      },
+      "delete": {
+        "kind": "withdraw",
+        "how": "close outcome DISCARDED (or SUBMITTED with request id)",
+        "evidence": "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql:172",
+        "ui": "apps/web/app/account/drafts/guided-request.tsx:1319 \"Discard This Draft\" with window.confirm :449"
+      },
+      "auditTrail": "app.domain_event customer.mission_draft.saved/closed",
+      "tests": [
+        "tests/integration/customer-mission-drafts.test.ts:409",
+        "tests/operator/v3-guided-request-ui.spec.ts:134"
+      ],
+      "gaps": [
+        {
+          "op": "readList",
+          "severity": "low",
+          "what": "Discarded/submitted drafts stay in the list forever (no hide/archive of closed drafts).",
+          "evidence": "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql:219"
+        }
+      ]
+    },
+    {
+      "name": "Private customer request (submitted mission request)",
+      "tables": [
+        "customer_private.owned_request",
+        "customer_private.request_attestation",
+        "customer_private.request_revocation",
+        "customer_private.request_admission",
+        "app.mission",
+        "app.mission_intake"
+      ],
+      "class": "draft then frozen (submitted request is immutable)",
+      "roles": [
+        "customer with request admission (submit/list/detail)",
+        "operator owner/admin/operator (mission lifecycle)"
+      ],
+      "create": {
+        "api": "POST apps/web/app/api/customer-requests/route.ts:82",
+        "sql": "packages/db/customer-real-use-migrations/0002_real_request_authority.sql:699 customer.submit_private_request",
+        "idempotency": "commandId; owned_request UNIQUE(principal_id,command_id) packages/db/customer-migrations/0003_private_customer_requests.sql:24",
+        "ui": "apps/web/app/account/request/private-request-intake.tsx:128",
+        "audit": "domain_event+audit packages/db/customer-migrations/0003_private_customer_requests.sql:126-129"
+      },
+      "readList": {
+        "api": "GET apps/web/app/api/customer-requests/route.ts:56",
+        "sql": "packages/db/customer-real-use-migrations/0002_real_request_authority.sql:614 customer.private_requests (paged)",
+        "ui": "apps/web/app/account/customer-requests.tsx:62"
+      },
+      "readDetail": {
+        "api": "GET apps/web/app/api/customer-requests/[requestId]/route.ts:18",
+        "sql": "packages/db/customer-detail-migrations/0001_original_request_details.sql:3",
+        "ui": "apps/web/app/account/requests/request-detail.tsx:167"
+      },
+      "update": {
+        "supported": false,
+        "note": "frozen; owned_request has reject_rewrite",
+        "evidence": "packages/db/customer-migrations/0003_private_customer_requests.sql:31"
+      },
+      "delete": {
+        "kind": "none",
+        "note": "Corrected by S1 review: revocation is inserted only by an offline schema-owner action (packages/auth/src/customer-request-admission.ts:69, requires the customer schema owner role). The customer has no withdraw or cancel of their own",
+        "evidence": "packages/db/customer-migrations/0003_private_customer_requests.sql:26"
+      },
+      "auditTrail": "app.domain_event/audit_event on submit; mission_command for operator transitions",
+      "tests": [
+        "tests/integration/customer-requests.test.ts",
+        "tests/integration/customer-request-details.test.ts",
+        "tests/operator/v3-customer-requests-ui.spec.ts:15"
+      ],
+      "gaps": [
+        {
+          "op": "delete",
+          "severity": "high",
+          "what": "A customer cannot withdraw or cancel a submitted request; revocation table has no writer in code, so the frozen-record lifecycle (withdraw) is missing.",
+          "evidence": "packages/db/customer-migrations/0003_private_customer_requests.sql:26"
+        },
+        {
+          "op": "update",
+          "severity": "low",
+          "what": "No correction/addendum path for a submitted request (customer must start a new request).",
+          "evidence": "packages/db/customer-migrations/0003_private_customer_requests.sql:31"
+        }
+      ]
+    },
+    {
+      "name": "Pending guest request (pre-sign-in handoff)",
+      "tables": ["customer_private.pending_request", "customer_private.pending_request_claim"],
+      "class": "draft then frozen",
+      "roles": ["anonymous visitor (stage)", "verified customer (claim)"],
+      "create": {
+        "api": "POST apps/web/app/api/intake/pending/route.ts:36",
+        "sql": "packages/db/customer-real-use-migrations/0001_verified_guest_handoff.sql:86",
+        "ui": "apps/web/app/plan/intake.tsx:752"
+      },
+      "readList": {
+        "note": "not found (single pending item per capability)"
+      },
+      "readDetail": {
+        "api": "GET apps/web/app/api/intake/pending/route.ts:15",
+        "ui": "apps/web/app/plan/intake.tsx:458"
+      },
+      "update": {
+        "supported": false,
+        "note": "not found"
+      },
+      "delete": {
+        "kind": "none",
+        "note": "claimed via POST apps/web/app/api/intake/pending/claim/route.ts:21; no discard found"
+      },
+      "auditTrail": "not found (no domain_event in stage_pending_request packages/db/customer-real-use-migrations/0001_verified_guest_handoff.sql:86-103)",
+      "tests": [
+        "tests/integration/real-guest-handoff.test.ts",
+        "tests/integration/pending-notice.test.ts"
+      ],
+      "gaps": [
+        {
+          "op": "delete",
+          "severity": "low",
+          "what": "Visitor cannot discard a staged pending request before claiming it.",
+          "evidence": "packages/db/customer-real-use-migrations/0001_verified_guest_handoff.sql:86"
+        }
+      ]
+    },
+    {
+      "name": "Saved mission (saved commercial report binding)",
+      "tables": ["customer_private.saved_mission", "customer_private.saved_mission_command"],
+      "class": "mutable navigation state (only removed_at may change)",
+      "roles": ["customer who holds the invitation"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-saved-missions/route.ts:57 action save",
+        "sql": "packages/db/customer-commercial-migrations/0001_saved_mission_invitations.sql:65",
+        "idempotency": "commandId :23",
+        "cap": "100 active :81",
+        "ui": "apps/web/app/account/saved-missions.tsx:180"
+      },
+      "readList": {
+        "api": "GET apps/web/app/api/customer-saved-missions/route.ts:29",
+        "sql": "packages/db/customer-commercial-migrations/0001_saved_mission_invitations.sql:88 (after_id/page_size)"
+      },
+      "readDetail": {
+        "api": "POST action view",
+        "sql": "packages/db/customer-commercial-migrations/0001_saved_mission_invitations.sql:103",
+        "ui": "apps/web/app/account/missions/saved-commercial-report.tsx:352"
+      },
+      "update": {
+        "supported": false,
+        "note": "guard allows only removed_at to change",
+        "evidence": "packages/db/customer-commercial-migrations/0001_saved_mission_invitations.sql:15"
+      },
+      "delete": {
+        "kind": "soft",
+        "how": "UPDATE removed_at",
+        "evidence": "packages/db/customer-commercial-migrations/0001_saved_mission_invitations.sql:129",
+        "hard_delete_blocked": "packages/db/customer-commercial-migrations/0001_saved_mission_invitations.sql:21",
+        "ui": "apps/web/app/account/saved-missions.tsx:316 \"Remove From My Saved Missions\"",
+        "confirmation": "none - single click apps/web/app/account/saved-missions.tsx:210-225"
+      },
+      "auditTrail": "saved_mission_command ledger only; no app.domain_event/audit_event in module (0 audit inserts in customer-commercial-migrations)",
+      "tests": [
+        "tests/integration/customer-saved-missions.test.ts:192",
+        "tests/operator/v3-saved-commercial-ui.spec.ts:222"
+      ],
+      "gaps": [
+        {
+          "op": "delete",
+          "severity": "low",
+          "what": "Remove has no confirmation step and writes no domain/audit event (only the command ledger).",
+          "evidence": "apps/web/app/account/saved-missions.tsx:210"
+        },
+        {
+          "op": "delete",
+          "severity": "low",
+          "what": "Removed bindings cannot be restored except by saving the invitation again.",
+          "evidence": "packages/db/customer-commercial-migrations/0001_saved_mission_invitations.sql:15"
+        }
+      ]
+    },
+    {
+      "name": "Client response on saved commercial report",
+      "tables": ["customer_private.saved_mission_command", "app.delivery_response"],
+      "class": "append-only/immutable",
+      "roles": ["customer holding saved mission"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-saved-missions/route.ts:57 action respond",
+        "idempotency": "commandId packages/auth/src/customer-saved-missions.ts:33",
+        "ui": "apps/web/app/account/missions/saved-commercial-report.tsx:248"
+      },
+      "readList": {
+        "note": "part of saved mission view"
+      },
+      "readDetail": {
+        "note": "part of saved mission view"
+      },
+      "update": {
+        "supported": false,
+        "note": "immutable delivery_response (0016 loop)",
+        "evidence": "packages/db/migrations/0016_scoped_delivery.sql:130-134"
+      },
+      "delete": {
+        "kind": "none",
+        "note": "not found"
+      },
+      "auditTrail": "delivery external event",
+      "tests": ["tests/operator/v3-saved-commercial-ui.spec.ts:227"],
+      "gaps": [
+        {
+          "op": "update",
+          "severity": "low",
+          "what": "A submitted response cannot be revised or withdrawn.",
+          "evidence": "packages/db/migrations/0016_scoped_delivery.sql:134"
+        }
+      ]
+    },
+    {
+      "name": "Trip/Supplier book generation",
+      "tables": ["customer_private.saved_mission_command (generation record)"],
+      "class": "append-only/immutable",
+      "roles": ["customer holding saved mission"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-books/route.ts:28",
+        "sql": "packages/db/customer-book-migrations/0001_trip_and_supplier_books.sql:15",
+        "idempotency": "commandId :18",
+        "ui": "apps/web/app/account/missions/book-downloads.tsx:139"
+      },
+      "readList": {
+        "note": "not found (generated on demand)"
+      },
+      "readDetail": {
+        "note": "not found"
+      },
+      "update": {
+        "supported": false
+      },
+      "delete": {
+        "kind": "none",
+        "note": "n/a"
+      },
+      "auditTrail": "delivery_external_event packages/db/customer-book-migrations/0001_trip_and_supplier_books.sql:89",
+      "tests": [
+        "tests/integration/customer-book-route.test.ts:7",
+        "tests/operator/ux-books.spec.ts:316"
+      ],
+      "gaps": []
+    },
+    {
+      "name": "Service request (contextual service request + need versions)",
+      "tables": [
+        "customer_private.service_request",
+        "customer_private.service_request_need",
+        "customer_private.service_request_claim",
+        "customer_private.service_request_event",
+        "customer_private.service_request_command",
+        "customer_private.service_order_intent"
+      ],
+      "class": "draft then frozen (need versions until quoted; then accept/decline/withdraw)",
+      "roles": [
+        "workspace owner/admin (\"writer\") create/revise/accept/decline/withdraw",
+        "staff owner/admin with fresh MFA (quote/answer/start/update/deliver/close/note)"
+      ],
+      "create": {
+        "api": "POST apps/web/app/api/customer-service-requests/route.ts:64 action create",
+        "sql": "packages/db/customer-real-use-migrations/0003_real_customer_modules.sql:1754",
+        "idempotency": "commandId ledger, conflict check",
+        "ui": "apps/web/app/account/service-requests/service-request-new.tsx:128",
+        "audit": "service_request_event + domain events"
+      },
+      "readList": {
+        "api": "GET apps/web/app/api/customer-service-requests/route.ts:42",
+        "sql": "packages/db/customer-service-request-migrations/0001_contextual_service_requests.sql:482 (paged)",
+        "staff": "GET apps/web/app/api/workspace/customer-service-requests/route.ts:39"
+      },
+      "readDetail": {
+        "api": "GET apps/web/app/api/customer-service-requests/route.ts:40",
+        "sql": "packages/db/customer-service-request-migrations/0001_contextual_service_requests.sql:506"
+      },
+      "update": {
+        "how": "revise -> new service_request_need version",
+        "concurrency": "expectedNeedVersion \"Request changed; reload\" packages/db/customer-service-request-migrations/0001_contextual_service_requests.sql:637",
+        "ui": "apps/web/app/account/service-requests/service-request-detail.tsx:389 \"Save Changes\"",
+        "staff_concurrency": "expectedSeq packages/delivery/src/customer-service-staff.ts:32"
+      },
+      "delete": {
+        "kind": "withdraw",
+        "how": "withdraw / decline operations",
+        "evidence": "packages/auth/src/customer-service-requests.ts:86",
+        "ui": "apps/web/app/account/service-requests/service-request-detail.tsx:553 \"Withdraw This Request\" -> :659 \"Confirm and Withdraw\"; :534 -> :628 decline"
+      },
+      "auditTrail": "service_request_event table (append-only) + app.domain_event",
+      "tests": [
+        "tests/integration/customer-service-requests.test.ts:513",
+        "tests/operator/v3-service-requests-ui.spec.ts:70",
+        "tests/operator/v3-service-requests-ui.spec.ts:966"
+      ],
+      "gaps": []
+    },
+    {
+      "name": "Service quote",
+      "tables": [
+        "customer_private.service_quote",
+        "customer_private.service_quote_component",
+        "customer_private.service_quote_view",
+        "customer_private.service_quote_arrangement"
+      ],
+      "class": "append-only/immutable (signed quote; change = new version)",
+      "roles": [
+        "staff owner/admin fresh MFA (quote)",
+        "workspace owner/admin (accept with digest)"
+      ],
+      "create": {
+        "api": "POST apps/web/app/api/workspace/customer-service-requests/route.ts:59 action quote",
+        "zod": "packages/delivery/src/customer-service-staff.ts:50",
+        "sql": "packages/db/customer-real-use-migrations/0003_real_customer_modules.sql:870",
+        "ui": "apps/web/app/operator/customer-service-requests.tsx:176"
+      },
+      "readList": {
+        "note": "within request view"
+      },
+      "readDetail": {
+        "api": "request view",
+        "sql": "packages/db/customer-service-request-migrations/0001_contextual_service_requests.sql:506"
+      },
+      "update": {
+        "how": "supersede by new version only",
+        "evidence": "packages/db/customer-service-request-migrations/0001_contextual_service_requests.sql:98-99"
+      },
+      "delete": {
+        "kind": "void",
+        "how": "customer decline; acceptance pins version+digest",
+        "evidence": "packages/auth/src/customer-service-requests.ts:75-86"
+      },
+      "auditTrail": "service_request_event",
+      "tests": [
+        "tests/integration/customer-service-requests.test.ts",
+        "tests/integration/commercial-arrangements.test.ts"
+      ],
+      "gaps": []
+    },
+    {
+      "name": "Service catalogue version",
+      "tables": ["customer_private.service_catalogue_version"],
+      "class": "append-only versions",
+      "roles": ["staff owner/admin fresh MFA"],
+      "create": {
+        "api": "POST apps/web/app/api/workspace/customer-service-requests/route.ts:58 reviseCatalogue",
+        "concurrency": "expectedVersion packages/delivery/src/customer-service-staff.ts:90",
+        "sql": "packages/db/customer-real-use-migrations/0003_real_customer_modules.sql:805",
+        "ui": "apps/web/app/operator/customer-service-catalogue.tsx:108"
+      },
+      "readList": {
+        "api": "GET customer catalogue apps/web/app/api/customer-service-requests/route.ts:38; staff :35",
+        "sql": "packages/db/customer-real-use-migrations/0003_real_customer_modules.sql:855"
+      },
+      "readDetail": {
+        "note": "n/a"
+      },
+      "update": {
+        "how": "new version"
+      },
+      "delete": {
+        "kind": "none",
+        "note": "not found (no retire flag found in catalogue)"
+      },
+      "auditTrail": "domain events via staff command",
+      "tests": ["tests/operator/v3-service-requests-ui.spec.ts"],
+      "gaps": []
+    },
+    {
+      "name": "Decision card (shareable decision link)",
+      "tables": [
+        "customer_private.decision_card",
+        "customer_private.decision_card_withdrawal",
+        "customer_private.decision_card_open"
+      ],
+      "class": "append-only/immutable (withdraw row)",
+      "roles": [
+        "customer holder of report who is owner/admin of the owning workspace",
+        "public link visitor (read)"
+      ],
+      "create": {
+        "api": "POST apps/web/app/api/customer-decision-cards/route.ts:44 action create",
+        "sql": "packages/db/customer-decision-card-migrations/0001_decision_cards.sql:215",
+        "idempotency": "commandId UNIQUE(principal_id,command_id) :49",
+        "rate": "30/hour :31",
+        "ui": "apps/web/app/account/missions/decision-card-panel.tsx:151 \"Create Link\""
+      },
+      "readList": {
+        "api": "POST action state apps/web/app/api/customer-decision-cards/route.ts:35",
+        "sql": "packages/db/customer-decision-card-migrations/0001_decision_cards.sql:177"
+      },
+      "readDetail": {
+        "api": "GET apps/web/app/api/decision-card/route.ts:48 (public token)",
+        "ui": "apps/web/app/decision-card/decision-card-view.tsx"
+      },
+      "update": {
+        "supported": false,
+        "note": "immutable; expires <=168h",
+        "evidence": "packages/db/customer-decision-card-migrations/0001_decision_cards.sql:51"
+      },
+      "delete": {
+        "kind": "withdraw",
+        "sql": "packages/db/customer-decision-card-migrations/0001_decision_cards.sql:271",
+        "ui": "apps/web/app/account/missions/decision-card-panel.tsx:188 \"Withdraw\"",
+        "confirmation": "none - single click apps/web/app/account/missions/decision-card-panel.tsx:186"
+      },
+      "auditTrail": "delivery external event :289; open counter guarded (count-up only) :65-77",
+      "tests": [
+        "tests/integration/customer-decision-cards.test.ts:53",
+        "tests/integration/customer-decision-card-route.test.ts"
+      ],
+      "gaps": [
+        {
+          "op": "delete",
+          "severity": "low",
+          "what": "Withdrawing a live public link is a single click with no confirmation.",
+          "evidence": "apps/web/app/account/missions/decision-card-panel.tsx:186"
+        }
+      ]
+    },
+    {
+      "name": "Decision disclosure (approved decisions shown to customer)",
+      "tables": ["app.delivery_decision_publication"],
+      "class": "append-only versions",
+      "roles": ["staff owner/admin (approve)", "customer (read)"],
+      "create": {
+        "api": "POST apps/web/app/api/workspace/customer-decision-disclosures/route.ts:39",
+        "zod": "packages/delivery/src/decision-disclosures.ts:6",
+        "ui": "apps/web/app/operator/decision-disclosures.tsx:138"
+      },
+      "readList": {
+        "api": "GET apps/web/app/api/customer-decisions/route.ts:19",
+        "sql": "packages/db/customer-real-use-migrations/0003_real_customer_modules.sql:1670",
+        "ui": "apps/web/app/account/missions/decision-history.tsx:86"
+      },
+      "readDetail": {
+        "note": "same"
+      },
+      "update": {
+        "how": "new version per publication UNIQUE(tenant_id,publication_id,version)",
+        "evidence": "packages/db/customer-decision-migrations/0001_reviewed_commercial_decisions.sql:5"
+      },
+      "delete": {
+        "kind": "supersede",
+        "note": "new version; no explicit withdraw command found"
+      },
+      "auditTrail": "record via app.finish_decision_disclosure packages/db/customer-decision-migrations/0001_reviewed_commercial_decisions.sql:53",
+      "tests": [
+        "tests/operator/v3-customer-decisions-ui.spec.ts:241",
+        "tests/integration/real-decisions.test.ts:11"
+      ],
+      "gaps": []
+    },
+    {
+      "name": "Customer delivery assignment (report assigned to customer request)",
+      "tables": ["app.customer_delivery_assignment"],
+      "class": "append-only/immutable",
+      "roles": ["staff owner/admin (assign)", "customer (list/accept)"],
+      "create": {
+        "api": "POST apps/web/app/api/workspace/customer-mission-delivery/route.ts:39",
+        "zod": "packages/delivery/src/customer-delivery.ts:11",
+        "ui": "apps/web/app/operator/customer-mission-delivery.tsx:120"
+      },
+      "readList": {
+        "api": "GET apps/web/app/api/customer-assigned-missions/route.ts:33",
+        "sql": "packages/db/customer-real-use-migrations/0003_real_customer_modules.sql:1028"
+      },
+      "readDetail": {
+        "note": "not found"
+      },
+      "update": {
+        "supported": false
+      },
+      "delete": {
+        "kind": "none",
+        "note": "not found: un-assign not present; effective withdrawal only via delivery link revoke (apps/web/app/api/workspace/delivery/route.ts:109)"
+      },
+      "auditTrail": "app.finish_customer_delivery packages/db/customer-delivery-migrations/0001_reviewed_customer_mission_delivery.sql:50",
+      "tests": [
+        "tests/integration/customer-delivery.test.ts:19",
+        "tests/operator/v3-customer-delivery-ui.spec.ts:143"
+      ],
+      "gaps": [
+        {
+          "op": "delete",
+          "severity": "low",
+          "what": "No direct un-assign of a delivery assignment; only revoking the underlying link.",
+          "evidence": "packages/db/customer-delivery-migrations/0001_reviewed_customer_mission_delivery.sql:1"
+        }
+      ]
+    },
+    {
+      "name": "Customer acceptance of assigned report",
+      "tables": ["customer_private.saved_mission"],
+      "class": "append-only",
+      "roles": ["customer"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-assigned-missions/route.ts:24",
+        "sql": "packages/db/customer-delivery-migrations/0001_reviewed_customer_mission_delivery.sql:124",
+        "idempotency": "commandId packages/auth/src/customer-assigned-missions.ts:19",
+        "ui": "apps/web/app/account/assigned-missions.tsx:261 \"Save and Open Approved Report\""
+      },
+      "readList": {
+        "note": "assigned list above"
+      },
+      "readDetail": {
+        "note": "n/a"
+      },
+      "update": {
+        "supported": false
+      },
+      "delete": {
+        "kind": "soft",
+        "note": "via saved mission remove"
+      },
+      "auditTrail": "n/a",
+      "tests": ["tests/operator/v3-customer-delivery-ui.spec.ts"],
+      "gaps": []
+    },
+    {
+      "name": "Specification confirmation",
+      "tables": ["app.delivery_specification_request", "app.delivery_specification_confirmation"],
+      "class": "append-only/immutable",
+      "roles": ["staff (request)", "customer holding saved mission (confirm)"],
+      "create": {
+        "api": "POST apps/web/app/api/workspace/specification-confirmations/route.ts:39 (staff request); POST apps/web/app/api/customer-specification-confirmations/route.ts:30 (customer confirm)",
+        "sql": "packages/db/customer-specification-confirmation-migrations/0001_pinned_specification_confirmation.sql:144",
+        "concurrency": "pinned requirement version+digest :158",
+        "ui": "apps/web/app/account/missions/specification-confirmation.tsx:117; apps/web/app/operator/specification-requests.tsx:102"
+      },
+      "readList": {
+        "api": "GET apps/web/app/api/customer-specification-confirmations/route.ts:18",
+        "sql": "packages/db/customer-specification-confirmation-migrations/0001_pinned_specification_confirmation.sql:103"
+      },
+      "readDetail": {
+        "note": "same"
+      },
+      "update": {
+        "supported": false,
+        "evidence": "packages/db/customer-specification-confirmation-migrations/0001_pinned_specification_confirmation.sql:14-15"
+      },
+      "delete": {
+        "kind": "none",
+        "note": "not found: no withdrawal of a request or confirmation; closing is through delivery closeRequest (apps/web/app/api/workspace/delivery/route.ts:108)"
+      },
+      "auditTrail": "delivery external event :166",
+      "tests": [
+        "tests/integration/specification-confirmation.test.ts",
+        "tests/operator/specification-confirmation.spec.ts:100"
+      ],
+      "gaps": []
+    },
+    {
+      "name": "Programme (delegation programme)",
+      "tables": [
+        "customer_private.programme_creation",
+        "app.delivery_programme",
+        "customer_private.programme_execution_grant"
+      ],
+      "class": "append-only/immutable (name and purpose fixed)",
+      "roles": ["customer workspace owner/admin via programme_actor"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-programmes/route.ts:55",
+        "sql": "packages/db/customer-real-use-migrations/0003_real_customer_modules.sql:1106 (orig packages/db/customer-programme-migrations/0001_customer_programme_creation.sql:120)",
+        "idempotency": "commandId UNIQUE(principal_id,command_id) packages/db/customer-programme-migrations/0001_customer_programme_creation.sql:15",
+        "cap": "100 per workspace :135",
+        "ui": "apps/web/app/account/delegations/customer-programmes.tsx:282",
+        "audit": "app.record_change on delivery_programme (execution grant) packages/db/customer-programme-migrations/0001_customer_programme_creation.sql:2-10"
+      },
+      "readList": {
+        "api": "GET apps/web/app/api/customer-programmes/route.ts:29",
+        "sql": "packages/db/customer-programme-migrations/0001_customer_programme_creation.sql:158 (after_id/page_size<=25)",
+        "ui": "apps/web/app/account/delegations/customer-programmes.tsx:152"
+      },
+      "readDetail": {
+        "note": "programme room pages; no dedicated detail endpoint found"
+      },
+      "update": {
+        "supported": false,
+        "note": "name/reporting purpose immutable (programme_creation + delivery_programme reject_rewrite); only context (organiser, dates, purpose text) is versioned separately",
+        "evidence": "packages/db/customer-programme-migrations/0001_customer_programme_creation.sql:18; packages/db/migrations/0016_scoped_delivery.sql:130-134"
+      },
+      "delete": {
+        "kind": "none",
+        "note": "not found: no close/archive/cancel command for a programme"
+      },
+      "auditTrail": "record_change domain/audit events on app.delivery_programme",
+      "tests": [
+        "tests/integration/customer-programmes.test.ts",
+        "tests/operator/v3-customer-programmes-ui.spec.ts:13"
+      ],
+      "gaps": [
+        {
+          "op": "update",
+          "severity": "medium",
+          "what": "Programme name and reporting purpose cannot be corrected after creation.",
+          "evidence": "packages/db/customer-programme-migrations/0001_customer_programme_creation.sql:18"
+        },
+        {
+          "op": "delete",
+          "severity": "medium",
+          "what": "No archive/close for a programme, while creation is capped at 100 per workspace, so a full workspace cannot retire old programmes.",
+          "evidence": "packages/db/customer-programme-migrations/0001_customer_programme_creation.sql:135"
+        }
+      ]
+    },
+    {
+      "name": "Programme context (organiser, market, dates, timezone)",
+      "tables": [
+        "app.delivery_programme_context",
+        "customer_private.programme_context_command",
+        "customer_private.context_execution_grant"
+      ],
+      "class": "append-only revisions",
+      "roles": ["programme owner/admin (participant_scope writer)"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-programme-context/route.ts:55",
+        "sql": "packages/db/customer-real-use-migrations/0003_real_customer_modules.sql:1286",
+        "idempotency": "commandId",
+        "concurrency": "expectedVersion packages/db/customer-real-use-migrations/0003_real_customer_modules.sql:1315",
+        "validation": "synthetic-labelled fields, market, timezone, dates packages/db/customer-programme-context-migrations/0001_canonical_programme_context.sql:116-124",
+        "ui": "apps/web/app/account/delegations/programme-context-editor.tsx:130"
+      },
+      "readList": {
+        "note": "n/a (one per programme)"
+      },
+      "readDetail": {
+        "api": "GET apps/web/app/api/customer-programme-context/route.ts:35",
+        "sql": "packages/db/customer-real-use-migrations/0003_real_customer_modules.sql:1334"
+      },
+      "update": {
+        "how": "new version with expectedVersion"
+      },
+      "delete": {
+        "kind": "none",
+        "note": "not found (unshare via share=false revision only)"
+      },
+      "auditTrail": "record_change on delivery_programme_context",
+      "tests": [
+        "tests/integration/customer-programme-context.test.ts",
+        "tests/operator/v3-programme-context-ui.spec.ts:125"
+      ],
+      "gaps": []
+    },
+    {
+      "name": "Programme objective (participant mission summary share)",
+      "tables": [
+        "customer_private.programme_mission_link",
+        "customer_private.programme_mission_revision",
+        "customer_private.programme_mission_command"
+      ],
+      "class": "append-only revisions (withdraw = revision)",
+      "roles": ["registered participant (share/withdraw own)", "organiser (read summaries)"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-programme-objectives/route.ts:61 action share",
+        "sql": "packages/db/customer-real-use-migrations/0003_real_customer_modules.sql:1398",
+        "concurrency": "expectedVersion packages/auth/src/customer-mission-shares.ts:21",
+        "idempotency": "commandId",
+        "ui": "apps/web/app/account/delegations/programme-objective-editor.tsx:489"
+      },
+      "readList": {
+        "api": "GET apps/web/app/api/customer-programme-objectives/route.ts:41",
+        "sql": "packages/db/customer-real-use-migrations/0003_real_customer_modules.sql:1457 (paged)"
+      },
+      "readDetail": {
+        "api": "GET choices :40",
+        "sql": "packages/db/customer-real-use-migrations/0003_real_customer_modules.sql:1366"
+      },
+      "update": {
+        "how": "share again with expectedVersion"
+      },
+      "delete": {
+        "kind": "withdraw",
+        "evidence": "packages/auth/src/customer-mission-shares.ts:34-37",
+        "ui": "apps/web/app/account/delegations/programme-objective-editor.tsx:458 \"Withdraw this shared objective\" -> :498 confirm"
+      },
+      "auditTrail": "emit via programme_mission_command packages/db/customer-mission-share-migrations/0001_participant_mission_summaries.sql:120",
+      "tests": [
+        "tests/integration/customer-mission-shares.test.ts:345",
+        "tests/operator/v3-programme-objectives-ui.spec.ts:149"
+      ],
+      "gaps": []
+    },
+    {
+      "name": "Programme participant (invitation + registration)",
+      "tables": [
+        "customer_private.programme_invitation",
+        "customer_private.programme_registration",
+        "customer_private.programme_participant_revocation",
+        "customer_private.programme_participant_command"
+      ],
+      "class": "append-only/immutable (revocation/withdrawal rows)",
+      "roles": [
+        "organiser owner/admin (invite, emailInvitation, revoke)",
+        "participant customer (accept, withdraw)"
+      ],
+      "create": {
+        "api": "POST apps/web/app/api/customer-programme-participants/route.ts:72 action invite",
+        "sql": "packages/db/customer-real-use-migrations/0003_real_customer_modules.sql:1502",
+        "idempotency": "commandId packages/auth/src/customer-participants.ts:22",
+        "ui": "apps/web/app/account/delegations/participant-client.ts:144; apps/web/app/account/delegations/programme-participants.tsx:216 \"Create replacement code\""
+      },
+      "readList": {
+        "api": "GET apps/web/app/api/customer-programme-participants/route.ts:42",
+        "sql": "packages/db/customer-real-use-migrations/0003_real_customer_modules.sql:1624 (paged)"
+      },
+      "readDetail": {
+        "api": "GET own :41",
+        "sql": "packages/db/customer-real-use-migrations/0003_real_customer_modules.sql:1255"
+      },
+      "update": {
+        "supported": false,
+        "note": "participant display label set at accept and never editable; invitation immutable",
+        "evidence": "packages/db/customer-participant-migrations/0001_private_programme_participants.sql:38-41"
+      },
+      "delete": {
+        "kind": "withdraw",
+        "how": "organiser revoke (invitation|registration) / participant withdraw",
+        "evidence": "packages/auth/src/customer-participants.ts:64-74",
+        "ui": "apps/web/app/account/delegations/programme-participants.tsx:227 \"Revoke invitation\", :279 \"Revoke programme access\" with :131 confirm; apps/web/app/account/delegations/participant-account.tsx:244 \"Withdraw from programme\" with :129 confirm"
+      },
+      "auditTrail": "emit packages/db/customer-participant-migrations/0001_private_programme_participants.sql:162",
+      "tests": [
+        "tests/integration/customer-participants.test.ts:322",
+        "tests/operator/v3-customer-participants-ui.spec.ts:156"
+      ],
+      "gaps": [
+        {
+          "op": "update",
+          "severity": "low",
+          "what": "Participant display label cannot be corrected after acceptance.",
+          "evidence": "packages/auth/src/customer-participants.ts:37"
+        }
+      ]
+    },
+    {
+      "name": "Programme terms, eligibility and places",
+      "tables": [
+        "customer_private.programme_terms_revision",
+        "customer_private.programme_eligibility_revision",
+        "customer_private.programme_places_revision",
+        "customer_private.programme_terms_command"
+      ],
+      "class": "append-only revisions",
+      "roles": ["programme owner/admin"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-programme-terms/route.ts:67-71 (terms/eligibility/places)",
+        "sql": "packages/db/customer-programme-terms-migrations/0001_programme_terms_eligibility_and_places.sql:355,388,425",
+        "concurrency": "expectedVersion packages/auth/src/customer-programme-terms.ts:59,73,85",
+        "ui": "apps/web/app/account/delegations/terms-client.ts:320; apps/web/app/account/delegations/programme-terms.tsx:655 \"Save criteria\", :822 \"Save places\""
+      },
+      "readList": {
+        "note": "n/a"
+      },
+      "readDetail": {
+        "api": "GET",
+        "sql": "packages/db/customer-programme-terms-migrations/0001_programme_terms_eligibility_and_places.sql:322"
+      },
+      "update": {
+        "how": "new revision with expectedVersion"
+      },
+      "delete": {
+        "kind": "none",
+        "note": "not found (supersede by new revision only)"
+      },
+      "auditTrail": "terms_event emit :384",
+      "tests": [
+        "tests/integration/customer-programme-terms.test.ts",
+        "tests/operator/v3-programme-terms-ui.spec.ts:378"
+      ],
+      "gaps": []
+    },
+    {
+      "name": "Programme enrolment (place, terms acceptance)",
+      "tables": [
+        "customer_private.programme_enrolment",
+        "customer_private.programme_enrolment_revision",
+        "customer_private.programme_terms_acceptance"
+      ],
+      "class": "append-only revisions (state machine)",
+      "roles": ["participant (apply, accept_terms, cancel)"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-programme-terms/route.ts:79 action enrol",
+        "sql": "packages/db/customer-programme-terms-migrations/0001_programme_terms_eligibility_and_places.sql:589",
+        "idempotency": "commandId",
+        "ui": "apps/web/app/account/delegations/participant-place.tsx:261,291"
+      },
+      "readList": {
+        "api": "places report",
+        "sql": "packages/db/customer-programme-terms-migrations/0001_programme_terms_eligibility_and_places.sql:537"
+      },
+      "readDetail": {
+        "api": "own place",
+        "sql": "packages/db/customer-programme-terms-migrations/0001_programme_terms_eligibility_and_places.sql:676"
+      },
+      "update": {
+        "how": "state transitions only (no expectedVersion in enrolmentInput)",
+        "evidence": "packages/auth/src/customer-programme-terms.ts:110-135"
+      },
+      "delete": {
+        "kind": "withdraw",
+        "how": "cancel",
+        "ui": "apps/web/app/account/delegations/participant-place.tsx:359"
+      },
+      "auditTrail": "emit :653",
+      "tests": [
+        "tests/integration/customer-programme-terms.test.ts",
+        "tests/integration/revamp-programme-consent.test.ts:22"
+      ],
+      "gaps": []
+    },
+    {
+      "name": "Programme task plan item (owner assign / done)",
+      "tables": ["customer_private.programme_task_plan_revision"],
+      "class": "append-only revisions",
+      "roles": ["programme owner/admin"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-programme-terms/route.ts:75 assign",
+        "sql": "packages/db/customer-programme-terms-migrations/0001_programme_terms_eligibility_and_places.sql:477",
+        "concurrency": "expectedVersion packages/auth/src/customer-programme-terms.ts:98",
+        "ui": "apps/web/app/account/delegations/programme-terms.tsx:913 \"Save owner for {title}\""
+      },
+      "readList": {
+        "note": "in terms state"
+      },
+      "readDetail": {
+        "note": "n/a"
+      },
+      "update": {
+        "how": "done with expectedVersion",
+        "sql": "packages/db/customer-programme-terms-migrations/0001_programme_terms_eligibility_and_places.sql:508"
+      },
+      "delete": {
+        "kind": "none",
+        "note": "not found"
+      },
+      "auditTrail": "emit :503,:531",
+      "tests": ["tests/integration/customer-programme-terms.test.ts"],
+      "gaps": []
+    },
+    {
+      "name": "Programme coordination task",
+      "tables": [
+        "customer_private.programme_task",
+        "customer_private.programme_task_revision",
+        "customer_private.programme_coordination_command"
+      ],
+      "class": "append-only revisions (status CANCELLED as soft delete)",
+      "roles": ["programme owner/admin"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-programme-coordination/route.ts:65 action task",
+        "sql": "packages/db/customer-programme-coordination-migrations/0001_programme_coordination_and_reporting.sql:182",
+        "concurrency": "expectedVersion packages/auth/src/customer-programme-coordination.ts:58",
+        "cap": "seq<=200 per programme :6",
+        "ui": "apps/web/app/account/delegations/programme-coordination.tsx:731 \"Add a task\""
+      },
+      "readList": {
+        "api": "GET",
+        "sql": "packages/db/customer-programme-coordination-migrations/0001_programme_coordination_and_reporting.sql:227 (paged)"
+      },
+      "readDetail": {
+        "note": "in list"
+      },
+      "update": {
+        "how": "new revision with expectedVersion"
+      },
+      "delete": {
+        "kind": "soft",
+        "how": "status 'CANCELLED' revision",
+        "evidence": "packages/db/customer-programme-coordination-migrations/0001_programme_coordination_and_reporting.sql:17"
+      },
+      "auditTrail": "coordination_event :222",
+      "tests": [
+        "tests/integration/customer-programme-coordination.test.ts",
+        "tests/operator/v3-programme-coordination-ui.spec.ts:221"
+      ],
+      "gaps": []
+    },
+    {
+      "name": "Programme capacity and attendance",
+      "tables": [
+        "customer_private.programme_capacity_revision",
+        "customer_private.programme_attendance_revision"
+      ],
+      "class": "append-only revisions",
+      "roles": ["programme owner/admin"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-programme-coordination/route.ts:67,69",
+        "sql": "packages/db/customer-programme-coordination-migrations/0001_programme_coordination_and_reporting.sql:242 (capacity, expectedVersion), :271 (attendance)",
+        "ui": "apps/web/app/account/delegations/programme-coordination.tsx:639 \"Save capacity\", :669/:677 \"Mark attended/absent\""
+      },
+      "readList": {
+        "api": "GET report",
+        "sql": "packages/db/customer-programme-coordination-migrations/0001_programme_coordination_and_reporting.sql:394"
+      },
+      "readDetail": {
+        "note": "n/a"
+      },
+      "update": {
+        "how": "attendance: idempotent state set without expectedVersion (last writer wins)",
+        "evidence": "packages/auth/src/customer-programme-coordination.ts:74-82; packages/db/customer-programme-coordination-migrations/0001_programme_coordination_and_reporting.sql:291-296"
+      },
+      "delete": {
+        "kind": "none",
+        "note": "not found: an attendance mark cannot be cleared back to unknown"
+      },
+      "auditTrail": "coordination_event :266,:296",
+      "tests": ["tests/integration/customer-programme-coordination.test.ts"],
+      "gaps": [
+        {
+          "op": "update",
+          "severity": "low",
+          "what": "Attendance set has no expectedVersion, so two organisers can silently overwrite each other.",
+          "evidence": "packages/auth/src/customer-programme-coordination.ts:74"
+        },
+        {
+          "op": "delete",
+          "severity": "low",
+          "what": "No way to clear an attendance mark once set (only flip ATTENDED/ABSENT).",
+          "evidence": "packages/db/customer-programme-coordination-migrations/0001_programme_coordination_and_reporting.sql:41"
+        }
+      ]
+    },
+    {
+      "name": "Participant feedback / outcome record",
+      "tables": [
+        "customer_private.programme_participant_record",
+        "customer_private.programme_participant_record_revision"
+      ],
+      "class": "append-only revisions (retracted flag)",
+      "roles": ["participant (own records)"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-programme-coordination/route.ts:71 action record",
+        "sql": "packages/db/customer-programme-coordination-migrations/0001_programme_coordination_and_reporting.sql:311",
+        "concurrency": "expectedVersion packages/auth/src/customer-programme-coordination.ts:90",
+        "ui": "apps/web/app/account/delegations/participant-results.tsx:228, :525 \"Add result\""
+      },
+      "readList": {
+        "api": "GET own",
+        "sql": "packages/db/customer-programme-coordination-migrations/0001_programme_coordination_and_reporting.sql:377"
+      },
+      "readDetail": {
+        "note": "same"
+      },
+      "update": {
+        "how": "new revision"
+      },
+      "delete": {
+        "kind": "withdraw",
+        "how": "retracted=true revision",
+        "evidence": "packages/db/customer-programme-coordination-migrations/0001_programme_coordination_and_reporting.sql:60",
+        "ui": "apps/web/app/account/delegations/participant-results.tsx:457 \"Withdraw my feedback\", :560 \"Withdraw this result\""
+      },
+      "auditTrail": "coordination_event :372",
+      "tests": ["tests/operator/v3-participant-results-ui.spec.ts:143"],
+      "gaps": []
+    },
+    {
+      "name": "Programme ledger entry (organiser bookkeeping)",
+      "tables": [
+        "customer_private.programme_ledger_entry",
+        "customer_private.programme_ledger_command"
+      ],
+      "class": "append-only/immutable money (reversal entries)",
+      "roles": ["programme owner/admin"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-programme-economics/route.ts:62",
+        "sql": "packages/db/customer-programme-economics-migrations/0001_organiser_programme_economics.sql:89",
+        "idempotency": "commandId :25",
+        "validation": "amount_minor bigint, currency FK, kind/cost basis checks :9-22",
+        "ui": "apps/web/app/account/delegations/programme-economics.tsx:362"
+      },
+      "readList": {
+        "api": "GET list :42",
+        "sql": "packages/db/customer-programme-economics-migrations/0001_organiser_programme_economics.sql:133 (paged)"
+      },
+      "readDetail": {
+        "api": "GET summary :41",
+        "sql": "packages/db/customer-programme-economics-migrations/0001_organiser_programme_economics.sql:148"
+      },
+      "update": {
+        "supported": false,
+        "note": "immutable trigger :33"
+      },
+      "delete": {
+        "kind": "void",
+        "how": "reverse_of negative entry (one reversal per entry)",
+        "evidence": "packages/db/customer-programme-economics-migrations/0001_organiser_programme_economics.sql:14,22",
+        "ui": "apps/web/app/account/delegations/programme-economics.tsx:780 \"Add correction\""
+      },
+      "auditTrail": "programme_ledger_event emit :128",
+      "tests": [
+        "tests/integration/customer-programme-economics.test.ts:338",
+        "tests/operator/v3-programme-economics-ui.spec.ts:203"
+      ],
+      "gaps": []
+    },
+    {
+      "name": "Fee schedule (pricing template) and recorded fee batches",
+      "tables": [
+        "customer_private.pricing_template",
+        "customer_private.pricing_template_revision",
+        "customer_private.programme_fee_schedule",
+        "customer_private.programme_fee_batch",
+        "customer_private.programme_fee_batch_line",
+        "customer_private.pricing_command"
+      ],
+      "class": "append-only revisions (retire flag); fee batches immutable money",
+      "roles": ["workspace owner/admin"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-programme-pricing/route.ts:70 saveTemplate, :72 applySchedule, :76 recordFees",
+        "sql": "packages/db/customer-programme-pricing-migrations/0001_pricing_series_and_exports.sql:295,352; packages/db/customer-real-use-migrations/0008_real_note_wording.sql:7",
+        "concurrency": "expectedVersion packages/auth/src/customer-programme-pricing.ts:96",
+        "ui": "apps/web/app/account/delegations/programme-pricing.tsx:522,601,663; :1227 \"Record these fees\""
+      },
+      "readList": {
+        "api": "GET",
+        "sql": "packages/db/customer-programme-pricing-migrations/0001_pricing_series_and_exports.sql:337 (paged), :493 overview"
+      },
+      "readDetail": {
+        "note": "in list"
+      },
+      "update": {
+        "how": "new revision with expectedVersion",
+        "ui": "apps/web/app/account/delegations/programme-pricing.tsx:743 \"Edit fee schedule\""
+      },
+      "delete": {
+        "kind": "archive",
+        "how": "retired=true revision (restorable)",
+        "evidence": "packages/db/customer-programme-pricing-migrations/0001_pricing_series_and_exports.sql:315-329",
+        "ui": "apps/web/app/account/delegations/programme-pricing.tsx:751 \"Retire/Restore fee schedule\""
+      },
+      "auditTrail": "pricing_event :332,:381,:487",
+      "tests": [
+        "tests/integration/customer-programme-pricing.test.ts:468",
+        "tests/operator/v3-programme-pricing-ui.spec.ts:319"
+      ],
+      "gaps": [
+        {
+          "op": "delete",
+          "severity": "low",
+          "what": "A recorded fee batch has no batch-level void; each line is a ledger entry that must be reversed one at a time in Economics.",
+          "evidence": "packages/db/customer-programme-pricing-migrations/0001_pricing_series_and_exports.sql:60; packages/db/customer-real-use-migrations/0008_real_note_wording.sql:35"
+        }
+      ]
+    },
+    {
+      "name": "Programme series and editions",
+      "tables": [
+        "customer_private.programme_series",
+        "customer_private.programme_series_revision",
+        "customer_private.programme_series_edition",
+        "customer_private.programme_series_command"
+      ],
+      "class": "append-only revisions (retire flag)",
+      "roles": ["workspace owner/admin"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-programme-pricing/route.ts:78 saveSeries, :80 createEdition",
+        "sql": "packages/db/customer-programme-pricing-migrations/0001_pricing_series_and_exports.sql:535,611",
+        "concurrency": "expectedVersion packages/auth/src/customer-programme-pricing.ts:143,171",
+        "ui": "apps/web/app/account/delegations/programme-series.tsx:295,340; :425 \"Create the next edition\""
+      },
+      "readList": {
+        "api": "GET",
+        "sql": "packages/db/customer-programme-pricing-migrations/0001_pricing_series_and_exports.sql:594 (paged)"
+      },
+      "readDetail": {
+        "api": "revenue",
+        "sql": "packages/db/customer-programme-pricing-migrations/0001_pricing_series_and_exports.sql:659"
+      },
+      "update": {
+        "how": "new revision",
+        "ui": "apps/web/app/account/delegations/programme-series.tsx:435 \"Edit series\""
+      },
+      "delete": {
+        "kind": "archive",
+        "how": "retired flag supported by API/DB",
+        "evidence": "packages/db/customer-programme-pricing-migrations/0001_pricing_series_and_exports.sql:93; packages/auth/src/customer-programme-pricing.ts:149",
+        "ui": "not found: no retire control in apps/web/app/account/delegations/programme-series.tsx"
+      },
+      "auditTrail": "pricing_event :589,:652",
+      "tests": [
+        "tests/integration/real-programme-series.test.ts:7",
+        "tests/operator/v3-programme-pricing-ui.spec.ts"
+      ],
+      "gaps": [
+        {
+          "op": "delete",
+          "severity": "low",
+          "what": "Series retire exists in API/DB but the UI has no Retire control (templates and fee schedules do).",
+          "evidence": "apps/web/app/account/delegations/programme-series.tsx:435"
+        }
+      ]
+    },
+    {
+      "name": "Programme template and application",
+      "tables": [
+        "customer_private.programme_template",
+        "customer_private.programme_template_revision",
+        "customer_private.programme_template_application",
+        "customer_private.programme_template_command"
+      ],
+      "class": "append-only revisions (retire flag)",
+      "roles": ["workspace owner/admin"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-programme-templates/route.ts:63 save, :65 apply",
+        "sql": "packages/db/customer-programme-templates-migrations/0001_repeatable_programme_templates.sql:111,189",
+        "concurrency": "expectedVersion packages/auth/src/customer-programme-templates.ts:70,88",
+        "ui": "apps/web/app/account/delegations/programme-templates.tsx:257; :976 \"Apply template\""
+      },
+      "readList": {
+        "api": "GET",
+        "sql": "packages/db/customer-programme-templates-migrations/0001_repeatable_programme_templates.sql:153 (paged)"
+      },
+      "readDetail": {
+        "note": "in list"
+      },
+      "update": {
+        "how": "new revision",
+        "ui": "apps/web/app/account/delegations/programme-templates.tsx:633 \"Edit template\""
+      },
+      "delete": {
+        "kind": "archive",
+        "how": "retired=true revision; retired template cannot be applied",
+        "evidence": "packages/db/customer-programme-templates-migrations/0001_repeatable_programme_templates.sql:131-145,214",
+        "ui": "apps/web/app/account/delegations/programme-templates.tsx:641 \"Retire/Restore template\""
+      },
+      "auditTrail": "template_event :148,:244",
+      "tests": [
+        "tests/integration/customer-programme-templates.test.ts:347",
+        "tests/operator/v3-programme-templates-ui.spec.ts:163"
+      ],
+      "gaps": []
+    },
+    {
+      "name": "Programme projection (consented company/meetings/schedule)",
+      "tables": [
+        "customer_private.programme_projection_company",
+        "customer_private.programme_projection_meeting",
+        "customer_private.programme_projection_schedule",
+        "customer_private.programme_projection_command"
+      ],
+      "class": "append-only revisions",
+      "roles": ["participant (consent/share)", "organiser (read)"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-programme-projections/route.ts:57",
+        "sql": "packages/db/customer-programme-projection-migrations/0001_consented_programme_projections.sql:77",
+        "concurrency": "expectedVersion packages/auth/src/customer-programme-projections.ts:17",
+        "ui": "apps/web/app/account/delegations/programme-projections.tsx:524,730,803,859"
+      },
+      "readList": {
+        "api": "GET owner :35",
+        "sql": "packages/db/customer-programme-projection-migrations/0002_projection_source_and_retention.sql:51"
+      },
+      "readDetail": {
+        "api": "GET own :37",
+        "sql": "packages/db/customer-programme-projection-migrations/0002_projection_source_and_retention.sql:111"
+      },
+      "update": {
+        "how": "new revision",
+        "ui": "apps/web/app/account/delegations/programme-projections.tsx:509 \"Edit schedule\""
+      },
+      "delete": {
+        "kind": "withdraw",
+        "how": "scheduled=false / clear permission revision",
+        "ui": "apps/web/app/account/delegations/programme-projections.tsx:663 \"Remove schedule\", :814 \"Clear earlier company permission\""
+      },
+      "auditTrail": "emit :162",
+      "tests": [
+        "tests/integration/customer-programme-projections.test.ts",
+        "tests/operator/v3-programme-projections-ui.spec.ts:197"
+      ],
+      "gaps": []
+    },
+    {
+      "name": "Programme export record",
+      "tables": ["customer_private.programme_export_record"],
+      "class": "append-only/immutable",
+      "roles": ["workspace owner/admin"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-programme-exports/route.ts:25",
+        "sql": "packages/db/customer-programme-pricing-migrations/0001_pricing_series_and_exports.sql:695",
+        "ui": "apps/web/app/account/delegations/programme-exports.tsx:151 \"Download CSV\""
+      },
+      "readList": {
+        "note": "not found (no list of past exports)"
+      },
+      "readDetail": {
+        "note": "not found"
+      },
+      "update": {
+        "supported": false
+      },
+      "delete": {
+        "kind": "none",
+        "note": "n/a"
+      },
+      "auditTrail": "emit :735",
+      "tests": ["tests/integration/revamp-money-screens.test.ts:303"],
+      "gaps": [
+        {
+          "op": "readList",
+          "severity": "low",
+          "what": "Export history is recorded but there is no list/read of past exports.",
+          "evidence": "packages/db/customer-programme-pricing-migrations/0001_pricing_series_and_exports.sql:126"
+        }
+      ]
+    },
+    {
+      "name": "Billing subscription and plan versions",
+      "tables": [
+        "customer_private.billing_subscription",
+        "customer_private.billing_subscription_event",
+        "customer_private.billing_plan_version",
+        "customer_private.billing_plan_entitlement",
+        "customer_private.billing_command",
+        "customer_private.billing_staff_command"
+      ],
+      "class": "append-only/immutable (event-sourced subscription; plan versions)",
+      "roles": [
+        "workspace owner (request/withdraw/cancel/keep)",
+        "staff owner/admin fresh MFA (activate/renew/decline/end/note, revisePlan)"
+      ],
+      "create": {
+        "api": "POST apps/web/app/api/customer-billing/route.ts:90 action request",
+        "sql": "packages/db/customer-billing-real-migrations/0001_real_billing.sql:266",
+        "idempotency": "commandId packages/auth/src/customer-billing.ts:23",
+        "concurrency": "expectedSeq for staff packages/delivery/src/customer-billing-staff.ts:24; plan expectedVersion :76",
+        "ui": "apps/web/app/account/billing/billing-overview.tsx:204"
+      },
+      "readList": {
+        "api": "GET overview/plans apps/web/app/api/customer-billing/route.ts:64-68; staff list apps/web/app/api/workspace/customer-billing/route.ts:85",
+        "sql": "packages/db/customer-billing-real-migrations/0001_real_billing.sql:323"
+      },
+      "readDetail": {
+        "api": "staff view apps/web/app/api/workspace/customer-billing/route.ts:80",
+        "sql": "packages/db/customer-billing-real-migrations/0001_real_billing.sql:343"
+      },
+      "update": {
+        "how": "subscription events only; plan revise = new plan version",
+        "ui": "apps/web/app/operator/customer-billing.tsx:193"
+      },
+      "delete": {
+        "kind": "withdraw",
+        "how": "withdraw (pending request) / cancel at period end / keep",
+        "evidence": "packages/auth/src/customer-billing.ts:33",
+        "ui": "apps/web/app/account/billing/billing-overview.tsx:336 \"Withdraw My Request\" -> :372 confirm; :319 \"Cancel at the End of the Period\" -> :354 confirm"
+      },
+      "auditTrail": "billing_subscription_event + audit_event (2 inserts in module)",
+      "tests": [
+        "tests/integration/customer-billing.test.ts:714",
+        "tests/operator/v3-billing-ui.spec.ts:24"
+      ],
+      "gaps": []
+    },
+    {
+      "name": "Sample invoice, payment and credit note",
+      "tables": [
+        "customer_private.invoicing_invoice",
+        "customer_private.invoicing_payment",
+        "customer_private.invoicing_credit",
+        "customer_private.invoicing_command"
+      ],
+      "class": "append-only/immutable money",
+      "roles": [
+        "staff owner/admin fresh MFA (issue, payment, credit)",
+        "workspace member (read overview)"
+      ],
+      "create": {
+        "api": "POST apps/web/app/api/workspace/customer-billing/route.ts:109",
+        "sql": "packages/db/customer-invoicing-migrations/0001_sample_invoices_payments_credits.sql:317",
+        "concurrency": "expectedPosition packages/delivery/src/customer-invoicing-staff.ts:18",
+        "ui": "apps/web/app/operator/customer-invoicing.tsx:127"
+      },
+      "readList": {
+        "api": "GET customer apps/web/app/api/customer-billing/route.ts:55; staff :72",
+        "sql": "packages/db/customer-invoicing-migrations/0001_sample_invoices_payments_credits.sql:243,282"
+      },
+      "readDetail": {
+        "api": "staff view :76",
+        "sql": "packages/db/customer-invoicing-migrations/0001_sample_invoices_payments_credits.sql:301"
+      },
+      "update": {
+        "supported": false,
+        "note": "corrections are credits, never edits :63"
+      },
+      "delete": {
+        "kind": "void",
+        "how": "credit note reduces unpaid amount; no reversal for a payment observation",
+        "evidence": "packages/db/customer-invoicing-migrations/0001_sample_invoices_payments_credits.sql:47,63"
+      },
+      "auditTrail": "invoicing_emit :228",
+      "tests": [
+        "tests/integration/customer-invoicing.test.ts",
+        "tests/operator/v3-invoicing-ui.spec.ts:162"
+      ],
+      "gaps": [
+        {
+          "op": "delete",
+          "severity": "high",
+          "what": "A mistaken payment observation cannot be reversed or voided (no reversal row, credit cannot exceed unpaid), so a wrong payment permanently misstates paid status.",
+          "evidence": "packages/db/customer-invoicing-migrations/0001_sample_invoices_payments_credits.sql:47"
+        }
+      ]
+    },
+    {
+      "name": "Real invoice (four-eyes proposal/decision), payment and credit note",
+      "tables": [
+        "customer_private.real_invoicing_proposal",
+        "customer_private.real_invoicing_decision",
+        "customer_private.real_invoice",
+        "customer_private.real_invoice_payment",
+        "customer_private.real_invoice_credit",
+        "customer_private.real_invoicing_command",
+        "customer_private.real_invoicing_entity"
+      ],
+      "class": "append-only/immutable money",
+      "roles": [
+        "staff owner/admin fresh MFA; second person decides proposals",
+        "workspace member (read)"
+      ],
+      "create": {
+        "api": "POST apps/web/app/api/workspace/customer-billing/route.ts:101 (prepare_invoice, prepare_credit, decide, payment)",
+        "sql": "packages/db/customer-invoicing-real-migrations/0001_real_invoicing.sql:488",
+        "concurrency": "expectedPosition packages/delivery/src/customer-invoicing-real-staff.ts:24",
+        "ui": "apps/web/app/operator/customer-real-invoicing.tsx:172"
+      },
+      "readList": {
+        "api": "GET customer apps/web/app/api/customer-billing/route.ts:47; staff :53",
+        "sql": "packages/db/customer-invoicing-real-migrations/0001_real_invoicing.sql:396,453"
+      },
+      "readDetail": {
+        "api": "staff view :57",
+        "sql": "packages/db/customer-invoicing-real-migrations/0001_real_invoicing.sql:472"
+      },
+      "update": {
+        "supported": false,
+        "note": "immutable triggers e.g. :175"
+      },
+      "delete": {
+        "kind": "void",
+        "how": "credit note proposal + second-person decision; credit capped at unpaid amount",
+        "evidence": "packages/db/customer-invoicing-real-migrations/0001_real_invoicing.sql:303"
+      },
+      "auditTrail": "real invoicing emit (1 audit insert in module)",
+      "tests": [
+        "tests/integration/customer-invoicing-real.test.ts",
+        "tests/operator/v3-real-invoicing-staff-ui.spec.ts:199"
+      ],
+      "gaps": [
+        {
+          "op": "delete",
+          "severity": "high",
+          "what": "Real payment records have no reversal/void and are recorded by one person (no second-person decision, unlike invoices/credits); a wrong payment cannot be corrected.",
+          "evidence": "packages/db/customer-invoicing-real-migrations/0001_real_invoicing.sql:129; payment inserted directly by the acting staff member at :640"
+        }
+      ]
+    },
+    {
+      "name": "Simulated payment (attempt, outcome, refund)",
+      "tables": [
+        "customer_private.simulated_payment_attempt",
+        "customer_private.simulated_payment_outcome",
+        "customer_private.simulated_payment_refund",
+        "customer_private.simulated_payment_customer_command",
+        "customer_private.simulated_payment_staff_command"
+      ],
+      "class": "append-only/immutable money",
+      "roles": ["workspace owner (start/complete)", "staff owner/admin fresh MFA (refund)"],
+      "create": {
+        "api": "POST apps/web/app/api/customer-billing/simulated-payments/route.ts:57",
+        "sql": "packages/db/customer-payments-simulated-migrations/0001_simulated_payments.sql:261",
+        "idempotency": "commandId packages/auth/src/customer-payments-simulated.ts:20",
+        "ui": "apps/web/app/account/billing/simulated-payments-section.tsx:124,136"
+      },
+      "readList": {
+        "api": "GET :37; staff apps/web/app/api/workspace/customer-simulated-payments/route.ts:36",
+        "sql": "packages/db/customer-payments-simulated-migrations/0001_simulated_payments.sql:237,310"
+      },
+      "readDetail": {
+        "note": "in overview"
+      },
+      "update": {
+        "supported": false
+      },
+      "delete": {
+        "kind": "void",
+        "how": "staff refund row",
+        "evidence": "packages/db/customer-payments-simulated-migrations/0001_simulated_payments.sql:61",
+        "ui": "apps/web/app/operator/customer-simulated-payments.tsx:80"
+      },
+      "auditTrail": "emit :295",
+      "tests": [
+        "tests/integration/customer-payments-simulated.test.ts:21",
+        "tests/operator/v3-simulated-payments-staff-ui.spec.ts:18"
+      ],
+      "gaps": []
+    },
+    {
+      "name": "Notification preferences",
+      "tables": ["customer_private.notification_preference"],
+      "class": "append-only versions (last write wins)",
+      "roles": ["customer (own)"],
+      "create": {
+        "api": "POST apps/web/app/api/pulse/preferences/route.ts:58",
+        "sql": "packages/db/customer-notification-migrations/0003_withdrawal_and_issuer_check.sql:35",
+        "ui": "apps/web/app/account/notifications/notifications-form.tsx:126"
+      },
+      "readList": {
+        "note": "n/a"
+      },
+      "readDetail": {
+        "api": "GET apps/web/app/api/pulse/preferences/route.ts:39",
+        "sql": "packages/db/customer-notification-migrations/0001_notifications.sql:225"
+      },
+      "update": {
+        "how": "new version = old.version+1; no expectedVersion, no commandId",
+        "evidence": "packages/db/customer-notification-migrations/0003_withdrawal_and_issuer_check.sql:53-54"
+      },
+      "delete": {
+        "kind": "soft",
+        "how": "empty kinds list switches email off",
+        "evidence": "apps/web/app/api/pulse/preferences/route.ts:53"
+      },
+      "auditTrail": "not found: set_notification_preferences writes no domain_event/audit_event",
+      "tests": ["tests/integration/ux-pulse.test.ts:319", "tests/operator/ux-pulse.spec.ts:115"],
+      "gaps": [
+        {
+          "op": "update",
+          "severity": "low",
+          "what": "Preference save has no expectedVersion/commandId; concurrent tabs overwrite silently.",
+          "evidence": "packages/db/customer-notification-migrations/0003_withdrawal_and_issuer_check.sql:53"
+        },
+        {
+          "op": "update",
+          "severity": "low",
+          "what": "Preference changes are not written to the audit trail.",
+          "evidence": "packages/db/customer-notification-migrations/0003_withdrawal_and_issuer_check.sql:35-58"
+        }
+      ]
+    },
+    {
+      "name": "Notification and mission-mail mute (per request)",
+      "tables": [
+        "customer_private.notification_mute",
+        "customer_private.mission_mail_mute",
+        "customer_private.mission_mail_recipient"
+      ],
+      "class": "append-only (mute is permanent)",
+      "roles": ["email recipient via signed mute link (token)"],
+      "create": {
+        "api": "POST apps/web/app/api/pulse/mute/route.ts:38; POST apps/web/app/api/mission-mail/mute/route.ts:38",
+        "sql": "packages/db/customer-notification-migrations/0001_notifications.sql:404; packages/db/customer-mission-mail-migrations/0001_mission_mail.sql:209",
+        "ui": "apps/web/app/pulse/mute/[requestId]/mute-form.tsx:24; apps/web/app/mute/[requestId]/mute-form.tsx:24"
+      },
+      "readList": {
+        "note": "not found"
+      },
+      "readDetail": {
+        "note": "not found"
+      },
+      "update": {
+        "supported": false
+      },
+      "delete": {
+        "kind": "none",
+        "note": "not found: no unmute anywhere (grep -i unmute returns nothing); mission mail mute hard-deletes recipient address rows by design",
+        "evidence": "packages/db/customer-mission-mail-migrations/0001_mission_mail.sql:221"
+      },
+      "auditTrail": "domain_event/audit on first mute packages/db/customer-mission-mail-migrations/0001_mission_mail.sql:228-231; notification_record packages/db/customer-notification-migrations/0001_notifications.sql:418",
+      "tests": [
+        "tests/integration/notification-database.test.ts:1085",
+        "tests/browser/mission-mail-mute.spec.ts:14"
+      ],
+      "gaps": [
+        {
+          "op": "delete",
+          "severity": "medium",
+          "what": "Mute is irreversible: no unmute path for either mute type, although the table comment says unmuting is a later separate change.",
+          "evidence": "packages/db/customer-notification-migrations/0001_notifications.sql:79"
+        }
+      ]
+    },
+    {
+      "name": "In-app inbox notification",
+      "tables": ["app.inbox_notification"],
+      "class": "mutable (read_at only)",
+      "roles": [
+        "recipient staff or customer (read, mark read)",
+        "any signed-in writer via app.inbox_record"
+      ],
+      "create": {
+        "how": "server-side notify() -> app.inbox_record",
+        "sql": "packages/db/commercial-readiness-migrations/0001_inbox_and_links.sql:37"
+      },
+      "readList": {
+        "api": "GET apps/web/app/api/customer-inbox/route.ts:24; GET apps/web/app/api/notifications/route.ts:32",
+        "code": "packages/communications/src/inbox.ts:183 LIMIT up to 100, no cursor",
+        "ui": "components/ux/customer-bar.tsx:97; components/ux/notification-inbox.tsx:38"
+      },
+      "readDetail": {
+        "note": "not found"
+      },
+      "update": {
+        "api": "POST markRead apps/web/app/api/customer-inbox/route.ts:35",
+        "code": "packages/communications/src/inbox.ts:205",
+        "ui": "components/ux/notification-inbox.tsx:71"
+      },
+      "delete": {
+        "kind": "none",
+        "note": "not found: no dismiss/archive/delete; no mark-unread"
+      },
+      "auditTrail": "none (read_at column only)",
+      "tests": ["tests/integration/inbox-routes.test.ts:24"],
+      "gaps": [
+        {
+          "op": "readList",
+          "severity": "low",
+          "what": "Inbox returns at most 100 newest items with no cursor; older items are unreachable.",
+          "evidence": "packages/communications/src/inbox.ts:183"
+        },
+        {
+          "op": "delete",
+          "severity": "low",
+          "what": "No dismiss/archive of inbox items.",
+          "evidence": "packages/db/commercial-readiness-migrations/0001_inbox_and_links.sql:9"
+        }
+      ]
+    },
+    {
+      "name": "Move (next-step message on a request)",
+      "tables": ["app.mission_move_command", "app.mission_move", "app.mission_move_close"],
+      "class": "append-only (close rows)",
+      "roles": ["staff with fresh MFA (set/done/clear)", "customer (read own)"],
+      "create": {
+        "api": "POST apps/web/app/api/move/staff/route.ts:39 action set",
+        "code": "packages/missions/src/moves.ts:58",
+        "idempotency": "commandId packages/domain/src/moves.ts:75",
+        "ui": "apps/web/app/operator/mission-moves.tsx:55"
+      },
+      "readList": {
+        "api": "GET apps/web/app/api/move/mine/route.ts:25",
+        "sql": "packages/db/customer-move-migrations/0001_move_records.sql:151 (paged)"
+      },
+      "readDetail": {
+        "api": "GET staff history apps/web/app/api/move/staff/route.ts:33",
+        "code": "packages/missions/src/moves.ts:28-35 (no LIMIT)"
+      },
+      "update": {
+        "how": "'set' replaces all open moves with a new list; no expectedVersion",
+        "evidence": "packages/missions/src/moves.ts:57; packages/domain/src/moves.ts:71-88"
+      },
+      "delete": {
+        "kind": "withdraw",
+        "how": "done/clear insert mission_move_close",
+        "evidence": "packages/db/customer-move-migrations/0001_move_records.sql:74"
+      },
+      "auditTrail": "record_change on close :133",
+      "tests": [
+        "tests/integration/ux-move-records.test.ts:212",
+        "tests/operator/ux-mission-moves.spec.ts:94"
+      ],
+      "gaps": [
+        {
+          "op": "update",
+          "severity": "medium",
+          "what": "'set' replaces the open Moves list without any expected version, so two staff can overwrite each other's Moves.",
+          "evidence": "packages/domain/src/moves.ts:71-80"
+        },
+        {
+          "op": "readList",
+          "severity": "low",
+          "what": "Staff move history query has no limit or pagination.",
+          "evidence": "packages/missions/src/moves.ts:30-35"
+        }
+      ]
+    },
+    {
+      "name": "Recipient reply review",
+      "tables": ["app.recipient_reply_review", "app.reply_review_control"],
+      "class": "append-only/immutable",
+      "roles": ["staff with fresh MFA"],
+      "create": {
+        "api": "POST apps/web/app/api/reply/review/route.ts:38",
+        "sql": "packages/db/recipient-reply-review-migrations/0001_reply_review.sql:74",
+        "ui": "apps/web/app/operator/reply-review.tsx:150"
+      },
+      "readList": {
+        "api": "GET apps/web/app/api/reply/review/route.ts:34"
+      },
+      "readDetail": {
+        "note": "n/a"
+      },
+      "update": {
+        "supported": false
+      },
+      "delete": {
+        "kind": "none",
+        "note": "not found"
+      },
+      "auditTrail": "domain event via review function",
+      "tests": [
+        "tests/integration/ux-reply-review.test.ts:218",
+        "tests/operator/ux-reply-review.spec.ts:157"
+      ],
+      "gaps": []
+    },
+    {
+      "name": "Recipient (buyer/supplier) response via scoped link",
+      "tables": [
+        "app.buyer_link",
+        "app.buyer_link_revocation",
+        "app.buyer_response",
+        "app.communication_optout",
+        "app.recipient_detail_response"
+      ],
+      "class": "append-only/immutable",
+      "roles": [
+        "recipient with link token (read, respond, optout)",
+        "operator owner/admin/operator (introduce, revoke link)"
+      ],
+      "create": {
+        "api": "POST apps/web/app/api/buyer/route.ts:40",
+        "ui": "apps/web/app/buyer/introduction.tsx:139,172"
+      },
+      "readList": {
+        "note": "n/a"
+      },
+      "readDetail": {
+        "api": "POST read apps/web/app/api/buyer/route.ts",
+        "ui": "apps/web/app/buyer/introduction.tsx:103"
+      },
+      "update": {
+        "supported": false,
+        "note": "one response per link UNIQUE(tenant_id,link_id)",
+        "evidence": "packages/db/migrations/0009_controlled_communications.sql:42"
+      },
+      "delete": {
+        "kind": "withdraw",
+        "how": "operator buyer_link_revocation; recipient opt-out",
+        "evidence": "packages/db/migrations/0009_controlled_communications.sql:33,45"
+      },
+      "auditTrail": "record_capability_change on response/optout packages/db/migrations/0009_controlled_communications.sql:176-177",
+      "tests": [
+        "tests/integration/ux-reply-page.test.ts:344",
+        "tests/operator/ux-reply-page.spec.ts:104"
+      ],
+      "gaps": [
+        {
+          "op": "update",
+          "severity": "low",
+          "what": "Recipient cannot revise a submitted response (one per link) or undo an opt-out.",
+          "evidence": "packages/db/migrations/0009_controlled_communications.sql:42"
+        }
+      ]
+    },
+    {
+      "name": "Shared delivery publication and link (programme/mission report)",
+      "tables": [
+        "app.delivery_programme",
+        "app.delivery_publication",
+        "app.delivery_link",
+        "app.delivery_revocation",
+        "app.delivery_request",
+        "app.delivery_response",
+        "app.delivery_request_close",
+        "app.delivery_export",
+        "app.delivery_experience_publication",
+        "app.recipient_disclosure",
+        "app.delivery_agenda"
+      ],
+      "class": "append-only/immutable",
+      "roles": ["operator owner/admin/operator", "recipient via link (read, respond)"],
+      "create": {
+        "api": "POST apps/web/app/api/workspace/delivery/route.ts:95-120 (programme, publication, share, request, context, agenda ...)",
+        "ui": "apps/web/app/operator/delivery.tsx; apps/web/app/operator/delivery-experience.tsx"
+      },
+      "readList": {
+        "api": "GET apps/web/app/api/workspace/delivery/route.ts:59",
+        "code": "packages/delivery/src/index.ts:78 LIMIT 100 OFFSET"
+      },
+      "readDetail": {
+        "api": "GET/POST apps/web/app/api/delivery/route.ts:29 (recipient)"
+      },
+      "update": {
+        "how": "new versions (agenda/context versioned)",
+        "evidence": "packages/db/migrations/0025_scoped_product_experience.sql:4-15"
+      },
+      "delete": {
+        "kind": "withdraw",
+        "how": "revoke inserts delivery_revocation; closeRequest",
+        "evidence": "apps/web/app/api/workspace/delivery/route.ts:108-109; packages/db/migrations/0016_scoped_delivery.sql:35"
+      },
+      "auditTrail": "record_change triggers",
+      "tests": ["tests/integration/delivery.test.ts", "tests/operator/workspace.spec.ts"],
+      "gaps": []
+    },
+    {
+      "name": "Operator team membership and team invitation",
+      "tables": [
+        "app.membership",
+        "identity.verification (invitation)",
+        "identity.principal",
+        "identity.\"user\"",
+        "identity.account"
+      ],
+      "class": "mutable (membership role/revoked_at with version trigger)",
+      "roles": ["workspace owner with fresh MFA"],
+      "create": {
+        "api": "POST apps/web/app/api/team-control/[action]/route.ts:83 invite",
+        "code": "packages/auth/src/team-control.ts:134",
+        "ui": "apps/web/app/operator/workspace-controls.tsx:46"
+      },
+      "readList": {
+        "api": "GET members apps/web/app/api/workspace/[action]/route.ts:127; GET invites apps/web/app/api/team-control/[action]/route.ts:48"
+      },
+      "readDetail": {
+        "note": "not found"
+      },
+      "update": {
+        "api": "POST member apps/web/app/api/workspace/[action]/route.ts:280",
+        "code": "packages/auth/src/access.ts:79 UPDATE app.membership (no client version, no commandId)",
+        "db_guard": "advance_version trigger packages/db/migrations/0005_integrity_versions.sql:11; owner+fresh MFA policy packages/db/migrations/0001_identity_tenancy.sql:107",
+        "ui": "apps/web/app/operator/workspace.tsx:709"
+      },
+      "delete": {
+        "kind": "hard",
+        "how": "invitation cancel/resend hard-deletes identity.verification and revokes membership",
+        "evidence": "packages/auth/src/team-control.ts:267-271,225",
+        "ui": "apps/web/app/operator/workspace-controls.tsx:245 \"Cancel invitation\" with window.confirm :141"
+      },
+      "auditTrail": "membership: app.record_change trigger packages/db/migrations/0002_trust_events.sql:183; resend/reset: identity.record_team_control packages/auth/src/team-control.ts:94; cancel: not recorded via record_team_control",
+      "tests": [
+        "tests/integration/ws-d-team-control.test.ts:5",
+        "tests/integration/team-owner-audit.test.ts:4",
+        "tests/integration/communications.test.ts:258"
+      ],
+      "gaps": [
+        {
+          "op": "update",
+          "severity": "medium",
+          "what": "Member role change/revocation sends no expected version or command id; last write wins and retries are not idempotent.",
+          "evidence": "packages/auth/src/access.ts:61-81"
+        },
+        {
+          "op": "delete",
+          "severity": "medium",
+          "what": "Team invitation cancel hard-deletes the invitation row and is not recorded by record_team_control (only resend and authenticator reset are).",
+          "evidence": "packages/auth/src/team-control.ts:271"
+        },
+        {
+          "op": "delete",
+          "severity": "low",
+          "what": "Operator member revocation form has no confirmation step.",
+          "evidence": "apps/web/app/operator/workspace-controls.tsx:471-477"
+        }
+      ]
+    },
+    {
+      "name": "Contributor invitation",
+      "tables": ["app.network_invitation", "app.network_invitation_revocation"],
+      "class": "append-only/immutable",
+      "roles": ["operator owner/admin"],
+      "create": {
+        "api": "POST apps/web/app/api/workspace/[action]/route.ts:224 network-invitation",
+        "sql": "packages/db/network-real-use-migrations/0002_reviewed_contributor_invitations.sql:44",
+        "idempotency": "commandId packages/auth/src/network-invitations.ts:12",
+        "ui": "apps/web/app/operator/contributor-invitations.tsx:85"
+      },
+      "readList": {
+        "api": "GET apps/web/app/api/workspace/[action]/route.ts:40 (after cursor)"
+      },
+      "readDetail": {
+        "note": "n/a"
+      },
+      "update": {
+        "supported": false
+      },
+      "delete": {
+        "kind": "withdraw",
+        "how": "revoke row",
+        "evidence": "packages/db/network-real-use-migrations/0002_reviewed_contributor_invitations.sql:8"
+      },
+      "auditTrail": "domain events",
+      "tests": ["tests/integration/real-network-invitations.test.ts"],
+      "gaps": []
+    },
+    {
+      "name": "Contributor network task and submissions",
+      "tables": [
+        "app.network_task",
+        "app.network_event",
+        "app.network_profile",
+        "app.contribution",
+        "app.reward_reconciliation",
+        "app.service_ledger"
+      ],
+      "class": "append-only/immutable (events; reverse)",
+      "roles": ["operator owner/admin/operator/reviewer", "invited contributor (accept/submit)"],
+      "create": {
+        "api": "POST apps/web/app/api/workspace/[action]/route.ts:246-251; contributor POST apps/web/app/api/network/tasks/route.ts:39",
+        "ui": "apps/web/app/contributor/task-board.tsx:127"
+      },
+      "readList": {
+        "api": "GET apps/web/app/api/network/tasks/route.ts:23",
+        "code": "packages/network/src/index.ts:419 LIMIT 100"
+      },
+      "readDetail": {
+        "note": "in list"
+      },
+      "update": {
+        "how": "new network_event version",
+        "evidence": "packages/db/migrations/0027_restricted_execution_network.sql:13-16"
+      },
+      "delete": {
+        "kind": "void",
+        "how": "network-reverse",
+        "evidence": "apps/web/app/api/workspace/[action]/route.ts:251"
+      },
+      "auditTrail": "record_change",
+      "tests": [
+        "tests/integration/real-network-work.test.ts",
+        "tests/operator/real-network-work.spec.ts:55"
+      ],
+      "gaps": []
+    },
+    {
+      "name": "Operator mission (commercial mission lifecycle)",
+      "tables": [
+        "app.mission",
+        "app.mission_intake",
+        "app.mission_market",
+        "app.commercial_intent",
+        "app.target_profile",
+        "app.mission_command",
+        "app.mission_reply"
+      ],
+      "class": "mutable status with guards; children append-only",
+      "roles": ["operator owner/admin/operator", "public intake (create)"],
+      "create": {
+        "api": "POST apps/web/app/api/intake/route.ts:41",
+        "ui": "apps/web/app/plan/intake.tsx:800"
+      },
+      "readList": {
+        "api": "GET missions apps/web/app/api/workspace/[action]/route.ts:103 (offset, filters)"
+      },
+      "readDetail": {
+        "api": "GET apps/web/app/api/team-work/[action]/route.ts:32"
+      },
+      "update": {
+        "api": "POST mission apps/web/app/api/workspace/[action]/route.ts:271",
+        "code": "packages/missions/src/index.ts:437",
+        "concurrency": "m.version !== v.version packages/missions/src/index.ts:326",
+        "guard": "app.guard_mission trigger"
+      },
+      "delete": {
+        "kind": "archive",
+        "how": "status transitions to closed states via mission command (no hard delete; reject_rewrite on children)",
+        "evidence": "packages/db/migrations/0007_mission_core.sql:159-160"
+      },
+      "auditTrail": "mission_command ledger + record_change",
+      "tests": ["tests/integration/missions.test.ts"],
+      "gaps": []
+    },
+    {
+      "name": "Counterparty research records (sources, contacts, notes, targets, assessments)",
+      "tables": [
+        "app.organisation_source",
+        "app.private_contact_data",
+        "app.private_note",
+        "app.organisation_attribute",
+        "app.entity_candidate",
+        "app.entity_resolution",
+        "app.target_account",
+        "app.target_contact",
+        "app.match_assessment",
+        "app.assessment_claim",
+        "app.research_command",
+        "app.relationship"
+      ],
+      "class": "append-only/immutable",
+      "roles": ["operator owner/admin/operator; resolution needs reviewer+fresh MFA"],
+      "create": {
+        "api": "POST research apps/web/app/api/workspace/[action]/route.ts:270",
+        "ui": "apps/web/app/operator/counterparties.tsx:237"
+      },
+      "readList": {
+        "api": "GET research/shortlist apps/web/app/api/workspace/[action]/route.ts:88-92",
+        "code": "packages/counterparties/src/index.ts:41 LIMIT 50 OFFSET"
+      },
+      "readDetail": {
+        "api": "GET counterparty apps/web/app/api/workspace/[action]/route.ts:90",
+        "code": "packages/counterparties/src/index.ts:69-103 (LIMIT 100 per section, no cursor)"
+      },
+      "update": {
+        "supported": false,
+        "evidence": "packages/db/migrations/0008_counterparty_research.sql:205"
+      },
+      "delete": {
+        "kind": "void",
+        "how": "only entity_resolution has reverse_of; notes/contacts/attributes have no retraction",
+        "evidence": "packages/counterparties/src/index.ts:55"
+      },
+      "auditTrail": "record_change packages/db/migrations/0008_counterparty_research.sql:206",
+      "tests": ["tests/integration/counterparties.test.ts"],
+      "gaps": [
+        {
+          "op": "delete",
+          "severity": "medium",
+          "what": "Private notes and contact data cannot be retracted or corrected (contact only expires via valid_until); no erase path for personal data.",
+          "evidence": "packages/db/migrations/0008_counterparty_research.sql:38-49"
+        }
+      ]
+    },
+    {
+      "name": "Evidence, source records and claims",
+      "tables": [
+        "app.source_record",
+        "app.claim",
+        "app.evidence_object",
+        "app.evidence_state",
+        "app.scan_report",
+        "app.verification"
+      ],
+      "class": "append-only/immutable (evidence_state transitions guarded)",
+      "roles": ["operator owner/admin/operator; verify needs reviewer"],
+      "create": {
+        "api": "POST source/claim/upload apps/web/app/api/workspace/[action]/route.ts:278-279,170",
+        "ui": "apps/web/app/operator/sources-panel.tsx; apps/web/app/operator/evidence-panel.tsx"
+      },
+      "readList": {
+        "api": "GET workspace apps/web/app/api/workspace/[action]/route.ts:122",
+        "code": "packages/evidence/src/index.ts:68-81 LIMIT 50, no cursor"
+      },
+      "readDetail": {
+        "api": "GET download apps/web/app/api/workspace/[action]/route.ts:150"
+      },
+      "update": {
+        "how": "evidence_state transitions with version check",
+        "code": "packages/evidence/src/index.ts:232",
+        "guard": "packages/db/migrations/0003_guards.sql:1-19"
+      },
+      "delete": {
+        "kind": "supersede",
+        "how": "SUPERSEDED/EXPIRED/REJECTED states",
+        "evidence": "packages/db/migrations/0003_guards.sql:11-12"
+      },
+      "auditTrail": "reject_rewrite packages/db/migrations/0002_trust_events.sql:173-177",
+      "tests": ["tests/integration/scan-bypass.test.ts", "tests/operator/workspace.spec.ts"],
+      "gaps": []
+    },
+    {
+      "name": "Communications, meetings and follow-ups",
+      "tables": [
+        "app.communication",
+        "app.communication_template",
+        "app.communication_policy",
+        "app.meeting",
+        "app.meeting_outcome",
+        "app.follow_up",
+        "app.meeting_command"
+      ],
+      "class": "meeting and follow_up mutable status (versioned); others append-only",
+      "roles": ["operator owner/admin/operator; policy/template owner/admin+fresh MFA"],
+      "create": {
+        "api": "POST communication/meeting apps/web/app/api/workspace/[action]/route.ts:259-260",
+        "ui": "apps/web/app/operator/access.tsx:190"
+      },
+      "readList": {
+        "api": "GET apps/web/app/api/workspace/[action]/route.ts:86-87",
+        "code": "packages/communications/src/index.ts:78-106 and packages/missions/src/meetings.ts:16-41 LIMIT 50-200, no cursor"
+      },
+      "readDetail": {
+        "note": "not found as separate detail"
+      },
+      "update": {
+        "how": "meeting/follow_up UPDATE with version check",
+        "code": "packages/missions/src/meetings.ts:128,196"
+      },
+      "delete": {
+        "kind": "archive",
+        "how": "status CANCELLED/COMPLETED transitions",
+        "evidence": "packages/db/migrations/0010_meetings_and_followup.sql:95-98"
+      },
+      "auditTrail": "record_change AFTER INSERT OR UPDATE packages/db/migrations/0010_meetings_and_followup.sql:98",
+      "tests": ["tests/integration/meetings.test.ts", "tests/integration/communications.test.ts"],
+      "gaps": [
+        {
+          "op": "readList",
+          "severity": "medium",
+          "what": "Communications and meetings workspace lists are hard-capped (LIMIT 50-200) with no cursor, so older records are not reachable in the UI.",
+          "evidence": "packages/missions/src/meetings.ts:16"
+        }
+      ]
+    },
+    {
+      "name": "Opportunity and commercial records",
+      "tables": [
+        "app.opportunity",
+        "app.commercial_record",
+        "app.accounting_confirmation",
+        "app.commercial_command",
+        "app.commercial_origin"
+      ],
+      "class": "opportunity mutable (versioned); records append-only money",
+      "roles": ["operator owner/admin/operator; accounting confirmation owner/admin+fresh MFA"],
+      "create": {
+        "api": "POST opportunity apps/web/app/api/workspace/[action]/route.ts:258",
+        "ui": "apps/web/app/operator/opportunities.tsx"
+      },
+      "readList": {
+        "api": "GET opportunities apps/web/app/api/workspace/[action]/route.ts:72 (offset)"
+      },
+      "readDetail": {
+        "api": "GET commercial-records apps/web/app/api/workspace/[action]/route.ts:61 (offset)"
+      },
+      "update": {
+        "how": "UPDATE with version check",
+        "code": "packages/opportunities/src/index.ts:292-304"
+      },
+      "delete": {
+        "kind": "void",
+        "how": "'reverse' action on commercial records",
+        "evidence": "apps/web/app/operator/opportunities.tsx (action reverse)"
+      },
+      "auditTrail": "record_change packages/db/migrations/0011_commercial_followthrough.sql:129-133",
+      "tests": ["tests/integration/opportunities.test.ts"],
+      "gaps": []
+    },
+    {
+      "name": "Commercial mission execution (requirements, RFQ, quotations, selections, schedule)",
+      "tables": [
+        "app.mission_requirements",
+        "app.mission_assessment",
+        "app.mission_rfq",
+        "app.mission_quotation",
+        "app.mission_selection",
+        "app.mission_schedule",
+        "app.commercial_mission_command"
+      ],
+      "class": "append-only/immutable (quotation revisions)",
+      "roles": ["operator owner/admin/operator"],
+      "create": {
+        "api": "POST commercial-mission apps/web/app/api/workspace/[action]/route.ts:252",
+        "ui": "apps/web/app/operator/commercial-mission.tsx:256"
+      },
+      "readList": {
+        "api": "GET commercial-mission apps/web/app/api/workspace/[action]/route.ts:56"
+      },
+      "readDetail": {
+        "note": "same"
+      },
+      "update": {
+        "supported": false,
+        "evidence": "packages/db/migrations/0023_commercial_mission_execution.sql:150"
+      },
+      "delete": {
+        "kind": "supersede",
+        "note": "new versions only"
+      },
+      "auditTrail": "reject_rewrite + guard_commercial_mission",
+      "tests": ["tests/integration/commercial-missions.test.ts"],
+      "gaps": []
+    },
+    {
+      "name": "Corridor routes, packs, AI policy, operations control (configuration)",
+      "tables": [
+        "app.corridor_definition",
+        "app.corridor_pack_version",
+        "app.mission_route_assignment",
+        "app.ai_model_policy",
+        "app.ai_run",
+        "app.ai_review",
+        "app.route_readiness",
+        "app.route_release",
+        "app.configuration_proposal",
+        "app.configuration_decision",
+        "app.operations_case",
+        "app.config_version"
+      ],
+      "class": "append-only/immutable versions",
+      "roles": ["owner/admin with fresh MFA (most)", "operator for runs"],
+      "create": {
+        "api": "POST apps/web/app/api/workspace/[action]/route.ts:216-257,281",
+        "ui": "apps/web/app/operator/operations.tsx:259; apps/web/app/operator/intelligence.tsx; apps/web/app/operator/review-settings.tsx:261"
+      },
+      "readList": {
+        "api": "GET apps/web/app/api/workspace/[action]/route.ts:36-55,129"
+      },
+      "readDetail": {
+        "note": "same"
+      },
+      "update": {
+        "how": "append new version/decision",
+        "evidence": "packages/db/migrations/0020_versioned_corridors.sql:80; packages/db/migrations/0028_operations_control_center.sql:151"
+      },
+      "delete": {
+        "kind": "supersede",
+        "note": "new version/decision only"
+      },
+      "auditTrail": "record_change / domain_event",
+      "tests": ["tests/integration/operations.test.ts", "tests/integration/intelligence.test.ts"],
+      "gaps": []
+    },
+    {
+      "name": "Customer account (identity)",
+      "tables": [
+        "identity.\"user\"",
+        "identity.account",
+        "identity.session",
+        "customer_private.principal"
+      ],
+      "class": "mutable identity",
+      "roles": ["signed-in customer"],
+      "create": {
+        "api": "apps/web/app/api/auth/[...all]/route.ts (Neon Auth sign-up)"
+      },
+      "readList": {
+        "note": "n/a"
+      },
+      "readDetail": {
+        "api": "GET apps/web/app/api/account/route.ts:5"
+      },
+      "update": {
+        "note": "not found in app: profile/email edit handled by auth provider only"
+      },
+      "delete": {
+        "kind": "none",
+        "note": "not found: no self-service account closure or data deletion; principal disable is offline"
+      },
+      "auditTrail": "identity.security_event (immutable) packages/db/migrations/0004_bootstrap_security.sql:12",
+      "tests": ["tests/integration/identity.test.ts"],
+      "gaps": [
+        {
+          "op": "delete",
+          "severity": "medium",
+          "what": "No self-service account closure/erasure for customers; customer_private.principal.disabled_at is set only by the offline procedure.",
+          "evidence": "packages/db/customer-migrations/0001_synthetic_workspace_authority.sql:19-24"
+        }
+      ]
+    }
+  ],
+  "crossCutting": [
+    {
+      "issue": "No REST verbs beyond GET/POST: every create/update/withdraw is a POST with an action discriminator; no PUT/PATCH/DELETE handlers exist and no server actions (\"use server\" not found).",
+      "evidence": "apps/web/app/api/customer-mission-drafts/route.ts:56-57; apps/web/app/api/workspace/[action]/route.ts:332-333"
+    },
+    {
+      "issue": "DB-enforced immutability: app.reject_rewrite BEFORE UPDATE OR DELETE triggers cover almost all business tables; only app.mission, mission_market, commercial_intent, meeting, follow_up, opportunity, membership, relationship, evidence_state, inbox_notification.read_at, saved_mission.removed_at and queue tables are updatable, each with guard/version triggers. No immutable business record was found to be editable or hard-deletable.",
+      "evidence": "packages/db/migrations/0002_trust_events.sql:86; packages/db/migrations/0010_meetings_and_followup.sql:95-100; packages/db/migrations/0011_commercial_followthrough.sql:124-131"
+    },
+    {
+      "issue": "Hard DELETEs are limited to transient/credential rows: session proofs (cascading request_attestation), execution grants, identity.verification (team/network invitations), twoFactor/session on authenticator reset, mission_mail_recipient addresses, outcome_projection rebuild, identity.assurance.",
+      "evidence": "packages/auth/src/customer-session.ts:224; packages/db/customer-migrations/0003_private_customer_requests.sql:8; packages/auth/src/team-control.ts:190,225,271,302,306; packages/db/customer-mission-mail-migrations/0001_mission_mail.sql:221; packages/db/migrations/0012_outcome_projections.sql:52"
+    },
+    {
+      "issue": "Idempotency is consistent in customer modules (commandId ledgers with conflict detection) but absent in operator membership change and notification preferences.",
+      "evidence": "packages/db/customer-mission-draft-migrations/0001_private_mission_drafts.sql:17; packages/auth/src/access.ts:62; packages/db/customer-notification-migrations/0003_withdrawal_and_issuer_check.sql:35"
+    },
+    {
+      "issue": "Optimistic concurrency (expectedVersion/expectedSeq/expectedPosition) is used in nearly all revisioned customer and billing modules; exceptions: Moves set, programme attendance, operator membership change, notification preferences.",
+      "evidence": "packages/domain/src/moves.ts:71; packages/auth/src/customer-programme-coordination.ts:74; packages/auth/src/access.ts:62"
+    },
+    {
+      "issue": "Operator workspace lists are hard-capped (LIMIT 50/100/200/1000) with no cursor for evidence, communications, meetings, network tasks and counterparty detail sections; customer module lists use keyset pagination.",
+      "evidence": "packages/evidence/src/index.ts:68; packages/communications/src/index.ts:78; packages/missions/src/meetings.ts:16; packages/network/src/index.ts:419; packages/counterparties/src/index.ts:69"
+    },
+    {
+      "issue": "app.inbox_record lets any signed-in staff or customer write an inbox item for any recipient id (only a tenant-membership check for staff when a tenant is named); reachable through server-side notify().",
+      "evidence": "packages/db/commercial-readiness-migrations/0001_inbox_and_links.sql:37-49"
+    },
+    {
+      "issue": "No archive/close lifecycle for top-level containers: customer workspace, programme and customer account have create/read only.",
+      "evidence": "packages/db/customer-migrations/0001_synthetic_workspace_authority.sql:54; packages/db/customer-programme-migrations/0001_customer_programme_creation.sql:18"
+    },
+    {
+      "issue": "Money correction paths: ledger entries have reversals and invoices have credit notes, but payment observations (sample and real) have no reversal or void.",
+      "evidence": "packages/db/customer-programme-economics-migrations/0001_organiser_programme_economics.sql:14; packages/db/customer-invoicing-real-migrations/0001_real_invoicing.sql:129; packages/db/customer-invoicing-migrations/0001_sample_invoices_payments_credits.sql:47"
+    },
+    {
+      "issue": "The operator workspace route returns HTTP 201 for every write action, including updates and revocations, and maps DB errors to generic 409/403 text.",
+      "evidence": "apps/web/app/api/workspace/[action]/route.ts:299,301-313"
+    }
+  ]
+}
