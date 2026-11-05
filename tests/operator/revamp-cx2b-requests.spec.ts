@@ -33,7 +33,8 @@ test.beforeAll(async () => {
                   <p><a href="#customer-workspaces">Open your workspaces</a> <a href="#customer-requests">Open your saved requests</a></p>
                   <WorkFilterBar filter={filter} options={options}/>
                   <RowList label="Your work" title="Request" columns={[{name:'Kind'},{name:'Status'}]}>
-                    <RowLink href="/account/requests/1" title="Sell machines to Dhaka" cells={[{name:'Kind',value:'Request'},{name:'Status',value:'In progress',status:true}]}/>
+                    {Array.from({length:Number(new URLSearchParams(location.search).get('rows')||1)},(_,n)=>
+                      <RowLink key={n} href={'/account/requests/'+(n+1)} title={'Sell machines to Dhaka '+(n+1)} cells={[{name:'Kind',value:'Request'},{name:'Status',value:'In progress',status:true}]}/>)}
                   </RowList></section>}
                 workspaces={<div id="customer-workspaces" tabIndex={-1}><h2>Workspaces</h2><p>Atelier Rahman</p><button type="button" id="in-workspaces">Create Workspace</button></div>}
                 saved={<div id="customer-requests" tabIndex={-1}><h2>Saved requests</h2><p>Nothing saved.</p></div>}
@@ -221,3 +222,21 @@ test('CX-04 a hidden tab stays hidden: no panel is shown by an id or a stronger 
     .evaluateAll((all) => all.map((el) => getComputedStyle(el).display));
   expect(displays).toEqual(['none', 'none']);
 });
+
+// CX-01 for Requests: six requests on the first tab fit in one screen at 1440 x 900 and two at 390 x 844. The
+// fixture has no site header, so a fixed allowance stands in for the 56 px customer bar.
+for (const [width, height, screens] of [
+  [1440, 900, 1],
+  [390, 844, 2],
+] as const)
+  test(`CX-01 six requests on the Requests tab fit in ${screens} screen${screens > 1 ? 's' : ''} at ${width}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto(`${origin}/?view=work&rows=6`);
+    await expect(page.getByRole('link', { name: /Sell machines to Dhaka 6/ })).toBeVisible();
+    const used = await page.evaluate(
+      () => document.querySelector('main')!.getBoundingClientRect().bottom + window.scrollY,
+    );
+    expect(used + 56).toBeLessThanOrEqual(height * screens);
+  });
