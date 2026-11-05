@@ -39,7 +39,7 @@ const service = (person = 'alice') =>
 const prepare = (context: Parameters<MissionService['prepareCustomerIntake']>[0], brief: unknown) =>
   missions.prepareCustomerIntake(context, brief);
 const brief = () => ({
-  objective: 'Sell in a New Market',
+  objective: 'Sell in a new market',
   market: 'Spain',
   attendance: 'Yes',
   startDate: '2026-11-01',

@@ -46,7 +46,7 @@ type Person = {
   missionTenantId: string;
 };
 const briefFor = (email: string) => ({
-  objective: 'Sell in a New Market',
+  objective: 'Sell in a new market',
   market: 'Spain',
   attendance: 'No',
   startDate: '',

@@ -20,7 +20,7 @@ const fillField = async (page: Page, name: string, value: string) =>
   await page.locator(`#brief-${name}`).fill(value);
 
 const objectives = {
-  sell: 'Sell in a New Market',
+  sell: 'Sell in a new market',
   customers: 'Find customers or distributors',
   source: 'Source suppliers',
   trip: 'Make an upcoming business trip more productive',

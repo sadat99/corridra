@@ -60,7 +60,7 @@ const port = (): MissionMailPort => ({
   },
 });
 
-const briefFor = (email: string, objective = 'Sell in a New Market') => ({
+const briefFor = (email: string, objective = 'Sell in a new market') => ({
   objective,
   market: 'Spain',
   attendance: 'No',

@@ -10,7 +10,7 @@ let real: MissionService;
 const issuer =
   'https://ep-real-guest-fixture.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth';
 const brief = () => ({
-  objective: 'Sell in a New Market',
+  objective: 'Sell in a new market',
   market: 'Spain',
   attendance: 'No',
   startDate: '',

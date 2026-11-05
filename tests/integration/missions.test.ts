@@ -6,7 +6,7 @@ import { configureSyntheticIntake } from '../../packages/missions/src/bootstrap'
 import { briefSchema, noticeVersion } from '../../packages/domain/src/missions';
 let f: Awaited<ReturnType<typeof fixture>>, s: MissionService;
 const brief = () => ({
-  objective: 'Sell in a New Market',
+  objective: 'Sell in a new market',
   market: 'Spain',
   attendance: 'Yes',
   startDate: '2026-11-01',
