@@ -66,7 +66,14 @@ on:
       field_modules_action:
         description: 'Optional ADR-072 specification confirmation and ADR-073 quote arrangements, or programme_lifecycle (rename, archive and restore a programme; needs the real-use modules installed first). Install does not open confirmation, principal sales, billing or payments.'
         type: choice
-        options: [unchanged, specification_confirmation, commercial_arrangements, both, programme_lifecycle]
+        options:
+          [
+            unchanged,
+            specification_confirmation,
+            commercial_arrangements,
+            both,
+            programme_lifecycle,
+          ]
         default: unchanged
       notifications_action:
         description: 'Optional ADR-067 operation for Pulse notification records. Install changes nothing anyone can see; enable opens the database side only. The application switch is separate.'

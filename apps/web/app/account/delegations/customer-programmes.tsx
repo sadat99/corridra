@@ -1,4 +1,10 @@
 'use client';
+import {
+  ProgrammeLifecycle,
+  changeProgramme,
+  type LifecycleChange,
+  type LifecycleProgramme,
+} from './programme-lifecycle';
 import { ProgrammeProjectionPanel } from './programme-projections';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
@@ -32,6 +38,9 @@ type Programme = {
   reportingPurpose: string;
   createdAt: string;
   synthetic: boolean;
+  // Present only where the programme lifecycle module is installed; absent means the controls stay hidden.
+  archived?: boolean;
+  version?: number;
 };
 type Command = {
   commandId: string;
@@ -73,7 +82,9 @@ function programme(value: unknown, workspaceId: string): value is Programme {
     p.reportingPurpose.length >= 10 &&
     p.reportingPurpose.length <= 500 &&
     typeof p.createdAt === 'string' &&
-    Number.isFinite(Date.parse(p.createdAt))
+    Number.isFinite(Date.parse(p.createdAt)) &&
+    (p.archived === undefined || typeof p.archived === 'boolean') &&
+    (p.version === undefined || (Number.isInteger(p.version) && p.version >= 0))
   );
 }
 export function CustomerProgrammes(props: Props) {
@@ -119,6 +130,9 @@ function ScopedProgrammes({
   const [termsProgramme, setTermsProgramme] = useState<string | null>(null);
   const [rows, setRows] = useState<Programme[]>([]),
     [next, setNext] = useState<string | null>(null);
+  // Archived programmes (CRUD gap G7): hidden from the list and the picker unless the Archived filter is on.
+  const [showArchived, setShowArchived] = useState(false);
+  const [archivedNotice, setArchivedNotice] = useState<LifecycleProgramme | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed' | 'denied' | 'unavailable'>(
     'loading',
   );
@@ -351,12 +365,16 @@ function ScopedProgrammes({
   // The approved Organise room (owner, 5 Nov 2026): with the room on, the page is cut into tabs and shows one
   // programme at a time, so it fits the page-length budget. Nothing is removed: the same list, panels, templates,
   // pricing and form, each in its own tab, every panel kept in the page. With the room off the page is unchanged.
-  const chosenProgramme = rows.find((p) => p.id === chosenId)?.id ?? rows[0]?.id;
+  const lifecycleReady = rows.some((p) => typeof p.version === 'number');
+  const visibleRows = rows.filter((p) =>
+    showArchived ? p.archived === true : p.archived !== true,
+  );
+  const chosenProgramme = visibleRows.find((p) => p.id === chosenId)?.id ?? visibleRows[0]?.id;
   // A programme once opened stays mounted, hidden, so anything typed in its panels survives a switch and back;
   // a hidden room is off screen, so it reads nothing until it is shown again.
   const shownRows = roomEnabled
-    ? rows.filter((p) => p.id === chosenProgramme || visited.has(p.id))
-    : rows;
+    ? visibleRows.filter((p) => p.id === chosenProgramme || visited.has(p.id))
+    : visibleRows;
   const choose = (id: string) => {
     setVisited((current) => {
       const next = new Set(current);
@@ -369,15 +387,99 @@ function ScopedProgrammes({
     url.searchParams.set('programme', id);
     window.history.replaceState(window.history.state, '', url);
   };
+  // Rename, archive and restore. The answer replaces the row in place, so the room, tabs and typed text stay where they are.
+  // An archive keeps an Undo for ten seconds; a restore that the cap refuses says so in plain words.
+  const archiveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const applyChange = (change: LifecycleChange, before: LifecycleProgramme) => {
+    setRows((old) =>
+      old.map((p) =>
+        p.id === change.id
+          ? {
+              ...p,
+              name: change.name,
+              reportingPurpose: change.reportingPurpose,
+              archived: change.archived,
+              version: change.version,
+            }
+          : p,
+      ),
+    );
+    if (archiveTimer.current) clearTimeout(archiveTimer.current);
+    if (change.operation === 'archive') {
+      setArchivedNotice({ ...before, ...change });
+      archiveTimer.current = setTimeout(() => setArchivedNotice(null), 10000);
+      setMessage('');
+    } else {
+      setArchivedNotice(null);
+      setMessage(change.operation === 'restore' ? 'Programme restored.' : 'Programme renamed.');
+    }
+  };
+  async function undoArchive() {
+    const target = archivedNotice;
+    if (!target) return;
+    const outcome = await changeProgramme({
+      workspaceId,
+      headers,
+      programme: target,
+      operation: 'restore',
+      commandId: crypto.randomUUID(),
+    });
+    if (outcome.ok) applyChange(outcome.result, target);
+    else {
+      setArchivedNotice(null);
+      setMessage(outcome.message);
+    }
+  }
+  const lifecycleFor = (p: Programme) =>
+    typeof p.version === 'number' ? (
+      <ProgrammeLifecycle
+        key={p.id + ':' + p.version}
+        programme={{
+          id: p.id,
+          name: p.name,
+          reportingPurpose: p.reportingPurpose,
+          archived: p.archived === true,
+          version: p.version,
+        }}
+        workspaceId={workspaceId}
+        headers={headers}
+        onChanged={applyChange}
+        onStale={() => void load()}
+      />
+    ) : null;
   const programmeList = (
     <>
-      <h2 className={roomEnabled && rows.length > 0 ? 'sr-only' : undefined}>
+      <h2 className={roomEnabled && visibleRows.length > 0 ? 'sr-only' : undefined}>
         Your planning programmes
       </h2>
-      {rows.length === 0 ? (
+      {lifecycleReady && (
+        <p>
+          <button
+            type="button"
+            className="text-link"
+            aria-pressed={showArchived}
+            onClick={() => setShowArchived(!showArchived)}
+          >
+            {showArchived ? 'Show Active Programmes' : 'Show Archived Programmes'}
+          </button>
+        </p>
+      )}
+      {archivedNotice && (
+        <p role="status">
+          Programme archived: {archivedNotice.name}.{' '}
+          <button type="button" className="text-link" onClick={() => void undoArchive()}>
+            Undo
+          </button>
+        </p>
+      )}
+      {visibleRows.length === 0 ? (
         <p className="ux-empty">
           {' '}
-          {realCustomerInput() ? 'No programmes yet.' : 'No sample programmes yet.'}{' '}
+          {showArchived
+            ? 'No archived programmes.'
+            : realCustomerInput()
+              ? 'No programmes yet.'
+              : 'No sample programmes yet.'}{' '}
         </p>
       ) : (
         <ul>
@@ -396,6 +498,7 @@ function ScopedProgrammes({
                           ? 'Planning record only · data'
                           : 'Planning record only · Sample data'}{' '}
                       </p>
+                      {lifecycleFor(p)}
                       {serviceRequestsEnabled && (
                         <p>
                           <a
@@ -545,6 +648,7 @@ function ScopedProgrammes({
                       ? 'Planning record only · data'
                       : 'Planning record only · Sample data'}{' '}
                   </p>
+                  {lifecycleFor(p)}
                   {serviceRequestsEnabled && (
                     <p>
                       <a
@@ -742,7 +846,9 @@ function ScopedProgrammes({
             subject={subject}
             issuer={issuer}
             workspaceId={workspaceId}
-            programmes={rows.map((p) => ({ id: p.id, name: p.name }))}
+            programmes={rows
+              .filter((p) => p.archived !== true)
+              .map((p) => ({ id: p.id, name: p.name }))}
             onChanged={() => void load()}
           />
         </Suspense>
@@ -757,7 +863,9 @@ function ScopedProgrammes({
             subject={subject}
             issuer={issuer}
             workspaceId={workspaceId}
-            programmes={rows.map((p) => ({ id: p.id, name: p.name }))}
+            programmes={rows
+              .filter((p) => p.archived !== true)
+              .map((p) => ({ id: p.id, name: p.name }))}
             onChanged={() => void load()}
           />
         </Suspense>
@@ -927,7 +1035,7 @@ function ScopedProgrammes({
               label: 'Programmes',
               panel: (
                 <>
-                  {rows.length > 1 && (
+                  {visibleRows.length > 1 && (
                     <label className="field programme-picker">
                       Programme
                       <select
@@ -935,7 +1043,7 @@ function ScopedProgrammes({
                         value={chosenProgramme}
                         onChange={(event) => choose(event.target.value)}
                       >
-                        {rows.map((p) => (
+                        {visibleRows.map((p) => (
                           <option key={p.id} value={p.id}>
                             {p.name}
                           </option>

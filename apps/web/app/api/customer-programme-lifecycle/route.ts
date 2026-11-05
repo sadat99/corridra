@@ -16,7 +16,20 @@ async function services() {
   await s.ready;
   return s;
 }
+// The plain refusals the database gives for this action. Only these exact texts are shown; anything else keeps the shared wording.
+const plainRefusals = [
+  'Programme changed; reload before saving',
+  'Restore the programme before renaming it',
+  'Programme is already archived',
+  'Programme is not archived',
+  'Nothing changed',
+  'Archive another programme first: this workspace already has 100 active programmes',
+  'Programme name and reporting purpose required',
+];
 function failure(error: unknown) {
+  const refusal = error as { code?: string; message?: string };
+  if (refusal.code === '23514' && plainRefusals.includes(refusal.message ?? ''))
+    return deliveryError(new DomainError(refusal.message as string, 409));
   return deliveryError(
     ['42P01', '3F000', '42883'].includes((error as { code?: string }).code ?? '')
       ? new DomainError('Renaming and archiving programmes is unavailable', 503)

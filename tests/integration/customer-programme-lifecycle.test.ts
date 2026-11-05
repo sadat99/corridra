@@ -1,6 +1,7 @@
 import { beforeAll, afterAll, test, expect } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { fixture } from './support';
+import type { DatabaseClient } from '../../packages/db/src/index';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateCustomerProgrammeLifecycle } from '../../packages/db/src/customer-programme-lifecycle-migrate';
 import { admitSyntheticCustomer } from '../../packages/auth/src/customer-admission';
@@ -38,7 +39,7 @@ const workspaces = (person = 'alice') =>
 const participants = (person = 'alice') =>
   new CustomerParticipantService(f.runtime, f.auth, options, async () => session(person));
 class Probe extends CustomerSessionBoundary {
-  run<T>(fn: (db: import('pg').PoolClient) => Promise<T>) {
+  run<T>(fn: (db: DatabaseClient) => Promise<T>) {
     return this.transaction(async (db) => fn(db));
   }
 }
