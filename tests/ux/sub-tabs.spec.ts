@@ -17,16 +17,16 @@ test.beforeAll(async () => {
   const bundle = await build({
     stdin: {
       contents: `import { createRoot } from 'react-dom/client';
-        import { SubTabs } from ${JSON.stringify(resolve('apps/web/components/ux/sub-tabs.tsx'))};
+        import { SubTabs, openSubTab } from ${JSON.stringify(resolve('apps/web/components/ux/sub-tabs.tsx'))};
         import { LanguageProvider } from ${JSON.stringify(resolve('apps/web/components/language-provider.tsx'))};
         const tabs = [
-          { id: 'people', label: 'People and access', panel: <section><h2 id="people-heading" tabIndex={-1}>People</h2><label>Note <input id="note" /></label></section> },
+          { id: 'people', label: 'People and access', panel: <section><h2 id="people-heading" tabIndex={-1}>People</h2><label>Note <input id="note" /></label><button type="button" id="go-invite" onClick={(e) => openSubTab(e.currentTarget, 'invite')}>Go to invite</button><button type="button" id="go-missing" onClick={(e) => openSubTab(e.currentTarget, 'missing')}>Go to a missing tab</button></section> },
           { id: 'tools', label: 'Tools', aliases: ['old-tools'], panel: <section><h2>Tools</h2><p>{'Tool text. '.repeat(30)}</p><h3 id="deep-heading" tabIndex={-1}>Deep heading</h3></section> },
           { id: 'invite', label: 'Invite a team member', anchor: 'workspace-invite', panel: <section><h2>Invite</h2><button type="button">Send invite</button></section> },
         ];
         createRoot(document.getElementById('app')).render(
           <LanguageProvider offered={[{ code: 'en', draft: false }, { code: 'ar', draft: false }]}>
-            <main id="main"><h1>Controls</h1><a id="outside" href="#outside">Outside the tabs</a><SubTabs label="Controls sections" tabs={tabs} /></main>
+            <main id="main"><h1>Controls</h1><a id="outside" href="#outside">Outside the tabs</a><button type="button" id="go-outside" onClick={(e) => openSubTab(e.currentTarget, 'invite')}>Outside button</button><SubTabs label="Controls sections" tabs={tabs} /></main>
           </LanguageProvider>,
         );`,
       loader: 'tsx',
@@ -113,6 +113,22 @@ test('a hash that cannot be decoded shows the first tab and raises no page error
   // Choosing a tab still works, and the bad hash raises nothing there either.
   await tab(page, 'Tools').click();
   await expect(tab(page, 'Tools')).toHaveAttribute('aria-selected', 'true');
+  expect(errors).toEqual([]);
+});
+
+test('an action inside one tab can open another tab', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await open(page, 1280);
+  await page.locator('#go-invite').click();
+  await expect(tab(page, 'Invite a team member')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('#workspace-invite')).toBeVisible();
+  expect(new URL(page.url()).searchParams.get('tab')).toBe('invite');
+  // A tab that does not exist, or a button outside the tabs, does nothing and raises nothing.
+  await tab(page, 'People and access').click();
+  await page.locator('#go-missing').click();
+  await page.locator('#go-outside').click();
+  await expect(tab(page, 'People and access')).toHaveAttribute('aria-selected', 'true');
   expect(errors).toEqual([]);
 });
 

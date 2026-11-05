@@ -2,7 +2,7 @@ import { test, expect, type Page, type Route } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { clearSignInLimits, totp } from './operator-signin';
-import { openSection } from './workspace-nav';
+import { openSection, openTab } from './workspace-nav';
 
 // The staff billing panel inside the real workspace frame (Delivery, phone fold, delivery
 // experience, billing hub), where its text column was narrowed on phones. The committed
@@ -320,9 +320,13 @@ async function openDelivery(page: Page, address: string, width: number) {
   await page.goto(address);
   await page.addStyleTag({ content: 'html { scroll-behavior: auto !important; }' });
   await expect(page.getByRole('heading', { name: 'Client and programme delivery' })).toBeVisible();
+  // The billing hub sits in the tab for mission and delegation experience (L-03).
+  await openTab(page.locator('#workspace-delivery'), 'Mission and delegation experience');
 }
 // Opens the phone fold that holds the billing hub, where it is closed.
 async function unfoldBilling(page: Page) {
+  // The fold sits in the Delivery tab for mission and delegation experience (L-03).
+  await openTab(page.locator('#workspace-delivery'), 'Mission and delegation experience');
   const fold = page.locator('#workspace-delivery details.phone-fold').first();
   if (!(await fold.evaluate((details) => (details as HTMLDetailsElement).open)))
     await fold.locator(':scope > summary').click();

@@ -50,6 +50,7 @@ test('WS-D actions: team invite, roles, authenticator reset, audit, route pack, 
     // V-01: invite a team member with email, role and a 7-day window; resend and cancel.
     await page.goto(`/operator/controls?workspace=${tenant}`);
     const controls = page.locator('#workspace-controls');
+    await controls.getByRole('tab', { name: 'Invite a team member', exact: true }).click();
     await expect(controls.getByRole('heading', { name: 'Invite a team member' })).toBeVisible();
     await controls.getByLabel('Name', { exact: true }).fill('QA test (madeup) New Operator');
     await controls.getByLabel('Email', { exact: true }).fill('qa-new-operator@example.invalid');
@@ -119,6 +120,7 @@ test('WS-D actions: team invite, roles, authenticator reset, audit, route pack, 
     ).toBe(true);
 
     // V-03: the owner resets another member's authenticator with a fresh check.
+    await controls.getByRole('tab', { name: 'People and access', exact: true }).click();
     await controls.getByRole('button', { name: 'Load workspace members', exact: true }).click();
     await controls
       .getByRole('combobox', { name: 'Member to reset', exact: true })
@@ -253,6 +255,8 @@ test('WS-D layout: owner status board and readiness tell the truth at every widt
   // screens at every width. The deferred register follows it, each control with its risk line.
   const box = await board.boundingBox();
   expect(box!.y + box!.height).toBeLessThanOrEqual(page.viewportSize()!.height * 2);
+  // The register is its own tab (L-03).
+  await page.getByRole('tab', { name: 'Open gaps', exact: true }).click();
   const register = page.locator('[data-deferred-register]');
   await expect(register.getByRole('listitem')).toHaveCount(11);
   for (const item of await register.getByRole('listitem').all()) {

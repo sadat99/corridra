@@ -33,5 +33,6 @@
   outline-offset: -3px;
 }
 .ux-subtabs-panel[hidden] {
-  display: none;
+  /* A page rule that gives a panel its own display must never show a hidden panel. */
+  display: none !important;
 }

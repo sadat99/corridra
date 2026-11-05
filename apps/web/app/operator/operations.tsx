@@ -1,4 +1,5 @@
 'use client';
+import { SubTabs } from '../../components/ux/sub-tabs';
 import { FounderOverview } from '../../components/founder-overview';
 import { ReferencePicker } from '../../components/ux/reference-picker';
 import { PhoneFold } from '../../components/phone-fold';
@@ -164,11 +165,16 @@ function Table({
   rows,
   columns,
   label,
+  limit,
 }: {
   rows: Row[];
   columns: [string, string][];
   label: string;
+  /** Rows shown at first; the rest stay in the page and open with "Show all" (layout budget, page length). */
+  limit?: number;
 }) {
+  const [all, setAll] = useState(false);
+  const shown = limit && !all ? limit : rows.length;
   return rows.length ? (
     <div className="operations-table" tabIndex={0} role="region" aria-label={label}>
       <table>
@@ -184,7 +190,7 @@ function Table({
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={String(r.id ?? i)}>
+            <tr key={String(r.id ?? i)} hidden={i >= shown}>
               {columns.map(([k]) => (
                 <td key={k}>{value(r[k])}</td>
               ))}
@@ -192,6 +198,16 @@ function Table({
           ))}
         </tbody>
       </table>
+      {limit && rows.length > limit ? (
+        <button
+          type="button"
+          className="text-link"
+          aria-expanded={all}
+          onClick={() => setAll((value) => !value)}
+        >
+          {all ? `Show the first ${limit} rows` : `Show all ${rows.length} rows`}
+        </button>
+      ) : null}
     </div>
   ) : (
     <p>
@@ -1488,51 +1504,81 @@ export function Operations({
           <strong>Status: {LIVE_STATE}.</strong> Corridra serves a small number of real customers.
           The controls below are open and deferred by the owner. None of them is passed or approved.
         </p>
-        <Table
-          label="Deferred controls"
-          rows={deferredControls.map((control) => ({
-            id: control.id,
-            name: control.name,
-            status: DEFERRED_LABEL,
-            risk: control.risk,
-            owner: control.whoActs,
-          }))}
-          columns={[
-            ['id', 'Control'],
-            ['name', 'What it covers'],
-            ['status', 'Status'],
-            ['risk', 'Risk while deferred'],
-            ['owner', 'Who acts'],
+        <SubTabs
+          label="Production readiness sections"
+          tabs={[
+            {
+              id: 'deferred',
+              label: 'Deferred controls',
+              panel: (
+                <>
+                  <Table
+                    label="Deferred controls"
+                    limit={4}
+                    rows={deferredControls.map((control) => ({
+                      id: control.id,
+                      name: control.name,
+                      status: DEFERRED_LABEL,
+                      risk: control.risk,
+                      owner: control.whoActs,
+                    }))}
+                    columns={[
+                      ['id', 'Control'],
+                      ['name', 'What it covers'],
+                      ['status', 'Status'],
+                      ['risk', 'Risk while deferred'],
+                      ['owner', 'Who acts'],
+                    ]}
+                  />
+                </>
+              ),
+            },
+            {
+              id: 'blocked',
+              label: 'Blocked',
+              panel: (
+                <>
+                  <Table
+                    label="Blocked"
+                    rows={blockedItems.map((item) => ({
+                      id: item.id,
+                      name: item.name,
+                      reason: item.reason,
+                      owner: item.whoActs,
+                    }))}
+                    columns={[
+                      ['name', 'Item'],
+                      ['reason', 'Why it is blocked'],
+                      ['owner', 'Who acts'],
+                    ]}
+                  />
+                </>
+              ),
+            },
+            {
+              id: 'rules',
+              label: 'Rules and runbook',
+              panel: (
+                <>
+                  {admin && (
+                    <p>
+                      Repository settings for these controls (branch rules, secret scanning and code
+                      analysis) are described in the owner technical setup runbook,
+                      docs/runbooks/owner-technical-setup.md. Nothing on this page changes a setting
+                      or clears a control.
+                    </p>
+                  )}
+                  <p>
+                    Bangladesh to China: sourcing and machinery come before delegations. Bangladesh
+                    to Spain and the EU: buyer and export market access come before reverse
+                    services. Other routes stay unpublished. No readiness status can waive access
+                    checks, evidence quarantine, retention or legal approval.
+                  </p>
+                </>
+              ),
+            },
           ]}
         />
-        <Table
-          label="Blocked"
-          rows={blockedItems.map((item) => ({
-            id: item.id,
-            name: item.name,
-            reason: item.reason,
-            owner: item.whoActs,
-          }))}
-          columns={[
-            ['name', 'Item'],
-            ['reason', 'Why it is blocked'],
-            ['owner', 'Who acts'],
-          ]}
-        />
-        {admin && (
-          <p>
-            Repository settings for these controls (branch rules, secret scanning and code analysis)
-            are described in the owner technical setup runbook,
-            docs/runbooks/owner-technical-setup.md. Nothing on this page changes a setting or clears
-            a control.
-          </p>
-        )}
-        <p>
-          Bangladesh to China: sourcing and machinery come before delegations. Bangladesh to Spain
-          and the EU: buyer and export market access come before reverse services. Other routes stay
-          unpublished. No readiness status can waive access checks, evidence quarantine, retention
-          or legal approval.
-        </p>
         <a className="text-link" href="#workspace-navigation">
           Return to workspace navigation
         </a>
