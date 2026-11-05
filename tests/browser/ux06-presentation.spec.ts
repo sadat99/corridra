@@ -28,6 +28,7 @@ test('UX-06 the home is one question, and the route explorer and mission guide k
     '/trust',
   );
   // Every way to work and every guide page stays reachable from the footer.
+  await openFooterGroups(page);
   for (const href of [
     '/sell',
     '/source',
@@ -163,32 +164,32 @@ test('UX-06 discovery preserves keyboard and content at all required widths and 
   );
 });
 
-test('footer keeps equal link groups together on tablets and stacks them on phones', async ({
+// The footer's link groups start collapsed (layout budget, Phase 1); opening them is one tap.
+const openFooterGroups = async (page: import('@playwright/test').Page) => {
+  for (const group of await page.locator('footer details.guide-footer-details').all())
+    if (!(await group.evaluate((node) => (node as HTMLDetailsElement).open)))
+      await group.locator('summary').click();
+};
+
+test('footer keeps six links in each group, collapsed by default, and each group opens to its links at every width', async ({
   page,
 }) => {
   for (const width of [1440, 1000, 768, 701, 700, 390]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto('/');
     const footer = page.locator('footer');
+    const groups = footer.locator('details.guide-footer-details');
+    await expect(groups, `two link groups at ${width}px`).toHaveCount(2);
+    for (const group of await groups.all())
+      await expect(group, `collapsed at ${width}px`).not.toHaveAttribute('open', '');
+    await openFooterGroups(page);
     const first = footer.getByRole('navigation', { name: 'Footer solutions', exact: true });
     const second = footer.getByRole('navigation', { name: 'About Corridra', exact: true });
     await expect(first.getByRole('link')).toHaveCount(6);
     await expect(second.getByRole('link')).toHaveCount(6);
     const a = (await first.boundingBox())!;
     const b = (await second.boundingBox())!;
-    if (width > 700) {
-      expect(Math.abs(a.y - b.y), `link groups share a row at ${width}px`).toBeLessThanOrEqual(1);
-      expect(
-        Math.abs(a.width - b.width),
-        `link columns are equal at ${width}px`,
-      ).toBeLessThanOrEqual(1);
-      expect(b.x).toBeGreaterThanOrEqual(a.x + a.width);
-      if (width <= 1000) {
-        const brand = (await footer.locator('.guide-footer-brand').boundingBox())!;
-        expect(a.y).toBeGreaterThanOrEqual(brand.y + brand.height);
-      }
-    } else {
-      expect(b.y).toBeGreaterThanOrEqual(a.y + a.height);
-    }
+    // Opened groups stack, so neither is cut off and nothing overlaps.
+    expect(b.y, `groups do not overlap at ${width}px`).toBeGreaterThanOrEqual(a.y + a.height - 1);
   }
 });

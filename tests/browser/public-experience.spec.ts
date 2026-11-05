@@ -97,6 +97,13 @@ test('the home example switches between selling and sourcing by pointer and keyb
   expect(writes).toEqual([]);
 });
 
+// The footer's link groups start collapsed (layout budget, Phase 1); opening them is one tap.
+const openFooterGroups = async (page: import('@playwright/test').Page) => {
+  for (const group of await page.locator('footer details.guide-footer-details').all())
+    if (!(await group.evaluate((node) => (node as HTMLDetailsElement).open)))
+      await group.locator('summary').click();
+};
+
 test('the menu opens, closes with Escape and the footer takes visitors to a way to work', async ({
   page,
   isMobile,
@@ -115,7 +122,8 @@ test('the menu opens, closes with Escape and the footer takes visitors to a way 
   } else {
     await expect(nav.getByRole('link', { name: 'Routes', exact: true })).toBeVisible();
   }
-  // Every way to work stays one tap away in the footer of every page.
+  // Every way to work stays in the footer of every page: open the group, then one tap.
+  await openFooterGroups(page);
   const ways = page.getByRole('navigation', { name: 'Footer solutions' });
   for (const [name, href] of [
     ['Source products and suppliers', '/source'],

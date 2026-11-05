@@ -27,3 +27,107 @@
     gap: var(--space-3);
   }
 }
+
+/* The notice in sections (layout budget, Phase 1). One section shows at a time: the one the link or the address
+   points at, or the first when nothing is chosen. "Show the whole notice" shows them all; printing always does.
+   Every section stays in the server HTML, so search, print and the tests still see all of it. */
+.privacy-notice .guide-doc:not(.guide-contents) > article {
+  display: none;
+}
+.privacy-notice .guide-doc:not(.guide-contents) > article:target,
+.privacy-notice .guide-doc:not(.guide-contents) > article:has(:target) {
+  display: grid;
+}
+.privacy-notice:not(:has(.guide-doc :target))
+  .guide-doc:not(.guide-contents)
+  > article:first-child {
+  display: grid;
+}
+.privacy-notice[data-whole='true'] .guide-doc:not(.guide-contents) > article {
+  display: grid;
+}
+@media print {
+  .privacy-notice .guide-doc:not(.guide-contents) > article {
+    display: grid;
+  }
+  .privacy-whole-toggle,
+  .privacy-contents-details > summary {
+    display: none;
+  }
+}
+
+/* The contents list: collapsed on a phone, open on a wide screen. */
+.privacy-contents-body {
+  display: grid;
+  gap: var(--space-2);
+}
+.privacy-contents-details > summary {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+.guide-doc.guide-contents > h2 {
+  display: none;
+}
+.privacy-whole-toggle {
+  justify-self: start;
+  min-height: 2.75rem;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+@supports selector(::details-content) {
+  @media (min-width: 769px) {
+    .guide-doc.guide-contents > h2 {
+      display: block;
+    }
+    .privacy-contents-details > summary {
+      display: none;
+    }
+    .privacy-contents-details::details-content {
+      content-visibility: visible;
+    }
+  }
+}
+
+/* From 1000 px the contents list is a left column beside the section that is showing, so the whole notice
+   page stays within one desktop screen. */
+@media (min-width: 1000px) {
+  .privacy-notice {
+    display: grid;
+    grid-template-columns: 17rem minmax(0, 1fr);
+    gap: var(--space-8);
+    align-items: start;
+  }
+  .privacy-notice .guide-doc.guide-contents {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding-block: 0;
+    border-bottom: 0;
+  }
+  .privacy-notice .guide-contents > h2 {
+    font-size: var(--text-lg);
+  }
+  .privacy-notice .guide-contents ol {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .privacy-notice .guide-contents li a {
+    min-height: 1.75rem;
+  }
+  .privacy-notice .privacy-whole-toggle {
+    min-height: 2rem;
+  }
+  .privacy-notice #privacy-doc {
+    margin-bottom: 0;
+    border-top: 0;
+  }
+  .privacy-notice #privacy-doc > article {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+    padding-block: var(--space-3);
+  }
+}
