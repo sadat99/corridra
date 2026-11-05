@@ -10,8 +10,12 @@ import { PendingRequestNotice } from '../../../components/pending-request-notice
 import { EmailNudge } from '../../../components/email-nudge';
 import { AccountHashRedirect } from '../hash-redirect';
 import { MoveView } from './move-view';
+import { Greeting } from './greeting';
+import { loadWorkItems } from '../../../lib/work-items/load';
+import { journeysOf } from './journeys';
 
 export const dynamic = 'force-dynamic';
+
 export const runtime = 'nodejs';
 export const metadata = {
   title: 'Your Move | Corridra',
@@ -36,13 +40,24 @@ export default async function Page() {
       </WorkspaceShell>
     );
 
-  const loaded = await loadMoveInput(session.subject, session.issuer);
-  const model = buildMoveModel(loaded.input, { rooms: uxSwitchOn('CORRIDRA_UX_ROAD') });
+  const rooms = uxSwitchOn('CORRIDRA_UX_ROAD');
+  // Your Move and the work list read the same records; the work list adds each request's title and journey.
+  const [loaded, work] = await Promise.all([
+    loadMoveInput(session.subject, session.issuer),
+    loadWorkItems(session.subject, session.issuer, { rooms }).catch(() => null),
+  ]);
+  const model = buildMoveModel(loaded.input, { rooms });
+  const journeys = work ? journeysOf(work, model.latest?.id ?? null) : null;
   const startHref = loaded.requestCreationEnabled
     ? '/account?view=work#customer-workspaces'
     : '/plan';
   return (
-    <CustomerShell tab="move" eyebrow="YOUR MOVE" title="Here is what is waiting for you.">
+    <CustomerShell
+      tab="move"
+      eyebrow="YOUR MOVE"
+      title={<Greeting name={session.name} />}
+      count={model.cards.length}
+    >
       <AccountHashRedirect view="move" />
       <PendingRequestNotice where="account" />
       {customerNotificationsEnabled() && <EmailNudge />}
@@ -52,6 +67,8 @@ export default async function Page() {
         skippedWorkspaces={loaded.skippedWorkspaces}
         partial={loaded.partial}
         unreadable={loaded.unreadable.length > 0}
+        latestItem={journeys?.latest ?? null}
+        journeys={journeys?.cards ?? []}
       />
     </CustomerShell>
   );
