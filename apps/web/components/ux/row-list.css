@@ -13,8 +13,9 @@
   gap: var(--space-1) var(--space-4);
   align-items: center;
   min-height: 44px;
-  /* The hover surface reaches past the content edge; the words stay on it (actions align to the left edge). */
-  margin-inline: calc(-1 * var(--space-3));
+  /* The hover surface reaches past the left content edge so the words sit on it (actions align to the left edge);
+     the right side stays inside the column, so a row never causes sideways scroll. */
+  margin-inline-start: calc(-1 * var(--space-3));
   padding: var(--space-3);
   color: var(--ink);
   text-decoration: none;
