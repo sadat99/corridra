@@ -1,0 +1,29 @@
+{
+  "recordedOn": "2026-11-05",
+  "track": "Revamp S4 (branch revamp/staff)",
+  "kind": "CRUD gap G2 (CRUD standard, owner scope of 5 Nov 2026): a sample-invoice payment entered in error can be reversed. One additive migration; sample money only.",
+  "findings": [],
+  "findingsNote": "No GAP id is created or changed. This PR closes audit gap G2 in docs/revamp/crud/summary.md; the Conductor updates that record.",
+  "sensitive": "yes: money (sample invoices only, synthetic workspaces), a database migration and a staff command. No auth, session, tenant-scope, consent, token or cookie code changes. Nothing is installed anywhere by this PR; the migration is additive and the owner merges. ADR-061 amendment (payments and reversals) is written by the Conductor.",
+  "ownerDecision": "5 Nov 2026 via the Conductor: sample invoices take a single staff person with a required reason; second-person approval applies to REAL money only (G3, a separate PR).",
+  "changed": [
+    "packages/db/customer-invoicing-migrations/0002_payment_reversal.sql (new, additive): table invoicing_payment_reversal (append-only, one reversal per payment, reason of at least 20 characters starting with Synthetic, rewrite and delete refused, row security on, no runtime or auth access); a guard for every writer; the command log accepts the operation reverse; invoicing_paid, invoicing_position, invoicing_invoice_json, invoicing_emit, app.invoicing_staff_view and app.invoicing_staff_command are replaced with the same signatures and grants.",
+    "packages/db/src/customer-invoicing-migrate.ts: runs every file in the folder in order and refuses a changed or missing applied file, as the real-invoicing runner already does.",
+    "packages/delivery/src/customer-invoicing-staff.ts: the staff command schema accepts action reverse (invoice, position, payment number, reason).",
+    "apps/web/app/operator/customer-invoicing.tsx: a Reverse Payment form (choose an unreversed payment, give a reason) and reversed payments marked in the list with the reason.",
+    "packages/auth/src/customer-invoicing.ts and apps/web/app/account/billing/invoices-section.tsx: customers see that a payment was reversed, never why.",
+    "tests: tests/integration/customer-invoicing.test.ts (new reversal test; migration history now has two files; a fully paid invoice offers reverse), tests/operator/v3-invoicing-ui.spec.ts (staff reversal flow with a lost answer retried, customer view)."
+  ],
+  "preserved": [
+    "Payments, credits and invoices stay append-only: the payment row is never edited or deleted, and stays readable with its reversal.",
+    "Exact money: amounts stay whole minor units as text; what is paid is derived, never stored; currencies are never added or converted.",
+    "Every existing command, guard, event kind and customer read behaves as before; the ordering, over-payment and over-credit guards use the new net paid amount.",
+    "A reversal event carries ids and a sequence only, never the amount, the date or the reason."
+  ],
+  "behaviour": {
+    "afterReversal": "The reversed amount is owed again: paid goes down by it, outstanding goes up by it, and the invoice can be paid, credited or reversed further. A payment is reversed once.",
+    "position": "Reversals count in the invoice position, so a stale screen is refused with 'reload and try again', like payments and credits.",
+    "actions": "Staff view offers reverse while an unreversed payment exists. An invoice that was fully paid now lists reverse; the one existing test that expected an empty list now expects reverse."
+  },
+  "nextAction": "G3: real-invoice payments and reversals with a second staff person (money, Sensitive: yes, migration, owner merges)."
+}

@@ -17,6 +17,8 @@ export type InvoicePayment = {
   amountMinor: string;
   receivedOn: string;
   method: 'bank_transfer' | 'cash' | 'other';
+  // True once the team reversed this payment as entered in error. Customers never see why.
+  reversed: boolean;
 };
 export type InvoiceCredit = {
   seq: number;

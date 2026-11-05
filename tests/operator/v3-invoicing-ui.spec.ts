@@ -249,6 +249,37 @@ test('an owner reads the totals per currency and each invoice with its payments 
   expect(await axe(page)).toEqual([]);
 });
 
+test('an owner sees that a payment was reversed, and never why', async ({ page }) => {
+  await serve(page, () => ({
+    json: invoicingBody({
+      invoices: [
+        invoice({
+          paidMinor: '0',
+          outstandingMinor: '5390',
+          status: 'unpaid',
+          payments: [
+            {
+              seq: 1,
+              amountMinor: '1000',
+              receivedOn: '2026-10-24',
+              method: 'bank_transfer',
+              reversed: true,
+            },
+          ],
+        }),
+      ],
+      balances: [balance({ paidMinor: '0', outstandingMinor: '5390' })],
+    }),
+  }));
+  await page.goto(origin + '/');
+  await page.getByText('Payments and credit notes for SAMPLE-INV-000001').click();
+  await expect(
+    page.getByText(/USD\s10\.00 on 24 October 2026 · Bank transfer · Reversed/),
+  ).toBeVisible();
+  await expect(page.getByText(/wrong invoice|Synthetic reversal/)).toHaveCount(0);
+  expect(await axe(page)).toEqual([]);
+});
+
 test('a member only learns whether invoices exist, and an empty workspace says so plainly', async ({
   page,
 }) => {
@@ -579,6 +610,118 @@ test('a credit note asks for a reason, is marked destructive, and a settled invo
   ).toBeVisible();
   await expect(page.getByRole('form', { name: 'Record Payment' })).toHaveCount(0);
   await expect(page.getByRole('form', { name: 'Issue Credit Note' })).toHaveCount(0);
+});
+
+test('a payment entered in error is reversed with a reason, a lost answer is retried with the same command id, and a reversed payment is marked', async ({
+  page,
+}) => {
+  let tries = 0;
+  const twoPayments = staffInvoice({
+    position: 2,
+    paidMinor: '3000',
+    outstandingMinor: '2390',
+    payments: [
+      {
+        seq: 1,
+        amountMinor: '1000',
+        receivedOn: '2026-10-24',
+        method: 'bank_transfer',
+        reference: 'Synthetic transfer reference 0001',
+        reversed: false,
+      },
+      {
+        seq: 2,
+        amountMinor: '2000',
+        receivedOn: '2026-10-25',
+        method: 'cash',
+        reference: 'Synthetic cash handover 0002',
+        reversed: false,
+      },
+    ],
+  });
+  const reversedInvoice = staffInvoice({
+    position: 3,
+    paidMinor: '1000',
+    outstandingMinor: '4390',
+    payments: [
+      { ...twoPayments.payments[0], reversed: false },
+      {
+        ...twoPayments.payments[1],
+        reversed: true,
+        reversal: {
+          seq: 1,
+          reason: 'Synthetic reversal: recorded against the wrong invoice',
+          reversedAt: '2026-10-26T09:00:00.000Z',
+        },
+      },
+    ],
+  });
+  const state: Staff = {
+    invoices: [twoPayments],
+    detail: {
+      invoice: twoPayments,
+      actions: ['payment', 'credit', 'reverse'],
+      workspaceBalances: [balance()],
+    },
+    // The first answer is lost; the retry lands, and the invoice then reads back with the payment reversed.
+    post: () => {
+      tries += 1;
+      if (tries === 1) return { status: 0 };
+      state.invoices = [reversedInvoice];
+      state.detail = {
+        invoice: reversedInvoice,
+        actions: ['payment', 'credit', 'reverse'],
+        workspaceBalances: [balance()],
+      };
+      return { json: reversedInvoice };
+    },
+  };
+  const posts = await serveStaff(page, state);
+  await page.goto(origin + '/?view=staff');
+  await page.getByRole('button', { name: 'Open SAMPLE-INV-000001' }).click();
+  const form = page.getByRole('form', { name: 'Reverse Payment' });
+  // The reason is required, and the choice lists the payments that can still be reversed.
+  await expect(form.getByLabel('Payment to reverse').locator('option')).toHaveCount(3);
+  await form.getByLabel('Payment to reverse').selectOption('2');
+  await form
+    .getByLabel(/Why it is reversed/)
+    .fill('Synthetic reversal: recorded against the wrong invoice');
+  expect(await axe(page)).toEqual([]);
+  const submit = form.getByRole('button', { name: 'Reverse Payment' });
+  await expect(submit).toHaveAttribute('data-intent', 'destructive');
+  await submit.click();
+  await expect(page.getByRole('alert')).toContainText('Could not confirm that this was saved');
+  await form.getByRole('button', { name: 'Send the Same Reversal Again' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
+  expect(posts).toHaveLength(2);
+  expect(posts[1]!.commandId).toBe(posts[0]!.commandId);
+  expect(posts[0]).toMatchObject({
+    action: 'reverse',
+    invoiceId,
+    expectedPosition: 2,
+    paymentSeq: 2,
+    reason: 'Synthetic reversal: recorded against the wrong invoice',
+  });
+  // The reversed payment stays in the list, marked, with the reason; only the other one can still be reversed.
+  const detail = page.getByRole('region', { name: 'Invoice detail' });
+  await expect(
+    detail.getByText(/Reversed: Synthetic reversal: recorded against the wrong invoice/),
+  ).toBeVisible();
+  await expect(detail.getByText(/Payment USD\s20\.00/)).toBeVisible();
+  await expect(page.getByLabel('Payment to reverse').locator('option')).toHaveCount(2);
+  // No payment to reverse, no form.
+  await page.unroute('**/api/workspace/customer-billing**');
+  await serveStaff(page, {
+    invoices: [staffInvoice({ payments: [] })],
+    detail: {
+      invoice: staffInvoice({ payments: [] }),
+      actions: ['payment', 'credit'],
+      workspaceBalances: [],
+    },
+  });
+  await page.reload();
+  await page.getByRole('button', { name: 'Open SAMPLE-INV-000001' }).click();
+  await expect(page.getByRole('form', { name: 'Reverse Payment' })).toHaveCount(0);
 });
 
 test('staff denial is plain and an unavailable module leaves no panel', async ({ page }) => {

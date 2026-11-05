@@ -52,6 +52,17 @@ export const staffInvoicingCommandInput = z.discriminatedUnion('action', [
       reason: synthetic(500),
     })
     .strict(),
+  // A payment entered in error is reversed once, with a reason of at least twenty characters. The payment stays on
+  // the invoice, marked as reversed. The database repeats these rules.
+  z
+    .object({
+      action: z.literal('reverse'),
+      commandId: z.uuid(),
+      ...invoiceRef,
+      paymentSeq: z.number().int().min(1).max(500),
+      reason: synthetic(500).refine((v) => v.length >= 20, 'Say why the payment is reversed'),
+    })
+    .strict(),
 ]);
 export const staffInvoicingListQuery = z
   .object({

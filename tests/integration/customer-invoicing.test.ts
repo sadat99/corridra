@@ -131,6 +131,16 @@ const credit = async (id: string, amountMinor: string, over: Record<string, unkn
     reason: 'Synthetic credit for a rehearsal correction',
     ...over,
   }) as Promise<Invoice>;
+const reverse = async (id: string, paymentSeq: number, over: Record<string, unknown> = {}) =>
+  staff.command(staffCtx(), {
+    action: 'reverse',
+    commandId: randomUUID(),
+    invoiceId: id,
+    expectedPosition: await position(id),
+    paymentSeq,
+    reason: 'Synthetic reversal: recorded against the wrong invoice',
+    ...over,
+  }) as Promise<Invoice>;
 // A plan of the staff's own whose price includes tax, used for the third tax treatment.
 async function includesTaxPlan() {
   const key = 'example-inclusive-' + randomUUID().slice(0, 8);
@@ -308,7 +318,7 @@ test('installing the module on a populated database adds only new objects and ch
       .filter((t) => !oldTables.has(t))
       .sort(),
   ).toEqual(
-    ['command', 'credit', 'invoice', 'payment']
+    ['command', 'credit', 'invoice', 'payment', 'payment_reversal']
       .map((n) => 'customer_private.invoicing_' + n)
       .sort(),
   );
@@ -336,12 +346,14 @@ test('installing the module on a populated database adds only new objects and ch
   const applied = (
     await f.owner.query('SELECT name,sha256 FROM customer_invoicing_migrations.applied')
   ).rows;
-  expect(applied).toHaveLength(1);
-  const sql = await readFile(
-    'packages/db/customer-invoicing-migrations/' + applied[0].name,
-    'utf8',
-  );
-  expect(applied[0].sha256).toBe(createHash('sha256').update(sql).digest('hex'));
+  expect(applied.map((row) => row.name)).toEqual([
+    '0001_sample_invoices_payments_credits.sql',
+    '0002_payment_reversal.sql',
+  ]);
+  for (const row of applied) {
+    const sql = await readFile('packages/db/customer-invoicing-migrations/' + row.name, 'utf8');
+    expect(row.sha256).toBe(createHash('sha256').update(sql).digest('hex'));
+  }
 });
 
 test('the runtime and auth logins can reach only the five intended functions and none of the tables', async () => {
@@ -592,7 +604,8 @@ test('payments are recorded against what is outstanding, name the position they 
   // Nothing more can be paid or credited.
   await expect(pay(inv.id, '1')).rejects.toThrow(/more than is still outstanding/i);
   await expect(credit(inv.id, '1')).rejects.toThrow(/more than is still unpaid/i);
-  expect((await staff.view(staffCtx(), inv.id)).actions).toEqual([]);
+  // A paid invoice can still have a payment reversed, and nothing else.
+  expect((await staff.view(staffCtx(), inv.id)).actions).toEqual(['reverse']);
 });
 
 test('credit notes reduce what is unpaid, never more, and every status is derived from the three record kinds', async () => {
@@ -636,6 +649,123 @@ test('credit notes reduce what is unpaid, never more, and every status is derive
   const three = await issue(c.sub, { taxMinor: '0' });
   await expect(credit(three.id, '100', { reason: 'Customer was unhappy' })).rejects.toThrow();
   await expect(credit(three.id, '100', { reason: 'Synthetic' })).rejects.toThrow();
+});
+
+test('a payment entered in error is reversed once, with a reason, and the invoice owes it again', async () => {
+  const a = await held('example-organiser');
+  const inv = await issue(a.sub, { taxMinor: '490' });
+  // Nothing paid yet: there is nothing to reverse, and the action is not offered.
+  expect((await staff.view(staffCtx(), inv.id)).actions).toEqual(['payment', 'credit']);
+  await expect(reverse(inv.id, 1)).rejects.toThrow(/no such payment|unavailable/i);
+  await pay(inv.id, '2000');
+  expect((await staff.view(staffCtx(), inv.id)).actions).toEqual(['payment', 'credit', 'reverse']);
+  const paid = await pay(inv.id, '3390', {
+    method: 'cash',
+    reference: 'Synthetic cash handover 0002',
+  });
+  expect(paid).toMatchObject({ status: 'paid', paidMinor: '5390', position: 2 });
+
+  // A reason is required and is invented text; the position must be the one the person saw.
+  await expect(reverse(inv.id, 2, { reason: 'Synthetic' })).rejects.toThrow();
+  await expect(reverse(inv.id, 2, { reason: '' })).rejects.toThrow();
+  await expect(reverse(inv.id, 2, { reason: 'A real reason from a real bank' })).rejects.toThrow();
+  await expect(reverse(inv.id, 2, { expectedPosition: 1 })).rejects.toThrow(/reload/i);
+  await expect(reverse(inv.id, 9)).rejects.toThrow(/no such payment|unavailable/i);
+
+  const command = randomUUID();
+  const reversed = await reverse(inv.id, 2, { commandId: command });
+  expect(reversed).toMatchObject({
+    status: 'partly_paid',
+    paidMinor: '2000',
+    outstandingMinor: '3390',
+    position: 3,
+  });
+  // The original payment stays readable, marked as reversed, with the reason for staff.
+  expect(reversed.payments).toHaveLength(2);
+  expect(reversed.payments[1]).toMatchObject({ seq: 2, amountMinor: '3390', reversed: true });
+  expect(JSON.stringify(reversed.payments[1])).toContain('wrong invoice');
+  expect(reversed.payments[0]).toMatchObject({ seq: 1, reversed: false });
+
+  // The same command replays once; other content under the same id conflicts.
+  const start = await chainCounts();
+  expect(
+    await staff.command(staffCtx(), {
+      action: 'reverse',
+      commandId: command,
+      invoiceId: inv.id,
+      expectedPosition: 2,
+      paymentSeq: 2,
+      reason: 'Synthetic reversal: recorded against the wrong invoice',
+    }),
+  ).toEqual(reversed);
+  expect(await chainCounts()).toEqual(start);
+  await expect(reverse(inv.id, 1, { commandId: command, expectedPosition: 2 })).rejects.toThrow(
+    /conflicts/i,
+  );
+  // A payment is reversed once.
+  await expect(reverse(inv.id, 2)).rejects.toThrow(/already reversed/i);
+
+  // What was reversed can be paid again, and credits still work on the new balance.
+  expect((await staff.view(staffCtx(), inv.id)).actions).toEqual(['payment', 'credit', 'reverse']);
+  const repaid = await pay(inv.id, '3390', { reference: 'Synthetic transfer reference 0003' });
+  expect(repaid).toMatchObject({ status: 'paid', paidMinor: '5390', outstandingMinor: '0' });
+  const afterCredit = await reverse(inv.id, 3);
+  expect(afterCredit).toMatchObject({ paidMinor: '2000', outstandingMinor: '3390' });
+  const credited = await credit(inv.id, '3390');
+  expect(credited).toMatchObject({ status: 'settled', outstandingMinor: '0' });
+
+  // Customers see that a payment was reversed, never the reason, the reference or who recorded it.
+  const mine = (await invoicing().overview({ workspaceId: a.target })) as {
+    invoices: { id: string; payments: Record<string, unknown>[] }[];
+  };
+  const seen = mine.invoices.find((x) => x.id === inv.id)!;
+  expect(seen.payments.map((x) => x.reversed)).toEqual([false, true, true]);
+  expect(JSON.stringify(seen.payments)).not.toMatch(/wrong invoice|Synthetic|reason|reference/i);
+
+  // The reversal rows cannot be rewritten or deleted, and the database repeats the rules for every writer.
+  const row = (
+    await f.owner.query(
+      'SELECT invoice_id,tenant_id,payment_seq FROM customer_private.invoicing_payment_reversal WHERE invoice_id=$1 ORDER BY seq',
+      [inv.id],
+    )
+  ).rows;
+  expect(row).toHaveLength(2);
+  await expect(
+    f.owner.query(
+      "UPDATE customer_private.invoicing_payment_reversal SET reason='Synthetic changed' WHERE invoice_id=$1",
+      [inv.id],
+    ),
+  ).rejects.toThrow();
+  await expect(
+    f.owner.query('DELETE FROM customer_private.invoicing_payment_reversal WHERE invoice_id=$1', [
+      inv.id,
+    ]),
+  ).rejects.toThrow();
+  await expect(
+    f.owner.query(
+      "INSERT INTO customer_private.invoicing_payment_reversal(invoice_id,tenant_id,seq,payment_seq,reason,reversed_by,staff_tenant_id) SELECT invoice_id,tenant_id,3,2,'Synthetic twice',reversed_by,staff_tenant_id FROM customer_private.invoicing_payment_reversal WHERE invoice_id=$1 LIMIT 1",
+      [inv.id],
+    ),
+  ).rejects.toThrow();
+  await expect(
+    f.owner.query(
+      "INSERT INTO customer_private.invoicing_payment_reversal(invoice_id,tenant_id,seq,payment_seq,reason,reversed_by,staff_tenant_id) SELECT invoice_id,tenant_id,3,7,'Synthetic no such payment',reversed_by,staff_tenant_id FROM customer_private.invoicing_payment_reversal WHERE invoice_id=$1 LIMIT 1",
+      [inv.id],
+    ),
+  ).rejects.toThrow();
+
+  // Each reversal is one event with ids and a sequence only: never the amount, the date or the reason.
+  const events = (
+    await f.owner.query(
+      "SELECT type,payload::text p FROM app.domain_event WHERE aggregate_type='customer_invoice' AND aggregate_id=$1 AND type='customer.invoicing.payment.reversed' ORDER BY aggregate_version",
+      [inv.id],
+    )
+  ).rows;
+  expect(events).toHaveLength(2);
+  for (const e of events)
+    expect(
+      e.p.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '<id>'),
+    ).not.toMatch(/wrong|invoice\b.*reason|3390|2000|5390|reason|amount|date/i);
 });
 
 test('an invoice is overdue only while something is unpaid after its due date', async () => {
@@ -746,6 +876,38 @@ test('staff commands replay once, conflict on other content and need the staff a
     { ...body, commandId: randomUUID(), taxMinor: '-1' },
     { ...body, commandId: randomUUID(), extra: true },
     { action: 'refund', commandId: randomUUID(), invoiceId: first.id },
+    {
+      action: 'reverse',
+      commandId: randomUUID(),
+      invoiceId: first.id,
+      expectedPosition: 0,
+      paymentSeq: 1,
+    },
+    {
+      action: 'reverse',
+      commandId: randomUUID(),
+      invoiceId: first.id,
+      expectedPosition: 0,
+      paymentSeq: 0,
+      reason: 'Synthetic reversal reason',
+    },
+    {
+      action: 'reverse',
+      commandId: randomUUID(),
+      invoiceId: first.id,
+      expectedPosition: 0,
+      paymentSeq: 1,
+      reason: 'Synthetic',
+    },
+    {
+      action: 'reverse',
+      commandId: randomUUID(),
+      invoiceId: first.id,
+      expectedPosition: 0,
+      paymentSeq: 1,
+      reason: 'Synthetic reversal reason',
+      amountMinor: '1',
+    },
     {
       action: 'payment',
       commandId: randomUUID(),
@@ -1023,6 +1185,7 @@ test('the tables reference no participant, programme, cost, trade-value or contr
     'customer_private.billing_plan_version',
     'customer_private.billing_subscription',
     'customer_private.invoicing_invoice',
+    'customer_private.invoicing_payment',
     'identity.principal',
   ]);
   // No function of the module reads another money ledger.
@@ -1184,12 +1347,14 @@ test('the flags, synthetic and production gates stay binding and the installer i
   expect((await f.owner.query('SELECT * FROM customer_invoicing_migrations.applied')).rows).toEqual(
     first,
   );
-  expect(first).toHaveLength(1);
+  expect(first).toHaveLength(2);
   await f.owner.query('UPDATE customer_invoicing_migrations.applied SET sha256=$1', [
     randomBytes(32).toString('hex'),
   ]);
   await expect(migrateCustomerInvoicing(f.owner)).rejects.toThrow(/history mismatch/i);
-  await f.owner.query('UPDATE customer_invoicing_migrations.applied SET sha256=$1', [
-    first[0].sha256,
-  ]);
+  for (const row of first)
+    await f.owner.query(
+      'UPDATE customer_invoicing_migrations.applied SET sha256=$1 WHERE name=$2',
+      [row.sha256, row.name],
+    );
 });

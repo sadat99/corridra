@@ -39,6 +39,8 @@ type Invoice = {
     receivedOn: string;
     method: string;
     reference: string;
+    reversed: boolean;
+    reversal?: { seq: number; reason: string; reversedAt: string };
   }[];
   credits: { seq: number; number: string; amountMinor: string; issuedOn: string; reason: string }[];
 };
@@ -115,7 +117,9 @@ function Scoped({ tenant }: { tenant: string }) {
     [method, setMethod] = useState('bank_transfer'),
     [reference, setReference] = useState(starter),
     [creditAmount, setCreditAmount] = useState(''),
-    [reason, setReason] = useState(starter);
+    [reason, setReason] = useState(starter),
+    [reverseSeq, setReverseSeq] = useState(''),
+    [reverseReason, setReverseReason] = useState(starter);
   const task = useRef<AbortController | null>(null);
   const endpoint = '/api/workspace/customer-billing?tenant=' + encodeURIComponent(tenant);
   const call = useCallback(
@@ -225,6 +229,8 @@ function Scoped({ tenant }: { tenant: string }) {
     setCreditAmount('');
     setReference(starter);
     setReason(starter);
+    setReverseSeq('');
+    setReverseReason(starter);
     if (typeof saved?.id === 'string') await open(saved.id);
     await loadAll();
   }
@@ -281,6 +287,20 @@ function Scoped({ tenant }: { tenant: string }) {
         expectedPosition: detail.invoice.position,
         amountMinor: creditAmount.trim(),
         reason: reason.trim(),
+      },
+    );
+  }
+  function submitReversal(e: FormEvent) {
+    e.preventDefault();
+    if (!detail) return;
+    void send(
+      pending ?? {
+        action: 'reverse',
+        commandId: crypto.randomUUID(),
+        invoiceId: detail.invoice.id,
+        expectedPosition: detail.invoice.position,
+        paymentSeq: Number(reverseSeq),
+        reason: reverseReason.trim(),
       },
     );
   }
@@ -417,6 +437,13 @@ function Scoped({ tenant }: { tenant: string }) {
               <li key={'p' + p.seq}>
                 Payment {money(p.amountMinor, inv.currency)} · {displayDate(p.receivedOn)} ·{' '}
                 {p.method.replace('_', ' ')} · {p.reference}
+                {p.reversal && (
+                  <>
+                    {' '}
+                    · Reversed: {p.reversal.reason} (
+                    {displayDate(p.reversal.reversedAt.slice(0, 10))})
+                  </>
+                )}
               </li>
             ))}
             {inv.credits.map((c) => (
@@ -523,6 +550,57 @@ function Scoped({ tenant }: { tenant: string }) {
                 disabled={busy}
               >
                 {pending ? 'Send the Same Credit Again' : 'Issue Credit Note'}
+              </button>
+            </form>
+          )}
+          {can('reverse') && (
+            <form aria-label="Reverse payment" onSubmit={submitReversal}>
+              <p>
+                A payment entered in error is reversed, not deleted. It stays on the invoice, marked
+                as reversed with your reason, and its amount is owed again.
+              </p>
+              <fieldset disabled={busy}>
+                <div className="field">
+                  <label htmlFor="invoice-reverse-payment">Payment to reverse</label>
+                  <select
+                    id="invoice-reverse-payment"
+                    required
+                    value={reverseSeq}
+                    onChange={(e) => change(() => setReverseSeq(e.target.value))}
+                  >
+                    <option value="">Choose a payment</option>
+                    {inv.payments
+                      .filter((p) => !p.reversed)
+                      .map((p) => (
+                        <option key={p.seq} value={String(p.seq)}>
+                          Payment {p.seq}: {money(p.amountMinor, inv.currency)} on{' '}
+                          {displayDate(p.receivedOn)}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor="invoice-reverse-reason">
+                    Why it is reversed (start with Synthetic, at least 20 characters)
+                  </label>
+                  <textarea
+                    id="invoice-reverse-reason"
+                    rows={2}
+                    required
+                    minLength={20}
+                    maxLength={500}
+                    value={reverseReason}
+                    onChange={(e) => change(() => setReverseReason(e.target.value))}
+                  />
+                </div>
+              </fieldset>
+              <button
+                type="submit"
+                className="button button-secondary"
+                data-intent="destructive"
+                disabled={busy}
+              >
+                {pending ? 'Send the Same Reversal Again' : 'Reverse Payment'}
               </button>
             </form>
           )}
