@@ -105,6 +105,9 @@ export default async function Page({
         facts={facts}
         journey={journey}
         taskJourneys={taskJourneys}
+        sortIncomplete={
+          !work || work.partial || work.unreadable.length > 0 || work.skippedWorkspaces > 0
+        }
       />
     </CustomerShell>
   );

@@ -128,6 +128,7 @@ export function MoveView({
   facts = null,
   journey = null,
   taskJourneys = {},
+  sortIncomplete = false,
 }: {
   model: MoveModel;
   startHref: string;
@@ -146,6 +147,8 @@ export function MoveView({
   journey?: Journey | null;
   /** Each task's and waiting row's journey, by id. A task with none shows under All only. */
   taskJourneys?: Record<string, Journey>;
+  /** The work list that sorts tasks into journeys was not read in full, so a journey view may miss some. */
+  sortIncomplete?: boolean;
 }) {
   const { locale } = useLanguage();
   const say = (key: MessageKey) => translate(locale, key);
@@ -272,15 +275,29 @@ export function MoveView({
   const incomplete = unreadable || partial || skippedWorkspaces > 0;
   const where = journey ? ` in ${journeyWords[journey].toLowerCase()}` : '';
   const needs = count === 1 ? `One thing needs you${where}` : `${count} things need you${where}`;
-  const lede = incomplete
+  // A journey view shows only tasks the work list could sort. Tasks it could not sort, or a work list that was
+  // not read in full, mean the view may miss some: it says so and points to All, never "nothing needs you".
+  const unsorted = allItems.filter((item) => !taskJourneys[String(item.key)]).length;
+  const unsortedWords =
+    unsorted === 1
+      ? 'One more thing needs you under All.'
+      : `${unsorted} more things need you under All.`;
+  const filterGap = !!journey && (unsorted > 0 || sortIncomplete);
+  const lede = filterGap
     ? nothing
-      ? 'This page may not show everything that needs you yet.'
-      : `${needs} so far. This page may not show everything yet.`
-    : nothing
-      ? journey
-        ? `Nothing needs you${where} right now. Here is where it stands.`
-        : 'You are all caught up. Here is where your work stands.'
-      : `${needs}. Everything else is moving.`;
+      ? unsorted > 0
+        ? `Nothing sorted into ${journeyWords[journey!].toLowerCase()} needs you. ${unsortedWords}`
+        : `This view may not show everything${where} yet.`
+      : `${needs} so far. ${unsorted > 0 ? unsortedWords : 'This view may not show everything yet.'}`
+    : incomplete
+      ? nothing
+        ? 'This page may not show everything that needs you yet.'
+        : `${needs} so far. This page may not show everything yet.`
+      : nothing
+        ? journey
+          ? `Nothing needs you${where} right now. Here is where it stands.`
+          : 'You are all caught up. Here is where your work stands.'
+        : `${needs}. Everything else is moving.`;
 
   return (
     <div className="move-view" lang={html} dir={dir}>
@@ -334,6 +351,20 @@ export function MoveView({
                   {say('move.start')}
                 </Link>
               </div>
+            </div>
+          ) : nothing && journey ? (
+            <div className="move-empty" role="status" lang="en">
+              <p>
+                <strong>Nothing here{where}.</strong>{' '}
+                {filterGap
+                  ? unsorted > 0
+                    ? unsortedWords
+                    : 'Some work may not be sorted into a journey yet.'
+                  : 'Nothing in this journey needs you right now.'}
+              </p>
+              <Link prefetch={false} className="text-link ux-action" href="/account/move">
+                Show All
+              </Link>
             </div>
           ) : nothing ? (
             <div className="move-empty" role="status">
