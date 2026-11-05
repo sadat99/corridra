@@ -1,0 +1,23 @@
+{
+  "recordedOn": "2026-11-05",
+  "track": "Revamp S4 (branch revamp/staff)",
+  "kind": "Page lengths phase 4: owner Open gaps fits one screen. The guard stays report-only.",
+  "findings": [],
+  "findingsNote": "No GAP id is created or changed.",
+  "sensitive": "no: presentation only. No auth, role, tenant, money, consent or token code changes; the owner page stays read only.",
+  "changed": [
+    "apps/web/app/operator/owner/page.tsx: Open gaps shows 3 cards before 'Show all 11 open gaps' (was 4).",
+    "tests/operator/zzz-owner-page.spec.ts: the visible-card assertion expects 3 before Show all and 11 after."
+  ],
+  "preserved": [
+    "All 11 gap cards are still in the page; folded cards stay hidden behind the shared show-more list.",
+    "The owner page is still read only."
+  ],
+  "unit": "screens (document height over viewport height), measured on the verification server with the seeded owner; before = main at 80c6c62, after = this PR",
+  "pageLengthByTab": [
+    { "route": "/operator/owner", "tab": "gaps", "desktop": [1.07, 1.0], "phone": [1.96, 1.68] }
+  ],
+  "pageLengthNote": "At 1440x900 the document is exactly one screen (900 of 900 px) with the content at 758 px, so the tab meets the 1.0 desktop limit. Phone 1.68 is within the 2.0 limit. Other tabs are unchanged: owner Status 1.32 / 2.09, Technical details 1.54 / 1.95.",
+  "stillOver": "Owner Status and Technical details, and all other team tabs (see the 306 record), are still over the 1.0 desktop limit.",
+  "nextAction": "PR-A (G2: sample-invoice payment reversal), then more tab splits for the long panels."
+}
