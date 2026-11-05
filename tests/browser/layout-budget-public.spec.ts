@@ -130,30 +130,25 @@ test.describe('the privacy notice in sections (L-02, L-05)', () => {
     await expect(toggle).toHaveAttribute('aria-pressed', 'false');
     await toggle.click();
     await expect(toggle).toHaveAttribute('aria-pressed', 'true');
-    const all = await page.evaluate(() =>
-      Array.from(document.querySelectorAll<HTMLElement>('section.guide-doc > article')).map(
+    // The page's sections, and the same sections as the server sent them. The server HTML is parsed by the
+    // browser, so no entity is decoded by hand.
+    const all = await page.evaluate((html) => {
+      const text = (node: Element) => (node.textContent ?? '').replace(/\s+/g, ' ').trim();
+      const sent = new DOMParser().parseFromString(html, 'text/html');
+      return Array.from(document.querySelectorAll<HTMLElement>('section.guide-doc > article')).map(
         (a) => ({
           id: a.id,
           visible: a.getBoundingClientRect().height > 0,
-          text: (a.textContent ?? '').replace(/\s+/g, ' ').trim(),
+          text: text(a),
+          sent: text(sent.getElementById(a.id)!),
         }),
-      ),
-    );
+      );
+    }, served);
     expect(all.length).toBeGreaterThan(10);
     for (const article of all) {
       expect(article.visible, `${article.id} is shown`).toBe(true);
-      // Every word the server sent for this section is in the page.
-      const html = served.match(new RegExp(`<article id="${article.id}"[\\s\\S]*?</article>`))![0];
-      const words = html
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/&amp;/g, '&')
-        .replace(/&#x27;|&#39;/g, "'")
-        .replace(/&quot;/g, '"')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .split(' ');
-      for (const word of words)
-        expect(article.text.includes(word), `${article.id}: "${word}"`).toBe(true);
+      // Every word the server sent for this section is in the page, in the same order.
+      expect(article.text, `${article.id}: every word kept`).toBe(article.sent);
     }
     await toggle.click();
     await expect(toggle).toHaveAttribute('aria-pressed', 'false');
