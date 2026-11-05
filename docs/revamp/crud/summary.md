@@ -38,7 +38,7 @@ No business record can be edited or hard deleted. `app.reject_rewrite` triggers 
 
 ## Low severity (examples; full list in the matrix)
 
-Saved mission removal has no confirmation and no audit event; decision card withdraw is one click; series retire has no UI control; notification preferences and attendance have no version check; participant label cannot be edited; the inbox stops at 100 items with no dismiss; a recipient cannot revise a response; discarded drafts list forever.
+Saved mission removal has no confirmation and no audit event; decision card withdraw is one click; notification preferences and attendance have no version check; participant label cannot be edited; the inbox stops at 100 items with no dismiss; a recipient cannot revise a response; discarded drafts list forever. (Correction, 5 Nov: series retire was listed as missing a UI control; S3 found the Retire Series and Restore Series buttons in programme-series.tsx, so that low gap is closed.)
 
 ## Order
 
