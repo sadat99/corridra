@@ -256,3 +256,43 @@ test('the account menu and Help open from the foot of the bar unclipped, also wh
     await page.keyboard.press('Escape');
   }
 });
+
+test('reading aloud started from Help in the bar can be stopped from Help again (Codex review of PR 305)', async ({
+  page,
+}) => {
+  // A browser voice that keeps speaking until it is cancelled, so the test sees the state between.
+  await page.addInitScript(() => {
+    const synth = window.speechSynthesis;
+    const counts = { speak: 0, cancel: 0 };
+    (window as unknown as { __speech: typeof counts }).__speech = counts;
+    synth.speak = () => {
+      counts.speak += 1;
+    };
+    synth.cancel = () => {
+      counts.cancel += 1;
+    };
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/account');
+  const help = leftBar(page).getByRole('button', { name: 'Help', exact: true });
+  await help.click();
+  const sheet = page.getByRole('dialog', { name: 'Need a hand?' });
+  await sheet.getByRole('button', { name: 'Listen to This Page' }).click();
+  const speech = () =>
+    page.evaluate(
+      () => (window as unknown as { __speech: { speak: number; cancel: number } }).__speech,
+    );
+  expect((await speech()).speak).toBe(1);
+  await help.click();
+  const stop = sheet.getByRole('button', { name: 'Stop Reading' });
+  await expect(stop).toHaveAttribute('aria-pressed', 'true');
+  const cancelledBefore = (await speech()).cancel;
+  await stop.click();
+  expect((await speech()).cancel).toBe(cancelledBefore + 1);
+  expect((await speech()).speak).toBe(1);
+  await help.click();
+  await expect(sheet.getByRole('button', { name: 'Listen to This Page' })).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  );
+});

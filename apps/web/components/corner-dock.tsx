@@ -195,14 +195,16 @@ function CornerDockView({ variant }: { variant: 'corner' | 'header' | 'rail' }) 
             See How It Works
           </Link>
           {supported && (
+            // A toggle, so a sheet whose dock has no separate Listen button (header and rail) can also stop it.
             <button
               type="button"
+              aria-pressed={speaking}
               onClick={() => {
                 closeHelp(true);
-                if (!speaking) toggleListen();
+                toggleListen();
               }}
             >
-              Listen to This Page
+              {speaking ? 'Stop Reading' : 'Listen to This Page'}
             </button>
           )}
           <Link prefetch={false} href="/plan" onClick={() => closeHelp(false)}>
