@@ -782,6 +782,24 @@ test('a payment entered in error is reversed once, with a reason, and the invoic
     ).not.toMatch(/wrong|invoice\b.*reason|3390|2000|5390|reason|amount|date/i);
 });
 
+test('the position a command may carry reaches the most an invoice can hold: 500 payments, 500 credits and 500 reversals', () => {
+  const base = {
+    action: 'payment',
+    commandId: randomUUID(),
+    invoiceId: randomUUID(),
+    amountMinor: '100',
+    receivedOn: '2026-10-01',
+    method: 'cash',
+    reference: 'Synthetic cash handover 0002',
+  };
+  expect(staffInvoicingCommandInput.safeParse({ ...base, expectedPosition: 1500 }).success).toBe(
+    true,
+  );
+  expect(staffInvoicingCommandInput.safeParse({ ...base, expectedPosition: 1501 }).success).toBe(
+    false,
+  );
+});
+
 test('two people reversing the same payment at once: exactly one reversal is recorded', async () => {
   const a = await held('example-organiser');
   const inv = await issue(a.sub, { taxMinor: '490' });
