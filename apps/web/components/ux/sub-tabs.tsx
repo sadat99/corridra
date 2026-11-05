@@ -57,6 +57,19 @@ export function revealInSubTabs(element: Element) {
   button?.click();
 }
 
+/**
+ * Opens a named tab of the SubTabs that holds `from`. For an action inside one tab whose result is shown
+ * in another (selecting a mission to review in the Publication tab): the screen then shows the result
+ * instead of changing nothing. Does nothing when `from` is not inside SubTabs or the tab does not exist.
+ */
+export function openSubTab(from: Element | null, id: string) {
+  const root = from?.closest('.ux-subtabs');
+  const tab = Array.from(root?.querySelectorAll<HTMLElement>('[role="tab"][data-tab]') ?? []).find(
+    (button) => button.dataset.tab === id,
+  );
+  tab?.click();
+}
+
 export function SubTabs({
   tabs,
   label,

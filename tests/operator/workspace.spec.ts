@@ -1473,7 +1473,11 @@ test('scoped delivery imports every row, serves client requests and downloads co
     .getByRole('button', { name: 'Review imported mission' })
     .first()
     .click();
-  await openTab(panel, 'Publication');
+  // Choosing a mission to review opens the Publication tab by itself, so the review form is on screen.
+  await expect(panel.getByRole('tab', { name: 'Publication', exact: true })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
   await panel.locator('summary').filter({ hasText: 'Review client publication' }).click();
   await panel.getByLabel('Client title', { exact: true }).fill('Reviewed delivery progress');
   await panel.getByLabel('Approved company name').fill('Synthetic Browser Cohort');

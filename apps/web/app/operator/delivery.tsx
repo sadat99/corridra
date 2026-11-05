@@ -1,5 +1,5 @@
 'use client';
-import { SubTabs } from '../../components/ux/sub-tabs';
+import { SubTabs, openSubTab } from '../../components/ux/sub-tabs';
 import { PhoneFold } from '../../components/phone-fold';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import {
@@ -512,7 +512,14 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                       {data.participants.map((p) => (
                         <li key={p.id}>
                           {p.reference}: {p.company} · {p.status.toLowerCase().replaceAll('_', ' ')}{' '}
-                          <button onClick={() => setMissionId(p.mission_id)}>Review mission</button>
+                          <button
+                            onClick={(event) => {
+                              setMissionId(p.mission_id);
+                              openSubTab(event.currentTarget, 'publication');
+                            }}
+                          >
+                            Review mission
+                          </button>
                         </li>
                       ))}
                     </ul>
@@ -605,7 +612,12 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                                   <li key={r.row}>
                                     Row {r.row}: {r.reference || 'Empty'} · {r.result.toLowerCase()}{' '}
                                     {r.missionId && (
-                                      <button onClick={() => setMissionId(r.missionId!)}>
+                                      <button
+                                        onClick={(event) => {
+                                          setMissionId(r.missionId!);
+                                          openSubTab(event.currentTarget, 'publication');
+                                        }}
+                                      >
                                         Review imported mission
                                       </button>
                                     )}

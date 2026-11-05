@@ -794,13 +794,13 @@
   }
   .ux-workspace-body
     #workspace-delivery
-    :is(section.delivery-ops, .ux-subtabs-panel)
+    :is(section.delivery-ops, .ux-subtabs-panel:not([hidden]))
     > details.phone-fold[data-phone-fold='phone'] {
     border: 0;
   }
   .ux-workspace-body
     #workspace-delivery
-    :is(section.delivery-ops, .ux-subtabs-panel)
+    :is(section.delivery-ops, .ux-subtabs-panel:not([hidden]))
     > details.phone-fold[data-phone-fold='phone']
     > :not(summary) {
     margin-inline: 0;
@@ -1242,7 +1242,7 @@
 @media (min-width: 64rem) {
   .ux-workspace-body
     #workspace-delivery
-    :is(section.delivery-ops, details.phone-fold > section, .ux-subtabs-panel) {
+    :is(section.delivery-ops, details.phone-fold > section, .ux-subtabs-panel:not([hidden])) {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: var(--space-4);
@@ -1251,14 +1251,14 @@
   }
   .ux-workspace-body
     #workspace-delivery
-    :is(section.delivery-ops, details.phone-fold > section, .ux-subtabs-panel)
+    :is(section.delivery-ops, details.phone-fold > section, .ux-subtabs-panel:not([hidden]))
     > * {
     grid-column: 1 / -1;
     margin-block: 0;
   }
   .ux-workspace-body
     #workspace-delivery
-    :is(section.delivery-ops, details.phone-fold > section, .ux-subtabs-panel)
+    :is(section.delivery-ops, details.phone-fold > section, .ux-subtabs-panel:not([hidden]))
     > :is(details:not([open]):not(.phone-fold), section.detail-card) {
     grid-column: auto;
   }
@@ -1266,7 +1266,7 @@
 @media (min-width: 64rem) {
   .ux-workspace-body
     #workspace-delivery
-    :is(section.delivery-ops, details.phone-fold > section, .ux-subtabs-panel)
+    :is(section.delivery-ops, details.phone-fold > section, .ux-subtabs-panel:not([hidden]))
     > :is(button, a) {
     justify-self: start;
   }
@@ -1295,20 +1295,20 @@
 @media (min-width: 64rem) {
   .ux-workspace-body
     #workspace-delivery
-    :is(section.delivery-ops, details.phone-fold > section, .ux-subtabs-panel)
+    :is(section.delivery-ops, details.phone-fold > section, .ux-subtabs-panel:not([hidden]))
     > :is(details:not([open]):not(.phone-fold)):first-child:not(
       :has(+ :is(details:not([open]):not(.phone-fold)))
     ),
   .ux-workspace-body
     #workspace-delivery
-    :is(section.delivery-ops, details.phone-fold > section, .ux-subtabs-panel)
+    :is(section.delivery-ops, details.phone-fold > section, .ux-subtabs-panel:not([hidden]))
     > :not(:is(details:not([open]):not(.phone-fold)))
     + :is(details:not([open]):not(.phone-fold)):not(
       :has(+ :is(details:not([open]):not(.phone-fold)))
     ),
   .ux-workspace-body
     #workspace-delivery
-    :is(section.delivery-ops, details.phone-fold > section, .ux-subtabs-panel)
+    :is(section.delivery-ops, details.phone-fold > section, .ux-subtabs-panel:not([hidden]))
     > :is(details:not([open]):not(.phone-fold)):first-child
     + :is(details:not([open]):not(.phone-fold))
     + :is(details:not([open]):not(.phone-fold)):not(
@@ -1316,7 +1316,7 @@
     ),
   .ux-workspace-body
     #workspace-delivery
-    :is(section.delivery-ops, details.phone-fold > section, .ux-subtabs-panel)
+    :is(section.delivery-ops, details.phone-fold > section, .ux-subtabs-panel:not([hidden]))
     > :not(:is(details:not([open]):not(.phone-fold)))
     + :is(details:not([open]):not(.phone-fold))
     + :is(details:not([open]):not(.phone-fold))
@@ -1325,7 +1325,7 @@
     ),
   .ux-workspace-body
     #workspace-delivery
-    :is(section.delivery-ops, details.phone-fold > section, .ux-subtabs-panel)
+    :is(section.delivery-ops, details.phone-fold > section, .ux-subtabs-panel:not([hidden]))
     > :not(:is(details:not([open]):not(.phone-fold)))
     + :is(details:not([open]):not(.phone-fold))
     + :is(details:not([open]):not(.phone-fold))
@@ -1336,7 +1336,7 @@
     ),
   .ux-workspace-body
     #workspace-delivery
-    :is(section.delivery-ops, details.phone-fold > section, .ux-subtabs-panel)
+    :is(section.delivery-ops, details.phone-fold > section, .ux-subtabs-panel:not([hidden]))
     > :not(:is(details:not([open]):not(.phone-fold)))
     + :is(details:not([open]):not(.phone-fold))
     + :is(details:not([open]):not(.phone-fold))
