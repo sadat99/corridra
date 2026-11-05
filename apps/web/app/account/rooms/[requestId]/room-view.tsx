@@ -11,6 +11,8 @@ import { CorridraIcon } from '../../../../components/corridra-icon';
 import { useLanguage } from '../../../../components/language-provider';
 import { ModeLabel, StageBar, mrLabelsFor } from '../../../../components/mr';
 import { SourceLedger } from '../../../../components/source-ledger';
+import { SellBoard } from '../../../../components/sell-board';
+import { sellFacts } from '../../../../lib/home-journeys/facts';
 import { fill } from '../../../../lib/i18n/fill';
 import { localeMeta } from '../../../../lib/i18n/locales';
 import { translate, type MessageKey } from '../../../../lib/i18n/messages';
@@ -36,6 +38,13 @@ const sourceLensWords: Record<Lens, string> = {
   compare: 'Compare Quotes',
   evidence: 'Evidence',
   trip: 'Visit',
+};
+// The approved Sell room: the buyers, then the meetings (owner, 5 Nov 2026).
+const sellLensWords: Record<Lens, string> = {
+  overview: 'Overview',
+  compare: 'Buyers',
+  evidence: 'Evidence',
+  trip: 'Meetings',
 };
 const journeyWords = { SOURCE: 'Sourcing', SELL: 'Selling', ORGANISE: 'Organising' } as const;
 const journeyKey = { SOURCE: 'source', SELL: 'sell', ORGANISE: 'organise' } as const;
@@ -114,30 +123,56 @@ export function RoomView({
   const quotes = experience
     ? experience.quotations.filter((q) => isCurrentOffer(experience, q))
     : [];
-  const lensWords = (item: Lens) => (source ? sourceLensWords[item] : say(lensKey[item]));
+  const sell = family === 'SELL';
+  const mission = report.data?.missions[0] ?? null;
+  const board = sell && experience ? sellFacts([experience]) : null;
+  const lensWords = (item: Lens) =>
+    source ? sourceLensWords[item] : sell ? sellLensWords[item] : say(lensKey[item]);
   const lensLang = (item: Lens) =>
-    (source || item === 'trip') && locale !== 'en' ? 'en' : undefined;
-  const next: { words: string; small: string; act: 'compare' | 'library' | 'help' | 'request' } =
-    lenses && quotes.length > 0
+    (source || sell || item === 'trip') && locale !== 'en' ? 'en' : undefined;
+  const next: {
+    words: string;
+    small: string;
+    act: 'compare' | 'lens' | 'library' | 'help' | 'request';
+    lens?: Lens;
+    label?: string;
+  } =
+    lenses && board && board.proposed > 0
       ? {
-          words: `Compare ${quotes.length === 1 ? 'the quote' : `${quotes.length} quotes`}`,
-          small:
-            'See how each supplier is backed and what is missing, then tell us which to visit.',
-          act: 'compare',
+          words: `Review ${board.proposed === 1 ? 'the proposed meeting' : `${board.proposed} proposed meetings`}`,
+          small: 'Tell the Corridra team which times work for you.',
+          act: 'lens',
+          lens: trip ? 'trip' : 'compare',
+          label: trip ? 'See Meetings' : 'See Buyers',
         }
-      : hasReport && !link.savedResourceId
+      : lenses && board && board.shortlisted > 0
         ? {
-            words: 'Your report is ready',
-            small: 'Save it from your Library to read and compare it here.',
-            act: 'library',
+            words: `Review ${board.shortlisted === 1 ? 'the shortlisted buyer' : `${board.shortlisted} shortlisted buyers`}`,
+            small: 'See how each buyer fits and how it is backed, then tell us whom to meet.',
+            act: 'lens',
+            lens: 'compare',
+            label: 'See Buyers',
           }
-        : {
-            words: subline ?? 'The Corridra team is working on your request',
-            small: replies[0]
-              ? `Latest reply ${day(replies[0].createdAt)}.`
-              : 'The Corridra team will tell you here when something needs you.',
-            act: serviceRequestsEnabled ? 'help' : 'request',
-          };
+        : !sell && lenses && quotes.length > 0
+          ? {
+              words: `Compare ${quotes.length === 1 ? 'the quote' : `${quotes.length} quotes`}`,
+              small:
+                'See how each supplier is backed and what is missing, then tell us which to visit.',
+              act: 'compare',
+            }
+          : hasReport && !link.savedResourceId
+            ? {
+                words: 'Your report is ready',
+                small: 'Save it from your Library to read and compare it here.',
+                act: 'library',
+              }
+            : {
+                words: subline ?? 'The Corridra team is working on your request',
+                small: replies[0]
+                  ? `Latest reply ${day(replies[0].createdAt)}.`
+                  : 'The Corridra team will tell you here when something needs you.',
+                act: serviceRequestsEnabled ? 'help' : 'request',
+              };
 
   // Everything the report page shows for the comparison stays one tap away: the requirement, the shortlist,
   // every offer with its evidence lens, the cards and the original table.
@@ -163,8 +198,19 @@ export function RoomView({
         : lens;
 
   const lensItems: Lens[] = trip
-    ? ['overview', 'compare', 'evidence', 'trip']
+    ? sell
+      ? ['overview', 'compare', 'trip', 'evidence']
+      : ['overview', 'compare', 'evidence', 'trip']
     : ['overview', 'compare', 'evidence'];
+  const lensCount = (item: Lens) => {
+    if (item === 'compare') {
+      const n = sell ? (experience?.shortlist.length ?? 0) : quotes.length;
+      return n > 0 ? n : undefined;
+    }
+    if (item === 'trip' && sell && mission && mission.itinerary.length > 0)
+      return mission.itinerary.length;
+    return undefined;
+  };
 
   return (
     <div
@@ -237,7 +283,7 @@ export function RoomView({
               <span>{next.small}</span>
             </span>
             <span className="room-next-actions">
-              {next.act === 'compare' && serviceRequestsEnabled ? (
+              {(next.act === 'compare' || next.act === 'lens') && serviceRequestsEnabled ? (
                 <Link prefetch={false} className="text-link" href={helpHref}>
                   Ask a Question
                 </Link>
@@ -249,6 +295,14 @@ export function RoomView({
                   onClick={() => setLens('compare')}
                 >
                   Compare Quotes
+                </button>
+              ) : next.act === 'lens' ? (
+                <button
+                  type="button"
+                  className="button button-primary"
+                  onClick={() => setLens(next.lens ?? 'compare')}
+                >
+                  {next.label}
                 </button>
               ) : next.act === 'library' ? (
                 <Link
@@ -282,7 +336,7 @@ export function RoomView({
                   type="button"
                   className="room-lens"
                   aria-pressed={lens === item}
-                  data-count={item === 'compare' && quotes.length > 0 ? quotes.length : undefined}
+                  data-count={lensCount(item)}
                   onClick={() => setLens(item)}
                 >
                   {/* An English word until native review (D16), marked so it is read as English. */}
@@ -320,7 +374,15 @@ export function RoomView({
               {report.status === 'loading' && <p role="status">Opening your approved report…</p>}
               {report.status === 'ready' &&
                 (experience ? (
-                  <SourceLedger experience={experience} language={locale} more={fullToggle} />
+                  sell ? (
+                    <SellBoard
+                      experience={experience}
+                      outcomes={mission?.outcomes ?? null}
+                      more={fullToggle}
+                    />
+                  ) : (
+                    <SourceLedger experience={experience} language={locale} more={fullToggle} />
+                  )
                 ) : (
                   <>
                     <p className="ux-empty" role="status">

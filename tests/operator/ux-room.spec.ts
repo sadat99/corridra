@@ -306,6 +306,65 @@ test('shows who and what the request is, where it stands and what the team said'
   await expect(page.getByText('We have shortlisted three suppliers.')).toBeVisible();
 });
 
+// Approved work rooms (owner, 5 Nov 2026): a selling request names its views for selling, says the one next
+// step from the report's own agenda, and shows where the buyers stand without tying a meeting to a buyer.
+test('a selling request opens on its buyers and meetings, with the proposed meetings as the next step', async ({
+  page,
+}) => {
+  const body = reportBody([
+    { label: 'Meeting with Lantern Cutting Works', status: 'PROPOSED', scheduleChanged: false },
+  ]);
+  const e = body.report.missions[0].experience;
+  e.quotations = [];
+  e.agenda = [
+    {
+      id: 'a1',
+      itemId: 'a1',
+      version: 1,
+      label: 'Buyer meeting',
+      state: 'PROPOSED',
+      nextAction: 'Confirm a time',
+      dueAt: '2026-11-12T00:00:00Z',
+      responsibility: 'Team',
+      meetings: [],
+    },
+  ] as never;
+  await open(
+    page,
+    { trip: true },
+    {
+      body: detail({
+        original: {
+          objective: 'Find customers or distributors',
+          market: 'ES',
+          companyCountry: 'BD',
+        },
+      }),
+    },
+    { body },
+  );
+  await expect(page.locator('.room-tag')).toHaveText('Selling');
+  await expect(page.locator('.room-route')).toHaveText('Bangladesh → Spain');
+  await expect(page.locator('.room-lenses button')).toHaveText([
+    'Overview',
+    'Buyers',
+    'Meetings',
+    'Evidence',
+  ]);
+  const next = page.getByRole('region', { name: 'Your next step' });
+  await expect(next).toContainText('Review the proposed meeting');
+  await next.getByRole('button', { name: 'See Meetings' }).click();
+  await expect(lens(page, 'Meetings')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('heading', { name: 'Your meetings and visits' })).toBeVisible();
+  await lens(page, 'Buyers').click();
+  const funnel = page.getByRole('definition');
+  await expect(page.locator('.sellb-funnel > div')).toHaveCount(5);
+  await expect(funnel.first()).toHaveText('2');
+  const table = page.locator('.sellb-table');
+  await expect(table.getByRole('rowheader')).toHaveCount(2);
+  await expect(table.locator('thead th')).toHaveText(['Buyer', 'Fit', 'How it is backed']);
+});
+
 test('keeps every original action one tap away', async ({ page }) => {
   await open(page);
   await expect(page.getByRole('link', { name: 'Open the saved request' })).toHaveAttribute(
