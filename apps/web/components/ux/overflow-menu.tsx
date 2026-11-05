@@ -3,7 +3,6 @@
 // has aria-haspopup and aria-expanded; the menu has role menu and its rows are menuitem or menuitemradio.
 // Enter, Space and the arrow keys open it and move through it, Home and End jump, Escape closes it and puts
 // focus back on the button, Tab and a click outside close it, and choosing a link closes it.
-import Link from 'next/link';
 import {
   useEffect,
   useId,
@@ -124,14 +123,14 @@ export function OverflowMenu({
   );
 }
 
-export function MenuLink({ href, children }: { href: string; children: ReactNode }) {
+/** A plain anchor row, for a page that links with ordinary addresses (a full page load, as before). */
+export function MenuAnchor({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Link prefetch={false} role="menuitem" tabIndex={-1} className="ux-menu-row" href={href}>
+    <a role="menuitem" tabIndex={-1} className="ux-menu-row" href={href}>
       {children}
-    </Link>
+    </a>
   );
 }
-
 export function MenuButton({
   children,
   ...rest

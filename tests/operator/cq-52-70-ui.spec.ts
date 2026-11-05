@@ -106,80 +106,66 @@ async function openWorkspaces(page: Page, props: Record<string, boolean>) {
   await expect(page.getByRole('heading', { name: 'Workspaces', exact: true })).toBeVisible();
   await expect(page.getByText('Synthetic Dhaka Knits', { exact: true })).toBeVisible();
 }
-const card = (page: Page, name: string) =>
-  page
-    .getByRole('listitem')
-    .filter({ has: page.locator('.guide-actions-row') })
-    .filter({
-      hasText: name,
-    });
+const menuFor = async (page: Page, name: string) => {
+  await page.getByRole('button', { name: 'Actions for ' + name }).click();
+  return page.getByRole('menu', { name: 'Actions for ' + name });
+};
 const linkPairs = (links: Locator) =>
   links.evaluateAll((nodes) =>
     nodes.map((node) => [node.textContent?.trim(), node.getAttribute('href')]),
   );
 
-test('CQ-52: each workspace card shows one primary action and keeps every other action in More', async ({
+test('CQ-52: each workspace row keeps every action in one menu, the first being New Request', async ({
   page,
 }) => {
   await openWorkspaces(page, allSwitches);
-  // Owner: all six original actions are reachable, one of them as the primary action.
-  const owner = card(page, 'Synthetic Dhaka Knits');
-  const actions = owner.locator('.guide-actions-row');
-  await expect(actions.locator('.primary-link')).toHaveCount(1);
-  // The primary action is the only link outside the More menu.
-  await expect(actions.locator(':scope > a')).toHaveCount(1);
-  await expect(actions.locator(':scope > a')).toHaveAttribute('href', '/account/drafts/' + ownerId);
-  await expect(actions.locator(':scope > a')).toHaveText('New Request in Synthetic Dhaka Knits');
-  const more = actions.locator('details.ux-more-menu');
-  await expect(more).toHaveCount(1);
-  await expect(more.locator('summary')).toHaveText('More for Synthetic Dhaka Knits');
-  // Closed: none of the extras can be seen or reached.
-  await expect(more).not.toHaveAttribute('open', '');
-  await expect(more.getByRole('link', { name: 'Plan and billing' })).toBeHidden();
-  await more.locator('summary').click();
-  await expect(more.getByRole('link', { name: 'Plan and billing' })).toBeVisible();
-  expect(await linkPairs(more.locator('a'))).toEqual([
-    ['Continue a saved draft', '/account/drafts/' + ownerId],
-    ['Send a private request', '/account/request/' + ownerId],
-    ['Edit company profile', '/account/profile/' + ownerId],
-    ['Plan delegations', '/account/delegations/' + ownerId],
-    ['Paid-service requests', '/account/service-requests/' + ownerId],
-    ['Plan and billing', '/account/billing/' + ownerId],
+  // Closed: none of the actions can be seen or reached, and no link sits outside the menu.
+  const row = page.getByRole('row').filter({ hasText: 'Synthetic Dhaka Knits' });
+  await expect(row.getByRole('link')).toHaveCount(0);
+  await expect(page.getByRole('menu', { name: 'Actions for Synthetic Dhaka Knits' })).toBeHidden();
+  // Owner: all the original actions are reachable, New Request first, then Manage Team.
+  const owner = await menuFor(page, 'Synthetic Dhaka Knits');
+  await expect(owner.getByRole('menuitem', { name: 'Plan and Billing' })).toBeVisible();
+  expect(await linkPairs(owner.locator('a'))).toEqual([
+    ['New Request', '/account/drafts/' + ownerId],
+    ['Continue a Saved Draft', '/account/drafts/' + ownerId],
+    ['Send a Private Request', '/account/request/' + ownerId],
+    ['Edit Company Profile', '/account/profile/' + ownerId],
+    ['Plan Delegations', '/account/delegations/' + ownerId],
+    ['Paid-Service Requests', '/account/service-requests/' + ownerId],
+    ['Plan and Billing', '/account/billing/' + ownerId],
   ]);
-  // Member: the same card, with the actions a member may use (view the profile, no delegations).
-  const member = card(page, 'Synthetic Chattogram Dyers').locator('.guide-actions-row');
-  await expect(member.locator('.primary-link')).toHaveCount(1);
-  await expect(member.locator(':scope > a')).toHaveCount(1);
-  await member.locator('details.ux-more-menu > summary').click();
-  expect(await linkPairs(member.locator('details.ux-more-menu a'))).toEqual([
-    ['Continue a saved draft', '/account/drafts/' + memberId],
-    ['Send a private request', '/account/request/' + memberId],
-    ['View company profile', '/account/profile/' + memberId],
-    ['Paid-service requests', '/account/service-requests/' + memberId],
-    ['Plan and billing', '/account/billing/' + memberId],
+  await expect(owner.getByRole('menuitem', { name: 'Manage Team' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(owner).toBeHidden();
+  // Member: the same row, with the actions a member may use (view the profile, no delegations).
+  const member = await menuFor(page, 'Synthetic Chattogram Dyers');
+  expect(await linkPairs(member.locator('a'))).toEqual([
+    ['New Request', '/account/drafts/' + memberId],
+    ['Continue a Saved Draft', '/account/drafts/' + memberId],
+    ['Send a Private Request', '/account/request/' + memberId],
+    ['View Company Profile', '/account/profile/' + memberId],
+    ['Paid-Service Requests', '/account/service-requests/' + memberId],
+    ['Plan and Billing', '/account/billing/' + memberId],
   ]);
-  // Only the card's actions carry the primary style: the whole list has one per card plus the create button.
-  await expect(page.locator('.guide-actions-row .primary-link')).toHaveCount(2);
+  await expect(member.getByRole('menuitem', { name: 'Manage Team' })).toHaveCount(0);
 });
 
-test('CQ-52: with saved drafts off the primary action is the request form and a lone action needs no More', async ({
+test('CQ-52: with saved drafts off New Request is the request form and extras that are on follow it', async ({
   page,
 }) => {
   await openWorkspaces(page, { requestsEnabled: true });
-  const owner = card(page, 'Synthetic Dhaka Knits').locator('.guide-actions-row');
-  await expect(owner.locator('.primary-link')).toHaveCount(1);
-  await expect(owner.locator(':scope > a')).toHaveAttribute('href', '/account/request/' + ownerId);
-  await expect(owner.locator('details.ux-more-menu')).toHaveCount(0);
+  const owner = await menuFor(page, 'Synthetic Dhaka Knits');
+  expect(await linkPairs(owner.locator('a'))).toEqual([
+    ['New Request', '/account/request/' + ownerId],
+  ]);
   await page.unroute('**/api/customer-workspaces');
   await page.unroute('**/api/customer-workspace-access*');
-  // The request form stays primary and the extras that are on appear in More, none outside it.
   await openWorkspaces(page, { requestsEnabled: true, billingEnabled: true });
-  const billed = card(page, 'Synthetic Dhaka Knits').locator('.guide-actions-row');
-  await expect(billed.locator(':scope > a')).toHaveCount(1);
-  await expect(billed.locator(':scope > a')).toHaveAttribute('href', '/account/request/' + ownerId);
-  await billed.locator('details.ux-more-menu > summary').click();
-  expect(await linkPairs(billed.locator('details.ux-more-menu a'))).toEqual([
-    ['Plan and billing', '/account/billing/' + ownerId],
+  const billed = await menuFor(page, 'Synthetic Dhaka Knits');
+  expect(await linkPairs(billed.locator('a'))).toEqual([
+    ['New Request', '/account/request/' + ownerId],
+    ['Plan and Billing', '/account/billing/' + ownerId],
   ]);
 });
 

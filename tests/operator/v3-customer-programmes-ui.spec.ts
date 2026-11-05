@@ -368,14 +368,25 @@ test('planning entry stays contextual to current owner/admin workspace cards and
     }),
   );
   await page.goto(origin + '/?mode=workspaces&enabled=true');
-  // UX-07: secondary workspace actions sit in each workspace's More menu.
-  await expect(page.locator('details.ux-more-menu > summary')).toHaveCount(2);
-  for (const more of await page.locator('details.ux-more-menu > summary').all()) await more.click();
-  const links = page.getByRole('link', { name: 'Plan delegations' });
-  await expect(links).toHaveCount(2);
-  await expect(links.nth(0)).toHaveAttribute('href', '/account/delegations/' + ids[0]);
-  await expect(links.nth(1)).toHaveAttribute('href', '/account/delegations/' + ids[1]);
-  await page.getByText('Manage team', { exact: true }).click();
+  // Workspace actions sit in each row's actions menu; planning shows for the owner and the admin only.
+  const planFor = async (role: string) => {
+    await page
+      .getByRole('button', { name: 'Actions for Synthetic ' + role + ' workspace' })
+      .click();
+    return page
+      .getByRole('menu', { name: 'Actions for Synthetic ' + role + ' workspace' })
+      .getByRole('menuitem', { name: 'Plan Delegations' });
+  };
+  await expect(await planFor('owner')).toHaveAttribute('href', '/account/delegations/' + ids[0]);
+  await page.keyboard.press('Escape');
+  await expect(await planFor('admin')).toHaveAttribute('href', '/account/delegations/' + ids[1]);
+  await page.keyboard.press('Escape');
+  // A member has no planning action, so with only planning on the member row has no menu at all.
+  await expect(
+    page.getByRole('button', { name: 'Actions for Synthetic member workspace' }),
+  ).toHaveCount(0);
+  await page.getByRole('button', { name: 'Actions for Synthetic owner workspace' }).click();
+  await page.getByRole('menuitem', { name: 'Manage Team' }).click();
   await expect(page.getByText('No sample invitations on this page.')).toBeVisible();
   await page.goto(origin + '/?mode=workspaces&enabled=false');
   await expect(page.getByText('Synthetic owner workspace', { exact: true })).toBeVisible();

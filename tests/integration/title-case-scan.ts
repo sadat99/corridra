@@ -39,7 +39,7 @@ export function customerFiles(root = process.cwd()): string[] {
 }
 
 const elements =
-  /<(button|Link|a|MenuLink|MenuButton|MenuRadio)\b((?:[^>{]|\{[^}]*\})*)>([\s\S]*?)<\/\1>/g;
+  /<(button|Link|a|MenuLink|MenuAnchor|MenuButton|MenuRadio)\b((?:[^>{]|\{[^}]*\})*)>([\s\S]*?)<\/\1>/g;
 const buttonLike = (tag: string, attrs: string) =>
   tag === 'button' ||
   tag.startsWith('Menu') ||

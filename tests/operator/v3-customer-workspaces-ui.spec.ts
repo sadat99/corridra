@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { build } from 'esbuild';
 import { createServer, type Server } from 'node:http';
 import { readFile, mkdir } from 'node:fs/promises';
@@ -70,6 +70,15 @@ test.afterAll(async () => {
   }
 });
 
+// Creating a workspace happens in a dialog opened from the list. A saved retry opens it by itself.
+async function openCreate(page: Page) {
+  await expect(page.getByRole('button', { name: 'Refresh workspaces', exact: true })).toBeVisible();
+  const form = page.getByRole('form', { name: 'Create a workspace' });
+  if (!(await form.isVisible()))
+    await page.getByRole('button', { name: 'Create a Workspace', exact: true }).first().click();
+  await expect(form).toBeVisible();
+}
+
 const row = (name: string) => ({
   id: randomUUID(),
   name,
@@ -119,7 +128,7 @@ test('customer workspace UI preserves one command through loading, duplicate sub
   await expect(
     page.getByText('No workspaces yet. Create your first one below.', { exact: true }),
   ).toBeVisible();
-  await page.getByRole('button', { name: 'Create Workspace', exact: true }).click();
+  await openCreate(page);
   expect(posts).toHaveLength(0);
   const name = page.getByLabel('Workspace name', { exact: true });
   await name.fill('Lost acknowledgement');
@@ -241,6 +250,7 @@ test('customer workspace drafts and responses stay scoped to the mounted issuer 
     else await route.fulfill({ json: record });
   });
   await page.goto(origin);
+  await openCreate(page);
   await page.getByLabel('Workspace name', { exact: true }).fill('Alice draft');
   await page.getByRole('button', { name: 'Create Workspace', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Creation was not confirmed');
@@ -249,6 +259,7 @@ test('customer workspace drafts and responses stay scoped to the mounted issuer 
   await expect(page.getByRole('alert')).toContainText('Your account or saved request changed');
   await expect(page.getByRole('form', { name: 'Create a workspace' })).toHaveCount(0);
   await page.goto(origin + '/?subject=synthetic-bob');
+  await openCreate(page);
   await expect(page.getByLabel('Workspace name', { exact: true })).toBeEmpty();
   await expect(page.getByText('Alice draft', { exact: true })).toHaveCount(0);
   await expect(
@@ -272,6 +283,7 @@ test('customer workspace drafts and responses stay scoped to the mounted issuer 
   await expect(page.getByRole('alert')).toContainText('Your account or saved request changed');
   await expect(page.getByRole('form', { name: 'Create a workspace' })).toHaveCount(0);
   await page.goto(origin + '/?issuer=' + encodeURIComponent(currentIssuer));
+  await openCreate(page);
   await expect(page.getByLabel('Workspace name', { exact: true })).toBeEmpty();
   await expect(
     page.getByRole('button', { name: 'Retry Workspace Creation', exact: true }),
@@ -306,12 +318,16 @@ test('customer workspace UI sends no mutation when retry storage fails and does 
     }
   });
   await page.goto(origin);
+  await openCreate(page);
   await page.getByLabel('Workspace name', { exact: true }).fill('Storage failure');
   await page.getByRole('button', { name: 'Create Workspace', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('No workspace request was sent');
   expect(posts).toBe(0);
   await page.evaluate(() => Reflect.get(window, 'allowSyntheticStorage')());
+  // The list behind the dialog cannot be used while it is open; close it, refresh, and open it again.
+  await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Refresh workspaces', exact: true }).click();
+  await openCreate(page);
   await page.getByRole('button', { name: 'Create Workspace', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Creation was not confirmed');
   expect(posts).toBe(1);

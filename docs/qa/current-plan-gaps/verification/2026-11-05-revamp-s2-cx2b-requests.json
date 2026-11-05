@@ -1,0 +1,40 @@
+{
+  "recordedOn": "2026-11-05",
+  "batch": "Revamp S2 Customer Work: CX PR 2b, the Requests page on the shared sub-tabs, the segmented filter, row-link rows, the workspaces table with a row menu, and the Create, Join, Team and Leave dialogs",
+  "kind": "Requests to docs/revamp/specs/customer-experience.md; uses the shared SubTabs, RowList, SegmentedFilter, Dialog and OverflowMenu in components/ux (S4 owns sub-tabs; nothing forked).",
+  "findings": [],
+  "findingsNote": "No gap is created or changed. No route, table, migration, switch, provider, payment or write is added.",
+  "status": "Built on branch revamp/customer over main 74b3681d (PR 300). CI on the exact pushed head is the verifier; see the pull request for its result.",
+  "newFiles": [
+    "apps/web/app/account/requests-tabs.tsx (Requests, Workspaces, Saved tabs; old #work-list, #customer-workspaces and #customer-requests links still land)",
+    "apps/web/app/account/work-filter.tsx (the filter applies at once and keeps other query words; a no-script GET form stays as the fallback)",
+    "apps/web/app/account/workspace-table.css",
+    "apps/web/components/ux/menu-link.tsx (MenuLink split out of overflow-menu so a plain anchor row, MenuAnchor, needs no next/link)",
+    "tests/integration/revamp-cx2b-requests.test.ts (8)",
+    "tests/operator/revamp-cx2b-requests.spec.ts (12: CX-01 length with six requests, CX-04 tabs and filter, CX-05 axe at 390 and 1440), revamp-cx2b-workspaces.spec.ts (5: CX-05 menu and dialogs by keyboard, Escape and focus return, axe, CX-07 screenshots)",
+    "docs/design-system/evidence/revamp-cx2b (after screenshots; the before images are revamp-cx2/before)"
+  ],
+  "changedFiles": [
+    "apps/web/app/account/page.tsx: the Requests view is RequestsTabs; ids my-work, customer-workspaces, customer-requests and 'Manage your work' are kept",
+    "apps/web/app/account/work-list.tsx and work-rows.tsx: rows are one link each (RowLink), first ten rows and a Show more button",
+    "apps/web/app/account/customer-workspaces.tsx: a table, one actions menu per row (New Request, Continue a Saved Draft, Send a Private Request, Edit or View Company Profile, Plan Delegations, Paid-Service Requests, Plan and Billing, Manage Team, Leave Workspace); Create and Join are dialogs; Team and Leave open in dialogs from the menu. A saved creation retry opens the Create dialog by itself so it is never out of sight",
+    "customer-workspace-team.tsx, customer-workspace-leave.tsx, customer-workspace-invitation.tsx: optional bare, open, startAsking and onCancel modes; defaults and every request they send are unchanged",
+    "components/ux row-list, dialog (keepMounted, Tab wrap), segmented-filter (count may be text), overflow-menu, customer-bar (MenuLink import)"
+  ],
+  "decisions": {
+    "tests": "Ten existing operator specs followed the new interactions with the same assertions: the action row and More menu became the row menu, 'Manage team' became a menu item that opens the Team dialog, 'Join a workspace' became a button that opens the dialog, the create form sits in the Create dialog. Two specs use exact text matching because the mounted Team dialog title repeats the workspace name. cq-52-70-ui.spec.ts CQ-52 now asserts the same link pairs from the menu (New Request first). No assertion was weakened, skipped or deleted.",
+    "tabs": "A link whose target is in another tab opens that tab itself (tested by clicking, with no manual tab click). No panel is given a display value by id, so [hidden] holds.",
+    "dialogLock": "Review finding on PR 307 (Codex P2, then the Conductor's wider ask): a dialog that sends a command cannot be dismissed while the request is in flight. The shared Dialog has a locked mode (Escape, Close and the dimmed area do nothing, Close is disabled with a Working note, and a browser that closes on a second Escape has the dialog shown again). Leave, Join, Team and Create tell it in the same step the request starts and ends, so the answer is reconciled before the dialog's state goes. Leave stays mounted. A browser test per sending dialog holds the request, tries Escape, Close and the dimmed area, releases it and asserts the result (Leave removes the row) and where focus goes: the confirmation message takes focus as before, or the row menu button for Team. Written after the finding; the Leave case failed before the fix.",
+    "manage": "'Manage your work' stays on the Workspaces tab in this PR; moving it to Account is PR 3."
+  },
+  "receipts": {
+    "operator": "The ten workspace specs, cq-52-70, member-roles, workspace-team, workspace-invitation, organisation-links, customer-workspaces, programmes, billing, service-requests and wave6, plus the two new specs: all pass after the edits (first full run 113 passed, 26 old-interaction failures, then fixed and re-run).",
+    "length": "CX-01 Requests is held in customer-page-length.spec.ts (empty state, 1.0 screen at 390 and 1440 on a production build) and in the operator fixture with six requests (fits 1 screen at 1440 x 900 and 2 at 390 x 844 with a 56 px bar allowance)."
+  },
+  "notRun": [
+    "Requests with real workspaces on a production build: the verification seed has none; the table is measured through the fixture.",
+    "A screen reader walk-through of the row menu and dialogs.",
+    "The Team, Leave and Join flows against the real database: they use the same components and requests as before and keep their existing operator specs."
+  ],
+  "sensitive": "Yes, for review only: the Team, Leave and Join controls moved into dialogs. Their requests, authority checks and copy are unchanged; no new write, route or authority."
+}

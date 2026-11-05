@@ -2,8 +2,8 @@ import { test, expect, signInCustomer } from '../fixtures';
 import { measure, viewports } from '../../../ux/page-length-lib';
 
 // CX-01 (docs/revamp/specs/customer-experience.md): a customer page is at most 1.0 screen at 1440 x 900 and
-// at most 2.0 screens at 390 x 844. Home is held to it from CX PR 2a; the other pages are held to it in the
-// PRs that rebuild them (Requests in 2b, Companies, Reports and Account in PR 3), so they are reported here
+// at most 2.0 screens at 390 x 844. Home is held to it from CX PR 2a and Requests from 2b; the other pages are held to it in the
+// PRs that rebuild them (Companies, Reports and Account in PR 3), so they are reported here
 // and not failed. The verification seed has no requests, so this measures the empty state; the filled
 // state (five active-work rows) is measured in tests/operator/revamp-cx2-home.spec.ts.
 test.beforeEach(({}, info) => {
@@ -12,7 +12,7 @@ test.beforeEach(({}, info) => {
 
 const pages = [
   { name: 'Home', url: '/account', held: true },
-  { name: 'Requests', url: '/account?view=work', held: false },
+  { name: 'Requests', url: '/account?view=work', held: true },
   { name: 'Reports', url: '/account?view=results', held: false },
   { name: 'Account', url: '/account?view=more', held: false },
 ];
