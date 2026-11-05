@@ -12,6 +12,8 @@ import { movePageCap } from '../move-constants';
 import { followPages } from '../move-pages';
 import {
   experiencesOf,
+  savedReportIds,
+  type Assignment,
   organiseFacts,
   participantFacts,
   sellFacts,
@@ -37,8 +39,6 @@ export type JourneyFacts = {
 
 /** At most this many approved reports are opened for one request. */
 export const reportsPerRequest = 3;
-
-type Assignment = { requestId?: unknown; savedResourceId?: unknown; available?: unknown };
 
 async function attempt<T>(read: () => Promise<T>): Promise<T | null> {
   try {
@@ -67,14 +67,8 @@ export async function loadJourneyFacts(
 
   const experiencesFor = async (requestId: string | null | undefined, all: Assignment[] | null) => {
     if (!requestId || !all) return null;
-    const open = all.filter((a) => a.requestId === requestId && a.available === true);
-    const saved = open
-      .filter((a) => typeof a.savedResourceId === 'string')
-      .map((a) => a.savedResourceId as string);
-    // A request with no saved, available report has nothing to count yet: that is not a zero. A report the
-    // person has not saved, or more reports than Home opens, would make any count partial, so none is shown.
-    if (saved.length === 0 || saved.length < open.length || saved.length > reportsPerRequest)
-      return null;
+    const saved = savedReportIds(all, requestId, reportsPerRequest);
+    if (!saved) return null;
     const read = await Promise.all(
       saved.map((resourceId) =>
         attempt(() =>

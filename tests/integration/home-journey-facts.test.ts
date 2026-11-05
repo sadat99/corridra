@@ -4,6 +4,7 @@ import {
   experiencesOf,
   organiseFacts,
   participantFacts,
+  savedReportIds,
   sellFacts,
   sourceFacts,
 } from '../../apps/web/lib/home-journeys/facts';
@@ -181,6 +182,24 @@ describe('two saved reports of one request (guardian review of PR 310)', () => {
       confirmed: 1,
       held: 1,
     });
+  });
+
+  it('counts saved reports only when every open report is saved and Home opens them all', () => {
+    const a = (requestId: string, savedResourceId?: string, available = true) => ({
+      requestId,
+      savedResourceId,
+      available,
+    });
+    expect(savedReportIds([a('r1', 's1'), a('r1', 's2'), a('r2', 's9')], 'r1', 3)).toEqual([
+      's1',
+      's2',
+    ]);
+    // Not yet saved, unsaved alongside saved, or more than Home opens: no numbers, never a partial count.
+    expect(savedReportIds([a('r1')], 'r1', 3)).toBeNull();
+    expect(savedReportIds([a('r1', 's1'), a('r1')], 'r1', 3)).toBeNull();
+    expect(savedReportIds([a('r1', 's1'), a('r1', 's2')], 'r1', 1)).toBeNull();
+    // An expired or withdrawn report is not open, so it neither counts nor blocks.
+    expect(savedReportIds([a('r1', 's1'), a('r1', undefined, false)], 'r1', 3)).toEqual(['s1']);
   });
 
   it('says "or more" for registrations beyond the page read', () => {

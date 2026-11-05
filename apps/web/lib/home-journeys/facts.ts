@@ -40,6 +40,22 @@ export type ParticipantFacts = {
 
 const list = <T>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
 
+export type Assignment = { requestId?: unknown; savedResourceId?: unknown; available?: unknown };
+
+/**
+ * The saved reports Home may count for one request, or null when it must show no numbers: no saved, available
+ * report yet (that is not a zero), a report the person has not saved, or more reports than Home opens (either
+ * would make a count partial).
+ */
+export function savedReportIds(all: Assignment[], requestId: string, cap: number): string[] | null {
+  const open = all.filter((a) => a.requestId === requestId && a.available === true);
+  const saved = open
+    .filter((a) => typeof a.savedResourceId === 'string')
+    .map((a) => a.savedResourceId as string);
+  if (saved.length === 0 || saved.length < open.length || saved.length > cap) return null;
+  return saved;
+}
+
 /** Approved experiences from one saved-mission report, ignoring anything that is not well formed. */
 export function experiencesOf(report: unknown): MissionExperience[] {
   const missions = list<{ experience?: unknown }>(
