@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import './move-card.css';
 import './scripts.css';
 import { HolderBadge, type Holder } from './holder-badge';
@@ -23,6 +24,7 @@ export function MoveCard({
   href,
   action,
   labels = mrLabels,
+  tag,
 }: {
   verb: MoveVerb;
   /** What the verb is about, in a few plain words ("your import licence number"). */
@@ -38,12 +40,15 @@ export function MoveCard({
   href?: string;
   action?: string;
   labels?: Pick<MrLabels, 'holder' | 'move'>;
+  /** A short label shown before the title, such as the journey a task belongs to. */
+  tag?: ReactNode;
 }) {
   return (
     <article className="mr-move" data-holder={holder}>
       <div className="mr-move-body">
         <p className="mr-move-kind">{labels.move.verbs[verb]}</p>
         <h3 lang={title ? titleLang : undefined}>
+          {tag}
           {title ?? movePhrase(labels.move.phrase, labels.move.verbs[verb], object)}
         </h3>
         {context ? <p className="mr-move-context">{context}</p> : null}

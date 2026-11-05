@@ -55,6 +55,8 @@ export type MoveCardData = {
   /** For a Move the team set: the words as written, and the real due date if there is one. */
   object?: string;
   dueOn?: string | null;
+  /** The request a Move or report belongs to, so Home can say which journey it is in. */
+  requestId?: string;
 };
 
 export type WaitingRow = {
@@ -69,6 +71,8 @@ export type WaitingRow = {
   /** The date a request was received, for the label. */
   received: string | null;
   href: string;
+  /** The request a Move belongs to, so Home can say which journey it is in. */
+  requestId?: string;
 };
 
 export type MoveModel = {
@@ -194,6 +198,7 @@ export function buildMoveModel(
           href,
           object: move.object,
           dueOn: move.dueOn,
+          requestId: entry.requestId,
         });
       else
         waiting.push({
@@ -204,6 +209,7 @@ export function buildMoveModel(
           status: null,
           received: received.get(entry.requestId) ?? null,
           href,
+          requestId: entry.requestId,
         });
     }
 
@@ -218,6 +224,7 @@ export function buildMoveModel(
       holder: 'you',
       context: report.title,
       href: report.href,
+      requestId: report.requestId,
     });
 
   const replyCandidates: MoveModel['replyCandidates'] = [];

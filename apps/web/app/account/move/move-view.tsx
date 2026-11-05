@@ -17,7 +17,15 @@ import {
   type MoveModel,
   type WaitingRow,
 } from '../../../lib/move-cards';
-import { journeyWords, type JourneyCard, type LatestItem } from './journeys';
+import {
+  journeys as journeyOrder,
+  journeyWords,
+  type Journey,
+  type JourneyCard,
+  type LatestItem,
+} from './journeys';
+import { JourneyCardView, ParticipantCard } from './journey-card';
+import type { JourneyFacts } from '../../../lib/home-journeys/load';
 import './move-view.css';
 
 // The last reply a person marked as read, per request. It lives in this browser only (the same
@@ -117,6 +125,9 @@ export function MoveView({
   unreadable = false,
   latestItem = null,
   journeys = [],
+  facts = null,
+  journey = null,
+  taskJourneys = {},
 }: {
   model: MoveModel;
   startHref: string;
@@ -129,6 +140,12 @@ export function MoveView({
   latestItem?: LatestItem | null;
   /** The newest piece of work in each journey the person has (Sourcing, Selling, Organising). */
   journeys?: JourneyCard[];
+  /** The numbers on each journey card and the Taking part card; null parts keep the plain count. */
+  facts?: JourneyFacts | null;
+  /** The journey Home is showing (`?journey=`), or null for all of them. */
+  journey?: Journey | null;
+  /** Each task's and waiting row's journey, by id. A task with none shows under All only. */
+  taskJourneys?: Record<string, Journey>;
 }) {
   const { locale } = useLanguage();
   const say = (key: MessageKey) => translate(locale, key);
@@ -143,10 +160,22 @@ export function MoveView({
     commit({ ...(seen ?? {}), [requestId]: latestReplyAt });
   const forget = () => commit({});
 
-  const items = [
+  // Under All each task says which journey it belongs to; under one journey the tag would only repeat it.
+  const tag = (id: string) => {
+    const j = taskJourneys[id];
+    return j && !journey ? (
+      <span className="move-tag move-task-tag" data-journey={j} lang="en">
+        {journeyWords[j]}
+      </span>
+    ) : null;
+  };
+  const shown = (id: string) => !journey || taskJourneys[id] === journey;
+
+  const allItems = [
     ...unread.map((reply) => (
       <li key={`reply:${reply.requestId}`} className="move-reply" data-kind="reply">
         <MoveCard
+          tag={tag(`reply:${reply.requestId}`)}
           verb="Read"
           object={say('move.card.reply.object')}
           holder="you"
@@ -168,6 +197,7 @@ export function MoveView({
       <li key={card.id} data-kind={card.kind}>
         {card.kind === 'move' ? (
           <MoveCard
+            tag={tag(card.id)}
             verb={card.verb}
             object={card.object ?? ''}
             title={`${card.verb} ${card.object ?? ''}`}
@@ -181,6 +211,7 @@ export function MoveView({
           />
         ) : (
           <MoveCard
+            tag={tag(card.id)}
             verb={verbOf[card.kind]}
             object={say(objectKey[card.kind])}
             holder={card.holder}
@@ -201,7 +232,25 @@ export function MoveView({
       </li>
     )),
   ];
+  const items = allItems.filter((item) => shown(String(item.key)));
   const nothing = items.length === 0;
+  // The switch counts what needs the person in each journey; it appears once any task or card has one.
+  const perJourney = Object.fromEntries(
+    journeyOrder.map((j) => [
+      j,
+      allItems.filter((item) => taskJourneys[String(item.key)] === j).length,
+    ]),
+  ) as Record<Journey, number>;
+  const present = journeyOrder.filter(
+    (j) => perJourney[j] > 0 || journeys.some((card) => card.journey === j),
+  );
+  const cards = journey ? journeys.filter((card) => card.journey === journey) : journeys;
+  const waiting = model.waiting.filter((row) => shown(row.id));
+  const participant = !journey ? (facts?.participant ?? null) : null;
+  const latestShown =
+    !participant && model.latest && (!journey || latestItem?.journey === journey)
+      ? model.latest
+      : null;
 
   const waitingLine = (row: WaitingRow) =>
     row.kind === 'move'
@@ -218,22 +267,44 @@ export function MoveView({
   // The summary never claims more than the page could read: an unreadable source, a list cut short or
   // workspaces left unread make "all caught up" and "everything else is moving" unprovable.
   const incomplete = unreadable || partial || skippedWorkspaces > 0;
-  const needs = count === 1 ? 'One thing needs you' : `${count} things need you`;
+  const where = journey ? ` in ${journeyWords[journey].toLowerCase()}` : '';
+  const needs = count === 1 ? `One thing needs you${where}` : `${count} things need you${where}`;
   const lede = incomplete
     ? nothing
       ? 'This page may not show everything that needs you yet.'
       : `${needs} so far. This page may not show everything yet.`
     : nothing
-      ? 'You are all caught up. Here is where your work stands.'
+      ? journey
+        ? `Nothing needs you${where} right now. Here is where it stands.`
+        : 'You are all caught up. Here is where your work stands.'
       : `${needs}. Everything else is moving.`;
 
   return (
     <div className="move-view" lang={html} dir={dir}>
-      <p className="move-lede" lang="en">
-        {lede}
-      </p>
+      <div className="move-hello">
+        <p className="move-lede" lang="en">
+          {lede}
+        </p>
+        {present.length > 0 ? (
+          <nav className="move-seg" aria-label="Show work for" lang="en">
+            <Link prefetch={false} href="/account/move" aria-current={journey ? undefined : 'page'}>
+              All <em>{allItems.length}</em>
+            </Link>
+            {present.map((j) => (
+              <Link
+                key={j}
+                prefetch={false}
+                href={`/account/move?journey=${j}`}
+                aria-current={journey === j ? 'page' : undefined}
+              >
+                {journeyWords[j]} <em>{perJourney[j]}</em>
+              </Link>
+            ))}
+          </nav>
+        ) : null}
+      </div>
 
-      <div className="move-grid" data-latest={model.latest ? 'true' : 'false'}>
+      <div className="move-grid" data-latest={latestShown || participant ? 'true' : 'false'}>
         <section className="move-card" aria-labelledby="move-you">
           <h2 id="move-you">{say('move.you.heading')}</h2>
           <span className="move-count" data-hot={nothing ? 'false' : 'true'}>
@@ -286,10 +357,11 @@ export function MoveView({
           )}
         </section>
 
-        {model.latest ? (
+        {participant ? <ParticipantCard facts={participant} /> : null}
+        {latestShown ? (
           <section className="move-card" aria-labelledby="move-latest">
             <h2 id="move-latest">{say('move.empty.latest')}</h2>
-            <Link prefetch={false} className="move-card-link" href={model.latest.href}>
+            <Link prefetch={false} className="move-card-link" href={latestShown.href}>
               <span>{say('move.wait.open')}</span>
               <CorridraIcon name="arrow" />
             </Link>
@@ -303,7 +375,7 @@ export function MoveView({
                 <span className="move-latest-sent">
                   {latestItem?.journey ? `${journeyWords[latestItem.journey]} · ` : ''}
                   {fill(say('move.received'), {
-                    date: day(model.latest.createdAt.slice(0, 10), locale),
+                    date: day(latestShown.createdAt.slice(0, 10), locale),
                   })}
                 </span>
                 {latestItem?.statusWords ? (
@@ -312,70 +384,42 @@ export function MoveView({
                   </span>
                 ) : null}
               </p>
-              {model.latest.status ? (
-                <StageBar status={model.latest.status} labels={labels.road} named />
+              {latestShown.status ? (
+                <StageBar status={latestShown.status} labels={labels.road} named />
               ) : null}
             </div>
           </section>
         ) : null}
       </div>
 
-      {journeys.length > 0 ? (
+      {cards.length > 0 ? (
         <section className="move-journeys" aria-labelledby="move-journeys" lang="en">
           <h2 id="move-journeys" className="sr-only">
             Your work by journey
           </h2>
-          {journeys.map((card) => (
-            <article
+          {cards.map((card) => (
+            <JourneyCardView
               key={card.journey}
-              className="move-journey"
-              data-journey={card.journey}
-              aria-labelledby={`move-journey-${card.journey}`}
-            >
-              <header className="move-journey-head">
-                <span className="move-tag" data-journey={card.journey}>
-                  {journeyWords[card.journey]}
-                </span>
-                <h3 id={`move-journey-${card.journey}`} dir="auto">
-                  {card.title ?? (card.kind === 'programme' ? 'Programme' : 'Request')}
-                </h3>
-              </header>
-              <div className="move-journey-body">
-                {card.status ? (
-                  <StageBar status={card.status} labels={labels.road} />
-                ) : card.statusWords ? (
-                  <p className="move-journey-status">{card.statusWords}</p>
-                ) : null}
-                <p className="move-journey-count">
-                  {card.count === '1' ? '1 piece of work' : `${card.count} pieces of work`} in{' '}
-                  {journeyWords[card.journey].toLowerCase()}
-                </p>
-              </div>
-              <footer className="move-journey-foot">
-                <span>
-                  {card.dateWords} {card.at ? formatDate(card.at, { timeZone: 'UTC', locale }) : ''}
-                </span>
-                <Link prefetch={false} className="move-card-link" href={card.href}>
-                  <span>{card.kind === 'programme' ? 'Open Organiser Room' : 'Open Request'}</span>
-                  <CorridraIcon name="arrow" />
-                </Link>
-              </footer>
-            </article>
+              card={card}
+              facts={facts?.[card.journey] ?? null}
+              labels={labels.road}
+              locale={locale}
+            />
           ))}
         </section>
       ) : null}
 
-      {model.waiting.length > 0 ? (
+      {waiting.length > 0 ? (
         <section className="move-card" aria-labelledby="move-others">
           <h2 id="move-others">{say('move.others.heading')}</h2>
-          <span className="move-count">{model.waiting.length}</span>
+          <span className="move-count">{waiting.length}</span>
           <RowList
             label={say('move.others.heading')}
             title="Request"
             columns={[{ name: 'Held by' }, { name: 'Where it stands' }]}
             lang="en"
           >
-            {model.waiting.map((row) => {
+            {waiting.map((row) => {
               const holders = row.holder === 'owner' ? ownerHolders : labels.holder;
               const title =
                 row.kind !== 'move' && row.title
