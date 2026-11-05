@@ -177,7 +177,7 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
               className="button"
               href={'/account/service-requests/' + done.workspaceId + '/' + done.id}
             >
-              View your request
+              View Your Request
             </a>
             <a className="text-link" href={'/account/service-requests/' + done.workspaceId}>
               All help requests
@@ -347,7 +347,7 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
               need.trim().length < (realCustomerInput() ? 2 : 11)
             }
           >
-            {pending ? 'Send the same request again' : 'Send help request'}
+            {pending ? 'Send the Same Request Again' : 'Send Help Request'}
           </button>
         </form>
       )}

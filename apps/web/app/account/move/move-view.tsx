@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useMemo, useSyncExternalStore } from 'react';
-import { HolderBadge, MoveCard, Road, mrLabelsFor, type MoveVerb } from '../../../components/mr';
+import { MoveCard, StageBar, mrLabelsFor, type MoveVerb } from '../../../components/mr';
+import { RowLink, RowList } from '../../../components/ux/row-list';
 import { useLanguage } from '../../../components/language-provider';
 import { fill } from '../../../lib/i18n/fill';
 import { localeMeta } from '../../../lib/i18n/locales';
@@ -219,7 +220,7 @@ export function MoveView({
             <a className="text-link ux-action" href="/account/move">
               {unreadWords.retry}
             </a>
-            <Link prefetch={false} className="button" href={startHref}>
+            <Link prefetch={false} className="text-link ux-action" href={startHref}>
               {say('move.start')}
             </Link>
           </div>
@@ -232,14 +233,14 @@ export function MoveView({
               <>
                 <h3>{say('move.empty.latest')}</h3>
                 {model.latest.status ? (
-                  <Road status={model.latest.status} labels={labels.road} showLegend={false} />
+                  <StageBar status={model.latest.status} labels={labels.road} />
                 ) : null}
                 <Link prefetch={false} className="text-link ux-action" href={model.latest.href}>
                   {say('move.wait.open')}
                 </Link>
               </>
             ) : null}
-            <Link prefetch={false} className="button" href={startHref}>
+            <Link prefetch={false} className="text-link ux-action" href={startHref}>
               {say('move.start')}
             </Link>
           </div>
@@ -259,31 +260,37 @@ export function MoveView({
       {model.waiting.length > 0 ? (
         <section aria-labelledby="move-others">
           <h2 id="move-others">{say('move.others.heading')}</h2>
-          <ul className="move-list">
-            {model.waiting.map((row) => (
-              <li key={row.id} className="move-wait">
-                <p>
-                  <HolderBadge
-                    holder={row.holder === 'team' ? 'team' : 'third'}
-                    labels={row.holder === 'owner' ? ownerHolders : labels.holder}
-                  />
-                </p>
-                {(row.kind !== 'move' && row.title) || row.received ? (
-                  <p className="move-wait-title">
-                    {row.kind !== 'move' && row.title
-                      ? row.title
-                      : fill(say('move.received'), {
-                          date: row.received ? day(row.received, locale) : '',
-                        })}
-                  </p>
-                ) : null}
-                <p lang={row.kind === 'move' ? 'en' : undefined}>{waitingLine(row)}</p>
-                <Link prefetch={false} className="text-link ux-action" href={row.href}>
-                  {say('move.wait.open')}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <RowList
+            label={say('move.others.heading')}
+            title="Request"
+            columns={[{ name: 'Held by' }, { name: 'Where it stands' }]}
+            lang="en"
+          >
+            {model.waiting.map((row) => {
+              const holders = row.holder === 'owner' ? ownerHolders : labels.holder;
+              const title =
+                row.kind !== 'move' && row.title
+                  ? row.title
+                  : fill(say('move.received'), {
+                      date: row.received ? day(row.received, locale) : '',
+                    });
+              return (
+                <RowLink
+                  key={row.id}
+                  href={row.href}
+                  title={title}
+                  cells={[
+                    { name: 'Held by', value: holders[row.holder === 'team' ? 'team' : 'third'] },
+                    {
+                      name: 'Where it stands',
+                      value: waitingLine(row),
+                      lang: row.kind === 'move' ? 'en' : undefined,
+                    },
+                  ]}
+                />
+              );
+            })}
+          </RowList>
         </section>
       ) : null}
 

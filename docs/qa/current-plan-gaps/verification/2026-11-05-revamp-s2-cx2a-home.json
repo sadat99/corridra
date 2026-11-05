@@ -1,0 +1,55 @@
+{
+  "recordedOn": "2026-11-05",
+  "batch": "Revamp S2 Customer Work: CX PR 2a, Home, the phone Menu icon, three 429 send actions, the shared components, and the owner's Title Case and left-alignment rules",
+  "kind": "Home and Move to docs/revamp/specs/customer-experience.md; shared row-link list, segmented filter, dialog and empty state in components/ux; the three send actions that still told people to retry at once on a 429; every customer button, button-styled link and menu item in Title Case (owner rule, 5 Nov); actions and rows aligned to the content's left edge.",
+  "findings": [],
+  "findingsNote": "No gap is created or changed. No route, table, migration, switch, provider, payment or write is added.",
+  "status": "Built on branch revamp/customer over main f7784108 (PR 295). CI on the exact pushed head is the verifier; see the pull request for its result.",
+  "newFiles": [
+    "apps/web/components/ux/row-list.tsx, segmented-filter.tsx, dialog.tsx, empty-state.tsx and their css",
+    "apps/web/components/mr/stage-bar.tsx, stage-bar.css",
+    "apps/web/app/account/home-next-step.tsx, home-work.tsx",
+    "tests/operator/revamp-cx2-components.spec.ts (8 cases: CX-04, CX-05), revamp-cx2-move-shots.spec.ts (screenshots only)",
+    "tests/integration/revamp-cx2-home.test.ts (7), revamp-cx2-move.test.ts (6)",
+    "tests/e2e/verification/revamp-s2/customer-home.spec.ts, customer-page-length.spec.ts",
+    "docs/design-system/evidence/revamp-cx2/before and after (Home, Requests, Reports, Account, Companies, and the Move page full and quiet, at 390 and 1440)",
+    "apps/web/lib/ux/title-case.ts (titleCase, isTitleCase)",
+    "tests/integration/revamp-title-case.test.ts and title-case-scan.ts (one test reads every customer button label from the source, plus the Move catalogue labels)"
+  ],
+  "changedFiles": [
+    "apps/web/app/account/page.tsx: Home uses the next-step row and Active work; apps/web/components/next-step-card.tsx is kept byte for byte: Home no longer uses it, and it is listed for K-01 (no deletion outside K-01 to K-03)",
+    "apps/web/app/account/move/move-view.tsx: what others hold is a row list, the latest request is the stage bar, the start link is quiet",
+    "apps/web/components/mr/move-card.tsx: the card action is a secondary button",
+    "apps/web/components/ux/customer-bar.css: the Menu button is an icon below 700 px",
+    "apps/web/app/account/assigned-missions.tsx, missions/saved-commercial-report.tsx, missions/specification-confirmation.tsx: a 429 shows the shared limit words and keeps the same command",
+    "Title Case sweep: 137 button, button-styled link and menu item labels in apps/web/app/account (not delegations) and components/ux/customer-bar.tsx, including the header's New Request; 12 English catalogue labels in lib/i18n/messages.ts and lib/i18n/ws/ws-b.ts (English values only, the other languages are untouched)"
+  ],
+  "decisions": {
+    "tests": "Existing tests edited, none weakened: ux-move.spec.ts now matches the exact action name 'Accept or decline' (a waiting row's own sentence contains those words and is a row link whose accessible name is its visible text, WCAG 2.5.3, which axe enforces); ux-teaching-layer.test.ts lists home-work.tsx among the screens that mount the mr components, as the test itself says each lane must.",
+    "oneFilledAction": "The header's New request is the only filled in-page-visible action on Home and Move. Card actions, the start link and the next-step row are secondary or quiet.",
+    "owner": "Active work rows show Kind, Status and Date. A work item has no owner field, so no owner column is invented; the Move page's waiting rows do show who holds them.",
+    "stage": "The stage bar reads the same marker as the Road. Compare and Decide with no record are plain grey segments with no words. The Road itself (request room, programme room) is unchanged in this PR.",
+    "requests": "The Requests page is not changed here: its tabs, filter and workspaces table are CX PR 2b, after the shared sub-tabs lands.",
+    "titleCase": "Minor words (a, an, the, and, or, of, to, in, on, for, by, at) stay lowercase unless first; every other word starts with a capital, so 'as' becomes 'As'. The text itself changed, never text-transform. Placeholders such as {count} and words already capitalised are left alone. Navigation destinations, headings, text links and disclosure summaries are not buttons and are not changed; the programme pages under account/delegations belong to another track and are not changed.",
+    "testsEdited": "Exact-name assertions in 12 operator specs and 6 integration tests follow the new words with the same assertions. The saved-report golden changed only in two button labels (Send Response, Refresh Approved Commercial Report). Prose that contains 'Try again' (the shared limit sentence, load-failure lines) is unchanged; a first scripted replacement touched it and was reverted. ux-move.spec.ts matches the exact action name 'Accept or Decline'. ux-teaching-layer.test.ts lists home-work.tsx as a screen that mounts the mr components.",
+    "alignment": "Row text and column heads start at the content's left edge: the row link's hover surface reaches left with a negative start margin, so the words align with headings and the right side stays inside the column. A first version pulled both sides and caused 12 px of sideways scroll in ux-move and ux-pseudo-language; fixed to the start side only."
+  },
+  "receipts": {
+    "429": "Three cases written red first (each failed with the 'interrupted' or 'not confirmed' wording), then green; revamp-wave6, specification-confirmation, v3-customer-delivery-ui and v3-saved-commercial-ui operator specs: 67 passed.",
+    "components": "tests/operator/revamp-cx2-components.spec.ts: 8 passed at 390 and 1440 with axe wcag2a, wcag2aa, wcag21aa and wcag22aa, open and closed dialog, keyboard and Escape and focus return. The dialog's Tab wrap was added after the first run showed focus leaving the dialog.",
+    "home": "revamp-cx2-home.test.ts and revamp-cx2-move.test.ts written red first (modules missing, then three Move failures), then green; ux-front-door and revamp-truth-states unchanged and passing; ux-move.spec.ts 13 passed including axe at 320, 390, 768 and 1440.",
+    "verification": "playwright.verification.config.ts revamp-s2: customer-shell 24, customer-home 3 per width, page length (Home 1.0 screen at 390 and 1440 empty state) on a fresh production build with the test-only sign-in. The customer-home cases were written after the change, so they were not seen failing first.",
+    "preflight": "See the pull request: node scripts/preflight.mjs standard result is recorded there.",
+    "titleCase": "revamp-title-case.test.ts (3): red first (132 labels), green after the sweep; found two slips on the way (the helper changed {count}, and a hand-written 'Mark as Read' needed 'As').",
+    "operatorFull": "Full operator suite after the sweep: 969 passed, 54 failed in 13 spec files (old exact names, one golden, and the sideways-scroll CSS slip); after the fixes the 13 files were re-run: all pass (ux-room 51, others 174 in the second run, then the remaining 14 fixed and re-run).",
+    "verificationFull": "Full verification suite on a fresh production build with the test-only sign-in: 451 passed, 53 skipped, 3 failed. The 3 are /fairs ux-measures (404): CI sets CORRIDRA_UX_FAIRS=true for that job, this local server does not; unrelated to this change. New: customer-home (alignment at 1440 and 390)."
+  },
+  "notRun": [
+    "Home with real requests on a production build: the verification seed has no requests or workspaces, so Active work is covered by the integration test and not measured at 1440 x 900 with six requests (CX-01 for the filled state).",
+    "The Move page in a production build: it needs CORRIDRA_UX_NAV and CORRIDRA_UX_MOVE; it is screenshotted through the fixture and covered by ux-move.spec.ts.",
+    "A screen reader walk-through of the dialog and the row list.",
+    "The segmented filter and the dialog have no screen mounting them yet (Requests tabs and the Create and Join dialogs are CX PR 2b).",
+    "Title Case runtime scan of every customer page and state: the test reads the source, so a label built at runtime from data is not covered."
+  ],
+  "sensitive": "No. Reads only what the pages already read; no new write, route or authority."
+}

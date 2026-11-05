@@ -57,7 +57,7 @@ export function MoveCard({
         </p>
       </div>
       {href && action ? (
-        <Link prefetch={false} className="button mr-move-action" href={href}>
+        <Link prefetch={false} className="button button-secondary mr-move-action" href={href}>
           {action}
         </Link>
       ) : null}

@@ -300,7 +300,7 @@ function ScopedIntake(scope: PrivateRequestScope & { realMode?: boolean }) {
             disabled={busy}
             onClick={() => void retry()}
           >
-            {busy ? 'Checking…' : 'Retry original request'}
+            {busy ? 'Checking…' : 'Retry Original Request'}
           </button>
         </div>
       )}
@@ -308,9 +308,9 @@ function ScopedIntake(scope: PrivateRequestScope & { realMode?: boolean }) {
         <button type="button" className="text-link" disabled={busy} onClick={forget}>
           {saved
             ? scope.realMode
-              ? 'Start another private request'
-              : 'Start another private sample request'
-            : 'Forget local retry details'}
+              ? 'Start Another Private Request'
+              : 'Start Another Private Sample Request'
+            : 'Forget Local Retry Details'}
         </button>
       )}
       <p>

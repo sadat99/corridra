@@ -176,3 +176,33 @@ test('CX-02 every header action from before is still reachable: inbox, language,
     .evaluateAll((all) => all.map((a) => a.getAttribute('href')));
   expect(hrefs).toEqual(destinations.map(([, href]) => href));
 });
+
+test('CX-03 on a phone the Menu button is an icon with the accessible name Menu; wider it keeps the word', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/account');
+  const opener = page.getByRole('button', { name: 'Menu', exact: true });
+  await expect(opener).toBeVisible();
+  const phone = await opener.evaluate((el) => {
+    const icon = getComputedStyle(el, '::before');
+    const box = el.getBoundingClientRect();
+    return {
+      mask: icon.maskImage,
+      fontSize: getComputedStyle(el).fontSize,
+      width: box.width,
+      height: box.height,
+    };
+  });
+  expect(phone.mask).not.toBe('none');
+  expect(phone.fontSize).toBe('0px');
+  expect(phone.width).toBeGreaterThanOrEqual(44);
+  expect(phone.height).toBeGreaterThanOrEqual(44);
+  await page.setViewportSize({ width: 800, height: 900 });
+  const tablet = await opener.evaluate((el) => ({
+    mask: getComputedStyle(el, '::before').maskImage,
+    fontSize: getComputedStyle(el).fontSize,
+  }));
+  expect(tablet.mask === 'none' || tablet.mask === '').toBe(true);
+  expect(tablet.fontSize).not.toBe('0px');
+});

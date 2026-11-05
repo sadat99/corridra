@@ -292,7 +292,7 @@ test('shows who and what the request is, where it stands and what the team said'
   await expect(road.getByText('Not tracked yet')).toHaveCount(1);
   await expect(page.getByText('Meetings are being arranged for November.')).toBeVisible();
   await expect(page.getByText('We have shortlisted three suppliers.')).toHaveCount(0);
-  await page.getByRole('button', { name: /Read every reply/ }).click();
+  await page.getByRole('button', { name: /Read Every Reply/ }).click();
   await expect(page.getByText('We have shortlisted three suppliers.')).toBeVisible();
 });
 
@@ -577,7 +577,7 @@ test('the whole saved report page is byte for byte what it was before the Trip l
   await page.goto(
     `${origin}/?mode=report&props=${encodeURIComponent(JSON.stringify(props({})))}&resourceId=${resourceId}`,
   );
-  await page.getByRole('button', { name: 'Refresh approved commercial report' }).waitFor();
+  await page.getByRole('button', { name: 'Refresh Approved Commercial Report' }).waitFor();
   const html = await page.locator('#fixture').innerHTML();
   const path = resolve('tests/operator/golden/saved-report-all.golden');
   expect(html).toBe(readFileSync(path, 'utf8'));
@@ -745,7 +745,7 @@ test('shows one meeting in the singular and offers no show-all control', async (
   await openTrip(page, [dhakaVisit]);
   await expect(tripRegion(page).getByText('1 meeting or visit', { exact: true })).toBeVisible();
   await expect(items(page)).toHaveCount(1);
-  await expect(page.getByRole('button', { name: /Show all/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Show All/ })).toHaveCount(0);
 });
 
 test('shows the first five of seven in time order, with undated and changed meetings last, and the rest on request', async ({
@@ -760,7 +760,7 @@ test('shows the first five of seven in time order, with undated and changed meet
     'Undated call',
     'Second undated',
   ]);
-  const toggle = page.getByRole('button', { name: 'Show all 7 meetings and visits' });
+  const toggle = page.getByRole('button', { name: 'Show All 7 Meetings and Visits' });
   await expect(toggle).toHaveAttribute('aria-expanded', 'false');
   await toggle.click();
   await expect(items(page)).toHaveCount(7);
@@ -773,12 +773,12 @@ test('shows the first five of seven in time order, with undated and changed meet
     'Changed visit',
     'Reschedule needed',
   ]);
-  const fewer = page.getByRole('button', { name: 'Show fewer' });
+  const fewer = page.getByRole('button', { name: 'Show Fewer' });
   await expect(fewer).toHaveAttribute('aria-expanded', 'true');
   await expect(fewer).toBeFocused();
   await fewer.click();
   await expect(items(page)).toHaveCount(5);
-  await expect(page.getByRole('button', { name: 'Show all 7 meetings and visits' })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Show All 7 Meetings and Visits' })).toBeFocused();
 });
 
 test('names each status in plain words and shows an unknown status as it was supplied', async ({
@@ -798,7 +798,7 @@ test('names each status in plain words and shows an unknown status as it was sup
     page,
     statuses.map(([status], index) => meeting(`Meeting ${index}`, { status })),
   );
-  await page.getByRole('button', { name: /Show all 8/ }).click();
+  await page.getByRole('button', { name: /Show All 8/ }).click();
   for (const [index, [, words, tone]] of statuses.entries()) {
     const badge = items(page).nth(index).locator('.ux-status');
     await expect(badge).toHaveText(words);
@@ -920,7 +920,7 @@ for (const status of [401, 403, 409]) {
         body: JSON.stringify(reportBody([dhakaVisit])),
       }),
     );
-    await page.getByRole('button', { name: 'Refresh approved commercial report' }).click();
+    await page.getByRole('button', { name: 'Refresh Approved Commercial Report' }).click();
     await expect(items(page)).toHaveCount(1);
   });
 }
@@ -961,7 +961,7 @@ for (const [status, message] of [
         body: JSON.stringify(reportBody([dhakaVisit])),
       }),
     );
-    await page.getByRole('button', { name: 'Refresh approved commercial report' }).click();
+    await page.getByRole('button', { name: 'Refresh Approved Commercial Report' }).click();
     await expect(items(page)).toHaveCount(1);
     await expect(page.getByText(message)).toHaveCount(0);
   });
@@ -1112,7 +1112,7 @@ for (const [width, framed] of [320, 390, 768, 1440].flatMap((w) => [
       // Measure the rendered list, not the page while the report is still loading.
       await expect(items(page)).toHaveCount(5);
       if (expanded) {
-        await page.getByRole('button', { name: /Show all 7/ }).click();
+        await page.getByRole('button', { name: /Show All 7/ }).click();
         await expect(items(page)).toHaveCount(7);
       }
       if (framed) await toCustomerFrame(page);
@@ -1164,7 +1164,7 @@ test('works from the keyboard: lens, show all, show fewer and refresh, with a vi
   await openTrip(page, sevenMeetings());
   // The report is fetched after the lens opens. Tab stops depend on what is in the page, so wait
   // until the list and its toggle are really there before the first key.
-  const toggle = page.getByRole('button', { name: 'Show all 7 meetings and visits' });
+  const toggle = page.getByRole('button', { name: 'Show All 7 Meetings and Visits' });
   await expect(items(page)).toHaveCount(5);
   await expect(toggle).toBeVisible();
   await lens(page, 'Trip').focus();
@@ -1179,13 +1179,13 @@ test('works from the keyboard: lens, show all, show fewer and refresh, with a vi
   expect(ring).toBe(true);
   await page.keyboard.press('Enter');
   await expect(items(page)).toHaveCount(7);
-  const fewer = page.getByRole('button', { name: 'Show fewer' });
+  const fewer = page.getByRole('button', { name: 'Show Fewer' });
   await expect(fewer).toBeFocused();
   await page.keyboard.press('Space');
   await expect(items(page)).toHaveCount(5);
   await expect(toggle).toBeFocused();
   await page.keyboard.press('Tab');
-  const refresh = page.getByRole('button', { name: 'Refresh approved commercial report' });
+  const refresh = page.getByRole('button', { name: 'Refresh Approved Commercial Report' });
   await expect(refresh).toBeFocused();
   expect(posts).toHaveLength(1);
   await page.keyboard.press('Enter');
@@ -1198,7 +1198,7 @@ test('works from the keyboard: lens, show all, show fewer and refresh, with a vi
 test('starts no animation when the person asks for less movement', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await openTrip(page, sevenMeetings());
-  await page.getByRole('button', { name: /Show all 7/ }).click();
+  await page.getByRole('button', { name: /Show All 7/ }).click();
   await expect(items(page)).toHaveCount(7);
   const moving = await page.evaluate(
     () => document.getAnimations().filter((a) => a.effect?.getTiming().duration !== 0).length,

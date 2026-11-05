@@ -293,7 +293,7 @@ function PrivateRequests({
           disabled={busy}
           onClick={() => void load(nextAfter)}
         >
-          Load more saved requests
+          Load More Saved Requests
         </button>
       )}
       {canSubmit ? (

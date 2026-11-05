@@ -148,7 +148,7 @@ export function DecisionCardPanelView({
             onClick={() => handlers.create?.()}
             disabled={!canCreate(panel)}
           >
-            Create link
+            Create Link
           </button>
         </div>
       )}
@@ -162,7 +162,7 @@ export function DecisionCardPanelView({
           <h4>Your link</h4>
           <input type="text" readOnly value={panel.link} aria-label="Decision card link" />
           <button type="button" className="decision-card-action" onClick={() => handlers.copy?.()}>
-            Copy link
+            Copy Link
           </button>
           {panel.linkExpiresAt && <p>Works until {formatDateTime(panel.linkExpiresAt)}.</p>}
           <p>Anyone with this link can see these six fields until it expires or you withdraw it.</p>

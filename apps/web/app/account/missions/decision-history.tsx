@@ -141,7 +141,7 @@ function PrivateHistory({ subject, issuer, resourceId, cards = false }: Scope) {
         </p>
       )}
       <button type="button" onClick={load} disabled={status === 'loading'}>
-        {data || status === 'refresh' ? 'Refresh reviewed decisions' : 'Load reviewed decisions'}
+        {data || status === 'refresh' ? 'Refresh Reviewed Decisions' : 'Load Reviewed Decisions'}
       </button>
       {status === 'denied' && (
         <a href="/account" className="text-link">

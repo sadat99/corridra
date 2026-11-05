@@ -133,7 +133,10 @@ function PrivateConfirmation({ subject, issuer, resourceId }: Props) {
         setPending(null);
         setChecked({});
         setMessage('Access or requirements changed. Reload before confirming.');
-      } else
+      } else if (error instanceof Error && error.message === 'limit')
+        // Nothing was processed, so the same command stays ready to send again later.
+        setMessage(limitWords);
+      else
         setMessage(
           'The response was interrupted. Retry the same confirmation to check whether it was recorded.',
         );
@@ -155,7 +158,7 @@ function PrivateConfirmation({ subject, issuer, resourceId }: Props) {
         the next commercial step. It does not authorise a purchase, contract or payment.
       </p>
       <button type="button" disabled={busy} onClick={() => void load()}>
-        Review current requirements
+        Review Current Requirements
       </button>
       {message && <p role="status">{message}</p>}
       {data && data.reviews.length === 0 && (
@@ -204,8 +207,8 @@ function PrivateConfirmation({ subject, issuer, resourceId }: Props) {
                 onClick={() => void confirm(review)}
               >
                 {pending?.requestId === review.requestId
-                  ? 'Retry same confirmation'
-                  : 'Confirm these requirements'}
+                  ? 'Retry Same Confirmation'
+                  : 'Confirm These Requirements'}
               </button>
             </>
           )}

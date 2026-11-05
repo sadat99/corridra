@@ -272,6 +272,32 @@ test('pagination cannot extend the original private display window and hide clea
   await expect(page.getByRole('heading', { name: item().title })).toHaveCount(0);
   await expect(page.getByText(/Private delivery details cleared/)).toBeVisible();
 });
+const limitLine = 'The request limit was reached. Try again later.';
+test('a 429 on saving says the limit was reached, keeps the list and the same command for later', async ({
+  page,
+}) => {
+  const bodies: Record<string, unknown>[] = [];
+  await page.route('**/api/customer-assigned-missions*', (r) => {
+    if (r.request().method() === 'GET') return r.fulfill({ json: deliveries() });
+    bodies.push(r.request().postDataJSON());
+    return bodies.length === 1
+      ? r.fulfill({ status: 429, json: { error: 'Too many requests' } })
+      : r.fulfill({ json: receipt() });
+  });
+  await page.route('**/account/missions/*', (r) =>
+    r.fulfill({ contentType: 'text/html', body: '<h1>Original report protocol fixture</h1>' }),
+  );
+  await page.goto(origin);
+  await page.getByRole('checkbox', { name: /I understand this saves/ }).check();
+  await page.getByRole('button', { name: 'Save and open approved report' }).click();
+  await expect(page.getByText(limitLine)).toHaveCount(1);
+  await expect(page.getByText(/Saving was not confirmed/)).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: item().title })).toBeVisible();
+  await page.getByRole('button', { name: 'Retry saving the same report' }).click();
+  await expect(page).toHaveURL(origin + '/account/missions/' + resource);
+  expect(bodies).toHaveLength(2);
+  expect(bodies[0]).toEqual(bodies[1]);
+});
 test('uncertain save response retains the exact acknowledged command for retry', async ({
   page,
 }) => {
