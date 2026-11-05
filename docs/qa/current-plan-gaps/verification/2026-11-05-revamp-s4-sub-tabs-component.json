@@ -7,8 +7,8 @@
   "sensitive": "no: a presentation component with no page using it. It reads the address and the page, and holds no session, role or token code.",
   "changed": [
     "apps/web/components/ux/sub-tabs.tsx and sub-tabs.css: SubTabs, SubTab and revealInSubTabs",
-    "apps/web/lib/ux/sub-tabs.ts: resolveSubTab, nextTabIndex, withTab (pure, tested without a browser)",
-    "tests/integration/ux-sub-tabs.test.ts (14 tests) and tests/ux/sub-tabs.spec.ts (10 tests, the L-03 reference)"
+    "apps/web/lib/ux/sub-tabs.ts: resolveSubTab, nextTabIndex, withTab, safeDecode (pure, tested without a browser)",
+    "tests/integration/ux-sub-tabs.test.ts (16 tests) and tests/ux/sub-tabs.spec.ts (11 tests, the L-03 reference)"
   ],
   "behaviour": [
     "A labelled tablist of tabs, each owning one panel; automatic activation; only the chosen tab is in the tab order.",
@@ -18,11 +18,13 @@
     "Arrow keys, Home and End move between tabs and wrap; the arrows mirror in a right-to-left page.",
     "Every panel stays in the server HTML, hidden unless chosen, so entries survive a switch and no content is lost.",
     "Tabs are 44 px, wrap on a phone and never scroll the page sideways; axe finds nothing on any tab, left to right and right to left.",
-    "revealInSubTabs(element) opens the tab that holds an element so a Jump to control can land on a heading."
+    "revealInSubTabs(element) opens the tab that holds an element so a Jump to control can land on a heading.",
+    "A hash that cannot be decoded (such as %E0%A4%A) names nothing: the first tab is shown and no page error is raised (safeDecode is used everywhere the hash is read).",
+    "Callers own the five-tab cap of the layout budget; the component shows every tab it is given."
   ],
   "verification": {
-    "integration": "14 of 14 in tests/integration/ux-sub-tabs.test.ts",
-    "browser": "10 of 10 in tests/ux/sub-tabs.spec.ts (fixture page, no server)"
+    "integration": "16 of 16 in tests/integration/ux-sub-tabs.test.ts",
+    "browser": "11 of 11 in tests/ux/sub-tabs.spec.ts (fixture page, no server)"
   },
   "nextAction": "KI-35 database readiness fix, then the first staff routes on these tabs."
 }

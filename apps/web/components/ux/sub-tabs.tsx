@@ -9,13 +9,15 @@
 //   - every panel stays in the server HTML, hidden unless chosen, so content is never lost and
 //     entries in a hidden panel survive a switch.
 // Navigation only: tabs never grant or remove access; each panel's content still checks the role.
+// Callers own the count: the layout budget allows at most five visible tabs, with any others under a
+// "More" control. This component shows every tab it is given and does not enforce the cap.
 // Owner: WS-E (single writer: S4).
 import './sub-tabs.css';
 import { useCallback, useEffect, useId, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { useLanguage } from '../language-provider';
 import { localeMeta } from '../../lib/i18n/locales';
-import { nextTabIndex, resolveSubTab, withTab } from '../../lib/ux/sub-tabs';
+import { nextTabIndex, resolveSubTab, safeDecode, withTab } from '../../lib/ux/sub-tabs';
 
 export type SubTab = {
   id: string;
@@ -86,7 +88,7 @@ export function SubTabs({
 
   // An old #id that sits inside a panel: once its tab is shown, go to the element.
   useEffect(() => {
-    const word = decodeURIComponent(window.location.hash.replace(/^#/, ''));
+    const word = safeDecode(window.location.hash);
     if (!word) return;
     const element = document.getElementById(word);
     if (!element || element.closest('[hidden]')) return;
@@ -102,12 +104,7 @@ export function SubTabs({
       url.search = withTab(url.search, id);
       // An old #id that pointed into these tabs is replaced by ?tab=. Any other hash stays: on the team
       // workspace the hash names the section being shown, and dropping it would leave that section.
-      let word = '';
-      try {
-        word = decodeURIComponent(url.hash.replace(/^#/, ''));
-      } catch {
-        /* A hash that cannot be read is left alone. */
-      }
+      const word = safeDecode(url.hash);
       const root = list.current?.parentElement;
       const target = word ? document.getElementById(word) : null;
       const pointsHere =

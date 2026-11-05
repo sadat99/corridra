@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { nextTabIndex, resolveSubTab, withTab } from '../../apps/web/lib/ux/sub-tabs';
+import { nextTabIndex, resolveSubTab, safeDecode, withTab } from '../../apps/web/lib/ux/sub-tabs';
 
 const web = createRequire(resolve('apps/web/package.json'));
 const createElement = web('react').createElement as (
@@ -53,6 +53,23 @@ describe('which tab an address points at', () => {
     expect(resolveSubTab(tabs, '', '#')).toBe('people');
     expect(resolveSubTab(tabs, '', '#%74ools')).toBe('tools');
     expect(resolveSubTab(tabs, '', '#%E0%A4%A')).toBe('people');
+  });
+});
+
+describe('reading a hash', () => {
+  it('drops the # and decodes it', () => {
+    expect(safeDecode('#tools')).toBe('tools');
+    expect(safeDecode('tools')).toBe('tools');
+    expect(safeDecode('#%74ools')).toBe('tools');
+    expect(safeDecode('#a%20b')).toBe('a b');
+  });
+
+  it('never throws on a hash that cannot be decoded, and reads it as no word', () => {
+    for (const bad of ['#%E0%A4%A', '#%', '#%zz', '%E0%A4%A', '#%C0%AF'])
+      expect(() => safeDecode(bad)).not.toThrow();
+    expect(safeDecode('#%E0%A4%A')).toBe('');
+    expect(safeDecode('')).toBe('');
+    expect(safeDecode('#')).toBe('');
   });
 });
 

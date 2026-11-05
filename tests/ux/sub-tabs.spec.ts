@@ -102,6 +102,20 @@ test('a hash that is not inside the tabs stays when a tab is chosen', async ({ p
   expect(new URL(page.url()).hash).toBe('#outside');
 });
 
+test('a hash that cannot be decoded shows the first tab and raises no page error', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await open(page, 1280, '', '#%E0%A4%A');
+  await expect(tab(page, 'People and access')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tabpanel', { name: 'People and access' })).toBeVisible();
+  // Choosing a tab still works, and the bad hash raises nothing there either.
+  await tab(page, 'Tools').click();
+  await expect(tab(page, 'Tools')).toHaveAttribute('aria-selected', 'true');
+  expect(errors).toEqual([]);
+});
+
 test('?tab= opens that tab on load, and a word that is not a tab opens the first', async ({
   page,
 }) => {

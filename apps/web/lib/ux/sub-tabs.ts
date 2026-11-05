@@ -9,6 +9,19 @@ export type SubTabKey = {
   aliases?: readonly string[];
 };
 
+/**
+ * The word in a hash: without the leading #, decoded, and empty when it cannot be decoded. A hash comes
+ * from the address bar or a link anyone can write, so a malformed one (such as %E0%A4%A) must never
+ * throw into the page; it simply names nothing.
+ */
+export function safeDecode(hash: string): string {
+  try {
+    return decodeURIComponent(hash.replace(/^#/, ''));
+  } catch {
+    return '';
+  }
+}
+
 const matches = (tab: SubTabKey, word: string) =>
   tab.id === word || (tab.aliases?.includes(word) ?? false);
 
@@ -22,12 +35,7 @@ export function resolveSubTab(
   hash: string,
   panelOf?: (id: string) => string | null,
 ): string {
-  let word = hash.replace(/^#/, '');
-  try {
-    word = decodeURIComponent(word);
-  } catch {
-    word = '';
-  }
+  const word = safeDecode(hash);
   if (word) {
     const direct = tabs.find((tab) => matches(tab, word));
     if (direct) return direct.id;
