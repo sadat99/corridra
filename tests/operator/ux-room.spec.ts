@@ -376,6 +376,42 @@ test('without the question link the next step does not ask the person to tell th
   await expect(next.getByRole('link', { name: 'Ask a Question' })).toHaveCount(0);
 });
 
+// Guardian review of PR 314: with the Trip switch off there is no Meetings view, so the proposed meeting's step
+// points to the saved report, where the times are.
+test('a proposed meeting without the Meetings view points to the saved report', async ({
+  page,
+}) => {
+  const body = reportBody();
+  const e = body.report.missions[0].experience;
+  e.quotations = [];
+  e.agenda = [
+    {
+      id: 'a1',
+      itemId: 'a1',
+      version: 1,
+      label: 'Buyer meeting',
+      state: 'PROPOSED',
+      nextAction: 'Confirm a time',
+      dueAt: '2026-11-12T00:00:00Z',
+      responsibility: 'Team',
+      meetings: [],
+    },
+  ] as never;
+  await open(
+    page,
+    { trip: false, service: false },
+    { body: detail({ original: { objective: 'Find customers or distributors', market: 'ES' } }) },
+    { body },
+  );
+  const next = page.getByRole('region', { name: 'Your next step' });
+  await expect(next).toContainText('The proposed times are in your saved report.');
+  await expect(next).not.toContainText('Meetings');
+  await expect(next.getByRole('link', { name: 'Open the Saved Report' })).toHaveAttribute(
+    'href',
+    `/account/missions/${resourceId}`,
+  );
+});
+
 test('keeps every original action one tap away', async ({ page }) => {
   await open(page);
   await expect(page.getByRole('link', { name: 'Open the saved request' })).toHaveAttribute(

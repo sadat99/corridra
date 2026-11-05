@@ -133,20 +133,19 @@ export function RoomView({
   const next: {
     words: string;
     small: string;
-    act: 'compare' | 'lens' | 'library' | 'help' | 'request';
+    act: 'compare' | 'lens' | 'report' | 'library' | 'help' | 'request';
     lens?: Lens;
     label?: string;
   } =
     lenses && board && board.proposed > 0
       ? {
           words: `Review ${board.proposed === 1 ? 'the proposed meeting' : `${board.proposed} proposed meetings`}`,
-          // Only ask for what the room lets the person do: the reply is the question link beside it.
-          small: serviceRequestsEnabled
-            ? 'See the proposed times, then tell the Corridra team which work for you.'
-            : 'See the proposed times in Meetings.',
-          act: 'lens',
-          lens: trip ? 'trip' : 'compare',
-          label: trip ? 'See Meetings' : 'See Buyers',
+          // Only point to where the times are, and ask for a reply only where the question link is beside it.
+          // With the Trip switch off the room has no Meetings view, so the times are in the saved report.
+          small: `${trip ? 'See the proposed times in Meetings' : 'The proposed times are in your saved report'}${serviceRequestsEnabled ? ', then tell the Corridra team which work for you.' : '.'}`,
+          act: trip ? 'lens' : 'report',
+          lens: 'trip',
+          label: trip ? 'See Meetings' : 'Open the Saved Report',
         }
       : lenses && board && board.shortlisted > 0
         ? {
@@ -289,7 +288,8 @@ export function RoomView({
               <span>{next.small}</span>
             </span>
             <span className="room-next-actions">
-              {(next.act === 'compare' || next.act === 'lens') && serviceRequestsEnabled ? (
+              {(next.act === 'compare' || next.act === 'lens' || next.act === 'report') &&
+              serviceRequestsEnabled ? (
                 <Link prefetch={false} className="text-link" href={helpHref}>
                   Ask a Question
                 </Link>
@@ -310,6 +310,10 @@ export function RoomView({
                 >
                   {next.label}
                 </button>
+              ) : next.act === 'report' && reportHref ? (
+                <Link prefetch={false} className="button button-primary" href={reportHref}>
+                  {next.label}
+                </Link>
               ) : next.act === 'library' ? (
                 <Link
                   prefetch={false}
