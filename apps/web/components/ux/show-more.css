@@ -1,6 +1,6 @@
 /* The folded items of a show-more list stay hidden even where a rule gives the item its own display. */
 .ux-showmore > [hidden] {
-  display: none;
+  display: none !important;
 }
 .ux-showmore-button {
   min-height: 44px;

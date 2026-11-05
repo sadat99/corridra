@@ -11,7 +11,8 @@
     "apps/web/app/operator/owner/page.tsx: Open gaps shows 4 of the open gaps, then 'Show all N open gaps'.",
     "apps/web/app/operator/workspace-controls.tsx: the Available tools list is folded behind its summary at every width.",
     "apps/web/app/operator/operations.tsx: the Deferred controls table shows 3 rows, then 'Show all 11 rows'.",
-    "tests: workspace.spec, zzz-owner-page.spec, ws-d team-control.spec and the openTools helper open the fold or click Show all before using what is inside; no assertion removed or loosened. New: tests/integration/ux-show-more.test.ts and tests/ux/show-more.spec.ts."
+    "tests: workspace.spec, zzz-owner-page.spec, ws-d team-control.spec and the openTools helper open the fold or click Show all before using what is inside; no assertion removed or loosened. New: tests/integration/ux-show-more.test.ts and tests/ux/show-more.spec.ts.",
+    "apps/web/components/ux/show-more.css: the folded-item rule is display: none !important (Codex P2 on cf15770), so no card style can show a folded item. tests/ux/show-more.spec.ts now uses a rule as strong as the owner register's (red before, green after); zzz-owner-page.spec.ts asserts exactly 4 gap cards visible before Show all and 11 after."
   ],
   "preserved": [
     "Every gap card, tool, table row, id and action is still in the page; folded items stay in the HTML.",
@@ -101,5 +102,6 @@
   ],
   "pageLengthNote": "Each pair is [before, after]. No tab reaches the 1.0 desktop limit yet; the closest are owner Open gaps 1.13 and controls Available tools 1.14. On phone only owner Open gaps (3.93 to 1.96) and Technical details (1.95) are at or under the 2.0 hard limit; this PR changes phone only for those two and for readiness Deferred controls (2.74 to 2.58).",
   "stillOver": "Desktop: every tab. Phone: every tab except owner Open gaps and Technical details, the closest being controls Available tools 2.02 and delivery Programmes 2.14. Remaining work: split delivery Experience (2.79 desktop) and owner Status into more tabs, drop the delivery Jump to list, and more folds on the longest panels. The frame change in PR 305 (fixed left bar, sticky header) will move every number and needs a re-measure after it merges.",
-  "nextAction": "Title Case button labels on staff, contributor and owner surfaces as its own PR, then re-measure after PR 305."
+  "nextAction": "Title Case button labels on staff, contributor and owner surfaces as its own PR, then re-measure after PR 305.",
+  "reMeasured": "Owner Open gaps re-measured after the fix: 1.129 desktop, 1.964 phone, with 7 of 11 cards at computed display none and 4 at grid on the built page, so the numbers above were taken with the cards folded."
 }

@@ -57,7 +57,12 @@ test('the Owner page lists what is on and off, read only, for an owner', async (
     page.getByRole('heading', { level: 2, name: 'Open gaps', exact: true }),
   ).toBeVisible();
   // The register shows its first four and folds the rest behind one button; all 11 are still in the page.
+  // The owner card styling gives each card its own display, so count what is really shown, not what exists.
+  const gapCards = page.locator('.owner-gap-cards > li');
+  await expect(gapCards).toHaveCount(11);
+  await expect(gapCards.filter({ visible: true })).toHaveCount(4);
   await page.getByRole('button', { name: 'Show all 11 open gaps', exact: true }).click();
+  await expect(gapCards.filter({ visible: true })).toHaveCount(11);
   await page.getByRole('tab', { name: 'Technical details', exact: true }).click();
   await expect(
     page.getByRole('heading', { level: 2, name: 'What is on and off', exact: true }),

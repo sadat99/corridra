@@ -16,7 +16,7 @@ test.beforeAll(async () => {
         import { ShowMoreList } from ${JSON.stringify(resolve('apps/web/components/ux/show-more.tsx'))};
         const items = Array.from({ length: 11 }, (_, i) => <li key={i} className="card"><span>Gap {i + 1}</span><input aria-label={'Note ' + (i + 1)} /></li>);
         createRoot(document.getElementById('app')).render(
-          <main><h1>Open gaps</h1><ShowMoreList limit={4} noun="open gaps" className="cards">{items}</ShowMoreList></main>,
+          <main className="ux-owner"><h1>Open gaps</h1><ShowMoreList limit={4} noun="open gaps" className="cards">{items}</ShowMoreList></main>,
         );`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
@@ -33,8 +33,9 @@ test.beforeAll(async () => {
   const css = ['app/globals.css', 'components/ux/show-more.css']
     .map((file) => readFileSync(resolve('apps/web', file), 'utf8'))
     .join('\n');
-  // A rule like the owner register's: the item sets its own display, which must not defeat "hidden".
-  const own = '.card { display: grid; gap: 4px; padding: 8px; }';
+  // A rule as strong as the owner register's (.ux-owner .owner-gap-cards li): the item sets its own display with
+  // more specificity than the folding rule, which must still not defeat "hidden".
+  const own = '.ux-owner .cards li { display: grid; gap: 4px; padding: 8px; }';
   html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Show more fixture</title><style>${css}${own}</style></head><body><div id="app"></div><script type="module">${bundle.outputFiles[0]!.text.replace(/<\/script>/g, '<\\/script>')}</script></body></html>`;
 });
 
