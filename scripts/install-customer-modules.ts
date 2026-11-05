@@ -1,6 +1,7 @@
 import { migrateCustomerProgrammeProjections } from '../packages/db/src/customer-programme-projection-migrate';
 import { migrateCustomerBooks } from '../packages/db/src/customer-book-migrate';
 import { migrateCustomerDecisionCards } from '../packages/db/src/customer-decision-card-migrate';
+import { migrateCustomerProgrammeLifecycle } from '../packages/db/src/customer-programme-lifecycle-migrate';
 import { databasePool } from './database-pool';
 import { migrateCustomerAuthority } from '../packages/db/src/customer-migrate';
 import { migrateCustomerSavedMissions } from '../packages/db/src/customer-commercial-migrate';
@@ -73,6 +74,7 @@ const v = z
     NOTIFICATIONS_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     REPLY_REVIEW_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     SPECIFICATION_CONFIRMATION_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
+    PROGRAMME_LIFECYCLE_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     COMMERCIAL_ARRANGEMENTS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     REPLY_REVIEW_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
@@ -146,6 +148,8 @@ if (
 )
   throw new Error('Install target does not match the approved Frankfurt database');
 const apply = v.INSTALL_APPLY === 'yes';
+if (v.PROGRAMME_LIFECYCLE_ACTION !== 'unchanged' && !apply)
+  throw new Error('PROGRAMME_LIFECYCLE_ACTION needs INSTALL_APPLY=yes');
 if (v.SPECIFICATION_CONFIRMATION_ACTION !== 'unchanged' && !apply)
   throw new Error('Specification confirmation installation requires INSTALL_APPLY=yes');
 if (v.COMMERCIAL_ARRANGEMENTS_ACTION !== 'unchanged' && !apply)
@@ -224,6 +228,7 @@ const registries = [
   'customer_billing_migrations',
   'customer_invoicing_migrations',
   'customer_real_use_migrations',
+  'customer_programme_lifecycle_migrations',
   'network_real_use_migrations',
   'customer_billing_real_migrations',
   'customer_invoicing_real_migrations',
@@ -316,6 +321,12 @@ try {
           `Real-use admission ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
         );
       }
+    }
+    if (v.PROGRAMME_LIFECYCLE_ACTION === 'install') {
+      await migrateCustomerProgrammeLifecycle(pool);
+      console.log(
+        'installed or already current: programme lifecycle (needs real-use installed first)',
+      );
     }
     if (v.SPECIFICATION_CONFIRMATION_ACTION === 'install') {
       await migrateCustomerSpecificationConfirmation(pool);
