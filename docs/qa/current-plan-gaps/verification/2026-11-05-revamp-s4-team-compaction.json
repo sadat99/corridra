@@ -1,12 +1,12 @@
 {
   "recordedOn": "2026-11-05",
   "track": "Revamp S4 (branch revamp/staff)",
-  "kind": "Page lengths phase 3 on the four team routes: compact page heading and padding, a shared show-more list, and folded long lists. The guard stays report-only.",
+  "kind": "Page lengths phase 3 on the four team routes: a shared show-more list and folded long lists. The guard stays report-only.",
   "findings": [],
   "findingsNote": "No GAP id is created or changed.",
   "sensitive": "no: presentation only. No auth, role, tenant, money, consent or token code changes; the server still decides every action.",
   "changed": [
-    "apps/web/components/ux/team-compact.css (new) and a one-line import in team-frame.tsx: from 64rem up, a smaller team page heading (text-2xl) and tighter block padding, using existing spacing tokens only. Phone is unchanged.",
+    "No heading or padding change: PR 305's app frame already compacts the team page heading, and a heading rule of my own measured 0.02 to 0.04 screens longer on top of it, so it was removed before merge.",
     "apps/web/components/ux/show-more.tsx and show-more.css (new): ShowMoreList shows the first N items and keeps the rest in the page, hidden, behind 'Show all N <noun>'.",
     "apps/web/app/operator/owner/page.tsx: Open gaps shows 4 of the open gaps, then 'Show all N open gaps'.",
     "apps/web/app/operator/workspace-controls.tsx: the Available tools list is folded behind its summary at every width.",
@@ -19,89 +19,89 @@
     "The owner page is still read only: the exemption in its check covers tab buttons and the show-more button only.",
     "Phone layout rules are untouched."
   ],
-  "unit": "screens (document height over viewport height), measured on the verification server with the seeded owner, before this PR is the 301 record",
+  "unit": "screens (document height over viewport height), measured on the verification server with the seeded owner; before = main at 42a2535 (PR 305 frame, PR 301 tabs), after = this PR on top of it",
   "pageLengthByTab": [
     {
       "route": "/operator/controls",
       "tab": "people",
-      "desktop": [1.82, 1.75],
+      "desktop": [1.78, 1.78],
       "phone": [2.86, 2.86]
     },
     {
       "route": "/operator/controls",
       "tab": "invite",
-      "desktop": [1.38, 1.3],
+      "desktop": [1.31, 1.31],
       "phone": [2.3, 2.3]
     },
     {
       "route": "/operator/controls",
       "tab": "tools",
-      "desktop": [2.03, 1.14],
+      "desktop": [1.92, 1.17],
       "phone": [2.02, 2.02]
     },
     {
       "route": "/operator/readiness",
       "tab": "deferred",
-      "desktop": [1.97, 1.74],
+      "desktop": [1.96, 1.8],
       "phone": [2.74, 2.58]
     },
     {
       "route": "/operator/readiness",
       "tab": "blocked",
-      "desktop": [1.33, 1.26],
+      "desktop": [1.32, 1.32],
       "phone": [2.06, 2.06]
     },
     {
       "route": "/operator/readiness",
       "tab": "rules",
-      "desktop": [1.29, 1.19],
+      "desktop": [1.25, 1.25],
       "phone": [2.31, 2.31]
     },
     {
       "route": "/operator/delivery",
       "tab": "programmes",
-      "desktop": [1.35, 1.28],
+      "desktop": [1.34, 1.34],
       "phone": [2.14, 2.14]
     },
     {
       "route": "/operator/delivery",
       "tab": "publication",
-      "desktop": [1.35, 1.28],
+      "desktop": [1.34, 1.34],
       "phone": [2.24, 2.24]
     },
     {
       "route": "/operator/delivery",
       "tab": "access",
-      "desktop": [1.44, 1.36],
+      "desktop": [1.42, 1.42],
       "phone": [2.2, 2.2]
     },
     {
       "route": "/operator/delivery",
       "tab": "experience",
-      "desktop": [2.9, 2.79],
+      "desktop": [2.85, 2.85],
       "phone": [2.19, 2.19]
     },
     {
       "route": "/operator/owner",
       "tab": "status",
-      "desktop": [1.33, 1.28],
+      "desktop": [1.32, 1.32],
       "phone": [2.09, 2.09]
     },
     {
       "route": "/operator/owner",
       "tab": "gaps",
-      "desktop": [1.73, 1.13],
+      "desktop": [1.5, 1.07],
       "phone": [3.93, 1.96]
     },
     {
       "route": "/operator/owner",
       "tab": "technical",
-      "desktop": [1.55, 1.5],
+      "desktop": [1.54, 1.54],
       "phone": [1.95, 1.95]
     }
   ],
-  "pageLengthNote": "Each pair is [before, after]. No tab reaches the 1.0 desktop limit yet; the closest are owner Open gaps 1.13 and controls Available tools 1.14. On phone only owner Open gaps (3.93 to 1.96) and Technical details (1.95) are at or under the 2.0 hard limit; this PR changes phone only for those two and for readiness Deferred controls (2.74 to 2.58).",
-  "stillOver": "Desktop: every tab. Phone: every tab except owner Open gaps and Technical details, the closest being controls Available tools 2.02 and delivery Programmes 2.14. Remaining work: split delivery Experience (2.79 desktop) and owner Status into more tabs, drop the delivery Jump to list, and more folds on the longest panels. The frame change in PR 305 (fixed left bar, sticky header) will move every number and needs a re-measure after it merges.",
+  "pageLengthNote": "Each pair is [before, after]. No tab reaches the 1.0 desktop limit yet; the closest are owner Open gaps 1.07 and controls Available tools 1.17. On phone only owner Open gaps (3.93 to 1.96) and Technical details (1.95) are at or under the 2.0 hard limit. Tabs that were not folded are unchanged.",
+  "stillOver": "Desktop: every tab. Phone: every tab except owner Open gaps and Technical details, the closest being controls Available tools 2.02 and delivery Programmes 2.14. Remaining work: split delivery Experience (2.85 desktop) and owner Status into more tabs, drop the delivery Jump to list, and more folds on the longest panels.",
   "nextAction": "Title Case button labels on staff, contributor and owner surfaces as its own PR, then re-measure after PR 305.",
-  "reMeasured": "Owner Open gaps re-measured after the fix: 1.129 desktop, 1.964 phone, with 7 of 11 cards at computed display none and 4 at grid on the built page, so the numbers above were taken with the cards folded."
+  "reMeasured": "Owner Open gaps: 7 of 11 cards at computed display none and 4 at grid on the built page, so the number is with the cards folded. Re-measured after the merge of PR 305 and again after removing the heading rule."
 }
