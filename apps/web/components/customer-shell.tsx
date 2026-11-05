@@ -40,7 +40,7 @@ export function CustomerShell({
   tab: CustomerTab;
   /** Shown only while the shells switch is off; the left-bar frame has no eyebrow. */
   eyebrow?: string;
-  title: string;
+  title: ReactNode;
   children: ReactNode;
 }) {
   const plainNames = uxSwitchOn('CORRIDRA_UX_NAV');

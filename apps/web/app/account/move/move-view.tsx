@@ -17,6 +17,7 @@ import {
   type MoveModel,
   type WaitingRow,
 } from '../../../lib/move-cards';
+import { journeyWords, type JourneyCard, type LatestItem } from './journeys';
 import './move-view.css';
 
 // The last reply a person marked as read, per request. It lives in this browser only (the same
@@ -114,6 +115,8 @@ export function MoveView({
   skippedWorkspaces = 0,
   partial = false,
   unreadable = false,
+  latestItem = null,
+  journeys = [],
 }: {
   model: MoveModel;
   startHref: string;
@@ -122,6 +125,10 @@ export function MoveView({
   partial?: boolean;
   /** True when a source that is on could not be read, so an empty list is not proof of nothing. */
   unreadable?: boolean;
+  /** The latest request's stored title, journey and status, from the work list (null when it is not there). */
+  latestItem?: LatestItem | null;
+  /** The newest piece of work in each journey the person has (Sourcing, Selling, Organising). */
+  journeys?: JourneyCard[];
 }) {
   const { locale } = useLanguage();
   const say = (key: MessageKey) => translate(locale, key);
@@ -281,12 +288,23 @@ export function MoveView({
               <CorridraIcon name="arrow" />
             </Link>
             <div className="move-latest">
+              {latestItem?.title ? (
+                <p className="move-latest-title" dir="auto">
+                  {latestItem.title}
+                </p>
+              ) : null}
               <p className="move-latest-top">
                 <span className="move-latest-sent">
+                  {latestItem?.journey ? `${journeyWords[latestItem.journey]} · ` : ''}
                   {fill(say('move.received'), {
                     date: day(model.latest.createdAt.slice(0, 10), locale),
                   })}
                 </span>
+                {latestItem?.statusWords ? (
+                  <span className="move-badge" lang="en">
+                    {latestItem.statusWords}
+                  </span>
+                ) : null}
               </p>
               {model.latest.status ? (
                 <StageBar status={model.latest.status} labels={labels.road} named />
@@ -295,6 +313,51 @@ export function MoveView({
           </section>
         ) : null}
       </div>
+
+      {journeys.length > 0 ? (
+        <section className="move-journeys" aria-labelledby="move-journeys" lang="en">
+          <h2 id="move-journeys" className="sr-only">
+            Your work by journey
+          </h2>
+          {journeys.map((card) => (
+            <article
+              key={card.journey}
+              className="move-journey"
+              data-journey={card.journey}
+              aria-labelledby={`move-journey-${card.journey}`}
+            >
+              <header className="move-journey-head">
+                <span className="move-tag" data-journey={card.journey}>
+                  {journeyWords[card.journey]}
+                </span>
+                <h3 id={`move-journey-${card.journey}`} dir="auto">
+                  {card.title ?? (card.kind === 'programme' ? 'Programme' : 'Request')}
+                </h3>
+              </header>
+              <div className="move-journey-body">
+                {card.status ? (
+                  <StageBar status={card.status} labels={labels.road} />
+                ) : card.statusWords ? (
+                  <p className="move-journey-status">{card.statusWords}</p>
+                ) : null}
+                <p className="move-journey-count">
+                  {card.count === '1' ? '1 piece of work' : `${card.count} pieces of work`} in{' '}
+                  {journeyWords[card.journey].toLowerCase()}
+                </p>
+              </div>
+              <footer className="move-journey-foot">
+                <span>
+                  {card.dateWords} {card.at ? formatDate(card.at, { timeZone: 'UTC', locale }) : ''}
+                </span>
+                <Link prefetch={false} className="move-card-link" href={card.href}>
+                  <span>{card.kind === 'programme' ? 'Open Organiser Room' : 'Open Request'}</span>
+                  <CorridraIcon name="arrow" />
+                </Link>
+              </footer>
+            </article>
+          ))}
+        </section>
+      ) : null}
 
       {model.waiting.length > 0 ? (
         <section className="move-card" aria-labelledby="move-others">

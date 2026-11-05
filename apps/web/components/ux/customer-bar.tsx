@@ -246,6 +246,7 @@ export function CustomerBar({ notifications }: { notifications: boolean }) {
       {workspaces ? <WorkspaceSwitcher workspaces={workspaces} /> : null}
       <div className="ux-bar-tools">
         <Link prefetch={false} className="ux-bar-primary" href={start}>
+          <CorridraIcon name="draft" className="ux-bar-primary-icon" />
           New Request
         </Link>
         {notifications ? <CustomerInbox counted={onAccount} /> : null}
