@@ -505,7 +505,7 @@ test('the workspace list shows the link status, and shows nothing when the modul
   expect(overviewCalls).toBeGreaterThan(0);
   const before = overviewCalls;
   await page.goto(origin + '/?mode=list&links=off');
-  await expect(page.getByText('Synthetic Dhaka workspace', { exact: false })).toBeVisible();
+  await expect(page.getByText('Synthetic Dhaka workspace', { exact: true })).toBeVisible();
   await expect(page.getByText(/Company link:/)).toHaveCount(0);
   expect(overviewCalls).toBe(before);
   // A failing status service never breaks the list.
@@ -514,7 +514,7 @@ test('the workspace list shows the link status, and shows nothing when the modul
     route.fulfill({ status: 503, json: { error: 'x' } }),
   );
   await page.goto(origin + '/?mode=list');
-  await expect(page.getByText('Synthetic Dhaka workspace', { exact: false })).toBeVisible();
+  await expect(page.getByText('Synthetic Dhaka workspace', { exact: true })).toBeVisible();
   await expect(page.getByText(/Company link:/)).toHaveCount(0);
 });
 

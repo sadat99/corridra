@@ -9,7 +9,8 @@ import { useEffect, useState } from 'react';
 import { CornerDock } from '../corner-dock';
 import { CorridraIcon } from '../corridra-icon';
 import { AccountMenuBody, useWorkspaces } from './customer-bar';
-import { MenuLink, OverflowMenu } from './overflow-menu';
+import { MenuLink } from './menu-link';
+import { OverflowMenu } from './overflow-menu';
 
 const initials = (text: string) =>
   text

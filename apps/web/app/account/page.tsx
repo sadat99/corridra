@@ -35,6 +35,7 @@ import { Suspense } from 'react';
 import { WorkList } from './work-list';
 import { HomeNextStep } from './home-next-step';
 import { HomeWork } from './home-work';
+import { RequestsTabs } from './requests-tabs';
 import { parseWorkFilter } from '../../lib/work-items/view';
 export const dynamic = 'force-dynamic';
 export const metadata = {
@@ -175,89 +176,101 @@ export default async function Page({
       )}
       {view === 'work' && (
         <div id="my-work" tabIndex={-1} className="ux-account-groups">
-          {workspaceIssuer && (
-            <Suspense fallback={<p role="status">Loading your work…</p>}>
-              <WorkList
-                subject={data.user.id}
-                issuer={workspaceIssuer}
-                filter={parseWorkFilter(query.work)}
-                rooms={uxSwitchOn('CORRIDRA_UX_ROAD')}
-              />
-            </Suspense>
-          )}
-          <section aria-label="Manage your work">
-            <h2>Manage your work</h2>
-            <ul className="ux-quick-links">
-              {customerOrganisationProfilesEnabled() && (
-                <li>
-                  <Link prefetch={false} href="/account/profile">
-                    <strong>Company profiles and links</strong>
-                    <span>Keep company details current and request a reviewed company link.</span>
-                  </Link>
-                </li>
-              )}
-              {customerProgrammesEnabled() && (
-                <li>
-                  <Link prefetch={false} href="/account/delegations/organise">
-                    <strong>Programmes</strong>
-                    <span>Participants, terms, places, fee schedules and delivery.</span>
-                  </Link>
-                </li>
-              )}
-              {customerServiceRequestsEnabled() && (
-                <li>
-                  <Link prefetch={false} href="/account/service-requests">
-                    <strong>Service requests</strong>
-                    <span>Review requests for help, questions and quotes.</span>
-                  </Link>
-                </li>
-              )}
-              {customerBillingEnabled() && (
-                <li>
-                  <Link prefetch={false} href="/account/billing">
-                    <strong>Plan and billing</strong>
-                    <span>The plan your workspace holds and the plans on offer.</span>
-                  </Link>
-                </li>
-              )}
-            </ul>
-          </section>
+          <RequestsTabs
+            requests={
+              workspaceIssuer && (
+                <Suspense fallback={<p role="status">Loading your work…</p>}>
+                  <WorkList
+                    subject={data.user.id}
+                    issuer={workspaceIssuer}
+                    filter={parseWorkFilter(query.work)}
+                    rooms={uxSwitchOn('CORRIDRA_UX_ROAD')}
+                  />
+                </Suspense>
+              )
+            }
+            workspaces={
+              <>
+                <section aria-label="Manage your work">
+                  <h2>Manage your work</h2>
+                  <ul className="ux-quick-links">
+                    {customerOrganisationProfilesEnabled() && (
+                      <li>
+                        <Link prefetch={false} href="/account/profile">
+                          <strong>Company profiles and links</strong>
+                          <span>
+                            Keep company details current and request a reviewed company link.
+                          </span>
+                        </Link>
+                      </li>
+                    )}
+                    {customerProgrammesEnabled() && (
+                      <li>
+                        <Link prefetch={false} href="/account/delegations/organise">
+                          <strong>Programmes</strong>
+                          <span>Participants, terms, places, fee schedules and delivery.</span>
+                        </Link>
+                      </li>
+                    )}
+                    {customerServiceRequestsEnabled() && (
+                      <li>
+                        <Link prefetch={false} href="/account/service-requests">
+                          <strong>Service requests</strong>
+                          <span>Review requests for help, questions and quotes.</span>
+                        </Link>
+                      </li>
+                    )}
+                    {customerBillingEnabled() && (
+                      <li>
+                        <Link prefetch={false} href="/account/billing">
+                          <strong>Plan and billing</strong>
+                          <span>The plan your workspace holds and the plans on offer.</span>
+                        </Link>
+                      </li>
+                    )}
+                  </ul>
+                </section>
 
-          {workspaceIssuer && (
-            <div id="customer-workspaces" tabIndex={-1}>
-              <CustomerWorkspaces
-                key={`${workspaceIssuer}:${data.user.id}`}
-                subject={data.user.id}
-                issuer={workspaceIssuer}
-                requestsEnabled={requestCreationEnabled}
-                programmesEnabled={customerProgrammesEnabled()}
-                profilesEnabled={customerOrganisationProfilesEnabled()}
-                draftsEnabled={customerMissionDraftsEnabled()}
-                memberRolesEnabled={customerMemberRolesEnabled()}
-                linksEnabled={customerOrganisationLinksEnabled()}
-                serviceRequestsEnabled={customerServiceRequestsEnabled()}
-                billingEnabled={customerBillingEnabled()}
-              />
-            </div>
-          )}
-          {workspaceIssuer && customerParticipantsEnabled() && (
-            <p>
-              <Link className="text-link ux-action" href="/account/delegations">
-                Delegation registrations
-              </Link>
-            </p>
-          )}
-          {requestIssuer && (
-            <div id="customer-requests" tabIndex={-1}>
-              <CustomerRequests
-                detailsEnabled={customerRequestDetailsEnabled()}
-                subject={data.user.id}
-                issuer={requestIssuer}
-                statuses={missionStatus.options}
-                canSubmit={requestCreationEnabled}
-              />
-            </div>
-          )}
+                {workspaceIssuer && (
+                  <div id="customer-workspaces" tabIndex={-1}>
+                    <CustomerWorkspaces
+                      key={`${workspaceIssuer}:${data.user.id}`}
+                      subject={data.user.id}
+                      issuer={workspaceIssuer}
+                      requestsEnabled={requestCreationEnabled}
+                      programmesEnabled={customerProgrammesEnabled()}
+                      profilesEnabled={customerOrganisationProfilesEnabled()}
+                      draftsEnabled={customerMissionDraftsEnabled()}
+                      memberRolesEnabled={customerMemberRolesEnabled()}
+                      linksEnabled={customerOrganisationLinksEnabled()}
+                      serviceRequestsEnabled={customerServiceRequestsEnabled()}
+                      billingEnabled={customerBillingEnabled()}
+                    />
+                  </div>
+                )}
+                {workspaceIssuer && customerParticipantsEnabled() && (
+                  <p>
+                    <Link className="text-link ux-action" href="/account/delegations">
+                      Delegation registrations
+                    </Link>
+                  </p>
+                )}
+              </>
+            }
+            saved={
+              requestIssuer && (
+                <div id="customer-requests" tabIndex={-1}>
+                  <CustomerRequests
+                    detailsEnabled={customerRequestDetailsEnabled()}
+                    subject={data.user.id}
+                    issuer={requestIssuer}
+                    statuses={missionStatus.options}
+                    canSubmit={requestCreationEnabled}
+                  />
+                </div>
+              )
+            }
+          />
         </div>
       )}
       {view === 'results' && (

@@ -32,6 +32,10 @@ vi.mock('next/link', () => ({
   }) => createElement('a', { href, className }, children as never),
 }));
 vi.mock('../../apps/web/lib/foundations', () => ({ foundations: () => null }));
+// The filter bar changes the address, so it asks for the router; a static render has none.
+vi.doMock(web.resolve('next/navigation'), () => ({
+  useRouter: () => ({ replace: () => undefined, push: () => undefined }),
+}));
 
 const read = (path: string) => readFileSync(resolve(path), 'utf8');
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
@@ -106,7 +110,7 @@ describe('H-02 the existing Work panels are all still there', () => {
     const work = page.slice(page.indexOf('id="my-work"'));
     expect(work.indexOf('<WorkList')).toBeGreaterThan(0);
     expect(work.indexOf('<WorkList')).toBeLessThan(work.indexOf('aria-label="Manage your work"'));
-    expect(work).toMatch(/\{workspaceIssuer && \(\s*<Suspense/);
+    expect(work).toMatch(/workspaceIssuer && \(\s*<Suspense/);
   });
   it('H-04 loading and signed-out screens are the existing ones', () => {
     expect(page).toContain('<p role="status">Loading your work…</p>');
@@ -182,7 +186,10 @@ describe('H-05 the work filter', () => {
     const html = await view(list([item(1)]), parseWorkFilter('"><script>alert(1)</script>'));
     expect(html).not.toContain('<script>');
     expect(html).toContain('value="all"');
-    expect(html.match(/checked=""/g)).toHaveLength(1);
+    // The live filter and its no-script copy each mark the chosen segment once.
+    expect(html.replace(/<noscript>[\s\S]*?<\/noscript>/g, '').match(/checked=""/g)).toHaveLength(
+      1,
+    );
   });
 });
 
@@ -256,8 +263,10 @@ describe('rows', () => {
     expect(html).toContain('Sent 4 Nov 2026');
     expect(html).toContain('Created 4 Nov 2026');
     // A request has no stored title, so its kind word is the heading and nothing is invented.
-    expect(html).toContain('<h3 dir="auto">Request</h3>');
-    expect(html.match(/work-open/g)).toHaveLength(5);
+    expect(html).toContain('<span class="ux-row-title" dir="auto">Request</span>');
+    // Each row is one link, which takes the place of the old Open link.
+    expect(html.match(/<li class="ux-row"/g)).toHaveLength(5);
+    expect(html.match(/work-open/g)).toBeNull();
   });
   it('use no status word that does not already exist', () => {
     expect(workStatusWords(item(1))).toBe('Draft');
@@ -266,7 +275,7 @@ describe('rows', () => {
   });
   it('show ten rows and one button for more', async () => {
     const html = await view(list(Array.from({ length: 25 }, (_, n) => item(n + 1))));
-    expect(html.match(/<li class="work-row/g)).toHaveLength(10);
+    expect(html.match(/<li class="ux-row"/g)).toHaveLength(10);
     expect(html).toContain('Show 10 more');
     const small = await view(list([item(1)]));
     expect(small).not.toContain('work-more');
@@ -284,7 +293,7 @@ describe('language marks for stored text', () => {
     const html = await view(
       list([item(1, { title: '广州家具采购' })], { workspaces: [{ id: W, name: '广州工厂' }] }),
     );
-    expect(html).toContain('<h3 dir="auto" lang="zh">广州家具采购</h3>');
+    expect(html).toContain('<span class="ux-row-title" dir="auto" lang="zh">广州家具采购</span>');
     expect(html).toContain('lang="zh">广州工厂</span>');
   });
   it('marks Bangla text lang bn in a title and in a workspace name', async () => {
@@ -294,7 +303,9 @@ describe('language marks for stored text', () => {
         workspaces: [{ id: W, name: 'ঢাকা নিটওয়্যার' }],
       }),
     );
-    expect(html).toContain('<h3 dir="auto" lang="bn">কারখানা পরিদর্শন</h3>');
+    expect(html).toContain(
+      '<span class="ux-row-title" dir="auto" lang="bn">কারখানা পরিদর্শন</span>',
+    );
     expect(html).toContain('lang="bn">ঢাকা নিটওয়্যার</span>');
   });
   it('leaves English text unmarked', () => {
