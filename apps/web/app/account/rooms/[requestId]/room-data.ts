@@ -13,6 +13,8 @@ export type RoomDetail = {
     marketCode?: string;
     /** Where the customer's company is, as they wrote it in the brief: the start of the route chip. */
     companyCountry?: string;
+    /** The intake's structured choices; the company country and market are stored here (plan/intake.tsx). */
+    experience?: { companyCountry?: string; marketCode?: string };
   } | null;
   progress: null | {
     status: string;

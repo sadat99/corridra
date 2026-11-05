@@ -103,8 +103,10 @@ export function RoomView({
   const journey = family === 'UNCLASSIFIED' ? null : family;
   const source = family === 'SOURCE';
   // The route is the customer's own brief: where their company is, and the market they chose.
-  const from = original?.companyCountry?.trim();
-  const to = (original?.market ?? original?.marketCode)?.trim();
+  // The intake stores both inside the brief's experience (Codex review of PR 314); a top-level value is kept as a
+  // fallback for older briefs.
+  const from = (original?.experience?.companyCountry ?? original?.companyCountry)?.trim();
+  const to = (original?.market ?? original?.marketCode ?? original?.experience?.marketCode)?.trim();
   const route = from && to ? `${placeName(from)} → ${placeName(to)}` : null;
   const replies = detail?.progress
     ? [...detail.progress.replies].sort((a, b) => b.createdAt.localeCompare(a.createdAt))

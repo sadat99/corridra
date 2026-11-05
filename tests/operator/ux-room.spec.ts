@@ -334,10 +334,10 @@ test('a selling request opens on its buyers and meetings, with the proposed meet
     { trip: true },
     {
       body: detail({
+        // The shape the intake stores: the country and market inside the brief's experience.
         original: {
           objective: 'Find customers or distributors',
-          market: 'ES',
-          companyCountry: 'BD',
+          experience: { schemaVersion: 1, companyCountry: 'BD', marketCode: 'ES' },
         },
       }),
     },
