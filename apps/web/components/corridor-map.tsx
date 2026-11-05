@@ -19,6 +19,11 @@ function arc(from: readonly [number, number], to: readonly [number, number], bow
   return `M${from[0]} ${from[1]}Q${Math.round(mx + nx * lift)} ${Math.round(my + ny * lift)} ${to[0]} ${to[1]}`;
 }
 
+// The frame is the horizontal band of the full map that holds every marker, arc and label (the EU label sits near
+// y 80 and the Bangladesh label near y 275). Cropping the frame itself, not the box around it, keeps all of them
+// in view at any width, and the map keeps its proportions.
+const band = '0 74 600 206';
+
 const chinaArc = arc(dhaka, beijing, 0.3);
 const europeArc = arc(dhaka, madrid, 0.2);
 
@@ -32,13 +37,7 @@ export function CorridorMap({ company, market }: { company: string; market: stri
   const europeActive = market === 'ES' || market === 'EU' || company === 'ES';
   const arrow = reverse ? { markerStart: 'url(#map-arrow)' } : { markerEnd: 'url(#map-arrow)' };
   return (
-    <svg
-      viewBox={g.viewBox}
-      preserveAspectRatio="xMidYMid slice"
-      aria-hidden="true"
-      className="ux-atlas-map"
-      focusable="false"
-    >
+    <svg viewBox={band} aria-hidden="true" className="ux-atlas-map" focusable="false">
       <defs>
         <marker
           id="map-arrow"

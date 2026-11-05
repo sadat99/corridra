@@ -1,6 +1,6 @@
 /* The route box on a wide screen: the picker and its fine-tune control on the left, the map and the result on
-   the right, so the first tab fits the page budget (layout budget, Phase 2b). The map is cropped to its middle
-   band, which keeps the three places and the route line. Nothing is removed. */
+   the right, so the first tab fits the page budget (layout budget, Phase 2b). The map's own frame is a band of
+   the full map (see corridor-map.tsx), so it keeps every marker and label at any width. Nothing is removed. */
 @media (min-width: 1000px) {
   .guide-routes .guide-route-box {
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
@@ -34,7 +34,6 @@
     align-self: start;
   }
   .guide-routes .ux-atlas-map {
-    height: 16rem;
     margin: 0;
   }
 }
@@ -70,10 +69,6 @@
   .guide-routes .ux-atlas {
     gap: var(--space-2);
   }
-  .guide-routes .ux-atlas-map {
-    height: 7.5rem;
-    margin: 0;
-  }
   .guide-routes .guide-route-result .ux-atlas-note {
     font-size: var(--text-sm);
   }
@@ -90,9 +85,6 @@
     padding-inline: var(--space-2);
     text-align: center;
     line-height: 1.25;
-  }
-  .guide-routes .ux-atlas-map {
-    height: 8rem;
   }
   .guide-routes .guide-directions {
     gap: var(--space-3);
@@ -129,10 +121,4 @@
   .guide-routes .ux-subtabs-tab {
     padding-inline: var(--space-2);
   }
-}
-
-/* The world map (any other route) is never cropped: the pair can be anywhere, so it keeps its whole frame. Only the
-   two fixed spotlight maps are cropped to their middle band. */
-.guide-routes .ux-atlas-map.ux-atlas-map-world {
-  height: auto;
 }
