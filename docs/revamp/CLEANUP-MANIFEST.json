@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "purpose": "Revamp contract sections 7 and 11: evidenced keep, consolidate, archive or delete decisions. Nothing here is deleted; a delete needs an owner-approved PR, the Guardian PASS, this check rerun and the recovery step below.",
-  "baseline": "4b7f83e9c3b846c5fb0067bce1333f795a07fb36",
+  "baseline": "c7da830f62e16df3f03ac02a4483320c5242730c",
   "generatedBy": "node scripts/v3-inventory.mjs <sha> <dir> && node scripts/revamp-manifest.mjs <dir>/inventory.json",
   "neverCandidates": [
     "docs/source/",
@@ -15,6 +15,28 @@
   ],
   "entries": [
     {
+      "path": "apps/web/components/next-step-card.tsx",
+      "classification": "REVIEW",
+      "reason": "REVIEW: no importer found; needs owner-approved deletion with preservation and rollback proof",
+      "incomingReferences": {
+        "importers": 0,
+        "documentation": [
+          "docs/agents/ui-direction.md",
+          "docs/qa/2026-10-31/OWNERSHIP.md",
+          "docs/qa/current-plan-gaps/verification/2026-11-05-revamp-s2-cx2a-home.json",
+          "docs/source/ac1-design-system/EXISTING_TOKEN_MIGRATION_CROSSWALK.md"
+        ]
+      },
+      "replacement": null,
+      "recovery": "git checkout c7da830f62e1 -- apps/web/components/next-step-card.tsx",
+      "proof": {
+        "sha256": "7e12c86c721233131624a0cf403957202e17081164354e1759b39cf176c7ac13",
+        "lastCommit": "4f2c42a 2026-10-25",
+        "method": "Tracked apps/web, packages and scripts source with no import, CSS import, package script or config reference. Next special files, tests, migrations and type declarations are excluded. docs/source, ADRs, QA, history and migrations are never candidates."
+      },
+      "approval": "PENDING owner and Guardian"
+    },
+    {
       "path": "apps/web/components/ux/page-header.tsx",
       "classification": "REVIEW",
       "reason": "REVIEW: no importer found; needs owner-approved deletion with preservation and rollback proof",
@@ -23,12 +45,13 @@
         "documentation": [
           "docs/agents/work-log.md",
           "docs/qa/2026-10-31/OWNERSHIP.md",
+          "docs/revamp/CLEANUP-MANIFEST.json",
           "docs/revamp/README.md",
           "docs/revamp/wave-0/manifest.json"
         ]
       },
       "replacement": null,
-      "recovery": "git checkout 4b7f83e9c3b8 -- apps/web/components/ux/page-header.tsx",
+      "recovery": "git checkout c7da830f62e1 -- apps/web/components/ux/page-header.tsx",
       "proof": {
         "sha256": "f0223b879e1e5ac158a87e772e47ba4343a1a666840bd114d54a91b17fd2c243",
         "lastCommit": "b836542 2026-10-31",
@@ -54,6 +77,7 @@
           "docs/qa/current-plan-gaps/verification/2026-11-03-gap017-local.json",
           "docs/qa/current-plan-gaps/verification/2026-11-03-gap019-local.json",
           "docs/qa/current-plan-gaps/verification/2026-11-03-gap020-local.json",
+          "docs/revamp/CLEANUP-MANIFEST.json",
           "docs/revamp/wave-0/manifest.json",
           "docs/ux10x/coverage.json",
           "docs/ux10x/ux02/coverage.json",
@@ -65,7 +89,7 @@
         ]
       },
       "replacement": null,
-      "recovery": "git checkout 4b7f83e9c3b8 -- apps/web/eslint.config.mjs",
+      "recovery": "git checkout c7da830f62e1 -- apps/web/eslint.config.mjs",
       "proof": {
         "sha256": "4492c39d7bf137d6674b640975dcb1de2f5b5cd9f16f1bf7adca15862a770e89",
         "lastCommit": "4f2c42a 2026-10-25",
@@ -80,6 +104,7 @@
       "incomingReferences": {
         "importers": 0,
         "documentation": [
+          "docs/revamp/CLEANUP-MANIFEST.json",
           "docs/revamp/wave-0/manifest.json",
           "docs/ux10x/coverage.json",
           "docs/ux10x/ux02/coverage.json",
@@ -91,7 +116,7 @@
         ]
       },
       "replacement": null,
-      "recovery": "git checkout 4b7f83e9c3b8 -- apps/web/postcss.config.mjs",
+      "recovery": "git checkout c7da830f62e1 -- apps/web/postcss.config.mjs",
       "proof": {
         "sha256": "90a413fcb7bc068b0643ea4f7c9e95ef28fec01e2d71caf9dfb2afa7067c4772",
         "lastCommit": "4f2c42a 2026-10-25",
@@ -105,10 +130,14 @@
       "reason": "KEEP: operator or agent CLI run by path; documented or historical evidence tooling",
       "incomingReferences": {
         "importers": 0,
-        "documentation": ["docs/revamp/wave-0/manifest.json", "docs/runbooks/evidence-storage.md"]
+        "documentation": [
+          "docs/revamp/CLEANUP-MANIFEST.json",
+          "docs/revamp/wave-0/manifest.json",
+          "docs/runbooks/evidence-storage.md"
+        ]
       },
       "replacement": null,
-      "recovery": "git checkout 4b7f83e9c3b8 -- scripts/blob-storage-check.mjs",
+      "recovery": "git checkout c7da830f62e1 -- scripts/blob-storage-check.mjs",
       "proof": {
         "sha256": "d1815180cc3d664b11304257b4345bb21c4e9a4e2cbddd0368ce2327d3d72302",
         "lastCommit": "4f2c42a 2026-10-25",
@@ -126,6 +155,7 @@
           "AGENTS.md",
           "docs/agents/work-log.md",
           "docs/product/ux-update-plan-corrected-2026-10-24.md",
+          "docs/revamp/CLEANUP-MANIFEST.json",
           "docs/revamp/wave-0/manifest.json",
           "docs/runbooks/v2-access-and-launch.md",
           "docs/ux10x/master-handoff.md",
@@ -134,7 +164,7 @@
         ]
       },
       "replacement": null,
-      "recovery": "git checkout 4b7f83e9c3b8 -- scripts/check-git-branch-budget.mjs",
+      "recovery": "git checkout c7da830f62e1 -- scripts/check-git-branch-budget.mjs",
       "proof": {
         "sha256": "273f1b30961b6be0f573313eb7c06a1ffe7455d41c6f208e2bb35ddc8d54d182",
         "lastCommit": "4f2c42a 2026-10-25",
@@ -149,12 +179,13 @@
       "incomingReferences": {
         "importers": 0,
         "documentation": [
+          "docs/revamp/CLEANUP-MANIFEST.json",
           "docs/revamp/wave-0/manifest.json",
           "docs/runbooks/part-03-foundations.md"
         ]
       },
       "replacement": null,
-      "recovery": "git checkout 4b7f83e9c3b8 -- scripts/cloud-validate.mjs",
+      "recovery": "git checkout c7da830f62e1 -- scripts/cloud-validate.mjs",
       "proof": {
         "sha256": "fb7b3dc45e83180780696bf2f5ac094b364d8d407f2576022b6721c930cca212",
         "lastCommit": "4f2c42a 2026-10-25",
@@ -169,12 +200,13 @@
       "incomingReferences": {
         "importers": 0,
         "documentation": [
+          "docs/revamp/CLEANUP-MANIFEST.json",
           "docs/revamp/wave-0/manifest.json",
           "docs/runbooks/part-03-foundations.md"
         ]
       },
       "replacement": null,
-      "recovery": "git checkout 4b7f83e9c3b8 -- scripts/migrate-environment.ts",
+      "recovery": "git checkout c7da830f62e1 -- scripts/migrate-environment.ts",
       "proof": {
         "sha256": "aa909377082049c100e1fb55da92f5c3484d07e99b3440603246be64ab9925ca",
         "lastCommit": "4f2c42a 2026-10-25",
@@ -188,10 +220,14 @@
       "reason": "KEEP: operator or agent CLI run by path; documented or historical evidence tooling",
       "incomingReferences": {
         "importers": 0,
-        "documentation": ["docs/revamp/wave-0/manifest.json", "docs/runbooks/evidence-storage.md"]
+        "documentation": [
+          "docs/revamp/CLEANUP-MANIFEST.json",
+          "docs/revamp/wave-0/manifest.json",
+          "docs/runbooks/evidence-storage.md"
+        ]
       },
       "replacement": null,
-      "recovery": "git checkout 4b7f83e9c3b8 -- scripts/migrate-evidence-storage.ts",
+      "recovery": "git checkout c7da830f62e1 -- scripts/migrate-evidence-storage.ts",
       "proof": {
         "sha256": "877554f533d0be07323450f57a053cde84422616330d04ea19878f4755f34621",
         "lastCommit": "4f2c42a 2026-10-25",
@@ -207,12 +243,13 @@
         "importers": 0,
         "documentation": [
           "docs/product/phase0-rehearsal-mission-proposal.md",
+          "docs/revamp/CLEANUP-MANIFEST.json",
           "docs/revamp/wave-0/manifest.json",
           "docs/runbooks/part-03-foundations.md"
         ]
       },
       "replacement": null,
-      "recovery": "git checkout 4b7f83e9c3b8 -- scripts/neon-preview.ts",
+      "recovery": "git checkout c7da830f62e1 -- scripts/neon-preview.ts",
       "proof": {
         "sha256": "ffaa7d869e502604927678e4daa29d7e47acb1e7b4d06a84791c6c89f6ff5e05",
         "lastCommit": "4f2c42a 2026-10-25",
@@ -229,11 +266,12 @@
         "documentation": [
           "docs/agents/work-log.md",
           "docs/product/phase0-rehearsal-mission-proposal.md",
+          "docs/revamp/CLEANUP-MANIFEST.json",
           "docs/revamp/wave-0/manifest.json"
         ]
       },
       "replacement": null,
-      "recovery": "git checkout 4b7f83e9c3b8 -- scripts/operator-browser-server.ts",
+      "recovery": "git checkout c7da830f62e1 -- scripts/operator-browser-server.ts",
       "proof": {
         "sha256": "0f990ed40d4bfacf0537faee7f3e2c82de4f1c1d70461a52c5cee69056883e98",
         "lastCommit": "4f2c42a 2026-10-25",
@@ -248,12 +286,13 @@
       "incomingReferences": {
         "importers": 0,
         "documentation": [
+          "docs/revamp/CLEANUP-MANIFEST.json",
           "docs/revamp/wave-0/manifest.json",
           "docs/runbooks/part-03-foundations.md"
         ]
       },
       "replacement": null,
-      "recovery": "git checkout 4b7f83e9c3b8 -- scripts/provision-runtime.ts",
+      "recovery": "git checkout c7da830f62e1 -- scripts/provision-runtime.ts",
       "proof": {
         "sha256": "88ad8db3f588e5d077cb0cdebc41ea76727780e6f1e4286f351cde555aaeeb90",
         "lastCommit": "4f2c42a 2026-10-25",
@@ -269,15 +308,18 @@
         "importers": 0,
         "documentation": [
           "docs/agents/work-log.md",
+          "docs/revamp/CLEANUP-MANIFEST.json",
+          "docs/revamp/COVERAGE.json",
           "docs/revamp/README.md",
+          "docs/revamp/specs/wave7-cleanup.md",
           "docs/revamp/wave-0/manifest.json"
         ]
       },
       "replacement": null,
-      "recovery": "git checkout 4b7f83e9c3b8 -- scripts/revamp-manifest.mjs",
+      "recovery": "git checkout c7da830f62e1 -- scripts/revamp-manifest.mjs",
       "proof": {
-        "sha256": "99803756a2100f6bb17ef9478a85043ea87bd00e38a498679c8919212ff152f4",
-        "lastCommit": "f5040a0 2026-11-04",
+        "sha256": "0f4e1309485c8d403fdc988bbc11835d8cd43851fd7ffc3f8949f4e3f0922023",
+        "lastCommit": "e011c70 2026-11-04",
         "method": "Tracked apps/web, packages and scripts source with no import, CSS import, package script or config reference. Next special files, tests, migrations and type declarations are excluded. docs/source, ADRs, QA, history and migrations are never candidates."
       },
       "approval": "n/a (kept)"
@@ -288,10 +330,10 @@
       "reason": "KEEP: operator or agent CLI run by path; documented or historical evidence tooling",
       "incomingReferences": {
         "importers": 0,
-        "documentation": ["docs/revamp/wave-0/manifest.json"]
+        "documentation": ["docs/revamp/CLEANUP-MANIFEST.json", "docs/revamp/wave-0/manifest.json"]
       },
       "replacement": null,
-      "recovery": "git checkout 4b7f83e9c3b8 -- scripts/ux10x-browser-evidence.mjs",
+      "recovery": "git checkout c7da830f62e1 -- scripts/ux10x-browser-evidence.mjs",
       "proof": {
         "sha256": "f621ddb094a69bfdcaf581541c5b247de6bd07193da22ed7f636a04458ca95c4",
         "lastCommit": "4f2c42a 2026-10-25",
@@ -305,10 +347,10 @@
       "reason": "KEEP: operator or agent CLI run by path; documented or historical evidence tooling",
       "incomingReferences": {
         "importers": 0,
-        "documentation": ["docs/revamp/wave-0/manifest.json"]
+        "documentation": ["docs/revamp/CLEANUP-MANIFEST.json", "docs/revamp/wave-0/manifest.json"]
       },
       "replacement": null,
-      "recovery": "git checkout 4b7f83e9c3b8 -- scripts/ux10x-runtime-coverage/playwright.public.config.ts",
+      "recovery": "git checkout c7da830f62e1 -- scripts/ux10x-runtime-coverage/playwright.public.config.ts",
       "proof": {
         "sha256": "44119713898cf5c2eceb2c9d106e413e8394692bf07df82b8786c1e3fe720a66",
         "lastCommit": "4f2c42a 2026-10-25",
@@ -322,10 +364,10 @@
       "reason": "KEEP: operator or agent CLI run by path; documented or historical evidence tooling",
       "incomingReferences": {
         "importers": 0,
-        "documentation": ["docs/revamp/wave-0/manifest.json"]
+        "documentation": ["docs/revamp/CLEANUP-MANIFEST.json", "docs/revamp/wave-0/manifest.json"]
       },
       "replacement": null,
-      "recovery": "git checkout 4b7f83e9c3b8 -- scripts/ux10x-runtime-coverage/sweep.mjs",
+      "recovery": "git checkout c7da830f62e1 -- scripts/ux10x-runtime-coverage/sweep.mjs",
       "proof": {
         "sha256": "258d70c93dcc8c413d55ee810bb7c9ea2c6ffdc76d43ced35bacf247a4f5ca2a",
         "lastCommit": "4f2c42a 2026-10-25",
@@ -340,12 +382,13 @@
       "incomingReferences": {
         "importers": 0,
         "documentation": [
+          "docs/revamp/CLEANUP-MANIFEST.json",
           "docs/revamp/wave-0/manifest.json",
           "docs/v3/history/ledger-through-109.md"
         ]
       },
       "replacement": null,
-      "recovery": "git checkout 4b7f83e9c3b8 -- scripts/v3-browser-baseline.mjs",
+      "recovery": "git checkout c7da830f62e1 -- scripts/v3-browser-baseline.mjs",
       "proof": {
         "sha256": "64508b6fc3a205ac7647b5aa2445986853959cd9805ea7deb321f9e0bec9aba7",
         "lastCommit": "4f2c42a 2026-10-25",
@@ -361,13 +404,15 @@
         "importers": 0,
         "documentation": [
           "docs/agents/work-log.md",
+          "docs/revamp/CLEANUP-MANIFEST.json",
+          "docs/revamp/COVERAGE.json",
           "docs/revamp/README.md",
           "docs/revamp/wave-0/manifest.json",
           "docs/v3/history/ledger-through-109.md"
         ]
       },
       "replacement": null,
-      "recovery": "git checkout 4b7f83e9c3b8 -- scripts/v3-inventory.mjs",
+      "recovery": "git checkout c7da830f62e1 -- scripts/v3-inventory.mjs",
       "proof": {
         "sha256": "c1b7b7b496bacfd0e5b55e371b6a4cc9e8465642c8febb45c58e15a3fa7d94fe",
         "lastCommit": "4f2c42a 2026-10-25",
@@ -383,13 +428,14 @@
         "importers": 0,
         "documentation": [
           "docs/agents/work-log.md",
+          "docs/revamp/CLEANUP-MANIFEST.json",
           "docs/revamp/wave-0/manifest.json",
           "docs/v3/history/ledger-chunks-110-111.md",
           "docs/v3/history/ledger-through-109.md"
         ]
       },
       "replacement": null,
-      "recovery": "git checkout 4b7f83e9c3b8 -- scripts/v3-preservation-check.mjs",
+      "recovery": "git checkout c7da830f62e1 -- scripts/v3-preservation-check.mjs",
       "proof": {
         "sha256": "cd8b39063876096c3b9d7693554700353b8913594e44364cbee8e5998fff7592",
         "lastCommit": "4f2c42a 2026-10-25",
@@ -404,12 +450,13 @@
       "incomingReferences": {
         "importers": 0,
         "documentation": [
+          "docs/revamp/CLEANUP-MANIFEST.json",
           "docs/revamp/wave-0/manifest.json",
           "docs/v3/history/ledger-through-109.md"
         ]
       },
       "replacement": null,
-      "recovery": "git checkout 4b7f83e9c3b8 -- scripts/v3-register.mjs",
+      "recovery": "git checkout c7da830f62e1 -- scripts/v3-register.mjs",
       "proof": {
         "sha256": "4f3f33673b752cd8dc0cdf2e789c8b78a3d74f425da40097fdb5bbd46d460320",
         "lastCommit": "4f2c42a 2026-10-25",
@@ -423,10 +470,14 @@
       "reason": "KEEP: operator or agent CLI run by path; documented or historical evidence tooling",
       "incomingReferences": {
         "importers": 0,
-        "documentation": ["docs/revamp/wave-0/manifest.json", "docs/runbooks/v2-operations.md"]
+        "documentation": [
+          "docs/revamp/CLEANUP-MANIFEST.json",
+          "docs/revamp/wave-0/manifest.json",
+          "docs/runbooks/v2-operations.md"
+        ]
       },
       "replacement": null,
-      "recovery": "git checkout 4b7f83e9c3b8 -- scripts/validate-environment-plan.ts",
+      "recovery": "git checkout c7da830f62e1 -- scripts/validate-environment-plan.ts",
       "proof": {
         "sha256": "a7686515b13f3eb995d177a371982c0c6ed4ab7e04439a2f58fafadc22cba215",
         "lastCommit": "4f2c42a 2026-10-25",
