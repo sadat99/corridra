@@ -128,6 +128,18 @@ export function CustomerWorkspaces({
   const [storageFailed, setStorageFailed] = useState(false);
   const [creating, setCreating] = useState(false);
   const [dialog, setDialog] = useState<DialogKind | null>(null);
+  // Dialogs with a request in flight (keyed 'team:<id>', 'leave:<id>', 'join'); they cannot be dismissed.
+  const [working, setWorking] = useState<Record<string, boolean>>({});
+  // When the control that opened a dialog is gone (a menu row, or the row itself after leaving), focus goes
+  // to that row's menu button, or to the first action at the top of the list.
+  const focusBack = (name?: string) => () =>
+    (name
+      ? [...document.querySelectorAll<HTMLElement>('.ux-ws-table button[aria-label]')].find(
+          (el) => el.getAttribute('aria-label') === 'Actions for ' + name,
+        )
+      : undefined) ?? document.querySelector<HTMLElement>('.ux-ws-head-actions button');
+  const setBusyFor = (key: string) => (busy: boolean) =>
+    setWorking((current) => (!!current[key] === busy ? current : { ...current, [key]: busy }));
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
   const linkOverview = useCompanyLinkOverview(
     linksEnabled && status === 'ready',
@@ -520,6 +532,8 @@ export function CustomerWorkspaces({
                     }
                     title={'Team for ' + row.name}
                     keepMounted
+                    locked={!!working['team:' + row.id]}
+                    returnFocusTo={focusBack(row.name)}
                   >
                     <CustomerWorkspaceTeam
                       key={issuer + ':' + subject + ':' + row.id}
@@ -529,6 +543,7 @@ export function CustomerWorkspaces({
                       memberRolesEnabled={memberRolesEnabled}
                       bare
                       open={here === 'team'}
+                      onBusyChange={setBusyFor('team:' + row.id)}
                       onDenied={(status) => {
                         setDialog(null);
                         setRows([]);
@@ -549,6 +564,8 @@ export function CustomerWorkspaces({
                     }
                     title={'Leave ' + row.name}
                     keepMounted
+                    locked={!!working['leave:' + row.id]}
+                    returnFocusTo={focusBack(row.name)}
                   >
                     <CustomerWorkspaceLeave
                       key={'leave:' + issuer + ':' + subject + ':' + row.id}
@@ -556,9 +573,11 @@ export function CustomerWorkspaces({
                       subject={subject}
                       issuer={issuer}
                       startAsking
+                      onBusyChange={setBusyFor('leave:' + row.id)}
                       onCancel={() => setDialog(null)}
                       onLeft={(id) => {
                         setDialog(null);
+
                         setRows((current) => current.filter((r) => r.id !== id));
                         setMessage({
                           text: 'You have left the workspace. The owner can invite you again.',
@@ -585,12 +604,15 @@ export function CustomerWorkspaces({
             onClose={() => setDialog((d) => (d?.kind === 'join' ? null : d))}
             title="Join a Workspace"
             keepMounted
+            locked={!!working.join}
+            returnFocusTo={focusBack()}
           >
             <CustomerWorkspaceInvitation
               key={issuer + ':' + subject}
               issuer={issuer}
               subject={subject}
               bare
+              onBusyChange={setBusyFor('join')}
               onJoined={() => {
                 setDialog(null);
                 void reload().then((loaded) => {
@@ -616,6 +638,8 @@ export function CustomerWorkspaces({
             open={dialog?.kind === 'create'}
             onClose={() => setDialog((d) => (d?.kind === 'create' ? null : d))}
             title="Create a Workspace"
+            locked={creating}
+            returnFocusTo={focusBack()}
           >
             <form className="operator-form" aria-label="Create a workspace" onSubmit={create}>
               <div className="field">

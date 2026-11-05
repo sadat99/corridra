@@ -85,6 +85,7 @@ export function CustomerWorkspaceTeam({
   memberRolesEnabled = false,
   bare = false,
   open = false,
+  onBusyChange,
 }: {
   workspace: CustomerWorkspace;
   subject: string;
@@ -94,6 +95,8 @@ export function CustomerWorkspaceTeam({
   /** Inside a dialog: no disclosure of its own. The team is read when `open` turns true. */
   bare?: boolean;
   open?: boolean;
+  /** Tells a dialog around this when a request is in flight, so it cannot be dismissed meanwhile. */
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const [page, setPage] = useState<CustomerAccessPage | null>(null);
   const [loading, setLoading] = useState(false),
@@ -116,6 +119,12 @@ export function CustomerWorkspaceTeam({
   const controller = useRef<AbortController | null>(null);
   const mutation = useRef<AbortController | null>(null);
   const cursors = useRef<Cursor>({});
+  // Tell a dialog around this at once, in the same step as the request starts or ends, so it cannot be
+  // dismissed in between.
+  const markBusy = (value: boolean) => {
+    setBusy(value);
+    onBusyChange?.(value);
+  };
   const feedback = useRef<HTMLParagraphElement>(null);
   const key = `corridra.customer-workspace-invite.v1:${issuer}:${subject}:${workspace.id}`;
   const headers = { 'x-corridra-customer-subject': subject, 'x-corridra-customer-issuer': issuer };
@@ -213,7 +222,7 @@ export function CustomerWorkspaceTeam({
       return;
     }
     inFlight.current = true;
-    setBusy(true);
+    markBusy(true);
     setIssued(null);
     setMessage(null);
     setRemoval(null);
@@ -315,14 +324,14 @@ export function CustomerWorkspaceTeam({
         });
     } finally {
       inFlight.current = false;
-      if (alive.current) setBusy(false);
+      if (alive.current) markBusy(false);
     }
   }
   async function revoke() {
     if (!removal || inFlight.current || !page) return;
     const command = removal;
     inFlight.current = true;
-    setBusy(true);
+    markBusy(true);
     setMessage(null);
     try {
       const request = new AbortController();
@@ -378,7 +387,7 @@ export function CustomerWorkspaceTeam({
         });
     } finally {
       inFlight.current = false;
-      if (alive.current) setBusy(false);
+      if (alive.current) markBusy(false);
     }
   }
   function discard() {
@@ -419,7 +428,7 @@ export function CustomerWorkspaceTeam({
     if (!roleChange || inFlight.current || !page) return;
     const command = roleChange;
     inFlight.current = true;
-    setBusy(true);
+    markBusy(true);
     setMessage(null);
     try {
       const request = new AbortController();
@@ -485,7 +494,7 @@ export function CustomerWorkspaceTeam({
         });
     } finally {
       inFlight.current = false;
-      if (alive.current) setBusy(false);
+      if (alive.current) markBusy(false);
     }
   }
   function confirm(kind: Removal['kind'], targetId: string, name: string) {

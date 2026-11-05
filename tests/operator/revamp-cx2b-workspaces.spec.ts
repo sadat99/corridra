@@ -215,3 +215,161 @@ for (const [width, height] of [
       width,
     );
   });
+
+// A dialog that sends a command cannot be dismissed while the request is in flight (Escape, Close and the dimmed
+// area do nothing; Close is disabled and says so), and the answer is reconciled before the dialog's state goes.
+const gated = () => {
+  let release!: () => void;
+  const gate = new Promise<void>((done) => {
+    release = done;
+  });
+  return { gate, release };
+};
+async function pressDismiss(page: Page, dialog: ReturnType<Page['getByRole']>) {
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Escape');
+  await expect(dialog.getByRole('button', { name: 'Close', exact: true })).toBeDisabled();
+  await dialog.getByRole('button', { name: 'Close', exact: true }).click({ force: true });
+  // The dimmed area is the dialog element itself.
+  await dialog.click({ position: { x: 1, y: 1 } });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText('Working…')).toBeVisible();
+}
+
+test('CX-05 Leave cannot be dismissed while sending, then the row goes and focus returns to the list', async ({
+  page,
+}) => {
+  await open(page);
+  const { gate, release } = gated();
+  let posts = 0;
+  await page.route('**/api/customer-workspace-members', async (route) => {
+    posts++;
+    await gate;
+    await route.fulfill({
+      json: { workspaceId: memberId, memberId: ownerId, status: 'left' },
+    });
+  });
+  await trigger(page, 'Synthetic Chattogram Dyers').click();
+  await page.getByRole('menuitem', { name: 'Leave Workspace', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: /Leave/ });
+  await dialog.getByRole('button', { name: 'Confirm leaving' }).click();
+  await expect.poll(() => posts).toBe(1);
+  await pressDismiss(page, dialog);
+  release();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByText('You have left the workspace')).toBeVisible();
+  await expect(trigger(page, 'Synthetic Chattogram Dyers')).toHaveCount(0);
+  // The answer is announced: the confirmation takes focus, as it did before the dialogs.
+  await expect(page.getByRole('status').filter({ hasText: 'You have left' })).toBeFocused();
+  expect(posts).toBe(1);
+});
+
+test('CX-05 Join cannot be dismissed while sending, then it closes and the confirmation takes focus', async ({
+  page,
+}) => {
+  await open(page);
+  const { gate, release } = gated();
+  let posts = 0;
+  const joinedId = '00000000-0000-4000-8000-0000000000f1';
+  await page.route('**/api/customer-workspace-access', async (route) => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    posts++;
+    await gate;
+    return route.fulfill({
+      json: {
+        workspaceId: joinedId,
+        memberId: ownerId,
+        invitationId: memberId,
+        workspace: {
+          id: joinedId,
+          name: 'Synthetic Invited Mills',
+          role: 'member',
+          synthetic: true,
+          organisationId: null,
+        },
+      },
+    });
+  });
+  const button = page.getByRole('button', { name: 'Join a Workspace', exact: true });
+  await button.click();
+  const dialog = page.getByRole('dialog', { name: 'Join a Workspace' });
+  await dialog.getByLabel('Workspace invitation code', { exact: true }).fill('T'.repeat(43));
+  await dialog.getByRole('button', { name: 'Join Workspace', exact: true }).click();
+  await expect.poll(() => posts).toBe(1);
+  await pressDismiss(page, dialog);
+  release();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole('status').filter({ hasText: 'You have joined' })).toBeFocused();
+  expect(posts).toBe(1);
+});
+
+test('CX-05 Create cannot be dismissed while sending, then it closes and the confirmation takes focus', async ({
+  page,
+}) => {
+  await open(page);
+  const { gate, release } = gated();
+  let posts = 0;
+  await page.route('**/api/customer-workspaces', async (route) => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    posts++;
+    await gate;
+    return route.fulfill({
+      json: {
+        id: '00000000-0000-4000-8000-0000000000f2',
+        name: 'Synthetic Gate test',
+        role: 'owner',
+        synthetic: true,
+        organisationId: null,
+      },
+    });
+  });
+  const button = page.getByRole('button', { name: 'Create a Workspace', exact: true });
+  await button.click();
+  const dialog = page.getByRole('dialog', { name: 'Create a Workspace' });
+  await dialog.getByLabel('Workspace name', { exact: true }).fill('Gate test');
+  await dialog.getByRole('button', { name: 'Create Workspace', exact: true }).click();
+  await expect.poll(() => posts).toBe(1);
+  await pressDismiss(page, dialog);
+  release();
+  await expect(dialog).toBeHidden();
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Your workspace is confirmed' }),
+  ).toBeFocused();
+  expect(posts).toBe(1);
+});
+
+test('CX-05 Team cannot be dismissed while sending, then it can be closed and focus returns to the row menu', async ({
+  page,
+}) => {
+  await open(page);
+  const { gate, release } = gated();
+  let posts = 0;
+  await page.route('**/api/customer-workspace-access**', async (route) => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    posts++;
+    await gate;
+    return route.fulfill({
+      json: {
+        workspaceId: ownerId,
+        invitationId: memberId,
+        expiresAt: '2026-12-18T12:00:00.000Z',
+        issued: true,
+        token: 'T'.repeat(43),
+      },
+    });
+  });
+  await trigger(page, 'Synthetic Dhaka Knits').click();
+  await page.getByRole('menuitem', { name: 'Manage Team', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Team for Synthetic Dhaka Knits' });
+  await dialog.getByLabel('Sample invitation label', { exact: true }).fill('gate test');
+  await dialog.getByRole('button', { name: 'Issue Sample Invitation', exact: true }).click();
+  await expect.poll(() => posts).toBe(1);
+  await pressDismiss(page, dialog);
+  release();
+  await expect(dialog.getByRole('button', { name: 'Close', exact: true })).toBeEnabled();
+  await expect(dialog.getByText('Working…')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(trigger(page, 'Synthetic Dhaka Knits')).toBeFocused();
+  expect(posts).toBe(1);
+});

@@ -33,6 +33,7 @@ export function CustomerWorkspaceInvitation({
   onJoined,
   onDenied,
   bare = false,
+  onBusyChange,
 }: {
   subject: string;
   issuer: string;
@@ -40,6 +41,8 @@ export function CustomerWorkspaceInvitation({
   onDenied: (status: number) => void;
   /** Inside a dialog: no disclosure of its own, the same form and the same behaviour. */
   bare?: boolean;
+  /** Tells a dialog around this when a request is in flight, so it cannot be dismissed meanwhile. */
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const [code, setCode] = useState('');
   const [pending, setPending] = useState<{ commandId: string; token: string } | null>(null);
@@ -48,6 +51,12 @@ export function CustomerWorkspaceInvitation({
   const mounted = useRef(false),
     inFlight = useRef(false);
   const controller = useRef<AbortController | null>(null);
+  // Tell a dialog around this at once, in the same step as the request starts or ends, so it cannot be
+  // dismissed in between.
+  const markBusy = (value: boolean) => {
+    setBusy(value);
+    onBusyChange?.(value);
+  };
   const feedback = useRef<HTMLParagraphElement>(null);
   useEffect(() => {
     mounted.current = true;
@@ -71,7 +80,7 @@ export function CustomerWorkspaceInvitation({
     }
     const command = pending ?? { commandId: crypto.randomUUID(), token: code };
     inFlight.current = true;
-    setBusy(true);
+    markBusy(true);
     setPending(command);
     setMessage(null);
     const request = new AbortController();
@@ -114,7 +123,7 @@ export function CustomerWorkspaceInvitation({
         setMessage('Joining was not confirmed. Keep this page and retry the same request.');
     } finally {
       inFlight.current = false;
-      if (mounted.current) setBusy(false);
+      if (mounted.current) markBusy(false);
     }
   }
   const Root = (bare ? 'div' : 'details') as 'div';

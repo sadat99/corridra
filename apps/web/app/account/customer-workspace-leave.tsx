@@ -12,6 +12,7 @@ export function CustomerWorkspaceLeave({
   onDenied,
   startAsking = false,
   onCancel,
+  onBusyChange,
 }: {
   workspace: CustomerWorkspace;
   subject: string;
@@ -22,6 +23,8 @@ export function CustomerWorkspaceLeave({
   startAsking?: boolean;
   /** Called when the person chooses to keep their access, so a dialog around this can close. */
   onCancel?: () => void;
+  /** Tells a dialog around this when a request is in flight, so it cannot be dismissed meanwhile. */
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const [asking, setAsking] = useState(startAsking),
     [busy, setBusy] = useState(false);
@@ -29,6 +32,12 @@ export function CustomerWorkspaceLeave({
   const command = useRef<string | null>(null);
   const inFlight = useRef(false),
     alive = useRef(false);
+  // Tell a dialog around this at once, in the same step as the request starts or ends, so it cannot be
+  // dismissed in between.
+  const markBusy = (value: boolean) => {
+    setBusy(value);
+    onBusyChange?.(value);
+  };
   const feedback = useRef<HTMLParagraphElement>(null);
   useEffect(() => {
     alive.current = true;
@@ -48,7 +57,7 @@ export function CustomerWorkspaceLeave({
     // One command id per decision, so a lost response is retried as the same request.
     command.current ??= crypto.randomUUID();
     inFlight.current = true;
-    setBusy(true);
+    markBusy(true);
     setMessage(null);
     try {
       const response = await fetch('/api/customer-workspace-members', {
@@ -90,7 +99,7 @@ export function CustomerWorkspaceLeave({
       if (alive.current) setMessage('Leaving was not confirmed. Try the same request again.');
     } finally {
       inFlight.current = false;
-      if (alive.current) setBusy(false);
+      if (alive.current) markBusy(false);
     }
   }
   return (
