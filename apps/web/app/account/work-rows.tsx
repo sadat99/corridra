@@ -1,5 +1,6 @@
 'use client';
 import { Children, useState, type ReactNode } from 'react';
+import { RowList } from '../../components/ux/row-list';
 
 /** The first rows, then one button for more: a long list stays within the scroll budget. */
 export const workRowsFirst = 10;
@@ -9,7 +10,13 @@ export function WorkRows({ children }: { children: ReactNode }) {
   const [shown, setShown] = useState(workRowsFirst);
   return (
     <>
-      <ul className="work-rows">{rows.slice(0, shown)}</ul>
+      <RowList
+        label="Your work"
+        title="Request"
+        columns={[{ name: 'Kind' }, { name: 'Workspace' }, { name: 'Status' }, { name: 'Date' }]}
+      >
+        {rows.slice(0, shown)}
+      </RowList>
       {rows.length > shown && (
         <button
           type="button"
