@@ -7,7 +7,7 @@ import type { Page } from '@playwright/test';
 // section 2). Page length is the full document height (header, content and footer) divided by the
 // viewport height. Target and hard limit per viewport:
 //   390 x 844   target 1.5 screens, hard limit 2.0
-//   1440 x 900  target 1.0 screen,  hard limit 1.5
+//   1440 x 900  target 1.0 screen,  hard limit 1.0 (owner, 5 November 2026)
 // The routes come from docs/revamp/COVERAGE.json, page routes only (the file is a page.tsx; the
 // inventory also lists route.ts endpoints). This guard only REPORTS: it never fails on a value. The
 // last track PR switches it to failing over the hard limit. Each track reuses this module with its own
@@ -25,7 +25,7 @@ export type Viewport = {
 };
 export const viewports: readonly Viewport[] = [
   { name: 'phone', width: 390, height: 844, target: 1.5, hard: 2.0 },
-  { name: 'desktop', width: 1440, height: 900, target: 1.0, hard: 1.5 },
+  { name: 'desktop', width: 1440, height: 900, target: 1.0, hard: 1.0 },
 ];
 
 export type CoverageRoute = { route: string; file: string; audience: string; state: string };
@@ -47,6 +47,10 @@ export type Measurement = {
   documentHeight?: number;
   screens?: number;
   verdict?: Verdict;
+  /** For a page over its hard limit: the tallest blocks of the page content, to show what makes it long. */
+  blocks?: { label: string; height: number }[];
+  /** For a page over its hard limit: the page frame around the content (header, footer, the rest). */
+  frame?: { header: number; footer: number; other: number };
 };
 
 /** Every page route in the inventory (the file is a page.tsx), in the order it lists them. */
@@ -122,6 +126,7 @@ export async function measure(
     Math.max(document.documentElement.scrollHeight, document.body ? document.body.scrollHeight : 0),
   );
   const screens = screensOf(documentHeight, viewport);
+  const verdict = verdictFor(screens, viewport);
   return {
     ...base,
     measured: true,
@@ -129,8 +134,58 @@ export async function measure(
     status,
     documentHeight,
     screens,
-    verdict: verdictFor(screens, viewport),
+    verdict,
+    ...(verdict === 'over hard limit'
+      ? { blocks: await tallestBlocks(page), frame: await frameOf(page, documentHeight) }
+      : {}),
   };
+}
+
+/** How much of the document height is the header and the footer, and how much is the rest. */
+export async function frameOf(page: Page, documentHeight: number) {
+  const { header, footer } = await page.evaluate(() => {
+    const height = (selector: string) =>
+      Array.from(document.querySelectorAll(selector))
+        .filter((el) => !el.closest('main'))
+        .reduce((sum, el) => sum + el.getBoundingClientRect().height, 0);
+    return { header: height('header'), footer: height('footer') };
+  });
+  return {
+    header: Math.round(header),
+    footer: Math.round(footer),
+    other: Math.round(documentHeight - header - footer),
+  };
+}
+
+/**
+ * The four tallest blocks of the page content. It starts at <main> and goes down through a wrapper
+ * that holds most of the height, so the list names the sections (a form, a list, a panel) and not
+ * the page frame. Report only: it helps a track see what to move into tabs or disclosures.
+ */
+export async function tallestBlocks(page: Page): Promise<{ label: string; height: number }[]> {
+  return page.evaluate(() => {
+    const label = (el: Element) => {
+      const heading = el.querySelector('h1, h2, h3, legend, summary');
+      const text = (heading?.textContent ?? el.getAttribute('aria-label') ?? '')
+        .trim()
+        .replace(/\s+/g, ' ')
+        .slice(0, 48);
+      return `${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}${text ? ' "' + text + '"' : ''}`;
+    };
+    const tall = (el: Element) => el.getBoundingClientRect().height;
+    let container: Element = document.querySelector('main') ?? document.body;
+    for (let depth = 0; depth < 5; depth++) {
+      const total = tall(container);
+      const big = Array.from(container.children).find((child) => tall(child) > total * 0.7);
+      if (!big) break;
+      container = big;
+    }
+    return Array.from(container.children)
+      .map((child) => ({ label: label(child), height: Math.round(tall(child)) }))
+      .filter((block) => block.height > 0)
+      .sort((a, b) => b.height - a.height)
+      .slice(0, 4);
+  });
 }
 
 /** The route is listed but has no address to open (a dynamic segment with no fixture yet). */

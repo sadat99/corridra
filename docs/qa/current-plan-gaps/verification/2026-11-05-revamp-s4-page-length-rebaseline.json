@@ -1,0 +1,432 @@
+{
+  "recordedOn": "2026-11-05",
+  "track": "Revamp S4 (branch revamp/staff)",
+  "kind": "Page-length guard: desktop hard limit set to 1.0 (owner, 5 November 2026) and the team baseline re-measured with the left navigation, with the tallest blocks and the page frame for every route over the limit. Report only: nothing fails on a value yet.",
+  "findings": [],
+  "findingsNote": "No GAP id is created or changed. The values are a baseline, not acceptance.",
+  "sensitive": "no: tests and a record only",
+  "changed": [
+    "tests/ux/page-length-lib.ts: desktop hard limit 1.5 to 1.0; over-limit measurements now carry the four tallest blocks and the header, footer and remaining height",
+    "tests/integration/page-length-lib.test.ts: the limits and the verdicts (fails on the old limit, passes on the new one)"
+  ],
+  "method": "Same as 2026-11-05-revamp-s4-page-length-baseline.json: full document height over viewport height at 390x844 and 1440x900 on the verification server with the seeded owner, now with the left navigation in place.",
+  "summary": {
+    "measuredRoutes": 28,
+    "desktopOverHardLimit": 26,
+    "desktopWithinTarget": 2,
+    "phoneOverHardLimit": 22
+  },
+  "findingsForPlanning": [
+    "The signed-in team shell frame is small: header 72 px and footer 70 px, so a one-screen page has about 758 px for content. The length is the page content, not the frame.",
+    "The five public-frame pages owned by S4 (/operator/signin, /operator/forgot-password, /operator/reset-password, /operator/setup, /contributor/setup) carry the public footer at 479 px. S3's compact footer is the shared fix; /operator/reset-password (1.04) would pass with it alone.",
+    "Largest by far: /operator/controls (3.31), /operator/readiness (3.29, one table of 1627 px), /operator/delivery (3.18, one disclosure of 1457 px), /operator/owner (2.65), /operator/operations and /operator/dashboard (2.55, they share one screen)."
+  ],
+  "routes": [
+    {
+      "route": "/operator/controls",
+      "phone": 3.91,
+      "desktop": 3.31,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": [
+        "section \"Available tools\": 967",
+        "section \"People and access\": 781",
+        "section \"Invite a team member\": 379"
+      ],
+      "desktopFramePx": {
+        "header": 72,
+        "footer": 70,
+        "other": 2836
+      }
+    },
+    {
+      "route": "/operator/readiness",
+      "phone": 4.39,
+      "desktop": 3.29,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": ["table: 1627"],
+      "desktopFramePx": {
+        "header": 72,
+        "footer": 70,
+        "other": 2823
+      }
+    },
+    {
+      "route": "/operator/delivery",
+      "phone": 2.45,
+      "desktop": 3.18,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": [
+        "details \"Mission and delegation experience: context, agen\": 1457",
+        "label: 81",
+        "details \"Create programme\": 67"
+      ],
+      "desktopFramePx": {
+        "header": 72,
+        "footer": 70,
+        "other": 2719
+      }
+    },
+    {
+      "route": "/operator/owner",
+      "phone": 5.47,
+      "desktop": 2.65,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": [
+        "section \"Open gaps\": 1111",
+        "section \"Status\": 762",
+        "header \"What is on and off.\": 92"
+      ],
+      "desktopFramePx": {
+        "header": 72,
+        "footer": 70,
+        "other": 2243
+      }
+    },
+    {
+      "route": "/operator/operations",
+      "phone": 3.36,
+      "desktop": 2.55,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": [
+        "details \"Filter the records (10 filters)\": 452",
+        "div \"Service economics: fees, costs and contribution \": 406",
+        "div \"22 more counts: denominators, unknown values and\": 367"
+      ],
+      "desktopFramePx": {
+        "header": 72,
+        "footer": 70,
+        "other": 2150
+      }
+    },
+    {
+      "route": "/operator/dashboard",
+      "phone": 3.4,
+      "desktop": 2.55,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": [
+        "details \"Filter the records (10 filters)\": 452",
+        "div \"Service economics: fees, costs and contribution \": 406",
+        "div \"22 more counts: denominators, unknown values and\": 367"
+      ],
+      "desktopFramePx": {
+        "header": 72,
+        "footer": 70,
+        "other": 2150
+      }
+    },
+    {
+      "route": "/operator/control-center",
+      "phone": 3.87,
+      "desktop": 2.39,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": [
+        "div \"Configured country and market scopes\": 464",
+        "section \"What Corridra can do, what is on and what is blo\": 330",
+        "div \"Command fields\": 207"
+      ],
+      "desktopFramePx": {
+        "header": 72,
+        "footer": 70,
+        "other": 2010
+      }
+    },
+    {
+      "route": "/operator/network",
+      "phone": 3.88,
+      "desktop": 2.23,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": [
+        "aside \"Network is paused in Synthetic North.\": 233",
+        "section \"Invite a contributor\": 212",
+        "nav \"Execution work sections\": 141"
+      ],
+      "desktopFramePx": {
+        "header": 72,
+        "footer": 70,
+        "other": 1868
+      }
+    },
+    {
+      "route": "/operator/sources",
+      "phone": 1.94,
+      "desktop": 2,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": ["p: 149", "div: 136", "div: 136"],
+      "desktopFramePx": {
+        "header": 72,
+        "footer": 70,
+        "other": 1661
+      }
+    },
+    {
+      "route": "/operator/commercial",
+      "phone": 3.57,
+      "desktop": 1.98,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": ["div: 280", "div: 81", "p: 74"],
+      "desktopFramePx": {
+        "header": 72,
+        "footer": 70,
+        "other": 1637
+      }
+    },
+    {
+      "route": "/operator/meetings",
+      "phone": 2.73,
+      "desktop": 1.9,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": [
+        "div \"Introductions and meetings\": 128",
+        "p: 74",
+        "details \"Approved communication policy and templates\": 67"
+      ],
+      "desktopFramePx": {
+        "header": 72,
+        "footer": 70,
+        "other": 1572
+      }
+    },
+    {
+      "route": "/operator",
+      "phone": 3.13,
+      "desktop": 1.81,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": [
+        "section \"Today\": 538",
+        "section \"Start with a mission.\": 475",
+        "details \"Manage this workspace\": 70"
+      ],
+      "desktopFramePx": {
+        "header": 72,
+        "footer": 70,
+        "other": 1484
+      }
+    },
+    {
+      "route": "/operator/signin",
+      "phone": 2.5,
+      "desktop": 1.79,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": [
+        "form \"Use your operator account\": 476",
+        "nav \"Sign-in alternatives\": 261",
+        "header \"Sign in to your workspace.\": 92"
+      ],
+      "desktopFramePx": {
+        "header": 88,
+        "footer": 479,
+        "other": 1044
+      }
+    },
+    {
+      "route": "/operator/research",
+      "phone": 2.78,
+      "desktop": 1.77,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": [
+        "div \"Mission shortlist\": 183",
+        "nav \"Research sections\": 141",
+        "form: 82"
+      ],
+      "desktopFramePx": {
+        "header": 72,
+        "footer": 70,
+        "other": 1454
+      }
+    },
+    {
+      "route": "/operator/assistance",
+      "phone": 3.24,
+      "desktop": 1.75,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": ["form: 336", "nav \"AI review workflow sections\": 60", "p: 50"],
+      "desktopFramePx": {
+        "header": 72,
+        "footer": 70,
+        "other": 1437
+      }
+    },
+    {
+      "route": "/operator/settings",
+      "phone": 3.1,
+      "desktop": 1.67,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": [
+        "div \"Prepare commercial mission templates\": 383",
+        "header \"Corridors and reviewed policies\": 108",
+        "nav \"Reviewed configuration sections\": 93"
+      ],
+      "desktopFramePx": {
+        "header": 72,
+        "footer": 70,
+        "other": 1364
+      }
+    },
+    {
+      "route": "/operator/evidence",
+      "phone": 2.48,
+      "desktop": 1.58,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": ["form: 352", "form: 254", "p: 50"],
+      "desktopFramePx": {
+        "header": 72,
+        "footer": 70,
+        "other": 1280
+      }
+    },
+    {
+      "route": "/operator/[section]/[missionId]",
+      "phone": 2.16,
+      "desktop": 1.49,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": ["dd \"Record details\": 53", "dt: 26", "dd: 26"],
+      "desktopFramePx": {
+        "header": 72,
+        "footer": 70,
+        "other": 1199
+      }
+    },
+    {
+      "route": "/operator/missions",
+      "phone": 3.27,
+      "desktop": 1.44,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": [
+        "div: 174",
+        "div \"Mission review queue\": 128",
+        "div \"Missions\": 111"
+      ],
+      "desktopFramePx": {
+        "header": 72,
+        "footer": 70,
+        "other": 1152
+      }
+    },
+    {
+      "route": "/contributor/setup",
+      "phone": 2.26,
+      "desktop": 1.42,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": [
+        "section \"Your contributor invitation\": 167",
+        "nav \"Contributor setup help\": 157",
+        "header \"Set up your contributor access.\": 92"
+      ],
+      "desktopFramePx": {
+        "header": 88,
+        "footer": 479,
+        "other": 710
+      }
+    },
+    {
+      "route": "/operator/forgot-password",
+      "phone": 2.08,
+      "desktop": 1.38,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": [
+        "form \"Operator password recovery\": 195",
+        "nav \"Recovery options\": 157",
+        "header \"Reset your operator password.\": 92"
+      ],
+      "desktopFramePx": {
+        "header": 88,
+        "footer": 479,
+        "other": 671
+      }
+    },
+    {
+      "route": "/operator/setup",
+      "phone": 2.09,
+      "desktop": 1.34,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": [
+        "section \"Your operator invitation\": 167",
+        "nav \"Operator setup help\": 157",
+        "header \"Set up your operator access.\": 92"
+      ],
+      "desktopFramePx": {
+        "header": 88,
+        "footer": 479,
+        "other": 643
+      }
+    },
+    {
+      "route": "/operator/health",
+      "phone": 2.45,
+      "desktop": 1.33,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": [
+        "section#ops-health \"Recovery and health\": 402",
+        "nav \"Operations workflow sections\": 60",
+        "p: 50"
+      ],
+      "desktopFramePx": {
+        "header": 72,
+        "footer": 70,
+        "other": 1055
+      }
+    },
+    {
+      "route": "/operator/authenticator",
+      "phone": 1.93,
+      "desktop": 1.26,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": [
+        "form: 235",
+        "div: 131",
+        "header \"Confirm a sensitive action\": 108"
+      ],
+      "desktopFramePx": {
+        "header": 72,
+        "footer": 70,
+        "other": 993
+      }
+    },
+    {
+      "route": "/operator/audit",
+      "phone": 1.64,
+      "desktop": 1.12,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": [
+        "div: 127",
+        "header \"Access and audit\": 108",
+        "div \"Review access when you need it\": 103"
+      ],
+      "desktopFramePx": {
+        "header": 72,
+        "footer": 70,
+        "other": 868
+      }
+    },
+    {
+      "route": "/operator/reset-password",
+      "phone": 1.72,
+      "desktop": 1.04,
+      "desktopVerdict": "over hard limit",
+      "tallestBlocksDesktopPx": ["header \"Set a new operator password.\": 92", "div: 85", "a: 44"],
+      "desktopFramePx": {
+        "header": 88,
+        "footer": 479,
+        "other": 369
+      }
+    },
+    {
+      "route": "/mute/[requestId]",
+      "phone": 1.61,
+      "desktop": 1,
+      "desktopVerdict": "within target"
+    },
+    {
+      "route": "/pulse/mute/[requestId]",
+      "phone": 1.61,
+      "desktop": 1,
+      "desktopVerdict": "within target"
+    }
+  ],
+  "notCovered": [
+    "/contributor board (needs an invited contributor session), /workspace and /operator/view-as/[role] are still not measured.",
+    "One representative state per page; lists with more rows and long form tails are for the fix PRs.",
+    "No Core Web Vitals (L-06)."
+  ],
+  "nextAction": "Phase 2: sub-tabs and disclosures per nav group, largest routes first, using S2's shared components when they are on main."
+}
