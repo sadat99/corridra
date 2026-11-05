@@ -322,6 +322,7 @@ describe('the stylesheets of the teaching layer', () => {
     // Each lane that mounts the layer adds its screen here, in the same pull request that builds it.
     const mounts = [
       'app/account/move/move-view.tsx',
+      'app/account/home-work.tsx',
       'app/account/rooms/[requestId]/room-view.tsx',
       'app/plan/intake.tsx',
       'app/account/delegations/programme-room.tsx',

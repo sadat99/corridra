@@ -262,7 +262,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
           <div className="ux-state-actions">
             {state !== 'denied' && (
               <button type="button" className="button button-secondary" onClick={() => void load()}>
-                Try again
+                Try Again
               </button>
             )}
             <a className="text-link" href="/account">
@@ -294,7 +294,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
               </div>
               <div className="ux-state-actions">
                 <button type="button" className="button" onClick={() => void load()}>
-                  Reload this request
+                  Reload This Request
                 </button>
               </div>
             </div>
@@ -320,7 +320,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
           {can('revise') && (
             <>
               <button type="button" className="text-link" onClick={() => open('revise')}>
-                {panel === 'revise' ? 'Close editing' : 'Edit this request'}
+                {panel === 'revise' ? 'Close Editing' : 'Edit This Request'}
               </button>
               {panel === 'revise' && (
                 <form onSubmit={submitRevise} aria-label="Edit the request">
@@ -386,7 +386,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                     </div>
                   </fieldset>
                   <button type="submit" className="button" disabled={busy}>
-                    Save changes
+                    Save Changes
                   </button>
                 </form>
               )}
@@ -522,7 +522,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                 <div className="guide-actions-row">
                   {can('accept') && (
                     <button type="button" className="button" onClick={() => open('accept')}>
-                      Accept this quote
+                      Accept This Quote
                     </button>
                   )}
                   {can('decline') && (
@@ -531,7 +531,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                       className="button button-secondary"
                       onClick={() => open('decline')}
                     >
-                      Decline this quote
+                      Decline This Quote
                     </button>
                   )}
                   {can('question') && (
@@ -540,7 +540,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                       className="button button-secondary"
                       onClick={() => open('question')}
                     >
-                      Ask a question
+                      Ask a Question
                     </button>
                   )}
                   {can('withdraw') && (
@@ -550,7 +550,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                       className="button button-secondary"
                       onClick={() => open('withdraw')}
                     >
-                      Withdraw this request
+                      Withdraw This Request
                     </button>
                   )}
                 </div>
@@ -570,7 +570,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                           document.getElementById(id + 'quote')?.scrollIntoView({ block: 'start' });
                         }}
                       >
-                        Review the new version
+                        Review the New Version
                       </button>
                     </div>
                   </div>
@@ -594,7 +594,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                       that nothing is charged and billing is not switched on.
                     </label>
                     <button type="submit" className="button" disabled={busy || !ack}>
-                      {pending ? 'Send the same acceptance again' : 'Confirm and accept'}
+                      {pending ? 'Send the Same Acceptance Again' : 'Confirm and Accept'}
                     </button>
                   </form>
                 )}
@@ -625,7 +625,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                       />
                     </div>
                     <button type="submit" className="button" disabled={busy}>
-                      Confirm and decline
+                      Confirm and Decline
                     </button>
                   </form>
                 )}
@@ -656,7 +656,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                       />
                     </div>
                     <button type="submit" className="button" disabled={busy}>
-                      Confirm and withdraw
+                      Confirm and Withdraw
                     </button>
                   </form>
                 )}
@@ -691,7 +691,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
                         note.trim().length < (realCustomerInput() ? 2 : 11)
                       }
                     >
-                      Send question
+                      Send Question
                     </button>
                   </form>
                 )}
@@ -724,7 +724,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
             </ol>
           </section>
           <button type="button" className="text-link" disabled={busy} onClick={() => void load()}>
-            Reload this request
+            Reload This Request
           </button>
         </>
       )}

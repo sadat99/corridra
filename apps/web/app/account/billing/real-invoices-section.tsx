@@ -181,7 +181,7 @@ function InvoiceDocument({ i }: { i: RealInvoice }) {
       </details>
       <p className="real-invoice-actions">
         <button type="button" className="button button-secondary" onClick={print}>
-          Print or save as PDF
+          Print or Save As PDF
         </button>
       </p>
     </li>
@@ -258,7 +258,7 @@ function ScopedInvoices({ subject, issuer, workspaceId }: Props) {
           {state !== 'denied' && (
             <div className="ux-state-actions">
               <button type="button" className="button button-secondary" onClick={() => void load()}>
-                Try again
+                Try Again
               </button>
             </div>
           )}

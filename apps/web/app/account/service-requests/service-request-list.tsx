@@ -98,7 +98,7 @@ function ScopedList({ subject, issuer, workspaceId }: Props) {
           <div className="ux-state-actions">
             {state === 'error' && (
               <button type="button" className="button button-secondary" onClick={() => void load()}>
-                Try again
+                Try Again
               </button>
             )}
             <a className="text-link" href="/account">
@@ -157,7 +157,7 @@ function ScopedList({ subject, issuer, workspaceId }: Props) {
                 void load(list.nextAfter ?? undefined).finally(() => setMore(false));
               }}
             >
-              Show older requests
+              Show Older Requests
             </button>
           )}
           {catalogue && catalogue.services.length > 0 && (

@@ -170,7 +170,7 @@ async function fillRequired(page: Page, reason = 'Synthetic revised profile') {
     .check();
 }
 const saveButton = (page: Page) =>
-  page.getByRole('button', { name: 'Save company profile', exact: true });
+  page.getByRole('button', { name: 'Save Company Profile', exact: true });
 
 test('an empty workspace invites the owner to add a profile and shows the unverified boundary', async ({
   page,
@@ -183,7 +183,7 @@ test('an empty workspace invites the owner to add a profile and shows the unveri
   await expect(page.getByText('self-reported', { exact: false }).first()).toBeVisible();
   await expect(page.getByText('not linked to any company record', { exact: false })).toBeVisible();
   await expect(page.getByRole('group', { name: 'Add sample company profile' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Reload company profile' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Reload Company Profile' })).toBeVisible();
 });
 test('role choices render as compact rows with the box beside its label', async ({ page }) => {
   await mock(page, { get: () => view({ empty: true }) });
@@ -307,7 +307,7 @@ test('an unmatched acknowledgement retains the exact command for a safe retry', 
   await fillRequired(page);
   await saveButton(page).click();
   await expect(page.getByRole('status')).toContainText('Save could not be confirmed');
-  await page.getByRole('button', { name: 'Retry same save', exact: true }).click();
+  await page.getByRole('button', { name: 'Retry Same Save', exact: true }).click();
   await expect(page.getByRole('status')).toHaveText('Company profile saved.');
   expect(commands).toHaveLength(2);
   expect(commands[1]).toEqual(commands[0]);
@@ -320,7 +320,7 @@ test('a stale-version rejection clears local details and offers a reload', async
   await expect(page.getByRole('status')).toContainText('Reload before editing');
   await expect(page.getByRole('textbox')).toHaveCount(0);
   await expect(page.getByText('Synthetic Dhaka Garments Limited')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Reload company profile' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Reload Company Profile' })).toBeVisible();
 });
 for (const status of [401, 403, 503])
   test('save ' + status + ' clears stale details', async ({ page }) => {
@@ -330,7 +330,7 @@ for (const status of [401, 403, 503])
     await saveButton(page).click();
     await expect(page.getByRole('textbox')).toHaveCount(0);
     await expect(page.getByText('Synthetic Dhaka Garments Limited')).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Reload company profile' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Reload Company Profile' })).toBeVisible();
   });
 test('a rejected input keeps the draft and explains what to check', async ({ page }) => {
   await mock(page, { post: () => ({ status: 400, json: { error: 'Invalid' } }) });

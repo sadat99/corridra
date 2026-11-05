@@ -8,10 +8,10 @@ export const wsBEn = {
   // D6: a request the customer sent is never called a draft.
   'wsb.status.received': 'Received, waiting for review.',
   // CQ-21: an unsent draft asks to be finished and sent.
-  'wsb.move.draft.action': 'Finish and send',
+  'wsb.move.draft.action': 'Finish and Send',
   // CQ-77: a published report the customer can read.
   'wsb.move.report.object': 'your new report',
-  'wsb.move.report.action': 'Open the report',
+  'wsb.move.report.action': 'Open the Report',
   'wsb.move.report.title': 'New report ready',
 } as const;
 

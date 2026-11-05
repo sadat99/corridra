@@ -520,7 +520,7 @@ export function CustomerWorkspaceTeam({
               void load();
             }}
           >
-            Retry loading team access
+            Retry Loading Team Access
           </button>
         )}
         {page && (
@@ -552,7 +552,7 @@ export function CustomerWorkspaceTeam({
                         disabled={busy || !!removal}
                         onClick={() => confirm('invitation', r.id, r.label)}
                       >
-                        Cancel invitation for {r.label}
+                        Cancel Invitation for {r.label}
                       </button>
                     )}
                   </li>
@@ -568,7 +568,7 @@ export function CustomerWorkspaceTeam({
                   void load({ ...cursors.current, invitationAfter: page.nextInvitationAfter! })
                 }
               >
-                Next invitations
+                Next Invitations
               </button>
             )}
             <h3>Invited members</h3>
@@ -606,7 +606,7 @@ export function CustomerWorkspaceTeam({
                         disabled={busy || !!removal || !!roleChange}
                         onClick={() => confirm('membership', r.id, r.label)}
                       >
-                        Remove invited membership for {r.label}
+                        Remove Invited Membership for {r.label}
                       </button>
                     )}
                   </li>
@@ -622,7 +622,7 @@ export function CustomerWorkspaceTeam({
                   void load({ ...cursors.current, memberAfter: page.nextMemberAfter! })
                 }
               >
-                Next invited members
+                Next Invited Members
               </button>
             )}
             <button
@@ -634,7 +634,7 @@ export function CustomerWorkspaceTeam({
                 void load();
               }}
             >
-              Refresh team history
+              Refresh Team History
             </button>
             {roleChange && (
               <div className="ux-draft-notice">
@@ -656,8 +656,8 @@ export function CustomerWorkspaceTeam({
                   onClick={() => void applyRole()}
                 >
                   {roleChange.role === 'admin'
-                    ? 'Confirm admin role'
-                    : 'Confirm regular member role'}
+                    ? 'Confirm Admin Role'
+                    : 'Confirm Regular Member Role'}
                 </button>
                 <button
                   type="button"
@@ -665,7 +665,7 @@ export function CustomerWorkspaceTeam({
                   disabled={busy}
                   onClick={() => setRoleChange(null)}
                 >
-                  Close role confirmation
+                  Close Role Confirmation
                 </button>
               </div>
             )}
@@ -688,8 +688,8 @@ export function CustomerWorkspaceTeam({
                   onClick={() => void revoke()}
                 >
                   {removal.kind === 'invitation'
-                    ? 'Confirm invitation cancellation'
-                    : 'Confirm membership removal'}
+                    ? 'Confirm Invitation Cancellation'
+                    : 'Confirm Membership Removal'}
                 </button>
                 <button
                   type="button"
@@ -697,7 +697,7 @@ export function CustomerWorkspaceTeam({
                   disabled={busy}
                   onClick={() => setRemoval(null)}
                 >
-                  Close confirmation
+                  Close Confirmation
                 </button>
               </div>
             )}
@@ -738,17 +738,17 @@ export function CustomerWorkspaceTeam({
                 disabled={busy || storageFailed || !!issued?.token || !!removal}
               >
                 {busy
-                  ? 'Please wait…'
+                  ? 'Please Wait…'
                   : pending
-                    ? 'Retry issuing invitation'
+                    ? 'Retry Issuing Invitation'
                     : realCustomerInput()
-                      ? 'Issue invitation'
-                      : 'Issue sample invitation'}
+                      ? 'Issue Invitation'
+                      : 'Issue Sample Invitation'}
               </button>
             </form>
             {(pending || storageFailed) && (
               <button type="button" className="text-link" disabled={busy} onClick={discard}>
-                Discard invitation retry details
+                Discard Invitation Retry Details
               </button>
             )}
           </>
@@ -768,7 +768,7 @@ export function CustomerWorkspaceTeam({
                   the invitation and issue another.
                 </p>
                 <button type="button" className="text-link" onClick={() => setIssued(null)}>
-                  Clear new invitation code
+                  Clear New Invitation Code
                 </button>
               </>
             ) : (
@@ -780,7 +780,7 @@ export function CustomerWorkspaceTeam({
               disabled={!page || busy || !!removal}
               onClick={() => confirm('invitation', issued.id, issued.label)}
             >
-              Cancel this issued invitation
+              Cancel This Issued Invitation
             </button>
           </div>
         )}

@@ -42,7 +42,7 @@ export function CustomerMissions() {
           Private mission invitation
           <input name="invitation" type="text" autoComplete="off" required maxLength={300} />
         </label>
-        <button className="primary-link">Open shared mission</button>
+        <button className="primary-link">Open Shared Mission</button>
       </form>
       {error && (
         <p ref={feedback} tabIndex={-1} className="ux-error-summary" role="alert">
@@ -59,7 +59,7 @@ export function CustomerMissions() {
             endpoint="/api/customer-missions"
           />
           <button onClick={() => setMissions((v) => v.filter((x) => x.token !== m.token))}>
-            Close this mission view
+            Close This Mission View
           </button>
         </article>
       ))}

@@ -119,16 +119,16 @@ test('customer workspace UI preserves one command through loading, duplicate sub
   await expect(
     page.getByText('No workspaces yet. Create your first one below.', { exact: true }),
   ).toBeVisible();
-  await page.getByRole('button', { name: 'Create workspace', exact: true }).click();
+  await page.getByRole('button', { name: 'Create Workspace', exact: true }).click();
   expect(posts).toHaveLength(0);
   const name = page.getByLabel('Workspace name', { exact: true });
   await name.fill('Lost acknowledgement');
   await name.focus();
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('button', { name: 'Create workspace', exact: true })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Create Workspace', exact: true })).toBeFocused();
   await page.keyboard.press('Enter');
   await postStarted;
-  await expect(page.getByRole('button', { name: 'Please wait…', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Please Wait…', exact: true })).toBeDisabled();
   await page
     .getByRole('form', { name: 'Create a workspace' })
     .evaluate((form) =>
@@ -146,7 +146,7 @@ test('customer workspace UI preserves one command through loading, duplicate sub
   await expect(name).toHaveValue('Lost acknowledgement');
   await expect(page.getByText('Synthetic Lost acknowledgement', { exact: true })).toBeVisible();
   await expect(name).toHaveAttribute('readonly', '');
-  const retry = page.getByRole('button', { name: 'Retry workspace creation', exact: true });
+  const retry = page.getByRole('button', { name: 'Retry Workspace Creation', exact: true });
   await retry.focus();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('status')).toHaveText('Your workspace is confirmed.');
@@ -204,7 +204,7 @@ test('customer workspace UI hides received rows and creation controls on expired
       );
     if (status === 503) {
       responseStatus = 200;
-      await page.getByRole('button', { name: 'Retry loading workspaces', exact: true }).click();
+      await page.getByRole('button', { name: 'Retry Loading Workspaces', exact: true }).click();
       await expect(page.getByText(record.name, { exact: true })).toBeVisible();
     }
   }
@@ -242,7 +242,7 @@ test('customer workspace drafts and responses stay scoped to the mounted issuer 
   });
   await page.goto(origin);
   await page.getByLabel('Workspace name', { exact: true }).fill('Alice draft');
-  await page.getByRole('button', { name: 'Create workspace', exact: true }).click();
+  await page.getByRole('button', { name: 'Create Workspace', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Creation was not confirmed');
   current = 'synthetic-bob';
   await page.evaluate(() => window.dispatchEvent(new Event('focus')));
@@ -252,10 +252,10 @@ test('customer workspace drafts and responses stay scoped to the mounted issuer 
   await expect(page.getByLabel('Workspace name', { exact: true })).toBeEmpty();
   await expect(page.getByText('Alice draft', { exact: true })).toHaveCount(0);
   await expect(
-    page.getByRole('button', { name: 'Retry workspace creation', exact: true }),
+    page.getByRole('button', { name: 'Retry Workspace Creation', exact: true }),
   ).toHaveCount(0);
   await page.getByLabel('Workspace name', { exact: true }).fill('Bob own workspace');
-  await page.getByRole('button', { name: 'Create workspace', exact: true }).click();
+  await page.getByRole('button', { name: 'Create Workspace', exact: true }).click();
   await expect(page.getByRole('status')).toHaveText('Your workspace is confirmed.');
   expect(posts).toHaveLength(2);
   expect(posts[1].commandId).not.toBe(posts[0].commandId);
@@ -274,7 +274,7 @@ test('customer workspace drafts and responses stay scoped to the mounted issuer 
   await page.goto(origin + '/?issuer=' + encodeURIComponent(currentIssuer));
   await expect(page.getByLabel('Workspace name', { exact: true })).toBeEmpty();
   await expect(
-    page.getByRole('button', { name: 'Retry workspace creation', exact: true }),
+    page.getByRole('button', { name: 'Retry Workspace Creation', exact: true }),
   ).toHaveCount(0);
 });
 
@@ -307,19 +307,19 @@ test('customer workspace UI sends no mutation when retry storage fails and does 
   });
   await page.goto(origin);
   await page.getByLabel('Workspace name', { exact: true }).fill('Storage failure');
-  await page.getByRole('button', { name: 'Create workspace', exact: true }).click();
+  await page.getByRole('button', { name: 'Create Workspace', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('No workspace request was sent');
   expect(posts).toBe(0);
   await page.evaluate(() => Reflect.get(window, 'allowSyntheticStorage')());
   await page.getByRole('button', { name: 'Refresh workspaces', exact: true }).click();
-  await page.getByRole('button', { name: 'Create workspace', exact: true }).click();
+  await page.getByRole('button', { name: 'Create Workspace', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Creation was not confirmed');
   expect(posts).toBe(1);
   await expect(
-    page.getByRole('button', { name: 'Retry workspace creation', exact: true }),
+    page.getByRole('button', { name: 'Retry Workspace Creation', exact: true }),
   ).toBeVisible();
   await expect(page.getByText('Your workspace is confirmed.', { exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Discard retry details', exact: true }).click();
+  await page.getByRole('button', { name: 'Discard Retry Details', exact: true }).click();
   await expect(page.getByLabel('Workspace name', { exact: true })).toBeEmpty();
   expect(await page.evaluate(() => Object.keys(sessionStorage).length)).toBe(0);
   expect(posts).toBe(1);

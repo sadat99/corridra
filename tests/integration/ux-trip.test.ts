@@ -214,7 +214,7 @@ describe('the words', () => {
   it('say the count in the singular for one and with the number otherwise', () => {
     expect(en['room.trip.count.one']).toBe('1 meeting or visit');
     expect(en['room.trip.count.other']).toBe('{count} meetings or visits');
-    expect(en['room.trip.all']).toBe('Show all {count} meetings and visits');
+    expect(en['room.trip.all']).toBe('Show All {count} Meetings and Visits');
   });
   it('stay English placeholders in the six other languages until a native reviewer signs them off (D16)', () => {
     // Delete this check, and write the reviewed words, in the change that records the review.

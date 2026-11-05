@@ -234,7 +234,7 @@ test('lost response and reload freeze the original command and payload for an ex
   await complete(page);
   await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
   await expect(
-    page.getByRole('button', { name: 'Retry original request', exact: true }),
+    page.getByRole('button', { name: 'Retry Original Request', exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Your private sample request is saved.', exact: true }),
@@ -242,9 +242,9 @@ test('lost response and reload freeze the original command and payload for an ex
   await expect(page.getByLabel('Your offer or requirement')).toBeHidden();
   await page.reload();
   await expect(
-    page.getByRole('button', { name: 'Retry original request', exact: true }),
+    page.getByRole('button', { name: 'Retry Original Request', exact: true }),
   ).toBeVisible();
-  await page.getByRole('button', { name: 'Retry original request', exact: true }).click();
+  await page.getByRole('button', { name: 'Retry Original Request', exact: true }).click();
   await expect(
     page.getByRole('heading', { name: 'Your private sample request is saved.', exact: true }),
   ).toBeVisible();
@@ -323,10 +323,10 @@ test('malformed acknowledgement retains the pending request and permission denia
     page.getByRole('heading', { name: 'Your private sample request is saved.', exact: true }),
   ).toHaveCount(0);
   denied = true;
-  await page.getByRole('button', { name: 'Retry original request', exact: true }).click();
+  await page.getByRole('button', { name: 'Retry Original Request', exact: true }).click();
   await expect(page.getByRole('link', { name: 'Reload your account', exact: true })).toBeVisible();
   await expect(
-    page.getByRole('button', { name: 'Retry original request', exact: true }),
+    page.getByRole('button', { name: 'Retry Original Request', exact: true }),
   ).toHaveCount(0);
   expect(writes[1]).toEqual(writes[0]);
   expect(
@@ -453,7 +453,7 @@ test('changing account context aborts an in-flight private write without display
     page.getByRole('heading', { name: 'Your private sample request is saved.', exact: true }),
   ).toHaveCount(0);
   await expect(
-    page.getByRole('button', { name: 'Retry original request', exact: true }),
+    page.getByRole('button', { name: 'Retry Original Request', exact: true }),
   ).toHaveCount(0);
 });
 
@@ -467,7 +467,7 @@ test('confirmed customer logout clears only private request drafts and keeps ind
     sessionStorage.setItem('corridra-mission-receipt', 'independent public receipt marker');
     sessionStorage.setItem('corridra-mission-draft', 'independent public draft marker');
   }, privatePrefix);
-  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await page.getByRole('button', { name: 'Sign Out', exact: true }).click();
   await expect
     .poll(() => page.evaluate(() => (window as unknown as { __navigation?: string }).__navigation))
     .toBe('/signin');
@@ -493,7 +493,7 @@ test('failed customer logout preserves private recovery and can retry the unchan
     sessionStorage.setItem(prefix + 'alice:pending', 'invented pending');
     Object.assign(window, { __logoutFailure: true });
   }, privatePrefix);
-  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await page.getByRole('button', { name: 'Sign Out', exact: true }).click();
   await expect(page.getByRole('alert')).toHaveText(
     'Sign-out could not be completed. Please try again.',
   );
@@ -507,7 +507,7 @@ test('failed customer logout preserves private recovery and can retry the unchan
     await page.evaluate(() => (window as unknown as { __navigation?: string }).__navigation),
   ).toBeUndefined();
   await page.evaluate(() => Object.assign(window, { __logoutFailure: false }));
-  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await page.getByRole('button', { name: 'Sign Out', exact: true }).click();
   await expect
     .poll(() => page.evaluate(() => (window as unknown as { __navigation?: string }).__navigation))
     .toBe('/signin');

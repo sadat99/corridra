@@ -106,7 +106,7 @@ export function CustomerWorkspaceLeave({
             disabled={busy}
             onClick={() => void leave()}
           >
-            {busy ? 'Please wait…' : 'Confirm leaving'}
+            {busy ? 'Please Wait…' : 'Confirm Leaving'}
           </button>
           <button
             type="button"
@@ -118,7 +118,7 @@ export function CustomerWorkspaceLeave({
               setMessage(null);
             }}
           >
-            Keep my access
+            Keep My Access
           </button>
         </div>
       )}

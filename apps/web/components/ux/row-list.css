@@ -1,0 +1,71 @@
+/* The row-link list: tokens only. The whole row is the target; status is the one badge. */
+.ux-rows ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);
+}
+.ux-row {
+  border-bottom: 1px solid var(--line);
+}
+.ux-row-link {
+  display: grid;
+  gap: var(--space-1) var(--space-4);
+  align-items: center;
+  min-height: 44px;
+  /* The hover surface reaches past the left content edge so the words sit on it (actions align to the left edge);
+     the right side stays inside the column, so a row never causes sideways scroll. */
+  margin-inline-start: calc(-1 * var(--space-3));
+  padding: var(--space-3);
+  color: var(--ink);
+  text-decoration: none;
+}
+.ux-row-link:hover {
+  background: var(--selected-surface);
+}
+.ux-row-link:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}
+.ux-row-title {
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.ux-row-cell {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.ux-badge {
+  display: inline-block;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1.6;
+}
+.ux-rows-head {
+  display: none;
+}
+@media (min-width: 64rem) {
+  .ux-rows-head,
+  .ux-row-link {
+    grid-template-columns: var(--ux-row-cols);
+    gap: var(--space-4);
+  }
+  .ux-rows-head {
+    display: grid;
+    padding: 0 0 var(--space-2);
+    color: var(--text-2);
+    font: 600 var(--text-xs) var(--font-mono);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .ux-row-cell .sr-only {
+    /* The column header already names the cell on a wide screen; assistive technology keeps the name. */
+    position: absolute;
+  }
+}

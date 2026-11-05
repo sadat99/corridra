@@ -5,7 +5,7 @@ export function AccountSignout() {
   return (
     <>
       <button type="button" className="text-link" disabled={busy} onClick={signOut}>
-        {busy ? 'Signing out…' : 'Sign out'}
+        {busy ? 'Signing Out…' : 'Sign Out'}
       </button>
       {message && <p role="alert">{message}</p>}
     </>

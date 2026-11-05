@@ -1,0 +1,54 @@
+/* The segmented filter: tokens only. Joined segments, one selected, 44 px high. */
+.ux-segments {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.ux-segments legend {
+  padding: 0;
+  margin-bottom: var(--space-2);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.ux-segments-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.ux-segment {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  cursor: pointer;
+  color: var(--ink);
+  background: var(--surface-1);
+}
+.ux-segment + .ux-segment {
+  border-inline-start: 1px solid var(--border-strong);
+}
+.ux-segment input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.ux-segment:has(input:checked) {
+  background: var(--selected-surface);
+  color: var(--brand-deep);
+  font-weight: 650;
+}
+.ux-segment:has(input:focus-visible) {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}
+.ux-segment-count {
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}

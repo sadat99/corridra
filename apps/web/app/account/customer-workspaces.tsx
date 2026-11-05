@@ -348,7 +348,7 @@ export function CustomerWorkspaces({
             </a>
           ) : (
             <button type="button" className="text-link" onClick={() => void reload()}>
-              Retry loading workspaces
+              Retry Loading Workspaces
             </button>
           )}
         </>
@@ -373,11 +373,11 @@ export function CustomerWorkspaces({
                   <div className="guide-actions-row">
                     {draftsEnabled ? (
                       <a className="primary-link" href={'/account/drafts/' + row.id}>
-                        New request<span className="sr-only"> in {row.name}</span>
+                        New Request<span className="sr-only"> in {row.name}</span>
                       </a>
                     ) : requestsEnabled ? (
                       <a className="primary-link" href={'/account/request/' + row.id}>
-                        New request<span className="sr-only"> in {row.name}</span>
+                        New Request<span className="sr-only"> in {row.name}</span>
                       </a>
                     ) : null}
                     {(profilesEnabled ||
@@ -534,10 +534,10 @@ export function CustomerWorkspaces({
             )}
             <button className="primary-link" disabled={creating || storageFailed}>
               {creating
-                ? 'Please wait…'
+                ? 'Please Wait…'
                 : pending
-                  ? 'Retry workspace creation'
-                  : 'Create workspace'}
+                  ? 'Retry Workspace Creation'
+                  : 'Create Workspace'}
             </button>
           </form>
           {(pending || storageFailed) && (
@@ -547,7 +547,7 @@ export function CustomerWorkspaces({
                 another.
               </p>
               <button type="button" className="text-link" disabled={creating} onClick={discard}>
-                Discard retry details
+                Discard Retry Details
               </button>
             </>
           )}

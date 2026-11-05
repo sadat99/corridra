@@ -62,7 +62,7 @@ describe('D6: a sent request is never a draft', () => {
       ],
     });
     expect(model.cards[0]).toMatchObject({ kind: 'draft', holder: 'you' });
-    expect(translate('en', 'wsb.move.draft.action')).toBe('Finish and send');
+    expect(translate('en', 'wsb.move.draft.action')).toBe('Finish and Send');
   });
 });
 
