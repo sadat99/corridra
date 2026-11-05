@@ -583,11 +583,11 @@ function ScopedProgrammes({
                           >
                             {selectedProgramme === p.id
                               ? realCustomerInput()
-                                ? 'Hide participants'
-                                : 'Hide sample participants'
+                                ? 'Hide Participants'
+                                : 'Hide Sample Participants'
                               : realCustomerInput()
-                                ? 'Manage participants'
-                                : 'Manage sample participants'}
+                                ? 'Manage Participants'
+                                : 'Manage Sample Participants'}
                           </button>
                           {selectedProgramme === p.id && (
                             <Suspense
@@ -621,8 +621,8 @@ function ScopedProgrammes({
                             }
                           >
                             {coordinationProgramme === p.id
-                              ? 'Hide coordination and report'
-                              : 'Coordinate and report'}
+                              ? 'Hide Coordination and Report'
+                              : 'Coordinate and Report'}
                           </button>
                           {coordinationProgramme === p.id && (
                             <Suspense
@@ -653,8 +653,8 @@ function ScopedProgrammes({
                             onClick={() => setTermsProgramme(termsProgramme === p.id ? null : p.id)}
                           >
                             {termsProgramme === p.id
-                              ? 'Hide terms, eligibility and places'
-                              : 'Terms, eligibility and places'}
+                              ? 'Hide Terms, Eligibility and Places'
+                              : 'Terms, Eligibility and Places'}
                           </button>
                           {termsProgramme === p.id && (
                             <Suspense fallback={<p role="status">Loading terms and places…</p>}>
@@ -680,11 +680,11 @@ function ScopedProgrammes({
                           >
                             {financeProgramme === p.id
                               ? realCustomerInput()
-                                ? 'Hide finances'
-                                : 'Hide sample finances'
+                                ? 'Hide Finances'
+                                : 'Hide Sample Finances'
                               : realCustomerInput()
-                                ? 'Record fees and costs'
-                                : 'Record sample fees and costs'}
+                                ? 'Record Fees and Costs'
+                                : 'Record Sample Fees and Costs'}
                           </button>
                           {financeProgramme === p.id && (
                             <Suspense
@@ -767,7 +767,7 @@ function ScopedProgrammes({
               disabled={busy}
               onClick={() => void load(next)}
             >
-              Load more planning programmes
+              Load More Planning Programmes
             </button>
           )}
           <form
@@ -816,10 +816,10 @@ function ScopedProgrammes({
               {busy
                 ? 'Saving…'
                 : pending
-                  ? 'Retry same planning request'
+                  ? 'Retry Same Planning Request'
                   : realCustomerInput()
-                    ? 'Save programme'
-                    : 'Save sample programme'}
+                    ? 'Save Programme'
+                    : 'Save Sample Programme'}
             </button>
           </form>
         </>
@@ -837,7 +837,7 @@ function ScopedProgrammes({
             void load();
           }}
         >
-          Reload planning programmes
+          Reload Planning Programmes
         </button>
       )}
       <p>

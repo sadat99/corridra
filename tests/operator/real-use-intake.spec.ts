@@ -426,7 +426,7 @@ for (const width of [1366, 390])
       true,
     );
     await page.screenshot({ path: `work/real-use/intake-${width}.png`, fullPage: true });
-    await page.getByRole('button', { name: 'Create account and continue', exact: true }).click();
+    await page.getByRole('button', { name: 'Create Account and Continue', exact: true }).click();
     await activate(page, email, password);
     await expect(page).toHaveURL(/\/account\/requests\/[a-f0-9-]{36}$/);
     await expect(
@@ -465,7 +465,7 @@ test('standalone signup and activation can precede submission', async ({ page })
   await expect(page).toHaveURL(origin + '/plan');
   await fillRequest(page, email);
   await expect(page.getByLabel('Create an account password', { exact: false })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit Mission Request', exact: true }).click();
   await expect(page).toHaveURL(/\/account\/requests\/[a-f0-9-]{36}$/);
 });
 test('fixture exceptions are returned as text and cannot be interpreted as HTML', async ({

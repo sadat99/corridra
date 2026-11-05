@@ -907,7 +907,7 @@ function IntakeForm({
       aria-controls={`fold-${group}`}
       onClick={() => setFoldChoice((current) => ({ ...current, [group]: !foldOpen(group) }))}
     >
-      {english(foldOpen(group) ? 'Fewer details' : 'More details (optional)')}
+      {english(foldOpen(group) ? 'Fewer Details' : 'More Details (Optional)')}
     </button>
   );
   const error = (name: string) =>

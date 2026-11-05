@@ -245,3 +245,19 @@
     margin-block-start: 0;
   }
 }
+
+/* Each settings group is a closed disclosure inside the Technical details tab, so the tab stays short
+   (layout budget, page length). Every row stays in the page. */
+.ux-owner .owner-group > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-4);
+  min-height: 44px;
+  padding: var(--space-2) 0;
+  cursor: pointer;
+}
+.ux-owner .owner-group > summary h3 {
+  display: inline;
+  margin: 0;
+}

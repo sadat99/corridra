@@ -232,7 +232,7 @@ test('an empty workspace invites the first template', async ({ page }) => {
   await mock(page, { list: () => listBody([]) });
   await page.goto(origin);
   await expect(page.getByText('No templates yet.')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'New template' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'New Template' })).toBeVisible();
 });
 test('a new template is validated, converts amounts exactly and sends only the four content parts', async ({
   page,
@@ -247,10 +247,10 @@ test('a new template is validated, converts amounts exactly and sends only the f
     },
   });
   await page.goto(origin);
-  await page.getByRole('button', { name: 'New template' }).click();
+  await page.getByRole('button', { name: 'New Template' }).click();
   await page.getByLabel('Template name (start with Synthetic)').fill('Synthetic autumn expo plan');
   await page.getByLabel('Default programme purpose (start with Synthetic)').fill('Buyer mission');
-  await page.getByRole('button', { name: 'Create template' }).click();
+  await page.getByRole('button', { name: 'Create Template' }).click();
   await expect(page.getByRole('alert')).toContainText(
     'default programme purpose with the word Synthetic',
   );
@@ -258,28 +258,28 @@ test('a new template is validated, converts amounts exactly and sends only the f
     .getByLabel('Default programme purpose (start with Synthetic)')
     .fill('Synthetic buyer mission to the autumn expo');
   await page.getByLabel('Places available (optional)').fill('0');
-  await page.getByRole('button', { name: 'Create template' }).click();
+  await page.getByRole('button', { name: 'Create Template' }).click();
   await expect(page.getByRole('alert')).toContainText('Capacity must be a whole number');
   await page.getByLabel('Places available (optional)').fill('15');
-  await page.getByRole('button', { name: 'Add a task' }).click();
+  await page.getByRole('button', { name: 'Add a Task' }).click();
   await page.getByLabel('Task 1 title').fill('Synthetic print the badges');
   await page.getByLabel('Task 1 due days after the start (optional)').fill('-3');
-  await page.getByRole('button', { name: 'Create template' }).click();
+  await page.getByRole('button', { name: 'Create Template' }).click();
   await expect(page.getByRole('alert')).toContainText('due offset is a whole number of days');
   await page.getByLabel('Task 1 due days after the start (optional)').fill('7');
-  await page.getByRole('button', { name: 'Add a planned cost' }).click();
+  await page.getByRole('button', { name: 'Add a Planned Cost' }).click();
   await page.getByLabel('Cost 1 description').fill('Synthetic printing run');
   await page.getByLabel('Cost 1 amount (2 decimal places)').fill('1234.567');
-  await page.getByRole('button', { name: 'Create template' }).click();
+  await page.getByRole('button', { name: 'Create Template' }).click();
   await expect(page.getByRole('alert')).toContainText('enter a positive amount');
   expect(commands).toHaveLength(0);
   await page.getByLabel('Cost 1 amount (2 decimal places)').fill('1234.50');
-  await page.getByRole('button', { name: 'Add a planned cost' }).click();
+  await page.getByRole('button', { name: 'Add a Planned Cost' }).click();
   await page.getByLabel('Cost 2 description').fill('Synthetic hall hire in yen');
   await page.getByLabel('Cost 2 currency').selectOption('JPY');
   await page.getByLabel('Cost 2 type').selectOption('ORGANISER_OBLIGATION');
   await page.getByLabel('Cost 2 amount (0 decimal places)').fill('1500');
-  await page.getByRole('button', { name: 'Create template' }).click();
+  await page.getByRole('button', { name: 'Create Template' }).click();
   await expect(saved(page, 'Template created.')).toBeVisible();
   expect(commands[0]).toMatchObject({
     action: 'save',
@@ -347,7 +347,7 @@ test('editing prefills exact amounts and sends the template id and version', asy
   );
   await page.getByLabel('Places available (optional)').fill('25');
   await page.getByRole('button', { name: 'Remove task 1' }).click();
-  await page.getByRole('button', { name: 'Save template' }).click();
+  await page.getByRole('button', { name: 'Save Template' }).click();
   await expect(saved(page, 'Template saved.')).toBeVisible();
   expect(commands[0]).toMatchObject({
     input: {
@@ -391,7 +391,7 @@ test('capturing a programme plan fills the form and changes nothing until the te
   });
   await page.goto(origin);
   await page.getByLabel('Capture the plan of a programme').selectOption(programmeId);
-  await page.getByRole('button', { name: 'Capture plan' }).click();
+  await page.getByRole('button', { name: 'Capture Plan' }).click();
   await expect(saved(page, 'Plan captured')).toBeVisible();
   expect(commands).toHaveLength(0);
   expect(
@@ -401,12 +401,12 @@ test('capturing a programme plan fills the form and changes nothing until the te
   await page
     .getByLabel('Template name (start with Synthetic)')
     .fill('Synthetic captured plan from a run');
-  await page.getByRole('button', { name: 'Create template' }).click();
+  await page.getByRole('button', { name: 'Create Template' }).click();
   await expect(saved(page, 'Template created.')).toBeVisible();
   expect(commands[0]).toMatchObject({ input: { templateId: null, content: { capacity: null } } });
   // Nothing chosen: refuse without a request.
   await page.getByLabel('Capture the plan of a programme').selectOption('');
-  await page.getByRole('button', { name: 'Capture plan' }).click();
+  await page.getByRole('button', { name: 'Capture Plan' }).click();
   await expect(page.getByRole('alert')).toContainText('Choose a programme');
 });
 test('a capture for another programme is rejected instead of used', async ({ page }) => {
@@ -422,7 +422,7 @@ test('a capture for another programme is rejected instead of used', async ({ pag
   });
   await page.goto(origin);
   await page.getByLabel('Capture the plan of a programme').selectOption(programmeId);
-  await page.getByRole('button', { name: 'Capture plan' }).click();
+  await page.getByRole('button', { name: 'Capture Plan' }).click();
   await expect(page.getByRole('alert')).toContainText('could not be confirmed');
   await expect(page.getByLabel('Task 1 title')).toHaveCount(0);
 });
@@ -461,14 +461,14 @@ test('using a template for a new programme creates it with the default purpose, 
   await page.goto(origin);
   await page.getByRole('button', { name: 'Use template Synthetic spring fair delegation' }).click();
   await page.getByLabel('New programme name (start with Synthetic)').fill('Programme');
-  await page.getByRole('button', { name: 'Apply template' }).click();
+  await page.getByRole('button', { name: 'Apply Template' }).click();
   await expect(page.getByRole('alert')).toContainText('programme name with the word Synthetic');
   expect(created).toHaveLength(0);
   await page
     .getByLabel('New programme name (start with Synthetic)')
     .fill('Synthetic spring fair 2027');
   await page.getByLabel(/Programme start date/).fill('2026-11-01');
-  await page.getByRole('button', { name: 'Apply template' }).click();
+  await page.getByRole('button', { name: 'Apply Template' }).click();
   await expect(
     saved(page, 'Template applied: 2 tasks and 1 planned costs were added.'),
   ).toBeVisible();
@@ -513,7 +513,7 @@ test('using a template for an existing programme does not create one', async ({ 
   await page.goto(origin);
   await page.getByRole('button', { name: 'Use template Synthetic spring fair delegation' }).click();
   await page.getByLabel('Where should it go?').selectOption(secondProgramme);
-  await page.getByRole('button', { name: 'Apply template' }).click();
+  await page.getByRole('button', { name: 'Apply Template' }).click();
   await expect(saved(page, 'Template applied')).toBeVisible();
   expect(created).toHaveLength(0);
   expect(commands[0]).toMatchObject({ input: { programmeId: secondProgramme, startDate: null } });
@@ -557,10 +557,10 @@ test('if applying fails after creating the programme, the retry reuses the same 
   await page
     .getByLabel('New programme name (start with Synthetic)')
     .fill('Synthetic spring fair 2028');
-  await page.getByRole('button', { name: 'Apply template' }).click();
+  await page.getByRole('button', { name: 'Apply Template' }).click();
   await expect(page.getByRole('alert')).toContainText('try again');
   expect(await page.evaluate(() => window.__changed)).toBeGreaterThan(0);
-  await page.getByRole('button', { name: 'Apply template' }).click();
+  await page.getByRole('button', { name: 'Apply Template' }).click();
   await expect(saved(page, 'Template applied')).toBeVisible();
   expect(created).toHaveLength(2);
   expect(created[1]).toEqual(created[0]);
@@ -579,7 +579,7 @@ test('a refused application keeps the form and explains it', async ({ page }) =>
   await page.goto(origin);
   await page.getByRole('button', { name: 'Use template Synthetic spring fair delegation' }).click();
   await page.getByLabel('Where should it go?').selectOption(programmeId);
-  await page.getByRole('button', { name: 'Apply template' }).click();
+  await page.getByRole('button', { name: 'Apply Template' }).click();
   await expect(page.getByRole('alert')).toContainText('programme is not empty');
   await expect(page.getByLabel('Where should it go?')).toHaveValue(programmeId);
 });
@@ -596,19 +596,19 @@ test('a failed save keeps what was typed and retries with the identical command'
     },
   });
   await page.goto(origin);
-  await page.getByRole('button', { name: 'New template' }).click();
+  await page.getByRole('button', { name: 'New Template' }).click();
   await page
     .getByLabel('Template name (start with Synthetic)')
     .fill('Synthetic retry safe template');
   await page
     .getByLabel('Default programme purpose (start with Synthetic)')
     .fill('Synthetic a retry safe purpose');
-  await page.getByRole('button', { name: 'Create template' }).click();
+  await page.getByRole('button', { name: 'Create Template' }).click();
   await expect(page.getByRole('alert')).toContainText('try again');
   await expect(page.getByLabel('Template name (start with Synthetic)')).toHaveValue(
     'Synthetic retry safe template',
   );
-  await page.getByRole('button', { name: 'Create template' }).click();
+  await page.getByRole('button', { name: 'Create Template' }).click();
   await expect(saved(page, 'Template created.')).toBeVisible();
   expect(commands[1]).toEqual(commands[0]);
 });

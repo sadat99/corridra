@@ -30,7 +30,7 @@ test('About explains the product, audience, process and commercial boundaries', 
   ])
     await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
   await expect(
-    page.getByRole('link', { name: 'Start a request', exact: true }).first(),
+    page.getByRole('link', { name: 'Start a Request', exact: true }).first(),
   ).toHaveAttribute('href', '/plan');
   for (const width of info.project.name === 'desktop' ? [1440, 1920] : [390, 768]) {
     await page.setViewportSize({ width, height: 1000 });
@@ -47,7 +47,7 @@ test('Privacy explains account data, private requests, retention and the deferre
 }, info) => {
   await page.goto('/privacy');
   // The notice shows one section at a time (layout budget); this test reads the whole notice.
-  await page.getByRole('button', { name: 'Show the whole notice' }).click();
+  await page.getByRole('button', { name: 'Show the Whole Notice' }).click();
   for (const heading of [
     'Who is responsible',
     'Your account',

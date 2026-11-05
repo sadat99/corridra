@@ -1,5 +1,5 @@
 import { operatorEvidence } from './operator-evidence';
-import { openSection } from './workspace-nav';
+import { openSection, openTab } from './workspace-nav';
 import { participantEvidence } from './participant-evidence';
 import { test, expect } from '@playwright/test';
 import { Pool } from '../../packages/db/src/index';
@@ -65,7 +65,7 @@ test('anonymous five-step intake preserves draft, retries safely and returns a p
       body: JSON.stringify({ error: 'Temporary test failure. Retry your brief.' }),
     }),
   );
-  await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit Mission Request', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Temporary test failure');
   await expect(page.getByLabel('Work email', { exact: true })).toHaveValue(
     'intake@example.invalid',
@@ -74,7 +74,7 @@ test('anonymous five-step intake preserves draft, retries safely and returns a p
   const response = page.waitForResponse(
     (r) => r.url().endsWith('/api/intake') && r.request().method() === 'POST',
   );
-  await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit Mission Request', exact: true }).click();
   const saved = await response;
   expect(saved.status()).toBe(201);
   const payload = saved.request().postDataJSON();
@@ -92,7 +92,7 @@ test('anonymous five-step intake preserves draft, retries safely and returns a p
   await expect(page.getByLabel('Private receipt code')).toHaveValue(result.receipt);
   await page.reload();
   await expect(page.getByLabel('Private receipt code')).toHaveValue(result.receipt);
-  await page.getByRole('button', { name: 'Check status and replies' }).click();
+  await page.getByRole('button', { name: 'Check Status and Replies' }).click();
   // D6: a request with a receipt was sent, so the customer sees it as received, not as a draft.
   await expect(page.getByText('Received, waiting for review', { exact: true })).toBeVisible();
   await writeFile('.cache/part04-browser-receipt.json', JSON.stringify(result), { mode: 0o600 });
@@ -532,6 +532,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     await db.end();
   }
   await openSection(page, 'workspace-controls');
+  await openTab(page, 'Available tools');
   await page.getByRole('button', { name: 'Enable evidence verification', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText(
     'Verify your authenticator again to continue',
@@ -541,6 +542,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await page.getByRole('button', { name: 'Verify again', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText('Saved.');
   await openSection(page, 'workspace-controls');
+  await openTab(page, 'Available tools');
   await page.getByRole('button', { name: 'Enable evidence verification', exact: true }).click();
   await expect(
     page
@@ -558,6 +560,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     page.getByRole('button', { name: 'Submit for validation', exact: true }),
   ).toBeDisabled();
   await openSection(page, 'workspace-controls');
+  await openTab(page, 'Available tools');
   await expect(
     page
       .getByRole('article', { name: 'Research intake', exact: true })
@@ -574,6 +577,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     controls.getByRole('heading', { name: 'Workspace controls', exact: true }),
   ).toBeVisible();
   await expect(controls.getByRole('article')).toHaveCount(10);
+  await openTab(controls, 'People and access');
   await expect(
     controls.getByRole('combobox', { name: 'Workspace member', exact: true }),
   ).toBeDisabled();
@@ -999,7 +1003,7 @@ test('controlled buyer response progresses through durable delivery, a held meet
     return route.continue();
   });
   await buyer.getByRole('button', { name: 'Interested', exact: true }).click();
-  await expect(buyer.getByRole('button', { name: 'Retry the same response' })).toBeVisible();
+  await expect(buyer.getByRole('button', { name: 'Retry the Same Response' })).toBeVisible();
   await expect(
     buyer.getByLabel('Do not send me further introductions', { exact: false }),
   ).toBeDisabled();
@@ -1007,7 +1011,7 @@ test('controlled buyer response progresses through durable delivery, a held meet
   const buyerRetry = buyer.waitForResponse(
     (r) => r.url().endsWith('/api/buyer') && r.request().postDataJSON().action === 'respond',
   );
-  await buyer.getByRole('button', { name: 'Retry the same response' }).click();
+  await buyer.getByRole('button', { name: 'Retry the Same Response' }).click();
   expect((await buyerRetry).request().postDataJSON()).toEqual(buyerFailed);
   await expect(buyer.getByRole('status')).toContainText('response has been recorded');
   const duplicate = await buyer.request.post('/api/buyer', {
@@ -1114,7 +1118,7 @@ test('controlled buyer response progresses through durable delivery, a held meet
     }),
     { mode: 0o600 },
   );
-  await buyer.getByRole('button', { name: 'Stop further introductions' }).click();
+  await buyer.getByRole('button', { name: 'Stop Further Introductions' }).click();
   await expect(buyer.getByRole('status')).toContainText('Further introductions');
   await operatorEvidence(page, page.locator('#workspace-meetings'), 'meetings');
   await buyerContext.close();
@@ -1469,6 +1473,11 @@ test('scoped delivery imports every row, serves client requests and downloads co
     .getByRole('button', { name: 'Review imported mission' })
     .first()
     .click();
+  // Choosing a mission to review opens the Publication tab by itself, so the review form is on screen.
+  await expect(panel.getByRole('tab', { name: 'Publication', exact: true })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
   await panel.locator('summary').filter({ hasText: 'Review client publication' }).click();
   await panel.getByLabel('Client title', { exact: true }).fill('Reviewed delivery progress');
   await panel.getByLabel('Approved company name').fill('Synthetic Browser Cohort');
@@ -1482,6 +1491,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
   await panel.getByLabel('I reviewed this copy', { exact: false }).check();
   await panel.getByRole('button', { name: 'Approve publication', exact: true }).click();
   await expect(panel.getByRole('status', { name: 'Delivery status' })).toHaveText('Saved.');
+  await openTab(panel, 'Access and requests');
   await panel.locator('summary').filter({ hasText: 'Create evidence request' }).click();
   await panel.getByLabel('Request title', { exact: true }).fill('Confirm synthetic requirements');
   await panel
@@ -1490,6 +1500,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
   await panel.getByLabel('Response deadline').fill(deadline);
   await panel.getByRole('button', { name: 'Create request', exact: true }).click();
   await expect(panel.getByRole('status', { name: 'Delivery status' })).toHaveText('Saved.');
+  await openTab(panel, 'Publication');
   await panel.locator('summary').filter({ hasText: 'Share approved view' }).click();
   await panel
     .getByRole('group', { name: 'Approved publications' })
@@ -1547,6 +1558,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
   expect((await evidenceRetry).request().postDataJSON()).toEqual(evidenceFailed);
   await expect(client.getByRole('status').filter({ hasText: 'Response received' })).toBeVisible();
   await page.reload();
+  await openTab(panel, 'Access and requests');
   const evidenceRequest = panel.locator('li').filter({ hasText: 'Confirm synthetic requirements' });
   await expect(
     evidenceRequest.getByText('Self-declared response:', { exact: false }),
@@ -1610,6 +1622,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
     programmeId,
   );
   await page.unroute(scopeRoute);
+  await openTab(panel, 'Publication');
   await panel.locator('summary').filter({ hasText: 'Share approved view' }).click();
   await panel
     .getByRole('group', { name: 'Approved publications' })
@@ -1663,6 +1676,7 @@ test('scoped delivery imports every row, serves client requests and downloads co
     expect(await replay.body()).toEqual(bytes);
   }
   expect((await new AxeBuilder({ page: client }).analyze()).violations).toEqual([]);
+  await openTab(panel, 'Access and requests');
   const institutionalAccess = panel.locator('li').filter({
     hasText: 'institution report · Synthetic programme outcome review',
   });
@@ -2298,7 +2312,7 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
   await recipientPage
     .getByLabel('Unit price (original currency amount)', { exact: false })
     .fill('123.456');
-  await recipientPage.getByRole('button', { name: 'Record response', exact: true }).click();
+  await recipientPage.getByRole('button', { name: 'Record Response', exact: true }).click();
   await expect(recipientPage.locator('.buyer-card').getByRole('alert')).toBeFocused();
   await expect(recipientPage.getByLabel('Your response', { exact: true })).toHaveValue(
     '供应商原文答复：请确认技术参数。',
@@ -2319,14 +2333,14 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
     }
     return route.continue();
   });
-  await recipientPage.getByRole('button', { name: 'Record response', exact: true }).click();
+  await recipientPage.getByRole('button', { name: 'Record Response', exact: true }).click();
   await expect(recipientPage.getByLabel('Your response', { exact: true })).toBeDisabled();
   await recipientPage.unroute('**/api/buyer');
   const supplierRetry = recipientPage.waitForResponse(
     (r) =>
       r.url().endsWith('/api/buyer') && r.request().postDataJSON().action === 'detail-response',
   );
-  await recipientPage.getByRole('button', { name: 'Retry the same declaration' }).click();
+  await recipientPage.getByRole('button', { name: 'Retry the Same Declaration' }).click();
   expect((await supplierRetry).request().postDataJSON()).toEqual(supplierFailed);
   await expect(
     recipientPage.getByRole('heading', { name: 'Your recorded response', exact: true }),

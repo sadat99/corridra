@@ -59,7 +59,7 @@ function Road({ counts, onInvite }: { counts: BoardingCounts | null; onInvite?: 
                 {step.key === 'invite' && onInvite ? (
                   <button type="button" className="text-link" onClick={onInvite}>
                     <b>{step.label}</b>
-                    <span className="sr-only"> (open People)</span>
+                    <span className="sr-only"> (Open People)</span>
                   </button>
                 ) : (
                   <b>{step.label}</b>
@@ -93,7 +93,7 @@ function Status({
         <strong>Boarding</strong> {boardingLine(counts)}
         {onRefresh && (
           <button type="button" className="text-link programme-refresh" onClick={onRefresh}>
-            Refresh counts
+            Refresh Counts
           </button>
         )}
       </p>

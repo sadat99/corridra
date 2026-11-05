@@ -118,7 +118,7 @@ test('an owner can open the customer preview: marked, read only, inert, logged e
     await expect(page.getByRole('button', { name: /sign out/i })).toHaveCount(0);
     // The header's account links (sign in, your account, start a request) are not on offer here.
     await expect(page.getByRole('navigation', { name: 'Main navigation' })).toBeHidden();
-    await expect(page.getByRole('link', { name: 'Start a request' })).toBeHidden();
+    await expect(page.getByRole('link', { name: 'Start a Request' })).toBeHidden();
 
     // Read only: the sample content is inert and holds nothing that can act.
     await expect(page.locator('.view-as-content')).toHaveAttribute('inert', '');

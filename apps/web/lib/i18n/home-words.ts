@@ -12,7 +12,7 @@ export const homeEn = {
   'home.example': 'Example',
   'home.how': 'How it works',
   'home.routes.eyebrow': 'Routes',
-  'home.start': 'Start a request',
+  'home.start': 'Start a Request',
   'home.lead':
     'Say what you want to buy, sell or organise. We find the companies that fit, show what is proven about each one, and help you meet them.',
   'home.jobs.aria': 'Choose your commercial objective',
@@ -51,8 +51,8 @@ export const homeEn = {
   'home.proof.title': 'What you get back, when you sell and when you buy.',
   'home.proof.lead':
     'Every company comes with a reason and a trust label. The companies below are examples, not real companies.',
-  'home.proof.prev': 'Previous example',
-  'home.proof.next': 'Next example',
+  'home.proof.prev': 'Previous Example',
+  'home.proof.next': 'Next Example',
   'home.proof.aria': 'Examples for selling and for buying',
   'home.buyers.title': 'Buyers worth meeting',
   'home.buyers.text':
@@ -120,7 +120,7 @@ export const homeEn = {
   'home.route.more': 'See this route',
   'home.other.title': 'Another route?',
   'home.other.text': 'Ask us. We tell you plainly if we can help.',
-  'home.other.link': 'Explore every route',
+  'home.other.link': 'Explore Every Route',
   'home.band.title': 'Not sure where to start?',
   'home.band.text': 'Tell us your goal in your own words. You do not need an account to begin.',
   'home.ex.aria': 'Example missions, not real companies',

@@ -574,7 +574,7 @@ for (const [label, setup] of [
 test('quality: an error is announced as an alert, not only shown', async ({ page }) => {
   await open(page, 'room=1&proj=1');
   await page.getByRole('button', { name: 'Results', exact: true }).click();
-  await page.getByRole('button', { name: 'Refresh programme projection' }).click();
+  await page.getByRole('button', { name: 'Refresh Programme Projection' }).click();
   await expect(page.locator(`[id="${section('results')}"]`).getByRole('alert')).toContainText(
     /could not be read/,
   );
@@ -768,7 +768,7 @@ test('Q-05 the Results, companies and agenda views say wait and refresh on a 429
   const results = page.locator(`[id="${section('results')}"]`);
   await expect(results.getByRole('alert')).toContainText(/Wait a minute, then refresh/);
   limited = false;
-  await results.getByRole('button', { name: 'Refresh programme projection' }).click();
+  await results.getByRole('button', { name: 'Refresh Programme Projection' }).click();
   await expect(results.getByText(/^Not shared/)).toBeVisible();
 });
 
@@ -808,7 +808,7 @@ test('Q-06 Save sample programme is busy while in flight, sends once for a doubl
     .fill('Fictional purpose: meet fabric buyers in Shanghai.');
   await page.getByLabel('I am using fictional information for sample planning only.').check();
   const save = page.locator('form.operator-form .primary-link');
-  await expect(save).toHaveText('Save sample programme');
+  await expect(save).toHaveText('Save Sample Programme');
   await save.dblclick();
   await expect(save).toBeDisabled();
   await expect(save, 'a first attempt in flight does not read as a retry').toHaveText('Saving…');

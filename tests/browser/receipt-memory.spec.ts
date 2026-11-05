@@ -51,7 +51,7 @@ test('a remembered request is still there in a new tab, and can be forgotten on 
   }
 
   await saved
-    .getByRole('button', { name: 'Forget this request on this device', exact: true })
+    .getByRole('button', { name: 'Forget This Request on This Device', exact: true })
     .click();
   expect(await page.evaluate(remembered)).toMatchObject({ receipt: null, device: null, at: null });
   // The code stays on screen for now, so it cannot be lost by one click.

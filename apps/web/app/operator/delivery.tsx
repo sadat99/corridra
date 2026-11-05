@@ -1,4 +1,5 @@
 'use client';
+import { SubTabs, openSubTab } from '../../components/ux/sub-tabs';
 import { PhoneFold } from '../../components/phone-fold';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import {
@@ -479,98 +480,513 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
           Next programmes
         </button>
       </p>
-      {manages && (
-        <details>
-          <summary>Create programme</summary>
-          <form className="operator-form" onSubmit={createProgramme}>
-            <label>
-              Programme name
-              <input name="name" minLength={3} maxLength={160} required />
-            </label>
-            <label>
-              Reporting purpose
-              <textarea name="reportingPurpose" minLength={10} maxLength={500} required />
-            </label>
-            <button disabled={busy}>Create programme</button>
-          </form>
-        </details>
-      )}
-      {programme && (
-        <>
-          <h3>Participants</h3>
-          <p>{data.participants.length} participants in this programme</p>
-          <ul>
-            {data.participants.map((p) => (
-              <li key={p.id}>
-                {p.reference}: {p.company} · {p.status.toLowerCase().replaceAll('_', ' ')}{' '}
-                <button onClick={() => setMissionId(p.mission_id)}>Review mission</button>
-              </li>
-            ))}
-          </ul>
-          {manages && (
-            <details open>
-              <summary>Import participants</summary>
-              <p>
-                Maximum 100 rows and 1 MiB per file, 1000 participants per programme. XLSX must have
-                one visible worksheet with text cells, no formulas or macros. Missing optional
-                fields default to attendance “Not decided”, timezone “Asia/Dhaka”, outcome “Relevant
-                meetings”, and empty dates, website and notes. Multiple outcomes use a | separator.
-              </p>
-              <a href={`${endpoint}&template=true`}>Download intake template</a>
-              <form className="operator-form" onSubmit={upload}>
-                <label>
-                  CSV or Excel intake
-                  <input
-                    name="file"
-                    type="file"
-                    accept=".csv,.xlsx"
-                    required
-                    onChange={() => {
-                      uploadKey.current = '';
-                      setPreview(null);
-                      setResult(null);
-                    }}
-                  />
-                </label>
-                <button disabled={busy}>Preview intake</button>
-              </form>
-              {preview && (
-                <>
-                  <p>
-                    Preview expires {formatDateTime(preview.expiresAt)}. Ready{' '}
-                    {preview.counts.ready}, duplicates {preview.counts.duplicates}, empty{' '}
-                    {preview.counts.empty}, errors {preview.counts.errors}. All{' '}
-                    {preview.counts.total} rows are shown below.
-                  </p>
-                  <div className="delivery-table">
-                    <table>
-                      <caption>Intake preview: every row</caption>
-                      <thead>
-                        <tr>
-                          <th>Row</th>
-                          <th>Reference</th>
-                          <th>Company</th>
-                          <th>Result</th>
-                          <th>Details</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {preview.rows.map((r) => (
-                          <tr key={r.row}>
-                            <td>{r.row}</td>
-                            <td>{r.reference || 'Empty'}</td>
-                            <td>{r.brief?.company ?? ''}</td>
-                            <td>{r.status.toLowerCase().replaceAll('_', ' ')}</td>
-                            <td>{r.errors.join('; ')}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  {!result && (
-                    <form className="operator-form" onSubmit={confirm}>
+      <SubTabs
+        label="Delivery sections"
+        tabs={[
+          {
+            id: 'programmes',
+            label: 'Programmes',
+            panel: (
+              <>
+                {manages && (
+                  <details>
+                    <summary>Create programme</summary>
+                    <form className="operator-form" onSubmit={createProgramme}>
                       <label>
-                        Mission owner
+                        Programme name
+                        <input name="name" minLength={3} maxLength={160} required />
+                      </label>
+                      <label>
+                        Reporting purpose
+                        <textarea name="reportingPurpose" minLength={10} maxLength={500} required />
+                      </label>
+                      <button disabled={busy}>Create programme</button>
+                    </form>
+                  </details>
+                )}
+                {programme && (
+                  <>
+                    <h3>Participants</h3>
+                    <p>{data.participants.length} participants in this programme</p>
+                    <ul>
+                      {data.participants.map((p) => (
+                        <li key={p.id}>
+                          {p.reference}: {p.company} · {p.status.toLowerCase().replaceAll('_', ' ')}{' '}
+                          <button
+                            onClick={(event) => {
+                              setMissionId(p.mission_id);
+                              openSubTab(event.currentTarget, 'publication');
+                            }}
+                          >
+                            Review mission
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                    {manages && (
+                      <details open>
+                        <summary>Import participants</summary>
+                        <p>
+                          Maximum 100 rows and 1 MiB per file, 1000 participants per programme. XLSX
+                          must have one visible worksheet with text cells, no formulas or macros.
+                          Missing optional fields default to attendance “Not decided”, timezone
+                          “Asia/Dhaka”, outcome “Relevant meetings”, and empty dates, website and
+                          notes. Multiple outcomes use a | separator.
+                        </p>
+                        <a href={`${endpoint}&template=true`}>Download intake template</a>
+                        <form className="operator-form" onSubmit={upload}>
+                          <label>
+                            CSV or Excel intake
+                            <input
+                              name="file"
+                              type="file"
+                              accept=".csv,.xlsx"
+                              required
+                              onChange={() => {
+                                uploadKey.current = '';
+                                setPreview(null);
+                                setResult(null);
+                              }}
+                            />
+                          </label>
+                          <button disabled={busy}>Preview intake</button>
+                        </form>
+                        {preview && (
+                          <>
+                            <p>
+                              Preview expires {formatDateTime(preview.expiresAt)}. Ready{' '}
+                              {preview.counts.ready}, duplicates {preview.counts.duplicates}, empty{' '}
+                              {preview.counts.empty}, errors {preview.counts.errors}. All{' '}
+                              {preview.counts.total} rows are shown below.
+                            </p>
+                            <div className="delivery-table">
+                              <table>
+                                <caption>Intake preview: every row</caption>
+                                <thead>
+                                  <tr>
+                                    <th>Row</th>
+                                    <th>Reference</th>
+                                    <th>Company</th>
+                                    <th>Result</th>
+                                    <th>Details</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {preview.rows.map((r) => (
+                                    <tr key={r.row}>
+                                      <td>{r.row}</td>
+                                      <td>{r.reference || 'Empty'}</td>
+                                      <td>{r.brief?.company ?? ''}</td>
+                                      <td>{r.status.toLowerCase().replaceAll('_', ' ')}</td>
+                                      <td>{r.errors.join('; ')}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                            {!result && (
+                              <form className="operator-form" onSubmit={confirm}>
+                                <label>
+                                  Mission owner
+                                  <select name="ownerId" required>
+                                    {data.owners.map((o) => (
+                                      <option key={o.user_id} value={o.user_id}>
+                                        {o.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </label>
+                                <label>
+                                  <input name="acknowledged" type="checkbox" required /> I reviewed
+                                  every row and the exact ready, duplicate and empty counts. The
+                                  accepted requests are self-declarations.
+                                </label>
+                                <button disabled={busy || !!preview.counts.errors}>
+                                  Confirm intake
+                                </button>
+                              </form>
+                            )}
+                            {result && (
+                              <ul aria-label="Confirmed intake results">
+                                {result.map((r) => (
+                                  <li key={r.row}>
+                                    Row {r.row}: {r.reference || 'Empty'} · {r.result.toLowerCase()}{' '}
+                                    {r.missionId && (
+                                      <button
+                                        onClick={(event) => {
+                                          setMissionId(r.missionId!);
+                                          openSubTab(event.currentTarget, 'publication');
+                                        }}
+                                      >
+                                        Review imported mission
+                                      </button>
+                                    )}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </>
+                        )}
+                      </details>
+                    )}
+                  </>
+                )}
+              </>
+            ),
+          },
+          {
+            id: 'publication',
+            label: 'Publication',
+            panel: (
+              <>
+                {shares && (
+                  <details>
+                    <summary>Review client publication</summary>
+                    <label>
+                      Mission
+                      <select value={missionId} onChange={(e) => setMissionId(e.target.value)}>
+                        <option value="">Choose mission</option>
+                        {[
+                          ...data.participants.map((p) => ({
+                            id: p.mission_id,
+                            company: p.company,
+                          })),
+                          ...missions.filter(
+                            (m) => !data.participants.some((p) => p.mission_id === m.id),
+                          ),
+                        ].map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {m.company} · {m.id.slice(0, 8)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <p className="operator-pager">
+                      <button
+                        disabled={missionOffset === 0 || busy}
+                        onClick={() => setMissionOffset((v) => Math.max(0, v - 100))}
+                      >
+                        Previous missions
+                      </button>{' '}
+                      <button
+                        disabled={missionOffset + 100 >= missionTotal || busy}
+                        onClick={() => setMissionOffset((v) => v + 100)}
+                      >
+                        Next missions
+                      </button>
+                    </p>
+                    {missionId && (
+                      <form
+                        key={`${missionId}:${publicationDraft.restored}`}
+                        className="operator-form"
+                        onSubmit={publish}
+                        onChange={(e) => {
+                          const values = Object.fromEntries(
+                            [...new FormData(e.currentTarget)].filter(
+                              ([k, v]) =>
+                                typeof v === 'string' &&
+                                !['approved', 'meeting', 'opportunity'].includes(k),
+                            ),
+                          ) as Record<string, string>;
+                          publicationDraft.save(values);
+                        }}
+                      >
+                        {publicationDraft.draft && (
+                          <p role="note">Your unsent draft for this mission was restored.</p>
+                        )}
+                        <p>Filled in from the mission. Check every line before you approve it.</p>
+                        <label>
+                          Client title
+                          <input
+                            name="title"
+                            minLength={3}
+                            maxLength={160}
+                            required
+                            defaultValue={
+                              publicationDraft.draft?.title ??
+                              (chosen ? `${chosen.company}: progress update` : '')
+                            }
+                          />
+                        </label>
+                        <label>
+                          Approved company name
+                          <input
+                            name="company"
+                            minLength={2}
+                            maxLength={160}
+                            required
+                            defaultValue={publicationDraft.draft?.company ?? chosen?.company ?? ''}
+                          />
+                        </label>
+                        <label>
+                          Approved objective
+                          <textarea
+                            name="objective"
+                            minLength={3}
+                            maxLength={500}
+                            required
+                            defaultValue={
+                              publicationDraft.draft?.objective ?? chosen?.objective ?? ''
+                            }
+                          />
+                        </label>
+                        <label>
+                          Approved request
+                          <textarea
+                            name="brief"
+                            minLength={10}
+                            maxLength={2000}
+                            required
+                            defaultValue={publicationDraft.draft?.brief ?? chosen?.offer ?? ''}
+                          />
+                        </label>
+                        <label>
+                          Client next action
+                          <textarea
+                            name="nextAction"
+                            minLength={3}
+                            maxLength={300}
+                            required
+                            defaultValue={
+                              publicationDraft.draft?.nextAction ?? chosen?.nextAction ?? ''
+                            }
+                          />
+                        </label>
+                        <DueField
+                          label="Next action deadline"
+                          name="dueAt"
+                          initial={publicationDraft.draft?.dueAt || chosen?.dueAt || weekAhead()}
+                        />
+                        <fieldset>
+                          <legend>Approve itinerary meetings</legend>
+                          {meetings.length === 0 && <p>No available meetings for this mission.</p>}
+                          {meetings.map((m) => (
+                            <div key={m.id}>
+                              <label>
+                                <input type="checkbox" name="meeting" value={m.id} /> {m.title} ·{' '}
+                                {plainStatus(m.status)} ·{' '}
+                                {m.starts_at ? formatDateTime(m.starts_at) : 'Unscheduled'} ·{' '}
+                                {m.location ?? 'Location not set'}
+                              </label>
+                              <label>
+                                Client meeting label
+                                <input
+                                  name={`meeting-label-${m.id}`}
+                                  defaultValue={m.title}
+                                  minLength={3}
+                                  maxLength={160}
+                                />
+                              </label>
+                            </div>
+                          ))}
+                        </fieldset>
+                        <fieldset>
+                          <legend>Approve outcome scope</legend>
+                          {opportunities.map((o) => (
+                            <label key={o.id}>
+                              <input type="checkbox" name="opportunity" value={o.id} /> {o.title} ·{' '}
+                              {plainStatus(o.status)}
+                            </label>
+                          ))}
+                          <label>
+                            <input type="checkbox" name="includeFinancials" /> Approve aggregate
+                            contracts, invoices and confirmed cash in the selected scope, by
+                            currency
+                          </label>
+                        </fieldset>
+                        <label className="check-field">
+                          <input name="approved" type="checkbox" required /> I reviewed this copy
+                          and scope for external delivery. It excludes private contacts, notes,
+                          margins and negotiations.
+                        </label>
+                        <button disabled={busy || optionsMission !== missionId}>
+                          Approve publication
+                        </button>
+                      </form>
+                    )}
+                  </details>
+                )}
+                {shares && (
+                  <details>
+                    <summary>Share approved view</summary>
+                    <p>
+                      Sharing and evidence requests require a fresh authenticator check. Links are
+                      private bearer access: share them only with their intended recipients.
+                    </p>
+                    <fieldset>
+                      <legend>Approved publications</legend>
+                      {publications.map((p) => (
+                        <label key={p.id}>
+                          <input
+                            type="checkbox"
+                            checked={selected.includes(p.id)}
+                            onChange={(e) =>
+                              setSelected((v) =>
+                                e.target.checked ? [...v, p.id] : v.filter((id) => id !== p.id),
+                              )
+                            }
+                          />{' '}
+                          {p.copy.company}: {p.copy.title}
+                        </label>
+                      ))}
+                    </fieldset>
+                    <form className="operator-form" onSubmit={share}>
+                      <label>
+                        Audience
+                        <select value={audience} onChange={(e) => setAudience(e.target.value)}>
+                          <option value="CLIENT_PROGRESS">Client: one mission</option>
+                          <option value="INSTITUTION_REPORT">
+                            Institution: selected programme scope
+                          </option>
+                        </select>
+                      </label>
+                      <label>
+                        Approved sharing purpose
+                        <textarea
+                          key={programme}
+                          name="purpose"
+                          defaultValue={
+                            data.programmes.find((p) => p.id === programme)?.reporting_purpose
+                          }
+                          minLength={10}
+                          maxLength={500}
+                          required
+                        />
+                      </label>
+                      <DueField
+                        label="Link expiry (within 30 days)"
+                        name="expiresAt"
+                        initial={weekAhead()}
+                      />
+                      {audience === 'INSTITUTION_REPORT' && (
+                        <label>
+                          <input name="allowExport" type="checkbox" /> Allow CSV and PDF reports for
+                          this reporting purpose
+                        </label>
+                      )}
+                      {audience === 'INSTITUTION_REPORT' && (
+                        <label className="check-field">
+                          <input type="checkbox" name="includeDelegation" />
+                          Include the reviewed delegation context and agenda. Every disclosed
+                          meeting must already be explicitly approved in the selected participant
+                          publications.
+                        </label>
+                      )}
+                      <label className="check-field">
+                        <input name="approved" type="checkbox" required /> I approve this audience,
+                        purpose and exact publication scope.
+                      </label>
+                      <button
+                        disabled={
+                          busy ||
+                          selected.length === 0 ||
+                          (audience === 'INSTITUTION_REPORT' && !programme)
+                        }
+                      >
+                        Create private link
+                      </button>
+                    </form>
+                    {privateLink && (
+                      <p>
+                        Share this reviewed link:{' '}
+                        <a href={privateLink} target="_blank" rel="noopener noreferrer">
+                          Open approved view
+                        </a>
+                        {signInNeeded && (
+                          <span role="note">
+                            {' '}
+                            Public report links for live workspaces are switched off on the owner
+                            page, so for a live workspace the customer opens this link after signing
+                            in to their Corridra account and saving it under Saved missions. Sample
+                            workspace links open without signing in.
+                          </span>
+                        )}
+                        <label>
+                          Private link
+                          <input
+                            readOnly
+                            value={privateLink}
+                            onFocus={(e) => e.currentTarget.select()}
+                          />
+                        </label>
+                      </p>
+                    )}
+                  </details>
+                )}
+              </>
+            ),
+          },
+          {
+            id: 'access',
+            label: 'Access and requests',
+            panel: (
+              <>
+                <h3>Access and requests</h3>
+                <ul>
+                  {data.links.map((l) => (
+                    <li key={l.id}>
+                      {l.audience.toLowerCase().replaceAll('_', ' ')} · {l.reporting_purpose} ·
+                      Expires {formatDateTime(l.expires_at)} · {l.revoked ? 'Revoked' : 'Issued'}
+                      {manages && !l.revoked && (
+                        <button
+                          data-intent="destructive"
+                          disabled={busy}
+                          onClick={() =>
+                            void act(async () => {
+                              await action('revoke', {
+                                linkId: l.id,
+                                publicationId: null,
+                                reason: 'Operator withdrew delivery access',
+                              });
+                            })
+                          }
+                        >
+                          Revoke link
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+                {manages && (
+                  <ul>
+                    {publications.map((p) => (
+                      <li key={p.id}>
+                        {p.copy.company}: {p.copy.title}{' '}
+                        <button
+                          data-intent="destructive"
+                          disabled={busy}
+                          onClick={() =>
+                            void act(async () => {
+                              await action('revoke', {
+                                linkId: null,
+                                publicationId: p.id,
+                                reason: 'Operator withdrew reviewed publication',
+                              });
+                            })
+                          }
+                        >
+                          Withdraw publication
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {shares && (
+                  <details>
+                    <summary>Create evidence request</summary>
+                    <form className="operator-form" onSubmit={evidenceRequest}>
+                      <label>
+                        Publication
+                        <select name="publicationId" required>
+                          {publications.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.copy.company}: {p.copy.title}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        Request owner
                         <select name="ownerId" required>
                           {data.owners.map((o) => (
                             <option key={o.user_id} value={o.user_id}>
@@ -580,419 +996,85 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                         </select>
                       </label>
                       <label>
-                        <input name="acknowledged" type="checkbox" required /> I reviewed every row
-                        and the exact ready, duplicate and empty counts. The accepted requests are
-                        self-declarations.
+                        Request title
+                        <input name="title" minLength={3} maxLength={160} required />
                       </label>
-                      <button disabled={busy || !!preview.counts.errors}>Confirm intake</button>
+                      <label>
+                        Approved instructions
+                        <textarea name="instructions" minLength={10} maxLength={1000} required />
+                      </label>
+                      <DueField label="Response deadline" name="dueAt" initial={weekAhead()} />
+                      <button disabled={busy}>Create request</button>
                     </form>
-                  )}
-                  {result && (
-                    <ul aria-label="Confirmed intake results">
-                      {result.map((r) => (
-                        <li key={r.row}>
-                          Row {r.row}: {r.reference || 'Empty'} · {r.result.toLowerCase()}{' '}
-                          {r.missionId && (
-                            <button onClick={() => setMissionId(r.missionId!)}>
-                              Review imported mission
-                            </button>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </>
-              )}
-            </details>
-          )}
-        </>
-      )}
-      {shares && (
-        <details>
-          <summary>Review client publication</summary>
-          <label>
-            Mission
-            <select value={missionId} onChange={(e) => setMissionId(e.target.value)}>
-              <option value="">Choose mission</option>
-              {[
-                ...data.participants.map((p) => ({ id: p.mission_id, company: p.company })),
-                ...missions.filter((m) => !data.participants.some((p) => p.mission_id === m.id)),
-              ].map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.company} · {m.id.slice(0, 8)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <p className="operator-pager">
-            <button
-              disabled={missionOffset === 0 || busy}
-              onClick={() => setMissionOffset((v) => Math.max(0, v - 100))}
-            >
-              Previous missions
-            </button>{' '}
-            <button
-              disabled={missionOffset + 100 >= missionTotal || busy}
-              onClick={() => setMissionOffset((v) => v + 100)}
-            >
-              Next missions
-            </button>
-          </p>
-          {missionId && (
-            <form
-              key={`${missionId}:${publicationDraft.restored}`}
-              className="operator-form"
-              onSubmit={publish}
-              onChange={(e) => {
-                const values = Object.fromEntries(
-                  [...new FormData(e.currentTarget)].filter(
-                    ([k, v]) =>
-                      typeof v === 'string' && !['approved', 'meeting', 'opportunity'].includes(k),
-                  ),
-                ) as Record<string, string>;
-                publicationDraft.save(values);
-              }}
-            >
-              {publicationDraft.draft && (
-                <p role="note">Your unsent draft for this mission was restored.</p>
-              )}
-              <p>Filled in from the mission. Check every line before you approve it.</p>
-              <label>
-                Client title
-                <input
-                  name="title"
-                  minLength={3}
-                  maxLength={160}
-                  required
-                  defaultValue={
-                    publicationDraft.draft?.title ??
-                    (chosen ? `${chosen.company}: progress update` : '')
-                  }
-                />
-              </label>
-              <label>
-                Approved company name
-                <input
-                  name="company"
-                  minLength={2}
-                  maxLength={160}
-                  required
-                  defaultValue={publicationDraft.draft?.company ?? chosen?.company ?? ''}
-                />
-              </label>
-              <label>
-                Approved objective
-                <textarea
-                  name="objective"
-                  minLength={3}
-                  maxLength={500}
-                  required
-                  defaultValue={publicationDraft.draft?.objective ?? chosen?.objective ?? ''}
-                />
-              </label>
-              <label>
-                Approved request
-                <textarea
-                  name="brief"
-                  minLength={10}
-                  maxLength={2000}
-                  required
-                  defaultValue={publicationDraft.draft?.brief ?? chosen?.offer ?? ''}
-                />
-              </label>
-              <label>
-                Client next action
-                <textarea
-                  name="nextAction"
-                  minLength={3}
-                  maxLength={300}
-                  required
-                  defaultValue={publicationDraft.draft?.nextAction ?? chosen?.nextAction ?? ''}
-                />
-              </label>
-              <DueField
-                label="Next action deadline"
-                name="dueAt"
-                initial={publicationDraft.draft?.dueAt || chosen?.dueAt || weekAhead()}
-              />
-              <fieldset>
-                <legend>Approve itinerary meetings</legend>
-                {meetings.length === 0 && <p>No available meetings for this mission.</p>}
-                {meetings.map((m) => (
-                  <div key={m.id}>
-                    <label>
-                      <input type="checkbox" name="meeting" value={m.id} /> {m.title} ·{' '}
-                      {plainStatus(m.status)} ·{' '}
-                      {m.starts_at ? formatDateTime(m.starts_at) : 'Unscheduled'} ·{' '}
-                      {m.location ?? 'Location not set'}
-                    </label>
-                    <label>
-                      Client meeting label
-                      <input
-                        name={`meeting-label-${m.id}`}
-                        defaultValue={m.title}
-                        minLength={3}
-                        maxLength={160}
-                      />
-                    </label>
-                  </div>
-                ))}
-              </fieldset>
-              <fieldset>
-                <legend>Approve outcome scope</legend>
-                {opportunities.map((o) => (
-                  <label key={o.id}>
-                    <input type="checkbox" name="opportunity" value={o.id} /> {o.title} ·{' '}
-                    {plainStatus(o.status)}
-                  </label>
-                ))}
-                <label>
-                  <input type="checkbox" name="includeFinancials" /> Approve aggregate contracts,
-                  invoices and confirmed cash in the selected scope, by currency
-                </label>
-              </fieldset>
-              <label className="check-field">
-                <input name="approved" type="checkbox" required /> I reviewed this copy and scope
-                for external delivery. It excludes private contacts, notes, margins and
-                negotiations.
-              </label>
-              <button disabled={busy || optionsMission !== missionId}>Approve publication</button>
-            </form>
-          )}
-        </details>
-      )}
-      {shares && (
-        <details>
-          <summary>Share approved view</summary>
-          <p>
-            Sharing and evidence requests require a fresh authenticator check. Links are private
-            bearer access: share them only with their intended recipients.
-          </p>
-          <fieldset>
-            <legend>Approved publications</legend>
-            {publications.map((p) => (
-              <label key={p.id}>
-                <input
-                  type="checkbox"
-                  checked={selected.includes(p.id)}
-                  onChange={(e) =>
-                    setSelected((v) =>
-                      e.target.checked ? [...v, p.id] : v.filter((id) => id !== p.id),
-                    )
-                  }
-                />{' '}
-                {p.copy.company}: {p.copy.title}
-              </label>
-            ))}
-          </fieldset>
-          <form className="operator-form" onSubmit={share}>
-            <label>
-              Audience
-              <select value={audience} onChange={(e) => setAudience(e.target.value)}>
-                <option value="CLIENT_PROGRESS">Client: one mission</option>
-                <option value="INSTITUTION_REPORT">Institution: selected programme scope</option>
-              </select>
-            </label>
-            <label>
-              Approved sharing purpose
-              <textarea
-                key={programme}
-                name="purpose"
-                defaultValue={data.programmes.find((p) => p.id === programme)?.reporting_purpose}
-                minLength={10}
-                maxLength={500}
-                required
-              />
-            </label>
-            <DueField label="Link expiry (within 30 days)" name="expiresAt" initial={weekAhead()} />
-            {audience === 'INSTITUTION_REPORT' && (
-              <label>
-                <input name="allowExport" type="checkbox" /> Allow CSV and PDF reports for this
-                reporting purpose
-              </label>
-            )}
-            {audience === 'INSTITUTION_REPORT' && (
-              <label className="check-field">
-                <input type="checkbox" name="includeDelegation" />
-                Include the reviewed delegation context and agenda. Every disclosed meeting must
-                already be explicitly approved in the selected participant publications.
-              </label>
-            )}
-            <label className="check-field">
-              <input name="approved" type="checkbox" required /> I approve this audience, purpose
-              and exact publication scope.
-            </label>
-            <button
-              disabled={
-                busy || selected.length === 0 || (audience === 'INSTITUTION_REPORT' && !programme)
-              }
-            >
-              Create private link
-            </button>
-          </form>
-          {privateLink && (
-            <p>
-              Share this reviewed link:{' '}
-              <a href={privateLink} target="_blank" rel="noopener noreferrer">
-                Open approved view
-              </a>
-              {signInNeeded && (
-                <span role="note">
-                  {' '}
-                  Public report links for live workspaces are switched off on the owner page, so for
-                  a live workspace the customer opens this link after signing in to their Corridra
-                  account and saving it under Saved missions. Sample workspace links open without
-                  signing in.
-                </span>
-              )}
-              <label>
-                Private link
-                <input readOnly value={privateLink} onFocus={(e) => e.currentTarget.select()} />
-              </label>
-            </p>
-          )}
-        </details>
-      )}
-      <h3>Access and requests</h3>
-      <ul>
-        {data.links.map((l) => (
-          <li key={l.id}>
-            {l.audience.toLowerCase().replaceAll('_', ' ')} · {l.reporting_purpose} · Expires{' '}
-            {formatDateTime(l.expires_at)} · {l.revoked ? 'Revoked' : 'Issued'}
-            {manages && !l.revoked && (
-              <button
-                data-intent="destructive"
-                disabled={busy}
-                onClick={() =>
-                  void act(async () => {
-                    await action('revoke', {
-                      linkId: l.id,
-                      publicationId: null,
-                      reason: 'Operator withdrew delivery access',
-                    });
-                  })
-                }
-              >
-                Revoke link
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
-      {manages && (
-        <ul>
-          {publications.map((p) => (
-            <li key={p.id}>
-              {p.copy.company}: {p.copy.title}{' '}
-              <button
-                data-intent="destructive"
-                disabled={busy}
-                onClick={() =>
-                  void act(async () => {
-                    await action('revoke', {
-                      linkId: null,
-                      publicationId: p.id,
-                      reason: 'Operator withdrew reviewed publication',
-                    });
-                  })
-                }
-              >
-                Withdraw publication
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-      {shares && (
-        <details>
-          <summary>Create evidence request</summary>
-          <form className="operator-form" onSubmit={evidenceRequest}>
-            <label>
-              Publication
-              <select name="publicationId" required>
-                {publications.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.copy.company}: {p.copy.title}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Request owner
-              <select name="ownerId" required>
-                {data.owners.map((o) => (
-                  <option key={o.user_id} value={o.user_id}>
-                    {o.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Request title
-              <input name="title" minLength={3} maxLength={160} required />
-            </label>
-            <label>
-              Approved instructions
-              <textarea name="instructions" minLength={10} maxLength={1000} required />
-            </label>
-            <DueField label="Response deadline" name="dueAt" initial={weekAhead()} />
-            <button disabled={busy}>Create request</button>
-          </form>
-        </details>
-      )}
-      <ul>
-        {data.requests.map((r) => (
-          <li key={r.id}>
-            <strong>{r.title}</strong> · {r.status.toLowerCase()}
-            <p>{r.instructions}</p>
-            {r.response && <p>Self-declared response: {r.response}</p>}
-            {manages && !['COMPLETED', 'CANCELLED'].includes(r.status) && (
-              <>
-                <button
-                  disabled={busy || r.status !== 'RESPONDED'}
-                  onClick={() =>
-                    void act(async () => {
-                      await action('closeRequest', {
-                        requestId: r.id,
-                        status: 'COMPLETED',
-                        reason: 'Declaration received; evidence verification remains separate',
-                      });
-                    })
-                  }
-                >
-                  Mark fulfilled
-                </button>{' '}
-                <button
-                  disabled={busy}
-                  onClick={() =>
-                    void act(async () => {
-                      await action('closeRequest', {
-                        requestId: r.id,
-                        status: 'CANCELLED',
-                        reason: 'Operator cancelled evidence request',
-                      });
-                    })
-                  }
-                >
-                  Cancel request
-                </button>
+                  </details>
+                )}
+                <ul>
+                  {data.requests.map((r) => (
+                    <li key={r.id}>
+                      <strong>{r.title}</strong> · {r.status.toLowerCase()}
+                      <p>{r.instructions}</p>
+                      {r.response && <p>Self-declared response: {r.response}</p>}
+                      {manages && !['COMPLETED', 'CANCELLED'].includes(r.status) && (
+                        <>
+                          <button
+                            disabled={busy || r.status !== 'RESPONDED'}
+                            onClick={() =>
+                              void act(async () => {
+                                await action('closeRequest', {
+                                  requestId: r.id,
+                                  status: 'COMPLETED',
+                                  reason:
+                                    'Declaration received; evidence verification remains separate',
+                                });
+                              })
+                            }
+                          >
+                            Mark fulfilled
+                          </button>{' '}
+                          <button
+                            disabled={busy}
+                            onClick={() =>
+                              void act(async () => {
+                                await action('closeRequest', {
+                                  requestId: r.id,
+                                  status: 'CANCELLED',
+                                  reason: 'Operator cancelled evidence request',
+                                });
+                              })
+                            }
+                          >
+                            Cancel request
+                          </button>
+                        </>
+                      )}
+                    </li>
+                  ))}
+                </ul>
               </>
-            )}
-          </li>
-        ))}
-      </ul>
-      <PhoneFold summary="Mission and delegation experience: context, agenda and recipient scope">
-        <DeliveryExperience
-          role={data?.role ?? ''}
-          key={`${tenant}:${programme}:${missionId}`}
-          tenant={tenant}
-          programme={programme}
-          mission={missionId}
-          participants={data?.participants ?? []}
-          publications={data?.publications ?? []}
-          owners={data?.owners ?? []}
-        />
-      </PhoneFold>
+            ),
+          },
+          {
+            id: 'experience',
+            label: 'Mission and delegation experience',
+            panel: (
+              <>
+                <PhoneFold summary="Mission and delegation experience: context, agenda and recipient scope">
+                  <DeliveryExperience
+                    role={data?.role ?? ''}
+                    key={`${tenant}:${programme}:${missionId}`}
+                    tenant={tenant}
+                    programme={programme}
+                    mission={missionId}
+                    participants={data?.participants ?? []}
+                    publications={data?.publications ?? []}
+                    owners={data?.owners ?? []}
+                  />
+                </PhoneFold>
+              </>
+            ),
+          },
+        ]}
+      />
     </section>
   );
 }

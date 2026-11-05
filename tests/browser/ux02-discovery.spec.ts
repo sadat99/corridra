@@ -20,7 +20,7 @@ test('UX-02 Atlas selects an actual direction and synthetic example without crea
   await page.getByRole('combobox', { name: 'Route', exact: true }).selectOption('bangladesh-eu');
   const atlas = page.getByLabel('Route map', { exact: true });
   await expect(atlas).toContainText('The EU is a group of countries');
-  await page.getByRole('button', { name: 'Open the sample mission' }).click();
+  await page.getByRole('button', { name: 'Open the Sample Mission' }).click();
   const example = page.getByRole('region', { name: 'Sample mission' });
   await expect(example).toContainText('Run a multi-company mission');
   await expect(example).toContainText('Give each participant their own goal');
@@ -33,7 +33,7 @@ test('UX-02 Atlas selects an actual direction and synthetic example without crea
   await expect(example).toContainText('No operating offer is announced');
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   expect(writes).toEqual([]);
-  await example.getByRole('link', { name: 'Start a request on this route' }).click();
+  await example.getByRole('link', { name: 'Start a Request on This Route' }).click();
   await expect(page).toHaveURL('/plan?companyCountry=ES&marketCode=BD&job=delegations');
   await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue(
     'delegations',
@@ -118,6 +118,7 @@ test('UX-02 route pages show their sections in full and account recovery keeps i
   await page.goto('/machinery');
   await expect(page.locator('.ux-public-disclosure')).toHaveCount(0);
   await expect(page.locator('.guide-page-steps li p').first()).toBeVisible();
+  await page.locator('details.guide-more > summary').click(); // the closing sections sit behind Show more
   await page.locator('#page-next').scrollIntoViewIfNeeded();
   await expect(page.locator('#page-next')).toBeInViewport();
   for (const route of [
@@ -185,21 +186,21 @@ test('UX-02 situation cards preset the role, job and route and prefill the examp
   await page.goto('/corridors');
   await openFineTune(page);
   const group = page.getByRole('group', { name: 'Choose your situation' });
-  await expect(group.getByRole('button', { name: /Source from suppliers/ })).toHaveAttribute(
+  await expect(group.getByRole('button', { name: /Source From Suppliers/ })).toHaveAttribute(
     'aria-pressed',
     'true',
   );
-  await group.getByRole('button', { name: /Run a trade mission/ }).click();
-  await expect(group.getByRole('button', { name: /Run a trade mission/ })).toHaveAttribute(
+  await group.getByRole('button', { name: /Run a Trade Mission/ }).click();
+  await expect(group.getByRole('button', { name: /Run a Trade Mission/ })).toHaveAttribute(
     'aria-pressed',
     'true',
   );
-  await expect(page.getByRole('link', { name: 'Plan a mission on this route' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'Plan a Mission on This Route' })).toHaveAttribute(
     'href',
     '/plan?companyCountry=BD&marketCode=CN&job=delegations',
   );
   await group.getByRole('button', { name: /Enter Bangladesh/ }).click();
-  await expect(page.getByRole('link', { name: 'Plan a mission on this route' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'Plan a Mission on This Route' })).toHaveAttribute(
     'href',
     '/plan?companyCountry=ES&marketCode=BD&job=market_entry',
   );
@@ -248,7 +249,7 @@ test('saved request receipt uses the shared cards, copies safely, checks replies
     expect(input.height).toBeGreaterThanOrEqual(48);
     const savedBox = (await saved.boundingBox())!;
     const restart = (await page
-      .getByRole('button', { name: 'Start another request (save your receipt first)', exact: true })
+      .getByRole('button', { name: 'Start Another Request (Save Your Receipt First)', exact: true })
       .boundingBox())!;
     const lookup = (await page.locator('#receipt-check').boundingBox())!;
     expect(restart.y).toBeGreaterThanOrEqual(savedBox.y + savedBox.height);
@@ -262,7 +263,7 @@ test('saved request receipt uses the shared cards, copies safely, checks replies
       fullPage: true,
     });
   }
-  await saved.getByRole('button', { name: 'Copy receipt code', exact: true }).click();
+  await saved.getByRole('button', { name: 'Copy Receipt Code', exact: true }).click();
   await expect(page.getByRole('status')).toHaveText('Private receipt code copied.');
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(code);
   await page.evaluate(() =>
@@ -275,7 +276,7 @@ test('saved request receipt uses the shared cards, copies safely, checks replies
       },
     }),
   );
-  await saved.getByRole('button', { name: 'Copy receipt code', exact: true }).click();
+  await saved.getByRole('button', { name: 'Copy Receipt Code', exact: true }).click();
   await expect(page.getByRole('status')).toHaveText(
     'Could not copy the code. Select it and copy it before leaving this page.',
   );
@@ -285,10 +286,10 @@ test('saved request receipt uses the shared cards, copies safely, checks replies
       .getByLabel('Private receipt code', { exact: true })
       .evaluate((input: HTMLInputElement) => [input.selectionStart, input.selectionEnd]),
   ).toEqual([0, 64]);
-  await page.getByRole('button', { name: 'Check status and replies', exact: true }).click();
+  await page.getByRole('button', { name: 'Check Status and Replies', exact: true }).click();
   await expect(page.getByText('We are reviewing your request.', { exact: true })).toBeVisible();
   await page
-    .getByRole('button', { name: 'Start another request (save your receipt first)', exact: true })
+    .getByRole('button', { name: 'Start Another Request (Save Your Receipt First)', exact: true })
     .click();
   await expect(saved).toHaveCount(0);
   await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toBeVisible();

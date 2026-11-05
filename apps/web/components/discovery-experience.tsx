@@ -42,7 +42,7 @@ const directions = [
 const situations = [
   {
     key: 'source',
-    title: 'Source from suppliers',
+    title: 'Source From Suppliers',
     text: 'Find suppliers and compare their offers before you travel.',
     role: 'buyer',
     job: 'sourcing',
@@ -50,7 +50,7 @@ const situations = [
   },
   {
     key: 'delegation',
-    title: 'Run a trade mission',
+    title: 'Run a Trade Mission',
     text: 'Plan a group visit with clear agendas and results.',
     role: 'institution',
     job: 'delegations',
@@ -58,7 +58,7 @@ const situations = [
   },
   {
     key: 'sell',
-    title: 'Sell in a new market',
+    title: 'Sell in a New Market',
     text: 'Reach the buyers and distributors that fit what you offer.',
     role: 'exporter',
     job: 'buyers',
@@ -223,11 +223,11 @@ export function DiscoveryExperience() {
             <p className="ux-atlas-note">{route.note}</p>
             <div className="guide-route-actions">
               <Link className="primary-link" href={briefUrl}>
-                Plan a mission on this route
+                Plan a Mission on This Route
               </Link>
               {route.slug && (
                 <Link className="button-secondary" href={`/corridors/${route.slug}`}>
-                  Read about this route
+                  Read About This Route
                 </Link>
               )}
             </div>
@@ -237,7 +237,7 @@ export function DiscoveryExperience() {
           </div>
         </div>
         <details id="commercial-objective" className="ux-fine-tune guide-fine">
-          <summary>Fine-tune: your goal, role and route</summary>
+          <summary>Fine-Tune: Your Goal, Role and Route</summary>
           <div className="ux-situations" role="group" aria-label="Choose your situation">
             {situations.map((item) => (
               <button
@@ -345,7 +345,7 @@ export function DiscoveryExperience() {
               requestAnimationFrame(() => exampleHeading.current?.focus());
             }}
           >
-            Open the sample mission
+            Open the Sample Mission
           </button>
         ) : (
           <>
@@ -408,7 +408,7 @@ export function DiscoveryExperience() {
                 requestAnimationFrame(() => exampleTrigger.current?.focus());
               }}
             >
-              Close the example
+              Close the Example
             </button>
           </>
         )}

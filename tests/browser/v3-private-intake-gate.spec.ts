@@ -15,7 +15,7 @@ test('private submission page stays closed without reading optional customer aut
     page.getByRole('link', { name: 'Return to your account', exact: true }),
   ).toHaveAttribute('href', '/account');
   await expect(
-    page.getByRole('button', { name: 'Submit mission request', exact: true }),
+    page.getByRole('button', { name: 'Submit Mission Request', exact: true }),
   ).toHaveCount(0);
   await expect(page.locator('form')).toHaveCount(0);
 });

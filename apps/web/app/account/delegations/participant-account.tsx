@@ -126,7 +126,7 @@ function ScopedAccount(
           if (withdrawTarget) withdraw(withdrawTarget);
         }}
       >
-        Confirm withdrawal
+        Confirm Withdrawal
       </button>
       <button
         type="button"
@@ -138,7 +138,7 @@ function ScopedAccount(
           setWithdrawError('');
         }}
       >
-        Cancel withdrawal
+        Cancel Withdrawal
       </button>
     </div>
   );
@@ -241,7 +241,7 @@ function ScopedAccount(
                         disabled={view.busy || !!view.pending}
                         onClick={() => withdraw(r.id)}
                       >
-                        Withdraw from programme
+                        Withdraw From Programme
                       </button>
                       {!view.pending && withdrawTarget === r.id && withdrawalFields}
                     </>
@@ -267,7 +267,7 @@ function ScopedAccount(
               disabled={view.busy}
               onClick={() => void view.load('registrations', view.data!.nextRegistrationAfter!)}
             >
-              Load more of my registrations
+              Load More of My Registrations
             </button>
           )}
           {!view.pending && (
@@ -312,7 +312,7 @@ function ScopedAccount(
                   />
                 </label>
                 <button className="primary-link" disabled={view.busy}>
-                  {realCustomerInput() ? 'Preview invitation' : 'Preview sample invitation'}{' '}
+                  {realCustomerInput() ? 'Preview Invitation' : 'Preview Sample Invitation'}{' '}
                 </button>
               </form>
               {preview && (
@@ -375,8 +375,8 @@ function ScopedAccount(
                   </label>
                   <button className="primary-link" disabled={view.busy}>
                     {realCustomerInput()
-                      ? 'Register for programme'
-                      : 'Register for sample programme'}{' '}
+                      ? 'Register for Programme'
+                      : 'Register for Sample Programme'}{' '}
                   </button>
                 </form>
               )}
@@ -391,7 +391,7 @@ function ScopedAccount(
           disabled={view.busy}
           onClick={() => void view.send(view.pending!)}
         >
-          Retry same programme request
+          Retry Same Programme Request
         </button>
       )}
       {error && <p role="alert">{error}</p>}
@@ -403,7 +403,7 @@ function ScopedAccount(
           disabled={view.busy}
           onClick={() => void view.load()}
         >
-          {realCustomerInput() ? 'Reload my registrations' : 'Reload my sample registrations'}{' '}
+          {realCustomerInput() ? 'Reload My Registrations' : 'Reload My Sample Registrations'}{' '}
         </button>
       )}
     </section>

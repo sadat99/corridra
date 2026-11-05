@@ -417,7 +417,7 @@ test('cancel, keep and withdraw each ask first and send the exact change', async
   await page.getByRole('button', { name: 'Withdraw my request' }).click();
   await page
     .getByRole('form', { name: 'Withdraw' })
-    .getByRole('button', { name: 'Confirm withdrawal' })
+    .getByRole('button', { name: 'Confirm Withdrawal' })
     .click();
   await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
   expect(posts[2]).toMatchObject({ action: 'withdraw', subscriptionId, workspaceId });

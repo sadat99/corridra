@@ -233,7 +233,7 @@ function ScopedIntroduction({
       </p>
       {!data && message !== 'Loading your introduction…' && (
         <button className="text-link" onClick={() => window.location.reload()}>
-          Retry private introduction
+          Retry Private Introduction
         </button>
       )}
       {data && (
@@ -333,7 +333,7 @@ function ScopedIntroduction({
               disabled={busy}
               onClick={() => void respond(pending.decision)}
             >
-              Retry the same response
+              Retry the Same Response
             </button>
           )}
           {!declined && (
@@ -342,7 +342,7 @@ function ScopedIntroduction({
               disabled={busy || !!pending}
               onClick={() => void stopContact()}
             >
-              Stop further introductions
+              Stop Further Introductions
             </button>
           )}
           <p>You will not be added to a mailing list by responding.</p>

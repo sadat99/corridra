@@ -13,11 +13,11 @@ test('Help is one tap away on every public page and Escape returns focus to it',
   await help.click();
   await expect(help).toHaveAttribute('aria-expanded', 'true');
   const sheet = page.getByRole('dialog', { name: 'Need a hand?' });
-  await expect(sheet.getByRole('link', { name: 'See how it works' })).toHaveAttribute(
+  await expect(sheet.getByRole('link', { name: 'See How It Works' })).toHaveAttribute(
     'href',
     '/how-it-works',
   );
-  await expect(sheet.getByRole('link', { name: 'Start a request' })).toHaveAttribute(
+  await expect(sheet.getByRole('link', { name: 'Start a Request' })).toHaveAttribute(
     'href',
     '/plan',
   );
@@ -26,7 +26,7 @@ test('Help is one tap away on every public page and Escape returns focus to it',
   await expect(sheet).toHaveCount(0);
   await expect(help).toBeFocused();
   await help.click();
-  await sheet.getByRole('link', { name: 'See how it works' }).click();
+  await sheet.getByRole('link', { name: 'See How It Works' }).click();
   await expect(page).toHaveURL('/how-it-works');
 });
 
@@ -35,7 +35,7 @@ test('Listen is a small named icon button in the corner, not part of the header'
 }) => {
   await page.goto('/');
   await expect(page.locator('header').getByText('Listen')).toHaveCount(0);
-  const listen = page.getByRole('button', { name: 'Listen to this page', exact: true });
+  const listen = page.getByRole('button', { name: 'Listen to This Page', exact: true });
   // Where the browser has no voice for the page language the button is not shown at all.
   if ((await listen.count()) > 0) {
     await expect(listen).toHaveAttribute('aria-pressed', 'false');

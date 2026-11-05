@@ -209,10 +209,10 @@ test('the public header shows no Sample or Real badge and the start button keeps
   // CQ-47 (31 Oct 2026): the badge is gone from the public header; the team shell says Live or Preview.
   await open(page, 'fq=1&mode=sample');
   await expect(page.locator('.mr-mode')).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'Start a request', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Start a Request', exact: true })).toBeVisible();
   await open(page, 'fq=1&mode=real');
   await expect(page.locator('.mr-mode')).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'Start a request', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Start a Request', exact: true })).toBeVisible();
   await open(page);
   await expect(page.locator('.mr-mode')).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Start a request (sample request)' })).toBeVisible();
@@ -336,8 +336,8 @@ test('notes validation keeps its context hint and exposes the error on the texta
     .getByLabel('Your offer or requirement', { exact: true })
     .fill('Synthetic cotton fabric requirement');
   await next.click();
-  // The optional notes sit behind "More details (optional)" on the results step (the step fits its budget).
-  await page.getByRole('button', { name: 'More details (optional)', exact: true }).click();
+  // The optional notes sit behind "More Details (Optional)" on the results step (the step fits its budget).
+  await page.getByRole('button', { name: 'More Details (Optional)', exact: true }).click();
   const notes = page.locator('.intake-form textarea');
   await expect(notes).toHaveAttribute('aria-describedby', 'request-context-hint');
   await notes.evaluate((el) => ((el as HTMLTextAreaElement).maxLength = 2000));

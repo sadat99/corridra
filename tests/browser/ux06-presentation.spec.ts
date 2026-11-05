@@ -48,6 +48,7 @@ test('UX-06 the home is one question, and the route explorer and mission guide k
   await expect(page.getByRole('combobox', { name: 'Route', exact: true })).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.goto('/trust');
+  await page.locator('details.guide-more > summary').click(); // the closing sections sit behind Show more
   await expect(
     page.getByRole('heading', { name: 'A meeting is not a sale. A contract is not cash.' }),
   ).toBeVisible();
@@ -73,8 +74,8 @@ test('UX-06 legacy example fragment opens the real synthetic flow and close rest
   await example.getByRole('button', { name: '2. Inspect the evidence' }).focus();
   await page.keyboard.press('Enter');
   await expect(example.getByText('Evidence not established', { exact: true })).toBeVisible();
-  await example.getByRole('button', { name: 'Close the example' }).click();
-  await expect(page.getByRole('button', { name: 'Open the sample mission' })).toBeFocused();
+  await example.getByRole('button', { name: 'Close the Example' }).click();
+  await expect(page.getByRole('button', { name: 'Open the Sample Mission' })).toBeFocused();
   await expect(example.getByRole('button', { name: '2. Inspect the evidence' })).toHaveCount(0);
   await page.keyboard.press('Enter');
   await expect(example.getByRole('button', { name: '1. Define the objective' })).toHaveAttribute(
@@ -84,7 +85,7 @@ test('UX-06 legacy example fragment opens the real synthetic flow and close rest
   await openFineTune(page);
   await page.getByRole('combobox', { name: 'Route', exact: true }).selectOption('china-bangladesh');
   await expect(page.getByLabel('Route map', { exact: true })).toContainText('China → Bangladesh');
-  await expect(page.getByRole('link', { name: 'Plan a mission on this route' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'Plan a Mission on This Route' })).toHaveAttribute(
     'href',
     '/plan?companyCountry=CN&marketCode=BD&job=sourcing',
   );

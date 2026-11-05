@@ -159,7 +159,7 @@ const okRecord = (body: Record<string, unknown>, record: Record<string, unknown>
 });
 async function open(page: Page) {
   await page.goto(origin);
-  await page.getByRole('button', { name: 'Share feedback and results' }).click();
+  await page.getByRole('button', { name: 'Share Feedback and Results' }).click();
   await expect(page.getByRole('heading', { name: 'My feedback and results' })).toBeVisible();
 }
 const status = (page: Page, text: string) => page.getByRole('status').filter({ hasText: text });
@@ -195,21 +195,21 @@ test('feedback is validated, then sent exactly with the share choice', async ({ 
     },
   });
   await open(page);
-  await page.getByRole('button', { name: 'Save feedback' }).click();
+  await page.getByRole('button', { name: 'Save Feedback' }).click();
   await expect(page.getByRole('alert')).toContainText('Choose a rating');
   await page.getByLabel('5 · Excellent').check();
   await page.getByLabel('Comment (optional, start with Synthetic)').fill('A good programme');
-  await page.getByRole('button', { name: 'Save feedback' }).click();
+  await page.getByRole('button', { name: 'Save Feedback' }).click();
   await expect(page.getByRole('alert')).toContainText('Start the comment with the word Synthetic');
   await page
     .getByLabel('Comment (optional, start with Synthetic)')
     .fill('Synthetic a very good programme');
-  await page.getByRole('button', { name: 'Save feedback' }).click();
+  await page.getByRole('button', { name: 'Save Feedback' }).click();
   await expect(page.getByRole('alert')).toContainText('Confirm that this is fictional');
   expect(commands).toHaveLength(0);
   await page.getByLabel(/Share this feedback with the organiser/).check();
   await page.getByLabel('This is fictional sample feedback.').check();
-  await page.getByRole('button', { name: 'Save feedback' }).click();
+  await page.getByRole('button', { name: 'Save Feedback' }).click();
   await expect(status(page, 'Feedback saved and shared with the organiser.')).toBeVisible();
   expect(commands[0]).toMatchObject({
     action: 'record',
@@ -255,15 +255,15 @@ test('existing private feedback is updated with its version and can be withdrawn
   });
   await open(page);
   await expect(page.getByLabel('4 · Good')).toBeChecked();
-  await expect(page.getByRole('button', { name: 'Update feedback' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Update Feedback' })).toBeVisible();
   await page.getByLabel(/Share this feedback with the organiser/).check();
   await page.getByLabel('This is fictional sample feedback.').check();
-  await page.getByRole('button', { name: 'Update feedback' }).click();
+  await page.getByRole('button', { name: 'Update Feedback' }).click();
   await expect(status(page, 'Feedback saved and shared')).toBeVisible();
   expect(commands[0]).toMatchObject({
     input: { recordId: recordId(1), expectedVersion: 2, shared: true },
   });
-  await page.getByRole('button', { name: 'Withdraw my feedback' }).click();
+  await page.getByRole('button', { name: 'Withdraw My Feedback' }).click();
   await expect(status(page, 'Withdrawn. The organiser can no longer see it.')).toBeVisible();
   expect(commands[1]).toMatchObject({
     input: { recordId: recordId(1), expectedVersion: 2, rating: 4, shared: false, retracted: true },
@@ -273,7 +273,7 @@ test('withdrawn feedback is shown as withdrawn and cannot be edited', async ({ p
   await mock(page, { get: () => view({ feedback: fb({ retracted: true, version: 3 }) }) });
   await open(page);
   await expect(page.getByText('You withdrew your feedback')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Update feedback' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Update Feedback' })).toHaveCount(0);
   await expect(page.getByLabel('4 · Good')).toBeDisabled();
 });
 test('a result is validated, can be dated no later than today, and is sent with the share choice', async ({
@@ -291,14 +291,14 @@ test('a result is validated, can be dated no later than today, and is sent with 
   expect(max).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   await page.getByLabel('What happened?').selectOption('SAMPLE_OR_QUOTE_REQUESTED');
   await page.getByLabel('Date', { exact: true }).fill('2026-10-03');
-  await page.getByRole('button', { name: 'Add result' }).click();
+  await page.getByRole('button', { name: 'Add Result' }).click();
   await expect(page.getByRole('alert')).toContainText('Start the note with the word Synthetic');
   await page.getByLabel('Note (start with Synthetic)').fill('Synthetic a buyer asked for a sample');
-  await page.getByRole('button', { name: 'Add result' }).click();
+  await page.getByRole('button', { name: 'Add Result' }).click();
   await expect(page.getByRole('alert')).toContainText('Confirm that this is a fictional');
   expect(commands).toHaveLength(0);
   await page.getByLabel('This is a fictional sample result.').check();
-  await page.getByRole('button', { name: 'Add result' }).click();
+  await page.getByRole('button', { name: 'Add Result' }).click();
   await expect(status(page, 'Result saved. The organiser cannot see it.')).toBeVisible();
   expect(commands[0]).toMatchObject({
     input: {
@@ -327,7 +327,7 @@ test('a result can stop being shared or be withdrawn, keeping its content in the
   });
   await open(page);
   await expect(page.getByText('Shared with the organiser')).toBeVisible();
-  await page.getByRole('button', { name: 'Stop sharing' }).click();
+  await page.getByRole('button', { name: 'Stop Sharing' }).click();
   await expect(status(page, 'No longer shared with the organiser.')).toBeVisible();
   expect(commands[0]).toMatchObject({
     input: {
@@ -340,7 +340,7 @@ test('a result can stop being shared or be withdrawn, keeping its content in the
       retracted: false,
     },
   });
-  await page.getByRole('button', { name: 'Withdraw this result' }).click();
+  await page.getByRole('button', { name: 'Withdraw This Result' }).click();
   await expect(status(page, 'Withdrawn. The organiser can no longer see it.')).toBeVisible();
   expect(commands[1]).toMatchObject({
     input: { recordId: recordId(11), shared: false, retracted: true },
@@ -350,8 +350,8 @@ test('a withdrawn result offers no further actions', async ({ page }) => {
   await mock(page, { get: () => view({ outcomes: [oc(1, { shared: false, retracted: true })] }) });
   await open(page);
   await expect(page.getByText('Withdrawn · not shared')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Stop sharing' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Share with the organiser' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Stop Sharing' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Share With the Organiser' })).toHaveCount(0);
 });
 test('a failed save keeps what was typed and retries with the identical command', async ({
   page,
@@ -368,12 +368,12 @@ test('a failed save keeps what was typed and retries with the identical command'
     .getByLabel('Note (start with Synthetic)')
     .fill('Synthetic a follow up call was agreed');
   await page.getByLabel('This is a fictional sample result.').check();
-  await page.getByRole('button', { name: 'Add result' }).click();
+  await page.getByRole('button', { name: 'Add Result' }).click();
   await expect(page.getByRole('alert')).toContainText('try again');
   await expect(page.getByLabel('Note (start with Synthetic)')).toHaveValue(
     'Synthetic a follow up call was agreed',
   );
-  await page.getByRole('button', { name: 'Add result' }).click();
+  await page.getByRole('button', { name: 'Add Result' }).click();
   await expect(status(page, 'Result saved')).toBeVisible();
   expect(commands[1]).toEqual(commands[0]);
 });
@@ -384,7 +384,7 @@ test('a stale record keeps the draft and explains it', async ({ page }) => {
   });
   await open(page);
   await page.getByLabel('This is fictional sample feedback.').check();
-  await page.getByRole('button', { name: 'Update feedback' }).click();
+  await page.getByRole('button', { name: 'Update Feedback' }).click();
   await expect(page.getByRole('alert')).toContainText('changed since you opened it');
 });
 test('a changed account on save clears every private detail', async ({ page }) => {
@@ -397,7 +397,7 @@ test('a changed account on save clears every private detail', async ({ page }) =
   });
   await open(page);
   await page.getByLabel('This is fictional sample feedback.').check();
-  await page.getByRole('button', { name: 'Update feedback' }).click();
+  await page.getByRole('button', { name: 'Update Feedback' }).click();
   await expect(page.getByRole('alert')).toContainText('access changed');
   await expect(page.getByRole('textbox')).toHaveCount(0);
   await expect(page.getByLabel('4 · Good')).toHaveCount(0);
@@ -410,7 +410,7 @@ for (const code of [401, 403])
     });
     await open(page);
     await page.getByLabel('This is fictional sample feedback.').check();
-    await page.getByRole('button', { name: 'Update feedback' }).click();
+    await page.getByRole('button', { name: 'Update Feedback' }).click();
     await expect(page.getByRole('textbox')).toHaveCount(0);
   });
 test('read 403 shows a denial and read 503 says unavailable', async ({ page }) => {
@@ -424,7 +424,7 @@ test('read 403 shows a denial and read 503 says unavailable', async ({ page }) =
     route.fulfill({ status: 503, json: { error: 'x' } }),
   );
   await page.reload();
-  await page.getByRole('button', { name: 'Share feedback and results' }).click();
+  await page.getByRole('button', { name: 'Share Feedback and Results' }).click();
   await expect(status(page, 'unavailable')).toBeVisible();
 });
 test('a response for another registration or with an invalid record is rejected', async ({
@@ -464,7 +464,7 @@ test('changing the signed-in account discards the previous account data', async 
       ),
     issuer,
   );
-  await expect(page.getByRole('button', { name: 'Share feedback and results' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Share Feedback and Results' })).toBeVisible();
   await expect(page.getByLabel('4 · Good')).toHaveCount(0);
 });
 for (const width of [320, 390, 768, 1440])

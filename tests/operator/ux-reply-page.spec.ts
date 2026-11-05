@@ -140,7 +140,7 @@ test('asks one question first: the answer, with the shared requirement and the t
   await expect(page.getByText('Curtain track, 4 metres, white, about 1,200 pieces.')).toBeVisible();
   for (const name of ['Interested', 'Need more information', 'Not relevant'])
     await expect(page.getByRole('button', { name, exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Stop further introductions' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Stop Further Introductions' })).toBeVisible();
   await expect(page.getByText('(madeup) Sample introduction. No real outreach.')).toBeVisible();
   // Nothing past the first question is on the page yet.
   await expect(page.getByLabel('Your message to the team')).toHaveCount(0);
@@ -332,7 +332,7 @@ test('keeps the exact message after a failed send and repeats it under the same 
   await page.getByLabel(/This is my own declaration/).check();
   await page.getByRole('button', { name: 'Send' }).click();
   await expect(page.getByRole('alert').filter({ hasText: 'could not be completed' })).toBeVisible();
-  await page.getByRole('button', { name: 'Retry the same response' }).click();
+  await page.getByRole('button', { name: 'Retry the Same Response' }).click();
   await expect(page.getByRole('heading', { name: 'Your answer is recorded' })).toBeVisible();
   const [first, second] = detail(sent);
   expect(second).toEqual(first);

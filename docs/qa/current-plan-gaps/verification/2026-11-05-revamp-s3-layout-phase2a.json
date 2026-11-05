@@ -1,0 +1,190 @@
+{
+  "track": "S3 Public, Intake and Organise",
+  "item": "Layout budget, Phase 2a: the guide pages in one screen, the start page, and Title Case action labels",
+  "date": "2026-11-05",
+  "sensitive": false,
+  "spec": "docs/revamp/specs/layout-budget.md; owner rule of 5 Nov (Title Case for English button, button-styled link and menu item labels)",
+  "changed": [
+    "apps/web/components/public-page.tsx, public-page.css, page-compact.css: one shared template for /sell /source /trade-missions /enter-market /machinery /business-trips /institutions /network /trust. Compact hero and steps, and the closing sections sit in a native details element (Show More) with all content in the server HTML.",
+    "apps/web/app/workspace/page.tsx, workspace.css: the start page fits one screen on desktop; the sign-in routes are a details on a phone and open in three columns on desktop.",
+    "Title Case on action labels (text changed, no CSS text-transform): public pages and their catalogues, the /plan form catalogue, the home and discovery controls, the privacy toggle, the buyer pages, and every button in the organiser room (apps/web/app/account/delegations). The header buttons in corner-dock.tsx and messages.ts follow the same rule."
+  ],
+  "preserved": [
+    "Every link, id, name, payload and test hook kept; hidden content stays in the server HTML and an old #page-next address opens it.",
+    "P-06 old-address tests, P-11 payload and the ux-plan-languages request bodies unchanged; that test's English baseline moved to the commit that carries the Title Case labels, on purpose.",
+    "Left in sentence case on purpose: sign-in, sign-up, password and verify-email pages (Guardian review), shared components owned by S2 and S4, plain text links, headings, form option labels, other languages."
+  ],
+  "pageLength": {
+    "unit": "document height over viewport height (390x844 phone, 1440x900 desktop); hard limits 2.0 phone, 1.0 desktop",
+    "measuredOn": "production build, page-length report from the UX gate",
+    "routes": [
+      {
+        "route": "/sell",
+        "before": {
+          "phone": 3.38,
+          "desktop": 1.96
+        },
+        "after": {
+          "phone": 1.91,
+          "desktop": 1
+        },
+        "withinHardLimits": true
+      },
+      {
+        "route": "/source",
+        "before": {
+          "phone": 2.73,
+          "desktop": 1.69
+        },
+        "after": {
+          "phone": 1.82,
+          "desktop": 1
+        },
+        "withinHardLimits": true
+      },
+      {
+        "route": "/trade-missions",
+        "before": {
+          "phone": 3.04,
+          "desktop": 1.73
+        },
+        "after": {
+          "phone": 1.97,
+          "desktop": 1
+        },
+        "withinHardLimits": true
+      },
+      {
+        "route": "/enter-market",
+        "before": {
+          "phone": 3.0,
+          "desktop": 1.76
+        },
+        "after": {
+          "phone": 1.98,
+          "desktop": 1
+        },
+        "withinHardLimits": true
+      },
+      {
+        "route": "/machinery",
+        "before": {
+          "phone": 2.26,
+          "desktop": 1.46
+        },
+        "after": {
+          "phone": 1.71,
+          "desktop": 1
+        },
+        "withinHardLimits": true
+      },
+      {
+        "route": "/business-trips",
+        "before": {
+          "phone": 2.16,
+          "desktop": 1.46
+        },
+        "after": {
+          "phone": 1.65,
+          "desktop": 1
+        },
+        "withinHardLimits": true
+      },
+      {
+        "route": "/institutions",
+        "before": {
+          "phone": 2.36,
+          "desktop": 1.51
+        },
+        "after": {
+          "phone": 1.79,
+          "desktop": 1
+        },
+        "withinHardLimits": true
+      },
+      {
+        "route": "/network",
+        "before": {
+          "phone": 2.31,
+          "desktop": 1.51
+        },
+        "after": {
+          "phone": 1.82,
+          "desktop": 1
+        },
+        "withinHardLimits": true
+      },
+      {
+        "route": "/trust",
+        "before": {
+          "phone": 3.64,
+          "desktop": 2.01
+        },
+        "after": {
+          "phone": 1.99,
+          "desktop": 1
+        },
+        "withinHardLimits": true
+      },
+      {
+        "route": "/how-it-works",
+        "before": {
+          "phone": 3.66,
+          "desktop": 2.27
+        },
+        "after": {
+          "phone": 2.51,
+          "desktop": 1.32
+        },
+        "withinHardLimits": false
+      },
+      {
+        "route": "/",
+        "before": {
+          "phone": 7.07,
+          "desktop": 4.2
+        },
+        "after": {
+          "phone": 7.06,
+          "desktop": 4.2
+        },
+        "withinHardLimits": false
+      },
+      {
+        "route": "/about",
+        "before": {
+          "phone": 5.33,
+          "desktop": 2.94
+        },
+        "after": {
+          "phone": 5.33,
+          "desktop": 2.94
+        },
+        "withinHardLimits": false
+      },
+      {
+        "route": "/corridors",
+        "before": {
+          "phone": 4.15,
+          "desktop": 2.34
+        },
+        "after": {
+          "phone": 4.14,
+          "desktop": 2.34
+        },
+        "withinHardLimits": false
+      }
+    ],
+    "notMeasuredByTheGate": "/workspace, /buyer and /client are checked by tests/browser/layout-budget-pages.spec.ts against the same limits",
+    "left": "/how-it-works (2.51 phone, 1.32 desktop), /, /about and /corridors are Phase 2b"
+  },
+  "tests": {
+    "added": [
+      "tests/browser/layout-budget-pages.spec.ts (budget, every word kept, old link opens the details, axe collapsed and open, primary action above the fold at 390 and 1440)",
+      "tests/browser/title-case-actions.spec.ts (Title Case on buttons and button-styled links, 10 pages)"
+    ],
+    "updated": "exact-name assertions moved to the new words with the same assertions; data values and form options were kept as they were",
+    "preflight": "format, lint, typecheck, docs-tests, ledger, security-scan, integration-changed, build, e2e and ux-gate passed on this source; operator-affected failed 4 of 1011 on label case in two specs, fixed, and those two specs then passed 35 of 35",
+    "knownIssue": "y-ux05-governance fails in the affected-spec selection unless workspace.spec.ts runs first; passes in order and in CI"
+  }
+}

@@ -233,7 +233,7 @@ test('Refresh counts reads again, and a changed list shows after it', async ({ p
   await expect(page.getByText('No invitations yet')).toBeVisible();
   expect(log).toEqual([programmeId]);
   body = manage([invitation(1, 'ISSUED')], []);
-  await page.getByRole('button', { name: 'Refresh counts' }).click();
+  await page.getByRole('button', { name: 'Refresh Counts' }).click();
   await expect(page.getByText('0 of 1 invitations used')).toBeVisible();
   expect(log).toHaveLength(2);
   // Coming back from another view reads again too, so the numbers beside a panel are not left behind.
@@ -316,10 +316,10 @@ test('with the switch off the old toggles are exactly there and there is no room
   await open(page, { room: false });
   await expect(page.getByRole('heading', { name: programme.name })).toBeVisible();
   await expect(page.locator('.programme-room')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Manage sample participants' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Coordinate and report' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Terms, eligibility and places' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Record sample fees and costs' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Manage Sample Participants' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Coordinate and Report' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Terms, Eligibility and Places' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Record Sample Fees and Costs' })).toBeVisible();
 });
 
 for (const width of [320, 390, 768, 1440]) {

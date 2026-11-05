@@ -501,7 +501,7 @@ function ScopedCoordination(props: Props) {
           <p role="alert">{notice}</p>
           {status === 'failed' && (
             <button type="button" className="text-link" onClick={() => void load()}>
-              Reload coordination
+              Reload Coordination
             </button>
           )}
         </>
@@ -636,7 +636,7 @@ function ScopedCoordination(props: Props) {
               />
             </label>
             <button type="submit" className="primary-link" disabled={busy}>
-              Save capacity
+              Save Capacity
             </button>
           </form>
 
@@ -666,7 +666,7 @@ function ScopedCoordination(props: Props) {
                         disabled={busy || p.attendance === 'ATTENDED'}
                         onClick={() => mark(p.registrationId, 'ATTENDED')}
                       >
-                        Mark attended for {p.label}
+                        Mark Attended for {p.label}
                       </button>{' '}
                       <button
                         type="button"
@@ -674,7 +674,7 @@ function ScopedCoordination(props: Props) {
                         disabled={busy || p.attendance === 'ABSENT'}
                         onClick={() => mark(p.registrationId, 'ABSENT')}
                       >
-                        Mark absent for {p.label}
+                        Mark Absent for {p.label}
                       </button>
                     </>
                   )}
@@ -705,7 +705,7 @@ function ScopedCoordination(props: Props) {
                     disabled={busy}
                     onClick={() => startEdit(editing === t.id ? null : t)}
                   >
-                    {editing === t.id ? 'Cancel editing' : 'Edit task ' + t.seq}
+                    {editing === t.id ? 'Cancel Editing' : 'Edit task ' + t.seq}
                   </button>
                 </li>
               ))}
@@ -718,7 +718,7 @@ function ScopedCoordination(props: Props) {
               disabled={busy}
               onClick={() => void older()}
             >
-              Show more tasks
+              Show More Tasks
             </button>
           )}
           {editing === null && (
@@ -728,7 +728,7 @@ function ScopedCoordination(props: Props) {
               disabled={busy}
               onClick={() => startEdit(null)}
             >
-              Add a task
+              Add a Task
             </button>
           )}
           {editing !== null && (
@@ -802,7 +802,7 @@ function ScopedCoordination(props: Props) {
                 />
               </label>
               <button type="submit" className="primary-link" disabled={busy}>
-                {editing === 'new' ? 'Add task' : 'Save task'}
+                {editing === 'new' ? 'Add Task' : 'Save Task'}
               </button>
             </form>
           )}

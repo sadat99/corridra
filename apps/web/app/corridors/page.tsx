@@ -48,7 +48,7 @@ export default function Page() {
             <p>Tell us the two countries in a request and we will say whether we can help.</p>
           </div>
           <Link prefetch={false} className="button-secondary" href="/plan">
-            Plan a mission on another route <Arrow />
+            Plan a Mission on Another Route <Arrow />
           </Link>
         </div>
       </section>

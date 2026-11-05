@@ -128,7 +128,7 @@ function ScopedParticipants(props: Props) {
           if (changeTarget) revoke(changeTarget.id, changeTarget.kind);
         }}
       >
-        Confirm access change
+        Confirm Access Change
       </button>
       <button
         type="button"
@@ -140,7 +140,7 @@ function ScopedParticipants(props: Props) {
           setAccessError('');
         }}
       >
-        Cancel access change
+        Cancel Access Change
       </button>
     </div>
   );
@@ -213,7 +213,7 @@ function ScopedParticipants(props: Props) {
                         labelInput.current?.focus();
                       }}
                     >
-                      Create replacement code<span className="sr-only"> for {i.label}</span>
+                      Create Replacement Code<span className="sr-only"> for {i.label}</span>
                     </button>
                   )}
                   {i.status === 'ISSUED' && (
@@ -224,7 +224,7 @@ function ScopedParticipants(props: Props) {
                       disabled={view.busy || !!view.pending}
                       onClick={() => revoke(i.id, 'invitation')}
                     >
-                      Revoke invitation
+                      Revoke Invitation
                     </button>
                   )}
                   {!view.pending &&
@@ -242,7 +242,7 @@ function ScopedParticipants(props: Props) {
               disabled={view.busy}
               onClick={() => void view.load('invitations', view.data!.nextInvitationAfter!)}
             >
-              Load more invitations
+              Load More Invitations
             </button>
           )}
           <h4>Consented registrations</h4>
@@ -276,7 +276,7 @@ function ScopedParticipants(props: Props) {
                       disabled={view.busy || !!view.pending}
                       onClick={() => revoke(r.id, 'registration')}
                     >
-                      Revoke programme access
+                      Revoke Programme Access
                     </button>
                   )}
                   {!view.pending &&
@@ -294,7 +294,7 @@ function ScopedParticipants(props: Props) {
               disabled={view.busy}
               onClick={() => void view.load('registrations', view.data!.nextRegistrationAfter!)}
             >
-              Load more registrations
+              Load More Registrations
             </button>
           )}
           {!view.pending && (
@@ -371,8 +371,8 @@ function ScopedParticipants(props: Props) {
               </label>
               <button className="primary-link" disabled={view.busy}>
                 {realCustomerInput()
-                  ? 'Create invitation code'
-                  : 'Create sample invitation code'}{' '}
+                  ? 'Create Invitation Code'
+                  : 'Create Sample Invitation Code'}{' '}
               </button>
             </form>
           )}
@@ -409,7 +409,7 @@ function ScopedParticipants(props: Props) {
                     })
                   }
                 >
-                  Email invitation
+                  Email Invitation
                 </button>
               )}
             </div>
@@ -423,7 +423,7 @@ function ScopedParticipants(props: Props) {
           disabled={view.busy}
           onClick={() => void view.send(view.pending!)}
         >
-          Retry same participant request
+          Retry Same Participant Request
         </button>
       )}
       {error && <p role="alert">{error}</p>}
@@ -435,7 +435,7 @@ function ScopedParticipants(props: Props) {
           disabled={view.busy}
           onClick={() => void view.load()}
         >
-          Reload programme participants
+          Reload Programme Participants
         </button>
       )}
     </section>

@@ -171,7 +171,7 @@ function ScopedPlace({ subject, issuer, registrationId }: Props) {
         <>
           <p role="alert">Your place could not be loaded. Reload to check access and try again.</p>
           <button type="button" className="text-link" onClick={() => void load()}>
-            Reload my place
+            Reload My Place
           </button>
         </>
       )}
@@ -211,13 +211,13 @@ function ScopedPlace({ subject, issuer, registrationId }: Props) {
           )}
           {data.terms && (
             <details>
-              <summary>Programme terms, version {data.terms.version}</summary>
+              <summary>Programme Terms, Version {data.terms.version}</summary>
               <Terms terms={data.terms} fees={data.fees} />
             </details>
           )}
           {c && (
             <details>
-              <summary>Who can take part</summary>
+              <summary>Who Can Take Part</summary>
               <ul>
                 {c.roles.length > 0 && (
                   <li>Commercial roles: {c.roles.map((r) => roleLabel[r] ?? r).join(', ')}</li>
@@ -263,7 +263,7 @@ function ScopedPlace({ subject, issuer, registrationId }: Props) {
                     )
                   }
                 >
-                  Accept the new terms
+                  Accept the New Terms
                 </button>
               </div>
             )}
@@ -334,8 +334,8 @@ function ScopedPlace({ subject, issuer, registrationId }: Props) {
               )}
               <button type="submit" className="primary-link" disabled={!applyReady}>
                 {!data.placesAvailable && data.waitlist
-                  ? 'Join the waiting list'
-                  : 'Apply for a place'}
+                  ? 'Join the Waiting List'
+                  : 'Apply for a Place'}
               </button>
             </form>
           )}
@@ -358,12 +358,12 @@ function ScopedPlace({ subject, issuer, registrationId }: Props) {
                 disabled={busy || !confirmCancel}
                 onClick={() => void send({ action: 'cancel' }, 'You gave up your place.')}
               >
-                Give up my place
+                Give Up My Place
               </button>
             </div>
           )}
           <button type="button" className="text-link" disabled={busy} onClick={() => void load()}>
-            Reload my place
+            Reload My Place
           </button>
         </>
       )}

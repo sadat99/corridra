@@ -101,7 +101,7 @@ test('P-06 /fairs/<slug> is the plain not found page for an address that is not 
 test('P-06 /plan#receipt-check opens the receipt check', async ({ page }) => {
   await page.goto('/plan#receipt-check');
   await expect(page.getByLabel('Receipt code', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Check status and replies' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Check Status and Replies' })).toBeVisible();
 });
 
 test('P-07 the home page sends its three jobs to buyers, sourcing and delegations', async ({

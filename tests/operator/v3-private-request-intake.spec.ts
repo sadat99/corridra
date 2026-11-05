@@ -191,7 +191,7 @@ test('private guided submission retains structured original inputs and uses the 
   });
   await page.goto(origin + start);
   await complete(page);
-  await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit Mission Request', exact: true }).click();
   await expect(
     page.getByRole('heading', { name: 'Your private sample request is saved.', exact: true }),
   ).toBeVisible();
@@ -232,7 +232,7 @@ test('lost response and reload freeze the original command and payload for an ex
   });
   await page.goto(origin + start);
   await complete(page);
-  await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit Mission Request', exact: true }).click();
   await expect(
     page.getByRole('button', { name: 'Retry Original Request', exact: true }),
   ).toBeVisible();
@@ -317,7 +317,7 @@ test('malformed acknowledgement retains the pending request and permission denia
   });
   await page.goto(origin + start);
   await complete(page);
-  await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit Mission Request', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('acknowledgement could not be confirmed');
   await expect(
     page.getByRole('heading', { name: 'Your private sample request is saved.', exact: true }),
@@ -355,7 +355,7 @@ test('blocked retry storage sends no command and an invalid saved retry cannot c
       return original.call(this, key, value);
     };
   }, privatePrefix);
-  await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit Mission Request', exact: true }).click();
   await expect(
     page.getByRole('status').filter({ hasText: 'No new request was sent' }),
   ).toBeVisible();
@@ -433,7 +433,7 @@ test('changing account context aborts an in-flight private write without display
   });
   await page.goto(origin + start);
   await complete(page);
-  await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit Mission Request', exact: true }).click();
   await started;
   try {
     await page.evaluate(

@@ -31,7 +31,7 @@ test('P-11 the request body for fixed answers is byte for byte what it was', asy
     .getByLabel(/^Your offer or requirement/)
     .fill('QA test (madeup): combed cotton yarn for knitting');
   await page.locator('#brief-parameters').fill('Combed cotton, 30s count');
-  await page.getByRole('button', { name: 'More details (optional)', exact: true }).click();
+  await page.getByRole('button', { name: 'More Details (Optional)', exact: true }).click();
   await page.locator('#brief-quantity').fill('500');
   await page.locator('#brief-unit').fill('kg');
   await page.locator('#brief-preferences').fill('Audited mills only');
@@ -41,7 +41,7 @@ test('P-11 the request body for fixed answers is byte for byte what it was', asy
   await page.locator('#brief-budgetBasis').fill('Total budget');
   await page.locator('#brief-website').fill('https://example.com/catalogue');
   await next(page).click();
-  await page.getByRole('button', { name: 'More details (optional)', exact: true }).click();
+  await page.getByRole('button', { name: 'More Details (Optional)', exact: true }).click();
   await page.locator('#brief-worthwhile').fill('Three real meetings');
   await page.getByLabel('Relevant meetings', { exact: true }).check();
   await page.getByLabel('Supplier visits', { exact: true }).check();
@@ -51,7 +51,7 @@ test('P-11 the request body for fixed answers is byte for byte what it was', asy
   await page.getByLabel('Company', { exact: true }).fill('QA test company (madeup)');
   await page.getByLabel('Work email', { exact: true }).fill('QA-Buyer@example.invalid');
   await page.getByLabel('I have read', { exact: false }).check();
-  await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit Mission Request', exact: true }).click();
   await expect(page.getByLabel('Private receipt code')).toHaveValue('a'.repeat(64));
   const sent = JSON.parse(body) as { key: string; brief: unknown; websiteCheck: string };
   expect(Object.keys(sent)).toEqual(['key', 'brief', 'websiteCheck']);
@@ -157,19 +157,19 @@ test('P-10 an error in a folded details field opens the fold and focuses the fie
     .fill('QA test (madeup): combed cotton yarn for knitting');
   await expect(page.locator('#brief-quantity')).toBeHidden();
   // The quantity is typed inside the fold, which is then closed again by the person.
-  await fold(page, 'More details (optional)').click();
+  await fold(page, 'More Details (Optional)').click();
   await page.locator('#brief-quantity').fill('500');
-  await fold(page, 'Fewer details').click();
+  await fold(page, 'Fewer Details').click();
   await expect(page.locator('#brief-quantity')).toBeHidden();
   await next(page).click();
   // A quantity needs a unit: the fold opens, the error is shown and the focus is on the unit.
-  await expect(fold(page, 'Fewer details')).toHaveAttribute('aria-expanded', 'true');
+  await expect(fold(page, 'Fewer Details')).toHaveAttribute('aria-expanded', 'true');
   await expect(page.locator('#unit-error')).toBeVisible();
   await expect(page.locator('#brief-unit')).toBeFocused();
 });
 test('P-10 a saved draft with a folded value comes back with the fold open', async ({ page }) => {
   await toStep(page, '/plan?job=sourcing&companyCountry=BD&marketCode=CN', 2);
-  await fold(page, 'More details (optional)').click();
+  await fold(page, 'More Details (Optional)').click();
   await page.locator('#brief-quantity').fill('500');
   await page.locator('#brief-unit').fill('kg');
   await page.reload();
@@ -189,11 +189,11 @@ test('P-10 the results step folds only optional fields and an error in one opens
   await expect(page.getByLabel('Anything specific we should know? (optional)')).toBeHidden();
   // The required outcome is chosen, so the only problem is the folded field.
   await page.getByLabel('Relevant meetings', { exact: true }).check();
-  await fold(page, 'More details (optional)').click();
+  await fold(page, 'More Details (Optional)').click();
   await page.locator('#brief-worthwhile').fill('ab');
-  await fold(page, 'Fewer details').click();
+  await fold(page, 'Fewer Details').click();
   await next(page).click();
-  await expect(fold(page, 'Fewer details')).toHaveAttribute('aria-expanded', 'true');
+  await expect(fold(page, 'Fewer Details')).toHaveAttribute('aria-expanded', 'true');
   await expect(page.locator('#worthwhile-error')).toBeVisible();
   await expect(page.locator('#brief-worthwhile')).toBeFocused();
 });

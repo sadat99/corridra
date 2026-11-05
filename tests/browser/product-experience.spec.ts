@@ -15,7 +15,7 @@ test('corridor pages explain the actual direction, status and geographic limits'
     await expect(page.getByText('Available now', { exact: true })).toBeVisible();
     await expect(page.getByText('What happens', { exact: true })).toBeVisible();
     await expect(page.getByText('Not offered', { exact: true })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Start a request on this route' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Start a Request on This Route' })).toBeVisible();
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     expect(await page.locator('body').innerText()).not.toContain('—');
   }
@@ -36,7 +36,7 @@ test('global selector retains an unsupported operating direction and opens the a
   await expect(page.getByLabel('Route map', { exact: true })).toContainText(
     'No operating offer is announced',
   );
-  await page.getByRole('link', { name: 'Plan a mission on this route', exact: true }).click();
+  await page.getByRole('link', { name: 'Plan a Mission on This Route', exact: true }).click();
   await page
     .getByRole('combobox', { name: 'Commercial job', exact: true })
     .selectOption('machinery_procurement');
@@ -108,7 +108,7 @@ test('job-first navigation exposes machinery and commercial trips with real entr
     'Give each day a commercial purpose.',
   );
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-  await page.getByRole('main').getByRole('link', { name: 'Plan a business trip' }).click();
+  await page.getByRole('main').getByRole('link', { name: 'Plan a Business Trip' }).click();
   await expect(page).toHaveURL('/plan?job=business_trips');
   await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue(
     'business_trips',

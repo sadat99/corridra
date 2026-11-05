@@ -27,10 +27,10 @@ export function ProgrammeObjectives(props: ObjectiveScope) {
         }}
       >
         {open
-          ? 'Hide shared objectives'
+          ? 'Hide Shared Objectives'
           : props.view === 'own'
-            ? 'Manage my shared objectives'
-            : 'View shared objectives'}
+            ? 'Manage My Shared Objectives'
+            : 'View Shared Objectives'}
       </button>
       {open && (
         <Suspense fallback={<p role="status">Loading shared objectives…</p>}>
