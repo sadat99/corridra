@@ -150,7 +150,7 @@ test('private saved requests show canonical status, original-script replies, exp
   await expect(
     page.getByText('A saved request is not an accepted engagement, confirmed meeting or deal.'),
   ).toBeVisible();
-  await page.getByRole('button', { name: 'Load more saved requests', exact: true }).click();
+  await page.getByRole('button', { name: 'Load More Saved Requests', exact: true }).click();
   await expect(
     page.getByText(
       'The original request progress is no longer available. Its retention period may have ended.',
@@ -158,7 +158,7 @@ test('private saved requests show canonical status, original-script replies, exp
   ).toBeVisible();
   await expect(page.getByRole('article')).toHaveCount(2);
   await expect(
-    page.getByRole('button', { name: 'Load more saved requests', exact: true }),
+    page.getByRole('button', { name: 'Load More Saved Requests', exact: true }),
   ).toHaveCount(0);
   expect(calls).toHaveLength(2);
   expect(calls[1]).toContain('?after=' + id('1'));

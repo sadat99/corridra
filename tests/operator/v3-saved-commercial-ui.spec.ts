@@ -246,15 +246,15 @@ test('explicitly saves and removes an invitation with scoped headers and no brow
   await page.getByText('Save an invitation', { exact: true }).click();
   await page.getByLabel('Private client mission invitation').fill(origin + '/client#' + token);
   await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: 'Save invitation to this account' }).click();
-  await expect(page.getByRole('link', { name: 'Open approved commercial report' })).toHaveAttribute(
+  await page.getByRole('button', { name: 'Save Invitation to This Account' }).click();
+  await expect(page.getByRole('link', { name: 'Open Approved Commercial Report' })).toHaveAttribute(
     'href',
     '/account/missions/' + id,
   );
-  await expect(page.getByRole('button', { name: 'Save invitation to this account' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Save Invitation to This Account' })).toBeEnabled();
   expect(await page.evaluate(() => localStorage.length + sessionStorage.length)).toBe(0);
   expect(saves).toBe(1);
-  await page.getByRole('button', { name: 'Remove from my saved missions' }).click();
+  await page.getByRole('button', { name: 'Remove From My Saved Missions' }).click();
   await expect(page.getByText('No commercial mission invitations saved yet.')).toBeVisible();
   await expect(page.getByText(/were not cancelled/)).toBeVisible();
 });
@@ -272,10 +272,10 @@ test('lost save response freezes the exact command and retries without claiming 
   await page.getByText('Save an invitation', { exact: true }).click();
   await page.getByLabel('Private client mission invitation').fill(origin + '/client#' + token);
   await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: 'Save invitation to this account' }).click();
+  await page.getByRole('button', { name: 'Save Invitation to This Account' }).click();
   await expect(page.getByText(/Saving could not be confirmed/)).toBeVisible();
   await expect(page.getByLabel('Private client mission invitation')).toBeDisabled();
-  await page.getByRole('button', { name: 'Retry same invitation' }).click();
+  await page.getByRole('button', { name: 'Retry Same Invitation' }).click();
   await expect(page.getByText(/Invitation saved to this account/)).toBeVisible();
   expect(commands).toHaveLength(2);
   expect(commands[1]).toEqual(commands[0]);
@@ -320,7 +320,7 @@ test('approved commercial report reuses requirements,qualification,original quot
   await expect(page.getByText(/Installation and commissioning not quoted/)).toBeVisible();
   await expect(page.getByText(/BHD.*1\.234/).first()).toBeVisible();
   await expect(page.getByText('PROPOSED', { exact: false })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Send response' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Send Response' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'My shared missions' })).toHaveAttribute(
     'href',
     '/account#customer-missions',
@@ -381,7 +381,7 @@ test('page restoration rechecks saved scope and malformed report cannot fabricat
     window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })),
   );
   await expect(page.getByRole('alert')).toContainText('could not be loaded');
-  await page.getByRole('button', { name: 'Refresh approved commercial report' }).click();
+  await page.getByRole('button', { name: 'Refresh Approved Commercial Report' }).click();
   await expect(page.getByRole('alert')).toContainText('No commercial report content');
 });
 test('saved list and approved report support keyboard,axe and three responsive widths', async ({
@@ -397,7 +397,7 @@ test('saved list and approved report support keyboard,axe and three responsive w
       await page.goto(origin + '/?mode=' + mode);
       await expect(
         mode === 'list'
-          ? page.getByRole('link', { name: 'Open approved commercial report' })
+          ? page.getByRole('link', { name: 'Open Approved Commercial Report' })
           : page.getByText('Original approved requirements 工厂 বাংলা', { exact: true }),
       ).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
@@ -454,10 +454,10 @@ test('a 429 on sending a response says the limit was reached and keeps the same 
   await page.goto(origin + '/?mode=report');
   await page.getByLabel('Your response', { exact: true }).fill('Fictional supporting declaration');
   await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: 'Send response', exact: true }).click();
+  await page.getByRole('button', { name: 'Send Response', exact: true }).click();
   await expect(page.getByText(limitLine)).toHaveCount(1);
   await expect(page.getByText(/could not be confirmed/)).toHaveCount(0);
-  await page.getByRole('button', { name: 'Retry same response', exact: true }).click();
+  await page.getByRole('button', { name: 'Retry Same Response', exact: true }).click();
   await expect(page.getByText(/Response recorded as your self-declaration/)).toBeVisible();
   expect(commands).toHaveLength(2);
   expect(commands[1]).toEqual(commands[0]);
@@ -482,11 +482,11 @@ test('uncertain evidence submission freezes exact text and command until the sam
     .getByLabel('Your response', { exact: true })
     .fill('Fictional supporting declaration বাংলা');
   await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: 'Send response', exact: true }).click();
+  await page.getByRole('button', { name: 'Send Response', exact: true }).click();
   await expect(page.getByText(/Response delivery could not be confirmed/)).toBeVisible();
   await expect(page.getByText(/Response recorded as your self-declaration/)).toHaveCount(0);
   await expect(page.getByLabel('Your response', { exact: true })).toBeDisabled();
-  await page.getByRole('button', { name: 'Retry same response', exact: true }).click();
+  await page.getByRole('button', { name: 'Retry Same Response', exact: true }).click();
   await expect(page.getByText(/Response recorded as your self-declaration/)).toBeVisible();
   await expect(
     page.getByText('Your self-declared response: Fictional supporting declaration বাংলা', {
@@ -556,15 +556,15 @@ test('saved mission pagination preserves earlier scoped entries and appends the 
   await expect(
     page.getByRole('heading', { name: 'First approved mission', exact: true }),
   ).toBeVisible();
-  await page.getByRole('button', { name: 'Load more commercial missions' }).click();
+  await page.getByRole('button', { name: 'Load More Commercial Missions' }).click();
   await expect(
     page.getByRole('heading', { name: 'Second approved mission', exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'First approved mission', exact: true }),
   ).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Open approved commercial report' })).toHaveCount(2);
-  await expect(page.getByRole('button', { name: 'Load more commercial missions' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Open Approved Commercial Report' })).toHaveCount(2);
+  await expect(page.getByRole('button', { name: 'Load More Commercial Missions' })).toHaveCount(0);
   expect(laterReads).toBe(1);
 });
 
