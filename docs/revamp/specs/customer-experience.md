@@ -61,6 +61,9 @@ read. With work on the page, the three shortcut tiles give way to the "Start a R
 "Check a Request Receipt" and "Open a Shared Mission" stay in All tools. Measured on 5 Nov 2026 with every role:
 1.00 desktop screen and 1.91 phone screens.
 
+Owner, 5 Nov 2026, approving the Source, Sell and Organise room mockups (desktop and phone), verbatim: "mockups
+approved. finishi and continue finishing of v3 revamp 100% correct in alighnment with the latest decision".
+
 **Work rooms (owner-approved mockups, 5 Nov 2026; Source built first in Wave 4).** Every room has the same
 four parts:
 
@@ -84,9 +87,10 @@ What each room shows:
   qualified held meetings. A count that cannot be given says "Not measured yet", and meetings no participant
   allowed to be counted say "Not shared", never zero. "Needs your attention" lists the projection's own flags:
   overlapping activities, activities to review after a date change, and participants not ready yet. Each flag
-  opens the view that resolves it. With the room on, the delegations page has four tabs (Programmes, Templates,
-  Pricing, Series and Exports, New Programme) and shows one programme at a time, chosen in a picker and kept in
-  `?programme=`. Measured: 1.00 desktop screen and 1.66 phone screens on the Overview.
+  opens the view that resolves it. The five groups of the programme consent spec (C-09) stay as the room's tabs.
+  With the room on, the delegations page has its own tabs (Programmes, Templates, Pricing, Series and Exports, New
+  Programme) and shows one programme at a time, chosen in a picker and kept in
+  `?programme=` (an old `#<programme id>-<view>` link opens that programme). Measured: 1.00 desktop screen and 1.66 phone screens on the Overview.
 
 The room reads the saved report once and adds no data. The page links stay on the Overview, and a stage with no
 record is a plain grey segment. Measured with a BD-China sample: 1.00 desktop screen in every view and 1.13 to

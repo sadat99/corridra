@@ -102,11 +102,17 @@ function ScopedProgrammes({
 }: Props) {
   const [selectedProgramme, setSelectedProgramme] = useState<string | null>(null);
   // The programme the room shows, kept in ?programme= (read once; the list itself loads after the first render).
-  const [chosenId, setChosenId] = useState<string | null>(() =>
-    typeof window === 'undefined'
-      ? null
-      : new URLSearchParams(window.location.search).get('programme'),
-  );
+  // An old link to one programme's section (#<programme id>-<view>) still opens that programme (layout budget L-03).
+  // Only a programme in this workspace's own list can be chosen; anything else shows the first one.
+  const [chosenId, setChosenId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const asked = new URLSearchParams(window.location.search).get('programme');
+    if (asked) return asked;
+    const hash = /^#([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i.exec(
+      window.location.hash,
+    );
+    return hash ? hash[1]!.toLowerCase() : null;
+  });
   const [financeProgramme, setFinanceProgramme] = useState<string | null>(null);
   const [coordinationProgramme, setCoordinationProgramme] = useState<string | null>(null);
   const [termsProgramme, setTermsProgramme] = useState<string | null>(null);
