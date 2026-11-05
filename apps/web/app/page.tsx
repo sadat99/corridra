@@ -145,8 +145,10 @@ export default function Home() {
     const card = row?.querySelector<HTMLElement>('.ac1-proof');
     if (!row || !card) return;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // In a right-to-left page the row scrolls the other way, so Next moves to negative offsets (Codex, PR 311).
+    const sign = getComputedStyle(row).direction === 'rtl' ? -1 : 1;
     row.scrollBy({
-      left: direction * (card.offsetWidth + 16),
+      left: sign * direction * (card.offsetWidth + 16),
       behavior: reduce ? 'auto' : 'smooth',
     });
   };

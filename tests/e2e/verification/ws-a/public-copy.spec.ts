@@ -114,3 +114,22 @@ test('CQ-53 the home examples row has working previous and next buttons on narro
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await evidence(page, `CQ-53-${info.project.name}`);
 });
+
+// Codex review of PR 311: in a right-to-left page (Arabic preview) the row scrolls the other way, and Next must
+// still move to the next example.
+test('CQ-53 in a right-to-left page Next still moves to the next example', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('tab', { name: 'Results', exact: true }).click();
+  const row = page.locator('#home-proofs');
+  await row.evaluate((el) => el.closest('main')?.setAttribute('dir', 'rtl'));
+  const next = page.getByRole('button', { name: 'Next Example' });
+  test.skip(
+    !(await next.isVisible()),
+    'Both examples are side by side here: no carousel controls.',
+  );
+  await row.scrollIntoViewIfNeeded();
+  await next.click();
+  await expect.poll(() => row.evaluate((el) => el.scrollLeft)).toBeLessThan(0);
+  await page.getByRole('button', { name: 'Previous Example' }).click();
+  await expect.poll(() => row.evaluate((el) => el.scrollLeft)).toBe(0);
+});
