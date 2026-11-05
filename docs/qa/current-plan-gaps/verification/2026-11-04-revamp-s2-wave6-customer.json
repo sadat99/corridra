@@ -1,0 +1,71 @@
+{
+  "recordedOn": "2026-11-04",
+  "batch": "Revamp S2 Customer Work: Wave 6 (Q-01 to Q-06) first slice, customer surfaces",
+  "kind": "Inspection of the customer account screens against docs/revamp/specs/wave6-quality.md, with a failing test for each defect found and its fix. No gap status is changed here. No language work.",
+  "findings": [],
+  "findingsNote": "No row in docs/qa/current-plan-gaps/findings.json is changed. GAP-050 (busy actions) evidence is the Q-06 list below; the Conductor decides its status.",
+  "status": "Built on branch revamp/customer over main 7187a9d. CI on the exact pushed head is the verifier; see the pull request for its result.",
+  "defectsProvedAndFixed": [
+    "notifications-form.tsx, Q-05 offline: a dropped request showed the browser's own words (\"Failed to fetch\"). Now: \"Your choices were not saved. Check your connection, then try again.\" The choices stay on screen. Test failed first.",
+    "notifications-form.tsx, Q-05 unavailable: a 503 that was an HTML error page showed the parser's words (\"Unexpected token '<'...\"). Now the plain not-saved line. Test failed first.",
+    "notifications-form.tsx, Q-05 429: showed whatever text the server sent. Now \"The request limit was reached. Try again later.\" (the same line the guided draft already used). Test failed first.",
+    "notifications-form.tsx, Q-06: the form had no aria-busy while a save ran (the button was already disabled and a double click already sent one request). aria-busy added. Test failed first on that attribute only.",
+    "customer-workspace-leave.tsx, Q-05 429: showed \"Leaving was not confirmed. Try the same request again.\" which invites an immediate retry. Now the limit line. Test failed first.",
+    "customer-workspace-invitation.tsx, Q-05 429: same pattern (\"Retry this invitation with the same request.\"). Now the limit line. Test failed first.",
+    "drafts/guided-request.tsx: persist() now re-checks the editor session after reading the answer as well, per the Conductor's instruction. Defensive only: Back, Discard, Send and Save draft are disabled during a save, so no screen path exists to prove it with a failing test; this is said plainly here and in the pull request.",
+    "notifications-form.tsx, Codex P2 on PR 285 (verified): a 200 whose body could not be read became an empty answer, took the success branch and announced that email was on or off without confirmation. Now only an explicit saved:true counts; an unreadable body or one with no saved flag shows the not-saved line, announces nothing and leaves the saved state as it was. Two cases (unreadable body, no saved flag) failed first."
+  ],
+  "checkedNoDefect": [
+    "customer-workspace-invitation.tsx, Q-05 offline: keeps the code and says joining was not confirmed, with no machine words (test passed on first run).",
+    "Q-02 and Q-03 on the changed states (offline and limit lines of the email choices form): no sideways scroll and axe wcag2a/wcag2aa/wcag21aa/wcag22aa clean at 320 and 390 (passed on first run).",
+    "Q-06 double click on the email choices form sends one request (passed; only aria-busy was missing)."
+  ],
+  "foundNotFixed": [
+    "Q-05 429: these screens give no own line for a rate limit and show the general not-confirmed or failed words instead: assigned-missions.tsx, customer-workspace-team.tsx, customer-workspaces.tsx, saved-missions.tsx, missions/saved-commercial-report.tsx, missions/specification-confirmation.tsx, missions/decision-history.tsx, service-requests/service-request-new.tsx, requests/request-detail.tsx. Five of them share savedMissionRead (apps/web/app/account/saved-missions.tsx), which maps every other status to 'failed'; a single 'limit' reason there plus the limit line in each catch is the likely fix. Found by reading, not yet proved by a failing test, so not changed in this PR. Proposed as the next slice.",
+    "Q-01 (keyboard, focus to heading, error summary) and Q-04 (right to left): not swept in this slice beyond what existing specs already cover (guided request, saved commercial report and customer workspace specs press Tab and check focus; rooms and move views set dir from the content language). No new finding and no new test.",
+    "Q-08 performance numbers: not recorded in this slice (needs a production build with CPU throttling at 390); no code change for it."
+  ],
+  "q06ActionSweep": [
+    "assigned-missions.tsx (2 request calls): sends a write, early-return guard, disabled while busy, no aria-busy, announces result, 429 has no own line",
+    "billing/billing-client.ts (1 request call): reads only, no early-return guard found by the scan, not disabled by a busy flag, no aria-busy, no status or alert region, 429 has no own line",
+    "companies/company-portfolio.tsx (1 request call): reads only, no early-return guard found by the scan, disabled while busy, no aria-busy, announces result, 429 has no own line",
+    "company-link-status.tsx (1 request call): reads only, no early-return guard found by the scan, not disabled by a busy flag, no aria-busy, no status or alert region, 429 has no own line",
+    "customer-requests.tsx (1 request call): reads only, early-return guard, disabled while busy, aria-busy, announces result, 429 has no own line",
+    "customer-workspace-invitation.tsx (1 request call): sends a write, early-return guard, disabled while busy, aria-busy, announces result, 429 has its own line",
+    "customer-workspace-leave.tsx (1 request call): sends a write, early-return guard, disabled while busy, no aria-busy, announces result, 429 has its own line",
+    "customer-workspace-team.tsx (4 request calls): sends a write, early-return guard, disabled while busy, aria-busy, announces result, 429 has no own line",
+    "customer-workspaces.tsx (2 request calls): sends a write, early-return guard, not disabled by a busy flag, aria-busy, announces result, 429 has no own line",
+    "drafts/guided-request.tsx (7 request calls): sends a write, early-return guard, disabled while busy, no aria-busy, announces result, 429 has its own line",
+    "missions/book-downloads.tsx (1 request call): sends a write, early-return guard, disabled while busy, aria-busy, announces result, 429 has its own line",
+    "missions/decision-card-panel.tsx (1 request call): sends a write, no early-return guard found by the scan, not disabled by a busy flag, no aria-busy, announces result, 429 has no own line; reviewed by hand: buttons disabled through the reducer busy state and a repeat reuses the same command id, so a double click cannot make a second card; not double-click tested in a browser",
+    "missions/decision-history.tsx (1 request call): reads only, no early-return guard found by the scan, not disabled by a busy flag, no aria-busy, announces result, 429 has no own line",
+    "missions/saved-commercial-report.tsx (2 request calls): sends a write, no early-return guard found by the scan, disabled while busy, no aria-busy, announces result, 429 has no own line; reviewed by hand: guard present (multi-line condition the scan pattern missed: `if (inFlight.current || ...) return`)",
+    "missions/specification-confirmation.tsx (2 request calls): sends a write, early-return guard, disabled while busy, no aria-busy, announces result, 429 has no own line",
+    "notifications/notifications-form.tsx (1 request call): sends a write, no early-return guard found by the scan, disabled while busy, aria-busy, announces result, 429 has its own line; reviewed by hand: no ref guard, but the button is disabled in the same render; double click proven by test Q-06",
+    "profile/company-link.tsx (3 request calls): reads only, early-return guard, disabled while busy, aria-busy, announces result, 429 has no own line",
+    "profile/organisation-profile.tsx (2 request calls): reads only, early-return guard, disabled while busy, no aria-busy, announces result, 429 has no own line",
+    "request/private-request-intake.tsx (1 request call): sends a write, no early-return guard found by the scan, disabled while busy, aria-busy, announces result, 429 has its own line; reviewed by hand: guard present under another name (`running.current`)",
+    "requests/request-detail.tsx (1 request call): reads only, no early-return guard found by the scan, not disabled by a busy flag, no aria-busy, announces result, 429 has no own line",
+    "rooms/[requestId]/room-data.ts (1 request call): reads only, no early-return guard found by the scan, not disabled by a busy flag, no aria-busy, no status or alert region, 429 has no own line",
+    "saved-missions.tsx (3 request calls): sends a write, early-return guard, disabled while busy, no aria-busy, announces result, 429 has no own line",
+    "service-requests/service-request-client.ts (1 request call): reads only, no early-return guard found by the scan, not disabled by a busy flag, no aria-busy, no status or alert region, 429 has no own line",
+    "service-requests/service-request-new.tsx (1 request call): reads only, early-return guard, disabled while busy, no aria-busy, announces result, 429 has no own line"
+  ],
+  "newFiles": [
+    "apps/web/lib/account-limit.ts (the limit line and the not-reached line, one place)",
+    "tests/operator/revamp-wave6-customer.spec.ts (9 cases, real components mounted with the real stylesheets, interface answered by the test)"
+  ],
+  "changedFiles": [
+    "apps/web/app/account/notifications/notifications-form.tsx",
+    "apps/web/app/account/customer-workspace-leave.tsx",
+    "apps/web/app/account/customer-workspace-invitation.tsx",
+    "apps/web/app/account/drafts/guided-request.tsx"
+  ],
+  "receipts": {
+    "operator": "tests/operator/revamp-wave6-customer.spec.ts: 11 passed. Before the fixes 8 cases failed (offline, non-JSON, 429 on the email form, aria-busy, 429 on leave, 429 on join); the other cases passed on the first run. Existing specs for the same components still pass: ux-pulse, v3-workspace-invitation-ui, v3-customer-workspaces-ui, v3-workspace-team-ui, v3-guided-request-ui."
+  },
+  "notRun": [
+    "Q-08 performance numbers.",
+    "A deployed-build run of these screens; the cases above mount the real components against test answers."
+  ]
+}

@@ -377,6 +377,8 @@ function Guided(scope: Scope) {
     }
     if (!r.ok) throw new Error('failed');
     const v = parseView(await r.json(), scope);
+    // Reading the answer is a second wait. If the editor moved on during it, this answer is not for this session.
+    if (!active.current || mine !== session.current) return null;
     if (v.commandId !== pendingSave.current.commandId) throw new Error('mismatch');
     setDraftId(v.draft.id);
     setVersion(v.draft.version);

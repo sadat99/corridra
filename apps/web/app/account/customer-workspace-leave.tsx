@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CustomerWorkspace } from '@corridra/auth/customer-workspaces';
+import { limitWords } from '../../lib/account-limit';
 
 // A non-owner leaves their own invited membership. The owner has no such control: the initial owner
 // cannot be removed here. Leaving is recorded and the owner can invite the person again.
@@ -66,9 +67,11 @@ export function CustomerWorkspaceLeave({
         if ([401, 403, 409].includes(response.status)) onDenied(response.status);
         else
           setMessage(
-            response.status === 503
-              ? 'Leaving a team is unavailable right now.'
-              : 'Leaving was not confirmed. Try the same request again.',
+            response.status === 429
+              ? limitWords
+              : response.status === 503
+                ? 'Leaving a team is unavailable right now.'
+                : 'Leaving was not confirmed. Try the same request again.',
           );
         return;
       }

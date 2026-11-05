@@ -1,6 +1,7 @@
 import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
 import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { limitWords } from '../../lib/account-limit';
 
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 function accepted(value: unknown) {
@@ -92,7 +93,11 @@ export function CustomerWorkspaceInvitation({
           setPending(null);
           onDenied(response.status);
         } else
-          setMessage('Joining was not confirmed. Retry this invitation with the same request.');
+          setMessage(
+            response.status === 429
+              ? limitWords
+              : 'Joining was not confirmed. Retry this invitation with the same request.',
+          );
         return;
       }
       const value: unknown = await response.json();
