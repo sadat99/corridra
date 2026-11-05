@@ -4,7 +4,7 @@
   "kind": "Reports to docs/revamp/specs/customer-experience.md (pages table). The two paste forms and the link that were spread over the page become one button and one dialog.",
   "findings": [],
   "findingsNote": "No gap is created or changed. No route, table, migration, switch, provider, payment or write is added. No request, command id, retry or payload changes.",
-  "status": "Built on branch revamp/customer on top of CX PR 3a (PR 313). To be pushed after 313 merges, with main merged in so the diff is 3b only. CI on the exact pushed head is the verifier.",
+  "status": "Built on branch revamp/customer over main c68ebd19 (PR 313, CX PR 3a). CI on the exact pushed head is the verifier; see the pull request for its result.",
   "newFiles": [
     "apps/web/app/account/invitation-dialog.tsx (InvitationProvider, OpenInvitationButton, InvitationSlot): the dialog and the one button; reads, keeps and sends nothing itself",
     "tests/integration/revamp-cx3b-invitation.test.ts (3), tests/operator/revamp-cx3b-invitation.spec.ts (5: CX-02, CX-04, CX-05 axe at 390 and 1440, CX-07 screenshots)",
