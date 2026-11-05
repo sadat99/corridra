@@ -16,3 +16,13 @@ export async function openTab(scope: Page | Locator, name: string) {
   await tab.click();
   await expect(tab).toHaveAttribute('aria-selected', 'true');
 }
+
+// The tool list of the owner controls is folded behind its summary at every width (page length). Open
+// the Available tools tab and then the list.
+export async function openTools(page: Page) {
+  await openTab(page, 'Available tools');
+  const fold = page.locator('#workspace-controls details.phone-fold').first();
+  if (!(await fold.evaluate((details) => (details as HTMLDetailsElement).open)))
+    await fold.locator(':scope > summary').click();
+  await expect(fold).toHaveAttribute('open', '');
+}

@@ -584,6 +584,7 @@ export function WorkspaceControls({
                     </p>
                   </div>
                   <PhoneFold
+                    fold="always"
                     summary={`Show all ${groups.reduce((n, g) => n + g.items.length, 0)} tools (${groups.reduce(
                       (n, g) => n + g.items.filter((item) => enabled(item[0])).length,
                       0,

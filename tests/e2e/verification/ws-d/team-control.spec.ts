@@ -257,6 +257,7 @@ test('WS-D layout: owner status board and readiness tell the truth at every widt
   expect(box!.y + box!.height).toBeLessThanOrEqual(page.viewportSize()!.height * 2);
   // The register is its own tab (L-03).
   await page.getByRole('tab', { name: 'Open gaps', exact: true }).click();
+  await page.getByRole('button', { name: 'Show all 11 open gaps', exact: true }).click();
   const register = page.locator('[data-deferred-register]');
   await expect(register.getByRole('listitem')).toHaveCount(11);
   for (const item of await register.getByRole('listitem').all()) {

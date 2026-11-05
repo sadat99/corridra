@@ -1514,7 +1514,7 @@ export function Operations({
                 <>
                   <Table
                     label="Deferred controls"
-                    limit={4}
+                    limit={3}
                     rows={deferredControls.map((control) => ({
                       id: control.id,
                       name: control.name,

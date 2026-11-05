@@ -1,5 +1,5 @@
 import { operatorEvidence } from './operator-evidence';
-import { openSection, openTab } from './workspace-nav';
+import { openSection, openTab, openTools } from './workspace-nav';
 import { participantEvidence } from './participant-evidence';
 import { test, expect } from '@playwright/test';
 import { Pool } from '../../packages/db/src/index';
@@ -532,7 +532,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     await db.end();
   }
   await openSection(page, 'workspace-controls');
-  await openTab(page, 'Available tools');
+  await openTools(page);
   await page.getByRole('button', { name: 'Enable evidence verification', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText(
     'Verify your authenticator again to continue',
@@ -542,7 +542,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await page.getByRole('button', { name: 'Verify again', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText('Saved.');
   await openSection(page, 'workspace-controls');
-  await openTab(page, 'Available tools');
+  await openTools(page);
   await page.getByRole('button', { name: 'Enable evidence verification', exact: true }).click();
   await expect(
     page
@@ -550,6 +550,8 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
       .getByText('Enabled', { exact: true }),
   ).toBeVisible();
   await page.reload();
+  // The reload keeps the Available tools tab; its tool list starts folded again.
+  await openTools(page);
   await expect(
     page
       .getByRole('article', { name: 'Evidence verification', exact: true })
@@ -560,7 +562,7 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     page.getByRole('button', { name: 'Submit for validation', exact: true }),
   ).toBeDisabled();
   await openSection(page, 'workspace-controls');
-  await openTab(page, 'Available tools');
+  await openTools(page);
   await expect(
     page
       .getByRole('article', { name: 'Research intake', exact: true })
