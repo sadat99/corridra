@@ -6,6 +6,7 @@ import { test, expect, type Page } from '@playwright/test';
 // screens (390 x 844). Nothing is removed: every word stays in the server HTML, an old #address opens the tab that
 // holds it, an in-page link opens its own target's tab, and a hidden panel is never shown by a page rule.
 const tabbed = [
+  { path: '/', tabs: ['example', 'steps', 'results', 'facts', 'routes'] },
   { path: '/how-it-works', tabs: ['before-you-meet', 'meet-and-follow-up'] },
   { path: '/about', tabs: ['why', 'who', 'how', 'focus', 'together'] },
   { path: '/corridors', tabs: ['routes', 'route', 'sample'] },
@@ -60,7 +61,7 @@ for (const { path, tabs } of tabbed) {
     expect(same.page).toBe(same.sent);
     // Every tab has its panel in the page; only the chosen one is displayed, and no rule overrides [hidden].
     const panels = await page.evaluate(() =>
-      [...document.querySelectorAll('[role="tabpanel"]')].map((panel) => ({
+      [...document.querySelectorAll('.ux-subtabs-panel')].map((panel) => ({
         hidden: (panel as HTMLElement).hidden,
         display: getComputedStyle(panel).display,
       })),
@@ -123,8 +124,15 @@ for (const { path, tabs } of tabbed) {
       await page.setViewportSize(size);
       await page.goto(path);
       // Routes opens on the list of routes, whose way to start a request is the /plan link.
+      // The home's first screen offers three starts; Routes' start link is the /plan link.
       const action = page
-        .locator(path === '/corridors' ? 'main a[href="/plan"]' : 'main a.primary-link')
+        .locator(
+          path === '/'
+            ? 'main .ac1-jobs a'
+            : path === '/corridors'
+              ? 'main a[href="/plan"]'
+              : 'main a.primary-link',
+        )
         .first();
       await expect(action).toBeVisible();
       const box = (await action.boundingBox())!;

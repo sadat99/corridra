@@ -78,6 +78,8 @@ test('the home example switches between selling and sourcing by pointer and keyb
   await expect(selling).toHaveAttribute('aria-selected', 'true');
   await selling.press('End');
   await expect(sourcing).toBeFocused();
+  // The buyer shortlist and the price quote comparison are in the Results tab; the routes are in Routes.
+  await page.getByRole('tab', { name: 'Results', exact: true }).click();
   // Selling and buying carry equal weight: a buyer shortlist and a price quote comparison.
   await expect(
     page.getByRole('list', { name: 'Example buyer shortlist' }).locator('li'),
@@ -85,6 +87,7 @@ test('the home example switches between selling and sourcing by pointer and keyb
   await expect(
     page.getByRole('table', { name: 'Example price quote comparison' }).getByRole('row'),
   ).toHaveCount(5);
+  await page.getByRole('tab', { name: 'Routes', exact: true }).click();
   for (const href of ['/corridors/bangladesh-china', '/corridors/bangladesh-spain', '/corridors'])
     await expect(page.locator(`main a[href="${href}"]`).first()).toBeVisible();
   expect(

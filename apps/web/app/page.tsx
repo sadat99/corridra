@@ -9,6 +9,8 @@ import { useRef } from 'react';
 import '../components/front-door.css';
 import { LegacyHashRedirect } from '../components/legacy-hash-redirect';
 import { PublicShell } from '../components/public-shell';
+import { SubTabs } from '../components/ux/sub-tabs';
+import '../components/home-compact.css';
 import { useT } from '../components/language-provider';
 import type { MessageKey } from '../lib/i18n/messages';
 
@@ -143,8 +145,10 @@ export default function Home() {
     const card = row?.querySelector<HTMLElement>('.ac1-proof');
     if (!row || !card) return;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // In a right-to-left page the row scrolls the other way, so Next moves to negative offsets (Codex, PR 311).
+    const sign = getComputedStyle(row).direction === 'rtl' ? -1 : 1;
     row.scrollBy({
-      left: direction * (card.offsetWidth + 16),
+      left: sign * direction * (card.offsetWidth + 16),
       behavior: reduce ? 'auto' : 'smooth',
     });
   };
@@ -184,178 +188,205 @@ export default function Home() {
           </ul>
           <p className="ac1-note">{t('home.note')}</p>
         </div>
-        <HomeExampleRecord />
       </section>
 
-      <section className="ac1-section" aria-labelledby="steps-title">
-        <p className="label ac1-rule">{t('home.how')}</p>
-        <h2 id="steps-title">{t('home.steps.title')}</h2>
-        <p className="ac1-lead">{t('home.steps.lead')}</p>
-        <ol className="ac1-steps" aria-label={t('home.steps.aria')}>
-          {steps.map(([title, text], index) => (
-            <li key={title}>
-              <span className="ac1-step-number" aria-hidden="true">
-                {String(index + 1).padStart(2, '0')}
-              </span>
-              <h3>{t(title)}</h3>
-              <p>{t(text)}</p>
-            </li>
-          ))}
-        </ol>
-        <Link prefetch={false} className="ac1-quiet" href="/how-it-works">
-          {t('home.steps.more')} <Arrow />
-        </Link>
-      </section>
-
-      <section className="ac1-section" aria-labelledby="proof-title">
-        <p className="label ac1-rule">{t('home.example')}</p>
-        <h2 id="proof-title">{t('home.proof.title')}</h2>
-        <p className="ac1-lead">{t('home.proof.lead')}</p>
-        <div className="ac1-proof-nav">
-          <button type="button" onClick={() => turn(-1)} aria-controls="home-proofs">
-            <span aria-hidden="true">‹</span> {t('home.proof.prev')}
-          </button>
-          <button type="button" onClick={() => turn(1)} aria-controls="home-proofs">
-            {t('home.proof.next')} <span aria-hidden="true">›</span>
-          </button>
-        </div>
-        <div
-          ref={proofs}
-          id="home-proofs"
-          className="ac1-proofs"
-          role="region"
-          aria-label={t('home.proof.aria')}
-          tabIndex={0}
-        >
-          <div className="ac1-proof">
-            <div>
-              <h3 className="ac1-proof-title">
-                <CorridraIcon name="sell" /> {t('home.buyers.title')}
-              </h3>
-              <p>{t('home.buyers.text')}</p>
-            </div>
-            <div className="ac1-exhibit">
-              <p className="ac1-exhibit-head">
-                <span className="ac1-example-tag">{t('home.example')}</span>
-                <span>{t('home.exhibit.companies')}</span>
-              </p>
-              <p className="ac1-ledger-head" aria-hidden="true">
-                <span>{t('home.ledger.company')}</span>
-                <span>{t('home.ledger.why')}</span>
-                <span>{t('home.ledger.trust')}</span>
-                <span>{t('home.ledger.next')}</span>
-              </p>
-              <ul className="ac1-buyers" aria-label={t('home.buyers.aria')}>
-                {buyers.map(([name, note, fact, state]) => (
-                  <li key={name}>
-                    <strong>{t(name)}</strong>
-                    <span>{t(note)}</span>
-                    <FactLabel label={fact} english />
-                    <span className="ac1-state">{t(state)}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-          <div className="ac1-proof">
-            <div>
-              <h3 className="ac1-proof-title">
-                <CorridraIcon name="buy" /> {t('home.quotes.title')}
-              </h3>
-              <p>{t('home.quotes.text')}</p>
-            </div>
-            <div className="ac1-exhibit">
-              <p className="ac1-exhibit-head">
-                <span className="ac1-example-tag">{t('home.example')}</span>
-                <span>{t('home.exhibit.suppliers')}</span>
-              </p>
-              <div className="ac1-compare" role="table" aria-label={t('home.quotes.aria')}>
-                <div className="ac1-compare-row ac1-compare-head" role="row">
-                  <span role="columnheader">{t('home.quotes.term')}</span>
-                  {suppliers.map((supplier) => (
-                    <span role="columnheader" key={supplier}>
-                      {t(supplier)}
-                    </span>
-                  ))}
-                </div>
-                {quotes.map((quote) => (
-                  <div className="ac1-compare-row" role="row" key={quote.term}>
-                    <span role="rowheader">
-                      {t(quote.term)}
-                      {quote.note ? <small>{t(quote.note)}</small> : null}
-                    </span>
-                    {quote.values.map(([cell, tone], index) => (
-                      <span
-                        role="cell"
-                        key={suppliers[index]}
-                        data-supplier={t(suppliers[index])}
-                        data-tone={tone}
-                      >
-                        {'key' in cell ? (
-                          t(cell.key)
-                        ) : (
-                          // An amount or a delivery code is written the same in every language.
-                          <span lang="en" dir="ltr">
-                            {cell.text}
-                          </span>
-                        )}
+      <SubTabs
+        label="Home sections"
+        className="ac1-tabs"
+        tabs={[
+          { id: 'example', label: 'Example', panel: <HomeExampleRecord /> },
+          {
+            id: 'steps',
+            label: 'Steps',
+            panel: (
+              <section className="ac1-section" aria-labelledby="steps-title">
+                <p className="label ac1-rule">{t('home.how')}</p>
+                <h2 id="steps-title">{t('home.steps.title')}</h2>
+                <p className="ac1-lead">{t('home.steps.lead')}</p>
+                <ol className="ac1-steps" aria-label={t('home.steps.aria')}>
+                  {steps.map(([title, text], index) => (
+                    <li key={title}>
+                      <span className="ac1-step-number" aria-hidden="true">
+                        {String(index + 1).padStart(2, '0')}
                       </span>
-                    ))}
+                      <h3>{t(title)}</h3>
+                      <p>{t(text)}</p>
+                    </li>
+                  ))}
+                </ol>
+                <Link prefetch={false} className="ac1-quiet" href="/how-it-works">
+                  {t('home.steps.more')} <Arrow />
+                </Link>
+              </section>
+            ),
+          },
+          {
+            id: 'results',
+            label: 'Results',
+            panel: (
+              <section className="ac1-section" aria-labelledby="proof-title">
+                <p className="label ac1-rule">{t('home.example')}</p>
+                <h2 id="proof-title">{t('home.proof.title')}</h2>
+                <p className="ac1-lead">{t('home.proof.lead')}</p>
+                <div className="ac1-proof-nav">
+                  <button type="button" onClick={() => turn(-1)} aria-controls="home-proofs">
+                    <span aria-hidden="true">‹</span> {t('home.proof.prev')}
+                  </button>
+                  <button type="button" onClick={() => turn(1)} aria-controls="home-proofs">
+                    {t('home.proof.next')} <span aria-hidden="true">›</span>
+                  </button>
+                </div>
+                <div
+                  ref={proofs}
+                  id="home-proofs"
+                  className="ac1-proofs"
+                  role="region"
+                  aria-label={t('home.proof.aria')}
+                  tabIndex={0}
+                >
+                  <div className="ac1-proof">
+                    <div>
+                      <h3 className="ac1-proof-title">
+                        <CorridraIcon name="sell" /> {t('home.buyers.title')}
+                      </h3>
+                      <p>{t('home.buyers.text')}</p>
+                    </div>
+                    <div className="ac1-exhibit">
+                      <p className="ac1-exhibit-head">
+                        <span className="ac1-example-tag">{t('home.example')}</span>
+                        <span>{t('home.exhibit.companies')}</span>
+                      </p>
+                      <p className="ac1-ledger-head" aria-hidden="true">
+                        <span>{t('home.ledger.company')}</span>
+                        <span>{t('home.ledger.why')}</span>
+                        <span>{t('home.ledger.trust')}</span>
+                        <span>{t('home.ledger.next')}</span>
+                      </p>
+                      <ul className="ac1-buyers" aria-label={t('home.buyers.aria')}>
+                        {buyers.map(([name, note, fact, state]) => (
+                          <li key={name}>
+                            <strong>{t(name)}</strong>
+                            <span>{t(note)}</span>
+                            <FactLabel label={fact} english />
+                            <span className="ac1-state">{t(state)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="ac1-section" aria-labelledby="facts-title">
-        <p className="label ac1-rule">{t('home.facts.eyebrow')}</p>
-        <h2 id="facts-title">{t('home.facts.title')}</h2>
-        <p className="ac1-lead">{t('home.facts.lead')}</p>
-        <ul className="ac1-truth">
-          {factLabels.map((fact) => (
-            <li key={fact.label}>
-              <FactLabel label={fact.label} english />
-              <span>{t(factLines[fact.label])}</span>
-            </li>
-          ))}
-        </ul>
-        <Link prefetch={false} className="ac1-quiet" href="/trust">
-          {t('home.facts.more')} <Arrow />
-        </Link>
-      </section>
-
-      <section className="ac1-section" aria-labelledby="routes-title">
-        <p className="label ac1-rule">{t('home.routes.eyebrow')}</p>
-        <h2 id="routes-title">{t('home.routes.title')}</h2>
-        <p className="ac1-lead">{t('home.routes.lead')}</p>
-        <div className="ac1-routes">
-          {routes.map((route, index) => (
-            <article key={route.href}>
-              <p className="ac1-route-tag">
-                {t('home.route.tag')} {String(index + 1).padStart(2, '0')}
-              </p>
-              <h3>
-                {t(route.from)} <CorridraIcon name="arrow" className="ac1-route-arrow" />{' '}
-                {t(route.to)}
-              </h3>
-              <p>{t(route.text)}</p>
-              <Link prefetch={false} className="ac1-quiet" href={route.href}>
-                {t('home.route.more')} <Arrow />
-              </Link>
-            </article>
-          ))}
-          <div className="ac1-other">
-            <p className="ac1-route-tag">{t('home.other.tag')}</p>
-            <h3>{t('home.other.title')}</h3>
-            <p>{t('home.other.text')}</p>
-            <Link prefetch={false} className="button-secondary" href="/corridors">
-              {t('home.other.link')}
-            </Link>
-          </div>
-        </div>
-      </section>
+                  <div className="ac1-proof">
+                    <div>
+                      <h3 className="ac1-proof-title">
+                        <CorridraIcon name="buy" /> {t('home.quotes.title')}
+                      </h3>
+                      <p>{t('home.quotes.text')}</p>
+                    </div>
+                    <div className="ac1-exhibit">
+                      <p className="ac1-exhibit-head">
+                        <span className="ac1-example-tag">{t('home.example')}</span>
+                        <span>{t('home.exhibit.suppliers')}</span>
+                      </p>
+                      <div className="ac1-compare" role="table" aria-label={t('home.quotes.aria')}>
+                        <div className="ac1-compare-row ac1-compare-head" role="row">
+                          <span role="columnheader">{t('home.quotes.term')}</span>
+                          {suppliers.map((supplier) => (
+                            <span role="columnheader" key={supplier}>
+                              {t(supplier)}
+                            </span>
+                          ))}
+                        </div>
+                        {quotes.map((quote) => (
+                          <div className="ac1-compare-row" role="row" key={quote.term}>
+                            <span role="rowheader">
+                              {t(quote.term)}
+                              {quote.note ? <small>{t(quote.note)}</small> : null}
+                            </span>
+                            {quote.values.map(([cell, tone], index) => (
+                              <span
+                                role="cell"
+                                key={suppliers[index]}
+                                data-supplier={t(suppliers[index])}
+                                data-tone={tone}
+                              >
+                                {'key' in cell ? (
+                                  t(cell.key)
+                                ) : (
+                                  // An amount or a delivery code is written the same in every language.
+                                  <span lang="en" dir="ltr">
+                                    {cell.text}
+                                  </span>
+                                )}
+                              </span>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            ),
+          },
+          {
+            id: 'facts',
+            label: 'Facts',
+            panel: (
+              <section className="ac1-section" aria-labelledby="facts-title">
+                <p className="label ac1-rule">{t('home.facts.eyebrow')}</p>
+                <h2 id="facts-title">{t('home.facts.title')}</h2>
+                <p className="ac1-lead">{t('home.facts.lead')}</p>
+                <ul className="ac1-truth">
+                  {factLabels.map((fact) => (
+                    <li key={fact.label}>
+                      <FactLabel label={fact.label} english />
+                      <span>{t(factLines[fact.label])}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Link prefetch={false} className="ac1-quiet" href="/trust">
+                  {t('home.facts.more')} <Arrow />
+                </Link>
+              </section>
+            ),
+          },
+          {
+            id: 'routes',
+            label: 'Routes',
+            panel: (
+              <section className="ac1-section" aria-labelledby="routes-title">
+                <p className="label ac1-rule">{t('home.routes.eyebrow')}</p>
+                <h2 id="routes-title">{t('home.routes.title')}</h2>
+                <p className="ac1-lead">{t('home.routes.lead')}</p>
+                <div className="ac1-routes">
+                  {routes.map((route, index) => (
+                    <article key={route.href}>
+                      <p className="ac1-route-tag">
+                        {t('home.route.tag')} {String(index + 1).padStart(2, '0')}
+                      </p>
+                      <h3>
+                        {t(route.from)} <CorridraIcon name="arrow" className="ac1-route-arrow" />{' '}
+                        {t(route.to)}
+                      </h3>
+                      <p>{t(route.text)}</p>
+                      <Link prefetch={false} className="ac1-quiet" href={route.href}>
+                        {t('home.route.more')} <Arrow />
+                      </Link>
+                    </article>
+                  ))}
+                  <div className="ac1-other">
+                    <p className="ac1-route-tag">{t('home.other.tag')}</p>
+                    <h3>{t('home.other.title')}</h3>
+                    <p>{t('home.other.text')}</p>
+                    <Link prefetch={false} className="button-secondary" href="/corridors">
+                      {t('home.other.link')}
+                    </Link>
+                  </div>
+                </div>
+              </section>
+            ),
+          },
+        ]}
+      />
 
       <section className="guide-band ac1-band" aria-label={t('home.start')}>
         <div>
