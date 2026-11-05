@@ -18,6 +18,8 @@ import {
 // The last track PR switches the guard to failing over the hard limit.
 
 const routes = pageRoutes();
+// Audiences whose pages open with no sign-in: the public site and the public intake and sign-in pages.
+const publicAudiences = new Set(['public', 'public intake and customer identity']);
 
 test('page length: every page route in COVERAGE.json is measured or recorded with a reason', async ({
   page,
@@ -26,7 +28,11 @@ test('page length: every page route in COVERAGE.json is measured or recorded wit
   const rows: Measurement[] = [];
   for (const entry of routes) {
     for (const viewport of viewports) {
-      if (hasDynamicSegment(entry.route)) {
+      if (!publicAudiences.has(entry.audience)) {
+        // A signed-in or private-link page measured without its session would be the sign-in or an
+        // empty state. Its owning track measures it with its own sign-in or link fixture.
+        rows.push(notMeasured(entry, viewport, 'needs a signed-in session or a private link'));
+      } else if (hasDynamicSegment(entry.route)) {
         rows.push(notMeasured(entry, viewport, 'dynamic segment: needs a fixture address'));
       } else {
         rows.push(await measure(page, entry, entry.route, viewport));
