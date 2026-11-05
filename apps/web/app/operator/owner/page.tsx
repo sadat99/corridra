@@ -12,6 +12,7 @@ import {
 } from '@corridra/auth/deferred-controls';
 import { AccessState, StatusBadge } from '../../../components/access-state';
 import { FrontDoor } from '../../../components/front-door';
+import { ShowMoreList } from '../../../components/ux/show-more';
 import { SubTabs } from '../../../components/ux/sub-tabs';
 import { TeamContextPublisher } from '../../../components/ux/team-context-publisher';
 import { WorkspaceShell } from '../../../components/workspace-shell';
@@ -201,7 +202,7 @@ export default async function Page({
                     These {deferredControls.length} controls are open. Each one is deferred by your
                     decision to launch at small scale. None of them is passed or approved.
                   </p>
-                  <ul className="owner-gaps owner-gap-cards">
+                  <ShowMoreList className="owner-gaps owner-gap-cards" limit={4} noun="open gaps">
                     {deferredControls.map((control) => {
                       const gap = ownerGaps.find((g) => g.id === control.id);
                       const signal = gap ? gapSignal(gap.id) : null;
@@ -227,7 +228,7 @@ export default async function Page({
                         </li>
                       );
                     })}
-                  </ul>
+                  </ShowMoreList>
                 </section>
               </>
             ),
