@@ -31,7 +31,7 @@ import './move-view.css';
 // The last reply a person marked as read, per request. It lives in this browser only (the same
 // idea as the language choice): the server never learns what was read, and "forget" clears it.
 const seenKey = 'corridra.move.seen';
-const firstShown = 5;
+const firstShown = 3;
 
 function parse(text: string): Record<string, string> {
   try {
@@ -247,8 +247,12 @@ export function MoveView({
   const cards = journey ? journeys.filter((card) => card.journey === journey) : journeys;
   const waiting = model.waiting.filter((row) => shown(row.id));
   const participant = !journey ? (facts?.participant ?? null) : null;
+  // The latest request has its own card only when no journey card already shows it.
   const latestShown =
-    !participant && model.latest && (!journey || latestItem?.journey === journey)
+    !participant &&
+    model.latest &&
+    !cards.some((card) => card.kind === 'request' && card.id === model.latest?.id) &&
+    (!journey || latestItem?.journey === journey)
       ? model.latest
       : null;
 
@@ -304,24 +308,33 @@ export function MoveView({
         ) : null}
       </div>
 
-      <div className="move-grid" data-latest={latestShown || participant ? 'true' : 'false'}>
+      <div className="move-grid" data-latest={latestShown || waiting.length > 0 ? 'true' : 'false'}>
         <section className="move-card" aria-labelledby="move-you">
           <h2 id="move-you">{say('move.you.heading')}</h2>
           <span className="move-count" data-hot={nothing ? 'false' : 'true'}>
             <span className="sr-only">: </span>
             {count}
           </span>
+          {/* With work on the page the shortcuts give way, so the way to start a request stays here. */}
+          {!nothing ? (
+            <Link prefetch={false} className="move-card-link" href={startHref}>
+              <span>{say('move.start')}</span>
+              <CorridraIcon name="arrow" />
+            </Link>
+          ) : null}
           {nothing && unreadable ? (
             <div className="move-empty" role="status" lang="en">
               <p>
                 <strong>{unreadWords.title}</strong> {unreadWords.text}
               </p>
-              <a className="text-link ux-action" href="/account/move">
-                {unreadWords.retry}
-              </a>
-              <Link prefetch={false} className="text-link ux-action" href={startHref}>
-                {say('move.start')}
-              </Link>
+              <div className="move-empty-actions">
+                <a className="text-link ux-action" href="/account/move">
+                  {unreadWords.retry}
+                </a>
+                <Link prefetch={false} className="text-link ux-action" href={startHref}>
+                  {say('move.start')}
+                </Link>
+              </div>
             </div>
           ) : nothing ? (
             <div className="move-empty" role="status">
@@ -357,42 +370,85 @@ export function MoveView({
           )}
         </section>
 
-        {participant ? <ParticipantCard facts={participant} /> : null}
-        {latestShown ? (
-          <section className="move-card" aria-labelledby="move-latest">
-            <h2 id="move-latest">{say('move.empty.latest')}</h2>
-            <Link prefetch={false} className="move-card-link" href={latestShown.href}>
-              <span>{say('move.wait.open')}</span>
-              <CorridraIcon name="arrow" />
-            </Link>
-            <div className="move-latest">
-              {latestItem?.title ? (
-                <p className="move-latest-title" dir="auto">
-                  {latestItem.title}
-                </p>
-              ) : null}
-              <p className="move-latest-top">
-                <span className="move-latest-sent">
-                  {latestItem?.journey ? `${journeyWords[latestItem.journey]} · ` : ''}
-                  {fill(say('move.received'), {
-                    date: day(latestShown.createdAt.slice(0, 10), locale),
+        {latestShown || waiting.length > 0 ? (
+          <div className="move-side">
+            {latestShown ? (
+              <section className="move-card" aria-labelledby="move-latest">
+                <h2 id="move-latest">{say('move.empty.latest')}</h2>
+                <Link prefetch={false} className="move-card-link" href={latestShown.href}>
+                  <span>{say('move.wait.open')}</span>
+                  <CorridraIcon name="arrow" />
+                </Link>
+                <div className="move-latest">
+                  {latestItem?.title ? (
+                    <p className="move-latest-title" dir="auto">
+                      {latestItem.title}
+                    </p>
+                  ) : null}
+                  <p className="move-latest-top">
+                    <span className="move-latest-sent">
+                      {latestItem?.journey ? `${journeyWords[latestItem.journey]} · ` : ''}
+                      {fill(say('move.received'), {
+                        date: day(latestShown.createdAt.slice(0, 10), locale),
+                      })}
+                    </span>
+                    {latestItem?.statusWords ? (
+                      <span className="move-badge" lang="en">
+                        {latestItem.statusWords}
+                      </span>
+                    ) : null}
+                  </p>
+                  {latestShown.status ? (
+                    <StageBar status={latestShown.status} labels={labels.road} named />
+                  ) : null}
+                </div>
+              </section>
+            ) : null}
+            {waiting.length > 0 ? (
+              <section className="move-card" aria-labelledby="move-others">
+                <h2 id="move-others">{say('move.others.heading')}</h2>
+                <span className="move-count">{waiting.length}</span>
+                <RowList
+                  label={say('move.others.heading')}
+                  title="Request"
+                  columns={[{ name: 'Held by' }, { name: 'Where it stands' }]}
+                  lang="en"
+                >
+                  {waiting.map((row) => {
+                    const holders = row.holder === 'owner' ? ownerHolders : labels.holder;
+                    const title =
+                      row.kind !== 'move' && row.title
+                        ? row.title
+                        : fill(say('move.received'), {
+                            date: row.received ? day(row.received, locale) : '',
+                          });
+                    return (
+                      <RowLink
+                        key={row.id}
+                        href={row.href}
+                        title={title}
+                        cells={[
+                          {
+                            name: 'Held by',
+                            value: holders[row.holder === 'team' ? 'team' : 'third'],
+                          },
+                          {
+                            name: 'Where it stands',
+                            value: waitingLine(row),
+                            lang: row.kind === 'move' ? 'en' : undefined,
+                          },
+                        ]}
+                      />
+                    );
                   })}
-                </span>
-                {latestItem?.statusWords ? (
-                  <span className="move-badge" lang="en">
-                    {latestItem.statusWords}
-                  </span>
-                ) : null}
-              </p>
-              {latestShown.status ? (
-                <StageBar status={latestShown.status} labels={labels.road} named />
-              ) : null}
-            </div>
-          </section>
+                </RowList>
+              </section>
+            ) : null}
+          </div>
         ) : null}
       </div>
 
-      {cards.length > 0 ? (
+      {cards.length > 0 || participant ? (
         <section className="move-journeys" aria-labelledby="move-journeys" lang="en">
           <h2 id="move-journeys" className="sr-only">
             Your work by journey
@@ -406,44 +462,7 @@ export function MoveView({
               locale={locale}
             />
           ))}
-        </section>
-      ) : null}
-
-      {waiting.length > 0 ? (
-        <section className="move-card" aria-labelledby="move-others">
-          <h2 id="move-others">{say('move.others.heading')}</h2>
-          <span className="move-count">{waiting.length}</span>
-          <RowList
-            label={say('move.others.heading')}
-            title="Request"
-            columns={[{ name: 'Held by' }, { name: 'Where it stands' }]}
-            lang="en"
-          >
-            {waiting.map((row) => {
-              const holders = row.holder === 'owner' ? ownerHolders : labels.holder;
-              const title =
-                row.kind !== 'move' && row.title
-                  ? row.title
-                  : fill(say('move.received'), {
-                      date: row.received ? day(row.received, locale) : '',
-                    });
-              return (
-                <RowLink
-                  key={row.id}
-                  href={row.href}
-                  title={title}
-                  cells={[
-                    { name: 'Held by', value: holders[row.holder === 'team' ? 'team' : 'third'] },
-                    {
-                      name: 'Where it stands',
-                      value: waitingLine(row),
-                      lang: row.kind === 'move' ? 'en' : undefined,
-                    },
-                  ]}
-                />
-              );
-            })}
-          </RowList>
+          {participant ? <ParticipantCard facts={participant} /> : null}
         </section>
       ) : null}
 
@@ -466,37 +485,28 @@ export function MoveView({
         </p>
       ) : null}
 
-      <nav className="move-shortcuts" aria-label="Shortcuts" lang="en">
-        {!nothing ? (
-          <Link prefetch={false} className="move-tile" href={startHref}>
+      {/* The shortcuts guide an empty Home. With work on the page, New Request is in the header and the
+          other two are in All tools, so the busy Home stays within one screen (owner rule). */}
+      {nothing ? (
+        <nav className="move-shortcuts" aria-label="Shortcuts" lang="en">
+          <Link prefetch={false} className="move-tile" href="/plan#receipt-check">
             <span className="move-tile-mark" aria-hidden="true">
-              <CorridraIcon name="draft" />
+              <CorridraIcon name="search" />
             </span>
             <span className="move-tile-words">
-              <b>{say('move.start')}</b>
-              <small>Sell, source, organise or plan a trip.</small>
+              <b>Check a Request Receipt</b>
+              <small>See progress and replies on a request you sent.</small>
             </span>
           </Link>
-        ) : null}
-        <Link prefetch={false} className="move-tile" href="/plan#receipt-check">
-          <span className="move-tile-mark" aria-hidden="true">
-            <CorridraIcon name="search" />
-          </span>
-          <span className="move-tile-words">
-            <b>Check a Request Receipt</b>
-            <small>See progress and replies on a request you sent.</small>
-          </span>
-        </Link>
-        <Link prefetch={false} className="move-tile" href="/account?view=results">
-          <span className="move-tile-mark" aria-hidden="true">
-            <CorridraIcon name="open" />
-          </span>
-          <span className="move-tile-words">
-            <b>Open a Shared Mission</b>
-            <small>Paste the private link you were sent.</small>
-          </span>
-        </Link>
-        {nothing ? (
+          <Link prefetch={false} className="move-tile" href="/account?view=results">
+            <span className="move-tile-mark" aria-hidden="true">
+              <CorridraIcon name="open" />
+            </span>
+            <span className="move-tile-words">
+              <b>Open a Shared Mission</b>
+              <small>Paste the private link you were sent.</small>
+            </span>
+          </Link>
           <Link prefetch={false} className="move-tile" href="/account?view=work">
             <span className="move-tile-mark" aria-hidden="true">
               <CorridraIcon name="work" />
@@ -506,8 +516,8 @@ export function MoveView({
               <small>Every request in your workspaces.</small>
             </span>
           </Link>
-        ) : null}
-      </nav>
+        </nav>
+      ) : null}
 
       {seen && Object.keys(seen).length > 0 ? (
         <div className="move-foot">

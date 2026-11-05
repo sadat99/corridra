@@ -23,6 +23,7 @@ export function StageBar({
   labels = mrLabels.road,
   name,
   named = false,
+  note,
 }: {
   /** The mission status a customer may read, exactly as returned (for example `MEETINGS`). */
   status: string;
@@ -32,6 +33,8 @@ export function StageBar({
   name?: string;
   /** Show each stage's name under its segment (Home's request card). The bar is unchanged otherwise. */
   named?: boolean;
+  /** A short fact that follows the stage on the same line ("8 companies shortlisted"). */
+  note?: string;
 }) {
   const marker = statusToRoadStep(status);
   const states = roadStates(marker, records);
@@ -79,6 +82,7 @@ export function StageBar({
         ) : (
           aside
         )}
+        {note ? ` · ${note}` : null}
       </p>
     </div>
   );

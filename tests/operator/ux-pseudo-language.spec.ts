@@ -133,6 +133,9 @@ for (const width of [320, 390, 768, 1440]) {
         () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
       ),
     ).toBe(true);
+    // Open every fold first, so each control is measured, including the cards behind "Show more".
+    for (const summary of await page.locator('.move-view details.move-more > summary').all())
+      await summary.click();
     for (const control of await page
       .locator('.move-view a, .move-view button, .mr-fq-card')
       .all()) {

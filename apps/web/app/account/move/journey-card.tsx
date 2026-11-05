@@ -24,7 +24,7 @@ function Stats({ items, label }: { items: Stat[]; label: string }) {
       {items.map((item) => (
         <div key={item.label} className="move-stat" data-warn={item.warn ? 'true' : undefined}>
           <dt>{item.label}</dt>
-          <dd>{item.value}</dd>
+          <dd data-words={/^[0-9]/.test(item.value) ? undefined : 'true'}>{item.value}</dd>
         </div>
       ))}
     </dl>
@@ -40,19 +40,39 @@ function Private({ children }: { children: string }) {
   );
 }
 
+/** "9 to 13 Apr 2027", "28 Mar to 2 Apr 2027" or the two full dates, in the programme's own time zone. */
+export function dateRange(start: string, end: string, timeZone: string, locale: string) {
+  const parts = (value: string) => {
+    try {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return null;
+      const get = (o: Intl.DateTimeFormatOptions) =>
+        new Intl.DateTimeFormat(locale, { ...o, timeZone }).format(date);
+      return {
+        day: get({ day: 'numeric' }),
+        month: get({ month: 'short' }),
+        year: get({ year: 'numeric' }),
+      };
+    } catch {
+      return null;
+    }
+  };
+  const a = parts(start);
+  const b = parts(end);
+  if (!a || !b) return '';
+  if (a.year !== b.year) return `${a.day} ${a.month} ${a.year} to ${b.day} ${b.month} ${b.year}`;
+  if (a.month !== b.month) return `${a.day} ${a.month} to ${b.day} ${b.month} ${b.year}`;
+  return a.day === b.day
+    ? `${a.day} ${a.month} ${a.year}`
+    : `${a.day} to ${b.day} ${b.month} ${b.year}`;
+}
+
 const shared = (n: number | null) => (n === null ? 'Not shared' : String(n));
 
 function sourceBody(f: SourceFacts) {
-  const backing = [
-    f.evidence ? `${f.evidence} with evidence` : '',
-    f.selfDeclared ? `${f.selfDeclared} self-declared` : '',
-  ].filter(Boolean);
+  // How each quote is backed is shown on its own card in the report; Home counts the verified ones.
   return {
-    meta: f.quotes
-      ? backing.length
-        ? `Each quote shows how it is backed: ${backing.join(', ')}.`
-        : 'Each quote shows how it is backed.'
-      : 'No quotes on the current request yet.',
+    meta: f.quotes ? '' : 'No quotes on the current request yet',
     stats: [
       { value: String(f.quotes), label: plural(f.quotes, 'quote in', 'quotes in') },
       { value: String(f.notComparable), label: 'not comparable', warn: f.notComparable > 0 },
@@ -74,29 +94,22 @@ function sellBody(f: SellFacts) {
 
 function organiseBody(f: OrganiseFacts, locale: string) {
   const zone = f.timezone ?? 'UTC';
-  const dates =
-    f.startsAt && f.endsAt
-      ? `${formatDate(f.startsAt, { timeZone: zone, locale })} to ${formatDate(f.endsAt, { timeZone: zone, locale })}`
-      : '';
-  const people = `${f.participants} ${plural(f.participants, 'participant', 'participants')}, ${f.ready} ready`;
+  const dates = f.startsAt && f.endsAt ? dateRange(f.startsAt, f.endsAt, zone, locale) : '';
+  const people = [
+    `${f.ready} ready`,
+    f.invitationsOpen === null ? '' : `${f.invitationsOpen} invites open`,
+    f.conflicts ? `${f.conflicts} ${plural(f.conflicts, 'conflict', 'conflicts')}` : '',
+  ].filter(Boolean);
   return {
-    meta: [dates, people].filter(Boolean).join(' · '),
+    meta: [dates, people.join(', ')].filter(Boolean).join(' · '),
     stats: [
-      ...(f.invitationsOpen === null
-        ? []
-        : [{ value: f.invitationsOpen, label: 'invitations open' }]),
-      { value: shared(f.scheduled), label: 'meetings scheduled' },
+      {
+        value: String(f.participants),
+        label: plural(f.participants, 'participant', 'participants'),
+      },
+      { value: shared(f.scheduled), label: 'scheduled' },
       { value: shared(f.qualifiedHeld), label: 'qualified' },
-      ...(f.conflicts
-        ? [
-            {
-              value: String(f.conflicts),
-              label: plural(f.conflicts, 'conflict', 'conflicts'),
-              warn: true,
-            },
-          ]
-        : []),
-    ].slice(0, 3),
+    ],
   };
 }
 
@@ -135,18 +148,16 @@ export function JourneyCardView({
       </header>
       <div className="move-journey-body">
         {card.status ? (
-          <StageBar status={card.status} labels={labels} />
+          <StageBar status={card.status} labels={labels} note={body?.meta || undefined} />
         ) : card.statusWords ? (
           <p className="move-journey-status">{card.statusWords}</p>
         ) : null}
         {body ? (
           <>
-            {body.meta ? <p className="move-journey-status">{body.meta}</p> : null}
+            {body.meta && !card.status ? <p className="move-journey-status">{body.meta}</p> : null}
             <Stats items={body.stats} label={`${title}: numbers`} />
             {card.journey === 'organise' ? (
-              <Private>
-                Counts only. Participants&apos; quotes and costs stay private to them.
-              </Private>
+              <Private>Counts only. Participants&apos; details stay private.</Private>
             ) : null}
           </>
         ) : (
@@ -169,30 +180,31 @@ export function JourneyCardView({
   );
 }
 
+/** Taking part: shown with the journeys, only for a programme the person is registered for. */
 export function ParticipantCard({ facts }: { facts: ParticipantFacts }) {
   return (
-    <section className="move-card move-taking-part" aria-labelledby="move-taking-part" lang="en">
-      <h2 id="move-taking-part">Taking part</h2>
-      <span className="move-tag move-head-tag" data-journey="part">
-        Participant
-      </span>
-      <div className="move-part">
-        <p className="move-latest-title" dir="auto">
+    <article className="move-journey" data-journey="part" aria-labelledby="move-journey-part">
+      <header className="move-journey-head">
+        <span className="move-tag" data-journey="part">
+          Taking part
+        </span>
+        <h3 id="move-journey-part" dir="auto">
           {facts.name}
-        </p>
-        <p className="move-journey-status">
-          {facts.registered === 1
-            ? 'You are registered for this programme.'
-            : `You are registered for ${facts.registered} programmes.`}
-        </p>
+        </h3>
+      </header>
+      <div className="move-journey-body">
         <Private>
-          Your quotes, contacts and costs stay private. Organisers see only the display name you
-          agreed to share.
+          Your quotes, contacts and costs stay private. Organisers see only the name you agreed to
+          share.
         </Private>
-        <Link prefetch={false} className="button button-primary move-part-action" href={facts.href}>
-          Open My Programmes
-        </Link>
       </div>
-    </section>
+      <footer className="move-journey-foot">
+        <span>{facts.registered === 1 ? 'Registered' : `Registered for ${facts.registered}`}</span>
+        <Link prefetch={false} className="move-card-link" href={facts.href}>
+          <span>Open My Programmes</span>
+          <CorridraIcon name="arrow" />
+        </Link>
+      </footer>
+    </article>
   );
 }
