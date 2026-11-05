@@ -119,3 +119,36 @@ describe('CX PR 2a: Move, the stage and the actions', () => {
     expect(empty2).not.toMatch(/<a class="button"/);
   });
 });
+
+// CX-02: what the Move page linked to before this change (a card's action, each waiting row's Open link, the
+// latest request's Open link, Start a request) is what it links to now. Written from the old markup.
+describe('CX-02: Move keeps every destination it had', () => {
+  it('links every card, every waiting row and the way to start', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const html = render(MoveView, { model: busy, startHref: '/plan/start' });
+    for (const card of busy.cards) if (card.href) expect(html).toContain(`href="${card.href}"`);
+    for (const row of busy.waiting) expect(html).toContain(`href="${row.href}"`);
+    expect(html).toContain('href="/plan/start"');
+  });
+  it('links the latest request and the way to start when nothing is waiting', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const quiet = buildMoveModel({
+      ...empty,
+      workspaces: [owner],
+      requests: [
+        {
+          id: 'r9',
+          workspaceId: owner.id,
+          createdAt: '2026-10-02T00:00:00Z',
+          progress: { status: 'FOLLOW_UP', receivedAt: '2026-10-02T09:00:00Z', replies: [] },
+        },
+      ],
+    });
+    const html = render(MoveView, { model: quiet, startHref: '/plan/start' });
+    expect(quiet.latest).not.toBeNull();
+    expect(html).toContain(`href="${quiet.latest!.href}"`);
+    expect(html).toContain('href="/plan/start"');
+    expect(html).toContain('>Start a request<');
+    expect(html).toContain('>Open<');
+  });
+});

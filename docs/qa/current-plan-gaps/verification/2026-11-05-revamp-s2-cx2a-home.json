@@ -1,0 +1,45 @@
+{
+  "recordedOn": "2026-11-05",
+  "batch": "Revamp S2 Customer Work: CX PR 2a, Home, the phone Menu icon, three 429 send actions and the shared components",
+  "kind": "Home and Move to docs/revamp/specs/customer-experience.md; shared row-link list, segmented filter, dialog and empty state in components/ux; the three send actions that still told people to retry at once on a 429.",
+  "findings": [],
+  "findingsNote": "No gap is created or changed. No route, table, migration, switch, provider, payment or write is added.",
+  "status": "Built on branch revamp/customer over main f7784108 (PR 295). CI on the exact pushed head is the verifier; see the pull request for its result.",
+  "newFiles": [
+    "apps/web/components/ux/row-list.tsx, segmented-filter.tsx, dialog.tsx, empty-state.tsx and their css",
+    "apps/web/components/mr/stage-bar.tsx, stage-bar.css",
+    "apps/web/app/account/home-next-step.tsx, home-work.tsx",
+    "tests/operator/revamp-cx2-components.spec.ts (8 cases: CX-04, CX-05), revamp-cx2-move-shots.spec.ts (screenshots only)",
+    "tests/integration/revamp-cx2-home.test.ts (7), revamp-cx2-move.test.ts (6)",
+    "tests/e2e/verification/revamp-s2/customer-home.spec.ts, customer-page-length.spec.ts",
+    "docs/design-system/evidence/revamp-cx2/before and after (Home, Requests, Reports, Account, Companies, and the Move page full and quiet, at 390 and 1440)"
+  ],
+  "changedFiles": [
+    "apps/web/app/account/page.tsx: Home uses the next-step row and Active work; apps/web/components/next-step-card.tsx removed (only Home used it)",
+    "apps/web/app/account/move/move-view.tsx: what others hold is a row list, the latest request is the stage bar, the start link is quiet",
+    "apps/web/components/mr/move-card.tsx: the card action is a secondary button",
+    "apps/web/components/ux/customer-bar.css: the Menu button is an icon below 700 px",
+    "apps/web/app/account/assigned-missions.tsx, missions/saved-commercial-report.tsx, missions/specification-confirmation.tsx: a 429 shows the shared limit words and keeps the same command"
+  ],
+  "decisions": {
+    "tests": "Existing tests edited, none weakened: ux-move.spec.ts now matches the exact action name 'Accept or decline' (a waiting row's own sentence contains those words and is a row link whose accessible name is its visible text, WCAG 2.5.3, which axe enforces); ux-teaching-layer.test.ts lists home-work.tsx among the screens that mount the mr components, as the test itself says each lane must.",
+    "oneFilledAction": "The header's New request is the only filled in-page-visible action on Home and Move. Card actions, the start link and the next-step row are secondary or quiet.",
+    "owner": "Active work rows show Kind, Status and Date. A work item has no owner field, so no owner column is invented; the Move page's waiting rows do show who holds them.",
+    "stage": "The stage bar reads the same marker as the Road. Compare and Decide with no record are plain grey segments with no words. The Road itself (request room, programme room) is unchanged in this PR.",
+    "requests": "The Requests page is not changed here: its tabs, filter and workspaces table are CX PR 2b, after the shared sub-tabs lands."
+  },
+  "receipts": {
+    "429": "Three cases written red first (each failed with the 'interrupted' or 'not confirmed' wording), then green; revamp-wave6, specification-confirmation, v3-customer-delivery-ui and v3-saved-commercial-ui operator specs: 67 passed.",
+    "components": "tests/operator/revamp-cx2-components.spec.ts: 8 passed at 390 and 1440 with axe wcag2a, wcag2aa, wcag21aa and wcag22aa, open and closed dialog, keyboard and Escape and focus return. The dialog's Tab wrap was added after the first run showed focus leaving the dialog.",
+    "home": "revamp-cx2-home.test.ts and revamp-cx2-move.test.ts written red first (modules missing, then three Move failures), then green; ux-front-door and revamp-truth-states unchanged and passing; ux-move.spec.ts 13 passed including axe at 320, 390, 768 and 1440.",
+    "verification": "playwright.verification.config.ts revamp-s2: customer-shell 24, customer-home 3 per width, page length (Home 1.0 screen at 390 and 1440 empty state) on a fresh production build with the test-only sign-in. The customer-home cases were written after the change, so they were not seen failing first.",
+    "preflight": "See the pull request: node scripts/preflight.mjs standard result is recorded there."
+  },
+  "notRun": [
+    "Home with real requests on a production build: the verification seed has no requests or workspaces, so Active work is covered by the integration test and not measured at 1440 x 900 with six requests (CX-01 for the filled state).",
+    "The Move page in a production build: it needs CORRIDRA_UX_NAV and CORRIDRA_UX_MOVE; it is screenshotted through the fixture and covered by ux-move.spec.ts.",
+    "A screen reader walk-through of the dialog and the row list.",
+    "The segmented filter and the dialog have no screen mounting them yet (Requests tabs and the Create and Join dialogs are CX PR 2b)."
+  ],
+  "sensitive": "No. Reads only what the pages already read; no new write, route or authority."
+}

@@ -27,7 +27,7 @@ export function HomeWorkView({ list }: { list: WorkList }) {
   const shown = list.items.slice(0, homeWorkRows);
   const newest = list.items.find((item) => item.kind === 'request' && item.status !== '');
   return (
-    <section aria-labelledby="home-work-title" className="home-work">
+    <section aria-labelledby="home-work-title" className="guide-area home-work">
       <h2 id="home-work-title">Active work</h2>
       {state === 'unreadable' && (
         <p role="status">

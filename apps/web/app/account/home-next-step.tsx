@@ -7,7 +7,7 @@ import { RowLink, RowList } from '../../components/ux/row-list';
  */
 export function HomeNextStep({ title, text, href }: { title: string; text: string; href: string }) {
   return (
-    <section aria-labelledby="next-step-title" className="home-next">
+    <section aria-labelledby="next-step-title" className="guide-area home-next">
       <h2 id="next-step-title">Your next step</h2>
       <RowList label="Your next step">
         <RowLink href={href} title={title} cells={[{ name: 'About', value: text }]} />
