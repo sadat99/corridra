@@ -382,7 +382,7 @@
     line-height: 1.2;
   }
   .ac1-home .ac1-quiet {
-    min-height: 2.25rem;
+    min-height: 2.75rem;
     font-size: var(--text-sm);
   }
   .ac1-home .ac1-calm {
@@ -402,7 +402,7 @@
   }
   .ac1-home .ac1-track li {
     padding-top: var(--space-2);
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
     line-height: 1.25;
   }
   .ac1-home .ac1-companies li {
@@ -494,7 +494,7 @@
   .ac1-home .ac1-calm {
     flex-wrap: wrap;
     gap: var(--space-1) var(--space-3);
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
   }
   .ac1-home .ac1-calm li {
     gap: var(--space-1);
