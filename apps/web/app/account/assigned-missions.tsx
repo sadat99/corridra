@@ -174,6 +174,12 @@ function PrivateAssignments({ subject, issuer }: SavedMissionScope) {
       if (!task.signal.aborted) router.push('/account/missions/' + receipt.id);
     } catch (e) {
       if (!task.signal.aborted) {
+        if (e instanceof Error && e.message === 'limit') {
+          // The list and the same command stay, so sending again later is the same save.
+          setBusy(false);
+          setNotice(limitWords);
+          return;
+        }
         failure(e);
         if (e instanceof Error && e.message === 'denied') setPending(null);
         else

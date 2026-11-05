@@ -149,6 +149,33 @@ test('customer reviews exact fields and explicitly confirms only the displayed p
   });
   await expect(page.getByRole('status')).toContainText('does not authorise a purchase');
 });
+const limitLine = 'The request limit was reached. Try again later.';
+test('a 429 on confirming says the limit was reached, not that the response was interrupted, and keeps the same command for later', async ({
+  page,
+}) => {
+  await open(page);
+  const commands: Record<string, unknown>[] = [];
+  await page.route('**/api/customer-specification-confirmations', async (route) => {
+    const command = route.request().postDataJSON();
+    commands.push(command);
+    if (commands.length === 1)
+      await route.fulfill({ status: 429, contentType: 'application/json', body: '{}' });
+    else
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ id: command.commandId, confirmed: true, replayed: false }),
+      });
+  });
+  await page.getByRole('button', { name: 'Review current requirements' }).click();
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Confirm these requirements', exact: true }).click();
+  await expect(page.getByRole('status')).toHaveText(limitLine);
+  await expect(page.getByText(/interrupted/)).toHaveCount(0);
+  await page.getByRole('button', { name: 'Retry same confirmation' }).click();
+  await expect(page.getByRole('status')).toContainText('confirmation was recorded');
+  expect(commands[1]).toEqual(commands[0]);
+});
 test('an interrupted confirmation retries the identical command and never invents success', async ({
   page,
 }) => {

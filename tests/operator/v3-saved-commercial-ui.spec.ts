@@ -434,6 +434,34 @@ function responseReport(body?: string) {
   });
   return value;
 }
+const limitLine = 'The request limit was reached. Try again later.';
+test('a 429 on sending a response says the limit was reached and keeps the same command for later', async ({
+  page,
+}) => {
+  const commands: Record<string, unknown>[] = [];
+  let recorded: string | undefined;
+  await page.route('**/api/customer-saved-missions', async (route) => {
+    const command = route.request().postDataJSON();
+    if (command.action === 'view') return route.fulfill({ json: responseReport(recorded) });
+    commands.push(command);
+    if (commands.length === 1)
+      return route.fulfill({ status: 429, json: { error: 'Too many requests' } });
+    recorded = command.body;
+    return route.fulfill({
+      json: { resourceId: id, response: { id: command.commandId, claimStatus: 'self_declared' } },
+    });
+  });
+  await page.goto(origin + '/?mode=report');
+  await page.getByLabel('Your response', { exact: true }).fill('Fictional supporting declaration');
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Send response', exact: true }).click();
+  await expect(page.getByText(limitLine)).toHaveCount(1);
+  await expect(page.getByText(/could not be confirmed/)).toHaveCount(0);
+  await page.getByRole('button', { name: 'Retry same response', exact: true }).click();
+  await expect(page.getByText(/Response recorded as your self-declaration/)).toBeVisible();
+  expect(commands).toHaveLength(2);
+  expect(commands[1]).toEqual(commands[0]);
+});
 test('uncertain evidence submission freezes exact text and command until the same self-declaration is acknowledged', async ({
   page,
 }) => {

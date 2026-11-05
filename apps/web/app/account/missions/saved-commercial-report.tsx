@@ -389,7 +389,10 @@ function PrivateReport({
           setNotice(
             'Access or request state changed. Local response recovery was cleared for privacy.',
           );
-        } else
+        } else if (error instanceof Error && error.message === 'limit')
+          // Nothing was processed, so the same command stays ready to send again later.
+          setNotice(limitWords);
+        else
           setNotice(
             'Response delivery could not be confirmed. Retry the same response before changing it.',
           );

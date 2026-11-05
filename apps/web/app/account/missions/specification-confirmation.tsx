@@ -133,7 +133,10 @@ function PrivateConfirmation({ subject, issuer, resourceId }: Props) {
         setPending(null);
         setChecked({});
         setMessage('Access or requirements changed. Reload before confirming.');
-      } else
+      } else if (error instanceof Error && error.message === 'limit')
+        // Nothing was processed, so the same command stays ready to send again later.
+        setMessage(limitWords);
+      else
         setMessage(
           'The response was interrupted. Retry the same confirmation to check whether it was recorded.',
         );
