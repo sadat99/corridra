@@ -1,0 +1,218 @@
+/* The customer left bar's workspace card (top) and Help and person (foot). Tokens only. */
+.ux-rail-workspace,
+.ux-rail-account {
+  display: flex;
+  width: 100%;
+}
+.ux-rail-workspace {
+  margin-bottom: var(--space-3);
+}
+.ux-rail-workspace > .ux-menu-button,
+.ux-rail-account > .ux-menu-button {
+  justify-content: flex-start;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2);
+  text-align: start;
+}
+.ux-rail-workspace > .ux-menu-button {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-1);
+}
+.ux-rail-mark,
+.ux-rail-face {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  background: var(--brand-deep);
+  color: var(--paper);
+  font-size: var(--text-xs);
+  font-weight: 650;
+}
+.ux-rail-face {
+  border-radius: 50%;
+  background: var(--selected-surface);
+  color: var(--brand);
+}
+.ux-rail-face .corridra-icon {
+  width: 18px;
+  height: 18px;
+}
+.ux-rail-words {
+  display: grid;
+  min-width: 0;
+  line-height: 1.25;
+}
+.ux-rail-words b {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ux-rail-words small {
+  overflow: hidden;
+  color: var(--text-2);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ux-rail-chevron {
+  width: 16px;
+  height: 16px;
+  margin-inline-start: auto;
+  color: var(--text-2);
+  transform: rotate(90deg);
+}
+.ux-rail-foot {
+  display: grid;
+  gap: var(--space-1);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--line);
+}
+/* The account menu opens upward from the foot of the bar. */
+.ux-rail-account .ux-menu-panel {
+  top: auto;
+  bottom: calc(100% + var(--space-2));
+}
+/* Help as a bar item, its sheet opening upward. */
+.rail-help {
+  position: relative;
+  inset: auto;
+  z-index: auto;
+  display: block;
+}
+.rail-help .dock-button {
+  display: flex;
+  justify-content: flex-start;
+  gap: var(--space-2);
+  width: 100%;
+  height: auto;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-2);
+  font: 500 var(--text-md) var(--font-ui);
+}
+.rail-help .dock-button:hover,
+.rail-help .dock-button[aria-expanded='true'] {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.rail-help .dock-button::after {
+  content: none;
+}
+.rail-help .dock-sheet {
+  position: absolute;
+  inset-inline-start: 0;
+  bottom: calc(100% + var(--space-2));
+  z-index: 70;
+}
+/* The count beside Home. */
+.ux-leftnav-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  margin-inline-start: auto;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--brand);
+  color: var(--paper);
+  font-size: var(--text-xs);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+/* The header's path ("Aurora Textiles / Home"). */
+.ux-bar-crumb {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.ux-bar-crumb-parent {
+  color: var(--text-2);
+  font-weight: 500;
+}
+@media (max-width: 1023.98px) {
+  .ux-bar-crumb {
+    display: none;
+  }
+}
+@media (min-width: 1024px) {
+  /* With the bar beside the page, the person and Help live at its foot, not in the header or the corner. */
+  .site-shell:has(.ux-rail-foot) > .ux-app-header .ux-bar-account,
+  .site-shell:has(.ux-rail-foot) > .corner-dock {
+    display: none;
+  }
+  /* Icons-only bar: the cards keep their marks, the words go (the names stay for assistive technology). */
+  .ux-leftnav-frame[data-collapsed='true']
+    :is(.ux-rail-words, .ux-rail-chevron, .ux-leftnav-count) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .ux-leftnav-frame[data-collapsed='true']
+    :is(.ux-rail-workspace, .ux-rail-account)
+    > .ux-menu-button {
+    justify-content: center;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+  .ux-leftnav-frame[data-collapsed='true'] .rail-help .dock-button {
+    justify-content: center;
+    padding: 0;
+  }
+  .ux-leftnav-frame[data-collapsed='true'] .rail-help .dock-button span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+}
+@media (max-width: 1023.98px) {
+  /* In the drawer the header keeps the account menu, so the foot shows only Help. */
+  .ux-rail-account {
+    display: none;
+  }
+}
+
+/* Order at the foot, as in the approved mockup: Help, then Collapse menu, then the person. */
+@media (min-width: 1024px) {
+  .ux-leftnav-panel:has(.ux-rail-foot) > .ux-rail-foot {
+    display: contents;
+  }
+  .ux-leftnav-panel:has(.ux-rail-foot) > .ux-rail-foot > .rail-help {
+    order: 1;
+    margin-top: auto;
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--line);
+  }
+  .ux-leftnav-panel:has(.ux-rail-foot) > .ux-leftnav-collapse {
+    order: 2;
+    margin-top: 0;
+  }
+  .ux-leftnav-panel:has(.ux-rail-foot) > .ux-rail-foot > .ux-rail-account {
+    order: 3;
+  }
+}
+.rail-help .dock-button {
+  /* The same size as the bar's links, which take the page size. */
+  font-size: inherit;
+  font-weight: 500;
+}

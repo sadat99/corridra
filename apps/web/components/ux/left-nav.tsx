@@ -79,6 +79,8 @@ export function LeftNavFrame({
   lang,
   dir,
   nav,
+  top,
+  foot,
   children,
 }: {
   /** The id of the navigation element inside `nav`; the menu button and collapse control point at it. */
@@ -87,6 +89,10 @@ export function LeftNavFrame({
   lang?: string;
   dir?: 'ltr' | 'rtl';
   nav: ReactNode;
+  /** Shown above the navigation (the customer's workspace card). */
+  top?: ReactNode;
+  /** Shown at the foot of the bar, under the collapse control (Help and the signed-in person). */
+  foot?: ReactNode;
   children: ReactNode;
 }) {
   const state = useSyncExternalStore(subscribeLeftNav, readLeftNav, readServerLeftNav);
@@ -192,6 +198,7 @@ export function LeftNavFrame({
               {words.closeLabel}
             </button>
           ) : null}
+          {top}
           {nav}
           <button
             type="button"
@@ -203,6 +210,7 @@ export function LeftNavFrame({
             <OperatorIcon name="chevron" />
             <span>{collapsed ? words.expandLabel : words.collapseLabel}</span>
           </button>
+          {foot}
         </div>
       </div>
       <div className="ux-leftnav-page" inert={open}>
@@ -219,6 +227,8 @@ export type LeftNavItem = {
   icon: string;
   /** A full page load rather than a client-side link (a # link or a page the workspace reads once). */
   plain?: boolean;
+  /** A small count beside the name (Home: what waits for the person). Shown only above zero; the page says it in words. */
+  count?: number;
 };
 
 /** The flat list a simple shell uses (contributor, customer). Same look and targets as the team bar. */
@@ -242,6 +252,11 @@ export function LeftNavList({
             <>
               <OperatorIcon name={item.icon} />
               <span>{item.label}</span>
+              {item.count ? (
+                <span className="ux-leftnav-count" aria-hidden="true">
+                  {item.count}
+                </span>
+              ) : null}
             </>
           );
           const aria = item.key === current ? ('page' as const) : undefined;
