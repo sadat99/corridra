@@ -380,3 +380,33 @@ test('a leave answered with access denied is not shown as a completed leave', as
   ).toBeVisible();
   await expect(page.getByText('You have left the workspace')).toHaveCount(0);
 });
+
+test('closing the leave dialog while the request is in flight still removes the workspace when it succeeds', async ({
+  page,
+}) => {
+  let release!: () => void;
+  const gate = new Promise<void>((done) => {
+    release = done;
+  });
+  const posts: Record<string, unknown>[] = [];
+  await page.route('**/api/customer-workspaces', (route) =>
+    route.fulfill({ json: { synthetic: true, workspaces: [joined] } }),
+  );
+  await page.route('**/api/customer-workspace-members', async (route) => {
+    posts.push(route.request().postDataJSON());
+    await gate;
+    await route.fulfill({
+      json: { workspaceId: joined.id, memberId: randomUUID(), status: 'left' },
+    });
+  });
+  await page.goto(origin + '/');
+  await openLeave(page, joined.name);
+  await page.getByRole('button', { name: 'Confirm leaving' }).click();
+  await expect.poll(() => posts.length).toBe(1);
+  // Escape dismisses the dialog before the answer arrives.
+  await page.keyboard.press('Escape');
+  release();
+  await expect(page.getByText('You have left the workspace')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Actions for ' + joined.name })).toHaveCount(0);
+  expect(posts).toHaveLength(1);
+});

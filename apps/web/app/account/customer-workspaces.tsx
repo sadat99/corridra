@@ -548,6 +548,7 @@ export function CustomerWorkspaces({
                       setDialog((d) => (d && 'id' in d && d.kind === 'leave' ? null : d))
                     }
                     title={'Leave ' + row.name}
+                    keepMounted
                   >
                     <CustomerWorkspaceLeave
                       key={'leave:' + issuer + ':' + subject + ':' + row.id}

@@ -119,7 +119,7 @@ export function CustomerWorkspaceLeave({
             className="text-link"
             disabled={busy}
             onClick={() => {
-              setAsking(false);
+              setAsking(startAsking);
               command.current = null;
               setMessage(null);
               onCancel?.();
