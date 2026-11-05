@@ -2,7 +2,6 @@ import { AssignedMissions } from './assigned-missions';
 import { customerDeliveryEnabled } from '@corridra/auth/customer-assigned-missions';
 import { WorkspaceShell } from '../../components/workspace-shell';
 import { CustomerShell } from '../../components/customer-shell';
-import { NextStepCard } from '../../components/next-step-card';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { neonAuth } from '../../lib/neon-auth';
@@ -34,6 +33,8 @@ import { uxSwitchOn } from '../../lib/ux-switches';
 import { PendingRequestNotice } from '../../components/pending-request-notice';
 import { Suspense } from 'react';
 import { WorkList } from './work-list';
+import { HomeNextStep } from './home-next-step';
+import { HomeWork } from './home-work';
 import { parseWorkFilter } from '../../lib/work-items/view';
 export const dynamic = 'force-dynamic';
 export const metadata = {
@@ -119,22 +120,23 @@ export default async function Page({
       {view === 'home' && (
         <>
           <PendingRequestNotice where="account" />
-          <NextStepCard
+          <HomeNextStep
             title="New request"
             text={
               requestCreationEnabled
                 ? 'Choose a workspace, then say what you want to achieve.'
                 : 'Tell us your goal. It takes a few minutes.'
             }
-            action="New request"
             href={requestCreationEnabled ? '/account?view=work#customer-workspaces' : '/plan'}
           />
           {workspaceIssuer && (
-            <p>
-              <Link prefetch={false} className="text-link" href="/account?view=work">
-                See all your work
-              </Link>
-            </p>
+            <Suspense fallback={<p role="status">Loading your work…</p>}>
+              <HomeWork
+                subject={data.user.id}
+                issuer={workspaceIssuer}
+                rooms={uxSwitchOn('CORRIDRA_UX_ROAD')}
+              />
+            </Suspense>
           )}
           <section className="guide-area ux-account-groups" aria-labelledby="open-title">
             <h2 id="open-title">Have something to open?</h2>

@@ -1,0 +1,35 @@
+/* The slim stage bar: tokens only. Six segments in a row; done and current are filled, the rest plain grey. */
+.mr-stage-wrap {
+  display: grid;
+  gap: var(--space-2);
+}
+.mr-stage {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  align-items: end;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mr-stage li {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+}
+.mr-stage li[data-state='done'] {
+  background: var(--brand);
+}
+.mr-stage li[data-state='now'] {
+  height: 8px;
+  background: var(--brand);
+}
+.mr-stage-line {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.mr-stage-line b {
+  color: var(--ink);
+  font-weight: 650;
+}

@@ -183,7 +183,8 @@ test('the cards show what is waiting for the person and who holds the rest', asy
   ).toBeVisible();
   // A member's quote is never offered as an action.
   await expect(page.getByText('A quote is waiting for a workspace owner or admin')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Accept or decline' })).toHaveCount(0);
+  // The action link is exactly "Accept or decline"; a waiting row's own sentence may contain the words.
+  await expect(page.getByRole('link', { name: 'Accept or decline', exact: true })).toHaveCount(0);
   // The navigation names the five places.
   const tabs = page.getByRole('navigation', { name: 'Customer navigation' });
   await expect(tabs.getByRole('link')).toHaveText([
