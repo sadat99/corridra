@@ -703,7 +703,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
           <p role="alert">{templates.message}</p>
           {templates.status === 'failed' && (
             <button type="button" className="text-link" onClick={reloadTemplates}>
-              Reload fee schedules
+              Reload Fee Schedules
             </button>
           )}
         </>
@@ -740,7 +740,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                     disabled={busy}
                     onClick={() => startEdit(t)}
                   >
-                    Edit fee schedule {t.name}
+                    Edit Fee Schedule {t.name}
                   </button>{' '}
                   <button
                     type="button"
@@ -748,7 +748,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                     disabled={busy}
                     onClick={() => save(!t.retired, t, t)}
                   >
-                    {t.retired ? 'Restore fee schedule ' : 'Retire fee schedule '}
+                    {t.retired ? 'Restore Fee Schedule ' : 'Retire Fee Schedule '}
                     {t.name}
                   </button>
                 </li>
@@ -762,7 +762,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
               disabled={busy}
               onClick={() => startEdit(null)}
             >
-              New fee schedule
+              New Fee Schedule
             </button>
           )}
           {editing && (!textDraft.restored || restoredEditor !== editing) && (
@@ -851,7 +851,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                         removeLabel('tier', t.draftIndex);
                       }}
                     >
-                      Remove tier {i + 1}
+                      Remove Tier {i + 1}
                     </button>
                   )}
                 </fieldset>
@@ -862,7 +862,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                 disabled={busy || tiers.length >= 12}
                 onClick={() => setTiers([...tiers, blankTier(nextLabelIndex('tier', tiers))])}
               >
-                Add a tier
+                Add a Tier
               </button>
               <h5>Early booking reductions</h5>
               {early.map((t, i) => (
@@ -919,7 +919,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                       removeLabel('early', t.draftIndex);
                     }}
                   >
-                    Remove early booking {i + 1}
+                    Remove Early Booking {i + 1}
                   </button>
                 </fieldset>
               ))}
@@ -929,7 +929,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                 disabled={busy || early.length >= 6}
                 onClick={() => setEarly([...early, blankEarly(nextLabelIndex('early', early))])}
               >
-                Add an early booking reduction
+                Add an Early Booking Reduction
               </button>
               <h5>Group reductions</h5>
               {groups.map((t, i) => (
@@ -986,7 +986,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                       removeLabel('group', t.draftIndex);
                     }}
                   >
-                    Remove group {i + 1}
+                    Remove Group {i + 1}
                   </button>
                 </fieldset>
               ))}
@@ -996,10 +996,10 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                 disabled={busy || groups.length >= 6}
                 onClick={() => setGroups([...groups, blankGroup(nextLabelIndex('group', groups))])}
               >
-                Add a group reduction
+                Add a Group Reduction
               </button>
               <button type="submit" className="primary-link" disabled={busy}>
-                {editing === 'new' ? 'Create fee schedule' : 'Save fee schedule'}
+                {editing === 'new' ? 'Create Fee Schedule' : 'Save Fee Schedule'}
               </button>
               <button
                 type="button"
@@ -1092,7 +1092,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                   disabled={busy || !scheduleChoice}
                   onClick={applySchedule}
                 >
-                  Apply fee schedule
+                  Apply Fee Schedule
                 </button>
               </div>
               {overview.data.schedule && !preview && (
@@ -1167,7 +1167,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                         />
                       </label>
                       <button type="submit" className="primary-link" disabled={busy}>
-                        Preview fees
+                        Preview Fees
                       </button>
                     </>
                   )}
@@ -1224,7 +1224,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                     </p>
                   ))}
                   <button type="button" className="primary-link" disabled={busy} onClick={record}>
-                    Record these fees
+                    Record These Fees
                   </button>
                   <button
                     type="button"
@@ -1232,7 +1232,7 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                     disabled={busy}
                     onClick={() => setPreview(null)}
                   >
-                    Change the selection
+                    Change the Selection
                   </button>
                 </div>
               )}

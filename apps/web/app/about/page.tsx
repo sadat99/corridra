@@ -57,7 +57,7 @@ export default function Page() {
             relevant relationships and accountable follow-through.
           </p>
           <Link className="primary-link" prefetch={false} href="/plan">
-            Start a request
+            Start a Request
           </Link>
         </div>
       </section>

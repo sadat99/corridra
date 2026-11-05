@@ -157,7 +157,7 @@ describe('mission page read (D15)', () => {
     s = new MissionService(f.runtime, 'unit-test-only-secret');
     await configureSyntheticIntake(f.owner, f.tenantA, f.users.owner.id);
     const submitted = await s.submit(randomUUID(), {
-      objective: 'Sell in a new market',
+      objective: 'Sell in a New Market',
       market: 'Spain',
       attendance: 'Yes',
       startDate: '2026-11-01',

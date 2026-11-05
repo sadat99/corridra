@@ -51,7 +51,7 @@ const assigned = (person = 'alice') =>
 const saved = (person = 'alice') =>
   new CustomerSavedMissionService(f.runtime, f.auth, options, async () => session(person));
 const brief = () => ({
-  objective: 'Sell in a new market',
+  objective: 'Sell in a New Market',
   market: 'Spain',
   attendance: 'Yes',
   startDate: '2026-11-01',

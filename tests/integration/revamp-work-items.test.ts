@@ -123,7 +123,7 @@ describe('W-01 draft families', () => {
 
 describe('W-02 and W-03 request objectives', () => {
   const objectives: [string, string][] = [
-    ['Sell in a new market', 'SELL'],
+    ['Sell in a New Market', 'SELL'],
     ['Find customers or distributors', 'SELL'],
     ['Source suppliers', 'SOURCE'],
     ['Run a multi-company mission', 'ORGANISE'],
@@ -143,12 +143,12 @@ describe('W-02 and W-03 request objectives', () => {
   it('W-03 computes the map from the table, so a two-family objective is UNCLASSIFIED', async () => {
     const { classifyObjective } = await import('../../apps/web/lib/work-items/classify');
     const table = {
-      BUYERS_PARTNERS: ['Sell in a new market', 'Source suppliers'],
+      BUYERS_PARTNERS: ['Sell in a New Market', 'Source suppliers'],
       SUPPLIERS_PRODUCTS: ['Source suppliers'],
       DELEGATION: [],
       OTHER: [],
     };
-    expect(classifyObjective('Sell in a new market', table)).toBe('SELL');
+    expect(classifyObjective('Sell in a New Market', table)).toBe('SELL');
     expect(classifyObjective('Source suppliers', table)).toBe('UNCLASSIFIED');
     expect(classifyObjective('Not an objective', table)).toBe('UNCLASSIFIED');
     // The real table is the default and gives the documented result today.
@@ -168,7 +168,7 @@ describe('W-02 and W-03 request objectives', () => {
 
   it('W-04 a request is UNCLASSIFIED without a read when the detail module is off', async () => {
     on.details = false;
-    const detail = vi.fn(async () => detailFor('Sell in a new market'));
+    const detail = vi.fn(async () => detailFor('Sell in a New Market'));
     patch({
       customerRequests: { list: async () => ({ requests: [requestRow(1)], nextAfter: null }) },
       customerRequestDetails: { detail },
@@ -633,7 +633,7 @@ describe('request titles and the detail cap', () => {
       customerRequestDetails: {
         detail: async () => ({
           available: true,
-          original: { objective: 'Sell in a new market', market: 'ES' },
+          original: { objective: 'Sell in a New Market', market: 'ES' },
         }),
       },
     });

@@ -68,7 +68,7 @@ const profiles = (p = 'alice') =>
 const details = (over: Partial<MissionDraftDetails> = {}): MissionDraftDetails => ({
   title: 'Synthetic towel buyers in Spain',
   family: 'BUYERS_PARTNERS',
-  objective: 'Sell in a new market',
+  objective: 'Sell in a New Market',
   market: 'Spain',
   attendance: 'Yes',
   startDate: '2026-11-01',
@@ -190,7 +190,7 @@ async function rejected(work: Promise<unknown>) {
 const submitRequest = async (p = 'alice', target = workspaceId) => {
   const briefInput = composeBrief({
     ...details(),
-    objective: 'Sell in a new market',
+    objective: 'Sell in a New Market',
   })!;
   const result = await requests(p).submit(
     {
@@ -486,7 +486,7 @@ test('V3 sourcing contexts: machinery detail belongs to supplier requests only, 
   }
   for (const bad of [
     { family: 'BUYERS_PARTNERS' as const, objective: 'Source suppliers' as const },
-    { family: 'SUPPLIERS_PRODUCTS' as const, objective: 'Sell in a new market' as const },
+    { family: 'SUPPLIERS_PRODUCTS' as const, objective: 'Sell in a New Market' as const },
     { family: 'DELEGATION' as const, objective: 'Find customers or distributors' as const },
   ]) {
     expect(missionDraftSaveInput.safeParse(save(bad)).success).toBe(false);

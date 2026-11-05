@@ -139,7 +139,7 @@ test('owner saves exact scope, date offsets, version and explicit participant sh
   await page
     .getByLabel('I confirm these details are accurate to the best of my knowledge.')
     .check();
-  await page.getByRole('button', { name: 'Save programme details', exact: true }).click();
+  await page.getByRole('button', { name: 'Save Programme Details', exact: true }).click();
   await expect(page.getByRole('status')).toHaveText('Programme details saved.');
   expect(command).toMatchObject({
     workspaceId,
@@ -173,12 +173,12 @@ test('short change reason stays editable without sending a rejected save', async
   await page
     .getByLabel('I confirm these details are accurate to the best of my knowledge.')
     .check();
-  await page.getByRole('button', { name: 'Save programme details', exact: true }).click();
+  await page.getByRole('button', { name: 'Save Programme Details', exact: true }).click();
   expect(await reason.evaluate((input: HTMLInputElement) => input.validity.tooShort)).toBe(true);
   expect(commands).toHaveLength(0);
   await expect(reason).toHaveValue('ab');
   await reason.pressSequentially('c');
-  await page.getByRole('button', { name: 'Save programme details', exact: true }).click();
+  await page.getByRole('button', { name: 'Save Programme Details', exact: true }).click();
   await expect(page.getByRole('status')).toHaveText('Programme details saved.');
   expect(commands).toHaveLength(1);
   expect(commands[0]).toMatchObject({
@@ -207,9 +207,9 @@ test('wrong acknowledgement retains exact command for safe retry', async ({ page
   await page
     .getByLabel('I confirm these details are accurate to the best of my knowledge.')
     .check();
-  await page.getByRole('button', { name: 'Save programme details', exact: true }).click();
+  await page.getByRole('button', { name: 'Save Programme Details', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Save could not be confirmed');
-  await page.getByRole('button', { name: 'Retry same save', exact: true }).click();
+  await page.getByRole('button', { name: 'Retry Same Save', exact: true }).click();
   await expect(page.getByRole('status')).toHaveText('Programme details saved.');
   expect(commands).toHaveLength(2);
   expect(commands[1]).toEqual(commands[0]);
@@ -221,7 +221,7 @@ test('participant reads shared details without organiser editing controls', asyn
   await page.goto(origin + '/?mode=participant');
   await expect(page.getByText(context.organiser, { exact: true })).toBeVisible();
   await expect(page.getByRole('textbox')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Save programme details' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Save Programme Details' })).toHaveCount(0);
 });
 for (const status of [403, 409, 503])
   test('save ' + status + ' clears stale details and offers recovery', async ({ page }) => {
@@ -234,10 +234,10 @@ for (const status of [403, 409, 503])
     await page
       .getByLabel('I confirm these details are accurate to the best of my knowledge.')
       .check();
-    await page.getByRole('button', { name: 'Save programme details', exact: true }).click();
+    await page.getByRole('button', { name: 'Save Programme Details', exact: true }).click();
     await expect(page.getByRole('textbox')).toHaveCount(0);
     await expect(page.getByText(context.organiser, { exact: true })).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Reload programme details' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Reload Programme Details' })).toBeVisible();
   });
 test('snapshot expiry clears details and draft without extending permission', async ({ page }) => {
   await page.route('**/api/customer-programme-context**', (route) =>
@@ -254,7 +254,7 @@ test('dirty close asks before discarding local draft', async ({ page }) => {
   await page.goto(origin);
   await page.getByLabel('Reason for change', { exact: true }).fill('Synthetic unsaved change');
   page.once('dialog', (dialog) => dialog.dismiss());
-  await page.getByRole('button', { name: 'Close programme details' }).click();
+  await page.getByRole('button', { name: 'Close Programme Details' }).click();
   await expect(page.getByLabel('Reason for change', { exact: true })).toHaveValue(
     'Synthetic unsaved change',
   );

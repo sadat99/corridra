@@ -380,9 +380,9 @@ test('a fee schedule is validated before sending and saved with exact minor-unit
     }),
   });
   const area = await open(page);
-  await area.getByRole('button', { name: 'New fee schedule' }).click();
+  await area.getByRole('button', { name: 'New Fee Schedule' }).click();
   await area.getByLabel('Name (start with Synthetic)').fill('Autumn fees');
-  await area.getByRole('button', { name: 'Create fee schedule' }).click();
+  await area.getByRole('button', { name: 'Create Fee Schedule' }).click();
   await expect(area.getByRole('alert')).toContainText(
     'Start the schedule name with the word Synthetic',
   );
@@ -390,25 +390,25 @@ test('a fee schedule is validated before sending and saved with exact minor-unit
   await area.getByLabel('Name (start with Synthetic)').fill('Synthetic autumn delegation fees');
   await area.getByLabel('Tier 1 name').fill(standard);
   await area.getByLabel(/Tier 1 fee/).fill('10000.505');
-  await area.getByRole('button', { name: 'Create fee schedule' }).click();
+  await area.getByRole('button', { name: 'Create Fee Schedule' }).click();
   // MoneyInput also explains the decimal places beside the field, so pick the form's own error.
   await expect(
     area.getByRole('alert').filter({ hasText: 'positive amount using the currency' }),
   ).toBeVisible();
   await area.getByLabel(/Tier 1 fee/).fill('10000.50');
-  await area.getByRole('button', { name: 'Add an early booking reduction' }).click();
+  await area.getByRole('button', { name: 'Add an Early Booking Reduction' }).click();
   await area.getByLabel('Early booking 1 name').fill('Synthetic early booking discount');
   await area.getByLabel('Early booking 1 last day it applies').fill('2026-11-30');
   await area.getByLabel('Early booking 1 amount taken off each fee').fill('10000.50');
-  await area.getByRole('button', { name: 'Create fee schedule' }).click();
+  await area.getByRole('button', { name: 'Create Fee Schedule' }).click();
   await expect(area.getByRole('alert')).toContainText('stay below the cheapest tier');
   expect(posts).toHaveLength(0);
   await area.getByLabel('Early booking 1 amount taken off each fee').fill('1000');
-  await area.getByRole('button', { name: 'Add a group reduction' }).click();
+  await area.getByRole('button', { name: 'Add a Group Reduction' }).click();
   await area.getByLabel('Group 1 name').fill('Synthetic group of four discount');
   await area.getByLabel('Group 1 applies from this many participants').fill('4');
   await area.getByLabel('Group 1 amount taken off each fee').fill('500');
-  await area.getByRole('button', { name: 'Create fee schedule' }).click();
+  await area.getByRole('button', { name: 'Create Fee Schedule' }).click();
   await expect(area.getByRole('status').first()).toContainText('Fee schedule created');
   expect(posts).toHaveLength(1);
   expect(posts[0]!.headers['x-corridra-customer-subject']).toBe('synthetic-alice');
@@ -470,13 +470,13 @@ test('fees are previewed first, recorded only on confirmation with one exact req
   const area = await open(page);
   await area.getByLabel('Programme').selectOption(programmeId);
   await expect(area.getByText('Fee schedule version 1 is applied')).toBeVisible();
-  await area.getByRole('button', { name: 'Preview fees' }).click();
+  await area.getByRole('button', { name: 'Preview Fees' }).click();
   await expect(area.getByRole('alert')).toContainText('Choose at least one participant');
   await area.getByLabel('Charge Synthetic participant Bob').check();
   await area.getByLabel('Charge Synthetic participant Carol').check();
   await area.getByLabel('Tier for Synthetic participant Carol').selectOption(student);
   await area.getByLabel(/Fee date/).fill('2026-11-15');
-  await area.getByRole('button', { name: 'Preview fees' }).click();
+  await area.getByRole('button', { name: 'Preview Fees' }).click();
   await expect(area.getByRole('heading', { name: 'Check before recording' })).toBeVisible();
   await expect(area.getByText('Total in BDT: BDT 14500.00')).toBeVisible();
   await expect(area.getByRole('row', { name: /Synthetic participant Bob/ })).toContainText(
@@ -492,10 +492,10 @@ test('fees are previewed first, recorded only on confirmation with one exact req
   expect(
     (await new AxeBuilder({ page }).include('main').analyze()).violations.map((v) => v.id),
   ).toEqual([]);
-  await area.getByRole('button', { name: 'Record these fees' }).click();
+  await area.getByRole('button', { name: 'Record These Fees' }).click();
   await expect(area.getByRole('alert')).toContainText('It could not be saved');
   record = 200;
-  await area.getByRole('button', { name: 'Record these fees' }).click();
+  await area.getByRole('button', { name: 'Record These Fees' }).click();
   await expect(area.getByRole('status')).toContainText(
     'Recorded 2 fees. Payments are not collected here.',
   );
@@ -524,14 +524,14 @@ test('a stale batch saves nothing and closes the preview; a lost admin right cle
   await area.getByLabel('Programme').selectOption(programmeId);
   await area.getByLabel('Charge Synthetic participant Bob').check();
   await area.getByLabel(/Fee date/).fill('2026-11-15');
-  await area.getByRole('button', { name: 'Preview fees' }).click();
-  await area.getByRole('button', { name: 'Record these fees' }).click();
+  await area.getByRole('button', { name: 'Preview Fees' }).click();
+  await area.getByRole('button', { name: 'Record These Fees' }).click();
   await expect(area.getByRole('alert')).toContainText('Nothing was saved');
   await expect(area.getByRole('heading', { name: 'Check before recording' })).toHaveCount(0);
   status = 403;
   await area.getByLabel('Charge Synthetic participant Bob').check();
-  await area.getByRole('button', { name: 'Preview fees' }).click();
-  await area.getByRole('button', { name: 'Record these fees' }).click();
+  await area.getByRole('button', { name: 'Preview Fees' }).click();
+  await area.getByRole('button', { name: 'Record These Fees' }).click();
   await expect(area.getByRole('alert')).toContainText('Account or workspace access changed');
 });
 
@@ -540,7 +540,7 @@ test('a denied or failed load shows a calm message and never stale figures', asy
   const area = await open(page);
   await expect(area.getByRole('alert')).toContainText('Account or workspace access changed');
   await expect(area.getByText('Synthetic autumn delegation fees')).toHaveCount(0);
-  await expect(area.getByRole('button', { name: 'New fee schedule' })).toHaveCount(0);
+  await expect(area.getByRole('button', { name: 'New Fee Schedule' })).toHaveCount(0);
   const unavailable = await page.context().newPage();
   await mock(unavailable, { templates: () => ({ status: 503, json: { error: 'x' } }) });
   const second = await open(unavailable);
@@ -628,23 +628,23 @@ test('a series is saved with an explicit increasing list of dates, filled from a
   });
   const area = await open(page);
   await area.getByRole('tab', { name: 'Series' }).click();
-  await area.getByRole('button', { name: 'New series' }).click();
+  await area.getByRole('button', { name: 'New Series' }).click();
   await area
     .getByLabel('Series name (start with Synthetic)')
     .fill('Synthetic annual buyer mission series');
-  await area.getByRole('button', { name: 'Create series' }).click();
+  await area.getByRole('button', { name: 'Create Series' }).click();
   await expect(area.getByRole('alert')).toContainText('Choose the programme template');
   await area.getByLabel('Programme template each edition starts from').selectOption(planId);
   await area.getByLabel('First start date').fill('2027-01-31');
   await area.getByLabel('How many editions').fill('3');
   await area.getByLabel('How often').selectOption('1');
-  await area.getByRole('button', { name: 'Fill in the dates' }).click();
+  await area.getByRole('button', { name: 'Fill in the Dates' }).click();
   await expect(area.getByLabel('Edition 2 start date')).toHaveValue('2027-02-28');
   await area.getByLabel('Edition 3 start date').fill('2027-02-10');
-  await area.getByRole('button', { name: 'Create series' }).click();
+  await area.getByRole('button', { name: 'Create Series' }).click();
   await expect(area.getByRole('alert')).toContainText('Start dates must be in order');
   await area.getByLabel('Edition 3 start date').fill('2027-03-31');
-  await area.getByRole('button', { name: 'Create series' }).click();
+  await area.getByRole('button', { name: 'Create Series' }).click();
   await expect(area.getByRole('status').first()).toContainText('Series created');
   expect(posts).toHaveLength(1);
   expect(posts[0]!.input).toMatchObject({
@@ -780,7 +780,7 @@ for (const width of [320, 390, 768, 1440])
       ).violations,
     ).toEqual([]);
     await area.getByRole('tab', { name: 'Series' }).click();
-    await area.getByRole('button', { name: 'New series' }).click();
+    await area.getByRole('button', { name: 'New Series' }).click();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
@@ -806,21 +806,21 @@ test('GAP-006 reload restores edited fee schedule text without storing money or 
 }) => {
   await mock(page);
   const area = await open(page);
-  await area.getByRole('button', { name: 'New fee schedule' }).click();
+  await area.getByRole('button', { name: 'New Fee Schedule' }).click();
   await area.getByLabel('Name (start with Synthetic)').fill('Synthetic unsent fee wording');
   await area
     .getByLabel('Description (optional, start with Synthetic)')
     .fill('Synthetic unsent description');
   await area.getByLabel('Tier 1 name').fill('Synthetic unsent tier');
   await area.getByLabel(/Tier 1 fee/).fill('1234.56');
-  await area.getByRole('button', { name: 'Add an early booking reduction', exact: true }).click();
+  await area.getByRole('button', { name: 'Add an Early Booking Reduction', exact: true }).click();
   await area.getByLabel('Early booking 1 name').fill('Synthetic unsent early label');
   await area.getByLabel('Early booking 1 last day it applies').fill('2026-11-30');
-  await area.getByRole('button', { name: 'Add a group reduction', exact: true }).click();
+  await area.getByRole('button', { name: 'Add a Group Reduction', exact: true }).click();
   await area.getByLabel('Group 1 name').fill('Synthetic unsent group label');
   await area.getByLabel('Group 1 applies from this many participants').fill('8');
   await page.reload();
-  await area.getByRole('button', { name: 'New fee schedule' }).click();
+  await area.getByRole('button', { name: 'New Fee Schedule' }).click();
   await expect(area.getByLabel('Name (start with Synthetic)')).toHaveValue(
     'Synthetic unsent fee wording',
   );
@@ -856,7 +856,7 @@ test('GAP-006 reload restores edited fee schedule text without storing money or 
     .click();
   await expect(area.getByLabel('Name (start with Synthetic)')).toHaveValue(template().name);
   await area.getByRole('button', { name: 'Cancel', exact: true }).click();
-  await area.getByRole('button', { name: 'New fee schedule', exact: true }).click();
+  await area.getByRole('button', { name: 'New Fee Schedule', exact: true }).click();
   await expect(area.getByLabel('Name (start with Synthetic)')).toHaveValue(
     'Synthetic unsent fee wording',
   );
@@ -895,16 +895,16 @@ test('GAP-006 edited labels survive row removal without restoring amounts or cro
     }),
   });
   const area = await open(page);
-  await area.getByRole('button', { name: 'New fee schedule', exact: true }).click();
+  await area.getByRole('button', { name: 'New Fee Schedule', exact: true }).click();
   await area.getByLabel('Tier 1 name').fill('Synthetic removed label');
-  await area.getByRole('button', { name: 'Add a tier', exact: true }).click();
+  await area.getByRole('button', { name: 'Add a Tier', exact: true }).click();
   await area.getByLabel('Tier 2 name').fill('Synthetic retained label');
   await area.getByLabel(/Tier 2 fee/).fill('72.34');
   await area.getByRole('button', { name: 'Remove tier 1', exact: true }).click();
   await area.getByLabel('Name (start with Synthetic)').fill('Synthetic reordered draft');
   await expect(area.getByLabel(/Tier 1 fee/)).toHaveValue('72.34');
   await page.reload();
-  await area.getByRole('button', { name: 'New fee schedule', exact: true }).click();
+  await area.getByRole('button', { name: 'New Fee Schedule', exact: true }).click();
   await expect(area.getByLabel('Tier 1 name')).toHaveValue('Synthetic retained label');
   await expect(area.getByLabel('Tier 2 name')).toHaveCount(0);
   await expect(area.getByLabel(/Tier 1 fee/)).toHaveValue('');

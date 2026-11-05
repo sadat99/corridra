@@ -90,7 +90,7 @@ export function ParticipantResults(props: Props) {
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        {open ? 'Hide my feedback and results' : 'Share feedback and results'}
+        {open ? 'Hide My Feedback and Results' : 'Share Feedback and Results'}
       </button>
       {open && (
         <ScopedResults
@@ -377,7 +377,7 @@ function ScopedResults({ subject, issuer, registrationId }: Props) {
           <p role="alert">{notice}</p>
           {status === 'failed' && (
             <button type="button" className="text-link" onClick={() => void load()}>
-              Reload my feedback and results
+              Reload My Feedback and Results
             </button>
           )}
         </>
@@ -443,7 +443,7 @@ function ScopedResults({ subject, issuer, registrationId }: Props) {
               <p>You withdrew your feedback. It is kept for your own history and is not shared.</p>
             ) : (
               <button type="submit" className="primary-link" disabled={busy}>
-                {feedback ? 'Update feedback' : 'Save feedback'}
+                {feedback ? 'Update Feedback' : 'Save Feedback'}
               </button>
             )}
             {feedback && !feedback.retracted && (
@@ -454,7 +454,7 @@ function ScopedResults({ subject, issuer, registrationId }: Props) {
                 disabled={busy}
                 onClick={() => change(feedback, { retracted: true })}
               >
-                Withdraw my feedback
+                Withdraw My Feedback
               </button>
             )}
           </form>
@@ -522,7 +522,7 @@ function ScopedResults({ subject, issuer, registrationId }: Props) {
                 : 'This is a fictional sample result.'}{' '}
             </label>
             <button type="submit" className="primary-link" disabled={busy}>
-              Add result
+              Add Result
             </button>
           </form>
 
@@ -548,7 +548,7 @@ function ScopedResults({ subject, issuer, registrationId }: Props) {
                         disabled={busy}
                         onClick={() => change(o, { shared: !o.shared })}
                       >
-                        {o.shared ? 'Stop sharing' : 'Share with the organiser'}
+                        {o.shared ? 'Stop Sharing' : 'Share With the Organiser'}
                       </button>{' '}
                       <button
                         data-intent="destructive"
@@ -557,7 +557,7 @@ function ScopedResults({ subject, issuer, registrationId }: Props) {
                         disabled={busy}
                         onClick={() => change(o, { retracted: true })}
                       >
-                        Withdraw this result
+                        Withdraw This Result
                       </button>
                     </>
                   )}

@@ -30,7 +30,7 @@ const request = () => new CustomerRequestService(f.runtime, f.auth, options, asy
 const customerInbox = (person = 'alice') =>
   new CustomerInboxService(f.runtime, f.auth, options, async () => session(person), inbox);
 const brief = () => ({
-  objective: 'Sell in a new market',
+  objective: 'Sell in a New Market',
   market: 'Spain',
   attendance: 'Yes',
   startDate: '2026-11-01',

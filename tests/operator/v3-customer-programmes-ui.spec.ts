@@ -133,7 +133,7 @@ test('creates a real planning command with scoped headers then displays acknowle
   await page.goto(origin);
   await expect(page.getByText('No sample programmes yet.')).toBeVisible();
   await fill(page);
-  await page.getByRole('button', { name: 'Save sample programme', exact: true }).click();
+  await page.getByRole('button', { name: 'Save Sample Programme', exact: true }).click();
   await expect(page.getByRole('heading', { name: programme.name })).toBeVisible();
   expect(command).toMatchObject({
     workspaceId,
@@ -174,10 +174,10 @@ test('lost acknowledgement freezes exact command and retries without duplicating
   await page.goto(origin);
   await expect(page.getByText('No sample programmes yet.')).toBeVisible();
   await fill(page);
-  await page.getByRole('button', { name: 'Save sample programme', exact: true }).click();
+  await page.getByRole('button', { name: 'Save Sample Programme', exact: true }).click();
   await expect(page.getByText(/Saving could not be confirmed/)).toBeVisible();
   await expect(page.getByLabel('Programme name', { exact: true })).toBeDisabled();
-  await page.getByRole('button', { name: 'Retry same planning request' }).click();
+  await page.getByRole('button', { name: 'Retry Same Planning Request' }).click();
   await expect(page.getByRole('heading', { name: programme.name })).toBeVisible();
   expect(commands).toHaveLength(2);
   expect(commands[1]).toEqual(commands[0]);
@@ -246,10 +246,10 @@ test('malformed and unavailable lists show recovery without exposing untrusted r
   });
   await page.goto(origin);
   await expect(page.getByRole('status')).toContainText('unavailable');
-  await page.getByRole('button', { name: 'Reload planning programmes' }).click();
+  await page.getByRole('button', { name: 'Reload Planning Programmes' }).click();
   await expect(page.getByRole('alert')).toContainText('could not be loaded');
   await expect(page.getByRole('heading', { name: programme.name })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Reload planning programmes' }).click();
+  await page.getByRole('button', { name: 'Reload Planning Programmes' }).click();
   await expect(page.getByText('No sample programmes yet.')).toBeVisible();
 });
 test('wrong-scope create acknowledgement remains unconfirmed and retains exact retry', async ({
@@ -266,10 +266,10 @@ test('wrong-scope create acknowledgement remains unconfirmed and retains exact r
   await page.goto(origin);
   await expect(page.getByText('No sample programmes yet.')).toBeVisible();
   await fill(page);
-  await page.getByRole('button', { name: 'Save sample programme', exact: true }).click();
+  await page.getByRole('button', { name: 'Save Sample Programme', exact: true }).click();
   await expect(page.getByText(/Saving could not be confirmed/)).toBeVisible();
   await expect(page.getByRole('heading', { name: programme.name })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Retry same planning request' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Retry Same Planning Request' })).toBeVisible();
 });
 test('pagination appends only the next workspace-scoped planning page', async ({ page }) => {
   const second = {
@@ -286,10 +286,10 @@ test('pagination appends only the next workspace-scoped planning page', async ({
   );
   await page.goto(origin);
   await expect(page.getByRole('heading', { name: programme.name })).toBeVisible();
-  await page.getByRole('button', { name: 'Load more planning programmes' }).click();
+  await page.getByRole('button', { name: 'Load More Planning Programmes' }).click();
   await expect(page.getByRole('heading', { name: second.name })).toBeVisible();
   await expect(page.getByRole('heading', { name: programme.name })).toHaveCount(1);
-  await expect(page.getByRole('button', { name: 'Load more planning programmes' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Load More Planning Programmes' })).toHaveCount(0);
 });
 test('planning supports keyboard,axe and four responsive widths without losing original long text', async ({
   page,

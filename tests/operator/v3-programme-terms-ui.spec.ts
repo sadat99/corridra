@@ -433,7 +433,7 @@ test('an organiser publishes a new terms version with one exact request and sees
     .getByLabel('What is included')
     .fill('Synthetic ground transport, hotel nights and breakfast');
   await p.getByLabel('Why this version').fill('Synthetic breakfast added');
-  await p.getByRole('button', { name: 'Publish new version' }).click();
+  await p.getByRole('button', { name: 'Publish New Version' }).click();
   await expect(p.getByRole('status').first()).toContainText('Terms saved as a new version');
   expect(posts).toHaveLength(1);
   expect(posts[0]!.action).toBe('terms');
@@ -470,7 +470,7 @@ test('terms that are not synthetic are stopped before any request, and an empty 
     p.getByText('No terms yet. Participants can apply without accepting any terms.'),
   ).toBeVisible();
   await p.getByLabel('What is included').fill('Real hotel nights');
-  await p.getByRole('button', { name: 'Publish terms' }).click();
+  await p.getByRole('button', { name: 'Publish Terms' }).click();
   await expect(p.getByRole('alert')).toContainText('Start each text with the word Synthetic');
   expect(posts).toHaveLength(0);
   await p.getByRole('tab', { name: 'Eligibility' }).click();
@@ -506,7 +506,7 @@ test('tabs work from the keyboard, and eligibility criteria are sent as one exac
   await p.getByLabel('Buyer').check();
   await p.getByLabel('Countries (two-letter codes, separated by commas)').fill('bd, de');
   await p.getByLabel('Why this change').fill('Synthetic also welcome buyers from Germany');
-  await p.getByRole('button', { name: 'Save criteria' }).click();
+  await p.getByRole('button', { name: 'Save Criteria' }).click();
   await expect(p.getByRole('status').first()).toContainText('Criteria saved as a new version');
   expect(posts).toHaveLength(1);
   expect(posts[0]!.action).toBe('eligibility');
@@ -520,7 +520,7 @@ test('tabs work from the keyboard, and eligibility criteria are sent as one exac
   // Bad country codes never reach the server.
   await p.getByLabel('Countries (two-letter codes, separated by commas)').fill('Bangladesh');
   await p.getByLabel('Why this change').fill('Synthetic try a long country name');
-  await p.getByRole('button', { name: 'Save criteria' }).click();
+  await p.getByRole('button', { name: 'Save Criteria' }).click();
   await expect(p.getByRole('alert')).toContainText('two-letter codes');
   expect(posts).toHaveLength(1);
 });
@@ -549,18 +549,18 @@ test('capacity shows exact figures, validates places before sending and moves wa
   await p.getByLabel('Minimum to run the programme').fill('12');
   await p.getByLabel('Maximum places').fill('10');
   await p.getByLabel('Why this change').fill('Synthetic more places');
-  await p.getByRole('button', { name: 'Save places' }).click();
+  await p.getByRole('button', { name: 'Save Places' }).click();
   await expect(p.getByRole('alert')).toContainText('The minimum cannot be more than the maximum');
   expect(posts).toHaveLength(0);
   await p.getByLabel('Minimum to run the programme').fill('4');
   await p.getByLabel('Maximum places').fill('12');
-  await p.getByRole('button', { name: 'Save places' }).click();
+  await p.getByRole('button', { name: 'Save Places' }).click();
   await expect(p.getByRole('status').first()).toContainText('Places saved');
   expect(posts[0]).toMatchObject({
     action: 'places',
     input: { expectedVersion: 1, minimum: 4, maximum: 12, waitlist: true },
   });
-  await p.getByRole('button', { name: 'Move waiting people up' }).click();
+  await p.getByRole('button', { name: 'Move Waiting People Up' }).click();
   await expect(p.getByRole('status').first()).toContainText(
     'Waiting people were moved up in order',
   );
@@ -609,14 +609,14 @@ test('a retried save reuses the same command id and a stale answer asks for a re
   await organiser(page);
   const p = panel(page);
   await p.getByLabel('Why this version').fill('Synthetic clearer wording');
-  await p.getByRole('button', { name: 'Publish new version' }).click();
+  await p.getByRole('button', { name: 'Publish New Version' }).click();
   await expect(p.getByRole('alert')).toContainText('It could not be saved');
   answer = { status: 409, json: { error: 'x' } };
-  await p.getByRole('button', { name: 'Publish new version' }).click();
+  await p.getByRole('button', { name: 'Publish New Version' }).click();
   await expect(p.getByRole('alert')).toContainText('This changed since you opened it');
   await expect(p.getByRole('status')).toHaveCount(0);
   answer = { json: { commandId: 'x' } };
-  await p.getByRole('button', { name: 'Publish new version' }).click();
+  await p.getByRole('button', { name: 'Publish New Version' }).click();
   await expect(p.getByRole('status').first()).toContainText('Terms saved');
   expect(posts).toHaveLength(3);
   expect(new Set(posts.map((x) => x.input.commandId)).size).toBe(1);
@@ -652,7 +652,7 @@ test('an unavailable module, a failed read and a malformed answer each read calm
   });
   await organiser(second);
   await expect(second.getByRole('alert')).toContainText('could not be loaded');
-  await expect(second.getByRole('button', { name: 'Reload terms and places' })).toBeVisible();
+  await expect(second.getByRole('button', { name: 'Reload Terms and Places' })).toBeVisible();
 });
 
 test('the terms button is offered with the flag and absent without it', async ({ page }) => {
@@ -679,10 +679,10 @@ test('the terms button is offered with the flag and absent without it', async ({
     route.fulfill({ status: 503, json: { error: 'x' } }),
   );
   await organiser(page, '?c=programmes');
-  await expect(page.getByRole('button', { name: 'Terms, eligibility and places' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Terms, Eligibility and Places' })).toBeVisible();
   await organiser(page, '?c=programmes&terms=off');
   await expect(page.getByText('Synthetic Dhaka trade programme').first()).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Terms, eligibility and places' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Terms, Eligibility and Places' })).toHaveCount(0);
 });
 
 test('a participant must accept the terms and choose a profile before applying, then sends one exact request', async ({
@@ -701,7 +701,7 @@ test('a participant must accept the terms and choose a profile before applying, 
   ).toBeVisible();
   await p.getByText('Who can take part').click();
   await expect(p.getByText('Commercial roles: Seller')).toBeVisible();
-  const apply = p.getByRole('button', { name: 'Apply for a place' });
+  const apply = p.getByRole('button', { name: 'Apply for a Place' });
   await expect(apply).toBeDisabled();
   await p
     .getByLabel('Organisation profile to check')
@@ -751,7 +751,7 @@ test('criteria with every list empty and no minimum ask for no profile, and the 
   await organiser(page, '?c=participant');
   const p = page.getByRole('region', { name: 'Your place in Synthetic Dhaka trade programme' });
   await expect(p.getByLabel('Organisation profile to check')).toHaveCount(0);
-  const apply = p.getByRole('button', { name: 'Apply for a place' });
+  const apply = p.getByRole('button', { name: 'Apply for a Place' });
   await expect(apply).toBeDisabled();
   await p.getByLabel(/I have read and accept version 2/).check();
   await expect(apply).toBeEnabled();
@@ -788,7 +788,7 @@ test('a participant who is not eligible reads plain reasons and nothing from the
   ).toBeVisible();
   await expect(p.getByText('fewer details filled in than this programme asks for')).toBeVisible();
   await expect(p.getByText('Add one in your account, then apply again.')).toBeVisible();
-  await expect(p.getByRole('button', { name: 'Apply for a place' })).toBeVisible();
+  await expect(p.getByRole('button', { name: 'Apply for a Place' })).toBeVisible();
   await expect(p.getByRole('heading', { name: 'Apply again' })).toBeVisible();
 });
 
@@ -810,7 +810,7 @@ test('a waiting participant sees their number and can give the place up only aft
   await organiser(page, '?c=participant');
   const p = page.getByRole('region', { name: 'Your place in Synthetic Dhaka trade programme' });
   await expect(p.getByText('On the waiting list, number 2')).toBeVisible();
-  const give = p.getByRole('button', { name: 'Give up my place' });
+  const give = p.getByRole('button', { name: 'Give Up My Place' });
   await expect(give).toBeDisabled();
   await p.getByLabel(/I want to give up my place/).check();
   await give.click();
@@ -845,7 +845,7 @@ test('newer terms need a fresh acceptance, and a full programme without a waitin
   await expect(p.getByText('Your place is confirmed')).toBeVisible();
   await expect(p.getByText('You accepted version 1.')).toBeVisible();
   await expect(p.getByText('Synthetic bring a product sample · due 2026-10-22')).toBeVisible();
-  const accept = p.getByRole('button', { name: 'Accept the new terms' });
+  const accept = p.getByRole('button', { name: 'Accept the New Terms' });
   await expect(accept).toBeDisabled();
   await p.getByLabel('I accept version 2 of the programme terms.').check();
   await accept.click();
@@ -861,7 +861,7 @@ test('newer terms need a fresh acceptance, and a full programme without a waitin
   await organiser(second, '?c=participant');
   const q = second.getByRole('region', { name: 'Your place in Synthetic Dhaka trade programme' });
   await expect(q.getByText('This programme is full and has no waiting list.')).toBeVisible();
-  await expect(q.getByRole('button', { name: 'Apply for a place' })).toBeDisabled();
+  await expect(q.getByRole('button', { name: 'Apply for a Place' })).toBeDisabled();
 });
 
 test('reminders list what is due or late, mark done sends one exact request, and an empty list says so', async ({

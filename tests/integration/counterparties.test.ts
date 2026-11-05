@@ -99,7 +99,7 @@ async function attribute(organisationId: string, kind = 'capability', ctx = f.us
 }
 async function mission() {
   const brief = {
-    objective: 'Sell in a new market',
+    objective: 'Sell in a New Market',
     market: 'Spain',
     attendance: 'No',
     startDate: '',
@@ -738,7 +738,7 @@ test('populated Part 04 upgrade preserves the mission brief, owner, legacy relat
     await configureSyntheticIntake(owner, seed.tenantId, seed.principalId);
     const service = new MissionService(runtime, 'upgrade-test-secret');
     const submitted = await service.submit(randomUUID(), {
-      objective: 'Sell in a new market',
+      objective: 'Sell in a New Market',
       market: 'Spain',
       attendance: 'No',
       startDate: '',

@@ -30,7 +30,7 @@ test('anonymous five-step intake preserves draft, retries safely and returns a p
   expect((await page.request.get('/api/workspace/tenants')).status()).toBe(401);
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await expect(page.getByText('Choose what you want to do', { exact: true })).toBeVisible();
-  await page.getByLabel('Sell in a new market', { exact: true }).check();
+  await page.getByLabel('Sell in a New Market', { exact: true }).check();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.locator('#brief-companyCountry').fill('Bangladesh');
   await page.getByRole('option', { name: 'Bangladesh', exact: true }).click();
@@ -65,7 +65,7 @@ test('anonymous five-step intake preserves draft, retries safely and returns a p
       body: JSON.stringify({ error: 'Temporary test failure. Retry your brief.' }),
     }),
   );
-  await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit Mission Request', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Temporary test failure');
   await expect(page.getByLabel('Work email', { exact: true })).toHaveValue(
     'intake@example.invalid',
@@ -74,7 +74,7 @@ test('anonymous five-step intake preserves draft, retries safely and returns a p
   const response = page.waitForResponse(
     (r) => r.url().endsWith('/api/intake') && r.request().method() === 'POST',
   );
-  await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit Mission Request', exact: true }).click();
   const saved = await response;
   expect(saved.status()).toBe(201);
   const payload = saved.request().postDataJSON();
@@ -92,7 +92,7 @@ test('anonymous five-step intake preserves draft, retries safely and returns a p
   await expect(page.getByLabel('Private receipt code')).toHaveValue(result.receipt);
   await page.reload();
   await expect(page.getByLabel('Private receipt code')).toHaveValue(result.receipt);
-  await page.getByRole('button', { name: 'Check status and replies' }).click();
+  await page.getByRole('button', { name: 'Check Status and Replies' }).click();
   // D6: a request with a receipt was sent, so the customer sees it as received, not as a draft.
   await expect(page.getByText('Received, waiting for review', { exact: true })).toBeVisible();
   await writeFile('.cache/part04-browser-receipt.json', JSON.stringify(result), { mode: 0o600 });
@@ -843,7 +843,7 @@ test('controlled buyer response progresses through durable delivery, a held meet
       key: randomUUID(),
       websiteCheck: '',
       brief: {
-        objective: 'Sell in a new market',
+        objective: 'Sell in a New Market',
         market: 'Spain',
         attendance: 'No',
         startDate: '',
@@ -999,7 +999,7 @@ test('controlled buyer response progresses through durable delivery, a held meet
     return route.continue();
   });
   await buyer.getByRole('button', { name: 'Interested', exact: true }).click();
-  await expect(buyer.getByRole('button', { name: 'Retry the same response' })).toBeVisible();
+  await expect(buyer.getByRole('button', { name: 'Retry the Same Response' })).toBeVisible();
   await expect(
     buyer.getByLabel('Do not send me further introductions', { exact: false }),
   ).toBeDisabled();
@@ -1007,7 +1007,7 @@ test('controlled buyer response progresses through durable delivery, a held meet
   const buyerRetry = buyer.waitForResponse(
     (r) => r.url().endsWith('/api/buyer') && r.request().postDataJSON().action === 'respond',
   );
-  await buyer.getByRole('button', { name: 'Retry the same response' }).click();
+  await buyer.getByRole('button', { name: 'Retry the Same Response' }).click();
   expect((await buyerRetry).request().postDataJSON()).toEqual(buyerFailed);
   await expect(buyer.getByRole('status')).toContainText('response has been recorded');
   const duplicate = await buyer.request.post('/api/buyer', {
@@ -1114,7 +1114,7 @@ test('controlled buyer response progresses through durable delivery, a held meet
     }),
     { mode: 0o600 },
   );
-  await buyer.getByRole('button', { name: 'Stop further introductions' }).click();
+  await buyer.getByRole('button', { name: 'Stop Further Introductions' }).click();
   await expect(buyer.getByRole('status')).toContainText('Further introductions');
   await operatorEvidence(page, page.locator('#workspace-meetings'), 'meetings');
   await buyerContext.close();
@@ -2298,7 +2298,7 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
   await recipientPage
     .getByLabel('Unit price (original currency amount)', { exact: false })
     .fill('123.456');
-  await recipientPage.getByRole('button', { name: 'Record response', exact: true }).click();
+  await recipientPage.getByRole('button', { name: 'Record Response', exact: true }).click();
   await expect(recipientPage.locator('.buyer-card').getByRole('alert')).toBeFocused();
   await expect(recipientPage.getByLabel('Your response', { exact: true })).toHaveValue(
     '供应商原文答复：请确认技术参数。',
@@ -2319,14 +2319,14 @@ test('route-aware machinery requirements and evidence-aware supplier comparison 
     }
     return route.continue();
   });
-  await recipientPage.getByRole('button', { name: 'Record response', exact: true }).click();
+  await recipientPage.getByRole('button', { name: 'Record Response', exact: true }).click();
   await expect(recipientPage.getByLabel('Your response', { exact: true })).toBeDisabled();
   await recipientPage.unroute('**/api/buyer');
   const supplierRetry = recipientPage.waitForResponse(
     (r) =>
       r.url().endsWith('/api/buyer') && r.request().postDataJSON().action === 'detail-response',
   );
-  await recipientPage.getByRole('button', { name: 'Retry the same declaration' }).click();
+  await recipientPage.getByRole('button', { name: 'Retry the Same Declaration' }).click();
   expect((await supplierRetry).request().postDataJSON()).toEqual(supplierFailed);
   await expect(
     recipientPage.getByRole('heading', { name: 'Your recorded response', exact: true }),

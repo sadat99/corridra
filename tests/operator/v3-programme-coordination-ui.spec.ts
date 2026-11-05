@@ -312,17 +312,17 @@ test('capacity is sent with the expected version and checked first', async ({ pa
   });
   await page.goto(origin);
   await page.getByLabel('Places available').fill('0');
-  await page.getByRole('button', { name: 'Save capacity' }).click();
+  await page.getByRole('button', { name: 'Save Capacity' }).click();
   await expect(page.getByRole('alert')).toContainText('whole number from 1 to 10000');
   await page.getByLabel('Places available').fill('40');
   await page.getByLabel('Reason (start with Synthetic)').fill('A bigger hall');
-  await page.getByRole('button', { name: 'Save capacity' }).click();
+  await page.getByRole('button', { name: 'Save Capacity' }).click();
   await expect(page.getByRole('alert')).toContainText('Synthetic');
   expect(commands).toHaveLength(0);
   await page
     .getByLabel('Reason (start with Synthetic)')
     .fill('Synthetic a bigger hall is confirmed');
-  await page.getByRole('button', { name: 'Save capacity' }).click();
+  await page.getByRole('button', { name: 'Save Capacity' }).click();
   await expect(saved(page, 'Capacity saved.')).toBeVisible();
   expect(commands[0]).toMatchObject({
     action: 'capacity',
@@ -380,9 +380,9 @@ test('a new task is validated and sent as open with version zero', async ({ page
     },
   });
   await page.goto(origin);
-  await page.getByRole('button', { name: 'Add a task' }).click();
+  await page.getByRole('button', { name: 'Add a Task' }).click();
   await page.getByLabel('Title (start with Synthetic)').fill('Book the hall');
-  await page.getByRole('button', { name: 'Add task' }).click();
+  await page.getByRole('button', { name: 'Add Task' }).click();
   await expect(page.getByRole('alert')).toContainText(
     'Start the task title with the word Synthetic',
   );
@@ -392,7 +392,7 @@ test('a new task is validated and sent as open with version zero', async ({ page
   await page
     .getByLabel('Who is responsible (optional, start with Synthetic)')
     .fill('Synthetic local helper Mina');
-  await page.getByRole('button', { name: 'Add task' }).click();
+  await page.getByRole('button', { name: 'Add Task' }).click();
   await expect(saved(page, 'Task added.')).toBeVisible();
   expect(commands[0]).toMatchObject({
     action: 'task',
@@ -420,7 +420,7 @@ test('editing a task sends its id and version and can change its status', async 
   await page.goto(origin);
   await page.getByRole('button', { name: 'Edit task 2' }).click();
   await page.getByLabel('Status').selectOption('DONE');
-  await page.getByRole('button', { name: 'Save task' }).click();
+  await page.getByRole('button', { name: 'Save Task' }).click();
   await expect(saved(page, 'Task updated.')).toBeVisible();
   expect(commands[0]).toMatchObject({
     action: 'task',
@@ -446,14 +446,14 @@ test('a failed save keeps the form and retries with the identical command; a cha
     },
   });
   await page.goto(origin);
-  await page.getByRole('button', { name: 'Add a task' }).click();
+  await page.getByRole('button', { name: 'Add a Task' }).click();
   await page.getByLabel('Title (start with Synthetic)').fill('Synthetic print the name badges');
-  await page.getByRole('button', { name: 'Add task' }).click();
+  await page.getByRole('button', { name: 'Add Task' }).click();
   await expect(page.getByRole('alert')).toContainText('try again');
   await expect(page.getByLabel('Title (start with Synthetic)')).toHaveValue(
     'Synthetic print the name badges',
   );
-  await page.getByRole('button', { name: 'Add task' }).click();
+  await page.getByRole('button', { name: 'Add Task' }).click();
   await expect(saved(page, 'Task added.')).toBeVisible();
   expect((commands[1].input as { commandId: string }).commandId).toBe(
     (commands[0].input as { commandId: string }).commandId,
@@ -473,7 +473,7 @@ test('a stale version keeps the draft and explains it', async ({ page }) => {
   await page.goto(origin);
   await page.getByRole('button', { name: 'Edit task 1' }).click();
   await page.getByLabel('Title (start with Synthetic)').fill('Synthetic a different title');
-  await page.getByRole('button', { name: 'Save task' }).click();
+  await page.getByRole('button', { name: 'Save Task' }).click();
   await expect(page.getByRole('alert')).toContainText('changed since you opened it');
   await expect(page.getByLabel('Title (start with Synthetic)')).toHaveValue(
     'Synthetic a different title',
@@ -546,10 +546,10 @@ test('more tasks load on request without duplicating rows', async ({ page }) => 
         : tasks([task(1), task(2, { title: 'Synthetic arrange airport pickups' })], 2),
   });
   await page.goto(origin);
-  await page.getByRole('button', { name: 'Show more tasks' }).click();
+  await page.getByRole('button', { name: 'Show More Tasks' }).click();
   await expect(page.getByText('Synthetic send the final schedule')).toBeVisible();
   await expect(page.getByText('Synthetic arrange airport pickups')).toHaveCount(1);
-  await expect(page.getByRole('button', { name: 'Show more tasks' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Show More Tasks' })).toHaveCount(0);
 });
 test('the average rounds half up from exact integers', async ({ page }) => {
   for (const [sum, n, text] of [

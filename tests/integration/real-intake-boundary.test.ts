@@ -7,7 +7,7 @@ import { noticeVersion, realNoticeVersion } from '../../packages/domain/src/miss
 
 let f: Awaited<ReturnType<typeof fixture>>;
 const brief = () => ({
-  objective: 'Sell in a new market',
+  objective: 'Sell in a New Market',
   market: 'Spain',
   attendance: 'No',
   startDate: '',

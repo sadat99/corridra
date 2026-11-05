@@ -97,7 +97,7 @@ for (const [zone, wall, edited, zoneName] of [
     browser,
   }) => {
     const created = await service.submit(randomUUID(), {
-      objective: 'Sell in a new market',
+      objective: 'Sell in a New Market',
       market: 'Spain',
       attendance: 'Yes',
       startDate: '2026-11-01',

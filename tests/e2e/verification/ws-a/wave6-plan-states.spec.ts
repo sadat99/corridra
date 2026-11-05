@@ -7,7 +7,7 @@ import { test, expect } from '../fixtures';
 // Made-up details only.
 
 const next = (page: Page) => page.getByRole('button', { name: 'Continue', exact: true });
-const submitName = 'Submit mission request';
+const submitName = 'Submit Mission Request';
 
 async function toSubmit(page: Page) {
   await page.goto('/plan?job=buyers&companyCountry=BD&marketCode=CN');
@@ -175,10 +175,10 @@ test('Q-05 /plan receipt check, a 200 with an unreadable or wrong-shaped body sh
       : route.fulfill({ status: 200, json: {} });
   });
   await page.goto('/plan');
-  await page.getByRole('heading', { name: 'Check a mission request.' }).click();
+  await page.getByRole('heading', { name: 'Check a Mission Request.' }).click();
   const code = page.getByLabel('Receipt code', { exact: true });
   await code.fill('e'.repeat(64));
-  const check = page.getByRole('button', { name: 'Check status and replies', exact: true });
+  const check = page.getByRole('button', { name: 'Check Status and Replies', exact: true });
   for (let attempt = 0; attempt < 2; attempt++) {
     await check.click();
     await expect(status(page)).toContainText(notCompleted);

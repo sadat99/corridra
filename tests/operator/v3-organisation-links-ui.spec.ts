@@ -401,7 +401,7 @@ test('withdrawing asks first and sends one exact request', async ({ page }) => {
   await panel.getByRole('button', { name: 'Keep the request' }).click();
   expect(posts).toHaveLength(0);
   await panel.getByRole('button', { name: 'Withdraw this request' }).click();
-  await panel.getByRole('button', { name: 'Confirm withdrawal' }).click();
+  await panel.getByRole('button', { name: 'Confirm Withdrawal' }).click();
   await expect(panel.getByText('No company link yet')).toBeVisible();
   expect(posts).toHaveLength(1);
   expect(Object.keys(posts[0]!).sort()).toEqual([
@@ -428,7 +428,7 @@ test('stale, unavailable, denied and malformed answers are never shown as succes
   });
   const withdraw = async () => {
     const open = panel.getByRole('button', { name: 'Withdraw this request' });
-    const confirm = panel.getByRole('button', { name: 'Confirm withdrawal' });
+    const confirm = panel.getByRole('button', { name: 'Confirm Withdrawal' });
     // Wait for the panel to settle in either state before choosing: an immediate count can read zero
     // while the panel is still redrawing after the previous answer.
     await expect(open.or(confirm)).toBeVisible();
@@ -859,7 +859,7 @@ test('a failed evidence request is never reused for a different action', async (
   await panel.getByRole('button', { name: 'Add evidence' }).click();
   await expect(panel.getByRole('alert')).toContainText('could not be confirmed');
   await panel.getByRole('button', { name: 'Withdraw this request' }).click();
-  await panel.getByRole('button', { name: 'Confirm withdrawal' }).click();
+  await panel.getByRole('button', { name: 'Confirm Withdrawal' }).click();
   await expect(panel.getByText('No company link yet')).toBeVisible();
   expect(posts.map((p) => p.action)).toEqual(['add_evidence', 'withdraw']);
   expect(posts[1]!.commandId).not.toBe(posts[0]!.commandId);

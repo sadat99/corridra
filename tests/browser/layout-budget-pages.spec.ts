@@ -164,3 +164,20 @@ for (const path of ['/buyer', '/client'])
         name === 'phone' ? 2.0 : 1.0,
       );
     });
+
+// Condition of the Phase 2a approval: each page keeps its one primary action in view without scrolling, at 390
+// x 844 and at 1440 x 900.
+for (const path of [...pages, '/workspace'])
+  for (const [name, size] of Object.entries(sizes))
+    test(`${path} keeps its primary action above the fold at ${name}`, async ({ page }) => {
+      await page.setViewportSize(size);
+      await page.goto(path);
+      const action = page.locator('main a.primary-link').first();
+      await expect(action).toBeVisible();
+      const box = (await action.boundingBox())!;
+      expect(
+        box.y + box.height,
+        `${path} ${name}: the action ends inside the screen`,
+      ).toBeLessThanOrEqual(size.height);
+      expect(box.y).toBeGreaterThanOrEqual(0);
+    });

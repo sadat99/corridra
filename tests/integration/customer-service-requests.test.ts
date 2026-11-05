@@ -319,7 +319,7 @@ beforeAll(async () => {
         commandId: randomUUID(),
         workspaceId: person === 'dave' ? otherWorkspace : workspaceId,
         brief: {
-          objective: 'Sell in a new market',
+          objective: 'Sell in a New Market',
           market: 'Spain',
           attendance: 'Yes',
           startDate: '2026-11-01',

@@ -120,13 +120,13 @@ test.describe('the privacy notice in sections (L-02, L-05)', () => {
     expect(await visibleArticles(page)).toEqual(['storage']);
   });
 
-  test('"Show the whole notice" shows every section with every word, and hides again', async ({
+  test('"Show the Whole Notice" shows every section with every word, and hides again', async ({
     page,
   }) => {
     await page.setViewportSize(sizes.phone);
     const served = await (await page.request.get('/privacy')).text();
     await page.goto('/privacy');
-    const toggle = page.getByRole('button', { name: 'Show the whole notice' });
+    const toggle = page.getByRole('button', { name: 'Show the Whole Notice' });
     await expect(toggle).toHaveAttribute('aria-pressed', 'false');
     await toggle.click();
     await expect(toggle).toHaveAttribute('aria-pressed', 'true');
@@ -176,7 +176,7 @@ test.describe('the privacy notice in sections (L-02, L-05)', () => {
         ).toEqual([]);
       };
       await check('sections');
-      await page.getByRole('button', { name: 'Show the whole notice' }).click();
+      await page.getByRole('button', { name: 'Show the Whole Notice' }).click();
       await check('whole');
     });
 });

@@ -22,7 +22,7 @@ const real = () => ({
   purpose: 'commercial_qualification',
 });
 const brief = (n: number) => ({
-  objective: 'Sell in a new market',
+  objective: 'Sell in a New Market',
   market: 'Spain',
   attendance: 'No',
   startDate: '',

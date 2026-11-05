@@ -171,7 +171,7 @@ describe('the privacy notice', () => {
   it('test mode: tells people the code is kept on the device, how to remove it and when it is forgotten', async () => {
     const page = await text({ DATA_ENVIRONMENT: 'synthetic' });
     expect(page).toContain(deviceSentence);
-    expect(page).toContain('Forget this request on this device');
+    expect(page).toContain('Forget This Request on This Device');
     expect(page).toContain('The device forgets it after 30 days.');
     expect(page).toContain('Mission reply emails are not sent.');
     expect(page).not.toContain(emailSentence);

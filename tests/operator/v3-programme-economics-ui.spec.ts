@@ -218,7 +218,7 @@ async function mock(page: Page, handler: Handler = {}) {
 }
 const participantSelect = (page: Page) => page.getByRole('combobox', { name: /^Participant/ });
 const recordButton = (page: Page) =>
-  page.getByRole('button', { name: 'Record amount', exact: true });
+  page.getByRole('button', { name: 'Record Amount', exact: true });
 async function fill(page: Page, amount: string, description = 'Synthetic fee for the sample') {
   await page.getByLabel(/^Amount/).fill(amount);
   await page.getByLabel('Description (start with Synthetic)').fill(description);
@@ -504,10 +504,10 @@ test('older entries load on request without duplicating rows', async ({ page }) 
         : list({ nextBefore: 1 }),
   });
   await page.goto(origin);
-  await page.getByRole('button', { name: 'Show older entries' }).click();
+  await page.getByRole('button', { name: 'Show Older Entries' }).click();
   await expect(page.getByText('Synthetic older fee')).toBeVisible();
   await expect(page.getByText('Synthetic first receipt')).toHaveCount(1);
-  await expect(page.getByRole('button', { name: 'Show older entries' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Show Older Entries' })).toHaveCount(0);
 });
 test('a correction names only the original, a date and a reason', async ({ page }) => {
   let command: Record<string, unknown> | null = null;
@@ -518,10 +518,10 @@ test('a correction names only the original, a date and a reason', async ({ page 
     },
   });
   await page.goto(origin);
-  await page.getByRole('button', { name: 'Correct this entry' }).first().click();
+  await page.getByRole('button', { name: 'Correct This Entry' }).first().click();
   await page.getByLabel('Reason (start with Synthetic)').fill('Synthetic wrong amount entered');
   await page.getByLabel('I confirm this correction.').check();
-  await page.getByRole('button', { name: 'Add correction' }).click();
+  await page.getByRole('button', { name: 'Add Correction' }).click();
   await expect(
     page.getByRole('status').filter({ hasText: 'No payment was collected' }),
   ).toBeVisible();
@@ -544,7 +544,7 @@ test('already corrected entries offer no second correction', async ({ page }) =>
       }),
   });
   await page.goto(origin);
-  await expect(page.getByRole('button', { name: 'Correct this entry' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Correct This Entry' })).toHaveCount(0);
   await expect(page.getByText('Correction of an earlier entry')).toBeVisible();
   await expect(page.getByText('BDT -90071992547409.93')).toBeVisible();
 });

@@ -33,7 +33,7 @@ export async function prepareRealNetworkTask(
     }),
   );
   const brief = {
-    objective: 'Sell in a new market',
+    objective: 'Sell in a New Market',
     market: 'Spain',
     attendance: 'No',
     startDate: '',

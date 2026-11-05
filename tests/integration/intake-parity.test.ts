@@ -49,7 +49,7 @@ const jobs = [
 
 // job -> [objective the link sets, picture that opens it, requirement role]
 const jobFacts: Record<string, [string, string, string]> = {
-  buyers: ['Sell in a new market', 'sell-abroad', 'EXPORTER'],
+  buyers: ['Sell in a New Market', 'sell-abroad', 'EXPORTER'],
   customers: ['Find customers or distributors', 'sell-abroad', 'EXPORTER'],
   distributors: ['Find customers or distributors', 'sell-abroad', 'EXPORTER'],
   partners: ['Find customers or distributors', 'sell-abroad', 'EXPORTER'],
@@ -60,9 +60,9 @@ const jobFacts: Record<string, [string, string, string]> = {
   factory_visits: ['Make an upcoming business trip more productive', 'something-else', 'IMPORTER'],
   trade_fairs: ['Make an upcoming business trip more productive', 'something-else', 'EXPORTER'],
   business_trips: ['Make an upcoming business trip more productive', 'something-else', 'EXPORTER'],
-  market_validation: ['Sell in a new market', 'sell-abroad', 'EXPORTER'],
-  market_entry: ['Sell in a new market', 'sell-abroad', 'EXPORTER'],
-  export_market_access: ['Sell in a new market', 'sell-abroad', 'EXPORTER'],
+  market_validation: ['Sell in a New Market', 'sell-abroad', 'EXPORTER'],
+  market_entry: ['Sell in a New Market', 'sell-abroad', 'EXPORTER'],
+  export_market_access: ['Sell in a New Market', 'sell-abroad', 'EXPORTER'],
   delegations: ['Run a multi-company mission', 'group-trip', 'INSTITUTION'],
 };
 
@@ -81,7 +81,7 @@ describe('the 15 mission jobs', () => {
   });
   it('the six request objectives and seven outcomes are unchanged', () => {
     expect(objectiveOptions).toEqual([
-      'Sell in a new market',
+      'Sell in a New Market',
       'Find customers or distributors',
       'Source suppliers',
       'Make an upcoming business trip more productive',

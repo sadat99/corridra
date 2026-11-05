@@ -108,7 +108,7 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
                 content.ctaHref ?? (content.intakeJob ? `/plan?job=${content.intakeJob}` : '/plan')
               }
             >
-              {content.cta ?? 'Start a request'}
+              {content.cta ?? 'Start a Request'}
             </Link>
           </div>
         </div>
@@ -147,7 +147,7 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
 
       {/* The sections after the approach stay in the page, behind one native disclosure (layout budget). */}
       <details className="guide-more">
-        <summary>Show more</summary>
+        <summary>Show More</summary>
         {content.reverse && (
           <section className="guide-reverse" aria-labelledby="reverse-title">
             <div>
@@ -239,7 +239,7 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
                 content.ctaHref ?? (content.intakeJob ? `/plan?job=${content.intakeJob}` : '/plan')
               }
             >
-              {content.cta ?? 'Start a request'}
+              {content.cta ?? 'Start a Request'}
             </Link>
           </section>
         )}

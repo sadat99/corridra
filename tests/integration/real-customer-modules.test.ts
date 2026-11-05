@@ -177,7 +177,7 @@ test('real guided drafts accept ordinary company details and compose a normal co
   const details = {
     title: 'Supplier discussions',
     family: 'BUYERS_PARTNERS' as const,
-    objective: 'Sell in a new market' as const,
+    objective: 'Sell in a New Market' as const,
     market: 'Spain',
     attendance: 'No' as const,
     startDate: '',

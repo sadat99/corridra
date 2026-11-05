@@ -179,7 +179,7 @@ test('owner issues a real scoped command,shows the secret once and follows a rel
   await page.goto(origin + '?mode=owner');
   await expect(page.getByText('No sample invitations yet.', { exact: true })).toBeVisible();
   await page.getByRole('checkbox', { name: /share this sample code/ }).check();
-  await page.getByRole('button', { name: 'Create sample invitation code' }).click();
+  await page.getByRole('button', { name: 'Create Sample Invitation Code' }).click();
   await expect(page.getByLabel('Private sample invitation code', { exact: true })).toHaveValue(
     token,
   );
@@ -220,15 +220,15 @@ test('participant inspects the actual programme and explicitly consents before r
   });
   await page.goto(origin);
   await page.getByLabel('Private sample invitation code', { exact: true }).fill(token);
-  await page.getByRole('button', { name: 'Preview sample invitation' }).click();
+  await page.getByRole('button', { name: 'Preview Sample Invitation' }).click();
   await expect(page.getByRole('heading', { name: preview().name })).toBeVisible();
   await page
     .getByLabel('Fictional display name', { exact: true })
     .fill('Synthetic participant label');
-  await page.getByRole('button', { name: 'Register for sample programme' }).click();
+  await page.getByRole('button', { name: 'Register for Sample Programme' }).click();
   expect(posts).toHaveLength(1);
   await page.getByRole('checkbox', { name: /consent to sharing/ }).check();
-  await page.getByRole('button', { name: 'Register for sample programme' }).click();
+  await page.getByRole('button', { name: 'Register for Sample Programme' }).click();
   await expect(
     page.getByText('Synthetic participant label · Registered, self-declared', { exact: true }),
   ).toBeVisible();
@@ -278,16 +278,16 @@ test('uncertain registration retains exact text,code and command;wrong-scope ack
   });
   await page.goto(origin);
   await page.getByLabel('Private sample invitation code', { exact: true }).fill(token);
-  await page.getByRole('button', { name: 'Preview sample invitation' }).click();
+  await page.getByRole('button', { name: 'Preview Sample Invitation' }).click();
   await page
     .getByLabel('Fictional display name', { exact: true })
     .fill('Synthetic participant label');
   await page.getByRole('checkbox', { name: /consent to sharing/ }).check();
-  await page.getByRole('button', { name: 'Register for sample programme' }).click();
+  await page.getByRole('button', { name: 'Register for Sample Programme' }).click();
   await expect(page.getByText(/Saving could not be confirmed/)).toBeVisible();
   await expect(page.getByText('No sample registrations yet.', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Register for sample programme' })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Retry same programme request' }).click();
+  await expect(page.getByRole('button', { name: 'Register for Sample Programme' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Retry Same Programme Request' }).click();
   await expect(
     page.getByText('Synthetic participant label · Registered, self-declared', { exact: true }),
   ).toBeVisible();
@@ -319,13 +319,13 @@ test('lost issuance never regenerates a secret or creates a second invitation du
   });
   await page.goto(origin + '?mode=owner');
   await page.getByRole('checkbox', { name: /share this sample code/ }).check();
-  await page.getByRole('button', { name: 'Create sample invitation code' }).click();
+  await page.getByRole('button', { name: 'Create Sample Invitation Code' }).click();
   await expect(page.getByText(/Saving could not be confirmed/)).toBeVisible();
-  await page.getByRole('button', { name: 'Retry same participant request' }).click();
+  await page.getByRole('button', { name: 'Retry Same Participant Request' }).click();
   await expect(page.getByText(/Its code cannot be shown again/)).toBeVisible();
   await expect(page.getByLabel('Private sample invitation code', { exact: true })).toHaveCount(0);
   expect(bodies[1]).toEqual(bodies[0]);
-  await expect(page.getByRole('button', { name: 'Revoke invitation', exact: true })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Revoke Invitation', exact: true })).toHaveCount(1);
 });
 test('organiser access changes require explicit reason and confirmation and update only the selected registration', async ({
   page,
@@ -346,7 +346,7 @@ test('organiser access changes require explicit reason and confirmation and upda
   });
   await page.goto(origin + '?mode=owner');
   await expect(page.getByLabel('Reason for access change', { exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Revoke programme access', exact: true }).click();
+  await page.getByRole('button', { name: 'Revoke Programme Access', exact: true }).click();
   await expect(page.getByLabel('Reason for access change', { exact: true })).toBeVisible();
   await page.setViewportSize({ width: 320, height: 1000 });
   await mkdir('.cache/v3-participants/after', { recursive: true });
@@ -363,7 +363,7 @@ test('organiser access changes require explicit reason and confirmation and upda
     .getByLabel('Reason for access change', { exact: true })
     .fill('Synthetic programme access cancellation');
   await page.getByRole('checkbox', { name: /confirm this access change/ }).check();
-  await page.getByRole('button', { name: 'Confirm access change', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm Access Change', exact: true }).click();
   await expect(page.getByText('Programme access revoked', { exact: true })).toBeVisible();
   expect(posts[0]).toMatchObject({
     action: 'revoke',
@@ -396,7 +396,7 @@ test('participant withdrawal is explicit,scoped and removes stale programme meta
   });
   await page.goto(origin);
   await expect(page.getByLabel('Reason for withdrawal', { exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Withdraw from programme', exact: true }).click();
+  await page.getByRole('button', { name: 'Withdraw From Programme', exact: true }).click();
   await expect(page.getByLabel('Reason for withdrawal', { exact: true })).toBeVisible();
   await page.setViewportSize({ width: 320, height: 1000 });
   await mkdir('.cache/v3-participants/after', { recursive: true });
@@ -410,7 +410,7 @@ test('participant withdrawal is explicit,scoped and removes stale programme meta
     .getByLabel('Reason for withdrawal', { exact: true })
     .fill('Synthetic participant requests withdrawal');
   await page.getByRole('checkbox', { name: /confirm withdrawal/ }).check();
-  await page.getByRole('button', { name: 'Confirm withdrawal', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm Withdrawal', exact: true }).click();
   await expect(
     page.getByText('You withdrew from this sample programme.', { exact: true }),
   ).toBeVisible();
@@ -440,7 +440,7 @@ test('account change and hide/restore clear secret and old participant labels be
   );
   await page.goto(origin + '?mode=owner');
   await page.getByRole('checkbox', { name: /share this sample code/ }).check();
-  await page.getByRole('button', { name: 'Create sample invitation code' }).click();
+  await page.getByRole('button', { name: 'Create Sample Invitation Code' }).click();
   await expect(page.getByLabel('Private sample invitation code', { exact: true })).toHaveValue(
     token,
   );
@@ -481,7 +481,7 @@ test('participant paging never extends the initial private display window or lea
   await page.goto(origin + '?mode=owner');
   await expect(page.getByText('Synthetic participant invitation', { exact: true })).toBeVisible();
   await page.clock.fastForward(45000);
-  await page.getByRole('button', { name: 'Load more invitations' }).click();
+  await page.getByRole('button', { name: 'Load More Invitations' }).click();
   await expect(page.getByText('Synthetic second invitation', { exact: true })).toBeVisible();
   expect(queries.at(-1)).toContain('invitationAfter=' + invitationId);
   await page.clock.fastForward(16000);
@@ -505,15 +505,15 @@ test('malformed,wrong-scope,unavailable and expired previews never expose action
   await expect(
     page.getByText('Sample delegation participation is unavailable.', { exact: true }),
   ).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Preview sample invitation' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Preview Sample Invitation' })).toHaveCount(0);
   stage = 1;
-  await page.getByRole('button', { name: 'Reload my sample registrations' }).click();
+  await page.getByRole('button', { name: 'Reload My Sample Registrations' }).click();
   await expect(page.getByRole('alert')).toContainText('could not be checked');
   await expect(page.getByText(ownRegistration().name, { exact: true })).toHaveCount(0);
   stage = 2;
-  await page.getByRole('button', { name: 'Reload my sample registrations' }).click();
+  await page.getByRole('button', { name: 'Reload My Sample Registrations' }).click();
   await page.getByLabel('Private sample invitation code', { exact: true }).fill(token);
-  await page.getByRole('button', { name: 'Preview sample invitation' }).click();
+  await page.getByRole('button', { name: 'Preview Sample Invitation' }).click();
   await expect(
     page.getByText('The invitation could not be checked. Try again.', { exact: true }),
   ).toBeVisible();
@@ -547,16 +547,16 @@ test('programme controls stay contextual,lazy and independently gated without dr
     return route.fulfill({ status: 403, json: { error: 'Access denied' } });
   });
   await page.goto(origin + '?mode=context');
-  await expect(page.getByRole('button', { name: 'Save sample programme' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Manage sample participants' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Save Sample Programme' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Manage Sample Participants' })).toHaveCount(0);
   expect(reads).toBe(0);
   await page.goto(origin + '?mode=context&enabled=true');
-  await expect(page.getByRole('button', { name: 'Manage sample participants' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Manage Sample Participants' })).toBeVisible();
   expect(reads).toBe(0);
-  await page.getByRole('button', { name: 'Manage sample participants' }).click();
+  await page.getByRole('button', { name: 'Manage Sample Participants' }).click();
   await expect(page.getByRole('alert')).toContainText('Only current programme');
   expect(reads).toBe(1);
-  await expect(page.getByRole('button', { name: 'Save sample programme' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Save Sample Programme' })).toBeVisible();
 });
 test('both audiences support original-script text,keyboard,axe and four responsive widths without clipped records', async ({
   page,
@@ -656,20 +656,20 @@ test('GAP-007 stores an optional address, explicitly emails the visible code and
     .getByRole('textbox', { name: 'Participant email (optional)', exact: true })
     .fill('participant@example.test');
   await page.getByRole('checkbox', { name: /share this sample code/ }).check();
-  await page.getByRole('button', { name: 'Create sample invitation code', exact: true }).click();
+  await page.getByRole('button', { name: 'Create Sample Invitation Code', exact: true }).click();
   await expect(page.getByLabel('Private sample invitation code', { exact: true })).toHaveValue(
     token,
   );
   expect(posts).toHaveLength(1);
   expect(posts[0].recipientEmail).toBe('participant@example.test');
-  await page.getByRole('button', { name: 'Email invitation', exact: true }).click();
+  await page.getByRole('button', { name: 'Email Invitation', exact: true }).click();
   await expect(
     page.getByRole('status').filter({ hasText: 'The email was not sent.' }),
   ).toBeVisible();
   await expect(page.getByLabel('Private sample invitation code', { exact: true })).toHaveValue(
     token,
   );
-  await page.getByRole('button', { name: 'Email invitation', exact: true }).click();
+  await page.getByRole('button', { name: 'Email Invitation', exact: true }).click();
   await expect(
     page.getByRole('status').filter({ hasText: 'Invitation email sent.' }),
   ).toBeVisible();
@@ -686,5 +686,5 @@ test('GAP-007 stores an optional address, explicitly emails the visible code and
   expect(storage).not.toContain('participant@example.test');
   await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide')));
   await expect(page.getByLabel('Private sample invitation code', { exact: true })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Email invitation', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Email Invitation', exact: true })).toHaveCount(0);
 });

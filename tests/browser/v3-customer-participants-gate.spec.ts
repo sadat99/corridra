@@ -22,7 +22,7 @@ test('participant preview,registration and administration stay closed before opt
   await expect(page.getByRole('status')).toHaveText(
     'Sample delegation participation is unavailable.',
   );
-  await expect(page.getByRole('button', { name: 'Preview sample invitation' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Preview Sample Invitation' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Return to your account' })).toHaveAttribute(
     'href',
     '/account',

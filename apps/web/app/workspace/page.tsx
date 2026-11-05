@@ -19,21 +19,21 @@ export default function Page() {
               account. You create one at the last step to send it.
             </p>
             <Link className="primary-link" href="/plan">
-              Plan a mission
+              Plan a Mission
             </Link>
           </article>
           <article className="detail-card">
             <h2>See how it works</h2>
             <p>Follow a sample mission from the first goal to the next step.</p>
             <Link className="button-secondary" href="/corridors#mission-example">
-              See a sample mission
+              See a Sample Mission
             </Link>
           </article>
         </section>
         <section className="ux-start-signin" aria-labelledby="signin-title">
           <h2 id="signin-title">Already working with us?</h2>
           <details className="ux-start-signin-details">
-            <summary>Already working with us?</summary>
+            <summary>Already Working With Us?</summary>
             <ul>
               <li>
                 <div>
@@ -41,7 +41,7 @@ export default function Page() {
                   <p>See your requests and missions.</p>
                 </div>
                 <Link className="primary-link" href="/account">
-                  Open my account
+                  Open My Account
                 </Link>
               </li>
               <li>
@@ -54,7 +54,7 @@ export default function Page() {
                 </div>
                 <div className="ux-start-actions">
                   <Link className="primary-link" href="/operator">
-                    Team sign-in
+                    Team Sign-In
                   </Link>
                   <Link className="text-link" href="/operator/setup">
                     Set up your team account

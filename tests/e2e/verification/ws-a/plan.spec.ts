@@ -89,7 +89,7 @@ test('A-3 a link naming another job asks before replacing a saved draft, and Cle
   // Back to a sourcing link: continuing keeps the saved trip; Clear draft applies the link instead.
   await page.goto('/plan?job=sourcing');
   await expect(page.getByRole('group', { name: /You have a saved request/ })).toBeVisible();
-  await page.getByRole('button', { name: 'Clear draft', exact: true }).click();
+  await page.getByRole('button', { name: 'Clear Draft', exact: true }).click();
   await expect(page.getByRole('group', { name: /You have a saved request/ })).toHaveCount(0);
   await expect(job(page)).toHaveValue('sourcing');
   // Countries are listed by name with the route countries first (CQ-15).
@@ -125,7 +125,7 @@ test('V-10 a sent request gets a receipt and reads as received, never as a draft
   await page.getByLabel('Work email', { exact: true }).fill('qa-buyer@example.invalid');
   await page.getByLabel('I have read', { exact: false }).check();
   const sent = page.waitForResponse((r) => r.url().endsWith('/api/intake'));
-  await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
+  await page.getByRole('button', { name: 'Submit Mission Request', exact: true }).click();
   const response = await sent;
   expect(response.status()).toBe(201);
   const body = (await response.json()) as { receipt?: string };
@@ -133,7 +133,7 @@ test('V-10 a sent request gets a receipt and reads as received, never as a draft
   await expect(page.getByLabel('Private receipt code')).toHaveValue(body.receipt!);
   // The status check reads the stored request through the API and shows the customer label (D6).
   const checked = page.waitForResponse((r) => r.url().endsWith('/api/intake/receipt'));
-  await page.getByRole('button', { name: 'Check status and replies' }).click();
+  await page.getByRole('button', { name: 'Check Status and Replies' }).click();
   const answer = await checked;
   expect(answer.status()).toBe(200);
   expect(((await answer.json()) as { status: string }).status).toMatch(/^[A-Z_]+$/);
@@ -157,14 +157,14 @@ test('V-49 the receipt check explains an empty code and a wrong code, with a hin
   page.on('request', (request) => {
     if (request.url().endsWith('/api/intake/receipt')) called = true;
   });
-  await page.getByRole('button', { name: 'Check status and replies' }).click();
+  await page.getByRole('button', { name: 'Check Status and Replies' }).click();
   await expect(page.locator('#check-error')).toHaveText('Enter the code from your receipt.');
   await expect(code).toHaveAttribute('aria-invalid', 'true');
   expect(called).toBe(false);
   await code.fill('0'.repeat(64));
   await expect(page.locator('#check-error')).toHaveCount(0);
   const refused = page.waitForResponse((r) => r.url().endsWith('/api/intake/receipt'));
-  await page.getByRole('button', { name: 'Check status and replies' }).click();
+  await page.getByRole('button', { name: 'Check Status and Replies' }).click();
   expect((await refused).ok()).toBe(false);
   await expect(page.locator('main')).toContainText('Receipt unavailable or expired');
   await evidence(page, `V-49-${info.project.name}`);

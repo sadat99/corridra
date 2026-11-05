@@ -14,7 +14,7 @@ export async function seed(
 ): Promise<Record<string, unknown>> {
   const missions = new MissionService(db, 'qa-verification-only-secret');
   const submitted = await missions.submit(randomUUID(), {
-    objective: 'Sell in a new market',
+    objective: 'Sell in a New Market',
     market: 'Spain',
     attendance: 'Yes',
     startDate: '2026-11-10',

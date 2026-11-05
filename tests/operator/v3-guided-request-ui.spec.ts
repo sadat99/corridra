@@ -215,7 +215,7 @@ function fake(
 const full = (over: Details = {}): Details => ({
   title: 'Synthetic towel buyer search',
   family: 'BUYERS_PARTNERS',
-  objective: 'Sell in a new market',
+  objective: 'Sell in a New Market',
   market: 'Spain',
   attendance: 'No',
   startDate: '',
@@ -462,7 +462,7 @@ test('sending uses the existing request with a stable command id, then closes th
   };
   expect(sent.workspaceId).toBe(workspaceId);
   expect(sent.brief).toMatchObject({
-    objective: 'Sell in a new market',
+    objective: 'Sell in a New Market',
     market: 'Spain',
     company: 'Synthetic Dhaka Towels Limited',
     name: 'Test Person',

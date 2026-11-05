@@ -377,17 +377,17 @@ export function ProgrammeContextEditor(props: ProgrammeContextScope & { onClose:
             </label>
           </fieldset>
           <button type="submit" className="button button-primary" disabled={busy || !ack}>
-            {pending ? 'Retry same save' : 'Save programme details'}
+            {pending ? 'Retry Same Save' : 'Save Programme Details'}
           </button>
         </form>
       )}
       {!dirty && !pending && (
         <button type="button" className="text-link" disabled={busy} onClick={() => void request()}>
-          Reload programme details
+          Reload Programme Details
         </button>
       )}
       <button type="button" className="text-link" disabled={busy} onClick={close}>
-        Close programme details
+        Close Programme Details
       </button>
     </section>
   );

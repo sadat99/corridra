@@ -28,7 +28,7 @@ test('the start page offers three plain choices and links each kind of person to
   await page.goto('/');
   const start = page
     .getByRole('navigation', { name: 'Main navigation', includeHidden: true })
-    .getByRole('link', { name: 'Start a request', includeHidden: true });
+    .getByRole('link', { name: 'Start a Request', includeHidden: true });
   await expect(start).toHaveAttribute('href', '/plan');
   await openFooterGroups(page);
   await page
@@ -41,18 +41,18 @@ test('the start page offers three plain choices and links each kind of person to
   const signIn = page.locator('details.ux-start-signin-details > summary');
   if (await signIn.isVisible()) await signIn.click();
   const main = page.getByRole('main');
-  await expect(main.getByRole('link', { name: 'Plan a mission', exact: true })).toHaveAttribute(
+  await expect(main.getByRole('link', { name: 'Plan a Mission', exact: true })).toHaveAttribute(
     'href',
     '/plan',
   );
   await expect(
-    main.getByRole('link', { name: 'See a sample mission', exact: true }),
+    main.getByRole('link', { name: 'See a Sample Mission', exact: true }),
   ).toHaveAttribute('href', '/corridors#mission-example');
-  await expect(main.getByRole('link', { name: 'Open my account', exact: true })).toHaveAttribute(
+  await expect(main.getByRole('link', { name: 'Open My Account', exact: true })).toHaveAttribute(
     'href',
     '/account',
   );
-  await expect(main.getByRole('link', { name: 'Team sign-in', exact: true })).toHaveAttribute(
+  await expect(main.getByRole('link', { name: 'Team Sign-In', exact: true })).toHaveAttribute(
     'href',
     '/operator',
   );
@@ -68,7 +68,7 @@ test('the start page offers three plain choices and links each kind of person to
     expect(text).not.toContain(jargon);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await main.getByRole('link', { name: 'Team sign-in', exact: true }).click();
+  await main.getByRole('link', { name: 'Team Sign-In', exact: true }).click();
   await expect(page).toHaveURL(/\/operator$/);
   await expect(page.getByRole('main')).toContainText('not configured');
 });
@@ -91,7 +91,7 @@ test('protected access entries explain unavailable configuration and offer a way
 test('invited network and private sharing help have connected recovery paths', async ({ page }) => {
   await page.goto('/network');
   await page.locator('details.guide-more > summary').click(); // the closing sections sit behind Show more
-  await page.getByRole('link', { name: 'Already invited? Open assigned-task access' }).click();
+  await page.getByRole('link', { name: 'Already Invited? Open Assigned-Task Access' }).click();
   await expect(page).toHaveURL(/\/contributor$/);
   await expect(page.getByRole('heading', { name: 'Your assigned tasks.' })).toBeVisible();
   for (const route of ['/client', '/programme']) {

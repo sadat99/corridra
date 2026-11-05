@@ -100,7 +100,7 @@ export async function accessFixture(
       }),
     );
     const intake = await mission.submit(randomUUID(), {
-      objective: 'Sell in a new market',
+      objective: 'Sell in a New Market',
       market: country === 'ES' ? 'Spain' : country,
       attendance: 'No',
       startDate: '',

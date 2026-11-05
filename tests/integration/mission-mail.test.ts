@@ -105,7 +105,7 @@ describe('message 1, we have your request', () => {
     const expected: Record<string, string> = {
       'Source suppliers':
         "Here's what comes next. We check the details with you. Then we look for suppliers and check what they say about themselves. When quotes arrive, you'll see them side by side.",
-      'Sell in a new market':
+      'Sell in a New Market':
         "Here's what comes next. We check the details with you. Then we look for buyers and partners in your target market and check what they say about themselves. What we find will appear in your request.",
       'Find customers or distributors':
         "Here's what comes next. We check the details with you. Then we look for customers or distributors that fit and check what they say about themselves. What we find will appear in your request.",

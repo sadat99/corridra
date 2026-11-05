@@ -132,7 +132,7 @@ export function RecipientResponse({
                 : 'NOT SUPPLIED'}
             </p>
             <details>
-              <summary>Recorded original offer terms</summary>
+              <summary>Recorded Original Offer Terms</summary>
               <dl>
                 {Object.entries(quotation.terms).map(([key, value]) => (
                   <div key={key}>
@@ -252,7 +252,7 @@ export function RecipientResponse({
         </label>
       </fieldset>
       <button className="primary-link" disabled={busy}>
-        {pending ? 'Retry the same declaration' : 'Record response'}
+        {pending ? 'Retry the Same Declaration' : 'Record Response'}
       </button>
     </form>
   );

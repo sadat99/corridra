@@ -29,7 +29,7 @@ type Person = {
   mute: string;
 };
 const briefFor = (email: string) => ({
-  objective: 'Sell in a new market',
+  objective: 'Sell in a New Market',
   market: 'Spain',
   attendance: 'No',
   startDate: '',

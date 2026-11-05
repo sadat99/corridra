@@ -258,7 +258,7 @@ test('when nothing waits it says so, shows where the latest request stands and o
   await expect(page.getByText('Nothing is waiting for you right now.')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Your most recent request' })).toBeVisible();
   await expect(page.locator('[aria-current="step"]')).toHaveCount(1);
-  await expect(page.getByRole('link', { name: 'Start a request' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'Start a Request' })).toHaveAttribute(
     'href',
     '/plan',
   );

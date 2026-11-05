@@ -188,7 +188,7 @@ function CornerDockView({ variant }: { variant: 'corner' | 'header' }) {
         >
           <p>Need a hand?</p>
           <Link prefetch={false} href="/how-it-works" onClick={() => closeHelp(false)}>
-            See how it works
+            See How It Works
           </Link>
           {supported && (
             <button
@@ -198,7 +198,7 @@ function CornerDockView({ variant }: { variant: 'corner' | 'header' }) {
                 if (!speaking) toggleListen();
               }}
             >
-              Listen to this page
+              Listen to This Page
             </button>
           )}
           <Link prefetch={false} href="/plan" onClick={() => closeHelp(false)}>
@@ -223,8 +223,8 @@ function CornerDockView({ variant }: { variant: 'corner' | 'header' }) {
           type="button"
           className="dock-button"
           data-active={speaking}
-          data-tip={speaking ? 'Stop reading' : 'Listen to this page'}
-          aria-label={speaking ? 'Stop reading' : 'Listen to this page'}
+          data-tip={speaking ? 'Stop Reading' : 'Listen to This Page'}
+          aria-label={speaking ? 'Stop Reading' : 'Listen to This Page'}
           aria-pressed={speaking}
           onClick={toggleListen}
         >

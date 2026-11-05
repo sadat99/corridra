@@ -48,7 +48,7 @@ function objectiveForJobBefore(job: string) {
     return 'Make an upcoming business trip more productive';
   if (['customers', 'distributors', 'partners'].includes(job))
     return 'Find customers or distributors';
-  return 'Sell in a new market';
+  return 'Sell in a New Market';
 }
 
 describe('the mapping table is complete', () => {
@@ -112,7 +112,7 @@ describe('which picture is chosen', () => {
   it('follows the objective "Something else" first, then the job', () => {
     expect(selectedPicture('', '')).toBeNull();
     expect(selectedPicture('Something else', 'market_validation')).toBe('something-else');
-    expect(selectedPicture('Sell in a new market', 'buyers')).toBe('sell-abroad');
+    expect(selectedPicture('Sell in a New Market', 'buyers')).toBe('sell-abroad');
     expect(selectedPicture('Source suppliers', 'machinery_procurement')).toBe('buy-machine');
     expect(
       selectedPicture('Make an upcoming business trip more productive', 'business_trips'),
@@ -188,11 +188,11 @@ describe('one Sample or Real label per site', () => {
     const { SiteHeader } = await load('components/site-header');
     const sample = render(SiteHeader, { accounts: false, mode: 'sample' });
     expect(sample).not.toContain('mr-mode');
-    expect(sample).not.toContain('(sample request)');
+    expect(sample).not.toContain('(Sample Request)');
     expect(sample).toContain('>Start a request<');
     const real = render(SiteHeader, { accounts: false, mode: 'real' });
     expect(real).not.toContain('mr-mode');
-    expect(real).not.toContain('(sample request)');
+    expect(real).not.toContain('(Sample Request)');
     expect(real).toContain('>Start a request<');
   });
   it('is chosen by the server layout from the switch and the real-use state', () => {

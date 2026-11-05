@@ -128,7 +128,7 @@ describe('CQ-77: a published report reaches Your Move', () => {
 
 describe('CQ-23 and CQ-24: plain request titles and grouped details', () => {
   it('titles a request by objective and market', () => {
-    expect(requestTitle({ objective: 'Sell in a new market', market: 'Spain' })).toBe(
+    expect(requestTitle({ objective: 'Sell in a New Market', market: 'Spain' })).toBe(
       'Sell in Spain',
     );
     expect(requestTitle({ objective: 'Source suppliers', market: 'CN' })).toBe(
@@ -137,7 +137,7 @@ describe('CQ-23 and CQ-24: plain request titles and grouped details', () => {
     expect(requestTitle({ objective: 'Something else', marketCode: 'AZ' })).toBe(
       'Request for Azerbaijan',
     );
-    expect(requestTitle({ objective: 'Sell in a new market' })).toBe('Sell in a new market');
+    expect(requestTitle({ objective: 'Sell in a New Market' })).toBe('Sell in a New Market');
     expect(requestTitle(null)).toBeNull();
   });
   it('shows country names, never raw codes', () => {
@@ -150,7 +150,7 @@ describe('CQ-23 and CQ-24: plain request titles and grouped details', () => {
       schemaVersion: 2,
       acknowledged: true,
       email: 'buyer@example.com',
-      objective: 'Sell in a new market',
+      objective: 'Sell in a New Market',
       market: 'Spain',
       marketCode: 'ES',
       offer: 'Knitwear for retail chains',

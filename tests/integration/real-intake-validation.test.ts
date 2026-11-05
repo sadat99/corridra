@@ -2,7 +2,7 @@ import { expect, test } from 'vitest';
 import { briefSchema, realBriefSchema, realIntakeSteps } from '../../packages/domain/src/missions';
 
 const request = () => ({
-  objective: 'Sell in a new market',
+  objective: 'Sell in a New Market',
   market: 'Spain',
   attendance: 'Yes',
   startDate: '2026-11-01',
