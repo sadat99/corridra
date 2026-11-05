@@ -14,12 +14,14 @@ test('UX-02 Atlas selects an actual direction and synthetic example without crea
     if (request.method() !== 'GET') writes.push(request.url());
   });
   await page.goto('/corridors');
+  await page.getByRole('tab', { name: 'Pick Your Route' }).click(); // the picker is its own tab
   await openFineTune(page);
   await page.getByRole('combobox', { name: 'Your perspective' }).selectOption('institution');
   await expect(page.getByRole('combobox', { name: "I'm trying to" })).toHaveValue('delegations');
   await page.getByRole('combobox', { name: 'Route', exact: true }).selectOption('bangladesh-eu');
   const atlas = page.getByLabel('Route map', { exact: true });
   await expect(atlas).toContainText('The EU is a group of countries');
+  await page.getByRole('tab', { name: 'Sample Mission' }).click(); // the sample is its own tab
   await page.getByRole('button', { name: 'Open the Sample Mission' }).click();
   const example = page.getByRole('region', { name: 'Sample mission' });
   await expect(example).toContainText('Run a multi-company mission');
@@ -28,8 +30,10 @@ test('UX-02 Atlas selects an actual direction and synthetic example without crea
   await page.keyboard.press('Enter');
   await expect(example).toContainText('Evidence not established');
   await expect(example).toContainText('Unknown terms stay unknown');
+  await page.getByRole('tab', { name: 'Pick Your Route' }).click();
   await page.getByRole('combobox', { name: 'Route', exact: true }).selectOption('spain-bangladesh');
   await expect(atlas).toContainText('Spanish companies entering Bangladesh is a separate route');
+  await page.getByRole('tab', { name: 'Sample Mission' }).click();
   await expect(example).toContainText('No operating offer is announced');
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   expect(writes).toEqual([]);
@@ -184,6 +188,7 @@ test('UX-02 situation cards preset the role, job and route and prefill the examp
     if (request.method() !== 'GET') writes.push(request.url());
   });
   await page.goto('/corridors');
+  await page.getByRole('tab', { name: 'Pick Your Route' }).click(); // the picker is its own tab
   await openFineTune(page);
   const group = page.getByRole('group', { name: 'Choose your situation' });
   await expect(group.getByRole('button', { name: /Source From Suppliers/ })).toHaveAttribute(

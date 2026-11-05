@@ -1,6 +1,7 @@
 import { PublicShell } from './public-shell';
 import { Arrow } from './arrow';
 import { CorridraIcon } from './corridra-icon';
+import { SubTabs } from './ux/sub-tabs';
 import { FactLabel } from './fact-label';
 import Link from 'next/link';
 import type { PublicPageContent } from '../content/public-pages';
@@ -57,27 +58,36 @@ function Steps({ content }: { content: PublicPageContent }) {
     );
   }
   const size = Math.ceil(sections.length / groups.length);
+  // The phases are tabs (layout budget): one phase shows at a time, every step stays in the page.
+  const tabs = groups.map((title, index) => {
+    const start = index * size;
+    const items = sections.slice(start, start + size);
+    return {
+      id: title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, ''),
+      label: title,
+      panel: (
+        <div className="guide-phase">
+          <header>
+            <h3 className="sr-only">{title}</h3>
+            <p>
+              Steps {start + 1} to {start + items.length}
+            </p>
+          </header>
+          <ol data-count={items.length}>
+            {items.map((section, i) => (
+              <StepItem key={section.title} section={section} number={start + i + 1} />
+            ))}
+          </ol>
+        </div>
+      ),
+    };
+  });
   return (
-    <section className="guide-journey" aria-label="The approach">
-      {groups.map((title, index) => {
-        const start = index * size;
-        const items = sections.slice(start, start + size);
-        return (
-          <div className="guide-phase" key={title}>
-            <header>
-              <h3>{title}</h3>
-              <p>
-                Steps {start + 1} to {start + items.length}
-              </p>
-            </header>
-            <ol data-count={items.length}>
-              {items.map((section, i) => (
-                <StepItem key={section.title} section={section} number={start + i + 1} />
-              ))}
-            </ol>
-          </div>
-        );
-      })}
+    <section className="guide-journey guide-journey--tabs" aria-label="The approach">
+      <SubTabs tabs={tabs} label="Phases of the approach" />
     </section>
   );
 }

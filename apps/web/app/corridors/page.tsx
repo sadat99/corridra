@@ -3,6 +3,8 @@ import { DiscoveryExperience } from '../../components/discovery-experience';
 import Link from 'next/link';
 import { corridorPages } from '../../content/corridors';
 import { Arrow } from '../../components/arrow';
+import '../../components/page-compact.css';
+import './corridors.css';
 export const metadata = {
   title: 'Routes | Corridra',
   description: 'We start with Bangladesh to China, Spain and the EU. Ask us about other routes.',
@@ -10,7 +12,7 @@ export const metadata = {
 export default function Page() {
   return (
     <PublicShell>
-      <section className="guide-page-hero">
+      <section className="guide-page-hero guide-page-hero--compact">
         <div>
           <nav className="guide-crumb" aria-label="Breadcrumb">
             <Link prefetch={false} href="/">
@@ -28,30 +30,31 @@ export default function Page() {
           </p>
         </div>
       </section>
-      <DiscoveryExperience />
-      <section className="guide-directions" aria-labelledby="directions-title">
-        <h2 id="directions-title">Explore a route</h2>
-        <ul>
-          {Object.entries(corridorPages).map(([slug, c]) => (
-            <li key={slug}>
-              <h3>{c.title}</h3>
-              <p>{c.description}</p>
-              <Link prefetch={false} href={`/corridors/${slug}`} className="text-link">
-                Explore this route <Arrow />
-              </Link>
-            </li>
-          ))}
-        </ul>
-        <div className="guide-other-route">
-          <div>
-            <h3>Any other route</h3>
-            <p>Tell us the two countries in a request and we will say whether we can help.</p>
+      <DiscoveryExperience>
+        <section className="guide-directions" aria-labelledby="directions-title">
+          <h2 id="directions-title">Explore a route</h2>
+          <ul>
+            {Object.entries(corridorPages).map(([slug, c]) => (
+              <li key={slug}>
+                <h3>{c.title}</h3>
+                <p>{c.description}</p>
+                <Link prefetch={false} href={`/corridors/${slug}`} className="text-link">
+                  Explore this route <Arrow />
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <div className="guide-other-route">
+            <div>
+              <h3>Any other route</h3>
+              <p>Tell us the two countries in a request and we will say whether we can help.</p>
+            </div>
+            <Link prefetch={false} className="button-secondary" href="/plan">
+              Plan a Mission on Another Route <Arrow />
+            </Link>
           </div>
-          <Link prefetch={false} className="button-secondary" href="/plan">
-            Plan a Mission on Another Route <Arrow />
-          </Link>
-        </div>
-      </section>
+        </section>
+      </DiscoveryExperience>
     </PublicShell>
   );
 }

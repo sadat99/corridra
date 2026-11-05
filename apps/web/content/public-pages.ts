@@ -234,7 +234,7 @@ export const publicPages: Record<string, PublicPageContent> = {
       title: 'Begin with a decision you need to make.',
       text: 'A mission gives the work a clear goal, scope and window.',
     },
-    groups: ['Before you meet', 'Meet and follow up'],
+    groups: ['Before You Meet', 'Meet and Follow Up'],
     sections: [
       {
         title: 'Define what you need',
