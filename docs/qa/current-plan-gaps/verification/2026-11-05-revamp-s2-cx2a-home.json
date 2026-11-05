@@ -17,7 +17,7 @@
     "tests/integration/revamp-title-case.test.ts and title-case-scan.ts (one test reads every customer button label from the source, plus the Move catalogue labels)"
   ],
   "changedFiles": [
-    "apps/web/app/account/page.tsx: Home uses the next-step row and Active work; apps/web/components/next-step-card.tsx removed (only Home used it)",
+    "apps/web/app/account/page.tsx: Home uses the next-step row and Active work; apps/web/components/next-step-card.tsx is kept byte for byte: Home no longer uses it, and it is listed for K-01 (no deletion outside K-01 to K-03)",
     "apps/web/app/account/move/move-view.tsx: what others hold is a row list, the latest request is the stage bar, the start link is quiet",
     "apps/web/components/mr/move-card.tsx: the card action is a secondary button",
     "apps/web/components/ux/customer-bar.css: the Menu button is an icon below 700 px",
