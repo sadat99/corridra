@@ -202,6 +202,20 @@ describe('two saved reports of one request (guardian review of PR 310)', () => {
     expect(savedReportIds([a('r1', 's1'), a('r1', undefined, false)], 'r1', 3)).toEqual(['s1']);
   });
 
+  // Codex review of PR 310: the loader reads every page, so a registration behind 25 withdrawn ones still counts.
+  it('finds a current registration after a full page of withdrawn ones', () => {
+    const withdrawn = Array.from({ length: 25 }, (_, i) => ({
+      status: 'WITHDRAWN',
+      name: `Old ${i}`,
+    }));
+    expect(
+      participantFacts({
+        registrations: [...withdrawn, { status: 'REGISTERED', name: 'Milan delegation' }],
+        nextAfter: null,
+      }),
+    ).toMatchObject({ registered: 1, name: 'Milan delegation', more: false });
+  });
+
   it('says "or more" for registrations beyond the page read', () => {
     expect(
       participantFacts({ registrations: [{ status: 'REGISTERED', name: 'Milan' }], nextAfter: 'x' })

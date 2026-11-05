@@ -117,8 +117,16 @@ export async function loadJourneyFacts(
           ),
         )
       : null,
+    // Every page, up to the same bound as the other lists: a current registration can sit behind withdrawn ones.
     customerParticipantsEnabled()
-      ? attempt(() => services.customerParticipants.own({ pageSize: 25 }, subject, issuer))
+      ? followPages(async (after) => {
+          const page = (await services.customerParticipants.own(
+            { pageSize: 25, ...(after ? { after } : {}) },
+            subject,
+            issuer,
+          )) as { registrations?: unknown[]; nextAfter?: string | null };
+          return { items: page.registrations ?? [], nextAfter: page.nextAfter };
+        }, movePageCap)
       : null,
   ]);
 
@@ -132,6 +140,10 @@ export async function loadJourneyFacts(
     source: source ? sourceFacts(source) : null,
     sell: sell ? sellFacts(sell) : null,
     organise: organiseFacts(projection as never, participants as never),
-    participant: participantFacts(own),
+    // A list that failed on its first page shows no card; one cut short says "or more".
+    participant:
+      own && !own.failed
+        ? participantFacts({ registrations: own.items, nextAfter: own.complete ? null : 'more' })
+        : null,
   };
 }
