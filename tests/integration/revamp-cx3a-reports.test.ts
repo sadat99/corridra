@@ -118,3 +118,15 @@ describe('a Delivered tab is never a blank panel', () => {
     expect(reports).toMatch(/<DeliveredReports[^>]*showEmpty=\{[^}]*customerDeliveryEnabled\(\)/);
   });
 });
+
+describe('the invitation shortcut lands where the invitation is', () => {
+  it('sends the Home shortcut to the Shared With Me tab', async () => {
+    const { readFileSync } = await import('node:fs');
+    const page = readFileSync(resolve('apps/web/app/account/page.tsx'), 'utf8');
+    const shortcut = page.slice(
+      page.indexOf('Open a shared mission') - 220,
+      page.indexOf('Open a shared mission'),
+    );
+    expect(shortcut).toContain('href="/account?view=results&tab=shared"');
+  });
+});

@@ -152,7 +152,7 @@ export default async function Page({
                 </li>
               )}
               <li>
-                <Link prefetch={false} href="/account?view=results">
+                <Link prefetch={false} href="/account?view=results&tab=shared">
                   <strong>Open a shared mission</strong>
                   <span>Paste the private link you were sent.</span>
                 </Link>
