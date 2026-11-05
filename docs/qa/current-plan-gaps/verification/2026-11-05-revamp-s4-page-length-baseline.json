@@ -1,0 +1,398 @@
+{
+  "recordedOn": "2026-11-05",
+  "track": "Revamp S4 (branch revamp/staff)",
+  "kind": "Page-length measuring guard (layout budget section 2, owner decision of 4 November 2026) and its first baseline. Report only: nothing fails on a value yet.",
+  "findings": [],
+  "findingsNote": "No GAP id is created or changed. The measured values are a baseline, not acceptance.",
+  "sensitive": "no: tests and a record only",
+  "method": {
+    "measure": "Full document height (documentElement.scrollHeight or body.scrollHeight, whichever is larger) divided by the viewport height, rounded to two places.",
+    "viewports": {
+      "phone": "390x844, target 1.5 screens, hard limit 2.0",
+      "desktop": "1440x900, target 1.0 screen, hard limit 1.5"
+    },
+    "routes": "docs/revamp/COVERAGE.json page routes only (62 of the 126 entries: the file is a page.tsx; the rest are route.ts endpoints). 45 static and 17 with a dynamic segment.",
+    "notMeasuredRule": "A route that redirects, answers an error, has a dynamic segment with no fixture, or needs a session or private link is recorded as not measured with its reason, never as a value.",
+    "files": [
+      "tests/ux/page-length-lib.ts (shared measure, thresholds, owner mapping, report writer)",
+      "tests/ux/page-length.spec.ts (public pages on the UX gate server)",
+      "tests/e2e/verification/ws-e/team-page-length.spec.ts (team workspace as the seeded owner, plus the staff and contributor pages that need no session)"
+    ],
+    "reportFiles": "work/page-length/ux-gate.json and work/page-length/team.json (gitignored; the values are copied below)."
+  },
+  "publicPages": {
+    "server": "production build, no database, no sign-in",
+    "summary": {
+      "phone": {
+        "measured": 20,
+        "within target": 0,
+        "over target": 4,
+        "over hard limit": 16
+      },
+      "desktop": {
+        "measured": 20,
+        "within target": 0,
+        "over target": 5,
+        "over hard limit": 15
+      }
+    },
+    "screens": [
+      {
+        "route": "/privacy",
+        "phone": 13.03,
+        "desktop": 6.65
+      },
+      {
+        "route": "/",
+        "phone": 7.86,
+        "desktop": 4.68
+      },
+      {
+        "route": "/about",
+        "phone": 6.11,
+        "desktop": 3.39
+      },
+      {
+        "route": "/corridors",
+        "phone": 4.94,
+        "desktop": 2.82
+      },
+      {
+        "route": "/how-it-works",
+        "phone": 4.45,
+        "desktop": 2.75
+      },
+      {
+        "route": "/trust",
+        "phone": 4.43,
+        "desktop": 2.49
+      },
+      {
+        "route": "/sell",
+        "phone": 4.17,
+        "desktop": 2.44
+      },
+      {
+        "route": "/trade-missions",
+        "phone": 3.84,
+        "desktop": 2.21
+      },
+      {
+        "route": "/enter-market",
+        "phone": 3.79,
+        "desktop": 2.24
+      },
+      {
+        "route": "/plan",
+        "phone": 3.66,
+        "desktop": 2.1
+      },
+      {
+        "route": "/source",
+        "phone": 3.53,
+        "desktop": 2.17
+      },
+      {
+        "route": "/institutions",
+        "phone": 3.16,
+        "desktop": 1.99
+      },
+      {
+        "route": "/network",
+        "phone": 3.11,
+        "desktop": 1.99
+      },
+      {
+        "route": "/machinery",
+        "phone": 3.05,
+        "desktop": 1.95
+      },
+      {
+        "route": "/business-trips",
+        "phone": 2.95,
+        "desktop": 1.95
+      },
+      {
+        "route": "/signin",
+        "phone": 2.14,
+        "desktop": 1.2
+      },
+      {
+        "route": "/signup",
+        "phone": 1.84,
+        "desktop": 1.15
+      },
+      {
+        "route": "/forgot-password",
+        "phone": 1.81,
+        "desktop": 1.13
+      },
+      {
+        "route": "/reset-password",
+        "phone": 1.81,
+        "desktop": 1.13
+      },
+      {
+        "route": "/verify-email",
+        "phone": 1.81,
+        "desktop": 1.13
+      }
+    ],
+    "notMeasuredHere": {
+      "S2 customer": [
+        "/account (needs a signed-in session or a private link)",
+        "/account/all-tools (needs a signed-in session or a private link)",
+        "/account/billing (needs a signed-in session or a private link)",
+        "/account/billing/[workspaceId] (needs a signed-in session or a private link)",
+        "/account/companies (needs a signed-in session or a private link)",
+        "/account/delegations (needs a signed-in session or a private link)",
+        "/account/delegations/[workspaceId] (needs a signed-in session or a private link)",
+        "/account/delegations/organise (needs a signed-in session or a private link)",
+        "/account/drafts/[workspaceId] (needs a signed-in session or a private link)",
+        "/account/missions/[resourceId] (needs a signed-in session or a private link)",
+        "/account/move (needs a signed-in session or a private link)",
+        "/account/notifications (needs a signed-in session or a private link)",
+        "/account/profile (needs a signed-in session or a private link)",
+        "/account/profile/[workspaceId] (needs a signed-in session or a private link)",
+        "/account/request/[workspaceId] (needs a signed-in session or a private link)",
+        "/account/requests/[requestId] (needs a signed-in session or a private link)",
+        "/account/rooms/[requestId] (needs a signed-in session or a private link)",
+        "/account/service-requests (needs a signed-in session or a private link)",
+        "/account/service-requests/[workspaceId] (needs a signed-in session or a private link)",
+        "/account/service-requests/[workspaceId]/[requestId] (needs a signed-in session or a private link)",
+        "/account/service-requests/new (needs a signed-in session or a private link)"
+      ],
+      "unassigned": [
+        "/buyer (needs a signed-in session or a private link)",
+        "/client (needs a signed-in session or a private link)"
+      ],
+      "S3 public and organiser": [
+        "/coming-soon (redirected)",
+        "/corridors/[corridor] (dynamic segment: needs a fixture address)",
+        "/fairs (the page answered 404)",
+        "/fairs/[slug] (dynamic segment: needs a fixture address)",
+        "/programme (needs a signed-in session or a private link)"
+      ],
+      "S4 team and contributor": [
+        "/contributor (needs a signed-in session or a private link)",
+        "/contributor/setup (needs a signed-in session or a private link)",
+        "/mute/[requestId] (needs a signed-in session or a private link)",
+        "/operator (needs a signed-in session or a private link)",
+        "/operator/[section] (needs a signed-in session or a private link)",
+        "/operator/[section]/[missionId] (needs a signed-in session or a private link)",
+        "/operator/forgot-password (needs a signed-in session or a private link)",
+        "/operator/owner (needs a signed-in session or a private link)",
+        "/operator/reset-password (needs a signed-in session or a private link)",
+        "/operator/setup (needs a signed-in session or a private link)",
+        "/operator/signin (needs a signed-in session or a private link)",
+        "/operator/view-as/[role] (needs a signed-in session or a private link)",
+        "/pulse/mute/[requestId] (needs a signed-in session or a private link)",
+        "/workspace (needs a signed-in session or a private link)"
+      ]
+    }
+  },
+  "teamPages": {
+    "server": "verification server, seeded owner (and a clean context for the pages that need no session)",
+    "summary": {
+      "phone": {
+        "measured": 28,
+        "within target": 0,
+        "over target": 6,
+        "over hard limit": 22
+      },
+      "desktop": {
+        "measured": 28,
+        "within target": 2,
+        "over target": 9,
+        "over hard limit": 17
+      }
+    },
+    "screens": [
+      {
+        "route": "/operator/owner",
+        "phone": 5.52,
+        "desktop": 2.6
+      },
+      {
+        "route": "/operator/readiness",
+        "phone": 4.44,
+        "desktop": 3.27
+      },
+      {
+        "route": "/operator/controls",
+        "phone": 3.96,
+        "desktop": 3.28
+      },
+      {
+        "route": "/operator/network",
+        "phone": 3.93,
+        "desktop": 2.23
+      },
+      {
+        "route": "/operator/control-center",
+        "phone": 3.92,
+        "desktop": 2.36
+      },
+      {
+        "route": "/operator/commercial",
+        "phone": 3.62,
+        "desktop": 1.98
+      },
+      {
+        "route": "/operator/dashboard",
+        "phone": 3.45,
+        "desktop": 2.52
+      },
+      {
+        "route": "/operator/operations",
+        "phone": 3.41,
+        "desktop": 2.52
+      },
+      {
+        "route": "/operator/missions",
+        "phone": 3.32,
+        "desktop": 1.44
+      },
+      {
+        "route": "/operator/assistance",
+        "phone": 3.29,
+        "desktop": 1.73
+      },
+      {
+        "route": "/operator",
+        "phone": 3.18,
+        "desktop": 1.75
+      },
+      {
+        "route": "/operator/settings",
+        "phone": 3.15,
+        "desktop": 1.67
+      },
+      {
+        "route": "/operator/research",
+        "phone": 2.83,
+        "desktop": 1.77
+      },
+      {
+        "route": "/operator/meetings",
+        "phone": 2.78,
+        "desktop": 1.9
+      },
+      {
+        "route": "/operator/evidence",
+        "phone": 2.53,
+        "desktop": 1.58
+      },
+      {
+        "route": "/operator/delivery",
+        "phone": 2.5,
+        "desktop": 3.14
+      },
+      {
+        "route": "/operator/health",
+        "phone": 2.5,
+        "desktop": 1.3
+      },
+      {
+        "route": "/operator/signin",
+        "phone": 2.5,
+        "desktop": 1.79
+      },
+      {
+        "route": "/contributor/setup",
+        "phone": 2.26,
+        "desktop": 1.42
+      },
+      {
+        "route": "/operator/[section]/[missionId]",
+        "phone": 2.22,
+        "desktop": 1.49
+      },
+      {
+        "route": "/operator/setup",
+        "phone": 2.09,
+        "desktop": 1.34
+      },
+      {
+        "route": "/operator/forgot-password",
+        "phone": 2.08,
+        "desktop": 1.38
+      },
+      {
+        "route": "/operator/sources",
+        "phone": 1.99,
+        "desktop": 1.98
+      },
+      {
+        "route": "/operator/authenticator",
+        "phone": 1.98,
+        "desktop": 1.26
+      },
+      {
+        "route": "/operator/reset-password",
+        "phone": 1.72,
+        "desktop": 1.04
+      },
+      {
+        "route": "/operator/audit",
+        "phone": 1.69,
+        "desktop": 1.04
+      },
+      {
+        "route": "/mute/[requestId]",
+        "phone": 1.61,
+        "desktop": 1
+      },
+      {
+        "route": "/pulse/mute/[requestId]",
+        "phone": 1.61,
+        "desktop": 1
+      }
+    ]
+  },
+  "unionCoverageSoFar": {
+    "pageRoutes": 62,
+    "measuredByAtLeastOneSpec": 31,
+    "stillUnmeasuredByOwner": {
+      "S2 customer": [
+        "/account",
+        "/account/all-tools",
+        "/account/billing",
+        "/account/billing/[workspaceId]",
+        "/account/companies",
+        "/account/delegations",
+        "/account/delegations/[workspaceId]",
+        "/account/delegations/organise",
+        "/account/drafts/[workspaceId]",
+        "/account/missions/[resourceId]",
+        "/account/move",
+        "/account/notifications",
+        "/account/profile",
+        "/account/profile/[workspaceId]",
+        "/account/request/[workspaceId]",
+        "/account/requests/[requestId]",
+        "/account/rooms/[requestId]",
+        "/account/service-requests",
+        "/account/service-requests/[workspaceId]",
+        "/account/service-requests/[workspaceId]/[requestId]",
+        "/account/service-requests/new"
+      ],
+      "unassigned": ["/buyer", "/client"],
+      "S3 public and organiser": [
+        "/coming-soon",
+        "/corridors/[corridor]",
+        "/fairs",
+        "/fairs/[slug]",
+        "/programme"
+      ],
+      "S4 team and contributor": ["/contributor", "/operator/view-as/[role]", "/workspace"]
+    },
+    "note": "By the last layout PR the union of every track spec must cover every page route. /operator/<slug> addresses count for the /operator/[section] route. /buyer and /client have no named owner: for the Conductor to assign."
+  },
+  "notCovered": [
+    "The contributor board (/contributor with assigned work) needs an invited contributor session; it is measured where that fixture exists (tests/operator/real-network-work.spec.ts), not here.",
+    "/workspace and /operator/view-as/[role] are not yet measured.",
+    "The guard measures one representative state per page; lists and tables with more rows, the long tails of forms and the signed-in customer pages are for their tracks.",
+    "No Core Web Vitals here (L-06)."
+  ]
+}
