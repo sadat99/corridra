@@ -53,9 +53,8 @@ const record = (value: unknown): value is Record<string, unknown> =>
 export const isSent = (value: unknown): value is { receipt?: string; duplicate?: boolean } =>
   record(value) && (typeof value.receipt === 'string' || value.duplicate === true);
 
-/** A request held for account activation. */
-export const isPendingSaved = (value: unknown): value is { pending: true; expiresAt?: string } =>
-  record(value) && value.pending === true;
+/** A request held for account activation. The form uses nothing from the body, so any JSON object is enough. */
+export const isPendingSaved = (value: unknown): value is Record<string, unknown> => record(value);
 
 /** A receipt check: a status and the list of replies. */
 export const isReceiptStatus = (

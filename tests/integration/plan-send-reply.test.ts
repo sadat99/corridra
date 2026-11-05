@@ -14,14 +14,11 @@ describe('a good answer must be readable and the shape the request needs', () =>
     for (const bad of ['', '<h1>ok</h1>', '{}', '[]', 'null', '{"receipt":7}'])
       await expect(readSuccess(reply(bad), isSent), bad).rejects.toThrow(/could not be completed/);
   });
-  it('pending save: only { pending: true } is a success', async () => {
+  it('pending save: a readable JSON object is a success, anything else is not', async () => {
     const { readSuccess, isPendingSaved } = await load();
-    expect(
-      await readSuccess(reply('{"pending":true,"expiresAt":"x"}'), isPendingSaved),
-    ).toMatchObject({
-      pending: true,
-    });
-    for (const bad of ['', '<h1>ok</h1>', '{}', '{"pending":false}', '"ok"'])
+    for (const good of ['{"pending":true,"expiresAt":"x"}', '{"ok":true}'])
+      expect(await readSuccess(reply(good), isPendingSaved), good).toBeTruthy();
+    for (const bad of ['', '<h1>ok</h1>', '"ok"', '[]', 'null', '{"pending":'])
       await expect(readSuccess(reply(bad), isPendingSaved), bad).rejects.toThrow(
         /could not be completed/,
       );
