@@ -40,6 +40,8 @@ test('A-1 public pages carry no test, sample or invented wording and one main he
   for (const path of ['/', '/how-it-works']) {
     await page.goto(path);
     const steps = page.locator(path === '/' ? '.ac1-steps' : '#main');
+    // On the home page the steps are in the Steps tab (layout budget).
+    if (path === '/') await page.getByRole('tab', { name: 'Steps', exact: true }).click();
     for (const name of ['Define', 'Find', 'Compare', 'Visit', 'Decide', 'Follow through']) {
       // On How it works the steps are in two tabs (layout budget): choose the tab that holds the step.
       if (path === '/how-it-works')
