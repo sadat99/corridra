@@ -15,7 +15,7 @@ export function ProgrammeContext(props: ProgrammeContextScope) {
   return (
     <section>
       <button type="button" className="text-link" onClick={() => setOpen(true)} disabled={open}>
-        Programme dates and details
+        Programme Dates and Details
       </button>
       {open && (
         <Suspense fallback={<p role="status">Loading programme details…</p>}>

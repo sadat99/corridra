@@ -42,7 +42,7 @@ test('UX-02 discovery completes a synthetic brief with original money, retry, du
     await page
       .getByRole('combobox', { name: 'Route', exact: true })
       .selectOption('bangladesh-china');
-    await page.getByRole('link', { name: 'Plan a mission on this route' }).click();
+    await page.getByRole('link', { name: 'Plan a Mission on This Route' }).click();
     await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue(
       'machinery_procurement',
     );
@@ -97,7 +97,7 @@ test('UX-02 discovery completes a synthetic brief with original money, retry, du
     page.on('request', (request) => {
       if (request.url().endsWith('/api/intake') && request.method() === 'POST') writes++;
     });
-    await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
+    await page.getByRole('button', { name: 'Submit Mission Request', exact: true }).click();
     await expect(page.getByLabel('Work email', { exact: true })).toHaveAttribute(
       'aria-invalid',
       'true',
@@ -111,7 +111,7 @@ test('UX-02 discovery completes a synthetic brief with original money, retry, du
         body: JSON.stringify({ error: 'Synthetic transport interruption. Retry the same brief.' }),
       }),
     );
-    await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
+    await page.getByRole('button', { name: 'Submit Mission Request', exact: true }).click();
     await expect(page.getByRole('status')).toContainText('Synthetic transport interruption');
     await expect(page.getByLabel('Work email', { exact: true })).toHaveValue(email);
     await page.unroute('**/api/intake');
@@ -119,7 +119,7 @@ test('UX-02 discovery completes a synthetic brief with original money, retry, du
       (response) =>
         response.url().endsWith('/api/intake') && response.request().method() === 'POST',
     );
-    await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
+    await page.getByRole('button', { name: 'Submit Mission Request', exact: true }).click();
     const response = await saved;
     expect(response.status()).toBe(201);
     const payload = response.request().postDataJSON();
@@ -150,14 +150,14 @@ test('UX-02 discovery completes a synthetic brief with original money, retry, du
     await expect(page.getByLabel('Private receipt code')).toHaveValue(result.receipt);
     await page.reload();
     await expect(page.getByLabel('Private receipt code')).toHaveValue(result.receipt);
-    await page.getByRole('button', { name: 'Check status and replies' }).click();
+    await page.getByRole('button', { name: 'Check Status and Replies' }).click();
     // D6: a request with a receipt was sent, so the customer sees it as received, not as a draft.
     await expect(page.getByText('Received, waiting for review', { exact: true })).toBeVisible();
     await page.getByLabel('Receipt code', { exact: true }).fill('0'.repeat(64));
     const rejected = page.waitForResponse((response) =>
       response.url().endsWith('/api/intake/receipt'),
     );
-    await page.getByRole('button', { name: 'Check status and replies' }).click();
+    await page.getByRole('button', { name: 'Check Status and Replies' }).click();
     expect((await rejected).ok()).toBe(false);
     await expect(page.getByText('Received, waiting for review', { exact: true })).toHaveCount(0);
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);

@@ -1,0 +1,48 @@
+/* The closing sections of a public page sit behind one native disclosure (layout budget, Phase 2a). They stay in
+   the server HTML, and a link to one of them (#page-next) opens it. */
+.guide-more > summary {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding-block: var(--space-2);
+  border-top: 1px solid var(--line);
+  color: var(--brand);
+  font-size: var(--text-base);
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.guide-more > summary::-webkit-details-marker {
+  display: none;
+}
+.guide-more > summary::after {
+  content: '+';
+  margin-inline-start: var(--space-2);
+  font-family: var(--font-mono);
+}
+.guide-more[open] > summary::after {
+  content: '\2212';
+}
+@media print {
+  .guide-more > summary {
+    display: none;
+  }
+}
+@supports selector(::details-content) {
+  @media print {
+    .guide-more::details-content {
+      content-visibility: visible;
+    }
+  }
+}
+
+/* Tighter intro and step cards on a wide screen, from the same spacing scale. */
+@media (min-width: 1000px) {
+  .guide-page-intro.guide-page-intro--compact {
+    gap: var(--space-8);
+    padding: var(--space-5) var(--space-8);
+  }
+  .guide-page-steps--compact li {
+    padding: var(--space-4) var(--space-6);
+  }
+}

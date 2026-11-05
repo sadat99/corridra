@@ -179,7 +179,7 @@ describe('one Sample or Real label per site', () => {
   it('with the switch off the start button is exactly as it was, with its screen-reader text', async () => {
     const { SiteHeader } = await load('components/site-header');
     const html = render(SiteHeader, { accounts: false });
-    expect(html).toContain('Start a request <span class="sr-only">(sample request)</span>');
+    expect(html).toContain('Start a Request <span class="sr-only">(Sample Request)</span>');
     expect(html).not.toContain('mr-mode');
   });
   it('with the switch on the public header shows no mode badge and no repeated suffix', async () => {
@@ -188,12 +188,12 @@ describe('one Sample or Real label per site', () => {
     const { SiteHeader } = await load('components/site-header');
     const sample = render(SiteHeader, { accounts: false, mode: 'sample' });
     expect(sample).not.toContain('mr-mode');
-    expect(sample).not.toContain('(sample request)');
-    expect(sample).toContain('>Start a request<');
+    expect(sample).not.toContain('(Sample Request)');
+    expect(sample).toContain('>Start a Request<');
     const real = render(SiteHeader, { accounts: false, mode: 'real' });
     expect(real).not.toContain('mr-mode');
-    expect(real).not.toContain('(sample request)');
-    expect(real).toContain('>Start a request<');
+    expect(real).not.toContain('(Sample Request)');
+    expect(real).toContain('>Start a Request<');
   });
   it('is chosen by the server layout from the switch and the real-use state', () => {
     const layout = read('apps/web/app/layout.tsx');

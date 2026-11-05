@@ -52,7 +52,7 @@ test('A-1 public pages carry no test, sample or invented wording and one main he
   }
   // Corridor pages: the live button opens the request form on that route (CQ-04).
   await page.goto('/corridors/bangladesh-spain');
-  const start = page.getByRole('link', { name: 'Start a request on this route', exact: true });
+  const start = page.getByRole('link', { name: 'Start a Request on This Route', exact: true });
   await expect(start).toHaveAttribute('href', '/plan?companyCountry=BD&marketCode=ES');
   await expect(page.locator('main')).toContainText('buyers and distributors in Spain');
   // The privacy notice opens with a contents list whose links reach their sections (UX-14).
@@ -73,7 +73,7 @@ test('A-5 the not found page has its own title and answers 404', async ({ page }
   expect(response?.status()).toBe(404);
   await expect(page).toHaveTitle('Page not found | Corridra');
   await expect(
-    page.getByRole('main').getByRole('link', { name: 'Start a request', exact: true }),
+    page.getByRole('main').getByRole('link', { name: 'Start a Request', exact: true }),
   ).toHaveAttribute('href', '/plan');
   await evidence(page, `A-5-${info.project.name}`);
 });
@@ -82,7 +82,7 @@ test('CQ-53 the home examples row has working previous and next buttons on narro
   page,
 }, info) => {
   await page.goto('/');
-  const next = page.getByRole('button', { name: 'Next example' });
+  const next = page.getByRole('button', { name: 'Next Example' });
   if ((page.viewportSize()?.width ?? 1280) >= 1120) {
     // Side by side on wide screens: no carousel controls.
     await expect(next).toBeHidden();
@@ -95,7 +95,7 @@ test('CQ-53 the home examples row has working previous and next buttons on narro
   expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
   await next.click();
   await expect.poll(() => row.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
-  await page.getByRole('button', { name: 'Previous example' }).click();
+  await page.getByRole('button', { name: 'Previous Example' }).click();
   await expect.poll(() => row.evaluate((el) => el.scrollLeft)).toBe(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await evidence(page, `CQ-53-${info.project.name}`);

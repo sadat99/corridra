@@ -18,7 +18,7 @@ export default function NotFound() {
               Back to Corridra
             </Link>
             <Link className="button-secondary" href="/plan">
-              Start a request
+              Start a Request
             </Link>
           </div>
         </div>

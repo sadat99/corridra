@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 /**
- * "Show the whole notice" (layout budget, L-05). The notice shows one section at a time; this shows every
+ * "Show the Whole Notice" (layout budget, L-05). The notice shows one section at a time; this shows every
  * section, in full, for reading and searching on the page. Nothing is removed either way: all sections are in
  * the page, and printing always shows the whole notice. The frame carries the choice as data-whole.
  */
@@ -22,7 +22,7 @@ export function WholeNoticeToggle() {
         if (frame) frame.dataset.whole = String(next);
       }}
     >
-      Show the whole notice
+      Show the Whole Notice
     </button>
   );
 }

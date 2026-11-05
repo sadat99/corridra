@@ -69,7 +69,7 @@ export const publicPages: Record<string, PublicPageContent> = {
       title: 'Fewer irrelevant meetings. More reason to meet.',
       text: 'Corridra does not promise orders.',
     },
-    cta: 'Plan my mission',
+    cta: 'Plan My Mission',
     route: {
       label: 'Bangladesh to Spain and the EU',
       href: '/corridors/bangladesh-eu',
@@ -78,7 +78,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     reverse: {
       title: 'It also works the other way.',
       text: 'A Spanish or EU seller can reach suitable buyers in Bangladesh. Each case is set up and reviewed separately.',
-      cta: 'Plan a mission from Spain or the EU',
+      cta: 'Plan a Mission From Spain or the EU',
       href: '/plan?companyCountry=ES&marketCode=BD&job=buyers',
       scopeLabel: 'Read the Spain to Bangladesh scope',
       scopeHref: '/corridors/bangladesh-spain',
@@ -92,7 +92,7 @@ export const publicPages: Record<string, PublicPageContent> = {
         'Who owns the next step, and what became business.',
       ],
     },
-    related: { href: '/how-it-works', label: 'See how it works' },
+    related: { href: '/how-it-works', label: 'See How It Works' },
   },
   source: {
     label: 'Source suppliers',
@@ -121,7 +121,7 @@ export const publicPages: Record<string, PublicPageContent> = {
       title: 'A visit should answer a question.',
       text: 'Qualification cannot remove every risk. We make the gaps visible.',
     },
-    cta: 'Plan a sourcing mission',
+    cta: 'Plan a Sourcing Mission',
     route: {
       label: 'Bangladesh to China',
       href: '/corridors/bangladesh-china',
@@ -136,7 +136,7 @@ export const publicPages: Record<string, PublicPageContent> = {
         'What you decided after the visit, and the next step.',
       ],
     },
-    related: { href: '/trust', label: 'Understand the evidence labels' },
+    related: { href: '/trust', label: 'Understand the Evidence Labels' },
   },
   'enter-market': {
     label: 'Enter a new market',
@@ -165,7 +165,7 @@ export const publicPages: Record<string, PublicPageContent> = {
       title: 'Bangladesh without the usual black box.',
       text: 'Reverse directions are set up case by case. Each offer needs its own reviewed scope.',
     },
-    cta: 'Plan a market-entry mission',
+    cta: 'Plan a Market-Entry Mission',
     route: {
       label: 'Spain and the EU to Bangladesh',
       href: '/corridors/bangladesh-spain',
@@ -180,7 +180,7 @@ export const publicPages: Record<string, PublicPageContent> = {
         'Who owns the next step.',
       ],
     },
-    related: { href: '/about', label: 'See where Corridra is starting' },
+    related: { href: '/about', label: 'See Where Corridra Is Starting' },
   },
   'trade-missions': {
     label: 'Run a trade mission',
@@ -209,7 +209,7 @@ export const publicPages: Record<string, PublicPageContent> = {
       title: 'A trade mission should produce more than attendance.',
       text: 'Organisers see commercial progress without replacing their own relationships.',
     },
-    cta: 'Plan a trade mission',
+    cta: 'Plan a Trade Mission',
     route: {
       label: 'Starting with Bangladesh to China',
       href: '/corridors/bangladesh-china',
@@ -224,7 +224,7 @@ export const publicPages: Record<string, PublicPageContent> = {
         'Contracts, invoices and collected cash, kept as separate outcomes.',
       ],
     },
-    related: { href: '/institutions', label: 'Explore the institutional approach' },
+    related: { href: '/institutions', label: 'Explore the Institutional Approach' },
   },
   'how-it-works': {
     label: 'How it works',
@@ -280,7 +280,7 @@ export const publicPages: Record<string, PublicPageContent> = {
       title: 'Ready to start?',
       text: 'Tell us your goal. You can start without an account and create one at the last step to send it.',
     },
-    related: { href: '/trust', label: 'See how claims and evidence differ' },
+    related: { href: '/trust', label: 'See How Claims and Evidence Differ' },
   },
   network: {
     label: 'Corridra Network',
@@ -309,8 +309,8 @@ export const publicPages: Record<string, PublicPageContent> = {
       title: 'Useful work. Clear terms.',
       text: 'There are no open tasks or published rewards yet. Paid work will depend on local law and tax.',
     },
-    cta: 'See what is coming',
-    related: { href: '/trust', label: 'Read the evidence approach' },
+    cta: 'See What Is Coming',
+    related: { href: '/trust', label: 'Read the Evidence Approach' },
   },
   institutions: {
     label: 'For institutions',
@@ -339,8 +339,8 @@ export const publicPages: Record<string, PublicPageContent> = {
       title: 'Keep your institutional relationships. Add execution visibility.',
       text: 'We support delivery and reporting. We do not promise sales or claim results from programmes that have not taken place.',
     },
-    cta: 'Plan an institutional mission',
-    related: { href: '/trade-missions', label: 'Explore trade missions' },
+    cta: 'Plan an Institutional Mission',
+    related: { href: '/trade-missions', label: 'Explore Trade Missions' },
   },
   trust: {
     label: 'Trust and evidence',
@@ -399,7 +399,7 @@ export const publicPages: Record<string, PublicPageContent> = {
       title: 'AI can help reason. It cannot redefine reality.',
       text: 'AI can support research. It cannot decide permissions, handle money or declare a fact verified. Consequential actions need human review.',
     },
-    related: { href: '/how-it-works', label: 'See how it works' },
+    related: { href: '/how-it-works', label: 'See How It Works' },
   },
   about: {
     label: 'About Corridra',
@@ -428,7 +428,7 @@ export const publicPages: Record<string, PublicPageContent> = {
       title: 'Start with one objective.',
       text: 'Explore the approach, then plan a mission when you are ready.',
     },
-    related: { href: '/how-it-works', label: 'See how it works' },
+    related: { href: '/how-it-works', label: 'See How It Works' },
   },
 };
 
@@ -459,8 +459,8 @@ publicPages.machinery = {
     text: 'Record the evidence behind a choice and what is unknown. Corridra does not certify a machine or place an order.',
   },
   intakeJob: 'machinery_procurement',
-  cta: 'Plan a machinery request',
-  related: { href: '/corridors/bangladesh-china', label: 'Explore Bangladesh to China sourcing' },
+  cta: 'Plan a Machinery Request',
+  related: { href: '/corridors/bangladesh-china', label: 'Explore Bangladesh to China Sourcing' },
 };
 publicPages['business-trips'] = {
   label: 'Plan a business trip',
@@ -489,8 +489,8 @@ publicPages['business-trips'] = {
     text: 'We do not book travel or guarantee meetings. Tell us the purpose of the trip and we plan the conversations around it.',
   },
   intakeJob: 'business_trips',
-  cta: 'Plan a business trip',
-  related: { href: '/how-it-works', label: 'See the mission process' },
+  cta: 'Plan a Business Trip',
+  related: { href: '/how-it-works', label: 'See the Mission Process' },
 };
 
 publicPages.source.intakeJob = 'sourcing';

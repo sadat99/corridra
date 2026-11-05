@@ -46,7 +46,7 @@ export default function Page() {
         related:
           process.env.CORRIDRA_NETWORK_ENABLED === 'true'
             ? { href: '/contributor/setup', label: 'First invitation? Set up contributor access' }
-            : { href: '/contributor', label: 'Already invited? Open assigned-task access' },
+            : { href: '/contributor', label: 'Already Invited? Open Assigned-Task Access' },
       }}
     />
   );

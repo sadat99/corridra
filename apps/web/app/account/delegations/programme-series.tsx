@@ -379,7 +379,7 @@ function ScopedSeries({ subject, issuer, workspaceId, onChanged }: Props) {
           <p role="alert">{list.message}</p>
           {list.status === 'failed' && (
             <button type="button" className="text-link" onClick={reloadList}>
-              Reload series
+              Reload Series
             </button>
           )}
         </>
@@ -422,7 +422,7 @@ function ScopedSeries({ subject, issuer, workspaceId, onChanged }: Props) {
                         disabled={busy}
                         onClick={() => startMaking(s)}
                       >
-                        Create the next edition of {s.name}
+                        Create the Next Edition of {s.name}
                       </button>{' '}
                     </>
                   )}
@@ -432,7 +432,7 @@ function ScopedSeries({ subject, issuer, workspaceId, onChanged }: Props) {
                     disabled={busy}
                     onClick={() => startEdit(s)}
                   >
-                    Edit series {s.name}
+                    Edit Series {s.name}
                   </button>{' '}
                   <button
                     type="button"
@@ -440,7 +440,7 @@ function ScopedSeries({ subject, issuer, workspaceId, onChanged }: Props) {
                     disabled={busy}
                     onClick={() => save(!s.retired, s, s)}
                   >
-                    {s.retired ? 'Restore series ' : 'Retire series '}
+                    {s.retired ? 'Restore Series ' : 'Retire Series '}
                     {s.name}
                   </button>{' '}
                   {s.editions.length > 0 && (
@@ -451,8 +451,8 @@ function ScopedSeries({ subject, issuer, workspaceId, onChanged }: Props) {
                       onClick={() => setRevenueFor(revenueFor === s.id ? null : s.id)}
                     >
                       {revenueFor === s.id
-                        ? 'Hide repeat revenue for '
-                        : 'Show repeat revenue for '}
+                        ? 'Hide Repeat Revenue for '
+                        : 'Show Repeat Revenue for '}
                       {s.name}
                     </button>
                   )}
@@ -486,7 +486,7 @@ function ScopedSeries({ subject, issuer, workspaceId, onChanged }: Props) {
                 />
               </label>
               <button type="submit" className="primary-link" disabled={busy}>
-                Create edition {making.editions.length + 1}
+                Create Edition {making.editions.length + 1}
               </button>
               <button
                 type="button"
@@ -606,7 +606,7 @@ function ScopedSeries({ subject, issuer, workspaceId, onChanged }: Props) {
               disabled={busy}
               onClick={() => startEdit(null)}
             >
-              New series
+              New Series
             </button>
           )}
           {editing && (
@@ -704,7 +704,7 @@ function ScopedSeries({ subject, issuer, workspaceId, onChanged }: Props) {
                   </select>
                 </label>
                 <button type="button" className="text-link" disabled={busy} onClick={fill}>
-                  Fill in the dates
+                  Fill in the Dates
                 </button>
               </div>
               {dates.map((d, i) => {
@@ -731,7 +731,7 @@ function ScopedSeries({ subject, issuer, workspaceId, onChanged }: Props) {
                 disabled={busy || dates.length >= 24}
                 onClick={() => setDates([...dates, ''])}
               >
-                Add a date
+                Add a Date
               </button>
               {dates.length > 1 &&
                 (editing === 'new' || dates.length > editing.editions.length) && (
@@ -741,11 +741,11 @@ function ScopedSeries({ subject, issuer, workspaceId, onChanged }: Props) {
                     disabled={busy}
                     onClick={() => setDates(dates.slice(0, -1))}
                   >
-                    Remove the last date
+                    Remove the Last Date
                   </button>
                 )}
               <button type="submit" className="primary-link" disabled={busy}>
-                {editing === 'new' ? 'Create series' : 'Save series'}
+                {editing === 'new' ? 'Create Series' : 'Save Series'}
               </button>
               <button
                 type="button"

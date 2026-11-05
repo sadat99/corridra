@@ -143,7 +143,7 @@ function ScopedReminders({ subject, issuer }: Props) {
                       disabled={busy}
                       onClick={() => void finish(t)}
                     >
-                      Mark done: {t.title}
+                      Mark Done: {t.title}
                     </button>
                   </li>
                 ))}
@@ -182,7 +182,7 @@ function ScopedReminders({ subject, issuer }: Props) {
             </>
           )}
           <button type="button" className="text-link" disabled={busy} onClick={() => void load()}>
-            Reload reminders
+            Reload Reminders
           </button>
         </>
       )}

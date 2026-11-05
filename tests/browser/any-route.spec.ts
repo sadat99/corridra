@@ -15,7 +15,7 @@ test('any pair of countries shows on the world map with an honest, non-operating
   await page.getByLabel('I want to reach', { exact: true }).selectOption('KE');
   await expect(atlas.getByRole('heading', { name: 'Japan → Kenya' })).toBeVisible();
   await expect(atlas).toContainText('No operating offer is announced for this route yet.');
-  await expect(atlas.getByRole('link', { name: 'Plan a mission on this route' })).toHaveAttribute(
+  await expect(atlas.getByRole('link', { name: 'Plan a Mission on This Route' })).toHaveAttribute(
     'href',
     '/plan?companyCountry=JP&marketCode=KE&job=sourcing',
   );
@@ -24,7 +24,7 @@ test('any pair of countries shows on the world map with an honest, non-operating
   await expect(atlas.locator('.ux-map-to')).toHaveCount(1);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   // The plan link keeps both countries.
-  await atlas.getByRole('link', { name: 'Plan a mission on this route' }).click();
+  await atlas.getByRole('link', { name: 'Plan a Mission on This Route' }).click();
   await expect(page).toHaveURL('/plan?companyCountry=JP&marketCode=KE&job=sourcing');
   const summary = page.getByRole('complementary', { name: 'Your example request' });
   await expect(summary).toContainText('Japan');
@@ -56,7 +56,7 @@ test('a spotlight pair chosen freely snaps to its corridor and clearing returns 
   await page.getByLabel('My company is in', { exact: true }).selectOption('BD');
   await page.getByLabel('I want to reach', { exact: true }).selectOption('CN');
   await expect(atlas.getByRole('heading', { name: 'Bangladesh → China' })).toBeVisible();
-  await expect(atlas.getByRole('link', { name: 'Read about this route' })).toHaveAttribute(
+  await expect(atlas.getByRole('link', { name: 'Read About This Route' })).toHaveAttribute(
     'href',
     '/corridors/bangladesh-china',
   );

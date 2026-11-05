@@ -587,7 +587,7 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
           <p role="alert">{notice}</p>
           {status === 'failed' && (
             <button type="button" className="text-link" onClick={() => void load()}>
-              Reload templates
+              Reload Templates
             </button>
           )}
         </>
@@ -621,7 +621,7 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
                       disabled={busy}
                       onClick={() => startUse(t)}
                     >
-                      Use template {t.name}
+                      Use Template {t.name}
                     </button>
                   )}{' '}
                   <button
@@ -630,7 +630,7 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
                     disabled={busy}
                     onClick={() => startEdit(t)}
                   >
-                    Edit template {t.name}
+                    Edit Template {t.name}
                   </button>{' '}
                   <button
                     type="button"
@@ -638,7 +638,7 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
                     disabled={busy}
                     onClick={() => toggleRetired(t)}
                   >
-                    {t.retired ? 'Restore template ' : 'Retire template '}
+                    {t.retired ? 'Restore Template ' : 'Retire Template '}
                     {t.name}
                   </button>
                 </li>
@@ -653,7 +653,7 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
                 disabled={busy}
                 onClick={() => startEdit(null)}
               >
-                New template
+                New Template
               </button>
               <div className="operator-form">
                 <label className="field">
@@ -672,7 +672,7 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
                   </select>
                 </label>
                 <button type="button" className="text-link" disabled={busy} onClick={capture}>
-                  Capture plan
+                  Capture Plan
                 </button>
               </div>
             </>
@@ -800,7 +800,7 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
                     disabled={busy}
                     onClick={() => setTaskRows(taskRows.filter((_, j) => j !== i))}
                   >
-                    Remove task {i + 1}
+                    Remove Task {i + 1}
                   </button>
                 </fieldset>
               ))}
@@ -810,7 +810,7 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
                 disabled={busy || taskRows.length >= 50}
                 onClick={() => setTaskRows([...taskRows, blankTask()])}
               >
-                Add a task
+                Add a Task
               </button>
               <h5>Planned costs</h5>
               {costRows.map((k, i) => (
@@ -893,7 +893,7 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
                     disabled={busy}
                     onClick={() => setCostRows(costRows.filter((_, j) => j !== i))}
                   >
-                    Remove cost {i + 1}
+                    Remove Cost {i + 1}
                   </button>
                 </fieldset>
               ))}
@@ -903,10 +903,10 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
                 disabled={busy || costRows.length >= 30}
                 onClick={() => setCostRows([...costRows, blankCost()])}
               >
-                Add a planned cost
+                Add a Planned Cost
               </button>
               <button type="submit" className="primary-link" disabled={busy}>
-                {editing ? 'Save template' : 'Create template'}
+                {editing ? 'Save Template' : 'Create Template'}
               </button>
               <button
                 type="button"
@@ -973,7 +973,7 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
                 existing programme must have no tasks, capacity or costs.
               </p>
               <button type="submit" className="primary-link" disabled={busy}>
-                Apply template
+                Apply Template
               </button>
               <button
                 type="button"

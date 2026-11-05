@@ -488,7 +488,7 @@ function ScopedEconomics(props: Props) {
           <p role="alert">{notice}</p>
           {status === 'failed' && (
             <button type="button" className="text-link" onClick={() => void load()}>
-              Reload finances
+              Reload Finances
             </button>
           )}
         </>
@@ -699,7 +699,7 @@ function ScopedEconomics(props: Props) {
             </label>
             {error && <p role="alert">{error}</p>}
             <button type="submit" className="primary-link" disabled={busy}>
-              {busy ? 'Saving…' : 'Record amount'}
+              {busy ? 'Saving…' : 'Record Amount'}
             </button>
           </form>
 
@@ -731,7 +731,7 @@ function ScopedEconomics(props: Props) {
                           setFixConfirm(false);
                         }}
                       >
-                        {correcting === e.id ? 'Cancel correction' : 'Correct this entry'}
+                        {correcting === e.id ? 'Cancel Correction' : 'Correct This Entry'}
                       </button>
                     </>
                   )}
@@ -777,7 +777,7 @@ function ScopedEconomics(props: Props) {
                         disabled={busy}
                         onClick={() => correct(e.id)}
                       >
-                        Add correction
+                        Add Correction
                       </button>
                     </div>
                   )}
@@ -792,7 +792,7 @@ function ScopedEconomics(props: Props) {
               disabled={busy}
               onClick={() => void older()}
             >
-              Show older entries
+              Show Older Entries
             </button>
           )}
         </>

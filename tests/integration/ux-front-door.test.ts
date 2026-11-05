@@ -275,7 +275,7 @@ describe('the Your Move screen', () => {
     expect(html).toContain('Your most recent request');
     expect(html).toContain('aria-current="step"');
     expect(html).toMatch(
-      /class="button"[^>]*>Start a request|href="\/account\?view=work#customer-workspaces"/,
+      /class="button"[^>]*>Start a Request|href="\/account\?view=work#customer-workspaces"/,
     );
   });
 

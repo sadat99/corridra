@@ -135,7 +135,7 @@ const choices = () => ({
   viewExpiresAt: new Date(Date.now() + 60000).toISOString(),
 });
 async function draft(page: import('@playwright/test').Page) {
-  await page.getByRole('button', { name: 'Choose an existing private request' }).click();
+  await page.getByRole('button', { name: 'Choose an Existing Private Request' }).click();
   await page.getByLabel('Original private request', { exact: true }).selectOption(requestId);
   await page
     .getByLabel('Fictional objective to share')
@@ -170,7 +170,7 @@ test('participant shares explicit text through a scoped real command and reopens
   });
   await page.goto(origin);
   await draft(page);
-  await page.getByRole('button', { name: 'Share objective with organisers' }).click();
+  await page.getByRole('button', { name: 'Share Objective With Organisers' }).click();
   await expect(
     page.getByText('Synthetic supplier objective 工厂 বাংলা', { exact: true }),
   ).toBeVisible();
@@ -233,11 +233,11 @@ test('withdrawal confirms beside the chosen objective and retains exact independ
   });
   await page.goto(origin);
   await expect(page.getByLabel('Reason for objective withdrawal')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Withdraw this shared objective' }).click();
+  await page.getByRole('button', { name: 'Withdraw This Shared Objective' }).click();
   const row = page.locator('li').filter({ hasText: 'Synthetic supplier objective 工厂 বাংলা' });
   await row.getByLabel('Reason for objective withdrawal').fill('Synthetic explicit withdrawal');
   await row.getByLabel('I understand this ends objective sharing').check();
-  await row.getByRole('button', { name: 'Confirm objective withdrawal' }).click();
+  await row.getByRole('button', { name: 'Confirm Objective Withdrawal' }).click();
   await expect(page.getByText('Objective sharing withdrawn.', { exact: true })).toBeVisible();
   await expect(
     page.getByText('Synthetic supplier objective 工厂 বাংলা', { exact: true }),
@@ -272,10 +272,10 @@ test('uncertain network result preserves command identity and payload on exact r
   });
   await page.goto(origin);
   await draft(page);
-  await page.getByRole('button', { name: 'Share objective with organisers' }).click();
-  await expect(page.getByRole('button', { name: 'Retry exact objective change' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Reload shared objectives' })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Retry exact objective change' }).click();
+  await page.getByRole('button', { name: 'Share Objective With Organisers' }).click();
+  await expect(page.getByRole('button', { name: 'Retry Exact Objective Change' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Reload Shared Objectives' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Retry Exact Objective Change' }).click();
   await expect(
     page.getByText('Synthetic supplier objective 工厂 বাংলা', { exact: true }),
   ).toBeVisible();
@@ -295,7 +295,7 @@ test('permission denial removes original references,drafts and controls', async 
   });
   await page.goto(origin);
   await draft(page);
-  await page.getByRole('button', { name: 'Update shared objective' }).click();
+  await page.getByRole('button', { name: 'Update Shared Objective' }).click();
   await expect(
     page.getByText('Access changed. Private details and drafts were cleared.'),
   ).toBeVisible();
@@ -319,7 +319,7 @@ test('scope mismatch and unexpected private organiser fields fail closed', async
   await page.route('**/api/customer-programme-objectives*', (r) =>
     r.fulfill({ json: { ...view([]), registrationId: requestId } }),
   );
-  await page.getByRole('button', { name: 'Reload shared objectives' }).click();
+  await page.getByRole('button', { name: 'Reload Shared Objectives' }).click();
   await expect(
     page.getByText('Objective access could not be checked. Reload to try again.'),
   ).toBeVisible();
@@ -339,7 +339,7 @@ test('expiry and page hiding erase private snapshots and drafts', async ({ page 
     page.getByText('Private details and drafts were cleared. Reload to check current access.'),
   ).toBeVisible();
   await expect(page.getByRole('link')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Reload shared objectives' }).click();
+  await page.getByRole('button', { name: 'Reload Shared Objectives' }).click();
   await expect(
     page.getByText('Synthetic supplier objective 工厂 বাংলা', { exact: true }),
   ).toBeVisible();
@@ -362,11 +362,11 @@ test('stale concurrent edit is rejected with recovery instead of an invented suc
   });
   await page.goto(origin);
   await draft(page);
-  await page.getByRole('button', { name: 'Share objective with organisers' }).click();
+  await page.getByRole('button', { name: 'Share Objective With Organisers' }).click();
   await expect(
     page.getByText('This change was not accepted. Reload to check the latest objective version.'),
   ).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Retry exact objective change' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Retry Exact Objective Change' })).toHaveCount(0);
   await expect(page.getByLabel('Fictional objective to share')).toHaveValue(
     'Synthetic supplier objective 工厂 বাংলা',
   );
@@ -388,7 +388,7 @@ for (const width of [320, 390, 768, 1440])
       await expect(
         page.getByText('Synthetic supplier objective 工厂 বাংলা', { exact: true }),
       ).toBeVisible();
-      await page.getByRole('button', { name: 'Withdraw this shared objective' }).focus();
+      await page.getByRole('button', { name: 'Withdraw This Shared Objective' }).focus();
       await page.keyboard.press('Enter');
       await expect(page.getByLabel('Reason for objective withdrawal')).toBeVisible();
       await expect(page.locator('body')).toHaveJSProperty('scrollWidth', width);
@@ -461,7 +461,7 @@ test('pagination does not extend the original private display deadline', async (
     page.getByText('Synthetic supplier objective 工厂 বাংলা', { exact: true }),
   ).toBeVisible();
   await page.clock.fastForward(1000);
-  await page.getByRole('button', { name: 'Load more shared objectives' }).click();
+  await page.getByRole('button', { name: 'Load More Shared Objectives' }).click();
   await expect(page.getByText('Synthetic second objective', { exact: true })).toBeVisible();
   await page.clock.fastForward(1000);
   await expect(
@@ -534,13 +534,13 @@ test('wrong-request or impossible-version acknowledgement retains the same pendi
   });
   await page.goto(origin);
   await draft(page);
-  await page.getByRole('button', { name: 'Share objective with organisers' }).click();
+  await page.getByRole('button', { name: 'Share Objective With Organisers' }).click();
   await expect(
     page.getByText('The result could not be checked. Retry this exact change.'),
   ).toBeVisible();
-  await page.getByRole('button', { name: 'Retry exact objective change' }).click();
-  await expect(page.getByRole('button', { name: 'Retry exact objective change' })).toBeVisible();
-  await page.getByRole('button', { name: 'Retry exact objective change' }).click();
+  await page.getByRole('button', { name: 'Retry Exact Objective Change' }).click();
+  await expect(page.getByRole('button', { name: 'Retry Exact Objective Change' })).toBeVisible();
+  await page.getByRole('button', { name: 'Retry Exact Objective Change' }).click();
   await expect(
     page.getByText('Synthetic supplier objective 工厂 বাংলা', { exact: true }),
   ).toBeVisible();

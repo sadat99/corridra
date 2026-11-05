@@ -296,7 +296,7 @@ function OwnerPanel(
             disabled={view.busy}
             onClick={() => setAfter(undefined)}
           >
-            First participant page
+            First Participant Page
           </button>
         )}
         {d.nextAfter && (
@@ -306,7 +306,7 @@ function OwnerPanel(
             disabled={view.busy}
             onClick={() => setAfter(d.nextAfter!)}
           >
-            Next participant page
+            Next Participant Page
           </button>
         )}
       </div>
@@ -338,7 +338,7 @@ function OwnerPanel(
           disabled={view.busy}
           onClick={() => void view.retry()}
         >
-          Retry same change
+          Retry Same Change
         </button>
       )}
       <button
@@ -347,7 +347,7 @@ function OwnerPanel(
         disabled={view.busy}
         onClick={() => void view.load()}
       >
-        Refresh programme projection
+        Refresh Programme Projection
       </button>
       {props.view === 'results' ? (
         <>
@@ -506,7 +506,7 @@ function OwnerPanel(
                   disabled={view.busy}
                   onClick={() => edit(row.taskId)}
                 >
-                  Edit schedule for {row.title}
+                  Edit Schedule for {row.title}
                 </button>
               </li>
             ))}
@@ -621,7 +621,7 @@ function OwnerPanel(
                       activitySelect.current?.focus();
                     }}
                   >
-                    Reload this activity
+                    Reload This Activity
                   </button>
                 </>
               )}
@@ -638,7 +638,7 @@ function OwnerPanel(
                   (audience === 'SELECTED' && !attendees.length)
                 }
               >
-                Save activity schedule
+                Save Activity Schedule
               </button>
               {task?.scheduled && (
                 <button
@@ -660,7 +660,7 @@ function OwnerPanel(
                     )
                   }
                 >
-                  Remove schedule
+                  Remove Schedule
                 </button>
               )}
             </form>
@@ -704,7 +704,7 @@ function OwnSharing(props: Identity & { registrationId: string }) {
           disabled={view.busy}
           onClick={() => void view.retry()}
         >
-          Retry same change
+          Retry Same Change
         </button>
       )}
       <button
@@ -713,7 +713,7 @@ function OwnSharing(props: Identity & { registrationId: string }) {
         disabled={view.busy}
         onClick={() => void view.load()}
       >
-        Refresh sharing
+        Refresh Sharing
       </button>
       {!d ? (
         <p role="status">Sharing data is loading or has expired.</p>
@@ -777,7 +777,7 @@ function OwnSharing(props: Identity & { registrationId: string }) {
                 type="submit"
                 disabled={view.busy || consentProfileId !== d.profile.id}
               >
-                {d.company.shared ? 'Update company sharing' : 'Share company profile'}
+                {d.company.shared ? 'Update Company Sharing' : 'Share Company Profile'}
               </button>
             </form>
           ) : (
@@ -811,7 +811,7 @@ function OwnSharing(props: Identity & { registrationId: string }) {
                     })
                 }
               >
-                Clear earlier company permission
+                Clear Earlier Company Permission
               </button>
             </>
           )}
@@ -833,7 +833,7 @@ function OwnSharing(props: Identity & { registrationId: string }) {
                   })
                 }
               >
-                Stop sharing company
+                Stop Sharing Company
               </button>
             </>
           )}
@@ -874,7 +874,7 @@ function OwnSharing(props: Identity & { registrationId: string }) {
             <div className="button-row">
               {after && (
                 <button className="text-link" type="button" onClick={() => setAfter(undefined)}>
-                  First mission page
+                  First Mission Page
                 </button>
               )}
               {d.nextLinkAfter && (
@@ -883,7 +883,7 @@ function OwnSharing(props: Identity & { registrationId: string }) {
                   type="button"
                   onClick={() => setAfter(d.nextLinkAfter!)}
                 >
-                  Next mission page
+                  Next Mission Page
                 </button>
               )}
             </div>

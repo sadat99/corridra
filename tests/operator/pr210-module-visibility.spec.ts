@@ -146,8 +146,8 @@ test('Listen stops and checks voices again when the chosen language changes on a
     });
   });
   await page.goto(origin + '/?dock=1');
-  await page.getByRole('button', { name: 'Listen to this page', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Stop reading', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Listen to This Page', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Stop Reading', exact: true })).toBeVisible();
   const before = await page.evaluate(() => ({
     ...(window as unknown as { fixtureSpeech: { cancels: number; voiceChecks: number } })
       .fixtureSpeech,
@@ -159,7 +159,7 @@ test('Listen stops and checks voices again when the chosen language changes on a
   await expect(page.locator('html')).toHaveAttribute('lang', 'de');
   await expect(page.locator('main')).toHaveAttribute('lang', 'en');
   await expect(
-    page.getByRole('button', { name: 'Listen to this page', exact: true }),
+    page.getByRole('button', { name: 'Listen to This Page', exact: true }),
   ).toBeVisible();
   const after = await page.evaluate(
     () =>

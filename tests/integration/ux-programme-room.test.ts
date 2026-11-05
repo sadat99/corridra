@@ -161,13 +161,13 @@ describe('the room wraps the same panels', () => {
   });
   it('keeps the old toggles word for word as the switch-off branch', () => {
     for (const text of [
-      'Manage participants',
-      'Manage sample participants',
-      'Coordinate and report',
-      'Terms, eligibility and places',
-      'Record fees and costs',
-      'Record sample fees and costs',
-      'Load more planning programmes',
+      'Manage Participants',
+      'Manage Sample Participants',
+      'Coordinate and Report',
+      'Terms, Eligibility and Places',
+      'Record Fees and Costs',
+      'Record Sample Fees and Costs',
+      'Load More Planning Programmes',
     ])
       expect(list).toContain(text);
     expect(list).toContain('roomEnabled ? (');
@@ -184,7 +184,7 @@ describe('the room wraps the same panels', () => {
     const room = read('apps/web/app/account/delegations/programme-room.tsx');
     expect(room).toContain('IntersectionObserver');
     expect(room).toContain('<LiveStatus key={reads}');
-    expect(room).toContain('Refresh counts');
+    expect(room).toContain('Refresh Counts');
     expect(room).toContain('available.length > 1');
     // The money note names the panels that are on the page: pricing needs templates too.
     expect(list).toContain('sharedMoneyNote={templatesEnabled && pricingEnabled}');

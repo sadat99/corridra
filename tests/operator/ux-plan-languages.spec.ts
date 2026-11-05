@@ -29,10 +29,11 @@ import { countryCodes } from '../../packages/domain/src/countries';
 // GAP-010 changes the English country controls. Keep this fixed source snapshot reachable
 // through baseline/gap-010-request-countries-groups-2026-11-03 after the PR is squash-merged.
 // The /plan step budget (revamp, 4 Nov 2026) folds the optional fields of the details and results steps behind
-// "More details (optional)" so every step fits its budget; the request bodies are unchanged. The baseline now
+// "More Details (Optional)" so every step fits its budget; the request bodies are unchanged. The baseline now
 // names the commit that carries that form. That commit is kept reachable because the pull request is merged with
 // a merge commit, not squashed (no tag), so main's history holds it.
-const baseline = '4bd7b5d1acc1df4fbecadf8f46f85e10d62bba49';
+// Layout Phase 2a (5 Nov 2026): English action labels moved to Title Case on purpose, so the baseline is the commit that carries them.
+const baseline = '335cd394d90dd1a544de94fc58520133c0f9c8a3';
 let server: Server, origin: string;
 let bundle = '';
 const chunks = new Map<string, string>();
@@ -1045,7 +1046,7 @@ test.describe('with the form released', () => {
       else await openTranslated(page, code, query);
       return page;
     };
-    const listen = (page: Page) => page.getByRole('button', { name: 'Listen to this page' });
+    const listen = (page: Page) => page.getByRole('button', { name: 'Listen to This Page' });
     const arabic = await tab(['en-US'], 'ar', 'form=true&dock=1');
     await expect(listen(arabic)).toHaveCount(0);
     const englishForm = await tab(['en-US'], 'ar', 'dock=1');

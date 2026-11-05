@@ -11,9 +11,9 @@ import { test, expect } from '../fixtures';
 type Sent = { key: string; brief: Record<string, any>; websiteCheck: string };
 
 const next = (page: Page) => page.getByRole('button', { name: 'Continue', exact: true });
-// The optional fields of the details and results steps sit behind "More details (optional)".
+// The optional fields of the details and results steps sit behind "More Details (Optional)".
 const unfold = async (page: Page) => {
-  const toggle = page.getByRole('button', { name: 'More details (optional)', exact: true });
+  const toggle = page.getByRole('button', { name: 'More Details (Optional)', exact: true });
   if (await toggle.count()) await toggle.click();
 };
 const fillField = async (page: Page, name: string, value: string) =>
@@ -180,11 +180,11 @@ for (const entry of jobs) {
     await page.getByLabel('Name', { exact: true }).fill('QA buyer (madeup)');
     await page.getByLabel('Company', { exact: true }).fill('QA test company (madeup)');
     await page.getByLabel('Work email', { exact: true }).fill('QA-Buyer@example.invalid');
-    await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
+    await page.getByRole('button', { name: 'Submit Mission Request', exact: true }).click();
     await expect(page.locator('#acknowledged-error')).toBeVisible();
     expect(sentRequest()).toBeUndefined();
     await page.getByLabel('I have read', { exact: false }).check();
-    await page.getByRole('button', { name: 'Submit mission request', exact: true }).click();
+    await page.getByRole('button', { name: 'Submit Mission Request', exact: true }).click();
     await expect(page.getByLabel('Private receipt code')).toHaveValue('a'.repeat(64));
 
     const sent = sentRequest()!;

@@ -30,7 +30,7 @@ test('the planner and participant pages stay private and omit coordination while
     expect(r.status()).toBe(200);
     expect(r.headers()['cache-control']).toContain('no-store');
     const html = await r.text();
-    expect(html).not.toContain('Coordinate and report');
-    expect(html).not.toContain('Share feedback and results');
+    expect(html).not.toContain('Coordinate and Report');
+    expect(html).not.toContain('Share Feedback and Results');
   }
 });

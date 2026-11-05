@@ -422,7 +422,7 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
             void load();
           }}
         >
-          Reload shared objectives
+          Reload Shared Objectives
         </button>
       )}
       {status === 'ready' && (
@@ -455,7 +455,7 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
                       setAck(false);
                     }}
                   >
-                    Withdraw this shared objective
+                    Withdraw This Shared Objective
                   </button>
                 )}
                 {target?.id === o.id && !pending && (
@@ -495,7 +495,7 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
                         })
                       }
                     >
-                      Confirm objective withdrawal
+                      Confirm Objective Withdrawal
                     </button>
                     <button
                       type="button"
@@ -507,7 +507,7 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
                         setAck(false);
                       }}
                     >
-                      Cancel objective withdrawal
+                      Cancel Objective Withdrawal
                     </button>
                   </>
                 )}
@@ -521,7 +521,7 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
               disabled={busy}
               onClick={() => void more(next)}
             >
-              Load more shared objectives
+              Load More Shared Objectives
             </button>
           )}
           {scope.view === 'own' && active && !pending && (
@@ -532,7 +532,7 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
                 disabled={busy}
                 onClick={() => void choose()}
               >
-                Choose an existing private request
+                Choose an Existing Private Request
               </button>
               {choices.length > 0 && (
                 <form
@@ -591,7 +591,7 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
                       disabled={busy}
                       onClick={() => void choose(choiceNext)}
                     >
-                      Load more private requests
+                      Load More Private Requests
                     </button>
                   )}
                   <label className="field">
@@ -622,7 +622,7 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
                     its visibility.
                   </label>
                   <button className="button button-primary" disabled={busy || !consent}>
-                    {current ? 'Update shared objective' : 'Share objective with organisers'}
+                    {current ? 'Update Shared Objective' : 'Share Objective With Organisers'}
                   </button>
                 </form>
               )}
@@ -640,7 +640,7 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
                 disabled={busy}
                 onClick={() => void send(pending)}
               >
-                Retry exact objective change
+                Retry Exact Objective Change
               </button>
             </>
           )}

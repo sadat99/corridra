@@ -65,7 +65,7 @@ test('E-3: Arabic sets right to left on a signed-in shell, with no marketing hea
   await expect(header).toContainText('مهامك');
   // D14: no public marketing header inside a signed-in shell.
   await expect(page.locator('#public-navigation')).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'Start a request' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Start a Request' })).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(
     true,
   );

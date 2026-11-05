@@ -367,7 +367,7 @@ function ScopedTerms({ subject, issuer, workspaceId, programmeId, coordinationEn
           <p role="alert">{notice}</p>
           {phase === 'failed' && (
             <button type="button" className="text-link" onClick={() => void load()}>
-              Reload terms and places
+              Reload Terms and Places
             </button>
           )}
         </>
@@ -514,12 +514,12 @@ function ScopedTerms({ subject, issuer, workspaceId, programmeId, coordinationEn
                   />
                 </label>
                 <button type="submit" className="primary-link" disabled={busy}>
-                  {t ? 'Publish new version' : 'Publish terms'}
+                  {t ? 'Publish New Version' : 'Publish Terms'}
                 </button>
               </form>
               {state.terms.history.length > 1 && (
                 <details>
-                  <summary>Earlier versions ({state.terms.history.length - 1})</summary>
+                  <summary>Earlier Versions ({state.terms.history.length - 1})</summary>
                   <ul>
                     {state.terms.history.slice(1).map((h) => (
                       <li key={h.version}>
@@ -652,12 +652,12 @@ function ScopedTerms({ subject, issuer, workspaceId, programmeId, coordinationEn
                   />
                 </label>
                 <button type="submit" className="primary-link" disabled={busy}>
-                  Save criteria
+                  Save Criteria
                 </button>
               </form>
               {state.eligibility.history.length > 1 && (
                 <details>
-                  <summary>Earlier versions ({state.eligibility.history.length - 1})</summary>
+                  <summary>Earlier Versions ({state.eligibility.history.length - 1})</summary>
                   <ul>
                     {state.eligibility.history.slice(1).map((h) => (
                       <li key={h.version}>
@@ -765,7 +765,7 @@ function ScopedTerms({ subject, issuer, workspaceId, programmeId, coordinationEn
                       void send('refresh', {}, 'Waiting people were moved up in order.')
                     }
                   >
-                    Move waiting people up
+                    Move Waiting People Up
                   </button>
                 </div>
               )}
@@ -819,7 +819,7 @@ function ScopedTerms({ subject, issuer, workspaceId, programmeId, coordinationEn
                   />
                 </label>
                 <button type="submit" className="primary-link" disabled={busy}>
-                  Save places
+                  Save Places
                 </button>
               </form>
               <h5>People</h5>
@@ -910,7 +910,7 @@ function ScopedTerms({ subject, issuer, workspaceId, programmeId, coordinationEn
                           }
                           onClick={() => saveOwner(x)}
                         >
-                          Save owner for {x.title}
+                          Save Owner for {x.title}
                         </button>
                       </li>
                     );
@@ -921,7 +921,7 @@ function ScopedTerms({ subject, issuer, workspaceId, programmeId, coordinationEn
             </div>
           )}
           <button type="button" className="text-link" disabled={busy} onClick={() => void load()}>
-            Reload terms and places
+            Reload Terms and Places
           </button>
         </>
       )}
