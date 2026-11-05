@@ -104,6 +104,7 @@ function ScopedProgrammes({
   // The programme the room shows, kept in ?programme= (read once; the list itself loads after the first render).
   // An old link to one programme's section (#<programme id>-<view>) still opens that programme (layout budget L-03).
   // Only a programme in this workspace's own list can be chosen; anything else shows the first one.
+  const [visited, setVisited] = useState<ReadonlySet<string>>(() => new Set());
   const [chosenId, setChosenId] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null;
     const asked = new URLSearchParams(window.location.search).get('programme');
@@ -351,8 +352,18 @@ function ScopedProgrammes({
   // programme at a time, so it fits the page-length budget. Nothing is removed: the same list, panels, templates,
   // pricing and form, each in its own tab, every panel kept in the page. With the room off the page is unchanged.
   const chosenProgramme = rows.find((p) => p.id === chosenId)?.id ?? rows[0]?.id;
-  const shownRows = roomEnabled ? rows.filter((p) => p.id === chosenProgramme) : rows;
+  // A programme once opened stays mounted, hidden, so anything typed in its panels survives a switch and back;
+  // a hidden room is off screen, so it reads nothing until it is shown again.
+  const shownRows = roomEnabled
+    ? rows.filter((p) => p.id === chosenProgramme || visited.has(p.id))
+    : rows;
   const choose = (id: string) => {
+    setVisited((current) => {
+      const next = new Set(current);
+      if (chosenProgramme) next.add(chosenProgramme);
+      next.add(id);
+      return next;
+    });
     setChosenId(id);
     const url = new URL(window.location.href);
     url.searchParams.set('programme', id);
@@ -369,7 +380,7 @@ function ScopedProgrammes({
       ) : (
         <ul>
           {shownRows.map((p) => (
-            <li key={p.id}>
+            <li key={p.id} hidden={roomEnabled && p.id !== chosenProgramme}>
               {roomEnabled ? (
                 <ProgrammeRoom
                   programmeId={p.id}

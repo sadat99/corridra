@@ -175,11 +175,22 @@ export function programmeGlance(
     of: r ? `of ${r.activeParticipants}` : undefined,
     label: 'participants ready',
   });
+  // A meeting count is a total only when every shared link was read (AVAILABLE). A partial read leaves links out,
+  // so even its zero is not a total: it is not measured yet, as on Home (organiseFacts). Results explains coverage.
   const m = projection?.meetings;
+  const complete = m?.state === 'AVAILABLE';
   const meetingWords = m?.state === 'NOT_SHARED' ? 'Not shared' : notMeasured;
   tiles.push(
-    { key: 'scheduled', ...count(m?.scheduled, meetingWords), label: 'meetings scheduled' },
-    { key: 'held', ...count(m?.qualifiedHeld, meetingWords), label: 'qualified meetings held' },
+    {
+      key: 'scheduled',
+      ...count(complete ? m.scheduled : null, meetingWords),
+      label: 'meetings scheduled',
+    },
+    {
+      key: 'held',
+      ...count(complete ? m.qualifiedHeld : null, meetingWords),
+      label: 'qualified meetings held',
+    },
   );
   return tiles;
 }

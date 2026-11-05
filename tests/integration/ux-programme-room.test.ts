@@ -299,6 +299,17 @@ describe('the Organise room overview (approved work rooms, 5 Nov 2026)', () => {
     expect(notShared.find((t) => t.key === 'scheduled')!.value).toBe('Not shared');
     expect(notShared.find((t) => t.key === 'held')!.value).toBe('Not shared');
     expect(programmeGlance(null, null, false).map((t) => t.key)).toEqual(['registered', 'open']);
+    // Codex review of PR 314: a partial read (some shared links unavailable) is not a total, not even its zero.
+    const partial = programmeGlance(
+      null,
+      projection({ meetings: { state: 'PARTIAL', scheduled: 0, qualifiedHeld: 0 } }),
+      true,
+    );
+    for (const key of ['scheduled', 'held'])
+      expect(partial.find((t) => t.key === key)).toMatchObject({
+        value: 'Not measured yet',
+        known: false,
+      });
     for (const tiles of [unknown, notShared])
       for (const t of tiles) if (!t.known) expect(t.value).not.toBe('0');
   });

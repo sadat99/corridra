@@ -354,6 +354,9 @@ article.room.programme-room .programme-attention > li > .button.button-secondary
 .programme-page .programme-page-tabs ul:has(> li > .programme-room) > li {
   margin: 0;
 }
+.programme-page .programme-page-tabs ul:has(> li > .programme-room) > li[hidden] {
+  display: none;
+}
 .ux-customer section.delivery-view.programme-page .programme-page-foot {
   display: flex;
   flex-wrap: wrap;

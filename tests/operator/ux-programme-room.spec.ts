@@ -270,7 +270,21 @@ test('only the chosen programme is shown and read, and choosing another reads it
   await expect(page.getByRole('article', { name: `${programme.name} 8` })).toBeVisible();
   await expect.poll(() => log).toContain(programmeIdAt(8));
   expect(new URL(page.url()).searchParams.get('programme')).toBe(programmeIdAt(8));
-  await expect(page.locator('.programme-room')).toHaveCount(1);
+  await expect(page.locator('.programme-room').filter({ visible: true })).toHaveCount(1);
+  // Codex review of PR 314: a programme once opened stays mounted, hidden, so what was typed survives a switch.
+  await picker.selectOption({ label: `${programme.name} 1` });
+  const first = page.getByRole('article', { name: `${programme.name} 1` });
+  await first.getByRole('button', { name: 'Participants and eligibility', exact: true }).click();
+  await first
+    .getByLabel(/invitation label/i)
+    .first()
+    .fill('Synthetic label kept across programmes');
+  await picker.selectOption({ label: `${programme.name} 8` });
+  await expect(first).toBeHidden();
+  await picker.selectOption({ label: `${programme.name} 1` });
+  await expect(first.getByLabel(/invitation label/i).first()).toHaveValue(
+    'Synthetic label kept across programmes',
+  );
 });
 
 test('a room with no other view does not tell the person to choose one', async ({ page }) => {
