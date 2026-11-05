@@ -297,14 +297,16 @@ function Scoped({ tenant }: { tenant: string }) {
     if (!detail) return;
     // A reversal cannot be undone, so it asks once. A resend after a lost answer carries the same command id.
     setConfirming(
-      pending ?? {
-        action: 'reverse',
-        commandId: crypto.randomUUID(),
-        invoiceId: detail.invoice.id,
-        expectedPosition: detail.invoice.position,
-        paymentSeq: Number(reverseSeq),
-        reason: reverseReason.trim(),
-      },
+      pending?.action === 'reverse'
+        ? pending
+        : {
+            action: 'reverse',
+            commandId: crypto.randomUUID(),
+            invoiceId: detail.invoice.id,
+            expectedPosition: detail.invoice.position,
+            paymentSeq: Number(reverseSeq),
+            reason: reverseReason.trim(),
+          },
     );
   }
   const asked =
@@ -607,7 +609,7 @@ function Scoped({ tenant }: { tenant: string }) {
                 data-intent="destructive"
                 disabled={busy}
               >
-                {pending ? 'Send the Same Reversal Again' : 'Reverse Payment'}
+                {pending?.action === 'reverse' ? 'Send the Same Reversal Again' : 'Reverse Payment'}
               </button>
             </form>
           )}

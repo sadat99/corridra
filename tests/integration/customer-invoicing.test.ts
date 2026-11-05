@@ -751,6 +751,12 @@ test('a payment entered in error is reversed once, with a reason, and the invoic
   ).rejects.toThrow(/check constraint/i);
   await expect(
     f.owner.query(
+      "INSERT INTO customer_private.invoicing_payment_reversal(invoice_id,tenant_id,seq,payment_seq,reason,reversed_by,staff_tenant_id) SELECT invoice_id,tenant_id,3,1,'A real reason from a real bank',reversed_by,staff_tenant_id FROM customer_private.invoicing_payment_reversal WHERE invoice_id=$1 LIMIT 1",
+      [inv.id],
+    ),
+  ).rejects.toThrow(/check constraint/i);
+  await expect(
+    f.owner.query(
       "INSERT INTO customer_private.invoicing_payment_reversal(invoice_id,tenant_id,seq,payment_seq,reason,reversed_by,staff_tenant_id) SELECT invoice_id,tenant_id,3,2,'Synthetic second reversal of the same payment',reversed_by,staff_tenant_id FROM customer_private.invoicing_payment_reversal WHERE invoice_id=$1 LIMIT 1",
       [inv.id],
     ),
