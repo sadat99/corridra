@@ -217,8 +217,10 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 ### KI-35 Local database preparation lost its connection once on a fresh runner (4 November 2026)
 
 - **Observed:** main push CI run 41775257221 (PR258 merge, 4f2870e), attempt 1: only job `ux (2)` failed. `pnpm db:prepare-local` ended with `Error: read ECONNRESET` (pg-pool, `packages/db/src/migrate.ts`) at 04:48:02Z, two seconds after the runner's Postgres container reported started and before any test ran. `validate` was red only as the roll-up. One re-run of the failed jobs passed (attempt 2 success).
-- **Cause:** inferred (a database readiness race on a fresh runner container), not proven.
-- **If it recurs:** reproduce the pattern first. Only then add a short readiness wait (a `pg_isready` loop) in the workflow. Do not change tests for it.
+- **Recurred (5 November 2026):** PR 295's browser job (run 41980734589) died at `pnpm db:prepare-local` with `ECONNRESET` about 1 s after the container started, and PR 294's `ux (3)` (run 41969707752) died at the same step with `error: the database system is starting up` (code 57P03). Both ended before any test ran, and both passed on one re-run of the failed job.
+- **Cause (now understood):** `scripts/local-database.mjs` waited with `pg_isready` run inside the container. The Postgres image first starts a temporary server for its init scripts, and that one answers `pg_isready` inside the container before the real server listens on the published port. The first connections from the host then fail with a reset or "starting up".
+- **Fix (5 November 2026):** `scripts/prepare-local.ts` waits until a query over the real connection (`SELECT 1` on port 54329) is answered, up to 30 tries one second apart, logs each try ("Waiting for local PostgreSQL, try N of 30: ...") and the try that succeeded, and then fails with a clear message. No workflow or test changed. Checked locally by stopping the database, starting the script, and starting the database a few seconds later: the script waited and then migrated; with the database down for the whole time it failed after 31 s.
+- **If it recurs after this:** the job log will now say "Local PostgreSQL did not answer a query on port 54329 after 30 tries (...)" with the last error. That means the container did not come up at all, which is a runner problem; re-run the failed job once and report it.
 
 ### KI-36 Two parallel runs shared one local database and one lost its results (4 November 2026)
 
