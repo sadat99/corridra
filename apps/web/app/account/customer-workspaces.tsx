@@ -140,11 +140,12 @@ export function CustomerWorkspaces({
       : undefined) ?? document.querySelector<HTMLElement>('.ux-ws-head-actions button');
   // The same keys as a ref, so the window-focus refresh can tell at once that a dialog is still sending.
   const sending = useRef(new Set<string>());
-  const setBusyFor = (key: string) => (busy: boolean) => {
+  const markSending = useCallback((key: string, busy: boolean) => {
     if (busy) sending.current.add(key);
     else sending.current.delete(key);
     setWorking((current) => (!!current[key] === busy ? current : { ...current, [key]: busy }));
-  };
+  }, []);
+  const setBusyFor = (key: string) => (busy: boolean) => markSending(key, busy);
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
   const linkOverview = useCompanyLinkOverview(
     linksEnabled && status === 'ready',
