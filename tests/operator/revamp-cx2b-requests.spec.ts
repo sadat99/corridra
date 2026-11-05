@@ -30,6 +30,7 @@ test.beforeAll(async () => {
             <div id="my-work">
               <RequestsTabs
                 requests={<section id="work-list"><h2>Your work</h2>
+                  <p><a href="#customer-workspaces">Open your workspaces</a> <a href="#customer-requests">Open your saved requests</a></p>
                   <WorkFilterBar filter={filter} options={options}/>
                   <RowList label="Your work" title="Request" columns={[{name:'Kind'},{name:'Status'}]}>
                     <RowLink href="/account/requests/1" title="Sell machines to Dhaka" cells={[{name:'Kind',value:'Request'},{name:'Status',value:'In progress',status:true}]}/>
@@ -193,3 +194,30 @@ for (const [width, height] of [
       );
     }
   });
+
+test('CX-04 a link whose target is in another tab opens that tab itself, with no tab click', async ({
+  page,
+}) => {
+  await page.goto(`${origin}/?view=work`);
+  await expect(tab(page, 'Requests')).toHaveAttribute('aria-selected', 'true');
+  await page.getByRole('link', { name: 'Open your workspaces' }).click();
+  await expect(tab(page, 'Workspaces')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('button', { name: 'Create Workspace' })).toBeVisible();
+  await expect(page.locator('#customer-workspaces')).toBeVisible();
+  await page.goto(`${origin}/?view=work`);
+  await page.getByRole('link', { name: 'Open your saved requests' }).click();
+  await expect(tab(page, 'Saved')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('#customer-requests')).toBeVisible();
+});
+
+test('CX-04 a hidden tab stays hidden: no panel is shown by an id or a stronger selector', async ({
+  page,
+}) => {
+  await page.goto(`${origin}/?view=work`);
+  for (const id of ['customer-workspaces', 'customer-requests'])
+    await expect(page.locator('#' + id)).toBeHidden();
+  const displays = await page
+    .locator('[role="tabpanel"][hidden]')
+    .evaluateAll((all) => all.map((el) => getComputedStyle(el).display));
+  expect(displays).toEqual(['none', 'none']);
+});
