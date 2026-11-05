@@ -6,6 +6,9 @@ import type { Page } from '@playwright/test';
 // production build with the test-only customer sign-in. Case ids: L-01, CX-02, CX-03, CX-06.
 const bar = (page: Page) => page.getByRole('navigation', { name: 'Customer navigation' });
 const header = (page: Page) => page.locator('header.ux-app-header');
+// Owner-approved frame (5 Nov 2026): from 1024 px the account menu sits at the foot of the left bar with the
+// person's name; below 1024 px it stays in the header. The menu and everything in it are unchanged.
+const leftBar = (page: Page) => page.locator('.ux-leftnav-panel');
 // The destinations every customer page had before the bar, in their order (Companies appears only where
 // the approved-companies module is on, which it is not on this server).
 const destinations: [string, string][] = [
@@ -105,8 +108,9 @@ test('CX-03 the account menu holds the name, the language, the website, the priv
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/account');
-  const trigger = header(page).getByRole('button', { name: 'Account menu' });
+  const trigger = leftBar(page).getByRole('button', { name: 'Account menu' });
   await expect(trigger).toBeVisible();
+  await expect(header(page).getByRole('button', { name: 'Account menu' })).toBeHidden();
   await expect(trigger).toHaveAttribute('aria-expanded', 'false');
   await trigger.focus();
   await page.keyboard.press('Enter');
@@ -165,9 +169,9 @@ test('CX-02 every header action from before is still reachable: inbox, language,
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/account');
   await expect(header(page).getByRole('button', { name: 'Inbox', exact: true })).toBeVisible();
-  // The help button lives in the corner dock, outside the header, and stays on the page.
+  // The help button lives outside the header and stays on the page (at the foot of the left bar from 1024 px).
   await expect(page.getByRole('button', { name: 'Help', exact: true })).toBeVisible();
-  await header(page).getByRole('button', { name: 'Account menu' }).click();
+  await leftBar(page).getByRole('button', { name: 'Account menu' }).click();
   const menu = page.getByRole('menu', { name: 'Account menu' });
   await expect(menu.getByRole('group', { name: /Language/ })).toBeVisible();
   await expect(menu.getByRole('menuitem', { name: 'Corridra website' })).toBeVisible();
@@ -205,4 +209,17 @@ test('CX-03 on a phone the Menu button is an icon with the accessible name Menu;
   }));
   expect(tablet.mask === 'none' || tablet.mask === '').toBe(true);
   expect(tablet.fontSize).not.toBe('0px');
+});
+
+test('CX-03 on a phone the account menu stays in the header, with the same contents', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/account');
+  const trigger = header(page).getByRole('button', { name: 'Account menu' });
+  await expect(trigger).toBeVisible();
+  await trigger.click();
+  const menu = page.getByRole('menu', { name: 'Account menu' });
+  await expect(menu).toContainText('qa-customer@example.invalid');
+  await expect(menu.getByRole('menuitem', { name: 'Sign out' })).toBeVisible();
 });
