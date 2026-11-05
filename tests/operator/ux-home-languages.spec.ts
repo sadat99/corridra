@@ -250,7 +250,7 @@ test('a reading stops when the page or its language changes, so it is never left
   await page.evaluate(() => {
     document.getElementById('main')!.lang = 'ar';
   });
-  await expect(page.getByRole('button', { name: /Listen to this page|Stop reading/ })).toHaveCount(
+  await expect(page.getByRole('button', { name: /Listen to This Page|Stop Reading/ })).toHaveCount(
     0,
   );
   expect((await counts()).cancelled).toBeGreaterThan(before);
