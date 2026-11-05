@@ -5,7 +5,7 @@ import { quoteCardsFrom } from '../lib/quote-cards';
 import { StatusBadge } from '../components/access-state';
 import { useId, useState } from 'react';
 import type { AgendaItem, MissionExperience } from '@corridra/delivery/report';
-import { compareOffers } from '@corridra/domain/commercial-missions';
+import { compareExperienceOffers, isCurrentOffer } from '../lib/experience-offers';
 import { displayMoney, displayDate } from '@corridra/domain/locale';
 const offerFieldLabels: Record<string, string> = {
   specification: 'Quoted specification',
@@ -72,26 +72,8 @@ export function MissionExperienceView({
   const lensId = useId(),
     dateId = useId();
   const r = e.requirements;
-  const comparisons = compareOffers(
-    e.quotations.map((q) => ({
-      id: q.id,
-      currency: q.currency,
-      terms: q.terms,
-      requirementId: String(r?.version ?? 'missing'),
-      uncertainties: q.uncertainties,
-      evidenceCurrent:
-        !!r?.current &&
-        !q.superseded &&
-        q.assignmentCurrent &&
-        (!r.fields.specifications || r.fields.specifications === q.terms.specification) &&
-        (!r.fields.quantity || r.fields.quantity === q.terms.quantity) &&
-        (!r.fields.unit || r.fields.unit === q.terms.unit),
-    })),
-    undefined,
-    r?.fields.machinery ? 'MACHINERY' : 'GENERAL',
-  );
-  const isCurrent = (q: MissionExperience['quotations'][number]) =>
-    !!r?.current && !q.superseded && q.assignmentCurrent;
+  const comparisons = compareExperienceOffers(e);
+  const isCurrent = (q: MissionExperience['quotations'][number]) => isCurrentOffer(e, q);
   const inLens = (q: MissionExperience['quotations'][number]) =>
     lens === 'all' || (lens === 'current' ? isCurrent(q) : !isCurrent(q));
   const currentCount = e.quotations.filter(isCurrent).length;

@@ -175,4 +175,31 @@ describe('Home summary never claims more than the page could read (Codex review 
     expect(html).not.toContain('Everything else is moving');
     expect(html).toContain('so far. This page may not show everything yet.');
   });
+
+  // Codex review of PR 310: a journey view shows only the tasks the work list could sort into a journey.
+  it('never says nothing needs you in a journey while tasks are unsorted or the work list was cut short', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const allSell = Object.fromEntries(busy.cards.map((card) => [card.id, 'sell']));
+    const unsorted = render(MoveView, { model: busy, startHref: '/plan', journey: 'source' });
+    expect(unsorted).not.toContain('Nothing in this journey needs you right now.');
+    expect(unsorted).not.toContain('all caught up');
+    expect(unsorted).toMatch(/(One more thing needs|\d+ more things need) you under All\./);
+    const cutShort = render(MoveView, {
+      model: busy,
+      startHref: '/plan',
+      journey: 'source',
+      taskJourneys: allSell,
+      sortIncomplete: true,
+    });
+    expect(cutShort).toContain('This view may not show everything in sourcing yet.');
+    expect(cutShort).not.toContain('Nothing in this journey needs you right now.');
+    const sorted = render(MoveView, {
+      model: busy,
+      startHref: '/plan',
+      journey: 'source',
+      taskJourneys: allSell,
+    });
+    expect(sorted).toContain('Nothing in this journey needs you right now.');
+    expect(sorted).toContain('href="/account/move"');
+  });
 });

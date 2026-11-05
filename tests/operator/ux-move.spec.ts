@@ -268,11 +268,14 @@ test('when nothing waits it says so, shows where the latest request stands and o
   await expect(page.getByRole('heading', { name: 'Your most recent request' })).toHaveCount(0);
 });
 
-test('shows five cards and the rest behind one control', async ({ page }) => {
+// Three show first since the role-aware Home (owner rule: one desktop screen); the rest are one control away.
+test('shows three cards and the rest behind one control', async ({ page }) => {
   await open(page, 'many');
   await expect(page.locator('.mr-move')).toHaveCount(7);
+  await expect(page.locator('.mr-move').filter({ visible: true })).toHaveCount(3);
   await expect(page.locator('.move-more')).toHaveJSProperty('open', false);
-  await page.getByText('Show 2 more').click();
+  await page.getByText('Show 4 more').click();
+  await expect(page.locator('.mr-move').filter({ visible: true })).toHaveCount(7);
   await expect(page.locator('.move-more')).toHaveJSProperty('open', true);
 });
 

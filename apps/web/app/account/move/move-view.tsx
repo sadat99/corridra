@@ -17,13 +17,21 @@ import {
   type MoveModel,
   type WaitingRow,
 } from '../../../lib/move-cards';
-import { journeyWords, type JourneyCard, type LatestItem } from './journeys';
+import {
+  journeys as journeyOrder,
+  journeyWords,
+  type Journey,
+  type JourneyCard,
+  type LatestItem,
+} from './journeys';
+import { JourneyCardView, ParticipantCard } from './journey-card';
+import type { JourneyFacts } from '../../../lib/home-journeys/load';
 import './move-view.css';
 
 // The last reply a person marked as read, per request. It lives in this browser only (the same
 // idea as the language choice): the server never learns what was read, and "forget" clears it.
 const seenKey = 'corridra.move.seen';
-const firstShown = 5;
+const firstShown = 3;
 
 function parse(text: string): Record<string, string> {
   try {
@@ -117,6 +125,10 @@ export function MoveView({
   unreadable = false,
   latestItem = null,
   journeys = [],
+  facts = null,
+  journey = null,
+  taskJourneys = {},
+  sortIncomplete = false,
 }: {
   model: MoveModel;
   startHref: string;
@@ -129,6 +141,14 @@ export function MoveView({
   latestItem?: LatestItem | null;
   /** The newest piece of work in each journey the person has (Sourcing, Selling, Organising). */
   journeys?: JourneyCard[];
+  /** The numbers on each journey card and the Taking part card; null parts keep the plain count. */
+  facts?: JourneyFacts | null;
+  /** The journey Home is showing (`?journey=`), or null for all of them. */
+  journey?: Journey | null;
+  /** Each task's and waiting row's journey, by id. A task with none shows under All only. */
+  taskJourneys?: Record<string, Journey>;
+  /** The work list that sorts tasks into journeys was not read in full, so a journey view may miss some. */
+  sortIncomplete?: boolean;
 }) {
   const { locale } = useLanguage();
   const say = (key: MessageKey) => translate(locale, key);
@@ -143,10 +163,22 @@ export function MoveView({
     commit({ ...(seen ?? {}), [requestId]: latestReplyAt });
   const forget = () => commit({});
 
-  const items = [
+  // Under All each task says which journey it belongs to; under one journey the tag would only repeat it.
+  const tag = (id: string) => {
+    const j = taskJourneys[id];
+    return j && !journey ? (
+      <span className="move-tag move-task-tag" data-journey={j} lang="en">
+        {journeyWords[j]}
+      </span>
+    ) : null;
+  };
+  const shown = (id: string) => !journey || taskJourneys[id] === journey;
+
+  const allItems = [
     ...unread.map((reply) => (
       <li key={`reply:${reply.requestId}`} className="move-reply" data-kind="reply">
         <MoveCard
+          tag={tag(`reply:${reply.requestId}`)}
           verb="Read"
           object={say('move.card.reply.object')}
           holder="you"
@@ -168,6 +200,7 @@ export function MoveView({
       <li key={card.id} data-kind={card.kind}>
         {card.kind === 'move' ? (
           <MoveCard
+            tag={tag(card.id)}
             verb={card.verb}
             object={card.object ?? ''}
             title={`${card.verb} ${card.object ?? ''}`}
@@ -181,6 +214,7 @@ export function MoveView({
           />
         ) : (
           <MoveCard
+            tag={tag(card.id)}
             verb={verbOf[card.kind]}
             object={say(objectKey[card.kind])}
             holder={card.holder}
@@ -201,7 +235,28 @@ export function MoveView({
       </li>
     )),
   ];
+  const items = allItems.filter((item) => shown(String(item.key)));
   const nothing = items.length === 0;
+  // The switch counts what needs the person in each journey; it appears once any task or card has one.
+  const perJourney = Object.fromEntries(
+    journeyOrder.map((j) => [
+      j,
+      allItems.filter((item) => taskJourneys[String(item.key)] === j).length,
+    ]),
+  ) as Record<Journey, number>;
+  const present = journeyOrder.filter(
+    (j) => perJourney[j] > 0 || journeys.some((card) => card.journey === j),
+  );
+  const cards = journey ? journeys.filter((card) => card.journey === journey) : journeys;
+  const waiting = model.waiting.filter((row) => shown(row.id));
+  const participant = !journey ? (facts?.participant ?? null) : null;
+  // The latest request has its own card only when no journey card already shows it.
+  const latestShown =
+    model.latest &&
+    !cards.some((card) => card.kind === 'request' && card.id === model.latest?.id) &&
+    (!journey || latestItem?.journey === journey)
+      ? model.latest
+      : null;
 
   const waitingLine = (row: WaitingRow) =>
     row.kind === 'move'
@@ -218,38 +273,97 @@ export function MoveView({
   // The summary never claims more than the page could read: an unreadable source, a list cut short or
   // workspaces left unread make "all caught up" and "everything else is moving" unprovable.
   const incomplete = unreadable || partial || skippedWorkspaces > 0;
-  const needs = count === 1 ? 'One thing needs you' : `${count} things need you`;
-  const lede = incomplete
+  const where = journey ? ` in ${journeyWords[journey].toLowerCase()}` : '';
+  const needs = count === 1 ? `One thing needs you${where}` : `${count} things need you${where}`;
+  // A journey view shows only tasks the work list could sort. Tasks it could not sort, or a work list that was
+  // not read in full, mean the view may miss some: it says so and points to All, never "nothing needs you".
+  const unsorted = allItems.filter((item) => !taskJourneys[String(item.key)]).length;
+  const unsortedWords =
+    unsorted === 1
+      ? 'One more thing needs you under All.'
+      : `${unsorted} more things need you under All.`;
+  const filterGap = !!journey && (unsorted > 0 || sortIncomplete);
+  const lede = filterGap
     ? nothing
-      ? 'This page may not show everything that needs you yet.'
-      : `${needs} so far. This page may not show everything yet.`
-    : nothing
-      ? 'You are all caught up. Here is where your work stands.'
-      : `${needs}. Everything else is moving.`;
+      ? unsorted > 0
+        ? `Nothing sorted into ${journeyWords[journey!].toLowerCase()} needs you. ${unsortedWords}`
+        : `This view may not show everything${where} yet.`
+      : `${needs} so far. ${unsorted > 0 ? unsortedWords : 'This view may not show everything yet.'}`
+    : incomplete
+      ? nothing
+        ? 'This page may not show everything that needs you yet.'
+        : `${needs} so far. This page may not show everything yet.`
+      : nothing
+        ? journey
+          ? `Nothing needs you${where} right now. Here is where it stands.`
+          : 'You are all caught up. Here is where your work stands.'
+        : `${needs}. Everything else is moving.`;
 
   return (
     <div className="move-view" lang={html} dir={dir}>
-      <p className="move-lede" lang="en">
-        {lede}
-      </p>
+      <div className="move-hello">
+        <p className="move-lede" lang="en">
+          {lede}
+        </p>
+        {present.length > 0 ? (
+          <nav className="move-seg" aria-label="Show work for" lang="en">
+            <Link prefetch={false} href="/account/move" aria-current={journey ? undefined : 'page'}>
+              All <em>{allItems.length}</em>
+            </Link>
+            {present.map((j) => (
+              <Link
+                key={j}
+                prefetch={false}
+                href={`/account/move?journey=${j}`}
+                aria-current={journey === j ? 'page' : undefined}
+              >
+                {journeyWords[j]} <em>{perJourney[j]}</em>
+              </Link>
+            ))}
+          </nav>
+        ) : null}
+      </div>
 
-      <div className="move-grid" data-latest={model.latest ? 'true' : 'false'}>
+      <div className="move-grid" data-latest={latestShown || waiting.length > 0 ? 'true' : 'false'}>
         <section className="move-card" aria-labelledby="move-you">
           <h2 id="move-you">{say('move.you.heading')}</h2>
           <span className="move-count" data-hot={nothing ? 'false' : 'true'}>
             <span className="sr-only">: </span>
             {count}
           </span>
+          {/* With work on the page the shortcuts give way, so the way to start a request stays here. */}
+          {!nothing ? (
+            <Link prefetch={false} className="move-card-link" href={startHref}>
+              <span>{say('move.start')}</span>
+              <CorridraIcon name="arrow" />
+            </Link>
+          ) : null}
           {nothing && unreadable ? (
             <div className="move-empty" role="status" lang="en">
               <p>
                 <strong>{unreadWords.title}</strong> {unreadWords.text}
               </p>
-              <a className="text-link ux-action" href="/account/move">
-                {unreadWords.retry}
-              </a>
-              <Link prefetch={false} className="text-link ux-action" href={startHref}>
-                {say('move.start')}
+              <div className="move-empty-actions">
+                <a className="text-link ux-action" href="/account/move">
+                  {unreadWords.retry}
+                </a>
+                <Link prefetch={false} className="text-link ux-action" href={startHref}>
+                  {say('move.start')}
+                </Link>
+              </div>
+            </div>
+          ) : nothing && journey ? (
+            <div className="move-empty" role="status" lang="en">
+              <p>
+                <strong>Nothing here{where}.</strong>{' '}
+                {filterGap
+                  ? unsorted > 0
+                    ? unsortedWords
+                    : 'Some work may not be sorted into a journey yet.'
+                  : 'Nothing in this journey needs you right now.'}
+              </p>
+              <Link prefetch={false} className="text-link ux-action" href="/account/move">
+                Show All
               </Link>
             </div>
           ) : nothing ? (
@@ -286,120 +400,99 @@ export function MoveView({
           )}
         </section>
 
-        {model.latest ? (
-          <section className="move-card" aria-labelledby="move-latest">
-            <h2 id="move-latest">{say('move.empty.latest')}</h2>
-            <Link prefetch={false} className="move-card-link" href={model.latest.href}>
-              <span>{say('move.wait.open')}</span>
-              <CorridraIcon name="arrow" />
-            </Link>
-            <div className="move-latest">
-              {latestItem?.title ? (
-                <p className="move-latest-title" dir="auto">
-                  {latestItem.title}
-                </p>
-              ) : null}
-              <p className="move-latest-top">
-                <span className="move-latest-sent">
-                  {latestItem?.journey ? `${journeyWords[latestItem.journey]} · ` : ''}
-                  {fill(say('move.received'), {
-                    date: day(model.latest.createdAt.slice(0, 10), locale),
+        {latestShown || waiting.length > 0 ? (
+          <div className="move-side">
+            {latestShown ? (
+              <section className="move-card" aria-labelledby="move-latest">
+                <h2 id="move-latest">{say('move.empty.latest')}</h2>
+                <Link prefetch={false} className="move-card-link" href={latestShown.href}>
+                  <span>{say('move.wait.open')}</span>
+                  <CorridraIcon name="arrow" />
+                </Link>
+                <div className="move-latest">
+                  {latestItem?.title ? (
+                    <p className="move-latest-title" dir="auto">
+                      {latestItem.title}
+                    </p>
+                  ) : null}
+                  <p className="move-latest-top">
+                    <span className="move-latest-sent">
+                      {latestItem?.journey ? `${journeyWords[latestItem.journey]} · ` : ''}
+                      {fill(say('move.received'), {
+                        date: day(latestShown.createdAt.slice(0, 10), locale),
+                      })}
+                    </span>
+                    {latestItem?.statusWords ? (
+                      <span className="move-badge" lang="en">
+                        {latestItem.statusWords}
+                      </span>
+                    ) : null}
+                  </p>
+                  {latestShown.status ? (
+                    <StageBar status={latestShown.status} labels={labels.road} named />
+                  ) : null}
+                </div>
+              </section>
+            ) : null}
+            {waiting.length > 0 ? (
+              <section className="move-card" aria-labelledby="move-others">
+                <h2 id="move-others">{say('move.others.heading')}</h2>
+                <span className="move-count">{waiting.length}</span>
+                <RowList
+                  label={say('move.others.heading')}
+                  title="Request"
+                  columns={[{ name: 'Held by' }, { name: 'Where it stands' }]}
+                  lang="en"
+                >
+                  {waiting.map((row) => {
+                    const holders = row.holder === 'owner' ? ownerHolders : labels.holder;
+                    const title =
+                      row.kind !== 'move' && row.title
+                        ? row.title
+                        : fill(say('move.received'), {
+                            date: row.received ? day(row.received, locale) : '',
+                          });
+                    return (
+                      <RowLink
+                        key={row.id}
+                        href={row.href}
+                        title={title}
+                        cells={[
+                          {
+                            name: 'Held by',
+                            value: holders[row.holder === 'team' ? 'team' : 'third'],
+                          },
+                          {
+                            name: 'Where it stands',
+                            value: waitingLine(row),
+                            lang: row.kind === 'move' ? 'en' : undefined,
+                          },
+                        ]}
+                      />
+                    );
                   })}
-                </span>
-                {latestItem?.statusWords ? (
-                  <span className="move-badge" lang="en">
-                    {latestItem.statusWords}
-                  </span>
-                ) : null}
-              </p>
-              {model.latest.status ? (
-                <StageBar status={model.latest.status} labels={labels.road} named />
-              ) : null}
-            </div>
-          </section>
+                </RowList>
+              </section>
+            ) : null}
+          </div>
         ) : null}
       </div>
 
-      {journeys.length > 0 ? (
+      {cards.length > 0 || participant ? (
         <section className="move-journeys" aria-labelledby="move-journeys" lang="en">
           <h2 id="move-journeys" className="sr-only">
             Your work by journey
           </h2>
-          {journeys.map((card) => (
-            <article
+          {cards.map((card) => (
+            <JourneyCardView
               key={card.journey}
-              className="move-journey"
-              data-journey={card.journey}
-              aria-labelledby={`move-journey-${card.journey}`}
-            >
-              <header className="move-journey-head">
-                <span className="move-tag" data-journey={card.journey}>
-                  {journeyWords[card.journey]}
-                </span>
-                <h3 id={`move-journey-${card.journey}`} dir="auto">
-                  {card.title ?? (card.kind === 'programme' ? 'Programme' : 'Request')}
-                </h3>
-              </header>
-              <div className="move-journey-body">
-                {card.status ? (
-                  <StageBar status={card.status} labels={labels.road} />
-                ) : card.statusWords ? (
-                  <p className="move-journey-status">{card.statusWords}</p>
-                ) : null}
-                <p className="move-journey-count">
-                  {card.count === '1' ? '1 piece of work' : `${card.count} pieces of work`} in{' '}
-                  {journeyWords[card.journey].toLowerCase()}
-                </p>
-              </div>
-              <footer className="move-journey-foot">
-                <span>
-                  {card.dateWords} {card.at ? formatDate(card.at, { timeZone: 'UTC', locale }) : ''}
-                </span>
-                <Link prefetch={false} className="move-card-link" href={card.href}>
-                  <span>{card.kind === 'programme' ? 'Open Organiser Room' : 'Open Request'}</span>
-                  <CorridraIcon name="arrow" />
-                </Link>
-              </footer>
-            </article>
+              card={card}
+              facts={facts?.[card.journey] ?? null}
+              labels={labels.road}
+              locale={locale}
+            />
           ))}
-        </section>
-      ) : null}
-
-      {model.waiting.length > 0 ? (
-        <section className="move-card" aria-labelledby="move-others">
-          <h2 id="move-others">{say('move.others.heading')}</h2>
-          <span className="move-count">{model.waiting.length}</span>
-          <RowList
-            label={say('move.others.heading')}
-            title="Request"
-            columns={[{ name: 'Held by' }, { name: 'Where it stands' }]}
-            lang="en"
-          >
-            {model.waiting.map((row) => {
-              const holders = row.holder === 'owner' ? ownerHolders : labels.holder;
-              const title =
-                row.kind !== 'move' && row.title
-                  ? row.title
-                  : fill(say('move.received'), {
-                      date: row.received ? day(row.received, locale) : '',
-                    });
-              return (
-                <RowLink
-                  key={row.id}
-                  href={row.href}
-                  title={title}
-                  cells={[
-                    { name: 'Held by', value: holders[row.holder === 'team' ? 'team' : 'third'] },
-                    {
-                      name: 'Where it stands',
-                      value: waitingLine(row),
-                      lang: row.kind === 'move' ? 'en' : undefined,
-                    },
-                  ]}
-                />
-              );
-            })}
-          </RowList>
+          {participant ? <ParticipantCard facts={participant} /> : null}
         </section>
       ) : null}
 
@@ -422,37 +515,28 @@ export function MoveView({
         </p>
       ) : null}
 
-      <nav className="move-shortcuts" aria-label="Shortcuts" lang="en">
-        {!nothing ? (
-          <Link prefetch={false} className="move-tile" href={startHref}>
+      {/* The shortcuts guide an empty Home. With work on the page, New Request is in the header and the
+          other two are in All tools, so the busy Home stays within one screen (owner rule). */}
+      {nothing ? (
+        <nav className="move-shortcuts" aria-label="Shortcuts" lang="en">
+          <Link prefetch={false} className="move-tile" href="/plan#receipt-check">
             <span className="move-tile-mark" aria-hidden="true">
-              <CorridraIcon name="draft" />
+              <CorridraIcon name="search" />
             </span>
             <span className="move-tile-words">
-              <b>{say('move.start')}</b>
-              <small>Sell, source, organise or plan a trip.</small>
+              <b>Check a Request Receipt</b>
+              <small>See progress and replies on a request you sent.</small>
             </span>
           </Link>
-        ) : null}
-        <Link prefetch={false} className="move-tile" href="/plan#receipt-check">
-          <span className="move-tile-mark" aria-hidden="true">
-            <CorridraIcon name="search" />
-          </span>
-          <span className="move-tile-words">
-            <b>Check a Request Receipt</b>
-            <small>See progress and replies on a request you sent.</small>
-          </span>
-        </Link>
-        <Link prefetch={false} className="move-tile" href="/account?view=results">
-          <span className="move-tile-mark" aria-hidden="true">
-            <CorridraIcon name="open" />
-          </span>
-          <span className="move-tile-words">
-            <b>Open a Shared Mission</b>
-            <small>Paste the private link you were sent.</small>
-          </span>
-        </Link>
-        {nothing ? (
+          <Link prefetch={false} className="move-tile" href="/account?view=results">
+            <span className="move-tile-mark" aria-hidden="true">
+              <CorridraIcon name="open" />
+            </span>
+            <span className="move-tile-words">
+              <b>Open a Shared Mission</b>
+              <small>Paste the private link you were sent.</small>
+            </span>
+          </Link>
           <Link prefetch={false} className="move-tile" href="/account?view=work">
             <span className="move-tile-mark" aria-hidden="true">
               <CorridraIcon name="work" />
@@ -462,8 +546,8 @@ export function MoveView({
               <small>Every request in your workspaces.</small>
             </span>
           </Link>
-        ) : null}
-      </nav>
+        </nav>
+      ) : null}
 
       {seen && Object.keys(seen).length > 0 ? (
         <div className="move-foot">

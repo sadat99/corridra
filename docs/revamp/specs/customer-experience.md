@@ -45,6 +45,22 @@ This is the owner's request of 5 November 2026, recorded verbatim in the [UI dir
 | Reports   | **Sub-tabs:** Delivered, Saved missions and Shared with me. A single "Open an invitation" action opens one dialog with the paste field, replacing the three competing controls. Data loads on open; one quiet refresh sits in the page header where a manual refresh is still needed.                                                                                                                                                                                                                                                                                                                                        |
 | Account   | **A settings layout with sub-tabs:** Profile (name, email, verified state), Workspaces and team, Notifications, Plan and billing, and Security (sign out). **Tools and entry points:** "Plan a mission", "Check a request receipt", "Accept a team invitation", "Start page" and "Local helper tasks" move to "All tools", which stays reachable from the left bar.                                                                                                                                                                                                                                                          |
 
+**Home, role-aware (owner-approved role mockup, 5 Nov 2026; built in Phase 2).** A switch (All, Sourcing,
+Selling, Organising, each with its count, `?journey=`) filters what waits for the person. Each task carries its
+journey tag under All. Three tasks show first and the rest are behind one control. What others hold sits in the
+side column. One card per journey shows three numbers read from records the person can already open:
+
+- **Sourcing:** current quotes, not comparable (the report page's own comparison engine, shared) and verified.
+- **Selling:** companies shortlisted on the stage line, then visits proposed, confirmed and held.
+- **Organising:** participants, meetings scheduled and qualified. "Not shared" is used where participants have not shared, never zero.
+
+A "Taking part" card appears only after the person registers for a programme. Four journeys scroll sideways with
+the fourth showing at the edge. No count of quotes needing evidence is shown; each quote card in the report shows
+its own trust level. Read only. The places report is never called from Home because it records enrolments when
+read. With work on the page, the three shortcut tiles give way to the "Start a Request" link in the card head;
+"Check a Request Receipt" and "Open a Shared Mission" stay in All tools. Measured on 5 Nov 2026 with every role:
+1.00 desktop screen and 1.91 phone screens.
+
 ### Components (shared, in `components/ux/`, reused by every track)
 
 - Row-link list and table: the whole row is the target, with a visible focus ring, 44 px minimum rows, and status as a badge (a capsule is allowed for status only).

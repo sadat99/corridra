@@ -279,7 +279,8 @@ describe('the Your Move screen', () => {
     );
   });
 
-  it('shows five cards and puts the rest behind one control', async () => {
+  // Three since the role-aware Home (owner rule: one desktop screen); every card is still on the page.
+  it('shows three cards and puts the rest behind one control', async () => {
     const { MoveView } = await load('app/account/move/move-view');
     const drafts = Array.from({ length: 7 }, (_, i) => ({
       id: `d${i}`,
@@ -291,7 +292,7 @@ describe('the Your Move screen', () => {
       model: buildMoveModel({ ...empty, workspaces: [owner], drafts }),
       startHref: '/plan',
     });
-    expect(html).toContain('Show 2 more');
+    expect(html).toContain('Show 4 more');
     expect(html.match(/class="mr-move"/g)).toHaveLength(7);
     expect(html).toContain('<details class="move-more">');
   });

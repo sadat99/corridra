@@ -25,6 +25,9 @@ const familyOf: Record<Journey, WorkFamily> = {
 
 export type JourneyCard = {
   journey: Journey;
+  /** The newest item's source record id and workspace, so its numbers can be read for this card only. */
+  id: string;
+  workspaceId: string;
   /** How many pieces of work are in this journey, with "or more" when the list is incomplete. */
   count: string;
   title: string | null;
@@ -52,6 +55,8 @@ export function journeysOf(list: WorkList, latestRequestId: string | null) {
     if (!newest) continue;
     cards.push({
       journey,
+      id: newest.id,
+      workspaceId: newest.workspaceId,
       count: partial ? `${items.length} or more` : String(items.length),
       title: newest.title,
       kind: newest.kind,
@@ -75,4 +80,49 @@ export function journeysOf(list: WorkList, latestRequestId: string | null) {
       }
     : null;
   return { cards, latest };
+}
+
+export const journeys = ['source', 'sell', 'organise'] as const;
+export function isJourney(value: unknown): value is Journey {
+  return typeof value === 'string' && (journeys as readonly string[]).includes(value);
+}
+const journeyOfFamily = (family: WorkFamily): Journey | null =>
+  (Object.keys(familyOf) as Journey[]).find((j) => familyOf[j] === family) ?? null;
+
+/**
+ * The journey a task on Home belongs to, read from the work list: a draft or request by its own record,
+ * a Move, report or reply by its request. Anything the list does not classify has no journey and shows under All only.
+ */
+export function journeyOfTask(
+  list: Pick<WorkList, 'items'>,
+  task: { kind: string; id: string; requestId?: string },
+): Journey | null {
+  // A draft card and a request row carry the work list's own key; a Move, report or reply carries its request.
+  const key =
+    task.kind === 'draft' || task.kind === 'request'
+      ? task.id
+      : task.requestId
+        ? `request:${task.requestId}`
+        : null;
+  if (!key) return null;
+  const item = list.items.find((entry) => entry.key === key);
+  return item ? journeyOfFamily(item.family) : null;
+}
+
+/** Which records the journey cards' numbers come from: only a sent request or a programme has any. */
+export function journeyTargets(cards: JourneyCard[]) {
+  const card = (journey: Journey) => cards.find((c) => c.journey === journey);
+  const request = (journey: Journey) => {
+    const c = card(journey);
+    return c && c.kind === 'request' ? c.id : null;
+  };
+  const organise = card('organise');
+  return {
+    source: request('source'),
+    sell: request('sell'),
+    organise:
+      organise && organise.kind === 'programme'
+        ? { workspaceId: organise.workspaceId, programmeId: organise.id }
+        : null,
+  };
 }
