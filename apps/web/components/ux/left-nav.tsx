@@ -67,9 +67,10 @@ export type LeftNavWords = {
   navLabel: string;
   /** The words on the header menu button. */
   menuLabel: string;
-  closeLabel: string;
-  collapseLabel: string;
-  expandLabel: string;
+  /** These three may carry a lang="en" mark when the chosen language has no text for them yet. */
+  closeLabel: ReactNode;
+  collapseLabel: ReactNode;
+  expandLabel: ReactNode;
 };
 
 export function LeftNavFrame({

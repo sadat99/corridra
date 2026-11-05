@@ -1,0 +1,33 @@
+{
+  "recordedOn": "2026-11-05",
+  "track": "Revamp S4 (branch revamp/staff)",
+  "kind": "L-01 adoption: the team shell and a new contributor frame use the shared left navigation (owner decision of 4 November 2026, layout budget spec).",
+  "findings": [],
+  "findingsNote": "No GAP id is created or changed.",
+  "sensitive": "no: layout and navigation only. No auth, session, role, cookie or token code changes. The team sidebar still lists a section only for a role that may open it and the server still decides every action; the contributor frame has two plain links and no sign-in or sign-out code.",
+  "changed": [
+    "apps/web/components/ux/team-frame.tsx (holds TeamSidebar in LeftNavFrame; the header Sections button replaces the in-page toggle; #workspace-navigation still opens the drawer; a new page closes it)",
+    "apps/web/components/ux/contributor-frame.tsx and apps/web/app/contributor/layout.tsx (new frame behind CORRIDRA_UX_SHELLS_V2: Your tasks, How assigned work works)",
+    "apps/web/components/ux/marked-word.tsx (lang=en mark for English placeholder words)",
+    "apps/web/components/ux/left-nav.tsx (close, collapse and expand words may carry the lang mark)",
+    "apps/web/components/ux/shells.css (the old team frame, rail and toggle rules removed; item styles kept)",
+    "apps/web/lib/i18n/ws/ws-e.ts (five new keys, English placeholders in every language)",
+    "tests/integration/ux-left-nav-adoption.test.ts, tests/e2e/verification/ws-e/contributor-shell.spec.ts",
+    "apps/web/lib/ux/contributor-nav.ts and contributor-frame.tsx: Your tasks keeps a valid workspace id from the address (Codex P2 on PR 292: /contributor shows the task board only with ?workspace=<id>); anything that is not an id is dropped",
+    "tests/e2e/verification/ws-e/team-quality.spec.ts: the Arabic mirroring spec waits for the phone drawer to settle before measuring"
+  ],
+  "preserved": [
+    "Team sidebar: Signal Desk groups, role filtering, the 'Team sections' name, id workspace-navigation, 44px targets and aria-current are unchanged.",
+    "The accessible name of the phone button stays 'Sections' (now in the header); team-shell.spec.ts passes unchanged at 1280, 768 and 390.",
+    "Sign-out stays on the contributor page where it was. With the shells switch off both layouts add nothing."
+  ],
+  "verification": {
+    "integration": "134 of 134 in the left-nav, signal-desk, staff-parity, team-sidebar-role and language-catalog files",
+    "browser": "contributor-shell.spec.ts and team-shell.spec.ts: 9 of 9 on the verification server at 1280, 768 and 390 (axe wcag2a and wcag2aa, drawer open and Escape, targets 44px, no sideways scroll)",
+    "codexFinding": "P2 on db3e09b verified real (the link dropped the workspace and a signed-in contributor would land on 'No tasks assigned yet'). Fixed with a pure function tested for valid ids, case, and injected values; the browser spec covers the invalid-id case because a valid id on /contributor needs a session."
+  },
+  "openItems": [
+    "Guardian note from PR 289: if L-06 measures CLS above 0.1 on a wide route, read the saved icons-only choice before first paint. Not measured yet."
+  ],
+  "nextAction": "Team page lengths, tabs and forms (L-01 to L-06) from the page-length baseline."
+}

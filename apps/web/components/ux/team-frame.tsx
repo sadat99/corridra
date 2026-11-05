@@ -1,14 +1,18 @@
 'use client';
-// The Team shell frame (D14): a left sidebar beside the page on wide screens, and a "Sections"
-// button that opens the same list on phones. Sign-in and recovery pages under /operator keep the
-// plain public frame. Owner: WS-E.
+// The Team shell frame (D14): the shared left navigation (components/ux/left-nav.tsx) holding the
+// Signal Desk sidebar. On wide screens the bar sits beside the page; on phones it is a drawer opened
+// from the "Sections" button in the header. Sign-in and recovery pages under /operator keep the plain
+// public frame. Owner: WS-E.
 import './shells.css';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { useLanguage } from '../language-provider';
 import { localeMeta } from '../../lib/i18n/locales';
 import { subscribeToHash } from '../../lib/address-store';
 import { teamSidebarShown } from '../../lib/ux/shells';
+import { LeftNavFrame } from './left-nav';
+import { setLeftNavOpen } from './left-nav-store';
+import { useMarkedWord } from './marked-word';
 import { StepUpDialog } from './step-up-dialog';
 import { TeamSidebar } from './team-sidebar';
 
@@ -23,37 +27,39 @@ export function TeamFrame({
 }) {
   const pathname = usePathname();
   const { locale, t } = useLanguage();
-  // The phone list is open for one page: a new page closes it. An old "Back to workspace sections"
-  // link (#workspace-navigation) opens it.
-  const [openOn, setOpenOn] = useState<string | null>(null);
-  const open = openOn !== null && openOn === pathname;
-  const setOpen = (next: boolean | ((value: boolean) => boolean)) =>
-    setOpenOn((typeof next === 'function' ? next(open) : next) ? pathname : null);
+  const word = useMarkedWord();
+  const shown = teamSidebarShown(pathname);
+  // A new page closes the drawer. An old "Back to workspace sections" link (#workspace-navigation)
+  // opens it (on a wide screen the bar is already beside the page).
   useEffect(() => {
+    if (!shown) return;
+    setLeftNavOpen(false);
     const read = () => {
-      if (window.location.hash === '#workspace-navigation') setOpenOn(window.location.pathname);
+      if (window.location.hash === '#workspace-navigation') setLeftNavOpen(true);
     };
     read();
     return subscribeToHash(read);
-  }, []);
-  if (!teamSidebarShown(pathname)) return <>{children}</>;
+  }, [pathname, shown]);
+  if (!shown) return <>{children}</>;
   const meta = localeMeta[locale];
   return (
-    <div className="ux-team-frame" data-open={open ? 'true' : 'false'}>
-      <div className="ux-team-rail" lang={meta.html} dir={meta.dir}>
-        <button
-          type="button"
-          className="ux-team-toggle"
-          aria-expanded={open}
-          aria-controls="workspace-navigation"
-          onClick={() => setOpen((value) => !value)}
-        >
-          {t('wse.shell.menu')}
-        </button>
-        <TeamSidebar urls={urls} ownerPage={ownerPage} />
-      </div>
-      <div className="ux-team-page">{children}</div>
+    <>
+      <LeftNavFrame
+        navId="workspace-navigation"
+        lang={meta.html}
+        dir={meta.dir}
+        words={{
+          navLabel: t('wse.team.nav'),
+          menuLabel: t('wse.shell.menu'),
+          closeLabel: word('wse.shell.closeMenu'),
+          collapseLabel: word('wse.shell.collapseMenu'),
+          expandLabel: word('wse.shell.expandMenu'),
+        }}
+        nav={<TeamSidebar urls={urls} ownerPage={ownerPage} />}
+      >
+        {children}
+      </LeftNavFrame>
       <StepUpDialog />
-    </div>
+    </>
   );
 }
