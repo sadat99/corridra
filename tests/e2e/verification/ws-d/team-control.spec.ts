@@ -120,6 +120,7 @@ test('WS-D actions: team invite, roles, authenticator reset, audit, route pack, 
     ).toBe(true);
 
     // V-03: the owner resets another member's authenticator with a fresh check.
+    await controls.getByRole('tab', { name: 'People and access', exact: true }).click();
     await controls.getByRole('button', { name: 'Load workspace members', exact: true }).click();
     await controls
       .getByRole('combobox', { name: 'Member to reset', exact: true })
