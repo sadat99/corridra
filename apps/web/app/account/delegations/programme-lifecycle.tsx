@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 
 // Rename, archive and restore one programme (CRUD gap G7). The database owns every rule; this only asks and shows the answer.
 export type LifecycleProgramme = {
@@ -115,6 +115,15 @@ export function ProgrammeLifecycle({
   const [discarding, setDiscarding] = useState(false);
   // One command id per exact attempt: pressing again after a lost answer repeats the same command and changes nothing twice.
   const attempt = useRef<{ signature: string; id: string } | null>(null);
+  // Focus moves into the form when it opens and back to the Rename button when it closes (A-03).
+  const nameField = useRef<HTMLInputElement>(null);
+  const renameButton = useRef<HTMLButtonElement>(null);
+  const wasEditing = useRef(false);
+  useEffect(() => {
+    if (editing) nameField.current?.focus();
+    else if (wasEditing.current) renameButton.current?.focus();
+    wasEditing.current = editing;
+  }, [editing]);
   const trimmed = { name: name.trim(), purpose: purpose.trim() };
   const changed = trimmed.name !== programme.name || trimmed.purpose !== programme.reportingPurpose;
   const valid =
@@ -188,6 +197,7 @@ export function ProgrammeLifecycle({
           ) : (
             <>
               <button
+                ref={renameButton}
                 type="button"
                 className="text-link"
                 disabled={busy}
@@ -214,8 +224,9 @@ export function ProgrammeLifecycle({
       {editing && (
         <form onSubmit={submit} onKeyDown={keys} aria-label="Rename programme">
           <label className="field">
-            Programme name
+            New programme name
             <input
+              ref={nameField}
               value={name}
               maxLength={160}
               disabled={busy}
@@ -223,7 +234,7 @@ export function ProgrammeLifecycle({
             />
           </label>
           <label className="field">
-            Reporting purpose
+            New reporting purpose
             <textarea
               value={purpose}
               maxLength={500}
@@ -246,7 +257,14 @@ export function ProgrammeLifecycle({
               <button type="button" className="text-link" onClick={close}>
                 Discard Changes
               </button>{' '}
-              <button type="button" className="text-link" onClick={() => setDiscarding(false)}>
+              <button
+                type="button"
+                className="text-link"
+                onClick={() => {
+                  setDiscarding(false);
+                  nameField.current?.focus();
+                }}
+              >
                 Keep Editing
               </button>
             </p>
