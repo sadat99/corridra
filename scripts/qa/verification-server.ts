@@ -3,8 +3,10 @@
 import { createServer } from 'node:http';
 import { readFile, writeFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { Pool } from '../../packages/db/src/index';
 import { migrate } from '../../packages/db/src/migrate';
 import { migrateViewAs } from '../../packages/db/src/view-as-migrate';
@@ -45,7 +47,16 @@ const seed = await seedPreview(db, '127.0.0.1', {
   'ws-e': seedE,
 });
 await db.end();
-await writeFile('.cache/qa-verification.json', JSON.stringify(seed), { mode: 0o600 });
+// One synthetic signed-in customer for browser tests. The token is made up for this run and kept in the
+// same owner-only seed file the tests already read. Nothing here is a real account or a real provider.
+const customer = {
+  subject: `qa-customer-${randomBytes(6).toString('hex')}`,
+  email: 'qa-customer@example.invalid',
+  token: randomBytes(32).toString('base64url'),
+};
+await writeFile('.cache/qa-verification.json', JSON.stringify({ ...seed, customer }), {
+  mode: 0o600,
+});
 const connection = (role: string, secret: string) =>
   `postgresql://${role}:${secret}@127.0.0.1:54329/corridra_verification`;
 const env = {
@@ -103,6 +114,25 @@ for (const key of [
   'NEON_AUTH_COOKIE_SECRET',
 ])
   delete (env as NodeJS.ProcessEnv)[key];
+// Customer sign-in for browser tests. The app still asks the Neon Auth SDK for the session; a stand-in loaded
+// into this server process only (scripts/qa/fake-neon-auth.mjs) answers that one request for the synthetic
+// customer above. The address has the approved shape but is never contacted. Local synthetic runs only.
+const customerAuthBase = 'https://ep-qa-customer.neonauth.eu-central-1.aws.neon.tech/qa/auth';
+Object.assign(env, {
+  CORRIDRA_NEON_AUTH_ENABLED: 'true',
+  NEON_AUTH_BASE_URL: customerAuthBase,
+  NEON_AUTH_COOKIE_SECRET: randomBytes(32).toString('hex'),
+  QA_FAKE_NEON_AUTH_BASE_URL: customerAuthBase,
+  QA_FAKE_NEON_AUTH_TOKEN: customer.token,
+  QA_FAKE_NEON_AUTH_SUBJECT: customer.subject,
+  QA_FAKE_NEON_AUTH_EMAIL: customer.email,
+  NODE_OPTIONS: [
+    process.env.NODE_OPTIONS,
+    `--import=${pathToFileURL(resolve('scripts/qa/fake-neon-auth.mjs')).href}`,
+  ]
+    .filter(Boolean)
+    .join(' '),
+});
 // Explicit synthetic provider protocol fixture. No model inference or outbound provider traffic.
 const providerFixture = createServer(async (req, res) => {
   try {

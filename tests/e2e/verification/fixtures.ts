@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { test as base, expect, type Page } from '@playwright/test';
+import { test as base, expect, type BrowserContext, type Page } from '@playwright/test';
 
 // Shared fixture for the commercial readiness verification suite (program section 8). Every case
 // takes a screenshot, checks the final network status and makes a database or API assertion.
@@ -10,6 +10,8 @@ export type QaSeed = {
   tenantId: string;
   principalId: string;
   owner: { email: string; password: string };
+  /** The synthetic signed-in customer: made up for this run by the verification server. */
+  customer: { subject: string; email: string; token: string };
   streams: Record<string, Record<string, unknown>>;
 };
 
@@ -80,6 +82,26 @@ type SavedAuthenticator = { tenantId: string; secret: string; lastWindow: number
  * authenticator and keeps its key (local file, this run's tenant only) so later tests and other
  * streams can sign in again. A code is never reused within its 30 second window (replay rule).
  */
+/**
+ * Signs the synthetic customer in by setting the session cookie the Neon Auth SDK reads. The verification
+ * server answers the SDK's session check for this one token (scripts/qa/fake-neon-auth.mjs). Test only.
+ */
+export async function signInCustomer(context: BrowserContext) {
+  const { customer } = qaSeed();
+  await context.addCookies([
+    {
+      name: '__Secure-neon-auth.session_token',
+      value: customer.token,
+      domain: '127.0.0.1',
+      path: '/',
+      secure: true,
+      httpOnly: true,
+      sameSite: 'Lax',
+    },
+  ]);
+  return customer;
+}
+
 export async function signInOwner(page: Page, next = '/operator') {
   const seed = qaSeed();
   let saved: SavedAuthenticator | null = null;
