@@ -914,15 +914,21 @@ for (const width of [390, 1440])
     await open(page, 'room=1&proj=1', none);
     const boxes = await page.evaluate(() =>
       Array.from(document.querySelectorAll<HTMLElement>('.mr-road > li')).map((li) => {
-        // The label's cell: a plain label, or the button that holds it for the Invite step.
-        const label = li.querySelector<HTMLElement>('.mr-road-text > :first-child')!;
+        // The label's own text, as a person sees it: a plain label, or the label inside the Invite button.
+        const label = li.querySelector<HTMLElement>('.mr-road-text b')!;
         const state = li.querySelector<HTMLElement>('.mr-road-state')!;
-        const a = label.getBoundingClientRect();
+        const text = document.createRange();
+        text.selectNodeContents(label);
+        const a = text.getBoundingClientRect();
         const b = state.getBoundingClientRect();
         return { left: a.left - li.getBoundingClientRect().left, top: a.top, stateTop: b.top };
       }),
     );
     expect(boxes.length).toBe(6);
+    // The Invite step is a button: it keeps the 44 px tap height the room's other controls have, even though
+    // its label sits level with the plain labels (review finding on PR 288).
+    const invite = await page.locator('.mr-road-text > button').boundingBox();
+    expect(invite?.height, 'Invite tap height').toBeGreaterThanOrEqual(43.5);
     for (const box of boxes) {
       expect(Math.abs(box.left - boxes[0].left), 'label left edge').toBeLessThanOrEqual(1);
       if (width === 1440) {

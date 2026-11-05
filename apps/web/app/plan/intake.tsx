@@ -10,6 +10,14 @@ import { FirstQuestion } from '../../components/mr/first-question';
 import { rememberVerifyEmail } from '../../components/verify-email-handoff';
 import { fill } from '../../lib/i18n/fill';
 import { formEn, type FormKey } from '../../lib/i18n/form-words/en';
+import {
+  isPendingSaved,
+  isReceiptStatus,
+  isSent,
+  readFailure,
+  readSuccess,
+  wordsFor,
+} from './send-reply';
 import { issueSeparator } from '../../lib/i18n/form-words/messages';
 import { useFormWords } from './form-words';
 import { rememberSentRequest } from '../../lib/private-request-storage';
@@ -258,37 +266,6 @@ export type PrivateIntakeSubmission = {
   draftStorageKey: string;
   submit: (commandId: string, brief: unknown) => Promise<void>;
 };
-
-// Words for a send that did not come back as expected (Wave 6). The server's own sentence always wins. When
-// there is none (a proxy page, an empty body) the status picks a sentence the form already has, so it is
-// translated like the rest and the person never reads a raw parser error or faces a blank area. A refused
-// connection keeps the browser's own words, which the form translates for the chosen language.
-function wordsFor(
-  status: number,
-  said: unknown,
-  fallback: string = formEn['form.message.intakeNotSaved'],
-) {
-  if (typeof said === 'string' && said.trim()) return said;
-  return status === 429
-    ? formEn['form.message.tooMany']
-    : status === 409
-      ? formEn['form.message.changed']
-      : fallback;
-}
-type Reply = {
-  error?: string;
-  fields?: Record<string, string[]>;
-  duplicate?: boolean;
-  receipt?: string;
-};
-async function readReply(response: Response): Promise<Reply> {
-  try {
-    const value = await response.json();
-    return value && typeof value === 'object' ? (value as Reply) : {};
-  } catch {
-    return {};
-  }
-}
 
 async function claimSavedRequest(storageKey: string, navigate: (path: string) => void) {
   const response = await fetch('/api/intake/pending/claim', {
@@ -780,9 +757,11 @@ function IntakeForm({
             brief: realBriefSchema.parse(canonicalDraft()),
           }),
         });
-        const saved = await readReply(response);
-        if (!response.ok)
+        if (!response.ok) {
+          const saved = await readFailure(response);
           throw new Error(wordsFor(response.status, saved.error, formEn['form.message.notSaved']));
+        }
+        await readSuccess(response, isPendingSaved);
         setPendingReady(true);
         submitted.current = true;
         if (account?.emailVerified) {
@@ -827,11 +806,12 @@ function IntakeForm({
           websiteCheck: '',
         }),
       });
-      const data = await readReply(r);
       if (!r.ok) {
-        setErrors(data.fields ?? {});
-        throw new Error(wordsFor(r.status, data.error));
+        const failed = await readFailure(r);
+        setErrors(failed.fields ?? {});
+        throw new Error(wordsFor(r.status, failed.error));
       }
+      const data = await readSuccess(r, isSent);
       submitted.current = true;
       setFinished(true);
       setMessage(
@@ -881,14 +861,11 @@ function IntakeForm({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ receipt: checkCode }),
       });
-      const data = (await readReply(r)) as {
-        status: string;
-        replies: { body: string; createdAt: string }[];
-        error?: string;
-      };
-      if (!r.ok)
-        throw new Error(wordsFor(r.status, data.error, formEn['form.message.unableToCheck']));
-      setResult(data);
+      if (!r.ok) {
+        const failed = await readFailure(r);
+        throw new Error(wordsFor(r.status, failed.error, formEn['form.message.unableToCheck']));
+      }
+      setResult(await readSuccess(r, isReceiptStatus));
     } catch (e) {
       setMessage(
         e instanceof Error && e.message ? e.message : formEn['form.message.unableToCheck'],

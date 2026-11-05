@@ -10,7 +10,9 @@
     "Q-01 organiser room: choosing a group left focus on the button. Now a visible heading per group takes focus.",
     "Q-06 Save programme: while the first save was in flight the button read 'Retry same planning request'. Now 'Saving\u2026' while busy.",
     "Q-07 projection panel: 15 buttons fell back to the browser default look. Now text-link and primary-link like the sibling panels.",
-    "Q-07 road: the Invite step was off the label column (indented at 390, 16px low at 1440). Fixed in programme-room.css."
+    "Q-07 road: the Invite step was off the label column (indented at 390, 16px low at 1440). Fixed in programme-room.css.",
+    "Review of PR 288: a good status with an unreadable or wrong-shaped body is no longer a success on the send, the pending save and the receipt check (the form said 'recorded' with no receipt). Readers in apps/web/app/plan/send-reply.ts; tests: three browser and four unit cases (tests/integration/plan-send-reply.test.ts). Run against the old code the send said 'recorded' and the receipt check showed no error.",
+    "Review of PR 288: the road Invite button keeps its 44 px tap height (negative block margins keep the label level); tested at 390 and 1440."
   ],
   "cleanSurfacesTestOnly": [
     "Q-01, Q-02, Q-03 on 18 public pages: no positive tabindex, every tab stop shows focus (negative control proves the check can fail), no trap, no sideways scroll at 320 and 640, axe wcag2a and wcag2aa clean at 390 and 1440. tests/browser/wave6-public-quality.spec.ts",
@@ -173,7 +175,7 @@
     "note": "/programme LCP 784 ms against a 207 ms heading is the one outlier; no score invented and no code changed for Q-08"
   },
   "openRisks": [
-    "Guardian question: /plan offline (the request is rejected) still shows the browser's own words ('Failed to fetch' in English). Q-05 asks for honest words, but tests/operator/ux-plan-languages.spec.ts pins 'English keeps the browser words' and the form translates them per language. My first fix replaced them with a new English sentence and that test caught it, so I restored the pinned behaviour. Honest English words would mean a new catalogue string in every language, which is language work I was told not to do. Needs a decision; retry and non-blank are tested.",
+    "Known gap (language work is excluded): /plan offline, a rejected request, still shows the browser's own words ('Failed to fetch' in English). Q-05 asks for honest words, but tests/operator/ux-plan-languages.spec.ts pins 'English keeps the browser words' and the form translates them per language; honest English words would need a new string in every language. Retry and non-blank are tested.",
     "429: only the projection panel (Results, companies, agenda views) says wait-and-refresh; the other room panels fall back to their existing plain 'could not be read, reload' lines for a 429, which is honest but not a later-retry line. Fixing each of about 20 handlers touches consent and terms panels; left for a decision",
     "Focus moves to the group heading on choosing a group, as Q-01 asks; a keyboard user returns to the group buttons with Shift+Tab",
     "Screenshots come from the synthetic fixture with fallback fonts; no visual acceptance on a real signed-in organiser room"

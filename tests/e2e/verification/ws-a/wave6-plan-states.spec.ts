@@ -129,3 +129,59 @@ test('Q-06 /plan send: busy while in flight, one request for a double click, res
   expect(sent).toBe(1);
   await expect(status(page)).toContainText(/recorded/i);
 });
+
+// A good status with an unreadable or wrong-shaped body is not a success. The send must not say "recorded"
+// without a receipt, and the receipt check must not show a status it did not read. Review finding on PR 288.
+const notCompleted = /could not be completed|try again/i;
+for (const [label, body] of [
+  ['an unreadable body', { contentType: 'text/html', body: '<h1>ok</h1>' }],
+  ['the wrong shape', { contentType: 'application/json', body: '{}' }],
+] as const)
+  test(`Q-05 /plan send, a 201 with ${label} is not a success: it says so and the same button tries again`, async ({
+    page,
+  }) => {
+    let sent = 0;
+    await page.route('**/api/intake', async (route) => {
+      if (route.request().method() !== 'POST') return route.continue();
+      sent += 1;
+      if (sent === 1) return route.fulfill({ status: 201, ...body });
+      return route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({ receipt: 'd'.repeat(64) }),
+      });
+    });
+    await toSubmit(page);
+    const button = page.getByRole('button', { name: submitName, exact: true });
+    await button.click();
+    await expect(status(page)).toBeVisible();
+    const words = (await status(page).innerText()).trim();
+    expect(words, 'not reported as recorded').not.toMatch(/recorded/i);
+    expect(words).toMatch(notCompleted);
+    await expect(page.getByLabel('Private receipt code')).toHaveCount(0);
+    await expect(button).toBeEnabled();
+    await button.click();
+    await expect(page.getByLabel('Private receipt code')).toHaveValue('d'.repeat(64));
+  });
+
+test('Q-05 /plan receipt check, a 200 with an unreadable or wrong-shaped body shows no status', async ({
+  page,
+}) => {
+  let asked = 0;
+  await page.route('**/api/intake/receipt', (route) => {
+    asked += 1;
+    return asked === 1
+      ? route.fulfill({ status: 200, contentType: 'text/html', body: '<h1>ok</h1>' })
+      : route.fulfill({ status: 200, json: {} });
+  });
+  await page.goto('/plan');
+  await page.getByRole('heading', { name: 'Check a mission request.' }).click();
+  const code = page.getByLabel('Receipt code', { exact: true });
+  await code.fill('e'.repeat(64));
+  const check = page.getByRole('button', { name: 'Check status and replies', exact: true });
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await check.click();
+    await expect(status(page)).toContainText(notCompleted);
+    await expect(page.getByText(/^Status:/)).toHaveCount(0);
+  }
+});
