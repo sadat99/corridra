@@ -142,7 +142,13 @@ function SignOutRow({ label }: { label: string }) {
   );
 }
 
-export function Entry({ entry, listen }: { entry: MenuEntry; listen?: ReturnType<typeof useListen> }) {
+export function Entry({
+  entry,
+  listen,
+}: {
+  entry: MenuEntry;
+  listen?: ReturnType<typeof useListen>;
+}) {
   if (entry.kind === 'link') return <MenuLink href={entry.href}>{entry.label}</MenuLink>;
   if (entry.kind === 'soon') return <MenuSoon>{entry.label}</MenuSoon>;
   if (entry.kind === 'listen')
