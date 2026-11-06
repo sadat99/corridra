@@ -2,7 +2,7 @@
 
 Document status: CURRENT.
 
-Track S3, Wave 3. The public home is owner-settled (concept A "Ledger", 22 Oct 2026, [design-system index](../../design-system/README.md) section 9): headline "Make market entry deliberate.", the three jobs on the first screen, and a Selling/Sourcing example mission beside them. This wave keeps that composition. It fixes what tests prove is wrong and makes the first intake step shorter. It is not a redesign.
+Track S3, Wave 3. The public home is owner-settled (concept A "Ledger", 22 Oct 2026, [design-system index](../../design-system/README.md) section 9): headline "Make market entry deliberate.", the three jobs on the first screen, and a Selling/Sourcing example mission beside them. This wave keeps that composition. It fixes what tests prove is wrong and makes the first intake step shorter. It is not a redesign. Superseded for the home page by the owner's decision of 6 November 2026 below (concept G); everything else in this spec still applies.
 
 ## First: pin what exists (tests before any change)
 
@@ -36,3 +36,16 @@ These go up as their own test-only PR first.
 | P-11 | The intake API payload for the same answers is byte-for-byte the same before and after the change (fixture comparison).                                                                                                                                         |
 
 `/plan` is a public unauthenticated route: a change to its submit path, consent, cookies or storage is `Sensitive: yes`.
+
+## Owner decision, 6 November 2026: home page concept G
+
+The owner asked for a landing revamp of 2 to 2.5 desktop screens (verbatim: "landing could be 2-2.5x screen size ij desktop"), reviewed six concepts (A to F) and chose, verbatim: "E with F". Concept G is the result. Mockup and screenshots: [evidence/landing-g](../../agents/evidence/landing-g/) (`concepts.html?v=g`, 1440 and 390).
+
+- **Hero (E).** Eyebrow, h1 "Make market entry deliberate." (unchanged), lead "Watch one request become a decision. Then start yours.", the three job rows with the same `/plan?job=buyers|sourcing|delegations` links and accessible names, "Something else? Tell us your business goal" to `/plan`, the two calm lines. Beside them the Mission Player.
+- **Mission Player.** An `ol` named "How a mission works" with the six steps and their existing copy (descriptions stay in the accessibility tree). Each step is a screen of sample data: Define (the request), Find (the existing four-row shortlist), Compare (the existing quote table), Visit, Decide, Follow through. A Selling and Sourcing example switch (tablist, Arrow, Home and End). It advances every 4 seconds with a visible Pause (WCAG 2.2.2), stops on hover and focus, never advances under reduced motion, and has Previous and Next buttons. Every sample says Example and Not real companies or suppliers.
+- **Evidence (F).** Hook line "Know who is real before you fly." above "Every fact says where it comes from.", the four labels as a numbered list, How We Label Facts to `/trust`, and an example dossier card that shows all four labels on its fields.
+- **Routes (F).** Boarding-pass cards: Bangladesh to China, Bangladesh to Spain and Explore Every Route, same three links.
+- **Closing band.** "Your request can look like this." with Start a Request. Header, footer and dock unchanged.
+- **Budget.** 1440 × 900: 2.0 to 2.5 screens (owner). 390 × 844: at most 3.5 screens (owner, 6 November 2026, verbatim: "3.5 screens (Recommended)"). The mockup measures 2.33 and 3.50. No sideways scroll, 44 px targets, axe clean at 320, 390, 768 and 1440.
+- **Tests.** P-01 to P-07 stay unchanged. The AC1-03 pins (example tabs, four buyer rows, five quote rows, three route links, the `#mission-example` redirect) move to the player; the PR lists each changed assertion as owner-approved. New tests cover the player keyboard, Pause, reduced motion, the example switch and every job link.
+- **Owner.** S3, after the PR 322 fixes. Not sensitive unless it touches the `/plan` submit path, consent, cookies or storage.
