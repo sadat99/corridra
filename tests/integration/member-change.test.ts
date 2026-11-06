@@ -31,6 +31,28 @@ const change = (
   ctx = f.users.owner.ctx,
 ) => access.changeMember(ctx, { commandId, userId, role, revoked, expectedVersion });
 
+// A write the way the invitation cancel makes it: as the owner, in a transaction, without the workspace lock.
+async function lockFreeWrite(assignment: string) {
+  const client = await f.owner.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      `SELECT set_config('corridra.session_hash',encode(sha256(convert_to($1,'UTF8')),'hex'),true),set_config('corridra.tenant_id',$2,true),set_config('corridra.purpose','synthetic_validation',true),set_config('corridra.correlation_id',$3,true),set_config('corridra.causation_id',$4,true)`,
+      [f.users.owner.token, f.tenantA, randomUUID(), randomUUID()],
+    );
+    await client.query(
+      `UPDATE app.membership SET ${assignment} WHERE tenant_id=$1 AND user_id=$2`,
+      [f.tenantA, f.users.viewer.id],
+    );
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 beforeAll(async () => {
   f = await fixture();
   access = new AccessService(f.runtime);
@@ -84,12 +106,24 @@ describe('a member change names the version the owner saw', () => {
     const attempt = async (input: Record<string, unknown>) =>
       access.changeMember(f.users.owner.ctx, input);
     const body = { userId: f.users.viewer.id, role: 'viewer', revoked: false };
-    await expect(attempt({ ...body, expectedVersion: before.version })).rejects.toThrow();
-    await expect(attempt({ ...body, commandId: randomUUID() })).rejects.toThrow();
+    const shape = { name: 'ZodError' };
+    await expect(attempt({ ...body, expectedVersion: before.version })).rejects.toMatchObject(
+      shape,
+    );
+    await expect(attempt({ ...body, commandId: randomUUID() })).rejects.toMatchObject(shape);
+    await expect(
+      attempt({ ...body, commandId: 'not-a-uuid', expectedVersion: before.version }),
+    ).rejects.toMatchObject(shape);
+    await expect(
+      attempt({ ...body, commandId: randomUUID(), expectedVersion: before.version, extra: 1 }),
+    ).rejects.toMatchObject(shape);
+    await expect(
+      attempt({ ...body, commandId: randomUUID(), expectedVersion: 1_000_001 }),
+    ).rejects.toMatchObject(shape);
     for (const bad of [0, -1, 1.5, '2', null])
       await expect(
         attempt({ ...body, commandId: randomUUID(), expectedVersion: bad }),
-      ).rejects.toThrow();
+      ).rejects.toMatchObject(shape);
     expect(await row(f.users.viewer.id)).toEqual(before);
   });
 });
@@ -109,19 +143,65 @@ describe('a retry after a lost answer', () => {
     expect((await events(f.users.viewer.id)).length).toBe(count);
   });
 
-  test('the same command id for a different change, or for another member, is refused and writes nothing', async () => {
+  test('the same command id for a different revoke flag, a different role or another member is refused and writes nothing', async () => {
     const seen = (await row(f.users.viewer.id)).version;
     const commandId = randomUUID();
     await change(f.users.viewer.id, 'viewer', false, seen, commandId);
     const state = await row(f.users.viewer.id);
+    const operatorState = await row(f.users.operator.id);
+    const viewerEvents = (await events(f.users.viewer.id)).length;
+    const operatorEvents = (await events(f.users.operator.id)).length;
     await expect(change(f.users.viewer.id, 'viewer', true, seen, commandId)).rejects.toMatchObject({
       status: 409,
       message: expect.stringMatching(/reused/i),
     });
     await expect(
+      change(f.users.viewer.id, 'reviewer', false, seen, commandId),
+    ).rejects.toMatchObject({ status: 409, message: expect.stringMatching(/reused/i) });
+    await expect(
       change(f.users.operator.id, 'viewer', false, seen, commandId),
     ).rejects.toMatchObject({ status: 409, message: expect.stringMatching(/reused/i) });
     expect(await row(f.users.viewer.id)).toEqual(state);
+    expect(await row(f.users.operator.id)).toEqual(operatorState);
+    expect((await events(f.users.viewer.id)).length).toBe(viewerEvents);
+    expect((await events(f.users.operator.id)).length).toBe(operatorEvents);
+  });
+
+  test('a retry with the member id in capitals is still the same command', async () => {
+    const seen = (await row(f.users.viewer.id)).version;
+    const commandId = randomUUID();
+    await change(f.users.viewer.id, 'viewer', false, seen, commandId);
+    const again = await change(f.users.viewer.id.toUpperCase(), 'viewer', false, seen, commandId);
+    expect(again).toMatchObject({ updated: true, replayed: true });
+  });
+
+  test('an actor who lost the right to manage members cannot replay an earlier command', async () => {
+    // A second owner makes a change, is then demoted, and retries the same command: authority is checked before
+    // the replay lookup, so the answer is a refusal and not the old result.
+    const helper = f.users.reviewer;
+    const seenHelper = (await row(helper.id)).version;
+    await change(helper.id, 'owner', false, seenHelper);
+    const seen = (await row(f.users.viewer.id)).version;
+    const commandId = randomUUID();
+    await change(f.users.viewer.id, 'viewer', false, seen, commandId, helper.ctx);
+    const current = (await row(helper.id)).version;
+    await change(helper.id, 'reviewer', false, current);
+    await expect(
+      change(f.users.viewer.id, 'viewer', false, seen, commandId, helper.ctx),
+    ).rejects.toThrow('Access denied');
+  });
+
+  test('a write that slips in between the read and the update is refused by the version, not overwritten', async () => {
+    // A writer that does not take the workspace lock (cancelling an invitation) is simulated by bumping the
+    // membership between a screen's load and its save: the stale save finds a different version.
+    const seen = (await row(f.users.viewer.id)).version;
+    await lockFreeWrite('revoked_at=now()');
+    await expect(change(f.users.viewer.id, 'viewer', false, seen)).rejects.toMatchObject({
+      status: 409,
+      message: expect.stringMatching(/reload/i),
+    });
+    expect((await row(f.users.viewer.id)).revoked_at).not.toBeNull();
+    await lockFreeWrite('revoked_at=NULL');
   });
 });
 

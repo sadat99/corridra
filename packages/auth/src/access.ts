@@ -90,7 +90,7 @@ export class AccessService {
         if (replay.rowCount) {
           const earlier = replay.rows[0];
           if (
-            earlier.aggregate_id !== v.userId ||
+            earlier.aggregate_id !== v.userId.toLowerCase() ||
             earlier.payload.role !== v.role ||
             earlier.payload.revoked !== v.revoked
           )
@@ -113,9 +113,13 @@ export class AccessService {
             throw new DomainError('The tenant must retain an active owner', 409);
         }
         const changed = await t.db.query(
-          'UPDATE app.membership SET role=$3,revoked_at=CASE WHEN $4 THEN now() ELSE NULL END WHERE tenant_id=$1 AND user_id=$2 RETURNING version',
-          [t.tenantId, v.userId, v.role, v.revoked],
+          'UPDATE app.membership SET role=$3,revoked_at=CASE WHEN $4 THEN now() ELSE NULL END WHERE tenant_id=$1 AND user_id=$2 AND version=$5 RETURNING version',
+          [t.tenantId, v.userId, v.role, v.revoked, v.expectedVersion],
         );
+        // A writer that does not take the workspace lock (cancelling an invitation, until G10 gives it the lock) can
+        // commit between the read and this write: the version predicate turns that into the same refusal.
+        if (!changed.rowCount)
+          throw new DomainError('This membership changed; reload and try again', 409);
         return { updated: true, replayed: false, version: changed.rows[0].version as number };
       },
     );

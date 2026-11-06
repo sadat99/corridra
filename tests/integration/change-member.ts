@@ -10,7 +10,7 @@ export async function changeMemberNow(
   change: { userId: string; role: string; revoked: boolean },
   readCtx: RequestContext = ctx,
 ) {
-  const members = await access.members(readCtx).catch(() => []);
+  const members = await access.members(readCtx);
   const seen = members.find((m: { user_id: string }) => m.user_id === change.userId);
   return access.changeMember(ctx, {
     commandId: randomUUID(),
