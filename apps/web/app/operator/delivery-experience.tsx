@@ -597,6 +597,7 @@ export function DeliveryExperience(props: Props) {
         role={props.role}
         responses={data.responses}
         disclosures={data.disclosures}
+        onRefresh={load}
       />
     </section>
   );

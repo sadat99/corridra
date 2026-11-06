@@ -131,6 +131,28 @@ END $$;
 REVOKE ALL ON FUNCTION app.recipient_detail_revise(text,uuid,integer,jsonb) FROM PUBLIC,corridra_auth;
 GRANT EXECUTE ON FUNCTION app.recipient_detail_revise(text,uuid,integer,jsonb) TO corridra_runtime;
 
+-- A review decision bound to the answer the reviewer read. seen is the version on the card (0 is the first answer). It takes the same lock
+-- as a correction, so a decision and a correction cannot pass each other, and refuses when the answer has changed since: nobody can publish,
+-- ask on or reject terms they did not read. A command already recorded is passed straight on, so a retry of the same command still replays.
+-- The decision itself, its checks and its record stay in app.review_recipient_reply.
+CREATE FUNCTION app.review_recipient_reply_seen(command uuid,reply uuid,seen integer,outcome text,code text,asked text[],remark text) RETURNS jsonb
+ LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE tenant uuid:=NULLIF(current_setting('corridra.tenant_id',true),'')::uuid;viewer text;n integer;
+BEGIN
+ IF tenant IS NULL OR app.actor_id() IS NULL THEN RAISE EXCEPTION 'Access denied' USING ERRCODE='42501'; END IF;
+ viewer:=app.member_role(tenant);
+ IF viewer IS NULL OR viewer NOT IN ('owner','admin') THEN RAISE EXCEPTION 'Access denied' USING ERRCODE='42501'; END IF;
+ IF command IS NULL OR reply IS NULL OR seen IS NULL OR seen NOT BETWEEN 0 AND 20 THEN RAISE EXCEPTION 'Invalid review' USING ERRCODE='23514'; END IF;
+ PERFORM pg_advisory_xact_lock(hashtextextended('app.reply_review:'||tenant::text||':'||reply::text,0));
+ IF NOT EXISTS(SELECT FROM app.recipient_reply_review x WHERE x.tenant_id=tenant AND x.command_id=command) THEN
+  SELECT coalesce(max(version),0) INTO n FROM app.recipient_detail_response_revision WHERE tenant_id=tenant AND response_id=reply;
+  IF n<>seen THEN RAISE EXCEPTION 'Response changed; reload before deciding' USING ERRCODE='23514'; END IF;
+ END IF;
+ RETURN app.review_recipient_reply(command,reply,outcome,code,asked,remark);
+END $$;
+REVOKE ALL ON FUNCTION app.review_recipient_reply_seen(uuid,uuid,integer,text,text,text[],text) FROM PUBLIC,corridra_auth;
+GRANT EXECUTE ON FUNCTION app.review_recipient_reply_seen(uuid,uuid,integer,text,text,text[],text) TO corridra_runtime;
+
 -- The recipient's own view shows the latest answer, how many corrections were made, and whether another is still possible (the control
 -- is open, the team has not made a final decision, and the limit is not reached).
 DO $guard$ BEGIN IF encode(sha256(convert_to(pg_get_functiondef('app.recipient_detail_view(text)'::regprocedure),'UTF8')),'hex')<>'bbc55f4830292cf86d2dc8bfdcea8e8c170b28b854cdfcca4b476a388f1732d1' THEN RAISE EXCEPTION 'Response revision prerequisite function differs: app.recipient_detail_view (%)',encode(sha256(convert_to(pg_get_functiondef('app.recipient_detail_view(text)'::regprocedure),'UTF8')),'hex');END IF;END $guard$;

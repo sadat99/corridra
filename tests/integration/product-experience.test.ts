@@ -1661,10 +1661,11 @@ test('an Ask is answered by a correction, a final decision locks the answer, and
         .createdAt,
     ).getTime(),
   );
-  // A final decision (here a rejection) locks the answer.
+  // A final decision (here a rejection) locks the answer. The team read the correction, so it names version 1.
   await reviews.review(f.users.owner.ctx, {
     commandId: randomUUID(),
     responseId: a.responseId,
+    seen: 1,
     decision: 'REJECT',
     reasonCode: 'NOT_A_FIT',
   });
@@ -1675,6 +1676,76 @@ test('an Ask is answered by a correction, a final decision locks the answer, and
   await expect(f.communications.buyer(revision(a.token, 1))).rejects.toThrow(
     'The team has already decided on this response',
   );
+});
+
+test('a decision is bound to the answer the reviewer read: a correction in between makes publish, ask and reject refuse', async () => {
+  await migrateReplyReview(f.owner);
+  await configureReplyReview(f.owner, { enabled: true, reason: reviewReason });
+  const reviews = new ReplyReviewService(f.runtime);
+  const a = await answeredWithToken();
+  const count = async () =>
+    (
+      await f.owner.query(
+        'SELECT count(*)::int n FROM app.recipient_reply_review WHERE response_id=$1',
+        [a.responseId],
+      )
+    ).rows[0].n;
+  // The reviewer opens the card at the first answer (version 0); the supplier then corrects it.
+  expect(await f.communications.buyer(revision(a.token, 0))).toMatchObject({ version: 1 });
+  const stale = 'Response changed; reload before deciding';
+  const publish = {
+    commandId: randomUUID(),
+    responseId: a.responseId,
+    seen: 0,
+    decision: 'PUBLISH' as const,
+  };
+  const rejectIt = {
+    commandId: randomUUID(),
+    responseId: a.responseId,
+    seen: 0,
+    decision: 'REJECT' as const,
+    reasonCode: 'NOT_A_FIT' as const,
+  };
+  const askIt = { ...ask(a.responseId), seen: 0 };
+  for (const decision of [publish, askIt, rejectIt])
+    await expect(reviews.review(f.users.owner.ctx, decision)).rejects.toThrow(stale);
+  // A card that sends no version is treated as having read the first answer, so it is refused too.
+  await expect(
+    reviews.review(f.users.owner.ctx, {
+      commandId: randomUUID(),
+      responseId: a.responseId,
+      decision: 'PUBLISH',
+    }),
+  ).rejects.toThrow(stale);
+  // Nothing was written.
+  expect(await count()).toBe(0);
+  // Deciding on the version that was read works, and a retry of the same command replays even after another correction.
+  const fresh = { ...askIt, commandId: randomUUID(), seen: 1 };
+  expect(await reviews.review(f.users.owner.ctx, fresh)).toMatchObject({ replayed: false });
+  expect(await f.communications.buyer(revision(a.token, 1))).toMatchObject({ version: 2 });
+  expect(await reviews.review(f.users.owner.ctx, fresh)).toMatchObject({ replayed: true });
+  expect(await count()).toBe(1);
+  // The same command under another body still conflicts, and a stale PUBLISH on the new answer is still refused.
+  await expect(
+    reviews.review(f.users.owner.ctx, { ...publish, commandId: randomUUID(), seen: 1 }),
+  ).rejects.toThrow(stale);
+  expect(
+    await reviews.review(f.users.owner.ctx, { ...publish, commandId: randomUUID(), seen: 2 }),
+  ).toMatchObject({
+    replayed: false,
+  });
+  // A direct call with no workspace context is denied.
+  await expect(
+    f.runtime.query('SELECT app.review_recipient_reply_seen($1,$2,$3,$4,$5,$6,$7)', [
+      randomUUID(),
+      a.responseId,
+      99,
+      'PUBLISH',
+      null,
+      null,
+      null,
+    ]),
+  ).rejects.toThrow();
 });
 
 test('the team reads the latest correction with how many were made, and the first answer stays on record', async () => {
