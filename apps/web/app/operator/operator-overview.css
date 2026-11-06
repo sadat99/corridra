@@ -256,6 +256,15 @@
   font: 400 var(--text-xl) / 1.2 var(--serif);
   letter-spacing: -0.02em;
 }
+/* The page heading already reads Today: the panel heading stays in the outline but is not shown twice. */
+.ux-titled-today .ux-today .operator-today-heading h2 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
 .ux-operator-home .operator-today-heading time {
   color: var(--text-2);
   font-size: var(--text-sm);
