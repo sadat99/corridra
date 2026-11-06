@@ -1,0 +1,32 @@
+{
+  "recordedOn": "2026-11-05",
+  "batch": "Revamp S2 Customer Work: CX PR 3b, one 'Open an Invitation' action and dialog on Reports",
+  "kind": "Reports to docs/revamp/specs/customer-experience.md (pages table). The two paste forms and the link that were spread over the page become one button and one dialog.",
+  "findings": [],
+  "findingsNote": "No gap is created or changed. No route, table, migration, switch, provider, payment or write is added. No request, command id, retry or payload changes.",
+  "status": "Built on branch revamp/customer over main c68ebd19 (PR 313, CX PR 3a). CI on the exact pushed head is the verifier; see the pull request for its result.",
+  "newFiles": [
+    "apps/web/app/account/invitation-dialog.tsx (InvitationProvider, OpenInvitationButton, InvitationSlot): the dialog and the one button; reads, keeps and sends nothing itself",
+    "tests/integration/revamp-cx3b-invitation.test.ts (3), tests/operator/revamp-cx3b-invitation.spec.ts (5: CX-02, CX-04, CX-05 axe at 390 and 1440, CX-07 screenshots)",
+    "docs/design-system/evidence/revamp-cx3b (the open dialog at 390 and 1440)"
+  ],
+  "changedFiles": [
+    "apps/web/app/account/page.tsx: the Reports view puts InvitationProvider and the Open an Invitation button above the tabs",
+    "apps/web/app/account/customer-missions.tsx: the open form draws into the dialog when there is one; a success closes the dialog and shows the opened mission on Shared With Me",
+    "apps/web/app/account/saved-missions.tsx: the save form (with its acknowledgement, retry and clear) draws into the dialog when there is one, and its notice with it; a success closes the dialog and shows the saved list on Saved Missions. The 'Save an invitation' disclosure and the 'Open an original shared mission invitation' link remain where there is no provider"
+  ],
+  "decisions": {
+    "twoFields": "The dialog holds the two existing ways in, 'Open It for This Visit' and 'Save It to This Account', each with its own paste field. They are different commands (an opened mission clears when the person leaves; a saved one is kept with an acknowledgement and a retry that must resend the same command), so a single shared field would change the token handling of a private capability. The spec's goal, one action and one dialog instead of two forms and a link on the page, is met. A shared field is a follow-up if the owner wants it.",
+    "deferred": "Data that loads when a tab opens, and one quiet refresh in the page header, are not in this PR. The Account settings tabs are CX PR 3c.",
+    "tests": "No existing test changed: both components keep their old layout where there is no provider, so v3-saved-commercial-ui, customer delivery and decision specs pass unchanged."
+  },
+  "receipts": {
+    "operator": "revamp-cx3b-invitation.spec.ts written before the dialog existed (the fixture could not build), then 5 passed; saved commercial, CRUD-A, delivery and component specs: 37 passed.",
+    "integration": "revamp-cx3b-invitation.test.ts 3 passed; title-case, reports tabs and teaching-layer: 29 passed."
+  },
+  "notRun": [
+    "The dialog on a production build with real issuers: the verification seed has none; the page is covered through the fixture.",
+    "A screen reader walk-through."
+  ],
+  "sensitive": "No. The same two forms send the same requests; the invitation is not read, kept or sent by anything new."
+}
