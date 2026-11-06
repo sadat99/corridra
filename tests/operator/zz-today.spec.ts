@@ -124,12 +124,14 @@ test('Operator Today panel reads the real mission list, shows new and overdue wo
   await expect(today.getByText('new request to review', { exact: true })).toBeVisible();
   await expect(today.getByText('missions past their due date', { exact: true })).toBeVisible();
   await expect(today.getByText('open missions', { exact: true })).toBeVisible();
-  await expect(
-    today.getByRole('region', { name: 'New requests to review' }).getByText('Invented Towels Ltd'),
-  ).toBeVisible();
-  const late = today.getByRole('region', { name: 'Past their due date' });
-  await expect(late.getByText('Invented Machinery Co')).toBeVisible();
-  await expect(late.getByText('Invented Foods Co')).toBeVisible();
+  // New requests and late missions share one "Needs you now" list (owner, 6 Nov 2026); its "Past due"
+  // filter shows the late missions only.
+  const needs = today.getByRole('region', { name: 'Needs you now' });
+  await expect(needs.getByText('Invented Towels Ltd')).toBeVisible();
+  await needs.getByRole('radio', { name: 'Past due 2' }).check();
+  await expect(needs.getByText('Invented Machinery Co')).toBeVisible();
+  await expect(needs.getByText('Invented Foods Co')).toBeVisible();
+  await expect(needs.getByText('Invented Towels Ltd')).toHaveCount(0);
   await expect(today.getByText('follow-up past its due date', { exact: true })).toBeVisible();
   await expect(today.getByText('meeting in the next 7 days', { exact: true })).toBeVisible();
   await expect(
@@ -148,7 +150,7 @@ test('Operator Today panel reads the real mission list, shows new and overdue wo
       .getByRole('region', { name: 'Meetings that need a new time' })
       .getByText('Invented factory visit'),
   ).toBeVisible();
-  await expect(today.getByRole('link', { name: 'Open the mission list' })).toHaveAttribute(
+  await expect(today.getByRole('link', { name: 'Open Missions' })).toHaveAttribute(
     'href',
     '#workspace-missions',
   );
