@@ -5,6 +5,7 @@ import { operatorRecoveryMailer } from '../../packages/auth/src/recovery-mail';
 import { AccessService } from '../../packages/auth/src/access';
 import { hashPassword } from '../../packages/auth/src/bootstrap';
 import { fixture, sandbox } from './support';
+import { changeMemberNow } from './change-member';
 
 const origin = 'http://localhost:4100';
 const password = randomBytes(24).toString('base64url');
@@ -190,7 +191,7 @@ test('named membership directory retains workspace authorization and last-owner 
   await expect(access.members(f.users.viewer.ctx)).rejects.toThrow();
   await expect(access.members({ ...f.users.other.ctx, tenantId: f.tenantA })).rejects.toThrow();
   await expect(
-    access.changeMember(f.users.other.ctx, {
+    changeMemberNow(access, f.users.other.ctx, {
       userId: f.users.other.id,
       role: 'viewer',
       revoked: true,

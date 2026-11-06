@@ -1,0 +1,33 @@
+{
+  "recordedOn": "2026-11-06",
+  "track": "Revamp S4 (branch revamp/staff)",
+  "kind": "CRUD gap G9 (CRUD standard U-02 and CRUD-2): an owner's member role change or revoke names the membership version the owner saw and carries a command id. No migration.",
+  "findings": [],
+  "findingsNote": "No GAP id is created or changed. This PR closes audit gap G9 in docs/revamp/crud/summary.md; the Conductor updates that record.",
+  "sensitive": "yes: membership and role authority (who may do what in a workspace). No session, tenant-scope, authenticator, consent, token or cookie logic changes: the permission (members.manage, owner with a fresh authenticator check), the tenant lock and the last-active-owner rule are exactly as before.",
+  "migration": "None. app.membership already has a version column that a BEFORE UPDATE trigger moves on with every change (migration 0005), and every change already writes a membership.update domain event (record_change) whose aggregate is the member, whose payload holds role and revoked, and whose causation id comes from the session and is readable by owner and admin under row security. The command id is carried as that causation id, so no table, column, function or installer changes.",
+  "changed": [
+    "packages/auth/src/access.ts: changeMember requires commandId (uuid) and expectedVersion (a whole number from 1) and rejects unknown fields. Under the existing per-tenant lock: a command whose id is already on a membership event is answered from that event when the member, role and revoked flag match (replayed: true, nothing written) and refused with 409 'Membership command key reused' when they differ; otherwise a stale version is refused with 409 'This membership changed; reload and try again' and nothing is written; otherwise the last-active-owner rule and the update run as before, with the command id as the event's causation id. The answer carries the new version. members() also returns each membership version.",
+    "apps/web/app/operator/workspace-controls.tsx and workspace.tsx: the owner's screen sends the version of the member it listed and a command id that is reused only for an identical retry of an unresolved change; on a stale-version refusal it reloads the member list.",
+    "tests: tests/integration/member-change.test.ts (new), tests/integration/change-member.ts (new helper), the seven integration files that call changeMember, tests/operator/workspace.spec.ts."
+  ],
+  "preserved": [
+    "Only an owner with an authenticator check from the last five minutes may change a member; anyone else is refused as before.",
+    "The last active owner cannot be demoted or revoked, on any version.",
+    "A change still advances the membership version by one and writes one membership.update audit event with ids, role and the revoked flag only.",
+    "Team invitations, authenticator reset and the contributor flows are untouched (G10, the invitation cancel audit, is a separate item)."
+  ],
+  "behaviour": {
+    "stale": "A change on an out-of-date version is refused (409), nothing is written, and the screen reloads the member list.",
+    "replay": "A retry after a lost answer resends the same command id and body and is answered once from the audit event already written.",
+    "reused": "The same command id for a different member, role or revoked flag is refused (409) and writes nothing.",
+    "race": "Two owners changing the same member from the same view at once: exactly one wins.",
+    "missing": "A command without an id or a version, or with a version that is not a whole number from 1, is refused before the database."
+  },
+  "deliberateTestChanges": [
+    "Eight changeMember calls in seven integration files (communications, foundations, identity-recovery, operations, opportunities, product-experience, view-as-database) go through a small helper that reads the member's current version and adds a command id, because a change without them is refused.",
+    "tests/operator/workspace.spec.ts also asserts the posted change carries a command id and a version."
+  ],
+  "knownLocalLimit": "tests/integration/foundations.test.ts 'non-production backup restores evidence...' fails in this sandbox with and without this change (the backup tool is not available here); CI runs it.",
+  "nextAction": "G10: cancelling a team invitation must write a team-control audit row in the same transaction."
+}

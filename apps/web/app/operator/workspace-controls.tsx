@@ -322,6 +322,8 @@ type Member = {
   name?: string | null;
   role?: string;
   revoked_at?: string | null;
+  /** The membership version, sent back with a change so a change on an out-of-date list is refused. */
+  version?: number;
 };
 const groups = [
   {
@@ -421,7 +423,12 @@ export function WorkspaceControls({
   busy: boolean;
   enabled: (key: string) => boolean;
   onLoadMembers: () => void;
-  onUpdateMember: (value: { userId: string; role: string; revoked: boolean }) => void;
+  onUpdateMember: (value: {
+    userId: string;
+    role: string;
+    revoked: boolean;
+    expectedVersion: number;
+  }) => void;
   onChangeFeature: (key: string, value: boolean) => void;
 }) {
   const tenant = useCurrentTenant(tenantProp);
@@ -488,10 +495,15 @@ export function WorkspaceControls({
                     onSubmit={(event) => {
                       event.preventDefault();
                       const form = new FormData(event.currentTarget);
+                      const userId = String(form.get('user') ?? '');
+                      const version = members.find((m) => m.user_id === userId)?.version;
+                      // Without the version the list was not loaded properly: do not guess it.
+                      if (version === undefined) return;
                       onUpdateMember({
-                        userId: String(form.get('user') ?? ''),
+                        userId,
                         role: String(form.get('role') ?? ''),
                         revoked: form.get('revoked') === 'on',
+                        expectedVersion: version,
                       });
                     }}
                   >

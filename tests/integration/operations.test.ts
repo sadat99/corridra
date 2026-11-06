@@ -10,6 +10,7 @@ import { AccessService } from '../../packages/auth/src/access';
 import { OutboxDispatcher } from '../../packages/workflows/src/index';
 import { SyntheticChannel } from '../../packages/communications/src/adapters';
 import { CommercialMissionService } from '../../packages/missions/src/commercial';
+import { changeMemberNow } from './change-member';
 let f: Awaited<ReturnType<typeof commercialFixture>>, s: OperationsService, r: CorridorService;
 const reason = 'Explicit synthetic operational acceptance';
 beforeAll(async () => {
@@ -17,7 +18,7 @@ beforeAll(async () => {
   s = new OperationsService(f.runtime);
   r = new CorridorService(f.runtime);
   await r.installTemplates(f.users.owner.ctx);
-  await new AccessService(f.runtime).changeMember(f.users.owner.ctx, {
+  await changeMemberNow(new AccessService(f.runtime), f.users.owner.ctx, {
     userId: f.users.reviewer.id,
     role: 'owner',
     revoked: false,
