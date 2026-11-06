@@ -507,8 +507,10 @@
   color: var(--text-2);
   font-size: var(--text-sm);
 }
+/* One column that never grows past the page: with large text the facts and the dossier wrap inside it (Q-02). */
 .ac1-facts {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-6);
   align-items: center;
   background: var(--surface-1);
@@ -547,6 +549,28 @@
 }
 .ac1-facts .ac1-quiet {
   margin-top: var(--space-2);
+}
+/* A fact label or the Example tag wraps onto a second line rather than run past a narrow screen. */
+.ac1-facts .guide-tag {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.ac1-facts .ac1-dossier-card figcaption {
+  flex-wrap: wrap;
+}
+/* The label list is a size container: when a label row cannot hold the number, the label and its line side by side
+   (large text in the two-column layout), the line moves under them instead of being squeezed. */
+.ac1-facts .ac1-truth {
+  container: ac1-truth / inline-size;
+}
+@container ac1-truth (max-width: 24rem) {
+  .ac1-facts .ac1-truth li {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .ac1-facts .ac1-truth li > span:last-child {
+    grid-column: 1 / -1;
+  }
 }
 .ac1-dossier {
   position: relative;
@@ -877,6 +901,10 @@
   }
   .ac1-truth .guide-tag {
     white-space: normal;
+  }
+  /* Two labels to a row while they fit; with large text each label has the whole width. */
+  .ac1-facts .ac1-truth {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
   }
   .ac1-dossier {
     padding: 0;
