@@ -105,7 +105,7 @@ export function ProgrammeLifecycle({
   workspaceId: string;
   headers: Record<string, string>;
   onChanged: (change: LifecycleChange, before: LifecycleProgramme) => void;
-  onStale: () => void;
+  onStale: (message: string) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(programme.name);
@@ -154,11 +154,13 @@ export function ProgrammeLifecycle({
       onChanged(outcome.result, programme);
       return;
     }
-    setNote(outcome.message);
+    // A stale answer reloads the list, which remounts this component at the new version: the parent keeps the words.
     if (outcome.kind === 'stale') {
       attempt.current = null;
-      onStale();
+      onStale(outcome.message);
+      return;
     }
+    setNote(outcome.message);
   }
   function close() {
     setEditing(false);

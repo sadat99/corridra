@@ -264,6 +264,8 @@ test('a stale version shows the plain message and reloads the latest', async ({ 
   await expect(
     page.getByRole('heading', { name: 'Synthetic renamed by a colleague' }),
   ).toBeVisible();
+  // The reload remounts the controls at the new version; the words must survive it.
+  await expect(page.getByRole('alert')).toContainText('changed by someone else');
   expect(loads).toBeGreaterThan(1);
 });
 

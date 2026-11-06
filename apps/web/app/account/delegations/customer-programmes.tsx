@@ -133,6 +133,7 @@ function ScopedProgrammes({
   // Archived programmes (CRUD gap G7): hidden from the list and the picker unless the Archived filter is on.
   const [showArchived, setShowArchived] = useState(false);
   const [archivedNotice, setArchivedNotice] = useState<LifecycleProgramme | null>(null);
+  const [staleNote, setStaleNote] = useState('');
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed' | 'denied' | 'unavailable'>(
     'loading',
   );
@@ -391,6 +392,7 @@ function ScopedProgrammes({
   // An archive keeps an Undo for ten seconds; a restore that the cap refuses says so in plain words.
   const archiveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const applyChange = (change: LifecycleChange, before: LifecycleProgramme) => {
+    setStaleNote('');
     setRows((old) =>
       old.map((p) =>
         p.id === change.id
@@ -444,7 +446,10 @@ function ScopedProgrammes({
         workspaceId={workspaceId}
         headers={headers}
         onChanged={applyChange}
-        onStale={() => void load()}
+        onStale={(note) => {
+          setStaleNote(note);
+          void load();
+        }}
       />
     ) : null;
   const programmeList = (
@@ -464,6 +469,7 @@ function ScopedProgrammes({
           </button>
         </p>
       )}
+      {staleNote && <p role="alert">{staleNote}</p>}
       {archivedNotice && (
         <p role="status">
           Programme archived: {archivedNotice.name}.{' '}
