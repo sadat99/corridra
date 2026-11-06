@@ -62,6 +62,8 @@ test('the home example switches between selling and sourcing by pointer and keyb
   page.on('request', (request) => {
     if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method())) writes.push(request.method());
   });
+  // The example player stays on the step this test chooses (it never moves on by itself under reduced motion).
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   const record = page.getByRole('article', { name: 'Example missions, not real companies' });
   const tabs = record.getByRole('tablist', { name: 'Example mission' });
@@ -78,16 +80,19 @@ test('the home example switches between selling and sourcing by pointer and keyb
   await expect(selling).toHaveAttribute('aria-selected', 'true');
   await selling.press('End');
   await expect(sourcing).toBeFocused();
-  // The buyer shortlist and the price quote comparison are in the Results tab; the routes are in Routes.
-  await page.getByRole('tab', { name: 'Results', exact: true }).click();
-  // Selling and buying carry equal weight: a buyer shortlist and a price quote comparison.
+  // Selling and buying carry equal weight: a buyer shortlist (step Find) and a price quote comparison (step
+  // Compare) are screens of the example player (concept G); the routes are on the page.
+  await selling.press('Home');
+  await expect(selling).toHaveAttribute('aria-selected', 'true');
+  await record.getByRole('button', { name: 'Next Step' }).click();
   await expect(
     page.getByRole('list', { name: 'Example buyer shortlist' }).locator('li'),
   ).toHaveCount(4);
+  await sourcing.click();
+  await record.getByRole('button', { name: 'Next Step' }).click();
   await expect(
     page.getByRole('table', { name: 'Example price quote comparison' }).getByRole('row'),
   ).toHaveCount(5);
-  await page.getByRole('tab', { name: 'Routes', exact: true }).click();
   for (const href of ['/corridors/bangladesh-china', '/corridors/bangladesh-spain', '/corridors'])
     await expect(page.locator(`main a[href="${href}"]`).first()).toBeVisible();
   expect(

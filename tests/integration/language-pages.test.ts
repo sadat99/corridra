@@ -112,7 +112,7 @@ describe('the home page words', () => {
   it('are not written into the page as literal English any more', () => {
     // Comments may quote the words; only the code counts.
     const source =
-      `${read('apps/web/app/page.tsx')}\n${read('apps/web/components/home-example-record.tsx')}`
+      `${read('apps/web/app/page.tsx')}\n${read('apps/web/components/home-mission-player.tsx')}`
         .replace(/\/\*[\s\S]*?\*\//g, '')
         .replace(/^\s*\/\/.*$/gm, '');
     for (const [key, words] of Object.entries(homeEn))
@@ -120,7 +120,7 @@ describe('the home page words', () => {
   });
 
   it('use only home keys, so that with the page switch off no word of the page changes language', () => {
-    for (const file of ['apps/web/app/page.tsx', 'apps/web/components/home-example-record.tsx']) {
+    for (const file of ['apps/web/app/page.tsx', 'apps/web/components/home-mission-player.tsx']) {
       const keys = [...read(file).matchAll(/\bt\('([^']+)'\)/g)].map((m) => m[1]);
       expect(keys.length, file).toBeGreaterThan(0);
       for (const key of keys) expect(key.startsWith('home.'), `${file} ${key}`).toBe(true);
