@@ -609,3 +609,59 @@ test('a stale rename on a programme from page two keeps the typed text and still
   await expect(rename(page)).toHaveValue('Synthetic my own new name');
   await expect(page.getByRole('button', { name: 'Keep Mine', exact: true })).toBeVisible();
 });
+
+test('Back restores the programme named in the address, not the first one', async ({ page }) => {
+  const a = '00000000-0000-4000-8000-000000000003';
+  const b = '00000000-0000-4000-8000-000000000004';
+  await serve(page, [
+    base,
+    archivedRow(a, 'Synthetic archived A'),
+    archivedRow(b, 'Synthetic archived B'),
+  ]);
+  await page.goto(origin + '/?room=true&archived=1&programme=' + b);
+  const picker = page.getByRole('combobox', { name: 'Programme' });
+  await expect(picker).toHaveValue(b);
+  await page.getByRole('button', { name: 'Show Active Programmes', exact: true }).click();
+  await expect(page).not.toHaveURL(/programme=/);
+  await page.goBack();
+  await expect(page).toHaveURL(new RegExp('programme=' + b));
+  await expect(picker).toHaveValue(b);
+});
+
+test('a programme archived by someone else during a rename keeps the typed text and offers a way forward', async ({
+  page,
+}) => {
+  const { rows } = await serve(page, [base]);
+  const sent: string[] = [];
+  await page.route('**/api/customer-programme-lifecycle', (route) => {
+    const body = route.request().postDataJSON();
+    sent.push(body.operation);
+    if (body.operation === 'rename') {
+      rows[0] = { ...rows[0]!, archived: true, version: 3 };
+      return route.fulfill({
+        status: 409,
+        json: { error: 'Programme changed; reload before saving' },
+      });
+    }
+    rows[0] = { ...rows[0]!, archived: false, version: 4 };
+    return route.fulfill({ json: answer(rows[0]!, 'restore') });
+  });
+  await page.goto(origin);
+  await page.getByRole('button', { name: 'Rename Programme', exact: true }).click();
+  await rename(page).fill('Synthetic my own new name');
+  await page.getByRole('button', { name: 'Save Changes', exact: true }).click();
+  const notice = page
+    .getByRole('alert')
+    .filter({ hasText: 'was archived by someone else while you were renaming it' });
+  await expect(notice).toBeVisible();
+  await notice.getByRole('button', { name: 'Show Archived Programmes', exact: true }).click();
+  await expect(rename(page)).toHaveValue('Synthetic my own new name');
+  await expect(page.getByText('This programme was archived while you were editing.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Save Changes', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: 'Restore Programme', exact: true }).click();
+  await page.getByRole('button', { name: 'Show Active Programmes', exact: true }).click();
+  await expect(rename(page)).toHaveValue('Synthetic my own new name');
+  // The typed text is still there and the person is asked to choose, as for any other stale save.
+  await expect(page.getByRole('button', { name: 'Keep Mine', exact: true })).toBeVisible();
+  expect(sent).toEqual(['rename', 'restore']);
+});

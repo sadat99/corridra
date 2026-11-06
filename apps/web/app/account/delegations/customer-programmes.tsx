@@ -157,13 +157,18 @@ function ScopedProgrammes({
   useEffect(() => {
     const sync = () => {
       setMounted((current) => new Set([...current, ...shownNow.current]));
-      setShowArchived(new URLSearchParams(window.location.search).get('archived') === '1');
+      const query = new URLSearchParams(window.location.search);
+      setShowArchived(query.get('archived') === '1');
+      // The programme named in the restored address is the one shown, not whichever comes first.
+      setChosenId(query.get('programme'));
     };
     window.addEventListener('popstate', sync);
     return () => window.removeEventListener('popstate', sync);
   }, []);
   const [archivedNotice, setArchivedNotice] = useState<LifecycleProgramme | null>(null);
   const [staleNote, setStaleNote] = useState('');
+  // A programme someone archived while this person was renaming it: kept mounted so the typed text survives, and named here.
+  const [archivedMidEdit, setArchivedMidEdit] = useState<{ id: string; name: string } | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed' | 'denied' | 'unavailable'>(
     'loading',
   );
@@ -287,6 +292,7 @@ function ScopedProgrammes({
         const hit = (data.programmes as Programme[]).find((p) => p.id === id);
         if (hit) {
           setRows((old) => old.map((p) => (p.id === id ? hit : p)));
+          setArchivedMidEdit(hit.archived === true ? { id, name: hit.name } : null);
           return;
         }
         if (!data.nextAfter) return;
@@ -475,6 +481,7 @@ function ScopedProgrammes({
   const archiveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const applyChange = (change: LifecycleChange, before: LifecycleProgramme) => {
     setStaleNote('');
+    setArchivedMidEdit(null);
     setRows((old) =>
       old.map((p) =>
         p.id === change.id
@@ -532,6 +539,9 @@ function ScopedProgrammes({
         onChanged={applyChange}
         onStale={(note) => {
           if (note) setStaleNote(note);
+          // Keep this programme mounted whatever the refresh finds, so a typed rename is never lost.
+          setMounted((current) => new Set(current).add(p.id));
+          setVisited((current) => new Set(current).add(p.id));
           void refreshProgramme(p.id);
         }}
       />
@@ -558,6 +568,15 @@ function ScopedProgrammes({
         </p>
       )}
       {staleNote && <p role="alert">{staleNote}</p>}
+      {archivedMidEdit && !visibleIds.has(archivedMidEdit.id) && (
+        <p role="alert">
+          {archivedMidEdit.name} was archived by someone else while you were renaming it. Your text
+          is kept.{' '}
+          <button type="button" className="text-link" onClick={() => setArchivedFilter(true)}>
+            Show Archived Programmes
+          </button>
+        </p>
+      )}
       {archivedNotice && (
         <p role="status">
           Programme archived: {archivedNotice.name}.{' '}

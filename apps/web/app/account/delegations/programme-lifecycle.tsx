@@ -158,8 +158,11 @@ export function ProgrammeLifecycle({
     setBusy(false);
     if (outcome.ok) {
       attempt.current = null;
-      setEditing(false);
-      setDiscarding(false);
+      // A rename ends the editing; a restore done from inside the form keeps the typed text so it can still be saved.
+      if (operation === 'rename') {
+        setEditing(false);
+        setDiscarding(false);
+      }
       onChanged(outcome.result, programme);
       return;
     }
@@ -263,7 +266,7 @@ export function ProgrammeLifecycle({
           <p>
             <button
               className="primary-link"
-              disabled={busy || !changed || !valid || conflictFrom !== null}
+              disabled={busy || !changed || !valid || conflictFrom !== null || programme.archived}
             >
               Save Changes
             </button>{' '}
@@ -271,7 +274,26 @@ export function ProgrammeLifecycle({
               Cancel
             </button>
           </p>
-          {conflictFrom !== null && (
+          {programme.archived && (
+            <div role="alert">
+              <p>
+                This programme was archived while you were editing. Restore it to rename it, or
+                discard your text.{' '}
+                <button
+                  type="button"
+                  className="text-link"
+                  disabled={busy}
+                  onClick={() => void run('restore')}
+                >
+                  Restore Programme
+                </button>{' '}
+                <button type="button" className="text-link" onClick={close}>
+                  Discard Changes
+                </button>
+              </p>
+            </div>
+          )}
+          {conflictFrom !== null && !programme.archived && (
             <div role="alert">
               {newerShown ? (
                 <>
