@@ -1,6 +1,7 @@
 import { realUseEnabled } from '@corridra/auth/customer-production';
 import type { ReactNode } from 'react';
 import { customerBillingEnabled } from '@corridra/auth/customer-billing';
+import { customerAccountLifecycleEnabled } from '@corridra/auth/customer-account-lifecycle';
 import { customerCompaniesEnabled } from '@corridra/auth/customer-companies';
 import { customerOrganisationProfilesEnabled } from '@corridra/auth/customer-organisation-profiles';
 import { uxSwitchOn } from '../lib/ux-switches';
@@ -13,6 +14,7 @@ import { CustomerBarNote } from './ux/customer-bar-note';
 import { LeftNavFrame, LeftNavList, type LeftNavItem } from './ux/left-nav';
 import { CustomerRailFoot, CustomerRailTop } from './ux/customer-rail';
 import { WorkspaceShell } from './workspace-shell';
+import { ClosedAccountGate } from './customer-closed-account';
 
 const navId = 'customer-navigation';
 const words = {
@@ -31,13 +33,13 @@ const words = {
  * is the public one and has no opener, so the frame is exactly what it was: eyebrow, notice and tab row.
  * Server only.
  */
-export function CustomerShell({
-  tab,
-  eyebrow,
-  title,
-  count,
-  children,
-}: {
+export function CustomerShell(props: CustomerShellProps) {
+  const frame = <CustomerFrame {...props} />;
+  // With the account module off nothing is added: the frame is exactly what it was.
+  return customerAccountLifecycleEnabled() ? <ClosedAccountGate>{frame}</ClosedAccountGate> : frame;
+}
+
+type CustomerShellProps = {
   tab: CustomerTab;
   /** Shown only while the shells switch is off; the left-bar frame has no eyebrow. */
   eyebrow?: string;
@@ -45,7 +47,9 @@ export function CustomerShell({
   /** What waits for the person, shown as a small count beside Home in the left bar. */
   count?: number;
   children: ReactNode;
-}) {
+};
+
+function CustomerFrame({ tab, eyebrow, title, count, children }: CustomerShellProps) {
   const plainNames = uxSwitchOn('CORRIDRA_UX_NAV');
   const move = uxSwitchOn('CORRIDRA_UX_MOVE');
   const translated = uxSwitchOn('CORRIDRA_UX_SHELLS_V2');

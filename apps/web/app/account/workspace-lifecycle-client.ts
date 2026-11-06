@@ -85,12 +85,13 @@ export async function readLifecycleState(
 }
 
 async function post(
-  command: LifecycleCommand,
+  url: string,
+  command: object,
   commandId: string,
   headers: SessionHeaders,
 ): Promise<LifecycleResult> {
   try {
-    const response = await fetch(endpoint, {
+    const response = await fetch(url, {
       method: 'POST',
       credentials: 'same-origin',
       cache: 'no-store',
@@ -129,23 +130,26 @@ async function post(
  * One command id per open dialog. It is sent again when an attempt is not settled (rate limit, outage, lost
  * answer) so the database answers a repeat with the same result, and a new one is made after any settled attempt.
  */
-export function useLifecycleCommand(headers: SessionHeaders) {
+export function useLifecycleCommand<Command extends object = LifecycleCommand>(
+  headers: SessionHeaders,
+  path: string = endpoint,
+) {
   const commandId = useRef<string | null>(null);
   const inFlight = useRef(false);
   const [busy, setBusy] = useState(false);
   const send = useCallback(
-    async (command: LifecycleCommand): Promise<LifecycleResult | null> => {
+    async (command: Command): Promise<LifecycleResult | null> => {
       if (inFlight.current) return null;
       inFlight.current = true;
       setBusy(true);
       commandId.current ??= crypto.randomUUID();
-      const result = await post(command, commandId.current, headers);
+      const result = await post(path, command, commandId.current, headers);
       if (result.kind !== 'failed' || result.settled) commandId.current = null;
       inFlight.current = false;
       setBusy(false);
       return result;
     },
-    [headers],
+    [headers, path],
   );
   return { send, busy };
 }
