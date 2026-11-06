@@ -117,6 +117,11 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   await page.keyboard.press('Escape');
   await expect(palette).toBeHidden();
   await expect(trigger).toBeFocused();
+  // The compiled response of the search route carries the private headers (the framework override, not only the handler).
+  const search = await page.request.get(`/api/workspace/search?tenant=${seed.tenantId}&q=qa`);
+  expect(search.status()).toBe(200);
+  expect(search.headers()['referrer-policy']).toBe('no-referrer');
+  expect(search.headers()['cache-control']).toContain('no-store');
   // Enter opens the selected action: Audit, by its own address.
   await page.keyboard.press('Control+k');
   await palette.getByRole('combobox').fill('open audit');

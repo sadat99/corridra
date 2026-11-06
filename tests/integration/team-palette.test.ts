@@ -9,7 +9,7 @@ import {
 } from '../../apps/web/lib/ux/palette';
 import { operatorSlugs } from '../../apps/web/lib/operator-urls';
 import { workspaceSections } from '../../apps/web/lib/workspace-navigation';
-import { missionPath } from '../../apps/web/lib/ux/palette-paths';
+import { missionHitHref, missionPath } from '../../apps/web/lib/ux/palette-paths';
 
 // The command palette's pure parts (Navigation v1). What the palette lists as an action is exactly what
 // the role could already open; keyboard rules are the board's (Up and Down, Enter, Tab for scope, Esc).
@@ -73,6 +73,16 @@ describe('keyboard', () => {
     expect(isPaletteShortcut(base)).toBe(false);
     expect(isPaletteShortcut({ ...base, ctrlKey: true, shiftKey: true })).toBe(false);
     expect(isPaletteShortcut({ ...base, key: 'j', ctrlKey: true })).toBe(false);
+  });
+});
+
+describe('a mission hit never leads to a 404', () => {
+  const section = `/operator/missions?workspace=${tenant}`;
+  test('with mission pages on it opens the mission page, with them off or unknown it opens the Missions section', () => {
+    expect(missionHitHref(true, 'abc', tenant, section)).toBe(
+      `/operator/missions/abc?workspace=${tenant}`,
+    );
+    expect(missionHitHref(false, 'abc', tenant, section)).toBe(section);
   });
 });
 

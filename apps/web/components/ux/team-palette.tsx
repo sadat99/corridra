@@ -9,7 +9,7 @@ import './team-nav.css';
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { OperatorIcon } from '../operator-icon';
-import { missionPath } from '../../lib/ux/palette-paths';
+import { missionHitHref } from '../../lib/ux/palette-paths';
 import {
   filterActions,
   isPaletteShortcut,
@@ -46,6 +46,9 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
   const [scope, setScope] = useState<PaletteScopeId>('all');
   // The last answer and the query it answered. What is shown is derived from it, so nothing is set in an effect.
   const [answer, setAnswer] = useState<{ key: string; found: Found | null } | null>(null);
+  // Whether mission pages are on (CORRIDRA_UX_MISSIONS_V2), read as the Missions list reads it. While it is unknown or
+  // off a mission hit opens the Missions section, whose list always works; the mission page would be a 404.
+  const [missionPages, setMissionPages] = useState(false);
   const [selected, setSelected] = useState(0);
   const dialog = useRef<HTMLDialogElement>(null);
   const opener = useRef<HTMLElement | null>(null);
@@ -76,6 +79,16 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
     if (open && !element.open) element.showModal();
     if (!open && element.open) element.close();
   }, [open, mounted]);
+
+  useEffect(() => {
+    if (!open) return;
+    const controller = new AbortController();
+    fetch('/api/team-work/flags', { signal: controller.signal, cache: 'no-store' })
+      .then(async (response) => (response.ok ? response.json() : { missionsV2: false }))
+      .then((value: { missionsV2?: boolean }) => setMissionPages(value.missionsV2 === true))
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [open]);
 
   // One search at a time: a newer query cancels the older, and an answer for an old query is dropped.
   const text = query.trim();
@@ -120,8 +133,15 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
         key: 'mission:' + hit.id,
         group: 'Missions',
         label: hit.label,
-        detail: hit.detail,
-        href: missionPath(hit.id, tenant),
+        detail: missionPages
+          ? hit.detail
+          : [hit.detail, 'Opens Missions'].filter(Boolean).join(' · '),
+        href: missionHitHref(
+          missionPages,
+          hit.id,
+          tenant,
+          placeHref('workspace-missions', urls, tenant),
+        ),
       });
   if (scope === 'all' || scope === 'companies')
     for (const hit of found?.companies ?? [])
@@ -135,6 +155,11 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
   if (scope === 'all' || scope === 'actions')
     entries.push(...filterActions(actions, query).slice(0, scope === 'actions' ? 20 : 4));
   const active = Math.min(selected, entries.length - 1);
+  // The keyboard moves the selection while focus stays in the field, so the list is scrolled to keep it in view.
+  useEffect(() => {
+    if (!open || active < 0) return;
+    document.getElementById(`${listId}-${active}`)?.scrollIntoView({ block: 'nearest' });
+  }, [open, active, listId, entries.length]);
 
   function close() {
     setOpen(false);
