@@ -72,7 +72,6 @@ export const customerParticipantInput = z.discriminatedUnion('action', [
   z
     .object({
       ...command,
-      ...scope,
       action: z.literal('label'),
       registrationId: z.uuid(),
       expectedVersion: z.number().int().min(0).max(100000),
@@ -171,17 +170,12 @@ export class CustomerParticipantService extends CustomerSessionBoundary {
       return this.transaction(
         async (db) =>
           (
-            await db.query(
-              'SELECT customer.programme_registration_label($1,$2,$3,$4,$5,$6) AS result',
-              [
-                value.commandId,
-                value.workspaceId,
-                value.programmeId,
-                value.registrationId,
-                value.expectedVersion,
-                value.displayLabel,
-              ],
-            )
+            await db.query('SELECT customer.programme_registration_label($1,$2,$3,$4) AS result', [
+              value.commandId,
+              value.registrationId,
+              value.expectedVersion,
+              value.displayLabel,
+            ])
           ).rows[0].result,
         subject,
         issuer,

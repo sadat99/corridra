@@ -41,8 +41,6 @@ const relabel = (
 ) => ({
   action: 'label' as const,
   commandId,
-  workspaceId,
-  programmeId,
   registrationId: registration,
   expectedVersion,
   displayLabel,
@@ -146,6 +144,10 @@ test('installs once, repeats safely, refuses a changed history, and leaves every
 
 test('with no correction every reader shows the label given on accepting', async () => {
   expect(await shown()).toMatchObject({ [registrationId]: original });
+  const listed = await people().list({ workspaceId, programmeId });
+  expect(
+    listed.registrations.find((r: { id: string }) => r.id === registrationId).labelVersion,
+  ).toBe(0);
   const own = await people('bob').own({});
   expect(own.registrations.find((r: { id: string }) => r.id === registrationId).displayLabel).toBe(
     original,
@@ -167,7 +169,7 @@ test('every reader of the label reads the current view, none reads the registrat
       'customer.programme_participants(uuid,uuid,uuid,uuid,integer)',
       'customer.programme_places_report(uuid,uuid)',
       'customer.programme_pricing_overview(uuid,uuid)',
-      'customer.programme_registration_label(uuid,uuid,uuid,uuid,integer,text)',
+      'customer.programme_registration_label(uuid,uuid,integer,text)',
       'customer.programme_report(uuid,uuid)',
       'customer_private.programme_ledger_entry_json(uuid)',
     ].sort(),
@@ -182,7 +184,7 @@ test('every reader of the label reads the current view, none reads the registrat
   // The accept path still writes the registration, and the correction function finds the registration it changes.
   expect(direct).toEqual([
     'customer.programme_participant_command(uuid,text,jsonb)',
-    'customer.programme_registration_label(uuid,uuid,uuid,uuid,integer,text)',
+    'customer.programme_registration_label(uuid,uuid,integer,text)',
   ]);
 });
 
@@ -198,6 +200,9 @@ test('the participant corrects their own label; the organiser list and the parti
   });
   expect((await shown())[registrationId]).toBe('Synthetic participant Bob Rahman');
   const own = await people('bob').own({});
+  expect(own.registrations.find((r: { id: string }) => r.id === registrationId).labelVersion).toBe(
+    1,
+  );
   expect(own.registrations.find((r: { id: string }) => r.id === registrationId).displayLabel).toBe(
     'Synthetic participant Bob Rahman',
   );
@@ -269,10 +274,8 @@ test('the label must be well formed (too short, too long, and padded at the data
   const probe = new Probe(f.runtime, f.auth, options, async () => session('bob'));
   await expect(
     probe.run((db) =>
-      db.query('SELECT customer.programme_registration_label($1,$2,$3,$4,$5,$6)', [
+      db.query('SELECT customer.programme_registration_label($1,$2,$3,$4)', [
         randomUUID(),
-        workspaceId,
-        programmeId,
         registrationId,
         3,
         ' Synthetic padded label here ',

@@ -55,18 +55,19 @@ END $$;
 -- workspace. A command id makes a retry return the first answer; expected is the label version the person saw (0 before any correction)
 -- and a stale value is refused. A withdrawn or revoked registration cannot be changed. The audit event carries the old and new label,
 -- who changed it (participant or organiser) and nothing else about the person; consent is never changed.
-CREATE FUNCTION customer.programme_registration_label(command uuid,target uuid,programme uuid,registration uuid,expected integer,new_label text) RETURNS jsonb
+CREATE FUNCTION customer.programme_registration_label(command uuid,registration uuid,expected integer,new_label text) RETURNS jsonb
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
-DECLARE actor uuid;reg customer_private.programme_registration;mine boolean;role text;prior customer_private.programme_registration_label_command;sig jsonb;cur customer_private.programme_registration_current;result jsonb;
+DECLARE actor uuid;target uuid;programme uuid;reg customer_private.programme_registration;mine boolean;role text;prior customer_private.programme_registration_label_command;sig jsonb;cur customer_private.programme_registration_current;result jsonb;
 BEGIN
  IF customer.actor_id() IS NULL THEN RAISE EXCEPTION 'Customer access denied' USING ERRCODE='42501'; END IF;
- IF command IS NULL OR target IS NULL OR programme IS NULL OR registration IS NULL OR expected IS NULL OR expected<0 OR expected>100000 OR new_label IS NULL
+ IF command IS NULL OR registration IS NULL OR expected IS NULL OR expected<0 OR expected>100000 OR new_label IS NULL
   OR length(new_label) NOT BETWEEN (CASE WHEN customer_private.synthetic_context() THEN 11 ELSE 2 END) AND 120
   OR (new_label NOT LIKE 'Synthetic %' AND customer_private.synthetic_context()) OR new_label<>btrim(new_label) OR new_label ~ '[[:cntrl:]]' THEN
   RAISE EXCEPTION 'Invalid participant label' USING ERRCODE='23514';
  END IF;
- SELECT * INTO reg FROM customer_private.programme_registration r WHERE r.id=registration AND r.workspace_id=target AND r.programme_id=programme;
+ SELECT * INTO reg FROM customer_private.programme_registration r WHERE r.id=registration;
  IF NOT FOUND THEN RAISE EXCEPTION 'Registration unavailable' USING ERRCODE='42501'; END IF;
+ target:=reg.workspace_id;programme:=reg.programme_id;
  mine:=reg.principal_id=customer.actor_id();
  role:=CASE WHEN mine THEN 'participant' ELSE 'organiser' END;
  actor:=customer_private.participant_scope(command,target,programme,NOT mine);
@@ -91,8 +92,8 @@ BEGIN
  IF customer.actor_id() IS DISTINCT FROM actor THEN RAISE EXCEPTION 'Participant access expired' USING ERRCODE='42501'; END IF;
  RETURN result||jsonb_build_object('commandId',command,'replayed',false);
 END $$;
-REVOKE ALL ON FUNCTION customer_private.programme_label_event(uuid,uuid,uuid,uuid,jsonb),customer.programme_registration_label(uuid,uuid,uuid,uuid,integer,text) FROM PUBLIC,corridra_runtime,corridra_auth;
-GRANT EXECUTE ON FUNCTION customer.programme_registration_label(uuid,uuid,uuid,uuid,integer,text) TO corridra_runtime;
+REVOKE ALL ON FUNCTION customer_private.programme_label_event(uuid,uuid,uuid,uuid,jsonb),customer.programme_registration_label(uuid,uuid,integer,text) FROM PUBLIC,corridra_runtime,corridra_auth;
+GRANT EXECUTE ON FUNCTION customer.programme_registration_label(uuid,uuid,integer,text) TO corridra_runtime;
 
 -- Readers of the label. Each first checks that the installed function is exactly the definition it replaces.
 
@@ -113,7 +114,7 @@ BEGIN
   IF customer.actor_id() IS DISTINCT FROM actor THEN RAISE EXCEPTION 'Customer access expired' USING ERRCODE='42501'; END IF;
  END LOOP;
  SELECT coalesce(jsonb_agg(jsonb_build_object('id',r.id,'programmeId',r.programme_id,'status',coalesce(v.status,'REGISTERED'),'synthetic',customer_private.synthetic_context())||
- CASE WHEN v.status IS NULL THEN jsonb_build_object('name',p.name,'reportingPurpose',p.reporting_purpose,'displayLabel',r.display_label,'consentedAt',r.consented_at) ELSE '{}'::jsonb END ORDER BY r.id),'[]'::jsonb)
+ CASE WHEN v.status IS NULL THEN jsonb_build_object('name',p.name,'reportingPurpose',p.reporting_purpose,'displayLabel',r.display_label,'labelVersion',r.label_version,'consentedAt',r.consented_at) ELSE '{}'::jsonb END ORDER BY r.id),'[]'::jsonb)
  INTO items FROM (SELECT * FROM customer_private.programme_registration_current WHERE principal_id=actor AND id=ANY(selected)) r
  JOIN customer_private.programme_current p ON p.tenant_id=r.workspace_id AND p.id=r.programme_id
  JOIN app.tenant t ON t.id=r.workspace_id AND (t.synthetic OR customer_private.real_session())
@@ -192,7 +193,7 @@ BEGIN
  WHEN EXISTS(SELECT FROM customer_private.programme_registration_current WHERE invitation_id=i.id) THEN 'USED'
  WHEN NOT customer_private.participant_invitation_active(i.id) THEN 'UNAVAILABLE' ELSE 'ISSUED' END) ORDER BY i.id),'[]'::jsonb) INTO invitations
  FROM (SELECT * FROM customer_private.programme_invitation WHERE workspace_id=target AND programme_id=programme AND (invitation_after IS NULL OR id>invitation_after) ORDER BY id LIMIT page_size) i;
- SELECT coalesce(jsonb_agg(jsonb_build_object('id',r.id,'displayLabel',r.display_label,'consentedAt',r.consented_at,'status',
+ SELECT coalesce(jsonb_agg(jsonb_build_object('id',r.id,'displayLabel',r.display_label,'labelVersion',r.label_version,'consentedAt',r.consented_at,'status',
  coalesce((SELECT CASE WHEN v.withdrawn THEN 'WITHDRAWN' ELSE 'REVOKED' END FROM customer_private.programme_participant_revocation v WHERE v.registration_id=r.id),'REGISTERED')) ORDER BY r.id),'[]'::jsonb) INTO registrations
  FROM (SELECT * FROM customer_private.programme_registration_current WHERE workspace_id=target AND programme_id=programme AND (registration_after IS NULL OR id>registration_after) ORDER BY id LIMIT page_size) r;
  IF customer.actor_id() IS DISTINCT FROM actor THEN RAISE EXCEPTION 'Customer access expired' USING ERRCODE='42501'; END IF;
