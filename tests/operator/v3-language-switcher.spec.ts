@@ -255,9 +255,16 @@ test('the chip is a 44 pixel target on a phone and inside the open menu', async 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${origin}/?offered=en,es`);
   await page.getByRole('button', { name: /^Menu/ }).click();
-  const box = await chip(page).boundingBox();
-  expect(box!.height).toBeGreaterThanOrEqual(44);
-  await chip(page).click();
-  const item = await page.getByRole('button', { name: 'Español' }).boundingBox();
-  expect(item!.height).toBeGreaterThanOrEqual(44);
+  // Navigation v1 (board PublicMobile): the open menu shows the offered languages as chips, one tap each.
+  await expect(page.getByRole('group', { name: 'Language' })).toBeVisible();
+  // Located by class from here, because the group's own name changes with the language chosen.
+  const languages = page.locator('.public-nav-languages');
+  const english = languages.getByRole('button', { name: 'English' });
+  const spanish = languages.getByRole('button', { name: 'Español' });
+  await expect(english).toHaveAttribute('aria-pressed', 'true');
+  for (const option of [english, spanish])
+    expect((await option.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await spanish.click();
+  await expect(spanish).toHaveAttribute('aria-pressed', 'true');
+  expect(await attrs(page)).toEqual({ lang: 'es', dir: 'ltr', stored: 'es' });
 });
