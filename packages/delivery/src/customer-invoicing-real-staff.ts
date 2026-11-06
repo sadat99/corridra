@@ -21,9 +21,9 @@ const plain = (min: number, max: number) =>
     );
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const amount = z.string().regex(/^[1-9][0-9]{0,11}$/);
-// The shortest reason a payment reversal may carry: the credit note rule. The database holds the same number in
+// The shortest reason a payment reversal may carry: the owner's ruling of 6 Nov 2026 (credit notes keep 10). The database holds the same number in
 // customer_private.real_reversal_reason_min(), and the staff screen holds one matching constant.
-export const REVERSAL_REASON_MIN = 10;
+export const REVERSAL_REASON_MIN = 20;
 const invoiceRef = { invoiceId: z.uuid(), expectedPosition: z.number().int().min(0).max(1500) };
 export const realInvoicingStaffCommandInput = z.discriminatedUnion('action', [
   z

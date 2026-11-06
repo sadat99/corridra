@@ -48,5 +48,15 @@
     "v3-real-invoicing-staff-ui.spec.ts: with one person allowed the screen still prepares the payment (no Record Payment button), then the preparer approves."
   ],
   "nextAction": "Owner decisions on the remaining CRUD gaps: G8 to G12 in my area, in the order the Conductor sets.",
-  "behaviourNote": "With one person allowed, the named finance approver is still the only approver and self approval is recorded as such, for payments and reversals as for invoices. Whether one-person mode is allowed for real payments at all is an owner question held by the Conductor; ruling it out later is a one-line control change."
+  "behaviourNote": "With one person allowed, the named finance approver is still the only approver and self approval is recorded as such, for payments and reversals as for invoices. Whether one-person mode is allowed for real payments at all is an owner question held by the Conductor; ruling it out later is a one-line control change.",
+  "ownerDecisions": [
+    "5 Nov 2026: \"Two people for both\" (recording a real payment and reversing one each need a second staff member's approval, every reversal carries a reason).",
+    "6 Nov 2026, single-approver switch and real payments: \"Yes, marked (Recommended)\". Only when the owner turns allow_single_approver on, one person may record or reverse a real payment; every such record is marked self_approved=true and the named finance approver still applies. With the switch off, two different people always.",
+    "6 Nov 2026, reason length for real reversals: \"20 characters (Recommended)\". Credit notes keep their current rule (10)."
+  ],
+  "databaseLimits": {
+    "proposalPosition": "expected_position BETWEEN 0 AND 1500 on the credit, payment and payment reversal proposal checks (real_invoicing_proposal_credit_check, real_invoicing_proposal_payment_check, real_invoicing_proposal_reversal_check); the integration test inserts at 1001 and 1500 (accepted) and 1501 (refused) for each kind",
+    "reversalReasonMinimum": "20, from customer_private.real_reversal_reason_min(), used by the proposal check, the reversal table check and the command; REVERSAL_REASON_MIN in the delivery schema and one matching constant on the staff screen; tests at 19 (refused) and 20 (accepted)"
+  },
+  "migrationNote": "0002 (real invoicing) was added by this PR and was never applied anywhere (real invoicing is closed and no install has run it); it is edited in place before first merge rather than shipped as a 0003. The replacement of the unnamed credit check from 0001 raises unless exactly one matching check is found (or the new named check is already there)."
 }

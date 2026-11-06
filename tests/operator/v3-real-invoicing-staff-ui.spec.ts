@@ -461,6 +461,10 @@ test('a payment entered in error is reversed by preparing a reversal with a reas
   // Only the payment that is still standing can be chosen.
   await expect(form.getByLabel('Payment to reverse').locator('option')).toHaveCount(2);
   await form.getByLabel('Payment to reverse').selectOption('1');
+  // The shortest reversal reason is 20 characters (owner ruling of 6 Nov 2026), and the label says so.
+  await expect(
+    form.getByLabel(/Why it is reversed \(plain words, at least 20 characters\)/),
+  ).toHaveAttribute('minlength', '20');
   await form.getByLabel(/Why it is reversed/).fill('The transfer was a duplicate of another one');
   expect(await axe(page)).toEqual([]);
   await form.getByRole('button', { name: 'Prepare Reversal for Approval' }).click();

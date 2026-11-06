@@ -31,7 +31,7 @@ type Period = {
   currency: string;
 };
 // The shortest reason a payment reversal may carry; the delivery schema and the database each hold one matching constant.
-const REVERSAL_REASON_MIN = 10;
+const REVERSAL_REASON_MIN = 20;
 type ProposalKind = 'invoice' | 'credit' | 'payment' | 'payment_reversal';
 const kindName: Record<ProposalKind, string> = {
   invoice: 'invoice',

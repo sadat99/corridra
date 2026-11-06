@@ -1518,23 +1518,122 @@ test('a real prepare works at position 1001, the first position the old limit re
     await decide(id, 'reject', second.ctx, 'Withdrawn after the position rehearsal');
 });
 
-test('the shortest reversal reason is one number per layer, and the layers agree', async () => {
+test('the shortest reversal reason is 20 characters in every layer: 19 refused, 20 accepted', async () => {
   const sqlMin = (await s.f.owner.query('SELECT customer_private.real_reversal_reason_min() AS n'))
     .rows[0].n;
-  expect(sqlMin).toBe(REVERSAL_REASON_MIN);
+  expect(sqlMin).toBe(20);
+  expect(REVERSAL_REASON_MIN).toBe(20);
   const listed = (await staff.list(first())).invoices as (RealInvoice & { position: number })[];
   const inv = listed.find((i) => i.number === number('INV', 1))!;
-  const short = 'x'.repeat(REVERSAL_REASON_MIN - 1);
-  await expect(
+  const live = (
+    await s.f.owner.query(
+      'SELECT seq FROM customer_private.real_invoice_payment p WHERE invoice_id=$1 AND NOT EXISTS(SELECT FROM customer_private.real_invoice_payment_reversal r WHERE r.invoice_id=p.invoice_id AND r.payment_seq=p.seq) ORDER BY seq DESC LIMIT 1',
+      [inv.id],
+    )
+  ).rows[0].seq as number;
+  const reasonOf = (n: number) => 'Entered by mistake'.padEnd(n, 'e');
+  const prepare = (n: number) =>
     staff.command(first(), {
       action: 'prepare_payment_reversal',
       commandId: randomUUID(),
       invoiceId: inv.id,
       expectedPosition: inv.position,
-      paymentSeq: 1,
-      reason: short,
-    }),
-  ).rejects.toThrow();
+      paymentSeq: live,
+      reason: reasonOf(n),
+    });
+  // Command layer (the Zod schema and the database function): 19 refused, 20 accepted.
+  await expect(prepare(19)).rejects.toThrow();
+  const ok = await prepare(20);
+  expect(ok).toMatchObject({ kind: 'payment_reversal', state: 'waiting_for_approval' });
+  await decide(ok.proposalId, 'reject', second.ctx, 'Withdrawn after the length rehearsal');
+  // Table layers, written directly as the owner inside a transaction that is rolled back.
+  const client = await s.f.owner.connect();
+  try {
+    const prior = (
+      await client.query(
+        'SELECT tenant_id,prepared_by,staff_tenant_id FROM customer_private.real_invoicing_proposal WHERE invoice_id=$1 LIMIT 1',
+        [inv.id],
+      )
+    ).rows[0];
+    const tryProposal = async (reason: string) => {
+      await client.query('SAVEPOINT p');
+      try {
+        await client.query(
+          `INSERT INTO customer_private.real_invoicing_proposal(kind,tenant_id,invoice_id,expected_position,payment_seq,reason,prepared_by,staff_tenant_id)
+           VALUES('payment_reversal',$1,$2,$3,$4,$5,$6,$7)`,
+          [
+            prior.tenant_id,
+            inv.id,
+            inv.position,
+            live,
+            reason,
+            prior.prepared_by,
+            prior.staff_tenant_id,
+          ],
+        );
+        return 'accepted';
+      } catch (error) {
+        return (error as { code?: string }).code;
+      } finally {
+        await client.query('ROLLBACK TO SAVEPOINT p');
+      }
+    };
+    await client.query('BEGIN');
+    expect(await tryProposal(reasonOf(19))).toBe('23514');
+    expect(await tryProposal(reasonOf(20))).toBe('accepted');
+    await client.query('ROLLBACK');
+  } finally {
+    client.release();
+  }
+});
+
+test('proposals are accepted at positions 1001 and 1500 and refused at 1501, for a payment, a reversal and a credit note', async () => {
+  const listed = (await staff.list(first())).invoices as (RealInvoice & { position: number })[];
+  const inv = listed.find((i) => i.number === number('INV', 1))!;
+  const client = await s.f.owner.connect();
+  try {
+    const prior = (
+      await client.query(
+        'SELECT tenant_id,prepared_by,staff_tenant_id FROM customer_private.real_invoicing_proposal WHERE invoice_id=$1 LIMIT 1',
+        [inv.id],
+      )
+    ).rows[0];
+    const base = [prior.tenant_id, inv.id, prior.prepared_by, prior.staff_tenant_id];
+    const inserts: Record<string, (position: number) => Promise<unknown>> = {
+      payment: (position) =>
+        client.query(
+          `INSERT INTO customer_private.real_invoicing_proposal(kind,tenant_id,invoice_id,expected_position,amount_minor,received_on,method,reference,prepared_by,staff_tenant_id)
+           VALUES('payment',$1,$2,$5,100,current_date,'cash','Cash handed over at the office',$3,$4)`,
+          [...base, position],
+        ),
+      payment_reversal: (position) =>
+        client.query(
+          `INSERT INTO customer_private.real_invoicing_proposal(kind,tenant_id,invoice_id,expected_position,payment_seq,reason,prepared_by,staff_tenant_id)
+           VALUES('payment_reversal',$1,$2,$5,1,'Entered by mistake while rehearsing',$3,$4)`,
+          [...base, position],
+        ),
+      credit: (position) =>
+        client.query(
+          `INSERT INTO customer_private.real_invoicing_proposal(kind,tenant_id,invoice_id,expected_position,amount_minor,reason,prepared_by,staff_tenant_id)
+           VALUES('credit',$1,$2,$5,100,'A rehearsal credit at a high position',$3,$4)`,
+          [...base, position],
+        ),
+    };
+    await client.query('BEGIN');
+    for (const [kind, insert] of Object.entries(inserts)) {
+      for (const position of [1001, 1500]) {
+        await client.query('SAVEPOINT p');
+        await insert(position);
+        await client.query('ROLLBACK TO SAVEPOINT p');
+      }
+      await client.query('SAVEPOINT p');
+      await expect(insert(1501), kind).rejects.toMatchObject({ code: '23514' });
+      await client.query('ROLLBACK TO SAVEPOINT p');
+    }
+    await client.query('ROLLBACK');
+  } finally {
+    client.release();
+  }
 });
 
 test('pausing closes customers and staff and keeps every record; opening again restores them', async () => {

@@ -9,9 +9,9 @@
 
 ALTER TABLE customer_private.real_invoicing_proposal DROP CONSTRAINT real_invoicing_proposal_kind_check;
 ALTER TABLE customer_private.real_invoicing_proposal ADD CONSTRAINT real_invoicing_proposal_kind_check CHECK(kind IN ('invoice','credit','payment','payment_reversal'));
--- The shortest reason a payment reversal may carry. It is the credit note rule (10); if the owner rules otherwise this is the
--- one place in the database to change, and the delivery schema and the staff screen each hold one matching constant.
-CREATE FUNCTION customer_private.real_reversal_reason_min() RETURNS integer LANGUAGE sql IMMUTABLE AS $$ SELECT 10 $$;
+-- The shortest reason a payment reversal may carry: 20 characters, the owner's ruling of 6 Nov 2026 (credit notes keep 10).
+-- If the owner rules otherwise this is the one place in the database to change, and the delivery schema and the staff screen each hold one matching constant.
+CREATE FUNCTION customer_private.real_reversal_reason_min() RETURNS integer LANGUAGE sql IMMUTABLE AS $$ SELECT 20 $$;
 REVOKE ALL ON FUNCTION customer_private.real_reversal_reason_min() FROM PUBLIC,corridra_runtime,corridra_auth;
 
 ALTER TABLE customer_private.real_invoicing_proposal
@@ -36,6 +36,7 @@ BEGIN
  SELECT count(*), min(conname) INTO n, c FROM pg_constraint
   WHERE conrelid='customer_private.real_invoicing_proposal'::regclass AND contype='c'
     AND pg_get_constraintdef(oid) LIKE '%credit%' AND pg_get_constraintdef(oid) LIKE '%expected_position%'
+    AND pg_get_constraintdef(oid) LIKE '%1000%'
     AND conname<>'real_invoicing_proposal_credit_check';
  -- Fail closed: exactly one old check is replaced; none found is only right when the new one is already there.
  IF n=0 AND EXISTS(SELECT FROM pg_constraint WHERE conrelid='customer_private.real_invoicing_proposal'::regclass AND conname='real_invoicing_proposal_credit_check') THEN
