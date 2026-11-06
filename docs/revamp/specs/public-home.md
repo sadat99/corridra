@@ -46,6 +46,6 @@ The owner asked for a landing revamp of 2 to 2.5 desktop screens (verbatim: "lan
 - **Evidence (F).** Hook line "Know who is real before you fly." above "Every fact says where it comes from.", the four labels as a numbered list, How We Label Facts to `/trust`, and an example dossier card that shows all four labels on its fields.
 - **Routes (F).** Boarding-pass cards: Bangladesh to China, Bangladesh to Spain and Explore Every Route, same three links.
 - **Closing band.** "Your request can look like this." with Start a Request. Header, footer and dock unchanged.
-- **Budget.** 1440 × 900: 2.0 to 2.5 screens (owner). 390 × 844: at most 3.5 screens (S1 cap, owner asked to confirm). The mockup measures 2.33 and 3.50. No sideways scroll, 44 px targets, axe clean at 320, 390, 768 and 1440.
+- **Budget.** 1440 × 900: 2.0 to 2.5 screens (owner). 390 × 844: at most 3.5 screens (owner, 6 November 2026, verbatim: "3.5 screens (Recommended)"). The mockup measures 2.33 and 3.50. No sideways scroll, 44 px targets, axe clean at 320, 390, 768 and 1440.
 - **Tests.** P-01 to P-07 stay unchanged. The AC1-03 pins (example tabs, four buyer rows, five quote rows, three route links, the `#mission-example` redirect) move to the player; the PR lists each changed assertion as owner-approved. New tests cover the player keyboard, Pause, reduced motion, the example switch and every job link.
 - **Owner.** S3, after the PR 322 fixes. Not sensitive unless it touches the `/plan` submit path, consent, cookies or storage.
