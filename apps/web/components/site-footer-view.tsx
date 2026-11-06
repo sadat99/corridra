@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { FactLabel, NotConfirmedLabel } from './fact-label';
 import { LanguageSwitcher } from './language-switcher';
 import { useT } from './language-provider';
-import { BrandMark } from './site-header';
+import { BrandLockup } from './site-header';
 import { isQuiet, useSignedInSeen } from './use-signed-in';
 import type { MessageKey } from '../lib/i18n/messages';
 import './site-footer.css';
@@ -72,8 +72,8 @@ export function SiteFooterView({ realUse }: { realUse: boolean }) {
       <div className="guide-footer-top">
         <div className="guide-footer-brand">
           <Link prefetch={false} className="guide-footer-wordmark" href="/">
-            <BrandMark />
-            <span>Corridra</span>
+            <BrandLockup />
+            <span className="sr-only">Corridra</span>
           </Link>
           <p className="guide-footer-promise">{t('footer.tagline')}</p>
         </div>

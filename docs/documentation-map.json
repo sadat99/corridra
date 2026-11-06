@@ -329,6 +329,16 @@
       "use": "Read alongside current plan, source requirements and ADRs"
     },
     {
+      "path": "docs/brand/CORRIDRA_BRAND_IDENTITY.md",
+      "classification": "Current guide/contract",
+      "use": "Logo, orb, favicon, app icon and social-image rules on top of AC/1; read before any logo or icon change (ADR-077, Proposed)"
+    },
+    {
+      "path": "docs/brand/LOGO_IMPLEMENTATION_RUNBOOK.md",
+      "classification": "Current operational guide",
+      "use": "Steps to apply or change the logo and icons: discover, apply, verify, record"
+    },
+    {
       "path": "docs/brand/positioning-messaging-constitution-v1.0.md",
       "classification": "Preserved source/working copy",
       "use": "Complete requirements; apply later explicit decisions without editing originals"
@@ -1402,6 +1412,11 @@
       "path": "docs/adr/0076-trip-books-and-decision-sharing.md",
       "classification": "Architecture decision",
       "use": "Batch E Trip view and proposed minimal book/decision-card disclosure contract; explicit owner acceptance required for export/share defaults"
+    },
+    {
+      "path": "docs/adr/0077-corridra-visual-identity.md",
+      "classification": "Architecture decision",
+      "use": "Proposed: owner-supplied logo, orb, favicon, app icons and social images in AC/1 colour; art-direction, trademark, legal handoff and tagline gates open"
     },
     {
       "path": "docs/revamp/README.md",

@@ -140,6 +140,24 @@ describe('W-02 and W-03 request objectives', () => {
     expect(items[0]).toMatchObject({ kind: 'request', family: expected });
   });
 
+  it('G1 a withdrawn request is not active work, and a request that is not withdrawn still is', async () => {
+    patch({
+      customerRequests: {
+        list: async () => ({
+          requests: [
+            requestRow(1, A, { withdrawn: true }),
+            requestRow(2, A, { withdrawn: false }),
+            requestRow(3),
+          ],
+          nextAfter: null,
+        }),
+      },
+      customerRequestDetails: { detail: async () => detailFor('Sell in a new market') },
+    });
+    const { items } = await run();
+    expect(items.map((item) => item.id).sort()).toEqual([id(102), id(103)].sort());
+  });
+
   it('W-03 computes the map from the table, so a two-family objective is UNCLASSIFIED', async () => {
     const { classifyObjective } = await import('../../apps/web/lib/work-items/classify');
     const table = {
