@@ -366,12 +366,15 @@ export default async function Page({
                   <AccountSignout />
                 </div>
                 <OperatorInvitationHint key={data.user.id} />
-                {uxSwitchOn('CORRIDRA_UX_NAV') && (
+                {uxSwitchOn('CORRIDRA_UX_NAV') ? (
                   <p>
                     <Link className="text-link ux-action" href="/account/all-tools">
                       All Tools
                     </Link>
                   </p>
+                ) : (
+                  // Without the new navigation there is no All tools page, so the entry points stay here.
+                  <WaysIn />
                 )}
               </section>
             }
@@ -379,5 +382,46 @@ export default async function Page({
         </div>
       )}
     </CustomerShell>
+  );
+}
+
+/** The entry points All tools holds, kept on Account while the new navigation (and All tools) is off. */
+function WaysIn() {
+  return (
+    <section aria-label="Other ways in" className="ux-ways-in">
+      <h2>Other ways in</h2>
+      <ul className="ux-link-list">
+        <li>
+          <Link prefetch={false} href="/plan">
+            <strong>Plan a mission</strong>
+            <span>Tell us your goal. It takes a few minutes.</span>
+          </Link>
+        </li>
+        <li>
+          <Link prefetch={false} href="/plan#receipt-check">
+            <strong>Check a request receipt</strong>
+            <span>Use the receipt we gave you to check progress and replies.</span>
+          </Link>
+        </li>
+        <li>
+          <Link prefetch={false} href="/operator/setup">
+            <strong>Accept a team invitation</strong>
+            <span>For invited Corridra team members.</span>
+          </Link>
+        </li>
+        <li>
+          <Link prefetch={false} href="/workspace">
+            <strong>Start page</strong>
+            <span>All the ways to use Corridra.</span>
+          </Link>
+        </li>
+        <li>
+          <Link prefetch={false} href="/contributor">
+            <strong>Local helper tasks</strong>
+            <span>For local helpers with assigned tasks.</span>
+          </Link>
+        </li>
+      </ul>
+    </section>
   );
 }

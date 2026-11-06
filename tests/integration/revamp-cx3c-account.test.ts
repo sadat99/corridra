@@ -60,7 +60,20 @@ describe('CX-04 the Account settings tabs', () => {
 describe('CX-02 the tools and entry points moved to All tools; nothing is lost', () => {
   const page = read('apps/web/app/account/page.tsx');
   const more = page.slice(page.indexOf("{view === 'more' && ("));
-  it('the Account view no longer repeats the tools and entry points', () => {
+  it('the Account view no longer repeats the tools and entry points while All tools exists', () => {
+    // With the new navigation off there is no All tools page, so those entry points stay on Account (WaysIn).
+    expect(more).toContain("{uxSwitchOn('CORRIDRA_UX_NAV') ? (");
+    expect(more).toContain('<WaysIn />');
+    const ways = page.slice(page.indexOf('function WaysIn()'));
+    for (const href of [
+      '/plan"',
+      '/plan#receipt-check',
+      '/operator/setup',
+      '/workspace"',
+      '/contributor"',
+    ])
+      expect(ways, href).toContain(`href="${href.replace(/"$/, '')}"`);
+    const shown = more.slice(0, more.indexOf('function WaysIn()'));
     for (const gone of [
       'Start something',
       'Other ways in',
@@ -69,7 +82,7 @@ describe('CX-02 the tools and entry points moved to All tools; nothing is lost',
       'Start page',
       'Accept a team invitation',
     ])
-      expect(more, gone).not.toContain(gone);
+      expect(shown, gone).not.toContain(gone);
   });
   it('All tools lists the two entry points the Account page used to hold', async () => {
     const { tools } = await load('lib/all-tools');
