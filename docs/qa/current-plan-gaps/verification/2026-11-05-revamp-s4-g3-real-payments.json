@@ -4,7 +4,7 @@
   "kind": "CRUD gap G3 (CRUD standard, owner scope of 5 Nov 2026): real-invoice payments and their reversals need a second staff person, and every reversal carries a reason. One additive migration; real invoicing stays closed until the owner opens it offline.",
   "findings": [],
   "findingsNote": "No GAP id is created or changed. This PR closes audit gap G3 in docs/revamp/crud/summary.md; the Conductor updates that record.",
-  "sensitive": "yes: real money (the real invoicing module), a database migration and staff commands. No auth, session, tenant-scope, consent, token or cookie code changes. Nothing is installed anywhere by this PR; the migration is additive and the owner merges. The ADR-064 amendment (payments and reversals) is written by the Conductor.",
+  "sensitive": "yes: real money (the real invoicing module), a database migration and staff commands. packages/auth changed one type (a payment carries a reversed flag for customers); no session, tenant-scope, consent, token or cookie logic changes. Nothing is installed anywhere by this PR; the migration is additive (one unnamed check from the first file is found by its definition and replaced under a name, with the larger position limit, the same widening precedent as earlier modules) and the owner merges. The ADR-064 amendment (payments and reversals) is written by the Conductor.",
   "ownerDecision": "5 Nov 2026: 'Two people for both'. Recording a real payment and reversing one both need a second staff member's approval, and every reversal carries a reason, the same rule as invoices and credit notes. The Conductor confirmed: the second person follows the existing second-approver control, and the one-person payment command works only when that control says a second person is not required.",
   "changed": [
     "packages/db/customer-invoicing-real-migrations/0002_payment_approval_and_reversal.sql (new, additive): the proposal table also carries 'payment' and 'payment_reversal' (new nullable columns, new checks); a payment records the approved proposal it came from; table real_invoice_payment_reversal (append-only, one reversal per payment, reason in plain words of at least 10 characters, rewrite and delete refused, row security on, no runtime or auth access); a guard on payments and on reversals for every writer that requires an approved proposal of the right kind, invoice and payment whenever a second person is required; the command log accepts prepare_payment and prepare_payment_reversal; real_invoicing_paid, _position, _invoice_json, _emit, the payment guard, app.real_invoicing_staff_pending, _staff_view and _staff_command are replaced with the same signatures, so their grants stay.",
@@ -17,7 +17,12 @@
     "packages/delivery/src/customer-invoicing-real-staff.ts: the position a command may carry is 1500 (500 payments, 500 credits and 500 reversals), up from 1000, the same fix the Codex review found for sample invoices.",
     "apps/web/app/operator/customer-real-invoicing.tsx: approving a payment reversal asks once in a dialog that names the payment, amount, date and invoice, says it cannot be undone and focuses Keep Payment (the CRUD standard D-02 rule).",
     "The staff pending read names the amount, date and invoice currency of the payment a waiting reversal is for, so the confirmation never depends on which invoice page is loaded (Codex P2).",
-    "The database position checks on proposals (credit, payment, payment reversal) all reach 1500; the credit check from the first file is found by what it says, dropped and put back under a name with the larger limit, additively (Codex P2)."
+    "The database position checks on proposals (credit, payment, payment reversal) all reach 1500; the credit check from the first file is found by what it says, dropped and put back under a name with the larger limit, additively (Codex P2).",
+    "Guardian review of e554e64 (PASS) folded in: the one-person payment command is now refused in every mode, so a payment always goes through a proposal and the decision rules (a second person while required, the named finance approver, self approval marked as such) always apply; with one person allowed, the same person prepares and approves a payment or a reversal and the record is marked self approved. The table guards on payments and reversals now demand an approved proposal in both modes.",
+    "The made-up-supplier check for approvals now runs after the command and judges what it issued: an approved payment or reversal is never refused, an approval that issued an invoice or credit note throws and the whole command rolls back, and a retry after a lost reply replays the recorded result instead of being refused.",
+    "The credit-check replacement in the migration fails closed: it raises when it finds zero or more than one matching check (unless the new named check is already there).",
+    "The shortest reversal reason is one constant per layer: customer_private.real_reversal_reason_min() in the database, REVERSAL_REASON_MIN in the delivery schema, one matching constant on the staff screen; a test pins the database and delivery values together.",
+    "Waiting payment and credit proposals show their amount with the invoice currency, from the proposal itself."
   ],
   "preserved": [
     "Payments, credits and invoices stay append-only: a payment is never edited or deleted, and stays readable with its reversal.",
@@ -37,7 +42,11 @@
     "The staff UI spec bundles stylesheets as empty, because the dialog imports one.",
     "The payment test and the credit-note test used the one-person payment command; they now prepare and approve (that is the decision).",
     "The migration history test lists two applied files, each hash checked.",
-    "The customer payment list now carries reversed: false."
+    "The customer payment list now carries reversed: false.",
+    "ws-c-team-work.test.ts: the made-up-supplier tests no longer pin the old order (check before the command, from the list of waiting proposals). They now pin: preparing is checked before the command, approving after it on the issued kind, payments and reversals pass, and an invoice or credit note approval is refused.",
+    "customer-invoicing-real.test.ts: the direct payment command is refused in every mode (message: prepare it for approval); the earlier assertion that it works when a second person is not required is replaced by the single-approver test, which prepares and self-approves.",
+    "v3-real-invoicing-staff-ui.spec.ts: with one person allowed the screen still prepares the payment (no Record Payment button), then the preparer approves."
   ],
-  "nextAction": "Owner decisions on the remaining CRUD gaps: G8 to G12 in my area, in the order the Conductor sets."
+  "nextAction": "Owner decisions on the remaining CRUD gaps: G8 to G12 in my area, in the order the Conductor sets.",
+  "behaviourNote": "With one person allowed, the named finance approver is still the only approver and self approval is recorded as such, for payments and reversals as for invoices. Whether one-person mode is allowed for real payments at all is an owner question held by the Conductor; ruling it out later is a one-line control change."
 }

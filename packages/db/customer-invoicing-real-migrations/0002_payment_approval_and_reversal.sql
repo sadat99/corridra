@@ -9,6 +9,11 @@
 
 ALTER TABLE customer_private.real_invoicing_proposal DROP CONSTRAINT real_invoicing_proposal_kind_check;
 ALTER TABLE customer_private.real_invoicing_proposal ADD CONSTRAINT real_invoicing_proposal_kind_check CHECK(kind IN ('invoice','credit','payment','payment_reversal'));
+-- The shortest reason a payment reversal may carry. It is the credit note rule (10); if the owner rules otherwise this is the
+-- one place in the database to change, and the delivery schema and the staff screen each hold one matching constant.
+CREATE FUNCTION customer_private.real_reversal_reason_min() RETURNS integer LANGUAGE sql IMMUTABLE AS $$ SELECT 10 $$;
+REVOKE ALL ON FUNCTION customer_private.real_reversal_reason_min() FROM PUBLIC,corridra_runtime,corridra_auth;
+
 ALTER TABLE customer_private.real_invoicing_proposal
  ADD COLUMN received_on date,ADD COLUMN method text,ADD COLUMN reference text,ADD COLUMN payment_seq integer;
 ALTER TABLE customer_private.real_invoicing_proposal ADD CONSTRAINT real_invoicing_proposal_payment_fields CHECK(
@@ -19,26 +24,31 @@ ALTER TABLE customer_private.real_invoicing_proposal ADD CONSTRAINT real_invoici
  AND payment_seq IS NULL AND reason IS NULL AND subscription_id IS NULL));
 ALTER TABLE customer_private.real_invoicing_proposal ADD CONSTRAINT real_invoicing_proposal_reversal_check CHECK(kind<>'payment_reversal' OR (
  invoice_id IS NOT NULL AND expected_position BETWEEN 0 AND 1500 AND payment_seq BETWEEN 1 AND 500
- AND customer_private.billing_plain_ok(reason,10,500) AND amount_minor IS NULL AND received_on IS NULL AND method IS NULL AND reference IS NULL
+ AND customer_private.billing_plain_ok(reason,customer_private.real_reversal_reason_min(),500) AND amount_minor IS NULL AND received_on IS NULL AND method IS NULL AND reference IS NULL
  AND subscription_id IS NULL));
 
 -- The position of an invoice counts its payments, credit notes and reversals (500 of each at most), so it can reach 1500.
 -- The credit proposal check from the first file said 1000; it is an unnamed table check, so it is found by what it says,
 -- dropped and put back under a name with the larger limit. Nothing else about it changes.
 DO $$
-DECLARE c text;
+DECLARE c text; n integer;
 BEGIN
- FOR c IN SELECT conname FROM pg_constraint
-   WHERE conrelid='customer_private.real_invoicing_proposal'::regclass AND contype='c'
-     AND pg_get_constraintdef(oid) LIKE '%credit%' AND pg_get_constraintdef(oid) LIKE '%expected_position%'
-     AND conname<>'real_invoicing_proposal_credit_check'
- LOOP
-  EXECUTE format('ALTER TABLE customer_private.real_invoicing_proposal DROP CONSTRAINT %I',c);
- END LOOP;
+ SELECT count(*), min(conname) INTO n, c FROM pg_constraint
+  WHERE conrelid='customer_private.real_invoicing_proposal'::regclass AND contype='c'
+    AND pg_get_constraintdef(oid) LIKE '%credit%' AND pg_get_constraintdef(oid) LIKE '%expected_position%'
+    AND conname<>'real_invoicing_proposal_credit_check';
+ -- Fail closed: exactly one old check is replaced; none found is only right when the new one is already there.
+ IF n=0 AND EXISTS(SELECT FROM pg_constraint WHERE conrelid='customer_private.real_invoicing_proposal'::regclass AND conname='real_invoicing_proposal_credit_check') THEN
+  RETURN;
+ END IF;
+ IF n<>1 THEN
+  RAISE EXCEPTION 'Expected exactly one credit proposal position check, found %',n USING ERRCODE='55000';
+ END IF;
+ EXECUTE format('ALTER TABLE customer_private.real_invoicing_proposal DROP CONSTRAINT %I',c);
+ ALTER TABLE customer_private.real_invoicing_proposal ADD CONSTRAINT real_invoicing_proposal_credit_check CHECK(kind<>'credit' OR (
+  invoice_id IS NOT NULL AND expected_position BETWEEN 0 AND 1500 AND amount_minor IS NOT NULL
+  AND customer_private.billing_plain_ok(reason,10,500) AND subscription_id IS NULL));
 END $$;
-ALTER TABLE customer_private.real_invoicing_proposal ADD CONSTRAINT real_invoicing_proposal_credit_check CHECK(kind<>'credit' OR (
- invoice_id IS NOT NULL AND expected_position BETWEEN 0 AND 1500 AND amount_minor IS NOT NULL
- AND customer_private.billing_plain_ok(reason,10,500) AND subscription_id IS NULL));
 
 -- A payment now records which approved proposal it came from. Payments recorded before this change have none.
 ALTER TABLE customer_private.real_invoice_payment
@@ -53,7 +63,7 @@ CREATE TABLE customer_private.real_invoice_payment_reversal (
  seq integer NOT NULL CHECK(seq BETWEEN 1 AND 500),
  payment_seq integer NOT NULL CHECK(payment_seq BETWEEN 1 AND 500),
  proposal_id uuid UNIQUE REFERENCES customer_private.real_invoicing_proposal(id),
- reason text NOT NULL CHECK(customer_private.billing_plain_ok(reason,10,500)),
+ reason text NOT NULL CHECK(customer_private.billing_plain_ok(reason,customer_private.real_reversal_reason_min(),500)),
  prepared_by uuid NOT NULL REFERENCES identity.principal(id),
  approved_by uuid NOT NULL REFERENCES identity.principal(id),
  self_approved boolean NOT NULL DEFAULT false,
@@ -80,10 +90,10 @@ BEGIN
  IF NOT EXISTS(SELECT FROM app.tenant t WHERE t.id=NEW.tenant_id AND NOT t.synthetic) THEN RAISE EXCEPTION 'Real invoices are for real workspaces only' USING ERRCODE='42501'; END IF;
  SELECT coalesce(max(r.seq),0) INTO v_prev FROM customer_private.real_invoice_payment_reversal r WHERE r.invoice_id=NEW.invoice_id;
  IF NEW.seq<>v_prev+1 THEN RAISE EXCEPTION 'Reversals must follow in order' USING ERRCODE='23514'; END IF;
- IF customer_private.real_invoicing_second_required() AND NOT EXISTS(SELECT FROM customer_private.real_invoicing_proposal pr
+ IF NOT EXISTS(SELECT FROM customer_private.real_invoicing_proposal pr
   JOIN customer_private.real_invoicing_decision d ON d.proposal_id=pr.id AND d.decision='approved'
   WHERE pr.id=NEW.proposal_id AND pr.kind='payment_reversal' AND pr.invoice_id=NEW.invoice_id AND pr.payment_seq=NEW.payment_seq) THEN
-  RAISE EXCEPTION 'A reversal needs a second person' USING ERRCODE='42501'; END IF;
+  RAISE EXCEPTION 'A reversal needs an approved proposal' USING ERRCODE='42501'; END IF;
  RETURN NEW;
 END $$;
 CREATE TRIGGER real_invoice_payment_reversal_guard BEFORE INSERT ON customer_private.real_invoice_payment_reversal FOR EACH ROW EXECUTE FUNCTION customer_private.real_invoice_payment_reversal_guard();
@@ -123,10 +133,10 @@ BEGIN
  IF NEW.received_on<v_inv.issue_date THEN RAISE EXCEPTION 'A payment cannot be dated before the invoice' USING ERRCODE='23514'; END IF;
  IF NEW.amount_minor>v_inv.total_minor-customer_private.real_invoicing_paid(v_inv.id)-customer_private.real_invoicing_credited(v_inv.id) THEN
   RAISE EXCEPTION 'That is more than is still outstanding on this invoice' USING ERRCODE='23514'; END IF;
- IF customer_private.real_invoicing_second_required() AND NOT EXISTS(SELECT FROM customer_private.real_invoicing_proposal pr
+ IF NOT EXISTS(SELECT FROM customer_private.real_invoicing_proposal pr
   JOIN customer_private.real_invoicing_decision d ON d.proposal_id=pr.id AND d.decision='approved'
   WHERE pr.id=NEW.proposal_id AND pr.kind='payment' AND pr.invoice_id=NEW.invoice_id AND pr.amount_minor=NEW.amount_minor) THEN
-  RAISE EXCEPTION 'A payment needs a second person' USING ERRCODE='42501'; END IF;
+  RAISE EXCEPTION 'A payment needs an approved proposal' USING ERRCODE='42501'; END IF;
  RETURN NEW;
 END $$;
 
@@ -361,7 +371,7 @@ BEGIN
   IF NOT FOUND THEN RAISE EXCEPTION 'Invoice unavailable' USING ERRCODE='42501'; END IF;
   v_pos:=customer_private.real_invoicing_position(i.id);
   IF v_pos<>(input->>'expectedPosition')::integer THEN RAISE EXCEPTION 'The invoice changed; reload and try again' USING ERRCODE='23514'; END IF;
-  IF NOT customer_private.billing_plain_ok(input->>'reason',10,500) THEN RAISE EXCEPTION 'Give the reason in plain words, at least 10 characters, with no links or addresses' USING ERRCODE='23514'; END IF;
+  IF NOT customer_private.billing_plain_ok(input->>'reason',customer_private.real_reversal_reason_min(),500) THEN RAISE EXCEPTION 'Give the reason in plain words, at least % characters, with no links or addresses',customer_private.real_reversal_reason_min() USING ERRCODE='23514'; END IF;
   v_ps:=(input->>'paymentSeq')::integer;
   SELECT * INTO pay FROM customer_private.real_invoice_payment x WHERE x.invoice_id=i.id AND x.seq=v_ps;
   IF NOT FOUND THEN RAISE EXCEPTION 'There is no such payment on this invoice' USING ERRCODE='23514'; END IF;
@@ -454,24 +464,9 @@ BEGIN
    result:=jsonb_build_object('proposalId',pr.id,'kind','credit','state','issued')||jsonb_build_object('invoice',customer_private.real_invoicing_invoice_json(i.id,'staff'));
   END IF;
  ELSE
-  IF customer_private.real_invoicing_second_required() THEN
-   RAISE EXCEPTION 'A payment needs a second person: prepare it for approval' USING ERRCODE='23514'; END IF;
-  v_id:=(input->>'invoiceId')::uuid;
-  PERFORM pg_advisory_xact_lock(hashtextextended('customer.real_invoicing.invoice:'||v_id::text,0));
-  SELECT * INTO i FROM customer_private.real_invoice x WHERE x.id=v_id AND EXISTS(SELECT FROM app.tenant w WHERE w.id=x.tenant_id AND NOT w.synthetic);
-  IF NOT FOUND THEN RAISE EXCEPTION 'Invoice unavailable' USING ERRCODE='42501'; END IF;
-  v_pos:=customer_private.real_invoicing_position(i.id);
-  IF v_pos<>(input->>'expectedPosition')::integer THEN RAISE EXCEPTION 'The invoice changed; reload and try again' USING ERRCODE='23514'; END IF;
-  v_amount:=(input->>'amountMinor')::bigint;
-  v_outstanding:=i.total_minor-customer_private.real_invoicing_paid(i.id)-customer_private.real_invoicing_credited(i.id);
-  IF NOT customer_private.billing_plain_ok(input->>'reference',2,120) THEN RAISE EXCEPTION 'Give the reference in plain words, with no links or addresses' USING ERRCODE='23514'; END IF;
-  IF v_amount>v_outstanding THEN RAISE EXCEPTION 'That is more than is still outstanding on this invoice' USING ERRCODE='23514'; END IF;
-  SELECT coalesce(max(x.seq),0)+1 INTO v_item FROM customer_private.real_invoice_payment x WHERE x.invoice_id=i.id;
-  INSERT INTO customer_private.real_invoice_payment(invoice_id,tenant_id,seq,amount_minor,received_on,method,reference,recorded_by,staff_tenant_id)
-  VALUES(i.id,i.tenant_id,v_item,v_amount,(input->>'receivedOn')::date,input->>'method',input->>'reference',v_actor,t);
-  PERFORM customer_private.real_invoicing_emit(i.tenant_id,i.id,'payment.recorded',customer_private.real_invoicing_number('INV',i.invoice_year,i.invoice_seq),v_item,v_pos+2,v_actor,command);
-  v_aggregate:=i.id;
-  result:=jsonb_build_object('state','recorded')||jsonb_build_object('invoice',customer_private.real_invoicing_invoice_json(i.id,'staff'));
+  -- A payment is always prepared and then approved, so the decision rules (a second person, the named finance approver,
+  -- self approval marked as such) apply in every mode. The one-person command is kept only to refuse.
+  RAISE EXCEPTION 'A payment is prepared first and then approved: prepare it for approval' USING ERRCODE='23514';
  END IF;
  IF app.actor_id() IS DISTINCT FROM v_actor THEN RAISE EXCEPTION 'Staff access expired' USING ERRCODE='42501'; END IF;
  result:=result||jsonb_build_object('commandId',command,'operation',operation,'synthetic',false);

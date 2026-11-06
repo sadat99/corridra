@@ -23,17 +23,17 @@ import { configureSyntheticIntake } from '../../packages/missions/src/bootstrap'
 // which reads happen; the service calls the guard before app.real_invoicing_staff_command and nothing else.
 const calls: string[] = [];
 let supplier: Record<string, unknown> = {};
-let proposals: { id: string; kind: string }[] = [];
 const db = {
   query: async (sql: string) => {
     calls.push(sql);
-    return { rows: [{ result: { supplier, proposals } }] };
+    return { rows: [{ result: { supplier } }] };
   },
 } as never;
-async function guard(input: Record<string, unknown>) {
+// `result` is what the command returned: approvals are checked after it ran, on what it issued.
+async function guard(input: Record<string, unknown>, result?: { kind?: string } | null) {
   const { action, commandId: _commandId, ...payload } = realInvoicingStaffCommandInput.parse(input);
   void _commandId;
-  return refuseMadeupIssue(db, action, payload);
+  return refuseMadeupIssue(db, action, payload, result);
 }
 const madeupSupplier = {
   legalName: 'Corridra Pte Ltd',
@@ -91,13 +91,27 @@ describe('D3: real invoices stay blocked while supplier details are made up', ()
         amountMinor: '100',
         reason: 'QA test (madeup) credit reason',
       },
-      { action: 'decide', commandId: randomUUID(), proposalId: randomUUID(), decision: 'approve' },
     ])
       await expect(guard(input)).rejects.toMatchObject({
         message: madeupSupplierMessage,
         status: 409,
         code: 'MADEUP_SUPPLIER_DETAILS',
       });
+    // Approving is checked once the command has run, on the document it issued.
+    const approve = {
+      action: 'decide',
+      commandId: randomUUID(),
+      proposalId: randomUUID(),
+      decision: 'approve',
+    };
+    for (const kind of ['invoice', 'credit'])
+      await expect(guard(approve, { kind })).rejects.toMatchObject({
+        message: madeupSupplierMessage,
+        status: 409,
+        code: 'MADEUP_SUPPLIER_DETAILS',
+      });
+    // Before the command an approval is not judged: what it would issue is not known yet.
+    await expect(guard(approve)).resolves.toBeUndefined();
   });
   test('payments and rejections never read the supplier; real details pass', async () => {
     supplier = madeupSupplier;
@@ -124,44 +138,38 @@ describe('D3: real invoices stay blocked while supplier details are made up', ()
     await expect(guard(prepare())).resolves.toBeUndefined();
     expect(calls).toHaveLength(1);
   });
-  test('approving a payment or a payment reversal puts no document before a customer, so it is not blocked; approving an invoice still is', async () => {
+  test('approving a payment or a payment reversal puts no document before a customer, so it is not blocked; approving an invoice or a credit note still is', async () => {
     supplier = madeupSupplier;
-    const approve = (proposalId: string) => ({
+    const approve = {
       action: 'decide',
       commandId: randomUUID(),
-      proposalId,
+      proposalId: randomUUID(),
       decision: 'approve',
+    };
+    await expect(guard(approve, { kind: 'payment' })).resolves.toBeUndefined();
+    await expect(guard(approve, { kind: 'payment_reversal' })).resolves.toBeUndefined();
+    await expect(guard(approve, { kind: 'invoice' })).rejects.toMatchObject({
+      code: 'MADEUP_SUPPLIER_DETAILS',
     });
-    const payment = randomUUID();
-    const reversal = randomUUID();
-    const invoice = randomUUID();
-    proposals = [
-      { id: payment, kind: 'payment' },
-      { id: reversal, kind: 'payment_reversal' },
-      { id: invoice, kind: 'invoice' },
-    ];
-    try {
-      await expect(guard(approve(payment))).resolves.toBeUndefined();
-      await expect(guard(approve(reversal))).resolves.toBeUndefined();
-      await expect(guard(approve(invoice))).rejects.toMatchObject({
-        code: 'MADEUP_SUPPLIER_DETAILS',
-      });
-      // A proposal the list does not show is treated as a document.
-      await expect(guard(approve(randomUUID()))).rejects.toMatchObject({
-        code: 'MADEUP_SUPPLIER_DETAILS',
-      });
-    } finally {
-      proposals = [];
-    }
+    await expect(guard(approve, { kind: 'credit' })).rejects.toMatchObject({
+      code: 'MADEUP_SUPPLIER_DETAILS',
+    });
+    // A retry whose first reply was lost is judged on the result it replays, not on a list of waiting proposals, so
+    // an approved payment is never refused afterwards.
+    await expect(guard(approve, { kind: 'payment' })).resolves.toBeUndefined();
+    supplier = realSupplier;
+    await expect(guard(approve, { kind: 'invoice' })).resolves.toBeUndefined();
   });
-  test('the service runs the guard before the command, in the same transaction', async () => {
+  test('the service checks preparing before the command and approving after it, in the same transaction', async () => {
     const { readFileSync } = await import('node:fs');
     const source = readFileSync('packages/delivery/src/customer-invoicing-real-staff.ts', 'utf8');
     const command = source.slice(source.indexOf('async command('));
-    expect(command.indexOf('refuseMadeupIssue(db')).toBeGreaterThan(0);
-    expect(command.indexOf('refuseMadeupIssue(db')).toBeLessThan(
-      command.indexOf('real_invoicing_staff_command'),
-    );
+    const run = command.indexOf('real_invoicing_staff_command');
+    const before = command.indexOf('refuseMadeupIssue(db, action, payload);');
+    const after = command.indexOf('refuseMadeupIssue(db, action, payload, result);');
+    expect(before).toBeGreaterThan(0);
+    expect(before).toBeLessThan(run);
+    expect(after).toBeGreaterThan(run);
   });
   test('a repeated submit of a refused command is refused again', async () => {
     supplier = madeupSupplier;

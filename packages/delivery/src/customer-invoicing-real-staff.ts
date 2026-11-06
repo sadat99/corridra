@@ -21,6 +21,9 @@ const plain = (min: number, max: number) =>
     );
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const amount = z.string().regex(/^[1-9][0-9]{0,11}$/);
+// The shortest reason a payment reversal may carry: the credit note rule. The database holds the same number in
+// customer_private.real_reversal_reason_min(), and the staff screen holds one matching constant.
+export const REVERSAL_REASON_MIN = 10;
 const invoiceRef = { invoiceId: z.uuid(), expectedPosition: z.number().int().min(0).max(1500) };
 export const realInvoicingStaffCommandInput = z.discriminatedUnion('action', [
   z
@@ -87,7 +90,7 @@ export const realInvoicingStaffCommandInput = z.discriminatedUnion('action', [
       commandId: z.uuid(),
       ...invoiceRef,
       paymentSeq: z.number().int().min(1).max(500),
-      reason: plain(10, 500),
+      reason: plain(REVERSAL_REASON_MIN, 500),
     })
     .strict(),
 ]);
@@ -122,30 +125,29 @@ export function madeupSupplierGuardOn(env: NodeJS.ProcessEnv = process.env) {
   return env.VERCEL_ENV === 'production' && env.DATA_ENVIRONMENT === 'real';
 }
 // Commands that put a new real document (invoice or credit note) in front of a customer.
-const issuing = (action: string, payload: Record<string, unknown>) =>
-  action === 'prepare_invoice' ||
-  action === 'prepare_credit' ||
-  (action === 'decide' && payload.decision === 'approve');
+const preparing = (action: string) => action === 'prepare_invoice' || action === 'prepare_credit';
 /**
  * Throws (409, MADEUP_SUPPLIER_DETAILS) when the command would issue a real document while any supplier detail
  * is made up. Runs in the command's own staff transaction, so the details cannot change in between.
+ *
+ * Preparing is checked before the command. Approving is checked after it, on what the command returned: an approval
+ * that issued an invoice or credit note throws and the whole command rolls back, while approving a payment or the
+ * reversal of one puts no document in front of a customer and passes. Running the command first also means a retry
+ * whose first answer was lost replays the recorded result instead of being refused for a payment that exists.
  */
 export async function refuseMadeupIssue(
   db: Pick<DatabaseClient, 'query'>,
   action: string,
   payload: Record<string, unknown>,
+  result?: { kind?: string } | null,
 ) {
-  if (!issuing(action, payload)) return;
+  const approved = action === 'decide' && payload.decision === 'approve';
+  const before = result === undefined && preparing(action);
+  const after =
+    result !== undefined && approved && (result?.kind === 'invoice' || result?.kind === 'credit');
+  if (!before && !after) return;
   const pending = (await db.query('SELECT app.real_invoicing_staff_pending() result')).rows[0]
-    ?.result as { supplier?: SupplierDetails; proposals?: { id: string; kind: string }[] } | null;
-  // Approving a payment or the reversal of one puts no document in front of a customer.
-  if (
-    action === 'decide' &&
-    pending?.proposals?.some(
-      (p) => p.id === payload.proposalId && (p.kind === 'payment' || p.kind === 'payment_reversal'),
-    )
-  )
-    return;
+    ?.result as { supplier?: SupplierDetails } | null;
   if (madeupSupplierFields(pending?.supplier).length)
     throw new DomainError(madeupSupplierMessage, 409, 'MADEUP_SUPPLIER_DETAILS');
 }
@@ -198,14 +200,18 @@ export class CustomerRealInvoicingStaffService {
   async command(ctx: RequestContext, input: unknown) {
     const { action, commandId, ...payload } = realInvoicingStaffCommandInput.parse(input);
     return this.read(ctx, async (db) => {
-      if (this.guardMadeupSupplier()) await refuseMadeupIssue(db, action, payload);
-      return (
+      const guarded = this.guardMadeupSupplier();
+      if (guarded) await refuseMadeupIssue(db, action, payload);
+      const result = (
         await db.query('SELECT app.real_invoicing_staff_command($1,$2,$3) result', [
           commandId,
           action,
           JSON.stringify(payload),
         ])
       ).rows[0].result;
+      // An approval that issued a document throws here and rolls the whole command back.
+      if (guarded) await refuseMadeupIssue(db, action, payload, result);
+      return result;
     });
   }
 }

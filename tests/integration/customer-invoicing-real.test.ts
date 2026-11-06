@@ -17,6 +17,7 @@ import {
 import { CustomerBillingStaffService } from '../../packages/delivery/src/customer-billing-staff';
 import {
   CustomerRealInvoicingStaffService,
+  REVERSAL_REASON_MIN,
   realInvoicingStaffCommandInput,
 } from '../../packages/delivery/src/customer-invoicing-real-staff';
 import { CustomerInvoicingStaffService } from '../../packages/delivery/src/customer-invoicing-staff';
@@ -574,7 +575,7 @@ test('real payments and their reversals need a second person, carry a reason, an
     ...over,
   });
 
-  // While a second person is required, one person cannot record a payment alone.
+  // The one-person payment command is gone in every mode: a payment is prepared, then approved.
   await expect(
     staff.command(first(), {
       action: 'payment',
@@ -586,7 +587,7 @@ test('real payments and their reversals need a second person, carry a reason, an
       method: 'cash',
       reference: 'Cash handed over at the office',
     }),
-  ).rejects.toThrow(/second person/i);
+  ).rejects.toThrow(/prepare it for approval/i);
 
   // A reversal needs a plain reason, an existing payment and the position the person saw.
   await expect(staff.command(first(), reversal({ reason: 'Wrong' }))).rejects.toThrow();
@@ -1259,6 +1260,281 @@ test('one person may do both only when the owner records it; the document says s
   expect(named.invoice).toMatchObject({ selfApproved: false });
   await control({ requireSecondApprover: true, entity: defaultRealInvoicingEntity });
   expect((await staff.pending(first())).secondApproverRequired).toBe(true);
+});
+
+test('with one person allowed, a payment and a reversal still go through a proposal the same person self-approves, marked as such; the named finance approver is still enforced', async () => {
+  const live = async () => {
+    const listed = (await staff.list(first())).invoices as (RealInvoice & { position: number })[];
+    return listed.find((i) => i.number === number('INV', 1))!;
+  };
+  const prep = async (action: string, over: Record<string, unknown>) => {
+    const inv = await live();
+    return staff.command(first(), {
+      action,
+      commandId: randomUUID(),
+      invoiceId: inv.id,
+      expectedPosition: inv.position,
+      ...over,
+    });
+  };
+  const payment = (amountMinor: string) =>
+    prep('prepare_payment', {
+      amountMinor,
+      receivedOn: utcToday(),
+      method: 'bank_transfer',
+      reference: 'Transfer received from Dhaka Imports',
+    });
+  const lastRows = async (table: string) =>
+    (
+      await s.f.owner.query(
+        `SELECT * FROM customer_private.${table} WHERE invoice_id=(SELECT id FROM customer_private.real_invoice WHERE invoice_year=$1 AND invoice_seq=1) ORDER BY seq DESC LIMIT 1`,
+        [singaporeYear()],
+      )
+    ).rows[0];
+  await control({ requireSecondApprover: false });
+  try {
+    // The one-person command stays closed even now, so the decision rules always apply.
+    const inv = await live();
+    await expect(
+      staff.command(first(), {
+        action: 'payment',
+        commandId: randomUUID(),
+        invoiceId: inv.id,
+        expectedPosition: inv.position,
+        amountMinor: '1',
+        receivedOn: utcToday(),
+        method: 'cash',
+        reference: 'Cash handed over at the office',
+      }),
+    ).rejects.toThrow(/prepare it for approval/i);
+    // A payment prepared and approved by the same person is recorded against its proposal and marked self approved.
+    const prepared = await payment('100');
+    expect(prepared).toMatchObject({ kind: 'payment', secondApproverRequired: false });
+    const recorded = await decide(prepared.proposalId, 'approve', first());
+    expect(recorded).toMatchObject({ kind: 'payment', state: 'recorded' });
+    const row = await lastRows('real_invoice_payment');
+    expect(row).toMatchObject({
+      amount_minor: '100',
+      self_approved: true,
+      proposal_id: prepared.proposalId,
+    });
+    expect(row.approved_by).toBe(row.recorded_by);
+    // The same for a reversal of it.
+    const reversal = await prep('prepare_payment_reversal', {
+      paymentSeq: row.seq,
+      reason: 'Entered by mistake while rehearsing',
+    });
+    expect(await decide(reversal.proposalId, 'approve', first())).toMatchObject({
+      kind: 'payment_reversal',
+      state: 'recorded',
+    });
+    const undone = await lastRows('real_invoice_payment_reversal');
+    expect(undone).toMatchObject({
+      payment_seq: row.seq,
+      self_approved: true,
+      proposal_id: reversal.proposalId,
+    });
+    // Whatever the mode, no payment row exists without an approved proposal.
+    await expect(
+      s.f.owner.query(
+        `INSERT INTO customer_private.real_invoice_payment(invoice_id,tenant_id,seq,amount_minor,received_on,method,reference,recorded_by,staff_tenant_id)
+         SELECT invoice_id,tenant_id,seq+1,1,received_on,method,reference,recorded_by,staff_tenant_id FROM customer_private.real_invoice_payment WHERE id=$1`,
+        [row.id],
+      ),
+    ).rejects.toThrow(/approved proposal/i);
+    // Naming a finance approver means only that account can approve, for payments as for invoices.
+    await control({ entity: { ...defaultRealInvoicingEntity, approverEmail: second.email } });
+    const named = await payment('100');
+    await expect(decide(named.proposalId, 'approve', first())).rejects.toThrow(
+      /named finance approver/i,
+    );
+    const byNamed = await decide(named.proposalId, 'approve', second.ctx);
+    expect(byNamed).toMatchObject({ kind: 'payment', state: 'recorded' });
+    expect(await lastRows('real_invoice_payment')).toMatchObject({ self_approved: false });
+    // Leave the invoice as it was for the tests that follow: reverse that last payment, approved by the named person.
+    const tidy = await prep('prepare_payment_reversal', {
+      paymentSeq: (await lastRows('real_invoice_payment')).seq,
+      reason: 'Tidy up after the rehearsal',
+    });
+    await decide(tidy.proposalId, 'approve', second.ctx);
+  } finally {
+    await control({ requireSecondApprover: true, entity: defaultRealInvoicingEntity });
+  }
+  expect((await staff.pending(first())).secondApproverRequired).toBe(true);
+});
+
+test('a retried approval after a lost reply replays the recorded result, even while supplier details are made up, and an approval that would issue a document is refused and leaves nothing behind', async () => {
+  // The same service with the live-environment guard switched on.
+  const guarded = new CustomerRealInvoicingStaffService(s.f.runtime, () => true);
+  const listed = (await staff.list(first())).invoices as (RealInvoice & { position: number })[];
+  const inv = listed.find((i) => i.number === number('INV', 1))!;
+  const prepared = await staff.command(first(), {
+    action: 'prepare_payment',
+    commandId: randomUUID(),
+    invoiceId: inv.id,
+    expectedPosition: inv.position,
+    amountMinor: '100',
+    receivedOn: utcToday(),
+    method: 'bank_transfer',
+    reference: 'Transfer received from Dhaka Imports',
+  });
+  expect((await staff.pending(first())).supplier.madeupFields.length).toBeGreaterThan(0);
+  const commandId = randomUUID();
+  const approve = () =>
+    guarded.command(second.ctx, {
+      action: 'decide',
+      commandId,
+      proposalId: prepared.proposalId,
+      decision: 'approve',
+    });
+  const answer = await approve();
+  expect(answer).toMatchObject({ kind: 'payment', state: 'recorded' });
+  // The reply was lost; the retry gets the same answer and records nothing more.
+  expect(await approve()).toEqual(answer);
+  const paid = await s.f.owner.query(
+    'SELECT count(*)::int n FROM customer_private.real_invoice_payment WHERE proposal_id=$1',
+    [prepared.proposalId],
+  );
+  expect(paid.rows[0].n).toBe(1);
+  // Undo it for the tests that follow.
+  const rev = await staff.command(first(), {
+    action: 'prepare_payment_reversal',
+    commandId: randomUUID(),
+    invoiceId: inv.id,
+    expectedPosition: (await staff.list(first())).invoices.find(
+      (i: RealInvoice) => i.number === number('INV', 1),
+    ).position,
+    paymentSeq: (
+      await s.f.owner.query(
+        'SELECT seq FROM customer_private.real_invoice_payment WHERE proposal_id=$1',
+        [prepared.proposalId],
+      )
+    ).rows[0].seq,
+    reason: 'Tidy up after the retry rehearsal',
+  });
+  await decide(rev.proposalId);
+
+  // Approving an invoice while the details are made up is refused, and the whole command rolls back.
+  const sub = await writePlanAndActivate(otherWorkspaceId, 'inv-other', 'growth-madeup-guard');
+  const invoiceProposal = await staff.command(first(), {
+    action: 'prepare_invoice',
+    commandId: randomUUID(),
+    subscriptionId: sub,
+    periodStart: utcToday(),
+    dueOn: days(30),
+    billToName: 'Chattogram Exports Limited',
+    billToAddress: 'Agrabad Commercial Area, Chattogram 4100, Bangladesh',
+  });
+  const before = (
+    await s.f.owner.query('SELECT count(*)::int n FROM customer_private.real_invoice')
+  ).rows[0].n;
+  await expect(
+    guarded.command(second.ctx, {
+      action: 'decide',
+      commandId: randomUUID(),
+      proposalId: invoiceProposal.proposalId,
+      decision: 'approve',
+    }),
+  ).rejects.toMatchObject({ code: 'MADEUP_SUPPLIER_DETAILS' });
+  expect(
+    (await s.f.owner.query('SELECT count(*)::int n FROM customer_private.real_invoice')).rows[0].n,
+  ).toBe(before);
+  expect(
+    (await staff.pending(first())).proposals.some(
+      (p: { id: string }) => p.id === invoiceProposal.proposalId,
+    ),
+  ).toBe(true);
+  await decide(
+    invoiceProposal.proposalId,
+    'reject',
+    second.ctx,
+    'Left unissued by the guard rehearsal',
+  );
+});
+
+test('a real prepare works at position 1001, the first position the old limit refused', async () => {
+  const listed = (await staff.list(first())).invoices as (RealInvoice & { position: number })[];
+  const inv = listed.find((i) => i.number === number('INV', 1))!;
+  const def = (
+    await s.f.owner.query(
+      "SELECT pg_get_functiondef('customer_private.real_invoicing_position(uuid)'::regprocedure) AS def",
+    )
+  ).rows[0].def as string;
+  const proposals: string[] = [];
+  try {
+    // Make the invoice read as having 1001 payments, credits and reversals, so the real command path and the real
+    // proposal checks are the ones exercised.
+    await s.f.owner.query(
+      'CREATE OR REPLACE FUNCTION customer_private.real_invoicing_position(inv uuid) RETURNS integer LANGUAGE sql STABLE AS $$ SELECT 1001 $$',
+    );
+    const base = { invoiceId: inv.id, expectedPosition: 1001 };
+    const pay = await staff.command(first(), {
+      action: 'prepare_payment',
+      commandId: randomUUID(),
+      ...base,
+      amountMinor: '100',
+      receivedOn: utcToday(),
+      method: 'bank_transfer',
+      reference: 'Transfer received from Dhaka Imports',
+    });
+    const credit = await staff.command(first(), {
+      action: 'prepare_credit',
+      commandId: randomUUID(),
+      ...base,
+      amountMinor: '100',
+      reason: 'A rehearsal credit at a high position',
+    });
+    const seq = (
+      await s.f.owner.query(
+        'SELECT seq FROM customer_private.real_invoice_payment WHERE invoice_id=$1 AND NOT EXISTS(SELECT FROM customer_private.real_invoice_payment_reversal r WHERE r.invoice_id=real_invoice_payment.invoice_id AND r.payment_seq=real_invoice_payment.seq) ORDER BY seq DESC LIMIT 1',
+        [inv.id],
+      )
+    ).rows[0].seq;
+    const rev = await staff.command(first(), {
+      action: 'prepare_payment_reversal',
+      commandId: randomUUID(),
+      ...base,
+      paymentSeq: seq,
+      reason: 'A rehearsal reversal at a high position',
+    });
+    proposals.push(pay.proposalId, credit.proposalId, rev.proposalId);
+    // One more than the most an invoice can hold is refused before the database.
+    await expect(
+      staff.command(first(), {
+        action: 'prepare_payment',
+        commandId: randomUUID(),
+        invoiceId: inv.id,
+        expectedPosition: 1501,
+        amountMinor: '100',
+        receivedOn: utcToday(),
+        method: 'bank_transfer',
+        reference: 'Transfer received from Dhaka Imports',
+      }),
+    ).rejects.toThrow();
+  } finally {
+    await s.f.owner.query(def);
+  }
+  for (const id of proposals)
+    await decide(id, 'reject', second.ctx, 'Withdrawn after the position rehearsal');
+});
+
+test('the shortest reversal reason is one number per layer, and the layers agree', async () => {
+  const sqlMin = (await s.f.owner.query('SELECT customer_private.real_reversal_reason_min() AS n'))
+    .rows[0].n;
+  expect(sqlMin).toBe(REVERSAL_REASON_MIN);
+  const listed = (await staff.list(first())).invoices as (RealInvoice & { position: number })[];
+  const inv = listed.find((i) => i.number === number('INV', 1))!;
+  const short = 'x'.repeat(REVERSAL_REASON_MIN - 1);
+  await expect(
+    staff.command(first(), {
+      action: 'prepare_payment_reversal',
+      commandId: randomUUID(),
+      invoiceId: inv.id,
+      expectedPosition: inv.position,
+      paymentSeq: 1,
+      reason: short,
+    }),
+  ).rejects.toThrow();
 });
 
 test('pausing closes customers and staff and keeps every record; opening again restores them', async () => {

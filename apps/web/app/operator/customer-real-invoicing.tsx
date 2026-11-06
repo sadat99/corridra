@@ -30,6 +30,8 @@ type Period = {
   priceMinor: string;
   currency: string;
 };
+// The shortest reason a payment reversal may carry; the delivery schema and the database each hold one matching constant.
+const REVERSAL_REASON_MIN = 10;
 type ProposalKind = 'invoice' | 'credit' | 'payment' | 'payment_reversal';
 const kindName: Record<ProposalKind, string> = {
   invoice: 'invoice',
@@ -372,8 +374,9 @@ function Scoped({ tenant }: { tenant: string }) {
     if (!detail) return;
     void send(
       pending ?? {
-        // While a second person is required, a payment is prepared here and approved by someone else.
-        action: data?.secondApproverRequired ? 'prepare_payment' : 'payment',
+        // A payment is always prepared here and then approved: by someone else while a second person is required, and
+        // by the same person, marked as self approval, when the owner has recorded that one person may do both.
+        action: 'prepare_payment',
         commandId: crypto.randomUUID(),
         invoiceId: detail.invoice.id,
         expectedPosition: detail.invoice.position,
@@ -384,7 +387,7 @@ function Scoped({ tenant }: { tenant: string }) {
       },
       data?.secondApproverRequired
         ? 'Prepared. A second person now needs to approve the payment.'
-        : 'Payment recorded.',
+        : 'Prepared. Approve it to record the payment.',
     );
   }
   function submitReversal(e: FormEvent) {
@@ -580,7 +583,8 @@ function Scoped({ tenant }: { tenant: string }) {
                       money(p.preview.totalMinor, p.preview.currency)
                     : ''}
                   {(p.kind === 'credit' || p.kind === 'payment') && p.amountMinor
-                    ? ' · amount ' + p.amountMinor
+                    ? ' · amount ' +
+                      (p.invoiceCurrency ? money(p.amountMinor, p.invoiceCurrency) : p.amountMinor)
                     : ''}
                   {p.billToName ? ' · bill to ' + p.billToName : ''}
                   {p.reason ? ' · ' + p.reason : ''}
@@ -762,10 +766,7 @@ function Scoped({ tenant }: { tenant: string }) {
             ))}
           </ol>
           {can('payment') && (
-            <form
-              aria-label={data?.secondApproverRequired ? 'Prepare payment' : 'Record payment'}
-              onSubmit={submitPayment}
-            >
+            <form aria-label="Prepare payment" onSubmit={submitPayment}>
               <fieldset disabled={busy}>
                 <div className="field">
                   <label htmlFor="real-pay-amount">
@@ -819,11 +820,7 @@ function Scoped({ tenant }: { tenant: string }) {
                 </div>
               </fieldset>
               <button type="submit" className="button" disabled={busy}>
-                {pending
-                  ? 'Send the Same Payment Again'
-                  : data?.secondApproverRequired
-                    ? 'Prepare Payment for Approval'
-                    : 'Record Payment'}
+                {pending ? 'Send the Same Payment Again' : 'Prepare Payment for Approval'}
               </button>
             </form>
           )}
@@ -856,13 +853,13 @@ function Scoped({ tenant }: { tenant: string }) {
                 </div>
                 <div className="field">
                   <label htmlFor="real-reverse-reason">
-                    Why it is reversed (plain words, at least 10 characters)
+                    Why it is reversed (plain words, at least {REVERSAL_REASON_MIN} characters)
                   </label>
                   <textarea
                     id="real-reverse-reason"
                     rows={2}
                     required
-                    minLength={10}
+                    minLength={REVERSAL_REASON_MIN}
                     maxLength={500}
                     value={reverseReason}
                     onChange={(e) => change(() => setReverseReason(e.target.value))}

@@ -393,19 +393,23 @@ test('while a second person is required a payment is prepared, an uncertain save
   });
 });
 
-test('when the owner has recorded that one person may do both, a payment is recorded at once', async ({
+test('when the owner has recorded that one person may do both, a payment is still prepared and then approved, and the preparer may approve it', async ({
   page,
 }) => {
   const seen: Seen[] = [];
-  await serve(page, fresh({ second: false }), seen, () => ({ json: { state: 'recorded' } }));
+  await serve(page, fresh({ second: false }), seen, () => ({
+    json: { proposalId: 'p1', kind: 'payment', state: 'waiting_for_approval' },
+  }));
   await page.goto(origin + '/');
   await page.getByRole('button', { name: 'Open INV-2026-000001' }).click();
+  // The one-person payment form is gone in every mode.
+  await expect(page.getByRole('button', { name: 'Record Payment' })).toHaveCount(0);
   await page.getByLabel(/Amount received in SGD minor units/).fill('2000');
   await page.getByLabel('Bank reference (plain text)').fill('DBS transfer 8841');
-  await page.getByRole('button', { name: 'Record Payment' }).click();
-  await expect(page.getByText('Payment recorded.')).toBeVisible();
+  await page.getByRole('button', { name: 'Prepare Payment for Approval' }).click();
+  await expect(page.getByText('Prepared. Approve it to record the payment.')).toBeVisible();
   expect(seen.filter((s) => s.method === 'POST')[0]!.body).toMatchObject({
-    action: 'payment',
+    action: 'prepare_payment',
     amountMinor: '2000',
   });
 });
@@ -484,6 +488,7 @@ test('payments and reversals wait for another person: the preparer is told so an
     billToName: null,
     billToAddress: null,
     invoiceNumber: 'INV-2026-000001',
+    invoiceCurrency: 'SGD',
     amountMinor: '2000',
     receivedOn: '2026-10-28',
     method: 'bank_transfer',
@@ -511,6 +516,8 @@ test('payments and reversals wait for another person: the preparer is told so an
   await page.goto(origin + '/');
   const waiting = page.getByRole('region', { name: 'Waiting for approval' });
   await expect(waiting.getByText(/Payment · Acme Apparel · against INV-2026-000001/)).toBeVisible();
+  // Money is shown with its currency, from the proposal itself, never as a bare number.
+  await expect(waiting.getByText(/amount SGD\s?20\.00/)).toBeVisible();
   await expect(
     waiting.getByText(/You prepared this. Another person needs to approve/),
   ).toBeVisible();
