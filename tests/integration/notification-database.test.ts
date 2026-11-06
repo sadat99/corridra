@@ -1823,6 +1823,7 @@ describe('G6 unmute, a Move made in or before a muted period', () => {
       action: 'set',
       commandId,
       missionId: who.missionId,
+      expectedVersion: await moves.version(staff(who), who.missionId),
       moves: [{ verb: 'Add', holder: 'customer', dueOn: null, object }],
     });
     return commandId;
@@ -1904,6 +1905,7 @@ describe("G6 unmute, the guardian's cases", () => {
       action: 'set',
       commandId,
       missionId: who.missionId,
+      expectedVersion: await moves.version(staff(who), who.missionId),
       moves: [{ verb: 'Add', holder: 'customer', dueOn: null, object }],
     });
     return commandId;
