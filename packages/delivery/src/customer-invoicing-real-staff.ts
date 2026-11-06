@@ -21,7 +21,10 @@ const plain = (min: number, max: number) =>
     );
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const amount = z.string().regex(/^[1-9][0-9]{0,11}$/);
-const invoiceRef = { invoiceId: z.uuid(), expectedPosition: z.number().int().min(0).max(1000) };
+// The shortest reason a payment reversal may carry: the owner's ruling of 6 Nov 2026 (credit notes keep 10). The database holds the same number in
+// customer_private.real_reversal_reason_min(), and the staff screen holds one matching constant.
+export const REVERSAL_REASON_MIN = 20;
+const invoiceRef = { invoiceId: z.uuid(), expectedPosition: z.number().int().min(0).max(1500) };
 export const realInvoicingStaffCommandInput = z.discriminatedUnion('action', [
   z
     .object({
@@ -56,6 +59,9 @@ export const realInvoicingStaffCommandInput = z.discriminatedUnion('action', [
       (v) => v.decision === 'approve' || v.reason !== undefined,
       'A rejection needs a reason',
     ),
+  // The one-person payment command is always refused by the database ("prepare it for approval"): a payment is prepared
+  // with `prepare_payment` and then approved with `decide`, by another person or, when the owner has allowed it, by the
+  // same person marked as self approval. The shape stays here so the refusal is the database's, in plain words.
   z
     .object({
       action: z.literal('payment'),
@@ -65,6 +71,27 @@ export const realInvoicingStaffCommandInput = z.discriminatedUnion('action', [
       receivedOn: day,
       method: z.enum(['bank_transfer', 'cash', 'other']),
       reference: plain(2, 120),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal('prepare_payment'),
+      commandId: z.uuid(),
+      ...invoiceRef,
+      amountMinor: amount,
+      receivedOn: day,
+      method: z.enum(['bank_transfer', 'cash', 'other']),
+      reference: plain(2, 120),
+    })
+    .strict(),
+  // Reversing a payment entered in error: prepared with a reason, approved by a second person. The payment stays.
+  z
+    .object({
+      action: z.literal('prepare_payment_reversal'),
+      commandId: z.uuid(),
+      ...invoiceRef,
+      paymentSeq: z.number().int().min(1).max(500),
+      reason: plain(REVERSAL_REASON_MIN, 500),
     })
     .strict(),
 ]);
@@ -99,20 +126,32 @@ export function madeupSupplierGuardOn(env: NodeJS.ProcessEnv = process.env) {
   return env.VERCEL_ENV === 'production' && env.DATA_ENVIRONMENT === 'real';
 }
 // Commands that put a new real document (invoice or credit note) in front of a customer.
-const issuing = (action: string, payload: Record<string, unknown>) =>
-  action === 'prepare_invoice' ||
-  action === 'prepare_credit' ||
-  (action === 'decide' && payload.decision === 'approve');
+const preparing = (action: string) => action === 'prepare_invoice' || action === 'prepare_credit';
 /**
  * Throws (409, MADEUP_SUPPLIER_DETAILS) when the command would issue a real document while any supplier detail
  * is made up. Runs in the command's own staff transaction, so the details cannot change in between.
+ *
+ * Preparing is checked before the command. Approving is checked after it, on what the command returned: an approval
+ * that issued anything other than a payment or the reversal of one throws and the whole command rolls back, while
+ * approving a payment or its reversal puts no document in front of a customer and passes. Running the command first also means a retry
+ * whose first answer was lost replays the recorded result instead of being refused for a payment that exists.
  */
 export async function refuseMadeupIssue(
   db: Pick<DatabaseClient, 'query'>,
   action: string,
   payload: Record<string, unknown>,
+  result?: { kind?: string } | null,
 ) {
-  if (!issuing(action, payload)) return;
+  const approved = action === 'decide' && payload.decision === 'approve';
+  const before = result === undefined && preparing(action);
+  // Fail closed: only the two kinds known to put no document before a customer pass, so a document kind added later
+  // (or an answer with no kind) is guarded until someone decides otherwise.
+  const after =
+    result !== undefined &&
+    approved &&
+    result?.kind !== 'payment' &&
+    result?.kind !== 'payment_reversal';
+  if (!before && !after) return;
   const pending = (await db.query('SELECT app.real_invoicing_staff_pending() result')).rows[0]
     ?.result as { supplier?: SupplierDetails } | null;
   if (madeupSupplierFields(pending?.supplier).length)
@@ -167,14 +206,18 @@ export class CustomerRealInvoicingStaffService {
   async command(ctx: RequestContext, input: unknown) {
     const { action, commandId, ...payload } = realInvoicingStaffCommandInput.parse(input);
     return this.read(ctx, async (db) => {
-      if (this.guardMadeupSupplier()) await refuseMadeupIssue(db, action, payload);
-      return (
+      const guarded = this.guardMadeupSupplier();
+      if (guarded) await refuseMadeupIssue(db, action, payload);
+      const result = (
         await db.query('SELECT app.real_invoicing_staff_command($1,$2,$3) result', [
           commandId,
           action,
           JSON.stringify(payload),
         ])
       ).rows[0].result;
+      // An approval that issued a document throws here and rolls the whole command back.
+      if (guarded) await refuseMadeupIssue(db, action, payload, result);
+      return result;
     });
   }
 }

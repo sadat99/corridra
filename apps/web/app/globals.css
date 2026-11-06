@@ -2848,37 +2848,6 @@ th {
   font-size: var(--text-md);
   color: var(--text-2);
 }
-.ux-today-lists {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
-  gap: var(--space-6);
-  margin-bottom: var(--space-3);
-}
-.ux-today-list h3 {
-  margin: 0 0 var(--space-2);
-  font-size: var(--text-base);
-  font-weight: 600;
-}
-.ux-today-list ul {
-  display: grid;
-  gap: var(--space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.ux-today-list li {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  padding: var(--space-3);
-  border-left: 3px solid var(--brand);
-  background: var(--surface-subtle);
-  font-size: var(--text-md);
-  color: var(--text-2);
-}
-.ux-today-list li strong {
-  color: var(--text-strong);
-}
 .ux-today-more,
 .ux-today-empty {
   margin: var(--space-2) 0 0;
@@ -8658,7 +8627,6 @@ th {
   .guide-group span,
   .ux-brief-summary dt,
   .ux-state-label,
-  .ux-today-list h3,
   .ux-mission-next h3,
   .ac1-example-tag,
   .ac1-step-number,

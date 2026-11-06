@@ -80,7 +80,8 @@ export async function OperatorEntry({
     <WorkspaceShell
       eyebrow={shellsV2 ? 'TEAM WORKSPACE' : 'OPERATOR WORKSPACE'}
       title={heading ?? 'Your workspace.'}
-      className="ux-operator-home"
+      // When the page heading already says Today, the Today panel keeps its heading for screen readers only.
+      className={heading === 'Today' ? 'ux-operator-home ux-titled-today' : 'ux-operator-home'}
     >
       <OperatorFlags replyReview={uxSwitchOn('CORRIDRA_REPLY_PAGE')}>
         <Workspace

@@ -17,9 +17,12 @@ import {
   readTeamContext,
   subscribeTeamContext,
 } from '../../lib/ux/team-context';
-import { CustomerBar } from './customer-bar';
+import { CorridraIcon } from '../corridra-icon';
+import { BarInbox, CustomerBar, LanguageMenuGroup } from './customer-bar';
 import { LeftNavMenuButton } from './left-nav';
+import { MenuLink } from './menu-link';
 import { NotificationInbox } from './notification-inbox';
+import { OverflowMenu } from './overflow-menu';
 
 const homes: Record<SignedInShell, string> = {
   team: '/operator',
@@ -102,12 +105,18 @@ export function AppHeader({
           ? `/api/notifications?tenant=${encodeURIComponent(tenant)}`
           : null;
   // The customer header is one slim row (the menu button of the left bar, the brand and the customer bar).
-  // Team and contributor output is unchanged, byte for byte (tests/integration/revamp-app-header-guard.test.ts).
+  // The team header uses the same quiet tools: the inbox as an icon with its unread count, and the language
+  // and the website in an account menu (owner, 6 Nov 2026). Contributor output is unchanged, byte for byte
+  // (tests/integration/revamp-app-header-guard.test.ts pins the team and contributor output).
   const customer = kind === 'customer';
   return (
     <header
       className={
-        customer ? 'site-header ux-app-header ux-customer-header' : 'site-header ux-app-header'
+        customer
+          ? 'site-header ux-app-header ux-customer-header'
+          : kind === 'team'
+            ? 'site-header ux-app-header ux-team-header'
+            : 'site-header ux-app-header'
       }
       data-shell={kind}
       lang={meta.html}
@@ -131,6 +140,26 @@ export function AppHeader({
           <CustomerBar notifications={notifications} />
           <CornerDock variant="header" />
         </>
+      ) : kind === 'team' ? (
+        <div className="ux-app-tools ux-team-tools">
+          {notifications && inboxEndpoint ? (
+            <BarInbox
+              key={inboxEndpoint}
+              counted
+              endpoint={inboxEndpoint}
+              label={t(shellWords.inbox)}
+            />
+          ) : null}
+          <OverflowMenu
+            label="Account menu"
+            trigger={<CorridraIcon name="people" />}
+            className="ux-bar-account"
+          >
+            <LanguageMenuGroup />
+            <MenuLink href="/">Corridra Website</MenuLink>
+          </OverflowMenu>
+          <CornerDock variant="header" />
+        </div>
       ) : (
         <div className="ux-app-tools">
           {notifications && inboxEndpoint ? (

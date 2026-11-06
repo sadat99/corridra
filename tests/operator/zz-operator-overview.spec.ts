@@ -63,7 +63,8 @@ test('operator overview follows the bento references and preserves every authori
         height: link.getBoundingClientRect().height,
       })),
     );
-    expect(cards.every((card) => card.width >= 110 && card.height >= 76)).toBe(true);
+    // The shortcuts are a compact grid of 44 px links in the Start card (owner, 6 Nov 2026).
+    expect(cards.every((card) => card.width >= 110 && card.height >= 44)).toBe(true);
     await page.evaluate(() => {
       (document.activeElement as HTMLElement | null)?.blur();
       window.scrollTo({ top: 0, behavior: 'instant' });
