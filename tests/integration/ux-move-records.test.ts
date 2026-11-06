@@ -86,13 +86,20 @@ describe('the shape of a Move', () => {
     const id = '11111111-1111-4111-8111-111111111111';
     const move = { verb: 'Add', object: 'a thing', holder: 'customer' };
     expect(
-      moveCommand.safeParse({ action: 'set', commandId: id, missionId: id, moves: [] }).success,
+      moveCommand.safeParse({
+        action: 'set',
+        commandId: id,
+        missionId: id,
+        expectedVersion: 0,
+        moves: [],
+      }).success,
     ).toBe(false);
     expect(
       moveCommand.safeParse({
         action: 'set',
         commandId: id,
         missionId: id,
+        expectedVersion: 0,
         moves: Array(6).fill(move),
       }).success,
     ).toBe(false);

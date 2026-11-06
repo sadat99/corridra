@@ -504,15 +504,22 @@ describe('setting and reading', () => {
 describe('who may write', () => {
   test('a viewer, a member of another tenant and a stranger cannot set a Move', async () => {
     const list = [{ verb: 'Read', object: 'the report' }];
+    // An explicit version is passed, so it is command() itself that refuses these people, not the read that would
+    // otherwise fetch the version first.
     await expect(
-      set(requests.alice.missionId, list, randomUUID(), f.users.viewer.ctx),
+      set(requests.alice.missionId, list, randomUUID(), f.users.viewer.ctx, 0),
     ).rejects.toThrow('Access denied');
     await expect(
-      set(requests.alice.missionId, list, randomUUID(), f.users.other.ctx),
-    ).rejects.toThrow();
+      set(requests.alice.missionId, list, randomUUID(), f.users.other.ctx, 0),
+    ).rejects.toThrow('Mission not found'); // a member of another workspace cannot even see this mission
     await expect(
-      set(requests.alice.missionId, list, randomUUID(), f.users.outsider.ctx),
-    ).rejects.toThrow();
+      set(requests.alice.missionId, list, randomUUID(), f.users.outsider.ctx, 0),
+    ).rejects.toThrow('Access denied');
+    const written = await f.owner.query(
+      'SELECT count(*)::int n FROM app.mission_move_command WHERE mission_id=$1 AND actor_id IN ($2,$3,$4)',
+      [requests.alice.missionId, f.users.viewer.id, f.users.other.id, f.users.outsider.id],
+    );
+    expect(written.rows[0].n).toBe(0);
   });
 
   test('a Move needs a fresh authenticator check', async () => {

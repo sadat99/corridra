@@ -65,8 +65,14 @@ export function MissionMoves({ tenant, missionId }: { tenant: string; missionId:
       });
       const data = await response.json();
       if (!response.ok) {
+        // A refusal is final for this command id: the next try is a new command. Only an answer that never arrived,
+        // or a server error, leaves the outcome unknown and keeps the id so a resend is answered once.
+        if (response.status < 500) setCommandId(crypto.randomUUID());
         // Someone else changed the Moves first: show the current list so the person can decide again.
-        if (response.status === 409) setReload((count) => count + 1);
+        if (response.status === 409) {
+          setReload((count) => count + 1);
+          throw new Error('This changed while you were editing. The latest Moves are shown.');
+        }
         throw new Error(data.error ?? 'The Move was not saved');
       }
       setMessage(data.replayed ? 'Already saved.' : done);
