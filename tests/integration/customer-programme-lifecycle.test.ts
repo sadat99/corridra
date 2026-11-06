@@ -225,7 +225,7 @@ test('every reader of the name reads the current view, none reads the base table
       'customer.programme_template_capture(uuid,uuid)',
       'customer.programmes(uuid,uuid,integer)',
       'customer_private.programme_active_count(uuid)',
-      'customer_private.programme_archived_guard(uuid,uuid,boolean)',
+      'customer_private.programme_archived_guard(uuid,uuid,boolean,boolean)',
       'customer_private.series_json(uuid)',
       'customer_private.service_request_context(uuid,uuid,text,text)',
     ].sort(),
@@ -483,6 +483,9 @@ test('a programme whose name has a control character inside can still be archive
 
 const archivedText =
   'This programme is archived. Restore it to accept new invitations and registrations.';
+// A participant cannot restore anything, so they are not told to.
+const archivedParticipantText =
+  'This programme is archived and is not accepting registrations right now.';
 const inviteTo = (programme: string, extra: Record<string, unknown> = {}) => ({
   action: 'invite' as const,
   commandId: randomUUID(),
@@ -529,11 +532,11 @@ test('an archived programme issues no invitations and takes no registrations; Re
   });
   await expect(participants('bob').preview({ token: issued.token })).rejects.toMatchObject({
     code: '23514',
-    message: archivedText,
+    message: archivedParticipantText,
   });
   await expect(participants('bob').command(acceptWith(issued.token, p.id))).rejects.toMatchObject({
     code: '23514',
-    message: archivedText,
+    message: archivedParticipantText,
   });
   await expect(
     participants().command({
@@ -590,6 +593,7 @@ test('a registration that starts while an archive is still uncommitted waits for
   const p = await create('Synthetic archive race programme');
   const issued = await participants().command(inviteTo(p.id));
   let registration: Promise<unknown> | undefined;
+  let waited = false;
   await probe().run(async (db) => {
     await db.query('SELECT customer.programme_lifecycle($1,$2,$3,$4,$5,$6::jsonb)', [
       randomUUID(),
@@ -610,11 +614,16 @@ test('a registration that starts while an archive is still uncommitted waits for
       const waiting = await f.owner.query(
         "SELECT count(*)::int AS n FROM pg_stat_activity WHERE wait_event_type='Lock'",
       );
-      if (waiting.rows[0].n > 0) break;
+      if (waiting.rows[0].n > 0) {
+        waited = true;
+        break;
+      }
       await new Promise((done) => setTimeout(done, 100));
     }
+    // The registration really did block on the lock this uncommitted archive holds; otherwise the test proves nothing.
+    expect(waited).toBe(true);
   });
-  expect(await registration).toMatchObject({ code: '23514', message: archivedText });
+  expect(await registration).toMatchObject({ code: '23514', message: archivedParticipantText });
   expect((await counts(p.id)).registrations).toBe(0);
 });
 

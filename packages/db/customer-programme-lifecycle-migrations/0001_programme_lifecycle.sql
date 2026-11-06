@@ -120,15 +120,16 @@ GRANT EXECUTE ON FUNCTION customer.programme_lifecycle(uuid,uuid,uuid,text,integ
 -- Owner decision of 6 Nov 2026: an archived programme accepts no new invitations and no new registrations until it is restored.
 -- Checked inside the writing transaction, under the same lock the archive takes, so a concurrent archive cannot let one slip through.
 -- Existing invitations are neither revoked nor extended; they simply cannot be used while archived. hold=false (a read) takes no lock.
-CREATE FUNCTION customer_private.programme_archived_guard(target uuid,programme uuid,hold boolean) RETURNS void
+CREATE FUNCTION customer_private.programme_archived_guard(target uuid,programme uuid,hold boolean,organiser boolean DEFAULT true) RETURNS void
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
 BEGIN
  IF hold THEN PERFORM pg_advisory_xact_lock(hashtextextended('customer.programme_lifecycle:'||target::text,0)); END IF;
  IF EXISTS(SELECT FROM customer_private.programme_current c WHERE c.id=programme AND c.tenant_id=target AND c.archived) THEN
-  RAISE EXCEPTION 'This programme is archived. Restore it to accept new invitations and registrations.' USING ERRCODE='23514';
+  -- The organiser is told how to reopen it; a participant is only told it is not taking registrations (they cannot restore it).
+  RAISE EXCEPTION '%',CASE WHEN organiser THEN 'This programme is archived. Restore it to accept new invitations and registrations.' ELSE 'This programme is archived and is not accepting registrations right now.' END USING ERRCODE='23514';
  END IF;
 END $$;
-REVOKE ALL ON FUNCTION customer_private.programme_archived_guard(uuid,uuid,boolean) FROM PUBLIC,corridra_runtime,corridra_auth;
+REVOKE ALL ON FUNCTION customer_private.programme_archived_guard(uuid,uuid,boolean,boolean) FROM PUBLIC,corridra_runtime,corridra_auth;
 
 -- Readers and the creation cap. Each block first checks that the installed function is exactly the real-use definition it replaces.
 
@@ -391,7 +392,7 @@ BEGIN
  IF NOT customer_private.participant_invitation_active(i.id) OR EXISTS(SELECT FROM customer_private.programme_registration WHERE invitation_id=i.id) THEN
   RAISE EXCEPTION 'Invitation unavailable' USING ERRCODE='42501';
  END IF;
- PERFORM customer_private.programme_archived_guard(i.workspace_id,i.programme_id,false);
+ PERFORM customer_private.programme_archived_guard(i.workspace_id,i.programme_id,false,false);
  SELECT jsonb_build_object('programmeId',p.id,'name',p.name,'reportingPurpose',p.reporting_purpose,'expiresAt',i.expires_at,'synthetic',customer_private.synthetic_context())
  INTO result FROM customer_private.programme_current p WHERE p.tenant_id=i.workspace_id AND p.id=i.programme_id;
  IF customer.actor_id() IS DISTINCT FROM actor OR NOT customer_private.participant_invitation_active(i.id) THEN RAISE EXCEPTION 'Invitation unavailable' USING ERRCODE='42501'; END IF;
@@ -601,7 +602,7 @@ BEGIN
    IF registration.principal_id<>actor OR EXISTS(SELECT FROM customer_private.programme_participant_revocation WHERE registration_id=registration.id) THEN RAISE EXCEPTION 'Registration unavailable' USING ERRCODE='42501'; END IF;
    IF registration.display_label<>input->>'displayLabel' THEN RAISE EXCEPTION 'Registration conflicts' USING ERRCODE='23514'; END IF;
   ELSE
-   PERFORM customer_private.programme_archived_guard(target,programme,true);
+   PERFORM customer_private.programme_archived_guard(target,programme,true,false);
    INSERT INTO customer_private.programme_registration(workspace_id,programme_id,invitation_id,principal_id,display_label)
    VALUES(target,programme,invitation.id,actor,input->>'displayLabel') RETURNING * INTO registration;changed:=true;
   END IF;

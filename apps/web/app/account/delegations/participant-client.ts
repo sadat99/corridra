@@ -32,6 +32,9 @@ type View = {
 // The refusal the database gives while a programme is archived (owner decision of 6 Nov 2026), shown as it is.
 export const archivedProgrammeMessage =
   'This programme is archived. Restore it to accept new invitations and registrations.';
+// What a participant reads for the same rule: they cannot restore anything.
+export const archivedParticipantMessage =
+  'This programme is archived and is not accepting registrations right now.';
 export type ParticipantCommand = Record<string, unknown> & { action: string; commandId?: string };
 export const isUuid = (v: unknown): v is string =>
   typeof v === 'string' &&
@@ -414,8 +417,8 @@ export function useParticipantView(
           const refusal = String(
             ((await response.json().catch(() => null)) as { error?: string } | null)?.error ?? '',
           );
-          if (refusal === archivedProgrammeMessage) {
-            setNotice(archivedProgrammeMessage);
+          if (refusal === archivedProgrammeMessage || refusal === archivedParticipantMessage) {
+            setNotice(refusal);
             return;
           }
           setData(null);

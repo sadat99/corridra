@@ -125,6 +125,9 @@ function ScopedProgrammes({
     );
     return hash ? hash[1]!.toLowerCase() : null;
   });
+  // The programme named in the address when the page opened (or when Back restored an address). Only that link may open the
+  // Archived list by itself; archiving a programme from this page never switches the view.
+  const [linkTarget, setLinkTarget] = useState<string | null>(chosenId);
   const [financeProgramme, setFinanceProgramme] = useState<string | null>(null);
   const [coordinationProgramme, setCoordinationProgramme] = useState<string | null>(null);
   const [termsProgramme, setTermsProgramme] = useState<string | null>(null);
@@ -151,6 +154,7 @@ function ScopedProgrammes({
       // Leaving the Archived list also leaves a link that pointed into it.
       url.searchParams.delete('programme');
       setChosenId(null);
+      setLinkTarget(null);
     }
     window.history.pushState(window.history.state, '', url);
   };
@@ -161,6 +165,7 @@ function ScopedProgrammes({
       setShowArchived(query.get('archived') === '1');
       // The programme named in the restored address is the one shown, not whichever comes first.
       setChosenId(query.get('programme'));
+      setLinkTarget(query.get('programme'));
     };
     window.addEventListener('popstate', sync);
     return () => window.removeEventListener('popstate', sync);
@@ -206,56 +211,70 @@ function ScopedProgrammes({
     setMessage('Account or workspace access changed. Local planning details were cleared.');
     setStatus('denied');
   }, [clearPlanningDraft]);
+  // One reader for a page of programmes, used by the list and by the single-row refresh, so both check the answer the same way:
+  // provenance, workspace, at most 25 rows, no duplicate ids, and a next cursor that is the last id on the page.
+  const fetchPage = useCallback(
+    async (
+      after: string | undefined,
+      signal: AbortSignal,
+    ): Promise<
+      | { kind: 'ok'; programmes: Programme[]; nextAfter: string | null }
+      | { kind: 'denied' }
+      | { kind: 'unavailable' }
+    > => {
+      const query = new URLSearchParams({ workspaceId, ...(after ? { after } : {}) });
+      const response = await fetch('/api/customer-programmes?' + query, {
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { 'x-corridra-customer-subject': subject, 'x-corridra-customer-issuer': issuer },
+        signal,
+      });
+      if ([401, 403, 409].includes(response.status)) return { kind: 'denied' };
+      if (response.status === 503) return { kind: 'unavailable' };
+      if (!response.ok) throw Error('Programme list failed');
+      const data = await response.json();
+      if (
+        !data ||
+        !customerProvenanceAllowed(data.synthetic) ||
+        data.workspaceId !== workspaceId ||
+        !Array.isArray(data.programmes) ||
+        data.programmes.length > 25 ||
+        !data.programmes.every((p: unknown) => programme(p, workspaceId)) ||
+        new Set(data.programmes.map((p: Programme) => p.id)).size !== data.programmes.length ||
+        !(
+          data.nextAfter === null ||
+          (uuid(data.nextAfter) && data.nextAfter === data.programmes.at(-1)?.id)
+        )
+      )
+        throw Error('Invalid programme list');
+      return { kind: 'ok', programmes: data.programmes, nextAfter: data.nextAfter };
+    },
+    [subject, issuer, workspaceId],
+  );
   const load = useCallback(
     async (after?: string) => {
       getTask.current?.abort();
       const task = new AbortController();
       getTask.current = task;
       try {
-        const query = new URLSearchParams({ workspaceId, ...(after ? { after } : {}) });
-        const response = await fetch('/api/customer-programmes?' + query, {
-          credentials: 'same-origin',
-          cache: 'no-store',
-          headers: { 'x-corridra-customer-subject': subject, 'x-corridra-customer-issuer': issuer },
-          signal: task.signal,
-        });
+        const page = await fetchPage(after, task.signal);
         if (task.signal.aborted || !active.current) return;
-        if ([401, 403, 409].includes(response.status)) {
+        if (page.kind === 'denied') {
           deny();
           return;
         }
-        if (response.status === 503) {
+        if (page.kind === 'unavailable') {
           setRows([]);
           setNext(null);
           setStatus('unavailable');
           return;
         }
-        if (!response.ok) throw Error('Programme list failed');
-        const data = await response.json();
-        if (task.signal.aborted || !active.current) return;
-        if (
-          !data ||
-          !customerProvenanceAllowed(data.synthetic) ||
-          data.workspaceId !== workspaceId ||
-          !Array.isArray(data.programmes) ||
-          data.programmes.length > 25 ||
-          !data.programmes.every((p: unknown) => programme(p, workspaceId)) ||
-          new Set(data.programmes.map((p: Programme) => p.id)).size !== data.programmes.length ||
-          !(
-            data.nextAfter === null ||
-            (uuid(data.nextAfter) && data.nextAfter === data.programmes.at(-1)?.id)
-          )
-        )
-          throw Error('Invalid programme list');
         setRows((old) =>
           after
-            ? [
-                ...old,
-                ...data.programmes.filter((p: Programme) => !old.some((item) => item.id === p.id)),
-              ]
-            : data.programmes,
+            ? [...old, ...page.programmes.filter((p) => !old.some((item) => item.id === p.id))]
+            : page.programmes,
         );
-        setNext(data.nextAfter);
+        setNext(page.nextAfter);
         setStatus('ready');
       } catch {
         if (!task.signal.aborted && active.current) {
@@ -265,49 +284,49 @@ function ScopedProgrammes({
         }
       }
     },
-    [subject, issuer, workspaceId, deny],
+    [fetchPage, deny],
   );
   // Refresh one programme in place after a stale answer: walk the pages until it is found and replace only that row, so rows
   // from later pages (and the controls typed into) are never dropped by a reload that only reaches the first page.
+  const refreshTask = useRef<AbortController | null>(null);
   const refreshProgramme = useCallback(
     async (id: string) => {
+      refreshTask.current?.abort();
+      const task = new AbortController();
+      refreshTask.current = task;
+      const gone = () => task.signal.aborted || !active.current;
+      const lost = (words: string) => {
+        if (!gone()) setStaleNote(words);
+      };
       let cursor: string | undefined;
       const seen = new Set<string>();
-      const lost = (words: string) => {
-        if (active.current) setStaleNote(words);
-      };
-      for (;;) {
-        const query = new URLSearchParams({ workspaceId, ...(cursor ? { after: cursor } : {}) });
-        const response = await fetch('/api/customer-programmes?' + query, {
-          credentials: 'same-origin',
-          cache: 'no-store',
-          headers: { 'x-corridra-customer-subject': subject, 'x-corridra-customer-issuer': issuer },
-        }).catch(() => null);
-        if (!active.current) return;
-        if (!response?.ok) return lost('The latest version could not be loaded. Reload the page.');
-        const data = await response.json().catch(() => null);
-        if (!active.current) return;
-        if (
-          !data ||
-          data.workspaceId !== workspaceId ||
-          !Array.isArray(data.programmes) ||
-          !data.programmes.every((p: unknown) => programme(p, workspaceId))
-        )
-          return lost('The latest version could not be loaded. Reload the page.');
-        const hit = (data.programmes as Programme[]).find((p) => p.id === id);
-        if (hit) {
-          setRows((old) => old.map((p) => (p.id === id ? hit : p)));
-          setArchivedMidEdit(hit.archived === true ? { id, name: hit.name } : null);
-          return;
+      try {
+        for (;;) {
+          const page = await fetchPage(cursor, task.signal);
+          if (gone()) return;
+          if (page.kind === 'denied') {
+            deny();
+            return;
+          }
+          if (page.kind === 'unavailable')
+            return lost('The latest version could not be loaded. Reload the page.');
+          const hit = page.programmes.find((p) => p.id === id);
+          if (hit) {
+            setRows((old) => old.map((p) => (p.id === id ? hit : p)));
+            setArchivedMidEdit(hit.archived === true ? { id, name: hit.name } : null);
+            return;
+          }
+          // Follow the pages until the list ends; a cursor seen twice would loop, so it ends the walk too.
+          if (!page.nextAfter || seen.has(page.nextAfter))
+            return lost('That programme could no longer be found. Reload the page.');
+          seen.add(page.nextAfter);
+          cursor = page.nextAfter;
         }
-        // Follow the pages until the list ends; a cursor seen twice would loop, so it ends the walk too.
-        if (!data.nextAfter || seen.has(data.nextAfter))
-          return lost('That programme could no longer be found. Reload the page.');
-        seen.add(data.nextAfter);
-        cursor = data.nextAfter;
+      } catch {
+        lost('The latest version could not be loaded. Reload the page.');
       }
     },
-    [subject, issuer, workspaceId],
+    [fetchPage, deny],
   );
   useEffect(() => {
     active.current = true;
@@ -317,6 +336,7 @@ function ScopedProgrammes({
     const hide = () => {
       getTask.current?.abort();
       postTask.current?.abort();
+      refreshTask.current?.abort();
       setVisible(false);
       setRows([]);
       setNext(null);
@@ -337,6 +357,7 @@ function ScopedProgrammes({
       active.current = false;
       getTask.current?.abort();
       postTask.current?.abort();
+      refreshTask.current?.abort();
       window.removeEventListener('pagehide', hide);
       window.removeEventListener('pageshow', show);
       document.removeEventListener('visibilitychange', visibility);
@@ -447,7 +468,7 @@ function ScopedProgrammes({
   // A link to an archived programme shows the Archived list, so it opens that programme and not another.
   const archivedView =
     showArchived ||
-    (chosenId !== null && rows.some((p) => p.id === chosenId && p.archived === true));
+    (linkTarget !== null && rows.some((p) => p.id === linkTarget && p.archived === true));
   const visibleRows = rows.filter((p) =>
     archivedView ? p.archived === true : p.archived !== true,
   );
@@ -467,9 +488,10 @@ function ScopedProgrammes({
   // programme asked for is found (or, with the filter on, until there are no more), so an empty list is never a half answer.
   useEffect(() => {
     if (status !== 'ready' || !next) return;
-    if (archivedView || (chosenId !== null && !rows.some((p) => p.id === chosenId)))
+    // It stops as soon as the view has something to show and any programme asked for is found; Load More takes over from there.
+    if (visibleRows.length === 0 || (chosenId !== null && !rows.some((p) => p.id === chosenId)))
       void Promise.resolve().then(() => load(next));
-  }, [status, next, archivedView, chosenId, rows, load]);
+  }, [status, next, visibleRows.length, chosenId, rows, load]);
   const linkMissing =
     status === 'ready' && !next && chosenId !== null && !rows.some((p) => p.id === chosenId);
   const choose = (id: string) => {
@@ -480,6 +502,7 @@ function ScopedProgrammes({
       return next;
     });
     setChosenId(id);
+    setLinkTarget(null);
     const url = new URL(window.location.href);
     url.searchParams.set('programme', id);
     window.history.replaceState(window.history.state, '', url);
@@ -488,6 +511,7 @@ function ScopedProgrammes({
   // An archive keeps an Undo for ten seconds; a restore that the cap refuses says so in plain words.
   const archiveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const applyChange = (change: LifecycleChange, before: LifecycleProgramme) => {
+    setLinkTarget(null);
     setStaleNote('');
     setArchivedMidEdit(null);
     // Whatever the answer, the programme stays mounted (hidden by the filter if need be) so typed text and the chosen tab survive.

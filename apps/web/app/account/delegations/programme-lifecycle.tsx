@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { formEn } from '../../../lib/i18n/form-words/en';
 
 // Rename, archive and restore one programme (CRUD gap G7). The database owns every rule; this only asks and shows the answer.
 export type LifecycleProgramme = {
@@ -52,7 +53,7 @@ export async function changeProgramme(request: Request): Promise<Outcome> {
       return {
         ok: false,
         kind: 'limited',
-        message: 'Too many requests just now. Wait a minute, then try again.',
+        message: formEn['form.message.tooMany'],
       };
     if (response.status === 503)
       return {
@@ -76,7 +77,9 @@ export async function changeProgramme(request: Request): Promise<Outcome> {
             kind: 'refused',
             message: text.startsWith('The request conflicts')
               ? 'This change could not be made. Reload the page and try again.'
-              : text,
+              : text === 'Programme name and reporting purpose required'
+                ? 'The name or the purpose is not allowed. A name cannot contain tabs or line breaks, and both must keep their length limits.'
+                : text,
           };
     }
     if (!response.ok) throw Error('Programme change failed');
@@ -120,8 +123,11 @@ export function ProgrammeLifecycle({
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState('');
   const [discarding, setDiscarding] = useState(false);
-  // The version the person saw when someone else saved first; set until they choose Keep Mine or Use Theirs.
-  const [conflictFrom, setConflictFrom] = useState<number | null>(null);
+  // What the person saw when Rename opened. Saving always sends this version, never a newer one a reload brought in, so a
+  // colleague's change is shown as a choice (Keep Mine / Use Theirs) and never overwritten silently.
+  const [base, setBase] = useState<{ version: number; name: string; purpose: string } | null>(null);
+  // The server said the version was stale; kept until the person chooses, even while the latest version is still loading.
+  const [serverStale, setServerStale] = useState(false);
   // One command id per exact attempt: pressing again after a lost answer repeats the same command and changes nothing twice.
   const attempt = useRef<{ signature: string; id: string } | null>(null);
   // Focus moves into the form when it opens and back to the Rename button when it closes (A-03).
@@ -135,14 +141,25 @@ export function ProgrammeLifecycle({
   }, [editing]);
   const trimmed = { name: name.trim(), purpose: purpose.trim() };
   const changed = trimmed.name !== programme.name || trimmed.purpose !== programme.reportingPurpose;
+  // Typed text that differs from what the person started with (not from a newer version that arrived meanwhile).
+  const dirty = base !== null && (trimmed.name !== base.name || trimmed.purpose !== base.purpose);
+  // The database refuses control characters in the name (a tab or line break inside it); say so before it is sent.
+  const nameBad = /\p{Cc}/u.test(trimmed.name);
+  const purposeBad = /[^\P{Cc}\t\n\r]/u.test(trimmed.purpose);
   const valid =
     trimmed.name.length >= 3 &&
     trimmed.name.length <= 160 &&
     trimmed.purpose.length >= 10 &&
-    trimmed.purpose.length <= 500;
-  async function run(operation: 'rename' | 'archive' | 'restore') {
+    trimmed.purpose.length <= 500 &&
+    !nameBad &&
+    !purposeBad;
+  const newerShown = base !== null && programme.version !== base.version;
+  const conflict = editing && !programme.archived && base !== null && (serverStale || newerShown);
+  async function run(operation: 'rename' | 'archive' | 'restore', expectedVersion?: number) {
     if (busy) return;
-    const signature = JSON.stringify([operation, programme.version, trimmed.name, trimmed.purpose]);
+    const sent =
+      expectedVersion ?? (operation === 'rename' && base ? base.version : programme.version);
+    const signature = JSON.stringify([operation, sent, trimmed.name, trimmed.purpose]);
     if (attempt.current?.signature !== signature)
       attempt.current = { signature, id: crypto.randomUUID() };
     setBusy(true);
@@ -150,7 +167,7 @@ export function ProgrammeLifecycle({
     const outcome = await changeProgramme({
       workspaceId,
       headers,
-      programme,
+      programme: { ...programme, version: sent },
       operation,
       ...(operation === 'rename' ? { name: trimmed.name, reportingPurpose: trimmed.purpose } : {}),
       commandId: attempt.current.id,
@@ -162,6 +179,8 @@ export function ProgrammeLifecycle({
       if (operation === 'rename') {
         setEditing(false);
         setDiscarding(false);
+        setBase(null);
+        setServerStale(false);
       }
       onChanged(outcome.result, programme);
       return;
@@ -171,7 +190,7 @@ export function ProgrammeLifecycle({
     if (outcome.kind === 'stale') {
       attempt.current = null;
       if (operation === 'rename') {
-        setConflictFrom(programme.version);
+        setServerStale(true);
         onStale(null);
       } else onStale(outcome.message);
       return;
@@ -181,20 +200,20 @@ export function ProgrammeLifecycle({
   function close() {
     setEditing(false);
     setDiscarding(false);
-    setConflictFrom(null);
+    setBase(null);
+    setServerStale(false);
     setName(programme.name);
     setPurpose(programme.reportingPurpose);
     setNote('');
   }
   function cancel() {
-    if (changed && !discarding) setDiscarding(true);
+    if (dirty && !discarding) setDiscarding(true);
     else close();
   }
   function submit(event: FormEvent) {
     event.preventDefault();
-    if (changed && valid && conflictFrom === null) void run('rename');
+    if (changed && valid && !conflict) void run('rename');
   }
-  const newerShown = conflictFrom !== null && programme.version !== conflictFrom;
   function keys(event: KeyboardEvent) {
     if (event.key === 'Escape') {
       event.preventDefault();
@@ -224,6 +243,12 @@ export function ProgrammeLifecycle({
                 onClick={() => {
                   setName(programme.name);
                   setPurpose(programme.reportingPurpose);
+                  setBase({
+                    version: programme.version,
+                    name: programme.name,
+                    purpose: programme.reportingPurpose,
+                  });
+                  setServerStale(false);
                   setEditing(true);
                 }}
               >
@@ -266,7 +291,7 @@ export function ProgrammeLifecycle({
           <p>
             <button
               className="primary-link"
-              disabled={busy || !changed || !valid || conflictFrom !== null || programme.archived}
+              disabled={busy || !changed || !valid || conflict || programme.archived}
             >
               Save Changes
             </button>{' '}
@@ -293,7 +318,14 @@ export function ProgrammeLifecycle({
               </p>
             </div>
           )}
-          {conflictFrom !== null && !programme.archived && (
+          {(nameBad || purposeBad) && (
+            <p role="alert">
+              {nameBad
+                ? 'The name cannot contain tabs or line breaks.'
+                : 'The purpose contains a character that is not allowed.'}
+            </p>
+          )}
+          {conflict && (
             <div role="alert">
               {newerShown ? (
                 <>
@@ -307,10 +339,12 @@ export function ProgrammeLifecycle({
                     <button
                       type="button"
                       className="text-link"
-                      disabled={busy}
+                      disabled={busy || !dirty || !valid}
                       onClick={() => {
-                        setConflictFrom(null);
-                        void run('rename');
+                        const latest = programme.version;
+                        setBase(base && { ...base, version: latest });
+                        setServerStale(false);
+                        void run('rename', latest);
                       }}
                     >
                       Keep Mine
@@ -321,7 +355,12 @@ export function ProgrammeLifecycle({
                   </p>
                 </>
               ) : (
-                <p>Someone else changed this programme first. Checking the latest version…</p>
+                <p>
+                  Someone else changed this programme first. Checking the latest version…{' '}
+                  <button type="button" className="text-link" onClick={() => onStale(null)}>
+                    Check Again
+                  </button>
+                </p>
               )}
             </div>
           )}

@@ -535,9 +535,7 @@ test('a rate limit says so in the shared words and the retry sends the same comm
   });
   await page.goto(origin);
   await page.getByRole('button', { name: 'Archive Programme', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText(
-    'Too many requests just now. Wait a minute, then try again.',
-  );
+  await expect(page.getByRole('alert')).toContainText('Too many requests. Try again in an hour.');
   await page.getByRole('button', { name: 'Archive Programme', exact: true }).click();
   await expect(page.getByText('Programme archived: Synthetic buyers visit.')).toBeVisible();
   expect(commands[1]).toBe(commands[0]);
@@ -736,4 +734,156 @@ test('a stale rename on a programme far down a long list is still refreshed (no 
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Keep Mine', exact: true })).toBeVisible();
   await expect(rename(page)).toHaveValue('Synthetic my own new name');
+});
+
+const second = '00000000-0000-4000-8000-000000000005';
+const third = '00000000-0000-4000-8000-000000000006';
+
+test('a reload while Rename is open never lets Save overwrite a colleague: the choice comes first', async ({
+  page,
+}) => {
+  const { rows } = await serve(page, [base]);
+  // The page reloads its list after a new programme is saved, which is the reload a colleague's change rides in on.
+  await page.route('**/api/customer-programmes', async (route) => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    const body = route.request().postDataJSON();
+    rows.push({ ...base, id: second, name: body.name, reportingPurpose: body.reportingPurpose });
+    return route.fulfill({ json: rows.at(-1) });
+  });
+  const sent: Array<Record<string, unknown>> = [];
+  await page.route('**/api/customer-programme-lifecycle', (route) => {
+    const body = route.request().postDataJSON();
+    sent.push(body);
+    rows[0] = { ...rows[0]!, name: body.name, reportingPurpose: body.reportingPurpose, version: 3 };
+    return route.fulfill({ json: answer(rows[0]!, 'rename') });
+  });
+  await page.goto(origin);
+  await page.getByRole('button', { name: 'Rename Programme', exact: true }).click();
+  await rename(page).fill('Synthetic my own new name');
+  // A colleague renames it (version 2) while this person is typing, then something reloads the list.
+  rows[0] = { ...rows[0]!, name: 'Synthetic renamed by a colleague', version: 2 };
+  await page.getByLabel('Programme name', { exact: true }).fill('Synthetic another new programme');
+  await page.getByLabel('Purpose and intended outcomes').fill('Fictional second programme purpose');
+  await page.getByRole('checkbox', { name: /fictional information/ }).check();
+  await page.getByRole('button', { name: 'Save Sample Programme' }).click();
+  await expect(
+    page.getByText('Someone else changed this programme first. It now reads:'),
+  ).toBeVisible();
+  await expect(rename(page)).toHaveValue('Synthetic my own new name');
+  await expect(page.getByRole('button', { name: 'Save Changes', exact: true })).toBeDisabled();
+  expect(sent).toHaveLength(0);
+  // Only the person's own choice sends anything, and it is written on top of the version they have now seen.
+  await page.getByRole('button', { name: 'Keep Mine', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Synthetic my own new name' })).toBeVisible();
+  expect(sent).toHaveLength(1);
+  expect(sent[0]).toMatchObject({ expectedVersion: 2, name: 'Synthetic my own new name' });
+});
+
+test('an active list whose first page is all archived loads on by itself instead of waiting forever', async ({
+  page,
+}) => {
+  await page.route('**/api/customer-programmes*', (route) => {
+    const after = new URL(route.request().url()).searchParams.get('after');
+    return route.fulfill({
+      json: after
+        ? list([base])
+        : { ...list([archivedRow(second, 'Synthetic archived first')]), nextAfter: second },
+    });
+  });
+  await page.goto(origin);
+  await expect(page.getByRole('heading', { name: base.name })).toBeVisible();
+  await expect(page.getByText('Loading more programmes…')).toHaveCount(0);
+});
+
+test('the Archived list stops loading by itself once it has rows, and Load More takes over', async ({
+  page,
+}) => {
+  let afterRequests = 0;
+  await page.route('**/api/customer-programmes*', (route) => {
+    const after = new URL(route.request().url()).searchParams.get('after');
+    if (after) afterRequests += 1;
+    return route.fulfill({
+      json: after
+        ? list([archivedRow(third, 'Synthetic archived on page two')])
+        : { ...list([base, archivedRow(second, 'Synthetic archived first')]), nextAfter: second },
+    });
+  });
+  await page.goto(origin);
+  await page.getByRole('button', { name: 'Show Archived Programmes', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Synthetic archived first' })).toBeVisible();
+  await page.waitForTimeout(500);
+  expect(afterRequests).toBe(0);
+  await expect(page.getByRole('heading', { name: 'Synthetic archived on page two' })).toBeHidden();
+  await page.getByRole('button', { name: 'Load More Planning Programmes' }).click();
+  await expect(page.getByRole('heading', { name: 'Synthetic archived on page two' })).toBeVisible();
+});
+
+test('archiving the programme in the address keeps the active list and offers Undo', async ({
+  page,
+}) => {
+  const { rows } = await serve(page, [
+    base,
+    { ...base, id: second, name: 'Synthetic second visit' },
+  ]);
+  await page.route('**/api/customer-programme-lifecycle', async (route) => {
+    const body = route.request().postDataJSON();
+    rows[0] = { ...rows[0]!, archived: body.operation === 'archive', version: 1 };
+    await route.fulfill({ json: answer(rows[0]!, body.operation) });
+  });
+  await page.goto(origin + '/?room=true&programme=' + base.id);
+  await page.getByRole('button', { name: 'Archive Programme', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeVisible();
+  await expect(page).not.toHaveURL(/archived=1/);
+  await expect(
+    page.getByRole('button', { name: 'Show Archived Programmes', exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Synthetic second visit' })).toBeVisible();
+});
+
+test('a refresh that returns a malformed page is refused like a malformed list', async ({
+  page,
+}) => {
+  const { rows } = await serve(page, [base]);
+  let broken = false;
+  await page.route('**/api/customer-programmes*', (route) =>
+    route.fulfill({ json: broken ? list([rows[0]!, rows[0]!]) : list(rows) }),
+  );
+  await page.route('**/api/customer-programme-lifecycle', (route) => {
+    broken = true;
+    return route.fulfill({
+      status: 409,
+      json: { error: 'Programme changed; reload before saving' },
+    });
+  });
+  await page.goto(origin);
+  await page.getByRole('button', { name: 'Rename Programme', exact: true }).click();
+  await rename(page).fill('Synthetic my own new name');
+  await page.getByRole('button', { name: 'Save Changes', exact: true }).click();
+  await expect(
+    page.getByText('The latest version could not be loaded. Reload the page.'),
+  ).toBeVisible();
+  // The typed text is kept, and Check Again is offered while the latest version is not known.
+  await expect(rename(page)).toHaveValue('Synthetic my own new name');
+  await expect(page.getByRole('button', { name: 'Check Again', exact: true })).toBeVisible();
+  broken = false;
+  rows[0] = { ...rows[0]!, name: 'Synthetic renamed by a colleague', version: 3 };
+  await page.getByRole('button', { name: 'Check Again', exact: true }).click();
+  await expect(
+    page.getByText('Someone else changed this programme first. It now reads:'),
+  ).toBeVisible();
+});
+
+test('a name with a tab or line break inside it is refused on the form, with the name named as the problem', async ({
+  page,
+}) => {
+  await serve(page, [base]);
+  await page.goto(origin);
+  await page.getByRole('button', { name: 'Rename Programme', exact: true }).click();
+  await rename(page).evaluate((input: HTMLInputElement) => {
+    const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
+    set.call(input, 'Synthetic name\twith a tab');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await expect(page.getByText('The name cannot contain tabs or line breaks.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Save Changes', exact: true })).toBeDisabled();
 });
