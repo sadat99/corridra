@@ -2748,7 +2748,9 @@
       }
 
       document.getElementById('page').innerHTML =
-        `<div class="${v}">${header}<main id="main">${main}</main>${footer}</div>`;
+        `<div id="concept">${header}<main id="main">${main}</main>${footer}</div>`;
+      // The concept letter is set as a class name, never written into markup.
+      document.getElementById('concept').className = v;
       if (innerWidth < 700)
         document
           .querySelectorAll('svg.map')
