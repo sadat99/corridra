@@ -1,6 +1,6 @@
 /* Navigation v1, Team shell: the dark sidebar and the second-level row. Colours come from the AC
    tokens; every target is at least 44 px; focus is always visible. Owner: S4. */
-.ux-team-sidebar {
+nav.ux-team-sidebar {
   display: grid;
   gap: var(--space-2);
   padding: var(--space-3);
@@ -8,25 +8,27 @@
   background: var(--ac-navy);
   color: var(--ac-paper);
 }
-.ux-team-sidebar a,
-.ux-team-sidebar summary {
+nav.ux-team-sidebar a,
+nav.ux-team-sidebar summary,
+nav.ux-team-sidebar a span,
+nav.ux-team-sidebar summary span {
   color: var(--ac-paper);
+  opacity: 1;
 }
-.ux-team-sidebar a:hover,
-.ux-team-sidebar summary:hover {
+nav.ux-team-sidebar a:hover,
+nav.ux-team-sidebar summary:hover {
   background: var(--ac-surface-navy-hover);
 }
-.ux-team-sidebar a[aria-current='page'],
-.ux-team-sidebar summary[aria-current='true'] {
+nav.ux-team-sidebar a[aria-current='page'],
+nav.ux-team-sidebar summary[aria-current='true'] {
   background: var(--ac-surface-navy);
-  color: var(--ac-paper);
 }
-.ux-team-sidebar a:focus-visible,
-.ux-team-sidebar summary:focus-visible {
+nav.ux-team-sidebar a:focus-visible,
+nav.ux-team-sidebar summary:focus-visible {
   outline: 3px solid var(--ac-paper);
   outline-offset: 2px;
 }
-.ux-team-sidebar .ux-team-group {
+nav.ux-team-sidebar .ux-team-group {
   border-top: 1px solid var(--ac-surface-navy-hover);
   padding-top: var(--space-2);
 }
