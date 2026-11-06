@@ -2265,7 +2265,9 @@
   <body>
     <div id="page"></div>
     <script>
-      const v = (new URLSearchParams(location.search).get('v') || 'a').toUpperCase();
+      // Only the known concept letters; anything else shows concept G, so the address never reaches the page.
+      const asked = (new URLSearchParams(location.search).get('v') || 'g').toUpperCase();
+      const v = ['A', 'B', 'C', 'D', 'E', 'F', 'G'].includes(asked) ? asked : 'G';
       const I = {
         sell: '<svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 15l5-5 3 3 6-7"/><path d="M12 6h5v5"/></svg>',
         buy: '<svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 4h2l2 9h9l2-6H6"/><circle cx="8" cy="16.5" r="1.2"/><circle cx="15" cy="16.5" r="1.2"/></svg>',
