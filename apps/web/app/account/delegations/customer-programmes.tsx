@@ -1,4 +1,10 @@
 'use client';
+import {
+  ProgrammeLifecycle,
+  changeProgramme,
+  type LifecycleChange,
+  type LifecycleProgramme,
+} from './programme-lifecycle';
 import { ProgrammeProjectionPanel } from './programme-projections';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
@@ -32,6 +38,9 @@ type Programme = {
   reportingPurpose: string;
   createdAt: string;
   synthetic: boolean;
+  // Present only where the programme lifecycle module is installed; absent means the controls stay hidden.
+  archived?: boolean;
+  version?: number;
 };
 type Command = {
   commandId: string;
@@ -73,7 +82,9 @@ function programme(value: unknown, workspaceId: string): value is Programme {
     p.reportingPurpose.length >= 10 &&
     p.reportingPurpose.length <= 500 &&
     typeof p.createdAt === 'string' &&
-    Number.isFinite(Date.parse(p.createdAt))
+    Number.isFinite(Date.parse(p.createdAt)) &&
+    (p.archived === undefined || typeof p.archived === 'boolean') &&
+    (p.version === undefined || (Number.isInteger(p.version) && p.version >= 0))
   );
 }
 export function CustomerProgrammes(props: Props) {
@@ -114,11 +125,59 @@ function ScopedProgrammes({
     );
     return hash ? hash[1]!.toLowerCase() : null;
   });
+  // The programme named in the address when the page opened (or when Back restored an address). Only that link may open the
+  // Archived list by itself; archiving a programme from this page never switches the view.
+  const [linkTarget, setLinkTarget] = useState<string | null>(chosenId);
   const [financeProgramme, setFinanceProgramme] = useState<string | null>(null);
   const [coordinationProgramme, setCoordinationProgramme] = useState<string | null>(null);
   const [termsProgramme, setTermsProgramme] = useState<string | null>(null);
   const [rows, setRows] = useState<Programme[]>([]),
     [next, setNext] = useState<string | null>(null);
+  // Archived programmes (CRUD gap G7): hidden from the list and the picker unless the Archived filter is on.
+  // The filter is kept in the address (?archived=1), so a reload, a shared link and Back all keep it (R-01).
+  const [showArchived, setShowArchived] = useState<boolean>(
+    () =>
+      typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('archived') === '1',
+  );
+  const [undoing, setUndoing] = useState(false);
+  // Programmes shown when the filter last changed stay mounted (hidden), so anything typed in them survives (page without the room).
+  const [mounted, setMounted] = useState<ReadonlySet<string>>(() => new Set());
+  const shownNow = useRef<string[]>([]);
+  // The programme the room shows right now, so history navigation can keep it mounted (hidden) like the filter buttons do.
+  const chosenNow = useRef<string | undefined>(undefined);
+  const setArchivedFilter = (on: boolean) => {
+    setMounted((current) => new Set([...current, ...shownNow.current]));
+    setShowArchived(on);
+    const url = new URL(window.location.href);
+    if (on) url.searchParams.set('archived', '1');
+    else {
+      url.searchParams.delete('archived');
+      // Leaving the Archived list also leaves a link that pointed into it.
+      url.searchParams.delete('programme');
+      setChosenId(null);
+      setLinkTarget(null);
+    }
+    window.history.pushState(window.history.state, '', url);
+  };
+  useEffect(() => {
+    const sync = () => {
+      setMounted((current) => new Set([...current, ...shownNow.current]));
+      const leaving = chosenNow.current;
+      if (leaving) setVisited((current) => new Set(current).add(leaving));
+      const query = new URLSearchParams(window.location.search);
+      setShowArchived(query.get('archived') === '1');
+      // The programme named in the restored address is the one shown, not whichever comes first.
+      setChosenId(query.get('programme'));
+      setLinkTarget(query.get('programme'));
+    };
+    window.addEventListener('popstate', sync);
+    return () => window.removeEventListener('popstate', sync);
+  }, []);
+  const [archivedNotice, setArchivedNotice] = useState<LifecycleProgramme | null>(null);
+  const [staleNote, setStaleNote] = useState('');
+  // A programme someone archived while this person was renaming it: kept mounted so the typed text survives, and named here.
+  const [archivedMidEdit, setArchivedMidEdit] = useState<{ id: string; name: string } | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed' | 'denied' | 'unavailable'>(
     'loading',
   );
@@ -156,56 +215,75 @@ function ScopedProgrammes({
     setMessage('Account or workspace access changed. Local planning details were cleared.');
     setStatus('denied');
   }, [clearPlanningDraft]);
+  // One reader for a page of programmes, used by the list and by the single-row refresh, so both check the answer the same way:
+  // provenance, workspace, at most 25 rows, no duplicate ids, and a next cursor that is the last id on the page.
+  const fetchPage = useCallback(
+    async (
+      after: string | undefined,
+      signal: AbortSignal,
+    ): Promise<
+      | { kind: 'ok'; programmes: Programme[]; nextAfter: string | null }
+      | { kind: 'denied' }
+      | { kind: 'unavailable' }
+    > => {
+      const query = new URLSearchParams({ workspaceId, ...(after ? { after } : {}) });
+      const response = await fetch('/api/customer-programmes?' + query, {
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { 'x-corridra-customer-subject': subject, 'x-corridra-customer-issuer': issuer },
+        signal,
+      });
+      if ([401, 403, 409].includes(response.status)) return { kind: 'denied' };
+      if (response.status === 503) return { kind: 'unavailable' };
+      if (!response.ok) throw Error('Programme list failed');
+      const data = await response.json();
+      if (
+        !data ||
+        !customerProvenanceAllowed(data.synthetic) ||
+        data.workspaceId !== workspaceId ||
+        !Array.isArray(data.programmes) ||
+        data.programmes.length > 25 ||
+        !data.programmes.every((p: unknown) => programme(p, workspaceId)) ||
+        new Set(data.programmes.map((p: Programme) => p.id)).size !== data.programmes.length ||
+        !(
+          data.nextAfter === null ||
+          (uuid(data.nextAfter) && data.nextAfter === data.programmes.at(-1)?.id)
+        )
+      )
+        throw Error('Invalid programme list');
+      return { kind: 'ok', programmes: data.programmes, nextAfter: data.nextAfter };
+    },
+    [subject, issuer, workspaceId],
+  );
   const load = useCallback(
     async (after?: string) => {
       getTask.current?.abort();
       const task = new AbortController();
       getTask.current = task;
       try {
-        const query = new URLSearchParams({ workspaceId, ...(after ? { after } : {}) });
-        const response = await fetch('/api/customer-programmes?' + query, {
-          credentials: 'same-origin',
-          cache: 'no-store',
-          headers: { 'x-corridra-customer-subject': subject, 'x-corridra-customer-issuer': issuer },
-          signal: task.signal,
-        });
+        const page = await fetchPage(after, task.signal);
         if (task.signal.aborted || !active.current) return;
-        if ([401, 403, 409].includes(response.status)) {
+        if (page.kind === 'denied') {
           deny();
           return;
         }
-        if (response.status === 503) {
+        if (page.kind === 'unavailable') {
           setRows([]);
           setNext(null);
           setStatus('unavailable');
           return;
         }
-        if (!response.ok) throw Error('Programme list failed');
-        const data = await response.json();
-        if (task.signal.aborted || !active.current) return;
-        if (
-          !data ||
-          !customerProvenanceAllowed(data.synthetic) ||
-          data.workspaceId !== workspaceId ||
-          !Array.isArray(data.programmes) ||
-          data.programmes.length > 25 ||
-          !data.programmes.every((p: unknown) => programme(p, workspaceId)) ||
-          new Set(data.programmes.map((p: Programme) => p.id)).size !== data.programmes.length ||
-          !(
-            data.nextAfter === null ||
-            (uuid(data.nextAfter) && data.nextAfter === data.programmes.at(-1)?.id)
-          )
-        )
-          throw Error('Invalid programme list');
+        // A reload brings in the first page; programmes already loaded from later pages stay (their open forms and typed text
+        // with them) until the person reloads the whole page. Nothing here is ever deleted, so keeping them cannot show a removed row.
         setRows((old) =>
           after
-            ? [
-                ...old,
-                ...data.programmes.filter((p: Programme) => !old.some((item) => item.id === p.id)),
-              ]
-            : data.programmes,
+            ? [...old, ...page.programmes.filter((p) => !old.some((item) => item.id === p.id))]
+            : [
+                ...page.programmes,
+                ...old.filter((o) => !page.programmes.some((p) => p.id === o.id)),
+              ],
         );
-        setNext(data.nextAfter);
+        setNext(page.nextAfter);
         setStatus('ready');
       } catch {
         if (!task.signal.aborted && active.current) {
@@ -215,16 +293,61 @@ function ScopedProgrammes({
         }
       }
     },
-    [subject, issuer, workspaceId, deny],
+    [fetchPage, deny],
+  );
+  // Refresh one programme in place after a stale answer: walk the pages until it is found and replace only that row, so rows
+  // from later pages (and the controls typed into) are never dropped by a reload that only reaches the first page.
+  // One controller per programme, so refreshing one never cancels another's.
+  const refreshTasks = useRef(new Map<string, AbortController>());
+  const refreshProgramme = useCallback(
+    async (id: string) => {
+      refreshTasks.current.get(id)?.abort();
+      const task = new AbortController();
+      refreshTasks.current.set(id, task);
+      const gone = () => task.signal.aborted || !active.current;
+      const lost = (words: string) => {
+        if (!gone()) setStaleNote(words);
+      };
+      let cursor: string | undefined;
+      const seen = new Set<string>();
+      try {
+        for (;;) {
+          const page = await fetchPage(cursor, task.signal);
+          if (gone()) return;
+          if (page.kind === 'denied') {
+            deny();
+            return;
+          }
+          if (page.kind === 'unavailable')
+            return lost('The latest version could not be loaded. Reload the page.');
+          const hit = page.programmes.find((p) => p.id === id);
+          if (hit) {
+            setRows((old) => old.map((p) => (p.id === id ? hit : p)));
+            setArchivedMidEdit(hit.archived === true ? { id, name: hit.name } : null);
+            return;
+          }
+          // Follow the pages until the list ends; a cursor seen twice would loop, so it ends the walk too.
+          if (!page.nextAfter || seen.has(page.nextAfter))
+            return lost('That programme could no longer be found. Reload the page.');
+          seen.add(page.nextAfter);
+          cursor = page.nextAfter;
+        }
+      } catch {
+        lost('The latest version could not be loaded. Reload the page.');
+      }
+    },
+    [fetchPage, deny],
   );
   useEffect(() => {
     active.current = true;
+    const refreshing = refreshTasks.current;
     void Promise.resolve().then(() => {
       if (active.current) void load();
     });
     const hide = () => {
       getTask.current?.abort();
       postTask.current?.abort();
+      refreshing.forEach((task) => task.abort());
       setVisible(false);
       setRows([]);
       setNext(null);
@@ -245,6 +368,7 @@ function ScopedProgrammes({
       active.current = false;
       getTask.current?.abort();
       postTask.current?.abort();
+      refreshing.forEach((task) => task.abort());
       window.removeEventListener('pagehide', hide);
       window.removeEventListener('pageshow', show);
       document.removeEventListener('visibilitychange', visibility);
@@ -351,13 +475,48 @@ function ScopedProgrammes({
   // The approved Organise room (owner, 5 Nov 2026): with the room on, the page is cut into tabs and shows one
   // programme at a time, so it fits the page-length budget. Nothing is removed: the same list, panels, templates,
   // pricing and form, each in its own tab, every panel kept in the page. With the room off the page is unchanged.
-  const chosenProgramme = rows.find((p) => p.id === chosenId)?.id ?? rows[0]?.id;
+  const lifecycleReady = rows.some((p) => typeof p.version === 'number');
+  // A link to an archived programme shows the Archived list, so it opens that programme and not another.
+  const archivedView =
+    showArchived ||
+    (linkTarget !== null && rows.some((p) => p.id === linkTarget && p.archived === true));
+  const visibleRows = rows.filter((p) =>
+    archivedView ? p.archived === true : p.archived !== true,
+  );
+  const chosenProgramme = visibleRows.find((p) => p.id === chosenId)?.id ?? visibleRows[0]?.id;
   // A programme once opened stays mounted, hidden, so anything typed in its panels survives a switch and back;
   // a hidden room is off screen, so it reads nothing until it is shown again.
+  // The Archived filter only changes which room is shown: rooms already opened stay mounted (hidden), so typed text and the
+  // selected tab survive a switch to the archived list and back.
+  const visibleIds = new Set(visibleRows.map((p) => p.id));
   const shownRows = roomEnabled
     ? rows.filter((p) => p.id === chosenProgramme || visited.has(p.id))
-    : rows;
+    : rows.filter((p) => visibleIds.has(p.id) || mounted.has(p.id));
+  useEffect(() => {
+    shownNow.current = visibleRows.map((p) => p.id);
+    chosenNow.current = chosenProgramme;
+  });
+  // The Archived filter and a link to one programme work over every page: the remaining pages load by themselves until the
+  // programme asked for is found (or, with the filter on, until there are no more), so an empty list is never a half answer.
+  useEffect(() => {
+    if (status !== 'ready' || !next) return;
+    // It stops as soon as the view has something to show and any programme asked for is found; Load More takes over from there.
+    if (visibleRows.length === 0 || (chosenId !== null && !rows.some((p) => p.id === chosenId)))
+      void Promise.resolve().then(() => load(next));
+  }, [status, next, visibleRows.length, chosenId, rows, load]);
+  const linkMissing =
+    status === 'ready' && !next && chosenId !== null && !rows.some((p) => p.id === chosenId);
+  // A link into the Archived list opens it without saying so in the address. The first thing the person does there makes it
+  // explicit (?archived=1), so choosing another archived programme or restoring one keeps the Archived list instead of flipping away.
+  const pinArchivedView = () => {
+    if (!archivedView || showArchived) return;
+    setShowArchived(true);
+    const url = new URL(window.location.href);
+    url.searchParams.set('archived', '1');
+    window.history.replaceState(window.history.state, '', url);
+  };
   const choose = (id: string) => {
+    pinArchivedView();
     setVisited((current) => {
       const next = new Set(current);
       if (chosenProgramme) next.add(chosenProgramme);
@@ -365,24 +524,148 @@ function ScopedProgrammes({
       return next;
     });
     setChosenId(id);
+    setLinkTarget(null);
     const url = new URL(window.location.href);
     url.searchParams.set('programme', id);
     window.history.replaceState(window.history.state, '', url);
   };
+  // Rename, archive and restore. The answer replaces the row in place, so the room, tabs and typed text stay where they are.
+  // An archive keeps an Undo for ten seconds; a restore that the cap refuses says so in plain words.
+  const archiveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const applyChange = (change: LifecycleChange, before: LifecycleProgramme) => {
+    pinArchivedView();
+    setLinkTarget(null);
+    setStaleNote('');
+    setArchivedMidEdit(null);
+    // Whatever the answer, the programme stays mounted (hidden by the filter if need be) so typed text and the chosen tab survive.
+    setMounted((current) => new Set(current).add(change.id));
+    setVisited((current) => new Set(current).add(change.id));
+    setRows((old) =>
+      old.map((p) =>
+        p.id === change.id
+          ? {
+              ...p,
+              name: change.name,
+              reportingPurpose: change.reportingPurpose,
+              archived: change.archived,
+              version: change.version,
+            }
+          : p,
+      ),
+    );
+    if (archiveTimer.current) clearTimeout(archiveTimer.current);
+    if (change.operation === 'archive') {
+      setArchivedNotice({ ...before, ...change });
+      archiveTimer.current = setTimeout(() => setArchivedNotice(null), 10000);
+      setMessage('');
+    } else {
+      setArchivedNotice(null);
+      setMessage(change.operation === 'restore' ? 'Programme restored.' : 'Programme renamed.');
+    }
+  };
+  async function undoArchive() {
+    const target = archivedNotice;
+    if (!target || undoing) return;
+    setUndoing(true);
+    const outcome = await changeProgramme({
+      workspaceId,
+      headers,
+      programme: target,
+      operation: 'restore',
+      commandId: crypto.randomUUID(),
+    });
+    if (outcome.ok) applyChange(outcome.result, target);
+    else {
+      setArchivedNotice(null);
+      setMessage(outcome.message);
+    }
+    setUndoing(false);
+  }
+  const lifecycleFor = (p: Programme) =>
+    typeof p.version === 'number' ? (
+      <ProgrammeLifecycle
+        key={p.id}
+        programme={{
+          id: p.id,
+          name: p.name,
+          reportingPurpose: p.reportingPurpose,
+          archived: p.archived === true,
+          version: p.version,
+        }}
+        workspaceId={workspaceId}
+        headers={headers}
+        onChanged={applyChange}
+        onStale={(note) => {
+          if (note) setStaleNote(note);
+          // Keep this programme mounted whatever the refresh finds, so a typed rename is never lost.
+          setMounted((current) => new Set(current).add(p.id));
+          setVisited((current) => new Set(current).add(p.id));
+          void refreshProgramme(p.id);
+        }}
+      />
+    ) : null;
   const programmeList = (
     <>
-      <h2 className={roomEnabled && rows.length > 0 ? 'sr-only' : undefined}>
+      <h2 className={roomEnabled && visibleRows.length > 0 ? 'sr-only' : undefined}>
         Your planning programmes
       </h2>
-      {rows.length === 0 ? (
-        <p className="ux-empty">
-          {' '}
-          {realCustomerInput() ? 'No programmes yet.' : 'No sample programmes yet.'}{' '}
+      {lifecycleReady && (
+        <p>
+          <button
+            type="button"
+            className="text-link"
+            aria-pressed={archivedView}
+            onClick={() => {
+              if (roomEnabled && chosenProgramme)
+                setVisited((current) => new Set(current).add(chosenProgramme));
+              setArchivedFilter(!archivedView);
+            }}
+          >
+            {archivedView ? 'Show Active Programmes' : 'Show Archived Programmes'}
+          </button>
         </p>
-      ) : (
+      )}
+      {staleNote && <p role="alert">{staleNote}</p>}
+      {archivedMidEdit && !visibleIds.has(archivedMidEdit.id) && (
+        <p role="alert">
+          {archivedMidEdit.name} was archived by someone else while you were renaming it. Your text
+          is kept.{' '}
+          <button type="button" className="text-link" onClick={() => setArchivedFilter(true)}>
+            Show Archived Programmes
+          </button>
+        </p>
+      )}
+      {archivedNotice && (
+        <p role="status">
+          Programme archived: {archivedNotice.name}.{' '}
+          <button
+            type="button"
+            className="text-link"
+            disabled={undoing}
+            onClick={() => void undoArchive()}
+          >
+            Undo
+          </button>
+        </p>
+      )}
+      {linkMissing && <p role="status">That programme is not in this workspace.</p>}
+      {visibleRows.length === 0 &&
+        (next ? (
+          <p role="status">Loading more programmes…</p>
+        ) : (
+          <p className="ux-empty">
+            {' '}
+            {archivedView
+              ? 'No archived programmes.'
+              : realCustomerInput()
+                ? 'No programmes yet.'
+                : 'No sample programmes yet.'}{' '}
+          </p>
+        ))}
+      {shownRows.length > 0 && (
         <ul>
           {shownRows.map((p) => (
-            <li key={p.id} hidden={roomEnabled && p.id !== chosenProgramme}>
+            <li key={p.id} hidden={roomEnabled ? p.id !== chosenProgramme : !visibleIds.has(p.id)}>
               {roomEnabled ? (
                 <ProgrammeRoom
                   programmeId={p.id}
@@ -396,6 +679,7 @@ function ScopedProgrammes({
                           ? 'Planning record only · data'
                           : 'Planning record only · Sample data'}{' '}
                       </p>
+                      {lifecycleFor(p)}
                       {serviceRequestsEnabled && (
                         <p>
                           <a
@@ -478,6 +762,7 @@ function ScopedProgrammes({
                           workspaceId={workspaceId}
                           missionSharesEnabled={missionSharesEnabled}
                           programmeId={p.id}
+                          archived={p.archived === true}
                         />
                       </Suspense>
                     ) : null,
@@ -545,6 +830,7 @@ function ScopedProgrammes({
                       ? 'Planning record only · data'
                       : 'Planning record only · Sample data'}{' '}
                   </p>
+                  {lifecycleFor(p)}
                   {serviceRequestsEnabled && (
                     <p>
                       <a
@@ -602,6 +888,7 @@ function ScopedProgrammes({
                             workspaceId={workspaceId}
                             missionSharesEnabled={missionSharesEnabled}
                             programmeId={p.id}
+                            archived={p.archived === true}
                           />
                         </Suspense>
                       )}
@@ -742,7 +1029,9 @@ function ScopedProgrammes({
             subject={subject}
             issuer={issuer}
             workspaceId={workspaceId}
-            programmes={rows.map((p) => ({ id: p.id, name: p.name }))}
+            programmes={rows
+              .filter((p) => p.archived !== true)
+              .map((p) => ({ id: p.id, name: p.name }))}
             onChanged={() => void load()}
           />
         </Suspense>
@@ -757,7 +1046,9 @@ function ScopedProgrammes({
             subject={subject}
             issuer={issuer}
             workspaceId={workspaceId}
-            programmes={rows.map((p) => ({ id: p.id, name: p.name }))}
+            programmes={rows
+              .filter((p) => p.archived !== true)
+              .map((p) => ({ id: p.id, name: p.name }))}
             onChanged={() => void load()}
           />
         </Suspense>
@@ -927,7 +1218,7 @@ function ScopedProgrammes({
               label: 'Programmes',
               panel: (
                 <>
-                  {rows.length > 1 && (
+                  {visibleRows.length > 1 && (
                     <label className="field programme-picker">
                       Programme
                       <select
@@ -935,7 +1226,7 @@ function ScopedProgrammes({
                         value={chosenProgramme}
                         onChange={(event) => choose(event.target.value)}
                       >
-                        {rows.map((p) => (
+                        {visibleRows.map((p) => (
                           <option key={p.id} value={p.id}>
                             {p.name}
                           </option>
