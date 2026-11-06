@@ -27,6 +27,8 @@ type Reply = {
   link_id: string;
   body: ReplyBody & { body?: string };
   created_at?: string;
+  revision?: number;
+  revised_at?: string;
 };
 type Disclosure = { link_id: string; role: string; shared_requirements: string };
 
@@ -35,11 +37,14 @@ export function ReplyReview({
   role,
   responses,
   disclosures,
+  onRefresh,
 }: {
   tenant: string;
   role: string;
   responses: Reply[];
   disclosures: Disclosure[];
+  /** Loads the workspace's replies again, so a card shows the answer as it is now. */
+  onRefresh?: () => Promise<void>;
 }) {
   const { replyReview } = useOperatorFlags();
   const [reviews, setReviews] = useState<StoredReview[]>([]);
@@ -100,6 +105,9 @@ export function ReplyReview({
             tenant={tenant}
             canAct={canReview && open === true && !unavailable}
             onChanged={reload}
+            onStale={async () => {
+              await Promise.all([reload(), onRefresh?.()]);
+            }}
           />
         ))}
       </ul>
@@ -114,6 +122,7 @@ function ReplyCard({
   tenant,
   canAct,
   onChanged,
+  onStale,
 }: {
   reply: Reply;
   requirement?: string;
@@ -121,6 +130,7 @@ function ReplyCard({
   tenant: string;
   canAct: boolean;
   onChanged: () => Promise<void>;
+  onStale: () => Promise<void>;
 }) {
   const gaps = useMemo(() => replyGaps(reply.body), [reply.body]);
   const state = reviewState(reviews);
@@ -134,6 +144,13 @@ function ReplyCard({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [copied, setCopied] = useState(false);
+  // When the supplier corrects the answer, the choices made on the old one no longer apply: the terms to ask for are worked out again.
+  const [shownRevision, setShownRevision] = useState(reply.revision ?? 0);
+  if (shownRevision !== (reply.revision ?? 0)) {
+    setShownRevision(reply.revision ?? 0);
+    setAsked(suggestedAsk(gaps.missing));
+    setMode(null);
+  }
 
   async function send(decision: 'PUBLISH' | 'ASK' | 'REJECT') {
     setBusy(true);
@@ -142,6 +159,8 @@ function ReplyCard({
       const body: Record<string, unknown> = {
         commandId,
         responseId: reply.id,
+        // The answer version this card shows. The database refuses the decision if the answer has changed since.
+        seen: reply.revision ?? 0,
         decision,
         ...(note.trim() ? { note: note.trim() } : {}),
         ...(decision === 'ASK' ? { askTerms: asked } : {}),
@@ -153,7 +172,18 @@ function ReplyCard({
         body: JSON.stringify(body),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? 'The decision was not saved');
+      if (!response.ok) {
+        // A correction landed after this card was opened: show the latest answer and let the team decide again on what they read.
+        if (response.status === 409 && /changed; reload/i.test(String(data.error ?? ''))) {
+          setCommandId(crypto.randomUUID());
+          setMessage(
+            'The supplier corrected this answer after you opened it. The latest answer is shown now. Read it and decide again.',
+          );
+          await onStale();
+          return;
+        }
+        throw new Error(data.error ?? 'The decision was not saved');
+      }
       setCommandId(crypto.randomUUID());
       setMode(null);
       setNote('');
@@ -204,6 +234,16 @@ function ReplyCard({
         <section aria-label="The reply">
           <h4>The reply</h4>
           <p lang={han(String(reply.body.body ?? ''))}>{String(reply.body.body ?? '')}</p>
+          {!!reply.revision && (
+            <p className="reply-review-note">
+              The recipient corrected this answer {reply.revision} time
+              {reply.revision === 1 ? '' : 's'}. The latest answer is shown.
+              {state.asked &&
+                reply.revised_at &&
+                new Date(reply.revised_at) > new Date(state.asked.createdAt) &&
+                ' This answer came after your request for more terms.'}
+            </p>
+          )}
           {reply.body.meetingInterest === true && (
             <p>Meeting or visit interest expressed. No appointment is inferred.</p>
           )}

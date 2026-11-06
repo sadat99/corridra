@@ -39,6 +39,7 @@ type Experience = {
     id: string;
     link_id: string;
     created_at?: string;
+    revision?: number;
     body: {
       body: string;
       meetingInterest: boolean;
@@ -564,6 +565,12 @@ export function DeliveryExperience(props: Props) {
         data.responses.map((r) => (
           <article key={r.id}>
             <p>{r.body.body}</p>
+            {!!r.revision && (
+              <p className="evidence-label">
+                The recipient corrected this answer {r.revision} time{r.revision === 1 ? '' : 's'}.
+                The latest answer is shown.
+              </p>
+            )}
             <p className="evidence-label">
               {r.source_kind} · recipient link {r.link_id}. Review source and evidence before
               recording a mission quotation or confirming a meeting.
@@ -590,6 +597,7 @@ export function DeliveryExperience(props: Props) {
         role={props.role}
         responses={data.responses}
         disclosures={data.disclosures}
+        onRefresh={load}
       />
     </section>
   );

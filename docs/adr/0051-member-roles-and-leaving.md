@@ -27,3 +27,17 @@ Unset the flag. The additive tables and history are kept. Roles already granted 
 ## Required acceptance
 
 Database tests: installing on a populated database changes only the three role readers and adds only new objects; unchanged behaviour with no history; owner-only change; admin and member refused; other-workspace owner refused; stale, repeated and hostile payloads refused with no writes; replay and conflict; demotion; immutable history; restricted logins denied; leaving, revoked and disabled members; original owner protected; gates; repeatable installer with history-mismatch refusal. Browser protocol tests: confirmation before any request, exact request shape, stale, unavailable, denied and malformed answers, same-command retry, leave flow, absence of controls when off, and accessibility.
+
+## Amendment, 6 November 2026: ownership transfer (CRUD gap G4)
+
+The owner asked to close CRUD gap G4, recorded in [the CRUD summary](../revamp/crud/summary.md) as "Customer workspace: no rename, no archive or close, no ownership transfer", and on 6 November 2026 said "when ready build g4, g5 together". "Ownership transfer" therefore leaves the "Not included" list above. The rest of that list stands: a read-only `viewer` role, removing the original owner, email notice of a change and per-module custom permissions stay out.
+
+Rules, decided by S1 (Conductor and Guardian) for the G4 build and binding on it:
+
+- A workspace has exactly one owner at every moment. A transfer is an offer from the owner to one named active member of the same workspace. The offer holds 7 days. Only that member can accept it, and the owner can cancel it before acceptance.
+- Acceptance happens in one transaction: the member becomes owner, the former owner becomes `admin`, and an append-only ownership history row records who, when, the command id and the reason. The member role history of this ADR records the role change. No row is deleted.
+- The original owner grant's immutability is relaxed in one way only: the owner to admin change of the former owner, inside that transaction, after the acceptance row exists. Every other update, and every delete, of a membership stays refused. Zero owners or two owners at commit are refused and tested.
+- The owner confirms archive and transfer by typing the workspace name, with a fresh provider session. Customers have no two-factor step today, so the screen never claims one (owner choice "Typed name + fresh sign-in (Recommended)").
+- Known limit: the new owner cannot remove the former owner, who stays `admin`. A step-down needs a later reviewed change.
+
+The capability ships as an optional module, closed by default, installed only by an owner-approved protected run.

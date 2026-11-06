@@ -43,6 +43,17 @@ export class CommunicationService {
         throw new DomainError('This private link is unavailable or expired', 404);
       return r.rows[0].result;
     }
+    if (v.action === 'detail-revision') {
+      const { token, responseId, expectedVersion, action: _action, ...body } = v;
+      void _action;
+      const r = await this.pool.query(
+        'SELECT app.recipient_detail_revise($1,$2,$3,$4::jsonb) result',
+        [hash(token), responseId, expectedVersion, JSON.stringify(body)],
+      );
+      if (!r.rows[0].result)
+        throw new DomainError('This private link is unavailable or expired', 404);
+      return r.rows[0].result;
+    }
     const r =
       v.action === 'read'
         ? await this.pool.query('SELECT app.recipient_detail_view($1) AS result', [hash(v.token)])

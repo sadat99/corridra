@@ -92,13 +92,18 @@ test.beforeAll(async () => {
   const result = await build({
     stdin: {
       contents: `import{createRoot}from'react-dom/client';
+      import{useState}from'react';
       import{ReplyReview}from ${JSON.stringify(resolve('apps/web/app/operator/reply-review.tsx'))};
       import{OperatorFlags}from ${JSON.stringify(resolve('apps/web/app/operator/operator-flags.tsx'))};
       const q=new URLSearchParams(location.search);
       const props=JSON.parse(q.get('props'));
       createRoot(document.getElementById('fixture')).render(
         <main className="operator-page ux-workspace"><h1>Delivery</h1><h2>Declarations</h2>
-        <OperatorFlags replyReview={q.get('flag')!=='0'}><ReplyReview {...props}/></OperatorFlags></main>);`,
+        <OperatorFlags replyReview={q.get('flag')!=='0'}><Host/></OperatorFlags></main>);
+      function Host(){
+        const[responses,setResponses]=useState(props.responses);
+        const refresh=async()=>{try{const r=await fetch('/fixture/responses');if(r.ok)setResponses(await r.json())}catch{}};
+        return <ReplyReview {...props} responses={responses} onRefresh={refresh}/>}`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
     },
@@ -150,6 +155,8 @@ async function open(
     flag?: boolean;
     unavailable?: boolean;
     failWith?: { status: number; error: string };
+    /** The supplier corrects the answer after the card is opened: the first decision is refused as stale. */
+    corrected?: boolean;
   } = {},
 ) {
   const reviews: Stored[] = [];
@@ -162,6 +169,8 @@ async function open(
     if (request.method() === 'GET') return json(200, { open: options.open !== false, reviews });
     const body = JSON.parse(request.postData() ?? '{}');
     sent.push(body);
+    if (options.corrected && body.seen === 0)
+      return json(409, { error: 'Response changed; reload before deciding' });
     if (options.failWith) return json(options.failWith.status, { error: options.failWith.error });
     reviews.push({
       id: crypto.randomUUID(),
@@ -174,6 +183,21 @@ async function open(
     });
     return json(200, { id: 'x', replayed: false });
   });
+  if (options.corrected)
+    await page.route('**/fixture/responses', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          replies.gappy.map((reply) => ({
+            ...reply,
+            revision: 1,
+            revised_at: '2026-10-25T00:30:00Z',
+            body: { ...reply.body, body: 'Corrected: the price is higher than first said.' },
+          })),
+        ),
+      }),
+    );
   const props = {
     tenant,
     role: options.role ?? 'owner',
@@ -317,6 +341,29 @@ test('reject needs a reason, records it, and tells the team the customer never s
   });
   await expect(page.getByText('Review history (1)')).toBeVisible();
   await expect(page.locator('.reply-review-prepared')).toHaveCount(0);
+});
+
+test('a correction after the card was opened refuses the decision, shows the latest answer and decides on what was read', async ({
+  page,
+}) => {
+  const sent = await open(page, { corrected: true });
+  await page.getByRole('button', { name: 'Publish: Prepare As a Quotation' }).click();
+  await expect(
+    page.getByText(
+      'The supplier corrected this answer after you opened it. The latest answer is shown now. Read it and decide again.',
+    ),
+  ).toBeVisible();
+  // Nothing was recorded, and the card now shows the corrected answer.
+  await expect(page.getByText('Corrected: the price is higher than first said.')).toBeVisible();
+  await expect(page.getByText('The recipient corrected this answer 1 time.')).toBeVisible();
+  await expect(page.getByText('Awaiting review.')).toBeVisible();
+  expect(sent).toMatchObject([{ decision: 'PUBLISH', seen: 0 }]);
+  // The next decision names the version now on screen.
+  await page.getByRole('button', { name: 'Publish: Prepare As a Quotation' }).click();
+  await expect(
+    page.getByText('Published: prepared as a mission quotation, not yet confirmed.'),
+  ).toBeVisible();
+  expect(sent[1]).toMatchObject({ decision: 'PUBLISH', seen: 1 });
 });
 
 test('shows the database message when the team member must verify again', async ({ page }) => {

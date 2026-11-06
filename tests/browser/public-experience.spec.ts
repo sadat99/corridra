@@ -120,7 +120,7 @@ test('the menu opens, closes with Escape and the footer takes visitors to a way 
   isMobile,
 }) => {
   await page.goto('/');
-  const menu = page.getByRole('button', { name: /^(Menu|Close Menu)$/ });
+  const menu = page.getByRole('button', { name: /^(Menu|Close)$/ });
   const nav = page.getByRole('navigation', { name: 'Main navigation' });
   if (isMobile) {
     await expect(nav).not.toBeVisible();
@@ -131,7 +131,12 @@ test('the menu opens, closes with Escape and the footer takes visitors to a way 
     await expect(menu).toBeFocused();
     await expect(menu).toHaveAttribute('aria-expanded', 'false');
   } else {
-    await expect(nav.getByRole('link', { name: 'Routes', exact: true })).toBeVisible();
+    // Navigation v1: the routes page is the header's Markets link.
+    await expect(nav.getByRole('link', { name: 'Markets', exact: true })).toHaveAttribute(
+      'href',
+      '/corridors',
+    );
+    await expect(nav.getByRole('link', { name: 'Markets', exact: true })).toBeVisible();
   }
   // Every way to work stays in the footer of every page: open the group, then one tap.
   await openFooterGroups(page);

@@ -48,6 +48,8 @@ export const replyReviewCommand = z.discriminatedUnion('decision', [
     .object({
       commandId: z.uuid(),
       responseId: z.uuid(),
+      // The answer version the reviewer read (0 is the first answer). Needed once corrections are installed.
+      seen: z.int().min(0).max(20).optional(),
       decision: z.literal('PUBLISH'),
       note: note.optional(),
     })
@@ -56,6 +58,8 @@ export const replyReviewCommand = z.discriminatedUnion('decision', [
     .object({
       commandId: z.uuid(),
       responseId: z.uuid(),
+      // The answer version the reviewer read (0 is the first answer). Needed once corrections are installed.
+      seen: z.int().min(0).max(20).optional(),
       decision: z.literal('ASK'),
       askTerms: z.array(z.enum(replyTermNames)).min(1).max(18),
       note: note.optional(),
@@ -65,6 +69,8 @@ export const replyReviewCommand = z.discriminatedUnion('decision', [
     .object({
       commandId: z.uuid(),
       responseId: z.uuid(),
+      // The answer version the reviewer read (0 is the first answer). Needed once corrections are installed.
+      seen: z.int().min(0).max(20).optional(),
       decision: z.literal('REJECT'),
       reasonCode: z.enum(replyReviewReasons),
       note: note.optional(),

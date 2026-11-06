@@ -1,0 +1,27 @@
+# Public header: old item to new place (navigation v1, order 2a)
+
+Document status: CURRENT.
+
+Binding condition 1 of [navigation system v1](../navigation-v1.md): nothing is lost. This table lists every item the public header had before navigation v1 (`apps/web/components/site-header.tsx` at `a4caf6f`) and where it is now, on a wide screen (the bar, from a 1200 px window at default text size) and on a phone or tablet (the Menu sheet). No route was deleted.
+
+The proof is `tests/browser/public-header-nav.spec.ts` (cases N1 to N6 and Q-02) with `tests/integration/navigation-v1-public-header.test.ts` (the server-built header).
+
+| Old item                                       | Route or hook                                                     | New place, wide screen                                            | New place, phone and tablet                                                 |
+| ---------------------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Corridra logo                                  | `/`                                                               | Logo, unchanged (ADR-077)                                         | Logo, unchanged                                                             |
+| How it works                                   | `/how-it-works`                                                   | How it works, second item of the bar                              | How it works, in the sheet                                                  |
+| Routes                                         | `/corridors`                                                      | Markets (the board's word), third item of the bar                 | Markets, in the sheet                                                       |
+| Sign in (signed out)                           | `/signin`                                                         | Sign in, beside Start a Request                                   | Sign in, in the bar at the foot of the sheet                                |
+| Your account (customer signed in)              | `/account`                                                        | Your account, in place of Sign in                                 | Your account, in the bar at the foot of the sheet                           |
+| Team workspace (staff signed in)               | `/operator`                                                       | Team workspace, in place of Sign in                               | Team workspace, in the bar at the foot of the sheet                         |
+| Sign out (customer signed in)                  | `useSignOut`, unchanged                                           | Sign out, after Your account                                      | Sign out, in the bar at the foot of the sheet                               |
+| Language chip                                  | `LanguageSwitcher`, unchanged; shown only when more than English  | The language chip, quiet, before Sign in                          | Language chips in the sheet, from the same offered languages and the same stored choice |
+| Start a Request (with its screen-reader text)  | `/plan`, class `primary-link nav-cta`                             | Start a Request, the one button                                   | Start a Request, in the bar at the foot of the sheet                        |
+| Menu and Close Menu                            | `.menu-toggle`, `aria-controls="public-navigation"`               | Not shown (the bar is open)                                       | Menu, and Close while the sheet is open                                     |
+| Navigation landmark                            | `#public-navigation`, `.public-nav`, name "Main navigation"       | The bar                                                           | The sheet                                                                   |
+| Help (corner dock in the header on phones)     | `CornerDock variant="header"`, unchanged                          | Corner dock, bottom right, unchanged                              | Help, in the header row, unchanged                                          |
+| Sign-out error                                 | `.nav-message`, `role="alert"`                                    | Under the header, unchanged                                       | Under the header, unchanged                                                 |
+
+New in the header (each to an existing page): What we do opens the six jobs, Sell in a new market (`/sell`), Source products and suppliers (`/source`), Procure machinery (`/machinery`), Run a trade mission (`/trade-missions`), Plan a business trip (`/business-trips`) and Enter a new market (`/enter-market`), with "Something else? Tell us your business goal" (`/plan`); and Trust (`/trust`). The same pages stay in the footer, which this order does not change.
+
+Left out because they do not work yet (binding condition 3): WhatsApp (no owner-supplied number in configuration), Data saver, and the board's fixed Español chip (a language chip appears only for a language the owner has offered, exactly as the language chip on a wide screen). Listen stays in the corner dock and is never in the header.
