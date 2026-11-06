@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 import { fixture } from './support';
 import { migrateCustomerMoves } from '../../packages/db/src/customer-move-migrate';
 import { migrateCustomerNotifications } from '../../packages/db/src/customer-notification-migrate';
+import { migrateCustomerRequestWithdrawal } from '../../packages/db/src/customer-request-withdrawal-migrate';
 import { pinCustomerAuthority } from '../../packages/auth/src/customer-authority-pin';
 import { configureCustomerRealUse } from '../../packages/auth/src/customer-real-use-configuration';
 import { configureMoveRecords } from '../../packages/auth/src/customer-move-configuration';
@@ -97,6 +98,8 @@ describe('upgrading from the installed first file to email off until chosen', ()
   });
 
   test('the runner applies only the new files, leaves the installed hash alone and is repeatable', async () => {
+    // Notifications 0005 needs the request withdrawal module, which needs no mail module.
+    await migrateCustomerRequestWithdrawal(f.owner);
     await migrateCustomerNotifications(f.owner);
     const applied = (
       await f.owner.query(
@@ -108,6 +111,7 @@ describe('upgrading from the installed first file to email off until chosen', ()
       '0002_email_off_until_chosen.sql',
       '0003_withdrawal_and_issuer_check.sql',
       '0004_mute_events.sql',
+      '0005_withdrawn_requests.sql',
     ]);
     expect(applied[0].sha256).toBe(sha(first));
     expect(applied[1].sha256).toBe(
@@ -120,7 +124,7 @@ describe('upgrading from the installed first file to email off until chosen', ()
     expect(
       (await f.owner.query('SELECT count(*)::int n FROM customer_notification_migrations.applied'))
         .rows[0].n,
-    ).toBe(4);
+    ).toBe(5);
   });
 
   test('a person with no choice now has email off, and a person who chose keeps their choice', async () => {

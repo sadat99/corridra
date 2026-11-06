@@ -5,6 +5,8 @@ import { fixture } from './support';
 import { sessionHash, withTenant, type DatabaseClient } from '../../packages/db/src/index';
 import { migrateCustomerMoves } from '../../packages/db/src/customer-move-migrate';
 import { migrateCustomerNotifications } from '../../packages/db/src/customer-notification-migrate';
+import { migrateCustomerRequestWithdrawal } from '../../packages/db/src/customer-request-withdrawal-migrate';
+import { configureRequestWithdrawal } from '../../packages/auth/src/customer-request-withdrawal-configuration';
 import { pinCustomerAuthority } from '../../packages/auth/src/customer-authority-pin';
 import { configureCustomerRealUse } from '../../packages/auth/src/customer-real-use-configuration';
 import { configureMoveRecords } from '../../packages/auth/src/customer-move-configuration';
@@ -309,6 +311,8 @@ beforeAll(async () => {
   moves = new MissionMoveService(f.runtime);
   // Staff reach real-use missions through the processing purpose the application derives from this switch.
   process.env.CORRIDRA_REAL_USE_ENABLED = 'true';
+  // Notifications 0005 needs the request withdrawal module, which needs no mail module.
+  await migrateCustomerRequestWithdrawal(f.owner);
   before = await snapshot();
   await migrateCustomerNotifications(f.owner);
 });
@@ -335,6 +339,7 @@ describe('installation', () => {
       '0002_email_off_until_chosen.sql',
       '0003_withdrawal_and_issuer_check.sql',
       '0004_mute_events.sql',
+      '0005_withdrawn_requests.sql',
     ]);
     await migrateCustomerNotifications(f.owner);
     expect(
@@ -1709,7 +1714,7 @@ describe('G6 unmute', () => {
     const bodies = (
       await f.owner.query(
         `SELECT n.nspname||'.'||p.proname AS name,p.prosrc AS src FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
-        WHERE n.nspname IN ('customer','customer_private') AND p.prosrc ~ 'notification_mute' ORDER BY 1`,
+        WHERE n.nspname IN ('customer','customer_private') AND p.prosrc ~ 'notification_mute|notification_block_reason' ORDER BY 1`,
       )
     ).rows as { name: string; src: string }[];
     const readsOldRow = bodies.filter((b) =>
@@ -1722,11 +1727,11 @@ describe('G6 unmute', () => {
       'customer_private.notification_muted_since',
     ]);
     expect(bodies.find((b) => b.name === 'customer_private.notification_valid')?.src).toContain(
-      'customer_private.notification_muted_since(row_.request_id,row_.created_at)',
+      'customer_private.notification_block_reason(row_.request_id,row_.created_at)',
     );
     // The Move enqueue asks whether the request was muted since the Move was set, not only now.
     expect(bodies.find((b) => b.name === 'customer.enqueue_move_notifications')?.src).toContain(
-      'customer_private.notification_muted_since(owned.id,cmd.created_at)',
+      'customer_private.notification_block_reason(owned.id,cmd.created_at)',
     );
   });
 });
@@ -2014,5 +2019,127 @@ describe("G6 unmute, the guardian's cases", () => {
     expect(src).toContain(
       "'customer_private_notification_mute',request::text,jsonb_build_object('request_id',request),NOT mute)",
     );
+  });
+});
+
+describe('G1 withdrawn requests get no Pulse messages', () => {
+  const openWithdrawal = () =>
+    configureRequestWithdrawal(f.owner, {
+      enabled: true,
+      reason: 'Owner approved request withdrawal for the Pulse fixture tests',
+    });
+  const withdraw = (who: Person) =>
+    asCustomer(
+      who,
+      async (db) =>
+        (
+          await db.query('SELECT customer.withdraw_request($1,$2,$3) AS r', [
+            who.requestId,
+            randomUUID(),
+            'I sent this to the wrong team and will send it again',
+          ])
+        ).rows[0].r as { withdrawn: boolean; changed: boolean },
+    );
+  const restore = (who: Person) =>
+    asCustomer(
+      who,
+      async (db) =>
+        (
+          await db.query('SELECT customer.restore_request($1,$2) AS r', [
+            who.requestId,
+            randomUUID(),
+          ])
+        ).rows[0].r as { withdrawn: boolean; changed: boolean },
+    );
+  async function command(who: Person, object: string) {
+    const commandId = randomUUID();
+    await moves.command(staff(who), {
+      action: 'set',
+      commandId,
+      missionId: who.missionId,
+      moves: [{ verb: 'Add', holder: 'customer', dueOn: null, object }],
+    });
+    return commandId;
+  }
+  const enqueueFor = (who: Person, commandId: string) =>
+    withTenant(
+      f.runtime,
+      staff(who),
+      'missions.manage',
+      async ({ db }) =>
+        (await db.query('SELECT customer.enqueue_move_notifications($1) AS r', [commandId])).rows[0]
+          .r as { queued: number; reason: string | null },
+    );
+  const valid = async (id: string) =>
+    (
+      await f.owner.query(
+        'SELECT customer_private.notification_valid(r) AS v FROM customer_private.notification_outbox r WHERE r.id=$1',
+        [id],
+      )
+    ).rows[0].v as boolean;
+
+  test('a Move set while withdrawn queues nothing and says why; one set after the restore queues', async () => {
+    await setControl(true);
+    await openWithdrawal();
+    const p = await person();
+    await setMoves(p, [{ object: 'your trade licence' }]);
+    await withdraw(p);
+    expect(await setMoves(p, [{ object: 'your bank letter' }])).toMatchObject({
+      queued: 0,
+      reason: 'withdrawn',
+    });
+    await restore(p);
+    expect(await setMoves(p, [{ object: 'your signed contract' }])).toMatchObject({ queued: 1 });
+  });
+
+  test('a Move set before a withdrawal, or during it, and enqueued after the restore queues nothing', async () => {
+    await setControl(true);
+    await openWithdrawal();
+    // A new Move command replaces the open list, so each case has its own person.
+    const early = await person();
+    await setMoves(early, [{ object: 'your trade licence' }]);
+    const beforeCommand = await command(early, 'your bank letter');
+    await withdraw(early);
+    await restore(early);
+    expect(await enqueueFor(early, beforeCommand)).toMatchObject({
+      queued: 0,
+      reason: 'withdrawn',
+    });
+    const mid = await person();
+    await setMoves(mid, [{ object: 'your trade licence' }]);
+    await withdraw(mid);
+    const duringCommand = await command(mid, 'your insurance certificate');
+    await restore(mid);
+    expect(await enqueueFor(mid, duringCommand)).toMatchObject({ queued: 0, reason: 'withdrawn' });
+    const after = await command(mid, 'your tax certificate');
+    expect(await enqueueFor(mid, after)).toMatchObject({ queued: 1 });
+  });
+
+  test('a message made before a withdrawal stays invalid after the restore, and one made after it is valid', async () => {
+    await setControl(true);
+    await openWithdrawal();
+    const p = await person();
+    const first = await setMoves(p, [{ object: 'your trade licence' }]);
+    const old = first.jobs[0].queueId;
+    expect(await valid(old)).toBe(true);
+    await withdraw(p);
+    expect(await valid(old)).toBe(false);
+    await restore(p);
+    expect(await valid(old)).toBe(false);
+    const fresh = await setMoves(p, [{ object: 'your bank letter' }]);
+    expect(await valid(fresh.jobs[0].queueId)).toBe(true);
+  });
+
+  test('a mute still gives its own reason, and a request that is both muted and withdrawn says withdrawn', async () => {
+    await setControl(true);
+    await openWithdrawal();
+    const p = await person();
+    await setMoves(p, [{ object: 'your trade licence' }]);
+    await mute(p.requestId, linkToken(p));
+    expect(await setMoves(p, [{ object: 'your bank letter' }])).toMatchObject({ reason: 'muted' });
+    await withdraw(p);
+    expect(await setMoves(p, [{ object: 'your signed contract' }])).toMatchObject({
+      reason: 'withdrawn',
+    });
   });
 });

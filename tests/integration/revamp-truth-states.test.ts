@@ -97,6 +97,30 @@ describe('Your Move loader names every source it could not read', () => {
     expect(loaded.input.workspaces).toHaveLength(1);
   });
 
+  it('G1 a withdrawn request asks nothing of the person: it is left out of Your Move until it is restored', async () => {
+    const row = (id: string, extra: Record<string, unknown> = {}) => ({
+      id,
+      workspaceId: '00000000-0000-4000-8000-000000000a01',
+      createdAt: '2026-10-01T09:00:00.000Z',
+      available: true,
+      progress: { status: 'ACTIVE', receivedAt: '2026-10-01T09:00:00.000Z', replies: [] },
+      ...extra,
+    });
+    services!.customerRequests = {
+      list: async () => ({
+        requests: [
+          row('00000000-0000-4000-8000-000000000101', { withdrawn: true }),
+          row('00000000-0000-4000-8000-000000000102'),
+        ],
+        nextAfter: null,
+      }),
+    } as never;
+    const loaded = await (await load())('subject', 'issuer');
+    expect(loaded.input.requests.map((r: { id: string }) => r.id)).toEqual([
+      '00000000-0000-4000-8000-000000000102',
+    ]);
+  });
+
   it('the workspace module off is a true empty, not a failure', async () => {
     on.workspaces = false;
     const loaded = await (await load())('subject', 'issuer');

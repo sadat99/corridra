@@ -164,14 +164,18 @@ export async function loadMoveInput(subject: string, issuer: string): Promise<Lo
       workspaceId: string;
       createdAt: string;
       available: boolean;
+      withdrawn?: boolean;
       progress: MoveInput['requests'][number]['progress'];
-    }[])
+    }[]) {
+      // A withdrawn request asks nothing of the person: it is not part of Your Move until it is restored.
+      if (row.withdrawn === true) continue;
       input.requests.push({
         id: row.id,
         workspaceId: row.workspaceId,
         createdAt: row.createdAt,
         progress: row.available ? row.progress : null,
       });
+    }
   }
 
   if (customerMovesEnabled() && moveRecords === null) unreadable.add('moves');

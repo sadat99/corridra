@@ -3,6 +3,8 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { fixture } from './support';
 import { sessionHash, type DatabaseClient } from '../../packages/db/src/index';
 import { migrateCustomerMissionMail } from '../../packages/db/src/customer-mission-mail-migrate';
+import { migrateCustomerRequestWithdrawal } from '../../packages/db/src/customer-request-withdrawal-migrate';
+import { configureRequestWithdrawal } from '../../packages/auth/src/customer-request-withdrawal-configuration';
 import { pinCustomerAuthority } from '../../packages/auth/src/customer-authority-pin';
 import { configureCustomerRealUse } from '../../packages/auth/src/customer-real-use-configuration';
 import { configureMissionMail } from '../../packages/auth/src/customer-mission-mail-configuration';
@@ -153,6 +155,8 @@ const setControl = (enabled: boolean) => configureMissionMail(f.owner, { enabled
 
 beforeAll(async () => {
   f = await fixture();
+  // Mission mail 0003 needs the request withdrawal module, which needs no mail module.
+  await migrateCustomerRequestWithdrawal(f.owner);
   await migrateCustomerMissionMail(f.owner);
   await pinCustomerAuthority(f.owner, { issuer, executorId: f.serviceId });
   await configureSyntheticIntake(f.owner, f.tenantA, f.users.owner.id);
@@ -173,6 +177,7 @@ describe('installation', () => {
     expect(before.map((row) => row.name)).toEqual([
       '0001_mission_mail.sql',
       '0002_mute_events.sql',
+      '0003_withdrawn_requests.sql',
     ]);
     await migrateCustomerMissionMail(f.owner);
     expect(
@@ -856,7 +861,7 @@ describe('G6 unmute', () => {
     const bodies = (
       await f.owner.query(
         `SELECT n.nspname||'.'||p.proname AS name,p.prosrc AS src FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
-        WHERE n.nspname IN ('customer','customer_private') AND p.prosrc ~ 'mission_mail_mute' ORDER BY 1`,
+        WHERE n.nspname IN ('customer','customer_private') AND p.prosrc ~ 'mission_mail_mute|mission_mail_block_reason' ORDER BY 1`,
       )
     ).rows as { name: string; src: string }[];
     const readsOldRow = bodies.filter((b) =>
@@ -869,7 +874,7 @@ describe('G6 unmute', () => {
     ]);
     for (const name of ['customer.enqueue_mission_mail', 'customer.claim_mission_mail'])
       expect(bodies.find((b) => b.name === name)?.src, name).toContain(
-        'customer_private.mission_mail_muted(',
+        'customer_private.mission_mail_block_reason(',
       );
   });
 
@@ -970,5 +975,85 @@ describe("G6 unmute, the guardian's cases", () => {
       )
     ).rows[0].prosrc as string;
     expect(src).toContain('request,NOT mute);');
+  });
+});
+
+describe('G1 withdrawn requests send no mission mail', () => {
+  const openWithdrawal = () =>
+    configureRequestWithdrawal(f.owner, {
+      enabled: true,
+      reason: 'Owner approved request withdrawal for the mission mail fixture tests',
+    });
+  const withdraw = (who: Person) =>
+    asCustomer(
+      who,
+      async (db) =>
+        (
+          await db.query('SELECT customer.withdraw_request($1,$2,$3) AS r', [
+            who.requestId,
+            randomUUID(),
+            'I sent this to the wrong team and will send it again',
+          ])
+        ).rows[0].r as { withdrawn: boolean; changed: boolean },
+    );
+  const restore = (who: Person) =>
+    asCustomer(
+      who,
+      async (db) =>
+        (
+          await db.query('SELECT customer.restore_request($1,$2) AS r', [
+            who.requestId,
+            randomUUID(),
+          ])
+        ).rows[0].r as { withdrawn: boolean; changed: boolean },
+    );
+
+  test('a withdrawn request is refused new mail with its own reason, and mail resumes only for messages made after the restore', async () => {
+    await setControl(true);
+    await openWithdrawal();
+    const p = await person();
+    expect((await withdraw(p)).changed).toBe(true);
+    expect(await enqueue(p, { key: 'during' })).toEqual({ queued: false, reason: 'withdrawn' });
+    expect(await restore(p)).toEqual({ withdrawn: false, changed: true });
+    const after = await enqueue(p, { key: 'after' });
+    expect(after.queued).toBe(true);
+    expect((await claim(after.id!, p.capability)).status).toBe('CLAIMED');
+    // The refused message left no row.
+    expect(
+      (
+        await f.owner.query(
+          "SELECT count(*)::int n FROM customer_private.mission_mail_queue WHERE request_id=$1 AND dedupe_key='during'",
+          [p.requestId],
+        )
+      ).rows[0].n,
+    ).toBe(0);
+  });
+
+  test('a message made before a withdrawal is never sent, even if the restore comes before it is claimed', async () => {
+    await setControl(true);
+    await openWithdrawal();
+    const p = await person();
+    const waiting = await enqueue(p, { key: 'before' });
+    await withdraw(p);
+    expect(await claim(waiting.id!, p.capability)).toEqual({ status: 'SUPPRESSED' });
+    const q = await person();
+    const queued = await enqueue(q, { key: 'before' });
+    await withdraw(q);
+    await restore(q);
+    expect(await claim(queued.id!, q.capability)).toEqual({ status: 'SUPPRESSED' });
+    expect(await addressRows(queued.id!)).toHaveLength(0);
+  });
+
+  test('another request is unaffected, and a mute still gives its own reason', async () => {
+    await setControl(true);
+    await openWithdrawal();
+    const a = await person();
+    const b = await person();
+    await withdraw(a);
+    expect((await enqueue(b, { key: 'other' })).queued).toBe(true);
+    const c = await person();
+    await enqueue(c);
+    await mute(c.requestId, c.mute);
+    expect(await enqueue(c, { key: 'later' })).toEqual({ queued: false, reason: 'muted' });
   });
 });

@@ -1,0 +1,45 @@
+{
+  "recordedOn": "2026-11-06",
+  "batch": "Revamp S2 Customer Work: CRUD G1, a customer can withdraw a sent private request, with a reason, and take it back",
+  "kind": "Reports to docs/revamp/specs/crud-standard.md (gap G1, a customer cannot withdraw a sent private request; revocation exists only as an offline schema-owner action). A new optional module with its own closed control, two guarded mail files, one service method pair, one route and the Withdraw Request action on the saved requests.",
+  "findings": [],
+  "findingsNote": "G1 is closed by this change once the owner installs the module and opens its control. S1 recorded that the owner should not open real use of withdrawal until the staff signal (S4's follow-up, read only 'Withdrawn by the customer on <date>' on the mission page and Today) is merged, so staff never keep working blind. No existing migration file is edited; no switch, provider, payment or outreach is turned on; nothing is applied to any database by this change.",
+  "status": "Built on branch revamp/customer over main 6ac0a82a (PR 330, G6). CI on the exact pushed head is the verifier; see the pull request for its result. Sensitive: yes (consent, outbound mail, and what the team can see). The owner merges; the migrations are not applied by this session.",
+  "newFiles": [
+    "packages/db/customer-request-withdrawal-migrations/0001_request_withdrawal.sql: a closed control (request_withdrawal_control, request_withdrawal_open()), an append-only request_withdrawal_event table, request_withdrawn(request) and request_withdrawn_since(request, since), a strict audit helper, my_request_withdrawals(), withdraw_request(request, command, why), restore_request(request, command); customer_private.request_result is replaced behind a sha256 fingerprint to add one key, withdrawn",
+    "packages/db/customer-mission-mail-migrations/0003_withdrawn_requests.sql and customer-notification-migrations/0005_withdrawn_requests.sql: one combined guard per store (mission_mail_block_reason, notification_block_reason) so each reader changes once; the four readers are replaced behind fingerprints of the text 0002 and 0004 left; both refuse to install without the withdrawal module and say so",
+    "packages/db/src/customer-request-withdrawal-migrate.ts, packages/auth/src/customer-request-withdrawal-configuration.ts, and the install script block (scripts/install-customer-modules.ts, REQUEST_WITHDRAWAL_ACTION and REQUEST_WITHDRAWAL_REASON, run before mission mail so a single run can install both)",
+    "apps/web/app/api/customer-request-withdrawals/route.ts: GET lists the person's withdrawals (with the reason, to them only) and whether withdrawing is open; POST withdraws or restores one request with one command id; origin, content type and size checked; the reason is never echoed in an error",
+    "tests: revamp-g1-withdrawal-database (16), revamp-g1-withdrawals-route (6), revamp-g1-reader-parity (3), revamp-g1-withdraw.spec (10, axe clean at 390 and 1440), plus 3 new tests in mission-mail-database and 4 in notification-database, 1 in revamp-work-items and 1 in revamp-truth-states; docs/design-system/evidence/revamp-g1 (the dialog at 390 and 1440)"
+  ],
+  "changedFiles": [
+    "packages/auth/src/customer-requests.ts: CustomerRequestService.withdrawals() and setWithdrawal(), the decision schema (a withdraw carries a reason of 10 to 500 characters, a restore carries none). A database without the module answers closed with nothing withdrawn",
+    "apps/web/app/account/customer-requests.tsx: Withdraw Request on each active sent request, the dialog (names the request and its consequence, asks for a reason, says who sees it, the destructive button is not focused, locked while in flight), an Undo for ten seconds, a Withdrawn filter kept in the address (?status=withdrawn), and Restore Request",
+    "apps/web/lib/work-items/load.ts and apps/web/lib/move-loader.ts: a withdrawn request is not active work and is left out of Your Move until it is restored",
+    "tests/integration/mission-mail-database.test.ts, notification-database.test.ts, notification-upgrade.test.ts, notification-upgrade-third.test.ts: the mail and Pulse fixtures install the withdrawal module first (0003 and 0005 need it); the lists of applied files gain 0003 (mission mail) and 0005 (notifications); the notification applied count goes from 4 to 5; the G6 reader parity tests now expect the readers to ask the combined guards (block_reason). No assertion was loosened or removed"
+  ],
+  "decisions": {
+    "design": "Agreed with the Guardian before building (answers A to D). A new append-only event table instead of reusing offline revocation, which cannot be undone and hides the request from its owner. Withdrawn now is the newest event by sequence number; offline revocation stays separate and stronger, so a revoked request can be neither withdrawn nor restored.",
+    "authority": "Only the owning principal (same subject and issuer). Anyone else, and an unknown request, get the same refusal. One command id per decision: a repeat answers with how things stand now; the same id for another decision or request is refused the same way (a concurrent reuse is mapped to the same 42501).",
+    "when": "Any time until the team has closed or cancelled the mission (CLOSED or CANCELLED answer not-withdrawable). Withdrawing deletes nothing, so after delivery it is allowed and delivered reports stay readable to the owner. Withdrawing needs the control open; restoring never does, so a paused control can never trap a withdrawal.",
+    "team": "No customer function writes the team's mission. The team sees nothing in this PR; S4's follow-up shows 'Withdrawn by the customer on <date>' read only. The owner should not open the control until that is merged.",
+    "reason": "10 to 500 characters of the person's own words. Stored only in the private event table, returned only to its owner, never in the domain event payload, the audit trail or an error. Whether the team may read it later is an owner privacy decision; exposing it is one function change. The dialog says plainly: 'Only you can see this reason; the Corridra team sees that you withdrew the request and when.'",
+    "outbound": "A withdrawn request sends no mission mail and no Pulse message. A message is blocked if the request was withdrawn at any time since the message (or the Move) was made, or is now, or is muted; the Move enqueue checks after both advisory locks; the claim checks again with the message's own creation time. Restoring never sends or queues anything, and a mute and a withdrawal together answer withdrawn.",
+    "installOrder": "The withdrawal module needs no mail module. Mission mail 0003 and notifications 0005 need the withdrawal module and stop with a clear message without it. The mail and Pulse install runners do not install it for you.",
+    "undo": "Ten seconds of Undo after withdrawing, then Restore Request on the Withdrawn filter at any time while the request is not revoked.",
+    "process": "The database module and its tests were written together and shown to fail with the migration directory removed; the Move and mail effects were tested after the guards; the lock of the in-flight dialog was proven by removing it, which failed its test. The browser spec was written after the component."
+  },
+  "receipts": {
+    "database": "revamp-g1-withdrawal-database 16 passed; mission-mail-database 37 passed (3 new for G1); notification-database 77 passed (4 new for G1); notification upgrade tests 9 passed; revamp-g1-reader-parity 3 passed.",
+    "application": "revamp-g1-withdrawals-route 6 passed; revamp-work-items 31 passed (1 new); revamp-truth-states 11 passed (1 new).",
+    "browser": "revamp-g1-withdraw 10 passed including axe with no violations and no sideways scroll at 390 and 1440; the existing request specs (requests UI, requests page, request detail, room) 80 passed.",
+    "checks": "format, lint and typecheck clean."
+  },
+  "notRun": [
+    "The saved requests list with the real service and the module installed in a browser: the verification seed has none of the modules on, so the list is covered through the fixture and the real database tests.",
+    "Applying the migrations anywhere, or opening the control. The owner does that, after the staff signal is merged.",
+    "The install workflow: .github/workflows/install-customer-modules.yml already has 25 inputs, the limit, so no withdrawal inputs were added; the script supports REQUEST_WITHDRAWAL_ACTION and REQUEST_WITHDRAWAL_REASON.",
+    "A screen reader walk-through."
+  ],
+  "sensitive": "Yes. This changes what a customer can do to a request the team may already be working on, what the team can see, and what is sent. The owner reviews and merges."
+}

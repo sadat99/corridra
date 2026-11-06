@@ -34,6 +34,7 @@ import { configureCustomerRealUse } from '../packages/auth/src/customer-real-use
 import { migrateNetworkRealUse } from '../packages/db/src/network-real-use-migrate';
 import { configureNetworkRealUse } from '../packages/auth/src/network-real-use-configuration';
 import { migrateCustomerMissionMail } from '../packages/db/src/customer-mission-mail-migrate';
+import { migrateCustomerRequestWithdrawal } from '../packages/db/src/customer-request-withdrawal-migrate';
 import { migrateCustomerMoves } from '../packages/db/src/customer-move-migrate';
 import { configureMoveRecords } from '../packages/auth/src/customer-move-configuration';
 import { migrateCustomerNotifications } from '../packages/db/src/customer-notification-migrate';
@@ -45,6 +46,7 @@ import {
 import { migrateReplyReview } from '../packages/db/src/recipient-reply-review-migrate';
 import { configureReplyReview } from '../packages/delivery/src/reply-review-configuration';
 import { configureMissionMail } from '../packages/auth/src/customer-mission-mail-configuration';
+import { configureRequestWithdrawal } from '../packages/auth/src/customer-request-withdrawal-configuration';
 import { migrateCustomerBillingReal } from '../packages/db/src/customer-billing-real-migrate';
 import { configureRealBilling } from '../packages/auth/src/customer-billing-real-configuration';
 import { migrateCustomerInvoicingReal } from '../packages/db/src/customer-invoicing-real-migrate';
@@ -65,6 +67,9 @@ const v = z
     REAL_USE_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     NETWORK_USE_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     MISSION_MAIL_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
+    REQUEST_WITHDRAWAL_ACTION: z
+      .enum(['unchanged', 'install', 'enable', 'pause'])
+      .default('unchanged'),
     MOVE_RECORDS_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     MOVE_RECORDS_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
@@ -118,6 +123,10 @@ const v = z
       z.coerce.number().int().min(1).max(90).optional(),
     ),
     VIEW_AS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
+    REQUEST_WITHDRAWAL_REASON: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.string().trim().min(10).max(500).optional(),
+    ),
     MISSION_MAIL_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
       z.string().trim().min(10).max(500).optional(),
@@ -176,6 +185,10 @@ if (!['unchanged', 'install'].includes(v.SIMULATED_PAYMENTS_ACTION) && !v.SIMULA
   throw new Error('Simulated payments changes require an explicit reason');
 if (v.SIMULATED_PAYMENTS_ACTION === 'set_refund_window' && !v.SIMULATED_PAYMENTS_REFUND_DAYS)
   throw new Error('Setting the refund window needs the number of days');
+if (v.REQUEST_WITHDRAWAL_ACTION !== 'unchanged' && !apply)
+  throw new Error('Request withdrawal changes require INSTALL_APPLY=yes');
+if (['enable', 'pause'].includes(v.REQUEST_WITHDRAWAL_ACTION) && !v.REQUEST_WITHDRAWAL_REASON)
+  throw new Error('Request withdrawal changes require an explicit reason');
 if (v.MISSION_MAIL_ACTION !== 'unchanged' && !apply)
   throw new Error('Mission mail changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.MISSION_MAIL_ACTION) && !v.MISSION_MAIL_REASON)
@@ -338,6 +351,19 @@ try {
         });
         console.log(
           `Real Network ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
+        );
+      }
+    }
+    // Request withdrawal first: mission mail 0003 and notifications 0005 need it, and it needs no mail module.
+    if (v.REQUEST_WITHDRAWAL_ACTION !== 'unchanged') {
+      await migrateCustomerRequestWithdrawal(pool);
+      if (v.REQUEST_WITHDRAWAL_ACTION !== 'install') {
+        const result = await configureRequestWithdrawal(pool, {
+          enabled: v.REQUEST_WITHDRAWAL_ACTION === 'enable',
+          reason: v.REQUEST_WITHDRAWAL_REASON,
+        });
+        console.log(
+          `Request withdrawal ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
         );
       }
     }
