@@ -3,6 +3,7 @@ import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { ProgrammeContextScope } from './programme-context';
+import { onDeviceClock } from '../../../lib/server-clock';
 type Details = {
   organiser: string;
   marketCode: string;
@@ -167,7 +168,7 @@ export function ProgrammeContextEditor(props: ProgrammeContextScope & { onClose:
           return;
         }
         if (!r.ok) throw Error('Programme request failed');
-        const v = parse(await r.json(), {
+        const v = parse(onDeviceClock(await r.json(), r), {
           subject,
           issuer,
           programmeId,

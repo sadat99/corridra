@@ -1404,6 +1404,11 @@
       "use": "Exact hashed ledger at a1dbbc9 (the PR 261 merge), before the PR 261 main result and the decision card service and routes (E3b step 3) were recorded; preserves the wording condensed or superseded in the current ledger; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-pr325-342-records-2026-11-06.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at a4caf6f (the PR 342 merge), before PRs 322, 325 and 327 to 342 and the 6 Nov install runs were recorded; preserves the Batch E and E3b bullets condensed in the current ledger; use the current ledger for live state."
+    },
+    {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"
