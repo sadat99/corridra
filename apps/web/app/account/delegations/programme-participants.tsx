@@ -9,6 +9,7 @@ import {
   useParticipantView,
   type ParticipantScope,
 } from './participant-client';
+import { ParticipantLabelEditor } from './participant-label';
 type Props = ParticipantScope & {
   workspaceId: string;
   programmeId: string;
@@ -61,6 +62,7 @@ function ScopedParticipants(props: Props) {
     }
   }, []);
   const view = useParticipantView(props, clear, saved);
+  const [labelNote, setLabelNote] = useState('');
   useEffect(() => {
     const protect = (event: BeforeUnloadEvent) => {
       if (
@@ -266,6 +268,24 @@ function ScopedParticipants(props: Props) {
                         ? 'Participant withdrew'
                         : 'Programme access revoked'}
                   </p>
+                  {r.status === 'REGISTERED' &&
+                    typeof r.labelVersion === 'number' &&
+                    r.displayLabel && (
+                      <ParticipantLabelEditor
+                        key={r.id}
+                        registrationId={r.id}
+                        label={r.displayLabel}
+                        version={r.labelVersion}
+                        headers={{
+                          'x-corridra-customer-subject': props.subject,
+                          'x-corridra-customer-issuer': props.issuer,
+                        }}
+                        mine={false}
+                        onChanged={() => void view.load()}
+                        onNote={setLabelNote}
+                        onDenied={view.deny}
+                      />
+                    )}
                   {props.missionSharesEnabled && r.status === 'REGISTERED' && (
                     <ProgrammeObjectives
                       subject={props.subject}
@@ -435,6 +455,7 @@ function ScopedParticipants(props: Props) {
       )}
       {error && <p role="alert">{error}</p>}
       {view.notice && <p role="status">{view.notice}</p>}
+      {labelNote && <p role="status">{labelNote}</p>}
       {view.status !== 'loading' && (
         <button
           type="button"

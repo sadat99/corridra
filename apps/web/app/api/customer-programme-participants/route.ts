@@ -16,15 +16,18 @@ async function services() {
   await s.ready;
   return s;
 }
-// The one plain refusal shown as it is: an archived programme takes no new invitations or registrations (owner, 6 Nov 2026).
-const archivedMessages = [
+// The plain refusals shown as they are: an archived programme takes no new invitations or registrations (owner, 6 Nov 2026),
+// and the two the database gives for a label correction.
+const plainRefusals = [
   'This programme is archived. Restore it to accept new invitations and registrations.',
   // The same rule as a participant reads it: they cannot restore anything, so they are not told to.
   'This programme is archived and is not accepting registrations right now.',
+  'Label changed; reload before saving',
+  'Nothing changed',
 ];
 function failure(error: unknown) {
   const refusal = error as { code?: string; message?: string };
-  if (refusal.code === '23514' && archivedMessages.includes(refusal.message ?? ''))
+  if (refusal.code === '23514' && plainRefusals.includes(refusal.message ?? ''))
     return deliveryError(new DomainError(refusal.message as string, 409));
   return deliveryError(
     ['42P01', '3F000', '42883'].includes((error as { code?: string }).code ?? '')
