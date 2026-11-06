@@ -262,6 +262,39 @@ function ScopedProgrammes({
     },
     [subject, issuer, workspaceId, deny],
   );
+  // Refresh one programme in place after a stale answer: walk the pages until it is found and replace only that row, so rows
+  // from later pages (and the controls typed into) are never dropped by a reload that only reaches the first page.
+  const refreshProgramme = useCallback(
+    async (id: string) => {
+      let cursor: string | undefined;
+      for (let page = 0; page < 6; page += 1) {
+        const query = new URLSearchParams({ workspaceId, ...(cursor ? { after: cursor } : {}) });
+        const response = await fetch('/api/customer-programmes?' + query, {
+          credentials: 'same-origin',
+          cache: 'no-store',
+          headers: { 'x-corridra-customer-subject': subject, 'x-corridra-customer-issuer': issuer },
+        }).catch(() => null);
+        if (!active.current || !response?.ok) return;
+        const data = await response.json().catch(() => null);
+        if (
+          !active.current ||
+          !data ||
+          data.workspaceId !== workspaceId ||
+          !Array.isArray(data.programmes) ||
+          !data.programmes.every((p: unknown) => programme(p, workspaceId))
+        )
+          return;
+        const hit = (data.programmes as Programme[]).find((p) => p.id === id);
+        if (hit) {
+          setRows((old) => old.map((p) => (p.id === id ? hit : p)));
+          return;
+        }
+        if (!data.nextAfter) return;
+        cursor = data.nextAfter;
+      }
+    },
+    [subject, issuer, workspaceId],
+  );
   useEffect(() => {
     active.current = true;
     void Promise.resolve().then(() => {
@@ -499,7 +532,7 @@ function ScopedProgrammes({
         onChanged={applyChange}
         onStale={(note) => {
           if (note) setStaleNote(note);
-          void load();
+          void refreshProgramme(p.id);
         }}
       />
     ) : null;

@@ -579,3 +579,33 @@ test('an archived programme shows the owner message instead of the invitation fo
   // The panel stays open across the filter, and the invitation form is back now that the programme is restored.
   await expect(page.getByRole('button', { name: /Create Sample Invitation Code/ })).toBeVisible();
 });
+
+test('a stale rename on a programme from page two keeps the typed text and still shows the choice', async ({
+  page,
+}) => {
+  const secondId = '00000000-0000-4000-8000-000000000003';
+  let second: Row = { ...base, id: secondId, name: 'Synthetic page two programme', version: 0 };
+  await page.route('**/api/customer-programmes*', (route) => {
+    const after = new URL(route.request().url()).searchParams.get('after');
+    return route.fulfill({
+      json: after ? list([second]) : { ...list([base]), nextAfter: base.id },
+    });
+  });
+  await page.route('**/api/customer-programme-lifecycle', (route) => {
+    second = { ...second, name: 'Synthetic renamed by a colleague', version: 3 };
+    return route.fulfill({
+      status: 409,
+      json: { error: 'Programme changed; reload before saving' },
+    });
+  });
+  await page.goto(origin + '/?programme=' + secondId);
+  await expect(page.getByRole('heading', { name: 'Synthetic page two programme' })).toBeVisible();
+  await page.getByRole('button', { name: 'Rename Programme', exact: true }).nth(1).click();
+  await rename(page).fill('Synthetic my own new name');
+  await page.getByRole('button', { name: 'Save Changes', exact: true }).click();
+  await expect(
+    page.getByText('Someone else changed this programme first. It now reads:'),
+  ).toBeVisible();
+  await expect(rename(page)).toHaveValue('Synthetic my own new name');
+  await expect(page.getByRole('button', { name: 'Keep Mine', exact: true })).toBeVisible();
+});
