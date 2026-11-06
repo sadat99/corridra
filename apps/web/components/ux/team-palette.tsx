@@ -158,7 +158,7 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
     } else if (event.key === 'Enter') {
       event.preventDefault();
       go(entries[active]);
-    } else if (event.key === 'Tab' && !(event.target as HTMLElement).closest('footer')) {
+    } else if (event.key === 'Tab' && !(event.target as HTMLElement).closest('.ux-palette-hint')) {
       event.preventDefault();
       setScope(nextScope(scope, event.shiftKey));
       setSelected(0);
@@ -276,13 +276,13 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
                 <p className="ux-palette-status" role="status" aria-live="polite">
                   {message} {partial}
                 </p>
-                <footer>
+                <div className="ux-palette-hint">
                   <span>
                     <kbd>Up</kbd> <kbd>Down</kbd> Move · <kbd>Enter</kbd> Open · <kbd>Tab</kbd>{' '}
                     Change scope
                   </span>
                   <span>Searches only what your role may open</span>
-                </footer>
+                </div>
               </div>
             </dialog>,
             document.body,
