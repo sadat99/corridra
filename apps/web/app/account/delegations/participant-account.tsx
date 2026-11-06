@@ -8,6 +8,7 @@ import { ParticipantPlace } from './participant-place';
 import { MyReminders } from './my-reminders';
 import { useCallback, useEffect, useState } from 'react';
 import { useParticipantView, type ParticipantScope } from './participant-client';
+import { ParticipantLabelEditor } from './participant-label';
 export function ParticipantAccount(
   props: ParticipantScope & {
     missionSharesEnabled?: boolean;
@@ -59,6 +60,7 @@ function ScopedAccount(
     }
   }, []);
   const view = useParticipantView(props, clear, saved);
+  const [labelNote, setLabelNote] = useState('');
   const preview =
     view.result?.action === 'preview' && view.result.requestToken === token ? view.result : null;
   useEffect(() => {
@@ -198,6 +200,21 @@ function ScopedAccount(
                       <h3>{r.name}</h3>
                       <p>{r.reportingPurpose}</p>
                       <p>{r.displayLabel} · Registered, self-declared</p>
+                      {typeof r.labelVersion === 'number' && r.displayLabel && (
+                        <ParticipantLabelEditor
+                          key={r.id}
+                          registrationId={r.id}
+                          label={r.displayLabel}
+                          version={r.labelVersion}
+                          headers={{
+                            'x-corridra-customer-subject': props.subject,
+                            'x-corridra-customer-issuer': props.issuer,
+                          }}
+                          mine={true}
+                          onChanged={() => void view.load()}
+                          onNote={setLabelNote}
+                        />
+                      )}
                       {props.contextEnabled && (
                         <ProgrammeContext
                           subject={props.subject}
@@ -396,6 +413,7 @@ function ScopedAccount(
       )}
       {error && <p role="alert">{error}</p>}
       {view.notice && <p role="status">{view.notice}</p>}
+      {labelNote && <p role="alert">{labelNote}</p>}
       {view.status !== 'loading' && (
         <button
           type="button"

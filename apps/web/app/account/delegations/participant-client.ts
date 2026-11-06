@@ -18,6 +18,8 @@ export type Registration = {
   id: string;
   programmeId?: string;
   displayLabel?: string;
+  // Present only where participant label correction is installed; absent means the controls stay hidden.
+  labelVersion?: number;
   consentedAt?: string;
   name?: string;
   reportingPurpose?: string;
@@ -67,7 +69,16 @@ export function parseParticipantView(value: unknown, scope: ParticipantScope): V
       !['REGISTERED', 'REVOKED', 'WITHDRAWN'].includes(String(r.status))
     )
       throw Error('Invalid registration');
-    const base = { id: r.id, status: r.status as Registration['status'] };
+    if (
+      r.labelVersion !== undefined &&
+      !(Number.isInteger(r.labelVersion) && Number(r.labelVersion) >= 0)
+    )
+      throw Error('Invalid label version');
+    const base = {
+      id: r.id,
+      status: r.status as Registration['status'],
+      ...(r.labelVersion === undefined ? {} : { labelVersion: Number(r.labelVersion) }),
+    };
     if (manage) {
       if (!syntheticLabel(r.displayLabel) || !date(r.consentedAt))
         throw Error('Invalid registration');
