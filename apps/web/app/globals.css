@@ -4131,7 +4131,6 @@ th {
 }
 .intake-notice p {
   margin: 0;
-  overflow-wrap: anywhere;
   font-size: var(--text-sm);
   line-height: 1.6;
   color: var(--text-2);

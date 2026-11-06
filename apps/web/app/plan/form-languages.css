@@ -69,6 +69,11 @@
    word may break, so that no button pushes the page sideways. (A media query counts in the browser's own text size, so it
    matches the 320 px phone whatever the text is set to, and nothing changes at the larger widths.) */
 @media (max-width: 22.5rem) {
+  .ux-intake-page:not(:lang(en)) .intake-notice [lang='en']:not(.ux-brief-summary dd *),
+  .ux-intake-page .guide-bn p,
+  .ux-intake-page .intake-notice p {
+    overflow-wrap: anywhere;
+  }
   .ux-intake-page :is(button, .primary-link, .button),
   .ux-intake-page:not(:lang(en)) :is(button, .primary-link, .button) {
     max-width: 100%;
@@ -85,10 +90,6 @@
 }
 /* The one long English token in the sample-mode notice and in the Bengali guidance is the test address. Text at twice its size on a
    320 px phone is narrower than that address, so these two places let it break rather than push the page sideways. */
-.ux-intake-page:not(:lang(en)) .intake-notice [lang='en']:not(.ux-brief-summary dd *),
-.ux-intake-page .guide-bn p {
-  overflow-wrap: anywhere;
-}
 
 /* On a phone only the current step word shows. It stays on one line, and for the last two steps it lines up with
    the end of the bar so it never runs past the card. Its column may be narrower than the word, and the word still
