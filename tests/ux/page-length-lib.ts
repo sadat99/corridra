@@ -38,11 +38,20 @@ export const publicPageLimits: Record<Viewport['name'], Limits> = {
   phone: { target: 3.0, hard: 3.0 },
   desktop: { target: 2.0, hard: 2.0 },
 };
-/** The home's own rule (docs/revamp/specs/public-home.md): 2.0 to 2.5 desktop screens, at most 3.5 phone. */
+/** The home's own rule (docs/revamp/specs/public-home.md; owner, 6 November 2026, with the Ledger footer): 2.0 to 3.0
+ * desktop screens, at most 4.25 phone. */
 export const homeLimits: Record<Viewport['name'], Limits> = {
-  phone: { target: 3.5, hard: 3.5 },
-  desktop: { target: 2.5, hard: 2.5 },
+  phone: { target: 4.25, hard: 4.25 },
+  desktop: { target: 3.0, hard: 3.0 },
 };
+/** Sign-in and account recovery pages show the public footer, so they follow the public page limits. `/plan` does not. */
+const publicIdentityPages = [
+  '/signin',
+  '/signup',
+  '/forgot-password',
+  '/reset-password',
+  '/verify-email',
+];
 
 export type CoverageRoute = { route: string; file: string; audience: string; state: string };
 export type Verdict = 'within target' | 'over target' | 'over hard limit';
@@ -104,6 +113,7 @@ export function limitsFor(
 ): Limits {
   if (entry.audience === 'public')
     return entry.route === '/' ? homeLimits[viewport.name] : publicPageLimits[viewport.name];
+  if (publicIdentityPages.includes(entry.route)) return publicPageLimits[viewport.name];
   return { target: viewport.target, hard: viewport.hard };
 }
 

@@ -176,9 +176,10 @@ test('signed in, the footer opens the workspace and never offers sign-in', async
   await page.goto('/about');
   const actions = footer(page).locator('.guide-footer-actions');
   const workspace = actions.getByRole('link', { name: 'Open Your Workspace', exact: true });
+  // The same place the header offers: the customer account, or the team workspace for a team member. The footer
+  // first renders signed out (like the header) and switches once the session answer arrives, so wait for it.
+  await expect(workspace).toHaveAttribute('href', /^\/(account|operator)$/);
   await expect(workspace).toBeVisible();
-  // The same place the header offers: the customer account, or the team workspace for a team member.
-  expect(['/account', '/operator']).toContain(await workspace.getAttribute('href'));
   await expect(footer(page).getByRole('link', { name: /sign in/i })).toHaveCount(0);
   await expect(footer(page).locator('a[href="/signin"]')).toHaveCount(0);
   await expect(actions).not.toContainText('Already working with us?');

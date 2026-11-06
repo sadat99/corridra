@@ -40,8 +40,18 @@ describe('page length limits', () => {
       desktop: { target: 2.0, hard: 2.0 },
     });
     expect(homeLimits).toEqual({
-      phone: { target: 3.5, hard: 3.5 },
-      desktop: { target: 2.5, hard: 2.5 },
+      phone: { target: 4.25, hard: 4.25 },
+      desktop: { target: 3.0, hard: 3.0 },
+    });
+    // Sign-in and recovery pages carry the public footer; /plan keeps the signed-in limits.
+    expect(
+      limitsFor({ route: '/signin', audience: 'public intake and customer identity' }, desktop),
+    ).toEqual(publicPageLimits.desktop);
+    expect(
+      limitsFor({ route: '/plan', audience: 'public intake and customer identity' }, desktop),
+    ).toEqual({
+      target: desktop.target,
+      hard: desktop.hard,
     });
     const about = { route: '/about', audience: 'public' };
     expect(limitsFor(about, desktop)).toEqual(publicPageLimits.desktop);
@@ -50,15 +60,21 @@ describe('page length limits', () => {
     expect(verdictFor(2.01, limitsFor(about, desktop))).toBe('over hard limit');
     expect(verdictFor(3.01, limitsFor(about, phone))).toBe('over hard limit');
     expect(limitsFor({ route: '/', audience: 'public' }, desktop)).toEqual(homeLimits.desktop);
-    expect(verdictFor(2.51, limitsFor({ route: '/', audience: 'public' }, desktop))).toBe(
+    // Owner, 6 November 2026: with the Ledger footer the home may be up to 3.0 desktop and 4.25 phone screens.
+    expect(verdictFor(3.0, limitsFor({ route: '/', audience: 'public' }, desktop))).toBe(
+      'within target',
+    );
+    expect(verdictFor(3.01, limitsFor({ route: '/', audience: 'public' }, desktop))).toBe(
+      'over hard limit',
+    );
+    expect(verdictFor(4.26, limitsFor({ route: '/', audience: 'public' }, phone))).toBe(
       'over hard limit',
     );
   });
 
-  it('keeps the viewport limits for /plan, the sign-in pages and every signed-in page', () => {
+  it('keeps the viewport limits for /plan and every signed-in page', () => {
     for (const entry of [
       { route: '/plan', audience: 'public intake and customer identity' },
-      { route: '/signin', audience: 'public intake and customer identity' },
       { route: '/account', audience: 'customer' },
       { route: '/operator', audience: 'staff' },
     ]) {
