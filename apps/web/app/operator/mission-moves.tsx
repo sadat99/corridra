@@ -25,6 +25,8 @@ const blank = (): Draft => ({ verb: 'Add', object: '', holder: 'customer', dueOn
 
 export function MissionMoves({ tenant, missionId }: { tenant: string; missionId: string }) {
   const [rows, setRows] = useState<Row[] | null>(null);
+  // The version of the Moves this person is looking at; every command names it, so a newer change is shown, not replaced.
+  const [version, setVersion] = useState<number | null>(null);
   const [drafts, setDrafts] = useState<Draft[]>([blank()]);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
@@ -38,7 +40,10 @@ export function MissionMoves({ tenant, missionId }: { tenant: string; missionId:
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error ?? 'Moves could not be read');
-        if (active) setRows(data as Row[]);
+        if (active) {
+          setRows((data as { moves: Row[] }).moves);
+          setVersion((data as { version: number }).version);
+        }
       })
       .catch((error) => {
         if (active) setMessage(error instanceof Error ? error.message : 'Moves could not be read');
@@ -52,13 +57,18 @@ export function MissionMoves({ tenant, missionId }: { tenant: string; missionId:
     setBusy(true);
     setMessage('');
     try {
+      if (version === null) throw new Error('Reload to see the Moves first');
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ missionId, ...body }),
+        body: JSON.stringify({ missionId, expectedVersion: version, ...body }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? 'The Move was not saved');
+      if (!response.ok) {
+        // Someone else changed the Moves first: show the current list so the person can decide again.
+        if (response.status === 409) setReload((count) => count + 1);
+        throw new Error(data.error ?? 'The Move was not saved');
+      }
       setMessage(data.replayed ? 'Already saved.' : done);
       setCommandId(crypto.randomUUID());
       setReload((count) => count + 1);

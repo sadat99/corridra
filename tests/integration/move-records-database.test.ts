@@ -69,16 +69,19 @@ async function newRequest(person: string) {
   ).rows[0];
   return { requestId: result.id as string, missionId: owned.mission_id as string };
 }
-const set = (
+// A person always sends the version they were looking at; by default a test is looking at the Moves as they stand.
+const set = async (
   missionId: string,
   list: { verb: string; object: string; holder?: string; dueOn?: string | null }[],
   commandId = randomUUID(),
   ctx = f.users.operator.ctx,
+  expectedVersion?: number,
 ) =>
   moves.command(ctx, {
     action: 'set',
     commandId,
     missionId,
+    expectedVersion: expectedVersion ?? (await moves.version(ctx, missionId)),
     moves: list.map((m) => ({ holder: 'customer', dueOn: null, ...m })),
   });
 const mine = async (person: string) =>
@@ -335,19 +338,108 @@ describe('setting and reading', () => {
   test('is replay safe: the same command is a replay, a changed one under the same id conflicts', async () => {
     const commandId = randomUUID();
     const list = [{ verb: 'Send', object: 'your packing list' }];
-    const first = await set(requests.alice.missionId, list, commandId);
+    // A retry after a lost answer resends the same body, including the version the person saw.
+    const seen = await moves.version(f.users.operator.ctx, requests.alice.missionId);
+    const first = await set(requests.alice.missionId, list, commandId, undefined, seen);
     expect(first).toMatchObject({ replayed: false });
-    const second = await set(requests.alice.missionId, list, commandId);
+    const second = await set(requests.alice.missionId, list, commandId, undefined, seen);
     expect(second).toMatchObject({ replayed: true });
     expect(
       (await openMoves(requests.alice.missionId)).filter((m) => m.command_id === commandId),
     ).toHaveLength(1);
     await expect(
-      set(requests.alice.missionId, [{ verb: 'Send', object: 'a different list' }], commandId),
+      set(
+        requests.alice.missionId,
+        [{ verb: 'Send', object: 'a different list' }],
+        commandId,
+        undefined,
+        seen,
+      ),
     ).rejects.toThrow('reused');
-    await expect(set(requests.alice.missionId, list, commandId, f.users.owner.ctx)).rejects.toThrow(
-      'reused',
-    );
+    await expect(
+      set(requests.alice.missionId, list, commandId, f.users.owner.ctx, seen),
+    ).rejects.toThrow('reused');
+  });
+
+  test('a command carries the version the person saw: a stale set, finish or clear is refused and writes nothing, and a replay still answers', async () => {
+    const mission = requests.alice.missionId;
+    const ctx = f.users.operator.ctx;
+    const seen = await moves.version(ctx, mission);
+    const snapshot = await moves.snapshot(ctx, mission);
+    expect(snapshot.version).toBe(seen);
+    expect(snapshot.moves.length).toBeGreaterThan(0);
+    // Someone else sets the Moves first.
+    const winner = randomUUID();
+    await set(mission, [{ verb: 'Read', object: 'the reply they just sent' }], winner, ctx, seen);
+    expect(await moves.version(ctx, mission)).toBe(seen + 1);
+    const before = await openMoves(mission);
+    const rows = async () =>
+      (
+        await f.owner.query(
+          'SELECT count(*)::int n FROM app.mission_move_command WHERE mission_id=$1',
+          [mission],
+        )
+      ).rows[0].n;
+    const commands = await rows();
+    // The person who still sees the old list is told to reload; nothing is written, not even a command row.
+    await expect(
+      set(mission, [{ verb: 'Send', object: 'an older plan' }], randomUUID(), ctx, seen),
+    ).rejects.toMatchObject({ status: 409, message: expect.stringMatching(/reload/i) });
+    await expect(
+      moves.command(ctx, {
+        action: 'done',
+        commandId: randomUUID(),
+        missionId: mission,
+        expectedVersion: seen,
+        moveId: before[0].id,
+      }),
+    ).rejects.toMatchObject({ status: 409 });
+    await expect(
+      moves.command(ctx, {
+        action: 'clear',
+        commandId: randomUUID(),
+        missionId: mission,
+        expectedVersion: seen,
+      }),
+    ).rejects.toMatchObject({ status: 409 });
+    expect(await rows()).toBe(commands);
+    expect((await openMoves(mission)).map((m) => m.id)).toEqual(before.map((m) => m.id));
+    // The winner's own retry (same id, same version) is a replay, not a conflict.
+    await expect(
+      set(mission, [{ verb: 'Read', object: 'the reply they just sent' }], winner, ctx, seen),
+    ).resolves.toMatchObject({ replayed: true });
+    // A version that was never real is refused too, and so is a missing one.
+    await expect(
+      set(mission, [{ verb: 'Send', object: 'a plan' }], randomUUID(), ctx, seen + 50),
+    ).rejects.toMatchObject({ status: 409 });
+    await expect(
+      moves.command(ctx, {
+        action: 'clear',
+        commandId: randomUUID(),
+        missionId: mission,
+      }),
+    ).rejects.toThrow();
+  });
+
+  test('two people setting the Moves from the same view at once: exactly one wins', async () => {
+    const mission = requests.bob.missionId;
+    const ctx = f.users.operator.ctx;
+    const seen = await moves.version(ctx, mission);
+    const results = await Promise.allSettled([
+      set(
+        mission,
+        [{ verb: 'Add', object: 'first plan from one person' }],
+        randomUUID(),
+        ctx,
+        seen,
+      ),
+      set(mission, [{ verb: 'Add', object: 'second plan from another' }], randomUUID(), ctx, seen),
+    ]);
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+    const lost = results.find((r) => r.status === 'rejected') as PromiseRejectedResult;
+    expect(lost.reason).toMatchObject({ status: 409 });
+    expect(await moves.version(ctx, mission)).toBe(seen + 1);
+    expect(await openMoves(mission)).toHaveLength(1);
   });
 
   test('done closes one Move, and only an open one', async () => {
@@ -356,6 +448,7 @@ describe('setting and reading', () => {
       action: 'done',
       commandId: randomUUID(),
       missionId: requests.alice.missionId,
+      expectedVersion: await moves.version(f.users.operator.ctx, requests.alice.missionId),
       moveId: open.id,
     });
     expect(await mine('alice')).toEqual([]);
@@ -364,6 +457,7 @@ describe('setting and reading', () => {
         action: 'done',
         commandId: randomUUID(),
         missionId: requests.alice.missionId,
+        expectedVersion: await moves.version(f.users.operator.ctx, requests.alice.missionId),
         moveId: open.id,
       }),
     ).rejects.toThrow('not open');
@@ -381,6 +475,7 @@ describe('setting and reading', () => {
       action: 'clear',
       commandId: randomUUID(),
       missionId: requests.bob.missionId,
+      expectedVersion: await moves.version(f.users.operator.ctx, requests.bob.missionId),
     });
     expect(await mine('bob')).toEqual([]);
     expect(await openMoves(requests.bob.missionId)).toHaveLength(0);

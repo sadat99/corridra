@@ -192,6 +192,7 @@ async function setMoves(
     action: 'set',
     commandId,
     missionId: who.missionId,
+    expectedVersion: await moves.version(staff(who), who.missionId),
     moves: list.map((m) => ({ verb: 'Add', holder: 'customer', dueOn: null, ...m })),
   });
   const result = await withTenant(f.runtime, staff(who), 'missions.manage', async ({ db }) => {
@@ -701,6 +702,7 @@ describe('queueing from a Move', () => {
       action: 'clear',
       commandId: randomUUID(),
       missionId: p.missionId,
+      expectedVersion: await moves.version(staff(p), p.missionId),
     });
     expect(await claim(set.jobs[0].queueId)).toEqual({ status: 'SUPPRESSED' });
   });
@@ -788,6 +790,7 @@ describe('sending', () => {
       action: 'set',
       commandId,
       missionId: p.missionId,
+      expectedVersion: await moves.version(staff(p), p.missionId),
       moves: [{ verb: 'Add', holder: 'customer', dueOn: null, object: 'your trade licence' }],
     });
     const queueAfter = async (age: string) => {
@@ -1055,6 +1058,7 @@ describe('the application service', () => {
       action: 'set',
       commandId,
       missionId: p.missionId,
+      expectedVersion: await moves.version(staff(p), p.missionId),
       moves: [{ verb: 'Add', object, holder: 'customer', dueOn: inThirtyDays }],
     });
     return service().enqueueForCommand(staff(p), commandId, env);
@@ -1140,6 +1144,7 @@ describe('the application service', () => {
       action: 'set',
       commandId,
       missionId: p.missionId,
+      expectedVersion: await moves.version(staff(p), p.missionId),
       moves: [{ verb: 'Add', object: 'your trade licence', holder: 'customer', dueOn: null }],
     });
     const off = { ...env, CORRIDRA_PULSE_ENABLED: 'false' } as NodeJS.ProcessEnv;
@@ -1228,6 +1233,7 @@ describe('email is off until a person switches it on, and the address is read at
       action: 'set',
       commandId,
       missionId: who.missionId,
+      expectedVersion: await moves.version(staff(who), who.missionId),
       moves: [
         { verb: 'Add', object: 'your import licence number', holder: 'customer', dueOn: null },
       ],

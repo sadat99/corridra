@@ -101,12 +101,38 @@ describe('the shape of a Move', () => {
         action: 'set',
         commandId: id,
         missionId: id,
+        expectedVersion: 0,
         moves: Array(5).fill(move),
       }).success,
     ).toBe(true);
     expect(
-      moveCommand.safeParse({ action: 'clear', commandId: 'nope', missionId: id }).success,
+      moveCommand.safeParse({
+        action: 'clear',
+        commandId: 'nope',
+        missionId: id,
+        expectedVersion: 0,
+      }).success,
     ).toBe(false);
+  });
+
+  it('every command names the version of the Moves the person saw, as a whole number', () => {
+    const id = '11111111-1111-4111-8111-111111111111';
+    const move = { verb: 'Add', object: 'a thing', holder: 'customer' };
+    const base = { commandId: id, missionId: id };
+    const commands = [
+      { action: 'set', moves: [move] },
+      { action: 'done', moveId: id },
+      { action: 'clear' },
+    ];
+    for (const command of commands) {
+      const body = { ...base, ...command };
+      expect(moveCommand.safeParse(body).success, `${command.action} without a version`).toBe(
+        false,
+      );
+      expect(moveCommand.safeParse({ ...body, expectedVersion: 7 }).success).toBe(true);
+      for (const bad of [-1, 1.5, '3', null, 2_000_000])
+        expect(moveCommand.safeParse({ ...body, expectedVersion: bad }).success).toBe(false);
+    }
   });
 });
 

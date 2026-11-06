@@ -89,18 +89,29 @@ test.afterAll(async () => {
 });
 
 /** Answers the team interface from a small in-memory history and records every command it receives. */
+// The version of the Moves the fixture is at; every accepted command moves it on, as the real count of commands does.
+let serverVersion = 3;
 async function open(page: Page, rows: Row[], failure?: { status: number; error: string }) {
   const sent: Record<string, unknown>[] = [];
+  serverVersion = 3;
   await page.route('**/api/move/staff**', async (route) => {
     const request = route.request();
     if (request.method() === 'GET')
       return route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(rows),
+        body: JSON.stringify({ version: serverVersion, moves: rows }),
       });
     const body = JSON.parse(request.postData() ?? '{}');
     sent.push(body);
+    // A command that names an older version is refused and changes nothing.
+    if (!failure && body.expectedVersion !== serverVersion)
+      return route.fulfill({
+        status: 409,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'The Moves changed; reload and try again' }),
+      });
+    if (!failure) serverVersion += 1;
     if (failure)
       return route.fulfill({
         status: failure.status,
@@ -217,3 +228,23 @@ for (const width of [320, 390, 768, 1440]) {
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   });
 }
+
+test('every command names the version the person saw, and a stale one shows the newer list instead of replacing it', async ({
+  page,
+}) => {
+  const rows = [row({ verb: 'Confirm', object: 'your visit dates', holder: 'team' })];
+  const sent = await open(page, rows);
+  await expect(page.getByText('Confirm your visit dates')).toBeVisible();
+  // Someone else changes the Moves after this screen loaded: the fixture moves on and shows a new list.
+  serverVersion += 1;
+  rows[0]!.closed = { outcome: 'CLEARED', at: new Date().toISOString(), by: 'someone else' };
+  rows.push(row({ verb: 'Read', object: 'the newer plan', holder: 'customer', position: 1 }));
+  await page.getByRole('button', { name: 'Clear All Open Moves' }).click();
+  await expect(page.getByText('The Moves changed; reload and try again')).toBeVisible();
+  expect(sent[0]).toMatchObject({ action: 'clear', expectedVersion: 3 });
+  // The screen reloaded: the newer list is shown, and the next command names the new version.
+  await expect(page.getByText('Read the newer plan')).toBeVisible();
+  await page.getByRole('button', { name: 'Clear All Open Moves' }).click();
+  await expect(page.getByText('Moves cleared.')).toBeVisible();
+  expect(sent[1]).toMatchObject({ action: 'clear', expectedVersion: 4 });
+});
