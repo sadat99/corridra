@@ -269,10 +269,15 @@ function ScopedProgrammes({
           setStatus('unavailable');
           return;
         }
+        // A reload brings in the first page; programmes already loaded from later pages stay (their open forms and typed text
+        // with them) until the person reloads the whole page. Nothing here is ever deleted, so keeping them cannot show a removed row.
         setRows((old) =>
           after
             ? [...old, ...page.programmes.filter((p) => !old.some((item) => item.id === p.id))]
-            : page.programmes,
+            : [
+                ...page.programmes,
+                ...old.filter((o) => !page.programmes.some((p) => p.id === o.id)),
+              ],
         );
         setNext(page.nextAfter);
         setStatus('ready');

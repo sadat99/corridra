@@ -887,3 +887,43 @@ test('a name with a tab or line break inside it is refused on the form, with the
   await expect(page.getByText('The name cannot contain tabs or line breaks.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Save Changes', exact: true })).toBeDisabled();
 });
+
+test('saving a new programme keeps a rename typed on a programme from a later page', async ({
+  page,
+}) => {
+  const later = { ...base, id: second, name: 'Synthetic later page visit' };
+  const created = {
+    ...base,
+    id: third,
+    name: 'Synthetic another new programme',
+    reportingPurpose: 'Fictional second programme purpose',
+  };
+  let added = false;
+  await page.route('**/api/customer-programmes*', (route) => {
+    if (route.request().method() === 'POST') {
+      added = true;
+      return route.fulfill({ json: created });
+    }
+    const after = new URL(route.request().url()).searchParams.get('after');
+    return route.fulfill({
+      json: after
+        ? list([later])
+        : { ...list(added ? [created, base] : [base]), nextAfter: base.id },
+    });
+  });
+  await page.goto(origin);
+  await page.getByRole('button', { name: 'Load More Planning Programmes' }).click();
+  const row = page.getByRole('listitem').filter({ hasText: later.name });
+  await row.getByRole('button', { name: 'Rename Programme', exact: true }).click();
+  await row
+    .getByLabel('New programme name', { exact: true })
+    .fill('Synthetic typed on a later page');
+  await page.getByLabel('Programme name', { exact: true }).fill(created.name);
+  await page.getByLabel('Purpose and intended outcomes').fill('Fictional second programme purpose');
+  await page.getByRole('checkbox', { name: /fictional information/ }).check();
+  await page.getByRole('button', { name: 'Save Sample Programme' }).click();
+  await expect(page.getByRole('heading', { name: created.name })).toBeVisible();
+  await expect(row.getByLabel('New programme name', { exact: true })).toHaveValue(
+    'Synthetic typed on a later page',
+  );
+});
