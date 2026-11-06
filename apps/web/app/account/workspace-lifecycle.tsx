@@ -72,8 +72,7 @@ function UndoLine({
             expectedVersion: state.version,
           }).then((result) => {
             if (result?.kind === 'done') onRestored();
-            else if (result?.kind === 'stale')
-              onFailed('This workspace changed. Reload before trying again.');
+            else if (result?.kind === 'stale') onFailed(lifecycleWords.changed);
             else if (result?.kind === 'archived') onFailed(lifecycleWords.archived);
             else if (result?.kind === 'failed') onFailed(result.message);
           });

@@ -39,6 +39,7 @@ export const lifecycleWords = {
   unavailable: 'This is unavailable right now. Nothing was changed.',
   archived: 'This workspace is archived, so this was not saved. Restore it first.',
   notConfirmed: 'This was not confirmed. Try the same request again.',
+  changed: 'This workspace changed. Reload before trying again.',
 } as const;
 
 /** UTC with the zone named, written like "6 Nov 2026, 14:30 UTC". */
