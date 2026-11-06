@@ -2,6 +2,7 @@ import { migrateCustomerProgrammeProjections } from '../packages/db/src/customer
 import { migrateCustomerBooks } from '../packages/db/src/customer-book-migrate';
 import { migrateCustomerDecisionCards } from '../packages/db/src/customer-decision-card-migrate';
 import { migrateCustomerProgrammeLifecycle } from '../packages/db/src/customer-programme-lifecycle-migrate';
+import { migrateCustomerParticipantLabels } from '../packages/db/src/customer-participant-label-migrate';
 import { databasePool } from './database-pool';
 import { migrateCustomerAuthority } from '../packages/db/src/customer-migrate';
 import { migrateCustomerSavedMissions } from '../packages/db/src/customer-commercial-migrate';
@@ -75,6 +76,7 @@ const v = z
     REPLY_REVIEW_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     SPECIFICATION_CONFIRMATION_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     PROGRAMME_LIFECYCLE_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
+    PARTICIPANT_LABELS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     COMMERCIAL_ARRANGEMENTS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     REPLY_REVIEW_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
@@ -150,6 +152,8 @@ if (
 const apply = v.INSTALL_APPLY === 'yes';
 if (v.PROGRAMME_LIFECYCLE_ACTION !== 'unchanged' && !apply)
   throw new Error('PROGRAMME_LIFECYCLE_ACTION needs INSTALL_APPLY=yes');
+if (v.PARTICIPANT_LABELS_ACTION !== 'unchanged' && !apply)
+  throw new Error('PARTICIPANT_LABELS_ACTION needs INSTALL_APPLY=yes');
 if (v.SPECIFICATION_CONFIRMATION_ACTION !== 'unchanged' && !apply)
   throw new Error('Specification confirmation installation requires INSTALL_APPLY=yes');
 if (v.COMMERCIAL_ARRANGEMENTS_ACTION !== 'unchanged' && !apply)
@@ -229,6 +233,7 @@ const registries = [
   'customer_invoicing_migrations',
   'customer_real_use_migrations',
   'customer_programme_lifecycle_migrations',
+  'customer_participant_label_migrations',
   'network_real_use_migrations',
   'customer_billing_real_migrations',
   'customer_invoicing_real_migrations',
@@ -326,6 +331,12 @@ try {
       await migrateCustomerProgrammeLifecycle(pool);
       console.log(
         'installed or already current: programme lifecycle (needs real-use installed first)',
+      );
+    }
+    if (v.PARTICIPANT_LABELS_ACTION === 'install') {
+      await migrateCustomerParticipantLabels(pool);
+      console.log(
+        'installed or already current: participant labels (needs real-use and the programme lifecycle installed first)',
       );
     }
     if (v.SPECIFICATION_CONFIRMATION_ACTION === 'install') {
