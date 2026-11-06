@@ -104,6 +104,8 @@ export class CustomerSessionBoundary {
     // that needs a connection of its own (a rate limit) cannot wait on one this request already holds. It receives
     // the verified issuer and subject, never the browser's. A refusal from it ends the request.
     afterIdentity?: (identity: { issuer: string; subject: string }) => Promise<void>,
+    // Only the account lifecycle service sets this: a closed person may read the closure status and undo it.
+    access: { allowClosedAccount?: boolean } = {},
   ): Promise<T> {
     if (
       !this.options.enabled ||
