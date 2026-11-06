@@ -4,13 +4,13 @@
 // workspaces and their own session); nothing here decides access, and every page still checks on the server.
 import './customer-rail.css';
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { CornerDock } from '../corner-dock';
 import { CorridraIcon } from '../corridra-icon';
-import { AccountMenuBody, useWorkspaces } from './customer-bar';
+import { AccountMenuBody, scoped, useWorkspaces } from './customer-bar';
 import { MenuLink } from './menu-link';
-import { OverflowMenu } from './overflow-menu';
+import { MenuRadio, OverflowMenu } from './overflow-menu';
 
 const initials = (text: string) =>
   text
@@ -20,36 +20,55 @@ const initials = (text: string) =>
     .map((word) => word[0]!.toUpperCase())
     .join('') || '?';
 
-/** The workspace card: one workspace by name, or all of them with a menu to open any one. */
+/**
+ * The workspace card, the one workspace switcher. On a page that belongs to one workspace it names that
+ * workspace, and choosing another keeps the person in the same section of the chosen workspace. Elsewhere it
+ * names the only workspace, or "All workspaces", and opens a workspace's profile.
+ */
 export function CustomerRailTop() {
+  const router = useRouter();
   const pathname = usePathname() ?? '';
   const workspaces = useWorkspaces(pathname.startsWith('/account'));
   if (!workspaces || workspaces.length === 0) return null;
-  const one = workspaces.length === 1 ? workspaces[0]! : null;
+  const match = scoped.exec(pathname);
+  const section = match?.[1];
+  const current = match ? workspaces.find((w) => w.id === match[2]) : undefined;
+  const shown = current ?? (workspaces.length === 1 ? workspaces[0]! : null);
   const face = (
     <>
       <span className="ux-rail-mark" aria-hidden="true">
-        {one ? initials(one.name) : workspaces.length}
+        {shown ? initials(shown.name) : workspaces.length}
       </span>
       <span className="ux-rail-words">
-        <b>{one ? one.name : 'All workspaces'}</b>
-        <small>{one ? 'Workspace' : `${workspaces.length} workspaces`}</small>
+        <b>{shown ? shown.name : 'All workspaces'}</b>
+        <small>{shown ? 'Workspace' : `${workspaces.length} workspaces`}</small>
       </span>
       <CorridraIcon name="chevron" className="ux-rail-chevron" />
     </>
   );
   return (
     <OverflowMenu
-      label="Your workspaces"
+      label={current ? 'Switch workspace' : 'Your workspaces'}
       align="start"
       className="ux-rail-workspace"
       trigger={face}
     >
-      {workspaces.map((w) => (
-        <MenuLink key={w.id} href={`/account/profile/${w.id}`}>
-          {w.name}
-        </MenuLink>
-      ))}
+      {current && section
+        ? workspaces.map((w) => (
+            <MenuRadio
+              key={w.id}
+              checked={w.id === current.id}
+              onClick={() => router.push(`/account/${section}/${w.id}`)}
+              data-menu-close=""
+            >
+              {w.name}
+            </MenuRadio>
+          ))
+        : workspaces.map((w) => (
+            <MenuLink key={w.id} href={`/account/profile/${w.id}`}>
+              {w.name}
+            </MenuLink>
+          ))}
       <MenuLink href="/account?view=work#customer-workspaces">Manage Workspaces</MenuLink>
     </OverflowMenu>
   );

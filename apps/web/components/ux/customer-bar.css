@@ -16,15 +16,6 @@
 .ux-customer-header .ux-app-button[aria-expanded='true'] {
   background: var(--selected-surface);
 }
-.ux-bar-switcher .ux-bar-switcher-name {
-  max-width: 14rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.ux-bar-chevron {
-  transform: rotate(90deg);
-}
 .ux-bar-tools {
   display: flex;
   align-items: center;
