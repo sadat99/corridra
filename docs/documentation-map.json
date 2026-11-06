@@ -1409,6 +1409,11 @@
       "use": "Exact hashed ledger at a4caf6f (the PR 342 merge), before PRs 322, 325 and 327 to 342 and the 6 Nov install runs were recorded; preserves the Batch E and E3b bullets condensed in the current ledger; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-pr341-349-records-2026-11-06.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at 2217fd5 (the PR 344 merge), before PRs 341, 344 and 346 to 349 and the 6 Nov takeover lanes were recorded; preserves the full PR 322 to 343 merge bullet, the condensed Batch D, Batch E, production and product sequence bullets and the replaced Open and Next bullets; use the current ledger for live state."
+    },
+    {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"
