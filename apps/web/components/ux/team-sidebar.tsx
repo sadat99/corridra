@@ -8,7 +8,7 @@ import './shells.css';
 import './team-nav.css';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import { OperatorIcon } from '../operator-icon';
 import { TeamPalette } from './team-palette';
 import { useLanguage } from '../language-provider';
@@ -55,6 +55,7 @@ export function TeamSidebar({ urls, ownerPage = false }: { urls: boolean; ownerP
   const section = currentTeamSection(pathname, hash, sectionForSlug);
   const place = (section || 'home') as TeamPlaceId;
   const current = itemForPlace(place, role);
+  const adminNote = useId();
   const admin = useRef<HTMLDetailsElement | null>(null);
   const account = useRef<HTMLDetailsElement | null>(null);
   // The Admin group opens by itself on one of its pages, so a deep link lands visibly.
@@ -141,10 +142,15 @@ export function TeamSidebar({ urls, ownerPage = false }: { urls: boolean; ownerP
         <details ref={admin} className="ux-team-group" open={current === 'admin'}>
           <summary
             title={labelText(adminItem)}
+            aria-describedby={adminNote}
             aria-current={current === 'admin' ? 'true' : undefined}
           >
             <OperatorIcon name={adminItem.icon} />
             <span>{label(adminItem)}</span>
+            {/* The board's caption. Hidden from the name (the name stays "Admin") and read as its description. */}
+            <small id={adminNote} className="ux-team-caption" aria-hidden="true">
+              {english('Owner and admin')}
+            </small>
             <OperatorIcon name="chevron" className="ux-team-chevron" />
           </summary>
           <ul>

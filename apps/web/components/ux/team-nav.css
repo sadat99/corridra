@@ -235,3 +235,20 @@ nav.ux-team-sidebar .operator-icon {
   width: 1.25rem;
   height: 1.25rem;
 }
+
+/* The Admin caption: small, white, never in the collapsed rail. */
+nav.ux-team-sidebar .ux-team-caption {
+  color: var(--ac-paper);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 500;
+  opacity: 1;
+}
+@media (min-width: 1024px) {
+  .ux-leftnav-frame[data-collapsed='true'] nav.ux-team-sidebar .ux-team-caption {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+}

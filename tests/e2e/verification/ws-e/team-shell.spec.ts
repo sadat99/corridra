@@ -62,7 +62,13 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
 
   // Tab order: Today, Missions, Companies, Meetings, Money, then the Admin and Account summaries. A closed group's
   // links are not in the order. Enter and Space both toggle the group and focus stays on its summary.
-  const focusedText = () => page.evaluate(() => document.activeElement?.textContent?.trim() ?? '');
+  const focusedText = () =>
+    page.evaluate(
+      () =>
+        document.activeElement?.getAttribute('title') ??
+        document.activeElement?.textContent?.trim() ??
+        '',
+    );
   await sidebar.getByRole('link', { name: 'Today', exact: true }).focus();
   const order: string[] = [];
   for (let step = 0; step < 6; step++) {
@@ -71,6 +77,8 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   }
   expect(order).toEqual(['Missions', 'Companies', 'Meetings', 'Money', 'Admin', 'Account']);
   const admin = sidebar.locator('summary', { hasText: 'Admin' });
+  await expect(admin).toHaveAccessibleName('Admin');
+  await expect(admin).toHaveAccessibleDescription('Owner and admin');
   await admin.focus();
   await page.keyboard.press('Space');
   await expect(admin.locator('xpath=..')).toHaveAttribute('open', '');
