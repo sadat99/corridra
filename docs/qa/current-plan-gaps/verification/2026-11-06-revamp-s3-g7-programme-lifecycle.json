@@ -1,0 +1,30 @@
+{
+  "track": "S3 Public, Intake and Organise",
+  "item": "CRUD gap G7, module 1 of 3: programme lifecycle (rename, archive, restore) as an append-only overlay",
+  "date": "2026-11-06",
+  "sensitive": true,
+  "spec": "docs/revamp/specs/crud-standard.md; docs/revamp/crud/summary.md G7; Conductor approval of 5 Nov (overlay design, six conditions)",
+  "changed": [
+    "packages/db/customer-programme-lifecycle-migrations/0001_programme_lifecycle.sql: programme_lifecycle_revision and programme_lifecycle_command (append-only, reject_rewrite, version order guard, RLS, no runtime grants); view customer_private.programme_current; customer.programme_lifecycle(command,target,programme,operation,expected,input); customer_private.programme_active_count; audit via domain_event/audit_event/outbox with before and after values; 12 readers moved to the view, each behind a sha256 guard of the real-use definition it replaces; create_programme cap counts non-archived only and serialises with the lifecycle function.",
+    "packages/db/src/customer-programme-lifecycle-migrate.ts (hash-recorded, refuses to run without real-use installed, never installs real-use); scripts/install-customer-modules.ts and .github/workflows/install-customer-modules.yml: new field_modules_action choice programme_lifecycle (the workflow is at the 25-input limit), tests/workflow-inputs.test.mjs extended.",
+    "packages/auth/src/customer-programmes.ts: change(); apps/web/app/api/customer-programme-lifecycle/route.ts: POST, same origin, content-type, size and budget checks; only a fixed list of plain refusals is shown.",
+    "apps/web/app/account/delegations/programme-lifecycle.tsx and customer-programmes.tsx: Rename Programme, Archive Programme (10 second Undo), Show Archived Programmes filter, Restore Programme; controls appear only when the list carries a lifecycle version, so nothing shows before the owner installs the module."
+  ],
+  "preserved": [
+    "No business row is rewritten: app.delivery_programme and programme_creation are byte-identical after install (digest test). Names and purposes shown everywhere come from the latest revision, or the original when none.",
+    "Owner or admin only, command id idempotency, stale expectedVersion refused with 409 and a plain message, restore refused (never forced) at 100 active programmes, rename refused while archived.",
+    "Audit event keeps old and new values and no participant data. Nothing is installed in production; no switch, provider, payment, outreach or AI change."
+  ],
+  "verification": {
+    "preflight": "READY TO PUSH: format, lint, typecheck, docs-tests, ledger, security-scan, integration-changed, build, e2e, operator-affected, ux-gate all PASS",
+    "integration": "tests/integration/customer-programme-lifecycle.test.ts 13 passed (install, history mismatch, base digest unchanged, 12 reader static scan, rename shown by template capture and participant preview, stale, replay, validation, archive and restore, roles, audit, immutability, cap and restore at 100)",
+    "operator": "tests/operator/v3-programme-lifecycle-ui.spec.ts 9 passed and v3-customer-programmes-ui.spec.ts 11 passed",
+    "workflow": "tests/workflow-inputs.test.mjs 7 passed"
+  },
+  "openRisks": [
+    "Needs the owner's install run with field_modules_action=programme_lifecycle after real-use is installed; until then the screen is unchanged.",
+    "The twelve replaced functions are guarded by the hash of their definition in the test chain; the install job fails closed if production differs.",
+    "Operator-side readers of operator-created programmes (packages/delivery list, missions operations report) are untouched: a lifecycle revision only exists for customer-created programmes.",
+    "Participant label edit and recipient response revision are modules 2 and 3, separate PRs."
+  ]
+}
