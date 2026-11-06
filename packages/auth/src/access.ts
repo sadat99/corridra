@@ -83,9 +83,10 @@ export class AccessService {
         await t.db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [t.tenantId]);
         const replay = await t.db.query(
           `SELECT aggregate_id,payload FROM app.domain_event
-           WHERE tenant_id=$1 AND aggregate_type='membership' AND causation_id=$2 LIMIT 1`,
+           WHERE tenant_id=$1 AND type='membership.update' AND aggregate_type='membership' AND causation_id=$2 LIMIT 1`,
           [t.tenantId, v.commandId],
         );
+        // The id may be on an event for another member or another change: that is a reused key, never a replay.
         if (replay.rowCount) {
           const earlier = replay.rows[0];
           if (
