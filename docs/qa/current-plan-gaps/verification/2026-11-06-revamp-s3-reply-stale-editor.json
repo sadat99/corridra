@@ -1,0 +1,19 @@
+{
+  "track": "S3 Public, Intake and Organise",
+  "item": "Reply journey: a late read of the stored answer takes the version and the answer it belongs to together (Codex P2 on #344, reply-journey.tsx)",
+  "date": "2026-11-06",
+  "sensitive": false,
+  "spec": "docs/revamp/specs/crud-standard.md; Conductor instruction of 6 Nov after #344 merged as 2217fd5",
+  "changed": [
+    "apps/web/app/buyer/reply-journey.tsx: refreshAnswer, which runs after the first answer is recorded, used to adopt the stored version but keep the text this window sent. If another window had already corrected the answer, Change My Answer then started from older terms at the newer version and the version check could not catch it. It now sets the displayed answer from the stored body together with the version and canRevise. A ref (editing) marks a correction in progress from the moment it starts until it is sent, cancelled or replaced by Use Theirs, so a late read never changes the version under an editor that began from an older text."
+  ],
+  "preserved": [
+    "Every request the page sends, its payload and ids, Keep Mine / Use Theirs, the exact-retry hold, the first answer's literal detail-response command, English only, no server or database change, nothing installed."
+  ],
+  "verification": [
+    "tests/operator/ux-reply-page.spec.ts (26): new two-window test, where this window sends the first answer and the read-back returns version 2 corrected elsewhere. The receipt shows the version 2 text, Change My Answer starts from it and the correction is sent at expectedVersion 2. The test was run without the fix and fails there."
+  ],
+  "openRisks": [
+    "A correction typed in the reply journey is still held in memory only and is lost if the page is closed (unchanged, stated in #344)."
+  ]
+}

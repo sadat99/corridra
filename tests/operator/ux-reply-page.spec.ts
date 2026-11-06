@@ -663,6 +663,40 @@ test('a correction changed in another window keeps the typed text and lets the p
   expect(corrections[1]!.responseId).not.toBe(corrections[0]!.responseId);
 });
 
+test('an answer already corrected in another window is what the receipt shows and the next correction starts from', async ({
+  page,
+}) => {
+  const newer = earlier({
+    version: 2,
+    body: {
+      body: 'Corrected in another window',
+      meetingInterest: false,
+      quotation: null,
+      acknowledged: true,
+    },
+  });
+  // This window sends the first answer; by the time the page reads it back, another window has corrected it twice.
+  const sent = await open(page, { reads: [newer] });
+  await toMessage(page);
+  await page.getByLabel('Your message to the team').fill('Please send more detail.');
+  await page.getByRole('button', { name: 'Send my message without a quote' }).click();
+  await signed(page);
+  await expect(page.getByRole('heading', { name: 'Your answer is recorded' })).toBeVisible();
+  await expect(page.locator('.reply-receipt')).toContainText('Corrected in another window');
+  await expect(page.locator('.reply-receipt')).not.toContainText('Please send more detail.');
+  // The editor starts from the text that belongs to version 2, so older terms cannot be sent as if they were current.
+  await page.getByRole('button', { name: 'Change My Answer' }).click();
+  await expect(page.getByLabel('Your message to the team')).toHaveValue(
+    'Corrected in another window',
+  );
+  await page.getByLabel('Your message to the team').fill('Corrected again here');
+  await page.getByRole('button', { name: 'Send my message without a quote' }).click();
+  await signed(page);
+  const corrections = sent.filter((c) => c.action === 'detail-revision');
+  expect(corrections).toHaveLength(1);
+  expect(corrections[0]).toMatchObject({ expectedVersion: 2, body: 'Corrected again here' });
+});
+
 test('Use Theirs shows the newer answer and sends nothing more', async ({ page }) => {
   const newer = earlier({
     version: 3,
