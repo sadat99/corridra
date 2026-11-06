@@ -500,6 +500,7 @@ test('payments and reversals wait for another person: the preparer is told so an
     billToAddress: null,
     invoiceNumber: 'INV-2026-000001',
     paymentSeq: 1,
+    invoiceCurrency: 'SGD',
     paymentAmountMinor: '2000',
     paymentReceivedOn: '2026-10-28',
     reason: 'The transfer was a duplicate of another one',
@@ -522,7 +523,7 @@ test('payments and reversals wait for another person: the preparer is told so an
   await waiting.getByRole('button', { name: 'Approve payment reversal for Acme Apparel' }).click();
   const ask = page.getByRole('dialog', { name: 'Reverse This Payment?' });
   await expect(ask).toBeVisible();
-  await expect(ask).toContainText('Payment 1');
+  await expect(ask).toContainText(/Payment 1 of SGD\s?20\.00 received on 28 October 2026/);
   await expect(ask).toContainText(/received on 28 October 2026 on invoice INV-2026-000001/);
   await expect(ask).toContainText('This cannot be undone');
   await expect(ask.getByRole('button', { name: 'Keep Payment' })).toBeFocused();

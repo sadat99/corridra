@@ -16,7 +16,8 @@
   "alsoChanged": [
     "packages/delivery/src/customer-invoicing-real-staff.ts: the position a command may carry is 1500 (500 payments, 500 credits and 500 reversals), up from 1000, the same fix the Codex review found for sample invoices.",
     "apps/web/app/operator/customer-real-invoicing.tsx: approving a payment reversal asks once in a dialog that names the payment, amount, date and invoice, says it cannot be undone and focuses Keep Payment (the CRUD standard D-02 rule).",
-    "The staff pending read names the amount and date of the payment a waiting reversal is for."
+    "The staff pending read names the amount, date and invoice currency of the payment a waiting reversal is for, so the confirmation never depends on which invoice page is loaded (Codex P2).",
+    "The database position checks on proposals (credit, payment, payment reversal) all reach 1500; the credit check from the first file is found by what it says, dropped and put back under a name with the larger limit, additively (Codex P2)."
   ],
   "preserved": [
     "Payments, credits and invoices stay append-only: a payment is never edited or deleted, and stays readable with its reversal.",

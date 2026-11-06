@@ -622,6 +622,10 @@ test('real payments and their reversals need a second person, carry a reason, an
     kind: 'payment_reversal',
     paymentSeq: 2,
     reason: 'The second payment was entered against the wrong invoice',
+    // The confirmation names the payment and its currency, whatever invoice page the screen has loaded.
+    paymentAmountMinor: '6900',
+    paymentReceivedOn: expect.stringMatching(/^\d{4}-\d{2}-\d{2}/),
+    invoiceCurrency: 'SGD',
     preparedByYou: true,
   });
   const reversed = await decide(prepared.proposalId);
@@ -766,6 +770,21 @@ test('two people preparing a reversal of the same payment at once: exactly one w
   ).value;
   // Leave nothing waiting for the tests that follow.
   await decide(won.proposalId, 'reject', second.ctx, 'Withdrawn after the race rehearsal');
+});
+
+test('every position check the database holds on a proposal reaches 1500, the most an invoice can hold', async () => {
+  const defs = (
+    await s.f.owner.query(
+      `SELECT conname, pg_get_constraintdef(oid) AS def FROM pg_constraint
+       WHERE conrelid='customer_private.real_invoicing_proposal'::regclass AND contype='c' AND pg_get_constraintdef(oid) LIKE '%expected_position%'`,
+    )
+  ).rows as { conname: string; def: string }[];
+  // Credit, payment and payment reversal each carry one.
+  expect(defs.length).toBe(3);
+  for (const d of defs) {
+    expect(d.def).toMatch(/expected_position >= 0\) AND \(expected_position <= 1500\)/);
+    expect(d.def).not.toMatch(/1000/);
+  }
 });
 
 test('the position a real command may carry reaches the most an invoice can hold: 500 payments, 500 credits and 500 reversals', () => {

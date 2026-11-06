@@ -14,13 +14,31 @@ ALTER TABLE customer_private.real_invoicing_proposal
 ALTER TABLE customer_private.real_invoicing_proposal ADD CONSTRAINT real_invoicing_proposal_payment_fields CHECK(
  (kind IN ('payment','payment_reversal')) OR (received_on IS NULL AND method IS NULL AND reference IS NULL AND payment_seq IS NULL));
 ALTER TABLE customer_private.real_invoicing_proposal ADD CONSTRAINT real_invoicing_proposal_payment_check CHECK(kind<>'payment' OR (
- invoice_id IS NOT NULL AND expected_position BETWEEN 0 AND 1000 AND amount_minor IS NOT NULL AND received_on IS NOT NULL
+ invoice_id IS NOT NULL AND expected_position BETWEEN 0 AND 1500 AND amount_minor IS NOT NULL AND received_on IS NOT NULL
  AND method IN ('bank_transfer','cash','other') AND customer_private.billing_plain_ok(reference,2,120)
  AND payment_seq IS NULL AND reason IS NULL AND subscription_id IS NULL));
 ALTER TABLE customer_private.real_invoicing_proposal ADD CONSTRAINT real_invoicing_proposal_reversal_check CHECK(kind<>'payment_reversal' OR (
- invoice_id IS NOT NULL AND expected_position BETWEEN 0 AND 1000 AND payment_seq BETWEEN 1 AND 500
+ invoice_id IS NOT NULL AND expected_position BETWEEN 0 AND 1500 AND payment_seq BETWEEN 1 AND 500
  AND customer_private.billing_plain_ok(reason,10,500) AND amount_minor IS NULL AND received_on IS NULL AND method IS NULL AND reference IS NULL
  AND subscription_id IS NULL));
+
+-- The position of an invoice counts its payments, credit notes and reversals (500 of each at most), so it can reach 1500.
+-- The credit proposal check from the first file said 1000; it is an unnamed table check, so it is found by what it says,
+-- dropped and put back under a name with the larger limit. Nothing else about it changes.
+DO $$
+DECLARE c text;
+BEGIN
+ FOR c IN SELECT conname FROM pg_constraint
+   WHERE conrelid='customer_private.real_invoicing_proposal'::regclass AND contype='c'
+     AND pg_get_constraintdef(oid) LIKE '%credit%' AND pg_get_constraintdef(oid) LIKE '%expected_position%'
+     AND conname<>'real_invoicing_proposal_credit_check'
+ LOOP
+  EXECUTE format('ALTER TABLE customer_private.real_invoicing_proposal DROP CONSTRAINT %I',c);
+ END LOOP;
+END $$;
+ALTER TABLE customer_private.real_invoicing_proposal ADD CONSTRAINT real_invoicing_proposal_credit_check CHECK(kind<>'credit' OR (
+ invoice_id IS NOT NULL AND expected_position BETWEEN 0 AND 1500 AND amount_minor IS NOT NULL
+ AND customer_private.billing_plain_ok(reason,10,500) AND subscription_id IS NULL));
 
 -- A payment now records which approved proposal it came from. Payments recorded before this change have none.
 ALTER TABLE customer_private.real_invoice_payment
@@ -188,6 +206,7 @@ BEGIN
   'subscriptionId',pr.subscription_id,'periodStart',pr.period_start,'periodEnd',pr.period_end,'dueDate',pr.due_date,'billToName',pr.bill_to_name,'billToAddress',pr.bill_to_address,
   'invoiceId',pr.invoice_id,'invoiceNumber',(SELECT customer_private.real_invoicing_number('INV',i.invoice_year,i.invoice_seq) FROM customer_private.real_invoice i WHERE i.id=pr.invoice_id),
   'amountMinor',pr.amount_minor::text,'reason',pr.reason,'receivedOn',pr.received_on,'method',pr.method,'reference',pr.reference,'paymentSeq',pr.payment_seq,
+  'invoiceCurrency',(SELECT i2.currency FROM customer_private.real_invoice i2 WHERE i2.id=pr.invoice_id),
   'paymentAmountMinor',(SELECT pay.amount_minor::text FROM customer_private.real_invoice_payment pay WHERE pay.invoice_id=pr.invoice_id AND pay.seq=pr.payment_seq),
   'paymentReceivedOn',(SELECT pay.received_on FROM customer_private.real_invoice_payment pay WHERE pay.invoice_id=pr.invoice_id AND pay.seq=pr.payment_seq),'preparedByYou',pr.prepared_by=v_actor,'preparedAt',pr.created_at,
   'preview',CASE WHEN pr.kind='invoice' THEN (SELECT jsonb_build_object('currency',p.currency,'planTitle',p.title,'taxTreatment',p.tax_treatment,'feeMinor',p.price_minor::text,

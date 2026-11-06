@@ -53,6 +53,7 @@ type Proposal = {
   method?: string | null;
   reference?: string | null;
   paymentSeq?: number | null;
+  invoiceCurrency?: string | null;
   paymentAmountMinor?: string | null;
   paymentReceivedOn?: string | null;
   preparedByYou: boolean;
@@ -626,13 +627,9 @@ function Scoped({ tenant }: { tenant: string }) {
           <>
             <p>
               Payment {confirmingReversal.paymentSeq}
-              {confirmingReversal.paymentAmountMinor
+              {confirmingReversal.paymentAmountMinor && confirmingReversal.invoiceCurrency
                 ? ' of ' +
-                  money(
-                    confirmingReversal.paymentAmountMinor,
-                    rows?.find((r) => r.number === confirmingReversal.invoiceNumber)?.currency ??
-                      '',
-                  ).trim()
+                  money(confirmingReversal.paymentAmountMinor, confirmingReversal.invoiceCurrency)
                 : ''}
               {confirmingReversal.paymentReceivedOn
                 ? ' received on ' + displayDate(confirmingReversal.paymentReceivedOn)
