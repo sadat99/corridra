@@ -1,4 +1,5 @@
 import { test, expect, expectNoForbiddenCopy, evidence } from '../fixtures';
+import type { Page } from '@playwright/test';
 
 // WS-A public site (program 6.A). A-1: no Appendix B wording on the public pages; A-5: the not found page
 // has its own title. The server runs without real use, so the request form is a made-up data panel there and
@@ -89,46 +90,52 @@ test('A-5 the not found page has its own title and answers 404', async ({ page }
   await evidence(page, `A-5-${info.project.name}`);
 });
 
+// Home concept G (owner, 6 Nov 2026) replaced the scrolling examples row with the Mission Player, whose Previous
+// Step and Next Step buttons are the examples' controls at every width. CQ-53 keeps its intent on them: working
+// previous and next buttons on narrow screens, 44 px targets, no sideways page scroll.
+const currentStep = (page: Page) =>
+  page
+    .getByRole('article', { name: 'Example missions, not real companies' })
+    .locator('li[aria-current="step"]')
+    .evaluate((li) => Array.from(li.parentElement?.children ?? []).indexOf(li));
+
 test('CQ-53 the home examples row has working previous and next buttons on narrow screens', async ({
   page,
 }, info) => {
   await page.goto('/');
-  const next = page.getByRole('button', { name: 'Next Example' });
-  if ((page.viewportSize()?.width ?? 1280) >= 1120) {
-    // Side by side on wide screens: no carousel controls.
-    await expect(next).toBeHidden();
-    return;
-  }
-  // The results row is in the Results tab (layout budget): choose the tab first.
-  await page.getByRole('tab', { name: 'Results', exact: true }).click();
-  const row = page.locator('#home-proofs');
-  await row.scrollIntoViewIfNeeded();
+  const next = page.getByRole('button', { name: 'Next Step', exact: true });
+  const previous = page.getByRole('button', { name: 'Previous Step', exact: true });
+  await next.scrollIntoViewIfNeeded();
   await expect(next).toBeVisible();
-  const box = await next.boundingBox();
-  expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+  await expect(previous).toBeVisible();
+  for (const control of [next, previous]) {
+    const box = await control.boundingBox();
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+    expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
+  }
+  // The first press also stops the player, so the step only moves when a button is pressed.
   await next.click();
-  await expect.poll(() => row.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
-  await page.getByRole('button', { name: 'Previous Example' }).click();
-  await expect.poll(() => row.evaluate((el) => el.scrollLeft)).toBe(0);
+  const from = await currentStep(page);
+  await next.click();
+  await expect.poll(() => currentStep(page)).toBe((from + 1) % 6);
+  await previous.click();
+  await expect.poll(() => currentStep(page)).toBe(from);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await evidence(page, `CQ-53-${info.project.name}`);
 });
 
-// Codex review of PR 311: in a right-to-left page (Arabic preview) the row scrolls the other way, and Next must
-// still move to the next example.
+// Codex review of PR 311: in a right-to-left page (Arabic preview) Next must still move to the next example step.
 test('CQ-53 in a right-to-left page Next still moves to the next example', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('tab', { name: 'Results', exact: true }).click();
-  const row = page.locator('#home-proofs');
-  await row.evaluate((el) => el.closest('main')?.setAttribute('dir', 'rtl'));
-  const next = page.getByRole('button', { name: 'Next Example' });
-  test.skip(
-    !(await next.isVisible()),
-    'Both examples are side by side here: no carousel controls.',
-  );
-  await row.scrollIntoViewIfNeeded();
+  await page
+    .getByRole('article', { name: 'Example missions, not real companies' })
+    .evaluate((el) => el.closest('main')?.setAttribute('dir', 'rtl'));
+  const next = page.getByRole('button', { name: 'Next Step', exact: true });
+  await next.scrollIntoViewIfNeeded();
   await next.click();
-  await expect.poll(() => row.evaluate((el) => el.scrollLeft)).toBeLessThan(0);
-  await page.getByRole('button', { name: 'Previous Example' }).click();
-  await expect.poll(() => row.evaluate((el) => el.scrollLeft)).toBe(0);
+  const from = await currentStep(page);
+  await next.click();
+  await expect.poll(() => currentStep(page)).toBe((from + 1) % 6);
+  await page.getByRole('button', { name: 'Previous Step', exact: true }).click();
+  await expect.poll(() => currentStep(page)).toBe(from);
 });
