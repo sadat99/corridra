@@ -580,6 +580,43 @@ test('an archived programme shows the owner message instead of the invitation fo
   await expect(page.getByRole('button', { name: /Create Sample Invitation Code/ })).toBeVisible();
 });
 
+test('archiving keeps the programme mounted, so a typed invitation label survives Undo', async ({
+  page,
+}) => {
+  const { rows } = await serve(page, [base]);
+  await page.route('**/api/customer-programme-participants*', (route) =>
+    route.fulfill({
+      json: {
+        workspaceId,
+        programmeId: rows[0]!.id,
+        invitations: [],
+        registrations: [],
+        nextInvitationAfter: null,
+        nextRegistrationAfter: null,
+        synthetic: true,
+      },
+    }),
+  );
+  await page.route('**/api/customer-programme-lifecycle', async (route) => {
+    const body = route.request().postDataJSON();
+    rows[0] = {
+      ...rows[0]!,
+      archived: body.operation === 'archive',
+      version: rows[0]!.version! + 1,
+    };
+    await route.fulfill({ json: answer(rows[0]!, body.operation) });
+  });
+  await page.goto(origin + '/?people=true');
+  await page.getByRole('button', { name: 'Manage Sample Participants', exact: true }).click();
+  const label = page.getByLabel('Invitation label');
+  await label.fill('Synthetic label typed before archiving');
+  await page.getByRole('button', { name: 'Archive Programme', exact: true }).click();
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(page.getByLabel('Invitation label')).toHaveValue(
+    'Synthetic label typed before archiving',
+  );
+});
+
 test('a stale rename on a programme from page two keeps the typed text and still shows the choice', async ({
   page,
 }) => {

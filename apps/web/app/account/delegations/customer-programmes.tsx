@@ -490,6 +490,9 @@ function ScopedProgrammes({
   const applyChange = (change: LifecycleChange, before: LifecycleProgramme) => {
     setStaleNote('');
     setArchivedMidEdit(null);
+    // Whatever the answer, the programme stays mounted (hidden by the filter if need be) so typed text and the chosen tab survive.
+    setMounted((current) => new Set(current).add(change.id));
+    setVisited((current) => new Set(current).add(change.id));
     setRows((old) =>
       old.map((p) =>
         p.id === change.id
