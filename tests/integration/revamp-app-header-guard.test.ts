@@ -7,7 +7,9 @@ import { describe, expect, test } from 'vitest';
 // inside AppHeader behind kind === 'customer'. The team and contributor headers must come out byte for
 // byte as they did before. Their markup was captured from main before the customer change and is pinned
 // in tests/integration/fixtures/app-header-markup.json. To record it again, a person sets
-// RECORD_APP_HEADER=1 on purpose; an ordinary run only compares.
+// RECORD_APP_HEADER=1 on purpose; an ordinary run only compares. The two team entries were recorded again
+// for the team Today redesign (owner, 6 Nov 2026: "today page redesign"): the inbox as an icon with its
+// unread count and the language and website in an account menu. The contributor entries are unchanged.
 const web = createRequire(resolve('apps/web/package.json'));
 const createElement = web('react').createElement as (
   t: unknown,
