@@ -44,10 +44,12 @@ describe('NAV-01 every old route is still reachable for each role that could ope
 });
 
 describe('NAV-02 five at most per level, and the right words', () => {
-  test('at most six items (five plus Admin) and five places each, for every role', () => {
+  test('at most five daily items plus the Admin and Account groups, and five places each, for every role', () => {
     for (const role of [...roles, null]) {
       const items = teamItemsFor(role);
-      expect(items.filter((item) => item.key !== 'admin').length).toBeLessThanOrEqual(5);
+      expect(
+        items.filter((item) => item.key !== 'admin' && item.key !== 'account').length,
+      ).toBeLessThanOrEqual(5);
       for (const item of items) expect(teamPlacesFor(item, role).length).toBeLessThanOrEqual(5);
       expect(settingsLevel(role).length).toBeLessThanOrEqual(5);
     }
@@ -60,6 +62,7 @@ describe('NAV-02 five at most per level, and the right words', () => {
       'Meetings',
       'Money',
       'Admin',
+      'Account',
     ]);
     expect(teamMap.find((item) => item.key === 'admin')?.places.map((p) => p.label)).toEqual([
       'Health',
@@ -93,18 +96,20 @@ describe('NAV-03 same access: nothing is shown to a role that cannot open it', (
       }
     }
   });
-  test('an operator keeps Health and Readiness under Today, where Admin is not shown', () => {
-    const today = teamItemsFor('operator').find((item) => item.key === 'today');
-    expect(teamPlacesFor(today!, 'operator').map((p) => p.id)).toEqual([
-      'home',
-      'ops-health',
-      'ops-gates',
-      'workspace-authenticator',
-    ]);
+  test('an operator keeps Health and Readiness in Account, where Admin is not shown; owner and admin find them in Admin', () => {
+    const account = (role: string) =>
+      teamPlacesFor(
+        teamItemsFor(role).find((item) => item.key === 'account')!,
+        role,
+      ).map((p) => p.id);
+    expect(account('operator')).toEqual(['workspace-authenticator', 'ops-health', 'ops-gates']);
+    expect(account('viewer')).toEqual(['workspace-authenticator']);
+    expect(account('owner')).toEqual(['workspace-authenticator']);
   });
   test('a place belongs to Admin for owner and admin and to its own item for others', () => {
     expect(itemForPlace('ops-health', 'owner')).toBe('admin');
-    expect(itemForPlace('ops-health', 'operator')).toBe('today');
+    expect(itemForPlace('ops-health', 'operator')).toBe('account');
+    expect(itemForPlace('workspace-authenticator', 'viewer')).toBe('account');
     expect(itemForPlace('workspace-missions', 'owner')).toBe('missions');
     expect(itemForPlace('workspace-delivery', 'viewer')).toBe('meetings');
     expect(itemForPlace('owner', 'owner')).toBe('admin');

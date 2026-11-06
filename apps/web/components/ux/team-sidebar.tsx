@@ -54,9 +54,11 @@ export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
   const place = (section || 'home') as TeamPlaceId;
   const current = itemForPlace(place, role);
   const admin = useRef<HTMLDetailsElement | null>(null);
+  const account = useRef<HTMLDetailsElement | null>(null);
   // The Admin group opens by itself on one of its pages, so a deep link lands visibly.
   useEffect(() => {
     if (admin.current && current === 'admin') admin.current.open = true;
+    if (account.current && current === 'account') account.current.open = true;
   }, [current]);
   // A section word on a mission page, the owner page or a `#` link is a full page change: the
   // workspace reads the address once, so a soft change could show the old section.
@@ -104,8 +106,9 @@ export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
     );
   }
   const items = teamItemsFor(role);
-  const daily = items.filter((item) => item.key !== 'admin');
+  const daily = items.filter((item) => item.key !== 'admin' && item.key !== 'account');
   const adminItem = items.find((item) => item.key === 'admin');
+  const accountItem = items.find((item) => item.key === 'account');
   return (
     <nav
       id="workspace-navigation"
@@ -150,6 +153,29 @@ export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
                   place === entry.id ||
                     (entry.id === 'workspace-settings' &&
                       (place === 'ops-center' || place === 'owner')),
+                )}
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
+      {accountItem ? (
+        <details ref={account} className="ux-team-group" open={current === 'account'}>
+          <summary aria-current={current === 'account' ? 'true' : undefined}>
+            <OperatorIcon name={accountItem.icon} />
+            <span>{label(accountItem)}</span>
+            <OperatorIcon name="chevron" className="ux-team-chevron" />
+          </summary>
+          <ul>
+            {teamPlacesFor(accountItem, role).map((entry) => (
+              <li key={entry.id}>
+                {link(
+                  entry.id,
+                  english(entry.label),
+                  entry.label,
+                  'chevron',
+                  placeHref(entry.id, urls, tenant),
+                  place === entry.id,
                 )}
               </li>
             ))}

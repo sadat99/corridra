@@ -154,6 +154,7 @@ describe('role shells (D14)', () => {
       'meetings',
       'money',
       'admin',
+      'account',
     ]);
     const reachable = new Set<string>(teamMap.flatMap((item) => item.places.map((p) => p.id)));
     for (const place of settingsLevel('owner')) reachable.add(place.id);

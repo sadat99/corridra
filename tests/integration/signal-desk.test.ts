@@ -68,13 +68,16 @@ describe('NAV-04 the sidebar holds the five daily items, and Admin only for owne
       'Audit',
       'People and access',
       'Settings',
+      'Account',
+      'Authenticator',
     ]);
   });
-  test('no other role sees Admin or its pages; an operator keeps the daily items', async () => {
+  test('no other role sees Admin or its pages; an operator keeps the daily items and Account', async () => {
     for (const role of ['operator', 'reviewer', 'viewer', null]) {
       const { sidebar } = await render(role);
       expect(sidebar, String(role)).not.toContain('Admin');
-      expect(sidebar).not.toContain('<details');
+      // Account is the only group: Authenticator for everyone, Health and Readiness for an operator.
+      expect(sidebar.match(/<details/g)?.length).toBe(1);
       expect(hrefs(sidebar)).not.toContain('/operator/audit');
     }
     expect((await render('admin')).sidebar).toContain('Admin');

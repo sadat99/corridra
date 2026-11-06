@@ -13,7 +13,7 @@ export type TeamPlaceId = SectionId | 'home' | 'owner';
 
 export type TeamPlace = { id: TeamPlaceId; label: string };
 export type TeamItem = {
-  key: 'today' | 'missions' | 'companies' | 'meetings' | 'money' | 'admin';
+  key: 'today' | 'missions' | 'companies' | 'meetings' | 'money' | 'admin' | 'account';
   label: string;
   icon: string;
   /** The second level, in order. The first place is where the item itself leads. */
@@ -27,12 +27,7 @@ export const teamMap: readonly TeamItem[] = [
     key: 'today',
     label: 'Today',
     icon: 'home',
-    places: [
-      { id: 'home', label: 'Today' },
-      { id: 'ops-health', label: 'Health' },
-      { id: 'ops-gates', label: 'Readiness' },
-      { id: 'workspace-authenticator', label: 'Authenticator' },
-    ],
+    places: [{ id: 'home', label: 'Today' }],
   },
   {
     key: 'missions',
@@ -86,6 +81,19 @@ export const teamMap: readonly TeamItem[] = [
       { id: 'workspace-settings', label: 'Settings' },
     ],
   },
+  // For every role: the Authenticator, and Health and Readiness for a role that may open them but is not
+  // shown Admin (an operator). Owner and admin find those two in Admin. Until the avatar menu of the
+  // shared header carries Account (S2), this small group is its door.
+  {
+    key: 'account',
+    label: 'Account',
+    icon: 'lock',
+    places: [
+      { id: 'workspace-authenticator', label: 'Authenticator' },
+      { id: 'ops-health', label: 'Health' },
+      { id: 'ops-gates', label: 'Readiness' },
+    ],
+  },
 ];
 
 /**
@@ -123,12 +131,12 @@ function placeAllowedStrict(id: TeamPlaceId, role: string | null): boolean {
 }
 
 export function teamPlacesFor(item: TeamItem, role: string | null): TeamPlace[] {
-  const places = item.key === 'admin' ? adminPlaces() : [...item.places];
-  return places.filter((place) => placeAllowedStrict(place.id, role));
-}
-
-function adminPlaces(): TeamPlace[] {
-  return [...(teamMap.find((i) => i.key === 'admin')?.places ?? [])];
+  const admin = role === 'owner' || role === 'admin';
+  return item.places.filter(
+    (place) =>
+      placeAllowedStrict(place.id, role) &&
+      !(item.key === 'account' && admin && (place.id === 'ops-health' || place.id === 'ops-gates')),
+  );
 }
 
 /** The second level of Settings: three places, shown on any of them. */

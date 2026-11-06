@@ -60,16 +60,16 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   );
   await evidence(page, `V-06-today-${info.project.name}`);
 
-  // Tab order: Today, Missions, Companies, Meetings, Money, then the Admin summary. A closed group's
+  // Tab order: Today, Missions, Companies, Meetings, Money, then the Admin and Account summaries. A closed group's
   // links are not in the order. Enter and Space both toggle the group and focus stays on its summary.
   const focusedText = () => page.evaluate(() => document.activeElement?.textContent?.trim() ?? '');
   await sidebar.getByRole('link', { name: 'Today', exact: true }).focus();
   const order: string[] = [];
-  for (let step = 0; step < 5; step++) {
+  for (let step = 0; step < 6; step++) {
     await page.keyboard.press('Tab');
     order.push(await focusedText());
   }
-  expect(order).toEqual(['Missions', 'Companies', 'Meetings', 'Money', 'Admin']);
+  expect(order).toEqual(['Missions', 'Companies', 'Meetings', 'Money', 'Admin', 'Account']);
   const admin = sidebar.locator('summary', { hasText: 'Admin' });
   await admin.focus();
   await page.keyboard.press('Space');
