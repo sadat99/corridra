@@ -36,11 +36,11 @@ import { MenuButton, MenuRadio, OverflowMenu } from './overflow-menu';
 export function NotificationsPanel({
   counted,
   endpoint,
-  label = 'Notifications',
+  label = 'Inbox',
 }: {
   counted: boolean;
   endpoint: string;
-  /** The accessible name of the bell. */
+  /** The accessible name of the bell. It stays "Inbox", as every existing test and the team header call it; the panel it opens is titled Notifications. */
   label?: string;
 }) {
   return <BarInbox counted={counted} endpoint={endpoint} label={label} grouped />;
@@ -192,6 +192,34 @@ const initials = (text: string) =>
     .map((word) => word[0]!.toUpperCase())
     .join('') || '?';
 
+/** The workspace choices on a page that belongs to one workspace: choosing one keeps the person in the same section. */
+function WorkspaceRadios({
+  list,
+  current,
+  section,
+}: {
+  list: readonly { id: string; name: string }[];
+  current: { id: string };
+  section: string;
+}) {
+  // The router is read only here, on a workspace page, so the rest of the header never needs it.
+  const router = useRouter();
+  return (
+    <>
+      {list.map((w) => (
+        <MenuRadio
+          key={w.id}
+          checked={w.id === current.id}
+          onClick={() => router.push(`/account/${section}/${w.id}`)}
+          data-menu-close=""
+        >
+          {w.name}
+        </MenuRadio>
+      ))}
+    </>
+  );
+}
+
 /**
  * The customer's account menu behind the avatar: who is signed in, the workspace (the one switcher, which keeps
  * the person in the same section of the chosen workspace), then Account, Company Profile, Plan and Billing,
@@ -199,7 +227,6 @@ const initials = (text: string) =>
  */
 export function AvatarMenu({ active }: { active: boolean }) {
   const listen = useListen();
-  const router = useRouter();
   const pathname = usePathname() ?? '';
   const workspaces = useWorkspaces(active);
   const billing = useSyncExternalStore(
@@ -214,6 +241,9 @@ export function AvatarMenu({ active }: { active: boolean }) {
   );
   const [who, setWho] = useState<{ name: string; email: string } | null>(null);
   useEffect(() => {
+    // Like the workspaces, the person's own session is read only on the customer account pages. Elsewhere the
+    // avatar is the plain person icon and the header makes no calls but its inbox.
+    if (!active) return;
     const controller = new AbortController();
     fetch('/api/auth/get-session', { cache: 'no-store', signal: controller.signal })
       .then((r) => (r.ok ? r.json() : null))
@@ -224,7 +254,7 @@ export function AvatarMenu({ active }: { active: boolean }) {
       })
       .catch(() => undefined);
     return () => controller.abort();
-  }, []);
+  }, [active]);
 
   const list = workspaces ?? [];
   const match = workspacePage.exec(pathname);
@@ -256,22 +286,15 @@ export function AvatarMenu({ active }: { active: boolean }) {
       {note ? <p className="ux-menu-note">{note}</p> : null}
       {list.length > 1 || (list.length === 1 && !match) ? (
         <div role="group" aria-label="Workspace" className="ux-menu-group">
-          {current && section
-            ? list.map((w) => (
-                <MenuRadio
-                  key={w.id}
-                  checked={w.id === current.id}
-                  onClick={() => router.push(`/account/${section}/${w.id}`)}
-                  data-menu-close=""
-                >
-                  {w.name}
-                </MenuRadio>
-              ))
-            : list.map((w) => (
-                <MenuLink key={w.id} href={`/account/profile/${w.id}`}>
-                  {w.name}
-                </MenuLink>
-              ))}
+          {current && section ? (
+            <WorkspaceRadios list={list} current={current} section={section} />
+          ) : (
+            list.map((w) => (
+              <MenuLink key={w.id} href={`/account/profile/${w.id}`}>
+                {w.name}
+              </MenuLink>
+            ))
+          )}
         </div>
       ) : null}
       {list.length > 0 ? <MenuLink href={manageWorkspacesHref}>Manage Workspaces</MenuLink> : null}

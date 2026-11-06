@@ -94,6 +94,11 @@ export function NotificationInbox({
   }
   const [marking, setMarking] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
+  // In the grouped panel an item that is read moves to Earlier, which remounts its button. If that left focus on
+  // the page, it goes back into the panel (its title), so Escape still closes the panel from where the person is.
+  useEffect(() => {
+    if (grouped && items && document.activeElement === document.body) heading.current?.focus();
+  }, [grouped, items]);
   // Mark All Read uses the same single-item read each opened item uses, one after another, then reads the list again.
   async function markAllRead(list: Item[]) {
     setMarking(true);

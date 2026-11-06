@@ -83,7 +83,7 @@ for (const [width, height] of [
       ['avatar-menu', 'Account menu'],
       ['help-menu', 'Help and accessibility'],
       ['language-menu', 'Language'],
-      ['notifications', 'Notifications'],
+      ['notifications', 'Inbox'],
     ] as const) {
       const trigger = header.getByRole('button', { name: label, exact: true });
       if (!(await trigger.isVisible())) continue;

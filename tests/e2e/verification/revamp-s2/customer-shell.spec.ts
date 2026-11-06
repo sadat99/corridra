@@ -287,7 +287,7 @@ test('CX-03 the notifications panel groups Needs You, Updates and Earlier, marks
   });
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/account');
-  const bell = header(page).getByRole('button', { name: 'Notifications', exact: true });
+  const bell = header(page).getByRole('button', { name: 'Inbox', exact: true });
   await expect(bell).toBeVisible();
   await expect(bell).toHaveAccessibleDescription('3 unread');
   expect((await bell.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
@@ -308,6 +308,36 @@ test('CX-03 the notifications panel groups Needs You, Updates and Earlier, marks
   await expect(panel.getByRole('button', { name: 'Mark All Read' })).toHaveCount(0);
   expect(posted.sort()).toEqual(['1', '2', '3']);
   await expect(panel.getByRole('group', { name: 'Earlier' })).toContainText('Team invitation');
+  await page.keyboard.press('Escape');
+  await expect(bell).toBeFocused();
+});
+
+test('CX-03 opening one notification keeps focus in the panel, so Escape still closes it and returns to the bell', async ({
+  page,
+}) => {
+  const items = [inboxItem('1', 'REPLY_POSTED', 'New reply', null)];
+  await page.route('**/api/customer-inbox', async (route) => {
+    if (route.request().method() === 'POST') {
+      items[0]!.readAt = '2026-11-05T09:00:00Z';
+      return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+    }
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(items),
+    });
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/account');
+  const bell = header(page).getByRole('button', { name: 'Inbox', exact: true });
+  await bell.click();
+  const panel = page.locator('.ux-notice-panel');
+  await panel.getByRole('button', { name: 'New reply' }).click();
+  // The item moves from Updates to Earlier, which replaces its button; focus must stay inside the panel.
+  await expect(panel.getByRole('group', { name: 'Earlier' })).toContainText('New reply');
+  expect(await page.evaluate(() => !!document.activeElement?.closest('.ux-notice-panel'))).toBe(
+    true,
+  );
   await page.keyboard.press('Escape');
   await expect(bell).toBeFocused();
 });
