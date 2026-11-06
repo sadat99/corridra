@@ -1,6 +1,7 @@
 import { DomainError } from '@corridra/domain';
 import { customerRequestsEnabled } from '@corridra/auth/customer-requests';
 import { customerRequestDetailsEnabled } from '@corridra/auth/customer-request-details';
+import { archivedWorkspaceRefusal } from '@corridra/auth/customer-workspace-lifecycle';
 import { requestTitle } from '../../account/request-words';
 import { foundations } from '../../../lib/foundations';
 import { boundedBody, deliveryError, deliveryHeaders } from '../../../lib/delivery-http';
@@ -14,7 +15,14 @@ async function services() {
   await services.ready;
   return services;
 }
+// An archived workspace says so, with the code archived, instead of the generic try-again answer.
 function failure(error: unknown) {
+  const archived = archivedWorkspaceRefusal(error);
+  if (archived)
+    return Response.json(
+      { error: archived.message, code: archived.code },
+      { status: archived.status, headers: deliveryHeaders },
+    );
   if (['42P01', '3F000', '42883'].includes((error as { code?: string }).code ?? ''))
     return deliveryError(new DomainError('Customer requests are unavailable', 503));
   return deliveryError(error);

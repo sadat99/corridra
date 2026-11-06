@@ -154,6 +154,24 @@ export function customerWorkspaceLifecycleError(error: unknown): unknown {
   }
 }
 
+// The two sentences the database gives when a new private request, invitation or registration meets an archived workspace:
+// one for a member who can restore it, one for an invitee or participant who cannot. Raised as 55000 by requests and
+// workspace invitations and as 23514 by the programme paths, so the participant screens handle both unchanged.
+const archivedWorkspaceMessages = [
+  'This workspace is archived. Restore it to send new private requests, invitations and registrations.',
+  'This workspace is archived and is not accepting new invitations or registrations right now.',
+];
+// The archive refusal as the person should read it (409, code archived), or undefined for anything else. Only these exact
+// sentences count: another 55000 refusal of the database is not an archive.
+export function archivedWorkspaceRefusal(error: unknown): DomainError | undefined {
+  const { code, message } = error as { code?: string; message?: string };
+  return (code === '55000' || code === '23514') &&
+    typeof message === 'string' &&
+    archivedWorkspaceMessages.includes(message)
+    ? new DomainError(message, 409, 'archived')
+    : undefined;
+}
+
 // Server-only: the actual current provider session decides who is acting.
 export class CustomerWorkspaceLifecycleService extends CustomerSessionBoundary {
   async state(

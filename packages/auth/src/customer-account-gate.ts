@@ -1,12 +1,16 @@
 import { DomainError } from '@corridra/domain';
 import type { DatabaseClient } from '@corridra/db';
+import { customerWorkspacesSwitchOn } from './customer-production';
 
 // The closed-account check the customer session boundary runs. It lives in its own file, with no import of the
 // session boundary, so the boundary can call it without a circular import.
-// It does nothing at all unless the app flag is on, and does nothing until the optional account lifecycle module is
-// installed. It never reads the module control: pausing the module never reopens a closed account.
+// It does nothing at all unless the app flag is on (with customer workspaces, the same condition the screens use, so the
+// server and the screens always agree), and does nothing until the optional account lifecycle module is installed. It
+// never reads the module control: pausing the module never reopens a closed account.
 export function customerAccountGateEnabled(env: NodeJS.ProcessEnv = process.env) {
-  return env.CORRIDRA_CUSTOMER_ACCOUNT_LIFECYCLE_ENABLED === 'true';
+  return (
+    customerWorkspacesSwitchOn(env) && env.CORRIDRA_CUSTOMER_ACCOUNT_LIFECYCLE_ENABLED === 'true'
+  );
 }
 
 // An installed module is cached for the life of the process. A missing one is probed again after a minute, so

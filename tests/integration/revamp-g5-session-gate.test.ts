@@ -60,16 +60,27 @@ const probeFor = (person: string, log: string[] = []) =>
   new Probe(recording(f.runtime, log), recording(f.auth, log), options, async () =>
     h.session(person),
   );
-async function withFlag<T>(value: string | undefined, work: () => Promise<T>) {
-  const before = process.env[flag];
-  if (value === undefined) delete process.env[flag];
-  else process.env[flag] = value;
+// The check needs the account switch and customer workspaces, the same condition the screens use.
+const workspacesFlag = 'CORRIDRA_CUSTOMER_WORKSPACES_ENABLED';
+async function withFlag<T>(
+  value: string | undefined,
+  work: () => Promise<T>,
+  workspaces: string | null = 'true',
+) {
+  const names = [flag, workspacesFlag, 'DATA_ENVIRONMENT'] as const;
+  const before = names.map((name) => process.env[name]);
+  const set = (name: string, next: string | undefined) => {
+    if (next === undefined) delete process.env[name];
+    else process.env[name] = next;
+  };
+  set(flag, value);
+  set(workspacesFlag, workspaces ?? undefined);
+  set('DATA_ENVIRONMENT', 'synthetic');
   resetClosedAccountGateCache();
   try {
     return await work();
   } finally {
-    if (before === undefined) delete process.env[flag];
-    else process.env[flag] = before;
+    names.forEach((name, index) => set(name, before[index]));
     resetClosedAccountGateCache();
   }
 }
@@ -121,6 +132,11 @@ describe('with the app flag off', () => {
   test('the boundary issues exactly the queries it issued before, even though the module is installed', async () => {
     for (const value of [undefined, 'false', 'TRUE', '1'])
       expect(await withFlag(value, () => queries('alice')), String(value)).toEqual(baseline);
+  });
+
+  test('the account switch alone, without customer workspaces, checks nothing, as the screens show nothing', async () => {
+    expect(await withFlag('true', () => queries('alice'), null)).toEqual(baseline);
+    expect(await withFlag('true', () => queries('alice'), 'false')).toEqual(baseline);
   });
 
   test('a closed person is not stopped, because nothing checks', async () => {

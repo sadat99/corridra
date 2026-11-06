@@ -11,6 +11,7 @@ import {
   customerAccountLifecycleError,
   customerAccountLifecycleInput,
 } from '../../packages/auth/src/customer-account-lifecycle';
+import { customerAccountGateEnabled } from '../../packages/auth/src/customer-account-gate';
 import {
   CustomerErasureQueue,
   erasureQueueQuery,
@@ -74,6 +75,24 @@ describe('the app flag', () => {
     ).toBe(false);
     expect(customerAccountLifecycleEnabled(on)).toBe(true);
     expect(customerAccountLifecycleEnabled({ ...on, VERCEL_ENV: 'production' })).toBe(false);
+  });
+  test('the server gate and the screens use one predicate, so they never disagree', () => {
+    const cases = [
+      {},
+      on,
+      { ...on, CORRIDRA_CUSTOMER_WORKSPACES_ENABLED: 'false' },
+      { ...on, CORRIDRA_CUSTOMER_WORKSPACES_ENABLED: undefined },
+      { ...on, CORRIDRA_CUSTOMER_ACCOUNT_LIFECYCLE_ENABLED: 'false' },
+      { ...on, VERCEL_ENV: 'production' },
+      { ...on, DATA_ENVIRONMENT: 'real' },
+    ];
+    for (const env of cases)
+      expect(customerAccountGateEnabled(env), JSON.stringify(env)).toBe(
+        customerAccountLifecycleEnabled(env),
+      );
+    expect(
+      customerAccountGateEnabled({ ...on, CORRIDRA_CUSTOMER_WORKSPACES_ENABLED: 'false' }),
+    ).toBe(false);
   });
 });
 

@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
 import { CustomerSessionBoundary } from './customer-session';
-import { customerWorkspacesEnabled } from './customer-workspaces';
 import { customerAccountGateEnabled } from './customer-account-gate';
 
 export {
@@ -11,7 +10,7 @@ export {
 } from './customer-account-gate';
 
 export function customerAccountLifecycleEnabled(env: NodeJS.ProcessEnv = process.env) {
-  return customerWorkspacesEnabled(env) && customerAccountGateEnabled(env);
+  return customerAccountGateEnabled(env);
 }
 
 // Words a person is asked to type or read. The privacy wording is pending the owner's named review: nothing here is
