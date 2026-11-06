@@ -2918,3 +2918,5 @@ Owner items: the real invoices control (install log 42168728160 says "control op
 Risks: the always-read guides now total 36713 of the 36864-byte budget (151 bytes spare), so the next ledger addition must condense or archive first. CI at 2217fd5 was still running when recorded.
 
 Next: S1 opens the public header 2a PR; S2 finishes the G4/G5 PR for the owner's merge; S3 fixes the stale editor; S4 builds palette part 2. Tested head: 2217fd5 plus this records commit (branch s1-records2, not pushed).
+
+S1 addendum (same PR): the ADR-032 and ADR-051 ownership-transfer amendments are now written ("Amendment, 6 November 2026" sections), quoting the G4 gap text and the owner's "when ready build g4, g5 together".
