@@ -1,7 +1,6 @@
 // The four role shells (commercial readiness program, D14 and UX-02). Behind CORRIDRA_UX_SHELLS_V2:
 // with the switch off nothing here is used and every page renders as before. Navigation is a
 // convenience only; access is still decided by each route and the server. Owner: WS-E.
-import type { MessageKey } from '../i18n/messages';
 import { operatorSectionPath } from '../operator-urls';
 import { workspaceSections } from '../workspace-navigation';
 

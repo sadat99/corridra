@@ -32,7 +32,6 @@ import {
 import { languageBootScript } from '../../apps/web/lib/ux/language-boot';
 import { localeCodes } from '../../apps/web/lib/i18n/locales';
 import { wsE, wsEEn } from '../../apps/web/lib/i18n/ws/ws-e';
-import { translate } from '../../apps/web/lib/i18n/messages';
 import { notificationTypes } from '../../packages/communications/src/inbox';
 
 // WS-E kit, shells and platform rules (commercial readiness program, 6.E). No browser, no database.
