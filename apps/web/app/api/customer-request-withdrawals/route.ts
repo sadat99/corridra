@@ -3,6 +3,10 @@ import { DomainError } from '@corridra/domain';
 import { customerRequestsEnabled, requestWithdrawalInput } from '@corridra/auth/customer-requests';
 import { foundations } from '../../../lib/foundations';
 import { boundedBody, deliveryError, deliveryHeaders } from '../../../lib/delivery-http';
+
+// The longest valid body: a 500-character reason that JSON writes as six-byte escapes, plus two ids and the action,
+// is about 3.2 KB. Anything larger cannot be a valid decision.
+const MAX_BODY_BYTES = 4000;
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +49,7 @@ export async function POST(request: Request) {
     if (!request.headers.get('content-type')?.startsWith('application/json'))
       throw new DomainError('JSON required', 415);
     const value = requestWithdrawalInput.parse(
-      JSON.parse((await boundedBody(request, 2000)).toString('utf8')),
+      JSON.parse((await boundedBody(request, MAX_BODY_BYTES)).toString('utf8')),
     );
     const s = await services();
     if (request.headers.get('origin') !== new URL(s.config.APP_ORIGIN).origin)

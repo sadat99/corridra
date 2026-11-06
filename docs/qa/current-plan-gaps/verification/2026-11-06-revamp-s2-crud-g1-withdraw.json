@@ -51,6 +51,7 @@
     "counts": "The Withdrawn count is every withdrawal the person has; a note says more may be on later pages while there are more pages.",
     "length": "The reason is counted in characters in the form (the schema and database already were); the textarea no longer cuts at 500 UTF-16 units.",
     "outbox": "Withdraw and restore events go to the domain and audit trail but not the outbox, matching the mute precedent.",
-    "replay": "Reusing a command id for another decision is refused with 42501 and answered 403, by design; there is no version: the newest event wins and only the owner toggles."
+    "replay": "Reusing a command id for another decision is refused with 42501 and answered 403, by design; there is no version: the newest event wins and only the owner toggles.",
+    "body": "The route's body bound is 4000 bytes (was 2000): 500 four-byte characters plus the JSON envelope is about 2.1 KB, and 500 characters JSON escapes to six bytes each is about 3.2 KB, so a valid reason was refused with 413 (Codex P2). The oversized-body test now sends 5000 bytes."
   }
 }

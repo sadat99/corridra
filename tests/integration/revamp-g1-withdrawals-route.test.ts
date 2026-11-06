@@ -118,6 +118,15 @@ describe('POST withdraws or restores one request', () => {
       commandId: command,
     });
   });
+  it('accepts the longest valid reason: 500 four-byte characters, and 500 characters JSON escapes to six bytes each', async () => {
+    const { POST } = await route();
+    for (const reason of ['\u{1F600}'.repeat(500), '\u0001'.repeat(500)]) {
+      setWithdrawal.mockClear();
+      const response = await POST(post(body({ reason })));
+      expect(response.status, `${reason.length} units`).toBe(200);
+      expect(setWithdrawal).toHaveBeenCalledTimes(1);
+    }
+  });
   it('refuses another origin, a body that is not JSON, a bad decision and an oversized body, and never reaches the service', async () => {
     const { POST } = await route();
     expect((await POST(post(body(), { origin: 'https://evil.test' }))).status).not.toBe(200);
@@ -135,7 +144,7 @@ describe('POST withdraws or restores one request', () => {
         )
       ).status,
     ).toBe(400);
-    expect((await POST(post('{' + ' '.repeat(3000) + '}'))).status).toBe(413);
+    expect((await POST(post('{' + ' '.repeat(5000) + '}'))).status).toBe(413);
     expect((await POST(post('not json'))).status).toBe(400);
     expect(setWithdrawal).not.toHaveBeenCalled();
   });
