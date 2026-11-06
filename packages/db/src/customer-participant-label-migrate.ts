@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateCustomerProgrammeProjections } from './customer-programme-projection-migrate';
 // Explicit optional participant label correction (CRUD gap G7, module 2). It replaces readers of the participant label that the
 // real-use state and the programme lifecycle module already replaced, so both must already be installed (this installer installs neither). Accepted base lifecycles are unchanged: no business row is rewritten.
 export async function migrateCustomerParticipantLabels(pool: DatabasePool) {
@@ -11,6 +12,8 @@ export async function migrateCustomerParticipantLabels(pool: DatabasePool) {
     throw new Error(
       'Install the real-use customer modules and the programme lifecycle before the participant labels',
     );
+  // The programme projections show a participant's label, so that module is installed first and its reader is replaced too.
+  await migrateCustomerProgrammeProjections(pool);
   const name = '0001_participant_label.sql';
   const sql = await readFile(
     new URL('../customer-participant-label-migrations/' + name, import.meta.url),

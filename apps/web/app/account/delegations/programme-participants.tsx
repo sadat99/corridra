@@ -454,7 +454,7 @@ function ScopedParticipants(props: Props) {
       )}
       {error && <p role="alert">{error}</p>}
       {view.notice && <p role="status">{view.notice}</p>}
-      {labelNote && <p role="alert">{labelNote}</p>}
+      {labelNote && <p role="status">{labelNote}</p>}
       {view.status !== 'loading' && (
         <button
           type="button"

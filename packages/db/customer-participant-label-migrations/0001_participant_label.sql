@@ -30,9 +30,9 @@ REVOKE ALL ON customer_private.programme_registration_label_revision,customer_pr
 
 -- Same columns as the registration, with the label that is current; label_version is 0 until a correction is made.
 CREATE VIEW customer_private.programme_registration_current AS
- SELECT r.id,r.workspace_id,r.programme_id,r.invitation_id,r.principal_id,coalesce(l.display_label,r.display_label) AS display_label,r.consented_at,coalesce(l.version,0) AS label_version
+ SELECT r.id,r.workspace_id,r.programme_id,r.invitation_id,r.principal_id,coalesce(l.display_label,r.display_label) AS display_label,r.consented_at,coalesce(l.version,0) AS label_version,l.changed_by_role AS label_changed_by
  FROM customer_private.programme_registration r
- LEFT JOIN LATERAL(SELECT x.display_label,x.version FROM customer_private.programme_registration_label_revision x WHERE x.registration_id=r.id ORDER BY x.version DESC LIMIT 1) l ON true;
+ LEFT JOIN LATERAL(SELECT x.display_label,x.version,x.changed_by_role FROM customer_private.programme_registration_label_revision x WHERE x.registration_id=r.id ORDER BY x.version DESC LIMIT 1) l ON true;
 REVOKE ALL ON customer_private.programme_registration_current FROM PUBLIC,corridra_runtime,corridra_auth;
 
 CREATE FUNCTION customer_private.programme_label_event(target uuid,actor uuid,command uuid,aggregate uuid,detail jsonb) RETURNS void
@@ -53,8 +53,8 @@ END $$;
 
 -- Correct a participant's display label. The participant corrects their own; otherwise the caller must be an owner or admin of the
 -- workspace. A command id makes a retry return the first answer; expected is the label version the person saw (0 before any correction)
--- and a stale value is refused. A withdrawn or revoked registration cannot be changed. The audit event carries the old and new label,
--- who changed it (participant or organiser) and nothing else about the person; consent is never changed.
+-- and a stale value is refused. A withdrawn or revoked registration cannot be changed. The audit event carries ids, the new version and
+-- who changed it (participant or organiser), never the label text; consent is never changed.
 CREATE FUNCTION customer.programme_registration_label(command uuid,registration uuid,expected integer,new_label text) RETURNS jsonb
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE actor uuid;target uuid;programme uuid;reg customer_private.programme_registration;mine boolean;role text;prior customer_private.programme_registration_label_command;sig jsonb;cur customer_private.programme_registration_current;result jsonb;
@@ -85,8 +85,9 @@ BEGIN
  IF cur.display_label=new_label THEN RAISE EXCEPTION 'Nothing changed' USING ERRCODE='23514'; END IF;
  INSERT INTO customer_private.programme_registration_label_revision(registration_id,workspace_id,programme_id,version,display_label,changed_by,changed_by_role)
  VALUES(registration,target,programme,cur.label_version+1,new_label,actor,role);
+ -- The event holds ids, the new version and who changed it, never the label text: personal text stays in the closed revision table.
  PERFORM customer_private.programme_label_event(target,actor,command,registration,jsonb_build_object('programmeId',programme,'registrationId',registration,'version',cur.label_version+1,
-  'changedBy',role,'before',jsonb_build_object('displayLabel',cur.display_label),'after',jsonb_build_object('displayLabel',new_label)));
+  'changedBy',role));
  result:=jsonb_build_object('registrationId',registration,'programmeId',programme,'displayLabel',new_label,'labelVersion',cur.label_version+1,'changedBy',role,'synthetic',customer_private.synthetic_context());
  INSERT INTO customer_private.programme_registration_label_command(actor_id,command_id,workspace_id,request,result) VALUES(actor,command,target,sig,result);
  IF customer.actor_id() IS DISTINCT FROM actor THEN RAISE EXCEPTION 'Participant access expired' USING ERRCODE='42501'; END IF;
@@ -114,7 +115,7 @@ BEGIN
   IF customer.actor_id() IS DISTINCT FROM actor THEN RAISE EXCEPTION 'Customer access expired' USING ERRCODE='42501'; END IF;
  END LOOP;
  SELECT coalesce(jsonb_agg(jsonb_build_object('id',r.id,'programmeId',r.programme_id,'status',coalesce(v.status,'REGISTERED'),'synthetic',customer_private.synthetic_context())||
- CASE WHEN v.status IS NULL THEN jsonb_build_object('name',p.name,'reportingPurpose',p.reporting_purpose,'displayLabel',r.display_label,'labelVersion',r.label_version,'consentedAt',r.consented_at) ELSE '{}'::jsonb END ORDER BY r.id),'[]'::jsonb)
+ CASE WHEN v.status IS NULL THEN jsonb_build_object('name',p.name,'reportingPurpose',p.reporting_purpose,'displayLabel',r.display_label,'labelVersion',r.label_version,'labelChangedBy',r.label_changed_by,'consentedAt',r.consented_at) ELSE '{}'::jsonb END ORDER BY r.id),'[]'::jsonb)
  INTO items FROM (SELECT * FROM customer_private.programme_registration_current WHERE principal_id=actor AND id=ANY(selected)) r
  JOIN customer_private.programme_current p ON p.tenant_id=r.workspace_id AND p.id=r.programme_id
  JOIN app.tenant t ON t.id=r.workspace_id AND (t.synthetic OR customer_private.real_session())
@@ -352,3 +353,34 @@ AS $function$
  FROM customer_private.programme_ledger_entry e JOIN app.currency c ON c.code=e.currency
  LEFT JOIN customer_private.programme_registration_current r ON r.id=e.registration_id WHERE e.id=entry
 $function$;
+
+-- The programme projections (roster and agenda selector) show the label the participant has now, not the original. The programme
+-- projections module is required (the installer installs it first). The guard compares the stored body of the function it replaces
+-- (pg_proc.prosrc, identical on every PostgreSQL major version) with the body 0002 of that module created, as that module's own guard does.
+DO $guard$ BEGIN IF NOT EXISTS(SELECT FROM pg_proc WHERE oid='customer_private.programme_projection_rows(uuid,uuid)'::regprocedure AND prosecdef AND 'search_path=pg_catalog'=ANY(proconfig)
+ AND encode(sha256(convert_to(prosrc,'UTF8')),'hex')='23f6a27e1cff979349a7c274c37cf096e7f629f26ae3592777c77aa72ee78231') THEN RAISE EXCEPTION 'Participant label prerequisite function differs: customer_private.programme_projection_rows';END IF;END $guard$;
+CREATE OR REPLACE FUNCTION customer_private.programme_projection_rows(target uuid,programme uuid)
+ RETURNS TABLE(registration_id uuid,label text,company jsonb,missing text[])
+ LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
+ SELECT r.id,r.display_label,
+ CASE WHEN c.shared AND c.profile_workspace = e.profile_workspace_id AND customer_private.organisation_profile_role(c.profile_workspace,r.principal_id) = 'writer' THEN
+ jsonb_build_object('name',p.details->>'legalName','countryCode',p.details->>'countryCode',
+ 'roles',p.details->'commercialRoles','sectors',p.details->'sectors','objective',c.objective,'profileVersion',c.profile_version,'provenance','SELF_REPORTED') END,
+ array_remove(ARRAY[
+ CASE WHEN e.status IS DISTINCT FROM 'PLACED' THEN 'confirmedPlace' END,
+ CASE WHEN criteria.version IS NULL OR profile.details IS NULL OR cardinality(customer_private.terms_eligibility_reasons(criteria,profile.details))>0 THEN 'currentEligibility' END,
+ CASE WHEN terms.version IS NULL OR NOT EXISTS(SELECT FROM customer_private.programme_terms_acceptance a WHERE a.registration_id=r.id AND a.terms_version=terms.version) THEN 'currentTerms' END,
+ CASE WHEN c.shared IS DISTINCT FROM true OR p.id IS NULL OR customer_private.organisation_profile_role(c.profile_workspace,r.principal_id) <> 'writer'
+ OR customer_private.organisation_profile_role(c.profile_workspace,r.principal_id) IS NULL OR c.profile_workspace IS DISTINCT FROM e.profile_workspace_id
+ OR c.profile_version IS DISTINCT FROM profile.version THEN 'currentSharedCompany' END
+ ],NULL)::text[]
+ FROM customer_private.programme_registration_current r
+ LEFT JOIN LATERAL(SELECT * FROM customer_private.programme_projection_company x WHERE x.registration_id=r.id ORDER BY version DESC LIMIT 1)c ON true
+ LEFT JOIN customer_private.organisation_profile_revision p ON p.tenant_id=c.profile_workspace AND p.version=c.profile_version
+ LEFT JOIN customer_private.programme_enrolment enrol ON enrol.registration_id=r.id
+ LEFT JOIN LATERAL(SELECT * FROM customer_private.programme_enrolment_revision x WHERE x.enrolment_id=enrol.id ORDER BY version DESC LIMIT 1)e ON true
+ LEFT JOIN LATERAL(SELECT * FROM customer_private.organisation_profile_revision x WHERE x.tenant_id=e.profile_workspace_id ORDER BY version DESC LIMIT 1)profile ON true
+ LEFT JOIN LATERAL(SELECT * FROM customer_private.programme_eligibility_revision x WHERE x.programme_id=programme ORDER BY version DESC LIMIT 1)criteria ON true
+ LEFT JOIN LATERAL(SELECT * FROM customer_private.programme_terms_revision x WHERE x.programme_id=programme ORDER BY version DESC LIMIT 1)terms ON true
+ WHERE r.workspace_id=target AND r.programme_id=programme AND customer_private.programme_projection_active(r.id)
+$$;

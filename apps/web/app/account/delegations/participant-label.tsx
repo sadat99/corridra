@@ -139,7 +139,7 @@ export function ParticipantLabelEditor({
         attempt.current = null;
         setDraft(null);
         setDiscarding(false);
-        onNote('');
+        onNote('Label saved.');
         onChanged();
       }
     } catch {
@@ -163,7 +163,10 @@ export function ParticipantLabelEditor({
             type="button"
             className="text-link"
             disabled={busy}
-            onClick={() => setDraft({ value: label, base: { version, label }, stale: false })}
+            onClick={() => {
+              onNote('');
+              setDraft({ value: label, base: { version, label }, stale: false });
+            }}
           >
             {mine ? 'Edit My Label' : 'Edit Label'}
           </button>

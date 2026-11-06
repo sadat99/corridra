@@ -199,7 +199,12 @@ function ScopedAccount(
                     <>
                       <h3>{r.name}</h3>
                       <p>{r.reportingPurpose}</p>
-                      <p>{r.displayLabel} · Registered, self-declared</p>
+                      <p>
+                        {r.displayLabel} ·{' '}
+                        {r.labelChangedBy === 'organiser'
+                          ? 'Label changed by the organiser'
+                          : 'Registered, self-declared'}
+                      </p>
                       {typeof r.labelVersion === 'number' && r.displayLabel && (
                         <ParticipantLabelEditor
                           key={r.id}
@@ -413,7 +418,7 @@ function ScopedAccount(
       )}
       {error && <p role="alert">{error}</p>}
       {view.notice && <p role="status">{view.notice}</p>}
-      {labelNote && <p role="alert">{labelNote}</p>}
+      {labelNote && <p role="status">{labelNote}</p>}
       {view.status !== 'loading' && (
         <button
           type="button"

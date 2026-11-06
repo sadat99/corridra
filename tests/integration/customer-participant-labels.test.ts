@@ -172,6 +172,7 @@ test('every reader of the label reads the current view, none reads the registrat
       'customer.programme_registration_label(uuid,uuid,integer,text)',
       'customer.programme_report(uuid,uuid)',
       'customer_private.programme_ledger_entry_json(uuid)',
+      'customer_private.programme_projection_rows(uuid,uuid)',
     ].sort(),
   );
   const direct = (
@@ -285,7 +286,7 @@ test('the label must be well formed (too short, too long, and padded at the data
   expect((await shown())[registrationId]).toBe('Synthetic participant Bob Rahman');
 });
 
-test('the audit event keeps the old and new label and who changed it, and nothing else about the person', async () => {
+test('the audit event keeps ids, the version and who changed it, and no label text or anything else about the person', async () => {
   const events = (
     await f.owner.query(
       "SELECT payload FROM app.domain_event WHERE tenant_id=$1 AND aggregate_type='customer_programme_registration' AND aggregate_id=$2 ORDER BY aggregate_version",
@@ -293,10 +294,21 @@ test('the audit event keeps the old and new label and who changed it, and nothin
     )
   ).rows.map((r) => r.payload);
   expect(events.map((e) => e.changedBy)).toEqual(['participant', 'organiser', 'organiser']);
-  expect(events[0].before).toEqual({ displayLabel: original });
-  expect(events[0].after).toEqual({ displayLabel: 'Synthetic participant Bob Rahman' });
-  for (const e of events)
-    expect(JSON.stringify(e)).not.toMatch(/email|token|consent|principal_id/i);
+  expect(events.map((e) => e.version)).toEqual([1, 2, 3]);
+  for (const e of events) {
+    expect(JSON.stringify(e)).not.toMatch(
+      /email|token|consent|principal_id|Bob|Synthetic participant/i,
+    );
+    expect(e).not.toHaveProperty('before');
+    expect(e).not.toHaveProperty('after');
+  }
+  // The label text is not in the event log or the outbox either, only in the closed revision table.
+  const leaked = (
+    await f.owner.query(
+      "SELECT (SELECT count(*)::int FROM app.domain_event WHERE payload::text LIKE '%Rahman%') + (SELECT count(*)::int FROM app.outbox o JOIN app.domain_event e ON e.id=o.event_id WHERE e.payload::text LIKE '%Rahman%') AS n",
+    )
+  ).rows[0].n;
+  expect(leaked).toBe(0);
 });
 
 test('consent is untouched, a withdrawn participant cannot be relabelled, and rows cannot be rewritten', async () => {
@@ -338,4 +350,63 @@ test('consent is untouched, a withdrawn participant cannot be relabelled, and ro
   await expect(
     f.runtime.query('SELECT * FROM customer_private.programme_registration_current'),
   ).rejects.toMatchObject({ code: '42501' });
+});
+
+test('a corrected label shows in the programme projections and says who changed it', async () => {
+  const rows = (
+    await f.owner.query(
+      'SELECT registration_id,label FROM customer_private.programme_projection_rows($1,$2)',
+      [workspaceId, programmeId],
+    )
+  ).rows as { registration_id: string; label: string }[];
+  const mine = rows.find((r) => r.registration_id === registrationId);
+  expect(mine?.label).toBe((await shown())[registrationId]);
+  expect(mine?.label).not.toBe(original);
+  const own = await people('bob').own({});
+  expect(
+    own.registrations.find((r: { id: string }) => r.id === registrationId).labelChangedBy,
+  ).toBe('organiser');
+  const never = await people('carol').own({});
+  expect(
+    never.registrations.find((r: { id: string }) => r.id === otherRegistration).labelChangedBy,
+  ).toBeUndefined();
+});
+
+test('an archived programme still lets the participant and the owner correct a label, and so does restoring it', async () => {
+  const one = (await programmes().list({ workspaceId })).programmes.find(
+    (p: { id: string }) => p.id === programmeId,
+  );
+  const archived = await programmes().change({
+    commandId: randomUUID(),
+    workspaceId,
+    programmeId,
+    operation: 'archive',
+    expectedVersion: one.version,
+  });
+  const current = async (id: string) =>
+    (await people('bob').own({})).registrations.find((r: { id: string }) => r.id === id)
+      ?.labelVersion as number;
+  const mineVersion = (await people('bob').own({})).registrations.find(
+    (r: { id: string }) => r.id === registrationId,
+  ).labelVersion;
+  await people('bob').command(
+    relabel(registrationId, mineVersion, 'Synthetic participant while archived'),
+  );
+  expect((await shown())[registrationId]).toBe('Synthetic participant while archived');
+  await people().command(
+    relabel(registrationId, mineVersion + 1, 'Synthetic organiser while archived'),
+  );
+  expect((await shown())[registrationId]).toBe('Synthetic organiser while archived');
+  await programmes().change({
+    commandId: randomUUID(),
+    workspaceId,
+    programmeId,
+    operation: 'restore',
+    expectedVersion: archived.version,
+  });
+  await people('bob').command(
+    relabel(registrationId, mineVersion + 2, 'Synthetic participant after restoring'),
+  );
+  expect((await shown())[registrationId]).toBe('Synthetic participant after restoring');
+  expect(await current(registrationId)).toBe(mineVersion + 3);
 });

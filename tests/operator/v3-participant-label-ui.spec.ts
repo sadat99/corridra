@@ -102,13 +102,18 @@ test.beforeEach(({ page }) => {
 const workspaceId = '00000000-0000-4000-8000-000000000001',
   programmeId = '00000000-0000-4000-8000-000000000002',
   registrationId = '00000000-0000-4000-8000-000000000004';
-type State = { label: string; version: number | undefined };
+type State = {
+  label: string;
+  version: number | undefined;
+  by?: 'participant' | 'organiser';
+};
 const row = (state: State) => ({
   id: registrationId,
   displayLabel: state.label,
   consentedAt: '2026-10-18T00:00:00Z',
   status: 'REGISTERED',
   ...(state.version === undefined ? {} : { labelVersion: state.version }),
+  ...(state.by ? { labelChangedBy: state.by } : {}),
 });
 const ownRow = (state: State) => ({
   ...row(state),
@@ -150,6 +155,7 @@ async function serve(
       return route.fulfill({ status: 409, json: { error: 'Label changed; reload before saving' } });
     state.label = String(body.displayLabel);
     state.version = Number(body.expectedVersion) + 1;
+    state.by = 'participant';
     return route.fulfill({
       json: {
         registrationId,
@@ -205,6 +211,7 @@ test('a participant corrects their own label: only the registration, the version
     'registrationId',
   ]);
   await expect(page.getByRole('button', { name: 'Edit My Label', exact: true })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Label saved.' })).toBeVisible();
 });
 
 test('an organiser corrects a label from the registrations list', async ({ page }) => {
@@ -235,12 +242,13 @@ test('a lost answer repeats the very same command', async ({ page }) => {
   expect(posted[1]).toEqual(posted[0]);
 });
 
-test('a stale version shows the plain message, closes the form and reloads the latest label', async ({
+test('a stale version keeps the form open with the typed label, shows the latest label and who changed it, and says so', async ({
   page,
 }) => {
   const state: State = { label: 'Synthetic participant label', version: 0 };
   await serve(page, state, () => {
     state.label = 'Synthetic label set by the organiser';
+    state.by = 'organiser';
     state.version = 3;
     return 'stale';
   });
@@ -249,9 +257,12 @@ test('a stale version shows the plain message, closes the form and reloads the l
   await form(page).getByLabel('New display label').fill('Synthetic participant Bob Rahman');
   await page.getByRole('button', { name: 'Save Label', exact: true }).click();
   await expect(
-    page.getByText('Synthetic label set by the organiser · Registered, self-declared'),
+    page.getByText('Synthetic label set by the organiser · Label changed by the organiser'),
   ).toBeVisible();
   await expect(page.getByRole('alert')).toContainText('changed by someone else');
+  await expect(form(page).getByLabel('New display label')).toHaveValue(
+    'Synthetic participant Bob Rahman',
+  );
 });
 
 test('Escape discards at once when nothing changed and asks first when something did; the form has no accessibility violations', async ({
@@ -288,6 +299,7 @@ test('a stale save keeps the typed label, shows the newer one and lets the perso
     if (!first) return undefined;
     first = false;
     state.label = 'Synthetic label set by the organiser';
+    state.by = 'organiser';
     state.version = 3;
     return 'stale';
   });
@@ -321,6 +333,7 @@ test('Use Theirs drops the typed label and shows the newer one', async ({ page }
   const state: State = { label: 'Synthetic participant label', version: 0 };
   await serve(page, state, () => {
     state.label = 'Synthetic label set by the organiser';
+    state.by = 'organiser';
     state.version = 3;
     return 'stale';
   });
@@ -331,7 +344,7 @@ test('Use Theirs drops the typed label and shows the newer one', async ({ page }
   await page.getByRole('button', { name: 'Use Theirs', exact: true }).click();
   await expect(form(page)).toHaveCount(0);
   await expect(
-    page.getByText('Synthetic label set by the organiser · Registered, self-declared'),
+    page.getByText('Synthetic label set by the organiser · Label changed by the organiser'),
   ).toBeVisible();
 });
 
@@ -345,6 +358,7 @@ test('a reload while the editor is open never lets Save overwrite someone else: 
   await form(page).getByLabel('New display label').fill('Synthetic participant Bob Rahman');
   // Someone else changes it (version 2), then the page reloads its list.
   state.label = 'Synthetic label set by the organiser';
+  state.by = 'organiser';
   state.version = 2;
   await page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
   await expect(
@@ -382,6 +396,7 @@ test('a rate limit uses the shared wording and the retry sends the same command'
       return route.fulfill({ status: 429, json: { error: 'Too many requests' } });
     state.label = String(body.displayLabel);
     state.version = Number(body.expectedVersion) + 1;
+    state.by = 'participant';
     return route.fulfill({
       json: {
         registrationId,
