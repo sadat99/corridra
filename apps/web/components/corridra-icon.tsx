@@ -44,6 +44,8 @@ export const iconPaths = {
   help: 'M3.5 3.5h13v13h-13zM8 8a2 2 0 1 1 2.8 1.8c-.5.3-.8.6-.8 1.2v1M10 14v.5',
   listen: 'M3 8h3l4-3v10l-4-3H3zM13 7.5a3.5 3.5 0 0 1 0 5M15.5 5a7 7 0 0 1 0 10',
   stop: 'M6 6h8v8H6z',
+  pause: 'M7 4.5v11M13 4.5v11',
+  play: 'M6.5 4v12l9-6z',
   exit: 'M8.5 4H4v12h4.5M8 10h9M14 7l3 3-3 3',
   refresh: 'M16 10a6 6 0 1 1-1.8-4.3M16 3.5V7h-3.5',
   check: 'M4.5 10.5 8 14l7.5-8',

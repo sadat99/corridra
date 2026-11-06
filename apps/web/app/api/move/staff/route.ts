@@ -29,8 +29,9 @@ async function handle(request: Request) {
     const tenantId = z.uuid().parse(url.searchParams.get('tenant'));
     const ctx = { token: identity.token, tenantId, purpose: 'synthetic_validation', correlationId };
     if (request.method === 'GET')
+      // The Moves and the version they are at, read together: the next command names that version.
       return Response.json(
-        await s.moves.history(ctx, z.uuid().parse(url.searchParams.get('mission'))),
+        await s.moves.snapshot(ctx, z.uuid().parse(url.searchParams.get('mission'))),
         { headers },
       );
     if (!request.headers.get('content-type')?.startsWith('application/json'))

@@ -68,12 +68,20 @@ export const moveInput = z
   .strict();
 export type MoveInput = z.infer<typeof moveInput>;
 
+/**
+ * The version of a request's Moves the person was looking at: how many Move commands the request has had. Every set,
+ * finish and clear is one immutable command row, so the number only grows. A command that carries an older number
+ * is refused and the person reloads, instead of silently replacing what someone else just set.
+ */
+const expectedVersion = z.number().int().min(0).max(1_000_000);
+
 export const moveCommand = z.discriminatedUnion('action', [
   z
     .object({
       action: z.literal('set'),
       commandId: z.uuid(),
       missionId: z.uuid(),
+      expectedVersion,
       moves: z.array(moveInput).min(1).max(maxOpenMoves),
     })
     .strict(),
@@ -82,10 +90,18 @@ export const moveCommand = z.discriminatedUnion('action', [
       action: z.literal('done'),
       commandId: z.uuid(),
       missionId: z.uuid(),
+      expectedVersion,
       moveId: z.uuid(),
     })
     .strict(),
-  z.object({ action: z.literal('clear'), commandId: z.uuid(), missionId: z.uuid() }).strict(),
+  z
+    .object({
+      action: z.literal('clear'),
+      commandId: z.uuid(),
+      missionId: z.uuid(),
+      expectedVersion,
+    })
+    .strict(),
 ]);
 export type MoveCommand = z.infer<typeof moveCommand>;
 

@@ -21,37 +21,69 @@ export type MoveHistoryRow = {
   closed: null | { outcome: 'DONE' | 'CLEARED'; at: string; by: string };
 };
 
+type Query = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> }; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+async function readVersion(db: Query, tenantId: string, missionId: string) {
+  const { rows } = await db.query(
+    'SELECT count(*)::int AS n FROM app.mission_move_command WHERE tenant_id=$1 AND mission_id=$2',
+    [tenantId, missionId],
+  );
+  return rows[0].n as number;
+}
+
+async function readHistory(db: Query, tenantId: string, missionId: string) {
+  const { rows } = await db.query(
+    `SELECT m.id,m.verb,m.object,m.holder,to_char(m.due_on,'YYYY-MM-DD') AS due_on,m.position,m.created_at,m.created_by,
+      c.outcome,c.created_at AS closed_at,c.closed_by
+     FROM app.mission_move m LEFT JOIN app.mission_move_close c ON c.move_id=m.id
+     WHERE m.tenant_id=$1 AND m.mission_id=$2 ORDER BY m.created_at,m.position`,
+    [tenantId, missionId],
+  );
+  return rows.map((row): MoveHistoryRow => ({
+    id: row.id,
+    verb: row.verb,
+    object: row.object,
+    holder: row.holder,
+    dueOn: row.due_on,
+    position: row.position,
+    setAt: new Date(row.created_at).toISOString(),
+    setBy: row.created_by,
+    closed: row.outcome
+      ? {
+          outcome: row.outcome,
+          at: new Date(row.closed_at).toISOString(),
+          by: row.closed_by,
+        }
+      : null,
+  }));
+}
+
 export class MissionMoveService {
   constructor(private pool: DatabasePool) {}
 
   /** The whole history of a mission's Moves, open and closed, oldest first. */
   history(ctx: RequestContext, missionId: string) {
-    return withTenant(this.pool, ctx, 'missions.read', async ({ db, tenantId }) => {
-      const { rows } = await db.query(
-        `SELECT m.id,m.verb,m.object,m.holder,to_char(m.due_on,'YYYY-MM-DD') AS due_on,m.position,m.created_at,m.created_by,
-          c.outcome,c.created_at AS closed_at,c.closed_by
-         FROM app.mission_move m LEFT JOIN app.mission_move_close c ON c.move_id=m.id
-         WHERE m.tenant_id=$1 AND m.mission_id=$2 ORDER BY m.created_at,m.position`,
-        [tenantId, missionId],
-      );
-      return rows.map((row): MoveHistoryRow => ({
-        id: row.id,
-        verb: row.verb,
-        object: row.object,
-        holder: row.holder,
-        dueOn: row.due_on,
-        position: row.position,
-        setAt: new Date(row.created_at).toISOString(),
-        setBy: row.created_by,
-        closed: row.outcome
-          ? {
-              outcome: row.outcome,
-              at: new Date(row.closed_at).toISOString(),
-              by: row.closed_by,
-            }
-          : null,
-      }));
-    });
+    return withTenant(this.pool, ctx, 'missions.read', async ({ db, tenantId }) =>
+      readHistory(db, tenantId, missionId),
+    );
+  }
+
+  /**
+   * The history and the version the person is looking at, read in one transaction so the number can never be newer
+   * than the Moves beside it. The next command carries this number as `expectedVersion`.
+   */
+  snapshot(ctx: RequestContext, missionId: string) {
+    return withTenant(this.pool, ctx, 'missions.read', async ({ db, tenantId }) => ({
+      version: await readVersion(db, tenantId, missionId),
+      moves: await readHistory(db, tenantId, missionId),
+    }));
+  }
+
+  /** How many Move commands this mission has had: the version a command must name. */
+  version(ctx: RequestContext, missionId: string) {
+    return withTenant(this.pool, ctx, 'missions.read', async ({ db, tenantId }) =>
+      readVersion(db, tenantId, missionId),
+    );
   }
 
   /** set replaces the open Moves with a new list; done closes one; clear closes all of them. */
@@ -87,6 +119,10 @@ export class MissionMoveService {
           value.missionId,
         ]);
         if (!exists.rowCount) throw new DomainError('Mission not found', 404);
+        // The person must be looking at the Moves as they stand: a newer set, finish or clear by someone else is
+        // shown to them first, not replaced. Decided under the lock above, after an idempotent replay is answered.
+        if ((await readVersion(db, tenantId, value.missionId)) !== value.expectedVersion)
+          throw new DomainError('The Moves changed; reload and try again', 409);
         await db.query(
           `INSERT INTO app.mission_move_command(id,tenant_id,mission_id,kind,input_hash,actor_id)
          VALUES($1,$2,$3,$4,$5,$6)`,

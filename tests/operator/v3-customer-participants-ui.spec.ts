@@ -688,3 +688,42 @@ test('GAP-007 stores an optional address, explicitly emails the visible code and
   await expect(page.getByLabel('Private sample invitation code', { exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Email Invitation', exact: true })).toHaveCount(0);
 });
+
+// CRUD gap G7 (owner, 6 Nov 2026): an archived programme takes no new invitations or registrations. Each audience reads the rule in its own words.
+const archivedOrganiser =
+  'This programme is archived. Restore it to accept new invitations and registrations.';
+const archivedParticipant =
+  'This programme is archived and is not accepting registrations right now.';
+test('an invitation refused because the programme is archived says so to the organiser, who can restore it', async ({
+  page,
+}) => {
+  await page.route('**/api/customer-programme-participants*', (route) => {
+    if (route.request().method() === 'GET')
+      return route.fulfill({
+        json: new URL(route.request().url()).searchParams.get('view') === 'own' ? own() : manage(),
+      });
+    return route.fulfill({ status: 409, json: { error: archivedOrganiser } });
+  });
+  await page.goto(origin + '?mode=owner');
+  await page.getByRole('checkbox', { name: /share this sample code/ }).check();
+  await page.getByRole('button', { name: 'Create Sample Invitation Code' }).click();
+  await expect(page.getByText(archivedOrganiser, { exact: true }).first()).toBeVisible();
+  await expect(page.getByLabel('Private sample invitation code', { exact: true })).toHaveCount(0);
+  // The form is still there and nothing is shown as issued.
+  await expect(page.getByRole('button', { name: 'Create Sample Invitation Code' })).toBeVisible();
+});
+test('a participant who tries an archived programme is told it is not taking registrations, and is not told to restore it', async ({
+  page,
+}) => {
+  await page.route('**/api/customer-programme-participants*', (route) => {
+    if (route.request().method() === 'GET') return route.fulfill({ json: own() });
+    return route.fulfill({ status: 409, json: { error: archivedParticipant } });
+  });
+  await page.goto(origin);
+  await page.getByLabel('Private sample invitation code', { exact: true }).fill(token);
+  await page.getByRole('button', { name: 'Preview Sample Invitation' }).click();
+  await expect(page.getByText(archivedParticipant, { exact: true }).first()).toBeVisible();
+  await expect(page.getByText(/Restore it/)).toHaveCount(0);
+  // No registration form was opened for it.
+  await expect(page.getByRole('button', { name: 'Register for Sample Programme' })).toHaveCount(0);
+});

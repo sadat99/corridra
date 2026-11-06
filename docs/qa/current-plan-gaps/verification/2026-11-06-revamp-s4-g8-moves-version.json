@@ -1,0 +1,41 @@
+{
+  "recordedOn": "2026-11-06",
+  "track": "Revamp S4 (branch revamp/staff)",
+  "kind": "CRUD gap G8 (CRUD standard U-02, owner scope of 5 Nov 2026): the team's Move commands (set, finish, clear) carry the version of the Moves the person saw, so a newer change by someone else is shown and not silently replaced. No migration.",
+  "findings": [],
+  "findingsNote": "No GAP id is created or changed. This PR closes audit gap G8 in docs/revamp/crud/summary.md; the Conductor updates that record.",
+  "sensitive": "no for money, authentication, session, tenant-scope, consent, token, cookie and migration. packages/domain and packages/missions are shared packages, so a Guardian PASS is required (README:56); this change also adds tenant-scoped reads of app.mission_move_command (a count) for people who hold missions.read.",
+  "migration": "None. The Moves command is TypeScript (packages/missions/src/moves.ts) and already serialises per mission with SELECT ... FOR UPDATE. Every set, finish and clear inserts exactly one immutable row into app.mission_move_command (rewrite and delete are refused by a trigger), so the number of those rows for a mission is a version that only grows. No table, column, function or installer changes.",
+  "changed": [
+    "packages/domain/src/moves.ts: set, done and clear all require expectedVersion (a whole number from 0).",
+    "packages/missions/src/moves.ts: the command compares expectedVersion with the number of command rows for the mission under the existing lock, after an idempotent replay has been answered and before anything is written; a stale one is refused with 409 'The Moves changed; reload and try again' and writes nothing, not even a command row. New snapshot() returns the Moves and the version read in one transaction; new version() returns the number; history() is unchanged.",
+    "apps/web/app/api/move/staff/route.ts: GET returns { version, moves } from one snapshot.",
+    "apps/web/app/operator/mission-moves.tsx: the screen keeps the version it read and sends it with every command; on a 409 it reloads the current list and says so.",
+    "tests: tests/integration/move-records-database.test.ts, notification-database.test.ts, ux-move-records.test.ts, tests/operator/ux-mission-moves.spec.ts.",
+    "apps/web/app/operator/mission-moves.tsx (review fix): after any final refusal (a status below 500) the screen takes a new command id for the next Set, so a spent id is never resent with new words; only an answer that never arrived, or a 5xx, keeps the id so a resend is answered once."
+  ],
+  "preserved": [
+    "Moves, closes and commands stay append-only; a set still replaces the open Moves in one step and keeps every earlier Move in the history.",
+    "A command id is still idempotent: the same id with the same input replays the earlier answer, a changed request under the same id conflicts, even after the Moves have moved on.",
+    "The cap of five open Moves, the plain-words rules, the date window, the control, the fresh authenticator check and the ids-only events are untouched.",
+    "What customers read on Your Move and the notification and Pulse steps after a set are untouched."
+  ],
+  "behaviour": {
+    "stale": "A set, finish or clear that names an older version is refused (409) and nothing is written; the screen reloads and shows the newer list.",
+    "replay": "A retry after a lost answer resends the same body, version included, and still gets the earlier answer.",
+    "race": "Two people setting from the same view at once: exactly one wins, the other is refused.",
+    "missing": "A command with no version, or a version that is not a whole number from 0 to 1,000,000, is refused before the Moves database is reached (after sign-in: an unauthenticated caller gets 401 first)."
+  },
+  "deliberateTestChanges": [
+    "Every existing Move command in the tests now carries expectedVersion (the set helper and the done and clear calls in move-records-database.test.ts, six calls in notification-database.test.ts), because a command without a version is refused.",
+    "move-records-database.test.ts: the replay test resends the same version a real retry would; a replay with a recomputed version is a different request.",
+    "ux-move-records.test.ts: the valid set case carries a version, and a new case pins the version rules for all three actions.",
+    "ux-mission-moves.spec.ts: the fixture answers GET with { version, moves } and refuses a command that names an older version; a new test covers the stale case.",
+    "move-records-database.test.ts: the denial test passes an explicit version so command() itself refuses the viewer, the person from another workspace (Mission not found) and the stranger (Access denied), and checks no command row was written for them. ux-move-records.test.ts: the empty-set and six-Move cases carry a version, so the one to five rule is what refuses them (checked by loosening the rule: the test fails)."
+  ],
+  "nextAction": "G9 (operator member role change and revoke: version and command id), then G10 (team invitation cancel must write a team-control audit row in the same transaction).",
+  "knownLimits": [
+    "readVersion is count(*) on app.mission_move_command by (tenant_id, mission_id) with no covering index. That is fine at human volume (a request has a handful of commands). An index would need a migration, which is a closed gate, so none is added.",
+    "A stale-version refusal shows 'This changed while you were editing. The latest Moves are shown.' and reloads the list. The status region is not remounted by this change."
+  ]
+}
