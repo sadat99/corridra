@@ -3,6 +3,7 @@ import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { linkStatusText, type LinkStatus } from '../company-link-status';
 import { onDeviceClock } from '../../../lib/server-clock';
+import { ReplyError, loadReason, withReason } from '../../../lib/load-reason';
 
 const evidenceKinds = [
   ['REGISTRATION_STATEMENT', 'Registration statement'],
@@ -52,21 +53,26 @@ type Found = { id: string; name: string; country: string };
 const statuses = ['none', 'pending', 'needs_evidence', 'approved', 'rejected'];
 function parseView(value: unknown, workspaceId: string): View {
   const v = value as View;
-  if (
-    !v ||
-    v.workspaceId !== workspaceId ||
-    !statuses.includes(v.status) ||
-    typeof v.canEdit !== 'boolean' ||
-    typeof v.canFile !== 'boolean' ||
-    !Number.isInteger(v.currentProfileVersion) ||
-    !Number.isFinite(Date.parse(v.expiresAt)) ||
-    Date.parse(v.expiresAt) <= Date.now() ||
-    Date.parse(v.expiresAt) > Date.now() + 65000 ||
-    (v.claim !== null && typeof v.claim !== 'object') ||
-    (v.link !== null &&
-      (typeof v.link !== 'object' || typeof v.link.organisation?.name !== 'string'))
-  )
-    throw Error('Invalid company link');
+  if (!v || typeof v !== 'object') throw new ReplyError('reply empty');
+  const expires = Date.parse(v.expiresAt);
+  const checks: [string, boolean][] = [
+    ['workspace', v.workspaceId !== workspaceId],
+    ['status', !statuses.includes(v.status)],
+    ['can edit', typeof v.canEdit !== 'boolean'],
+    ['can file', typeof v.canFile !== 'boolean'],
+    ['version', !Number.isInteger(v.currentProfileVersion)],
+    ['expiry missing', !Number.isFinite(expires)],
+    ['expiry past', expires <= Date.now()],
+    ['expiry far', expires > Date.now() + 65000],
+    ['claim', v.claim !== null && typeof v.claim !== 'object'],
+    [
+      'link',
+      v.link !== null &&
+        (typeof v.link !== 'object' || typeof v.link.organisation?.name !== 'string'),
+    ],
+  ];
+  const failed = checks.find(([, bad]) => bad);
+  if (failed) throw new ReplyError(`reply ${failed[0]}`);
   return v;
 }
 const day = (value: string) => new Date(value).toISOString().slice(0, 10);
@@ -170,7 +176,7 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
           });
           return;
         }
-        if (!r.ok) throw Error('Company link request failed');
+        if (!r.ok) throw new ReplyError(`HTTP ${r.status}`);
         const v = parseView(onDeviceClock(await r.json(), r), workspaceId);
         if (body && v.commandId !== body.commandId) throw Error('Acknowledgement did not match');
         if (active.current && !controller.signal.aborted) {
@@ -187,12 +193,15 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
             setChanging(false);
           } else setMessage(null);
         }
-      } catch {
+      } catch (error) {
         if (active.current)
           setMessage({
             text: body
               ? 'The change could not be confirmed. Retry the same request.'
-              : 'The company link could not be loaded. Try again.',
+              : withReason(
+                  'The company link could not be loaded. Try again.',
+                  loadReason(error, controller.signal.aborted),
+                ),
             error: true,
           });
       } finally {
