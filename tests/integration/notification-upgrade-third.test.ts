@@ -88,6 +88,7 @@ describe('upgrading from installed 0001 and 0002 to the third file', () => {
       '0001_notifications.sql',
       '0002_email_off_until_chosen.sql',
       '0003_withdrawal_and_issuer_check.sql',
+      '0004_mute_events.sql',
     ]);
     expect(applied[2].sha256).toBe(
       sha(readFileSync(`${directory}/0003_withdrawal_and_issuer_check.sql`, 'utf8')),
@@ -96,7 +97,7 @@ describe('upgrading from installed 0001 and 0002 to the third file', () => {
     expect(
       (await f.owner.query('SELECT count(*)::int n FROM customer_notification_migrations.applied'))
         .rows[0].n,
-    ).toBe(3);
+    ).toBe(4);
   });
 
   test('the two replaced functions keep their owner, access list and settings', async () => {
