@@ -24,13 +24,7 @@ const fontCss = `
 @font-face{font-family:'FxBengaliSans';src:url('/fonts/noto-sans-bengali-variable.woff2') format('woff2');font-weight:100 900}
 @font-face{font-family:'FxBengaliSerif';src:url('/fonts/noto-serif-bengali-variable.woff2') format('woff2');font-weight:100 900}
 :root{--font-geist:'FxGeist';--font-newsreader:'FxNewsreader';--font-bengali-sans:'FxBengaliSans';--font-bengali:'FxBengaliSerif';--font-geist-mono:'DejaVu Sans Mono'}`;
-const trustNames = [
-  'Self-declared',
-  'Evidence available',
-  'Verified',
-  'Derived',
-  'Outcome observed',
-];
+const trustNames = ['Self-declared', 'Evidence available', 'Verified'];
 
 test.beforeAll(async () => {
   const result = await build({
@@ -119,7 +113,9 @@ for (const code of localeCodes) {
     await expect(main).toHaveAttribute('lang', 'en');
     await expect(main).toHaveAttribute('dir', 'ltr');
     await expect(page.locator('h1')).toHaveText(translate('en', 'home.title'));
-    await expect(page.locator('.ac1-hero .ac1-lead')).toHaveText(translate('en', 'home.lead'));
+    await expect(page.locator('.ac1-hero .ac1-lead')).toHaveText(
+      translate('en', 'home.lead.watch'),
+    );
   });
 }
 
@@ -133,11 +129,21 @@ for (const code of localeCodes) {
     await expect(main).toHaveAttribute('lang', localeMeta[code].html);
     await expect(main).toHaveAttribute('dir', localeMeta[code].dir);
     await expect(page.locator('h1')).toHaveText(translate(code, 'home.title'));
-    await expect(page.locator('.ac1-hero .ac1-lead')).toHaveText(translate(code, 'home.lead'));
-    await expect(page.locator('.ac1-truth .guide-tag')).toHaveCount(5);
-    for (const tag of await page.locator('.ac1-truth .guide-tag, .ac1-buyers .guide-tag').all())
+    await expect(page.locator('.ac1-hero .ac1-lead')).toHaveText(
+      translate(code, 'home.lead.watch'),
+    );
+    // Concept G: four labels, three trust names and the Not confirmed state, which is in the reader's words.
+    await expect(page.locator('.ac1-truth .guide-tag')).toHaveCount(4);
+    for (const tag of await page
+      .locator(
+        '.ac1-truth li:not(:last-child) .guide-tag, .ac1-buyers .guide-tag, .ac1-compare .guide-tag',
+      )
+      .all())
       await expect(tag).toHaveAttribute('lang', 'en');
-    expect(await page.locator('.ac1-truth .guide-tag').allInnerTexts()).toEqual(trustNames);
+    expect(await page.locator('.ac1-truth .guide-tag').allInnerTexts()).toEqual([
+      ...trustNames,
+      translate(code, 'home.value.notConfirmed'),
+    ]);
     if (code !== 'en')
       await expect(page.locator('h1')).not.toHaveText(translate('en', 'home.title'));
   });
@@ -176,7 +182,7 @@ test('no word on the page is written by the stylesheet, so every word is transla
     translate('ar', 'home.route.tag'),
   );
   await expect(page.locator('.ac1-other .ac1-route-tag')).toHaveText(
-    translate('ar', 'home.other.tag'),
+    translate('ar', 'home.other.title'),
   );
 });
 
