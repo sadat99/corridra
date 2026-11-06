@@ -1,0 +1,23 @@
+{
+  "track": "S3 Public, Intake and Organise",
+  "item": "/plan at 320 px with the root text at 200 percent: no sideways scroll in any language or step",
+  "date": "2026-11-06",
+  "sensitive": false,
+  "spec": "Conductor instruction of 6 Nov: let long labels wrap and add 320 to the 200 percent test's widths",
+  "changed": [
+    "tests/operator/ux-plan-languages.spec.ts: the 200 percent test runs at 320 and 390 in all six languages (12 cases).",
+    "apps/web/app/globals.css: labels and headings in the intake form break anywhere when a word is too long; the guide pill wraps instead of staying on one line; the guide button's minimum width gives way to its container; the journey dots shrink to their column and the list items use a minmax(0, 1fr) column; the receipt panel's form and field use minmax(0, 1fr) columns.",
+    "apps/web/app/plan/form-languages.css: at 320 px and below only (a rem media query, so it matches the phone whatever the text size), buttons and links stay inside their container and break a long word, the notice, the Bengali guidance and the English parts inside the notice may break the test address, and choice cards (including the English-language agreement card) wrap their sentence."
+  ],
+  "preserved": [
+    "Every action, link, id, name, payload and test hook on /plan. Above 360 px nothing wraps differently: the English parts of a translated page keep the English form's wrapping, which the existing 'translated text may break and hyphenate' test pins. English only, no new keys."
+  ],
+  "verification": [
+    "ux-plan-languages.spec.ts: 116 passed, including the 12 cases of the 200 percent test at 320 and 390.",
+    "By hand: preflight quick (format, lint, typecheck, docs-tests, ledger, security-scan), build, e2e 499 passed, ux-gate 84 passed.",
+    "Page length measured on this build: /plan is 3.48 screens on a 390 px phone and 2.25 on a 1440 px desktop, the same figures as before this change, so it neither adds to nor reduces the 1.0 / 2.0 length budget overrun."
+  ],
+  "openRisks": [
+    "/plan is over its length budget (3.48 phone, 2.25 desktop); this change does not address it and was not meant to."
+  ]
+}
