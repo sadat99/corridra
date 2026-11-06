@@ -2067,6 +2067,7 @@ describe('G1 withdrawn requests get no Pulse messages', () => {
       action: 'set',
       commandId,
       missionId: who.missionId,
+      expectedVersion: await moves.version(staff(who), who.missionId),
       moves: [{ verb: 'Add', holder: 'customer', dueOn: null, object }],
     });
     return commandId;
