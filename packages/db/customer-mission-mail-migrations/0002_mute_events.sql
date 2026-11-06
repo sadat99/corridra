@@ -102,10 +102,10 @@ BEGIN
  PERFORM pg_advisory_xact_lock(hashtextextended('customer.mission_mail:'||request::text,0));
  was:=customer_private.mission_mail_muted(request);
  SELECT * INTO owned FROM customer_private.owned_request WHERE id=request;
- -- The first mute still writes the old row, as before. Any change from not muted to muted also records an event,
- -- so the answer never depends on which of the two came first. Already muted, by either route: nothing new.
- INSERT INTO customer_private.mission_mail_mute(request_id) VALUES(request) ON CONFLICT(request_id) DO NOTHING;
+ -- Already muted, by either route: nothing is written. A change from not muted to muted writes the old row if it
+ -- was never written (as before) and always records an event, so the answer never depends on which came first.
  IF NOT was THEN
+  INSERT INTO customer_private.mission_mail_mute(request_id) VALUES(request) ON CONFLICT(request_id) DO NOTHING;
   INSERT INTO customer_private.mission_mail_mute_event(request_id,principal_id,state,via,command_id)
   VALUES(request,owned.principal_id,'muted','link',gen_random_uuid());
  END IF;

@@ -137,7 +137,7 @@ test('CX-02 lists each muted request with its kind and state, and an action only
   await expect(rows.nth(1)).toContainText('A request you sent');
   await expect(page.locator('body')).not.toContainText(b_id);
   // The receipt email is sent once, when a request is made: there is nothing to start or stop, so no button.
-  await expect(rows.nth(2)).toContainText('Receipt and progress emails: stopped');
+  await expect(rows.nth(2)).toContainText('Receipt email: stopped');
   await expect(rows.nth(2)).toContainText('sent once, when a request is made');
   await expect(rows.nth(2).getByRole('button')).toHaveCount(0);
 });

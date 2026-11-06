@@ -8,7 +8,7 @@ import './muted-requests.css';
 // The requests a person stopped emails about, with a way back. Stopping came from the Mute link in an email;
 // this is where it is undone. Turning emails on again asks first and says what it does and does not send.
 const kindWords: Record<MailMute['store'], string> = {
-  request: 'Receipt and progress emails',
+  request: 'Receipt email',
   reminder: 'Reminder emails',
 };
 
