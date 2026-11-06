@@ -45,17 +45,30 @@ export class ReplyReviewService {
     const value = replyReviewCommand.parse(input);
     return withTenant(this.pool, ctx, 'delivery.share', async ({ db, freshMfa }) => {
       if (!freshMfa) throw stepUpRequired();
-      const { rows } = await db.query<{ r: { id: string; replayed: boolean } }>(
-        'SELECT app.review_recipient_reply($1,$2,$3,$4,$5,$6) AS r',
-        [
-          value.commandId,
-          value.responseId,
-          value.decision,
-          value.decision === 'REJECT' ? value.reasonCode : null,
-          value.decision === 'ASK' ? value.askTerms : null,
-          value.note ?? null,
-        ],
-      );
+      const args = [value.commandId, value.responseId];
+      const tail = [
+        value.decision,
+        value.decision === 'REJECT' ? value.reasonCode : null,
+        value.decision === 'ASK' ? value.askTerms : null,
+        value.note ?? null,
+      ];
+      // Where answer correction is installed the decision is bound to the version the reviewer read, so a
+      // correction that lands in between cannot be published, asked on or rejected unseen. A card that sends
+      // no version is treated as having read the first answer. Without correction the original call is used.
+      const bound = (
+        await db.query<{ ok: boolean }>(
+          `SELECT to_regprocedure('app.review_recipient_reply_seen(uuid,uuid,integer,text,text,text[],text)') IS NOT NULL AS ok`,
+        )
+      ).rows[0].ok;
+      const { rows } = bound
+        ? await db.query<{ r: { id: string; replayed: boolean } }>(
+            'SELECT app.review_recipient_reply_seen($1,$2,$3,$4,$5,$6,$7) AS r',
+            [...args, value.seen ?? 0, ...tail],
+          )
+        : await db.query<{ r: { id: string; replayed: boolean } }>(
+            'SELECT app.review_recipient_reply($1,$2,$3,$4,$5,$6) AS r',
+            [...args, ...tail],
+          );
       return rows[0].r;
     });
   }

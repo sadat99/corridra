@@ -2,7 +2,11 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { currencies } from '@corridra/domain/currencies';
 import type { Introduction } from '@corridra/domain/access';
-import { checkedResponse, accessDenied } from '../../components/private-capability';
+import {
+  checkedResponse,
+  accessDenied,
+  ParticipantRequestError,
+} from '../../components/private-capability';
 import { ParticipantScope } from '../../components/participant-scope';
 import {
   buildReplyTerms,
@@ -25,7 +29,13 @@ export type ReplyData = {
   sharedUncertainty?: string;
   allowQuotation?: boolean;
   allowMeetingInterest?: boolean;
-  detailResponse?: { body: Record<string, unknown>; sourceKind: string };
+  // version and canRevise are present only where the owner has installed answer correction.
+  detailResponse?: {
+    body: Record<string, unknown>;
+    sourceKind: string;
+    version?: number;
+    canRevise?: boolean;
+  };
   introduction: Introduction;
   template: string;
   expiresAt: string;
@@ -34,6 +44,15 @@ export type ReplyData = {
 };
 export type ReplyDecision = 'INTERESTED' | 'NEED_INFO' | 'NOT_RELEVANT';
 type Phase = 'answer' | 'message' | ReplyGroup | 'check' | 'receipt';
+
+// A recorded amount (whole minor units) back to what the supplier typed, so a correction starts from their own answer.
+function toMajor(value: string, code: string) {
+  const places = Object.hasOwn(currencies, code) ? currencies[code as keyof typeof currencies] : 2;
+  if (places === 0) return value;
+  const padded = value.padStart(places + 1, '0');
+  return `${padded.slice(0, -places)}.${padded.slice(-places)}`;
+}
+const staleWords = 'This answer was changed since you opened it.';
 
 /**
  * The Reply Page (ADR-069): one question at a time. The answer, then for Interested a short message and an
@@ -85,15 +104,20 @@ export function ReplyJourney({
   const [command, setCommand] = useState<Record<string, unknown> | null>(null);
   const [sent, setSent] = useState<{ reply: RecordedReply; at: Date } | null>(null);
   const [copied, setCopied] = useState(false);
+  // Answer correction (CRUD gap G7). Shown only where the page says a correction is possible.
+  const [revising, setRevising] = useState(false);
+  const [version, setVersion] = useState<number | null>(null);
+  const [canRevise, setCanRevise] = useState<boolean | null>(null);
+  const [latest, setLatest] = useState<{ reply: RecordedReply; version: number } | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const responseId = useRef('');
   const inFlight = useRef(false);
 
   // What step the person is on. A decision made earlier (or on another visit) moves the page on.
   const effective: Phase =
-    sent || data.detailResponse
+    !revising && (sent || data.detailResponse)
       ? 'receipt'
-      : phase === 'answer' && data.decision
+      : phase === 'answer' && data.decision && !revising
         ? data.decision === 'INTERESTED' && detailOpen
           ? 'message'
           : 'receipt'
@@ -150,8 +174,93 @@ export function ReplyJourney({
     [quote, values, currency],
   );
 
-  async function send(event: FormEvent) {
-    event.preventDefault();
+  const recordedFrom = (stored: Record<string, unknown>): RecordedReply => ({
+    body: String(stored.body ?? ''),
+    meetingInterest: stored.meetingInterest === true,
+    quotation: (stored.quotation as RecordedReply['quotation']) ?? null,
+  });
+  const currentVersion = version ?? data.detailResponse?.version ?? 0;
+  const mayRevise =
+    !revising &&
+    (canRevise ?? data.detailResponse?.canRevise === true) &&
+    typeof (version ?? data.detailResponse?.version) === 'number';
+  // The page the recipient opened, read again: the latest answer and whether it can still be changed.
+  async function readAnswer() {
+    const response = await fetch('/api/buyer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'read', token }),
+      cache: 'no-store',
+    });
+    await checkedResponse(response);
+    const read = (await response.json()) as { detailResponse?: ReplyData['detailResponse'] };
+    return read.detailResponse;
+  }
+  async function refreshAnswer() {
+    try {
+      const stored = await readAnswer();
+      if (typeof stored?.version === 'number') {
+        setVersion(stored.version);
+        setCanRevise(stored.canRevise === true);
+      }
+    } catch {
+      // The answer is recorded either way; a correction is simply not offered until the page is opened again.
+    }
+  }
+  function startRevision() {
+    if (!recorded) return;
+    setBody(recorded.body);
+    setMeeting(recorded.meetingInterest);
+    const q = recorded.quotation;
+    setQuote(!!q);
+    const typed: Record<string, string> = {};
+    const modes: Record<string, boolean> = {};
+    if (q) {
+      for (const spec of replyFields) {
+        const raw = q.terms[spec.key];
+        if (raw === undefined) continue;
+        if (spec.kind === 'amount') typed[spec.key] = toMajor(raw, q.currency);
+        else if (spec.kind === 'charge') {
+          if (raw === '0') typed[spec.key] = noCharge;
+          else {
+            typed[spec.key] = toMajor(raw, q.currency);
+            modes[spec.key] = true;
+          }
+        } else if (spec.kind === 'date') typed[spec.key] = raw.slice(0, 10);
+        else typed[spec.key] = raw;
+      }
+    }
+    setCurrency(q?.currency ?? '');
+    setUncertainties(q?.uncertainties ?? '');
+    setValues(typed);
+    setAmountMode(modes);
+    setAcknowledged(false);
+    setErrors({});
+    setProblem('');
+    setCommand(null);
+    setLatest(null);
+    setRevising(true);
+    setPhase('message');
+  }
+  function cancelRevision() {
+    setRevising(false);
+    setLatest(null);
+    setCommand(null);
+    setProblem('');
+  }
+  async function loadLatest() {
+    try {
+      const stored = await readAnswer();
+      if (!stored || typeof stored.version !== 'number') throw Error('No answer');
+      setLatest({ reply: recordedFrom(stored.body), version: stored.version });
+    } catch (error) {
+      if (accessDenied(error)) onAccessDenied();
+      setProblem('The latest answer could not be loaded. Try again.');
+    }
+  }
+
+  async function send(event: FormEvent | null, expected?: number) {
+    event?.preventDefault();
     if (inFlight.current) return;
     if (!acknowledged) {
       setErrors({ acknowledged: words.notAcknowledged });
@@ -173,12 +282,10 @@ export function ReplyJourney({
     inFlight.current = true;
     setSending(true);
     setProblem('');
+    const base = expected ?? currentVersion;
     try {
-      if (!responseId.current) responseId.current = crypto.randomUUID();
-      const message = command ?? {
-        action: 'detail-response',
-        token,
-        responseId: responseId.current,
+      if (!revising && !responseId.current) responseId.current = crypto.randomUUID();
+      const answer = {
         body: body.trim(),
         meetingInterest: meeting,
         quotation:
@@ -188,6 +295,23 @@ export function ReplyJourney({
         acknowledged: true,
       };
       // A failed send keeps the exact message, so a retry sends the same thing under the same id.
+      // The first answer is the command the older form sent, unchanged; a correction is a separate command with its own id.
+      const message =
+        command ??
+        (revising
+          ? {
+              action: 'detail-revision',
+              token,
+              responseId: crypto.randomUUID(),
+              expectedVersion: base,
+              ...answer,
+            }
+          : {
+              action: 'detail-response',
+              token,
+              responseId: responseId.current,
+              ...answer,
+            });
       setCommand(message);
       const response = await fetch('/api/buyer', {
         method: 'POST',
@@ -206,13 +330,50 @@ export function ReplyJourney({
         },
       });
       setCommand(null);
+      if (revising) {
+        setVersion(base + 1);
+        setCanRevise(base + 1 < 20);
+        setRevising(false);
+        setLatest(null);
+      } else void refreshAnswer();
     } catch (error) {
       if (accessDenied(error)) onAccessDenied();
+      if (revising && error instanceof ParticipantRequestError && error.status === 409) {
+        if (error.message.startsWith(staleWords)) {
+          // Someone (another window) changed it first: keep what was typed and let the person choose.
+          setCommand(null);
+          await loadLatest();
+          inFlight.current = false;
+          setSending(false);
+          return;
+        }
+        if (error.message.includes('made a decision')) {
+          // Sending it again can never work, so the exact-retry hold is released and the person can go back.
+          setCanRevise(false);
+          setCommand(null);
+        }
+      }
       setProblem(error instanceof Error ? error.message : 'Your answer could not be recorded.');
     } finally {
       inFlight.current = false;
       setSending(false);
     }
+  }
+  function keepMine() {
+    if (!latest) return;
+    const theirs = latest.version;
+    setLatest(null);
+    setVersion(theirs);
+    void send(null, theirs);
+  }
+  function useTheirs() {
+    if (!latest) return;
+    setSent({ at: new Date(), reply: latest.reply });
+    setVersion(latest.version);
+    setRevising(false);
+    setLatest(null);
+    setCommand(null);
+    setProblem('');
   }
 
   const recorded: RecordedReply | null = sent
@@ -494,6 +655,11 @@ export function ReplyJourney({
             </p>
           )}
           <div className="reply-actions">
+            {revising && (
+              <button type="button" className="text-link" lang="en" onClick={cancelRevision}>
+                Keep My Current Answer
+              </button>
+            )}
             {data.allowQuotation && (
               <button
                 type="button"
@@ -591,7 +757,7 @@ export function ReplyJourney({
       )}
 
       {effective === 'check' && (
-        <form onSubmit={send} noValidate aria-labelledby="reply-h">
+        <form onSubmit={(event) => void send(event)} noValidate aria-labelledby="reply-h">
           <h2 id="reply-h" ref={heading} tabIndex={-1}>
             {words.stepCheck}
           </h2>
@@ -640,6 +806,21 @@ export function ReplyJourney({
               {problem}
             </p>
           )}
+          {latest && (
+            <div role="alert" lang="en" dir="ltr">
+              <p>{staleWords} It now reads:</p>
+              <p className="reply-typed">{latest.reply.body}</p>
+              <p>
+                Your text is still in the form.{' '}
+                <button type="button" className="text-link" onClick={keepMine}>
+                  Keep Mine
+                </button>{' '}
+                <button type="button" className="text-link" onClick={useTheirs}>
+                  Use Theirs
+                </button>
+              </p>
+            </div>
+          )}
           <div className="reply-actions">
             <button
               type="button"
@@ -649,7 +830,7 @@ export function ReplyJourney({
             >
               {words.back}
             </button>
-            <button className="primary-link" disabled={sending}>
+            <button className="primary-link" disabled={sending || !!latest}>
               {sending ? words.sending : command ? words.retrySame : words.send}
             </button>
           </div>
@@ -678,6 +859,11 @@ export function ReplyJourney({
                 >
                   {words.receiptDownload}
                 </a>
+                {mayRevise && (
+                  <button type="button" className="text-link" lang="en" onClick={startRevision}>
+                    Change My Answer
+                  </button>
+                )}
               </div>
             </>
           ) : (

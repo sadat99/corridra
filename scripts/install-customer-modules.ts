@@ -3,6 +3,7 @@ import { migrateCustomerBooks } from '../packages/db/src/customer-book-migrate';
 import { migrateCustomerDecisionCards } from '../packages/db/src/customer-decision-card-migrate';
 import { migrateCustomerProgrammeLifecycle } from '../packages/db/src/customer-programme-lifecycle-migrate';
 import { migrateCustomerParticipantLabels } from '../packages/db/src/customer-participant-label-migrate';
+import { migrateRecipientResponseRevision } from '../packages/db/src/recipient-response-revision-migrate';
 import { databasePool } from './database-pool';
 import { migrateCustomerAuthority } from '../packages/db/src/customer-migrate';
 import { migrateCustomerSavedMissions } from '../packages/db/src/customer-commercial-migrate';
@@ -47,6 +48,7 @@ import {
 } from '../packages/auth/src/customer-notification-configuration';
 import { migrateReplyReview } from '../packages/db/src/recipient-reply-review-migrate';
 import { configureReplyReview } from '../packages/delivery/src/reply-review-configuration';
+import { configureRecipientRevision } from '../packages/delivery/src/recipient-revision-configuration';
 import { configureMissionMail } from '../packages/auth/src/customer-mission-mail-configuration';
 import { configureRequestWithdrawal } from '../packages/auth/src/customer-request-withdrawal-configuration';
 import { migrateCustomerBillingReal } from '../packages/db/src/customer-billing-real-migrate';
@@ -80,6 +82,9 @@ const v = z
     SPECIFICATION_CONFIRMATION_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     PROGRAMME_LIFECYCLE_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     PARTICIPANT_LABELS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
+    RESPONSE_REVISION_ACTION: z
+      .enum(['unchanged', 'install', 'enable', 'pause'])
+      .default('unchanged'),
     COMMERCIAL_ARRANGEMENTS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     REPLY_REVIEW_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
@@ -161,6 +166,8 @@ if (v.PROGRAMME_LIFECYCLE_ACTION !== 'unchanged' && !apply)
   throw new Error('PROGRAMME_LIFECYCLE_ACTION needs INSTALL_APPLY=yes');
 if (v.PARTICIPANT_LABELS_ACTION !== 'unchanged' && !apply)
   throw new Error('PARTICIPANT_LABELS_ACTION needs INSTALL_APPLY=yes');
+if (v.RESPONSE_REVISION_ACTION !== 'unchanged' && !apply)
+  throw new Error('RESPONSE_REVISION_ACTION needs INSTALL_APPLY=yes');
 if (v.SPECIFICATION_CONFIRMATION_ACTION !== 'unchanged' && !apply)
   throw new Error('Specification confirmation installation requires INSTALL_APPLY=yes');
 if (v.COMMERCIAL_ARRANGEMENTS_ACTION !== 'unchanged' && !apply)
@@ -246,6 +253,7 @@ const registries = [
   'customer_real_use_migrations',
   'customer_programme_lifecycle_migrations',
   'customer_participant_label_migrations',
+  'recipient_response_revision_migrations',
   'network_real_use_migrations',
   'customer_billing_real_migrations',
   'customer_invoicing_real_migrations',
@@ -353,6 +361,25 @@ try {
       console.log(
         'installed or already current: programme lifecycle (needs real-use installed first)',
       );
+    }
+    if (v.RESPONSE_REVISION_ACTION !== 'unchanged') {
+      await migrateRecipientResponseRevision(pool);
+      if (v.RESPONSE_REVISION_ACTION === 'install') {
+        console.log(
+          'installed or already current: recipient response revision, closed (needs real-use installed first)',
+        );
+      } else {
+        const result = await configureRecipientRevision(pool, {
+          enabled: v.RESPONSE_REVISION_ACTION === 'enable',
+          reason:
+            v.RESPONSE_REVISION_ACTION === 'enable'
+              ? 'Owner opened answer correction from the install workflow'
+              : 'Owner paused answer correction from the install workflow',
+        });
+        console.log(
+          `Recipient answer correction ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
+        );
+      }
     }
     if (v.PARTICIPANT_LABELS_ACTION === 'install') {
       await migrateCustomerParticipantLabels(pool);

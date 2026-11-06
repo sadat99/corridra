@@ -110,6 +110,21 @@ export const recipientReply = z
   })
   .strict();
 
+// A correction to an answer already given through the same private link (CRUD gap G7). expectedVersion is the version the
+// recipient saw (0 before any correction); the database applies the same rules as the first answer.
+export const recipientRevision = z
+  .object({
+    action: z.literal('detail-revision'),
+    token: z.string().regex(/^[a-f0-9]{64}$/),
+    responseId: z.uuid(),
+    expectedVersion: z.number().int().min(0).max(19),
+    body: text,
+    meetingInterest: z.boolean(),
+    quotation: z.object({ currency, terms: offerTerms, uncertainties: text }).strict().nullable(),
+    acknowledged: z.literal(true),
+  })
+  .strict();
+
 export const participantIdentityInput = z
   .object({
     commandId: z.uuid(),

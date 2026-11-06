@@ -1,0 +1,35 @@
+{
+  "track": "S3 Public, Intake and Organise",
+  "item": "CRUD gap G7, module 3 of 3: recipient response revision through the scoped link as an append-only overlay",
+  "date": "2026-11-06",
+  "sensitive": true,
+  "spec": "docs/revamp/specs/crud-standard.md; docs/revamp/crud/summary.md G7; Conductor approval of 5 Nov (overlay design, order lifecycle, participant label, recipient response)",
+  "changed": [
+    "packages/db/recipient-response-revision-migrations/0001_response_revision.sql: app.recipient_detail_response_revision (append-only, reject_rewrite, version order trigger, RLS read policies in the sample and real-use pair, no runtime write grant, the same capability event the first answer writes); app.recipient_detail_body_check (the first answer's rules, copied verbatim and compared by a test); app.recipient_response_reviewed; app.recipient_detail_revise(h,k,expected,b); app.recipient_detail_view replaced behind a sha256 guard of the definition it replaces. The module ships with a control that starts CLOSED (app.recipient_revision_control, opened only by an offline schema-owner operation, like reply review); the view offers a correction only while it is open.",
+    "packages/db/src/recipient-response-revision-migrate.ts (hash-recorded, installs the real-use functions it needs, nothing else); packages/delivery/src/recipient-revision-configuration.ts (offline owner operation that opens or closes it); scripts/install-customer-modules.ts and .github/workflows/install-customer-modules.yml: new field_modules_action choices response_revision (install, closed), response_revision_enable and response_revision_pause (the workflow is at the 25-input limit); tests/workflow-inputs.test.mjs extended.",
+    "packages/domain/src/experience.ts and access.ts: recipientRevision request; packages/communications/src/index.ts: detail-revision action; apps/web/app/api/buyer/route.ts: three plain refusals for a correction.",
+    "apps/web/app/buyer/reply-journey.tsx: Change My Answer on the receipt (only when the page says a correction is possible), the journey starts from the recorded answer (amounts back to what was typed), Keep My Current Answer, a stale answer keeps the typed text and shows Keep Mine / Use Theirs, a reviewed answer releases the exact-retry hold.",
+    "packages/delivery/src/experience.ts, apps/web/app/operator/delivery-experience.tsx and reply-review.tsx: the team reads the latest correction and is told how many were made; the reply review module is untouched and its decisions still point at the original reply.",
+    "Guardian and Codex finding on 26c7c8b (a decision not bound to the version read): packages/db/recipient-response-revision-migrations/0001_response_revision.sql adds app.review_recipient_reply_seen(command,reply,seen,outcome,code,asked,remark), SECURITY DEFINER, which takes the same advisory lock as a correction, refuses with 'Response changed; reload before deciding' (23514, HTTP 409) when the answer version differs from seen, passes an already recorded command straight on so a retry still replays, and otherwise calls app.review_recipient_reply unchanged. packages/delivery/src/reply-review.ts calls it when it exists (a card that sends no version counts as having read the first answer) and the original function otherwise; packages/domain/src/reply-review.ts adds the optional seen field; apps/web/app/operator/reply-review.tsx sends the version shown, and on the refusal says so in plain words, reloads the replies (delivery-experience.tsx passes its loader) and works the terms to ask for out again. The reply review module is not edited. docs/adr/0069-reply-page.md amended."
+  ],
+  "preserved": [
+    "app.recipient_detail_response is never rewritten; the first answer stays on record. A correction is checked by exactly the same rules as the first answer under the same disclosure, so it cannot add a quotation, meeting interest, role or RFQ the link does not allow; consent (acknowledged) must be restated; retention is the original's and is never extended.",
+    "A correction is refused while the control is closed, once the team has made a final decision (publish or reject) on the reply, after the link is revoked or expired, and after 20 corrections. An Ask (ADR-069: a link suffix inviting the supplier to add named terms to their own answer) is not final, so a correction is how it is answered; reply review and the Today count show an answer that arrived after the Ask. The disclosure is read at the time of the correction, so a narrowed disclosure cannot be widened. Idempotent by the command id; a stale version is refused with a plain message.",
+    "Nothing is installed in production; no switch, provider, payment, outreach or AI change. Without the module the page is exactly as before."
+  ],
+  "verification": [
+    {
+      "preflight": "pending on the pushed head",
+      "integration": "tests/integration/product-experience.test.ts 24 passed (adds: the control starts closed and only the owner opens it, an Ask is answered by a correction, a final decision locks the answer, the Today count follows)",
+      "operator": "tests/operator/ux-reply-page.spec.ts 25 passed (6 new, with an axe check on the stale choice)",
+      "workflow": "tests/workflow-inputs.test.mjs 7 passed"
+    },
+    "tests/integration/product-experience.test.ts (25): a correction between view and decide makes PUBLISH, ASK and REJECT each refuse (and a command with no version), nothing is written, deciding on the version read works, a retry of the recorded command replays after another correction, and a stale PUBLISH on the newer answer still refuses. tests/operator/ux-reply-review.spec.ts (14): the card shows the reload sentence, the corrected answer, then decides with seen 1."
+  ],
+  "openRisks": [
+    "Closed on install: the owner opens it with field_modules_action=response_revision_enable (and closes it with response_revision_pause) after real-use is installed; until then nothing changes.",
+    "The replaced view is guarded by the hash of its core definition; the install fails closed if production differs.",
+    "A correction typed in the reply journey is held in memory only and is lost if the page is closed.",
+    "A revision writes only the same id-only capability event the first answer writes; no team email or Pulse event is added."
+  ]
+}
