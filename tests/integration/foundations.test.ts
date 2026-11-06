@@ -12,6 +12,7 @@ import {
   inspectFile,
 } from '../../packages/evidence/src/index';
 import { AccessService } from '../../packages/auth/src/access';
+import { changeMemberNow } from './change-member';
 let f: Awaited<ReturnType<typeof fixture>>, evidence: EvidenceService, access: AccessService;
 const objects = new Map<string, Uint8Array>();
 const storage: ObjectStorage = {
@@ -294,7 +295,7 @@ test('feature changes append immutable versions; last owner cannot be removed', 
     access.appendConfig(f.users.operator.ctx, { key: 'evidence.uploads', enabled: true }),
   ).rejects.toThrow('Access denied');
   await expect(
-    access.changeMember(f.users.owner.ctx, {
+    changeMemberNow(access, f.users.owner.ctx, {
       userId: f.users.owner.id,
       role: 'viewer',
       revoked: true,
@@ -352,7 +353,7 @@ test('config changes serialize and preserve every version and event', async () =
   expect(events.rows.map((r) => r.aggregate_version)).toEqual([1, 2, 3]);
 });
 test('membership revocation takes effect for existing sessions', async () => {
-  await access.changeMember(f.users.owner.ctx, {
+  await changeMemberNow(access, f.users.owner.ctx, {
     userId: f.users.operator.id,
     role: 'operator',
     revoked: true,

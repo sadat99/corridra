@@ -605,7 +605,13 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
       response.url().includes('/api/workspace/member?') && response.request().method() === 'POST',
   );
   await controls.getByRole('button', { name: 'Update Membership', exact: true }).click();
-  expect((await deniedMembership).status()).toBe(409);
+  const denied = await deniedMembership;
+  expect(denied.status()).toBe(409);
+  // Every change names the membership version the owner saw and carries a command id.
+  expect(denied.request().postDataJSON()).toMatchObject({
+    commandId: expect.stringMatching(/^[0-9a-f-]{36}$/),
+    expectedVersion: expect.any(Number),
+  });
   await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText(
     'The tenant must retain an active owner',
   );

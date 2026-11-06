@@ -4,6 +4,7 @@ import { fixture, rawContext } from './support';
 import { migrateViewAs } from '../../packages/db/src/view-as-migrate';
 import { ViewAsService } from '../../packages/auth/src/view-as';
 import { AccessService } from '../../packages/auth/src/access';
+import { changeMemberNow } from './change-member';
 
 // Real database, real roles. Proves who may open a preview, that opening is always logged in the
 // same transaction, and that the log holds ids and roles only.
@@ -117,7 +118,7 @@ describe('who may open a preview', () => {
   });
 
   test('an admin can once promoted', async () => {
-    await new AccessService(f.runtime).changeMember(f.users.owner.ctx, {
+    await changeMemberNow(new AccessService(f.runtime), f.users.owner.ctx, {
       userId: f.users.viewer.id,
       role: 'admin',
       revoked: false,

@@ -44,7 +44,7 @@ export class AccessService {
     return withTenant(this.pool, ctx, 'audit.read', async (t) => {
       const members = (
         await t.db.query(
-          'SELECT user_id,role,revoked_at,allowed_purposes,allowed_classifications,allowed_countries FROM app.membership WHERE tenant_id=$1 ORDER BY created_at',
+          'SELECT user_id,role,revoked_at,version,allowed_purposes,allowed_classifications,allowed_countries FROM app.membership WHERE tenant_id=$1 ORDER BY created_at',
           [t.tenantId],
         )
       ).rows;
@@ -58,29 +58,66 @@ export class AccessService {
       return members.map((member) => ({ ...member, name: names.get(member.user_id) ?? null }));
     });
   }
+  /**
+   * Change a member's role or revoke them. Two things keep a change from landing on a view that is out of date or from
+   * landing twice: `expectedVersion` is the membership version the owner saw (it moves on with every change), and
+   * `commandId` is carried into the audit event as its causation id, so a retry after a lost answer is recognised from
+   * the event already written and answered once, while the same id for a different change is refused.
+   */
   changeMember(ctx: RequestContext, input: unknown) {
-    const v = z.object({ userId: z.uuid(), role, revoked: z.boolean() }).parse(input);
-    return withTenant(this.pool, ctx, 'members.manage', async (t) => {
-      await t.db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [t.tenantId]);
-      const old = await t.db.query(
-        'SELECT role FROM app.membership WHERE tenant_id=$1 AND user_id=$2',
-        [t.tenantId, v.userId],
-      );
-      if (!old.rowCount) throw new DomainError('Membership unavailable', 404);
-      if (old.rows[0].role === 'owner' && (v.role !== 'owner' || v.revoked)) {
-        const count = await t.db.query(
-          "SELECT count(*)::int AS count FROM app.membership WHERE tenant_id=$1 AND role='owner' AND revoked_at IS NULL",
-          [t.tenantId],
+    const v = z
+      .object({
+        commandId: z.uuid(),
+        userId: z.uuid(),
+        role,
+        revoked: z.boolean(),
+        expectedVersion: z.number().int().min(1).max(1_000_000),
+      })
+      .strict()
+      .parse(input);
+    return withTenant(
+      this.pool,
+      { ...ctx, causationId: v.commandId },
+      'members.manage',
+      async (t) => {
+        await t.db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [t.tenantId]);
+        const replay = await t.db.query(
+          `SELECT aggregate_id,payload FROM app.domain_event
+           WHERE tenant_id=$1 AND aggregate_type='membership' AND causation_id=$2 LIMIT 1`,
+          [t.tenantId, v.commandId],
         );
-        if (count.rows[0].count <= 1)
-          throw new DomainError('The tenant must retain an active owner', 409);
-      }
-      await t.db.query(
-        'UPDATE app.membership SET role=$3,revoked_at=CASE WHEN $4 THEN now() ELSE NULL END WHERE tenant_id=$1 AND user_id=$2',
-        [t.tenantId, v.userId, v.role, v.revoked],
-      );
-      return { updated: true };
-    });
+        if (replay.rowCount) {
+          const earlier = replay.rows[0];
+          if (
+            earlier.aggregate_id !== v.userId ||
+            earlier.payload.role !== v.role ||
+            earlier.payload.revoked !== v.revoked
+          )
+            throw new DomainError('Membership command key reused', 409);
+          return { updated: true, replayed: true, version: earlier.payload.version as number };
+        }
+        const old = await t.db.query(
+          'SELECT role,version FROM app.membership WHERE tenant_id=$1 AND user_id=$2',
+          [t.tenantId, v.userId],
+        );
+        if (!old.rowCount) throw new DomainError('Membership unavailable', 404);
+        if (old.rows[0].version !== v.expectedVersion)
+          throw new DomainError('This membership changed; reload and try again', 409);
+        if (old.rows[0].role === 'owner' && (v.role !== 'owner' || v.revoked)) {
+          const count = await t.db.query(
+            "SELECT count(*)::int AS count FROM app.membership WHERE tenant_id=$1 AND role='owner' AND revoked_at IS NULL",
+            [t.tenantId],
+          );
+          if (count.rows[0].count <= 1)
+            throw new DomainError('The tenant must retain an active owner', 409);
+        }
+        const changed = await t.db.query(
+          'UPDATE app.membership SET role=$3,revoked_at=CASE WHEN $4 THEN now() ELSE NULL END WHERE tenant_id=$1 AND user_id=$2 RETURNING version',
+          [t.tenantId, v.userId, v.role, v.revoked],
+        );
+        return { updated: true, replayed: false, version: changed.rows[0].version as number };
+      },
+    );
   }
   appendConfig(ctx: RequestContext, input: unknown) {
     const v = z
