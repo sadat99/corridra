@@ -5,7 +5,7 @@ import { useEffect, useSyncExternalStore } from 'react';
 import { sessionChanged } from './session-events';
 
 /** Who is signed in in this browser: a customer account, a Corridra team member, or no one. */
-export type SignedIn = 'customer' | 'staff' | null;
+type SignedIn = 'customer' | 'staff' | null;
 
 // The last answer the public header received, shared so the footer shows the same state without asking again.
 let latest: SignedIn = null;
