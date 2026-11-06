@@ -290,6 +290,19 @@ test('N6 the phone menu keeps focus inside, makes the page inert, closes on Esca
   await expect(page.locator('main')).not.toHaveAttribute('inert', '');
 });
 
+test('N6 the phone menu closes and the page is usable again when the logo opens the home page', async ({
+  page,
+}) => {
+  await page.setViewportSize(sizes.phone);
+  await page.goto('/about');
+  await menu(page).click();
+  await header(page).getByRole('link', { name: 'Corridra home' }).click();
+  await expect(page).toHaveURL('/');
+  await expect(menu(page)).toHaveAttribute('aria-expanded', 'false');
+  await expect(nav(page)).toBeHidden();
+  await expect(page.locator('main')).not.toHaveAttribute('inert', '');
+});
+
 test('N6 the What we do panel closes on Escape and returns focus to its button, and closes on a press outside', async ({
   page,
 }) => {

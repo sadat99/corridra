@@ -212,6 +212,13 @@ export function SiteHeader({
   const { busy, message, signOut } = useSignOut();
   const [open, setOpen] = useState(false);
   const [jobsOpen, setJobsOpen] = useState(false);
+  // A new page (the logo, a link, or back and forward) closes the menu and the panel.
+  const [shownPath, setShownPath] = useState(pathname);
+  if (pathname !== shownPath) {
+    setShownPath(pathname);
+    setOpen(false);
+    setJobsOpen(false);
+  }
   const toggle = useRef<HTMLButtonElement>(null);
   const whatWeDo = useRef<HTMLButtonElement>(null);
   const header = useRef<HTMLElement>(null);
