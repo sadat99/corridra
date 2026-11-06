@@ -1,9 +1,10 @@
 -- CRUD G6: a person can undo a mute. 0001 is installed or about to be and its hash is checked, so it is not edited
 -- and the mute table it made keeps its one row per request, written only by the first mute. Every later change of
--- mind is a row in a new append-only event table. "Muted" is then the newest of the two: the first mute row read as
--- a muted event at its time, and the events. Nothing is updated or deleted; the history stays exact.
+-- mind is a row in a new append-only event table. "Muted" is the newest event by its sequence number, or the first mute
+-- row when there is no event. Nothing is updated or deleted; the history stays exact.
 -- Only the person the request belongs to can unmute it. Nothing here queues, re-queues or sends any mail: mail
--- that was suppressed while muted stays suppressed, and mail resumes only for messages made after an unmute.
+-- that was suppressed while muted stays suppressed, and mail resumes only for messages made after an unmute. (Today the module queues one message
+-- per request, the receipt, when the request is made, so an unmute here records the choice and resumes nothing.)
 -- Nothing here stores an address or message text; events hold ids and the way the change was made.
 DO $guard$
 BEGIN
@@ -31,30 +32,32 @@ REVOKE ALL ON customer_private.mission_mail_mute_event FROM PUBLIC,corridra_runt
 CREATE TRIGGER mission_mail_mute_event_immutable BEFORE UPDATE OR DELETE ON customer_private.mission_mail_mute_event
  FOR EACH ROW EXECUTE FUNCTION app.reject_rewrite();
 
--- The one place that says whether a request is muted right now. Every reader asks it.
+-- The one place that says whether a request is muted right now. The newest event decides, by its sequence number
+-- (never by a clock); with no event, the first mute row decides. A mute link or a signed-in change always records
+-- an event when it changes the answer, so the old row is never needed once an event exists.
 CREATE FUNCTION customer_private.mission_mail_muted(request uuid) RETURNS boolean
  LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
- SELECT coalesce((SELECT s.state='muted' FROM (
-   SELECT 'muted'::text AS state,m.created_at AS at,0::bigint AS n FROM customer_private.mission_mail_mute m WHERE m.request_id=request
-   UNION ALL
-   SELECT e.state,e.occurred_at,e.seq FROM customer_private.mission_mail_mute_event e WHERE e.request_id=request) s
-  ORDER BY s.at DESC,s.n DESC LIMIT 1),false)
+ SELECT coalesce((SELECT e.state='muted' FROM customer_private.mission_mail_mute_event e WHERE e.request_id=request ORDER BY e.seq DESC LIMIT 1),
+  EXISTS(SELECT FROM customer_private.mission_mail_mute m WHERE m.request_id=request))
 $$;
 REVOKE ALL ON FUNCTION customer_private.mission_mail_muted(uuid) FROM PUBLIC,corridra_runtime,corridra_auth;
 
 -- Ids and a type only, in the same events and audit trail the first mute already uses.
-CREATE FUNCTION customer_private.mission_mail_record(tenant uuid, event_type text, request uuid) RETURNS void
+CREATE FUNCTION customer_private.mission_mail_record(tenant uuid, event_type text, request uuid, strict boolean) RETURNS void
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE executor uuid;eid uuid:=gen_random_uuid();corr uuid:=gen_random_uuid();
 BEGIN
  SELECT c.executor_id INTO executor FROM customer_private.configuration c JOIN identity.principal p ON p.id=c.executor_id
  WHERE c.synthetic AND p.kind='service' AND p.disabled_at IS NULL;
- IF executor IS NULL THEN RETURN; END IF;
+ IF executor IS NULL THEN
+  IF strict THEN RAISE EXCEPTION 'Customer authority unavailable' USING ERRCODE='42501'; END IF;
+  RETURN;
+ END IF;
  INSERT INTO app.domain_event(id,tenant_id,type,schema_version,aggregate_type,aggregate_id,aggregate_version,actor_id,occurred_at,correlation_id,causation_id,payload)
  VALUES(eid,tenant,event_type,1,'customer_private_mission_mail_mute',request::text,1,executor,clock_timestamp(),corr,corr,jsonb_build_object('request_id',request));
  INSERT INTO app.audit_event(id,tenant_id,domain_event_id,actor_id,action) VALUES(gen_random_uuid(),tenant,eid,executor,event_type);
 END $$;
-REVOKE ALL ON FUNCTION customer_private.mission_mail_record(uuid,text,uuid) FROM PUBLIC,corridra_runtime,corridra_auth;
+REVOKE ALL ON FUNCTION customer_private.mission_mail_record(uuid,text,uuid,boolean) FROM PUBLIC,corridra_runtime,corridra_auth;
 
 -- The two readers of the old mute row now ask the helper. Each is replaced only if its live text is exactly the
 -- reviewed text of 0001, so a newer or different definition stops the install instead of being overwritten.
@@ -91,7 +94,7 @@ BEGIN
 END $mute$;
 CREATE OR REPLACE FUNCTION customer.mute_mission_mail(request uuid, token text) RETURNS jsonb
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
-DECLARE owned customer_private.owned_request%ROWTYPE;added integer;was boolean;again boolean:=false;
+DECLARE owned customer_private.owned_request%ROWTYPE;was boolean;
 BEGIN
  IF request IS NULL OR token IS NULL OR token !~ '^[A-Za-z0-9_-]{43}$' THEN RAISE EXCEPTION 'This link is not valid' USING ERRCODE='42501'; END IF;
  IF NOT EXISTS(SELECT FROM customer_private.mission_mail_queue WHERE request_id=request AND mute_token_hash=encode(sha256(convert_to(token,'UTF8')),'hex'))
@@ -99,19 +102,19 @@ BEGIN
  PERFORM pg_advisory_xact_lock(hashtextextended('customer.mission_mail:'||request::text,0));
  was:=customer_private.mission_mail_muted(request);
  SELECT * INTO owned FROM customer_private.owned_request WHERE id=request;
+ -- The first mute still writes the old row, as before. Any change from not muted to muted also records an event,
+ -- so the answer never depends on which of the two came first. Already muted, by either route: nothing new.
  INSERT INTO customer_private.mission_mail_mute(request_id) VALUES(request) ON CONFLICT(request_id) DO NOTHING;
- GET DIAGNOSTICS added=ROW_COUNT;
- IF added=0 AND NOT was THEN
+ IF NOT was THEN
   INSERT INTO customer_private.mission_mail_mute_event(request_id,principal_id,state,via,command_id)
   VALUES(request,owned.principal_id,'muted','link',gen_random_uuid());
-  again:=true;
  END IF;
  UPDATE customer_private.mission_mail_queue SET status='SUPPRESSED',finished_at=clock_timestamp(),lease_until=NULL
  WHERE request_id=request AND status IN ('PENDING','LEASED');
  DELETE FROM customer_private.mission_mail_recipient r USING customer_private.mission_mail_queue x
  WHERE x.id=r.queue_id AND x.request_id=request AND x.status IN ('SENT','DEAD','SUPPRESSED');
- IF added=1 OR again THEN PERFORM customer_private.mission_mail_record(owned.workspace_id,'customer.mission_mail.muted',request); END IF;
- RETURN jsonb_build_object('muted',true,'already',added=0 AND NOT again);
+ IF NOT was THEN PERFORM customer_private.mission_mail_record(owned.workspace_id,'customer.mission_mail.muted',request,false); END IF;
+ RETURN jsonb_build_object('muted',true,'already',was);
 END $$;
 
 -- Signed-in. The person's own requests that were ever muted, newest change first, with whether each is muted now.
@@ -128,7 +131,8 @@ BEGIN
     UNION ALL
     SELECT e.request_id,e.state,e.occurred_at,e.seq FROM customer_private.mission_mail_mute_event e
      JOIN customer_private.owned_request o ON o.id=e.request_id WHERE o.principal_id=actor) s
-   ORDER BY s.request_id,s.at DESC,s.n DESC) l
+   WHERE NOT EXISTS(SELECT FROM customer_private.request_revocation v WHERE v.request_id=s.request_id)
+   ORDER BY s.request_id,s.n DESC) l
   ORDER BY l.at DESC,l.request_id LIMIT 100) t;
  IF customer.actor_id() IS DISTINCT FROM actor THEN RAISE EXCEPTION 'Customer request access expired' USING ERRCODE='42501'; END IF;
  RETURN result;
@@ -149,25 +153,32 @@ BEGIN
  IF NOT FOUND OR EXISTS(SELECT FROM customer_private.request_revocation v WHERE v.request_id=request)
  THEN RAISE EXCEPTION 'Request is not available' USING ERRCODE='42501'; END IF;
  PERFORM pg_advisory_xact_lock(hashtextextended('customer.mission_mail:'||request::text,0));
+ was:=customer_private.mission_mail_muted(request);
  SELECT * INTO prior FROM customer_private.mission_mail_mute_event WHERE command_id=command;
  IF FOUND THEN
   IF prior.request_id<>request OR prior.principal_id<>actor OR prior.state<>want THEN RAISE EXCEPTION 'Command is not valid' USING ERRCODE='42501'; END IF;
-  RETURN jsonb_build_object('muted',want='muted','changed',false,'replayed',true);
+  -- A repeat answers with how things stand now, never with what that command once asked for.
+  RETURN jsonb_build_object('muted',was,'changed',false,'replayed',true);
  END IF;
- was:=customer_private.mission_mail_muted(request);
  IF NOT mute AND NOT customer_private.mission_mail_open() THEN
   RETURN jsonb_build_object('muted',was,'changed',false,'reason','closed');
  END IF;
  IF was=mute THEN RETURN jsonb_build_object('muted',was,'changed',false); END IF;
- INSERT INTO customer_private.mission_mail_mute_event(request_id,principal_id,state,via,command_id)
- VALUES(request,actor,want,'signed-in',command);
+ BEGIN
+  INSERT INTO customer_private.mission_mail_mute_event(request_id,principal_id,state,via,command_id)
+  VALUES(request,actor,want,'signed-in',command);
+ EXCEPTION WHEN unique_violation THEN
+  -- The same command id used for another request at the same moment: the same refusal as any reused id.
+  RAISE EXCEPTION 'Command is not valid' USING ERRCODE='42501';
+ END;
  IF mute THEN
   UPDATE customer_private.mission_mail_queue SET status='SUPPRESSED',finished_at=clock_timestamp(),lease_until=NULL
   WHERE request_id=request AND status IN ('PENDING','LEASED');
   DELETE FROM customer_private.mission_mail_recipient r USING customer_private.mission_mail_queue x
   WHERE x.id=r.queue_id AND x.request_id=request AND x.status IN ('SENT','DEAD','SUPPRESSED');
  END IF;
- PERFORM customer_private.mission_mail_record(owned.workspace_id,CASE WHEN mute THEN 'customer.mission_mail.muted' ELSE 'customer.mission_mail.unmuted' END,request);
+ -- Turning mail on again is the choice that matters most, so its record is never skipped.
+ PERFORM customer_private.mission_mail_record(owned.workspace_id,CASE WHEN mute THEN 'customer.mission_mail.muted' ELSE 'customer.mission_mail.unmuted' END,request,NOT mute);
  IF customer.actor_id() IS DISTINCT FROM actor THEN RAISE EXCEPTION 'Customer request access expired' USING ERRCODE='42501'; END IF;
  RETURN jsonb_build_object('muted',mute,'changed',true);
 END $$;

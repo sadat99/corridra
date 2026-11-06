@@ -81,6 +81,7 @@ export default async function Page() {
       <MutedRequests
         initial={mutes}
         titles={titles}
+        canResume={initial.open}
         subject={session.subject}
         issuer={session.issuer}
       />

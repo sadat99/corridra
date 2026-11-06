@@ -1519,6 +1519,7 @@ describe('G6 unmute', () => {
         )
       ).rows,
     ).toEqual([
+      { state: 'muted', via: 'link' },
       { state: 'unmuted', via: 'signed-in' },
       { state: 'muted', via: 'signed-in' },
       { state: 'unmuted', via: 'signed-in' },
@@ -1573,7 +1574,7 @@ describe('G6 unmute', () => {
     expect(await setMute(p, p.requestId, command, false)).toEqual({ muted: false, changed: true });
     await setMute(p, p.requestId, randomUUID(), true);
     expect(await setMute(p, p.requestId, command, false)).toEqual({
-      muted: false,
+      muted: true,
       changed: false,
       replayed: true,
     });
@@ -1721,7 +1722,7 @@ describe('G6 unmute', () => {
       'customer_private.notification_muted_since',
     ]);
     expect(bodies.find((b) => b.name === 'customer_private.notification_valid')?.src).toContain(
-      'customer_private.notification_muted(',
+      'customer_private.notification_muted_since(row_.request_id,row_.created_at)',
     );
     // The Move enqueue asks whether the request was muted since the Move was set, not only now.
     expect(bodies.find((b) => b.name === 'customer.enqueue_move_notifications')?.src).toContain(
@@ -1887,5 +1888,131 @@ describe('G6 unmute, a Move made in or before a muted period', () => {
       await import('../../apps/web/app/account/notifications/muted-labels');
     const labels = mutedRequestLabels(page.requests as never);
     expect(labels[p.requestId]).toMatch(/^Request sent .+\d/);
+  });
+});
+
+describe("G6 unmute, the guardian's cases", () => {
+  async function command(who: Person, object: string) {
+    const commandId = randomUUID();
+    await moves.command(staff(who), {
+      action: 'set',
+      commandId,
+      missionId: who.missionId,
+      moves: [{ verb: 'Add', holder: 'customer', dueOn: null, object }],
+    });
+    return commandId;
+  }
+  const enqueueFor = (who: Person, commandId: string) =>
+    withTenant(
+      f.runtime,
+      staff(who),
+      'missions.manage',
+      async ({ db }) =>
+        (await db.query('SELECT customer.enqueue_move_notifications($1) AS r', [commandId])).rows[0]
+          .r as { queued: number; reason: string | null },
+    );
+
+  test('a mute that commits while the enqueue waits for its lock is always seen', async () => {
+    await setControl(true);
+    const p = await person();
+    await setMoves(p, [{ object: 'your trade licence' }]);
+    const waiting = await command(p, 'your bank letter');
+    const holder = await f.owner.connect();
+    try {
+      await holder.query('BEGIN');
+      await holder.query(
+        "SELECT pg_advisory_xact_lock(hashtextextended('customer.notification:'||$1::text,0))",
+        [p.requestId],
+      );
+      // The enqueue reaches the request's lock and waits there; the mute commits first.
+      const pending = enqueueFor(p, waiting);
+      await new Promise((done) => setTimeout(done, 500));
+      await holder.query('SELECT customer.mute_notifications($1,$2)', [p.requestId, linkToken(p)]);
+      await holder.query('COMMIT');
+      expect(await pending).toMatchObject({ queued: 0, reason: 'muted' });
+    } finally {
+      holder.release();
+    }
+  });
+
+  test('a message made before a mute stays invalid after the unmute, and one made after it is valid', async () => {
+    await setControl(true);
+    const p = await person();
+    const first = await setMoves(p, [{ object: 'your trade licence' }]);
+    const valid = async (id: string) =>
+      (
+        await f.owner.query(
+          'SELECT customer_private.notification_valid(r) AS v FROM customer_private.notification_outbox r WHERE r.id=$1',
+          [id],
+        )
+      ).rows[0].v as boolean;
+    const old = first.jobs[0].queueId;
+    expect(await valid(old)).toBe(true);
+    await mute(p.requestId, linkToken(p));
+    await setMute(p, p.requestId, randomUUID(), false);
+    expect(await valid(old)).toBe(false);
+    const fresh = await setMoves(p, [{ object: 'your bank letter' }]);
+    expect(await valid(fresh.jobs[0].queueId)).toBe(true);
+  });
+
+  test('a mute link when already muted from the page says so and records nothing new', async () => {
+    await setControl(true);
+    const p = await person();
+    await setMoves(p, [{ object: 'your trade licence' }]);
+    expect(await setMute(p, p.requestId, randomUUID(), true)).toEqual({
+      muted: true,
+      changed: true,
+    });
+    expect(await mute(p.requestId, linkToken(p))).toEqual({ muted: true, already: true });
+    const events = (
+      await f.owner.query(
+        "SELECT count(*)::int n FROM customer_private.notification_mute_event WHERE request_id=$1 AND state='muted'",
+        [p.requestId],
+      )
+    ).rows[0].n;
+    expect(events).toBe(1);
+    // And the answer holds whichever route came first: the page, the link, the page again.
+    await setMute(p, p.requestId, randomUUID(), false);
+    expect(await mutedNow(p.requestId)).toBe(false);
+    expect(await mute(p.requestId, linkToken(p))).toEqual({ muted: true, already: false });
+    expect(await mutedNow(p.requestId)).toBe(true);
+  });
+
+  test('a revoked request is left out of the list and cannot be changed', async () => {
+    await setControl(true);
+    const p = await person();
+    await setMoves(p, [{ object: 'your trade licence' }]);
+    await mute(p.requestId, linkToken(p));
+    expect(await myMutes(p)).toHaveLength(1);
+    await f.owner.query(
+      "INSERT INTO customer_private.request_revocation(request_id,reason) VALUES($1,'Revoked for the unmute test')",
+      [p.requestId],
+    );
+    expect(await myMutes(p)).toEqual([]);
+    await expect(setMute(p, p.requestId, randomUUID(), false)).rejects.toMatchObject({
+      code: '42501',
+    });
+  });
+
+  test('a command id used for a second request of the same person is refused the same way', async () => {
+    await setControl(true);
+    const p = await person();
+    await setMoves(p, [{ object: 'your trade licence' }]);
+    await mute(p.requestId, linkToken(p));
+    const command = randomUUID();
+    await setMute(p, p.requestId, command, false);
+    await expect(setMute(p, p.requestId, command, true)).rejects.toMatchObject({ code: '42501' });
+    await expect(setMute(p, randomUUID(), command, false)).rejects.toMatchObject({ code: '42501' });
+  });
+
+  test('the unmute record is strict: its call passes the strict flag, so a missing executor fails the unmute', async () => {
+    const src = (
+      await f.owner.query(
+        "SELECT prosrc FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='customer' AND p.proname='set_notification_mute'",
+      )
+    ).rows[0].prosrc as string;
+    expect(src).toContain(
+      "'customer_private_notification_mute',request::text,jsonb_build_object('request_id',request),NOT mute)",
+    );
   });
 });

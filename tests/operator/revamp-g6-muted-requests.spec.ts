@@ -26,13 +26,14 @@ test.beforeAll(async () => {
         <LanguageProvider offered={[{code:'en',draft:false}]}>
           <main className="operator-page ux-workspace ux-customer"><h1>Email choices</h1>
             <MutedRequests
+              canResume={new URLSearchParams(location.search).get('closed') !== '1'}
               subject="synthetic-alice"
               issuer=${JSON.stringify(issuer)}
               titles={{ ${JSON.stringify(a_id)}: 'Sell towels in Spain' }}
               initial={[
-                { store: 'request', requestId: ${JSON.stringify(a_id)}, muted: true, at: '2026-11-05T10:00:00Z' },
-                { store: 'reminder', requestId: ${JSON.stringify(a_id)}, muted: false, at: '2026-11-04T10:00:00Z' },
-                { store: 'reminder', requestId: ${JSON.stringify(b_id)}, muted: true, at: '2026-11-03T10:00:00Z' },
+                { store: 'reminder', requestId: ${JSON.stringify(a_id)}, muted: true, at: '2026-11-05T10:00:00Z' },
+                { store: 'reminder', requestId: ${JSON.stringify(b_id)}, muted: false, at: '2026-11-04T10:00:00Z' },
+                { store: 'request', requestId: ${JSON.stringify(a_id)}, muted: true, at: '2026-11-03T10:00:00Z' },
               ]}
             />
           </main>
@@ -99,6 +100,7 @@ type Sent = { store: string; requestId: string; commandId: string; muted: boolea
 async function open(
   page: Page,
   answer: (sent: Sent) => { status: number; json: unknown } | 'hold',
+  closed = false,
 ) {
   const sent: Sent[] = [];
   const held: (() => void)[] = [];
@@ -111,7 +113,7 @@ async function open(
       result === 'hold' ? { status: 200, json: { muted: body.muted, changed: true } } : result;
     return route.fulfill({ status: final.status, json: final.json });
   });
-  await page.goto(origin);
+  await page.goto(origin + (closed ? '?closed=1' : ''));
   await expect(page.getByRole('heading', { name: 'Requests you muted' })).toBeVisible();
   return { sent, release: () => held.splice(0).forEach((done) => done()) };
 }
@@ -120,20 +122,34 @@ const axe = async (page: Page) =>
     await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()
   ).violations.map((v) => v.id);
 
-test('CX-02 lists each muted request with its kind and state, and the right action for each', async ({
+test('CX-02 lists each muted request with its kind and state, and an action only where one does something', async ({
   page,
 }) => {
   await open(page, () => ({ status: 200, json: { muted: false, changed: true } }));
   const rows = page.getByRole('listitem');
   await expect(rows).toHaveCount(3);
   await expect(rows.nth(0)).toContainText('Sell towels in Spain');
-  await expect(rows.nth(0)).toContainText('Receipt and progress emails: stopped');
-  await expect(rows.nth(0).getByRole('button', { name: 'Unmute', exact: true })).toBeVisible();
+  await expect(rows.nth(0)).toContainText('Reminder emails: stopped');
+  await expect(rows.nth(0).getByRole('button', { name: 'Unmute', exact: true })).toBeEnabled();
   await expect(rows.nth(1)).toContainText('Reminder emails: on again');
   await expect(rows.nth(1).getByRole('button', { name: 'Mute Again', exact: true })).toBeVisible();
   // A request the list does not name still reads plainly, never as an id.
-  await expect(rows.nth(2)).toContainText('A request you sent');
+  await expect(rows.nth(1)).toContainText('A request you sent');
   await expect(page.locator('body')).not.toContainText(b_id);
+  // The receipt email is sent once, when a request is made: there is nothing to start or stop, so no button.
+  await expect(rows.nth(2)).toContainText('Receipt and progress emails: stopped');
+  await expect(rows.nth(2)).toContainText('sent once, when a request is made');
+  await expect(rows.nth(2).getByRole('button')).toHaveCount(0);
+});
+
+test('Unmute is off, with the reason, while the reminder control is closed; Mute Again still works', async ({
+  page,
+}) => {
+  await open(page, () => ({ status: 200, json: { muted: true, changed: true } }), true);
+  const rows = page.getByRole('listitem');
+  await expect(rows.nth(0).getByRole('button', { name: 'Unmute', exact: true })).toBeDisabled();
+  await expect(rows.nth(0)).toContainText('Reminder emails cannot be turned back on right now.');
+  await expect(rows.nth(1).getByRole('button', { name: 'Mute Again', exact: true })).toBeEnabled();
 });
 
 test('CX-05 Unmute asks first, says what it sends, and one choice sends one command', async ({
@@ -152,10 +168,10 @@ test('CX-05 Unmute asks first, says what it sends, and one choice sends one comm
   await dialog.getByRole('button', { name: 'Start Emails Again' }).click();
   await expect(dialog).toBeHidden();
   expect(sent).toHaveLength(1);
-  expect(sent[0]).toMatchObject({ store: 'request', requestId: a_id, muted: false });
+  expect(sent[0]).toMatchObject({ store: 'reminder', requestId: a_id, muted: false });
   expect(sent[0]!.commandId).toMatch(/^[0-9a-f-]{36}$/);
   const row = page.getByRole('listitem').nth(0);
-  await expect(row).toContainText('Receipt and progress emails: on again');
+  await expect(row).toContainText('Reminder emails: on again');
   await expect(row.getByRole('status')).toHaveText('Emails about this request are on again.');
   await expect(row.getByRole('button', { name: 'Mute Again' })).toBeVisible();
 });

@@ -15,11 +15,14 @@ const kindWords: Record<MailMute['store'], string> = {
 export function MutedRequests({
   initial,
   titles,
+  canResume,
   subject,
   issuer,
 }: {
   initial: MailMute[];
   titles: Record<string, string>;
+  /** The reminder emails' sending control is open. Stopping always works; starting again needs it. */
+  canResume: boolean;
   subject: string;
   issuer: string;
 }) {
@@ -111,26 +114,36 @@ export function MutedRequests({
               <span>
                 {kindWords[item.store]}: {item.muted ? 'stopped' : 'on again'}
               </span>
+              {item.store === 'request' && (
+                <span>
+                  This email is sent once, when a request is made, so there is nothing more to start
+                  or stop for this request.
+                </span>
+              )}
+              {item.store === 'reminder' && item.muted && !canResume && (
+                <span>Reminder emails cannot be turned back on right now.</span>
+              )}
             </span>
-            {item.muted ? (
-              <button
-                type="button"
-                className="button button-secondary"
-                disabled={busy}
-                onClick={() => setAsking(item)}
-              >
-                Unmute
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="button button-secondary"
-                disabled={busy}
-                onClick={() => void change(item, true)}
-              >
-                Mute Again
-              </button>
-            )}
+            {item.store === 'reminder' &&
+              (item.muted ? (
+                <button
+                  type="button"
+                  className="button button-secondary"
+                  disabled={busy || !canResume}
+                  onClick={() => setAsking(item)}
+                >
+                  Unmute
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="button button-secondary"
+                  disabled={busy}
+                  onClick={() => void change(item, true)}
+                >
+                  Mute Again
+                </button>
+              ))}
             {message?.key === key(item) && <p role="status">{message.text}</p>}
           </li>
         ))}

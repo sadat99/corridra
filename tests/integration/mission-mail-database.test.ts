@@ -656,6 +656,7 @@ describe('G6 unmute', () => {
       )
     ).rows;
     expect(events).toEqual([
+      { state: 'muted', via: 'link' },
       { state: 'unmuted', via: 'signed-in' },
       { state: 'muted', via: 'signed-in' },
       { state: 'unmuted', via: 'signed-in' },
@@ -718,10 +719,10 @@ describe('G6 unmute', () => {
     await mute(p.requestId, p.mute);
     const command = randomUUID();
     expect(await setMute(p, p.requestId, command, false)).toEqual({ muted: false, changed: true });
-    // A stale repeat after a later decision still changes nothing.
+    // A stale repeat after a later decision changes nothing and answers with how things stand now.
     await setMute(p, p.requestId, randomUUID(), true);
     expect(await setMute(p, p.requestId, command, false)).toEqual({
-      muted: false,
+      muted: true,
       changed: false,
       replayed: true,
     });
@@ -911,5 +912,63 @@ describe('G6 unmute', () => {
     });
     expect(await mutedNow(p.requestId)).toBe(false);
     expect((await service.mutes(p.subject, issuer))[0]).toMatchObject({ muted: false });
+  });
+});
+
+describe("G6 unmute, the guardian's cases", () => {
+  test('a mute link when already muted from the page says so and records nothing new', async () => {
+    await setControl(true);
+    const p = await person();
+    await enqueue(p);
+    expect(await setMute(p, p.requestId, randomUUID(), true)).toEqual({
+      muted: true,
+      changed: true,
+    });
+    expect(await mute(p.requestId, p.mute)).toEqual({ muted: true, already: true });
+    expect(
+      (
+        await f.owner.query(
+          "SELECT count(*)::int n FROM customer_private.mission_mail_mute_event WHERE request_id=$1 AND state='muted'",
+          [p.requestId],
+        )
+      ).rows[0].n,
+    ).toBe(1);
+    await setMute(p, p.requestId, randomUUID(), false);
+    expect(await mutedNow(p.requestId)).toBe(false);
+    expect(await mute(p.requestId, p.mute)).toEqual({ muted: true, already: false });
+    expect(await mutedNow(p.requestId)).toBe(true);
+  });
+
+  test('a revoked request is left out of the list and cannot be changed', async () => {
+    await setControl(true);
+    const p = await person();
+    await enqueue(p);
+    await mute(p.requestId, p.mute);
+    expect(await myMutes(p)).toHaveLength(1);
+    await f.owner.query(
+      "INSERT INTO customer_private.request_revocation(request_id,reason) VALUES($1,'Revoked for the unmute test')",
+      [p.requestId],
+    );
+    expect(await myMutes(p)).toEqual([]);
+    await expect(setMute(p, p.requestId, randomUUID(), false)).rejects.toMatchObject({
+      code: '42501',
+    });
+  });
+
+  test('a command id used for a second request is refused the same way, and the unmute record is strict', async () => {
+    await setControl(true);
+    const p = await person();
+    await enqueue(p);
+    await mute(p.requestId, p.mute);
+    const command = randomUUID();
+    await setMute(p, p.requestId, command, false);
+    await expect(setMute(p, p.requestId, command, true)).rejects.toMatchObject({ code: '42501' });
+    await expect(setMute(p, randomUUID(), command, false)).rejects.toMatchObject({ code: '42501' });
+    const src = (
+      await f.owner.query(
+        "SELECT prosrc FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='customer' AND p.proname='set_mission_mail_mute'",
+      )
+    ).rows[0].prosrc as string;
+    expect(src).toContain('request,NOT mute);');
   });
 });
