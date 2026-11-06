@@ -67,9 +67,7 @@ const v = z
     REAL_USE_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     NETWORK_USE_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     MISSION_MAIL_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
-    REQUEST_WITHDRAWAL_ACTION: z
-      .enum(['unchanged', 'install', 'enable', 'pause'])
-      .default('unchanged'),
+    REQUEST_WITHDRAWAL_ACTION: z.enum(['unchanged', 'enable', 'pause']).default('unchanged'),
     MOVE_RECORDS_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     MOVE_RECORDS_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
@@ -207,6 +205,7 @@ if (['enable', 'pause'].includes(v.NOTIFICATIONS_ACTION) && !v.NOTIFICATIONS_REA
   throw new Error('Notification changes require an explicit reason');
 
 const registries = [
+  'customer_request_withdrawal_migrations',
   'customer_migrations',
   'customer_commercial_migrations',
   'customer_company_migrations',
@@ -278,6 +277,9 @@ const installers: [string, (pool: ReturnType<typeof databasePool>) => Promise<vo
   ['consented programme projections', migrateCustomerProgrammeProjections],
   ['trip and supplier books', migrateCustomerBooks],
   ['decision cards', migrateCustomerDecisionCards],
+  // Installing it changes nothing anyone can see: its own control starts closed. It must be in the base run so
+  // mission mail 0003 and notifications 0005, installed later in the same run, find it. It needs no mail module.
+  ['request withdrawal (its control stays closed)', migrateCustomerRequestWithdrawal],
 ];
 
 const pool = databasePool(v.MIGRATION_DATABASE_URL);
@@ -354,18 +356,16 @@ try {
         );
       }
     }
-    // Request withdrawal first: mission mail 0003 and notifications 0005 need it, and it needs no mail module.
-    if (v.REQUEST_WITHDRAWAL_ACTION !== 'unchanged') {
-      await migrateCustomerRequestWithdrawal(pool);
-      if (v.REQUEST_WITHDRAWAL_ACTION !== 'install') {
-        const result = await configureRequestWithdrawal(pool, {
-          enabled: v.REQUEST_WITHDRAWAL_ACTION === 'enable',
-          reason: v.REQUEST_WITHDRAWAL_REASON,
-        });
-        console.log(
-          `Request withdrawal ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
-        );
-      }
+    // Request withdrawal is already installed by the base run above, with its control closed. Opening or pausing it
+    // is an owner decision with a reason; it is not wired to the install workflow.
+    if (['enable', 'pause'].includes(v.REQUEST_WITHDRAWAL_ACTION)) {
+      const result = await configureRequestWithdrawal(pool, {
+        enabled: v.REQUEST_WITHDRAWAL_ACTION === 'enable',
+        reason: v.REQUEST_WITHDRAWAL_REASON,
+      });
+      console.log(
+        `Request withdrawal ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
+      );
     }
     if (v.MISSION_MAIL_ACTION !== 'unchanged') {
       await migrateCustomerMissionMail(pool);
