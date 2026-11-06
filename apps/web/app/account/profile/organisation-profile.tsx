@@ -3,6 +3,7 @@ import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { CountrySelect } from '../../../components/ux/pickers';
 import { countryName } from '../../../lib/ux/options';
+import { onDeviceClock } from '../../../lib/server-clock';
 const roleOptions = [
   ['BUYER', 'Buyer'],
   ['SELLER', 'Seller'],
@@ -214,7 +215,7 @@ export function OrganisationProfile(props: {
           return;
         }
         if (!r.ok) throw Error('Profile request failed');
-        const v = parseView(await r.json(), workspaceId);
+        const v = parseView(onDeviceClock(await r.json(), r), workspaceId);
         if (
           body &&
           (v.commandId !== body.commandId ||
