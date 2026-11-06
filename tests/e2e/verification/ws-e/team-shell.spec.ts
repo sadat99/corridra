@@ -81,6 +81,44 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   await expect(admin.locator('xpath=..')).not.toHaveAttribute('open');
   await expect(admin).toBeFocused();
 
+  // The command palette: Ctrl K opens it, Actions list only places this role may open, Tab changes scope,
+  // Up and Down move, Escape closes and focus returns, and a mission is found by its company name.
+  const palette = page.getByRole('dialog', { name: 'Search missions, companies and actions' });
+  const trigger = sidebar.getByRole('button', { name: /Search/ });
+  expect((await trigger.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await trigger.focus();
+  await page.keyboard.press('Control+k');
+  await expect(palette).toBeVisible();
+  await expect(palette.getByText('Searches only what your role may open')).toBeVisible();
+  const box = palette.getByRole('combobox');
+  await expect(box).toBeFocused();
+  await box.fill('audit');
+  await expect(palette.getByRole('option', { name: /Open Audit/ })).toBeVisible();
+  await page.keyboard.press('Tab');
+  await expect(palette.getByRole('button', { name: 'Missions', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await page.keyboard.press('Shift+Tab');
+  await expect(palette.getByRole('button', { name: 'All', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await box.fill('QA Test');
+  await expect(palette.getByRole('option', { name: /QA Test Co/ })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(palette).toBeHidden();
+  await expect(trigger).toBeFocused();
+  // Enter opens the selected action: Audit, by its own address.
+  await page.keyboard.press('Control+k');
+  await page.getByRole('combobox').fill('open audit');
+  await expect(palette.getByRole('option', { name: /Open Audit/ })).toBeVisible();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/operator\/audit/);
+  await page.goto(`/operator?workspace=${seed.tenantId}`);
+  await expect(page.locator('h1')).toHaveText('Today');
+  if (phone) await openDrawer();
+
   // Missions opens at its own address, with the row of places under the header.
   await sidebar.getByRole('link', { name: 'Missions', exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/operator/missions\\?workspace=${seed.tenantId}$`));

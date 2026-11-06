@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import { OperatorIcon } from '../operator-icon';
+import { TeamPalette } from './team-palette';
 import { useLanguage } from '../language-provider';
 import { translate } from '../../lib/i18n/messages';
 import { subscribeToHash } from '../../lib/address-store';
@@ -38,7 +39,7 @@ const translated: Partial<
   meetings: 'wse.team.meetings',
 };
 
-export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
+export function TeamSidebar({ urls, ownerPage = false }: { urls: boolean; ownerPage?: boolean }) {
   const { t, locale } = useLanguage();
   const pathname = usePathname() ?? '/operator';
   const hash = useSyncExternalStore(
@@ -117,6 +118,7 @@ export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
       className="ux-team-sidebar"
       aria-label={t('wse.team.nav')}
     >
+      <TeamPalette urls={urls} ownerPage={ownerPage} />
       <ul>
         {daily.map((item) => {
           const first = teamPlacesFor(item, role)[0];

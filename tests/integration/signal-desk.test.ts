@@ -79,6 +79,7 @@ describe('NAV-04 the sidebar holds the five daily items, and Admin only for owne
     const { sidebar } = await render('owner');
     const words = [...sidebar.matchAll(/<span>([^<]+)<\/span>/g)].map((m) => m[1]);
     expect(words).toEqual([
+      'Search',
       'Today',
       'Missions',
       'Companies',
