@@ -159,6 +159,20 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'module',
   },
   {
+    name: 'CORRIDRA_CUSTOMER_WORKSPACE_LIFECYCLE_ENABLED',
+    label: 'Workspace changes',
+    line: 'Lets a customer owner rename, archive, restore or hand over a workspace.',
+    group: 'Accounts and requests',
+    kind: 'module',
+  },
+  {
+    name: 'CORRIDRA_CUSTOMER_ACCOUNT_LIFECYCLE_ENABLED',
+    label: 'Close my account',
+    line: 'Lets a customer close their own account, undo it for a while, and file an erasure request.',
+    group: 'Accounts and requests',
+    kind: 'module',
+  },
+  {
     name: 'CORRIDRA_CUSTOMER_CODE_SIGNIN',
     label: 'Sign in with a code',
     line: 'Adds a second way to sign in: a six-digit code sent by email. Password sign-in stays.',

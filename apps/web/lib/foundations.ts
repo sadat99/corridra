@@ -62,6 +62,14 @@ import {
   customerMemberRolesEnabled,
 } from '@corridra/auth/customer-member-roles';
 import {
+  CustomerWorkspaceLifecycleService,
+  customerWorkspaceLifecycleEnabled,
+} from '@corridra/auth/customer-workspace-lifecycle';
+import {
+  CustomerAccountLifecycleService,
+  customerAccountLifecycleEnabled,
+} from '@corridra/auth/customer-account-lifecycle';
+import {
   CustomerOrganisationLinkService,
   StaffOrganisationLinkService,
   customerOrganisationLinksEnabled,
@@ -556,6 +564,32 @@ function createServices() {
       authPool,
       {
         enabled: customerMemberRolesEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
+        issuer: customerIssuerFromEnv(),
+      },
+      readCustomerSession,
+    ),
+    customerWorkspaceLifecycle: new CustomerWorkspaceLifecycleService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerWorkspaceLifecycleEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
+        issuer: customerIssuerFromEnv(),
+      },
+      readCustomerSession,
+    ),
+    customerAccountLifecycle: new CustomerAccountLifecycleService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerAccountLifecycleEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
         dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),
