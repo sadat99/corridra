@@ -1,0 +1,31 @@
+{
+  "track": "S3 Public, Intake and Organise",
+  "item": "CRUD gap G7, module 2 of 3: participant label correction as an append-only overlay",
+  "date": "2026-11-06",
+  "sensitive": true,
+  "spec": "docs/revamp/specs/crud-standard.md; docs/revamp/crud/summary.md G7; Conductor approval of 5 Nov (overlay design, order lifecycle, participant label, recipient response)",
+  "changed": [
+    "packages/db/customer-participant-label-migrations/0001_participant_label.sql: programme_registration_label_revision and programme_registration_label_command (append-only, reject_rewrite, version order guard, RLS, no runtime grants); view customer_private.programme_registration_current (label_version is 0 until a correction); customer.programme_registration_label(command,registration,expected,label); audit through domain_event/audit_event/outbox; readers of the label read the view, each behind a sha256 guard of the definition it replaces (needs the programme lifecycle installed first).",
+    "packages/db/src/customer-participant-label-migrate.ts (hash-recorded, refuses to run without the programme lifecycle, never installs it); scripts/install-customer-modules.ts and .github/workflows/install-customer-modules.yml: new field_modules_action choice participant_labels; tests/workflow-inputs.test.mjs extended.",
+    "packages/auth/src/customer-participants.ts: label action derives the scope from the registration (the caller names only the registration, the version they saw and the new label); apps/web/app/api/customer-programme-participants/route.ts: plain refusals for a stale label and no change.",
+    "apps/web/app/account/delegations/participant-label.tsx, participant-account.tsx, programme-participants.tsx, participant-client.ts: Edit My Label for the participant, Edit Label for an owner or admin; the controls appear only when the list carries a label version, so nothing shows before the owner installs the module.",
+    "Standard from the programme lifecycle review applied: Save always sends the version the form opened at; a stale answer or a newer label after any reload keeps the typed text and shows Keep Mine or Use Theirs; the draft survives the list reload (in memory only, dropped when the page is hidden or left); 429 uses the shared words; the same command is repeated after a lost answer; Check Again when the latest label could not be loaded."
+  ],
+  "preserved": [
+    "customer_private.programme_registration is never rewritten and consent (consented_at) is untouched by a label correction; the original label is the fallback when no revision exists.",
+    "A participant can correct only their own label; an owner or admin can correct any label in their workspace; command id idempotency; a stale version is refused with 409 and a plain message.",
+    "Audit event keeps old and new values. Nothing is installed in production; no switch, provider, payment, outreach or AI change. Archive rules from module 1 are unchanged (organiser edits to existing registrations stay open)."
+  ],
+  "verification": {
+    "preflight": "pending on the pushed head",
+    "integration": "tests/integration/customer-participant-labels.test.ts and customer-programme-lifecycle.test.ts 28 passed",
+    "operator": "tests/operator/v3-participant-label-ui.spec.ts 10 passed (4 new: stale keeps the typed label with Keep Mine, Use Theirs, a reload never lets Save overwrite someone else, rate limit shared words; all red on the previous editor)",
+    "workflow": "tests/workflow-inputs.test.mjs 7 passed"
+  },
+  "openRisks": [
+    "Needs the owner's install run with field_modules_action=participant_labels after the programme lifecycle is installed; until then the screen is unchanged.",
+    "The replaced readers are guarded by the hash of their definition; the install job fails closed if production differs.",
+    "Recipient response revision is module 3, a separate PR.",
+    "A label draft is cleared when the browser tab is hidden (the page's existing privacy behaviour for every draft)."
+  ]
+}

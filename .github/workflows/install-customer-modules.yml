@@ -64,7 +64,7 @@ on:
         required: false
         default: ''
       field_modules_action:
-        description: 'Optional ADR-072 specification confirmation and ADR-073 quote arrangements, or programme_lifecycle (rename, archive and restore a programme; needs the real-use modules installed first), or participant_labels (correct a participant label; needs the programme lifecycle installed first), or participant_labels (correct a participant label; needs the programme lifecycle installed first). Install does not open confirmation, principal sales, billing or payments.'
+        description: 'Optional ADR-072 specification confirmation and ADR-073 quote arrangements, or programme_lifecycle (rename, archive and restore a programme; needs the real-use modules installed first), or participant_labels (correct a participant label; needs the programme lifecycle installed first). Install does not open confirmation, principal sales, billing or payments.'
         type: choice
         options:
           [

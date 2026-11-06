@@ -2,6 +2,19 @@
 
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
+import { formEn } from '../../../lib/i18n/form-words/en';
+
+// What a person has typed into a label correction, and the version of the label they started from. A reload of the list
+// remounts the editor, so the draft lives here, in memory only, and is dropped the moment the page is hidden or left.
+type Draft = { value: string; base: { version: number; label: string }; stale: boolean };
+const drafts = new Map<string, Draft>();
+if (typeof window !== 'undefined') {
+  const dropAll = () => drafts.clear();
+  window.addEventListener('pagehide', dropAll);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') dropAll();
+  });
+}
 
 // Correct a participant's display label (CRUD gap G7, module 2). The participant corrects their own; an owner or admin may correct
 // it from the organiser list. The database owns every rule; this asks and shows the answer. Consent is never changed here.
@@ -23,8 +36,17 @@ export function ParticipantLabelEditor({
   // A reload replaces the whole list, which remounts this editor: the words after a reload are kept by the page, not here.
   onNote: (message: string) => void;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState(label);
+  const key = JSON.stringify([
+    headers['x-corridra-customer-issuer'],
+    headers['x-corridra-customer-subject'],
+    registrationId,
+  ]);
+  const [draft, setDraftState] = useState<Draft | null>(() => drafts.get(key) ?? null);
+  const setDraft = (next: Draft | null) => {
+    if (next) drafts.set(key, next);
+    else drafts.delete(key);
+    setDraftState(next);
+  };
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState('');
   const [discarding, setDiscarding] = useState(false);
@@ -32,32 +54,38 @@ export function ParticipantLabelEditor({
   const field = useRef<HTMLInputElement>(null);
   const opener = useRef<HTMLButtonElement>(null);
   const wasEditing = useRef(false);
+  const editing = draft !== null;
   useEffect(() => {
     if (editing) field.current?.focus();
     else if (wasEditing.current) opener.current?.focus();
     wasEditing.current = editing;
   }, [editing]);
-  const trimmed = value.trim();
+  const trimmed = (draft?.value ?? label).trim();
   const changed = trimmed !== label;
+  // Typed text that differs from what the person started with, not from a newer label that arrived meanwhile.
+  const dirty = draft !== null && trimmed !== draft.base.label;
   const valid =
     trimmed.length >= 2 &&
     trimmed.length <= 120 &&
     customerLabelAllowed(trimmed) &&
-    !/[\u0000-\u001f\u007f]/u.test(trimmed);
+    !/\p{Cc}/u.test(trimmed);
+  const newerShown = draft !== null && version !== draft.base.version;
+  // Saving always uses the version the person started from. A newer one, or a stale answer, shows a choice first.
+  const conflict = draft !== null && (draft.stale || newerShown);
   function close() {
-    setEditing(false);
+    setDraft(null);
     setDiscarding(false);
-    setValue(label);
     setNote('');
   }
   function cancel() {
-    if (changed && !discarding) setDiscarding(true);
+    if (dirty && !discarding) setDiscarding(true);
     else close();
   }
-  async function save(event: FormEvent) {
-    event.preventDefault();
-    if (busy || !changed || !valid) return;
-    const signature = JSON.stringify([registrationId, version, trimmed]);
+  async function save(event?: FormEvent, expectedVersion?: number) {
+    event?.preventDefault();
+    if (busy || !draft || !changed || !valid || (conflict && expectedVersion === undefined)) return;
+    const sent = expectedVersion ?? draft.base.version;
+    const signature = JSON.stringify([registrationId, sent, trimmed]);
     if (attempt.current?.signature !== signature)
       attempt.current = { signature, id: crypto.randomUUID() };
     setBusy(true);
@@ -72,7 +100,7 @@ export function ParticipantLabelEditor({
           action: 'label',
           commandId: attempt.current.id,
           registrationId,
-          expectedVersion: version,
+          expectedVersion: sent,
           displayLabel: trimmed,
         }),
       });
@@ -82,6 +110,8 @@ export function ParticipantLabelEditor({
             ? 'Your registration could not be changed.'
             : 'Only a workspace owner or admin can change a participant label.',
         );
+      } else if (response.status === 429) {
+        setNote(formEn['form.message.tooMany']);
       } else if (response.status === 503) {
         setNote('Changing labels is not available yet.');
       } else if (response.status === 409) {
@@ -90,8 +120,8 @@ export function ParticipantLabelEditor({
         );
         attempt.current = null;
         if (text.startsWith('Label changed')) {
-          setEditing(false);
-          onNote('This label was changed by someone else. The latest version is shown; try again.');
+          // Keep what was typed and show the newer label as a choice; the reload brings it in.
+          setDraft({ ...draft, stale: true });
           onChanged();
         } else {
           setNote(
@@ -107,7 +137,7 @@ export function ParticipantLabelEditor({
         if (data.registrationId !== registrationId || data.displayLabel !== trimmed)
           throw Error('Unconfirmed label change');
         attempt.current = null;
-        setEditing(false);
+        setDraft(null);
         setDiscarding(false);
         onNote('');
         onChanged();
@@ -133,35 +163,69 @@ export function ParticipantLabelEditor({
             type="button"
             className="text-link"
             disabled={busy}
-            onClick={() => {
-              setValue(label);
-              setEditing(true);
-            }}
+            onClick={() => setDraft({ value: label, base: { version, label }, stale: false })}
           >
             {mine ? 'Edit My Label' : 'Edit Label'}
           </button>
         </p>
       )}
-      {editing && (
+      {draft && (
         <form onSubmit={(event) => void save(event)} onKeyDown={keys} aria-label="Change label">
           <label className="field">
             New display label
             <input
               ref={field}
-              value={value}
+              value={draft.value}
               maxLength={120}
               disabled={busy}
-              onChange={(event) => setValue(event.target.value)}
+              onChange={(event) => setDraft({ ...draft, value: event.target.value })}
             />
           </label>
           <p>
-            <button className="primary-link" disabled={busy || !changed || !valid}>
+            <button className="primary-link" disabled={busy || !changed || !valid || conflict}>
               Save Label
             </button>{' '}
             <button type="button" className="text-link" disabled={busy} onClick={cancel}>
               Cancel
             </button>
           </p>
+          {conflict && (
+            <div role="alert">
+              {newerShown ? (
+                <>
+                  <p>This label was changed by someone else. It now reads:</p>
+                  <p>
+                    <strong>{label}</strong>
+                  </p>
+                  <p>
+                    Your text is still in the form.{' '}
+                    <button
+                      type="button"
+                      className="text-link"
+                      disabled={busy || !dirty || !valid}
+                      onClick={() => {
+                        const latest = version;
+                        setDraft({ ...draft, base: { version: latest, label }, stale: false });
+                        void save(undefined, latest);
+                      }}
+                    >
+                      Keep Mine
+                    </button>{' '}
+                    <button type="button" className="text-link" onClick={close}>
+                      Use Theirs
+                    </button>
+                  </p>
+                </>
+              ) : (
+                <p>
+                  This label was changed by someone else. Checking the latest version…{' '}
+                  <button type="button" className="text-link" onClick={() => onChanged()}>
+                    Check Again
+                  </button>
+                </p>
+              )}
+            </div>
+          )}
           {discarding && (
             <p role="alert">
               Discard your change?{' '}

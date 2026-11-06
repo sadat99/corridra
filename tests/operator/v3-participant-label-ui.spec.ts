@@ -278,3 +278,130 @@ test('Escape discards at once when nothing changed and asks first when something
     page.getByText('Synthetic participant label · Registered, self-declared'),
   ).toBeVisible();
 });
+
+test('a stale save keeps the typed label, shows the newer one and lets the person choose', async ({
+  page,
+}) => {
+  const state: State = { label: 'Synthetic participant label', version: 0 };
+  let first = true;
+  const posted = await serve(page, state, () => {
+    if (!first) return undefined;
+    first = false;
+    state.label = 'Synthetic label set by the organiser';
+    state.version = 3;
+    return 'stale';
+  });
+  await page.goto(origin);
+  await page.getByRole('button', { name: 'Edit My Label', exact: true }).click();
+  await form(page).getByLabel('New display label').fill('Synthetic participant Bob Rahman');
+  await page.getByRole('button', { name: 'Save Label', exact: true }).click();
+  await expect(
+    page.getByText('This label was changed by someone else. It now reads:'),
+  ).toBeVisible();
+  await expect(
+    page.getByText('Synthetic label set by the organiser', { exact: true }),
+  ).toBeVisible();
+  await expect(form(page).getByLabel('New display label')).toHaveValue(
+    'Synthetic participant Bob Rahman',
+  );
+  await expect(page.getByRole('button', { name: 'Save Label', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: 'Keep Mine', exact: true }).click();
+  await expect(
+    page.getByText('Synthetic participant Bob Rahman · Registered, self-declared'),
+  ).toBeVisible();
+  expect(posted).toHaveLength(2);
+  expect(posted[1]).toMatchObject({
+    expectedVersion: 3,
+    displayLabel: 'Synthetic participant Bob Rahman',
+  });
+  expect(posted[1]!.commandId).not.toBe(posted[0]!.commandId);
+});
+
+test('Use Theirs drops the typed label and shows the newer one', async ({ page }) => {
+  const state: State = { label: 'Synthetic participant label', version: 0 };
+  await serve(page, state, () => {
+    state.label = 'Synthetic label set by the organiser';
+    state.version = 3;
+    return 'stale';
+  });
+  await page.goto(origin);
+  await page.getByRole('button', { name: 'Edit My Label', exact: true }).click();
+  await form(page).getByLabel('New display label').fill('Synthetic participant Bob Rahman');
+  await page.getByRole('button', { name: 'Save Label', exact: true }).click();
+  await page.getByRole('button', { name: 'Use Theirs', exact: true }).click();
+  await expect(form(page)).toHaveCount(0);
+  await expect(
+    page.getByText('Synthetic label set by the organiser · Registered, self-declared'),
+  ).toBeVisible();
+});
+
+test('a reload while the editor is open never lets Save overwrite someone else: the choice comes first', async ({
+  page,
+}) => {
+  const state: State = { label: 'Synthetic participant label', version: 0 };
+  const posted = await serve(page, state);
+  await page.goto(origin);
+  await page.getByRole('button', { name: 'Edit My Label', exact: true }).click();
+  await form(page).getByLabel('New display label').fill('Synthetic participant Bob Rahman');
+  // Someone else changes it (version 2), then the page reloads its list.
+  state.label = 'Synthetic label set by the organiser';
+  state.version = 2;
+  await page.evaluate(() => window.dispatchEvent(new Event('pageshow')));
+  await expect(
+    page.getByText('This label was changed by someone else. It now reads:'),
+  ).toBeVisible();
+  await expect(form(page).getByLabel('New display label')).toHaveValue(
+    'Synthetic participant Bob Rahman',
+  );
+  await expect(page.getByRole('button', { name: 'Save Label', exact: true })).toBeDisabled();
+  expect(posted).toHaveLength(0);
+  await page.getByRole('button', { name: 'Keep Mine', exact: true }).click();
+  await expect(
+    page.getByText('Synthetic participant Bob Rahman · Registered, self-declared'),
+  ).toBeVisible();
+  expect(posted[0]).toMatchObject({ expectedVersion: 2 });
+});
+
+test('a rate limit uses the shared wording and the retry sends the same command', async ({
+  page,
+}) => {
+  const state: State = { label: 'Synthetic participant label', version: 0 };
+  let attempts = 0;
+  const posted = await serve(page, state, () => (++attempts === 1 ? 'limited' : undefined));
+  await page.unroute('**/api/customer-programme-participants*');
+  const original = posted;
+  await page.route('**/api/customer-programme-participants*', async (route) => {
+    const request = route.request();
+    if (request.method() === 'GET')
+      return route.fulfill({
+        json: { registrations: [ownRow(state)], nextAfter: null, synthetic: true },
+      });
+    const body = request.postDataJSON();
+    original.push(body);
+    if (original.length === 1)
+      return route.fulfill({ status: 429, json: { error: 'Too many requests' } });
+    state.label = String(body.displayLabel);
+    state.version = Number(body.expectedVersion) + 1;
+    return route.fulfill({
+      json: {
+        registrationId,
+        programmeId,
+        displayLabel: state.label,
+        labelVersion: state.version,
+        changedBy: 'participant',
+        synthetic: true,
+      },
+    });
+  });
+  await page.goto(origin);
+  await page.getByRole('button', { name: 'Edit My Label', exact: true }).click();
+  await form(page).getByLabel('New display label').fill('Synthetic participant Bob Rahman');
+  await page.getByRole('button', { name: 'Save Label', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Too many requests. Try again in an hour.');
+  await page.getByRole('button', { name: 'Save Label', exact: true }).click();
+  await expect(
+    page.getByText('Synthetic participant Bob Rahman · Registered, self-declared'),
+  ).toBeVisible();
+  expect(original).toHaveLength(2);
+  expect(original[1]).toEqual(original[0]);
+});
