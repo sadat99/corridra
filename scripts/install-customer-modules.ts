@@ -37,7 +37,10 @@ import { migrateNetworkRealUse } from '../packages/db/src/network-real-use-migra
 import { configureNetworkRealUse } from '../packages/auth/src/network-real-use-configuration';
 import { migrateCustomerMissionMail } from '../packages/db/src/customer-mission-mail-migrate';
 import { migrateCustomerRequestWithdrawal } from '../packages/db/src/customer-request-withdrawal-migrate';
-import { migrateCustomerWorkspaceLifecycle } from '../packages/db/src/customer-workspace-lifecycle-migrate';
+import {
+  migrateCustomerWorkspaceLifecycle,
+  refreshCustomerWorkspaceLifecycle,
+} from '../packages/db/src/customer-workspace-lifecycle-migrate';
 import { migrateCustomerAccountLifecycle } from '../packages/db/src/customer-account-lifecycle-migrate';
 import { configureWorkspaceLifecycle } from '../packages/auth/src/customer-workspace-lifecycle-configuration';
 import { configureAccountLifecycle } from '../packages/auth/src/customer-account-lifecycle-configuration';
@@ -381,6 +384,9 @@ try {
       console.log(
         'installed or already current: programme lifecycle (needs real-use installed first)',
       );
+      // The programme guard just installed gets its workspace archive gate when that module is already here.
+      if (await refreshCustomerWorkspaceLifecycle(pool))
+        console.log('workspace lifecycle re-run so the programme archive gate is current');
     }
     if (v.PARTICIPANT_LABELS_ACTION === 'install') {
       await migrateCustomerParticipantLabels(pool);

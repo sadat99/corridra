@@ -87,6 +87,8 @@ BEGIN
   IF NOT FOUND THEN RAISE EXCEPTION 'Transfer offer unavailable' USING ERRCODE='42501'; END IF;
   target:=offer.tenant_id;
  END IF;
+ -- The person who accepts takes the account lifecycle lock first, so a close of that account and this acceptance run in turn.
+ IF operation='accept' THEN PERFORM customer_private.lock_person_lifecycle(customer.actor_id()); END IF;
  actor:=customer_private.lock_workspace_access(command,target);
  SELECT * INTO previous FROM customer_private.workspace_lifecycle_request q WHERE q.actor_id=actor AND q.command_id=command;
  IF FOUND THEN
@@ -121,6 +123,7 @@ BEGIN
    OR EXISTS(SELECT FROM customer.membership m WHERE m.tenant_id=target AND m.principal_id=member.principal_id) THEN
    RAISE EXCEPTION 'Membership unavailable' USING ERRCODE='42501';
   END IF;
+  IF customer_private.closed_person(member.principal_id) THEN RAISE EXCEPTION 'That account is closed' USING ERRCODE='23514'; END IF;
   IF EXISTS(SELECT FROM customer_private.workspace_transfer_offer o WHERE o.tenant_id=target AND o.expires_at>clock_timestamp()
    AND NOT EXISTS(SELECT FROM customer_private.workspace_transfer_outcome x WHERE x.offer_id=o.id)) THEN
    RAISE EXCEPTION 'An ownership offer is already open. Cancel it first' USING ERRCODE='23514';
@@ -145,6 +148,7 @@ BEGIN
  ELSE
   IF offer.to_principal_id<>actor OR NOT open_offer THEN RAISE EXCEPTION 'Transfer offer unavailable' USING ERRCODE='42501'; END IF;
   IF NOT customer_private.workspace_lifecycle_open() THEN RAISE EXCEPTION 'Workspace changes are not available yet' USING ERRCODE='0A000'; END IF;
+  IF customer_private.closed_person(actor) THEN RAISE EXCEPTION 'That account is closed' USING ERRCODE='23514'; END IF;
   -- Still true inside the lock: the named person is an active member and the person who offered is still the owner.
   IF NOT EXISTS(SELECT FROM customer_private.workspace_member m WHERE m.id=offer.to_member_id AND m.tenant_id=target AND m.principal_id=actor
     AND NOT EXISTS(SELECT FROM customer_private.workspace_access_revocation r WHERE r.member_id=m.id))

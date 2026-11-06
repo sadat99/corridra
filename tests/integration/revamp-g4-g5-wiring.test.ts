@@ -42,6 +42,16 @@ describe('the install script', () => {
   });
 });
 
+describe('the programme lifecycle install', () => {
+  test('re-runs the workspace lifecycle only through the refresh, which never installs it, and only inside its own action', () => {
+    const at = script.indexOf('refreshCustomerWorkspaceLifecycle(pool)');
+    expect(at).toBeGreaterThan(-1);
+    expect(script.split('refreshCustomerWorkspaceLifecycle(pool)').length - 1).toBe(1);
+    expect(script.slice(at - 600, at)).toContain("v.PROGRAMME_LIFECYCLE_ACTION === 'install'");
+    expect(script.slice(at - 600, at)).toContain('migrateCustomerProgrammeLifecycle(pool)');
+  });
+});
+
 describe('no workflow carries the two actions', () => {
   const directory = resolve('.github/workflows');
   for (const name of readdirSync(directory).filter((n) => /\.ya?ml$/.test(n)))

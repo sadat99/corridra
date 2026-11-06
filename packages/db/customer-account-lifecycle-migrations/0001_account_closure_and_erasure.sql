@@ -12,6 +12,11 @@ DO $guard$ BEGIN
  IF to_regprocedure('customer.actor_id()') IS NULL
  OR to_regprocedure('app.actor_id()') IS NULL
  OR to_regprocedure('app.fresh_mfa()') IS NULL
+ OR to_regprocedure('app.can_access(uuid,text,text)') IS NULL
+ OR to_regprocedure('app.member_role(uuid)') IS NULL
+ OR to_regprocedure('app.real_use_allowed(uuid)') IS NULL
+ OR to_regprocedure('app.tenant_processing_purpose(uuid)') IS NULL
+ OR to_regprocedure('customer_private.closed_person(uuid)') IS NULL
  OR to_regprocedure('app.reject_rewrite()') IS NULL
  OR to_regprocedure('customer_private.workspace_archived(uuid)') IS NULL
  OR to_regclass('customer_private.workspace_lifecycle_control') IS NULL
@@ -54,7 +59,7 @@ CREATE TABLE customer_private.account_closure_event (
  occurred_at timestamptz NOT NULL,
  final_at timestamptz,
  command_id uuid NOT NULL UNIQUE,
- CHECK((state='closed' AND final_at=occurred_at+interval '30 days') OR (state='restored' AND final_at IS NULL))
+ CHECK((state='closed' AND final_at=occurred_at+interval '720 hours') OR (state='restored' AND final_at IS NULL))
 );
 CREATE INDEX account_closure_event_latest ON customer_private.account_closure_event(principal_id,seq DESC);
 
@@ -74,7 +79,7 @@ CREATE TABLE customer_private.erasure_request (
  filed_at timestamptz NOT NULL DEFAULT clock_timestamp(),
  due_at timestamptz NOT NULL,
  command_id uuid NOT NULL UNIQUE,
- CHECK(due_at=filed_at+interval '30 days')
+ CHECK(due_at=filed_at+interval '720 hours')
 );
 CREATE INDEX erasure_request_principal ON customer_private.erasure_request(principal_id,number DESC);
 
@@ -170,15 +175,27 @@ BEGIN
  INSERT INTO app.outbox_delivery(event_id,tenant_id) VALUES(eid,tenant);
 END $$;
 
--- Staff who may read and move the erasure queue: a signed-in staff owner or admin with a fresh authenticator check.
+-- Staff who may read and move the erasure queue. The same protected staff authority as customer billing, delivery and
+-- paid-service requests: an owner or admin of the staff workspace named in the session (a sample workspace, or a real one
+-- while real use is open), with a fresh authenticator check and a live session, read from the staff session and never
+-- from the caller. Membership of some other workspace does not count. The rows it reads are locked for the transaction.
 CREATE FUNCTION customer_private.staff_privacy_actor() RETURNS uuid
- LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
-DECLARE staff uuid:=app.actor_id();
+ LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE staff uuid:=app.actor_id(); t uuid:=NULLIF(current_setting('corridra.tenant_id',true),'')::uuid;
 BEGIN
- IF staff IS NULL OR NOT app.fresh_mfa() OR NOT EXISTS(SELECT FROM app.membership m WHERE m.user_id=staff
-  AND m.role IN ('owner','admin') AND m.revoked_at IS NULL) THEN
+ IF staff IS NULL OR t IS NULL OR NOT coalesce(app.can_access(t,'INTERNAL',app.tenant_processing_purpose(t)),false)
+  OR coalesce(app.member_role(t),'') NOT IN ('owner','admin') OR NOT app.fresh_mfa()
+  OR NOT EXISTS(SELECT FROM app.tenant WHERE id=t AND (synthetic OR app.real_use_allowed(id))) THEN
   RAISE EXCEPTION 'Privacy queue access denied' USING ERRCODE='42501';
  END IF;
+ PERFORM 1 FROM identity.session s JOIN identity.assurance a ON a.session_id=s.id JOIN identity.principal p ON p.identity_id=s."userId"
+ JOIN identity."user" u ON u.id=p.identity_id JOIN app.membership m ON m.user_id=p.id AND m.tenant_id=t
+ WHERE p.id=staff AND p.disabled_at IS NULL AND u."twoFactorEnabled" AND m.revoked_at IS NULL AND m.role IN ('owner','admin')
+ AND p.operating_country=ANY(m.allowed_countries) AND current_setting('corridra.purpose',true)=ANY(m.allowed_purposes)
+ AND encode(sha256(convert_to(s.token,'UTF8')),'hex')=current_setting('corridra.session_hash',true)
+ AND s."expiresAt">clock_timestamp() AND s."createdAt">clock_timestamp()-interval '24 hours' AND a.verified_at>clock_timestamp()-interval '5 minutes'
+ FOR SHARE OF s,a,p,u,m;
+ IF NOT FOUND THEN RAISE EXCEPTION 'Privacy queue access denied' USING ERRCODE='42501'; END IF;
  RETURN staff;
 END $$;
 
@@ -221,7 +238,7 @@ $$;
 -- paused. A person with no workspace cannot close or file, and is told whom to write to.
 CREATE FUNCTION customer.account_lifecycle_command(command uuid,operation text,input jsonb) RETURNS jsonb
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
-DECLARE actor uuid;tenant uuid;previous customer_private.account_lifecycle_request%ROWTYPE;cur record;result jsonb;
+DECLARE actor uuid;tenant uuid;previous customer_private.account_lifecycle_request%ROWTYPE;cur record;result jsonb;owned uuid;
  stamp timestamptz;filed customer_private.erasure_request%ROWTYPE;open_state text;eref text;
 BEGIN
  IF customer.actor_id() IS NULL THEN RAISE EXCEPTION 'Customer access denied' USING ERRCODE='42501'; END IF;
@@ -250,14 +267,20 @@ BEGIN
    result:=jsonb_build_object('operation','close','changed',false,'status',cur.status,'closedAt',cur.closed_at,'undoUntil',cur.final_at);
   ELSE
    tenant:=customer_private.account_chain_tenant(actor);
+   -- Every workspace the person owns, archived or not, is locked in id order (the lock an archive, a restore and an
+   -- ownership handover take) before the blockers are read, so a restore or a handover in flight is either seen here or
+   -- waits for this close and is then refused. The lock order is the principal, the command, this account, the workspaces.
+   FOR owned IN SELECT m.tenant_id FROM customer.membership m WHERE m.principal_id=actor AND m.role='owner' ORDER BY m.tenant_id LOOP
+    PERFORM pg_advisory_xact_lock(hashtextextended('customer.access.workspace:'||owned::text,0));
+   END LOOP;
    IF customer_private.account_blockers(actor)<>'[]'::jsonb THEN
     RAISE EXCEPTION 'Transfer ownership or archive the workspace first' USING ERRCODE='23514';
    END IF;
    stamp:=clock_timestamp();
    INSERT INTO customer_private.account_closure_event(principal_id,state,occurred_at,final_at,command_id)
-   VALUES(actor,'closed',stamp,stamp+interval '30 days',command);
+   VALUES(actor,'closed',stamp,stamp+interval '720 hours',command);
    PERFORM customer_private.account_lifecycle_event(tenant,actor,actor,'customer',command,'customer.account.closed','{}'::jsonb);
-   result:=jsonb_build_object('operation','close','changed',true,'status','closed','closedAt',stamp,'undoUntil',stamp+interval '30 days');
+   result:=jsonb_build_object('operation','close','changed',true,'status','closed','closedAt',stamp,'undoUntil',stamp+interval '720 hours');
   END IF;
  ELSIF operation='undo' THEN
   IF cur.status='final' THEN
@@ -279,7 +302,7 @@ BEGIN
   ELSE
    tenant:=customer_private.account_chain_tenant(actor);
    stamp:=clock_timestamp();
-   INSERT INTO customer_private.erasure_request(principal_id,filed_at,due_at,command_id) VALUES(actor,stamp,stamp+interval '30 days',command) RETURNING * INTO filed;
+   INSERT INTO customer_private.erasure_request(principal_id,filed_at,due_at,command_id) VALUES(actor,stamp,stamp+interval '720 hours',command) RETURNING * INTO filed;
    INSERT INTO customer_private.erasure_status_event(request_id,state) VALUES(filed.id,'received');
    PERFORM customer_private.account_lifecycle_event(tenant,actor,actor,'customer',command,'customer.account.erasure_requested',jsonb_build_object('request_id',filed.id));
    result:=jsonb_build_object('operation','file_erasure','changed',true,'reference',filed.reference,'filedAt',filed.filed_at,'dueAt',filed.due_at);
@@ -292,7 +315,7 @@ END $$;
 -- Staff only. The queue of erasure requests, oldest first, paged by number. accountStatus is active, closed or final for
 -- the person who filed, with closedAt and undoUntil, so staff can say that an account is closed and can still be undone.
 CREATE FUNCTION customer.erasure_queue(after_number bigint DEFAULT NULL,page_size integer DEFAULT 25,state_filter text DEFAULT NULL) RETURNS jsonb
- LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
+ LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
 BEGIN
  PERFORM customer_private.staff_privacy_actor();
  IF page_size IS NULL OR page_size NOT BETWEEN 1 AND 100 OR (state_filter IS NOT NULL AND state_filter NOT IN ('received','in_progress','completed','declined')) THEN

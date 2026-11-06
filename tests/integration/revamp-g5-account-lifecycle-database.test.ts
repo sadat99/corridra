@@ -103,8 +103,32 @@ beforeAll(async () => {
   f = await fixture();
   await migrateCustomerRealUse(f.owner);
   h = harness(f, 'g5db');
-  ids = await h.admit(['alice', 'bob', 'carol', 'dave', 'erin', 'frank', 'gina', 'nina', 'owen']);
-  for (const person of ['alice', 'carol', 'dave', 'erin', 'frank', 'gina', 'owen'])
+  ids = await h.admit([
+    'alice',
+    'bob',
+    'carol',
+    'dave',
+    'erin',
+    'frank',
+    'gina',
+    'nina',
+    'owen',
+    'hana',
+    'ivan',
+    'jude',
+  ]);
+  for (const person of [
+    'alice',
+    'carol',
+    'dave',
+    'erin',
+    'frank',
+    'gina',
+    'owen',
+    'hana',
+    'ivan',
+    'jude',
+  ])
     await h.provision(person, `Synthetic ${person} workspace`);
   await migrateCustomerAccountLifecycle(f.owner);
 });
@@ -349,6 +373,81 @@ describe('closing and undoing', () => {
   });
 });
 
+describe('the undo window edge and the length of 30 days', () => {
+  // A closure whose day 30 ends this many seconds from now (negative: already ended).
+  const closureEndingIn = (person: string, seconds: number) =>
+    f.owner.query(
+      `INSERT INTO customer_private.account_closure_event(principal_id,state,occurred_at,final_at,command_id)
+       SELECT $1,'closed',t.at-interval '720 hours',t.at,$3 FROM (SELECT clock_timestamp()+make_interval(secs=>$2) AS at) t`,
+      [ids[person], seconds, randomUUID()],
+    );
+
+  test('undo works just before final_at and is refused from final_at on', async () => {
+    await archiveOwn('hana');
+    await closureEndingIn('hana', 4);
+    expect(await stateOf('hana')).toMatchObject({ status: 'closed', canUndo: true });
+    expect(await account('hana', 'undo')).toMatchObject({ status: 'active' });
+    await archiveOwn('ivan');
+    await closureEndingIn('ivan', 0.4);
+    await new Promise((done) => setTimeout(done, 700));
+    expect(await stateOf('ivan')).toMatchObject({ status: 'final', canUndo: false });
+    await expect(account('ivan', 'undo')).rejects.toMatchObject({
+      code: '23514',
+      message: message.withTeam,
+    });
+  });
+
+  // Day arithmetic on a timestamptz follows the session time zone, so across a clock change "30 days" is not 720 hours.
+  // The stored dates must not depend on the session that wrote them.
+  const inNewYork = async (statement: string, params: unknown[]) => {
+    const db = await f.owner.connect();
+    try {
+      await db.query('BEGIN');
+      await db.query("SET LOCAL TimeZone='America/New_York'");
+      await db.query(statement, params);
+    } finally {
+      await db.query('ROLLBACK');
+      db.release();
+    }
+  };
+  test('a closure and an erasure request are exactly 720 hours long across a clock change', async () => {
+    await inNewYork(
+      `INSERT INTO customer_private.account_closure_event(principal_id,state,occurred_at,final_at,command_id)
+       VALUES($1,'closed','2026-03-01T12:00:00Z','2026-03-31T12:00:00Z',$2)`,
+      [ids.bob, randomUUID()],
+    );
+    await inNewYork(
+      `INSERT INTO customer_private.erasure_request(principal_id,filed_at,due_at,command_id)
+       VALUES($1,'2026-03-01T12:00:00Z','2026-03-31T12:00:00Z',$2)`,
+      [ids.bob, randomUUID()],
+    );
+  });
+
+  test('the dates the commands store are 720 hours apart whatever the session time zone', async () => {
+    await archiveOwn('jude');
+    const closed = await h.as('jude', async (db) => {
+      await db.query("SET LOCAL TimeZone='America/New_York'");
+      return (
+        await db.query<{ r: { closedAt: string; undoUntil: string } }>(
+          'SELECT customer.account_lifecycle_command($1,$2,$3) AS r',
+          [randomUUID(), 'close', JSON.stringify({ confirmation: phrase })],
+        )
+      ).rows[0]!.r;
+    });
+    expect(Date.parse(closed.undoUntil) - Date.parse(closed.closedAt)).toBe(720 * 3600000);
+    expect(
+      (
+        await f.owner.query(
+          `SELECT (final_at-occurred_at)=interval '720 hours' AS exact FROM customer_private.account_closure_event
+           WHERE principal_id=$1 ORDER BY seq DESC LIMIT 1`,
+          [ids.jude],
+        )
+      ).rows[0].exact,
+    ).toBe(true);
+    expect(await account('jude', 'undo')).toMatchObject({ status: 'active' });
+  });
+});
+
 describe('erasure requests', () => {
   test('is filed without closing, with a reference, a due date 30 days on, and one open request at a time', async () => {
     const before = await chainCounts();
@@ -472,6 +571,53 @@ describe('the staff queue', () => {
       code: '42501',
     });
     expect(await chainCounts()).toEqual(before);
+  });
+
+  test('is bound to the staff workspace in the session: an owner of another workspace, or of none, is denied', async () => {
+    // The owner of South, named in the session as a member of North, which the owner of South is not.
+    const crossed = { ...f.users.other!.ctx, tenantId: f.tenantA };
+    await expect(
+      rawContext(f.runtime, crossed, 'SELECT customer.erasure_queue(NULL,25,NULL) AS r'),
+    ).rejects.toMatchObject({ code: '42501' });
+    const request = (await queue('owner'))[0]!.id as string;
+    const before = await chainCounts();
+    await expect(
+      rawContext(f.runtime, crossed, 'SELECT customer.erasure_transition($1,$2,$3,$4,$5)', [
+        randomUUID(),
+        request,
+        'received',
+        'in_progress',
+        null,
+      ]),
+    ).rejects.toMatchObject({ code: '42501' });
+    expect(await chainCounts()).toEqual(before);
+    // A staff owner of a workspace that is not a sample workspace is denied while real use is not open for it.
+    await f.owner.query('ALTER TABLE app.tenant DISABLE TRIGGER USER');
+    await f.owner.query('UPDATE app.tenant SET synthetic=false WHERE id=$1', [f.tenantB]);
+    try {
+      await expect(queue('other')).rejects.toMatchObject({ code: '42501' });
+    } finally {
+      await f.owner.query('UPDATE app.tenant SET synthetic=true WHERE id=$1', [f.tenantB]);
+      await f.owner.query('ALTER TABLE app.tenant ENABLE TRIGGER USER');
+    }
+  });
+
+  test('a staff owner of the workspace named in a fresh session is allowed, and a stale check is denied', async () => {
+    expect(Array.isArray(await queue('other'))).toBe(true);
+    await f.owner.query(
+      "UPDATE identity.assurance SET verified_at=now()-interval '1 hour' WHERE session_id=$1",
+      [f.users.owner!.sessionId],
+    );
+    try {
+      await expect(queue('owner')).rejects.toMatchObject({ code: '42501' });
+      await expect(transition(randomUUID(), 'received', 'in_progress', null)).rejects.toMatchObject(
+        { code: '42501' },
+      );
+    } finally {
+      await f.owner.query('UPDATE identity.assurance SET verified_at=now() WHERE session_id=$1', [
+        f.users.owner!.sessionId,
+      ]);
+    }
   });
 
   test('moves only along the allowed arrows, completion needs a note, a stale state is refused', async () => {

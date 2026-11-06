@@ -6,7 +6,10 @@ import { fixture } from './support';
 import { harness, options, type Fixture } from './revamp-g4-support';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateCustomerProgrammeLifecycle } from '../../packages/db/src/customer-programme-lifecycle-migrate';
-import { migrateCustomerWorkspaceLifecycle } from '../../packages/db/src/customer-workspace-lifecycle-migrate';
+import {
+  migrateCustomerWorkspaceLifecycle,
+  refreshCustomerWorkspaceLifecycle,
+} from '../../packages/db/src/customer-workspace-lifecycle-migrate';
 import { admitSyntheticCustomerRequests } from '../../packages/auth/src/customer-request-admission';
 import { configureSyntheticIntake } from '../../packages/missions/src/bootstrap';
 import { MissionService } from '../../packages/missions/src/index';
@@ -683,6 +686,96 @@ describe('an optional module that is not installed', () => {
           (await g.owner.query('SELECT pg_get_functiondef($1::regprocedure) AS d', [signature]))
             .rows[0].d,
         ).toContain('workspace_open_guard(target');
+    } finally {
+      await g.close();
+    }
+  });
+});
+
+describe('the programme lifecycle installed after the workspace lifecycle', () => {
+  const gated = (definition: string) => definition.includes('workspace_archived(target)');
+  const programmeGuard = async (pool: Fixture) => (await definitions(pool)).programme;
+  const names = async (pool: Fixture) =>
+    (
+      await pool.owner.query(
+        'SELECT name,sha256 FROM customer_workspace_lifecycle_migrations.applied ORDER BY name',
+      )
+    ).rows as { name: string; sha256: string }[];
+
+  test('is gated by the next run, to exactly the text of a database built in production order, and a later run changes nothing', async () => {
+    const g = await fixture('corridra_upgrade_third');
+    try {
+      await migrateCustomerRealUse(g.owner);
+      await migrateCustomerWorkspaceLifecycle(g.owner);
+      expect(
+        (
+          await g.owner.query(
+            "SELECT to_regprocedure('customer_private.programme_archived_guard(uuid,uuid,boolean,boolean)') IS NULL AS absent",
+          )
+        ).rows[0].absent,
+      ).toBe(true);
+      await migrateCustomerProgrammeLifecycle(g.owner);
+      const ungated = await programmeGuard(g);
+      expect(gated(ungated)).toBe(false);
+      expect(sha(ungated)).toBe(recordedHashes()[2]);
+      await expect(refreshCustomerWorkspaceLifecycle(g.owner)).resolves.toBe(true);
+      const now = await programmeGuard(g);
+      expect(gated(now)).toBe(true);
+      expect(now).toBe((await definitions(f)).programme);
+      const recorded = await names(g);
+      await migrateCustomerWorkspaceLifecycle(g.owner);
+      expect(await programmeGuard(g)).toBe(now);
+      expect(await names(g)).toEqual(recorded);
+      // Nothing else of the module moved: the other two functions keep the text they were given the first time.
+      expect(sha((await definitions(g)).request)).toBe(sha((await definitions(f)).request));
+    } finally {
+      await g.close();
+    }
+  });
+
+  test('still refuses a changed applied file, and a guard that is neither the reviewed text nor gated', async () => {
+    const g = await fixture('corridra_upgrade_third');
+    try {
+      await migrateCustomerRealUse(g.owner);
+      await migrateCustomerWorkspaceLifecycle(g.owner);
+      await migrateCustomerProgrammeLifecycle(g.owner);
+      const original = await programmeGuard(g);
+      await g.owner.query(original.replace(/BEGIN\n/, 'BEGIN\n -- changed by someone else\n'));
+      await expect(migrateCustomerWorkspaceLifecycle(g.owner)).rejects.toThrow(
+        'Workspace lifecycle prerequisite differs: customer_private.programme_archived_guard',
+      );
+      expect(gated(await programmeGuard(g))).toBe(false);
+      await g.owner.query(original);
+      const [last] = (await names(g)).slice(-1);
+      await g.owner.query(
+        'UPDATE customer_workspace_lifecycle_migrations.applied SET sha256=$2 WHERE name=$1',
+        [last!.name, 'f'.repeat(64)],
+      );
+      await expect(migrateCustomerWorkspaceLifecycle(g.owner)).rejects.toThrow(
+        'Workspace lifecycle migration history mismatch',
+      );
+      expect(gated(await programmeGuard(g))).toBe(false);
+    } finally {
+      await g.close();
+    }
+  });
+});
+
+describe('refreshing the workspace lifecycle after the programme lifecycle install', () => {
+  test('never installs the module: without its registry it does nothing and answers false', async () => {
+    const g = await fixture('corridra_upgrade_third');
+    try {
+      await migrateCustomerRealUse(g.owner);
+      await migrateCustomerProgrammeLifecycle(g.owner);
+      await expect(refreshCustomerWorkspaceLifecycle(g.owner)).resolves.toBe(false);
+      expect(await installedGuard(g)).toBe(false);
+      expect(
+        (
+          await g.owner.query(
+            "SELECT to_regclass('customer_workspace_lifecycle_migrations.applied') IS NOT NULL AS present",
+          )
+        ).rows[0].present,
+      ).toBe(false);
     } finally {
       await g.close();
     }

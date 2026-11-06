@@ -149,8 +149,27 @@ BEGIN
   RAISE EXCEPTION '%',customer_private.workspace_archived_message(organiser) USING ERRCODE='55000';
  END IF;
 END $$;
+-- Whether a person has closed their account (the undo window or day 30 has passed). The account lifecycle module owns that
+-- fact; when it is not installed nobody has closed an account, so this answers false. The statement is fixed text.
+CREATE FUNCTION customer_private.closed_person(person uuid) RETURNS boolean
+ LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE closed boolean;
+BEGIN
+ IF to_regclass('customer_private.account_closure_event') IS NULL THEN RETURN false; END IF;
+ EXECUTE 'SELECT coalesce((SELECT e.state=''closed'' FROM customer_private.account_closure_event e WHERE e.principal_id=$1 ORDER BY e.seq DESC LIMIT 1),false)'
+  INTO closed USING person;
+ RETURN closed;
+END $$;
+-- The lock a person's account closing, undoing and erasure filing take. Taking it first in a command that can give the
+-- person a workspace to own (accepting ownership) lets it and a close see each other in turn. It is taken before the
+-- workspace lock, which is the order the account close follows too.
+CREATE FUNCTION customer_private.lock_person_lifecycle(person uuid) RETURNS void
+ LANGUAGE sql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
+ SELECT pg_advisory_xact_lock(hashtextextended('customer.account.lifecycle:'||person::text,0))
+$$;
 REVOKE ALL ON FUNCTION customer_private.workspace_lifecycle_open(),customer_private.workspace_command_uuid(jsonb),customer_private.workspace_archived(uuid),
- customer_private.workspace_current(uuid),customer_private.workspace_archived_message(boolean),customer_private.workspace_open_guard(uuid,boolean)
+ customer_private.workspace_current(uuid),customer_private.workspace_archived_message(boolean),customer_private.workspace_open_guard(uuid,boolean),
+ customer_private.closed_person(uuid),customer_private.lock_person_lifecycle(uuid)
  FROM PUBLIC,corridra_runtime,corridra_auth;
 
 -- Signed-in. With no workspace: the workspaces the person can reach, each with its version and whether it is archived.
@@ -243,6 +262,8 @@ BEGIN
   kind:='customer.workspace.archived';
  ELSE
   IF NOT cur.archived THEN RAISE EXCEPTION 'This workspace is not archived' USING ERRCODE='23514'; END IF;
+  -- A closed account cannot bring a workspace back to life: the close and this restore meet on the workspace lock.
+  IF customer_private.closed_person(actor) THEN RAISE EXCEPTION 'That account is closed' USING ERRCODE='23514'; END IF;
   INSERT INTO customer_private.workspace_revision(tenant_id,version,kind,name,previous_name,archived,changed_by,command_id)
   VALUES(target,next_version,'restore',cur.name,cur.name,false,actor,command);
   kind:='customer.workspace.restored';
