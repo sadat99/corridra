@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { notificationSettingsAvailable } from '../../apps/web/lib/ux/notification-settings';
 import { customerAvatarItems } from '../../apps/web/lib/ux/customer-navigation';
@@ -40,5 +41,22 @@ describe('Notification Settings follows whether its page exists', () => {
     vi.stubEnv('CORRIDRA_PULSE_ENABLED', 'true');
     vi.stubEnv('DATA_ENVIRONMENT', 'synthetic');
     expect(notificationSettingsAvailable()).toBe(true);
+  });
+
+  it("repeats the page's own test, which stays in the page", () => {
+    const page = readFileSync(
+      new URL('../../apps/web/app/account/notifications/page.tsx', import.meta.url),
+      'utf8',
+    );
+    const helper = readFileSync(
+      new URL('../../apps/web/lib/ux/notification-settings.ts', import.meta.url),
+      'utf8',
+    );
+    // The page is dark when Pulse is off, and then needs the withdrawal path (the customer area) to exist at all.
+    expect(page).toContain('const dark = !customerNotificationsEnabled();');
+    expect(page).toContain('if (dark && !customerNotificationWithdrawalEnabled()) notFound();');
+    expect(helper).toContain(
+      'customerNotificationsEnabled() || customerNotificationWithdrawalEnabled()',
+    );
   });
 });

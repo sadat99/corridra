@@ -1,8 +1,11 @@
 import { notFound } from 'next/navigation';
-import { customerNotificationsEnabled, type MailMute } from '@corridra/auth/customer-notifications';
+import {
+  customerNotificationsEnabled,
+  customerNotificationWithdrawalEnabled,
+  type MailMute,
+} from '@corridra/auth/customer-notifications';
 import { defaultNotificationPreferences, emailIsOn } from '@corridra/domain/notifications';
 import { CustomerShell } from '../../../components/customer-shell';
-import { notificationSettingsAvailable } from '../../../lib/ux/notification-settings';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { customerPageSession } from '../../../lib/customer-page-session';
 import { foundations } from '../../../lib/foundations';
@@ -25,7 +28,7 @@ export const metadata = {
  */
 export default async function Page() {
   const dark = !customerNotificationsEnabled();
-  if (!notificationSettingsAvailable()) notFound();
+  if (dark && !customerNotificationWithdrawalEnabled()) notFound();
   const session = await customerPageSession();
   if (!session.ok) {
     if (dark) notFound();
