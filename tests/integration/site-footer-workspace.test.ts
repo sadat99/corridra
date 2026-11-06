@@ -81,6 +81,13 @@ describe('the footer everywhere else', () => {
   ])('%s keeps the full footer when shells are on', async (path) => {
     expect(full(await footer(path, { realUse: true, shells: true }))).toBe(true);
   });
+  it('the staff customer preview keeps the full footer but offers no account actions', async () => {
+    const html = await footer('/operator/view-as/owner', { realUse: true, shells: true });
+    expect(full(html)).toBe(true);
+    expect(html).not.toContain('guide-footer-actions');
+    expect(html).not.toContain('href="/plan"');
+    expect(html).not.toContain('href="/signin"');
+  });
   it.each(['/account', '/operator', '/contributor'])(
     '%s keeps the full footer when the shells switch is off',
     async (path) => {

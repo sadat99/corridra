@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { CorridraIcon } from './corridra-icon';
+import { useT } from './language-provider';
 import { TrustTag } from './ux/trust-tag';
 
 /** The five fact labels. Icon plus word, so colour is never the only clue. */
@@ -64,5 +65,19 @@ export function FactLabel({
       <CorridraIcon name={fact.icon} />
       {children ?? fact.label}
     </Tag>
+  );
+}
+
+/**
+ * A fact that was asked for and not yet answered. It is a state, not one of the five trust names, so it is
+ * shown in the reader's words beside the labels.
+ */
+export function NotConfirmedLabel() {
+  const t = useT();
+  return (
+    <span className="guide-tag" data-tone="unknown">
+      <CorridraIcon name="help" />
+      {t('home.value.notConfirmed')}
+    </span>
   );
 }

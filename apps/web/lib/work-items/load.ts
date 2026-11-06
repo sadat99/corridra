@@ -207,7 +207,13 @@ export async function loadWorkItems(
     // ordered by id, which is not by date.
     const created = (row: Obj) => Date.parse(text(row.createdAt) ?? '') || 0;
     const rows = requests.items
-      .filter((row) => typeof row.id === 'string' && allowed.has(String(row.workspaceId)))
+      // A withdrawn request is not active work: it waits under Withdrawn on the saved requests until restored.
+      .filter(
+        (row) =>
+          typeof row.id === 'string' &&
+          allowed.has(String(row.workspaceId)) &&
+          row.withdrawn !== true,
+      )
       .sort((a, b) => created(b) - created(a));
     const readDetails = customerRequestDetailsEnabled();
     // Requests beyond the cap are still listed, but their family and title are not known, so say so.

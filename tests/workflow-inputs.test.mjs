@@ -78,6 +78,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'commercial_arrangements',
     'both',
     'programme_lifecycle',
+    'participant_labels',
     'response_revision',
     'response_revision_enable',
     'response_revision_pause',
@@ -85,20 +86,22 @@ test('each field-module choice maps to install only and reaches the exact-head c
   const defaults = Object.fromEntries(
     Object.entries(declared).map(([name, input]) => [name, input.default]),
   );
-  for (const [choice, confirmation, arrangements, lifecycle, revision] of [
-    ['unchanged', 'unchanged', 'unchanged', 'unchanged', 'unchanged'],
-    ['specification_confirmation', 'install', 'unchanged', 'unchanged', 'unchanged'],
-    ['commercial_arrangements', 'unchanged', 'install', 'unchanged', 'unchanged'],
-    ['both', 'install', 'install', 'unchanged', 'unchanged'],
-    ['programme_lifecycle', 'unchanged', 'unchanged', 'install', 'unchanged'],
-    ['response_revision', 'unchanged', 'unchanged', 'unchanged', 'install'],
-    ['response_revision_enable', 'unchanged', 'unchanged', 'unchanged', 'enable'],
-    ['response_revision_pause', 'unchanged', 'unchanged', 'unchanged', 'pause'],
+  for (const [choice, confirmation, arrangements, lifecycle, labels, revision] of [
+    ['unchanged', 'unchanged', 'unchanged', 'unchanged', 'unchanged', 'unchanged'],
+    ['specification_confirmation', 'install', 'unchanged', 'unchanged', 'unchanged', 'unchanged'],
+    ['commercial_arrangements', 'unchanged', 'install', 'unchanged', 'unchanged', 'unchanged'],
+    ['both', 'install', 'install', 'unchanged', 'unchanged', 'unchanged'],
+    ['programme_lifecycle', 'unchanged', 'unchanged', 'install', 'unchanged', 'unchanged'],
+    ['participant_labels', 'unchanged', 'unchanged', 'unchanged', 'install', 'unchanged'],
+    ['response_revision', 'unchanged', 'unchanged', 'unchanged', 'unchanged', 'install'],
+    ['response_revision_enable', 'unchanged', 'unchanged', 'unchanged', 'unchanged', 'enable'],
+    ['response_revision_pause', 'unchanged', 'unchanged', 'unchanged', 'unchanged', 'pause'],
   ]) {
     const inputs = { ...defaults, field_modules_action: choice };
     assert.equal(evaluate(env.SPECIFICATION_CONFIRMATION_ACTION, inputs), confirmation);
     assert.equal(evaluate(env.COMMERCIAL_ARRANGEMENTS_ACTION, inputs), arrangements);
     assert.equal(evaluate(env.PROGRAMME_LIFECYCLE_ACTION, inputs), lifecycle);
+    assert.equal(evaluate(env.PARTICIPANT_LABELS_ACTION, inputs), labels);
     assert.equal(evaluate(env.RESPONSE_REVISION_ACTION, inputs), revision);
     assert.equal(evaluate(guard, inputs), choice !== 'unchanged');
   }

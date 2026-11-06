@@ -15,12 +15,6 @@ test('operator setup explains verified invitation requirements without collectin
   ).toHaveAttribute('href', '/account');
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
-// The footer's link groups start collapsed (layout budget, Phase 1); opening them is one tap.
-const openFooterGroups = async (page: import('@playwright/test').Page) => {
-  for (const group of await page.locator('footer details.guide-footer-details').all())
-    if (!(await group.evaluate((node) => (node as HTMLDetailsElement).open)))
-      await group.locator('summary').click();
-};
 
 test('the start page offers three plain choices and links each kind of person to the right place', async ({
   page,
@@ -30,10 +24,10 @@ test('the start page offers three plain choices and links each kind of person to
     .getByRole('navigation', { name: 'Main navigation', includeHidden: true })
     .getByRole('link', { name: 'Start a Request', includeHidden: true });
   await expect(start).toHaveAttribute('href', '/plan');
-  await openFooterGroups(page);
+  // The footer's "Already working with us?" line opens the start page.
   await page
-    .getByRole('navigation', { name: 'About Corridra' })
-    .getByRole('link', { name: 'Start here', exact: true })
+    .getByRole('contentinfo')
+    .getByRole('link', { name: 'Open Your Workspace', exact: true })
     .click();
   await expect(page).toHaveURL(/\/workspace$/);
   await expect(page.getByRole('heading', { name: 'What would you like to do?' })).toBeVisible();

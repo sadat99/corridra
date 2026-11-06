@@ -97,6 +97,7 @@ function TenantWorkspace({
   shellsV2: boolean;
 }) {
   const edited = useRef(false);
+  const memberCommand = useRef<{ key: string; id: string } | null>(null);
   const hash = useSyncExternalStore(
     subscribeToHash,
     () => window.location.hash,
@@ -716,13 +717,29 @@ function TenantWorkspace({
                     setMembersLoaded(true);
                   })
                 }
-                onUpdateMember={(value) =>
+                onUpdateMember={(value) => {
+                  // A retry of the same change after an answer that never arrived reuses its command id, so it is
+                  // answered once; a different change, or one made after the list moved on, gets a new one.
+                  const key = JSON.stringify(value);
+                  if (memberCommand.current?.key !== key)
+                    memberCommand.current = { key, id: crypto.randomUUID() };
+                  const commandId = memberCommand.current.id;
                   void act(async () => {
-                    await request('member', value);
+                    try {
+                      await request('member', { commandId, ...value });
+                    } catch (error) {
+                      // The list the person saw is out of date: show the current one before they decide again.
+                      if (error instanceof Error && /reload and try again/i.test(error.message)) {
+                        setMembers(await request('members'));
+                        memberCommand.current = null;
+                      }
+                      throw error;
+                    }
+                    memberCommand.current = null;
                     setMembers(await request('members'));
                     setMembersLoaded(true);
-                  })
-                }
+                  });
+                }}
                 onChangeFeature={(key, value) =>
                   void act(() => request('config', { key, enabled: value }))
                 }

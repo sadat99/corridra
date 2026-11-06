@@ -24,6 +24,25 @@ const pageInput = z
     pageSize: z.coerce.number().int().min(1).max(100).default(25),
   })
   .strict();
+/** One withdrawal decision: a withdraw carries the person's own reason, a restore carries none. */
+export const requestWithdrawalInput = z.discriminatedUnion('action', [
+  z
+    .object({
+      action: z.literal('withdraw'),
+      requestId: z.uuid(),
+      commandId: z.uuid(),
+      reason: z.string().trim().min(10).max(500),
+    })
+    .strict(),
+  z.object({ action: z.literal('restore'), requestId: z.uuid(), commandId: z.uuid() }).strict(),
+]);
+export type RequestWithdrawal = { requestId: string; at: string; reason: string };
+export type RequestWithdrawalResult = {
+  withdrawn: boolean;
+  changed: boolean;
+  replayed?: boolean;
+  reason?: 'closed' | 'not-withdrawable';
+};
 export type CustomerRequestContext = {
   issuer: string;
   subject: string;
@@ -256,5 +275,59 @@ export class CustomerRequestService extends CustomerSessionBoundary {
     );
     await this.dispatchMail(jobs);
     return claimed;
+  }
+
+  /**
+   * The requests this person has withdrawn, each with the reason they gave (returned to the owner only), and
+   * whether withdrawing is open. A database without the withdrawal module answers "closed, nothing withdrawn".
+   */
+  async withdrawals(
+    expectedSubject?: string,
+    expectedIssuer?: string,
+  ): Promise<{ open: boolean; items: RequestWithdrawal[] }> {
+    try {
+      const value = await this.transaction(
+        async (db) => (await db.query('SELECT customer.my_request_withdrawals() AS r')).rows[0].r,
+        expectedSubject,
+        expectedIssuer,
+      );
+      return z
+        .object({
+          open: z.boolean(),
+          items: z.array(z.object({ requestId: z.uuid(), at: z.string(), reason: z.string() })),
+        })
+        .parse(value);
+    } catch (error) {
+      if (['42883', '42P01', '3F000'].includes((error as { code?: string }).code ?? ''))
+        return { open: false, items: [] };
+      throw error;
+    }
+  }
+
+  /**
+   * Withdraw a request the person sent, with their reason, or take the withdrawal back. One command id per
+   * decision. Only the owner of the request can do it; the database decides and repeats every rule.
+   */
+  async setWithdrawal(
+    input: unknown,
+    expectedSubject?: string,
+    expectedIssuer?: string,
+  ): Promise<RequestWithdrawalResult> {
+    const value = requestWithdrawalInput.parse(input);
+    return this.transaction(
+      async (db) =>
+        (
+          await db.query<{ r: RequestWithdrawalResult }>(
+            value.action === 'withdraw'
+              ? 'SELECT customer.withdraw_request($1,$2,$3) AS r'
+              : 'SELECT customer.restore_request($1,$2) AS r',
+            value.action === 'withdraw'
+              ? [value.requestId, value.commandId, value.reason]
+              : [value.requestId, value.commandId],
+          )
+        ).rows[0].r,
+      expectedSubject,
+      expectedIssuer,
+    );
   }
 }

@@ -5,6 +5,8 @@ import { resolve } from 'node:path';
 import { fixture } from './support';
 import { migrateCustomerMoves } from '../../packages/db/src/customer-move-migrate';
 import { migrateCustomerNotifications } from '../../packages/db/src/customer-notification-migrate';
+import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
+import { migrateCustomerRequestWithdrawal } from '../../packages/db/src/customer-request-withdrawal-migrate';
 import { pinCustomerAuthority } from '../../packages/auth/src/customer-authority-pin';
 import { configureCustomerRealUse } from '../../packages/auth/src/customer-real-use-configuration';
 import { configureMoveRecords } from '../../packages/auth/src/customer-move-configuration';
@@ -78,6 +80,9 @@ describe('upgrading from installed 0001 and 0002 to the third file', () => {
   });
 
   test('the runner applies 0003 alone, with no history mismatch, and again does nothing', async () => {
+    // Notifications 0005 needs the request withdrawal module, which needs no mail module.
+    await migrateCustomerRealUse(f.owner);
+    await migrateCustomerRequestWithdrawal(f.owner);
     await migrateCustomerNotifications(f.owner);
     const applied = (
       await f.owner.query(
@@ -89,6 +94,7 @@ describe('upgrading from installed 0001 and 0002 to the third file', () => {
       '0002_email_off_until_chosen.sql',
       '0003_withdrawal_and_issuer_check.sql',
       '0004_mute_events.sql',
+      '0005_withdrawn_requests.sql',
     ]);
     expect(applied[2].sha256).toBe(
       sha(readFileSync(`${directory}/0003_withdrawal_and_issuer_check.sql`, 'utf8')),
@@ -97,7 +103,7 @@ describe('upgrading from installed 0001 and 0002 to the third file', () => {
     expect(
       (await f.owner.query('SELECT count(*)::int n FROM customer_notification_migrations.applied'))
         .rows[0].n,
-    ).toBe(4);
+    ).toBe(5);
   });
 
   test('the two replaced functions keep their owner, access list and settings', async () => {

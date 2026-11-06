@@ -25,6 +25,8 @@ Measured as the full document height (header, content and footer) divided by the
 | 390 × 844  | 1.5 screens | 2.0 screens                    |
 | 1440 × 900 | 1.0 screen  | 1.0 screen (owner, 5 Nov 2026) |
 
+Public marketing pages (owner, 6 November 2026, verbatim answer: "Up to 2.0 / 3.0 (Recommended)"): every public page except the home page and `/plan` may be up to 2.0 screens at 1440 × 900 and 3.0 screens at 390 × 844, footer included. The home page keeps its own rule (owner, 6 November 2026, with the Ledger footer: up to 3.0 and 4.25, [public home](public-home.md)). The sign-in and account recovery pages (`/signin`, `/signup`, `/forgot-password`, `/reset-password`, `/verify-email`) show the public footer and follow the public page limits. `/plan` and every signed-in page keep the table above.
+
 - A page over the hard limit fails. Fix it with tabs, progressive disclosure ("Show more", accordions), a compact mobile footer (collapsed link groups) or tighter spacing within the AC/1 scale. Content is never removed.
 - Statutory and legal text (privacy, terms) keeps every word. It is split into sections with an in-page contents list or tabs, plus a "Show the whole notice" option for reading and printing in full.
 - Lists and tables page or load more after a fixed count, and never grow the page without limit.

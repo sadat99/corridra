@@ -2,7 +2,8 @@ import AxeBuilder from '@axe-core/playwright';
 import { test, expect, type Page } from '@playwright/test';
 
 // Layout budget, Phase 2a (docs/revamp/specs/layout-budget.md): the public pages that share one template. Each
-// is at most 1.0 desktop screen (1440 x 900) and 2.0 phone screens (390 x 844), with the closing sections in a
+// is at most 2.0 desktop screens (1440 x 900) and 3.0 phone screens (390 x 844), footer included (owner decision
+// of 6 November 2026, with the Ledger footer), with the closing sections in a
 // native "Show more" disclosure. Nothing is removed: all the text stays in the server HTML, the old #page-next
 // and #page-approach links still open what they point at, and both states pass axe.
 const pages = [
@@ -34,7 +35,7 @@ for (const path of pages) {
       await page.setViewportSize(size);
       await page.goto(path);
       expect(await screens(page), `${path} ${name} screens`).toBeLessThanOrEqual(
-        name === 'phone' ? 2.0 : 1.0,
+        name === 'phone' ? 3.0 : 2.0,
       );
     });
 
@@ -91,8 +92,9 @@ test.describe('/workspace (Phase 2a)', () => {
     test(`/workspace is within its page budget at ${name}`, async ({ page }) => {
       await page.setViewportSize(size);
       await page.goto('/workspace');
+      // A public page with the public footer: the public page budget (owner decision of 6 November 2026).
       expect(await screens(page), `/workspace ${name} screens`).toBeLessThanOrEqual(
-        name === 'phone' ? 2.0 : 1.0,
+        name === 'phone' ? 3.0 : 2.0,
       );
     });
 
@@ -154,14 +156,15 @@ test.describe('/workspace (Phase 2a)', () => {
     });
 });
 
-// /buyer and /client are private-link pages: with no link they show an access page, which is already short.
+// /buyer and /client are private-link pages: with no link they show a public access page with the public footer,
+// so the public page budget applies (owner decision of 6 November 2026).
 for (const path of ['/buyer', '/client'])
   for (const [name, size] of Object.entries(sizes))
     test(`${path} is within its page budget at ${name}`, async ({ page }) => {
       await page.setViewportSize(size);
       await page.goto(path);
       expect(await screens(page), `${path} ${name} screens`).toBeLessThanOrEqual(
-        name === 'phone' ? 2.0 : 1.0,
+        name === 'phone' ? 3.0 : 2.0,
       );
     });
 

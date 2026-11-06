@@ -31,6 +31,7 @@ vi.mock('../../apps/web/lib/neon-auth', () => ({
 }));
 vi.mock('../../apps/web/lib/foundations', () => ({ foundations: () => account.services }));
 import { POST as customerPost } from '../../apps/web/app/api/customer-missions/route';
+import { changeMemberNow } from './change-member';
 let f: Awaited<ReturnType<typeof commercialFixture>>,
   delivery: DeliveryService,
   experience: DeliveryExperienceService,
@@ -1720,12 +1721,12 @@ test('publisher membership revocation invalidates selected client detail indepen
     reason,
   });
   // Revoking the publisher's membership is a genuine independent access gate, not a fake capability failure.
-  await f.a.changeMember(f.users.owner.ctx, {
+  await changeMemberNow(f.a, f.users.owner.ctx, {
     userId: f.users.reviewer.id,
     role: 'owner',
     revoked: false,
   });
-  await f.a.changeMember(f.users.reviewer.ctx, {
+  await changeMemberNow(f.a, f.users.reviewer.ctx, {
     userId: f.users.owner.id,
     role: 'owner',
     revoked: true,
