@@ -1,70 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { CornerDock } from './corner-dock';
 import { LanguageSwitcher } from './language-switcher';
 import { useT } from './language-provider';
-import { sessionChanged } from './session-events';
+import { useSignedIn } from './use-signed-in';
 import { useSignOut } from './use-sign-out';
-
-/** Asks one identity service whether this browser is signed in. Never throws; unknown means out. */
-async function readSignedIn(path: string, signal: AbortSignal) {
-  try {
-    const response = await fetch(path, {
-      cache: 'no-store',
-      credentials: 'same-origin',
-      signal,
-    });
-    if (!response.ok) return false;
-    const data: unknown = await response.json();
-    return typeof data === 'object' && data !== null && 'user' in data && Boolean(data.user);
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Who is signed in here: a customer account, a Corridra team member (a separate sign-in), or no one.
- * The customer service is only asked where customer accounts exist. Both are asked again when a
- * sign-in or sign-out happens, when the tab regains focus or when it returns from the back button.
- */
-function useSignedIn(accounts: boolean): 'customer' | 'staff' | null {
-  const [who, setWho] = useState<'customer' | 'staff' | null>(null);
-  // The customer preview for staff makes no network request at all, so the header stays quiet there.
-  useEffect(() => {
-    if (window.location.pathname.startsWith('/operator/view-as')) return;
-    let controller = new AbortController();
-    function check() {
-      controller.abort();
-      controller = new AbortController();
-      const current = controller;
-      void (async () => {
-        const customer = accounts && (await readSignedIn('/api/auth/get-session', current.signal));
-        const next = customer
-          ? 'customer'
-          : (await readSignedIn('/api/operator-auth/get-session', current.signal))
-            ? 'staff'
-            : null;
-        if (!current.signal.aborted) setWho(next);
-      })();
-    }
-    function refocus() {
-      if (document.visibilityState === 'visible') check();
-    }
-    check();
-    window.addEventListener(sessionChanged, check);
-    window.addEventListener('focus', refocus);
-    window.addEventListener('pageshow', check);
-    return () => {
-      controller.abort();
-      window.removeEventListener(sessionChanged, check);
-      window.removeEventListener('focus', refocus);
-      window.removeEventListener('pageshow', check);
-    };
-  }, [accounts]);
-  return who;
-}
 
 /** The wordmark, drawn here only (the design system allows this one inline drawing). */
 export function BrandMark() {

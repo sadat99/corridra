@@ -1,0 +1,258 @@
+[
+  {
+    "route": "/",
+    "viewport": "desktop",
+    "documentHeight": 2537,
+    "screens": 2.82,
+    "footer": 626,
+    "sideways": false
+  },
+  {
+    "route": "/how-it-works",
+    "viewport": "desktop",
+    "documentHeight": 1455,
+    "screens": 1.62,
+    "footer": 626,
+    "sideways": false
+  },
+  {
+    "route": "/corridors",
+    "viewport": "desktop",
+    "documentHeight": 1463,
+    "screens": 1.63,
+    "footer": 626,
+    "sideways": false
+  },
+  {
+    "route": "/corridors/bangladesh-china",
+    "viewport": "desktop",
+    "documentHeight": 1444,
+    "screens": 1.6,
+    "footer": 626,
+    "sideways": false
+  },
+  {
+    "route": "/corridors/bangladesh-spain",
+    "viewport": "desktop",
+    "documentHeight": 1411,
+    "screens": 1.57,
+    "footer": 626,
+    "sideways": false
+  },
+  {
+    "route": "/trust",
+    "viewport": "desktop",
+    "documentHeight": 1485,
+    "screens": 1.65,
+    "footer": 626,
+    "sideways": false
+  },
+  {
+    "route": "/about",
+    "viewport": "desktop",
+    "documentHeight": 1266,
+    "screens": 1.41,
+    "footer": 626,
+    "sideways": false
+  },
+  {
+    "route": "/network",
+    "viewport": "desktop",
+    "documentHeight": 1403,
+    "screens": 1.56,
+    "footer": 626,
+    "sideways": false
+  },
+  {
+    "route": "/institutions",
+    "viewport": "desktop",
+    "documentHeight": 1402,
+    "screens": 1.56,
+    "footer": 626,
+    "sideways": false
+  },
+  {
+    "route": "/privacy",
+    "viewport": "desktop",
+    "documentHeight": 1387,
+    "screens": 1.54,
+    "footer": 626,
+    "sideways": false
+  },
+  {
+    "route": "/source",
+    "viewport": "desktop",
+    "documentHeight": 1444,
+    "screens": 1.6,
+    "footer": 626,
+    "sideways": false
+  },
+  {
+    "route": "/machinery",
+    "viewport": "desktop",
+    "documentHeight": 1361,
+    "screens": 1.51,
+    "footer": 626,
+    "sideways": false
+  },
+  {
+    "route": "/trade-missions",
+    "viewport": "desktop",
+    "documentHeight": 1481,
+    "screens": 1.65,
+    "footer": 626,
+    "sideways": false
+  },
+  {
+    "route": "/business-trips",
+    "viewport": "desktop",
+    "documentHeight": 1361,
+    "screens": 1.51,
+    "footer": 626,
+    "sideways": false
+  },
+  {
+    "route": "/sell",
+    "viewport": "desktop",
+    "documentHeight": 1447,
+    "screens": 1.61,
+    "footer": 626,
+    "sideways": false
+  },
+  {
+    "route": "/enter-market",
+    "viewport": "desktop",
+    "documentHeight": 1481,
+    "screens": 1.65,
+    "footer": 626,
+    "sideways": false
+  },
+  {
+    "route": "/",
+    "viewport": "phone",
+    "documentHeight": 3424,
+    "screens": 4.06,
+    "footer": 862,
+    "sideways": false
+  },
+  {
+    "route": "/how-it-works",
+    "viewport": "phone",
+    "documentHeight": 2082,
+    "screens": 2.47,
+    "footer": 862,
+    "sideways": false
+  },
+  {
+    "route": "/corridors",
+    "viewport": "phone",
+    "documentHeight": 2200,
+    "screens": 2.61,
+    "footer": 862,
+    "sideways": false
+  },
+  {
+    "route": "/corridors/bangladesh-china",
+    "viewport": "phone",
+    "documentHeight": 1863,
+    "screens": 2.21,
+    "footer": 862,
+    "sideways": false
+  },
+  {
+    "route": "/corridors/bangladesh-spain",
+    "viewport": "phone",
+    "documentHeight": 1840,
+    "screens": 2.18,
+    "footer": 862,
+    "sideways": false
+  },
+  {
+    "route": "/trust",
+    "viewport": "phone",
+    "documentHeight": 2208,
+    "screens": 2.62,
+    "footer": 862,
+    "sideways": false
+  },
+  {
+    "route": "/about",
+    "viewport": "phone",
+    "documentHeight": 1821,
+    "screens": 2.16,
+    "footer": 862,
+    "sideways": false
+  },
+  {
+    "route": "/network",
+    "viewport": "phone",
+    "documentHeight": 2064,
+    "screens": 2.45,
+    "footer": 862,
+    "sideways": false
+  },
+  {
+    "route": "/institutions",
+    "viewport": "phone",
+    "documentHeight": 2041,
+    "screens": 2.42,
+    "footer": 862,
+    "sideways": false
+  },
+  {
+    "route": "/privacy",
+    "viewport": "phone",
+    "documentHeight": 1791,
+    "screens": 2.12,
+    "footer": 862,
+    "sideways": false
+  },
+  {
+    "route": "/source",
+    "viewport": "phone",
+    "documentHeight": 2062,
+    "screens": 2.44,
+    "footer": 862,
+    "sideways": false
+  },
+  {
+    "route": "/machinery",
+    "viewport": "phone",
+    "documentHeight": 1969,
+    "screens": 2.33,
+    "footer": 862,
+    "sideways": false
+  },
+  {
+    "route": "/trade-missions",
+    "viewport": "phone",
+    "documentHeight": 2190,
+    "screens": 2.59,
+    "footer": 862,
+    "sideways": false
+  },
+  {
+    "route": "/business-trips",
+    "viewport": "phone",
+    "documentHeight": 1920,
+    "screens": 2.27,
+    "footer": 862,
+    "sideways": false
+  },
+  {
+    "route": "/sell",
+    "viewport": "phone",
+    "documentHeight": 2143,
+    "screens": 2.54,
+    "footer": 862,
+    "sideways": false
+  },
+  {
+    "route": "/enter-market",
+    "viewport": "phone",
+    "documentHeight": 2199,
+    "screens": 2.61,
+    "footer": 862,
+    "sideways": false
+  }
+]
