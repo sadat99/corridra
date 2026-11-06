@@ -980,3 +980,17 @@ test('in a linked Archived list, restoring one keeps the remaining archived prog
   ).toBeVisible();
   await expect(page).toHaveURL(/archived=1/);
 });
+
+test('Back and Forward keep a rename typed in the room that was on screen', async ({ page }) => {
+  const id = '00000000-0000-4000-8000-0000000000a1';
+  await serve(page, [base, archivedRow(id, 'Synthetic archived alpha')]);
+  await page.goto(origin + '/?room=true&programme=' + id);
+  await expect(page.getByRole('heading', { name: 'Synthetic archived alpha' })).toBeVisible();
+  await page.getByRole('button', { name: 'Show Active Programmes', exact: true }).click();
+  await page.getByRole('button', { name: 'Rename Programme', exact: true }).click();
+  await rename(page).fill('Synthetic typed before navigating');
+  await page.goBack();
+  await expect(page.getByRole('heading', { name: 'Synthetic archived alpha' })).toBeVisible();
+  await page.goForward();
+  await expect(rename(page)).toHaveValue('Synthetic typed before navigating');
+});

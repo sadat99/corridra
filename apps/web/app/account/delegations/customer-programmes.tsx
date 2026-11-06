@@ -144,6 +144,8 @@ function ScopedProgrammes({
   // Programmes shown when the filter last changed stay mounted (hidden), so anything typed in them survives (page without the room).
   const [mounted, setMounted] = useState<ReadonlySet<string>>(() => new Set());
   const shownNow = useRef<string[]>([]);
+  // The programme the room shows right now, so history navigation can keep it mounted (hidden) like the filter buttons do.
+  const chosenNow = useRef<string | undefined>(undefined);
   const setArchivedFilter = (on: boolean) => {
     setMounted((current) => new Set([...current, ...shownNow.current]));
     setShowArchived(on);
@@ -161,6 +163,8 @@ function ScopedProgrammes({
   useEffect(() => {
     const sync = () => {
       setMounted((current) => new Set([...current, ...shownNow.current]));
+      const leaving = chosenNow.current;
+      if (leaving) setVisited((current) => new Set(current).add(leaving));
       const query = new URLSearchParams(window.location.search);
       setShowArchived(query.get('archived') === '1');
       // The programme named in the restored address is the one shown, not whichever comes first.
@@ -490,6 +494,7 @@ function ScopedProgrammes({
     : rows.filter((p) => visibleIds.has(p.id) || mounted.has(p.id));
   useEffect(() => {
     shownNow.current = visibleRows.map((p) => p.id);
+    chosenNow.current = chosenProgramme;
   });
   // The Archived filter and a link to one programme work over every page: the remaining pages load by themselves until the
   // programme asked for is found (or, with the filter on, until there are no more), so an empty list is never a half answer.
