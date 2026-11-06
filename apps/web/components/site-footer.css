@@ -168,6 +168,15 @@
   font-size: var(--text-sm);
   color: var(--footer-text);
 }
+/* A label chip may wrap its own words when text is enlarged, so the legend never runs past a narrow screen. */
+.guide-footer-legend > * {
+  max-width: 100%;
+}
+.guide-footer-legend .guide-tag {
+  white-space: normal;
+  height: auto;
+  min-height: 1.5em;
+}
 .guide-footer-trust > a {
   display: inline-flex;
   flex: none;
