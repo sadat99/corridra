@@ -111,7 +111,7 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   await expect(trigger).toBeFocused();
   // Enter opens the selected action: Audit, by its own address.
   await page.keyboard.press('Control+k');
-  await page.getByRole('combobox').fill('open audit');
+  await palette.getByRole('combobox').fill('open audit');
   await expect(palette.getByRole('option', { name: /Open Audit/ })).toBeVisible();
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/operator\/audit/);

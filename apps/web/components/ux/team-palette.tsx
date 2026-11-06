@@ -212,7 +212,7 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
                 <div className="ux-palette-input">
                   <OperatorIcon name="search" />
                   <input
-                    type="search"
+                    type="text"
                     role="combobox"
                     aria-expanded="true"
                     aria-controls={listId}
