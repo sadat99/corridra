@@ -170,7 +170,7 @@ export default async function Page({
                 <li>
                   <Link prefetch={false} href="/account/companies">
                     <strong>Browse approved companies</strong>
-                    <span>Companies cleared to take part in missions.</span>
+                    <span>Companies we have cleared to work with.</span>
                   </Link>
                 </li>
               )}

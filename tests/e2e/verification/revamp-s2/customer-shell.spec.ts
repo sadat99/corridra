@@ -292,7 +292,7 @@ const inboxItem = (id: string, type: string, title: string, readAt: string | nul
   createdAt: '2026-11-04T10:00:00Z',
 });
 
-test('CX-03 the notifications panel groups Needs You, Updates and Earlier, marks all read with the existing read call, and counts unread for assistive technology', async ({
+test('CX-03 the notifications panel groups Needs You, Updates and Earlier, marks all read with one server call, and counts unread for assistive technology', async ({
   page,
 }) => {
   const items = [
@@ -304,11 +304,15 @@ test('CX-03 the notifications panel groups Needs You, Updates and Earlier, marks
   const posted: string[] = [];
   await page.route('**/api/customer-inbox', async (route) => {
     if (route.request().method() === 'POST') {
-      const id = (route.request().postDataJSON() as { id: string }).id;
-      posted.push(id);
-      const item = items.find((one) => one.id === id);
-      if (item) item.readAt = '2026-11-05T09:00:00Z';
-      return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+      // Mark All Read is one server call with nothing but {all:true}; the server picks the recipient.
+      const body = route.request().postDataJSON() as { all?: boolean };
+      posted.push(JSON.stringify(body));
+      for (const item of items) item.readAt ??= '2026-11-05T09:00:00Z';
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ marked: 3, unread: 0 }),
+      });
     }
     return route.fulfill({
       status: 200,
@@ -337,13 +341,45 @@ test('CX-03 the notifications panel groups Needs You, Updates and Earlier, marks
   await expect(panel.locator('li[data-unread="true"] .sr-only').first()).toContainText('Unread');
   await panel.getByRole('button', { name: 'Mark All Read' }).click();
   await expect(panel.getByRole('button', { name: 'Mark All Read' })).toHaveCount(0);
-  expect(posted.sort()).toEqual(['1', '2', '3']);
+  expect(posted).toEqual(['{"all":true}']);
   // The bell counts again while the panel is still open.
   await expect(bell).not.toHaveAccessibleDescription('3 unread');
   await expect(bell.locator('.ux-bar-count')).toHaveCount(0);
   await expect(panel.getByRole('group', { name: 'Earlier' })).toContainText('Team invitation');
   await page.keyboard.press('Escape');
   await expect(bell).toBeFocused();
+});
+
+test('CX-03 a full list of 30 asks the server how many are unread, so the bell and Mark All Read cover older items too', async ({
+  page,
+}) => {
+  // The newest 30 are all read, but 12 older items are unread: the list alone would say nothing is waiting.
+  let unread = 12;
+  const full = Array.from({ length: 30 }, (_, index) =>
+    inboxItem(String(index + 1), 'REPLY_POSTED', `Reply ${index + 1}`, '2026-11-04T11:00:00Z'),
+  );
+  const posted: string[] = [];
+  await page.route('**/api/customer-inbox**', async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === 'POST') {
+      posted.push(JSON.stringify(request.postDataJSON()));
+      unread = 0;
+      return route.fulfill({ json: { marked: 12, unread: 0 } });
+    }
+    if (url.searchParams.get('count') === '1') return route.fulfill({ json: { unread } });
+    return route.fulfill({ json: full });
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/account');
+  const bell = header(page).getByRole('button', { name: 'Inbox', exact: true });
+  await expect(bell).toHaveAccessibleDescription('12 unread');
+  await bell.click();
+  const panel = page.locator('.ux-notice-panel');
+  await panel.getByRole('button', { name: 'Mark All Read' }).click();
+  await expect(panel.getByRole('button', { name: 'Mark All Read' })).toHaveCount(0);
+  expect(posted).toEqual(['{"all":true}']);
+  await expect(bell.locator('.ux-bar-count')).toHaveCount(0);
 });
 
 test('CX-03 opening one notification keeps focus in the panel, so Escape still closes it and returns to the bell', async ({

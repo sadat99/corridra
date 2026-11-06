@@ -9,7 +9,7 @@ import { customerProgrammesEnabled } from '@corridra/auth/customer-programmes';
 import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-requests';
 import { CustomerShell } from '../../../components/customer-shell';
 import { WorkspaceShell } from '../../../components/workspace-shell';
-import { toolGroups, toolsFor } from '../../../lib/all-tools';
+import { groupLabel, toolGroups, toolsFor } from '../../../lib/all-tools';
 import { customerPageSession } from '../../../lib/customer-page-session';
 import { uxSwitchOn } from '../../../lib/ux-switches';
 
@@ -53,7 +53,7 @@ export default async function Page() {
         const id = `tools-${group.toLowerCase().replace(/\s+/g, '-')}`;
         return (
           <section key={group} className="guide-area ux-account-groups" aria-labelledby={id}>
-            <h2 id={id}>{group}</h2>
+            <h2 id={id}>{groupLabel(group)}</h2>
             <ul className="ux-link-list">
               {inGroup.map((tool) => (
                 <li key={tool.href}>

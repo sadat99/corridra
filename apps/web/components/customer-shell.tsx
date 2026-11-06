@@ -2,6 +2,7 @@ import { realUseEnabled } from '@corridra/auth/customer-production';
 import type { ReactNode } from 'react';
 import { customerBillingEnabled } from '@corridra/auth/customer-billing';
 import { customerCompaniesEnabled } from '@corridra/auth/customer-companies';
+import { customerOrganisationProfilesEnabled } from '@corridra/auth/customer-organisation-profiles';
 import { uxSwitchOn } from '../lib/ux-switches';
 import { CustomerNav, type CustomerTab } from './customer-nav';
 import { T } from './language-provider';
@@ -112,6 +113,7 @@ export function CustomerShell({
       <CustomerBarNote
         billing={customerBillingEnabled()}
         notificationSettings={notificationSettingsAvailable()}
+        organisationProfiles={customerOrganisationProfilesEnabled()}
         text={
           real
             ? 'Your work stays private to the people given access.'
