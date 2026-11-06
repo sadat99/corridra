@@ -126,7 +126,6 @@ export function AppHeader({
       <LeftNavMenuButton />
       <Link prefetch={false} className="brand" href={homes[kind]} aria-label={t(names[kind])}>
         {brandMark}
-        <span>Corridra</span>
       </Link>
       {customer ? null : <span className="ux-app-name">{t(names[kind])}</span>}
       {kind === 'team' ? (

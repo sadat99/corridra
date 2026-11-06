@@ -36,16 +36,13 @@
   padding: var(--space-12) 0 var(--space-8);
   border-bottom: 1px solid var(--footer-line);
 }
+/* The logo is the compact lockup in white; its name is the link's hidden text. */
 .guide-footer .guide-footer-wordmark {
   display: inline-flex;
   align-items: center;
   gap: var(--space-3);
   min-height: 2.75rem;
   color: var(--on-brand);
-  font-family: var(--serif);
-  font-size: var(--text-2xl);
-  font-weight: 600;
-  line-height: 1;
 }
 .guide-footer-wordmark .brand-mark {
   width: 1.75rem;
