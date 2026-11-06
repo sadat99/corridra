@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { displayMoney } from '@corridra/domain/locale';
+import { Dialog } from '../../components/ux/dialog';
 
 type Period = {
   subscriptionId: string;
@@ -39,6 +40,8 @@ type Invoice = {
     receivedOn: string;
     method: string;
     reference: string;
+    reversed: boolean;
+    reversal?: { seq: number; reason: string; reversedAt: string };
   }[];
   credits: { seq: number; number: string; amountMinor: string; issuedOn: string; reason: string }[];
 };
@@ -115,7 +118,10 @@ function Scoped({ tenant }: { tenant: string }) {
     [method, setMethod] = useState('bank_transfer'),
     [reference, setReference] = useState(starter),
     [creditAmount, setCreditAmount] = useState(''),
-    [reason, setReason] = useState(starter);
+    [reason, setReason] = useState(starter),
+    [reverseSeq, setReverseSeq] = useState(''),
+    [reverseReason, setReverseReason] = useState(starter),
+    [confirming, setConfirming] = useState<Record<string, unknown> | null>(null);
   const task = useRef<AbortController | null>(null);
   const endpoint = '/api/workspace/customer-billing?tenant=' + encodeURIComponent(tenant);
   const call = useCallback(
@@ -225,6 +231,8 @@ function Scoped({ tenant }: { tenant: string }) {
     setCreditAmount('');
     setReference(starter);
     setReason(starter);
+    setReverseSeq('');
+    setReverseReason(starter);
     if (typeof saved?.id === 'string') await open(saved.id);
     await loadAll();
   }
@@ -284,6 +292,27 @@ function Scoped({ tenant }: { tenant: string }) {
       },
     );
   }
+  function submitReversal(e: FormEvent) {
+    e.preventDefault();
+    if (!detail) return;
+    // A reversal cannot be undone, so it asks once. A resend after a lost answer carries the same command id.
+    setConfirming(
+      pending?.action === 'reverse'
+        ? pending
+        : {
+            action: 'reverse',
+            commandId: crypto.randomUUID(),
+            invoiceId: detail.invoice.id,
+            expectedPosition: detail.invoice.position,
+            paymentSeq: Number(reverseSeq),
+            reason: reverseReason.trim(),
+          },
+    );
+  }
+  const asked =
+    confirming && detail
+      ? (detail.invoice.payments.find((p) => p.seq === confirming.paymentSeq) ?? null)
+      : null;
   if (off) return null;
   const can = (a: string) => !!detail && detail.actions.includes(a);
   const inv = detail?.invoice ?? null;
@@ -417,6 +446,13 @@ function Scoped({ tenant }: { tenant: string }) {
               <li key={'p' + p.seq}>
                 Payment {money(p.amountMinor, inv.currency)} · {displayDate(p.receivedOn)} ·{' '}
                 {p.method.replace('_', ' ')} · {p.reference}
+                {p.reversal && (
+                  <>
+                    {' '}
+                    · Reversed: {p.reversal.reason} (
+                    {displayDate(p.reversal.reversedAt.slice(0, 10))})
+                  </>
+                )}
               </li>
             ))}
             {inv.credits.map((c) => (
@@ -526,9 +562,99 @@ function Scoped({ tenant }: { tenant: string }) {
               </button>
             </form>
           )}
+          {can('reverse') && (
+            <form aria-label="Reverse payment" onSubmit={submitReversal}>
+              <p>
+                A payment entered in error is reversed, not deleted. It stays on the invoice, marked
+                as reversed with your reason, and its amount is owed again.
+              </p>
+              <fieldset disabled={busy}>
+                <div className="field">
+                  <label htmlFor="invoice-reverse-payment">Payment to reverse</label>
+                  <select
+                    id="invoice-reverse-payment"
+                    required
+                    value={reverseSeq}
+                    onChange={(e) => change(() => setReverseSeq(e.target.value))}
+                  >
+                    <option value="">Choose a payment</option>
+                    {inv.payments
+                      .filter((p) => !p.reversed)
+                      .map((p) => (
+                        <option key={p.seq} value={String(p.seq)}>
+                          Payment {p.seq}: {money(p.amountMinor, inv.currency)} on{' '}
+                          {displayDate(p.receivedOn)}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor="invoice-reverse-reason">
+                    Why it is reversed (start with Synthetic, at least 20 characters)
+                  </label>
+                  <textarea
+                    id="invoice-reverse-reason"
+                    rows={2}
+                    required
+                    minLength={20}
+                    maxLength={500}
+                    value={reverseReason}
+                    onChange={(e) => change(() => setReverseReason(e.target.value))}
+                  />
+                </div>
+              </fieldset>
+              <button
+                type="submit"
+                className="button button-secondary"
+                data-intent="destructive"
+                disabled={busy}
+              >
+                {pending?.action === 'reverse' ? 'Send the Same Reversal Again' : 'Reverse Payment'}
+              </button>
+            </form>
+          )}
           {!can('payment') && <p>Nothing is outstanding, so no payment or credit can be added.</p>}
         </section>
       )}
+      <Dialog
+        open={!!confirming && !!asked}
+        onClose={() => setConfirming(null)}
+        title="Reverse This Payment?"
+        locked={busy}
+      >
+        {confirming && asked && detail && (
+          <>
+            <p>
+              Payment {asked.seq} of {money(asked.amountMinor, detail.invoice.currency)} received on{' '}
+              {displayDate(asked.receivedOn)} on invoice {detail.invoice.number} will be marked as
+              reversed, and its amount will be owed again. This cannot be undone. The payment stays
+              on the invoice with your reason.
+            </p>
+            <div className="ux-dialog-actions">
+              <button
+                type="button"
+                className="button button-secondary"
+                data-autofocus=""
+                onClick={() => setConfirming(null)}
+              >
+                Keep Payment
+              </button>
+              <button
+                type="button"
+                className="button button-secondary"
+                data-intent="destructive"
+                onClick={() => {
+                  const body = confirming;
+                  setConfirming(null);
+                  void send(body);
+                }}
+              >
+                Confirm Reversal
+              </button>
+            </div>
+          </>
+        )}
+      </Dialog>
     </section>
   );
 }
