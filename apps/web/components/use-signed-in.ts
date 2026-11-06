@@ -26,7 +26,7 @@ function subscribe(listener: () => void) {
 
 const current = () => latest;
 // The customer preview for staff makes no network request at all and shows no one signed in.
-const isQuiet = (path: string | null) => Boolean(path?.startsWith('/operator/view-as'));
+export const isQuiet = (path: string | null) => Boolean(path?.startsWith('/operator/view-as'));
 // The server never knows who is signed in, so the page is built signed out and updated after load.
 const signedOutOnServer = () => null;
 

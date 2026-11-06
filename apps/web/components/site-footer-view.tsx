@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { FactLabel, NotConfirmedLabel } from './fact-label';
 import { LanguageSwitcher } from './language-switcher';
 import { useT } from './language-provider';
 import { BrandMark } from './site-header';
-import { useSignedInSeen } from './use-signed-in';
+import { isQuiet, useSignedInSeen } from './use-signed-in';
 import type { MessageKey } from '../lib/i18n/messages';
 import './site-footer.css';
 
@@ -64,6 +65,8 @@ export function SiteFooterView({ realUse }: { realUse: boolean }) {
   const t = useT();
   // The public header has already asked who is signed in; a signed-in person is never offered sign-in here.
   const who = useSignedInSeen();
+  // The staff customer preview is inert and offers no account actions (the header hides them there too).
+  const preview = isQuiet(usePathname());
   return (
     <footer className="guide-footer">
       <div className="guide-footer-top">
@@ -74,32 +77,34 @@ export function SiteFooterView({ realUse }: { realUse: boolean }) {
           </Link>
           <p className="guide-footer-promise">{t('footer.tagline')}</p>
         </div>
-        <div className="guide-footer-actions">
-          <Link prefetch={false} className="primary-link" href="/plan">
-            {t('header.start')}
-          </Link>
-          {who ? (
-            <Link
-              prefetch={false}
-              className="button-secondary"
-              href={who === 'staff' ? '/operator' : '/account'}
-            >
-              {t('footer.openWorkspace')}
+        {preview ? null : (
+          <div className="guide-footer-actions">
+            <Link prefetch={false} className="primary-link" href="/plan">
+              {t('header.start')}
             </Link>
-          ) : (
-            <>
-              <Link prefetch={false} className="button-secondary" href="/signin">
-                {t('footer.signIn')}
+            {who ? (
+              <Link
+                prefetch={false}
+                className="button-secondary"
+                href={who === 'staff' ? '/operator' : '/account'}
+              >
+                {t('footer.openWorkspace')}
               </Link>
-              <p className="guide-footer-already">
-                {t('footer.already')}{' '}
-                <Link prefetch={false} href="/workspace">
-                  {t('footer.openWorkspace')}
+            ) : (
+              <>
+                <Link prefetch={false} className="button-secondary" href="/signin">
+                  {t('footer.signIn')}
                 </Link>
-              </p>
-            </>
-          )}
-        </div>
+                <p className="guide-footer-already">
+                  {t('footer.already')}{' '}
+                  <Link prefetch={false} href="/workspace">
+                    {t('footer.openWorkspace')}
+                  </Link>
+                </p>
+              </>
+            )}
+          </div>
+        )}
       </div>
       {/* One copy of each link. On a phone each group is a disclosure; from 701 px every group shows open. */}
       <nav className="guide-footer-groups" aria-label={t('footer.nav')}>
