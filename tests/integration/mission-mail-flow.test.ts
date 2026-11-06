@@ -2,6 +2,8 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { fixture } from './support';
 import { migrateCustomerMissionMail } from '../../packages/db/src/customer-mission-mail-migrate';
+import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
+import { migrateCustomerRequestWithdrawal } from '../../packages/db/src/customer-request-withdrawal-migrate';
 import { pinCustomerAuthority } from '../../packages/auth/src/customer-authority-pin';
 import { configureCustomerRealUse } from '../../packages/auth/src/customer-real-use-configuration';
 import { configureMissionMail } from '../../packages/auth/src/customer-mission-mail-configuration';
@@ -113,6 +115,9 @@ const queueRows = async (requestId: string) =>
 
 beforeAll(async () => {
   f = await fixture();
+  // Mission mail 0003 needs the request withdrawal module, which needs no mail module.
+  await migrateCustomerRealUse(f.owner);
+  await migrateCustomerRequestWithdrawal(f.owner);
   await migrateCustomerMissionMail(f.owner);
   await pinCustomerAuthority(f.owner, { issuer, executorId: f.serviceId });
   await configureSyntheticIntake(f.owner, f.tenantA, f.users.owner.id);
