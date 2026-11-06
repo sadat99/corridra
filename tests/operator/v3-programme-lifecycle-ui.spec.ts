@@ -11,7 +11,7 @@ test.beforeAll(async () => {
   const result = await build({
     stdin: {
       contents: `import {createRoot} from 'react-dom/client';import {CustomerProgrammes} from ${JSON.stringify(resolve('apps/web/app/account/delegations/customer-programmes.tsx'))};import {CustomerWorkspaces} from ${JSON.stringify(resolve('apps/web/app/account/customer-workspaces.tsx'))};
-        const query=new URLSearchParams(location.search);const root=createRoot(document.getElementById('fixture'));const initial={subject:'synthetic-alice',issuer:${JSON.stringify(issuer)},workspaceId:'00000000-0000-4000-8000-000000000001'};const render=props=>query.get('mode')==='workspaces'?<CustomerWorkspaces {...props} programmesEnabled={query.get('enabled')==='true'}/>:<CustomerProgrammes {...props}/>;root.render(render(initial));window.addEventListener('fixture-customer-change',event=>root.render(render({...initial,...event.detail})));`,
+        const query=new URLSearchParams(location.search);const root=createRoot(document.getElementById('fixture'));const initial={subject:'synthetic-alice',issuer:${JSON.stringify(issuer)},workspaceId:'00000000-0000-4000-8000-000000000001'};const render=props=>query.get('mode')==='workspaces'?<CustomerWorkspaces {...props} programmesEnabled={query.get('enabled')==='true'}/>:<CustomerProgrammes {...props} roomEnabled={query.get('room')==='true'}/>;root.render(render(initial));window.addEventListener('fixture-customer-change',event=>root.render(render({...initial,...event.detail})));`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
     },
@@ -324,4 +324,28 @@ test('the rename form and the archived list have no accessibility violations', a
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Show Archived Programmes', exact: true }).click();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+});
+
+test('in the room, switching the Archived filter keeps the opened room mounted so typed text survives', async ({
+  page,
+}) => {
+  const archived: Row = {
+    ...base,
+    id: '00000000-0000-4000-8000-000000000003',
+    name: 'Synthetic archived visit',
+    archived: true,
+    version: 2,
+  };
+  await serve(page, [base, archived]);
+  await page.goto(origin + '/?room=true');
+  const active = page
+    .locator('li', { has: page.getByRole('button', { name: 'Archive Programme', exact: true }) })
+    .first();
+  await expect(active).toBeVisible();
+  await active.evaluate((node) => node.setAttribute('data-mark', 'kept'));
+  await page.getByRole('button', { name: 'Show Archived Programmes', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Restore Programme', exact: true })).toBeVisible();
+  await expect(page.locator('li[data-mark="kept"]')).toBeHidden();
+  await page.getByRole('button', { name: 'Show Active Programmes', exact: true }).click();
+  await expect(page.locator('li[data-mark="kept"]')).toBeVisible();
 });

@@ -373,8 +373,10 @@ function ScopedProgrammes({
   const chosenProgramme = visibleRows.find((p) => p.id === chosenId)?.id ?? visibleRows[0]?.id;
   // A programme once opened stays mounted, hidden, so anything typed in its panels survives a switch and back;
   // a hidden room is off screen, so it reads nothing until it is shown again.
+  // The Archived filter only changes which room is shown: rooms already opened stay mounted (hidden), so typed text and the
+  // selected tab survive a switch to the archived list and back.
   const shownRows = roomEnabled
-    ? visibleRows.filter((p) => p.id === chosenProgramme || visited.has(p.id))
+    ? rows.filter((p) => p.id === chosenProgramme || visited.has(p.id))
     : visibleRows;
   const choose = (id: string) => {
     setVisited((current) => {
@@ -463,7 +465,11 @@ function ScopedProgrammes({
             type="button"
             className="text-link"
             aria-pressed={showArchived}
-            onClick={() => setShowArchived(!showArchived)}
+            onClick={() => {
+              if (roomEnabled && chosenProgramme)
+                setVisited((current) => new Set(current).add(chosenProgramme));
+              setShowArchived(!showArchived);
+            }}
           >
             {showArchived ? 'Show Active Programmes' : 'Show Archived Programmes'}
           </button>
