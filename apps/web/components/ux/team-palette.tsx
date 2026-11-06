@@ -44,8 +44,8 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [scope, setScope] = useState<PaletteScopeId>('all');
-  const [found, setFound] = useState<Found | null>(null);
-  const [state, setState] = useState<State>('idle');
+  // The last answer and the query it answered. What is shown is derived from it, so nothing is set in an effect.
+  const [answer, setAnswer] = useState<{ key: string; found: Found | null } | null>(null);
   const [selected, setSelected] = useState(0);
   const dialog = useRef<HTMLDialogElement>(null);
   const opener = useRef<HTMLElement | null>(null);
@@ -78,17 +78,12 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
   }, [open, mounted]);
 
   // One search at a time: a newer query cancels the older, and an answer for an old query is dropped.
+  const text = query.trim();
+  const searchable = scope !== 'actions' && text.length >= 2 && /^[0-9a-f-]{36}$/i.test(tenant);
+  const key = `${tenant}|${scope}|${text}`;
   useEffect(() => {
-    if (!open) return;
-    const text = query.trim();
-    const searchable = scope !== 'actions' && text.length >= 2 && /^[0-9a-f-]{36}$/i.test(tenant);
-    if (!searchable) {
-      setFound(null);
-      setState('idle');
-      return;
-    }
+    if (!open || !searchable) return;
     const controller = new AbortController();
-    setState('searching');
     const timer = setTimeout(async () => {
       try {
         const response = await fetch(
@@ -96,19 +91,26 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
           { signal: controller.signal, cache: 'no-store' },
         );
         if (!response.ok) throw new Error('search failed');
-        setFound((await response.json()) as Found);
-        setState('done');
+        setAnswer({ key, found: (await response.json()) as Found });
       } catch (error) {
         if ((error as { name?: string }).name === 'AbortError') return;
-        setFound(null);
-        setState('failed');
+        setAnswer({ key, found: null });
       }
     }, 200);
     return () => {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [open, query, scope, tenant]);
+  }, [open, searchable, key, tenant, scope, text]);
+  const current = searchable && answer?.key === key ? answer : null;
+  const found = current?.found ?? null;
+  const state: State = !searchable
+    ? 'idle'
+    : !current
+      ? 'searching'
+      : current.found
+        ? 'done'
+        : 'failed';
 
   const actions = paletteActions(role, urls, tenant, ownerPage);
   const entries: PaletteEntry[] = [];
@@ -138,8 +140,7 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
     setOpen(false);
     setQuery('');
     setScope('all');
-    setFound(null);
-    setState('idle');
+    setAnswer(null);
     setSelected(0);
     const back = opener.current;
     if (back?.isConnected) back.focus();
