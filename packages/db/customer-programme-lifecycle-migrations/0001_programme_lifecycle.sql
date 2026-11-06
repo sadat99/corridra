@@ -7,8 +7,10 @@ CREATE TABLE customer_private.programme_lifecycle_revision (
  workspace_id uuid NOT NULL,
  version integer NOT NULL CHECK(version>=1),
  kind text NOT NULL CHECK(kind IN ('rename','archive','restore')),
- name text NOT NULL CHECK(name=btrim(name) AND length(name) BETWEEN 3 AND 160 AND name !~ '[[:cntrl:]]'),
- reporting_purpose text NOT NULL CHECK(reporting_purpose=btrim(reporting_purpose) AND length(reporting_purpose) BETWEEN 10 AND 500 AND reporting_purpose !~ '[\x01-\x08\x0b\x0c\x0e-\x1f\x7f]'),
+ -- Same bounds as creation: archive and restore copy the existing text, which creation accepted with any characters inside it, so a stricter
+ -- check here would make such a programme impossible to archive. Text typed for a rename is checked more strictly in the function.
+ name text NOT NULL CHECK(length(name) BETWEEN 3 AND 160),
+ reporting_purpose text NOT NULL CHECK(length(reporting_purpose) BETWEEN 10 AND 500),
  archived boolean NOT NULL,
  changed_by uuid NOT NULL REFERENCES customer_private.principal(id),
  created_at timestamptz NOT NULL DEFAULT clock_timestamp(),

@@ -131,7 +131,7 @@ afterAll(async () => {
   await f?.close();
 });
 
-test('installs once, repeats safely, refuses a changed history, and refuses to run without real-use', async () => {
+test('installs once, repeats safely and refuses a changed history', async () => {
   await migrateCustomerProgrammeLifecycle(f.owner);
   expect(
     (
@@ -146,6 +146,54 @@ test('installs once, repeats safely, refuses a changed history, and refuses to r
 
 test('installing the module leaves every existing programme row exactly as it was', async () => {
   expect(await digest()).toBe(baseDigest);
+});
+
+test('refuses to install without the real-use modules, and installs nothing', async () => {
+  const bare = await fixture('corridra_upgrade');
+  try {
+    await expect(migrateCustomerProgrammeLifecycle(bare.owner)).rejects.toThrow(
+      'Install the real-use',
+    );
+    expect(
+      (
+        await bare.owner.query(
+          "SELECT to_regclass('customer_programme_lifecycle_migrations.applied') IS NULL AS none",
+        )
+      ).rows[0].none,
+    ).toBe(true);
+  } finally {
+    await bare.close();
+  }
+});
+
+test('a changed prerequisite function stops the install and rolls everything back', async () => {
+  const changed = await fixture('corridra_upgrade');
+  try {
+    await migrateCustomerRealUse(changed.owner);
+    // The function is left behaving the same but no longer has the exact definition the module replaces.
+    await changed.owner.query('ALTER FUNCTION customer.programmes(uuid,uuid,integer) COST 777');
+    await expect(migrateCustomerProgrammeLifecycle(changed.owner)).rejects.toThrow(
+      'Programme lifecycle prerequisite function differs: customer.programmes',
+    );
+    const left = (
+      await changed.owner.query(
+        `SELECT to_regclass('customer_private.programme_lifecycle_revision') IS NULL AS no_table,
+                to_regclass('customer_private.programme_current') IS NULL AS no_view,
+                to_regclass('customer_programme_lifecycle_migrations.applied') IS NULL AS no_receipt,
+                NOT EXISTS(SELECT FROM pg_proc WHERE proname='programme_lifecycle') AS no_function,
+                (SELECT pg_get_functiondef('customer.my_programme_reminders(date)'::regprocedure) NOT LIKE '%programme_current%') AS reader_untouched`,
+      )
+    ).rows[0];
+    expect(left).toEqual({
+      no_table: true,
+      no_view: true,
+      no_receipt: true,
+      no_function: true,
+      reader_untouched: true,
+    });
+  } finally {
+    await changed.close();
+  }
 });
 
 test('before any change every reader shows the original name and purpose, with version 0 and not archived', async () => {
@@ -390,6 +438,46 @@ test('revisions and commands cannot be rewritten or deleted, even by the owner r
   await expect(
     f.runtime.query('SELECT * FROM customer_private.programme_current'),
   ).rejects.toMatchObject({ code: '42501' });
+});
+
+test('a programme whose name has a control character inside can still be archived, restored and then renamed cleanly', async () => {
+  const odd = await programmes().create({
+    commandId: randomUUID(),
+    workspaceId,
+    name: 'Synthetic odd\tname programme',
+    reportingPurpose: 'Synthetic purpose with a\ttab inside it for the test',
+    acknowledged: true,
+  });
+  const archived = await programmes().change(change('archive', 0, {}, odd.id));
+  expect(archived).toMatchObject({
+    archived: true,
+    version: 1,
+    name: 'Synthetic odd\tname programme',
+  });
+  expect(await programmes().change(change('restore', 1, {}, odd.id))).toMatchObject({
+    archived: false,
+    version: 2,
+  });
+  await expect(
+    programmes().change(
+      change(
+        'rename',
+        2,
+        { name: 'Synthetic new\tname here', reportingPurpose: originalPurpose },
+        odd.id,
+      ),
+    ),
+  ).rejects.toMatchObject({ code: '23514' });
+  expect(
+    await programmes().change(
+      change(
+        'rename',
+        2,
+        { name: 'Synthetic cleaned name here', reportingPurpose: originalPurpose },
+        odd.id,
+      ),
+    ),
+  ).toMatchObject({ version: 3, name: 'Synthetic cleaned name here' });
 });
 
 test('the cap counts only active programmes and restore is refused, never forced, at 100 active', async () => {

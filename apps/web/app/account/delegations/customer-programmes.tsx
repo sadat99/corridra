@@ -131,7 +131,37 @@ function ScopedProgrammes({
   const [rows, setRows] = useState<Programme[]>([]),
     [next, setNext] = useState<string | null>(null);
   // Archived programmes (CRUD gap G7): hidden from the list and the picker unless the Archived filter is on.
-  const [showArchived, setShowArchived] = useState(false);
+  // The filter is kept in the address (?archived=1), so a reload, a shared link and Back all keep it (R-01).
+  const [showArchived, setShowArchived] = useState<boolean>(
+    () =>
+      typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('archived') === '1',
+  );
+  const [undoing, setUndoing] = useState(false);
+  // Programmes shown when the filter last changed stay mounted (hidden), so anything typed in them survives (page without the room).
+  const [mounted, setMounted] = useState<ReadonlySet<string>>(() => new Set());
+  const shownNow = useRef<string[]>([]);
+  const setArchivedFilter = (on: boolean) => {
+    setMounted((current) => new Set([...current, ...shownNow.current]));
+    setShowArchived(on);
+    const url = new URL(window.location.href);
+    if (on) url.searchParams.set('archived', '1');
+    else {
+      url.searchParams.delete('archived');
+      // Leaving the Archived list also leaves a link that pointed into it.
+      url.searchParams.delete('programme');
+      setChosenId(null);
+    }
+    window.history.pushState(window.history.state, '', url);
+  };
+  useEffect(() => {
+    const sync = () => {
+      setMounted((current) => new Set([...current, ...shownNow.current]));
+      setShowArchived(new URLSearchParams(window.location.search).get('archived') === '1');
+    };
+    window.addEventListener('popstate', sync);
+    return () => window.removeEventListener('popstate', sync);
+  }, []);
   const [archivedNotice, setArchivedNotice] = useState<LifecycleProgramme | null>(null);
   const [staleNote, setStaleNote] = useState('');
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed' | 'denied' | 'unavailable'>(
@@ -367,17 +397,34 @@ function ScopedProgrammes({
   // programme at a time, so it fits the page-length budget. Nothing is removed: the same list, panels, templates,
   // pricing and form, each in its own tab, every panel kept in the page. With the room off the page is unchanged.
   const lifecycleReady = rows.some((p) => typeof p.version === 'number');
+  // A link to an archived programme shows the Archived list, so it opens that programme and not another.
+  const archivedView =
+    showArchived ||
+    (chosenId !== null && rows.some((p) => p.id === chosenId && p.archived === true));
   const visibleRows = rows.filter((p) =>
-    showArchived ? p.archived === true : p.archived !== true,
+    archivedView ? p.archived === true : p.archived !== true,
   );
   const chosenProgramme = visibleRows.find((p) => p.id === chosenId)?.id ?? visibleRows[0]?.id;
   // A programme once opened stays mounted, hidden, so anything typed in its panels survives a switch and back;
   // a hidden room is off screen, so it reads nothing until it is shown again.
   // The Archived filter only changes which room is shown: rooms already opened stay mounted (hidden), so typed text and the
   // selected tab survive a switch to the archived list and back.
+  const visibleIds = new Set(visibleRows.map((p) => p.id));
   const shownRows = roomEnabled
     ? rows.filter((p) => p.id === chosenProgramme || visited.has(p.id))
-    : visibleRows;
+    : rows.filter((p) => visibleIds.has(p.id) || mounted.has(p.id));
+  useEffect(() => {
+    shownNow.current = visibleRows.map((p) => p.id);
+  });
+  // The Archived filter and a link to one programme work over every page: the remaining pages load by themselves until the
+  // programme asked for is found (or, with the filter on, until there are no more), so an empty list is never a half answer.
+  useEffect(() => {
+    if (status !== 'ready' || !next) return;
+    if (archivedView || (chosenId !== null && !rows.some((p) => p.id === chosenId)))
+      void Promise.resolve().then(() => load(next));
+  }, [status, next, archivedView, chosenId, rows, load]);
+  const linkMissing =
+    status === 'ready' && !next && chosenId !== null && !rows.some((p) => p.id === chosenId);
   const choose = (id: string) => {
     setVisited((current) => {
       const next = new Set(current);
@@ -420,7 +467,8 @@ function ScopedProgrammes({
   };
   async function undoArchive() {
     const target = archivedNotice;
-    if (!target) return;
+    if (!target || undoing) return;
+    setUndoing(true);
     const outcome = await changeProgramme({
       workspaceId,
       headers,
@@ -433,11 +481,12 @@ function ScopedProgrammes({
       setArchivedNotice(null);
       setMessage(outcome.message);
     }
+    setUndoing(false);
   }
   const lifecycleFor = (p: Programme) =>
     typeof p.version === 'number' ? (
       <ProgrammeLifecycle
-        key={p.id + ':' + p.version}
+        key={p.id}
         programme={{
           id: p.id,
           name: p.name,
@@ -449,7 +498,7 @@ function ScopedProgrammes({
         headers={headers}
         onChanged={applyChange}
         onStale={(note) => {
-          setStaleNote(note);
+          if (note) setStaleNote(note);
           void load();
         }}
       />
@@ -464,14 +513,14 @@ function ScopedProgrammes({
           <button
             type="button"
             className="text-link"
-            aria-pressed={showArchived}
+            aria-pressed={archivedView}
             onClick={() => {
               if (roomEnabled && chosenProgramme)
                 setVisited((current) => new Set(current).add(chosenProgramme));
-              setShowArchived(!showArchived);
+              setArchivedFilter(!archivedView);
             }}
           >
-            {showArchived ? 'Show Active Programmes' : 'Show Archived Programmes'}
+            {archivedView ? 'Show Active Programmes' : 'Show Archived Programmes'}
           </button>
         </p>
       )}
@@ -479,24 +528,34 @@ function ScopedProgrammes({
       {archivedNotice && (
         <p role="status">
           Programme archived: {archivedNotice.name}.{' '}
-          <button type="button" className="text-link" onClick={() => void undoArchive()}>
+          <button
+            type="button"
+            className="text-link"
+            disabled={undoing}
+            onClick={() => void undoArchive()}
+          >
             Undo
           </button>
         </p>
       )}
-      {visibleRows.length === 0 ? (
-        <p className="ux-empty">
-          {' '}
-          {showArchived
-            ? 'No archived programmes.'
-            : realCustomerInput()
-              ? 'No programmes yet.'
-              : 'No sample programmes yet.'}{' '}
-        </p>
-      ) : (
+      {linkMissing && <p role="status">That programme is not in this workspace.</p>}
+      {visibleRows.length === 0 &&
+        (next ? (
+          <p role="status">Loading more programmes…</p>
+        ) : (
+          <p className="ux-empty">
+            {' '}
+            {archivedView
+              ? 'No archived programmes.'
+              : realCustomerInput()
+                ? 'No programmes yet.'
+                : 'No sample programmes yet.'}{' '}
+          </p>
+        ))}
+      {shownRows.length > 0 && (
         <ul>
           {shownRows.map((p) => (
-            <li key={p.id} hidden={roomEnabled && p.id !== chosenProgramme}>
+            <li key={p.id} hidden={roomEnabled ? p.id !== chosenProgramme : !visibleIds.has(p.id)}>
               {roomEnabled ? (
                 <ProgrammeRoom
                   programmeId={p.id}

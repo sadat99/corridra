@@ -13,7 +13,7 @@ export type LifecycleProgramme = {
 export type LifecycleChange = LifecycleProgramme & { operation: 'rename' | 'archive' | 'restore' };
 type Outcome =
   | { ok: true; result: LifecycleChange }
-  | { ok: false; kind: 'denied' | 'stale' | 'refused' | 'failed'; message: string };
+  | { ok: false; kind: 'denied' | 'stale' | 'refused' | 'limited' | 'failed'; message: string };
 type Request = {
   workspaceId: string;
   headers: Record<string, string>;
@@ -47,6 +47,12 @@ export async function changeProgramme(request: Request): Promise<Outcome> {
         ok: false,
         kind: 'denied',
         message: 'Only a workspace owner or admin can change a programme.',
+      };
+    if (response.status === 429)
+      return {
+        ok: false,
+        kind: 'limited',
+        message: 'Too many requests just now. Wait a minute, then try again.',
       };
     if (response.status === 503)
       return {
@@ -105,7 +111,8 @@ export function ProgrammeLifecycle({
   workspaceId: string;
   headers: Record<string, string>;
   onChanged: (change: LifecycleChange, before: LifecycleProgramme) => void;
-  onStale: (message: string) => void;
+  // A stale rename keeps the person's text and asks them to choose (null); any other stale answer comes back as words for the page.
+  onStale: (message: string | null) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(programme.name);
@@ -113,6 +120,8 @@ export function ProgrammeLifecycle({
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState('');
   const [discarding, setDiscarding] = useState(false);
+  // The version the person saw when someone else saved first; set until they choose Keep Mine or Use Theirs.
+  const [conflictFrom, setConflictFrom] = useState<number | null>(null);
   // One command id per exact attempt: pressing again after a lost answer repeats the same command and changes nothing twice.
   const attempt = useRef<{ signature: string; id: string } | null>(null);
   // Focus moves into the form when it opens and back to the Rename button when it closes (A-03).
@@ -154,10 +163,14 @@ export function ProgrammeLifecycle({
       onChanged(outcome.result, programme);
       return;
     }
-    // A stale answer reloads the list, which remounts this component at the new version: the parent keeps the words.
+    // A stale answer reloads the list. This component stays mounted, so a stale rename keeps what was typed and offers the choice;
+    // any other stale answer is told by the page, which outlives the reload.
     if (outcome.kind === 'stale') {
       attempt.current = null;
-      onStale(outcome.message);
+      if (operation === 'rename') {
+        setConflictFrom(programme.version);
+        onStale(null);
+      } else onStale(outcome.message);
       return;
     }
     setNote(outcome.message);
@@ -165,6 +178,7 @@ export function ProgrammeLifecycle({
   function close() {
     setEditing(false);
     setDiscarding(false);
+    setConflictFrom(null);
     setName(programme.name);
     setPurpose(programme.reportingPurpose);
     setNote('');
@@ -175,8 +189,9 @@ export function ProgrammeLifecycle({
   }
   function submit(event: FormEvent) {
     event.preventDefault();
-    if (changed && valid) void run('rename');
+    if (changed && valid && conflictFrom === null) void run('rename');
   }
+  const newerShown = conflictFrom !== null && programme.version !== conflictFrom;
   function keys(event: KeyboardEvent) {
     if (event.key === 'Escape') {
       event.preventDefault();
@@ -246,13 +261,48 @@ export function ProgrammeLifecycle({
             />
           </label>
           <p>
-            <button className="primary-link" disabled={busy || !changed || !valid}>
+            <button
+              className="primary-link"
+              disabled={busy || !changed || !valid || conflictFrom !== null}
+            >
               Save Changes
             </button>{' '}
             <button type="button" className="text-link" disabled={busy} onClick={cancel}>
               Cancel
             </button>
           </p>
+          {conflictFrom !== null && (
+            <div role="alert">
+              {newerShown ? (
+                <>
+                  <p>Someone else changed this programme first. It now reads:</p>
+                  <p>
+                    <strong>{programme.name}</strong>
+                  </p>
+                  <p>{programme.reportingPurpose}</p>
+                  <p>
+                    Your text is still in the form.{' '}
+                    <button
+                      type="button"
+                      className="text-link"
+                      disabled={busy}
+                      onClick={() => {
+                        setConflictFrom(null);
+                        void run('rename');
+                      }}
+                    >
+                      Keep Mine
+                    </button>{' '}
+                    <button type="button" className="text-link" onClick={close}>
+                      Use Theirs
+                    </button>
+                  </p>
+                </>
+              ) : (
+                <p>Someone else changed this programme first. Checking the latest version…</p>
+              )}
+            </div>
+          )}
           {discarding && (
             <p role="alert">
               Discard your changes?{' '}

@@ -349,3 +349,196 @@ test('in the room, switching the Archived filter keeps the opened room mounted s
   await page.getByRole('button', { name: 'Show Active Programmes', exact: true }).click();
   await expect(page.locator('li[data-mark="kept"]')).toBeVisible();
 });
+
+const rename = (page: import('@playwright/test').Page) =>
+  page.getByLabel('New programme name', { exact: true });
+const archivedRow = (id: string, name: string, version = 2): Row => ({
+  ...base,
+  id,
+  name,
+  archived: true,
+  version,
+});
+
+test('typed text survives the Archived filter on the plain page, with archived programmes and with none', async ({
+  page,
+}) => {
+  for (const initial of [
+    [base],
+    [base, archivedRow('00000000-0000-4000-8000-000000000003', 'Synthetic archived visit')],
+  ]) {
+    await serve(page, initial);
+    await page.goto(origin);
+    await page.getByRole('button', { name: 'Rename Programme', exact: true }).click();
+    await rename(page).fill('Synthetic text typed before switching');
+    await page.getByRole('button', { name: 'Show Archived Programmes', exact: true }).click();
+    await expect(rename(page)).toBeHidden();
+    await page.getByRole('button', { name: 'Show Active Programmes', exact: true }).click();
+    await expect(rename(page)).toHaveValue('Synthetic text typed before switching');
+    await page.unrouteAll();
+  }
+});
+
+test('typed text survives the Archived filter in the room, with none archived', async ({
+  page,
+}) => {
+  await serve(page, [base]);
+  await page.goto(origin + '/?room=true');
+  await page.getByRole('button', { name: 'Rename Programme', exact: true }).click();
+  await rename(page).fill('Synthetic text typed in the room');
+  await page.getByRole('button', { name: 'Show Archived Programmes', exact: true }).click();
+  await expect(page.getByText('No archived programmes.')).toBeVisible();
+  await page.getByRole('button', { name: 'Show Active Programmes', exact: true }).click();
+  await expect(rename(page)).toHaveValue('Synthetic text typed in the room');
+});
+
+test('a stale save keeps what was typed, shows the newer value, and lets the person choose', async ({
+  page,
+}) => {
+  const { rows } = await serve(page, [base]);
+  const sent: Array<Record<string, unknown>> = [];
+  await page.route('**/api/customer-programme-lifecycle', (route) => {
+    const body = route.request().postDataJSON();
+    sent.push(body);
+    if (sent.length === 1) {
+      rows[0] = { ...rows[0]!, name: 'Synthetic renamed by a colleague', version: 3 };
+      return route.fulfill({
+        status: 409,
+        json: { error: 'Programme changed; reload before saving' },
+      });
+    }
+    rows[0] = { ...rows[0]!, name: body.name, reportingPurpose: body.reportingPurpose, version: 4 };
+    return route.fulfill({ json: answer(rows[0]!, 'rename') });
+  });
+  await page.goto(origin);
+  await page.getByRole('button', { name: 'Rename Programme', exact: true }).click();
+  await rename(page).fill('Synthetic my own new name');
+  await page.getByRole('button', { name: 'Save Changes', exact: true }).click();
+  await expect(
+    page.getByText('Someone else changed this programme first. It now reads:'),
+  ).toBeVisible();
+  await expect(
+    page.getByText('Synthetic renamed by a colleague', { exact: true }).first(),
+  ).toBeVisible();
+  await expect(rename(page)).toHaveValue('Synthetic my own new name');
+  await expect(page.getByRole('button', { name: 'Save Changes', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: 'Keep Mine', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Synthetic my own new name' })).toBeVisible();
+  expect(sent[1]).toMatchObject({ expectedVersion: 3, name: 'Synthetic my own new name' });
+  expect(sent[1]!.commandId).not.toBe(sent[0]!.commandId);
+});
+
+test('Use Theirs drops the typed text and shows the newer value', async ({ page }) => {
+  const { rows } = await serve(page, [base]);
+  await page.route('**/api/customer-programme-lifecycle', (route) => {
+    rows[0] = { ...rows[0]!, name: 'Synthetic renamed by a colleague', version: 3 };
+    return route.fulfill({
+      status: 409,
+      json: { error: 'Programme changed; reload before saving' },
+    });
+  });
+  await page.goto(origin);
+  await page.getByRole('button', { name: 'Rename Programme', exact: true }).click();
+  await rename(page).fill('Synthetic my own new name');
+  await page.getByRole('button', { name: 'Save Changes', exact: true }).click();
+  await page.getByRole('button', { name: 'Use Theirs', exact: true }).click();
+  await expect(rename(page)).toHaveCount(0);
+  await expect(
+    page.getByRole('heading', { name: 'Synthetic renamed by a colleague' }),
+  ).toBeVisible();
+});
+
+test('the Archived filter lives in the address and Back returns to the active list', async ({
+  page,
+}) => {
+  await serve(page, [
+    base,
+    archivedRow('00000000-0000-4000-8000-000000000003', 'Synthetic archived visit'),
+  ]);
+  await page.goto(origin + '/?archived=1');
+  await expect(page.getByRole('heading', { name: 'Synthetic archived visit' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: base.name })).toBeHidden();
+  await page.getByRole('button', { name: 'Show Active Programmes', exact: true }).click();
+  await expect(page).not.toHaveURL(/archived=1/);
+  await expect(page.getByRole('heading', { name: base.name })).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL(/archived=1/);
+  await expect(page.getByRole('heading', { name: 'Synthetic archived visit' })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Synthetic archived visit' })).toBeVisible();
+});
+
+test('an archived programme on page two is found by the Archived filter, never reported as missing', async ({
+  page,
+}) => {
+  const second = archivedRow(
+    '00000000-0000-4000-8000-000000000003',
+    'Synthetic archived on page two',
+  );
+  await page.route('**/api/customer-programmes*', (route) => {
+    const after = new URL(route.request().url()).searchParams.get('after');
+    return route.fulfill({
+      json: after ? list([second]) : { ...list([base]), nextAfter: base.id },
+    });
+  });
+  await page.goto(origin);
+  await page.getByRole('button', { name: 'Show Archived Programmes', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Synthetic archived on page two' })).toBeVisible();
+  await expect(page.getByText('No archived programmes.')).toHaveCount(0);
+});
+
+test('a link to an archived programme opens it, and a link to an unknown one says so', async ({
+  page,
+}) => {
+  const id = '00000000-0000-4000-8000-000000000003';
+  await serve(page, [base, archivedRow(id, 'Synthetic archived visit')]);
+  await page.goto(origin + '/?room=true&programme=' + id);
+  await expect(page.getByText('Synthetic archived visit').first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Restore Programme', exact: true })).toBeVisible();
+  await page.goto(origin + '/?programme=00000000-0000-4000-8000-0000000000ff');
+  await expect(page.getByText('That programme is not in this workspace.')).toBeVisible();
+});
+
+test('Undo cannot be sent twice by a double click', async ({ page }) => {
+  const { rows } = await serve(page, [base]);
+  const operations: string[] = [];
+  await page.route('**/api/customer-programme-lifecycle', async (route) => {
+    const body = route.request().postDataJSON();
+    operations.push(body.operation);
+    rows[0] = {
+      ...rows[0]!,
+      archived: body.operation === 'archive',
+      version: rows[0]!.version! + 1,
+    };
+    await new Promise((done) => setTimeout(done, 300));
+    await route.fulfill({ json: answer(rows[0]!, body.operation) });
+  });
+  await page.goto(origin);
+  await page.getByRole('button', { name: 'Archive Programme', exact: true }).click();
+  await page.getByRole('button', { name: 'Undo', exact: true }).dblclick();
+  await expect(page.getByRole('heading', { name: base.name })).toBeVisible();
+  expect(operations).toEqual(['archive', 'restore']);
+});
+
+test('a rate limit says so in the shared words and the retry sends the same command', async ({
+  page,
+}) => {
+  const { rows } = await serve(page, [base]);
+  const commands: string[] = [];
+  await page.route('**/api/customer-programme-lifecycle', (route) => {
+    const body = route.request().postDataJSON();
+    commands.push(body.commandId);
+    if (commands.length === 1)
+      return route.fulfill({ status: 429, json: { error: 'Too many requests' } });
+    rows[0] = { ...rows[0]!, archived: true, version: 1 };
+    return route.fulfill({ json: answer(rows[0]!, 'archive') });
+  });
+  await page.goto(origin);
+  await page.getByRole('button', { name: 'Archive Programme', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText(
+    'Too many requests just now. Wait a minute, then try again.',
+  );
+  await page.getByRole('button', { name: 'Archive Programme', exact: true }).click();
+  await expect(page.getByText('Programme archived: Synthetic buyers visit.')).toBeVisible();
+  expect(commands[1]).toBe(commands[0]);
+});
