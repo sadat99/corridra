@@ -1,12 +1,12 @@
 'use client';
-// The slim customer header row (customer experience spec): a workspace switcher where the page belongs to a
-// workspace, one primary "New request", the inbox as an icon with its unread count, and an account menu that
-// holds the name, the language, the website, the privacy notice and Sign out. No bordered text buttons.
+// The slim customer header row (customer experience spec): one primary "New request", the inbox as an icon
+// with its unread count, and an account menu that holds the name, the language, the website, the privacy
+// notice and Sign out. No bordered text buttons. The workspace switcher lives once, in the left bar.
 // It reads only what the signed-in header already reads (the inbox, the workspaces and the session of the
 // person looking); nothing here decides access, and every page and action still checks on the server.
 import './customer-bar.css';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
 import { CorridraIcon } from '../corridra-icon';
 import { useLanguage } from '../language-provider';
@@ -23,10 +23,6 @@ import { MenuButton, MenuRadio, OverflowMenu } from './overflow-menu';
 
 export type Workspace = { id: string; name: string };
 type Item = { readAt: string | null };
-
-/** Pages that belong to one workspace: the section and the workspace id, so another workspace can be chosen. */
-const scoped =
-  /^\/account\/(request|drafts|billing|profile|delegations|service-requests)\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/|$)/i;
 
 /** Read only on the customer account pages, where New request and the switcher need them. */
 export function useWorkspaces(active: boolean) {
@@ -50,41 +46,6 @@ export function useWorkspaces(active: boolean) {
     return () => controller.abort();
   }, [active]);
   return active ? list : null;
-}
-
-function WorkspaceSwitcher({ workspaces }: { workspaces: Workspace[] }) {
-  const router = useRouter();
-  const pathname = usePathname() ?? '';
-  const match = scoped.exec(pathname);
-  if (!match || workspaces.length < 2) return null;
-  const [, section, current] = match;
-  const here = workspaces.find((w) => w.id === current);
-  return (
-    <OverflowMenu
-      label="Switch workspace"
-      align="start"
-      className="ux-bar-switcher"
-      trigger={
-        <>
-          <span className="ux-bar-switcher-name">{here?.name ?? 'Workspace'}</span>
-          <CorridraIcon name="chevron" className="ux-bar-chevron" />
-        </>
-      }
-    >
-      {workspaces.map((w) => (
-        <MenuRadio
-          key={w.id}
-          checked={w.id === current}
-          onClick={() => {
-            router.push(`/account/${section}/${w.id}`);
-          }}
-          data-menu-close=""
-        >
-          {w.name}
-        </MenuRadio>
-      ))}
-    </OverflowMenu>
-  );
 }
 
 /** `counted`: read the unread count in the background. The list itself loads when it is opened. */
@@ -264,7 +225,6 @@ export function CustomerBar({ notifications }: { notifications: boolean }) {
           <span>{page}</span>
         </p>
       ) : null}
-      {workspaces ? <WorkspaceSwitcher workspaces={workspaces} /> : null}
       <div className="ux-bar-tools">
         <Link prefetch={false} className="ux-bar-primary" href={start}>
           <CorridraIcon name="draft" className="ux-bar-primary-icon" />
