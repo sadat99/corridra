@@ -1,25 +1,15 @@
 'use client';
-// The slim customer header row (customer experience spec): one primary "New request", the inbox as an icon
-// with its unread count, and an account menu that holds the name, the language, the website, the privacy
-// notice and Sign out. No bordered text buttons. The workspace switcher lives once, in the left bar.
-// It reads only what the signed-in header already reads (the inbox, the workspaces and the session of the
-// person looking); nothing here decides access, and every page and action still checks on the server.
+// Pieces the signed-in headers share: the workspaces read, the inbox bell with its unread count, and the
+// language choices. The customer header row itself is in customer-header.tsx. They read only what the
+// signed-in header already reads; nothing here decides access, and every page and action still checks on
+// the server.
 import './customer-bar.css';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { CorridraIcon } from '../corridra-icon';
 import { useLanguage } from '../language-provider';
-import { useSignOut } from '../use-sign-out';
 import { localeMeta } from '../../lib/i18n/locales';
-import {
-  readCustomerNote,
-  readServerCustomerNote,
-  subscribeCustomerNote,
-} from './customer-bar-store';
 import { NotificationInbox } from './notification-inbox';
-import { MenuLink } from './menu-link';
-import { MenuButton, MenuRadio, OverflowMenu } from './overflow-menu';
+import { MenuRadio } from './overflow-menu';
 
 export type Workspace = { id: string; name: string };
 type Item = { readAt: string | null };
@@ -57,10 +47,13 @@ export function BarInbox({
   counted,
   endpoint,
   label = 'Inbox',
+  grouped = false,
 }: {
   counted: boolean;
   endpoint: string;
   label?: string;
+  /** The customer panel (Needs You, Updates, Earlier, Mark All Read) instead of the plain list. */
+  grouped?: boolean;
 }) {
   const [unread, setUnread] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
@@ -144,7 +137,13 @@ export function BarInbox({
         </span>
       ) : null}
       <div id={panelId} className="ux-app-popover" hidden={!open}>
-        {open ? <NotificationInbox endpoint={endpoint} /> : null}
+        {open ? (
+          <NotificationInbox
+            endpoint={endpoint}
+            grouped={grouped}
+            onItems={(list) => setUnread(list.filter((item) => !item.readAt).length)}
+          />
+        ) : null}
       </div>
     </div>
   );
@@ -169,97 +168,5 @@ export function LanguageMenuGroup() {
         </MenuRadio>
       ))}
     </div>
-  );
-}
-
-export function AccountMenuBody() {
-  const note = useSyncExternalStore(
-    subscribeCustomerNote,
-    readCustomerNote,
-    readServerCustomerNote,
-  );
-  const { busy, message, signOut } = useSignOut();
-  const [who, setWho] = useState<{ name: string; email: string } | null>(null);
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch('/api/auth/get-session', { cache: 'no-store', signal: controller.signal })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((body: { user?: { name?: unknown; email?: unknown } } | null) => {
-        const user = body?.user;
-        if (!controller.signal.aborted && user && typeof user.email === 'string')
-          setWho({ name: typeof user.name === 'string' ? user.name : '', email: user.email });
-      })
-      .catch(() => undefined);
-    return () => controller.abort();
-  }, []);
-  return (
-    <>
-      {who ? (
-        <div role="group" aria-label="Signed in as" className="ux-menu-who">
-          {who.name ? <strong>{who.name}</strong> : null}
-          <span>{who.email}</span>
-        </div>
-      ) : null}
-      {note ? <p className="ux-menu-note">{note}</p> : null}
-      <LanguageMenuGroup />
-      <MenuLink href="/">Corridra Website</MenuLink>
-      <MenuLink href="/privacy">Privacy Notice</MenuLink>
-      <MenuButton disabled={busy} onClick={signOut}>
-        {busy ? 'Signing Out…' : 'Sign Out'}
-      </MenuButton>
-      {message ? (
-        <p role="alert" className="ux-menu-note">
-          {message}
-        </p>
-      ) : null}
-    </>
-  );
-}
-
-/** Where the person is, in the left bar's words, for the header's path ("Aurora Textiles / Home"). */
-function pageName(pathname: string): string | null {
-  // "/account" serves several views by its query, which this header does not follow, so it shows no path there.
-  if (pathname === '/account/move') return 'Home';
-  if (pathname.startsWith('/account/companies')) return 'Companies';
-  if (pathname.startsWith('/account/all-tools')) return 'All tools';
-  if (pathname.startsWith('/account/requests') || pathname.startsWith('/account/rooms'))
-    return 'Requests';
-  return null;
-}
-
-export function CustomerBar({ notifications }: { notifications: boolean }) {
-  const pathname = usePathname() ?? '';
-  const onAccount = pathname === '/account' || pathname.startsWith('/account/');
-  const workspaces = useWorkspaces(onAccount);
-  // A person with a workspace goes to the place where requests are made; otherwise to the plan page, as the
-  // account Home does when requests are not switched on for them.
-  const start =
-    workspaces && workspaces.length > 0 ? '/account?view=work#customer-workspaces' : '/plan';
-  const page = pageName(pathname);
-  return (
-    <>
-      {page ? (
-        <p className="ux-bar-crumb">
-          {workspaces && workspaces.length === 1 ? (
-            <span className="ux-bar-crumb-parent">{workspaces[0]!.name} / </span>
-          ) : null}
-          <span>{page}</span>
-        </p>
-      ) : null}
-      <div className="ux-bar-tools">
-        <Link prefetch={false} className="ux-bar-primary" href={start}>
-          <CorridraIcon name="draft" className="ux-bar-primary-icon" />
-          New Request
-        </Link>
-        {notifications ? <BarInbox counted={onAccount} endpoint="/api/customer-inbox" /> : null}
-        <OverflowMenu
-          label="Account menu"
-          trigger={<CorridraIcon name="people" />}
-          className="ux-bar-account"
-        >
-          <AccountMenuBody />
-        </OverflowMenu>
-      </div>
-    </>
   );
 }

@@ -1,31 +1,709 @@
-/* About is cut into a few tabs so it fits the page budget (layout budget, Phase 2b). Each tab keeps the
-   notice-document look of the articles it holds; nothing is removed. */
-.guide-doc-tabs .guide-doc {
-  margin-bottom: 0;
-}
-.guide-doc-tabs {
-  margin-bottom: var(--space-2);
+/* About, Editorial layout (owner decision of 6 November 2026, docs/revamp/specs/layout-budget.md section 2).
+   A white opening band (the hero with why and what, who it is for, the six steps) and a closing band of three
+   sections plus the operator line. One page, no tabs: the closing sections keep their supporting detail behind
+   a native Show Details, and on a phone why and what fold under their headings. Tokens only. */
+
+/* The closing band runs straight into the footer, as in the approved layout. */
+.about-page + .guide-footer {
+  margin-top: 0;
 }
 
+/* ---------- the opening band ---------- */
+.about-band {
+  background: var(--ac-paper);
+  /* The band reaches both window edges without making the page wider (the footer's technique), with a rule
+     under it. */
+  box-shadow:
+    0 0 0 100vmax var(--ac-paper),
+    0 1px 0 100vmax var(--line);
+  clip-path: inset(0 -100vmax -1px);
+}
+.about-page h2 {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--text-1);
+}
+.about-page h3 {
+  margin: 0;
+  font-family: var(--font-ui);
+  letter-spacing: 0;
+  color: var(--text-1);
+}
+.about-page p {
+  margin: 0;
+}
+.about-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-8) var(--space-12);
+  align-items: start;
+  padding-block: var(--space-4) var(--space-5);
+}
+.about-intro {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+}
+.about-intro .guide-crumb {
+  margin-block: calc(-1 * var(--space-2)) calc(-1 * var(--space-1));
+}
+/* A pointer target of 28 px is enough on a wide screen (the compact page hero does the same). */
+@media (min-width: 769px) {
+  .about-intro .guide-crumb a {
+    min-height: 1.75rem;
+  }
+}
+.about-intro h1 {
+  font-size: var(--text-h1);
+  line-height: 1.06;
+}
+.about-lead {
+  max-width: 36rem;
+  font-size: var(--text-lead);
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.about-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-5);
+  margin-top: var(--space-2);
+}
+.about-quiet {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-size: var(--text-base);
+  font-weight: 500;
+  color: var(--brand);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.about-quiet:hover {
+  color: var(--brand-hover);
+}
+
+/* Why and what: open on a wide screen, folded under the heading on a phone. */
+.about-opening {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  padding-top: var(--space-12);
+}
+.about-opening h2 {
+  font-size: var(--text-xl);
+}
+.about-opening p {
+  font-size: var(--text-base);
+  line-height: 1.55;
+  color: var(--text-2);
+}
+.about-opening > h2 {
+  padding-inline-end: 3.5rem;
+}
+.about-fold > summary {
+  position: absolute;
+  inset-block-start: var(--space-12);
+  inset-inline-end: 0;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--ac-paper);
+  color: var(--brand);
+  cursor: pointer;
+  list-style: none;
+}
+.about-fold > summary::-webkit-details-marker {
+  display: none;
+}
+.about-fold > summary::before {
+  content: '+' / '';
+  font: 500 var(--text-xl) / 1 var(--font-ui);
+}
+.about-fold[open] > summary::before {
+  content: '\2212' / '';
+}
+.about-fold-body {
+  display: grid;
+  gap: var(--space-2);
+}
+@supports selector(::details-content) {
+  @media (min-width: 701px) {
+    .about-fold > summary {
+      display: none;
+    }
+    .about-fold::details-content {
+      content-visibility: visible;
+    }
+    .about-opening > h2 {
+      padding-inline-end: 0;
+    }
+  }
+}
+
+/* Who it is for and the six steps. */
+.about-block {
+  border-top: 1px solid var(--line);
+  padding-block: var(--space-4) var(--space-5);
+}
+.about-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-6);
+  margin-bottom: var(--space-3);
+}
+.about-head h2 {
+  font-size: var(--text-2xl);
+}
+.about-head p {
+  flex: 1 1 20rem;
+  font-size: var(--text-base);
+  color: var(--text-2);
+}
+.about-head .about-quiet {
+  margin-inline-start: auto;
+  margin-block: calc(-1 * var(--space-3));
+}
+.about-uses {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.about-uses li {
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--brand);
+  border-radius: 4px 4px var(--radius-md) var(--radius-md);
+  background: var(--ac-porcelain);
+}
+.about-uses h3 {
+  font-size: var(--text-base);
+  font-weight: 600;
+  line-height: 1.25;
+}
+.about-uses p {
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--text-2);
+}
+.about-uses strong,
+.about-close strong {
+  font-weight: 600;
+  color: var(--text-1);
+}
+.about-road {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* The road line runs behind the numbered dots; copper marks the last step (editorial ornament). */
+.about-road::before {
+  content: '';
+  position: absolute;
+  inset-inline: var(--space-4);
+  top: 15px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--brand), var(--editorial-accent));
+}
+.about-road li {
+  position: relative;
+  min-width: 0;
+  padding-inline-end: var(--space-4);
+}
+.about-road-dot {
+  position: relative;
+  float: left;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: var(--space-1);
+  border: 2px solid var(--brand);
+  border-radius: 50%;
+  background: var(--ac-paper);
+  color: var(--brand);
+  font: 600 var(--text-xs) / 1 var(--font-ui);
+}
+.about-road li:last-child .about-road-dot {
+  border-color: var(--editorial-accent);
+  color: var(--text-1);
+}
+.about-road h3 {
+  position: relative;
+  display: inline-block;
+  padding-inline: var(--space-2);
+  background: var(--ac-paper);
+  font-size: var(--text-base);
+  font-weight: 600;
+  line-height: 2rem;
+}
+.about-road p {
+  clear: inline-start;
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--text-2);
+}
+
+/* ---------- the closing band ---------- */
+.about-close {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1fr);
+  grid-template-areas:
+    'where standards together'
+    'company standards together';
+  align-items: start;
+  gap: var(--space-3) var(--space-8);
+  padding-block: var(--space-4) var(--space-5);
+}
+.about-close > #where {
+  grid-area: where;
+}
+.about-close > #standards {
+  grid-area: standards;
+}
+.about-close > #working-together {
+  grid-area: together;
+}
+.about-company {
+  grid-area: company;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-strong);
+}
+.about-section {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.about-section h2 {
+  font-size: var(--text-2xl);
+}
+.about-close p,
+.about-close dd {
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.about-company a {
+  color: var(--brand);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.about-isnot {
+  padding-inline-start: var(--space-3);
+  border-inline-start: 3px solid var(--brand);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: var(--text-base) !important;
+  line-height: 1.4 !important;
+  color: var(--text-1) !important;
+}
+.about-essentials {
+  display: grid;
+  gap: var(--space-3);
+}
+.about-tail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0 var(--space-4);
+}
+/* Open, the detail takes the full width and the link moves under it. */
+.about-more[open] {
+  flex-basis: 100%;
+}
+.about-more > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  border-radius: 6px;
+  color: var(--brand);
+  font-size: var(--text-base);
+  font-weight: 500;
+  cursor: pointer;
+  list-style: none;
+}
+.about-more > summary::-webkit-details-marker {
+  display: none;
+}
+.about-more > summary::before {
+  content: '+' / '';
+  display: inline-grid;
+  place-items: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  font: 600 var(--text-sm) / 1 var(--font-ui);
+}
+.about-more[open] > summary::before {
+  content: '\2212' / '';
+}
+.about-more-hide,
+.about-more[open] .about-more-show {
+  display: none;
+}
+.about-more[open] .about-more-hide {
+  display: inline;
+}
+.about-more-body {
+  display: grid;
+  gap: var(--space-3);
+  padding-block: var(--space-1) var(--space-2);
+}
+.about-phone-only {
+  display: none;
+}
+.about-rungs {
+  display: grid;
+  /* Three in a row; with large text they wrap rather than run past the column. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 7.5rem), 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.about-rungs li {
+  position: relative;
+  display: grid;
+  justify-items: start;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--ac-paper);
+}
+.about-rungs li + li::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: calc(-1 * var(--space-4) + 2px);
+  top: 50%;
+  width: calc(var(--space-4) - 4px);
+  height: 2px;
+  background: var(--border-strong);
+}
+.about-rungs b,
+.about-ladder b,
+.about-terms dt {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1.9;
+  letter-spacing: 0.04em;
+  color: var(--text-1);
+}
+.about-rungs span:not(.guide-tag) {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-2);
+}
+.about-close .guide-tag {
+  max-width: 100%;
+  gap: var(--space-1);
+  padding: 0.125rem var(--space-2);
+  font-size: var(--text-xs);
+  white-space: normal;
+  vertical-align: middle;
+}
+.about-close .guide-tag svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex: none;
+}
+.about-ladder {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.about-ladder li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
+  align-items: baseline;
+  padding-block: 6px;
+  padding-inline-start: var(--space-3);
+  border-inline-start: 3px solid var(--border-strong);
+}
+.about-ladder li:nth-child(2) {
+  margin-inline-start: var(--space-3);
+  border-inline-start-color: color-mix(in srgb, var(--brand) 55%, var(--ac-paper));
+}
+.about-ladder li:nth-child(3) {
+  margin-inline-start: var(--space-6);
+  border-inline-start-color: var(--brand);
+}
+.about-terms {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+.about-terms > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
+}
+/* The label column; the words beside it move under it when the column is too narrow. */
+.about-ladder b {
+  flex: 0 0 4.75rem;
+}
+.about-terms dt {
+  flex: 0 0 5.25rem;
+}
+.about-ladder p,
+.about-terms dd {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+.about-terms dd {
+  margin: 0;
+}
+
+/* ---------- mid widths ---------- */
+@media (max-width: 1100px) {
+  .about-top {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .about-intro {
+    grid-column: 1 / -1;
+  }
+  .about-opening {
+    padding-top: 0;
+  }
+  .about-fold > summary {
+    inset-block-start: 0;
+  }
+  .about-uses {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .about-road {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: var(--space-5);
+  }
+  .about-road::before {
+    display: none;
+  }
+  .about-close {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'where standards'
+      'company standards'
+      'together together';
+  }
+}
+
+/* ---------- phones ---------- */
 @media (max-width: 700px) {
-  .guide-doc-tabs .guide-doc article {
+  .about-top {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding-block: var(--space-2);
+  }
+  .about-intro {
+    grid-column: auto;
     gap: var(--space-2);
+    padding-bottom: var(--space-3);
+  }
+  .about-intro .guide-crumb {
+    display: none;
+  }
+  .about-intro h1 {
+    font-size: var(--text-display);
+  }
+  .about-actions {
+    justify-self: stretch;
+  }
+  .about-actions .primary-link {
+    flex: 1 1 auto;
+  }
+  .about-opening {
+    gap: var(--space-1);
+    padding-block: var(--space-3);
+    border-top: 1px solid var(--line);
+  }
+  .about-fold > summary {
+    inset-block-start: var(--space-2);
+  }
+  .about-opening p {
+    font-size: var(--text-sm);
+  }
+  .about-fold-body {
+    padding-top: var(--space-2);
+  }
+  .about-block {
     padding-block: var(--space-3);
   }
-  .guide-doc-tabs .guide-doc p,
-  .guide-doc-tabs .guide-doc dd,
-  .guide-doc-tabs .guide-doc li {
-    font-size: var(--text-sm);
-    line-height: 1.5;
+  .about-head {
+    gap: var(--space-1) var(--space-4);
+    margin-bottom: var(--space-2);
   }
-  .guide-doc-tabs .guide-doc article > div {
+  .about-head h2,
+  .about-section h2 {
+    font-size: var(--text-xl);
+  }
+  .about-head p {
+    font-size: var(--text-sm);
+  }
+  .about-head .about-quiet {
+    margin-inline-start: 0;
+    margin-block: calc(-1 * var(--space-3)) calc(-1 * var(--space-2));
+  }
+  /* The four kinds of work scroll sideways inside their own row; the next card shows at the edge, and the row
+     takes keyboard focus so the arrow keys scroll it. The page itself never scrolls sideways. */
+  .about-uses {
+    display: flex;
+    gap: var(--space-3);
+    padding-bottom: var(--space-2);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+  .about-uses li {
+    flex: 0 0 86%;
+    padding: var(--space-2) var(--space-3);
+    scroll-snap-align: start;
+  }
+  .about-road {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0;
+  }
+  .about-road::before {
+    display: block;
+    inset-inline: 13px auto;
+    top: 14px;
+    bottom: 14px;
+    width: 2px;
+    height: auto;
+    background: linear-gradient(180deg, var(--brand), var(--editorial-accent));
+  }
+  .about-road li {
+    padding-block: 3px 5px;
+    padding-inline: 2.375rem 0;
+    font-size: var(--text-sm);
+    line-height: 1.4;
+  }
+  .about-road-dot {
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0;
+    float: none;
+    width: 1.75rem;
+    height: 1.75rem;
+    margin: 0;
+  }
+  .about-road h3 {
+    display: inline;
+    padding: 0;
+    background: none;
+    font-size: var(--text-sm);
+    line-height: 1.4;
+  }
+  .about-road h3::after {
+    content: '. ';
+  }
+  .about-road p {
+    display: inline;
+    line-height: inherit;
+  }
+  .about-close {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'where'
+      'standards'
+      'together'
+      'company';
+    gap: var(--space-2);
+    padding-block: var(--space-3) var(--space-4);
+  }
+  .about-section {
     gap: var(--space-2);
   }
-}
-
-/* A little less padding between the articles of a tab on a wide screen, so two articles fit one screen. */
-@media (min-width: 1000px) {
-  .guide-doc-tabs .guide-doc article {
-    padding-block: var(--space-4);
+  .about-company {
+    margin-top: var(--space-1);
+  }
+  .about-company p {
+    font-size: var(--text-xs);
+  }
+  .about-wide-only {
+    display: none;
+  }
+  .about-phone-only {
+    display: grid;
+  }
+  /* Show Details becomes the round control beside the heading; its words stay its accessible name. */
+  .about-section {
+    position: relative;
+  }
+  .about-section > h2 {
+    padding-inline-end: 3.5rem;
+  }
+  .about-tail {
+    display: block;
+  }
+  .about-more > summary {
+    position: absolute;
+    inset-block-start: calc(-1 * var(--space-3));
+    inset-inline-end: 0;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid var(--border-strong);
+    border-radius: 50%;
+    background: var(--ac-paper);
+  }
+  .about-more > summary::before {
+    width: auto;
+    height: auto;
+    border: 0;
+    font: 500 var(--text-xl) / 1 var(--font-ui);
+  }
+  .about-more > summary > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .about-more-body {
+    padding-block: 0 var(--space-1);
+  }
+  .about-ladder b,
+  .about-terms dt {
+    flex-basis: 100%;
+  }
+  .about-rungs {
+    gap: var(--space-3);
+  }
+  .about-rungs li {
+    padding: var(--space-2);
+  }
+  .about-rungs li + li::before {
+    inset-inline-start: calc(-1 * var(--space-3) + 2px);
+    width: calc(var(--space-3) - 4px);
   }
 }

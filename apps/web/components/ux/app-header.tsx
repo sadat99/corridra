@@ -18,7 +18,8 @@ import {
   subscribeTeamContext,
 } from '../../lib/ux/team-context';
 import { CorridraIcon } from '../corridra-icon';
-import { BarInbox, CustomerBar, LanguageMenuGroup } from './customer-bar';
+import { BarInbox, LanguageMenuGroup } from './customer-bar';
+import { CustomerBar } from './customer-header';
 import { LeftNavMenuButton } from './left-nav';
 import { MenuLink } from './menu-link';
 import { NotificationInbox } from './notification-inbox';
@@ -135,10 +136,7 @@ export function AppHeader({
         </span>
       ) : null}
       {customer ? (
-        <>
-          <CustomerBar notifications={notifications} />
-          <CornerDock variant="header" />
-        </>
+        <CustomerBar notifications={notifications} />
       ) : kind === 'team' ? (
         <div className="ux-app-tools ux-team-tools">
           {notifications && inboxEndpoint ? (

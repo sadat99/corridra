@@ -2,7 +2,7 @@
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { linkStatusText, type LinkStatus } from '../company-link-status';
-import { onDeviceClock } from '../../../lib/server-clock';
+import { onDeviceClock, privateViewMaxMs } from '../../../lib/server-clock';
 import { ReplyError, loadReason, withReason } from '../../../lib/load-reason';
 
 const evidenceKinds = [
@@ -63,7 +63,7 @@ function parseView(value: unknown, workspaceId: string): View {
     ['version', !Number.isInteger(v.currentProfileVersion)],
     ['expiry missing', !Number.isFinite(expires)],
     ['expiry past', expires <= Date.now()],
-    ['expiry far', expires > Date.now() + 65000],
+    ['expiry far', expires > Date.now() + privateViewMaxMs],
     ['claim', v.claim !== null && typeof v.claim !== 'object'],
     [
       'link',

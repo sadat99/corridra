@@ -1,13 +1,13 @@
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect, type Page } from '@playwright/test';
 
-// Layout budget, Phase 2b-i (docs/revamp/specs/layout-budget.md): How it works, About, Routes and the three route
-// pages are cut into tabs with the shared SubTabs. Each tab fits 2.0 desktop screens (1440 x 900) and 3.0 phone
+// Layout budget, Phase 2b-i (docs/revamp/specs/layout-budget.md): How it works, Routes and the three route pages
+// are cut into tabs with the shared SubTabs. About left the tabs for one Editorial page (owner, 6 November 2026);
+// its anchors, disclosures and length are checked in about-editorial.spec.ts. Each tab fits 2.0 desktop screens (1440 x 900) and 3.0 phone
 // screens (390 x 844), footer included (owner decision of 6 November 2026). Nothing is removed: every word stays in the server HTML, an old #address opens the tab that
 // holds it, an in-page link opens its own target's tab, and a hidden panel is never shown by a page rule.
 const tabbed = [
   { path: '/how-it-works', tabs: ['before-you-meet', 'meet-and-follow-up'] },
-  { path: '/about', tabs: ['why', 'who', 'how', 'focus', 'together'] },
   { path: '/corridors', tabs: ['routes', 'route', 'sample'] },
   { path: '/corridors/bangladesh-china', tabs: ['help', 'availability', 'work'] },
   { path: '/corridors/bangladesh-spain', tabs: ['help', 'availability', 'work'] },
@@ -136,13 +136,6 @@ for (const { path, tabs } of tabbed) {
 
 // An old address lands on its content: the tab that holds it opens, then the element is shown.
 const oldAddresses: [string, string, string][] = [
-  ['/about#why', 'why', '#why'],
-  ['/about#what', 'why', '#what'],
-  ['/about#for-whom', 'who', '#for-whom'],
-  ['/about#how', 'how', '#how'],
-  ['/about#where', 'focus', '#where'],
-  ['/about#standards', 'focus', '#standards'],
-  ['/about#working-together', 'together', '#working-together'],
   ['/corridors#mission-example', 'sample', '#mission-example'],
   ['/corridors#commercial-objective', 'route', '#commercial-objective'],
   ['/corridors#directions-title', 'routes', '#directions-title'],

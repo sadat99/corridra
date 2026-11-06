@@ -81,6 +81,7 @@ export function LeftNavFrame({
   nav,
   top,
   foot,
+  narrow = 'drawer',
   children,
 }: {
   /** The id of the navigation element inside `nav`; the menu button and collapse control point at it. */
@@ -93,6 +94,11 @@ export function LeftNavFrame({
   top?: ReactNode;
   /** Shown at the foot of the bar, under the collapse control (Help and the signed-in person). */
   foot?: ReactNode;
+  /**
+   * Below 1024 px: `drawer` (the default, as before) is a left drawer opened from the header menu button;
+   * `tabs` has no drawer and no menu button, because the shell draws its own labelled bottom tabs instead.
+   */
+  narrow?: 'drawer' | 'tabs';
   children: ReactNode;
 }) {
   const state = useSyncExternalStore(subscribeLeftNav, readLeftNav, readServerLeftNav);
@@ -102,7 +108,11 @@ export function LeftNavFrame({
   const panel = useRef<HTMLDivElement>(null);
   const { menuLabel } = words;
 
-  useEffect(() => registerLeftNav(navId, menuLabel), [navId, menuLabel]);
+  useEffect(() => {
+    // With bottom tabs there is no drawer to open, so no menu button is offered.
+    if (narrow === 'tabs') return;
+    return registerLeftNav(navId, menuLabel);
+  }, [navId, menuLabel, narrow]);
   // Growing past 1024 px closes the drawer: a wide screen has the bar beside the page instead.
   useEffect(() => {
     if (wide) setLeftNavOpen(false);
@@ -153,6 +163,7 @@ export function LeftNavFrame({
     <div
       className="ux-leftnav-frame"
       data-collapsed={wide && collapsed ? 'true' : 'false'}
+      data-narrow={narrow}
       lang={lang}
       dir={dir}
     >
