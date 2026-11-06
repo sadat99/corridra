@@ -1,11 +1,11 @@
 'use client';
-// The Team shell sidebar (Signal Desk map, docs/revamp/specs/signal-desk.md): Today, Missions,
-// Companies, Delivery, Outcomes and All tools and settings. Each of the 18 workspace sections sits in
-// exactly one group, so nothing that existed before is more than two clicks away. A group with one
-// visible section is a plain link; a group with more opens to list them, and the group holding the
-// current page is open. Convenience only: each section still checks the role and the server decides
-// every action. Owner: WS-E.
+// The Team shell sidebar (Navigation v1, docs/revamp/specs/navigation-v1.md): Today, Missions,
+// Companies, Meetings and Money, and an Admin group for owner and admin. Every workspace section,
+// the owner page and the mission page keep their address; lib/ux/team-map.ts says where each is
+// found and the second level (team-second-level.tsx) lists the places inside an item. Convenience
+// only: each section still checks the role and the server decides every action. Owner: S4.
 import './shells.css';
+import './team-nav.css';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useSyncExternalStore, type ReactNode } from 'react';
@@ -13,23 +13,31 @@ import { OperatorIcon } from '../operator-icon';
 import { useLanguage } from '../language-provider';
 import { subscribeToHash } from '../../lib/address-store';
 import { sectionForSlug } from '../../lib/operator-urls';
-import { translate } from '../../lib/i18n/messages';
-import { workspaceSections } from '../../lib/workspace-navigation';
+import { currentTeamSection } from '../../lib/ux/shells';
 import {
-  currentTeamItem,
-  currentTeamSection,
-  sectionAllowedFor,
-  sectionLabel,
-  teamNavigation,
-  teamSectionHref,
-} from '../../lib/ux/shells';
+  itemForPlace,
+  placeHref,
+  teamItemsFor,
+  teamPlacesFor,
+  type TeamItem,
+  type TeamPlaceId,
+} from '../../lib/ux/team-map';
 import {
   readServerTeamContext,
   readTeamContext,
   subscribeTeamContext,
 } from '../../lib/ux/team-context';
 
-export function TeamSidebar({ urls, ownerPage }: { urls: boolean; ownerPage: boolean }) {
+const translated: Partial<
+  Record<TeamItem['key'], Parameters<ReturnType<typeof useLanguage>['t']>[0]>
+> = {
+  today: 'wse.team.today',
+  missions: 'wse.team.missions',
+  companies: 'wse.team.companies',
+  meetings: 'wse.team.meetings',
+};
+
+export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
   const { t, locale } = useLanguage();
   const pathname = usePathname() ?? '/operator';
   const hash = useSyncExternalStore(
@@ -43,51 +51,61 @@ export function TeamSidebar({ urls, ownerPage }: { urls: boolean; ownerPage: boo
     readServerTeamContext,
   );
   const section = currentTeamSection(pathname, hash, sectionForSlug);
-  const current = currentTeamItem(section);
-  const groups = useRef(new Map<string, HTMLDetailsElement>());
-  // The group holding the current page opens by itself, so a deep link or `#` link lands visibly.
+  const place = (section || 'home') as TeamPlaceId;
+  const current = itemForPlace(place, role);
+  const admin = useRef<HTMLDetailsElement | null>(null);
+  // The Admin group opens by itself on one of its pages, so a deep link lands visibly.
   useEffect(() => {
-    const group = groups.current.get(current);
-    if (group) group.open = true;
+    if (admin.current && current === 'admin') admin.current.open = true;
   }, [current]);
-  const href = (id?: string) => teamSectionHref(id, urls, tenant);
   // A section word on a mission page, the owner page or a `#` link is a full page change: the
   // workspace reads the address once, so a soft change could show the old section.
   const plain = pathname !== '/operator' && !sectionForSlug(pathname.split('/')[2] ?? '');
-  // Until the workspace has loaded the role is unknown. Then only what every role may open is
-  // listed, so an owner or admin link never flashes for someone who cannot use it. Presentation
-  // only: each section and action still checks the role on the server.
-  const allowed = (id: string) =>
-    role === null
-      ? !!(
-          workspaceSections.find((entry) => entry.id === id)?.roles as readonly string[] | undefined
-        )?.includes('viewer')
-      : sectionAllowedFor(id, role);
-  const showOwner = ownerPage && (role === 'owner' || role === 'admin');
-  // A word with no text in the chosen language falls back to English; it is then marked as English.
-  function word(key: Parameters<typeof t>[0]): ReactNode {
-    const text = t(key);
-    return locale !== 'en' && text === translate('en', key) ? <span lang="en">{text}</span> : text;
-  }
+  const label = (item: TeamItem): ReactNode => {
+    const key = translated[item.key];
+    if (key && locale === 'en') return item.label;
+    if (key) {
+      const text = t(key);
+      return text;
+    }
+    return locale !== 'en' ? <span lang="en">{item.label}</span> : item.label;
+  };
   const english = (text: string): ReactNode =>
     locale !== 'en' ? <span lang="en">{text}</span> : text;
-  function item(key: string, label: ReactNode, icon: string, target: string, active: boolean) {
+  function link(
+    key: string,
+    text: ReactNode,
+    name: string,
+    icon: string,
+    target: string,
+    active: boolean,
+  ) {
     const content = (
       <>
         <OperatorIcon name={icon} />
-        <span>{label}</span>
+        <span>{text}</span>
       </>
     );
+    // The name shows as a tooltip when the bar is collapsed to icons.
     return plain || target.includes('#') ? (
-      <a key={key} href={target} aria-current={active ? 'page' : undefined}>
+      <a key={key} href={target} title={name} aria-current={active ? 'page' : undefined}>
         {content}
       </a>
     ) : (
-      <Link key={key} prefetch={false} href={target} aria-current={active ? 'page' : undefined}>
+      <Link
+        key={key}
+        prefetch={false}
+        href={target}
+        title={name}
+        aria-current={active ? 'page' : undefined}
+      >
         {content}
       </Link>
     );
   }
+  const items = teamItemsFor(role);
+  const daily = items.filter((item) => item.key !== 'admin');
+  const adminItem = items.find((item) => item.key === 'admin');
   return (
     <nav
       id="workspace-navigation"
@@ -96,67 +114,48 @@ export function TeamSidebar({ urls, ownerPage }: { urls: boolean; ownerPage: boo
       aria-label={t('wse.team.nav')}
     >
       <ul>
-        {teamNavigation.map((entry) => {
-          if (!entry.sections)
-            return (
-              <li key={entry.key}>
-                {item(entry.key, word(entry.label), entry.icon, href(), current === entry.key)}
-              </li>
-            );
-          const visible = entry.sections.filter(allowed);
-          const owner = entry.key === 'tools' && showOwner;
-          if (visible.length === 0 && !owner) return null;
-          if (visible.length === 1 && entry.key !== 'tools')
-            return (
-              <li key={entry.key}>
-                {item(
-                  entry.key,
-                  word(entry.label),
-                  entry.icon,
-                  href(visible[0]),
-                  current === entry.key,
-                )}
-              </li>
-            );
+        {daily.map((item) => {
+          const first = teamPlacesFor(item, role)[0];
+          if (!first) return null;
           return (
-            <li key={entry.key}>
-              <details
-                ref={(node) => {
-                  if (node) groups.current.set(entry.key, node);
-                  else groups.current.delete(entry.key);
-                }}
-                className="ux-team-group"
-                open={current === entry.key}
-              >
-                <summary aria-current={current === entry.key ? 'true' : undefined}>
-                  <OperatorIcon name={entry.icon} />
-                  <span>{word(entry.label)}</span>
-                  <OperatorIcon name="chevron" className="ux-team-chevron" />
-                </summary>
-                <ul>
-                  {visible.map((id) => (
-                    <li key={id}>
-                      {item(id, english(sectionLabel(id)), 'chevron', href(id), section === id)}
-                    </li>
-                  ))}
-                  {owner ? (
-                    <li>
-                      <Link
-                        prefetch={false}
-                        href="/operator/owner"
-                        aria-current={section === 'owner' ? 'page' : undefined}
-                      >
-                        <OperatorIcon name="shield" />
-                        <span>{word('wse.team.owner')}</span>
-                      </Link>
-                    </li>
-                  ) : null}
-                </ul>
-              </details>
+            <li key={item.key}>
+              {link(
+                item.key,
+                label(item),
+                item.label,
+                item.icon,
+                placeHref(first.id, urls, tenant),
+                current === item.key,
+              )}
             </li>
           );
         })}
       </ul>
+      {adminItem ? (
+        <details ref={admin} className="ux-team-group" open={current === 'admin'}>
+          <summary aria-current={current === 'admin' ? 'true' : undefined}>
+            <OperatorIcon name={adminItem.icon} />
+            <span>{label(adminItem)}</span>
+            <OperatorIcon name="chevron" className="ux-team-chevron" />
+          </summary>
+          <ul>
+            {teamPlacesFor(adminItem, role).map((entry) => (
+              <li key={entry.id}>
+                {link(
+                  entry.id,
+                  english(entry.label),
+                  entry.label,
+                  'chevron',
+                  placeHref(entry.id, urls, tenant),
+                  place === entry.id ||
+                    (entry.id === 'workspace-settings' &&
+                      (place === 'ops-center' || place === 'owner')),
+                )}
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
     </nav>
   );
 }

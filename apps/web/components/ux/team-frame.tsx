@@ -14,6 +14,7 @@ import { LeftNavFrame } from './left-nav';
 import { setLeftNavOpen } from './left-nav-store';
 import { useMarkedWord } from './marked-word';
 import { StepUpDialog } from './step-up-dialog';
+import { TeamSecondLevel } from './team-second-level';
 import { TeamSidebar } from './team-sidebar';
 
 export function TeamFrame({
@@ -57,6 +58,7 @@ export function TeamFrame({
         }}
         nav={<TeamSidebar urls={urls} ownerPage={ownerPage} />}
       >
+        <TeamSecondLevel urls={urls} ownerPage={ownerPage} />
         {children}
       </LeftNavFrame>
       <StepUpDialog />

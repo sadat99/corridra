@@ -33,7 +33,9 @@ describe('team sidebar sections while the role is unknown', () => {
   test('lists only what every role may open, and none of the restricted sections', async () => {
     const TeamSidebar = await load();
     const html = renderToStaticMarkup(createElement(TeamSidebar, { urls: true, ownerPage: true }));
-    for (const word of ['missions', 'authenticator']) expect(link(html, word), word).toBe(true);
+    for (const word of ['missions', 'research', 'meetings', 'commercial'])
+      expect(link(html, word), word).toBe(true);
+    expect(html).not.toContain('Admin');
     for (const word of [
       'controls',
       'audit',
@@ -52,21 +54,42 @@ describe('team sidebar sections while the role is unknown', () => {
 });
 
 describe('team sidebar once the role is known', () => {
-  const renderAs = async (role: string) => {
+  const secondPath = '../../apps/web/components/ux/team-second-level';
+  const renderAs = async (role: string, at = '/operator/settings') => {
     vi.resetModules();
     vi.doMock('../../apps/web/lib/ux/team-context', () => ({
       subscribeTeamContext: () => () => undefined,
       readTeamContext: () => ({ tenant: '', role }),
       readServerTeamContext: () => ({ tenant: '', role }),
     }));
-    const TeamSidebar = await load();
-    return renderToStaticMarkup(createElement(TeamSidebar, { urls: true, ownerPage: true }));
+    vi.doMock(web.resolve('next/navigation'), () => ({ usePathname: () => at }));
+    vi.doMock(web.resolve('next/link'), () => ({
+      default: ({ children, href }: { children: unknown; href: string }) =>
+        createElement('a', { href }, children as never),
+    }));
+    const TeamSecondLevel = (await import(/* @vite-ignore */ secondPath)).TeamSecondLevel;
+    return renderToStaticMarkup(createElement(TeamSecondLevel, { urls: true, ownerPage: true }));
   };
   test('lists the owner page for owner and admin, not for an operator or viewer', async () => {
     expect(await renderAs('owner')).toContain('/operator/owner');
     expect(await renderAs('admin')).toContain('/operator/owner');
     expect(await renderAs('operator')).not.toContain('/operator/owner');
     expect(await renderAs('viewer')).not.toContain('/operator/owner');
+  });
+  test('the owner page link needs the owner page to be on', async () => {
+    vi.resetModules();
+    vi.doMock('../../apps/web/lib/ux/team-context', () => ({
+      subscribeTeamContext: () => () => undefined,
+      readTeamContext: () => ({ tenant: '', role: 'owner' }),
+      readServerTeamContext: () => ({ tenant: '', role: 'owner' }),
+    }));
+    vi.doMock(web.resolve('next/navigation'), () => ({ usePathname: () => '/operator/settings' }));
+    const TeamSecondLevel = (await import(/* @vite-ignore */ secondPath)).TeamSecondLevel;
+    const html = renderToStaticMarkup(
+      createElement(TeamSecondLevel, { urls: true, ownerPage: false }),
+    );
+    expect(html).not.toContain('/operator/owner');
+    expect(html).toContain('/operator/control-center');
   });
 });
 
@@ -93,20 +116,19 @@ describe('team pages that do not mount the workspace publish the role from the s
     const TeamSidebar = await load();
     return renderToStaticMarkup(createElement(TeamSidebar, { urls: true, ownerPage: true }));
   };
-  test('an owner or admin sees the Owner page, controls and network once the publisher ran', async () => {
+  test('an owner or admin sees the Admin group once the publisher ran', async () => {
     const owner = await withPublisher('owner');
-    expect(owner).toContain('href="/operator/owner"');
-    for (const word of ['controls', 'network', 'settings'])
+    for (const word of ['controls', 'settings', 'audit', 'health', 'readiness'])
       expect(link(owner, word), word).toBe(true);
     const admin = await withPublisher('admin');
-    expect(admin).toContain('href="/operator/owner"');
-    expect(link(admin, 'network')).toBe(true);
+    expect(link(admin, 'settings')).toBe(true);
     expect(link(admin, 'controls')).toBe(false);
   });
   test('a viewer gets nothing more than the unknown role does', async () => {
     const viewer = await withPublisher('viewer');
     expect(viewer).not.toContain('/operator/owner');
-    for (const word of ['controls', 'network', 'settings'])
+    expect(viewer).not.toContain('Admin');
+    for (const word of ['controls', 'network', 'settings', 'audit'])
       expect(link(viewer, word), word).toBe(false);
   });
   test('with no publisher mounted the owner links are absent', async () => {

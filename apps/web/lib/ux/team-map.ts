@@ -4,7 +4,7 @@
 // mission page keep their address; this file only says where each one is found. Navigation never
 // grants access: a place is listed only for a role that may open it, and the server still decides.
 // Owner: S4.
-import { sectionAllowedFor } from './shells';
+import { sectionAllowedFor, teamSectionHref } from './shells';
 import { workspaceSections } from '../workspace-navigation';
 
 type SectionId = (typeof workspaceSections)[number]['id'];
@@ -144,4 +144,14 @@ export function itemForPlace(id: TeamPlaceId, role: string | null): TeamItem['ke
   if (id === 'ops-center' || id === 'owner') return 'admin';
   const found = teamMap.find((i) => i.key !== 'admin' && i.places.some((p) => p.id === id));
   return found ? found.key : 'admin';
+}
+
+/**
+ * The address of a place. A section uses its address word (or the `#` link when section addresses
+ * are off), the workspace home is `/operator` and the owner page is `/operator/owner`. The chosen
+ * workspace is kept in each.
+ */
+export function placeHref(id: TeamPlaceId, urls: boolean, workspace = ''): string {
+  if (id === 'owner') return '/operator/owner';
+  return teamSectionHref(id === 'home' ? undefined : id, urls, workspace);
 }

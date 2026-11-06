@@ -2,15 +2,15 @@ import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { describe, expect, test, vi } from 'vitest';
 import { translate } from '../../apps/web/lib/i18n/messages';
-import { sectionForSlug, operatorSlugs } from '../../apps/web/lib/operator-urls';
+import { operatorSlugs, sectionForSlug } from '../../apps/web/lib/operator-urls';
 import { workspaceSections } from '../../apps/web/lib/workspace-navigation';
-import { currentTeamItem, currentTeamSection, teamNavigation } from '../../apps/web/lib/ux/shells';
+import { currentTeamSection } from '../../apps/web/lib/ux/shells';
+import { itemForPlace, type TeamPlaceId } from '../../apps/web/lib/ux/team-map';
 
-// Signal Desk (revamp Wave 5, step B2, docs/revamp/specs/signal-desk.md): S-01 to S-04. S-02 (the same
-// reachable sections per role as before) is staff-parity.test.ts; S-03 (nothing role-limited and no
-// owner link while the role is unknown) is also pinned in team-sidebar-role.test.ts. S-05 (390 and
-// wide widths, no sideways scroll, 44 px targets, accessibility) runs in the browser, in
-// tests/e2e/verification/ws-e/team-shell.spec.ts.
+// Team navigation as rendered (Navigation v1, docs/revamp/specs/navigation-v1.md; it replaced the
+// Signal Desk map S-01 to S-04). The map and its rules are in team-navigation-map.test.ts; this file
+// renders the sidebar and the second level and walks the links the way a person would. S-05 (widths,
+// targets, accessibility) runs in the browser, tests/e2e/verification/ws-e/team-shell.spec.ts.
 const web = createRequire(resolve('apps/web/package.json'));
 const createElement = web('react').createElement as (
   t: unknown,
@@ -21,7 +21,8 @@ const renderToStaticMarkup = web('react-dom/server').renderToStaticMarkup as (e:
 let pathname = '/operator';
 
 const sidebarPath = '../../apps/web/components/ux/team-sidebar';
-const render = async (role: string | null, at = '/operator', locale = 'en') => {
+const secondPath = '../../apps/web/components/ux/team-second-level';
+const render = async (role: string | null, at = '/operator', locale = 'en', ownerPage = true) => {
   pathname = at;
   vi.resetModules();
   // The web app resolves its own copy of next, so the mocks name that copy.
@@ -42,153 +43,120 @@ const render = async (role: string | null, at = '/operator', locale = 'en') => {
     }),
   }));
   const { TeamSidebar } = await import(/* @vite-ignore */ sidebarPath);
-  return renderToStaticMarkup(createElement(TeamSidebar, { urls: true, ownerPage: true }));
+  const { TeamSecondLevel } = await import(/* @vite-ignore */ secondPath);
+  return {
+    sidebar: renderToStaticMarkup(createElement(TeamSidebar, { urls: true, ownerPage })),
+    second: renderToStaticMarkup(createElement(TeamSecondLevel, { urls: true, ownerPage })),
+  };
 };
-const link = (html: string, word: string) => html.includes('href="/operator/' + word + '"');
+const hrefs = (html: string) => [...html.matchAll(/href="([^"]+)"/g)].map((m) => m[1]!);
 const roles = ['owner', 'admin', 'operator', 'reviewer', 'viewer'];
 
-describe('S-01 the map places each section exactly once', () => {
-  test('every id in workspaceSections is in exactly one group, and no group names an unknown id', () => {
-    const placed = teamNavigation.flatMap((group) => group.sections ?? []);
-    const ids = workspaceSections.map((section) => section.id);
-    expect([...placed].sort()).toEqual([...ids].sort());
-    expect(new Set(placed).size).toBe(placed.length);
-    expect(placed).toHaveLength(18);
-  });
-  test('the locked names, in order, with Today first and no group beyond the six', () => {
-    expect(teamNavigation.map((group) => translate('en', group.label))).toEqual([
+describe('NAV-04 the sidebar holds the five daily items, and Admin only for owner and admin', () => {
+  test('the words in order, and Admin lists its five', async () => {
+    const { sidebar } = await render('owner');
+    const words = [...sidebar.matchAll(/<span>([^<]+)<\/span>/g)].map((m) => m[1]);
+    expect(words).toEqual([
       'Today',
       'Missions',
       'Companies',
-      'Delivery',
-      'Outcomes',
-      'All tools and settings',
+      'Meetings',
+      'Money',
+      'Admin',
+      'Health',
+      'Readiness',
+      'Audit',
+      'People and access',
+      'Settings',
     ]);
-    expect(teamNavigation[0]?.sections).toBeUndefined();
   });
-  test('the map matches the Guardian table', () => {
-    const map = Object.fromEntries(
-      teamNavigation.filter((g) => g.sections).map((g) => [g.key, g.sections]),
-    );
-    expect(map).toEqual({
-      missions: ['workspace-missions', 'workspace-meetings', 'workspace-commercial'],
-      companies: ['workspace-research', 'workspace-sources', 'workspace-evidence'],
-      delivery: ['workspace-delivery', 'workspace-network', 'workspace-ai'],
-      outcomes: ['ops-dashboard'],
-      tools: [
-        'workspace-operations',
-        'ops-health',
-        'ops-gates',
-        'ops-center',
-        'workspace-settings',
-        'workspace-audit',
-        'workspace-authenticator',
-        'workspace-controls',
-      ],
-    });
+  test('no other role sees Admin or its pages; an operator keeps the daily items', async () => {
+    for (const role of ['operator', 'reviewer', 'viewer', null]) {
+      const { sidebar } = await render(role);
+      expect(sidebar, String(role)).not.toContain('Admin');
+      expect(sidebar).not.toContain('<details');
+      expect(hrefs(sidebar)).not.toContain('/operator/audit');
+    }
+    expect((await render('admin')).sidebar).toContain('Admin');
   });
 });
 
-describe('S-03 nothing role-limited and no owner link while the role is unknown', () => {
-  test('only what every role may open is listed, and Outcomes is hidden', async () => {
-    const html = await render(null);
-    for (const word of [
-      'missions',
-      'meetings',
-      'commercial',
-      'research',
-      'sources',
-      'evidence',
-      'delivery',
-      'authenticator',
-    ])
-      expect(link(html, word), word).toBe(true);
-    for (const word of [
-      'assistance',
-      'network',
-      'dashboard',
-      'operations',
-      'health',
-      'readiness',
-      'control-center',
-      'settings',
-      'audit',
-      'controls',
-    ])
-      expect(link(html, word), word).toBe(false);
-    expect(html).not.toContain('/operator/owner');
-    expect(html).not.toContain('>Outcomes<');
-  });
-});
-
-describe('a group with no visible section for the role is not rendered', () => {
-  test('a viewer has no Outcomes group; an operator has it', async () => {
-    expect(await render('viewer')).not.toContain('>Outcomes<');
-    expect(link(await render('operator'), 'dashboard')).toBe(true);
-  });
-  test('a group with one visible section is a plain link, and the tools group is always a list', async () => {
-    const viewer = await render('viewer');
-    expect(viewer).toContain('<a href="/operator/delivery"');
-    expect(viewer).toContain('>All tools and settings<');
-    expect(viewer).toContain('<summary');
-    expect(link(viewer, 'authenticator')).toBe(true);
-  });
-});
-
-describe('S-04 every address and hash opens its section, with its group open', () => {
+describe('NAV-05 every address and hash marks its place current, in an item that holds it', () => {
   for (const [id, slug] of Object.entries(operatorSlugs)) {
-    test(`/operator/${slug} (${id}) opens its group and marks its link current`, async () => {
-      const group = currentTeamItem(currentTeamSection('/operator/' + slug, '', sectionForSlug));
-      expect(teamNavigation.find((g) => g.key === group)?.sections).toContain(id);
-      expect(currentTeamItem(currentTeamSection('/operator', '#' + id, sectionForSlug))).toBe(
-        group,
-      );
+    test(`/operator/${slug} (${id})`, async () => {
       const role = workspaceSections.find((s) => s.id === id)!.roles[0];
-      const html = await render(role, '/operator/' + slug);
-      expect(html).toMatch(
+      const item = itemForPlace(id as TeamPlaceId, role);
+      const { sidebar, second } = await render(role, '/operator/' + slug);
+      // The place is current in the sidebar (its item's first place or Admin) or in the second level.
+      const current = [sidebar, second].some((html) =>
         new RegExp(
           '<a [^>]*aria-current="page"[^>]*href="/operator/' +
             slug +
             '"|<a href="/operator/' +
             slug +
             '"[^>]*aria-current="page"',
-        ),
+        ).test(html),
       );
-      // The group holding the page is the only one open; Outcomes has one section, so it is a link.
-      const open = html.match(/<details[^>]*open=""[^>]*>/g) ?? [];
-      expect(open.length, 'open groups').toBe(group === 'outcomes' ? 0 : 1);
+      expect(current, `${slug} current`).toBe(true);
+      // A hash link names the same item.
+      expect(
+        itemForPlace(
+          currentTeamSection('/operator', '#' + id, sectionForSlug) as TeamPlaceId,
+          role,
+        ),
+      ).toBe(item);
     });
   }
-  test('the owner page and a mission address open the right group', async () => {
-    expect(await render('owner', '/operator/owner')).toMatch(/<details[^>]*open=""/);
-    expect(currentTeamItem(currentTeamSection('/operator/missions/abc', '', sectionForSlug))).toBe(
-      'missions',
-    );
-  });
-  test('every role keeps every one of its sections reachable from the rendered list', async () => {
-    for (const role of roles) {
-      const html = await render(role);
-      for (const section of workspaceSections.filter((s) =>
-        (s.roles as readonly string[]).includes(role),
-      ))
-        expect(
-          link(html, operatorSlugs[section.id]) ||
-            (section.id === 'workspace-delivery' && link(html, 'delivery')),
-          role + ' ' + section.id,
-        ).toBe(true);
-    }
+  test('a mission address belongs to Missions, and the owner page to Admin', async () => {
+    expect(
+      itemForPlace(
+        currentTeamSection('/operator/missions/abc', '', sectionForSlug) as TeamPlaceId,
+        'operator',
+      ),
+    ).toBe('missions');
+    const { sidebar } = await render('owner', '/operator/owner');
+    expect(sidebar).toMatch(/<details[^>]*open=""/);
   });
 });
 
+describe('NAV-06 every role reaches every one of its sections by following links', () => {
+  // Start at Today and follow every link that is an operator page, the way a person clicks.
+  async function walk(role: string) {
+    const seen = new Set<string>();
+    const queue = ['/operator'];
+    while (queue.length) {
+      const at = queue.shift()!;
+      if (seen.has(at)) continue;
+      seen.add(at);
+      const { sidebar, second } = await render(role, at);
+      for (const href of hrefs(sidebar + second))
+        if (href.startsWith('/operator') && !seen.has(href)) queue.push(href);
+    }
+    return seen;
+  }
+  for (const role of roles)
+    test(role, async () => {
+      const seen = await walk(role);
+      for (const section of workspaceSections.filter((s) =>
+        (s.roles as readonly string[]).includes(role),
+      ))
+        expect(seen.has('/operator/' + operatorSlugs[section.id]), `${role} ${section.id}`).toBe(
+          true,
+        );
+      expect(seen.has('/operator/owner')).toBe(role === 'owner' || role === 'admin');
+    });
+});
+
 describe('language: words with no text in the chosen language are marked English', () => {
-  test('Delivery, Outcomes and All tools and settings carry lang="en"; translated words do not', async () => {
-    const html = await render('owner', '/operator', 'bn');
-    for (const word of ['Delivery', 'Outcomes', 'All tools and settings'])
-      expect(html, word).toContain('<span lang="en">' + word + '</span>');
-    expect(html).toContain(translate('bn', 'wse.team.today'));
-    expect(html).not.toContain('<span lang="en">' + translate('bn', 'wse.team.today'));
+  test('Money, Admin and the places carry lang="en"; translated words do not', async () => {
+    const { sidebar } = await render('owner', '/operator', 'bn');
+    for (const word of ['Money', 'Admin'])
+      expect(sidebar, word).toContain('<span lang="en">' + word + '</span>');
+    expect(sidebar).toContain(translate('bn', 'wse.team.today'));
+    expect(sidebar).not.toContain('<span lang="en">' + translate('bn', 'wse.team.today'));
   });
   test('in English nothing is marked', async () => {
-    expect(await render('owner')).not.toContain('lang="en"');
+    const { sidebar, second } = await render('owner');
+    expect(sidebar + second).not.toContain('lang="en"');
   });
 });

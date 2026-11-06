@@ -32,11 +32,10 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
   }
   await expect(sidebar).toBeVisible();
-  // Signal Desk map: Today and Outcomes are links, the other groups open to list their sections.
-  await expect(sidebar.getByRole('link', { name: 'Today', exact: true })).toBeVisible();
-  await expect(sidebar.getByRole('link', { name: 'Outcomes', exact: true })).toBeVisible();
-  for (const name of ['Missions', 'Companies', 'Delivery', 'All tools and settings'])
-    await expect(sidebar.locator('summary', { hasText: name })).toBeVisible();
+  // Navigation v1: the five daily items are links and Admin (owner and admin) opens to list its five.
+  for (const name of ['Today', 'Missions', 'Companies', 'Meetings', 'Money'])
+    await expect(sidebar.getByRole('link', { name, exact: true })).toBeVisible();
+  await expect(sidebar.locator('summary', { hasText: 'Admin' })).toBeVisible();
   // Every sidebar target is at least 44 pixels tall.
   for (const box of await sidebar
     .locator('a, summary')
@@ -61,9 +60,8 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   );
   await evidence(page, `V-06-today-${info.project.name}`);
 
-  // Tab order: Today, then each group's summary, then Outcomes and All tools and settings. A closed
-  // group's links are not in the order. Enter and Space both toggle a group and focus stays on its
-  // summary.
+  // Tab order: Today, Missions, Companies, Meetings, Money, then the Admin summary. A closed group's
+  // links are not in the order. Enter and Space both toggle the group and focus stays on its summary.
   const focusedText = () => page.evaluate(() => document.activeElement?.textContent?.trim() ?? '');
   await sidebar.getByRole('link', { name: 'Today', exact: true }).focus();
   const order: string[] = [];
@@ -71,33 +69,20 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
     await page.keyboard.press('Tab');
     order.push(await focusedText());
   }
-  expect(order).toEqual([
-    'Missions',
-    'Companies',
-    'Delivery',
-    'Outcomes',
-    'All tools and settings',
-  ]);
-  const companies = sidebar.locator('summary', { hasText: 'Companies' });
-  await companies.focus();
+  expect(order).toEqual(['Missions', 'Companies', 'Meetings', 'Money', 'Admin']);
+  const admin = sidebar.locator('summary', { hasText: 'Admin' });
+  await admin.focus();
   await page.keyboard.press('Space');
-  await expect(companies.locator('xpath=..')).toHaveAttribute('open', '');
-  await expect(companies).toBeFocused();
-  await page.keyboard.press('Enter');
-  await expect(companies.locator('xpath=..')).not.toHaveAttribute('open');
-  await expect(companies).toBeFocused();
-  // The keyboard opens a group: Enter on its summary lists the sections, and Missions and
-  // requirements opens at its own address.
-  await sidebar.locator('summary', { hasText: 'Missions' }).focus();
-  await page.keyboard.press('Enter');
-  const missionsLink = sidebar.getByRole('link', {
-    name: 'Missions and requirements',
-    exact: true,
-  });
-  await expect(missionsLink).toBeVisible();
-  for (const name of ['Introductions and meetings', 'Commercial progress'])
+  await expect(admin.locator('xpath=..')).toHaveAttribute('open', '');
+  await expect(admin).toBeFocused();
+  for (const name of ['Health', 'Readiness', 'Audit', 'People and access', 'Settings'])
     await expect(sidebar.getByRole('link', { name, exact: true })).toBeVisible();
-  await missionsLink.click();
+  await page.keyboard.press('Enter');
+  await expect(admin.locator('xpath=..')).not.toHaveAttribute('open');
+  await expect(admin).toBeFocused();
+
+  // Missions opens at its own address, with the row of places under the header.
+  await sidebar.getByRole('link', { name: 'Missions', exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/operator/missions\\?workspace=${seed.tenantId}$`));
   await expect(page).toHaveTitle('Missions | Corridra');
   await expect(page.locator('h1')).toHaveText('Missions');
@@ -106,31 +91,47 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   for (const other of ['#workspace-research', '#workspace-meetings', '#workspace-delivery'])
     await expect(page.locator(other)).toHaveCount(0);
   await expect(page.locator('.ux-overview')).toHaveCount(0);
-  // The group holding the page is open and its section is the current one. On a phone the drawer
-  // closes itself after a navigation; wait until it has closed, then open it again, so the check never
-  // races the closing drawer (main CI 74b3681, run 42018219952).
+  const second = page.getByRole('navigation', { name: 'In this section' });
+  for (const name of ['Missions', 'Operations', 'Network', 'Assistance'])
+    await expect(second.getByRole('link', { name, exact: true })).toBeVisible();
+  await expect(second.getByRole('link', { name: 'Missions', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  for (const box of await second
+    .locator('a')
+    .evaluateAll((els) => els.map((el) => el.getBoundingClientRect().height)))
+    expect(box).toBeGreaterThanOrEqual(44);
+  // On a phone the drawer closes itself after a navigation; wait until it has closed, then open it
+  // again, so the check never races the closing drawer (main CI 74b3681, run 42018219952).
   if (phone) {
     await expect(toggle).toHaveAttribute('aria-expanded', 'false');
     await openDrawer();
   }
-  await expect(
-    sidebar.getByRole('link', { name: 'Missions and requirements', exact: true }),
-  ).toHaveAttribute('aria-current', 'page');
-
-  // Companies holds Sources and claims; All tools and settings holds the rest and the Owner page.
-  await openDrawer();
-  await sidebar.locator('summary', { hasText: 'Companies' }).click();
-  await expect(
-    sidebar.getByRole('link', { name: 'Sources and claims', exact: true }),
-  ).toBeVisible();
-  await sidebar.getByText('All tools and settings', { exact: true }).click();
-  for (const name of ['Access and audit', 'Authenticator', 'Workspace controls'])
-    await expect(sidebar.getByRole('link', { name, exact: true })).toBeVisible();
-  await expect(sidebar.getByRole('link', { name: 'Owner: what is on and off' })).toHaveAttribute(
-    'href',
-    '/operator/owner',
+  await expect(sidebar.getByRole('link', { name: 'Missions', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
   );
-  await sidebar.getByRole('link', { name: 'Access and audit', exact: true }).click();
+
+  // Companies holds Sources in its row; Admin holds Audit, and Settings holds the Owner page.
+  await sidebar.getByRole('link', { name: 'Companies', exact: true }).click();
+  await expect(page).toHaveURL(/\/operator\/research/);
+  await page
+    .getByRole('navigation', { name: 'In this section' })
+    .getByRole('link', { name: 'Sources', exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/operator\/sources/);
+  await openDrawer();
+  await sidebar.getByText('Admin', { exact: true }).click();
+  await sidebar.getByRole('link', { name: 'Settings', exact: true }).click();
+  await expect(page).toHaveURL(/\/operator\/settings/);
+  await expect(
+    page
+      .getByRole('navigation', { name: 'In this section' })
+      .getByRole('link', { name: 'Owner page', exact: true }),
+  ).toHaveAttribute('href', '/operator/owner');
+  await openDrawer();
+  await sidebar.getByRole('link', { name: 'Audit', exact: true }).click();
   await expect(page).toHaveURL(/\/operator\/audit/);
   await expect(page.locator('h1')).toHaveText('Access and audit');
   await expect(page.locator('#workspace-audit')).toBeVisible();

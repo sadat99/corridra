@@ -28,66 +28,6 @@ export function teamSidebarShown(pathname: string | null | undefined): boolean {
   return signedInShellFor(pathname) === 'team';
 }
 
-type SectionId = (typeof workspaceSections)[number]['id'];
-
-export type TeamNavItem = {
-  key: string;
-  label: MessageKey;
-  icon: string;
-  /** The sections this group holds, in the order they are listed; absent for Today. */
-  sections?: readonly SectionId[];
-};
-
-/**
- * The Team sidebar (Signal Desk map, docs/revamp/specs/signal-desk.md): Today, Missions, Companies,
- * Delivery and Outcomes, and "All tools and settings", which keeps every other section reachable.
- * Each of the 18 sections is placed exactly once. Grouping never grants access: the sidebar lists a
- * section only for a role that may open it, and each page and action still checks on the server.
- * The section ids, address words, roles and panels are not touched here.
- */
-export const teamNavigation: readonly TeamNavItem[] = [
-  { key: 'today', label: 'wse.team.today', icon: 'home' },
-  {
-    key: 'missions',
-    label: 'wse.team.missions',
-    icon: 'mission',
-    sections: ['workspace-missions', 'workspace-meetings', 'workspace-commercial'],
-  },
-  {
-    key: 'companies',
-    label: 'wse.team.companies',
-    icon: 'company',
-    sections: ['workspace-research', 'workspace-sources', 'workspace-evidence'],
-  },
-  {
-    key: 'delivery',
-    label: 'wse.team.delivery',
-    icon: 'document',
-    sections: ['workspace-delivery', 'workspace-network', 'workspace-ai'],
-  },
-  {
-    key: 'outcomes',
-    label: 'wse.team.outcomes',
-    icon: 'progress',
-    sections: ['ops-dashboard'],
-  },
-  {
-    key: 'tools',
-    label: 'wse.team.allTools',
-    icon: 'settings',
-    sections: [
-      'workspace-operations',
-      'ops-health',
-      'ops-gates',
-      'ops-center',
-      'workspace-settings',
-      'workspace-audit',
-      'workspace-authenticator',
-      'workspace-controls',
-    ],
-  },
-];
-
 export function sectionLabel(id: string): string {
   return workspaceSections.find((section) => section.id === id)?.label ?? id;
 }
@@ -147,11 +87,4 @@ const teamTitles: Record<string, string> = {
 export function teamSectionTitle(section: string | undefined): string {
   if (!section) return 'Today';
   return teamTitles[section] ?? sectionLabel(section);
-}
-
-/** Which sidebar item is current for a section id ('' is Today). The owner page counts as the last group. */
-export function currentTeamItem(section: string): string {
-  if (!section) return 'today';
-  const group = teamNavigation.find((item) => item.sections?.includes(section as SectionId));
-  return group ? group.key : 'tools';
 }
