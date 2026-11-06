@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { WorkspaceShell } from '../../components/workspace-shell';
+import { TeamSecondLevel } from '../../components/ux/team-second-level';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { customerMovesEnabled } from '@corridra/auth/customer-moves';
@@ -73,6 +74,7 @@ export async function OperatorEntry({
       </WorkspaceShell>
     );
   const shellsV2 = uxSwitchOn('CORRIDRA_UX_SHELLS_V2');
+  const ownerPage = ownerPageEnabled() && ownerCapable(tenants).length > 0;
   // With the shells switch and section addresses on, each section has its own heading (CQ-36).
   const heading =
     shellsV2 && uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS') ? teamSectionTitle(section) : null;
@@ -83,12 +85,15 @@ export async function OperatorEntry({
       // When the page heading already says Today, the Today panel keeps its heading for screen readers only.
       className={heading === 'Today' ? 'ux-operator-home ux-titled-today' : 'ux-operator-home'}
     >
+      {shellsV2 ? (
+        <TeamSecondLevel urls={uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')} ownerPage={ownerPage} />
+      ) : null}
       <OperatorFlags replyReview={uxSwitchOn('CORRIDRA_REPLY_PAGE')}>
         <Workspace
           tenants={tenants}
           initialTenant={selected!}
           initialSection={section}
-          ownerPage={ownerPageEnabled() && ownerCapable(tenants).length > 0}
+          ownerPage={ownerPage}
           moveRecords={customerMovesEnabled()}
           shellsV2={shellsV2}
         />
