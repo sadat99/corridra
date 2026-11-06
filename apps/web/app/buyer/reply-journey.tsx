@@ -112,6 +112,8 @@ export function ReplyJourney({
   const heading = useRef<HTMLHeadingElement>(null);
   const responseId = useRef('');
   const inFlight = useRef(false);
+  // True from the moment a correction is started until it is sent, cancelled or replaced, so a late read of the stored answer never changes the version under an editor that began from an older text.
+  const editing = useRef(false);
 
   // What step the person is on. A decision made earlier (or on another visit) moves the page on.
   const effective: Phase =
@@ -199,7 +201,10 @@ export function ReplyJourney({
   async function refreshAnswer() {
     try {
       const stored = await readAnswer();
-      if (typeof stored?.version === 'number') {
+      if (typeof stored?.version === 'number' && !editing.current) {
+        // The version and the answer it belongs to are taken together: another window may have corrected the answer already,
+        // and the receipt and the next correction must start from that text, not from what this window sent.
+        setSent((prior) => ({ at: prior?.at ?? new Date(), reply: recordedFrom(stored.body) }));
         setVersion(stored.version);
         setCanRevise(stored.canRevise === true);
       }
@@ -239,10 +244,12 @@ export function ReplyJourney({
     setProblem('');
     setCommand(null);
     setLatest(null);
+    editing.current = true;
     setRevising(true);
     setPhase('message');
   }
   function cancelRevision() {
+    editing.current = false;
     setRevising(false);
     setLatest(null);
     setCommand(null);
@@ -333,6 +340,7 @@ export function ReplyJourney({
       if (revising) {
         setVersion(base + 1);
         setCanRevise(base + 1 < 20);
+        editing.current = false;
         setRevising(false);
         setLatest(null);
       } else void refreshAnswer();
@@ -370,6 +378,7 @@ export function ReplyJourney({
     if (!latest) return;
     setSent({ at: new Date(), reply: latest.reply });
     setVersion(latest.version);
+    editing.current = false;
     setRevising(false);
     setLatest(null);
     setCommand(null);
