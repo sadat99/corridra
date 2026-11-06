@@ -48,24 +48,39 @@ export function useWorkspaces(active: boolean) {
   return active ? list : null;
 }
 
-/** `counted`: read the unread count in the background. The list itself loads when it is opened. */
-function CustomerInbox({ counted }: { counted: boolean }) {
+/**
+ * The inbox as an icon with its unread count. `counted`: read the unread count in the background. The list
+ * itself loads when it is opened. `endpoint` is the person's own inbox read (the customer inbox, or the team
+ * notifications of the workspace in view); `label` is the button's accessible name.
+ */
+export function BarInbox({
+  counted,
+  endpoint,
+  label = 'Inbox',
+}: {
+  counted: boolean;
+  endpoint: string;
+  label?: string;
+}) {
   const [unread, setUnread] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
   const panelId = `${useId().replace(/[^a-zA-Z0-9_-]/g, '')}-inbox`;
   const wrapper = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
-  const load = useCallback((signal?: AbortSignal) => {
-    fetch('/api/customer-inbox', { cache: 'no-store', signal })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((items: Item[] | null) => {
-        if (signal?.aborted) return;
-        setUnread(Array.isArray(items) ? items.filter((i) => !i.readAt).length : null);
-      })
-      .catch(() => {
-        if (!signal?.aborted) setUnread(null);
-      });
-  }, []);
+  const load = useCallback(
+    (signal?: AbortSignal) => {
+      fetch(endpoint, { cache: 'no-store', signal })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((items: Item[] | null) => {
+          if (signal?.aborted) return;
+          setUnread(Array.isArray(items) ? items.filter((i) => !i.readAt).length : null);
+        })
+        .catch(() => {
+          if (!signal?.aborted) setUnread(null);
+        });
+    },
+    [endpoint],
+  );
   useEffect(() => {
     if (!counted) return;
     const controller = new AbortController();
@@ -110,7 +125,7 @@ function CustomerInbox({ counted }: { counted: boolean }) {
         ref={button}
         type="button"
         className="ux-menu-button"
-        aria-label="Inbox"
+        aria-label={label}
         aria-describedby={unread ? countId : undefined}
         aria-expanded={open}
         aria-controls={panelId}
@@ -129,14 +144,35 @@ function CustomerInbox({ counted }: { counted: boolean }) {
         </span>
       ) : null}
       <div id={panelId} className="ux-app-popover" hidden={!open}>
-        {open ? <NotificationInbox endpoint="/api/customer-inbox" /> : null}
+        {open ? <NotificationInbox endpoint={endpoint} /> : null}
       </div>
     </div>
   );
 }
 
-export function AccountMenuBody() {
+/** The language choices of an account menu, shown only when more than one language is offered. */
+export function LanguageMenuGroup() {
   const { locale, offered, choose, t } = useLanguage();
+  if (offered.length < 2) return null;
+  return (
+    <div role="group" aria-label={t('language.label')}>
+      {offered.map(({ code }) => (
+        <MenuRadio
+          key={code}
+          checked={code === locale}
+          lang={localeMeta[code].html}
+          dir={localeMeta[code].dir}
+          data-menu-close=""
+          onClick={() => choose(code)}
+        >
+          {localeMeta[code].name}
+        </MenuRadio>
+      ))}
+    </div>
+  );
+}
+
+export function AccountMenuBody() {
   const note = useSyncExternalStore(
     subscribeCustomerNote,
     readCustomerNote,
@@ -165,22 +201,7 @@ export function AccountMenuBody() {
         </div>
       ) : null}
       {note ? <p className="ux-menu-note">{note}</p> : null}
-      {offered.length > 1 ? (
-        <div role="group" aria-label={t('language.label')}>
-          {offered.map(({ code }) => (
-            <MenuRadio
-              key={code}
-              checked={code === locale}
-              lang={localeMeta[code].html}
-              dir={localeMeta[code].dir}
-              data-menu-close=""
-              onClick={() => choose(code)}
-            >
-              {localeMeta[code].name}
-            </MenuRadio>
-          ))}
-        </div>
-      ) : null}
+      <LanguageMenuGroup />
       <MenuLink href="/">Corridra Website</MenuLink>
       <MenuLink href="/privacy">Privacy Notice</MenuLink>
       <MenuButton disabled={busy} onClick={signOut}>
@@ -230,7 +251,7 @@ export function CustomerBar({ notifications }: { notifications: boolean }) {
           <CorridraIcon name="draft" className="ux-bar-primary-icon" />
           New Request
         </Link>
-        {notifications ? <CustomerInbox counted={onAccount} /> : null}
+        {notifications ? <BarInbox counted={onAccount} endpoint="/api/customer-inbox" /> : null}
         <OverflowMenu
           label="Account menu"
           trigger={<CorridraIcon name="people" />}

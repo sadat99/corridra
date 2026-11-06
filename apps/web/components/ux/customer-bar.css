@@ -1,5 +1,6 @@
-/* The slim customer header row. Tokens only. One row, a quiet menu button, one filled primary action. */
-.ux-customer-header {
+/* The slim customer header row. Tokens only. One row, a quiet menu button, one filled primary action. The team
+   header shares the slim row and its phone rules (owner, 6 Nov 2026), and keeps its shell name and status. */
+:is(.ux-customer-header, .ux-team-header) {
   flex-wrap: wrap;
   min-height: 56px;
   padding-block: var(--space-2);
@@ -9,11 +10,11 @@
   display: none;
 }
 /* The drawer button of the left bar: quiet like the other header buttons, no border. */
-.ux-customer-header .ux-app-button {
+:is(.ux-customer-header, .ux-team-header) .ux-app-button {
   border: 0;
   background: transparent;
 }
-.ux-customer-header .ux-app-button[aria-expanded='true'] {
+:is(.ux-customer-header, .ux-team-header) .ux-app-button[aria-expanded='true'] {
   background: var(--selected-surface);
 }
 .ux-bar-tools {
@@ -85,11 +86,11 @@
 }
 @media (max-width: 700px) {
   /* Phones: one row. The help button joins the row beside the tools instead of wrapping under it. */
-  .ux-customer-header {
+  :is(.ux-customer-header, .ux-team-header) {
     flex-wrap: nowrap;
     gap: var(--space-2);
   }
-  .ux-customer-header .header-help {
+  :is(.ux-customer-header, .ux-team-header) .header-help {
     margin-inline-start: 0;
   }
   .ux-bar-tools {
@@ -99,7 +100,7 @@
 @media (max-width: 700px) {
   /* Phones: the drawer button is the list icon, not the word. Its accessible name is still "Menu": the word
      stays in the button at zero size, and the icon is the same line icon as the navigation list. */
-  .ux-customer-header .ux-leftnav-opener {
+  :is(.ux-customer-header, .ux-team-header) .ux-leftnav-opener {
     position: relative;
     width: 44px;
     min-width: 44px;
@@ -107,7 +108,7 @@
     padding: 0;
     font-size: 0;
   }
-  .ux-customer-header .ux-leftnav-opener::before {
+  :is(.ux-customer-header, .ux-team-header) .ux-leftnav-opener::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -119,13 +120,13 @@
     mask: var(--ux-menu-icon) center / 20px 20px no-repeat;
   }
 }
-.ux-customer-header {
+:is(.ux-customer-header, .ux-team-header) {
   /* corridra-icon "list": M4 5h12M4 10h12M4 15h8, 1.5 px stroke, square ends */
   --ux-menu-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='square'%3E%3Cpath d='M4 5h12M4 10h12M4 15h8'/%3E%3C/svg%3E");
 }
 @media (max-width: 480px) {
   /* The wordmark text goes; the logo mark stays and the link keeps its name. */
-  .ux-customer-header .brand span {
+  :is(.ux-customer-header, .ux-team-header) .brand span {
     display: none;
   }
 }
