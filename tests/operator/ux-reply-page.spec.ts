@@ -97,16 +97,31 @@ async function open(
     failDetail?: number;
     old?: boolean;
     zhNotReleased?: boolean;
+    // Answer correction: how the private interface answers a correction, and what each later read of the page returns.
+    revise?: (body: Sent, count: number) => { status: number; value: unknown };
+    reads?: Record<string, unknown>[];
   } = {},
 ) {
   const sent: Sent[] = [];
+  let revisions = 0;
+  let readCount = 0;
   let failures = options.failDetail ?? 0;
   await page.route('**/api/buyer', async (route) => {
     const body = JSON.parse(route.request().postData() ?? '{}');
     sent.push(body);
     const json = (status: number, value: unknown) =>
       route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(value) });
-    if (body.action === 'read') return json(200, view(options.view));
+    if (body.action === 'read') {
+      const later = options.reads?.[readCount++ - 1];
+      return json(200, view(later ?? options.view));
+    }
+    if (body.action === 'detail-revision') {
+      const answer = options.revise?.(body, ++revisions) ?? {
+        status: 200,
+        value: { recorded: true, version: Number(body.expectedVersion) + 1 },
+      };
+      return json(answer.status, answer.value);
+    }
     if (body.action === 'respond') return json(200, { decision: body.decision });
     if (body.action === 'detail-response') {
       if (failures > 0) {
@@ -505,3 +520,196 @@ for (const width of [320, 390, 768, 1440]) {
       });
   });
 }
+
+// Answer correction (CRUD gap G7, module 3): offered only where the page says a correction is possible.
+const earlier = (over: Record<string, unknown> = {}) => ({
+  decision: 'INTERESTED',
+  detailResponse: {
+    sourceKind: 'SELF_DECLARATION',
+    createdAt: '2026-10-20T08:00:00Z',
+    version: 0,
+    canRevise: true,
+    body: {
+      body: 'Earlier reply',
+      meetingInterest: false,
+      quotation: {
+        currency: 'USD',
+        terms: {
+          specification: 'Polyester curtain track',
+          unitPriceMinor: '1250',
+          toolingMinor: '0',
+        },
+        uncertainties: 'Lead time not yet known',
+      },
+      acknowledged: true,
+    },
+    ...over,
+  },
+});
+const signed = async (page: Page) => {
+  await page.getByLabel(/This is my own declaration/).check();
+  await page.getByRole('button', { name: 'Send', exact: true }).click();
+};
+
+test('a correction is offered only when the page says it is possible', async ({ page }) => {
+  await open(page, {
+    view: {
+      decision: 'INTERESTED',
+      detailResponse: { ...earlier().detailResponse, version: undefined, canRevise: undefined },
+    },
+  });
+  await expect(page.getByRole('heading', { name: 'Your answer is recorded' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Change My Answer' })).toHaveCount(0);
+});
+
+test('Change My Answer starts from the recorded answer and sends one correction at the version it saw', async ({
+  page,
+}) => {
+  const sent = await open(page, { view: earlier() });
+  await page.getByRole('button', { name: 'Change My Answer' }).click();
+  await expect(page.getByLabel('Your message to the team')).toHaveValue('Earlier reply');
+  await page.getByLabel('Your message to the team').fill('Corrected reply with the same offer.');
+  await page.getByRole('button', { name: 'Add a quote' }).click();
+  // The recorded quote is there to edit, in the form the supplier typed it.
+  await expect(page.getByLabel('What you are quoting')).toHaveValue('Polyester curtain track');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await expect(page.getByLabel('Currency of your quote')).toHaveValue('USD');
+  await expect(page.getByLabel('Price for one unit')).toHaveValue('12.50');
+  await expect(page.getByLabel('Tooling')).toHaveValue('NONE');
+  await page.getByLabel('Price for one unit').fill('13.00');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page
+    .getByLabel('What is missing or uncertain in this quote')
+    .fill('Lead time still unknown');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await expect(page.getByRole('heading', { name: 'Check what you typed' })).toBeVisible();
+  await signed(page);
+  await expect(page.getByRole('heading', { name: 'Your answer is recorded' })).toBeVisible();
+  await expect(page.locator('.reply-receipt')).toContainText(
+    'Corrected reply with the same offer.',
+  );
+  const [correction] = sent.filter((c) => c.action === 'detail-revision');
+  expect(correction).toMatchObject({
+    expectedVersion: 0,
+    body: 'Corrected reply with the same offer.',
+    acknowledged: true,
+  });
+  expect(correction!.responseId).toMatch(/^[0-9a-f-]{36}$/);
+  expect((correction!.quotation as { terms: Record<string, string> }).terms).toMatchObject({
+    specification: 'Polyester curtain track',
+    unitPriceMinor: '1300',
+    toolingMinor: '0',
+  });
+  expect(sent.filter((c) => c.action === 'detail-response')).toHaveLength(0);
+});
+
+test('a correction can drop the quote and Keep My Current Answer leaves everything as it was', async ({
+  page,
+}) => {
+  const sent = await open(page, { view: earlier() });
+  await page.getByRole('button', { name: 'Change My Answer' }).click();
+  await page.getByRole('button', { name: 'Keep My Current Answer' }).click();
+  await expect(page.locator('.reply-receipt')).toContainText('Earlier reply');
+  expect(sent.filter((c) => c.action === 'detail-revision')).toHaveLength(0);
+  await page.getByRole('button', { name: 'Change My Answer' }).click();
+  await page.getByRole('button', { name: 'Send my message without a quote' }).click();
+  await signed(page);
+  await expect(page.getByRole('heading', { name: 'Your answer is recorded' })).toBeVisible();
+  const [correction] = sent.filter((c) => c.action === 'detail-revision');
+  expect(correction).toMatchObject({ quotation: null, expectedVersion: 0 });
+});
+
+test('a correction changed in another window keeps the typed text and lets the person choose', async ({
+  page,
+}) => {
+  const newer = earlier({
+    version: 3,
+    body: {
+      body: 'Changed in another window',
+      meetingInterest: false,
+      quotation: null,
+      acknowledged: true,
+    },
+  });
+  const sent = await open(page, {
+    view: earlier(),
+    reads: [newer],
+    revise: (_body, count) =>
+      count === 1
+        ? {
+            status: 409,
+            value: {
+              error:
+                'This answer was changed since you opened it. The latest version is shown; try again.',
+            },
+          }
+        : { status: 200, value: { recorded: true, version: 4 } },
+  });
+  await page.getByRole('button', { name: 'Change My Answer' }).click();
+  await page.getByLabel('Your message to the team').fill('My own corrected reply');
+  await page.getByRole('button', { name: 'Send my message without a quote' }).click();
+  await signed(page);
+  const alert = page.getByRole('alert').filter({ hasText: 'was changed since you opened it' });
+  await expect(alert).toContainText('Changed in another window');
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await expect(page.getByText('My own corrected reply')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: 'Keep Mine', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Your answer is recorded' })).toBeVisible();
+  const corrections = sent.filter((c) => c.action === 'detail-revision');
+  expect(corrections).toHaveLength(2);
+  expect(corrections[1]).toMatchObject({ expectedVersion: 3, body: 'My own corrected reply' });
+  expect(corrections[1]!.responseId).not.toBe(corrections[0]!.responseId);
+});
+
+test('Use Theirs shows the newer answer and sends nothing more', async ({ page }) => {
+  const newer = earlier({
+    version: 3,
+    body: {
+      body: 'Changed in another window',
+      meetingInterest: false,
+      quotation: null,
+      acknowledged: true,
+    },
+  });
+  const sent = await open(page, {
+    view: earlier(),
+    reads: [newer],
+    revise: () => ({
+      status: 409,
+      value: {
+        error:
+          'This answer was changed since you opened it. The latest version is shown; try again.',
+      },
+    }),
+  });
+  await page.getByRole('button', { name: 'Change My Answer' }).click();
+  await page.getByLabel('Your message to the team').fill('My own corrected reply');
+  await page.getByRole('button', { name: 'Send my message without a quote' }).click();
+  await signed(page);
+  await page.getByRole('button', { name: 'Use Theirs', exact: true }).click();
+  await expect(page.locator('.reply-receipt')).toContainText('Changed in another window');
+  expect(sent.filter((c) => c.action === 'detail-revision')).toHaveLength(1);
+});
+
+test('once the team has reviewed an answer the page says so and offers no more corrections', async ({
+  page,
+}) => {
+  await open(page, {
+    view: earlier(),
+    revise: () => ({
+      status: 409,
+      value: {
+        error: 'The team has already reviewed this answer, so it can no longer be changed here.',
+      },
+    }),
+  });
+  await page.getByRole('button', { name: 'Change My Answer' }).click();
+  await page.getByRole('button', { name: 'Send my message without a quote' }).click();
+  await signed(page);
+  await expect(page.getByRole('alert').filter({ hasText: 'already reviewed' })).toBeVisible();
+  await page.getByRole('button', { name: 'Back' }).click();
+  await page.getByRole('button', { name: 'Keep My Current Answer' }).click();
+  await expect(page.getByRole('button', { name: 'Change My Answer' })).toHaveCount(0);
+});

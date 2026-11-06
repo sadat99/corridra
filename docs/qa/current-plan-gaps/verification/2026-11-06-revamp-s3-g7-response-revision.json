@@ -1,0 +1,31 @@
+{
+  "track": "S3 Public, Intake and Organise",
+  "item": "CRUD gap G7, module 3 of 3: recipient response revision through the scoped link as an append-only overlay",
+  "date": "2026-11-06",
+  "sensitive": true,
+  "spec": "docs/revamp/specs/crud-standard.md; docs/revamp/crud/summary.md G7; Conductor approval of 5 Nov (overlay design, order lifecycle, participant label, recipient response)",
+  "changed": [
+    "packages/db/recipient-response-revision-migrations/0001_response_revision.sql: app.recipient_detail_response_revision (append-only, reject_rewrite, version order trigger, RLS read policies in the sample and real-use pair, no runtime write grant, the same capability event the first answer writes); app.recipient_detail_body_check (the first answer's rules, copied verbatim and compared by a test); app.recipient_response_reviewed; app.recipient_detail_revise(h,k,expected,b); app.recipient_detail_view replaced behind a sha256 guard of the definition it replaces.",
+    "packages/db/src/recipient-response-revision-migrate.ts (hash-recorded, installs the real-use functions it needs, nothing else); scripts/install-customer-modules.ts and .github/workflows/install-customer-modules.yml: new field_modules_action choice response_revision (the workflow is at the 25-input limit); tests/workflow-inputs.test.mjs extended.",
+    "packages/domain/src/experience.ts and access.ts: recipientRevision request; packages/communications/src/index.ts: detail-revision action; apps/web/app/api/buyer/route.ts: three plain refusals for a correction.",
+    "apps/web/app/buyer/reply-journey.tsx: Change My Answer on the receipt (only when the page says a correction is possible), the journey starts from the recorded answer (amounts back to what was typed), Keep My Current Answer, a stale answer keeps the typed text and shows Keep Mine / Use Theirs, a reviewed answer releases the exact-retry hold.",
+    "packages/delivery/src/experience.ts, apps/web/app/operator/delivery-experience.tsx and reply-review.tsx: the team reads the latest correction and is told how many were made; the reply review module is untouched and its decisions still point at the original reply."
+  ],
+  "preserved": [
+    "app.recipient_detail_response is never rewritten; the first answer stays on record. A correction is checked by exactly the same rules as the first answer under the same disclosure, so it cannot add a quotation, meeting interest, role or RFQ the link does not allow; consent (acknowledged) must be restated; retention is the original's and is never extended.",
+    "A correction is refused once the team has recorded any review decision on the reply (taking the same lock a review takes), after the link is revoked or expired, and after 20 corrections. Idempotent by the command id; a stale version is refused with a plain message.",
+    "Nothing is installed in production; no switch, provider, payment, outreach or AI change. Without the module the page is exactly as before."
+  ],
+  "verification": {
+    "preflight": "pending on the pushed head",
+    "integration": "tests/integration/product-experience.test.ts 23 passed (7 new: install and history mismatch, correct and replay, scope and consent limits, table protections and body-check text compare, reviewed answer locked, twenty corrections, team reads the latest)",
+    "operator": "tests/operator/ux-reply-page.spec.ts 25 passed (6 new, with an axe check on the stale choice)",
+    "workflow": "tests/workflow-inputs.test.mjs 7 passed"
+  },
+  "openRisks": [
+    "Live as soon as the owner installs response_revision (no separate control): a recipient with a disclosed link can then correct until the team reviews. Say if a closed-by-default control like reply review is wanted.",
+    "Needs the owner's install run after real-use is installed; until then nothing changes.",
+    "The replaced view is guarded by the hash of its core definition; the install fails closed if production differs.",
+    "A correction typed in the reply journey is held in memory only and is lost if the page is closed."
+  ]
+}

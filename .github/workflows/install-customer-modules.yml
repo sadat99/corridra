@@ -64,7 +64,7 @@ on:
         required: false
         default: ''
       field_modules_action:
-        description: 'Optional ADR-072 specification confirmation and ADR-073 quote arrangements, or programme_lifecycle (rename, archive and restore a programme; needs the real-use modules installed first). Install does not open confirmation, principal sales, billing or payments.'
+        description: 'Optional ADR-072 specification confirmation and ADR-073 quote arrangements, or programme_lifecycle (rename, archive and restore a programme; needs the real-use modules installed first), or response_revision (a recipient may correct their answer through the private link until the team reviews it; needs the real-use modules installed first). Install does not open confirmation, principal sales, billing or payments.'
         type: choice
         options:
           [
@@ -73,6 +73,7 @@ on:
             commercial_arrangements,
             both,
             programme_lifecycle,
+            response_revision,
           ]
         default: unchanged
       notifications_action:
@@ -181,6 +182,7 @@ jobs:
           REPLY_REVIEW_ACTION: ${{ inputs.reply_review_action }}
           SPECIFICATION_CONFIRMATION_ACTION: ${{ (inputs.field_modules_action == 'specification_confirmation' || inputs.field_modules_action == 'both') && 'install' || 'unchanged' }}
           PROGRAMME_LIFECYCLE_ACTION: ${{ inputs.field_modules_action == 'programme_lifecycle' && 'install' || 'unchanged' }}
+          RESPONSE_REVISION_ACTION: ${{ inputs.field_modules_action == 'response_revision' && 'install' || 'unchanged' }}
           COMMERCIAL_ARRANGEMENTS_ACTION: ${{ (inputs.field_modules_action == 'commercial_arrangements' || inputs.field_modules_action == 'both') && 'install' || 'unchanged' }}
           REPLY_REVIEW_REASON: ${{ inputs.reply_review_reason }}
           NOTIFICATIONS_ACTION: ${{ inputs.notifications_action }}

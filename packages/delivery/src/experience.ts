@@ -73,9 +73,20 @@ export class DeliveryExperienceService {
           [ctx.tenantId],
         )
       ).rows,
+      // Where recipient response revision is installed, the latest correction is what the team reads, with how many were made.
       responses: (
         await db.query(
-          'SELECT id,link_id,body,source_kind,created_at FROM app.recipient_detail_response WHERE tenant_id=$1 ORDER BY created_at DESC LIMIT 100',
+          (
+            await db.query(
+              "SELECT to_regclass('app.recipient_detail_response_revision') IS NOT NULL AS ok",
+            )
+          ).rows[0]?.ok
+            ? `SELECT d.id,d.link_id,coalesce(x.body,d.body) AS body,d.source_kind,d.created_at,coalesce(x.version,0)::int AS revision,x.created_at AS revised_at
+               FROM app.recipient_detail_response d
+               LEFT JOIN LATERAL(SELECT y.body,y.version,y.created_at FROM app.recipient_detail_response_revision y
+                 WHERE y.tenant_id=d.tenant_id AND y.response_id=d.id ORDER BY y.version DESC LIMIT 1) x ON true
+               WHERE d.tenant_id=$1 ORDER BY d.created_at DESC LIMIT 100`
+            : 'SELECT id,link_id,body,source_kind,created_at FROM app.recipient_detail_response WHERE tenant_id=$1 ORDER BY created_at DESC LIMIT 100',
           [ctx.tenantId],
         )
       ).rows,

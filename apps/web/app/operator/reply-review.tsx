@@ -27,6 +27,7 @@ type Reply = {
   link_id: string;
   body: ReplyBody & { body?: string };
   created_at?: string;
+  revision?: number;
 };
 type Disclosure = { link_id: string; role: string; shared_requirements: string };
 
@@ -204,6 +205,12 @@ function ReplyCard({
         <section aria-label="The reply">
           <h4>The reply</h4>
           <p lang={han(String(reply.body.body ?? ''))}>{String(reply.body.body ?? '')}</p>
+          {!!reply.revision && (
+            <p className="reply-review-note">
+              The recipient corrected this answer {reply.revision} time
+              {reply.revision === 1 ? '' : 's'}. The latest answer is shown.
+            </p>
+          )}
           {reply.body.meetingInterest === true && (
             <p>Meeting or visit interest expressed. No appointment is inferred.</p>
           )}
