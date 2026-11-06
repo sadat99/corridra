@@ -18,6 +18,10 @@ export type Registration = {
   id: string;
   programmeId?: string;
   displayLabel?: string;
+  // Present only where participant label correction is installed; absent means the controls stay hidden.
+  labelVersion?: number;
+  // Who made the latest correction of the label, when there was one.
+  labelChangedBy?: 'participant' | 'organiser';
   consentedAt?: string;
   name?: string;
   reportingPurpose?: string;
@@ -67,7 +71,23 @@ export function parseParticipantView(value: unknown, scope: ParticipantScope): V
       !['REGISTERED', 'REVOKED', 'WITHDRAWN'].includes(String(r.status))
     )
       throw Error('Invalid registration');
-    const base = { id: r.id, status: r.status as Registration['status'] };
+    if (
+      r.labelVersion !== undefined &&
+      !(Number.isInteger(r.labelVersion) && Number(r.labelVersion) >= 0)
+    )
+      throw Error('Invalid label version');
+    const changedBy: Registration['labelChangedBy'] =
+      r.labelChangedBy === 'participant'
+        ? 'participant'
+        : r.labelChangedBy === 'organiser'
+          ? 'organiser'
+          : undefined;
+    const base = {
+      id: r.id,
+      status: r.status as Registration['status'],
+      ...(r.labelVersion === undefined ? {} : { labelVersion: Number(r.labelVersion) }),
+      ...(changedBy ? { labelChangedBy: changedBy } : {}),
+    };
     if (manage) {
       if (!syntheticLabel(r.displayLabel) || !date(r.consentedAt))
         throw Error('Invalid registration');
@@ -539,5 +559,5 @@ export function useParticipantView(
       document.removeEventListener('visibilitychange', visibility);
     };
   }, [load]);
-  return { data, status, busy, visible, notice, pending, result, load, send };
+  return { data, status, busy, visible, notice, pending, result, load, send, deny };
 }

@@ -2,8 +2,8 @@ import AxeBuilder from '@axe-core/playwright';
 import { test, expect, type Page } from '@playwright/test';
 
 // Layout budget, Phase 2b-i (docs/revamp/specs/layout-budget.md): How it works, About, Routes and the three route
-// pages are cut into tabs with the shared SubTabs. Each tab fits 1.0 desktop screen (1440 x 900) and 2.0 phone
-// screens (390 x 844). Nothing is removed: every word stays in the server HTML, an old #address opens the tab that
+// pages are cut into tabs with the shared SubTabs. Each tab fits 2.0 desktop screens (1440 x 900) and 3.0 phone
+// screens (390 x 844), footer included (owner decision of 6 November 2026). Nothing is removed: every word stays in the server HTML, an old #address opens the tab that
 // holds it, an in-page link opens its own target's tab, and a hidden panel is never shown by a page rule.
 const tabbed = [
   { path: '/how-it-works', tabs: ['before-you-meet', 'meet-and-follow-up'] },
@@ -35,7 +35,7 @@ for (const { path, tabs } of tabbed) {
       for (const id of tabs) {
         await choose(page, id);
         expect(await screens(page), `${path} ${id} ${name}`).toBeLessThanOrEqual(
-          name === 'phone' ? 2.0 : 1.0,
+          name === 'phone' ? 3.0 : 2.0,
         );
       }
     });

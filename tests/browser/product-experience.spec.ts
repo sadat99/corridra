@@ -95,12 +95,12 @@ test('job-first navigation exposes machinery and commercial trips with real entr
   isMobile,
 }) => {
   await page.goto('/');
-  // The footer's link groups start collapsed (layout budget): open the group, then one tap.
-  for (const group of await page.locator('footer details.guide-footer-details').all())
-    await group.locator('summary').click();
+  // On a phone the footer's link groups are disclosures: open the group, then one tap. From 701 px they are open.
+  for (const summary of await page.locator('footer details.guide-footer-details > summary').all())
+    if (await summary.isVisible()) await summary.click();
   await page
-    .getByRole('navigation', { name: 'Footer solutions' })
-    .getByRole('link', { name: 'Procure machinery', exact: true })
+    .getByRole('navigation', { name: 'Footer', exact: true })
+    .getByRole('link', { name: 'Procure Machinery', exact: true })
     .click();
   await expect(page).toHaveURL('/machinery');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(

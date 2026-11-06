@@ -3612,77 +3612,6 @@ th {
   border-radius: var(--guided-hero-radius);
 }
 
-/* Footer */
-.guide-footer {
-  display: grid;
-  gap: var(--space-8);
-  margin-top: var(--space-12);
-  padding: var(--space-12) var(--space-12) var(--space-24);
-  color: color-mix(in srgb, var(--on-brand) 85%, transparent);
-  background: var(--brand-deep);
-  border-radius: var(--guided-hero-radius) var(--guided-hero-radius) 0 0;
-}
-.guide-footer-top {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) repeat(2, minmax(0, 1fr));
-  gap: var(--space-12);
-}
-.guide-footer-brand {
-  display: grid;
-  gap: var(--space-3);
-  align-content: start;
-}
-.guide-footer-brand .brand {
-  color: var(--on-brand);
-  font-size: var(--text-2xl);
-}
-.guide-footer-brand p {
-  margin: 0;
-  font-size: var(--text-lg);
-  color: var(--on-brand);
-}
-.guide-footer-brand span {
-  font-size: var(--text-md);
-  color: color-mix(in srgb, var(--on-brand) 65%, transparent);
-}
-.guide-footer nav {
-  display: grid;
-  align-content: start;
-}
-.guide-footer nav .label {
-  margin: 0 0 var(--space-2);
-  color: color-mix(in srgb, var(--on-brand) 65%, transparent);
-}
-.guide-footer a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.75rem;
-  font-size: var(--text-base);
-  color: var(--on-brand);
-}
-.guide-footer a:hover {
-  text-decoration: underline;
-}
-.guide-footer-bottom {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2) var(--space-6);
-  padding-top: var(--space-4);
-  font-size: var(--text-md);
-  color: color-mix(in srgb, var(--on-brand) 65%, transparent);
-  border-top: 1px solid color-mix(in srgb, var(--on-brand) 20%, transparent);
-}
-.guide-footer-bottom > span:last-child {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 var(--space-6);
-}
-.guide-footer-bottom a {
-  font-size: var(--text-md);
-}
-
 /* Corner dock: Listen and Help, small icon buttons in the bottom-right corner of every page */
 .corner-dock {
   position: fixed;
@@ -3933,14 +3862,6 @@ th {
   .guide-progress .outcome-path li:not(:last-child)::after {
     content: none;
   }
-  .guide-footer {
-    padding: var(--space-8) var(--space-5) var(--space-24);
-    border-radius: var(--guided-hero-radius) var(--guided-hero-radius) 0 0;
-  }
-  .guide-footer-top {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-6);
-  }
 }
 @media (min-width: 701px) and (max-width: 1000px) {
   .guide-steps ol,
@@ -3954,12 +3875,6 @@ th {
   }
   .guide-choices {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .guide-footer-top {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .guide-footer-brand {
-    grid-column: 1 / -1;
   }
 }
 /* Routes */
@@ -5859,13 +5774,6 @@ th {
 }
 .ux-customer .ux-journey-disclosure > div {
   padding-top: 0;
-}
-
-/* Footer: two equal link columns of six, and equal space above and below. */
-@media (min-width: 701px) {
-  .guide-footer {
-    padding-bottom: var(--space-12);
-  }
 }
 
 /* More tab: profile on the left, ways in on the right; links are rows, not loose text. */

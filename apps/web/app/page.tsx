@@ -2,7 +2,7 @@
 
 import { Arrow } from '../components/arrow';
 import { CorridraIcon } from '../components/corridra-icon';
-import { FactLabel, type factLabels } from '../components/fact-label';
+import { FactLabel, NotConfirmedLabel, type factLabels } from '../components/fact-label';
 import { HomeMissionPlayer } from '../components/home-mission-player';
 import Link from 'next/link';
 import { LegacyHashRedirect } from '../components/legacy-hash-redirect';
@@ -99,16 +99,6 @@ const passes = [
   stub: MessageKey;
 }[];
 
-function NotConfirmed() {
-  const t = useT();
-  return (
-    <span className="guide-tag" data-tone="unknown">
-      <CorridraIcon name="help" />
-      {t('home.value.notConfirmed')}
-    </span>
-  );
-}
-
 export default function Home() {
   const t = useT();
   return (
@@ -160,7 +150,7 @@ export default function Home() {
                 <span className="ac1-truth-number" aria-hidden="true">
                   {index + 1}
                 </span>
-                {fact ? <FactLabel label={fact} english /> : <NotConfirmed />}
+                {fact ? <FactLabel label={fact} english /> : <NotConfirmedLabel />}
                 <span>{t(line)}</span>
               </li>
             ))}
@@ -181,7 +171,7 @@ export default function Home() {
               {dossier.map(({ field, fact }) => (
                 <li key={field}>
                   <span>{t(field)}</span>
-                  {fact ? <FactLabel label={fact} english /> : <NotConfirmed />}
+                  {fact ? <FactLabel label={fact} english /> : <NotConfirmedLabel />}
                 </li>
               ))}
             </ul>

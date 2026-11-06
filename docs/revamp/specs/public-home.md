@@ -47,5 +47,6 @@ The owner asked for a landing revamp of 2 to 2.5 desktop screens (verbatim: "lan
 - **Routes (F).** Boarding-pass cards: Bangladesh to China, Bangladesh to Spain and Explore Every Route, same three links.
 - **Closing band.** "Your request can look like this." with Start a Request. Header, footer and dock unchanged.
 - **Budget.** 1440 × 900: 2.0 to 2.5 screens (owner). 390 × 844: at most 3.5 screens (owner, 6 November 2026, verbatim: "3.5 screens (Recommended)"). The mockup measures 2.33 and 3.50. No sideways scroll, 44 px targets, axe clean at 320, 390, 768 and 1440.
+- **Budget with the Ledger footer.** Owner, 6 November 2026, verbatim answer: "Raise home to 3.0 / 4.25 (Recommended)". With the full footer the home may be up to 3.0 screens at 1440 × 900 and 4.25 at 390 × 844; measured 2.82 and 4.06.
 - **Tests.** P-01 to P-07 stay unchanged. The AC1-03 pins (example tabs, four buyer rows, five quote rows, three route links, the `#mission-example` redirect) move to the player; the PR lists each changed assertion as owner-approved. New tests cover the player keyboard, Pause, reduced motion, the example switch and every job link.
 - **Owner.** S3, after the PR 322 fixes. Not sensitive unless it touches the `/plan` submit path, consent, cookies or storage.

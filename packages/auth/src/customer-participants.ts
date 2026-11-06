@@ -11,13 +11,14 @@ import { customerProgrammesEnabled } from './customer-programmes';
 export function customerParticipantsEnabled(env: NodeJS.ProcessEnv = process.env) {
   return customerProgrammesEnabled(env) && env.CORRIDRA_CUSTOMER_PARTICIPANTS_ENABLED === 'true';
 }
+// Counted in characters, as the database counts them, and refusing every control character it refuses (\p{Cc}).
 const label = z
   .string()
   .trim()
-  .min(2)
   .max(120)
+  .refine((v) => [...v].length >= 2, 'Enter a descriptive name or statement')
   .refine(customerLabelAllowed, 'Enter a descriptive name or statement')
-  .refine((v) => !/[\u0000-\u001f\u007f]/u.test(v));
+  .refine((v) => !/\p{Cc}/u.test(v));
 const token = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
 const command = { commandId: z.uuid() };
 const scope = { workspaceId: z.uuid(), programmeId: z.uuid() };
@@ -66,6 +67,16 @@ export const customerParticipantInput = z.discriminatedUnion('action', [
       targetId: z.uuid(),
       reason,
       acknowledged: z.literal(true),
+    })
+    .strict(),
+  // Correct a display label (CRUD gap G7): the participant for their own, or a workspace owner or admin.
+  z
+    .object({
+      ...command,
+      action: z.literal('label'),
+      registrationId: z.uuid(),
+      expectedVersion: z.number().int().min(0).max(100000),
+      displayLabel: label,
     })
     .strict(),
   z
@@ -155,6 +166,21 @@ export class CustomerParticipantService extends CustomerSessionBoundary {
         synthetic: receipt.synthetic,
         email,
       };
+    }
+    if (value.action === 'label') {
+      return this.transaction(
+        async (db) =>
+          (
+            await db.query('SELECT customer.programme_registration_label($1,$2,$3,$4) AS result', [
+              value.commandId,
+              value.registrationId,
+              value.expectedVersion,
+              value.displayLabel,
+            ])
+          ).rows[0].result,
+        subject,
+        issuer,
+      );
     }
     return this.transaction(
       async (db) => {

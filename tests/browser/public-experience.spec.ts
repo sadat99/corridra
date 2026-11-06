@@ -105,11 +105,14 @@ test('the home example switches between selling and sourcing by pointer and keyb
   expect(writes).toEqual([]);
 });
 
-// The footer's link groups start collapsed (layout budget, Phase 1); opening them is one tap.
+// On a phone the footer's link groups are disclosures (opening one is one tap); from 701 px every group is open.
 const openFooterGroups = async (page: import('@playwright/test').Page) => {
-  for (const group of await page.locator('footer details.guide-footer-details').all())
-    if (!(await group.evaluate((node) => (node as HTMLDetailsElement).open)))
-      await group.locator('summary').click();
+  for (const summary of await page.locator('footer details.guide-footer-details > summary').all())
+    if (
+      (await summary.isVisible()) &&
+      !(await summary.evaluate((node) => (node.parentElement as HTMLDetailsElement).open))
+    )
+      await summary.click();
 };
 
 test('the menu opens, closes with Escape and the footer takes visitors to a way to work', async ({
@@ -132,17 +135,17 @@ test('the menu opens, closes with Escape and the footer takes visitors to a way 
   }
   // Every way to work stays in the footer of every page: open the group, then one tap.
   await openFooterGroups(page);
-  const ways = page.getByRole('navigation', { name: 'Footer solutions' });
+  const ways = page.getByRole('navigation', { name: 'Footer', exact: true });
   for (const [name, href] of [
-    ['Source products and suppliers', '/source'],
-    ['Procure machinery', '/machinery'],
-    ['Run a trade mission', '/trade-missions'],
-    ['Plan a business trip', '/business-trips'],
-    ['Sell in a new market', '/sell'],
-    ['Enter a new market', '/enter-market'],
+    ['Source Products and Suppliers', '/source'],
+    ['Procure Machinery', '/machinery'],
+    ['Run a Trade Mission', '/trade-missions'],
+    ['Plan a Business Trip', '/business-trips'],
+    ['Sell in a New Market', '/sell'],
+    ['Enter a New Market', '/enter-market'],
   ])
     await expect(ways.getByRole('link', { name, exact: true })).toHaveAttribute('href', href);
-  await ways.getByRole('link', { name: 'Source products and suppliers' }).click();
+  await ways.getByRole('link', { name: 'Source Products and Suppliers' }).click();
   await expect(page).toHaveURL('/source');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Visit fewer suppliers.');
 });

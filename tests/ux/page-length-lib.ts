@@ -8,6 +8,9 @@ import type { Page } from '@playwright/test';
 // viewport height. Target and hard limit per viewport:
 //   390 x 844   target 1.5 screens, hard limit 2.0
 //   1440 x 900  target 1.0 screen,  hard limit 1.0 (owner, 5 November 2026)
+// Public pages (owner, 6 November 2026, with the Ledger footer): up to 3.0 phone and 2.0 desktop screens, footer
+// included. The home keeps its own rule (at most 3.5 phone and 2.5 desktop screens). /plan and the sign-in pages
+// are not public pages here: they keep the limits above, as do the signed-in pages.
 // The routes come from docs/revamp/COVERAGE.json, page routes only (the file is a page.tsx; the
 // inventory also lists route.ts endpoints). This guard only REPORTS: it never fails on a value. The
 // last track PR switches it to failing over the hard limit. Each track reuses this module with its own
@@ -28,6 +31,28 @@ export const viewports: readonly Viewport[] = [
   { name: 'desktop', width: 1440, height: 900, target: 1.0, hard: 1.0 },
 ];
 
+/** The page-length limits for one kind of page at one viewport. */
+export type Limits = Pick<Viewport, 'target' | 'hard'>;
+/** Public pages other than the home (owner decision of 6 November 2026). */
+export const publicPageLimits: Record<Viewport['name'], Limits> = {
+  phone: { target: 3.0, hard: 3.0 },
+  desktop: { target: 2.0, hard: 2.0 },
+};
+/** The home's own rule (docs/revamp/specs/public-home.md; owner, 6 November 2026, with the Ledger footer): 2.0 to 3.0
+ * desktop screens, at most 4.25 phone. */
+export const homeLimits: Record<Viewport['name'], Limits> = {
+  phone: { target: 4.25, hard: 4.25 },
+  desktop: { target: 3.0, hard: 3.0 },
+};
+/** Sign-in and account recovery pages show the public footer, so they follow the public page limits. `/plan` does not. */
+const publicIdentityPages = [
+  '/signin',
+  '/signup',
+  '/forgot-password',
+  '/reset-password',
+  '/verify-email',
+];
+
 export type CoverageRoute = { route: string; file: string; audience: string; state: string };
 export type Verdict = 'within target' | 'over target' | 'over hard limit';
 /** The track that owns measuring a route (layout budget, ownership table). */
@@ -46,6 +71,8 @@ export type Measurement = {
   status?: number;
   documentHeight?: number;
   screens?: number;
+  /** The hard limit the page was judged against (it depends on the kind of page). */
+  hard?: number;
   verdict?: Verdict;
   /** For a page over its hard limit: the tallest blocks of the page content, to show what makes it long. */
   blocks?: { label: string; height: number }[];
@@ -79,10 +106,21 @@ export function trackFor(entry: Pick<CoverageRoute, 'route' | 'audience'>): Trac
 
 export const hasDynamicSegment = (route: string) => route.includes('[');
 
-export function verdictFor(screens: number, viewport: Viewport): Verdict {
-  return screens > viewport.hard
+/** The limits a route is judged against: the public page and home limits, or the viewport's own. */
+export function limitsFor(
+  entry: Pick<CoverageRoute, 'route' | 'audience'>,
+  viewport: Viewport,
+): Limits {
+  if (entry.audience === 'public')
+    return entry.route === '/' ? homeLimits[viewport.name] : publicPageLimits[viewport.name];
+  if (publicIdentityPages.includes(entry.route)) return publicPageLimits[viewport.name];
+  return { target: viewport.target, hard: viewport.hard };
+}
+
+export function verdictFor(screens: number, limits: Limits): Verdict {
+  return screens > limits.hard
     ? 'over hard limit'
-    : screens > viewport.target
+    : screens > limits.target
       ? 'over target'
       : 'within target';
 }
@@ -126,7 +164,8 @@ export async function measure(
     Math.max(document.documentElement.scrollHeight, document.body ? document.body.scrollHeight : 0),
   );
   const screens = screensOf(documentHeight, viewport);
-  const verdict = verdictFor(screens, viewport);
+  const limits = limitsFor(entry, viewport);
+  const verdict = verdictFor(screens, limits);
   return {
     ...base,
     measured: true,
@@ -134,6 +173,7 @@ export async function measure(
     status,
     documentHeight,
     screens,
+    hard: limits.hard,
     verdict,
     ...(verdict === 'over hard limit'
       ? { blocks: await tallestBlocks(page), frame: await frameOf(page, documentHeight) }
@@ -234,7 +274,7 @@ export function writeReport(name: string, rows: Measurement[]): string {
     for (const item of [...set].sort()) lines.push(`    ${item}`);
   }
   const worst = [...measured]
-    .sort((a, b) => (b.screens ?? 0) / viewportOf(b).hard - (a.screens ?? 0) / viewportOf(a).hard)
+    .sort((a, b) => (b.screens ?? 0) / hardOf(b) - (a.screens ?? 0) / hardOf(a))
     .slice(0, 8)
     .map((row) => `  ${row.viewport} ${row.route}: ${row.screens} screens (${row.verdict})`);
   return [
@@ -243,4 +283,5 @@ export function writeReport(name: string, rows: Measurement[]): string {
   ].join('\n');
 }
 
-const viewportOf = (row: Measurement) => viewports.find((v) => v.name === row.viewport)!;
+const hardOf = (row: Measurement) =>
+  row.hard ?? viewports.find((v) => v.name === row.viewport)!.hard;

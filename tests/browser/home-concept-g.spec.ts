@@ -28,7 +28,7 @@ const currentStep = (page: Page) =>
     .locator('li[aria-current="step"]');
 const announced = (page: Page) => player(page).locator('[aria-live="polite"]');
 
-test('the home is 2.0 to 2.5 screens at 1440 x 900 and at most 3.5 at 390 x 844, for both examples', async ({
+test('the home is 2.0 to 3.0 screens at 1440 x 900 and at most 4.25 at 390 x 844, for both examples', async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -43,8 +43,9 @@ test('the home is 2.0 to 2.5 screens at 1440 x 900 and at most 3.5 at 390 x 844,
       measured.push(`${name} ${example} ${length.toFixed(2)}`);
       if (name === 'desktop') {
         expect(length, `${name} ${example}`).toBeGreaterThanOrEqual(2.0);
-        expect(length, `${name} ${example}`).toBeLessThanOrEqual(2.5);
-      } else expect(length, `${name} ${example}`).toBeLessThanOrEqual(3.5);
+        // Owner, 6 November 2026: with the Ledger footer the home may be up to 3.0 desktop and 4.25 phone screens.
+        expect(length, `${name} ${example}`).toBeLessThanOrEqual(3.0);
+      } else expect(length, `${name} ${example}`).toBeLessThanOrEqual(4.25);
     }
   }
   test.info().annotations.push({ type: 'page-length', description: measured.join(', ') });

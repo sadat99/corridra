@@ -44,6 +44,34 @@ describe('message files', () => {
     expect(en['footer.tagline']).toBe('Make market entry deliberate.');
   });
 
+  it('shows the Ledger footer words in English in every language, so no translation is claimed', () => {
+    const footerOnly = [
+      'footer.signIn',
+      'footer.already',
+      'footer.openWorkspace',
+      'footer.nav',
+      'footer.group.buy',
+      'footer.group.sell',
+      'footer.group.partners',
+      'footer.link.china',
+      'footer.link.spain',
+      'footer.link.sample',
+      'footer.link.network',
+      'footer.link.routes',
+      'footer.link.howItWorks',
+      'footer.link.privacy',
+      'footer.link.privacyTest',
+      'footer.facts',
+      'footer.factsMore',
+      'footer.private',
+      'footer.routes',
+    ] as const satisfies readonly MessageKey[];
+    for (const key of footerOnly)
+      for (const code of others) expect(catalogs[code][key], `${code}.${key}`).toBe(en[key]);
+    expect(en['footer.signIn']).toBe('Sign In');
+    expect(en['footer.link.privacyTest']).toBe('Test Intake Notice');
+  });
+
   it('falls back to English for an empty entry and never returns an empty string', () => {
     const saved = catalogs.bn['header.routes'];
     catalogs.bn['header.routes'] = '';
