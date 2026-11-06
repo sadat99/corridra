@@ -43,7 +43,22 @@ CREATE FUNCTION customer_private.notification_muted(request uuid) RETURNS boolea
 $$;
 REVOKE ALL ON FUNCTION customer_private.notification_muted(uuid) FROM PUBLIC,corridra_runtime,corridra_auth;
 
--- The two readers of the old mute row now ask the helper. Each is replaced only if its live text is exactly the
+-- Whether a request was muted at any time since a moment: it was muted at that moment, or it was muted after it,
+-- or it is muted now. A Move is set in one transaction and enqueued in another up to ten minutes later; a Move set
+-- before or during a muted period must never send just because the enqueue ran after an unmute.
+CREATE FUNCTION customer_private.notification_muted_since(request uuid, since timestamptz) RETURNS boolean
+ LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
+ WITH ev AS (
+   SELECT 'muted'::text AS state,m.created_at AS at,0::bigint AS n FROM customer_private.notification_mute m WHERE m.request_id=request
+   UNION ALL
+   SELECT e.state,e.occurred_at,e.seq FROM customer_private.notification_mute_event e WHERE e.request_id=request)
+ SELECT coalesce((SELECT s.state='muted' FROM ev s WHERE s.at<=since ORDER BY s.at DESC,s.n DESC LIMIT 1),false)
+  OR EXISTS(SELECT FROM ev s WHERE s.state='muted' AND s.at>since)
+$$;
+REVOKE ALL ON FUNCTION customer_private.notification_muted_since(uuid,timestamptz) FROM PUBLIC,corridra_runtime,corridra_auth;
+
+-- The two readers of the old mute row now ask a helper (the Move enqueue asks whether the request was muted since the
+-- Move was set). Each is replaced only if its live text is exactly the
 -- reviewed text of 0001, so a newer or different definition stops the install instead of being overwritten.
 DO $readers$
 DECLARE spec record;original text;updated text;reader_owner text;
@@ -52,7 +67,7 @@ BEGIN
   ('customer_private.notification_valid(customer_private.notification_outbox)','4a82adb8dd0e951b26661b5705b0525c5af2bb5f682eaa6c9fb4166de3f28f6f',
    'EXISTS(SELECT FROM customer_private.notification_mute WHERE request_id=row_.request_id)','customer_private.notification_muted(row_.request_id)'),
   ('customer.enqueue_move_notifications(uuid)','42e46a4420378d40c40eb2c3f982c5947606ab3121d65398773c26e036b35076',
-   'EXISTS(SELECT FROM customer_private.notification_mute WHERE request_id=owned.id)','customer_private.notification_muted(owned.id)')
+   'EXISTS(SELECT FROM customer_private.notification_mute WHERE request_id=owned.id)','customer_private.notification_muted_since(owned.id,cmd.created_at)')
  ) AS v(signature,fingerprint,old_text,new_text) LOOP
   original:=pg_get_functiondef(spec.signature::regprocedure);
   IF encode(sha256(convert_to(original,'UTF8')),'hex')<>spec.fingerprint THEN
@@ -63,7 +78,7 @@ BEGIN
    RAISE EXCEPTION 'Mute reader replacement differs: %',spec.signature;
   END IF;
   SELECT pg_get_userbyid(proowner) INTO reader_owner FROM pg_proc WHERE oid=spec.signature::regprocedure;
-  EXECUTE format('GRANT EXECUTE ON FUNCTION customer_private.notification_muted(uuid) TO %I',reader_owner);
+  EXECUTE format('GRANT EXECUTE ON FUNCTION customer_private.notification_muted(uuid),customer_private.notification_muted_since(uuid,timestamptz) TO %I',reader_owner);
   EXECUTE updated;
  END LOOP;
 END $readers$;

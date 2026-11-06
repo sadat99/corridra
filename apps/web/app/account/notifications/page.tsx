@@ -11,6 +11,7 @@ import { customerPageSession } from '../../../lib/customer-page-session';
 import { foundations } from '../../../lib/foundations';
 import { NotificationsForm } from './notifications-form';
 import { MutedRequests } from './muted-requests';
+import { mutedRequestLabels } from './muted-labels';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -68,9 +69,8 @@ export default async function Page() {
           { pageSize: 100 },
           session.subject,
           session.issuer,
-        )) as { requests?: { id: string; title?: string | null }[] };
-        for (const request of page.requests ?? [])
-          if (request.title) titles[request.id] = request.title;
+        )) as { requests?: { id: string; createdAt?: string | null }[] };
+        Object.assign(titles, mutedRequestLabels(page.requests ?? []));
       }
     } catch {
       /* The titles or the list are not available just now; the choices above still work. */

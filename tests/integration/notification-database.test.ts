@@ -1718,14 +1718,15 @@ describe('G6 unmute', () => {
       'customer.mute_notifications',
       'customer.my_notification_mutes',
       'customer_private.notification_muted',
+      'customer_private.notification_muted_since',
     ]);
-    for (const name of [
-      'customer_private.notification_valid',
-      'customer.enqueue_move_notifications',
-    ])
-      expect(bodies.find((b) => b.name === name)?.src, name).toContain(
-        'customer_private.notification_muted(',
-      );
+    expect(bodies.find((b) => b.name === 'customer_private.notification_valid')?.src).toContain(
+      'customer_private.notification_muted(',
+    );
+    // The Move enqueue asks whether the request was muted since the Move was set, not only now.
+    expect(bodies.find((b) => b.name === 'customer.enqueue_move_notifications')?.src).toContain(
+      'customer_private.notification_muted_since(owned.id,cmd.created_at)',
+    );
   });
 });
 
@@ -1803,5 +1804,88 @@ describe('G6 unmute, application side', () => {
     ).rejects.toMatchObject({ code: '42501' });
     // A session for a different subject than the one the page asked for is refused before any query.
     await expect(serviceFor(b).mutes(a.subject, issuer)).rejects.toThrow();
+  });
+});
+
+describe('G6 unmute, a Move made in or before a muted period', () => {
+  // The team's Move command and the enqueue step run as two transactions up to ten minutes apart. A message for a
+  // Move that was set before or during a muted period is never sent just because the enqueue ran after an unmute.
+  async function command(who: Person, object: string) {
+    const commandId = randomUUID();
+    await moves.command(staff(who), {
+      action: 'set',
+      commandId,
+      missionId: who.missionId,
+      moves: [{ verb: 'Add', holder: 'customer', dueOn: null, object }],
+    });
+    return commandId;
+  }
+  const enqueueFor = (who: Person, commandId: string) =>
+    withTenant(f.runtime, staff(who), 'missions.manage', async ({ db }) => {
+      const r = (await db.query('SELECT customer.enqueue_move_notifications($1) AS r', [commandId]))
+        .rows[0].r as { queued: number; reason: string | null };
+      return r;
+    });
+
+  test('a Move set before a mute and enqueued after the unmute queues nothing', async () => {
+    await setControl(true);
+    const p = await person();
+    await setMoves(p, [{ object: 'your trade licence' }]);
+    const early = await command(p, 'your bank letter');
+    await mute(p.requestId, linkToken(p));
+    await setMute(p, p.requestId, randomUUID(), false);
+    expect(await enqueueFor(p, early)).toMatchObject({ queued: 0, reason: 'muted' });
+  });
+
+  test('a Move set while muted and enqueued after the unmute queues nothing', async () => {
+    await setControl(true);
+    const p = await person();
+    await setMoves(p, [{ object: 'your trade licence' }]);
+    await mute(p.requestId, linkToken(p));
+    const during = await command(p, 'your insurance certificate');
+    await setMute(p, p.requestId, randomUUID(), false);
+    expect(await enqueueFor(p, during)).toMatchObject({ queued: 0, reason: 'muted' });
+  });
+
+  test('a Move set after the unmute queues as usual', async () => {
+    await setControl(true);
+    const p = await person();
+    await setMoves(p, [{ object: 'your trade licence' }]);
+    await mute(p.requestId, linkToken(p));
+    await setMute(p, p.requestId, randomUUID(), false);
+    const later = await command(p, 'your signed contract');
+    expect(await enqueueFor(p, later)).toMatchObject({ queued: 1 });
+  });
+
+  test('the request list returns no title, so the muted list labels a request by when it was sent', async () => {
+    const p = await person();
+    const service = new CustomerRequestService(
+      f.runtime,
+      f.auth,
+      {
+        enabled: true,
+        synthetic: false,
+        production: false,
+        issuer,
+        dataMode: 'real',
+        openAdmission: true,
+      },
+      async () => ({
+        subject: p.subject,
+        email: p.email,
+        emailVerified: true,
+        expiresAt: new Date(Date.now() + 60000),
+      }),
+    );
+    const page = (await service.list({ pageSize: 100 }, p.subject, issuer)) as {
+      requests: Record<string, unknown>[];
+    };
+    const mine = page.requests.find((r) => r.id === p.requestId)!;
+    expect(mine).toBeDefined();
+    expect(mine).not.toHaveProperty('title');
+    const { mutedRequestLabels } =
+      await import('../../apps/web/app/account/notifications/muted-labels');
+    const labels = mutedRequestLabels(page.requests as never);
+    expect(labels[p.requestId]).toMatch(/^Request sent .+\d/);
   });
 });

@@ -10,7 +10,8 @@
     "packages/db/customer-notification-migrations/0004_mute_events.sql: the same for the Pulse store (notification_mute_event, notification_muted, notification_valid and enqueue_move_notifications replaced behind fingerprints, mute_notifications replaced, my_notification_mutes, set_notification_mute)",
     "apps/web/app/api/pulse/mutes/route.ts: GET list and POST change; origin, content type and size checked; the Pulse switch decides only whether emails can be turned back on",
     "apps/web/app/account/notifications/muted-requests.tsx and .css: Requests you muted, Unmute with a confirm dialog that locks while the change is in flight, Mute Again",
-    "tests/integration/revamp-g6-mutes-route.test.ts (6), tests/operator/revamp-g6-muted-requests.spec.ts (8), 19 new database tests in mission-mail-database.test.ts and notification-database.test.ts, docs/design-system/evidence/revamp-g6 (the dialog at 390 and 1440)"
+    "tests/integration/revamp-g6-mutes-route.test.ts (6), tests/operator/revamp-g6-muted-requests.spec.ts (8), 19 new database tests in mission-mail-database.test.ts and notification-database.test.ts, docs/design-system/evidence/revamp-g6 (the dialog at 390 and 1440)",
+    "apps/web/app/account/notifications/muted-labels.ts: labels a muted request by when it was sent, from what the request list really returns (it carries no title)"
   ],
   "changedFiles": [
     "packages/auth/src/customer-notifications.ts: CustomerNotificationService.mutes() and setMute(), the input schema and the two kinds (request, reminder). A kind whose database module is not installed shows nothing",
@@ -25,7 +26,9 @@
     "closedControl": "Turning emails back on needs the sending control to be open and answers reason closed otherwise; turning them off never does.",
     "linkMute": "The mute link in an old email still works with no sign-in and now also mutes again after an unmute (it writes an event). Its answers and refusals are unchanged.",
     "audit": "customer.mission_mail.muted/unmuted and customer.notification.muted/unmuted, ids only, in the same events and audit trail the first mute uses.",
-    "process": "The two migration files were written before their database tests; the tests were then shown to fail with the migration file removed (8 of 8 in each store) and to pass with it. The muted requests spec was written after the component; a mutation that removes the dialog lock made its in-flight test fail."
+    "process": "The two migration files were written before their database tests; the tests were then shown to fail with the migration file removed (8 of 8 in each store) and to pass with it. The muted requests spec was written after the component; a mutation that removes the dialog lock made its in-flight test fail.",
+    "moveTiming": "Codex P2, verified: a Move is set in one transaction and enqueued in another up to ten minutes later, so a Move set before or during a muted period could send after an unmute. 0004 adds notification_muted_since(request, since) (muted at that moment, muted after it, or muted now) and enqueue_move_notifications asks it with the Move's creation time. Three tests: set before the mute, set while muted, both enqueued after the unmute queue nothing; a Move set after the unmute queues. The first two failed before the fix. 0004 is not installed anywhere, so it was edited in place. Mission mail has no such window: its enqueue runs in the request's own flow and a mute suppresses what is waiting.",
+    "labels": "Codex P2, verified: customer.private_requests carries no title, so every muted request would have read 'A request you sent'. The page now labels each by 'Request sent <date and time>' from createdAt, the same wording the saved requests list falls back to. A test calls the real service and shows the response has no title."
   },
   "receipts": {
     "database": "mission-mail-database 31 passed (9 new), notification-database 63 passed (10 new, 2 of them through CustomerNotificationService), upgrade tests 9 passed, flow and pulse tests 100 passed.",
