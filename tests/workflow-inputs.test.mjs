@@ -77,19 +77,22 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'specification_confirmation',
     'commercial_arrangements',
     'both',
+    'programme_lifecycle',
   ]);
   const defaults = Object.fromEntries(
     Object.entries(declared).map(([name, input]) => [name, input.default]),
   );
-  for (const [choice, confirmation, arrangements] of [
-    ['unchanged', 'unchanged', 'unchanged'],
-    ['specification_confirmation', 'install', 'unchanged'],
-    ['commercial_arrangements', 'unchanged', 'install'],
-    ['both', 'install', 'install'],
+  for (const [choice, confirmation, arrangements, lifecycle] of [
+    ['unchanged', 'unchanged', 'unchanged', 'unchanged'],
+    ['specification_confirmation', 'install', 'unchanged', 'unchanged'],
+    ['commercial_arrangements', 'unchanged', 'install', 'unchanged'],
+    ['both', 'install', 'install', 'unchanged'],
+    ['programme_lifecycle', 'unchanged', 'unchanged', 'install'],
   ]) {
     const inputs = { ...defaults, field_modules_action: choice };
     assert.equal(evaluate(env.SPECIFICATION_CONFIRMATION_ACTION, inputs), confirmation);
     assert.equal(evaluate(env.COMMERCIAL_ARRANGEMENTS_ACTION, inputs), arrangements);
+    assert.equal(evaluate(env.PROGRAMME_LIFECYCLE_ACTION, inputs), lifecycle);
     assert.equal(evaluate(guard, inputs), choice !== 'unchanged');
   }
   for (const name of Object.keys(defaults).filter((name) => name.endsWith('_action'))) {

@@ -1,0 +1,33 @@
+{
+  "track": "S3 Public, Intake and Organise",
+  "item": "CRUD gap G7, module 1 of 3: programme lifecycle (rename, archive, restore) as an append-only overlay",
+  "date": "2026-11-06",
+  "sensitive": true,
+  "spec": "docs/revamp/specs/crud-standard.md; docs/revamp/crud/summary.md G7; Conductor approval of 5 Nov (overlay design, six conditions)",
+  "changed": [
+    "packages/db/customer-programme-lifecycle-migrations/0001_programme_lifecycle.sql: programme_lifecycle_revision and programme_lifecycle_command (append-only, reject_rewrite, version order guard, RLS, no runtime grants); view customer_private.programme_current; customer.programme_lifecycle(command,target,programme,operation,expected,input); customer_private.programme_active_count; audit via domain_event/audit_event/outbox with before and after values; 12 readers moved to the view, each behind a sha256 guard of the real-use definition it replaces; create_programme cap counts non-archived only and serialises with the lifecycle function.",
+    "packages/db/src/customer-programme-lifecycle-migrate.ts (hash-recorded, refuses to run without real-use installed, never installs real-use); scripts/install-customer-modules.ts and .github/workflows/install-customer-modules.yml: new field_modules_action choice programme_lifecycle (the workflow is at the 25-input limit), tests/workflow-inputs.test.mjs extended.",
+    "packages/auth/src/customer-programmes.ts: change(); apps/web/app/api/customer-programme-lifecycle/route.ts: POST, same origin, content-type, size and budget checks; only a fixed list of plain refusals is shown.",
+    "apps/web/app/account/delegations/programme-lifecycle.tsx and customer-programmes.tsx: Rename Programme, Archive Programme (10 second Undo), Show Archived Programmes filter, Restore Programme; controls appear only when the list carries a lifecycle version, so nothing shows before the owner installs the module.",
+    "Owner decision of 6 Nov 2026 (verbatim): \"Archive closes new invitations and public registration while it's archived, and Restore reopens them.\" customer_private.programme_archived_guard, called inside the writing transaction under the same advisory lock the archive takes, is added to customer.programme_participant_command (invite and the registration insert), customer.programme_invitation_email and customer.programme_participant_preview, each behind a sha256 guard of its real-use definition. Existing invitations are not revoked or extended. Organiser edits to existing registrations, context, terms and coordination stay writable (the owner did not close them). The organiser screen hides the invitation form with the reason; the registration page shows the same message.",
+    "Guardian review of d5e82db: typed text survives the Archived filter in both layouts (opened rows stay mounted); a stale rename keeps the typed text and offers Keep Mine or Use Theirs; the filter is in the address (?archived=1) with Back; remaining pages load for the Archived filter and for a deep link; a link to an archived programme opens the Archived list and an unknown link says so; the revision check matches creation so a name with a control character can still be archived; 429 uses the shared words; Undo ignores double clicks; install tests for the real-use refusal and a guard mismatch that rolls everything back."
+  ],
+  "preserved": [
+    "No business row is rewritten: app.delivery_programme and programme_creation are byte-identical after install (digest test). Names and purposes shown everywhere come from the latest revision, or the original when none.",
+    "Owner or admin only, command id idempotency, stale expectedVersion refused with 409 and a plain message, restore refused (never forced) at 100 active programmes, rename refused while archived.",
+    "Audit event keeps old and new values and no participant data. Nothing is installed in production; no switch, provider, payment, outreach or AI change."
+  ],
+  "verification": {
+    "preflight": "READY TO PUSH: format, lint, typecheck, docs-tests, ledger, security-scan, integration-changed, build, e2e, operator-affected, ux-gate all PASS",
+    "integration": "tests/integration/customer-programme-lifecycle.test.ts 18 passed (adds: real-use refusal, guard mismatch rollback, control characters, archived programme refuses invitations, previews and registrations then Restore reopens them, race test with an uncommitted archive); participant archived wording and the lock wait asserted in the race test",
+    "operator": "tests/operator/v3-programme-lifecycle-ui.spec.ts 35 passed (adds: Back and Forward keep a rename typed in the room on screen; a reload keeps a rename typed on a later-page programme; a linked Archived list stays Archived when another archived programme is picked or one is restored) and v3-customer-participants-ui.spec.ts 15 passed (Guardian delta: Rename keeps the version it opened at and shows a choice after any reload, an all-archived first page loads on, the Archived walk stops at the first rows, an in-page archive keeps the active list, one shared page validator with abort, shared rate-limit words, Check Again, tab in a name named, participant archived wording)",
+    "workflow": "tests/workflow-inputs.test.mjs 7 passed"
+  },
+  "openRisks": [
+    "Needs the owner's install run with field_modules_action=programme_lifecycle after real-use is installed; until then the screen is unchanged.",
+    "The twelve replaced functions are guarded by the hash of their definition in the test chain; the install job fails closed if production differs.",
+    "Operator-side readers of operator-created programmes (packages/delivery list, missions operations report) are untouched: a lifecycle revision only exists for customer-created programmes.",
+    "Participant label edit and recipient response revision are modules 2 and 3, separate PRs.",
+    "Archive only closes new invitations and registrations; existing registrations and organiser edits stay open by the owner's wording."
+  ]
+}

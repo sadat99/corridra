@@ -1,0 +1,64 @@
+import { DomainError } from '@corridra/domain';
+import {
+  customerProgrammesEnabled,
+  customerProgrammeLifecycleInput,
+} from '@corridra/auth/customer-programmes';
+import { foundations } from '../../../lib/foundations';
+import { boundedBody, deliveryError, deliveryHeaders } from '../../../lib/delivery-http';
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+// Rename, archive and restore a programme (CRUD gap G7). One POST with an operation; the database owns the rules.
+async function services() {
+  if (!customerProgrammesEnabled())
+    throw new DomainError('Sample delegation planning is unavailable', 503);
+  const s = foundations();
+  if (!s) throw new DomainError('Sample delegation planning is unavailable', 503);
+  await s.ready;
+  return s;
+}
+// The plain refusals the database gives for this action. Only these exact texts are shown; anything else keeps the shared wording.
+const plainRefusals = [
+  'Programme changed; reload before saving',
+  'Restore the programme before renaming it',
+  'Programme is already archived',
+  'Programme is not archived',
+  'Nothing changed',
+  'Archive another programme first: this workspace already has 100 active programmes',
+  'Programme name and reporting purpose required',
+];
+function failure(error: unknown) {
+  const refusal = error as { code?: string; message?: string };
+  if (refusal.code === '23514' && plainRefusals.includes(refusal.message ?? ''))
+    return deliveryError(new DomainError(refusal.message as string, 409));
+  return deliveryError(
+    ['42P01', '3F000', '42883'].includes((error as { code?: string }).code ?? '')
+      ? new DomainError('Renaming and archiving programmes is unavailable', 503)
+      : error,
+  );
+}
+export async function POST(request: Request) {
+  try {
+    const s = await services();
+    if (request.headers.get('origin') !== s.config.APP_ORIGIN)
+      throw new DomainError('Request origin is not allowed', 403);
+    if (!request.headers.get('content-type')?.startsWith('application/json'))
+      throw new DomainError('JSON required', 415);
+    const input = customerProgrammeLifecycleInput.parse(
+      JSON.parse((await boundedBody(request, 4096)).toString('utf8')),
+    );
+    const client = process.env.VERCEL
+      ? (request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown')
+      : 'local';
+    await s.missions.budget(client);
+    return Response.json(
+      await s.customerProgrammes.change(
+        input,
+        request.headers.get('x-corridra-customer-subject') ?? undefined,
+        request.headers.get('x-corridra-customer-issuer') ?? undefined,
+      ),
+      { headers: deliveryHeaders },
+    );
+  } catch (error) {
+    return failure(error);
+  }
+}
