@@ -8,7 +8,7 @@ import { ParticipantPlace } from './participant-place';
 import { MyReminders } from './my-reminders';
 import { useCallback, useEffect, useState } from 'react';
 import { useParticipantView, type ParticipantScope } from './participant-client';
-import { ParticipantLabelEditor } from './participant-label';
+import { ParticipantLabelEditor, dropLabelDrafts } from './participant-label';
 export function ParticipantAccount(
   props: ParticipantScope & {
     missionSharesEnabled?: boolean;
@@ -38,6 +38,8 @@ function ScopedAccount(
   const [withdrawTarget, setWithdrawTarget] = useState<string | null>(null);
   const [withdrawError, setWithdrawError] = useState('');
   const clear = useCallback(() => {
+    // Whatever refused access, the typed label corrections go with the rest of the private details.
+    dropLabelDrafts();
     setToken('');
     setWithdrawTarget(null);
     setWithdrawError('');
