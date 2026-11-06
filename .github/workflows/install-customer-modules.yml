@@ -151,7 +151,7 @@ jobs:
   install:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     environment: customer-modules-install
     steps:
       - uses: actions/checkout@v7

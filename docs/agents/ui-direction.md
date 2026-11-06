@@ -256,12 +256,12 @@ Business owners and organisers in Bangladesh and China, mostly on phones, often 
 
 ### Navigation (locked, at most five)
 
-| Audience      | Items                                                                                                                                                                                          |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Public header | How it works, Routes, Sign in, one button "Start a request", plus language and Listen. The old Solutions list and "Start here" move into the footer under "Ways to work". Nothing is deleted.  |
-| Customer      | Home, My Work, Companies, Results, More. Bottom tab bar on phones, top bar on desktop. With the switch `CORRIDRA_UX_NAV` on (UX update, below): Your Move, Missions, Companies, Library, More. |
-| Corridra team | Today, Missions, Companies, Delivery, Outcomes, and "All tools and settings", which keeps every original section reachable.                                                                    |
-| Founder       | Business, Operations, Routes and settings, People and access, Ready to start?                                                                                                                  |
+| Audience      | Items                                                                                                                                                                                                                                                                                                                                                       |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Public header | **Replaced 6 Nov 2026** by the public visitor row of [navigation v1](../revamp/specs/navigation-v1.md) (owner directive); the 19 Oct row is kept for history: How it works, Routes, Sign in, one button "Start a request", plus language and Listen. The old Solutions list and "Start here" move into the footer under "Ways to work". Nothing is deleted. |
+| Customer      | Home, My Work, Companies, Results, More. Bottom tab bar on phones, top bar on desktop. With the switch `CORRIDRA_UX_NAV` on (UX update, below): Your Move, Missions, Companies, Library, More.                                                                                                                                                              |
+| Corridra team | Today, Missions, Companies, Delivery, Outcomes, and "All tools and settings", which keeps every original section reachable.                                                                                                                                                                                                                                 |
+| Founder       | Business, Operations, Routes and settings, People and access, Ready to start?                                                                                                                                                                                                                                                                               |
 
 ### UX update amendment (owner delegation, 24 October 2026)
 

@@ -3,15 +3,19 @@ import { resolve } from 'node:path';
 import { describe, expect, test, vi } from 'vitest';
 import { fieldAnchor, summaryFocusDue } from '../../apps/web/lib/ux/focus';
 import {
-  currentTeamItem,
   currentTeamSection,
   signedInShellFor,
-  teamNavigation,
   teamSectionHref,
   teamSectionTitle,
   teamSidebarShown,
 } from '../../apps/web/lib/ux/shells';
 import { publishTeamContext, readTeamContext } from '../../apps/web/lib/ux/team-context';
+import {
+  itemForPlace,
+  settingsLevel,
+  teamMap,
+  type TeamPlaceId,
+} from '../../apps/web/lib/ux/team-map';
 import { sectionForSlug } from '../../apps/web/lib/operator-urls';
 import { workspaceSections } from '../../apps/web/lib/workspace-navigation';
 import {
@@ -28,7 +32,6 @@ import {
 import { languageBootScript } from '../../apps/web/lib/ux/language-boot';
 import { localeCodes } from '../../apps/web/lib/i18n/locales';
 import { wsE, wsEEn } from '../../apps/web/lib/i18n/ws/ws-e';
-import { translate } from '../../apps/web/lib/i18n/messages';
 import { notificationTypes } from '../../packages/communications/src/inbox';
 
 // WS-E kit, shells and platform rules (commercial readiness program, 6.E). No browser, no database.
@@ -143,26 +146,20 @@ describe('role shells (D14)', () => {
     expect(teamSidebarShown('/operator/signin')).toBe(false);
     expect(teamSidebarShown('/operator/research')).toBe(true);
   });
-  test('the sidebar is the Signal Desk map, in order, and every original section stays reachable', () => {
-    expect(teamNavigation.map((item) => item.key)).toEqual([
+  test('the sidebar is the Navigation v1 map, in order, and every original section stays reachable', () => {
+    expect(teamMap.map((item) => item.key)).toEqual([
       'today',
       'missions',
       'companies',
-      'delivery',
-      'outcomes',
-      'tools',
+      'meetings',
+      'money',
+      'admin',
+      'account',
     ]);
-    const reachable = new Set<string>(teamNavigation.flatMap((item) => item.sections ?? []));
+    const reachable = new Set<string>(teamMap.flatMap((item) => item.places.map((p) => p.id)));
+    for (const place of settingsLevel('owner')) reachable.add(place.id);
     for (const section of workspaceSections)
       expect(reachable.has(section.id), section.id).toBe(true);
-    expect(teamNavigation.map((item) => translate('en', item.label))).toEqual([
-      'Today',
-      'Missions',
-      'Companies',
-      'Delivery',
-      'Outcomes',
-      'All tools and settings',
-    ]);
   });
   test('links keep the chosen workspace and fall back to # links when section addresses are off', () => {
     const tenant = '0b5a0000-0000-4000-8000-000000000001';
@@ -175,20 +172,20 @@ describe('role shells (D14)', () => {
     expect(teamSectionHref(undefined, true, '')).toBe('/operator');
     expect(teamSectionHref('workspace-evidence', true, 'not-a-uuid')).toBe('/operator/evidence');
   });
-  test('the current item follows the address; a # part wins; the owner page is All tools and settings', () => {
-    const at = (path: string, hash = '') =>
-      currentTeamItem(currentTeamSection(path, hash, sectionForSlug));
+  test('the current item follows the address; a # part wins; the owner page belongs to Admin', () => {
+    const at = (path: string, hash = '', role: string | null = 'owner') =>
+      itemForPlace((currentTeamSection(path, hash, sectionForSlug) || 'home') as TeamPlaceId, role);
     expect(at('/operator')).toBe('today');
     expect(at('/operator/missions')).toBe('missions');
     expect(at('/operator/research')).toBe('companies');
-    expect(at('/operator/commercial')).toBe('missions');
+    expect(at('/operator/commercial')).toBe('money');
     expect(at('/operator/sources')).toBe('companies');
-    expect(at('/operator/audit')).toBe('tools');
-    expect(at('/operator/owner')).toBe('tools');
+    expect(at('/operator/audit')).toBe('admin');
+    expect(at('/operator/owner')).toBe('admin');
     expect(at('/operator/missions/abc')).toBe('missions');
-    expect(at('/operator', '#workspace-delivery')).toBe('delivery');
-    expect(at('/operator/missions', '#workspace-network')).toBe('delivery');
-    expect(at('/operator/dashboard')).toBe('outcomes');
+    expect(at('/operator', '#workspace-delivery')).toBe('meetings');
+    expect(at('/operator/missions', '#workspace-network')).toBe('missions');
+    expect(at('/operator/dashboard')).toBe('money');
     expect(at('/operator', '#workspace-navigation')).toBe('today');
   });
   test('each team page has its own title', () => {

@@ -8,7 +8,13 @@ import {
   sectionForSlug,
 } from '../../apps/web/lib/operator-urls';
 import { operatorReturnTo, workspaceSections } from '../../apps/web/lib/workspace-navigation';
-import { sectionAllowedFor, teamNavigation, teamSectionHref } from '../../apps/web/lib/ux/shells';
+import { teamSectionHref } from '../../apps/web/lib/ux/shells';
+import {
+  settingsLevel,
+  teamItemsFor,
+  teamMap,
+  teamPlacesFor,
+} from '../../apps/web/lib/ux/team-map';
 
 // Staff parity (revamp Wave 5, step B1). This freezes what the staff workspace offers today: the 18
 // section IDs, their address words, labels and permitted roles, every address form and every
@@ -99,9 +105,11 @@ describe('every address form of every section', () => {
 describe('navigation reaches every section for exactly the roles that may open it', () => {
   const reachable = (role: string) => {
     const ids = new Set<string>();
-    for (const entry of teamNavigation) {
-      for (const id of entry.sections ?? []) if (sectionAllowedFor(id, role)) ids.add(id);
-    }
+    for (const entry of teamItemsFor(role))
+      for (const place of teamPlacesFor(entry, role)) ids.add(place.id);
+    for (const place of settingsLevel(role)) ids.add(place.id);
+    ids.delete('home');
+    ids.delete('owner');
     return ids;
   };
   for (const role of all) {
@@ -111,8 +119,11 @@ describe('navigation reaches every section for exactly the roles that may open i
       expect([...got].sort()).toEqual([...expected].sort());
     });
   }
-  it('every section is reachable by at least one role in one or two clicks', () => {
-    const ids = new Set([...teamNavigation.flatMap((e) => e.sections ?? [])]);
+  it('every section is reachable by at least one role in one or two clicks (item, then the row under it)', () => {
+    const ids = new Set<string>([...teamMap.flatMap((e) => e.places.map((p) => p.id))]);
+    for (const place of settingsLevel('owner')) ids.add(place.id);
+    ids.delete('home');
+    ids.delete('owner');
     expect([...ids].sort()).toEqual(frozen.map((f) => f[0]).sort());
   });
 });
@@ -163,6 +174,7 @@ describe('the gates that decide access stay where they are', () => {
     const frame = read('components/ux/team-frame.tsx');
     expect(frame).toContain('StepUpDialog');
     expect(frame).toContain('TeamSidebar');
-    expect(read('components/ux/team-sidebar.tsx')).toContain('sectionAllowedFor');
+    expect(read('components/ux/team-sidebar.tsx')).toContain('teamItemsFor(role)');
+    expect(read('lib/ux/team-map.ts')).toContain('sectionAllowedFor');
   });
 });
