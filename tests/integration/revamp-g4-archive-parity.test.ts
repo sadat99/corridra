@@ -223,12 +223,18 @@ async function snapshot(pool: Fixture) {
         `SELECT md5(coalesce(jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t)::text)::text,'')) AS d FROM ${quote(row.nspname)}.${quote(row.relname)} t`,
       )
     ).rows[0].d as string;
+  const triggers = (
+    await pool.owner.query(
+      `SELECT t.tgrelid::regclass::text AS relation,t.tgname AS name FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid
+      JOIN pg_namespace n ON n.oid=c.relnamespace WHERE NOT t.tgisinternal AND n.nspname IN ('app','identity','customer','customer_private') ORDER BY 1,2`,
+    )
+  ).rows as { relation: string; name: string }[];
   const policies = (
     await pool.owner.query(
       "SELECT * FROM pg_policies WHERE schemaname IN ('app','identity','customer','customer_private') ORDER BY schemaname,tablename,policyname",
     )
   ).rows;
-  return { functions, tables, records, policies };
+  return { functions, tables, records, policies, triggers };
 }
 
 beforeAll(async () => {
@@ -263,7 +269,7 @@ describe('installing the archive gate on a populated database', () => {
     ]);
   });
 
-  test('install changes only the new objects and the three named function texts, and the control stays closed', async () => {
+  test('install changes only the new objects, the three named function texts and the membership trigger, and the control stays closed', async () => {
     beforeRun = await script('before');
     before = await snapshot(f);
     await migrateCustomerWorkspaceLifecycle(f.owner);
@@ -290,6 +296,21 @@ describe('installing the archive gate on a populated database', () => {
         before.records[`${row.nspname}.${row.relname}`],
       );
     }
+    // The only existing trigger that changes is the one on customer.membership (membership_immutable becomes membership_guard);
+    // the two deferred owner checks are new, and every other trigger is on a new table.
+    const triggerName = (row: { relation: string; name: string }) => `${row.relation}:${row.name}`;
+    const existing = new Set(before.triggers.map(triggerName));
+    const added = after.triggers.map(triggerName).filter((name) => !existing.has(name));
+    expect(
+      before.triggers
+        .map(triggerName)
+        .filter((name) => !after.triggers.map(triggerName).includes(name)),
+    ).toEqual(['customer.membership:membership_immutable']);
+    expect(added.filter((name) => !name.startsWith('customer_private.workspace_'))).toEqual([
+      'customer.membership:membership_guard',
+      'customer.membership:membership_one_owner',
+      'customer.workspace:workspace_one_owner',
+    ]);
     // Policies that existed are unchanged, and the new tables add none.
     expect(after.policies).toEqual(before.policies);
     // Nothing was granted to the application logins on the new tables or functions beyond the two customer functions.
