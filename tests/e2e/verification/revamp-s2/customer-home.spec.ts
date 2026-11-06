@@ -2,7 +2,7 @@ import { test, expect, signInCustomer } from '../fixtures';
 
 // CX PR 2a, Home on a production build with the test-only customer sign-in. Case ids: CX-02 (every destination
 // and name Home had before is still reachable), CX-06 (no mono-capital label, no "not tracked yet"), and the one
-// filled action: the header's New request is the only filled button on the page. The verification server has no
+// filled action: New Request, in the sidebar from 1024 px, is the only filled button on the page. The verification server has no
 // workspaces switched on, so Active work (which needs them) is covered by tests/integration/revamp-cx2-home.test.ts.
 test.beforeEach(async ({ context }) => {
   await signInCustomer(context);
@@ -48,9 +48,10 @@ test('CX-06 Home has no mono-capital label, no "not tracked yet" and no stepper'
   expect(style.family.toLowerCase()).not.toContain('mono');
 });
 
-test('Home has one filled action, the New request in the header, and none inside the page', async ({
+test('Home has one filled action, the New Request in the sidebar, and none inside the page', async ({
   page,
 }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/account');
   const filled = await page.evaluate(() => {
     const isFilled = (el: Element) => {
@@ -67,8 +68,10 @@ test('Home has one filled action, the New request in the header, and none inside
     return inMain.map((el) => (el.textContent ?? '').trim());
   });
   expect(filled).toEqual([]);
+  // Navigation v1: from 1024 px the one filled action is New Request at the top of the sidebar; the header one
+  // shows only on narrower screens (tests/e2e/verification/revamp-s2/customer-shell.spec.ts).
   await expect(
-    page.locator('header.ux-app-header').getByRole('link', { name: 'New request' }),
+    page.locator('.ux-leftnav-panel').getByRole('link', { name: 'New Request' }),
   ).toBeVisible();
 });
 

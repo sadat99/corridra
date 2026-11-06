@@ -81,11 +81,19 @@ export async function getTeamToday(pool: DatabasePool, ctx: RequestContext): Pro
     });
     const replies = await optional(db, 'today_replies', async () => {
       const installed = await db.query(
-        `SELECT to_regclass('app.recipient_reply_review') IS NOT NULL AS ok`,
+        `SELECT to_regclass('app.recipient_reply_review') IS NOT NULL AS ok,
+                to_regclass('app.recipient_detail_response_revision') IS NOT NULL AS revisable`,
       );
       if (!installed.rows[0]?.ok) throw new Error('not installed');
+      // Where answer correction is installed, an answer corrected after the team's latest Ask is waiting for review again.
       const r = await db.query(
-        `SELECT count(*)::int AS n FROM app.recipient_detail_response d WHERE d.tenant_id=$1
+        installed.rows[0].revisable
+          ? `SELECT count(*)::int AS n FROM app.recipient_detail_response d WHERE d.tenant_id=$1
+          AND (NOT EXISTS(SELECT FROM app.recipient_reply_review v WHERE v.tenant_id=d.tenant_id AND v.response_id=d.id)
+            OR (NOT EXISTS(SELECT FROM app.recipient_reply_review v WHERE v.tenant_id=d.tenant_id AND v.response_id=d.id AND v.decision<>'ASK')
+              AND EXISTS(SELECT FROM app.recipient_detail_response_revision y WHERE y.tenant_id=d.tenant_id AND y.response_id=d.id
+                AND y.created_at>(SELECT max(v.created_at) FROM app.recipient_reply_review v WHERE v.tenant_id=d.tenant_id AND v.response_id=d.id))))`
+          : `SELECT count(*)::int AS n FROM app.recipient_detail_response d WHERE d.tenant_id=$1
           AND NOT EXISTS(SELECT FROM app.recipient_reply_review v WHERE v.tenant_id=d.tenant_id AND v.response_id=d.id)`,
         [ctx.tenantId],
       );

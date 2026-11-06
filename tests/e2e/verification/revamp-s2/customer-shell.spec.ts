@@ -1,82 +1,102 @@
+import AxeBuilder from '@axe-core/playwright';
 import { test, expect, signInCustomer } from '../fixtures';
 import type { Page } from '@playwright/test';
 
-// CX PR 1, the customer shell (docs/revamp/specs/customer-experience.md and layout-budget.md): a left bar at
-// 1024 px and wider, a left drawer below it, a slim one-row header, and no eyebrow or amber banner. Run on a
-// production build with the test-only customer sign-in. Case ids: L-01, CX-02, CX-03, CX-06.
-const bar = (page: Page) => page.getByRole('navigation', { name: 'Customer navigation' });
+// Navigation v1, the customer shell (docs/revamp/specs/navigation-v1.md, boards CustomerDesktop, CustomerMobile and
+// UtilityMenus), run on a production build with the test-only customer sign-in. Supersedes the CX PR 1 shell cases
+// that described the left drawer and the account menu at the foot of the bar; the case ids are kept.
+// Case ids: L-01 (sidebar from 1024 px, labelled bottom tabs below), CX-02 (every old destination is still
+// reachable), CX-03 (the header row and its menus), CX-06 (no banner, no eyebrow, no tab row).
+const sidebar = (page: Page) => page.getByRole('navigation', { name: 'Customer navigation' });
+const tabs = (page: Page) => page.getByRole('navigation', { name: 'Customer tabs' });
 const header = (page: Page) => page.locator('header.ux-app-header');
-// Owner-approved frame (5 Nov 2026): from 1024 px the account menu sits at the foot of the left bar with the
-// person's name; below 1024 px it stays in the header. The menu and everything in it are unchanged.
-const leftBar = (page: Page) => page.locator('.ux-leftnav-panel');
-// The destinations every customer page had before the bar, in their order (Companies appears only where
-// the approved-companies module is on, which it is not on this server).
+// Companies appears only where the approved-companies module is on, and Home is Your Move only with its switch,
+// neither of which is on this server. So the five tabs are four here, and Home is /account.
 const destinations: [string, string][] = [
   ['Home', '/account'],
   ['Requests', '/account?view=work'],
+  ['Meetings', '/account/meetings'],
   ['Reports', '/account?view=results'],
-  ['Account', '/account?view=more'],
 ];
+const hrefsOf = (links: ReturnType<Page['getByRole']>) =>
+  links.evaluateAll((all) => all.map((a) => a.getAttribute('href')));
 
 test.beforeEach(async ({ context }) => {
   await signInCustomer(context);
 });
 
-test('L-01 at 1440 the destinations are a left bar beside the page, with the same names and addresses', async ({
+test('L-01 at 1440 the destinations are a sidebar beside the page, with New Request at its top and no Menu button', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/account');
-  await expect(bar(page)).toBeVisible();
-  const links = bar(page).getByRole('link');
+  await expect(sidebar(page)).toBeVisible();
+  const links = sidebar(page).getByRole('link');
   await expect(links).toHaveText(destinations.map(([name]) => name));
-  expect(await links.evaluateAll((all) => all.map((a) => a.getAttribute('href')))).toEqual(
-    destinations.map(([, href]) => href),
-  );
-  await expect(bar(page).getByRole('link', { name: 'Home' })).toHaveAttribute(
+  expect(await hrefsOf(links)).toEqual(destinations.map(([, href]) => href));
+  await expect(sidebar(page).getByRole('link', { name: 'Home' })).toHaveAttribute(
     'aria-current',
     'page',
   );
+  const newRequest = page.locator('.ux-leftnav-panel').getByRole('link', { name: 'New Request' });
+  await expect(newRequest).toBeVisible();
+  expect(['/plan', '/account?view=work#customer-workspaces']).toContain(
+    await newRequest.getAttribute('href'),
+  );
+  expect((await newRequest.boundingBox())!.height).toBeGreaterThanOrEqual(47.5);
   const beside = await page.evaluate(() => {
     const nav = document
       .querySelector('nav[aria-label="Customer navigation"]')!
       .getBoundingClientRect();
     const main = document.querySelector('main')!.getBoundingClientRect();
-    return { barRight: nav.right, barTop: nav.top, mainLeft: main.left };
+    return { barRight: nav.right, mainLeft: main.left };
   });
   expect(beside.barRight).toBeLessThanOrEqual(beside.mainLeft + 1);
   await expect(page.getByRole('button', { name: 'Menu', exact: true })).toHaveCount(0);
+  await expect(tabs(page)).toBeHidden();
+  // Help on WhatsApp has no owner-configured number: plain text with a tag, never a link.
+  const whatsapp = page.locator('.ux-rail-soon');
+  await expect(whatsapp).toContainText('Help on WhatsApp');
+  await expect(whatsapp).toContainText('Coming soon');
+  await expect(whatsapp.getByRole('link')).toHaveCount(0);
+  await expect(whatsapp.getByRole('button')).toHaveCount(0);
 });
 
-test('L-01 at 390 the bar is a drawer: a menu button opens it, focus stays inside, Escape closes it and returns focus', async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/account');
-  const opener = page.getByRole('button', { name: 'Menu', exact: true });
-  await expect(opener).toBeVisible();
-  const panel = page.locator('.ux-leftnav-panel');
-  await expect(panel).toHaveAttribute('data-open', 'false');
-  expect((await panel.boundingBox())!.x + (await panel.boundingBox())!.width).toBeLessThanOrEqual(
-    1,
-  );
-  await opener.click();
-  await expect(panel).toHaveAttribute('data-open', 'true');
-  await expect(page.getByRole('dialog', { name: /./ })).toBeVisible();
-  for (let i = 0; i < 8; i += 1) {
-    await page.keyboard.press('Tab');
-    expect(await page.evaluate(() => !!document.activeElement?.closest('.ux-leftnav-panel'))).toBe(
-      true,
+for (const width of [320, 390, 768]) {
+  test(`L-01 at ${width} the destinations are labelled bottom tabs, 48 px high, with no Menu button and no sideways scroll`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/account');
+    await expect(tabs(page)).toBeVisible();
+    const links = tabs(page).getByRole('link');
+    await expect(links).toHaveText(destinations.map(([name]) => name));
+    expect(await hrefsOf(links)).toEqual(destinations.map(([, href]) => href));
+    await expect(tabs(page).getByRole('link', { name: 'Home' })).toHaveAttribute(
+      'aria-current',
+      'page',
     );
-  }
-  await page.keyboard.press('Escape');
-  await expect(panel).toHaveAttribute('data-open', 'false');
-  await expect(opener).toBeFocused();
-  await opener.click();
-  await bar(page).getByRole('link', { name: 'Requests' }).click();
-  await expect(page).toHaveURL(/\/account\?view=work/);
-  await expect(panel).toHaveAttribute('data-open', 'false');
-});
+    for (const box of await links.evaluateAll((all) =>
+      all.map((a) => a.getBoundingClientRect().toJSON()),
+    ))
+      expect(box.height).toBeGreaterThanOrEqual(47.5);
+    await expect(page.getByRole('button', { name: 'Menu', exact: true })).toHaveCount(0);
+    await expect(page.locator('.ux-leftnav-rail')).toBeHidden();
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
+    // The last of the page is not hidden behind the tabs.
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    const clear = await page.evaluate(() => {
+      const tabsTop = document.querySelector('.ux-customer-tabs')!.getBoundingClientRect().top;
+      const main = document.querySelector('main')!.getBoundingClientRect();
+      return main.bottom <= tabsTop + 1;
+    });
+    expect(clear).toBe(true);
+    await tabs(page).getByRole('link', { name: 'Requests' }).click();
+    await expect(page).toHaveURL(/\/account\?view=work/);
+  });
+}
 
 test('CX-06 no amber banner, no eyebrow and no tab row on a customer page', async ({ page }) => {
   for (const path of ['/account', '/account?view=work', '/account?view=more']) {
@@ -88,7 +108,9 @@ test('CX-06 no amber banner, no eyebrow and no tab row on a customer page', asyn
   }
 });
 
-test('CX-03 the header is one slim row with no bordered text buttons', async ({ page }) => {
+test('CX-03 the header is one slim row with no bordered text buttons, and New Request is in the sidebar, not the header, from 1024 px', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/account');
   const box = (await header(page).boundingBox())!;
@@ -100,17 +122,19 @@ test('CX-03 the header is one slim row with no bordered text buttons', async ({ 
       .map((node) => (node.textContent ?? '').trim()),
   );
   expect(bordered).toEqual([]);
-  await expect(header(page).getByRole('link', { name: 'New request' })).toBeVisible();
+  await expect(header(page).getByRole('link', { name: 'New Request' })).toBeHidden();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(header(page).getByRole('link', { name: 'New Request' })).toBeVisible();
 });
 
-test('CX-03 the account menu holds the name, the language, the website, the privacy notice and Sign out, and works by keyboard', async ({
+test('CX-03 the avatar menu is Account, Company Profile, Plan and Billing, Notification Settings and Sign Out, honest about what is not real yet, and works by keyboard', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/account');
-  const trigger = leftBar(page).getByRole('button', { name: 'Account menu' });
+  const trigger = header(page).getByRole('button', { name: 'Account menu' });
   await expect(trigger).toBeVisible();
-  await expect(header(page).getByRole('button', { name: 'Account menu' })).toBeHidden();
+  expect((await trigger.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
   await expect(trigger).toHaveAttribute('aria-expanded', 'false');
   await trigger.focus();
   await page.keyboard.press('Enter');
@@ -118,17 +142,22 @@ test('CX-03 the account menu holds the name, the language, the website, the priv
   const menu = page.getByRole('menu', { name: 'Account menu' });
   await expect(menu).toBeVisible();
   await expect(menu).toContainText('qa-customer@example.invalid');
-  await expect(menu.getByRole('group', { name: /Language/ })).toBeVisible();
-  await expect(menu.getByRole('menuitem', { name: 'Corridra website' })).toHaveAttribute(
-    'href',
-    '/',
-  );
-  await expect(menu.getByRole('menuitem', { name: 'Privacy notice' })).toHaveAttribute(
-    'href',
-    '/privacy',
-  );
-  await expect(menu.getByRole('menuitem', { name: 'Sign out' })).toBeVisible();
   await expect(menu).toContainText(/Preview workspace|stays private/);
+  await expect(menu.getByRole('menuitem', { name: 'Account', exact: true })).toHaveAttribute(
+    'href',
+    '/account?view=more',
+  );
+  await expect(menu.getByRole('menuitem', { name: 'Sign Out' })).toBeVisible();
+  // This server has no workspace, no billing and no email choices page: these rows are plain text tagged Coming soon, announced as
+  // unavailable, and are not links.
+  // Notification Settings joins them: its page answers 404 unless Pulse or the customer area is on, which this
+  // server does not have, so a link would lead nowhere.
+  for (const name of ['Company Profile', 'Plan and Billing', 'Notification Settings']) {
+    const row = menu.getByRole('menuitem', { name: new RegExp(name) });
+    await expect(row).toHaveAttribute('aria-disabled', 'true');
+    await expect(row).toContainText('Coming soon');
+    await expect(row).not.toHaveAttribute('href', /.*/);
+  }
   await page.keyboard.press('ArrowDown');
   expect(await page.evaluate(() => document.activeElement?.getAttribute('role'))).toMatch(
     /^menuitem/,
@@ -138,128 +167,91 @@ test('CX-03 the account menu holds the name, the language, the website, the priv
   await expect(trigger).toBeFocused();
 });
 
-test('CX-03 the inbox is an icon with its unread count for assistive technology', async ({
+test('CX-03 the phone tabs follow the chosen language as the sidebar does, and a new word is marked English', async ({
   page,
 }) => {
-  const item = (id: string, readAt: string | null) => ({
-    id,
-    type: 'REPLY_POSTED',
-    payload: { title: 'New reply' },
-    readAt,
-    createdAt: '2026-11-04T10:00:00Z',
-  });
-  await page.route('**/api/customer-inbox', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify([item('1', null), item('2', null), item('3', '2026-11-04T11:00:00Z')]),
-    }),
-  );
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.addInitScript(() => localStorage.setItem('corridra.language', 'bn'));
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/account');
-  const inbox = header(page).getByRole('button', { name: 'Inbox', exact: true });
-  await expect(inbox).toBeVisible();
-  await expect(inbox).toHaveAccessibleDescription('2 unread');
-  await expect(inbox).toContainText('2');
+  const links = tabs(page).getByRole('link');
+  await expect(links.nth(0)).toHaveText('হোম');
+  await expect(links.nth(1)).toHaveText('আমার কাজ');
+  await expect(links.nth(3)).toHaveText('ফলাফল');
+  // Meetings has no reviewed translation, so it stays English and says so.
+  await expect(links.nth(2)).toHaveText('Meetings');
+  await expect(links.nth(2).locator('[lang="en"]')).toHaveCount(1);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(sidebar(page).getByRole('link').nth(0)).toHaveText('হোম');
 });
 
-test('CX-02 every header action from before is still reachable: inbox, language, website, help, and the same destinations', async ({
-  page,
-}) => {
+test('CX-03 the avatar menu never offers a link that does not open', async ({ page, request }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/account');
-  await expect(header(page).getByRole('button', { name: 'Inbox', exact: true })).toBeVisible();
-  // The help button lives outside the header and stays on the page (at the foot of the left bar from 1024 px).
-  await expect(page.getByRole('button', { name: 'Help', exact: true })).toBeVisible();
-  await leftBar(page).getByRole('button', { name: 'Account menu' }).click();
+  await header(page).getByRole('button', { name: 'Account menu' }).click();
   const menu = page.getByRole('menu', { name: 'Account menu' });
-  await expect(menu.getByRole('group', { name: /Language/ })).toBeVisible();
-  await expect(menu.getByRole('menuitem', { name: 'Corridra website' })).toBeVisible();
-  const hrefs = await bar(page)
-    .getByRole('link')
-    .evaluateAll((all) => all.map((a) => a.getAttribute('href')));
-  expect(hrefs).toEqual(destinations.map(([, href]) => href));
+  const hrefs = (await hrefsOf(menu.getByRole('menuitem'))).filter(
+    (href): href is string => !!href && href.startsWith('/'),
+  );
+  expect(hrefs).toContain('/account?view=more');
+  for (const href of hrefs) {
+    const response = await page.request.get(href);
+    expect(response.status(), `${href} answered ${response.status()}`).toBeLessThan(400);
+  }
+  void request;
 });
 
-test('CX-03 on a phone the Menu button is an icon with the accessible name Menu; wider it keeps the word', async ({
+test('CX-03 the language menu offers the languages in their own names and the choice applies', async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/account');
-  const opener = page.getByRole('button', { name: 'Menu', exact: true });
-  await expect(opener).toBeVisible();
-  const phone = await opener.evaluate((el) => {
-    const icon = getComputedStyle(el, '::before');
-    const box = el.getBoundingClientRect();
-    return {
-      mask: icon.maskImage,
-      fontSize: getComputedStyle(el).fontSize,
-      width: box.width,
-      height: box.height,
-    };
-  });
-  expect(phone.mask).not.toBe('none');
-  expect(phone.fontSize).toBe('0px');
-  expect(phone.width).toBeGreaterThanOrEqual(44);
-  expect(phone.height).toBeGreaterThanOrEqual(44);
-  await page.setViewportSize({ width: 800, height: 900 });
-  const tablet = await opener.evaluate((el) => ({
-    mask: getComputedStyle(el, '::before').maskImage,
-    fontSize: getComputedStyle(el).fontSize,
-  }));
-  expect(tablet.mask === 'none' || tablet.mask === '').toBe(true);
-  expect(tablet.fontSize).not.toBe('0px');
+  const trigger = header(page).getByRole('button', { name: 'Language' });
+  await expect(trigger).toBeVisible();
+  expect((await trigger.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
+  await trigger.click();
+  const menu = page.getByRole('menu', { name: 'Language' });
+  await expect(menu.getByRole('menuitemradio', { name: 'English' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  await expect(menu.getByRole('menuitemradio', { name: 'বাংলা' })).toBeVisible();
+  await expect(menu.getByRole('menuitemradio', { name: 'Español' })).toBeVisible();
+  await expect(menu.getByRole('menuitemradio', { name: '中文' })).toBeVisible();
 });
 
-test('CX-03 on a phone the account menu stays in the header, with the same contents', async ({
+test('CX-02 Help and accessibility: real things are links or switches, the rest is plain text tagged Coming soon', async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/account');
-  const trigger = header(page).getByRole('button', { name: 'Account menu' });
+  const trigger = header(page).getByRole('button', { name: 'Help and accessibility' });
   await expect(trigger).toBeVisible();
   await trigger.click();
-  const menu = page.getByRole('menu', { name: 'Account menu' });
-  await expect(menu).toContainText('qa-customer@example.invalid');
-  await expect(menu.getByRole('menuitem', { name: 'Sign out' })).toBeVisible();
-});
-
-test('the account menu and Help open from the foot of the bar unclipped, also when the bar is collapsed (Codex review of PR 305)', async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/account');
-  for (const collapsed of [false, true]) {
-    if (collapsed) await page.getByRole('button', { name: 'Collapse menu' }).click();
-    const trigger = leftBar(page).getByRole('button', { name: 'Account menu' });
-    await trigger.click();
-    const menu = page.getByRole('menu', { name: 'Account menu' });
-    await expect(menu).toBeVisible();
-    // The whole menu is on screen and is the topmost element at its own centre and right edge: not clipped.
-    const box = (await menu.boundingBox())!;
-    expect(box.width).toBeGreaterThanOrEqual(15 * 16 - 1);
-    const hit = await page.evaluate(
-      ([x, y]) => document.elementFromPoint(x!, y!)?.closest('[role="menu"]') !== null,
-      [box.x + box.width - 8, box.y + box.height / 2],
-    );
-    expect(hit).toBe(true);
-    await page.keyboard.press('Escape');
-    await leftBar(page).getByRole('button', { name: 'Help', exact: true }).click();
-    const sheet = page.getByRole('dialog', { name: 'Need a hand?' });
-    await expect(sheet).toBeVisible();
-    const sheetBox = (await sheet.boundingBox())!;
-    const sheetHit = await page.evaluate(
-      ([x, y]) => document.elementFromPoint(x!, y!)?.closest('[role="dialog"]') !== null,
-      [sheetBox.x + sheetBox.width - 8, sheetBox.y + sheetBox.height / 2],
-    );
-    expect(sheetHit).toBe(true);
-    await page.keyboard.press('Escape');
+  const menu = page.getByRole('menu', { name: 'Help and accessibility' });
+  for (const group of ['Get Help', 'Make It Easier to Read', 'About Corridra'])
+    await expect(menu.getByRole('group', { name: group })).toBeVisible();
+  const link = (name: string) => menu.getByRole('menuitem', { name, exact: true });
+  await expect(link('See How It Works')).toHaveAttribute('href', '/how-it-works');
+  await expect(link('How We Label Facts')).toHaveAttribute('href', '/trust');
+  await expect(link('Corridra Website')).toHaveAttribute('href', '/');
+  await expect(link('Privacy Notice')).toHaveAttribute('href', '/privacy');
+  for (const name of [
+    'Chat on WhatsApp',
+    'Report a Problem',
+    'Text Size',
+    'Stronger Colours',
+    'Less Movement',
+  ]) {
+    const row = menu.getByRole('menuitem', { name: new RegExp(name) });
+    await expect(row, name).toHaveAttribute('aria-disabled', 'true');
+    await expect(row, name).toContainText('Coming soon');
+    await expect(row, name).not.toHaveAttribute('href', /.*/);
   }
+  await page.keyboard.press('Escape');
+  await expect(trigger).toBeFocused();
 });
 
-test('reading aloud started from Help in the bar can be stopped from Help again (Codex review of PR 305)', async ({
-  page,
-}) => {
+test('reading aloud started from Help can be stopped from Help again', async ({ page }) => {
   // A browser voice that keeps speaking until it is cancelled, so the test sees the state between.
   await page.addInitScript(() => {
     const synth = window.speechSynthesis;
@@ -274,25 +266,217 @@ test('reading aloud started from Help in the bar can be stopped from Help again 
   });
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/account');
-  const help = leftBar(page).getByRole('button', { name: 'Help', exact: true });
-  await help.click();
-  const sheet = page.getByRole('dialog', { name: 'Need a hand?' });
-  await sheet.getByRole('button', { name: 'Listen to This Page' }).click();
+  const trigger = header(page).getByRole('button', { name: 'Help and accessibility' });
+  await trigger.click();
+  const menu = page.getByRole('menu', { name: 'Help and accessibility' });
+  await menu.getByRole('menuitemcheckbox', { name: 'Listen to This Page' }).click();
   const speech = () =>
     page.evaluate(
       () => (window as unknown as { __speech: { speak: number; cancel: number } }).__speech,
     );
   expect((await speech()).speak).toBe(1);
-  await help.click();
-  const stop = sheet.getByRole('button', { name: 'Stop Reading' });
-  await expect(stop).toHaveAttribute('aria-pressed', 'true');
+  await trigger.click();
+  const stop = menu.getByRole('menuitemcheckbox', { name: 'Stop Reading' });
+  await expect(stop).toHaveAttribute('aria-checked', 'true');
   const cancelledBefore = (await speech()).cancel;
   await stop.click();
   expect((await speech()).cancel).toBe(cancelledBefore + 1);
   expect((await speech()).speak).toBe(1);
-  await help.click();
-  await expect(sheet.getByRole('button', { name: 'Listen to This Page' })).toHaveAttribute(
-    'aria-pressed',
-    'false',
-  );
 });
+
+const inboxItem = (id: string, type: string, title: string, readAt: string | null) => ({
+  id,
+  type,
+  payload: { title },
+  readAt,
+  createdAt: '2026-11-04T10:00:00Z',
+});
+
+test('CX-03 the notifications panel groups Needs You, Updates and Earlier, marks all read with the existing read call, and counts unread for assistive technology', async ({
+  page,
+}) => {
+  const items = [
+    inboxItem('1', 'TEAM_INVITE', 'Team invitation', null),
+    inboxItem('2', 'REPLY_POSTED', 'New reply', null),
+    inboxItem('3', 'REPORT_PUBLISHED', 'Report ready', null),
+    inboxItem('4', 'REPLY_POSTED', 'Old reply', '2026-11-04T11:00:00Z'),
+  ];
+  const posted: string[] = [];
+  await page.route('**/api/customer-inbox', async (route) => {
+    if (route.request().method() === 'POST') {
+      const id = (route.request().postDataJSON() as { id: string }).id;
+      posted.push(id);
+      const item = items.find((one) => one.id === id);
+      if (item) item.readAt = '2026-11-05T09:00:00Z';
+      return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+    }
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(items),
+    });
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/account');
+  const bell = header(page).getByRole('button', { name: 'Inbox', exact: true });
+  await expect(bell).toBeVisible();
+  await expect(bell).toHaveAccessibleDescription('3 unread');
+  expect((await bell.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
+  await bell.click();
+  const panel = page.locator('.ux-notice-panel');
+  await expect(panel.getByRole('heading', { name: 'Notifications' })).toBeVisible();
+  await expect(panel.getByRole('group', { name: 'Needs You' })).toContainText('Team invitation');
+  await expect(panel.getByRole('group', { name: 'Updates' })).toContainText('New reply');
+  await expect(panel.getByRole('group', { name: 'Updates' })).toContainText('Report ready');
+  await expect(panel.getByRole('group', { name: 'Earlier' })).toContainText('Old reply');
+  // Needs You is first in the document order.
+  const order = await panel.locator('h3').allTextContents();
+  expect(order).toEqual(['Needs You', 'Updates', 'Earlier']);
+  // Unread is a dot and a tint with words for assistive technology, not a colour alone.
+  await expect(panel.locator('li[data-unread="true"] .ux-notice-dot')).toHaveCount(3);
+  await expect(panel.locator('li[data-unread="true"] .sr-only').first()).toContainText('Unread');
+  await panel.getByRole('button', { name: 'Mark All Read' }).click();
+  await expect(panel.getByRole('button', { name: 'Mark All Read' })).toHaveCount(0);
+  expect(posted.sort()).toEqual(['1', '2', '3']);
+  // The bell counts again while the panel is still open.
+  await expect(bell).not.toHaveAccessibleDescription('3 unread');
+  await expect(bell.locator('.ux-bar-count')).toHaveCount(0);
+  await expect(panel.getByRole('group', { name: 'Earlier' })).toContainText('Team invitation');
+  await page.keyboard.press('Escape');
+  await expect(bell).toBeFocused();
+});
+
+test('CX-03 opening one notification keeps focus in the panel, so Escape still closes it and returns to the bell', async ({
+  page,
+}) => {
+  const items = [inboxItem('1', 'REPLY_POSTED', 'New reply', null)];
+  await page.route('**/api/customer-inbox', async (route) => {
+    if (route.request().method() === 'POST') {
+      items[0]!.readAt = '2026-11-05T09:00:00Z';
+      return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+    }
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(items),
+    });
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/account');
+  const bell = header(page).getByRole('button', { name: 'Inbox', exact: true });
+  await bell.click();
+  const panel = page.locator('.ux-notice-panel');
+  await panel.getByRole('button', { name: 'New reply' }).click();
+  // The item moves from Updates to Earlier, which replaces its button; focus must stay inside the panel.
+  await expect(panel.getByRole('group', { name: 'Earlier' })).toContainText('New reply');
+  expect(await page.evaluate(() => !!document.activeElement?.closest('.ux-notice-panel'))).toBe(
+    true,
+  );
+  await page.keyboard.press('Escape');
+  await expect(bell).toBeFocused();
+});
+
+test('CX-02 every destination the customer menus reached before is still reachable from the new navigation', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/account');
+  const reached = new Set<string>();
+  for (const href of await hrefsOf(sidebar(page).getByRole('link'))) reached.add(href!);
+  reached.add((await page.locator('.ux-rail-new').getAttribute('href'))!);
+  await header(page).getByRole('button', { name: 'Account menu' }).click();
+  for (const href of await hrefsOf(
+    page.getByRole('menu', { name: 'Account menu' }).getByRole('menuitem'),
+  ))
+    if (href) reached.add(href);
+  await page.keyboard.press('Escape');
+  await header(page).getByRole('button', { name: 'Help and accessibility' }).click();
+  for (const href of await hrefsOf(
+    page.getByRole('menu', { name: 'Help and accessibility' }).getByRole('menuitem'),
+  ))
+    if (href) reached.add(href);
+  // Home, Requests, Reports, Account, New Request, the website, the privacy notice and Help's How It Works.
+  for (const old of [
+    '/account',
+    '/account?view=work',
+    '/account?view=results',
+    '/account?view=more',
+    '/',
+    '/privacy',
+    '/how-it-works',
+  ])
+    expect(reached.has(old), `${old} is no longer reachable`).toBe(true);
+  expect(
+    ['/plan', '/account?view=work#customer-workspaces'].some((href) => reached.has(href)),
+  ).toBe(true);
+  // All tools stays linked from the Account page where the navigation switch is on (checked in
+  // tests/integration/revamp-nav-customer-model.test.ts); this server has that switch off.
+});
+
+test('CX-02 on a phone the language and help menus are inside the avatar menu, so nothing is lost when the row is narrow', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/account');
+  await expect(header(page).getByRole('button', { name: 'Language' })).toBeHidden();
+  await expect(header(page).getByRole('button', { name: 'Help and accessibility' })).toBeHidden();
+  await header(page).getByRole('button', { name: 'Account menu' }).click();
+  const menu = page.getByRole('menu', { name: 'Account menu' });
+  await expect(menu.getByRole('menuitemradio', { name: 'English' })).toBeVisible();
+  await expect(menu.getByRole('menuitem', { name: 'See How It Works' })).toHaveAttribute(
+    'href',
+    '/how-it-works',
+  );
+  await expect(menu.getByRole('menuitem', { name: 'Sign Out' })).toBeVisible();
+  // The whole menu is on screen.
+  const box = (await menu.boundingBox())!;
+  expect(box.x).toBeGreaterThanOrEqual(-1);
+  expect(box.x + box.width).toBeLessThanOrEqual(391);
+});
+
+test('the Meetings tab opens a page that says what it is, with the combined list marked Coming soon and not a link', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/account');
+  await sidebar(page).getByRole('link', { name: 'Meetings' }).click();
+  await expect(page).toHaveURL(/\/account\/meetings$/);
+  await expect(page.locator('main h1')).toHaveText('Meetings');
+  await expect(sidebar(page).getByRole('link', { name: 'Meetings' })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  // The requests list is read only where the workspaces and requests modules are on; where they are not, the page
+  // says the list is not available and never claims there are no requests.
+  await expect(page.locator('main')).not.toContainText('You have no requests yet');
+  await expect(page.locator('main')).toContainText('Your requests list is not available here yet');
+  const soon = page.locator('.ux-soon-line');
+  await expect(soon).toContainText('One list of all your meetings');
+  await expect(soon).toContainText('Coming soon');
+  await expect(soon.getByRole('link')).toHaveCount(0);
+});
+
+for (const width of [320, 390, 768, 1440]) {
+  test(`axe finds nothing on the customer shell at ${width}, menus closed and with the avatar and help menus open`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/account');
+    await expect(page.locator('main h1').first()).toBeVisible();
+    const scan = async () =>
+      (
+        await new AxeBuilder({ page })
+          .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
+          .analyze()
+      ).violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`);
+    expect(await scan()).toEqual([]);
+    await header(page).getByRole('button', { name: 'Account menu' }).click();
+    expect(await scan()).toEqual([]);
+    await page.keyboard.press('Escape');
+    const help = header(page).getByRole('button', { name: 'Help and accessibility' });
+    if (await help.isVisible()) {
+      await help.click();
+      expect(await scan()).toEqual([]);
+    }
+  });
+}

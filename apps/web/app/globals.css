@@ -576,36 +576,8 @@ summary:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 5px;
 }
-.public-header {
-  height: 104px;
-  gap: 28px;
-  position: relative;
-  z-index: 2;
-}
-.public-nav {
-  display: flex;
-  gap: 19px;
-  align-items: center;
-  font-size: var(--text-xs);
-}
-.public-nav > a {
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-}
-.public-nav a:hover,
 summary:hover {
   color: var(--accent);
-}
-.public-nav .nav-cta:hover {
-  color: var(--paper);
-}
-.nav-cta {
-  padding: 13px 15px;
-  gap: 12px;
-}
-.menu-toggle {
-  display: none;
 }
 .availability-note {
   font-size: var(--text-xs);
@@ -719,54 +691,7 @@ summary:hover {
   color: var(--critical);
   font-size: var(--text-sm);
 }
-@media (max-width: 1250px) {
-  .public-header {
-    height: auto;
-    min-height: 94px;
-    flex-wrap: wrap;
-    padding: 18px 0;
-    gap: 16px;
-  }
-  .public-nav {
-    gap: 15px;
-    flex-wrap: wrap;
-  }
-}
 @media (max-width: 1000px) {
-  .public-header {
-    min-height: 86px;
-    padding: 16px 0;
-  }
-  .menu-toggle {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    background: transparent;
-    border: 1px solid var(--line);
-    padding: 12px 15px;
-    min-height: 44px;
-    cursor: pointer;
-    font-size: var(--text-base);
-  }
-  .public-nav {
-    display: none;
-    width: 100%;
-  }
-  .public-nav.is-open {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 2px;
-    padding: 12px 0 4px;
-  }
-  .public-nav > a {
-    padding: 12px 0;
-  }
-  .public-nav .nav-cta {
-    padding: 14px 18px;
-    margin-top: 10px;
-    align-self: start;
-  }
   .detail-grid {
     grid-template-columns: 1fr 1fr;
   }
@@ -2223,8 +2148,6 @@ time {
   font-size: 1.6rem;
   letter-spacing: -0.06em;
 }
-.public-nav a:not(.primary-link),
-.public-nav summary,
 .header-link {
   font-size: var(--text-base);
   border-radius: var(--radius-sm);
@@ -2234,29 +2157,9 @@ time {
 }
 /* Colours apply to the desktop bar only; the narrow-screen panel keeps its own light-on-dark pair. */
 @media (min-width: 1001px) {
-  .public-nav a:not(.primary-link),
-  .public-nav summary,
   .header-link {
     color: var(--text-2);
   }
-  .public-nav a:not(.primary-link):hover,
-  .public-nav summary:hover {
-    color: var(--brand-deep);
-    background: var(--surface-2);
-  }
-}
-.public-nav summary {
-  font-weight: 500;
-}
-.menu-toggle {
-  min-height: 2.75rem;
-  padding: 0.5rem 1rem;
-  font-size: var(--text-base);
-  font-weight: 550;
-  color: var(--brand-deep);
-  background: var(--surface-1);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
 }
 .availability-note {
   display: flex;
@@ -5205,45 +5108,6 @@ th {
   width: 1.25rem;
   height: 1.25rem;
   margin-top: 0.15rem;
-}
-
-/* Header while signed in: the account link and Sign out sit with the other links. */
-.public-nav > button.nav-signout {
-  display: flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0;
-  font: inherit;
-  font-size: var(--text-base);
-  color: var(--text-2);
-  background: none;
-  border: 0;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-.public-nav > button.nav-signout:hover {
-  color: var(--brand-deep);
-}
-.public-nav > button.nav-signout:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-.public-header .nav-message {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  z-index: 3;
-  margin: var(--space-2) 0 0;
-  padding: var(--space-2) var(--space-4);
-  font-size: var(--text-sm);
-  color: var(--critical);
-  background: var(--critical-surface);
-  border-radius: var(--radius-sm);
-}
-@media (max-width: 1000px) {
-  .public-nav > button.nav-signout {
-    padding: 12px 0;
-  }
 }
 
 /* Customer account: one test-mode banner, quick links, one Refresh button, field hints. */

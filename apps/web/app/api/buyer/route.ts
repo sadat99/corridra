@@ -9,6 +9,15 @@ const headers = {
   'Referrer-Policy': 'no-referrer',
   'X-Content-Type-Options': 'nosniff',
 };
+// The refusals the database gives for a correction. Only these exact texts are shown, each as a plain sentence.
+const revisionRefusals: Record<string, string> = {
+  'Response changed; reload before saving':
+    'This answer was changed since you opened it. The latest version is shown; try again.',
+  'The team has already decided on this response':
+    'The team has already made a decision on this answer, so it can no longer be changed here.',
+  'Answer correction is not open': 'Changing an answer is not available yet.',
+  'Response revision limit reached': 'This answer has been changed as often as is allowed.',
+};
 export async function POST(request: Request) {
   try {
     const s = foundations();
@@ -49,18 +58,22 @@ export async function POST(request: Request) {
             : (e as { code?: string }).code === '42501'
               ? 404
               : 500;
+    const revision =
+      status === 409 ? revisionRefusals[(e as { message?: string }).message ?? ''] : undefined;
     return Response.json(
       {
         error:
           e instanceof DomainError
             ? e.message
-            : status === 404
-              ? 'This private link is unavailable or expired'
-              : status === 409
-                ? 'A response was already recorded for this link.'
-                : status === 400
-                  ? 'Check the submitted values'
-                  : 'The response could not be completed. Please try again.',
+            : revision
+              ? revision
+              : status === 404
+                ? 'This private link is unavailable or expired'
+                : status === 409
+                  ? 'A response was already recorded for this link.'
+                  : status === 400
+                    ? 'Check the submitted values'
+                    : 'The response could not be completed. Please try again.',
       },
       { status, headers },
     );

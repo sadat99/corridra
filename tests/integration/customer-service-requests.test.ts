@@ -1846,7 +1846,11 @@ test('events carry ids and versions only, one chain per change, and reveal no te
       /^customer\.service_request\.(requested|revised|quoted|question|answer|accepted|declined|withdrawn|expired|started|update|delivered|closed|internal_note)$/,
     );
   }
-  const text = JSON.stringify(events);
+  // Ids are random hex, so a short number such as 45000 can appear inside one by chance; only the rest of the text is checked.
+  const text = JSON.stringify(events).replace(
+    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g,
+    '<id>',
+  );
   for (const word of ['Synthetic', 'interpreter', 'margin', '45000', 'USD'])
     expect(text).not.toContain(word);
   expect(

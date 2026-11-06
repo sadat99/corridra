@@ -3,6 +3,8 @@ import { beforeAll, afterAll, beforeEach, test, expect, vi } from 'vitest';
 import { commercialFixture } from './commercial-fixture';
 import { accessFixture } from './access-fixture';
 import { writeFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { command, future } from './access-fixture';
 import { rawContext } from './support';
 import { DeliveryService } from '../../packages/delivery/src/index';
@@ -19,6 +21,9 @@ import { buildReplyTerms, replyTermKeys, noCharge } from '../../apps/web/lib/rep
 import { ReplyReviewService } from '../../packages/delivery/src/reply-review';
 import { migrateReplyReview } from '../../packages/db/src/recipient-reply-review-migrate';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
+import { migrateRecipientResponseRevision } from '../../packages/db/src/recipient-response-revision-migrate';
+import { getTeamToday } from '../../packages/auth/src/team-today';
+import { configureRecipientRevision } from '../../packages/delivery/src/recipient-revision-configuration';
 import { configureReplyReview } from '../../packages/delivery/src/reply-review-configuration';
 const account = vi.hoisted(() => ({ session: null as unknown, services: null as unknown }));
 vi.mock('../../apps/web/lib/neon-auth', () => ({
@@ -1359,6 +1364,417 @@ test('populated Part 2 upgrade preserves every original row and historical expor
       }
     ).unit,
   ).toBe('kg');
+});
+
+// Recipient response revision (CRUD gap G7, module 3): a recipient may correct their answer through the same private link.
+const revisionReason = 'Owner opened answer correction for the local fixture tests';
+async function answeredWithToken(allowMeetingInterest = false, open = true) {
+  // Installing is idempotent, so every test below can run on its own; the control is opened unless the test is about it being closed.
+  await migrateCustomerRealUse(f.owner);
+  await migrateRecipientResponseRevision(f.owner);
+  if (open) await configureRecipientRevision(f.owner, { enabled: true, reason: revisionReason });
+  const j = await sourceJourney(),
+    link = await f.introduction(j.t);
+  await experience.disclosure(f.users.owner.ctx, {
+    commandId: randomUUID(),
+    linkId: link.id,
+    role: 'SUPPLIER',
+    sharedRequirements: 'Only the approved machinery component requirement is shareable.',
+    uncertainty: 'Buyer budget and technical fit are not independently verified.',
+    rfqId: j.rfq.id,
+    allowQuotation: true,
+    allowMeetingInterest,
+    approved: true,
+    reason,
+  });
+  const responseId = randomUUID();
+  await f.communications.buyer({
+    action: 'detail-response',
+    token: link.token,
+    responseId,
+    body: 'Original supplier reply, quote follows.',
+    meetingInterest: false,
+    quotation: {
+      currency: 'USD',
+      terms: { specification: 'Polyester curtain track', unitPriceMinor: '1250' },
+      uncertainties: 'Lead time and validity not yet known',
+    },
+    acknowledged: true,
+  });
+  return { linkId: link.id, token: link.token, responseId };
+}
+const revision = (token: string, expectedVersion: number, over: Record<string, unknown> = {}) => ({
+  action: 'detail-revision' as const,
+  token,
+  responseId: randomUUID(),
+  expectedVersion,
+  body: 'Corrected supplier reply, quote follows.',
+  meetingInterest: false,
+  quotation: {
+    currency: 'USD',
+    terms: { specification: 'Polyester curtain track', unitPriceMinor: '1300' },
+    uncertainties: 'Validity still not known',
+  },
+  acknowledged: true,
+  ...over,
+});
+
+test('response revision installs additively and idempotently, and a changed definition stops it', async () => {
+  await migrateCustomerRealUse(f.owner);
+  await migrateRecipientResponseRevision(f.owner);
+  const once = (await f.owner.query('SELECT * FROM recipient_response_revision_migrations.applied'))
+    .rows;
+  expect(once).toHaveLength(1);
+  await migrateRecipientResponseRevision(f.owner);
+  expect(
+    (await f.owner.query('SELECT * FROM recipient_response_revision_migrations.applied')).rows,
+  ).toEqual(once);
+  await f.owner.query(
+    "UPDATE recipient_response_revision_migrations.applied SET sha256=repeat('0',64)",
+  );
+  await expect(migrateRecipientResponseRevision(f.owner)).rejects.toThrow('history mismatch');
+  await f.owner.query('UPDATE recipient_response_revision_migrations.applied SET sha256=$1', [
+    once[0].sha256,
+  ]);
+  // The original table is untouched by installation: still immutable, still no revision rows.
+  expect(
+    (await f.owner.query('SELECT count(*)::int n FROM app.recipient_detail_response_revision'))
+      .rows[0].n,
+  ).toBe(0);
+});
+
+test('a recipient corrects their answer: the original is untouched, the view shows the latest, and a replay is safe', async () => {
+  const a = await answeredWithToken();
+  const before = (
+    await f.owner.query(
+      'SELECT body,retention_until FROM app.recipient_detail_response WHERE id=$1',
+      [a.responseId],
+    )
+  ).rows[0];
+  let view = await f.communications.buyer({ action: 'read', token: a.token });
+  expect(view.detailResponse).toMatchObject({ version: 0, canRevise: true });
+  const first = revision(a.token, 0);
+  expect(await f.communications.buyer(first)).toMatchObject({
+    recorded: true,
+    version: 1,
+    sourceKind: 'SELF_DECLARATION',
+  });
+  view = await f.communications.buyer({ action: 'read', token: a.token });
+  expect(view.detailResponse.body.body).toBe('Corrected supplier reply, quote follows.');
+  expect(view.detailResponse).toMatchObject({ version: 1, canRevise: true });
+  // Nothing was rewritten and retention was not extended.
+  const after = (
+    await f.owner.query(
+      'SELECT body,retention_until FROM app.recipient_detail_response WHERE id=$1',
+      [a.responseId],
+    )
+  ).rows[0];
+  expect(after).toEqual(before);
+  const row = (
+    await f.owner.query(
+      'SELECT retention_until,version FROM app.recipient_detail_response_revision WHERE response_id=$1',
+      [a.responseId],
+    )
+  ).rows;
+  expect(row).toHaveLength(1);
+  expect(row[0].retention_until).toEqual(before.retention_until);
+  // The same command with the same content is a replay; the same id with other content conflicts.
+  expect(await f.communications.buyer(first)).toMatchObject({ recorded: true, version: 1 });
+  await expect(
+    f.communications.buyer({ ...first, body: 'A different corrected reply' }),
+  ).rejects.toMatchObject({ code: '23514' });
+  expect(
+    (
+      await f.owner.query(
+        'SELECT count(*)::int n FROM app.recipient_detail_response_revision WHERE response_id=$1',
+        [a.responseId],
+      )
+    ).rows[0].n,
+  ).toBe(1);
+  // A stale version is refused, and the next version works.
+  await expect(f.communications.buyer(revision(a.token, 0))).rejects.toThrow(
+    'Response changed; reload before saving',
+  );
+  expect(await f.communications.buyer(revision(a.token, 1))).toMatchObject({ version: 2 });
+});
+
+test('a correction can never do more than the link allows or restate less than the first answer did', async () => {
+  const a = await answeredWithToken(false);
+  // Meeting interest was not disclosed for this link; consent must be restated; terms follow the same rules as the first answer.
+  for (const bad of [
+    { meetingInterest: true },
+    { acknowledged: false },
+    { body: 'ab' },
+    { quotation: { currency: 'ZZZ', terms: {}, uncertainties: 'Not known at all' } },
+    {
+      quotation: { currency: 'USD', terms: { unitPriceMinor: '12.5' }, uncertainties: 'Not known' },
+    },
+    { quotation: { currency: 'USD', terms: { colour: 'red' }, uncertainties: 'Not known' } },
+    { quotation: { currency: 'USD', terms: { incoterm: 'XXX' }, uncertainties: 'Not known' } },
+    { extra: 'field' },
+  ]) {
+    await expect(f.communications.buyer(revision(a.token, 0, bad))).rejects.toThrow();
+  }
+  expect(
+    (
+      await f.owner.query(
+        'SELECT count(*)::int n FROM app.recipient_detail_response_revision WHERE response_id=$1',
+        [a.responseId],
+      )
+    ).rows[0].n,
+  ).toBe(0);
+  // Dropping the quotation narrows the answer and is allowed.
+  expect(await f.communications.buyer(revision(a.token, 0, { quotation: null }))).toMatchObject({
+    version: 1,
+  });
+  // A link with no disclosure for a quotation cannot gain one by correcting.
+  const j = await sourceJourney(),
+    plain = await f.introduction(j.t);
+  await expect(f.communications.buyer(revision(plain.token, 0))).rejects.toThrow();
+  // A correction needs a first answer.
+  await experience.disclosure(f.users.owner.ctx, {
+    commandId: randomUUID(),
+    linkId: plain.id,
+    role: 'SUPPLIER',
+    sharedRequirements: 'Only the approved machinery component requirement is shareable.',
+    uncertainty: 'Buyer budget and technical fit are not independently verified.',
+    rfqId: j.rfq.id,
+    allowQuotation: false,
+    allowMeetingInterest: false,
+    approved: true,
+    reason,
+  });
+  await expect(
+    f.communications.buyer(revision(plain.token, 0, { quotation: null })),
+  ).rejects.toThrow('Respond before correcting');
+});
+
+test("the response revision table cannot be rewritten or written directly, and its body check is the first answer's text", async () => {
+  const a = await answeredWithToken();
+  await f.communications.buyer(revision(a.token, 0));
+  await expect(
+    f.owner.query("UPDATE app.recipient_detail_response_revision SET body='{}'::jsonb"),
+  ).rejects.toThrow();
+  await expect(
+    f.owner.query('DELETE FROM app.recipient_detail_response_revision'),
+  ).rejects.toThrow();
+  for (const pool of [f.runtime, f.auth])
+    await expect(
+      pool.query(
+        "INSERT INTO app.recipient_detail_response_revision(id,tenant_id,response_id,link_id,version,body,retention_until,created_by) VALUES($1,$2,$3,$4,1,'{}'::jsonb,now()+interval '1 day',$5)",
+        [randomUUID(), f.tenantA, a.responseId, a.linkId, f.users.owner.id],
+      ),
+    ).rejects.toMatchObject({ code: '42501' });
+  // The rules for a body are copied from the first-answer function: compare the text so they cannot drift apart.
+  const core = readFileSync(
+    resolve('packages/db/migrations/0025_scoped_product_experience.sql'),
+    'utf8',
+  );
+  const module3 = readFileSync(
+    resolve('packages/db/recipient-response-revision-migrations/0001_response_revision.sql'),
+    'utf8',
+  );
+  const from = core.indexOf(
+    " IF b IS NULL OR b-ARRAY['body','meetingInterest','quotation','acknowledged']",
+  );
+  const to = core.indexOf(
+    ' SELECT * INTO old FROM app.recipient_detail_response WHERE tenant_id=l.tenant_id',
+  );
+  expect(from).toBeGreaterThan(0);
+  expect(to).toBeGreaterThan(from);
+  expect(module3).toContain(core.slice(from, to).trimEnd());
+});
+
+test('the control starts closed: nothing can be corrected, and the view does not offer it, until the owner opens it', async () => {
+  await migrateCustomerRealUse(f.owner);
+  await migrateRecipientResponseRevision(f.owner);
+  const a = await answeredWithToken(false, false);
+  // Installing leaves it closed. If an earlier test opened it, close it for this one.
+  await configureRecipientRevision(f.owner, { enabled: false, reason: revisionReason });
+  expect(
+    (await f.communications.buyer({ action: 'read', token: a.token })).detailResponse,
+  ).toMatchObject({
+    version: 0,
+    canRevise: false,
+  });
+  await expect(f.communications.buyer(revision(a.token, 0))).rejects.toThrow(
+    'Answer correction is not open',
+  );
+  for (const pool of [f.runtime, f.auth]) {
+    await expect(pool.query('SELECT * FROM app.recipient_revision_control')).rejects.toMatchObject({
+      code: '42501',
+    });
+    await expect(pool.query('SELECT app.recipient_revision_open()')).rejects.toMatchObject({
+      code: '42501',
+    });
+  }
+  await expect(
+    configureRecipientRevision(f.runtime, { enabled: true, reason: revisionReason }),
+  ).rejects.toThrow();
+  expect(
+    await configureRecipientRevision(f.owner, { enabled: true, reason: revisionReason }),
+  ).toEqual({
+    enabled: true,
+    changed: true,
+  });
+  // The control's history cannot be rewritten.
+  await expect(
+    f.owner.query('UPDATE app.recipient_revision_control SET enabled=false'),
+  ).rejects.toThrow();
+  expect(await f.communications.buyer(revision(a.token, 0))).toMatchObject({ version: 1 });
+  // Pausing stops new corrections and keeps the ones already made.
+  await configureRecipientRevision(f.owner, { enabled: false, reason: revisionReason });
+  await expect(f.communications.buyer(revision(a.token, 1))).rejects.toThrow(
+    'Answer correction is not open',
+  );
+  expect(
+    (await f.communications.buyer({ action: 'read', token: a.token })).detailResponse.body.body,
+  ).toBe('Corrected supplier reply, quote follows.');
+  await configureRecipientRevision(f.owner, { enabled: true, reason: revisionReason });
+});
+
+test('an Ask is answered by a correction, a final decision locks the answer, and the team sees an answer that came after the Ask', async () => {
+  await migrateReplyReview(f.owner);
+  await configureReplyReview(f.owner, { enabled: true, reason: reviewReason });
+  const reviews = new ReplyReviewService(f.runtime);
+  const a = await answeredWithToken();
+  const waiting = async () => (await getTeamToday(f.runtime, f.users.owner.ctx)).repliesToReview;
+  const unreviewed = await waiting();
+  await reviews.review(f.users.owner.ctx, ask(a.responseId));
+  // Asked, so no longer waiting for a first review.
+  expect(await waiting()).toBe(unreviewed - 1);
+  // An Ask invites the supplier to add terms to their own answer: that is a correction, and it is allowed.
+  expect(
+    (await f.communications.buyer({ action: 'read', token: a.token })).detailResponse,
+  ).toMatchObject({ version: 0, canRevise: true });
+  expect(await f.communications.buyer(revision(a.token, 0))).toMatchObject({ version: 1 });
+  // An answer that came after the Ask is waiting for review again.
+  expect(await waiting()).toBe(unreviewed);
+  // The decision still points at the original reply, and the team's list shows the correction.
+  const mine = (await experience.workspace(f.users.owner.ctx)).responses.find(
+    (r) => r.id === a.responseId,
+  );
+  expect(mine).toMatchObject({ revision: 1 });
+  expect(new Date(mine!.revised_at).getTime()).toBeGreaterThan(
+    new Date(
+      (await reviews.list(f.users.owner.ctx)).reviews.find((r) => r.responseId === a.responseId)!
+        .createdAt,
+    ).getTime(),
+  );
+  // A final decision (here a rejection) locks the answer. The team read the correction, so it names version 1.
+  await reviews.review(f.users.owner.ctx, {
+    commandId: randomUUID(),
+    responseId: a.responseId,
+    seen: 1,
+    decision: 'REJECT',
+    reasonCode: 'NOT_A_FIT',
+  });
+  expect(await waiting()).toBe(unreviewed - 1);
+  expect(
+    (await f.communications.buyer({ action: 'read', token: a.token })).detailResponse,
+  ).toMatchObject({ version: 1, canRevise: false });
+  await expect(f.communications.buyer(revision(a.token, 1))).rejects.toThrow(
+    'The team has already decided on this response',
+  );
+});
+
+test('a decision is bound to the answer the reviewer read: a correction in between makes publish, ask and reject refuse', async () => {
+  await migrateReplyReview(f.owner);
+  await configureReplyReview(f.owner, { enabled: true, reason: reviewReason });
+  const reviews = new ReplyReviewService(f.runtime);
+  const a = await answeredWithToken();
+  const count = async () =>
+    (
+      await f.owner.query(
+        'SELECT count(*)::int n FROM app.recipient_reply_review WHERE response_id=$1',
+        [a.responseId],
+      )
+    ).rows[0].n;
+  // The reviewer opens the card at the first answer (version 0); the supplier then corrects it.
+  expect(await f.communications.buyer(revision(a.token, 0))).toMatchObject({ version: 1 });
+  const stale = 'Response changed; reload before deciding';
+  const publish = {
+    commandId: randomUUID(),
+    responseId: a.responseId,
+    seen: 0,
+    decision: 'PUBLISH' as const,
+  };
+  const rejectIt = {
+    commandId: randomUUID(),
+    responseId: a.responseId,
+    seen: 0,
+    decision: 'REJECT' as const,
+    reasonCode: 'NOT_A_FIT' as const,
+  };
+  const askIt = { ...ask(a.responseId), seen: 0 };
+  for (const decision of [publish, askIt, rejectIt])
+    await expect(reviews.review(f.users.owner.ctx, decision)).rejects.toThrow(stale);
+  // A card that sends no version is treated as having read the first answer, so it is refused too.
+  await expect(
+    reviews.review(f.users.owner.ctx, {
+      commandId: randomUUID(),
+      responseId: a.responseId,
+      decision: 'PUBLISH',
+    }),
+  ).rejects.toThrow(stale);
+  // Nothing was written.
+  expect(await count()).toBe(0);
+  // Deciding on the version that was read works, and a retry of the same command replays even after another correction.
+  const fresh = { ...askIt, commandId: randomUUID(), seen: 1 };
+  expect(await reviews.review(f.users.owner.ctx, fresh)).toMatchObject({ replayed: false });
+  expect(await f.communications.buyer(revision(a.token, 1))).toMatchObject({ version: 2 });
+  expect(await reviews.review(f.users.owner.ctx, fresh)).toMatchObject({ replayed: true });
+  expect(await count()).toBe(1);
+  // The same command under another body still conflicts, and a stale PUBLISH on the new answer is still refused.
+  await expect(
+    reviews.review(f.users.owner.ctx, { ...publish, commandId: randomUUID(), seen: 1 }),
+  ).rejects.toThrow(stale);
+  expect(
+    await reviews.review(f.users.owner.ctx, { ...publish, commandId: randomUUID(), seen: 2 }),
+  ).toMatchObject({
+    replayed: false,
+  });
+  // A direct call with no workspace context is denied.
+  await expect(
+    f.runtime.query('SELECT app.review_recipient_reply_seen($1,$2,$3,$4,$5,$6,$7)', [
+      randomUUID(),
+      a.responseId,
+      99,
+      'PUBLISH',
+      null,
+      null,
+      null,
+    ]),
+  ).rejects.toThrow();
+});
+
+test('the team reads the latest correction with how many were made, and the first answer stays on record', async () => {
+  const a = await answeredWithToken();
+  await f.communications.buyer(revision(a.token, 0, { body: 'First correction of the reply' }));
+  await f.communications.buyer(revision(a.token, 1, { body: 'Second correction of the reply' }));
+  const mine = (await experience.workspace(f.users.owner.ctx)).responses.find(
+    (r) => r.link_id === a.linkId,
+  );
+  expect(mine).toMatchObject({ revision: 2 });
+  expect(mine!.body.body).toBe('Second correction of the reply');
+  // The original is still stored exactly as it was given.
+  expect(
+    (
+      await f.owner.query('SELECT body->>$2 AS b FROM app.recipient_detail_response WHERE id=$1', [
+        a.responseId,
+        'body',
+      ])
+    ).rows[0].b,
+  ).toBe('Original supplier reply, quote follows.');
+});
+
+test('a recipient can correct an answer twenty times and no more', async () => {
+  const a = await answeredWithToken();
+  for (let i = 0; i < 20; i++)
+    await f.communications.buyer(revision(a.token, i, { body: `Corrected supplier reply ${i}` }));
+  await expect(f.communications.buyer(revision(a.token, 19))).rejects.toThrow();
+  const view = await f.communications.buyer({ action: 'read', token: a.token });
+  expect(view.detailResponse).toMatchObject({ version: 20, canRevise: false });
 });
 
 test('publisher membership revocation invalidates selected client detail independently of customer identity', async () => {

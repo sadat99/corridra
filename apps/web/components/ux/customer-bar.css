@@ -124,16 +124,21 @@
   /* corridra-icon "list": M4 5h12M4 10h12M4 15h8, 1.5 px stroke, square ends */
   --ux-menu-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='square'%3E%3Cpath d='M4 5h12M4 10h12M4 15h8'/%3E%3C/svg%3E");
 }
-@media (max-width: 480px) {
-  /* The wordmark text goes; the logo mark stays and the link keeps its name. */
-  :is(.ux-customer-header, .ux-team-header) .brand span {
-    display: none;
-  }
-}
 
 /* The shared left bar's collapse chevron is sized by the team shell's rules; on customer pages it needs its own. */
 .ux-leftnav-frame .ux-leftnav-collapse .operator-icon {
   flex: none;
   width: 1.25rem;
   height: 1.25rem;
+}
+
+/* Navigation v1: the sidebar carries the wide New Request, so the header one shows only below 1024 px. The old
+   corner Help and Listen buttons give way to the Help and accessibility menu in the header on customer pages. */
+@media (min-width: 1024px) {
+  .ux-bar-new-narrow {
+    display: none;
+  }
+}
+body:has(.ux-customer-header) .corner-dock:not(.header-help) {
+  display: none;
 }

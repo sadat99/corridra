@@ -1,0 +1,77 @@
+/* Navigation v1, Team shell: the dark sidebar and the second-level row. Colours come from the AC
+   tokens; every target is at least 44 px; focus is always visible. Owner: S4. */
+nav.ux-team-sidebar {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--ac-navy);
+  color: var(--ac-paper);
+}
+/* Colour on the navy panel. left-nav.css sets a quiet grey on `.ux-leftnav-panel .ux-team-sidebar a` at
+   1024 px and wider; the panel selectors below are one class stronger so the text and the icons (which
+   take currentColor) stay white in every state, including the collapsed rail where icons are all there is. */
+nav.ux-team-sidebar a,
+nav.ux-team-sidebar summary,
+nav.ux-team-sidebar a span,
+nav.ux-team-sidebar summary span,
+.ux-leftnav-panel nav.ux-team-sidebar a,
+.ux-leftnav-panel nav.ux-team-sidebar summary,
+.ux-leftnav-panel nav.ux-team-sidebar a:hover,
+.ux-leftnav-panel nav.ux-team-sidebar summary:hover,
+.ux-leftnav-panel nav.ux-team-sidebar a[aria-current],
+.ux-leftnav-panel nav.ux-team-sidebar summary[aria-current] {
+  color: var(--ac-paper);
+  opacity: 1;
+}
+nav.ux-team-sidebar a:hover,
+nav.ux-team-sidebar summary:hover {
+  background: var(--ac-surface-navy-hover);
+}
+nav.ux-team-sidebar a[aria-current],
+nav.ux-team-sidebar summary[aria-current='true'] {
+  background: var(--ac-surface-navy);
+}
+nav.ux-team-sidebar a:focus-visible,
+nav.ux-team-sidebar summary:focus-visible {
+  outline: 3px solid var(--ac-paper);
+  outline-offset: 2px;
+}
+nav.ux-team-sidebar .ux-team-group {
+  border-top: 1px solid var(--ac-surface-navy-hover);
+  padding-top: var(--space-2);
+}
+
+.ux-team-second {
+  margin: 0 0 var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+.ux-team-second ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ux-team-second a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border-bottom: 3px solid transparent;
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+.ux-team-second a:hover {
+  background: var(--surface-2);
+}
+.ux-team-second a[aria-current='page'] {
+  border-bottom-color: var(--selected);
+  color: var(--brand-deep);
+}
+.ux-team-second a:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}

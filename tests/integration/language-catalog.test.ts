@@ -73,12 +73,12 @@ describe('message files', () => {
   });
 
   it('falls back to English for an empty entry and never returns an empty string', () => {
-    const saved = catalogs.bn['header.routes'];
-    catalogs.bn['header.routes'] = '';
+    const saved = catalogs.bn['header.howItWorks'];
+    catalogs.bn['header.howItWorks'] = '';
     try {
-      expect(translate('bn', 'header.routes')).toBe(en['header.routes']);
+      expect(translate('bn', 'header.howItWorks')).toBe(en['header.howItWorks']);
     } finally {
-      catalogs.bn['header.routes'] = saved;
+      catalogs.bn['header.howItWorks'] = saved;
     }
     for (const code of localeCodes)
       for (const key of keys) expect(translate(code, key).length).toBeGreaterThan(0);
@@ -204,7 +204,9 @@ describe('where the words come from', () => {
     for (const literal of ['>Sign in<', 'How it works\n', "'Sign out'", "'Close menu'"])
       expect(header, literal).not.toContain(literal);
     expect(footer).not.toContain('WAYS TO WORK');
-    expect(header).toContain("t('header.howItWorks')");
+    // Navigation v1 lists the section links in a table of message keys, each shown with t(key).
+    expect(header).toContain("{ href: '/how-it-works', key: 'header.howItWorks' }");
+    expect(header).toContain('{t(key)}');
     expect(footer).toContain("t('footer.tagline')");
   });
 
