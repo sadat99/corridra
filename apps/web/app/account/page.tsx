@@ -37,6 +37,8 @@ import { HomeNextStep } from './home-next-step';
 import { HomeWork } from './home-work';
 import { RequestsTabs } from './requests-tabs';
 import { ReportsTabs } from './reports-tabs';
+import { AccountSettings } from './account-settings';
+import { customerNotificationsEnabled } from '@corridra/auth/customer-notifications';
 import { InvitationProvider, OpenInvitationButton } from './invitation-dialog';
 import { parseWorkFilter } from '../../lib/work-items/view';
 export const dynamic = 'force-dynamic';
@@ -193,46 +195,6 @@ export default async function Page({
             }
             workspaces={
               <>
-                <section aria-label="Manage your work">
-                  <h2>Manage your work</h2>
-                  <ul className="ux-quick-links">
-                    {customerOrganisationProfilesEnabled() && (
-                      <li>
-                        <Link prefetch={false} href="/account/profile">
-                          <strong>Company profiles and links</strong>
-                          <span>
-                            Keep company details current and request a reviewed company link.
-                          </span>
-                        </Link>
-                      </li>
-                    )}
-                    {customerProgrammesEnabled() && (
-                      <li>
-                        <Link prefetch={false} href="/account/delegations/organise">
-                          <strong>Programmes</strong>
-                          <span>Participants, terms, places, fee schedules and delivery.</span>
-                        </Link>
-                      </li>
-                    )}
-                    {customerServiceRequestsEnabled() && (
-                      <li>
-                        <Link prefetch={false} href="/account/service-requests">
-                          <strong>Service requests</strong>
-                          <span>Review requests for help, questions and quotes.</span>
-                        </Link>
-                      </li>
-                    )}
-                    {customerBillingEnabled() && (
-                      <li>
-                        <Link prefetch={false} href="/account/billing">
-                          <strong>Plan and billing</strong>
-                          <span>The plan your workspace holds and the plans on offer.</span>
-                        </Link>
-                      </li>
-                    )}
-                  </ul>
-                </section>
-
                 {workspaceIssuer && (
                   <div id="customer-workspaces" tabIndex={-1}>
                     <CustomerWorkspaces
@@ -319,8 +281,8 @@ export default async function Page({
       )}
       {view === 'more' && (
         <div id="more" tabIndex={-1} className="ux-account-groups">
-          <div className="ux-more-grid">
-            <aside className="ux-account-sidebar" aria-label="Account and access">
+          <AccountSettings
+            profile={
               <section className="ux-account-profile" aria-label="Your verified profile">
                 <span className="ux-status" data-tone="positive">
                   Verified account email
@@ -328,104 +290,138 @@ export default async function Page({
                 <h2>{data.user.name}</h2>
                 <p>{data.user.email}</p>
                 <p>Your email address is verified. This does not verify your company.</p>
-                <div className="ux-profile-actions">
-                  <AccountSignout />
-                </div>
               </section>
-              <OperatorInvitationHint key={data.user.id} />
-            </aside>
-            <section className="detail-card" aria-label="Help and other ways in">
-              <h2>Manage your work</h2>
-              <ul className="ux-link-list">
-                {customerOrganisationProfilesEnabled() && (
+            }
+            workspaces={
+              <section aria-label="Manage your work">
+                <h2>Manage your work</h2>
+                <ul className="ux-link-list">
                   <li>
-                    <Link prefetch={false} href="/account/profile">
-                      <strong>Company profiles and links</strong>
-                      <span>Your company details and supporting statements.</span>
+                    <Link prefetch={false} href="/account?view=work&tab=workspaces">
+                      <strong>Workspaces and team</strong>
+                      <span>Your workspaces, who is on each team and your role.</span>
                     </Link>
                   </li>
-                )}
-                {customerProgrammesEnabled() && (
-                  <li>
-                    <Link prefetch={false} href="/account/delegations/organise">
-                      <strong>Programmes</strong>
-                      <span>Programme terms, places, pricing and coordination.</span>
-                    </Link>
-                  </li>
-                )}
-                {customerServiceRequestsEnabled() && (
-                  <li>
-                    <Link prefetch={false} href="/account/service-requests">
-                      <strong>Service requests</strong>
-                      <span>Help requests, questions and quotes.</span>
-                    </Link>
-                  </li>
-                )}
-                {customerBillingEnabled() && (
-                  <li>
-                    <Link prefetch={false} href="/account/billing">
-                      <strong>Plan and billing</strong>
-                      <span>Your current plan and the plans on offer.</span>
-                    </Link>
-                  </li>
-                )}
-              </ul>
-              {uxSwitchOn('CORRIDRA_UX_NAV') && (
-                <>
-                  <h2>Find any tool</h2>
+                  {customerOrganisationProfilesEnabled() && (
+                    <li>
+                      <Link prefetch={false} href="/account/profile">
+                        <strong>Company profiles and links</strong>
+                        <span>Your company details and supporting statements.</span>
+                      </Link>
+                    </li>
+                  )}
+                  {customerProgrammesEnabled() && (
+                    <li>
+                      <Link prefetch={false} href="/account/delegations/organise">
+                        <strong>Programmes</strong>
+                        <span>Programme terms, places, pricing and coordination.</span>
+                      </Link>
+                    </li>
+                  )}
+                  {customerServiceRequestsEnabled() && (
+                    <li>
+                      <Link prefetch={false} href="/account/service-requests">
+                        <strong>Service requests</strong>
+                        <span>Help requests, questions and quotes.</span>
+                      </Link>
+                    </li>
+                  )}
+                </ul>
+              </section>
+            }
+            notifications={
+              customerNotificationsEnabled() && (
+                <section aria-label="Notifications">
+                  <h2>Notifications</h2>
                   <ul className="ux-link-list">
                     <li>
-                      <Link prefetch={false} href="/account/all-tools">
-                        <strong>All tools</strong>
-                        <span>Every page you can open, each with a plain verb.</span>
+                      <Link prefetch={false} href="/account/notifications">
+                        <strong>Choose what we email you</strong>
+                        <span>Turn each kind of email on or off.</span>
                       </Link>
                     </li>
                   </ul>
-                </>
-              )}
-              <h2>Start something</h2>
-              <ul className="ux-link-list">
-                <li>
-                  <Link prefetch={false} href="/plan">
-                    <strong>Plan a mission</strong>
-                    <span>Tell us your goal. It takes a few minutes.</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link prefetch={false} href="/plan#receipt-check">
-                    <strong>Check a request receipt</strong>
-                    <span>
-                      Keep the receipt we give you after you send a request. Use it to check
-                      progress and replies.
-                    </span>
-                  </Link>
-                </li>
-              </ul>
-              <h2>Other ways in</h2>
-              <ul className="ux-link-list">
-                <li>
-                  <Link prefetch={false} href="/operator/setup">
-                    <strong>Accept a team invitation</strong>
-                    <span>For invited Corridra team members.</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link prefetch={false} href="/workspace">
-                    <strong>Start page</strong>
-                    <span>All the ways to use Corridra.</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link prefetch={false} href="/contributor">
-                    <strong>Local helper tasks</strong>
-                    <span>For local helpers with assigned tasks.</span>
-                  </Link>
-                </li>
-              </ul>
-            </section>
-          </div>
+                </section>
+              )
+            }
+            billing={
+              customerBillingEnabled() && (
+                <section aria-label="Plan and billing">
+                  <h2>Plan and billing</h2>
+                  <ul className="ux-link-list">
+                    <li>
+                      <Link prefetch={false} href="/account/billing">
+                        <strong>Plan and billing</strong>
+                        <span>Your current plan and the plans on offer.</span>
+                      </Link>
+                    </li>
+                  </ul>
+                </section>
+              )
+            }
+            security={
+              <section aria-label="Security">
+                <h2>Security</h2>
+                <div className="ux-profile-actions">
+                  <AccountSignout />
+                </div>
+                <OperatorInvitationHint key={data.user.id} />
+                {uxSwitchOn('CORRIDRA_UX_NAV') ? (
+                  <p>
+                    <Link className="text-link ux-action" href="/account/all-tools">
+                      All Tools
+                    </Link>
+                  </p>
+                ) : (
+                  // Without the new navigation there is no All tools page, so the entry points stay here.
+                  <WaysIn />
+                )}
+              </section>
+            }
+          />
         </div>
       )}
     </CustomerShell>
+  );
+}
+
+/** The entry points All tools holds, kept on Account while the new navigation (and All tools) is off. */
+function WaysIn() {
+  return (
+    <section aria-label="Other ways in" className="ux-ways-in">
+      <h2>Other ways in</h2>
+      <ul className="ux-link-list">
+        <li>
+          <Link prefetch={false} href="/plan">
+            <strong>Plan a mission</strong>
+            <span>Tell us your goal. It takes a few minutes.</span>
+          </Link>
+        </li>
+        <li>
+          <Link prefetch={false} href="/plan#receipt-check">
+            <strong>Check a request receipt</strong>
+            <span>Use the receipt we gave you to check progress and replies.</span>
+          </Link>
+        </li>
+        <li>
+          <Link prefetch={false} href="/operator/setup">
+            <strong>Accept a team invitation</strong>
+            <span>For invited Corridra team members.</span>
+          </Link>
+        </li>
+        <li>
+          <Link prefetch={false} href="/workspace">
+            <strong>Start page</strong>
+            <span>All the ways to use Corridra.</span>
+          </Link>
+        </li>
+        <li>
+          <Link prefetch={false} href="/contributor">
+            <strong>Local helper tasks</strong>
+            <span>For local helpers with assigned tasks.</span>
+          </Link>
+        </li>
+      </ul>
+    </section>
   );
 }
