@@ -136,6 +136,20 @@ export const tools: readonly Tool[] = [
     module: 'notifications',
   },
   {
+    route: '/operator/setup',
+    href: '/operator/setup',
+    label: 'Accept a team invitation',
+    line: 'For invited Corridra team members.',
+    group: 'More',
+  },
+  {
+    route: '/contributor',
+    href: '/contributor',
+    label: 'Open your local helper tasks',
+    line: 'For local helpers with assigned tasks.',
+    group: 'More',
+  },
+  {
     route: '/account',
     href: '/account?view=more',
     label: 'Manage your account',

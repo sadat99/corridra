@@ -1,0 +1,32 @@
+{
+  "recordedOn": "2026-11-06",
+  "batch": "Revamp S2 Customer Work: CX PR 3c, the Account settings layout with sub-tabs",
+  "kind": "Reports to docs/revamp/specs/customer-experience.md (pages table, Account row). The long Account column becomes sub-tabs Profile, Workspaces and Team, Notifications, Plan and Billing and Security. The tools and entry points it repeated now live only in All tools.",
+  "findings": [],
+  "findingsNote": "No gap is created or changed. No route, table, migration, switch, provider, payment or write is added. No request, command id or payload changes.",
+  "status": "Built on branch revamp/customer over main aca2f368 (PR 319, CX PR 3b). CI on the exact pushed head is the verifier; see the pull request for its result.",
+  "newFiles": [
+    "apps/web/app/account/account-settings.tsx (AccountSettings): the five tabs on the shared sub-tabs, a tab only when its area is on, kept by ?tab=",
+    "tests/integration/revamp-cx3c-account.test.ts (5), tests/e2e/verification/revamp-s2/account-settings.spec.ts (2, at 390 and 1440)",
+    "docs/design-system/evidence/revamp-cx3c (the five customer pages at 390 and 1440)"
+  ],
+  "changedFiles": [
+    "apps/web/app/account/page.tsx: the Account view is built from AccountSettings; the Manage your work links move from the Requests Workspaces tab to the Account Workspaces and Team tab, with the Delegation registrations link left on Requests",
+    "apps/web/lib/all-tools.ts: two entries added, Accept a team invitation (/operator/setup) and Open your local helper tasks (/contributor), so everything the Account page used to repeat is reachable from All tools",
+    "tests/e2e/verification/revamp-s2/customer-page-length.spec.ts: Reports and Account are now held to the page length limit, not only reported"
+  ],
+  "decisions": {
+    "startPage": "The Account page's Start page link is not added to All tools again: All tools already lists Open the start page, Plan a mission and Check a request receipt.",
+    "tabLabels": "Tab labels use Title Case, as the other tab sets do.",
+    "tests": "No existing test changed. The source-string tests that look for the Manage your work label and the Delegation registrations link still find them in the same page file."
+  },
+  "receipts": {
+    "integration": "revamp-cx3c-account.test.ts written first: 5 failed, then 5 passed with the build; all-tools, work screen, work items and front door: 124 passed.",
+    "verification": "Account measured 1.58 screens at 390 and 1.18 at 1440 before; 1.0 and 1.0 after on a production build, and all five customer pages are within target. Shell, home and account-settings specs: 47 passed."
+  },
+  "notRun": [
+    "The Notifications and Plan and Billing tabs with their switches on: the verification seed has both areas off, so the tabs are covered by the component test.",
+    "A screen reader walk-through."
+  ],
+  "sensitive": "No. Navigation and layout only; every link keeps its own access check."
+}
