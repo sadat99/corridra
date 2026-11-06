@@ -59,8 +59,9 @@ export const realInvoicingStaffCommandInput = z.discriminatedUnion('action', [
       (v) => v.decision === 'approve' || v.reason !== undefined,
       'A rejection needs a reason',
     ),
-  // Recording a payment: the one-person command works only while the owner has recorded that a second person is not
-  // required. Otherwise a payment is prepared by one person and approved by another with `decide`.
+  // The one-person payment command is always refused by the database ("prepare it for approval"): a payment is prepared
+  // with `prepare_payment` and then approved with `decide`, by another person or, when the owner has allowed it, by the
+  // same person marked as self approval. The shape stays here so the refusal is the database's, in plain words.
   z
     .object({
       action: z.literal('payment'),
@@ -131,8 +132,8 @@ const preparing = (action: string) => action === 'prepare_invoice' || action ===
  * is made up. Runs in the command's own staff transaction, so the details cannot change in between.
  *
  * Preparing is checked before the command. Approving is checked after it, on what the command returned: an approval
- * that issued an invoice or credit note throws and the whole command rolls back, while approving a payment or the
- * reversal of one puts no document in front of a customer and passes. Running the command first also means a retry
+ * that issued anything other than a payment or the reversal of one throws and the whole command rolls back, while
+ * approving a payment or its reversal puts no document in front of a customer and passes. Running the command first also means a retry
  * whose first answer was lost replays the recorded result instead of being refused for a payment that exists.
  */
 export async function refuseMadeupIssue(
@@ -143,8 +144,13 @@ export async function refuseMadeupIssue(
 ) {
   const approved = action === 'decide' && payload.decision === 'approve';
   const before = result === undefined && preparing(action);
+  // Fail closed: only the two kinds known to put no document before a customer pass, so a document kind added later
+  // (or an answer with no kind) is guarded until someone decides otherwise.
   const after =
-    result !== undefined && approved && (result?.kind === 'invoice' || result?.kind === 'credit');
+    result !== undefined &&
+    approved &&
+    result?.kind !== 'payment' &&
+    result?.kind !== 'payment_reversal';
   if (!before && !after) return;
   const pending = (await db.query('SELECT app.real_invoicing_staff_pending() result')).rows[0]
     ?.result as { supplier?: SupplierDetails } | null;

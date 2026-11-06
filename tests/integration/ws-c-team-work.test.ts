@@ -154,6 +154,13 @@ describe('D3: real invoices stay blocked while supplier details are made up', ()
     await expect(guard(approve, { kind: 'credit' })).rejects.toMatchObject({
       code: 'MADEUP_SUPPLIER_DETAILS',
     });
+    // Fail closed: only a payment or the reversal of one passes. Any other kind, or an answer with no kind, is treated as a
+    // document, so a document kind added later is guarded until someone decides otherwise.
+    await expect(guard(approve, { kind: 'statement' })).rejects.toMatchObject({
+      code: 'MADEUP_SUPPLIER_DETAILS',
+    });
+    await expect(guard(approve, {})).rejects.toMatchObject({ code: 'MADEUP_SUPPLIER_DETAILS' });
+    await expect(guard(approve, null)).rejects.toMatchObject({ code: 'MADEUP_SUPPLIER_DETAILS' });
     // A retry whose first reply was lost is judged on the result it replays, not on a list of waiting proposals, so
     // an approved payment is never refused afterwards.
     await expect(guard(approve, { kind: 'payment' })).resolves.toBeUndefined();

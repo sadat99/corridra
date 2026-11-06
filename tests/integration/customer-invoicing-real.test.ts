@@ -14,6 +14,7 @@ import {
   CustomerRealInvoicingService,
   type RealInvoice,
 } from '../../packages/auth/src/customer-invoicing-real';
+import { withTenant } from '../../packages/db/src/index';
 import { CustomerBillingStaffService } from '../../packages/delivery/src/customer-billing-staff';
 import {
   CustomerRealInvoicingStaffService,
@@ -1583,6 +1584,86 @@ test('the shortest reversal reason is 20 characters in every layer: 19 refused, 
     expect(await tryProposal(reasonOf(20))).toBe('accepted');
     await client.query('ROLLBACK');
   } finally {
+    client.release();
+  }
+});
+
+test('the database holds the 20 character rule and the approved proposal rule for reversals by itself, in both modes, whoever writes', async () => {
+  const listed = (await staff.list(first())).invoices as (RealInvoice & { position: number })[];
+  const inv = listed.find((i) => i.number === number('INV', 1))!;
+  const live = (
+    await s.f.owner.query(
+      'SELECT seq FROM customer_private.real_invoice_payment p WHERE invoice_id=$1 AND NOT EXISTS(SELECT FROM customer_private.real_invoice_payment_reversal r WHERE r.invoice_id=p.invoice_id AND r.payment_seq=p.seq) ORDER BY seq DESC LIMIT 1',
+      [inv.id],
+    )
+  ).rows[0].seq as number;
+  const reasonOf = (n: number) => 'Entered by mistake'.padEnd(n, 'e');
+  // (a) The SQL command path itself, called directly so the delivery schema is out of the way: 19 characters refused.
+  const direct = (reason: string) =>
+    withTenant(s.f.runtime, first(), 'delivery.share', async ({ db }) =>
+      db.query('SELECT app.real_invoicing_staff_command($1,$2,$3) result', [
+        randomUUID(),
+        'prepare_payment_reversal',
+        JSON.stringify({
+          invoiceId: inv.id,
+          expectedPosition: inv.position,
+          paymentSeq: live,
+          reason,
+        }),
+      ]),
+    );
+  await expect(direct(reasonOf(REVERSAL_REASON_MIN - 1))).rejects.toMatchObject({
+    code: '23514',
+    message: expect.stringMatching(/at least 20 characters/i),
+  });
+  const accepted = (await direct(reasonOf(REVERSAL_REASON_MIN))).rows[0].result;
+  expect(accepted).toMatchObject({ kind: 'payment_reversal', state: 'waiting_for_approval' });
+  await decide(
+    accepted.proposalId,
+    'reject',
+    second.ctx,
+    'Withdrawn after the direct call rehearsal',
+  );
+  // (b) The reversal table's own check, written directly as the owner with the guard off inside a transaction that is
+  // rolled back: 19 characters refused by the table, 20 accepted.
+  const client = await s.f.owner.connect();
+  try {
+    const prior = (
+      await client.query(
+        'SELECT tenant_id,prepared_by,staff_tenant_id FROM customer_private.real_invoicing_proposal WHERE invoice_id=$1 LIMIT 1',
+        [inv.id],
+      )
+    ).rows[0];
+    const nextSeq = (
+      await client.query(
+        'SELECT coalesce(max(seq),0)+1 AS n FROM customer_private.real_invoice_payment_reversal WHERE invoice_id=$1',
+        [inv.id],
+      )
+    ).rows[0].n;
+    const insert = (reason: string) =>
+      client.query(
+        `INSERT INTO customer_private.real_invoice_payment_reversal(invoice_id,tenant_id,seq,payment_seq,reason,prepared_by,approved_by,staff_tenant_id)
+         VALUES($1,$2,$3,$4,$5,$6,$6,$7)`,
+        [inv.id, prior.tenant_id, nextSeq, live, reason, prior.prepared_by, prior.staff_tenant_id],
+      );
+    await client.query('BEGIN');
+    await client.query(
+      'ALTER TABLE customer_private.real_invoice_payment_reversal DISABLE TRIGGER real_invoice_payment_reversal_guard',
+    );
+    await client.query('SAVEPOINT p');
+    await expect(insert(reasonOf(REVERSAL_REASON_MIN - 1))).rejects.toMatchObject({
+      code: '23514',
+    });
+    await client.query('ROLLBACK TO SAVEPOINT p');
+    await insert(reasonOf(REVERSAL_REASON_MIN));
+    await client.query('ROLLBACK');
+    // (c) With the guard on, a reversal row with no approved proposal is refused whether or not one person may do both.
+    for (const requireSecondApprover of [true, false]) {
+      await control({ requireSecondApprover });
+      await expect(insert(reasonOf(REVERSAL_REASON_MIN))).rejects.toThrow(/approved proposal/i);
+    }
+  } finally {
+    await control({ requireSecondApprover: true, entity: defaultRealInvoicingEntity });
     client.release();
   }
 });
