@@ -8450,7 +8450,7 @@ samp {
 .brand .brand-word {
   flex: none;
   width: auto;
-  height: 1.125rem;
+  height: 18px;
   color: var(--brand-deep);
 }
 .guide-footer-wordmark .brand-mark,
@@ -8460,11 +8460,11 @@ samp {
 }
 .guide-footer-wordmark .brand-word {
   width: auto;
-  height: 1.0625rem;
+  height: 17px;
 }
 @media (max-width: 760px) {
   .brand .brand-word {
-    height: 1rem;
+    height: 16px;
   }
 }
 @media (max-width: 480px) {
@@ -8475,7 +8475,7 @@ samp {
 }
 @media (min-width: 1024px) {
   .site-shell:has(.ux-leftnav-frame) > .ux-app-header .brand .brand-word {
-    height: 0.875rem;
+    height: 14px;
   }
   .site-shell:has(.ux-leftnav-frame[data-collapsed='true']) > .ux-app-header .brand .brand-word {
     display: none;
