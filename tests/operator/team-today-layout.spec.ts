@@ -83,6 +83,10 @@ async function open(page: Page, scenario: Scenario, query = '') {
   await page.route('**/api/**', (route) =>
     route.fulfill({ status: 404, json: { error: 'Not part of this fixture' } }),
   );
+  // The mission pages switch, read as the Missions panel reads it; `missions=off` turns it off.
+  await page.route('**/api/team-work/flags', (route) =>
+    route.fulfill({ json: { missionsV2: !query.includes('missions=off') } }),
+  );
   await page.route('**/api/workspace/workspace?*', (route) =>
     route.fulfill({
       json: {
@@ -411,4 +415,16 @@ test('with the team shell switch off the overview keeps Today, the Start card, b
     await page.screenshot({ path: `${shots}/switch-off-${width}.png`, fullPage: true });
     await page.unrouteAll();
   }
+});
+
+test('with mission pages switched off, a Needs you now row opens the mission list instead of a missing page', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, operatorRows, '?missions=off');
+  await loaded(page);
+  const rows = needs(page).locator('.ux-needs-list > li');
+  await expect(rows).toHaveCount(3);
+  for (const index of [0, 1, 2])
+    await expect(rows.nth(index).getByRole('link')).toHaveAttribute('href', '#workspace-missions');
 });

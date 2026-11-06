@@ -148,6 +148,21 @@ function NeedsYouNow({
 }) {
   const [filter, setFilter] = useState<NeedsFilter>('all');
   const [all, setAll] = useState(false);
+  // Mission pages exist only while CORRIDRA_UX_MISSIONS_V2 is on (the page answers 404 otherwise), so rows
+  // open the mission list until the same flag read the Missions panel uses says they are on.
+  const [missionPages, setMissionPages] = useState(false);
+  useEffect(() => {
+    let active = true;
+    fetch('/api/team-work/flags')
+      .then(async (r) => (r.ok ? ((await r.json()) as { missionsV2?: boolean }) : null))
+      .then((flags) => {
+        if (active) setMissionPages(flags?.missionsV2 === true);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
   const listId = `${useId().replace(/[^a-zA-Z0-9_-]/g, '')}-needs`;
   const shown = filterRows(rows, filter);
   const total = filterTotal(filter, today.fresh, today.overdue, rows);
@@ -211,7 +226,7 @@ function NeedsYouNow({
             <ul id={listId} className="ux-needs-list">
               {shown.map(({ mission, fresh, overdue }, index) => (
                 <li key={mission.id} hidden={!all && index >= firstRows}>
-                  <a href={missionHref(mission.id, tenant)}>
+                  <a href={missionPages ? missionHref(mission.id, tenant) : '#workspace-missions'}>
                     <span className="ux-needs-text">
                       <strong>{mission.brief.company}</strong>
                       <span>
