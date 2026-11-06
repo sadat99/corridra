@@ -103,7 +103,8 @@ async function handle(request: Request) {
       });
     // A plan change is its own command shape; every other action is a subscription command.
     const { action, ...rest } = input;
-    const invoicing = action === 'issue' || action === 'payment' || action === 'credit';
+    const invoicing =
+      action === 'issue' || action === 'payment' || action === 'credit' || action === 'reverse';
     if (invoicing && !customerInvoicingEnabled()) throw new DomainError(unavailable, 503);
     const result = invoicing
       ? await s.customerInvoicingStaff.command(ctx, input)

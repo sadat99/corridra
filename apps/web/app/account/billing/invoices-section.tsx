@@ -210,6 +210,7 @@ function ScopedInvoices({ subject, issuer, workspaceId }: Props) {
                         <li key={p.seq}>
                           {money(p.amountMinor, i.currency)} on {dayText(p.receivedOn)} ·{' '}
                           {methodText[p.method]}
+                          {p.reversed && ' · Reversed'}
                         </li>
                       ))}
                     </ul>
