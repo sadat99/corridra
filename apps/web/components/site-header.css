@@ -351,7 +351,9 @@
     font-weight: 500;
     color: var(--text-2);
   }
-  .public-nav-link .public-nav-chevron {
+  /* The bar has the language chip (LanguageSwitcher); the chips are the sheet's. */
+  .public-nav-link .public-nav-chevron,
+  .public-nav-languages {
     display: none;
   }
   .public-nav-what .public-nav-chevron {

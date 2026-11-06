@@ -268,3 +268,17 @@ test('the chip is a 44 pixel target on a phone and inside the open menu', async 
   await expect(spanish).toHaveAttribute('aria-pressed', 'true');
   expect(await attrs(page)).toEqual({ lang: 'es', dir: 'ltr', stored: 'es' });
 });
+
+test('the wide bar offers one language control: the chip, never the phone menu chips as well', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`${origin}/?offered=en,bn&draft=bn`);
+  await expect(chip(page)).toBeVisible();
+  await expect(page.locator('.public-nav-languages')).toBeHidden();
+  await expect(page.getByRole('button', { name: 'বাংলা (draft)' })).toHaveCount(0);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: /^Menu/ }).click();
+  await expect(chip(page)).toBeHidden();
+  await expect(page.locator('.public-nav-languages')).toBeVisible();
+});
