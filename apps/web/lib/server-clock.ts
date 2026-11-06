@@ -14,3 +14,7 @@ export function onDeviceClock<T>(value: T, response: Response, now: number = Dat
   // The Date header has one-second precision, so the shift can be up to a second late: harmless for a 60-second view.
   return { ...value, expiresAt: new Date(expires + (now - server)).toISOString() };
 }
+
+// The longest a private view may stay on screen. D12 (customer real-use migration 0011) slides the private
+// display window on fresh authorized reads up to 30 minutes; 5 seconds allow for clock rounding.
+export const privateViewMaxMs = 30 * 60_000 + 5_000;

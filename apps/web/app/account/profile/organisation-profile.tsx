@@ -3,7 +3,7 @@ import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { CountrySelect } from '../../../components/ux/pickers';
 import { countryName } from '../../../lib/ux/options';
-import { onDeviceClock } from '../../../lib/server-clock';
+import { onDeviceClock, privateViewMaxMs } from '../../../lib/server-clock';
 import { ReplyError, loadReason, withReason } from '../../../lib/load-reason';
 const roleOptions = [
   ['BUYER', 'Buyer'],
@@ -71,7 +71,7 @@ function parseView(value: unknown, workspaceId: string): View {
     ['version', !Number.isInteger(v.currentVersion) || v.currentVersion < 0],
     ['expiry missing', !Number.isFinite(expires)],
     ['expiry past', expires <= Date.now()],
-    ['expiry far', expires > Date.now() + 65000],
+    ['expiry far', expires > Date.now() + privateViewMaxMs],
   ];
   const failed = checks.find(([, bad]) => bad);
   if (failed) throw new ReplyError(`reply ${failed[0]}`);

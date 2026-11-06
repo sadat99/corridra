@@ -3,7 +3,7 @@ import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { ProgrammeContextScope } from './programme-context';
-import { onDeviceClock } from '../../../lib/server-clock';
+import { onDeviceClock, privateViewMaxMs } from '../../../lib/server-clock';
 type Details = {
   organiser: string;
   marketCode: string;
@@ -42,7 +42,7 @@ function parse(value: unknown, scope: ProgrammeContextScope): Snapshot {
     v.programmeId !== scope.programmeId ||
     !Number.isFinite(Date.parse(v.expiresAt)) ||
     Date.parse(v.expiresAt) <= Date.now() ||
-    Date.parse(v.expiresAt) > Date.now() + 65000
+    Date.parse(v.expiresAt) > Date.now() + privateViewMaxMs
   )
     throw Error('Invalid programme details');
   if (
