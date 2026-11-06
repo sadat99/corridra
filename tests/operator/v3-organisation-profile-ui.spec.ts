@@ -365,6 +365,18 @@ test('a response claiming verification or a canonical link is rejected', async (
   await expect(page.getByRole('status')).toContainText('could not be loaded');
   await expect(page.getByText('Synthetic Dhaka Garments Limited')).toHaveCount(0);
 });
+test('a D12 sliding view window of up to 30 minutes loads, and a longer one is rejected', async ({
+  page,
+}) => {
+  let ttl = 25 * 60_000;
+  await mock(page, { get: () => view({ ttl }) });
+  await page.goto(origin);
+  await expect(page.getByText('Synthetic Dhaka Garments Limited', { exact: true })).toBeVisible();
+  ttl = 40 * 60_000;
+  await page.reload();
+  await expect(page.getByRole('status')).toContainText('(code: reply expiry far)');
+  await expect(page.getByText('Synthetic Dhaka Garments Limited')).toHaveCount(0);
+});
 test('access expiry clears details and the draft without extending permission', async ({
   page,
 }) => {
