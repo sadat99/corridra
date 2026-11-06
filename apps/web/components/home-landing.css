@@ -157,9 +157,6 @@
 .ac1-player :focus-visible {
   outline-color: var(--on-brand);
 }
-.ac1-player .ac1-screen :focus-visible {
-  outline-color: var(--focus);
-}
 .ac1-record-head {
   display: flex;
   flex-wrap: wrap;
@@ -202,8 +199,11 @@
   background: var(--on-brand);
   color: var(--brand-deep);
 }
+/* The tab row clips its corners, so focus is drawn inside each tab, in a colour that shows on its fill. */
 .ac1-record-tabs button:focus-visible {
   outline-offset: -4px;
+}
+.ac1-record-tabs button[aria-selected='true']:focus-visible {
   outline-color: var(--action);
 }
 .ac1-record-head .ac1-example-tag {
