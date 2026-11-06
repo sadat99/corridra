@@ -57,6 +57,18 @@ Shared and frozen for every track: `globals.css`, tokens, `app/layout.tsx`, `pac
 
 The ledger, work log and gap register are shared. Each session appends its own entry and rebases before merge; nobody rewrites another session's entry.
 
+## Current lanes, 6 November 2026
+
+Snapshot for takeover at main `2217fd5` (PR 344). Live state, merges and owner items are in the [ledger](../V3_LEDGER.md) under Resume immediately; G4/G5 decisions and the Guardian's answers are in the [CRUD gap plan](crud/summary.md#order). Merge rules (owner, after PR 337): exact-head green CI plus Guardian PASS; Codex blocks only for P1 or a real privacy, money or access risk; one fix round at most; the owner merges any migration or installer change unless they say "u merge" for that PR.
+
+| Session                               | Now                                                                                              | After                                                                                                     |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| S1 `session_0187kU9qz8GGVRjUCwT2Mtof` | Public header and phone menu (navigation v1 order 2a), built locally on `s1-public-nav`; PR next | Records                                                                                                   |
+| S2 `session_0187kU9tbkCEfmkNwdPr8885` | G4 and G5 in one PR (Sensitive: yes, migration; the owner merges)                                | Inside that PR: Company Profile shows Coming soon when org profiles are off; All Tools "Missions" heading |
+| S3 `session_0187kU9qaRV8ZWz9qkj2YZ6g` | Two-window stale editor (Codex P2 on PR 344, `reply-journey.tsx` `refreshAnswer`)                | `/plan` at 320 px; one branch at a time                                                                   |
+| S4 `session_0187kU9rwcEXxStUHuLAMok4` | Command palette part 2 (Sensitive: yes)                                                          | "Owner and admin" caption via `aria-describedby`; later the staff erasure queue route and page            |
+| Unassigned                            | Trust words in the shipped footer                                                                |                                                                                                           |
+
 ## Wave 0: inventory and cleanup manifest
 
 [`wave-0/manifest.json`](wave-0/manifest.json) is generated at the baseline commit by the existing static collector and a small read-only deriver:

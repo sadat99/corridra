@@ -44,3 +44,10 @@ Unit tests: the form maps to exactly the keys the function accepts; blank means 
 - **Ask makes a link suffix, not a stored link.** The queue shows `&l=<language>&ask=<terms>` to add to that recipient's link. Nothing about the language or the ask is stored on the recipient.
 - **Chinese is released like every other language.** The Chinese Reply Page words are a draft listed in the language review record. A link that names Chinese opens in English until `zh` is released by `CORRIDRA_LANGUAGES_REVIEWED` (or the preview setting is on).
 - **The review reads the reply table and writes none of the existing tables.** Its own function accepts exactly the eighteen term names the form sends, checked against the SQL by a test.
+
+## Amendment: answer correction (CRUD gap G7, module 3, November 2026)
+
+- **An Ask is answered by a correction.** The supplier may correct their own answer through the same private link while the team has made no final decision. Each correction is one append-only row in `app.recipient_detail_response_revision` (twenty at most). The first answer stays exactly as it was given, and the team reads the latest correction.
+- **Only Publish and Reject are final.** After either, the answer is locked and no further correction is accepted.
+- **The module ships closed.** Corrections are offered only after the owner opens the control, which no application role can change.
+- **A decision is bound to the answer the reviewer read.** Where corrections are installed, the card sends the version it shows (`seen`) and `app.review_recipient_reply_seen` takes the same lock as a correction, refuses with "Response changed; reload before deciding" when the answer has changed since, and otherwise passes the decision to `app.review_recipient_reply` unchanged. Publish, Ask and Reject are all bound. A retry of a command that is already recorded still replays. Without the correction module the original function is called as before.
