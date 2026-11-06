@@ -380,6 +380,8 @@ One set of parts for every signed-in customer page, built once in `apps/web/comp
 
 One PR per step, each behind its existing flag where the module is optional, with no change to routes, forms, permissions, money or evidence: 1 language, public home and request flow; 2 customer Home, My Work, one piece of work; 3 company choice, price quotes, meeting time; 4 delegation; 5 team Today and one case; 6 founder; 7 team area lists.
 
+**Addendum, 6 November 2026:** the logo and icon rules live in [the brand identity](../brand/CORRIDRA_BRAND_IDENTITY.md) (ADR-077, Proposed). AC/1 colour, type, spacing and radius are unchanged.
+
 ## Hard limits (the backbone)
 
 A UI change may not alter domain packages, API handlers, authentication, RLS, migrations, money or evidence semantics, permission checks, production gates, element `name` or `id` attributes, link destinations, form payloads or test hooks. Presentation only. Run the checks in `docs/verification-guide.md` and record the results in the work log.

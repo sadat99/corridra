@@ -9,7 +9,9 @@ import { describe, expect, test } from 'vitest';
 // in tests/integration/fixtures/app-header-markup.json. To record it again, a person sets
 // RECORD_APP_HEADER=1 on purpose; an ordinary run only compares. The two team entries were recorded again
 // for the team Today redesign (owner, 6 Nov 2026: "today page redesign"): the inbox as an icon with its
-// unread count and the language and website in an account menu. The contributor entries are unchanged.
+// unread count and the language and website in an account menu. All four entries were recorded again for
+// the brand identity (owner, 6 Nov 2026, ADR-077): the brand link's text "Corridra" left the header because
+// the logo lockup the shell passes in now carries the drawn wordmark; the link keeps its aria-label.
 const web = createRequire(resolve('apps/web/package.json'));
 const createElement = web('react').createElement as (
   t: unknown,

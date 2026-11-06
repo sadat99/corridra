@@ -1,0 +1,520 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "$description": "Corridra brand identity layer. Extends AC/1 Atlantic Cobalt (docs/source/ac1-design-system/atlantic-cobalt.tokens.json); it does not redefine any AC/1 colour. Colour values below are AC/1 primitives, listed by their CSS token name.",
+  "identity": {
+    "name": {
+      "$value": "Corridra"
+    },
+    "wordmarkRule": {
+      "$value": "The lettering is artwork. Never retype it in Geist, Newsreader or any other face."
+    },
+    "status": {
+      "$value": "Owner-supplied logo adopted by owner instruction. Art-direction review, trademark check and legal handoff are still open (docs/adr/0077-corridra-visual-identity.md)."
+    }
+  },
+  "color": {
+    "mark": {
+      "light": {
+        "$value": "--brand",
+        "hex": "#2856C5"
+      },
+      "dark": {
+        "$value": "--on-brand",
+        "hex": "#FFFFFF"
+      }
+    },
+    "wordmark": {
+      "light": {
+        "$value": "--brand-deep",
+        "hex": "#142438"
+      },
+      "dark": {
+        "$value": "--on-brand",
+        "hex": "#FFFFFF"
+      }
+    },
+    "accentBar": {
+      "$value": "--editorial-accent",
+      "hex": "#BF7548",
+      "note": "Decorative only. Never text, never a status colour, never under 24 px wide."
+    },
+    "forbidden": {
+      "$value": [
+        "#FE8E03",
+        "#041B46",
+        "any gradient",
+        "any shadow",
+        "any opacity under 100 percent"
+      ],
+      "note": "#FE8E03 and #041B46 are the colours of the original supplied artwork, kept only in docs/brand/assets/legacy-orange."
+    }
+  },
+  "contrast": {
+    "cobaltOnPorcelain": 6.12,
+    "cobaltOnWhite": 6.51,
+    "navyOnPorcelain": 14.74,
+    "whiteOnNavy": 15.68,
+    "whiteOnCobalt": 6.51,
+    "copperOnPorcelain": 3.37,
+    "cobaltOnNavy": 2.41,
+    "note": "Cobalt on navy fails. Use the reversed colorway on navy."
+  },
+  "clearSpace": {
+    "$value": "X",
+    "definition": "X is the height of the letter C in the wordmark. For orb-only use, X is one quarter of the orb diameter. Keep at least X free on every side."
+  },
+  "sizeLadder": [
+    {
+      "context": "Under 48 px (favicon, avatar, collapsed rail)",
+      "asset": "orb"
+    },
+    {
+      "context": "Product chrome 24 to 40 px tall (headers, footer)",
+      "asset": "lockup-compact"
+    },
+    {
+      "context": "Full lockup 120 px wide and up",
+      "asset": "lockup-stacked or lockup-horizontal"
+    },
+    {
+      "context": "Large brand moments 64 px and up, square",
+      "asset": "mark"
+    },
+    {
+      "context": "App icon 180 px and up",
+      "asset": "mark on a navy tile (app-icons)"
+    }
+  ],
+  "orb": {
+    "viewBox": "10 10 42 42",
+    "path": "M51.80 28.12A21.0 21.0 0 1 0 41.18 49.37A12.5 12.5 0 1 1 51.80 28.12Z",
+    "dot": {
+      "cx": 46,
+      "cy": 40,
+      "r": 3.4
+    },
+    "construction": "Disc of radius 21 at (31,31) minus a circle of radius 12.5 at (43,37), plus a dot of radius 3.4 at (46,40)."
+  },
+  "assets": {
+    "mark": {
+      "$description": "Large brand moments only (hero, splash, print). Minimum 64 px wide.",
+      "minimumSize": "64 px",
+      "variants": {
+        "cobalt": {
+          "svg": "docs/brand/assets/svg/corridra-mark-cobalt.svg",
+          "png": "docs/brand/assets/png/corridra-mark-cobalt.png",
+          "aspect": [533, 511],
+          "colorway": "On Porcelain, white and surface-subtle. The default."
+        },
+        "navy": {
+          "svg": "docs/brand/assets/svg/corridra-mark-navy.svg",
+          "png": "docs/brand/assets/png/corridra-mark-navy.png",
+          "aspect": [533, 511],
+          "colorway": "Alternative on light surfaces where cobalt would compete with an action colour; print."
+        },
+        "reversed": {
+          "svg": "docs/brand/assets/svg/corridra-mark-reversed.svg",
+          "png": "docs/brand/assets/png/corridra-mark-reversed.png",
+          "aspect": [533, 511],
+          "colorway": "On Midnight Navy and surface-navy only."
+        },
+        "mono-navy": {
+          "svg": "docs/brand/assets/svg/corridra-mark-mono-navy.svg",
+          "png": "docs/brand/assets/png/corridra-mark-mono-navy.png",
+          "aspect": [533, 511],
+          "colorway": "One-colour print, stamps, fax-safe, embossing."
+        },
+        "mono-white": {
+          "svg": "docs/brand/assets/svg/corridra-mark-mono-white.svg",
+          "png": "docs/brand/assets/png/corridra-mark-mono-white.png",
+          "aspect": [533, 511],
+          "colorway": "On cobalt, photography with a scrim, or any single dark surface."
+        },
+        "mono-black": {
+          "svg": "docs/brand/assets/svg/corridra-mark-mono-black.svg",
+          "png": "docs/brand/assets/png/corridra-mark-mono-black.png",
+          "aspect": [533, 511],
+          "colorway": "Black-only print."
+        }
+      }
+    },
+    "orb": {
+      "$description": "Favicon, avatar, collapsed navigation rail, any space under 48 px. Derived small-size mark.",
+      "minimumSize": "16 px",
+      "variants": {
+        "cobalt": {
+          "svg": "docs/brand/assets/svg/corridra-orb-cobalt.svg",
+          "png": "docs/brand/assets/png/corridra-orb-cobalt.png",
+          "aspect": [42, 42],
+          "colorway": "On Porcelain, white and surface-subtle. The default."
+        },
+        "navy": {
+          "svg": "docs/brand/assets/svg/corridra-orb-navy.svg",
+          "png": "docs/brand/assets/png/corridra-orb-navy.png",
+          "aspect": [42, 42],
+          "colorway": "Alternative on light surfaces where cobalt would compete with an action colour; print."
+        },
+        "reversed": {
+          "svg": "docs/brand/assets/svg/corridra-orb-reversed.svg",
+          "png": "docs/brand/assets/png/corridra-orb-reversed.png",
+          "aspect": [42, 42],
+          "colorway": "On Midnight Navy and surface-navy only."
+        },
+        "mono-navy": {
+          "svg": "docs/brand/assets/svg/corridra-orb-mono-navy.svg",
+          "png": "docs/brand/assets/png/corridra-orb-mono-navy.png",
+          "aspect": [42, 42],
+          "colorway": "One-colour print, stamps, fax-safe, embossing."
+        },
+        "mono-white": {
+          "svg": "docs/brand/assets/svg/corridra-orb-mono-white.svg",
+          "png": "docs/brand/assets/png/corridra-orb-mono-white.png",
+          "aspect": [42, 42],
+          "colorway": "On cobalt, photography with a scrim, or any single dark surface."
+        },
+        "mono-black": {
+          "svg": "docs/brand/assets/svg/corridra-orb-mono-black.svg",
+          "png": "docs/brand/assets/png/corridra-orb-mono-black.png",
+          "aspect": [42, 42],
+          "colorway": "Black-only print."
+        }
+      }
+    },
+    "wordmark": {
+      "$description": "When the sphere would crowd the space, or when the name already sits beside a mark. Minimum 96 px wide.",
+      "minimumSize": "96 px wide",
+      "variants": {
+        "cobalt": {
+          "svg": "docs/brand/assets/svg/corridra-wordmark-cobalt.svg",
+          "png": "docs/brand/assets/png/corridra-wordmark-cobalt.png",
+          "aspect": [1093, 103],
+          "colorway": "On Porcelain, white and surface-subtle. The default."
+        },
+        "navy": {
+          "svg": "docs/brand/assets/svg/corridra-wordmark-navy.svg",
+          "png": "docs/brand/assets/png/corridra-wordmark-navy.png",
+          "aspect": [1093, 103],
+          "colorway": "Alternative on light surfaces where cobalt would compete with an action colour; print."
+        },
+        "reversed": {
+          "svg": "docs/brand/assets/svg/corridra-wordmark-reversed.svg",
+          "png": "docs/brand/assets/png/corridra-wordmark-reversed.png",
+          "aspect": [1093, 103],
+          "colorway": "On Midnight Navy and surface-navy only."
+        },
+        "mono-navy": {
+          "svg": "docs/brand/assets/svg/corridra-wordmark-mono-navy.svg",
+          "png": "docs/brand/assets/png/corridra-wordmark-mono-navy.png",
+          "aspect": [1093, 103],
+          "colorway": "One-colour print, stamps, fax-safe, embossing."
+        },
+        "mono-white": {
+          "svg": "docs/brand/assets/svg/corridra-wordmark-mono-white.svg",
+          "png": "docs/brand/assets/png/corridra-wordmark-mono-white.png",
+          "aspect": [1093, 103],
+          "colorway": "On cobalt, photography with a scrim, or any single dark surface."
+        },
+        "mono-black": {
+          "svg": "docs/brand/assets/svg/corridra-wordmark-mono-black.svg",
+          "png": "docs/brand/assets/png/corridra-wordmark-mono-black.png",
+          "aspect": [1093, 103],
+          "colorway": "Black-only print."
+        }
+      }
+    },
+    "wordmark-tagline": {
+      "$description": "Marketing and brand sheets only. Never in product UI.",
+      "minimumSize": "200 px wide",
+      "variants": {
+        "cobalt": {
+          "svg": "docs/brand/assets/svg/corridra-wordmark-tagline-cobalt.svg",
+          "png": "docs/brand/assets/png/corridra-wordmark-tagline-cobalt.png",
+          "aspect": [1093, 253.5],
+          "colorway": "On Porcelain, white and surface-subtle. The default."
+        },
+        "navy": {
+          "svg": "docs/brand/assets/svg/corridra-wordmark-tagline-navy.svg",
+          "png": "docs/brand/assets/png/corridra-wordmark-tagline-navy.png",
+          "aspect": [1093, 253.5],
+          "colorway": "Alternative on light surfaces where cobalt would compete with an action colour; print."
+        },
+        "reversed": {
+          "svg": "docs/brand/assets/svg/corridra-wordmark-tagline-reversed.svg",
+          "png": "docs/brand/assets/png/corridra-wordmark-tagline-reversed.png",
+          "aspect": [1093, 253.5],
+          "colorway": "On Midnight Navy and surface-navy only."
+        },
+        "mono-navy": {
+          "svg": "docs/brand/assets/svg/corridra-wordmark-tagline-mono-navy.svg",
+          "png": "docs/brand/assets/png/corridra-wordmark-tagline-mono-navy.png",
+          "aspect": [1093, 253.5],
+          "colorway": "One-colour print, stamps, fax-safe, embossing."
+        },
+        "mono-white": {
+          "svg": "docs/brand/assets/svg/corridra-wordmark-tagline-mono-white.svg",
+          "png": "docs/brand/assets/png/corridra-wordmark-tagline-mono-white.png",
+          "aspect": [1093, 253.5],
+          "colorway": "On cobalt, photography with a scrim, or any single dark surface."
+        },
+        "mono-black": {
+          "svg": "docs/brand/assets/svg/corridra-wordmark-tagline-mono-black.svg",
+          "png": "docs/brand/assets/png/corridra-wordmark-tagline-mono-black.png",
+          "aspect": [1093, 253.5],
+          "colorway": "Black-only print."
+        }
+      }
+    },
+    "lockup-compact": {
+      "$description": "Product chrome: public header, signed-in header, footer. Orb plus wordmark, no bar.",
+      "minimumSize": "24 px tall",
+      "variants": {
+        "cobalt": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-compact-cobalt.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-compact-cobalt.png",
+          "aspect": [325.3, 42],
+          "colorway": "On Porcelain, white and surface-subtle. The default."
+        },
+        "navy": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-compact-navy.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-compact-navy.png",
+          "aspect": [325.3, 42],
+          "colorway": "Alternative on light surfaces where cobalt would compete with an action colour; print."
+        },
+        "reversed": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-compact-reversed.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-compact-reversed.png",
+          "aspect": [325.3, 42],
+          "colorway": "On Midnight Navy and surface-navy only."
+        },
+        "mono-navy": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-compact-mono-navy.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-compact-mono-navy.png",
+          "aspect": [325.3, 42],
+          "colorway": "One-colour print, stamps, fax-safe, embossing."
+        },
+        "mono-white": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-compact-mono-white.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-compact-mono-white.png",
+          "aspect": [325.3, 42],
+          "colorway": "On cobalt, photography with a scrim, or any single dark surface."
+        },
+        "mono-black": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-compact-mono-black.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-compact-mono-black.png",
+          "aspect": [325.3, 42],
+          "colorway": "Black-only print."
+        }
+      }
+    },
+    "lockup-horizontal": {
+      "$description": "Default full lockup for wide spaces: slides, documents, partner pages.",
+      "minimumSize": "160 px wide",
+      "variants": {
+        "cobalt": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-horizontal-cobalt.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-horizontal-cobalt.png",
+          "aspect": [1339.5, 316.8],
+          "colorway": "On Porcelain, white and surface-subtle. The default."
+        },
+        "navy": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-horizontal-navy.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-horizontal-navy.png",
+          "aspect": [1339.5, 316.8],
+          "colorway": "Alternative on light surfaces where cobalt would compete with an action colour; print."
+        },
+        "reversed": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-horizontal-reversed.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-horizontal-reversed.png",
+          "aspect": [1339.5, 316.8],
+          "colorway": "On Midnight Navy and surface-navy only."
+        },
+        "mono-navy": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-horizontal-mono-navy.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-horizontal-mono-navy.png",
+          "aspect": [1339.5, 316.8],
+          "colorway": "One-colour print, stamps, fax-safe, embossing."
+        },
+        "mono-white": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-horizontal-mono-white.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-horizontal-mono-white.png",
+          "aspect": [1339.5, 316.8],
+          "colorway": "On cobalt, photography with a scrim, or any single dark surface."
+        },
+        "mono-black": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-horizontal-mono-black.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-horizontal-mono-black.png",
+          "aspect": [1339.5, 316.8],
+          "colorway": "Black-only print."
+        }
+      }
+    },
+    "lockup-horizontal-tagline": {
+      "$description": "Marketing and brand sheets only. Never in product UI.",
+      "minimumSize": "260 px wide",
+      "variants": {
+        "cobalt": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-horizontal-tagline-cobalt.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-horizontal-tagline-cobalt.png",
+          "aspect": [1339.5, 316.8],
+          "colorway": "On Porcelain, white and surface-subtle. The default."
+        },
+        "navy": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-horizontal-tagline-navy.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-horizontal-tagline-navy.png",
+          "aspect": [1339.5, 316.8],
+          "colorway": "Alternative on light surfaces where cobalt would compete with an action colour; print."
+        },
+        "reversed": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-horizontal-tagline-reversed.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-horizontal-tagline-reversed.png",
+          "aspect": [1339.5, 316.8],
+          "colorway": "On Midnight Navy and surface-navy only."
+        },
+        "mono-navy": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-horizontal-tagline-mono-navy.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-horizontal-tagline-mono-navy.png",
+          "aspect": [1339.5, 316.8],
+          "colorway": "One-colour print, stamps, fax-safe, embossing."
+        },
+        "mono-white": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-horizontal-tagline-mono-white.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-horizontal-tagline-mono-white.png",
+          "aspect": [1339.5, 316.8],
+          "colorway": "On cobalt, photography with a scrim, or any single dark surface."
+        },
+        "mono-black": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-horizontal-tagline-mono-black.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-horizontal-tagline-mono-black.png",
+          "aspect": [1339.5, 316.8],
+          "colorway": "Black-only print."
+        }
+      }
+    },
+    "lockup-stacked": {
+      "$description": "Default full lockup for centred or narrow spaces: sign-in, cover pages, social.",
+      "minimumSize": "120 px wide",
+      "variants": {
+        "cobalt": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-stacked-cobalt.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-stacked-cobalt.png",
+          "aspect": [1093, 721.5],
+          "colorway": "On Porcelain, white and surface-subtle. The default."
+        },
+        "navy": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-stacked-navy.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-stacked-navy.png",
+          "aspect": [1093, 721.5],
+          "colorway": "Alternative on light surfaces where cobalt would compete with an action colour; print."
+        },
+        "reversed": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-stacked-reversed.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-stacked-reversed.png",
+          "aspect": [1093, 721.5],
+          "colorway": "On Midnight Navy and surface-navy only."
+        },
+        "mono-navy": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-stacked-mono-navy.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-stacked-mono-navy.png",
+          "aspect": [1093, 721.5],
+          "colorway": "One-colour print, stamps, fax-safe, embossing."
+        },
+        "mono-white": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-stacked-mono-white.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-stacked-mono-white.png",
+          "aspect": [1093, 721.5],
+          "colorway": "On cobalt, photography with a scrim, or any single dark surface."
+        },
+        "mono-black": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-stacked-mono-black.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-stacked-mono-black.png",
+          "aspect": [1093, 721.5],
+          "colorway": "Black-only print."
+        }
+      }
+    },
+    "lockup-stacked-tagline": {
+      "$description": "Marketing and brand sheets only. Never in product UI.",
+      "minimumSize": "200 px wide",
+      "variants": {
+        "cobalt": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-stacked-tagline-cobalt.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-stacked-tagline-cobalt.png",
+          "aspect": [1093, 798.5],
+          "colorway": "On Porcelain, white and surface-subtle. The default."
+        },
+        "navy": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-stacked-tagline-navy.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-stacked-tagline-navy.png",
+          "aspect": [1093, 798.5],
+          "colorway": "Alternative on light surfaces where cobalt would compete with an action colour; print."
+        },
+        "reversed": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-stacked-tagline-reversed.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-stacked-tagline-reversed.png",
+          "aspect": [1093, 798.5],
+          "colorway": "On Midnight Navy and surface-navy only."
+        },
+        "mono-navy": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-stacked-tagline-mono-navy.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-stacked-tagline-mono-navy.png",
+          "aspect": [1093, 798.5],
+          "colorway": "One-colour print, stamps, fax-safe, embossing."
+        },
+        "mono-white": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-stacked-tagline-mono-white.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-stacked-tagline-mono-white.png",
+          "aspect": [1093, 798.5],
+          "colorway": "On cobalt, photography with a scrim, or any single dark surface."
+        },
+        "mono-black": {
+          "svg": "docs/brand/assets/svg/corridra-lockup-stacked-tagline-mono-black.svg",
+          "png": "docs/brand/assets/png/corridra-lockup-stacked-tagline-mono-black.png",
+          "aspect": [1093, 798.5],
+          "colorway": "Black-only print."
+        }
+      }
+    }
+  },
+  "runtime": {
+    "publicDir": "apps/web/public/brand",
+    "nextIcons": [
+      "apps/web/app/icon.svg",
+      "apps/web/app/favicon.ico",
+      "apps/web/app/apple-icon.png",
+      "apps/web/app/opengraph-image.png",
+      "apps/web/app/twitter-image.png",
+      "apps/web/app/manifest.ts"
+    ]
+  },
+  "favicon": {
+    "tile": "--ac-navy",
+    "glyph": "orb in --on-brand",
+    "files": [
+      "favicon.svg",
+      "favicon-16.png",
+      "favicon-32.png",
+      "favicon-48.png",
+      "favicon.ico",
+      "apple-touch-icon.png",
+      "android-chrome-192.png",
+      "android-chrome-512.png",
+      "maskable-512.png"
+    ]
+  },
+  "surfaces": {
+    "allowed": [
+      "--paper (Porcelain)",
+      "--surface-1 (white)",
+      "--surface-subtle",
+      "--brand-deep (Midnight Navy), reversed",
+      "--ac-surface-navy, reversed",
+      "--brand (Cobalt), mono-white only"
+    ],
+    "notAllowed": [
+      "photographs without a scrim",
+      "copper",
+      "status tints",
+      "any gradient or pattern"
+    ]
+  }
+}

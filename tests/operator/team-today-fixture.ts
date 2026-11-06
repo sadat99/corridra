@@ -32,7 +32,7 @@ export async function startTodayFixture(root = resolve('.')) {
       contents: `import{createRoot}from'react-dom/client';
       import{LanguageProvider}from ${source('apps/web/components/language-provider.tsx')};
       import{AppHeader}from ${source('apps/web/components/ux/app-header.tsx')};
-      import{BrandMark}from ${source('apps/web/components/site-header.tsx')};
+      import{BrandLockup}from ${source('apps/web/components/site-header.tsx')};
       import{TeamFrame}from ${source('apps/web/components/ux/team-frame.tsx')};
       import{WorkspaceShell}from ${source('apps/web/components/workspace-shell.tsx')};
       import{SiteFooterPlace}from ${source('apps/web/components/site-footer-place.tsx')};
@@ -53,7 +53,7 @@ export async function startTodayFixture(root = resolve('.')) {
           <div className="site-shell">
             {shells ? (
               <>
-                <AppHeader kind="team" live={false} notifications brandMark={<BrandMark/>}/>
+                <AppHeader kind="team" live={false} notifications brandMark={<BrandLockup/>}/>
                 <TeamFrame urls ownerPage={false}>
                   <WorkspaceShell eyebrow="TEAM WORKSPACE" title="Today" className="ux-operator-home ux-titled-today">
                     {workspace}
