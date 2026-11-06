@@ -927,3 +927,56 @@ test('saving a new programme keeps a rename typed on a programme from a later pa
     'Synthetic typed on a later page',
   );
 });
+
+test('in a linked Archived list, picking another archived programme stays in the Archived list', async ({
+  page,
+}) => {
+  const a = '00000000-0000-4000-8000-0000000000a1';
+  const b = '00000000-0000-4000-8000-0000000000b2';
+  await serve(page, [
+    base,
+    archivedRow(a, 'Synthetic archived alpha'),
+    archivedRow(b, 'Synthetic archived bravo'),
+  ]);
+  await page.goto(origin + '/?room=true&programme=' + a);
+  await expect(page.getByRole('heading', { name: 'Synthetic archived alpha' })).toBeVisible();
+  await page.getByLabel('Programme', { exact: true }).selectOption(b);
+  await expect(page.getByRole('heading', { name: 'Synthetic archived bravo' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Restore Programme', exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Show Active Programmes', exact: true }),
+  ).toBeVisible();
+  await expect(page).toHaveURL(/archived=1/);
+});
+
+test('in a linked Archived list, restoring one keeps the remaining archived programmes', async ({
+  page,
+}) => {
+  const a = '00000000-0000-4000-8000-0000000000a1';
+  const b = '00000000-0000-4000-8000-0000000000b2';
+  const c = '00000000-0000-4000-8000-0000000000c3';
+  const { rows } = await serve(page, [
+    base,
+    archivedRow(a, 'Synthetic archived alpha'),
+    archivedRow(b, 'Synthetic archived bravo'),
+    archivedRow(c, 'Synthetic archived charlie'),
+  ]);
+  await page.route('**/api/customer-programme-lifecycle', async (route) => {
+    const body = route.request().postDataJSON();
+    const at = rows.findIndex((r) => r.id === body.programmeId);
+    rows[at] = { ...rows[at]!, archived: false, version: 3 };
+    await route.fulfill({ json: answer(rows[at]!, 'restore') });
+  });
+  await page.goto(origin + '/?programme=' + b);
+  await page
+    .getByRole('listitem')
+    .filter({ hasText: 'Synthetic archived bravo' })
+    .getByRole('button', { name: 'Restore Programme', exact: true })
+    .click();
+  await expect(page.getByRole('heading', { name: 'Synthetic archived alpha' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Synthetic archived charlie' })).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Show Active Programmes', exact: true }),
+  ).toBeVisible();
+  await expect(page).toHaveURL(/archived=1/);
+});

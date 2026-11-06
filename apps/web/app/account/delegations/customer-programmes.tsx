@@ -293,12 +293,13 @@ function ScopedProgrammes({
   );
   // Refresh one programme in place after a stale answer: walk the pages until it is found and replace only that row, so rows
   // from later pages (and the controls typed into) are never dropped by a reload that only reaches the first page.
-  const refreshTask = useRef<AbortController | null>(null);
+  // One controller per programme, so refreshing one never cancels another's.
+  const refreshTasks = useRef(new Map<string, AbortController>());
   const refreshProgramme = useCallback(
     async (id: string) => {
-      refreshTask.current?.abort();
+      refreshTasks.current.get(id)?.abort();
       const task = new AbortController();
-      refreshTask.current = task;
+      refreshTasks.current.set(id, task);
       const gone = () => task.signal.aborted || !active.current;
       const lost = (words: string) => {
         if (!gone()) setStaleNote(words);
@@ -341,7 +342,7 @@ function ScopedProgrammes({
     const hide = () => {
       getTask.current?.abort();
       postTask.current?.abort();
-      refreshTask.current?.abort();
+      refreshTasks.current.forEach((task) => task.abort());
       setVisible(false);
       setRows([]);
       setNext(null);
@@ -362,7 +363,7 @@ function ScopedProgrammes({
       active.current = false;
       getTask.current?.abort();
       postTask.current?.abort();
-      refreshTask.current?.abort();
+      refreshTasks.current.forEach((task) => task.abort());
       window.removeEventListener('pagehide', hide);
       window.removeEventListener('pageshow', show);
       document.removeEventListener('visibilitychange', visibility);
@@ -499,7 +500,17 @@ function ScopedProgrammes({
   }, [status, next, visibleRows.length, chosenId, rows, load]);
   const linkMissing =
     status === 'ready' && !next && chosenId !== null && !rows.some((p) => p.id === chosenId);
+  // A link into the Archived list opens it without saying so in the address. The first thing the person does there makes it
+  // explicit (?archived=1), so choosing another archived programme or restoring one keeps the Archived list instead of flipping away.
+  const pinArchivedView = () => {
+    if (!archivedView || showArchived) return;
+    setShowArchived(true);
+    const url = new URL(window.location.href);
+    url.searchParams.set('archived', '1');
+    window.history.replaceState(window.history.state, '', url);
+  };
   const choose = (id: string) => {
+    pinArchivedView();
     setVisited((current) => {
       const next = new Set(current);
       if (chosenProgramme) next.add(chosenProgramme);
@@ -516,6 +527,7 @@ function ScopedProgrammes({
   // An archive keeps an Undo for ten seconds; a restore that the cap refuses says so in plain words.
   const archiveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const applyChange = (change: LifecycleChange, before: LifecycleProgramme) => {
+    pinArchivedView();
     setLinkTarget(null);
     setStaleNote('');
     setArchivedMidEdit(null);
