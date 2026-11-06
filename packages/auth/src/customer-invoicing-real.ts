@@ -44,7 +44,14 @@ export type RealInvoice = {
   outstandingMinor: string;
   status: RealInvoiceStatus;
   overdue: boolean;
-  payments: { seq: number; amountMinor: string; receivedOn: string; method: string }[];
+  // `reversed` is true once the team reversed a payment entered in error. Customers never see why.
+  payments: {
+    seq: number;
+    amountMinor: string;
+    receivedOn: string;
+    method: string;
+    reversed: boolean;
+  }[];
   credits: { seq: number; number: string; amountMinor: string; issuedOn: string; reason: string }[];
   supplier: {
     legalName: string;

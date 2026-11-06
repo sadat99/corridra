@@ -289,6 +289,37 @@ test('an owner reads a real tax invoice with both parties, the tax lines, paymen
   expect(await axe(page)).toEqual([]);
 });
 
+test('an owner sees that a real payment was reversed, and never why', async ({ page }) => {
+  await serve(page, () => ({
+    json: invoicingBody({
+      invoices: [
+        invoice({
+          paidMinor: '0',
+          outstandingMinor: '10900',
+          status: 'unpaid',
+          payments: [
+            {
+              seq: 1,
+              amountMinor: '2000',
+              receivedOn: '2026-10-25',
+              method: 'bank_transfer',
+              reversed: true,
+            },
+          ],
+        }),
+      ],
+      balances: [balance({ paidMinor: '0', outstandingMinor: '10900' })],
+    }),
+  }));
+  await page.goto(origin + '/');
+  await page.getByText('Payments and credit notes for INV-2026-000001').click();
+  await expect(
+    page.getByText(/SGD\s20\.00 on 25 October 2026 · Bank transfer · Reversed/),
+  ).toBeVisible();
+  await expect(page.getByText(/wrong invoice|duplicate|reason/i)).toHaveCount(0);
+  expect(await axe(page)).toEqual([]);
+});
+
 test('a member only learns whether invoices exist, and an empty workspace says so plainly', async ({
   page,
 }) => {

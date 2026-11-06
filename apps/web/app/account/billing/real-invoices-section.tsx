@@ -161,6 +161,7 @@ function InvoiceDocument({ i }: { i: RealInvoice }) {
               <li key={p.seq}>
                 {money(p.amountMinor, i.currency)} on {dayText(p.receivedOn)} ·{' '}
                 {methodText[p.method] ?? p.method}
+                {p.reversed && ' · Reversed'}
               </li>
             ))}
           </ul>
