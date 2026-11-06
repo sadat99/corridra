@@ -270,6 +270,12 @@ export function useParticipantView(
   const deny = useCallback(() => {
     available.current = false;
     if (timer.current) clearTimeout(timer.current);
+    // A read or write still in flight when access is refused must not bring the private details back when it lands.
+    get.current?.abort();
+    post.current?.abort();
+    reading.current = false;
+    writing.current = false;
+    setBusy(false);
     intent.current = null;
     setPending(null);
     setData(null);

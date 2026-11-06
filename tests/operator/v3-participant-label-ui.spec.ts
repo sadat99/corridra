@@ -466,3 +466,40 @@ test('a refused save by the organiser clears the roster too', async ({ page }) =
   await expect(page.getByText('Synthetic participant label')).toHaveCount(0);
   await expect(form(page)).toHaveCount(0);
 });
+
+test('a read still in flight when a label save is refused cannot bring the roster back', async ({
+  page,
+}) => {
+  const state: State = { label: 'Synthetic participant label', version: 0 };
+  let releaseSave!: () => void;
+  let releaseRead!: () => void;
+  const saveGate = new Promise<void>((done) => (releaseSave = done));
+  const readGate = new Promise<void>((done) => (releaseRead = done));
+  let reads = 0;
+  await page.route('**/api/customer-programme-participants*', async (route) => {
+    const request = route.request();
+    if (request.method() === 'GET') {
+      // The first read opens the page; the second is the Reload pressed while the save is pending.
+      if (++reads === 2) await readGate;
+      return route
+        .fulfill({ json: { registrations: [ownRow(state)], nextAfter: null, synthetic: true } })
+        .catch(() => undefined);
+    }
+    await saveGate;
+    return route.fulfill({ status: 403, json: { error: 'Participant access denied' } });
+  });
+  await page.goto(origin);
+  await page.getByRole('button', { name: 'Edit My Label', exact: true }).click();
+  await form(page).getByLabel('New display label').fill('Synthetic participant Bob Rahman');
+  await page.getByRole('button', { name: 'Save Label', exact: true }).click();
+  await page.getByRole('button', { name: 'Reload My Sample Registrations' }).click();
+  releaseSave();
+  await expect(
+    page.getByText('Account or programme access changed. Private details were cleared.'),
+  ).toBeVisible();
+  // The read that was already on its way now answers 200, after the refusal.
+  releaseRead();
+  await page.waitForTimeout(500);
+  await expect(page.getByText('Synthetic participant label', { exact: false })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Edit My Label', exact: true })).toHaveCount(0);
+});
