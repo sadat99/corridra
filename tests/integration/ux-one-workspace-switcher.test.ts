@@ -4,7 +4,8 @@ import { workspacePage as scoped } from '../../apps/web/lib/ux/workspace-pages';
 
 // Owner review, 6 Nov 2026: the customer header showed a second, unsized workspace switcher beside the
 // brand (a large bare arrow on a phone) while the left bar's workspace card already switches workspace.
-// One switcher stays, in the left bar, and it keeps the person in the same section of the chosen workspace.
+// One switcher stays and it keeps the person in the same section of the chosen workspace. Navigation v1 (S1
+// approved the table, 6 Nov 2026) moved it from the left bar's card into the identity block of the avatar menu.
 const read = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 const id = '0f8fad5b-d9cb-469f-a165-70867728950e';
 
@@ -41,16 +42,17 @@ describe('one workspace switcher', () => {
     expect(scoped.exec('/account/delegations/not-a-workspace')).toBeNull();
   });
 
-  it('the left bar card names the current workspace and switches within the same section', () => {
+  it('the avatar menu names the current workspace and switches within the same section', () => {
+    const menu = read('apps/web/components/ux/utility-menus.tsx');
+    expect(menu).toContain('workspacePage.exec(pathname)');
+    expect(menu).toContain('aria-label="Workspace"');
+    expect(menu).toContain('router.push(`/account/${section}/${w.id}`)');
+    expect(menu).toContain('<MenuRadio');
+    expect(menu).toContain('Manage Workspaces');
+    // It is the only switcher: the sidebar and the header row carry none.
     const rail = read('apps/web/components/ux/customer-rail.tsx');
-    expect(rail).toContain('workspacePage.exec(pathname)');
-    expect(rail).toContain("label={current ? 'Switch workspace' : 'Your workspaces'}");
-    expect(rail).toContain('router.push(`/account/${section}/${w.id}`)');
-    expect(rail).toContain('<MenuRadio');
-    expect(rail).toContain('Manage Workspaces');
-    // The card's arrow keeps its fixed 16 px size.
-    expect(read('apps/web/components/ux/customer-rail.css')).toMatch(
-      /\.ux-rail-chevron \{\s*width: 16px;\s*height: 16px;/,
-    );
+    expect(rail).not.toContain('MenuRadio');
+    expect(rail).not.toContain('Switch workspace');
+    expect(read('apps/web/components/ux/customer-header.tsx')).not.toContain('MenuRadio');
   });
 });

@@ -168,6 +168,10 @@ export type ExcludedPage = { route: string; why: string };
 export const excludedPages: readonly ExcludedPage[] = [
   { route: '/account/all-tools', why: 'This is the list itself.' },
   {
+    route: '/account/meetings',
+    why: 'It opens from the Meetings tab of the customer navigation. The page exists only with the shells switch, so a link here would lead nowhere without it.',
+  },
+  {
     route: '/account/request/[workspaceId]',
     why: 'Needs a workspace. It opens from the workspace under Missions.',
   },

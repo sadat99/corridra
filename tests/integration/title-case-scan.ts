@@ -8,6 +8,12 @@ import { isTitleCase } from '../../apps/web/lib/ux/title-case';
 export const customerRoots = [
   'apps/web/app/account',
   'apps/web/components/ux/customer-bar.tsx',
+  // Navigation v1: the customer header, sidebar, bottom tabs and the shared utility menus.
+  'apps/web/components/ux/customer-header.tsx',
+  'apps/web/components/ux/customer-rail.tsx',
+  'apps/web/components/ux/customer-tabs.tsx',
+  'apps/web/components/ux/utility-menus.tsx',
+  'apps/web/lib/ux/customer-navigation.ts',
   'apps/web/components/ux/overflow-menu.tsx',
   'apps/web/components/mr',
   'apps/web/components/customer-shell.tsx',

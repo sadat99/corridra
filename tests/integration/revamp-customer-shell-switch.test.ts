@@ -63,4 +63,17 @@ describe('CX PR 1: the customer frame follows the shells switch', () => {
     expect(real).toContain('Your work stays private to the people given access.');
     expect(real).not.toContain('made-up');
   });
+
+  it('Home is Your Move only with both the navigation and the Move switches, as before', async () => {
+    vi.stubEnv('CORRIDRA_UX_SHELLS_V2', 'true');
+    const home = (html: string) =>
+      [...html.matchAll(/<a[^>]*href="([^"]*)"[^>]*>(?:(?!<\/a>).)*?Home/g)].map((m) => m[1]);
+    vi.stubEnv('CORRIDRA_UX_MOVE', 'true');
+    vi.stubEnv('CORRIDRA_UX_NAV', '');
+    expect(home(await render())).toEqual(['/account', '/account']);
+    vi.stubEnv('CORRIDRA_UX_NAV', 'true');
+    expect(home(await render())).toEqual(['/account/move', '/account/move']);
+    vi.stubEnv('CORRIDRA_UX_MOVE', '');
+    expect(home(await render())).toEqual(['/account', '/account']);
+  });
 });
