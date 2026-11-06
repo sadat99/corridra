@@ -6,6 +6,7 @@
 import './customer-tabs.css';
 import Link from 'next/link';
 import { CorridraIcon } from '../corridra-icon';
+import { T } from '../language-provider';
 import type { CustomerTab, CustomerTabKey } from '../../lib/ux/customer-navigation';
 
 export function CustomerTabs({
@@ -36,7 +37,10 @@ export function CustomerTabs({
                   </span>
                 ) : null}
               </span>
-              <span>{tab.label}</span>
+              {/* The name follows the chosen language as the sidebar's does; a word with no reviewed translation is marked English. */}
+              <span>
+                {tab.labelKey ? <T k={tab.labelKey} /> : <span lang="en">{tab.label}</span>}
+              </span>
               {tab.key === 'home' && count ? (
                 <span className="sr-only">, {count} waiting</span>
               ) : null}

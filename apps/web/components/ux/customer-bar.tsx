@@ -137,7 +137,13 @@ export function BarInbox({
         </span>
       ) : null}
       <div id={panelId} className="ux-app-popover" hidden={!open}>
-        {open ? <NotificationInbox endpoint={endpoint} grouped={grouped} /> : null}
+        {open ? (
+          <NotificationInbox
+            endpoint={endpoint}
+            grouped={grouped}
+            onItems={(list) => setUnread(list.filter((item) => !item.readAt).length)}
+          />
+        ) : null}
       </div>
     </div>
   );

@@ -32,14 +32,22 @@ const typeTitle: Record<string, string> = {
 export function NotificationInbox({
   endpoint,
   grouped = false,
+  onItems,
 }: {
   endpoint: string;
+  /** Called with each list the panel loads, so the bell can recount from it while the panel stays open (no extra request). */
+  onItems?: (items: Item[]) => void;
   /** The customer panel: Needs You first, then Updates, then Earlier, with Mark All Read. Off: the plain list. */
   grouped?: boolean;
 }) {
   const [items, setItems] = useState<Item[] | null>(null);
   const [error, setError] = useState('');
   const active = useRef<AbortController | null>(null);
+  // The latest callback, held in a ref so a new inline function from the parent never restarts the load.
+  const itemsCallback = useRef(onItems);
+  useEffect(() => {
+    itemsCallback.current = onItems;
+  });
   const load = useCallback(() => {
     active.current?.abort();
     const controller = new AbortController();
@@ -50,6 +58,7 @@ export function NotificationInbox({
         if (controller.signal.aborted) return;
         setItems(list);
         setError('');
+        itemsCallback.current?.(list);
       })
       .catch((e: unknown) => {
         if (controller.signal.aborted) return;

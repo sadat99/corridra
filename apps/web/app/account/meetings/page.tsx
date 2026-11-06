@@ -1,5 +1,7 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { customerRequestsEnabled } from '@corridra/auth/customer-requests';
+import { customerWorkspacesEnabled } from '@corridra/auth/customer-workspaces';
 import { readNeonAuthConfig } from '@corridra/config';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { CustomerShell } from '../../../components/customer-shell';
@@ -19,6 +21,8 @@ export const metadata = {
 // plain text, not a control. It reads the same list of requests the Requests page reads, with the same session
 // proof, so it shows nothing the person could not already open.
 export default async function Page() {
+  // The Meetings tab exists only with the shells switch, so the page does too: without it the address answers 404.
+  if (!uxSwitchOn('CORRIDRA_UX_SHELLS_V2')) notFound();
   const issuer = readNeonAuthConfig()?.NEON_AUTH_BASE_URL;
   const auth = neonAuth();
   const session = await auth?.getSession({ query: { disableCookieCache: true } }).catch(() => null);
@@ -37,6 +41,9 @@ export default async function Page() {
     rooms: uxSwitchOn('CORRIDRA_UX_ROAD'),
   });
   const requests = list.items.filter((item) => item.kind === 'request');
+  // The list is read only where the workspaces and requests modules are on. Where they are not, nothing was read, so
+  // the page must not say there are no requests.
+  const readable = customerWorkspacesEnabled() && customerRequestsEnabled();
   return (
     <CustomerShell tab="meetings" eyebrow="YOUR ACCOUNT" title="Meetings">
       <p>Open a request to see its meetings and visits.</p>
@@ -51,7 +58,8 @@ export default async function Page() {
           </Link>
         </p>
       ) : null}
-      {requests.length === 0 && list.unreadable.length === 0 ? (
+      {!readable ? <p role="status">Your requests list is not available here yet.</p> : null}
+      {readable && requests.length === 0 && list.unreadable.length === 0 ? (
         <p role="status">
           You have no requests yet.{' '}
           <Link className="text-link" prefetch={false} href="/plan">

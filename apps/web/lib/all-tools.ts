@@ -73,13 +73,6 @@ export const tools: readonly Tool[] = [
     group: 'Missions',
   },
   {
-    route: '/account/meetings',
-    href: '/account/meetings',
-    label: 'See your meetings and visits',
-    line: 'Open a request to see its meetings and visits.',
-    group: 'Missions',
-  },
-  {
     route: '/account/service-requests',
     href: '/account/service-requests',
     label: 'Ask for help or a quote',
@@ -174,6 +167,10 @@ export type ExcludedPage = { route: string; why: string };
  */
 export const excludedPages: readonly ExcludedPage[] = [
   { route: '/account/all-tools', why: 'This is the list itself.' },
+  {
+    route: '/account/meetings',
+    why: 'It opens from the Meetings tab of the customer navigation. The page exists only with the shells switch, so a link here would lead nowhere without it.',
+  },
   {
     route: '/account/request/[workspaceId]',
     why: 'Needs a workspace. It opens from the workspace under Missions.',

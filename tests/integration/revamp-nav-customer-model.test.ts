@@ -18,6 +18,7 @@ const all = {
   companies: true,
   move: true,
   billing: true,
+  notificationSettings: true,
   workspaces: [
     { id: workspace, name: 'Aurora Textiles' },
     { id: '1f8fad5b-d9cb-469f-a165-70867728950e', name: 'Second Mill' },
@@ -105,6 +106,26 @@ describe('the customer navigation model', () => {
     expect(hrefs(off)).not.toContain('/account/billing');
   });
 
+  it('Notification Settings is a link only where its page exists, otherwise plain text tagged Coming soon', () => {
+    const off = customerAvatarItems({ ...all, notificationSettings: false });
+    const entry = off.find((item) => item.label === 'Notification Settings')!;
+    expect(entry.kind).toBe('soon');
+    expect(hrefs(off)).not.toContain('/account/notifications');
+    expect(hrefs(customerAvatarItems(all))).toContain('/account/notifications');
+  });
+
+  it('the four named tabs carry the message key the sidebar always used, and Meetings, a new word, has none', () => {
+    const tabs = customerTabs({ companies: true, move: false });
+    const keys = Object.fromEntries(tabs.map((tab) => [tab.key, tab.labelKey]));
+    expect(keys).toEqual({
+      home: 'wse.nav.home',
+      requests: 'wse.nav.work',
+      companies: 'wse.nav.companies',
+      meetings: undefined,
+      reports: 'wse.nav.results',
+    });
+  });
+
   it('Company Profile follows the chosen workspace, and is Coming soon with no workspace', () => {
     const second = '1f8fad5b-d9cb-469f-a165-70867728950e';
     const other = customerAvatarItems({ ...all, currentWorkspaceId: second });
@@ -148,5 +169,21 @@ describe('the customer navigation model', () => {
       for (const word of label.split(' ').filter((w) => w.length > 3))
         expect(word[0], `${label}: ${word}`).toBe(word[0]!.toUpperCase());
     }
+  });
+});
+
+describe('the Meetings page', () => {
+  const page = readFileSync(
+    new URL('../../apps/web/app/account/meetings/page.tsx', import.meta.url),
+    'utf8',
+  );
+  it('answers 404 unless the shells switch is on, like the navigation that leads to it', () => {
+    expect(page).toContain("uxSwitchOn('CORRIDRA_UX_SHELLS_V2')");
+    expect(page).toMatch(/!uxSwitchOn\('CORRIDRA_UX_SHELLS_V2'\)\) notFound\(\)/);
+  });
+  it('says the list is not available, not that there are no requests, where it could not read any', () => {
+    expect(page).toContain('customerWorkspacesEnabled()');
+    expect(page).toContain('customerRequestsEnabled()');
+    expect(page).toContain('Your requests list is not available here yet');
   });
 });

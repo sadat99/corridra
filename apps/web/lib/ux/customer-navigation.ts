@@ -6,8 +6,20 @@
 // Honest features: anything that is not real in this repository yet is an entry of kind "soon", which the menus
 // draw as plain text with a "Coming soon" tag, never a link or a button that does nothing.
 
+import type { MessageKey } from '../i18n/messages';
+
 export type CustomerTabKey = 'home' | 'requests' | 'companies' | 'meetings' | 'reports';
-export type CustomerTab = { key: CustomerTabKey; label: string; href: string; icon: string };
+export type CustomerTab = {
+  key: CustomerTabKey;
+  label: string;
+  href: string;
+  icon: string;
+  /**
+   * The message key of the name the sidebar and tabs have always used, so the name follows the chosen language.
+   * Absent for a word with no reviewed translation yet (Meetings): it is drawn as English and marked lang="en".
+   */
+  labelKey?: MessageKey;
+};
 
 /** One row of a menu: a link, the Listen action, plain text tagged Coming soon, or the Sign Out action. */
 export type MenuEntry =
@@ -25,6 +37,8 @@ export type CustomerNavigationInput = {
   move: boolean;
   /** True where customer billing is on; otherwise Plan and Billing is Coming soon. */
   billing: boolean;
+  /** True where the email choices page exists (its own switches); otherwise Notification Settings is Coming soon. */
+  notificationSettings: boolean;
   workspaces: readonly CustomerWorkspace[];
   /** The workspace the page belongs to, or the only workspace; it picks whose profile Company Profile opens. */
   currentWorkspaceId?: string;
@@ -41,8 +55,20 @@ export function customerTabs({
   move,
 }: Pick<CustomerNavigationInput, 'companies' | 'move'>): CustomerTab[] {
   return [
-    { key: 'home', label: 'Home', href: move ? '/account/move' : '/account', icon: 'home' },
-    { key: 'requests', label: 'Requests', href: '/account?view=work', icon: 'work' },
+    {
+      key: 'home',
+      label: 'Home',
+      href: move ? '/account/move' : '/account',
+      icon: 'home',
+      labelKey: 'wse.nav.home',
+    },
+    {
+      key: 'requests',
+      label: 'Requests',
+      href: '/account?view=work',
+      icon: 'work',
+      labelKey: 'wse.nav.work',
+    },
     ...(companies
       ? [
           {
@@ -50,17 +76,27 @@ export function customerTabs({
             label: 'Companies',
             href: '/account/companies',
             icon: 'company',
+            labelKey: 'wse.nav.companies' as const,
           },
         ]
       : []),
     { key: 'meetings', label: 'Meetings', href: '/account/meetings', icon: 'calendar' },
-    { key: 'reports', label: 'Reports', href: '/account?view=results', icon: 'library' },
+    {
+      key: 'reports',
+      label: 'Reports',
+      href: '/account?view=results',
+      icon: 'library',
+      labelKey: 'wse.nav.results',
+    },
   ];
 }
 
 /** The avatar menu: identity first (drawn by the menu), then these five. Nothing here is a fake control. */
 export function customerAvatarItems(
-  input: Pick<CustomerNavigationInput, 'billing' | 'workspaces' | 'currentWorkspaceId'>,
+  input: Pick<
+    CustomerNavigationInput,
+    'billing' | 'notificationSettings' | 'workspaces' | 'currentWorkspaceId'
+  >,
 ): MenuEntry[] {
   const profile =
     input.workspaces.find((w) => w.id === input.currentWorkspaceId) ??
@@ -73,7 +109,9 @@ export function customerAvatarItems(
     input.billing
       ? { kind: 'link', label: 'Plan and Billing', href: '/account/billing' }
       : { kind: 'soon', label: 'Plan and Billing' },
-    { kind: 'link', label: 'Notification Settings', href: '/account/notifications' },
+    input.notificationSettings
+      ? { kind: 'link', label: 'Notification Settings', href: '/account/notifications' }
+      : { kind: 'soon', label: 'Notification Settings' },
     { kind: 'signout', label: 'Sign Out' },
   ];
 }

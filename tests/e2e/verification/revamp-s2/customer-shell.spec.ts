@@ -147,14 +147,12 @@ test('CX-03 the avatar menu is Account, Company Profile, Plan and Billing, Notif
     'href',
     '/account?view=more',
   );
-  await expect(menu.getByRole('menuitem', { name: 'Notification Settings' })).toHaveAttribute(
-    'href',
-    '/account/notifications',
-  );
   await expect(menu.getByRole('menuitem', { name: 'Sign Out' })).toBeVisible();
-  // This server has no workspace and no billing: both rows are plain text tagged Coming soon, announced as
+  // This server has no workspace, no billing and no email choices page: these rows are plain text tagged Coming soon, announced as
   // unavailable, and are not links.
-  for (const name of ['Company Profile', 'Plan and Billing']) {
+  // Notification Settings joins them: its page answers 404 unless Pulse or the customer area is on, which this
+  // server does not have, so a link would lead nowhere.
+  for (const name of ['Company Profile', 'Plan and Billing', 'Notification Settings']) {
     const row = menu.getByRole('menuitem', { name: new RegExp(name) });
     await expect(row).toHaveAttribute('aria-disabled', 'true');
     await expect(row).toContainText('Coming soon');
@@ -167,6 +165,39 @@ test('CX-03 the avatar menu is Account, Company Profile, Plan and Billing, Notif
   await page.keyboard.press('Escape');
   await expect(trigger).toHaveAttribute('aria-expanded', 'false');
   await expect(trigger).toBeFocused();
+});
+
+test('CX-03 the phone tabs follow the chosen language as the sidebar does, and a new word is marked English', async ({
+  page,
+}) => {
+  await page.addInitScript(() => localStorage.setItem('corridra.language', 'bn'));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/account');
+  const links = tabs(page).getByRole('link');
+  await expect(links.nth(0)).toHaveText('হোম');
+  await expect(links.nth(1)).toHaveText('আমার কাজ');
+  await expect(links.nth(3)).toHaveText('ফলাফল');
+  // Meetings has no reviewed translation, so it stays English and says so.
+  await expect(links.nth(2)).toHaveText('Meetings');
+  await expect(links.nth(2).locator('[lang="en"]')).toHaveCount(1);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(sidebar(page).getByRole('link').nth(0)).toHaveText('হোম');
+});
+
+test('CX-03 the avatar menu never offers a link that does not open', async ({ page, request }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/account');
+  await header(page).getByRole('button', { name: 'Account menu' }).click();
+  const menu = page.getByRole('menu', { name: 'Account menu' });
+  const hrefs = (await hrefsOf(menu.getByRole('menuitem'))).filter(
+    (href): href is string => !!href && href.startsWith('/'),
+  );
+  expect(hrefs).toContain('/account?view=more');
+  for (const href of hrefs) {
+    const response = await page.request.get(href);
+    expect(response.status(), `${href} answered ${response.status()}`).toBeLessThan(400);
+  }
+  void request;
 });
 
 test('CX-03 the language menu offers the languages in their own names and the choice applies', async ({
@@ -307,6 +338,9 @@ test('CX-03 the notifications panel groups Needs You, Updates and Earlier, marks
   await panel.getByRole('button', { name: 'Mark All Read' }).click();
   await expect(panel.getByRole('button', { name: 'Mark All Read' })).toHaveCount(0);
   expect(posted.sort()).toEqual(['1', '2', '3']);
+  // The bell counts again while the panel is still open.
+  await expect(bell).not.toHaveAccessibleDescription('3 unread');
+  await expect(bell.locator('.ux-bar-count')).toHaveCount(0);
   await expect(panel.getByRole('group', { name: 'Earlier' })).toContainText('Team invitation');
   await page.keyboard.press('Escape');
   await expect(bell).toBeFocused();
@@ -412,6 +446,10 @@ test('the Meetings tab opens a page that says what it is, with the combined list
     'aria-current',
     'page',
   );
+  // The requests list is read only where the workspaces and requests modules are on; where they are not, the page
+  // says the list is not available and never claims there are no requests.
+  await expect(page.locator('main')).not.toContainText('You have no requests yet');
+  await expect(page.locator('main')).toContainText('Your requests list is not available here yet');
   const soon = page.locator('.ux-soon-line');
   await expect(soon).toContainText('One list of all your meetings');
   await expect(soon).toContainText('Coming soon');

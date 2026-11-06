@@ -23,8 +23,10 @@ import {
 import { workspacePage } from '../../lib/ux/workspace-pages';
 import {
   readCustomerBilling,
+  readCustomerNotificationSettings,
   readCustomerNote,
   readServerCustomerBilling,
+  readServerCustomerNotificationSettings,
   readServerCustomerNote,
   subscribeCustomerNote,
 } from './customer-bar-store';
@@ -234,6 +236,11 @@ export function AvatarMenu({ active }: { active: boolean }) {
     readCustomerBilling,
     readServerCustomerBilling,
   );
+  const notificationSettings = useSyncExternalStore(
+    subscribeCustomerNote,
+    readCustomerNotificationSettings,
+    readServerCustomerNotificationSettings,
+  );
   const note = useSyncExternalStore(
     subscribeCustomerNote,
     readCustomerNote,
@@ -263,6 +270,7 @@ export function AvatarMenu({ active }: { active: boolean }) {
   const shown = current ?? (list.length === 1 ? list[0] : undefined);
   const items = customerAvatarItems({
     billing,
+    notificationSettings,
     workspaces: list,
     currentWorkspaceId: shown?.id,
   });
@@ -284,7 +292,7 @@ export function AvatarMenu({ active }: { active: boolean }) {
         </div>
       ) : null}
       {note ? <p className="ux-menu-note">{note}</p> : null}
-      {list.length > 1 || (list.length === 1 && !match) ? (
+      {list.length > 0 ? (
         <div role="group" aria-label="Workspace" className="ux-menu-group">
           {current && section ? (
             <WorkspaceRadios list={list} current={current} section={section} />
@@ -295,9 +303,9 @@ export function AvatarMenu({ active }: { active: boolean }) {
               </MenuLink>
             ))
           )}
+          <MenuLink href={manageWorkspacesHref}>Manage Workspaces</MenuLink>
         </div>
       ) : null}
-      {list.length > 0 ? <MenuLink href={manageWorkspacesHref}>Manage Workspaces</MenuLink> : null}
       {items
         .filter((entry) => entry.kind !== 'signout')
         .map((entry) => (

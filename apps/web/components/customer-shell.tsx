@@ -6,7 +6,7 @@ import { uxSwitchOn } from '../lib/ux-switches';
 import { CustomerNav, type CustomerTab } from './customer-nav';
 import { T } from './language-provider';
 import { customerTabs, type CustomerTabKey } from '../lib/ux/customer-navigation';
-import type { MessageKey } from '../lib/i18n/messages';
+import { notificationSettingsAvailable } from '../lib/ux/notification-settings';
 import { CustomerTabs } from './ux/customer-tabs';
 import { CustomerBarNote } from './ux/customer-bar-note';
 import { LeftNavFrame, LeftNavList, type LeftNavItem } from './ux/left-nav';
@@ -80,7 +80,8 @@ export function CustomerShell({
     );
   // Navigation v1: the sidebar (1024 px and wider) and the labelled bottom tabs (below) list the same five
   // destinations from one model. Account, Company Profile, Plan and Billing and the rest are under the avatar.
-  const tabs = customerTabs({ companies: customerCompaniesEnabled(), move });
+  // Home is Your Move only with both the navigation and the Move switches, exactly as the old list decided.
+  const tabs = customerTabs({ companies: customerCompaniesEnabled(), move: plainNames && move });
   const here: CustomerTabKey | null =
     tab === 'home' || tab === 'move'
       ? 'home'
@@ -91,20 +92,10 @@ export function CustomerShell({
           : tab === 'companies' || tab === 'meetings'
             ? tab
             : null;
-  const labelKeys: Partial<Record<CustomerTabKey, MessageKey>> = {
-    home: 'wse.nav.home',
-    requests: 'wse.nav.work',
-    companies: 'wse.nav.companies',
-    reports: 'wse.nav.results',
-  };
   const items: LeftNavItem[] = tabs.map((item) => ({
     key: item.key,
     // Meetings is a new word with no reviewed translation yet, so it is marked as English.
-    label: labelKeys[item.key] ? (
-      <T k={labelKeys[item.key]!} />
-    ) : (
-      <span lang="en">{item.label}</span>
-    ),
+    label: item.labelKey ? <T k={item.labelKey} /> : <span lang="en">{item.label}</span>,
     href: item.href,
     icon: item.icon,
     count: item.key === 'home' && here === 'home' ? count : undefined,
@@ -120,6 +111,7 @@ export function CustomerShell({
     >
       <CustomerBarNote
         billing={customerBillingEnabled()}
+        notificationSettings={notificationSettingsAvailable()}
         text={
           real
             ? 'Your work stays private to the people given access.'

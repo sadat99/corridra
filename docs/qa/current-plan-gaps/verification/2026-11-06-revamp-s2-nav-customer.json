@@ -4,7 +4,7 @@
   "kind": "Reports to docs/revamp/specs/navigation-v1.md (boards CustomerDesktop, CustomerMobile, UtilityMenus). The owner directive (6 Nov 2026): update all the menu and navigation across the system except the footer, as per the design, without damaging or orphaning anything.",
   "findings": [],
   "findingsNote": "No gap is created or changed. No route is deleted, no table, migration, switch, provider, payment or write is added. Access is unchanged: the new menus read what the old ones read and every page and action still checks on the server.",
-  "status": "Built on branch revamp/customer over main 4feb6d70 (after #335). CI on the exact pushed head is the verifier; see the pull request. The brand identity PR 339 had not landed when this was built; its logo lines in app-header.tsx and shell-header.tsx are untouched here, and the dead .brand span rules in left-nav.css, customer-bar.css and globals.css are removed in a follow-up commit after it lands.",
+  "status": "Built on branch revamp/customer over main 4feb6d70 with main 21e247a merged (brand identity). Guardian findings on 1e38390e fixed in the next push. CI on the exact pushed head is the verifier; see the pull request.",
   "newFiles": [
     "apps/web/lib/ux/customer-navigation.ts: the customer navigation as data (tabs, avatar items, help groups, New Request address); feeds the sidebar, the bottom tabs and every menu",
     "apps/web/lib/ux/notification-groups.ts: Needs You, Updates, Earlier",
@@ -122,11 +122,11 @@
     "inboxName": "The bell keeps its existing accessible name Inbox (the board labels it Notifications, 2 new). Existing operator tests (v3-saved-commercial-ui GAP-004), the team header and the binding condition that names and test hooks stay reachable all use Inbox; the panel it opens is titled Notifications as on the board. One prop (NotificationsPanel label) changes it if the owner prefers the board's word.",
     "headerCalls": "The customer header makes no calls except its inbox where it is not on an account page: the person's session (for the avatar initials) and the workspaces are read only on the customer account pages, as the sidebar did before. The workspace router is used only in the workspace radios on a workspace page.",
     "focus": "In the grouped panel an item that is read moves from Updates to Earlier and its button is replaced; if that leaves focus on the page, focus returns to the panel title, so Escape still closes the panel and returns to the bell (found by the existing GAP-004 operator test, covered again in customer-shell.spec.ts).",
-    "uxBaseline": "/account/meetings has a UX baseline entry of {} in tests/ux/ux-baseline.json: measured clean (no axe violation, no overflow), not recorded debt."
+    "uxBaseline": "/account/meetings has a UX baseline entry of unavailable 6 in tests/ux/ux-baseline.json: the measured 404 on the gate's server (the shells switch is off there), the same as the other switch-gated customer pages."
   },
   "receipts": {
     "integration": "revamp-nav-customer-model 10 passed, revamp-nav-notification-groups 4, ux-one-workspace-switcher 3, ux-all-tools, ux-left-nav, ux-left-nav-adoption, revamp-customer-shell-switch, revamp-app-header-guard (team and contributor byte for byte), title-case scan with the new files: passed.",
-    "browser": "tests/e2e/verification/revamp-s2 on a production build at 1280, 768 and 390: 114 passed, including the new customer-shell cases (sidebar and tabs at 320, 390, 768 and 1440 with 48 px tabs and no sideways scroll, avatar, language, help and notifications menus, focus kept in the panel, the old destinations reachable, the Meetings page, axe clean with the avatar and help menus open at 320, 390, 768 and 1440). tests/operator/v3-saved-commercial-ui.spec.ts (customer header inbox, real AppHeader): 17 passed. ux-move operator spec (legacy shell) 15 passed. UX gate: passed with the Meetings baseline entry.",
+    "browser": "tests/e2e/verification/revamp-s2 on a production build at 1280, 768 and 390: 138 passed, including the customer-shell cases (sidebar and tabs at 320, 390, 768 and 1440 with 48 px tabs and no sideways scroll, Bangla tabs, every avatar link opens, avatar, language, help and notifications menus, focus kept in the panel and the bell recounting after Mark All Read, the old destinations reachable, the Meetings page, axe clean with the avatar and help menus open at 320, 390, 768 and 1440). tests/operator/v3-saved-commercial-ui.spec.ts (customer header inbox, real AppHeader): 17 passed. ux-move operator spec (legacy shell) 15 passed. UX gate: passed.",
     "screens": "docs/design-system/evidence/revamp-nav-customer"
   },
   "notRun": [
@@ -134,5 +134,13 @@
     "The shell with a workspace, companies and billing on: the verification seed has none of them, so Company Profile, Plan and Billing and Companies are checked through the model tests; the avatar menu workspace group is covered by the old switcher test and by reading the code path.",
     "The dead .brand span rules are not removed here: they go in a follow-up after the brand PR 339 lands."
   ],
-  "sensitive": "No. No auth, session, role or public-route behaviour changes: the same reads, the same links and the same actions; the new Meetings page reads the same request list under the same session proof."
+  "sensitive": "No. No auth, session, role or public-route behaviour changes: the same reads, the same links and the same actions; the new Meetings page reads the same request list under the same session proof.",
+  "guardianFixes": {
+    "notificationSettings": "Blocking (S1 Guardian on 1e38390e): Notification Settings pointed at /account/notifications, which answers 404 unless Pulse or the customer area is on. One helper (lib/ux/notification-settings.ts) now answers for both the page and the menu; the flag reaches the header the way billing does (CustomerBarNote, store, avatar items); off, the item is plain text tagged Coming soon. Tests: model (on and off), the helper under each real environment setting, and a browser case that every link in the avatar menu opens.",
+    "phoneTabsTranslated": "The phone tabs printed English labels; they now use the sidebar's message keys (labelKey on each tab), and Meetings, a new word with no reviewed translation, is marked lang en. Browser case with a Bangla choice.",
+    "homeCondition": "Home is Your Move only with both CORRIDRA_UX_NAV and CORRIDRA_UX_MOVE, exactly as the old list decided (it had become Move alone). Test renders the shell under each combination.",
+    "meetingsGated": "The Meetings page answers 404 unless CORRIDRA_UX_SHELLS_V2 is on, like the navigation that leads to it, and says 'Your requests list is not available here yet' where the workspaces or requests modules are off instead of 'no requests'. It is excluded from All tools with a written reason (a link there would lead nowhere without the switch), and its UX baseline is the measured 404 (unavailable 6), like the other switch-gated pages.",
+    "alsoDone": "Two of the Guardian's follow-ups, both small: the workspace choices and Manage Workspaces sit together in the identity block (the desktop top level is five), and the bell recounts from the list the panel already reloads after Mark All Read (no extra request; the operator test that pins the request sequence still passes).",
+    "leftForLater": "Company Profile as Coming soon when organisation profiles are off; the All Tools group heading 'Missions' on the customer screen."
+  }
 }

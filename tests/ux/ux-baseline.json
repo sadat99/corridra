@@ -7,7 +7,9 @@
   "/account/all-tools": {
     "unavailable": 6
   },
-  "/account/meetings": {},
+  "/account/meetings": {
+    "unavailable": 6
+  },
   "/account/move": {
     "unavailable": 6
   },

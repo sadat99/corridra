@@ -37,3 +37,17 @@ export function readCustomerBilling() {
 export function readServerCustomerBilling() {
   return false;
 }
+
+// Whether the email choices page exists, so the avatar menu links Notification Settings or says Coming soon. A flag only.
+let notificationSettings = false;
+export function setCustomerNotificationSettings(next: boolean) {
+  if (next === notificationSettings) return;
+  notificationSettings = next;
+  for (const listener of listeners) listener();
+}
+export function readCustomerNotificationSettings() {
+  return notificationSettings;
+}
+export function readServerCustomerNotificationSettings() {
+  return false;
+}
