@@ -207,10 +207,6 @@
     gap: var(--space-2);
     color: var(--brand-deep);
   }
-  .site-shell:has(.ux-leftnav-frame) > .ux-app-header .brand span {
-    font-size: 1.25rem;
-    letter-spacing: -0.02em;
-  }
   .site-shell:has(.ux-leftnav-frame) > .ux-app-header .brand-mark {
     width: 24px;
     height: 24px;
@@ -218,14 +214,6 @@
   .site-shell:has(.ux-leftnav-frame[data-collapsed='true']) > .ux-app-header .brand {
     justify-content: center;
     padding-inline: 0;
-  }
-  .site-shell:has(.ux-leftnav-frame[data-collapsed='true']) > .ux-app-header .brand span {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
   }
   /* The first item after the brand starts at the content column's edge. */
   .site-shell:has(.ux-leftnav-frame) > .ux-app-header .brand + * {
