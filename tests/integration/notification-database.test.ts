@@ -18,6 +18,7 @@ import { MissionService } from '../../packages/missions/src/index';
 import { MissionMoveService } from '../../packages/missions/src/moves';
 import { signPulseMute } from '../../packages/auth/src/pulse-mute';
 import {
+  CustomerNotificationService,
   PulseService,
   databaseRecipientSource,
   pulseCapability,
@@ -333,6 +334,7 @@ describe('installation', () => {
       '0001_notifications.sql',
       '0002_email_off_until_chosen.sql',
       '0003_withdrawal_and_issuer_check.sql',
+      '0004_mute_events.sql',
     ]);
     await migrateCustomerNotifications(f.owner);
     expect(
@@ -1455,5 +1457,351 @@ describe('email is off until a person switches it on, and the address is read at
     const set = await setMoves(p, [{ object: 'your import licence number' }]);
     expect(set.queued).toBe(0);
     expect(set.jobs).toEqual([]);
+  });
+});
+
+// CRUD G6: a person can undo a mute. Only the person the request belongs to; every change is an appended event;
+// nothing is ever re-queued or back-sent; messages resume only when made after an unmute.
+const setMute = (who: Person, request: string, command: string, on: boolean) =>
+  asCustomer(
+    who,
+    async (db) =>
+      (
+        await db.query('SELECT customer.set_notification_mute($1,$2,$3) AS r', [
+          request,
+          command,
+          on,
+        ])
+      ).rows[0].r as { muted: boolean; changed: boolean; replayed?: boolean; reason?: string },
+  );
+const myMutes = (who: Person) =>
+  asCustomer(
+    who,
+    async (db) =>
+      (await db.query('SELECT customer.my_notification_mutes() AS r')).rows[0].r as {
+        requestId: string;
+        muted: boolean;
+        at: string;
+      }[],
+  );
+const mutedNow = async (request: string) =>
+  (await f.owner.query('SELECT customer_private.notification_muted($1) AS m', [request])).rows[0]
+    .m as boolean;
+const linkToken = (who: Person) => signPulseMute(secret, who.requestId);
+
+describe('G6 unmute', () => {
+  test('mute, unmute and mute again follow the newest change, and history is only appended', async () => {
+    await setControl(true);
+    const p = await person();
+    await setMoves(p, [{ object: 'your trade licence' }]);
+    expect(await mutedNow(p.requestId)).toBe(false);
+    expect(await mute(p.requestId, linkToken(p))).toEqual({ muted: true, already: false });
+    expect(await mutedNow(p.requestId)).toBe(true);
+    expect(await setMute(p, p.requestId, randomUUID(), false)).toEqual({
+      muted: false,
+      changed: true,
+    });
+    expect(await mutedNow(p.requestId)).toBe(false);
+    expect(await setMute(p, p.requestId, randomUUID(), true)).toEqual({
+      muted: true,
+      changed: true,
+    });
+    await setMute(p, p.requestId, randomUUID(), false);
+    // The mute link of an old email mutes again after an unmute, and says so truthfully.
+    expect(await mute(p.requestId, linkToken(p))).toEqual({ muted: true, already: false });
+    expect(await mutedNow(p.requestId)).toBe(true);
+    expect(await mute(p.requestId, linkToken(p))).toEqual({ muted: true, already: true });
+    expect(
+      (
+        await f.owner.query(
+          'SELECT state,via FROM customer_private.notification_mute_event WHERE request_id=$1 ORDER BY seq',
+          [p.requestId],
+        )
+      ).rows,
+    ).toEqual([
+      { state: 'unmuted', via: 'signed-in' },
+      { state: 'muted', via: 'signed-in' },
+      { state: 'unmuted', via: 'signed-in' },
+      { state: 'muted', via: 'link' },
+    ]);
+    expect(
+      (
+        await f.owner.query(
+          'SELECT count(*)::int n FROM customer_private.notification_mute WHERE request_id=$1',
+          [p.requestId],
+        )
+      ).rows[0].n,
+    ).toBe(1);
+    for (const sql of [
+      "UPDATE customer_private.notification_mute_event SET state='muted'",
+      'DELETE FROM customer_private.notification_mute_event',
+    ])
+      await expect(f.owner.query(sql)).rejects.toThrow();
+  });
+
+  test('only the person the request belongs to can change it; anyone else gets the refusal an unknown request gets', async () => {
+    await setControl(true);
+    const a = await person();
+    const b = await person();
+    await setMoves(a, [{ object: 'your trade licence' }]);
+    await mute(a.requestId, linkToken(a));
+    const refused = await setMute(b, a.requestId, randomUUID(), false).catch((e) => e);
+    const unknown = await setMute(b, randomUUID(), randomUUID(), false).catch((e) => e);
+    expect(refused.code).toBe('42501');
+    expect(refused.message).toBe(unknown.message);
+    expect(await mutedNow(a.requestId)).toBe(true);
+    await expect(setMute(b, a.requestId, randomUUID(), true)).rejects.toMatchObject({
+      code: '42501',
+    });
+    for (const pool of [f.runtime, f.auth])
+      await expect(
+        pool.query('SELECT customer.set_notification_mute($1,$2,$3)', [
+          a.requestId,
+          randomUUID(),
+          false,
+        ]),
+      ).rejects.toMatchObject({ code: '42501' });
+  });
+
+  test('a command id is one decision: a repeat answers the same and changes nothing, another decision is refused', async () => {
+    await setControl(true);
+    const p = await person();
+    const q = await person();
+    await setMoves(p, [{ object: 'your trade licence' }]);
+    await mute(p.requestId, linkToken(p));
+    const command = randomUUID();
+    expect(await setMute(p, p.requestId, command, false)).toEqual({ muted: false, changed: true });
+    await setMute(p, p.requestId, randomUUID(), true);
+    expect(await setMute(p, p.requestId, command, false)).toEqual({
+      muted: false,
+      changed: false,
+      replayed: true,
+    });
+    expect(await mutedNow(p.requestId)).toBe(true);
+    await expect(setMute(p, p.requestId, command, true)).rejects.toMatchObject({ code: '42501' });
+    await expect(setMute(q, q.requestId, command, false)).rejects.toMatchObject({ code: '42501' });
+    const again = randomUUID();
+    expect(await setMute(p, p.requestId, again, true)).toEqual({ muted: true, changed: false });
+    expect(
+      (
+        await f.owner.query(
+          'SELECT count(*)::int n FROM customer_private.notification_mute_event WHERE command_id=$1',
+          [again],
+        )
+      ).rows[0].n,
+    ).toBe(0);
+  });
+
+  test('unmuting never back-sends: suppressed messages stay suppressed and messages resume only when made after', async () => {
+    await setControl(true);
+    const p = await person();
+    const waiting = await setMoves(p, [{ object: 'your trade licence' }]);
+    await mute(p.requestId, linkToken(p));
+    const old = waiting.jobs[0].queueId;
+    expect((await row(old)).status).toBe('SUPPRESSED');
+    // While muted, a Move queues nothing and leaves no row.
+    expect(await setMoves(p, [{ object: 'your bank letter' }])).toMatchObject({
+      queued: 0,
+      reason: 'muted',
+    });
+    const count = async () =>
+      (
+        await f.owner.query(
+          'SELECT count(*)::int n FROM customer_private.notification_outbox WHERE request_id=$1',
+          [p.requestId],
+        )
+      ).rows[0].n as number;
+    expect(await count()).toBe(1);
+    await setMute(p, p.requestId, randomUUID(), false);
+    // The unmute queued nothing, and the old message cannot be claimed or sent.
+    expect(await count()).toBe(1);
+    expect((await row(old)).status).toBe('SUPPRESSED');
+    expect((await claim(old)).status).not.toBe('CLAIMED');
+    // A Move set after the unmute is queued as usual.
+    const after = await setMoves(p, [{ object: 'your insurance certificate' }]);
+    expect(after.queued).toBe(1);
+    // Muting again stops what is waiting, as the link does.
+    await setMute(p, p.requestId, randomUUID(), true);
+    expect((await row(after.jobs[0].queueId)).status).toBe('SUPPRESSED');
+  });
+
+  test('turning messages back on needs the control open, turning them off does not', async () => {
+    await setControl(true);
+    const p = await person();
+    await setMoves(p, [{ object: 'your trade licence' }]);
+    await mute(p.requestId, linkToken(p));
+    await setControl(false);
+    expect(await setMute(p, p.requestId, randomUUID(), false)).toEqual({
+      muted: true,
+      changed: false,
+      reason: 'closed',
+    });
+    expect(await mutedNow(p.requestId)).toBe(true);
+    await setControl(true);
+    await setMute(p, p.requestId, randomUUID(), false);
+    await setControl(false);
+    expect(await setMute(p, p.requestId, randomUUID(), true)).toEqual({
+      muted: true,
+      changed: true,
+    });
+    await setControl(true);
+  });
+
+  test('a person sees only their own requests that were ever muted, with the state now', async () => {
+    await setControl(true);
+    const a = await person();
+    const b = await person();
+    await setMoves(a, [{ object: 'your trade licence' }]);
+    await setMoves(b, [{ object: 'your trade licence' }]);
+    expect(await myMutes(a)).toEqual([]);
+    await mute(a.requestId, linkToken(a));
+    await mute(b.requestId, linkToken(b));
+    expect(await myMutes(a)).toEqual([
+      { requestId: a.requestId, muted: true, at: expect.any(String) },
+    ]);
+    await setMute(a, a.requestId, randomUUID(), false);
+    expect(await myMutes(a)).toEqual([
+      { requestId: a.requestId, muted: false, at: expect.any(String) },
+    ]);
+    expect(await myMutes(b)).toEqual([
+      { requestId: b.requestId, muted: true, at: expect.any(String) },
+    ]);
+  });
+
+  test('the audit trail holds ids and a type only, and the new table is closed to every customer role', async () => {
+    await setControl(true);
+    const p = await person();
+    await setMoves(p, [{ object: 'your trade licence' }]);
+    await mute(p.requestId, linkToken(p));
+    await setMute(p, p.requestId, randomUUID(), false);
+    const events = (
+      await f.owner.query(
+        "SELECT type,payload FROM app.domain_event WHERE type IN ('customer.notification.muted','customer.notification.unmuted') AND aggregate_id=$1 ORDER BY occurred_at",
+        [p.requestId],
+      )
+    ).rows;
+    expect(events.map((e) => e.type)).toEqual([
+      'customer.notification.muted',
+      'customer.notification.unmuted',
+    ]);
+    for (const e of events) expect(e.payload).toEqual({ request_id: p.requestId });
+    expect(
+      JSON.stringify(
+        (
+          await f.owner.query(
+            'SELECT * FROM customer_private.notification_mute_event WHERE request_id=$1',
+            [p.requestId],
+          )
+        ).rows,
+      ),
+    ).not.toContain(p.email);
+    for (const pool of [f.runtime, f.auth])
+      for (const sql of [
+        'SELECT * FROM customer_private.notification_mute_event',
+        'DELETE FROM customer_private.notification_mute_event',
+        'SELECT customer_private.notification_muted(gen_random_uuid())',
+      ])
+        await expect(pool.query(sql)).rejects.toMatchObject({ code: '42501' });
+  });
+
+  test('every reader of the mute state asks the helper, and only the helper and the mute functions read the old row', async () => {
+    const bodies = (
+      await f.owner.query(
+        `SELECT n.nspname||'.'||p.proname AS name,p.prosrc AS src FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+        WHERE n.nspname IN ('customer','customer_private') AND p.prosrc ~ 'notification_mute' ORDER BY 1`,
+      )
+    ).rows as { name: string; src: string }[];
+    const readsOldRow = bodies.filter((b) =>
+      /customer_private\.notification_mute(?!d|_event)/.test(b.src),
+    );
+    expect(readsOldRow.map((b) => b.name)).toEqual([
+      'customer.mute_notifications',
+      'customer.my_notification_mutes',
+      'customer_private.notification_muted',
+    ]);
+    for (const name of [
+      'customer_private.notification_valid',
+      'customer.enqueue_move_notifications',
+    ])
+      expect(bodies.find((b) => b.name === name)?.src, name).toContain(
+        'customer_private.notification_muted(',
+      );
+  });
+});
+
+describe('G6 unmute, application side', () => {
+  const serviceFor = (who: Person) =>
+    new CustomerNotificationService(
+      f.runtime,
+      f.auth,
+      {
+        enabled: true,
+        synthetic: false,
+        production: false,
+        issuer,
+        dataMode: 'real',
+        openAdmission: true,
+      },
+      async () => ({
+        subject: who.subject,
+        email: who.email,
+        emailVerified: true,
+        expiresAt: new Date(Date.now() + 60000),
+      }),
+    );
+
+  test("lists the person's muted requests for the reminder kind, and unmutes and mutes again with one command id each", async () => {
+    await setControl(true);
+    const p = await person();
+    const other = await person();
+    await setMoves(p, [{ object: 'your trade licence' }]);
+    await setMoves(other, [{ object: 'your trade licence' }]);
+    const service = serviceFor(p);
+    expect(await service.mutes(p.subject, issuer)).toEqual([]);
+    await mute(p.requestId, linkToken(p));
+    await mute(other.requestId, linkToken(other));
+    const listed = await service.mutes(p.subject, issuer);
+    expect(listed).toEqual([
+      { store: 'reminder', requestId: p.requestId, muted: true, at: expect.any(String) },
+    ]);
+    const command = randomUUID();
+    const input = { store: 'reminder', requestId: p.requestId, commandId: command, muted: false };
+    expect(await service.setMute(input, p.subject, issuer)).toEqual({
+      muted: false,
+      changed: true,
+    });
+    expect(await service.setMute(input, p.subject, issuer)).toMatchObject({ replayed: true });
+    expect((await service.mutes(p.subject, issuer))[0]).toMatchObject({ muted: false });
+    // Another person's request is refused, and a malformed choice never reaches the database.
+    await expect(
+      service.setMute(
+        { ...input, requestId: other.requestId, commandId: randomUUID() },
+        p.subject,
+        issuer,
+      ),
+    ).rejects.toMatchObject({ code: '42501' });
+    await expect(service.setMute({ ...input, muted: 'no' }, p.subject, issuer)).rejects.toThrow();
+    await expect(service.setMute({ ...input, extra: 1 }, p.subject, issuer)).rejects.toThrow();
+    await expect(
+      service.setMute({ ...input, store: 'other', commandId: randomUUID() }, p.subject, issuer),
+    ).rejects.toThrow();
+  });
+
+  test("a person whose session is another person's cannot reach the list or the change", async () => {
+    const a = await person();
+    const b = await person();
+    await setMoves(a, [{ object: 'your trade licence' }]);
+    await mute(a.requestId, linkToken(a));
+    // Asked as person b, the answer holds nothing about a.
+    expect(await serviceFor(b).mutes(b.subject, issuer)).toEqual([]);
+    await expect(
+      serviceFor(b).setMute(
+        { store: 'reminder', requestId: a.requestId, commandId: randomUUID(), muted: false },
+        b.subject,
+        issuer,
+      ),
+    ).rejects.toMatchObject({ code: '42501' });
+    // A session for a different subject than the one the page asked for is refused before any query.
+    await expect(serviceFor(b).mutes(a.subject, issuer)).rejects.toThrow();
   });
 });

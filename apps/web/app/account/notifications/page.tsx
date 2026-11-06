@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import {
   customerNotificationsEnabled,
   customerNotificationWithdrawalEnabled,
+  type MailMute,
 } from '@corridra/auth/customer-notifications';
 import { defaultNotificationPreferences, emailIsOn } from '@corridra/domain/notifications';
 import { CustomerShell } from '../../../components/customer-shell';
@@ -9,6 +10,7 @@ import { WorkspaceShell } from '../../../components/workspace-shell';
 import { customerPageSession } from '../../../lib/customer-page-session';
 import { foundations } from '../../../lib/foundations';
 import { NotificationsForm } from './notifications-form';
+import { MutedRequests } from './muted-requests';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -53,9 +55,35 @@ export default async function Page() {
     if (unavailable || initial.version === 0 || !emailIsOn(initial)) notFound();
     initial = { ...initial, open: false };
   }
+  // The requests the person stopped emails about, with a way back. Read only for the lit page: a person on the
+  // paused page can still switch email off but is not offered anything that turns email on. A problem here never
+  // hides the choices above; the list is simply left out.
+  let mutes: MailMute[] = [];
+  const titles: Record<string, string> = {};
+  if (!dark && !unavailable && services)
+    try {
+      mutes = await services.customerNotifications.mutes(session.subject, session.issuer);
+      if (mutes.length > 0) {
+        const page = (await services.customerRequests.list(
+          { pageSize: 100 },
+          session.subject,
+          session.issuer,
+        )) as { requests?: { id: string; title?: string | null }[] };
+        for (const request of page.requests ?? [])
+          if (request.title) titles[request.id] = request.title;
+      }
+    } catch {
+      /* The titles or the list are not available just now; the choices above still work. */
+    }
   return (
     <CustomerShell tab="more" eyebrow="EMAIL CHOICES" title="Choose what we email you.">
       <NotificationsForm initial={initial} unavailable={unavailable} />
+      <MutedRequests
+        initial={mutes}
+        titles={titles}
+        subject={session.subject}
+        issuer={session.issuer}
+      />
     </CustomerShell>
   );
 }

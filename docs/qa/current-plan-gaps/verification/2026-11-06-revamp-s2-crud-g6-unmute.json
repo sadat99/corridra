@@ -1,0 +1,42 @@
+{
+  "recordedOn": "2026-11-06",
+  "batch": "Revamp S2 Customer Work: CRUD G6, a person can unmute emails about a request",
+  "kind": "Reports to docs/revamp/specs/crud-standard.md (gap G6, notification and mission-mail mutes have no unmute). Two additive database files, one service method pair, one route and a list on the Email choices page.",
+  "findings": [],
+  "findingsNote": "G6 is closed by this change once the owner installs the two migration files. No existing migration file is edited; no switch, provider, payment or outreach is turned on; nothing is applied to any database by this change.",
+  "status": "Built on branch revamp/customer over main a4301ef3. CI on the exact pushed head is the verifier; see the pull request for its result. Sensitive: yes (consent and outbound mail). The owner merges; the migrations are not applied by this session.",
+  "newFiles": [
+    "packages/db/customer-mission-mail-migrations/0002_mute_events.sql: append-only mission_mail_mute_event, helper mission_mail_muted(request), audit helper, the two readers (enqueue_mission_mail, claim_mission_mail) replaced behind a sha256 fingerprint of their live text, the mute link function replaced behind a fingerprint, signed-in my_mission_mail_mutes() and set_mission_mail_mute(request, command, mute)",
+    "packages/db/customer-notification-migrations/0004_mute_events.sql: the same for the Pulse store (notification_mute_event, notification_muted, notification_valid and enqueue_move_notifications replaced behind fingerprints, mute_notifications replaced, my_notification_mutes, set_notification_mute)",
+    "apps/web/app/api/pulse/mutes/route.ts: GET list and POST change; origin, content type and size checked; the Pulse switch decides only whether emails can be turned back on",
+    "apps/web/app/account/notifications/muted-requests.tsx and .css: Requests you muted, Unmute with a confirm dialog that locks while the change is in flight, Mute Again",
+    "tests/integration/revamp-g6-mutes-route.test.ts (6), tests/operator/revamp-g6-muted-requests.spec.ts (8), 19 new database tests in mission-mail-database.test.ts and notification-database.test.ts, docs/design-system/evidence/revamp-g6 (the dialog at 390 and 1440)"
+  ],
+  "changedFiles": [
+    "packages/auth/src/customer-notifications.ts: CustomerNotificationService.mutes() and setMute(), the input schema and the two kinds (request, reminder). A kind whose database module is not installed shows nothing",
+    "apps/web/app/account/notifications/page.tsx: reads the muted list and request titles for the lit page and draws the list under the form; a problem reading them leaves the list out and never hides the form",
+    "tests/integration/mission-mail-database.test.ts, notification-database.test.ts, notification-upgrade.test.ts, notification-upgrade-third.test.ts: the lists of applied files gain the new file (0002 for mission mail, 0004 for notifications), the count of applied notification files goes from 3 to 4, and the list of functions the runtime role may call gains the two new mission mail functions. No assertion was loosened or removed"
+  ],
+  "decisions": {
+    "design": "Agreed with the Guardian before building: the one-row primary key of the existing mute tables is kept; every later change is an event in a new table; muted now is the newest of the first mute row (read as a muted event at its time) and the events; one helper per store holds that rule and every reader asks it.",
+    "authority": "Only the person the request belongs to (the signed-in person who owns the request, same subject and issuer) can unmute or mute again. Workspace membership alone is not enough. Anyone else, and an unknown request, get the same refusal.",
+    "commands": "One command id per decision. A repeat of the same decision returns the same answer and changes nothing; the same id for another decision or another request is refused; asking for the state a request already has records nothing and does not use the id up.",
+    "noBackSend": "Unmute never queues, re-queues or sends. Messages suppressed while muted stay suppressed, a message made while muted is refused and leaves no row, and mail resumes only for messages made after the unmute. Muting again also suppresses mail that is waiting, as the link does.",
+    "closedControl": "Turning emails back on needs the sending control to be open and answers reason closed otherwise; turning them off never does.",
+    "linkMute": "The mute link in an old email still works with no sign-in and now also mutes again after an unmute (it writes an event). Its answers and refusals are unchanged.",
+    "audit": "customer.mission_mail.muted/unmuted and customer.notification.muted/unmuted, ids only, in the same events and audit trail the first mute uses.",
+    "process": "The two migration files were written before their database tests; the tests were then shown to fail with the migration file removed (8 of 8 in each store) and to pass with it. The muted requests spec was written after the component; a mutation that removes the dialog lock made its in-flight test fail."
+  },
+  "receipts": {
+    "database": "mission-mail-database 31 passed (9 new), notification-database 63 passed (10 new, 2 of them through CustomerNotificationService), upgrade tests 9 passed, flow and pulse tests 100 passed.",
+    "route": "revamp-g6-mutes-route 6 passed.",
+    "browser": "revamp-g6-muted-requests 8 passed, including axe with no violations and no sideways scroll at 390 and 1440.",
+    "checks": "format, lint and typecheck clean."
+  },
+  "notRun": [
+    "The Email choices page with real issuers and both modules installed: the verification seed has neither module on, so the page is covered through the fixture and the real database tests.",
+    "Applying the migrations to any shared or production database. The owner does that.",
+    "A screen reader walk-through."
+  ],
+  "sensitive": "Yes. This changes who can turn outbound email on, and the readers that decide whether mail is sent. The owner reviews and merges."
+}
