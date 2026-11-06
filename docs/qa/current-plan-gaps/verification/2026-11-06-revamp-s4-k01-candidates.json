@@ -1,0 +1,31 @@
+{
+  "recordedOn": "2026-11-06",
+  "track": "Revamp S4 (branch revamp/staff)",
+  "kind": "Wave 7 K-01 (docs/revamp/specs/wave7-cleanup.md): candidate report only. Nothing is deleted or changed in the product.",
+  "findings": [],
+  "findingsNote": "No GAP id is created or changed. The report is input to K-02 (Guardian marking in docs/revamp/CLEANUP-MANIFEST.json); every entry keeps approval: null.",
+  "sensitive": "no: a read-only script, a generated report and a test of the report's shape. No product code, migration, auth, money, consent, token or cookie change.",
+  "changed": [
+    "scripts/revamp-candidates.mjs (new): builds the usage graph from git ls-files at the baseline (import specifiers, paths, CSS imports, asset and URL names, package scripts, workflows, tests) and writes docs/revamp/wave-7/candidates.json.",
+    "docs/revamp/wave-7/candidates.json (new): one entry per candidate with path, kind, classification, reason, incomingReferences, replacement, recovery, proof (sha256, bytes, last commit, method) and approval: null.",
+    "tests/integration/revamp-candidates.test.ts (new): the report exists, every entry has the required fields and a recovery step, no protected path appears, no entry is approved, a REVIEW file candidate has no reference in code or tests, and the totals add up."
+  ],
+  "result": {
+    "scanned": 801,
+    "entries": 28,
+    "keep": 19,
+    "review": 9,
+    "reviewDetail": "2 code files with no importer (apps/web/components/next-step-card.tsx, apps/web/components/ux/page-header.tsx, the same two the Conductor found), and 7 CSS files with class selectors named in no tracked source file (globals.css 39, move-view.css 4, work-list.css 3 plus 1 named only by tests, operator-overview.css 1, owner-page.css 2, source-ledger.css 2, ux-kit.css 1). No unreferenced image, font or other asset, and no unreferenced test helper, was found.",
+    "keepDetail": "15 documented operator scripts named by path in documents, 4 standard package entry points (check, dev, format, start)."
+  },
+  "preserved": [
+    "Nothing is deleted. The never-touched trees (docs/source, docs/v3/history, ADRs, docs/qa, frozen evidence, migrations and installers, the contract, requirement identities) are excluded from the scan and a test keeps them out of the report.",
+    "Routes are not judged here; route coverage stays with scripts/revamp-manifest.mjs (127 routes, 0 unmapped).",
+    "Documentation mentions are recorded but never keep a file alive and never remove one."
+  ],
+  "limits": [
+    "Names built from strings other than template-string prefixes cannot be seen by a static scan. The report lists the 42 prefixes it honoured; a class kept only by one is listed as kept by prefix, not as a candidate.",
+    "A CSS selector named only in documents or fixtures that are not tracked source would show as unreferenced; K-02 decides each one."
+  ],
+  "nextAction": "K-02 (Conductor): mark each REVIEW entry KEEP, CONSOLIDATE or DELETE-AFTER-PROOF in docs/revamp/CLEANUP-MANIFEST.json. K-03 (S4) deletes only approved DELETE entries, after an independent adversarial review."
+}
