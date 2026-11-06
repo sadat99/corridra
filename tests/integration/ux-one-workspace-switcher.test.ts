@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { scoped } from '../../apps/web/components/ux/customer-bar';
+import { workspacePage as scoped } from '../../apps/web/lib/ux/workspace-pages';
 
 // Owner review, 6 Nov 2026: the customer header showed a second, unsized workspace switcher beside the
 // brand (a large bare arrow on a phone) while the left bar's workspace card already switches workspace.
@@ -43,7 +43,7 @@ describe('one workspace switcher', () => {
 
   it('the left bar card names the current workspace and switches within the same section', () => {
     const rail = read('apps/web/components/ux/customer-rail.tsx');
-    expect(rail).toContain('scoped.exec(pathname)');
+    expect(rail).toContain('workspacePage.exec(pathname)');
     expect(rail).toContain("label={current ? 'Switch workspace' : 'Your workspaces'}");
     expect(rail).toContain('router.push(`/account/${section}/${w.id}`)');
     expect(rail).toContain('<MenuRadio');

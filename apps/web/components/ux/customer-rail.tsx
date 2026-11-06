@@ -8,7 +8,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { CornerDock } from '../corner-dock';
 import { CorridraIcon } from '../corridra-icon';
-import { AccountMenuBody, scoped, useWorkspaces } from './customer-bar';
+import { workspacePage } from '../../lib/ux/workspace-pages';
+import { AccountMenuBody, useWorkspaces } from './customer-bar';
 import { MenuLink } from './menu-link';
 import { MenuRadio, OverflowMenu } from './overflow-menu';
 
@@ -30,7 +31,7 @@ export function CustomerRailTop() {
   const pathname = usePathname() ?? '';
   const workspaces = useWorkspaces(pathname.startsWith('/account'));
   if (!workspaces || workspaces.length === 0) return null;
-  const match = scoped.exec(pathname);
+  const match = workspacePage.exec(pathname);
   const section = match?.[1];
   const current = match ? workspaces.find((w) => w.id === match[2]) : undefined;
   const shown = current ?? (workspaces.length === 1 ? workspaces[0]! : null);

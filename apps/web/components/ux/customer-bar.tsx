@@ -24,11 +24,6 @@ import { MenuButton, MenuRadio, OverflowMenu } from './overflow-menu';
 export type Workspace = { id: string; name: string };
 type Item = { readAt: string | null };
 
-/** Pages that belong to one workspace: the section and the workspace id, so another workspace can be chosen
- * from the left bar's workspace card (the one workspace switcher). */
-export const scoped =
-  /^\/account\/(request|drafts|billing|profile|delegations|service-requests)\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/|$)/i;
-
 /** Read only on the customer account pages, where New request and the switcher need them. */
 export function useWorkspaces(active: boolean) {
   const [list, setList] = useState<Workspace[] | null>(null);
