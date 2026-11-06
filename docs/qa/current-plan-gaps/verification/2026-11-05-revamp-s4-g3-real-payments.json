@@ -13,6 +13,11 @@
     "packages/auth/src/customer-invoicing-real.ts and apps/web/app/account/billing/real-invoices-section.tsx: customers see that a payment was reversed, never why.",
     "tests: tests/integration/customer-invoicing-real.test.ts (new G3 test; the payment test and the credit-note test record payments through prepare and approve; migration history lists two files), tests/integration/ws-c-team-work.test.ts (the made-up-supplier guard), tests/operator/v3-real-invoicing-staff-ui.spec.ts and v3-real-invoicing-ui.spec.ts."
   ],
+  "alsoChanged": [
+    "packages/delivery/src/customer-invoicing-real-staff.ts: the position a command may carry is 1500 (500 payments, 500 credits and 500 reversals), up from 1000, the same fix the Codex review found for sample invoices.",
+    "apps/web/app/operator/customer-real-invoicing.tsx: approving a payment reversal asks once in a dialog that names the payment, amount, date and invoice, says it cannot be undone and focuses Keep Payment (the CRUD standard D-02 rule).",
+    "The staff pending read names the amount and date of the payment a waiting reversal is for."
+  ],
   "preserved": [
     "Payments, credits and invoices stay append-only: a payment is never edited or deleted, and stays readable with its reversal.",
     "Exact money: whole minor units as text; what is paid is derived, never stored; currencies are never added or converted.",
@@ -27,6 +32,8 @@
     "stale": "Approval of a payment or reversal prepared against an older state of the invoice is refused ('prepare it again'), like a credit note."
   },
   "deliberateTestChanges": [
+    "The restricted-login table check also lists real_invoice_payment_reversal.",
+    "The staff UI spec bundles stylesheets as empty, because the dialog imports one.",
     "The payment test and the credit-note test used the one-person payment command; they now prepare and approve (that is the decision).",
     "The migration history test lists two applied files, each hash checked.",
     "The customer payment list now carries reversed: false."

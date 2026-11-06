@@ -15,7 +15,10 @@ import {
   type RealInvoice,
 } from '../../packages/auth/src/customer-invoicing-real';
 import { CustomerBillingStaffService } from '../../packages/delivery/src/customer-billing-staff';
-import { CustomerRealInvoicingStaffService } from '../../packages/delivery/src/customer-invoicing-real-staff';
+import {
+  CustomerRealInvoicingStaffService,
+  realInvoicingStaffCommandInput,
+} from '../../packages/delivery/src/customer-invoicing-real-staff';
 import { CustomerInvoicingStaffService } from '../../packages/delivery/src/customer-invoicing-staff';
 
 // ADR-064: real invoices, payment records and credit notes (billing stage 2). Nothing is collected: no processor, card or
@@ -736,6 +739,53 @@ test('real payments and their reversals need a second person, carry a reason, an
   ).rejects.toThrow();
 });
 
+test('two people preparing a reversal of the same payment at once: exactly one waits for approval', async () => {
+  const listed = (await staff.list(first())).invoices as (RealInvoice & { position: number })[];
+  const inv = listed.find((i) => i.number === number('INV', 1))!;
+  const body = () => ({
+    action: 'prepare_payment_reversal',
+    commandId: randomUUID(),
+    invoiceId: inv.id,
+    expectedPosition: inv.position,
+    paymentSeq: 3,
+    reason: 'Entered twice by mistake, so one is reversed',
+  });
+  const results = await Promise.allSettled([
+    staff.command(first(), body()),
+    staff.command(first(), body()),
+  ]);
+  expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+  const failed = results.find((r) => r.status === 'rejected') as PromiseRejectedResult;
+  expect(String(failed.reason?.message ?? failed.reason)).toMatch(
+    /already waiting|changed|reload/i,
+  );
+  const won = (
+    results.find((r) => r.status === 'fulfilled') as PromiseFulfilledResult<{
+      proposalId: string;
+    }>
+  ).value;
+  // Leave nothing waiting for the tests that follow.
+  await decide(won.proposalId, 'reject', second.ctx, 'Withdrawn after the race rehearsal');
+});
+
+test('the position a real command may carry reaches the most an invoice can hold: 500 payments, 500 credits and 500 reversals', () => {
+  const base = {
+    action: 'prepare_payment',
+    commandId: randomUUID(),
+    invoiceId: randomUUID(),
+    amountMinor: '100',
+    receivedOn: '2026-10-01',
+    method: 'cash',
+    reference: 'Cash handed over at the office',
+  };
+  expect(
+    realInvoicingStaffCommandInput.safeParse({ ...base, expectedPosition: 1500 }).success,
+  ).toBe(true);
+  expect(
+    realInvoicingStaffCommandInput.safeParse({ ...base, expectedPosition: 1501 }).success,
+  ).toBe(false);
+});
+
 test('a second invoice continues the legal number, rounding GST half up, with a tax-inclusive price keeping the total', async () => {
   // A second subscription with a tax-inclusive price that needs rounding: 10001 includes 826 of GST (825.8).
   const sub = await writePlanAndActivate(otherWorkspaceId, 'inv-other', 'growth-inclusive', {
@@ -963,6 +1013,7 @@ test('the runtime logins reach no table and no private function, and the staff f
     'real_invoice',
     'real_invoice_payment',
     'real_invoice_credit',
+    'real_invoice_payment_reversal',
     'real_invoicing_proposal',
     'real_invoicing_decision',
     'real_invoicing_entity',

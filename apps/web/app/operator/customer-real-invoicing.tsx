@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { displayMoney } from '@corridra/domain/locale';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
+import { Dialog } from '../../components/ux/dialog';
 
 // ADR-064: the staff side of real invoices. Staff prepare an invoice or a credit note; a second named person approves
 // it, and only then does it get its legal number. Payments are records of money the team received. Nothing is collected
@@ -52,6 +53,8 @@ type Proposal = {
   method?: string | null;
   reference?: string | null;
   paymentSeq?: number | null;
+  paymentAmountMinor?: string | null;
+  paymentReceivedOn?: string | null;
   preparedByYou: boolean;
   preview: {
     currency: string;
@@ -174,7 +177,8 @@ function Scoped({ tenant }: { tenant: string }) {
     [reason, setReason] = useState(''),
     [reverseSeq, setReverseSeq] = useState(''),
     [reverseReason, setReverseReason] = useState(''),
-    [rejectReason, setRejectReason] = useState('');
+    [rejectReason, setRejectReason] = useState(''),
+    [confirmingReversal, setConfirmingReversal] = useState<Proposal | null>(null);
   const task = useRef<AbortController | null>(null);
   const endpoint =
     '/api/workspace/customer-billing?invoicing=real&tenant=' + encodeURIComponent(tenant);
@@ -323,7 +327,12 @@ function Scoped({ tenant }: { tenant: string }) {
         : 'Prepared. Approve it to give it a number.',
     );
   }
+  // A reversal cannot be undone, so approving one asks once. Everything else is approved at once.
   function approve(p: Proposal) {
+    if (p.kind === 'payment_reversal') setConfirmingReversal(p);
+    else doApprove(p);
+  }
+  function doApprove(p: Proposal) {
     setMessage('');
     void send(
       pending ?? {
@@ -607,6 +616,58 @@ function Scoped({ tenant }: { tenant: string }) {
           )}
         </section>
       )}
+      <Dialog
+        open={!!confirmingReversal}
+        onClose={() => setConfirmingReversal(null)}
+        title="Reverse This Payment?"
+        locked={busy}
+      >
+        {confirmingReversal && (
+          <>
+            <p>
+              Payment {confirmingReversal.paymentSeq}
+              {confirmingReversal.paymentAmountMinor
+                ? ' of ' +
+                  money(
+                    confirmingReversal.paymentAmountMinor,
+                    rows?.find((r) => r.number === confirmingReversal.invoiceNumber)?.currency ??
+                      '',
+                  ).trim()
+                : ''}
+              {confirmingReversal.paymentReceivedOn
+                ? ' received on ' + displayDate(confirmingReversal.paymentReceivedOn)
+                : ''}
+              {confirmingReversal.invoiceNumber
+                ? ' on invoice ' + confirmingReversal.invoiceNumber
+                : ''}{' '}
+              will be marked as reversed, and its amount will be owed again. This cannot be undone.
+              The payment stays on the invoice with the reason.
+            </p>
+            <div className="ux-dialog-actions">
+              <button
+                type="button"
+                className="button button-secondary"
+                data-autofocus=""
+                onClick={() => setConfirmingReversal(null)}
+              >
+                Keep Payment
+              </button>
+              <button
+                type="button"
+                className="button button-secondary"
+                data-intent="destructive"
+                onClick={() => {
+                  const p = confirmingReversal;
+                  setConfirmingReversal(null);
+                  doApprove(p);
+                }}
+              >
+                Confirm Reversal
+              </button>
+            </div>
+          </>
+        )}
+      </Dialog>
       {rejecting && (
         <form aria-label="Reject" onSubmit={submitReject}>
           <div className="field">

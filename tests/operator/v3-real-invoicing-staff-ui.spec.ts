@@ -23,6 +23,7 @@ createRoot(document.getElementById('fixture')).render(<CustomerRealInvoicing ten
     },
     nodePaths: [resolve('apps/web/node_modules')],
     bundle: true,
+    loader: { '.css': 'empty' },
     write: false,
     format: 'esm',
     platform: 'browser',
@@ -499,6 +500,8 @@ test('payments and reversals wait for another person: the preparer is told so an
     billToAddress: null,
     invoiceNumber: 'INV-2026-000001',
     paymentSeq: 1,
+    paymentAmountMinor: '2000',
+    paymentReceivedOn: '2026-10-28',
     reason: 'The transfer was a duplicate of another one',
     preparedByYou: false,
     preview: null,
@@ -514,7 +517,21 @@ test('payments and reversals wait for another person: the preparer is told so an
     waiting.getByText(/Payment reversal · Acme Apparel · against INV-2026-000001 · payment 1/),
   ).toBeVisible();
   expect(await axe(page)).toEqual([]);
+  // An irreversible approval asks once: the dialog names the payment, amount, date and invoice, says it cannot
+  // be undone and focuses the safe choice. Keeping the payment sends nothing.
   await waiting.getByRole('button', { name: 'Approve payment reversal for Acme Apparel' }).click();
+  const ask = page.getByRole('dialog', { name: 'Reverse This Payment?' });
+  await expect(ask).toBeVisible();
+  await expect(ask).toContainText('Payment 1');
+  await expect(ask).toContainText(/received on 28 October 2026 on invoice INV-2026-000001/);
+  await expect(ask).toContainText('This cannot be undone');
+  await expect(ask.getByRole('button', { name: 'Keep Payment' })).toBeFocused();
+  expect(await axe(page)).toEqual([]);
+  await ask.getByRole('button', { name: 'Keep Payment' }).click();
+  await expect(ask).toBeHidden();
+  expect(seen.filter((s) => s.method === 'POST')).toHaveLength(0);
+  await waiting.getByRole('button', { name: 'Approve payment reversal for Acme Apparel' }).click();
+  await ask.getByRole('button', { name: 'Confirm Reversal' }).click();
   await expect(page.getByText('Approved. The payment is reversed.')).toBeVisible();
   expect(seen.filter((s) => s.method === 'POST')[0]!.body).toMatchObject({
     action: 'decide',

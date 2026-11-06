@@ -187,7 +187,9 @@ BEGIN
  SELECT coalesce(jsonb_agg(jsonb_build_object('id',pr.id,'kind',pr.kind,'workspaceId',pr.tenant_id,'workspaceName',(SELECT w.name FROM app.tenant w WHERE w.id=pr.tenant_id),
   'subscriptionId',pr.subscription_id,'periodStart',pr.period_start,'periodEnd',pr.period_end,'dueDate',pr.due_date,'billToName',pr.bill_to_name,'billToAddress',pr.bill_to_address,
   'invoiceId',pr.invoice_id,'invoiceNumber',(SELECT customer_private.real_invoicing_number('INV',i.invoice_year,i.invoice_seq) FROM customer_private.real_invoice i WHERE i.id=pr.invoice_id),
-  'amountMinor',pr.amount_minor::text,'reason',pr.reason,'receivedOn',pr.received_on,'method',pr.method,'reference',pr.reference,'paymentSeq',pr.payment_seq,'preparedByYou',pr.prepared_by=v_actor,'preparedAt',pr.created_at,
+  'amountMinor',pr.amount_minor::text,'reason',pr.reason,'receivedOn',pr.received_on,'method',pr.method,'reference',pr.reference,'paymentSeq',pr.payment_seq,
+  'paymentAmountMinor',(SELECT pay.amount_minor::text FROM customer_private.real_invoice_payment pay WHERE pay.invoice_id=pr.invoice_id AND pay.seq=pr.payment_seq),
+  'paymentReceivedOn',(SELECT pay.received_on FROM customer_private.real_invoice_payment pay WHERE pay.invoice_id=pr.invoice_id AND pay.seq=pr.payment_seq),'preparedByYou',pr.prepared_by=v_actor,'preparedAt',pr.created_at,
   'preview',CASE WHEN pr.kind='invoice' THEN (SELECT jsonb_build_object('currency',p.currency,'planTitle',p.title,'taxTreatment',p.tax_treatment,'feeMinor',p.price_minor::text,
     'taxMinor',CASE WHEN e.gst_registered THEN customer_private.real_invoicing_tax(p.price_minor,p.tax_treatment,e.gst_rate_bps)::text ELSE '0' END,
     'totalMinor',(p.price_minor+CASE WHEN e.gst_registered AND p.tax_treatment='price_excludes_tax' THEN customer_private.real_invoicing_tax(p.price_minor,p.tax_treatment,e.gst_rate_bps) ELSE 0 END)::text)

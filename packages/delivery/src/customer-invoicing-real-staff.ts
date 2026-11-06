@@ -21,7 +21,7 @@ const plain = (min: number, max: number) =>
     );
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const amount = z.string().regex(/^[1-9][0-9]{0,11}$/);
-const invoiceRef = { invoiceId: z.uuid(), expectedPosition: z.number().int().min(0).max(1000) };
+const invoiceRef = { invoiceId: z.uuid(), expectedPosition: z.number().int().min(0).max(1500) };
 export const realInvoicingStaffCommandInput = z.discriminatedUnion('action', [
   z
     .object({
