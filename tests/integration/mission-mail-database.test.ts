@@ -3,6 +3,7 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { fixture } from './support';
 import { sessionHash, type DatabaseClient } from '../../packages/db/src/index';
 import { migrateCustomerMissionMail } from '../../packages/db/src/customer-mission-mail-migrate';
+import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateCustomerRequestWithdrawal } from '../../packages/db/src/customer-request-withdrawal-migrate';
 import { configureRequestWithdrawal } from '../../packages/auth/src/customer-request-withdrawal-configuration';
 import { pinCustomerAuthority } from '../../packages/auth/src/customer-authority-pin';
@@ -156,6 +157,7 @@ const setControl = (enabled: boolean) => configureMissionMail(f.owner, { enabled
 beforeAll(async () => {
   f = await fixture();
   // Mission mail 0003 needs the request withdrawal module, which needs no mail module.
+  await migrateCustomerRealUse(f.owner);
   await migrateCustomerRequestWithdrawal(f.owner);
   await migrateCustomerMissionMail(f.owner);
   await pinCustomerAuthority(f.owner, { issuer, executorId: f.serviceId });

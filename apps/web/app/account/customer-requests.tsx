@@ -121,7 +121,8 @@ const readFilter = () =>
   new URLSearchParams(window.location.search).get('status') === 'withdrawn'
     ? 'withdrawn'
     : 'active';
-const reasonLength = (value: string) => value.trim().length;
+// Counted in characters, the way the database counts them, not in UTF-16 units.
+const reasonLength = (value: string) => [...value.trim()].length;
 function time(value: string) {
   return formatDateTime(value);
 }
@@ -350,7 +351,12 @@ function PrivateRequests({
       if (!pending.signal.aborted) setBusy(false);
     }
   }
-  const withdrawnCount = requests.filter((one) => one.withdrawn === true).length;
+  // Every withdrawal the person has, including ones on pages not loaded yet: the list of reasons is complete.
+  const loadedWithdrawn = requests.filter((one) => one.withdrawn === true);
+  const withdrawnCount = new Set([
+    ...Object.keys(wd.reasons),
+    ...loadedWithdrawn.map((one) => one.id),
+  ]).size;
   const showFilter = status === 'ready' && (wd.open || withdrawnCount > 0);
   const visible = showFilter
     ? requests.filter((one) => (one.withdrawn === true) === (filter === 'withdrawn'))
@@ -398,7 +404,7 @@ function PrivateRequests({
           value={filter}
           onChange={chooseFilter}
           options={[
-            { value: 'active', label: 'Active', count: requests.length - withdrawnCount },
+            { value: 'active', label: 'Active', count: requests.length - loadedWithdrawn.length },
             { value: 'withdrawn', label: 'Withdrawn', count: withdrawnCount },
           ]}
         />
@@ -419,6 +425,15 @@ function PrivateRequests({
           </button>
         </p>
       )}
+      {status === 'ready' &&
+        showFilter &&
+        filter === 'withdrawn' &&
+        nextAfter &&
+        loadedWithdrawn.length < withdrawnCount && (
+          <p className="ux-empty">
+            Some withdrawn requests are on later pages. Choose Load More Saved Requests to see them.
+          </p>
+        )}
       {status === 'ready' && visible.length === 0 && (
         <p className="ux-empty">
           {showFilter && filter === 'withdrawn'
@@ -472,7 +487,9 @@ function PrivateRequests({
               </p>
             ) : (
               wd.open &&
-              request.available && (
+              request.available &&
+              request.progress?.status !== 'CLOSED' &&
+              request.progress?.status !== 'CANCELLED' && (
                 <p>
                   <button
                     type="button"
@@ -570,14 +587,12 @@ function PrivateRequests({
                 value={reason}
                 onChange={(event) => setReason(event.target.value)}
                 rows={3}
-                maxLength={500}
                 required
                 aria-describedby="withdraw-reason-help"
               />
             </label>
             <p id="withdraw-reason-help" className="notifications-help">
-              10 to 500 characters. Only you can see this reason; the Corridra team sees that you
-              withdrew the request and when.
+              10 to 500 characters. Only you can see this reason.
             </p>
             {note?.id === asking.id && note.alert && <p role="alert">{note.text}</p>}
             <div className="ux-dialog-actions">

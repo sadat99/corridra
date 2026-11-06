@@ -279,7 +279,6 @@ const installers: [string, (pool: ReturnType<typeof databasePool>) => Promise<vo
   ['decision cards', migrateCustomerDecisionCards],
   // Installing it changes nothing anyone can see: its own control starts closed. It must be in the base run so
   // mission mail 0003 and notifications 0005, installed later in the same run, find it. It needs no mail module.
-  ['request withdrawal (its control stays closed)', migrateCustomerRequestWithdrawal],
 ];
 
 const pool = databasePool(v.MIGRATION_DATABASE_URL);
@@ -307,6 +306,13 @@ async function report(label: string) {
 try {
   await report(apply ? 'Before install' : 'Read-only report (nothing written)');
   if (apply) {
+    // Only for an explicit mail install: the real-use schema first (the mail installers include it anyway), then the
+    // withdrawal tables, so mission mail 0003 and notifications 0005 find them. Never run by a base run.
+    const installWithdrawalFirst = async () => {
+      await migrateCustomerRealUse(pool);
+      await migrateCustomerRequestWithdrawal(pool);
+      console.log('installed or already current: request withdrawal (its control stays closed)');
+    };
     for (const [name, install] of installers) {
       await install(pool);
       console.log(`installed or already current: ${name}`);
@@ -356,18 +362,8 @@ try {
         );
       }
     }
-    // Request withdrawal is already installed by the base run above, with its control closed. Opening or pausing it
-    // is an owner decision with a reason; it is not wired to the install workflow.
-    if (['enable', 'pause'].includes(v.REQUEST_WITHDRAWAL_ACTION)) {
-      const result = await configureRequestWithdrawal(pool, {
-        enabled: v.REQUEST_WITHDRAWAL_ACTION === 'enable',
-        reason: v.REQUEST_WITHDRAWAL_REASON,
-      });
-      console.log(
-        `Request withdrawal ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
-      );
-    }
     if (v.MISSION_MAIL_ACTION !== 'unchanged') {
+      await installWithdrawalFirst();
       await migrateCustomerMissionMail(pool);
       if (v.MISSION_MAIL_ACTION !== 'install') {
         const result = await configureMissionMail(pool, {
@@ -404,6 +400,7 @@ try {
       }
     }
     if (v.NOTIFICATIONS_ACTION !== 'unchanged') {
+      await installWithdrawalFirst();
       await migrateCustomerNotifications(pool);
       // The address is read from the sign-in provider's user table at send time. Opening email without that
       // being readable would queue messages that can never be sent, so opening stops here with a plain message.
@@ -423,6 +420,19 @@ try {
           `Notifications ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
         );
       }
+    }
+    // Request withdrawal is never part of the base run. Its tables are installed, control closed, only as the first
+    // step of an explicit mission mail or notifications install (the two mail files that honour a withdrawal need
+    // them). Opening or pausing it is an owner decision with a reason; it is not wired to the install workflow, and
+    // it runs after the mail installs because opening is refused until both installed mail modules are upgraded.
+    if (['enable', 'pause'].includes(v.REQUEST_WITHDRAWAL_ACTION)) {
+      const result = await configureRequestWithdrawal(pool, {
+        enabled: v.REQUEST_WITHDRAWAL_ACTION === 'enable',
+        reason: v.REQUEST_WITHDRAWAL_REASON,
+      });
+      console.log(
+        `Request withdrawal ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
+      );
     }
     if (v.REAL_BILLING_ACTION !== 'unchanged') {
       await migrateCustomerBillingReal(pool);

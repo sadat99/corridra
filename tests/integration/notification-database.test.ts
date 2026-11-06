@@ -5,6 +5,7 @@ import { fixture } from './support';
 import { sessionHash, withTenant, type DatabaseClient } from '../../packages/db/src/index';
 import { migrateCustomerMoves } from '../../packages/db/src/customer-move-migrate';
 import { migrateCustomerNotifications } from '../../packages/db/src/customer-notification-migrate';
+import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateCustomerRequestWithdrawal } from '../../packages/db/src/customer-request-withdrawal-migrate';
 import { configureRequestWithdrawal } from '../../packages/auth/src/customer-request-withdrawal-configuration';
 import { pinCustomerAuthority } from '../../packages/auth/src/customer-authority-pin';
@@ -312,6 +313,7 @@ beforeAll(async () => {
   // Staff reach real-use missions through the processing purpose the application derives from this switch.
   process.env.CORRIDRA_REAL_USE_ENABLED = 'true';
   // Notifications 0005 needs the request withdrawal module, which needs no mail module.
+  await migrateCustomerRealUse(f.owner);
   await migrateCustomerRequestWithdrawal(f.owner);
   before = await snapshot();
   await migrateCustomerNotifications(f.owner);

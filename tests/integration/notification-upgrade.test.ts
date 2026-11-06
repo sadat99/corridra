@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 import { fixture } from './support';
 import { migrateCustomerMoves } from '../../packages/db/src/customer-move-migrate';
 import { migrateCustomerNotifications } from '../../packages/db/src/customer-notification-migrate';
+import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateCustomerRequestWithdrawal } from '../../packages/db/src/customer-request-withdrawal-migrate';
 import { pinCustomerAuthority } from '../../packages/auth/src/customer-authority-pin';
 import { configureCustomerRealUse } from '../../packages/auth/src/customer-real-use-configuration';
@@ -99,6 +100,7 @@ describe('upgrading from the installed first file to email off until chosen', ()
 
   test('the runner applies only the new files, leaves the installed hash alone and is repeatable', async () => {
     // Notifications 0005 needs the request withdrawal module, which needs no mail module.
+    await migrateCustomerRealUse(f.owner);
     await migrateCustomerRequestWithdrawal(f.owner);
     await migrateCustomerNotifications(f.owner);
     const applied = (

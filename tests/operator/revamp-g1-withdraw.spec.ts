@@ -37,7 +37,7 @@ test.beforeAll(async () => {
       createRoot(document.getElementById('fixture')).render(
         <LanguageProvider offered={[{code:'en',draft:false}]}>
           <main className="operator-page ux-workspace ux-customer"><h1>Requests</h1>
-            <CustomerRequests subject="synthetic-alice" issuer=${JSON.stringify(issuer)} statuses={['ACTIVE','CLOSED']} canSubmit={false} detailsEnabled={false} />
+            <CustomerRequests subject="synthetic-alice" issuer=${JSON.stringify(issuer)} statuses={['ACTIVE','CLOSED','CANCELLED']} canSubmit={false} detailsEnabled={false} />
           </main>
         </LanguageProvider>);`,
       loader: 'tsx',
@@ -104,6 +104,12 @@ type Setup = {
   withdrawn?: number[];
   answer?: (sent: Sent) => { status: number; json: unknown } | 'hold';
   query?: string;
+  /** Extra fields for one row, by index. */
+  rows?: Record<number, Record<string, unknown>>;
+  /** The first page is not the last one. */
+  nextAfter?: string;
+  /** Withdrawn requests the person has that are on pages not loaded yet. */
+  unloaded?: number;
 };
 async function open(page: Page, setup: Setup = {}) {
   const withdrawn = new Set(setup.withdrawn ?? []);
@@ -113,9 +119,12 @@ async function open(page: Page, setup: Setup = {}) {
     route.fulfill({
       json: {
         requests: [0, 1, 2].map((n) =>
-          row(n, withdrawn.has(n) ? { withdrawn: true } : { withdrawn: false }),
+          row(n, {
+            withdrawn: withdrawn.has(n),
+            ...(setup.rows?.[n] ?? {}),
+          }),
         ),
-        nextAfter: null,
+        nextAfter: setup.nextAfter ?? null,
         synthetic: true,
       },
     }),
@@ -125,11 +134,18 @@ async function open(page: Page, setup: Setup = {}) {
       return route.fulfill({
         json: {
           open: setup.open ?? true,
-          items: [...withdrawn].map((n) => ({
-            requestId: ids[n],
-            at: '2026-11-04T10:00:00Z',
-            reason: reasonWords,
-          })),
+          items: [
+            ...[...withdrawn].map((n) => ({
+              requestId: ids[n],
+              at: '2026-11-04T10:00:00Z',
+              reason: reasonWords,
+            })),
+            ...Array.from({ length: setup.unloaded ?? 0 }, (_, n) => ({
+              requestId: `00000000-0000-4000-8000-0000000001${String(n).padStart(2, '0')}`,
+              at: '2026-11-03T10:00:00Z',
+              reason: reasonWords,
+            })),
+          ],
         },
       });
     const body = route.request().postDataJSON() as Sent;
@@ -215,6 +231,56 @@ test('with withdrawing closed and nothing withdrawn there is no Withdraw Request
   await expect(page.getByRole('article')).toHaveCount(3);
 });
 
+test('a closed or cancelled request offers no Withdraw Request, and the others still do', async ({
+  page,
+}) => {
+  await open(page, {
+    rows: {
+      1: { progress: { status: 'CLOSED', receivedAt: '2026-11-02T09:00:00.000Z', replies: [] } },
+      2: {
+        progress: { status: 'CANCELLED', receivedAt: '2026-11-03T09:00:00.000Z', replies: [] },
+      },
+    },
+  });
+  await expect(
+    article(page, 'Sell towels in Spain').getByRole('button', { name: 'Withdraw Request' }),
+  ).toBeVisible();
+  await expect(
+    article(page, 'Source packaging in Turkey').getByRole('button', { name: 'Withdraw Request' }),
+  ).toHaveCount(0);
+  await expect(
+    article(page, 'Plan a trade visit').getByRole('button', { name: 'Withdraw Request' }),
+  ).toHaveCount(0);
+});
+
+test('Withdrawn counts every withdrawal the person has, and says more may be on later pages while there are more pages', async ({
+  page,
+}) => {
+  const next = '00000000-0000-4000-8000-0000000000ff';
+  await open(page, { withdrawn: [2], unloaded: 2, nextAfter: next });
+  // One withdrawn row is loaded; two more are on pages not loaded yet. The count is all three.
+  await expect(page.locator('label.ux-segment', { hasText: 'Withdrawn' })).toContainText('3');
+  await page.getByRole('radio', { name: /Withdrawn/ }).check();
+  await expect(page.getByRole('article')).toHaveCount(1);
+  await expect(page.getByText('Some withdrawn requests are on later pages.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Load More Saved Requests' })).toBeVisible();
+});
+
+test('the reason is counted in characters: 300 emoji are allowed, 9 are too short', async ({
+  page,
+}) => {
+  await open(page);
+  await article(page, 'Sell towels in Spain')
+    .getByRole('button', { name: 'Withdraw Request' })
+    .click();
+  const dialog = page.getByRole('dialog', { name: 'Withdraw Request?' });
+  const confirm = dialog.getByRole('button', { name: 'Withdraw Request', exact: true });
+  await dialog.getByLabel('Why are you withdrawing it?').fill('\u{1F600}'.repeat(9));
+  await expect(confirm).toBeDisabled();
+  await dialog.getByLabel('Why are you withdrawing it?').fill('\u{1F600}'.repeat(300));
+  await expect(confirm).toBeEnabled();
+});
+
 test('CX-05 the dialog names the request and its consequence, asks for a reason, says who sees it, and does not focus the destructive button', async ({
   page,
 }) => {
@@ -227,9 +293,9 @@ test('CX-05 the dialog names the request and its consequence, asks for a reason,
   await expect(dialog).toContainText('Sell towels in Spain');
   await expect(dialog).toContainText('Nothing is deleted');
   await expect(dialog).toContainText('restore it from Withdrawn');
-  await expect(dialog).toContainText(
-    'Only you can see this reason; the Corridra team sees that you withdrew the request and when.',
-  );
+  await expect(dialog).toContainText('10 to 500 characters. Only you can see this reason.');
+  // Nothing is promised about what the Corridra team sees until that signal exists.
+  await expect(dialog).not.toContainText('Corridra team sees');
   await expect(dialog.getByRole('button', { name: 'Keep Request' })).toBeFocused();
   const confirm = dialog.getByRole('button', { name: 'Withdraw Request', exact: true });
   await expect(confirm).toBeDisabled();

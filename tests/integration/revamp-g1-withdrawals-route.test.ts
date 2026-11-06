@@ -47,6 +47,31 @@ beforeEach(() => {
   setWithdrawal.mockReset().mockResolvedValue({ withdrawn: true, changed: true });
 });
 
+describe('the reason is counted in characters, the way the database counts it', async () => {
+  const { requestWithdrawalInput } = await import('../../packages/auth/src/customer-requests');
+  const base = {
+    action: 'withdraw',
+    requestId: '00000000-0000-4000-8000-000000000001',
+    commandId: '00000000-0000-4000-8000-000000000002',
+  };
+  it('accepts 300 characters that take two UTF-16 units each, and 500 exactly', () => {
+    expect(
+      requestWithdrawalInput.safeParse({ ...base, reason: '\u{1F600}'.repeat(300) }).success,
+    ).toBe(true);
+    expect(requestWithdrawalInput.safeParse({ ...base, reason: 'a'.repeat(500) }).success).toBe(
+      true,
+    );
+  });
+  it('refuses 501 characters, and 9', () => {
+    expect(requestWithdrawalInput.safeParse({ ...base, reason: 'a'.repeat(501) }).success).toBe(
+      false,
+    );
+    expect(
+      requestWithdrawalInput.safeParse({ ...base, reason: '\u{1F600}'.repeat(9) }).success,
+    ).toBe(false);
+  });
+});
+
 describe("GET lists the signed-in person's withdrawals", () => {
   it('passes the session identity through and answers with no-store', async () => {
     const { GET } = await route();

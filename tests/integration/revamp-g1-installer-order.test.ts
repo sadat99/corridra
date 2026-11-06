@@ -14,11 +14,13 @@ import { configureSyntheticIntake } from '../../packages/missions/src/bootstrap'
 import { configureRequestWithdrawal } from '../../packages/auth/src/customer-request-withdrawal-configuration';
 
 // CRUD G1, the install order. Production already has mission mail 0001 and 0002 and notifications 0001 to 0004. The
-// base install run now installs the request withdrawal module (its control stays closed), and mission mail 0003 and
-// notifications 0005 need it. This proves, on a database in exactly that state: a run that leaves the mail actions
-// unchanged installs withdrawal and touches nothing else; a run that installs the mail modules installs withdrawal
-// first and then 0003 and 0005 cleanly in one run; and installing mail first stops with a clear message and changes
-// nothing.
+// request withdrawal module is optional: a base run (apply=yes, every action unchanged) installs nothing of it. It is
+// installed, control closed, only as the first step of an explicit mission mail or notifications install, because
+// mission mail 0003 and notifications 0005 need it. It never applies the real-use schema itself. This proves, on a
+// database in exactly the production state: withdrawal refuses when the real-use schema is not current and writes
+// nothing; installing the mail modules before withdrawal stops with a clear message and changes nothing; withdrawal
+// installs alone without touching mail; the mail modules then apply 0003 and 0005 cleanly; and opening withdrawals is
+// refused until both installed mail modules are upgraded.
 const sha = (value: string) => createHash('sha256').update(value).digest('hex');
 let f: Awaited<ReturnType<typeof fixture>>;
 
@@ -90,6 +92,44 @@ afterAll(async () => {
 });
 
 describe('installing the withdrawal module on the production state', () => {
+  test('refuses, writing nothing, when the real-use schema is not current: it never applies that schema itself', async () => {
+    const last = (
+      await f.owner.query(
+        'SELECT name,sha256,applied_at FROM customer_real_use_migrations.applied ORDER BY name DESC LIMIT 1',
+      )
+    ).rows[0];
+    await f.owner.query('DELETE FROM customer_real_use_migrations.applied WHERE name=$1', [
+      last.name,
+    ]);
+    try {
+      await expect(migrateCustomerRequestWithdrawal(f.owner)).rejects.toThrow(
+        'The customer real-use schema is not current',
+      );
+      expect(await withdrawalInstalled()).toBe(false);
+      // It did not apply the missing real-use file to repair it.
+      expect(
+        (
+          await f.owner.query(
+            'SELECT count(*)::int AS n FROM customer_real_use_migrations.applied WHERE name=$1',
+            [last.name],
+          )
+        ).rows[0].n,
+      ).toBe(0);
+      expect(
+        (
+          await f.owner.query(
+            "SELECT to_regclass('customer_request_withdrawal_migrations.applied') IS NOT NULL AS present",
+          )
+        ).rows[0].present,
+      ).toBe(false);
+    } finally {
+      await f.owner.query(
+        'INSERT INTO customer_real_use_migrations.applied(name,sha256,applied_at) VALUES($1,$2,$3)',
+        [last.name, last.sha256, last.applied_at],
+      );
+    }
+  });
+
   test('installing the mail modules before withdrawal stops with a clear message and changes nothing', async () => {
     const before = {
       mail: await applied('customer_mission_mail_migrations'),
@@ -201,18 +241,38 @@ describe('installing the withdrawal module on the production state', () => {
 
 describe('the install script', () => {
   const script = readFileSync(resolve('scripts/install-customer-modules.ts'), 'utf8');
-  test('installs withdrawal in the base run, before the optional mail installs, and lists it in the report', () => {
-    const base = script.indexOf(
-      "['request withdrawal (its control stays closed)', migrateCustomerRequestWithdrawal]",
+  const installers = script.slice(
+    script.indexOf('const installers'),
+    script.indexOf('const pool = databasePool'),
+  );
+  test('a base run (apply yes, every action unchanged) installs nothing of withdrawal', () => {
+    // Not in the base installer list, and the only call site is inside the explicit-install helper.
+    expect(installers).not.toContain('migrateCustomerRequestWithdrawal');
+    expect(installers).not.toContain('request withdrawal');
+    const calls = script.split('await migrateCustomerRequestWithdrawal(pool)');
+    expect(calls).toHaveLength(2);
+    const helper = script.slice(
+      script.indexOf('const installWithdrawalFirst'),
+      script.indexOf('for (const [name, install] of installers)'),
     );
-    expect(base).toBeGreaterThan(0);
-    expect(base).toBeLessThan(script.indexOf('const pool = databasePool'));
-    expect(script.indexOf("'customer_request_withdrawal_migrations',")).toBeGreaterThan(0);
-    expect(script.indexOf('for (const [name, install] of installers)')).toBeLessThan(
-      script.indexOf("if (v.MISSION_MAIL_ACTION !== 'unchanged') {"),
-    );
+    expect(helper).toContain('await migrateCustomerRequestWithdrawal(pool)');
+    // The helper runs only inside the two blocks guarded by a mail action other than unchanged.
+    const uses = [...script.matchAll(/await installWithdrawalFirst\(\);/g)].map((m) => m.index!);
+    expect(uses).toHaveLength(2);
+    const mail = script.indexOf("if (v.MISSION_MAIL_ACTION !== 'unchanged') {");
+    const pulse = script.indexOf("if (v.NOTIFICATIONS_ACTION !== 'unchanged') {");
+    expect(uses[0]).toBeGreaterThan(mail);
+    expect(uses[0]).toBeLessThan(script.indexOf('await migrateCustomerMissionMail(pool)'));
+    expect(uses[1]).toBeGreaterThan(pulse);
+    expect(uses[1]).toBeLessThan(script.indexOf('await migrateCustomerNotifications(pool)'));
   });
-  test('keeps enable and pause, with a reason, out of the base run and out of the workflow', () => {
+  test('lists the withdrawal registry in the report, and opens or pauses only after the mail installs', () => {
+    expect(script.indexOf("'customer_request_withdrawal_migrations',")).toBeGreaterThan(0);
+    expect(
+      script.lastIndexOf("['enable', 'pause'].includes(v.REQUEST_WITHDRAWAL_ACTION)"),
+    ).toBeGreaterThan(script.indexOf('await migrateCustomerNotifications(pool)'));
+  });
+  test('keeps enable and pause, with a reason, out of the workflow', () => {
     expect(script).toContain("REQUEST_WITHDRAWAL_ACTION: z.enum(['unchanged', 'enable', 'pause'])");
     expect(script).toContain('Request withdrawal changes require an explicit reason');
     const workflow = readFileSync(

@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { fixture } from './support';
 import { sessionHash, type DatabaseClient } from '../../packages/db/src/index';
+import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateCustomerRequestWithdrawal } from '../../packages/db/src/customer-request-withdrawal-migrate';
 import { pinCustomerAuthority } from '../../packages/auth/src/customer-authority-pin';
 import { configureCustomerRealUse } from '../../packages/auth/src/customer-real-use-configuration';
@@ -150,6 +151,7 @@ const setMissionStatus = async (who: Person, status: string) => {
 
 beforeAll(async () => {
   f = await fixture();
+  await migrateCustomerRealUse(f.owner);
   await migrateCustomerRequestWithdrawal(f.owner);
   await pinCustomerAuthority(f.owner, { issuer, executorId: f.serviceId });
   await configureSyntheticIntake(f.owner, f.tenantA, f.users.owner.id);

@@ -119,6 +119,7 @@ export async function loadMoveInput(subject: string, issuer: string): Promise<Lo
   ]);
 
   let partial = false;
+  const withdrawn = new Set<string>();
   for (const page of drafts) {
     if (page.failed) {
       unreadable.add('drafts');
@@ -168,7 +169,10 @@ export async function loadMoveInput(subject: string, issuer: string): Promise<Lo
       progress: MoveInput['requests'][number]['progress'];
     }[]) {
       // A withdrawn request asks nothing of the person: it is not part of Your Move until it is restored.
-      if (row.withdrawn === true) continue;
+      if (row.withdrawn === true) {
+        withdrawn.add(row.id);
+        continue;
+      }
       input.requests.push({
         id: row.id,
         workspaceId: row.workspaceId,
@@ -179,7 +183,10 @@ export async function loadMoveInput(subject: string, issuer: string): Promise<Lo
   }
 
   if (customerMovesEnabled() && moveRecords === null) unreadable.add('moves');
-  input.moves = (moveRecords?.requests ?? []) as NonNullable<MoveInput['moves']>;
+  // A Move the team set on a withdrawn request waits with the request: it comes back when the request is restored.
+  input.moves = ((moveRecords?.requests ?? []) as NonNullable<MoveInput['moves']>).filter(
+    (entry) => !withdrawn.has(entry.requestId),
+  );
 
   // CQ-77: published reports, once the service wiring provides the delivered-reports service.
   const delivered = (

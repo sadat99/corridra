@@ -15,6 +15,13 @@ export async function configureRequestWithdrawal(pool: DatabasePool, input: unkn
   const db = await pool.connect();
   try {
     await db.query('BEGIN');
+    const installed = await db.query<{ present: boolean }>(
+      "SELECT to_regclass('customer_private.request_withdrawal_control') IS NOT NULL AS present",
+    );
+    if (!installed.rows[0]?.present)
+      throw new Error(
+        'Request withdrawal is not installed. Run an explicit mission mail or notifications install first.',
+      );
     const authority = await db.query<{ approved: boolean }>(`SELECT pg_has_role(current_user,
       (SELECT relowner FROM pg_class WHERE oid='customer_private.request_withdrawal_control'::regclass),
       'MEMBER') AS approved`);
