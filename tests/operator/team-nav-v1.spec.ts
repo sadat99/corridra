@@ -15,14 +15,12 @@ test.afterAll(async () => {
   await fixture.close();
 });
 
-async function open(page: Page, role: string, hash = '', width = 1280) {
+async function open(page: Page, role: string, hash = '', width = 1280, missionsV2 = true) {
   await page.setViewportSize({ width, height: 900 });
   await page.route('**/api/**', (route) =>
     route.fulfill({ status: 404, json: { error: 'Not part of this fixture' } }),
   );
-  await page.route('**/api/team-work/flags', (route) =>
-    route.fulfill({ json: { missionsV2: true } }),
-  );
+  await page.route('**/api/team-work/flags', (route) => route.fulfill({ json: { missionsV2 } }));
   await page.route('**/api/workspace/workspace?*', (route) =>
     route.fulfill({
       json: {
@@ -182,6 +180,66 @@ test('an operator has no Admin, finds Health, Readiness and the Authenticator in
     .withTags(['wcag2a', 'wcag2aa'])
     .analyze();
   expect(axe.violations.map((v) => v.id)).toEqual([]);
+});
+
+test('a mission hit opens the mission page when mission pages are on and the Missions section when they are off', async ({
+  page,
+}) => {
+  for (const missionsV2 of [true, false]) {
+    await open(page, 'owner', '', 1280, missionsV2);
+    await page.route('**/api/workspace/search?*', (route) =>
+      route.fulfill({
+        json: {
+          missions: [
+            {
+              id: '00000000-0000-4000-8000-000000000042',
+              label: 'Invented Towels Ltd',
+              detail: 'Source suppliers · China',
+            },
+          ],
+          companies: [],
+          denied: [],
+          partial: [],
+        },
+      }),
+    );
+    await page.keyboard.press('Control+k');
+    const dialog = page.getByRole('dialog', { name: 'Search missions, companies and actions' });
+    await dialog.getByRole('combobox').fill('Invented');
+    const hit = dialog.getByRole('option', { name: /Invented Towels Ltd/ });
+    await expect(hit).toBeVisible();
+    const href = await hit.getAttribute('href');
+    if (missionsV2)
+      expect(href).toBe(
+        `/operator/missions/00000000-0000-4000-8000-000000000042?workspace=${fixtureTenant}`,
+      );
+    else {
+      expect(href).toBe(`/operator/missions?workspace=${fixtureTenant}`);
+      await expect(hit).toContainText('Opens Missions');
+    }
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
+  }
+});
+
+test('the keyboard keeps the selected option in view in a long list (Actions)', async ({
+  page,
+}) => {
+  await open(page, 'owner', '#workspace-missions');
+  await page.keyboard.press('Control+k');
+  const dialog = page.getByRole('dialog', { name: 'Search missions, companies and actions' });
+  await dialog.getByRole('button', { name: 'Actions', exact: true }).click();
+  await dialog.getByRole('combobox').focus();
+  const options = dialog.getByRole('option');
+  expect(await options.count()).toBeGreaterThan(12);
+  for (let step = 0; step < 14; step++) await page.keyboard.press('ArrowDown');
+  const selected = dialog.locator('[role="option"][aria-selected="true"]');
+  await expect(selected).toHaveCount(1);
+  const [item, list] = await Promise.all([
+    selected.boundingBox(),
+    dialog.getByRole('listbox').boundingBox(),
+  ]);
+  expect(item!.y).toBeGreaterThanOrEqual(list!.y - 1);
+  expect(item!.y + item!.height).toBeLessThanOrEqual(list!.y + list!.height + 1);
 });
 
 // Keep the fixture id referenced so a rename of the tenant fails here and not silently.

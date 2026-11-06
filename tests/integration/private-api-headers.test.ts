@@ -73,3 +73,18 @@ describe('the public decision card API and the framework header overrides', () =
     ).toBe(true);
   });
 });
+
+// The team command palette's search (Navigation v1, Sensitive: yes) answers with mission and company names, so the
+// framework must never replace its no-store or no-referrer headers. Registered here, checked here, and the compiled
+// response is checked in tests/e2e/verification/ws-e/team-shell.spec.ts.
+describe('the team palette search API and the framework header overrides', () => {
+  const matching = rules.filter((rule) => rule.source === '/api/workspace/search');
+  it('has one explicit rule for /api/workspace/search with no-referrer and no-store', () => {
+    expect(
+      matching,
+      'the palette search is missing from the private-header overrides in next.config.ts',
+    ).toHaveLength(1);
+    expect(matching[0]!.headers).toContain("key: 'Referrer-Policy', value: 'no-referrer'");
+    expect(matching[0]!.headers).toContain("key: 'Cache-Control', value: 'no-store'");
+  });
+});

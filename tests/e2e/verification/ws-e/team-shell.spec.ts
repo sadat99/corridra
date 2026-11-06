@@ -62,7 +62,13 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
 
   // Tab order: Today, Missions, Companies, Meetings, Money, then the Admin and Account summaries. A closed group's
   // links are not in the order. Enter and Space both toggle the group and focus stays on its summary.
-  const focusedText = () => page.evaluate(() => document.activeElement?.textContent?.trim() ?? '');
+  const focusedText = () =>
+    page.evaluate(
+      () =>
+        document.activeElement?.getAttribute('title') ??
+        document.activeElement?.textContent?.trim() ??
+        '',
+    );
   await sidebar.getByRole('link', { name: 'Today', exact: true }).focus();
   const order: string[] = [];
   for (let step = 0; step < 6; step++) {
@@ -71,6 +77,8 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   }
   expect(order).toEqual(['Missions', 'Companies', 'Meetings', 'Money', 'Admin', 'Account']);
   const admin = sidebar.locator('summary', { hasText: 'Admin' });
+  await expect(admin).toHaveAccessibleName('Admin');
+  await expect(admin).toHaveAccessibleDescription('Owner and admin');
   await admin.focus();
   await page.keyboard.press('Space');
   await expect(admin.locator('xpath=..')).toHaveAttribute('open', '');
@@ -80,6 +88,49 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   await page.keyboard.press('Enter');
   await expect(admin.locator('xpath=..')).not.toHaveAttribute('open');
   await expect(admin).toBeFocused();
+
+  // The command palette: Ctrl K opens it, Actions list only places this role may open, Tab changes scope,
+  // Up and Down move, Escape closes and focus returns, and a mission is found by its company name.
+  const palette = page.getByRole('dialog', { name: 'Search missions, companies and actions' });
+  const trigger = sidebar.getByRole('button', { name: /Search/ });
+  expect((await trigger.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await trigger.focus();
+  await page.keyboard.press('Control+k');
+  await expect(palette).toBeVisible();
+  await expect(palette.getByText('Searches only what your role may open')).toBeVisible();
+  const box = palette.getByRole('combobox');
+  await expect(box).toBeFocused();
+  await box.fill('audit');
+  await expect(palette.getByRole('option', { name: /Open Audit/ })).toBeVisible();
+  await page.keyboard.press('Tab');
+  await expect(palette.getByRole('button', { name: 'Missions', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await page.keyboard.press('Shift+Tab');
+  await expect(palette.getByRole('button', { name: 'All', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await box.fill('QA Test');
+  await expect(palette.getByRole('option', { name: /QA Test Co/ })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(palette).toBeHidden();
+  await expect(trigger).toBeFocused();
+  // The compiled response of the search route carries the private headers (the framework override, not only the handler).
+  const search = await page.request.get(`/api/workspace/search?tenant=${seed.tenantId}&q=qa`);
+  expect(search.status()).toBe(200);
+  expect(search.headers()['referrer-policy']).toBe('no-referrer');
+  expect(search.headers()['cache-control']).toContain('no-store');
+  // Enter opens the selected action: Audit, by its own address.
+  await page.keyboard.press('Control+k');
+  await palette.getByRole('combobox').fill('open audit');
+  await expect(palette.getByRole('option', { name: /Open Audit/ })).toBeVisible();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/operator\/audit/);
+  await page.goto(`/operator?workspace=${seed.tenantId}`);
+  await expect(page.locator('h1')).toHaveText('Today');
+  if (phone) await openDrawer();
 
   // Missions opens at its own address, with the row of places under the header.
   await sidebar.getByRole('link', { name: 'Missions', exact: true }).click();

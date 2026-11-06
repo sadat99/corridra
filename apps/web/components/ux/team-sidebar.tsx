@@ -8,8 +8,9 @@ import './shells.css';
 import './team-nav.css';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import { OperatorIcon } from '../operator-icon';
+import { TeamPalette } from './team-palette';
 import { useLanguage } from '../language-provider';
 import { translate } from '../../lib/i18n/messages';
 import { subscribeToHash } from '../../lib/address-store';
@@ -38,7 +39,7 @@ const translated: Partial<
   meetings: 'wse.team.meetings',
 };
 
-export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
+export function TeamSidebar({ urls, ownerPage = false }: { urls: boolean; ownerPage?: boolean }) {
   const { t, locale } = useLanguage();
   const pathname = usePathname() ?? '/operator';
   const hash = useSyncExternalStore(
@@ -54,6 +55,7 @@ export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
   const section = currentTeamSection(pathname, hash, sectionForSlug);
   const place = (section || 'home') as TeamPlaceId;
   const current = itemForPlace(place, role);
+  const adminNote = useId();
   const admin = useRef<HTMLDetailsElement | null>(null);
   const account = useRef<HTMLDetailsElement | null>(null);
   // The Admin group opens by itself on one of its pages, so a deep link lands visibly.
@@ -117,6 +119,7 @@ export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
       className="ux-team-sidebar"
       aria-label={t('wse.team.nav')}
     >
+      <TeamPalette urls={urls} ownerPage={ownerPage} />
       <ul>
         {daily.map((item) => {
           const first = teamPlacesFor(item, role)[0];
@@ -139,10 +142,15 @@ export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
         <details ref={admin} className="ux-team-group" open={current === 'admin'}>
           <summary
             title={labelText(adminItem)}
+            aria-describedby={adminNote}
             aria-current={current === 'admin' ? 'true' : undefined}
           >
             <OperatorIcon name={adminItem.icon} />
             <span>{label(adminItem)}</span>
+            {/* The board's caption. Hidden from the name (the name stays "Admin") and read as its description. */}
+            <small id={adminNote} className="ux-team-caption" aria-hidden="true">
+              {english('Owner and admin')}
+            </small>
             <OperatorIcon name="chevron" className="ux-team-chevron" />
           </summary>
           <ul>

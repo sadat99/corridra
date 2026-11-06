@@ -79,6 +79,7 @@ describe('NAV-04 the sidebar holds the five daily items, and Admin only for owne
     const { sidebar } = await render('owner');
     const words = [...sidebar.matchAll(/<span>([^<]+)<\/span>/g)].map((m) => m[1]);
     expect(words).toEqual([
+      'Search',
       'Today',
       'Missions',
       'Companies',
@@ -93,6 +94,16 @@ describe('NAV-04 the sidebar holds the five daily items, and Admin only for owne
       'Account',
       'Authenticator',
     ]);
+  });
+  test('Admin carries the board caption as its description, and the name stays Admin', async () => {
+    const { sidebar } = await render('owner');
+    const summary = sidebar.match(/<summary[^>]*title="Admin"[^>]*>/)?.[0] ?? '';
+    const id = summary.match(/aria-describedby="([^"]+)"/)?.[1];
+    expect(id, summary).toBeTruthy();
+    expect(sidebar).toContain(
+      `id="${id}" class="ux-team-caption" aria-hidden="true">Owner and admin<`,
+    );
+    expect(sidebar).toMatch(/<span>Admin<\/span>/);
   });
   test('no other role sees Admin or its pages; an operator keeps the daily items and Account', async () => {
     for (const role of ['operator', 'reviewer', 'viewer', null]) {
