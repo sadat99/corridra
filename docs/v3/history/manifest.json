@@ -325,6 +325,14 @@
       "bytes": 11515,
       "sha256": "df7644b44794b3afb61085808f937dd776e3d1d10c497fb68df27934acae54f7",
       "meaning": "Exact active ledger at a1dbbc9 (the PR 261 merge, 4 Nov), before the PR 261 main result and the decision card service and routes (E3b step 3) were recorded, including the E3b bullet that said the branch was not pushed and the next-action list that said to open the PR for steps 1 and 2, and the PR 255, 257, 258, 259 and 260 bullets later condensed. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "a4caf6f355b322c21ec536995de2cc204b8a91e7",
+      "archive": "docs/v3/history/ledger-before-pr325-342-records-2026-11-06.md",
+      "bytes": 11441,
+      "sha256": "92865555f12f989e7f61cb4611dc7cb4676e577ffbd2ec6a14c980799e5aa1c1",
+      "meaning": "Exact active ledger at a4caf6f (the PR 342 merge, 6 Nov), before PRs 322, 325 and 327 to 342 and the 6 Nov install runs were recorded, including the PR 255 to 262 (Batch E and E3b) bullets and the 5 Nov next-action list later condensed. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
