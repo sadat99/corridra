@@ -150,7 +150,8 @@ test('Operator Today panel reads the real mission list, shows new and overdue wo
       .getByRole('region', { name: 'Meetings that need a new time' })
       .getByText('Invented factory visit'),
   ).toBeVisible();
-  await expect(today.getByRole('link', { name: 'Open Missions' })).toHaveAttribute(
+  // Exact: the "7 open missions" count link also contains the words.
+  await expect(today.getByRole('link', { name: 'Open Missions', exact: true })).toHaveAttribute(
     'href',
     '#workspace-missions',
   );
