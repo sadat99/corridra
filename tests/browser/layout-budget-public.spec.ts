@@ -1,9 +1,10 @@
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect, type Page } from '@playwright/test';
 
-// Layout budget, Phase 1 (docs/revamp/specs/layout-budget.md): the compact footer and the privacy notice in
-// sections. Page length is the full document height over the viewport height: at most 2.0 phone screens (390 x
-// 844) and 1.0 desktop screen (1440 x 900). Content is never removed: hidden content stays in the server HTML.
+// Layout budget, Phase 1 (docs/revamp/specs/layout-budget.md): the footer and the privacy notice in sections.
+// Page length is the full document height over the viewport height. A public page is at most 3.0 phone screens
+// (390 x 844) and 2.0 desktop screens (1440 x 900), footer included (owner decision of 6 November 2026, with the
+// Ledger footer). Content is never removed: hidden content stays in the server HTML.
 const sizes = {
   phone: { width: 390, height: 844 },
   desktop: { width: 1440, height: 900 },
@@ -27,19 +28,20 @@ const footerLinks = [
   '/privacy',
 ];
 
-test.describe('the compact footer (L-02)', () => {
-  test('on a phone the link groups are collapsed, the footer is short and every link is still there', async ({
+test.describe('the footer (L-02)', () => {
+  test('on a phone the link groups are collapsed, the footer stays within its height and every link is still there', async ({
     page,
   }) => {
     await page.setViewportSize(sizes.phone);
     await page.goto('/about');
     const footer = page.locator('footer.guide-footer');
     const box = await footer.boundingBox();
+    // The Ledger footer measured 874 px at 390 x 844 when it shipped; this bound stops it growing.
     expect(box!.height / sizes.phone.height, 'footer height in phone screens').toBeLessThanOrEqual(
-      0.4,
+      1.05,
     );
     const groups = footer.locator('details.guide-footer-details');
-    await expect(groups).toHaveCount(2);
+    await expect(groups).toHaveCount(4);
     for (const group of await groups.all()) await expect(group).not.toHaveAttribute('open', '');
     for (const href of footerLinks)
       expect(await footer.locator(`a[href="${href}"]`).count(), href).toBeGreaterThan(0);
@@ -50,26 +52,31 @@ test.describe('the compact footer (L-02)', () => {
     await expect(groups.first().locator('a').first()).toBeVisible();
   });
 
-  test('on a desktop the footer is one short row, every link is in the page, and each group opens to its links', async ({
+  test('on a desktop the footer stays within its height, every link is in the page, and every group shows its links with no tap', async ({
     page,
   }) => {
     await page.setViewportSize(sizes.desktop);
     await page.goto('/about');
     const footer = page.locator('footer.guide-footer');
     const box = await footer.boundingBox();
+    // The Ledger footer measured 626 px at 1440 x 900 when it shipped; this bound stops it growing.
     expect(
       box!.height / sizes.desktop.height,
       'footer height in desktop screens',
-    ).toBeLessThanOrEqual(0.1);
+    ).toBeLessThanOrEqual(0.72);
     for (const href of footerLinks)
       expect(await footer.locator(`a[href="${href}"]`).count(), href).toBeGreaterThan(0);
-    // The notice line is always in view; each group opens to a full row of its links.
+    // Every group is open from 701 px: its summary is hidden and its four links are in view, in one row of four.
     await expect(footer.locator('a[href="/privacy"]')).toBeVisible();
-    for (const group of await footer.locator('details.guide-footer-details').all()) {
-      await group.locator('summary').click();
+    const groups = footer.locator('details.guide-footer-details');
+    for (const group of await groups.all()) {
+      await expect(group.locator('summary')).toBeHidden();
       for (const link of await group.locator('a').all()) await expect(link).toBeVisible();
-      expect((await group.boundingBox())!.width).toBeGreaterThan(900);
     }
+    const tops = await groups.evaluateAll((items) =>
+      items.map((item) => Math.round(item.getBoundingClientRect().top)),
+    );
+    expect(new Set(tops).size, 'the four groups share one row').toBe(1);
   });
 
   for (const [name, size] of Object.entries(sizes))
@@ -98,7 +105,7 @@ test.describe('the privacy notice in sections (L-02, L-05)', () => {
     test(`the notice is within its page budget at ${name}`, async ({ page }) => {
       await page.setViewportSize(size);
       await page.goto('/privacy');
-      const limit = name === 'phone' ? 2.0 : 1.0;
+      const limit = name === 'phone' ? 3.0 : 2.0;
       expect(await screens(page), `${name} screens`).toBeLessThanOrEqual(limit);
     });
 

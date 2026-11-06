@@ -23,10 +23,10 @@ test('UX-06 the home is one question, and the route explorer and mission guide k
   await expect(page.getByRole('list', { name: 'How a mission works' }).locator('li')).toHaveCount(
     6,
   );
-  await expect(page.getByRole('link', { name: 'How we label facts' })).toHaveAttribute(
-    'href',
-    '/trust',
-  );
+  // The footer has its own How We Label Facts link, so the home's link is found in the page content.
+  await expect(
+    page.getByRole('main').getByRole('link', { name: 'How we label facts' }),
+  ).toHaveAttribute('href', '/trust');
   // Every way to work and every guide page stays reachable from the footer.
   await openFooterGroups(page);
   for (const href of [
@@ -39,9 +39,9 @@ test('UX-06 the home is one question, and the route explorer and mission guide k
     '/institutions',
   ])
     await expect(page.locator(`footer a[href="${href}"]`).first()).toBeVisible();
-  // How it works and Routes live in the header, so the footer does not repeat them.
-  await expect(page.locator('footer a[href="/how-it-works"]')).toHaveCount(0);
-  await expect(page.locator('footer a[href="/corridors"]')).toHaveCount(0);
+  // The Ledger footer (owner decision of 6 November 2026) lists How It Works and Explore Every Route once each.
+  await expect(page.locator('footer a[href="/how-it-works"]')).toHaveCount(1);
+  await expect(page.locator('footer a[href="/corridors"]')).toHaveCount(1);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.goto('/corridors');
   await page.getByRole('tab', { name: 'Pick Your Route' }).click(); // the picker is its own tab
@@ -168,14 +168,17 @@ test('UX-06 discovery preserves keyboard and content at all required widths and 
   );
 });
 
-// The footer's link groups start collapsed (layout budget, Phase 1); opening them is one tap.
+// On a phone the footer's link groups are disclosures (opening one is one tap); from 701 px every group is open.
 const openFooterGroups = async (page: import('@playwright/test').Page) => {
-  for (const group of await page.locator('footer details.guide-footer-details').all())
-    if (!(await group.evaluate((node) => (node as HTMLDetailsElement).open)))
-      await group.locator('summary').click();
+  for (const summary of await page.locator('footer details.guide-footer-details > summary').all())
+    if (
+      (await summary.isVisible()) &&
+      !(await summary.evaluate((node) => (node.parentElement as HTMLDetailsElement).open))
+    )
+      await summary.click();
 };
 
-test('footer keeps six links in each group, collapsed by default, and each group opens to its links at every width', async ({
+test('footer keeps four links in each of four groups, collapsed on a phone and open from 701 px, at every width', async ({
   page,
 }) => {
   for (const width of [1440, 1000, 768, 701, 700, 390]) {
@@ -183,17 +186,40 @@ test('footer keeps six links in each group, collapsed by default, and each group
     await page.goto('/');
     const footer = page.locator('footer');
     const groups = footer.locator('details.guide-footer-details');
-    await expect(groups, `two link groups at ${width}px`).toHaveCount(2);
+    await expect(groups, `four link groups at ${width}px`).toHaveCount(4);
     for (const group of await groups.all())
-      await expect(group, `collapsed at ${width}px`).not.toHaveAttribute('open', '');
-    await openFooterGroups(page);
-    const first = footer.getByRole('navigation', { name: 'Footer solutions', exact: true });
-    const second = footer.getByRole('navigation', { name: 'About Corridra', exact: true });
-    await expect(first.getByRole('link')).toHaveCount(6);
-    await expect(second.getByRole('link')).toHaveCount(6);
-    const a = (await first.boundingBox())!;
-    const b = (await second.boundingBox())!;
-    // Opened groups stack, so neither is cut off and nothing overlaps.
-    expect(b.y, `groups do not overlap at ${width}px`).toBeGreaterThanOrEqual(a.y + a.height - 1);
+      await expect(group, `no group starts open at ${width}px`).not.toHaveAttribute('open', '');
+    const nav = footer.getByRole('navigation', { name: 'Footer', exact: true });
+    if (width <= 700) {
+      for (const group of await groups.all()) {
+        await expect(group.locator('summary'), `${width}px`).toBeVisible();
+        await expect(group.getByRole('link').first(), `${width}px`).toBeHidden();
+      }
+      await openFooterGroups(page);
+    } else {
+      for (const group of await groups.all())
+        await expect(group.locator('summary'), `${width}px`).toBeHidden();
+    }
+    for (const group of await groups.all()) {
+      await expect(group.getByRole('link')).toHaveCount(4);
+      for (const link of await group.getByRole('link').all()) await expect(link).toBeVisible();
+    }
+    await expect(nav.getByRole('link')).toHaveCount(16);
+    // The groups never overlap: they stack on a phone and sit in columns on a wide screen.
+    const boxes = await groups.evaluateAll((items) =>
+      items.map((item) => {
+        const box = item.getBoundingClientRect();
+        return { left: box.left, right: box.right, top: box.top, bottom: box.bottom };
+      }),
+    );
+    for (const [i, a] of boxes.entries())
+      for (const b of boxes.slice(i + 1)) {
+        const apart =
+          a.right <= b.left + 1 ||
+          b.right <= a.left + 1 ||
+          a.bottom <= b.top + 1 ||
+          b.bottom <= a.top + 1;
+        expect(apart, `groups do not overlap at ${width}px`).toBe(true);
+      }
   }
 });

@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { screensOf, verdictFor, viewports } from '../ux/page-length-lib';
+import {
+  homeLimits,
+  limitsFor,
+  publicPageLimits,
+  screensOf,
+  verdictFor,
+  viewports,
+} from '../ux/page-length-lib';
 
 // The page-length limits of the layout budget (docs/revamp/specs/layout-budget.md section 2, owner
 // decision of 5 November 2026): phone target 1.5 and hard limit 2.0; desktop one screen both ways.
@@ -25,6 +32,39 @@ describe('page length limits', () => {
     expect(verdictFor(1.51, phone)).toBe('over target');
     expect(verdictFor(2.0, phone)).toBe('over target');
     expect(verdictFor(2.01, phone)).toBe('over hard limit');
+  });
+
+  it('judges a public page by the public page limits and the home by its own rule (owner, 6 November 2026)', () => {
+    expect(publicPageLimits).toEqual({
+      phone: { target: 3.0, hard: 3.0 },
+      desktop: { target: 2.0, hard: 2.0 },
+    });
+    expect(homeLimits).toEqual({
+      phone: { target: 3.5, hard: 3.5 },
+      desktop: { target: 2.5, hard: 2.5 },
+    });
+    const about = { route: '/about', audience: 'public' };
+    expect(limitsFor(about, desktop)).toEqual(publicPageLimits.desktop);
+    expect(limitsFor(about, phone)).toEqual(publicPageLimits.phone);
+    expect(verdictFor(2.0, limitsFor(about, desktop))).toBe('within target');
+    expect(verdictFor(2.01, limitsFor(about, desktop))).toBe('over hard limit');
+    expect(verdictFor(3.01, limitsFor(about, phone))).toBe('over hard limit');
+    expect(limitsFor({ route: '/', audience: 'public' }, desktop)).toEqual(homeLimits.desktop);
+    expect(verdictFor(2.51, limitsFor({ route: '/', audience: 'public' }, desktop))).toBe(
+      'over hard limit',
+    );
+  });
+
+  it('keeps the viewport limits for /plan, the sign-in pages and every signed-in page', () => {
+    for (const entry of [
+      { route: '/plan', audience: 'public intake and customer identity' },
+      { route: '/signin', audience: 'public intake and customer identity' },
+      { route: '/account', audience: 'customer' },
+      { route: '/operator', audience: 'staff' },
+    ]) {
+      expect(limitsFor(entry, desktop), entry.route).toEqual({ target: 1.0, hard: 1.0 });
+      expect(limitsFor(entry, phone), entry.route).toEqual({ target: 1.5, hard: 2.0 });
+    }
   });
 
   it('measures the document height over the viewport height', () => {
