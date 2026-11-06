@@ -7,17 +7,50 @@ import { LanguageSwitcher } from './language-switcher';
 import { useT } from './language-provider';
 import { useSignedIn } from './use-signed-in';
 import { useSignOut } from './use-sign-out';
+import { ORB, WORDMARK } from './brand-paths';
 
-/** The wordmark, drawn here only (the design system allows this one inline drawing). */
+/**
+ * The Corridra logo, drawn here only (the design system allows this one inline drawing). Geometry
+ * is in brand-paths.ts. Colour is set by CSS (.brand-mark, .brand-word), never by hex in this file.
+ * Spec: docs/brand/CORRIDRA_BRAND_IDENTITY.md.
+ */
 export function BrandMark() {
   return (
-    <svg className="brand-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-      <path
-        d="M25 5H14a11 11 0 0 0 0 22h11M25 12H15a4 4 0 0 0 0 8h10"
-        stroke="currentColor"
-        strokeWidth="3"
-      />
+    <svg
+      className="brand-mark"
+      viewBox={ORB.viewBox}
+      fill="currentColor"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d={ORB.d} />
+      <circle cx={ORB.dot.cx} cy={ORB.dot.cy} r={ORB.dot.r} />
     </svg>
+  );
+}
+
+export function BrandWordmark() {
+  return (
+    <svg
+      className="brand-word"
+      viewBox={WORDMARK.viewBox}
+      fill="currentColor"
+      fillRule="evenodd"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d={WORDMARK.d} />
+    </svg>
+  );
+}
+
+/** Compact lockup: orb then wordmark. The link that wraps it carries the accessible name. */
+export function BrandLockup() {
+  return (
+    <>
+      <BrandMark />
+      <BrandWordmark />
+    </>
   );
 }
 
@@ -107,8 +140,7 @@ export function SiteHeader({
       }}
     >
       <Link prefetch={false} className="brand" href="/" aria-label={t('header.home')}>
-        <BrandMark />
-        <span>Corridra</span>
+        <BrandLockup />
       </Link>
       <CornerDock variant="header" />
       <button

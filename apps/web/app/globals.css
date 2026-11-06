@@ -8439,3 +8439,54 @@ samp {
   outline: 3px solid var(--ac-cobalt);
   outline-offset: 2px;
 }
+
+/* Brand identity layer. Spec: docs/brand/CORRIDRA_BRAND_IDENTITY.md. Tokens only (D18).
+   Orb is cobalt (--brand), wordmark is navy (--brand-deep); both turn white on the navy footer.
+   Each wordmark height keeps the compact lockup's proportion: 25 / 42 of the orb beside it. */
+.brand .brand-mark {
+  flex: none;
+  color: var(--brand);
+}
+.brand .brand-word {
+  flex: none;
+  width: auto;
+  height: 18px;
+  color: var(--brand-deep);
+}
+.guide-footer-wordmark .brand-mark,
+.guide-footer-wordmark .brand-word {
+  flex: none;
+  color: var(--on-brand);
+}
+.guide-footer-wordmark .brand-word {
+  width: auto;
+  height: 17px;
+}
+@media (max-width: 760px) {
+  .brand .brand-word {
+    height: 16px;
+  }
+}
+@media (max-width: 760px) {
+  /* The signed-in headers keep the orb and the link's name below 760 px: their row does not wrap up to 700 px and
+     the lockup's wordmark (about 170 px) would push the inbox, account and help controls past the edge. */
+  :is(.ux-customer-header, .ux-team-header) .brand .brand-word {
+    display: none;
+  }
+}
+@media (min-width: 1024px) {
+  .site-shell:has(.ux-leftnav-frame) > .ux-app-header .brand .brand-word {
+    height: 14px;
+  }
+  .site-shell:has(.ux-leftnav-frame[data-collapsed='true']) > .ux-app-header .brand .brand-word {
+    display: none;
+  }
+}
+@media (forced-colors: active) {
+  .brand .brand-mark,
+  .brand .brand-word,
+  .guide-footer-wordmark .brand-mark,
+  .guide-footer-wordmark .brand-word {
+    color: CanvasText;
+  }
+}

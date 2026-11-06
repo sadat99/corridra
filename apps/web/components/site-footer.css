@@ -36,16 +36,13 @@
   padding: var(--space-12) 0 var(--space-8);
   border-bottom: 1px solid var(--footer-line);
 }
+/* The logo is the compact lockup in white; its name is the link's hidden text. */
 .guide-footer .guide-footer-wordmark {
   display: inline-flex;
   align-items: center;
   gap: var(--space-3);
   min-height: 2.75rem;
   color: var(--on-brand);
-  font-family: var(--serif);
-  font-size: var(--text-2xl);
-  font-weight: 600;
-  line-height: 1;
 }
 .guide-footer-wordmark .brand-mark {
   width: 1.75rem;
@@ -170,6 +167,15 @@
   gap: var(--space-2);
   font-size: var(--text-sm);
   color: var(--footer-text);
+}
+/* A label chip may wrap its own words when text is enlarged, so the legend never runs past a narrow screen. */
+.guide-footer-legend > * {
+  max-width: 100%;
+}
+.guide-footer-legend .guide-tag {
+  white-space: normal;
+  height: auto;
+  min-height: 1.5em;
 }
 .guide-footer-trust > a {
   display: inline-flex;

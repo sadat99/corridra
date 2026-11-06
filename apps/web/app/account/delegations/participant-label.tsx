@@ -109,8 +109,7 @@ export function ParticipantLabelEditor({
         }),
       });
       if ([401, 403].includes(response.status)) {
-        // Nothing typed or shown here outlives a refusal of access: the drafts go, and the page clears the private roster.
-        dropLabelDrafts();
+        // Nothing typed or shown here outlives a refusal of access: the page clears the private roster and, with it, every label draft.
         setDraftState(null);
         onDenied();
       } else if (response.status === 429) {
