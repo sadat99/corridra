@@ -4,7 +4,7 @@
 // or on a public page, it is the public header exactly as before. Owner: WS-E.
 import { usePathname } from 'next/navigation';
 import { isBarePublicPage } from '../../lib/ux/bare-pages';
-import { BrandMark, SiteHeader } from '../site-header';
+import { BrandLockup, SiteHeader } from '../site-header';
 import { signedInShellFor } from '../../lib/ux/shells';
 import { AppHeader } from './app-header';
 
@@ -30,7 +30,12 @@ export function ShellHeader({
   const shell = shells ? signedInShellFor(pathname) : null;
   if (shell)
     return (
-      <AppHeader kind={shell} live={live} notifications={notifications} brandMark={<BrandMark />} />
+      <AppHeader
+        kind={shell}
+        live={live}
+        notifications={notifications}
+        brandMark={<BrandLockup />}
+      />
     );
   return <SiteHeader accounts={accounts} mode={mode} />;
 }

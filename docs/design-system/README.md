@@ -2,6 +2,8 @@
 
 This is the working index for the owner-locked **Corridra AC/1** design system (Atlantic Cobalt brand, one Meridian foundation, four task compositions). It tells Claude Code or Codex what the package says, how it was reconciled with existing authorities, what is built, what is not and what to do next. It is not a product authority and not a status ledger: live status, tested SHAs and the next action stay in [the V3 ledger](../V3_LEDGER.md), and every change is logged in [the work log](../agents/work-log.md).
 
+Logo, orb, favicon, app icon and social-image rules: [docs/brand/CORRIDRA_BRAND_IDENTITY.md](../brand/CORRIDRA_BRAND_IDENTITY.md) (ADR-077, Proposed; owner instruction, 6 November 2026: "Update the logo, favicon, deisgn assets everywhere concerned, without making anything inconsistent.").
+
 ## 1. Where the package is and how to check it
 
 The owner supplied `CORRIDRA_AC1_LOCKED_DESIGN_SYSTEM.zip` on 22 October 2026 (zip sha256 `9a9574ef7f16b4bcdef92356685a77dc0b184e6cc237283dd622b0784fc70e5a`). All 23 files are preserved byte for byte in [`docs/source/ac1-design-system/`](../source/ac1-design-system/). Its own `manifest.json` lists 22 files with sha256 and size; `tests/design-system.test.mjs` re-checks every hash in `pnpm test`, so a later edit to an original fails CI. Never edit those files. Amend forward here or in [UI direction](../agents/ui-direction.md).
