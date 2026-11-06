@@ -2,6 +2,7 @@
 // deciding: this file seals what the Corridra team's Move just queued, sends from a durable workflow,
 // reads and saves a person's choices, and mutes. Nothing here logs an address, a name or message text.
 import { createHash, createHmac } from 'node:crypto';
+import { z } from 'zod';
 import { withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
 import {
   defaultNotificationPreferences,
@@ -135,7 +136,77 @@ export class CustomerNotificationService extends CustomerSessionBoundary {
       expectedIssuer,
     );
   }
+
+  /**
+   * The person's own requests they ever stopped emails about, for each kind of email, and whether each is
+   * stopped now. Ids, a state and a time: never an address. A kind whose module is not installed shows nothing.
+   */
+  async mutes(expectedSubject?: string, expectedIssuer?: string): Promise<MailMute[]> {
+    const found: MailMute[] = [];
+    for (const store of mailMuteStores) {
+      try {
+        const rows = await this.transaction(
+          async (db) =>
+            (await db.query<{ r: unknown }>(`SELECT ${muteFunctions[store].list}() AS r`)).rows[0]
+              .r,
+          expectedSubject,
+          expectedIssuer,
+        );
+        for (const row of z
+          .array(z.object({ requestId: z.uuid(), muted: z.boolean(), at: z.string() }))
+          .parse(rows))
+          found.push({ store, ...row });
+      } catch (error) {
+        if (!moduleMissing(error)) throw error;
+      }
+    }
+    return found.sort((a, b) => b.at.localeCompare(a.at));
+  }
+
+  /**
+   * Stop emails about one request again, or let them start again. One command id per decision. Only the person
+   * the request belongs to can do it, and turning emails back on needs the sending control to be open; the
+   * database decides both and repeats every rule. Resuming never sends anything from the stopped period.
+   */
+  async setMute(input: unknown, expectedSubject?: string, expectedIssuer?: string) {
+    const value = mailMuteInput.parse(input);
+    return this.transaction(
+      async (db) =>
+        (
+          await db.query<{
+            r: { muted: boolean; changed: boolean; replayed?: boolean; reason?: string };
+          }>(`SELECT ${muteFunctions[value.store].set}($1,$2,$3) AS r`, [
+            value.requestId,
+            value.commandId,
+            value.muted,
+          ])
+        ).rows[0].r,
+      expectedSubject,
+      expectedIssuer,
+    );
+  }
 }
+
+/** The two kinds of email a person can stop for one request: the receipt and progress mail, and Pulse reminders. */
+export const mailMuteStores = ['request', 'reminder'] as const;
+export type MailMuteStore = (typeof mailMuteStores)[number];
+export type MailMute = { store: MailMuteStore; requestId: string; muted: boolean; at: string };
+export const mailMuteInput = z
+  .object({
+    store: z.enum(mailMuteStores),
+    requestId: z.uuid(),
+    commandId: z.uuid(),
+    muted: z.boolean(),
+  })
+  .strict();
+// A store whose database module is not installed has no functions or tables to call. That is "nothing to show",
+// never an error the person has to read.
+const moduleMissing = (error: unknown) =>
+  ['42883', '42P01', '3F000'].includes((error as { code?: string }).code ?? '');
+const muteFunctions: Record<MailMuteStore, { list: string; set: string }> = {
+  request: { list: 'customer.my_mission_mail_mutes', set: 'customer.set_mission_mail_mute' },
+  reminder: { list: 'customer.my_notification_mutes', set: 'customer.set_notification_mute' },
+};
 
 export class PulseService {
   constructor(
