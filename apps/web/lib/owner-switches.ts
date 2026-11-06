@@ -168,7 +168,7 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_CUSTOMER_ACCOUNT_LIFECYCLE_ENABLED',
     label: 'Close my account',
-    line: 'Lets a customer close their own account, undo it for a while, and file an erasure request.',
+    line: 'Lets a customer close their own account, undo it for 30 days, and file an erasure request.',
     group: 'Accounts and requests',
     kind: 'module',
   },
