@@ -29,6 +29,39 @@ export async function configureRequestWithdrawal(pool: DatabasePool, input: unkn
       )
     ).rows[0];
     if (!configuration) throw new Error('Real-use configuration has not been initialized');
+    // Withdrawal promises that no email or notice is sent about a withdrawn request. That is kept by the withdrawal
+    // files of the two mail modules, so opening is refused while either module is installed without its file.
+    // A module that is not installed needs nothing; pausing is never refused.
+    if (value.enabled)
+      for (const [schema, first, upgrade] of [
+        [
+          'customer_mission_mail_migrations',
+          '0001_mission_mail.sql',
+          '0003_withdrawn_requests.sql',
+        ],
+        [
+          'customer_notification_migrations',
+          '0001_notifications.sql',
+          '0005_withdrawn_requests.sql',
+        ],
+      ] as const) {
+        const registry = await db.query<{ present: boolean }>(
+          'SELECT to_regclass($1) IS NOT NULL AS present',
+          [`${schema}.applied`],
+        );
+        if (!registry.rows[0]?.present) continue;
+        const names = (
+          await db.query<{ name: string }>(`SELECT name FROM ${schema}.applied`)
+        ).rows.map((row) => row.name);
+        if (names.includes(first) && !names.includes(upgrade))
+          throw new Error(
+            'Upgrade the installed mail modules before opening request withdrawal (' +
+              schema +
+              ' is missing ' +
+              upgrade +
+              ')',
+          );
+      }
     const latest = (
       await db.query<{ version: number; enabled: boolean }>(
         'SELECT version,enabled FROM customer_private.request_withdrawal_control ORDER BY version DESC LIMIT 1',

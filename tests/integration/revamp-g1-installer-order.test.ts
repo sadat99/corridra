@@ -8,6 +8,10 @@ import { migrateCustomerMoves } from '../../packages/db/src/customer-move-migrat
 import { migrateCustomerMissionMail } from '../../packages/db/src/customer-mission-mail-migrate';
 import { migrateCustomerNotifications } from '../../packages/db/src/customer-notification-migrate';
 import { migrateCustomerRequestWithdrawal } from '../../packages/db/src/customer-request-withdrawal-migrate';
+import { pinCustomerAuthority } from '../../packages/auth/src/customer-authority-pin';
+import { configureCustomerRealUse } from '../../packages/auth/src/customer-real-use-configuration';
+import { configureSyntheticIntake } from '../../packages/missions/src/bootstrap';
+import { configureRequestWithdrawal } from '../../packages/auth/src/customer-request-withdrawal-configuration';
 
 // CRUD G1, the install order. Production already has mission mail 0001 and 0002 and notifications 0001 to 0004. The
 // base install run now installs the request withdrawal module (its control stays closed), and mission mail 0003 and
@@ -71,6 +75,15 @@ beforeAll(async () => {
     '0003_withdrawal_and_issuer_check.sql',
     '0004_mute_events.sql',
   ]);
+  await pinCustomerAuthority(f.owner, {
+    issuer: 'https://ep-withdrawal.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth',
+    executorId: f.serviceId,
+  });
+  await configureSyntheticIntake(f.owner, f.tenantA, f.users.owner.id);
+  await configureCustomerRealUse(f.owner, {
+    enabled: true,
+    reason: 'Owner approved real work for the install order fixture tests',
+  });
 });
 afterAll(async () => {
   await f?.close();
@@ -119,6 +132,26 @@ describe('installing the withdrawal module on the production state', () => {
     expect(await applied('customer_request_withdrawal_migrations')).toHaveLength(1);
   });
 
+  test('opening withdrawals is refused while an installed mail module lacks its withdrawal upgrade, and pausing is never refused', async () => {
+    const reason = 'Opening withdrawals for the first customers';
+    const control = async () =>
+      (
+        await f.owner.query(
+          'SELECT count(*)::int AS n FROM customer_private.request_withdrawal_control',
+        )
+      ).rows[0].n as number;
+    const before = await control();
+    await expect(configureRequestWithdrawal(f.owner, { enabled: true, reason })).rejects.toThrow(
+      'Upgrade the installed mail modules before opening request withdrawal',
+    );
+    expect(await control()).toBe(before);
+    // Closing is always allowed, so a pause can never be trapped.
+    await expect(configureRequestWithdrawal(f.owner, { enabled: false, reason })).resolves.toEqual({
+      enabled: false,
+      changed: false,
+    });
+  });
+
   test('a run that installs the mail modules applies 0003 and 0005 cleanly, leaves the installed hashes alone, and is repeatable', async () => {
     const mailBefore = await applied('customer_mission_mail_migrations');
     const pulseBefore = await applied('customer_notification_migrations');
@@ -154,6 +187,15 @@ describe('installing the withdrawal module on the production state', () => {
     await migrateCustomerNotifications(f.owner);
     expect(await applied('customer_mission_mail_migrations')).toEqual(mail);
     expect(await applied('customer_notification_migrations')).toEqual(pulse);
+  });
+
+  test('once the installed mail modules are upgraded, opening withdrawals succeeds', async () => {
+    await expect(
+      configureRequestWithdrawal(f.owner, {
+        enabled: true,
+        reason: 'Opening withdrawals for the first customers',
+      }),
+    ).resolves.toEqual({ enabled: true, changed: true });
   });
 });
 
