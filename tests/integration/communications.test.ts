@@ -5,6 +5,7 @@ import { rawContext } from './support';
 import { hash } from '../../packages/communications/src/index';
 import { SyntheticChannel, EmailChannel } from '../../packages/communications/src/adapters';
 import { OutboxDispatcher } from '../../packages/workflows/src/index';
+import { changeMemberNow } from './change-member';
 test('Part 05 populated upgrade preserves missions, shortlist, contacts, permissions and immutable history', async () => {
   const upgraded = await accessFixture(true);
   try {
@@ -255,7 +256,7 @@ test('restricted roles and relationship visibility deny unrelated records and wo
     f.runtime.query("UPDATE app.communication_dispatch SET status='DELIVERED' WHERE id=$1", [i.id]),
   ).rejects.toThrow();
   expect((await f.runtime.query('SELECT * FROM app.buyer_link')).rowCount).toBe(0);
-  await f.a.changeMember(f.users.owner.ctx, {
+  await changeMemberNow(f.a, f.users.owner.ctx, {
     userId: f.users.operator.id,
     role: 'operator',
     revoked: true,
@@ -263,7 +264,7 @@ test('restricted roles and relationship visibility deny unrelated records and wo
   await expect(f.communications.buyer({ action: 'read', token: i.token })).rejects.toThrow(
     'unavailable',
   );
-  await f.a.changeMember(f.users.owner.ctx, {
+  await changeMemberNow(f.a, f.users.owner.ctx, {
     userId: f.users.operator.id,
     role: 'operator',
     revoked: false,

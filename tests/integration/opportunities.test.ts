@@ -11,6 +11,7 @@ import {
   opportunityTransitions,
   assertOpportunityTransition,
 } from '../../packages/domain/src/opportunities';
+import { changeMemberNow } from './change-member';
 let f: Awaited<ReturnType<typeof commercialFixture>>;
 beforeAll(async () => {
   f = await commercialFixture();
@@ -97,7 +98,7 @@ test('cross-tenant, non-member and private relationship readers cannot see comme
     [f.tenantA, f.users.outsider.id],
   );
   expect((await f.service.workspace(f.users.outsider.ctx, o.missionId)).opportunities).toEqual([]);
-  await f.a.changeMember(f.users.owner.ctx, {
+  await changeMemberNow(f.a, f.users.owner.ctx, {
     userId: f.users.outsider.id,
     role: 'operator',
     revoked: true,
