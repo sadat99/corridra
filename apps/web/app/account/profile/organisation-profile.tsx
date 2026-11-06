@@ -4,6 +4,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { CountrySelect } from '../../../components/ux/pickers';
 import { countryName } from '../../../lib/ux/options';
 import { onDeviceClock } from '../../../lib/server-clock';
+import { ReplyError, loadReason, withReason } from '../../../lib/load-reason';
 const roleOptions = [
   ['BUYER', 'Buyer'],
   ['SELLER', 'Seller'],
@@ -58,36 +59,38 @@ const empty: Draft = {
 };
 function parseView(value: unknown, workspaceId: string): View {
   const v = value as View;
-  if (
-    !v ||
-    v.workspaceId !== workspaceId ||
-    v.organisationId !== null ||
-    v.canonicalLinked !== false ||
-    v.provenance !== 'SELF_REPORTED' ||
-    v.verified !== false ||
-    typeof v.canEdit !== 'boolean' ||
-    !Number.isInteger(v.currentVersion) ||
-    v.currentVersion < 0 ||
-    !Number.isFinite(Date.parse(v.expiresAt)) ||
-    Date.parse(v.expiresAt) <= Date.now() ||
-    Date.parse(v.expiresAt) > Date.now() + 65000
-  )
-    throw Error('Invalid company profile');
+  if (!v || typeof v !== 'object') throw new ReplyError('reply empty');
+  const expires = Date.parse(v.expiresAt);
+  const checks: [string, boolean][] = [
+    ['workspace', v.workspaceId !== workspaceId],
+    ['organisation', v.organisationId !== null],
+    ['canonical', v.canonicalLinked !== false],
+    ['provenance', v.provenance !== 'SELF_REPORTED'],
+    ['verified', v.verified !== false],
+    ['can edit', typeof v.canEdit !== 'boolean'],
+    ['version', !Number.isInteger(v.currentVersion) || v.currentVersion < 0],
+    ['expiry missing', !Number.isFinite(expires)],
+    ['expiry past', expires <= Date.now()],
+    ['expiry far', expires > Date.now() + 65000],
+  ];
+  const failed = checks.find(([, bad]) => bad);
+  if (failed) throw new ReplyError(`reply ${failed[0]}`);
   if (v.profile !== null) {
     const p = v.profile;
-    if (
-      !p ||
-      p.version !== v.currentVersion ||
-      typeof p.legalName !== 'string' ||
-      typeof p.countryCode !== 'string' ||
-      typeof p.summary !== 'string' ||
-      typeof p.sizeBand !== 'string' ||
-      !(p.website === null || typeof p.website === 'string') ||
-      !Array.isArray(p.commercialRoles) ||
-      !Array.isArray(p.sectors)
-    )
-      throw Error('Invalid profile content');
-  } else if (v.currentVersion !== 0) throw Error('Invalid profile content');
+    const fields: [string, boolean][] = [
+      ['profile', !p || typeof p !== 'object'],
+      ['profile version', p?.version !== v.currentVersion],
+      ['legal name', typeof p?.legalName !== 'string'],
+      ['country', typeof p?.countryCode !== 'string'],
+      ['summary', typeof p?.summary !== 'string'],
+      ['size', typeof p?.sizeBand !== 'string'],
+      ['website', !(p?.website === null || typeof p?.website === 'string')],
+      ['roles', !Array.isArray(p?.commercialRoles)],
+      ['sectors', !Array.isArray(p?.sectors)],
+    ];
+    const bad = fields.find(([, wrong]) => wrong);
+    if (bad) throw new ReplyError(`reply ${bad[0]}`);
+  } else if (v.currentVersion !== 0) throw new ReplyError('reply profile missing');
   return v;
 }
 function toDraft(p: Profile | null): Draft {
@@ -214,7 +217,7 @@ export function OrganisationProfile(props: {
           );
           return;
         }
-        if (!r.ok) throw Error('Profile request failed');
+        if (!r.ok) throw new ReplyError(`HTTP ${r.status}`);
         const v = parseView(onDeviceClock(await r.json(), r), workspaceId);
         if (
           body &&
@@ -238,12 +241,15 @@ export function OrganisationProfile(props: {
                   : 'No company profile has been added yet.',
           );
         }
-      } catch {
+      } catch (error) {
         if (active.current)
           setMessage(
             body
               ? 'Save could not be confirmed. Retry the same save.'
-              : 'The company profile could not be loaded. Try again.',
+              : withReason(
+                  'The company profile could not be loaded. Try again.',
+                  loadReason(error, controller.signal.aborted),
+                ),
           );
       } finally {
         clearTimeout(timeout);
