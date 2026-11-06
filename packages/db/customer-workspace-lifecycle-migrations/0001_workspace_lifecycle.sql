@@ -3,7 +3,7 @@
 -- Additive only: no existing function, policy or grant is replaced here (file 0003 replaces three, under fingerprints).
 -- A rename or an archive is an append-only revision, never a delete. A rename also updates app.tenant.name in the same
 -- transaction, because the name is a mutable field; invoices and signed documents keep the wording they snapshotted.
--- Archive refuses new private requests, invitations and registrations (file 0003). It does not make anything read-only.
+-- Archive refuses new private requests, invitations and registrations (file 0003) and nothing else.
 -- Events and the audit trail hold ids and a type, never the workspace name or the reason a person gave.
 -- The tables for handing ownership to another member are created here; the functions that use them are in file 0002.
 DO $guard$ BEGIN
@@ -133,17 +133,25 @@ CREATE FUNCTION customer_private.workspace_current(target uuid) RETURNS TABLE(ve
  SELECT coalesce((SELECT max(r.version) FROM customer_private.workspace_revision r WHERE r.tenant_id=target),0),t.name,customer_private.workspace_archived(target)
  FROM app.tenant t WHERE t.id=target
 $$;
+-- What a person is told when a new request, invitation or registration meets an archived workspace. A member who can
+-- restore it is told how; a person who cannot (an invitee, a participant) is only told it is not taking them right now.
+CREATE FUNCTION customer_private.workspace_archived_message(organiser boolean) RETURNS text
+ LANGUAGE sql IMMUTABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
+ SELECT CASE WHEN organiser THEN 'This workspace is archived. Restore it to send new private requests, invitations and registrations.'
+ ELSE 'This workspace is archived and is not accepting new invitations or registrations right now.' END
+$$;
 -- The one gate every writing path calls. The caller already holds the access lock of the workspace, the same lock an
 -- archive takes, so a request cannot slip in beside an archive.
-CREATE FUNCTION customer_private.workspace_open_guard(target uuid) RETURNS void
+CREATE FUNCTION customer_private.workspace_open_guard(target uuid,organiser boolean DEFAULT true) RETURNS void
  LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
 BEGIN
  IF customer_private.workspace_archived(target) THEN
-  RAISE EXCEPTION 'This workspace is archived. Restore it to send new private requests, invitations and registrations.' USING ERRCODE='55000';
+  RAISE EXCEPTION '%',customer_private.workspace_archived_message(organiser) USING ERRCODE='55000';
  END IF;
 END $$;
 REVOKE ALL ON FUNCTION customer_private.workspace_lifecycle_open(),customer_private.workspace_command_uuid(jsonb),customer_private.workspace_archived(uuid),
- customer_private.workspace_current(uuid),customer_private.workspace_open_guard(uuid) FROM PUBLIC,corridra_runtime,corridra_auth;
+ customer_private.workspace_current(uuid),customer_private.workspace_archived_message(boolean),customer_private.workspace_open_guard(uuid,boolean)
+ FROM PUBLIC,corridra_runtime,corridra_auth;
 
 -- Signed-in. With no workspace: the workspaces the person can reach, each with its version and whether it is archived.
 -- With a workspace: how it stands, its last 20 revisions, the open ownership offer the person may see (the owner, and the

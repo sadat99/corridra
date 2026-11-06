@@ -69,14 +69,19 @@ export function harness(f: Fixture, prefix: string) {
       [latest + 1, enabled, f.serviceId, 'Fixture control for the workspace lifecycle tests'],
     );
   };
+  // Returns the principal id of each admitted person.
   const admit = async (people: string[]) => {
+    const ids: Record<string, string> = {};
     for (const person of people)
-      await admitSyntheticCustomer(f.owner, {
-        issuer,
-        subject: session(person).subject,
-        executorId: f.serviceId,
-        reason: 'Explicit fictional workspace lifecycle fixture, no real account or email',
-      });
+      ids[person] = (
+        await admitSyntheticCustomer(f.owner, {
+          issuer,
+          subject: session(person).subject,
+          executorId: f.serviceId,
+          reason: 'Explicit fictional workspace lifecycle fixture, no real account or email',
+        })
+      ).id;
+    return ids;
   };
   const provision = async (person: string, name: string) =>
     (await workspaces(person).provision({ commandId: randomUUID(), name })).id;
