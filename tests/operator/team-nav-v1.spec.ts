@@ -4,7 +4,7 @@ import { fixtureTenant, startTodayFixture } from './team-today-fixture';
 
 // Navigation v1, team shell (docs/revamp/specs/navigation-v1.md): the real sidebar and second-level row,
 // bundled with the real stylesheets (the Today fixture), at 320, 390, 768, 1024, 1280 and 1440, for an owner
-// and for an operator (no Admin). Guards: icon and text contrast on the navy bar in every state and in the
+// and for an operator (no Admin, the Authenticator and Health in the avatar menu). Guards: icon and text contrast on the navy bar in every state and in the
 // collapsed rail, the row wrapping at 320 with 44 px targets and no sideways scroll, and the Account stopgap
 // for a role that is not shown Admin.
 let fixture: Awaited<ReturnType<typeof startTodayFixture>>;
@@ -157,24 +157,23 @@ test('an owner has Admin with its five and the Settings row holds the Owner page
   expect(axeRow.violations.map((v) => v.id)).toEqual([]);
 });
 
-test('an operator has no Admin, finds Health, Readiness and the Authenticator in Account, and keeps the daily items', async ({
+test('an operator has no Admin, finds Health, Readiness and the Authenticator in the avatar menu, and keeps the daily items', async ({
   page,
 }) => {
   const sidebar = await open(page, 'operator', '#ops-health');
   await expect(sidebar.locator('summary', { hasText: 'Admin' })).toHaveCount(0);
   for (const name of ['Today', 'Missions', 'Companies', 'Meetings', 'Money'])
     await expect(sidebar.getByRole('link', { name, exact: true })).toBeVisible();
-  const account = sidebar.locator('summary', { hasText: 'Account' });
-  await expect(account).toBeVisible();
-  for (const name of ['Authenticator', 'Health', 'Readiness'])
-    await expect(sidebar.getByRole('link', { name, exact: true })).toBeVisible();
-  await expect(sidebar.getByRole('link', { name: 'Health', exact: true })).toHaveAttribute(
-    'aria-current',
-    'page',
-  );
+  // No sidebar item claims the Health page; the avatar menu carries it.
+  await expect(sidebar.locator('[aria-current]')).toHaveCount(0);
+  const menu = page.locator('header.ux-app-header').getByRole('button', { name: 'Account menu' });
+  await menu.click();
+  for (const name of ['Authenticator', 'Health', 'Readiness', 'Sign Out'])
+    await expect(page.getByRole('menuitem', { name, exact: true })).toBeVisible();
   // Nothing an operator may not open is offered.
   for (const name of ['Audit', 'People and access', 'Settings'])
-    await expect(sidebar.getByRole('link', { name, exact: true })).toHaveCount(0);
+    await expect(page.getByRole('menuitem', { name, exact: true })).toHaveCount(0);
+  await page.keyboard.press('Escape');
   const axe = await new AxeBuilder({ page })
     .include('#workspace-navigation')
     .withTags(['wcag2a', 'wcag2aa'])
@@ -240,6 +239,17 @@ test('the keyboard keeps the selected option in view in a long list (Actions)', 
   ]);
   expect(item!.y).toBeGreaterThanOrEqual(list!.y - 1);
   expect(item!.y + item!.height).toBeLessThanOrEqual(list!.y + list!.height + 1);
+});
+
+test('an owner finds only the Authenticator in the avatar menu, with Health and Readiness in Admin', async ({
+  page,
+}) => {
+  await open(page, 'owner', '#workspace-authenticator');
+  const menu = page.locator('header.ux-app-header').getByRole('button', { name: 'Account menu' });
+  await menu.click();
+  await expect(page.getByRole('menuitem', { name: 'Authenticator', exact: true })).toBeVisible();
+  await expect(page.getByRole('menuitem', { name: 'Health', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('menuitem', { name: 'Sign Out', exact: true })).toBeVisible();
 });
 
 // Keep the fixture id referenced so a rename of the tenant fails here and not silently.

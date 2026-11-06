@@ -13,7 +13,7 @@ export type TeamPlaceId = SectionId | 'home' | 'owner';
 
 export type TeamPlace = { id: TeamPlaceId; label: string };
 export type TeamItem = {
-  key: 'today' | 'missions' | 'companies' | 'meetings' | 'money' | 'admin' | 'account';
+  key: 'today' | 'missions' | 'companies' | 'meetings' | 'money' | 'admin';
   label: string;
   icon: string;
   /** The second level, in order. The first place is where the item itself leads. */
@@ -81,19 +81,6 @@ export const teamMap: readonly TeamItem[] = [
       { id: 'workspace-settings', label: 'Settings' },
     ],
   },
-  // For every role: the Authenticator, and Health and Readiness for a role that may open them but is not
-  // shown Admin (an operator). Owner and admin find those two in Admin. Until the avatar menu of the
-  // shared header carries Account (S2), this small group is its door.
-  {
-    key: 'account',
-    label: 'Account',
-    icon: 'lock',
-    places: [
-      { id: 'workspace-authenticator', label: 'Authenticator' },
-      { id: 'ops-health', label: 'Health' },
-      { id: 'ops-gates', label: 'Readiness' },
-    ],
-  },
 ];
 
 /**
@@ -131,12 +118,7 @@ function placeAllowedStrict(id: TeamPlaceId, role: string | null): boolean {
 }
 
 export function teamPlacesFor(item: TeamItem, role: string | null): TeamPlace[] {
-  const admin = role === 'owner' || role === 'admin';
-  return item.places.filter(
-    (place) =>
-      placeAllowedStrict(place.id, role) &&
-      !(item.key === 'account' && admin && (place.id === 'ops-health' || place.id === 'ops-gates')),
-  );
+  return item.places.filter((place) => placeAllowedStrict(place.id, role));
 }
 
 /** The second level of Settings: three places, shown on any of them. */
@@ -145,13 +127,14 @@ export function settingsLevel(role: string | null): TeamPlace[] {
 }
 
 /** The item that holds a place for a role. Admin wins for the places it lists, for owner and admin. */
-export function itemForPlace(id: TeamPlaceId, role: string | null): TeamItem['key'] {
+export function itemForPlace(id: TeamPlaceId, role: string | null): TeamItem['key'] | 'none' {
   const admin = role === 'owner' || role === 'admin';
   if (admin && teamMap.find((i) => i.key === 'admin')?.places.some((p) => p.id === id))
     return 'admin';
   if (id === 'ops-center' || id === 'owner') return 'admin';
   const found = teamMap.find((i) => i.key !== 'admin' && i.places.some((p) => p.id === id));
-  return found ? found.key : 'admin';
+  // The Authenticator, and Health and Readiness for a role with no Admin, live in the avatar menu: no sidebar item is current.
+  return found ? found.key : 'none';
 }
 
 /**
@@ -162,4 +145,36 @@ export function itemForPlace(id: TeamPlaceId, role: string | null): TeamItem['ke
 export function placeHref(id: TeamPlaceId, urls: boolean, workspace = ''): string {
   if (id === 'owner') return '/operator/owner';
   return teamSectionHref(id === 'home' ? undefined : id, urls, workspace);
+}
+
+/**
+ * The places the avatar menu carries: the Authenticator for every role, and Health and Readiness for a role that may
+ * open them but is not shown Admin (an operator). Owner and admin find those two in Admin. With the role unknown only
+ * what every role may open is offered.
+ */
+const accountPlaces: readonly TeamPlace[] = [
+  { id: 'workspace-authenticator', label: 'Authenticator' },
+  { id: 'ops-health', label: 'Health' },
+  { id: 'ops-gates', label: 'Readiness' },
+];
+export function teamAccountPlaces(role: string | null): TeamPlace[] {
+  const admin = role === 'owner' || role === 'admin';
+  return accountPlaces.filter(
+    (place) =>
+      placeAllowedStrict(place.id, role) &&
+      !(admin && (place.id === 'ops-health' || place.id === 'ops-gates')),
+  );
+}
+
+/** The avatar menu's place links, with their addresses: what the menu renders, so a test can walk them without opening it. */
+export function teamAccountLinks(
+  role: string | null,
+  urls: boolean,
+  workspace = '',
+): { id: TeamPlaceId; label: string; href: string }[] {
+  return teamAccountPlaces(role).map((place) => ({
+    id: place.id,
+    label: place.label,
+    href: placeHref(place.id, urls, workspace),
+  }));
 }

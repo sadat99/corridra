@@ -60,7 +60,7 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   );
   await evidence(page, `V-06-today-${info.project.name}`);
 
-  // Tab order: Today, Missions, Companies, Meetings, Money, then the Admin and Account summaries. A closed group's
+  // Tab order: Today, Missions, Companies, Meetings, Money, then the Admin summary. A closed group's
   // links are not in the order. Enter and Space both toggle the group and focus stays on its summary.
   const focusedText = () =>
     page.evaluate(
@@ -71,11 +71,11 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
     );
   await sidebar.getByRole('link', { name: 'Today', exact: true }).focus();
   const order: string[] = [];
-  for (let step = 0; step < 6; step++) {
+  for (let step = 0; step < 5; step++) {
     await page.keyboard.press('Tab');
     order.push(await focusedText());
   }
-  expect(order).toEqual(['Missions', 'Companies', 'Meetings', 'Money', 'Admin', 'Account']);
+  expect(order).toEqual(['Missions', 'Companies', 'Meetings', 'Money', 'Admin']);
   const admin = sidebar.locator('summary', { hasText: 'Admin' });
   await expect(admin).toHaveAccessibleName('Admin');
   await expect(admin).toHaveAccessibleDescription('Owner and admin');
@@ -92,7 +92,7 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   // The command palette: Ctrl K opens it, Actions list only places this role may open, Tab changes scope,
   // Up and Down move, Escape closes and focus returns, and a mission is found by its company name.
   const palette = page.getByRole('dialog', { name: 'Search missions, companies and actions' });
-  const trigger = sidebar.getByRole('button', { name: /Search/ });
+  const trigger = page.locator('header.ux-app-header').getByRole('button', { name: /Search/ });
   expect((await trigger.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await trigger.focus();
   await page.keyboard.press('Control+k');

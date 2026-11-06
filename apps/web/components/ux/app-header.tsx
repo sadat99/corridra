@@ -17,13 +17,12 @@ import {
   readTeamContext,
   subscribeTeamContext,
 } from '../../lib/ux/team-context';
-import { CorridraIcon } from '../corridra-icon';
-import { BarInbox, LanguageMenuGroup } from './customer-bar';
 import { CustomerBar } from './customer-header';
 import { LeftNavMenuButton } from './left-nav';
-import { MenuLink } from './menu-link';
 import { NotificationInbox } from './notification-inbox';
-import { OverflowMenu } from './overflow-menu';
+import { PaletteTrigger } from './team-palette';
+import { TeamAccountMenu } from './team-utility-menus';
+import { HelpMenu, LanguageMenu, NotificationsPanel } from './utility-menus';
 
 const homes: Record<SignedInShell, string> = {
   team: '/operator',
@@ -139,23 +138,18 @@ export function AppHeader({
         <CustomerBar notifications={notifications} />
       ) : kind === 'team' ? (
         <div className="ux-app-tools ux-team-tools">
+          <PaletteTrigger />
           {notifications && inboxEndpoint ? (
-            <BarInbox
+            <NotificationsPanel
               key={inboxEndpoint}
               counted
               endpoint={inboxEndpoint}
               label={t(shellWords.inbox)}
             />
           ) : null}
-          <OverflowMenu
-            label="Account menu"
-            trigger={<CorridraIcon name="people" />}
-            className="ux-bar-account"
-          >
-            <LanguageMenuGroup />
-            <MenuLink href="/">Corridra Website</MenuLink>
-          </OverflowMenu>
-          <CornerDock variant="header" />
+          <LanguageMenu />
+          <HelpMenu />
+          <TeamAccountMenu />
         </div>
       ) : (
         <div className="ux-app-tools">

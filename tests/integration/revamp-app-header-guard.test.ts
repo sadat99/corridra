@@ -11,7 +11,10 @@ import { describe, expect, test } from 'vitest';
 // for the team Today redesign (owner, 6 Nov 2026: "today page redesign"): the inbox as an icon with its
 // unread count and the language and website in an account menu. All four entries were recorded again for
 // the brand identity (owner, 6 Nov 2026, ADR-077): the brand link's text "Corridra" left the header because
-// the logo lockup the shell passes in now carries the drawn wordmark; the link keeps its aria-label.
+// the logo lockup the shell passes in now carries the drawn wordmark; the link keeps its aria-label. The two team
+// entries were recorded again for Navigation v1 (owner, 6 Nov 2026): the Search button, the grouped notifications
+// panel, the language menu, the help menu and the avatar menu (docs/revamp/specs/navigation-v1.md, UtilityMenus).
+// The contributor entries are unchanged.
 const web = createRequire(resolve('apps/web/package.json'));
 const createElement = web('react').createElement as (
   t: unknown,
