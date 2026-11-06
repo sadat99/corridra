@@ -52,6 +52,9 @@ describe('NAV-02 five at most per level, and the right words', () => {
       ).toBeLessThanOrEqual(5);
       for (const item of items) expect(teamPlacesFor(item, role).length).toBeLessThanOrEqual(5);
       expect(settingsLevel(role).length).toBeLessThanOrEqual(5);
+      // The Account stopgap holds at most three places (Authenticator, Health, Readiness).
+      const account = items.find((item) => item.key === 'account');
+      if (account) expect(teamPlacesFor(account, role).length).toBeLessThanOrEqual(3);
     }
   });
   test('the board order and words', () => {

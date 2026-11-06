@@ -11,6 +11,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import { OperatorIcon } from '../operator-icon';
 import { useLanguage } from '../language-provider';
+import { translate } from '../../lib/i18n/messages';
 import { subscribeToHash } from '../../lib/address-store';
 import { sectionForSlug } from '../../lib/operator-urls';
 import { currentTeamSection } from '../../lib/ux/shells';
@@ -63,24 +64,30 @@ export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
   // A section word on a mission page, the owner page or a `#` link is a full page change: the
   // workspace reads the address once, so a soft change could show the old section.
   const plain = pathname !== '/operator' && !sectionForSlug(pathname.split('/')[2] ?? '');
+  // The visible words of an item, in the chosen language where one exists; also its tooltip.
+  const labelText = (item: TeamItem): string => {
+    const key = translated[item.key];
+    return key ? t(key) : item.label;
+  };
   const label = (item: TeamItem): ReactNode => {
     const key = translated[item.key];
-    if (key && locale === 'en') return item.label;
-    if (key) {
-      const text = t(key);
-      return text;
-    }
-    return locale !== 'en' ? <span lang="en">{item.label}</span> : item.label;
+    const text = labelText(item);
+    const untranslated = !key || text === translate('en', key);
+    return locale !== 'en' && untranslated ? <span lang="en">{text}</span> : text;
   };
   const english = (text: string): ReactNode =>
     locale !== 'en' ? <span lang="en">{text}</span> : text;
+  type Current = 'page' | 'true' | undefined;
+  /** "page" only on the link of the page itself; a parent of the current page is "true". */
+  const mark = (own: boolean, parent: boolean): Current =>
+    own ? 'page' : parent ? 'true' : undefined;
   function link(
     key: string,
     text: ReactNode,
     name: string,
     icon: string,
     target: string,
-    active: boolean,
+    current: Current,
   ) {
     const content = (
       <>
@@ -90,17 +97,11 @@ export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
     );
     // The name shows as a tooltip when the bar is collapsed to icons.
     return plain || target.includes('#') ? (
-      <a key={key} href={target} title={name} aria-current={active ? 'page' : undefined}>
+      <a key={key} href={target} title={name} aria-current={current}>
         {content}
       </a>
     ) : (
-      <Link
-        key={key}
-        prefetch={false}
-        href={target}
-        title={name}
-        aria-current={active ? 'page' : undefined}
-      >
+      <Link key={key} prefetch={false} href={target} title={name} aria-current={current}>
         {content}
       </Link>
     );
@@ -125,10 +126,10 @@ export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
               {link(
                 item.key,
                 label(item),
-                item.label,
+                labelText(item),
                 item.icon,
                 placeHref(first.id, urls, tenant),
-                current === item.key,
+                mark(place === first.id, current === item.key),
               )}
             </li>
           );
@@ -136,7 +137,10 @@ export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
       </ul>
       {adminItem ? (
         <details ref={admin} className="ux-team-group" open={current === 'admin'}>
-          <summary aria-current={current === 'admin' ? 'true' : undefined}>
+          <summary
+            title={labelText(adminItem)}
+            aria-current={current === 'admin' ? 'true' : undefined}
+          >
             <OperatorIcon name={adminItem.icon} />
             <span>{label(adminItem)}</span>
             <OperatorIcon name="chevron" className="ux-team-chevron" />
@@ -150,9 +154,11 @@ export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
                   entry.label,
                   'chevron',
                   placeHref(entry.id, urls, tenant),
-                  place === entry.id ||
-                    (entry.id === 'workspace-settings' &&
-                      (place === 'ops-center' || place === 'owner')),
+                  mark(
+                    place === entry.id,
+                    entry.id === 'workspace-settings' &&
+                      (place === 'ops-center' || place === 'owner'),
+                  ),
                 )}
               </li>
             ))}
@@ -161,7 +167,10 @@ export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
       ) : null}
       {accountItem ? (
         <details ref={account} className="ux-team-group" open={current === 'account'}>
-          <summary aria-current={current === 'account' ? 'true' : undefined}>
+          <summary
+            title={labelText(accountItem)}
+            aria-current={current === 'account' ? 'true' : undefined}
+          >
             <OperatorIcon name={accountItem.icon} />
             <span>{label(accountItem)}</span>
             <OperatorIcon name="chevron" className="ux-team-chevron" />
@@ -175,7 +184,7 @@ export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
                   entry.label,
                   'chevron',
                   placeHref(entry.id, urls, tenant),
-                  place === entry.id,
+                  mark(place === entry.id, false),
                 )}
               </li>
             ))}

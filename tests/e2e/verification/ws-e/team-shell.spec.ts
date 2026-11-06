@@ -118,7 +118,7 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   await expect(page).toHaveURL(/\/operator\/research/);
   await page
     .getByRole('navigation', { name: 'In this section' })
-    .getByRole('link', { name: 'Sources', exact: true })
+    .getByRole('link', { name: 'Sources and claims', exact: true })
     .click();
   await expect(page).toHaveURL(/\/operator\/sources/);
   await openDrawer();

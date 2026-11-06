@@ -15,6 +15,7 @@ import { FrontDoor } from '../../../components/front-door';
 import { ShowMoreList } from '../../../components/ux/show-more';
 import { SubTabs } from '../../../components/ux/sub-tabs';
 import { TeamContextPublisher } from '../../../components/ux/team-context-publisher';
+import { TeamSecondLevel } from '../../../components/ux/team-second-level';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { foundations } from '../../../lib/foundations';
 import { founderDoor, withWorkspace } from '../../../lib/front-doors';
@@ -93,6 +94,9 @@ export default async function Page({
   return (
     <WorkspaceShell eyebrow="OWNER PAGE" title="What is on and off." className="ux-owner">
       <TeamContextPublisher tenant={tenant.id} role={tenant.role} />
+      {uxSwitchOn('CORRIDRA_UX_SHELLS_V2') ? (
+        <TeamSecondLevel urls={uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')} ownerPage />
+      ) : null}
       {uxSwitchOn('CORRIDRA_UX_FRONT_DOORS') && (
         <FrontDoor label="Founder areas" items={withWorkspace(founderDoor, tenant.id)} />
       )}

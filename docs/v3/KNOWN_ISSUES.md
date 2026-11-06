@@ -246,3 +246,10 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Observed:** on PR 310 one CI job failed before any test ran: "PostgreSQL container could not start". The other jobs on the same head passed. Re-running only the failed jobs on the same head turned them green, with no code change.
 - **Cause:** a transient runner or service-container start failure, not the change under test.
 - **Rule:** when a job fails at service start-up with no test output, re-run the failed jobs once on the exact head (`gh api -X POST repos/<owner>/<repo>/actions/runs/<run>/rerun-failed-jobs`) and say so in one PR comment. A second failure is treated as real. Never change a test because of it.
+
+### KI-40 The team sidebar has an Account stopgap group, a known deviation from Navigation v1 (6 November 2026)
+
+- **What:** the Navigation v1 board gives the team sidebar five first-level items (Today, Missions, Companies, Meetings, Money) and an Admin group for owner and admin. The board has no door for the Authenticator, and Health and Readiness (which an operator may open) sit only in Admin, which an operator is not shown. Until a door exists, the sidebar carries a small Account group (Authenticator for every role; Health and Readiness for a role that may open them and is not shown Admin), so an owner sees seven first-level entries: five items, Admin and Account.
+- **Why it stays:** nothing may be lost or hidden from a role that could reach it before (Navigation v1 condition 1), and the shared header (S2's `ux/app-header.tsx`, avatar menu) is not editable by the team-shell work.
+- **Removal trigger:** when the shared header's avatar menu carries Account (Authenticator, and for non-admin roles Health and Readiness), delete the Account item from `apps/web/lib/ux/team-map.ts`, its group from `ux/team-sidebar.tsx` and the cap check in `tests/integration/team-navigation-map.test.ts` (NAV-02); the reachability test NAV-06 then proves each place is still reachable.
+- **Rule:** do not add a second stopgap group. The Account group holds at most three places (tested).

@@ -1,6 +1,6 @@
 'use client';
 // The Team shell frame (D14): the shared left navigation (components/ux/left-nav.tsx) holding the
-// Signal Desk sidebar. On wide screens the bar sits beside the page; on phones it is a drawer opened
+// Navigation v1 sidebar. On wide screens the bar sits beside the page; on phones it is a drawer opened
 // from the "Sections" button in the header. Sign-in and recovery pages under /operator keep the plain
 // public frame. Owner: WS-E.
 import './shells.css';
@@ -14,7 +14,6 @@ import { LeftNavFrame } from './left-nav';
 import { setLeftNavOpen } from './left-nav-store';
 import { useMarkedWord } from './marked-word';
 import { StepUpDialog } from './step-up-dialog';
-import { TeamSecondLevel } from './team-second-level';
 import { TeamSidebar } from './team-sidebar';
 
 export function TeamFrame({
@@ -58,7 +57,6 @@ export function TeamFrame({
         }}
         nav={<TeamSidebar urls={urls} ownerPage={ownerPage} />}
       >
-        <TeamSecondLevel urls={urls} ownerPage={ownerPage} />
         {children}
       </LeftNavFrame>
       <StepUpDialog />

@@ -46,8 +46,8 @@ export const teamMap: readonly TeamItem[] = [
     icon: 'company',
     places: [
       { id: 'workspace-research', label: 'Companies' },
-      { id: 'workspace-sources', label: 'Sources' },
-      { id: 'workspace-evidence', label: 'Evidence' },
+      { id: 'workspace-sources', label: 'Sources and claims' },
+      { id: 'workspace-evidence', label: 'Evidence review' },
     ],
   },
   {
@@ -71,7 +71,7 @@ export const teamMap: readonly TeamItem[] = [
   {
     key: 'admin',
     label: 'Admin',
-    icon: 'settings',
+    icon: 'shield',
     adminOnly: true,
     places: [
       { id: 'ops-health', label: 'Health' },

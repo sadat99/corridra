@@ -35,6 +35,7 @@ export async function startTodayFixture(root = resolve('.')) {
       import{BrandLockup}from ${source('apps/web/components/site-header.tsx')};
       import{TeamFrame}from ${source('apps/web/components/ux/team-frame.tsx')};
       import{WorkspaceShell}from ${source('apps/web/components/workspace-shell.tsx')};
+      import{TeamSecondLevel}from ${source('apps/web/components/ux/team-second-level.tsx')};
       import{SiteFooterPlace}from ${source('apps/web/components/site-footer-place.tsx')};
       import{OperatorFlags}from ${source('apps/web/app/operator/operator-flags.tsx')};
       import{Workspace}from ${source('apps/web/app/operator/workspace.tsx')};
@@ -42,6 +43,8 @@ export async function startTodayFixture(root = resolve('.')) {
       // ?shells=off renders the frame with the team shell switch off (no team header or left bar, every
       // panel mounted and hidden), as the protected operator suite runs it.
       const shells = new URLSearchParams(location.search).get('shells') !== 'off';
+      // ?owner=on shows the owner page entry, as an owner with the owner page switched on sees it.
+      const ownerPage = new URLSearchParams(location.search).get('owner') === 'on';
       const workspace = (
         <OperatorFlags replyReview={false}>
           <Workspace tenants={[{id:${JSON.stringify(fixtureTenant)},name:'Synthetic request operations',role:'owner'}]}
@@ -54,8 +57,9 @@ export async function startTodayFixture(root = resolve('.')) {
             {shells ? (
               <>
                 <AppHeader kind="team" live={false} notifications brandMark={<BrandLockup/>}/>
-                <TeamFrame urls ownerPage={false}>
+                <TeamFrame urls ownerPage={ownerPage}>
                   <WorkspaceShell eyebrow="TEAM WORKSPACE" title="Today" className="ux-operator-home ux-titled-today">
+                    <TeamSecondLevel urls ownerPage={ownerPage}/>
                     {workspace}
                   </WorkspaceShell>
                 </TeamFrame>

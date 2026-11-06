@@ -14,7 +14,8 @@ vi.mock('next/link', () => ({
   default: ({ children, href }: { children: unknown; href: string }) =>
     createElement('a', { href }, children as never),
 }));
-vi.mock('next/navigation', () => ({ usePathname: () => '/operator' }));
+const at = vi.hoisted(() => ({ path: '/operator' }));
+vi.mock('next/navigation', () => ({ usePathname: () => at.path }));
 
 // The component is TSX and the package type check has no JSX setting, so it is loaded by path.
 const sidebarPath = '../../apps/web/components/ux/team-sidebar';
@@ -33,7 +34,7 @@ describe('team sidebar sections while the role is unknown', () => {
   test('lists only what every role may open, and none of the restricted sections', async () => {
     const TeamSidebar = await load();
     const html = renderToStaticMarkup(createElement(TeamSidebar, { urls: true, ownerPage: true }));
-    for (const word of ['missions', 'research', 'meetings', 'commercial'])
+    for (const word of ['missions', 'research', 'meetings', 'commercial', 'authenticator'])
       expect(link(html, word), word).toBe(true);
     expect(html).not.toContain('Admin');
     for (const word of [
@@ -99,8 +100,16 @@ describe('team pages that do not mount the workspace publish the role from the s
   // The sidebar reads the published context on the server render too, so the chain is the real one:
   // publisher effect -> context store -> sidebar. Effects do not run in a static render, so the
   // publisher's effect is run at once.
-  const withPublisher = async (role: string | null) => {
+  const secondPath = '../../apps/web/components/ux/team-second-level';
+  const withPublisher = async (role: string | null, place = '/operator') => {
     vi.resetModules();
+    at.path = place;
+    // The web app resolves its own copy of next, so the mock names that copy.
+    vi.doMock(web.resolve('next/navigation'), () => ({ usePathname: () => place }));
+    vi.doMock(web.resolve('next/link'), () => ({
+      default: ({ children, href }: { children: unknown; href: string }) =>
+        createElement('a', { href }, children as never),
+    }));
     vi.doMock(web.resolve('react'), async (original) => {
       const react = await original<Record<string, unknown>>();
       return { ...react, useEffect: (effect: () => void) => void effect() };
@@ -114,7 +123,12 @@ describe('team pages that do not mount the workspace publish the role from the s
       renderToStaticMarkup(createElement(TeamContextPublisher, { tenant: 't1', role }));
     }
     const TeamSidebar = await load();
-    return renderToStaticMarkup(createElement(TeamSidebar, { urls: true, ownerPage: true }));
+    const { TeamSecondLevel } = await import(/* @vite-ignore */ secondPath);
+    // The sidebar and the row under the page title are what a person sees on a page.
+    return (
+      renderToStaticMarkup(createElement(TeamSidebar, { urls: true, ownerPage: true })) +
+      renderToStaticMarkup(createElement(TeamSecondLevel, { urls: true, ownerPage: true }))
+    );
   };
   test('an owner or admin sees the Admin group once the publisher ran', async () => {
     const owner = await withPublisher('owner');
@@ -124,8 +138,20 @@ describe('team pages that do not mount the workspace publish the role from the s
     expect(link(admin, 'settings')).toBe(true);
     expect(link(admin, 'controls')).toBe(false);
   });
+  test('an owner or admin reaches the Owner page, controls and network once the publisher ran', async () => {
+    // Rendered checks: the Owner page is in the Settings row, Network in the Missions row.
+    expect(await withPublisher('owner', '/operator/settings')).toContain('href="/operator/owner"');
+    expect(await withPublisher('admin', '/operator/settings')).toContain('href="/operator/owner"');
+    expect(link(await withPublisher('owner', '/operator/missions'), 'network')).toBe(true);
+    expect(link(await withPublisher('admin', '/operator/missions'), 'network')).toBe(true);
+    expect(link(await withPublisher('owner'), 'controls')).toBe(true);
+    expect(link(await withPublisher('admin'), 'controls')).toBe(false);
+  });
   test('a viewer gets nothing more than the unknown role does', async () => {
-    const viewer = await withPublisher('viewer');
+    const viewer =
+      (await withPublisher('viewer')) +
+      (await withPublisher('viewer', '/operator/settings')) +
+      (await withPublisher('viewer', '/operator/missions'));
     expect(viewer).not.toContain('/operator/owner');
     expect(viewer).not.toContain('Admin');
     for (const word of ['controls', 'network', 'settings', 'audit'])
@@ -133,7 +159,7 @@ describe('team pages that do not mount the workspace publish the role from the s
   });
   test('with no publisher mounted the owner links are absent', async () => {
     vi.resetModules();
-    const html = await withPublisher(null);
+    const html = (await withPublisher(null)) + (await withPublisher(null, '/operator/settings'));
     expect(html).not.toContain('/operator/owner');
     expect(link(html, 'controls')).toBe(false);
   });

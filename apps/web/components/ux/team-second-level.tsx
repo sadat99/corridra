@@ -49,11 +49,16 @@ export function TeamSecondLevel({ urls, ownerPage }: { urls: boolean; ownerPage:
     : item
       ? teamPlacesFor(item, role)
       : [];
-  // A mission page belongs to Missions and has no row of its own.
+  // The row shows only on a page that is one of its places, and never for a single place. A mission page is
+  // inside Missions, so it shows the Missions row.
   if (places.length < 2 || !places.some((entry) => entry.id === place)) return null;
   const plain = pathname !== '/operator' && !sectionForSlug(pathname.split('/')[2] ?? '');
   return (
-    <nav className="ux-team-second" aria-label="In this section">
+    <nav
+      className="ux-team-second"
+      aria-label="In this section"
+      lang={locale !== 'en' ? 'en' : undefined}
+    >
       <ul>
         {places.map((entry) => {
           const target = placeHref(entry.id, urls, tenant);

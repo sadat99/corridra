@@ -6,6 +6,7 @@ import { notFound, redirect } from 'next/navigation';
 import { customerMovesEnabled } from '@corridra/auth/customer-moves';
 import { TeamContextPublisher } from '../../../../components/ux/team-context-publisher';
 import { WorkspaceShell } from '../../../../components/workspace-shell';
+import { TeamSecondLevel } from '../../../../components/ux/team-second-level';
 import { foundations } from '../../../../lib/foundations';
 import { uxSwitchOn } from '../../../../lib/ux-switches';
 import { OperatorFlags } from '../../operator-flags';
@@ -67,6 +68,9 @@ export default async function Page({
   return (
     <WorkspaceShell eyebrow="MISSION" title="Mission" className="ux-operator-home">
       <TeamContextPublisher tenant={tenant} role={chosen.role} />
+      {uxSwitchOn('CORRIDRA_UX_SHELLS_V2') ? (
+        <TeamSecondLevel urls={uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')} ownerPage={false} />
+      ) : null}
       <OperatorFlags replyReview={uxSwitchOn('CORRIDRA_REPLY_PAGE')}>
         <MissionPage
           tenant={tenant}
