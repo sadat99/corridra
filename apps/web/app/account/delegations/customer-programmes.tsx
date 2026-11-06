@@ -272,30 +272,38 @@ function ScopedProgrammes({
   const refreshProgramme = useCallback(
     async (id: string) => {
       let cursor: string | undefined;
-      for (let page = 0; page < 6; page += 1) {
+      const seen = new Set<string>();
+      const lost = (words: string) => {
+        if (active.current) setStaleNote(words);
+      };
+      for (;;) {
         const query = new URLSearchParams({ workspaceId, ...(cursor ? { after: cursor } : {}) });
         const response = await fetch('/api/customer-programmes?' + query, {
           credentials: 'same-origin',
           cache: 'no-store',
           headers: { 'x-corridra-customer-subject': subject, 'x-corridra-customer-issuer': issuer },
         }).catch(() => null);
-        if (!active.current || !response?.ok) return;
+        if (!active.current) return;
+        if (!response?.ok) return lost('The latest version could not be loaded. Reload the page.');
         const data = await response.json().catch(() => null);
+        if (!active.current) return;
         if (
-          !active.current ||
           !data ||
           data.workspaceId !== workspaceId ||
           !Array.isArray(data.programmes) ||
           !data.programmes.every((p: unknown) => programme(p, workspaceId))
         )
-          return;
+          return lost('The latest version could not be loaded. Reload the page.');
         const hit = (data.programmes as Programme[]).find((p) => p.id === id);
         if (hit) {
           setRows((old) => old.map((p) => (p.id === id ? hit : p)));
           setArchivedMidEdit(hit.archived === true ? { id, name: hit.name } : null);
           return;
         }
-        if (!data.nextAfter) return;
+        // Follow the pages until the list ends; a cursor seen twice would loop, so it ends the walk too.
+        if (!data.nextAfter || seen.has(data.nextAfter))
+          return lost('That programme could no longer be found. Reload the page.');
+        seen.add(data.nextAfter);
         cursor = data.nextAfter;
       }
     },

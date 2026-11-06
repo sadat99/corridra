@@ -665,3 +665,38 @@ test('a programme archived by someone else during a rename keeps the typed text 
   await expect(page.getByRole('button', { name: 'Keep Mine', exact: true })).toBeVisible();
   expect(sent).toEqual(['rename', 'restore']);
 });
+
+test('a stale rename on a programme far down a long list is still refreshed (no fixed page limit)', async ({
+  page,
+}) => {
+  const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+  const pages = 8;
+  let target: Row = { ...base, id: id(pages), name: 'Synthetic page 8 programme', version: 0 };
+  const rowFor = (n: number): Row =>
+    n === pages ? target : { ...base, id: id(n), name: `Synthetic page ${n} programme` };
+  await page.route('**/api/customer-programmes*', (route) => {
+    const after = new URL(route.request().url()).searchParams.get('after');
+    const n = after ? Number(after.slice(-12)) + 1 : 1;
+    return route.fulfill({ json: { ...list([rowFor(n)]), nextAfter: n < pages ? id(n) : null } });
+  });
+  await page.route('**/api/customer-programme-lifecycle', (route) => {
+    target = { ...target, name: 'Synthetic renamed by a colleague', version: 3 };
+    return route.fulfill({
+      status: 409,
+      json: { error: 'Programme changed; reload before saving' },
+    });
+  });
+  await page.goto(origin + '/?programme=' + id(pages));
+  await expect(page.getByRole('heading', { name: 'Synthetic page 8 programme' })).toBeVisible();
+  await page
+    .getByRole('button', { name: 'Rename Programme', exact: true })
+    .nth(pages - 1)
+    .click();
+  await rename(page).fill('Synthetic my own new name');
+  await page.getByRole('button', { name: 'Save Changes', exact: true }).click();
+  await expect(
+    page.getByText('Someone else changed this programme first. It now reads:'),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Keep Mine', exact: true })).toBeVisible();
+  await expect(rename(page)).toHaveValue('Synthetic my own new name');
+});
