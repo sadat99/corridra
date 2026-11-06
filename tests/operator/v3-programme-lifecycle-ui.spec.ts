@@ -11,7 +11,7 @@ test.beforeAll(async () => {
   const result = await build({
     stdin: {
       contents: `import {createRoot} from 'react-dom/client';import {CustomerProgrammes} from ${JSON.stringify(resolve('apps/web/app/account/delegations/customer-programmes.tsx'))};import {CustomerWorkspaces} from ${JSON.stringify(resolve('apps/web/app/account/customer-workspaces.tsx'))};
-        const query=new URLSearchParams(location.search);const root=createRoot(document.getElementById('fixture'));const initial={subject:'synthetic-alice',issuer:${JSON.stringify(issuer)},workspaceId:'00000000-0000-4000-8000-000000000001'};const render=props=>query.get('mode')==='workspaces'?<CustomerWorkspaces {...props} programmesEnabled={query.get('enabled')==='true'}/>:<CustomerProgrammes {...props} roomEnabled={query.get('room')==='true'}/>;root.render(render(initial));window.addEventListener('fixture-customer-change',event=>root.render(render({...initial,...event.detail})));`,
+        const query=new URLSearchParams(location.search);const root=createRoot(document.getElementById('fixture'));const initial={subject:'synthetic-alice',issuer:${JSON.stringify(issuer)},workspaceId:'00000000-0000-4000-8000-000000000001'};const render=props=>query.get('mode')==='workspaces'?<CustomerWorkspaces {...props} programmesEnabled={query.get('enabled')==='true'}/>:<CustomerProgrammes {...props} roomEnabled={query.get('room')==='true'} participantsEnabled={query.get('people')==='true'}/>;root.render(render(initial));window.addEventListener('fixture-customer-change',event=>root.render(render({...initial,...event.detail})));`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
     },
@@ -22,7 +22,7 @@ test.beforeAll(async () => {
     format: 'esm',
     platform: 'browser',
     jsx: 'automatic',
-    define: { 'process.env.NODE_ENV': '"production"' },
+    define: { 'process.env.NODE_ENV': '"production"', 'process.env': '{}' },
     metafile: true,
   });
   expect(
@@ -541,4 +541,41 @@ test('a rate limit says so in the shared words and the retry sends the same comm
   await page.getByRole('button', { name: 'Archive Programme', exact: true }).click();
   await expect(page.getByText('Programme archived: Synthetic buyers visit.')).toBeVisible();
   expect(commands[1]).toBe(commands[0]);
+});
+
+test('an archived programme shows the owner message instead of the invitation form, and Restore brings the form back', async ({
+  page,
+}) => {
+  const { rows } = await serve(page, [
+    archivedRow('00000000-0000-4000-8000-000000000003', 'Synthetic archived visit'),
+  ]);
+  await page.route('**/api/customer-programme-participants*', (route) =>
+    route.fulfill({
+      json: {
+        workspaceId,
+        programmeId: rows[0]!.id,
+        invitations: [],
+        registrations: [],
+        nextInvitationAfter: null,
+        nextRegistrationAfter: null,
+        synthetic: true,
+      },
+    }),
+  );
+  await page.route('**/api/customer-programme-lifecycle', async (route) => {
+    rows[0] = { ...rows[0]!, archived: false, version: 3 };
+    await route.fulfill({ json: answer(rows[0]!, 'restore') });
+  });
+  await page.goto(origin + '/?people=true&archived=1');
+  await page.getByRole('button', { name: 'Manage Sample Participants', exact: true }).click();
+  await expect(
+    page.getByText(
+      'This programme is archived. Restore it to accept new invitations and registrations.',
+    ),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: /Create Sample Invitation Code/ })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Restore Programme', exact: true }).click();
+  await page.getByRole('button', { name: 'Show Active Programmes', exact: true }).click();
+  // The panel stays open across the filter, and the invitation form is back now that the programme is restored.
+  await expect(page.getByRole('button', { name: /Create Sample Invitation Code/ })).toBeVisible();
 });

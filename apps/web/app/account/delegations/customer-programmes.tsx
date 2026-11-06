@@ -652,6 +652,7 @@ function ScopedProgrammes({
                           workspaceId={workspaceId}
                           missionSharesEnabled={missionSharesEnabled}
                           programmeId={p.id}
+                          archived={p.archived === true}
                         />
                       </Suspense>
                     ) : null,
@@ -777,6 +778,7 @@ function ScopedProgrammes({
                             workspaceId={workspaceId}
                             missionSharesEnabled={missionSharesEnabled}
                             programmeId={p.id}
+                            archived={p.archived === true}
                           />
                         </Suspense>
                       )}

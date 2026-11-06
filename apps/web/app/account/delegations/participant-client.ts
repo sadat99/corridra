@@ -29,6 +29,9 @@ type View = {
   nextInvitationAfter: string | null;
   nextRegistrationAfter: string | null;
 };
+// The refusal the database gives while a programme is archived (owner decision of 6 Nov 2026), shown as it is.
+export const archivedProgrammeMessage =
+  'This programme is archived. Restore it to accept new invitations and registrations.';
 export type ParticipantCommand = Record<string, unknown> & { action: string; commandId?: string };
 export const isUuid = (v: unknown): v is string =>
   typeof v === 'string' &&
@@ -408,6 +411,13 @@ export function useParticipantView(
         if (response.status === 409) {
           intent.current = null;
           setPending(null);
+          const refusal = String(
+            ((await response.json().catch(() => null)) as { error?: string } | null)?.error ?? '',
+          );
+          if (refusal === archivedProgrammeMessage) {
+            setNotice(archivedProgrammeMessage);
+            return;
+          }
           setData(null);
           setStatus('failed');
           setNotice('This request conflicts with current state. Reload before trying again.');

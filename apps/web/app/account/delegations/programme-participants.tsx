@@ -4,11 +4,17 @@ import { ProgrammeObjectives } from './programme-objectives';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { formatDateTime } from '../../../lib/ux/format';
 import Link from 'next/link';
-import { useParticipantView, type ParticipantScope } from './participant-client';
+import {
+  archivedProgrammeMessage,
+  useParticipantView,
+  type ParticipantScope,
+} from './participant-client';
 type Props = ParticipantScope & {
   workspaceId: string;
   programmeId: string;
   missionSharesEnabled?: boolean;
+  // An archived programme takes no new invitations or registrations until it is restored (owner, 6 Nov 2026).
+  archived?: boolean;
 };
 export function ProgrammeParticipants(props: Props) {
   return (
@@ -202,7 +208,7 @@ function ScopedParticipants(props: Props) {
                         : 'Invitation unavailable'}{' '}
                     · Expires {formatDateTime(i.expiresAt)}
                   </p>
-                  {!view.pending && (
+                  {!view.pending && !props.archived && (
                     <button
                       type="button"
                       className="text-link"
@@ -297,7 +303,8 @@ function ScopedParticipants(props: Props) {
               Load More Registrations
             </button>
           )}
-          {!view.pending && (
+          {props.archived && <p role="status">{archivedProgrammeMessage}</p>}
+          {!view.pending && !props.archived && (
             <form
               className="operator-form"
               onSubmit={(event) => {
@@ -392,7 +399,7 @@ function ScopedParticipants(props: Props) {
                 </Link>{' '}
                 to inspect and accept it.
               </p>
-              {view.result.canEmail === true && (
+              {view.result.canEmail === true && !props.archived && (
                 <button
                   type="button"
                   className="text-link"

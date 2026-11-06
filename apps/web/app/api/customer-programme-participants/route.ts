@@ -16,7 +16,13 @@ async function services() {
   await s.ready;
   return s;
 }
+// The one plain refusal shown as it is: an archived programme takes no new invitations or registrations (owner, 6 Nov 2026).
+const archivedMessage =
+  'This programme is archived. Restore it to accept new invitations and registrations.';
 function failure(error: unknown) {
+  const refusal = error as { code?: string; message?: string };
+  if (refusal.code === '23514' && refusal.message === archivedMessage)
+    return deliveryError(new DomainError(archivedMessage, 409));
   return deliveryError(
     ['42P01', '3F000', '42883'].includes((error as { code?: string }).code ?? '')
       ? new DomainError('Sample delegation participation is unavailable', 503)

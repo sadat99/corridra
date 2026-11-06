@@ -117,6 +117,19 @@ END $$;
 REVOKE ALL ON FUNCTION customer_private.programme_active_count(uuid),customer_private.programme_lifecycle_event(uuid,uuid,uuid,uuid,text,jsonb),customer.programme_lifecycle(uuid,uuid,uuid,text,integer,jsonb) FROM PUBLIC,corridra_runtime,corridra_auth;
 GRANT EXECUTE ON FUNCTION customer.programme_lifecycle(uuid,uuid,uuid,text,integer,jsonb) TO corridra_runtime;
 
+-- Owner decision of 6 Nov 2026: an archived programme accepts no new invitations and no new registrations until it is restored.
+-- Checked inside the writing transaction, under the same lock the archive takes, so a concurrent archive cannot let one slip through.
+-- Existing invitations are neither revoked nor extended; they simply cannot be used while archived. hold=false (a read) takes no lock.
+CREATE FUNCTION customer_private.programme_archived_guard(target uuid,programme uuid,hold boolean) RETURNS void
+ LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
+BEGIN
+ IF hold THEN PERFORM pg_advisory_xact_lock(hashtextextended('customer.programme_lifecycle:'||target::text,0)); END IF;
+ IF EXISTS(SELECT FROM customer_private.programme_current c WHERE c.id=programme AND c.tenant_id=target AND c.archived) THEN
+  RAISE EXCEPTION 'This programme is archived. Restore it to accept new invitations and registrations.' USING ERRCODE='23514';
+ END IF;
+END $$;
+REVOKE ALL ON FUNCTION customer_private.programme_archived_guard(uuid,uuid,boolean) FROM PUBLIC,corridra_runtime,corridra_auth;
+
 -- Readers and the creation cap. Each block first checks that the installed function is exactly the real-use definition it replaces.
 
 DO $guard$ BEGIN IF encode(sha256(convert_to(pg_get_functiondef('app.delivery_report_v1(text,text)'::regprocedure),'UTF8')),'hex')<>'562d1aa2baf07719dcbc626d623cc346b7451e13000047cd498f9f1a7dd637cf' THEN RAISE EXCEPTION 'Programme lifecycle prerequisite function differs: app.delivery_report_v1';END IF;END $guard$;
@@ -378,6 +391,7 @@ BEGIN
  IF NOT customer_private.participant_invitation_active(i.id) OR EXISTS(SELECT FROM customer_private.programme_registration WHERE invitation_id=i.id) THEN
   RAISE EXCEPTION 'Invitation unavailable' USING ERRCODE='42501';
  END IF;
+ PERFORM customer_private.programme_archived_guard(i.workspace_id,i.programme_id,false);
  SELECT jsonb_build_object('programmeId',p.id,'name',p.name,'reportingPurpose',p.reporting_purpose,'expiresAt',i.expires_at,'synthetic',customer_private.synthetic_context())
  INTO result FROM customer_private.programme_current p WHERE p.tenant_id=i.workspace_id AND p.id=i.programme_id;
  IF customer.actor_id() IS DISTINCT FROM actor OR NOT customer_private.participant_invitation_active(i.id) THEN RAISE EXCEPTION 'Invitation unavailable' USING ERRCODE='42501'; END IF;
@@ -521,4 +535,130 @@ BEGIN
  END IF;
  IF label IS NULL OR customer.actor_id() IS DISTINCT FROM actor THEN RAISE EXCEPTION 'That place is not available for a help request' USING ERRCODE='42501'; END IF;
  RETURN label;
+END $function$;
+
+DO $guard$ BEGIN IF encode(sha256(convert_to(pg_get_functiondef('customer.programme_participant_command(uuid,text,jsonb)'::regprocedure),'UTF8')),'hex')<>'c170a98b729635ec5bf96dc8f00fc3b4310ec072774ca56034b1465de24faeba' THEN RAISE EXCEPTION 'Programme lifecycle prerequisite function differs: customer.programme_participant_command';END IF;END $guard$;
+CREATE OR REPLACE FUNCTION customer.programme_participant_command(command uuid, operation text, input jsonb)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'pg_catalog'
+AS $function$
+DECLARE actor uuid;target uuid;programme uuid;invitation customer_private.programme_invitation;
+ registration customer_private.programme_registration;prior customer_private.programme_participant_command;
+ request jsonb;result jsonb;resource uuid;kind text;changed boolean:=false;
+BEGIN
+ IF customer.actor_id() IS NULL THEN RAISE EXCEPTION 'Customer access denied' USING ERRCODE='42501'; END IF;
+ IF command IS NULL OR input IS NULL OR jsonb_typeof(input)<>'object' OR operation IS NULL OR operation NOT IN ('invite','accept','revoke','withdraw') THEN
+  RAISE EXCEPTION 'Invalid participant command' USING ERRCODE='23514';
+ END IF;
+ IF operation<>'accept' AND input->'acknowledged' IS DISTINCT FROM 'true'::jsonb THEN RAISE EXCEPTION 'Explicit acknowledgement required' USING ERRCODE='23514'; END IF;
+ IF operation='invite' THEN
+  IF input ? 'recipientEmail' AND (jsonb_typeof(input->'recipientEmail') IS DISTINCT FROM 'string' OR length(input->>'recipientEmail') NOT BETWEEN 3 AND 254
+   OR input->>'recipientEmail' !~ '^[^[:space:]@]+@[^[:space:]@]+[.][^[:space:]@]+$' OR input->>'recipientEmail'<>lower(btrim(input->>'recipientEmail'))) THEN
+   RAISE EXCEPTION 'Invalid participant email' USING ERRCODE='23514';
+  END IF;
+  IF input-ARRAY['workspaceId','programmeId','label','tokenHash','acknowledged','recipientEmail']<>'{}'::jsonb OR input->>'tokenHash' IS NULL OR input->>'tokenHash' !~ '^[a-f0-9]{64}$'
+   OR jsonb_typeof(input->'label') IS DISTINCT FROM 'string' OR length(input->>'label') NOT BETWEEN (CASE WHEN customer_private.synthetic_context() THEN 11 ELSE 2 END) AND 120
+   OR (input->>'label' NOT LIKE 'Synthetic %' AND customer_private.synthetic_context()) OR input->>'label'<>btrim(input->>'label') OR input->>'label' ~ '[[:cntrl:]]' THEN
+   RAISE EXCEPTION 'Invalid synthetic invitation' USING ERRCODE='23514';
+  END IF;
+  target:=(input->>'workspaceId')::uuid;programme:=(input->>'programmeId')::uuid;request:=input-ARRAY['tokenHash','recipientEmail'];
+  IF input ? 'recipientEmail' THEN request:=request||jsonb_build_object('recipientEmailHash',encode(sha256(convert_to(input->>'recipientEmail','UTF8')),'hex'));END IF;
+ ELSIF operation='accept' THEN
+  IF input-ARRAY['tokenHash','programmeId','displayLabel','consented']<>'{}'::jsonb OR input->>'tokenHash' IS NULL OR input->>'tokenHash' !~ '^[a-f0-9]{64}$'
+   OR input->'consented' IS DISTINCT FROM 'true'::jsonb OR jsonb_typeof(input->'displayLabel') IS DISTINCT FROM 'string'
+   OR length(input->>'displayLabel') NOT BETWEEN (CASE WHEN customer_private.synthetic_context() THEN 11 ELSE 2 END) AND 120 OR (input->>'displayLabel' NOT LIKE 'Synthetic %' AND customer_private.synthetic_context())
+   OR input->>'displayLabel'<>btrim(input->>'displayLabel') OR input->>'displayLabel' ~ '[[:cntrl:]]' THEN
+   RAISE EXCEPTION 'Explicit synthetic registration consent required' USING ERRCODE='23514';
+  END IF;
+  SELECT * INTO invitation FROM customer_private.programme_invitation WHERE token_hash=input->>'tokenHash';
+  IF NOT FOUND OR invitation.programme_id IS DISTINCT FROM (input->>'programmeId')::uuid THEN RAISE EXCEPTION 'Invitation unavailable' USING ERRCODE='42501'; END IF;
+  target:=invitation.workspace_id;programme:=invitation.programme_id;request:=input;
+ ELSIF operation='withdraw' THEN
+  IF input-ARRAY['registrationId','reason','acknowledged']<>'{}'::jsonb THEN RAISE EXCEPTION 'Invalid withdrawal' USING ERRCODE='23514'; END IF;
+  SELECT * INTO registration FROM customer_private.programme_registration WHERE id=(input->>'registrationId')::uuid AND principal_id=customer.actor_id();
+  IF NOT FOUND THEN RAISE EXCEPTION 'Registration unavailable' USING ERRCODE='42501'; END IF;
+  target:=registration.workspace_id;programme:=registration.programme_id;resource:=registration.id;kind:='registration';request:=input;
+ ELSE
+  IF input-ARRAY['workspaceId','programmeId','kind','targetId','reason','acknowledged']<>'{}'::jsonb OR input->>'kind' IS NULL OR input->>'kind' NOT IN ('invitation','registration') THEN
+   RAISE EXCEPTION 'Invalid revocation' USING ERRCODE='23514';
+  END IF;
+  target:=(input->>'workspaceId')::uuid;programme:=(input->>'programmeId')::uuid;resource:=(input->>'targetId')::uuid;kind:=input->>'kind';request:=input;
+ END IF;
+ actor:=customer_private.participant_scope(command,target,programme,operation IN ('invite','revoke'));
+ IF operation IN ('revoke','withdraw') AND (jsonb_typeof(input->'reason') IS DISTINCT FROM 'string' OR length(input->>'reason') NOT BETWEEN 10 AND 500) THEN
+  RAISE EXCEPTION 'Revocation reason required' USING ERRCODE='23514';
+ END IF;
+ SELECT * INTO prior FROM customer_private.programme_participant_command q WHERE q.actor_id=actor AND q.command_id=command;
+ IF FOUND AND (prior.operation<>operation OR prior.request<>request) THEN RAISE EXCEPTION 'Participant command conflicts' USING ERRCODE='23514'; END IF;
+ IF operation='accept' THEN
+  IF NOT customer_private.participant_invitation_active(invitation.id) THEN RAISE EXCEPTION 'Invitation unavailable' USING ERRCODE='42501'; END IF;
+  SELECT * INTO registration FROM customer_private.programme_registration r WHERE r.invitation_id=invitation.id;
+  IF FOUND AND registration.principal_id<>actor THEN RAISE EXCEPTION 'Invitation unavailable' USING ERRCODE='42501'; END IF;
+  IF NOT FOUND THEN SELECT * INTO registration FROM customer_private.programme_registration r WHERE r.programme_id=programme AND r.principal_id=actor; END IF;
+  IF FOUND THEN
+   IF registration.principal_id<>actor OR EXISTS(SELECT FROM customer_private.programme_participant_revocation WHERE registration_id=registration.id) THEN RAISE EXCEPTION 'Registration unavailable' USING ERRCODE='42501'; END IF;
+   IF registration.display_label<>input->>'displayLabel' THEN RAISE EXCEPTION 'Registration conflicts' USING ERRCODE='23514'; END IF;
+  ELSE
+   PERFORM customer_private.programme_archived_guard(target,programme,true);
+   INSERT INTO customer_private.programme_registration(workspace_id,programme_id,invitation_id,principal_id,display_label)
+   VALUES(target,programme,invitation.id,actor,input->>'displayLabel') RETURNING * INTO registration;changed:=true;
+  END IF;
+  resource:=registration.id;result:=jsonb_build_object('id',resource,'programmeId',programme,'status','REGISTERED','synthetic',customer_private.synthetic_context());
+ ELSIF FOUND THEN
+  -- Rechecks above always precede retry receipts;issuance never recovers a secret.
+  IF customer.actor_id() IS DISTINCT FROM actor THEN RAISE EXCEPTION 'Customer access expired' USING ERRCODE='42501'; END IF;
+  RETURN CASE WHEN operation='invite' THEN prior.result||jsonb_build_object('issued',false) ELSE prior.result END;
+ ELSIF operation='invite' THEN
+  PERFORM customer_private.programme_archived_guard(target,programme,true);
+  IF (SELECT count(*) FROM customer_private.programme_invitation WHERE programme_id=programme)>=1000 THEN RAISE EXCEPTION 'Programme invitation limit reached' USING ERRCODE='23514'; END IF;
+  INSERT INTO customer_private.programme_invitation(workspace_id,programme_id,created_by,label,token_hash,expires_at,recipient_email)
+  VALUES(target,programme,actor,input->>'label',input->>'tokenHash',clock_timestamp()+interval '7 days'-interval '1 second',input->>'recipientEmail') RETURNING * INTO invitation;
+  resource:=invitation.id;changed:=true;result:=jsonb_build_object('id',resource,'programmeId',programme,'expiresAt',invitation.expires_at,'issued',true,'synthetic',customer_private.synthetic_context());
+ ELSE
+  IF kind='invitation' AND NOT EXISTS(SELECT FROM customer_private.programme_invitation WHERE id=resource AND workspace_id=target AND programme_id=programme) OR
+   kind='registration' AND NOT EXISTS(SELECT FROM customer_private.programme_registration WHERE id=resource AND workspace_id=target AND programme_id=programme AND (operation<>'withdraw' OR principal_id=actor)) THEN
+   RAISE EXCEPTION 'Programme access record unavailable' USING ERRCODE='42501';
+  END IF;
+  IF NOT EXISTS(SELECT FROM customer_private.programme_participant_revocation WHERE (kind='invitation' AND invitation_id=resource) OR (kind='registration' AND registration_id=resource)) THEN
+   INSERT INTO customer_private.programme_participant_revocation(workspace_id,programme_id,invitation_id,registration_id,created_by,reason,withdrawn)
+   VALUES(target,programme,CASE WHEN kind='invitation' THEN resource END,CASE WHEN kind='registration' THEN resource END,actor,input->>'reason',operation='withdraw');changed:=true;
+  END IF;
+  result:=jsonb_build_object('id',resource,'programmeId',programme,'status',CASE WHEN kind='invitation' THEN 'REVOKED' ELSE (SELECT CASE WHEN withdrawn THEN 'WITHDRAWN' ELSE 'REVOKED' END FROM customer_private.programme_participant_revocation WHERE registration_id=resource) END,'synthetic',customer_private.synthetic_context());
+ END IF;
+ IF changed THEN
+  PERFORM customer_private.workspace_access_event(target,actor,command,'customer.programme.'||operation,
+   jsonb_build_object('programme_id',programme,'resource_id',resource));
+ END IF;
+ IF customer.actor_id() IS DISTINCT FROM actor OR (operation='accept' AND NOT customer_private.participant_invitation_active(invitation.id)) THEN
+  RAISE EXCEPTION 'Participant access expired' USING ERRCODE='42501';
+ END IF;
+ IF prior.command_id IS NULL THEN
+  INSERT INTO customer_private.programme_participant_command(actor_id,command_id,workspace_id,programme_id,operation,request,result)
+  VALUES(actor,command,target,programme,operation,request,result);
+ END IF;
+ RETURN result;
+END $function$;
+
+DO $guard$ BEGIN IF encode(sha256(convert_to(pg_get_functiondef('customer.programme_invitation_email(uuid,uuid,uuid,text)'::regprocedure),'UTF8')),'hex')<>'771341f2373ad8a54cf962fad35d632ca6ca37d31e628b5b816b997863dc3c97' THEN RAISE EXCEPTION 'Programme lifecycle prerequisite function differs: customer.programme_invitation_email';END IF;END $guard$;
+CREATE OR REPLACE FUNCTION customer.programme_invitation_email(selected uuid, target uuid, programme uuid, digest text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'pg_catalog'
+AS $function$
+DECLARE actor uuid:=customer_private.participant_scope(gen_random_uuid(),target,programme,true);invitation customer_private.programme_invitation;
+BEGIN
+ PERFORM customer_private.programme_archived_guard(target,programme,true);
+ SELECT * INTO invitation FROM customer_private.programme_invitation WHERE id=selected AND workspace_id=target AND programme_id=programme FOR SHARE;
+ IF NOT FOUND OR digest IS NULL OR digest<>invitation.token_hash OR NOT customer_private.participant_invitation_active(selected)
+  OR EXISTS(SELECT FROM customer_private.programme_registration WHERE invitation_id=selected) THEN
+  RAISE EXCEPTION 'Invitation unavailable' USING ERRCODE='42501';
+ END IF;
+ IF invitation.recipient_email IS NULL THEN RAISE EXCEPTION 'Invitation email unavailable' USING ERRCODE='23514';END IF;
+ IF customer_private.participant_scope(gen_random_uuid(),target,programme,true) IS DISTINCT FROM actor THEN
+  RAISE EXCEPTION 'Participant access expired' USING ERRCODE='42501';
+ END IF;
+ RETURN jsonb_build_object('id',invitation.id,'programmeId',programme,'recipientEmail',invitation.recipient_email,'synthetic',customer_private.synthetic_context());
 END $function$;

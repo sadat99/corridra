@@ -225,6 +225,7 @@ test('every reader of the name reads the current view, none reads the base table
       'customer.programme_template_capture(uuid,uuid)',
       'customer.programmes(uuid,uuid,integer)',
       'customer_private.programme_active_count(uuid)',
+      'customer_private.programme_archived_guard(uuid,uuid,boolean)',
       'customer_private.series_json(uuid)',
       'customer_private.service_request_context(uuid,uuid,text,text)',
     ].sort(),
@@ -480,16 +481,154 @@ test('a programme whose name has a control character inside can still be archive
   ).toMatchObject({ version: 3, name: 'Synthetic cleaned name here' });
 });
 
+const archivedText =
+  'This programme is archived. Restore it to accept new invitations and registrations.';
+const inviteTo = (programme: string, extra: Record<string, unknown> = {}) => ({
+  action: 'invite' as const,
+  commandId: randomUUID(),
+  workspaceId,
+  programmeId: programme,
+  label: 'Synthetic participant invitation',
+  acknowledged: true,
+  ...extra,
+});
+const acceptWith = (token: string, programme: string) => ({
+  action: 'accept' as const,
+  commandId: randomUUID(),
+  token,
+  programmeId: programme,
+  displayLabel: 'Synthetic participant Bob',
+  consented: true,
+});
+const counts = async (programme: string) =>
+  (
+    await f.owner.query(
+      `SELECT (SELECT count(*)::int FROM customer_private.programme_invitation WHERE programme_id=$1) AS invitations,
+              (SELECT count(*)::int FROM customer_private.programme_registration WHERE programme_id=$1) AS registrations`,
+      [programme],
+    )
+  ).rows[0] as { invitations: number; registrations: number };
+
+test('an archived programme issues no invitations and takes no registrations; Restore reopens both and nothing else changes', async () => {
+  const p = await create('Synthetic archive rule programme');
+  const issued = await participants().command(inviteTo(p.id));
+  const withEmail = await participants().command(
+    inviteTo(p.id, { recipientEmail: 'bob@example.test' }),
+  );
+  const expiryBefore = (
+    await f.owner.query(
+      'SELECT expires_at FROM customer_private.programme_invitation WHERE id=$1',
+      [issued.id],
+    )
+  ).rows[0].expires_at;
+  await programmes().change(change('archive', 0, {}, p.id));
+
+  await expect(participants().command(inviteTo(p.id))).rejects.toMatchObject({
+    code: '23514',
+    message: archivedText,
+  });
+  await expect(participants('bob').preview({ token: issued.token })).rejects.toMatchObject({
+    code: '23514',
+    message: archivedText,
+  });
+  await expect(participants('bob').command(acceptWith(issued.token, p.id))).rejects.toMatchObject({
+    code: '23514',
+    message: archivedText,
+  });
+  await expect(
+    participants().command({
+      action: 'emailInvitation',
+      commandId: randomUUID(),
+      workspaceId,
+      programmeId: p.id,
+      invitationId: withEmail.id,
+      token: withEmail.token,
+      acknowledged: true,
+    }),
+  ).rejects.toMatchObject({ code: '23514', message: archivedText });
+  // Nothing was written, existing invitations are not revoked, and the organiser can still read the programme.
+  expect(await counts(p.id)).toEqual({ invitations: 2, registrations: 0 });
+  expect((await participants().list({ workspaceId, programmeId: p.id })).invitations).toHaveLength(
+    2,
+  );
+
+  await programmes().change(change('restore', 1, {}, p.id));
+  expect((await participants('bob').preview({ token: issued.token })).programmeId).toBe(p.id);
+  await participants('bob').command(acceptWith(issued.token, p.id));
+  expect((await participants().command(inviteTo(p.id))).issued).toBe(true);
+  expect(
+    (
+      await participants().command({
+        action: 'emailInvitation',
+        commandId: randomUUID(),
+        workspaceId,
+        programmeId: p.id,
+        invitationId: withEmail.id,
+        token: withEmail.token,
+        acknowledged: true,
+      })
+    ).email,
+  ).toBe('not_sent');
+  // Restore does not extend an invitation.
+  expect(
+    (
+      await f.owner.query(
+        'SELECT expires_at FROM customer_private.programme_invitation WHERE id=$1',
+        [issued.id],
+      )
+    ).rows[0].expires_at,
+  ).toEqual(expiryBefore);
+  expect(await counts(p.id)).toEqual({ invitations: 3, registrations: 1 });
+  // Existing registrations stay readable, and the organiser's other work stays open, while archived.
+  await programmes().change(change('archive', 2, {}, p.id));
+  expect(
+    (await participants().list({ workspaceId, programmeId: p.id })).registrations,
+  ).toHaveLength(1);
+});
+
+test('a registration that starts while an archive is still uncommitted waits for it and is then refused', async () => {
+  const p = await create('Synthetic archive race programme');
+  const issued = await participants().command(inviteTo(p.id));
+  let registration: Promise<unknown> | undefined;
+  await probe().run(async (db) => {
+    await db.query('SELECT customer.programme_lifecycle($1,$2,$3,$4,$5,$6::jsonb)', [
+      randomUUID(),
+      workspaceId,
+      p.id,
+      'archive',
+      0,
+      '{}',
+    ]);
+    registration = participants('bob')
+      .command(acceptWith(issued.token, p.id))
+      .then(
+        () => 'registered',
+        (error: unknown) => error,
+      );
+    // Give the registration time to start and block on the lock held by this archive, which has not committed yet.
+    for (let i = 0; i < 40; i++) {
+      const waiting = await f.owner.query(
+        "SELECT count(*)::int AS n FROM pg_stat_activity WHERE wait_event_type='Lock'",
+      );
+      if (waiting.rows[0].n > 0) break;
+      await new Promise((done) => setTimeout(done, 100));
+    }
+  });
+  expect(await registration).toMatchObject({ code: '23514', message: archivedText });
+  expect((await counts(p.id)).registrations).toBe(0);
+});
+
 test('the cap counts only active programmes and restore is refused, never forced, at 100 active', async () => {
-  const before = (await listed()).length;
-  for (let i = before; i < 100; i++) await create(`Synthetic cap programme ${i}`);
-  expect((await listed()).length).toBe(100);
+  const active = async () => (await listed()).filter((p) => p.archived !== true).length;
+  for (let i = await active(); i < 100; i++) await create(`Synthetic cap programme ${i}`);
+  expect(await active()).toBe(100);
   await expect(create('Synthetic programme number 101')).rejects.toMatchObject({ code: '23514' });
   const first = (await one(programmeId)) as { version: number };
   await programmes().change(change('archive', first.version));
   const added = await create('Synthetic programme after archiving one');
   expect(added.id).toBeTruthy();
-  expect((await listed()).length).toBe(101);
+  expect(await active()).toBe(100);
+  expect((await listed()).length).toBeGreaterThan(100);
   await expect(programmes().change(change('restore', first.version + 1))).rejects.toThrow(
     '100 active',
   );
