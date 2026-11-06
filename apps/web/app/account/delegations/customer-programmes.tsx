@@ -336,13 +336,14 @@ function ScopedProgrammes({
   );
   useEffect(() => {
     active.current = true;
+    const refreshing = refreshTasks.current;
     void Promise.resolve().then(() => {
       if (active.current) void load();
     });
     const hide = () => {
       getTask.current?.abort();
       postTask.current?.abort();
-      refreshTasks.current.forEach((task) => task.abort());
+      refreshing.forEach((task) => task.abort());
       setVisible(false);
       setRows([]);
       setNext(null);
@@ -363,7 +364,7 @@ function ScopedProgrammes({
       active.current = false;
       getTask.current?.abort();
       postTask.current?.abort();
-      refreshTasks.current.forEach((task) => task.abort());
+      refreshing.forEach((task) => task.abort());
       window.removeEventListener('pagehide', hide);
       window.removeEventListener('pageshow', show);
       document.removeEventListener('visibilitychange', visibility);
