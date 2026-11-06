@@ -503,3 +503,51 @@ test('a read still in flight when a label save is refused cannot bring the roste
   await expect(page.getByText('Synthetic participant label', { exact: false })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Edit My Label', exact: true })).toHaveCount(0);
 });
+
+test('a read refused with 403 drops an open label draft, and checking access again does not reopen it', async ({
+  page,
+}) => {
+  const state: State = { label: 'Synthetic participant label', version: 0 };
+  let reads = 0;
+  await page.route('**/api/customer-programme-participants*', (route) => {
+    if (route.request().method() !== 'GET') return route.abort('failed');
+    // The second read (the Reload below) is refused, the third succeeds.
+    if (++reads === 2)
+      return route.fulfill({ status: 403, json: { error: 'Participant access denied' } });
+    return route.fulfill({
+      json: { registrations: [ownRow(state)], nextAfter: null, synthetic: true },
+    });
+  });
+  await page.goto(origin);
+  await page.getByRole('button', { name: 'Edit My Label', exact: true }).click();
+  await form(page).getByLabel('New display label').fill('Synthetic participant Bob Rahman');
+  await page.getByRole('button', { name: 'Reload My Sample Registrations' }).click();
+  await expect(
+    page.getByText('Account or programme access changed. Private details were cleared.'),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Reload My Sample Registrations' }).click();
+  await expect(page.getByRole('button', { name: 'Edit My Label', exact: true })).toBeVisible();
+  await expect(form(page)).toHaveCount(0);
+});
+
+test('a read still in flight when the page is hidden cannot bring the roster back', async ({
+  page,
+}) => {
+  const state: State = { label: 'Synthetic participant label', version: 0 };
+  let releaseRead!: () => void;
+  const gate = new Promise<void>((done) => (releaseRead = done));
+  let reads = 0;
+  await page.route('**/api/customer-programme-participants*', async (route) => {
+    if (++reads === 2) await gate;
+    return route
+      .fulfill({ json: { registrations: [ownRow(state)], nextAfter: null, synthetic: true } })
+      .catch(() => undefined);
+  });
+  await page.goto(origin);
+  await expect(page.getByText('Synthetic participant label · Registered')).toBeVisible();
+  await page.getByRole('button', { name: 'Reload My Sample Registrations' }).click();
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide')));
+  releaseRead();
+  await page.waitForTimeout(500);
+  await expect(page.getByText('Synthetic participant label', { exact: false })).toHaveCount(0);
+});

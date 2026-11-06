@@ -1,0 +1,21 @@
+{
+  "track": "S3 Public, Intake and Organise",
+  "item": "Follow-up to PR 337: a refusal of access ends every read and write in flight and drops every label draft, in one place",
+  "date": "2026-11-06",
+  "sensitive": false,
+  "spec": "Conductor instruction of 6 Nov: fix the root in useParticipantView, one place owns access denial, and review the whole class (all callers and all orderings) before pushing.",
+  "changed": [
+    "apps/web/app/account/delegations/participant-client.ts: useParticipantView has one invalidate() that aborts the live read and write, resets the in-flight flags and clears the timer; refusal of access (deny), expiry, hiding the page and unmount all use it. Every request owns an AbortController and every await is followed by a check of it, so a late answer is discarded.",
+    "apps/web/app/account/delegations/participant-account.tsx and programme-participants.tsx: the clear callback every denial runs now also drops the label drafts, so any refusal (a read, an invite, a withdrawal, a label save) takes the typed label corrections with the rest of the private details; participant-label.tsx no longer clears them itself."
+  ],
+  "preserved": [
+    "No database, route, installer or workflow change. Behaviour without a refusal is unchanged; the label editor, its version and conflict handling are as merged in PR 337."
+  ],
+  "verification": {
+    "preflight": "pending on the pushed head",
+    "operator": "tests/operator/v3-participant-label-ui.spec.ts 15 passed and v3-customer-participants-ui.spec.ts 15 passed. New orderings: a read in flight when a label save is refused; a read refused with 403 while a label draft is open (red before this change); a read in flight when the page is hidden."
+  },
+  "openRisks": [
+    "Client only. The label draft cache is still in memory only and is dropped when the page is hidden or left."
+  ]
+}

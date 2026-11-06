@@ -9,7 +9,7 @@ import {
   useParticipantView,
   type ParticipantScope,
 } from './participant-client';
-import { ParticipantLabelEditor } from './participant-label';
+import { ParticipantLabelEditor, dropLabelDrafts } from './participant-label';
 type Props = ParticipantScope & {
   workspaceId: string;
   programmeId: string;
@@ -39,6 +39,8 @@ function ScopedParticipants(props: Props) {
   } | null>(null);
   const [accessError, setAccessError] = useState('');
   const clear = useCallback(() => {
+    // Whatever refused access, the typed label corrections go with the rest of the private details.
+    dropLabelDrafts();
     setLabel(realCustomerInput() ? '' : 'Synthetic participant invitation');
     setRecipientEmail('');
     setChangeTarget(null);

@@ -254,27 +254,27 @@ export function useParticipantView(
     timer = useRef<ReturnType<typeof setTimeout> | null>(null),
     // CQ-87: the programme name from the invitation the person checked, for a plain confirmation.
     previewName = useRef<string | null>(null);
-  const expire = useCallback(() => {
+  // The one place that ends everything in flight. Every request owns an AbortController and every await is followed by a check of
+  // it, so aborting here means a late answer (fetched before the end, delivered after) is discarded and can never bring private
+  // details back. Used when access is refused, when the view expires, when the page is hidden and on unmount.
+  const invalidate = useCallback(() => {
     available.current = false;
     if (timer.current) clearTimeout(timer.current);
     get.current?.abort();
     post.current?.abort();
     reading.current = false;
     writing.current = false;
+  }, []);
+  const expire = useCallback(() => {
+    invalidate();
     setBusy(false);
     setData(null);
     setResult(null);
     setStatus('failed');
     setNotice('This private view expired. Reload to check access again.');
-  }, []);
+  }, [invalidate]);
   const deny = useCallback(() => {
-    available.current = false;
-    if (timer.current) clearTimeout(timer.current);
-    // A read or write still in flight when access is refused must not bring the private details back when it lands.
-    get.current?.abort();
-    post.current?.abort();
-    reading.current = false;
-    writing.current = false;
+    invalidate();
     setBusy(false);
     intent.current = null;
     setPending(null);
@@ -283,7 +283,7 @@ export function useParticipantView(
     setStatus('denied');
     setNotice('Account or programme access changed. Private details were cleared.');
     clearDraft();
-  }, [clearDraft]);
+  }, [clearDraft, invalidate]);
   const load = useCallback(
     async (which?: 'invitations' | 'registrations', cursor?: string, preserveResult = false) => {
       if (reading.current || writing.current || !active.current) return;
@@ -534,12 +534,7 @@ export function useParticipantView(
       if (active.current) void load();
     });
     const hide = () => {
-      available.current = false;
-      get.current?.abort();
-      post.current?.abort();
-      reading.current = false;
-      writing.current = false;
-      if (timer.current) clearTimeout(timer.current);
+      invalidate();
       setBusy(false);
       setVisible(false);
       setData(null);
@@ -557,13 +552,11 @@ export function useParticipantView(
     document.addEventListener('visibilitychange', visibility);
     return () => {
       active.current = false;
-      get.current?.abort();
-      post.current?.abort();
-      if (timer.current) clearTimeout(timer.current);
+      invalidate();
       window.removeEventListener('pagehide', hide);
       window.removeEventListener('pageshow', show);
       document.removeEventListener('visibilitychange', visibility);
     };
-  }, [load]);
+  }, [load, invalidate]);
   return { data, status, busy, visible, notice, pending, result, load, send, deny };
 }
