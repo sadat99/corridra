@@ -283,6 +283,7 @@ function ScopedParticipants(props: Props) {
                         mine={false}
                         onChanged={() => void view.load()}
                         onNote={setLabelNote}
+                        onDenied={view.deny}
                       />
                     )}
                   {props.missionSharesEnabled && r.status === 'REGISTERED' && (

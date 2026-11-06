@@ -559,5 +559,5 @@ export function useParticipantView(
       document.removeEventListener('visibilitychange', visibility);
     };
   }, [load]);
-  return { data, status, busy, visible, notice, pending, result, load, send };
+  return { data, status, busy, visible, notice, pending, result, load, send, deny };
 }

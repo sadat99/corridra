@@ -218,6 +218,7 @@ function ScopedAccount(
                           mine={true}
                           onChanged={() => void view.load()}
                           onNote={setLabelNote}
+                          onDenied={view.deny}
                         />
                       )}
                       {props.contextEnabled && (

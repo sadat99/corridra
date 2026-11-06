@@ -151,6 +151,8 @@ async function serve(
     expect(request.headers()['x-corridra-customer-subject']).toBe('synthetic-alice');
     const outcome = onLabel?.(body);
     if (outcome === 'abort') return route.abort('failed');
+    if (outcome === 'denied')
+      return route.fulfill({ status: 403, json: { error: 'Participant access denied' } });
     if (outcome === 'stale')
       return route.fulfill({ status: 409, json: { error: 'Label changed; reload before saving' } });
     state.label = String(body.displayLabel);
@@ -419,4 +421,48 @@ test('a rate limit uses the shared wording and the retry sends the same command'
   ).toBeVisible();
   expect(original).toHaveLength(2);
   expect(original[1]).toEqual(original[0]);
+});
+
+test('a refused save clears the private roster and the typed label, exactly like every other refused action', async ({
+  page,
+}) => {
+  const state: State = { label: 'Synthetic participant label', version: 0 };
+  let first = true;
+  await serve(page, state, () => {
+    if (!first) return undefined;
+    first = false;
+    return 'denied';
+  });
+  await page.goto(origin);
+  await page.getByRole('button', { name: 'Edit My Label', exact: true }).click();
+  await form(page).getByLabel('New display label').fill('Synthetic participant Bob Rahman');
+  await page.getByRole('button', { name: 'Save Label', exact: true }).click();
+  await expect(
+    page.getByText('Account or programme access changed. Private details were cleared.'),
+  ).toBeVisible();
+  await expect(page.getByText('Synthetic participant label', { exact: false })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Edit My Label', exact: true })).toHaveCount(0);
+  // Checking access again starts clean: the form is not reopened with the text that was typed.
+  await page.getByRole('button', { name: 'Reload My Sample Registrations' }).click();
+  await expect(page.getByRole('button', { name: 'Edit My Label', exact: true })).toBeVisible();
+  await expect(form(page)).toHaveCount(0);
+});
+
+test('a refused save by the organiser clears the roster too', async ({ page }) => {
+  const state: State = { label: 'Synthetic participant label', version: 2 };
+  let first = true;
+  await serve(page, state, () => {
+    if (!first) return undefined;
+    first = false;
+    return 'denied';
+  });
+  await page.goto(origin + '?mode=owner');
+  await page.getByRole('button', { name: 'Edit Label', exact: true }).click();
+  await form(page).getByLabel('New display label').fill('Synthetic participant Rahman');
+  await page.getByRole('button', { name: 'Save Label', exact: true }).click();
+  await expect(
+    page.getByText('Account or programme access changed. Private details were cleared.'),
+  ).toBeVisible();
+  await expect(page.getByText('Synthetic participant label')).toHaveCount(0);
+  await expect(form(page)).toHaveCount(0);
 });

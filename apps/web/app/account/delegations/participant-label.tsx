@@ -8,8 +8,9 @@ import { formEn } from '../../../lib/i18n/form-words/en';
 // remounts the editor, so the draft lives here, in memory only, and is dropped the moment the page is hidden or left.
 type Draft = { value: string; base: { version: number; label: string }; stale: boolean };
 const drafts = new Map<string, Draft>();
+export const dropLabelDrafts = () => drafts.clear();
 if (typeof window !== 'undefined') {
-  const dropAll = () => drafts.clear();
+  const dropAll = dropLabelDrafts;
   window.addEventListener('pagehide', dropAll);
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') dropAll();
@@ -26,6 +27,7 @@ export function ParticipantLabelEditor({
   mine,
   onChanged,
   onNote,
+  onDenied,
 }: {
   registrationId: string;
   label: string;
@@ -35,6 +37,8 @@ export function ParticipantLabelEditor({
   onChanged: () => void;
   // A reload replaces the whole list, which remounts this editor: the words after a reload are kept by the page, not here.
   onNote: (message: string) => void;
+  // Access was refused (401 or 403): the page clears its private details, exactly as for every other participant action.
+  onDenied: () => void;
 }) {
   const key = JSON.stringify([
     headers['x-corridra-customer-issuer'],
@@ -105,11 +109,10 @@ export function ParticipantLabelEditor({
         }),
       });
       if ([401, 403].includes(response.status)) {
-        setNote(
-          mine
-            ? 'Your registration could not be changed.'
-            : 'Only a workspace owner or admin can change a participant label.',
-        );
+        // Nothing typed or shown here outlives a refusal of access: the drafts go, and the page clears the private roster.
+        dropLabelDrafts();
+        setDraftState(null);
+        onDenied();
       } else if (response.status === 429) {
         setNote(formEn['form.message.tooMany']);
       } else if (response.status === 503) {
