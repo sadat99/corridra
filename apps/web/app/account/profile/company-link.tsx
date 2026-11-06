@@ -2,6 +2,7 @@
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { linkStatusText, type LinkStatus } from '../company-link-status';
+import { onDeviceClock } from '../../../lib/server-clock';
 
 const evidenceKinds = [
   ['REGISTRATION_STATEMENT', 'Registration statement'],
@@ -158,7 +159,7 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
             },
           );
           if (again.ok && active.current && !controller.signal.aborted)
-            setView(parseView(await again.json(), workspaceId));
+            setView(parseView(onDeviceClock(await again.json(), again), workspaceId));
           return;
         }
         if (r.status === 400) {
@@ -170,7 +171,7 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
           return;
         }
         if (!r.ok) throw Error('Company link request failed');
-        const v = parseView(await r.json(), workspaceId);
+        const v = parseView(onDeviceClock(await r.json(), r), workspaceId);
         if (body && v.commandId !== body.commandId) throw Error('Acknowledgement did not match');
         if (active.current && !controller.signal.aborted) {
           setView(v);
