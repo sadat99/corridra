@@ -55,7 +55,13 @@ export const sessionHeaders = (subject: string, issuer: string): SessionHeaders 
   'x-corridra-customer-issuer': issuer,
 });
 
-/** The workspace list. Anything but a list means the control is closed or unavailable: show nothing. */
+/** An answer that says the control is closed or unavailable, as opposed to a read that failed. */
+const controlAbsent = (status: number) => status === 503 || status === 404;
+
+/**
+ * The workspace list. Null means the control is closed or unavailable: show nothing. A read that failed throws, so the
+ * caller keeps what it last knew instead of showing an archived workspace as active.
+ */
 export async function readLifecycleList(headers: SessionHeaders, signal: AbortSignal) {
   const response = await fetch(endpoint, {
     credentials: 'same-origin',
@@ -63,8 +69,12 @@ export async function readLifecycleList(headers: SessionHeaders, signal: AbortSi
     signal,
     headers,
   });
-  if (!response.ok) return null;
-  const value: unknown = await response.json();
+  if (!response.ok) {
+    if (controlAbsent(response.status)) return null;
+    throw new Error('The workspace list could not be read.');
+  }
+  // An answer that is not the list at all (not JSON) is not this control speaking: treat it as absent.
+  const value: unknown = await response.json().catch(() => null);
   return Array.isArray(value) ? (value as LifecycleSummary[]) : null;
 }
 
@@ -79,8 +89,11 @@ export async function readLifecycleState(
     signal,
     headers,
   });
-  if (!response.ok) return null;
-  const value = (await response.json()) as LifecycleState;
+  if (!response.ok) {
+    if (controlAbsent(response.status)) return null;
+    throw new Error('The workspace status could not be read.');
+  }
+  const value = (await response.json().catch(() => null)) as LifecycleState | null;
   return value && value.open === true && value.workspaceId === workspaceId ? value : null;
 }
 

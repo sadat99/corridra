@@ -104,6 +104,8 @@ type Setup = {
   /** The list answers this status instead of a list: the control is closed. */
   closed?: number;
   states?: Record<string, Record<string, unknown>>;
+  /** Set failReads while the test runs and every read of the lifecycle answers 500. */
+  control?: { failReads: boolean };
   answer?: (sent: Sent) => { status: number; json: unknown } | undefined;
 };
 const stateFor = (id: string, role: string, extra: Record<string, unknown> = {}) => ({
@@ -167,6 +169,11 @@ async function open(page: Page, setup: Setup = {}) {
     const request = route.request();
     if (request.method() === 'GET') {
       if (setup.closed) return route.fulfill({ status: setup.closed, json: { error: 'closed' } });
+      if (setup.control?.failReads)
+        return route.fulfill({
+          status: 500,
+          json: { error: 'The request could not be completed.' },
+        });
       const id = new URL(request.url()).searchParams.get('workspaceId');
       return route.fulfill({
         json: id
@@ -555,4 +562,92 @@ test('G4-14 the team list labels the member who became owner as Owner', async ({
   await expect(page.getByRole('dialog', { name: 'Team for ' + owner })).toContainText(
     'Synthetic Rahim · Owner',
   );
+});
+
+test('G4-15 an Undo that fails says so in an alert instead of doing nothing', async ({ page }) => {
+  const { sent } = await open(page, {
+    answer: (body) =>
+      body.action === 'restore' ? { status: 503, json: { error: 'down' } } : undefined,
+  });
+  await trigger(page, owner).click();
+  await page.getByRole('menuitem', { name: 'Archive Workspace' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Archive ' + owner + '?' });
+  await dialog.getByLabel('Type the workspace name to confirm').fill(owner);
+  await dialog.getByRole('button', { name: 'Archive Workspace' }).click();
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(page.getByRole('alert')).toContainText(
+    'This is unavailable right now. Nothing was changed.',
+  );
+  expect(sent.map((body) => body.action)).toEqual(['archive', 'restore']);
+});
+
+test('G4-16 when the status cannot be refreshed an archived workspace stays archived, and a small note says so', async ({
+  page,
+}) => {
+  const control = { failReads: false };
+  await open(page, {
+    control,
+    states: { [ids.mem]: stateFor(ids.mem, 'member', { archived: true }) },
+  });
+  await expect(page.getByRole('radio', { name: /Archived/ })).toBeVisible();
+  control.failReads = true;
+  await trigger(page, owner).click();
+  await page.getByRole('menuitem', { name: 'Rename Workspace' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Rename Workspace' });
+  await dialog.getByLabel('Workspace name').fill('Synthetic Dhaka Knitwear');
+  await dialog.getByLabel('Why are you renaming it?').fill('We rebranded this year');
+  await dialog.getByRole('button', { name: 'Save Name', exact: true }).click();
+  await expect(page.getByText('Could not refresh workspace status')).toBeVisible();
+  await expect(page.getByRole('radio', { name: /Archived/ })).toBeVisible();
+  await page.getByRole('radio', { name: /Archived/ }).check();
+  await expect(page.getByRole('row', { name: /Synthetic Gazipur Wovens/ })).toBeVisible();
+  control.failReads = false;
+});
+
+test('G4-17 the member picker pages through the whole team, and only says there is no one when the list is exhausted', async ({
+  page,
+}) => {
+  await open(page);
+  const seen: string[] = [];
+  const revoked = (id: string) => ({
+    id,
+    label: 'Synthetic Gone ' + id.slice(-2),
+    role: 'member',
+    createdAt: '2026-11-01T09:00:00Z',
+    status: 'revoked',
+  });
+  await page.route('**/api/customer-workspace-access*', (route) => {
+    const query = new URL(route.request().url()).searchParams;
+    seen.push(query.get('memberAfter') ?? 'first');
+    const late = query.get('memberAfter') === '00000000-0000-4000-8000-0000000000a1';
+    return route.fulfill({
+      json: {
+        workspaceId: ids.own,
+        ownerProtected: true,
+        nextInvitationAfter: null,
+        nextMemberAfter: late ? null : '00000000-0000-4000-8000-0000000000a1',
+        invitations: [],
+        memberships: late
+          ? [
+              {
+                id: '00000000-0000-4000-8000-0000000000f9',
+                label: 'Synthetic Late',
+                role: 'member',
+                createdAt: '2026-11-01T09:00:00Z',
+                status: 'active',
+              },
+            ]
+          : [revoked('00000000-0000-4000-8000-0000000000e1')],
+      },
+    });
+  });
+  await trigger(page, owner).click();
+  await page.getByRole('menuitem', { name: 'Transfer Ownership' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Transfer Ownership' });
+  await expect(dialog.getByLabel('New owner').locator('option')).toHaveText([
+    'Choose a member',
+    'Synthetic Late, member',
+  ]);
+  await expect(dialog.getByText('There is no one to transfer to yet')).toHaveCount(0);
+  expect(seen).toEqual(['first', '00000000-0000-4000-8000-0000000000a1']);
 });

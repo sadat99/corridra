@@ -170,6 +170,11 @@ export function NotificationInbox({
       </li>
     );
   }
+  // A full list may hide older unread items. When the server's count could not be read the local figure is only a floor,
+  // so Mark All Read stays available rather than hiding the way to clear them.
+  const markAllAvailable = (localUnread: number) =>
+    (serverUnread ?? localUnread) > 0 ||
+    (serverUnread === null && (items?.length ?? 0) >= listLimit);
   if (grouped) {
     const groups = items ? groupNotifications(items) : null;
     return (
@@ -178,7 +183,7 @@ export function NotificationInbox({
           <h2 id="ux-inbox-title" ref={heading} tabIndex={-1}>
             Notifications
           </h2>
-          {groups && (serverUnread ?? groups.unread) > 0 ? (
+          {groups && markAllAvailable(groups.unread) ? (
             <button
               type="button"
               className="text-link"

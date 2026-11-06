@@ -450,8 +450,10 @@ export function CustomerWorkspaces({
               <tbody>
                 {lifecycle.visibleRows.map((row) => {
                   const archived = lifecycle.isArchived(row.id);
+                  // Archived, or its status could not be read: either way no new request is offered from here.
+                  const closedToNew = archived || lifecycle.statusUnknown(row.id);
                   const admin = ['owner', 'admin'].includes(row.role);
-                  const start = archived
+                  const start = closedToNew
                     ? null
                     : draftsEnabled
                       ? '/account/drafts/' + row.id
@@ -499,12 +501,12 @@ export function CustomerWorkspaces({
                             align="end"
                           >
                             {start && <MenuAnchor href={start}>New Request</MenuAnchor>}
-                            {draftsEnabled && !archived && (
+                            {draftsEnabled && !closedToNew && (
                               <MenuAnchor href={'/account/drafts/' + row.id}>
                                 Continue a Saved Draft
                               </MenuAnchor>
                             )}
-                            {draftsEnabled && requestsEnabled && !archived && (
+                            {draftsEnabled && requestsEnabled && !closedToNew && (
                               <MenuAnchor href={'/account/request/' + row.id}>
                                 Send a Private Request
                               </MenuAnchor>

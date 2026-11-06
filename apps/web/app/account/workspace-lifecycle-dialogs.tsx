@@ -297,27 +297,36 @@ export function TransferBody(props: BodyProps) {
   const { run, busy, message } = useDialogCommand(props);
   useEffect(() => {
     const controller = new AbortController();
-    const query = new URLSearchParams({ workspaceId: state.workspaceId, pageSize: '25' });
-    fetch('/api/customer-workspace-access?' + query, {
-      credentials: 'same-origin',
-      cache: 'no-store',
-      signal: controller.signal,
-      headers,
-    })
-      .then(async (response) => {
+    // The team is read page by page until the list is exhausted or 200 members are in hand, so a member beyond the
+    // first page can be chosen, and "no one" is only said once every page has been seen.
+    void (async () => {
+      const found: Candidate[] = [];
+      let after: string | null = null;
+      let seen = 0;
+      do {
+        const query = new URLSearchParams({ workspaceId: state.workspaceId, pageSize: '100' });
+        if (after) query.set('memberAfter', after);
+        const response = await fetch('/api/customer-workspace-access?' + query, {
+          credentials: 'same-origin',
+          cache: 'no-store',
+          signal: controller.signal,
+          headers,
+        });
         if (!response.ok)
           throw new Error(response.status === 429 ? limitWords : 'The team could not be loaded.');
         const page = (await response.json()) as CustomerAccessPage;
-        setMembers(
-          page.memberships
-            .filter((m) => m.status === 'active' && m.id !== state.ownerMemberId)
-            .map((m) => ({ id: m.id, label: m.label, role: m.role })),
-        );
-      })
-      .catch((error: unknown) => {
-        if (!controller.signal.aborted)
-          setLoadFailed(error instanceof Error ? error.message : 'The team could not be loaded.');
-      });
+        seen += page.memberships.length;
+        for (const m of page.memberships)
+          if (m.status === 'active' && m.id !== state.ownerMemberId)
+            found.push({ id: m.id, label: m.label, role: m.role });
+        after = page.nextMemberAfter ?? null;
+      } while (after && seen < 200);
+      if (after && found.length === 0) throw new Error('The team is too large to list here.');
+      setMembers(found);
+    })().catch((error: unknown) => {
+      if (!controller.signal.aborted)
+        setLoadFailed(error instanceof Error ? error.message : 'The team could not be loaded.');
+    });
     return () => controller.abort();
   }, [state.workspaceId, state.ownerMemberId, headers]);
   const chosen = useMemo(() => members?.find((m) => m.id === memberId), [members, memberId]);

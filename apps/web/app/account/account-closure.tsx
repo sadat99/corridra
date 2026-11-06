@@ -49,7 +49,13 @@ export function AccountClosure() {
   const [typed, setTyped] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const [announce, setAnnounce] = useState<string | null>(null);
-  const { send, busy } = useLifecycleCommand<AccountCommand>(noHeaders, accountEndpoint);
+  // One command id for each kind of action: a close that was not confirmed keeps its id for the retry of the close only,
+  // and never lends it to an erasure request or an undo.
+  const closing = useLifecycleCommand<AccountCommand>(noHeaders, accountEndpoint);
+  const erasing = useLifecycleCommand<AccountCommand>(noHeaders, accountEndpoint);
+  const undoing = useLifecycleCommand<AccountCommand>(noHeaders, accountEndpoint);
+  const busy = closing.busy || erasing.busy || undoing.busy;
+  const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     const controller = new AbortController();
     void readAccountState(controller.signal).then((next) => {
@@ -57,6 +63,10 @@ export function AccountClosure() {
     });
     return () => controller.abort();
   }, []);
+  // The button that opened a dialog may be gone once the account has changed, so focus goes to the section heading.
+  useEffect(() => {
+    if (announce) heading.current?.focus();
+  }, [announce]);
   if (state === undefined) return null;
   if (state === null) return <AccountClosureComingSoon />;
 
@@ -66,7 +76,11 @@ export function AccountClosure() {
     setTyped('');
     setMessage(null);
   };
-  async function run(command: AccountCommand, finished: (result: LifecycleResult) => void) {
+  async function run(
+    send: (command: AccountCommand) => Promise<LifecycleResult | null>,
+    command: AccountCommand,
+    finished: (result: LifecycleResult) => void,
+  ) {
     setMessage(null);
     const result = await send(command);
     if (!result) return;
@@ -84,7 +98,7 @@ export function AccountClosure() {
   const submitClose = (event: FormEvent) => {
     event.preventDefault();
     if (typed !== accountWords.closePhrase) return;
-    void run({ action: 'close', confirmation: typed }, async () => {
+    void run(closing.send, { action: 'close', confirmation: typed }, async () => {
       close();
       await reload();
       setAnnounce('Your account is closed.');
@@ -92,7 +106,7 @@ export function AccountClosure() {
   };
   const submitErasure = (event: FormEvent) => {
     event.preventDefault();
-    void run({ action: 'file_erasure' }, async (result) => {
+    void run(erasing.send, { action: 'file_erasure' }, async (result) => {
       close();
       await reload();
       const done =
@@ -110,7 +124,9 @@ export function AccountClosure() {
   const closed = state.status !== 'active';
   return (
     <section aria-label={accountWords.sectionHeading}>
-      <h3>{accountWords.sectionHeading}</h3>
+      <h3 ref={heading} tabIndex={-1}>
+        {accountWords.sectionHeading}
+      </h3>
       {announce && (
         <p role="status" className="ux-draft-notice">
           {announce}
@@ -129,7 +145,7 @@ export function AccountClosure() {
               className="primary-link"
               disabled={busy}
               onClick={() =>
-                void run({ action: 'undo' }, async () => {
+                void run(undoing.send, { action: 'undo' }, async () => {
                   await reload();
                   setAnnounce(accountWords.reopened);
                 })
@@ -190,6 +206,7 @@ export function AccountClosure() {
         onClose={close}
         title={accountWords.closeTitle}
         locked={busy}
+        returnFocusTo={() => heading.current}
       >
         {state.blockers.length > 0 ? (
           <>
@@ -262,6 +279,7 @@ export function AccountClosure() {
         onClose={close}
         title={accountWords.erasureTitle}
         locked={busy}
+        returnFocusTo={() => heading.current}
       >
         <form onSubmit={submitErasure}>
           <p>{accountWords.erasureBody}</p>

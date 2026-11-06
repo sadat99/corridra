@@ -388,3 +388,74 @@ test('G5-12 the dialogs trap focus, return focus to their button, and are axe cl
     await expect(opener).toBeFocused();
   }
 });
+
+test('G5-13 a closed account stays closed on screen when the module control is paused: the gate shows the closed screen with Reopen and Sign Out', async ({
+  page,
+}) => {
+  const { sent } = await open(page, { part: 'gate', state: { ...closedState, open: false } });
+  await expect(page.getByRole('heading', { name: 'Your Account Is Closed' })).toBeFocused();
+  await expect(page.getByText('Customer pages')).toHaveCount(0);
+  await expect(page.getByRole('button').allTextContents()).resolves.toEqual([
+    'Reopen My Account',
+    'Sign Out',
+  ]);
+  await page.getByRole('button', { name: 'Reopen My Account' }).click();
+  await expect.poll(() => sent.length).toBe(1);
+  expect(sent[0]).toEqual({ action: 'undo', commandId: expect.any(String) });
+});
+
+test('G5-14 a paused control with an active account still shows the customer pages and the Coming soon line', async ({
+  page,
+}) => {
+  await open(page, { part: 'gate', state: { ...active, open: false } });
+  await expect(page.getByText('Customer pages')).toBeVisible();
+  await page.unrouteAll();
+  await open(page, { state: { ...active, open: false } });
+  await expect(page.getByText(comingSoon)).toBeVisible();
+});
+
+test('G5-15 the Account and Data section of a closed account offers Reopen when the control is paused', async ({
+  page,
+}) => {
+  await open(page, { state: { ...closedState, open: false } });
+  await expect(page.getByText('Your account is closed until 6 Dec 2026, 10:00 UTC.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Reopen My Account' })).toBeVisible();
+  await expect(page.getByText(comingSoon)).toHaveCount(0);
+});
+
+test('G5-16 after the account closes, focus lands on the section heading instead of being lost', async ({
+  page,
+}) => {
+  await open(page);
+  await page.getByRole('button', { name: 'Close Account' }).click();
+  const dialog = page.getByRole('dialog', { name: accountWords.closeTitle });
+  await dialog
+    .getByLabel(`Type ${accountWords.closePhrase} to confirm`)
+    .fill(accountWords.closePhrase);
+  await dialog.getByRole('button', { name: 'Close Account' }).click();
+  await expect(page.getByText('Your account is closed.')).toBeVisible();
+  await expect(page.getByRole('heading', { name: accountWords.sectionHeading })).toBeFocused();
+});
+
+test('G5-17 a close that was not confirmed does not lend its command id to an erasure request', async ({
+  page,
+}) => {
+  const { sent } = await open(page, {
+    answer: (body) =>
+      body.action === 'close' ? { status: 503, json: { error: 'down' } } : undefined,
+  });
+  await page.getByRole('button', { name: 'Close Account' }).click();
+  const dialog = page.getByRole('dialog', { name: accountWords.closeTitle });
+  await dialog
+    .getByLabel(`Type ${accountWords.closePhrase} to confirm`)
+    .fill(accountWords.closePhrase);
+  await dialog.getByRole('button', { name: 'Close Account' }).click();
+  await expect(dialog.getByRole('alert')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Keep My Account' }).click();
+  await page.getByRole('button', { name: 'Ask for Erasure' }).click();
+  await page.getByRole('button', { name: 'Send Erasure Request' }).click();
+  await expect.poll(() => sent.length).toBe(2);
+  expect(sent[0]!.action).toBe('close');
+  expect(sent[1]!.action).toBe('file_erasure');
+  expect(sent[1]!.commandId).not.toEqual(sent[0]!.commandId);
+});

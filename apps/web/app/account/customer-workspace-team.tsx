@@ -1,3 +1,4 @@
+import { archivedRefusalText } from './archived-refusal';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
@@ -257,6 +258,12 @@ export function CustomerWorkspaceTeam({
         }),
       });
       if (!alive.current) return;
+      const archived = await archivedRefusalText(response);
+      if (!alive.current) return;
+      if (archived) {
+        setMessage({ text: archived, error: true });
+        return;
+      }
       if (!response.ok) {
         if ([401, 403, 409, 503].includes(response.status)) denied(response.status);
         else

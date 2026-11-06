@@ -16,6 +16,7 @@ import {
   readLifecycleList,
   readLifecycleState,
   sessionHeaders,
+  lifecycleWords,
   useLifecycleCommand,
   whenWords,
   type LifecycleState,
@@ -47,11 +48,13 @@ function UndoLine({
   state,
   headers,
   onRestored,
+  onFailed,
 }: {
   name: string;
   state: LifecycleState | undefined;
   headers: Record<string, string>;
   onRestored: () => void;
+  onFailed: (message: string) => void;
 }) {
   const { send, busy } = useLifecycleCommand(headers);
   return (
@@ -69,6 +72,10 @@ function UndoLine({
             expectedVersion: state.version,
           }).then((result) => {
             if (result?.kind === 'done') onRestored();
+            else if (result?.kind === 'stale')
+              onFailed('This workspace changed. Reload before trying again.');
+            else if (result?.kind === 'archived') onFailed(lifecycleWords.archived);
+            else if (result?.kind === 'failed') onFailed(result.message);
           });
         }}
       >
@@ -162,27 +169,45 @@ export function useWorkspaceLifecycle({
   const [announce, setAnnounce] = useState<string | null>(null);
   const [undo, setUndo] = useState<{ id: string; name: string } | null>(null);
   const [reloadTick, setReloadTick] = useState(0);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [refreshFailed, setRefreshFailed] = useState(false);
   const key = rows.map((row) => row.id).join(',');
 
   useEffect(() => {
     if (!enabled || !key) return;
     const controller = new AbortController();
+    // A read that fails keeps what was last known for that workspace and says so: an archived workspace must never
+    // be drawn as active because a refresh did not arrive. Only an answer that the control is absent clears it.
     void (async () => {
       try {
-        if (!(await readLifecycleList(headers, controller.signal))) return setStates({});
+        if (!(await readLifecycleList(headers, controller.signal))) {
+          if (!controller.signal.aborted) {
+            setStates({});
+            setRefreshFailed(false);
+          }
+          return;
+        }
         const read = await Promise.all(
-          key
-            .split(',')
-            .map((id) => readLifecycleState(id, headers, controller.signal).catch(() => null)),
+          key.split(',').map(async (id) => {
+            try {
+              return { id, state: await readLifecycleState(id, headers, controller.signal) };
+            } catch {
+              return { id, state: undefined };
+            }
+          }),
         );
         if (controller.signal.aborted) return;
-        setStates(
+        setRefreshFailed(read.some((entry) => entry.state === undefined));
+        setStates((before) =>
           Object.fromEntries(
-            read.filter((s): s is LifecycleState => !!s).map((s) => [s.workspaceId, s]),
+            read.flatMap((entry) => {
+              const next = entry.state === undefined ? before[entry.id] : entry.state;
+              return next ? [[entry.id, next] as const] : [];
+            }),
           ),
         );
       } catch {
-        if (!controller.signal.aborted) setStates({});
+        if (!controller.signal.aborted) setRefreshFailed(true);
       }
     })();
     return () => controller.abort();
@@ -205,6 +230,7 @@ export function useWorkspaceLifecycle({
     setDialog(null);
     // The Undo line says an archive happened, so it is not announced twice.
     setAnnounce(undoId ? null : message);
+    setProblem(null);
     setUndo(undoId && id ? { id, name: nameOf(id) } : null);
     setReloadTick((tick) => tick + 1);
     void refreshRows();
@@ -279,13 +305,25 @@ export function useWorkspaceLifecycle({
           {announce}
         </p>
       )}
+      {refreshFailed && (
+        <p role="status" className="ux-hint">
+          Could not refresh workspace status. Showing the last known status.
+        </p>
+      )}
+      {problem && (
+        <p role="alert" className="ux-error-summary">
+          {problem}
+        </p>
+      )}
       {undo && (
         <UndoLine
           name={undo.name}
           state={states[undo.id]}
           headers={headers}
+          onFailed={setProblem}
           onRestored={() => {
             setUndo(null);
+            setProblem(null);
             setAnnounce(`${undo.name} was restored.`);
             setReloadTick((tick) => tick + 1);
             void refreshRows();
@@ -344,6 +382,8 @@ export function useWorkspaceLifecycle({
     /** Rows to draw for the chosen filter. */
     visibleRows,
     isArchived: (id: string) => !!states[id]?.archived,
+    /** The status of this workspace could not be read, so it is not known to accept new requests. */
+    statusUnknown: (id: string) => refreshFailed && !states[id],
     ownerMemberId: (id: string) => states[id]?.ownerMemberId ?? null,
     menuItems,
     panel,
