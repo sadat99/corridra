@@ -13,8 +13,9 @@ const headers = {
 const revisionRefusals: Record<string, string> = {
   'Response changed; reload before saving':
     'This answer was changed since you opened it. The latest version is shown; try again.',
-  'The team has already reviewed this response':
-    'The team has already reviewed this answer, so it can no longer be changed here.',
+  'The team has already decided on this response':
+    'The team has already made a decision on this answer, so it can no longer be changed here.',
+  'Answer correction is not open': 'Changing an answer is not available yet.',
   'Response revision limit reached': 'This answer has been changed as often as is allowed.',
 };
 export async function POST(request: Request) {

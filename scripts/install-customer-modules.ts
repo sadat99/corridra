@@ -46,6 +46,7 @@ import {
 } from '../packages/auth/src/customer-notification-configuration';
 import { migrateReplyReview } from '../packages/db/src/recipient-reply-review-migrate';
 import { configureReplyReview } from '../packages/delivery/src/reply-review-configuration';
+import { configureRecipientRevision } from '../packages/delivery/src/recipient-revision-configuration';
 import { configureMissionMail } from '../packages/auth/src/customer-mission-mail-configuration';
 import { migrateCustomerBillingReal } from '../packages/db/src/customer-billing-real-migrate';
 import { configureRealBilling } from '../packages/auth/src/customer-billing-real-configuration';
@@ -76,7 +77,9 @@ const v = z
     REPLY_REVIEW_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     SPECIFICATION_CONFIRMATION_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     PROGRAMME_LIFECYCLE_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
-    RESPONSE_REVISION_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
+    RESPONSE_REVISION_ACTION: z
+      .enum(['unchanged', 'install', 'enable', 'pause'])
+      .default('unchanged'),
     COMMERCIAL_ARRANGEMENTS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     REPLY_REVIEW_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
@@ -333,11 +336,24 @@ try {
         'installed or already current: programme lifecycle (needs real-use installed first)',
       );
     }
-    if (v.RESPONSE_REVISION_ACTION === 'install') {
+    if (v.RESPONSE_REVISION_ACTION !== 'unchanged') {
       await migrateRecipientResponseRevision(pool);
-      console.log(
-        'installed or already current: recipient response revision (needs real-use installed first)',
-      );
+      if (v.RESPONSE_REVISION_ACTION === 'install') {
+        console.log(
+          'installed or already current: recipient response revision, closed (needs real-use installed first)',
+        );
+      } else {
+        const result = await configureRecipientRevision(pool, {
+          enabled: v.RESPONSE_REVISION_ACTION === 'enable',
+          reason:
+            v.RESPONSE_REVISION_ACTION === 'enable'
+              ? 'Owner opened answer correction from the install workflow'
+              : 'Owner paused answer correction from the install workflow',
+        });
+        console.log(
+          `Recipient answer correction ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
+        );
+      }
     }
     if (v.SPECIFICATION_CONFIRMATION_ACTION === 'install') {
       await migrateCustomerSpecificationConfirmation(pool);

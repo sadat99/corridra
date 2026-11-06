@@ -28,6 +28,7 @@ type Reply = {
   body: ReplyBody & { body?: string };
   created_at?: string;
   revision?: number;
+  revised_at?: string;
 };
 type Disclosure = { link_id: string; role: string; shared_requirements: string };
 
@@ -209,6 +210,10 @@ function ReplyCard({
             <p className="reply-review-note">
               The recipient corrected this answer {reply.revision} time
               {reply.revision === 1 ? '' : 's'}. The latest answer is shown.
+              {state.asked &&
+                reply.revised_at &&
+                new Date(reply.revised_at) > new Date(state.asked.createdAt) &&
+                ' This answer came after your request for more terms.'}
             </p>
           )}
           {reply.body.meetingInterest === true && (

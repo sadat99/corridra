@@ -693,7 +693,7 @@ test('Use Theirs shows the newer answer and sends nothing more', async ({ page }
   expect(sent.filter((c) => c.action === 'detail-revision')).toHaveLength(1);
 });
 
-test('once the team has reviewed an answer the page says so and offers no more corrections', async ({
+test('once the team has decided on an answer the page says so and offers no more corrections', async ({
   page,
 }) => {
   await open(page, {
@@ -701,14 +701,15 @@ test('once the team has reviewed an answer the page says so and offers no more c
     revise: () => ({
       status: 409,
       value: {
-        error: 'The team has already reviewed this answer, so it can no longer be changed here.',
+        error:
+          'The team has already made a decision on this answer, so it can no longer be changed here.',
       },
     }),
   });
   await page.getByRole('button', { name: 'Change My Answer' }).click();
   await page.getByRole('button', { name: 'Send my message without a quote' }).click();
   await signed(page);
-  await expect(page.getByRole('alert').filter({ hasText: 'already reviewed' })).toBeVisible();
+  await expect(page.getByRole('alert').filter({ hasText: 'made a decision' })).toBeVisible();
   await page.getByRole('button', { name: 'Back' }).click();
   await page.getByRole('button', { name: 'Keep My Current Answer' }).click();
   await expect(page.getByRole('button', { name: 'Change My Answer' })).toHaveCount(0);

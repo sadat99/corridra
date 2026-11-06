@@ -22,6 +22,8 @@ import { ReplyReviewService } from '../../packages/delivery/src/reply-review';
 import { migrateReplyReview } from '../../packages/db/src/recipient-reply-review-migrate';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateRecipientResponseRevision } from '../../packages/db/src/recipient-response-revision-migrate';
+import { getTeamToday } from '../../packages/auth/src/team-today';
+import { configureRecipientRevision } from '../../packages/delivery/src/recipient-revision-configuration';
 import { configureReplyReview } from '../../packages/delivery/src/reply-review-configuration';
 const account = vi.hoisted(() => ({ session: null as unknown, services: null as unknown }));
 vi.mock('../../apps/web/lib/neon-auth', () => ({
@@ -1364,10 +1366,12 @@ test('populated Part 2 upgrade preserves every original row and historical expor
 });
 
 // Recipient response revision (CRUD gap G7, module 3): a recipient may correct their answer through the same private link.
-async function answeredWithToken(allowMeetingInterest = false) {
-  // Installing is idempotent, so every test below can run on its own.
+const revisionReason = 'Owner opened answer correction for the local fixture tests';
+async function answeredWithToken(allowMeetingInterest = false, open = true) {
+  // Installing is idempotent, so every test below can run on its own; the control is opened unless the test is about it being closed.
   await migrateCustomerRealUse(f.owner);
   await migrateRecipientResponseRevision(f.owner);
+  if (open) await configureRecipientRevision(f.owner, { enabled: true, reason: revisionReason });
   const j = await sourceJourney(),
     link = await f.introduction(j.t);
   await experience.disclosure(f.users.owner.ctx, {
@@ -1580,19 +1584,96 @@ test("the response revision table cannot be rewritten or written directly, and i
   expect(module3).toContain(core.slice(from, to).trimEnd());
 });
 
-test('once the team has reviewed an answer it can no longer be corrected, and the view says so', async () => {
+test('the control starts closed: nothing can be corrected, and the view does not offer it, until the owner opens it', async () => {
+  await migrateCustomerRealUse(f.owner);
+  await migrateRecipientResponseRevision(f.owner);
+  const a = await answeredWithToken(false, false);
+  // Installing leaves it closed. If an earlier test opened it, close it for this one.
+  await configureRecipientRevision(f.owner, { enabled: false, reason: revisionReason });
+  expect(
+    (await f.communications.buyer({ action: 'read', token: a.token })).detailResponse,
+  ).toMatchObject({
+    version: 0,
+    canRevise: false,
+  });
+  await expect(f.communications.buyer(revision(a.token, 0))).rejects.toThrow(
+    'Answer correction is not open',
+  );
+  for (const pool of [f.runtime, f.auth]) {
+    await expect(pool.query('SELECT * FROM app.recipient_revision_control')).rejects.toMatchObject({
+      code: '42501',
+    });
+    await expect(pool.query('SELECT app.recipient_revision_open()')).rejects.toMatchObject({
+      code: '42501',
+    });
+  }
+  await expect(
+    configureRecipientRevision(f.runtime, { enabled: true, reason: revisionReason }),
+  ).rejects.toThrow();
+  expect(
+    await configureRecipientRevision(f.owner, { enabled: true, reason: revisionReason }),
+  ).toEqual({
+    enabled: true,
+    changed: true,
+  });
+  // The control's history cannot be rewritten.
+  await expect(
+    f.owner.query('UPDATE app.recipient_revision_control SET enabled=false'),
+  ).rejects.toThrow();
+  expect(await f.communications.buyer(revision(a.token, 0))).toMatchObject({ version: 1 });
+  // Pausing stops new corrections and keeps the ones already made.
+  await configureRecipientRevision(f.owner, { enabled: false, reason: revisionReason });
+  await expect(f.communications.buyer(revision(a.token, 1))).rejects.toThrow(
+    'Answer correction is not open',
+  );
+  expect(
+    (await f.communications.buyer({ action: 'read', token: a.token })).detailResponse.body.body,
+  ).toBe('Corrected supplier reply, quote follows.');
+  await configureRecipientRevision(f.owner, { enabled: true, reason: revisionReason });
+});
+
+test('an Ask is answered by a correction, a final decision locks the answer, and the team sees an answer that came after the Ask', async () => {
   await migrateReplyReview(f.owner);
   await configureReplyReview(f.owner, { enabled: true, reason: reviewReason });
   const reviews = new ReplyReviewService(f.runtime);
   const a = await answeredWithToken();
-  expect(await f.communications.buyer(revision(a.token, 0))).toMatchObject({ version: 1 });
+  const waiting = async () => (await getTeamToday(f.runtime, f.users.owner.ctx)).repliesToReview;
+  const unreviewed = await waiting();
   await reviews.review(f.users.owner.ctx, ask(a.responseId));
-  const view = await f.communications.buyer({ action: 'read', token: a.token });
-  expect(view.detailResponse).toMatchObject({ version: 1, canRevise: false });
-  await expect(f.communications.buyer(revision(a.token, 1))).rejects.toThrow(
-    'The team has already reviewed this response',
+  // Asked, so no longer waiting for a first review.
+  expect(await waiting()).toBe(unreviewed - 1);
+  // An Ask invites the supplier to add terms to their own answer: that is a correction, and it is allowed.
+  expect(
+    (await f.communications.buyer({ action: 'read', token: a.token })).detailResponse,
+  ).toMatchObject({ version: 0, canRevise: true });
+  expect(await f.communications.buyer(revision(a.token, 0))).toMatchObject({ version: 1 });
+  // An answer that came after the Ask is waiting for review again.
+  expect(await waiting()).toBe(unreviewed);
+  // The decision still points at the original reply, and the team's list shows the correction.
+  const mine = (await experience.workspace(f.users.owner.ctx)).responses.find(
+    (r) => r.id === a.responseId,
   );
-  // A replay of a correction accepted before the review still answers.
+  expect(mine).toMatchObject({ revision: 1 });
+  expect(new Date(mine!.revised_at).getTime()).toBeGreaterThan(
+    new Date(
+      (await reviews.list(f.users.owner.ctx)).reviews.find((r) => r.responseId === a.responseId)!
+        .createdAt,
+    ).getTime(),
+  );
+  // A final decision (here a rejection) locks the answer.
+  await reviews.review(f.users.owner.ctx, {
+    commandId: randomUUID(),
+    responseId: a.responseId,
+    decision: 'REJECT',
+    reasonCode: 'NOT_A_FIT',
+  });
+  expect(await waiting()).toBe(unreviewed - 1);
+  expect(
+    (await f.communications.buyer({ action: 'read', token: a.token })).detailResponse,
+  ).toMatchObject({ version: 1, canRevise: false });
+  await expect(f.communications.buyer(revision(a.token, 1))).rejects.toThrow(
+    'The team has already decided on this response',
+  );
 });
 
 test('the team reads the latest correction with how many were made, and the first answer stays on record', async () => {

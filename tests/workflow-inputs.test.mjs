@@ -79,6 +79,8 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'both',
     'programme_lifecycle',
     'response_revision',
+    'response_revision_enable',
+    'response_revision_pause',
   ]);
   const defaults = Object.fromEntries(
     Object.entries(declared).map(([name, input]) => [name, input.default]),
@@ -90,6 +92,8 @@ test('each field-module choice maps to install only and reaches the exact-head c
     ['both', 'install', 'install', 'unchanged', 'unchanged'],
     ['programme_lifecycle', 'unchanged', 'unchanged', 'install', 'unchanged'],
     ['response_revision', 'unchanged', 'unchanged', 'unchanged', 'install'],
+    ['response_revision_enable', 'unchanged', 'unchanged', 'unchanged', 'enable'],
+    ['response_revision_pause', 'unchanged', 'unchanged', 'unchanged', 'pause'],
   ]) {
     const inputs = { ...defaults, field_modules_action: choice };
     assert.equal(evaluate(env.SPECIFICATION_CONFIRMATION_ACTION, inputs), confirmation);

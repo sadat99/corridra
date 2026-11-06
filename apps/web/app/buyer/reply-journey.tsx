@@ -337,7 +337,7 @@ export function ReplyJourney({
           setSending(false);
           return;
         }
-        if (error.message.includes('already reviewed')) {
+        if (error.message.includes('made a decision')) {
           // Sending it again can never work, so the exact-retry hold is released and the person can go back.
           setCanRevise(false);
           setCommand(null);
