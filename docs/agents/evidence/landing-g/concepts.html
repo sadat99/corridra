@@ -1,0 +1,2760 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Corridra landing mockups</title>
+    <style>
+      @font-face {
+        font-family: 'Newsreader';
+        src: url(../../../../apps/web/app/fonts/newsreader-latin-variable.woff2) format('woff2');
+        font-weight: 200 800;
+      }
+      @font-face {
+        font-family: 'Geist';
+        src: url(../../../../apps/web/app/fonts/geist-latin-variable.woff2) format('woff2');
+        font-weight: 100 900;
+      }
+      :root {
+        --navy: #142438;
+        --cobalt: #2856c5;
+        --cobalt-h: #1f47a8;
+        --porcelain: #f6f8fb;
+        --copper: #bf7548;
+        --ink: #18283c;
+        --text-2: #4a5a6e;
+        --line: #dce3ec;
+        --line-2: #c9d3df;
+        --surface: #ffffff;
+        --surface-2: #eef2f7;
+        --select: #e7eefc;
+        --ok: #1e7a4c;
+        --ok-bg: #e5f3ec;
+        --warn: #8a5a00;
+        --warn-bg: #fbf1dc;
+        --muted-bg: #eef1f5;
+        --serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+        --sans: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        --r: 8px;
+        --wrap: 1240px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        background: var(--porcelain);
+        color: var(--ink);
+        font: 16px/1.5 var(--sans);
+        -webkit-font-smoothing: antialiased;
+      }
+      a {
+        color: inherit;
+      }
+      .wrap {
+        max-width: var(--wrap);
+        margin: 0 auto;
+        padding: 0 40px;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--serif);
+        font-weight: 500;
+        letter-spacing: -0.01em;
+        margin: 0;
+      }
+      h1 {
+        font-size: 60px;
+        line-height: 1.04;
+      }
+      h2 {
+        font-size: 36px;
+        line-height: 1.12;
+      }
+      h3 {
+        font-size: 22px;
+        line-height: 1.2;
+      }
+      p {
+        margin: 0;
+      }
+      .eyebrow {
+        font: 600 12px/1 var(--sans);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--copper);
+      }
+      .lead {
+        font-size: 19px;
+        line-height: 1.5;
+        color: var(--text-2);
+        max-width: 36rem;
+      }
+      .small {
+        font-size: 14px;
+        color: var(--text-2);
+      }
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        height: 22px;
+        padding: 0 8px;
+        border-radius: 4px;
+        background: var(--warn-bg);
+        color: var(--warn);
+        font: 600 11px/1 var(--sans);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .tag.blue {
+        background: var(--select);
+        color: var(--cobalt);
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 48px;
+        padding: 0 22px;
+        border-radius: var(--r);
+        background: var(--cobalt);
+        color: #fff;
+        font: 600 16px var(--sans);
+        text-decoration: none;
+        border: 0;
+      }
+      .btn.light {
+        background: #fff;
+        color: var(--navy);
+      }
+      .quiet {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 44px;
+        font: 500 15px var(--sans);
+        color: var(--cobalt);
+        text-decoration: underline;
+        text-underline-offset: 4px;
+      }
+      .ico {
+        width: 20px;
+        height: 20px;
+        flex: none;
+      }
+      /* header */
+      .hdr {
+        background: #fff;
+        border-bottom: 1px solid var(--line);
+      }
+      .hdr .wrap {
+        display: flex;
+        align-items: center;
+        gap: 28px;
+        height: 72px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 44px;
+        font: 600 22px var(--serif);
+        text-decoration: none;
+        color: var(--navy);
+      }
+      .brand svg {
+        width: 26px;
+        height: 26px;
+      }
+      .nav {
+        display: flex;
+        gap: 24px;
+        font: 500 15px var(--sans);
+        color: var(--text-2);
+      }
+      .nav a {
+        text-decoration: none;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+      }
+      .hdr .tools {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 44px;
+        padding: 0 12px;
+        border: 1px solid var(--line-2);
+        border-radius: var(--r);
+        font: 500 14px var(--sans);
+        color: var(--text-2);
+        background: #fff;
+      }
+      .signin {
+        font: 500 15px var(--sans);
+        text-decoration: none;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        padding: 0 6px;
+      }
+      .hdr .btn {
+        min-height: 44px;
+        padding: 0 18px;
+        font-size: 15px;
+      }
+      .menu-btn {
+        display: none;
+      }
+      /* job rows */
+      .jobs {
+        display: grid;
+        border-top: 1px solid var(--line-2);
+      }
+      .job {
+        display: grid;
+        grid-template-columns: 44px 1fr 24px;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 4px;
+        border-bottom: 1px solid var(--line-2);
+        text-decoration: none;
+        min-height: 76px;
+      }
+      .job .jicon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        background: var(--select);
+        color: var(--cobalt);
+        display: grid;
+        place-items: center;
+      }
+      .job b {
+        display: block;
+        font: 600 18px var(--sans);
+      }
+      .job span {
+        display: block;
+        font-size: 15px;
+        color: var(--text-2);
+      }
+      .job .go {
+        color: var(--cobalt);
+      }
+      .calm {
+        display: flex;
+        gap: 22px;
+        flex-wrap: wrap;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-size: 14px;
+        color: var(--text-2);
+      }
+      .calm li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .calm li::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--ok);
+      }
+      /* exhibit */
+      .exhibit {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        box-shadow:
+          0 1px 2px rgba(20, 36, 56, 0.04),
+          0 12px 32px rgba(20, 36, 56, 0.07);
+        overflow: hidden;
+      }
+      .ex-tabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid var(--line);
+        padding: 0 20px;
+      }
+      .ex-tabs button {
+        all: unset;
+        cursor: pointer;
+        min-height: 48px;
+        padding: 0 14px;
+        display: inline-flex;
+        align-items: center;
+        font: 500 15px var(--sans);
+        color: var(--text-2);
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
+      }
+      .ex-tabs button[aria-selected='true'] {
+        color: var(--cobalt);
+        border-color: var(--cobalt);
+        font-weight: 600;
+      }
+      .ex-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 16px 20px 10px;
+      }
+      .ex-head h3 {
+        font: 600 17px var(--sans);
+      }
+      .ex-head .small {
+        margin-left: auto;
+      }
+      .ledger-h,
+      .ledger-r {
+        display: grid;
+        grid-template-columns: 1.25fr 1.6fr 9.5rem;
+        gap: 14px;
+        padding: 12px 20px;
+        align-items: start;
+      }
+      .ledger-h {
+        font: 600 12px var(--sans);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-2);
+        border-bottom: 1px solid var(--line);
+        padding-top: 4px;
+        padding-bottom: 8px;
+      }
+      .ledger-r {
+        border-bottom: 1px solid var(--line);
+        font-size: 14.5px;
+      }
+      .ledger-r:last-child {
+        border-bottom: 0;
+      }
+      .ledger-r b {
+        font-weight: 600;
+      }
+      .ledger-r .why {
+        color: var(--text-2);
+      }
+      .st {
+        display: inline-flex;
+        align-items: center;
+        height: 24px;
+        padding: 0 9px;
+        border-radius: 12px;
+        font: 600 12px var(--sans);
+        white-space: nowrap;
+      }
+      .st.ok {
+        background: var(--ok-bg);
+        color: var(--ok);
+      }
+      .st.go {
+        background: var(--select);
+        color: var(--cobalt);
+      }
+      .st.mute {
+        background: var(--muted-bg);
+        color: var(--text-2);
+      }
+      .st.w {
+        background: var(--warn-bg);
+        color: var(--warn);
+      }
+      .ex-foot {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        background: var(--surface-2);
+        font-size: 13px;
+        color: var(--text-2);
+      }
+      /* steps */
+      .steps {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 0;
+        border-top: 1px solid var(--line-2);
+      }
+      .steps li {
+        padding: 20px 18px 6px 0;
+        position: relative;
+      }
+      .steps .n {
+        font: 500 30px var(--serif);
+        color: var(--copper);
+        display: block;
+        margin-bottom: 6px;
+      }
+      .steps b {
+        display: block;
+        font: 600 17px var(--sans);
+        margin-bottom: 4px;
+      }
+      .steps p {
+        font-size: 14.5px;
+        color: var(--text-2);
+      }
+      /* facts */
+      .facts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .fact {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 16px;
+      }
+      .fact .st {
+        margin-bottom: 8px;
+      }
+      .fact p {
+        font-size: 14.5px;
+        color: var(--text-2);
+      }
+      /* routes */
+      .routes {
+        display: grid;
+        border-top: 1px solid var(--line-2);
+      }
+      .route {
+        display: grid;
+        grid-template-columns: 90px 1fr 24px;
+        gap: 14px;
+        align-items: center;
+        padding: 16px 4px;
+        border-bottom: 1px solid var(--line-2);
+        text-decoration: none;
+        min-height: 64px;
+      }
+      .route .k {
+        font: 600 12px var(--sans);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--copper);
+      }
+      .route b {
+        font: 600 17px var(--sans);
+      }
+      .route span {
+        display: block;
+        font-size: 14px;
+        color: var(--text-2);
+      }
+      /* cta + footer */
+      .cta {
+        background: var(--navy);
+        color: #fff;
+      }
+      .cta .wrap {
+        display: flex;
+        align-items: center;
+        gap: 32px;
+        padding-top: 44px;
+        padding-bottom: 44px;
+      }
+      .cta h2 {
+        color: #fff;
+        font-size: 34px;
+      }
+      .cta p {
+        color: #c3cedc;
+        font-size: 16px;
+        margin-top: 6px;
+      }
+      .cta .right {
+        margin-left: auto;
+      }
+      .foot {
+        background: #0f1c2c;
+        color: #afbccc;
+        font-size: 14px;
+      }
+      .foot .wrap {
+        display: grid;
+        grid-template-columns: 1.4fr repeat(4, 1fr);
+        gap: 24px;
+        padding-top: 36px;
+        padding-bottom: 28px;
+      }
+      .foot b {
+        color: #fff;
+        font: 600 14px var(--sans);
+        display: block;
+        margin-bottom: 10px;
+      }
+      .foot a {
+        display: block;
+        text-decoration: none;
+        min-height: 30px;
+      }
+      .foot .brand {
+        color: #fff;
+        margin-bottom: 8px;
+      }
+      .foot .brand rect {
+        fill: #fff;
+      }
+      .foot .brand path:first-of-type {
+        stroke: #142438;
+      }
+      .foot .legal {
+        grid-column: 1/-1;
+        border-top: 1px solid #24364c;
+        padding-top: 16px;
+        display: flex;
+        gap: 24px;
+        font-size: 13px;
+      }
+      .foot details {
+        display: none;
+      }
+      section {
+        scroll-margin-top: 80px;
+      }
+      .sec {
+        padding: 72px 0;
+      }
+      .sec-head {
+        display: flex;
+        align-items: end;
+        gap: 24px;
+        margin-bottom: 28px;
+      }
+      .sec-head .lead {
+        margin-top: 10px;
+      }
+      .sec-head .quiet {
+        margin-left: auto;
+      }
+
+      /* ===== Variant A: Ledger, tightened ===== */
+      .A .hero {
+        padding: 56px 0 64px;
+      }
+      .A .hero .wrap {
+        display: grid;
+        grid-template-columns: 1fr 1.05fr;
+        gap: 56px;
+        align-items: start;
+      }
+      .A .hero h1 {
+        margin: 14px 0 16px;
+      }
+      .A .hero .jobs {
+        margin-top: 28px;
+      }
+      .A .hero .after {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        margin-top: 14px;
+      }
+      .A .two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 56px;
+      }
+      .A .sec.alt {
+        background: #fff;
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+
+      /* ===== Variant B: Three journeys ===== */
+      .B .hero {
+        padding: 56px 0 28px;
+      }
+      .B .hero .wrap {
+        display: grid;
+        grid-template-columns: 1.25fr 1fr;
+        gap: 56px;
+        align-items: end;
+      }
+      .B .hero h1 {
+        margin: 14px 0 14px;
+        font-size: 64px;
+      }
+      .B .journeys .wrap {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+      .B .jcard {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        text-decoration: none;
+        box-shadow:
+          0 1px 2px rgba(20, 36, 56, 0.04),
+          0 10px 26px rgba(20, 36, 56, 0.06);
+      }
+      .B .jcard:hover {
+        border-color: var(--cobalt);
+      }
+      .B .jcard .top {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .B .jcard .jicon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        background: var(--select);
+        color: var(--cobalt);
+        display: grid;
+        place-items: center;
+      }
+      .B .jcard .k {
+        font: 600 12px var(--sans);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--copper);
+      }
+      .B .jcard h3 {
+        font-size: 25px;
+      }
+      .B .jcard p.t {
+        font-size: 15px;
+        color: var(--text-2);
+      }
+      .B .mini {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--porcelain);
+        padding: 12px 14px;
+        font-size: 13.5px;
+      }
+      .B .mini .mh {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        font: 600 13px var(--sans);
+      }
+      .B .mini .mh .tag {
+        margin-left: auto;
+      }
+      .B .bar {
+        display: grid;
+        grid-template-columns: 92px 1fr 26px;
+        align-items: center;
+        gap: 8px;
+        margin: 6px 0;
+      }
+      .B .bar i {
+        display: block;
+        height: 10px;
+        border-radius: 5px;
+        background: var(--cobalt);
+      }
+      .B .bar i.l2 {
+        background: #5c80d8;
+      }
+      .B .bar i.l3 {
+        background: #93aae6;
+      }
+      .B .q {
+        display: grid;
+        grid-template-columns: 1fr 78px 92px;
+        gap: 6px;
+        padding: 5px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .B .q:last-child {
+        border-bottom: 0;
+      }
+      .B .q.h {
+        font-weight: 600;
+        color: var(--text-2);
+        font-size: 12px;
+      }
+      .B .stage {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 4px;
+        margin: 4px 0 8px;
+      }
+      .B .stage i {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--line-2);
+      }
+      .B .stage i.d {
+        background: var(--cobalt);
+      }
+      .B .stage i.n {
+        background: #93aae6;
+      }
+      .B .tiles {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+      .B .tiles div {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 6px 8px;
+      }
+      .B .tiles b {
+        font: 600 18px var(--sans);
+        display: block;
+      }
+      .B .jcard .go {
+        margin-top: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 44px;
+        font: 600 15px var(--sans);
+        color: var(--cobalt);
+      }
+      .B .else {
+        padding-top: 14px;
+      }
+      .B .split {
+        display: grid;
+        grid-template-columns: 1.15fr 1fr;
+        gap: 56px;
+      }
+      .B .vsteps {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 28px;
+      }
+      .B .vsteps li {
+        display: grid;
+        grid-template-columns: 38px 1fr;
+        gap: 10px;
+        padding: 12px 0;
+        border-top: 1px solid var(--line-2);
+      }
+      .B .vsteps .n {
+        font: 500 24px/1 var(--serif);
+        color: var(--copper);
+        padding-top: 2px;
+      }
+      .B .vsteps b {
+        font: 600 16px var(--sans);
+        display: block;
+      }
+      .B .vsteps p {
+        font-size: 14px;
+        color: var(--text-2);
+      }
+      .B .facts {
+        grid-template-columns: 1fr;
+      }
+      .B .fact {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+      }
+      .B .fact .st {
+        margin: 0;
+      }
+      .B .rstrip {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        border-top: 1px solid var(--line-2);
+        border-bottom: 1px solid var(--line-2);
+      }
+      .B .rstrip .route {
+        border-bottom: 0;
+        border-right: 1px solid var(--line-2);
+        grid-template-columns: 76px 1fr 24px;
+        padding: 16px 18px;
+      }
+      .B .rstrip .route:last-child {
+        border-right: 0;
+      }
+
+      /* ===== Variant C: Editorial navy ===== */
+      .C .hero {
+        background: var(--navy);
+        color: #fff;
+        padding: 60px 0 0;
+      }
+      .C .hero .wrap {
+        display: grid;
+        grid-template-columns: 1.1fr 1fr;
+        gap: 56px;
+        align-items: start;
+      }
+      .C .hero .eyebrow {
+        color: #e0a57e;
+      }
+      .C .hero h1 {
+        color: #fff;
+        font-size: 68px;
+        margin: 14px 0 16px;
+      }
+      .C .hero .lead {
+        color: #c3cedc;
+      }
+      .C .hero .calm {
+        color: #c3cedc;
+        margin-top: 22px;
+      }
+      .C .hero .calm li::before {
+        background: #6fd0a0;
+      }
+      .C .hero .jobs {
+        border-top: 1px solid #2f4561;
+      }
+      .C .hero .job {
+        border-bottom: 1px solid #2f4561;
+        color: #fff;
+      }
+      .C .hero .job span {
+        color: #afbccc;
+      }
+      .C .hero .job .jicon {
+        background: #22385a;
+        color: #9db6f0;
+      }
+      .C .hero .job .go {
+        color: #9db6f0;
+      }
+      .C .hero .after {
+        margin-top: 10px;
+      }
+      .C .hero .wrap.hero-ex {
+        display: block;
+      }
+      .C .hero .after .quiet {
+        color: #9db6f0;
+      }
+      .C .hero-ex {
+        margin-top: 56px;
+        padding-bottom: 0;
+      }
+      .C .hero-ex .exhibit {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        border-bottom: 0;
+        box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.18);
+      }
+      .C .exbelow {
+        background: #fff;
+        border-bottom: 1px solid var(--line);
+      }
+      .C .exwrap {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+      }
+      .C .exwrap .col {
+        padding: 0;
+      }
+      .C .exwrap .col + .col {
+        border-left: 1px solid var(--line);
+      }
+      .C .cmp-h,
+      .C .cmp-r {
+        display: grid;
+        grid-template-columns: 1.1fr repeat(3, 1fr);
+        gap: 10px;
+        padding: 11px 20px;
+        font-size: 14.5px;
+      }
+      .C .cmp-h {
+        font: 600 12px var(--sans);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-2);
+        border-bottom: 1px solid var(--line);
+        padding-top: 4px;
+        padding-bottom: 8px;
+      }
+      .C .cmp-r {
+        border-bottom: 1px solid var(--line);
+      }
+      .C .cmp-r:last-child {
+        border-bottom: 0;
+      }
+      .C .cmp-r .t {
+        color: var(--text-2);
+      }
+      .C .three {
+        display: grid;
+        grid-template-columns: 1.3fr 1fr 1fr;
+        gap: 48px;
+      }
+      .C .steps {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .C .steps li {
+        padding: 16px 16px 10px 0;
+      }
+      .C .steps .n {
+        font-size: 24px;
+        margin-bottom: 2px;
+      }
+      .C .facts {
+        grid-template-columns: 1fr;
+      }
+      .C .fact {
+        padding: 12px 14px;
+      }
+
+      /* shared dark job rows */
+      .on-dark .jobs {
+        border-top: 1px solid #2f4561;
+      }
+      .on-dark .job {
+        border-bottom: 1px solid #2f4561;
+        color: #fff;
+      }
+      .on-dark .job span {
+        color: #afbccc;
+      }
+      .on-dark .job .jicon {
+        background: #22385a;
+        color: #9db6f0;
+      }
+      .on-dark .job .go {
+        color: #9db6f0;
+      }
+      .on-dark .quiet {
+        color: #9db6f0;
+      }
+      .on-dark .calm {
+        color: #c3cedc;
+      }
+      .on-dark .calm li::before {
+        background: #6fd0a0;
+      }
+      .on-dark .eyebrow {
+        color: #e0a57e;
+      }
+      .on-dark h1,
+      .on-dark h2 {
+        color: #fff;
+      }
+      .on-dark .lead {
+        color: #c3cedc;
+      }
+
+      /* ===== Variant D: Corridor Atlas ===== */
+      .D .hero {
+        position: relative;
+        background: radial-gradient(1200px 600px at 78% 40%, #1d3554 0%, #142438 60%, #101d2e 100%);
+        overflow: hidden;
+        padding: 64px 0 72px;
+      }
+      .D .hero .map {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      .D .hero .wrap {
+        position: relative;
+        display: grid;
+        grid-template-columns: 520px 1fr;
+        gap: 40px;
+      }
+      .D .hero h1 {
+        margin: 14px 0 16px;
+        font-size: 64px;
+      }
+      .D .hero .jobs {
+        margin-top: 26px;
+        background: rgba(16, 29, 46, 0.55);
+        backdrop-filter: blur(6px);
+      }
+      .D .hero .after {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        margin-top: 12px;
+      }
+      .D .pin {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.97);
+        color: var(--ink);
+        border-radius: 10px;
+        padding: 12px 14px;
+        width: 262px;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+        font-size: 13.5px;
+      }
+      .D .pin .ph {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+      .D .pin .ph b {
+        font: 600 14px var(--sans);
+      }
+      .D .pin .ph .tag {
+        margin-left: auto;
+      }
+      .D .pin .row {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 5px 0;
+        border-top: 1px solid var(--line);
+      }
+      .D .pin .row span:first-child {
+        color: var(--text-2);
+      }
+      .D .pin::after {
+        content: '';
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: #fff;
+        transform: rotate(45deg);
+      }
+      .D .pin.p1 {
+        left: 560px;
+        top: 92px;
+      }
+      .D .pin.p1::after {
+        left: 120px;
+        bottom: -5px;
+      }
+      .D .pin.p2 {
+        left: 972px;
+        top: 150px;
+      }
+      .D .pin.p2::after {
+        left: 190px;
+        bottom: -5px;
+      }
+      .D .legend {
+        position: absolute;
+        left: 600px;
+        bottom: -40px;
+        display: flex;
+        gap: 18px;
+        font-size: 13px;
+        color: #afbccc;
+      }
+      .D .legend i {
+        display: inline-block;
+        width: 18px;
+        height: 2px;
+        margin-right: 6px;
+        vertical-align: middle;
+      }
+      .D .journey {
+        position: relative;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+      }
+      .D .journey::before {
+        content: '';
+        position: absolute;
+        left: 14px;
+        right: 14px;
+        top: 14px;
+        height: 2px;
+        background: linear-gradient(90deg, var(--cobalt), var(--copper));
+      }
+      .D .journey li {
+        position: relative;
+        padding: 44px 18px 0 0;
+      }
+      .D .journey .dot {
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #fff;
+        border: 2px solid var(--cobalt);
+        display: grid;
+        place-items: center;
+        font: 600 11px var(--sans);
+        color: var(--cobalt);
+      }
+      .D .journey b {
+        display: block;
+        font: 600 17px var(--sans);
+        margin-bottom: 4px;
+      }
+      .D .journey p {
+        font-size: 14.5px;
+        color: var(--text-2);
+      }
+      .D .two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 56px;
+      }
+      .D .facts {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      /* ===== Variant E: Mission Player ===== */
+      .E .hero {
+        padding: 52px 0 60px;
+      }
+      .E .hero .wrap {
+        display: grid;
+        grid-template-columns: 440px 1fr;
+        gap: 52px;
+        align-items: start;
+      }
+      .E .hero h1 {
+        margin: 14px 0 14px;
+        font-size: 56px;
+      }
+      .E .hero .jobs {
+        margin-top: 22px;
+      }
+      .E .hero .after {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        margin-top: 10px;
+      }
+      .E .player {
+        background: var(--navy);
+        border-radius: 16px;
+        padding: 20px;
+        color: #fff;
+        box-shadow: 0 30px 60px rgba(20, 36, 56, 0.25);
+      }
+      .E .ptop {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .E .ptop .play {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: var(--cobalt);
+        display: grid;
+        place-items: center;
+        border: 0;
+        color: #fff;
+      }
+      .E .ptop b {
+        font: 600 16px var(--sans);
+      }
+      .E .ptop small {
+        display: block;
+        color: #afbccc;
+        font-size: 13px;
+      }
+      .E .ptop .tag {
+        margin-left: auto;
+      }
+      .E .rail {
+        list-style: none;
+        margin: 0 0 16px;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 6px;
+      }
+      .E .rail li {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font: 500 12.5px var(--sans);
+        color: #8fa2ba;
+        min-height: 44px;
+      }
+      .E .rail li i {
+        height: 4px;
+        border-radius: 2px;
+        background: #2f4561;
+        display: block;
+        overflow: hidden;
+      }
+      .E .rail li.d i {
+        background: #6f8fdc;
+      }
+      .E .rail li.d {
+        color: #c3cedc;
+      }
+      .E .rail li.now i {
+        background: linear-gradient(90deg, #fff 0 55%, #2f4561 55%);
+      }
+      .E .rail li.now {
+        color: #fff;
+        font-weight: 600;
+      }
+      .E .rail .n {
+        font: 500 11px var(--sans);
+        color: #e0a57e;
+        letter-spacing: 0.08em;
+      }
+      .E .rail p {
+        display: none;
+      }
+      .E .screen {
+        background: #fff;
+        color: var(--ink);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .E .shead {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--line);
+      }
+      .E .shead h3 {
+        font: 600 16px var(--sans);
+      }
+      .E .shead .small {
+        margin-left: auto;
+      }
+      .E .grid4 {
+        display: grid;
+        grid-template-columns: 1.05fr repeat(3, 1fr);
+        gap: 0;
+      }
+      .E .grid4 > div {
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--line);
+        font-size: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        align-items: flex-start;
+      }
+      .E .grid4 .h {
+        font: 600 12px var(--sans);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-2);
+        padding-top: 10px;
+      }
+      .E .grid4 .t {
+        color: var(--text-2);
+      }
+      .E .grid4 .st {
+        height: 20px;
+        font-size: 11px;
+        padding: 0 7px;
+      }
+      .E .grid4 .hl {
+        background: #fff8ec;
+      }
+      .E .caption {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 14px;
+        font-size: 14.5px;
+        color: #c3cedc;
+      }
+      .E .caption b {
+        color: #fff;
+      }
+      .E .caption .ctrl {
+        margin-left: auto;
+        display: flex;
+        gap: 6px;
+      }
+      .E .caption .ctrl button {
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        border: 1px solid #2f4561;
+        background: transparent;
+        color: #fff;
+        display: grid;
+        place-items: center;
+      }
+      .E .legendbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 14px;
+        padding: 12px 18px;
+        background: var(--surface-2);
+        font-size: 12.5px;
+        color: var(--text-2);
+        align-items: center;
+      }
+      .E .why {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0;
+        border-top: 1px solid var(--line-2);
+      }
+      .E .why > div {
+        padding: 24px 28px 8px 0;
+      }
+      .E .why .big {
+        font: 500 44px/1 var(--serif);
+        color: var(--copper);
+        display: block;
+        margin-bottom: 12px;
+      }
+      .E .why h3 {
+        font-size: 24px;
+        margin-bottom: 8px;
+      }
+      .E .why p {
+        color: var(--text-2);
+        font-size: 15px;
+      }
+      .E .rstrip {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        border-top: 1px solid var(--line-2);
+        border-bottom: 1px solid var(--line-2);
+        margin-top: 40px;
+      }
+      .E .rstrip .route {
+        border-bottom: 0;
+        border-right: 1px solid var(--line-2);
+        grid-template-columns: 76px 1fr 24px;
+        padding: 16px 18px;
+      }
+      .E .rstrip .route:last-child {
+        border-right: 0;
+      }
+
+      /* ===== Variant F: Evidence Stack ===== */
+      .F .hero {
+        padding: 56px 0 40px;
+        background: linear-gradient(180deg, #fff 0, #f6f8fb 100%);
+      }
+      .F .hero .wrap {
+        display: grid;
+        grid-template-columns: 1fr 560px;
+        gap: 40px;
+        align-items: center;
+      }
+      .F .hero h1 {
+        font-size: 76px;
+        line-height: 1;
+        margin: 14px 0 18px;
+      }
+      .F .hook {
+        font: italic 400 24px/1.35 var(--serif);
+        color: var(--copper);
+        margin-bottom: 12px;
+      }
+      .F .stack {
+        position: relative;
+        height: 440px;
+      }
+      .F .card {
+        position: absolute;
+        inset: 20px 40px 20px 40px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: 0 20px 50px rgba(20, 36, 56, 0.14);
+        padding: 22px;
+      }
+      .F .card.c3 {
+        transform: rotate(-7deg) translate(-26px, 14px);
+        background: #eef2f7;
+      }
+      .F .card.c2 {
+        transform: rotate(4deg) translate(22px, 6px);
+        background: #f6f8fb;
+      }
+      .F .card.c1 {
+        transform: rotate(-1deg);
+      }
+      .F .card .ch {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 4px;
+      }
+      .F .card .ch .tag {
+        margin-left: auto;
+      }
+      .F .card h3 {
+        font-size: 28px;
+      }
+      .F .card .sub {
+        font-size: 14px;
+        color: var(--text-2);
+        margin-bottom: 12px;
+      }
+      .F .field {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 10px 0;
+        border-top: 1px dashed var(--line-2);
+        font-size: 14.5px;
+      }
+      .F .stamp {
+        position: absolute;
+        right: 26px;
+        bottom: 24px;
+        transform: rotate(-8deg);
+        border: 2px solid var(--ok);
+        color: var(--ok);
+        border-radius: 8px;
+        padding: 6px 12px;
+        font: 700 13px var(--sans);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        opacity: 0.9;
+      }
+      .F .doors {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0;
+        border-top: 1px solid var(--line-2);
+        border-bottom: 1px solid var(--line-2);
+        margin-top: 8px;
+        background: #fff;
+      }
+      .F .door {
+        display: grid;
+        grid-template-columns: auto 1fr 24px;
+        align-items: center;
+        gap: 16px;
+        padding: 22px 24px;
+        text-decoration: none;
+        border-right: 1px solid var(--line-2);
+        min-height: 96px;
+      }
+      .F .door:last-child {
+        border-right: 0;
+      }
+      .F .door .num {
+        font: 500 40px/1 var(--serif);
+        color: var(--copper);
+      }
+      .F .door b {
+        display: block;
+        font: 600 18px var(--sans);
+      }
+      .F .door span {
+        display: block;
+        font-size: 14.5px;
+        color: var(--text-2);
+      }
+      .F .door .go {
+        color: var(--cobalt);
+      }
+      .F .hero .wrap.doorswrap {
+        display: block;
+        margin-top: 8px;
+      }
+      .F .belowdoors {
+        display: flex;
+        gap: 28px;
+        align-items: center;
+        margin-top: 10px;
+      }
+      .F .split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 56px;
+      }
+      .F .ladder {
+        display: grid;
+        gap: 0;
+        border-top: 1px solid var(--line-2);
+      }
+      .F .ladder div {
+        display: grid;
+        grid-template-columns: 28px 170px 1fr;
+        gap: 12px;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--line-2);
+        font-size: 14.5px;
+        color: var(--text-2);
+      }
+      .F .ladder .lv {
+        font: 500 18px var(--serif);
+        color: var(--copper);
+      }
+      .F .steps {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .F .steps li {
+        padding: 14px 16px 8px 0;
+      }
+      .F .steps .n {
+        font-size: 24px;
+        margin-bottom: 2px;
+      }
+      .F .passes {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      .F .pass {
+        position: relative;
+        display: grid;
+        grid-template-columns: 1fr 92px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        text-decoration: none;
+        overflow: hidden;
+        min-height: 140px;
+      }
+      .F .pass .main {
+        padding: 16px 18px;
+      }
+      .F .pass .k {
+        font: 600 11px var(--sans);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--copper);
+      }
+      .F .pass .codes {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font: 600 30px/1.1 var(--sans);
+        letter-spacing: 0.02em;
+        margin: 6px 0 4px;
+        color: var(--navy);
+      }
+      .F .pass .codes svg {
+        width: 28px;
+        height: 16px;
+        color: var(--cobalt);
+      }
+      .F .pass .main span {
+        font-size: 13.5px;
+        color: var(--text-2);
+        display: block;
+      }
+      .F .pass .stub {
+        border-left: 2px dashed var(--line-2);
+        display: grid;
+        place-items: center;
+        background: var(--porcelain);
+        color: var(--cobalt);
+        font: 600 13px var(--sans);
+        text-align: center;
+        padding: 8px;
+      }
+      .F .pass .stub b {
+        display: block;
+        font-size: 13px;
+      }
+      .F .pass::before,
+      .F .pass::after {
+        content: '';
+        position: absolute;
+        right: 83px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--porcelain);
+        border: 1px solid var(--line);
+      }
+      .F .pass::before {
+        top: -9px;
+      }
+      .F .pass::after {
+        bottom: -9px;
+      }
+
+      /* ===== G: E hero + F evidence and routes ===== */
+      .G .F .evidence .stack {
+        height: 420px;
+      }
+      .G .F .evidence .card {
+        inset: 10px 30px;
+      }
+      .G .F .sec {
+        padding: 64px 0;
+      }
+      .G .E .rail li p {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+      }
+      .G .E .rail li {
+        position: relative;
+      }
+      /* ===== phone ===== */
+      @media (max-width: 700px) {
+        .wrap {
+          padding: 0 16px;
+        }
+        h1 {
+          font-size: 40px !important;
+          line-height: 1.06;
+        }
+        h2 {
+          font-size: 28px;
+        }
+        .lead {
+          font-size: 16.5px;
+        }
+        .nav,
+        .signin,
+        .hdr .chip {
+          display: none;
+        }
+        .hdr .wrap {
+          height: 60px;
+          gap: 10px;
+        }
+        .menu-btn {
+          display: inline-grid;
+          place-items: center;
+          width: 44px;
+          height: 44px;
+          border: 0;
+          background: transparent;
+          margin-left: -8px;
+        }
+        .hdr .tools {
+          gap: 6px;
+        }
+        .hdr .btn {
+          min-height: 44px;
+          padding: 0 14px;
+          font-size: 14.5px;
+        }
+        .brand {
+          font-size: 20px;
+        }
+        .sec {
+          padding: 40px 0;
+        }
+        .sec-head {
+          display: block;
+          margin-bottom: 18px;
+        }
+        .sec-head .quiet {
+          margin-left: 0;
+        }
+        .job {
+          min-height: 68px;
+          padding: 12px 2px;
+          gap: 12px;
+        }
+        .job b {
+          font-size: 16.5px;
+        }
+        .job span {
+          font-size: 14px;
+        }
+        .ledger-h {
+          display: none;
+        }
+        .ledger-r {
+          grid-template-columns: 1fr;
+          gap: 4px;
+          padding: 12px 16px;
+        }
+        .ex-tabs {
+          padding: 0 8px;
+          overflow-x: auto;
+        }
+        .ex-head {
+          padding: 14px 16px 8px;
+        }
+        .ex-foot {
+          padding: 10px 16px;
+        }
+        .steps {
+          grid-template-columns: 1fr 1fr !important;
+          gap: 0 16px;
+        }
+        .steps li {
+          padding: 14px 0 8px;
+          border-bottom: 1px solid var(--line);
+        }
+        .steps .n {
+          font-size: 22px;
+          margin-bottom: 2px;
+        }
+        .facts {
+          grid-template-columns: 1fr 1fr !important;
+          gap: 8px;
+        }
+        .fact {
+          padding: 12px;
+        }
+        .fact p {
+          font-size: 13.5px;
+        }
+        .route {
+          grid-template-columns: 72px 1fr 20px;
+          padding: 12px 2px;
+          min-height: 56px;
+        }
+        .cta .wrap {
+          display: block;
+          padding-top: 32px;
+          padding-bottom: 32px;
+        }
+        .cta h2 {
+          font-size: 26px;
+        }
+        .cta .right {
+          margin: 18px 0 0;
+        }
+        .foot .wrap {
+          display: block;
+          padding-top: 24px;
+          padding-bottom: 20px;
+        }
+        .foot .cols {
+          display: none;
+        }
+        .foot details {
+          display: block;
+          border-top: 1px solid #24364c;
+        }
+        .foot summary {
+          min-height: 48px;
+          display: flex;
+          align-items: center;
+          color: #fff;
+          font-weight: 600;
+          list-style: none;
+        }
+        .foot .legal {
+          display: block;
+          border-top: 1px solid #24364c;
+          padding-top: 12px;
+          margin-top: 4px;
+        }
+        .foot .legal span {
+          display: block;
+        }
+        .A .hero {
+          padding: 28px 0 32px;
+        }
+        .A .hero .wrap,
+        .A .two {
+          display: block;
+        }
+        .A .hero .exhibit {
+          margin-top: 28px;
+        }
+        .A .two > div + div {
+          margin-top: 36px;
+        }
+        .B .hero {
+          padding: 28px 0 16px;
+        }
+        .B .hero .wrap {
+          display: block;
+        }
+        .B .hero .side {
+          margin-top: 16px;
+        }
+        .B .journeys .wrap {
+          display: flex;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          gap: 12px;
+          padding-bottom: 6px;
+        }
+        .B .jcard {
+          flex: 0 0 84%;
+          scroll-snap-align: start;
+          padding: 18px;
+        }
+        .B .split {
+          display: block;
+        }
+        .B .split > div + div {
+          margin-top: 32px;
+        }
+        .B .vsteps {
+          grid-template-columns: 1fr 1fr;
+          gap: 0 14px;
+        }
+        .B .vsteps li {
+          grid-template-columns: 1fr;
+          gap: 2px;
+        }
+        .B .fact {
+          grid-template-columns: 1fr;
+          gap: 6px;
+        }
+        .B .rstrip {
+          grid-template-columns: 1fr;
+        }
+        .B .rstrip .route {
+          border-right: 0;
+          border-bottom: 1px solid var(--line-2);
+          padding: 12px 2px;
+        }
+        .C .hero {
+          padding: 28px 0 0;
+        }
+        .C .hero .wrap {
+          display: block;
+        }
+        .C .hero h1 {
+          font-size: 42px !important;
+        }
+        .C .hero .jobs {
+          margin-top: 22px;
+        }
+        .C .hero-ex {
+          margin-top: 28px;
+        }
+        .C .exwrap {
+          display: block;
+        }
+        .C .exwrap .col + .col {
+          display: none;
+        }
+        .C .three {
+          display: block;
+        }
+        .C .three > div + div {
+          margin-top: 32px;
+        }
+        .C .cmp-h,
+        .C .cmp-r {
+          padding: 10px 16px;
+        }
+        .D .hero {
+          padding: 28px 0 0;
+        }
+        .D .hero .wrap {
+          display: block;
+        }
+        .D .mapzone {
+          position: relative;
+          height: 280px;
+          margin: 16px -16px 0;
+        }
+        .D .hero .map {
+          position: absolute;
+          inset: auto 0 0 0;
+          top: auto;
+          height: 280px;
+        }
+        .D .pin {
+          width: 236px;
+        }
+        .D .pin.p1 {
+          left: 16px;
+          top: 16px;
+        }
+        .D .pin.p1::after {
+          left: 150px;
+        }
+        .D .pin.p2 {
+          display: none;
+        }
+        .D .legend {
+          display: none;
+        }
+        .D .journey {
+          grid-template-columns: 1fr 1fr;
+          row-gap: 8px;
+        }
+        .D .journey::before {
+          display: none;
+        }
+        .D .journey li {
+          padding: 34px 10px 6px 0;
+        }
+        .D .two {
+          display: block;
+        }
+        .D .two > div + div {
+          margin-top: 36px;
+        }
+        .E .hero {
+          padding: 28px 0 32px;
+        }
+        .E .hero .wrap {
+          display: block;
+        }
+        .E .player {
+          margin-top: 24px;
+          padding: 14px;
+          border-radius: 12px;
+        }
+        .E .rail {
+          grid-template-columns: repeat(6, 1fr);
+          gap: 4px;
+        }
+        .E .rail li {
+          font-size: 0;
+          min-height: 20px;
+        }
+        .E .rail .n {
+          font-size: 10px;
+        }
+        .E .grid4 {
+          grid-template-columns: 1fr 1fr 1fr;
+        }
+        .E .grid4 > div:nth-child(4n + 1) {
+          grid-column: 1/-1;
+          background: var(--surface-2);
+          padding: 6px 14px;
+        }
+        .E .grid4 .h:first-child {
+          display: none;
+        }
+        .E .caption {
+          font-size: 13.5px;
+        }
+        .E .why {
+          grid-template-columns: 1fr;
+        }
+        .E .why > div {
+          padding: 18px 0 4px;
+        }
+        .E .why .big {
+          font-size: 28px;
+          margin-bottom: 4px;
+        }
+        .E .why h3 {
+          font-size: 20px;
+        }
+        .E .why p {
+          font-size: 14px;
+        }
+        .E .legendbar {
+          padding: 10px 14px;
+          gap: 6px 10px;
+        }
+        .E .rstrip {
+          grid-template-columns: 1fr;
+          margin-top: 24px;
+        }
+        .E .rstrip .route {
+          border-right: 0;
+          border-bottom: 1px solid var(--line-2);
+          padding: 12px 2px;
+        }
+        .F .hero {
+          padding: 28px 0 20px;
+        }
+        .F .hero .wrap {
+          display: block;
+        }
+        .F .hero h1 {
+          font-size: 44px !important;
+        }
+        .F .hook {
+          font-size: 19px;
+        }
+        .F .stack {
+          height: 300px;
+          margin-top: 8px;
+        }
+        .F .card .sub {
+          margin-bottom: 6px;
+        }
+        .F .card.c3,
+        .F .card.c2 {
+          display: none;
+        }
+        .F .card {
+          inset: 14px 18px;
+          padding: 16px;
+        }
+        .F .card h3 {
+          font-size: 22px;
+        }
+        .F .field {
+          padding: 8px 0;
+          font-size: 13.5px;
+        }
+        .F .doors {
+          grid-template-columns: 1fr;
+        }
+        .F .door {
+          border-right: 0;
+          border-bottom: 1px solid var(--line-2);
+          padding: 14px 4px;
+          min-height: 72px;
+        }
+        .F .door .num {
+          font-size: 28px;
+        }
+        .F .hero .wrap.doorswrap {
+          display: block;
+          margin-top: 8px;
+        }
+        .F .belowdoors {
+          display: block;
+        }
+        .F .split {
+          display: block;
+        }
+        .F .split > div + div {
+          margin-top: 32px;
+        }
+        .F .ladder {
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+          border-top: 0;
+        }
+        .F .ladder div {
+          display: block;
+          border: 1px solid var(--line);
+          border-radius: 10px;
+          background: #fff;
+          padding: 10px 12px;
+        }
+        .F .ladder .lv {
+          display: none;
+        }
+        .F .ladder p {
+          font-size: 13px;
+          margin-top: 6px;
+        }
+        .F .stack {
+          height: auto;
+        }
+        .F .card.c1 {
+          position: relative;
+          inset: auto;
+          margin: 10px 2px 18px;
+          transform: none;
+        }
+        .F .stamp {
+          position: static;
+          display: inline-block;
+          margin-top: 10px;
+          transform: rotate(-3deg);
+          font-size: 11.5px;
+        }
+        .F .pass {
+          grid-template-columns: 1fr 70px;
+          min-height: 0;
+        }
+        .F .pass .main {
+          padding: 12px 14px;
+        }
+        .F .pass .codes {
+          font-size: 22px;
+          margin: 4px 0 2px;
+        }
+        .F .calm {
+          gap: 4px 16px;
+        }
+        .F .sec {
+          padding: 28px 0 !important;
+        }
+        .F .split > div + div {
+          margin-top: 24px;
+        }
+        .F .steps li {
+          padding: 10px 0 6px;
+        }
+        .F .steps p {
+          font-size: 13.5px;
+        }
+        .F h2 {
+          font-size: 25px;
+        }
+        .F .door {
+          min-height: 60px;
+          padding: 10px 2px;
+        }
+        .F .door b {
+          font-size: 16px;
+        }
+        .F .door span {
+          font-size: 13.5px;
+        }
+        .F .card h3 {
+          font-size: 20px;
+        }
+        .F .field {
+          padding: 6px 0;
+        }
+        .F .cta .wrap {
+          padding-top: 24px;
+          padding-bottom: 24px;
+        }
+        .F .passes {
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+        .G .F .evidence .stack {
+          height: auto;
+        }
+        .G .F .evidence .split {
+          display: flex;
+          flex-direction: column-reverse;
+        }
+        .G .F .evidence .split > div + div {
+          margin-top: 0;
+        }
+        .G .F .evidence .stack {
+          margin-top: 8px;
+        }
+        .G .F .evidence .card {
+          inset: auto;
+        }
+        .G .F .evidence .card .sub {
+          display: none;
+        }
+        .G .E .grid4 {
+          grid-template-columns: 1fr 1fr 1fr 1fr;
+        }
+        .G .E .grid4 > div:nth-child(4n + 1) {
+          grid-column: auto;
+          background: transparent;
+          padding: 8px 6px 8px 10px;
+        }
+        .G .E .grid4 .h:first-child {
+          display: flex;
+        }
+        .G .E .grid4 > div {
+          padding: 8px 6px;
+          font-size: 12px;
+          gap: 3px;
+        }
+        .G .E .grid4 .h {
+          font-size: 10px;
+          letter-spacing: 0.02em;
+        }
+        .G .E .grid4 .st {
+          font-size: 10px;
+          height: 18px;
+          padding: 0 5px;
+        }
+        .G .E .shead {
+          padding: 10px 12px;
+        }
+        .G .E .shead h3 {
+          font-size: 14.5px;
+        }
+        .G .E .shead .small {
+          font-size: 12px;
+        }
+        .G .E .ptop b {
+          font-size: 14.5px;
+        }
+        .G .E .hero .calm {
+          flex-direction: row;
+          gap: 4px 14px;
+        }
+        .G .F .pass .main span:last-child {
+          font-size: 12.5px;
+        }
+        .G .F .pass .codes {
+          font-size: 20px;
+        }
+        .G .F .ladder div {
+          padding: 8px 10px;
+        }
+        .G .F .ladder p {
+          font-size: 12.5px;
+          margin-top: 4px;
+          line-height: 1.4;
+        }
+        .G .F .hook {
+          font-size: 18px;
+          margin-bottom: 4px;
+        }
+        .G .F .evidence h2 {
+          margin-bottom: 12px !important;
+        }
+        .G .F .field {
+          padding: 5px 0;
+          font-size: 13px;
+        }
+        .G .F .card {
+          padding: 12px 14px;
+        }
+        .G .F .stamp {
+          margin-top: 6px;
+        }
+        .G .F .passes {
+          gap: 8px;
+        }
+        .G .F .pass .main {
+          padding: 10px 12px;
+        }
+        .G .E .player {
+          margin-top: 18px;
+        }
+        .G .E .caption {
+          margin-top: 10px;
+        }
+        .G .E .hero {
+          padding: 22px 0 26px;
+        }
+        .G .E .hero h1 {
+          margin: 10px 0 10px;
+        }
+        .G .cta .wrap {
+          padding-top: 24px;
+          padding-bottom: 24px;
+        }
+        .G .foot summary {
+          min-height: 44px;
+        }
+        .G .F .sec {
+          padding: 22px 0 !important;
+        }
+        .G .F .card.c1 {
+          margin: 6px 0 4px;
+        }
+        .G .E .ptop {
+          margin-bottom: 10px;
+        }
+        .G .E .rail {
+          margin-bottom: 10px;
+        }
+        .G .F .sec-head {
+          margin-bottom: 12px;
+        }
+        .G .E .hero .lead {
+          font-size: 15.5px;
+        }
+        .G .foot .wrap {
+          padding-top: 18px;
+          padding-bottom: 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="page"></div>
+    <script>
+      // Only the known concept letters; anything else shows concept G, so the address never reaches the page.
+      const asked = (new URLSearchParams(location.search).get('v') || 'g').toUpperCase();
+      const v = ['A', 'B', 'C', 'D', 'E', 'F', 'G'].includes(asked) ? asked : 'G';
+      const I = {
+        sell: '<svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 15l5-5 3 3 6-7"/><path d="M12 6h5v5"/></svg>',
+        buy: '<svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 4h2l2 9h9l2-6H6"/><circle cx="8" cy="16.5" r="1.2"/><circle cx="15" cy="16.5" r="1.2"/></svg>',
+        trip: '<svg class="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="2.6"/><circle cx="14" cy="8" r="2.1"/><path d="M2.5 16c.6-3 2.4-4.5 4.5-4.5s3.9 1.5 4.5 4.5M12 12.2c2.4-.3 4.6 1 5.2 3.8"/></svg>',
+        arrow:
+          '<svg class="ico go" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10h11M11 5l5 5-5 5"/></svg>',
+        menu: '<svg width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 5h14M3 10h14M3 15h9"/></svg>',
+        globe:
+          '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="7.5"/><path d="M2.5 10h15M10 2.5c2.2 2.3 2.2 12.7 0 15M10 2.5c-2.2 2.3-2.2 12.7 0 15"/></svg>',
+        mark: '<svg viewBox="0 0 26 26"><rect width="26" height="26" rx="6" fill="#142438"/><path d="M17.5 8.2A6.3 6.3 0 1 0 17.5 17.8" fill="none" stroke="#fff" stroke-width="2.2"/><path d="M10.5 13h6.5" stroke="#BF7548" stroke-width="2.2"/></svg>',
+      };
+      const jobs = [
+        ['sell', 'Sell my products', 'Find buyers and partners abroad.', '/plan?job=buyers'],
+        [
+          'buy',
+          'Buy products or machines',
+          'Find suppliers. Compare price quotes.',
+          '/plan?job=sourcing',
+        ],
+        [
+          'trip',
+          'Lead a group trip',
+          'Plan the programme and the meetings.',
+          '/plan?job=delegations',
+        ],
+      ];
+      const header = `<header class="hdr"><div class="wrap">
+  <button class="menu-btn" aria-label="Menu">${I.menu}</button>
+  <a class="brand" href="/">${I.mark}<span>Corridra</span></a>
+  <nav class="nav" aria-label="Site"><a href="/how-it-works">How It Works</a><a href="/corridors">Routes</a><a href="/fairs">Fairs</a><a href="/about">About</a></nav>
+  <div class="tools"><span class="chip">${I.globe} EN</span><a class="signin" href="/signin">Sign In</a><a class="btn" href="/plan">Start a Request</a></div>
+</div></header>`;
+      const jobRows = `<nav class="jobs" aria-label="Choose your commercial objective">${jobs.map(([i, t, s, h]) => `<a class="job" href="${h}"><span class="jicon">${I[i]}</span><span><b>${t}</b><span>${s}</span></span>${I.arrow}</a>`).join('')}</nav>`;
+      const elseLink = `<a class="quiet" href="/plan">Something else? Tell us your business goal</a>`;
+      const calm = `<ul class="calm"><li>No account needed to begin</li><li>Nothing is sent until you check it</li></ul>`;
+      const buyers = [
+        [
+          'Distributor A, Madrid',
+          'Sells knitwear to about 40 shops. Asked for a price list.',
+          'go',
+          'Introduction proposed',
+        ],
+        [
+          'Retail buyer B, Valencia',
+          'Buys private label for its own stores.',
+          'go',
+          'Meeting proposed',
+        ],
+        ['Importer C, Barcelona', 'Company registration checked.', 'ok', 'Meeting confirmed'],
+        [
+          'Agent D, Seville',
+          'Not a fit: says it only works with EU makers.',
+          'mute',
+          'Not contacted',
+        ],
+      ];
+      const ledger = (
+        tabs = true,
+      ) => `<div class="exhibit" role="region" aria-label="Examples for selling and for buying">
+  ${tabs ? `<div class="ex-tabs" role="tablist"><button role="tab" aria-selected="true">Selling</button><button role="tab" aria-selected="false">Sourcing</button><button role="tab" aria-selected="false">Organising</button></div>` : ''}
+  <div class="ex-head"><span class="tag">Example</span><h3>Buyers worth meeting</h3><span class="small">Not real companies</span></div>
+  <div class="ledger-h"><span>Company</span><span>Why it fits</span><span>Next step</span></div>
+  ${buyers.map(([n, w, c, s]) => `<div class="ledger-r"><b>${n}</b><span class="why">${w}</span><span><span class="st ${c}">${s}</span></span></div>`).join('')}
+  <div class="ex-foot">Each line says whether it is stated by the company or checked by us.</div>
+</div>`;
+      const steps = [
+        ['Define', 'Say what you want to buy, sell or organise, and when.'],
+        ['Find', 'We look for companies that fit, beyond one fair or one directory.'],
+        ['Compare', 'Price quotes and terms side by side, with what is missing marked.'],
+        ['Visit', 'We plan the introductions and meetings worth your time.'],
+        ['Decide', 'Choose who to work with, with the evidence in front of you.'],
+        ['Follow through', 'Track quotes, samples and next steps until there is a result.'],
+      ];
+      const stepList = (cls = 'steps') =>
+        `<ol class="${cls}" aria-label="How a mission works">${steps.map(([t, s], i) => `<li><span class="n">0${i + 1}</span><div><b>${t}</b><p>${s}</p></div></li>`).join('')}</ol>`;
+      const facts = [
+        ['w', 'Stated by the company', 'What the company says about itself, not yet checked.'],
+        ['go', 'Document seen', 'We have seen a document that supports it.'],
+        ['ok', 'Checked by us', 'We confirmed it with an independent source.'],
+        ['mute', 'Not confirmed', 'Asked for, and not yet answered.'],
+      ];
+      const factCards = facts
+        .map(([c, t, s]) => `<div class="fact"><span class="st ${c}">${t}</span><p>${s}</p></div>`)
+        .join('');
+      const routes = `<div class="routes">
+  <a class="route" href="/corridors/bangladesh-china"><span class="k">Route 01</span><span><b>Bangladesh to China</b><span>Sourcing machines and materials, Canton Fair visits.</span></span>${I.arrow}</a>
+  <a class="route" href="/corridors/bangladesh-spain"><span class="k">Route 02</span><span><b>Bangladesh to Spain</b><span>Selling garments and knitwear to Spanish buyers.</span></span>${I.arrow}</a>
+  <a class="route" href="/corridors"><span class="k">Another route?</span><span><b>Explore Every Route</b><span>Or tell us the market you have in mind.</span></span>${I.arrow}</a>
+</div>`;
+      const cta = (
+        h = 'Start with one request.',
+        p = 'Tell us the goal in a few minutes. Nothing is sent until you check it.',
+      ) =>
+        `<section class="cta" aria-labelledby="cta-t"><div class="wrap"><div><h2 id="cta-t">${h}</h2><p>${p}</p></div><div class="right"><a class="btn light" href="/plan">Start a Request</a></div></div></section>`;
+      const footer = `<footer class="foot"><div class="wrap">
+  <div><a class="brand" href="/">${I.mark}<span>Corridra</span></a><p>Make market entry deliberate.</p></div>
+  <div class="cols"><b>Start</b><a href="/plan?job=buyers">Find Buyers</a><a href="/plan?job=sourcing">Find Suppliers</a><a href="/plan?job=delegations">Organise a Delegation</a></div>
+  <div class="cols"><b>Routes</b><a href="/corridors/bangladesh-china">Bangladesh to China</a><a href="/corridors/bangladesh-spain">Bangladesh to Spain</a><a href="/fairs">Fairs</a></div>
+  <div class="cols"><b>Company</b><a href="/about">About</a><a href="/how-it-works">How It Works</a><a href="/trust">How We Label Facts</a></div>
+  <div class="cols"><b>Account</b><a href="/signin">Sign In</a><a href="/signup">Create Account</a><a href="/network">Work With Us</a></div>
+  <details><summary>Start</summary></details><details><summary>Routes</summary></details><details><summary>Company and Account</summary></details>
+  <div class="legal"><span>© 2026 Corridra</span><a href="/privacy">Privacy and Request Notice</a><a href="/terms">Terms</a></div>
+</div></footer>`;
+
+      let main = '';
+      if (v === 'A') {
+        main = `
+  <section class="hero" aria-labelledby="home-title"><div class="wrap">
+    <div>
+      <p class="eyebrow">Cross-border market access</p>
+      <h1 id="home-title">Make market entry deliberate.</h1>
+      <p class="lead">Tell us what you want to sell, buy or organise abroad. We find the right companies, compare what they offer and set up the meetings worth your time.</p>
+      ${jobRows}
+      <div class="after">${elseLink}${calm}</div>
+    </div>
+    <div>${ledger()}</div>
+  </div></section>
+  <section class="sec alt" aria-labelledby="steps-title"><div class="wrap">
+    <div class="sec-head"><div><p class="eyebrow">How it works</p><h2 id="steps-title" style="margin-top:10px">One request, six clear steps.</h2></div><a class="quiet" href="/how-it-works">See the Full Process</a></div>
+    ${stepList()}
+  </div></section>
+  <section class="sec"><div class="wrap two">
+    <div aria-labelledby="facts-title"><p class="eyebrow">What we show you</p><h2 id="facts-title" style="margin:10px 0 10px">Every fact says where it comes from.</h2><p class="lead" style="margin-bottom:20px">You always see whether a statement is only claimed, or has proof behind it.</p><div class="facts">${factCards}</div><p style="margin-top:8px"><a class="quiet" href="/trust">How We Label Facts</a></p></div>
+    <div aria-labelledby="routes-title"><p class="eyebrow">Routes</p><h2 id="routes-title" style="margin:10px 0 20px">Corridors we know well.</h2>${routes}</div>
+  </div></section>
+  ${cta()}`;
+      }
+      if (v === 'B') {
+        const mini = {
+          sell: `<div class="mini"><div class="mh">Your buyer search <span class="tag">Example</span></div>
+      <div class="bar"><span>Found</span><i style="width:100%"></i><b>24</b></div>
+      <div class="bar"><span>Contacted</span><i class="l2" style="width:40%"></i><b>9</b></div>
+      <div class="bar"><span>Meetings</span><i class="l3" style="width:14%"></i><b>3</b></div></div>`,
+          buy: `<div class="mini"><div class="mh">Price quotes side by side <span class="tag">Example</span></div>
+      <div class="q h"><span>Term</span><span>Supplier A</span><span>Supplier B</span></div>
+      <div class="q"><span>Lead time</span><span>90 days</span><span>75 days</span></div>
+      <div class="q"><span>Installation</span><span>Included</span><span>Not stated</span></div>
+      <div class="q"><span>Delivery terms</span><span>FOB</span><span>Not confirmed</span></div></div>`,
+          trip: `<div class="mini"><div class="mh">Programme at a glance <span class="tag">Example</span></div>
+      <div class="stage"><i class="d"></i><i class="d"></i><i class="n"></i><i></i><i></i><i></i></div>
+      <div class="small" style="font-size:12.5px;margin-bottom:8px">Stage 3 of 6: Register</div>
+      <div class="tiles"><div><b>12</b><span class="small">registered</span></div><div><b>18</b><span class="small">meetings planned</span></div></div></div>`,
+        };
+        const cards = [
+          [
+            'sell',
+            'Sell',
+            'Find buyers and partners abroad.',
+            'Find Buyers & Partners',
+            '/plan?job=buyers',
+            'Sell my products',
+          ],
+          [
+            'buy',
+            'Source',
+            'Find suppliers. Compare price quotes.',
+            'Find Suppliers & Products',
+            '/plan?job=sourcing',
+            'Buy products or machines',
+          ],
+          [
+            'trip',
+            'Organise',
+            'Plan the programme and the meetings.',
+            'Organise a Delegation',
+            '/plan?job=delegations',
+            'Lead a group trip',
+          ],
+        ];
+        main = `
+  <section class="hero" aria-labelledby="home-title"><div class="wrap">
+    <div><p class="eyebrow">Cross-border market access</p><h1 id="home-title">Make market entry deliberate.</h1>
+    <p class="lead">One request to find the right companies abroad, compare what they offer and meet the ones worth your time.</p></div>
+    <div class="side">${calm}</div>
+  </div></section>
+  <section class="journeys" aria-label="Choose your commercial objective"><div class="wrap">
+    ${cards.map(([i, k, t, go, h, title]) => `<a class="jcard" href="${h}"><div class="top"><span class="jicon">${I[i]}</span><div><span class="k">${k}</span><h3>${title}</h3></div></div><p class="t">${t}</p>${mini[i]}<span class="go">${go} ${I.arrow}</span></a>`).join('')}
+  </div><div class="wrap else">${elseLink}</div></section>
+  <section class="sec"><div class="wrap split">
+    <div aria-labelledby="steps-title"><div class="sec-head"><div><p class="eyebrow">How it works</p><h2 id="steps-title" style="margin-top:10px">One request, six clear steps.</h2></div></div>${stepList('vsteps')}<a class="quiet" href="/how-it-works">See the Full Process</a></div>
+    <div aria-labelledby="facts-title"><div class="sec-head"><div><p class="eyebrow">What we show you</p><h2 id="facts-title" style="margin-top:10px">Every fact says where it comes from.</h2></div></div><div class="facts">${factCards}</div><a class="quiet" href="/trust">How We Label Facts</a></div>
+  </div></section>
+  <section aria-label="Routes" style="padding-bottom:56px"><div class="wrap"><div class="rstrip">
+    <a class="route" href="/corridors/bangladesh-china"><span class="k">Route 01</span><span><b>Bangladesh to China</b><span>Machines, materials, Canton Fair.</span></span>${I.arrow}</a>
+    <a class="route" href="/corridors/bangladesh-spain"><span class="k">Route 02</span><span><b>Bangladesh to Spain</b><span>Garments and knitwear buyers.</span></span>${I.arrow}</a>
+    <a class="route" href="/corridors"><span class="k">Another?</span><span><b>Explore Every Route</b><span>Or name the market you want.</span></span>${I.arrow}</a>
+  </div></div></section>
+  ${cta('Not sure which one fits?', 'Start a request and describe the goal. We will help you shape it.')}`;
+      }
+      if (v === 'C') {
+        const quotes = [
+          ['Price quote', 'Not stated', 'On request', 'Not stated'],
+          ['Delivery terms', 'FOB Chittagong', 'CIF', 'Not confirmed'],
+          ['Installation', 'Included', 'Not included', 'Included'],
+          ['Lead time', '90 days', '75 days', '120 days'],
+        ];
+        main = `
+  <section class="hero" aria-labelledby="home-title">
+    <div class="wrap">
+      <div><p class="eyebrow">Cross-border market access</p><h1 id="home-title">Make market entry deliberate.</h1>
+      <p class="lead">Tell us what you want to sell, buy or organise abroad. We find the right companies, compare what they offer and set up the meetings worth your time.</p>${calm}</div>
+      <div>${jobRows}<div class="after">${elseLink}</div></div>
+    </div>
+    <div class="wrap hero-ex"><div class="exhibit" style="width:100%" role="region" aria-label="Examples for selling and for buying">
+      <div class="ex-tabs" role="tablist"><button role="tab" aria-selected="true">Selling and Sourcing</button><button role="tab" aria-selected="false">Organising</button></div>
+    </div></div>
+  </section>
+  <div class="exbelow"><div class="wrap"><div class="exhibit" style="border-top:0;border-top-left-radius:0;border-top-right-radius:0;box-shadow:none;border-color:var(--line)"><div class="exwrap">
+    <div class="col"><div class="ex-head"><span class="tag">Example</span><h3>Buyers worth meeting</h3><span class="small">Not real companies</span></div>
+      <div class="ledger-h"><span>Company</span><span>Why it fits</span><span>Next step</span></div>
+      ${buyers
+        .slice(0, 3)
+        .map(
+          ([n, w, c, s]) =>
+            `<div class="ledger-r"><b>${n}</b><span class="why">${w}</span><span><span class="st ${c}">${s}</span></span></div>`,
+        )
+        .join('')}</div>
+    <div class="col"><div class="ex-head"><span class="tag">Example</span><h3>Price quotes side by side</h3><span class="small">Not real suppliers</span></div>
+      <div class="cmp-h"><span>Term</span><span>Supplier A</span><span>Supplier B</span><span>Supplier C</span></div>
+      ${quotes
+        .map(
+          (r) =>
+            `<div class="cmp-r"><span class="t">${r[0]}</span>${r
+              .slice(1)
+              .map((x) => `<span>${x}</span>`)
+              .join('')}</div>`,
+        )
+        .join('')}</div>
+  </div></div></div><div style="height:28px"></div></div>
+  <section class="sec"><div class="wrap three">
+    <div aria-labelledby="steps-title"><p class="eyebrow">How it works</p><h2 id="steps-title" style="margin:10px 0 8px">One request, six clear steps.</h2>${stepList()}<a class="quiet" href="/how-it-works">See the Full Process</a></div>
+    <div aria-labelledby="facts-title"><p class="eyebrow">What we show you</p><h2 id="facts-title" style="margin:10px 0 18px;font-size:30px">Every fact says where it comes from.</h2><div class="facts">${factCards}</div><a class="quiet" href="/trust">How We Label Facts</a></div>
+    <div aria-labelledby="routes-title"><p class="eyebrow">Routes</p><h2 id="routes-title" style="margin:10px 0 18px;font-size:30px">Corridors we know well.</h2>${routes}</div>
+  </div></section>
+  ${cta()}`;
+      }
+
+      const plane =
+        '<svg viewBox="0 0 28 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 8h24M19 2l6 6-6 6"/></svg>';
+      const map = (w, h) => {
+        const dots = [];
+        for (let y = 18; y < h; y += 18)
+          for (let x = 18; x < w; x += 18) {
+            const n = Math.sin(x * 0.011) * Math.cos(y * 0.017) + Math.sin((x + y) * 0.006);
+            if (n > 0.35) dots.push('<circle cx="' + x + '" cy="' + y + '" r="1.6"/>');
+          }
+        return dots.join('');
+      };
+      if (v === 'D') {
+        main = `
+  <section class="hero on-dark" aria-labelledby="home-title">
+    <svg class="map" viewBox="0 0 1440 760" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <g fill="#2B4566">${map(1440, 760)}</g>
+      <defs><linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#BF7548"/><stop offset="1" stop-color="#6F8FDC"/></linearGradient></defs>
+      <path d="M1110 420 Q 960 180 790 330" stroke="url(#g1)" stroke-width="2.5" fill="none"/>
+      <path d="M1110 420 Q 980 250 830 300" stroke="#6F8FDC" stroke-width="1.5" fill="none" stroke-dasharray="5 6" opacity=".8"/>
+      <path d="M1110 420 Q 1220 300 1310 360" stroke="url(#g1)" stroke-width="2.5" fill="none"/>
+      <g font-family="Geist, sans-serif" font-size="13" fill="#C3CEDC" font-weight="600">
+        <circle cx="1110" cy="420" r="7" fill="#BF7548"/><circle cx="1110" cy="420" r="16" fill="none" stroke="#BF7548" opacity=".5"/><text x="1092" y="452">DAC Dhaka</text>
+        <circle cx="790" cy="330" r="5" fill="#9DB6F0"/><text x="742" y="356">MAD Madrid</text>
+        <circle cx="830" cy="300" r="4" fill="#9DB6F0"/><text x="842" y="296">BCN</text>
+        <circle cx="1310" cy="360" r="5" fill="#9DB6F0"/><text x="1272" y="386">CAN Guangzhou</text>
+      </g>
+    </svg>
+    <div class="wrap">
+      <div>
+        <p class="eyebrow">Cross-border market access</p>
+        <h1 id="home-title">Make market entry deliberate.</h1>
+        <p class="lead">Pick the route and what you want to happen there. We find the right companies on it and set up the meetings worth your time.</p>
+        ${jobRows}
+        <div class="after">${elseLink}${calm}</div>
+      </div>
+      <div class="mapzone">
+        <div class="pin p1"><div class="ph"><b>Importer C, Barcelona</b><span class="tag">Example</span></div>
+          <div class="row"><span>Company registration</span><span class="st ok">Checked by us</span></div>
+          <div class="row"><span>Next step</span><span class="st ok">Meeting confirmed</span></div></div>
+        <div class="pin p2"><div class="ph"><b>Supplier B, Guangzhou</b><span class="tag">Example</span></div>
+          <div class="row"><span>Lead time</span><span>75 days</span></div>
+          <div class="row"><span>Installation</span><span class="st mute">Not stated</span></div></div>
+      </div>
+    </div>
+  </section>
+  <section class="sec" aria-labelledby="steps-title"><div class="wrap">
+    <div class="sec-head"><div><p class="eyebrow">How it works</p><h2 id="steps-title" style="margin-top:10px">One request, six clear steps.</h2></div><a class="quiet" href="/how-it-works">See the Full Process</a></div>
+    <ol class="journey" aria-label="How a mission works">${steps.map(([t, s], i) => `<li><span class="dot">${i + 1}</span><b>${t}</b><p>${s}</p></li>`).join('')}</ol>
+  </div></section>
+  <section class="sec" style="padding-top:0"><div class="wrap two">
+    <div aria-labelledby="facts-title"><p class="eyebrow">What we show you</p><h2 id="facts-title" style="margin:10px 0 18px">Every fact says where it comes from.</h2><div class="facts">${factCards}</div><p style="margin-top:6px"><a class="quiet" href="/trust">How We Label Facts</a></p></div>
+    <div aria-labelledby="routes-title"><p class="eyebrow">Routes</p><h2 id="routes-title" style="margin:10px 0 18px">Corridors we know well.</h2>${routes}</div>
+  </div></section>
+  ${cta('Where do you want to go next?', 'One request. Nothing is sent until you check it.')}`;
+      }
+      if (v === 'E') {
+        const cell = (x, c) => `<div${c ? ' class="' + c + '"' : ''}>${x}</div>`;
+        const g = [
+          ['h', 'Term'],
+          ['h', 'Supplier A'],
+          ['h', 'Supplier B'],
+          ['h', 'Supplier C'],
+          ['t', 'Price quote'],
+          ['', 'Not stated <span class="st mute">Asked</span>'],
+          ['', 'On request'],
+          ['', 'Not stated <span class="st mute">Asked</span>'],
+          ['t', 'Delivery terms'],
+          ['', 'FOB Chittagong <span class="st go">Document seen</span>'],
+          ['', 'CIF <span class="st w">Stated</span>'],
+          ['', 'Not confirmed'],
+          ['t', 'Installation'],
+          ['', 'Included <span class="st ok">Checked by us</span>'],
+          ['hl', 'Not included'],
+          ['', 'Included <span class="st w">Stated</span>'],
+          ['t', 'Lead time'],
+          ['', '90 days'],
+          ['', '75 days <span class="st go">Document seen</span>'],
+          ['', '120 days'],
+        ];
+        main = `
+  <section class="hero" aria-labelledby="home-title"><div class="wrap">
+    <div>
+      <p class="eyebrow">Cross-border market access</p>
+      <h1 id="home-title">Make market entry deliberate.</h1>
+      <p class="lead">Watch one request become a decision. Then start yours.</p>
+      ${jobRows}
+      <div class="after">${elseLink}${calm}</div>
+    </div>
+    <div class="player" role="region" aria-label="Example mission, step by step">
+      <div class="ptop"><button class="play" aria-label="Pause the example"><svg width="16" height="16" viewBox="0 0 16 16" fill="#fff"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg></button>
+        <div><b>Buy a knitting machine from China</b><small>Example mission. Not real suppliers.</small></div><span class="tag">Example</span></div>
+      <ol class="rail" aria-label="How a mission works">${steps.map(([t, s], i) => `<li class="${i < 2 ? 'd' : i === 2 ? 'now' : ''}"><span class="n">0${i + 1}</span><i></i>${t}<p>${s}</p></li>`).join('')}</ol>
+      <div class="screen">
+        <div class="shead"><h3>Price quotes side by side</h3><span class="small">What is missing is marked</span></div>
+        <div class="grid4">${g.map(([c, x]) => cell(x, c)).join('')}</div>
+        <div class="legendbar"><b style="color:var(--ink)">Every fact says where it comes from:</b><span class="st w">Stated by the company</span><span class="st go">Document seen</span><span class="st ok">Checked by us</span><span class="st mute">Not confirmed</span></div>
+      </div>
+      <div class="caption"><span><b>Step 3 of 6, Compare.</b> Price quotes and terms side by side, with what is missing marked.</span>
+        <span class="ctrl"><button aria-label="Previous step">&#8249;</button><button aria-label="Next step">&#8250;</button></span></div>
+    </div>
+  </div></section>
+  <section class="sec" style="padding-top:24px" aria-label="Why it works"><div class="wrap">
+    <div class="why">
+      <div><span class="big">Beyond</span><h3>One fair, one directory.</h3><p>We look for companies that fit across many sources, then tell you why each one is on your list.</p></div>
+      <div><span class="big">Proof</span><h3>Before you fly.</h3><p>Every fact says where it comes from, so you know what is checked and what is only claimed. <a class="quiet" href="/trust">How We Label Facts</a></p></div>
+      <div><span class="big">Calm</span><h3>Nothing sent until you check it.</h3><p>No account needed to begin. You see the whole request before it leaves your hands. <a class="quiet" href="/how-it-works">See the Full Process</a></p></div>
+    </div>
+    <div class="rstrip">
+      <a class="route" href="/corridors/bangladesh-china"><span class="k">Route 01</span><span><b>Bangladesh to China</b><span>Machines, materials, Canton Fair.</span></span>${I.arrow}</a>
+      <a class="route" href="/corridors/bangladesh-spain"><span class="k">Route 02</span><span><b>Bangladesh to Spain</b><span>Garments and knitwear buyers.</span></span>${I.arrow}</a>
+      <a class="route" href="/corridors"><span class="k">Another?</span><span><b>Explore Every Route</b><span>Or name the market you want.</span></span>${I.arrow}</a>
+    </div>
+  </div></section>
+  ${cta('Your request can look like this.', 'Start in a few minutes. Nothing is sent until you check it.')}`;
+      }
+
+      if (v === 'G') {
+        const cell = (x, c) => `<div${c ? ' class="' + c + '"' : ''}>${x}</div>`;
+        const g = [
+          ['h', 'Term'],
+          ['h', 'Supplier A'],
+          ['h', 'Supplier B'],
+          ['h', 'Supplier C'],
+          ['t', 'Price quote'],
+          ['', 'Not stated <span class="st mute">Asked</span>'],
+          ['', 'On request'],
+          ['', 'Not stated <span class="st mute">Asked</span>'],
+          ['t', 'Delivery terms'],
+          ['', 'FOB Chittagong <span class="st go">Document seen</span>'],
+          ['', 'CIF <span class="st w">Stated</span>'],
+          ['', 'Not confirmed'],
+          ['t', 'Installation'],
+          ['', 'Included <span class="st ok">Checked by us</span>'],
+          ['hl', 'Not included'],
+          ['', 'Included <span class="st w">Stated</span>'],
+          ['t', 'Lead time'],
+          ['', '90 days'],
+          ['', '75 days <span class="st go">Document seen</span>'],
+          ['', '120 days'],
+        ];
+        main = `
+  <div class="E">
+  <section class="hero" aria-labelledby="home-title"><div class="wrap">
+    <div>
+      <p class="eyebrow">Cross-border market access</p>
+      <h1 id="home-title">Make market entry deliberate.</h1>
+      <p class="lead">Watch one request become a decision. Then start yours.</p>
+      ${jobRows}
+      <div class="after">${elseLink}${calm}</div>
+    </div>
+    <div class="player" role="region" aria-label="Example mission, step by step">
+      <div class="ptop"><button class="play" aria-label="Pause the example"><svg width="16" height="16" viewBox="0 0 16 16" fill="#fff"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg></button>
+        <div><b>Buy a knitting machine from China</b><small>Example mission. Not real suppliers.</small></div><span class="tag">Example</span></div>
+      <ol class="rail" aria-label="How a mission works">${steps.map(([t, s], i) => `<li class="${i < 2 ? 'd' : i === 2 ? 'now' : ''}"><span class="n">0${i + 1}</span><i></i>${t}<p>${s}</p></li>`).join('')}</ol>
+      <div class="screen">
+        <div class="shead"><h3>Price quotes side by side</h3><span class="small">What is missing is marked</span></div>
+        <div class="grid4">${g.map(([c, x]) => cell(x, c)).join('')}</div>
+      </div>
+      <div class="caption"><span><b>Step 3 of 6, Compare.</b> Price quotes and terms side by side, with what is missing marked. <a class="quiet" style="color:#9DB6F0" href="/how-it-works">See the Full Process</a></span>
+        <span class="ctrl"><button aria-label="Previous step">&#8249;</button><button aria-label="Next step">&#8250;</button></span></div>
+    </div>
+  </div></section>
+  </div>
+  <div class="F">
+  <section class="sec evidence" aria-labelledby="facts-title" style="background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line)"><div class="wrap split" style="align-items:center">
+    <div class="stack" role="img" aria-label="Example company record with trust labels">
+      <div class="card c3"></div><div class="card c2"></div>
+      <div class="card c1">
+        <div class="ch"><span class="small">Buyer shortlist, Spain</span><span class="tag">Example</span></div>
+        <h3>Importer C, Barcelona</h3><p class="sub">Not a real company. Knitwear importer for about 60 stores.</p>
+        <div class="field"><span>Company registration</span><span class="st ok">Checked by us</span></div>
+        <div class="field"><span>Buys private label</span><span class="st w">Stated by the company</span></div>
+        <div class="field"><span>Price list request</span><span class="st go">Document seen</span></div>
+        <div class="field"><span>Yearly order volume</span><span class="st mute">Not confirmed</span></div>
+        <span class="stamp">Meeting confirmed</span>
+      </div>
+    </div>
+    <div>
+      <p class="eyebrow">What we show you</p>
+      <p class="hook" style="margin-top:12px">Know who is real before you fly.</p>
+      <h2 id="facts-title" style="margin:4px 0 18px">Every fact says where it comes from.</h2>
+      <div class="ladder">${facts.map(([c, t, s], n) => `<div><span class="lv">${n + 1}</span><span class="st ${c}">${t}</span><p>${s}</p></div>`).join('')}</div>
+      <a class="quiet" href="/trust">How We Label Facts</a>
+    </div>
+  </div></section>
+  <section class="sec" aria-labelledby="routes-title"><div class="wrap">
+    <div class="sec-head"><div><p class="eyebrow">Routes</p><h2 id="routes-title" style="margin-top:10px">Corridors we know well.</h2></div></div>
+    <div class="passes">
+      <a class="pass" href="/corridors/bangladesh-china"><div class="main"><span class="k">Route 01</span><div class="codes">DAC ${plane} CAN</div><span>Bangladesh to China. Machines, materials, Canton Fair.</span></div><div class="stub"><div><b>Open</b>Route</div></div></a>
+      <a class="pass" href="/corridors/bangladesh-spain"><div class="main"><span class="k">Route 02</span><div class="codes">DAC ${plane} MAD</div><span>Bangladesh to Spain. Garments and knitwear buyers.</span></div><div class="stub"><div><b>Open</b>Route</div></div></a>
+      <a class="pass" href="/corridors"><div class="main"><span class="k">Another route?</span><div class="codes">DAC ${plane} ???</div><span>Explore Every Route, or name the market you want.</span></div><div class="stub"><div><b>Explore</b>Routes</div></div></a>
+    </div>
+  </div></section>
+  </div>
+  ${cta('Your request can look like this.', 'Start in a few minutes. Nothing is sent until you check it.')}`;
+      }
+
+      if (v === 'F') {
+        main = `
+  <section class="hero" aria-labelledby="home-title"><div class="wrap">
+    <div>
+      <p class="eyebrow">Cross-border market access</p>
+      <h1 id="home-title">Make market entry deliberate.</h1>
+      <p class="hook">Know who is real before you fly.</p>
+      <p class="lead">For every company we put in front of you, you see what they claim, what we have seen and what we checked ourselves.</p>
+    </div>
+    <div class="stack" role="img" aria-label="Example company record with trust labels">
+      <div class="card c3"></div><div class="card c2"></div>
+      <div class="card c1">
+        <div class="ch"><span class="small">Buyer shortlist, Spain</span><span class="tag">Example</span></div>
+        <h3>Importer C, Barcelona</h3><p class="sub">Not a real company. Knitwear importer for about 60 stores.</p>
+        <div class="field"><span>Company registration</span><span class="st ok">Checked by us</span></div>
+        <div class="field"><span>Buys private label</span><span class="st w">Stated by the company</span></div>
+        <div class="field"><span>Price list request</span><span class="st go">Document seen</span></div>
+        <div class="field"><span>Yearly order volume</span><span class="st mute">Not confirmed</span></div>
+        <span class="stamp">Meeting confirmed</span>
+      </div>
+    </div>
+  </div>
+  <div class="wrap doorswrap">
+    <nav class="doors" aria-label="Choose your commercial objective">
+      ${jobs.map(([i, t, s, h], n) => `<a class="door" href="${h}"><span class="num">0${n + 1}</span><span><b>${t}</b><span>${s}</span></span>${I.arrow}</a>`).join('')}
+    </nav>
+    <div class="belowdoors">${elseLink}${calm}</div>
+  </div></section>
+  <section class="sec" style="padding-top:48px"><div class="wrap split">
+    <div aria-labelledby="facts-title"><p class="eyebrow">What we show you</p><h2 id="facts-title" style="margin:10px 0 18px">Every fact says where it comes from.</h2>
+      <div class="ladder">${facts.map(([c, t, s], n) => `<div><span class="lv">${n + 1}</span><span class="st ${c}">${t}</span><p>${s}</p></div>`).join('')}</div>
+      <a class="quiet" href="/trust">How We Label Facts</a></div>
+    <div aria-labelledby="steps-title"><p class="eyebrow">How it works</p><h2 id="steps-title" style="margin:10px 0 8px">One request, six clear steps.</h2>${stepList()}<a class="quiet" href="/how-it-works">See the Full Process</a></div>
+  </div></section>
+  <section class="sec" style="padding-top:0" aria-labelledby="routes-title"><div class="wrap">
+    <div class="sec-head"><div><p class="eyebrow">Routes</p><h2 id="routes-title" style="margin-top:10px">Corridors we know well.</h2></div></div>
+    <div class="passes">
+      <a class="pass" href="/corridors/bangladesh-china"><div class="main"><span class="k">Route 01</span><div class="codes">DAC ${plane} CAN</div><span>Bangladesh to China. Machines, materials, Canton Fair.</span></div><div class="stub"><div><b>Open</b>Route</div></div></a>
+      <a class="pass" href="/corridors/bangladesh-spain"><div class="main"><span class="k">Route 02</span><div class="codes">DAC ${plane} MAD</div><span>Bangladesh to Spain. Garments and knitwear buyers.</span></div><div class="stub"><div><b>Open</b>Route</div></div></a>
+      <a class="pass" href="/corridors"><div class="main"><span class="k">Another route?</span><div class="codes">DAC ${plane} ???</div><span>Explore Every Route, or name the market you want.</span></div><div class="stub"><div><b>Explore</b>Routes</div></div></a>
+    </div>
+  </div></section>
+  ${cta('Your first step takes a few minutes.', 'Tell us the goal. Nothing is sent until you check it.')}`;
+      }
+
+      document.getElementById('page').innerHTML =
+        `<div id="concept">${header}<main id="main">${main}</main>${footer}</div>`;
+      // The concept letter is set as a class name, never written into markup.
+      document.getElementById('concept').className = v;
+      if (innerWidth < 700)
+        document
+          .querySelectorAll('svg.map')
+          .forEach((m) => m.setAttribute('preserveAspectRatio', 'xMaxYMid slice'));
+    </script>
+  </body>
+</html>
