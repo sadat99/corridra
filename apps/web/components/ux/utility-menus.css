@@ -1,0 +1,176 @@
+/* Navigation v1, the utility menus (UtilityMenus board): the notifications panel, the language menu, the help and
+   accessibility menu and the avatar menu. Existing tokens only; every target is at least 44 px; focus is visible. */
+.ux-notice-panel {
+  min-width: min(22rem, calc(100vw - 2rem));
+}
+.ux-notice-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.ux-notice-head h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.ux-notice-head .text-link {
+  min-height: 2.75rem;
+}
+.ux-notice-panel h3 {
+  margin: 0.75rem 0 0.25rem;
+  font-size: 0.8125rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.ux-notice-panel ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ux-notice-panel li {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.5rem 0.5rem 1.25rem;
+}
+/* Unread has a dot and a tint, not a colour alone: the dot is a shape and the tint is a second cue. */
+.ux-notice-panel li[data-unread='true'] {
+  background: var(--ac-surface-selected);
+}
+.ux-notice-dot {
+  position: absolute;
+  left: 0.5rem;
+  top: 1rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--ac-cobalt);
+}
+
+/* Menu rows and groups. */
+.ux-menu-group {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--ac-border);
+  padding-top: 0.25rem;
+  margin-top: 0.25rem;
+}
+.ux-menu-heading {
+  margin: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ac-text-tertiary);
+}
+/* A feature that is not real yet: plain text with a tag. It has no hover, no pointer and no action. */
+.ux-menu-soon {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 2.75rem;
+  color: var(--ac-text-tertiary);
+  cursor: default;
+}
+.ux-menu-soon:hover {
+  background: transparent;
+}
+.ux-soon-tag {
+  flex: none;
+  padding: 0.125rem 0.5rem;
+  border-radius: 99px;
+  background: var(--ac-surface-subtle);
+  color: var(--ac-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1rem;
+  white-space: nowrap;
+}
+/* The language, help and avatar triggers: 44 px targets. */
+.ux-util-language > .ux-menu-button,
+.ux-util-help > .ux-menu-button,
+.ux-util-avatar > .ux-menu-button {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+}
+.ux-avatar-face {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--ac-navy);
+  color: var(--ac-paper);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+/* Phones: the language and help menus fold into the avatar menu; wide screens keep them in the header row. */
+.ux-phone-only {
+  display: none;
+}
+@media (max-width: 639.98px) {
+  .ux-phone-only {
+    display: block;
+  }
+  .ux-menu.ux-util-language,
+  .ux-menu.ux-util-help {
+    display: none;
+  }
+}
+
+/* The Meetings page: the unbuilt combined list says so in plain text. */
+.ux-soon-line {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--ac-text-tertiary);
+}
+.ux-meeting-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ux-meeting-list li {
+  border-top: 1px solid var(--ac-border);
+}
+.ux-meeting-list a {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.5rem 0;
+}
+
+/* Very narrow screens: the compact New Request in the header is the icon alone (its name stays for assistive
+   technology), so the row fits at 320 px. */
+@media (max-width: 419.98px) {
+  .ux-bar-new-narrow {
+    width: 2.75rem;
+    padding: 0;
+    justify-content: center;
+  }
+  .ux-bar-new-narrow span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+/* The avatar menu is the longest (on phones it holds the language and help too): it scrolls within the screen,
+   above the bottom tabs, instead of running off it. */
+.ux-util-avatar .ux-menu-panel {
+  max-height: calc(100dvh - 8.5rem);
+  overflow-y: auto;
+}

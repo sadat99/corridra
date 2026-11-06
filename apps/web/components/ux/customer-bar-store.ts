@@ -23,3 +23,17 @@ export function subscribeCustomerNote(listener: () => void) {
     listeners.delete(listener);
   };
 }
+
+// Whether customer billing is on, so the avatar menu can link Plan and Billing or say Coming soon. A flag only.
+let billing = false;
+export function setCustomerBilling(next: boolean) {
+  if (next === billing) return;
+  billing = next;
+  for (const listener of listeners) listener();
+}
+export function readCustomerBilling() {
+  return billing;
+}
+export function readServerCustomerBilling() {
+  return false;
+}

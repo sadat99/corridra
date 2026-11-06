@@ -73,6 +73,13 @@ export const tools: readonly Tool[] = [
     group: 'Missions',
   },
   {
+    route: '/account/meetings',
+    href: '/account/meetings',
+    label: 'See your meetings and visits',
+    line: 'Open a request to see its meetings and visits.',
+    group: 'Missions',
+  },
+  {
     route: '/account/service-requests',
     href: '/account/service-requests',
     label: 'Ask for help or a quote',

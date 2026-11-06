@@ -1,0 +1,134 @@
+{
+  "recordedOn": "2026-11-06",
+  "batch": "Revamp S2 Customer Work: navigation v1, scope 2b (customer shell and the shared utility menus)",
+  "kind": "Reports to docs/revamp/specs/navigation-v1.md (boards CustomerDesktop, CustomerMobile, UtilityMenus). The owner directive (6 Nov 2026): update all the menu and navigation across the system except the footer, as per the design, without damaging or orphaning anything.",
+  "findings": [],
+  "findingsNote": "No gap is created or changed. No route is deleted, no table, migration, switch, provider, payment or write is added. Access is unchanged: the new menus read what the old ones read and every page and action still checks on the server.",
+  "status": "Built on branch revamp/customer over main 4feb6d70 (after #335). CI on the exact pushed head is the verifier; see the pull request. The brand identity PR 339 had not landed when this was built; its logo lines in app-header.tsx and shell-header.tsx are untouched here, and the dead .brand span rules in left-nav.css, customer-bar.css and globals.css are removed in a follow-up commit after it lands.",
+  "newFiles": [
+    "apps/web/lib/ux/customer-navigation.ts: the customer navigation as data (tabs, avatar items, help groups, New Request address); feeds the sidebar, the bottom tabs and every menu",
+    "apps/web/lib/ux/notification-groups.ts: Needs You, Updates, Earlier",
+    "apps/web/components/ux/utility-menus.tsx and .css: NotificationsPanel, LanguageMenu, HelpMenu, AvatarMenu (shared; S4 consumes NotificationsPanel, LanguageMenu and HelpMenu, which take their own labels and groups)",
+    "apps/web/components/ux/customer-tabs.tsx and .css: the labelled bottom tabs below 1024 px",
+    "apps/web/components/ux/customer-header.tsx: the customer header row (split out of customer-bar.tsx so the menus do not import each other in a cycle)",
+    "apps/web/app/account/meetings/page.tsx: the Meetings tab",
+    "tests/integration/revamp-nav-customer-model.test.ts (10), revamp-nav-notification-groups.test.ts (4)",
+    "docs/design-system/evidence/revamp-nav-customer (the shell and every menu at 320, 390, 768 and 1440)"
+  ],
+  "changedFiles": [
+    "customer-shell.tsx: the sidebar and the tabs come from one model; the frame opts into narrow=tabs",
+    "left-nav.tsx and .css: an opt-in narrow prop (drawer by default, so team and contributor are unchanged); tabs mode has no drawer and no Menu button",
+    "customer-rail.tsx and .css: the sidebar top is New Request, the foot is Help on WhatsApp as Coming soon text; the workspace card and the account menu moved to the avatar menu",
+    "customer-bar.tsx: keeps useWorkspaces, BarInbox (new optional grouped) and LanguageMenuGroup for the team shell; the customer row moved to customer-header.tsx",
+    "notification-inbox.tsx: opt-in grouped panel with Mark All Read (default output unchanged)",
+    "app-header.tsx: the customer branch renders the customer header and no longer draws the corner Help button; team and contributor output is byte for byte as before (revamp-app-header-guard passes)",
+    "customer-nav.tsx: tab type gains meetings; the legacy tab row (switch off) is unchanged",
+    "all-tools.ts: Meetings is listed, so the all-tools guard stays true",
+    "customer-bar-note.tsx and customer-bar-store.ts: a billing flag, so the avatar menu links Plan and Billing only where billing is on"
+  ],
+  "reachability": {
+    "note": "Old menu item and route -> new place. Every old route stays reachable; no route is deleted. Test: tests/integration/revamp-nav-customer-model.test.ts (the model) and tests/e2e/verification/revamp-s2/customer-shell.spec.ts (the rendered shell reaches each address).",
+    "table": [
+      {
+        "old": "Home /account/move (or /account), with the what-waits count",
+        "new": "Home tab (sidebar and phone tab), same address and count"
+      },
+      {
+        "old": "Requests /account?view=work",
+        "new": "Requests tab, same address"
+      },
+      {
+        "old": "Companies /account/companies (module on)",
+        "new": "Companies tab, same gating"
+      },
+      {
+        "old": "Reports /account?view=results",
+        "new": "Reports tab, same address"
+      },
+      {
+        "old": "Account /account?view=more",
+        "new": "Avatar menu: Account, same address"
+      },
+      {
+        "old": "All tools /account/all-tools",
+        "new": "Linked from the Account page (Security tab) where the navigation switch is on; the route is unchanged. Not a sixth tab"
+      },
+      {
+        "old": "Workspace card: switch workspace, Your workspaces, /account/profile/{id}",
+        "new": "Avatar menu identity block: the workspace choices (same section kept) and Manage Workspaces"
+      },
+      {
+        "old": "Manage Workspaces /account?view=work#customer-workspaces",
+        "new": "Avatar menu, same address"
+      },
+      {
+        "old": "New Request (header)",
+        "new": "Sidebar New Request from 1024 px; the compact header button below 1024 px, same address logic"
+      },
+      {
+        "old": "Inbox bell /api/customer-inbox",
+        "new": "Notifications panel: Needs You, Updates, Earlier, Mark All Read, same endpoint"
+      },
+      {
+        "old": "Account menu: language radios",
+        "new": "Language menu in the header from 640 px; inside the avatar menu below 640 px"
+      },
+      {
+        "old": "Account menu: Corridra Website /, Privacy Notice /privacy",
+        "new": "Help menu, About Corridra group"
+      },
+      {
+        "old": "Account menu: Sign Out",
+        "new": "Avatar menu, last item, same action"
+      },
+      {
+        "old": "Account menu: the privacy or preview line",
+        "new": "Avatar menu, the same quiet line"
+      },
+      {
+        "old": "Help sheet: See How It Works /how-it-works",
+        "new": "Help menu, Get Help group"
+      },
+      {
+        "old": "Help sheet: Listen to This Page",
+        "new": "Help menu, Make It Easier to Read group (a switch, hidden where the browser has no voice, as before)"
+      },
+      {
+        "old": "Help sheet: Start a request /plan",
+        "new": "New Request"
+      },
+      {
+        "old": "Collapse and Expand menu",
+        "new": "Kept at the sidebar foot"
+      },
+      {
+        "old": "Left drawer and the Menu button below 1024 px",
+        "new": "Labelled bottom tabs; the drawer stays for the team and contributor shells"
+      },
+      {
+        "old": "Header crumb Workspace / Page",
+        "new": "The page title (the h1) as the board shows; not a destination"
+      }
+    ]
+  },
+  "decisions": {
+    "meetings": "There was no customer Meetings route. The meetings and visits for a request come from the saved commercial report read client-side inside that request's Room, not from the request detail, so combining them across requests would be a new multi-read path. The Meetings page lists the person's requests (the same list the Requests page reads, with the same session proof) and opens each where its meetings and visits are. One list of all meetings says Coming soon as plain text.",
+    "search": "The board's header search has no backend that answers it under a customer's role, so it is left out (rule 3). Search stays where lists are.",
+    "honesty": "Plain text with a Coming soon tag, announced as unavailable (aria-disabled), never a link or a button: Chat on WhatsApp (no owner-configured number exists), Report a Problem, Text Size, Stronger Colours, Less Movement, and Help on WhatsApp in the sidebar. Plan and Billing is a link only where customer billing is on. Company Profile follows the chosen workspace and is Coming soon with none. Mark All Read is real: it uses the existing single-item read call for each unread item, then reads the list again.",
+    "phone": "Below 640 px the language and help menus are inside the avatar menu so the header row fits at 320 px; the notifications bell and the compact New Request stay in the row (the bell exists today, dropping it would lose it). At 420 px and narrower New Request is the icon alone with its name kept for assistive technology.",
+    "needsYou": "Unread invitations (team, contributor, programme), assigned tasks and quotes sent are Needs You; other unread items are Updates; anything read is Earlier.",
+    "retargetedTests": "tests/integration/ux-one-workspace-switcher.test.ts now checks the switcher in the avatar menu (names the current workspace, keeps the section, Manage Workspaces) and that the sidebar and header row carry none; the 16 px chevron check went with the card it described. tests/e2e/verification/revamp-s2/customer-shell.spec.ts replaces the CX PR 1 cases about the left drawer and the account menu at the foot of the bar with the new design, keeping the case ids and every property (keyboard, Escape and focus return, unclipped menus, Listen start and stop, names and addresses); customer-home.spec.ts looks for the one filled action in the sidebar. Nothing was weakened or skipped.",
+    "listen": "Listen to This Page in the Help menu uses its own small speech hook rather than editing the shared corner dock; the corner dock is unchanged and is hidden on customer pages because the Help menu replaces it there."
+  },
+  "receipts": {
+    "integration": "revamp-nav-customer-model 10 passed, revamp-nav-notification-groups 4, ux-one-workspace-switcher 3, ux-all-tools, ux-left-nav, ux-left-nav-adoption, revamp-customer-shell-switch, revamp-app-header-guard (team and contributor byte for byte), title-case scan with the new files: passed.",
+    "browser": "tests/e2e/verification/revamp-s2 on a production build at 1280, 768 and 390: 129 passed, including the new customer-shell cases (sidebar and tabs at 320, 390, 768 and 1440 with 48 px tabs and no sideways scroll, avatar, language, help and notifications menus, the old destinations reachable, the Meetings page, axe clean with the avatar and help menus open at 320, 390, 768 and 1440). ux-move operator spec (legacy shell) 15 passed.",
+    "screens": "docs/design-system/evidence/revamp-nav-customer"
+  },
+  "notRun": [
+    "A screen reader walk-through.",
+    "The shell with a workspace, companies and billing on: the verification seed has none of them, so Company Profile, Plan and Billing and Companies are checked through the model tests; the avatar menu workspace group is covered by the old switcher test and by reading the code path.",
+    "The dead .brand span rules are not removed here: they go in a follow-up after the brand PR 339 lands."
+  ],
+  "sensitive": "No. No auth, session, role or public-route behaviour changes: the same reads, the same links and the same actions; the new Meetings page reads the same request list under the same session proof."
+}

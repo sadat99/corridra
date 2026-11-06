@@ -1,15 +1,13 @@
 import { realUseEnabled } from '@corridra/auth/customer-production';
 import type { ReactNode } from 'react';
+import { customerBillingEnabled } from '@corridra/auth/customer-billing';
 import { customerCompaniesEnabled } from '@corridra/auth/customer-companies';
 import { uxSwitchOn } from '../lib/ux-switches';
-import {
-  CustomerNav,
-  customerNavIcons,
-  customerNavItems,
-  customerNavLabelKeys,
-  type CustomerTab,
-} from './customer-nav';
+import { CustomerNav, type CustomerTab } from './customer-nav';
 import { T } from './language-provider';
+import { customerTabs, type CustomerTabKey } from '../lib/ux/customer-navigation';
+import type { MessageKey } from '../lib/i18n/messages';
+import { CustomerTabs } from './ux/customer-tabs';
 import { CustomerBarNote } from './ux/customer-bar-note';
 import { LeftNavFrame, LeftNavList, type LeftNavItem } from './ux/left-nav';
 import { CustomerRailFoot, CustomerRailTop } from './ux/customer-rail';
@@ -80,28 +78,48 @@ export function CustomerShell({
         {children}
       </WorkspaceShell>
     );
-  const listed = customerNavItems({ companies: customerCompaniesEnabled(), plainNames, move });
-  // With Your Move as the first tab, the older Home view stays reachable by its address and is read as the same place.
-  const here = plainNames && move && tab === 'home' ? 'move' : tab;
-  const items: LeftNavItem[] = listed.map((item) => ({
-    key: item.tab,
-    label: translated ? <T k={customerNavLabelKeys[item.label] ?? 'wse.nav.more'} /> : item.label,
+  // Navigation v1: the sidebar (1024 px and wider) and the labelled bottom tabs (below) list the same five
+  // destinations from one model. Account, Company Profile, Plan and Billing and the rest are under the avatar.
+  const tabs = customerTabs({ companies: customerCompaniesEnabled(), move });
+  const here: CustomerTabKey | null =
+    tab === 'home' || tab === 'move'
+      ? 'home'
+      : tab === 'work'
+        ? 'requests'
+        : tab === 'results'
+          ? 'reports'
+          : tab === 'companies' || tab === 'meetings'
+            ? tab
+            : null;
+  const labelKeys: Partial<Record<CustomerTabKey, MessageKey>> = {
+    home: 'wse.nav.home',
+    requests: 'wse.nav.work',
+    companies: 'wse.nav.companies',
+    reports: 'wse.nav.results',
+  };
+  const items: LeftNavItem[] = tabs.map((item) => ({
+    key: item.key,
+    // Meetings is a new word with no reviewed translation yet, so it is marked as English.
+    label: labelKeys[item.key] ? (
+      <T k={labelKeys[item.key]!} />
+    ) : (
+      <span lang="en">{item.label}</span>
+    ),
     href: item.href,
-    icon: plainNames && item.tab === 'results' ? 'library' : customerNavIcons[item.tab],
-    count: item.tab === here ? count : undefined,
+    icon: item.icon,
+    count: item.key === 'home' && here === 'home' ? count : undefined,
   }));
-  // "All tools" sits at the bottom of the bar wherever that page is on.
-  if (plainNames)
-    items.push({ key: 'all-tools', label: 'All tools', href: '/account/all-tools', icon: 'grid' });
   return (
     <LeftNavFrame
       navId={navId}
       words={words}
-      nav={<LeftNavList id={navId} label={words.navLabel} items={items} current={here} />}
+      narrow="tabs"
+      nav={<LeftNavList id={navId} label={words.navLabel} items={items} current={here ?? ''} />}
       top={<CustomerRailTop />}
       foot={<CustomerRailFoot />}
     >
       <CustomerBarNote
+        billing={customerBillingEnabled()}
         text={
           real
             ? 'Your work stays private to the people given access.'
@@ -111,6 +129,7 @@ export function CustomerShell({
       <WorkspaceShell title={title} customer>
         {children}
       </WorkspaceShell>
+      <CustomerTabs tabs={tabs} current={here} count={here === 'home' ? count : undefined} />
     </LeftNavFrame>
   );
 }

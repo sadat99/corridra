@@ -136,6 +136,12 @@
     background: color-mix(in srgb, var(--ink) 40%, transparent);
   }
 }
+/* Shells with bottom tabs (the customer shell) have no drawer below 1024 px. */
+@media (max-width: 1023.98px) {
+  .ux-leftnav-frame[data-narrow='tabs'] .ux-leftnav-rail {
+    display: none;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .ux-leftnav-panel,
   .ux-leftnav-collapse .operator-icon {
