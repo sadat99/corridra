@@ -557,7 +557,7 @@
 .ac1-dossier::after {
   content: '';
   position: absolute;
-  inset: var(--space-6) var(--space-8);
+  inset: var(--space-6) var(--space-12);
   z-index: -1;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
@@ -565,11 +565,11 @@
 }
 .ac1-dossier::before {
   background: var(--surface-2);
-  transform: rotate(-6deg) translate(-1.5rem, 0.75rem);
+  transform: rotate(-6deg) translate(-1rem, 0.75rem);
 }
 .ac1-dossier::after {
   background: var(--paper);
-  transform: rotate(4deg) translate(1.25rem, 0.25rem);
+  transform: rotate(4deg) translate(1rem, 0.25rem);
 }
 .ac1-dossier-card {
   position: relative;
@@ -694,6 +694,8 @@
   font-weight: 600;
   line-height: 1.3;
   text-align: center;
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 /* Closing band: one primary action. */
@@ -745,7 +747,7 @@
     padding-bottom: var(--space-4);
   }
   .ac1-hero {
-    padding-block: var(--space-4) var(--space-5);
+    padding-block: var(--space-4);
   }
   .ac1-hero h1 {
     margin: var(--space-2) 0;
@@ -826,10 +828,17 @@
     justify-self: start;
   }
   .ac1-section {
-    padding-block: var(--space-4);
+    padding-block: var(--space-3);
   }
   .ac1-section h2 {
-    margin-bottom: var(--space-3);
+    margin-bottom: var(--space-2);
+  }
+  .ac1-section-note {
+    margin: calc(-1 * var(--space-1)) 0 var(--space-3);
+    font-size: var(--text-xs);
+  }
+  .ac1-screen > .ac1-screen-note {
+    padding: var(--space-1) var(--space-3) var(--space-2);
   }
   .ac1-hook {
     font-size: var(--text-lg);
@@ -860,7 +869,7 @@
     grid-template-columns: auto minmax(0, 1fr);
     align-content: start;
     gap: var(--space-1) var(--space-2);
-    padding: 0 0 var(--space-2);
+    padding: 0 0 var(--space-1);
     font-size: var(--text-xs);
   }
   .ac1-truth li > span:last-child {
@@ -906,7 +915,8 @@
   .ac1-pass-codes {
     font-size: var(--text-xl);
   }
-  .ac1-pass-text {
+  .ac1-pass-text,
+  .ac1-pass-stub {
     font-size: var(--text-xs);
   }
 }
