@@ -295,13 +295,23 @@ export function ReplyJourney({
         acknowledged: true,
       };
       // A failed send keeps the exact message, so a retry sends the same thing under the same id.
-      const message = command ?? {
-        action: revising ? 'detail-revision' : 'detail-response',
-        token,
-        responseId: revising ? crypto.randomUUID() : responseId.current,
-        ...(revising ? { expectedVersion: base } : {}),
-        ...answer,
-      };
+      // The first answer is the command the older form sent, unchanged; a correction is a separate command with its own id.
+      const message =
+        command ??
+        (revising
+          ? {
+              action: 'detail-revision',
+              token,
+              responseId: crypto.randomUUID(),
+              expectedVersion: base,
+              ...answer,
+            }
+          : {
+              action: 'detail-response',
+              token,
+              responseId: responseId.current,
+              ...answer,
+            });
       setCommand(message);
       const response = await fetch('/api/buyer', {
         method: 'POST',
