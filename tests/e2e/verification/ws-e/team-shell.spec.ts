@@ -231,7 +231,7 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   const inbox = header.getByRole('button', { name: 'Inbox', exact: true });
   await expect(inbox).toBeVisible();
   await inbox.click();
-  await expect(page.getByRole('heading', { name: 'Inbox', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Notifications', exact: true })).toBeVisible();
   await expect(page.getByText('Nothing new.')).toBeVisible();
   const own = await page.request.get(`/api/notifications?tenant=${seed.tenantId}`);
   expect(own.status()).toBe(200);
