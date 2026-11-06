@@ -1368,21 +1368,14 @@
         "kind": "archive",
         "how": "retired flag supported by API/DB",
         "evidence": "packages/db/customer-programme-pricing-migrations/0001_pricing_series_and_exports.sql:93; packages/auth/src/customer-programme-pricing.ts:149",
-        "ui": "not found: no retire control in apps/web/app/account/delegations/programme-series.tsx"
+        "ui": "apps/web/app/account/delegations/programme-series.tsx:441 \"Retire Series <name>\" / \"Restore Series <name>\" (corrected 5 Nov by S3: the control exists, from PR 115/118)"
       },
       "auditTrail": "pricing_event :589,:652",
       "tests": [
         "tests/integration/real-programme-series.test.ts:7",
         "tests/operator/v3-programme-pricing-ui.spec.ts"
       ],
-      "gaps": [
-        {
-          "op": "delete",
-          "severity": "low",
-          "what": "Series retire exists in API/DB but the UI has no Retire control (templates and fee schedules do).",
-          "evidence": "apps/web/app/account/delegations/programme-series.tsx:435"
-        }
-      ]
+      "gaps": []
     },
     {
       "name": "Programme template and application",
