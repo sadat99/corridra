@@ -561,6 +561,47 @@ test('payments and reversals wait for another person: the preparer is told so an
   await expect(page.getByText('Rejected. Nothing was changed.')).toBeVisible();
 });
 
+test('leaving the tab clears an open reversal confirmation along with everything else, so nothing about the payment is shown or confirmable on return', async ({
+  page,
+}) => {
+  const seen: Seen[] = [];
+  const rev = proposal({
+    kind: 'payment_reversal',
+    periodStart: null,
+    periodEnd: null,
+    dueDate: null,
+    billToName: null,
+    billToAddress: null,
+    invoiceNumber: 'INV-2026-000001',
+    paymentSeq: 1,
+    invoiceCurrency: 'SGD',
+    paymentAmountMinor: '2000',
+    paymentReceivedOn: '2026-10-28',
+    reason: 'The transfer was a duplicate of another one',
+    preparedByYou: false,
+    preview: null,
+  });
+  await serve(page, fresh({ proposals: [rev] }), seen);
+  await page.goto(origin + '/');
+  await page
+    .getByRole('region', { name: 'Waiting for approval' })
+    .getByRole('button', { name: 'Approve payment reversal for Acme Apparel' })
+    .click();
+  const ask = page.getByRole('dialog', { name: 'Reverse This Payment?' });
+  await expect(ask).toContainText(/SGD\s?20\.00/);
+  // The tab is hidden: the same handler that clears the invoice details clears the dialog too.
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await expect(ask).toBeHidden();
+  await expect(page.getByText(/SGD\s?20\.00/)).toHaveCount(0);
+  await expect(page.getByText('INV-2026-000001')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Confirm Reversal' })).toHaveCount(0);
+  await expect(page.getByText(/cleared while you were away/)).toBeVisible();
+  expect(seen.filter((x) => x.method === 'POST')).toHaveLength(0);
+});
+
 test('switched off shows nothing and an access refusal says what is needed', async ({ page }) => {
   await page.route('**/api/workspace/customer-billing**', (route) =>
     route.fulfill({ status: 503, json: {} }),

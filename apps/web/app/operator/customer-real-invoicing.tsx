@@ -258,6 +258,7 @@ function Scoped({ tenant }: { tenant: string }) {
         setData(null);
         setPreparing(null);
         setRejecting(null);
+        setConfirmingReversal(null);
         setMessage('Customer details were cleared while you were away. Reload to continue.');
       }
     };
