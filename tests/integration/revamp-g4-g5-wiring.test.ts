@@ -2,9 +2,9 @@ import { describe, expect, test } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
-// CRUD G4 and G5, the wiring. The workspace and account lifecycle modules are optional and installed only offline by the
-// owner. A base run installs nothing of them, no workflow carries them, and no request code can reach the offline
-// install or configuration modules.
+// CRUD G4 and G5, the wiring. The workspace and account lifecycle modules are optional and installed only by the owner,
+// through the protected install workflow or the offline script. A base run installs nothing of them, only that workflow
+// carries them, and no request code can reach the offline install or configuration modules.
 const script = readFileSync(resolve('scripts/install-customer-modules.ts'), 'utf8');
 const installers = script.slice(
   script.indexOf('const installers'),
@@ -52,12 +52,30 @@ describe('the programme lifecycle install', () => {
   });
 });
 
-describe('no workflow carries the two actions', () => {
+// Owner, 7 Nov 2026 ("switch on g4+g5 in production"): the protected install workflow is the one way in. It reaches
+// both actions only through field_modules_action, runs only on main in the owner-approved environment, and passes the
+// exact-head revision check. Every other workflow still carries neither action.
+const installWorkflow = 'install-customer-modules.yml';
+describe('only the protected install workflow carries the two actions', () => {
   const directory = resolve('.github/workflows');
   for (const name of readdirSync(directory).filter((n) => /\.ya?ml$/.test(n)))
     test(name, () => {
       const text = readFileSync(join(directory, name), 'utf8');
-      expect(text).not.toMatch(/WORKSPACE_LIFECYCLE|ACCOUNT_LIFECYCLE/);
+      if (name !== installWorkflow) {
+        expect(text).not.toMatch(/WORKSPACE_LIFECYCLE|ACCOUNT_LIFECYCLE/);
+        return;
+      }
+      expect(text).toContain('environment: customer-modules-install');
+      expect(text).toContain("if: github.ref == 'refs/heads/main'");
+      expect(text).toContain("inputs.field_modules_action != 'unchanged'");
+      // No input of its own: each action line is derived from field_modules_action alone.
+      expect(text).not.toMatch(/^\s{6}(workspace|account)_lifecycle_[a-z_]+:/m);
+      const lines = text.split('\n').filter((line) => /(WORKSPACE|ACCOUNT)_LIFECYCLE_/.test(line));
+      expect(lines).toHaveLength(4);
+      for (const line of lines) {
+        expect(line).toContain('inputs.field_modules_action');
+        expect(line.replace(/inputs\.field_modules_action/g, '')).not.toMatch(/inputs\./);
+      }
     });
 });
 
