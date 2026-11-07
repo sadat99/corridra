@@ -519,8 +519,9 @@ try {
     }
     // Workspace and account lifecycle are never part of the base run: a run with both actions unchanged installs
     // nothing of them. Each installs with its control closed; opening or pausing is an owner decision with a reason.
-    // Account lifecycle installs the workspace lifecycle first (its own migration does it). Neither is wired to the
-    // install workflow, whose input cap is already reached.
+    // Account lifecycle installs the workspace lifecycle first (its own migration does it). The install workflow reaches
+    // both through field_modules_action (lifecycle_install, lifecycle_enable, lifecycle_pause), which moves them together
+    // and supplies the reason, so the workflow stays within its 25-input cap.
     if (v.WORKSPACE_LIFECYCLE_ACTION !== 'unchanged') {
       await migrateCustomerWorkspaceLifecycle(pool);
       if (v.WORKSPACE_LIFECYCLE_ACTION === 'install')

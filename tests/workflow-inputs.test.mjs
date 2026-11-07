@@ -82,20 +82,27 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'response_revision',
     'response_revision_enable',
     'response_revision_pause',
+    'lifecycle_install',
+    'lifecycle_enable',
+    'lifecycle_pause',
   ]);
   const defaults = Object.fromEntries(
     Object.entries(declared).map(([name, input]) => [name, input.default]),
   );
-  for (const [choice, confirmation, arrangements, lifecycle, labels, revision] of [
-    ['unchanged', 'unchanged', 'unchanged', 'unchanged', 'unchanged', 'unchanged'],
-    ['specification_confirmation', 'install', 'unchanged', 'unchanged', 'unchanged', 'unchanged'],
-    ['commercial_arrangements', 'unchanged', 'install', 'unchanged', 'unchanged', 'unchanged'],
-    ['both', 'install', 'install', 'unchanged', 'unchanged', 'unchanged'],
-    ['programme_lifecycle', 'unchanged', 'unchanged', 'install', 'unchanged', 'unchanged'],
-    ['participant_labels', 'unchanged', 'unchanged', 'unchanged', 'install', 'unchanged'],
-    ['response_revision', 'unchanged', 'unchanged', 'unchanged', 'unchanged', 'install'],
-    ['response_revision_enable', 'unchanged', 'unchanged', 'unchanged', 'unchanged', 'enable'],
-    ['response_revision_pause', 'unchanged', 'unchanged', 'unchanged', 'unchanged', 'pause'],
+  const u = 'unchanged';
+  for (const [choice, confirmation, arrangements, lifecycle, labels, revision, g4g5] of [
+    ['unchanged', u, u, u, u, u, u],
+    ['specification_confirmation', 'install', u, u, u, u, u],
+    ['commercial_arrangements', u, 'install', u, u, u, u],
+    ['both', 'install', 'install', u, u, u, u],
+    ['programme_lifecycle', u, u, 'install', u, u, u],
+    ['participant_labels', u, u, u, 'install', u, u],
+    ['response_revision', u, u, u, u, 'install', u],
+    ['response_revision_enable', u, u, u, u, 'enable', u],
+    ['response_revision_pause', u, u, u, u, 'pause', u],
+    ['lifecycle_install', u, u, u, u, u, 'install'],
+    ['lifecycle_enable', u, u, u, u, u, 'enable'],
+    ['lifecycle_pause', u, u, u, u, u, 'pause'],
   ]) {
     const inputs = { ...defaults, field_modules_action: choice };
     assert.equal(evaluate(env.SPECIFICATION_CONFIRMATION_ACTION, inputs), confirmation);
@@ -103,6 +110,16 @@ test('each field-module choice maps to install only and reaches the exact-head c
     assert.equal(evaluate(env.PROGRAMME_LIFECYCLE_ACTION, inputs), lifecycle);
     assert.equal(evaluate(env.PARTICIPANT_LABELS_ACTION, inputs), labels);
     assert.equal(evaluate(env.RESPONSE_REVISION_ACTION, inputs), revision);
+    // G4 and G5 always move together, and an open or pause always carries a reason of 10 to 500 characters.
+    assert.equal(evaluate(env.WORKSPACE_LIFECYCLE_ACTION, inputs), g4g5);
+    assert.equal(evaluate(env.ACCOUNT_LIFECYCLE_ACTION, inputs), g4g5);
+    for (const reason of [env.WORKSPACE_LIFECYCLE_REASON, env.ACCOUNT_LIFECYCLE_REASON]) {
+      const value = evaluate(reason, inputs);
+      if (g4g5 === 'enable' || g4g5 === 'pause') {
+        assert.ok(value.length >= 10 && value.length <= 500, `${choice} reason length`);
+        assert.match(value, g4g5 === 'enable' ? /opened/ : /paused/);
+      } else assert.equal(value, '');
+    }
     assert.equal(evaluate(guard, inputs), choice !== 'unchanged');
   }
   for (const name of Object.keys(defaults).filter((name) => name.endsWith('_action'))) {
