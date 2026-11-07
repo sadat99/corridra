@@ -651,3 +651,50 @@ test('G4-17 the member picker pages through the whole team, and only says there 
   await expect(dialog.getByText('There is no one to transfer to yet')).toHaveCount(0);
   expect(seen).toEqual(['first', '00000000-0000-4000-8000-0000000000a1']);
 });
+
+test('G4-18 a paused control keeps an archived workspace archived with Restore, offers no new changes, and a named member can still decline', async ({
+  page,
+}) => {
+  const offer = {
+    offerId,
+    toMemberId: memberB,
+    expiresAt: '2099-01-01T10:00:00Z',
+    toYou: true,
+    byYou: false,
+  };
+  const { sent } = await open(page, {
+    states: {
+      [ids.own]: stateFor(ids.own, 'owner', { open: false, archived: true, version: 5 }),
+      [ids.adm]: stateFor(ids.adm, 'owner', { open: false }),
+      [ids.mem]: stateFor(ids.mem, 'member', { open: false, offer }),
+    },
+  });
+  // The archived workspace is not drawn as active: it sits under Archived with its banner.
+  await expect(page.getByRole('row', { name: new RegExp(owner) })).toHaveCount(0);
+  await page.getByRole('radio', { name: /Archived/ }).check();
+  await expect(page.getByRole('row', { name: new RegExp(owner) })).toContainText('Archived');
+  // Restore stays available while paused, and nothing else is offered for it.
+  expect(await menuNames(page, owner)).toEqual(expect.arrayContaining(['Restore Workspace']));
+  const archivedItems = await page.getByRole('menuitem').allTextContents();
+  for (const item of lifecycleItems) expect(archivedItems).not.toContain(item);
+  await page.getByRole('menuitem', { name: 'Restore Workspace' }).click();
+  await page
+    .getByRole('dialog', { name: 'Restore ' + owner + '?' })
+    .getByRole('button', { name: 'Restore Workspace' })
+    .click();
+  await expect(page.getByText(owner + ' was restored.')).toBeVisible();
+  expect(sent).toEqual([
+    { action: 'restore', workspaceId: ids.own, expectedVersion: 5, commandId: expect.any(String) },
+  ]);
+  // An active workspace offers no rename, transfer or archive while paused.
+  const items = await menuNames(page, 'Synthetic Chattogram Dyers');
+  for (const item of lifecycleItems) expect(items).not.toContain(item);
+  await page.keyboard.press('Escape');
+  // The named member can still decline an open offer, but accepting waits for the control.
+  const notice = page.getByRole('group', {
+    name: 'Workspace notices for Synthetic Gazipur Wovens',
+  });
+  await expect(notice).toContainText('Accepting is paused right now.');
+  await expect(notice.getByRole('button', { name: 'Decline' })).toBeVisible();
+  await expect(notice.getByRole('button', { name: 'Accept Ownership' })).toHaveCount(0);
+});

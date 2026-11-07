@@ -95,7 +95,11 @@ export async function readLifecycleState(
     throw new Error('The workspace status could not be read.');
   }
   const value = (await response.json().catch(() => null)) as LifecycleState | null;
-  return value && value.open === true && value.workspaceId === workspaceId ? value : null;
+  // A paused control still answers with the real status: keep it, so an archived workspace stays archived and its
+  // owner can still restore it (the database allows restore while paused). Each action checks `open` on its own.
+  return value && typeof value.open === 'boolean' && value.workspaceId === workspaceId
+    ? value
+    : null;
 }
 
 async function post(

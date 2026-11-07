@@ -113,9 +113,11 @@ function WorkspaceLifecycleCard({
               Cancel Offer
             </button>
           ) : (
-            <button type="button" className="text-link" onClick={() => onOpen('transfer')}>
-              Transfer Ownership
-            </button>
+            state.open && (
+              <button type="button" className="text-link" onClick={() => onOpen('transfer')}>
+                Transfer Ownership
+              </button>
+            )
           )}
         </p>
       )}
@@ -124,14 +126,20 @@ function WorkspaceLifecycleCard({
           {live
             ? `The owner wants to make you the owner of ${name}. This offer is open until ${whenWords(offer.expiresAt)}. If you accept, they become an admin. `
             : `This offer expired on ${whenWords(offer.expiresAt)}. Ask the owner to send a new one.`}
+          {live && !state.open && 'Accepting is paused right now. '}
           {live && (
             <>
               <button type="button" className="text-link" onClick={() => onOpen('decline')}>
                 Decline
-              </button>{' '}
-              <button type="button" className="primary-link" onClick={() => onOpen('accept')}>
-                Accept Ownership
               </button>
+              {state.open && (
+                <>
+                  {' '}
+                  <button type="button" className="primary-link" onClick={() => onOpen('accept')}>
+                    Accept Ownership
+                  </button>
+                </>
+              )}
             </>
           )}
         </p>
@@ -251,12 +259,15 @@ export function useWorkspaceLifecycle({
     const state = states[row.id];
     if (!state || state.role !== 'owner') return null;
     const open = (kind: Kind) => () => setDialog({ kind, id: row.id });
+    // Restore works while the control is paused, so a pause never traps an archive.
     if (state.archived)
       return (
         <MenuButton data-menu-close="" onClick={open('restore')}>
           Restore Workspace
         </MenuButton>
       );
+    // A paused control offers no new changes; an open offer can still be cancelled from its notice.
+    if (!state.open) return null;
     return (
       <>
         <MenuButton data-menu-close="" onClick={open('rename')}>
