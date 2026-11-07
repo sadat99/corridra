@@ -1,35 +1,53 @@
-/* The compact page hero (layout budget). The same hero as the other pages, with less space around it, so the
-   content comes into view sooner and a page can stay within its screen budget. Every element and word stays. */
+/* The page hero of the public pages (layout budget). It opens the page with room to read: the breadcrumb, the label,
+   the heading and the lead each have their own line height and space, and a hairline ends the hero before the content.
+   Owner, 7 November 2026: the opening of How it works, Routes and Trust was too compressed; the page may grow by up to
+   0.3 of its length there, inside the public page limit (2.0 desktop and 3.0 phone screens). Every element and word stays. */
 .guide-page-hero.guide-page-hero--compact {
-  gap: var(--space-4);
-  padding-block: var(--space-3) var(--space-2);
+  gap: var(--space-6);
+  padding-block: var(--space-8) var(--space-8);
+  border-bottom: 1px solid var(--line);
 }
 .guide-page-hero--compact > div {
-  gap: var(--space-1);
+  gap: var(--space-3);
+}
+.guide-page-hero--compact > div > .label {
+  margin-top: var(--space-2);
 }
 .guide-page-hero.guide-page-hero--compact h1 {
-  font-size: var(--text-h2);
+  max-width: 22ch;
+  font-size: var(--text-h1);
+  line-height: 1.12;
+  text-wrap: balance;
 }
 .guide-page-hero.guide-page-hero--compact .guide-lead,
 .guide-page-hero.guide-page-hero--compact .guide-hint {
-  font-size: var(--text-base);
-  line-height: 1.45;
+  max-width: 40rem;
+  font-size: var(--text-lg);
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+.guide-page-hero.guide-page-hero--compact .guide-page-actions {
+  margin-top: var(--space-2);
 }
 @media (min-width: 769px) {
+  .guide-page-hero.guide-page-hero--compact {
+    padding-block: var(--space-12) var(--space-12);
+  }
   .guide-page-hero--compact .guide-crumb a {
     min-height: 1.75rem;
   }
   .guide-page-hero--compact > div {
     grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
   }
 }
 
-/* From 1000 px the heading block and the lead sit side by side. */
+/* From 1000 px the heading block and the lead sit side by side, the lead lined up with the heading's last line. */
 @media (min-width: 1000px) {
   .guide-page-hero.guide-page-hero--compact:not(:has(.guide-route)) > div {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
-    column-gap: var(--space-8);
-    align-items: start;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    column-gap: var(--space-16);
+    align-items: end;
   }
   .guide-page-hero--compact:not(:has(.guide-route)) > div > .guide-crumb,
   .guide-page-hero--compact:not(:has(.guide-route)) > div > .label,
@@ -38,13 +56,14 @@
   }
   .guide-page-hero--compact:not(:has(.guide-route)) > div > .guide-lead {
     grid-column: 2;
-    grid-row: 1 / span 2;
+    grid-row: 2 / span 2;
+    align-self: end;
     max-width: none;
   }
   .guide-page-hero--compact:not(:has(.guide-route)) > div > .guide-hint,
   .guide-page-hero--compact:not(:has(.guide-route)) > div > .guide-page-actions {
     grid-column: 2;
-    grid-row: 3;
+    grid-row: 4;
   }
 }
 
