@@ -4379,6 +4379,9 @@ th {
 }
 .receipt-panel {
   display: grid;
+  /* One column no wider than the panel: an automatic column grows to its widest word and pushes past a 320 px phone. */
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
   gap: var(--space-4);
   padding: var(--space-6);
   background: var(--surface-1);

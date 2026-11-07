@@ -87,6 +87,11 @@
     min-width: 0;
     overflow-wrap: anywhere;
   }
+  /* The receipt: its heading, lines and field label wrap inside the panel; an English part keeps whole words. */
+  .ux-intake-page .receipt-panel :is(h2, p, .label, .field) {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
 }
 /* The one long English token in the sample-mode notice and in the Bengali guidance is the test address. Text at twice its size on a
    320 px phone is narrower than that address, so these two places let it break rather than push the page sideways. */
