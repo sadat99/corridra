@@ -7,6 +7,7 @@ import { CustomerWorkspaceInvitation } from './customer-workspace-invitation';
 import { CustomerWorkspaceTeam } from './customer-workspace-team';
 import { RefreshButton } from './refresh-button';
 import { CustomerWorkspaceLeave } from './customer-workspace-leave';
+import { useWorkspaceLifecycle } from './workspace-lifecycle';
 import { CompanyLinkLine, useCompanyLinkOverview } from './company-link-status';
 import { limitWords } from '../../lib/account-limit';
 import { CorridraIcon } from '../../components/corridra-icon';
@@ -342,6 +343,14 @@ export function CustomerWorkspaces({
       });
     }
   }
+  const lifecycle = useWorkspaceLifecycle({
+    subject,
+    issuer,
+    rows,
+    enabled: status === 'ready',
+    refreshRows: refresh,
+    focusBack,
+  });
   const messageBlock = message && (
     <p
       ref={feedback}
@@ -409,6 +418,7 @@ export function CustomerWorkspaces({
       )}
       {status === 'ready' && (
         <>
+          {lifecycle.panel}
           {rows.length === 0 ? (
             <EmptyState
               icon="company"
@@ -438,13 +448,18 @@ export function CustomerWorkspaces({
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row) => {
+                {lifecycle.visibleRows.map((row) => {
+                  const archived = lifecycle.isArchived(row.id);
+                  // Archived, or its status could not be read: either way no new request is offered from here.
+                  const closedToNew = archived || lifecycle.statusUnknown(row.id);
                   const admin = ['owner', 'admin'].includes(row.role);
-                  const start = draftsEnabled
-                    ? '/account/drafts/' + row.id
-                    : requestsEnabled
-                      ? '/account/request/' + row.id
-                      : null;
+                  const start = closedToNew
+                    ? null
+                    : draftsEnabled
+                      ? '/account/drafts/' + row.id
+                      : requestsEnabled
+                        ? '/account/request/' + row.id
+                        : null;
                   const hasMenu =
                     !!start ||
                     profilesEnabled ||
@@ -461,6 +476,16 @@ export function CustomerWorkspaces({
                         {realCustomerInput() && row.synthetic && !row.name.includes('(madeup)')
                           ? ' (madeup)'
                           : ''}
+                        {archived && (
+                          <>
+                            {' '}
+                            <span className="ux-badge">Archived</span>
+                            <br />
+                            <span className="ux-hint">
+                              New requests are closed while this workspace is archived.
+                            </span>
+                          </>
+                        )}
                       </th>
                       <td>{row.role}</td>
                       {linksEnabled && (
@@ -476,12 +501,12 @@ export function CustomerWorkspaces({
                             align="end"
                           >
                             {start && <MenuAnchor href={start}>New Request</MenuAnchor>}
-                            {draftsEnabled && (
+                            {draftsEnabled && !closedToNew && (
                               <MenuAnchor href={'/account/drafts/' + row.id}>
                                 Continue a Saved Draft
                               </MenuAnchor>
                             )}
-                            {draftsEnabled && requestsEnabled && (
+                            {draftsEnabled && requestsEnabled && !closedToNew && (
                               <MenuAnchor href={'/account/request/' + row.id}>
                                 Send a Private Request
                               </MenuAnchor>
@@ -506,6 +531,7 @@ export function CustomerWorkspaces({
                                 Plan and Billing
                               </MenuAnchor>
                             )}
+                            {lifecycle.menuItems(row)}
                             {row.role === 'owner' && (
                               <MenuButton
                                 data-menu-close=""
@@ -552,6 +578,7 @@ export function CustomerWorkspaces({
                       subject={subject}
                       issuer={issuer}
                       memberRolesEnabled={memberRolesEnabled}
+                      ownerMemberId={lifecycle.ownerMemberId(row.id)}
                       bare
                       open={here === 'team'}
                       onBusyChange={setBusyFor('team:' + row.id)}

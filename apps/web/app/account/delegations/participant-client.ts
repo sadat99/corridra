@@ -39,6 +39,11 @@ export const archivedProgrammeMessage =
 // What a participant reads for the same rule: they cannot restore anything.
 export const archivedParticipantMessage =
   'This programme is archived and is not accepting registrations right now.';
+// The same rule when it is the whole workspace that is archived, for a member and for an invitee.
+const archivedWorkspaceMessages = [
+  'This workspace is archived. Restore it to send new private requests, invitations and registrations.',
+  'This workspace is archived and is not accepting new invitations or registrations right now.',
+];
 export type ParticipantCommand = Record<string, unknown> & { action: string; commandId?: string };
 export const isUuid = (v: unknown): v is string =>
   typeof v === 'string' &&
@@ -443,7 +448,11 @@ export function useParticipantView(
           const refusal = String(
             ((await response.json().catch(() => null)) as { error?: string } | null)?.error ?? '',
           );
-          if (refusal === archivedProgrammeMessage || refusal === archivedParticipantMessage) {
+          if (
+            refusal === archivedProgrammeMessage ||
+            refusal === archivedParticipantMessage ||
+            archivedWorkspaceMessages.includes(refusal)
+          ) {
             setNotice(refusal);
             return;
           }

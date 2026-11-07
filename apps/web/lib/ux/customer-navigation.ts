@@ -39,6 +39,8 @@ export type CustomerNavigationInput = {
   billing: boolean;
   /** True where the email choices page exists (its own switches); otherwise Notification Settings is Coming soon. */
   notificationSettings: boolean;
+  /** True where the organisation profiles module is on; otherwise Company Profile is plain Coming soon. */
+  organisationProfiles: boolean;
   workspaces: readonly CustomerWorkspace[];
   /** The workspace the page belongs to, or the only workspace; it picks whose profile Company Profile opens. */
   currentWorkspaceId?: string;
@@ -95,12 +97,18 @@ export function customerTabs({
 export function customerAvatarItems(
   input: Pick<
     CustomerNavigationInput,
-    'billing' | 'notificationSettings' | 'workspaces' | 'currentWorkspaceId'
+    | 'billing'
+    | 'notificationSettings'
+    | 'organisationProfiles'
+    | 'workspaces'
+    | 'currentWorkspaceId'
   >,
 ): MenuEntry[] {
-  const profile =
-    input.workspaces.find((w) => w.id === input.currentWorkspaceId) ??
-    (input.workspaces.length === 1 ? input.workspaces[0] : undefined);
+  // The profile page answers 404 with its module off, so the entry is a link only with the module on and a workspace.
+  const profile = input.organisationProfiles
+    ? (input.workspaces.find((w) => w.id === input.currentWorkspaceId) ??
+      (input.workspaces.length === 1 ? input.workspaces[0] : undefined))
+    : undefined;
   return [
     { kind: 'link', label: 'Account', href: '/account?view=more' },
     profile

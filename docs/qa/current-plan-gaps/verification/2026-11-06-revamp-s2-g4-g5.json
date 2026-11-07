@@ -1,0 +1,42 @@
+{
+  "recordedOn": "2026-11-06",
+  "batch": "Revamp S2 Customer Work: CRUD G4 (workspace rename, archive, restore, ownership transfer) and G5 (account close with undo, erasure request), with the Mark All Read, Company Profile and All Tools follow-ups",
+  "kind": "Reports to docs/revamp/crud/summary.md rows G4 and G5 and docs/revamp/specs/crud-standard.md. Owner request (6 Nov 2026): \"when ready build g4, g5 together\". Requirements: V3-06-002, V3-06-003, V3-06-006, V3-05-055.",
+  "findings": [],
+  "findingsNote": "No gap is created. Two optional modules are added behind closed controls; no switch is flipped, nothing is installed, no email is sent and nothing is deleted. Sensitive: yes (migrations, a trigger swap on customer.membership, three fingerprint-guarded function replacements, a flag-gated check in the customer session boundary).",
+  "status": "Built on branch revamp/customer over main 5c6ec8be. CI on the exact pushed head is the verifier; see the pull request. The owner merges.",
+  "modules": [
+    "packages/db/customer-workspace-lifecycle-migrations 0001 (tables, closed control, rename, archive, restore), 0002 (membership_guard, one owner at every commit, ownership offers), 0003 (archive refuses new private requests, invitations and registrations; three fingerprint-guarded CREATE OR REPLACE), 0004 (late programme guard patch for install order)",
+    "packages/db/customer-account-lifecycle-migrations 0001 (close with 30 day undo, erasure requests, staff queue functions)",
+    "packages/auth: customer-workspace-lifecycle, customer-account-lifecycle, customer-account-gate, customer-erasure-queue, two offline configuration modules, flag-gated closed-account check in customer-session.ts"
+  ],
+  "routes": [
+    "/api/customer-workspace-lifecycle (GET list or ?workspaceId, POST rename, archive, restore, offer_transfer, cancel_transfer, accept_transfer, decline_transfer)",
+    "/api/customer-account-lifecycle (GET self state, POST close, undo, file_erasure)",
+    "/api/customer-inbox: POST {all:true} marks every unread item of the signed-in person, GET ?count=1 returns the server unread count"
+  ],
+  "installer": "scripts/install-customer-modules.ts: WORKSPACE_LIFECYCLE_ACTION and ACCOUNT_LIFECYCLE_ACTION (unchanged, install, enable, pause) and their reasons are script-only. A base run installs nothing of G4 or G5. No workflow file is edited (25 input cap), so a later small workflow change is needed before the owner can install through the protected run.",
+  "preservation": [
+    "customer.membership stays append-only except one owner-to-admin change in the same transaction as the ownership history row and the new owner row; DELETE is always refused; commit refuses zero or two owners (tests)",
+    "no invoice, payment, credit note, signed decision, evidence or audit row is changed by any G4 or G5 operation (digest test); the only UPDATEs in the new SQL are app.tenant.name and customer.membership.role",
+    "with the account lifecycle flag off the session boundary issues exactly the same eleven statements as before (recorded-query test)",
+    "every existing route, action and test stays; the Mark All Read verification test changed from one post per item to one {all:true} call, by design"
+  ],
+  "knownLimits": [
+    "A former owner stays an admin after a transfer and the new owner cannot remove them; a step-down is a later reviewed change (KNOWN_ISSUES)",
+    "Rename also changes the workspace name shown on staff invoice, payment and billing list labels (live read of app.tenant.name); issued invoices keep their own pinned name",
+    "Service requests, drafts and customer.create_programme stay open while a workspace is archived (follow-up)",
+    "G7 programme lifecycle should be installed before or in the same run as G4; the late 0004 patch and the installer refresh cover the other order",
+    "Replaying a committed close under the HTTP gate returns 403 account_closed; with the app flag off an already closed account regains access",
+    "Privacy wording options A and B are behind the closed control for the owner's named review; the visible text is the Coming soon line"
+  ],
+  "tests": [
+    "tests/integration/revamp-g4-* (workspace lifecycle, ownership transfer, archive parity, archive errors route, installer order, record tables, service, race)",
+    "tests/integration/revamp-g5-* (account lifecycle database, record tables, installer order, service, session gate)",
+    "tests/integration/revamp-g4-g5-routes.test.ts, revamp-g4-g5-wiring.test.ts, revamp-g4-g5-race-database.test.ts",
+    "tests/integration/revamp-customer-inbox-mark-all.test.ts (45 unread plus a colleague, another tenant and a staff row), revamp-customer-inbox-mark-all-route.test.ts, revamp-s2-all-tools-words.test.ts, revamp-nav-customer-model.test.ts",
+    "tests/operator/revamp-g4-workspace-lifecycle.spec.ts, revamp-g5-account-lifecycle.spec.ts, revamp-customer-inbox-count-failure.spec.ts",
+    "tests/e2e/verification/revamp-s2/customer-shell.spec.ts (bulk mark all, server count for a full list)"
+  ],
+  "notRun": "ClamAV, Blob and pg_dump backup tests (adapters, blob, foundations backup restore, scan-bypass) need the Docker scanner and a matching pg_dump and fail in this environment; they do not touch these files. No screen reader walk-through."
+}

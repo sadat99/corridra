@@ -35,6 +35,12 @@ export type Tool = {
   module?: ToolModule;
 };
 
+/**
+ * What a customer reads for a group heading. The key stays as it is (tests and links use it); customers say
+ * Request, never Mission.
+ */
+export const groupLabel = (group: ToolGroup): string => (group === 'Missions' ? 'Requests' : group);
+
 export const tools: readonly Tool[] = [
   {
     route: '/plan',
@@ -100,14 +106,14 @@ export const tools: readonly Tool[] = [
     route: '/account',
     href: '/account?view=results',
     label: 'Open your results and saved reports',
-    line: 'Missions shared with you and reports you saved.',
+    line: 'Requests shared with you and reports you saved.',
     group: 'Library',
   },
   {
     route: '/account/companies',
     href: '/account/companies',
     label: 'Browse approved companies',
-    line: 'Companies cleared to take part in missions.',
+    line: 'Companies we have cleared to work with.',
     group: 'Companies',
     module: 'companies',
   },
@@ -173,11 +179,11 @@ export const excludedPages: readonly ExcludedPage[] = [
   },
   {
     route: '/account/request/[workspaceId]',
-    why: 'Needs a workspace. It opens from the workspace under Missions.',
+    why: 'Needs a workspace. It opens from the workspace under Requests.',
   },
   {
     route: '/account/requests/[requestId]',
-    why: 'Needs one request. It opens from the request list under Missions and from Your Move.',
+    why: 'Needs one request. It opens from the request list under Requests and from Your Move.',
   },
   {
     route: '/account/rooms/[requestId]',
@@ -185,11 +191,11 @@ export const excludedPages: readonly ExcludedPage[] = [
   },
   {
     route: '/account/drafts/[workspaceId]',
-    why: 'Needs a workspace. It opens from the workspace under Missions and from Your Move.',
+    why: 'Needs a workspace. It opens from the workspace under Requests and from Your Move.',
   },
   {
     route: '/account/missions/[resourceId]',
-    why: 'Needs one shared mission. It opens from the Library.',
+    why: 'Needs one shared item. It opens from the Library.',
   },
   {
     route: '/account/profile/[workspaceId]',
