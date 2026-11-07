@@ -927,18 +927,19 @@ test.describe('with the form released', () => {
     });
 
   for (const code of draftCodes)
-    test(`${code} at 390 with text at 200 percent: every step and the receipt fit with no sideways scroll`, async ({
-      page,
-    }) => {
-      await page.setViewportSize({ width: 390, height: 844 });
-      await openTranslated(page, code, 'form=true');
-      await page.evaluate(() => {
-        document.documentElement.style.fontSize = '200%';
+    for (const width of [320, 390])
+      test(`${code} at ${width} with text at 200 percent: every step and the receipt fit with no sideways scroll`, async ({
+        page,
+      }) => {
+        await page.setViewportSize({ width, height: 844 });
+        await openTranslated(page, code, 'form=true');
+        await page.evaluate(() => {
+          document.documentElement.style.fontSize = '200%';
+        });
+        await walk(page, 'sample', async (state) => {
+          expect(await layoutProblems(page, width), `${code} 200% ${state}`).toEqual([]);
+        });
       });
-      await walk(page, 'sample', async (state) => {
-        expect(await layoutProblems(page, 390), `${code} 200% ${state}`).toEqual([]);
-      });
-    });
 
   test('at 390 every job fits the closed job select in every language', async ({ browser }) => {
     // Every language is measured before the one check, so a run reports every cut label at once. The fonts differ
