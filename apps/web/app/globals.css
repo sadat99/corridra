@@ -8367,3 +8367,73 @@ samp {
     color: CanvasText;
   }
 }
+
+/* Large text on the public pages (Wave 6 Q-02). With the text at twice its size a column, a tab row or a card can be
+   narrower than its longest word. A one-column grid sizes its column to its content unless the track may shrink, so
+   each of these says so; a band wraps its button under its words instead of squeezing either; a word may break at
+   the end of its box; and a tag may take a second line. Nothing changes while the content fits. */
+.ux-discovery,
+.guide-progress,
+.guide-directions,
+.guide-directions li,
+.guide-page-intro ul {
+  grid-template-columns: minmax(0, 1fr);
+}
+/* The phone already gives a phase step its own two-column layout, so the single shrinking track is only for wider screens. */
+@media (min-width: 701px) {
+  .guide-phase li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.guide-page-intro ul {
+  container-type: inline-size;
+}
+/* The tag column is fifteen letters wide, so a list narrower than twenty of them (a tablet at large text) stacks its rows. */
+@container (max-width: 20rem) {
+  .guide-page-intro li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.guide-band {
+  flex-wrap: wrap;
+}
+.guide-band > :not(.primary-link) {
+  min-width: 0;
+  max-width: 100%;
+}
+@media (min-width: 701px) {
+  .guide-band > :not(.primary-link) {
+    flex: 1 1 16rem;
+  }
+}
+.guide-band :is(h2, p) {
+  overflow-wrap: break-word;
+}
+.guide-band .primary-link {
+  max-width: 100%;
+}
+.ux-public .guide-tag {
+  max-width: 100%;
+  white-space: normal;
+}
+.guide-page-steps li :is(h3, p),
+.guide-phase li :is(h3, p, .label),
+.guide-progress :is(.label, h2, .guide-lead),
+.guide-directions :is(h2, h3, p, .text-link),
+.guide-page-intro :is(h2, p) {
+  overflow-wrap: break-word;
+}
+.guide-page-hero > div {
+  grid-template-columns: minmax(0, 1fr);
+}
+.guide-page-hero h1 {
+  overflow-wrap: anywhere;
+}
+/* A button or link on a public page never grows past the column it is in; its words wrap instead. */
+.ux-public :is(.primary-link, .button-secondary, .guide-page-actions) {
+  max-width: 100%;
+}
+.guide-progress .outcome-path li {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
