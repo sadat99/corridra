@@ -106,6 +106,7 @@ import {
 import { CustomerRequestService, customerRequestsEnabled } from '@corridra/auth/customer-requests';
 import { CustomerMoveService, customerMovesEnabled } from '@corridra/auth/customer-moves';
 import { MissionMoveService } from '@corridra/missions/moves';
+import { RequestWithdrawalSignalService } from '@corridra/missions/request-withdrawal-signal';
 import {
   CustomerNotificationService,
   PulseService,
@@ -542,6 +543,7 @@ function createServices() {
       readCustomerSession,
     ),
     moves: new MissionMoveService(runtimePool),
+    withdrawalSignal: new RequestWithdrawalSignalService(runtimePool),
     customerNotifications: new CustomerNotificationService(
       runtimePool,
       authPool,

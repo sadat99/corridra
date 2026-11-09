@@ -2977,3 +2977,27 @@ Limits:
 - Ran locally on a local PostgreSQL 16: typecheck, eslint with no warnings, prettier, the guard tests and the four new test files. CI is the proof for the full gates.
 
 Next: owner install of the account module's remaining files (lifecycle_install run 42654373889, pending approval), then a real-staff path.
+
+### 9 November 2026: CRUD item 1, the team sees that a customer withdrew a request (G1 follow-up)
+
+Branch `crud-g1-staff-signal`, S12. What the CRUD standard needs for this item:
+
+| Part                     | Result                                                                                                                                                                                                                                          |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Create / update / delete | None. The signal is read only; the customer's withdraw and restore (PR 335) are unchanged.                                                                                                                                                      |
+| Read                     | New `app.mission_request_withdrawal(mission)` returns `withdrawn` (yes or no) and `at` (the date). Route `GET /api/mission-withdrawal?tenant&mission`; a line on the mission page header: "Withdrawn by the customer on <date>."                |
+| History                  | Nothing new is written. The newest withdrawal event decides, by sequence number, as for the customer.                                                                                                                                           |
+| Permission               | A signed-in member of the mission's own workspace with a role that can read missions, under that session's processing purpose. Another workspace or a customer session is refused; another workspace's mission id answers like "not withdrawn". |
+| Audit                    | A read writes no event and no audit row (tested by counts).                                                                                                                                                                                     |
+| Tenant scope             | Matches `owned_request.mission_tenant_id` to the session's tenant.                                                                                                                                                                              |
+| Privacy                  | The reason is never selected, returned or shown (tested on the function result and the page). Offline-revoked requests show no signal.                                                                                                          |
+| Undo                     | Not applicable.                                                                                                                                                                                                                                 |
+
+Why a migration: the withdrawal lives in `customer_private`, revoked from the runtime role, and its events are written under the customer's workspace, not the mission's, so no staff path could read it. `0002_staff_withdrawal_signal.sql` is additive, adds one function and changes nothing that exists. It rides the existing withdrawal installer (the next mail or notifications install applies it). Where the function is absent the route answers "not withdrawn" and the page shows nothing.
+
+Tests: `revamp-g1-staff-signal-database.test.ts` (real database and roles), `revamp-g1-staff-signal-route.test.ts`, `tests/operator/revamp-g1-staff-signal.spec.ts`; the installer-order, withdrawal-database and reader-parity tests now name the second file and the new reader.
+Local runs: full vitest 3376 passed, 4 failed (the four need the Docker ClamAV scanner: adapters, blob, scan-bypass, foundations backup restore), `pnpm test:e2e` 518 passed 302 skipped, three operator specs touching the mission pages passed, format, lint, typecheck, `pnpm build`, `test:docs` passed. CI is the proof for the full operator shards.
+
+Limits: the line shows on the mission page only, not in the mission list. PR 335's withdrawal control stays closed until the owner installs this file and opens it.
+
+Next: the owner merges (migration), then CRUD item 2, G12 paging.
