@@ -1,0 +1,21 @@
+{
+  "track": "S3 Public, Intake and Organise",
+  "item": "Wave 6 Q-02: public page bodies fit the window at 320, 390, 768 and 1280 with the text at 200 percent (home, how it works, corridors, network, trust)",
+  "date": "2026-11-09",
+  "sensitive": false,
+  "spec": "Conductor instruction of 6 Nov (Wave 6 Q-02, found by the header build); docs/revamp/specs/layout-budget.md",
+  "changed": [
+    "tests/browser/public-large-text.spec.ts (new): sweeps the five pages at 320, 390, 768 and 1280 with the root text at 200 percent and fails on a box past a window edge, in-flow text running out of its own box, or any sideways scroll. Decoration placed on top (absolutely positioned) and visually hidden text are not counted.",
+    "apps/web/app/globals.css, one block at the end: one-column grids may shrink their track (corridors, directions, progress, steps, intro list), the closing band wraps its button under its words above 700 px and its text breaks, tags may take a second line, long words in step cards and headings break, a button or link never grows past its column, and the intro list stacks its rows through a container query when it is narrower than twenty letters (a tablet at large text).",
+    "apps/web/components/home-landing.css: the home player's record tabs wrap, its caption puts the controls under the words, the six steps take a second row only when each no longer has room for its number, the field list goes to one column, the boarding passes give their stub less width on a narrow card, plan rows shrink their label column, and through container queries the shortlist and the quote table tighten and stack only when the player is narrower than a few words (large text on a phone).",
+    "apps/web/components/home-mission-player.tsx: each quote cell carries data-column so a stacked cell can name its supplier in front of its value; nothing is added when the table is side by side."
+  ],
+  "preserved": [
+    "Every element, word, link and test hook. At normal text size nothing changes: the container queries count rem at the page's text size, so they do not apply at 100 percent on a phone, and each shrink rule only takes effect once the content no longer fits. The header and footer are not edited.",
+    "No server, database, request or payload change. English only."
+  ],
+  "verification": [],
+  "openRisks": [
+    "The footer's link columns overflow their boxes at 320 px with 200 percent text on the home page in the test environment (S1's file, not edited here); the sweep covers the page body only."
+  ]
+}
