@@ -1,8 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 
 // Wave 6 Q-02: with the text at twice its size, the public page bodies fit the window at the four widths people use,
-// and nothing is cut off or runs out of its own box. The whole page is held to no sideways scroll; the header and the
-// footer have their own tests.
+// and nothing is cut off or runs out of its own box. The whole page is measured, header and footer included, so a
+// shared band, tab row, card or footer link cannot bring the sideways scroll back on a page this test names.
 const pages = ['/', '/how-it-works', '/corridors', '/network', '/trust'] as const;
 const widths = [320, 390, 768, 1280] as const;
 
@@ -30,7 +30,7 @@ async function problems(page: Page) {
       }
       return right;
     };
-    const offenders = Array.from(document.querySelectorAll<HTMLElement>('main *')).filter((el) => {
+    const offenders = Array.from(document.querySelectorAll<HTMLElement>('body *')).filter((el) => {
       const box = el.getBoundingClientRect();
       // Visually hidden helper text (and what is inside it) is one pixel wide on purpose.
       if (box.width < 2 || el.clientWidth < 2) return false;

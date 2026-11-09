@@ -49,6 +49,7 @@
   height: 1.75rem;
 }
 .guide-footer-promise {
+  overflow-wrap: anywhere;
   max-width: 14ch;
   margin: var(--space-3) 0 0;
   font-family: var(--serif);
@@ -143,6 +144,7 @@
   margin: 0;
 }
 .guide-footer-group a {
+  overflow-wrap: anywhere;
   display: flex;
   align-items: center;
   min-height: 2.75rem;
@@ -313,5 +315,24 @@
   }
   .guide-footer-routes {
     display: none;
+  }
+}
+
+/* Large text. A container query counts rem at the page's text size, so these apply only when a footer block is
+   narrower than a dozen letters of its own text (a phone with the text at twice its size), never at normal size. */
+.guide-footer-top,
+.guide-footer-group {
+  container-type: inline-size;
+}
+.guide-footer-actions > a {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+@container (max-width: 12rem) {
+  .guide-footer-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .guide-footer-group ul {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
