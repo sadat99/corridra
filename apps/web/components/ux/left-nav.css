@@ -208,8 +208,8 @@
     color: var(--brand-deep);
   }
   .site-shell:has(.ux-leftnav-frame) > .ux-app-header .brand-mark {
-    width: 24px;
-    height: 24px;
+    width: 46px;
+    height: 44px;
   }
   .site-shell:has(.ux-leftnav-frame[data-collapsed='true']) > .ux-app-header .brand {
     justify-content: center;

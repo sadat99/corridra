@@ -1,0 +1,42 @@
+{
+  "recordedOn": "2026-11-09",
+  "batch": "S10 brand: halftone sphere replaces the solid orb in the product mark and the favicon (ADR-077 amendment 1)",
+  "kind": "Presentation only. Code-only, no migration, no auth, data, money or event change. Owner decision 9 Nov 2026 quoted in docs/adr/0077-corridra-visual-identity.md.",
+  "baseCommit": "a3090c667cca7f36475da64efb5196113b56aa00",
+  "headNote": "The exact head is the last commit of the PR; a file cannot hold its own commit hash. Quote the head from the PR and from the CI run.",
+  "commands": [
+    { "command": "pnpm format:check", "exit": 0 },
+    { "command": "pnpm lint", "exit": 0 },
+    { "command": "pnpm typecheck", "exit": 0 },
+    {
+      "command": "node scripts/gate.mjs docs-tests -- pnpm test:docs (includes tests/brand-identity.test.mjs, 5 of 5 pass)",
+      "exit": 0
+    },
+    {
+      "command": "pnpm exec vitest run tests/integration/navigation-v1-public-header.test.ts (6 of 6 pass)",
+      "exit": 0
+    },
+    {
+      "command": "pnpm build (apps/web, twice: before and after the 430 px wordmark rule)",
+      "exit": 0
+    },
+    { "command": "pnpm test:ux --trace off against the production build (85 passed)", "exit": 0 }
+  ],
+  "rendered": [
+    "Production build served; public home at 320, 390, 768 and 1440 px: no horizontal overflow, mark box 46 x 44 px, brand link 44 px tall.",
+    "Header rows before and after on the production build: 320 and 360 px wrap to two rows as before (89 px); 390 px and wider stay one row (72 px) after the 14 px wordmark rule at 430 px and below; without that rule 390 px wrapped to 89 px.",
+    "Footer wordmark (reversed on navy) rendered at 1440 px: dots legible.",
+    "Favicon files rendered at 3x: favicon-16 orb tile, favicon-32, -48 and -64 halftone tile."
+  ],
+  "changedArtwork": {
+    "icon.svg": "halftone mark reversed on the navy tile, 0.92 of the tile, 21812 bytes",
+    "favicon.ico": "16 px entry unchanged (orb); 32 and 48 px entries rasterised from icon.svg",
+    "docs/brand/assets/favicon": "favicon.svg, favicon-32, -48, -64 and favicon.ico replaced; favicon-16 unchanged; apple, android and maskable files were already the halftone mark and are unchanged"
+  },
+  "notDone": [
+    "Signed-in headers and the left rail were not rendered here (they need a signed-in session); the CSS sizes were set to 46 x 44 inside the 64 px bar and 68 px collapsed rail and the 85 route UX gate passes. Please check them in the preview.",
+    "Open Graph and Twitter images already use the halftone lockup (checked by eye); not regenerated.",
+    "Browser tab at 16 CSS px on a 1x screen uses icon.svg (halftone) in browsers that prefer SVG; only favicon.ico keeps the orb at 16 px.",
+    "Trademark check, legal handoff and tagline review stay open."
+  ]
+}

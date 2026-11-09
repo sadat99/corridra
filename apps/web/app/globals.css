@@ -8320,6 +8320,15 @@ samp {
 /* Brand identity layer. Spec: docs/brand/CORRIDRA_BRAND_IDENTITY.md. Tokens only (D18).
    Orb is cobalt (--brand), wordmark is navy (--brand-deep); both turn white on the navy footer.
    Each wordmark height keeps the compact lockup's proportion: 25 / 42 of the orb beside it. */
+.brand-mark {
+  display: inline-block;
+  flex: none;
+  width: 46px;
+  height: 44px;
+  background-color: currentColor;
+  -webkit-mask: url('/brand/corridra-mark-cobalt.svg') center / contain no-repeat;
+  mask: url('/brand/corridra-mark-cobalt.svg') center / contain no-repeat;
+}
 .brand .brand-mark {
   flex: none;
   color: var(--brand);
@@ -8344,6 +8353,12 @@ samp {
     height: 16px;
   }
 }
+@media (max-width: 430px) {
+  /* The mark is 46 px wide (ADR-077 amendment 1); this keeps the phone header on one row at 390 px as before. */
+  .brand .brand-word {
+    height: 14px;
+  }
+}
 @media (max-width: 760px) {
   /* The signed-in headers keep the orb and the link's name below 760 px: their row does not wrap up to 700 px and
      the lockup's wordmark (about 170 px) would push the inbox, account and help controls past the edge. */
@@ -8365,6 +8380,11 @@ samp {
   .guide-footer-wordmark .brand-mark,
   .guide-footer-wordmark .brand-word {
     color: CanvasText;
+  }
+  .brand .brand-mark,
+  .guide-footer-wordmark .brand-mark {
+    forced-color-adjust: none;
+    background-color: CanvasText;
   }
 }
 

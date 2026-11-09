@@ -18,17 +18,18 @@ Lockups: `lockup-compact` (orb + wordmark), `lockup-horizontal`, `lockup-stacked
 
 ## 2. Which asset to use
 
-| Context                                                 | Asset                                |
-| ------------------------------------------------------- | ------------------------------------ |
-| Under 48 px: favicon, avatar, collapsed navigation rail | `orb`                                |
-| Product chrome 24 to 40 px tall: headers, footer        | `lockup-compact`                     |
-| Wide spaces: slides, documents, partner pages           | `lockup-horizontal`                  |
-| Centred or narrow spaces: sign-in, covers, social cards | `lockup-stacked`                     |
-| Large brand moments, square, 64 px and up               | `mark`                               |
-| App icon, 180 px and up                                 | `mark` on a navy tile (`app-icons/`) |
-| Marketing and brand sheets only                         | `*-tagline` versions                 |
+| Context                                                                         | Asset                                           |
+| ------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Favicon file at 16 px, avatar and any other slot under 44 px                    | `orb`                                           |
+| Product chrome, 44 px tall beside the wordmark: headers, collapsed rail, footer | `mark` (BrandMark paints it from the mask file) |
+| Product chrome 24 to 40 px tall: headers, footer                                | `lockup-compact`                                |
+| Wide spaces: slides, documents, partner pages                                   | `lockup-horizontal`                             |
+| Centred or narrow spaces: sign-in, covers, social cards                         | `lockup-stacked`                                |
+| Large brand moments, square, 64 px and up                                       | `mark`                                          |
+| App icon, 180 px and up                                                         | `mark` on a navy tile (`app-icons/`)            |
+| Marketing and brand sheets only                                                 | `*-tagline` versions                            |
 
-Never scale the dot mark below 64 px. The halftone dots merge into grey below that. Use the orb.
+Never scale the dot mark below 44 px tall. The halftone dots merge into grey below that. Use the orb. Owner decision, 9 Nov 2026 (ADR-077 amendment 1): the header, rail and footer show the halftone sphere at 44 px tall, and the favicon uses it at 32 px and up; the orb stays only for the 16 px favicon file and slots under 44 px.
 
 ## 3. Colour
 
@@ -79,16 +80,16 @@ SOURCE, VALIDATE, TRANSACT belongs to marketing material and brand sheets only. 
 
 ## 9. Favicon, app icon and social
 
-| Output                 | File                                           | Construction                                         |
-| ---------------------- | ---------------------------------------------- | ---------------------------------------------------- |
-| Browser tab (SVG)      | `apps/web/app/icon.svg`                        | Orb in white on a navy rounded tile, 64 grid         |
-| Browser tab (legacy)   | `apps/web/app/favicon.ico`                     | Same tile at 16, 32 and 48 px                        |
-| iOS home screen        | `apps/web/app/apple-icon.png` (180)            | Full-bleed navy, dot mark at 66 percent              |
-| Android, manifest      | `public/brand/android-chrome-192.png`, `-512`  | Full-bleed navy, dot mark at 66 percent              |
-| Android maskable       | `public/brand/maskable-512.png`                | Full-bleed navy, dot mark at 46 percent              |
-| Open Graph and Twitter | `app/opengraph-image.png`, `twitter-image.png` | 1200 x 630, Porcelain, horizontal lockup, no tagline |
-| Profile avatars        | `docs/brand/assets/app-icons/*-circle.png`     | Navy or cobalt circle, white dot mark                |
-| Browser chrome colour  | `viewport.themeColor` and manifest             | `#142438`                                            |
+| Output                 | File                                           | Construction                                                        |
+| ---------------------- | ---------------------------------------------- | ------------------------------------------------------------------- |
+| Browser tab (SVG)      | `apps/web/app/icon.svg`                        | Halftone mark in white on a navy rounded tile, 0.92 filled, 64 grid |
+| Browser tab (legacy)   | `apps/web/app/favicon.ico`                     | 16 px entry the orb tile; 32 and 48 px entries the halftone tile    |
+| iOS home screen        | `apps/web/app/apple-icon.png` (180)            | Full-bleed navy, dot mark at 66 percent                             |
+| Android, manifest      | `public/brand/android-chrome-192.png`, `-512`  | Full-bleed navy, dot mark at 66 percent                             |
+| Android maskable       | `public/brand/maskable-512.png`                | Full-bleed navy, dot mark at 46 percent                             |
+| Open Graph and Twitter | `app/opengraph-image.png`, `twitter-image.png` | 1200 x 630, Porcelain, horizontal lockup, no tagline                |
+| Profile avatars        | `docs/brand/assets/app-icons/*-circle.png`     | Navy or cobalt circle, white dot mark                               |
+| Browser chrome colour  | `viewport.themeColor` and manifest             | `#142438`                                                           |
 
 ## 10. Never
 
