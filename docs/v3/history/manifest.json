@@ -341,6 +341,14 @@
       "bytes": 9601,
       "sha256": "8f5fb1403debdbab5ccae03113ea56caa68f8490782a0fe1b189eea5264c3d9b",
       "meaning": "Exact active ledger at 2217fd5 (the PR 344 merge, 6 Nov), before PRs 341, 344 and 346 to 349, the 6 Nov G4/G5 decisions and the takeover lanes were recorded, including the full 'Merged 6 Nov' bullet for PRs 322 to 343, the Batch D, Batch E, production and product sequence bullets later condensed, and the Open and Next bullets replaced. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "f62e093de6b44a44bb848a5dc04d70cc3a6f8477",
+      "archive": "docs/v3/history/ledger-before-pr350-356-records-2026-11-09.md",
+      "bytes": 11309,
+      "sha256": "5f7d54640d74dff8a2205b2a7ceacca6587821039057f5b0a9ea812fb9c2d26b",
+      "meaning": "Exact active ledger at f62e093 (the PR 356 merge, 7 Nov), before PRs 350 to 356, the owner's 7 Nov G4/G5 install run 42364802587 and the 9 Nov lanes were recorded, including the full 6 Nov takeover, lanes, 'Merged since PR 345', install and Next bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
