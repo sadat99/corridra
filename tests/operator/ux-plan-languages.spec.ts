@@ -32,12 +32,14 @@ import { countryCodes } from '../../packages/domain/src/countries';
 // names the commit that carries that form. That commit is kept reachable because the pull request is merged with
 // a merge commit, not squashed (no tag), so main's history holds it.
 // Layout Phase 2a (5 Nov 2026): English action labels moved to Title Case on purpose, so the baseline is the commit that carries them.
-// Request page length (owner, 9 November 2026, S13): the English form changed on purpose (the test notice folds, the
-// example request summary is a closed line on a phone, the draft line moved). The baseline is no longer a commit,
-// because a squash merge drops the pull request's commits from main's history: it is the pair of source files kept
-// in tests/operator/fixtures/plan-baseline (copies of page.tsx and intake.tsx with that change), read as text. The
-// old pin at 335cd394 stays in history for the record. When the English form changes on purpose again, copy the two
-// files over and say so in the pull request.
+// Request page length (S13, 9 November 2026): the baseline is a committed copy of the request page as it was BEFORE
+// that change (page.tsx and intake.tsx from main dd6e1e13, in tests/operator/fixtures/plan-baseline), read as text,
+// because a squash merge drops a pull request's commits from main's history and an old SHA would stop resolving (see
+// the work log note on PR 279). The older pin at 335cd394 stays in history. The copy replaces the `git fetch` of that
+// commit that KI-15 asked for. The equality tests stay, with an explicit allowlist (see `allowed` below) of the
+// differences that change made on purpose; any other difference, in any language with the switch off, still fails.
+// Differences that are not in the main region's markup and so need no allowlist: the draft line and the receipt check
+// are placed by CSS only, and the compact footer is outside #main.
 const baselineDir = resolve('tests/operator/fixtures/plan-baseline');
 let server: Server, origin: string;
 let bundle = '';
@@ -359,6 +361,61 @@ async function walk(
   return states;
 }
 
+/**
+ * The allowlist of the page-length change: two regions of the main region differ on purpose, and each is named here.
+ * 1. The test notice (sample form only): the availability sentence stays, and the rest sits behind one toggle. Allowed:
+ *    its markup, and the added toggle words "Read the Test Notice". Its words are otherwise compared as before.
+ * 2. The example request summary: its facts sit in a disclosure whose line holds the heading and a count. Allowed: its
+ *    markup, the second copy of the heading and the count ", N of 3 chosen". Its words are otherwise compared as before.
+ * Everything outside those two regions must be byte for byte the baseline's, and the real and private notices are
+ * not on the allowlist at all (their markup is compared in full, as it is part of `rest`).
+ */
+function allowed(html: string, label: string) {
+  const words = (fragment: string) =>
+    fragment
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  const noticeTest =
+    /<aside class="intake-notice[^"]*intake-notice-compact">[\s\S]*?<\/aside>|<aside class="intake-notice">(?=[\s\S]*?class="guide-pill">Test mode<)[\s\S]*?<\/aside>/;
+  const summaryTest = /<aside class="ux-brief-summary"[^>]*>[\s\S]*?<\/aside>/;
+  const notice = html.match(noticeTest)?.[0] ?? '';
+  const summary = html.match(summaryTest)?.[0] ?? '';
+  const rest = html.replace(noticeTest, '<aside:notice/>').replace(summaryTest, '<aside:summary/>');
+  expect(rest, `${label} has the notice and summary regions`).toContain('<aside:notice/>');
+  return {
+    rest,
+    notice: words(notice)
+      .replace(' Read the Test Notice ', ' ')
+      .replace(/ Read the Test Notice$/, ''),
+    summary: words(
+      summary
+        .replace(/<p class="label ux-brief-heading">[\s\S]*?<\/p>/, '')
+        .replace(/<span class="ux-brief-count">[\s\S]*?<\/span>/, ''),
+    ),
+  };
+}
+
+/** The aria snapshot without the two named regions (their landmarks), which are compared by their words above. */
+function withoutAside(aria: string) {
+  const lines = aria.split('\n');
+  const kept: string[] = [];
+  let skipIndent = -1;
+  for (const line of lines) {
+    const indent = line.length - line.trimStart().length;
+    if (skipIndent >= 0) {
+      if (indent > skipIndent) continue;
+      skipIndent = -1;
+    }
+    if (/^\s*- complementary/.test(line)) {
+      skipIndent = indent;
+      continue;
+    }
+    kept.push(line);
+  }
+  return kept.join('\n');
+}
+
 async function compareWithBaseline(
   page: Page,
   language: string,
@@ -372,8 +429,12 @@ async function compareWithBaseline(
   const after = await walk(now, mode);
   expect(after.map((state) => state.name)).toEqual(before.map((state) => state.name));
   for (const [index, state] of after.entries()) {
-    expect(state.html, `${language} ${query} ${state.name}`).toBe(before[index].html);
-    expect(state.aria, `${language} ${query} ${state.name}`).toBe(before[index].aria);
+    const label = `${language} ${query} ${state.name}`;
+    const [oldState, newState] = [allowed(before[index].html, label), allowed(state.html, label)];
+    expect(newState.rest, label).toBe(oldState.rest);
+    expect(newState.notice, `${label} notice words`).toBe(oldState.notice);
+    expect(newState.summary, `${label} summary words`).toBe(oldState.summary);
+    expect(withoutAside(state.aria), label).toBe(withoutAside(before[index].aria));
   }
   // The main region says English whatever language is chosen.
   await expect(now.locator('#main')).toHaveAttribute('lang', 'en');
@@ -1082,7 +1143,8 @@ test.describe('with the form released', () => {
 // last step at 1440 is the one exception: its English sentences on lines of their own (UI spec L5) and the line saying
 // they are English (D4) add about 127 px in every language, so it was held to 1.08 (design audit, 30 Oct 2026). S13, 9 Nov 2026: the English page got shorter (the page-length
 // change), so the same fixed 127 px is a larger share of it; measured 1.095 in German, French and 1.092 in Arabic, so the
-// pass mark is 1.10. The extra height itself did not grow.
+// pass mark was raised to 1.10 as a knowing change by S13 (not an owner decision; owner confirmation pending). The extra
+// height itself did not grow.
 const flowStepLimit = { 390: 1.5, 1440: 1 } as const;
 const passMark = {
   de: { 390: 1.15, 1440: 1.05 },

@@ -1,10 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 
-// The request page length (owner, 9 November 2026): /plan keeps its own limit, set from the measured result of the
-// four moves in docs/revamp/evidence/s13-plan-length (2.53 screens at 390 x 844, 1.80 at 1440 x 900 and 1780 x 900).
-// The earlier limits (2.0 and 1.0) were not reachable with the footer and the page head on the page; this guard
-// replaces them with the measured result plus a small margin. The owner's targets were 2.4 and 1.8; the phone stays
-// above 2.4 because the availability sentence of the test notice stays in view (existing honesty tests need it). It never goes up without the owner.
+// The request page length: /plan keeps its own limit, set from the measured result of the page-length change
+// (docs/revamp/evidence/s13-plan-length: 2.53 screens at 390 x 844, 1.80 at 1440 x 900 and 1780 x 900). The earlier
+// limits (2.0 and 1.0) were not reachable with the footer and the page head on the page. These numbers are the S5
+// conductor's proposal of 9 November 2026 after measurement, NOT an owner decision: the owner's targets were 2.4 and
+// 1.8, the phone misses 2.4 because the test notice's availability sentence stays in view (folding it measures
+// 2.42), and the owner has not confirmed the limits. They never go up without the owner.
 const limits = { phone: 2.55, desktop: 1.85 } as const;
 const sizes = {
   phone: { width: 390, height: 844 },
@@ -165,4 +166,47 @@ test('on a phone the draft line and Clear Draft stay one line under Continue, wi
     line.boundingBox(),
   ]);
   expect(l!.y - (c!.y + c!.height)).toBeLessThan(24);
+});
+
+test('the folded trust legend keeps its exact words and link, and they are the same words as on every other page', async ({
+  page,
+}) => {
+  await page.setViewportSize(sizes.desktop);
+  await page.goto('/about');
+  const full = await footer(page).locator('.guide-footer-legend').innerText();
+  const fullLink = await footer(page)
+    .getByRole('link', { name: 'How We Label Facts', exact: true })
+    .getAttribute('href');
+  await page.goto('/plan');
+  const trust = footer(page).locator('details.guide-footer-trust-fold');
+  // Closed: the words are in the page (a closed details keeps its content in the DOM), and the summary is a real,
+  // keyboard-reachable control that carries the legend's opening words.
+  await expect(trust).not.toHaveAttribute('open', '');
+  const closed = await trust.evaluate((el) => el.textContent ?? '');
+  for (const word of [
+    'Every fact says where it comes from:',
+    'Self-declared',
+    'Evidence available',
+    'Verified',
+    'Not confirmed',
+    'How We Label Facts',
+  ])
+    expect(closed, word).toContain(word);
+  await trust.locator('summary').focus();
+  await expect(trust.locator('summary')).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(trust).toHaveAttribute('open', '');
+  // Opened: the same words, in the same order, and the same link address, as the full footer on another page.
+  const opened = (await trust.innerText()).replace(/\s+/g, ' ').trim();
+  expect(opened).toBe(full.replace(/\s+/g, ' ').trim() + ' How We Label Facts');
+  await expect(
+    trust.getByRole('link', { name: 'How We Label Facts', exact: true }),
+  ).toHaveAttribute('href', fullLink!);
+  const names = await trust.locator('.guide-tag').allInnerTexts();
+  expect(names.map((n) => n.trim())).toEqual([
+    'Self-declared',
+    'Evidence available',
+    'Verified',
+    'Not confirmed',
+  ]);
 });

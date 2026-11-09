@@ -927,14 +927,6 @@ function IntakeForm({
         ? wsa('wsa.plan.countries.eu')
         : wsa('wsa.plan.countries.other');
   const delegation = draft.job === 'delegations';
-  // The summary line counts the three answers the summary shows, out of three.
-  const chosenCount =
-    (chosenJob ? 1 : 0) +
-    (countryCodes.includes(draft.companyCountry as (typeof countryCodes)[number]) ? 1 : 0) +
-    (draft.marketCode === 'EU' ||
-    countryCodes.includes(draft.marketCode as (typeof countryCodes)[number])
-      ? 1
-      : 0);
   return (
     // Without real use (a preview or local copy) everything entered here is made up, and the page says so.
     <div className="ux-intake-layout" data-madeup-panel={realMode ? undefined : ''}>
@@ -956,28 +948,22 @@ function IntakeForm({
             {translated && <p>{say('form.notice.englishParts')}</p>}
           </aside>
         ) : (
-          <aside className="intake-notice intake-notice-compact">
+          <aside className="intake-notice">
             <span className="guide-pill">{say('form.notice.samplePill')}</span>
-            {/* The availability sentence stays in view beside the pill. The rest of the notice is one toggle away. */}
             <p>
-              <strong>{say('form.notice.sampleLead')}</strong>
+              <strong>{say('form.notice.sampleLead')}</strong>{' '}
+              {sayWith('form.notice.sampleUse', { domain: english('@example.invalid') })}{' '}
+              {privateMode
+                ? 'Sample requests stay private to this account. '
+                : `${say('form.notice.sampleReceipt')} `}
+              {say('form.notice.sampleEmail')}{' '}
+              {englishIsland(
+                <>
+                  <Link href="/privacy">Read the test intake notice</Link>.
+                </>,
+              )}
             </p>
             {translated && <p>{say('form.notice.englishParts')}</p>}
-            <details className="intake-notice-more">
-              <summary>{english('Read the Test Notice')}</summary>
-              <p>
-                {sayWith('form.notice.sampleUse', { domain: english('@example.invalid') })}{' '}
-                {privateMode
-                  ? 'Sample requests stay private to this account. '
-                  : `${say('form.notice.sampleReceipt')} `}
-                {say('form.notice.sampleEmail')}{' '}
-                {englishIsland(
-                  <>
-                    <Link href="/privacy">Read the test intake notice</Link>.
-                  </>,
-                )}
-              </p>
-            </details>
           </aside>
         )}
         <details lang="bn" className="guide-bn" dir={dir === 'rtl' ? 'ltr' : undefined}>
@@ -1708,66 +1694,56 @@ function IntakeForm({
             className="ux-brief-summary"
             aria-label={realMode ? say('form.side.realLabel') : say('form.side.sampleLabel')}
           >
-            <p className="label ux-brief-heading">
+            <p className="label">
               {realMode ? say('form.side.realHeading') : say('form.side.sampleHeading')}
             </p>
-            <details className="ux-brief-details">
-              <summary>
-                <span>
-                  <span className="label">
-                    {realMode ? say('form.side.realHeading') : say('form.side.sampleHeading')}
-                  </span>
-                  <span className="ux-brief-count">{english(`, ${chosenCount} of 3 chosen`)}</span>
-                </span>
-              </summary>
-              <dl>
-                <div>
-                  <dt>{say('form.side.objective')}</dt>
-                  <dd>{chosenJob ? say(jobWord(chosenJob.key)) : say('form.side.notChosen')}</dd>
-                </div>
-                <div>
-                  <dt>{say('form.side.country')}</dt>
-                  <dd>
-                    {countryCodes.includes(draft.companyCountry as (typeof countryCodes)[number])
-                      ? regionNames.of(draft.companyCountry)
+            <dl>
+              <div>
+                <dt>{say('form.side.objective')}</dt>
+                <dd>{chosenJob ? say(jobWord(chosenJob.key)) : say('form.side.notChosen')}</dd>
+              </div>
+              <div>
+                <dt>{say('form.side.country')}</dt>
+                <dd>
+                  {countryCodes.includes(draft.companyCountry as (typeof countryCodes)[number])
+                    ? regionNames.of(draft.companyCountry)
+                    : say('form.side.notChosen')}
+                </dd>
+              </div>
+              <div>
+                <dt>{say('form.side.market')}</dt>
+                <dd>
+                  {draft.marketCode === 'EU'
+                    ? say('form.where.eu')
+                    : countryCodes.includes(draft.marketCode as (typeof countryCodes)[number])
+                      ? regionNames.of(draft.marketCode)
                       : say('form.side.notChosen')}
-                  </dd>
-                </div>
-                <div>
-                  <dt>{say('form.side.market')}</dt>
-                  <dd>
-                    {draft.marketCode === 'EU'
-                      ? say('form.where.eu')
-                      : countryCodes.includes(draft.marketCode as (typeof countryCodes)[number])
-                        ? regionNames.of(draft.marketCode)
-                        : say('form.side.notChosen')}
-                  </dd>
-                </div>
-                {/* The budget row shows only once a budget is given; most jobs never ask for one (CQ-49). */}
-                <div hidden={!draft.budgetAmount}>
-                  <dt>{say('form.side.budget')}</dt>
-                  <dd>
-                    {!draft.budgetAmount ? (
-                      say('form.side.notSupplied')
-                    ) : !translated ? (
-                      `${draft.budgetAmount} ${draft.currency || say('form.side.noCurrency')}`
-                    ) : draft.currency ? (
-                      english(`${draft.budgetAmount} ${draft.currency}`)
-                    ) : (
-                      <>
-                        {english(draft.budgetAmount)} {say('form.side.noCurrency')}
-                      </>
-                    )}
-                  </dd>
-                </div>
-              </dl>
-              <p>
-                {withEnglish(
-                  'form.side.draftOnly',
-                  'Nothing here is an offer, a quote or a promise.',
-                )}
-              </p>
-            </details>
+                </dd>
+              </div>
+              {/* The budget row shows only once a budget is given; most jobs never ask for one (CQ-49). */}
+              <div hidden={!draft.budgetAmount}>
+                <dt>{say('form.side.budget')}</dt>
+                <dd>
+                  {!draft.budgetAmount ? (
+                    say('form.side.notSupplied')
+                  ) : !translated ? (
+                    `${draft.budgetAmount} ${draft.currency || say('form.side.noCurrency')}`
+                  ) : draft.currency ? (
+                    english(`${draft.budgetAmount} ${draft.currency}`)
+                  ) : (
+                    <>
+                      {english(draft.budgetAmount)} {say('form.side.noCurrency')}
+                    </>
+                  )}
+                </dd>
+              </div>
+            </dl>
+            <p>
+              {withEnglish(
+                'form.side.draftOnly',
+                'Nothing here is an offer, a quote or a promise.',
+              )}
+            </p>
           </aside>
         )}
       </div>
