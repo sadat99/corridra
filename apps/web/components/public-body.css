@@ -45,26 +45,26 @@
   row-gap: var(--space-8);
 }
 .ux-public .guide-journey--tabs .guide-phase li {
-  gap: var(--space-3);
+  row-gap: var(--space-3);
 }
 .ux-public .guide-journey--tabs .guide-phase li p {
   line-height: 1.65;
 }
 
 /* Show More: one quiet control after a gap, without the two stacked lines above it. */
-.ux-public .guide-more {
+.ux-public details.guide-more {
   margin-top: var(--space-12);
   padding-top: 0;
   border-top: 0;
 }
-.ux-public .guide-more > summary {
+.ux-public details.guide-more > summary {
   width: fit-content;
   border-top: 0;
 }
-.ux-public .guide-more[open] > summary {
+.ux-public details.guide-more[open] > summary {
   margin-bottom: var(--space-4);
 }
-.ux-public .guide-more .guide-statements {
+.ux-public details.guide-more .guide-statements {
   border-top: 0;
 }
 
@@ -113,10 +113,15 @@
   .ux-public .guide-page-intro--compact + .guide-journey--tabs {
     margin-top: var(--space-8);
   }
+  /* The phone steps keep row-gap 0, so each vertical connector still reaches the next number; the extra room
+     is inside each step instead. */
   .ux-public .guide-journey--tabs .guide-phase ol {
-    row-gap: var(--space-6);
+    row-gap: 0;
   }
-  .ux-public .guide-more {
+  .ux-public .guide-journey--tabs .guide-phase li {
+    padding-bottom: var(--space-6);
+  }
+  .ux-public details.guide-more {
     margin-top: var(--space-8);
   }
   .ux-public .guide-routes .guide-directions ul {

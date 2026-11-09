@@ -57,6 +57,7 @@ for (const path of pages) {
         await expect(rows).toHaveCount(5);
         for (const row of await rows.all()) {
           await expect(row).toHaveCSS('border-top-width', '0px');
+          await expect(row).toHaveCSS('border-bottom-width', '0px');
         }
       }
       const height = await page.evaluate(() =>
@@ -66,3 +67,52 @@ for (const path of pages) {
     });
   }
 }
+
+test('Show More opens without a rule above its first section, at desktop', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/how-it-works');
+  const more = page.locator('details.guide-more');
+  await more.locator('summary').click();
+  await expect(more).toHaveAttribute('open', '');
+  await expect(more).toHaveCSS('border-top-width', '0px');
+  await expect(more.locator('summary')).toHaveCSS('border-top-width', '0px');
+  await expect(more.locator('.guide-statements')).toHaveCSS('border-top-width', '0px');
+});
+
+test('on a phone each step connector reaches the next step number', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/how-it-works');
+  const gaps = await page.evaluate(() => {
+    const steps = [
+      ...document.querySelectorAll('.guide-journey--tabs .guide-phase:not([hidden]) li'),
+    ].filter((li) => li.getBoundingClientRect().height > 0);
+    return steps.slice(0, -1).map((li, index) => {
+      const bottom = li.getBoundingClientRect().bottom;
+      const next =
+        steps[index + 1]!.querySelector('.guide-step-number')!.getBoundingClientRect().top;
+      return Math.round(next - bottom);
+    });
+  });
+  expect(gaps.length).toBeGreaterThan(0);
+  for (const gap of gaps) expect(gap).toBeLessThanOrEqual(1);
+});
+
+test('the Show More styles reach only the disclosure, never a /plan field that shares its class', async ({
+  page,
+}) => {
+  // /plan renders <label class="field guide-more"> inside the same public main, and a client navigation keeps
+  // this page's stylesheet loaded. A field with that class on this page must keep the global divider and spacing.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/how-it-works');
+  const style = await page.evaluate(() => {
+    const label = document.createElement('label');
+    label.className = 'field guide-more';
+    label.textContent = 'Probe';
+    document.querySelector('main')!.append(label);
+    const computed = getComputedStyle(label);
+    const result = { border: computed.borderTopWidth, margin: computed.marginTop };
+    label.remove();
+    return result;
+  });
+  expect(style).toEqual({ border: '1px', margin: '8px' });
+});
