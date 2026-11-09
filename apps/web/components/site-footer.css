@@ -45,8 +45,8 @@
   color: var(--on-brand);
 }
 .guide-footer-wordmark .brand-mark {
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 46px;
+  height: 44px;
 }
 .guide-footer-promise {
   overflow-wrap: anywhere;

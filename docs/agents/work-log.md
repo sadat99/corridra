@@ -2957,3 +2957,23 @@ Not checked:
 
 - The Vercel app flags (team access returned 403).
 - The test bodies beyond the cited lines.
+
+### 9 November 2026: staff erasure queue route and page (CRUD G5, staff side)
+
+Scope (S9, branch s9-erasure from main 9d58f64; builds on PR 362, merged as cd341229):
+
+- Route `/api/workspace/customer-erasure-queue` (GET list, POST move), registered in the private-header overrides. It uses `CustomerErasureQueue` from `packages/auth/src/customer-erasure-queue.ts`, gated by the account lifecycle switch. There is no scope input: the database derives sample or real from the staff workspace. The answer carries an explicit field list and never the person's internal id.
+- Scope guard (Guardian P1): account module 0001 is already live in production (install 42364802587, 7 Nov) and creates the queue and move functions WITHOUT the sample or real split; only 0003 and 0004 add `customer_private.erasure_in_scope`. So the service refuses with 503, before it reads or changes anything, on both GET and POST, until that function exists. The check reads the catalogue (the runtime login cannot name the private schema, so `to_regprocedure` would error); an installed module is remembered, a missing one is checked again after a minute, so the page works soon after the install with no redeploy.
+- Notes: the database refuses any control character in a note (22023). The service schema, the route and the page now refuse a line break, tab or other control character first, with "Notes must be on one line, with no line breaks, tabs or control characters".
+- Page: `ErasureQueue` in the owner and admin settings panel of the operator workspace (no new route, so no ux-baseline entry). It shows reference, state, due date and days left, and "Closed, can be undone until <date>" or "Closed, final". Complete and Decline need a note of 10 to 1000 characters; the page offers no scope control and nothing else about the person. After a move whose reload fails it says both and clears the list; changing the status filter clears the list.
+- Tests: `revamp-g5-staff-erasure-route.test.ts` (route with a mocked service: paging, no scope, no person id, note rules including control characters, origin, session, 403 and 503 mapping, header override), `revamp-g5-staff-erasure-page.test.ts` (wording, initial render, note rule equal to the service, moved message), `revamp-g5-staff-erasure-route-database.test.ts` (the real route over the real service, database and restricted roles: only the listed fields; a customer whose workspace is real is not listed and its move is refused with "Erasure request not found" (409); the order received, in progress, completed with a note; a non-admin gets 403 and nothing moves; a line break in a note is refused and nothing moves; the same command sent twice moves once) and `revamp-g5-staff-erasure-route-only-0001.test.ts` (a database with ONLY module 0001, as in production: GET and POST answer 503, no rows, no change; still 503 right after installing 0002 to 0004 until the check runs again; a minute later it works). That last file fails with the guard removed (4 of 6). The real staff side stays proven in `revamp-g4-g5-followup-database.test.ts`.
+
+Limits:
+
+- With the scope guard, merging this before the owner installs the account module's 0003 and 0004 is safe: the route answers 503 and nothing is read or changed. The page starts working within a minute of that install.
+- Real staff cannot reach this page: every staff route in the web layer uses the sample purpose, so real customers' requests need another path before any real legal deadline (30 days from filing).
+- No seeded-request browser test: the route-over-database tests cover the split, the refusals and the order, and the page is a thin client of that route.
+- Not covered by an automated test: a stale authenticator check through the route (the database checks it; the fixture cannot make a stale session cheaply), and the status filter clearing the list on screen (the list state is client-only).
+- Ran locally on a local PostgreSQL 16: typecheck, eslint with no warnings, prettier, the guard tests and the four new test files. CI is the proof for the full gates.
+
+Next: owner install of the account module's remaining files (lifecycle_install run 42654373889, pending approval), then a real-staff path.

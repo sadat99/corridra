@@ -41,10 +41,10 @@ If main has moved and the patch does not apply, use `git apply --3way`, or copy 
 | Public header               | `components/site-header.tsx`                                        | `<BrandLockup />` inside the existing `.brand` link; link keeps its `aria-label`                                       |
 | Signed-in header            | `components/ux/shell-header.tsx`, `components/ux/app-header.tsx`    | Shell passes `brandMark={<BrandLockup />}`; remove the old `<span>Corridra</span>`                                     |
 | Footer                      | `components/site-footer-view.tsx`                                   | `<BrandLockup />` plus `<span className="sr-only">Corridra</span>`; white on navy via CSS                              |
-| Collapsed left rail         | `app/globals.css` (brand identity layer)                            | Hide `.brand-word`, keep the orb                                                                                       |
-| Logo geometry               | `components/brand-paths.ts`                                         | `ORB` and `WORDMARK` path data; must equal the SVG assets (test enforces)                                              |
+| Collapsed left rail         | `app/globals.css`, `components/ux/left-nav.css`                     | Hide `.brand-word`, keep the halftone mark at 44 px tall (ADR-077 amendment 1)                                         |
+| Logo geometry               | `components/brand-paths.ts`                                         | `MARK` names the mask file; `WORDMARK` path data must equal the SVG asset (test enforces both)                         |
 | Logo colour                 | `app/globals.css`, after the "Design system layer" marker           | `.brand-mark` uses `var(--brand)`, `.brand-word` uses `var(--brand-deep)`; tokens only                                 |
-| Tab icon                    | `app/icon.svg`, `app/favicon.ico`                                   | Orb tile                                                                                                               |
+| Tab icon                    | `app/icon.svg`, `app/favicon.ico`                                   | Halftone tile; 16 px ico entry is the orb tile                                                                         |
 | iOS icon                    | `app/apple-icon.png`                                                | 180 px                                                                                                                 |
 | Social cards                | `app/opengraph-image.png`, `app/twitter-image.png` and `.alt.txt`   | 1200 x 630; set `twitter.card` to `summary_large_image`                                                                |
 | Manifest                    | `app/manifest.ts`, `public/brand/android-*.png`, `maskable-512.png` | `display: 'browser'`, colours are AC/1 primitives                                                                      |
@@ -58,7 +58,7 @@ Owner actions outside the repository, list in the PR and do not attempt: GitHub 
 
 ## 4. Rules that make the existing tests pass
 
-- Inline `<svg>` is allowed only in the files the design-system test lists. Do not add files to that list; keep drawing the logo in `site-header.tsx`.
+- Inline `<svg>` is allowed only in the files the design-system test lists. Do not add files to that list; keep drawing the logo in `site-header.tsx`: the wordmark inline, the halftone mark as the `BrandMark` span that CSS masks with `public/brand/corridra-mark-cobalt.svg`.
 - Hex colours in `.ts` and `.tsx` under `app`, `components` and `lib` must be AC/1 primitives. `#142438` and `#f6f8fb` are. Orange `#FE8E03` and `#041B46` are not and must never appear.
 - CSS written after the "Design system layer (Phase 1)" marker uses tokens only. Add logo CSS at the end of `globals.css`. Do not remove legacy `.brand span` rules unless you also lower `tests/design-system-baseline.json` as that file instructs.
 - Never edit, skip or weaken an existing assertion. The new `tests/brand-identity.test.mjs` is added to the `test:docs` script in `package.json`.
@@ -100,7 +100,7 @@ Visual checks, on the representative screens: public home, signed-in customer sh
 
 ## 8. Updating the logo later
 
-A new artwork needs a new ADR and the review in section 11 of the identity doc first. Mechanically: replace the SVGs in `docs/brand/assets/` and `apps/web/public/brand/`, regenerate PNG, favicon and social files, update `brand-paths.ts` to the new orb and wordmark paths, update the registry JSON, run the tests. The test fails if `brand-paths.ts` and the SVG assets disagree.
+A new artwork needs a new ADR and the review in section 11 of the identity doc first. Mechanically: replace the SVGs in `docs/brand/assets/` and `apps/web/public/brand/`, regenerate PNG, favicon and social files, update the wordmark path in `brand-paths.ts`, and `MARK.file` if the mask file is renamed (`BrandMark` paints that file through CSS; there is no inline orb or mark path), update the registry JSON, run the tests. The test fails if `brand-paths.ts`, the mask file, the CSS and the SVG assets disagree.
 
 ## 9. Rollback
 
