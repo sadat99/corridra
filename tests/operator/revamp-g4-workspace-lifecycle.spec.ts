@@ -225,6 +225,10 @@ const axe = async (page: Page) =>
 const owner = 'Synthetic Dhaka Knits';
 const menuNames = async (page: Page, name: string) => {
   await trigger(page, name).click();
+  // The items depend on the status of the workspace, which arrives by request: wait for the menu and the requests to settle
+  // before reading, so an item that is not there yet is never taken for an item that is not offered.
+  await expect(page.getByRole('menuitem').first()).toBeVisible();
+  await page.waitForLoadState('networkidle');
   return page.getByRole('menuitem').allTextContents();
 };
 const lifecycleItems = ['Rename Workspace', 'Transfer Ownership', 'Archive Workspace'];
@@ -416,8 +420,7 @@ test('G4-08 the Undo line goes after ten seconds, the Archived filter holds the 
   await expect(page.locator('body')).not.toContainText(/read-only/i);
   // No New Request for an archived workspace, and the reason is in words.
   await expect(row).toContainText('New requests are closed while this workspace is archived.');
-  await trigger(page, owner).click();
-  expect(await page.getByRole('menuitem').allTextContents()).not.toContain('New Request');
+  expect(await menuNames(page, owner)).not.toContain('New Request');
   await page.getByRole('menuitem', { name: 'Restore Workspace' }).click();
   const dialog = page.getByRole('dialog', { name: 'Restore ' + owner + '?' });
   await expect(dialog.getByRole('button', { name: 'Not Now' })).toBeFocused();
@@ -753,8 +756,8 @@ test('G4-18 a paused control keeps an archived workspace archived with Restore, 
   await expect(page.getByRole('row', { name: new RegExp(owner) })).toContainText('Archived');
   // Restore stays available while paused, and nothing else is offered for it.
   expect(await menuNames(page, owner)).toEqual(expect.arrayContaining(['Restore Workspace']));
-  const archivedItems = await page.getByRole('menuitem').allTextContents();
-  for (const item of lifecycleItems) expect(archivedItems).not.toContain(item);
+  for (const item of lifecycleItems)
+    await expect(page.getByRole('menuitem', { name: item })).toHaveCount(0);
   await page.getByRole('menuitem', { name: 'Restore Workspace' }).click();
   await page
     .getByRole('dialog', { name: 'Restore ' + owner + '?' })

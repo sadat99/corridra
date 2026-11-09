@@ -350,10 +350,7 @@ test('G5-10 the closed-account screen replaces the pages, shows the date, Reopen
   await expect(
     page.getByText('You also have an erasure request open. Reference ERA-2026-0042.'),
   ).toBeVisible();
-  await expect(page.getByRole('button').allTextContents()).resolves.toEqual([
-    'Reopen My Account',
-    'Sign Out',
-  ]);
+  await expect(page.getByRole('button')).toHaveText(['Reopen My Account', 'Sign Out']);
   expect(await axe(page)).toEqual([]);
   for (const button of await page.getByRole('button').all())
     expect((await button.boundingBox())!.height).toBeGreaterThanOrEqual(44);
@@ -376,10 +373,7 @@ test('G5-11 an active account shows the customer pages unchanged, and a final ac
   await expect(
     page.getByText('Your account was closed and can no longer be reopened.'),
   ).toBeVisible();
-  await expect(page.getByRole('button').allTextContents()).resolves.toEqual([
-    'Ask for Erasure',
-    'Sign Out',
-  ]);
+  await expect(page.getByRole('button')).toHaveText(['Ask for Erasure', 'Sign Out']);
 });
 
 test('G5-12 the dialogs trap focus, return focus to their button, and are axe clean at 390 and 1440', async ({
@@ -410,7 +404,7 @@ test('G5-13 a closed account stays closed on screen when the module control is p
   const { sent } = await open(page, { part: 'gate', state: { ...closedState, open: false } });
   await expect(page.getByRole('heading', { name: 'Your Account Is Closed' })).toBeFocused();
   await expect(page.getByText('Customer pages')).toHaveCount(0);
-  await expect(page.getByRole('button').allTextContents()).resolves.toEqual([
+  await expect(page.getByRole('button')).toHaveText([
     'Ask for Erasure',
     'Reopen My Account',
     'Sign Out',
