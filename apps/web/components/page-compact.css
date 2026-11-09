@@ -42,28 +42,47 @@
   }
 }
 
-/* From 1000 px the heading block and the lead sit side by side, the lead lined up with the heading's last line. */
+/* From 1000 px the heading block and the lead sit side by side. The lead starts at the top of the heading (owner,
+   9 November 2026: the lead sat at the foot of a tall heading and left a blank block above it). The action or hint
+   sits under the lead. The heading spans the last two rows, whose second row takes the spare height, so a tall heading
+   never pushes the lead or the action down. */
 @media (min-width: 1000px) {
   .guide-page-hero.guide-page-hero--compact:not(:has(.guide-route)) > div {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    grid-template-rows: auto auto auto 1fr;
     column-gap: var(--space-16);
-    align-items: end;
+    align-items: start;
   }
   .guide-page-hero--compact:not(:has(.guide-route)) > div > .guide-crumb,
-  .guide-page-hero--compact:not(:has(.guide-route)) > div > .label,
+  .guide-page-hero--compact:not(:has(.guide-route)) > div > .label {
+    grid-column: 1;
+  }
   .guide-page-hero--compact:not(:has(.guide-route)) > div > h1 {
     grid-column: 1;
+    grid-row: 3 / span 2;
   }
   .guide-page-hero--compact:not(:has(.guide-route)) > div > .guide-lead {
     grid-column: 2;
-    grid-row: 2 / span 2;
-    align-self: end;
-    max-width: none;
+    grid-row: 3;
+    max-width: 40rem;
   }
   .guide-page-hero--compact:not(:has(.guide-route)) > div > .guide-hint,
   .guide-page-hero--compact:not(:has(.guide-route)) > div > .guide-page-actions {
     grid-column: 2;
     grid-row: 4;
+  }
+}
+
+/* The header shows Start a Request in its bar when its own container is 67rem wide (site-header.css). The hero is a
+   container of the same inline size (the shell's content box), so the same width, the same rem and the same scrollbar
+   decide for both: from 67rem the page hero does not repeat the action the bar already shows, and below it the header
+   keeps the action inside Menu, so the hero keeps its button. */
+.guide-page-hero--compact {
+  container: public-hero / inline-size;
+}
+@container public-hero (min-width: 67rem) {
+  .guide-page-actions[data-repeats-header] {
+    display: none;
   }
 }
 
