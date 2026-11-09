@@ -6,7 +6,6 @@
 // no call of its own and grants nothing: each page and action still checks on the server. Owner: S4.
 import './utility-menus.css';
 import { useState, useSyncExternalStore } from 'react';
-import { identityClient } from '@corridra/auth/client';
 import { CorridraIcon } from '../corridra-icon';
 import { operatorSignInPage } from '../../lib/workspace-navigation';
 import { customerHelpGroups } from '../../lib/ux/customer-navigation';
@@ -29,8 +28,15 @@ function SignOutRow() {
     setBusy(true);
     setMessage('');
     try {
-      const result = await identityClient.signOut();
-      if (result.error) throw new Error();
+      // The same request the sign-in SDK makes (`identityClient.signOut`), sent directly so the shared header does not
+      // carry the SDK: the team header ships on every page of the shell.
+      const response = await fetch('/api/operator-auth/sign-out', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+        credentials: 'same-origin',
+      });
+      if (!response.ok) throw new Error();
       // A full page load: it drops the cached workspace (see operatorSignInPage).
       window.location.replace(operatorSignInPage);
     } catch {

@@ -57,10 +57,7 @@ const render = async (
     const context = { tenant: '', role };
     return { ...real, readTeamContext: () => context, readServerTeamContext: () => context };
   });
-  // The avatar menu signs out through the identity client and reads the section-address flag the frame publishes.
-  vi.doMock(web.resolve('@corridra/auth/client'), () => ({
-    identityClient: { signOut: async () => ({}) },
-  }));
+  // The avatar menu reads the section-address flag the frame publishes.
   vi.doMock('../../apps/web/lib/ux/team-flags', () => ({
     publishTeamFlags: () => undefined,
     subscribeTeamFlags: () => () => undefined,

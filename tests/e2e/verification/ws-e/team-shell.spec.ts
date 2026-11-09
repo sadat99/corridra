@@ -274,6 +274,11 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   expect(contributorInbox.status()).toBe(200);
   expect(await contributorInbox.json()).toEqual([]);
   await evidence(page, `GAP-004-contributor-${info.project.name}`);
+  // Sign Out from the avatar menu ends the session and returns to the staff sign-in page.
+  await page.goto(`/operator?workspace=${seed.tenantId}`);
+  await header.getByRole('button', { name: 'Account menu' }).click();
+  await page.getByRole('menuitem', { name: 'Sign Out', exact: true }).click();
+  await expect(page).toHaveURL(/\/operator\/signin/);
 });
 
 test('V-45 infrastructure: the inbox answers 401 to a signed-out visitor', async ({ request }) => {
