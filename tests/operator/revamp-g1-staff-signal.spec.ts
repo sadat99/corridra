@@ -88,7 +88,7 @@ test('says when the customer withdrew the request, with no reason and no control
   await expect(note).toBeVisible();
   await expect(note).toContainText('Withdrawn by the customer on');
   await expect(note).toContainText('9 Nov 2026');
-  await expect(note).toContainText('The reason stays private to the customer.');
+  await expect(note).toHaveText('Withdrawn by the customer on 9 Nov 2026');
   await expect(page.getByRole('button')).toHaveCount(0);
   await expect(page.getByRole('link')).toHaveCount(0);
   expect(urls).toHaveLength(1);

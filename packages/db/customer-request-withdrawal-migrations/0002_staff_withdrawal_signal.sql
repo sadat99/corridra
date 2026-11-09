@@ -3,9 +3,10 @@
 -- request behind it is withdrawn right now, and when that was recorded. It never returns the reason the customer gave,
 -- a person id or a workspace id, and writes nothing (it only locks the staff session rows it checks, for the transaction). The team's own tools still decide what to do. A request the schema
 -- owner revoked offline shows no signal.
--- Who may read it: the same protected staff authority as the erasure queue. An owner, admin or operator of the staff
--- workspace named in the session (a sample workspace, or a real one while real use is open), with a fresh authenticator
--- check and a live session, read from the staff session and never from the caller. The mission must belong to that
+-- Who may read it: an owner, admin or operator of the staff workspace named in the session (the erasure queue admits owner
+-- and admin only; operators work missions and act on a withdrawal), with the same session, side and fresh-authenticator
+-- checks as the erasure queue: a sample workspace, or a real one while real use is allowed, a live session and a
+-- fresh authenticator check, all read from the staff session and never from the caller. The mission must belong to that
 -- workspace and the customer's workspace must be on the same side (sample or real), so a sample workspace never learns
 -- about a real customer's withdrawal. A customer session, another workspace or a weaker role is refused.
 DO $guard$ BEGIN

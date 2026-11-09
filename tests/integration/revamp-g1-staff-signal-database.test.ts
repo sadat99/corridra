@@ -256,42 +256,182 @@ describe('the team signal for a withdrawn request', () => {
     expect(await signal(f.users.owner.ctx, unknown)).toEqual(none(unknown));
   });
 
-  test("a sample workspace never learns about a real customer's withdrawal, and real never about sample", async () => {
-    const p = await person();
-    await withdraw(p);
-    const workspace = (
+  // Owner-side fixture changes, each undone in a finally block so one test never leaks into the next.
+  const asOwner = async (work: (db: DatabaseClient) => Promise<void>) => {
+    const db = await f.owner.connect();
+    try {
+      await db.query('BEGIN');
+      await db.query('ALTER TABLE app.tenant DISABLE TRIGGER USER');
+      await work(db);
+      await db.query('ALTER TABLE app.tenant ENABLE TRIGGER USER');
+      await db.query('COMMIT');
+    } catch (error) {
+      await db.query('ROLLBACK');
+      throw error;
+    } finally {
+      db.release();
+    }
+  };
+  const setSynthetic = (tenant: string, value: boolean) =>
+    asOwner(async (db) => {
+      await db.query('UPDATE app.tenant SET synthetic=$2 WHERE id=$1', [tenant, value]);
+    });
+  const workspaceOf = async (p: Person) =>
+    (
       await f.owner.query('SELECT workspace_id FROM customer_private.owned_request WHERE id=$1', [
         p.requestId,
       ])
     ).rows[0].workspace_id as string;
-    const flip = async (value: boolean | null) => {
-      const db = await f.owner.connect();
-      try {
-        await db.query('BEGIN');
-        await db.query('ALTER TABLE app.tenant DISABLE TRIGGER USER');
-        await db.query(
-          value === null
-            ? 'UPDATE app.tenant SET synthetic=NOT synthetic WHERE id=$1'
-            : 'UPDATE app.tenant SET synthetic=$2 WHERE id=$1',
-          value === null ? [workspace] : [workspace, value],
+  const updateMemberships = async (sql: string, args: unknown[]) => {
+    const db = await f.owner.connect();
+    try {
+      await db.query('BEGIN');
+      await db.query('ALTER TABLE app.membership DISABLE TRIGGER USER');
+      await db.query(sql, args);
+      await db.query('ALTER TABLE app.membership ENABLE TRIGGER USER');
+      await db.query('COMMIT');
+    } catch (error) {
+      await db.query('ROLLBACK');
+      throw error;
+    } finally {
+      db.release();
+    }
+  };
+  // Changes the staff memberships of one workspace for a test and puts every row back afterwards.
+  const withMemberships = async (
+    tenant: string,
+    patch: { purposes?: string[]; classifications?: string[] },
+    work: () => Promise<void>,
+  ) => {
+    const old = (
+      await f.owner.query(
+        'SELECT user_id,allowed_purposes,allowed_classifications FROM app.membership WHERE tenant_id=$1',
+        [tenant],
+      )
+    ).rows;
+    expect(old.length).toBeGreaterThan(0);
+    await updateMemberships(
+      'UPDATE app.membership SET allowed_purposes=coalesce($2,allowed_purposes),allowed_classifications=coalesce($3,allowed_classifications) WHERE tenant_id=$1',
+      [tenant, patch.purposes ?? null, patch.classifications ?? null],
+    );
+    try {
+      await work();
+    } finally {
+      for (const row of old)
+        await updateMemberships(
+          'UPDATE app.membership SET allowed_purposes=$3,allowed_classifications=$4 WHERE tenant_id=$1 AND user_id=$2',
+          [tenant, row.user_id, row.allowed_purposes, row.allowed_classifications],
         );
-        await db.query('ALTER TABLE app.tenant ENABLE TRIGGER USER');
-        await db.query('COMMIT');
-      } catch (error) {
-        await db.query('ROLLBACK');
-        throw error;
-      } finally {
-        db.release();
-      }
-    };
+    }
+  };
+  // The real-use configuration is immutable and always enabled once set up; the test switches it off as the schema owner
+  // and puts it back, to prove the staff check reads it. (Pausing new admissions does not touch it, by design: the
+  // erasure queue stays open for legal deadlines, and so does this signal.)
+  const setRealUse = async (enabled: boolean) => {
+    const db = await f.owner.connect();
+    try {
+      await db.query('BEGIN');
+      await db.query('ALTER TABLE customer_private.real_use_configuration DISABLE TRIGGER USER');
+      await db.query('UPDATE customer_private.real_use_configuration SET enabled=$1', [enabled]);
+      await db.query('ALTER TABLE customer_private.real_use_configuration ENABLE TRIGGER USER');
+      await db.query('COMMIT');
+    } catch (error) {
+      await db.query('ROLLBACK');
+      throw error;
+    } finally {
+      db.release();
+    }
+  };
+
+  test("real staff never learn about a sample customer's withdrawal, and do for a real one", async () => {
+    const p = await person();
+    await withdraw(p);
+    const workspace = await workspaceOf(p);
+    // Both real: the baseline of this module's real-use fixture.
     expect((await signal(staffOf(p), p.missionId)).withdrawn).toBe(true);
-    await flip(null);
+    await setSynthetic(workspace, true);
     try {
       expect(await signal(staffOf(p), p.missionId)).toEqual(none(p.missionId));
     } finally {
-      await flip(null);
+      await setSynthetic(workspace, false);
     }
     expect((await signal(staffOf(p), p.missionId)).withdrawn).toBe(true);
+  });
+
+  test("sample staff never learn about a real customer's withdrawal", async () => {
+    const p = await person();
+    await withdraw(p);
+    // The staff workspace becomes a sample one, which works under the sample purpose.
+    await withMemberships(
+      p.tenantId,
+      { purposes: ['synthetic_validation', 'commercial_qualification'] },
+      async () => {
+        await setSynthetic(p.tenantId, true);
+        try {
+          expect(await signal(staffOf(p), p.missionId)).toEqual(none(p.missionId));
+          // The control: once the customer's workspace is a sample one too, the same staff see it.
+          await setSynthetic(await workspaceOf(p), true);
+          try {
+            expect((await signal(staffOf(p), p.missionId)).withdrawn).toBe(true);
+          } finally {
+            await setSynthetic(await workspaceOf(p), false);
+          }
+        } finally {
+          await setSynthetic(p.tenantId, false);
+        }
+      },
+    );
+    expect((await signal(staffOf(p), p.missionId)).withdrawn).toBe(true);
+  });
+
+  test('a real staff workspace gets nothing when real use is not allowed for it', async () => {
+    const p = await person();
+    await withdraw(p);
+    expect((await signal(staffOf(p), p.missionId)).withdrawn).toBe(true);
+    await setRealUse(false);
+    try {
+      await expect(signal(staffOf(p), p.missionId)).rejects.toThrow('Mission access denied');
+    } finally {
+      await setRealUse(true);
+    }
+    expect((await signal(staffOf(p), p.missionId)).withdrawn).toBe(true);
+  });
+
+  test('staff without the INTERNAL classification, or with another purpose, get nothing', async () => {
+    const p = await person();
+    await withdraw(p);
+    expect((await signal(staffOf(p), p.missionId)).withdrawn).toBe(true);
+    await withMemberships(p.tenantId, { classifications: ['PUBLIC'] }, async () => {
+      await expect(signal(staffOf(p), p.missionId)).rejects.toThrow('Mission access denied');
+    });
+    await withMemberships(p.tenantId, { purposes: ['synthetic_validation'] }, async () => {
+      await expect(signal(staffOf(p), p.missionId)).rejects.toThrow('Mission access denied');
+    });
+    expect((await signal(staffOf(p), p.missionId)).withdrawn).toBe(true);
+  });
+
+  test('a mission with no customer request, and a request nobody withdrew, answer not withdrawn', async () => {
+    const p = await person();
+    // A mission the team made itself: no customer ever sent it, so no request row points at it.
+    const bare = randomUUID();
+    const db = await f.owner.connect();
+    try {
+      await db.query('BEGIN');
+      await db.query('ALTER TABLE app.mission DISABLE TRIGGER USER');
+      await db.query(
+        "INSERT INTO app.mission(id,tenant_id,owner_id,next_action,due_at,reason,created_by,purpose) VALUES($1,$2,$3,'Review',now()+interval '1 day','Team made',$3,'commercial_qualification')",
+        [bare, p.tenantId, f.users.owner.id],
+      );
+      await db.query('ALTER TABLE app.mission ENABLE TRIGGER USER');
+      await db.query('COMMIT');
+    } catch (error) {
+      await db.query('ROLLBACK');
+      throw error;
+    } finally {
+      db.release();
+    }
+    expect(await signal(staffOf(p), p.missionId)).toEqual(none(p.missionId));
+    expect(await signal(staffOf(p), bare)).toEqual(none(bare));
   });
 
   test('a request the schema owner revoked offline shows no signal', async () => {
@@ -335,7 +475,7 @@ describe('the team signal for a withdrawn request', () => {
       .join('\n');
     expect(sql).not.toMatch(/\b(INSERT|UPDATE|DELETE|TRUNCATE)\b/i);
     const recordName =
-      /invoice|payment|credit|decision|confirmation|evidence|ledger|billing_|subscription|audit_event|domain_event|request_withdrawal_event/;
+      /invoice|payment|credit|decision|confirmation|evidence|ledger|billing_|subscription|audit_event|domain_event|outbox|request_withdrawal_event/;
     const tables = (
       await f.owner.query(
         `SELECT n.nspname||'.'||c.relname AS name FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace

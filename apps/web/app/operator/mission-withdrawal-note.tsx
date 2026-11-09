@@ -31,8 +31,7 @@ export function WithdrawalNote({ tenant, missionId }: { tenant: string; missionI
   if (!signal?.withdrawn || !signal.at) return null;
   return (
     <p role="status" data-testid="withdrawn-by-customer">
-      <strong>Withdrawn by the customer on {formatDate(signal.at)}.</strong> The reason stays
-      private to the customer.
+      Withdrawn by the customer on {formatDate(signal.at)}
     </p>
   );
 }
