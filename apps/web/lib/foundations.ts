@@ -237,6 +237,7 @@ function createServices() {
       emailVerified: data.user.emailVerified,
       email: data.user.email,
       expiresAt: new Date(data.session.expiresAt),
+      signedInAt: new Date(data.session.createdAt),
     };
   };
   // Mission mail. The service is cheap and always built (mute links must keep working if the switch is

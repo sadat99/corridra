@@ -96,8 +96,8 @@ export function customerAccountLifecycleError(error: unknown): unknown {
   }
 }
 
-// Server-only: the actual current provider session decides who is acting. A closed person can read the state and undo,
-// and nothing else: closing again or filing an erasure request goes through the closed-account check like any call.
+// Server-only: the actual current provider session decides who is acting. A closed person can read the state, undo and
+// file an erasure request, and nothing else: closing again goes through the closed-account check like any call.
 export class CustomerAccountLifecycleService extends CustomerSessionBoundary {
   async state(
     expectedSubject?: string,
@@ -139,7 +139,11 @@ export class CustomerAccountLifecycleService extends CustomerSessionBoundary {
         expectedSubject,
         expectedIssuer,
         undefined,
-        { allowClosedAccount: action === 'undo' },
+        // A closed person may undo, may ask for erasure (the right does not end with the closing), and nothing else.
+        {
+          allowClosedAccount: action === 'undo' || action === 'file_erasure',
+          requireRecentSignIn: action === 'close',
+        },
       );
     } catch (error) {
       throw customerAccountLifecycleError(error);

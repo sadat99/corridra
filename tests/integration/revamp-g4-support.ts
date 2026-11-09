@@ -23,6 +23,7 @@ export function harness(f: Fixture, prefix: string) {
     subject: `synthetic-${prefix}-${person}`,
     emailVerified: true,
     expiresAt: new Date(Date.now() + 3600000),
+    signedInAt: new Date(),
   });
   const workspaces = (person = 'alice') =>
     new CustomerWorkspaceService(f.runtime, f.auth, options, async () => session(person));

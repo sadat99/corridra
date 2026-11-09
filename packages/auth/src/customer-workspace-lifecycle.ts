@@ -127,6 +127,9 @@ export type CustomerWorkspaceLifecycleState = {
   } | null;
   // The workspace_member id of the person who became owner by a handover, so the team list can label them.
   ownerMemberId: string | null;
+  // Every invited member who also holds an owner or admin membership (a person who is or was an owner), with the access
+  // that membership gives. Removing or demoting them is refused, so the team list shows no control for them.
+  protectedMembers: { memberId: string; role: 'owner' | 'admin' }[];
 };
 
 const unavailable = 'Workspace changes are unavailable';
@@ -171,6 +174,10 @@ export function archivedWorkspaceRefusal(error: unknown): DomainError | undefine
     ? new DomainError(message, 409, 'archived')
     : undefined;
 }
+
+// Archiving a workspace and handing one over (offering it or accepting it) ask for a recent sign-in. Restore, rename,
+// cancel and decline do not: they are reversible or only refuse.
+const needsRecentSignIn = new Set<string>(['archive', 'offer_transfer', 'accept_transfer']);
 
 // Server-only: the actual current provider session decides who is acting.
 export class CustomerWorkspaceLifecycleService extends CustomerSessionBoundary {
@@ -225,6 +232,8 @@ export class CustomerWorkspaceLifecycleService extends CustomerSessionBoundary {
           ).rows[0]!.result,
         expectedSubject,
         expectedIssuer,
+        undefined,
+        { requireRecentSignIn: needsRecentSignIn.has(action) },
       );
     } catch (error) {
       throw customerWorkspaceLifecycleError(error);

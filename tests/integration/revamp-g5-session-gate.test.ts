@@ -202,16 +202,17 @@ describe('with the app flag on and the module installed', () => {
     });
   });
 
-  test('a closed person can still read the status and undo, and nothing else of the lifecycle', async () => {
+  test('a closed person can still read the status, undo and ask for erasure, and nothing else of the lifecycle', async () => {
     await withFlag('true', async () => {
       const service = () =>
         new CustomerAccountLifecycleService(f.runtime, f.auth, options, async () =>
           h.session('bob'),
         );
       expect(await service().state()).toMatchObject({ status: 'closed', canUndo: true });
-      await expect(
-        service().command({ action: 'file_erasure', commandId: randomUUID() }),
-      ).rejects.toMatchObject({ status: 403, code: 'account_closed' });
+      // The right to ask for erasure does not end with the closing.
+      expect(
+        await service().command({ action: 'file_erasure', commandId: randomUUID() }),
+      ).toMatchObject({ operation: 'file_erasure', changed: true });
       await expect(
         service().command({ action: 'close', commandId: randomUUID(), confirmation: phrase }),
       ).rejects.toMatchObject({ status: 403, code: 'account_closed' });

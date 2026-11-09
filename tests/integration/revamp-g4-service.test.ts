@@ -175,6 +175,7 @@ describe('through the real session boundary and database', () => {
         'offer',
         'open',
         'ownerMemberId',
+        'protectedMembers',
         'role',
         'version',
         'workspaceId',
