@@ -7,6 +7,7 @@ import Link from 'next/link';
 import type { PublicPageContent } from '../content/public-pages';
 import './page-compact.css';
 import './public-page.css';
+import './public-body.css';
 
 /** One sentence per line, so a headline never wraps in the middle of a thought. */
 export function Lines({ text }: { text: string }) {

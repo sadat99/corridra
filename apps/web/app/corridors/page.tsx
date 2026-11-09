@@ -5,6 +5,7 @@ import { corridorPages } from '../../content/corridors';
 import { Arrow } from '../../components/arrow';
 import '../../components/page-compact.css';
 import './corridors.css';
+import '../../components/public-body.css';
 export const metadata = {
   title: 'Routes | Corridra',
   description: 'We start with Bangladesh to China, Spain and the EU. Ask us about other routes.',
