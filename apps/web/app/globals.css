@@ -8355,12 +8355,17 @@ samp {
     height: 16px;
   }
 }
-@media (max-width: 340px) {
-  /* At 320 px the signed-in header row (mark alone, wordmark hidden) wrapped to a second row with the 46 px mark;
-     42 x 40 px keeps it on one row. Measured 9 Nov 2026 (ADR-077 amendment 1); every other width keeps 46 x 44. */
+@media (max-width: 430px) {
+  /* The signed-in header row has no spare width on a phone (the real team header measured 342 px of content for
+     342 px of room at 390 px). A 46 px mark wrapped it to a second row and pushed Today past two screens. A 4 px
+     gap and a 44 x 42 px mark give back the same widths at which the row stayed on one line with the old mark
+     (measured 9 Nov 2026 at 320 to 759 px; ADR-077 amendment 1). */
+  .site-header.ux-app-header {
+    gap: 4px;
+  }
   :is(.ux-customer-header, .ux-team-header) .brand .brand-mark {
-    width: 42px;
-    height: 40px;
+    width: 44px;
+    height: 42px;
   }
 }
 @media (max-width: 430px) {

@@ -112,7 +112,7 @@ test('product code draws the logo in one place, from tokens, without the tagline
   );
   assert.match(
     css,
-    /@media \(max-width: 340px\)[^{]*\{[^}]*\.brand \.brand-mark\s*\{[^}]*width: 42px/,
+    /@media \(max-width: 430px\)\s*\{[^@]*\.site-header\.ux-app-header\s*\{\s*gap: 4px;[^@]*\.brand \.brand-mark\s*\{\s*width: 44px;\s*height: 42px/,
   );
   assert.match(css, /\.brand-mark\s*\{[^}]*print-color-adjust: exact/);
   const sources = (await readdir(new URL('apps/web/', root), { recursive: true })).filter(
