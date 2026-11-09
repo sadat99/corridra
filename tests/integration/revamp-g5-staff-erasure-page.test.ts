@@ -45,3 +45,45 @@ describe('the queue before anything is loaded', () => {
     expect(html).not.toContain('<li');
   });
 });
+
+describe('the page and the service say the same about a note', () => {
+  it('agree on every kind of control character, with the same words', async () => {
+    const { noteProblem, noteProblemText } = await load();
+    const service = await import('../../packages/auth/src/customer-erasure-queue');
+    expect(noteProblemText).toBe(service.erasureNoteProblemText);
+    const samples = [
+      'Kept the invoices the law requires',
+      'two\nlines of words here',
+      'a tab\there in the words',
+      'carriage\rreturn in words',
+      'escape \u001b code in words',
+      'delete \u007f code in words',
+      'next line \u0085 in words',
+      'line sep   in words',
+      'para sep   in words',
+      'accents and ligatures: café ü 中文 are fine here',
+      '  spaces around are trimmed  ',
+      'ends with a newline\n',
+    ];
+    for (const sample of samples)
+      expect(noteProblem(sample), JSON.stringify(sample)).toBe(service.erasureNoteProblem(sample));
+    expect(noteProblem(samples[0]!)).toBeNull();
+    expect(noteProblem(samples[1]!)).toBe(noteProblemText);
+    expect(noteProblem(samples[10]!)).toBeNull();
+    expect(noteProblem(samples[11]!)).toBeNull();
+  });
+});
+
+describe('what the page says after a move', () => {
+  it('says only that it moved when the list reloaded', async () => {
+    const { movedMessage } = await load();
+    expect(movedMessage('ER-000005', null)).toBe('Request ER-000005 moved.');
+  });
+  it('says both when the reload failed, so the success never hides the failure', async () => {
+    const { movedMessage } = await load();
+    const text = movedMessage('ER-000005', 'The erasure queue is not available yet.');
+    expect(text).toContain('moved');
+    expect(text).toContain('could not be reloaded');
+    expect(text).toContain('The erasure queue is not available yet.');
+  });
+});

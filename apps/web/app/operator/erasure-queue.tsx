@@ -82,6 +82,21 @@ export function dueText(item: Pick<Item, 'status' | 'daysLeft' | 'dueAt'>) {
     ' left'
   );
 }
+// The database refuses a note with any control character (a line break, a tab). Same rule as the route; a test keeps
+// them equal.
+const controlCharacters = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/;
+export const noteProblemText =
+  'Notes must be on one line, with no line breaks, tabs or control characters';
+export function noteProblem(note: string) {
+  return controlCharacters.test(note.trim()) ? noteProblemText : null;
+}
+// What the page says after a move. A reload that failed must not be hidden by the success: both are said, and the
+// caller clears the list because it would still show the old state of the request.
+export function movedMessage(reference: string, reloadFailure: string | null) {
+  return reloadFailure === null
+    ? 'Request ' + reference + ' moved.'
+    : 'Request ' + reference + ' moved, but the list could not be reloaded. ' + reloadFailure;
+}
 function failureText(status: number) {
   if (status === 401 || status === 403)
     return 'Your sign-in or authenticator check is not current, or this role cannot manage requests. Check it and try again.';
@@ -105,8 +120,10 @@ function Queue({ tenant }: Props) {
   const endpoint = '/api/workspace/customer-erasure-queue?tenant=' + encodeURIComponent(tenant);
   useEffect(() => () => controller.current?.abort(), []);
 
-  async function load(after?: number) {
-    if (busy) return;
+  // `moved` is the reference of a request that was just moved. If this reload fails, the message says both things and
+  // the list is cleared, because the list on screen would still show the old state of that request.
+  async function load(after?: number, moved?: string) {
+    if (busy && !moved) return;
     controller.current?.abort();
     const task = new AbortController();
     controller.current = task;
@@ -124,10 +141,17 @@ function Queue({ tenant }: Props) {
       const v = queueSchema.parse(await r.json());
       if (task.signal.aborted) return;
       setQueue(after === undefined || !queue ? v : { ...v, items: [...queue.items, ...v.items] });
-      if (v.items.length === 0 && after === undefined) setMessage('No erasure requests to show.');
+      if (moved) setMessage(movedMessage(moved, null));
+      else if (v.items.length === 0 && after === undefined)
+        setMessage('No erasure requests to show.');
     } catch (e) {
-      if (!task.signal.aborted)
-        setMessage(e instanceof Error ? e.message : 'The list could not be loaded.');
+      if (!task.signal.aborted) {
+        const reason = e instanceof Error ? e.message : 'The list could not be loaded.';
+        if (moved) {
+          setQueue(null);
+          setMessage(movedMessage(moved, reason));
+        } else setMessage(reason);
+      }
     } finally {
       if (!task.signal.aborted) setBusy(false);
     }
@@ -144,6 +168,11 @@ function Queue({ tenant }: Props) {
     const text = note.trim();
     if (needsNote && (text.length < 10 || text.length > 1000)) {
       setMessage('Write 10 to 1000 characters about what was kept and why.');
+      return;
+    }
+    const problem = needsNote ? noteProblem(text) : null;
+    if (problem) {
+      setMessage(problem);
       return;
     }
     setBusy(true);
@@ -164,9 +193,7 @@ function Queue({ tenant }: Props) {
       const reference = pending.item.reference;
       setPending(null);
       setNote('');
-      setBusy(false);
-      await load();
-      setMessage('Request ' + reference + ' moved.');
+      await load(undefined, reference);
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'The request could not be completed.');
       setBusy(false);
@@ -186,7 +213,14 @@ function Queue({ tenant }: Props) {
         <select
           value={filter}
           disabled={busy}
-          onChange={(e) => setFilter(e.target.value as Status | '')}
+          onChange={(e) => {
+            controller.current?.abort();
+            setFilter(e.target.value as Status | '');
+            setQueue(null);
+            setPending(null);
+            setBusy(false);
+            setMessage('Choose Load Erasure Requests to show this selection.');
+          }}
         >
           <option value="">All requests</option>
           {statusValues.map((s) => (
@@ -241,6 +275,7 @@ function Queue({ tenant }: Props) {
           {pending.toState !== 'in_progress' && (
             <label>
               Note to the person
+              <span> (10 to 1000 characters, on one line, no line breaks or tabs)</span>
               <textarea
                 value={note}
                 maxLength={1000}

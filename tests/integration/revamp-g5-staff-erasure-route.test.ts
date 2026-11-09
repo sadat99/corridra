@@ -188,3 +188,47 @@ describe('the route is registered as a private API', () => {
     expect(rule![1]).toContain("key: 'Cache-Control', value: 'no-store'");
   });
 });
+
+describe('a note the database would refuse is refused first, in plain words', () => {
+  const words = 'Notes must be on one line, with no line breaks, tabs or control characters';
+  it.each([
+    ['a line break', 'Kept the invoices\nthe law requires'],
+    ['a tab', 'Kept the invoices\tthe law requires'],
+    ['an escape code', 'Kept the invoices \u001b the law requires'],
+    ['a line separator', 'Kept the invoices the law requires'],
+  ])('answers 400 with the words for %s, and the database is not called', async (_name, note) => {
+    const { POST } = await route();
+    const response = await POST(post(move({ toState: 'completed', note })));
+    expect(response.status).toBe(400);
+    expect((await response.json()).error).toBe(words);
+    expect(transition).not.toHaveBeenCalled();
+  });
+
+  it('still accepts a note with ordinary punctuation and a trailing newline from a paste', async () => {
+    const { POST } = await route();
+    const response = await POST(
+      post(
+        move({
+          toState: 'completed',
+          note: 'Kept the invoices the law requires; erased the rest.\n',
+        }),
+      ),
+    );
+    expect(response.status).toBe(200);
+    expect(transition.mock.calls[0]![1]).toMatchObject({
+      note: 'Kept the invoices the law requires; erased the rest.',
+    });
+  });
+});
+
+describe('a refusal from the database stays a refusal', () => {
+  it('answers 403 when the staff role may not manage requests, and 503 when the queue is not available', async () => {
+    const { GET, POST } = await route();
+    queue.mockRejectedValueOnce(Object.assign(new Error('denied'), { code: '42501' }));
+    expect((await GET(new Request(url()))).status).toBe(403);
+    transition.mockRejectedValueOnce(Object.assign(new Error('denied'), { code: '42501' }));
+    expect((await POST(post(move()))).status).toBe(403);
+    queue.mockRejectedValueOnce(Object.assign(new Error('relation missing'), { code: '42P01' }));
+    expect((await GET(new Request(url()))).status).toBe(503);
+  });
+});

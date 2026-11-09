@@ -47,14 +47,19 @@ const list = async () => {
     nextAfter: number | null;
   };
 };
-const move = async (requestId: string, toState: string, note?: string) => {
+const move = async (
+  requestId: string,
+  toState: string,
+  note?: string,
+  commandId = randomUUID(),
+) => {
   const { POST } = await route();
   const response = await POST(
     new Request(url(), {
       method: 'POST',
       headers: { 'content-type': 'application/json', origin: 'https://app.corridra.test' },
       body: JSON.stringify({
-        commandId: randomUUID(),
+        commandId,
         requestId,
         expectedState: toState === 'in_progress' ? 'received' : 'in_progress',
         toState,
@@ -90,7 +95,7 @@ beforeAll(async () => {
   await migrateCustomerRealUse(f.owner);
   await migrateCustomerMemberRoles(f.owner);
   h = harness(f, 'g5route');
-  ids = await h.admit(['ada', 'bea', 'cyd']);
+  ids = await h.admit(['ada', 'bea', 'cyd', 'dee', 'eli', 'fay']);
   await migrateCustomerAccountLifecycle(f.owner);
   await h.setControl(true);
   await f.owner.query(
@@ -158,5 +163,51 @@ describe('the staff route over the real database', () => {
     };
     expect(row.status).toBe('completed');
     expect(row.note).toContain('Kept the invoices');
+  });
+});
+
+describe('refusals through the real route change nothing', () => {
+  const statesOf = async (id: string) =>
+    (
+      await f.owner.query(
+        'SELECT state FROM customer_private.erasure_status_event WHERE request_id=$1 ORDER BY seq',
+        [id],
+      )
+    ).rows.map((row) => row.state as string);
+
+  test('staff who may not manage requests get 403 on the list and on a move, and the request stays received', async () => {
+    const { id } = await filed('dee');
+    live.token = f.users.operator!.ctx.token;
+    try {
+      const { GET } = await route();
+      expect((await GET(new Request(url()))).status).toBe(403);
+      expect((await move(id, 'in_progress')).status).toBe(403);
+    } finally {
+      live.token = f.users.owner!.ctx.token;
+    }
+    expect(await statesOf(id)).toEqual(['received']);
+  });
+
+  test('a note with a line break is refused in plain words and the request stays received', async () => {
+    const { id } = await filed('eli');
+    expect((await move(id, 'in_progress')).status).toBe(200);
+    const refused = await move(id, 'completed', 'Kept the invoices\nthe law requires');
+    expect(refused.status).toBe(400);
+    expect(refused.body.error).toBe(
+      'Notes must be on one line, with no line breaks, tabs or control characters',
+    );
+    expect(await statesOf(id)).toEqual(['received', 'in_progress']);
+  });
+
+  test('the same command sent twice moves the request once and answers the same way', async () => {
+    const { id } = await filed('fay');
+    const command = randomUUID();
+    const first = await move(id, 'in_progress', undefined, command);
+    const second = await move(id, 'in_progress', undefined, command);
+    expect(first.status).toBe(200);
+    expect(first.body.changed).toBe(true);
+    expect(second.status).toBe(200);
+    expect(second.body.changed).toBe(false);
+    expect(await statesOf(id)).toEqual(['received', 'in_progress']);
   });
 });

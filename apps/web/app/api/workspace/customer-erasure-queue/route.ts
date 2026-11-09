@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
 import { customerAccountLifecycleEnabled } from '@corridra/auth/customer-account-lifecycle';
-import { erasureTransitionInput } from '@corridra/auth/customer-erasure-queue';
+import { erasureNoteProblem, erasureTransitionInput } from '@corridra/auth/customer-erasure-queue';
 import { foundations } from '../../../../lib/foundations';
 import { boundedBody, deliveryError, deliveryHeaders } from '../../../../lib/delivery-http';
 export const runtime = 'nodejs';
@@ -9,6 +9,10 @@ export const dynamic = 'force-dynamic';
 // Protected staff queue of customer erasure requests (CRUD G5). The operator session, the members.manage role and the
 // fresh authenticator check are the existing ones, and the database repeats them. There is no scope input: the
 // database decides sample or real from the staff workspace. A person's internal id never leaves this route.
+// Until the account module's scope function (modules 0003 and 0004) is installed, the service answers 503 on both GET
+// and POST and reads and changes nothing: module 0001 alone has the queue functions WITHOUT the sample or real split.
+// So this route is safe to deploy before that install, and starts working soon after it (the service checks again
+// within a minute) without a redeploy.
 const statuses = z.enum(['received', 'in_progress', 'completed', 'declined']);
 const page = z.coerce.number().int().min(1).max(100);
 const after = z.coerce.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
@@ -58,13 +62,12 @@ async function handle(request: Request) {
     if (request.method !== 'POST') throw new DomainError('Not found', 404);
     if (!request.headers.get('content-type')?.startsWith('application/json'))
       throw new DomainError('JSON required', 415);
+    const body = JSON.parse((await boundedBody(request, 4096)).toString('utf8')) as unknown;
+    // A note with a line break or tab is refused by the database with no useful words, so say it here.
+    const noteProblem = erasureNoteProblem((body as { note?: unknown } | null)?.note);
+    if (noteProblem) throw new DomainError(noteProblem, 400);
     return Response.json(
-      await s.customerErasureQueue.transition(
-        ctx,
-        erasureTransitionInput.parse(
-          JSON.parse((await boundedBody(request, 4096)).toString('utf8')),
-        ),
-      ),
+      await s.customerErasureQueue.transition(ctx, erasureTransitionInput.parse(body)),
       { headers: deliveryHeaders },
     );
   } catch (error) {
