@@ -1,147 +1,244 @@
 {
   "branch": "claude/s13-plan-length",
-  "base": "dd6e1e1",
-  "note": "Code is identical from d211b50 onward; ddb6b76 and later differ only in docs. Earlier plan-languages runs at 3a86026, c2c3155 and cbd1b23 failed (baseline pin, then the 1.08 pass mark) and are fixed in the tests; plan-budget ran the two page-length tests only. The earlier e2e at dd6e1e1 with the same working tree passed 527.",
+  "base": "main 15637875 (merged in at 3550423)",
+  "final_head_note": "Final code head cf12b458. ux and plan-languages ran on 990de873, which differs from cf12b458 only in tests/browser/receipt-memory.spec.ts (a browser-project spec, not part of either), docs and the work log.",
+  "explained_non_green": [
+    {
+      "receipt": "format-check exit 1 at 990de873",
+      "why": "prettier flagged docs/agents/work-log.md after the merge conflict was resolved; superseded by format-check4 exit 0 at cf12b458"
+    },
+    {
+      "receipt": "e2e, e2e2, e2e3 exit 1 (990de873, 40dc58dd, 95aadbf8)",
+      "why": "one test each time: tests/browser/receipt-memory.spec.ts:72 (a request older than thirty days). It also failed 1 of 80 on clean main 15637875 under load and passed 160 of 160 on this build; the test read storage once, before the page's mount effect ran. Made to poll for the same assertion (KI-43); e2e4 exit 0 at cf12b458"
+    },
+    {
+      "receipt": "plan-languages exit 1 at 3a860269, c2c3155c, cbd1b23b (earlier, before the baseline copies were restored to the pre-change text)",
+      "why": "baseline pin and 1.08 pass mark; fixed, see the 990de873 pass"
+    }
+  ],
+  "bite_proof": "baseline-eq exit 0 (30 passed) with the pre-change copies and the allowlist; bite exit 1 when one unrelated line of the baseline copy was changed ('Drafts stay in this tab for 24 hours.' to '25 hours'); the copy was restored",
   "receipts": [
-    {
-      "name": "format",
-      "command": "pnpm format:check",
-      "exit": 1,
-      "head": "d211b50e39d07b76d46cace6a637f70e14d4f371",
-      "seconds": 58
-    },
-    {
-      "name": "e2e",
-      "command": "pnpm test:e2e --trace off",
-      "exit": 0,
-      "head": "d211b50e39d07b76d46cace6a637f70e14d4f371",
-      "seconds": 447.3
-    },
-    {
-      "name": "plan-languages",
-      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-plan-languages.spec.ts",
-      "exit": 0,
-      "head": "d211b50e39d07b76d46cace6a637f70e14d4f371",
-      "seconds": 839.4
-    },
-    {
-      "name": "ux",
-      "command": "pnpm test:ux --trace off",
-      "exit": 0,
-      "head": "d211b50e39d07b76d46cace6a637f70e14d4f371",
-      "seconds": 484.7
-    },
     {
       "name": "format-check",
       "command": "pnpm format:check",
-      "exit": 0,
-      "head": "ddb6b76a230400bc8fd5a7bcef8265c718bdc06a",
-      "seconds": 45.8
+      "exit": 1,
+      "head": "990de8737421ec704322f2979a3879d666cb341f",
+      "seconds": 43.7
     },
     {
       "name": "lint",
       "command": "pnpm lint",
       "exit": 0,
-      "head": "ddb6b76a230400bc8fd5a7bcef8265c718bdc06a",
-      "seconds": 52.7
+      "head": "990de8737421ec704322f2979a3879d666cb341f",
+      "seconds": 47.5
     },
     {
       "name": "typecheck",
       "command": "pnpm typecheck",
       "exit": 0,
-      "head": "ddb6b76a230400bc8fd5a7bcef8265c718bdc06a",
-      "seconds": 25.9
+      "head": "990de8737421ec704322f2979a3879d666cb341f",
+      "seconds": 27
     },
     {
       "name": "test",
       "command": "pnpm test",
       "exit": 0,
-      "head": "ddb6b76a230400bc8fd5a7bcef8265c718bdc06a",
+      "head": "990de8737421ec704322f2979a3879d666cb341f",
+      "seconds": 17
+    },
+    {
+      "name": "e2e",
+      "command": "pnpm test:e2e --trace off",
+      "exit": 1,
+      "head": "990de8737421ec704322f2979a3879d666cb341f",
+      "seconds": 357
+    },
+    {
+      "name": "ux",
+      "command": "pnpm test:ux --trace off",
+      "exit": 0,
+      "head": "990de8737421ec704322f2979a3879d666cb341f",
+      "seconds": 478.4
+    },
+    {
+      "name": "plan-languages",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-plan-languages.spec.ts",
+      "exit": 0,
+      "head": "990de8737421ec704322f2979a3879d666cb341f",
+      "seconds": 819.5
+    },
+    {
+      "name": "format-check2",
+      "command": "pnpm format:check",
+      "exit": 0,
+      "head": "40dc58dd6fab3a3cab21145b8ba84fb5626a9933",
+      "seconds": 44.7
+    },
+    {
+      "name": "e2e2",
+      "command": "pnpm test:e2e --trace off",
+      "exit": 1,
+      "head": "40dc58dd6fab3a3cab21145b8ba84fb5626a9933",
+      "seconds": 385.2
+    },
+    {
+      "name": "e2e-main",
+      "command": "pnpm test:e2e --trace off",
+      "exit": 0,
+      "head": "15637875508fafc2677326187ae217b7ce8ca910",
+      "seconds": 384.1
+    },
+    {
+      "name": "format-check3",
+      "command": "pnpm format:check",
+      "exit": 0,
+      "head": "95aadbf883cd24e2c492d7084cf1d0431e9e3a0c",
+      "seconds": 47.1
+    },
+    {
+      "name": "e2e3",
+      "command": "pnpm test:e2e --trace off",
+      "exit": 1,
+      "head": "95aadbf883cd24e2c492d7084cf1d0431e9e3a0c",
+      "seconds": 388.9
+    },
+    {
+      "name": "format-check4",
+      "command": "pnpm format:check",
+      "exit": 0,
+      "head": "cf12b458424cb5376eea27536dc4588a9e105ca8",
+      "seconds": 46.1
+    },
+    {
+      "name": "lint4",
+      "command": "pnpm lint",
+      "exit": 0,
+      "head": "cf12b458424cb5376eea27536dc4588a9e105ca8",
+      "seconds": 50.5
+    },
+    {
+      "name": "typecheck4",
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "head": "cf12b458424cb5376eea27536dc4588a9e105ca8",
+      "seconds": 25.4
+    },
+    {
+      "name": "test4",
+      "command": "pnpm test",
+      "exit": 0,
+      "head": "cf12b458424cb5376eea27536dc4588a9e105ca8",
+      "seconds": 18.1
+    },
+    {
+      "name": "e2e4",
+      "command": "pnpm test:e2e --trace off",
+      "exit": 0,
+      "head": "cf12b458424cb5376eea27536dc4588a9e105ca8",
+      "seconds": 384.2
+    },
+    {
+      "name": "baseline-eq",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-plan-languages.spec.ts -g exactly the baseline",
+      "exit": 1,
+      "head": "0104585e4460cab0786f51429ae4cad584b6267e",
+      "seconds": 312
+    },
+    {
+      "name": "baseline-eq",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-plan-languages.spec.ts -g exactly the baseline",
+      "exit": 0,
+      "head": "0104585e4460cab0786f51429ae4cad584b6267e",
+      "seconds": 308.7
+    },
+    {
+      "name": "bite",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-plan-languages.spec.ts -g en, page words unset: the request form is exactly",
+      "exit": 1,
+      "head": "0104585e4460cab0786f51429ae4cad584b6267e",
       "seconds": 18.2
     }
   ],
-  "measured": {
-    "before": [
-      {
-        "width": 390,
-        "height": 844,
-        "document": 2945,
-        "header": 72,
-        "head": 128.9375,
-        "notice": 259.53125,
-        "form": 974.453125,
-        "receipt": 94,
-        "summary": 350.71875,
-        "footer": 869.09375,
-        "screens": 3.49
-      },
-      {
-        "width": 1440,
-        "height": 900,
-        "document": 2034,
-        "header": 81,
-        "head": 113.078125,
-        "notice": 134.78125,
-        "form": 749.671875,
-        "receipt": 94,
-        "summary": 350.71875,
-        "footer": 633.75,
-        "screens": 2.26
-      },
-      {
-        "width": 1780,
-        "height": 900,
-        "document": 2034,
-        "header": 81,
-        "head": 113.078125,
-        "notice": 134.78125,
-        "form": 749.671875,
-        "receipt": 94,
-        "summary": 350.71875,
-        "footer": 633.75,
-        "screens": 2.26
-      }
-    ],
-    "after": [
-      {
-        "width": 390,
-        "height": 844,
-        "document": 2132,
-        "header": 72,
-        "head": 128.9375,
-        "notice": 189.171875,
-        "form": 967.140625,
-        "receipt": 94,
-        "summary": 54,
-        "footer": 482.546875,
-        "screens": 2.53
-      },
-      {
-        "width": 1440,
-        "height": 900,
-        "document": 1617,
-        "header": 81,
-        "head": 113.078125,
-        "notice": 62,
-        "form": 749.671875,
-        "receipt": 94,
-        "summary": 346.71875,
-        "footer": 471.375,
-        "screens": 1.8
-      },
-      {
-        "width": 1780,
-        "height": 900,
-        "document": 1617,
-        "header": 81,
-        "head": 113.078125,
-        "notice": 62,
-        "form": 749.671875,
-        "receipt": 94,
-        "summary": 346.71875,
-        "footer": 471.375,
-        "screens": 1.8
-      }
-    ]
-  }
+  "measured_after_merge": [
+    {
+      "width": 390,
+      "height": 844,
+      "document": 2132,
+      "header": 72,
+      "head": 128.9375,
+      "notice": 189.171875,
+      "form": 967.140625,
+      "receipt": 94,
+      "summary": 54,
+      "footer": 482.546875,
+      "screens": 2.53
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "document": 1617,
+      "header": 81,
+      "head": 113.078125,
+      "notice": 62,
+      "form": 749.671875,
+      "receipt": 94,
+      "summary": 346.71875,
+      "footer": 471.375,
+      "screens": 1.8
+    },
+    {
+      "width": 1780,
+      "height": 900,
+      "document": 1617,
+      "header": 81,
+      "head": 113.078125,
+      "notice": 62,
+      "form": 749.671875,
+      "receipt": 94,
+      "summary": 346.71875,
+      "footer": 471.375,
+      "screens": 1.8
+    }
+  ],
+  "measured_before": [
+    {
+      "width": 390,
+      "height": 844,
+      "document": 2945,
+      "header": 72,
+      "head": 128.9375,
+      "notice": 259.53125,
+      "form": 974.453125,
+      "receipt": 94,
+      "summary": 350.71875,
+      "footer": 869.09375,
+      "screens": 3.49
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "document": 2034,
+      "header": 81,
+      "head": 113.078125,
+      "notice": 134.78125,
+      "form": 749.671875,
+      "receipt": 94,
+      "summary": 350.71875,
+      "footer": 633.75,
+      "screens": 2.26
+    },
+    {
+      "width": 1780,
+      "height": 900,
+      "document": 2034,
+      "header": 81,
+      "head": 113.078125,
+      "notice": 134.78125,
+      "form": 749.671875,
+      "receipt": 94,
+      "summary": 350.71875,
+      "footer": 633.75,
+      "screens": 2.26
+    }
+  ]
 }
