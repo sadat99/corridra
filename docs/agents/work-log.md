@@ -3056,6 +3056,7 @@ Next:
 2. Re-review PR 372 on its fix commit; the owner merges it; then a mission mail or notifications `install` run.
 3. S13 `/plan` length result; S12 next CRUD items.
 4. Owner items in the ledger.
+
 ### 9 November 2026: /plan length (S13, branch claude/s13-plan-length from main dd6e1e1)
 
 Scope: owner, 9 Nov 2026, "finish what's left, crud and /plan length". Five moves on `/plan` only, every action kept: (a) the test notice keeps the pill and the availability sentence in view, the rest (use invented details, receipt, email, privacy link) is one closed toggle; (b) on 1000 px and narrower the example request summary is a closed line "Your example request, N of 3 chosen" with the live count (wide screens keep the open column); (c) the footer on `/plan` only has a compact variant (same links and actions, four closed groups in two columns on a phone, the trust legend inside a closed disclosure with the exact words and link, tighter spacing); (d) from 1001 px the receipt check sits under the summary column in the plain state (no pending request, job choice or receipt); (e) the draft line sits close under Continue, Clear Draft is a 44 px target on a phone. Also less space under the form, the notice and the Bangla guide share a row from 701 px.
