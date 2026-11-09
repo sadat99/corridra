@@ -2985,6 +2985,7 @@ Scope: owner, 9 Nov 2026, "finish what's left, crud and /plan length". Five move
 Measured on the production build (document height / viewport, `docs/revamp/evidence/s13-plan-length/`): 390 x 844 3.49 to 2.53 screens (2945 to 2132 px); 1440 x 900 and 1780 x 900 2.26 to 1.80 (2034 to 1617 px). The owner's 2.4 phone target is missed by 0.13: folding the availability sentence too measured 2.42, but four existing tests (public-experience, product-experience, ux02-discovery, v3-objective-entry) assert that sentence is visible, so it stays. The brief's "2.94 screens" for the phone before is 3.49 by the same method (2937 px / 844); the 2.4 and 1.8 targets match its pixel sums.
 
 Pinned values changed on purpose (old, new, why):
+
 - `/plan` page length: old 2.0 phone, 1.0 desktop (layout-budget.md section 2; no test pinned it, the page-length guard is report only), new 2.55 and 1.85, pinned by the new `tests/browser/layout-budget-plan.spec.ts`.
 - `tests/operator/ux-plan-languages.spec.ts` baseline: old a git commit (335cd394), new two committed copies in `tests/operator/fixtures/plan-baseline` (`page.tsx.txt`, `intake.tsx.txt`), because the English form changed on purpose and a squash merge drops the commit from main.
 - Same spec, `realLastStepAt1440`: old 1.08, new 1.10. English got shorter, so the fixed 127 px of English lines in a translated form is a larger share: measured 1.095 (de, fr), 1.092 (ar). The extra height did not grow.

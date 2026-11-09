@@ -1,45 +1,45 @@
 {
- "label": "before",
- "base": "http://localhost:3100",
- "results": [
-  {
-   "width": 390,
-   "height": 844,
-   "document": 2945,
-   "header": 72,
-   "head": 128.9375,
-   "notice": 259.53125,
-   "form": 974.453125,
-   "receipt": 94,
-   "summary": 350.71875,
-   "footer": 869.09375,
-   "screens": 3.49
-  },
-  {
-   "width": 1440,
-   "height": 900,
-   "document": 2034,
-   "header": 81,
-   "head": 113.078125,
-   "notice": 134.78125,
-   "form": 749.671875,
-   "receipt": 94,
-   "summary": 350.71875,
-   "footer": 633.75,
-   "screens": 2.26
-  },
-  {
-   "width": 1780,
-   "height": 900,
-   "document": 2034,
-   "header": 81,
-   "head": 113.078125,
-   "notice": 134.78125,
-   "form": 749.671875,
-   "receipt": 94,
-   "summary": 350.71875,
-   "footer": 633.75,
-   "screens": 2.26
-  }
- ]
+  "label": "before",
+  "base": "http://localhost:3100",
+  "results": [
+    {
+      "width": 390,
+      "height": 844,
+      "document": 2945,
+      "header": 72,
+      "head": 128.9375,
+      "notice": 259.53125,
+      "form": 974.453125,
+      "receipt": 94,
+      "summary": 350.71875,
+      "footer": 869.09375,
+      "screens": 3.49
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "document": 2034,
+      "header": 81,
+      "head": 113.078125,
+      "notice": 134.78125,
+      "form": 749.671875,
+      "receipt": 94,
+      "summary": 350.71875,
+      "footer": 633.75,
+      "screens": 2.26
+    },
+    {
+      "width": 1780,
+      "height": 900,
+      "document": 2034,
+      "header": 81,
+      "head": 113.078125,
+      "notice": 134.78125,
+      "form": 749.671875,
+      "receipt": 94,
+      "summary": 350.71875,
+      "footer": 633.75,
+      "screens": 2.26
+    }
+  ]
 }

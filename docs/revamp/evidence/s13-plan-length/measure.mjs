@@ -18,7 +18,11 @@ const browser = await chromium.launch({
 const out = { label, base, results: [] };
 for (const { width, height } of sizes) {
   const page = await (
-    await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1, reducedMotion: 'reduce' })
+    await browser.newContext({
+      viewport: { width, height },
+      deviceScaleFactor: 1,
+      reducedMotion: 'reduce',
+    })
   ).newPage();
   await page.goto(`${base}/plan`, { waitUntil: 'networkidle' });
   await page.evaluate(() => document.fonts.ready);
