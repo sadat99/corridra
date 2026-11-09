@@ -1,0 +1,45 @@
+{
+ "label": "after2",
+ "base": "http://localhost:3100",
+ "results": [
+  {
+   "width": 390,
+   "height": 844,
+   "document": 2123,
+   "header": 72,
+   "head": 128.9375,
+   "notice": 118,
+   "form": 945.453125,
+   "receipt": 94,
+   "summary": 54,
+   "footer": 566.359375,
+   "screens": 2.52
+  },
+  {
+   "width": 1440,
+   "height": 900,
+   "document": 1617,
+   "header": 81,
+   "head": 113.078125,
+   "notice": 62,
+   "form": 749.671875,
+   "receipt": 94,
+   "summary": 346.71875,
+   "footer": 471.375,
+   "screens": 1.8
+  },
+  {
+   "width": 1780,
+   "height": 900,
+   "document": 1617,
+   "header": 81,
+   "head": 113.078125,
+   "notice": 62,
+   "form": 749.671875,
+   "receipt": 94,
+   "summary": 346.71875,
+   "footer": 471.375,
+   "screens": 1.8
+  }
+ ]
+}
