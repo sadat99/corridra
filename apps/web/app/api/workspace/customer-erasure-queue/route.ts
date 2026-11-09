@@ -36,7 +36,20 @@ async function handle(request: Request) {
         pageSize,
         ...(query.get('status') ? { status: statuses.parse(query.get('status')) } : {}),
       });
-      const items = rows.map(({ principalId: _principalId, ...visible }) => visible);
+      // Only these fields leave the route: a field the database adds later is not shown by default.
+      const items = rows.map((row) => ({
+        id: row.id,
+        number: row.number,
+        reference: row.reference,
+        filedAt: row.filedAt,
+        dueAt: row.dueAt,
+        daysLeft: row.daysLeft,
+        status: row.status,
+        note: row.note,
+        accountStatus: row.accountStatus,
+        closedAt: row.closedAt,
+        undoUntil: row.undoUntil,
+      }));
       return Response.json(
         { items, nextAfter: items.length === pageSize ? items[items.length - 1]!.number : null },
         { headers: deliveryHeaders },
