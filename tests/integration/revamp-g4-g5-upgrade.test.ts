@@ -42,7 +42,11 @@ const newFiles = {
     '0007_archive_gate_late.sql',
     '0008_member_role_guard_late.sql',
   ],
-  account: ['0002_account_chain_and_undo_words.sql', '0003_erasure_queue_scope.sql'],
+  account: [
+    '0002_account_chain_and_undo_words.sql',
+    '0003_erasure_queue_scope.sql',
+    '0004_erasure_scope_by_workspaces.sql',
+  ],
 };
 const recordTables = [
   'customer_private.workspace_revision',
@@ -300,6 +304,7 @@ describe('the follow-up reaches an installed database', () => {
       [workspaceSchema, '0005_member_protection.sql', migrateCustomerWorkspaceLifecycle],
       [accountSchema, '0001_account_closure_and_erasure.sql', migrateCustomerAccountLifecycle],
       [accountSchema, '0003_erasure_queue_scope.sql', migrateCustomerAccountLifecycle],
+      [accountSchema, '0004_erasure_scope_by_workspaces.sql', migrateCustomerAccountLifecycle],
     ] as const) {
       const recorded = (
         await old.owner.query(`SELECT sha256 FROM ${schema}.applied WHERE name=$1`, [name])

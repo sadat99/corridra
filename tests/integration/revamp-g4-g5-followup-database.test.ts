@@ -152,6 +152,9 @@ beforeAll(async () => {
     'quo',
     'rex',
     'sue',
+    'wyn',
+    'vik',
+    'xan',
     'tim',
     'uma',
   ]);
@@ -496,6 +499,94 @@ describe('the staff erasure queue is split between sample and real customers', (
     }
     expect((await queue()).some((row) => row.principalId === ids.ivy)).toBe(true);
     await transition(request, 'received', 'in_progress');
+  });
+});
+
+describe('a request is seen by staff of the side the person really belongs to', () => {
+  const asStaff = (who: 'owner' | 'other', purpose: string, text: string, params: unknown[] = []) =>
+    rawContext(f.runtime, { ...f.users[who]!.ctx, purpose }, text, params).then(
+      (result) => result.rows[0],
+    );
+  const queueFor = (who: 'owner' | 'other', purpose: string) =>
+    asStaff(who, purpose, 'SELECT customer.erasure_queue(NULL,100,NULL) AS r').then((row) =>
+      (row.r as { id: string; principalId: string }[]).map((item) => item.principalId),
+    );
+  const flip = async (tenant: string, synthetic: boolean) => {
+    await f.owner.query('ALTER TABLE app.tenant DISABLE TRIGGER USER');
+    await f.owner.query('UPDATE app.tenant SET synthetic=$2 WHERE id=$1', [tenant, synthetic]);
+    await f.owner.query('ALTER TABLE app.tenant ENABLE TRIGGER USER');
+  };
+
+  test('real staff see a person with any real workspace, sample staff only a person with none, and each side moves only what it sees', async () => {
+    await team('wyn', [], 'sides sample');
+    await account('wyn', 'file_erasure');
+    // first events on a sample workspace, later a real workspace of the person's own
+    await team('vik', [], 'sides first');
+    await account('vik', 'file_erasure');
+    const later = await team('vik', [], 'sides later');
+    // real from the start
+    const realOnly = await team('xan', [], 'sides real');
+    await account('xan', 'file_erasure');
+    await f.owner.query(
+      "INSERT INTO customer_private.real_use_configuration(issuer,executor_id,intake_tenant_id,owner_id,notice_version,enabled) VALUES($1,$2,$3,$4,'real-intake-2026-10-21-v1',true)",
+      [
+        (await f.owner.query('SELECT issuer FROM customer_private.principal LIMIT 1')).rows[0]
+          .issuer,
+        f.serviceId,
+        f.tenantA,
+        f.users.owner!.id,
+      ],
+    );
+    await flip(later.target, false);
+    await flip(realOnly.target, false);
+    await flip(f.tenantB, false);
+    await f.owner.query('ALTER TABLE app.membership DISABLE TRIGGER USER');
+    await f.owner.query(
+      "UPDATE app.membership SET allowed_purposes=allowed_purposes||ARRAY['commercial_qualification'] WHERE tenant_id=$1",
+      [f.tenantB],
+    );
+    await f.owner.query('ALTER TABLE app.membership ENABLE TRIGGER USER');
+    try {
+      const sample = await queueFor('owner', 'synthetic_validation');
+      expect(sample).toContain(ids.wyn);
+      expect(sample).not.toContain(ids.vik);
+      expect(sample).not.toContain(ids.xan);
+      const real = await queueFor('other', 'commercial_qualification');
+      expect(real).toEqual(expect.arrayContaining([ids.vik!, ids.xan!]));
+      expect(real).not.toContain(ids.wyn);
+      // moving: real staff can move vik, sample staff cannot
+      const request = (
+        await f.owner.query(
+          'SELECT id FROM customer_private.erasure_request WHERE principal_id=$1',
+          [ids.vik],
+        )
+      ).rows[0].id as string;
+      await expect(
+        asStaff(
+          'owner',
+          'synthetic_validation',
+          'SELECT customer.erasure_transition($1,$2,$3,$4,$5)',
+          [randomUUID(), request, 'received', 'in_progress', null],
+        ),
+      ).rejects.toMatchObject({ message: 'Erasure request not found' });
+      await asStaff(
+        'other',
+        'commercial_qualification',
+        'SELECT customer.erasure_transition($1,$2,$3,$4,$5)',
+        [randomUUID(), request, 'received', 'in_progress', null],
+      );
+    } finally {
+      await flip(later.target, true);
+      await flip(realOnly.target, true);
+      await flip(f.tenantB, true);
+      await f.owner.query(
+        'ALTER TABLE customer_private.real_use_configuration DISABLE TRIGGER USER',
+      );
+      await f.owner.query('DELETE FROM customer_private.real_use_configuration');
+      await f.owner.query(
+        'ALTER TABLE customer_private.real_use_configuration ENABLE TRIGGER USER',
+      );
+    }
   });
 });
 
