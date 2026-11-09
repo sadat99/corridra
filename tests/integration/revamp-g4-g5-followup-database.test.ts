@@ -153,6 +153,9 @@ beforeAll(async () => {
     'rex',
     'sue',
     'wyn',
+    'zoe',
+    'yan',
+    'abe',
     'vik',
     'xan',
     'tim',
@@ -222,6 +225,16 @@ describe('a former owner keeps admin access, so no revocation or role change may
     );
     expect(state.protectedMembers).toHaveLength(2);
     expect(JSON.stringify(state)).not.toContain(ids.eve!);
+  });
+
+  test('the state tells a person who holds an owner or admin membership, so the screen offers them no Leave', async () => {
+    const t = await team('zoe', ['yan', 'abe'], 'keeps');
+    await hand('zoe', 'yan', t);
+    const keeps = async (person: string) =>
+      ((await h.state(person, t.target)) as { keepsAccess: boolean }).keepsAccess;
+    expect(await keeps('zoe')).toBe(true);
+    expect(await keeps('yan')).toBe(true);
+    expect(await keeps('abe')).toBe(false);
   });
 
   test('an invited admin and an invited member can still be demoted and removed, and really lose access', async () => {

@@ -171,6 +171,7 @@ describe('through the real session boundary and database', () => {
       [
         'archived',
         'history',
+        'keepsAccess',
         'name',
         'offer',
         'open',

@@ -129,6 +129,8 @@ export type CustomerWorkspaceLifecycleState = {
   ownerMemberId: string | null;
   // Every invited member who also holds an owner or admin membership (a person who is or was an owner), with the access
   // that membership gives. Removing or demoting them is refused, so the team list shows no control for them.
+  // The signed-in person holds an owner or admin membership here, so Leave would remove nothing and is not offered.
+  keepsAccess: boolean;
   protectedMembers: { memberId: string; role: 'owner' | 'admin' }[];
 };
 

@@ -41,6 +41,7 @@ const newFiles = {
     '0006_provisioning_closed_account.sql',
     '0007_archive_gate_late.sql',
     '0008_member_role_guard_late.sql',
+    '0009_keeps_access_in_state.sql',
   ],
   account: [
     '0002_account_chain_and_undo_words.sql',
