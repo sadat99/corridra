@@ -293,6 +293,8 @@ describe('the account screens send the identity', () => {
       'the shared header has no page identity; it marks only the signed-in person own notifications as read',
     'app/account/delegations/programme-lifecycle.tsx':
       'the headers are passed in by the page that draws it, which is checked below',
+    'components/ux/team-utility-menus.tsx':
+      'the staff Sign Out sends the operator session cookie; it has no customer identity',
   };
   const named = [
     'app/account/service-requests/service-request-client.ts',
