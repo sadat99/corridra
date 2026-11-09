@@ -288,14 +288,23 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
     'page',
   );
   await page.keyboard.press('Escape');
-  // Sign Out from the avatar menu ends the session: the page returns to the staff sign-in, the workspace address
-  // sends a signed-out visitor there, and a private API answers 401.
+  // Sign Out from the avatar menu ends the session. The browser's own cookies are cleared by any sign-out, so the proof
+  // that the server revoked the session is a replay: the cookies held before the click, sent from a fresh context
+  // after it, must be refused. The page also returns to the staff sign-in and the workspace address sends a signed-out
+  // visitor there.
+  const before = await page.context().cookies();
+  expect(before.length).toBeGreaterThan(0);
   await header.getByRole('button', { name: 'Account menu' }).click();
   await page.getByRole('menuitem', { name: 'Sign Out', exact: true }).click();
   await expect(page).toHaveURL(/\/operator\/signin/);
   await page.goto(`/operator?workspace=${seed.tenantId}`);
   await expect(page).toHaveURL(/\/operator\/signin/);
   expect((await page.request.get(`/api/notifications?tenant=${seed.tenantId}`)).status()).toBe(401);
+  const replay = await page.context().browser()!.newContext({ baseURL: info.project.use.baseURL });
+  await replay.addCookies(before);
+  const replayed = await replay.request.get(`/api/notifications?tenant=${seed.tenantId}`);
+  expect(replayed.status(), 'the old session cookies are refused after Sign Out').toBe(401);
+  await replay.close();
 });
 
 test('V-45 infrastructure: the inbox answers 401 to a signed-out visitor', async ({ request }) => {

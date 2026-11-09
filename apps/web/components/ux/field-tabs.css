@@ -1,0 +1,63 @@
+/* The field helper's bottom tabs: below 1024 px only, fixed to the bottom edge, 48 px targets, labels always shown. */
+.ux-field-tabs {
+  display: none;
+}
+@media (max-width: 1023.98px) {
+  .ux-field-tabs {
+    display: block;
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: 70;
+    background: var(--ac-paper);
+    border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .ux-field-tabs ul {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .ux-field-tabs a,
+  .ux-field-tab-soon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 3rem;
+    padding: 4px 2px;
+    color: var(--ac-text-secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1rem;
+    text-align: center;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+  .ux-field-tabs a[aria-current='page'] {
+    color: var(--ac-cobalt-pressed);
+    background: var(--ac-surface-selected);
+    font-weight: 600;
+    box-shadow: inset 0 3px 0 var(--ac-cobalt);
+  }
+  .ux-field-tabs a:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: -2px;
+  }
+  .ux-field-tab-soon small {
+    font-size: 0.6875rem;
+    line-height: 0.875rem;
+  }
+  .ux-field-tabs .corridra-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  /* The page leaves room so its last line is never under the tabs. */
+  body:has(.ux-field-tabs) main {
+    padding-block-end: 4.5rem;
+  }
+}

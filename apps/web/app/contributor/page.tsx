@@ -26,7 +26,7 @@ async function signedIn(s: NonNullable<ReturnType<typeof foundations>>) {
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ workspace?: string }>;
+  searchParams: Promise<{ workspace?: string; view?: string }>;
 }) {
   const s = foundations();
   if (!s)
@@ -47,7 +47,9 @@ export default async function Page({
         </Link>
       </WorkspaceShell>
     );
-  const workspace = z.uuid().safeParse((await searchParams).workspace);
+  const query = await searchParams;
+  const workspace = z.uuid().safeParse(query.workspace);
+  const today = query.view === 'today';
   // CQ-60: a person who finished setup and is signed in is told where they stand, instead of being
   // sent back to the invitation steps they already completed.
   if (!workspace.success && (await signedIn(s)))
@@ -100,13 +102,17 @@ export default async function Page({
       '/operator/signin?next=' + encodeURIComponent('/contributor?workspace=' + workspace.data),
     );
   return (
-    <WorkspaceShell eyebrow="ASSIGNED EXECUTION WORK" title="Your assigned tasks.">
+    <WorkspaceShell
+      eyebrow="ASSIGNED EXECUTION WORK"
+      title={today ? 'Today.' : 'Your assigned tasks.'}
+    >
       <p>
+        {today ? 'Tasks due today. You see only what Corridra shared with you. ' : null}
         Only your disclosed tasks appear here. Follow each task’s instructions, deadlines and
         evidence requirements. Your access does not include the full mission or team workspace.
       </p>
       {process.env.CORRIDRA_NETWORK_ENABLED === 'true' ? (
-        <TaskBoard workspace={workspace.data} />
+        <TaskBoard workspace={workspace.data} today={today} />
       ) : (
         <p>The execution network is awaiting activation review. No work is currently available.</p>
       )}
