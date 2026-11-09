@@ -271,3 +271,9 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Observed:** on main cfa22c2a, attempt 1 had abandoned shards: the runners dropped operator 1, 2, 3 and 5, ux 1 and 2, and verification, and the `validate` aggregate said "abandoned". Attempt 2 of the failed jobs passed (run 42674117115). On ff51afb4, run 42673037794 ran only the `checks` job and failed with 0 test jobs; cfa22c2a superseded that head.
 - **Cause:** a runner problem on the provider side, not the change under test. It differs from KI-39, where a job started and its service container did not.
 - **Rule:** rerun the failed jobs once on the exact head, never push an empty commit, and record the run id. A second failure is treated as real.
+
+### KI-43 The receipt-memory "older than thirty days" browser test fails now and then under load (9 November 2026)
+
+- **Seen (S13, PR 374):** `tests/browser/receipt-memory.spec.ts:72` failed in two full `pnpm test:e2e` runs (once on desktop, once on mobile, 538 other tests passed). It passed 36 of 36 alone, and 160 of 160 more on the PR's build with 8 workers. On clean main 15637875 (no PR 374 code) the same test failed 1 of 80 with 8 workers, and main's own full run passed (529).
+- **Cause, inferred, not traced:** the test reads storage as soon as the Commercial job select is visible. The page shows that select in its server HTML, and the mount effect that drops an expired receipt (`readReceipt` in `apps/web/lib/receipt-memory.ts`, called from `intake.tsx`) may not have run yet. Under load the read can come first.
+- **Do:** rerun and compare with main before blaming a change. Do not edit the test without the owner; a poll for "storage cleared" would keep the same assertion and remove the race.
