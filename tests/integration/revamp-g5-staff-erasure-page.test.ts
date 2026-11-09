@@ -7,7 +7,8 @@ import { describe, expect, it } from 'vitest';
 const web = createRequire(resolve('apps/web/package.json'));
 const createElement = web('react').createElement as (type: unknown, props?: unknown) => unknown;
 const renderToString = web('react-dom/server').renderToString as (element: unknown) => string;
-const load = async () => await import('../../apps/web/app/operator/erasure-queue');
+const load = async () =>
+  await import(/* @vite-ignore */ `../../apps/web/${'app/operator/erasure-queue'}`);
 
 describe('the words staff read for a closed account', () => {
   it('says closed and final, or closed and until when it can be undone', async () => {
