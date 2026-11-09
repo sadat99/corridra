@@ -344,7 +344,12 @@ function Screen({ example, step }: { example: Example; step: number }) {
               <div className="ac1-compare-row" role="row" key={row.term}>
                 <span role="rowheader">{t(row.term)}</span>
                 {row.values.map(([value, tone, fact], index) => (
-                  <span role="cell" key={example.compare.columns[index]} data-tone={tone}>
+                  <span
+                    role="cell"
+                    key={example.compare.columns[index]}
+                    data-tone={tone}
+                    data-column={t(example.compare.columns[index])}
+                  >
                     <ValueText value={value} />
                     {fact ? <FactLabel label={fact} english /> : null}
                   </span>
