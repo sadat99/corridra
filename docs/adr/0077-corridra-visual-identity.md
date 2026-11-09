@@ -20,12 +20,12 @@ The owner supplied a new Corridra logo: a halftone dot sphere with an open bite,
 
 ## Open gates (not passed)
 
-| Gate                                                      | Owner of the gate        |
-| --------------------------------------------------------- | ------------------------ |
-| Human art-direction review of the logo family and the orb | Owner to name a reviewer |
-| Trademark check for the name and mark in target markets   | Owner and counsel        |
-| Legal and technical handoff, including a vector master    | Owner and designer       |
-| Tagline claims against live capability (Transact)         | Owner                    |
+| Gate                                                                                                                                                                                                              | Owner of the gate        |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| Human art-direction review of the orb as a standalone mark and of the rest of the logo family (done only for the sphere in the header, footer, rail and favicon, by the owner's 9 Nov 2026 decision, amendment 1) | Owner to name a reviewer |
+| Trademark check for the name and mark in target markets                                                                                                                                                           | Owner and counsel        |
+| Legal and technical handoff, including a vector master                                                                                                                                                            | Owner and designer       |
+| Tagline claims against live capability (Transact)                                                                                                                                                                 | Owner                    |
 
 ## Consequences
 
@@ -53,10 +53,10 @@ Where each asset is used from now on:
 | Apple, Android, maskable, Open Graph, Twitter                               | halftone `mark` (already, no change)                           | unchanged                                |
 | Avatars and any other slot under 44 px                                      | `orb`                                                          | unchanged                                |
 
-Why the 16 px favicon keeps the orb: at 16 px the dots turn to grey. At 32 px and above the sphere on the navy tile reads.
+Why the 16 px favicon keeps the orb: at 16 px the dots turn to grey. At 32 px and above the sphere on the navy tile reads. Browsers that prefer `icon.svg` use the halftone at 16 CSS px; the orb shows only where `favicon.ico` is chosen. The mark is 42 x 40 px in the signed-in headers at 340 px and below (46 px wrapped the row at 320 px); 46 x 44 px everywhere else. `.brand-mark` sets `print-color-adjust: exact` so the mask prints in colour.
 
 Why 44 px tall in chrome: at 36 px the small dots vanish; at 44 px the dot grid and the bite on the right read on light and navy surfaces. The mark is sized 46 x 44 px at every place it appears. The signed-in headers still hide the wordmark under 760 px, and the collapsed rail still shows the mark alone; both now show the halftone sphere at the same 44 px, so no place falls back to the orb.
 
 Mechanism: `BrandMark` is a `span` that CSS paints with `background-color: currentColor` and a mask of `public/brand/corridra-mark-cobalt.svg` (only its alpha is used), so 230 ellipses (about 21 KB) are not inlined in the client bundle and the colour still comes from the existing token rules. Forced colours use `CanvasText` with `forced-color-adjust: none`. `brand-paths.ts` now exports `MARK` (the file) and `WORDMARK`; the `ORB` path export is removed and `tests/brand-identity.test.mjs` and `tests/integration/navigation-v1-public-header.test.ts` were updated to this truth. The brand test still fails if the mask file, the CSS or the header code disagree.
 
-Still open, unchanged: trademark check, legal and technical handoff and tagline review. Gate 2 (art-direction review) is recorded as done for the sphere in these places by the owner's decision above; the review of the orb as a standalone mark stays open.
+Still open, unchanged: trademark check, legal and technical handoff and tagline review. Gate 2 (art-direction review) is recorded as done only for the sphere in these places by the owner's 9 Nov 2026 decision above. The review of the orb as a standalone mark and of the rest of the family stays open, and so do the trademark check, the vector master and legal handoff, and the tagline claims. Nothing wider is closed.

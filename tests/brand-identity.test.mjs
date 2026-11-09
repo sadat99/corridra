@@ -93,6 +93,28 @@ test('product code draws the logo in one place, from tokens, without the tagline
     'favicon.ico holds 16, 32 and 48 px',
   );
   assert.equal((await read('apps/web/app/icon.svg')).match(/<ellipse /g)?.length, 230);
+  // The art is the registry art, unedited: byte-identical copies, and the tile's dot group is the reversed mark's.
+  for (const colorway of ['cobalt', 'reversed']) {
+    assert.equal(
+      await read(`apps/web/public/brand/corridra-mark-${colorway}.svg`),
+      await read(`docs/brand/assets/svg/corridra-mark-${colorway}.svg`),
+      `corridra-mark-${colorway}.svg differs from the registry file`,
+    );
+  }
+  const dots = (svg) => svg.match(/<g fill="#FFFFFF">[\s\S]*?<\/g>/)?.[0];
+  const tileDots = dots(await read('apps/web/app/icon.svg'));
+  assert.ok(tileDots, 'icon.svg has the white dot group');
+  assert.equal(tileDots, dots(await read('apps/web/public/brand/corridra-mark-reversed.svg')));
+  assert.equal(
+    await read('apps/web/app/icon.svg'),
+    await read('docs/brand/assets/favicon/favicon.svg'),
+    'icon.svg and favicon.svg are the same file',
+  );
+  assert.match(
+    css,
+    /@media \(max-width: 340px\)[^{]*\{[^}]*\.brand \.brand-mark\s*\{[^}]*width: 42px/,
+  );
+  assert.match(css, /\.brand-mark\s*\{[^}]*print-color-adjust: exact/);
   const sources = (await readdir(new URL('apps/web/', root), { recursive: true })).filter(
     (f) => /\.(?:tsx|ts|css)$/.test(f) && !/(?:^|\/)(?:node_modules|\.next)\//.test(f),
   );

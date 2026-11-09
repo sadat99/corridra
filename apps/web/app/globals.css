@@ -8326,6 +8326,8 @@ samp {
   width: 46px;
   height: 44px;
   background-color: currentColor;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
   -webkit-mask: url('/brand/corridra-mark-cobalt.svg') center / contain no-repeat;
   mask: url('/brand/corridra-mark-cobalt.svg') center / contain no-repeat;
 }
@@ -8351,6 +8353,14 @@ samp {
 @media (max-width: 760px) {
   .brand .brand-word {
     height: 16px;
+  }
+}
+@media (max-width: 340px) {
+  /* At 320 px the signed-in header row (mark alone, wordmark hidden) wrapped to a second row with the 46 px mark;
+     42 x 40 px keeps it on one row. Measured 9 Nov 2026 (ADR-077 amendment 1); every other width keeps 46 x 44. */
+  :is(.ux-customer-header, .ux-team-header) .brand .brand-mark {
+    width: 42px;
+    height: 40px;
   }
 }
 @media (max-width: 430px) {

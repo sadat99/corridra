@@ -1,6 +1,6 @@
 # Corridra brand identity (logo and icon system)
 
-Status: owner-supplied logo, adopted by owner instruction on 6 November 2026. Decision record: [ADR-077](../adr/0077-corridra-visual-identity.md) (Proposed). Art-direction review, trademark check and legal handoff are open; see section 11.
+Status: owner-supplied logo, adopted by owner instruction on 6 November 2026. Decision record: [ADR-077](../adr/0077-corridra-visual-identity.md) (Proposed), amended on 9 Nov 2026 by the owner (amendment 1: the halftone sphere in the header, footer, rail and favicon). Trademark check, vector master and legal handoff and tagline review are open; the art-direction review is recorded done only for the sphere in those places; see section 11.
 
 This is the identity layer on top of the owner-locked AC/1 Atlantic Cobalt design system. It adds the logo, icon and social-image rules. It does not redefine any AC/1 colour, font, spacing or radius; those stay in `apps/web/app/globals.css` and [docs/design-system/README.md](../design-system/README.md). Machine-readable registry: [brand-identity.tokens.json](brand-identity.tokens.json). Visual reference: [brand-guidelines.html](brand-guidelines.html).
 
@@ -55,16 +55,16 @@ Allowed: Porcelain (`--paper`), white (`--surface-1`), `--surface-subtle`, Midni
 
 Clear space `X` is the height of the letter C in the wordmark. For the orb alone, `X` is a quarter of the orb diameter. Keep at least `X` free on every side.
 
-| Asset               | Minimum size       |
-| ------------------- | ------------------ |
-| `orb`               | 16 px              |
-| `lockup-compact`    | 24 px tall         |
-| `wordmark`          | 96 px wide         |
-| `lockup-stacked`    | 120 px wide        |
-| `lockup-horizontal` | 160 px wide        |
-| `mark`              | 64 px wide         |
-| tagline lockups     | 200 to 260 px wide |
-| Print, any lockup   | 25 mm wide         |
+| Asset               | Minimum size                                                                                                          |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `orb`               | 16 px                                                                                                                 |
+| `lockup-compact`    | 24 px tall                                                                                                            |
+| `wordmark`          | 96 px wide                                                                                                            |
+| `lockup-stacked`    | 120 px wide                                                                                                           |
+| `lockup-horizontal` | 160 px wide                                                                                                           |
+| `mark`              | 64 px wide in print and on pages (large brand moments, app icons); 44 px tall in product chrome (ADR-077 amendment 1) |
+| tagline lockups     | 200 to 260 px wide                                                                                                    |
+| Print, any lockup   | 25 mm wide                                                                                                            |
 
 ## 6. Typography relation
 
@@ -72,7 +72,7 @@ The logo lettering is artwork. Never retype CORRIDRA in Geist, Newsreader or any
 
 ## 7. Where the logo is drawn in code
 
-One place. `BrandMark`, `BrandWordmark` and `BrandLockup` live in `apps/web/components/site-header.tsx`, the single inline drawing the design-system test allows. Geometry sits in `apps/web/components/brand-paths.ts`. Colour comes from CSS classes `.brand-mark` and `.brand-word` using tokens, never from hex in a component. Anywhere else use a file from `apps/web/public/brand/` through `next/image` with `unoptimized`, `alt=""` when a visible name is next to it, or `alt="Corridra"` when it stands alone.
+One place. `BrandMark`, `BrandWordmark` and `BrandLockup` live in `apps/web/components/site-header.tsx`, the single inline drawing the design-system test allows. `BrandMark` is a `span` that CSS paints from `public/brand/corridra-mark-cobalt.svg` as a mask (alpha only), so no mark geometry is inlined; the wordmark path is inlined from `apps/web/components/brand-paths.ts`, which also names the mask file (`MARK`). Colour comes from CSS classes `.brand-mark` and `.brand-word` using tokens, never from hex in a component. Anywhere else use a file from `apps/web/public/brand/` through `next/image` with `unoptimized`, `alt=""` when a visible name is next to it, or `alt="Corridra"` when it stands alone.
 
 ## 8. Tagline
 
@@ -80,16 +80,16 @@ SOURCE, VALIDATE, TRANSACT belongs to marketing material and brand sheets only. 
 
 ## 9. Favicon, app icon and social
 
-| Output                 | File                                           | Construction                                                        |
-| ---------------------- | ---------------------------------------------- | ------------------------------------------------------------------- |
-| Browser tab (SVG)      | `apps/web/app/icon.svg`                        | Halftone mark in white on a navy rounded tile, 0.92 filled, 64 grid |
-| Browser tab (legacy)   | `apps/web/app/favicon.ico`                     | 16 px entry the orb tile; 32 and 48 px entries the halftone tile    |
-| iOS home screen        | `apps/web/app/apple-icon.png` (180)            | Full-bleed navy, dot mark at 66 percent                             |
-| Android, manifest      | `public/brand/android-chrome-192.png`, `-512`  | Full-bleed navy, dot mark at 66 percent                             |
-| Android maskable       | `public/brand/maskable-512.png`                | Full-bleed navy, dot mark at 46 percent                             |
-| Open Graph and Twitter | `app/opengraph-image.png`, `twitter-image.png` | 1200 x 630, Porcelain, horizontal lockup, no tagline                |
-| Profile avatars        | `docs/brand/assets/app-icons/*-circle.png`     | Navy or cobalt circle, white dot mark                               |
-| Browser chrome colour  | `viewport.themeColor` and manifest             | `#142438`                                                           |
+| Output                 | File                                           | Construction                                                                                                                                                                                       |
+| ---------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Browser tab (SVG)      | `apps/web/app/icon.svg`                        | Halftone mark in white on a navy rounded tile, 0.92 filled, 64 grid. Browsers that prefer SVG use this at 16 CSS px, so the halftone shows there; the orb shows only where `favicon.ico` is chosen |
+| Browser tab (legacy)   | `apps/web/app/favicon.ico`                     | 16 px entry the orb tile; 32 and 48 px entries the halftone tile                                                                                                                                   |
+| iOS home screen        | `apps/web/app/apple-icon.png` (180)            | Full-bleed navy, dot mark at 66 percent                                                                                                                                                            |
+| Android, manifest      | `public/brand/android-chrome-192.png`, `-512`  | Full-bleed navy, dot mark at 66 percent                                                                                                                                                            |
+| Android maskable       | `public/brand/maskable-512.png`                | Full-bleed navy, dot mark at 46 percent                                                                                                                                                            |
+| Open Graph and Twitter | `app/opengraph-image.png`, `twitter-image.png` | 1200 x 630, Porcelain, horizontal lockup, no tagline                                                                                                                                               |
+| Profile avatars        | `docs/brand/assets/app-icons/*-circle.png`     | Navy or cobalt circle, white dot mark                                                                                                                                                              |
+| Browser chrome colour  | `viewport.themeColor` and manifest             | `#142438`                                                                                                                                                                                          |
 
 ## 10. Never
 
@@ -107,17 +107,18 @@ SOURCE, VALIDATE, TRANSACT belongs to marketing material and brand sheets only. 
 
 AC/1 master contract section 11 says to retain the current mark and that a visual-identity revision needs separate human review, a trademark check and a legal and technical handoff. The owner supplied this logo and instructed its adoption. The gates below are not passed by any agent and must stay recorded as open until a named person closes them.
 
-| Gate                                                                           | State  |
-| ------------------------------------------------------------------------------ | ------ |
-| Owner supplied the artwork                                                     | Done   |
-| Human art-direction review of the logo family and the orb                      | Open   |
-| Trademark check on the name and mark in target markets                         | Open   |
-| Legal and technical handoff (source files, licences, fonts)                    | Open   |
-| Tagline claims reviewed against positioning and live capability                | Open   |
-| Accessibility and responsive checks (320 to 1920 px, 200 and 400 percent zoom) | Per PR |
+| Gate                                                                                                                                      | State                      |
+| ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| Owner supplied the artwork                                                                                                                | Done                       |
+| Human art-direction review: the halftone sphere in the header, footer, rail and favicon (owner decision, 9 Nov 2026, ADR-077 amendment 1) | Done for these places only |
+| Human art-direction review of the orb as a standalone mark and of the rest of the logo family                                             | Open                       |
+| Trademark check on the name and mark in target markets                                                                                    | Open                       |
+| Legal and technical handoff (source files, licences, fonts)                                                                               | Open                       |
+| Tagline claims reviewed against positioning and live capability                                                                           | Open                       |
+| Accessibility and responsive checks (320 to 1920 px, 200 and 400 percent zoom)                                                            | Per PR                     |
 
 The lettering and dots were traced from the supplied raster image, so a vector master from the original designer, if one exists, should replace them when available.
 
 ## 12. Accessibility
 
-The inline logo is `aria-hidden` and the link around it carries the accessible name (the header links already have `aria-label`; the footer link carries a visually hidden "Corridra"). Standalone files used alone need `alt="Corridra"`. In forced-colours mode the logo takes `CanvasText`. The 44 px touch target on `.brand` stays. Test header and footer at 320, 360 and 390 px; if the wordmark crowds a narrow header, hide `.brand-word` at that width and keep the orb and the link name.
+The inline logo is `aria-hidden` and the link around it carries the accessible name (the header links already have `aria-label`; the footer link carries a visually hidden "Corridra"). Standalone files used alone need `alt="Corridra"`. In forced-colours mode the logo takes `CanvasText`. The 44 px touch target on `.brand` stays. Test header and footer at 320, 360 and 390 px; if the wordmark crowds a narrow header, hide `.brand-word` at that width and keep the mark and the link name. The signed-in header mark is 42 x 40 px at 340 px and below (measured: 46 px wraps the row at 320 px); everywhere else it is 46 x 44 px.
