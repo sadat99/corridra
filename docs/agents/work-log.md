@@ -2957,3 +2957,18 @@ Not checked:
 
 - The Vercel app flags (team access returned 403).
 - The test bodies beyond the cited lines.
+
+### 9 November 2026: staff erasure queue route and page (CRUD G5, staff side)
+
+Scope (S9, branch s9-erasure from main 9d58f64; builds on PR 362, merged as cd341229):
+
+- Route `/api/workspace/customer-erasure-queue` (GET list, POST move), registered in the private-header overrides. It uses `CustomerErasureQueue` from `packages/auth/src/customer-erasure-queue.ts`, gated by the account lifecycle switch. There is no scope input: the database derives sample or real from the staff workspace. The answer carries an explicit field list and never the person's internal id.
+- Page: `ErasureQueue` in the owner and admin settings panel of the operator workspace (no new route, so no ux-baseline entry). It shows reference, state, due date and days left, and "Closed, can be undone until <date>" or "Closed, final". Complete and Decline need a note of 10 to 1000 characters; the page offers no scope control and nothing else about the person.
+- Tests: `revamp-g5-staff-erasure-route.test.ts` (10, the route with a mocked service: paging, no scope, no person id, note rules, origin, session, 409 mapping, header override) and `revamp-g5-staff-erasure-page.test.ts` (3, wording and initial render). The database side stays covered by `revamp-g4-g5-followup-database.test.ts`.
+
+Limits:
+
+- It does not ship before the owner installs lifecycle_install: the SQL functions are not installed in production, and the route answers 503 until then.
+- No browser test with seeded requests yet; CI is the proof for the full gates. Typecheck, lint, format and the guard tests ran locally.
+
+Next: owner install run, then a browser test with a seeded request.

@@ -40,7 +40,7 @@ describe('the queue before anything is loaded', () => {
     expect(html).toContain('Load Erasure Requests');
     expect(html).toContain('All requests');
     expect(html).not.toMatch(/scope|sample|real customer|principal/i);
-    expect(html).not.toContain('—');
+    expect(html).not.toContain('\u2014');
     expect(html).not.toContain('<li');
   });
 });
