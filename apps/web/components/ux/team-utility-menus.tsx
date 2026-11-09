@@ -50,17 +50,20 @@ export function PlaceLink({
   plain: boolean;
   children: ReactNode;
 }) {
-  const shared = {
-    role: 'menuitem',
-    tabIndex: -1,
-    className: 'ux-menu-row',
-    href,
-    'aria-current': current ? ('page' as const) : undefined,
-  };
+  const ariaCurrent = current ? ('page' as const) : undefined;
   return plain || href.includes('#') ? (
-    <a {...shared}>{children}</a>
+    <a role="menuitem" tabIndex={-1} className="ux-menu-row" href={href} aria-current={ariaCurrent}>
+      {children}
+    </a>
   ) : (
-    <Link prefetch={false} {...shared}>
+    <Link
+      prefetch={false}
+      role="menuitem"
+      tabIndex={-1}
+      className="ux-menu-row"
+      href={href}
+      aria-current={ariaCurrent}
+    >
       {children}
     </Link>
   );
