@@ -4,6 +4,7 @@ import {
   setCustomerBilling,
   setCustomerNote,
   setCustomerNotificationSettings,
+  setCustomerOrganisationProfiles,
 } from './customer-bar-store';
 
 /**
@@ -14,10 +15,12 @@ export function CustomerBarNote({
   text,
   billing = false,
   notificationSettings = false,
+  organisationProfiles = false,
 }: {
   text: string;
   billing?: boolean;
   notificationSettings?: boolean;
+  organisationProfiles?: boolean;
 }) {
   useEffect(() => {
     setCustomerNote(text);
@@ -31,6 +34,10 @@ export function CustomerBarNote({
     setCustomerNotificationSettings(notificationSettings);
     return () => setCustomerNotificationSettings(false);
   }, [notificationSettings]);
+  useEffect(() => {
+    setCustomerOrganisationProfiles(organisationProfiles);
+    return () => setCustomerOrganisationProfiles(false);
+  }, [organisationProfiles]);
   return (
     <p hidden className="ux-customer-note">
       {text}

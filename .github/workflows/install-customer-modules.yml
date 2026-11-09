@@ -64,7 +64,7 @@ on:
         required: false
         default: ''
       field_modules_action:
-        description: 'Optional ADR-072 specification confirmation and ADR-073 quote arrangements, or programme_lifecycle (rename, archive and restore a programme; needs the real-use modules installed first), or participant_labels (correct a participant label; needs the programme lifecycle installed first), or response_revision, response_revision_enable and response_revision_pause (install, open and close the right of a recipient to correct their answer through the private link until the team makes a final decision; installing leaves it closed; needs the real-use modules installed first). Install does not open confirmation, principal sales, billing or payments.'
+        description: 'Optional ADR-072 specification confirmation and ADR-073 quote arrangements, or programme_lifecycle (rename, archive and restore a programme; needs the real-use modules installed first), or participant_labels (correct a participant label; needs the programme lifecycle installed first), or response_revision, response_revision_enable and response_revision_pause (install, open and close the right of a recipient to correct their answer through the private link until the team makes a final decision; installing leaves it closed; needs the real-use modules installed first), or lifecycle_install, lifecycle_enable and lifecycle_pause (G4 workspace rename, archive, restore and ownership transfer together with G5 account close and erasure requests: install leaves both closed, enable opens both, pause closes both; restore and undo keep working while paused; the two app switches are separate). Install does not open confirmation, principal sales, billing or payments.'
         type: choice
         options:
           [
@@ -77,6 +77,9 @@ on:
             response_revision,
             response_revision_enable,
             response_revision_pause,
+            lifecycle_install,
+            lifecycle_enable,
+            lifecycle_pause,
           ]
         default: unchanged
       notifications_action:
@@ -188,6 +191,10 @@ jobs:
           PARTICIPANT_LABELS_ACTION: ${{ inputs.field_modules_action == 'participant_labels' && 'install' || 'unchanged' }}
           RESPONSE_REVISION_ACTION: ${{ inputs.field_modules_action == 'response_revision' && 'install' || inputs.field_modules_action == 'response_revision_enable' && 'enable' || inputs.field_modules_action == 'response_revision_pause' && 'pause' || 'unchanged' }}
           COMMERCIAL_ARRANGEMENTS_ACTION: ${{ (inputs.field_modules_action == 'commercial_arrangements' || inputs.field_modules_action == 'both') && 'install' || 'unchanged' }}
+          WORKSPACE_LIFECYCLE_ACTION: ${{ inputs.field_modules_action == 'lifecycle_install' && 'install' || inputs.field_modules_action == 'lifecycle_enable' && 'enable' || inputs.field_modules_action == 'lifecycle_pause' && 'pause' || 'unchanged' }}
+          ACCOUNT_LIFECYCLE_ACTION: ${{ inputs.field_modules_action == 'lifecycle_install' && 'install' || inputs.field_modules_action == 'lifecycle_enable' && 'enable' || inputs.field_modules_action == 'lifecycle_pause' && 'pause' || 'unchanged' }}
+          WORKSPACE_LIFECYCLE_REASON: ${{ inputs.field_modules_action == 'lifecycle_enable' && 'Owner opened workspace changes from the install workflow' || inputs.field_modules_action == 'lifecycle_pause' && 'Owner paused workspace changes from the install workflow' || '' }}
+          ACCOUNT_LIFECYCLE_REASON: ${{ inputs.field_modules_action == 'lifecycle_enable' && 'Owner opened account close and erasure requests from the install workflow' || inputs.field_modules_action == 'lifecycle_pause' && 'Owner paused account close and erasure requests from the install workflow' || '' }}
           REPLY_REVIEW_REASON: ${{ inputs.reply_review_reason }}
           NOTIFICATIONS_ACTION: ${{ inputs.notifications_action }}
           NOTIFICATIONS_REASON: ${{ inputs.notifications_reason }}

@@ -1,4 +1,5 @@
 'use client';
+import { archivedRefusalText } from '../archived-refusal';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { useEffect, useRef, useState } from 'react';
@@ -141,6 +142,9 @@ function ScopedIntake(scope: PrivateRequestScope & { realMode?: boolean }) {
         }),
       });
       if (operation.signal.aborted) throw new Error('Request checking was interrupted.');
+      const archived = await archivedRefusalText(response);
+      if (operation.signal.aborted) throw new Error('Request checking was interrupted.');
+      if (archived) throw new Error(archived);
       if ([401, 403, 409].includes(response.status)) {
         try {
           clear();

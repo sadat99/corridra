@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import { customerProductionUnlocked } from './customer-production';
+import { closedAccountGate, customerAccountGateEnabled } from './customer-account-gate';
 import { realReportSignedInEnabled, realReportsOffMessage } from './real-report-access';
 import { DomainError } from '@corridra/domain';
 import {
@@ -104,6 +105,8 @@ export class CustomerSessionBoundary {
     // that needs a connection of its own (a rate limit) cannot wait on one this request already holds. It receives
     // the verified issuer and subject, never the browser's. A refusal from it ends the request.
     afterIdentity?: (identity: { issuer: string; subject: string }) => Promise<void>,
+    // Only the account lifecycle service sets this: a closed person may read the closure status and undo it.
+    access: { allowClosedAccount?: boolean } = {},
   ): Promise<T> {
     if (
       !this.options.enabled ||
@@ -207,6 +210,10 @@ export class CustomerSessionBoundary {
         set_config('corridra.real_report_signed_in',$2,true)`,
         [hash, realReportSignedInEnabled() ? 'on' : 'off'],
       );
+      // A closed account reaches only the closure status and undo. Does nothing, and issues no query, unless the app
+      // flag is on, and then only once the optional account lifecycle module is installed.
+      if (access.allowClosedAccount !== true && customerAccountGateEnabled())
+        await closedAccountGate(db);
       const result = await work(db, {
         hash,
         issuer,

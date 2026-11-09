@@ -1,4 +1,5 @@
 'use client';
+import { archivedRefusalText } from '../archived-refusal';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { formatDateTime } from '../../../lib/ux/format';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
@@ -507,6 +508,12 @@ function Guided(scope: Scope) {
       });
       if (!active.current) return;
       if (denied(r.status)) return;
+      const archived = await archivedRefusalText(r);
+      if (!active.current) return;
+      if (archived) {
+        setMessage(archived);
+        return;
+      }
       if (r.status === 409) {
         setConflict(true);
         setMessage('Your account or this request changed. Reload before sending.');

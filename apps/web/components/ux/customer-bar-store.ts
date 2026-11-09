@@ -51,3 +51,17 @@ export function readCustomerNotificationSettings() {
 export function readServerCustomerNotificationSettings() {
   return false;
 }
+
+// Whether the organisation profiles module is on, so the avatar menu links Company Profile or says Coming soon. A flag only.
+let organisationProfiles = false;
+export function setCustomerOrganisationProfiles(next: boolean) {
+  if (next === organisationProfiles) return;
+  organisationProfiles = next;
+  for (const listener of listeners) listener();
+}
+export function readCustomerOrganisationProfiles() {
+  return organisationProfiles;
+}
+export function readServerCustomerOrganisationProfiles() {
+  return false;
+}

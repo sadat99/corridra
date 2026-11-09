@@ -1,7 +1,6 @@
 import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
-import { customerDataEnvironmentAllowed } from './customer-production';
+import { customerWorkspacesSwitchOn } from './customer-production';
 import { randomBytes } from 'node:crypto';
-import { customerProductionLocked } from './customer-production';
 import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
 import { sessionHash } from '@corridra/db';
@@ -99,11 +98,7 @@ export type CustomerAccessPage = {
 };
 
 export function customerWorkspacesEnabled(env: NodeJS.ProcessEnv = process.env) {
-  return (
-    env.CORRIDRA_CUSTOMER_WORKSPACES_ENABLED === 'true' &&
-    customerDataEnvironmentAllowed(env) &&
-    !customerProductionLocked(env)
-  );
+  return customerWorkspacesSwitchOn(env);
 }
 
 // This service is server-only: readSession must fetch the actual current provider

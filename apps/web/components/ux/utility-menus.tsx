@@ -24,9 +24,11 @@ import { workspacePage } from '../../lib/ux/workspace-pages';
 import {
   readCustomerBilling,
   readCustomerNotificationSettings,
+  readCustomerOrganisationProfiles,
   readCustomerNote,
   readServerCustomerBilling,
   readServerCustomerNotificationSettings,
+  readServerCustomerOrganisationProfiles,
   readServerCustomerNote,
   subscribeCustomerNote,
 } from './customer-bar-store';
@@ -247,6 +249,11 @@ export function AvatarMenu({ active }: { active: boolean }) {
     readCustomerNotificationSettings,
     readServerCustomerNotificationSettings,
   );
+  const organisationProfiles = useSyncExternalStore(
+    subscribeCustomerNote,
+    readCustomerOrganisationProfiles,
+    readServerCustomerOrganisationProfiles,
+  );
   const note = useSyncExternalStore(
     subscribeCustomerNote,
     readCustomerNote,
@@ -277,6 +284,7 @@ export function AvatarMenu({ active }: { active: boolean }) {
   const items = customerAvatarItems({
     billing,
     notificationSettings,
+    organisationProfiles,
     workspaces: list,
     currentWorkspaceId: shown?.id,
   });

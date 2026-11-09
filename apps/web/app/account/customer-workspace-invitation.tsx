@@ -1,3 +1,4 @@
+import { archivedRefusalText } from './archived-refusal';
 import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
 import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
@@ -99,6 +100,12 @@ export function CustomerWorkspaceInvitation({
         body: JSON.stringify({ action: 'accept', ...command }),
       });
       if (!mounted.current) return;
+      const archived = await archivedRefusalText(response);
+      if (!mounted.current) return;
+      if (archived) {
+        setMessage(archived);
+        return;
+      }
       if (!response.ok) {
         if ([401, 403, 409, 503].includes(response.status)) {
           setCode('');
