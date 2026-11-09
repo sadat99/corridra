@@ -123,6 +123,14 @@
       "exit": 0,
       "head": "b6009e1617b68270e83eaac6357de1516c2a7ec1",
       "seconds": 39.8
+    },
+    {
+      "name": "bite-footer",
+      "command": "pnpm exec playwright test tests/browser/layout-budget-plan.spec.ts -g compact footer fits --trace off --project desktop",
+      "exit": 1,
+      "head": "1d603c6722a5d73229ae21d4977ca03b72bd0f84",
+      "seconds": 13.7,
+      "note": "Intended failure: a scratch rule widened the compact footer groups (min-width 420px); all 6 cases of the 320 px footer test failed with 'boxes past the edge'. The rule was removed afterwards."
     }
   ],
   "earlier_receipts": [
