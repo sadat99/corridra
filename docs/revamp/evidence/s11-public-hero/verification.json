@@ -1,7 +1,7 @@
 {
   "task": "S11 public page hero",
   "base": "e8ca4cac (main merged into the branch, merge commit e7764e4)",
-  "note": "CI failed on 643f772 in layout-budget-tabs.spec.ts:119 (the first main a.primary-link is the hero button, hidden from 67rem). The guard now accepts the header action there (changed knowingly, listed in the PR). commandsOnFinalHead ran on finalHead; commandsOnEarlierCodeHead ran on 9d0086a (hero code identical; only a comment, test files and this json differ). This json is added in a later record-only commit.",
+  "note": "Main (72f07b6, dd6e1e1) merged at a802dfa; commandsOnMergedHead ran there. commandsOnEarlierFinalHead ran on 568375f before the merge. This json is added in a later record-only commit.",
   "pinned_values_changed": "none. No Q-02 or page-length guard value was changed or loosened.",
   "actionTable": [
     {
@@ -47,7 +47,7 @@
     "/corridors phone 390": "2.88 -> 2.88",
     "/corridors 1440": "1.83 -> 1.84"
   },
-  "finalHead": "568375fa5f97328ce99ddd179e64eae51c9e9562",
+  "finalHead": "a802dfa4569add68888db43e22b481dd22d100ce",
   "commandResults": {
     "hero-spec": "11 passed",
     "e2e-public": "179 passed (large text, normal text, public-experience, layout-budget-public, public-header-nav, wave6-public-quality, body-rhythm)",
@@ -99,7 +99,8 @@
       "head": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de (with this json present)"
     }
   ],
-  "commandsOnFinalHead": [
+  "pinnedValuesChanged": "One guard changed knowingly: tests/browser/layout-budget-tabs.spec.ts above-the-fold locator now also accepts the visible header Start a Request. No Q-02 value or page-length limit changed.",
+  "commandsOnEarlierFinalHead": [
     {
       "command": "pnpm --filter @corridra/web build",
       "exit": 0,
@@ -138,9 +139,44 @@
       "receipt": "work/format-2026-11-09T17-37-58-852Z.log.receipt.json"
     }
   ],
-  "commandResultsFinalHead": {
+  "commandResultsEarlierFinalHead": {
     "hero-fix": "167 passed, 149 skipped (layout-budget-tabs, layout-budget-pages, about-editorial, title-case-actions, public-hero-layout)",
     "e2e-full": "529 passed, 313 skipped (the CI browser job's command)"
   },
-  "pinnedValuesChanged": "One guard changed knowingly: tests/browser/layout-budget-tabs.spec.ts above-the-fold locator now also accepts the visible header Start a Request. No Q-02 value or page-length limit changed."
+  "commandsOnMergedHead": [
+    {
+      "command": "pnpm --filter @corridra/web build",
+      "exit": 0,
+      "head": "a802dfa4569add68888db43e22b481dd22d100ce",
+      "receipt": "work/build-2026-11-09T17-39-32-302Z.log.receipt.json"
+    },
+    {
+      "command": "pnpm test:e2e --trace off",
+      "exit": 1,
+      "head": "a802dfa4569add68888db43e22b481dd22d100ce",
+      "receipt": "work/e2e-full-2026-11-09T17-41-33-182Z.log.receipt.json"
+    },
+    {
+      "command": "pnpm lint",
+      "exit": 0,
+      "head": "a802dfa4569add68888db43e22b481dd22d100ce",
+      "receipt": "work/lint-2026-11-09T17-47-44-874Z.log.receipt.json"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "head": "a802dfa4569add68888db43e22b481dd22d100ce",
+      "receipt": "work/typecheck-2026-11-09T17-49-37-092Z.log.receipt.json"
+    },
+    {
+      "command": "pnpm exec playwright test --trace off tests/browser/receipt-memory.spec.ts --project=desktop",
+      "exit": 1,
+      "head": "a802dfa4569add68888db43e22b481dd22d100ce",
+      "receipt": "work/receipt-memory-2026-11-09T17-50-03-339Z.log.receipt.json"
+    }
+  ],
+  "commandResultsMergedHead": {
+    "e2e-full": "exit 1: 528 passed, 313 skipped, 1 failed: tests/browser/receipt-memory.spec.ts:72 (request older than thirty days, receipt storage on /plan). Not in the files this PR touches; the same spec passed alone twice on this head (exit 0, 3 passed) and the full run passed 529 on 568375f. CI on the exact head decides.",
+    "receipt-memory": "3 passed (exit 0)"
+  }
 }
