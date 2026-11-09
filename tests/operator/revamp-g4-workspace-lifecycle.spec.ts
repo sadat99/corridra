@@ -440,6 +440,23 @@ test('G4-09 the Undo line disappears after ten seconds', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Undo' })).toHaveCount(0);
 });
 
+test('G4-10b Transfer Ownership shows exactly the active members however late the team arrives', async ({
+  page,
+}) => {
+  await open(page);
+  await page.route('**/api/customer-workspace-access*', async (route) => {
+    await new Promise((done) => setTimeout(done, 1200));
+    return route.fallback();
+  });
+  await trigger(page, owner).click();
+  await page.getByRole('menuitem', { name: 'Transfer Ownership' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Transfer Ownership' });
+  await expect(dialog.getByLabel('New owner').locator('option')).toHaveText(
+    ['Choose a member', 'Synthetic Rahim, admin', 'Synthetic Salma, member'],
+    { timeout: 10_000 },
+  );
+});
+
 test('G4-10 Transfer Ownership lists only active members, needs the typed name, sends the offer, and the owner can cancel it', async ({
   page,
 }) => {
@@ -447,8 +464,12 @@ test('G4-10 Transfer Ownership lists only active members, needs the typed name, 
   await trigger(page, owner).click();
   await page.getByRole('menuitem', { name: 'Transfer Ownership' }).click();
   const dialog = page.getByRole('dialog', { name: 'Transfer Ownership' });
-  const options = await dialog.getByLabel('New owner').locator('option').allTextContents();
-  expect(options).toEqual(['Choose a member', 'Synthetic Rahim, admin', 'Synthetic Salma, member']);
+  // The team arrives from a request, so the list is waited for: reading it once at the click raced that request.
+  await expect(dialog.getByLabel('New owner').locator('option')).toHaveText([
+    'Choose a member',
+    'Synthetic Rahim, admin',
+    'Synthetic Salma, member',
+  ]);
   const send = dialog.getByRole('button', { name: 'Send Offer' });
   await dialog.getByLabel('New owner').selectOption(memberB);
   await expect(send).toBeDisabled();

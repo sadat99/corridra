@@ -283,7 +283,13 @@ export function TransferBody(props: BodyProps) {
   const [memberId, setMemberId] = useState('');
   const [typed, setTyped] = useState('');
   const { run, busy, message } = useDialogCommand(props);
+  // A string, not the array: a refresh of the status brings new objects with the same content, and must not read the team again.
+  const keptIds = state.protectedMembers
+    .map((kept) => kept.memberId)
+    .sort()
+    .join(',');
   useEffect(() => {
+    const kept = new Set(keptIds ? keptIds.split(',') : []);
     const controller = new AbortController();
     // The team is read page by page until the list is exhausted or 200 members are in hand, so a member beyond the
     // first page can be chosen, and "no one" is only said once every page has been seen.
@@ -305,10 +311,7 @@ export function TransferBody(props: BodyProps) {
         const page = (await response.json()) as CustomerAccessPage;
         seen += page.memberships.length;
         for (const m of page.memberships)
-          if (
-            m.status === 'active' &&
-            !state.protectedMembers.some((kept) => kept.memberId === m.id)
-          )
+          if (m.status === 'active' && !kept.has(m.id))
             found.push({ id: m.id, label: m.label, role: m.role });
         after = page.nextMemberAfter ?? null;
       } while (after && seen < 200);
@@ -319,7 +322,7 @@ export function TransferBody(props: BodyProps) {
         setLoadFailed(error instanceof Error ? error.message : 'The team could not be loaded.');
     });
     return () => controller.abort();
-  }, [state.workspaceId, state.protectedMembers, headers]);
+  }, [state.workspaceId, keptIds, headers]);
   const chosen = useMemo(() => members?.find((m) => m.id === memberId), [members, memberId]);
   const ready = !!chosen && typed.trim() === state.name;
   if (loadFailed)
