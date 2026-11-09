@@ -1,8 +1,7 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { clearPrivateRequestStorage } from '../lib/private-request-storage';
-import { announceSessionChange } from './session-events';
+import { endSession } from '../lib/end-session';
 import { signInPath } from '../lib/account-return';
 
 /**
@@ -18,15 +17,7 @@ export function useSignOut(returnTo?: string | (() => string)) {
     setBusy(true);
     setMessage('');
     try {
-      const { accountClient } = await import('../lib/neon-auth-client');
-      const result = await accountClient.signOut();
-      if (result.error) throw new Error();
-      try {
-        clearPrivateRequestStorage(sessionStorage);
-      } catch {
-        /* Logout still clears the provider session. */
-      }
-      announceSessionChange();
+      await endSession();
       router.replace(signInPath(typeof returnTo === 'function' ? returnTo() : returnTo));
       router.refresh();
     } catch {

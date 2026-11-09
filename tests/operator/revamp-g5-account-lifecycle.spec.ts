@@ -570,7 +570,6 @@ test('G5-21 Sign Out and Sign In Again returns to the sign-in page told where th
     (window as unknown as { __signOutFails: boolean }).__signOutFails = false;
   });
   await page.getByRole('button', { name: 'Sign Out and Sign In Again' }).click();
-  await expect
-    .poll(() => page.evaluate(() => (window as unknown as { __replaced?: string[] }).__replaced))
-    .toEqual(['/signin?next=' + encodeURIComponent('/')]);
+  // The page itself goes to the sign-in page and tells it where the person was.
+  await expect(page).toHaveURL(new RegExp('/signin\\?next=' + encodeURIComponent('/') + '$'));
 });
