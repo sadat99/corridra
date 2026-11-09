@@ -41,13 +41,16 @@ export function NotificationsPanel({
   counted,
   endpoint,
   label = 'Inbox',
+  bulk = true,
 }: {
   counted: boolean;
   endpoint: string;
+  /** Whether the inbox endpoint can count every unread item and mark them all read. The team inbox cannot: it marks one item at a time. */
+  bulk?: boolean;
   /** The accessible name of the bell. It stays "Inbox", as every existing test and the team header call it; the panel it opens is titled Notifications. */
   label?: string;
 }) {
-  return <BarInbox counted={counted} endpoint={endpoint} label={label} grouped />;
+  return <BarInbox counted={counted} endpoint={endpoint} label={label} grouped bulk={bulk} />;
 }
 
 /** The language code beside a globe, and the languages offered, each in its own name. */

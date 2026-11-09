@@ -146,6 +146,7 @@ export function AppHeader({
               counted
               endpoint={inboxEndpoint}
               label={t(shellWords.inbox)}
+              bulk={false}
             />
           ) : null}
           <LanguageMenu />
