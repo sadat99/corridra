@@ -3,40 +3,54 @@
   "batch": "S10 brand: halftone sphere replaces the solid orb in the product mark and the favicon (ADR-077 amendment 1)",
   "kind": "Presentation only. Code-only, no migration, no auth, data, money or event change. Owner decision 9 Nov 2026 quoted in docs/adr/0077-corridra-visual-identity.md.",
   "baseCommit": "a3090c667cca7f36475da64efb5196113b56aa00",
-  "headNote": "The exact head is the last commit of the PR; a file cannot hold its own commit hash. Quote the head from the PR and from the CI run.",
+  "history": "First push aad01144454d9ef20f7fa67283bdd0aea8a277cc (origin/main ba7390d merged in). Guardian fix commit 39e2db641c676bc4200ba363fd590ee1215da967. The checks below were all run on the tree of 39e2db6; the only change after it is this receipt file. Earlier runs on the first commit (before the merge of main and before the fixes) were all exit 0 as well and are superseded by these.",
+  "headNote": "A file cannot hold its own commit hash. The head of the PR is the commit that adds this receipt; CI on that exact head is the final record.",
   "commands": [
-    { "command": "pnpm format:check", "exit": 0 },
-    { "command": "pnpm lint", "exit": 0 },
-    { "command": "pnpm typecheck", "exit": 0 },
+    {
+      "command": "pnpm format:check",
+      "exit": 0,
+      "ranOn": "39e2db641c676bc4200ba363fd590ee1215da967"
+    },
+    { "command": "pnpm lint", "exit": 0, "ranOn": "39e2db641c676bc4200ba363fd590ee1215da967" },
+    { "command": "pnpm typecheck", "exit": 0, "ranOn": "39e2db641c676bc4200ba363fd590ee1215da967" },
     {
       "command": "node scripts/gate.mjs docs-tests -- pnpm test:docs (includes tests/brand-identity.test.mjs, 5 of 5 pass)",
-      "exit": 0
+      "exit": 0,
+      "ranOn": "39e2db641c676bc4200ba363fd590ee1215da967"
     },
     {
       "command": "pnpm exec vitest run tests/integration/navigation-v1-public-header.test.ts (6 of 6 pass)",
-      "exit": 0
+      "exit": 0,
+      "ranOn": "39e2db641c676bc4200ba363fd590ee1215da967"
     },
     {
-      "command": "pnpm build (apps/web, twice: before and after the 430 px wordmark rule)",
-      "exit": 0
+      "command": "node scripts/gate.mjs ux -- pnpm test:ux --trace off, production build (85 passed)",
+      "exit": 0,
+      "ranOn": "39e2db641c676bc4200ba363fd590ee1215da967"
     },
-    { "command": "pnpm test:ux --trace off against the production build (85 passed)", "exit": 0 }
+    {
+      "command": "cd apps/web && node ../../scripts/gate.mjs build -- pnpm build",
+      "exit": 0,
+      "ranOn": "working tree identical to 39e2db6 (run just before that commit)"
+    }
   ],
   "rendered": [
-    "Production build served; public home at 320, 390, 768 and 1440 px: no horizontal overflow, mark box 46 x 44 px, brand link 44 px tall.",
-    "Header rows before and after on the production build: 320 and 360 px wrap to two rows as before (89 px); 390 px and wider stay one row (72 px) after the 14 px wordmark rule at 430 px and below; without that rule 390 px wrapped to 89 px.",
+    "Production build served on port 3111. Public home at 320, 390, 768 and 1440 px: no horizontal overflow, mark box 46 x 44 px, brand link 44 px tall. Public header rows: 320 and 360 px wrap to two rows as before (89 px); 390 and 430 px stay on one row (72 px) thanks to the 14 px wordmark rule at 430 px and below (without it 390 px wrapped to 89 px).",
+    "Signed-in headers (customer and team) were rendered from markup injected into the production build's real CSS, not from a real session, and not through the operator suite. Measured scrollWidth equals clientWidth (no overflow) at 320, 360, 390, 700 and 759 px for both; the wordmark is hidden at all of these widths. Header height: 61 px at 360, 390, 700 and 759 px; at 320 px the 46 x 44 px mark wrapped the row to 113 px (a mark of 44 px wide or more wrapped, 42 px did not), so the mark is 42 x 40 px at 340 px and below, after which the 320 px header is 61 px. Same injected markup with the old 26 px mark: 61 px at 320, 340 and 360 px.",
+    "Wide layouts from the same injected markup: customer 1280 expanded, collapsed rail (mark alone) and team 1280: header 64 px, identical with the old 30 and 24 px mark; 768 and 390 px header 61 px, identical with the old mark.",
     "Footer wordmark (reversed on navy) rendered at 1440 px: dots legible.",
     "Favicon files rendered at 3x: favicon-16 orb tile, favicon-32, -48 and -64 halftone tile."
   ],
   "changedArtwork": {
-    "icon.svg": "halftone mark reversed on the navy tile, 0.92 of the tile, 21812 bytes",
+    "icon.svg": "halftone mark reversed on the navy tile, 0.92 of the tile, 21812 bytes; dot group equals the reversed mark's (test pins it)",
     "favicon.ico": "16 px entry unchanged (orb); 32 and 48 px entries rasterised from icon.svg",
-    "docs/brand/assets/favicon": "favicon.svg, favicon-32, -48, -64 and favicon.ico replaced; favicon-16 unchanged; apple, android and maskable files were already the halftone mark and are unchanged"
+    "docs/brand/assets/favicon": "favicon.svg, favicon-32, -48, -64 and favicon.ico replaced; favicon-16 unchanged; apple, android and maskable files were already the halftone mark and are unchanged",
+    "public/brand mark files": "corridra-mark-cobalt.svg and -reversed.svg are byte-identical to docs/brand/assets/svg (test pins it)"
   },
   "notDone": [
-    "Signed-in headers and the left rail were not rendered here (they need a signed-in session); the CSS sizes were set to 46 x 44 inside the 64 px bar and 68 px collapsed rail and the 85 route UX gate passes. Please check them in the preview.",
+    "No real signed-in session was rendered and the operator suite was not run; the signed-in headers and the left rail were checked from injected markup only. Please look at them in the preview.",
     "Open Graph and Twitter images already use the halftone lockup (checked by eye); not regenerated.",
-    "Browser tab at 16 CSS px on a 1x screen uses icon.svg (halftone) in browsers that prefer SVG; only favicon.ico keeps the orb at 16 px.",
-    "Trademark check, legal handoff and tagline review stay open."
+    "Browsers that prefer icon.svg show the halftone at 16 CSS px; only favicon.ico keeps the orb at 16 px.",
+    "Trademark check, vector master and legal handoff, tagline review and the art-direction review of the orb as a standalone mark stay open."
   ]
 }
