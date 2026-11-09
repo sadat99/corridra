@@ -1,35 +1,48 @@
 {
   "task": "S11 public page hero",
-  "base": "ba7390d534b0989502dc869f40bde57a52682dba",
-  "note": "Exit codes are from node scripts/gate.mjs receipts in work/ on the base head with the working tree change; the PR head SHA is in the PR body.",
+  "base": "e8ca4cac (main merged into the branch, merge commit e7764e4)",
+  "note": "Every command below ran on finalHead (code head). This json is added in a later record-only commit. Receipts are gate.mjs receipts in work/ (not committed).",
   "commands": [
     {
-      "name": "build",
-      "exit": 0
+      "command": "pnpm --filter @corridra/web build",
+      "exit": 0,
+      "head": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de",
+      "receipt": "work/build-2026-11-09T16-45-01-721Z.log.receipt.json"
     },
     {
-      "name": "ux (test:ux, 85 passed)",
-      "exit": 0
+      "command": "pnpm exec playwright test --trace off tests/browser/public-hero-layout.spec.ts --project=desktop",
+      "exit": 0,
+      "head": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de",
+      "receipt": "work/hero-spec-2026-11-09T16-45-17-250Z.log.receipt.json"
     },
     {
-      "name": "public e2e: large text, normal text, public-experience, layout-budget-public, public-header-nav, wave6-public-quality, public-body-rhythm (desktop 159 passed; all projects 169 passed 129 skipped)",
-      "exit": 0
+      "command": "pnpm exec playwright test --trace off tests/browser/public-large-text.spec.ts tests/browser/public-normal-text.spec.ts tests/browser/public-experience.spec.ts tests/browser/layout-budget-public.spec.ts tests/browser/public-header-nav.spec.t",
+      "exit": 0,
+      "head": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de",
+      "receipt": "work/e2e-public-2026-11-09T16-45-56-777Z.log.receipt.json"
     },
     {
-      "name": "new tests/browser/public-hero-layout.spec.ts (5 passed)",
-      "exit": 0
+      "command": "pnpm lint",
+      "exit": 0,
+      "head": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de",
+      "receipt": "work/lint-2026-11-09T16-47-54-385Z.log.receipt.json"
     },
     {
-      "name": "lint",
-      "exit": 0
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "head": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de",
+      "receipt": "work/typecheck-2026-11-09T16-48-39-320Z.log.receipt.json"
     },
     {
-      "name": "typecheck",
-      "exit": 0
+      "command": "pnpm test:ux --trace off",
+      "exit": 0,
+      "head": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de",
+      "receipt": "work/ux-2026-11-09T16-49-00-651Z.log.receipt.json"
     },
     {
-      "name": "format:check (after the evidence json was formatted)",
-      "exit": 0
+      "command": "pnpm format:check",
+      "exit": 0,
+      "head": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de (with this json present)"
     }
   ],
   "pinned_values_changed": "none. No Q-02 or page-length guard value was changed or loosened.",
@@ -76,5 +89,14 @@
     "/how-it-works phone": "2.70 -> 2.70",
     "/corridors phone 390": "2.88 -> 2.88",
     "/corridors 1440": "1.83 -> 1.84"
-  }
+  },
+  "finalHead": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de",
+  "commandResults": {
+    "hero-spec": "11 passed",
+    "e2e-public": "179 passed (large text, normal text, public-experience, layout-budget-public, public-header-nav, wave6-public-quality, body-rhythm)",
+    "ux": "85 passed"
+  },
+  "hideRule": "Hero is a container (public-hero, inline-size) and hides the repeated action at @container min-width 67rem, the same query and threshold the header uses, so scrollbar and root font size match. Sanity check: with the old @media 75rem rule the new property test fails at 1216 px with 200% text.",
+  "scrollbarEmulation": "The 15 px scrollbar cases (html overflow-y scroll plus ::-webkit-scrollbar) ran, but headless Chromium may not apply them; the old viewport rule failed only the 200% text cases. The container rule matches the header by construction.",
+  "notDone": "Pages with the route aside (/sell, /source, /enter-market, /trade-missions) keep the old stacked layout: their lead already sits directly under the heading in the left column, there is no blank block, and the aside takes the right column. Their hero actions are job links and are kept."
 }
