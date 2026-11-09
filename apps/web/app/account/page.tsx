@@ -102,6 +102,7 @@ export default async function Page({
   const workspaceIssuer = customerWorkspacesEnabled()
     ? readNeonAuthConfig()?.NEON_AUTH_BASE_URL
     : undefined;
+  const accountIssuer = readNeonAuthConfig()?.NEON_AUTH_BASE_URL;
   const requestIssuer = customerRequestsEnabled()
     ? readNeonAuthConfig()?.NEON_AUTH_BASE_URL
     : undefined;
@@ -378,8 +379,8 @@ export default async function Page({
                   // Without the new navigation there is no All tools page, so the entry points stay here.
                   <WaysIn />
                 )}
-                {customerAccountLifecycleEnabled() ? (
-                  <AccountClosure />
+                {customerAccountLifecycleEnabled() && accountIssuer ? (
+                  <AccountClosure subject={data.user.id} issuer={accountIssuer} />
                 ) : (
                   <AccountClosureComingSoon />
                 )}

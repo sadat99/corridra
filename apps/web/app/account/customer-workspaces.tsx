@@ -578,7 +578,7 @@ export function CustomerWorkspaces({
                       subject={subject}
                       issuer={issuer}
                       memberRolesEnabled={memberRolesEnabled}
-                      ownerMemberId={lifecycle.ownerMemberId(row.id)}
+                      protectedMembers={lifecycle.protectedMembers(row.id)}
                       bare
                       open={here === 'team'}
                       onBusyChange={setBusyFor('team:' + row.id)}

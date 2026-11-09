@@ -4,6 +4,7 @@ import { createServer, type Server } from 'node:http';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
+import { lifecycleWords } from '../../apps/web/app/account/workspace-lifecycle-client';
 
 // CRUD G4, workspace lifecycle in Workspaces and Team: owner-only menu items, Rename Workspace (reason, stale conflict),
 // Archive Workspace (typed name, ten second Undo, Archived filter and banner), Restore, Transfer Ownership (offer,
@@ -118,6 +119,7 @@ const stateFor = (id: string, role: string, extra: Record<string, unknown> = {})
   history: [],
   offer: null,
   ownerMemberId: null,
+  protectedMembers: [],
   ...extra,
 });
 async function open(page: Page, setup: Setup = {}) {
@@ -553,15 +555,69 @@ test('G4-13 dialogs trap focus, return it to the row menu, have 44 pixel buttons
   }
 });
 
-test('G4-14 the team list labels the member who became owner as Owner', async ({ page }) => {
+test('G4-14 the team list labels a member who is or was an owner with the access they really have, and offers no removal', async ({
+  page,
+}) => {
   await open(page, {
-    states: { [ids.own]: stateFor(ids.own, 'owner', { ownerMemberId: memberA }) },
+    states: {
+      [ids.own]: stateFor(ids.own, 'owner', {
+        ownerMemberId: memberA,
+        protectedMembers: [{ memberId: memberA, role: 'owner' }],
+      }),
+    },
   });
   await trigger(page, owner).click();
   await page.getByRole('menuitem', { name: 'Manage Team' }).click();
-  await expect(page.getByRole('dialog', { name: 'Team for ' + owner })).toContainText(
-    'Synthetic Rahim · Owner',
+  const dialog = page.getByRole('dialog', { name: 'Team for ' + owner });
+  await expect(dialog).toContainText('Synthetic Rahim · Owner');
+  await expect(dialog.getByText('Synthetic Salma · member')).toBeVisible();
+  await expect(
+    dialog.getByRole('button', { name: 'Remove Invited Membership for Synthetic Rahim' }),
+  ).toHaveCount(0);
+  await expect(
+    dialog.getByRole('button', { name: 'Remove Invited Membership for Synthetic Salma' }),
+  ).toBeVisible();
+  await expect(dialog).toContainText(
+    'This person is or was an owner and keeps admin access. Ask support to remove it.',
   );
+});
+
+test('G4-14b a former owner who is now an admin is labelled Admin and cannot be removed or demoted from the list', async ({
+  page,
+}) => {
+  await open(page, {
+    states: {
+      [ids.own]: stateFor(ids.own, 'owner', {
+        protectedMembers: [{ memberId: memberA, role: 'admin' }],
+      }),
+    },
+  });
+  await trigger(page, owner).click();
+  await page.getByRole('menuitem', { name: 'Manage Team' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Team for ' + owner });
+  await expect(dialog).toContainText('Synthetic Rahim · Admin');
+  await expect(dialog.getByRole('button', { name: /Synthetic Rahim/ })).toHaveCount(0);
+});
+
+test('G4-14c archiving with an old sign-in says so and offers to sign out and in again', async ({
+  page,
+}) => {
+  await open(page, {
+    answer: (body) =>
+      body.action === 'archive'
+        ? {
+            status: 403,
+            json: { error: lifecycleWords.signInAgain, code: 'recent_sign_in_required' },
+          }
+        : undefined,
+  });
+  await trigger(page, owner).click();
+  await page.getByRole('menuitem', { name: 'Archive Workspace' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Archive ' + owner + '?' });
+  await dialog.getByLabel('Type the workspace name to confirm').fill(owner);
+  await dialog.getByRole('button', { name: 'Archive Workspace' }).click();
+  await expect(dialog.getByRole('alert')).toHaveText(lifecycleWords.signInAgain);
+  await expect(dialog.getByRole('button', { name: 'Sign Out and Sign In Again' })).toBeVisible();
 });
 
 test('G4-15 an Undo that fails says so in an alert instead of doing nothing', async ({ page }) => {

@@ -394,7 +394,7 @@ export function useWorkspaceLifecycle({
     isArchived: (id: string) => !!states[id]?.archived,
     /** The status of this workspace could not be read, so it is not known to accept new requests. */
     statusUnknown: (id: string) => refreshFailed && !states[id],
-    ownerMemberId: (id: string) => states[id]?.ownerMemberId ?? null,
+    protectedMembers: (id: string) => states[id]?.protectedMembers ?? [],
     menuItems,
     panel,
   };

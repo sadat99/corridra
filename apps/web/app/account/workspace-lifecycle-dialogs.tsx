@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import type { CustomerAccessPage } from '@corridra/auth/customer-workspaces';
 import {
   lifecycleWords,
@@ -11,6 +11,7 @@ import {
   type SessionHeaders,
 } from './workspace-lifecycle-client';
 import { limitWords } from '../../lib/account-limit';
+import { LifecycleErrorLine } from './lifecycle-error-line';
 import './invitation-dialog.css';
 
 type BodyProps = {
@@ -26,19 +27,6 @@ type BodyProps = {
 
 const staleWords =
   'This workspace was changed since you opened this. Reload Workspaces to see its current state.';
-
-/** An error line that takes focus when it appears, so it is read at once. */
-function ErrorLine({ message }: { message: string | null }) {
-  const ref = useRef<HTMLParagraphElement>(null);
-  useEffect(() => {
-    if (message) ref.current?.focus();
-  }, [message]);
-  return message ? (
-    <p ref={ref} tabIndex={-1} role="alert" className="ux-error-summary">
-      {message}
-    </p>
-  ) : null;
-}
 
 /** Runs one command for a dialog and reports its busy state; anything but a finished change becomes a message. */
 function useDialogCommand(props: BodyProps) {
@@ -171,7 +159,7 @@ export function RenameBody(props: BodyProps) {
           </ul>
         )}
       </details>
-      <ErrorLine message={message} />
+      <LifecycleErrorLine message={message} />
       {discarding ? (
         <div className="ux-draft-notice" role="group" aria-label="Discard changes">
           <p>Discard Changes?</p>
@@ -245,7 +233,7 @@ export function ArchiveBody(props: BodyProps) {
       <p id="archive-name-help" className="notifications-help">
         Type {state.name} exactly.
       </p>
-      <ErrorLine message={message} />
+      <LifecycleErrorLine message={message} />
       <Actions safe="Keep Workspace" busy={busy} onSafe={props.onCancel}>
         <button
           type="submit"
@@ -276,7 +264,7 @@ export function RestoreBody(props: BodyProps) {
       <p>
         {state.name} will be open again. Invitations can be sent and new requests can be started.
       </p>
-      <ErrorLine message={message} />
+      <LifecycleErrorLine message={message} />
       <Actions safe="Not Now" busy={busy} onSafe={props.onCancel}>
         <button type="submit" className="primary-link" disabled={busy}>
           {busy ? 'Please Wait…' : 'Restore Workspace'}
@@ -317,7 +305,10 @@ export function TransferBody(props: BodyProps) {
         const page = (await response.json()) as CustomerAccessPage;
         seen += page.memberships.length;
         for (const m of page.memberships)
-          if (m.status === 'active' && m.id !== state.ownerMemberId)
+          if (
+            m.status === 'active' &&
+            !state.protectedMembers.some((kept) => kept.memberId === m.id)
+          )
             found.push({ id: m.id, label: m.label, role: m.role });
         after = page.nextMemberAfter ?? null;
       } while (after && seen < 200);
@@ -328,7 +319,7 @@ export function TransferBody(props: BodyProps) {
         setLoadFailed(error instanceof Error ? error.message : 'The team could not be loaded.');
     });
     return () => controller.abort();
-  }, [state.workspaceId, state.ownerMemberId, headers]);
+  }, [state.workspaceId, state.protectedMembers, headers]);
   const chosen = useMemo(() => members?.find((m) => m.id === memberId), [members, memberId]);
   const ready = !!chosen && typed.trim() === state.name;
   if (loadFailed)
@@ -401,7 +392,7 @@ export function TransferBody(props: BodyProps) {
       <p id="transfer-name-help" className="notifications-help">
         Type {state.name} exactly.
       </p>
-      <ErrorLine message={message} />
+      <LifecycleErrorLine message={message} />
       <Actions safe="Cancel" busy={busy} onSafe={props.onCancel}>
         <button type="submit" className="primary-link" disabled={busy || !ready}>
           {busy ? 'Please Wait…' : 'Send Offer'}
@@ -436,7 +427,7 @@ export function AnswerBody(props: BodyProps & { answer: 'accept' | 'decline' }) 
           ? `You will be the owner. You can archive the workspace, rename it and transfer ownership. The current owner becomes an admin.`
           : 'The current owner stays the owner. They will see that you declined.'}
       </p>
-      <ErrorLine message={message} />
+      <LifecycleErrorLine message={message} />
       <Actions safe="Not Now" busy={busy} onSafe={props.onCancel}>
         <button
           type="submit"
@@ -467,7 +458,7 @@ export function CancelBody(props: BodyProps) {
       }}
     >
       <p>The member will no longer see the offer. You stay the owner and can send a new offer.</p>
-      <ErrorLine message={message} />
+      <LifecycleErrorLine message={message} />
       <Actions safe="Not Now" busy={busy} onSafe={props.onCancel}>
         <button type="submit" className="primary-link" disabled={busy || !offer}>
           {busy ? 'Please Wait…' : 'Cancel Offer'}
