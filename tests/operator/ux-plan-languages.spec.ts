@@ -937,6 +937,13 @@ test.describe('with the form released', () => {
           document.documentElement.style.fontSize = '200%';
         });
         await walk(page, 'sample', async (state) => {
+          // The receipt is checked again with a wider face and open letter spacing, as a build machine with other fonts
+          // would show it: the code, its note and the copy button must wrap rather than leave the screen.
+          if (state === 'receipt')
+            await page.addStyleTag({
+              content:
+                "*{font-family:'DejaVu Sans',sans-serif !important;letter-spacing:0.04em !important}",
+            });
           expect(await layoutProblems(page, width), `${code} 200% ${state}`).toEqual([]);
         });
       });
