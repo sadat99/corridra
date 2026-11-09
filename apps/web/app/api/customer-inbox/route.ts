@@ -18,19 +18,33 @@ async function handle(request: Request) {
       request.headers.get('x-corridra-customer-issuer') ?? undefined,
     ] as const;
     if (request.method === 'GET') {
-      z.object({})
+      const query = z
+        .object({ count: z.literal('1').optional() })
         .strict()
         .parse(Object.fromEntries(new URL(request.url).searchParams));
+      // The bell's figure comes from the server over every unread item, not from the 30 a list loads.
+      if (query.count)
+        return Response.json(
+          { unread: await s.customerInbox.unreadCount(...context) },
+          { headers: deliveryHeaders },
+        );
       return Response.json(await s.customerInbox.list(...context), { headers: deliveryHeaders });
     }
     if (request.headers.get('origin') !== new URL(s.config.APP_ORIGIN).origin)
       throw new DomainError('Request origin is not allowed', 403);
     if (!request.headers.get('content-type')?.startsWith('application/json'))
       throw new DomainError('JSON required', 415);
+    // Either one item by id, or all of the signed-in person's own unread items. The recipient is never sent.
     const body = z
-      .object({ id: z.uuid() })
-      .strict()
+      .union([z.object({ id: z.uuid() }).strict(), z.object({ all: z.literal(true) }).strict()])
       .parse(JSON.parse((await boundedBody(request, 1024)).toString('utf8')));
+    if ('all' in body) {
+      const marked = await s.customerInbox.markAllRead(...context);
+      return Response.json(
+        { marked, unread: await s.customerInbox.unreadCount(...context) },
+        { headers: deliveryHeaders },
+      );
+    }
     return Response.json(
       { read: await s.customerInbox.markRead(body.id, ...context) },
       { headers: deliveryHeaders },

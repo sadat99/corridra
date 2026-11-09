@@ -38,6 +38,8 @@ import { HomeWork } from './home-work';
 import { RequestsTabs } from './requests-tabs';
 import { ReportsTabs } from './reports-tabs';
 import { AccountSettings } from './account-settings';
+import { AccountClosure, AccountClosureComingSoon } from './account-closure';
+import { customerAccountLifecycleEnabled } from '@corridra/auth/customer-account-lifecycle';
 import { customerNotificationsEnabled } from '@corridra/auth/customer-notifications';
 import { InvitationProvider, OpenInvitationButton } from './invitation-dialog';
 import { parseWorkFilter } from '../../lib/work-items/view';
@@ -170,7 +172,7 @@ export default async function Page({
                 <li>
                   <Link prefetch={false} href="/account/companies">
                     <strong>Browse approved companies</strong>
-                    <span>Companies cleared to take part in missions.</span>
+                    <span>Companies we have cleared to work with.</span>
                   </Link>
                 </li>
               )}
@@ -375,6 +377,11 @@ export default async function Page({
                 ) : (
                   // Without the new navigation there is no All tools page, so the entry points stay here.
                   <WaysIn />
+                )}
+                {customerAccountLifecycleEnabled() ? (
+                  <AccountClosure />
+                ) : (
+                  <AccountClosureComingSoon />
                 )}
               </section>
             }

@@ -17,6 +17,9 @@ type Item = {
   createdAt: string;
 };
 
+/** The customer inbox list returns the newest 30; a full list may hide older unread items. */
+const listLimit = 30;
+
 const typeTitle: Record<string, string> = {
   TEAM_INVITE: 'Team invitation',
   CONTRIBUTOR_INVITE: 'Contributor invitation',
@@ -32,11 +35,15 @@ const typeTitle: Record<string, string> = {
 export function NotificationInbox({
   endpoint,
   grouped = false,
-  onItems,
+  onUnread,
 }: {
   endpoint: string;
-  /** Called with each list the panel loads, so the bell can recount from it while the panel stays open (no extra request). */
-  onItems?: (items: Item[]) => void;
+  /**
+   * Called with the unread figure each time the panel loads, so the bell recounts while the panel stays open. It is
+   * counted from the list; where the list is full (the page limit) the customer panel asks the server, because the
+   * list is only the newest items.
+   */
+  onUnread?: (unread: number) => void;
   /** The customer panel: Needs You first, then Updates, then Earlier, with Mark All Read. Off: the plain list. */
   grouped?: boolean;
 }) {
@@ -44,10 +51,12 @@ export function NotificationInbox({
   const [error, setError] = useState('');
   const active = useRef<AbortController | null>(null);
   // The latest callback, held in a ref so a new inline function from the parent never restarts the load.
-  const itemsCallback = useRef(onItems);
+  const unreadCallback = useRef(onUnread);
   useEffect(() => {
-    itemsCallback.current = onItems;
+    unreadCallback.current = onUnread;
   });
+  // The server's count of every unread item, known only where the list is full; otherwise null (the list is all of them).
+  const [serverUnread, setServerUnread] = useState<number | null>(null);
   const load = useCallback(() => {
     active.current?.abort();
     const controller = new AbortController();
@@ -58,14 +67,26 @@ export function NotificationInbox({
         if (controller.signal.aborted) return;
         setItems(list);
         setError('');
-        itemsCallback.current?.(list);
+        const local = list.filter((item) => !item.readAt).length;
+        unreadCallback.current?.(local);
+        if (grouped && list.length >= listLimit) {
+          // Only the newest items are loaded, so the true figure (and whether Mark All Read is needed) is the server's.
+          fetch(`${endpoint}?count=1`, { cache: 'no-store', signal: controller.signal })
+            .then((r) => readJson<{ unread: number }>(r))
+            .then((body) => {
+              if (controller.signal.aborted || typeof body.unread !== 'number') return;
+              setServerUnread(body.unread);
+              unreadCallback.current?.(body.unread);
+            })
+            .catch(() => undefined);
+        } else setServerUnread(null);
       })
       .catch((e: unknown) => {
         if (controller.signal.aborted) return;
         setItems(null);
         setError(e instanceof Error ? e.message : 'The inbox could not be loaded.');
       });
-  }, [endpoint]);
+  }, [endpoint, grouped]);
   useEffect(() => {
     load();
     function visibility() {
@@ -108,18 +129,18 @@ export function NotificationInbox({
   useEffect(() => {
     if (grouped && items && document.activeElement === document.body) heading.current?.focus();
   }, [grouped, items]);
-  // Mark All Read uses the same single-item read each opened item uses, one after another, then reads the list again.
-  async function markAllRead(list: Item[]) {
+  // Mark All Read is one server call that marks every unread item of the signed-in person (not only the ones loaded
+  // here), then the list is read again. The server decides the recipient; nothing but {all:true} is sent.
+  async function markAllRead() {
     setMarking(true);
     try {
-      for (const item of list) {
-        if (item.readAt) continue;
-        await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: item.id }),
-        }).then((response) => readJson(response));
-      }
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ all: true }),
+      });
+      const body = await readJson<{ unread?: number }>(response);
+      if (typeof body.unread === 'number') unreadCallback.current?.(body.unread);
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'The inbox could not be updated.');
     } finally {
@@ -149,6 +170,11 @@ export function NotificationInbox({
       </li>
     );
   }
+  // A full list may hide older unread items. When the server's count could not be read the local figure is only a floor,
+  // so Mark All Read stays available rather than hiding the way to clear them.
+  const markAllAvailable = (localUnread: number) =>
+    (serverUnread ?? localUnread) > 0 ||
+    (serverUnread === null && (items?.length ?? 0) >= listLimit);
   if (grouped) {
     const groups = items ? groupNotifications(items) : null;
     return (
@@ -157,12 +183,12 @@ export function NotificationInbox({
           <h2 id="ux-inbox-title" ref={heading} tabIndex={-1}>
             Notifications
           </h2>
-          {groups && groups.unread > 0 ? (
+          {groups && markAllAvailable(groups.unread) ? (
             <button
               type="button"
               className="text-link"
               disabled={marking}
-              onClick={() => void markAllRead(items ?? [])}
+              onClick={() => void markAllRead()}
             >
               Mark All Read
             </button>

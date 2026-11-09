@@ -67,12 +67,21 @@ export function BarInbox({
         .then((items: Item[] | null) => {
           if (signal?.aborted) return;
           setUnread(Array.isArray(items) ? items.filter((i) => !i.readAt).length : null);
+          // The customer list holds only the newest 30. A full list may hide older unread items, so the figure on
+          // the bell is then the server's own count over every item.
+          if (grouped && Array.isArray(items) && items.length >= 30)
+            fetch(`${endpoint}?count=1`, { cache: 'no-store', signal })
+              .then((r) => (r.ok ? r.json() : null))
+              .then((body: { unread?: unknown } | null) => {
+                if (!signal?.aborted && typeof body?.unread === 'number') setUnread(body.unread);
+              })
+              .catch(() => undefined);
         })
         .catch(() => {
           if (!signal?.aborted) setUnread(null);
         });
     },
-    [endpoint],
+    [endpoint, grouped],
   );
   useEffect(() => {
     if (!counted) return;
@@ -138,11 +147,7 @@ export function BarInbox({
       ) : null}
       <div id={panelId} className="ux-app-popover" hidden={!open}>
         {open ? (
-          <NotificationInbox
-            endpoint={endpoint}
-            grouped={grouped}
-            onItems={(list) => setUnread(list.filter((item) => !item.readAt).length)}
-          />
+          <NotificationInbox endpoint={endpoint} grouped={grouped} onUnread={setUnread} />
         ) : null}
       </div>
     </div>

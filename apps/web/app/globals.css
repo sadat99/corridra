@@ -4054,7 +4054,9 @@ th {
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  white-space: nowrap;
+  /* One word never keeps its line when the text is at 200 percent on a 320 px phone: it breaks rather than push the page sideways. */
+  overflow-wrap: anywhere;
+  max-width: 100%;
   color: var(--caution-text);
   background: var(--caution-surface);
 }
@@ -4137,10 +4139,12 @@ th {
   line-height: 1.25;
   letter-spacing: -0.01em;
   color: var(--text-1);
+  overflow-wrap: anywhere;
 }
 .intake-form .label {
   margin: 0;
   color: var(--text-3);
+  overflow-wrap: anywhere;
 }
 .intake-form .field {
   display: grid;
@@ -4197,6 +4201,7 @@ th {
 .guide-journey-bar li {
   position: relative;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-2);
   justify-items: start;
   font-size: var(--text-sm);
@@ -4220,8 +4225,9 @@ th {
 .guide-journey-bar span {
   display: grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
+  /* A dot is 2rem and gives way to its column: with text at 200 percent five dots are wider than a 320 px phone. */
+  width: min(2rem, 100%);
+  aspect-ratio: 1;
   font-size: var(--text-sm);
   font-weight: 700;
   color: var(--text-2);
@@ -4305,7 +4311,9 @@ th {
 }
 .guide-actions .primary-link {
   margin-inline-start: auto;
-  min-width: 10rem;
+  /* 10rem is 320 px when text is at 200 percent, which is the whole phone: it gives way to the space there is. */
+  min-width: min(10rem, 100%);
+  max-width: 100%;
   min-height: var(--guided-touch-large);
 }
 .guide-actions .button-secondary {
@@ -4371,6 +4379,9 @@ th {
 }
 .receipt-panel {
   display: grid;
+  /* One column no wider than the panel: an automatic column grows to its widest word and pushes past a 320 px phone. */
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
   gap: var(--space-4);
   padding: var(--space-6);
   background: var(--surface-1);
@@ -4393,6 +4404,7 @@ th {
 }
 .receipt-panel .field {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-2);
   min-width: 0;
   margin: 0;
@@ -4415,6 +4427,7 @@ th {
 }
 .receipt-panel .operator-form {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
   min-width: 0;
 }

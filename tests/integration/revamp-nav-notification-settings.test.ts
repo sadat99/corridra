@@ -13,6 +13,7 @@ const item = () =>
   customerAvatarItems({
     billing: false,
     notificationSettings: notificationSettingsAvailable(),
+    organisationProfiles: true,
     workspaces: [],
   }).find((entry) => entry.label === 'Notification Settings')!;
 

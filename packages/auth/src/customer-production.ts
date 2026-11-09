@@ -45,6 +45,16 @@ export function customerDataEnvironmentAllowed(env: NodeJS.ProcessEnv = process.
   return env.DATA_ENVIRONMENT === 'synthetic' || realUseEnabled(env);
 }
 
+// The customer workspaces switch: on, in an allowed data environment, and not locked for production. It lives here, with
+// no import of the session boundary, so the closed-account check the boundary runs can share it with the screens.
+export function customerWorkspacesSwitchOn(env: NodeJS.ProcessEnv = process.env) {
+  return (
+    env.CORRIDRA_CUSTOMER_WORKSPACES_ENABLED === 'true' &&
+    customerDataEnvironmentAllowed(env) &&
+    !customerProductionLocked(env)
+  );
+}
+
 // The issuer label the customer modules pin. An explicit owner setting wins, so the exact string the
 // database pins is known; otherwise the provider address from the existing identity settings.
 export function customerIssuerFromEnv(env: NodeJS.ProcessEnv = process.env) {

@@ -4,6 +4,7 @@ import {
   customerParticipantsEnabled,
   customerParticipantInput,
 } from '@corridra/auth/customer-participants';
+import { archivedWorkspaceRefusal } from '@corridra/auth/customer-workspace-lifecycle';
 import { foundations } from '../../../lib/foundations';
 import { boundedBody, deliveryError, deliveryHeaders } from '../../../lib/delivery-http';
 export const runtime = 'nodejs';
@@ -25,7 +26,14 @@ const plainRefusals = [
   'Label changed; reload before saving',
   'Nothing changed',
 ];
+// The workspace archive sentences come back with the code archived, as on the other customer routes.
 function failure(error: unknown) {
+  const archived = archivedWorkspaceRefusal(error);
+  if (archived)
+    return Response.json(
+      { error: archived.message, code: archived.code },
+      { status: archived.status, headers: deliveryHeaders },
+    );
   const refusal = error as { code?: string; message?: string };
   if (refusal.code === '23514' && plainRefusals.includes(refusal.message ?? ''))
     return deliveryError(new DomainError(refusal.message as string, 409));

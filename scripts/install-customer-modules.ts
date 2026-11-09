@@ -38,6 +38,13 @@ import { migrateNetworkRealUse } from '../packages/db/src/network-real-use-migra
 import { configureNetworkRealUse } from '../packages/auth/src/network-real-use-configuration';
 import { migrateCustomerMissionMail } from '../packages/db/src/customer-mission-mail-migrate';
 import { migrateCustomerRequestWithdrawal } from '../packages/db/src/customer-request-withdrawal-migrate';
+import {
+  migrateCustomerWorkspaceLifecycle,
+  refreshCustomerWorkspaceLifecycle,
+} from '../packages/db/src/customer-workspace-lifecycle-migrate';
+import { migrateCustomerAccountLifecycle } from '../packages/db/src/customer-account-lifecycle-migrate';
+import { configureWorkspaceLifecycle } from '../packages/auth/src/customer-workspace-lifecycle-configuration';
+import { configureAccountLifecycle } from '../packages/auth/src/customer-account-lifecycle-configuration';
 import { migrateCustomerMoves } from '../packages/db/src/customer-move-migrate';
 import { configureMoveRecords } from '../packages/auth/src/customer-move-configuration';
 import { migrateCustomerNotifications } from '../packages/db/src/customer-notification-migrate';
@@ -72,6 +79,12 @@ const v = z
     NETWORK_USE_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     MISSION_MAIL_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     REQUEST_WITHDRAWAL_ACTION: z.enum(['unchanged', 'enable', 'pause']).default('unchanged'),
+    WORKSPACE_LIFECYCLE_ACTION: z
+      .enum(['unchanged', 'install', 'enable', 'pause'])
+      .default('unchanged'),
+    ACCOUNT_LIFECYCLE_ACTION: z
+      .enum(['unchanged', 'install', 'enable', 'pause'])
+      .default('unchanged'),
     MOVE_RECORDS_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     MOVE_RECORDS_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
@@ -130,6 +143,14 @@ const v = z
       z.coerce.number().int().min(1).max(90).optional(),
     ),
     VIEW_AS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
+    WORKSPACE_LIFECYCLE_REASON: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.string().trim().min(10).max(500).optional(),
+    ),
+    ACCOUNT_LIFECYCLE_REASON: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.string().trim().min(10).max(500).optional(),
+    ),
     REQUEST_WITHDRAWAL_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
       z.string().trim().min(10).max(500).optional(),
@@ -202,6 +223,14 @@ if (v.REQUEST_WITHDRAWAL_ACTION !== 'unchanged' && !apply)
   throw new Error('Request withdrawal changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.REQUEST_WITHDRAWAL_ACTION) && !v.REQUEST_WITHDRAWAL_REASON)
   throw new Error('Request withdrawal changes require an explicit reason');
+if (v.WORKSPACE_LIFECYCLE_ACTION !== 'unchanged' && !apply)
+  throw new Error('Workspace lifecycle changes require INSTALL_APPLY=yes');
+if (['enable', 'pause'].includes(v.WORKSPACE_LIFECYCLE_ACTION) && !v.WORKSPACE_LIFECYCLE_REASON)
+  throw new Error('Workspace lifecycle changes require an explicit reason');
+if (v.ACCOUNT_LIFECYCLE_ACTION !== 'unchanged' && !apply)
+  throw new Error('Account lifecycle changes require INSTALL_APPLY=yes');
+if (['enable', 'pause'].includes(v.ACCOUNT_LIFECYCLE_ACTION) && !v.ACCOUNT_LIFECYCLE_REASON)
+  throw new Error('Account lifecycle changes require an explicit reason');
 if (v.MISSION_MAIL_ACTION !== 'unchanged' && !apply)
   throw new Error('Mission mail changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.MISSION_MAIL_ACTION) && !v.MISSION_MAIL_REASON)
@@ -221,6 +250,8 @@ if (['enable', 'pause'].includes(v.NOTIFICATIONS_ACTION) && !v.NOTIFICATIONS_REA
 
 const registries = [
   'customer_request_withdrawal_migrations',
+  'customer_workspace_lifecycle_migrations',
+  'customer_account_lifecycle_migrations',
   'customer_migrations',
   'customer_commercial_migrations',
   'customer_company_migrations',
@@ -361,6 +392,9 @@ try {
       console.log(
         'installed or already current: programme lifecycle (needs real-use installed first)',
       );
+      // The programme guard just installed gets its workspace archive gate when that module is already here.
+      if (await refreshCustomerWorkspaceLifecycle(pool))
+        console.log('workspace lifecycle re-run so the programme archive gate is current');
     }
     if (v.RESPONSE_REVISION_ACTION !== 'unchanged') {
       await migrateRecipientResponseRevision(pool);
@@ -482,6 +516,39 @@ try {
       console.log(
         `Request withdrawal ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
       );
+    }
+    // Workspace and account lifecycle are never part of the base run: a run with both actions unchanged installs
+    // nothing of them. Each installs with its control closed; opening or pausing is an owner decision with a reason.
+    // Account lifecycle installs the workspace lifecycle first (its own migration does it). The install workflow reaches
+    // both through field_modules_action (lifecycle_install, lifecycle_enable, lifecycle_pause), which moves them together
+    // and supplies the reason, so the workflow stays within its 25-input cap.
+    if (v.WORKSPACE_LIFECYCLE_ACTION !== 'unchanged') {
+      await migrateCustomerWorkspaceLifecycle(pool);
+      if (v.WORKSPACE_LIFECYCLE_ACTION === 'install')
+        console.log('Workspace lifecycle installed or already current (its control stays closed)');
+      else {
+        const result = await configureWorkspaceLifecycle(pool, {
+          enabled: v.WORKSPACE_LIFECYCLE_ACTION === 'enable',
+          reason: v.WORKSPACE_LIFECYCLE_REASON,
+        });
+        console.log(
+          `Workspace lifecycle ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
+        );
+      }
+    }
+    if (v.ACCOUNT_LIFECYCLE_ACTION !== 'unchanged') {
+      await migrateCustomerAccountLifecycle(pool);
+      if (v.ACCOUNT_LIFECYCLE_ACTION === 'install')
+        console.log('Account lifecycle installed or already current (its control stays closed)');
+      else {
+        const result = await configureAccountLifecycle(pool, {
+          enabled: v.ACCOUNT_LIFECYCLE_ACTION === 'enable',
+          reason: v.ACCOUNT_LIFECYCLE_REASON,
+        });
+        console.log(
+          `Account lifecycle ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
+        );
+      }
     }
     if (v.REAL_BILLING_ACTION !== 'unchanged') {
       await migrateCustomerBillingReal(pool);

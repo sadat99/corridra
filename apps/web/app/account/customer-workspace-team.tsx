@@ -1,3 +1,4 @@
+import { archivedRefusalText } from './archived-refusal';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
@@ -83,6 +84,7 @@ export function CustomerWorkspaceTeam({
   issuer,
   onDenied,
   memberRolesEnabled = false,
+  ownerMemberId = null,
   bare = false,
   open = false,
   onBusyChange,
@@ -92,6 +94,8 @@ export function CustomerWorkspaceTeam({
   issuer: string;
   onDenied: (status: number) => void;
   memberRolesEnabled?: boolean;
+  /** The member who became owner by a handover, labelled Owner in the list. */
+  ownerMemberId?: string | null;
   /** Inside a dialog: no disclosure of its own. The team is read when `open` turns true. */
   bare?: boolean;
   open?: boolean;
@@ -254,6 +258,12 @@ export function CustomerWorkspaceTeam({
         }),
       });
       if (!alive.current) return;
+      const archived = await archivedRefusalText(response);
+      if (!alive.current) return;
+      if (archived) {
+        setMessage({ text: archived, error: true });
+        return;
+      }
       if (!response.ok) {
         if ([401, 403, 409, 503].includes(response.status)) denied(response.status);
         else
@@ -604,7 +614,8 @@ export function CustomerWorkspaceTeam({
                 {page.memberships.map((r) => (
                   <li key={r.id}>
                     <p className="ux-row-title">
-                      <strong>{r.label}</strong> · {r.role} · {r.status}
+                      <strong>{r.label}</strong> · {r.id === ownerMemberId ? 'Owner' : r.role} ·{' '}
+                      {r.status}
                     </p>
                     <details className="ux-journey-disclosure">
                       <summary>Membership reference</summary>

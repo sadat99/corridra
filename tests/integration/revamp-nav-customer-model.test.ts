@@ -19,6 +19,7 @@ const all = {
   move: true,
   billing: true,
   notificationSettings: true,
+  organisationProfiles: true,
   workspaces: [
     { id: workspace, name: 'Aurora Textiles' },
     { id: '1f8fad5b-d9cb-469f-a165-70867728950e', name: 'Second Mill' },
@@ -132,6 +133,15 @@ describe('the customer navigation model', () => {
     expect(hrefs(other)).toContain(`/account/profile/${second}`);
     const none = customerAvatarItems({ ...all, workspaces: [], currentWorkspaceId: undefined });
     expect(none.find((item) => item.label === 'Company Profile')!.kind).toBe('soon');
+  });
+
+  it('Company Profile is a link only where the profiles module is on and a workspace resolves, otherwise plain Coming soon', () => {
+    const off = customerAvatarItems({ ...all, organisationProfiles: false });
+    expect(off.find((item) => item.label === 'Company Profile')!.kind).toBe('soon');
+    expect(hrefs(off).some((href) => href.startsWith('/account/profile'))).toBe(false);
+    expect(customerAvatarItems(all).find((item) => item.label === 'Company Profile')!.kind).toBe(
+      'link',
+    );
   });
 
   it('the help menu is honest: only real things are links, the rest is Coming soon', () => {

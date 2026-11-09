@@ -2,6 +2,8 @@ import { customerCompaniesEnabled } from './customer-companies';
 import { customerDeliveryEnabled } from './customer-assigned-missions';
 import { customerDecisionsEnabled } from './customer-decisions';
 import { customerMemberRolesEnabled } from './customer-member-roles';
+import { customerWorkspaceLifecycleEnabled } from './customer-workspace-lifecycle';
+import { customerAccountLifecycleEnabled } from './customer-account-lifecycle';
 import { customerMissionDraftsEnabled } from './customer-mission-drafts';
 import { customerMissionSharesEnabled } from './customer-mission-shares';
 import { customerOrganisationLinksEnabled } from './customer-organisation-links';
@@ -113,6 +115,18 @@ const modules: {
     label: 'Team roles and leaving',
     flag: 'CORRIDRA_CUSTOMER_MEMBER_ROLES_ENABLED',
     enabled: customerMemberRolesEnabled,
+  },
+  {
+    key: 'workspace-lifecycle',
+    label: 'Workspace changes',
+    flag: 'CORRIDRA_CUSTOMER_WORKSPACE_LIFECYCLE_ENABLED',
+    enabled: customerWorkspaceLifecycleEnabled,
+  },
+  {
+    key: 'account-lifecycle',
+    label: 'Close my account',
+    flag: 'CORRIDRA_CUSTOMER_ACCOUNT_LIFECYCLE_ENABLED',
+    enabled: customerAccountLifecycleEnabled,
   },
   {
     key: 'organisation-profiles',
