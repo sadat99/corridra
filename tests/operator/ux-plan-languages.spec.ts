@@ -1,6 +1,5 @@
 import { test, expect, type BrowserContext, type Page, type Locator } from '@playwright/test';
 import { build } from 'esbuild';
-import { execFileSync } from 'node:child_process';
 import { createServer, type Server } from 'node:http';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -33,7 +32,13 @@ import { countryCodes } from '../../packages/domain/src/countries';
 // names the commit that carries that form. That commit is kept reachable because the pull request is merged with
 // a merge commit, not squashed (no tag), so main's history holds it.
 // Layout Phase 2a (5 Nov 2026): English action labels moved to Title Case on purpose, so the baseline is the commit that carries them.
-const baseline = '335cd394d90dd1a544de94fc58520133c0f9c8a3';
+// Request page length (owner, 9 November 2026, S13): the English form changed on purpose (the test notice folds, the
+// example request summary is a closed line on a phone, the draft line moved). The baseline is no longer a commit,
+// because a squash merge drops the pull request's commits from main's history: it is the pair of source files kept
+// in tests/operator/fixtures/plan-baseline (copies of page.tsx and intake.tsx with that change), read as text. The
+// old pin at 335cd394 stays in history for the record. When the English form changes on purpose again, copy the two
+// files over and say so in the pull request.
+const baselineDir = resolve('tests/operator/fixtures/plan-baseline');
 let server: Server, origin: string;
 let bundle = '';
 const chunks = new Map<string, string>();
@@ -51,8 +56,7 @@ CORRIDRA_REAL_USE_ENABLED:real?'true':''};
 </script>`;
 
 test.beforeAll(async () => {
-  const before = (path: string) =>
-    execFileSync('git', ['show', `${baseline}:apps/web/app/plan/${path}`], { encoding: 'utf8' });
+  const before = (path: string) => readFileSync(`${baselineDir}/${path}.txt`, 'utf8');
   const sources: Record<string, string> = {
     page: before('page.tsx'),
     intake: before('intake.tsx'),
