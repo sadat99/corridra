@@ -12,7 +12,7 @@
     "@corridra/domain": "workspace:*",
     "@corridra/missions": "workspace:*",
     "yauzl": "3.4.0",
-    "fast-xml-parser": "5.11.2",
+    "fast-xml-parser": "5.12.0",
     "fontkit": "2.0.4",
     "pdfkit": "0.20.2"
   },
