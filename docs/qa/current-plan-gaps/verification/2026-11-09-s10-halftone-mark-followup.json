@@ -1,0 +1,51 @@
+{
+  "recordedOn": "2026-11-09",
+  "batch": "S10 brand follow-up to PR 369 (merged as dd6e1e13): docs reconciled, phone header gap scoped to the customer and team headers",
+  "kind": "Docs, one CSS selector and its test. No art change, no migration, no auth, data, money or event change.",
+  "baseCommit": "dd6e1e13",
+  "headNote": "The commands ran on e18206537bcacc455744e94e477a74605356d81d. This receipt is the only change after it; CI on the exact PR head is the final record.",
+  "commands": [
+    {
+      "command": "pnpm format:check",
+      "exit": 0,
+      "ranOn": "e18206537bcacc455744e94e477a74605356d81d"
+    },
+    { "command": "pnpm lint", "exit": 0, "ranOn": "e18206537bcacc455744e94e477a74605356d81d" },
+    { "command": "pnpm typecheck", "exit": 0, "ranOn": "e18206537bcacc455744e94e477a74605356d81d" },
+    {
+      "command": "node scripts/gate.mjs docs-tests -- pnpm test:docs (brand test 5 of 5)",
+      "exit": 0,
+      "ranOn": "e18206537bcacc455744e94e477a74605356d81d"
+    },
+    {
+      "command": "pnpm exec vitest run tests/integration/navigation-v1-public-header.test.ts",
+      "exit": 0,
+      "ranOn": "e18206537bcacc455744e94e477a74605356d81d"
+    },
+    {
+      "command": "cd apps/web && node ../../scripts/gate.mjs build -- pnpm build",
+      "exit": 0,
+      "ranOn": "e18206537bcacc455744e94e477a74605356d81d"
+    },
+    {
+      "command": "node scripts/gate.mjs ux -- pnpm test:ux --trace off (85 passed)",
+      "exit": 0,
+      "ranOn": "e18206537bcacc455744e94e477a74605356d81d"
+    },
+    {
+      "command": "playwright test tests/operator/team-today-layout.spec.ts tests/operator/team-nav-v1.spec.ts (19 passed; fixture only, config copy without the database web server)",
+      "exit": 0,
+      "ranOn": "tree before the commit, same CSS as e18206537bcacc455744e94e477a74605356d81d"
+    }
+  ],
+  "changes": [
+    "ADR-077: removed 'at every place'; the customer and team headers at 430 px and below (44 x 42 px mark, 4 px gap) are recorded as a deliberate exception 2 px under the 44 px rule (measured row width); the public header wordmark at 14 px tall at 430 px and below is recorded as a second exception under the 24 px compact-lockup minimum.",
+    "Identity doc sections 2, 5 and 11 and brand-identity.tokens.json (status, sizeLadder, minimumSize) say the same; section 2 says the code uses BrandLockup (44 px mark plus wordmark), not the lockup-compact file; section 11 intro excepts the owner decision of 9 Nov 2026.",
+    "globals.css: the 4 px gap at 430 px and below is now scoped to .site-header:is(.ux-customer-header, .ux-team-header). The contributor header (site-header ux-app-header, flex-wrap wrap) keeps its own gap and the 46 x 44 px mark. The brand test regex follows the new selector.",
+    "The PR 369 receipt baseCommit is corrected to the merge base ba7390d (branch start a3090c6) and notes the contributor header."
+  ],
+  "notDone": [
+    "The contributor header was not rendered or measured at 320 to 430 px. It is a wrapping row, so a narrow width can take a second row; no overflow is expected. Scoping leaves its gap as it was before PR 369.",
+    "No real signed-in session was rendered."
+  ]
+}
