@@ -98,7 +98,7 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
   const heroHref =
     content.ctaHref ?? (content.intakeJob ? `/plan?job=${content.intakeJob}` : '/plan');
   const heroLabel = content.cta ?? 'Start a Request';
-  // The header bar already carries this exact action from 75rem; a job or page specific action is never a repeat.
+  // The header bar already carries this exact action when the hero is 67rem wide or more (the header's own threshold, see page-compact.css); a job or page specific action is never a repeat.
   const heroRepeatsHeader = heroHref === '/plan' && heroLabel === 'Start a Request';
   return (
     <PublicShell>

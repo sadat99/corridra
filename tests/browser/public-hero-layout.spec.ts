@@ -10,7 +10,10 @@ const pages = ['/how-it-works', '/trust'] as const;
 
 // Property: at every width, at normal and at 200% text, with and without a 15 px scrollbar, the action is in view in
 // the header bar or in the hero, never in neither and never in both. The header decides by its own container width in
-// rem, so the sweep includes the edges (1199, 1200, 1215, 1216) and the scrollbar and large-text cases.
+// rem, so the sweep (39 entries, 35 distinct widths from 320 to 2400) includes the edges (1199, 1200, 1215, 1216,
+// 2271, 2272) and the scrollbar and large-text cases. The 15 px scrollbar emulation may not take effect in headless
+// Chromium (it hides scrollbars), so those cases are not independent proof; the hero and the header read the same
+// container width by construction.
 const widths = [
   ...Array.from({ length: 26 }, (_, i) => 320 + i * 64),
   390,
