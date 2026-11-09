@@ -18,18 +18,18 @@ Lockups: `lockup-compact` (orb + wordmark), `lockup-horizontal`, `lockup-stacked
 
 ## 2. Which asset to use
 
-| Context                                                                         | Asset                                           |
-| ------------------------------------------------------------------------------- | ----------------------------------------------- |
-| Favicon file at 16 px, avatar and any other slot under 44 px                    | `orb`                                           |
-| Product chrome, 44 px tall beside the wordmark: headers, collapsed rail, footer | `mark` (BrandMark paints it from the mask file) |
-| Product chrome 24 to 40 px tall: headers, footer                                | `lockup-compact`                                |
-| Wide spaces: slides, documents, partner pages                                   | `lockup-horizontal`                             |
-| Centred or narrow spaces: sign-in, covers, social cards                         | `lockup-stacked`                                |
-| Large brand moments, square, 64 px and up                                       | `mark`                                          |
-| App icon, 180 px and up                                                         | `mark` on a navy tile (`app-icons/`)            |
-| Marketing and brand sheets only                                                 | `*-tagline` versions                            |
+| Context                                                                         | Asset                                                                                                 |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Favicon file at 16 px, avatar and any other slot under 44 px                    | `orb`                                                                                                 |
+| Product chrome, 44 px tall beside the wordmark: headers, collapsed rail, footer | `mark` (BrandMark paints it from the mask file)                                                       |
+| Product chrome 24 to 40 px tall as a file: decks, email, PDFs                   | `lockup-compact` (the code does not use it: `BrandLockup` composes the 44 px `mark` and the wordmark) |
+| Wide spaces: slides, documents, partner pages                                   | `lockup-horizontal`                                                                                   |
+| Centred or narrow spaces: sign-in, covers, social cards                         | `lockup-stacked`                                                                                      |
+| Large brand moments, square, 64 px and up                                       | `mark`                                                                                                |
+| App icon, 180 px and up                                                         | `mark` on a navy tile (`app-icons/`)                                                                  |
+| Marketing and brand sheets only                                                 | `*-tagline` versions                                                                                  |
 
-Never scale the dot mark below 44 px tall. The halftone dots merge into grey below that. Use the orb. Owner decision, 9 Nov 2026 (ADR-077 amendment 1): the header, rail and footer show the halftone sphere at 44 px tall, and the favicon uses it at 32 px and up; the orb stays only for the 16 px favicon file and slots under 44 px.
+Never scale the dot mark below 44 px tall (one deliberate exception: 44 x 42 px in the customer and team headers at 430 px and below, see section 5). The halftone dots merge into grey below that. Use the orb. Owner decision, 9 Nov 2026 (ADR-077 amendment 1): the header, rail and footer show the halftone sphere at 44 px tall, and the favicon uses it at 32 px and up; the orb stays only for the 16 px favicon file and slots under 44 px.
 
 ## 3. Colour
 
@@ -55,16 +55,16 @@ Allowed: Porcelain (`--paper`), white (`--surface-1`), `--surface-subtle`, Midni
 
 Clear space `X` is the height of the letter C in the wordmark. For the orb alone, `X` is a quarter of the orb diameter. Keep at least `X` free on every side.
 
-| Asset               | Minimum size                                                                                                          |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `orb`               | 16 px                                                                                                                 |
-| `lockup-compact`    | 24 px tall                                                                                                            |
-| `wordmark`          | 96 px wide                                                                                                            |
-| `lockup-stacked`    | 120 px wide                                                                                                           |
-| `lockup-horizontal` | 160 px wide                                                                                                           |
-| `mark`              | 64 px wide in print and on pages (large brand moments, app icons); 44 px tall in product chrome (ADR-077 amendment 1) |
-| tagline lockups     | 200 to 260 px wide                                                                                                    |
-| Print, any lockup   | 25 mm wide                                                                                                            |
+| Asset               | Minimum size                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `orb`               | 16 px                                                                                                                                                                                                                                                                                                                                                        |
+| `lockup-compact`    | 24 px tall                                                                                                                                                                                                                                                                                                                                                   |
+| `wordmark`          | 96 px wide                                                                                                                                                                                                                                                                                                                                                   |
+| `lockup-stacked`    | 120 px wide                                                                                                                                                                                                                                                                                                                                                  |
+| `lockup-horizontal` | 160 px wide                                                                                                                                                                                                                                                                                                                                                  |
+| `mark`              | 64 px wide in print and on pages (large brand moments, app icons); 44 px tall in product chrome (ADR-077 amendment 1); deliberate exception: 44 x 42 px in the customer and team headers at 430 px and below, 2 px under the rule (measured row width); the public header wordmark is 14 px tall at 430 px and below, under the 24 px compact-lockup minimum |
+| tagline lockups     | 200 to 260 px wide                                                                                                                                                                                                                                                                                                                                           |
+| Print, any lockup   | 25 mm wide                                                                                                                                                                                                                                                                                                                                                   |
 
 ## 6. Typography relation
 
@@ -105,7 +105,7 @@ SOURCE, VALIDATE, TRANSACT belongs to marketing material and brand sheets only. 
 
 ## 11. Governance and open gates
 
-AC/1 master contract section 11 says to retain the current mark and that a visual-identity revision needs separate human review, a trademark check and a legal and technical handoff. The owner supplied this logo and instructed its adoption. The gates below are not passed by any agent and must stay recorded as open until a named person closes them.
+AC/1 master contract section 11 says to retain the current mark and that a visual-identity revision needs separate human review, a trademark check and a legal and technical handoff. The owner supplied this logo and instructed its adoption. The gates below are not passed by any agent and must stay recorded as open until a named person closes them, except the owner decision of 9 Nov 2026 in the row below.
 
 | Gate                                                                                                                                      | State                      |
 | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |

@@ -2,7 +2,7 @@
   "recordedOn": "2026-11-09",
   "batch": "S10 brand: halftone sphere replaces the solid orb in the product mark and the favicon (ADR-077 amendment 1)",
   "kind": "Presentation only. Code-only, no migration, no auth, data, money or event change. Owner decision 9 Nov 2026 quoted in docs/adr/0077-corridra-visual-identity.md.",
-  "baseCommit": "a3090c667cca7f36475da64efb5196113b56aa00",
+  "baseCommit": "ba7390d534b0989502dc869f40bde57a52682dba",
   "history": "First push aad01144454d9ef20f7fa67283bdd0aea8a277cc (CI job operator (2) failed there: team Today at 390 px was 2.0308 screens, budget 2.0). Guardian fix commit 39e2db641c676bc4200ba363fd590ee1215da967 and receipt 2068d369fcdfe327a587b9484457ebb65850f511 (CI operator (2) failed again with the same test). Phone header fix commit fb1673ba89e638cfa9b6033cc010044ef0976e73. The commands below ran on the tree of fb1673ba89e638cfa9b6033cc010044ef0976e73; the only change after it is this receipt file. Earlier runs on earlier commits are superseded.",
   "headNote": "A file cannot hold its own commit hash. The head of the PR is the commit that adds this receipt; CI on that exact head is the final record.",
   "commands": [
@@ -69,6 +69,8 @@
     "No real signed-in session was rendered. The signed-in headers were measured through the operator fixtures for team Today and team navigation, and through injected markup for the rest. The customer shell was not rendered in a fixture here; the other operator shards passed on the first head and only gap and mark size changed since, in the direction that matches the old widths.",
     "Open Graph and Twitter images already use the halftone lockup (checked by eye); not regenerated.",
     "Browsers that prefer icon.svg show the halftone at 16 CSS px; only favicon.ico keeps the orb at 16 px.",
-    "Trademark check, vector master and legal handoff, tagline review and the art-direction review of the orb as a standalone mark stay open."
-  ]
+    "Trademark check, vector master and legal handoff, tagline review and the art-direction review of the orb as a standalone mark stay open.",
+    "Contributor header (components/ux/app-header.tsx, class site-header ux-app-header, flex-wrap wrap): it received the 4 px gap at 430 px and below in PR 369 and keeps the 46 x 44 px mark. The follow-up PR scopes the gap to the customer and team headers only, so the contributor header is back to its own gap. It was not rendered or measured at 320 to 430 px."
+  ],
+  "baseNote": "Merge base of the PR head 7e8451a with main (the origin/main merged in before the first push). The branch started from main a3090c667cca7f36475da64efb5196113b56aa00. Corrected by the follow-up PR."
 }
