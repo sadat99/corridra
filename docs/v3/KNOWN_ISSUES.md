@@ -253,3 +253,20 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Why it stays:** nothing may be lost or hidden from a role that could reach it before (Navigation v1 condition 1), and the shared header (S2's `ux/app-header.tsx`, avatar menu) is not editable by the team-shell work.
 - **Removal trigger:** when the shared header's avatar menu carries Account (Authenticator, and for non-admin roles Health and Readiness), delete the Account item from `apps/web/lib/ux/team-map.ts`, its group from `ux/team-sidebar.tsx` and the cap check in `tests/integration/team-navigation-map.test.ts` (NAV-02); the reachability test NAV-06 then proves each place is still reachable.
 - **Rule:** do not add a second stopgap group. The Account group holds at most three places (tested).
+
+### KI-41 G4/G5 enabled in production before its post-merge fixes and privacy review (9 November 2026)
+
+- **What:** PR 355 (G4 workspace lifecycle, G5 account close and erasure request) merged on 7 Nov without S1's Guardian review, and install run 42364802587 the same day installed both modules and enabled both controls. The post-merge Guardian review (9 Nov, stamp auth-c8b26adfa5f2) is FIXES-NEEDED:
+  - B1: Undo and the staff erasure steps fail for a person later removed from their only workspace (`account_chain_tenant`).
+  - B2: a former owner demoted by transfer keeps admin after a revocation that reports success.
+  - B3: unreviewed and partly false privacy words show once the control is open.
+  - B4: erasure requests can be filed, but staff have no route or page to handle them.
+  - Codex 1 and 3 are also confirmed: the close dialog sends no identity headers, and close and provisioning are not serialized.
+- **Reachable:** only where the app flags `CORRIDRA_CUSTOMER_WORKSPACE_LIFECYCLE_ENABLED` and `CORRIDRA_CUSTOMER_ACCOUNT_LIFECYCLE_ENABLED` are set. They were not observed.
+- **Safe pause:** run the install workflow with `lifecycle_pause`.
+  - A closed account stays closed while paused, because `customer.account_closed_gate()` does not read the control, and Undo still works.
+  - Turning the app flag off instead would give closed accounts full access again.
+- **Known limits that stay after the fix:**
+  - A former owner stays admin until a later step-down change.
+  - A sole owner may close while the workspace is archived, and after day 30 nobody can restore or transfer it.
+- **Removal trigger:** S2's follow-up PR merges with a Guardian PASS on its exact head, the owner installs it, and the privacy wording review is recorded. Erasure handling needs S4's staff queue or a staff runbook before the first real request.

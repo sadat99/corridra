@@ -2920,3 +2920,40 @@ Risks: the always-read guides now total 36713 of the 36864-byte budget (151 byte
 Next: S1 opens the public header 2a PR; S2 finishes the G4/G5 PR for the owner's merge; S3 fixes the stale editor; S4 builds palette part 2. Tested head: 2217fd5 plus this records commit (branch s1-records2, not pushed).
 
 S1 addendum (same PR): the ADR-032 and ADR-051 ownership-transfer amendments are now written ("Amendment, 6 November 2026" sections), quoting the G4 gap text and the owner's "when ready build g4, g5 together".
+
+### 9 November 2026: post-merge Guardian review of PR 355, live G4/G5 install, records for PRs 350 to 356
+
+Scope:
+
+- S1 resumed after the owner's 7 Nov merges ("i already merged 354,355 differently").
+- Main f62e093. CI 42361143427 and CodeQL 42361143403 passed.
+- Install run 42364802587 (owner dispatch, 7 Nov 10:38Z) logged:
+  - "customer_workspace_lifecycle_migrations: not installed" then "4 applied";
+  - "customer_account_lifecycle_migrations: not installed" then "1 applied";
+  - "Workspace lifecycle enabled; changed=true" and "Account lifecycle enabled; changed=true".
+  - All other actions were unchanged. recipient_response_revision stays not installed.
+
+Guardian (corridra-reviewer, stamp auth-c8b26adfa5f2, diff 5c6ec8be...22afe92c): FIXES-NEEDED.
+
+- B1 to B4 and Codex 1 to 4 are all confirmed (details in KI-41). S1 re-read B1 (account 0001:131-133) and B2 (real-use 0002:457-460).
+- Of the 11 conditions, 1, 2, 3, 5, 6, 7, 8 and 11 PASS, and 9 PASS with a note.
+- Condition 9 note: "fresh sign-in" is a live provider session, with no recency check.
+- Condition 10 is PARTIAL: a closed person cannot file erasure.
+- Condition 4 is FAIL against the Guardian answer "script-only": the PR added the `lifecycle_*` workflow options that the 7 Nov run used.
+- Follow-up items: split the erasure queue between sample and real; add a late re-run for submit_private_request and workspace_access_command.
+
+Action:
+
+- The full fix list went to S2 as one follow-up PR, with red tests first and additive migrations only. The owner merges it.
+- S1 recommended that the owner run `lifecycle_pause` until that PR merges. Closed accounts stay closed and Undo still works while paused.
+
+Records (PR 358):
+
+- Ledger archived at f62e093 to docs/v3/history/ledger-before-pr350-356-records-2026-11-09.md, then condensed.
+- Lanes updated to 9 November.
+- KI-41 added.
+
+Not checked:
+
+- The Vercel app flags (team access returned 403).
+- The test bodies beyond the cited lines.
