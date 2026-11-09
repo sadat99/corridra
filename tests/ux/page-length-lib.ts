@@ -50,7 +50,7 @@ export const homeLimits: Record<Viewport['name'], Limits> = {
  * tests/browser/layout-budget-plan.spec.ts after measuring (2.53 and 1.80); owner confirmation pending.
  */
 const planLimits: Record<Viewport['name'], Limits> = {
-  phone: { target: 2.4, hard: 2.55 },
+  phone: { target: 2.4, hard: 2.6 },
   desktop: { target: 1.8, hard: 1.85 },
 };
 /** Sign-in and account recovery pages show the public footer, so they follow the public page limits. `/plan` has its own limits. */

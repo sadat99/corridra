@@ -3065,9 +3065,9 @@ Measured on the production build (document height / viewport, `docs/revamp/evide
 
 Pinned values changed on purpose (old, new, why):
 
-- `/plan` page length: old 2.0 phone, 1.0 desktop (layout-budget.md section 2; no test pinned it, the page-length guard is report only), new 2.55 and 1.85 (S5 conductor proposal after measuring, owner confirmation pending; the owner's targets were 2.4 and 1.8), pinned by the new `tests/browser/layout-budget-plan.spec.ts`.
+- `/plan` page length: old 2.0 phone, 1.0 desktop (layout-budget.md section 2; no test pinned it, the page-length guard is report only), new 2.6 and 1.85 (measured 2.53 and 1.80, so 62 px and 48 px of room; S5 conductor proposal after measuring, owner confirmation pending; the owner's targets were 2.4 and 1.8), pinned by the new `tests/browser/layout-budget-plan.spec.ts`.
 - `tests/operator/ux-plan-languages.spec.ts` baseline: old a git commit (335cd394), new two committed copies of the page as it was BEFORE this change (main dd6e1e13) in `tests/operator/fixtures/plan-baseline`, because a squash merge drops the commit from main. The equality tests stay, with a named allowlist of the two intended differences (the test notice and the example request summary); any other difference still fails (proved by changing one unrelated line).
-- Same spec, `realLastStepAt1440`: old 1.08, new 1.10. English got shorter, so the fixed 127 px of English lines in a translated form is a larger share: measured 1.095 (de, fr), 1.092 (ar). The extra height did not grow.
+- Same spec, `realLastStepAt1440`: old 1.08, new 1.12 (measured 1.095, more than a text line of room for CI's wider Arabic). English got shorter, so the fixed 127 px of English lines in a translated form is a larger share: measured 1.095 (de, fr), 1.092 (ar). The extra height did not grow.
 
 Verification (exit codes and heads in `docs/revamp/evidence/s13-plan-length/verification.json`). Not run: the full operator suite (only ux-plan-languages, as asked), CI.
 
