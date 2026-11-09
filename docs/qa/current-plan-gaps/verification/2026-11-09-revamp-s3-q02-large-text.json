@@ -15,7 +15,11 @@
     "Every element, word, link and test hook. At normal text size nothing changes: the container queries count rem at the page's text size, so they do not apply at 100 percent on a phone, and each shrink rule only takes effect once the content no longer fits.",
     "No server, database, request or payload change. English only."
   ],
-  "verification": [],
+  "verification": [
+    "tests/browser/public-large-text.spec.ts: passes for the five pages at 320, 390, 768 and 1280 with 200 percent text, whole page measured. It failed on every page class before the fixes (the probe listed the home player, the closing band, how it works, corridors, network, trust and the footer).",
+    "By hand: preflight quick (format, lint, typecheck, docs-tests, ledger, security-scan), build, e2e 500 passed, ux-gate 84 passed, the whole ux-plan-languages spec 116 passed (it shares the styles). Merged with main f62e093d (#356 touched the same heroes and the sweep still passes).",
+    "Two e2e cases (ux06 old sample mission link, product-experience global selector) failed once on a stale build, passed on main and on a fresh build of this branch three times, and passed in the full e2e run."
+  ],
   "openRisks": [
     "The sweep measures five public pages; other public pages (about, institutions, privacy, ways to work) share the same footer and templates but are not in the sweep."
   ]
