@@ -274,6 +274,101 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 
 ### KI-43 The receipt-memory "older than thirty days" browser test fails now and then under load (9 November 2026)
 
+- **Seen (S13, PR 374):** `tests/browser/receipt-memory.spec.ts:72` failed in three of three full `pnpm test:e2e` runs on the PR's branch after main was merged in (twice on mobile, once on desktop; 538 other tests passed each time), but in none of the two full runs before the merge. It passed 36 of 36 alone, and 160 of 160 more on the PR's build with 8 workers. On clean main 15637875 (no PR 374 code) it failed 1 of 80 with 8 workers, and main's own single full run passed (529). So it is a race that exists on main, and this PR may make it more likely in full runs (3 of 3 against 1 of 80); that is not settled.
+- **Cause, inferred, not traced in a request log:** right after the helper clicks Manage team, the test removes and re-adds its mocked access route (lines 125 to 128). A request made in that gap can reach the fixture server, which answers 404, so the panel shows its load error.
+- **Do:** rerun the test and compare with the full operator run before blaming a change. Do not edit the test without the owner. Print the access request's status before naming a cause (KI-04).
+
+### KI-30 A soft return through operator sign-in doubles or keeps an old `#` (31 October 2026)
+
+- **Seen (PR 220):** "Verify workspace access", when it was a Next `<Link>` with a return address, failed its own round trip. After sign-in and the authenticator code the page landed on `/operator?workspace=T#workspace-sources#workspace-sources`, which is not a listed section, so the person saw "This section is unavailable…" instead of Sources (`tests/operator/zz-workspace-access-return.spec.ts:195`, `work/operator-3-2026-10-31T08-34-45-664Z.log.receipt.json`; local repros `work/repro-hash-2026-10-31T08-46-04-799Z` and `work/repro-hash2-2026-10-31T08-49-08-844Z`). The same href opened with a full page load returned once. PR219's "Sign in again" link had the same fault after a fresh load of `#workspace-authenticator` (`#workspace-authenticator#workspace-authenticator`, `work/signin-again-link-2026-10-31T08-56-37-578Z`). Signing out with `router.replace` plus `router.refresh` brought back the old section: the next sign-in, with no return address, landed on `/operator#workspace-sources` instead of the overview (`work/signout-old-2026-10-31T09-15-16-419Z`). Receipts are local under `work/`, not committed.
+- **Cause, traced in the installed code:** Next 16.4.3 `next/dist/client/components/app-router-state.js:204` builds `canonicalUrl = route.canonicalUrl + url.hash` from a cached route entry. If that entry was first loaded with a `#`, the sign-in form's unchanged `router.replace(next)` adds the `#` again, or a bare `/operator` return gets the old one back. `router.refresh()` clears the cache for the current route only, so the signed-in session's entries survive a soft sign-out. The old bare sign-in links never showed it because they returned to a different address.
+- **Rule:** every link into operator sign-in, and signing out, is a full page load: a plain `<a>` (with `operatorSignInPage` or `operatorSignInPath(...)` from `apps/web/lib/workspace-navigation.ts`) or `window.location.replace`. Never a Next `<Link>` or `router.push`/`router.replace`. `tests/integration/ux-operator-urls.test.ts` pins each link and scans every `<Link>` in `apps/web`; a `target="_blank"` Link is exempt because a new tab is a fresh document. Since PR 221 the guard in `tests/integration/sign-in-navigation-guard.ts` reads the syntax tree: it sees a sign-in path held in a variable in the same file, `operatorSignIn*` helpers, spread props, an aliased `next/link` import and `push` or `replace` on a router from `useRouter()`. It does not follow a constant or helper imported or renamed from another file, a path built in pieces, a wrapper component that passes `href` on to `Link`, or a server `redirect()`, so read new sign-in links by eye too.
+- **Root fix (PR 221, `855d350`, approved by the owner as "approve item 1"):** the sign-in form leaves with `window.location.replace(destination)` once the authenticator code is accepted, so the page after sign-in is always a fresh document, whichever way the person reached the form. Contributor sign-out is a full page load too (`0b0fb5d`). Some entries into sign-in can still be soft: the server `redirect()`s in `apps/web/app/operator/operator-entry.tsx`, `apps/web/app/operator/owner/page.tsx`, `apps/web/app/signin/page.tsx` (only where customer sign-in is not configured) and `apps/web/app/contributor/page.tsx`, and the `accountAccessPath('/signin', ...)` Links in `apps/web/app/plan/intake.tsx` (they reach operator sign-in only through that `/signin` redirect). They are safe because the form now always leaves with a full page load. The four redirects stayed byte-identical, as in the blast radius the owner approved.
+- **Open gap:** if the person stops the navigation after a successful sign-in (the browser's Stop button), the form stays busy until the page is reloaded. The owner approved this behaviour with item 1.
+
+### KI-31 A future-meeting fixture became past on 2 November
+
+- **Observed:** main CI41416900700, job125182931636: meetings.test.ts ran at09:10:03 UTC on2 November2026; its rescheduling fixture hard-coded `2026-11-02T10:00:00+01:00` (09:00 UTC). The final HELD command correctly succeeded for that now-past meeting, so the unchanged `rejects.toThrow('future meeting')` assertion failed. The integration log reported1 failed/1865 passed/1 skipped. PR233's earlier pre-merge run passed before that instant.
+- **Fix in PR234:** construct the rescheduled meeting one day ahead with matching Madrid wall times; preserve every assertion and the application's meeting guards. Do not rerun an expired immutable fixture expecting a different result. No application meeting code changed.
+
+### KI-32 Fee rows accepted edits before their draft restored
+
+- **Observed:** PR241 CI41516407408, operator job125522118971, lost the edited second fee label after row removal/reload. A paused-timer browser case reproduces enabled fields before the new editor storage key finishes restoring, even though title controls already waited.
+- **Fix:** expose the fee form only when both its keyed draft and initial row restoration have settled. Track the restored editor in state so the readiness transition renders atomically with its restored rows. Preserve the original row-removal/version/money assertions and add the delayed-restoration regression; do not hide the race with test sleeps.
+
+### KI-33 Shared field grid overflow needs the preceding workspace state
+
+- **Observed:** PR242 CI41546518647/operator125623398842 failed UX-01 page width (139 other shard cases passed). Bootstrap plus the isolated mission case passed locally. Adding the existing preceding SDK scenario reproduced a320px viewport with330px document width: a shared field's label/row/input occupied a256px implicit grid column.
+- **Fix:** constrain the existing field grid to `minmax(0, 1fr)`; keep the original viewport/axe/permission assertions and add bounded geometry to failure messages. The identical4-case sequence now passes all six widths after a fresh build. Do not hide overflow or substitute the isolated passing case for this reproduction. Evidence: [layout verification](../qa/current-plan-gaps/verification/2026-11-03-gap009-layout-local.json).
+
+- KI-33 diagnostic follow-up: use `Array.from` for DOM node lists under the repository test TypeScript library. The app-only build does not typecheck operator test sources; full root `pnpm typecheck` verifies this path.
+
+### KI-34 Startup-recovery operator test timed out once on a slow runner (4 November 2026)
+
+- **Observed:** PR257 head 4309ec5, operator shard (6): `tests/operator/z-startup-recovery.spec.ts` (UX-01 startup outage) failed once with "Test timeout of 180000ms exceeded". In the same run operator (2) and browser took about 15 and 18 minutes against about 5 for the other jobs. One re-run of operator (6) passed with no code change.
+- **Cause:** inferred (runner slowness), not proven. The test starts its own `next start` and normally needs about 120 s.
+- **If it recurs:** on a normal-speed run, reproduce it locally before changing anything. Do not raise the timeout blindly.
+
+### KI-35 Local database preparation lost its connection once on a fresh runner (4 November 2026)
+
+- **Observed:** main push CI run 41775257221 (PR258 merge, 4f2870e), attempt 1: only job `ux (2)` failed. `pnpm db:prepare-local` ended with `Error: read ECONNRESET` (pg-pool, `packages/db/src/migrate.ts`) at 04:48:02Z, two seconds after the runner's Postgres container reported started and before any test ran. `validate` was red only as the roll-up. One re-run of the failed jobs passed (attempt 2 success).
+- **Recurred (5 November 2026):** PR 295's browser job (run 41980734589) died at `pnpm db:prepare-local` with `ECONNRESET` about 1 s after the container started, and PR 294's `ux (3)` (run 41969707752) died at the same step with `error: the database system is starting up` (code 57P03). Both ended before any test ran, and both passed on one re-run of the failed job.
+- **Cause (now understood):** `scripts/local-database.mjs` waited with `pg_isready` run inside the container. The Postgres image first starts a temporary server for its init scripts, and that one answers `pg_isready` inside the container before the real server listens on the published port. The first connections from the host then fail with a reset or "starting up".
+- **Fix (5 November 2026):** `scripts/prepare-local.ts` waits until a query over the real connection (`SELECT 1` on port 54329) is answered, up to 30 tries one second apart, logs each try ("Waiting for local PostgreSQL, try N of 30: ...") and the try that succeeded, and then fails with a clear message. No workflow or test changed. Checked locally by stopping the database, starting the script, and starting the database a few seconds later: the script waited and then migrated; with the database down for the whole time it failed after 31 s.
+- **If it recurs after this:** the job log will now say "Local PostgreSQL did not answer a query on port 54329 after 30 tries (...)" with the last error. That means the container did not come up at all, which is a runner problem; re-run the failed job once and report it.
+
+### KI-36 Two parallel runs shared one local database and one lost its results (4 November 2026)
+
+- **Observed:** on the decision card database work (E3b, 4 November) two builders ran in parallel and both used the KI-15 sandbox at `/tmp/pg54329` and port 54329. One changed the other's password, stopped its server and deleted its data directory, so that builder's first test results were lost and no result came from it.
+- **Cause:** a fixed data directory and a fixed port shared by two processes; KI-15 describes one run, not two.
+- **Fix used by the later runs:** give each run a private network namespace (`unshare -n`, loopback only; the container has no `ip` binary, so raise loopback with a small Python ioctl script), a data directory unique to that run, and port 54329 inside the namespace (the tests need that port). Run every database test through `nsenter -t <pid> -n`.
+- **Rule:** when running database suites in parallel always isolate them this way, and never share `/tmp/pg54329`. A run whose database was touched by another run proves nothing; rerun it in its own namespace.
+
+### KI-37 Local preflight e2e lost a trace file while the ux gate ran at the same time (4 November 2026)
+
+- **Observed:** S3's local `node scripts/preflight.mjs` run on 4 November reported an ENOENT for a Playwright trace file in the e2e step while the ux-gate step ran alongside it. Run on its own, the same e2e step passed 198 of 198, and exact-head CI was green.
+- **Likely cause, not proven:** two Playwright runs in one container wrote under the same output directory, and one cleaned files the other still needed.
+- **Rule:** before treating a local trace ENOENT as a failure, rerun the e2e step alone. Do not change a test because of it. CI on the exact head is the verifier.
+
+### KI-38 Preflight operator-affected selection ran a spec without its setup spec (5 November 2026)
+
+- **Observed:** S3's local `node scripts/preflight.mjs` selected `y-ux05-governance.spec.ts` as affected, but not `workspace.spec.ts`, which creates the user it signs in as. The spec failed in the preflight, and passed when both ran in order (11 of 11) and in CI, which runs the whole operator suite in order.
+- **Cause:** the affected-spec selection does not follow the order dependencies between operator specs.
+- **Rule:** before treating a preflight-only operator failure as real, rerun the spec together with its setup spec in suite order. CI on the exact head is the verifier. Do not change a test because of it.
+
+### KI-39 A CI job's PostgreSQL service container did not start (5 November 2026)
+
+- **Observed:** on PR 310 one CI job failed before any test ran: "PostgreSQL container could not start". The other jobs on the same head passed. Re-running only the failed jobs on the same head turned them green, with no code change.
+- **Cause:** a transient runner or service-container start failure, not the change under test.
+- **Rule:** when a job fails at service start-up with no test output, re-run the failed jobs once on the exact head (`gh api -X POST repos/<owner>/<repo>/actions/runs/<run>/rerun-failed-jobs`) and say so in one PR comment. A second failure is treated as real. Never change a test because of it.
+
+### KI-40 The team sidebar had an Account stopgap group, a known deviation from Navigation v1 (6 November 2026, resolved the same day)
+
+- **What:** the Navigation v1 board gives the team sidebar five first-level items and an Admin group for owner and admin, and no door for the Authenticator; Health and Readiness (which an operator may open) sat only in Admin, which an operator is not shown. The first team PR (#341) therefore carried a small Account group in the sidebar (Authenticator for every role; Health and Readiness for a role that may open them and is not shown Admin), so an owner saw seven first-level entries.
+- **Resolved:** the team header's avatar menu (Navigation v1 part 3, after S2's shared utility menus) now carries those places (`teamAccountPlaces` in `apps/web/lib/ux/team-map.ts`), and the Account group, its map entry and its tests are removed. The reachability walk (NAV-06) includes the avatar menu's links and proves each place is still reachable for every role.
+- **Rule kept:** a place a role could reach before must stay reachable from the new navigation; when a menu is removed, the test that walks the navigation is what proves it.
+
+### KI-41 G4/G5 enabled in production before its post-merge fixes and privacy review (9 November 2026, follow-up installed the same day)
+
+- **What:** PR 355 (G4 workspace lifecycle, G5 account close and erasure request) merged on 7 Nov without a Guardian review, and install run 42364802587 the same day installed both modules and enabled both controls (the 7 Nov enable stands and was not changed since). The post-merge review (9 Nov, stamp auth-c8b26adfa5f2) was FIXES-NEEDED.
+- **Fixed and installed 9 Nov:** the follow-up PR 362 (merged as cd341229) was installed by run 42654373889 (input `lifecycle_install` only). It holds B1 (Undo and the staff erasure steps for a person removed from their only workspace), B2 (a former owner demoted by transfer), B3 (the unreviewed privacy words), Codex 1 and 3 (the close dialog identity headers; close and provisioning serialized), `file_erasure` while the control is closed, the sample and real erasure queue split, the late re-run guard and the sign-in recency check.
+- **B4, merged but not reachable:** the staff erasure queue is merged (PR 366), but real staff cannot reach the page, because every staff route in the web layer uses the purpose `synthetic_validation`. Real requests need another path before any real legal deadline (30 days from filing).
+- **Still open:**
+  - The privacy wording review (drafts A and B in the PR 355 body).
+  - A preview check that the live provider returns `session.createdAt` (the recency check fails closed without it).
+  - A former owner stays admin until a step-down change (now refused honestly).
+  - A sole owner may close while the workspace is archived, and after day 30 nobody can restore or transfer it.
+- **Safe pause:** the install workflow input `lifecycle_pause`. A closed account stays closed while paused and Undo still works; turning the app flag off instead would give closed accounts full access again.
+- **Removal trigger:** the wording review is recorded, the `createdAt` check is seen on a preview, and real staff have an erasure path.
+
+### KI-42 GitHub-hosted runners abandoned or never started CI shards (9 November 2026)
+
+- **Observed:** on main cfa22c2a, attempt 1 had abandoned shards: the runners dropped operator 1, 2, 3 and 5, ux 1 and 2, and verification, and the `validate` aggregate said "abandoned". Attempt 2 of the failed jobs passed (run 42674117115). On ff51afb4, run 42673037794 ran only the `checks` job and failed with 0 test jobs; cfa22c2a superseded that head.
+- **Cause:** a runner problem on the provider side, not the change under test. It differs from KI-39, where a job started and its service container did not.
+- **Rule:** rerun the failed jobs once on the exact head, never push an empty commit, and record the run id. A second failure is treated as real.
+
+### KI-43 The receipt-memory "older than thirty days" browser test fails now and then under load (9 November 2026)
+
 - **Seen (S13, PR 374):** `tests/browser/receipt-memory.spec.ts:72` failed in three full `pnpm test:e2e` runs after main was merged in (twice on mobile, once on desktop; 538 other tests passed each time). It passed 36 of 36 alone, and 160 of 160 more on the PR's build with 8 workers. On clean main 15637875 (no PR 374 code) the same test failed 1 of 80 with 8 workers, and main's own full run passed (529).
-- **Cause, inferred, not traced:** the test reads storage as soon as the Commercial job select is visible. The page shows that select in its server HTML, and the mount effect that drops an expired receipt (`readReceipt` in `apps/web/lib/receipt-memory.ts`, called from `intake.tsx`) may not have run yet. Under load the read can come first.
+- **Cause, inferred, not traced:** the test reads storage as soon as the Commercial job select is visible. The page shows that select in its server HTML, and the mount effect that drops an expired receipt (`readReceipt` in `apps/web/lib/receipt-memory.ts`, called from `intake.tsx`) may not have run yet. Under load the read can come first. Cause inferred, not traced.
 - **Do:** rerun and compare with main before blaming a change. PR 374 made the test poll for the same assertion (storage cleared) instead of reading once, which keeps what it checks and removes the race. It failed in three full runs of that PR's branch, so it was not left as a flake.

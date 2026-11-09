@@ -8473,7 +8473,7 @@ samp {
   overflow-wrap: anywhere;
 }
 
-/* Request page length (owner, 9 November 2026). Four moves, each keeping every action: the test notice is one line
+/* Request page length (S13 under the S5 brief, owner confirmation pending). Four moves, each keeping every action: the test notice is one line
    with the whole notice behind a toggle; on a phone or tablet the example-request summary is a closed disclosure
    whose line keeps the live count; on a wide screen the receipt check sits under the summary column; the draft line
    sits close under the buttons. Tokens only. */
@@ -8624,7 +8624,7 @@ samp {
   }
 }
 
-/* Request page spacing, second pass (owner, 9 November 2026): less empty space under the form, the notice and the
+/* Request page spacing, second pass (S13 under the S5 brief, owner confirmation pending): less empty space under the form, the notice and the
    Bangla guide on one row where they fit, and tighter gaps on a phone. */
 .guide-plan {
   padding-block-end: var(--space-6);

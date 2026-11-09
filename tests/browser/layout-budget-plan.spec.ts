@@ -4,8 +4,9 @@ import { expect, test, type Page } from '@playwright/test';
 // (docs/revamp/evidence/s13-plan-length: 2.53 screens at 390 x 844, 1.80 at 1440 x 900 and 1780 x 900). The earlier
 // limits (2.0 and 1.0) were not reachable with the footer and the page head on the page. These numbers are the S5
 // conductor's proposal of 9 November 2026 after measurement, NOT an owner decision: the owner's targets were 2.4 and
-// 1.8, the phone misses 2.4 because the test notice's availability sentence stays in view (folding it measures
-// 2.42), and the owner has not confirmed the limits. They never go up without the owner.
+// 1.8, and the phone misses 2.4 (2.53). The test notice's availability sentence stays in view because existing
+// honesty tests need it; hiding it would still only reach 2.48 (a style in the current build, see the evidence
+// folder). The owner has not confirmed the limits. They never go up without the owner.
 const limits = { phone: 2.55, desktop: 1.85 } as const;
 const sizes = {
   phone: { width: 390, height: 844 },
@@ -210,3 +211,49 @@ test('the folded trust legend keeps its exact words and link, and they are the s
     'Not confirmed',
   ]);
 });
+
+// The compact footer is outside #main, so the form's own layout guard never sees it. Here it is measured on its own at
+// 320 px, at normal size and with the text at 200 percent, in English, German and Arabic (the footer follows the
+// language chip): no box past the window edge, no sideways scroll, and every group summary and the trust summary at
+// least 44 px tall.
+for (const chosen of ['en', 'de', 'ar'])
+  for (const zoom of [false, true])
+    test(`the compact footer fits at 320 px${zoom ? ' with 200% text' : ''} in ${chosen}, with 44 px summaries`, async ({
+      page,
+    }) => {
+      await page.addInitScript((value) => localStorage.setItem('corridra.language', value), chosen);
+      await page.setViewportSize({ width: 320, height: 800 });
+      await page.goto('/plan');
+      if (zoom) await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
+      await page.evaluate(() => document.fonts.ready);
+      const f = footer(page);
+      await expect(f).toHaveClass(/guide-footer-compact/);
+      // Open every group and the trust fold, the tallest state.
+      for (const summary of await f.locator('summary').all()) {
+        await summary.scrollIntoViewIfNeeded();
+        await summary.click();
+      }
+      const result = await page.evaluate(() => {
+        const edge = document.documentElement.clientWidth;
+        const footerEl = document.querySelector('footer.guide-footer')!;
+        const out = Array.from(footerEl.querySelectorAll('*'))
+          .filter((el) => {
+            const box = el.getBoundingClientRect();
+            return box.width > 1 && (box.right > edge + 0.5 || box.left < -0.5);
+          })
+          .map(
+            (el) => `${el.tagName.toLowerCase()}.${el.className} ${el.textContent?.slice(0, 40)}`,
+          );
+        const small = Array.from(footerEl.querySelectorAll('summary'))
+          .filter((el) => el.getBoundingClientRect().height < 43.5)
+          .map(
+            (el) =>
+              `${Math.round(el.getBoundingClientRect().height)}: ${el.textContent?.slice(0, 40)}`,
+          );
+        return { out, small, wide: document.documentElement.scrollWidth > edge };
+      });
+      expect(result.out, 'boxes past the edge').toEqual([]);
+      expect(result.small, 'summaries under 44 px').toEqual([]);
+      expect(result.wide, 'sideways scroll').toBe(false);
+      expect(await f.locator('summary').count()).toBe(5);
+    });

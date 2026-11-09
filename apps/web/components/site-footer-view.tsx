@@ -69,7 +69,7 @@ export function SiteFooterView({ realUse }: { realUse: boolean }) {
   const pathname = usePathname();
   const preview = isQuiet(pathname);
   // The request page is a form with a length budget, so its footer is the compact one: the same links, actions and
-  // trust words, with the trust legend folded (owner, 9 November 2026). Every other page keeps the full footer.
+  // trust words, with the trust legend folded (S13 under the S5 brief, owner confirmation pending). Every other page keeps the full footer.
   const compact = pathname === '/plan';
   // Folded, the summary carries the legend's own opening words, so the body does not say them twice.
   const trust = (

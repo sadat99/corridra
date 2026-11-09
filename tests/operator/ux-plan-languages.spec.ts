@@ -376,14 +376,23 @@ function allowed(html: string) {
       .replace(/<[^>]*>/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
+  // The second alternative is the baseline's test notice: the pill "Test mode" must be inside the same aside.
   const noticeTest =
-    /<aside class="intake-notice[^"]*intake-notice-compact">[\s\S]*?<\/aside>|<aside class="intake-notice">(?=[\s\S]*?class="guide-pill">Test mode<)[\s\S]*?<\/aside>/;
+    /<aside class="intake-notice[^"]*intake-notice-compact">[\s\S]*?<\/aside>|<aside class="intake-notice">(?=(?:(?!<\/aside>)[\s\S])*?class="guide-pill">Test mode<)[\s\S]*?<\/aside>/;
   const summaryTest = /<aside class="ux-brief-summary"[^>]*>[\s\S]*?<\/aside>/;
   const notice = html.match(noticeTest)?.[0] ?? '';
   const summary = html.match(summaryTest)?.[0] ?? '';
   const rest = html.replace(noticeTest, '<aside:notice/>').replace(summaryTest, '<aside:summary/>');
+  // Addresses, ids, names, languages, directions and accessible labels inside the two regions are compared in full, so
+  // the allowlist covers added words and markup only, never a changed link or label.
+  const attributes = (fragment: string) =>
+    [...fragment.matchAll(/ (href|id|name|lang|dir|for|aria-[a-z]+|type|role)="([^"]*)"/g)]
+      .map((match) => `${match[1]}=${match[2]}`)
+      .join(' ');
   return {
     rest,
+    noticeAttributes: attributes(notice),
+    summaryAttributes: attributes(summary),
     notice: words(notice)
       .replace(' Read the Test Notice ', ' ')
       .replace(/ Read the Test Notice$/, ''),
@@ -395,24 +404,36 @@ function allowed(html: string) {
   };
 }
 
-/** The aria snapshot without the two named regions (their landmarks), which are compared by their words above. */
+/**
+ * The aria snapshot without exactly the two named landmarks, which are compared by their words and attributes above:
+ * the example request summary (a complementary landmark named "Your example request" or "Your request") and, in the
+ * sample form, the test notice (the complementary landmark with no name that holds the pill "Test mode"). Every other
+ * landmark, the real form's notice included, stays in the snapshot. It also returns how many it dropped, so a snapshot
+ * cannot lose a third landmark unseen.
+ */
 function withoutAside(aria: string) {
   const lines = aria.split('\n');
   const kept: string[] = [];
-  let skipIndent = -1;
-  for (const line of lines) {
-    const indent = line.length - line.trimStart().length;
-    if (skipIndent >= 0) {
-      if (indent > skipIndent) continue;
-      skipIndent = -1;
-    }
+  let dropped = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!;
     if (/^\s*- complementary/.test(line)) {
-      skipIndent = indent;
-      continue;
+      const indent = line.length - line.trimStart().length;
+      let end = i + 1;
+      while (end < lines.length && lines[end]!.length - lines[end]!.trimStart().length > indent)
+        end++;
+      const block = lines.slice(i, end).join('\n');
+      const summary = /^\s*- complementary "Your (example )?request"/.test(line);
+      const testNotice = !/^\s*- complementary "/.test(line) && block.includes('Test mode');
+      if (summary || testNotice) {
+        dropped++;
+        i = end - 1;
+        continue;
+      }
     }
     kept.push(line);
   }
-  return kept.join('\n');
+  return { text: kept.join('\n'), dropped };
 }
 
 async function compareWithBaseline(
@@ -438,9 +459,16 @@ async function compareWithBaseline(
         expect(newState.notice, `${label} notice found`).toContain('Test mode');
     }
     expect(newState.rest, label).toBe(oldState.rest);
+    expect(newState.noticeAttributes, `${label} notice links and labels`).toBe(
+      oldState.noticeAttributes,
+    );
+    expect(newState.summaryAttributes, `${label} summary labels`).toBe(oldState.summaryAttributes);
     expect(newState.notice, `${label} notice words`).toBe(oldState.notice);
     expect(newState.summary, `${label} summary words`).toBe(oldState.summary);
-    expect(withoutAside(state.aria), label).toBe(withoutAside(before[index].aria));
+    const [oldAria, newAria] = [withoutAside(before[index].aria), withoutAside(state.aria)];
+    expect(newAria.text, label).toBe(oldAria.text);
+    expect(newAria.dropped, `${label} named landmarks`).toBe(oldAria.dropped);
+    expect(newAria.dropped, `${label} at most two named landmarks`).toBeLessThanOrEqual(2);
   }
   // The main region says English whatever language is chosen.
   await expect(now.locator('#main')).toHaveAttribute('lang', 'en');
