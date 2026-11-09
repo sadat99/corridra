@@ -20,6 +20,7 @@ import {
 import { CustomerBar } from './customer-header';
 import { LeftNavMenuButton } from './left-nav';
 import { NotificationInbox } from './notification-inbox';
+import { teamHelpGroups } from '../../lib/ux/team-help';
 import { PaletteTrigger } from './team-palette';
 import { TeamAccountMenu } from './team-utility-menus';
 import { HelpMenu, LanguageMenu, NotificationsPanel } from './utility-menus';
@@ -148,7 +149,7 @@ export function AppHeader({
             />
           ) : null}
           <LanguageMenu />
-          <HelpMenu />
+          <HelpMenu groups={teamHelpGroups()} />
           <TeamAccountMenu />
         </div>
       ) : (

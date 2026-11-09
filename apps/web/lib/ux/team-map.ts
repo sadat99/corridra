@@ -166,15 +166,20 @@ export function teamAccountPlaces(role: string | null): TeamPlace[] {
   );
 }
 
-/** The avatar menu's place links, with their addresses: what the menu renders, so a test can walk them without opening it. */
+/**
+ * The avatar menu's place links, with their addresses and which one is the current page: what the menu renders, so a
+ * test can walk them without opening it. `current` is the place in view (a `#` part or a section address), if any.
+ */
 export function teamAccountLinks(
   role: string | null,
   urls: boolean,
   workspace = '',
-): { id: TeamPlaceId; label: string; href: string }[] {
+  current: TeamPlaceId | '' = '',
+): { id: TeamPlaceId; label: string; href: string; current: boolean }[] {
   return teamAccountPlaces(role).map((place) => ({
     id: place.id,
     label: place.label,
     href: placeHref(place.id, urls, workspace),
+    current: place.id === current,
   }));
 }

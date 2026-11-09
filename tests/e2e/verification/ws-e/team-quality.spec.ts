@@ -92,7 +92,11 @@ test('Q-01 Tab reaches every control with a visible focus ring, never traps, and
     ['today', 'missions', 'audit', 'owner'].includes(a.name),
   )) {
     await open(address.path());
-    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+    // Start from the top of the page: after a # address the browser would begin at that section and skip the header.
+    await page.evaluate(() => {
+      document.querySelector<HTMLElement>('a[href="#main"]')?.focus();
+      (document.activeElement as HTMLElement | null)?.blur();
+    });
     const seen: string[] = [];
     let previous = '';
     for (let step = 0; step < 150; step++) {

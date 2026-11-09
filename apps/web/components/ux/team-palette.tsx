@@ -39,7 +39,12 @@ export function PaletteTrigger() {
       aria-haspopup="dialog"
       aria-keyshortcuts="Control+K Meta+K"
       title="Search"
-      onClick={() => window.dispatchEvent(new CustomEvent(openPaletteEvent))}
+      onClick={(event) =>
+        // The trigger is passed along: Safari does not focus a clicked button, so focus could not be returned to it.
+        window.dispatchEvent(
+          new CustomEvent(openPaletteEvent, { detail: { opener: event.currentTarget } }),
+        )
+      }
     >
       <OperatorIcon name="search" />
       <span>Search</span>
@@ -90,9 +95,14 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
         document.activeElement instanceof HTMLElement ? document.activeElement : null;
       setOpen(true);
     };
-    const onOpen = () => {
+    const onOpen = (event: Event) => {
+      const given = (event as CustomEvent<{ opener?: unknown }>).detail?.opener;
       opener.current =
-        document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        given instanceof HTMLElement
+          ? given
+          : document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null;
       setOpen(true);
     };
     window.addEventListener('keydown', onKey);

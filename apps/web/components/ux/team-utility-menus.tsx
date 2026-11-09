@@ -5,21 +5,66 @@
 // too, so nothing is lost on a phone. It reads only what the team shell already knows (the role); it makes
 // no call of its own and grants nothing: each page and action still checks on the server. Owner: S4.
 import './utility-menus.css';
-import { useState, useSyncExternalStore } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useState, useSyncExternalStore, type ReactNode } from 'react';
 import { CorridraIcon } from '../corridra-icon';
 import { operatorSignInPage } from '../../lib/workspace-navigation';
-import { customerHelpGroups } from '../../lib/ux/customer-navigation';
-import { teamAccountLinks } from '../../lib/ux/team-map';
+import { teamHelpGroups } from '../../lib/ux/team-help';
+import { subscribeToHash } from '../../lib/address-store';
+import { sectionForSlug } from '../../lib/operator-urls';
+import { currentTeamSection } from '../../lib/ux/shells';
+import { teamAccountLinks, type TeamPlaceId } from '../../lib/ux/team-map';
 import { readServerTeamFlags, readTeamFlags, subscribeTeamFlags } from '../../lib/ux/team-flags';
 import {
   readServerTeamContext,
   readTeamContext,
   subscribeTeamContext,
 } from '../../lib/ux/team-context';
+import { useLanguage } from '../language-provider';
 import { LanguageMenuGroup } from './customer-bar';
-import { MenuLink } from './menu-link';
 import { MenuButton, OverflowMenu } from './overflow-menu';
 import { Entry, useListen } from './utility-menus';
+
+const roleWords: Record<string, string> = {
+  owner: 'Owner',
+  admin: 'Admin',
+  operator: 'Operator',
+  reviewer: 'Reviewer',
+  viewer: 'Viewer',
+};
+
+/**
+ * A menu row that leads to a team place. A `#` address, or any page that is not the workspace itself (a mission page,
+ * the owner page), is a plain anchor, as in the sidebar: the workspace reads its section from `hashchange` and a soft
+ * router change to a same-page `#` fires none, so the section would not switch.
+ */
+export function PlaceLink({
+  href,
+  current,
+  plain,
+  children,
+}: {
+  href: string;
+  current: boolean;
+  plain: boolean;
+  children: ReactNode;
+}) {
+  const shared = {
+    role: 'menuitem',
+    tabIndex: -1,
+    className: 'ux-menu-row',
+    href,
+    'aria-current': current ? ('page' as const) : undefined,
+  };
+  return plain || href.includes('#') ? (
+    <a {...shared}>{children}</a>
+  ) : (
+    <Link prefetch={false} {...shared}>
+      {children}
+    </Link>
+  );
+}
 
 function SignOutRow() {
   const [busy, setBusy] = useState(false);
@@ -66,7 +111,16 @@ export function TeamAccountMenu() {
     readServerTeamContext,
   );
   const { urls } = useSyncExternalStore(subscribeTeamFlags, readTeamFlags, readServerTeamFlags);
-  const links = teamAccountLinks(role, urls, tenant);
+  const pathname = usePathname() ?? '/operator';
+  const hash = useSyncExternalStore(
+    subscribeToHash,
+    () => window.location.hash,
+    () => '',
+  );
+  const { offered } = useLanguage();
+  const place = (currentTeamSection(pathname, hash, sectionForSlug) || 'home') as TeamPlaceId;
+  const plain = pathname !== '/operator' && !sectionForSlug(pathname.split('/')[2] ?? '');
+  const links = teamAccountLinks(role, urls, tenant, place);
   return (
     <OverflowMenu
       label="Account menu"
@@ -79,28 +133,30 @@ export function TeamAccountMenu() {
     >
       {role ? (
         <div role="group" aria-label="Signed in" className="ux-menu-who">
-          <strong>Team workspace</strong>
-          <span>Your access: {role}</span>
+          <strong>Team Workspace</strong>
+          <span>Your access: {roleWords[role] ?? role}</span>
         </div>
       ) : null}
       {links.length > 0 ? (
         <div role="group" aria-label="Account" className="ux-menu-group">
           {links.map((link) => (
-            <MenuLink key={link.id} href={link.href}>
+            <PlaceLink key={link.id} href={link.href} current={link.current} plain={plain}>
               {link.label}
-            </MenuLink>
+            </PlaceLink>
           ))}
         </div>
       ) : null}
       {/* Below 640 px the language and help menus are not in the header row; they are here, so nothing is lost. */}
       <div className="ux-phone-only">
-        <div className="ux-menu-group">
-          <p className="ux-menu-heading" aria-hidden="true">
-            Language
-          </p>
-          <LanguageMenuGroup />
-        </div>
-        {customerHelpGroups().map((group) => (
+        {offered.length > 1 ? (
+          <div className="ux-menu-group">
+            <p className="ux-menu-heading" aria-hidden="true">
+              Language
+            </p>
+            <LanguageMenuGroup />
+          </div>
+        ) : null}
+        {teamHelpGroups().map((group) => (
           <div key={group.label} role="group" aria-label={group.label} className="ux-menu-group">
             <p className="ux-menu-heading" aria-hidden="true">
               {group.label}

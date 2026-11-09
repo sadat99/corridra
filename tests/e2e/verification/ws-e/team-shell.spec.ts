@@ -274,11 +274,28 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   expect(contributorInbox.status()).toBe(200);
   expect(await contributorInbox.json()).toEqual([]);
   await evidence(page, `GAP-004-contributor-${info.project.name}`);
-  // Sign Out from the avatar menu ends the session and returns to the staff sign-in page.
-  await page.goto(`/operator?workspace=${seed.tenantId}`);
+  // Choosing the Authenticator from the Account menu switches the section from another section (Missions here), on the
+  // real router: the menu's link must change what is on screen, not only the address. The current place is marked.
+  await page.goto(`/operator/missions?workspace=${seed.tenantId}`);
+  await expect(page.locator('#workspace-missions')).toBeVisible();
+  await header.getByRole('button', { name: 'Account menu' }).click();
+  await page.getByRole('menuitem', { name: 'Authenticator', exact: true }).click();
+  await expect(page.locator('#workspace-authenticator')).toBeVisible();
+  await expect(page.locator('#workspace-missions')).toHaveCount(0);
+  await header.getByRole('button', { name: 'Account menu' }).click();
+  await expect(page.getByRole('menuitem', { name: 'Authenticator', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  await page.keyboard.press('Escape');
+  // Sign Out from the avatar menu ends the session: the page returns to the staff sign-in, the workspace address
+  // sends a signed-out visitor there, and a private API answers 401.
   await header.getByRole('button', { name: 'Account menu' }).click();
   await page.getByRole('menuitem', { name: 'Sign Out', exact: true }).click();
   await expect(page).toHaveURL(/\/operator\/signin/);
+  await page.goto(`/operator?workspace=${seed.tenantId}`);
+  await expect(page).toHaveURL(/\/operator\/signin/);
+  expect((await page.request.get(`/api/notifications?tenant=${seed.tenantId}`)).status()).toBe(401);
 });
 
 test('V-45 infrastructure: the inbox answers 401 to a signed-out visitor', async ({ request }) => {

@@ -15,7 +15,14 @@ test.afterAll(async () => {
   await fixture.close();
 });
 
-async function open(page: Page, role: string, hash = '', width = 1280, missionsV2 = true) {
+async function open(
+  page: Page,
+  role: string,
+  hash = '',
+  width = 1280,
+  missionsV2 = true,
+  urls = true,
+) {
   await page.setViewportSize({ width, height: 900 });
   await page.route('**/api/**', (route) =>
     route.fulfill({ status: 404, json: { error: 'Not part of this fixture' } }),
@@ -37,7 +44,7 @@ async function open(page: Page, role: string, hash = '', width = 1280, missionsV
   );
   await page.route('**/api/workspace/config?*', (route) => route.fulfill({ json: [] }));
   await page.route('**/api/notifications?*', (route) => route.fulfill({ json: [] }));
-  await page.goto(`${fixture.origin}/operator?owner=on${hash}`);
+  await page.goto(`${fixture.origin}/operator?owner=on&urls=${urls ? 'on' : 'off'}${hash}`);
   const sidebar = page.locator('#workspace-navigation');
   if (width < 1024) await page.getByRole('button', { name: 'Sections', exact: true }).click();
   await expect(sidebar).toBeVisible();
@@ -170,6 +177,15 @@ test('an operator has no Admin, finds Health, Readiness and the Authenticator in
   await menu.click();
   for (const name of ['Authenticator', 'Health', 'Readiness', 'Sign Out'])
     await expect(page.getByRole('menuitem', { name, exact: true })).toBeVisible();
+  // The place in view is the menu's current page; the others are not.
+  await expect(page.getByRole('menuitem', { name: 'Health', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  await expect(page.getByRole('menuitem', { name: 'Readiness', exact: true })).not.toHaveAttribute(
+    'aria-current',
+    'page',
+  );
   // Nothing an operator may not open is offered.
   for (const name of ['Audit', 'People and access', 'Settings'])
     await expect(page.getByRole('menuitem', { name, exact: true })).toHaveCount(0);
@@ -250,6 +266,29 @@ test('an owner finds only the Authenticator in the avatar menu, with Health and 
   await expect(page.getByRole('menuitem', { name: 'Authenticator', exact: true })).toBeVisible();
   await expect(page.getByRole('menuitem', { name: 'Health', exact: true })).toHaveCount(0);
   await expect(page.getByRole('menuitem', { name: 'Sign Out', exact: true })).toBeVisible();
+});
+
+test('choosing Health or the Authenticator from the Account menu switches the section, with section addresses off', async ({
+  page,
+}) => {
+  // With the address switch off the menu links are `#` addresses: a plain anchor changes the hash and the workspace
+  // switches section (a router link to the same page would change the address and leave the old section on screen).
+  // The switch-on case needs the real router and is in the verification spec ws-e/team-shell.
+  await open(page, 'operator', '#workspace-missions', 1280, true, false);
+  const menu = page.locator('header.ux-app-header').getByRole('button', { name: 'Account menu' });
+  await expect(page.locator('#workspace-missions')).toBeVisible();
+  await menu.click();
+  await page.getByRole('menuitem', { name: 'Health', exact: true }).click();
+  await expect(page.locator('#ops-health')).toBeVisible();
+  await expect(page.locator('#workspace-missions')).toHaveCount(0);
+  await menu.click();
+  await expect(page.getByRole('menuitem', { name: 'Health', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  await page.getByRole('menuitem', { name: 'Authenticator', exact: true }).click();
+  await expect(page.locator('#workspace-authenticator')).toBeVisible();
+  await expect(page.locator('#ops-health')).toHaveCount(0);
 });
 
 // Keep the fixture id referenced so a rename of the tenant fails here and not silently.

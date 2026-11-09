@@ -67,6 +67,7 @@ const render = async (
   vi.doMock('../../apps/web/components/language-provider', () => ({
     useLanguage: () => ({
       locale,
+      offered: [{ code: 'en' }, { code: 'bn' }],
       t: (key: Parameters<typeof translate>[1]) => translate(locale as 'en', key),
     }),
   }));
@@ -146,12 +147,18 @@ describe('NAV-05 every address and hash marks its place current, for every role 
         const item = itemForPlace(id as TeamPlaceId, role);
         const { sidebar, second, account } = await render(role, '/operator/' + slug);
         if (item === 'none') {
-          // The Authenticator, and Health and Readiness for a role with no Admin, are reached from the avatar menu;
-          // no sidebar item or row link claims the page.
+          // The Authenticator, and Health and Readiness for a role with no Admin, are reached from the avatar menu:
+          // no sidebar item or row link claims the page, and the menu's own link is the current page.
           expect(account, `${role} ${slug} in the avatar menu`).toContain(
             'href="/operator/' + slug + '"',
           );
           expect(sidebar + second, `${role} ${slug} no item current`).not.toContain('aria-current');
+          const here = teamAccountLinks(role, true, '', id as TeamPlaceId).find((l) => l.id === id);
+          expect(here?.current, `${role} ${slug} menu link is current`).toBe(true);
+          expect(
+            teamAccountLinks(role, true, '', id as TeamPlaceId).filter((l) => l.current),
+            `${role} ${slug} only one current`,
+          ).toHaveLength(1);
           const hashed = await render(role, '/operator', 'en', true, {
             urls: false,
             hash: '#' + id,
