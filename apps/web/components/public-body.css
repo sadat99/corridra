@@ -1,0 +1,149 @@
+/* The body of the public pages below the hero (How it works, Routes, Trust and the other pages built on
+   PublicPage). Owner, 9 November 2026: "contents are too compressed. even too many straightlines. public pages
+   could be 20-30% longer if only required". Sections are separated by space, not by rules: the hero keeps its one
+   hairline, and the intro, the step tabs, the label rows and Show More lose the stacked lines around them. Step
+   connectors stay, because they show the order. Nothing is removed or reworded. Tokens only. */
+
+/* The intro: no box, no rules, aligned with the hero text, with room above and below. */
+.ux-public .guide-page-intro.guide-page-intro--compact {
+  margin-top: var(--space-12);
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+.ux-public .guide-page-intro--compact h2 {
+  text-wrap: balance;
+}
+.ux-public .guide-page-intro--compact p {
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+/* Trust: the five evidence labels read as a list with space between rows, not a ruled table. */
+.ux-public .guide-page-intro--compact.is-labelled ul {
+  gap: var(--space-2);
+}
+.ux-public .guide-page-intro--compact.is-labelled li,
+.ux-public .guide-page-intro--compact.is-labelled li:last-child {
+  padding-block: var(--space-4);
+  border: 0;
+}
+.ux-public .guide-page-intro--compact.is-labelled li p {
+  line-height: 1.6;
+}
+
+/* How it works: the phase tabs start after a clear gap; the steps get air between them and in their text. */
+.ux-public .guide-page-intro--compact + .guide-journey--tabs {
+  margin-top: var(--space-12);
+}
+.ux-public .guide-journey--tabs .guide-phase {
+  gap: var(--space-6);
+  padding-top: var(--space-6);
+}
+.ux-public .guide-journey--tabs .guide-phase ol {
+  row-gap: var(--space-8);
+}
+.ux-public .guide-journey--tabs .guide-phase li {
+  gap: var(--space-3);
+}
+.ux-public .guide-journey--tabs .guide-phase li p {
+  line-height: 1.65;
+}
+
+/* Show More: one quiet control after a gap, without the two stacked lines above it. */
+.ux-public .guide-more {
+  margin-top: var(--space-12);
+  padding-top: 0;
+  border-top: 0;
+}
+.ux-public .guide-more > summary {
+  width: fit-content;
+  border-top: 0;
+}
+.ux-public .guide-more[open] > summary {
+  margin-bottom: var(--space-4);
+}
+.ux-public .guide-more .guide-statements {
+  border-top: 0;
+}
+
+/* Routes: the tabs and the route cards get the same breathing room. */
+.ux-public .guide-routes {
+  margin-top: var(--space-8);
+}
+.ux-public .guide-routes .guide-directions {
+  gap: var(--space-6);
+}
+.ux-public .guide-routes .guide-directions ul {
+  gap: var(--space-5);
+}
+.ux-public .guide-routes .guide-directions li {
+  gap: var(--space-3);
+  padding: var(--space-6);
+}
+.ux-public .guide-routes .guide-directions li p,
+.ux-public .guide-routes .guide-other-route p {
+  line-height: 1.6;
+}
+.ux-public .guide-routes .guide-other-route {
+  margin-top: var(--space-2);
+  padding: var(--space-6);
+}
+
+@media (min-width: 1000px) {
+  .ux-public .guide-page-intro.guide-page-intro--compact {
+    margin-top: var(--space-16);
+  }
+  .ux-public .guide-page-intro--compact + .guide-journey--tabs {
+    margin-top: var(--space-16);
+  }
+  .ux-public .guide-journey--tabs .guide-phase {
+    padding-top: var(--space-8);
+  }
+  .ux-public .guide-routes {
+    margin-top: var(--space-12);
+  }
+}
+
+@media (max-width: 700px) {
+  .ux-public .guide-page-intro.guide-page-intro--compact {
+    margin-top: var(--space-8);
+  }
+  .ux-public .guide-page-intro--compact + .guide-journey--tabs {
+    margin-top: var(--space-8);
+  }
+  .ux-public .guide-journey--tabs .guide-phase ol {
+    row-gap: var(--space-6);
+  }
+  .ux-public .guide-more {
+    margin-top: var(--space-8);
+  }
+  .ux-public .guide-routes .guide-directions ul {
+    gap: var(--space-4);
+  }
+  .ux-public .guide-routes .guide-directions li,
+  .ux-public .guide-routes .guide-other-route {
+    padding: var(--space-4);
+  }
+  .ux-public .guide-routes .guide-directions li p,
+  .ux-public .guide-routes .guide-other-route p {
+    font-size: var(--text-base);
+    line-height: 1.6;
+  }
+}
+
+/* Each route card keeps its action on the card's last line, so the three actions line up. */
+.ux-public .guide-routes .guide-directions li {
+  display: flex;
+  flex-direction: column;
+}
+.ux-public .guide-routes .guide-directions li > a {
+  align-self: flex-start;
+  margin-top: auto;
+}
+@media (max-width: 700px) {
+  .ux-public .guide-routes .guide-directions li > a {
+    align-self: stretch;
+  }
+}
