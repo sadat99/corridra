@@ -77,34 +77,6 @@ nav.ux-team-sidebar .ux-team-group {
 }
 
 /* The command palette: the Search button in the sidebar and the dialog it opens. */
-nav.ux-team-sidebar .ux-palette-trigger {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  width: 100%;
-  min-height: 44px;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--ac-surface-navy-hover);
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--ac-paper);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-nav.ux-team-sidebar .ux-palette-trigger:hover {
-  background: var(--ac-surface-navy-hover);
-}
-nav.ux-team-sidebar .ux-palette-trigger:focus-visible {
-  outline: 3px solid var(--ac-paper);
-  outline-offset: 2px;
-}
-nav.ux-team-sidebar .ux-palette-trigger kbd {
-  margin-inline-start: auto;
-  color: var(--ac-paper);
-  font: inherit;
-  font-size: var(--text-sm, 0.875rem);
-}
 nav.ux-team-sidebar .operator-icon {
   flex: none;
 }
@@ -215,21 +187,6 @@ nav.ux-team-sidebar .operator-icon {
   color: var(--text-2);
   font-size: var(--text-sm, 0.875rem);
 }
-@media (min-width: 1024px) {
-  .ux-leftnav-frame[data-collapsed='true'] .ux-palette-trigger span,
-  .ux-leftnav-frame[data-collapsed='true'] .ux-palette-trigger kbd {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-  .ux-leftnav-frame[data-collapsed='true'] nav.ux-team-sidebar .ux-palette-trigger {
-    justify-content: center;
-    padding: 0;
-  }
-}
 .ux-palette .operator-icon {
   flex: none;
   width: 1.25rem;
@@ -251,4 +208,54 @@ nav.ux-team-sidebar .ux-team-caption {
     overflow: hidden;
     clip-path: inset(50%);
   }
+}
+
+/* The Search button in the top bar: a quiet bordered button, icon only on a phone. */
+.ux-team-header .ux-palette-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ux-team-header .ux-palette-trigger:hover {
+  background: var(--surface-2);
+}
+.ux-team-header .ux-palette-trigger:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.ux-team-header .ux-palette-trigger kbd {
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--text-sm, 0.875rem);
+}
+@media (max-width: 899.98px) {
+  .ux-team-header .ux-palette-trigger span,
+  .ux-team-header .ux-palette-trigger kbd {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+.ux-team-header .ux-palette-trigger .operator-icon {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* The Help menu in the team header replaces the floating Help and Listen buttons, as on the customer pages. */
+body:has(.ux-team-header) .corner-dock:not(.header-help) {
+  display: none;
 }

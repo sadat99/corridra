@@ -375,7 +375,7 @@ test('a failed Today read says so with a retry, and the Start card and its short
   await expect(today(page)).toContainText('1 mission needs you. It is a new request.');
 });
 
-test('the team header shows the inbox as an icon with its unread count and keeps the language and website in the account menu', async ({
+test('the team header shows the inbox as an icon with its unread count, the website in the help menu and the account menu with Authenticator and Sign Out', async ({
   page,
 }) => {
   await open(page, operatorRows);
@@ -383,12 +383,22 @@ test('the team header shows the inbox as an icon with its unread count and keeps
   const inbox = header.getByRole('button', { name: 'Inbox', exact: true });
   await expect(inbox).toBeVisible();
   await expect(header.getByText('3 unread')).toBeAttached();
-  const menu = header.getByRole('button', { name: 'Account menu' });
-  await menu.click();
+  await expect(header.getByRole('button', { name: /Search/ })).toBeVisible();
+  const help = header.getByRole('button', { name: 'Help and accessibility' });
+  await help.click();
   await expect(page.getByRole('menuitem', { name: 'Corridra Website' })).toHaveAttribute(
     'href',
     '/',
   );
+  await page.keyboard.press('Escape');
+  await expect(help).toBeFocused();
+  const menu = header.getByRole('button', { name: 'Account menu' });
+  await menu.click();
+  await expect(page.getByRole('menuitem', { name: 'Authenticator' })).toHaveAttribute(
+    'href',
+    /authenticator/,
+  );
+  await expect(page.getByRole('menuitem', { name: 'Sign Out' })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(menu).toBeFocused();
 });

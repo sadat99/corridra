@@ -13,6 +13,7 @@ import { publishTeamContext, readTeamContext } from '../../apps/web/lib/ux/team-
 import {
   itemForPlace,
   settingsLevel,
+  teamAccountPlaces,
   teamMap,
   type TeamPlaceId,
 } from '../../apps/web/lib/ux/team-map';
@@ -154,10 +155,10 @@ describe('role shells (D14)', () => {
       'meetings',
       'money',
       'admin',
-      'account',
     ]);
     const reachable = new Set<string>(teamMap.flatMap((item) => item.places.map((p) => p.id)));
     for (const place of settingsLevel('owner')) reachable.add(place.id);
+    for (const place of teamAccountPlaces('operator')) reachable.add(place.id);
     for (const section of workspaceSections)
       expect(reachable.has(section.id), section.id).toBe(true);
   });
@@ -181,6 +182,7 @@ describe('role shells (D14)', () => {
     expect(at('/operator/commercial')).toBe('money');
     expect(at('/operator/sources')).toBe('companies');
     expect(at('/operator/audit')).toBe('admin');
+    expect(at('/operator/authenticator')).toBe('none');
     expect(at('/operator/owner')).toBe('admin');
     expect(at('/operator/missions/abc')).toBe('missions');
     expect(at('/operator', '#workspace-delivery')).toBe('meetings');

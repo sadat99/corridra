@@ -11,6 +11,7 @@ import { operatorReturnTo, workspaceSections } from '../../apps/web/lib/workspac
 import { teamSectionHref } from '../../apps/web/lib/ux/shells';
 import {
   settingsLevel,
+  teamAccountPlaces,
   teamItemsFor,
   teamMap,
   teamPlacesFor,
@@ -108,6 +109,7 @@ describe('navigation reaches every section for exactly the roles that may open i
     for (const entry of teamItemsFor(role))
       for (const place of teamPlacesFor(entry, role)) ids.add(place.id);
     for (const place of settingsLevel(role)) ids.add(place.id);
+    for (const place of teamAccountPlaces(role)) ids.add(place.id);
     ids.delete('home');
     ids.delete('owner');
     return ids;
@@ -122,6 +124,7 @@ describe('navigation reaches every section for exactly the roles that may open i
   it('every section is reachable by at least one role in one or two clicks (item, then the row under it)', () => {
     const ids = new Set<string>([...teamMap.flatMap((e) => e.places.map((p) => p.id))]);
     for (const place of settingsLevel('owner')) ids.add(place.id);
+    for (const place of teamAccountPlaces('operator')) ids.add(place.id);
     ids.delete('home');
     ids.delete('owner');
     expect([...ids].sort()).toEqual(frozen.map((f) => f[0]).sort());

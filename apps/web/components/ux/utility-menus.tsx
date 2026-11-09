@@ -81,7 +81,7 @@ export function MenuSoon({ children }: { children: string }) {
 }
 
 /** Speaks the main region aloud, only where this browser has a voice for the page language (as the corner Help does). */
-function useListen() {
+export function useListen() {
   const supported = useSyncExternalStore(
     (notify) => {
       if (!('speechSynthesis' in window)) return () => undefined;
@@ -144,7 +144,13 @@ function SignOutRow({ label }: { label: string }) {
   );
 }
 
-function Entry({ entry, listen }: { entry: MenuEntry; listen?: ReturnType<typeof useListen> }) {
+export function Entry({
+  entry,
+  listen,
+}: {
+  entry: MenuEntry;
+  listen?: ReturnType<typeof useListen>;
+}) {
   if (entry.kind === 'link') return <MenuLink href={entry.href}>{entry.label}</MenuLink>;
   if (entry.kind === 'soon') return <MenuSoon>{entry.label}</MenuSoon>;
   if (entry.kind === 'listen')

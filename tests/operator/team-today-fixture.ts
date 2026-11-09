@@ -44,7 +44,15 @@ export async function startTodayFixture(root = resolve('.')) {
       // panel mounted and hidden), as the protected operator suite runs it.
       const shells = new URLSearchParams(location.search).get('shells') !== 'off';
       // ?owner=on shows the owner page entry, as an owner with the owner page switched on sees it.
-      const ownerPage = new URLSearchParams(location.search).get('owner') === 'on';
+      // A plain link to a '#' address reloads the page without this query, so the choice is kept for the tab.
+      const flag = (name) => {
+        const given = new URLSearchParams(location.search).get(name);
+        if (given !== null) sessionStorage.setItem('fixture-' + name, given);
+        return sessionStorage.getItem('fixture-' + name);
+      };
+      const ownerPage = flag('owner') === 'on';
+      // ?urls=off builds the hash links the sidebar and menus use while section addresses are switched off.
+      const urls = flag('urls') !== 'off';
       const workspace = (
         <OperatorFlags replyReview={false}>
           <Workspace tenants={[{id:${JSON.stringify(fixtureTenant)},name:'Synthetic request operations',role:'owner'}]}
@@ -57,9 +65,9 @@ export async function startTodayFixture(root = resolve('.')) {
             {shells ? (
               <>
                 <AppHeader kind="team" live={false} notifications brandMark={<BrandLockup/>}/>
-                <TeamFrame urls ownerPage={ownerPage}>
+                <TeamFrame urls={urls} ownerPage={ownerPage}>
                   <WorkspaceShell eyebrow="TEAM WORKSPACE" title="Today" className="ux-operator-home ux-titled-today">
-                    <TeamSecondLevel urls ownerPage={ownerPage}/>
+                    <TeamSecondLevel urls={urls} ownerPage={ownerPage}/>
                     {workspace}
                   </WorkspaceShell>
                 </TeamFrame>
