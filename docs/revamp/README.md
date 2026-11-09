@@ -57,17 +57,17 @@ Shared and frozen for every track: `globals.css`, tokens, `app/layout.tsx`, `pac
 
 The ledger, work log and gap register are shared. Each session appends its own entry and rebases before merge; nobody rewrites another session's entry.
 
-## Current lanes, 6 November 2026
+## Current lanes, 9 November 2026
 
-Snapshot for takeover at main `2217fd5` (PR 344). Live state, merges and owner items are in the [ledger](../V3_LEDGER.md) under Resume immediately; G4/G5 decisions and the Guardian's answers are in the [CRUD gap plan](crud/summary.md#order). Merge rules (owner, after PR 337): exact-head green CI plus Guardian PASS; Codex blocks only for P1 or a real privacy, money or access risk; one fix round at most; the owner merges any migration or installer change unless they say "u merge" for that PR.
+Snapshot for takeover at main `f62e093` (PR 356). Live state, merges and owner items are in the [ledger](../V3_LEDGER.md) under Resume immediately; G4/G5 decisions and the Guardian's answers are in the [CRUD gap plan](crud/summary.md#order). Merge rules (owner, after PR 337): exact-head green CI plus Guardian PASS; Codex blocks only for P1 or a real privacy, money or access risk; one fix round at most; the owner merges any migration or installer change unless they say "u merge" for that PR. G4/G5 (PR 355) is installed and enabled in production since install run 42364802587 (7 Nov); its follow-up fixes are not merged yet.
 
-| Session                               | Now                                                                                              | After                                                                                                     |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
-| S1 `session_0187kU9qz8GGVRjUCwT2Mtof` | Public header and phone menu (navigation v1 order 2a), built locally on `s1-public-nav`; PR next | Records                                                                                                   |
-| S2 `session_0187kU9tbkCEfmkNwdPr8885` | G4 and G5 in one PR (Sensitive: yes, migration; the owner merges)                                | Inside that PR: Company Profile shows Coming soon when org profiles are off; All Tools "Missions" heading |
-| S3 `session_0187kU9qaRV8ZWz9qkj2YZ6g` | Two-window stale editor (Codex P2 on PR 344, `reply-journey.tsx` `refreshAnswer`)                | `/plan` at 320 px; one branch at a time                                                                   |
-| S4 `session_0187kU9rwcEXxStUHuLAMok4` | Command palette part 2 (Sensitive: yes)                                                          | "Owner and admin" caption via `aria-describedby`; later the staff erasure queue route and page            |
-| Unassigned                            | Trust words in the shipped footer                                                                |                                                                                                           |
+| Session                               | Now                                                                                                       | After                                                                               |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| S1 `session_0187kU9qz8GGVRjUCwT2Mtof` | Post-merge Guardian review of PR 355; records                                                             | Merge lane PRs on green CI plus Guardian PASS                                       |
+| S2 `session_0187kU9tbkCEfmkNwdPr8885` | G4/G5 follow-up PR: four Codex findings plus Guardian findings, red tests first, additive migrations only | The owner merges it, then an install run                                            |
+| S3 `session_0187kU9qaRV8ZWz9qkj2YZ6g` | Q-02 200% text sweep on public pages (`revamp/public-q02`)                                                | `/plan` length proposal only (measured 3.48 and 2.25 viewports against 2.0 and 1.0) |
+| S4 `session_0187kU9rwcEXxStUHuLAMok4` | Team header part 3 (`s4-header2`)                                                                         | Field helper; staff erasure queue route and page                                    |
+| Unassigned                            | Trust words in the shipped footer; service requests and drafts not gated by an archived workspace         |                                                                                     |
 
 ## Wave 0: inventory and cleanup manifest
 
