@@ -218,6 +218,13 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: '/api/workspace/customer-erasure-queue',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
         source: '/api/workspace/customer-decision-disclosures',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },

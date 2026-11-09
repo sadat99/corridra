@@ -65,6 +65,7 @@ import {
   CustomerWorkspaceLifecycleService,
   customerWorkspaceLifecycleEnabled,
 } from '@corridra/auth/customer-workspace-lifecycle';
+import { CustomerErasureQueue } from '@corridra/auth/customer-erasure-queue';
 import {
   CustomerAccountLifecycleService,
   customerAccountLifecycleEnabled,
@@ -586,6 +587,7 @@ function createServices() {
       },
       readCustomerSession,
     ),
+    customerErasureQueue: new CustomerErasureQueue(runtimePool),
     customerAccountLifecycle: new CustomerAccountLifecycleService(
       runtimePool,
       authPool,

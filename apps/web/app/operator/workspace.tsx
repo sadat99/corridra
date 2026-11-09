@@ -13,6 +13,7 @@ import { WorkspaceAreaBar, panelFor } from '../../components/workspace-area-bar'
 import { identityClient } from '@corridra/auth/client';
 import { Counterparties } from './counterparties';
 import { CompanyLinkReview } from './company-link-review';
+import { ErasureQueue } from './erasure-queue';
 import { Missions } from './missions';
 import { TodayPanel } from './today';
 import { CommercialProgress } from './opportunities';
@@ -668,6 +669,7 @@ function TenantWorkspace({
           {shown('workspace-settings') && ['owner', 'admin'].includes(data.role) && (
             <div className="ux-panel" hidden={view !== 'workspace-settings'}>
               <ReviewSettings key={`settings-${tenant}`} tenant={tenant} role={data.role} />
+              <ErasureQueue key={`erasure-${tenant}`} tenant={tenant} />
             </div>
           )}
           {shown('workspace-audit') && ['owner', 'admin'].includes(data.role) && (
