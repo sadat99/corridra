@@ -1080,17 +1080,19 @@ test.describe('with the form released', () => {
 // in English stays within it translated. The first question has its own release and follows the chosen language
 // whatever the form switch says, so it is counted at its English height, as the spec measured it. The real form's
 // last step at 1440 is the one exception: its English sentences on lines of their own (UI spec L5) and the line saying
-// they are English (D4) add about 127 px in every language, so it is held to 1.08 (design audit, 30 Oct 2026).
+// they are English (D4) add about 127 px in every language, so it was held to 1.08 (design audit, 30 Oct 2026). S13, 9 Nov 2026: the English page got shorter (the page-length
+// change), so the same fixed 127 px is a larger share of it; measured 1.095 in German, French and 1.092 in Arabic, so the
+// pass mark is 1.10. The extra height itself did not grow.
 const flowStepLimit = { 390: 1.5, 1440: 1 } as const;
 const passMark = {
   de: { 390: 1.15, 1440: 1.05 },
   fr: { 390: 1.15, 1440: 1.05 },
   ar: { 390: 1.1, 1440: 1.05 },
 } as const;
-const realLastStepAt1440 = 1.08;
+const realLastStepAt1440 = 1.1;
 test.describe('the page-length budget', () => {
   for (const width of [390, 1440] as const)
-    test(`at ${width}: German, French and Arabic stay within their pass marks of English on every step, the real last step at 1440 within 1.08`, async ({
+    test(`at ${width}: German, French and Arabic stay within their pass marks of English on every step, the real last step at 1440 within 1.1`, async ({
       browser,
     }) => {
       /** Screens taken by the main region, the first question and the form card on each step. */
