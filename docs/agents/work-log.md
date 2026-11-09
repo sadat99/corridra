@@ -2978,6 +2978,84 @@ Limits:
 
 Next: owner install of the account module's remaining files (lifecycle_install run 42654373889, pending approval), then a real-staff path.
 
+### 9 November 2026 (evening): S5 conductor session, 13 merges, G4/G5 follow-up installed, session rotation
+
+Scope:
+
+- S5 (`session_0187kU9uYXkA5NHR7sAupuyZ`) took over as conductor and Guardian from `session_0187kU9qz8GGVRjUCwT2Mtof` (old S1, retired).
+- It merged the lane PRs below on exact-head green CI plus Guardian PASS, ran one owner-approved install, and wrote these records from main cfa22c2a.
+- Authority Brief stamp auth-67f52cc5c7d4 (main cfa22c2a) matched `node scripts/authority.mjs stamp` at the start of this records run.
+
+Merged 9 Nov, in order (code only unless noted):
+
+- 361 1c0f75e3: public pages spacing below the hero.
+- 360 98bf8a68: public pages at 200% text (Q-02).
+- 363 9d9ef7d0: receipt-panel guard and tighter public 100% guards (test only).
+- 359 252d81af: team header part 3. Codex P2 on Mark All Read was fixed in 364.
+- 362 cd341229: G4/G5 follow-up (migrations). The owner said "u merge 362".
+- 364 9d58f649: team inbox has no Mark All Read and no server count.
+- 365 a3090c66: field helper tabs plus `team-reachability.md`.
+- 368 ba7390d5: identity guard exception for the staff Sign Out. Main was red after 365 because two PRs, each green alone, conflicted: 362's guard against 359's staff Sign Out POST.
+- 367 e8ca4cac: the Sign Out proof now replays the old cookies as a control first (200) and again after Sign Out (401).
+- 366 72f07b6b: staff erasure queue, route `/api/workspace/customer-erasure-queue`. There is no scope input; the database derives sample or real. It answers 503 until `customer_private.erasure_in_scope` exists, found by a `pg_catalog` probe that is re-checked after 60 seconds.
+- 369 dd6e1e13: halftone sphere mark replaces the solid orb in the headers, footer and favicon (ADR-077 amendment 1). The orb stays for the 16 px favicon entry only. A 44 x 42 px exception applies in the customer and team headers at 430 px and below. Owner: "all good except the icon/logo art, which is currently solid colored circle shaped and dot, instead of many dot type one" and "replace with the alternate version, color could whatever is appropriate".
+- 370 ff51afb4: public hero. The lead sits level with the heading; the default hero Start a Request is hidden by an `@container` rule at 67rem, where the header bar shows it. Owner: "this view look strange, the positioning of the contents. request option is already on the header, still here and randomly placed contents". One pinned test changed knowingly: `tests/browser/layout-budget-tabs.spec.ts:119`.
+- 371 cfa22c2a: logo follow-up. The 430 px gap is scoped to the customer and team headers; ADR, registry and identity-doc wording.
+
+Main cfa22c2a CI:
+
+- Attempt 1 had abandoned shards. GitHub runners dropped operator 1, 2, 3 and 5, ux 1 and 2, and verification; the `validate` aggregate said "abandoned".
+- Attempt 2 of the failed jobs passed (run 42674117115).
+- ff51afb4 run 42673037794 ran only the `checks` job and failed with 0 test jobs, also a runner problem. cfa22c2a superseded that head. Recorded as KI-42.
+
+Install:
+
+- Run 42654373889 (owner approved; S5 dispatched at ba7390d5; input `lifecycle_install` only).
+- "Before install": workspace lifecycle 4, account lifecycle 1. "After install": 9 and 4.
+- Log: "Workspace lifecycle installed or already current (its control stays closed)" and the same for the account lifecycle. All other actions were unchanged. `recipient_response_revision` is still not installed.
+- The 7 Nov enable of both controls stands; this run did not change it.
+
+Guardian findings kept:
+
+- PR 366, first review P1: before the install, the route would have listed and moved REAL customers' erasure requests from a sample workspace, because account module 0001, already live in production, has unscoped functions. Fixed by a service-level `pg_catalog` check (`to_regprocedure` on the private schema is permission-denied for the runtime login), with a new only-0001 test.
+- PR 372, first review P1: the new function checked only `member_role`, not `real_use_allowed`, `can_access` or the side. The re-review of 91f44cb5 is FIXES-NEEDED with no P1 (fix commit pending).
+- PR 359: Codex P2 on Mark All Read, fixed in 364.
+
+In flight, not merged:
+
+- PR 372 (branch `crud-g1-staff-signal`, S12): CRUD item 1, the staff "Withdrawn by the customer on <date>" signal. Additive migration `customer-request-withdrawal-migrations/0002` (function `app.mission_request_withdrawal`). Sensitive: yes; the owner merges. A later install needs a mission mail or notifications `install` action, because the withdrawal files install only through `installWithdrawalFirst`.
+- S13 (`session_0187kU9rCa8AfvbhHALk5yPZ`): `/plan` length, targets 2.4 viewports on a phone and 1.8 on a desktop, moves a to e.
+- S12 next: G12 paging, attendance version check, G10 invitation cancel audit plus workspace lock, G11 counterparty private notes.
+
+Session rotation:
+
+- New rule file `docs/agents/session-rotation.md` (owner statement relayed by the previous conductor session) and a pointer line in CLAUDE.md. Lanes table renamed "Current lanes, 9 November 2026 (evening)". Archived: S2, S3, S4, S6, S7, S8, S9. Finished: S6 (362), S7 (360, 363), S8 (364), S9 (365 to 368), S10 (369, 371), S11 (370).
+
+Records in this run:
+
+- Ledger archived at cfa22c2a to `docs/v3/history/ledger-before-9nov-evening-records-2026-11-09.md` (10814 bytes, sha256 d78122d0af38e71b982d10ad093a80376a159cb4bdd6728c23c653ecf5a54fe6), registered in the history manifest and the documentation map, then condensed.
+- KI-41 updated; KI-42 added.
+- `docs/agents/session-rotation.md` registered in the documentation map and `docs/PLAN_STATUS.md`.
+- Only records files changed; no application code, tests, ADR text or migrations.
+
+Verification:
+
+- What CI proved: each merged head above had exact-head green CI and Guardian PASS before merge (per the conductor's merge record); main cfa22c2a passed on attempt 2 of the failed jobs (run 42674117115).
+- Records checks, all exit 0 on this branch: `node scripts/gate.mjs docs-tests -- pnpm test:docs` (77 pass, 0 fail; log work/docs-tests-2026-11-09T19-18-29-386Z.log), `node scripts/v3-context.mjs verify`, `node scripts/authority.mjs check` (77 governed documents), `pnpm format:check`. The stamp after the edits is auth-e40f1504ea5f; it differs from the brief's because this PR edits authority files. The tested head is the PR's exact head.
+- Not observed: the live deploy of any of these PRs; signed-in pages with a real session (the logo, hero and signed-in headers shipped but were not looked at live); the Vercel app flags (including `CORRIDRA_CUSTOMER_ACCOUNT_LIFECYCLE_ENABLED`); the owner's Neon state.
+
+Not done:
+
+- Privacy wording A and B review; preview check that the live provider returns `session.createdAt`; a real erasure path for real staff.
+- PR 372's fix commit, its merge and its install; PR 335's control stays closed until that signal is merged and installed.
+- Dependabot 230, 232 and 357 are untouched.
+
+Next:
+
+1. Records for the next conductor are the lanes table in `docs/revamp/README.md` and the ledger "Resume immediately".
+2. Re-review PR 372 on its fix commit; the owner merges it; then a mission mail or notifications `install` run.
+3. S13 `/plan` length result; S12 next CRUD items.
+4. Owner items in the ledger.
 ### 9 November 2026: /plan length (S13, branch claude/s13-plan-length from main dd6e1e1)
 
 Scope: owner, 9 Nov 2026, "finish what's left, crud and /plan length". Five moves on `/plan` only, every action kept: (a) the test notice keeps the pill and the availability sentence in view, the rest (use invented details, receipt, email, privacy link) is one closed toggle; (b) on 1000 px and narrower the example request summary is a closed line "Your example request, N of 3 chosen" with the live count (wide screens keep the open column); (c) the footer on `/plan` only has a compact variant (same links and actions, four closed groups in two columns on a phone, the trust legend inside a closed disclosure with the exact words and link, tighter spacing); (d) from 1001 px the receipt check sits under the summary column in the plain state (no pending request, job choice or receipt); (e) the draft line sits close under Continue, Clear Draft is a 44 px target on a phone. Also less space under the form, the notice and the Bangla guide share a row from 701 px.

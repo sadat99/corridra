@@ -8356,11 +8356,11 @@ samp {
   }
 }
 @media (max-width: 430px) {
-  /* The signed-in header row has no spare width on a phone (the real team header measured 342 px of content for
+  /* The customer and team header row has no spare width on a phone (the real team header measured 342 px of content for
      342 px of room at 390 px). A 46 px mark wrapped it to a second row and pushed Today past two screens. A 4 px
      gap and a 44 x 42 px mark give back the same widths at which the row stayed on one line with the old mark
      (measured 9 Nov 2026 at 320 to 759 px; ADR-077 amendment 1). */
-  .site-header.ux-app-header {
+  .site-header:is(.ux-customer-header, .ux-team-header) {
     gap: 4px;
   }
   :is(.ux-customer-header, .ux-team-header) .brand .brand-mark {
