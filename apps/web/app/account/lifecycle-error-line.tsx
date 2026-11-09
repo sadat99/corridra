@@ -9,7 +9,7 @@ import { lifecycleWords } from './workspace-lifecycle-client';
  */
 export function LifecycleErrorLine({ message }: { message: string | null }) {
   const ref = useRef<HTMLParagraphElement>(null);
-  const { busy, signOut } = useSignOut();
+  const { busy, message: signOutMessage, signOut } = useSignOut(() => window.location.pathname);
   useEffect(() => {
     if (message) ref.current?.focus();
   }, [message]);
@@ -24,6 +24,7 @@ export function LifecycleErrorLine({ message }: { message: string | null }) {
           {busy ? 'Signing Out…' : 'Sign Out and Sign In Again'}
         </button>
       )}
+      {signOutMessage && <p role="alert">{signOutMessage}</p>}
     </>
   );
 }

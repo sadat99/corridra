@@ -16,6 +16,7 @@ import {
   type LifecycleResult,
 } from './workspace-lifecycle-client';
 import { LifecycleErrorLine } from './lifecycle-error-line';
+import { ErasureDialog } from './erasure-dialog';
 
 /** Shown while the real controls are closed or unavailable. Plain text, one sentence, no control. */
 export function AccountClosureComingSoon() {
@@ -270,32 +271,14 @@ export function AccountClosure({ subject, issuer }: { subject: string; issuer: s
           </form>
         )}
       </Dialog>
-      <Dialog
+      <ErasureDialog
         open={asking === 'erasure'}
+        busy={busy}
+        message={message}
+        onSubmit={submitErasure}
         onClose={close}
-        title={accountWords.erasureTitle}
-        locked={busy}
         returnFocusTo={() => heading.current}
-      >
-        <form onSubmit={submitErasure}>
-          <p>{accountWords.erasureBody}</p>
-          <LifecycleErrorLine message={message} />
-          <div className="ux-dialog-actions">
-            <button
-              type="button"
-              className="button button-secondary"
-              data-autofocus=""
-              disabled={busy}
-              onClick={close}
-            >
-              Cancel
-            </button>
-            <button type="submit" className="primary-link" disabled={busy}>
-              {busy ? 'Please Wait…' : 'Send Erasure Request'}
-            </button>
-          </div>
-        </form>
-      </Dialog>
+      />
     </section>
   );
 }

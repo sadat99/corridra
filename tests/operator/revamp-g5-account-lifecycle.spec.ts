@@ -50,17 +50,18 @@ test.beforeAll(async () => {
       {
         name: 'next-fixture',
         setup(b) {
-          b.onResolve({ filter: /^next\/(link|navigation)$/ }, (args) => ({
+          b.onResolve({ filter: /^next\/(link|navigation)$|neon-auth-client$/ }, (args) => ({
             path: args.path,
             namespace: 'fixture',
           }));
           b.onLoad({ filter: /.*/, namespace: 'fixture' }, (args) => ({
             loader: 'tsx',
             resolveDir: resolve('apps/web'),
-            contents:
-              args.path === 'next/link'
+            contents: args.path.endsWith('neon-auth-client')
+              ? 'export const accountClient={signOut:async()=>{if(window.__signOutFails)throw new Error("down");return {}}}'
+              : args.path === 'next/link'
                 ? 'export default function Link({prefetch,...props}){return <a {...props}/>}'
-                : 'const router={replace:()=>{},push:()=>{}};export function useRouter(){return router}export function usePathname(){return "/account"}',
+                : 'const router={replace:(path)=>{(window.__replaced=window.__replaced||[]).push(path)},push:()=>{},refresh:()=>{}};export function useRouter(){return router}export function usePathname(){return "/account"}',
           }));
         },
       },
@@ -121,6 +122,8 @@ type Setup = {
   state?: State;
   status?: number;
   part?: string;
+  /** Every state-changing answer waits this long, so a test can look at the screen while a request is in flight. */
+  delayMs?: number;
   answer?: (sent: Sent) => { status: number; json: unknown } | undefined;
 };
 async function open(page: Page, setup: Setup = {}) {
@@ -138,6 +141,7 @@ async function open(page: Page, setup: Setup = {}) {
       return route.fulfill({ status: setup.status ?? 200, json: state });
     const body = request.postDataJSON() as Sent;
     sent.push(body);
+    if (setup.delayMs) await new Promise((done) => setTimeout(done, setup.delayMs));
     const custom = setup.answer?.(body);
     if (custom) return route.fulfill({ status: custom.status, json: custom.json });
     if (body.action === 'close') {
@@ -495,16 +499,41 @@ test('G5-18 the state read and every command name the person the page was drawn 
     });
 });
 
-test('G5-19 a closed person can ask for erasure from the closed screen, and the request names them', async ({
+test('G5-19 a closed person can ask for erasure from the closed screen: one click only opens the dialog, and the request names them', async ({
   page,
 }) => {
   const { sent, identities } = await open(page, { part: 'gate', state: closedState });
   await page.getByRole('button', { name: 'Ask for Erasure' }).click();
+  const dialog = page.getByRole('dialog', { name: accountWords.erasureTitle });
+  await expect(dialog).toContainText(accountWords.erasureBody);
+  expect(sent).toEqual([]);
+  await dialog.getByRole('button', { name: 'Cancel' }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(sent).toEqual([]);
+  await page.getByRole('button', { name: 'Ask for Erasure' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Send Erasure Request' }).click();
   await expect.poll(() => sent.length).toBe(1);
   expect(sent[0]).toEqual({ action: 'file_erasure', commandId: expect.any(String) });
   await expect(page.getByText(`Reference ${erasure.reference}`)).toBeVisible();
   for (const seen of identities) expect(seen.subject).toBe('synthetic-fixture-subject');
   await expect(page.getByText(/are hidden|separate reviewed step/)).toHaveCount(0);
+});
+
+test('G5-19b on the closed screen neither action can start while the other is in flight', async ({
+  page,
+}) => {
+  const reopen = page.locator('button:has-text("Reopen My Account")');
+  const erase = page.locator('button:has-text("Ask for Erasure")');
+  await open(page, { part: 'gate', state: closedState, delayMs: 1500 });
+  await erase.click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Send Erasure Request' }).click();
+  await expect(reopen).toBeDisabled();
+  await page.unrouteAll();
+  await page.reload();
+  const second = await open(page, { part: 'gate', state: closedState, delayMs: 1500 });
+  await reopen.click();
+  await expect(erase).toBeDisabled();
+  await expect.poll(() => second.sent.length).toBe(1);
 });
 
 test('G5-20 a refusal that asks for a recent sign-in says so and offers to sign out and in again', async ({
@@ -523,4 +552,31 @@ test('G5-20 a refusal that asks for a recent sign-in says so and offers to sign 
   await page.getByRole('button', { name: 'Close Account' }).last().click();
   await expect(page.getByRole('alert')).toHaveText(lifecycleWords.signInAgain);
   await expect(page.getByRole('button', { name: 'Sign Out and Sign In Again' })).toBeVisible();
+});
+
+test('G5-21 Sign Out and Sign In Again returns to the sign-in page told where the person was, and says so when signing out fails', async ({
+  page,
+}) => {
+  const refuse = () => ({
+    status: 403,
+    json: { error: lifecycleWords.signInAgain, code: 'recent_sign_in_required' },
+  });
+  await open(page, { answer: refuse });
+  await page.getByRole('button', { name: 'Close Account' }).first().click();
+  await page
+    .getByLabel(`Type ${accountWords.closePhrase} to confirm`)
+    .fill(accountWords.closePhrase);
+  await page.getByRole('button', { name: 'Close Account' }).last().click();
+  await page.evaluate(() => {
+    (window as unknown as { __signOutFails: boolean }).__signOutFails = true;
+  });
+  await page.getByRole('button', { name: 'Sign Out and Sign In Again' }).click();
+  await expect(page.getByText('Sign-out could not be completed. Please try again.')).toBeVisible();
+  await page.evaluate(() => {
+    (window as unknown as { __signOutFails: boolean }).__signOutFails = false;
+  });
+  await page.getByRole('button', { name: 'Sign Out and Sign In Again' }).click();
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as { __replaced?: string[] }).__replaced))
+    .toEqual(['/signin?next=' + encodeURIComponent('/')]);
 });

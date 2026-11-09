@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { accountWords } from '../app/account/account-lifecycle-words';
 import {
   accountEndpoint,
@@ -15,6 +15,7 @@ import {
   type SessionHeaders,
 } from '../app/account/workspace-lifecycle-client';
 import { LifecycleErrorLine } from '../app/account/lifecycle-error-line';
+import { ErasureDialog } from '../app/account/erasure-dialog';
 
 /** What a person with a closed account sees instead of the customer pages: the status, Reopen My Account, Sign Out. */
 export function CustomerClosedAccount({
@@ -29,6 +30,7 @@ export function CustomerClosedAccount({
   const { send, busy } = useLifecycleCommand<AccountCommand>(headers, accountEndpoint);
   const erase = useLifecycleCommand<AccountCommand>(headers, accountEndpoint);
   const [filed, setFiled] = useState<string | null>(null);
+  const [asking, setAsking] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => heading.current?.focus(), []);
@@ -40,13 +42,22 @@ export function CustomerClosedAccount({
     else setMessage(result.kind === 'failed' ? result.message : accountWords.finalNotice);
   };
   // A closed person can still ask for erasure: the right does not end with the closing.
-  const askErasure = async () => {
+  const askErasure = async (event: FormEvent) => {
+    event.preventDefault();
     setMessage(null);
     const result = await erase.send({ action: 'file_erasure' });
     if (!result) return;
-    if (result.kind === 'done') setFiled((result.done as { reference?: string }).reference ?? '');
-    else setMessage(result.kind === 'failed' ? result.message : accountWords.finalNotice);
+    if (result.kind === 'done') {
+      setAsking(false);
+      setFiled((result.done as { reference?: string }).reference ?? '');
+    } else
+      setMessage(
+        result.kind === 'failed'
+          ? result.message
+          : 'Your erasure request was not confirmed. Try the same request again.',
+      );
   };
+
   return (
     <main className="operator-page ux-workspace ux-customer">
       <section className="detail-card" aria-labelledby="closed-account-heading">
@@ -73,9 +84,12 @@ export function CustomerClosedAccount({
               type="button"
               className="button button-secondary"
               disabled={busy || erase.busy}
-              onClick={() => void askErasure()}
+              onClick={() => {
+                setMessage(null);
+                setAsking(true);
+              }}
             >
-              {erase.busy ? 'Please Wait…' : 'Ask for Erasure'}
+              Ask for Erasure
             </button>
           </>
         )}
@@ -83,13 +97,21 @@ export function CustomerClosedAccount({
           <button
             type="button"
             className="primary-link"
-            disabled={busy}
+            disabled={busy || erase.busy}
             onClick={() => void reopen()}
           >
             {busy ? 'Please Wait…' : 'Reopen My Account'}
           </button>
         )}
-        <LifecycleErrorLine message={message} />
+        {!asking && <LifecycleErrorLine message={message} />}
+        <ErasureDialog
+          open={asking}
+          busy={erase.busy}
+          message={message}
+          onSubmit={(event) => void askErasure(event)}
+          onClose={() => setAsking(false)}
+          returnFocusTo={() => heading.current}
+        />
         <p>
           <AccountSignout />
         </p>
@@ -107,11 +129,15 @@ export function ClosedAccountGate({
   issuer,
   children,
 }: {
-  subject: string;
-  issuer: string;
+  /** Both or neither: without them (the identity could not be read just now) the server checks the session itself. */
+  subject?: string;
+  issuer?: string;
   children: ReactNode;
 }) {
-  const headers = useMemo(() => sessionHeaders(subject, issuer), [subject, issuer]);
+  const headers = useMemo(
+    () => (subject && issuer ? sessionHeaders(subject, issuer) : {}),
+    [subject, issuer],
+  );
   const [state, setState] = useState<AccountState | null>(null);
   useEffect(() => {
     const controller = new AbortController();

@@ -257,13 +257,36 @@ describe('the account screens send the identity', () => {
       if (name === 'node_modules' || name === '.next') return [];
       return statSync(path).isDirectory() ? walk(path) : /\.(ts|tsx)$/.test(name) ? [path] : [];
     });
-  const sources = [...walk(join(web, 'app/account')), ...walk(join(web, 'components'))].map(
-    (path) => ({
-      path: relative(web, path),
-      text: readFileSync(path, 'utf8'),
-    }),
-  );
-  const identity = /sessionHeaders|savedMissionHeaders|customerHeaders|x-corridra-customer-subject/;
+  const sources = [
+    ...walk(join(web, 'app/account')),
+    ...walk(join(web, 'components')),
+    ...walk(join(web, 'lib')),
+  ].map((path) => ({ path: relative(web, path), text: readFileSync(path, 'utf8') }));
+  // The text of each fetch( call, up to its closing parenthesis.
+  const fetchCalls = (text: string) => {
+    const calls: string[] = [];
+    for (const start of text.matchAll(/\bfetch\(/g)) {
+      let depth = 0;
+      let end = start.index;
+      for (; end < text.length; end++) {
+        if (text[end] === '(') depth++;
+        else if (text[end] === ')' && --depth === 0) break;
+      }
+      calls.push(text.slice(start.index, end + 1));
+    }
+    return calls;
+  };
+  // A request changes something unless its method is the plain GET (or absent). A method that is a variable or an
+  // expression, such as `method: body ? 'POST' : 'GET'`, counts as changing.
+  const changes = (call: string) => /\bmethod:\s*(?!['"]GET['"])/.test(call);
+  const namesIdentity =
+    /sessionHeaders|savedMissionHeaders|customerHeaders|x-corridra-customer-subject/;
+  // Headers passed on as a variable, spread or shorthand: the file must hold the identity where they are made.
+  const passesHeaders =
+    /\.\.\.[\w.]*headers\b|[\s{,]headers\s*[,}]|headers:\s*(headers\b|\w+Headers\()/;
+  const lifecycleRead = (text: string, call: string) =>
+    /customer-(account|workspace)-lifecycle|accountEndpoint/.test(call) ||
+    (/endpoint/.test(call) && /customer-(account|workspace)-lifecycle/.test(text));
   // Allowed exceptions, each with the reason.
   const exceptions: Record<string, string> = {
     'components/ux/notification-inbox.tsx':
@@ -271,12 +294,39 @@ describe('the account screens send the identity', () => {
     'app/account/delegations/programme-lifecycle.tsx':
       'the headers are passed in by the page that draws it, which is checked below',
   };
+  const named = [
+    'app/account/service-requests/service-request-client.ts',
+    'app/account/profile/company-link.tsx',
+    'app/account/profile/organisation-profile.tsx',
+    'app/account/delegations/programme-context-editor.tsx',
+    'app/account/billing/billing-client.ts',
+  ];
 
-  test('every client with a state-changing request carries the identity, or is a listed exception', () => {
-    const changing = sources.filter((file) => /method: '(POST|PUT|PATCH|DELETE)'/.test(file.text));
-    expect(changing.length).toBeGreaterThan(10);
-    const missing = changing.filter((file) => !identity.test(file.text)).map((file) => file.path);
-    expect(missing.sort()).toEqual(Object.keys(exceptions).sort());
+  test('every state-changing fetch, and every read of a lifecycle state, carries the identity or is a listed exception', () => {
+    for (const path of named)
+      expect(
+        sources.map((file) => file.path),
+        path,
+      ).toContain(path);
+    const missing: string[] = [];
+    let changing = 0;
+    for (const file of sources) {
+      if (file.path in exceptions) continue;
+      for (const call of fetchCalls(file.text)) {
+        const mustName = changes(call) || lifecycleRead(file.text, call);
+        if (!mustName) continue;
+        if (changes(call)) changing++;
+        const ok =
+          namesIdentity.test(call) ||
+          (passesHeaders.test(call) &&
+            (namesIdentity.test(file.text) || /SessionHeaders/.test(file.text)));
+        if (!ok) missing.push(`${file.path}: ${call.slice(0, 80).replace(/\s+/g, ' ')}`);
+      }
+    }
+    expect(changing).toBeGreaterThan(30);
+    expect(missing).toEqual([]);
+    for (const path of Object.keys(exceptions))
+      expect(sources.map((file) => file.path)).toContain(path);
   });
 
   test('the programme lifecycle is drawn only by pages that pass the identity headers', () => {
@@ -297,7 +347,7 @@ describe('the account screens send the identity', () => {
         expect(call[1], file.path).toMatch(/^headers/);
     }
     const gate = sources.find((file) => file.path === 'components/customer-closed-account.tsx')!;
-    expect(gate.text).toMatch(/subject: string;\s*issuer: string;/);
+    expect(gate.text).toMatch(/subject\?: string;\s*issuer\?: string;/);
     const shell = sources.find((file) => file.path === 'components/customer-shell.tsx')!;
     expect(shell.text).toContain('IdentifiedClosedAccountGate');
   });

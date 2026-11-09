@@ -394,6 +394,8 @@ export function useWorkspaceLifecycle({
     isArchived: (id: string) => !!states[id]?.archived,
     /** The status of this workspace could not be read, so it is not known to accept new requests. */
     statusUnknown: (id: string) => refreshFailed && !states[id],
+    /** The person holds an owner or admin membership here: Leave removes nothing, so it is not offered. */
+    keepsAccess: (id: string) => !!states[id]?.keepsAccess,
     protectedMembers: (id: string) => states[id]?.protectedMembers ?? [],
     menuItems,
     panel,

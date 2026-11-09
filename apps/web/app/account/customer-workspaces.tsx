@@ -540,14 +540,16 @@ export function CustomerWorkspaces({
                                 Manage Team
                               </MenuButton>
                             )}
-                            {memberRolesEnabled && row.role !== 'owner' && (
-                              <MenuButton
-                                data-menu-close=""
-                                onClick={() => setDialog({ kind: 'leave', id: row.id })}
-                              >
-                                Leave Workspace
-                              </MenuButton>
-                            )}
+                            {memberRolesEnabled &&
+                              row.role !== 'owner' &&
+                              !lifecycle.keepsAccess(row.id) && (
+                                <MenuButton
+                                  data-menu-close=""
+                                  onClick={() => setDialog({ kind: 'leave', id: row.id })}
+                                >
+                                  Leave Workspace
+                                </MenuButton>
+                              )}
                           </OverflowMenu>
                         )}
                       </td>
@@ -594,7 +596,7 @@ export function CustomerWorkspaces({
                     />
                   </Dialog>
                 )}
-                {memberRolesEnabled && row.role !== 'owner' && (
+                {memberRolesEnabled && row.role !== 'owner' && !lifecycle.keepsAccess(row.id) && (
                   <Dialog
                     open={here === 'leave'}
                     onClose={() =>

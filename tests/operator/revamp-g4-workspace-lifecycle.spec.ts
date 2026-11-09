@@ -120,6 +120,7 @@ const stateFor = (id: string, role: string, extra: Record<string, unknown> = {})
   offer: null,
   ownerMemberId: null,
   protectedMembers: [],
+  keepsAccess: false,
   ...extra,
 });
 async function open(page: Page, setup: Setup = {}) {
@@ -753,4 +754,15 @@ test('G4-18 a paused control keeps an archived workspace archived with Restore, 
   await expect(notice).toContainText('Accepting is paused right now.');
   await expect(notice.getByRole('button', { name: 'Decline' })).toBeVisible();
   await expect(notice.getByRole('button', { name: 'Accept Ownership' })).toHaveCount(0);
+});
+
+test('G4-18 Leave Workspace is offered to an invited admin, and not to an admin who holds an owner or admin membership', async ({
+  page,
+}) => {
+  await open(page);
+  expect(await menuNames(page, 'Synthetic Chattogram Dyers')).toContain('Leave Workspace');
+  await page.keyboard.press('Escape');
+  await page.unrouteAll();
+  await open(page, { states: { [ids.adm]: stateFor(ids.adm, 'admin', { keepsAccess: true }) } });
+  expect(await menuNames(page, 'Synthetic Chattogram Dyers')).not.toContain('Leave Workspace');
 });
