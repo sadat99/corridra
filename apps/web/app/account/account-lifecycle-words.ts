@@ -7,19 +7,20 @@ export const accountWords = {
   // pending the owner's named review: wording A
   closeTitle: 'Close Your Account?',
   closeBody:
-    'Your account and workspaces are hidden. You have 30 days to undo this. After that it is final. We keep records the law requires, such as invoices and signed decisions.',
+    'You have 30 days to undo this. After that it is final. While your account is closed you cannot use it, but you can still ask for erasure. We keep records the law requires, such as invoices and signed decisions.',
   // pending the owner's named review: wording B
   erasureTitle: 'Ask Us to Erase Your Personal Data',
   erasureBody:
-    'Staff will reply within 30 days. We keep records we must keep by law, for example invoices, signed decisions and audit history, and we will tell you which ones and why. Files are removed in a separate reviewed step.',
+    'Staff will reply within 30 days. We keep records we must keep by law, for example invoices, signed decisions and audit history, and we will tell you which ones and why.',
   // pending the owner's named review
   sectionHeading: 'Close Account or Erase Data',
-  closeRow: 'Hide your account and workspaces. You can undo this for 30 days.',
+  closeRow: 'Close your account. You can undo this for 30 days.',
   erasureRow: 'Ask the Corridra team to erase your personal data.',
   blockedNotice:
     'You are the only owner of these workspaces. Transfer ownership or archive each one before you close your account.',
   closedHeading: 'Your Account Is Closed',
   reopened: 'Your account is open again.',
+  closedNotice: 'You can still ask us to erase your personal data while your account is closed.',
   finalNotice: 'Your account was closed and can no longer be reopened.',
 } as const;
 

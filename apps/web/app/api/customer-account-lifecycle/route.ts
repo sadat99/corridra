@@ -49,7 +49,7 @@ export async function GET(request: Request) {
 }
 
 // Closes the signed-in account, takes the closing back, or files an erasure request. A closed account reaches this
-// route (to undo) and nothing else. No person id or identity is ever read from the body.
+// route to undo and to ask for erasure, and for nothing else. No person id or identity is ever read from the body.
 export async function POST(request: Request) {
   try {
     const s = await services();

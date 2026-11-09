@@ -10,6 +10,7 @@ import AxeBuilder from '@axe-core/playwright';
 // closed-account screen. No request carries an id of a person. Case ids: G5-01 to G5-10.
 import { accountLifecycleWords } from '../../packages/auth/src/customer-account-lifecycle';
 import { accountWords } from '../../apps/web/app/account/account-lifecycle-words';
+import { lifecycleWords } from '../../apps/web/app/account/workspace-lifecycle-client';
 
 let server: Server, origin: string;
 let bundle = '';
@@ -23,14 +24,15 @@ test.beforeAll(async () => {
       import{LanguageProvider}from ${JSON.stringify(resolve('apps/web/components/language-provider.tsx'))};
       import{AccountClosure,AccountClosureComingSoon}from ${JSON.stringify(resolve('apps/web/app/account/account-closure.tsx'))};
       import{ClosedAccountGate}from ${JSON.stringify(resolve('apps/web/components/customer-closed-account.tsx'))};
+      const fixtureSubject='synthetic-fixture-subject';const fixtureIssuer='https://ep-fixture.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth';
       const part=new URLSearchParams(location.search).get('part');
       createRoot(document.getElementById('fixture')).render(
         <LanguageProvider offered={[{code:'en',draft:false}]}>
           {part==='gate'
-            ? <ClosedAccountGate><main><h1>Home</h1><p>Customer pages</p></main></ClosedAccountGate>
+            ? <ClosedAccountGate subject={fixtureSubject} issuer={fixtureIssuer}><main><h1>Home</h1><p>Customer pages</p></main></ClosedAccountGate>
             : part==='soon'
               ? <main className="operator-page ux-workspace ux-customer"><h1>Security</h1><AccountClosureComingSoon/></main>
-              : <main className="operator-page ux-workspace ux-customer"><h1>Security</h1><AccountClosure/></main>}
+              : <main className="operator-page ux-workspace ux-customer"><h1>Security</h1><AccountClosure subject={fixtureSubject} issuer={fixtureIssuer}/></main>}
         </LanguageProvider>);`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
@@ -48,17 +50,18 @@ test.beforeAll(async () => {
       {
         name: 'next-fixture',
         setup(b) {
-          b.onResolve({ filter: /^next\/(link|navigation)$/ }, (args) => ({
+          b.onResolve({ filter: /^next\/(link|navigation)$|neon-auth-client$/ }, (args) => ({
             path: args.path,
             namespace: 'fixture',
           }));
           b.onLoad({ filter: /.*/, namespace: 'fixture' }, (args) => ({
             loader: 'tsx',
             resolveDir: resolve('apps/web'),
-            contents:
-              args.path === 'next/link'
+            contents: args.path.endsWith('neon-auth-client')
+              ? 'export const accountClient={signOut:async()=>{if(window.__signOutFails)throw new Error("down");return {}}}'
+              : args.path === 'next/link'
                 ? 'export default function Link({prefetch,...props}){return <a {...props}/>}'
-                : 'const router={replace:()=>{},push:()=>{}};export function useRouter(){return router}export function usePathname(){return "/account"}',
+                : 'const router={replace:(path)=>{(window.__replaced=window.__replaced||[]).push(path)},push:()=>{},refresh:()=>{}};export function useRouter(){return router}export function usePathname(){return "/account"}',
           }));
         },
       },
@@ -119,17 +122,26 @@ type Setup = {
   state?: State;
   status?: number;
   part?: string;
+  /** Every state-changing answer waits this long, so a test can look at the screen while a request is in flight. */
+  delayMs?: number;
   answer?: (sent: Sent) => { status: number; json: unknown } | undefined;
 };
 async function open(page: Page, setup: Setup = {}) {
   let state = setup.state ?? active;
   const sent: Sent[] = [];
+  const identities: Record<string, string | undefined>[] = [];
   await page.route('**/api/customer-account-lifecycle', async (route) => {
     const request = route.request();
+    identities.push({
+      method: request.method(),
+      subject: request.headers()['x-corridra-customer-subject'],
+      issuer: request.headers()['x-corridra-customer-issuer'],
+    });
     if (request.method() === 'GET')
       return route.fulfill({ status: setup.status ?? 200, json: state });
     const body = request.postDataJSON() as Sent;
     sent.push(body);
+    if (setup.delayMs) await new Promise((done) => setTimeout(done, setup.delayMs));
     const custom = setup.answer?.(body);
     if (custom) return route.fulfill({ status: custom.status, json: custom.json });
     if (body.action === 'close') {
@@ -168,7 +180,7 @@ async function open(page: Page, setup: Setup = {}) {
     });
   });
   await page.goto(`${origin}/?part=${setup.part ?? 'closure'}`);
-  return { sent };
+  return { sent, identities };
 }
 const axe = async (page: Page) =>
   (
@@ -338,10 +350,7 @@ test('G5-10 the closed-account screen replaces the pages, shows the date, Reopen
   await expect(
     page.getByText('You also have an erasure request open. Reference ERA-2026-0042.'),
   ).toBeVisible();
-  await expect(page.getByRole('button').allTextContents()).resolves.toEqual([
-    'Reopen My Account',
-    'Sign Out',
-  ]);
+  await expect(page.getByRole('button')).toHaveText(['Reopen My Account', 'Sign Out']);
   expect(await axe(page)).toEqual([]);
   for (const button of await page.getByRole('button').all())
     expect((await button.boundingBox())!.height).toBeGreaterThanOrEqual(44);
@@ -351,7 +360,7 @@ test('G5-10 the closed-account screen replaces the pages, shows the date, Reopen
   expect(sent[0]).toEqual({ action: 'undo', commandId: expect.any(String) });
 });
 
-test('G5-11 an active account shows the customer pages unchanged, and a final account shows only Sign Out', async ({
+test('G5-11 an active account shows the customer pages unchanged, and a final account shows only Ask for Erasure and Sign Out', async ({
   page,
 }) => {
   await open(page, { part: 'gate' });
@@ -364,7 +373,7 @@ test('G5-11 an active account shows the customer pages unchanged, and a final ac
   await expect(
     page.getByText('Your account was closed and can no longer be reopened.'),
   ).toBeVisible();
-  await expect(page.getByRole('button').allTextContents()).resolves.toEqual(['Sign Out']);
+  await expect(page.getByRole('button')).toHaveText(['Ask for Erasure', 'Sign Out']);
 });
 
 test('G5-12 the dialogs trap focus, return focus to their button, and are axe clean at 390 and 1440', async ({
@@ -395,7 +404,8 @@ test('G5-13 a closed account stays closed on screen when the module control is p
   const { sent } = await open(page, { part: 'gate', state: { ...closedState, open: false } });
   await expect(page.getByRole('heading', { name: 'Your Account Is Closed' })).toBeFocused();
   await expect(page.getByText('Customer pages')).toHaveCount(0);
-  await expect(page.getByRole('button').allTextContents()).resolves.toEqual([
+  await expect(page.getByRole('button')).toHaveText([
+    'Ask for Erasure',
     'Reopen My Account',
     'Sign Out',
   ]);
@@ -458,4 +468,108 @@ test('G5-17 a close that was not confirmed does not lend its command id to an er
   expect(sent[0]!.action).toBe('close');
   expect(sent[1]!.action).toBe('file_erasure');
   expect(sent[1]!.commandId).not.toEqual(sent[0]!.commandId);
+});
+
+test('G5-18 the state read and every command name the person the page was drawn for', async ({
+  page,
+}) => {
+  const { sent, identities } = await open(page);
+  await page.getByRole('button', { name: 'Close Account' }).first().click();
+  await page
+    .getByLabel(`Type ${accountWords.closePhrase} to confirm`)
+    .fill(accountWords.closePhrase);
+  await page.getByRole('button', { name: 'Close Account' }).last().click();
+  await page.getByRole('button', { name: 'Reopen My Account' }).click();
+  await expect(page.getByRole('button', { name: 'Close Account' }).first()).toBeVisible();
+  await page.getByRole('button', { name: 'Ask for Erasure' }).click();
+  await page.getByRole('button', { name: 'Send Erasure Request' }).click();
+  await expect.poll(() => sent.length).toBe(3);
+  expect(sent.map((body) => body.action)).toEqual(['close', 'undo', 'file_erasure']);
+  expect(identities.length).toBeGreaterThanOrEqual(4);
+  for (const seen of identities)
+    expect(seen).toMatchObject({
+      subject: 'synthetic-fixture-subject',
+      issuer: 'https://ep-fixture.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth',
+    });
+});
+
+test('G5-19 a closed person can ask for erasure from the closed screen: one click only opens the dialog, and the request names them', async ({
+  page,
+}) => {
+  const { sent, identities } = await open(page, { part: 'gate', state: closedState });
+  await page.getByRole('button', { name: 'Ask for Erasure' }).click();
+  const dialog = page.getByRole('dialog', { name: accountWords.erasureTitle });
+  await expect(dialog).toContainText(accountWords.erasureBody);
+  expect(sent).toEqual([]);
+  await dialog.getByRole('button', { name: 'Cancel' }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(sent).toEqual([]);
+  await page.getByRole('button', { name: 'Ask for Erasure' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Send Erasure Request' }).click();
+  await expect.poll(() => sent.length).toBe(1);
+  expect(sent[0]).toEqual({ action: 'file_erasure', commandId: expect.any(String) });
+  await expect(page.getByText(`Reference ${erasure.reference}`)).toBeVisible();
+  for (const seen of identities) expect(seen.subject).toBe('synthetic-fixture-subject');
+  await expect(page.getByText(/are hidden|separate reviewed step/)).toHaveCount(0);
+});
+
+test('G5-19b on the closed screen neither action can start while the other is in flight', async ({
+  page,
+}) => {
+  const reopen = page.locator('button:has-text("Reopen My Account")');
+  const erase = page.locator('button:has-text("Ask for Erasure")');
+  await open(page, { part: 'gate', state: closedState, delayMs: 1500 });
+  await erase.click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Send Erasure Request' }).click();
+  await expect(reopen).toBeDisabled();
+  await page.unrouteAll();
+  await page.reload();
+  const second = await open(page, { part: 'gate', state: closedState, delayMs: 1500 });
+  await reopen.click();
+  await expect(erase).toBeDisabled();
+  await expect.poll(() => second.sent.length).toBe(1);
+});
+
+test('G5-20 a refusal that asks for a recent sign-in says so and offers to sign out and in again', async ({
+  page,
+}) => {
+  await open(page, {
+    answer: () => ({
+      status: 403,
+      json: { error: lifecycleWords.signInAgain, code: 'recent_sign_in_required' },
+    }),
+  });
+  await page.getByRole('button', { name: 'Close Account' }).first().click();
+  await page
+    .getByLabel(`Type ${accountWords.closePhrase} to confirm`)
+    .fill(accountWords.closePhrase);
+  await page.getByRole('button', { name: 'Close Account' }).last().click();
+  await expect(page.getByRole('alert')).toHaveText(lifecycleWords.signInAgain);
+  await expect(page.getByRole('button', { name: 'Sign Out and Sign In Again' })).toBeVisible();
+});
+
+test('G5-21 Sign Out and Sign In Again returns to the sign-in page told where the person was, and says so when signing out fails', async ({
+  page,
+}) => {
+  const refuse = () => ({
+    status: 403,
+    json: { error: lifecycleWords.signInAgain, code: 'recent_sign_in_required' },
+  });
+  await open(page, { answer: refuse });
+  await page.getByRole('button', { name: 'Close Account' }).first().click();
+  await page
+    .getByLabel(`Type ${accountWords.closePhrase} to confirm`)
+    .fill(accountWords.closePhrase);
+  await page.getByRole('button', { name: 'Close Account' }).last().click();
+  await page.evaluate(() => {
+    (window as unknown as { __signOutFails: boolean }).__signOutFails = true;
+  });
+  await page.getByRole('button', { name: 'Sign Out and Sign In Again' }).click();
+  await expect(page.getByText('Sign-out could not be completed. Please try again.')).toBeVisible();
+  await page.evaluate(() => {
+    (window as unknown as { __signOutFails: boolean }).__signOutFails = false;
+  });
+  await page.getByRole('button', { name: 'Sign Out and Sign In Again' }).click();
+  // The page itself goes to the sign-in page and tells it where the person was.
+  await expect(page).toHaveURL(new RegExp('/signin\\?next=' + encodeURIComponent('/') + '$'));
 });

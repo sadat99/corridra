@@ -45,7 +45,7 @@ test.beforeAll(async () => {
           ?<MuteForm requestId=${JSON.stringify(requestId)}/>
           :query.get('screen')==='nudge'
           ?<EmailNudge/>
-          :<NotificationsForm initial={props.initial} unavailable={!!props.unavailable}/>}</main>);`,
+          :<NotificationsForm initial={props.initial} unavailable={!!props.unavailable} subject="synthetic-alice" issuer="https://ep-fixture.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth"/>}</main>);`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
     },

@@ -16,7 +16,7 @@ const message = {
   firstArchive: 'Transfer ownership or archive the workspace first',
   noWorkspace:
     'There is no workspace on this account. Write to the privacy contact on the privacy page.',
-  withTeam: 'This request is with our team. Write to the privacy contact on the privacy page.',
+  undoEnded: 'The 30 days to undo have ended. Write to the privacy contact on the privacy page.',
 };
 const account = (
   person: string,
@@ -324,14 +324,14 @@ describe('closing and undoing', () => {
     expect(await account('dave', 'undo')).toMatchObject({ changed: true });
   });
 
-  test('a closure at day 31 is final: undo is refused with the team message, nothing is deleted', async () => {
+  test('a closure at day 31 is final: undo is refused with the plain ended message, nothing is deleted', async () => {
     await archiveOwn('erin');
     await backdate('erin', 31);
     expect(await stateOf('erin')).toMatchObject({ status: 'final', canUndo: false });
     expect(await gate('erin')).toBe(true);
     await expect(account('erin', 'undo')).rejects.toMatchObject({
       code: '23514',
-      message: message.withTeam,
+      message: message.undoEnded,
     });
     // still closed after the refusal, and a new close just reports final
     expect(await close('erin')).toMatchObject({ changed: false, status: 'final' });
@@ -352,7 +352,7 @@ describe('closing and undoing', () => {
     const reference = (await stateOf('frank')).erasure as { reference: string };
     await expect(account('frank', 'undo')).rejects.toMatchObject({
       code: '23514',
-      message: `This request is with our team (reference ${reference.reference}). Write to the privacy contact on the privacy page.`,
+      message: `The 30 days to undo have ended. Your erasure request has the reference ${reference.reference}. Write to the privacy contact on the privacy page.`,
     });
     await archiveOwn('owen');
     await backdate('owen', 29);
@@ -393,7 +393,7 @@ describe('the undo window edge and the length of 30 days', () => {
     expect(await stateOf('ivan')).toMatchObject({ status: 'final', canUndo: false });
     await expect(account('ivan', 'undo')).rejects.toMatchObject({
       code: '23514',
-      message: message.withTeam,
+      message: message.undoEnded,
     });
   });
 

@@ -1,0 +1,32 @@
+{
+  "recordedOn": "2026-11-09",
+  "batch": "Revamp S2 Customer Work: follow-up to PR 355 (G4 workspace lifecycle and G5 account lifecycle, installed and enabled), fixing the four Codex findings and the post-merge Guardian findings",
+  "kind": "Reports to docs/revamp/crud/summary.md rows G4 and G5. Requirements: V3-06-002, V3-06-003, V3-06-006, V3-05-055.",
+  "findings": [],
+  "findingsNote": "Sensitive: yes (migrations on installed modules, triggers on member-role tables, session boundary sign-in check). The owner merges. Migrations are additive new files only; no applied file is edited.",
+  "fixed": [
+    "Account screens and the closed-account screen send the page identity (subject and issuer) on the state read and every command; a source scan lists every state-changing client under app/account, components and lib",
+    "A former owner (demoted admin) cannot be removed, demoted or leave through a false success: the server refuses with a plain reason (BEFORE INSERT guards on workspace_access_revocation and workspace_member_role), the team list shows the true role, and Leave is not offered to them",
+    "Account close and workspace provisioning take the same person lifecycle lock, and provisioning refuses a closed account",
+    "Undo, later closure events and the staff erasure steps use the workspace of the original closure or request (append-only account_chain, backfilled from existing events), so a member removed from their only workspace can still undo and be erased",
+    "Closing and erasure words state facts only (no hidden-workspaces claim, no separate reviewed file step); the final undo refusal is true with or without an erasure request",
+    "A closed person can still ask for erasure, with a confirm dialog on the closed screen",
+    "The erasure queue is split sample and real by the chain workspace and the person's current workspaces",
+    "Late fingerprint re-checks restore or refuse if submit_private_request or workspace_access_command lose the archive gate",
+    "Close, archive, ownership offer and accept need a sign-in within 15 minutes (session createdAt), with a sign-in-again path; undo, erasure, restore, rename, cancel and decline do not"
+  ],
+  "migrations": [
+    "customer-workspace-lifecycle-migrations 0005 member protection, 0006 provisioning closed account, 0007 archive gate late, 0008 member role guard late, 0009 keeps access in state",
+    "customer-account-lifecycle-migrations 0002 account chain and undo words, 0003 erasure queue scope, 0004 erasure scope by workspaces"
+  ],
+  "upgradeProof": "tests/integration/revamp-g4-g5-upgrade.test.ts builds the shipped modules from fixtures byte-identical to main, installs them in production order, creates data with the old functions, pauses the account control, then runs the new migrations: only the expected functions change, recorded hashes and control values are untouched, a re-run changes nothing, a tampered applied hash still refuses, and the upgraded database equals a fresh install.",
+  "knownLimits": [
+    "Whether the live provider returns session.createdAt is not verified; if it does not, close, archive, offer and accept refuse with the sign-in-again message (fails closed). Check on a preview deployment.",
+    "Revocation rows for former owners that already exist in production stay as they are",
+    "A handover recipient cannot leave their own workspace without support",
+    "Filing erasure is refused while the account control is paused",
+    "About ten account pages read the provider session directly, so the shell makes one extra read for them (follow-up: share the cached read)",
+    "The sign-in page decides which return destinations it honours"
+  ],
+  "notRun": "ClamAV, Blob and pg_dump backup tests need Docker containers and fail in this environment (they do not touch these files)."
+}

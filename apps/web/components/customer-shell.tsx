@@ -14,7 +14,7 @@ import { CustomerBarNote } from './ux/customer-bar-note';
 import { LeftNavFrame, LeftNavList, type LeftNavItem } from './ux/left-nav';
 import { CustomerRailFoot, CustomerRailTop } from './ux/customer-rail';
 import { WorkspaceShell } from './workspace-shell';
-import { ClosedAccountGate } from './customer-closed-account';
+import { IdentifiedClosedAccountGate } from './customer-closed-account-server';
 
 const navId = 'customer-navigation';
 const words = {
@@ -36,7 +36,11 @@ const words = {
 export function CustomerShell(props: CustomerShellProps) {
   const frame = <CustomerFrame {...props} />;
   // With the account module off nothing is added: the frame is exactly what it was.
-  return customerAccountLifecycleEnabled() ? <ClosedAccountGate>{frame}</ClosedAccountGate> : frame;
+  return customerAccountLifecycleEnabled() ? (
+    <IdentifiedClosedAccountGate>{frame}</IdentifiedClosedAccountGate>
+  ) : (
+    frame
+  );
 }
 
 type CustomerShellProps = {

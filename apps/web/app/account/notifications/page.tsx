@@ -77,7 +77,12 @@ export default async function Page() {
     }
   return (
     <CustomerShell tab="more" eyebrow="EMAIL CHOICES" title="Choose what we email you.">
-      <NotificationsForm initial={initial} unavailable={unavailable} />
+      <NotificationsForm
+        initial={initial}
+        unavailable={unavailable}
+        subject={session.subject}
+        issuer={session.issuer}
+      />
       <MutedRequests
         initial={mutes}
         titles={titles}

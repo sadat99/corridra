@@ -67,7 +67,15 @@ export type CustomerSession = {
   expiresAt: Date;
   emailVerified: boolean;
   email?: string;
+  // When the person signed in: the creation time of the provider session, which a refresh does not move. Read only by
+  // actions that ask for a recent sign-in.
+  signedInAt?: Date;
 };
+// The window in which a sign-in counts as recent, and the one refusal a person gets outside it. The words are matched by
+// the screens (lifecycleWords.signInAgain in the account screens), and a test holds the two together.
+export const recentSignInMinutes = 15;
+export const recentSignInCode = 'recent_sign_in_required';
+export const recentSignInWords = 'For your safety, sign in again to do this, then try again.';
 export type CustomerWorkspaceOptions = {
   enabled: boolean;
   synthetic: boolean;
@@ -106,7 +114,9 @@ export class CustomerSessionBoundary {
     // the verified issuer and subject, never the browser's. A refusal from it ends the request.
     afterIdentity?: (identity: { issuer: string; subject: string }) => Promise<void>,
     // Only the account lifecycle service sets this: a closed person may read the closure status and undo it.
-    access: { allowClosedAccount?: boolean } = {},
+    // requireRecentSignIn: the action is closing an account, archiving a workspace or handing one over, and needs a sign-in
+    // from the last few minutes (the provider session creation time) on top of the live session.
+    access: { allowClosedAccount?: boolean; requireRecentSignIn?: boolean } = {},
   ): Promise<T> {
     if (
       !this.options.enabled ||
@@ -153,6 +163,12 @@ export class CustomerSessionBoundary {
       (expectedIssuer !== undefined && expectedIssuer !== issuer)
     )
       throw new DomainError('Your account changed. Reload before continuing.', 409);
+    if (access.requireRecentSignIn) {
+      const age =
+        session.signedInAt instanceof Date ? Date.now() - session.signedInAt.getTime() : NaN;
+      if (!(age >= -60000 && age <= recentSignInMinutes * 60000))
+        throw new DomainError(recentSignInWords, 403, recentSignInCode);
+    }
     await afterIdentity?.({ issuer, subject: session.subject });
     await Promise.all([
       assertRestrictedPool(this.runtime),

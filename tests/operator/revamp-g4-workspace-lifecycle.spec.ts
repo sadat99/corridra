@@ -4,6 +4,7 @@ import { createServer, type Server } from 'node:http';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
+import { lifecycleWords } from '../../apps/web/app/account/workspace-lifecycle-client';
 
 // CRUD G4, workspace lifecycle in Workspaces and Team: owner-only menu items, Rename Workspace (reason, stale conflict),
 // Archive Workspace (typed name, ten second Undo, Archived filter and banner), Restore, Transfer Ownership (offer,
@@ -118,6 +119,8 @@ const stateFor = (id: string, role: string, extra: Record<string, unknown> = {})
   history: [],
   offer: null,
   ownerMemberId: null,
+  protectedMembers: [],
+  keepsAccess: false,
   ...extra,
 });
 async function open(page: Page, setup: Setup = {}) {
@@ -222,6 +225,10 @@ const axe = async (page: Page) =>
 const owner = 'Synthetic Dhaka Knits';
 const menuNames = async (page: Page, name: string) => {
   await trigger(page, name).click();
+  // The items depend on the status of the workspace, which arrives by request: wait for the menu and the requests to settle
+  // before reading, so an item that is not there yet is never taken for an item that is not offered.
+  await expect(page.getByRole('menuitem').first()).toBeVisible();
+  await page.waitForLoadState('networkidle');
   return page.getByRole('menuitem').allTextContents();
 };
 const lifecycleItems = ['Rename Workspace', 'Transfer Ownership', 'Archive Workspace'];
@@ -413,8 +420,7 @@ test('G4-08 the Undo line goes after ten seconds, the Archived filter holds the 
   await expect(page.locator('body')).not.toContainText(/read-only/i);
   // No New Request for an archived workspace, and the reason is in words.
   await expect(row).toContainText('New requests are closed while this workspace is archived.');
-  await trigger(page, owner).click();
-  expect(await page.getByRole('menuitem').allTextContents()).not.toContain('New Request');
+  expect(await menuNames(page, owner)).not.toContain('New Request');
   await page.getByRole('menuitem', { name: 'Restore Workspace' }).click();
   const dialog = page.getByRole('dialog', { name: 'Restore ' + owner + '?' });
   await expect(dialog.getByRole('button', { name: 'Not Now' })).toBeFocused();
@@ -437,6 +443,23 @@ test('G4-09 the Undo line disappears after ten seconds', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Undo' })).toHaveCount(0);
 });
 
+test('G4-10b Transfer Ownership shows exactly the active members however late the team arrives', async ({
+  page,
+}) => {
+  await open(page);
+  await page.route('**/api/customer-workspace-access*', async (route) => {
+    await new Promise((done) => setTimeout(done, 1200));
+    return route.fallback();
+  });
+  await trigger(page, owner).click();
+  await page.getByRole('menuitem', { name: 'Transfer Ownership' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Transfer Ownership' });
+  await expect(dialog.getByLabel('New owner').locator('option')).toHaveText(
+    ['Choose a member', 'Synthetic Rahim, admin', 'Synthetic Salma, member'],
+    { timeout: 10_000 },
+  );
+});
+
 test('G4-10 Transfer Ownership lists only active members, needs the typed name, sends the offer, and the owner can cancel it', async ({
   page,
 }) => {
@@ -444,8 +467,12 @@ test('G4-10 Transfer Ownership lists only active members, needs the typed name, 
   await trigger(page, owner).click();
   await page.getByRole('menuitem', { name: 'Transfer Ownership' }).click();
   const dialog = page.getByRole('dialog', { name: 'Transfer Ownership' });
-  const options = await dialog.getByLabel('New owner').locator('option').allTextContents();
-  expect(options).toEqual(['Choose a member', 'Synthetic Rahim, admin', 'Synthetic Salma, member']);
+  // The team arrives from a request, so the list is waited for: reading it once at the click raced that request.
+  await expect(dialog.getByLabel('New owner').locator('option')).toHaveText([
+    'Choose a member',
+    'Synthetic Rahim, admin',
+    'Synthetic Salma, member',
+  ]);
   const send = dialog.getByRole('button', { name: 'Send Offer' });
   await dialog.getByLabel('New owner').selectOption(memberB);
   await expect(send).toBeDisabled();
@@ -553,15 +580,69 @@ test('G4-13 dialogs trap focus, return it to the row menu, have 44 pixel buttons
   }
 });
 
-test('G4-14 the team list labels the member who became owner as Owner', async ({ page }) => {
+test('G4-14 the team list labels a member who is or was an owner with the access they really have, and offers no removal', async ({
+  page,
+}) => {
   await open(page, {
-    states: { [ids.own]: stateFor(ids.own, 'owner', { ownerMemberId: memberA }) },
+    states: {
+      [ids.own]: stateFor(ids.own, 'owner', {
+        ownerMemberId: memberA,
+        protectedMembers: [{ memberId: memberA, role: 'owner' }],
+      }),
+    },
   });
   await trigger(page, owner).click();
   await page.getByRole('menuitem', { name: 'Manage Team' }).click();
-  await expect(page.getByRole('dialog', { name: 'Team for ' + owner })).toContainText(
-    'Synthetic Rahim · Owner',
+  const dialog = page.getByRole('dialog', { name: 'Team for ' + owner });
+  await expect(dialog).toContainText('Synthetic Rahim · Owner');
+  await expect(dialog.getByText('Synthetic Salma · member')).toBeVisible();
+  await expect(
+    dialog.getByRole('button', { name: 'Remove Invited Membership for Synthetic Rahim' }),
+  ).toHaveCount(0);
+  await expect(
+    dialog.getByRole('button', { name: 'Remove Invited Membership for Synthetic Salma' }),
+  ).toBeVisible();
+  await expect(dialog).toContainText(
+    'This person is or was an owner and keeps admin access. Ask support to remove it.',
   );
+});
+
+test('G4-14b a former owner who is now an admin is labelled Admin and cannot be removed or demoted from the list', async ({
+  page,
+}) => {
+  await open(page, {
+    states: {
+      [ids.own]: stateFor(ids.own, 'owner', {
+        protectedMembers: [{ memberId: memberA, role: 'admin' }],
+      }),
+    },
+  });
+  await trigger(page, owner).click();
+  await page.getByRole('menuitem', { name: 'Manage Team' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Team for ' + owner });
+  await expect(dialog).toContainText('Synthetic Rahim · Admin');
+  await expect(dialog.getByRole('button', { name: /Synthetic Rahim/ })).toHaveCount(0);
+});
+
+test('G4-14c archiving with an old sign-in says so and offers to sign out and in again', async ({
+  page,
+}) => {
+  await open(page, {
+    answer: (body) =>
+      body.action === 'archive'
+        ? {
+            status: 403,
+            json: { error: lifecycleWords.signInAgain, code: 'recent_sign_in_required' },
+          }
+        : undefined,
+  });
+  await trigger(page, owner).click();
+  await page.getByRole('menuitem', { name: 'Archive Workspace' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Archive ' + owner + '?' });
+  await dialog.getByLabel('Type the workspace name to confirm').fill(owner);
+  await dialog.getByRole('button', { name: 'Archive Workspace' }).click();
+  await expect(dialog.getByRole('alert')).toHaveText(lifecycleWords.signInAgain);
+  await expect(dialog.getByRole('button', { name: 'Sign Out and Sign In Again' })).toBeVisible();
 });
 
 test('G4-15 an Undo that fails says so in an alert instead of doing nothing', async ({ page }) => {
@@ -675,8 +756,8 @@ test('G4-18 a paused control keeps an archived workspace archived with Restore, 
   await expect(page.getByRole('row', { name: new RegExp(owner) })).toContainText('Archived');
   // Restore stays available while paused, and nothing else is offered for it.
   expect(await menuNames(page, owner)).toEqual(expect.arrayContaining(['Restore Workspace']));
-  const archivedItems = await page.getByRole('menuitem').allTextContents();
-  for (const item of lifecycleItems) expect(archivedItems).not.toContain(item);
+  for (const item of lifecycleItems)
+    await expect(page.getByRole('menuitem', { name: item })).toHaveCount(0);
   await page.getByRole('menuitem', { name: 'Restore Workspace' }).click();
   await page
     .getByRole('dialog', { name: 'Restore ' + owner + '?' })
@@ -697,4 +778,15 @@ test('G4-18 a paused control keeps an archived workspace archived with Restore, 
   await expect(notice).toContainText('Accepting is paused right now.');
   await expect(notice.getByRole('button', { name: 'Decline' })).toBeVisible();
   await expect(notice.getByRole('button', { name: 'Accept Ownership' })).toHaveCount(0);
+});
+
+test('G4-18 Leave Workspace is offered to an invited admin, and not to an admin who holds an owner or admin membership', async ({
+  page,
+}) => {
+  await open(page);
+  expect(await menuNames(page, 'Synthetic Chattogram Dyers')).toContain('Leave Workspace');
+  await page.keyboard.press('Escape');
+  await page.unrouteAll();
+  await open(page, { states: { [ids.adm]: stateFor(ids.adm, 'admin', { keepsAccess: true }) } });
+  expect(await menuNames(page, 'Synthetic Chattogram Dyers')).not.toContain('Leave Workspace');
 });

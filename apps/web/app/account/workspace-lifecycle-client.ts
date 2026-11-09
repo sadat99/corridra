@@ -40,6 +40,8 @@ export const lifecycleWords = {
   archived: 'This workspace is archived, so this was not saved. Restore it first.',
   notConfirmed: 'This was not confirmed. Try the same request again.',
   changed: 'This workspace changed. Reload before trying again.',
+  // Equal to recentSignInWords in packages/auth (a test holds the two together).
+  signInAgain: 'For your safety, sign in again to do this, then try again.',
 } as const;
 
 /** UTC with the zone named, written like "6 Nov 2026, 14:30 UTC". */
@@ -133,6 +135,8 @@ async function post(
     if (response.status === 429) return { kind: 'failed', message: limitWords, settled: false };
     if (response.status === 503)
       return { kind: 'failed', message: lifecycleWords.unavailable, settled: false };
+    if (response.status === 403 && body?.code === 'recent_sign_in_required')
+      return { kind: 'failed', message: lifecycleWords.signInAgain, settled: true };
     if (response.status === 403)
       return { kind: 'failed', message: lifecycleWords.denied, settled: true };
     // A refusal such as an expired or cancelled offer carries its own plain wording.

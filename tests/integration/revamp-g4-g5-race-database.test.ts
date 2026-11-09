@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { fixture } from './support';
-import { harness, type Fixture } from './revamp-g4-support';
+import { harness, overlap as sharedOverlap, type Fixture } from './revamp-g4-support';
 import type { DatabaseClient } from '../../packages/db/src/index';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateCustomerAccountLifecycle } from '../../packages/db/src/customer-account-lifecycle-migrate';
@@ -15,7 +15,6 @@ let h: ReturnType<typeof harness>;
 const phrase = 'Close my account';
 const firstArchive = 'Transfer ownership or archive the workspace first';
 const closedAccount = 'That account is closed';
-type Answer = { ok?: unknown; error?: { code?: string; message: string } };
 
 const closeIn = (db: DatabaseClient) =>
   db.query('SELECT customer.account_lifecycle_command($1,$2,$3)', [
@@ -42,34 +41,11 @@ const acceptIn = (offerId: string) => (db: DatabaseClient) =>
     JSON.stringify({ offerId }),
   ]);
 
-// Runs `first` for `person` inside a transaction that stays open while `second` starts, then commits it.
-async function overlap(
+const overlap = (
   person: string,
   first: (db: DatabaseClient) => Promise<unknown>,
   second: () => Promise<unknown>,
-) {
-  let racing: Promise<Answer> | undefined;
-  let waited = false;
-  let settled = false;
-  await h.as(person, async (db) => {
-    await first(db);
-    racing = second().then(
-      (ok): Answer => ({ ok }),
-      (error: { code?: string; message: string }): Answer => ({ error }),
-    );
-    void racing.then(() => {
-      settled = true;
-    });
-    for (let attempt = 0; attempt < 30 && !waited && !settled; attempt++) {
-      const waiting = await f.owner.query(
-        "SELECT count(*)::int AS n FROM pg_stat_activity WHERE wait_event_type='Lock'",
-      );
-      waited = waiting.rows[0].n > 0;
-      if (!waited) await new Promise((done) => setTimeout(done, 100));
-    }
-  });
-  return { waited, answer: await racing! };
-}
+) => sharedOverlap(f, h, person, first, second);
 
 const closedOwnersOfLiveWorkspaces = async () =>
   (

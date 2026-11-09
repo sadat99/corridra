@@ -6,7 +6,9 @@ import type { DatabasePool } from './index';
 // nothing anyone can see: the control it creates starts closed. It never applies the real-use schema itself: when that
 // schema is not current it stops with a plain message and writes nothing. File 0003 changes three existing functions,
 // each only when its live text is exactly the reviewed text, and skips one that is not installed; file 0004 repeats on
-// every run so the programme guard is gated when the programme lifecycle is installed later.
+// every run so the programme guard is gated when the programme lifecycle is installed later. Files 0005 to 0008 are the
+// follow-up for a database that already has files 0001 to 0004: each changes a function only when its live text is exactly
+// the text that was installed, and files 0007 and 0008 (_late) repeat on every run.
 // No runtime request receives this owner connection.
 export async function migrateCustomerWorkspaceLifecycle(pool: DatabasePool) {
   const directory = new URL('../customer-workspace-lifecycle-migrations/', import.meta.url);
