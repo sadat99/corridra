@@ -1,0 +1,23 @@
+{
+  "track": "S7 Public, Intake and Organise",
+  "item": "Guard the /plan receipt state against a wider font at 320 and 390 with text at 200 percent (follow-up to #354)",
+  "date": "2026-11-09",
+  "sensitive": false,
+  "spec": "S3 handoff of 9 Nov (commit 18f18f84, never pushed); docs/revamp/specs/layout-budget.md",
+  "changed": [
+    "tests/operator/ux-plan-languages.spec.ts: in the 200 percent walk, the receipt state is measured again after adding a wider face (DejaVu Sans) and 0.04em letter spacing, as a build machine with other fonts would show it.",
+    "tests/browser/public-normal-text.spec.ts (S5 review note on #360): the footer check now compares the drawn link-list and action columns at all six widths with the values measured at 100 percent (it compared a count against itself above 390 px); the home-player probe returns null for a component that is not drawn instead of a default, so a selector that stops matching fails the table comparison. Every drawn value in the table is unchanged from the main-measured one (36 rows, 0 differences)."
+  ],
+  "preserved": [
+    "No product code changed. S3's 18f18f84 also added .receipt-panel > * wrapping rules and a button white-space rule; they are not included, because main already has the grid-template-columns: minmax(0, 1fr) fix from #354 and the test passes with it (see verification)."
+  ],
+  "verification": [
+    "Before (main 98bf8a68 plus the test, build 0): node scripts/gate.mjs receipt-before -- pnpm test:operator tests/operator/ux-plan-languages.spec.ts -g 'with text at 200 percent: every step and the receipt' --trace off: exit 0, 12 passed (6 languages x 320 and 390), 2.5 min, native PostgreSQL 16 (KI-15).",
+    "Proof the test bites: the same command with the .receipt-panel grid-template-columns: minmax(0, 1fr) line removed (uncommitted, restored afterwards): exit 1, 'de at 320 with text at 200 percent ... de 200% receipt' failed, 11 passed. That is the failure CI showed on #354.",
+    "tests/browser/public-normal-text.spec.ts and public-large-text.spec.ts against a production build of this head: all passed (npx playwright test --project=desktop --trace off).",
+    "The full ux-plan-languages spec and the other gates are run on the pushed head by CI."
+  ],
+  "openRisks": [
+    "The test depends on the DejaVu Sans face being installed on the machine; where it is missing the browser falls back to another sans face and the extra check is weaker, not wrong."
+  ]
+}
