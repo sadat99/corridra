@@ -271,3 +271,17 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Observed:** on main cfa22c2a, attempt 1 had abandoned shards: the runners dropped operator 1, 2, 3 and 5, ux 1 and 2, and verification, and the `validate` aggregate said "abandoned". Attempt 2 of the failed jobs passed (run 42674117115). On ff51afb4, run 42673037794 ran only the `checks` job and failed with 0 test jobs; cfa22c2a superseded that head.
 - **Cause:** a runner problem on the provider side, not the change under test. It differs from KI-39, where a job started and its service container did not.
 - **Rule:** rerun the failed jobs once on the exact head, never push an empty commit, and record the run id. A second failure is treated as real.
+
+### KI-43 The receipt-memory "older than thirty days" browser test can read storage before the page drops the value (9 November 2026)
+
+- **Seen (S13, PR 374):** `tests/browser/receipt-memory.spec.ts:72` ("a request that is older than thirty days, or a bad value, is not shown") failed in 3 of 3 full `pnpm test:e2e` runs on the PR's branch after main was merged in (twice on mobile, once on desktop; 538 other tests passed each time), and in none of the two full runs before the merge. It failed 1 of 80 on clean main 15637875 under 8 workers, and 0 of 160 on the PR's build under 8 workers. Main's own single full run passed (529). The PR may make the race more likely in full runs; that is not settled.
+- **Cause, inferred, not traced:** the test seeds an expired receipt in `localStorage`, waits for the Commercial job select, then reads storage once and expects it empty. The select is in the server-rendered HTML, so it is visible before the page's mount effect runs. That effect calls `readReceipt` (`apps/web/lib/receipt-memory.ts`, from `apps/web/app/plan/intake.tsx`), which drops an expired value. Under load the single read can come first.
+- **Fix in PR 374:** the test polls the same assertion (storage is empty) instead of reading it once. It still fails if the value is never dropped.
+
+### KI-44 The step bar on /plan overflows at 320 px with text at 200 percent (found 9 November 2026, not fixed)
+
+- **Seen (S13, PR 374):** adding `/plan` to the whole-page guard in `tests/browser/public-large-text.spec.ts` failed at 320 px: `Error: /plan at 320`, offender `li. 1Goal`. That guard measures the whole page, header and footer included, so it found something the form's own guard (`#main` only, English, German and Arabic) did not report.
+- **Cause, inferred from the CSS, not traced:** the step bar (`apps/web/components/journey-bar.tsx`, `.guide-journey-bar` in `apps/web/app/globals.css`, around lines 4193 to 4260) is five columns of `minmax(0, 1fr)`; at 200 percent text on a 320 px phone a column is about 52 px, and the step label ("Goal") in `--text-sm` is wider. PR 374 does not change the journey bar or its CSS, so this is not new in that PR; it was not separately measured on main.
+- **Why `/plan` is not in `public-large-text.spec.ts` yet:** adding it fails until this is fixed. The compact `/plan` footer has its own 320 px, 200 percent test in `tests/browser/layout-budget-plan.spec.ts`.
+- **Repro:** open `/plan` at 320 x 800, add `html { font-size: 200% !important; }`, wait for fonts, and list boxes whose right edge is past the window (the guard's `problems` helper in `public-large-text.spec.ts`).
+- **Do:** fix it in its own pull request (shorter labels under the dots, or let the step labels wrap or stack at that size), then add `/plan` to the guard's page list.

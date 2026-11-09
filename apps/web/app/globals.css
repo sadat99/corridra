@@ -8472,3 +8472,185 @@ samp {
   min-width: 0;
   overflow-wrap: anywhere;
 }
+
+/* Request page length (S13 under the S5 brief, owner confirmation pending). Four moves, each keeping every action: the test notice is one line
+   with the whole notice behind a toggle; on a phone or tablet the example-request summary is a closed disclosure
+   whose line keeps the live count; on a wide screen the receipt check sits under the summary column; the draft line
+   sits close under the buttons. Tokens only. */
+.intake-notice-compact {
+  flex-wrap: wrap;
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+}
+.intake-notice-compact > p {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+.intake-notice-more {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.intake-notice-more[open] {
+  flex-basis: 100%;
+}
+@media (max-width: 700px) {
+  .intake-notice-compact {
+    flex-direction: row;
+    gap: var(--space-1) var(--space-3);
+  }
+  .intake-notice-more {
+    flex-basis: 100%;
+  }
+}
+.intake-notice-more > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--brand-deep);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+.intake-notice-more[open] > summary {
+  margin-bottom: var(--space-1);
+}
+.ux-brief-details > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2.75rem;
+  gap: var(--space-2);
+  font-size: var(--text-base);
+  list-style: none;
+  cursor: pointer;
+}
+.ux-brief-details > summary::-webkit-details-marker {
+  display: none;
+}
+.ux-brief-details > summary::after {
+  content: '+';
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  color: var(--text-3);
+}
+.ux-brief-details[open] > summary::after {
+  content: '\2212';
+}
+.ux-brief-count {
+  font-weight: 600;
+  color: var(--text-1);
+}
+.ux-brief-details > dl {
+  margin-top: var(--space-3);
+}
+.ux-brief-details > p:last-child {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  color: var(--text-2);
+}
+.ux-brief-heading {
+  display: none;
+}
+@media (max-width: 1000px) {
+  .ux-brief-summary {
+    padding: var(--space-1) var(--space-4);
+  }
+  .guide-draft-line {
+    margin-top: calc(-1 * var(--space-3));
+    padding-top: 0;
+    border-top: 0;
+  }
+}
+/* From 1001 px the summary column is always open and shows its heading; where the browser cannot hold a closed
+   disclosure open, the toggle stays at every width. */
+@supports selector(::details-content) {
+  @media (min-width: 1001px) {
+    .ux-brief-details > summary {
+      display: none;
+    }
+    .ux-brief-details::details-content {
+      content-visibility: visible;
+    }
+    .ux-brief-heading {
+      display: block;
+      margin: 0;
+      color: var(--text-3);
+    }
+    .ux-brief-details > dl {
+      margin-top: 0;
+    }
+    .ux-brief-summary {
+      display: grid;
+    }
+  }
+}
+/* The receipt check sits under the summary column in the plain state (no pending request, job choice or receipt). */
+@media (min-width: 1001px) {
+  .guide-plan-body:has(.ux-brief-summary):not(
+      :has(.ux-job-choice, .receipt-saved, .receipt-panel:not(#receipt-check))
+    ) {
+    grid-template-rows: auto 1fr;
+  }
+  .guide-plan-body:has(.ux-brief-summary):not(
+      :has(.ux-job-choice, .receipt-saved, .receipt-panel:not(#receipt-check))
+    )
+    .guide-plan-main {
+    display: contents;
+  }
+  .guide-plan-body:has(.ux-brief-summary):not(
+      :has(.ux-job-choice, .receipt-saved, .receipt-panel:not(#receipt-check))
+    )
+    .intake-form {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+  .guide-plan-body:has(.ux-brief-summary):not(
+      :has(.ux-job-choice, .receipt-saved, .receipt-panel:not(#receipt-check))
+    )
+    .ux-brief-summary {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .guide-plan-body:has(.ux-brief-summary):not(
+      :has(.ux-job-choice, .receipt-saved, .receipt-panel:not(#receipt-check))
+    )
+    #receipt-check {
+    grid-column: 2;
+    grid-row: 2;
+  }
+}
+
+/* Request page spacing, second pass (S13 under the S5 brief, owner confirmation pending): less empty space under the form, the notice and the
+   Bangla guide on one row where they fit, and tighter gaps on a phone. */
+.guide-plan {
+  padding-block-end: var(--space-6);
+}
+@media (min-width: 701px) {
+  .guide-plan-top:has(.intake-notice-compact) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .guide-plan-top:has(.intake-notice-compact) > .intake-notice {
+    flex: 1 1 24rem;
+    width: auto;
+  }
+}
+@media (max-width: 700px) {
+  .guide-draft-line .text-link {
+    min-height: 2.75rem;
+    padding-inline: var(--space-1);
+  }
+  .guide-plan {
+    padding-block-end: var(--space-4);
+  }
+  .ux-intake-layout,
+  .guide-plan-main {
+    gap: var(--space-4);
+  }
+}

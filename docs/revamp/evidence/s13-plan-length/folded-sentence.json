@@ -1,0 +1,17 @@
+{
+  "base": "http://localhost:3100",
+  "width": 390,
+  "height": 844,
+  "variants": [
+    {
+      "name": "as built",
+      "document": 2132,
+      "screens": 2.53
+    },
+    {
+      "name": "availability sentence hidden",
+      "document": 2092,
+      "screens": 2.48
+    }
+  ]
+}
