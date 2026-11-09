@@ -314,6 +314,11 @@
       "use": "Append-only log; never read whole. Use v3-context outline --last N and section for affected entries"
     },
     {
+      "path": "docs/agents/session-rotation.md",
+      "classification": "Current guide/contract",
+      "use": "Owner rule of 9 November 2026: when a session rotates, the handoff packet and what a new session reads"
+    },
+    {
       "path": "docs/architecture/implementation-canvas-v1.0.md",
       "classification": "Preserved source/working copy",
       "use": "Complete requirements; apply later explicit decisions without editing originals"
@@ -1417,6 +1422,11 @@
       "path": "docs/v3/history/ledger-before-pr350-356-records-2026-11-09.md",
       "classification": "Historical evidence snapshot",
       "use": "Exact hashed ledger at f62e093 (the PR 356 merge), before PRs 350 to 356, the owner's 7 Nov G4/G5 install run 42364802587 and the 9 Nov lanes were recorded; preserves the full 6 Nov takeover, lanes, merge, install and Next bullets; use the current ledger for live state."
+    },
+    {
+      "path": "docs/v3/history/ledger-before-9nov-evening-records-2026-11-09.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at cfa22c2a (the PR 371 merge), before PRs 359 to 371, the 9 Nov G4/G5 follow-up install run 42654373889, the evening lanes and the session rotation rule were recorded; preserves the S1 to S4 lanes, takeover Resume and Next bullets; use the current ledger for live state."
     },
     {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",

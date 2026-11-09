@@ -253,19 +253,21 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Resolved:** the team header's avatar menu (Navigation v1 part 3, after S2's shared utility menus) now carries those places (`teamAccountPlaces` in `apps/web/lib/ux/team-map.ts`), and the Account group, its map entry and its tests are removed. The reachability walk (NAV-06) includes the avatar menu's links and proves each place is still reachable for every role.
 - **Rule kept:** a place a role could reach before must stay reachable from the new navigation; when a menu is removed, the test that walks the navigation is what proves it.
 
-### KI-41 G4/G5 enabled in production before its post-merge fixes and privacy review (9 November 2026)
+### KI-41 G4/G5 enabled in production before its post-merge fixes and privacy review (9 November 2026, follow-up installed the same day)
 
-- **What:** PR 355 (G4 workspace lifecycle, G5 account close and erasure request) merged on 7 Nov without S1's Guardian review, and install run 42364802587 the same day installed both modules and enabled both controls. The post-merge Guardian review (9 Nov, stamp auth-c8b26adfa5f2) is FIXES-NEEDED:
-  - B1: Undo and the staff erasure steps fail for a person later removed from their only workspace (`account_chain_tenant`).
-  - B2: a former owner demoted by transfer keeps admin after a revocation that reports success.
-  - B3: unreviewed and partly false privacy words show once the control is open.
-  - B4: erasure requests can be filed, but staff have no route or page to handle them.
-  - Codex 1 and 3 are also confirmed: the close dialog sends no identity headers, and close and provisioning are not serialized.
-- **Reachable:** only where the app flags `CORRIDRA_CUSTOMER_WORKSPACE_LIFECYCLE_ENABLED` and `CORRIDRA_CUSTOMER_ACCOUNT_LIFECYCLE_ENABLED` are set. They were not observed.
-- **Safe pause:** run the install workflow with `lifecycle_pause`.
-  - A closed account stays closed while paused, because `customer.account_closed_gate()` does not read the control, and Undo still works.
-  - Turning the app flag off instead would give closed accounts full access again.
-- **Known limits that stay after the fix:**
-  - A former owner stays admin until a later step-down change.
+- **What:** PR 355 (G4 workspace lifecycle, G5 account close and erasure request) merged on 7 Nov without a Guardian review, and install run 42364802587 the same day installed both modules and enabled both controls (the 7 Nov enable stands and was not changed since). The post-merge review (9 Nov, stamp auth-c8b26adfa5f2) was FIXES-NEEDED.
+- **Fixed and installed 9 Nov:** the follow-up PR 362 (merged as cd341229) was installed by run 42654373889 (input `lifecycle_install` only). It holds B1 (Undo and the staff erasure steps for a person removed from their only workspace), B2 (a former owner demoted by transfer), B3 (the unreviewed privacy words), Codex 1 and 3 (the close dialog identity headers; close and provisioning serialized), `file_erasure` while the control is closed, the sample and real erasure queue split, the late re-run guard and the sign-in recency check.
+- **B4, merged but not reachable:** the staff erasure queue is merged (PR 366), but real staff cannot reach the page, because every staff route in the web layer uses the purpose `synthetic_validation`. Real requests need another path before any real legal deadline (30 days from filing).
+- **Still open:**
+  - The privacy wording review (drafts A and B in the PR 355 body).
+  - A preview check that the live provider returns `session.createdAt` (the recency check fails closed without it).
+  - A former owner stays admin until a step-down change (now refused honestly).
   - A sole owner may close while the workspace is archived, and after day 30 nobody can restore or transfer it.
-- **Removal trigger:** S2's follow-up PR merges with a Guardian PASS on its exact head, the owner installs it, and the privacy wording review is recorded. Erasure handling needs S4's staff queue or a staff runbook before the first real request.
+- **Safe pause:** the install workflow input `lifecycle_pause`. A closed account stays closed while paused and Undo still works; turning the app flag off instead would give closed accounts full access again.
+- **Removal trigger:** the wording review is recorded, the `createdAt` check is seen on a preview, and real staff have an erasure path.
+
+### KI-42 GitHub-hosted runners abandoned or never started CI shards (9 November 2026)
+
+- **Observed:** on main cfa22c2a, attempt 1 had abandoned shards: the runners dropped operator 1, 2, 3 and 5, ux 1 and 2, and verification, and the `validate` aggregate said "abandoned". Attempt 2 of the failed jobs passed (run 42674117115). On ff51afb4, run 42673037794 ran only the `checks` job and failed with 0 test jobs; cfa22c2a superseded that head.
+- **Cause:** a runner problem on the provider side, not the change under test. It differs from KI-39, where a job started and its service container did not.
+- **Rule:** rerun the failed jobs once on the exact head, never push an empty commit, and record the run id. A second failure is treated as real.
