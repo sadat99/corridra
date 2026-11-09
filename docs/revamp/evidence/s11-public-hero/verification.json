@@ -1,65 +1,22 @@
 {
   "task": "S11 public page hero",
   "base": "e8ca4cac (main merged into the branch, merge commit e7764e4)",
-  "note": "Every command below ran on finalHead (code head). This json is added in a later record-only commit. Receipts are gate.mjs receipts in work/ (not committed).",
-  "commands": [
-    {
-      "command": "pnpm --filter @corridra/web build",
-      "exit": 0,
-      "head": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de",
-      "receipt": "work/build-2026-11-09T16-45-01-721Z.log.receipt.json"
-    },
-    {
-      "command": "pnpm exec playwright test --trace off tests/browser/public-hero-layout.spec.ts --project=desktop",
-      "exit": 0,
-      "head": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de",
-      "receipt": "work/hero-spec-2026-11-09T16-45-17-250Z.log.receipt.json"
-    },
-    {
-      "command": "pnpm exec playwright test --trace off tests/browser/public-large-text.spec.ts tests/browser/public-normal-text.spec.ts tests/browser/public-experience.spec.ts tests/browser/layout-budget-public.spec.ts tests/browser/public-header-nav.spec.t",
-      "exit": 0,
-      "head": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de",
-      "receipt": "work/e2e-public-2026-11-09T16-45-56-777Z.log.receipt.json"
-    },
-    {
-      "command": "pnpm lint",
-      "exit": 0,
-      "head": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de",
-      "receipt": "work/lint-2026-11-09T16-47-54-385Z.log.receipt.json"
-    },
-    {
-      "command": "pnpm typecheck",
-      "exit": 0,
-      "head": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de",
-      "receipt": "work/typecheck-2026-11-09T16-48-39-320Z.log.receipt.json"
-    },
-    {
-      "command": "pnpm test:ux --trace off",
-      "exit": 0,
-      "head": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de",
-      "receipt": "work/ux-2026-11-09T16-49-00-651Z.log.receipt.json"
-    },
-    {
-      "command": "pnpm format:check",
-      "exit": 0,
-      "head": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de (with this json present)"
-    }
-  ],
+  "note": "CI failed on 643f772 in layout-budget-tabs.spec.ts:119 (the first main a.primary-link is the hero button, hidden from 67rem). The guard now accepts the header action there (changed knowingly, listed in the PR). commandsOnFinalHead ran on finalHead; commandsOnEarlierCodeHead ran on 9d0086a (hero code identical; only a comment, test files and this json differ). This json is added in a later record-only commit.",
   "pinned_values_changed": "none. No Q-02 or page-length guard value was changed or loosened.",
   "actionTable": [
     {
       "page": "/how-it-works",
       "oldPlace": "hero, below the lead",
       "oldAction": "Start a Request -> /plan",
-      "newPlace": "unchanged under 75rem (1200 px at default text); hidden from 75rem",
-      "reachabilityProof": "header bar Start a Request (same label, same /plan) is visible from 1200 px; below it Menu holds it and the hero button shows"
+      "newPlace": "hidden when the hero container is 67rem wide or more (the header's own threshold); shown below it",
+      "reachabilityProof": "tests/browser/public-hero-layout.spec.ts: 39 width entries (35 distinct, 320 to 2400), at 100% and 200% text, with and without a scrollbar emulation: the action is in the header bar or the hero, never neither and never both"
     },
     {
       "page": "/trust",
       "oldPlace": "hero, below the lead",
       "oldAction": "Start a Request -> /plan",
-      "newPlace": "same as How it works",
-      "reachabilityProof": "same"
+      "newPlace": "hidden when the hero container is 67rem wide or more (the header's own threshold); shown below it",
+      "reachabilityProof": "tests/browser/public-hero-layout.spec.ts: 39 width entries (35 distinct, 320 to 2400), at 100% and 200% text, with and without a scrollbar emulation: the action is in the header bar or the hero, never neither and never both"
     },
     {
       "page": "/about",
@@ -90,7 +47,7 @@
     "/corridors phone 390": "2.88 -> 2.88",
     "/corridors 1440": "1.83 -> 1.84"
   },
-  "finalHead": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de",
+  "finalHead": "568375fa5f97328ce99ddd179e64eae51c9e9562",
   "commandResults": {
     "hero-spec": "11 passed",
     "e2e-public": "179 passed (large text, normal text, public-experience, layout-budget-public, public-header-nav, wave6-public-quality, body-rhythm)",
@@ -98,5 +55,92 @@
   },
   "hideRule": "Hero is a container (public-hero, inline-size) and hides the repeated action at @container min-width 67rem, the same query and threshold the header uses, so scrollbar and root font size match. Sanity check: with the old @media 75rem rule the new property test fails at 1216 px with 200% text.",
   "scrollbarEmulation": "The 15 px scrollbar cases (html overflow-y scroll plus ::-webkit-scrollbar) ran, but headless Chromium may not apply them; the old viewport rule failed only the 200% text cases. The container rule matches the header by construction.",
-  "notDone": "Pages with the route aside (/sell, /source, /enter-market, /trade-missions) keep the old stacked layout: their lead already sits directly under the heading in the left column, there is no blank block, and the aside takes the right column. Their hero actions are job links and are kept."
+  "notDone": "Pages with the route aside (/sell, /source, /enter-market, /trade-missions) keep the old stacked layout: their lead already sits directly under the heading in the left column, there is no blank block, and the aside takes the right column. Their hero actions are job links and are kept.",
+  "commandsOnEarlierCodeHead": [
+    {
+      "command": "pnpm --filter @corridra/web build",
+      "exit": 0,
+      "head": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de",
+      "receipt": "work/build-2026-11-09T16-45-01-721Z.log.receipt.json"
+    },
+    {
+      "command": "pnpm exec playwright test --trace off tests/browser/public-hero-layout.spec.ts --project=desktop",
+      "exit": 0,
+      "head": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de",
+      "receipt": "work/hero-spec-2026-11-09T16-45-17-250Z.log.receipt.json"
+    },
+    {
+      "command": "pnpm exec playwright test --trace off tests/browser/public-large-text.spec.ts tests/browser/public-normal-text.spec.ts tests/browser/public-experience.spec.ts tests/browser/layout-budget-public.spec.ts tests/browser/public-header-nav.spec.ts tests/browser/wave6-public-quality.spec.ts tests/browser/public-body-rhythm.spec.ts",
+      "exit": 0,
+      "head": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de",
+      "receipt": "work/e2e-public-2026-11-09T16-45-56-777Z.log.receipt.json"
+    },
+    {
+      "command": "pnpm lint",
+      "exit": 0,
+      "head": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de",
+      "receipt": "work/lint-2026-11-09T16-47-54-385Z.log.receipt.json"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "head": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de",
+      "receipt": "work/typecheck-2026-11-09T16-48-39-320Z.log.receipt.json"
+    },
+    {
+      "command": "pnpm test:ux --trace off",
+      "exit": 0,
+      "head": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de",
+      "receipt": "work/ux-2026-11-09T16-49-00-651Z.log.receipt.json"
+    },
+    {
+      "command": "pnpm format:check",
+      "exit": 0,
+      "head": "9d0086afa0b5ea5dc1a0343ce15ba541bf3521de (with this json present)"
+    }
+  ],
+  "commandsOnFinalHead": [
+    {
+      "command": "pnpm --filter @corridra/web build",
+      "exit": 0,
+      "head": "568375fa5f97328ce99ddd179e64eae51c9e9562",
+      "receipt": "work/build-2026-11-09T17-34-32-595Z.log.receipt.json"
+    },
+    {
+      "command": "pnpm exec playwright test --trace off tests/browser/layout-budget-tabs.spec.ts tests/browser/layout-budget-pages.spec.ts tests/browser/about-editorial.spec.ts tests/browser/title-case-actions.spec.ts tests/browser/public-hero-layout.spec.ts",
+      "exit": 0,
+      "head": "568375fa5f97328ce99ddd179e64eae51c9e9562",
+      "receipt": "work/hero-fix-2026-11-09T17-35-50-427Z.log.receipt.json"
+    },
+    {
+      "command": "pnpm test:e2e --trace off",
+      "exit": 0,
+      "head": "568375fa5f97328ce99ddd179e64eae51c9e9562",
+      "receipt": "work/e2e-full-2026-11-09T17-23-44-840Z.log.receipt.json"
+    },
+    {
+      "command": "pnpm lint",
+      "exit": 0,
+      "head": "568375fa5f97328ce99ddd179e64eae51c9e9562",
+      "receipt": "work/lint-2026-11-09T17-29-51-810Z.log.receipt.json"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "head": "568375fa5f97328ce99ddd179e64eae51c9e9562",
+      "receipt": "work/typecheck-2026-11-09T17-30-44-159Z.log.receipt.json"
+    },
+    {
+      "command": "pnpm format:check",
+      "exit": 0,
+      "head": "568375fa5f97328ce99ddd179e64eae51c9e9562",
+      "note": "ran with this json in the working tree",
+      "receipt": "work/format-2026-11-09T17-37-58-852Z.log.receipt.json"
+    }
+  ],
+  "commandResultsFinalHead": {
+    "hero-fix": "167 passed, 149 skipped (layout-budget-tabs, layout-budget-pages, about-editorial, title-case-actions, public-hero-layout)",
+    "e2e-full": "529 passed, 313 skipped (the CI browser job's command)"
+  },
+  "pinnedValuesChanged": "One guard changed knowingly: tests/browser/layout-budget-tabs.spec.ts above-the-fold locator now also accepts the visible header Start a Request. No Q-02 value or page-length limit changed."
 }
