@@ -73,9 +73,14 @@
   }
 }
 
-/* The header shows Start a Request in its bar from 75rem (its 67rem container, see site-header.css). From there the
-   page hero does not repeat the same action; below it the header keeps the action inside Menu, so the hero keeps it. */
-@media (min-width: 75rem) {
+/* The header shows Start a Request in its bar when its own container is 67rem wide (site-header.css). The hero is a
+   container of the same inline size (the shell's content box), so the same width, the same rem and the same scrollbar
+   decide for both: from 67rem the page hero does not repeat the action the bar already shows, and below it the header
+   keeps the action inside Menu, so the hero keeps its button. */
+.guide-page-hero--compact {
+  container: public-hero / inline-size;
+}
+@container public-hero (min-width: 67rem) {
   .guide-page-actions[data-repeats-header] {
     display: none;
   }
