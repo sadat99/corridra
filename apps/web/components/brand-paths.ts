@@ -1,9 +1,10 @@
-// Path data for the Corridra orb and wordmark. Generated from docs/brand/assets (see
+// Geometry for the Corridra halftone mark (a mask file) and the path data of the wordmark. Generated from docs/brand/assets (see
 // docs/brand/LOGO_IMPLEMENTATION_RUNBOOK.md). Geometry only: colour comes from tokens in CSS (D18).
-export const ORB = {
-  viewBox: '10 10 42 42',
-  d: 'M51.80 28.12A21.0 21.0 0 1 0 41.18 49.37A12.5 12.5 0 1 1 51.80 28.12Z',
-  dot: { cx: 46.0, cy: 40.0, r: 3.4 },
+// The halftone sphere is not inlined. CSS paints it from this file as a mask (globals.css, brand layer),
+// so the colour still comes from currentColor. Only the alpha of the file is used.
+export const MARK = {
+  file: '/brand/corridra-mark-cobalt.svg',
+  viewBox: '0 0 533 511',
 } as const;
 
 export const WORDMARK = {

@@ -12,26 +12,17 @@ import { useSignedIn } from './use-signed-in';
 import { useSignOut } from './use-sign-out';
 import { defaultLocale, localeMeta } from '../lib/i18n/locales';
 import { translate, type MessageKey } from '../lib/i18n/messages';
-import { ORB, WORDMARK } from './brand-paths';
+import { WORDMARK } from './brand-paths';
 
 /**
- * The Corridra logo, drawn here only (the design system allows this one inline drawing). Geometry
+ * The Corridra logo, drawn here only (the design system allows this one inline drawing). The halftone
+ * sphere is a span that CSS paints from the mask file in public/brand (see MARK in brand-paths.ts and
+ * the brand layer in globals.css), so the 230 dots stay out of the client bundle. The wordmark path
  * is in brand-paths.ts. Colour is set by CSS (.brand-mark, .brand-word), never by hex in this file.
  * Spec: docs/brand/CORRIDRA_BRAND_IDENTITY.md.
  */
 export function BrandMark() {
-  return (
-    <svg
-      className="brand-mark"
-      viewBox={ORB.viewBox}
-      fill="currentColor"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d={ORB.d} />
-      <circle cx={ORB.dot.cx} cy={ORB.dot.cy} r={ORB.dot.r} />
-    </svg>
-  );
+  return <span className="brand-mark" aria-hidden="true" />;
 }
 
 export function BrandWordmark() {
