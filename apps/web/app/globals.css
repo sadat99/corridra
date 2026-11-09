@@ -8376,9 +8376,14 @@ samp {
 .guide-progress,
 .guide-directions,
 .guide-directions li,
-.guide-phase li,
 .guide-page-intro ul {
   grid-template-columns: minmax(0, 1fr);
+}
+/* The phone already gives a phase step its own two-column layout, so the single shrinking track is only for wider screens. */
+@media (min-width: 701px) {
+  .guide-phase li {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .guide-page-intro ul {
   container-type: inline-size;
