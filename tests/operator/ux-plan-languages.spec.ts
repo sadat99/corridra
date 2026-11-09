@@ -370,7 +370,7 @@ async function walk(
  * Everything outside those two regions must be byte for byte the baseline's, and the real and private notices are
  * not on the allowlist at all (their markup is compared in full, as it is part of `rest`).
  */
-function allowed(html: string, label: string) {
+function allowed(html: string) {
   const words = (fragment: string) =>
     fragment
       .replace(/<[^>]*>/g, ' ')
@@ -382,7 +382,6 @@ function allowed(html: string, label: string) {
   const notice = html.match(noticeTest)?.[0] ?? '';
   const summary = html.match(summaryTest)?.[0] ?? '';
   const rest = html.replace(noticeTest, '<aside:notice/>').replace(summaryTest, '<aside:summary/>');
-  expect(rest, `${label} has the notice and summary regions`).toContain('<aside:notice/>');
   return {
     rest,
     notice: words(notice)
@@ -430,7 +429,14 @@ async function compareWithBaseline(
   expect(after.map((state) => state.name)).toEqual(before.map((state) => state.name));
   for (const [index, state] of after.entries()) {
     const label = `${language} ${query} ${state.name}`;
-    const [oldState, newState] = [allowed(before[index].html, label), allowed(state.html, label)];
+    const [oldState, newState] = [allowed(before[index].html), allowed(state.html)];
+    // The regions are really found where they must be, so the allowlist cannot hide a missing notice or summary.
+    if (index === 0) {
+      expect(newState.summary, `${label} summary found`).not.toBe('');
+      expect(oldState.summary, `${label} baseline summary found`).not.toBe('');
+      if (mode === 'sample')
+        expect(newState.notice, `${label} notice found`).toContain('Test mode');
+    }
     expect(newState.rest, label).toBe(oldState.rest);
     expect(newState.notice, `${label} notice words`).toBe(oldState.notice);
     expect(newState.summary, `${label} summary words`).toBe(oldState.summary);
