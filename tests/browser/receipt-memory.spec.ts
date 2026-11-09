@@ -88,7 +88,9 @@ test('a request that is older than thirty days, or a bad value, is not shown', a
   await expect(
     page.getByRole('region', { name: 'Keep your private receipt.', exact: true }),
   ).toHaveCount(0);
-  expect(await page.evaluate(remembered)).toMatchObject({ device: null, at: null });
+  // The expired value is dropped by the page's mount effect, which can run just after the server-rendered select is
+  // visible, so the same assertion is polled instead of read once (KI-43).
+  await expect.poll(() => page.evaluate(remembered)).toMatchObject({ device: null, at: null });
 });
 
 test('with browser storage blocked the form still works and the request is not claimed saved', async ({
