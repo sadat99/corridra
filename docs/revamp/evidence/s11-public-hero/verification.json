@@ -1,0 +1,80 @@
+{
+  "task": "S11 public page hero",
+  "base": "ba7390d534b0989502dc869f40bde57a52682dba",
+  "note": "Exit codes are from node scripts/gate.mjs receipts in work/ on the base head with the working tree change; the PR head SHA is in the PR body.",
+  "commands": [
+    {
+      "name": "build",
+      "exit": 0
+    },
+    {
+      "name": "ux (test:ux, 85 passed)",
+      "exit": 0
+    },
+    {
+      "name": "public e2e: large text, normal text, public-experience, layout-budget-public, public-header-nav, wave6-public-quality, public-body-rhythm (desktop 159 passed; all projects 169 passed 129 skipped)",
+      "exit": 0
+    },
+    {
+      "name": "new tests/browser/public-hero-layout.spec.ts (5 passed)",
+      "exit": 0
+    },
+    {
+      "name": "lint",
+      "exit": 0
+    },
+    {
+      "name": "typecheck",
+      "exit": 0
+    },
+    {
+      "name": "format:check (after the evidence json was formatted)",
+      "exit": 0
+    }
+  ],
+  "pinned_values_changed": "none. No Q-02 or page-length guard value was changed or loosened.",
+  "actionTable": [
+    {
+      "page": "/how-it-works",
+      "oldPlace": "hero, below the lead",
+      "oldAction": "Start a Request -> /plan",
+      "newPlace": "unchanged under 75rem (1200 px at default text); hidden from 75rem",
+      "reachabilityProof": "header bar Start a Request (same label, same /plan) is visible from 1200 px; below it Menu holds it and the hero button shows"
+    },
+    {
+      "page": "/trust",
+      "oldPlace": "hero, below the lead",
+      "oldAction": "Start a Request -> /plan",
+      "newPlace": "same as How it works",
+      "reachabilityProof": "same"
+    },
+    {
+      "page": "/about",
+      "oldPlace": "no hero action",
+      "oldAction": "none",
+      "newPlace": "unchanged",
+      "reachabilityProof": "not affected"
+    },
+    {
+      "page": "/corridors, /privacy",
+      "oldPlace": "no hero action",
+      "oldAction": "none",
+      "newPlace": "unchanged",
+      "reachabilityProof": "not affected"
+    },
+    {
+      "page": "/source, /sell, /enter-market, /trade-missions, /machinery, /business-trips, /institutions, /network, /corridors/[route]",
+      "oldPlace": "hero action with its own label or target (job link, See What Is Coming, route link)",
+      "oldAction": "kept",
+      "newPlace": "unchanged at every width",
+      "reachabilityProof": "different action or target from the header, so not a duplicate"
+    }
+  ],
+  "measurements": "before.json and after.json in this folder (hero button, header button, lead and heading top, page screens, sideways scroll) at 1780, 1440, 1280, 1200, 1199, 1024, 768, 390 and 320",
+  "pageLength": {
+    "/how-it-works desktop 1440": "1.96 -> 1.88",
+    "/how-it-works phone": "2.70 -> 2.70",
+    "/corridors phone 390": "2.88 -> 2.88",
+    "/corridors 1440": "1.83 -> 1.84"
+  }
+}

@@ -95,6 +95,11 @@ function Steps({ content }: { content: PublicPageContent }) {
 
 export function PublicPage({ content }: { content: PublicPageContent }) {
   const labelled = content.sections.some((section) => section.tag);
+  const heroHref =
+    content.ctaHref ?? (content.intakeJob ? `/plan?job=${content.intakeJob}` : '/plan');
+  const heroLabel = content.cta ?? 'Start a Request';
+  // The header bar already carries this exact action from 75rem; a job or page specific action is never a repeat.
+  const heroRepeatsHeader = heroHref === '/plan' && heroLabel === 'Start a Request';
   return (
     <PublicShell>
       <section className="guide-page-hero guide-page-hero--compact">
@@ -111,15 +116,12 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
             <Lines text={content.title} />
           </h1>
           <p className="guide-lead">{content.description}</p>
-          <div className="guide-page-actions">
-            <Link
-              prefetch={false}
-              className="primary-link"
-              href={
-                content.ctaHref ?? (content.intakeJob ? `/plan?job=${content.intakeJob}` : '/plan')
-              }
-            >
-              {content.cta ?? 'Start a Request'}
+          <div
+            className="guide-page-actions"
+            data-repeats-header={heroRepeatsHeader ? '' : undefined}
+          >
+            <Link prefetch={false} className="primary-link" href={heroHref}>
+              {heroLabel}
             </Link>
           </div>
         </div>
