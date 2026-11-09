@@ -291,6 +291,34 @@ test('choosing Health or the Authenticator from the Account menu switches the se
   await expect(page.locator('#ops-health')).toHaveCount(0);
 });
 
+test('the team inbox panel offers no Mark All Read and asks for no server count, because the staff inbox cannot answer either', async ({
+  page,
+}) => {
+  // The staff route lists items and marks one read; it has no bulk call and no count. A full list of unread items is
+  // the case that made the grouped panel offer both. Opening one item still marks that one read.
+  const unread = Array.from({ length: 30 }, (_, index) => ({
+    id: `00000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
+    type: 'REPLY_POSTED',
+    payload: { title: `Reply ${index + 1}` },
+    readAt: null,
+    createdAt: '2026-11-03T11:00:00Z',
+  }));
+  const asked: string[] = [];
+  await open(page, 'operator');
+  await page.route('**/api/notifications?*', (route) => {
+    asked.push(route.request().method() + ' ' + route.request().url());
+    return route.fulfill({ json: unread });
+  });
+  await page.reload();
+  const header = page.locator('header.ux-app-header');
+  await header.getByRole('button', { name: 'Inbox', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Notifications' })).toBeVisible();
+  await expect(page.getByText('Reply 1', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Mark All Read' })).toHaveCount(0);
+  expect(asked.filter((entry) => entry.includes('count=1'))).toEqual([]);
+  expect(asked.filter((entry) => !entry.startsWith('GET '))).toEqual([]);
+});
+
 // Keep the fixture id referenced so a rename of the tenant fails here and not silently.
 test('the fixture workspace id is the one the team shell reads', () => {
   expect(fixtureTenant).toMatch(/^[0-9a-f-]{36}$/);

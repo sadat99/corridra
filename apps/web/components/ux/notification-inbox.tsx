@@ -35,6 +35,7 @@ const typeTitle: Record<string, string> = {
 export function NotificationInbox({
   endpoint,
   grouped = false,
+  bulk = true,
   onUnread,
 }: {
   endpoint: string;
@@ -46,6 +47,8 @@ export function NotificationInbox({
   onUnread?: (unread: number) => void;
   /** The customer panel: Needs You first, then Updates, then Earlier, with Mark All Read. Off: the plain list. */
   grouped?: boolean;
+  /** Whether the endpoint answers `?count=1` and accepts Mark All Read (the customer inbox does; the team inbox marks one item at a time). */
+  bulk?: boolean;
 }) {
   const [items, setItems] = useState<Item[] | null>(null);
   const [error, setError] = useState('');
@@ -69,7 +72,7 @@ export function NotificationInbox({
         setError('');
         const local = list.filter((item) => !item.readAt).length;
         unreadCallback.current?.(local);
-        if (grouped && list.length >= listLimit) {
+        if (grouped && bulk && list.length >= listLimit) {
           // Only the newest items are loaded, so the true figure (and whether Mark All Read is needed) is the server's.
           fetch(`${endpoint}?count=1`, { cache: 'no-store', signal: controller.signal })
             .then((r) => readJson<{ unread: number }>(r))
@@ -86,7 +89,7 @@ export function NotificationInbox({
         setItems(null);
         setError(e instanceof Error ? e.message : 'The inbox could not be loaded.');
       });
-  }, [endpoint, grouped]);
+  }, [endpoint, grouped, bulk]);
   useEffect(() => {
     load();
     function visibility() {
@@ -183,7 +186,7 @@ export function NotificationInbox({
           <h2 id="ux-inbox-title" ref={heading} tabIndex={-1}>
             Notifications
           </h2>
-          {groups && markAllAvailable(groups.unread) ? (
+          {bulk && groups && markAllAvailable(groups.unread) ? (
             <button
               type="button"
               className="text-link"
