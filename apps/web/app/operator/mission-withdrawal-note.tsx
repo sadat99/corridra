@@ -16,6 +16,8 @@ export function WithdrawalNote({ tenant, missionId }: { tenant: string; missionI
       { cache: 'no-store' },
     )
       .then(async (response) => {
+        // Not allowed to read it (a role or a stale authenticator check), or the module is not available: show nothing.
+        if (response.status === 403 || response.status === 503) return;
         if (!response.ok) throw new Error('unreadable');
         const data = (await response.json()) as Signal;
         if (active) setSignal(data);

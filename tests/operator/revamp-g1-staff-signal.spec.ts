@@ -112,3 +112,15 @@ test('says so plainly when the status cannot be read, instead of showing nothing
   await expect(page.getByRole('status')).toHaveText('The withdrawal status could not be read.');
   await expect(page.getByTestId('withdrawn-by-customer')).toHaveCount(0);
 });
+
+test('shows nothing at all when the person may not read it or the module is not available', async ({
+  page,
+}) => {
+  for (const status of [403, 503]) {
+    await page.unroute('**/api/mission-withdrawal**').catch(() => undefined);
+    await open(page, { status, body: { error: 'Access denied' } });
+    await expect(page.getByRole('heading', { name: 'Mission' })).toBeVisible();
+    await expect(page.getByRole('status')).toHaveCount(0);
+    await expect(page.getByTestId('withdrawn-by-customer')).toHaveCount(0);
+  }
+});
