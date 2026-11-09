@@ -252,3 +252,20 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **What:** the Navigation v1 board gives the team sidebar five first-level items and an Admin group for owner and admin, and no door for the Authenticator; Health and Readiness (which an operator may open) sat only in Admin, which an operator is not shown. The first team PR (#341) therefore carried a small Account group in the sidebar (Authenticator for every role; Health and Readiness for a role that may open them and is not shown Admin), so an owner saw seven first-level entries.
 - **Resolved:** the team header's avatar menu (Navigation v1 part 3, after S2's shared utility menus) now carries those places (`teamAccountPlaces` in `apps/web/lib/ux/team-map.ts`), and the Account group, its map entry and its tests are removed. The reachability walk (NAV-06) includes the avatar menu's links and proves each place is still reachable for every role.
 - **Rule kept:** a place a role could reach before must stay reachable from the new navigation; when a menu is removed, the test that walks the navigation is what proves it.
+
+### KI-41 G4/G5 enabled in production before its post-merge fixes and privacy review (9 November 2026)
+
+- **What:** PR 355 (G4 workspace lifecycle, G5 account close and erasure request) merged on 7 Nov without S1's Guardian review, and install run 42364802587 the same day installed both modules and enabled both controls. The post-merge Guardian review (9 Nov, stamp auth-c8b26adfa5f2) is FIXES-NEEDED:
+  - B1: Undo and the staff erasure steps fail for a person later removed from their only workspace (`account_chain_tenant`).
+  - B2: a former owner demoted by transfer keeps admin after a revocation that reports success.
+  - B3: unreviewed and partly false privacy words show once the control is open.
+  - B4: erasure requests can be filed, but staff have no route or page to handle them.
+  - Codex 1 and 3 are also confirmed: the close dialog sends no identity headers, and close and provisioning are not serialized.
+- **Reachable:** only where the app flags `CORRIDRA_CUSTOMER_WORKSPACE_LIFECYCLE_ENABLED` and `CORRIDRA_CUSTOMER_ACCOUNT_LIFECYCLE_ENABLED` are set. They were not observed.
+- **Safe pause:** run the install workflow with `lifecycle_pause`.
+  - A closed account stays closed while paused, because `customer.account_closed_gate()` does not read the control, and Undo still works.
+  - Turning the app flag off instead would give closed accounts full access again.
+- **Known limits that stay after the fix:**
+  - A former owner stays admin until a later step-down change.
+  - A sole owner may close while the workspace is archived, and after day 30 nobody can restore or transfer it.
+- **Removal trigger:** S2's follow-up PR merges with a Guardian PASS on its exact head, the owner installs it, and the privacy wording review is recorded. Erasure handling needs S4's staff queue or a staff runbook before the first real request.
