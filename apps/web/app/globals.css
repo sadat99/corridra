@@ -8412,7 +8412,7 @@ samp {
 .guide-band .primary-link {
   max-width: 100%;
 }
-.guide-tag {
+.ux-public .guide-tag {
   max-width: 100%;
   white-space: normal;
 }

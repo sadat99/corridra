@@ -12,8 +12,9 @@
     "apps/web/components/site-footer.css: the footer promise and every footer link break long words; the footer's two actions and the phone link columns (two columns of links) go to one column through a container query only when the block is narrower than a dozen letters of its own text, so nothing changes at normal text size."
   ],
   "preserved": [
-    "Every element, word, link and test hook. At normal text size nothing changes: the container queries count rem at the page's text size, so they do not apply at 100 percent on a phone, and each shrink rule only takes effect once the content no longer fits.",
-    "No server, database, request or payload change. English only."
+    "Every element, word, link, id and test hook. No server, database, request or payload change. English only.",
+    "At normal (100 percent) text size, measured by comparing every element's position and size on main and on this branch for the five pages at 320, 390, 768 and 1280, these are the only differences: (1) the closing band's text box is wider at 1024, 1280 and 1440 with the same wrapping and the button where it was (guarded by 'the closing band keeps its words and its button side by side'); (2) /network at 768: main squeezes the band's text column to 80 px, and the band now wraps its button under the words, so it is a defect fix, not a design change; (3) the footer, tags and public-page buttons can wrap or break where they used to overflow or clip, which only shows when they did not fit. Two normal-size regressions found in review were fixed and are guarded: the phone's two-column phase step ('the phone keeps its two-column phase step') and the home player's request fields staying two columns wide at every width ('the player fields stay two columns wide'), plus the caption keeping its controls beside its words at 320 ('the player caption keeps its controls beside its words').",
+    "The container queries count rem at the page's text size, so they do not apply at 100 percent on a phone; each shrink rule only takes effect once the content no longer fits. The tag wrapping is scoped to public pages (.ux-public), so signed-in pages keep the trust tag on one line."
   ],
   "verification": [
     "tests/browser/public-large-text.spec.ts: passes for the five pages at 320, 390, 768 and 1280 with 200 percent text, whole page measured. It failed on every page class before the fixes (the probe listed the home player, the closing band, how it works, corridors, network, trust and the footer).",
@@ -21,6 +22,6 @@
     "Two e2e cases (ux06 old sample mission link, product-experience global selector) failed once on a stale build, passed on main and on a fresh build of this branch three times, and passed in the full e2e run."
   ],
   "openRisks": [
-    "The sweep measures five public pages; other public pages (about, institutions, privacy, ways to work) share the same footer and templates but are not in the sweep."
+    "The sweep is a first guard, not a proof. Known gaps (follow-up): it exempts overflow:hidden containers and their clipped children, skips inline elements narrower than two pixels, has no pseudo-element or overlap check, no vertical clipping check, never measures a hidden phase panel or a closed details, uses a root font of 200 percent instead of 200 percent zoom (a 640 px window at 100 percent is not run), and does not cover about, institutions, privacy, sign-in, corridor details or /plan."
   ]
 }
