@@ -66,9 +66,28 @@ export function SiteFooterView({ realUse }: { realUse: boolean }) {
   // The public header has already asked who is signed in; a signed-in person is never offered sign-in here.
   const who = useSignedInSeen();
   // The staff customer preview is inert and offers no account actions (the header hides them there too).
-  const preview = isQuiet(usePathname());
+  const pathname = usePathname();
+  const preview = isQuiet(pathname);
+  // The request page is a form with a length budget, so its footer is the compact one: the same links, actions and
+  // trust words, with the trust legend folded (owner, 9 November 2026). Every other page keeps the full footer.
+  const compact = pathname === '/plan';
+  // Folded, the summary carries the legend's own opening words, so the body does not say them twice.
+  const trust = (
+    <>
+      <div className="guide-footer-legend">
+        {compact ? null : <span>{t('footer.facts')}</span>}
+        <FactLabel label="Self-declared" english />
+        <FactLabel label="Evidence available" english />
+        <FactLabel label="Verified" english />
+        <NotConfirmedLabel />
+      </div>
+      <Link prefetch={false} href="/trust">
+        {t('footer.factsMore')}
+      </Link>
+    </>
+  );
   return (
-    <footer className="guide-footer">
+    <footer className={compact ? 'guide-footer guide-footer-compact' : 'guide-footer'}>
       <div className="guide-footer-top">
         <div className="guide-footer-brand">
           <Link prefetch={false} className="guide-footer-wordmark" href="/">
@@ -126,18 +145,14 @@ export function SiteFooterView({ realUse }: { realUse: boolean }) {
           </details>
         ))}
       </nav>
-      <div className="guide-footer-trust">
-        <div className="guide-footer-legend">
-          <span>{t('footer.facts')}</span>
-          <FactLabel label="Self-declared" english />
-          <FactLabel label="Evidence available" english />
-          <FactLabel label="Verified" english />
-          <NotConfirmedLabel />
-        </div>
-        <Link prefetch={false} href="/trust">
-          {t('footer.factsMore')}
-        </Link>
-      </div>
+      {compact ? (
+        <details className="guide-footer-trust guide-footer-trust-fold">
+          <summary>{t('footer.facts')}</summary>
+          <div className="guide-footer-trust-body">{trust}</div>
+        </details>
+      ) : (
+        <div className="guide-footer-trust">{trust}</div>
+      )}
       <div className="guide-footer-bottom">
         <span className="guide-footer-copy">© 2026 Corridra</span>
         <span className="guide-footer-private">{t('footer.private')}</span>
