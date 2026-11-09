@@ -68,3 +68,18 @@ test('with 200% text the home, how it works, corridors, network and trust pages 
     }
   }
 });
+
+test('at normal text the phone keeps its two-column phase step, with the heading beside the number', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/how-it-works');
+  const step = page.locator('.guide-phase li').first();
+  await expect(step).toBeVisible();
+  expect(
+    await step.evaluate((li) => getComputedStyle(li).gridTemplateColumns.split(' ')),
+  ).toHaveLength(2);
+  const number = await step.locator('.guide-step-number').boundingBox();
+  const heading = await step.locator('h3').boundingBox();
+  expect(heading!.x).toBeGreaterThan(number!.x + number!.width - 1);
+});

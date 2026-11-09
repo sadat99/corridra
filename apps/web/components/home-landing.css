@@ -525,7 +525,7 @@
 }
 /* The words take what the controls leave; at large text the controls drop under them instead of pushing past the card. */
 .ac1-player-caption p {
-  flex: 1 1 10rem;
+  flex: 1 1 6rem;
   min-width: 0;
   line-height: 1.5;
 }
