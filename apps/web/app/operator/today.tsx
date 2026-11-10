@@ -641,7 +641,14 @@ export function TodayPanel({
                     : undefined
               }
             >
-              <a href="#workspace-delivery">
+              {/* The billing hub (and so #billing-services) renders for owners and admins, the same roles that can read this count. */}
+              <a
+                href={
+                  today.team.unavailable?.includes('serviceRequestsToQuote')
+                    ? '#workspace-delivery'
+                    : '#billing-services'
+                }
+              >
                 <strong>
                   {today.team.unavailable?.includes('serviceRequestsToQuote')
                     ? 'Not available'

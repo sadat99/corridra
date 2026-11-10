@@ -347,7 +347,7 @@ const counts = (page: Page) =>
   today(page).getByRole('list', { name: 'Counts' }).getByRole('listitem');
 const toQuote = (page: Page) => counts(page).filter({ hasText: /service requests? to quote/ });
 
-test('W3-1 a count of service requests waiting for a quote shows the number, the plural words and a link to the delivery section', async ({
+test('W3-1 a count of service requests waiting for a quote shows the number, the plural words and a link to the service requests', async ({
   page,
 }) => {
   await open(page, {
@@ -360,7 +360,7 @@ test('W3-1 a count of service requests waiting for a quote shows the number, the
   await expect(tile.locator('strong')).toHaveText('3');
   await expect(tile.locator('span')).toHaveText('service requests to quote');
   await expect(tile).not.toHaveAttribute('data-tone', /.+/);
-  await expect(tile.getByRole('link')).toHaveAttribute('href', '#workspace-delivery');
+  await expect(tile.getByRole('link')).toHaveAttribute('href', '#billing-services');
   // The tile sits directly after "accepted quotes not started" and the earlier tiles are unchanged.
   await expect(
     counts(page)
@@ -393,6 +393,7 @@ test('W3-3 zero service requests waiting shows 0 with the quiet zero tone, and t
   await expect(toQuote(page)).toHaveAttribute('data-tone', 'zero');
   await expect(toQuote(page).locator('strong')).toHaveText('0');
   await expect(toQuote(page).locator('span')).toHaveText('service requests to quote');
+  await expect(toQuote(page).getByRole('link')).toHaveAttribute('href', '#billing-services');
   const accepted = counts(page).filter({ hasText: 'accepted quotes not started' });
   await expect(accepted.locator('strong')).toHaveText('2');
   await expect(accepted).not.toHaveAttribute('data-tone', /.+/);
