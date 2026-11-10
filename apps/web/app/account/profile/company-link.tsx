@@ -40,7 +40,7 @@ type View = {
   currentProfileVersion: number;
   canFile: boolean;
   link: null | {
-    organisation: Organisation;
+    organisation: Organisation | null;
     linkedAt: string;
     reviewedProfileVersion: number;
     profileChanged: boolean;
@@ -68,7 +68,8 @@ function parseView(value: unknown, workspaceId: string): View {
     [
       'link',
       v.link !== null &&
-        (typeof v.link !== 'object' || typeof v.link.organisation?.name !== 'string'),
+        (typeof v.link !== 'object' ||
+          (v.link.organisation !== null && typeof v.link.organisation?.name !== 'string')),
     ],
   ];
   const failed = checks.find(([, bad]) => bad);
@@ -247,11 +248,13 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
     setBusy(true);
     setMessage(null);
     try {
-      const r = await fetch(
-        '/api/customer-organisation-links?' +
-          new URLSearchParams({ scope: 'search', workspaceId, q: term.trim() }),
-        { credentials: 'same-origin', cache: 'no-store', headers: headers() },
-      );
+      const r = await fetch('/api/customer-organisation-links', {
+        method: 'POST',
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: headers({ 'content-type': 'application/json' }),
+        body: JSON.stringify({ scope: 'search', workspaceId, q: term.trim() }),
+      });
       if (!r.ok) throw Error('search');
       const body = (await r.json()) as { workspaceId: string; organisations: Found[] };
       if (body.workspaceId !== workspaceId || !Array.isArray(body.organisations))
@@ -345,7 +348,7 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
               className="ux-status"
               data-tone={view.status === 'approved' ? 'positive' : 'neutral'}
             >
-              {linkStatusText(view.status, view.link?.organisation.name ?? null)}
+              {linkStatusText(view.status, view.link?.organisation?.name ?? null)}
             </span>
           </p>
           {view.status === 'none' && (
@@ -359,11 +362,13 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
           )}
           {view.link && (
             <>
-              <p>
-                <strong>
-                  {view.link.organisation.name} ({view.link.organisation.country})
-                </strong>
-              </p>
+              {view.link.organisation && (
+                <p>
+                  <strong>
+                    {view.link.organisation.name} ({view.link.organisation.country})
+                  </strong>
+                </p>
+              )}
               <p>{view.link.label}</p>
               {view.link.profileChanged && (
                 <p>

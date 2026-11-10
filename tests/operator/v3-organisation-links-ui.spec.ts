@@ -131,18 +131,16 @@ test.afterAll(async () => {
 
 async function openCustomer(page: Page, get: () => Json, query = '') {
   await page.route('**/api/customer-organisation-links**', (route) => {
-    if (route.request().method() === 'GET') {
-      const url = new URL(route.request().url());
-      if (url.searchParams.get('scope') === 'search')
-        return route.fulfill({
-          json: {
-            workspaceId,
-            expiresAt: future(),
-            organisations: [{ id: orgId, name: 'Synthetic Dhaka Textiles', country: 'BD' }],
-          },
-        });
-      return route.fulfill({ json: get() });
-    }
+    if (route.request().method() === 'GET') return route.fulfill({ json: get() });
+    // The company search is a POST with scope "search" in the body; every other POST is a later handler's.
+    if (route.request().method() === 'POST' && route.request().postDataJSON()?.scope === 'search')
+      return route.fulfill({
+        json: {
+          workspaceId,
+          expiresAt: future(),
+          organisations: [{ id: orgId, name: 'Synthetic Dhaka Textiles', country: 'BD' }],
+        },
+      });
     return route.fallback();
   });
   await page.goto(origin + '/' + query);
@@ -158,6 +156,7 @@ test('an owner finds the company, sends one exact request and sees the waiting s
   await expect(panel.getByText(/does not check who you are/)).toBeVisible();
   await page.route('**/api/customer-organisation-links', async (route) => {
     if (route.request().method() !== 'POST') return route.fallback();
+    if (route.request().postDataJSON()?.scope === 'search') return route.fallback();
     const request = route.request();
     expect(request.headers()['x-corridra-customer-subject']).toBe('synthetic-alice');
     expect(request.headers()['x-corridra-customer-issuer']).toBe(issuer);
