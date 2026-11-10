@@ -176,6 +176,8 @@ Staff billing classes (24 October 2026): `billing-hub` (full-width column with a
 
 Request form language class (30 October 2026): `lang-island` is an English sentence on its own line inside a translated paragraph, after the translated sentences. It is used in translated forms only (the English form adds no element) and is defined in `apps/web/app/plan/form-languages.css`, whose rules match only when the form's main region is in a language other than English. It carries UI spec rule L5, which ADR-074 cites: a whole English sentence inside a translated paragraph sits on its own line after the translated words. In translated messages this applies to an English part after a translated lead or an earlier part, and to an unknown message after the translated opening line; an English sentence that opens a message stays inline.
 
+Record change classes (10 November 2026, CRUD G11, `apps/web/app/globals.css`): `research-item` (one private contact or note on the operator's company workspace: the content line, the state line, the Correct, Withdraw and Hide buttons in an `operator-toolbar`, then the history; a top rule and token spacing, no media query) and `research-history` (the closed "Earlier versions and changes" disclosure of one item, its summary a 44 px target). The state word uses the existing `ux-badge`.
+
 ## Maps and the atlas
 
 The platform serves any country to any country. Two routes are spotlighted (Bangladesh to China, Bangladesh to Spain or the EU) and any other pair can be chosen.

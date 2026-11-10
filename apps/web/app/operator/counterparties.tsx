@@ -5,6 +5,16 @@ import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { CountryOptions } from './country-options';
 import { missionFromAddress, missionHintNote } from './mission-hint';
+import {
+  ChangeAvailability,
+  RecordItem,
+  chains,
+  shown,
+  stateWord,
+  type ChangeContext,
+  type Changes,
+} from './record-changes';
+import { readJson } from '../../lib/ux/step-up';
 type Row = { id: string; [key: string]: unknown };
 type Organisation = Row & {
   name: string;
@@ -25,6 +35,8 @@ type Detail = {
   publicFacts: Row[];
   candidates: Row[];
   resolutions: Row[];
+  /** CRUD G11: whether withdraw, correct and hide are installed and open in this workspace. */
+  changes?: Changes;
 };
 const txt = (r: Row, key: string) => String(r[key] ?? '');
 const when = (v: unknown) => (v ? new Date(String(v)).toLocaleString() : 'Not recorded');
@@ -125,6 +137,8 @@ export function Counterparties({
     [shortOffset, setShortOffset] = useState(0),
     [shortTotal, setShortTotal] = useState(0);
   const pending = useRef(new Map<string, string>());
+  // CRUD G11: command ids of withdraw, correct and hide requests, kept per identical body until one succeeds.
+  const [changeCommands] = useState(() => new Map<string, string>());
   // W5: a link from a mission page names a mission once; an explicit choice here always wins.
   const askedMission = useRef({ used: false, chosen: false });
   async function get(action: string, params: Record<string, string | number> = {}) {
@@ -253,6 +267,22 @@ export function Counterparties({
     pending.current.delete(key);
     return value;
   }
+  // CRUD G11: the same command id for an identical body until it succeeds, and the server's status and code kept, so a
+  // dialog can answer a conflict, a step-up or a limit next to its own button.
+  async function sendChange(body: Record<string, unknown>) {
+    const key = JSON.stringify(body),
+      commandId = changeCommands.get(key) ?? crypto.randomUUID();
+    changeCommands.set(key, commandId);
+    const value = await readJson(
+      await fetch(`/api/workspace/research?tenant=${tenant}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...body, commandId }),
+      }),
+    );
+    changeCommands.delete(key);
+    return value;
+  }
   async function act(work: () => Promise<unknown>, success = 'Research saved.') {
     if (busy) return;
     setBusy(true);
@@ -281,6 +311,25 @@ export function Counterparties({
   const relations = detail?.relationships ?? [],
     attrs = detail?.attributes ?? [];
   const [validDefault] = useState(() => new Date(Date.now() + 29 * 86400000).toISOString());
+  const ownerName = (id: unknown) =>
+    (owners.find((o) => o.id === id)?.name as string | undefined) ??
+    `a team member (id ${String(id ?? '').slice(0, 8)})`;
+  const changeContext: ChangeContext = {
+    role: detail?.role ?? catalogue?.role ?? '',
+    changes: detail?.changes ?? { installed: false, open: false },
+    purpose,
+    sources,
+    who: ownerName,
+    busy,
+    send: sendChange,
+    reload,
+    async done(success, chain) {
+      await reload();
+      setMessage(success);
+      document.querySelector<HTMLElement>(`[data-chain="${chain}"]`)?.focus();
+    },
+  };
+  const changesInstalled = changeContext.changes.installed;
   const publicSources = sources.filter(
     (s) => s.classification === 'PUBLIC' && s.kind === 'public_record',
   );
@@ -666,6 +715,7 @@ export function Counterparties({
             </PhoneFold>
             <PhoneFold summary={`Show private relationships (${relations.length})`}>
               <h4>Private relationships</h4>
+              {manage && <ChangeAvailability changes={changeContext.changes} />}
               {relations.length === 0 && (
                 <p>
                   No relationship visible to you. Hidden relationships, contacts and notes are never
@@ -685,23 +735,42 @@ export function Counterparties({
                       txt(r, 'owner_id')}
                   </p>
                   <p>{txt(r, 'note')}</p>
-                  {detail.contacts
-                    .filter((c) => c.relationship_id === r.id)
-                    .map((c) => (
-                      <p key={c.id}>
-                        {txt(c, 'name')} · {txt(c, 'job_title')} · {txt(c, 'email')} ·{' '}
-                        {txt(c, 'status')} · Source {txt(c, 'source_id')} · Until{' '}
-                        {when(c.valid_until)}
-                      </p>
-                    ))}
-                  {detail.notes
-                    .filter((n) => n.relationship_id === r.id)
-                    .map((n) => (
-                      <p key={n.id}>
-                        Private note: {txt(n, 'body')} · Source {txt(n, 'source_id')} ·{' '}
-                        {when(n.created_at)}
-                      </p>
-                    ))}
+                  {changesInstalled &&
+                    (['contact', 'note'] as const).map((subject) =>
+                      chains(
+                        (subject === 'contact' ? detail.contacts : detail.notes).filter(
+                          (c) => c.relationship_id === r.id,
+                        ),
+                      ).map((c) => (
+                        <RecordItem
+                          key={c.chain}
+                          subject={subject}
+                          {...c}
+                          canChange={r.can_change === true}
+                          ownerName={ownerName(r.owner_id)}
+                          ctx={changeContext}
+                        />
+                      )),
+                    )}
+                  {!changesInstalled &&
+                    detail.contacts
+                      .filter((c) => c.relationship_id === r.id)
+                      .map((c) => (
+                        <p key={c.id}>
+                          {txt(c, 'name')} · {txt(c, 'job_title')} · {txt(c, 'email')} ·{' '}
+                          {txt(c, 'status')} · Source {txt(c, 'source_id')} · Until{' '}
+                          {when(c.valid_until)}
+                        </p>
+                      ))}
+                  {!changesInstalled &&
+                    detail.notes
+                      .filter((n) => n.relationship_id === r.id)
+                      .map((n) => (
+                        <p key={n.id}>
+                          Private note: {txt(n, 'body')} · Source {txt(n, 'source_id')} ·{' '}
+                          {when(n.created_at)}
+                        </p>
+                      ))}
                 </article>
               ))}
               {manage && (
@@ -924,7 +993,7 @@ export function Counterparties({
                       <Select
                         label="Optional target contact"
                         name="contactId"
-                        rows={detail.contacts.filter((c) => c.status !== 'EXPIRED')}
+                        rows={detail.contacts.filter((c) => c.status === 'SOURCE_REPORTED')}
                         labelKey="name"
                         required={false}
                       />
@@ -1010,11 +1079,20 @@ export function Counterparties({
                     Retention {when(s.retention_until)}
                   </p>
                 ))}
-                {(t.contacts as Row[]).map((c, i) => (
-                  <p key={i}>
-                    {txt(c, 'name')} · {txt(c, 'email')} · {txt(c, 'status')}
-                  </p>
-                ))}
+                {(t.contacts as Row[]).map((c, i) =>
+                  changesInstalled ? (
+                    <p key={i}>
+                      {shown(c, 'name')} · {shown(c, 'email')} · {stateWord(c.status)}
+                      {c.status === 'WITHDRAWN' && ' · Not usable for new targets or messages'}
+                      {c.status === 'CORRECTED' &&
+                        ' · This target uses an earlier version of the contact'}
+                    </p>
+                  ) : (
+                    <p key={i}>
+                      {txt(c, 'name')} · {txt(c, 'email')} · {txt(c, 'status')}
+                    </p>
+                  ),
+                )}
                 <details>
                   <summary>Assessment history</summary>
                   {(t.history as Row[]).map((h) => (

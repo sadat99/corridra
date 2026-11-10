@@ -45,6 +45,8 @@ type Message = {
   attempts: number;
   revoked: boolean;
   expires_at: string;
+  /** CRUD G11: the state of the message's contact, present only when contact changes are installed. */
+  contact_status?: string;
 };
 type Comms = {
   role: string;
@@ -671,6 +673,9 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
             {channelLabel(m.channel)}: {plain(m.delivery_status)}. Attempts: {m.attempts}. Buyer
             response: {m.decision ? plain(m.decision) : 'Awaiting response'}.{' '}
             {m.revoked ? 'Link revoked.' : ''}
+            {m.delivery_status !== 'DELIVERED' &&
+              ['WITHDRAWN', 'CORRECTED', 'HIDDEN'].includes(m.contact_status ?? '') &&
+              ' Not sent: contact withdrawn or hidden'}
           </p>
           <p>Link expires {formatDateTime(m.expires_at)}.</p>
           {manage && !m.revoked && (
