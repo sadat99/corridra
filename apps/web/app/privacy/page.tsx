@@ -420,13 +420,6 @@ export default function Page() {
                   Resend: verification and password recovery emails
                   {pulseEmail && ', and the request emails you switch on'}, sent from Ireland.
                 </li>
-                {whatsapp && (
-                  <li>
-                    WhatsApp (Meta): the channel you choose when you select Chat on WhatsApp. You
-                    open it yourself and your messages travel under your own WhatsApp terms. It is
-                    not a service we use to run Corridra.
-                  </li>
-                )}
               </ul>
               <p>
                 They process information for us under their own terms and only for these purposes.
@@ -435,6 +428,13 @@ export default function Page() {
                 requires it. Corridra staff see the records they need to deliver and support the
                 work, and no more.
               </p>
+              {whatsapp && (
+                <p>
+                  WhatsApp (Meta): the channel you choose when you select Chat on WhatsApp. You open
+                  it yourself and your messages travel under your own WhatsApp terms. It is not a
+                  service we use to run Corridra.
+                </p>
+              )}
             </div>
           </article>
           <article id="storage">

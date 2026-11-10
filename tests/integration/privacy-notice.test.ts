@@ -370,6 +370,11 @@ describe('the privacy notice and Chat on WhatsApp', () => {
       // and the sharing list, which says it is the person's own channel and not a provider we use.
       expect(page).toContain(summarySentence);
       expect(page).toContain(sharingEntry);
+      // It is its own paragraph after the provider list and the sentence about providers, so it is not listed as a
+      // provider "we use to run Corridra" and the sentence about information processed for us does not cover it.
+      expect(page.indexOf(sharingEntry)).toBeGreaterThan(
+        page.indexOf('They process information for us under their own terms'),
+      );
       expect(page.match(/WhatsApp \(Meta\)/g)).toHaveLength(2);
       expect(page).not.toMatch(/WhatsApp[^.]*(our processor|our service provider)/);
     }

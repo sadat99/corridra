@@ -597,7 +597,7 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_SUPPORT_WHATSAPP_NUMBER',
     label: 'Support WhatsApp number',
-    line: 'The number behind Chat on WhatsApp in the Help menus. Digits with an optional leading +, 8 to 15 digits, no spaces. Its value is never shown. It stays off, and the menus say Coming soon, until you set a number and approve the privacy line that appears with it. Needs a new deploy.',
+    line: 'The number behind Chat on WhatsApp in the Help menus. Digits with an optional leading +, 8 to 15 digits, no spaces. Its value is never shown. Until a number is set the menus say Coming soon. Set it only after you approve the privacy wording: the link and the privacy lines about WhatsApp go live at the next deploy.',
     group: 'Accounts and requests',
     kind: 'setting',
   },

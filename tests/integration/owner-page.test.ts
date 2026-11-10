@@ -163,6 +163,11 @@ describe('switch states', () => {
       expect(row({})).toMatchObject({ kind: 'setting', group: 'Accounts and requests' });
       expect(row({}).label).toBe('Support WhatsApp number');
       expect(row({}).line).not.toMatch(/\u2014/);
+      // The line tells the truth about timing: nothing waits for an approval in the product, the link goes live at
+      // the next deploy after a usable number is set, so the owner approves the wording first.
+      expect(row({}).line).toContain('Set it only after you approve the privacy wording');
+      expect(row({}).line).toContain('go live at the next deploy');
+      expect(row({}).line).not.toMatch(/stays off/i);
     });
     it('says Not set when it is absent or blank, in the same neutral way as other settings', () => {
       for (const value of [undefined, '', '   ', '\t\n'])
