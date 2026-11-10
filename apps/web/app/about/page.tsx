@@ -22,22 +22,22 @@ const useCases = [
   [
     'Find buyers and partners',
     'Exporters and companies entering a market',
-    'define the right company, explain the offer and plan useful conversations.',
+    'choose the right company. Explain your offer. Plan useful conversations.',
   ],
   [
     'Source products and machinery',
     'Importers and purchasing teams',
-    'turn a buying requirement into supplier questions, comparisons and purposeful visits.',
+    'list what you need to buy. Ask suppliers questions and compare them. Plan visits with a clear purpose.',
   ],
   [
     'Make a business visit count',
     'Companies preparing a trade fair, factory visit or market visit',
-    'agree objectives before travel and follow up after meetings.',
+    'agree your goals before you travel. Follow up after the meetings.',
   ],
   [
     'Run a delegation or programme',
     'Chambers, institutions and organisers',
-    'coordinate the programme while keeping each participant’s objectives and private information separate.',
+    'manage the programme. Keep each person’s goals and private information apart.',
   ],
 ] as const;
 
@@ -46,7 +46,7 @@ const stepText: Record<RoadStep, string> = {
   define: 'Tell us the market, the commercial need and what would make it worthwhile.',
   find: 'We research companies that could fit and agree scope and any fees with you first.',
   compare: 'Companies and offers side by side, with what is claimed and what is checked.',
-  visit: 'We prepare introductions and coordinate the meetings and visits you agree.',
+  visit: 'We prepare introductions. We organise the meetings and visits you agree.',
   decide: 'Choose who to work with, with the evidence and open questions in view.',
   follow: 'Next action, owner and evidence stay with the work until a result.',
 };
@@ -332,7 +332,8 @@ export default function Page() {
         <div className="about-company">
           <p>
             Corridra is operated by Corridra Pte Ltd, 101 Robinson Road, Singapore 180239, with
-            operations in Gulshan, Dhaka, Bangladesh. For account or privacy questions, see the{' '}
+            operations in Gulshan, Dhaka, Bangladesh. Questions about your account or privacy? See
+            the{' '}
             <Link prefetch={false} href="/privacy">
               privacy information
             </Link>

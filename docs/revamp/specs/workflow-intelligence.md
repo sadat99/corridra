@@ -92,9 +92,12 @@ Withdrawn item (10 Nov 2026): an early account notice on `/plan`. The first scre
 2. `/plan` stays inside its confirmed limits (2.6 phone, 1.85 desktop) in `tests/browser/layout-budget-plan.spec.ts`.
 3. `Sensitive: yes` (public unauthenticated route): needs Guardian PASS.
 
-### W3 and W4
+### W3, W4 and W5 (status 10 Nov 2026)
 
-Specified in this file before their build, after W1 and W2 merge, with their files and tests read first.
+- W3, built by S22 in its own PR: the operator Today screen counts paid-service requests in status `requested` (the customer asked for help and the team has not sent a quote) in the same bounded read that already counts accepted quotes, and shows them as a tile beside "accepted quotes not started". The spec is in that PR's body. No schema, route or permission change.
+- W4, after a branch slot frees: on the customer request page, show the request reference beside its received date (it is in a closed disclosure at the bottom today, `request-detail.tsx:337-340`); in the Room, when there is nothing for the customer to do, show "Open the Request" as a quiet link, not a primary button (`room-view.tsx:333-339`), and say "Waiting on the Corridra team" as the glossary asks. The first W4 item, a one-workspace shortcut for organisers, was withdrawn: `workspace-chooser.tsx:61` already opens the only workspace directly.
+- W5, after a branch slot frees and a check of the receiving sections: the operator mission page links to whole workspace sections without the mission (`mission-page.tsx:372-374`), so the operator must find the mission again. Built only if those sections can take a mission filter with no change to data or permissions.
+- Checked and refuted on 10 Nov 2026: the programme report has no next step (it is a read-only report behind a private link, with export and evidence replies); customers get no confirmation after they submit (each checked flow names the next step and who acts).
 
 ### W4. Request reference in view, quiet idle step in the Room
 

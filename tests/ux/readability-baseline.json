@@ -14,11 +14,11 @@
     "words": 7
   },
   "/about": {
-    "grade": 10.8,
-    "hard": 11,
+    "grade": 8.8,
+    "hard": 7,
     "long": 0,
-    "sentences": 25,
-    "words": 294
+    "sentences": 33,
+    "words": 302
   },
   "/account": {
     "redirectsTo": "/signin"
@@ -85,11 +85,11 @@
     "words": 0
   },
   "/business-trips": {
-    "grade": 7.4,
-    "hard": 1,
+    "grade": 6.1,
+    "hard": 0,
     "long": 0,
-    "sentences": 8,
-    "words": 56
+    "sentences": 9,
+    "words": 63
   },
   "/buyer": {
     "grade": 6.9,
@@ -109,11 +109,11 @@
     "redirectsTo": "/"
   },
   "/contributor": {
-    "grade": 10.9,
-    "hard": 1,
+    "grade": 7.6,
+    "hard": 0,
     "long": 0,
     "sentences": 2,
-    "words": 15
+    "words": 18
   },
   "/contributor/me": {
     "grade": 8.5,
@@ -123,39 +123,39 @@
     "words": 17
   },
   "/contributor/setup": {
-    "grade": 10,
-    "hard": 3,
-    "long": 0,
-    "sentences": 6,
-    "words": 63
-  },
-  "/corridors": {
-    "grade": 6.4,
+    "grade": 8.8,
     "hard": 1,
     "long": 0,
     "sentences": 8,
-    "words": 97
+    "words": 63
+  },
+  "/corridors": {
+    "grade": 5.4,
+    "hard": 0,
+    "long": 0,
+    "sentences": 10,
+    "words": 99
   },
   "/corridors/bangladesh-china": {
-    "grade": 8.3,
-    "hard": 2,
+    "grade": 6,
+    "hard": 0,
     "long": 0,
-    "sentences": 4,
-    "words": 41
+    "sentences": 7,
+    "words": 46
   },
   "/corridors/bangladesh-eu": {
-    "grade": 7.4,
-    "hard": 1,
-    "long": 0,
-    "sentences": 3,
-    "words": 36
-  },
-  "/corridors/bangladesh-spain": {
-    "grade": 7.7,
-    "hard": 1,
+    "grade": 6.1,
+    "hard": 0,
     "long": 0,
     "sentences": 4,
-    "words": 35
+    "words": 39
+  },
+  "/corridors/bangladesh-spain": {
+    "grade": 6.6,
+    "hard": 0,
+    "long": 0,
+    "sentences": 5,
+    "words": 38
   },
   "/decision-card": {
     "grade": 0,
@@ -165,11 +165,11 @@
     "words": 0
   },
   "/enter-market": {
-    "grade": 6.3,
-    "hard": 2,
+    "grade": 5.5,
+    "hard": 0,
     "long": 0,
-    "sentences": 8,
-    "words": 82
+    "sentences": 9,
+    "words": 83
   },
   "/fairs": {
     "unavailable": true
@@ -189,25 +189,25 @@
     "words": 67
   },
   "/institutions": {
-    "grade": 9.8,
-    "hard": 4,
-    "long": 0,
-    "sentences": 9,
-    "words": 72
-  },
-  "/machinery": {
-    "grade": 9.7,
-    "hard": 2,
-    "long": 0,
-    "sentences": 8,
-    "words": 62
-  },
-  "/network": {
-    "grade": 7.2,
+    "grade": 8.2,
     "hard": 1,
     "long": 0,
-    "sentences": 7,
-    "words": 69
+    "sentences": 12,
+    "words": 81
+  },
+  "/machinery": {
+    "grade": 8.7,
+    "hard": 0,
+    "long": 0,
+    "sentences": 10,
+    "words": 65
+  },
+  "/network": {
+    "grade": 6.7,
+    "hard": 0,
+    "long": 0,
+    "sentences": 8,
+    "words": 71
   },
   "/operator": {
     "grade": 10.2,
@@ -234,8 +234,8 @@
     "words": 13
   },
   "/operator/setup": {
-    "grade": 12.4,
-    "hard": 3,
+    "grade": 11.1,
+    "hard": 2,
     "long": 0,
     "sentences": 4,
     "words": 39
@@ -277,10 +277,10 @@
   },
   "/sell": {
     "grade": 2.8,
-    "hard": 1,
-    "long": 1,
-    "sentences": 12,
-    "words": 96
+    "hard": 0,
+    "long": 0,
+    "sentences": 13,
+    "words": 103
   },
   "/signin": {
     "grade": 5,
@@ -297,18 +297,18 @@
     "words": 28
   },
   "/source": {
-    "grade": 5,
-    "hard": 1,
+    "grade": 4.5,
+    "hard": 0,
     "long": 0,
-    "sentences": 8,
-    "words": 72
+    "sentences": 9,
+    "words": 76
   },
   "/trade-missions": {
-    "grade": 5.8,
-    "hard": 1,
+    "grade": 5.3,
+    "hard": 0,
     "long": 0,
-    "sentences": 8,
-    "words": 71
+    "sentences": 9,
+    "words": 75
   },
   "/trust": {
     "grade": 5.5,

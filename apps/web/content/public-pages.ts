@@ -46,7 +46,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     label: 'Sell in a new market',
     title: 'Make the trip commercially useful.',
     description:
-      'We are building a way to find and qualify buyers in Spain and the EU before you arrive, and to follow up after you leave.',
+      'We are building a way to find and qualify buyers in Spain and the European Union (EU) before you arrive. We are also building a way to follow up after you leave.',
     introduction: {
       title: 'A booth gives visibility. It does not decide who you meet.',
       text: 'Start with your offer and the buyer you want. An attendee list is only one place to look.',
@@ -106,7 +106,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     sections: [
       {
         title: 'Define what fits',
-        text: 'Set the product, volume, delivery window and evidence you need.',
+        text: 'Set the product, volume and delivery window you need. Say what evidence you need.',
       },
       {
         title: 'Understand the shortlist',
@@ -142,7 +142,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     label: 'Enter a new market',
     title: 'Enter an unfamiliar market without entering it blind.',
     description:
-      'We are building support for finding customers and partners, with local help when remote research is not enough.',
+      'We are building support to find customers and partners. This includes local help when remote research is not enough.',
     introduction: {
       title: 'You do not need a local office to start learning.',
       text: 'A first visit should test something concrete: who needs your offer, how buying works and which partners fit.',
@@ -158,7 +158,7 @@ export const publicPages: Record<string, PublicPageContent> = {
       },
       {
         title: 'Follow the opportunity',
-        text: 'Keep the conversation and the next action connected after the visit.',
+        text: 'Keep the conversation and the next action linked after the visit.',
       },
     ],
     closing: {
@@ -186,7 +186,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     label: 'Run a trade mission',
     title: 'Give every participant a reason to be in the room.',
     description:
-      'We are building missions around each participant’s goal, a qualified agenda and follow-up after the trip.',
+      'We are building missions around each person’s goal and a qualified agenda. We are also building follow-up after the trip.',
     introduction: {
       title: 'A shared itinerary is not a shared objective.',
       text: 'Each participant has a different goal. A good programme links each goal to the right companies.',
@@ -289,7 +289,7 @@ export const publicPages: Record<string, PublicPageContent> = {
       'We are building a network for scoped local work, with a clear task, evidence and reward before you accept.',
     introduction: {
       title: 'Some market intelligence cannot be collected from a desk.',
-      text: 'A local check, visit or introduction can answer what remote research cannot.',
+      text: 'Some answers need a local check, visit or introduction. Remote research cannot give them.',
     },
     sections: [
       {
@@ -316,15 +316,15 @@ export const publicPages: Record<string, PublicPageContent> = {
     label: 'For institutions',
     title: 'Stop measuring trade missions by attendance.',
     description:
-      'We are building a way to turn participant goals into qualified agendas and to track business progress after the programme.',
+      'We are building a way to turn participant goals into qualified agendas. We are also building a way to track business progress after the programme.',
     introduction: {
       title: 'A programme can be busy and still produce little business.',
-      text: 'Attendance shows activity. It does not show whether opportunities progressed or cash was collected.',
+      text: 'Attendance shows activity. It does not show if opportunities progressed or if cash was collected.',
     },
     sections: [
       {
         title: 'Before the programme',
-        text: 'Capture each participant’s goal. Research and qualify companies before setting the agenda.',
+        text: 'Capture each participant’s goal. Research and qualify companies first. Then set the agenda.',
       },
       {
         title: 'During and after',
@@ -332,7 +332,7 @@ export const publicPages: Record<string, PublicPageContent> = {
       },
       {
         title: 'Measure the progression',
-        text: 'Report meetings, qualified opportunities, quotes, proposals and contracts. Cash needs its own evidence.',
+        text: 'Report meetings and qualified opportunities. Report quotes, proposals and contracts. Cash needs its own evidence.',
       },
     ],
     closing: {
@@ -435,10 +435,10 @@ export const publicPages: Record<string, PublicPageContent> = {
 publicPages.machinery = {
   label: 'Procure machinery',
   title: 'A machine is useful only if it fits the work.',
-  description: 'Define the application, capacity and site limits before comparing suppliers.',
+  description: 'Define the application, capacity and site limits. Then compare suppliers.',
   introduction: {
     title: 'Specification before price.',
-    text: 'Keep original offers apart from comparisons. Keep installation, spares, warranty and open questions visible.',
+    text: 'Keep original offers apart from comparisons. Keep installation, spares and warranty visible. Keep open questions visible too.',
   },
   sections: [
     {
@@ -468,7 +468,7 @@ publicPages['business-trips'] = {
   description: 'Work backwards from the conversations and decisions the trip should produce.',
   introduction: {
     title: 'An itinerary is part of a mission.',
-    text: 'Company location, target market, venue and shipment route are different facts. Keep each separate.',
+    text: 'Company location and target market are not the same fact. Nor are the venue and the shipment route. Keep each separate.',
   },
   sections: [
     {

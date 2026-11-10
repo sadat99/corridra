@@ -33,7 +33,7 @@ export default async function Page({
     return (
       <WorkspaceShell eyebrow="ASSIGNED EXECUTION WORK" title="Your assigned tasks." compact>
         <p>
-          Assigned-task access is not configured in this environment. Keep the invitation supplied
+          Access to assigned tasks is not set up in this environment. Keep the invitation supplied
           by your operator.
         </p>
         <Link className="text-link" href="/network">
