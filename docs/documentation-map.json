@@ -1439,6 +1439,11 @@
       "use": "Exact hashed ledger at c2137d43 (the PR 379 merge), before PRs 378 to 381, the S19, S20 and S17 lanes and the KI-45 resolution were recorded; preserves the 10 Nov S15 Lanes, Merged, Open and Next bullets; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-s26-records-2026-11-10.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at b2d6362c (the PR 388 merge), before PRs 384, 387, 386 and 388, the S26 and S28 lanes, the G10 Guardian PASS and the owner-reported switch change were recorded; preserves the 10 Nov S19 Lanes, Merged, Open and Next bullets; use the current ledger for live state."
+    },
+    {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"
