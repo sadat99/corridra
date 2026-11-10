@@ -1,19 +1,31 @@
 'use client';
-// The two reading comfort controls in the help menus (customer, team and the phone avatar menu): Text Size, one
-// row with three steps, and the Less Movement switch. Both are kept in this browser only (lib/ux/comfort.ts); a
-// browser that will not save them still gets the choice for the current page, and says so. Owner: W7.
+// The reading comfort controls in the help menus (customer, team and the phone avatar menu): Text Size, one row
+// with three steps, and the Stronger Colours and Less Movement switches. All are kept in this browser only
+// (lib/ux/comfort.ts); a browser that will not save them still gets the choice for the current page, and says so.
+// A switch whose effect the device already asks for reads On and does nothing. Owner: W7, W10.
+import { useId } from 'react';
 import { CorridraIcon } from '../corridra-icon';
-import { textSizes, type TextSize } from '../../lib/ux/comfort';
-import { useLessMovement, useSaveNoteFilled, useTextSize } from './use-comfort';
+import {
+  deviceAsksNote,
+  systemContrastQuery,
+  systemReducedMotionQuery,
+  textSizes,
+  unsavedChoiceNote,
+  type TextSize,
+} from '../../lib/ux/comfort';
+import {
+  useContrast,
+  useLessMovement,
+  useSaveNoteFilled,
+  useSystemSetting,
+  useTextSize,
+} from './use-comfort';
 
 export const textSizeNames: Record<TextSize, string> = {
   normal: 'Normal',
   large: 'Large',
   largest: 'Largest',
 };
-
-export const unsavedChoiceNote =
-  'This browser cannot save your choice. It lasts until you leave this page.';
 
 /**
  * The one live region for the comfort controls on a page. It is always in the page and empty until this browser
@@ -65,28 +77,82 @@ export function TextSizeRow({ label }: { label: string }) {
 }
 
 /**
- * Less Movement: a switch row that says On or Off in words. It stays open when used. It is last in the group, so it
- * carries the group's one save-failed note (an empty live region until a save fails).
+ * A switch row that says On or Off in words. It stays open when used. When the device already asks for the effect it
+ * reads On with a line saying so, is announced as unavailable (still focusable, still 44 px) and a tap does nothing.
+ * The name is the label alone and the device line is the description, so neither is read twice.
+ */
+function ComfortSwitchRow({
+  label,
+  on,
+  bySystem,
+  onToggle,
+}: {
+  label: string;
+  on: boolean;
+  bySystem: boolean;
+  onToggle: () => void;
+}) {
+  const labelId = useId();
+  const noteId = useId();
+  return (
+    <button
+      type="button"
+      role="menuitemcheckbox"
+      aria-checked={on || bySystem}
+      aria-disabled={bySystem || undefined}
+      aria-labelledby={labelId}
+      aria-describedby={bySystem ? noteId : undefined}
+      tabIndex={-1}
+      className="ux-menu-row ux-menu-toggle"
+      onClick={() => {
+        if (!bySystem) onToggle();
+      }}
+    >
+      <span className="ux-menu-toggle-text">
+        <span id={labelId}>{label}</span>
+        {bySystem ? (
+          <span id={noteId} className="ux-textsize-current">
+            {deviceAsksNote}
+          </span>
+        ) : null}
+      </span>
+      <span className="ux-menu-toggle-state">
+        {on || bySystem ? <CorridraIcon name="check" size={16} /> : null}
+        <span>{on || bySystem ? 'On' : 'Off'}</span>
+      </span>
+    </button>
+  );
+}
+
+/** Stronger Colours: darker text, clearer lines and underlined links (comfort.css). On when chosen or the device asks. */
+export function ContrastRow({ label }: { label: string }) {
+  const [value, setValue] = useContrast();
+  const bySystem = useSystemSetting(systemContrastQuery);
+  return (
+    <ComfortSwitchRow
+      label={label}
+      on={value === 'more'}
+      bySystem={bySystem}
+      onToggle={() => setValue(value === 'more' ? 'normal' : 'more')}
+    />
+  );
+}
+
+/**
+ * Less Movement. It is last in the group, so it carries the group's one save-failed note (an empty live region until a
+ * save fails).
  */
 export function LessMovementRow({ label }: { label: string }) {
   const [value, setValue] = useLessMovement();
-  const on = value === 'on';
+  const bySystem = useSystemSetting(systemReducedMotionQuery);
   return (
     <>
-      <button
-        type="button"
-        role="menuitemcheckbox"
-        aria-checked={on}
-        tabIndex={-1}
-        className="ux-menu-row ux-menu-toggle"
-        onClick={() => setValue(on ? 'off' : 'on')}
-      >
-        <span>{label}</span>
-        <span className="ux-menu-toggle-state">
-          {on ? <CorridraIcon name="check" size={16} /> : null}
-          <span>{on ? 'On' : 'Off'}</span>
-        </span>
-      </button>
+      <ComfortSwitchRow
+        label={label}
+        on={value === 'on'}
+        bySystem={bySystem}
+        onToggle={() => setValue(value === 'on' ? 'off' : 'on')}
+      />
       <UnsavedChoiceNote className="ux-menu-note ux-comfort-status" inMenu />
     </>
   );

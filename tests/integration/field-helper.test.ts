@@ -91,7 +91,8 @@ describe('nothing a helper reached before is lost', () => {
   test('Me says Coming soon for what is not built, and builds no control for it', () => {
     const me = read('apps/web/app/contributor/me/helper-me.tsx');
     expect(me).toMatch(/Data Saver[\s\S]{0,80}Coming soon/);
-    expect(me).not.toContain('Stronger Colours');
+    // Stronger Colours is a real control now (W10); Data Saver is the one thing still not built, and has no control.
+    expect(me).not.toMatch(/Data Saver[\s\S]{0,200}(?:role="switch"|type="checkbox")/);
     expect(me.match(/className="ux-soon-tag"/g)).toHaveLength(1);
   });
   test('Me builds real Text Size and Less Movement controls, kept in this browser only', () => {
@@ -104,6 +105,11 @@ describe('nothing a helper reached before is lost', () => {
     expect(me).toContain('Stops animation and anything that moves by itself.');
     expect(me).toContain('useTextSize');
     expect(me).toContain('useLessMovement');
+    // W10: Stronger Colours is a real switch beside them, and each switch yields to the device's own setting.
+    expect(me).toContain('label="Stronger Colours"');
+    expect(me).toContain('Darker text, clearer lines and underlined links.');
+    expect(me).toContain('useContrast');
+    expect(me).toContain('useSystemSetting');
     expect(me).not.toMatch(/fetch\(|\/api\//);
   });
 });

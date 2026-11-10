@@ -94,6 +94,11 @@
   margin: 0;
   cursor: pointer;
 }
+/* While the device already asks for the effect the switch reads On and does nothing. */
+.me-switch:has(input[aria-disabled='true']),
+.me-switch input[aria-disabled='true'] {
+  cursor: default;
+}
 .detail-card .me-hint {
   max-width: 40rem;
   margin: 0;
