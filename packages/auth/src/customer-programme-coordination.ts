@@ -282,10 +282,12 @@ export class CustomerProgrammeCoordinationService extends CustomerSessionBoundar
   /**
    * CRUD item 3: an attendance mark carries the version the organiser saw, so two organisers cannot silently
    * overwrite each other; a stale version is refused with 409 and nothing is written. The database function
-   * has no version argument, so the check runs here under the same programme lock the function takes
-   * (reentrant in this transaction): the version read below cannot change before the write. A retried
-   * command (same command id) still returns its first result: on a version mismatch the call runs in a
-   * savepoint and is kept only when the database answers with that stored replay, which writes nothing.
+   * has no version argument, so the check runs here. programme_report takes the workspace lock and then the
+   * programme lock, in the same order as every other coordination function, and both are held until this
+   * transaction commits: the version read below cannot change before the write. No lock is taken here, so
+   * the order cannot be inverted. A retried command (same command id) still returns its first result: on a
+   * version mismatch the call runs in a savepoint and is kept only when the database answers with that
+   * stored replay, which writes nothing.
    */
   setAttendance(input: unknown, subject?: string, issuer?: string) {
     const v = attendanceSetInput.parse(input);
@@ -296,10 +298,6 @@ export class CustomerProgrammeCoordinationService extends CustomerSessionBoundar
     };
     return this.transaction(
       async (db) => {
-        await db.query(
-          "SELECT pg_advisory_xact_lock(hashtextextended('customer.programme_coordination:'||$1::uuid::text,0))",
-          [v.programmeId],
-        );
         const report = (
           await db.query<{ result: ProgrammeReport }>(
             'SELECT customer.programme_report($1,$2) AS result',

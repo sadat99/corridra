@@ -1000,3 +1000,68 @@ test('the account-context guard and session checks run before any database work'
   expect((await rejected(off.report(scope()))).message).toContain('unavailable');
   expect(await counts()).toEqual(before);
 });
+
+test('an attendance mark run alongside a report, a task save and a capacity save takes the workspace lock before the programme lock and never deadlocks', async () => {
+  const opened = await report();
+  const bob = opened.participants.find((p) => p.registrationId === bobReg)!;
+  const tasksBefore = opened.tasks.open;
+  const workspaceKey = (
+    await f.owner.query<{ key: string }>(
+      "SELECT hashtextextended('customer.access.workspace:'||$1::text,0)::text AS key",
+      [workspaceId],
+    )
+  ).rows[0].key;
+  const waiting = async () =>
+    (
+      await f.owner.query<{ n: number }>(
+        `SELECT count(*)::int n FROM pg_locks WHERE locktype='advisory' AND NOT granted AND objsubid=1
+          AND classid=(($1::bigint>>32)&4294967295)::oid AND objid=($1::bigint&4294967295)::oid`,
+        [workspaceKey],
+      )
+    ).rows[0].n;
+  // Another writer holds the workspace lock, as programme_report and every coordination save do first.
+  const holder = await f.owner.connect();
+  let results: PromiseSettledResult<unknown>[];
+  try {
+    await holder.query('BEGIN');
+    await holder.query('SELECT pg_advisory_xact_lock($1::bigint)', [workspaceKey]);
+    const work = Promise.allSettled([
+      attend(bobReg, bob.attendance === 'ATTENDED' ? 'ABSENT' : 'ATTENDED', bob.attendanceVersion),
+      report(),
+      saveTask(task({ title: 'Synthetic task saved beside an attendance mark' })),
+      coord().setCapacity({
+        commandId: randomUUID(),
+        ...scope(),
+        expectedVersion: opened.capacity.version,
+        capacity: 30,
+        reason: 'Synthetic capacity saved beside an attendance mark',
+      }),
+    ]);
+    // All four now queue on the workspace lock. Had the mark taken the programme lock first, it would
+    // be holding it here, and the holder taking the programme lock next would deadlock.
+    for (let tries = 0; (await waiting()) < 4; tries++) {
+      expect(tries).toBeLessThan(200);
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    await holder.query(
+      "SELECT pg_advisory_xact_lock(hashtextextended('customer.programme_coordination:'||$1::text,0))",
+      [programmeId],
+    );
+    await holder.query('COMMIT');
+    results = await work;
+  } catch (error) {
+    await holder.query('ROLLBACK');
+    throw error;
+  } finally {
+    holder.release();
+  }
+  for (const r of results)
+    expect(r.status === 'rejected' ? r.reason : 'fulfilled').toBe('fulfilled');
+  const after = await report();
+  expect(after.participants.find((p) => p.registrationId === bobReg)).toMatchObject({
+    attendance: bob.attendance === 'ATTENDED' ? 'ABSENT' : 'ATTENDED',
+    attendanceVersion: bob.attendanceVersion + 1,
+  });
+  expect(after.tasks.open).toBe(tasksBefore + 1);
+  expect(after.capacity).toMatchObject({ capacity: 30, version: opened.capacity.version + 1 });
+});
