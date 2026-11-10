@@ -85,6 +85,7 @@ describe('request code never reaches the offline modules', () => {
     'customer-account-lifecycle-configuration',
     'customer-workspace-lifecycle-migrate',
     'customer-account-lifecycle-migrate',
+    'customer-problem-report-migrate',
   ];
   const walk = (dir: string): string[] =>
     readdirSync(dir).flatMap((name) => {
