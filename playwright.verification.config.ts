@@ -34,7 +34,8 @@ export default defineConfig({
     command: 'pnpm exec tsx scripts/qa/verification-server.ts',
     url: 'http://127.0.0.1:3300',
     reuseExistingServer: false,
-    timeout: 90000,
+    // The harness waits up to 60 seconds for its second app instance (3302) before it starts the main one.
+    timeout: 180000,
     gracefulShutdown: { signal: 'SIGTERM', timeout: 10000 },
   },
 });

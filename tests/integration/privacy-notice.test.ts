@@ -46,6 +46,7 @@ const text = async (env: Record<string, string | undefined>) => {
     'CORRIDRA_REAL_USE_ENABLED',
     'CORRIDRA_MISSION_EMAIL_ENABLED',
     'CORRIDRA_PULSE_ENABLED',
+    'CORRIDRA_SUPPORT_WHATSAPP_NUMBER',
     'CORRIDRA_CUSTOMER_WORKSPACES_ENABLED',
     'CORRIDRA_DELIVERY_ENABLED',
     'CORRIDRA_CUSTOMER_SAVED_MISSIONS_ENABLED',
@@ -77,6 +78,7 @@ afterEach(() => {
     'CORRIDRA_REAL_USE_ENABLED',
     'CORRIDRA_MISSION_EMAIL_ENABLED',
     'CORRIDRA_PULSE_ENABLED',
+    'CORRIDRA_SUPPORT_WHATSAPP_NUMBER',
     'CORRIDRA_CUSTOMER_WORKSPACES_ENABLED',
     'CORRIDRA_DELIVERY_ENABLED',
     'CORRIDRA_CUSTOMER_SAVED_MISSIONS_ENABLED',
@@ -214,6 +216,7 @@ describe('the privacy notice', () => {
       real,
       { ...real, CORRIDRA_MISSION_EMAIL_ENABLED: 'true' },
       { ...real, CORRIDRA_PULSE_ENABLED: 'true' },
+      { ...real, CORRIDRA_SUPPORT_WHATSAPP_NUMBER: '+6500000000' },
       { DATA_ENVIRONMENT: 'synthetic' },
       { ...real, CORRIDRA_LANGUAGES_FORM: 'true' },
     ])
@@ -331,5 +334,76 @@ describe('the language sentence follows the request form release', () => {
     expect(page).toContain(englishForm);
     expect(page).not.toContain('hosting provider');
     expect(page).toContain('Updated 25 October 2026.');
+  });
+});
+
+describe('the privacy notice and Chat on WhatsApp', () => {
+  const item = 'Messages you send us on WhatsApp';
+  const number = '+6500000000';
+  const sample = { DATA_ENVIRONMENT: 'synthetic' };
+  const summarySentence =
+    'If you choose Chat on WhatsApp, you open WhatsApp yourself, and your messages travel under your own WhatsApp terms.';
+  const retentionSentence =
+    'We delete a WhatsApp conversation 12 months after its last message, unless the law requires us to keep it longer.';
+  const locationParagraph =
+    'WhatsApp messages stay in WhatsApp, on Meta’s systems and on the device we answer from, not in our Frankfurt database. Meta may process them in other countries under its own terms.';
+  const sharingEntry =
+    'WhatsApp (Meta): the channel you choose when you select Chat on WhatsApp. You open it yourself and your messages travel under your own WhatsApp terms. It is not a service we use to run Corridra.';
+
+  it('has no WhatsApp item while no number is set, blank, or not usable', async () => {
+    for (const value of [undefined, '', '   ', '0065000000', '+65 0000 0000', '1234567']) {
+      for (const mode of [real, sample]) {
+        const page = await text({ ...mode, CORRIDRA_SUPPORT_WHATSAPP_NUMBER: value });
+        expect(page).not.toContain(item);
+        expect(page).not.toContain('Meta');
+        expect(page).not.toContain('WhatsApp');
+        expect(page).not.toContain(summarySentence);
+        expect(page).not.toContain(sharingEntry);
+        expect(page).not.toContain(retentionSentence);
+        expect(page).not.toContain(locationParagraph);
+      }
+    }
+  });
+  it('adds the item when a usable number is set, in real use and in sample mode', async () => {
+    for (const mode of [real, sample]) {
+      const page = await text({ ...mode, CORRIDRA_SUPPORT_WHATSAPP_NUMBER: number });
+      expect(page).toContain(item);
+      expect(page).toContain(
+        'only if you choose Chat on WhatsApp, which opens WhatsApp outside Corridra',
+      );
+      expect(page).toContain('WhatsApp (Meta) handles your message under its own terms.');
+      // All three places that name WhatsApp follow the same condition: the summary, the collected-messages item
+      // and the sharing list, which says it is the person's own channel and not a provider we use.
+      expect(page).toContain(summarySentence);
+      expect(page).toContain(sharingEntry);
+      // The retention sentence ends the WhatsApp item, and the location paragraph is in Where information is stored.
+      expect(page).toContain(retentionSentence);
+      expect(page).toContain(locationParagraph);
+      expect(page.indexOf(retentionSentence)).toBeGreaterThan(page.indexOf(item));
+      expect(page.indexOf(locationParagraph)).toBeGreaterThan(
+        page.indexOf('Application data and customer accounts are stored in Frankfurt'),
+      );
+      // It is its own paragraph after the provider list and the sentence about providers, so it is not listed as a
+      // provider "we use to run Corridra" and the sentence about information processed for us does not cover it.
+      expect(page.indexOf(sharingEntry)).toBeGreaterThan(
+        page.indexOf('They process information for us under their own terms'),
+      );
+      expect(page.match(/WhatsApp \(Meta\)/g)).toHaveLength(2);
+      expect(page).not.toMatch(/WhatsApp[^.]*(our processor|our service provider)/);
+    }
+  });
+  it('keeps the existing messages item and never prints the number', async () => {
+    const page = await text({ ...real, CORRIDRA_SUPPORT_WHATSAPP_NUMBER: number });
+    expect(page).toContain('Messages you send us (support and privacy requests).');
+    expect(page).not.toContain('6500000000');
+    expect(page).not.toContain('wa.me');
+  });
+  it('the item has no em dash', async () => {
+    const page = await text({ ...real, CORRIDRA_SUPPORT_WHATSAPP_NUMBER: number });
+    const start = page.indexOf(item);
+    const end = page.indexOf('answering you, or the law where it requires a record.', start);
+    expect(start).toBeGreaterThan(-1);
+    expect(end).toBeGreaterThan(start);
+    expect(page.slice(start, end)).not.toMatch(/\u2014|\u2013/);
   });
 });
