@@ -109,6 +109,17 @@ The first audit's W3 row said that customer questions and supplier or buyer repl
 - Follow-up found in the W3 review: the operator router accepts only section addresses, so links to addresses inside a section (such as the billing jump links `#billing-services` in `delivery-experience.tsx`) show the "section is unavailable" alert. Fixing it is a routing change for its own PR.
 - Checked and refuted on 10 Nov 2026: the programme report has no next step (it is a read-only report behind a private link, with export and evidence replies); customers get no confirmation after they submit (each checked flow names the next step and who acts).
 
+### W4. Request reference in view, quiet idle step in the Room
+
+Owner, 10 Nov 2026, in S17: "use the free branch slots to run W3 & others in parallel 100% correctly without rework, reruns etc". This lifts the order "after W1 and W2 merge" for W4. Built by S24 in PR 384. Presentation only, on signed-in customer pages.
+
+1. Request page (`apps/web/app/account/requests/request-detail.tsx`): the overview card shows "Reference: <request id>" under the received date, with the hint "Quote this reference when you contact the Corridra team." The id is the customer's own request id, already shown in the closed "Request reference" disclosure at the bottom of the page, which stays exactly as it was.
+2. Room (`apps/web/app/account/rooms/[requestId]/room-view.tsx`): when there is nothing for the customer to do and service requests are off (`next.act === 'request'`), "Open the Request" is a quiet `text-link` instead of a primary button. It is the same element, the same address (`/account/requests/<id>`) and the same words. Every other next-step state keeps its primary action.
+3. In that idle state, the default words are "Waiting on the Corridra team" (glossary, UX update amendment), and a subline still comes first when one exists.
+4. Preserved: every link destination, element, id, name and test hook; the "Request reference" disclosure; the Room's Overview link to the request.
+5. Tests: W4 cases in `tests/operator/v3-customer-request-detail.spec.ts` and `tests/operator/ux-room.spec.ts`. They fail on the code before W4, and no existing assertion changes.
+6. Matrix row "D organiser" is not part of W4 and is withdrawn: `apps/web/components/workspace-chooser.tsx:61` already opens the only workspace directly when a person has exactly one, so the one-workspace shortcut exists.
+
 ## 5. Measurement
 
 Measured for each changed journey: steps and fields before and after, repeated inputs removed, reading-level numbers from W1, UX gate counts, and the page lengths from the layout budget tests. Conversion, satisfaction, revenue and speed are not claimed: no measurement for them exists.
