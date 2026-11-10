@@ -186,7 +186,7 @@ describe('the customer navigation model', () => {
     }
   });
 
-  it('the help menu is honest: only real things are links, the rest is Coming soon', () => {
+  it('the help menu is honest: only real things are links or controls, the rest is Coming soon', () => {
     const help = customerHelpGroups();
     const flat = help.flatMap((group) => group.items);
     const link = (label: string) => flat.find((item) => item.label === label)!;
@@ -196,14 +196,12 @@ describe('the customer navigation model', () => {
     expect(link('Privacy Notice')).toMatchObject({ kind: 'link', href: '/privacy' });
     expect(link('Listen to This Page').kind).toBe('listen');
     // There is no owner-configured WhatsApp number, so it says Coming soon and is not a link.
-    for (const label of [
-      'Chat on WhatsApp',
-      'Report a Problem',
-      'Text Size',
-      'Stronger Colours',
-      'Less Movement',
-    ])
+    for (const label of ['Chat on WhatsApp', 'Report a Problem', 'Stronger Colours'])
       expect(link(label).kind, label).toBe('soon');
+    // W7: Text Size and Less Movement are real controls kept in this browser, no longer Coming soon.
+    expect(link('Text Size').kind).toBe('textsize');
+    expect(link('Less Movement').kind).toBe('lessmovement');
+    expect(flat.filter((item) => item.kind === 'soon')).toHaveLength(3);
     expect(flat.some((item) => item.kind === 'link' && /wa\.me|whatsapp/i.test(item.href))).toBe(
       false,
     );
