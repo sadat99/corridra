@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { accessFixture, future } from './access-fixture';
-import { rawContext } from './support';
 import { migrateCustomerMemberRoles } from '../../packages/db/src/customer-member-role-migrate';
 import { migrateCustomerProgrammes } from '../../packages/db/src/customer-programme-migrate';
 import { migrateCustomerCompanies } from '../../packages/db/src/customer-company-migrate';
@@ -243,22 +242,31 @@ describe('W3 service requests waiting for a quote', () => {
       expectedSeq: await seq(id),
       ...quoteBody(future(7)),
     });
-  // The service refuses a quote valid for under an hour, so a short one goes in through the same SQL command.
-  const shortQuote = async (id: string) =>
-    rawContext(
-      f.runtime,
-      f.users.owner.ctx,
-      'SELECT app.service_request_staff_command($1,$2,$3) r',
-      [
-        randomUUID(),
-        'quote',
-        JSON.stringify({
-          requestId: id,
-          expectedSeq: await seq(id),
-          ...quoteBody(new Date(Date.now() + 1500).toISOString()),
-        }),
-      ],
-    );
+  // The service refuses a quote valid for under an hour and records a quote only while it is open, so a quote
+  // that has run out is made by moving the stored times of an ordinary quote into the past, as the owner of the
+  // test database. The append-only guards are skipped for this one statement (as in revamp-money-database.test.ts),
+  // and the table's own check (valid_until after created_at, within 90 days) still holds. No waiting is involved.
+  const expireQuote = async (id: string) => {
+    const client = await f.owner.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query("SET LOCAL session_replication_role = 'replica'");
+      const moved = await client.query(
+        `UPDATE customer_private.service_quote
+            SET created_at = created_at - interval '2 days',
+                valid_until = clock_timestamp() - interval '1 day'
+          WHERE request_id = $1`,
+        [id],
+      );
+      expect(moved.rowCount).toBe(1);
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  };
   const customer = async (action: string, requestId: string, extra: Record<string, unknown> = {}) =>
     svc().command({ action, commandId: randomUUID(), workspaceId, requestId, ...extra });
   const accept = async (id: string) => {
@@ -352,7 +360,8 @@ describe('W3 service requests waiting for a quote', () => {
     const withdrawn = await create();
     await customer('withdraw', withdrawn, { note: null });
     const expired = await create();
-    await shortQuote(expired);
+    await quote(expired);
+    await expireQuote(expired);
     const started = await create();
     await quote(started);
     await accept(started);
@@ -368,7 +377,6 @@ describe('W3 service requests waiting for a quote', () => {
     await progress('start', closed);
     await progress('deliver', closed);
     await progress('close', closed);
-    await new Promise((resolve) => setTimeout(resolve, 1800));
     // Every status below was really reached, so the negative result is not an empty one.
     const seen = await statuses();
     for (const status of [

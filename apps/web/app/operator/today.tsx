@@ -641,14 +641,8 @@ export function TodayPanel({
                     : undefined
               }
             >
-              {/* The billing hub (and so #billing-services) renders for owners and admins, the same roles that can read this count. */}
-              <a
-                href={
-                  today.team.unavailable?.includes('serviceRequestsToQuote')
-                    ? '#workspace-delivery'
-                    : '#billing-services'
-                }
-              >
+              {/* The request list sits in the Delivery section; the router accepts section addresses only. */}
+              <a href="#workspace-delivery">
                 <strong>
                   {today.team.unavailable?.includes('serviceRequestsToQuote')
                     ? 'Not available'
@@ -657,8 +651,8 @@ export function TodayPanel({
                 <span>
                   {today.team.serviceRequestsToQuote === 1 &&
                   !today.team.unavailable?.includes('serviceRequestsToQuote')
-                    ? 'service request to quote'
-                    : 'service requests to quote'}
+                    ? 'paid-service request to quote'
+                    : 'paid-service requests to quote'}
                 </span>
               </a>
             </li>

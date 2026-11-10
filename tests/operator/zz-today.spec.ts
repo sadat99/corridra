@@ -1,7 +1,9 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { mkdir, readFile } from 'node:fs/promises';
 import { createHmac } from 'node:crypto';
+import { clearSignInLimits } from './operator-signin';
+import { openTab } from './workspace-nav';
 
 function totp(secret: string) {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
@@ -188,4 +190,96 @@ test('Operator Today panel reads the real mission list, shows new and overdue wo
     .getByRole('link', { name: 'Missions and requirements', exact: false })
     .click();
   await expect(page.locator('#workspace-missions')).toBeVisible();
+});
+
+// W3-6 and W3-7: the paid-service requests tile on the real server. The tile must open the Delivery section
+// through the real section router; an address the router does not know shows the "section is unavailable" alert
+// on the overview instead. Only the Today count read is answered here (the real database holds no waiting
+// request); the router, the Delivery section and its request list are the real ones.
+const tileCount = (counts: Record<string, unknown>) => ({
+  acceptedQuotesNotStarted: 0,
+  serviceRequestsToQuote: 0,
+  repliesToReview: 0,
+  ...counts,
+});
+async function ownerOverview(page: Page, counts: Record<string, unknown>) {
+  const local = JSON.parse(await readFile('.cache/part03-local.json', 'utf8')),
+    seed = JSON.parse(await readFile('.cache/part03-browser.json', 'utf8')),
+    { secret } = JSON.parse(await readFile('.cache/part06-browser-authenticator.json', 'utf8'));
+  await clearSignInLimits(local.ownerPassword);
+  // A code from an earlier test in the same 30 second step could be refused as a replay.
+  await page.waitForTimeout(30000 - (Date.now() % 30000) + 1000);
+  await page.goto('/operator/signin');
+  await page.getByLabel('Email', { exact: true }).fill('browser@example.invalid');
+  await page.getByLabel('Password', { exact: true }).fill(seed.password);
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
+  await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
+  await expect(page.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
+  await page.route('**/api/team-control/today?*', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(tileCount(counts)),
+    }),
+  );
+  // The workspace is loaded; a navigation sent during its own address update can be aborted, so retry it.
+  await expect(page.getByText('Your access:')).toBeVisible();
+  await expect(async () => {
+    await page.goto('/operator?workspace=' + encodeURIComponent(seed.tenantId));
+  }).toPass({ timeout: 30000 });
+  await expect(page.getByText('Your access: owner', { exact: true })).toBeVisible();
+  return page.getByRole('region', { name: 'Today' });
+}
+const unavailableAlert = (page: Page) =>
+  page.getByRole('alert').filter({ hasText: 'This section is unavailable' });
+
+test('W3-6 as an owner, the paid-service requests tile opens the Delivery section and its request list, with no unavailable-section alert', async ({
+  page,
+}) => {
+  test.setTimeout(180000);
+  const today = await ownerOverview(page, { serviceRequestsToQuote: 3 });
+  const tile = today
+    .getByRole('list', { name: 'Counts' })
+    .getByRole('listitem')
+    .filter({ hasText: 'paid-service requests to quote' });
+  await expect(tile.locator('strong')).toHaveText('3');
+  await tile.getByRole('link').click();
+  const delivery = page.locator('#workspace-delivery');
+  await expect(delivery).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Client and programme delivery' })).toBeVisible();
+  await expect(unavailableAlert(page)).toHaveCount(0);
+  await expect(page).toHaveURL(/#workspace-delivery$/);
+  await expect(page.getByRole('heading', { name: 'Start with a mission.' })).toHaveCount(0);
+  // The request list is mounted in the Delivery section for owners and admins. It sits in the section's tab
+  // for mission and delegation experience, so it is in the page but hidden until that tab is chosen.
+  const heading = delivery.getByRole('heading', {
+    name: 'Customer paid-service requests',
+    includeHidden: true,
+  });
+  await expect(heading).toBeAttached();
+  await expect(heading).toBeHidden();
+  await openTab(delivery, 'Mission and delegation experience');
+  await heading.scrollIntoViewIfNeeded();
+  await expect(heading).toBeVisible();
+  await expect(unavailableAlert(page)).toHaveCount(0);
+});
+
+test('W3-7 when the count is Not available, the tile still opens the Delivery section and shows no unavailable-section alert', async ({
+  page,
+}) => {
+  test.setTimeout(180000);
+  const today = await ownerOverview(page, {
+    unavailable: ['acceptedQuotesNotStarted', 'serviceRequestsToQuote'],
+  });
+  const tile = today
+    .getByRole('list', { name: 'Counts' })
+    .getByRole('listitem')
+    .filter({ hasText: 'paid-service requests to quote' });
+  await expect(tile.locator('strong')).toHaveText('Not available');
+  await tile.getByRole('link').click();
+  await expect(page).toHaveURL(/#workspace-delivery$/);
+  await expect(page.locator('#workspace-delivery')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Client and programme delivery' })).toBeVisible();
+  await expect(unavailableAlert(page)).toHaveCount(0);
 });
