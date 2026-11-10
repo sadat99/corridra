@@ -265,6 +265,12 @@ export function changeFailure(error: unknown, v: RecordChangeCommand): never {
     if (failure.message === 'Record unavailable') throw new DomainError('Record unavailable', 404);
     throw new DomainError(denied, 403);
   }
+  // Another person's command id: the same plain words as a reused id, never "this contact changed".
+  if (
+    failure.code === '23505' &&
+    /command_id/.test((failure as { constraint?: string }).constraint ?? '')
+  )
+    throw new DomainError('Command ID reused with different values', 409);
   if (failure.code === '23505')
     throw new DomainError(
       contact ? changeWords.contactChanged : changeWords.noteChanged,

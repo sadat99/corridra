@@ -133,11 +133,12 @@ BEGIN
  END IF;
  IF rec->>'kind'='CORRECT' THEN
   IF contact THEN
-   SELECT relationship_id,created_at INTO replacement FROM app.private_contact_data WHERE tenant_id=NEW.tenant_id AND id=NEW.replacement_id;
+   SELECT relationship_id,created_at,purpose,classification INTO replacement FROM app.private_contact_data WHERE tenant_id=NEW.tenant_id AND id=NEW.replacement_id;
   ELSE
-   SELECT relationship_id,created_at INTO replacement FROM app.private_note WHERE tenant_id=NEW.tenant_id AND id=NEW.replacement_id;
+   SELECT relationship_id,created_at,purpose,classification INTO replacement FROM app.private_note WHERE tenant_id=NEW.tenant_id AND id=NEW.replacement_id;
   END IF;
   IF NOT FOUND OR replacement.relationship_id<>NEW.relationship_id OR replacement.created_at<>now()
+  OR replacement.purpose<>parent.purpose OR replacement.classification<>parent.classification
   OR (contact AND (EXISTS(SELECT FROM app.private_contact_change WHERE tenant_id=NEW.tenant_id AND (contact_id=NEW.replacement_id OR replacement_id=NEW.replacement_id))
    OR EXISTS(SELECT FROM app.target_contact WHERE tenant_id=NEW.tenant_id AND contact_id=NEW.replacement_id)
    OR EXISTS(SELECT FROM app.communication WHERE tenant_id=NEW.tenant_id AND contact_id=NEW.replacement_id)))
@@ -166,7 +167,14 @@ $$;
 CREATE FUNCTION app.refuse_inactive_contact() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE rec jsonb:=to_jsonb(NEW); contact uuid; chain uuid;
 BEGIN
- IF TG_TABLE_NAME IN ('target_contact','communication') THEN contact:=(rec->>'contact_id')::uuid;
+ IF TG_TABLE_NAME IN ('target_contact','communication') THEN
+  contact:=(rec->>'contact_id')::uuid;
+  -- A person's insert is answered only for a contact the caller could write through the table's own RLS; anyone
+  -- else is refused afterwards by RLS or the existing guards with the same words for an absent and another tenant's contact.
+  IF NOT EXISTS(SELECT FROM app.private_contact_data pc WHERE pc.tenant_id=NEW.tenant_id AND pc.id=contact
+   AND app.member_role(NEW.tenant_id) IN ('owner','admin','operator') AND app.research_relationship_access(pc.tenant_id,pc.relationship_id,true)) THEN
+   RETURN NEW;
+  END IF;
  ELSE SELECT c.contact_id INTO contact FROM app.communication c WHERE c.tenant_id=NEW.tenant_id AND c.id=NEW.id; END IF;
  IF contact IS NULL THEN RETURN NEW; END IF;
  chain:=coalesce((SELECT chain_id FROM app.private_contact_change WHERE tenant_id=NEW.tenant_id AND replacement_id=contact),contact);
