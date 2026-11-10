@@ -84,7 +84,7 @@ Claude Code and Codex share repository memory. Use [the existing handoff](docs/S
 - Run the UX gate against a production build, never `next dev` (KI-18): the dev server gives seven false failures.
 - Operator browser tests share one auth rate limit (5 per 60 s on sign-in and two-factor); a test that signs in after many others clears `identity."rateLimit"` in the browser-test database. Never raise a limit.
 - Use `get_check_runs` and `get_job_logs` with `tail_lines` near 130; `list_workflow_jobs` returns tens of thousands of tokens.
-- In the cloud container set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome` for e2e, ux and operator runs; hundreds of failures at a few milliseconds mean the browser did not launch. `next dev` rewrites `apps/web/AGENTS.md`, and the local operator suite rewrites tracked evidence images; restore them before committing. The suite runs locally on native PostgreSQL 16 (docs/v3/KNOWN_ISSUES.md KI-15).
+- In the cloud container set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome` for e2e, ux and operator runs; hundreds of failures at a few milliseconds mean the browser did not launch. `next dev` rewrites `apps/web/AGENTS.md`, and the local operator suite rewrites tracked evidence images; restore them before committing. The suite runs locally on native PostgreSQL 16 (docs/v3/KNOWN_ISSUES.md KI-15).
 - Read docs/v3/KNOWN_ISSUES.md before debugging CI and add an entry when a failure takes more than one run to explain.
 
 ## Bounded V3 context
