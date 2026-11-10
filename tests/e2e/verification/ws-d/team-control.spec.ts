@@ -208,8 +208,12 @@ test('WS-D actions: team invite, roles, authenticator reset, audit, route pack, 
     const counts = await today.json();
     expect(Number.isInteger(counts.newSubmittedRequests)).toBe(true);
     expect(Number.isInteger(counts.overdueSubmittedRequests)).toBe(true);
+    expect(Number.isInteger(counts.serviceRequestsToQuote)).toBe(true);
     await page.goto(`/operator?workspace=${tenant}`);
     await expect(page.getByText(/accepted quotes? not started/)).toBeVisible();
+    await expect(
+      page.getByRole('list', { name: 'Counts' }).getByText(/service requests? to quote/),
+    ).toBeVisible();
     await evidence(page, 'D-1-today');
 
     // V-51: the backup runbook says how to read PITR retention and keeps the drill deferred.

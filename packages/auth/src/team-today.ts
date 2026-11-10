@@ -11,7 +11,7 @@ import {
 // - A request reaches app.mission only when the customer submits it. Its first internal status is
 //   DRAFT, which means "received, waiting for review" (D6). Unsent guided drafts live in the
 //   customer's private draft store and are never read here, so they never count.
-// - Accepted quotes, reviewed replies and meetings come from optional modules or roles. When one
+// - Accepted quotes, service requests waiting for a quote, reviewed replies and meetings come from optional modules or roles. When one
 //   cannot be read (module not installed, role without access, authenticator check too old), its
 //   name is listed in `unavailable` and its count is 0. The page shows "Not available" for it, never
 //   a zero.
@@ -19,6 +19,8 @@ export type TeamToday = {
   newSubmittedRequests: number;
   overdueSubmittedRequests: number;
   acceptedQuotesNotStarted: number;
+  /** The customer asked for paid help and the team has not sent a quote. */
+  serviceRequestsToQuote: number;
   repliesToReview: number;
   meetingsNextSevenDays: number;
   /** Counts that could not be read for this person. Never shown as zero. */
@@ -39,15 +41,18 @@ async function optional(db: DatabaseClient, name: string, read: () => Promise<nu
   }
 }
 
-async function acceptedQuotes(db: DatabaseClient) {
+/** One bounded read of the paid-service list gives both counts, so Today never pages twice. */
+async function serviceRequestCounts(db: DatabaseClient) {
   const installed = await db.query(
     `SELECT to_regprocedure('app.service_request_staff_list(uuid,integer)') IS NOT NULL AS ok`,
   );
   if (!installed.rows[0]?.ok) throw new Error('not installed');
   let after: string | null = null;
   let accepted = 0;
+  let requested = 0;
   // Fifty per page, at most twenty pages: a bounded read. Status "accepted" means the customer
-  // accepted the quote and nobody has started the work yet.
+  // accepted the quote and nobody has started the work yet. Status "requested" means the customer
+  // asked for paid help and the team has not sent a quote.
   for (let page = 0; page < 20; page++) {
     const r = await db.query('SELECT app.service_request_staff_list($1,50) AS list', [after]);
     const list = r.rows[0]?.list as {
@@ -55,7 +60,8 @@ async function acceptedQuotes(db: DatabaseClient) {
       nextAfter: string | null;
     };
     accepted += list.requests.filter((item) => item.status === 'accepted').length;
-    if (!list.nextAfter) return accepted;
+    requested += list.requests.filter((item) => item.status === 'requested').length;
+    if (!list.nextAfter) return { accepted, requested };
     after = list.nextAfter;
   }
   throw new Error('too many to count');
@@ -99,15 +105,22 @@ export async function getTeamToday(pool: DatabasePool, ctx: RequestContext): Pro
       );
       return r.rows[0].n;
     });
-    const quotes = await optional(db, 'today_quotes', () => acceptedQuotes(db));
+    // One optional read yields both counts: either both are known or both are listed as unavailable.
+    let toQuote = 0;
+    const quotes = await optional(db, 'today_quotes', async () => {
+      const counts = await serviceRequestCounts(db);
+      toQuote = counts.requested;
+      return counts.accepted;
+    });
     const unavailable: TeamTodayCount[] = [];
-    if (quotes === null) unavailable.push('acceptedQuotesNotStarted');
+    if (quotes === null) unavailable.push('acceptedQuotesNotStarted', 'serviceRequestsToQuote');
     if (replies === null) unavailable.push('repliesToReview');
     if (meetings === null) unavailable.push('meetingsNextSevenDays');
     return {
       newSubmittedRequests: m.fresh,
       overdueSubmittedRequests: m.overdue,
       acceptedQuotesNotStarted: quotes ?? 0,
+      serviceRequestsToQuote: quotes === null ? 0 : toQuote,
       repliesToReview: replies ?? 0,
       meetingsNextSevenDays: meetings ?? 0,
       unavailable,
