@@ -21,22 +21,22 @@
     "@corridra/missions": "workspace:*",
     "@corridra/workflows": "workspace:*",
     "@neondatabase/auth": "0.5.0-beta",
-    "next": "16.4.3",
+    "next": "16.4.5",
     "react": "19.3.1",
     "react-dom": "19.3.1",
-    "workflow": "5.2.3",
+    "workflow": "5.4.0",
     "zod": "4.6.7",
     "@corridra/opportunities": "workspace:*",
     "@corridra/intelligence": "workspace:*",
     "@corridra/network": "workspace:*"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "4.3.3",
+    "@tailwindcss/postcss": "4.3.4",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
-    "eslint": "10.13.0",
-    "eslint-config-next": "16.4.3",
-    "tailwindcss": "4.3.3",
+    "eslint": "10.14.0",
+    "eslint-config-next": "16.4.5",
+    "tailwindcss": "4.3.4",
     "typescript": "5.9.3"
   }
 }

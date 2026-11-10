@@ -73,7 +73,12 @@ type Scenario = {
   overdue: Row[];
   totals: { fresh: number; overdue: number; open: number };
   meetings?: typeof meetings | { status: number };
-  team?: { acceptedQuotesNotStarted: number; repliesToReview: number; unavailable?: string[] };
+  team?: {
+    acceptedQuotesNotStarted: number;
+    serviceRequestsToQuote: number;
+    repliesToReview: number;
+    unavailable?: string[];
+  };
   teamStatus?: number;
   missionsStatus?: number;
 };
@@ -138,7 +143,11 @@ async function open(page: Page, scenario: Scenario, query = '') {
     scenario.teamStatus
       ? route.fulfill({ status: scenario.teamStatus, json: { error: 'Synthetic' } })
       : route.fulfill({
-          json: scenario.team ?? { acceptedQuotesNotStarted: 0, repliesToReview: 0 },
+          json: scenario.team ?? {
+            acceptedQuotesNotStarted: 0,
+            serviceRequestsToQuote: 0,
+            repliesToReview: 0,
+          },
         }),
   );
   await page.goto(origin + query);
@@ -261,9 +270,9 @@ test('Needs you now lists each new or late mission once, most overdue first, wit
   await show.getByRole('radio', { name: 'Past due 2' }).check();
   await expect(rows).toHaveCount(2);
   await expect(needs(page).getByText('Invented Towels Ltd')).toHaveCount(0);
-  // The counts strip keeps its seven links and words.
+  // The counts strip keeps its seven links and words, plus the service requests tile (W3).
   const counts = today(page).getByRole('list', { name: 'Counts' }).getByRole('listitem');
-  await expect(counts).toHaveCount(7);
+  await expect(counts).toHaveCount(8);
   await expect(
     today(page).getByText('missions past their due date', { exact: true }),
   ).toBeVisible();
@@ -326,6 +335,111 @@ test('with nothing waiting Today says so, and This week shows each group as one 
     '#workspace-meetings',
   );
   expect(await axe(page)).toEqual([]);
+});
+
+const emptyRows = {
+  fresh: [],
+  overdue: [],
+  totals: { fresh: 0, overdue: 0, open: 0 },
+  meetings: { meetings: [], followups: [] },
+};
+const counts = (page: Page) =>
+  today(page).getByRole('list', { name: 'Counts' }).getByRole('listitem');
+const toQuote = (page: Page) => counts(page).filter({ hasText: /paid-service requests? to quote/ });
+
+test('W3-1 a count of service requests waiting for a quote shows the number, the plural words and a link to the Delivery section', async ({
+  page,
+}) => {
+  await open(page, {
+    ...operatorRows,
+    team: { acceptedQuotesNotStarted: 0, serviceRequestsToQuote: 3, repliesToReview: 0 },
+  });
+  await loaded(page);
+  const tile = toQuote(page);
+  await expect(tile).toHaveCount(1);
+  await expect(tile.locator('strong')).toHaveText('3');
+  await expect(tile.locator('span')).toHaveText('paid-service requests to quote');
+  await expect(tile).not.toHaveAttribute('data-tone', /.+/);
+  await expect(tile.getByRole('link')).toHaveAttribute('href', '#workspace-delivery');
+  // The tile sits directly after "accepted quotes not started" and the earlier tiles are unchanged.
+  await expect(
+    counts(page)
+      .filter({ hasText: 'accepted quotes not started' })
+      .locator('xpath=following-sibling::li[1]'),
+  ).toContainText('paid-service requests to quote');
+  await expect(counts(page)).toHaveCount(8);
+  expect(await axe(page)).toEqual([]);
+});
+
+test('W3-2 exactly one service request uses the singular words', async ({ page }) => {
+  await open(page, {
+    ...operatorRows,
+    team: { acceptedQuotesNotStarted: 0, serviceRequestsToQuote: 1, repliesToReview: 0 },
+  });
+  await loaded(page);
+  await expect(toQuote(page).locator('strong')).toHaveText('1');
+  await expect(toQuote(page).locator('span')).toHaveText('paid-service request to quote');
+  await expect(
+    today(page).getByText('paid-service requests to quote', { exact: true }),
+  ).toHaveCount(0);
+});
+
+test('W3-3 zero service requests waiting shows 0 with the quiet zero tone, and the accepted quotes tile is unchanged', async ({
+  page,
+}) => {
+  await open(page, {
+    ...operatorRows,
+    team: { acceptedQuotesNotStarted: 2, serviceRequestsToQuote: 0, repliesToReview: 0 },
+  });
+  await loaded(page);
+  await expect(toQuote(page)).toHaveAttribute('data-tone', 'zero');
+  await expect(toQuote(page).locator('strong')).toHaveText('0');
+  await expect(toQuote(page).locator('span')).toHaveText('paid-service requests to quote');
+  await expect(toQuote(page).getByRole('link')).toHaveAttribute('href', '#workspace-delivery');
+  const accepted = counts(page).filter({ hasText: 'accepted quotes not started' });
+  await expect(accepted.locator('strong')).toHaveText('2');
+  await expect(accepted).not.toHaveAttribute('data-tone', /.+/);
+  await expect(accepted.getByRole('link')).toHaveAttribute('href', '#workspace-commercial');
+});
+
+test('W3-4 service requests that cannot be read say Not available and are never shown as zero', async ({
+  page,
+}) => {
+  await open(page, {
+    ...operatorRows,
+    team: {
+      acceptedQuotesNotStarted: 0,
+      serviceRequestsToQuote: 0,
+      repliesToReview: 0,
+      unavailable: ['acceptedQuotesNotStarted', 'serviceRequestsToQuote'],
+    },
+  });
+  await loaded(page);
+  await expect(toQuote(page)).toHaveAttribute('data-tone', 'unavailable');
+  await expect(toQuote(page).locator('strong')).toHaveText('Not available');
+  await expect(toQuote(page).locator('span')).toHaveText('paid-service requests to quote');
+  await expect(toQuote(page).getByRole('link')).toHaveAttribute('href', '#workspace-delivery');
+  const accepted = counts(page).filter({ hasText: 'accepted quotes not started' });
+  await expect(accepted.locator('strong')).toHaveText('Not available');
+  expect(await axe(page)).toEqual([]);
+});
+
+test('W3-5 Today never says nothing is waiting while a service request waits for a quote', async ({
+  page,
+}) => {
+  await open(page, {
+    ...emptyRows,
+    team: { acceptedQuotesNotStarted: 0, serviceRequestsToQuote: 2, repliesToReview: 0 },
+  });
+  await loaded(page);
+  await expect(needs(page).getByText('Nothing is waiting.')).toHaveCount(0);
+  await page.unrouteAll();
+  await open(page, {
+    ...emptyRows,
+    team: { acceptedQuotesNotStarted: 0, serviceRequestsToQuote: 0, repliesToReview: 0 },
+  });
+  await loaded(page);
+  await expect(needs(page).getByText('Nothing is waiting.')).toBeVisible();
 });
 
 test('meetings and replies that cannot be read are named honestly, never shown as none', async ({
