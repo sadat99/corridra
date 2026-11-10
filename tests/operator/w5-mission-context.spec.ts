@@ -190,6 +190,16 @@ const shortlistCalls = (requests: string[]) =>
   requests.filter((r) => r.startsWith('/api/workspace/shortlist'));
 const filteredCommercial = (requests: string[]) =>
   requests.filter((r) => r.startsWith('/api/workspace/opportunities') && r.includes('&mission='));
+const unfilteredCommercial = (requests: string[]) =>
+  requests.filter((r) => r.startsWith('/api/workspace/opportunities') && !r.includes('&mission='));
+const missionListCalls = (requests: string[]) =>
+  requests.filter((r) => r.startsWith('/api/workspace/missions'));
+// A filtered request is fired from an effect after the select changes, so it can arrive after the
+// select already shows the value. A positive read therefore polls. A "nothing was asked" read first
+// confirms the section's own first load was recorded (it is recorded before the options render, so
+// this is a guard against a load that never happened), then waits for the network to go quiet. The
+// quiet wait is what lets a late, effect-fired request arrive before the empty read.
+const quiet = (page: Page) => page.waitForLoadState('networkidle');
 
 test('W5-links: the mission page sends research and commercial links with the mission, and keeps the others', async ({
   page,
@@ -240,6 +250,8 @@ test('W5-research: a malformed mission value is ignored', async ({ page }) => {
   await expect(select.locator('option')).toHaveCount(3);
   await expect(select).toHaveValue('');
   await expect(page.getByText(NOTE)).toHaveCount(0);
+  await expect.poll(() => missionListCalls(seen.requests).length).toBeGreaterThan(0);
+  await quiet(page);
   expect(shortlistCalls(seen.requests)).toEqual([]);
 });
 
@@ -252,6 +264,8 @@ test('W5-research: a mission that is not in the loaded list shows the note and c
   await expect(select.locator('option')).toHaveCount(3);
   await expect(page.getByText(NOTE)).toHaveCount(1);
   await expect(select).toHaveValue('');
+  await expect.poll(() => missionListCalls(seen.requests).length).toBeGreaterThan(0);
+  await quiet(page);
   expect(shortlistCalls(seen.requests)).toEqual([]);
   // The person's own choice clears the note and wins.
   await select.selectOption(MISSION_B);
@@ -283,7 +297,7 @@ test('W5-commercial: a listed mission is preselected through the existing missio
   const select = page.getByLabel('Commercial report mission');
   await expect(select).toHaveValue(MISSION_A);
   await expect(page.getByText(NOTE)).toHaveCount(0);
-  expect(filteredCommercial(seen.requests).length).toBeGreaterThan(0);
+  await expect.poll(() => filteredCommercial(seen.requests).length).toBeGreaterThan(0);
   for (const request of filteredCommercial(seen.requests))
     expect(request).toContain(`&mission=${MISSION_A}`);
   expect(seen.errors).toEqual([]);
@@ -296,6 +310,8 @@ test('W5-commercial: a malformed mission value is ignored', async ({ page }) => 
   await expect(select.locator('option')).toHaveCount(3);
   await expect(select).toHaveValue('');
   await expect(page.getByText(NOTE)).toHaveCount(0);
+  await expect.poll(() => unfilteredCommercial(seen.requests).length).toBeGreaterThan(0);
+  await quiet(page);
   expect(filteredCommercial(seen.requests)).toEqual([]);
 });
 
@@ -308,6 +324,8 @@ test('W5-commercial: a mission that is not in the loaded list shows the note and
   await expect(select.locator('option')).toHaveCount(3);
   await expect(page.getByText(NOTE)).toHaveCount(1);
   await expect(select).toHaveValue('');
+  await expect.poll(() => unfilteredCommercial(seen.requests).length).toBeGreaterThan(0);
+  await quiet(page);
   expect(filteredCommercial(seen.requests)).toEqual([]);
   await select.selectOption(MISSION_B);
   await expect(select).toHaveValue(MISSION_B);

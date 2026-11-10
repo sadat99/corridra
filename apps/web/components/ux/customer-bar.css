@@ -17,10 +17,19 @@
 :is(.ux-customer-header, .ux-team-header) .ux-app-button[aria-expanded='true'] {
   background: var(--selected-surface);
 }
+/* The tools wrap inside the header instead of running past the window when the row is too wide for the text size
+   (the language trigger, inbox, help and account menu keep the width their content needs). On a phone the header
+   itself stays on one row (below); only the tools break onto a second line, and only when they do not fit. */
 .ux-bar-tools {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--space-2);
+  /* The space token is in rem, so it doubles with the text size and then orphans the last control onto a line of its
+     own (the account menu at 768 px with 200% text, short by 3 px). The gap between the controls stays 8 px, which
+     is the token at the normal text size. */
+  column-gap: min(var(--space-2), 8px);
   margin-inline-start: auto;
 }
 .ux-bar-primary {
@@ -95,6 +104,12 @@
   }
   .ux-bar-tools {
     gap: 0;
+  }
+}
+@media (min-width: 640px) and (max-width: 700px) {
+  /* From 640 px the language trigger is on the row beside New Request: its shade must not touch the blue button. */
+  .ux-bar-tools {
+    column-gap: var(--space-1);
   }
 }
 @media (max-width: 700px) {
