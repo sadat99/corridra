@@ -187,3 +187,108 @@ export function scoreProse(blocks: string[]): ProseScore {
     worst,
   };
 }
+
+// ---- Baseline rules (pure, so they are unit-tested without a browser) ----
+
+export type Measured = Pick<ProseScore, 'words' | 'sentences' | 'grade' | 'long' | 'hard'>;
+/** One baseline entry: a measured page, a page that redirects, or a page that is unavailable. */
+export type Entry = Measured | { redirectsTo: string } | { unavailable: true };
+
+/** The most the grade may rise against the baseline before a route fails. */
+export const maxGradeRise = 0.5;
+/** How many of a route's hardest sentences go into its failure message. */
+export const failureSentences = 3;
+
+export const isMeasured = (entry: Entry | undefined): entry is Measured =>
+  !!entry && 'grade' in entry && 'hard' in entry;
+
+const kindOf = (entry: Entry): 'measured' | 'redirect' | 'unavailable' =>
+  isMeasured(entry) ? 'measured' : 'redirectsTo' in entry ? 'redirect' : 'unavailable';
+
+/**
+ * A route that changed kind (measured, redirect, unavailable) or now redirects somewhere else. This
+ * fails in a normal run and in update mode alike: the new kind cannot be compared with the old numbers.
+ */
+export function kindChangeError(key: string, now: Entry, before: Entry): string | null {
+  if (kindOf(now) === 'measured' && kindOf(before) === 'measured') return null;
+  return JSON.stringify(now) === JSON.stringify(before)
+    ? null
+    : `${key}: was ${JSON.stringify(before)}, now ${JSON.stringify(now)}`;
+}
+
+/** The hardest sentences of a route, as one readable block for a failure message. */
+export function worstBlock(key: string, worst: WorstSentence[]): string {
+  if (worst.length === 0) return '';
+  const lines = worst
+    .slice(0, failureSentences)
+    .map((s, i) => `  ${i + 1}. [grade ${s.grade}, ${s.words} words] ${s.text}`);
+  return `${key}: hardest sentences\n${lines.join('\n')}`;
+}
+
+/**
+ * What is worse than the baseline, as plain messages. Empty when the route is no harder than before.
+ * When a measured route fails, its hardest sentences follow so the failure shows what to rewrite.
+ */
+export function readabilityViolations(
+  key: string,
+  now: Entry,
+  before: Entry | undefined,
+  worst: WorstSentence[] = [],
+): string[] {
+  if (!before) {
+    return [
+      `${key} has no readability baseline entry. Run with READABILITY_UPDATE_BASELINE=1 to record it. ` +
+        'That flag is only for recording existing text, never for hiding a rise: fix the copy instead.',
+    ];
+  }
+  if (isMeasured(now) && isMeasured(before)) {
+    const found: string[] = [];
+    if (now.long > before.long) {
+      found.push(`${key}: sentences over 20 words rose from ${before.long} to ${now.long}`);
+    }
+    if (now.hard > before.hard) {
+      found.push(`${key}: hard sentences rose from ${before.hard} to ${now.hard}`);
+    }
+    if (now.grade - before.grade > maxGradeRise + 1e-9) {
+      found.push(
+        `${key}: grade rose from ${before.grade} to ${now.grade} (allowed rise ${maxGradeRise})`,
+      );
+    }
+    const block = found.length > 0 ? worstBlock(key, worst) : '';
+    return block ? [...found, block] : found;
+  }
+  const error = kindChangeError(key, now, before);
+  return error ? [error] : [];
+}
+
+/**
+ * The baseline an update run writes. A new key takes what was measured. A key measured before and now
+ * keeps the lower of the old and new long, hard and grade (a route that got worse is not written in);
+ * words and sentences take the new values. A change of kind is an error and the old entry stays. Keys
+ * that were not measured in this run keep their old entry.
+ */
+export function mergeBaseline(
+  before: Record<string, Entry>,
+  now: Record<string, Entry>,
+): { merged: Record<string, Entry>; errors: string[] } {
+  const merged: Record<string, Entry> = { ...before };
+  const errors: string[] = [];
+  for (const [key, entry] of Object.entries(now)) {
+    const old = before[key];
+    if (!old) {
+      merged[key] = entry;
+    } else if (isMeasured(old) && isMeasured(entry)) {
+      merged[key] = {
+        words: entry.words,
+        sentences: entry.sentences,
+        grade: Math.min(old.grade, entry.grade),
+        long: Math.min(old.long, entry.long),
+        hard: Math.min(old.hard, entry.hard),
+      };
+    } else {
+      const error = kindChangeError(key, entry, old);
+      if (error) errors.push(error);
+    }
+  }
+  return { merged, errors };
+}

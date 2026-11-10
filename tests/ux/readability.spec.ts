@@ -2,48 +2,55 @@ import { expect, test, type Page } from '@playwright/test';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { corridorPages } from '../../apps/web/content/corridors';
-import { hasDynamicSegment, pageRoutes } from './page-length-lib';
-import { scoreProse, words, type ProseScore } from './readability-lib';
+import {
+  kindChangeError,
+  mergeBaseline,
+  readabilityViolations,
+  scoreProse,
+  words,
+  type Entry,
+  type Measured,
+  type ProseScore,
+} from './readability-lib';
+import { gateRoutes } from './static-routes';
 
 // Reading-level gate (docs/revamp/specs/workflow-intelligence.md, section 4, batch W1). For every
-// public static page it reads the visible English prose at 1440 x 900 in the default state (no clicks,
-// closed `details` stay closed), scores it with ./readability-lib and fails when a route gets harder
-// than tests/ux/readability-baseline.json: the long-sentence and hard-sentence counts may not rise and
-// the grade may not rise by more than 0.5. Lower the baseline when copy improves; never raise it.
+// static page the UX gate walks, it reads the visible English prose at 1440 x 900 in the default state
+// (no clicks, closed `details` stay closed), scores it with ./readability-lib and fails when a route gets
+// harder than tests/ux/readability-baseline.json: the long-sentence and hard-sentence counts may not rise
+// and the grade may not rise by more than 0.5. Lower the baseline when copy improves; never raise it.
 // The grade is an approximation for English. It guides plain wording and never replaces native review.
 //
-// Route set. The UX gate's own route walk (`staticRoutes` in ux-gate.spec.ts) is not exported, and
-// importing that spec would register its tests here. So this spec uses `pageRoutes()` from
-// ./page-length-lib (docs/revamp/COVERAGE.json, page files only) filtered to the two public audiences
-// the page-length spec also treats as opening with no sign-in, and with no dynamic segment. It adds the
-// corridor pages that generateStaticParams() renders from content/corridors.ts, exactly as the UX gate
-// does. Signed-in static routes are left out on purpose: the gate only sees them redirect to sign-in,
-// which would measure the sign-in page again under another name.
+// Route set. Exactly the UX gate's: the walk over apps/web/app and the corridor pages live in
+// ./static-routes and both specs import them. A page a signed-out visitor cannot open shows up as a
+// redirect to sign-in or as unavailable, and is recorded that way.
+//
+// What is read. Prose inside the site header (`header.site-header`, public and signed-in), any `nav` and
+// the site footer (`footer.guide-footer` or `footer.site-footer`) is left out. Headers and footers that
+// belong to the page content, such as a page lead or a phase header, are read. The site footer is the
+// same on every page, so it is read once, on the home, under its own key.
+//
+// Update mode (READABILITY_UPDATE_BASELINE=1) never lets a route get worse: see mergeBaseline.
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..', '..');
 const baselinePath = join(here, 'readability-baseline.json');
-const reportPath = join(root, 'work', 'readability-report.json');
+// CI uploads work/ux-gate/ for the ux job, so the report lands there.
+const reportPath = join(root, 'work', 'ux-gate', 'readability-report.json');
 const update = process.env.READABILITY_UPDATE_BASELINE === '1';
 
-const publicAudiences = new Set(['public', 'public intake and customer identity']);
-const inventoryRoutes = pageRoutes()
-  .filter((entry) => publicAudiences.has(entry.audience) && !hasDynamicSegment(entry.route))
-  .map((entry) => entry.route);
-const generatedRoutes = Object.keys(corridorPages).map((slug) => `/corridors/${slug}`);
-const routes = [...new Set([...inventoryRoutes, ...generatedRoutes])].sort();
+const routes = gateRoutes();
 
 /** The footer is the same on every page, so it is measured once, on the home, under this key. */
 const footerKey = '/#footer';
 
+/** The site header, any navigation and the site footer: the chrome around the page, not its prose. */
+const chromeSelector = 'header.site-header, nav, footer.guide-footer, footer.site-footer';
+const footerSelector = 'footer.guide-footer, footer.site-footer';
 const proseSelector =
   'p, li, dd, figcaption, [role="alert"], [role="status"], .guide-hint, .field-hint';
 const minBlockWords = 5;
-const maxGradeRise = 0.5;
 
-type Measured = Pick<ProseScore, 'words' | 'sentences' | 'grade' | 'long' | 'hard'>;
-type Entry = Measured | { redirectsTo: string } | { unavailable: true };
 type Reported = Entry | (Measured & { worst: ProseScore['worst'] });
 
 const baseline: Record<string, Entry> = existsSync(baselinePath)
@@ -52,20 +59,17 @@ const baseline: Record<string, Entry> = existsSync(baselinePath)
 const report: Record<string, Reported> = {};
 const recorded: Record<string, Entry> = {};
 
-const isMeasured = (entry: Entry | undefined): entry is Measured =>
-  !!entry && 'grade' in entry && 'hard' in entry;
-
 /** Visible English prose blocks of one scope of the current page, in reading order. */
 async function proseBlocks(page: Page, scope: 'page' | 'footer'): Promise<string[]> {
   const texts = await page.evaluate(
-    ({ selector, scope: area }) => {
+    ({ selector, scope: area, chrome, footer }) => {
       return [...document.querySelectorAll<HTMLElement>(selector)]
         .filter((el) => {
           // A block that holds another prose block is measured through the inner one, once.
           if (el.querySelector(selector)) return false;
           if (area === 'page') {
-            if (el.closest('header, nav, footer')) return false;
-          } else if (!el.closest('footer') || el.closest('header, nav')) {
+            if (el.closest(chrome)) return false;
+          } else if (!el.closest(footer) || el.closest('nav')) {
             return false;
           }
           // English only: the closest lang attribute is absent, empty or starts with "en".
@@ -79,7 +83,7 @@ async function proseBlocks(page: Page, scope: 'page' | 'footer'): Promise<string
         })
         .map((el) => el.innerText.replace(/\s+/g, ' ').trim());
     },
-    { selector: proseSelector, scope },
+    { selector: proseSelector, scope, chrome: chromeSelector, footer: footerSelector },
   );
   return texts.filter((text) => words(text).length >= minBlockWords);
 }
@@ -92,35 +96,6 @@ function toEntry(score: ProseScore): Measured {
     long: score.long,
     hard: score.hard,
   };
-}
-
-/** What is worse than the baseline, as plain messages. Empty when the route is no harder than before. */
-function violations(key: string, now: Entry, before: Entry | undefined): string[] {
-  if (!before) {
-    return [
-      `${key} has no readability baseline entry. Run with READABILITY_UPDATE_BASELINE=1 to record it. ` +
-        'That flag is only for recording existing text, never for hiding a rise: fix the copy instead.',
-    ];
-  }
-  if (isMeasured(now) && isMeasured(before)) {
-    const found: string[] = [];
-    if (now.long > before.long) {
-      found.push(`${key}: sentences over 20 words rose from ${before.long} to ${now.long}`);
-    }
-    if (now.hard > before.hard) {
-      found.push(`${key}: hard sentences rose from ${before.hard} to ${now.hard}`);
-    }
-    if (now.grade - before.grade > maxGradeRise + 1e-9) {
-      found.push(
-        `${key}: grade rose from ${before.grade} to ${now.grade} (allowed rise ${maxGradeRise})`,
-      );
-    }
-    return found;
-  }
-  // The page was measured and still is, or it changed kind (now a redirect or unavailable).
-  return JSON.stringify(now) === JSON.stringify(before)
-    ? []
-    : [`${key}: was ${JSON.stringify(before)}, now ${JSON.stringify(now)}`];
 }
 
 function record(key: string, entry: Entry, detail?: ProseScore) {
@@ -151,9 +126,17 @@ for (const route of routes) {
       }
     }
 
-    if (update) return;
     for (const key of keys) {
-      expect.soft(violations(key, recorded[key], baseline[key]), `${key} readability`).toEqual([]);
+      const before = baseline[key];
+      if (update) {
+        // Update mode records new routes and lower numbers, but a change of kind still fails.
+        const error = before ? kindChangeError(key, recorded[key], before) : null;
+        expect.soft(error, `${key} readability`).toBeNull();
+        continue;
+      }
+      const worst = 'worst' in report[key] ? report[key].worst : [];
+      const found = readabilityViolations(key, recorded[key], before, worst);
+      expect.soft(found.join('\n'), `${key} readability`).toBe('');
     }
   });
 }
@@ -162,10 +145,11 @@ test.afterAll(() => {
   mkdirSync(dirname(reportPath), { recursive: true });
   writeFileSync(reportPath, JSON.stringify(sortKeys(report), null, 2) + '\n');
   if (update) {
-    writeFileSync(
-      baselinePath,
-      JSON.stringify(sortKeys({ ...baseline, ...recorded }), null, 2) + '\n',
-    );
+    const { merged, errors } = mergeBaseline(baseline, recorded);
+    // A kind change fails its own test; write nothing so the file is never half updated.
+    if (errors.length === 0) {
+      writeFileSync(baselinePath, JSON.stringify(sortKeys(merged), null, 2) + '\n');
+    }
   }
 });
 

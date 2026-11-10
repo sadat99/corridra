@@ -1,11 +1,16 @@
 import { expect, test } from '@playwright/test';
 import {
   countSyllables,
+  failureSentences,
   fkGrade,
+  kindChangeError,
+  mergeBaseline,
+  readabilityViolations,
   scoreProse,
   splitSentences,
   words,
   worstCount,
+  type Entry,
 } from './readability-lib';
 
 // Unit cases for the reading-level functions (docs/revamp/specs/workflow-intelligence.md, W1). They
@@ -209,4 +214,125 @@ test('R-12 worst: sorted by sentence grade, at most 20, ties keep reading order'
   expect(grades).toEqual([...grades].sort((a, b) => b - a));
   const same = scoreProse(['We read the page.', 'We read the page.']);
   expect(same.worst.map((s) => s.text)).toEqual(['We read the page.', 'We read the page.']);
+});
+
+// Baseline rules (R-13 and up). They are pure functions on entries, so no page is needed.
+
+const measured = (grade: number, long: number, hard: number, w = 100, n = 10): Entry => ({
+  words: w,
+  sentences: n,
+  grade,
+  long,
+  hard,
+});
+
+test('R-13 merge: a new key takes what was measured, whatever its kind', () => {
+  const { merged, errors } = mergeBaseline(
+    { '/a': measured(5, 0, 0) },
+    {
+      '/a': measured(5, 0, 0),
+      '/b': measured(7.2, 2, 3),
+      '/c': { redirectsTo: '/sign-in' },
+      '/d': { unavailable: true },
+    },
+  );
+  expect(errors).toEqual([]);
+  expect(merged['/b']).toEqual(measured(7.2, 2, 3));
+  expect(merged['/c']).toEqual({ redirectsTo: '/sign-in' });
+  expect(merged['/d']).toEqual({ unavailable: true });
+});
+
+test('R-14 merge: a route that got worse keeps the lower long, hard and grade', () => {
+  const { merged, errors } = mergeBaseline(
+    { '/a': measured(5, 1, 2, 100, 10) },
+    { '/a': measured(8.4, 3, 5, 140, 12) },
+  );
+  expect(errors).toEqual([]);
+  // Words and sentences are facts about the page now, so they take the new values.
+  expect(merged['/a']).toEqual({ words: 140, sentences: 12, grade: 5, long: 1, hard: 2 });
+});
+
+test('R-15 merge: a route that got easier is lowered, field by field', () => {
+  const { merged } = mergeBaseline(
+    { '/a': measured(9.1, 4, 6) },
+    { '/a': measured(6.3, 5, 2, 90, 9) },
+  );
+  // grade and hard fell, long rose: each field keeps its own minimum.
+  expect(merged['/a']).toEqual({ words: 90, sentences: 9, grade: 6.3, long: 4, hard: 2 });
+});
+
+test('R-16 merge: a change of kind is an error, in either direction, and the old entry stays', () => {
+  const before: Record<string, Entry> = {
+    '/m': measured(5, 0, 0),
+    '/r': { redirectsTo: '/sign-in' },
+    '/u': { unavailable: true },
+  };
+  const now: Record<string, Entry> = {
+    '/m': { redirectsTo: '/sign-in' },
+    '/r': measured(5, 0, 0),
+    '/u': { redirectsTo: '/' },
+  };
+  const { merged, errors } = mergeBaseline(before, now);
+  expect(errors).toHaveLength(3);
+  expect(errors.join('\n')).toContain('/m: was');
+  expect(merged).toEqual(before);
+  expect(
+    mergeBaseline({ '/r': before['/r'] }, { '/r': { redirectsTo: '/other' } }).errors,
+  ).toHaveLength(1);
+});
+
+test('R-17 merge: a redirect or unavailable page that stays the same is no error', () => {
+  const same: Record<string, Entry> = {
+    '/r': { redirectsTo: '/sign-in' },
+    '/u': { unavailable: true },
+  };
+  expect(mergeBaseline(same, same)).toEqual({ merged: same, errors: [] });
+  expect(kindChangeError('/r', same['/r'], same['/r'])).toBeNull();
+});
+
+test('R-18 merge: a key not measured in this run keeps its entry', () => {
+  const { merged } = mergeBaseline(
+    { '/a': measured(5, 0, 0), '/b': measured(6, 1, 1) },
+    { '/a': measured(4.5, 0, 0) },
+  );
+  expect(merged['/b']).toEqual(measured(6, 1, 1));
+  expect(merged['/a']).toMatchObject({ grade: 4.5 });
+});
+
+test('R-19 violations: a rise in long, hard or grade fails, a rise of exactly 0.5 passes', () => {
+  const before = measured(5, 1, 1);
+  expect(readabilityViolations('/a', measured(5.5, 1, 1), before)).toEqual([]);
+  expect(readabilityViolations('/a', measured(5.6, 1, 1), before)).toHaveLength(1);
+  expect(readabilityViolations('/a', measured(4, 2, 1), before)[0]).toContain('over 20 words rose');
+  expect(readabilityViolations('/a', measured(4, 1, 2), before)[0]).toContain(
+    'hard sentences rose',
+  );
+  expect(readabilityViolations('/a', measured(3, 0, 0), before)).toEqual([]);
+});
+
+test('R-20 violations: a failing route lists its three hardest sentences with grade and words', () => {
+  const worst = [1, 2, 3, 4, 5].map((n) => ({
+    text: `Sentence ${n}.`,
+    grade: 14 - n,
+    words: 20 + n,
+  }));
+  const found = readabilityViolations('/a', measured(5, 0, 3), measured(5, 0, 2), worst);
+  expect(found).toHaveLength(2);
+  const block = found[1];
+  expect(block.split('\n')).toHaveLength(1 + failureSentences);
+  expect(block).toContain('1. [grade 13, 21 words] Sentence 1.');
+  expect(block).toContain('3. [grade 11, 23 words] Sentence 3.');
+  expect(block).not.toContain('Sentence 4.');
+  // A passing route adds nothing, and neither does a route without sentences.
+  expect(readabilityViolations('/a', measured(5, 0, 2), measured(5, 0, 2), worst)).toEqual([]);
+  expect(readabilityViolations('/a', measured(5, 0, 3), measured(5, 0, 2), [])).toHaveLength(1);
+});
+
+test('R-21 violations: no baseline entry, and a change of kind, fail with a plain message', () => {
+  expect(readabilityViolations('/new', measured(5, 0, 0), undefined)[0]).toContain(
+    'no readability baseline entry',
+  );
+  expect(readabilityViolations('/a', { redirectsTo: '/sign-in' }, measured(5, 0, 0))[0]).toContain(
+    '/a: was',
+  );
 });
