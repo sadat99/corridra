@@ -2029,3 +2029,160 @@ describe('words are removed under an erasure request', () => {
     }
   });
 });
+
+// The plain text rule (customer_private.problem_report_plain) also refuses the C1 controls, the line and paragraph
+// separators and the bidirectional override and isolate characters, in every layer: the filing and transition shape
+// checks (22023) and the CHECK constraints under them (23514, which hold for the schema owner as well).
+describe('the plain text rule refuses control and direction characters', () => {
+  const refused = [
+    '\u0080',
+    '\u0085',
+    '\u009f',
+    '\u2028',
+    '\u2029',
+    '\u202a',
+    '\u202e',
+    '\u2066',
+    '\u2069',
+  ];
+  const neighbours = ['\u00a0', '\u2027', '\u202f', '\u2065', '\u206a'];
+  const owner = () => ctxOf('owner');
+  const plain = (value: string, min: number, max: number) =>
+    f.owner
+      .query('SELECT customer_private.problem_report_plain($1,$2,$3) AS ok', [value, min, max])
+      .then((result) => result.rows[0].ok as boolean);
+  const madeReport = async (person: string) =>
+    (
+      await f.owner.query(
+        `INSERT INTO customer_private.problem_report(reporter_kind,customer_principal_id,side,category,command_id)
+         VALUES('customer',$1,'sample','did_not_work',$2) RETURNING id`,
+        [ids[person], randomUUID()],
+      )
+    ).rows[0].id as string;
+  const insertWords = (report: string, pageKind: string, page: string, detail: string | null) =>
+    f.owner.query(
+      `INSERT INTO customer_private.problem_report_words(report_id,reporter_kind,category,page_kind,page_text,detail)
+       VALUES($1,'customer','did_not_work',$2,$3,$4)`,
+      [report, pageKind, page, detail],
+    );
+
+  test('a customer filing is refused with 22023 for each character, in the detail, the other page text and the path, and writes nothing', async () => {
+    const before = await counts();
+    for (const character of refused) {
+      const label = `U+${character.codePointAt(0)!.toString(16).toUpperCase().padStart(4, '0')}`;
+      for (const [where, input] of [
+        ['detail', body({ detail: `a long enough${character} detail` })],
+        ['detail at the start', body({ detail: `${character}a long enough detail` })],
+        ['other page', body({ pageKind: 'another_page', page: `Meet${character}ings` })],
+        ['path', body({ page: `/account/a${character}b` })],
+      ] as const)
+        await expect(customerFile('kay', input), `${label} in ${where}`).rejects.toMatchObject({
+          code: '22023',
+        });
+    }
+    expect(await counts()).toEqual(before);
+  });
+
+  test('a team filing is refused with 22023 for each character, in the detail, the other page text and the path, and writes nothing', async () => {
+    const before = await counts();
+    for (const character of refused)
+      for (const input of [
+        teamBody({ detail: `a long enough${character} detail` }),
+        teamBody({ pageKind: 'another_page', page: `Meet${character}ings` }),
+        teamBody({ page: `/operator/a${character}b` }),
+      ])
+        await expect(teamFile(ctxOf('reviewer'), input)).rejects.toMatchObject({ code: '22023' });
+    expect(await counts()).toEqual(before);
+  });
+
+  test('a transition note is refused with 22023 for each character and the status stays, then a note with their neighbours and an emoji is accepted', async () => {
+    const reference = (await customerFile(spare(), body())).reference as string;
+    const id = await reportId(reference);
+    const statuses = () =>
+      f.owner
+        .query(
+          'SELECT count(*)::int AS n FROM customer_private.problem_report_status_event WHERE report_id=$1',
+          [id],
+        )
+        .then((result) => result.rows[0].n as number);
+    expect(await statuses()).toBe(1);
+    for (const character of refused)
+      await expect(
+        move(owner(), id, 'received', 'in_review', `A long enough note${character} here`),
+      ).rejects.toMatchObject({ code: '22023' });
+    expect(await statuses()).toBe(1);
+    const accepted = `Checked ${neighbours.join(' ')} and a smile \u{1F600} today`;
+    expect(await move(owner(), id, 'received', 'in_review', accepted)).toMatchObject({
+      status: 'in_review',
+      note: accepted,
+    });
+    expect(await statuses()).toBe(2);
+  });
+
+  test('the table checks refuse each character for the schema owner as well, in the words and the status note', async () => {
+    const report = await madeReport('kay');
+    for (const character of refused) {
+      for (const [kind, page, detail] of [
+        ['this_page', '/account/x', `a${character}b`],
+        ['another_page', `Meet${character}ings`, null],
+        ['this_page', `/account/a${character}b`, null],
+      ] as const)
+        await expect(insertWords(report, kind, page, detail)).rejects.toMatchObject({
+          code: '23514',
+        });
+    }
+    // the same report accepts the words once, with the neighbours of the new classes
+    await insertWords(report, 'another_page', 'Meetings', `a ${neighbours.join(' ')} \u{1F600} b`);
+    const reference = (await customerFile(spare(), body())).reference as string;
+    const id = await reportId(reference);
+    for (const character of refused)
+      await expect(
+        f.owner.query(
+          `INSERT INTO customer_private.problem_report_status_event(report_id,state,expected_state,note,staff_principal_id,staff_tenant_id,command_id)
+           VALUES($1,'in_review','received',$2,$3,$4,$5)`,
+          [id, `A long enough note${character} here`, f.users.owner!.id, f.tenantA, randomUUID()],
+        ),
+      ).rejects.toMatchObject({ code: '23514' });
+  });
+
+  test('the neighbours of the new classes and ordinary text with an emoji are accepted, in a customer filing and a team filing', async () => {
+    const mixed = `Seen ${neighbours.join(' ')} with a smile \u{1F600} on it`;
+    const customer = await customerFile(
+      spare(),
+      body({ pageKind: 'another_page', page: `Meetings ${neighbours.join('')}`, detail: mixed }),
+    );
+    expect(customer.changed).toBe(true);
+    const team = await teamFile(
+      ctxOf('viewer'),
+      teamBody({ pageKind: 'another_page', page: `Queue ${neighbours.join('')}`, detail: mixed }),
+    );
+    expect(team.changed).toBe(true);
+    for (const character of neighbours) expect(await plain(`a${character}b`, 1, 100)).toBe(true);
+  });
+
+  test('the older rules and the length ranges still hold, and the function agrees with each layer above', async () => {
+    const cases: [string, number, number, boolean][] = [
+      ['plain words', 1, 1000, true],
+      ['a\u0001b', 1, 1000, false],
+      ['a\u0007b', 1, 1000, false],
+      ['a\u007fb', 1, 1000, false],
+      ['a\nb', 1, 1000, false],
+      ['a://b', 1, 1000, false],
+      ['write a@b', 1, 1000, false],
+      ['see www.example', 1, 1000, false],
+      ['Seen on WWW.EXAMPLE', 1, 1000, true],
+      ['', 1, 120, false],
+      ['a'.repeat(120), 1, 120, true],
+      ['a'.repeat(121), 1, 120, false],
+      ['a'.repeat(1000), 1, 1000, true],
+      ['a'.repeat(1001), 1, 1000, false],
+      ['a'.repeat(9), 10, 1000, false],
+      ['a'.repeat(10), 10, 1000, true],
+      ['a'.repeat(1000), 10, 1000, true],
+      ['a'.repeat(1001), 10, 1000, false],
+    ];
+    for (const [value, min, max, expected] of cases)
+      expect(await plain(value, min, max), JSON.stringify(value.slice(0, 20))).toBe(expected);
+    for (const character of refused) expect(await plain(`a${character}b`, 1, 100)).toBe(false);
+  });
+});
