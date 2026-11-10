@@ -3288,6 +3288,7 @@ Verification (local; first run on the working tree over 104c9058, re-run after t
 Preserved: flag OFF; no switch, workflow input (still 25, KI-25), migration, installer or application change; register states of V3-06-002, V3-06-011, V3-01-018 and V3-05-043 unchanged; ADR-052 text kept as the record of the synthetic build. Not claimed: anything implemented, tested, deployed, installed, enabled, approved or live.
 
 Next action: the owner answers the 13 open choices in ADR-079 (or accepts the defaults), then S28 starts build slice A (the rule, all replaced readers, decide, search as a POST, the url CHECK and the attempts table; owner-merged, then a protected install), followed by slice B (rights record, ingest wrapper, suppression and redaction writers); S26's records PR adds ADR-079 and the relayed owner decisions to the register and ledger.
+
 ### 10 November 2026: Workflow intelligence W8, one list of all meetings (S32 builder, orchestrator S28, branch workflow-w8-meetings from main 9e105ee4)
 
 Owner direction, 10 Nov 2026, verbatim: "For signed in users, there multiple navigation links as placeholders now in different menus on the header and others, we need to make them 100% functional(as per the latest prodcut vision and ambitions, ux/ui & other requirements), instead of just placeholders witth coming soon." Owner mandate to this lane: "Users(of 5th grade 12th grade literacy level) should know why they are on each screen, what they can do, what happens next, and how to progress toward a real commercial outcome."
