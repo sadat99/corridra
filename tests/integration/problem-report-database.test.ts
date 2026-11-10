@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { fixture, rawContext } from './support';
-import { harness, type Fixture, type Row } from './revamp-g4-support';
+import { digest, harness, type Fixture, type Row } from './revamp-g4-support';
 import type { RequestContext } from '../../packages/db/src/index';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateCustomerProblemReports } from '../../packages/db/src/customer-problem-report-migrate';
@@ -142,6 +142,30 @@ const otherRecords = async () =>
 const spares = ['sp0', 'sp1', 'sp2', 'sp3', 'sp4', 'sp5'];
 let spent = 0;
 const spare = () => spares[Math.floor(spent++ / 6)]!;
+// Customers of the self-removal tests, each used by one test (a few have a workspace or one made by the test).
+const selfRemovers = [
+  'sra',
+  'srb',
+  'src',
+  'srd',
+  'sre',
+  'srf',
+  'srg',
+  'srh',
+  'sri',
+  'srj',
+  'srk',
+  'srl',
+  'srm',
+  'srn',
+  'sro',
+  'srp',
+  'srq',
+  'srs',
+  'srt',
+  'srx',
+  'srhost',
+];
 const filers = ['fil0', 'fil1', 'fil2', 'fil3', 'fil4', 'fil5', 'fil6', 'fil7'];
 let used = 0;
 const filedBy = new Map<string, string>();
@@ -207,6 +231,33 @@ const revoke = (owner: string, target: string, memberId: string) =>
     'revoke',
     JSON.stringify({ workspaceId: target, kind: 'membership', targetId: memberId }),
   ]);
+// The erasure request of a person, its staff moves and the staff removal of words under it (the erasure authority, as the
+// owner of the sample staff workspace).
+const request = async (person: string) => {
+  const filed = await h.sql<{ r: Row }>(
+    person,
+    'SELECT customer.account_lifecycle_command($1,$2,$3) AS r',
+    [randomUUID(), 'file_erasure', '{}'],
+  );
+  expect(filed.r.changed).toBe(true);
+  const row = (await as(ctxOf('owner'), 'SELECT customer.erasure_queue(NULL,100,NULL) AS r')).r as {
+    id: string;
+    principalId: string;
+  }[];
+  return row.find((item) => item.principalId === ids[person])!.id;
+};
+const erasure = (request: string, expected: string, to: string, note: string | null = null) =>
+  as(ctxOf('owner'), 'SELECT customer.erasure_transition($1,$2,$3,$4,$5) AS r', [
+    randomUUID(),
+    request,
+    expected,
+    to,
+    note,
+  ]);
+const remove = (ctx: RequestContext, requestId: string, command: string = randomUUID()) =>
+  as(ctx, 'SELECT customer.problem_report_remove_words($1,$2) AS r', [command, requestId]).then(
+    (row) => row.r as Row,
+  );
 // One report as the two sample and real staff workspaces see it: the stored side, the one effective side, and whether the
 // staff of the sample workspace (tenant A) and of the real workspace (tenant B, made real by the test) see it.
 const seen = async (reference: string) => {
@@ -274,6 +325,7 @@ beforeAll(async () => {
     'yan',
     'zoe',
     ...filers,
+    ...selfRemovers,
   ]);
   for (const person of [
     'alice',
@@ -1239,8 +1291,9 @@ describe('every table and function is closed to the runtime', () => {
     'problem_report_words',
     'problem_report_status_event',
     'problem_report_erasure',
+    'problem_report_self_removal',
   ];
-  test('no role but the owner has any privilege on the four tables, and row security is on', async () => {
+  test('no role but the owner has any privilege on the five tables, and row security is on', async () => {
     for (const table of tables) {
       for (const role of ['public', 'corridra_runtime', 'corridra_auth'])
         for (const privilege of [
@@ -1285,7 +1338,7 @@ describe('every table and function is closed to the runtime', () => {
     ).rejects.toMatchObject({ code: '42501' });
   });
 
-  test('only the nine intended functions are callable, by the runtime role alone', async () => {
+  test('only the ten intended functions are callable, by the runtime role alone', async () => {
     const intended = [
       'app.problem_report_command',
       'app.problem_report_get',
@@ -1294,6 +1347,7 @@ describe('every table and function is closed to the runtime', () => {
       'customer.problem_report_get',
       'customer.problem_report_list',
       'customer.problem_report_queue',
+      'customer.problem_report_remove_own_words',
       'customer.problem_report_remove_words',
       'customer.problem_report_transition',
     ];
@@ -1656,33 +1710,464 @@ describe('every report is on exactly one staff side', () => {
   });
 });
 
+// ADR-078 decision 6 as amended by migration 0003: a customer removes the words of their own reports. The first block runs
+// with the account lifecycle control never opened (the state straight after the module is installed), so every test here
+// shows the new function needs no control. The staff erasure path and the control paused are in the block after the erasure
+// tests.
+const removeOwn = (person: string, command: string | null = randomUUID()) =>
+  h
+    .sql<{ r: Row }>(person, 'SELECT customer.problem_report_remove_own_words($1) AS r', [command])
+    .then((row) => row.r);
+const selfRemovals = async (person: string) =>
+  (
+    await f.owner.query(
+      'SELECT report_id,reporter_kind,customer_principal_id,command_id FROM customer_private.problem_report_self_removal WHERE customer_principal_id=$1 ORDER BY created_at,report_id',
+      [ids[person]],
+    )
+  ).rows;
+const wordsLeft = async (person: string) =>
+  (
+    await f.owner.query(
+      'SELECT count(*)::int AS n FROM customer_private.problem_report_words w JOIN customer_private.problem_report r ON r.id=w.report_id WHERE r.customer_principal_id=$1',
+      [ids[person]],
+    )
+  ).rows[0].n as number;
+// Everything a removal must leave as it was: reference, category, filing time, side, command, and each status row with its note.
+const frozen = async (person: string) =>
+  (
+    await f.owner.query(
+      `SELECT r.reference,r.category,r.filed_at,r.side,r.command_id,
+        (SELECT jsonb_agg(to_jsonb(x)-'id'-'seq' ORDER BY x.seq) FROM customer_private.problem_report_status_event x WHERE x.report_id=r.id) AS history
+       FROM customer_private.problem_report r WHERE r.customer_principal_id=$1 ORDER BY r.number`,
+      [ids[person]],
+    )
+  ).rows;
+const recordTables = [
+  'customer_private.problem_report',
+  'customer_private.problem_report_status_event',
+  'customer_private.problem_report_erasure',
+];
+const closeAccountAt = (person: string, daysAgo: number) =>
+  f.owner.query(
+    `WITH t AS (SELECT clock_timestamp()-make_interval(days=>$3::int) AS at)
+     INSERT INTO customer_private.account_closure_event(principal_id,state,occurred_at,final_at,command_id)
+     SELECT $1,'closed',t.at,t.at+interval '720 hours',$2 FROM t`,
+    [ids[person], randomUUID(), daysAgo],
+  );
+// Holds the per-person report lock (the one filing takes) on its own connection until released.
+const holdReportLock = async (person: string) => {
+  const client = await f.owner.connect();
+  await client.query('BEGIN');
+  await client.query(
+    "SELECT pg_advisory_xact_lock(hashtextextended('customer.problem_report:'||$1::text,0))",
+    [ids[person]],
+  );
+  return {
+    release: async () => {
+      await client.query('COMMIT');
+      client.release();
+    },
+  };
+};
+// True when the call has not finished after a moment (it is waiting for a lock).
+const waiting = (pending: Promise<unknown>) =>
+  Promise.race([
+    pending.then(
+      () => false,
+      () => false,
+    ),
+    new Promise<boolean>((resolve) => setTimeout(() => resolve(true), 400)),
+  ]);
+
+describe('a customer removes the words of their own reports, with the account lifecycle control never opened', () => {
+  const hosted: Record<string, string> = {};
+  beforeAll(async () => {
+    for (const person of ['srhost', 'src', 'sre', 'srf'])
+      hosted[person] = await h.provision(person, `Synthetic ${person} workspace`);
+  });
+
+  test('the control was never opened, so nothing here depends on it', async () => {
+    expect(
+      (
+        await f.owner.query(
+          'SELECT count(*)::int AS n FROM customer_private.account_lifecycle_control',
+        )
+      ).rows[0].n,
+    ).toBe(0);
+    expect(
+      (await f.owner.query('SELECT customer_private.account_lifecycle_open() AS open')).rows[0]
+        .open,
+    ).toBe(false);
+  });
+
+  test('a customer with no workspace removes the words of all three reports; the rest of each report, its history and notes are byte-identical, and three rows name the person and the command', async () => {
+    const mine: string[] = [];
+    for (const detail of ['Words one of sra.', 'Words two of sra.'])
+      mine.push((await customerFile('sra', body({ detail }))).reference as string);
+    mine.push(
+      (await customerFile('sra', body({ pageKind: 'another_page', page: 'Meetings' })))
+        .reference as string,
+    );
+    await move(
+      ctxOf('owner'),
+      await reportId(mine[0]!),
+      'received',
+      'in_review',
+      'We are reading what you wrote.',
+    );
+    const before = await frozen('sra');
+    const tables = await digest(f, recordTables);
+    const others = { ...(await counts()), ...(await otherRecords()) };
+    const command = randomUUID();
+    expect(await wordsLeft('sra')).toBe(3);
+    expect(await removeOwn('sra', command)).toEqual({ removed: 3, changed: true });
+    expect(await wordsLeft('sra')).toBe(0);
+    for (const reference of mine)
+      expect((await customerGet('sra', reference)).words).toEqual({ removed: true });
+    expect((await customerList('sra')).map((row) => row.wordsRemoved)).toEqual([true, true, true]);
+    const seen = (await queue(ctxOf('owner'))).items.filter((item) =>
+      mine.includes(item.reference as string),
+    );
+    expect(seen).toHaveLength(3);
+    for (const item of seen)
+      expect(item).toMatchObject({ wordsRemoved: true, pageKind: null, page: null, detail: null });
+    // the reference, category, filing time, side, status history and the staff note are exactly as they were
+    expect(await frozen('sra')).toEqual(before);
+    expect(await digest(f, recordTables)).toEqual(tables);
+    expect(((await customerGet('sra', mine[0]!)).history as Row[]).map((row) => row.note)).toEqual([
+      null,
+      'We are reading what you wrote.',
+    ]);
+    // three rows in the new table, each naming the person and the command, and nothing else was written
+    const rows = await selfRemovals('sra');
+    expect(rows).toHaveLength(3);
+    for (const row of rows)
+      expect(row).toMatchObject({
+        reporter_kind: 'customer',
+        customer_principal_id: ids.sra,
+        command_id: command,
+      });
+    expect(await counts()).toEqual({
+      reports: others.reports,
+      words: others.words! - 3,
+      statuses: others.statuses,
+      erasures: others.erasures,
+    });
+    expect(await otherRecords()).toEqual({
+      events: others.events,
+      audits: others.audits,
+      outbox: others.outbox,
+      deliveries: others.deliveries,
+    });
+  });
+
+  test('a person whose only link is a revoked membership, with no account chain row, removes theirs', async () => {
+    const member = await h.join('srhost', 'srb', hosted.srhost!);
+    const made = [
+      (await customerFile('srb', body({ detail: 'Words of the revoked member.' })))
+        .reference as string,
+      (await customerFile('srb', body())).reference as string,
+    ];
+    await revoke('srhost', hosted.srhost!, member);
+    // the gap the staff path cannot close: no chain row, so no erasure request can be filed
+    expect(
+      (
+        await f.owner.query(
+          'SELECT count(*)::int AS n FROM customer_private.account_chain WHERE principal_id=$1',
+          [ids.srb],
+        )
+      ).rows[0].n,
+    ).toBe(0);
+    await expect(
+      f.owner.query('SELECT customer_private.account_chain_tenant($1)', [ids.srb]),
+    ).rejects.toMatchObject({ code: '23514', message: expect.stringContaining('no workspace') });
+    expect(await removeOwn('srb')).toEqual({ removed: 2, changed: true });
+    for (const reference of made)
+      expect((await customerGet('srb', reference)).words).toEqual({ removed: true });
+  });
+
+  test('is refused with no signed-in customer, for the owner role, the auth role and a staff session, and writes nothing', async () => {
+    const reference = (await customerFile('src', body({ detail: 'Words that must stay.' })))
+      .reference as string;
+    const before = await counts();
+    const command = randomUUID();
+    const call = 'SELECT customer.problem_report_remove_own_words($1)';
+    await expect(f.owner.query(call, [command])).rejects.toMatchObject({
+      code: '42501',
+      message: 'Customer access denied',
+    });
+    await expect(f.runtime.query(call, [command])).rejects.toMatchObject({
+      code: '42501',
+      message: 'Customer access denied',
+    });
+    await expect(f.auth.query(call, [command])).rejects.toMatchObject({ code: '42501' });
+    for (const who of ['owner', 'operator', 'viewer'])
+      await expect(as(ctxOf(who), call, [command])).rejects.toMatchObject({
+        code: '42501',
+        message: 'Customer access denied',
+      });
+    await expect(removeOwn('src', null)).rejects.toMatchObject({
+      code: '22023',
+      message: 'Invalid problem report change',
+    });
+    expect(await counts()).toEqual(before);
+    expect((await customerGet('src', reference)).words).toMatchObject({
+      detail: 'Words that must stay.',
+    });
+    expect(await selfRemovals('src')).toEqual([]);
+  });
+
+  test('a disabled customer is refused and keeps the words, then removes them once enabled again', async () => {
+    const reference = (await customerFile('srx', body({ detail: 'Words of a disabled person.' })))
+      .reference as string;
+    await f.owner.query('ALTER TABLE customer_private.principal DISABLE TRIGGER USER');
+    await f.owner.query('UPDATE customer_private.principal SET disabled_at=now() WHERE id=$1', [
+      ids.srx,
+    ]);
+    try {
+      await expect(removeOwn('srx')).rejects.toMatchObject({ code: '42501' });
+      expect(await wordsLeft('srx')).toBe(1);
+    } finally {
+      await f.owner.query('UPDATE customer_private.principal SET disabled_at=NULL WHERE id=$1', [
+        ids.srx,
+      ]);
+      await f.owner.query('ALTER TABLE customer_private.principal ENABLE TRIGGER USER');
+    }
+    expect(await removeOwn('srx')).toEqual({ removed: 1, changed: true });
+    expect((await customerGet('srx', reference)).words).toEqual({ removed: true });
+  });
+
+  test('one customer removes only their own: another customer, a co-member and the team reports keep their words, and another person using the same command id acts only on their own', async () => {
+    const member = await h.join('src', 'srd', hosted.src!);
+    expect(member).toBeTruthy();
+    const kept = {
+      src: (await customerFile('src', body({ detail: 'Words of src, second.' })))
+        .reference as string,
+      srd: (await customerFile('srd', body({ detail: 'Words of the co-member.' })))
+        .reference as string,
+      sre: (await customerFile('sre', body({ detail: 'Words of the other customer.' })))
+        .reference as string,
+    };
+    const teamMade = (await teamFile(ctxOf('operator'), teamBody({ detail: 'Team words stay.' })))
+      .reference as string;
+    const command = randomUUID();
+    const mineBefore = await wordsLeft('src');
+    expect(mineBefore).toBeGreaterThanOrEqual(2);
+    expect(await removeOwn('src', command)).toEqual({ removed: mineBefore, changed: true });
+    expect(await wordsLeft('src')).toBe(0);
+    expect((await customerGet('srd', kept.srd)).words).toMatchObject({ pageKind: 'this_page' });
+    expect((await customerGet('sre', kept.sre)).words).toMatchObject({ pageKind: 'this_page' });
+    expect((await customerGet('src', kept.src)).words).toEqual({ removed: true });
+    expect((await teamGet(ctxOf('operator'), teamMade)).words).toMatchObject({
+      detail: 'Team words stay.',
+    });
+    // the same command id used by another person: they act on their own reports, and src's replay is unchanged
+    expect(await removeOwn('srd', command)).toEqual({ removed: 1, changed: true });
+    expect((await customerGet('srd', kept.srd)).words).toEqual({ removed: true });
+    expect((await customerGet('sre', kept.sre)).words).toMatchObject({ pageKind: 'this_page' });
+    expect(await removeOwn('src', command)).toEqual({ removed: mineBefore, changed: false });
+    expect((await selfRemovals('srd')).every((row) => row.customer_principal_id === ids.srd)).toBe(
+      true,
+    );
+  });
+
+  test('works for a closed account, inside the undo window and after it, while filing stays refused', async () => {
+    for (const [person, daysAgo] of [
+      ['srf', 0],
+      ['srg', 40],
+    ] as const) {
+      const reference = (await customerFile(person, body({ detail: `Words of ${person}.` })))
+        .reference as string;
+      const other = (await customerFile(person, body())).reference as string;
+      await closeAccountAt(person, daysAgo);
+      expect(
+        (await f.owner.query('SELECT customer_private.closed_person($1) AS closed', [ids[person]]))
+          .rows[0].closed,
+      ).toBe(true);
+      await expect(customerFile(person, body())).rejects.toMatchObject(closedAccount);
+      expect(await removeOwn(person)).toEqual({ removed: 2, changed: true });
+      expect((await customerGet(person, reference)).words).toEqual({ removed: true });
+      expect((await customerGet(person, other)).words).toEqual({ removed: true });
+      expect(await customerList(person)).toHaveLength(2);
+      // restoring is not needed to read, and a closed account can still not file
+      await expect(customerFile(person, body())).rejects.toMatchObject(closedAccount);
+    }
+  });
+
+  test('a double click answers with the first count even after a new report, and the new report keeps its words', async () => {
+    await customerFile('srh', body({ detail: 'First words of srh.' }));
+    await customerFile('srh', body({ detail: 'Second words of srh.' }));
+    const command = randomUUID();
+    expect(await removeOwn('srh', command)).toEqual({ removed: 2, changed: true });
+    const late = (await customerFile('srh', body({ detail: 'Late words of srh.' })))
+      .reference as string;
+    const before = await selfRemovals('srh');
+    expect(await removeOwn('srh', command)).toEqual({ removed: 2, changed: false });
+    expect(await selfRemovals('srh')).toEqual(before);
+    expect((await customerGet('srh', late)).words).toMatchObject({ detail: 'Late words of srh.' });
+    // a new command takes the late report
+    expect(await removeOwn('srh')).toEqual({ removed: 1, changed: true });
+    expect((await customerGet('srh', late)).words).toEqual({ removed: true });
+  });
+
+  test('a call that finds nothing writes nothing, and the same command runs again after a new filing', async () => {
+    const command = randomUUID();
+    expect(await removeOwn('sri', command)).toEqual({ removed: 0, changed: false });
+    expect(await selfRemovals('sri')).toEqual([]);
+    const reference = (await customerFile('sri', body({ detail: 'Words filed afterwards.' })))
+      .reference as string;
+    expect(await removeOwn('sri', command)).toEqual({ removed: 1, changed: true });
+    expect((await customerGet('sri', reference)).words).toEqual({ removed: true });
+    expect(await removeOwn('sri', command)).toEqual({ removed: 1, changed: false });
+  });
+
+  test('two calls with the same command at the same time give the count and then a replay of it', async () => {
+    for (let n = 0; n < 3; n++) await customerFile('srm', body({ detail: `Words ${n} of srm.` }));
+    const command = randomUUID();
+    const both = await Promise.all([removeOwn('srm', command), removeOwn('srm', command)]);
+    expect(both.map((row) => row.removed)).toEqual([3, 3]);
+    expect(both.map((row) => row.changed).sort()).toEqual([false, true]);
+    expect(await selfRemovals('srm')).toHaveLength(3);
+  });
+
+  test('a call waits for the filing lock of the person and goes on when it is released', async () => {
+    await customerFile('srn', body({ detail: 'Words held behind the lock.' }));
+    const lock = await holdReportLock('srn');
+    let pending: Promise<Row> | undefined;
+    try {
+      pending = removeOwn('srn');
+      expect(await waiting(pending)).toBe(true);
+      expect(await wordsLeft('srn')).toBe(1);
+    } finally {
+      await lock.release();
+    }
+    expect(await pending).toEqual({ removed: 1, changed: true });
+    // and the lock is the one filing takes: a filing waits behind it too
+    const second = await holdReportLock('srn');
+    let filing: Promise<Row> | undefined;
+    try {
+      filing = customerFile('srn', body({ detail: 'Filed while the lock is held.' }));
+      expect(await waiting(filing)).toBe(true);
+    } finally {
+      await second.release();
+    }
+    expect((await filing)!.changed).toBe(true);
+  });
+
+  test('a filing and a removal at the same time are seen one after the other: every report has its words or a row, never both and never neither', async () => {
+    await customerFile('sro', body({ detail: 'First words of sro.' }));
+    for (let round = 0; round < 4; round++) {
+      const [removed, filed] = await Promise.all([
+        removeOwn('sro'),
+        customerFile('sro', body({ detail: `Round ${round} words of sro.` })),
+      ]);
+      expect(filed.changed).toBe(true);
+      expect(removed.changed).toBe(removed.removed !== 0);
+      const reports = (
+        await f.owner.query(
+          `SELECT r.id,EXISTS(SELECT FROM customer_private.problem_report_words w WHERE w.report_id=r.id) AS words,
+            EXISTS(SELECT FROM customer_private.problem_report_self_removal s WHERE s.report_id=r.id) AS removed
+           FROM customer_private.problem_report r WHERE r.customer_principal_id=$1`,
+          [ids.sro],
+        )
+      ).rows as { words: boolean; removed: boolean }[];
+      for (const report of reports) expect(report.words).toBe(!report.removed);
+    }
+  });
+});
+
+describe('the self-removal record and the words guard hold for the schema owner as well', () => {
+  const insertRow = (report: string, person: string) =>
+    f.owner.query(
+      "INSERT INTO customer_private.problem_report_self_removal(report_id,reporter_kind,customer_principal_id,command_id) VALUES($1,'customer',$2,$3)",
+      [report, ids[person], randomUUID()],
+    );
+  const deleteWords = (report: string) =>
+    f.owner.query('DELETE FROM customer_private.problem_report_words WHERE report_id=$1', [report]);
+  const immutable = { code: '23514', message: 'Immutable record; append a new record' };
+
+  test('words can be deleted only for a report that has an erasure row or a self-removal row of its own, and never updated', async () => {
+    const mine = await reportId(
+      (await customerFile('srp', body({ detail: 'Words of srp, one.' }))).reference as string,
+    );
+    const other = await reportId(
+      (await customerFile('srp', body({ detail: 'Words of srp, two.' }))).reference as string,
+    );
+    const notMine = await reportId(
+      (await customerFile('srq', body({ detail: 'Words of srq.' }))).reference as string,
+    );
+    // no row yet: refused
+    await expect(deleteWords(mine)).rejects.toMatchObject(immutable);
+    await insertRow(mine, 'srp');
+    // an update is refused even with a row, and a row for one report never lets another report's words go
+    await expect(
+      f.owner.query(
+        'UPDATE customer_private.problem_report_words SET detail=detail WHERE report_id=$1',
+        [mine],
+      ),
+    ).rejects.toMatchObject(immutable);
+    await expect(deleteWords(other)).rejects.toMatchObject(immutable);
+    await expect(deleteWords(notMine)).rejects.toMatchObject(immutable);
+    await deleteWords(mine);
+    expect(
+      (
+        await f.owner.query(
+          'SELECT count(*)::int AS n FROM customer_private.problem_report_words WHERE report_id=$1',
+          [mine],
+        )
+      ).rows[0].n,
+    ).toBe(0);
+    // the report row itself and its status row still cannot be deleted or changed
+    await expect(
+      f.owner.query('DELETE FROM customer_private.problem_report WHERE id=$1', [mine]),
+    ).rejects.toMatchObject(immutable);
+    await expect(
+      f.owner.query(
+        "UPDATE customer_private.problem_report_status_event SET note='A long enough note' WHERE report_id=$1",
+        [mine],
+      ),
+    ).rejects.toMatchObject(immutable);
+  });
+
+  test('a self-removal row is immutable, must name the person who filed the report, and cannot be written for a team report', async () => {
+    const mine = await reportId(
+      (await customerFile('srq', body({ detail: 'Words of srq, again.' }))).reference as string,
+    );
+    // another person's report: the trigger refuses
+    await expect(insertRow(mine, 'srp')).rejects.toMatchObject({
+      code: '23514',
+      message: 'A self-removal record must name the person who filed the report',
+    });
+    const team = (
+      await f.owner.query(
+        "SELECT id FROM customer_private.problem_report WHERE reporter_kind='team' LIMIT 1",
+      )
+    ).rows[0].id as string;
+    // a team report: the key to the report carries the kind, so there is no row to point at
+    await expect(insertRow(team, 'srq')).rejects.toMatchObject({ code: '23503' });
+    await expect(insertRow(randomUUID(), 'srq')).rejects.toMatchObject({ code: '23503' });
+    await expect(
+      f.owner.query(
+        "INSERT INTO customer_private.problem_report_self_removal(report_id,reporter_kind,customer_principal_id,command_id) VALUES($1,'team',$2,$3)",
+        [mine, ids.srq, randomUUID()],
+      ),
+    ).rejects.toMatchObject({ code: '23514' });
+    await insertRow(mine, 'srq');
+    // one row per report, and none can change or go
+    await expect(insertRow(mine, 'srq')).rejects.toMatchObject({ code: '23505' });
+    await expect(
+      f.owner.query(
+        'UPDATE customer_private.problem_report_self_removal SET command_id=gen_random_uuid()',
+      ),
+    ).rejects.toMatchObject(immutable);
+    await expect(
+      f.owner.query('DELETE FROM customer_private.problem_report_self_removal'),
+    ).rejects.toMatchObject(immutable);
+  });
+});
+
 describe('words are removed under an erasure request', () => {
   const owner = () => ctxOf('owner');
-  const request = async (person: string) => {
-    const filed = await h.sql<{ r: Row }>(
-      person,
-      'SELECT customer.account_lifecycle_command($1,$2,$3) AS r',
-      [randomUUID(), 'file_erasure', '{}'],
-    );
-    expect(filed.r.changed).toBe(true);
-    const row = (await as(owner(), 'SELECT customer.erasure_queue(NULL,100,NULL) AS r')).r as {
-      id: string;
-      principalId: string;
-    }[];
-    return row.find((item) => item.principalId === ids[person])!.id;
-  };
-  const erasure = (request: string, expected: string, to: string, note: string | null = null) =>
-    as(owner(), 'SELECT customer.erasure_transition($1,$2,$3,$4,$5) AS r', [
-      randomUUID(),
-      request,
-      expected,
-      to,
-      note,
-    ]);
-  const remove = (ctx: RequestContext, requestId: string, command: string = randomUUID()) =>
-    as(ctx, 'SELECT customer.problem_report_remove_words($1,$2) AS r', [command, requestId]).then(
-      (row) => row.r as Row,
-    );
   const snapshot = async (person: string) =>
     (
       await f.owner.query(
@@ -2027,6 +2512,118 @@ describe('words are removed under an erasure request', () => {
       await flip(sampleWorkspace.vic!, true);
       await realUse(false);
     }
+  });
+});
+
+// The self-removal beside the staff erasure path. The account lifecycle control is open for these tests (the erasure tests
+// above opened it), and one test pauses it. The two removals are separate authorities and never count one report twice.
+describe('a customer removal beside the staff removal under an erasure request', () => {
+  beforeAll(async () => {
+    await setAccountControl(true);
+    for (const person of ['srj', 'srk', 'srs', 'srt'])
+      await h.provision(person, `Synthetic ${person} workspace`);
+  });
+
+  test('a self-removed report is skipped by the staff removal, which removes only what is left and counts it once', async () => {
+    const mine = [
+      (await customerFile('srj', body({ detail: 'First words of srj.' }))).reference as string,
+      (await customerFile('srj', body({ detail: 'Second words of srj.' }))).reference as string,
+    ];
+    expect(await removeOwn('srj')).toEqual({ removed: 2, changed: true });
+    const requestId = await request('srj');
+    await erasure(requestId, 'received', 'in_progress');
+    // a report filed after the self-removal is the only one with words left
+    const late = (await customerFile('srj', body({ detail: 'Late words of srj.' })))
+      .reference as string;
+    const command = randomUUID();
+    const done = await remove(ctxOf('owner'), requestId, command);
+    expect(done).toMatchObject({ removed: 1 });
+    expect(await remove(ctxOf('owner'), requestId, command)).toMatchObject({ removed: 1 });
+    expect(
+      (
+        await f.owner.query(
+          'SELECT count(*)::int AS n FROM customer_private.problem_report_erasure e JOIN customer_private.problem_report r ON r.id=e.report_id WHERE r.customer_principal_id=$1',
+          [ids.srj],
+        )
+      ).rows[0].n,
+    ).toBe(1);
+    expect(await selfRemovals('srj')).toHaveLength(2);
+    for (const reference of [...mine, late])
+      expect((await customerGet('srj', reference)).words).toEqual({ removed: true });
+    // a new command finds nothing left, for either kind
+    expect(await remove(ctxOf('owner'), requestId)).toMatchObject({ removed: 0 });
+    expect(await removeOwn('srj')).toEqual({ removed: 0, changed: false });
+    expect(
+      (await queue(ctxOf('owner'))).items.filter((item) => item.reference === mine[0])[0],
+    ).toMatchObject({
+      wordsRemoved: true,
+      detail: null,
+    });
+  });
+
+  test('a report the staff removed is not removed again by the customer, and a person who later gains a workspace stays removed', async () => {
+    const reference = (await customerFile('srk', body({ detail: 'Words of srk.' })))
+      .reference as string;
+    const requestId = await request('srk');
+    await erasure(requestId, 'received', 'in_progress');
+    expect(await remove(ctxOf('owner'), requestId)).toMatchObject({ removed: 1 });
+    expect(await removeOwn('srk')).toEqual({ removed: 0, changed: false });
+    expect(await selfRemovals('srk')).toEqual([]);
+    expect((await customerGet('srk', reference)).words).toEqual({ removed: true });
+    // a person with no workspace removes theirs, then gains a workspace: nothing comes back and nothing is counted again
+    const own = (await customerFile('srl', body({ detail: 'Words of srl.' }))).reference as string;
+    expect(await removeOwn('srl')).toEqual({ removed: 1, changed: true });
+    await h.provision('srl', 'Synthetic srl workspace');
+    expect((await customerGet('srl', own)).words).toEqual({ removed: true });
+    expect((await customerList('srl'))[0]).toMatchObject({ wordsRemoved: true });
+    const later = await request('srl');
+    await erasure(later, 'received', 'in_progress');
+    expect(await remove(ctxOf('owner'), later)).toMatchObject({ removed: 0 });
+    expect(await removeOwn('srl')).toEqual({ removed: 0, changed: false });
+  });
+
+  test('works while the control is paused, and the staff removal under an erasure request still follows its own rules', async () => {
+    const reference = (await customerFile('srs', body({ detail: 'Words of srs.' })))
+      .reference as string;
+    await setAccountControl(false);
+    try {
+      expect(
+        (await f.owner.query('SELECT customer_private.account_lifecycle_open() AS open')).rows[0]
+          .open,
+      ).toBe(false);
+      expect(await removeOwn('srs')).toEqual({ removed: 1, changed: true });
+    } finally {
+      await setAccountControl(true);
+    }
+    expect((await customerGet('srs', reference)).words).toEqual({ removed: true });
+  });
+
+  test('the staff removal and the customer removal wait for the same report lock, and between them remove the words once', async () => {
+    await customerFile('srt', body({ detail: 'Words of srt.' }));
+    const requestId = await request('srt');
+    await erasure(requestId, 'received', 'in_progress');
+    const lock = await holdReportLock('srt');
+    let staff: Promise<Row> | undefined;
+    let self: Promise<Row> | undefined;
+    try {
+      staff = remove(ctxOf('owner'), requestId);
+      self = removeOwn('srt');
+      expect(await waiting(staff)).toBe(true);
+      expect(await waiting(self)).toBe(true);
+      expect(await wordsLeft('srt')).toBe(1);
+    } finally {
+      await lock.release();
+    }
+    const [byStaff, byCustomer] = [await staff, await self];
+    expect((byStaff!.removed as number) + (byCustomer!.removed as number)).toBe(1);
+    const erasureRows = (
+      await f.owner.query(
+        'SELECT count(*)::int AS n FROM customer_private.problem_report_erasure e JOIN customer_private.problem_report r ON r.id=e.report_id WHERE r.customer_principal_id=$1',
+        [ids.srt],
+      )
+    ).rows[0].n as number;
+    expect(erasureRows + (await selfRemovals('srt')).length).toBe(1);
+    expect(await wordsLeft('srt')).toBe(0);
   });
 });
 
