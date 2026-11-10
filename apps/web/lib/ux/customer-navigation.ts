@@ -21,11 +21,16 @@ export type CustomerTab = {
   labelKey?: MessageKey;
 };
 
-/** One row of a menu: a link, the Listen action, plain text tagged Coming soon, or the Sign Out action. */
+/**
+ * One row of a menu: a link, the Listen action, the Text Size choice, the Less Movement switch, plain text tagged
+ * Coming soon, or the Sign Out action.
+ */
 export type MenuEntry =
   | { kind: 'link'; label: string; href: string }
   | { kind: 'soon'; label: string }
   | { kind: 'listen'; label: string }
+  | { kind: 'textsize'; label: string }
+  | { kind: 'lessmovement'; label: string }
   | { kind: 'signout'; label: string };
 export type HelpGroup = { label: string; items: MenuEntry[] };
 
@@ -126,9 +131,9 @@ export function customerAvatarItems(
 
 /**
  * The help and accessibility menu. Chat on WhatsApp needs a number the owner configures, and none exists, so it is
- * Coming soon; so are Report a Problem, Text Size, Stronger Colours and Less Movement. Listen to This Page is real
- * (the same speech the corner Help sheet offers), and the About group keeps the website and privacy notice the old
- * account menu held.
+ * Coming soon; so are Report a Problem and Stronger Colours. Listen to This Page, Text Size and Less Movement are
+ * real (the speech the corner Help sheet offers, and two choices kept in this browser only), and the About group
+ * keeps the website and privacy notice the old account menu held.
  */
 export function customerHelpGroups(): HelpGroup[] {
   return [
@@ -145,9 +150,9 @@ export function customerHelpGroups(): HelpGroup[] {
       label: 'Make It Easier to Read',
       items: [
         { kind: 'listen', label: 'Listen to This Page' },
-        { kind: 'soon', label: 'Text Size' },
+        { kind: 'textsize', label: 'Text Size' },
         { kind: 'soon', label: 'Stronger Colours' },
-        { kind: 'soon', label: 'Less Movement' },
+        { kind: 'lessmovement', label: 'Less Movement' },
       ],
     },
     {

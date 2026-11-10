@@ -52,6 +52,14 @@ describe('the team Help groups', () => {
     const links = entries.filter((e) => e.kind === 'link').map((e) => (e as { href: string }).href);
     expect(links).toEqual(expect.arrayContaining(['/how-it-works', '/plan', '/', '/privacy']));
     expect(entries.some((e) => e.kind === 'listen')).toBe(true);
+    // W7: the team has the same two reading controls as the customer menu, and the same three Coming soon rows.
+    expect(entries.map((e) => e.kind).filter((kind) => kind === 'textsize')).toHaveLength(1);
+    expect(entries.map((e) => e.kind).filter((kind) => kind === 'lessmovement')).toHaveLength(1);
+    expect(entries.filter((e) => e.kind === 'soon').map((e) => e.label)).toEqual([
+      'Chat on WhatsApp',
+      'Report a Problem',
+      'Stronger Colours',
+    ]);
     for (const group of teamHelpGroups()) expect(group.items.length).toBeLessThanOrEqual(4);
   });
 });

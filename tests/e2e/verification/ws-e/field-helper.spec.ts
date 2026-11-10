@@ -55,11 +55,37 @@ test('the field helper has four bottom tabs on a phone and the left bar on a wid
     'page',
   );
   await expect(page.getByRole('button', { name: 'Sign Out of Assigned Work' })).toBeVisible();
-  await expect(page.getByText('Text Size')).toBeVisible();
-  await expect(page.getByText('Data Saver')).toBeVisible();
+  // W7: Text Size (three steps) and Less Movement are real; Data Saver is still plain text tagged Coming soon.
+  const comfort = page.locator('section', {
+    has: page.getByRole('heading', { name: 'Make it easier to read' }),
+  });
+  await expect(comfort.getByRole('group', { name: 'Text Size' })).toBeVisible();
+  await expect(comfort.getByRole('radio')).toHaveCount(3);
+  await expect(comfort.getByRole('radio', { name: 'Normal' })).toBeChecked();
+  await expect(comfort.getByRole('switch', { name: /Less Movement/ })).not.toBeChecked();
+  await expect(
+    comfort.getByText('Stops animation and anything that moves by itself.'),
+  ).toBeVisible();
+  await expect(comfort.getByText('Data Saver')).toBeVisible();
+  await expect(comfort.locator('.ux-soon-tag')).toHaveText(['Coming soon']);
+  await expect(comfort.locator('p', { hasText: 'Data Saver' }).locator('.ux-soon-tag')).toHaveText(
+    'Coming soon',
+  );
+  for (const role of ['button', 'checkbox', 'switch', 'radio', 'link'] as const)
+    await expect(comfort.getByRole(role, { name: 'Data Saver' })).toHaveCount(0);
+  for (const choice of await page.locator('.me-textsize-choice').all())
+    expect((await choice.boundingBox())!.height).toBeGreaterThanOrEqual(75.5);
+  await comfort.getByRole('radio', { name: 'Largest' }).check();
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).fontSize)).toBe(
+    '20px',
+  );
+  await comfort.getByRole('switch', { name: /Less Movement/ }).check();
+  await expect(page.locator('html')).toHaveAttribute('data-less-movement', 'on');
+  await expect(comfort.getByRole('switch', { name: /Less Movement/ })).toBeChecked();
   await expect(page.getByRole('link', { name: 'About assigned work' })).toBeVisible();
   const axeMe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(axeMe.violations.map((v) => v.id)).toEqual([]);
+  // Text is at the largest step here, so each width is also measured at the largest text.
   for (const width of [320, 390, 768]) {
     await page.setViewportSize({ width, height: 800 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(

@@ -174,3 +174,70 @@
   max-height: calc(100dvh - 8.5rem);
   overflow-y: auto;
 }
+
+/* Text Size and Less Movement (W7). Text Size is one row: the label with the step in words, then three 44 px
+   buttons that do not grow with the text. The chosen step has a tint, a 2 px border and heavier weight as well as
+   aria-checked, so it is never shown by colour alone. No overflow clipping, so the focus ring is whole. */
+.ux-textsize {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-1) var(--space-3);
+  color: var(--ink);
+  font: 500 var(--text-md) var(--font-ui);
+}
+.ux-textsize-text {
+  display: grid;
+  min-width: 0;
+}
+.ux-textsize-current {
+  color: var(--text-2);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+.ux-textsize-steps {
+  display: flex;
+  gap: var(--space-1);
+}
+.ux-textsize-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink);
+  font: 500 var(--text-md) var(--font-ui);
+  cursor: pointer;
+}
+.ux-textsize-step[data-step='large'] {
+  font-size: 1.125rem;
+}
+.ux-textsize-step[data-step='largest'] {
+  font-size: 1.375rem;
+}
+.ux-textsize-step:hover {
+  background: var(--selected-surface);
+}
+.ux-textsize-step[aria-checked='true'] {
+  background: var(--selected-surface);
+  border-color: var(--selected);
+  font-weight: 600;
+}
+.ux-textsize-step:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.ux-menu-toggle {
+  justify-content: space-between;
+}
+.ux-menu-toggle-state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}

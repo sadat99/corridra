@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import './globals.css';
+import './comfort.css';
 import { readNeonAuthConfig } from '@corridra/config';
 import { ShellHeader } from '../components/ux/shell-header';
 import { SiteFooter } from '../components/site-footer';
@@ -8,6 +9,7 @@ import { CornerDock } from '../components/corner-dock';
 import { LanguageProvider } from '../components/language-provider';
 import { SkipLink } from '../components/skip-link';
 import { CanonicalLink } from '../components/ux/canonical-link';
+import { ComfortSync } from '../components/ux/use-comfort';
 import { canonicalSiteOrigin } from '../lib/canonical-origin';
 import { offeredLanguages } from '../lib/i18n/locales';
 import { languagesWithPages } from '../lib/i18n/pages';
@@ -102,13 +104,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     // The boot script may set lang and dir before React loads; the provider keeps them after.
     <html lang="en" className={fontVariables} suppressHydrationWarning>
       <head>
-        {/* Blocking on purpose: it sets lang and dir before the first paint (CQ-10). Same origin, no inline HTML. */}
+        {/* Blocking on purpose: it sets lang and dir, and the saved text size and Less Movement, before the first paint (CQ-10). Same origin, no inline HTML. */}
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script src="/language-boot.js" />
       </head>
       <body>
         <LanguageProvider offered={offered} pageLocales={languagesWithPages()}>
           <CanonicalLink />
+          <ComfortSync />
           <SkipLink />
           <div className="site-shell">
             <ShellHeader

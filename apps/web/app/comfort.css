@@ -1,0 +1,24 @@
+/* Reading comfort choices (W7), set on <html> by lib/ux/comfort.ts before the first paint. Tokens only.
+   Text Size: the page is sized in rem, so a larger root size makes the text larger (112.5 percent is
+   18 px, 125 percent is 20 px). Normal sets nothing.
+   Less Movement: exactly the effect of the visitor's reduced motion setting in globals.css, switched on
+   by the person. It only ever reduces motion; the system setting still applies on its own. */
+html[data-text-size='large'] {
+  font-size: 112.5%;
+}
+html[data-text-size='largest'] {
+  font-size: 125%;
+}
+
+html[data-less-movement='on'],
+html[data-less-movement='on'] *,
+html[data-less-movement='on'] *::before,
+html[data-less-movement='on'] *::after {
+  transition-duration: 0.01ms !important;
+  animation-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+html[data-less-movement='on'] .primary-link:hover,
+html[data-less-movement='on'] .button:hover {
+  transform: none;
+}

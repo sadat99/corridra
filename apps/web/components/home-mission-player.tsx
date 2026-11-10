@@ -12,6 +12,7 @@ import {
 import { CorridraIcon } from './corridra-icon';
 import { FactLabel, type factLabels } from './fact-label';
 import { useT } from './language-provider';
+import { useLessMovement } from './ux/use-comfort';
 import { fill } from '../lib/i18n/fill';
 import type { MessageKey } from '../lib/i18n/messages';
 
@@ -246,7 +247,8 @@ const examples: readonly Example[] = [
 /** Owner decision, 6 November 2026: the player moves on every 4 seconds until it is paused. */
 const advanceEvery = 4000;
 
-// Motion follows the visitor's setting: with reduced motion the player never moves on by itself.
+// Motion follows the visitor's setting (the system's, or Less Movement in the menus): with reduced motion the
+// player never moves on by itself.
 const reducedMotion = '(prefers-reduced-motion: reduce)';
 const subscribeToMotion = (onChange: () => void) => {
   const query = window.matchMedia(reducedMotion);
@@ -425,11 +427,14 @@ export function HomeMissionPlayer() {
   const [playing, setPlaying] = useState(true);
   const [hovered, setHovered] = useState(false);
   const [announcement, setAnnouncement] = useState('');
-  const reduced = useSyncExternalStore(
+  const systemReduced = useSyncExternalStore(
     subscribeToMotion,
     prefersReducedMotion,
     motionUnknownOnServer,
   );
+  // Less Movement in the menus adds to the system setting and never undoes it.
+  const [lessMovement] = useLessMovement();
+  const reduced = systemReduced || lessMovement === 'on';
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
   const running = playing && !hovered && !reduced;
 

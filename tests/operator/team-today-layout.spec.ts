@@ -390,6 +390,11 @@ test('the team header shows the inbox as an icon with its unread count, the webs
     'href',
     '/',
   );
+  // W7: the team menu offers the same two reading controls as the customer menu.
+  await expect(
+    page.getByRole('group', { name: 'Text Size' }).getByRole('menuitemradio'),
+  ).toHaveCount(3);
+  await expect(page.getByRole('menuitemcheckbox', { name: /Less Movement/ })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(help).toBeFocused();
   const menu = header.getByRole('button', { name: 'Account menu' });
