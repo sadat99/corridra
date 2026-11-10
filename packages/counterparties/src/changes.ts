@@ -65,7 +65,7 @@ export async function stateDetail(t: TenantTransaction, relationshipIds: string[
   if (['owner', 'admin'].includes(t.role)) {
     const hidden = (
       await t.db.query<{ id: string; reason: string; ticket_reference: string }>(
-        'SELECT id,reason,ticket_reference FROM app.private_record_redaction WHERE tenant_id=$1 AND relationship_id=ANY($2::uuid[])',
+        'SELECT id,reason,ticket_reference FROM app.private_record_redaction_reasons($1,$2::uuid[])',
         [t.tenantId, relationshipIds],
       )
     ).rows;

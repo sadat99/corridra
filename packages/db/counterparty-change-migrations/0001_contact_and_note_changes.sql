@@ -205,7 +205,14 @@ BEGIN
   -- would show them the hidden text.
   EXECUTE format('CREATE POLICY %I ON app.%I FOR SELECT TO corridra_runtime USING(app.can_access(tenant_id,classification,purpose) AND app.research_relationship_access(tenant_id,relationship_id))',tbl||'_read',tbl);
   EXECUTE format('CREATE POLICY %I ON app.%I FOR INSERT TO corridra_runtime WITH CHECK(app.can_access(tenant_id,classification,purpose) AND %s AND created_by=app.actor_id() AND app.research_relationship_access(tenant_id,relationship_id,true))',tbl||'_insert',tbl,roles);
-  EXECUTE format('GRANT SELECT,INSERT ON app.%I TO corridra_runtime',tbl);
+  -- The hide reason and ticket reference are not granted: every app role shares the runtime database role, so owners
+  -- and admins read them only through app.private_record_redaction_reasons below. The views read no such column.
+  IF tbl='private_record_redaction' THEN
+   EXECUTE 'GRANT INSERT ON app.private_record_redaction TO corridra_runtime';
+   EXECUTE 'GRANT SELECT(id,tenant_id,relationship_id,subject,chain_id,contact_chain_id,note_chain_id,command_id,request_hash,classification,purpose,created_by,created_at) ON app.private_record_redaction TO corridra_runtime';
+  ELSE
+   EXECUTE format('GRANT SELECT,INSERT ON app.%I TO corridra_runtime',tbl);
+  END IF;
   EXECUTE format('CREATE TRIGGER %I BEFORE INSERT ON app.%I FOR EACH ROW EXECUTE FUNCTION app.guard_private_record_change()',tbl||'_guard',tbl);
   EXECUTE format('CREATE TRIGGER %I BEFORE UPDATE OR DELETE ON app.%I FOR EACH ROW EXECUTE FUNCTION app.reject_rewrite()',tbl||'_immutable',tbl);
   EXECUTE format('CREATE TRIGGER %I AFTER INSERT ON app.%I FOR EACH ROW EXECUTE FUNCTION app.record_change()',tbl||'_event',tbl);
@@ -251,6 +258,15 @@ LEFT JOIN app.private_record_redaction r ON r.tenant_id=n.tenant_id AND r.subjec
 
 REVOKE ALL ON app.private_contact_state,app.private_note_state FROM PUBLIC;
 GRANT SELECT ON app.private_contact_state,app.private_note_state TO corridra_runtime;
+-- The hide reason and ticket reference for workspace owners and admins only, on rows they can already see.
+CREATE FUNCTION app.private_record_redaction_reasons(target uuid,relationship_ids uuid[]) RETURNS TABLE(id uuid,reason text,ticket_reference text)
+ LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
+ SELECT r.id,r.reason,r.ticket_reference FROM app.private_record_redaction r
+ WHERE r.tenant_id=target AND r.relationship_id=ANY(relationship_ids) AND app.member_role(target) IN ('owner','admin')
+  AND app.can_access(target,r.classification,r.purpose) AND app.research_relationship_access(target,r.relationship_id)
+$$;
+REVOKE ALL ON FUNCTION app.private_record_redaction_reasons(uuid,uuid[]) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION app.private_record_redaction_reasons(uuid,uuid[]) TO corridra_runtime;
 REVOKE ALL ON FUNCTION app.counterparty_change_enabled(),app.guard_private_record_change(),app.private_contact_inactive(uuid,uuid,boolean),
  app.refuse_inactive_contact(),app.private_contact_message_active(uuid,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION app.counterparty_change_enabled(),app.private_contact_message_active(uuid,text) TO corridra_runtime;
