@@ -554,10 +554,45 @@ function safeMoney(minor: string, currency: string) {
 }
 
 function Meetings({ tenant, missionId }: { tenant: string; missionId: string }) {
-  const { value, error } = useRead<{ meetings: Row[] }>(
-    `/api/workspace/meetings?tenant=${encodeURIComponent(tenant)}`,
+  const base = `/api/workspace/meetings?tenant=${encodeURIComponent(tenant)}&missionId=${encodeURIComponent(missionId)}`;
+  const first = useRead<{ meetings: Row[]; meetingsTotal: number | null; next: string | null }>(
+    base,
   );
-  const rows = value?.meetings.filter((m) => m.mission_id === missionId) ?? [];
+  const [more, setMore] = useState<{
+    rows: Row[];
+    next: string | null;
+    total: number | null;
+  } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState('');
+  const { value, error } = first;
+  const rows = [...(value?.meetings ?? []), ...(more?.rows ?? [])];
+  const next = more ? more.next : (value?.next ?? null);
+  const total = more ? more.total : (value?.meetingsTotal ?? null);
+  async function showMore() {
+    if (!next) return;
+    setBusy(true);
+    setFailure('');
+    try {
+      const page = await read<{
+        meetings: Row[];
+        meetingsTotal: number | null;
+        next: string | null;
+      }>(`${base}&after=${encodeURIComponent(next)}`);
+      setMore((old) => ({
+        rows: [
+          ...(old?.rows ?? []),
+          ...page.meetings.filter((m) => !rows.some((r) => r.id === m.id)),
+        ],
+        next: page.next,
+        total: page.meetingsTotal,
+      }));
+    } catch (e) {
+      setFailure(e instanceof Error ? e.message : 'The next page could not be loaded.');
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
     <>
       <h3>Meetings</h3>
@@ -565,14 +600,30 @@ function Meetings({ tenant, missionId }: { tenant: string; missionId: string }) 
       {!value ? (
         <Loading error={error} />
       ) : rows.length ? (
-        <ul>
-          {rows.map((m) => (
-            <li key={m.id}>
-              {String(m.title)} · {plainCode(String(m.status))}
-              {m.starts_at ? ` · ${formatDateTime(String(m.starts_at))}` : ' · not scheduled'}
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul>
+            {rows.map((m) => (
+              <li key={m.id}>
+                {String(m.title)} · {plainCode(String(m.status))}
+                {m.starts_at ? ` · ${formatDateTime(String(m.starts_at))}` : ' · not scheduled'}
+              </li>
+            ))}
+          </ul>
+          {next && (
+            <p>
+              Showing {rows.length} of {total} meetings.{' '}
+              <button
+                className="text-link"
+                type="button"
+                disabled={busy}
+                onClick={() => void showMore()}
+              >
+                Show More Meetings
+              </button>
+            </p>
+          )}
+          {failure && <p role="alert">{failure}</p>}
+        </>
       ) : (
         <p>No meetings for this mission yet.</p>
       )}

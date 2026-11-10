@@ -29,4 +29,12 @@ export type OperatorSnapshot = {
   claims: OperatorRecordRow[];
   evidence: OperatorRecordRow[];
   facts: OperatorRecordRow[];
+  // CRUD G12: each list comes in pages with an exact total; a next cursor means more rows exist.
+  sourcesTotal?: number | null;
+  sourcesNext?: string | null;
+  claimsTotal?: number | null;
+  claimsNext?: string | null;
+  evidenceTotal?: number | null;
+  evidenceNext?: string | null;
 };
+export type MoreKind = 'sources' | 'claims' | 'evidence';

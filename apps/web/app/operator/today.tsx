@@ -25,7 +25,12 @@ type Meeting = {
   location: string | null;
 };
 type FollowUp = { id: string; status: string; due_at: string; next_action: string };
-type MeetingRead = { meetings: Meeting[]; followups: FollowUp[] };
+type MeetingRead = {
+  meetings: Meeting[];
+  followups: FollowUp[];
+  next: string | null;
+  followupsNext: string | null;
+};
 /** getTeamToday counts (CQ-34, CQ-73). Unread counts are listed in `unavailable`, never zero. */
 type TeamCounts = {
   acceptedQuotesNotStarted: number;
@@ -54,7 +59,7 @@ type Today = {
 };
 
 const week = 7 * 24 * 60 * 60 * 1000;
-const readLimit = 100;
+const readLimit = 50;
 /** Rows shown in "Needs you now" before "Show N More", and rows per group in "This week". */
 const firstRows = 5;
 const weekRows = 3;
@@ -439,7 +444,7 @@ export function TodayPanel({
               lateFollowUps: read.followups.filter(
                 (f) => f.status === 'OPEN' && Date.parse(f.due_at) < now,
               ),
-              partial: read.meetings.length >= readLimit || read.followups.length >= readLimit,
+              partial: read.next !== null || read.followupsNext !== null,
             }
           : null;
         setToday({

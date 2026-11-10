@@ -33,7 +33,7 @@ import { AuthenticatorCheck } from './authenticator-check';
 import { SourcesPanel } from './sources-panel';
 import { EvidencePanel } from './evidence-panel';
 import { publishTeamContext } from '../../lib/ux/team-context';
-import type { OperatorRecordRow, OperatorSnapshot } from './workspace-types';
+import type { MoreKind, OperatorRecordRow, OperatorSnapshot } from './workspace-types';
 type RecordRow = OperatorRecordRow;
 type Snapshot = OperatorSnapshot;
 type Tenant = { id: string; name: string; role: string };
@@ -117,9 +117,9 @@ function TenantWorkspace({
   const enabled = (key: string) =>
     flags.find((f) => f.key === key)?.value?.enabled ??
     ['research.ingestion', 'research.resolution'].includes(key);
-  async function request(action: string, body?: unknown) {
+  async function request(action: string, body?: unknown, extra = '') {
     const r = await fetch(
-      `/api/workspace/${action}?tenant=${encodeURIComponent(tenant)}`,
+      `/api/workspace/${action}?tenant=${encodeURIComponent(tenant)}${extra}`,
       body === undefined
         ? {}
         : {
@@ -141,6 +141,37 @@ function TenantWorkspace({
       throw new Error(result.error ?? 'Request failed');
     }
     return result;
+  }
+  /** Appends the next page of sources, claims or evidence below the rows already shown, never twice. */
+  async function loadMore(kind: MoreKind) {
+    const cursor = data?.[`${kind}Next`];
+    if (!cursor) return;
+    setBusy(true);
+    setMessage('');
+    try {
+      const page: Snapshot = await request(
+        'workspace',
+        undefined,
+        `&${kind}After=${encodeURIComponent(cursor)}`,
+      );
+      setData((old) => {
+        if (!old) return old;
+        const add = (rows: RecordRow[], more: RecordRow[]) => [
+          ...rows,
+          ...more.filter((m) => !rows.some((r) => r.id === m.id)),
+        ];
+        return {
+          ...old,
+          [kind]: add(old[kind], page[kind]),
+          [`${kind}Total`]: page[`${kind}Total`],
+          [`${kind}Next`]: page[`${kind}Next`],
+        };
+      });
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'The next page could not be loaded.');
+    } finally {
+      setBusy(false);
+    }
   }
   async function refresh() {
     const [snapshot, config] = await Promise.all([request('workspace'), request('config')]);
@@ -638,6 +669,7 @@ function TenantWorkspace({
               tenant={tenant}
               act={act}
               request={request}
+              more={loadMore}
             />
           )}
           {shown('workspace-evidence') && (
@@ -649,6 +681,7 @@ function TenantWorkspace({
               flags={flags}
               act={act}
               request={request}
+              more={loadMore}
             />
           )}
           {shown('workspace-authenticator') && (

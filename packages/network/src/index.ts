@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
+import { decodeCursor, keysetPage, pageLimit } from '@corridra/domain/paging';
 import {
   sessionHash,
   withTenant,
@@ -401,31 +402,83 @@ export class NetworkService {
       db.release();
     }
   }
-  workspace(ctx: RequestContext) {
-    return withTenant(this.pool, ctx, 'trust.write', async (t) => ({
-      purpose: t.purpose,
-      enabled:
-        this.enabled &&
-        (
-          await t.db.query("SELECT app.part4_enabled($1,'network.enabled') AS enabled", [
-            t.tenantId,
-          ])
-        ).rows[0].enabled,
-      performance: (
-        await t.db.query('SELECT * FROM app.network_performance WHERE tenant_id=$1', [t.tenantId])
-      ).rows,
-      profiles: (
-        await t.db.query(
-          'SELECT id,principal_id,version,configuration,expires_at FROM app.network_profile WHERE tenant_id=$1 ORDER BY created_at DESC LIMIT 100',
-          [t.tenantId],
-        )
-      ).rows,
-      tasks: (
-        await t.db.query(
-          "SELECT t.*,EXISTS(SELECT FROM app.network_event submission WHERE submission.tenant_id=t.tenant_id AND submission.task_id=t.id AND submission.action='SUBMIT' AND submission.created_at>t.deadline) AS late_submission,(SELECT coalesce(jsonb_agg(jsonb_build_object('action',h.action,'version',h.version,'reason',h.reason,'details',h.details,'createdAt',h.created_at) ORDER BY h.version),'[]'::jsonb) FROM app.network_event h WHERE h.tenant_id=t.tenant_id AND h.task_id=t.id) AS history,coalesce(e.version,0) AS version,coalesce(e.action,'CREATED') AS status FROM app.network_task t LEFT JOIN LATERAL (SELECT version,action FROM app.network_event WHERE tenant_id=t.tenant_id AND task_id=t.id ORDER BY version DESC LIMIT 1) e ON true WHERE t.tenant_id=$1 ORDER BY t.created_at DESC LIMIT 100",
-          [t.tenantId],
-        )
-      ).rows,
-    }));
+  /**
+   * CRUD G12: profiles and tasks come in pages of at most 50, newest first, each with an exact total and a
+   * keyset cursor. `profilesAfter` or `tasksAfter` continues that one list and returns only it (the other
+   * is empty with a null total); not both. Task history travels with the tasks of the page. Performance
+   * and the activation state come with the first read only.
+   */
+  async workspace(
+    ctx: RequestContext,
+    options: {
+      profilesAfter?: string | null;
+      tasksAfter?: string | null;
+      limit?: number | null;
+    } = {},
+  ) {
+    const limit = pageLimit(options.limit),
+      profilesAfter = decodeCursor(options.profilesAfter),
+      tasksAfter = decodeCursor(options.tasksAfter);
+    if (profilesAfter && tasksAfter) throw new DomainError('Continue one list at a time.', 400);
+    return withTenant(this.pool, ctx, 'trust.write', async (t) => {
+      const first = !profilesAfter && !tasksAfter;
+      const profiles =
+        first || profilesAfter
+          ? await keysetPage(t.db, {
+              select: 'p.id,p.principal_id,p.version,p.configuration,p.expires_at',
+              from: 'app.network_profile p',
+              where: 'p.tenant_id=$1',
+              values: [t.tenantId],
+              sortExpression: 'p.created_at',
+              direction: 'desc',
+              cursor: profilesAfter,
+              limit,
+            })
+          : null;
+      const taskPage =
+        first || tasksAfter
+          ? await keysetPage(t.db, {
+              select: 't.id',
+              from: 'app.network_task t',
+              where: 't.tenant_id=$1',
+              values: [t.tenantId],
+              sortExpression: 't.created_at',
+              direction: 'desc',
+              cursor: tasksAfter,
+              limit,
+            })
+          : null;
+      const tasks = taskPage?.rows.length
+        ? (
+            await t.db.query(
+              "SELECT t.*,EXISTS(SELECT FROM app.network_event submission WHERE submission.tenant_id=t.tenant_id AND submission.task_id=t.id AND submission.action='SUBMIT' AND submission.created_at>t.deadline) AS late_submission,(SELECT coalesce(jsonb_agg(jsonb_build_object('action',h.action,'version',h.version,'reason',h.reason,'details',h.details,'createdAt',h.created_at) ORDER BY h.version),'[]'::jsonb) FROM app.network_event h WHERE h.tenant_id=t.tenant_id AND h.task_id=t.id) AS history,coalesce(e.version,0) AS version,coalesce(e.action,'CREATED') AS status FROM app.network_task t LEFT JOIN LATERAL (SELECT version,action FROM app.network_event WHERE tenant_id=t.tenant_id AND task_id=t.id ORDER BY version DESC LIMIT 1) e ON true WHERE t.tenant_id=$1 AND t.id=ANY($2::uuid[]) ORDER BY t.created_at DESC,t.id DESC",
+              [t.tenantId, taskPage.rows.map((r) => r.id)],
+            )
+          ).rows
+        : [];
+      return {
+        purpose: t.purpose,
+        enabled:
+          this.enabled &&
+          (
+            await t.db.query("SELECT app.part4_enabled($1,'network.enabled') AS enabled", [
+              t.tenantId,
+            ])
+          ).rows[0].enabled,
+        performance: first
+          ? (
+              await t.db.query('SELECT * FROM app.network_performance WHERE tenant_id=$1', [
+                t.tenantId,
+              ])
+            ).rows
+          : [],
+        profiles: profiles?.rows ?? [],
+        profilesTotal: profiles?.total ?? null,
+        profilesNext: profiles?.next ?? null,
+        tasks,
+        tasksTotal: taskPage?.total ?? null,
+        tasksNext: taskPage?.next ?? null,
+      };
+    });
   }
 }

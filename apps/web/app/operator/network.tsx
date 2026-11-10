@@ -14,6 +14,7 @@ import { ActionFeedback, type Feedback } from '../../components/ux/feedback';
 import { ReferencePicker } from '../../components/ux/reference-picker';
 import { DateTimeInput } from '../../components/ux/date-time-input';
 import type { PickerKind } from '../../lib/ux/picker';
+import { ShowMore } from './show-more';
 type Profile = {
   id: string;
   principal_id: string;
@@ -61,7 +62,11 @@ type Snapshot = {
   purpose?: string;
   enabled: boolean;
   profiles: Profile[];
+  profilesTotal: number | null;
+  profilesNext: string | null;
   tasks: Task[];
+  tasksTotal: number | null;
+  tasksNext: string | null;
   performance: Performance[];
 };
 const taskKinds = [
@@ -200,9 +205,9 @@ export function ExecutionNetwork({
     [busy, setBusy] = useState(false);
   const admin = ['owner', 'admin'].includes(role);
   const request = useCallback(
-    async (action: string, input?: unknown) => {
+    async (action: string, input?: unknown, extra = '') => {
       const r = await fetch(
-        '/api/workspace/' + action + '?tenant=' + encodeURIComponent(tenant),
+        '/api/workspace/' + action + '?tenant=' + encodeURIComponent(tenant) + extra,
         input
           ? {
               method: 'POST',
@@ -235,6 +240,37 @@ export function ExecutionNetwork({
       live = false;
     };
   }, [request]);
+  /** Shows the next page of profiles or tasks below the rows already listed, never twice. */
+  async function showMore(kind: 'profiles' | 'tasks') {
+    const cursor = data?.[`${kind}Next`];
+    if (!cursor) return;
+    setBusy(true);
+    setMessage('');
+    try {
+      const more: Snapshot = await request(
+        'network',
+        undefined,
+        `&${kind}After=${encodeURIComponent(cursor)}`,
+      );
+      setData((old) => {
+        if (!old) return old;
+        const rows: { id: string }[] = old[kind];
+        return {
+          ...old,
+          [kind]: [
+            ...rows,
+            ...(more[kind] as { id: string }[]).filter((m) => !rows.some((r) => r.id === m.id)),
+          ],
+          [`${kind}Total`]: more[`${kind}Total`],
+          [`${kind}Next`]: more[`${kind}Next`],
+        } as Snapshot;
+      });
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'The next page could not be loaded.');
+    } finally {
+      setBusy(false);
+    }
+  }
   const submit = useRetainedSubmission();
   // Feedback shows next to the form that caused it and nowhere else, so an old error never sits
   // beside a later action (CQ-59).
@@ -712,6 +748,14 @@ export function ExecutionNetwork({
             )}
           </article>
         ))}
+        <ShowMore
+          shown={data?.tasks.length ?? 0}
+          total={data?.tasksTotal}
+          next={data?.tasksNext}
+          busy={busy}
+          label="Tasks"
+          onMore={() => void showMore('tasks')}
+        />
       </PhoneFold>
       <details>
         <summary>Reviewed work dimensions by task category</summary>
@@ -785,6 +829,14 @@ export function ExecutionNetwork({
                 </button>
               </form>
             ))}
+          <ShowMore
+            shown={data?.profiles.length ?? 0}
+            total={data?.profilesTotal}
+            next={data?.profilesNext}
+            busy={busy}
+            label="Profiles"
+            onMore={() => void showMore('profiles')}
+          />
         </details>
       )}
       {admin && (

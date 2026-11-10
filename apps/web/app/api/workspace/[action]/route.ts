@@ -36,7 +36,13 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
         'ai-sources': () =>
           s.intelligence.sources(ctx, z.uuid().parse(new URL(request.url).searchParams.get('run'))),
         intelligence: () => s.intelligence.workspace(ctx),
-        network: () => s.network.workspace(ctx),
+        network: () => {
+          const q = new URL(request.url).searchParams;
+          return s.network.workspace(ctx, {
+            profilesAfter: q.get('profilesAfter'),
+            tasksAfter: q.get('tasksAfter'),
+          });
+        },
         'network-invitations': () =>
           s.networkInvitations.list(ctx, new URL(request.url).searchParams.get('after')),
         'mission-catalogue': () => s.corridors.catalogue(ctx),
@@ -83,8 +89,23 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
               .max(100000)
               .parse(new URL(request.url).searchParams.get('offset') ?? 0),
           ),
-        communications: () => s.communications.workspace(ctx),
-        meetings: () => s.meetings.workspace(ctx),
+        communications: () => {
+          const q = new URL(request.url).searchParams;
+          return s.communications.workspace(ctx, {
+            targetsAfter: q.get('targetsAfter'),
+            contactsAfter: q.get('contactsAfter'),
+            messagesAfter: q.get('messagesAfter'),
+            optoutsAfter: q.get('optoutsAfter'),
+          });
+        },
+        meetings: () => {
+          const q = new URL(request.url).searchParams;
+          return s.meetings.workspace(ctx, {
+            after: q.get('after'),
+            followupsAfter: q.get('followupsAfter'),
+            missionId: q.get('missionId'),
+          });
+        },
         research: () =>
           s.counterparties.catalogue(ctx, Object.fromEntries(new URL(request.url).searchParams)),
         counterparty: () =>
@@ -120,7 +141,11 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
           );
         },
         workspace: async () => ({
-          ...(await s.evidence.workspace(ctx)),
+          ...(await s.evidence.workspace(ctx, {
+            sourcesAfter: new URL(request.url).searchParams.get('sourcesAfter'),
+            claimsAfter: new URL(request.url).searchParams.get('claimsAfter'),
+            evidenceAfter: new URL(request.url).searchParams.get('evidenceAfter'),
+          })),
           uploadsConfigured: s.uploadsConfigured,
           scanMode: s.scanMode,
         }),
