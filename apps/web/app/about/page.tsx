@@ -22,7 +22,7 @@ const useCases = [
   [
     'Find buyers and partners',
     'Exporters and companies entering a market',
-    'choose the right company. Explain your offer. Plan useful conversations.',
+    'define the right company. Explain your offer. Plan useful conversations.',
   ],
   [
     'Source products and machinery',
@@ -32,12 +32,12 @@ const useCases = [
   [
     'Make a business visit count',
     'Companies preparing a trade fair, factory visit or market visit',
-    'agree your goals before you travel. Follow up after the meetings.',
+    'agree your objectives before you travel. Follow up after the meetings.',
   ],
   [
     'Run a delegation or programme',
     'Chambers, institutions and organisers',
-    'manage the programme. Keep each participant’s goals separate. Keep their private information separate too.',
+    'manage the programme. Keep each participant’s objectives separate. Keep their private information separate too.',
   ],
 ] as const;
 

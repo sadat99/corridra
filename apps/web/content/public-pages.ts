@@ -142,7 +142,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     label: 'Enter a new market',
     title: 'Enter an unfamiliar market without entering it blind.',
     description:
-      'We are building support to find customers and partners. This includes local help when remote research is not enough.',
+      'We are building support to find customers and partners. This will include local help when remote research is not enough.',
     introduction: {
       title: 'You do not need a local office to start learning.',
       text: 'A first visit should test something concrete: who needs your offer, how buying works and which partners fit.',
@@ -186,7 +186,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     label: 'Run a trade mission',
     title: 'Give every participant a reason to be in the room.',
     description:
-      'We are building a mission around each participant’s goal. Each mission gets a qualified agenda. We are also building follow-up after the trip.',
+      'We are building missions around each participant’s goal. Each mission will have a qualified agenda. We are also building follow-up after the trip.',
     introduction: {
       title: 'A shared itinerary is not a shared objective.',
       text: 'Each participant has a different goal. A good programme links each goal to the right companies.',

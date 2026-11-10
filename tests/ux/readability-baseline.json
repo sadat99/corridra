@@ -133,15 +133,15 @@
     "grade": 5.4,
     "hard": 0,
     "long": 0,
-    "sentences": 10,
-    "words": 99
+    "sentences": 9,
+    "words": 98
   },
   "/corridors/bangladesh-china": {
     "grade": 6,
     "hard": 0,
     "long": 0,
-    "sentences": 7,
-    "words": 46
+    "sentences": 6,
+    "words": 45
   },
   "/corridors/bangladesh-eu": {
     "grade": 6.1,
@@ -169,7 +169,7 @@
     "hard": 0,
     "long": 0,
     "sentences": 9,
-    "words": 83
+    "words": 84
   },
   "/fairs": {
     "unavailable": true
