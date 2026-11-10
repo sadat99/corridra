@@ -1454,6 +1454,11 @@
       "use": "Proposed: owner-supplied logo, orb, favicon, app icons and social images in AC/1 colour; art-direction, trademark, legal handoff and tagline gates open"
     },
     {
+      "path": "docs/adr/0079-real-company-linking-phase-1.md",
+      "classification": "Architecture decision",
+      "use": "Design only (relayed owner decisions of 10 Nov 2026): real company linking Phase 1, one provenance rule, source-rights record and takedown, combined search with anti-enumeration, erasure by redaction record, forward real-use files; nothing built, installed or enabled; amends ADR-052"
+    },
+    {
       "path": "docs/revamp/README.md",
       "classification": "Current guide/contract",
       "use": "Owner-approved V3 controlled revamp scope (4 Nov 2026), merge rules, session file ownership and the Wave 0 route/cleanup manifest; live state stays in the ledger"
@@ -1527,6 +1532,11 @@
       "path": "docs/revamp/specs/workflow-intelligence.md",
       "classification": "Current guide/contract",
       "use": "Owner mandate (10 Nov 2026): journey audit, open-source tool decisions, reading-level measurement W1, plain copy W2"
+    },
+    {
+      "path": "docs/revamp/specs/company-linking-phase1.md",
+      "classification": "Current guide/contract",
+      "use": "Phase plan for ADR-079 (design only): slices, named database objects, provenance and orphan matrices, owner steps, Phase 2 list"
     },
     {
       "path": "docs/revamp/crud/summary.md",
