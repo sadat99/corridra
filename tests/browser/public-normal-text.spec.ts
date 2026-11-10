@@ -543,3 +543,20 @@ test('home player: the six step marks stay in one row at every width from 320 to
     expect(rows, `step marks at ${width}`).toBe(1);
   }
 });
+
+// W7: with nothing saved the page is at Normal text, whatever the Text Size and Less Movement code does.
+test('with no saved text size the page carries no text size attribute and the text is 16 px', async ({
+  page,
+}) => {
+  for (const path of ['/', '/how-it-works', '/plan']) {
+    await open(page, path, 390);
+    expect(
+      await page.evaluate(() => ({
+        size: getComputedStyle(document.documentElement).fontSize,
+        textSize: document.documentElement.getAttribute('data-text-size'),
+        lessMovement: document.documentElement.getAttribute('data-less-movement'),
+      })),
+      path,
+    ).toEqual({ size: '16px', textSize: null, lessMovement: null });
+  }
+});
