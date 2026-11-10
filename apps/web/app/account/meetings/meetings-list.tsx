@@ -152,10 +152,14 @@ export function RequestsSection({ requests }: { requests: readonly RequestLink[]
       <ul className="ux-meeting-list" id={listId}>
         {shown.map((request) => (
           <li key={request.key}>
-            <Link prefetch={false} className="text-link" href={request.href}>
-              <span dir="auto" lang={hanLang(request.title)}>
-                {request.title}
-              </span>
+            <Link
+              prefetch={false}
+              className="text-link"
+              href={request.href}
+              dir="auto"
+              lang={hanLang(request.title)}
+            >
+              {request.title}
               <span className="sr-only">: meetings and visits</span>
             </Link>
           </li>
