@@ -153,6 +153,54 @@ describe('switch states', () => {
     expect(row.state.text).toBe('Set');
     expect(JSON.stringify(view)).not.toContain(secretValue);
   });
+  describe('the support WhatsApp number', () => {
+    const name = 'CORRIDRA_SUPPORT_WHATSAPP_NUMBER';
+    const row = (env: NodeJS.ProcessEnv) =>
+      describeSwitches(env)
+        .flatMap((g) => g.rows)
+        .find((r) => r.name === name)!;
+    it('is a described setting in Accounts and requests', () => {
+      expect(row({})).toMatchObject({ kind: 'setting', group: 'Accounts and requests' });
+      expect(row({}).label).toBe('Support WhatsApp number');
+      expect(row({}).line).not.toMatch(/\u2014/);
+      // The line tells the truth about timing: nothing waits for an approval in the product, the link goes live at
+      // the next deploy after a usable number is set, so the owner approves the wording first.
+      expect(row({}).line).toContain('Set it only after you approve the privacy wording');
+      expect(row({}).line).toContain('go live at the next deploy');
+      expect(row({}).line).not.toMatch(/stays off/i);
+    });
+    it('says Not set when it is absent or blank, in the same neutral way as other settings', () => {
+      for (const value of [undefined, '', '   ', '\t\n'])
+        expect(row({ [name]: value }).state).toEqual({ text: 'Not set', tone: 'neutral' });
+    });
+    it('says Set for a usable number and never shows the digits', () => {
+      const digits = '6500000000';
+      for (const value of [`+${digits}`, digits, ` +${digits} `]) {
+        const view = describeSwitches({ [name]: value });
+        expect(view.flatMap((g) => g.rows).find((r) => r.name === name)!.state).toEqual({
+          text: 'Set',
+          tone: 'info',
+        });
+        expect(JSON.stringify(view)).not.toContain(digits);
+      }
+    });
+    it('says it is set but not usable for a value the menus would reject, without showing it', () => {
+      for (const value of [
+        '0065000000',
+        '+65 0000 0000',
+        '1234567',
+        'call me',
+        'https://wa.me/6500000000',
+      ]) {
+        const view = describeSwitches({ [name]: value });
+        expect(view.flatMap((g) => g.rows).find((r) => r.name === name)!.state).toEqual({
+          text: 'Set, but not a usable number',
+          tone: 'caution',
+        });
+        expect(JSON.stringify(view)).not.toContain(value);
+      }
+    });
+  });
   it('never lists or reads secret names, whatever the environment holds', () => {
     const env = {
       CORRIDRA_OPENAI_API_KEY: 'sk-private-value-1',

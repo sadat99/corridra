@@ -62,4 +62,21 @@ describe('the team Help groups', () => {
     ]);
     for (const group of teamHelpGroups()) expect(group.items.length).toBeLessThanOrEqual(4);
   });
+  test('with a support number set only the Chat on WhatsApp row changes, and Start a Request stays', () => {
+    const href = 'https://wa.me/6500000000';
+    const unset = teamHelpGroups().flatMap((group) => group.items);
+    const set = teamHelpGroups(href);
+    const entries = set.flatMap((group) => group.items);
+    expect(entries).toHaveLength(unset.length);
+    expect(
+      entries.filter((entry, i) => JSON.stringify(entry) !== JSON.stringify(unset[i])),
+    ).toEqual([{ kind: 'external', label: 'Chat on WhatsApp', href }]);
+    expect(entries).toContainEqual({ kind: 'link', label: 'Start a Request', href: '/plan' });
+    for (const group of set) expect(group.items.length).toBeLessThanOrEqual(4);
+  });
+  test('without a number the team Help says Coming soon and has no external row', () => {
+    const entries = teamHelpGroups().flatMap((group) => group.items);
+    expect(entries).toContainEqual({ kind: 'soon', label: 'Chat on WhatsApp' });
+    expect(entries.some((entry) => entry.kind === 'external')).toBe(false);
+  });
 });

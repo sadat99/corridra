@@ -103,6 +103,7 @@ export async function withTenant<T>(
         'opportunities.accounting',
         'delivery.share',
         'viewas.open',
+        'problems.triage',
       ].includes(permission) &&
       !a.fresh
     )

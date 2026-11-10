@@ -1,7 +1,8 @@
 'use client';
 // The customer sidebar's top and foot (navigation v1, CustomerDesktop board). The top is the one primary action,
-// New Request. The foot says Help on WhatsApp is Coming soon: there is no owner-configured number yet, so it is
-// plain text with a tag and not a link. The workspace choice, the person and Help moved to the header menus
+// New Request. The foot is Help on WhatsApp: a link that opens WhatsApp in a new tab when the owner has set a
+// support number, and otherwise plain text with a Coming soon tag, never a link that does nothing. The workspace
+// choice, the person and Help moved to the header menus
 // (utility-menus.tsx). It reads only the person's workspaces; nothing here decides access, and every page and
 // action still checks on the server.
 import './customer-rail.css';
@@ -31,14 +32,24 @@ export function CustomerRailTop() {
   return <NewRequestLink />;
 }
 
-export function CustomerRailFoot() {
+/** Help on WhatsApp. `href` is the owner's support link; without it the row says Coming soon, as it always did. */
+export function CustomerRailFoot({ href }: { href?: string | null }) {
   return (
     <div className="ux-rail-foot">
-      <p className="ux-rail-soon">
-        <CorridraIcon name="help" />
-        <span>Help on WhatsApp</span>
-        <span className="ux-soon-tag">Coming soon</span>
-      </p>
+      {href ? (
+        <a className="ux-rail-help" href={href} target="_blank" rel="noopener noreferrer" lang="en">
+          <CorridraIcon name="help" />
+          <span>Help on WhatsApp</span>
+          <CorridraIcon name="open" className="ux-rail-help-open" />
+          <span className="sr-only"> (opens WhatsApp outside Corridra, in a new tab)</span>
+        </a>
+      ) : (
+        <p className="ux-rail-soon">
+          <CorridraIcon name="help" />
+          <span>Help on WhatsApp</span>
+          <span className="ux-soon-tag">Coming soon</span>
+        </p>
+      )}
     </div>
   );
 }

@@ -4,7 +4,8 @@
 // and an item the person cannot open is simply not given to this model by the shell.
 //
 // Honest features: anything that is not real in this repository yet is an entry of kind "soon", which the menus
-// draw as plain text with a "Coming soon" tag, never a link or a button that does nothing.
+// draw as plain text with a "Coming soon" tag, never a link or a button that does nothing. Chat on WhatsApp is the
+// one row that can be either: a "soon" row until the owner sets a support number, then an "external" link.
 
 import type { MessageKey } from '../i18n/messages';
 
@@ -22,11 +23,13 @@ export type CustomerTab = {
 };
 
 /**
- * One row of a menu: a link, the Listen action, the Text Size choice, the Less Movement switch, plain text tagged
+ * One row of a menu: a link, a link that leaves Corridra (opens in a new tab), the Listen action, the Text Size choice,
+ * the Less Movement switch, plain text tagged
  * Coming soon, or the Sign Out action.
  */
 export type MenuEntry =
   | { kind: 'link'; label: string; href: string }
+  | { kind: 'external'; label: string; href: string }
   | { kind: 'soon'; label: string }
   | { kind: 'listen'; label: string }
   | { kind: 'textsize'; label: string }
@@ -141,18 +144,21 @@ export function customerAvatarItems(
 }
 
 /**
- * The help and accessibility menu. Chat on WhatsApp needs a number the owner configures, and none exists, so it is
- * Coming soon; so are Report a Problem and Stronger Colours. Listen to This Page, Text Size and Less Movement are
- * real (the speech the corner Help sheet offers, and two choices kept in this browser only), and the About group
- * keeps the website and privacy notice the old account menu held.
+ * The help and accessibility menu. Chat on WhatsApp needs a number the owner configures: with no `whatsappHref` it is
+ * Coming soon, and with one it is a link in the same place (never an extra row). Report a Problem and Stronger
+ * Colours are Coming soon. Listen to This Page, Text Size and Less Movement are real (the speech the corner Help
+ * sheet offers, and two choices kept in this browser only), and the About group keeps the website and privacy
+ * notice the old account menu held.
  */
-export function customerHelpGroups(): HelpGroup[] {
+export function customerHelpGroups(whatsappHref?: string | null): HelpGroup[] {
   return [
     {
       label: 'Get Help',
       items: [
         { kind: 'link', label: 'See How It Works', href: '/how-it-works' },
-        { kind: 'soon', label: 'Chat on WhatsApp' },
+        whatsappHref
+          ? { kind: 'external', label: 'Chat on WhatsApp', href: whatsappHref }
+          : { kind: 'soon', label: 'Chat on WhatsApp' },
         { kind: 'link', label: 'How We Label Facts', href: '/trust' },
         { kind: 'soon', label: 'Report a Problem' },
       ],

@@ -94,6 +94,9 @@ export const permissions = {
   'members.manage': ['owner'],
   'config.manage': ['owner'],
   'audit.read': ['owner', 'admin'],
+  // Problem reports (ADR-078): every role may report one; owners and admins triage them with a fresh authenticator check.
+  'problems.report': ['owner', 'admin', 'operator', 'reviewer', 'viewer'],
+  'problems.triage': ['owner', 'admin'],
   // Opening a read-only preview of what a customer, delegate or supplier sees. Always logged.
   'viewas.open': ['owner', 'admin'],
 } satisfies Record<string, Role[]>;

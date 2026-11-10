@@ -6,6 +6,7 @@ import {
   validateArrangementFees,
 } from '@corridra/domain/commercial-arrangements';
 import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
+import { plainTextAllowed } from '@corridra/domain/problem-report';
 import {
   withTenant,
   type DatabaseClient,
@@ -23,12 +24,7 @@ const synthetic = (max: number) =>
     .refine(customerLabelAllowed, 'Enter a descriptive name or statement')
     .refine((v) => !control.test(v), 'Control characters are not allowed');
 const plain = (min: number, max: number) =>
-  z
-    .string()
-    .trim()
-    .min(min)
-    .max(max)
-    .refine((v) => !control.test(v) && !/(:\/\/|@|www\.)/.test(v), 'Plain text only');
+  z.string().trim().min(min).max(max).refine(plainTextAllowed, 'Plain text only');
 const requestRef = { requestId: z.uuid(), expectedSeq: z.number().int().min(1).max(500) };
 export const quoteComponentInput = z
   .object({

@@ -67,6 +67,11 @@ import {
 } from '@corridra/auth/customer-workspace-lifecycle';
 import { CustomerErasureQueue } from '@corridra/auth/customer-erasure-queue';
 import {
+  CustomerProblemReports,
+  StaffProblemReports,
+  TeamProblemReports,
+} from '@corridra/auth/problem-reports';
+import {
   CustomerAccountLifecycleService,
   customerAccountLifecycleEnabled,
 } from '@corridra/auth/customer-account-lifecycle';
@@ -590,6 +595,21 @@ function createServices() {
       readCustomerSession,
     ),
     customerErasureQueue: new CustomerErasureQueue(runtimePool),
+    customerProblemReports: new CustomerProblemReports(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerWorkspacesEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
+        issuer: customerIssuerFromEnv(),
+      },
+      readCustomerSession,
+    ),
+    teamProblemReports: new TeamProblemReports(runtimePool),
+    staffProblemReports: new StaffProblemReports(runtimePool),
     customerAccountLifecycle: new CustomerAccountLifecycleService(
       runtimePool,
       authPool,
