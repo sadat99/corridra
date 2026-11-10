@@ -15,6 +15,7 @@ async function problems(page: Page) {
   return page.evaluate(() => {
     const edge = document.documentElement.clientWidth;
     // The right edge of what is in the flow inside a box: its text and its children, not decoration placed on top of it.
+    // Content that is not rendered is skipped: a closed disclosure's content can keep a stale box nobody sees.
     const contentRight = (el: HTMLElement) => {
       let right = 0;
       const range = document.createRange();
@@ -23,6 +24,7 @@ async function problems(page: Page) {
           range.selectNodeContents(node);
           right = Math.max(right, range.getBoundingClientRect().right);
         } else if (node instanceof HTMLElement) {
+          if (!node.checkVisibility()) continue;
           const position = getComputedStyle(node).position;
           if (position === 'absolute' || position === 'fixed') continue;
           right = Math.max(right, node.getBoundingClientRect().right);
@@ -31,6 +33,7 @@ async function problems(page: Page) {
       return right;
     };
     const offenders = Array.from(document.querySelectorAll<HTMLElement>('body *')).filter((el) => {
+      if (!el.checkVisibility()) return false;
       const box = el.getBoundingClientRect();
       // Visually hidden helper text (and what is inside it) is one pixel wide on purpose.
       if (box.width < 2 || el.clientWidth < 2) return false;
@@ -106,6 +109,15 @@ test('with 200% text the request form fits at 320, 390, 768 and 1280 on its wher
     await expect(currentWord(page)).toHaveText('Where');
     await expect(page.locator('form.intake-form .guide-options-row .choice')).toHaveCount(3);
     expect(await problems(page), `/plan where step at ${width}`).toEqual([]);
+    // What is folded away is not measured above, so the receipt check is opened and measured here, then closed again.
+    // By keyboard: at twice the text size the page's sticky parts can cover the summary for a pointer.
+    const receipt = page.locator('details.receipt-disclosure');
+    await receipt.locator('> summary').press('Enter');
+    await expect(receipt).toHaveAttribute('open');
+    await expect(receipt.getByLabel('Receipt code')).toBeVisible();
+    expect(await problems(page), `/plan where step, receipt check open, at ${width}`).toEqual([]);
+    await receipt.locator('> summary').press('Enter');
+    await expect(receipt).not.toHaveAttribute('open');
     await continueToContact(page);
     expect(await problems(page), `/plan contact step at ${width}`).toEqual([]);
   }
