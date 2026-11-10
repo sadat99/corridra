@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect, signInCustomer, signInOwner } from '../fixtures';
 import type { Page } from '@playwright/test';
+import { measureColours, weakRings } from '../../../browser/ring-contrast';
 
 // W10 Stronger Colours on the signed-in pages, on a production build with the test-only sign-ins. The effect is in force
 // when the person chose it (the saved choice puts data-contrast="more" on <html>) or the device asks
@@ -229,7 +230,7 @@ test.describe('the Help menu row', () => {
     await expect(row(menu)).toHaveAttribute('aria-checked', 'true');
     expect((await contrast(page)).attribute).toBe('more');
     await expect(note).toHaveText(
-      'This browser cannot save your choice. It lasts until you reload or close this tab.',
+      'This browser cannot save your choice. It lasts until the page loads again.',
     );
     // Turning it off removes the saved value, which this browser allows, so the unsaved choice is gone.
     await row(menu).click();
@@ -425,4 +426,85 @@ test('the helper Me page and Team Today with Stronger Colours: axe, height, the 
   });
   // Leave the sign-in rate limit as this spec found it, for the specs that sign in after it.
   await page.waitForTimeout(61_000);
+});
+
+const underlineOf = (page: Page, selector: string) =>
+  page.evaluate(
+    (target) =>
+      Array.from(document.querySelectorAll<HTMLElement>(target)).map(
+        (el) => getComputedStyle(el).textDecorationLine,
+      ),
+    selector,
+  );
+
+for (const way of ways) {
+  test(`with ${way} the focus ring on the navy Team sidebar reaches 3 to 1, and the selected stripe is white, at 1440 and 800`, async ({
+    page,
+  }) => {
+    test.setTimeout(200_000);
+    await signInOwner(page, '/operator');
+    await prepare(page, way);
+    for (const size of [
+      { width: 1440, height: 900 },
+      { width: 800, height: 900 },
+    ]) {
+      await page.setViewportSize(size);
+      await page.goto('/operator');
+      await expect(page.locator('main h1, main h2').first()).toBeVisible();
+      await expectWay(page, way);
+      const { rings } = await measureColours(page, 'nav.ux-team-sidebar');
+      expect(rings.length, `the sidebar has focusable items at ${size.width}`).toBeGreaterThan(5);
+      expect(weakRings(rings), `at ${size.width}`).toEqual([]);
+      const stripe = await page.evaluate(() => {
+        const current = document.querySelector('nav.ux-team-sidebar [aria-current]');
+        return current ? getComputedStyle(current).boxShadow : 'none found';
+      });
+      // At 800 the stripe is drawn, and it is white (cobalt on navy is 1.91 to 1); at 1440 the selected tile has none.
+      if (size.width === 800) expect(stripe).toBe('rgb(255, 255, 255) 3px 0px 0px 0px inset');
+      else expect(stripe).toBe('none');
+    }
+    // Leave the sign-in rate limit as this test found it, for the specs that sign in after it.
+    await page.waitForTimeout(61_000);
+  });
+}
+
+test('Team Today tiles and rows made of links are not underlined; a link in a sentence and a standalone text link are', async ({
+  page,
+}) => {
+  test.setTimeout(200_000);
+  await signInOwner(page, '/operator');
+  await chooseStronger(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/operator');
+  await expect(page.locator('main h1, main h2').first()).toBeVisible();
+  await expect(html(page)).toHaveAttribute('data-contrast', 'more');
+  const tiles = await underlineOf(page, 'main .ux-today-tiles li > a');
+  expect(tiles.length, 'Team Today has count tiles').toBeGreaterThan(0);
+  expect(new Set(tiles)).toEqual(new Set(['none']));
+  const standalone = await underlineOf(page, 'main a.text-link');
+  expect(standalone.length, 'Team Today has a standalone text link').toBeGreaterThan(0);
+  expect(new Set(standalone)).toEqual(new Set(['underline']));
+  await page.waitForTimeout(61_000);
+});
+
+test('the account request rows are not underlined, and the link in a sentence is', async ({
+  page,
+  context,
+}) => {
+  await signInCustomer(context);
+  await chooseStronger(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/account');
+  await expect(page.locator('main h1, main h2').first()).toBeVisible();
+  const rows = await underlineOf(page, 'main li > a, main a.ux-row-link');
+  expect(rows.length, 'the account page has row links').toBeGreaterThan(0);
+  expect(new Set(rows)).toEqual(new Set(['none']));
+  await page.goto('/account?view=more');
+  await expect(page.locator('main h1, main h2').first()).toBeVisible();
+  const list = await underlineOf(page, 'main .ux-link-list li > a');
+  expect(list.length).toBeGreaterThan(0);
+  expect(new Set(list)).toEqual(new Set(['none']));
+  const sentence = await underlineOf(page, 'main p a.text-link');
+  expect(sentence.length, 'the more page has a link in a sentence').toBeGreaterThan(0);
+  expect(new Set(sentence)).toEqual(new Set(['underline']));
 });

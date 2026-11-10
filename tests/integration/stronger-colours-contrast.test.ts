@@ -181,31 +181,46 @@ const copperInkMode = copperRule.declarations.get('color') ?? '';
 // ---------------------------------------------------------------------------------------------------------------
 // The pair table. fg and bg are tokens (or, for fg, a colour expression); min is the least ratio.
 type Pair = { fg: string; bg: string; min: number; scope?: 'footer'; defaultFg?: string };
+// Every light surface a text colour can sit on, and every text colour: the table is their product, so the claim that
+// every text role reaches 7 to 1 on every surface is true by construction, not by a hand-picked list.
 const lights = [
   '--paper',
+  '--surface-0',
   '--surface-1',
   '--surface-2',
+  '--surface-raised',
+  '--surface-subtle',
   '--selected-surface',
+  '--info-surface',
   '--positive-surface',
   '--caution-surface',
   '--critical-surface',
+  '--unknown-surface',
+];
+const textColours = [
+  '--ink',
+  '--text-2',
+  '--text-3',
+  '--muted',
+  '--brand',
+  '--action',
+  '--info',
+  '--selected',
+  '--accent',
+  '--positive',
+  '--caution',
+  '--critical',
+  '--unknown',
+  '--caution-text',
+  '--brand-deep',
 ];
 const text = (fg: string, backgrounds: string[]): Pair[] =>
   backgrounds.map((bg) => ({ fg, bg, min: 7 }));
 const pairs: Pair[] = [
-  ...text('--ink', lights),
-  ...text('--text-2', lights),
-  ...text('--text-3', lights),
-  ...text('--brand', [...lights, '--info-surface']),
-  ...text('--info', ['--paper', '--surface-1', '--info-surface']),
-  ...text('--positive', ['--paper', '--surface-1', '--positive-surface']),
-  ...text('--caution', ['--paper', '--surface-1', '--caution-surface']),
-  ...text('--critical', ['--paper', '--surface-1', '--critical-surface']),
-  ...text('--unknown', ['--paper', '--surface-1', '--unknown-surface']),
+  ...textColours.flatMap((fg) => text(fg, lights)),
   ...text('--on-action', ['--action', '--action-hover', '--action-pressed']),
   ...text('--on-brand', ['--brand', '--brand-hover', '--brand-deep']),
   ...text('--paper', ['--accent', '--brand-hover']),
-  ...text('--brand-deep', ['--selected-surface', '--surface-1']),
   // The selected tab's text is the pressed cobalt, which Stronger Colours does not change.
   { fg: '--ac-cobalt-pressed', bg: '--ac-surface-selected', min: 7 },
   // The copper ink text (home hook and number, the organise tags) is mixed toward Ink.
@@ -234,6 +249,9 @@ const pairs: Pair[] = [
   { fg: '--action', bg: '--paper', min: 3 },
   // On the navy regions the focus ring is white (comfort.css), not cobalt.
   { fg: '--on-brand', bg: '--brand-deep', min: 7 },
+  // The ring inside the white selected tab of the player is navy; the stripe of the selected sidebar item is white.
+  { fg: '--brand-deep', bg: '--on-brand', min: 7 },
+  { fg: '--on-brand', bg: '--ac-surface-navy', min: 3 },
   { fg: '--footer-line', bg: '--brand-deep', min: 3, scope: 'footer' },
   // A soft glow that only supports the focus outline: it must only get stronger than the default.
   { fg: '--ring', bg: '--surface-1', min: 1.1 },
@@ -260,14 +278,36 @@ describe('the colours with Stronger Colours on', () => {
     expect(failures(pairs, true)).toEqual([]);
   });
 
-  test('the lowest text ratio is the brand colour on the selected tint, still above 7 to 1', () => {
+  test('the table is the full product of the text colours and the light surfaces, so nothing in it is hand-picked', () => {
+    for (const fg of textColours)
+      for (const bg of lights)
+        expect(
+          pairs.some((pair) => pair.fg === fg && pair.bg === bg && pair.min === 7),
+          `${fg} on ${bg}`,
+        ).toBe(true);
+    expect(textColours.length * lights.length).toBeGreaterThanOrEqual(180);
+  });
+
+  test('the lowest text ratio is the unknown colour on the selected tint, 7.03 to 1, still above 7 to 1', () => {
     const text7 = pairs.filter((pair) => pair.min === 7);
     const lowest = Math.min(...text7.map((pair) => ratioOf(pair, true)));
     expect(lowest).toBeGreaterThan(7);
     expect(lowest).toBeCloseTo(
-      ratioOf({ fg: '--brand', bg: '--selected-surface', min: 7 }, true),
+      ratioOf({ fg: '--unknown', bg: '--selected-surface', min: 7 }, true),
       5,
     );
+    expect(lowest).toBeCloseTo(7.03, 2);
+  });
+
+  test('the status colours reach 7 to 1 on the tints they were once just under (6.86 to 6.99 before)', () => {
+    for (const [fg, bg] of [
+      ['--positive', '--selected-surface'],
+      ['--positive', '--info-surface'],
+      ['--caution', '--selected-surface'],
+      ['--caution', '--info-surface'],
+      ['--caution', '--critical-surface'],
+    ])
+      expect(ratioOf({ fg, bg, min: 7 }, true), `${fg} on ${bg}`).toBeGreaterThanOrEqual(7.1);
   });
 
   test('the designer table is reproduced from the stylesheets', () => {
@@ -276,15 +316,15 @@ describe('the colours with Stronger Colours on', () => {
       ['--text-3', '--paper', 7.85],
       ['--brand', '--paper', 7.67],
       ['--on-action', '--action', 8.16],
-      ['--positive', '--paper', 7.6],
+      ['--positive', '--paper', 7.89],
       ['--critical', '--paper', 7.79],
-      ['--caution', '--paper', 7.49],
+      ['--caution', '--paper', 7.77],
       ['--unknown', '--paper', 7.7],
       ['--brand', '--critical-surface', 7.13],
       ['--line', '--paper', 3.33],
     ];
     for (const [fg, bg, value] of expected)
-      // The designer rounded each mix to a hex colour; this reads the mixes unrounded, so allow a rounding difference.
+      // The designer rounded each mix to a hex colour; this reads the mixes unrounded, so allow a rounding difference. The two status rows follow the status colours set to 76 percent.
       expect(Math.abs(ratioOf({ fg, bg, min: 0 }, true) - value), `${fg} on ${bg}`).toBeLessThan(
         0.08,
       );

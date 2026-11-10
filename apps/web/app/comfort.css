@@ -49,8 +49,8 @@ html[data-contrast='more'] {
   --action-pressed: color-mix(in srgb, var(--ac-cobalt) 50%, var(--ac-navy));
   --ring: color-mix(in srgb, var(--brand) 30%, transparent);
   /* Status text and marks toward Ink; the status surfaces and their meaning are unchanged. */
-  --positive: color-mix(in srgb, var(--ac-positive) 80%, var(--ac-ink));
-  --caution: color-mix(in srgb, var(--ac-warning) 80%, var(--ac-ink));
+  --positive: color-mix(in srgb, var(--ac-positive) 76%, var(--ac-ink));
+  --caution: color-mix(in srgb, var(--ac-warning) 76%, var(--ac-ink));
   --critical: color-mix(in srgb, var(--ac-critical) 80%, var(--ac-ink));
   --unknown: color-mix(in srgb, var(--ac-unknown) 72%, var(--ac-ink));
 }
@@ -88,16 +88,33 @@ html[data-contrast='more']
   outline-color: var(--on-brand);
   box-shadow: 0 0 0 2px var(--brand-deep);
 }
-/* A link inside a sentence, a list item or a table cell is underlined, so it is not found by colour alone. Controls,
-   navigation and tabs are not links in text and keep their own look. Underlining shifts nothing on the page. */
+/* A tab filled white inside the navy player draws its ring inside itself, so the ring is navy on that white. */
+html[data-contrast='more'] .ac1-record-tabs button[aria-selected='true']:focus-visible {
+  outline-color: var(--brand-deep);
+}
+/* The selected item of the navy sidebar carries a stripe: white, because cobalt on navy is only 1.91 to 1. */
+html[data-contrast='more'] nav.ux-team-sidebar {
+  --selected: var(--on-brand);
+}
+/* An action filled control on navy is edged in white, so its boundary shows: the fill alone is darker than the navy. */
+html[data-contrast='more'] .guide-footer .guide-footer-actions .primary-link {
+  border-color: var(--on-brand);
+}
+html[data-contrast='more'] .ac1-play {
+  border: 2px solid var(--on-brand);
+}
+/* A link in running text (a paragraph, a definition or a caption) is underlined, so it is not found by colour alone, and
+   so is a link that stands alone as a text link. A row, a tile or a badge made of a link is not text: its shape tells it
+   apart. Controls, navigation and tabs keep their own look. Underlining shifts nothing on the page. */
 html[data-contrast='more']
-  :is(main a.text-link, main :is(p, li, dd, td, figcaption) a, .guide-footer p a):not(
+  :is(main a.text-link, main :is(p, dd, figcaption) a, .guide-footer p a):not(
     [role],
     nav a,
     .primary-link,
     .button,
     .button-secondary,
-    .secondary-link
+    .secondary-link,
+    :has(div, ul, dl, [class*='tag'], [class*='badge'], [class*='status'])
   ) {
   text-decoration-line: underline;
   text-decoration-thickness: 2px;
@@ -131,8 +148,8 @@ html[data-contrast='more'] :is(.ux-menu-panel, .ux-notice-panel) {
     --action-pressed: color-mix(in srgb, var(--ac-cobalt) 50%, var(--ac-navy));
     --ring: color-mix(in srgb, var(--brand) 30%, transparent);
     /* Status text and marks toward Ink; the status surfaces and their meaning are unchanged. */
-    --positive: color-mix(in srgb, var(--ac-positive) 80%, var(--ac-ink));
-    --caution: color-mix(in srgb, var(--ac-warning) 80%, var(--ac-ink));
+    --positive: color-mix(in srgb, var(--ac-positive) 76%, var(--ac-ink));
+    --caution: color-mix(in srgb, var(--ac-warning) 76%, var(--ac-ink));
     --critical: color-mix(in srgb, var(--ac-critical) 80%, var(--ac-ink));
     --unknown: color-mix(in srgb, var(--ac-unknown) 72%, var(--ac-ink));
   }
@@ -168,16 +185,33 @@ html[data-contrast='more'] :is(.ux-menu-panel, .ux-notice-panel) {
     outline-color: var(--on-brand);
     box-shadow: 0 0 0 2px var(--brand-deep);
   }
-  /* A link inside a sentence, a list item or a table cell is underlined, so it is not found by colour alone. Controls,
-     navigation and tabs are not links in text and keep their own look. Underlining shifts nothing on the page. */
+  /* A tab filled white inside the navy player draws its ring inside itself, so the ring is navy on that white. */
+  html:root .ac1-record-tabs button[aria-selected='true']:focus-visible {
+    outline-color: var(--brand-deep);
+  }
+  /* The selected item of the navy sidebar carries a stripe: white, because cobalt on navy is only 1.91 to 1. */
+  html:root nav.ux-team-sidebar {
+    --selected: var(--on-brand);
+  }
+  /* An action filled control on navy is edged in white, so its boundary shows: the fill alone is darker than the navy. */
+  html:root .guide-footer .guide-footer-actions .primary-link {
+    border-color: var(--on-brand);
+  }
+  html:root .ac1-play {
+    border: 2px solid var(--on-brand);
+  }
+  /* A link in running text (a paragraph, a definition or a caption) is underlined, so it is not found by colour alone, and
+     so is a link that stands alone as a text link. A row, a tile or a badge made of a link is not text: its shape tells it
+     apart. Controls, navigation and tabs keep their own look. Underlining shifts nothing on the page. */
   html:root
-    :is(main a.text-link, main :is(p, li, dd, td, figcaption) a, .guide-footer p a):not(
+    :is(main a.text-link, main :is(p, dd, figcaption) a, .guide-footer p a):not(
       [role],
       nav a,
       .primary-link,
       .button,
       .button-secondary,
-      .secondary-link
+      .secondary-link,
+      :has(div, ul, dl, [class*='tag'], [class*='badge'], [class*='status'])
     ) {
     text-decoration-line: underline;
     text-decoration-thickness: 2px;
