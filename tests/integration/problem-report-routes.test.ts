@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { fixture, rawContext } from './support';
-import { watching } from './problem-report-support';
+import { tracing, watching } from './problem-report-support';
 import { harness, options, type Fixture } from './revamp-g4-support';
 import { DomainError } from '../../packages/domain/src/index';
 import { limitWords } from '../../apps/web/lib/account-limit';
@@ -54,6 +54,8 @@ let h: ReturnType<typeof harness>;
 let ids: Record<string, string>;
 // Every query that reaches a report function or the catalogue probe, so a test can show none was asked.
 const reportQueries: string[] = [];
+// Every connection and query of the runtime pool, in order, with a marker pushed when a request body is read.
+const trace: string[] = [];
 const reportCalls = /problem_report|pg_catalog\.pg_proc/;
 const customerRoute = async () =>
   await import('../../apps/web/app/api/customer-problem-reports/route');
@@ -107,13 +109,14 @@ beforeAll(async () => {
     await h.provision(person, `Synthetic ${person} workspace`);
   await migrateCustomerProblemReports(f.owner);
   live.readCustomer.mockImplementation(async () => (live.person ? h.session(live.person) : null));
-  const runtime = watching(f.runtime, reportQueries, undefined, reportCalls);
+  const runtime = tracing(watching(f.runtime, reportQueries, undefined, reportCalls), trace);
   live.customer = new CustomerProblemReports(runtime, f.auth, options, live.readCustomer);
   live.team = new TeamProblemReports(runtime);
   live.staff = new StaffProblemReports(runtime);
   resetProblemReportProbe();
 });
 beforeEach(() => {
+  trace.length = 0;
   live.lifecycle = true;
   customerAs(null);
   teamAs(null);
@@ -178,6 +181,81 @@ describe('the customer route', () => {
     // a well-formed reference does reach the database, so the empty list above is not an artefact
     await GET(new Request(customerUrl('?reference=RP-999999')));
     expect(reportQueries.length).toBeGreaterThan(0);
+  });
+
+  describe('the body is read before any database connection is taken', () => {
+    // A body that writes down in the trace when something starts to read it. highWaterMark 0 means it is not pulled early.
+    const watched = (text: string, headers: Record<string, string> = {}) => {
+      const bytes = new TextEncoder().encode(text);
+      const body = new ReadableStream<Uint8Array>(
+        {
+          pull(controller) {
+            trace.push('body');
+            controller.enqueue(bytes);
+            controller.close();
+          },
+        },
+        { highWaterMark: 0 },
+      );
+      return new Request(customerUrl(), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', origin, ...headers },
+        body,
+        duplex: 'half',
+      } as RequestInit & { duplex: 'half' });
+    };
+
+    test('an invalid body ends the request with no connection and no query', async () => {
+      customerAs('ann');
+      const { POST } = await customerRoute();
+      const before = await count();
+      const cases: [string, Request, number][] = [
+        ['bad JSON', post(customerUrl(), '{not json'), 400],
+        ['an unknown key', post(customerUrl(), filing({ personId: 'x' })), 400],
+        ['a wrong type', post(customerUrl(), filing({ category: 5 })), 400],
+        ['an empty page', post(customerUrl(), filing({ page: '' })), 400],
+        ['an oversized body', post(customerUrl(), filing({ detail: 'x'.repeat(9000) })), 413],
+        ['not JSON', post(customerUrl(), filing(), { 'content-type': 'text/plain' }), 415],
+      ];
+      for (const [name, request, status] of cases) {
+        trace.length = 0;
+        expect((await POST(request)).status, name).toBe(status);
+        expect(trace, name).toEqual([]);
+      }
+      expect(await count()).toBe(before);
+    });
+
+    test('the body is consumed before the first connection, and a valid body files as before', async () => {
+      customerAs('ann');
+      const { POST } = await customerRoute();
+      const response = await answer(await POST(watched(JSON.stringify(filing()))));
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({ status: 'received', changed: true });
+      expect(trace.indexOf('body')).toBeGreaterThanOrEqual(0);
+      expect(trace.indexOf('connect')).toBeGreaterThan(trace.indexOf('body'));
+      expect(trace.indexOf('query')).toBeGreaterThan(trace.indexOf('body'));
+      // the budget was spent after the session and before the body
+      expect(live.budget).toHaveBeenCalledTimes(1);
+    });
+
+    test('signed out is a 401 and the body is never read, valid or not', async () => {
+      const { POST } = await customerRoute();
+      for (const text of ['{not json', JSON.stringify(filing()), 'x'.repeat(9000)]) {
+        trace.length = 0;
+        expect((await POST(watched(text))).status).toBe(401);
+        expect(trace).toEqual([]);
+      }
+      expect(live.budget).not.toHaveBeenCalled();
+    });
+
+    test('a refused origin is answered before the session and the body', async () => {
+      customerAs('ann');
+      const { POST } = await customerRoute();
+      expect(
+        (await POST(watched(JSON.stringify(filing()), { origin: 'https://evil.invalid' }))).status,
+      ).toBe(403);
+      expect(trace).toEqual([]);
+    });
   });
 
   test('a team session does not sign a customer in: the customer route never reads the operator session', async () => {

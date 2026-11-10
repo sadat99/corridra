@@ -31,3 +31,28 @@ export function watching(
     },
   };
 }
+
+// A pool that writes down, in order, each connection taken ("connect") and each query asked ("query"), on the pool or on a
+// client it hands out, then passes everything through. Other events (a body read) can be pushed on the same list.
+export function tracing(pool: DatabasePool, events: string[]): DatabasePool {
+  return {
+    query: ((...args: unknown[]) => {
+      events.push('query');
+      return Reflect.apply(pool.query, pool, args);
+    }) as DatabasePool['query'],
+    end: pool.end.bind(pool),
+    connect: async () => {
+      events.push('connect');
+      const client = await pool.connect();
+      return new Proxy(client, {
+        get(target, key, receiver) {
+          if (key !== 'query') return Reflect.get(target, key, receiver);
+          return (...args: unknown[]) => {
+            events.push('query');
+            return Reflect.apply(target.query, target, args);
+          };
+        },
+      });
+    },
+  };
+}

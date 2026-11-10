@@ -205,45 +205,59 @@ function readReference(value: unknown) {
   return reference.data;
 }
 
-// What the signed-in provider session made of a request, before anything the caller sent is looked at. The routes pass
-// each caller input as a function, and the service calls it only once identity is known, so a signed-out caller gets the
-// same 401 whatever the body, the query or the reference looks like. A plain value is accepted too.
-export type CallerInput = unknown;
-async function settle(input: CallerInput) {
+// The routes pass each caller input (the reference, the query, the body) as a function, and the service calls it only once
+// identity is known, so a signed-out caller gets the same 401 whatever the request looks like. A plain value is accepted too.
+async function settle(input: unknown) {
   return typeof input === 'function' ? await (input as () => unknown)() : input;
 }
 
 // A customer's own reports. A person with no workspace may file, and a closed account can read but not file (the database
-// says so), so the closed-account gate of the boundary is not used. The signed-in provider session decides who acts. Inside
-// the transaction the order is: identity, the caller input is read and checked, the module is probed, the database is asked.
-// So a malformed reference is answered as an unknown one without a probe or a lookup, installed or not.
+// says so), so the closed-account gate of the boundary is not used. The signed-in provider session decides who acts.
+// The order is: identity, the request budget, the caller input is read and checked, and only then is a connection taken,
+// so a slow or invalid body never holds a pool connection or an open transaction. Inside the transaction the module is
+// probed and the database is asked. A malformed reference is answered as an unknown one before any of that.
 export class CustomerProblemReports extends CustomerSessionBoundary {
-  private async run<T>(
-    work: (db: DatabaseClient) => Promise<T>,
+  // `prepare` is the boundary's afterIdentity hook: it runs once the session is verified and before any pool connection,
+  // and what it returns is handed to `work` inside the transaction.
+  private async run<Prepared, T>(
+    prepare: () => Promise<Prepared>,
+    work: (db: DatabaseClient, prepared: Prepared) => Promise<T>,
     subject?: string,
     issuer?: string,
-    afterIdentity?: () => Promise<void>,
   ) {
+    let ready: { value: Prepared } | undefined;
     try {
-      return await this.transaction(work, subject, issuer, afterIdentity, {
-        allowClosedAccount: true,
-      });
+      return await this.transaction(
+        async (db) => {
+          if (!ready) throw new Error('The request input was not read before the transaction');
+          return work(db, ready.value);
+        },
+        subject,
+        issuer,
+        async () => {
+          ready = { value: await prepare() };
+        },
+        { allowClosedAccount: true },
+      );
     } catch (error) {
       throw problemReportError(error);
     }
   }
 
-  // afterIdentity is for the request budget: it runs once the session is verified and never for a signed-out caller.
+  // budget is the request budget of the route: spent after the session, never for a signed-out caller.
   async file(
-    input: CallerInput,
+    input: unknown,
     subject?: string,
     issuer?: string,
-    afterIdentity?: () => Promise<void>,
+    budget?: () => Promise<void>,
   ): Promise<ProblemReportFiled> {
     return reportFiled(
       await this.run(
-        async (db) => {
-          const { commandId, ...words } = customerProblemReportInput.parse(await settle(input));
+        async () => {
+          await budget?.();
+          return customerProblemReportInput.parse(await settle(input));
+        },
+        async (db, { commandId, ...words }) => {
           await requireInstalled(db);
           return (
             await db.query<{ result: ProblemReportFiled }>(
@@ -254,19 +268,14 @@ export class CustomerProblemReports extends CustomerSessionBoundary {
         },
         subject,
         issuer,
-        afterIdentity,
       ),
     );
   }
 
-  async list(
-    query: CallerInput,
-    subject?: string,
-    issuer?: string,
-  ): Promise<ProblemReportListItem[]> {
+  async list(query: unknown, subject?: string, issuer?: string): Promise<ProblemReportListItem[]> {
     const rows = await this.run(
-      async (db) => {
-        const { beforeNumber, pageSize } = problemReportListQuery.parse(await settle(query));
+      async () => problemReportListQuery.parse(await settle(query)),
+      async (db, { beforeNumber, pageSize }) => {
         await requireInstalled(db);
         return (
           await db.query<{ rows: ProblemReportListItem[] }>(
@@ -281,15 +290,11 @@ export class CustomerProblemReports extends CustomerSessionBoundary {
     return rows.map(listItem);
   }
 
-  async get(
-    reference: CallerInput,
-    subject?: string,
-    issuer?: string,
-  ): Promise<ProblemReportDetail> {
+  async get(reference: unknown, subject?: string, issuer?: string): Promise<ProblemReportDetail> {
     return reportDetail(
       await this.run(
-        async (db) => {
-          const wanted = readReference(await settle(reference));
+        async () => readReference(await settle(reference)),
+        async (db, wanted) => {
           await requireInstalled(db);
           return (
             await db.query<{ result: ProblemReportDetail }>(

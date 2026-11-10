@@ -45,8 +45,8 @@ export async function GET(request: Request) {
 }
 
 // Files a problem report. The command id makes a retry safe: the same id with the same words answers again. Only the
-// origin is checked before the session; the body is read, limited and checked after it, and the request budget is spent
-// after it, so a signed-out caller always gets a 401.
+// origin is checked before the session; the request budget is spent, and the body is read, limited and checked, after it
+// and before any database connection is taken, so a signed-out caller always gets a 401 and a slow body holds no connection.
 export async function POST(request: Request) {
   try {
     const s = await problemReportServices();
