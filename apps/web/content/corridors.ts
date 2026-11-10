@@ -4,7 +4,7 @@ export const corridorPages = {
     market: 'CN',
     heading: 'Start with the requirement. Make each supplier conversation count.',
     description:
-      'Source products and machinery with a clear specification, evidence of fit and a named next step.',
+      'Source products and machinery. Start with a clear specification, evidence of fit and a named next step.',
     jobs: [
       'Product and component sourcing',
       'Machinery and technical evaluation',
