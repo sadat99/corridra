@@ -267,6 +267,11 @@ beforeAll(async () => {
     'pat',
     'quin',
     'rhea',
+    'una',
+    'vic',
+    'wes',
+    'xia',
+    'yan',
     ...filers,
   ]);
   for (const person of [
@@ -284,6 +289,11 @@ beforeAll(async () => {
     'pat',
     'quin',
     'rhea',
+    'una',
+    'vic',
+    'wes',
+    'xia',
+    'yan',
     ...filers,
   ])
     sampleWorkspace[person] = await h.provision(person, `Synthetic ${person} workspace`);
@@ -1808,20 +1818,85 @@ describe('words are removed under an erasure request', () => {
       customerFile('pat', body({ category: 'words_wrong' }), firstCommand),
     ).rejects.toMatchObject(conflict);
     expect((await counts()).words).toBe(wordsBefore! - 2);
-    // a team report is staff data and is not touched, and a later customer report keeps its words
+    // a team report is staff data and is not touched
     expect((await teamGet(ctxOf('operator'), sampleTeam)).words).toMatchObject({
       detail: 'Operator words stay.',
     });
+    // a report filed while the request is still in progress is not reached by a retry of the first command
     const later = (await customerFile('pat', body({ detail: 'Words written after the removal.' })))
       .reference as string;
+    expect(await remove(owner(), requestId, command)).toMatchObject({ removed: 2 });
     expect((await customerGet('pat', later)).words).toMatchObject({
       detail: 'Words written after the removal.',
     });
-    // completing the request leaves the later report to a further call, which removes just that one
+    // it was filed before the request was completed, so the next removal reaches it and no other
     await erasure(requestId, 'in_progress', 'completed', 'The erasure was completed in full.');
     expect(await remove(owner(), requestId)).toMatchObject({ removed: 1 });
     expect((await customerGet('pat', later)).words).toEqual({ removed: true });
+    // a report filed after the completion keeps its words: it needs a new erasure request
+    const afterCompletion = (
+      await customerFile('pat', body({ detail: 'Words written after the completion.' }))
+    ).reference as string;
     expect(await remove(owner(), requestId)).toMatchObject({ removed: 0 });
+    expect(await remove(owner(), requestId, randomUUID())).toMatchObject({ removed: 0 });
+    expect((await customerGet('pat', afterCompletion)).words).toMatchObject({
+      detail: 'Words written after the completion.',
+    });
+    // and the retry of the first command still answers with its original count
+    expect(await remove(owner(), requestId, command)).toMatchObject({ removed: 2 });
+    expect((await customerGet('pat', afterCompletion)).words).toMatchObject({
+      detail: 'Words written after the completion.',
+    });
+  });
+
+  test('a removal while in progress reaches the reports filed up to that moment, and a retry is answered first whatever was filed since', async () => {
+    const requestId = await request('yan');
+    await erasure(requestId, 'received', 'in_progress');
+    const before = (await customerFile('yan', body({ detail: 'Yan words before the call.' })))
+      .reference as string;
+    const command = randomUUID();
+    const erasuresBefore = (await counts()).erasures;
+    expect(await remove(owner(), requestId, command)).toMatchObject({ removed: 1 });
+    expect((await customerGet('yan', before)).words).toEqual({ removed: true });
+    const since = (await customerFile('yan', body({ detail: 'Yan words filed since.' })))
+      .reference as string;
+    // the retry returns the original answer, with the reference of the request, and touches nothing
+    expect(await remove(owner(), requestId, command)).toEqual({
+      reference: expect.any(String),
+      removed: 1,
+    });
+    expect((await customerGet('yan', since)).words).toMatchObject({
+      detail: 'Yan words filed since.',
+    });
+    expect((await counts()).erasures).toBe(erasuresBefore + 1);
+    // even after the request is completed, the retry is answered first, while a new command reaches what was filed before
+    await erasure(requestId, 'in_progress', 'completed', 'The erasure was completed in full.');
+    expect(await remove(owner(), requestId, command)).toMatchObject({ removed: 1 });
+    expect((await customerGet('yan', since)).words).toMatchObject({
+      detail: 'Yan words filed since.',
+    });
+    expect(await remove(owner(), requestId)).toMatchObject({ removed: 1 });
+    expect((await customerGet('yan', since)).words).toEqual({ removed: true });
+  });
+
+  test('a command already used for another erasure request is refused, and nothing is removed', async () => {
+    const used = randomUUID();
+    const firstRequest = await request('wes');
+    await erasure(firstRequest, 'received', 'in_progress');
+    await customerFile('wes', body({ detail: 'Wes words for the first request.' }));
+    expect(await remove(owner(), firstRequest, used)).toMatchObject({ removed: 1 });
+    const otherRequest = await request('xia');
+    await erasure(otherRequest, 'received', 'in_progress');
+    const words = (await customerFile('xia', body({ detail: 'Xia words that stay.' })))
+      .reference as string;
+    const erasures = (await counts()).erasures;
+    await expect(remove(owner(), otherRequest, used)).rejects.toMatchObject(conflict);
+    expect((await counts()).erasures).toBe(erasures);
+    expect((await customerGet('xia', words)).words).toMatchObject({
+      detail: 'Xia words that stay.',
+    });
+    // the same command for the right request still answers its original count
+    expect(await remove(owner(), firstRequest, used)).toMatchObject({ removed: 1 });
   });
 
   test('words without an erasure row cannot be removed, even by the owner, and an erasure row is for customers only', async () => {
@@ -1877,5 +1952,45 @@ describe('words are removed under an erasure request', () => {
     // back on the sample side the same staff may remove them
     expect(await remove(owner(), requestId)).toMatchObject({ removed: 1 });
     expect((await customerGet('quin', reference)).words).toEqual({ removed: true });
+  });
+
+  test('a person whose real workspace access was revoked is erased by sample staff while the report stays on the real side', async () => {
+    // una has a sample workspace of her own, joined vic's workspace and was removed from it; vic's workspace then became real
+    const member = await h.join('vic', 'una', sampleWorkspace.vic!);
+    await revoke('vic', sampleWorkspace.vic!, member);
+    const requestId = await request('una');
+    await erasure(requestId, 'received', 'in_progress');
+    await flip(sampleWorkspace.vic!, false);
+    await realUse(true);
+    await f.owner.query('ALTER TABLE app.membership DISABLE TRIGGER USER');
+    await f.owner.query(
+      "UPDATE app.membership SET allowed_purposes=allowed_purposes||ARRAY['commercial_qualification'] WHERE tenant_id=$1 AND NOT 'commercial_qualification'=ANY(allowed_purposes)",
+      [f.tenantB],
+    );
+    await f.owner.query('ALTER TABLE app.membership ENABLE TRIGGER USER');
+    await flip(f.tenantB, false);
+    try {
+      const reference = (
+        await customerFile('una', body({ detail: 'Una wrote words for the real side.' }))
+      ).reference as string;
+      // the report is on the real side (ever held), and only real staff see it
+      expect(await storedSide(reference)).toBe('real');
+      expect(await seen(reference)).toMatchObject({ effective: 'real', sample: false, real: true });
+      // the person is in the scope of sample staff now (nothing real is held), so real staff do not find the request
+      await expect(remove(realCtx(), requestId)).rejects.toMatchObject({
+        code: '23514',
+        message: 'Erasure request not found',
+      });
+      expect((await customerGet('una', reference)).words).toMatchObject({
+        detail: 'Una wrote words for the real side.',
+      });
+      // sample staff remove the words of the real-side report
+      expect(await remove(owner(), requestId)).toMatchObject({ removed: 1 });
+      expect((await customerGet('una', reference)).words).toEqual({ removed: true });
+    } finally {
+      await flip(f.tenantB, true);
+      await flip(sampleWorkspace.vic!, true);
+      await realUse(false);
+    }
   });
 });
