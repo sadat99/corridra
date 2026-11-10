@@ -8845,6 +8845,11 @@ samp {
     justify-self: end;
     margin: 0;
   }
+  /* A row of one paragraph and a button (the closed state): the text centres against the button. */
+  .ux-customer .ux-account-row > p:first-child {
+    grid-row: 1 / span 2;
+    align-self: center;
+  }
 }
 
 /* Closure block. */
@@ -8910,9 +8915,14 @@ samp {
   max-width: 65ch;
 }
 .ux-customer .ux-account-card.ux-account-zone[data-tone='loading'] {
-  min-height: calc(var(--space-16) * 4);
+  min-height: calc(var(--space-16) * 3.5);
   border-color: transparent;
   background: none;
+}
+@media (max-width: 39.99rem) {
+  .ux-customer .ux-account-card.ux-account-zone[data-tone='loading'] {
+    min-height: calc(var(--space-16) * 6);
+  }
 }
 .ux-customer .ux-account-zone p > a.text-link {
   display: inline;
