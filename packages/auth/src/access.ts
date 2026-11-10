@@ -116,8 +116,8 @@ export class AccessService {
           'UPDATE app.membership SET role=$3,revoked_at=CASE WHEN $4 THEN now() ELSE NULL END WHERE tenant_id=$1 AND user_id=$2 AND version=$5 RETURNING version',
           [t.tenantId, v.userId, v.role, v.revoked, v.expectedVersion],
         );
-        // A writer that does not take the workspace lock (cancelling an invitation, until G10 gives it the lock) can
-        // commit between the read and this write: the version predicate turns that into the same refusal.
+        // Cancelling an invitation takes the same workspace lock (CRUD G10), so it no longer commits between the read
+        // and this write. The version predicate stays as a defence against any writer that does not take the lock.
         if (!changed.rowCount)
           throw new DomainError('This membership changed; reload and try again', 409);
         return { updated: true, replayed: false, version: changed.rows[0].version as number };
