@@ -159,6 +159,7 @@ type Options = {
   trip?: boolean;
   service?: boolean;
   offered?: string;
+  initialLens?: 'trip';
 };
 const props = (o: Options) => ({
   requestId,
@@ -169,6 +170,7 @@ const props = (o: Options) => ({
   decisionsEnabled: false,
   lenses: o.lenses ?? true,
   trip: o.trip ?? false,
+  initialLens: o.initialLens,
 });
 
 test.beforeAll(async () => {
@@ -927,6 +929,19 @@ test('without the switch the Room has exactly three lens buttons and no Trip wor
   await open(page, { lenses: false, trip: true });
   await expect(page.locator('.room-lenses')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Trip', exact: true })).toHaveCount(0);
+});
+
+test('W8: the Room opens on Meetings when the address asked for it, and on Overview otherwise', async ({
+  page,
+}) => {
+  await open(page, { trip: true, initialLens: 'trip' });
+  await expect(lens(page, 'Trip')).toHaveAttribute('aria-pressed', 'true');
+  await expect(lens(page, 'Overview')).toHaveAttribute('aria-pressed', 'false');
+  await expect(tripRegion(page)).toBeVisible();
+  // Without the asking, Overview is shown first as always, and the Trip lens is one tap away.
+  await open(page, { trip: true });
+  await expect(lens(page, 'Overview')).toHaveAttribute('aria-pressed', 'true');
+  await expect(tripRegion(page)).toHaveCount(0);
 });
 
 test('with the switch Trip is the fourth lens, last, and Overview is still the one shown', async ({

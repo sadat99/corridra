@@ -1,7 +1,7 @@
 'use client';
 
 import { useId, useState } from 'react';
-import { meetingStatus, type MeetingStatus } from '@corridra/domain/access';
+import { meetingStatus } from '@corridra/domain/access';
 import { StatusBadge } from '../../../../components/access-state';
 import { fill } from '../../../../lib/i18n/fill';
 import { localeMeta, type Locale } from '../../../../lib/i18n/locales';
@@ -10,24 +10,11 @@ import {
   hanLang,
   isChangedMeeting,
   orderTrip,
+  statusWords,
   tripFirstShown,
   type TripMeeting,
 } from '../../../../lib/trip';
 import { formatDateTime } from '../../../../lib/ux/format';
-
-const statusWords: Record<
-  MeetingStatus,
-  { key: MessageKey; tone: 'neutral' | 'positive' | 'caution' | 'info' }
-> = {
-  PROPOSED: { key: 'room.trip.status.proposed', tone: 'neutral' },
-  ACCEPTED: { key: 'room.trip.status.accepted', tone: 'info' },
-  SCHEDULED: { key: 'room.trip.status.scheduled', tone: 'info' },
-  HELD: { key: 'room.trip.status.held', tone: 'positive' },
-  DECLINED: { key: 'room.trip.status.declined', tone: 'caution' },
-  CANCELLED: { key: 'room.trip.status.cancelled', tone: 'caution' },
-  NO_SHOW: { key: 'room.trip.status.noShow', tone: 'caution' },
-  RESCHEDULE_REQUIRED: { key: 'room.trip.status.rescheduleRequired', tone: 'neutral' },
-};
 
 /**
  * The meetings and visits of a saved commercial report, read only. It shows what the Corridra team

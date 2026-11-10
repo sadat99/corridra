@@ -690,6 +690,39 @@ describe('request titles and the detail cap', () => {
     expect(list.unreadable).toEqual([]);
   });
 
+  it('the detail cap alone does not mark the requests list incomplete: every request is still listed', async () => {
+    const rows = Array.from({ length: 31 }, (_, n) => requestRow(n + 1));
+    patch({ customerRequests: { list: async () => ({ requests: rows, nextAfter: null }) } });
+    const list = await run();
+    expect(list.partial).toBe(true);
+    expect(list.items).toHaveLength(31);
+    expect(list).not.toHaveProperty('requestsIncomplete');
+  });
+
+  it('a requests list not followed to its end is marked requestsIncomplete, and no other list does', async () => {
+    const endless = async () => ({ requests: [requestRow(1)], nextAfter: id(777) });
+    patch({
+      customerRequests: { list: endless },
+      customerMissionDrafts: { list: async () => ({ drafts: [], nextAfter: id(778) }) },
+    });
+    expect((await run()).requestsIncomplete).toBe(true);
+    // An unfinished drafts list alone is partial but leaves the requests list complete.
+    patch({
+      customerRequests: { list: async () => ({ requests: [requestRow(1)], nextAfter: null }) },
+      customerMissionDrafts: { list: async () => ({ drafts: [], nextAfter: id(778) }) },
+    });
+    const draftsOnly = await run();
+    expect(draftsOnly.partial).toBe(true);
+    expect(draftsOnly).not.toHaveProperty('requestsIncomplete');
+  });
+
+  it('a requests list that failed is unreadable, not requestsIncomplete', async () => {
+    patch({ customerRequests: { list: fail } });
+    const list = await run();
+    expect(list.unreadable).toEqual(['requests']);
+    expect(list).not.toHaveProperty('requestsIncomplete');
+  });
+
   it('at the cap exactly, nothing is partial', async () => {
     const rows = Array.from({ length: 30 }, (_, n) => requestRow(n + 1));
     patch({ customerRequests: { list: async () => ({ requests: rows, nextAfter: null }) } });
