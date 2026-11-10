@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { fixture } from './support';
-import type { DatabasePool } from '../../packages/db/src/index';
+import { watching } from './problem-report-support';
 import { harness, options, type Fixture } from './revamp-g4-support';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateCustomerAccountLifecycle } from '../../packages/db/src/customer-account-lifecycle-migrate';
@@ -21,7 +21,7 @@ import {
 // must answer 503 on every method, change nothing, and start working within a minute of 0002 with no redeploy. The same
 // routes over the fully installed module are in problem-report-routes.test.ts.
 const live = vi.hoisted(() => ({
-  person: 'ann' as string,
+  person: 'ann' as string | null,
   token: '',
   customer: null as unknown,
   team: null as unknown,
@@ -31,7 +31,7 @@ vi.mock('../../apps/web/lib/foundations', () => ({
   foundations: () => ({
     ready: Promise.resolve(),
     config: { APP_ORIGIN: 'https://app.corridra.test' },
-    provider: { getSession: async () => ({ token: live.token }) },
+    provider: { getSession: async () => (live.token ? { token: live.token } : null) },
     missions: { budget: async () => undefined },
     customerProblemReports: live.customer,
     teamProblemReports: live.team,
@@ -166,7 +166,7 @@ beforeAll(async () => {
   await h.admit(['ann']);
   await h.provision('ann', 'Synthetic only-0001 workspace');
   live.customer = new CustomerProblemReports(f.runtime, f.auth, options, async () =>
-    h.session('ann'),
+    live.person ? h.session(live.person) : null,
   );
   live.team = new TeamProblemReports(f.runtime);
   live.staff = new StaffProblemReports(f.runtime);
@@ -184,6 +184,39 @@ describe('with the module not installed, with 0001 alone, and with 0001 and 0002
     expect(await written()).toEqual({ made: false, reports: 0 });
     await expectUnavailable();
     expect(await written()).toEqual({ made: false, reports: 0 });
+  });
+
+  test('signed out is a 401 and a malformed reference is a 404, installed or not; a well-formed one is a 503', async () => {
+    const long = 'x'.repeat(65);
+    const customerGet = async (reference: string) =>
+      (await customerRoute()).GET(new Request(`${customerUrl}?reference=${reference}`));
+    const teamGet = async (reference: string) =>
+      (await teamRoute()).GET(new Request(`${teamUrl()}&reference=${reference}`));
+    const token = live.token;
+    live.person = null;
+    live.token = '';
+    for (const response of [
+      await customerGet(long),
+      await customerGet(reference),
+      await teamGet(long),
+      await teamGet(reference),
+    ])
+      expect(response.status).toBe(401);
+    live.person = 'ann';
+    live.token = token;
+    // the shortcut for a malformed reference comes before the probe, so it stays 404 here; this is a choice, not an accident
+    for (const response of [
+      await customerGet(long),
+      await customerGet('%00'),
+      await customerGet(''),
+      await teamGet(long),
+      await teamGet(''),
+    ]) {
+      expect(response.status).toBe(404);
+      expect(await response.json()).toEqual({ error: 'Problem report not found' });
+    }
+    expect((await customerGet(reference)).status).toBe(503);
+    expect((await teamGet(reference)).status).toBe(503);
   });
 
   test('0001 alone has the command functions but not the rules 0002 made, and the runtime login can see that', async () => {
@@ -321,33 +354,6 @@ const stillThere = async () =>
       'plain words',
     ])
   ).rows[0].ok;
-// A pool that records every catalogue probe the service asks, and can make the next one fail.
-const watching = (
-  pool: DatabasePool,
-  seen: string[],
-  failing: { next: boolean },
-): DatabasePool => ({
-  query: pool.query.bind(pool),
-  end: pool.end.bind(pool),
-  connect: async () => {
-    const client = await pool.connect();
-    return new Proxy(client, {
-      get(target, key, receiver) {
-        if (key !== 'query') return Reflect.get(target, key, receiver);
-        return (text: unknown, ...rest: unknown[]) => {
-          if (typeof text === 'string' && text.includes('pg_catalog.pg_proc')) {
-            seen.push(text);
-            if (failing.next) {
-              failing.next = false;
-              return Promise.reject(new Error('the catalogue could not be read'));
-            }
-          }
-          return Reflect.apply(target.query, target, [text, ...rest]);
-        };
-      },
-    });
-  },
-});
 const mine = () => new Request(teamUrl());
 const asked = async () => (await (await teamRoute()).GET(mine())).status;
 

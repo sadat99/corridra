@@ -205,74 +205,99 @@ function readReference(value: unknown) {
   return reference.data;
 }
 
+// What the signed-in provider session made of a request, before anything the caller sent is looked at. The routes pass
+// each caller input as a function, and the service calls it only once identity is known, so a signed-out caller gets the
+// same 401 whatever the body, the query or the reference looks like. A plain value is accepted too.
+export type CallerInput = unknown;
+async function settle(input: CallerInput) {
+  return typeof input === 'function' ? await (input as () => unknown)() : input;
+}
+
 // A customer's own reports. A person with no workspace may file, and a closed account can read but not file (the database
-// says so), so the closed-account gate of the boundary is not used. The signed-in provider session decides who acts.
+// says so), so the closed-account gate of the boundary is not used. The signed-in provider session decides who acts. Inside
+// the transaction the order is: identity, the caller input is read and checked, the module is probed, the database is asked.
+// So a malformed reference is answered as an unknown one without a probe or a lookup, installed or not.
 export class CustomerProblemReports extends CustomerSessionBoundary {
   private async run<T>(
     work: (db: DatabaseClient) => Promise<T>,
     subject?: string,
     issuer?: string,
+    afterIdentity?: () => Promise<void>,
   ) {
     try {
-      return await this.transaction(
-        async (db) => {
-          await requireInstalled(db);
-          return work(db);
-        },
-        subject,
-        issuer,
-        undefined,
-        { allowClosedAccount: true },
-      );
+      return await this.transaction(work, subject, issuer, afterIdentity, {
+        allowClosedAccount: true,
+      });
     } catch (error) {
       throw problemReportError(error);
     }
   }
 
-  async file(input: unknown, subject?: string, issuer?: string): Promise<ProblemReportFiled> {
-    const { commandId, ...words } = customerProblemReportInput.parse(input);
+  // afterIdentity is for the request budget: it runs once the session is verified and never for a signed-out caller.
+  async file(
+    input: CallerInput,
+    subject?: string,
+    issuer?: string,
+    afterIdentity?: () => Promise<void>,
+  ): Promise<ProblemReportFiled> {
     return reportFiled(
       await this.run(
-        async (db) =>
-          (
+        async (db) => {
+          const { commandId, ...words } = customerProblemReportInput.parse(await settle(input));
+          await requireInstalled(db);
+          return (
             await db.query<{ result: ProblemReportFiled }>(
               'SELECT customer.problem_report_command($1,$2) AS result',
               [commandId, JSON.stringify(words)],
             )
-          ).rows[0]!.result,
+          ).rows[0]!.result;
+        },
         subject,
         issuer,
+        afterIdentity,
       ),
     );
   }
 
-  async list(query: unknown, subject?: string, issuer?: string): Promise<ProblemReportListItem[]> {
-    const { beforeNumber, pageSize } = problemReportListQuery.parse(query);
+  async list(
+    query: CallerInput,
+    subject?: string,
+    issuer?: string,
+  ): Promise<ProblemReportListItem[]> {
     const rows = await this.run(
-      async (db) =>
-        (
+      async (db) => {
+        const { beforeNumber, pageSize } = problemReportListQuery.parse(await settle(query));
+        await requireInstalled(db);
+        return (
           await db.query<{ rows: ProblemReportListItem[] }>(
             'SELECT customer.problem_report_list($1,$2) AS rows',
             [beforeNumber ?? null, pageSize],
           )
-        ).rows[0]!.rows,
+        ).rows[0]!.rows;
+      },
       subject,
       issuer,
     );
     return rows.map(listItem);
   }
 
-  async get(reference: unknown, subject?: string, issuer?: string): Promise<ProblemReportDetail> {
-    const wanted = readReference(reference);
+  async get(
+    reference: CallerInput,
+    subject?: string,
+    issuer?: string,
+  ): Promise<ProblemReportDetail> {
     return reportDetail(
       await this.run(
-        async (db) =>
-          (
+        async (db) => {
+          const wanted = readReference(await settle(reference));
+          await requireInstalled(db);
+          return (
             await db.query<{ result: ProblemReportDetail }>(
               'SELECT customer.problem_report_get($1) AS result',
               [wanted],
             )
-          ).rows[0]!.result,
+          ).rows[0]!.result;
+        },
         subject,
         issuer,
       ),

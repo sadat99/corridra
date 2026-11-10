@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { fixture, rawContext } from './support';
+import { watching } from './problem-report-support';
 import { harness, options, type Fixture } from './revamp-g4-support';
 import { DomainError } from '../../packages/domain/src/index';
 import { limitWords } from '../../apps/web/lib/account-limit';
@@ -51,6 +52,9 @@ vi.mock('../../apps/web/lib/foundations', () => ({
 let f: Fixture;
 let h: ReturnType<typeof harness>;
 let ids: Record<string, string>;
+// Every query that reaches a report function or the catalogue probe, so a test can show none was asked.
+const reportQueries: string[] = [];
+const reportCalls = /problem_report|pg_catalog\.pg_proc/;
 const customerRoute = async () =>
   await import('../../apps/web/app/api/customer-problem-reports/route');
 const teamRoute = async () =>
@@ -103,9 +107,10 @@ beforeAll(async () => {
     await h.provision(person, `Synthetic ${person} workspace`);
   await migrateCustomerProblemReports(f.owner);
   live.readCustomer.mockImplementation(async () => (live.person ? h.session(live.person) : null));
-  live.customer = new CustomerProblemReports(f.runtime, f.auth, options, live.readCustomer);
-  live.team = new TeamProblemReports(f.runtime);
-  live.staff = new StaffProblemReports(f.runtime);
+  const runtime = watching(f.runtime, reportQueries, undefined, reportCalls);
+  live.customer = new CustomerProblemReports(runtime, f.auth, options, live.readCustomer);
+  live.team = new TeamProblemReports(runtime);
+  live.staff = new StaffProblemReports(runtime);
   resetProblemReportProbe();
 });
 beforeEach(() => {
@@ -132,6 +137,47 @@ describe('the customer route', () => {
     ])
       expect(response.status).toBe(401);
     expect(await count()).toBe(before);
+  });
+
+  test('signed out is a 401 whatever the request looks like: nothing the caller sent is checked first', async () => {
+    const { GET, POST } = await customerRoute();
+    const before = await count();
+    const long = 'x'.repeat(65);
+    for (const response of [
+      await GET(new Request(customerUrl(`?reference=${long}`))),
+      await GET(new Request(customerUrl('?reference='))),
+      await GET(new Request(customerUrl('?reference=RP-1%00'))),
+      await GET(new Request(customerUrl('?reference=RP-1&pageSize=2'))),
+      await GET(new Request(customerUrl('?pageSize=0'))),
+      await GET(new Request(customerUrl('?personId=x'))),
+      await POST(post(customerUrl(), '{not json')),
+      await POST(post(customerUrl(), filing({ personId: 'x' }))),
+      await POST(post(customerUrl(), filing({ detail: 'x'.repeat(9000) }))),
+      await POST(post(customerUrl(), filing(), { 'content-type': 'text/plain' })),
+    ])
+      expect(response.status).toBe(401);
+    // the request budget is spent only for a signed-in caller
+    expect(live.budget).not.toHaveBeenCalled();
+    expect(await count()).toBe(before);
+  });
+
+  test('signed in, a malformed reference is the same 404 as an unknown one and asks the database nothing', async () => {
+    const { GET } = await customerRoute();
+    customerAs('ann');
+    const unknown = await answer(await GET(new Request(customerUrl('?reference=RP-999999'))));
+    expect(unknown.status).toBe(404);
+    reportQueries.length = 0;
+    for (const reference of ['x'.repeat(65), '', 'RP-1%00']) {
+      const malformed = await answer(
+        await GET(new Request(customerUrl(`?reference=${reference}`))),
+      );
+      expect(malformed.status).toBe(404);
+      expect(malformed.body).toEqual(unknown.body);
+    }
+    expect(reportQueries).toEqual([]);
+    // a well-formed reference does reach the database, so the empty list above is not an artefact
+    await GET(new Request(customerUrl('?reference=RP-999999')));
+    expect(reportQueries.length).toBeGreaterThan(0);
   });
 
   test('a team session does not sign a customer in: the customer route never reads the operator session', async () => {
@@ -282,7 +328,6 @@ describe('the customer route', () => {
       (await POST(post(customerUrl(), filing({ category: 'something_else', detail: 'short' }))))
         .status,
     ).toBe(400);
-    expect(live.budget).not.toHaveBeenCalled();
     expect(await count()).toBe(before);
   });
 
@@ -328,6 +373,42 @@ describe('the team route', () => {
     ])
       expect(response.status).toBe(401);
     expect(await count()).toBe(before);
+  });
+
+  test('signed out is a 401 whatever the request looks like: the tenant, the query and the body are read after the session', async () => {
+    const { GET, POST } = await teamRoute();
+    const before = await count();
+    const long = 'x'.repeat(65);
+    for (const response of [
+      await GET(new Request(`${origin}/api/workspace/problem-reports`)),
+      await GET(new Request(teamUrl(`&reference=${long}`))),
+      await GET(new Request(teamUrl('&reference='))),
+      await GET(new Request(teamUrl('&view=queue&pageSize=0'))),
+      await GET(new Request(teamUrl('&view=other'))),
+      await GET(new Request(teamUrl('', 'not-a-uuid'))),
+      await POST(post(teamUrl(), '{not json')),
+      await POST(post(teamUrl(), { action: 'delete' })),
+      await POST(post(teamUrl(), teamFiling({ detail: 'x'.repeat(9000) }))),
+      await POST(post(teamUrl(), teamFiling(), { 'content-type': 'text/plain' })),
+    ])
+      expect(response.status).toBe(401);
+    expect(await count()).toBe(before);
+  });
+
+  test('signed in, a malformed reference is the same 404 as an unknown one and asks the database nothing', async () => {
+    const { GET } = await teamRoute();
+    teamAs('operator');
+    const unknown = await answer(await GET(new Request(teamUrl('&reference=RP-999999'))));
+    expect(unknown.status).toBe(404);
+    reportQueries.length = 0;
+    for (const reference of ['x'.repeat(65), '', 'RP-1%00']) {
+      const malformed = await answer(await GET(new Request(teamUrl(`&reference=${reference}`))));
+      expect(malformed.status).toBe(404);
+      expect(malformed.body).toEqual(unknown.body);
+    }
+    expect(reportQueries).toEqual([]);
+    await GET(new Request(teamUrl('&reference=RP-999999')));
+    expect(reportQueries.length).toBeGreaterThan(0);
   });
 
   test('a customer session does not sign a team member in: the team route never reads the customer session', async () => {
