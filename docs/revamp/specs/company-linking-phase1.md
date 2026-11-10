@@ -2,7 +2,7 @@
 
 Document status: CURRENT.
 
-Status of the work: DESIGN ONLY. Designed, nothing else. Nothing here is implemented, tested, deployed, installed, enabled, approved or live. The decisions are in [ADR-079](../../adr/0079-real-company-linking-phase-1.md), which amends [ADR-052](../../adr/0052-canonical-organisation-linking.md) forward. Authority Brief stamp `auth-c36160a85b5b`, base commit `104c9058`, branch `company-linking-phase1`.
+Status of the work: DESIGN ONLY. Designed, nothing else. Nothing here is implemented, tested, deployed, installed, enabled, approved or live. The decisions are in [ADR-079](../../adr/0079-real-company-linking-phase-1.md), which amends [ADR-052](../../adr/0052-canonical-organisation-linking.md) forward. Authority stamp `auth-c9fee0e136e6` (main `9e105ee4`); source read at `104c9058`, unchanged in `packages/`, `scripts/` and `.github/` since (two navigation test files changed); branch `company-linking-phase1`.
 
 Owner decisions of 10 November 2026, relayed by S17 and not yet in the ledger: "Phase 1 now."; search "1 & 2 in the best way possible"; source rights "2+in better and faster way, not too much rigidity like 1"; erasure "Redact by new record (Recommended)". Defaults that stand: OD3 self-declared, OD5 staff revoke only, OD2 wait for the scanner. `CORRIDRA_CUSTOMER_ORGANISATION_LINKS_ENABLED` stays OFF.
 

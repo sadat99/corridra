@@ -2,7 +2,7 @@
 
 Status: DESIGN ONLY. Designed, nothing else. Nothing is implemented, tested, deployed, enabled, approved or live. No SQL, application code, migration, installer change, workflow input or switch change is part of this record. `CORRIDRA_CUSTOMER_ORGANISATION_LINKS_ENABLED` stays OFF. This ADR amends [ADR-052](0052-canonical-organisation-linking.md) forward. ADR-052 is not edited here beyond a one-line pointer added by the index owner.
 
-Authority: Authority Brief stamp `auth-c36160a85b5b`, base commit `104c9058` (branch `company-linking-phase1`). The phase plan, matrices and slice list are in [company-linking-phase1](../revamp/specs/company-linking-phase1.md).
+Authority: Authority stamp `auth-c9fee0e136e6` (main `9e105ee4`, after the S26 records PR 392). The source was read at `104c9058`; main has since changed only documents, navigation files and two navigation test files, not `packages/`, `scripts/` or `.github/`, so every file:line below still holds. Branch `company-linking-phase1`. This PR edits authority files, so its own stamp differs; the Guardian recomputes it on the exact head. The phase plan, matrices and slice list are in [company-linking-phase1](../revamp/specs/company-linking-phase1.md).
 
 ## Owner decisions in force (relayed by S17, 10 November 2026)
 

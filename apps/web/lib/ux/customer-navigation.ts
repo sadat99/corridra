@@ -39,10 +39,16 @@ export type CustomerNavigationInput = {
   billing: boolean;
   /** True where the email choices page exists (its own switches); otherwise Notification Settings is Coming soon. */
   notificationSettings: boolean;
-  /** True where the organisation profiles module is on; otherwise Company Profile is plain Coming soon. */
+  /**
+   * True where the organisation profiles module is on: Company Profile is then always a link (to the chosen
+   * workspace's profile, or to the workspace chooser). Otherwise it is plain Coming soon.
+   */
   organisationProfiles: boolean;
   workspaces: readonly CustomerWorkspace[];
-  /** The workspace the page belongs to, or the only workspace; it picks whose profile Company Profile opens. */
+  /**
+   * The workspace the page belongs to, or the only workspace; it picks whose profile Company Profile opens. With
+   * none, Company Profile opens the chooser.
+   */
   currentWorkspaceId?: string;
 };
 
@@ -104,15 +110,20 @@ export function customerAvatarItems(
     | 'currentWorkspaceId'
   >,
 ): MenuEntry[] {
-  // The profile page answers 404 with its module off, so the entry is a link only with the module on and a workspace.
-  const profile = input.organisationProfiles
-    ? (input.workspaces.find((w) => w.id === input.currentWorkspaceId) ??
-      (input.workspaces.length === 1 ? input.workspaces[0] : undefined))
-    : undefined;
+  // With its module off the profile page only says the profile is unavailable, so the entry is plain Coming soon.
+  // With the module on it is always a link: to the chosen workspace's profile, or else to the chooser, which lists
+  // the person's workspaces (or says there are none) and opens the only one directly.
+  const profile =
+    input.workspaces.find((w) => w.id === input.currentWorkspaceId) ??
+    (input.workspaces.length === 1 ? input.workspaces[0] : undefined);
   return [
     { kind: 'link', label: 'Account', href: '/account?view=more' },
-    profile
-      ? { kind: 'link', label: 'Company Profile', href: `/account/profile/${profile.id}` }
+    input.organisationProfiles
+      ? {
+          kind: 'link',
+          label: 'Company Profile',
+          href: profile ? `/account/profile/${profile.id}` : '/account/profile',
+        }
       : { kind: 'soon', label: 'Company Profile' },
     input.billing
       ? { kind: 'link', label: 'Plan and Billing', href: '/account/billing' }
@@ -169,7 +180,10 @@ export function customerNavigation(input: CustomerNavigationInput) {
     ...tabs.map((tab) => tab.href),
     newRequestHref(input.workspaces.length > 0),
     manageWorkspacesHref,
-    ...input.workspaces.map((w) => `/account/profile/${w.id}`),
+    // With the profiles module on, the chooser and each workspace's profile (the avatar's workspace rows).
+    ...(input.organisationProfiles
+      ? ['/account/profile', ...input.workspaces.map((w) => `/account/profile/${w.id}`)]
+      : []),
   ]);
   for (const entry of [...avatar, ...help.flatMap((group) => group.items)])
     if (entry.kind === 'link') reachable.add(entry.href);
