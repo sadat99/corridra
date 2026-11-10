@@ -43,8 +43,9 @@ describe('page length limits', () => {
       phone: { target: 4.25, hard: 4.25 },
       desktop: { target: 3.0, hard: 3.0 },
     });
-    // Sign-in and recovery pages carry the public footer; /plan has its own limits (S13 under the S5 brief, owner
-    // confirmation pending): the owner's targets 2.4 and 1.8, hard limits 2.6 and 1.85 after measuring 2.53 and 1.80, with a text line of room.
+    // Sign-in and recovery pages carry the public footer; /plan has its own limits (S13 under the S5 brief,
+    // owner confirmed, 9 November 2026, relayed by the conductor: "proceed with /plan proposal"): the owner's targets 2.4 and 1.8,
+    // hard limits 2.6 and 1.85 after measuring 2.53 and 1.80, with a text line of room.
     expect(
       limitsFor({ route: '/signin', audience: 'public intake and customer identity' }, desktop),
     ).toEqual(publicPageLimits.desktop);

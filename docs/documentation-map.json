@@ -1429,6 +1429,11 @@
       "use": "Exact hashed ledger at cfa22c2a (the PR 371 merge), before PRs 359 to 371, the 9 Nov G4/G5 follow-up install run 42654373889, the evening lanes and the session rotation rule were recorded; preserves the S1 to S4 lanes, takeover Resume and Next bullets; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-s15-records-2026-11-10.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at 2bc003b3 (the PR 376 merge), before PRs 372 and 374 to 376, the S15 and S16 rotations, the waiting install run 42729108780 and the owner's 9 and 10 Nov /plan and wording decisions were recorded; preserves the 9 Nov evening Resume, lanes, Open and Next bullets; use the current ledger for live state."
+    },
+    {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"

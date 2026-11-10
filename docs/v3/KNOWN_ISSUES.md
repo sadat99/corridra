@@ -78,6 +78,7 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 
 - **Seen:** `pnpm test:e2e` and `pnpm test:ux` reported 124 and 42 failures at 2 to 5 ms each. The pinned Playwright wants a Chromium build the container does not have (`chromium_headless_shell-1248`; the container has 1194).
 - **Fix:** run with `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome`. Mass failures of a few milliseconds mean the browser did not launch, not that the product broke.
+- **Path note (10 November 2026):** the paths above are dated history. On 10 November the container had `/opt/pw-browsers/chromium-1243/chrome-linux64/chrome` and no `chromium-1194`; `AGENTS.md` now names that path. Use whichever path exists.
 
 ### KI-13 Local tooling side effects
 
@@ -97,6 +98,7 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Two specs read old commits** (`git show <sha>:path`), so run `git fetch --unshallow` first or they fail with "Command failed: git show".
 - **The run rewrites tracked evidence images** under `docs/implementation/evidence`, `docs/v3/phase-4` and `docs/design-system/evidence/ux-repair-2026-10-29/after` (the last from `ux-first-question.spec.ts`, `specification-confirmation.spec.ts` and `v3-service-requests-ui.spec.ts`; seen during a local preflight on 31 October). Run `git checkout docs/implementation/evidence docs/v3/phase-4 docs/design-system/evidence/ux-repair-2026-10-29` before committing; never commit them.
 - **Browser path:** on 31 October the container had no `chromium-1194`; the runs used `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/opt/pw-browsers/chromium`. Use whichever path exists.
+- **Path note (10 November 2026):** the paths above are dated history. On 10 November the container had `/opt/pw-browsers/chromium-1243/chrome-linux64/chrome` and no `chromium-1194`; `AGENTS.md` now names that path. Use whichever path exists.
 - The ClamAV scanner tests are vitest integration tests, not part of this suite, and need the Docker scanner; they are not run locally.
 
 ### KI-16 Signed-in layouts are only visible through the operator suite
@@ -124,6 +126,7 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 
 - **Seen (23 Oct):** `tests/operator/workspace.spec.ts:2403` (governed SDK fixture review) fails here at the first of four large claims with `claim: The record or policy changed` (a 409 from a database limit error). It fails the same way on `origin/main` `7a4613a`, with and without the Phase 0 changes, while CI passes it. Cause not found; suspected difference in the local PostgreSQL. The other 13 cases in `workspace.spec.ts`, `zzz-owner-page.spec.ts` and `zzz-view-as.spec.ts` pass.
 - **Do:** compare with a clean `origin/main` run before blaming a change. The `zzz-*` specs need the authenticator that `workspace.spec.ts` enrols in the same run (the database is rebuilt every run), so run them together with it. Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/opt/pw-browsers/chromium`.
+- **Path note (10 November 2026):** the paths above are dated history. On 10 November the container had `/opt/pw-browsers/chromium-1243/chrome-linux64/chrome` and no `chromium-1194`; `AGENTS.md` now names that path. Use whichever path exists.
 
 ### KI-20 Two clean ledger edits can exceed the 12 KiB cap when both merge
 
@@ -258,13 +261,15 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **What:** PR 355 (G4 workspace lifecycle, G5 account close and erasure request) merged on 7 Nov without a Guardian review, and install run 42364802587 the same day installed both modules and enabled both controls (the 7 Nov enable stands and was not changed since). The post-merge review (9 Nov, stamp auth-c8b26adfa5f2) was FIXES-NEEDED.
 - **Fixed and installed 9 Nov:** the follow-up PR 362 (merged as cd341229) was installed by run 42654373889 (input `lifecycle_install` only). It holds B1 (Undo and the staff erasure steps for a person removed from their only workspace), B2 (a former owner demoted by transfer), B3 (the unreviewed privacy words), Codex 1 and 3 (the close dialog identity headers; close and provisioning serialized), `file_erasure` while the control is closed, the sample and real erasure queue split, the late re-run guard and the sign-in recency check.
 - **B4, merged but not reachable:** the staff erasure queue is merged (PR 366), but real staff cannot reach the page, because every staff route in the web layer uses the purpose `synthetic_validation`. Real requests need another path before any real legal deadline (30 days from filing).
+- **B4 correction (S15, 10 November 2026): inaccurate as written.** With `CORRIDRA_REAL_USE_ENABLED=true`, `withTenant` (`packages/db/src/index.ts:69-77`) maps `synthetic_validation` to the tenant's processing purpose, so a real owner or admin with fresh MFA reaches the erasure queue and can move a real request. Only with the switch not `'true'` is it refused. It also needs the lifecycle switch and `real_use_configuration.enabled`. The production switch values have NOT been observed. Proof: the new tests in `tests/integration/revamp-g5-staff-erasure-route-database.test.ts` (commit b3d00e4) passed 9/9, and two bite proofs failed when the mapping or the switch was broken.
 - **Still open:**
-  - The privacy wording review (drafts A and B in the PR 355 body).
-  - A preview check that the live provider returns `session.createdAt` (the recency check fails closed without it).
+  - The privacy wording review (drafts A and B in the PR 355 body). **Update, 10 November 2026:** the owner answered S15 directly, "Approve both as live (Recommended)", for wording A (close dialog) and B (erasure dialog), exactly as live (`closeBody` and `erasureBody` in `apps/web/app/account/account-lifecycle-words.ts`). Still pending the owner's named review: the two dialog titles ('Close Your Account?' and 'Ask Us to Erase Your Personal Data'), the typed phrase, the section heading and rows, and the privacy contact line.
+  - A preview check that the live provider returns `session.createdAt` (the recency check fails closed without it). **Traced 10 November 2026 (S15):** `signedInAt` comes from `apps/web/lib/foundations.ts:233-241` (`new Date(data.session.createdAt)` from Neon Auth `getSession`). If it is missing, the date is invalid, the age is NaN and the action is refused (`packages/auth/src/customer-session.ts:166-170`), so it fails closed for everyone. Not seen on a preview. Owner step: try Close Account once in a private window after signing in.
   - A former owner stays admin until a step-down change (now refused honestly).
   - A sole owner may close while the workspace is archived, and after day 30 nobody can restore or transfer it.
 - **Safe pause:** the install workflow input `lifecycle_pause`. A closed account stays closed while paused and Undo still works; turning the app flag off instead would give closed accounts full access again.
 - **Removal trigger:** the wording review is recorded, the `createdAt` check is seen on a preview, and real staff have an erasure path.
+- **Trigger status, 10 November 2026:** still holds. Wording A and B are approved, the rest is pending; the `createdAt` check is not seen on a preview; real staff now have a proven code path, but the production switch values are not observed. Both lifecycle controls stay open; `lifecycle_pause` was not run.
 
 ### KI-42 GitHub-hosted runners abandoned or never started CI shards (9 November 2026)
 
@@ -278,10 +283,18 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Cause, inferred, not traced:** the test seeds an expired receipt in `localStorage`, waits for the Commercial job select, then reads storage once and expects it empty. The select is in the server-rendered HTML, so it is visible before the page's mount effect runs. That effect calls `readReceipt` (`apps/web/lib/receipt-memory.ts`, from `apps/web/app/plan/intake.tsx`), which drops an expired value. Under load the single read can come first.
 - **Fix in PR 374:** the test polls the same assertion (storage is empty) instead of reading it once. It still fails if the value is never dropped.
 
-### KI-44 The step bar on /plan overflows at 320 px with text at 200 percent (found 9 November 2026, not fixed)
+### KI-44 The step bar on /plan overflows at 320 px with text at 200 percent (found 9 November 2026, resolved by PR 376 on 10 November 2026)
 
 - **Seen (S13, PR 374):** adding `/plan` to the whole-page guard in `tests/browser/public-large-text.spec.ts` failed at 320 px: `Error: /plan at 320`, offender `li. 1Goal`. That guard measures the whole page, header and footer included, so it found something the form's own guard (`#main` only, English, German and Arabic) did not report.
 - **Cause, inferred from the CSS, not traced:** the step bar (`apps/web/components/journey-bar.tsx`, `.guide-journey-bar` in `apps/web/app/globals.css`, around lines 4193 to 4260) is five columns of `minmax(0, 1fr)`; at 200 percent text on a 320 px phone a column is about 52 px, and the step label ("Goal") in `--text-sm` is wider. PR 374 does not change the journey bar or its CSS, so this is not new in that PR; it was not separately measured on main.
 - **Why `/plan` is not in `public-large-text.spec.ts` yet:** adding it fails until this is fixed. The compact `/plan` footer has its own 320 px, 200 percent test in `tests/browser/layout-budget-plan.spec.ts`.
 - **Repro:** open `/plan` at 320 x 800, add `html { font-size: 200% !important; }`, wait for fonts, and list boxes whose right edge is past the window (the guard's `problems` helper in `public-large-text.spec.ts`).
 - **Do:** fix it in its own pull request (shorter labels under the dots, or let the step labels wrap or stack at that size), then add `/plan` to the guard's page list.
+- **Resolved (10 November 2026):** PR 376, squash-merged as 2bc003b3 (Guardian PASS at bc69a201, stamp auth-e40f1504ea5f; CI 18 success and 1 neutral): the step bar and choice cards fit at 200 percent text, and `/plan` is in the `public-large-text.spec.ts` page list. Reviewer's follow-up notes: (1) `public-large-text.spec.ts:147` `toHaveText` reads `textContent`, not the accessibility tree (use `toHaveAccessibleName` or an aria snapshot); (2) `globals.css:4273` the bar is compact at 320 and 360 px at 100 percent text (agreed boundary, owner awareness); (3) `globals.css:4349` the cards are 190 px wide at 320 px and 200 percent and break every few characters because the form padding is 128 px; a follow-up could reduce the form padding on narrow screens. Not checked by the review: real translated pages (`CORRIDRA_LANGUAGES_FORM` unset), Safari and Firefox. A new failure in the same guard is KI-45.
+
+### KI-45 The /plan receipt disclosure fails the whole-page 200 percent guard at 320 px, seen only on one local machine (10 November 2026, cause not traced)
+
+- **Seen (S16's local machine, native PostgreSQL, chromium-1243):** on clean main 2bc003b, `tests/browser/public-large-text.spec.ts:97` fails at "/plan where step at 320" with offender `details.receipt-disclosure Check a Mission Request.Receip`. It failed 1/1 there and 3/3 on S16's branch.
+- **Seen only on S16's local machine:** it passes in CI on main 2bc003b3 (18 success, none failed, the e2e shards included) and in PR 376's CI on bc69a201.
+- **Cause:** not traced; a font difference is suspected (compare KI-28).
+- **Do:** the conductor owns a fix PR. Until then, a failure at this exact place on a local run is this issue, not the change under test; compare with clean main first.
