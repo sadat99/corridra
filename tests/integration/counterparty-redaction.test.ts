@@ -21,6 +21,7 @@ import {
   type World,
 } from './counterparty-changes-support';
 import { Pool, sessionHash } from '../../packages/db/src/index';
+import { DomainError } from '../../packages/domain/src/index';
 import { SyntheticChannel } from '../../packages/communications/src/adapters';
 import { OutboxDispatcher } from '../../packages/workflows/src/index';
 
@@ -167,6 +168,68 @@ describe('who may hide (owner answer 2, Guardian C6)', () => {
     await f.research.command(f.ctx, withdrawContact(t.contactId));
     expect(await probe(t.contactId)).toEqual(await probe(randomUUID()));
   });
+
+  test('a member of another workspace who forges this workspace as the tenant learns nothing about a contact here: target contact and message probes answer exactly as for a random id, also for an opted-out address', async () => {
+    const withdrawn = await f.target();
+    await f.research.command(f.ctx, withdrawContact(withdrawn.contactId));
+    const optedOut = await f.target();
+    await f.communications.command(
+      f.ctx,
+      command('optout', {
+        contactId: optedOut.contactId,
+        reason: 'The person asked not to be contacted',
+      }),
+    );
+    const answer = (sql: string, args: unknown[]) =>
+      rawContext(f.runtime, f.users.other.ctx, sql, args).then(
+        () => ({ code: 'none', message: 'none' }),
+        (e: { code: string; message: string }) => ({ code: e.code, message: e.message }),
+      );
+    const targetProbe = (contactId: string) =>
+      answer(
+        "INSERT INTO app.target_contact(tenant_id,purpose,created_by,target_id,relationship_id,contact_id) VALUES($1,'synthetic_validation',$2,$3,$4,$5)",
+        [f.tenantA, f.users.other.id, randomUUID(), withdrawn.relationshipId, contactId],
+      );
+    const messageProbe = (contactId: string) =>
+      answer(
+        "INSERT INTO app.communication(id,tenant_id,target_id,contact_id,policy_id,template_id,presentation,expires_at,created_by) VALUES($1,$2,$3,$4,$5,$6,'{}'::jsonb,now()+interval '1 day',$7)",
+        [
+          randomUUID(),
+          f.tenantA,
+          withdrawn.targetId,
+          contactId,
+          randomUUID(),
+          randomUUID(),
+          f.users.other.id,
+        ],
+      );
+    const randomTarget = await targetProbe(randomUUID());
+    const randomMessage = await messageProbe(randomUUID());
+    expect(randomTarget.message).not.toContain('Choose a current contact');
+    expect(randomMessage.message).not.toContain('Choose a current contact');
+    expect(await targetProbe(withdrawn.contactId)).toEqual(randomTarget);
+    expect(await messageProbe(withdrawn.contactId)).toEqual(randomMessage);
+    expect(await messageProbe(optedOut.contactId)).toEqual(randomMessage);
+    // The relationship owner is still refused for the withdrawn contact by the same trigger.
+    await expect(
+      rawContext(
+        f.runtime,
+        f.ctx,
+        'INSERT INTO app.target_contact(tenant_id,purpose,created_by,target_id,relationship_id,contact_id) VALUES($1,$2,$3,$4,$5,$6)',
+        [
+          f.tenantA,
+          'synthetic_validation',
+          f.users.operator.id,
+          withdrawn.targetId,
+          withdrawn.relationshipId,
+          withdrawn.contactId,
+        ],
+      ),
+    ).rejects.toMatchObject({
+      code: 'P0001',
+      message: 'Choose a current contact. This one was withdrawn, corrected or hidden.',
+    });
+  });
 });
 
 describe('what one hide covers (owner answers 3 and 8)', () => {
@@ -299,6 +362,47 @@ describe('every reader shows no hidden text (Guardian C2)', () => {
     expect(body).not.toContain('Synthetic Buyer Person');
   });
 
+  test('a change command posted signed out, or with a customer session the staff provider does not accept, is refused with 401 and writes nothing', async () => {
+    const { POST } = await import('../../apps/web/app/api/workspace/[action]/route');
+    const u = await f.target();
+    const before = await counts(f);
+    const params = { params: Promise.resolve({ action: 'research' }) };
+    const post = () =>
+      POST(
+        new Request(`https://app.corridra.test/api/workspace/research?tenant=${f.tenantA}`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', origin: 'https://app.corridra.test' },
+          body: JSON.stringify(withdrawContact(u.contactId)),
+        }),
+        params,
+      );
+    // Signed out: no session at all.
+    session.mockResolvedValue(null);
+    expect((await post()).status).toBe(401);
+    // A customer session cookie: the operator provider answers it with no staff session, exactly as signed out.
+    session.mockImplementation(async (headers: Headers) =>
+      headers.get('cookie')?.includes('customer-session')
+        ? null
+        : { token: f.users.operator.token },
+    );
+    const customer = await POST(
+      new Request(`https://app.corridra.test/api/workspace/research?tenant=${f.tenantA}`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          origin: 'https://app.corridra.test',
+          cookie: 'customer-session=synthetic',
+        },
+        body: JSON.stringify(withdrawContact(u.contactId)),
+      }),
+      params,
+    );
+    expect(customer.status).toBe(401);
+    expect((await customer.json()).error).toBe('Sign in to continue');
+    session.mockReset();
+    expect(await counts(f)).toEqual(before);
+  });
+
   test('the communications contact list omits withdrawn, corrected and hidden contacts, and the messages list carries no contact text', async () => {
     const withdrawn = await f.target();
     await f.research.command(f.ctx, withdrawContact(withdrawn.contactId));
@@ -385,12 +489,22 @@ describe('opt-outs keep working after hiding (owner answer 1)', () => {
 });
 
 describe('locks (Guardian C7)', () => {
-  const noDeadlock = (results: PromiseSettledResult<unknown>[]) => {
-    for (const r of results)
-      if (r.status === 'rejected') {
-        expect((r.reason as { code?: string }).code).not.toBe('40P01');
-        expect((r.reason as { status?: number }).status ?? 409).toBeLessThan(500);
-      }
+  // Every refusal is one of the expected ones: a plain 409 from the service (CHANGED or HIDDEN), or the trigger's words
+  // as P0001, which the route answers with 409. Anything else (a deadlock, a raw database error) fails the test.
+  const expectRefusal = (
+    reason: unknown,
+    kind: 'command' | 'message',
+    codes = ['CHANGED', 'HIDDEN'],
+  ) => {
+    if (kind === 'command') {
+      expect(reason).toBeInstanceOf(DomainError);
+      expect((reason as DomainError).status).toBe(409);
+      expect(codes).toContain((reason as DomainError).code);
+    } else
+      expect(reason).toMatchObject({
+        code: 'P0001',
+        message: 'Choose a current contact. This one was withdrawn, corrected or hidden.',
+      });
   };
 
   test('hide versus a concurrent message on the same chain: either the message is refused, or it was first and is then never delivered', async () => {
@@ -399,7 +513,7 @@ describe('locks (Guardian C7)', () => {
       f.research.command(f.users.owner.ctx, hideContact(t.contactId)),
       f.introduction(t),
     ]);
-    noDeadlock(results);
+    if (results[0].status === 'rejected') expectRefusal(results[0].reason, 'command');
     expect(results[0].status).toBe('fulfilled');
     if (results[1].status === 'fulfilled') {
       const id = results[1].value.id;
@@ -409,7 +523,7 @@ describe('locks (Guardian C7)', () => {
           f.communications.dispatchCapability(id),
         ),
       ).toBe('DEAD');
-    } else expect(String(results[1].reason)).toContain('Choose a current contact');
+    } else expectRefusal(results[1].reason, 'message');
   });
 
   test('hide versus a concurrent correct: every resulting version is hidden whichever commits first', async () => {
@@ -418,12 +532,29 @@ describe('locks (Guardian C7)', () => {
       f.research.command(f.ctx, correctContact(t.contactId, t.sourceId)),
       f.research.command(f.users.owner.ctx, hideContact(t.contactId)),
     ]);
-    noDeadlock(results);
-    expect(results.some((r) => r.status === 'fulfilled')).toBe(true);
-    for (const c of (await detailOf(t.relationshipId)).contacts.filter(
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+    const chain = (await detailOf(t.relationshipId)).contacts.filter(
       (x) => x.chain_id === t.contactId,
-    ))
-      if (results[1].status === 'fulfilled') expect(c.status).toBe('HIDDEN');
+    );
+    const redactions = (
+      await f.owner.query(
+        'SELECT count(*)::int n FROM app.private_record_redaction WHERE chain_id=$1',
+        [t.contactId],
+      )
+    ).rows[0].n;
+    if (results[0].status === 'fulfilled') {
+      // The correct won: the hide named a version that changed while it waited.
+      expectRefusal((results[1] as PromiseRejectedResult).reason, 'command', ['CHANGED']);
+      expect(redactions).toBe(0);
+      expect(chain).toHaveLength(2);
+      expect(chain.every((c) => c.status !== 'HIDDEN')).toBe(true);
+    } else {
+      // The hide won: the correction is refused and adds no version.
+      expectRefusal(results[0].reason, 'command', ['HIDDEN']);
+      expect(redactions).toBe(1);
+      expect(chain).toHaveLength(1);
+      expect(chain.every((c) => c.status === 'HIDDEN')).toBe(true);
+    }
   });
 
   test('a correction that commits while a hide waits on the chain lock makes the hide answer 409 with nothing written', async () => {
@@ -476,7 +607,10 @@ describe('locks (Guardian C7)', () => {
     }
   });
 
-  test('hide versus a concurrent delivery: never both a receipt written after the hide and a successful hide', async () => {
+  // Order independent: either the delivery took the chain lock first and the message was sent (one receipt), or the hide
+  // did and the message ended DEAD with no receipt. The strict order (a committed hide is never followed by a send) is
+  // covered deterministically in counterparty-changes.test.ts, "a queued synthetic message to a contact withdrawn…".
+  test('hide versus a concurrent delivery: the hide always succeeds and the message is either sent once or stopped with no receipt', async () => {
     const t = await f.target();
     const queued = await f.introduction(t);
     const results = await Promise.allSettled([
@@ -486,16 +620,30 @@ describe('locks (Guardian C7)', () => {
       ),
       f.research.command(f.users.owner.ctx, hideContact(t.contactId)),
     ]);
-    noDeadlock(results);
+    if (results[1].status === 'rejected') expectRefusal(results[1].reason, 'command');
     expect(results[1].status).toBe('fulfilled');
-    const row = (
-      await f.owner.query(
-        'SELECT (SELECT created_at FROM app.communication_receipt WHERE id=$1) receipt,(SELECT created_at FROM app.private_record_redaction WHERE chain_id=$2) hidden',
-        [queued.id, t.contactId],
-      )
-    ).rows[0];
-    if (row.receipt)
-      expect(new Date(row.receipt).getTime()).toBeLessThanOrEqual(new Date(row.hidden).getTime());
+    expect(results[0].status).toBe('fulfilled');
+    const sent = (results[0] as PromiseFulfilledResult<string>).value;
+    const receipts = (
+      await f.owner.query('SELECT count(*)::int n FROM app.communication_receipt WHERE id=$1', [
+        queued.id,
+      ])
+    ).rows[0].n;
+    if (receipts) {
+      expect(receipts).toBe(1);
+      expect(sent).toBe('DELIVERED');
+    } else {
+      // Stopped by the dispatcher check (DEAD) or, when the hide landed between that check and the send, by the receipt
+      // trigger (the attempt ends PENDING and the next one ends DEAD); never sent.
+      expect(['DEAD', 'PENDING']).toContain(sent);
+      expect(
+        (
+          await f.owner.query('SELECT status FROM app.communication_dispatch WHERE id=$1', [
+            queued.id,
+          ])
+        ).rows[0].status,
+      ).not.toBe('DELIVERED');
+    }
   });
 });
 
@@ -577,6 +725,8 @@ describe('source scan (Guardian C2)', () => {
       'packages/counterparties/src/changes.ts',
       'packages/counterparties/src/index.ts',
       'apps/web/app/operator/counterparties.tsx',
+      'apps/web/app/operator/record-changes.tsx',
+      'apps/web/app/operator/access.tsx',
     ])
       expect(readFileSync(file, 'utf8'), file).not.toMatch(
         /(?<!\.)\b(erase|erased|delete|deleted|removed|permanently)\b/i,

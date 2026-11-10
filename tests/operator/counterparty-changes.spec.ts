@@ -110,6 +110,8 @@ type Setup = {
   shortlistContacts?: Row[];
   answer?: (body: Row, count: number) => { status: number; json: unknown } | undefined;
   after?: { contacts?: Row[]; notes?: Row[] };
+  /** Leave the company unselected, so only the shortlist panel reads contact states. */
+  noCompany?: boolean;
 };
 async function open(page: Page, setup: Setup = {}) {
   const sent: Row[] = [];
@@ -214,6 +216,7 @@ async function open(page: Page, setup: Setup = {}) {
     return route.fulfill({ json: json[action ?? ''] ?? {} });
   });
   await page.goto(origin);
+  if (setup.noCompany) return sent;
   await page.getByRole('button', { name: /Synthetic Mill/ }).click();
   await expect(page.locator('summary', { hasText: 'Show private relationships' })).toBeVisible();
   return sent;
@@ -512,8 +515,148 @@ for (const width of [360, 1440])
     expect(await axe(page)).toEqual([]);
     await item.getByRole('button', { name: 'Withdraw Contact' }).click();
     expect(await axe(page)).toEqual([]);
-    // A dialog without the new confirmClose prop closes on Escape exactly as before.
+    // With no edits, Escape closes the change dialog at once (a dialog without confirmClose is covered by
+    // revamp-cx2-components.spec.ts CX-05, lines 139-170).
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).toBeHidden();
     await expect(item.getByRole('button', { name: 'Withdraw Contact' })).toBeFocused();
   });
+
+test('G11-10 with no company selected, the mission shortlist still reads the module state: a hidden contact reads Hidden, never an empty cell', async ({
+  page,
+}) => {
+  await open(page, {
+    noCompany: true,
+    shortlistContacts: [
+      { target_id: 'target-1', name: null, job_title: null, email: null, status: 'HIDDEN' },
+      {
+        target_id: 'target-1',
+        name: 'Gone Buyer',
+        job_title: 'Buyer',
+        email: 'gone@example.invalid',
+        status: 'WITHDRAWN',
+      },
+    ],
+  });
+  await page.getByLabel('Shortlist mission').selectOption(mission);
+  await expect(page.getByText('Hidden · Hidden · Hidden', { exact: true })).toBeVisible();
+  await expect(
+    page.getByText(
+      'Gone Buyer · gone@example.invalid · Withdrawn · Not usable for new targets or messages',
+    ),
+  ).toBeVisible();
+  expect(await page.locator('main').innerText()).not.toMatch(/ · {2}·|\bHIDDEN\b|\bnull\b/);
+});
+
+test('G11-11 typing in the correct dialog keeps focus in the field after the step heading took it', async ({
+  page,
+}) => {
+  await open(page);
+  await group(page, 'Contact: Synthetic Buyer')
+    .getByRole('button', { name: 'Correct Contact' })
+    .click();
+  const dialog = page.getByRole('dialog', { name: 'Correct This Contact' });
+  await dialog.getByRole('button', { name: 'Next' }).click();
+  await expect(
+    dialog.getByRole('heading', { name: 'Step 2 of 2: Source and reason' }),
+  ).toBeFocused();
+  await dialog.getByRole('button', { name: 'Back' }).click();
+  await expect(dialog.getByRole('heading', { name: 'Step 1 of 2: Contact details' })).toBeFocused();
+  const name = dialog.getByLabel('Name', { exact: true });
+  await name.click();
+  await page.keyboard.press('End');
+  await page.keyboard.type('XY');
+  await expect(name).toBeFocused();
+  await expect(name).toHaveValue('Synthetic BuyerXY');
+});
+
+test('G11-12 a hidden chain shows its newest version: corrected, then withdrawn, then hidden', async ({
+  page,
+}) => {
+  const hiddenText = {
+    name: null,
+    job_title: null,
+    email: null,
+    status: 'HIDDEN',
+    redaction_id: 'r',
+    hidden_at: '2026-11-10T15:00:00Z',
+    hidden_by: owner,
+  };
+  await open(page, {
+    role: 'owner',
+    notes: [],
+    contacts: [
+      contact({
+        ...hiddenText,
+        change_kind: 'CORRECT',
+        replacement_id: newer,
+        changed_by: owner,
+        changed_at: '2026-11-10T14:00:00Z',
+        valid_until: '2026-11-20T09:00:00Z',
+      }),
+      contact({
+        ...hiddenText,
+        id: newer,
+        chain_id: contactId,
+        source_id: 'second-source',
+        created_at: '2026-11-10T14:00:00Z',
+        change_kind: 'WITHDRAW',
+        changed_by: owner,
+        changed_at: '2026-11-10T14:30:00Z',
+        valid_until: '2026-12-24T09:00:00Z',
+      }),
+    ],
+  });
+  const item = group(page, 'Contact: details hidden');
+  await expect(item).toHaveCount(1);
+  await expect(item.locator('p').first()).toContainText('Source second-source · Until 24 Dec 2026');
+  await item.locator('summary').click();
+  await expect(item).toContainText(
+    'Withdrawn on 10 Nov 2026, 14:30 UTC by Synthetic Owner. Reason: Hidden',
+  );
+  await expect(item).toContainText(
+    'Corrected on 10 Nov 2026, 14:00 UTC by Synthetic Owner. Reason: Hidden',
+  );
+});
+
+test('G11-13 a signed-out answer says so, and a 409 in Withdraw shows the latest details without promising kept edits', async ({
+  page,
+}) => {
+  await open(page, {
+    answer: (_, count) =>
+      count === 1
+        ? { status: 401, json: { error: 'Sign in to continue' } }
+        : {
+            status: 409,
+            json: { error: 'This contact changed. Refresh to see the latest.', code: 'CHANGED' },
+          },
+    after: {
+      contacts: [
+        contact({
+          status: 'CORRECTED',
+          change_kind: 'CORRECT',
+          replacement_id: newer,
+          changed_by: owner,
+          changed_at: '2026-11-10T14:05:00Z',
+          change_reason: 'Other edit',
+        }),
+        contact({ id: newer, name: 'Changed Elsewhere', created_at: '2026-11-10T14:05:00Z' }),
+      ],
+    },
+  });
+  await group(page, 'Contact: Synthetic Buyer')
+    .getByRole('button', { name: 'Withdraw Contact' })
+    .click();
+  const dialog = page.getByRole('dialog', { name: 'Withdraw This Contact?' });
+  await dialog.getByLabel('Why are you withdrawing this contact?').fill('Wrong person');
+  await dialog.getByRole('button', { name: 'Confirm Withdrawal' }).click();
+  await expect(dialog.getByRole('alert')).toHaveText(
+    'Your session has ended. Sign in again, then send the same request again.',
+  );
+  await dialog.getByRole('button', { name: 'Confirm Withdrawal' }).click();
+  await expect(dialog.getByRole('heading', { name: 'Latest saved details' })).toBeVisible();
+  await expect(dialog).toContainText('Changed Elsewhere');
+  await expect(dialog.getByRole('alert')).toHaveText(
+    'Someone changed this contact after you opened it. Nothing was saved. The latest saved details are shown below.',
+  );
+});

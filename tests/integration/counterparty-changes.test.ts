@@ -169,6 +169,16 @@ describe('CRUD-2 retries', () => {
     expect(second).toEqual(first);
     expect(await f.research.command(f.ctx, input)).toEqual(first);
     await refused(f.research.command(f.ctx, { ...input, reason: 'Another reason entirely' }), 409);
+    // Another person sending the same command id gets the reused-id words, never "this contact changed".
+    const other = await f.target();
+    const reused = await refused(
+      f.research.command(f.users.owner.ctx, {
+        ...withdrawContact(other.contactId),
+        commandId: input.commandId,
+      }),
+      409,
+    );
+    expect(reused.message).toBe('Command ID reused with different values');
     expect(
       (
         await f.owner.query(
@@ -455,7 +465,7 @@ describe('Guardian C4 send-time check', () => {
     );
   });
 
-  test('a staff retry of a stopped message is refused', async () => {
+  test('a staff retry of a stopped message is refused by the contact state trigger, while a retry with a current contact still works', async () => {
     const i = await f.introduction();
     await f.research.command(f.ctx, withdrawContact(i.contactId));
     await worker().attempt(i.id, f.communications.dispatchCapability(i.id));
@@ -464,8 +474,22 @@ describe('Guardian C4 send-time check', () => {
         f.ctx,
         command('retry', { messageId: i.id, reason: 'Try the message again' }),
       ),
-    ).rejects.toThrow();
+    ).rejects.toMatchObject({
+      code: 'P0001',
+      message: 'Choose a current contact. This one was withdrawn, corrected or hidden.',
+    });
     expect((await dispatch(i.id)).status).toBe('DEAD');
+    // Control: the same retry path for a message whose contact is current. Setting DEAD directly does not fire the
+    // retry trigger (it only watches a stopped message going back to PENDING).
+    const current = await f.introduction();
+    await asOwner(f, "UPDATE app.communication_dispatch SET status='DEAD' WHERE id=$1", [
+      current.id,
+    ]);
+    await f.communications.command(
+      f.ctx,
+      command('retry', { messageId: current.id, reason: 'Try the message again' }),
+    );
+    expect((await dispatch(current.id)).status).toBe('PENDING');
   });
 });
 
