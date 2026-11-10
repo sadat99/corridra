@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Dialog } from '../../components/ux/dialog';
-import { DateTimeField } from '../../components/ux/date-time-input';
+import { DateTimeInput } from '../../components/ux/date-time-input';
 import { ActionError, withStepUp } from '../../lib/ux/step-up';
 import { limitWords } from '../../lib/account-limit';
 
@@ -408,17 +408,24 @@ function ChangeDialog({
   useEffect(() => {
     if (discard) keepEditing.current?.focus();
   }, [discard]);
-  const [initial] = useState(() => ({
-    name: String(current.name ?? ''),
-    jobTitle: String(current.job_title ?? ''),
-    email: String(current.email ?? ''),
-    body: String(current.body ?? ''),
-    sourceId: String(current.source_id ?? ''),
-  }));
-  const [values, setValues] = useState(initial);
-  const [validUntil] = useState(String(current.valid_until ?? ''));
+  const editable = (row: ChangeRow) => ({
+    name: String(row.name ?? ''),
+    jobTitle: String(row.job_title ?? ''),
+    email: String(row.email ?? ''),
+    body: String(row.body ?? ''),
+    sourceId: String(row.source_id ?? ''),
+    validUntil: String(row.valid_until ?? ''),
+  });
+  const [values, setValues] = useState(() => editable(current));
   const set = (key: keyof typeof values) => (value: string) =>
     setValues((v) => ({ ...v, [key]: value }));
+  // U-02: after a conflict the person's values are compared with the latest saved version, so the list names every
+  // field that saving would overwrite, never a silent revert.
+  const base = editable(conflict && usable ? current : seen);
+  const same = (key: keyof typeof values) =>
+    key === 'validUntil'
+      ? new Date(values.validUntil).getTime() === new Date(base.validUntil).getTime()
+      : values[key] === base[key];
   const changedFields = (
     contact
       ? ([
@@ -426,17 +433,35 @@ function ChangeDialog({
           ['jobTitle', 'Job title'],
           ['email', 'Email'],
           ['sourceId', 'Source'],
+          ['validUntil', 'Valid until'],
         ] as const)
       : ([
           ['body', 'Note text'],
           ['sourceId', 'Source'],
         ] as const)
-  ).filter(([key]) => values[key] !== initial[key]);
+  ).filter(([key]) => !same(key));
   const edited = mode === 'correct' && changedFields.length > 0;
   const earlier = versions.filter((v) => v.id !== current.id).length;
+  // Names the record as it was opened; once its chain is hidden, the words read Hidden, never null.
+  const named = hidden(current) ? current : seen;
   const what = contact
-    ? `${String(current.name)}, ${String(current.job_title)}`
-    : `Private note from ${at(current.created_at)}: "${String(current.body).slice(0, 80)}…"`;
+    ? `${shown(named, 'name')}, ${shown(named, 'job_title')}`
+    : `Private note from ${at(named.created_at)}: "${shown(named, 'body').slice(0, 80)}…"`;
+  // Cancel and Discard Changes close the dialog by unmounting it, so focus goes back to the button that opened it, or
+  // to the item when that button is gone.
+  const [opener] = useState(() =>
+    typeof document === 'undefined' ? null : (document.activeElement as HTMLElement | null),
+  );
+  function leave() {
+    close();
+    setTimeout(() => {
+      const back =
+        opener && opener !== document.body && opener.isConnected
+          ? opener
+          : document.querySelector<HTMLElement>(`[data-chain="${chain}"]`);
+      back?.focus();
+    }, 0);
+  }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (mode === 'correct' && contact && step === 1) {
@@ -466,7 +491,7 @@ function ChangeDialog({
                 name: values.name,
                 jobTitle: values.jobTitle,
                 email: values.email,
-                validUntil: new Date(String(form.get('validUntil') ?? validUntil)).toISOString(),
+                validUntil: new Date(values.validUntil).toISOString(),
                 reason,
               }
             : {
@@ -532,7 +557,7 @@ function ChangeDialog({
       className="button button-secondary"
       data-autofocus={mode === 'correct' ? undefined : true}
       disabled={locked}
-      onClick={() => (edited ? setDiscard(true) : close())}
+      onClick={() => (edited ? setDiscard(true) : leave())}
     >
       {mode === 'correct' && step === 2 ? 'Back' : 'Cancel'}
     </button>
@@ -626,7 +651,7 @@ function ChangeDialog({
             )}
             {(!contact || step === 2) && (
               <>
-                {contact && (
+                {(contact || (conflict && usable)) && (
                   <p>
                     {changedFields.length
                       ? `You changed: ${changedFields.map(([, label]) => label).join(', ')}.`
@@ -652,10 +677,11 @@ function ChangeDialog({
                   <small id="source-help">Choose a source that is still current.</small>
                 </label>
                 {contact ? (
-                  <DateTimeField
+                  <DateTimeInput
                     label="Valid until"
                     name="validUntil"
-                    initial={validUntil || null}
+                    value={values.validUntil || null}
+                    onChange={(iso) => set('validUntil')(iso ?? '')}
                     required
                   />
                 ) : (
@@ -690,7 +716,7 @@ function ChangeDialog({
           <>
             <p>
               {contact
-                ? `${what}, ${String(current.email)}, on the relationship owned by ${ownerName}.`
+                ? `${what}, ${shown(named, 'email')}, on the relationship owned by ${ownerName}.`
                 : what}
               {earlier > 0 ? ` This includes ${earlier} earlier version(s).` : ''}
             </p>
@@ -744,7 +770,7 @@ function ChangeDialog({
               >
                 Keep Editing
               </button>
-              <button type="button" className="button button-secondary" onClick={close}>
+              <button type="button" className="button button-secondary" onClick={leave}>
                 Discard Changes
               </button>
             </div>
