@@ -1,13 +1,24 @@
 'use client';
-// The settings a field helper uses in one place. Language and reading aloud are real; text size and data saver are not
-// built yet, so they say Coming soon and are not controls. The private link note describes the invitation link only
-// in words that are true of any link: it is for one person and the Corridra team renews it. Owner: S4.
+// The settings a field helper uses in one place. Language, reading aloud, text size (three steps) and Less Movement
+// are real; text size and Less Movement are kept in this browser only. Data saver is not built yet, so it says
+// Coming soon and is not a control. The private link note describes the invitation link only in words that are
+// true of any link: it is for one person and the Corridra team renews it. Owner: S4, W7.
+import './helper-me.css';
+import { useId } from 'react';
 import Link from 'next/link';
 import { LanguageSwitcher } from '../../../components/language-switcher';
+import { CorridraIcon } from '../../../components/corridra-icon';
+import { textSizeNames, UnsavedChoiceNote } from '../../../components/ux/comfort-controls';
+import { useLessMovement, useTextSize } from '../../../components/ux/use-comfort';
 import { useListen } from '../../../components/ux/utility-menus';
+import { textSizes } from '../../../lib/ux/comfort';
 
 export function HelperMe({ workspace }: { workspace: string }) {
   const listen = useListen();
+  const [size, setSize] = useTextSize();
+  const [movement, setMovement] = useLessMovement();
+  const switchLabelId = useId();
+  const hintId = useId();
   return (
     <>
       <section aria-labelledby="me-language" className="detail-card">
@@ -26,10 +37,47 @@ export function HelperMe({ workspace }: { workspace: string }) {
             {listen.speaking ? 'Stop Reading' : 'Read This Page Aloud'}
           </button>
         ) : null}
-        <p>
-          Text Size <span className="ux-soon-tag">Coming soon</span>
+        <fieldset className="me-textsize">
+          <legend>Text Size</legend>
+          <div className="me-textsize-choices">
+            {textSizes.map((step) => (
+              <label key={step} className="me-textsize-choice" data-step={step}>
+                <input
+                  type="radio"
+                  name="me-text-size"
+                  value={step}
+                  checked={size === step}
+                  onChange={() => setSize(step)}
+                />
+                <span aria-hidden="true" className="me-textsize-glyph">
+                  A
+                </span>
+                <span className="me-textsize-name">{textSizeNames[step]}</span>
+                {size === step ? <CorridraIcon name="check" /> : null}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        <label className="me-switch">
+          <span id={switchLabelId}>Less Movement</span>
+          <span className="me-switch-state">
+            {/* Named by its words alone and described by the hint, so the On or Off beside it is not read twice. */}
+            <input
+              type="checkbox"
+              role="switch"
+              aria-labelledby={switchLabelId}
+              aria-describedby={hintId}
+              checked={movement === 'on'}
+              onChange={(event) => setMovement(event.target.checked ? 'on' : 'off')}
+            />
+            {movement === 'on' ? 'On' : 'Off'}
+          </span>
+        </label>
+        <p id={hintId} className="me-hint">
+          Stops animation and anything that moves by itself.
         </p>
-        <p>
+        <UnsavedChoiceNote className="me-status" />
+        <p className="me-data-saver">
           Data Saver <span className="ux-soon-tag">Coming soon</span>
         </p>
       </section>

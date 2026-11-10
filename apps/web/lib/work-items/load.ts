@@ -257,6 +257,9 @@ export async function loadWorkItems(
     items: sortWorkItems([...byKey.values()]),
     unreadable: [...unreadable],
     partial,
+    ...(requests && !requests.failed && !requests.complete
+      ? { requestsIncomplete: true as const }
+      : {}),
     skippedWorkspaces: Math.max(0, listed.length - read.length),
     workspaces: listed.map(({ id, name }) => ({ id, name })),
   };

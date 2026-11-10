@@ -90,7 +90,20 @@ describe('nothing a helper reached before is lost', () => {
   });
   test('Me says Coming soon for what is not built, and builds no control for it', () => {
     const me = read('apps/web/app/contributor/me/helper-me.tsx');
-    expect(me).toMatch(/Text Size[\s\S]{0,80}Coming soon/);
     expect(me).toMatch(/Data Saver[\s\S]{0,80}Coming soon/);
+    expect(me).not.toContain('Stronger Colours');
+    expect(me.match(/className="ux-soon-tag"/g)).toHaveLength(1);
+  });
+  test('Me builds real Text Size and Less Movement controls, kept in this browser only', () => {
+    const me = read('apps/web/app/contributor/me/helper-me.tsx');
+    expect(me).not.toMatch(/Text Size[\s\S]{0,80}Coming soon/);
+    expect(me).toContain('<legend>Text Size</legend>');
+    expect(me).toContain('type="radio"');
+    expect(me).toContain('role="switch"');
+    expect(me).toContain('Less Movement');
+    expect(me).toContain('Stops animation and anything that moves by itself.');
+    expect(me).toContain('useTextSize');
+    expect(me).toContain('useLessMovement');
+    expect(me).not.toMatch(/fetch\(|\/api\//);
   });
 });
