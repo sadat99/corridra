@@ -1,5 +1,6 @@
 import { DomainError } from '@corridra/domain';
 import {
+  customerProblemReportAction,
   customerProblemReportInput,
   problemReportListQuery,
   problemReportQueueQuery,
@@ -7,6 +8,7 @@ import {
   problemReportRemoveWordsInput,
   problemReportTransitionInput,
   teamProblemReportFileInput,
+  type CustomerProblemReportInput,
   type ProblemReportCategory,
   type ProblemReportPageKind,
   type ProblemReportStatus,
@@ -91,6 +93,9 @@ export type ProblemReportMoved = {
   changed: boolean;
 };
 export type ProblemReportWordsRemoved = { reference: string; removed: number };
+// A customer's own removal (migration 0003): how many reports lost their words, and whether this call did it (false for a
+// replay of the same command and for a call that found nothing left).
+export type ProblemReportOwnWordsRemoved = { removed: number; changed: boolean };
 
 // Only these fields leave a service: a field the database adds later is not shown by default.
 const history = (rows: ProblemReportHistory[] | null): ProblemReportHistory[] =>
@@ -120,6 +125,11 @@ const reportFiled = (row: ProblemReportFiled): ProblemReportFiled => ({
   reference: row.reference,
   status: 'received',
   filedAt: row.filedAt,
+  changed: row.changed,
+});
+
+const ownWordsRemoved = (row: ProblemReportOwnWordsRemoved): ProblemReportOwnWordsRemoved => ({
+  removed: row.removed,
   changed: row.changed,
 });
 
@@ -198,6 +208,34 @@ async function installed(db: DatabaseClient) {
 async function requireInstalled(db: DatabaseClient) {
   if (!(await installed(db))) throw new DomainError(unavailable, 503, 'unavailable');
 }
+
+// Migration 0003 adds the customer's own removal of their words. It is a separate check from the one above on purpose:
+// filing, reading and triage work on 0001 and 0002 and never wait for 0003. The catalogue shows 0003 as the function
+// customer.problem_report_remove_own_words(uuid) AND the word removal body that skips self-removed reports (it names the
+// table problem_report_self_removal), so a half-applied or replaced module reads as missing. Same caching as above, same
+// pg_proc.prosrc reading (identical on every PostgreSQL major version). The screens (PR3) show the customer menu entry only
+// when this and the module check both hold, so a customer is never offered a removal that answers 503.
+let removalProbe: { available: boolean; at: number } | undefined;
+export function resetSelfRemovalProbe() {
+  removalProbe = undefined;
+}
+export async function selfRemovalAvailable(db: DatabaseClient) {
+  const now = Date.now();
+  if (removalProbe && (removalProbe.available || now - removalProbe.at < reprobeAfterMs))
+    return removalProbe.available;
+  const row = (
+    await db.query<{ available: boolean }>(
+      `SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace
+        WHERE n.nspname='customer' AND p.proname='problem_report_remove_own_words' AND p.pronargs=1
+          AND p.proargtypes[0]='uuid'::regtype)
+       AND EXISTS (SELECT 1 FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace
+        WHERE n.nspname='customer' AND p.proname='problem_report_remove_words' AND p.pronargs=2
+          AND position('problem_report_self_removal' IN p.prosrc)>0) AS available`,
+    )
+  ).rows[0];
+  removalProbe = { available: row?.available === true, at: now };
+  return removalProbe.available;
+}
 // A reference the database could not hold is answered like an unknown one, without asking it.
 function readReference(value: unknown) {
   const reference = problemReportReference.safeParse(value);
@@ -211,8 +249,8 @@ async function settle(input: unknown) {
   return typeof input === 'function' ? await (input as () => unknown)() : input;
 }
 
-// A customer's own reports. A person with no workspace may file, and a closed account can read but not file (the database
-// says so), so the closed-account gate of the boundary is not used. The signed-in provider session decides who acts.
+// A customer's own reports. A person with no workspace may file, and a closed account can read and remove its words but
+// not file (the database says so), so the closed-account gate of the boundary is not used. The signed-in provider session decides who acts.
 // The order is: identity, the request budget, the caller input is read and checked, and only then is a connection taken,
 // so a slow or invalid body never holds a pool connection or an open transaction. Inside the transaction the module is
 // probed and the database is asked. A malformed reference is answered as an unknown one before any of that.
@@ -257,19 +295,58 @@ export class CustomerProblemReports extends CustomerSessionBoundary {
           await budget?.();
           return customerProblemReportInput.parse(await settle(input));
         },
-        async (db, { commandId, ...words }) => {
-          await requireInstalled(db);
-          return (
-            await db.query<{ result: ProblemReportFiled }>(
-              'SELECT customer.problem_report_command($1,$2) AS result',
-              [commandId, JSON.stringify(words)],
-            )
-          ).rows[0]!.result;
-        },
+        (db, words) => this.fileReport(db, words),
         subject,
         issuer,
       ),
     );
+  }
+
+  // The one POST of the customer route: a filing (no action key) or the removal of the person's own words. The budget and
+  // the body are handled exactly as for a filing; a removal is refused with the module's 503 until migration 0003 is there.
+  async act(
+    input: unknown,
+    subject?: string,
+    issuer?: string,
+    budget?: () => Promise<void>,
+  ): Promise<ProblemReportFiled | ProblemReportOwnWordsRemoved> {
+    const done = await this.run(
+      async () => {
+        await budget?.();
+        return customerProblemReportAction.parse(await settle(input));
+      },
+      async (db, action): Promise<ProblemReportFiled | ProblemReportOwnWordsRemoved> =>
+        'action' in action
+          ? this.removeOwnWords(db, action.commandId)
+          : this.fileReport(db, action),
+      subject,
+      issuer,
+    );
+    return 'removed' in done ? ownWordsRemoved(done) : reportFiled(done);
+  }
+
+  private async fileReport(
+    db: DatabaseClient,
+    { commandId, ...words }: CustomerProblemReportInput,
+  ) {
+    await requireInstalled(db);
+    return (
+      await db.query<{ result: ProblemReportFiled }>(
+        'SELECT customer.problem_report_command($1,$2) AS result',
+        [commandId, JSON.stringify(words)],
+      )
+    ).rows[0]!.result;
+  }
+
+  private async removeOwnWords(db: DatabaseClient, commandId: string) {
+    await requireInstalled(db);
+    if (!(await selfRemovalAvailable(db))) throw new DomainError(unavailable, 503, 'unavailable');
+    return (
+      await db.query<{ result: ProblemReportOwnWordsRemoved }>(
+        'SELECT customer.problem_report_remove_own_words($1) AS result',
+        [commandId],
+      )
+    ).rows[0]!.result;
   }
 
   async list(query: unknown, subject?: string, issuer?: string): Promise<ProblemReportListItem[]> {

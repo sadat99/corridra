@@ -182,6 +182,17 @@ export const problemReportRemoveWordsInput = z
     erasureRequestId: z.uuid(),
   })
   .strict();
+// A customer removes the words of their own problem reports (migration 0003). Self only: no person id, no report id and
+// no erasure request, because the database takes the person from the signed-in session and removes every report of theirs.
+export const problemReportRemoveOwnWordsInput = z
+  .object({ action: z.literal('remove_words'), commandId: z.uuid() })
+  .strict();
+// What a customer POSTs: the filing (no action key) or the removal of their own words.
+export const customerProblemReportAction = z.union([
+  customerProblemReportInput,
+  problemReportRemoveOwnWordsInput,
+]);
+export type CustomerProblemReportAction = z.infer<typeof customerProblemReportAction>;
 export const teamProblemReportFileInput = z
   .object({ action: z.literal('file'), ...fileShape })
   .strict()
