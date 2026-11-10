@@ -99,6 +99,13 @@ export class CommunicationService {
     const wants = (k: keyof typeof cursors) => !continuing.length || continuing[0] === k;
     return withTenant(this.pool, ctx, 'communications.read', async ({ db, role }) => {
       const first = !continuing.length;
+      // CRUD G11: with contact changes installed, contacts come from the state view and only current ones are offered,
+      // so a withdrawn, corrected or hidden contact never appears and no hidden text is read.
+      const contactStates = (
+        await db.query<{ installed: boolean }>(
+          "SELECT to_regclass('app.private_contact_state') IS NOT NULL AS installed",
+        )
+      ).rows[0]?.installed;
       const policies = first
         ? (
             await db.query(
@@ -131,8 +138,10 @@ export class CommunicationService {
       const contacts = wants('contacts')
         ? await keysetPage(db, {
             select: 'c.id,c.relationship_id,c.name,c.email,c.valid_until',
-            from: 'app.private_contact_data c',
-            where: 'c.tenant_id=$1 AND c.valid_until>now()',
+            from: contactStates ? 'app.private_contact_state c' : 'app.private_contact_data c',
+            where: contactStates
+              ? "c.tenant_id=$1 AND c.valid_until>now() AND c.status='SOURCE_REPORTED'"
+              : 'c.tenant_id=$1 AND c.valid_until>now()',
             values: [ctx.tenantId],
             sortExpression: 'c.created_at',
             direction: 'desc',
@@ -143,9 +152,9 @@ export class CommunicationService {
       const messages = wants('messages')
         ? await keysetPage(db, {
             select: `c.*,p.channel,l.id AS link_id,br.status AS decision,br.id AS response_id,br.created_at AS response_at,j.status AS delivery_status,j.attempts,j.last_error,j.workflow_run_id,
-              EXISTS(SELECT FROM app.buyer_link_revocation r WHERE r.tenant_id=l.tenant_id AND r.link_id=l.id) AS revoked`,
+              EXISTS(SELECT FROM app.buyer_link_revocation r WHERE r.tenant_id=l.tenant_id AND r.link_id=l.id) AS revoked${contactStates ? ',cs.status AS contact_status' : ''}`,
             from: `app.communication c JOIN app.communication_policy p ON p.tenant_id=c.tenant_id AND p.id=c.policy_id LEFT JOIN app.buyer_link l ON l.tenant_id=c.tenant_id AND l.message_id=c.id
-              LEFT JOIN app.buyer_response br ON br.tenant_id=l.tenant_id AND br.link_id=l.id LEFT JOIN app.communication_dispatch j ON j.tenant_id=c.tenant_id AND j.id=c.id`,
+              LEFT JOIN app.buyer_response br ON br.tenant_id=l.tenant_id AND br.link_id=l.id LEFT JOIN app.communication_dispatch j ON j.tenant_id=c.tenant_id AND j.id=c.id${contactStates ? ' LEFT JOIN app.private_contact_state cs ON cs.tenant_id=c.tenant_id AND cs.id=c.contact_id' : ''}`,
             where: 'c.tenant_id=$1',
             values: [ctx.tenantId],
             sortExpression: 'c.created_at',

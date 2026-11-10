@@ -113,6 +113,61 @@ export const targetInput = z.object({
 export const assessmentInput = targetInput
   .omit({ action: true, missionId: true, relationshipId: true, contactId: true })
   .extend({ action: z.literal('assess'), targetId: uuid, version: z.number().int().positive() });
+// CRUD G11 (ADR-017 amendment): withdraw, correct and hide private contacts and notes. Each names the exact version
+// the person saw. Correct adds a new version through the same rules as a new record. Hide is for a workspace owner or
+// admin: the ticket reference must hold no personal details (no @ and no spaces), and the record id is typed again.
+const changeReason = text(500, 3);
+const hideReason = text(500, 10);
+const ticketReference = z
+  .string()
+  .trim()
+  .regex(
+    /^[A-Za-z0-9][A-Za-z0-9._:/#-]{2,63}$/,
+    'Use 3 to 64 letters, numbers or . _ : / # - with no spaces and no @.',
+  );
+const confirmId = z.string().trim().min(1).max(64);
+export const withdrawContactInput = z.object({
+  ...base,
+  action: z.literal('withdraw_contact'),
+  contactId: uuid,
+  reason: changeReason,
+});
+export const correctContactInput = contactInput
+  .omit({ action: true, relationshipId: true })
+  .extend({ action: z.literal('correct_contact'), contactId: uuid, reason: changeReason });
+export const withdrawNoteInput = z.object({
+  ...base,
+  action: z.literal('withdraw_note'),
+  noteId: uuid,
+  reason: changeReason,
+});
+export const correctNoteInput = noteInput
+  .omit({ action: true, relationshipId: true })
+  .extend({ action: z.literal('correct_note'), noteId: uuid, reason: changeReason });
+export const redactContactInput = z.object({
+  ...base,
+  action: z.literal('redact_contact'),
+  contactId: uuid,
+  confirmId,
+  reason: hideReason,
+  ticketReference,
+});
+export const redactNoteInput = z.object({
+  ...base,
+  action: z.literal('redact_note'),
+  noteId: uuid,
+  confirmId,
+  reason: hideReason,
+  ticketReference,
+});
+export const recordChangeActions = [
+  'withdraw_contact',
+  'correct_contact',
+  'withdraw_note',
+  'correct_note',
+  'redact_contact',
+  'redact_note',
+] as const;
 export const researchCommand = z.discriminatedUnion('action', [
   ingestOrganisation,
   relationshipInput,
@@ -125,5 +180,15 @@ export const researchCommand = z.discriminatedUnion('action', [
   reversalInput,
   targetInput,
   assessmentInput,
+  withdrawContactInput,
+  correctContactInput,
+  withdrawNoteInput,
+  correctNoteInput,
+  redactContactInput,
+  redactNoteInput,
 ]);
 export type ResearchCommand = z.infer<typeof researchCommand>;
+export type RecordChangeCommand = Extract<
+  ResearchCommand,
+  { action: (typeof recordChangeActions)[number] }
+>;
