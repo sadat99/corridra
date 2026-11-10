@@ -92,6 +92,17 @@ Withdrawn item (10 Nov 2026): an early account notice on `/plan`. The first scre
 2. `/plan` stays inside its confirmed limits (2.6 phone, 1.85 desktop) in `tests/browser/layout-budget-plan.spec.ts`.
 3. `Sensitive: yes` (public unauthenticated route): needs Guardian PASS.
 
+### W3. Operator Today shows service requests waiting for a quote
+
+Owner, 10 Nov 2026, in S17: "use the free branch slots to run W3 & others in parallel 100% correctly without rework, reruns etc". This lifts the order "after W1 and W2 merge" for W3. Built by S22 in PR 385. `Sensitive: yes` (`packages/auth`).
+
+The first audit's W3 row said that customer questions and supplier or buyer replies are missing from Today. Checked before the build, that was only partly true: Today's "This week" already shows replies to review, late follow-ups, meetings and meetings that need a new time. The real gap is paid-service requests in status `requested` (the customer asked for paid help and the team has not sent a quote). They were never counted, though the same read already counts accepted quotes.
+
+1. `packages/auth/src/team-today.ts`: the one bounded read of `app.service_request_staff_list` (50 per page, at most 20 pages, inside the existing `withTenant` and optional savepoint) now returns two counts, `accepted` and `requested`. `TeamToday` gains `serviceRequestsToQuote`. When the read fails or the module is not installed, both `acceptedQuotesNotStarted` and `serviceRequestsToQuote` are listed in `unavailable` and stay 0 underneath. No SQL, schema, route or permission change. The count covers exactly what the existing staff list already returns to that person.
+2. `apps/web/app/operator/today.tsx`: one tile after "accepted quotes not started", built the same way: the number or "Not available", then "service request to quote" or "service requests to quote". It links to `#billing-services`, where the request list is mounted for the owners and admins who can read the count, or to `#workspace-delivery` when the count is not available. The "nothing to do" state also needs this count to be 0.
+3. Preserved: every existing tile, count, link, id and test hook.
+4. Tests: W3-1 to W3-7 in `tests/integration/team-today.test.ts` (`requested` counted; `accepted` unchanged; every other status not counted; not installed and no access both unavailable; a request taken by another team not counted) and W3-1 to W3-5 in `tests/operator/team-today-layout.spec.ts`. The exact tile-count assertions in `zz-today.spec.ts`, `zz-operator-overview.spec.ts` and `ws-d/team-control.spec.ts` are extended by the new tile, never loosened.
+
 ### W3 and W4
 
 Specified in this file before their build, after W1 and W2 merge, with their files and tests read first.
