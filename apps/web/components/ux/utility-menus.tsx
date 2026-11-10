@@ -9,7 +9,7 @@
 // yet is plain text tagged Coming soon and announced as unavailable, never a link or a button that does nothing.
 import './utility-menus.css';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useEffect, useId, useState, useSyncExternalStore } from 'react';
 import { CorridraIcon } from '../corridra-icon';
 import { useLanguage } from '../language-provider';
 import { useSignOut } from '../use-sign-out';
@@ -236,12 +236,15 @@ function WorkspaceRadios({
 /**
  * The customer's account menu behind the avatar: who is signed in, the workspace (the one switcher, which keeps
  * the person in the same section of the chosen workspace), then Account, Company Profile, Plan and Billing,
- * Notification Settings and Sign Out. The privacy or preview line of the page stays here as a quiet note.
+ * Notification Settings and Sign Out. The privacy or preview line of the page stays here as a quiet note. Off a
+ * workspace page each workspace links to its company profile only where the profiles module is on; otherwise the
+ * names are plain text that describes Manage Workspaces, never a link to a profile that is unavailable.
  */
 export function AvatarMenu({ active }: { active: boolean }) {
   const listen = useListen();
   const pathname = usePathname() ?? '';
   const workspaces = useWorkspaces(active);
+  const workspaceNamesId = useId();
   const billing = useSyncExternalStore(
     subscribeCustomerNote,
     readCustomerBilling,
@@ -284,6 +287,8 @@ export function AvatarMenu({ active }: { active: boolean }) {
   const section = match?.[1];
   const current = match ? list.find((w) => w.id === match[2]) : undefined;
   const shown = current ?? (list.length === 1 ? list[0] : undefined);
+  // Off a workspace page with the profiles module off, the workspace names are plain text, not links.
+  const plainNames = !(current && section) && !organisationProfiles;
   const items = customerAvatarItems({
     billing,
     notificationSettings,
@@ -313,14 +318,25 @@ export function AvatarMenu({ active }: { active: boolean }) {
         <div role="group" aria-label="Workspace" className="ux-menu-group">
           {current && section ? (
             <WorkspaceRadios list={list} current={current} section={section} />
-          ) : (
+          ) : organisationProfiles ? (
             list.map((w) => (
               <MenuLink key={w.id} href={`/account/profile/${w.id}`}>
                 {w.name}
               </MenuLink>
             ))
+          ) : (
+            <div id={workspaceNamesId} className="ux-menu-who">
+              {list.map((w) => (
+                <span key={w.id}>{w.name}</span>
+              ))}
+            </div>
           )}
-          <MenuLink href={manageWorkspacesHref}>Manage Workspaces</MenuLink>
+          <MenuLink
+            href={manageWorkspacesHref}
+            describedBy={plainNames ? workspaceNamesId : undefined}
+          >
+            Manage Workspaces
+          </MenuLink>
         </div>
       ) : null}
       {items

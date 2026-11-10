@@ -14,8 +14,8 @@ export default function Page() {
       compact
     >
       <p>
-        Sign in to your verified customer account first, using the email your workspace owner
-        invited. Then set your separate contributor password and enroll your authenticator. A
+        First, sign in to your verified customer account. Use the email your workspace owner
+        invited. Next, set your separate contributor password. Then enroll your authenticator. A
         customer account alone does not grant task access.
       </p>
       <p id="contributor-password-rule">

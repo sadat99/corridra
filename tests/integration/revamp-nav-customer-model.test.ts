@@ -127,21 +127,63 @@ describe('the customer navigation model', () => {
     });
   });
 
-  it('Company Profile follows the chosen workspace, and is Coming soon with no workspace', () => {
+  it('Company Profile follows the chosen workspace, and otherwise opens the workspace chooser (owner, 10 Nov 2026: menu items that can be real are real)', () => {
     const second = '1f8fad5b-d9cb-469f-a165-70867728950e';
-    const other = customerAvatarItems({ ...all, currentWorkspaceId: second });
-    expect(hrefs(other)).toContain(`/account/profile/${second}`);
-    const none = customerAvatarItems({ ...all, workspaces: [], currentWorkspaceId: undefined });
-    expect(none.find((item) => item.label === 'Company Profile')!.kind).toBe('soon');
+    const profile = (input: Partial<typeof all>) =>
+      customerAvatarItems({ ...all, ...input }).find((item) => item.label === 'Company Profile')!;
+    // The page belongs to the second workspace: its profile.
+    expect(profile({ currentWorkspaceId: second })).toEqual({
+      kind: 'link',
+      label: 'Company Profile',
+      href: `/account/profile/${second}`,
+    });
+    // The only workspace, with no page workspace: its profile.
+    expect(
+      profile({ workspaces: [all.workspaces[0]!], currentWorkspaceId: undefined }),
+    ).toMatchObject({ kind: 'link', href: `/account/profile/${workspace}` });
+    // No workspace yet, or the list could not be read or is still loading (the menu passes []): the chooser.
+    expect(profile({ workspaces: [], currentWorkspaceId: undefined })).toMatchObject({
+      kind: 'link',
+      href: '/account/profile',
+    });
+    // Two workspaces and no page workspace: the chooser, which lists them.
+    expect(profile({ currentWorkspaceId: undefined })).toMatchObject({
+      kind: 'link',
+      href: '/account/profile',
+    });
+    for (const input of [
+      { currentWorkspaceId: second },
+      { workspaces: [], currentWorkspaceId: undefined },
+      { currentWorkspaceId: undefined },
+      { currentWorkspaceId: 'a workspace not in the list' },
+    ])
+      expect(profile(input).kind).not.toBe('soon');
   });
 
-  it('Company Profile is a link only where the profiles module is on and a workspace resolves, otherwise plain Coming soon', () => {
+  it('Company Profile is a link only where the profiles module is on, otherwise plain Coming soon', () => {
     const off = customerAvatarItems({ ...all, organisationProfiles: false });
     expect(off.find((item) => item.label === 'Company Profile')!.kind).toBe('soon');
     expect(hrefs(off).some((href) => href.startsWith('/account/profile'))).toBe(false);
     expect(customerAvatarItems(all).find((item) => item.label === 'Company Profile')!.kind).toBe(
       'link',
     );
+  });
+
+  it('with the profiles module on, the chooser and each workspace profile are reachable', () => {
+    const reachable = customerNavigation({ ...all, currentWorkspaceId: undefined }).reachable;
+    expect(reachable).toContain('/account/profile');
+    for (const w of all.workspaces) expect(reachable).toContain(`/account/profile/${w.id}`);
+  });
+
+  it('with the profiles module off, no company profile address is offered anywhere in the navigation', () => {
+    for (const currentWorkspaceId of [workspace, undefined]) {
+      const reachable = customerNavigation({
+        ...all,
+        organisationProfiles: false,
+        currentWorkspaceId,
+      }).reachable;
+      expect(reachable.filter((href) => href.startsWith('/account/profile'))).toEqual([]);
+    }
   });
 
   it('the help menu is honest: only real things are links, the rest is Coming soon', () => {

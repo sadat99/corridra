@@ -86,7 +86,7 @@ Limits of the measure, plainly:
 
 ### W2. The worst copy
 
-Withdrawn item (10 Nov 2026): an early account notice on `/plan`. The first screen already says it twice (see the audit), so a third line would add words, not clarity. Withdrawn after the Guardian review of PR 379 showed the page lead the first audit missed.
+Withdrawn item (10 Nov 2026): an early account notice on `/plan`. The first screen already says it twice (see the audit), so a third line would add words, not clarity. Withdrawn after the Guardian review of PR 379 showed the page lead the first audit missed. The early Sign In link that came with it is dropped too: the first screen's notice already offers sign-in at the final step.
 
 1. Rewrite the worst English sentences from the W1 report on `/plan` hints and public non-legal pages. Legal, privacy, consent and the owner-locked home headline are excluded. Each rewrite lowers the W1 numbers, and the baseline is lowered in the same PR.
 2. `/plan` stays inside its confirmed limits (2.6 phone, 1.85 desktop) in `tests/browser/layout-budget-plan.spec.ts`.
