@@ -71,7 +71,11 @@ test.describe('with a support number set (port 3302)', () => {
     // Text Size and Less Movement are real controls, not placeholders, and WhatsApp did not change them.
     await expect(menu.getByRole('group', { name: 'Text Size' })).toBeVisible();
     await expect(menu.getByRole('menuitemcheckbox', { name: /Less Movement/ })).toBeVisible();
-    await expect(menu.getByText('Coming soon')).toHaveCount(2);
+    // One Coming soon row is left in each Help group that has one (Report a Problem, Stronger Colours).
+    for (const group of ['Get Help', 'Make It Easier to Read'])
+      await expect(menu.getByRole('group', { name: group }).getByText('Coming soon')).toHaveCount(
+        1,
+      );
   });
 
   test('the keyboard reaches the row, and Escape closes the menu and returns to the button', async ({
