@@ -28,6 +28,7 @@ describe('installation', () => {
       '0007_task_assigned_notification.sql',
       '0008_quote_sent_notification.sql',
       '0009_reply_posted_notification.sql',
+      '0010_team_invitation_cancel_audit.sql',
     ]);
     await migrateCommercialReadiness(f.owner);
     expect(

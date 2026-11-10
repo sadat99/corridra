@@ -1464,6 +1464,9 @@ summary:hover {
   border-radius: 4px;
 }
 .ux-account-profile {
+  /* The name and the email address are one long word each; at a large text size or in a wider font they break
+     inside the word instead of pushing the page sideways. */
+  overflow-wrap: anywhere;
   padding: 24px;
   background: var(--surface-raised);
   border: 1px solid var(--border-subtle);
