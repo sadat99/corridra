@@ -115,8 +115,8 @@ export default async function Page({ params }: { params: Promise<{ corridor: str
       </section>
       <section className="guide-note">
         <p>
-          We check each company against the scope you agree. We do not claim a supplier network,
-          guaranteed buyers or certification.
+          We check each company against the scope you agree. We do not claim a supplier network or
+          certification. We do not guarantee buyers.
         </p>
         <Link prefetch={false} href="/trust" className="text-link">
           How evidence and uncertainty are handled

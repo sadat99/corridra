@@ -4,6 +4,7 @@ import { PhoneFold } from '../../components/phone-fold';
 import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { CountryOptions } from './country-options';
+import { missionFromAddress, missionHintNote } from './mission-hint';
 type Row = { id: string; [key: string]: unknown };
 type Organisation = Row & {
   name: string;
@@ -119,10 +120,13 @@ export function Counterparties({
     [missions, setMissions] = useState<Row[]>([]),
     [owners, setOwners] = useState<Row[]>([]),
     [mission, setMission] = useState(''),
+    [missionNote, setMissionNote] = useState(false),
     [shortlist, setShortlist] = useState<Row[]>([]),
     [shortOffset, setShortOffset] = useState(0),
     [shortTotal, setShortTotal] = useState(0);
   const pending = useRef(new Map<string, string>());
+  // W5: a link from a mission page names a mission once; an explicit choice here always wins.
+  const askedMission = useRef({ used: false, chosen: false });
   async function get(action: string, params: Record<string, string | number> = {}) {
     const p = new URLSearchParams({
       tenant,
@@ -153,12 +157,17 @@ export function Counterparties({
         if (active) {
           setSources(w.sources);
           setClaims(w.claims);
-          setMissions(
-            m.missions.map((r: Row) => ({
-              ...r,
-              company_name: String((r.brief as { company: string })?.company ?? r.id),
-            })),
-          );
+          const listed = m.missions.map((r: Row) => ({
+            ...r,
+            company_name: String((r.brief as { company: string })?.company ?? r.id),
+          }));
+          setMissions(listed);
+          const asked = missionFromAddress(window.location.search);
+          if (asked && !askedMission.current.used && !askedMission.current.chosen) {
+            askedMission.current.used = true;
+            if (listed.some((r: Row) => r.id === asked)) setMission(asked);
+            else setMissionNote(true);
+          }
           setOwners(
             m.owners.map((o: { user_id: string; name: string }) => ({
               id: o.user_id,
@@ -936,6 +945,8 @@ export function Counterparties({
               disabled={busy}
               value={mission}
               onChange={(e) => {
+                askedMission.current.chosen = true;
+                setMissionNote(false);
                 setMission(e.target.value);
                 setShortlist([]);
                 setShortOffset(0);
@@ -950,6 +961,7 @@ export function Counterparties({
               ))}
             </select>
           </label>
+          {missionNote && <p role="note">{missionHintNote}</p>}
           {mission && (
             <>
               <a

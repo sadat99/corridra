@@ -86,7 +86,7 @@ Limits of the measure, plainly:
 
 ### W2. The worst copy
 
-Withdrawn item (10 Nov 2026): an early account notice on `/plan`. The first screen already says it twice (see the audit), so a third line would add words, not clarity. Withdrawn after the Guardian review of PR 379 showed the page lead the first audit missed.
+Withdrawn item (10 Nov 2026): an early account notice on `/plan`. The first screen already says it twice (see the audit), so a third line would add words, not clarity. Withdrawn after the Guardian review of PR 379 showed the page lead the first audit missed. The early Sign In link that came with it is dropped too: the first screen's notice already offers sign-in at the final step.
 
 1. Rewrite the worst English sentences from the W1 report on `/plan` hints and public non-legal pages. Legal, privacy, consent and the owner-locked home headline are excluded. Each rewrite lowers the W1 numbers, and the baseline is lowered in the same PR.
 2. `/plan` stays inside its confirmed limits (2.6 phone, 1.85 desktop) in `tests/browser/layout-budget-plan.spec.ts`.
@@ -95,6 +95,32 @@ Withdrawn item (10 Nov 2026): an early account notice on `/plan`. The first scre
 ### W3 and W4
 
 Specified in this file before their build, after W1 and W2 merge, with their files and tests read first.
+
+### W4. Request reference in view, quiet idle step in the Room
+
+Owner, 10 Nov 2026, in S17: "use the free branch slots to run W3 & others in parallel 100% correctly without rework, reruns etc". This lifts the order "after W1 and W2 merge" for W4. Built by S24 in PR 384. Presentation only, on signed-in customer pages.
+
+1. Request page (`apps/web/app/account/requests/request-detail.tsx`): the overview card shows "Reference: <request id>" under the received date, with the hint "Quote this reference when you contact the Corridra team." The id is the customer's own request id, already shown in the closed "Request reference" disclosure at the bottom of the page, which stays exactly as it was.
+2. Room (`apps/web/app/account/rooms/[requestId]/room-view.tsx`): when there is nothing for the customer to do and service requests are off (`next.act === 'request'`), "Open the Request" is a quiet `text-link` instead of a primary button. It is the same element, the same address (`/account/requests/<id>`) and the same words. Every other next-step state keeps its primary action.
+3. In that idle state, the default words are "Waiting on the Corridra team" (glossary, UX update amendment), and a subline still comes first when one exists.
+4. Preserved: every link destination, element, id, name and test hook; the "Request reference" disclosure; the Room's Overview link to the request.
+5. Tests: W4 cases in `tests/operator/v3-customer-request-detail.spec.ts` and `tests/operator/ux-room.spec.ts`. They fail on the code before W4, and no existing assertion changes.
+6. Matrix row "D organiser" is not part of W4 and is withdrawn: `apps/web/components/workspace-chooser.tsx:61` already opens the only workspace directly when a person has exactly one, so the one-workspace shortcut exists.
+
+### W5. Operator section links keep the mission
+
+Owner, 10 Nov 2026, in S17: "use the free branch slots to run W3 & others in parallel 100% correctly without rework, reruns etc" and "close the dependabot PRs to free slots for W4 and W5, if they are not required". Built by S25 in PR 387. Operator presentation only: no data, route, permission or schema change.
+
+The mission page's links to whole workspace sections (`apps/web/app/operator/[section]/[missionId]/mission-page.tsx`, `sectionHref`) did not carry the mission, so the operator had to find it again. Each destination was checked first (GO or STOP):
+
+1. Research (`apps/web/app/operator/counterparties.tsx`): GO. It already holds a selected mission and lists missions it is allowed to read (one read of up to 100). The link "Find and add companies" now adds `&mission=<id>`.
+2. Commercial progress (`apps/web/app/operator/opportunities.tsx`): GO. Its first response already lists the missions. The link "Quotes and billing" now adds `&mission=<id>`.
+3. Meetings (`apps/web/app/operator/access.tsx`): STOP. It has no selected-mission state, only meeting targets, so its link is unchanged.
+4. Delivery (`apps/web/app/operator/delivery.tsx`): STOP. Its mission choice sits in a closed disclosure on another tab and only for owners and admins, so a preselection would be invisible or wrong for other roles. Its link is unchanged.
+
+For the GO sections the mission in the address is only a hint. It must be a well-formed id (`apps/web/app/operator/mission-hint.ts`), it is applied once after the section's own list loads, and only when that mission is in the list. Otherwise one plain note says "This mission is not in the list shown here." and the section is as before. A choice the operator makes always wins. Selecting the mission triggers only the read the section already makes when someone selects it by hand. The real `/operator` page reads only `workspace` from the address and rewrites it only when the operator switches workspace, so the hint survives a normal click. Section addresses are `#workspace-research` and `#workspace-commercial`, which the operator router accepts.
+
+Tests: `tests/operator/w5-mission-context.spec.ts`, W5-links and W5-research and W5-commercial (listed, malformed, not listed, later choice wins), 9 cases; 7 fail with the source change reverted.
 
 ## 5. Measurement
 
