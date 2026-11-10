@@ -4109,8 +4109,13 @@ th {
 }
 .intake-form {
   display: grid;
+  /* One column as wide as the form: a wide control or word gives way to it rather than widening the column past the
+     form's padding (a 320 px phone with text at 200 percent). */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-5);
   padding: var(--space-8);
+  /* Its choice cards follow its width (below). */
+  container: intake-form / inline-size;
   background: var(--surface-1);
   border: 1px solid var(--line);
   border-radius: var(--guided-hero-radius);
@@ -4255,6 +4260,42 @@ th {
 .guide-journey-bar li[aria-current='step'] b {
   font-weight: 700;
 }
+/* A narrow bar (a 320 px phone, or larger text in a narrow form) has columns narrower than a step word. There the
+   current step's word leaves its column and takes its own line under the five dots, from the bar's start edge and as
+   wide as the bar; its row keeps room for that line. The other words stay for screen readers only, and the
+   connectors give way. Rem here counts in the page's text size, so twice the text makes the bar compact sooner.
+   The bar is the container and the word's positioning box. 17.5rem is 280 px at normal text, under the 285 px bar of
+   a 375 px phone, which keeps its bar; with text at 200 percent it covers the 558 px bar of a 768 px tablet. */
+.guide-journey-bar {
+  position: relative;
+  container: journey-bar / inline-size;
+}
+@container journey-bar (max-width: 17.5rem) {
+  .guide-journey-bar li {
+    position: static;
+  }
+  .guide-journey-bar li::after {
+    display: none;
+  }
+  .guide-journey-bar li:not([aria-current='step']) b {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .guide-journey-bar li[aria-current='step'] {
+    padding-block-end: calc(1lh + var(--space-2));
+  }
+  .guide-journey-bar li[aria-current='step'] b {
+    position: absolute;
+    inset-block-end: 0;
+    inset-inline: 0 auto;
+    max-width: 100%;
+    white-space: nowrap;
+  }
+}
 
 /* Choices: whole card is the target; the checked card is clearly marked. */
 .guide-options {
@@ -4301,6 +4342,19 @@ th {
 .choice:has(input:focus-visible) {
   outline: 2px solid var(--brand);
   outline-offset: 3px;
+}
+/* A form narrower than two readable cards (larger text, or a narrow column) puts its choices in one column, and a
+   word wider than its card breaks inside the card rather than running out of it. Cards grow taller; nothing is cut.
+   Rem here counts in the page's text size. */
+@container intake-form (max-width: 22rem) {
+  .guide-options,
+  .guide-options-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .choice {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
 }
 .guide-actions {
   display: flex;

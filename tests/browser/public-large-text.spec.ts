@@ -3,7 +3,7 @@ import { test, expect, type Page } from '@playwright/test';
 // Wave 6 Q-02: with the text at twice its size, the public page bodies fit the window at the four widths people use,
 // and nothing is cut off or runs out of its own box. The whole page is measured, header and footer included, so a
 // shared band, tab row, card or footer link cannot bring the sideways scroll back on a page this test names.
-const pages = ['/', '/how-it-works', '/corridors', '/network', '/trust'] as const;
+const pages = ['/', '/how-it-works', '/corridors', '/network', '/trust', '/plan'] as const;
 const widths = [320, 390, 768, 1280] as const;
 
 test.beforeEach(({}, info) => {
@@ -53,7 +53,7 @@ async function problems(page: Page) {
   });
 }
 
-test('with 200% text the home, how it works, corridors, network and trust pages fit at 320, 390, 768 and 1280', async ({
+test('with 200% text the home, how it works, corridors, network, trust and request pages fit at 320, 390, 768 and 1280', async ({
   page,
 }) => {
   test.setTimeout(300_000);
@@ -67,6 +67,83 @@ test('with 200% text the home, how it works, corridors, network and trust pages 
       expect(await problems(page), `${path} at ${width}`).toEqual([]);
     }
   }
+});
+
+/** Opens the request form on its first step with an empty draft, with the text at twice its size. */
+async function openPlanLarge(page: Page) {
+  await page.goto('/plan?job=sourcing&companyCountry=BD&marketCode=CN');
+  await page.evaluate(() => sessionStorage.clear());
+  await page.reload();
+  await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
+  await page.evaluate(() => document.fonts.ready);
+}
+
+/** Answers the where, details and results steps, from the where step on, and lands on the contact step. */
+async function continueToContact(page: Page) {
+  const form = page.locator('form.intake-form');
+  await form.getByRole('radio', { name: 'No', exact: true }).check();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByLabel('Your offer or requirement').fill('Cotton fabric for shirts.');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await form.locator('.guide-options input[type="checkbox"]').first().check();
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(currentWord(page)).toHaveText('Contact');
+}
+
+const currentWord = (page: Page) => page.locator('.guide-journey-bar li[aria-current="step"] b');
+
+// The request page above is measured on its first step, with the goal cards. Here the form is walked on: the
+// attendance row on the where step, and the contact step, whose word sits at the far end of the step bar.
+test('with 200% text the request form fits at 320, 390, 768 and 1280 on its where and contact steps', async ({
+  page,
+}) => {
+  test.setTimeout(180_000);
+  for (const width of widths) {
+    await page.setViewportSize({ width, height: 900 });
+    await openPlanLarge(page);
+    await expect(currentWord(page)).toHaveText('Goal');
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+    await expect(currentWord(page)).toHaveText('Where');
+    await expect(page.locator('form.intake-form .guide-options-row .choice')).toHaveCount(3);
+    expect(await problems(page), `/plan where step at ${width}`).toEqual([]);
+    await continueToContact(page);
+    expect(await problems(page), `/plan contact step at ${width}`).toEqual([]);
+  }
+});
+
+test('on a 320 px phone with 200% text the current step word has its own line under the dots on the first and last step', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 900 });
+  await openPlanLarge(page);
+  const bar = page.locator('.guide-journey-bar');
+  await expect(bar).toHaveAttribute('aria-label', 'Request steps');
+  /** Where the current word sits: from the bar's start edge, inside the bar, below the dots; connectors hidden. */
+  const place = () =>
+    bar.evaluate((list) => {
+      const box = list.getBoundingClientRect();
+      const word = list.querySelector('li[aria-current="step"] b')!.getBoundingClientRect();
+      const dots = Array.from(list.querySelectorAll('span')).map((dot) =>
+        dot.getBoundingClientRect(),
+      );
+      return {
+        startGap: Math.round(word.left - box.left),
+        inside: word.right <= box.right + 0.5 && word.bottom <= box.bottom + 0.5,
+        belowDots: word.top >= Math.max(...dots.map((dot) => dot.bottom)) - 0.5,
+        connector: getComputedStyle(list.querySelector('li')!, '::after').display,
+      };
+    });
+  const compact = { startGap: 0, inside: true, belowDots: true, connector: 'none' };
+  await expect(currentWord(page)).toHaveText('Goal');
+  expect(await place(), 'step 1').toEqual(compact);
+  expect(await problems(page), 'step 1').toEqual([]);
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await continueToContact(page);
+  expect(await place(), 'step 5').toEqual(compact);
+  expect(await problems(page), 'step 5').toEqual([]);
+  // Every word stays in the list for screen readers; only the current one shows.
+  await expect(bar.locator('li b')).toHaveText(['Goal', 'Where', 'Details', 'Results', 'Contact']);
+  await expect(bar.locator('li[aria-current="step"] span')).toHaveText('5');
 });
 
 test('at normal text the phone keeps its two-column phase step, with the heading beside the number', async ({
