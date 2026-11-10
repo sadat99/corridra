@@ -1,5 +1,6 @@
 import { customerLabelAllowed, realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { z } from 'zod';
+import { DomainError } from '@corridra/domain';
 import { CustomerSessionBoundary } from './customer-session';
 import { customerParticipantsEnabled } from './customer-participants';
 
@@ -78,6 +79,8 @@ export const attendanceSetInput = z
     workspaceId: z.uuid(),
     programmeId: z.uuid(),
     registrationId: z.uuid(),
+    // CRUD item 3: the attendance version the organiser saw (0 when not yet marked).
+    expectedVersion: version,
     state: z.enum(['ATTENDED', 'ABSENT']),
   })
   .strict();
@@ -276,18 +279,57 @@ export class CustomerProgrammeCoordinationService extends CustomerSessionBoundar
       issuer,
     );
   }
+  /**
+   * CRUD item 3: an attendance mark carries the version the organiser saw, so two organisers cannot silently
+   * overwrite each other; a stale version is refused with 409 and nothing is written. The database function
+   * has no version argument, so the check runs here under the same programme lock the function takes
+   * (reentrant in this transaction): the version read below cannot change before the write. A retried
+   * command (same command id) still returns its first result: on a version mismatch the call runs in a
+   * savepoint and is kept only when the database answers with that stored replay, which writes nothing.
+   */
   setAttendance(input: unknown, subject?: string, issuer?: string) {
     const v = attendanceSetInput.parse(input);
-    return this.call<
-      Receipt & { registrationId: string; state: 'ATTENDED' | 'ABSENT'; version: number }
-    >(
-      'SELECT customer.programme_attendance_set($1,$2,$3,$4) AS result',
-      [
-        v.commandId,
-        v.workspaceId,
-        v.programmeId,
-        JSON.stringify({ registrationId: v.registrationId, state: v.state }),
-      ],
+    type Result = Receipt & {
+      registrationId: string;
+      state: 'ATTENDED' | 'ABSENT';
+      version: number;
+    };
+    return this.transaction(
+      async (db) => {
+        await db.query(
+          "SELECT pg_advisory_xact_lock(hashtextextended('customer.programme_coordination:'||$1::uuid::text,0))",
+          [v.programmeId],
+        );
+        const report = (
+          await db.query<{ result: ProgrammeReport }>(
+            'SELECT customer.programme_report($1,$2) AS result',
+            [v.workspaceId, v.programmeId],
+          )
+        ).rows[0].result;
+        const current = report.participants.find((p) => p.registrationId === v.registrationId);
+        const set = async () =>
+          (
+            await db.query<{ result: Result }>(
+              'SELECT customer.programme_attendance_set($1,$2,$3,$4) AS result',
+              [
+                v.commandId,
+                v.workspaceId,
+                v.programmeId,
+                JSON.stringify({ registrationId: v.registrationId, state: v.state }),
+              ],
+            )
+          ).rows[0].result;
+        // An unknown registration is refused by the database function with its own error.
+        if (!current || current.attendanceVersion === v.expectedVersion) return set();
+        await db.query('SAVEPOINT attendance_version');
+        const result = await set();
+        if (result.replayed) return result;
+        await db.query('ROLLBACK TO SAVEPOINT attendance_version');
+        throw new DomainError(
+          'Attendance was changed by someone else. Reload to see the latest mark, then try again.',
+          409,
+        );
+      },
       subject,
       issuer,
     );

@@ -418,8 +418,15 @@ function ScopedCoordination(props: Props) {
       'Capacity saved.',
     );
   }
-  function mark(registrationId: string, state: 'ATTENDED' | 'ABSENT') {
-    void send('attendance', { registrationId, state }, () => undefined, 'Attendance saved.');
+  // CRUD item 3: the mark carries the version shown; if someone else marked first the server answers 409
+  // and the shared message asks for a reload.
+  function mark(registrationId: string, expectedVersion: number, state: 'ATTENDED' | 'ABSENT') {
+    void send(
+      'attendance',
+      { registrationId, expectedVersion, state },
+      () => undefined,
+      'Attendance saved.',
+    );
   }
   function startEdit(t: Task | null) {
     setError('');
@@ -664,7 +671,7 @@ function ScopedCoordination(props: Props) {
                         type="button"
                         className="text-link"
                         disabled={busy || p.attendance === 'ATTENDED'}
-                        onClick={() => mark(p.registrationId, 'ATTENDED')}
+                        onClick={() => mark(p.registrationId, p.attendanceVersion, 'ATTENDED')}
                       >
                         Mark Attended for {p.label}
                       </button>{' '}
@@ -672,7 +679,7 @@ function ScopedCoordination(props: Props) {
                         type="button"
                         className="text-link"
                         disabled={busy || p.attendance === 'ABSENT'}
-                        onClick={() => mark(p.registrationId, 'ABSENT')}
+                        onClick={() => mark(p.registrationId, p.attendanceVersion, 'ABSENT')}
                       >
                         Mark Absent for {p.label}
                       </button>

@@ -3158,3 +3158,16 @@ Guardian items on PR 375, fixed by class in one round. No migration, no index, n
 Correction to the G12 entry above (its known limit 1 stays as written): paging at 50 did not bound the meetings read. The page query read the whole workspace in a materialized base, and its join to `app.meeting_brief` made the brief policy check every meeting once per meeting: 1890 policy calls and 12.9 s for one page of 5 on 60 meetings. The 225 ms per row measured there was that join, not `app.meeting_parent_access` alone (about 7 ms a call).
 
 Verification: see the PR body for exact commands and totals. Next: (B) attendance version check.
+
+### 10 November 2026: CRUD item 3, attendance version check (S16, branch crud-attendance-version from main 0dc2f57)
+
+Gap (docs/revamp/crud/matrix.json, "Programme capacity and attendance"): an attendance mark carried no expected version, so two organisers could overwrite each other without knowing. No migration: `customer.programme_attendance_set` is unchanged.
+
+- `setAttendance` (packages/auth/src/customer-programme-coordination.ts) now requires `expectedVersion`, the attendance version the organiser saw (0 when not marked). In one transaction it takes the same programme advisory lock the database function takes (reentrant), reads the version through `customer.programme_report`, and refuses a different version with 409 "Attendance was changed by someone else. Reload to see the latest mark, then try again." Nothing is written on a refusal.
+- A retried command (same command id, response lost) keeps its stored result: on a version mismatch the function runs inside a savepoint and is kept only when it answers with its stored replay, which writes nothing; any other answer is rolled back before the 409.
+- Every existing action and refusal stays: unknown or other-workspace registrations and non-organisers still get the database's 42501, a withdrawn registration still gets "active", an unchanged state still adds no revision.
+- The coordination page sends the version shown on each Mark Attended or Mark Absent; a 409 shows the existing "changed since you opened it" message and keeps the page.
+- Tests: tests/integration/customer-programme-coordination.test.ts (stale version 409 with no writes, future version 409, replay after a newer mark, two parallel marks from one version give one save and one 409); operator fixture spec v3-programme-coordination-ui (version sent, 409 explained). The G12 cost test's continuation check now has a lower bound (S15 note on PR 378).
+- Not in scope, still open in the matrix: clearing an attendance mark back to "not recorded".
+
+Verification: see the PR body. Next: (C) G10 invitation cancel audit plus workspace lock (additive migration, owner merges).

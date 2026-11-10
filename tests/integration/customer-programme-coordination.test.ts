@@ -67,8 +67,13 @@ const saveTask = (
   target = workspaceId,
   programme = programmeId,
 ) => coord(p).saveTask({ commandId, ...scope(target, programme), expectedVersion, task: t });
-const attend = (reg: string, state: string, p = 'alice', commandId = randomUUID()) =>
-  coord(p).setAttendance({ commandId, ...scope(), registrationId: reg, state });
+const attend = (
+  reg: string,
+  state: string,
+  expectedVersion = 0,
+  p = 'alice',
+  commandId = randomUUID(),
+) => coord(p).setAttendance({ commandId, ...scope(), registrationId: reg, expectedVersion, state });
 const feedback = (reg: string, over: Record<string, unknown> = {}) => ({
   commandId: randomUUID(),
   registrationId: reg,
@@ -512,11 +517,11 @@ test('attendance is recorded for active registrations only and an unchanged stat
   const before = await counts();
   const first = await attend(bobReg, 'ATTENDED');
   expect(first).toMatchObject({ state: 'ATTENDED', version: 1 });
-  const same = await attend(bobReg, 'ATTENDED');
+  const same = await attend(bobReg, 'ATTENDED', 1);
   expect(same.version).toBe(1);
   expect((await counts()).attendance).toBe(before.attendance + 1);
-  expect((await attend(bobReg, 'ABSENT')).version).toBe(2);
-  expect((await attend(bobReg, 'ATTENDED')).version).toBe(3);
+  expect((await attend(bobReg, 'ABSENT', 1)).version).toBe(2);
+  expect((await attend(bobReg, 'ATTENDED', 2)).version).toBe(3);
   const r = await report();
   expect(r.attendance).toMatchObject({ attended: 1, absent: 0, notRecorded: 1 });
   expect(r.participants.find((p) => p.registrationId === bobReg)).toMatchObject({
@@ -525,6 +530,51 @@ test('attendance is recorded for active registrations only and an unchanged stat
   });
   expect((await rejected(attend(secondReg, 'ATTENDED'))).code).toBe('42501');
   expect((await rejected(attend(randomUUID(), 'ATTENDED'))).code).toBe('42501');
+});
+
+test('a stale attendance version is refused with 409 and writes nothing; a retried command keeps its result', async () => {
+  // Two organisers both opened the report at version 3 (the previous test left Bob ATTENDED at 3).
+  const opened = (await report()).participants.find((p) => p.registrationId === bobReg)!;
+  expect(opened.attendanceVersion).toBe(3);
+  const commandId = randomUUID();
+  const first = await attend(bobReg, 'ABSENT', 3, 'alice', commandId);
+  expect(first).toMatchObject({ state: 'ABSENT', version: 4, replayed: false });
+  const before = await counts();
+  // The second organiser still holds version 3: refused, with a retry message, and nothing is written.
+  const stale = await rejected(attend(bobReg, 'ATTENDED', 3));
+  expect(stale).toMatchObject({ status: 409 });
+  expect(stale.message).toMatch(/Reload to see the latest mark, then try again/);
+  // A stale version is refused even when the state would not change.
+  expect(await rejected(attend(bobReg, 'ABSENT', 3))).toMatchObject({ status: 409 });
+  expect(await counts()).toEqual(before);
+  expect((await report()).participants.find((p) => p.registrationId === bobReg)).toMatchObject({
+    attendance: 'ABSENT',
+    attendanceVersion: 4,
+  });
+  // A retry of the first command (its response was lost) still returns its stored result, whatever
+  // version it carried, and writes nothing.
+  expect(await attend(bobReg, 'ABSENT', 3, 'alice', commandId)).toMatchObject({
+    state: 'ABSENT',
+    version: 4,
+    replayed: true,
+  });
+  expect(await counts()).toEqual(before);
+  // After reloading, the second organiser's mark goes through.
+  expect(await attend(bobReg, 'ATTENDED', 4)).toMatchObject({ version: 5, replayed: false });
+  // A version from the future is refused too.
+  expect(await rejected(attend(bobReg, 'ABSENT', 9))).toMatchObject({ status: 409 });
+  // Two organisers marking at the same moment from the same version: exactly one is saved.
+  const race = await Promise.allSettled([
+    attend(bobReg, 'ABSENT', 5),
+    attend(bobReg, 'ABSENT', 5, 'alice'),
+  ]);
+  expect(race.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+  const lost = race.find((r) => r.status === 'rejected') as PromiseRejectedResult;
+  expect(lost.reason).toMatchObject({ status: 409 });
+  expect((await report()).participants.find((p) => p.registrationId === bobReg)).toMatchObject({
+    attendance: 'ABSENT',
+    attendanceVersion: 6,
+  });
 });
 
 test('feedback and outcomes are written only by the registered participant, as consented revisions', async () => {
@@ -775,7 +825,9 @@ test('only workspace owners and admins of this programme read the report or writ
     expect((await rejected(report(p))).code, p + ' report').toBe('42501');
     expect((await rejected(coord(p).tasks(scope()))).code, p + ' tasks').toBe('42501');
     expect((await rejected(saveTask(task(), 0, p))).code, p + ' task').toBe('42501');
-    expect((await rejected(attend(bobReg, 'ATTENDED', p))).code, p + ' attendance').toBe('42501');
+    expect((await rejected(attend(bobReg, 'ATTENDED', 0, p))).code, p + ' attendance').toBe(
+      '42501',
+    );
     expect(
       (
         await rejected(

@@ -159,7 +159,9 @@ test('a continuation near the end skips the rows before its cursor and returns n
   expect(page.meetings.map((r) => r.id)).toEqual(all.slice(-5).map((r) => r.id));
   expect(page.next).toBeNull();
   expect(page.meetingsTotal).toBeNull();
-  // The five rows after the cursor and their five briefs, not the 55 rows before it.
+  // The five rows after the cursor and their five briefs, not the 55 rows before it. The lower bound
+  // shows the count is real: the five listed meetings were each checked.
+  expect(calls).toBeGreaterThanOrEqual(5);
   expect(calls).toBeLessThanOrEqual(10);
 });
 
