@@ -7,8 +7,8 @@ import { hanLang, statusWords } from '../trip';
 import { formatDateTime } from '../ux/format';
 import type { MeetingRow } from './load';
 
-export type Tone = 'neutral' | 'positive' | 'caution' | 'info';
-export type Timed = { iso: string; text: string };
+type Tone = 'neutral' | 'positive' | 'caution' | 'info';
+type Timed = { iso: string; text: string };
 
 export type MeetingCard = {
   key: string;

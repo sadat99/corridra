@@ -487,8 +487,9 @@ test('the Meetings tab opens a real page: it says what it is for, has no Coming 
   await expect(page.locator('main')).not.toContainText('You have no requests yet');
   await expect(page.locator('main')).toContainText('Your requests list is not available here yet');
   // The placeholder is gone for good: no line, no tag, no Coming soon words in the page.
-  await expect(page.locator('.ux-soon-line')).toHaveCount(0);
-  await expect(page.locator('.ux-soon-tag')).toHaveCount(0);
+  // (Other menu entries that are still Coming soon keep their tag, in the menus and not in the page.)
+  await expect(page.locator('main .ux-soon-line')).toHaveCount(0);
+  await expect(page.locator('main .ux-soon-tag')).toHaveCount(0);
   await expect(page.locator('main')).not.toContainText('Coming soon');
   await expect(page.locator('main')).not.toContainText('One list of all your meetings');
   await expect(page.locator('main')).toContainText(

@@ -8,12 +8,12 @@ import { translate } from '../../../lib/i18n/messages';
 import type { MeetingCard } from '../../../lib/meetings/cards';
 import { hanLang, meetingsFirstShown } from '../../../lib/trip';
 
-export type MeetingGroupKey = 'upcoming' | 'past' | 'undated' | 'changed';
+type MeetingGroupKey = 'upcoming' | 'past' | 'undated' | 'changed';
 export type MeetingGroup = { key: MeetingGroupKey; cards: MeetingCard[] };
-export type RequestLink = { key: string; title: string; href: string };
+type RequestLink = { key: string; title: string; href: string };
 
 /** More requests than this show behind "Show All". */
-export const requestsFirstShown = 5;
+const requestsFirstShown = 5;
 
 const say = (key: Parameters<typeof translate>[1]) => translate('en', key);
 const groupHeading: Record<MeetingGroupKey, string> = {
