@@ -175,7 +175,7 @@ export function RoomView({
                 act: 'library',
               }
             : {
-                words: subline ?? 'The Corridra team is working on your request',
+                words: subline ?? 'Waiting on the Corridra team',
                 small: replies[0]
                   ? `Latest reply ${day(replies[0].createdAt)}.`
                   : 'The Corridra team will tell you here when something needs you.',
@@ -332,7 +332,7 @@ export function RoomView({
               ) : (
                 <Link
                   prefetch={false}
-                  className="button button-primary"
+                  className={next.act === 'request' ? 'text-link' : 'button button-primary'}
                   href={`/account/requests/${requestId}`}
                 >
                   Open the Request

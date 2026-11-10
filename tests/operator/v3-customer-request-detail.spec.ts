@@ -147,6 +147,27 @@ const payload = () => ({
     replies: [{ body: 'Original team reply বাংলা', createdAt: '2026-10-18T02:00:00Z' }],
   },
 });
+// W4: the reference a customer quotes to the Corridra team is in the overview card, and it is the same value
+// the closed disclosure at the bottom shows.
+test('W4-request-reference: the overview card shows the reference the disclosure holds', async ({
+  page,
+}) => {
+  await page.route('**/api/customer-requests/' + id, (route) => route.fulfill({ json: payload() }));
+  await page.goto(origin);
+  const overview = page.getByRole('region', { name: 'Request overview' });
+  await expect(overview.getByText('Received', { exact: false }).first()).toBeVisible();
+  const line = overview.getByText(/^Reference:/);
+  await expect(line).toHaveText(`Reference: ${id}`);
+  await expect(
+    overview.getByText('Quote this reference when you contact the Corridra team.'),
+  ).toBeVisible();
+  // The disclosure stays, closed, and holds the same value.
+  const disclosure = page.locator('details', { hasText: 'Request reference' });
+  await expect(disclosure).toHaveJSProperty('open', false);
+  await disclosure.getByText('Request reference', { exact: true }).click();
+  await expect(disclosure.getByText(id, { exact: true })).toBeVisible();
+});
+
 test('reopens original requirements,precise currency,canonical status and replies through the read-only scoped endpoint', async ({
   page,
 }) => {

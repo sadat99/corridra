@@ -448,6 +448,69 @@ test('keeps every original action one tap away', async ({ page }) => {
   );
 });
 
+// W4: with nothing for the person to do the next step is a quiet link, not the one primary action, and it
+// names who holds the request. Every state that does ask for something keeps its primary action.
+const idle = (over: Record<string, unknown> = {}) => ({
+  link: { reportAvailable: false, savedResourceId: null },
+  lenses: false,
+  service: false,
+  ...over,
+});
+const idleDetail = (status: string) =>
+  detail({ progress: { status, receivedAt: '2026-10-02T09:00:00Z', replies: [] } });
+
+test('W4-room-idle: the idle next step opens the request as a quiet link, not a primary button', async ({
+  page,
+}) => {
+  await open(page, idle());
+  const next = page.getByRole('region', { name: 'Your next step' });
+  const link = next.getByRole('link', { name: 'Open the Request' });
+  await expect(link).toHaveAttribute('href', `/account/requests/${requestId}`);
+  await expect(link).toHaveClass(/text-link/);
+  await expect(next.locator('.button-primary')).toHaveCount(0);
+  await expect(next.getByRole('button')).toHaveCount(0);
+});
+
+test('W4-room-idle: the states that ask for something keep their primary action', async ({
+  page,
+}) => {
+  // Service requests on: the question link is the primary action.
+  await open(page, idle({ service: true }));
+  const next = page.getByRole('region', { name: 'Your next step' });
+  await expect(next.getByRole('link', { name: 'Ask a Question' })).toHaveClass(/button-primary/);
+  await expect(next.getByRole('link', { name: 'Open the Request' })).toHaveCount(0);
+  // A delivered report that is not saved yet: the Library link is the primary action.
+  await page.unrouteAll({ behavior: 'ignoreErrors' });
+  await open(page, idle({ link: { reportAvailable: true, savedResourceId: null } }));
+  await expect(
+    page
+      .getByRole('region', { name: 'Your next step' })
+      .getByRole('link', { name: 'Open Your Library' }),
+  ).toHaveClass(/button-primary/);
+  // A saved report to open: the report link is the primary action.
+  await page.unrouteAll({ behavior: 'ignoreErrors' });
+  await open(
+    page,
+    idle({ link: { reportAvailable: true, savedResourceId: resourceId }, lenses: true }),
+  );
+  await expect(
+    page.getByRole('region', { name: 'Your next step' }).locator('.button-primary'),
+  ).toHaveCount(1);
+});
+
+test('W4-room-idle: with no subline the idle step says who holds the request', async ({ page }) => {
+  await open(page, idle(), { body: idleDetail('ON_HOLD') });
+  const next = page.getByRole('region', { name: 'Your next step' });
+  await expect(next.locator('.room-next-words b')).toHaveText('Waiting on the Corridra team');
+  await expect(next).not.toContainText('is working on your request');
+  // A status that has its own subline keeps it first.
+  await page.unrouteAll({ behavior: 'ignoreErrors' });
+  await open(page, idle(), { body: idleDetail('MEETINGS') });
+  await expect(
+    page.getByRole('region', { name: 'Your next step' }).locator('.room-next-words b'),
+  ).toHaveText('Meetings are being arranged or held.');
+});
+
 test('a delivered report that is not saved yet points to the Library, not to a page that is not there', async ({
   page,
 }) => {
