@@ -37,7 +37,7 @@ const useCases = [
   [
     'Run a delegation or programme',
     'Chambers, institutions and organisers',
-    'manage the programme. Keep each person’s goals and private information apart.',
+    'manage the programme. Keep each participant’s goals separate. Keep their private information separate too.',
   ],
 ] as const;
 

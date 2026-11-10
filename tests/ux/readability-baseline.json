@@ -14,11 +14,11 @@
     "words": 7
   },
   "/about": {
-    "grade": 8.8,
+    "grade": 8.9,
     "hard": 7,
     "long": 0,
-    "sentences": 33,
-    "words": 302
+    "sentences": 34,
+    "words": 305
   },
   "/account": {
     "redirectsTo": "/signin"
@@ -85,11 +85,11 @@
     "words": 0
   },
   "/business-trips": {
-    "grade": 6.1,
+    "grade": 6.3,
     "hard": 0,
     "long": 0,
     "sentences": 9,
-    "words": 63
+    "words": 60
   },
   "/buyer": {
     "grade": 6.9,
@@ -307,8 +307,8 @@
     "grade": 5.3,
     "hard": 0,
     "long": 0,
-    "sentences": 9,
-    "words": 75
+    "sentences": 10,
+    "words": 78
   },
   "/trust": {
     "grade": 5.5,

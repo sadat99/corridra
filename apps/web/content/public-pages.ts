@@ -186,7 +186,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     label: 'Run a trade mission',
     title: 'Give every participant a reason to be in the room.',
     description:
-      'We are building missions around each person’s goal and a qualified agenda. We are also building follow-up after the trip.',
+      'We are building a mission around each participant’s goal. Each mission gets a qualified agenda. We are also building follow-up after the trip.',
     introduction: {
       title: 'A shared itinerary is not a shared objective.',
       text: 'Each participant has a different goal. A good programme links each goal to the right companies.',
@@ -468,7 +468,7 @@ publicPages['business-trips'] = {
   description: 'Work backwards from the conversations and decisions the trip should produce.',
   introduction: {
     title: 'An itinerary is part of a mission.',
-    text: 'Company location and target market are not the same fact. Nor are the venue and the shipment route. Keep each separate.',
+    text: 'Company location is one fact. Target market, venue and shipment route are three more facts. Keep each separate.',
   },
   sections: [
     {
