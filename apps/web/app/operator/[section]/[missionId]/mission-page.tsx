@@ -6,6 +6,7 @@ import { formatMoney } from '../../../../lib/ux/money';
 import { CommercialMission } from '../../commercial-mission';
 import { DeliveryExperience } from '../../delivery-experience';
 import { MissionMoves } from '../../mission-moves';
+import { WithdrawalNote } from '../../mission-withdrawal-note';
 import {
   MissionActionForm,
   MissionFacts,
@@ -155,6 +156,7 @@ export function MissionPage({
           {m.route_label ?? 'not assigned yet'}
         </p>
         <p>Next action: {m.next_action || 'Not recorded'}</p>
+        <WithdrawalNote tenant={tenant} missionId={m.id} />
       </header>
       <div className="mission-tabs" role="tablist" aria-label="Mission sections">
         {tabs.map(([key, label], index) => (

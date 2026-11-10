@@ -11,6 +11,7 @@
     "./commercial": "./src/commercial.ts",
     "./operations": "./src/operations.ts",
     "./moves": "./src/moves.ts",
+    "./request-withdrawal-signal": "./src/request-withdrawal-signal.ts",
     "./route-assignment": "./src/route-assignment.ts",
     "./route-pack-form": "./src/route-pack-form.ts"
   },

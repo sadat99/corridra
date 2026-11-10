@@ -146,6 +146,13 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: '/api/mission-withdrawal/:path*',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
         source: '/api/move/:path*',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },

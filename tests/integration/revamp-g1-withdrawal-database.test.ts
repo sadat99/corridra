@@ -170,7 +170,10 @@ describe('installation', () => {
     const before = (
       await f.owner.query('SELECT * FROM customer_request_withdrawal_migrations.applied')
     ).rows;
-    expect(before.map((r) => r.name)).toEqual(['0001_request_withdrawal.sql']);
+    expect(before.map((r) => r.name)).toEqual([
+      '0001_request_withdrawal.sql',
+      '0002_staff_withdrawal_signal.sql',
+    ]);
     await migrateCustomerRequestWithdrawal(f.owner);
     expect(
       (await f.owner.query('SELECT * FROM customer_request_withdrawal_migrations.applied')).rows,

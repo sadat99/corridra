@@ -10,7 +10,9 @@ import { describe, expect, it } from 'vitest';
 //   'revoked or withdrawn' outbound mail and reminders: a withdrawn request sends nothing (mail 0003, Pulse 0005)
 //   'flags withdrawn'      returns the withdrawn flag so a list can show it under Withdrawn
 //   'own'                  the mute and withdrawal commands themselves
+//   'signals withdrawn'    the team's read-only signal: yes or no and the date, never the reason
 const classification: Record<string, string> = {
+  'app.mission_request_withdrawal': 'signals withdrawn',
   'app.customer_delivery_scope': 'revoked only',
   'app.record_reply_posted': 'revoked only',
   'customer.enqueue_move_notifications': 'revoked or withdrawn',
