@@ -14,6 +14,7 @@ export function ShellHeader({
   live,
   accounts,
   mode,
+  whatsappHref,
 }: {
   /** CORRIDRA_UX_SHELLS_V2, read on the server. */
   shells: boolean;
@@ -23,6 +24,8 @@ export function ShellHeader({
   live: boolean;
   accounts?: boolean;
   mode?: 'sample' | 'real';
+  /** The support WhatsApp link, only when the owner has set a usable number. Signed-in headers only, never the public one. */
+  whatsappHref?: string;
 }) {
   const pathname = usePathname();
   // A bare page (the decision card) renders no header, so nothing here can ask the server who is signed in.
@@ -35,6 +38,7 @@ export function ShellHeader({
         live={live}
         notifications={notifications}
         brandMark={<BrandLockup />}
+        whatsappHref={whatsappHref}
       />
     );
   return <SiteHeader accounts={accounts} mode={mode} />;

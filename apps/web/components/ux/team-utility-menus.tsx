@@ -106,7 +106,7 @@ function SignOutRow() {
   );
 }
 
-export function TeamAccountMenu() {
+export function TeamAccountMenu({ whatsappHref }: { whatsappHref?: string | null }) {
   const listen = useListen();
   const { tenant, role } = useSyncExternalStore(
     subscribeTeamContext,
@@ -159,7 +159,7 @@ export function TeamAccountMenu() {
             <LanguageMenuGroup />
           </div>
         ) : null}
-        {teamHelpGroups().map((group) => (
+        {teamHelpGroups(whatsappHref).map((group) => (
           <div key={group.label} role="group" aria-label={group.label} className="ux-menu-group">
             <p className="ux-menu-heading" aria-hidden="true">
               {group.label}

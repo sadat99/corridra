@@ -176,6 +176,23 @@ export function Entry({
         {listen.speaking ? 'Stop Reading' : entry.label}
       </button>
     ) : null;
+  if (entry.kind === 'external')
+    // Leaves Corridra, so it opens a new tab and says so in words; the visible label comes first in the name.
+    return (
+      <a
+        role="menuitem"
+        tabIndex={-1}
+        className="ux-menu-row ux-menu-external"
+        href={entry.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        lang="en"
+      >
+        <span>{entry.label}</span>
+        <CorridraIcon name="open" className="ux-menu-external-icon" />
+        <span className="sr-only"> (opens WhatsApp outside Corridra, in a new tab)</span>
+      </a>
+    );
   return <SignOutRow label={entry.label} />;
 }
 
@@ -245,7 +262,14 @@ function WorkspaceRadios({
  * workspace page each workspace links to its company profile only where the profiles module is on; otherwise the
  * names are plain text that describes Manage Workspaces, never a link to a profile that is unavailable.
  */
-export function AvatarMenu({ active }: { active: boolean }) {
+export function AvatarMenu({
+  active,
+  whatsappHref,
+}: {
+  active: boolean;
+  /** The support WhatsApp link, when the owner has set a number; the phone copy of the help groups uses it. */
+  whatsappHref?: string | null;
+}) {
   const listen = useListen();
   const pathname = usePathname() ?? '';
   const workspaces = useWorkspaces(active);
@@ -357,7 +381,7 @@ export function AvatarMenu({ active }: { active: boolean }) {
           </p>
           <LanguageMenuGroup />
         </div>
-        {customerHelpGroups().map((group) => (
+        {customerHelpGroups(whatsappHref).map((group) => (
           <div key={group.label} role="group" aria-label={group.label} className="ux-menu-group">
             <p className="ux-menu-heading" aria-hidden="true">
               {group.label}
