@@ -34,6 +34,8 @@ type MeetingRead = {
 /** getTeamToday counts (CQ-34, CQ-73). Unread counts are listed in `unavailable`, never zero. */
 type TeamCounts = {
   acceptedQuotesNotStarted: number;
+  /** The customer asked for paid help and the team has not sent a quote. */
+  serviceRequestsToQuote: number;
   repliesToReview: number;
   unavailable?: string[];
 };
@@ -475,7 +477,9 @@ export function TodayPanel({
     today.fresh.total === 0 &&
     today.overdue.total === 0 &&
     (!today.team ||
-      (today.team.acceptedQuotesNotStarted === 0 && today.team.repliesToReview === 0)) &&
+      (today.team.acceptedQuotesNotStarted === 0 &&
+        today.team.serviceRequestsToQuote === 0 &&
+        today.team.repliesToReview === 0)) &&
     (!work ||
       (work.upcoming.length === 0 &&
         work.reschedule.length === 0 &&
@@ -623,6 +627,31 @@ export function TodayPanel({
                   !today.team.unavailable?.includes('acceptedQuotesNotStarted')
                     ? 'accepted quote not started'
                     : 'accepted quotes not started'}
+                </span>
+              </a>
+            </li>
+          )}
+          {today.team && (
+            <li
+              data-tone={
+                today.team.unavailable?.includes('serviceRequestsToQuote')
+                  ? 'unavailable'
+                  : today.team.serviceRequestsToQuote === 0
+                    ? 'zero'
+                    : undefined
+              }
+            >
+              <a href="#workspace-delivery">
+                <strong>
+                  {today.team.unavailable?.includes('serviceRequestsToQuote')
+                    ? 'Not available'
+                    : today.team.serviceRequestsToQuote}
+                </strong>
+                <span>
+                  {today.team.serviceRequestsToQuote === 1 &&
+                  !today.team.unavailable?.includes('serviceRequestsToQuote')
+                    ? 'service request to quote'
+                    : 'service requests to quote'}
                 </span>
               </a>
             </li>

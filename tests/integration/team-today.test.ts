@@ -1,4 +1,21 @@
-import { describe, expect, test } from 'vitest';
+import { randomUUID } from 'node:crypto';
+import { afterAll, beforeAll, describe, expect, test } from 'vitest';
+import { accessFixture, future } from './access-fixture';
+import { rawContext } from './support';
+import { migrateCustomerMemberRoles } from '../../packages/db/src/customer-member-role-migrate';
+import { migrateCustomerProgrammes } from '../../packages/db/src/customer-programme-migrate';
+import { migrateCustomerCompanies } from '../../packages/db/src/customer-company-migrate';
+import { migrateCustomerServiceRequests } from '../../packages/db/src/customer-service-request-migrate';
+import { admitSyntheticCustomer } from '../../packages/auth/src/customer-admission';
+import { admitSyntheticCustomerRequests } from '../../packages/auth/src/customer-request-admission';
+import {
+  CustomerWorkspaceService,
+  type CustomerSession,
+} from '../../packages/auth/src/customer-workspaces';
+import { CustomerProgrammeService } from '../../packages/auth/src/customer-programmes';
+import { CustomerServiceRequestService } from '../../packages/auth/src/customer-service-requests';
+import { CustomerServiceStaffService } from '../../packages/delivery/src/customer-service-staff';
+import { getTeamToday } from '../../packages/auth/src/team-today';
 import {
   daysLate,
   filterRows,
@@ -142,5 +159,261 @@ describe('counts and summary', () => {
     expect(filterTotal('new', fresh, overdue, rows)).toEqual({ count: 4, exact: true });
     expect(filterTotal('overdue', fresh, overdue, rows)).toEqual({ count: 9, exact: true });
     expect(filterTotal('all', fresh, overdue, rows)).toEqual({ count: 9, exact: false });
+  });
+});
+
+// W3 (workflow intelligence): the Today counts read the paid-service list once. A request in status
+// "requested" is one the customer sent and the team has not quoted; it is counted next to the accepted
+// quotes. The module is optional, so both counts are listed as unavailable until it is installed.
+describe('W3 service requests waiting for a quote', () => {
+  const issuer = 'https://ep-w3-fixture.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth';
+  const options = { enabled: true, synthetic: true, production: false, issuer };
+  const session = (): CustomerSession => ({
+    subject: 'synthetic-w3-alice',
+    emailVerified: true,
+    expiresAt: new Date(Date.now() + 3600000),
+  });
+  let f: Awaited<ReturnType<typeof accessFixture>>;
+  let staff: CustomerServiceStaffService;
+  let workspaceId = '';
+  const svc = () =>
+    new CustomerServiceRequestService(f.runtime, f.auth, options, async () => session());
+  const programmes = () =>
+    new CustomerProgrammeService(f.runtime, f.auth, options, async () => session());
+  const counts = async (ctx = f.users.owner.ctx) => {
+    const t = await getTeamToday(f.runtime, ctx);
+    return {
+      requested: t.serviceRequestsToQuote,
+      accepted: t.acceptedQuotesNotStarted,
+      unavailable: t.unavailable,
+    };
+  };
+  const create = async () =>
+    (
+      await svc().command({
+        action: 'create',
+        commandId: randomUUID(),
+        workspaceId,
+        contextKind: 'programme',
+        contextRef: (
+          await programmes().create({
+            commandId: randomUUID(),
+            workspaceId,
+            name: 'Synthetic W3 programme ' + randomUUID().slice(0, 8),
+            reportingPurpose: 'Fictional programme used to test Today counts only',
+            acknowledged: true,
+          })
+        ).id as string,
+        serviceKey: 'interpreter-day',
+        need: 'Synthetic need: an interpreter for two supplier meetings in one city',
+        preferredFrom: '2026-12-01',
+        preferredTo: '2026-12-03',
+        region: 'Dhaka',
+      })
+    ).id as string;
+  const seq = async (id: string) => (await staff.view(f.users.owner.ctx, id)).lastSeq as number;
+  const quoteBody = (validUntil: string) => ({
+    currency: 'USD',
+    components: [
+      {
+        kind: 'service_fee',
+        label: 'Synthetic interpreter day fee',
+        treatment: 'included',
+        amountMinor: '45000',
+      },
+      {
+        kind: 'tax',
+        label: 'Synthetic local sales tax, not included in this price',
+        treatment: 'not_included',
+        amountMinor: null,
+      },
+    ],
+    scope: 'Synthetic scope: one interpreter for one day of two meetings in Dhaka',
+    exclusions: ['Synthetic exclusion: written translation'],
+    assumptions: ['Synthetic assumption: both meetings are in the same building'],
+    deliveryTerms: 'Synthetic delivery terms: on the agreed day, eight hours',
+    paymentTerms: 'Synthetic payment terms are settled later; nothing is charged now',
+    validUntil,
+  });
+  const quote = async (id: string) =>
+    staff.command(f.users.owner.ctx, {
+      action: 'quote',
+      commandId: randomUUID(),
+      requestId: id,
+      expectedSeq: await seq(id),
+      ...quoteBody(future(7)),
+    });
+  // The service refuses a quote valid for under an hour, so a short one goes in through the same SQL command.
+  const shortQuote = async (id: string) =>
+    rawContext(
+      f.runtime,
+      f.users.owner.ctx,
+      'SELECT app.service_request_staff_command($1,$2,$3) r',
+      [
+        randomUUID(),
+        'quote',
+        JSON.stringify({
+          requestId: id,
+          expectedSeq: await seq(id),
+          ...quoteBody(new Date(Date.now() + 1500).toISOString()),
+        }),
+      ],
+    );
+  const customer = async (action: string, requestId: string, extra: Record<string, unknown> = {}) =>
+    svc().command({ action, commandId: randomUUID(), workspaceId, requestId, ...extra });
+  const accept = async (id: string) => {
+    const seen = await svc().view({ workspaceId, requestId: id });
+    await customer('accept', id, {
+      quoteVersion: 1,
+      quoteDigest: seen.quote!.digest,
+      acknowledged: true,
+    });
+  };
+  const progress = async (action: string, id: string) =>
+    staff.command(f.users.owner.ctx, {
+      action,
+      commandId: randomUUID(),
+      requestId: id,
+      expectedSeq: await seq(id),
+      customerNote: 'Synthetic note for the customer to read',
+    });
+  const statuses = async () =>
+    ((await staff.list(f.users.owner.ctx)).requests as { id: string; status: string }[]).map(
+      (item) => item.status,
+    );
+  let beforeInstall: Awaited<ReturnType<typeof counts>>;
+
+  beforeAll(async () => {
+    f = await accessFixture();
+    staff = new CustomerServiceStaffService(f.runtime);
+    // The module is optional; read Today before it exists.
+    beforeInstall = await counts();
+    await migrateCustomerMemberRoles(f.owner);
+    await migrateCustomerProgrammes(f.owner);
+    await migrateCustomerCompanies(f.owner);
+    const admitted = await admitSyntheticCustomer(f.owner, {
+      issuer,
+      subject: session().subject,
+      executorId: f.serviceId,
+      reason: 'Explicit invented Today count test identity; no real account or email',
+    });
+    await admitSyntheticCustomerRequests(f.owner, {
+      principalId: admitted.id,
+      reason: 'Explicit invented synthetic request scope, no commercial activation',
+    });
+    workspaceId = (
+      await new CustomerWorkspaceService(f.runtime, f.auth, options, async () =>
+        session(),
+      ).provision({ commandId: randomUUID(), name: 'Synthetic W3 workspace' })
+    ).id;
+  }, 120000);
+  afterAll(async () => {
+    await f?.close();
+  });
+
+  test('W3-1 with the paid-service module not installed both counts are listed as unavailable and stay 0', () => {
+    expect(beforeInstall.unavailable).toEqual(
+      expect.arrayContaining(['acceptedQuotesNotStarted', 'serviceRequestsToQuote']),
+    );
+    expect(beforeInstall).toMatchObject({ requested: 0, accepted: 0 });
+  });
+
+  test('W3-2 once installed with no request both counts are 0 and neither is listed as unavailable', async () => {
+    await migrateCustomerServiceRequests(f.owner);
+    const now = await counts();
+    expect(now).toMatchObject({ requested: 0, accepted: 0 });
+    expect(now.unavailable).not.toContain('acceptedQuotesNotStarted');
+    expect(now.unavailable).not.toContain('serviceRequestsToQuote');
+  });
+
+  test('W3-3 a request the customer sent and the team has not quoted is counted as requested', async () => {
+    await create();
+    expect(await counts()).toMatchObject({ requested: 1, accepted: 0 });
+    await create();
+    expect(await counts()).toMatchObject({ requested: 2, accepted: 0 });
+  });
+
+  test('W3-4 an accepted request is counted as accepted as before and not as requested', async () => {
+    const id = await create();
+    expect(await counts()).toMatchObject({ requested: 3, accepted: 0 });
+    await quote(id);
+    // Quoted: no longer waiting for a quote, not yet accepted.
+    expect(await counts()).toMatchObject({ requested: 2, accepted: 0 });
+    await accept(id);
+    expect(await counts()).toMatchObject({ requested: 2, accepted: 1 });
+  });
+
+  test('W3-5 quoted, declined, withdrawn, expired, in progress, delivered and closed requests are not counted as requested', async () => {
+    const quoted = await create();
+    await quote(quoted);
+    const declined = await create();
+    await quote(declined);
+    await customer('decline', declined, { note: null });
+    const withdrawn = await create();
+    await customer('withdraw', withdrawn, { note: null });
+    const expired = await create();
+    await shortQuote(expired);
+    const started = await create();
+    await quote(started);
+    await accept(started);
+    await progress('start', started);
+    const delivered = await create();
+    await quote(delivered);
+    await accept(delivered);
+    await progress('start', delivered);
+    await progress('deliver', delivered);
+    const closed = await create();
+    await quote(closed);
+    await accept(closed);
+    await progress('start', closed);
+    await progress('deliver', closed);
+    await progress('close', closed);
+    await new Promise((resolve) => setTimeout(resolve, 1800));
+    // Every status below was really reached, so the negative result is not an empty one.
+    const seen = await statuses();
+    for (const status of [
+      'requested',
+      'quoted',
+      'accepted',
+      'declined',
+      'withdrawn',
+      'expired',
+      'in_progress',
+      'delivered',
+      'closed',
+    ])
+      expect(seen, status).toContain(status);
+    expect(seen.filter((status) => status === 'requested')).toHaveLength(2);
+    // Only the two requests still waiting count as requested; the one accepted request still counts as accepted.
+    expect(await counts()).toMatchObject({ requested: 2, accepted: 1 });
+  });
+
+  test('W3-6 a role without access to the paid-service list sees both counts as unavailable, never zero', async () => {
+    for (const ctx of [f.users.operator.ctx, f.users.viewer.ctx, f.users.reviewer.ctx]) {
+      const read = await counts(ctx);
+      expect(read.unavailable).toEqual(
+        expect.arrayContaining(['acceptedQuotesNotStarted', 'serviceRequestsToQuote']),
+      );
+      expect(read).toMatchObject({ requested: 0, accepted: 0 });
+    }
+  });
+
+  test('W3-7 counts follow the team that handles the request: a request taken by another team is not counted', async () => {
+    // Before anyone takes a request, every team reads the same waiting requests.
+    expect(await counts(f.users.other.ctx)).toMatchObject({ requested: 2, accepted: 0 });
+    const first = (
+      (await staff.list(f.users.owner.ctx)).requests as { id: string; status: string }[]
+    ).find((item) => item.status === 'requested')!;
+    await staff.command(f.users.owner.ctx, {
+      action: 'note',
+      commandId: randomUUID(),
+      requestId: first.id,
+      expectedSeq: await seq(first.id),
+      internalNote: 'Synthetic note that takes the request',
+    });
+    expect(await counts()).toMatchObject({ requested: 2, accepted: 1 });
+    // The other team no longer sees the taken request, nor any request this team has quoted.
+    const other = await counts(f.users.other.ctx);
+    expect(other).toMatchObject({ requested: 1, accepted: 0 });
   });
 });

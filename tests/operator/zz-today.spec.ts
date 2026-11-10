@@ -37,10 +37,11 @@ test('Operator Today panel reads the real mission list, shows new and overdue wo
   await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
   await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
   await expect(page.getByRole('heading', { name: 'Your workspace.' })).toBeVisible();
-  // Real server reads: the panel loads and shows seven counts (the owner can read meetings); the
-  // commercial readiness Today adds accepted quotes not started and replies to review (CQ-34, CQ-73).
+  // Real server reads: the panel loads and shows eight counts (the owner can read meetings); the
+  // commercial readiness Today adds accepted quotes not started and replies to review (CQ-34, CQ-73),
+  // and W3 adds service requests to quote.
   const today = page.getByRole('region', { name: 'Today' });
-  await expect(today.getByRole('list', { name: 'Counts' }).getByRole('listitem')).toHaveCount(7);
+  await expect(today.getByRole('list', { name: 'Counts' }).getByRole('listitem')).toHaveCount(8);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   // Synthetic answers prove the new-request and overdue lists.
   await page.route('**/api/workspace/missions?*view=today*', async (route) => {
