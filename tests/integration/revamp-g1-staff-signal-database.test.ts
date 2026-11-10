@@ -12,6 +12,7 @@ import { configureRequestWithdrawal } from '../../packages/auth/src/customer-req
 import { configureSyntheticIntake } from '../../packages/missions/src/bootstrap';
 import { CustomerRequestService } from '../../packages/auth/src/customer-requests';
 import { MissionService } from '../../packages/missions/src/index';
+import { RequestWithdrawalSignalService } from '../../packages/missions/src/request-withdrawal-signal';
 
 // CRUD G1 follow-up, real database, real roles: the Corridra team can see that the customer withdrew a request, as one
 // read-only fact (yes or no, and the date). It never carries the customer's reason, never writes anything, and only a
@@ -503,5 +504,49 @@ describe('the team signal for a withdrawn request', () => {
     await signal(staffOf(p), p.missionId);
     await signal(staffOf(p, f.users.other), p.missionId).catch(() => undefined);
     expect(await digest()).toEqual(before);
+  });
+
+  test('stays true when new admissions are paused the real way, because a pause stops new customers and hides nothing', async () => {
+    const p = await person();
+    await withdraw(p);
+    // Pausing writes a new admission_control row (version, enabled=false), as the owner's script does.
+    await configureCustomerRealUse(f.owner, {
+      enabled: false,
+      reason: 'Owner paused new admissions for the withdrawal signal fixture tests',
+    });
+    try {
+      expect(
+        (
+          await f.owner.query(
+            'SELECT enabled FROM customer_private.real_use_admission_control ORDER BY version DESC LIMIT 1',
+          )
+        ).rows[0].enabled,
+      ).toBe(false);
+      expect((await signal(staffOf(p), p.missionId)).withdrawn).toBe(true);
+    } finally {
+      await configureCustomerRealUse(f.owner, {
+        enabled: true,
+        reason: 'Owner resumed admissions after the withdrawal signal pause test',
+      });
+    }
+  });
+
+  test('the application service answers withdrawn with an ISO date, then not withdrawn after a restore', async () => {
+    const service = new RequestWithdrawalSignalService(f.runtime);
+    const p = await person();
+    // A real workspace is read under its own processing purpose, as the application's session context carries.
+    const staff = async () => ({
+      ...staffOf(p),
+      purpose: (await f.owner.query('SELECT app.tenant_processing_purpose($1) AS p', [p.tenantId]))
+        .rows[0].p as string,
+    });
+    expect(await service.read(await staff(), p.missionId)).toEqual({ withdrawn: false, at: null });
+    await withdraw(p);
+    const during = await service.read(await staff(), p.missionId);
+    expect(during.withdrawn).toBe(true);
+    expect(during.at).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+    expect(Math.abs(Date.now() - Date.parse(during.at as string))).toBeLessThan(60_000);
+    await restore(p);
+    expect(await service.read(await staff(), p.missionId)).toEqual({ withdrawn: false, at: null });
   });
 });
