@@ -98,6 +98,7 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Two specs read old commits** (`git show <sha>:path`), so run `git fetch --unshallow` first or they fail with "Command failed: git show".
 - **The run rewrites tracked evidence images** under `docs/implementation/evidence`, `docs/v3/phase-4` and `docs/design-system/evidence/ux-repair-2026-10-29/after` (the last from `ux-first-question.spec.ts`, `specification-confirmation.spec.ts` and `v3-service-requests-ui.spec.ts`; seen during a local preflight on 31 October). Run `git checkout docs/implementation/evidence docs/v3/phase-4 docs/design-system/evidence/ux-repair-2026-10-29` before committing; never commit them.
 - **Browser path:** on 31 October the container had no `chromium-1194`; the runs used `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/opt/pw-browsers/chromium`. Use whichever path exists.
+- **Path note (10 November 2026):** the paths above are dated history. On 10 November the container had `/opt/pw-browsers/chromium-1243/chrome-linux64/chrome` and no `chromium-1194`; `AGENTS.md` now names that path. Use whichever path exists.
 - The ClamAV scanner tests are vitest integration tests, not part of this suite, and need the Docker scanner; they are not run locally.
 
 ### KI-16 Signed-in layouts are only visible through the operator suite
@@ -291,9 +292,9 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Do:** fix it in its own pull request (shorter labels under the dots, or let the step labels wrap or stack at that size), then add `/plan` to the guard's page list.
 - **Resolved (10 November 2026):** PR 376, squash-merged as 2bc003b3 (Guardian PASS at bc69a201, stamp auth-e40f1504ea5f; CI 18 success and 1 neutral): the step bar and choice cards fit at 200 percent text, and `/plan` is in the `public-large-text.spec.ts` page list. Reviewer's follow-up notes: (1) `public-large-text.spec.ts:147` `toHaveText` reads `textContent`, not the accessibility tree (use `toHaveAccessibleName` or an aria snapshot); (2) `globals.css:4273` the bar is compact at 320 and 360 px at 100 percent text (agreed boundary, owner awareness); (3) `globals.css:4349` the cards are 190 px wide at 320 px and 200 percent and break every few characters because the form padding is 128 px; a follow-up could reduce the form padding on narrow screens. Not checked by the review: real translated pages (`CORRIDRA_LANGUAGES_FORM` unset), Safari and Firefox. A new failure in the same guard is KI-45.
 
-### KI-45 The /plan receipt disclosure fails the whole-page 200 percent guard at 320 px on one local machine (10 November 2026, cause not traced)
+### KI-45 The /plan receipt disclosure fails the whole-page 200 percent guard at 320 px, seen only on one local machine (10 November 2026, cause not traced)
 
 - **Seen (S16's local machine, native PostgreSQL, chromium-1243):** on clean main 2bc003b, `tests/browser/public-large-text.spec.ts:97` fails at "/plan where step at 320" with offender `details.receipt-disclosure Check a Mission Request.Receip`. It failed 1/1 there and 3/3 on S16's branch.
-- **Not seen in CI:** it passed in PR 376's CI on bc69a201. Main's CI on 2bc003b3 was still running when this was recorded.
+- **Seen only on S16's local machine:** it passes in CI on main 2bc003b3 (18 success, none failed, the e2e shards included) and in PR 376's CI on bc69a201.
 - **Cause:** not traced; a font difference is suspected (compare KI-28).
 - **Do:** the conductor owns a fix PR. Until then, a failure at this exact place on a local run is this issue, not the change under test; compare with clean main first.
