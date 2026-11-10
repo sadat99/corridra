@@ -1,4 +1,5 @@
 import type { DeliveryReport } from '@corridra/delivery/report';
+import type { MeetingStatus } from '@corridra/domain/access';
 import type { MessageKey } from './i18n/messages';
 
 /** One reviewed meeting or visit, exactly as the saved commercial report carries it. */
@@ -30,6 +31,21 @@ export const tripKeys = [
   'room.trip.status.noShow',
   'room.trip.status.rescheduleRequired',
 ] as const satisfies readonly MessageKey[];
+
+/** The words and tone of each meeting status. A status outside this map is shown as supplied. */
+export const statusWords: Record<
+  MeetingStatus,
+  { key: MessageKey; tone: 'neutral' | 'positive' | 'caution' | 'info' }
+> = {
+  PROPOSED: { key: 'room.trip.status.proposed', tone: 'neutral' },
+  ACCEPTED: { key: 'room.trip.status.accepted', tone: 'info' },
+  SCHEDULED: { key: 'room.trip.status.scheduled', tone: 'info' },
+  HELD: { key: 'room.trip.status.held', tone: 'positive' },
+  DECLINED: { key: 'room.trip.status.declined', tone: 'caution' },
+  CANCELLED: { key: 'room.trip.status.cancelled', tone: 'caution' },
+  NO_SHOW: { key: 'room.trip.status.noShow', tone: 'caution' },
+  RESCHEDULE_REQUIRED: { key: 'room.trip.status.rescheduleRequired', tone: 'neutral' },
+};
 
 /** The language mark for a name or place inside the English region: Chinese text is read as Chinese. */
 export function hanLang(text: string): 'zh' | undefined {
