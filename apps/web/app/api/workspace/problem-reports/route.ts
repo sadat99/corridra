@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
+import { customerAccountLifecycleEnabled } from '@corridra/auth/customer-account-lifecycle';
 import { problemReportListQuery, teamProblemReportAction } from '@corridra/domain/problem-report';
 import { deliveryHeaders } from '../../../../lib/delivery-http';
 import {
@@ -64,12 +65,19 @@ export async function POST(request: Request) {
     problemReportOrigin(request, s.config.APP_ORIGIN);
     const { ctx } = await context(s, request);
     const input = teamProblemReportAction.parse(await problemReportBody(request));
+    if (input.action === 'remove_words') {
+      // Removing words runs under the erasure authority, so it follows the erasure queue's own switch (the account
+      // lifecycle), exactly as the sibling erasure queue route does. Filing, reading and triage do not.
+      if (!customerAccountLifecycleEnabled())
+        throw new DomainError('Word removal is unavailable', 503);
+      return Response.json(await s.staffProblemReports.removeWords(ctx, input), {
+        headers: deliveryHeaders,
+      });
+    }
     const done =
       input.action === 'file'
         ? await s.teamProblemReports.file(ctx, input)
-        : input.action === 'transition'
-          ? await s.staffProblemReports.transition(ctx, input)
-          : await s.staffProblemReports.removeWords(ctx, input);
+        : await s.staffProblemReports.transition(ctx, input);
     return Response.json(done, { headers: deliveryHeaders });
   } catch (error) {
     return problemReportFailure(error);

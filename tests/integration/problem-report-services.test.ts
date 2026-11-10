@@ -176,6 +176,10 @@ describe('what the database refused is what a person is told', () => {
     const unknown = new Error('boom');
     expect(problemReportError(unknown)).toBe(unknown);
   });
+  test('a missing error is passed on and never throws a TypeError of its own', () => {
+    expect(problemReportError(null)).toBeNull();
+    expect(problemReportError(undefined)).toBeUndefined();
+  });
 });
 
 describe('filing', () => {
@@ -507,6 +511,13 @@ describe('triage', () => {
     expect(
       (await customer(second.person).get(second.reference)).history.map((row) => row.state),
     ).toEqual(['received', 'in_review', 'closed']);
+    // once moves exist, the closed filter finds the known closed reports and nothing else
+    const onlyClosed = await staff.queue(ctxOf('owner'), { status: 'closed', pageSize: 100 });
+    expect(onlyClosed.items.length).toBeGreaterThanOrEqual(2);
+    expect(onlyClosed.items.map((row) => row.reference)).toEqual(
+      expect.arrayContaining([closed.reference, second.reference]),
+    );
+    expect(onlyClosed.items.every((row) => row.status === 'closed')).toBe(true);
   });
 
   test('a moved command is answered again, and used another way it is a conflict', async () => {

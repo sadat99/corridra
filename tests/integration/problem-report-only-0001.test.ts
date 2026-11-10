@@ -1,7 +1,10 @@
-import { readFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import { readFile, readdir } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { fixture } from './support';
+import type { DatabasePool } from '../../packages/db/src/index';
 import { harness, options, type Fixture } from './revamp-g4-support';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateCustomerAccountLifecycle } from '../../packages/db/src/customer-account-lifecycle-migrate';
@@ -34,6 +37,13 @@ vi.mock('../../apps/web/lib/foundations', () => ({
     teamProblemReports: live.team,
     staffProblemReports: live.staff,
   }),
+}));
+
+const web = createRequire(resolve('apps/web/package.json'));
+const lifecycleFile = web.resolve('@corridra/auth/customer-account-lifecycle');
+vi.doMock(lifecycleFile, async () => ({
+  ...(await vi.importActual<Record<string, unknown>>(lifecycleFile)),
+  customerAccountLifecycleEnabled: () => true,
 }));
 
 let f: Fixture;
@@ -256,5 +266,219 @@ describe('with the module not installed, with 0001 alone, and with 0001 and 0002
     expect((await (await customerRoute()).GET(new Request(customerUrl))).status).toBe(200);
     resetProblemReportProbe();
     expect((await (await teamRoute()).GET(new Request(teamUrl()))).status).toBe(200);
+  });
+});
+
+// The probe has three conditions, and each is shown to matter on its own: the module is present only when the command
+// function exists AND the plain-text rule carries the 0002 direction characters AND the word removal has its cutoff. Each
+// run replaces one function with its own text from the migration files, or renames the command function, asks again as
+// the runtime login, and puts the real definition back.
+const backslash = String.fromCharCode(92);
+const plainMarker = `${backslash}u2066-${backslash}u2069`;
+const removalMarker = 'cutoff';
+const migrationFiles = async () => {
+  const directory = new URL(
+    '../../packages/db/customer-problem-report-migrations/',
+    import.meta.url,
+  );
+  const names = (await readdir(directory)).filter((name) => name.endsWith('.sql')).sort();
+  return await Promise.all(
+    names.map(async (name) => ({ name, text: await readFile(new URL(name, directory), 'utf8') })),
+  );
+};
+// The text of a function as the migration file that last defines it states it: from its CREATE to the next function.
+const latestDefinition = async (signature: string) => {
+  let latest = { name: '', text: '' };
+  for (const file of await migrationFiles()) {
+    const start = file.text.lastIndexOf(`FUNCTION ${signature}(`);
+    if (start < 0) continue;
+    const rest = file.text.slice(start + 10);
+    const next = rest.search(/\bFUNCTION\s/);
+    latest = { name: file.name, text: next < 0 ? rest : rest.slice(0, next) };
+  }
+  return latest;
+};
+const original = {
+  plain: async () =>
+    (await sql('0001_problem_reports.sql')).match(
+      /CREATE FUNCTION customer_private\.problem_report_plain[\s\S]*?\$\$;/,
+    )![0],
+  removal: async () =>
+    (await sql('0001_problem_reports.sql')).match(
+      /CREATE FUNCTION customer\.problem_report_remove_words[\s\S]*?END \$\$;/,
+    )![0],
+};
+const replaced = {
+  plain: async () =>
+    (await sql('0002_word_removal_bounds.sql')).match(/\$plain\$([\s\S]*?)\$plain\$/)![1]!,
+  removal: async () =>
+    (await sql('0002_word_removal_bounds.sql')).match(/\$fn\$([\s\S]*?)\$fn\$/)![1]!,
+};
+const asOriginal = (text: string) => text.replace('CREATE FUNCTION', 'CREATE OR REPLACE FUNCTION');
+const stillThere = async () =>
+  (
+    await f.owner.query('SELECT customer_private.problem_report_plain($1,1,100) AS ok', [
+      'plain words',
+    ])
+  ).rows[0].ok;
+// A pool that records every catalogue probe the service asks, and can make the next one fail.
+const watching = (
+  pool: DatabasePool,
+  seen: string[],
+  failing: { next: boolean },
+): DatabasePool => ({
+  query: pool.query.bind(pool),
+  end: pool.end.bind(pool),
+  connect: async () => {
+    const client = await pool.connect();
+    return new Proxy(client, {
+      get(target, key, receiver) {
+        if (key !== 'query') return Reflect.get(target, key, receiver);
+        return (text: unknown, ...rest: unknown[]) => {
+          if (typeof text === 'string' && text.includes('pg_catalog.pg_proc')) {
+            seen.push(text);
+            if (failing.next) {
+              failing.next = false;
+              return Promise.reject(new Error('the catalogue could not be read'));
+            }
+          }
+          return Reflect.apply(target.query, target, [text, ...rest]);
+        };
+      },
+    });
+  },
+});
+const mine = () => new Request(teamUrl());
+const asked = async () => (await (await teamRoute()).GET(mine())).status;
+
+describe('each probe condition decides on its own', () => {
+  test('the real definitions are in place before each run', async () => {
+    expect(await marked()).toEqual({ plain: true, removal: true });
+    resetProblemReportProbe();
+    expect(await asked()).toBe(200);
+  });
+
+  test('the narrower plain-text rule alone makes the module unavailable', async () => {
+    await f.owner.query(asOriginal(await original.plain()));
+    try {
+      expect(await marked()).toEqual({ plain: false, removal: true });
+      resetProblemReportProbe();
+      expect(await asked()).toBe(503);
+    } finally {
+      await f.owner.query(await replaced.plain());
+    }
+    expect(await marked()).toEqual({ plain: true, removal: true });
+    resetProblemReportProbe();
+    expect(await asked()).toBe(200);
+  });
+
+  test('the word removal without its cutoff alone makes the module unavailable', async () => {
+    await f.owner.query(asOriginal(await original.removal()));
+    try {
+      expect(await marked()).toEqual({ plain: true, removal: false });
+      resetProblemReportProbe();
+      expect(await asked()).toBe(503);
+    } finally {
+      await f.owner.query(await replaced.removal());
+    }
+    expect(await marked()).toEqual({ plain: true, removal: true });
+    resetProblemReportProbe();
+    expect(await asked()).toBe(200);
+  });
+
+  test('a missing command function alone makes the module unavailable', async () => {
+    await f.owner.query(
+      'ALTER FUNCTION customer.problem_report_command(uuid,jsonb) RENAME TO problem_report_command_held',
+    );
+    try {
+      expect(await marked()).toEqual({ plain: true, removal: true });
+      resetProblemReportProbe();
+      expect(await asked()).toBe(503);
+    } finally {
+      await f.owner.query(
+        'ALTER FUNCTION customer.problem_report_command_held(uuid,jsonb) RENAME TO problem_report_command',
+      );
+    }
+    resetProblemReportProbe();
+    expect(await asked()).toBe(200);
+    expect(await stillThere()).toBe(true);
+  });
+});
+
+describe('the probe is remembered and does not remember a failure', () => {
+  const owner = () => f.users.owner!.ctx;
+  test('a present module is probed once, however many calls follow', async () => {
+    const seen: string[] = [];
+    const team = new TeamProblemReports(watching(f.runtime, seen, { next: false }));
+    resetProblemReportProbe();
+    await team.list(owner(), {});
+    await team.list(owner(), {});
+    await team.get(owner(), 'RP-999999').catch(() => undefined);
+    expect(seen).toHaveLength(1);
+  });
+
+  test('a missing module is probed again only after a minute', async () => {
+    const seen: string[] = [];
+    const team = new TeamProblemReports(watching(f.runtime, seen, { next: false }));
+    await f.owner.query(asOriginal(await original.removal()));
+    try {
+      resetProblemReportProbe();
+      await expect(team.list(owner(), {})).rejects.toMatchObject({ status: 503 });
+      await expect(team.list(owner(), {})).rejects.toMatchObject({ status: 503 });
+      expect(seen).toHaveLength(1);
+      later(61000);
+      await expect(team.list(owner(), {})).rejects.toMatchObject({ status: 503 });
+      expect(seen).toHaveLength(2);
+    } finally {
+      await f.owner.query(await replaced.removal());
+    }
+    later(61000);
+    await team.list(owner(), {});
+    expect(seen).toHaveLength(3);
+  });
+
+  test('a probe that fails leaves nothing remembered, so the next call probes again', async () => {
+    const seen: string[] = [];
+    const failing = { next: true };
+    const team = new TeamProblemReports(watching(f.runtime, seen, failing));
+    resetProblemReportProbe();
+    await expect(team.list(owner(), {})).rejects.toThrow('the catalogue could not be read');
+    expect(seen).toHaveLength(1);
+    await team.list(owner(), {});
+    expect(seen).toHaveLength(2);
+    await team.list(owner(), {});
+    expect(seen).toHaveLength(2);
+  });
+});
+
+describe('the probe markers follow the migrations', () => {
+  const moveWith = (name: string, signature: string) =>
+    `The latest definition of ${signature} (in ${name}) no longer carries the probe marker. ` +
+    'The probe markers in packages/auth/src/problem-reports.ts must move with it.';
+  test('the latest definition of each probed function still carries its marker', async () => {
+    const plain = await latestDefinition('customer_private.problem_report_plain');
+    expect(plain.name).not.toBe('');
+    expect(
+      plain.text.includes(plainMarker),
+      moveWith(plain.name, 'customer_private.problem_report_plain'),
+    ).toBe(true);
+    const removal = await latestDefinition('customer.problem_report_remove_words');
+    expect(removal.name).not.toBe('');
+    expect(
+      removal.text.includes(removalMarker),
+      moveWith(removal.name, 'customer.problem_report_remove_words'),
+    ).toBe(true);
+  });
+  test('the first definitions do not, which is what lets the probe tell 0001 from 0002', async () => {
+    expect((await original.plain()).includes(plainMarker)).toBe(false);
+    expect((await original.removal()).includes(removalMarker)).toBe(false);
+  });
+  test('the service probe still looks for exactly those markers', async () => {
+    const source = await readFile(
+      new URL('../../packages/auth/src/problem-reports.ts', import.meta.url),
+      'utf8',
+    );
+    expect(source).toContain("position(chr(92)||'u2066-'||chr(92)||'u2069' IN p.prosrc)");
+    expect(source).toContain(`position('${removalMarker}' IN p.prosrc)`);
   });
 });

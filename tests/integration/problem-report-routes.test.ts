@@ -1,3 +1,5 @@
+import { createRequire } from 'node:module';
+import { resolve } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { fixture, rawContext } from './support';
@@ -25,6 +27,14 @@ const live = vi.hoisted(() => ({
   getSession: vi.fn(),
   readCustomer: vi.fn(),
   budget: vi.fn(),
+  lifecycle: true,
+}));
+const web = createRequire(resolve('apps/web/package.json'));
+const lifecycleFile = web.resolve('@corridra/auth/customer-account-lifecycle');
+// The existing account lifecycle switch, the one the erasure queue route follows, read at the time of each call.
+vi.doMock(lifecycleFile, async () => ({
+  ...(await vi.importActual<Record<string, unknown>>(lifecycleFile)),
+  customerAccountLifecycleEnabled: () => live.lifecycle,
 }));
 vi.mock('../../apps/web/lib/foundations', () => ({
   foundations: () => ({
@@ -99,6 +109,7 @@ beforeAll(async () => {
   resetProblemReportProbe();
 });
 beforeEach(() => {
+  live.lifecycle = true;
   customerAs(null);
   teamAs(null);
   live.getSession
@@ -532,6 +543,79 @@ describe('the team route', () => {
       ),
     );
     expect(denied.status).toBe(403);
+  });
+
+  describe('removing words follows the account lifecycle switch, and nothing else does', () => {
+    const removal = () =>
+      post(teamUrl(), {
+        action: 'remove_words',
+        commandId: randomUUID(),
+        erasureRequestId: randomUUID(),
+      });
+    const staff = () => live.staff as StaffProblemReports;
+
+    test('with the switch off it answers 503 before any service call', async () => {
+      const removeWords = vi.spyOn(staff(), 'removeWords');
+      live.lifecycle = false;
+      teamAs('owner');
+      const { POST } = await teamRoute();
+      const refused = await answer(await POST(removal()));
+      expect(refused.status).toBe(503);
+      expect(refused.body).toEqual({ error: 'Word removal is unavailable' });
+      expect(removeWords).not.toHaveBeenCalled();
+      removeWords.mockRestore();
+    });
+
+    test('signed out still answers 401 and another origin 403 with the switch off', async () => {
+      const removeWords = vi.spyOn(staff(), 'removeWords');
+      live.lifecycle = false;
+      const { POST } = await teamRoute();
+      expect((await POST(removal())).status).toBe(401);
+      teamAs('owner');
+      expect((await POST(post(teamUrl(), {}, { origin: 'https://evil.invalid' }))).status).toBe(
+        403,
+      );
+      expect(removeWords).not.toHaveBeenCalled();
+      removeWords.mockRestore();
+    });
+
+    test('with the switch on the service is called and the database answers', async () => {
+      const removeWords = vi.spyOn(staff(), 'removeWords');
+      teamAs('owner');
+      const { POST } = await teamRoute();
+      const answered = await answer(await POST(removal()));
+      expect(removeWords).toHaveBeenCalledTimes(1);
+      expect(answered.status).toBe(404);
+      expect(answered.body.error).toBe('Erasure request not found');
+      removeWords.mockRestore();
+    });
+
+    test('filing, reading and triage work with the switch off', async () => {
+      live.lifecycle = false;
+      const { GET, POST } = await teamRoute();
+      teamAs('operator');
+      const filed = await answer(await POST(post(teamUrl(), teamFiling())));
+      expect(filed.status).toBe(200);
+      expect((await GET(new Request(teamUrl()))).status).toBe(200);
+      teamAs('owner');
+      expect((await GET(new Request(teamUrl('&view=queue')))).status).toBe(200);
+      const queue = await answer(await GET(new Request(teamUrl('&view=queue&pageSize=100'))));
+      const row = queue.body.items.find(
+        (item: { reference: string }) => item.reference === filed.body.reference,
+      );
+      const moved = await answer(
+        await POST(
+          post(teamUrl(), {
+            action: 'transition',
+            commandId: randomUUID(),
+            reportId: row.id,
+            expectedState: 'received',
+            toState: 'in_review',
+          }),
+        ),
+      );
+      expect(moved.status).toBe(200);
+    });
   });
 
   test('refuses another origin, a body that is not JSON, a large body, unknown actions and any key that names a person', async () => {

@@ -337,6 +337,16 @@ describe('the delivery catalogue text uses the same rule', () => {
     quoteBasis: 'per_day',
     active: true,
   });
+  it('still trims surrounding spaces and keeps its 3 to 120 character bounds on a title', () => {
+    const title = (value: string) =>
+      staffCatalogueInput.safeParse({ ...catalogue('A plain summary.'), title: value });
+    const trimmed = title('  Site visit  ');
+    expect(trimmed.success && trimmed.data.title).toBe('Site visit');
+    expect(title('  ab  ').success).toBe(false);
+    expect(title('abc').success).toBe(true);
+    expect(title('a'.repeat(120)).success).toBe(true);
+    expect(title('a'.repeat(121)).success).toBe(false);
+  });
   it('still accepts plain words and refuses a link, an email marker and the wider control set', () => {
     expect(staffCatalogueInput.safeParse(catalogue('We visit the site for a day.')).success).toBe(
       true,

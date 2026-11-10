@@ -136,6 +136,7 @@ const conflicts = new Set([
 // available) passes through unchanged.
 export function problemReportError(error: unknown): unknown {
   if (error instanceof DomainError) return error;
+  if (error === null || error === undefined) return error;
   const { code, message } = error as { code?: string; message?: string };
   switch (code) {
     case '42501':

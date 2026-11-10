@@ -30,7 +30,8 @@ export async function problemReportBody(request: Request) {
 // keeps its code, and the limit is said in the one sentence every account action uses.
 export function problemReportFailure(error: unknown) {
   const mapped = problemReportError(error);
-  if (!(mapped instanceof DomainError)) return deliveryError(mapped);
+  if (!(mapped instanceof DomainError))
+    return deliveryError(mapped ?? new Error('Unknown failure'));
   return Response.json(
     {
       error: mapped.status === 429 ? limitWords : mapped.message,
