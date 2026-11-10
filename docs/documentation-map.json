@@ -1454,6 +1454,11 @@
       "use": "Proposed: owner-supplied logo, orb, favicon, app icons and social images in AC/1 colour; art-direction, trademark, legal handoff and tagline gates open"
     },
     {
+      "path": "docs/adr/0078-problem-reports.md",
+      "classification": "Architecture decision",
+      "use": "Proposed: Help > Report a Problem; optional additive module, owner-installed; append-only reports, owner/admin triage, sample/real split, erasure removes words"
+    },
+    {
       "path": "docs/revamp/README.md",
       "classification": "Current guide/contract",
       "use": "Owner-approved V3 controlled revamp scope (4 Nov 2026), merge rules, session file ownership and the Wave 0 route/cleanup manifest; live state stays in the ledger"
@@ -1527,6 +1532,11 @@
       "path": "docs/revamp/specs/workflow-intelligence.md",
       "classification": "Current guide/contract",
       "use": "Owner mandate (10 Nov 2026): journey audit, open-source tool decisions, reading-level measurement W1, plain copy W2"
+    },
+    {
+      "path": "docs/revamp/specs/problem-reports.md",
+      "classification": "Current guide/contract",
+      "use": "Owner decisions (10 Nov 2026): Report a Problem build spec, addresses, words, states, staff queue, PR split and acceptance"
     },
     {
       "path": "docs/revamp/crud/summary.md",

@@ -20,6 +20,7 @@ Specs the revamp track sessions build to. Written by the Conductor and Guardian 
 | [Wave 7 cleanup](wave7-cleanup.md)                | S4,S1 | 7    | Usage graph, candidate report, proven deletions, docs consolidation (K-01 to K-04)                                      |
 | [Wave 8 acceptance](wave8-acceptance.md)          | all   | 8    | Journeys J1 to J7 on fixtures and the release memo                                                                      |
 | [Workflow intelligence](workflow-intelligence.md) | S17   | 6    | Owner 10 Nov: journey audit, tool decisions, reading-level measurement (W1), plain copy (W2)                            |
+| [Report a Problem](problem-reports.md)            | S17   | 6    | Owner 10 Nov: real in-app problem reports with staff triage (ADR-078), addresses, words, states, PR split               |
 
 ## Rules for every track PR
 
