@@ -381,6 +381,14 @@
       "bytes": 10664,
       "sha256": "54d483aa73f1bad3564c2d2701cf8e56b8f07f6b6e9f78105dccd46e0d9e781f",
       "meaning": "Exact active ledger at b2d6362c (the PR 388 merge, 10 Nov), unchanged since the S19 records merge bac878ef, before PRs 384, 387, 386 and 388, the S19 to S26 and S17 to S28 rotations, the S28 builder lanes, the G10 Guardian PASS and the owner-reported switch change were recorded, including the S19 Lanes, Merged (378 to 381), Open and Next bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "dda3f43b0956d38ffe5bae1275a45b66b2f46d6c",
+      "archive": "docs/v3/history/ledger-before-s26-records-2-2026-11-10.md",
+      "bytes": 11306,
+      "sha256": "49dc19f1b5e9093ce5a049ac1d18fddca312bf124cb5a2b4bd3dc9e8c883dc33",
+      "meaning": "Exact active ledger at dda3f43b (the PR 394 merge, 10 Nov), unchanged since the S26 records merge 9e105ee4, before PRs 357, 389, 385, 390, 393, 395, 383, 391, 396 and 394, the two 10 Nov problem report installs, the S33 to S37 lanes and the G11, PR 390, PR 397 and PR 399 Guardian results were recorded, including the S26 Lanes, Merged (384, 387, 386, 388), switch report, G10, Install, G4/G5, /plan, Owner decisions open and Next bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

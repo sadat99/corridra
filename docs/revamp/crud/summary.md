@@ -24,17 +24,17 @@ No business record can be edited or hard deleted. `app.reject_rewrite` triggers 
 
 ## Medium severity
 
-| Id  | Gap                                                                                                              | Owner                        |
-| --- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------- |
-| G4  | Customer workspace: no rename, no archive or close, no ownership transfer.                                       | S2                           |
-| G5  | Customers cannot close their account or ask for erasure themselves; disable is offline only.                     | S2, owner decision (privacy) |
-| G6  | Notification and mission-mail mutes have no unmute.                                                              | S2                           |
-| G7  | Programme: no rename of name or reporting purpose, no archive or close, creation capped at 100 per workspace.    | S3                           |
-| G8  | Moves `set` replaces the open list with no expected version (`packages/domain/src/moves.ts:71`).                 | S4                           |
-| G9  | Operator member role change and revoke carry no version and no command id (`packages/auth/src/access.ts:61-81`). | S4                           |
-| G10 | Cancelling a team invitation hard deletes the row and is not in the team-control audit.                          | S4                           |
-| G11 | Counterparty private notes and contact data cannot be withdrawn, corrected or erased.                            | S4                           |
-| G12 | Operator communications, meetings, evidence and network lists stop at a fixed limit with no next page.           | S4                           |
+| Id  | Gap                                                                                                                                                                                                                                                | Owner                        |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| G4  | Customer workspace: no rename, no archive or close, no ownership transfer.                                                                                                                                                                         | S2                           |
+| G5  | Customers cannot close their account or ask for erasure themselves; disable is offline only.                                                                                                                                                       | S2, owner decision (privacy) |
+| G6  | Notification and mission-mail mutes have no unmute.                                                                                                                                                                                                | S2                           |
+| G7  | Programme: no rename of name or reporting purpose, no archive or close, creation capped at 100 per workspace.                                                                                                                                      | S3                           |
+| G8  | Moves `set` replaces the open list with no expected version (`packages/domain/src/moves.ts:71`).                                                                                                                                                   | S4                           |
+| G9  | Operator member role change and revoke carry no version and no command id (`packages/auth/src/access.ts:61-81`).                                                                                                                                   | S4                           |
+| G10 | Cancelling a team invitation hard deletes the row and is not in the team-control audit. Fixed: PR 383 merged as 93ac1165 (10 Nov 2026, deployment success); migration 0010 installed by run 42835562806 (commercial_readiness_migrations 9 to 10). | S4; S20                      |
+| G11 | Counterparty private notes and contact data cannot be withdrawn, corrected or erased.                                                                                                                                                              | S4                           |
+| G12 | Operator communications, meetings, evidence and network lists stop at a fixed limit with no next page.                                                                                                                                             | S4                           |
 
 ## Low severity (examples; full list in the matrix)
 
