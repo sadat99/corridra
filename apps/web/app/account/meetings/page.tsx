@@ -72,8 +72,9 @@ export default async function Page() {
   )?.href;
   const intro =
     'This page lists every meeting and visit the Corridra team has set up for your requests.';
+  // With nothing shown, What Happens Next is the only explanation of the page, so it starts open.
   const whatNext = (
-    <details className="ux-journey-disclosure">
+    <details className="ux-journey-disclosure" open={shown === 0}>
       <summary>What Happens Next</summary>
       <p>{intro} Each one is a step between your request and your decision.</p>
       {shown > 0 ? <p>Open a meeting in its Request to see what to do next.</p> : null}
@@ -84,24 +85,31 @@ export default async function Page() {
       </p>
     </details>
   );
+  const notSavedSentence =
+    meetings.notSaved === 1
+      ? '1 of your requests has a report that is not saved yet. Save it from your Library to see its meetings here.'
+      : `${meetings.notSaved} of your requests have a report that is not saved yet. Save them from your Library to see their meetings here.`;
+  const openLibrary = (
+    <Link className="text-link" prefetch={false} href={libraryHref ?? '/account'}>
+      Open Library
+    </Link>
+  );
+  // With the meetings panel on show and the partial notice also showing, the three notices are one, above the tabs: the
+  // page stays within the layout budget at 1440 and nothing is dropped. The cap sentence is true on both tabs there.
+  const meetingsShown = readable && !(meetings.reportsOff && requests.length > 0);
+  const oneNotice = partial && meetingsShown;
   const meetingsPanel = (
     <div className="room">
       {whatNext}
-      {meetings.capped ? (
+      {meetings.capped && !oneNotice ? (
         <p role="status">
-          We show meetings from the first {meetingReportCap} reports only.{' '}
-          {partial ? null : 'Some meetings may be missing. '}Open a request in the Your Requests tab
-          to see all of its meetings.
+          We show meetings from the first {meetingReportCap} reports only. Some meetings may be
+          missing. Open a request in the Your Requests tab to see all of its meetings.
         </p>
       ) : null}
-      {meetings.notSaved > 0 ? (
+      {meetings.notSaved > 0 && !oneNotice ? (
         <p className="ux-draft-notice">
-          {meetings.notSaved === 1
-            ? '1 of your requests has a report that is not saved yet. Save it from your Library to see its meetings here.'
-            : `${meetings.notSaved} of your requests have a report that is not saved yet. Save them from your Library to see their meetings here.`}{' '}
-          <Link className="text-link" prefetch={false} href={libraryHref ?? '/account'}>
-            Open Library
-          </Link>
+          {notSavedSentence} {openLibrary}
         </p>
       ) : null}
       {requests.length === 0 && list.unreadable.length === 0 ? (
@@ -142,10 +150,23 @@ export default async function Page() {
             <Link className="text-link" prefetch={false} href="/account/meetings">
               Try Again
             </Link>
+            {oneNotice && meetings.capped ? (
+              <>
+                {' '}
+                We show meetings from the first {meetingReportCap} reports only. Open a request to
+                see all of its meetings.
+              </>
+            ) : null}
+            {oneNotice && meetings.notSaved > 0 ? (
+              <>
+                {' '}
+                {notSavedSentence} {openLibrary}
+              </>
+            ) : null}
           </p>
         ) : null}
         {!readable ? <p role="status">Your requests list is not available here yet.</p> : null}
-        {readable && meetings.reportsOff && requestsPanel ? (
+        {readable && !meetingsShown ? (
           <>
             {whatNext}
             <p role="status">
@@ -154,9 +175,7 @@ export default async function Page() {
             {requestsPanel}
           </>
         ) : null}
-        {readable && !(meetings.reportsOff && requestsPanel) ? (
-          <MeetingsTabs meetings={meetingsPanel} requests={requestsPanel} />
-        ) : null}
+        {meetingsShown ? <MeetingsTabs meetings={meetingsPanel} requests={requestsPanel} /> : null}
       </div>
     </CustomerShell>
   );

@@ -746,8 +746,14 @@ test.describe('the real page', () => {
     page.evaluate(() =>
       Math.round(document.querySelector('footer')!.getBoundingClientRect().bottom + window.scrollY),
     );
-  // Every state here is held to the limits. The cap, partial and not saved notices all showing at once is over the 1440
-  // limit and is recorded, with its figure, in docs/revamp/specs/workflow-intelligence.md (W8, Page length), not asserted.
+  const noticeAboveTabs = (page: Page) =>
+    page.evaluate(
+      () =>
+        document.querySelector('[role=status]')!.getBoundingClientRect().bottom <=
+        document.querySelector('[role=tablist]')!.getBoundingClientRect().top + 1,
+    );
+  // Every state here is held to the limits, with no soft pass. With the partial notice showing, the cap and not saved
+  // notices join it as one notice above the tabs, which is what keeps the three together inside the 1440 limit.
   const states: [string, () => RealPageState][] = [
     ['typical: 3 meetings, 2 requests', typicalState],
     ['12 long Chinese meetings, 3 requests', longChineseState],
@@ -765,10 +771,40 @@ test.describe('the real page', () => {
       '12 long Chinese meetings with the cap and partial notices',
       () => withMeetings(longChineseState(), { capped: true, partial: true }),
     ],
+    [
+      '12 long Chinese meetings with the cap and not saved notices',
+      () => withMeetings(longChineseState(), { capped: true, notSaved: 2 }),
+    ],
+    [
+      '12 long Chinese meetings with the partial and not saved notices',
+      () => withMeetings(longChineseState(), { partial: true, notSaved: 2 }),
+    ],
+    [
+      '12 long Chinese meetings with the cap, partial and not saved notices',
+      () => withMeetings(longChineseState(), { capped: true, partial: true, notSaved: 2 }),
+    ],
+    ['no meetings, 2 requests', () => withMeetings(typicalState(), { rows: [] })],
+    [
+      'no meetings, 2 requests, with the partial notice',
+      () => withMeetings(typicalState(), { rows: [], partial: true }),
+    ],
+    [
+      'meetings off, 2 requests',
+      () => withMeetings(typicalState(), { rows: [], reportsOff: true }),
+    ],
+    [
+      'no requests',
+      () => ({
+        ...withMeetings(typicalState(), { rows: [] }),
+        items: [] as RealPageState['items'],
+      }),
+    ],
   ];
 
+  // What Happens Next is closed when a meeting is shown, and open when none is, because it is then the only
+  // explanation of the page and a shut card does not look openable.
   for (const [name, state] of states)
-    test(`${name}, with Show All and What Happens Next closed, fits the page budget at 390 and 1440`, async ({
+    test(`${name}, with Show All closed, fits the page budget at 390 and 1440`, async ({
       page,
     }, info) => {
       const figures: Record<string, number> = {};
@@ -781,12 +817,14 @@ test.describe('the real page', () => {
         const screens = screensOf(await heightOf(page), viewport);
         figures[String(width)] = screens;
         ends[String(width)] = await endsAt(page);
-        expect.soft(screens, `${name} at ${width}`).toBeLessThanOrEqual(hard);
-        // The measure is of the closed page: the first meeting only, and What Happens Next shut.
-        await expect.soft(items(page)).toHaveCount(1);
-        await expect
-          .soft(page.locator('details.ux-journey-disclosure'))
-          .not.toHaveAttribute('open', /.*/);
+        expect(screens, `${name} at ${width}`).toBeLessThanOrEqual(hard);
+        // The measure is of the closed page: the first meeting only, and What Happens Next shut; with no meeting it is
+        // open, and that open page is the one held to the limits.
+        const meetingsShown = state().meetings.rows.length > 0;
+        await expect(items(page)).toHaveCount(meetingsShown ? 1 : 0);
+        const disclosure = page.locator('details.ux-journey-disclosure');
+        if (meetingsShown) await expect(disclosure).not.toHaveAttribute('open', /.*/);
+        else await expect(disclosure).toHaveAttribute('open', '');
       }
       for (const viewport of recorded) {
         const { width, height } = viewport;
@@ -816,7 +854,7 @@ test.describe('the real page', () => {
       await expect(page.locator('.ux-meeting-list').getByRole('link')).toHaveCount(3);
       const screens = screensOf(await heightOf(page), viewport);
       figures[String(width)] = screens;
-      expect.soft(screens, `Your Requests at ${width}`).toBeLessThanOrEqual(hard);
+      expect(screens, `Your Requests at ${width}`).toBeLessThanOrEqual(hard);
     }
     info.annotations.push({ type: 'page-length', description: JSON.stringify(figures) });
     console.log(`page length, real page and shell, Your Requests tab: ${JSON.stringify(figures)}`);
@@ -835,19 +873,99 @@ test.describe('the real page', () => {
       'href',
       '/account/meetings',
     );
-    const above = async () =>
-      page.evaluate(
-        () =>
-          document.querySelector('[role=status]')!.getBoundingClientRect().bottom <=
-          document.querySelector('[role=tablist]')!.getBoundingClientRect().top + 1,
-      );
-    expect(await above()).toBe(true);
+    expect(await noticeAboveTabs(page)).toBe(true);
     await tabNamed(page, 'Your Requests').click();
     await expect(notice).toBeVisible();
-    expect(await above()).toBe(true);
+    expect(await noticeAboveTabs(page)).toBe(true);
   });
 
-  test('the cap notice and the not saved note are in the Meetings tab only', async ({ page }) => {
+  // With the partial notice showing, the cap and not saved notices join it: one status notice above the tabs, on
+  // both tabs, with every sentence and both links, and nothing of it left inside the Meetings panel.
+  const combined: [string, Partial<RealPageState['meetings']>, string[], string[]][] = [
+    [
+      'partial and cap',
+      { partial: true, capped: true },
+      [
+        'We show meetings from the first 12 reports only. Open a request to see all of its meetings.',
+      ],
+      [],
+    ],
+    [
+      'partial and not saved',
+      { partial: true, notSaved: 2 },
+      ['2 of your requests have a report that is not saved yet.'],
+      ['Open Library'],
+    ],
+    [
+      'partial, cap and not saved',
+      { partial: true, capped: true, notSaved: 1 },
+      [
+        'We show meetings from the first 12 reports only. Open a request to see all of its meetings.',
+        '1 of your requests has a report that is not saved yet.',
+      ],
+      ['Open Library'],
+    ],
+  ];
+  for (const [name, over, sentences, links] of combined)
+    test(`shows ${name} as one notice above the tabs on both tabs, with every sentence and link`, async ({
+      page,
+    }) => {
+      await openReal(page, withMeetings(longChineseState(), over));
+      const notice = page.getByRole('status').filter({ hasText: 'We could not check' });
+      await expect(page.getByRole('status')).toHaveCount(1);
+      await expect(notice).toContainText(
+        'We could not check all your requests just now. Some meetings may be missing.',
+      );
+      await expect(notice.getByRole('link', { name: 'Try Again' })).toHaveAttribute(
+        'href',
+        '/account/meetings',
+      );
+      for (const sentence of sentences) await expect(notice).toContainText(sentence);
+      for (const link of links)
+        await expect(notice.getByRole('link', { name: link })).toBeVisible();
+      // The cap sentence of the combined notice is not the Meetings tab one, and nothing repeats in the panel.
+      const panel = page.getByRole('tabpanel', { name: 'Meetings' });
+      await expect(panel.getByText(/first 12 reports|not saved yet|Some meetings/)).toHaveCount(0);
+      await expect(page.locator('.ux-draft-notice')).toHaveCount(0);
+      await expect(page.getByText('Some meetings may be missing.')).toHaveCount(1);
+      expect(await noticeAboveTabs(page)).toBe(true);
+      await tabNamed(page, 'Your Requests').click();
+      await expect(notice).toBeVisible();
+      expect(await noticeAboveTabs(page)).toBe(true);
+    });
+
+  // The combined notice and both tabs have no accessibility violation and no touch target under 44 px.
+  for (const tab of ['meetings', 'requests'])
+    test(`has no axe violation and large targets on the ${tab} tab with the combined notice`, async ({
+      page,
+    }) => {
+      await openReal(
+        page,
+        withMeetings(longChineseState(), { partial: true, capped: true, notSaved: 2 }),
+        tab,
+      );
+      await expect(
+        page.getByRole('status').getByRole('link', { name: 'Open Library' }),
+      ).toBeVisible();
+      const small = await page.evaluate(() =>
+        Array.from(document.querySelectorAll('main :is(a[href], button, summary)'))
+          .filter((el) => (el as HTMLElement).offsetParent !== null)
+          .filter((el) => el.getBoundingClientRect().height < 43.5)
+          .map((el) => `${el.tagName.toLowerCase()}:${(el.textContent || '').trim().slice(0, 30)}`),
+      );
+      expect(small).toEqual([]);
+      expect(
+        (
+          await new AxeBuilder({ page })
+            .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
+            .analyze()
+        ).violations,
+      ).toEqual([]);
+    });
+
+  test('keeps the cap notice and the not saved note in the Meetings tab only when the partial notice is not showing', async ({
+    page,
+  }) => {
     await openReal(page, withMeetings(typicalState(), { capped: true, notSaved: 2 }));
     const cap = page.getByText(
       'We show meetings from the first 12 reports only. Some meetings may be missing. Open a request in the Your Requests tab to see all of its meetings.',

@@ -104,11 +104,12 @@ const lineTwo = 'Open a meeting in its Request to see what to do next.';
 const sourceLine = 'Meetings come from the reports you have saved.';
 const plainLine = 'Open any request to see all of it.';
 
-beforeEach(() => {
+const beforeEachState = () => {
   state.readable = true;
   state.list = { items: [request(1), request(2)], unreadable: [], partial: false };
   state.meetings = read();
-});
+};
+beforeEach(beforeEachState);
 
 describe('the lines that point at meetings appear only when a meeting is shown', () => {
   it('shows both lines, and the long requests line, when at least one meeting is shown', async () => {
@@ -280,20 +281,64 @@ describe('the tabs', () => {
     expect(html.indexOf(cap)).toBeGreaterThan(html.indexOf(tablist));
     expect(html).not.toContain('Open a request below');
   });
-  it('drops the repeated sentence from the cap notice when the partial notice already says it', async () => {
-    state.meetings = read({ capped: true, partial: true, rows: [row('Visit one')] });
-    const html = await render();
-    const cap =
-      'We show meetings from the first 12 reports only. Open a request in the Your Requests tab to see all of its meetings.';
-    expect(panel(html, 'meetings')).toContain(cap);
-    expect(html.split('Some meetings may be missing.').length).toBe(2);
-    expect(html.indexOf('Some meetings may be missing.')).toBeLessThan(html.indexOf(tablist));
-  });
+  const partialSentence =
+    'We could not check all your requests just now. Some meetings may be missing.';
+  const comboCap =
+    'We show meetings from the first 12 reports only. Open a request to see all of its meetings.';
+  const comboSaved = '2 of your requests have a report that is not saved yet.';
+  const noticeOf = (html: string) =>
+    html.match(/<p role="status">We could not check.*?<\/p>/)?.[0] ?? '';
+  const combos: [string, Partial<MeetingsRead>, string[], boolean][] = [
+    ['partial and cap', { partial: true, capped: true }, [comboCap], false],
+    ['partial and not saved', { partial: true, notSaved: 2 }, [comboSaved], true],
+    [
+      'partial, cap and not saved',
+      { partial: true, capped: true, notSaved: 2 },
+      [comboCap, comboSaved],
+      true,
+    ],
+  ];
+  for (const [name, over, sentences, library] of combos)
+    it(`makes ${name} one status notice above the tablist, with every sentence and link`, async () => {
+      state.meetings = read({ rows: [row('Visit one')], ...over });
+      const html = await render();
+      const notice = noticeOf(html);
+      expect(notice).toContain(partialSentence);
+      expect(notice).toContain('Try Again');
+      expect(notice).toContain('href="/account/meetings"');
+      for (const sentence of sentences) expect(notice).toContain(sentence);
+      expect(notice.includes('Open Library')).toBe(library);
+      // In order: partial sentences and Try Again, then the cap sentence, then the not saved sentence and its link.
+      const ordered = ['Try Again', ...sentences, ...(library ? ['Open Library'] : [])];
+      const places = ordered.map((text) => notice.indexOf(text));
+      expect(places).toEqual([...places].sort((x, y) => x - y));
+      expect(html.indexOf(notice)).toBeLessThan(html.indexOf(tablist));
+      // Nothing is said twice, and nothing is left in the Meetings panel.
+      expect(html.split(partialSentence).length).toBe(2);
+      expect(html.split('Some meetings may be missing.').length).toBe(2);
+      expect(html.split('first 12 reports').length).toBe(sentences.includes(comboCap) ? 2 : 1);
+      expect(html.split('not saved yet').length).toBe(sentences.includes(comboSaved) ? 2 : 1);
+      expect(panel(html, 'meetings')).not.toMatch(/first 12 reports|not saved yet/);
+      expect(html).not.toContain('Open a request in the Your Requests tab to see all');
+      expect(html).not.toContain('ux-draft-notice');
+      expect(html.split('Open Library').length).toBe(library ? 2 : 1);
+    });
   it('keeps the whole cap text when the partial notice is not showing', async () => {
     state.meetings = read({ capped: true, rows: [row('Visit one')] });
     const html = await render();
     expect(html.split('Some meetings may be missing.').length).toBe(2);
     expect(html.indexOf('Some meetings may be missing.')).toBeGreaterThan(html.indexOf(tablist));
+  });
+  it('keeps the cap notice and the not saved note in the Meetings panel, as they were, when the partial notice is not showing', async () => {
+    state.meetings = read({ capped: true, notSaved: 1, rows: [row('Visit one')] });
+    const html = await render();
+    const meetings = panel(html, 'meetings');
+    expect(meetings).toContain(
+      '<p role="status">We show meetings from the first 12 reports only. Some meetings may be missing. Open a request in the Your Requests tab to see all of its meetings.</p>',
+    );
+    expect(meetings).toContain('<p class="ux-draft-notice">1 of your requests has a report');
+    expect(meetings).toContain('Open Library');
+    expect(html).not.toContain('We could not check');
   });
   it('puts the not saved note inside the Meetings panel only', async () => {
     state.meetings = read({ notSaved: 1 });
@@ -303,6 +348,31 @@ describe('the tabs', () => {
     );
     expect(panel(html, 'requests')).not.toContain('not saved yet');
     expect(html.indexOf('not saved yet')).toBeGreaterThan(html.indexOf(tablist));
+  });
+  it('opens What Happens Next when no meeting is shown, and shuts it when one is', async () => {
+    const details = (html: string) =>
+      html.match(/<details class="ux-journey-disclosure"[^>]*>/)?.[0] ?? '';
+    const none: [string, () => void][] = [
+      ['no meeting is ready yet', () => {}],
+      [
+        'a read failed and nothing could be shown',
+        () => (state.meetings = read({ partial: true })),
+      ],
+      ['a report is not saved yet', () => (state.meetings = read({ notSaved: 1 }))],
+      ['the meetings are not available here', () => (state.meetings = read({ reportsOff: true }))],
+      [
+        'the person has no requests',
+        () => (state.list = { items: [], unreadable: [], partial: false }),
+      ],
+    ];
+    for (const [name, arrange] of none) {
+      beforeEachState();
+      arrange();
+      expect(details(await render()), name).toBe('<details class="ux-journey-disclosure" open="">');
+    }
+    beforeEachState();
+    state.meetings = read({ rows: [row('Visit one')] });
+    expect(details(await render())).toBe('<details class="ux-journey-disclosure">');
   });
   it('points the empty text at the Your Requests tab, with both tabs still there', async () => {
     const html = await render();
