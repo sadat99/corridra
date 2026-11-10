@@ -105,7 +105,7 @@ The first audit's W3 row said that customer questions and supplier or buyer repl
 
 ### W5 and checked candidates (status 10 Nov 2026)
 
-- W5, after a branch slot frees and a check of the receiving sections: the operator mission page links to whole workspace sections without the mission (`mission-page.tsx:372-374`), so the operator must find the mission again. Built only if those sections can take a mission filter with no change to data or permissions.
+- W5: built in PR 387; see "W5. Operator section links keep the mission" below.
 - Follow-up found in the W3 review: the operator router accepts only section addresses, so links to addresses inside a section (such as the billing jump links `#billing-services` in `delivery-experience.tsx`) show the "section is unavailable" alert. Fixing it is a routing change for its own PR.
 - Checked and refuted on 10 Nov 2026: the programme report has no next step (it is a read-only report behind a private link, with export and evidence replies); customers get no confirmation after they submit (each checked flow names the next step and who acts).
 
