@@ -107,6 +107,21 @@ Owner, 10 Nov 2026, in S17: "use the free branch slots to run W3 & others in par
 5. Tests: W4 cases in `tests/operator/v3-customer-request-detail.spec.ts` and `tests/operator/ux-room.spec.ts`. They fail on the code before W4, and no existing assertion changes.
 6. Matrix row "D organiser" is not part of W4 and is withdrawn: `apps/web/components/workspace-chooser.tsx:61` already opens the only workspace directly when a person has exactly one, so the one-workspace shortcut exists.
 
+### W5. Operator section links keep the mission
+
+Owner, 10 Nov 2026, in S17: "use the free branch slots to run W3 & others in parallel 100% correctly without rework, reruns etc" and "close the dependabot PRs to free slots for W4 and W5, if they are not required". Built by S25 in PR 387. Operator presentation only: no data, route, permission or schema change.
+
+The mission page's links to whole workspace sections (`apps/web/app/operator/[section]/[missionId]/mission-page.tsx`, `sectionHref`) did not carry the mission, so the operator had to find it again. Each destination was checked first (GO or STOP):
+
+1. Research (`apps/web/app/operator/counterparties.tsx`): GO. It already holds a selected mission and lists missions it is allowed to read (one read of up to 100). The link "Find and add companies" now adds `&mission=<id>`.
+2. Commercial progress (`apps/web/app/operator/opportunities.tsx`): GO. Its first response already lists the missions. The link "Quotes and billing" now adds `&mission=<id>`.
+3. Meetings (`apps/web/app/operator/access.tsx`): STOP. It has no selected-mission state, only meeting targets, so its link is unchanged.
+4. Delivery (`apps/web/app/operator/delivery.tsx`): STOP. Its mission choice sits in a closed disclosure on another tab and only for owners and admins, so a preselection would be invisible or wrong for other roles. Its link is unchanged.
+
+For the GO sections the mission in the address is only a hint. It must be a well-formed id (`apps/web/app/operator/mission-hint.ts`), it is applied once after the section's own list loads, and only when that mission is in the list. Otherwise one plain note says "This mission is not in the list shown here." and the section is as before. A choice the operator makes always wins. Selecting the mission triggers only the read the section already makes when someone selects it by hand. The real `/operator` page reads only `workspace` from the address and rewrites it only when the operator switches workspace, so the hint survives a normal click. Section addresses are `#workspace-research` and `#workspace-commercial`, which the operator router accepts.
+
+Tests: `tests/operator/w5-mission-context.spec.ts`, W5-links and W5-research and W5-commercial (listed, malformed, not listed, later choice wins), 9 cases; 7 fail with the source change reverted.
+
 ## 5. Measurement
 
 Measured for each changed journey: steps and fields before and after, repeated inputs removed, reading-level numbers from W1, UX gate counts, and the page lengths from the layout budget tests. Conversion, satisfaction, revenue and speed are not claimed: no measurement for them exists.
