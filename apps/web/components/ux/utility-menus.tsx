@@ -185,6 +185,7 @@ export function Entry({
         href={entry.href}
         target="_blank"
         rel="noopener noreferrer"
+        lang="en"
       >
         <span>{entry.label}</span>
         <CorridraIcon name="open" className="ux-menu-external-icon" />

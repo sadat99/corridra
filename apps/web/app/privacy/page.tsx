@@ -127,6 +127,8 @@ export default function Page() {
                   listed below handle it for us.
                   {pulseEmail &&
                     ' Email you switch on is delivered by Resend, which keeps its own delivery record.'}
+                  {whatsapp &&
+                    ' If you choose Chat on WhatsApp, you open WhatsApp yourself, and your messages travel under your own WhatsApp terms.'}
                 </li>
                 <li>
                   Request information is not automatically sent to AI, outreach or payment
@@ -418,6 +420,13 @@ export default function Page() {
                   Resend: verification and password recovery emails
                   {pulseEmail && ', and the request emails you switch on'}, sent from Ireland.
                 </li>
+                {whatsapp && (
+                  <li>
+                    WhatsApp (Meta): the channel you choose when you select Chat on WhatsApp. You
+                    open it yourself and your messages travel under your own WhatsApp terms. It is
+                    not a service we use to run Corridra.
+                  </li>
+                )}
               </ul>
               <p>
                 They process information for us under their own terms and only for these purposes.

@@ -216,6 +216,7 @@ describe('the privacy notice', () => {
       real,
       { ...real, CORRIDRA_MISSION_EMAIL_ENABLED: 'true' },
       { ...real, CORRIDRA_PULSE_ENABLED: 'true' },
+      { ...real, CORRIDRA_SUPPORT_WHATSAPP_NUMBER: '+6500000000' },
       { DATA_ENVIRONMENT: 'synthetic' },
       { ...real, CORRIDRA_LANGUAGES_FORM: 'true' },
     ])
@@ -340,6 +341,10 @@ describe('the privacy notice and Chat on WhatsApp', () => {
   const item = 'Messages you send us on WhatsApp';
   const number = '+6500000000';
   const sample = { DATA_ENVIRONMENT: 'synthetic' };
+  const summarySentence =
+    'If you choose Chat on WhatsApp, you open WhatsApp yourself, and your messages travel under your own WhatsApp terms.';
+  const sharingEntry =
+    'WhatsApp (Meta): the channel you choose when you select Chat on WhatsApp. You open it yourself and your messages travel under your own WhatsApp terms. It is not a service we use to run Corridra.';
 
   it('has no WhatsApp item while no number is set, blank, or not usable', async () => {
     for (const value of [undefined, '', '   ', '0065000000', '+65 0000 0000', '1234567']) {
@@ -347,6 +352,9 @@ describe('the privacy notice and Chat on WhatsApp', () => {
         const page = await text({ ...mode, CORRIDRA_SUPPORT_WHATSAPP_NUMBER: value });
         expect(page).not.toContain(item);
         expect(page).not.toContain('Meta');
+        expect(page).not.toContain('WhatsApp');
+        expect(page).not.toContain(summarySentence);
+        expect(page).not.toContain(sharingEntry);
       }
     }
   });
@@ -358,6 +366,12 @@ describe('the privacy notice and Chat on WhatsApp', () => {
         'only if you choose Chat on WhatsApp, which opens WhatsApp outside Corridra',
       );
       expect(page).toContain('WhatsApp (Meta) handles your message under its own terms.');
+      // All three places that name WhatsApp follow the same condition: the summary, the collected-messages item
+      // and the sharing list, which says it is the person's own channel and not a provider we use.
+      expect(page).toContain(summarySentence);
+      expect(page).toContain(sharingEntry);
+      expect(page.match(/WhatsApp \(Meta\)/g)).toHaveLength(2);
+      expect(page).not.toMatch(/WhatsApp[^.]*(our processor|our service provider)/);
     }
   });
   it('keeps the existing messages item and never prints the number', async () => {

@@ -48,6 +48,8 @@ describe('an external menu row', () => {
     expect(html.indexOf('<span>Chat on WhatsApp</span>')).toBeLessThan(html.indexOf('sr-only'));
     expect(html).toContain(`<span class="sr-only">${suffix}</span>`);
     expect(html).toContain('ux-menu-external-icon');
+    // The label and the spoken hint are English whatever the page language, as on the rail link.
+    expect(html).toContain('lang="en"');
   });
   test('a Coming soon row is still plain text: announced as unavailable, with no link', async () => {
     const html = await entry({ kind: 'soon', label: 'Chat on WhatsApp' });
