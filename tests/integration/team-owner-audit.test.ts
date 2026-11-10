@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, expect, test } from 'vitest';
 import { fixture, rawContext } from './support';
 import { TeamControl } from '../../packages/auth/src/team-control';
@@ -207,4 +208,94 @@ test('old-schema controls still work and explicitly report unavailable owner att
       'ALTER FUNCTION identity.record_team_control_install_pending(text,uuid,uuid) RENAME TO record_team_control',
     );
   }
+});
+
+// CRUD G10: migration 0010 replaces the shipped 0006 writer to add the cancel branch. The 0006 text is read from its
+// file, so these tests prove the guard against exactly what production installed.
+const migrations = new URL('../../packages/db/commercial-readiness-migrations/', import.meta.url);
+const file0006 = readFileSync(new URL('0006_team_control_owner_audit.sql', migrations), 'utf8');
+const file0010 = readFileSync(new URL('0010_team_invitation_cancel_audit.sql', migrations), 'utf8');
+const shipped0006 = file0006
+  .slice(file0006.indexOf('CREATE FUNCTION'), file0006.indexOf('END $$;') + 'END $$;'.length)
+  .replace('CREATE FUNCTION', 'CREATE OR REPLACE FUNCTION');
+const lines0006 = (from: number, to: number) =>
+  file0006
+    .split('\n')
+    .slice(from - 1, to)
+    .join('\n');
+const fingerprint = /<>'([0-9a-f]{64})'/.exec(file0010)?.[1];
+const writer = "to_regprocedure('identity.record_team_control(text,uuid,uuid)')";
+const writerHash = `SELECT encode(sha256(convert_to(pg_get_functiondef(${writer}),'UTF8')),'hex') AS hash`;
+const writerState = `SELECT p.prosrc,p.proacl::text AS acl,p.prosecdef,
+  has_function_privilege('corridra_runtime',p.oid,'EXECUTE') AS runtime,
+  has_function_privilege('corridra_auth',p.oid,'EXECUTE') AS auth
+  FROM pg_proc p WHERE p.oid=${writer}`;
+
+test('migration 0010 is skipped without the writer, replaces only the shipped 0006 text and refuses any other', async () => {
+  expect(fingerprint).toMatch(/^[0-9a-f]{64}$/);
+  const db = await f.owner.connect();
+  try {
+    // Absent: nothing is created and nothing fails.
+    await db.query('BEGIN');
+    await db.query(
+      'ALTER FUNCTION identity.record_team_control(text,uuid,uuid) RENAME TO record_team_control_install_pending',
+    );
+    await db.query(file0010);
+    expect((await db.query(`SELECT ${writer} AS writer`)).rows[0].writer).toBeNull();
+    await db.query('ROLLBACK');
+
+    // The shipped 0006 text: its fingerprint is the one in 0010, and the replacement keeps owner checks, resend and
+    // reset checks byte for byte, security definer and grants.
+    await db.query('BEGIN');
+    await db.query(shipped0006);
+    expect((await db.query(writerHash)).rows[0].hash).toBe(fingerprint);
+    const before = (await db.query(writerState)).rows[0];
+    expect(before.prosrc).not.toContain("'team.invitation.cancelled'");
+    await db.query(file0010);
+    const after = (await db.query(writerState)).rows[0];
+    expect(after.prosrc).toContain("operation='team.invitation.cancelled'");
+    expect(after.prosrc).toContain(lines0006(11, 18));
+    expect(after.prosrc).toContain(lines0006(19, 35));
+    expect(after.prosrc).toContain(lines0006(36, 37));
+    expect({
+      acl: after.acl,
+      prosecdef: after.prosecdef,
+      runtime: after.runtime,
+      auth: after.auth,
+    }).toEqual({
+      acl: before.acl,
+      prosecdef: true,
+      runtime: false,
+      auth: true,
+    });
+    await db.query('ROLLBACK');
+
+    // Any other text, including the already replaced one, is refused and nothing changes.
+    for (const changed of [
+      null,
+      shipped0006.replace("'Renewed team invitation required'", "'Renewed invitation required'"),
+    ]) {
+      await db.query('BEGIN');
+      if (changed) await db.query(changed);
+      await expect(db.query(file0010)).rejects.toThrow(
+        'Commercial readiness prerequisite differs: identity.record_team_control',
+      );
+      await db.query('ROLLBACK');
+    }
+  } finally {
+    await db.query('ROLLBACK');
+    db.release();
+  }
+});
+
+test('the installed writer keeps the 0006 resend and reset checks and grants unchanged', async () => {
+  const live = (await f.owner.query(writerState)).rows[0];
+  expect(live.prosrc).toContain(lines0006(19, 35));
+  // Only the owner and corridra_auth may execute it, as 0006 granted.
+  expect(live.acl).toMatch(/^\{(\w+)=X\/\1,corridra_auth=X\/\1\}$/);
+  expect({ prosecdef: live.prosecdef, runtime: live.runtime, auth: live.auth }).toEqual({
+    prosecdef: true,
+    runtime: false,
+    auth: true,
+  });
 });
