@@ -6,10 +6,18 @@
 // still checks on the server.
 import './customer-bar.css';
 import { usePathname } from 'next/navigation';
+import { customerHelpGroups } from '../../lib/ux/customer-navigation';
 import { NewRequestLink } from './customer-rail';
 import { AvatarMenu, HelpMenu, LanguageMenu, NotificationsPanel } from './utility-menus';
 
-export function CustomerBar({ notifications }: { notifications: boolean }) {
+export function CustomerBar({
+  notifications,
+  whatsappHref,
+}: {
+  notifications: boolean;
+  /** The support WhatsApp link, when the owner has set a number; absent, Chat on WhatsApp says Coming soon. */
+  whatsappHref?: string;
+}) {
   const pathname = usePathname() ?? '';
   const onAccount = pathname === '/account' || pathname.startsWith('/account/');
   return (
@@ -19,8 +27,8 @@ export function CustomerBar({ notifications }: { notifications: boolean }) {
       {notifications ? (
         <NotificationsPanel counted={onAccount} endpoint="/api/customer-inbox" />
       ) : null}
-      <HelpMenu />
-      <AvatarMenu active={onAccount} />
+      <HelpMenu groups={customerHelpGroups(whatsappHref)} />
+      <AvatarMenu active={onAccount} whatsappHref={whatsappHref} />
     </div>
   );
 }

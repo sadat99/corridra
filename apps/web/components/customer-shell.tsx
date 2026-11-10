@@ -9,6 +9,7 @@ import { CustomerNav, type CustomerTab } from './customer-nav';
 import { T } from './language-provider';
 import { customerTabs, type CustomerTabKey } from '../lib/ux/customer-navigation';
 import { notificationSettingsAvailable } from '../lib/ux/notification-settings';
+import { supportWhatsappHref } from '../lib/ux/support-whatsapp';
 import { CustomerTabs } from './ux/customer-tabs';
 import { CustomerBarNote } from './ux/customer-bar-note';
 import { LeftNavFrame, LeftNavList, type LeftNavItem } from './ux/left-nav';
@@ -116,7 +117,7 @@ function CustomerFrame({ tab, eyebrow, title, count, children }: CustomerShellPr
       narrow="tabs"
       nav={<LeftNavList id={navId} label={words.navLabel} items={items} current={here ?? ''} />}
       top={<CustomerRailTop />}
-      foot={<CustomerRailFoot />}
+      foot={<CustomerRailFoot href={supportWhatsappHref()} />}
     >
       <CustomerBarNote
         billing={customerBillingEnabled()}

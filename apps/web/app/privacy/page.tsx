@@ -6,6 +6,7 @@ import { customerSpecificationConfirmationEnabled } from '@corridra/auth/custome
 import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-requests';
 import { PublicShell } from '../../components/public-shell';
 import { languagesWithForm } from '../../lib/i18n/pages';
+import { supportWhatsappHref } from '../../lib/ux/support-whatsapp';
 import { WholeNoticeToggle } from './whole-notice-toggle';
 import '../../components/page-compact.css';
 import './privacy.css';
@@ -41,6 +42,8 @@ export default function Page() {
   const missionEmail = real && process.env.CORRIDRA_MISSION_EMAIL_ENABLED === 'true';
   // Email about what needs a person (Pulse) is described only while it can actually be sent.
   const pulseEmail = real && process.env.CORRIDRA_PULSE_ENABLED === 'true';
+  // The WhatsApp message line appears only while the Chat on WhatsApp link exists (the owner has set a number).
+  const whatsapp = supportWhatsappHref() !== null;
   // Billing records are described only while invoices can actually be issued; the practice payment flow only while it exists.
   const invoicing = real && customerRealInvoicingEnabled();
   const practicePayments = invoicing && customerSimulatedPaymentsEnabled();
@@ -124,6 +127,8 @@ export default function Page() {
                   listed below handle it for us.
                   {pulseEmail &&
                     ' Email you switch on is delivered by Resend, which keeps its own delivery record.'}
+                  {whatsapp &&
+                    ' If you choose Chat on WhatsApp, you open WhatsApp yourself, and your messages travel under your own WhatsApp terms.'}
                 </li>
                 <li>
                   Request information is not automatically sent to AI, outreach or payment
@@ -258,6 +263,17 @@ export default function Page() {
                   keep a record. Basis: our legitimate interest in answering you, or the law where
                   it requires a record.
                 </li>
+                {whatsapp && (
+                  <li>
+                    <strong>Messages you send us on WhatsApp</strong> (only if you choose Chat on
+                    WhatsApp, which opens WhatsApp outside Corridra). We receive what you send, with
+                    the phone number and name WhatsApp shows us. WhatsApp (Meta) handles your
+                    message under its own terms. To reply and keep a record. Basis: our legitimate
+                    interest in answering you, or the law where it requires a record. We delete a
+                    WhatsApp conversation 12 months after its last message, unless the law requires
+                    us to keep it longer.
+                  </li>
+                )}
                 {pulseEmail && (
                   <li>
                     <strong>Email about your requests</strong> (your email choices with the time you
@@ -414,6 +430,13 @@ export default function Page() {
                 requires it. Corridra staff see the records they need to deliver and support the
                 work, and no more.
               </p>
+              {whatsapp && (
+                <p>
+                  WhatsApp (Meta): the channel you choose when you select Chat on WhatsApp. You open
+                  it yourself and your messages travel under your own WhatsApp terms. It is not a
+                  service we use to run Corridra.
+                </p>
+              )}
             </div>
           </article>
           <article id="storage">
@@ -473,6 +496,13 @@ export default function Page() {
                 you are in the European Economic Area or the United Kingdom and want to know what
                 safeguards apply to that access, contact us.
               </p>
+              {whatsapp && (
+                <p>
+                  WhatsApp messages stay in WhatsApp, on Meta’s systems and on the device we answer
+                  from, not in our Frankfurt database. Meta may process them in other countries
+                  under its own terms.
+                </p>
+              )}
             </div>
           </article>
           <article id="files">

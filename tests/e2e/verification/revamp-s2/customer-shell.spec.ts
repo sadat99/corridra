@@ -60,6 +60,7 @@ test('L-01 at 1440 the destinations are a sidebar beside the page, with New Requ
   await expect(whatsapp).toContainText('Coming soon');
   await expect(whatsapp.getByRole('link')).toHaveCount(0);
   await expect(whatsapp.getByRole('button')).toHaveCount(0);
+  await expect(page.locator('a[href*="wa.me"]')).toHaveCount(0);
 });
 
 for (const width of [320, 390, 768]) {
@@ -241,6 +242,7 @@ test('CX-02 Help and accessibility: real things are links or switches, the rest 
     await expect(row, name).toContainText('Coming soon');
     await expect(row, name).not.toHaveAttribute('href', /.*/);
   }
+  await expect(page.locator('a[href*="wa.me"]')).toHaveCount(0);
   await expect(menu.getByText('Coming soon')).toHaveCount(3);
   // Text Size and Less Movement are real controls now, not Coming soon rows.
   await expect(menu.getByRole('menuitem', { name: /Text Size|Less Movement/ })).toHaveCount(0);

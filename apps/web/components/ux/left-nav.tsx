@@ -92,7 +92,7 @@ export function LeftNavFrame({
   nav: ReactNode;
   /** Shown above the navigation (the customer's workspace card). */
   top?: ReactNode;
-  /** Shown at the foot of the bar, under the collapse control (Help and the signed-in person). */
+  /** Shown at the foot of the bar, above the collapse control (Help on WhatsApp). */
   foot?: ReactNode;
   /**
    * Below 1024 px: `drawer` (the default, as before) is a left drawer opened from the header menu button;
@@ -198,8 +198,10 @@ export function LeftNavFrame({
           onClickCapture={(event) => {
             const target = event.target as HTMLElement;
             // A navigation closes the drawer. Focus is not forced back to the button here: the page
-            // that opens (or the section a # link shows) takes focus itself.
-            if (open && target.closest('a[href]')) close(false);
+            // that opens (or the section a # link shows) takes focus itself. A link that opens a new
+            // tab leaves this page where it is, so focus goes back to the button instead.
+            const link = target.closest('a[href]');
+            if (open && link) close(link.getAttribute('target') === '_blank');
             // A group opened while the bar is icons-only first widens the bar so its words show.
             if (wide && collapsed && target.closest('summary')) choose(false);
           }}
@@ -211,6 +213,8 @@ export function LeftNavFrame({
           ) : null}
           {top}
           {nav}
+          {/* The foot comes before the collapse control in the page order too, as it does on screen at 1024 px and wider. */}
+          {foot}
           <button
             type="button"
             className="ux-leftnav-collapse"
@@ -221,7 +225,6 @@ export function LeftNavFrame({
             <OperatorIcon name="chevron" />
             <span>{collapsed ? words.expandLabel : words.collapseLabel}</span>
           </button>
-          {foot}
         </div>
       </div>
       <div className="ux-leftnav-page" inert={open}>

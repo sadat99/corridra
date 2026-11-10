@@ -2,8 +2,8 @@
 // (the public request form), so nothing the team reached from the corner Help is lost. Owner: S4.
 import { customerHelpGroups, type HelpGroup } from './customer-navigation';
 
-export function teamHelpGroups(): HelpGroup[] {
-  return customerHelpGroups().map((group) =>
+export function teamHelpGroups(whatsappHref?: string | null): HelpGroup[] {
+  return customerHelpGroups(whatsappHref).map((group) =>
     group.label === 'About Corridra'
       ? {
           ...group,

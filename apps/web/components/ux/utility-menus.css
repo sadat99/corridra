@@ -79,6 +79,15 @@
 .ux-menu-soon:hover {
   background: transparent;
 }
+/* A row that leaves Corridra (Chat on WhatsApp): the open hint sits at the end of the row. The row itself is
+   the shared .ux-menu-row. */
+.ux-menu-external-icon {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+  margin-inline-start: auto;
+  color: var(--ac-text-tertiary);
+}
 .ux-soon-tag {
   flex: none;
   padding: 0.125rem 0.5rem;
