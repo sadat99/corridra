@@ -1521,7 +1521,7 @@
     {
       "path": "docs/revamp/specs/workflow-intelligence.md",
       "classification": "Current guide/contract",
-      "use": "Owner mandate (10 Nov 2026): journey audit, open-source tool decisions, reading-level measurement W1, early account notice and plain copy W2"
+      "use": "Owner mandate (10 Nov 2026): journey audit, open-source tool decisions, reading-level measurement W1, plain copy W2"
     },
     {
       "path": "docs/revamp/crud/summary.md",

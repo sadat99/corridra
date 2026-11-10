@@ -19,7 +19,7 @@ Specs the revamp track sessions build to. Written by the Conductor and Guardian 
 | [Wave 6 quality](wave6-quality.md)                | all   | 6    | Keyboard, reflow, contrast, states, busy actions, performance (Q-01 to Q-08)                                            |
 | [Wave 7 cleanup](wave7-cleanup.md)                | S4,S1 | 7    | Usage graph, candidate report, proven deletions, docs consolidation (K-01 to K-04)                                      |
 | [Wave 8 acceptance](wave8-acceptance.md)          | all   | 8    | Journeys J1 to J7 on fixtures and the release memo                                                                      |
-| [Workflow intelligence](workflow-intelligence.md) | S17   | 6    | Owner 10 Nov: journey audit, tool decisions, reading-level measurement (W1), early account notice and plain copy (W2)   |
+| [Workflow intelligence](workflow-intelligence.md) | S17   | 6    | Owner 10 Nov: journey audit, tool decisions, reading-level measurement (W1), plain copy (W2)                            |
 
 ## Rules for every track PR
 
