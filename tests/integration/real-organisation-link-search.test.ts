@@ -32,6 +32,20 @@ class RawSearch extends CustomerOrganisationLinkService {
     );
   }
 }
+// Runs the search inside a transaction that stays open until it is released, so a second session can be seen waiting.
+class HeldSearch extends CustomerOrganisationLinkService {
+  hold(workspaceId: string, term: string, ran: () => void, release: Promise<void>) {
+    return this.transaction(async (db) => {
+      const answer = await db.query<{ result: { organisations: { id: string }[] } }>(
+        'SELECT customer.organisation_link_search($1,$2) AS result',
+        [workspaceId, term],
+      );
+      ran();
+      await release;
+      return answer.rows[0]!.result;
+    });
+  }
+}
 let w: World;
 const search = (who: string, workspaceId: string, q: string, mode: 'real' | 'synthetic' = 'real') =>
   w.link(who, mode).search({ workspaceId, q });
@@ -79,6 +93,15 @@ beforeAll(async () => {
     synthetic: false,
     host: 'www.wwwhost-handel.de',
   });
+  for (const [key, name, host] of [
+    ['ESC-UNDER', 'Haus a_b Werke GmbH', 'haus-a-b.de'],
+    ['ESC-LOOK', 'AxB Bau GmbH', 'axb-bau.de'],
+    ['ESC-SLASH', 'Backslash c\\d Werke GmbH', 'backslash-cd.de'],
+    ['ESC-SLASHLOOK', 'Cd Handel GmbH', 'cd-handel.de'],
+    ['ESC-TAIL', 'Zbau\\ Werke GmbH', 'zbau-werke.de'],
+    ['ESC-TAILLOOK', 'Bau Alpha GmbH', 'bau-alpha.de'],
+  ] as const)
+    await w.addOrganisation({ key, name, synthetic: false, host });
   await w.addOrganisation({ key: 'ORAB', name: 'Ab GmbH', synthetic: false, host: 'ab-gmbh.de' });
 }, 300000);
 afterAll(async () => {
@@ -308,6 +331,68 @@ test('two searches at nine counted rows run the lookup once (race)', async () =>
   ]);
   expect(results.map((r) => r.length).sort()).toEqual([0, 1]);
   expect(await w.attempts(a.who)).toBe(10);
+});
+
+test('typed text is matched literally: underscore, percent and backslash have no pattern meaning (T3)', async () => {
+  const writer = await w.freshWriter('like-' + randomLabel(), 'Unrelated Firma GmbH');
+  const run = (term: string) => found(writer.who, writer.workspaceId, term);
+  // An underscore is a letter of the name, not any single character.
+  expect(await run('a_b')).toEqual([w.org['ESC-UNDER']]);
+  expect(await run('___')).toEqual([]);
+  // A backslash is a letter of the name, not an escape, and a trailing one is not an error.
+  expect(await run('c\\d')).toEqual([w.org['ESC-SLASH']]);
+  expect(await run('bau\\')).toEqual([w.org['ESC-TAIL']]);
+});
+
+test('an organisation that matches the exact lane and the name lane is returned once, in the exact position (T6)', async () => {
+  const writer = await w.freshWriter('both-' + randomLabel(), 'Capwerk Zulu GmbH');
+  expect(await found(writer.who, writer.workspaceId, 'zulu')).toEqual([w.org['CAP-Zulu']]);
+  const all = await found(writer.who, writer.workspaceId, 'capwerk');
+  expect(all.filter((id) => id === w.org['CAP-Zulu'])).toHaveLength(1);
+  expect(all).toHaveLength(10);
+});
+
+test('a second search of the same person waits for the first to commit (T2)', async () => {
+  const writer = await w.freshWriter('lock-' + randomLabel());
+  await w.addAttempts(writer.who, Array(9).fill('1 minute'));
+  const first = new HeldSearch(w.f.runtime, w.f.auth, realOptions, async () => ({
+    subject: 'link-a-' + writer.who,
+    email: `${writer.who}@business.test`,
+    emailVerified: true,
+    expiresAt: new Date(Date.now() + 3600000),
+  }));
+  let ran!: () => void;
+  const started = new Promise<void>((resolve) => (ran = resolve));
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => (release = resolve));
+  const open = first.hold(writer.workspaceId, 'acme', ran, gate);
+  await started;
+  let secondDone = false;
+  const second = search(writer.who, writer.workspaceId, 'acme').then((body) => {
+    secondDone = true;
+    return body;
+  });
+  try {
+    // The second session must be seen waiting for the person lock, and must not finish while the first is open.
+    let waiting = 0;
+    for (let n = 0; n < 50 && waiting === 0; n += 1) {
+      waiting = (
+        await w.f.owner.query(
+          "SELECT count(*)::int n FROM pg_locks WHERE locktype='advisory' AND NOT granted",
+        )
+      ).rows[0].n;
+      if (waiting === 0) await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(waiting).toBeGreaterThan(0);
+    expect(secondDone).toBe(false);
+  } finally {
+    release();
+  }
+  const [one, two] = [await open, await second];
+  expect(one.organisations.map((o) => o.id)).toEqual([w.org.OR1]);
+  expect(two.organisations).toEqual([]);
+  expect(await w.attempts(writer.who)).toBe(10);
 });
 
 test('only an owner or admin with a current session may search; others read as denied', async () => {

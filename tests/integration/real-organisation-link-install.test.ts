@@ -424,6 +424,50 @@ test('the runtime and auth logins cannot read or write the new tables or call th
   ]);
 });
 
+test('no application role and not PUBLIC holds any privilege on the new tables or helpers (ACL view)', async () => {
+  // has_table_privilege and has_function_privilege read the ACL itself, without the schema USAGE the logins also lack.
+  const tables = [
+    'organisation_suppression',
+    'organisation_link_redaction',
+    'organisation_link_search_attempt',
+  ];
+  const functions = [
+    'customer_private.organisation_link_same_context(boolean,boolean)',
+    'customer_private.organisation_link_suppressed(uuid)',
+    'customer_private.organisation_link_redacted(uuid)',
+    'customer_private.organisation_link_search_attempt_guard()',
+  ];
+  for (const role of [
+    'corridra_runtime',
+    'corridra_auth',
+    'corridra_runtime_local',
+    'corridra_auth_local',
+    'public',
+  ]) {
+    for (const table of tables) {
+      const held = await q(
+        `SELECT has_table_privilege($1,$2,'SELECT') s,has_table_privilege($1,$2,'INSERT') i,has_table_privilege($1,$2,'UPDATE') u,
+          has_table_privilege($1,$2,'DELETE') d,has_table_privilege($1,$2,'TRUNCATE') t,has_table_privilege($1,$2,'REFERENCES') r,has_table_privilege($1,$2,'TRIGGER') g`,
+        [role, 'customer_private.' + table],
+      );
+      expect(held.rows[0], `${role} on ${table}`).toEqual({
+        s: false,
+        i: false,
+        u: false,
+        d: false,
+        t: false,
+        r: false,
+        g: false,
+      });
+    }
+    for (const signature of functions)
+      expect(
+        (await q("SELECT has_function_privilege($1,$2,'EXECUTE') x", [role, signature])).rows[0].x,
+        `${role} on ${signature}`,
+      ).toBe(false);
+  }
+});
+
 test('the evidence URL rule follows the side of the workspace', async () => {
   const real = w.link('alice-r', 'real');
   const stateBefore = await real.view({ workspaceId: w.ws.WR1 });

@@ -2,6 +2,7 @@ import { afterAll, beforeAll, expect, test, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { hidden, World } from './organisation-link-support';
 import type {
+  CustomerOrganisationLinkView,
   StaffOrganisationLinkQueue,
   StaffOrganisationLinkReview,
 } from '../../packages/auth/src/customer-organisation-links';
@@ -325,6 +326,19 @@ test('ledger guard and decide refuse the other side and hidden organisations (ro
   expect(await ownerAttempt(insert, [w.ws.WR1, w.claim.CR1, w.org.OR2, staff])).toBe('accepted');
 });
 
+test('the older ledger checks keep their precedence for a direct writer (S2)', async () => {
+  const insert = `INSERT INTO customer_private.organisation_link(tenant_id,version,state,claim_id,organisation_id,shared,staff_actor) VALUES($1,$2,'linked',$3,$4,false,$5)`;
+  const staff = w.f.users.reviewer.id;
+  // WR2 already has an active link, so a second linked row reports that, even for an organisation of the other side.
+  expect(await ownerAttempt(insert, [w.ws.WR2, 2, w.claim.CR2, w.org.OS1, staff])).toMatch(
+    /Only one active company link is allowed per workspace/,
+  );
+  // A workspace with no active link gets the new refusal for the same organisation.
+  expect(await ownerAttempt(insert, [w.ws.WR1, 1, w.claim.CR1, w.org.OS1, staff])).toMatch(
+    /That organisation is not available for linking/,
+  );
+});
+
 test('the paging probe of the queue is scoped to the session side', async () => {
   await expect(queueOf(w.ssCtx, { scope: 'closed', after: w.claim.CR2 })).rejects.toThrow(
     /Invalid queue request/,
@@ -447,6 +461,122 @@ test('redaction: every reader masks the claim text, the replay never returns sto
   expect(row).toMatchObject({ redacted: true, legalName: hidden, state: 'approved' });
 });
 
+// The customer state of the claim being shown, with redaction rows made as table owner (the writer is slice B).
+type ShownClaim = NonNullable<CustomerOrganisationLinkView['claim']> & { redacted?: boolean };
+function expectMasked(view: CustomerOrganisationLinkView, plain: string[]) {
+  const claim = view.claim as ShownClaim;
+  expect(claim.redacted).toBe(true);
+  expect(claim.note).toBe(hidden);
+  expect(claim.evidence!.length).toBeGreaterThan(0);
+  for (const e of claim.evidence!) expect([e.statement, e.url]).toEqual([hidden, hidden]);
+  const reasons = claim.history!.map((h) => h.reason).filter((r) => r !== null);
+  expect(reasons.length).toBeGreaterThan(0);
+  for (const r of reasons) expect(r).toBe(hidden);
+  expect(claim.decision!.reason).toBe(hidden);
+  for (const secret of plain) expect(text(view)).not.toContain(secret);
+}
+
+test('customer state masks the text of a rejected, redacted claim and of its replayed receipt (T1 i)', async () => {
+  const who = 'ivan-r';
+  await w.workspace('WR9', who, 'real', 'Ivan Handel GmbH', null);
+  const person = w.link(who, 'real');
+  const fileCommand = {
+    action: 'file' as const,
+    commandId: randomUUID(),
+    workspaceId: w.ws.WR9!,
+    expectedProfileVersion: 1,
+    kind: 'PROPOSED_NEW' as const,
+    organisationId: null,
+    note: 'Nine private note',
+  };
+  const claimId = (await person.command(fileCommand)).claim!.id!;
+  await person.command({
+    action: 'add_evidence',
+    commandId: randomUUID(),
+    workspaceId: w.ws.WR9!,
+    claimId,
+    expectedVersion: 1,
+    evidenceKind: 'WEBSITE_STATEMENT',
+    statement: 'Nine private statement',
+    url: 'https://business.test/nine',
+  });
+  const open = await reviewOf(w.rsCtx, claimId);
+  await decideAs('real', claimId, open.version, {
+    decision: 'reject',
+    reason: 'Nine private reject reason',
+    internalNote: 'Nine internal note',
+  });
+  const plain = [
+    'Nine private note',
+    'Nine private statement',
+    'business.test/nine',
+    'Nine private reject reason',
+  ];
+  const before = await person.view({ workspaceId: w.ws.WR9 });
+  expect(before.status).toBe('rejected');
+  expect(before.claim!.note).toBe('Nine private note');
+  await w.redact(claimId);
+  const view = await person.view({ workspaceId: w.ws.WR9 });
+  expect(view.status).toBe('rejected');
+  expectMasked(view, plain);
+  const replay = await person.command(fileCommand);
+  expect(replay.commandId).toBe(fileCommand.commandId);
+  expectMasked(replay, plain);
+});
+
+test('customer state masks the text of an open, redacted claim and of a replayed evidence receipt (T1 ii)', async () => {
+  const who = 'judy-r';
+  await w.workspace('WR10', who, 'real', 'Judy Handel GmbH', null);
+  const person = w.link(who, 'real');
+  const claimId = (
+    await person.command({
+      action: 'file',
+      commandId: randomUUID(),
+      workspaceId: w.ws.WR10,
+      expectedProfileVersion: 1,
+      kind: 'PROPOSED_NEW',
+      organisationId: null,
+      note: 'Ten private note',
+    })
+  ).claim!.id!;
+  const evidence = (expectedVersion: number, statement: string, url: string) => ({
+    action: 'add_evidence' as const,
+    commandId: randomUUID(),
+    workspaceId: w.ws.WR10!,
+    claimId,
+    expectedVersion,
+    evidenceKind: 'WEBSITE_STATEMENT' as const,
+    statement,
+    url,
+  });
+  await person.command(evidence(1, 'Ten first statement', 'https://business.test/ten-first'));
+  const asked = await reviewOf(w.rsCtx, claimId);
+  await decideAs('real', claimId, asked.version, {
+    decision: 'request_evidence',
+    reason: 'Ten private request reason',
+    internalNote: null,
+  });
+  const second = evidence(3, 'Ten second statement', 'https://business.test/ten-second');
+  await person.command(second);
+  const plain = [
+    'Ten private note',
+    'Ten first statement',
+    'Ten second statement',
+    'business.test/ten',
+    'Ten private request reason',
+  ];
+  const before = await person.view({ workspaceId: w.ws.WR10 });
+  expect(before.status).toBe('pending');
+  expect(before.claim!.decision!.reason).toBe('Ten private request reason');
+  await w.redact(claimId);
+  const view = await person.view({ workspaceId: w.ws.WR10 });
+  expect(view.status).toBe('pending');
+  expectMasked(view, plain);
+  const replay = await person.command(second);
+  expect(replay.commandId).toBe(second.commandId);
+  expectMasked(replay, plain);
+});
+
 test('approval of a same-side claim to an organisation that only the other side links is not a shared link (row 8d)', async () => {
   const review = await reviewOf(w.ssCtx, w.claim.CS1!);
   const outcome = await decideAs('synthetic', w.claim.CS1!, review.version, {
@@ -500,4 +630,19 @@ test('staff can still end a cross-provenance link and a link whose organisation 
     organisationId: null,
   });
   expect(endedHidden.state).toBe('ended');
+});
+
+test('the suppression and redaction tables reject changes, even for the table owner (T5)', async () => {
+  const message = /Immutable record; append a new record/;
+  // A redaction row of its own, so the test does not depend on the tests before it. Nothing after this test reads CS2.
+  await w.redact(w.claim.CS2!);
+  for (const table of ['organisation_suppression', 'organisation_link_redaction']) {
+    expect(
+      (await w.f.owner.query(`SELECT count(*)::int n FROM customer_private.${table}`)).rows[0].n,
+    ).toBeGreaterThan(0);
+    await expect(
+      w.f.owner.query(`UPDATE customer_private.${table} SET reason='Changed after the fact'`),
+    ).rejects.toThrow(message);
+    await expect(w.f.owner.query(`DELETE FROM customer_private.${table}`)).rejects.toThrow(message);
+  }
 });
