@@ -23,6 +23,8 @@ const changed = {
 const notAllowed = { code: '23514', message: 'That change is not allowed from this status' };
 const conflict = { code: '23514', message: 'Command conflicts with original request' };
 const tooMany = { code: '54000', message: 'Too many problem reports in the last 24 hours' };
+const notInProgress =
+  'Words can be removed only for an erasure request that is in progress or completed';
 const closedAccount = { code: '23514', message: 'That account is closed' };
 
 const body = (over: Record<string, unknown> = {}) => ({
@@ -217,7 +219,7 @@ const seen = async (reference: string) => {
         [reference],
       )
     ).rows[0] as { id: string; side: string; effective: string };
-    const view: Record<string, boolean> = {};
+    const view = { sample: false, real: false };
     for (const [name, tenant] of [
       ['sample', f.tenantA],
       ['real', f.tenantB],
@@ -491,6 +493,96 @@ describe('identities never mix', () => {
     await expect(
       as({ ...ctxOf('owner'), token: 'no-such-token' }, 'SELECT app.problem_report_list(NULL,25)'),
     ).rejects.toMatchObject({ code: '42501' });
+  });
+});
+
+describe('a team member who is no longer valid is refused', () => {
+  const viewer = () => ctxOf('viewer');
+  const refusedEverywhere = async (ctx: RequestContext) => {
+    const before = await counts();
+    await expect(teamFile(ctx, teamBody())).rejects.toMatchObject({ code: '42501' });
+    await expect(teamList(ctx)).rejects.toMatchObject({ code: '42501' });
+    await expect(teamGet(ctx, 'RP-000001')).rejects.toMatchObject({ code: '42501' });
+    expect(await counts()).toEqual(before);
+  };
+  const allowed = async () => {
+    expect(Array.isArray(await teamList(viewer()))).toBe(true);
+  };
+  const withoutTriggers = async (table: string, work: () => Promise<unknown>) => {
+    await f.owner.query(`ALTER TABLE ${table} DISABLE TRIGGER USER`);
+    try {
+      await work();
+    } finally {
+      await f.owner.query(`ALTER TABLE ${table} ENABLE TRIGGER USER`);
+    }
+  };
+
+  test('a revoked membership', async () => {
+    await allowed();
+    await withoutTriggers('app.membership', async () => {
+      await f.owner.query('UPDATE app.membership SET revoked_at=now() WHERE user_id=$1', [
+        f.users.viewer!.id,
+      ]);
+      try {
+        await refusedEverywhere(viewer());
+      } finally {
+        await f.owner.query('UPDATE app.membership SET revoked_at=NULL WHERE user_id=$1', [
+          f.users.viewer!.id,
+        ]);
+      }
+    });
+    await allowed();
+  });
+
+  test('a disabled principal', async () => {
+    await allowed();
+    await withoutTriggers('identity.principal', async () => {
+      await f.owner.query('UPDATE identity.principal SET disabled_at=now() WHERE id=$1', [
+        f.users.viewer!.id,
+      ]);
+      try {
+        await refusedEverywhere(viewer());
+      } finally {
+        await f.owner.query('UPDATE identity.principal SET disabled_at=NULL WHERE id=$1', [
+          f.users.viewer!.id,
+        ]);
+      }
+    });
+    await allowed();
+  });
+
+  test('an expired session and a session older than 24 hours', async () => {
+    await allowed();
+    const original = (
+      await f.owner.query('SELECT "expiresAt","createdAt" FROM identity.session WHERE id=$1', [
+        f.users.viewer!.sessionId,
+      ])
+    ).rows[0] as { expiresAt: Date; createdAt: Date };
+    const set = (expires: string, created: string) =>
+      f.owner.query(
+        `UPDATE identity.session SET "expiresAt"=${expires},"createdAt"=${created} WHERE id=$1`,
+        [f.users.viewer!.sessionId],
+      );
+    await withoutTriggers('identity.session', async () => {
+      try {
+        await set("now()-interval '1 minute'", "now()-interval '2 hours'");
+        await refusedEverywhere(viewer());
+        await set("now()+interval '1 hour'", "now()-interval '25 hours'");
+        await refusedEverywhere(viewer());
+      } finally {
+        await f.owner.query(
+          'UPDATE identity.session SET "expiresAt"=$2,"createdAt"=$3 WHERE id=$1',
+          [f.users.viewer!.sessionId, original.expiresAt, original.createdAt],
+        );
+      }
+    });
+    await allowed();
+  });
+
+  test('a purpose that the membership does not allow', async () => {
+    await allowed();
+    await refusedEverywhere({ ...viewer(), purpose: 'commercial_qualification' });
+    await allowed();
   });
 });
 
@@ -1236,6 +1328,31 @@ describe('every table and function is closed to the runtime', () => {
   });
 });
 
+describe('every function has a fixed search path', () => {
+  test('all are pinned to pg_catalog and run as the owner, except the three pure helpers', async () => {
+    const rows = (
+      await f.owner.query(
+        `SELECT n.nspname||'.'||p.proname AS name,p.prosecdef,
+         coalesce('search_path=pg_catalog'=ANY(p.proconfig),false) AS pinned
+         FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+         WHERE n.nspname IN ('customer_private','customer','app')
+         AND (p.proname LIKE 'problem_report%' OR p.proname='staff_problem_actor')`,
+      )
+    ).rows as { name: string; prosecdef: boolean; pinned: boolean }[];
+    expect(rows.length).toBeGreaterThanOrEqual(19);
+    const pure = [
+      'customer_private.problem_report_plain',
+      'customer_private.problem_report_path_ok',
+      'customer_private.problem_report_parse',
+    ];
+    for (const row of rows) {
+      expect(row.pinned, `${row.name} search path`).toBe(true);
+      expect(row.prosecdef, `${row.name} security definer`).toBe(!pure.includes(row.name));
+    }
+    for (const name of pure) expect(rows.map((row) => row.name)).toContain(name);
+  });
+});
+
 describe('records are append only', () => {
   test('update and removal are rejected through the owner on every table', async () => {
     const reference = (await customerFile(spare(), body())).reference as string;
@@ -1569,9 +1686,13 @@ describe('words are removed under an erasure request', () => {
   });
 
   test('a received or declined request is refused, an in progress one removes the words and nothing else', async () => {
-    const first = (
-      await customerFile('pat', body({ detail: 'Pat wrote some private words here.' }))
-    ).reference as string;
+    const firstCommand = randomUUID();
+    const firstFiled = await customerFile(
+      'pat',
+      body({ detail: 'Pat wrote some private words here.' }),
+      firstCommand,
+    );
+    const first = firstFiled.reference as string;
     const second = (await customerFile('pat', body({ pageKind: 'another_page', page: 'Meetings' })))
       .reference as string;
     const sampleTeam = (
@@ -1588,13 +1709,19 @@ describe('words are removed under an erasure request', () => {
     const requestId = await request('pat');
     const before = await snapshot('pat');
     let wordsBefore = (await counts()).words;
-    await expect(remove(owner(), requestId)).rejects.toMatchObject({ code: '23514' });
+    await expect(remove(owner(), requestId)).rejects.toMatchObject({
+      code: '23514',
+      message: notInProgress,
+    });
     expect((await counts()).words).toBe(wordsBefore);
     // a declined request is refused as well
     const declined = await request('rhea');
     await customerFile('rhea', body({ detail: 'Words that must stay.' }));
     await erasure(declined, 'received', 'declined', 'We must keep the records for tax.');
-    await expect(remove(owner(), declined)).rejects.toMatchObject({ code: '23514' });
+    await expect(remove(owner(), declined)).rejects.toMatchObject({
+      code: '23514',
+      message: notInProgress,
+    });
     expect(
       (
         await f.owner.query(
@@ -1655,9 +1782,32 @@ describe('words are removed under an erasure request', () => {
       detail: null,
       status: 'in_review',
     });
-    // a second call removes nothing, with a new or the same command
-    expect(await remove(owner(), requestId)).toMatchObject({ removed: 0 });
-    expect(await remove(owner(), requestId, command)).toMatchObject({ removed: 0 });
+    // a second call with a new command removes nothing, and a retry of the first command answers with its original count
+    expect(await remove(owner(), requestId, randomUUID())).toMatchObject({ removed: 0 });
+    expect(await remove(owner(), requestId, command)).toMatchObject({ removed: 2 });
+    expect((await counts()).erasures).toBe(2);
+    // the original filing command is still answered after the words are gone, without comparing them
+    expect(
+      await customerFile(
+        'pat',
+        body({ detail: 'Pat wrote some private words here.' }),
+        firstCommand,
+      ),
+    ).toEqual({
+      ...firstFiled,
+      changed: false,
+    });
+    expect(
+      await customerFile(
+        'pat',
+        body({ page: '/account/other', detail: 'Other words.' }),
+        firstCommand,
+      ),
+    ).toEqual({ ...firstFiled, changed: false });
+    await expect(
+      customerFile('pat', body({ category: 'words_wrong' }), firstCommand),
+    ).rejects.toMatchObject(conflict);
+    expect((await counts()).words).toBe(wordsBefore! - 2);
     // a team report is staff data and is not touched, and a later customer report keeps its words
     expect((await teamGet(ctxOf('operator'), sampleTeam)).words).toMatchObject({
       detail: 'Operator words stay.',

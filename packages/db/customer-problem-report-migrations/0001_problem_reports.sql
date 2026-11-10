@@ -517,6 +517,10 @@ BEGIN
   DELETE FROM customer_private.problem_report_words w WHERE w.report_id=report;
   removed:=removed+1;
  END LOOP;
+ -- A retry of the same command answers with the count it removed the first time. A new command id finds nothing left.
+ IF removed=0 THEN
+  SELECT count(*)::integer INTO removed FROM customer_private.problem_report_erasure e WHERE e.command_id=command AND e.erasure_request_id=erasure_request;
+ END IF;
  RETURN jsonb_build_object('reference',filed.reference,'removed',removed);
 END $$;
 
