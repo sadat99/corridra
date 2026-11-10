@@ -2,6 +2,7 @@
 // right to left from the start instead of flipping after the page loads (CQ-10, CQ-48). The text
 // itself is still swapped by the language provider; this only sets lang and dir on <html>.
 // It reads the same browser setting as the language provider and uses only offered languages.
+// The same file also carries the saved text size and Less Movement (lib/ux/comfort.ts).
 // Owner: WS-E.
 import { languageStorageKey, localeMeta, type Locale } from '../i18n/locales';
 

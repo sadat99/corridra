@@ -101,6 +101,17 @@
   justify-content: center;
   gap: 0.375rem;
 }
+/* The language trigger is a globe and a code side by side. A CorridraIcon with no size adds nothing to a button's
+   natural width, so the trigger sat at its 44 px minimum and the globe and the code ran out of its hover, open and
+   focus shapes. The globe now has a size of its own, on the icon grid (20 px, in rem so it follows the text size), and
+   the trigger grows with both. Single-icon triggers (inbox, help) are left as they were: they fit their 44 px box. */
+.ux-util-language > .ux-menu-button {
+  white-space: nowrap;
+}
+.ux-util-language > .ux-menu-button > .corridra-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
 .ux-avatar-face {
   width: 2rem;
   height: 2rem;
@@ -168,9 +179,110 @@
   }
 }
 
-/* The avatar menu is the longest (on phones it holds the language and help too): it scrolls within the screen,
-   above the bottom tabs, instead of running off it. */
-.ux-util-avatar .ux-menu-panel {
+/* The avatar menu is the longest (on phones it holds the language and help too) and the help menu grows with the
+   text size: each scrolls within the screen, above the bottom tabs, instead of running off it. */
+.ux-util-avatar .ux-menu-panel,
+.ux-util-help .ux-menu-panel {
   max-height: calc(100dvh - 8.5rem);
   overflow-y: auto;
+}
+
+/* Phones: the account menu hangs from the header's end edge, under the header, and is never wider than the header.
+   At a large text size the header row can wrap, which leaves the avatar away from the row's end; a panel aligned to
+   the avatar ran off the left edge of the screen. The header (already a positioned box) is the frame, not the button. */
+@media (max-width: 639.98px) {
+  /* The panel hangs from the header, so the header must be a positioned box. It already is (left-nav.css makes it
+     sticky); this is the fallback for a header that is not, at zero specificity so it can never override sticky. */
+  :where(.ux-app-header) {
+    position: relative;
+  }
+  .ux-app-header .ux-menu.ux-util-avatar[data-align] {
+    position: static;
+  }
+  .ux-app-header .ux-menu.ux-util-avatar[data-align] .ux-menu-panel {
+    top: calc(100% + var(--space-2));
+    min-width: 0;
+    width: min(100%, 22rem);
+    max-width: none;
+    /* Sized from the header's real bottom: the tallest phone header (the team's, wrapped to three rows) is about
+       10.3 rem at normal text (165 px) and 9.2 rem at the largest step (184 px). With the 0.5 rem gap under the header,
+       a 12 rem reserve leaves the panel's bottom inside the window; rem makes it grow with the text size. The panel
+       scrolls inside itself. */
+    max-height: calc(100dvh - 12rem);
+  }
+}
+
+/* Text Size and Less Movement (W7). Text Size is one row: the label with the step in words, then three 44 px
+   buttons that do not grow with the text. The chosen step has a tint, a 2 px border and heavier weight as well as
+   aria-checked, so it is never shown by colour alone. No overflow clipping, so the focus ring is whole. */
+.ux-textsize {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-1) var(--space-3);
+  color: var(--ink);
+  font: 500 var(--text-md) var(--font-ui);
+}
+.ux-textsize-text {
+  display: grid;
+  min-width: 0;
+}
+.ux-textsize-current {
+  color: var(--text-2);
+  font-size: var(--text-xs);
+  font-weight: 400;
+}
+.ux-textsize-steps {
+  display: flex;
+  gap: var(--space-1);
+}
+.ux-textsize-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink);
+  font: 500 var(--text-md) var(--font-ui);
+  cursor: pointer;
+}
+.ux-textsize-step[data-step='large'] {
+  font-size: var(--text-lg);
+}
+.ux-textsize-step[data-step='largest'] {
+  font-size: var(--text-2xl);
+}
+.ux-textsize-step:hover {
+  background: var(--selected-surface);
+}
+.ux-textsize-step[aria-checked='true'] {
+  background: var(--selected-surface);
+  border-color: var(--selected);
+  font-weight: 600;
+}
+.ux-textsize-step:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.ux-menu-toggle {
+  justify-content: space-between;
+}
+.ux-menu-toggle-state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* The one live region under Less Movement: in the menu all the time, empty and taking no space until a save fails. */
+.ux-menu-note.ux-comfort-status {
+  padding-block: 0;
+}
+.ux-menu-note.ux-comfort-status:not(:empty) {
+  padding-block: var(--space-2);
 }

@@ -267,6 +267,12 @@ beforeAll(async () => {
     'pat',
     'quin',
     'rhea',
+    'una',
+    'vic',
+    'wes',
+    'xia',
+    'yan',
+    'zoe',
     ...filers,
   ]);
   for (const person of [
@@ -284,6 +290,12 @@ beforeAll(async () => {
     'pat',
     'quin',
     'rhea',
+    'una',
+    'vic',
+    'wes',
+    'xia',
+    'yan',
+    'zoe',
     ...filers,
   ])
     sampleWorkspace[person] = await h.provision(person, `Synthetic ${person} workspace`);
@@ -1808,20 +1820,105 @@ describe('words are removed under an erasure request', () => {
       customerFile('pat', body({ category: 'words_wrong' }), firstCommand),
     ).rejects.toMatchObject(conflict);
     expect((await counts()).words).toBe(wordsBefore! - 2);
-    // a team report is staff data and is not touched, and a later customer report keeps its words
+    // a team report is staff data and is not touched
     expect((await teamGet(ctxOf('operator'), sampleTeam)).words).toMatchObject({
       detail: 'Operator words stay.',
     });
+    // a report filed while the request is still in progress is not reached by a retry of the first command
     const later = (await customerFile('pat', body({ detail: 'Words written after the removal.' })))
       .reference as string;
+    expect(await remove(owner(), requestId, command)).toMatchObject({ removed: 2 });
     expect((await customerGet('pat', later)).words).toMatchObject({
       detail: 'Words written after the removal.',
     });
-    // completing the request leaves the later report to a further call, which removes just that one
+    // it was filed before the request was completed, so the next removal reaches it and no other
     await erasure(requestId, 'in_progress', 'completed', 'The erasure was completed in full.');
     expect(await remove(owner(), requestId)).toMatchObject({ removed: 1 });
     expect((await customerGet('pat', later)).words).toEqual({ removed: true });
+    // a report filed after the completion keeps its words: it needs a new erasure request
+    const afterCompletion = (
+      await customerFile('pat', body({ detail: 'Words written after the completion.' }))
+    ).reference as string;
     expect(await remove(owner(), requestId)).toMatchObject({ removed: 0 });
+    expect(await remove(owner(), requestId, randomUUID())).toMatchObject({ removed: 0 });
+    expect((await customerGet('pat', afterCompletion)).words).toMatchObject({
+      detail: 'Words written after the completion.',
+    });
+    // and the retry of the first command still answers with its original count
+    expect(await remove(owner(), requestId, command)).toMatchObject({ removed: 2 });
+    expect((await customerGet('pat', afterCompletion)).words).toMatchObject({
+      detail: 'Words written after the completion.',
+    });
+  });
+
+  test('a removal while in progress reaches the reports filed up to that moment, and a retry is answered first whatever was filed since', async () => {
+    const requestId = await request('yan');
+    await erasure(requestId, 'received', 'in_progress');
+    const before = (await customerFile('yan', body({ detail: 'Yan words before the call.' })))
+      .reference as string;
+    const command = randomUUID();
+    const erasuresBefore = (await counts()).erasures;
+    expect(await remove(owner(), requestId, command)).toMatchObject({ removed: 1 });
+    expect((await customerGet('yan', before)).words).toEqual({ removed: true });
+    const since = (await customerFile('yan', body({ detail: 'Yan words filed since.' })))
+      .reference as string;
+    // the retry returns the original answer, with the reference of the request, and touches nothing
+    expect(await remove(owner(), requestId, command)).toEqual({
+      reference: expect.any(String),
+      removed: 1,
+    });
+    expect((await customerGet('yan', since)).words).toMatchObject({
+      detail: 'Yan words filed since.',
+    });
+    expect((await counts()).erasures).toBe(erasuresBefore + 1);
+    // even after the request is completed, the retry is answered first, while a new command reaches what was filed before
+    await erasure(requestId, 'in_progress', 'completed', 'The erasure was completed in full.');
+    expect(await remove(owner(), requestId, command)).toMatchObject({ removed: 1 });
+    expect((await customerGet('yan', since)).words).toMatchObject({
+      detail: 'Yan words filed since.',
+    });
+    expect(await remove(owner(), requestId)).toMatchObject({ removed: 1 });
+    expect((await customerGet('yan', since)).words).toEqual({ removed: true });
+  });
+
+  test('a retry of a command that removed nothing is not a replay: it runs again and reaches the reports filed since', async () => {
+    const requestId = await request('zoe');
+    await erasure(requestId, 'received', 'in_progress');
+    const command = randomUUID();
+    expect(await remove(owner(), requestId, command)).toMatchObject({ removed: 0 });
+    const erasures = (await counts()).erasures;
+    const filed = (
+      await customerFile('zoe', body({ detail: 'Zoe words filed after an empty call.' }))
+    ).reference as string;
+    expect((await customerGet('zoe', filed)).words).toMatchObject({
+      detail: 'Zoe words filed after an empty call.',
+    });
+    // no erasure row was written by the empty call, so there is nothing to replay
+    expect(await remove(owner(), requestId, command)).toMatchObject({ removed: 1 });
+    expect((await counts()).erasures).toBe(erasures + 1);
+    expect((await customerGet('zoe', filed)).words).toEqual({ removed: true });
+    // now that it removed something, the same command is a replay with that count
+    expect(await remove(owner(), requestId, command)).toMatchObject({ removed: 1 });
+  });
+
+  test('a command already used for another erasure request is refused, and nothing is removed', async () => {
+    const used = randomUUID();
+    const firstRequest = await request('wes');
+    await erasure(firstRequest, 'received', 'in_progress');
+    await customerFile('wes', body({ detail: 'Wes words for the first request.' }));
+    expect(await remove(owner(), firstRequest, used)).toMatchObject({ removed: 1 });
+    const otherRequest = await request('xia');
+    await erasure(otherRequest, 'received', 'in_progress');
+    const words = (await customerFile('xia', body({ detail: 'Xia words that stay.' })))
+      .reference as string;
+    const erasures = (await counts()).erasures;
+    await expect(remove(owner(), otherRequest, used)).rejects.toMatchObject(conflict);
+    expect((await counts()).erasures).toBe(erasures);
+    expect((await customerGet('xia', words)).words).toMatchObject({
+      detail: 'Xia words that stay.',
+    });
+    // the same command for the right request still answers its original count
+    expect(await remove(owner(), firstRequest, used)).toMatchObject({ removed: 1 });
   });
 
   test('words without an erasure row cannot be removed, even by the owner, and an erasure row is for customers only', async () => {
@@ -1877,5 +1974,215 @@ describe('words are removed under an erasure request', () => {
     // back on the sample side the same staff may remove them
     expect(await remove(owner(), requestId)).toMatchObject({ removed: 1 });
     expect((await customerGet('quin', reference)).words).toEqual({ removed: true });
+  });
+
+  test('a person whose real workspace access was revoked is erased by sample staff while the report stays on the real side', async () => {
+    // una has a sample workspace of her own, joined vic's workspace and was removed from it; vic's workspace then became real
+    const member = await h.join('vic', 'una', sampleWorkspace.vic!);
+    await revoke('vic', sampleWorkspace.vic!, member);
+    const requestId = await request('una');
+    await erasure(requestId, 'received', 'in_progress');
+    // the members of the real staff workspace that lack the real purpose now, so that exactly those are put back
+    const lacking = (
+      await f.owner.query(
+        "SELECT user_id FROM app.membership WHERE tenant_id=$1 AND NOT 'commercial_qualification'=ANY(allowed_purposes)",
+        [f.tenantB],
+      )
+    ).rows.map((row) => row.user_id as string);
+    try {
+      await flip(sampleWorkspace.vic!, false);
+      await realUse(true);
+      await f.owner.query('ALTER TABLE app.membership DISABLE TRIGGER USER');
+      await f.owner.query(
+        "UPDATE app.membership SET allowed_purposes=allowed_purposes||ARRAY['commercial_qualification'] WHERE tenant_id=$1 AND user_id=ANY($2)",
+        [f.tenantB, lacking],
+      );
+      await f.owner.query('ALTER TABLE app.membership ENABLE TRIGGER USER');
+      await flip(f.tenantB, false);
+      const reference = (
+        await customerFile('una', body({ detail: 'Una wrote words for the real side.' }))
+      ).reference as string;
+      // the report is on the real side (ever held), and only real staff see it
+      expect(await storedSide(reference)).toBe('real');
+      expect(await seen(reference)).toMatchObject({ effective: 'real', sample: false, real: true });
+      // the person is in the scope of sample staff now (nothing real is held), so real staff do not find the request
+      await expect(remove(realCtx(), requestId)).rejects.toMatchObject({
+        code: '23514',
+        message: 'Erasure request not found',
+      });
+      expect((await customerGet('una', reference)).words).toMatchObject({
+        detail: 'Una wrote words for the real side.',
+      });
+      // sample staff remove the words of the real-side report
+      expect(await remove(owner(), requestId)).toMatchObject({ removed: 1 });
+      expect((await customerGet('una', reference)).words).toEqual({ removed: true });
+    } finally {
+      await f.owner.query('ALTER TABLE app.membership DISABLE TRIGGER USER');
+      await f.owner.query(
+        "UPDATE app.membership SET allowed_purposes=array_remove(allowed_purposes,'commercial_qualification') WHERE tenant_id=$1 AND user_id=ANY($2)",
+        [f.tenantB, lacking],
+      );
+      await f.owner.query('ALTER TABLE app.membership ENABLE TRIGGER USER');
+      await flip(f.tenantB, true);
+      await flip(sampleWorkspace.vic!, true);
+      await realUse(false);
+    }
+  });
+});
+
+// The plain text rule (customer_private.problem_report_plain) also refuses the C1 controls, the line and paragraph
+// separators and the bidirectional override and isolate characters, in every layer: the filing and transition shape
+// checks (22023) and the CHECK constraints under them (23514, which hold for the schema owner as well).
+describe('the plain text rule refuses control and direction characters', () => {
+  const refused = [
+    '\u0080',
+    '\u0085',
+    '\u009f',
+    '\u2028',
+    '\u2029',
+    '\u202a',
+    '\u202e',
+    '\u2066',
+    '\u2069',
+  ];
+  const neighbours = ['\u00a0', '\u2027', '\u202f', '\u2065', '\u206a'];
+  const owner = () => ctxOf('owner');
+  const plain = (value: string, min: number, max: number) =>
+    f.owner
+      .query('SELECT customer_private.problem_report_plain($1,$2,$3) AS ok', [value, min, max])
+      .then((result) => result.rows[0].ok as boolean);
+  const madeReport = async (person: string) =>
+    (
+      await f.owner.query(
+        `INSERT INTO customer_private.problem_report(reporter_kind,customer_principal_id,side,category,command_id)
+         VALUES('customer',$1,'sample','did_not_work',$2) RETURNING id`,
+        [ids[person], randomUUID()],
+      )
+    ).rows[0].id as string;
+  const insertWords = (report: string, pageKind: string, page: string, detail: string | null) =>
+    f.owner.query(
+      `INSERT INTO customer_private.problem_report_words(report_id,reporter_kind,category,page_kind,page_text,detail)
+       VALUES($1,'customer','did_not_work',$2,$3,$4)`,
+      [report, pageKind, page, detail],
+    );
+
+  test('a customer filing is refused with 22023 for each character, in the detail, the other page text and the path, and writes nothing', async () => {
+    const before = await counts();
+    for (const character of refused) {
+      const label = `U+${character.codePointAt(0)!.toString(16).toUpperCase().padStart(4, '0')}`;
+      for (const [where, input] of [
+        ['detail', body({ detail: `a long enough${character} detail` })],
+        ['detail at the start', body({ detail: `${character}a long enough detail` })],
+        ['other page', body({ pageKind: 'another_page', page: `Meet${character}ings` })],
+        ['path', body({ page: `/account/a${character}b` })],
+      ] as const)
+        await expect(customerFile('kay', input), `${label} in ${where}`).rejects.toMatchObject({
+          code: '22023',
+        });
+    }
+    expect(await counts()).toEqual(before);
+  });
+
+  test('a team filing is refused with 22023 for each character, in the detail, the other page text and the path, and writes nothing', async () => {
+    const before = await counts();
+    for (const character of refused)
+      for (const input of [
+        teamBody({ detail: `a long enough${character} detail` }),
+        teamBody({ pageKind: 'another_page', page: `Meet${character}ings` }),
+        teamBody({ page: `/operator/a${character}b` }),
+      ])
+        await expect(teamFile(ctxOf('reviewer'), input)).rejects.toMatchObject({ code: '22023' });
+    expect(await counts()).toEqual(before);
+  });
+
+  test('a transition note is refused with 22023 for each character and the status stays, then a note with their neighbours and an emoji is accepted', async () => {
+    const reference = (await customerFile(spare(), body())).reference as string;
+    const id = await reportId(reference);
+    const statuses = () =>
+      f.owner
+        .query(
+          'SELECT count(*)::int AS n FROM customer_private.problem_report_status_event WHERE report_id=$1',
+          [id],
+        )
+        .then((result) => result.rows[0].n as number);
+    expect(await statuses()).toBe(1);
+    for (const character of refused)
+      await expect(
+        move(owner(), id, 'received', 'in_review', `A long enough note${character} here`),
+      ).rejects.toMatchObject({ code: '22023' });
+    expect(await statuses()).toBe(1);
+    const accepted = `Checked ${neighbours.join(' ')} and a smile \u{1F600} today`;
+    expect(await move(owner(), id, 'received', 'in_review', accepted)).toMatchObject({
+      status: 'in_review',
+      note: accepted,
+    });
+    expect(await statuses()).toBe(2);
+  });
+
+  test('the table checks refuse each character for the schema owner as well, in the words and the status note', async () => {
+    const report = await madeReport('kay');
+    for (const character of refused) {
+      for (const [kind, page, detail] of [
+        ['this_page', '/account/x', `a${character}b`],
+        ['another_page', `Meet${character}ings`, null],
+        ['this_page', `/account/a${character}b`, null],
+      ] as const)
+        await expect(insertWords(report, kind, page, detail)).rejects.toMatchObject({
+          code: '23514',
+        });
+    }
+    // the same report accepts the words once, with the neighbours of the new classes
+    await insertWords(report, 'another_page', 'Meetings', `a ${neighbours.join(' ')} \u{1F600} b`);
+    const reference = (await customerFile(spare(), body())).reference as string;
+    const id = await reportId(reference);
+    for (const character of refused)
+      await expect(
+        f.owner.query(
+          `INSERT INTO customer_private.problem_report_status_event(report_id,state,expected_state,note,staff_principal_id,staff_tenant_id,command_id)
+           VALUES($1,'in_review','received',$2,$3,$4,$5)`,
+          [id, `A long enough note${character} here`, f.users.owner!.id, f.tenantA, randomUUID()],
+        ),
+      ).rejects.toMatchObject({ code: '23514' });
+  });
+
+  test('the neighbours of the new classes and ordinary text with an emoji are accepted, in a customer filing and a team filing', async () => {
+    const mixed = `Seen ${neighbours.join(' ')} with a smile \u{1F600} on it`;
+    const customer = await customerFile(
+      spare(),
+      body({ pageKind: 'another_page', page: `Meetings ${neighbours.join('')}`, detail: mixed }),
+    );
+    expect(customer.changed).toBe(true);
+    const team = await teamFile(
+      ctxOf('viewer'),
+      teamBody({ pageKind: 'another_page', page: `Queue ${neighbours.join('')}`, detail: mixed }),
+    );
+    expect(team.changed).toBe(true);
+    for (const character of neighbours) expect(await plain(`a${character}b`, 1, 100)).toBe(true);
+  });
+
+  test('the older rules and the length ranges still hold, and the function agrees with each layer above', async () => {
+    const cases: [string, number, number, boolean][] = [
+      ['plain words', 1, 1000, true],
+      ['a\u0001b', 1, 1000, false],
+      ['a\u0007b', 1, 1000, false],
+      ['a\u007fb', 1, 1000, false],
+      ['a\nb', 1, 1000, false],
+      ['a://b', 1, 1000, false],
+      ['write a@b', 1, 1000, false],
+      ['see www.example', 1, 1000, false],
+      ['Seen on WWW.EXAMPLE', 1, 1000, true],
+      ['', 1, 120, false],
+      ['a'.repeat(120), 1, 120, true],
+      ['a'.repeat(121), 1, 120, false],
+      ['a'.repeat(1000), 1, 1000, true],
+      ['a'.repeat(1001), 1, 1000, false],
+      ['a'.repeat(9), 10, 1000, false],
+      ['a'.repeat(10), 10, 1000, true],
+      ['a'.repeat(1000), 10, 1000, true],
+      ['a'.repeat(1001), 10, 1000, false],
+    ];
+    for (const [value, min, max, expected] of cases)
+      expect(await plain(value, min, max), JSON.stringify(value.slice(0, 20))).toBe(expected);
+    for (const character of refused) expect(await plain(`a${character}b`, 1, 100)).toBe(false);
   });
 });
