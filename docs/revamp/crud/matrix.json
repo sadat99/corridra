@@ -2180,7 +2180,7 @@
       },
       "delete": {
         "kind": "withdraw",
-        "how": "withdraw_contact / withdraw_note append a change row with a reason; redact_contact / redact_note (owner or admin, fresh authenticator check, ticket reference, typed id) append a private_record_redaction row that hides one whole contact or note chain from every reader; stored bytes are kept, so hidden is not deleted. entity_resolution keeps reverse_of",
+        "how": "withdraw_contact / withdraw_note append a change row with a reason; redact_contact / redact_note (owner or admin, fresh authenticator check, ticket reference, typed id) append a private_record_redaction row that hides one whole contact or note chain from every reader; stored bytes are kept, so hidden is not deleted. entity_resolution keeps reverse_of; organisation attributes still have no retraction or correction",
         "evidence": "packages/db/counterparty-change-migrations/0001_contact_and_note_changes.sql; packages/counterparties/src/changes.ts",
         "ui": "apps/web/app/operator/record-changes.tsx \"Withdraw Contact\", \"Correct Contact\", \"Hide Contact Details\", \"Withdraw Note\", \"Correct Note\", \"Hide Note\" with D-02 dialogs",
         "confirmation": "Dialog with reason; hide also needs ticket reference and the id typed again; default focus on Cancel"
@@ -2193,7 +2193,14 @@
         "tests/integration/counterparty-changes-install.test.ts",
         "tests/operator/counterparty-changes.spec.ts"
       ],
-      "gaps": []
+      "gaps": [
+        {
+          "op": "delete",
+          "severity": "medium",
+          "what": "Organisation attributes cannot be retracted or corrected; contact and note withdraw, correct and hide exist only once the owner installs and opens the G11 module.",
+          "evidence": "packages/db/migrations/0008_counterparty_research.sql"
+        }
+      ]
     },
     {
       "name": "Evidence, source records and claims",
