@@ -139,6 +139,8 @@ BEGIN
   END IF;
   IF NOT FOUND OR replacement.relationship_id<>NEW.relationship_id OR replacement.created_at<>now()
   OR replacement.purpose<>parent.purpose OR replacement.classification<>parent.classification
+  -- A replacement that already heads a hidden chain would move under this chain and show its text again.
+  OR EXISTS(SELECT FROM app.private_record_redaction WHERE tenant_id=NEW.tenant_id AND subject=CASE WHEN contact THEN 'contact' ELSE 'note' END AND chain_id=NEW.replacement_id)
   OR (contact AND (EXISTS(SELECT FROM app.private_contact_change WHERE tenant_id=NEW.tenant_id AND (contact_id=NEW.replacement_id OR replacement_id=NEW.replacement_id))
    OR EXISTS(SELECT FROM app.target_contact WHERE tenant_id=NEW.tenant_id AND contact_id=NEW.replacement_id)
    OR EXISTS(SELECT FROM app.communication WHERE tenant_id=NEW.tenant_id AND contact_id=NEW.replacement_id)))
@@ -172,6 +174,7 @@ BEGIN
   -- A person's insert is answered only for a contact the caller could write through the table's own RLS; anyone
   -- else is refused afterwards by RLS or the existing guards with the same words for an absent and another tenant's contact.
   IF NOT EXISTS(SELECT FROM app.private_contact_data pc WHERE pc.tenant_id=NEW.tenant_id AND pc.id=contact
+   AND app.can_access(pc.tenant_id,pc.classification,pc.purpose)
    AND app.member_role(NEW.tenant_id) IN ('owner','admin','operator') AND app.research_relationship_access(pc.tenant_id,pc.relationship_id,true)) THEN
    RETURN NEW;
   END IF;
