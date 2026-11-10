@@ -135,7 +135,9 @@ export function Counterparties({
     [missionNote, setMissionNote] = useState(false),
     [shortlist, setShortlist] = useState<Row[]>([]),
     [shortOffset, setShortOffset] = useState(0),
-    [shortTotal, setShortTotal] = useState(0);
+    [shortTotal, setShortTotal] = useState(0),
+    // CRUD G11: the shortlist answers with its own module state, so it renders states without a company selected.
+    [shortChanges, setShortChanges] = useState<Changes | undefined>();
   const pending = useRef(new Map<string, string>());
   // CRUD G11: command ids of withdraw, correct and hide requests, kept per identical body until one succeeds.
   const [changeCommands] = useState(() => new Map<string, string>());
@@ -219,6 +221,7 @@ export function Counterparties({
           if (active) {
             setShortlist(v.targets);
             setShortTotal(v.total);
+            setShortChanges(v.changes);
           }
         })
         .catch((e) => {
@@ -251,6 +254,7 @@ export function Counterparties({
       const list = await get('shortlist', { mission, offset: shortOffset });
       setShortlist(list.targets);
       setShortTotal(list.total);
+      setShortChanges(list.changes);
     }
   }
   async function send(body: Record<string, unknown>, action = 'research') {
@@ -1080,7 +1084,7 @@ export function Counterparties({
                   </p>
                 ))}
                 {(t.contacts as Row[]).map((c, i) =>
-                  changesInstalled ? (
+                  (shortChanges ?? changeContext.changes).installed ? (
                     <p key={i}>
                       {shown(c, 'name')} · {shown(c, 'email')} · {stateWord(c.status)}
                       {c.status === 'WITHDRAWN' && ' · Not usable for new targets or messages'}

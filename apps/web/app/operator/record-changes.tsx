@@ -1,5 +1,5 @@
 'use client';
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Dialog } from '../../components/ux/dialog';
 import { DateTimeField } from '../../components/ux/date-time-input';
 import { ActionError, withStepUp } from '../../lib/ux/step-up';
@@ -8,7 +8,7 @@ import { limitWords } from '../../lib/account-limit';
 // CRUD G11 (ADR-017 amendment): withdraw, correct and hide one private contact or note. One item is one group: the
 // content line, the state line, the actions, then the history. The server and the database are the control; the
 // buttons only follow the role and the per-relationship hint. Hidden text arrives as null with status HIDDEN and is
-// written here as the word "Hidden". Hidden is never called deleted.
+// written here as the word "Hidden"; the words for a hide say only that the text is hidden.
 export type ChangeRow = { id: string; [key: string]: unknown };
 export type Changes = { installed: boolean; open: boolean };
 export type Subject = 'contact' | 'note';
@@ -74,7 +74,8 @@ export function chains(rows: ChangeRow[]) {
   return [...groups.entries()].map(([chain, versions]) => ({
     chain,
     versions,
-    current: versions.find((v) => v.status !== 'CORRECTED') ?? versions[versions.length - 1]!,
+    // The version no correction superseded. In a hidden chain every version reads HIDDEN, so the change kind decides.
+    current: versions.find((v) => v.change_kind !== 'CORRECT') ?? versions[versions.length - 1]!,
   }));
 }
 
@@ -398,6 +399,15 @@ function ChangeDialog({
   // Focus moves to the step heading on a step change, never on opening (the first field has it then).
   const [stepped, setStepped] = useState(false);
   const [discard, setDiscard] = useState(false);
+  // Focus moves once per step change and once when the discard prompt opens, never on a keystroke.
+  const stepHeading = useRef<HTMLHeadingElement>(null);
+  const keepEditing = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (stepped) stepHeading.current?.focus();
+  }, [step, stepped]);
+  useEffect(() => {
+    if (discard) keepEditing.current?.focus();
+  }, [discard]);
   const [initial] = useState(() => ({
     name: String(current.name ?? ''),
     jobTitle: String(current.job_title ?? ''),
@@ -514,7 +524,7 @@ function ChangeDialog({
         : 'This note was hidden after you opened it. Nothing was saved.'
       : !usable
         ? `This ${subject} was withdrawn after you opened it. Nothing was saved.`
-        : `Someone changed this ${subject} after you opened it. Nothing was saved. The latest saved details are shown below. Your edits are kept.`;
+        : `Someone changed this ${subject} after you opened it. Nothing was saved. The latest saved details are shown below.${mode === 'correct' ? ' Your edits are kept.' : ''}`;
   const stopped = refused || (conflict && !usable);
   const safe = (
     <button
@@ -550,6 +560,12 @@ function ChangeDialog({
       returnFocusTo={() => document.querySelector<HTMLElement>(`[data-chain="${chain}"]`)}
     >
       <form onSubmit={submit} noValidate={false}>
+        {conflict && usable && (
+          <section>
+            <h3>Latest saved details</h3>
+            {contentLine(subject, current)}
+          </section>
+        )}
         {mode === 'withdraw' && (
           <>
             <p>{contact ? `${what}, on the relationship owned by ${ownerName}.` : what}</p>
@@ -573,14 +589,8 @@ function ChangeDialog({
               A correction saves a new version. The current version stays in the history, marked
               Corrected, with your reason. Mission targets that use it keep using it.
             </p>
-            {conflict && usable && (
-              <section>
-                <h3>Latest saved details</h3>
-                {contentLine(subject, current)}
-              </section>
-            )}
             {contact && (
-              <h3 tabIndex={-1} ref={(h) => (stepped ? h?.focus() : undefined)} key={step}>
+              <h3 tabIndex={-1} ref={stepHeading}>
                 {step === 1 ? 'Step 1 of 2: Contact details' : 'Step 2 of 2: Source and reason'}
               </h3>
             )}
@@ -729,7 +739,7 @@ function ChangeDialog({
               <button
                 type="button"
                 className="button button-secondary"
-                ref={(b) => b?.focus()}
+                ref={keepEditing}
                 onClick={() => setDiscard(false)}
               >
                 Keep Editing
