@@ -383,6 +383,25 @@ test('cancel records the cancelling owner, pending member, workspace and invitat
   expect(await audit(original.principalId)).toEqual(rows);
 });
 
+test('an invitation whose id was sent in upper case can be cancelled and is recorded', async () => {
+  const original = await team.invite(f.users.owner.ctx, {
+    commandId: randomUUID().toUpperCase(),
+    name: 'Cancel audit fixture',
+    email: invitedEmail(),
+    role: 'operator',
+  });
+  expect(original.id).toMatch(/[A-F]/);
+  await expect(team.cancel(f.users.owner.ctx, { invitationId: original.id })).resolves.toEqual({
+    cancelled: true,
+    audit: 'recorded',
+  });
+  expect(await invitationRows(original.id)).toBe(0);
+  expect((await pendingMember(original.principalId)).revoked_at).not.toBeNull();
+  expect(await audit(original.principalId)).toMatchObject([
+    { action: 'team.invitation.cancelled', reference_id: original.id.toLowerCase() },
+  ]);
+});
+
 test('an expired invitation can be cancelled and is recorded the same way', async () => {
   const original = await invite();
   await f.owner.query(

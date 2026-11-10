@@ -2011,10 +2011,10 @@
       "delete": {
         "kind": "hard",
         "how": "invitation cancel/resend hard-deletes identity.verification and revokes membership; cancel takes the workspace lock and revokes, audits and deletes together",
-        "evidence": "packages/auth/src/team-control.ts:268-301,237",
+        "evidence": "packages/auth/src/team-control.ts:269-305,238",
         "ui": "apps/web/app/operator/workspace-controls.tsx:245 \"Cancel invitation\" with window.confirm :141"
       },
-      "auditTrail": "membership: app.record_change trigger packages/db/migrations/0002_trust_events.sql:183; resend/reset/cancel: identity.record_team_control packages/auth/src/team-control.ts:106; cancel records 'team.invitation.cancelled' via packages/db/commercial-readiness-migrations/0010_team_invitation_cancel_audit.sql",
+      "auditTrail": "membership: app.record_change trigger packages/db/migrations/0002_trust_events.sql:183; resend/reset/cancel: identity.record_team_control packages/auth/src/team-control.ts:107; cancel records 'team.invitation.cancelled' via packages/db/commercial-readiness-migrations/0010_team_invitation_cancel_audit.sql",
       "tests": [
         "tests/integration/ws-d-team-control.test.ts:5",
         "tests/integration/team-owner-audit.test.ts:4",

@@ -260,6 +260,21 @@ test('another workspace, other roles, non-members and a contributor invitation c
   } finally {
     await changeMemberNow(access, f.users.owner.ctx, { ...reviewer, role: 'reviewer' });
   }
+  // An owner whose own membership was revoked is refused like anyone else.
+  await changeMemberNow(access, f.users.owner.ctx, {
+    userId: f.users.reviewer.id,
+    role: 'owner',
+    revoked: true,
+  });
+  try {
+    await expect(
+      team.cancel(f.users.reviewer.ctx, { invitationId: pending.id }),
+    ).rejects.toMatchObject({ status: 403, message: 'Access denied' });
+  } finally {
+    // Restore in two steps: the change away from owner needs a second active owner.
+    await changeMemberNow(access, f.users.owner.ctx, { ...reviewer, role: 'owner' });
+    await changeMemberNow(access, f.users.owner.ctx, { ...reviewer, role: 'reviewer' });
+  }
   // A contributor invitation for the same member is not a team invitation.
   const contributorRow = randomUUID();
   await f.owner.query(
@@ -344,6 +359,39 @@ test('cancel and a member change wait for the same workspace lock; the change ma
   expect(await cancelAudit(pending.principalId)).toHaveLength(1);
 }, 15000);
 
+test('cancel and an authenticator reset on the same pending member both settle and never wait on each other', async () => {
+  const pending = await freshInvite();
+  // The holder plays the reset: it locks the member principal, then reads the member's membership with a share
+  // lock, as the reset writer does. The lock timeout turns a wait on the cancel into a failure, not a hang.
+  const holder = await f.owner.connect();
+  let cancelled: Promise<unknown> | undefined;
+  try {
+    await holder.query('BEGIN');
+    await holder.query("SET LOCAL lock_timeout='3s'");
+    await holder.query('SELECT 1 FROM identity.principal WHERE id=$1 FOR UPDATE', [
+      pending.principalId,
+    ]);
+    cancelled = team.cancel(f.users.owner.ctx, { invitationId: pending.id });
+    await waitingOnLocks(1);
+    await expect(
+      holder.query(
+        'SELECT 1 FROM app.membership WHERE tenant_id=$1 AND user_id=$2 AND revoked_at IS NULL FOR SHARE',
+        [f.tenantA, pending.principalId],
+      ),
+    ).resolves.toMatchObject({ rowCount: 1 });
+    await holder.query('COMMIT');
+  } catch (error) {
+    await holder.query('ROLLBACK');
+    throw error;
+  } finally {
+    holder.release();
+    await cancelled?.catch(() => undefined);
+  }
+  await expect(cancelled).resolves.toEqual({ cancelled: true, audit: 'recorded' });
+  expect((await pendingOf(pending.principalId)).revoked_at).not.toBeNull();
+  expect(await cancelAudit(pending.principalId)).toHaveLength(1);
+}, 15000);
+
 test('cancel after setup is complete finds no invitation and leaves the member active', async () => {
   const pending = await freshInvite();
   const setup = new OperatorSetup(f.auth);
@@ -414,9 +462,22 @@ test('cancel never waits on the setup identifier lock, and racing with resend bo
     team.resend(f.users.owner.ctx, { invitationId: raced.id }),
     team.cancel(f.users.owner.ctx, { invitationId: raced.id }),
   ]);
-  expect(results.filter((r) => r.status === 'fulfilled').length).toBeGreaterThanOrEqual(1);
+  // Exactly one wins cleanly. The loser finds no invitation.
+  const [resent, cancelled] = results;
+  expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
   expect(await setupRow(raced.id)).toBe(0);
-  if (results[1].status === 'rejected') expect(results[1].reason).toMatchObject(notFound);
+  const member = await pendingOf(raced.principalId);
+  if (resent.status === 'fulfilled') {
+    expect(cancelled.status === 'rejected' && cancelled.reason).toMatchObject(notFound);
+    expect(member.revoked_at).toBeNull();
+    expect(await setupRow(resent.value.id)).toBe(1);
+    expect(await cancelAudit(raced.principalId)).toEqual([]);
+  } else {
+    expect(resent.reason).toMatchObject(notFound);
+    expect(cancelled).toMatchObject({ status: 'fulfilled', value: { cancelled: true } });
+    expect(member.revoked_at).not.toBeNull();
+    expect(await cancelAudit(raced.principalId)).toEqual([{ reference_id: raced.id }]);
+  }
 }, 15000);
 
 test('the owner resets another member authenticator with a fresh check; never their own or another workspace', async () => {

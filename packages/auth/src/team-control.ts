@@ -25,12 +25,13 @@ import { setupIdentifier, setupInvitation } from './operator-setup';
 // the bearer session. Until its reviewed migration (0006, and 0010 for cancel) is installed,
 // results explicitly say audit is unavailable.
 //
-// Cancel lock and commit order (CRUD G10): the runtime transaction takes the workspace lock that
-// member changes take, then the auth transaction locks the invitation row, the runtime connection
-// revokes the membership, the auth transaction records the audit row and deletes the invitation, and
-// the auth transaction commits before the runtime one. A runtime connection is always taken before
-// an auth connection, and nothing the auth transaction waits for is ever held by a transaction that
-// waits on the runtime transaction's locks, so the two cannot wait on each other.
+// Cancel lock and commit order (CRUD G10), always in this order: runtime workspace lock (the one
+// member changes take) -> auth invitation row FOR UPDATE -> auth KEY SHARE on the target principal
+// -> runtime revoke of the membership -> auth audit write and invitation delete -> commit auth ->
+// commit runtime. A runtime connection is always taken before an auth connection. Invariant: nothing
+// the auth transaction waits for is held by a transaction that waits on the runtime transaction's
+// locks. The principal key share is taken before the revoke because the audit row's foreign key needs
+// it, and an authenticator reset holds the principal while it waits for the membership row.
 
 export const teamInviteInput = z
   .object({
@@ -282,6 +283,9 @@ export class TeamControl {
         // answer the same way, so nothing about another workspace is revealed.
         if (!row || !invite || invite.tenantId !== t.tenantId || invite.role === 'contributor')
           throw new DomainError('Invitation not found', 404);
+        // Key share only, so setup and resend, which change the principal without touching its key, are
+        // not blocked; a reset that holds the principal finishes before the membership is touched.
+        await q('SELECT 1 FROM identity.principal WHERE id=$1 FOR KEY SHARE', [invite.principalId]);
         await t.db.query(
           'UPDATE app.membership SET revoked_at=now() WHERE tenant_id=$1 AND user_id=$2 AND revoked_at IS NULL',
           [t.tenantId, invite.principalId],
