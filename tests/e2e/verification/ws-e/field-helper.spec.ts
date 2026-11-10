@@ -55,7 +55,8 @@ test('the field helper has four bottom tabs on a phone and the left bar on a wid
     'page',
   );
   await expect(page.getByRole('button', { name: 'Sign Out of Assigned Work' })).toBeVisible();
-  // W7: Text Size (three steps) and Less Movement are real; Data Saver is still plain text tagged Coming soon.
+  // W7, W10: Text Size (three steps), Stronger Colours and Less Movement are real; Data Saver is still plain text tagged
+  // Coming soon.
   const comfort = page.locator('section', {
     has: page.getByRole('heading', { name: 'Make it easier to read' }),
   });
@@ -67,6 +68,13 @@ test('the field helper has four bottom tabs on a phone and the left bar on a wid
   await expect(lessMovement).not.toBeChecked();
   await expect(lessMovement).toHaveAccessibleDescription(
     'Stops animation and anything that moves by itself.',
+  );
+  // Stronger Colours is the second switch, named by its words alone and described by its own hint.
+  await expect(comfort.getByRole('switch')).toHaveCount(2);
+  const strongerColours = comfort.getByRole('switch', { name: 'Stronger Colours', exact: true });
+  await expect(strongerColours).not.toBeChecked();
+  await expect(strongerColours).toHaveAccessibleDescription(
+    'Darker text, clearer lines and underlined links.',
   );
   // One live region for a failed save is in the card all the time, empty and taking no room, and flush with the hint.
   const note = comfort.getByRole('status');
@@ -101,6 +109,10 @@ test('the field helper has four bottom tabs on a phone and the left bar on a wid
   await lessMovement.check();
   await expect(page.locator('html')).toHaveAttribute('data-less-movement', 'on');
   await expect(lessMovement).toBeChecked();
+  await strongerColours.check();
+  await expect(page.locator('html')).toHaveAttribute('data-contrast', 'more');
+  await expect(strongerColours).toBeChecked();
+  expect(await page.evaluate(() => localStorage.getItem('corridra.contrast'))).toBe('more');
   await expect(page.getByRole('link', { name: 'About assigned work' })).toBeVisible();
   const axeMe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(axeMe.violations.map((v) => v.id)).toEqual([]);
