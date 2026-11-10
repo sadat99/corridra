@@ -138,6 +138,8 @@ export type CustomerOrganisationLinkView = {
     target?: { name: string; country: string } | null;
     canAddEvidence?: boolean;
     canWithdraw?: boolean;
+    // Present, and true, only when staff hid the text of this request.
+    redacted?: boolean;
   };
 };
 export type CustomerOrganisationLinkOverview = {
@@ -267,6 +269,7 @@ export type StaffOrganisationLinkQueue = {
     country: string;
     evidenceCount: number;
     candidateCount: number;
+    redacted: boolean;
   }[];
 };
 export type StaffOrganisationLinkReview = {
@@ -310,6 +313,7 @@ export type StaffOrganisationLinkReview = {
   }[];
   candidates: StaffOrganisationLinkCandidates;
   decisions: ('approve' | 'approve_creation' | 'request_evidence' | 'reject' | 'revoke')[];
+  redacted: boolean;
 };
 export type StaffOrganisationLinkOutcome = {
   claimId: string;
