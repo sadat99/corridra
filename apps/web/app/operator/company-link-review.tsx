@@ -1,129 +1,18 @@
 'use client';
-import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { z } from 'zod';
 import { displayDate } from '@corridra/domain/locale';
-const org = z.object({ id: z.uuid(), name: z.string(), country: z.string() });
-const queueSchema = z
-  .object({
-    scope: z.enum(['open', 'closed']),
-    synthetic: z.boolean().refine(customerProvenanceAllowed),
-    nextAfter: z.uuid().nullable(),
-    items: z
-      .array(
-        z
-          .object({
-            claimId: z.uuid(),
-            workspaceId: z.uuid(),
-            workspaceName: z.string(),
-            kind: z.enum(['EXISTING', 'PROPOSED_NEW']),
-            state: z.string(),
-            version: z.number().int(),
-            filedAt: z.iso.datetime({ offset: true }),
-            legalName: z.string(),
-            country: z.string(),
-            evidenceCount: z.number().int(),
-            candidateCount: z.number().int(),
-          })
-          .strict(),
-      )
-      .max(50),
-  })
-  .strict();
-const decisions = ['approve', 'approve_creation', 'request_evidence', 'reject', 'revoke'] as const;
-const reviewSchema = z
-  .object({
-    claimId: z.uuid(),
-    workspaceId: z.uuid(),
-    workspaceName: z.string(),
-    expiresAt: z.iso.datetime({ offset: true }),
-    kind: z.enum(['EXISTING', 'PROPOSED_NEW']),
-    state: z.string(),
-    version: z.number().int(),
-    filedAt: z.iso.datetime({ offset: true }),
-    note: z.string(),
-    profile: z
-      .object({
-        version: z.number().int(),
-        currentVersion: z.number().int(),
-        legalName: z.string(),
-        countryCode: z.string(),
-        website: z.string().nullable(),
-        summary: z.string(),
-        commercialRoles: z.array(z.string()),
-        sectors: z.array(z.string()),
-        sizeBand: z.string(),
-      })
-      .strict(),
-    chosenOrganisation: org.nullable(),
-    activeLink: z
-      .object({
-        claimId: z.uuid(),
-        organisation: org,
-        linkedAt: z.iso.datetime({ offset: true }),
-        shared: z.boolean(),
-      })
-      .nullable(),
-    evidence: z.array(
-      z.object({
-        id: z.uuid(),
-        kind: z.string(),
-        statement: z.string(),
-        url: z.string().nullable(),
-        addedAt: z.string(),
-      }),
-    ),
-    history: z.array(
-      z.object({
-        seq: z.number().int(),
-        kind: z.string(),
-        state: z.string(),
-        at: z.string(),
-        by: z.enum(['customer', 'staff']),
-        byYou: z.boolean().nullable().optional(),
-        reason: z.string().nullable(),
-        internalNote: z.string().nullable(),
-      }),
-    ),
-    candidates: z
-      .object({
-        organisations: z.array(
-          z.object({
-            id: z.uuid(),
-            name: z.string(),
-            country: z.string(),
-            reasons: z.array(z.string()),
-            linkedWorkspaces: z.number().int(),
-          }),
-        ),
-        workspaces: z.array(
-          z.object({
-            claimId: z.uuid(),
-            workspaceId: z.uuid(),
-            state: z.string(),
-            legalName: z.string(),
-            country: z.string(),
-            reasons: z.array(z.string()),
-          }),
-        ),
-      })
-      .strict(),
-    decisions: z.array(z.enum(decisions)),
-  })
-  .strict();
-const outcomeSchema = z
-  .object({
-    claimId: z.uuid(),
-    commandId: z.uuid(),
-    decision: z.string(),
-    state: z.string(),
-    version: z.number().int(),
-    shared: z.boolean(),
-  })
-  .strict();
-type Queue = z.infer<typeof queueSchema>;
-type Review = z.infer<typeof reviewSchema>;
-type Decision = (typeof decisions)[number];
+import {
+  hiddenText,
+  isHidden,
+  staffDecisions,
+  staffOutcomeSchema,
+  staffQueueSchema,
+  staffReviewSchema,
+} from '../../lib/organisation-link-replies';
+type Queue = z.infer<typeof staffQueueSchema>;
+type Review = z.infer<typeof staffReviewSchema>;
+type Decision = (typeof staffDecisions)[number];
 type Pending = {
   commandId: string;
   claimId: string;
@@ -231,7 +120,7 @@ function Reviewer({ tenant }: Props) {
         signal: task.signal,
       });
       if (!r.ok) throw Error(failureText(r.status));
-      const v = queueSchema.parse(await r.json());
+      const v = staffQueueSchema.parse(await r.json());
       if (v.scope !== next) throw Error('The list changed. Reload.');
       if (!task.signal.aborted) {
         setQueue(v);
@@ -257,7 +146,7 @@ function Reviewer({ tenant }: Props) {
         { cache: 'no-store', signal: task.signal },
       );
       if (!r.ok) throw Error(failureText(r.status));
-      const v = queueSchema.parse(await r.json());
+      const v = staffQueueSchema.parse(await r.json());
       if (v.scope !== queue.scope) throw Error('The list changed. Reload.');
       if (!task.signal.aborted) setQueue({ ...v, items: [...queue.items, ...v.items] });
     } catch (e) {
@@ -283,7 +172,7 @@ function Reviewer({ tenant }: Props) {
         signal: task.signal,
       });
       if (!r.ok) throw Error(failureText(r.status));
-      const v = reviewSchema.parse(await r.json());
+      const v = staffReviewSchema.parse(await r.json());
       if (v.claimId !== claimId) throw Error('The request changed. Reload.');
       if (!task.signal.aborted) {
         setReview(v);
@@ -334,7 +223,7 @@ function Reviewer({ tenant }: Props) {
         if (r.status === 409) setPending(null);
         throw Error(failureText(r.status));
       }
-      const outcome = outcomeSchema.parse(await r.json());
+      const outcome = staffOutcomeSchema.parse(await r.json());
       if (outcome.commandId !== value.commandId) throw Error('The receipt did not match. Reload.');
       if (!task.signal.aborted) {
         setReview(null);
@@ -397,7 +286,7 @@ function Reviewer({ tenant }: Props) {
                 disabled={busy}
                 onClick={() => void open(i.claimId)}
               >
-                Review {i.legalName}
+                Review {isHidden(i.legalName) ? 'request' : i.legalName}
               </button>
             </li>
           ))}
@@ -409,7 +298,12 @@ function Reviewer({ tenant }: Props) {
         </button>
       )}
       {review && (
-        <section aria-label={'Review of ' + review.profile.legalName}>
+        <section
+          aria-label={
+            'Review of ' +
+            (isHidden(review.profile.legalName) ? 'request' : review.profile.legalName)
+          }
+        >
           <h3>{review.profile.legalName}</h3>
           <p>
             {stateLabel[review.state] ?? review.state} · {review.workspaceName} · request version{' '}
@@ -462,8 +356,12 @@ function Reviewer({ tenant }: Props) {
             <ul>
               {review.evidence.map((v) => (
                 <li key={v.id}>
-                  {v.kind.replaceAll('_', ' ').toLowerCase()}: {v.statement}
-                  {v.url ? ' (' + v.url + ')' : ''}
+                  {isHidden(v.statement)
+                    ? hiddenText
+                    : v.kind.replaceAll('_', ' ').toLowerCase() +
+                      ': ' +
+                      v.statement +
+                      (v.url ? ' (' + v.url + ')' : '')}
                 </li>
               ))}
             </ul>
@@ -502,7 +400,11 @@ function Reviewer({ tenant }: Props) {
                   {displayDate(h.at)}: {h.kind.replaceAll('_', ' ')} by{' '}
                   {h.by === 'staff' ? (h.byYou ? 'you' : 'staff') : 'the customer'}
                   {h.reason ? ' - ' + h.reason : ''}
-                  {h.internalNote ? ' (staff only: ' + h.internalNote + ')' : ''}
+                  {h.internalNote && !(isHidden(h.internalNote) && isHidden(h.reason))
+                    ? isHidden(h.internalNote)
+                      ? ' - ' + h.internalNote
+                      : ' (staff only: ' + h.internalNote + ')'
+                    : ''}
                 </li>
               ))}
             </ol>
