@@ -74,6 +74,20 @@ export async function followAssignments(
   return roomLinkFor(requestId, rows);
 }
 
+/**
+ * The same answer as `followAssignments`, from assignment pages already read: rows are added page by page and the
+ * reading stops at the first page after which a report is available, so a later page never changes the report the
+ * Room opens. The Meetings page uses it to open the report the Room would.
+ */
+export function roomLinkFromPages(requestId: string, pages: readonly unknown[][]): RoomLink {
+  const rows: unknown[] = [];
+  for (const page of pages) {
+    rows.push(...page);
+    if (roomLinkFor(requestId, rows).reportAvailable) break;
+  }
+  return roomLinkFor(requestId, rows);
+}
+
 /** The records the Road may read for Compare and Decide. A decision is not readable here, so it is never claimed. */
 export function roadRecords(link: RoomLink) {
   return { compare: link.reportAvailable, decide: false };

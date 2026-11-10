@@ -34,15 +34,16 @@ const say = (key: Parameters<typeof translate>[1]) => translate('en', key);
 export const requestTitleFallback = 'Your request';
 
 /**
- * With Trip and the Room on, a meeting opens in its Room (on Meetings when the lenses are on). In every other
- * case it opens the saved report, where its times are, as the Room itself does.
+ * The Room shows a meeting only in its Trip lens, and the lens bar exists only with the lenses on. So a meeting
+ * opens in its Room, on Meetings, only when Trip, the Room and the lenses are all on. In every other case it opens
+ * the saved report, where its times are, as the Room itself does.
  */
 export function meetingHref(
   row: Pick<MeetingRow, 'requestId' | 'savedResourceId'>,
   switches: MeetingLinkSwitches,
 ): string {
-  if (switches.trip && switches.road)
-    return `/account/rooms/${encodeURIComponent(row.requestId)}${switches.lenses ? '?view=meetings' : ''}`;
+  if (switches.trip && switches.road && switches.lenses)
+    return `/account/rooms/${encodeURIComponent(row.requestId)}?view=meetings`;
   return `/account/missions/${encodeURIComponent(row.savedResourceId)}`;
 }
 

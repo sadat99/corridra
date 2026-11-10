@@ -352,13 +352,14 @@ test('a changed schedule shows its name, the Date changed badge and the notice, 
   await expect(page.locator('main')).not.toContainText('Dhaka');
 });
 
-test('every link has its own name, and opens the Room on Meetings, the Room, or the saved report by the switches', async ({
+test('every link has its own name, and opens the Room on Meetings or the saved report by the switches', async ({
   page,
 }) => {
   const rows = sixRows();
   const cases: [Switches, (i: number) => string][] = [
     [switchesOn, (i) => `/account/rooms/${requestIds[i]}?view=meetings`],
-    [{ trip: true, road: true, lenses: false }, (i) => `/account/rooms/${requestIds[i]}`],
+    // The Trip lens needs the lenses, so without them the report is where the times are.
+    [{ trip: true, road: true, lenses: false }, (i) => `/account/missions/${savedIds[i]}`],
     [{ trip: false, road: true, lenses: true }, (i) => `/account/missions/${savedIds[i]}`],
     [{ trip: true, road: false, lenses: true }, (i) => `/account/missions/${savedIds[i]}`],
   ];

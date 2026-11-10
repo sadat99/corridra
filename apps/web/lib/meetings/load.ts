@@ -9,7 +9,7 @@ import { customerSavedMissionsEnabled } from '@corridra/auth/customer-saved-miss
 import { foundations } from '../foundations';
 import { movePageCap } from '../move-constants';
 import { followPages } from '../move-pages';
-import { roomLinkFor } from '../room';
+import { roomLinkFromPages } from '../room';
 import { report } from '../saved-report-check';
 import { isChangedMeeting } from '../trip';
 import type { WorkItem } from '../work-items/types';
@@ -79,13 +79,14 @@ export async function loadMeetings(
     return { ...none, partial: true };
   }
 
+  // Each item is one page of assignments, so the pages stay apart and the report is chosen as the Room chooses it.
   const assignments = await followPages(async (after) => {
     const page = (await services.customerAssignedMissions.list(
       { pageSize: 25, ...(after ? { after } : {}) },
       subject,
       issuer,
     )) as { assignments?: Assignment[]; nextAfter?: string | null };
-    return { items: page.assignments ?? [], nextAfter: page.nextAfter };
+    return { items: [page.assignments ?? []], nextAfter: page.nextAfter };
   }, movePageCap);
   // A list that failed or was cut short cannot prove that a report is missing, so no request is called unsaved.
   const proven = !assignments.failed && assignments.complete;
@@ -94,7 +95,7 @@ export async function loadMeetings(
   const saved: { request: WorkItem; savedResourceId: string }[] = [];
   let notSaved = 0;
   for (const request of requests) {
-    const link = roomLinkFor(request.id, assignments.items);
+    const link = roomLinkFromPages(request.id, assignments.items);
     if (link.savedResourceId) saved.push({ request, savedResourceId: link.savedResourceId });
     else if (link.reportAvailable && proven) notSaved += 1;
   }

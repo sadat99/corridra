@@ -2,10 +2,11 @@ import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { meetingStatus } from '../../packages/domain/src/access';
+import { createRequire } from 'node:module';
 import { groupMeetings } from '../../apps/web/lib/meetings/group';
 import { meetingCard, meetingHref } from '../../apps/web/lib/meetings/cards';
 import { loadMeetings, meetingReportCap } from '../../apps/web/lib/meetings/load';
-import { initialLensFor } from '../../apps/web/lib/room';
+import { followAssignments, initialLensFor, roomLinkFromPages } from '../../apps/web/lib/room';
 import {
   meetingsFirstShown,
   orderTrip,
@@ -26,6 +27,24 @@ vi.mock('../../packages/auth/src/customer-saved-missions.ts', () => ({
 type Services = Record<string, unknown> & { ready: Promise<void> };
 let services: Services | null = null;
 vi.mock('../../apps/web/lib/foundations', () => ({ foundations: () => services }));
+
+// React lives with the web app, not at the repository root.
+const web = createRequire(resolve('apps/web/package.json'));
+const createElement = web('react').createElement as (
+  type: unknown,
+  props?: unknown,
+  ...children: unknown[]
+) => unknown;
+const renderToStaticMarkup = web('react-dom/server').renderToStaticMarkup as (
+  element: unknown,
+) => string;
+vi.mock('next/link', () => ({
+  default: ({ children, href }: { children: unknown; href: string }) =>
+    createElement('a', { href }, children as never),
+}));
+// The list is a TSX file; the package type check has no JSX setting, so it is loaded by path.
+const listPath = '../../apps/web/app/account/meetings/meetings-list';
+const loadList = async () => (await import(/* @vite-ignore */ listPath)).MeetingsList;
 
 const read = (path: string) => readFileSync(resolve(path), 'utf8');
 const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
@@ -50,6 +69,97 @@ const assignment = (n: number, over: Record<string, unknown> = {}) => ({
   ...over,
 });
 type Itinerary = Record<string, unknown>[];
+/** Everything a report holds besides the itinerary: money, offers, companies, requests and outcomes. */
+const commercial = {
+  totals: [
+    {
+      currency: 'USD',
+      contractMinor: '123456700',
+      invoiceMinor: '987654',
+      confirmedCashMinor: '555111',
+      repeatCashMinor: '222333',
+    },
+  ],
+  outcomes: {
+    opportunities: 41,
+    qualified: 37,
+    proposals: 29,
+    contracts: 23,
+    rfqs: 19,
+    samples: 17,
+    heldMeetings: 13,
+  },
+  requests: [
+    {
+      id: 'e1',
+      title: 'Import licence number',
+      instructions: 'Add your import licence number SECRET-LICENCE-7788.',
+      dueAt: '2026-11-05T00:00:00Z',
+      status: 'OPEN',
+    },
+  ],
+  experience: {
+    schemaVersion: 1,
+    requirements: null,
+    shortlist: [
+      {
+        id: 't1',
+        company: 'Lantern Cutting Works',
+        country: 'China',
+        fit: 'HIGH',
+        rationale: 'Fits the brief',
+        uncertainty: 'None',
+        gaps: 'None',
+        verification: 'Self-declared',
+      },
+    ],
+    quotations: [
+      {
+        id: 'qa',
+        targetId: 't1',
+        currency: 'USD',
+        terms: {
+          specification: 'Auto cutter 2.5 m bed',
+          quantity: '2',
+          unit: 'unit',
+          unitPriceMinor: '1840000',
+          totalPriceMinor: '3680000',
+          leadTime: '45 days',
+          validUntil: '2099-01-01T00:00:00.000Z',
+          incoterm: 'FOB',
+          shipping: 'EXCLUDED',
+          paymentTerms: '30% deposit, 70% before shipping',
+          toolingMinor: '0',
+          setupMinor: '0',
+          packagingMinor: '0',
+        },
+        revision: 1,
+        uncertainties: 'None stated',
+        sourceKind: 'self_declaration',
+        claimStatus: 'self_declared',
+        superseded: false,
+        assignmentCurrent: true,
+      },
+    ],
+    agenda: [],
+    documentAccess: 'None',
+  },
+};
+/** Strings from `commercial` that must never reach a row, a card or the page. */
+const commercialStrings = [
+  'Lantern Cutting Works',
+  'Auto cutter 2.5 m bed',
+  '123456700',
+  '987654',
+  '1840000',
+  '3680000',
+  'FOB',
+  '30% deposit',
+  'SECRET-LICENCE-7788',
+  'Import licence number',
+  'Atelier Rahman',
+  'Cutting machine mission',
+];
 const reportFor = (resourceId: string, itinerary: Itinerary) => ({
   resourceId,
   report: {
@@ -62,7 +172,7 @@ const reportFor = (resourceId: string, itinerary: Itinerary) => ({
     missions: [
       {
         publicationId: 'pub-1',
-        title: 'Mission',
+        title: 'Cutting machine mission',
         company: 'Atelier Rahman',
         objective: 'Objective',
         brief: 'Brief',
@@ -72,16 +182,7 @@ const reportFor = (resourceId: string, itinerary: Itinerary) => ({
         updatedAt: '2026-10-08T00:00:00Z',
         status: 'MEETINGS',
         itinerary,
-        totals: [],
-        outcomes: {
-          opportunities: 0,
-          qualified: 0,
-          proposals: 0,
-          contracts: 0,
-          rfqs: 0,
-          samples: 0,
-          heldMeetings: 0,
-        },
+        ...commercial,
       },
     ],
   },
@@ -232,18 +333,16 @@ describe('words, caps and links', () => {
     expect(meetingsFirstShown).toBe(3);
     expect(meetingsFirstShown).toBeLessThan(tripFirstShown);
   });
-  it('opens the Room on Meetings only with Trip, Road and lenses on', () => {
+  it('opens the Room on Meetings only with Trip, the Room and the lenses all on', () => {
     const row = { requestId: uuid(1), savedResourceId: saved(1) };
     expect(meetingHref(row, { trip: true, road: true, lenses: true })).toBe(
       `/account/rooms/${uuid(1)}?view=meetings`,
     );
-    expect(meetingHref(row, { trip: true, road: true, lenses: false })).toBe(
-      `/account/rooms/${uuid(1)}`,
-    );
   });
-  it('opens the saved report in every other case, with no view', () => {
+  it('opens the saved report in every other case, with no view, including Trip and the Room without the lenses', () => {
     const row = { requestId: uuid(1), savedResourceId: saved(1) };
     for (const switches of [
+      { trip: true, road: true, lenses: false },
       { trip: false, road: true, lenses: true },
       { trip: true, road: false, lenses: true },
       { trip: false, road: false, lenses: false },
@@ -478,11 +577,85 @@ describe('reading the meetings of the person’s own requests', () => {
       location: 'Dhaka office',
     });
   });
-  it('keeps no price, offer or contact from the report: a row holds only the meeting', async () => {
+  it('keeps no price, offer, company, request or outcome from a full report: not in the rows, the cards or the page', async () => {
     pages = [{ assignments: [assignment(1)] }];
-    install({ [saved(1)]: [visit('One', { contact: 'a@b.test', price: '99' })] });
+    install({
+      [saved(1)]: [
+        visit('One', { contact: 'a@b.test', price: '99' }),
+        visit('Moved', { scheduleChanged: true }),
+      ],
+    });
     const result = await loadMeetings(SUBJECT, ISSUER, [requestItem(1)]);
-    expect(JSON.stringify(result.rows)).not.toMatch(/a@b\.test|"99"/);
+    expect(result.rows).toHaveLength(2);
+    // The report really does carry the commercial block, so the absence below means something.
+    const full = JSON.stringify(reportFor(saved(1), []));
+    for (const text of commercialStrings) expect(full, text).toContain(text);
+    const switches = { trip: true, road: true, lenses: true };
+    const cards = result.rows.map((row, index) => meetingCard(row, index, switches));
+    const grouped = groupMeetings(result.rows, Date.parse('2026-11-10T12:00:00Z'));
+    const MeetingsList = await loadList();
+    const html = renderToStaticMarkup(
+      createElement(MeetingsList, {
+        groups: (['upcoming', 'past', 'undated', 'changed'] as const).map((key) => ({
+          key,
+          cards: grouped[key].map((row, index) => meetingCard(row, index, switches)),
+        })),
+      }),
+    );
+    expect(html).toContain('One');
+    for (const text of [...commercialStrings, 'a@b.test', '"99"', ': 99', '>99<']) {
+      expect(JSON.stringify(result.rows), text).not.toContain(text);
+      expect(JSON.stringify(cards), text).not.toContain(text);
+      expect(html, text).not.toContain(text);
+    }
+  });
+});
+
+describe('choosing the report as the Room chooses it', () => {
+  const rowFor = (n: number, over: Record<string, unknown> = {}) => assignment(n, over);
+  const cases: [string, unknown[][]][] = [
+    [
+      'an available unsaved row on page one and a saved one on page two',
+      [[rowFor(1, { savedResourceId: null })], [rowFor(1)]],
+    ],
+    ['nothing on page one and a saved row on page two', [[rowFor(2)], [rowFor(1)]]],
+    [
+      'a saved row on page one and another on page two',
+      [[rowFor(1)], [rowFor(1, { savedResourceId: saved(50) })]],
+    ],
+    ['no rows at all', [[], []]],
+    ['only a row that is not available', [[rowFor(1, { available: false })], []]],
+    ['a malformed saved id', [[rowFor(1, { savedResourceId: 'nope' })], [rowFor(1)]]],
+  ];
+  for (const [name, pagesOfRows] of cases)
+    it(`gives exactly what the Room gets for ${name}`, async () => {
+      const pageFn = async (after?: string) => {
+        const index = after ? Number(after) : 0;
+        return {
+          assignments: pagesOfRows[index] ?? [],
+          nextAfter: index + 1 < pagesOfRows.length ? String(index + 1) : null,
+        };
+      };
+      expect(roomLinkFromPages(uuid(1), pagesOfRows)).toEqual(
+        await followAssignments(uuid(1), pageFn),
+      );
+    });
+  it('opens the report the Room would, not a later one, in the loader', async () => {
+    // Page one shows an available report that is not saved: the Room stops there, so nothing is read.
+    pages = [
+      { assignments: [assignment(1, { savedResourceId: null })], nextAfter: '1' },
+      { assignments: [assignment(1)] },
+    ];
+    install({ [saved(1)]: [visit('One')] });
+    const result = await loadMeetings(SUBJECT, ISSUER, [requestItem(1)]);
+    expect(command).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ rows: [], notSaved: 1, partial: false });
+  });
+  it('reads a report found on a later page when no earlier page showed one', async () => {
+    pages = [{ assignments: [assignment(2)], nextAfter: '1' }, { assignments: [assignment(1)] }];
+    install({ [saved(1)]: [visit('One')], [saved(2)]: [visit('Two')] });
+    const result = await loadMeetings(SUBJECT, ISSUER, [requestItem(1)]);
+    expect(result.rows.map((r) => r.label)).toEqual(['One']);
   });
 });
 
