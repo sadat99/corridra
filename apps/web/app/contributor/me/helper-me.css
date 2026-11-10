@@ -118,6 +118,6 @@
   margin-top: var(--space-2);
 }
 /* A line that follows the hint or the note keeps a gap from it. */
-.detail-card .me-data-saver {
+.detail-card .me-data-use {
   margin-top: var(--space-3);
 }

@@ -88,12 +88,16 @@ describe('nothing a helper reached before is lost', () => {
     expect(frame).toContain("key: 'tasks'");
     expect(frame).toContain("href: '/network'");
   });
-  test('Me says Coming soon for what is not built, and builds no control for it', () => {
+  test('Me says in one plain line that Corridra keeps data use low, with no Data Saver control and no Coming soon', () => {
     const me = read('apps/web/app/contributor/me/helper-me.tsx');
-    expect(me).toMatch(/Data Saver[\s\S]{0,80}Coming soon/);
-    // Stronger Colours is a real control now (W10); Data Saver is the one thing still not built, and has no control.
+    // W10 (owner decision, 10 Nov 2026): data use is kept low for everyone, so there is nothing to switch.
+    expect(me).toContain('<p className="me-data-use">Corridra already keeps data use low.</p>');
+    expect(me).not.toMatch(/<(?:input|button|label)[^>]*Data Saver/i);
+    expect(me).not.toMatch(/label="Data Saver"|name="Data Saver"|aria-label="Data Saver"/i);
     expect(me).not.toMatch(/Data Saver[\s\S]{0,200}(?:role="switch"|type="checkbox")/);
-    expect(me.match(/className="ux-soon-tag"/g)).toHaveLength(1);
+    expect(me).not.toMatch(/Data Saver[\s\S]{0,80}Coming soon/);
+    expect(me).not.toContain('ux-soon-tag');
+    expect(me).not.toContain('Coming soon');
   });
   test('Me builds real Text Size and Less Movement controls, kept in this browser only', () => {
     const me = read('apps/web/app/contributor/me/helper-me.tsx');

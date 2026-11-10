@@ -17,13 +17,13 @@ export default function Page() {
       </p>
       <SetupForm />
       <nav className="access-options" aria-label="Operator setup help">
-        <Link className="text-link" href="/account">
+        <Link prefetch={false} className="text-link" href="/account">
           Customer account and email verification
         </Link>
         <a className="text-link" href={operatorSignInPage}>
           Operator sign-in and authenticator
         </a>
-        <Link className="text-link" href="/workspace">
+        <Link prefetch={false} className="text-link" href="/workspace">
           All workspaces and tools
         </Link>
       </nav>

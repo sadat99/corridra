@@ -289,6 +289,13 @@ const nextConfig: NextConfig = {
           { key: 'Cache-Control', value: 'no-store' },
         ],
       },
+      {
+        // The site icon's address carries a hash of the file (/icon.svg?icon.<hash>.svg), so a changed icon
+        // is a new address and this one can be kept for a year (W10). Without this it is checked again on
+        // every page view and soft navigation (Cache-Control: public, max-age=0, must-revalidate).
+        source: '/icon.svg',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
     ];
   },
 };

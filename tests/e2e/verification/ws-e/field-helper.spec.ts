@@ -55,8 +55,8 @@ test('the field helper has four bottom tabs on a phone and the left bar on a wid
     'page',
   );
   await expect(page.getByRole('button', { name: 'Sign Out of Assigned Work' })).toBeVisible();
-  // W7, W10: Text Size (three steps), Stronger Colours and Less Movement are real; Data Saver is still plain text tagged
-  // Coming soon.
+  // W7, W10: Text Size (three steps), Stronger Colours and Less Movement are real. Data use is kept low for everyone, so the
+  // card has one plain line about it and no Data Saver control and no Coming soon tag.
   const comfort = page.locator('section', {
     has: page.getByRole('heading', { name: 'Make it easier to read' }),
   });
@@ -84,7 +84,9 @@ test('the field helper has four bottom tabs on a phone and the left bar on a wid
   const hintBox = (await comfort
     .getByText('Stops animation and anything that moves by itself.')
     .boundingBox())!;
-  const saverBox = (await comfort.locator('p', { hasText: 'Data Saver' }).boundingBox())!;
+  const saverBox = (await comfort
+    .locator('p', { hasText: 'Corridra already keeps data use low.' })
+    .boundingBox())!;
   expect(saverBox.y - (hintBox.y + hintBox.height)).toBeGreaterThanOrEqual(11.5);
   const group = (await comfort.getByRole('group', { name: 'Text Size' }).boundingBox())!;
   const row = (await lessMovement.locator('xpath=ancestor::label').boundingBox())!;
@@ -93,13 +95,18 @@ test('the field helper has four bottom tabs on a phone and the left bar on a wid
   await expect(
     comfort.getByText('Stops animation and anything that moves by itself.'),
   ).toBeVisible();
-  await expect(comfort.getByText('Data Saver')).toBeVisible();
-  await expect(comfort.locator('.ux-soon-tag')).toHaveText(['Coming soon']);
-  await expect(comfort.locator('p', { hasText: 'Data Saver' }).locator('.ux-soon-tag')).toHaveText(
-    'Coming soon',
-  );
+  const dataLine = comfort.locator('p', { hasText: 'Corridra already keeps data use low.' });
+  await expect(dataLine).toHaveCount(1);
+  await expect(dataLine).toBeVisible();
+  await expect(dataLine).toHaveText('Corridra already keeps data use low.');
+  // It is a plain line: nothing in it to press or switch, no Coming soon tag in the card or anywhere on the Me page.
+  await expect(dataLine.locator('input, button, a, [role], .ux-soon-tag')).toHaveCount(0);
+  await expect(comfort.locator('.ux-soon-tag')).toHaveCount(0);
+  await expect(page.locator('.ux-soon-tag')).toHaveCount(0);
+  await expect(comfort.getByText('Data Saver')).toHaveCount(0);
+  await expect(comfort.getByText('Coming soon')).toHaveCount(0);
   for (const role of ['button', 'checkbox', 'switch', 'radio', 'link'] as const)
-    await expect(comfort.getByRole(role, { name: 'Data Saver' })).toHaveCount(0);
+    await expect(comfort.getByRole(role, { name: /data saver|data use/i })).toHaveCount(0);
   for (const choice of await page.locator('.me-textsize-choice').all())
     expect((await choice.boundingBox())!.height).toBeGreaterThanOrEqual(75.5);
   await comfort.getByRole('radio', { name: 'Largest', exact: true }).check();

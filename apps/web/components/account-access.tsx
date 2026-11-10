@@ -32,7 +32,7 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
         ) : (
           <AccessState kind="unavailable">
             <p>Account access is not available yet.</p>
-            <Link className="text-link" href="/plan">
+            <Link prefetch={false} className="text-link" href="/plan">
               {realUseEnabled()
                 ? 'Start a Request Without an Account'
                 : 'Prepare an Example Request Without an Account'}
@@ -42,7 +42,7 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
         {config && mode === 'signup' && (
           <p>
             Your name and email are used for account access, verification and recovery. Read the{' '}
-            <Link href="/privacy">
+            <Link prefetch={false} href="/privacy">
               {realUseEnabled() ? 'privacy and request notice' : 'account and test intake notice'}
             </Link>{' '}
             before creating an account. Team access needs a separate invitation.
@@ -56,16 +56,16 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
                 Team members sign in separately. For a shared mission, programme or task, use the
                 private link we sent you.
               </p>
-              <Link className="text-link" href="/operator">
+              <Link prefetch={false} className="text-link" href="/operator">
                 Team Sign-in
               </Link>
-              <Link className="text-link" href="/workspace">
+              <Link prefetch={false} className="text-link" href="/workspace">
                 Start Page
               </Link>
-              <Link className="text-link" href="/contributor">
+              <Link prefetch={false} className="text-link" href="/contributor">
                 Local Helper Tasks
               </Link>
-              <Link className="text-link" href="/plan">
+              <Link prefetch={false} className="text-link" href="/plan">
                 Plan a Mission
               </Link>
             </nav>

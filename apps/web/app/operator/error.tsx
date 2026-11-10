@@ -45,10 +45,10 @@ export default function WorkspaceError() {
         >
           Verify operator access
         </a>
-        <Link className="text-link" href="/workspace">
+        <Link prefetch={false} className="text-link" href="/workspace">
           All workspaces and tools
         </Link>
-        <Link className="text-link" href="/">
+        <Link prefetch={false} className="text-link" href="/">
           Back to Corridra
         </Link>
       </nav>

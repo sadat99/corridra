@@ -23,7 +23,9 @@ export function PageHeader({
             {breadcrumb.map((item, index) => (
               <li key={`${item.label}-${index}`}>
                 {item.href && index < breadcrumb.length - 1 ? (
-                  <Link href={item.href}>{item.label}</Link>
+                  <Link prefetch={false} href={item.href}>
+                    {item.label}
+                  </Link>
                 ) : (
                   <span aria-current={index === breadcrumb.length - 1 ? 'page' : undefined}>
                     {item.label}

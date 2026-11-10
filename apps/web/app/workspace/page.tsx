@@ -18,14 +18,14 @@ export default function Page() {
               Tell us what you want to achieve and where. It takes a few minutes. Start without an
               account. You create one at the last step to send it.
             </p>
-            <Link className="primary-link" href="/plan">
+            <Link prefetch={false} className="primary-link" href="/plan">
               Plan a Mission
             </Link>
           </article>
           <article className="detail-card">
             <h2>See how it works</h2>
             <p>Follow a sample mission from the first goal to the next step.</p>
-            <Link className="button-secondary" href="/corridors#mission-example">
+            <Link prefetch={false} className="button-secondary" href="/corridors#mission-example">
               See a Sample Mission
             </Link>
           </article>
@@ -40,7 +40,7 @@ export default function Page() {
                   <h3>Customer</h3>
                   <p>See your requests and missions.</p>
                 </div>
-                <Link className="primary-link" href="/account">
+                <Link prefetch={false} className="primary-link" href="/account">
                   Open My Account
                 </Link>
               </li>
@@ -53,10 +53,10 @@ export default function Page() {
                   </p>
                 </div>
                 <div className="ux-start-actions">
-                  <Link className="primary-link" href="/operator">
+                  <Link prefetch={false} className="primary-link" href="/operator">
                     Team Sign-In
                   </Link>
-                  <Link className="text-link" href="/operator/setup">
+                  <Link prefetch={false} className="text-link" href="/operator/setup">
                     Set up your team account
                   </Link>
                 </div>
@@ -69,7 +69,7 @@ export default function Page() {
                     helpers can also sign in to see their tasks.
                   </p>
                 </div>
-                <Link className="text-link" href="/contributor">
+                <Link prefetch={false} className="text-link" href="/contributor">
                   Local helper sign-in
                 </Link>
               </li>
@@ -77,10 +77,10 @@ export default function Page() {
           </details>
         </section>
         <nav className="ux-start-foot" aria-label="More">
-          <Link className="text-link" href="/">
+          <Link prefetch={false} className="text-link" href="/">
             Back to Corridra
           </Link>
-          <Link className="text-link" href="/privacy">
+          <Link prefetch={false} className="text-link" href="/privacy">
             Privacy
           </Link>
         </nav>

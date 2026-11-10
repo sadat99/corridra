@@ -416,13 +416,13 @@ export function AccountForm({
       )}
       {mode === 'signin' && (
         <>
-          <Link className="text-link" href={accessPath('/forgot-password')}>
+          <Link prefetch={false} className="text-link" href={accessPath('/forgot-password')}>
             Forgot Your Password?
           </Link>
-          <Link className="text-link" href={accessPath('/signup')}>
+          <Link prefetch={false} className="text-link" href={accessPath('/signup')}>
             Create an Account
           </Link>
-          <Link className="text-link" href={accessPath('/verify-email')}>
+          <Link prefetch={false} className="text-link" href={accessPath('/verify-email')}>
             Verify Your Email
           </Link>
           <a className="text-link" href={operatorSignInPage}>
@@ -431,12 +431,12 @@ export function AccountForm({
         </>
       )}
       {(mode === 'signup' || mode === 'verify') && (
-        <Link className="text-link" href={accessPath('/forgot-password')}>
+        <Link prefetch={false} className="text-link" href={accessPath('/forgot-password')}>
           Forgot Your Password?
         </Link>
       )}
       {mode !== 'signin' && (
-        <Link className="text-link" href={accessPath('/signin')}>
+        <Link prefetch={false} className="text-link" href={accessPath('/signin')}>
           Back to Sign-in
         </Link>
       )}

@@ -1,7 +1,8 @@
 'use client';
 // The settings a field helper uses in one place. Language, reading aloud, text size (three steps), Stronger Colours
 // and Less Movement are real; the last three are kept in this browser only. A switch whose effect the device already
-// asks for reads On and does nothing. Data saver is not built yet, so it says Coming soon and is not a control. The
+// asks for reads On and does nothing. Corridra keeps data use low for everyone (W10, owner decision: the site icon is
+// cached and no link prefetches), so there is no Data Saver switch and the card says so in one plain line. The
 // private link note describes the invitation link only in words that are true of any link: it is for one person and
 // the Corridra team renews it. Owner: S4, W7, W10.
 import './helper-me.css';
@@ -131,9 +132,7 @@ export function HelperMe({ workspace }: { workspace: string }) {
           onChange={(on) => setMovement(on ? 'on' : 'off')}
         />
         <UnsavedChoiceNote className="me-status" />
-        <p className="me-data-saver">
-          Data Saver <span className="ux-soon-tag">Coming soon</span>
-        </p>
+        <p className="me-data-use">Corridra already keeps data use low.</p>
       </section>
       <section aria-labelledby="me-link" className="detail-card">
         <h2 id="me-link">Your private link</h2>
@@ -142,6 +141,7 @@ export function HelperMe({ workspace }: { workspace: string }) {
           ask the Corridra team to renew it.
         </p>
         <Link
+          prefetch={false}
           className="text-link"
           href={
             '/operator/signin?next=' + encodeURIComponent('/contributor?workspace=' + workspace)
@@ -151,7 +151,7 @@ export function HelperMe({ workspace }: { workspace: string }) {
         >
           Verify your authenticator again (opens a new tab)
         </Link>
-        <Link className="text-link" href="/network">
+        <Link prefetch={false} className="text-link" href="/network">
           About assigned work
         </Link>
       </section>
