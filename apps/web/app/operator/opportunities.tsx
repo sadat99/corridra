@@ -4,6 +4,7 @@ import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { operatorSignInPath } from '../../lib/workspace-navigation';
 import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { missionFromAddress, missionHintNote } from './mission-hint';
 import {
   currencies,
   formatMoney,
@@ -355,8 +356,11 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false),
     [mission, setMission] = useState(''),
+    [missionNote, setMissionNote] = useState(false),
     [offset, setOffset] = useState(0);
   const keys = useRef(new Map<string, string>());
+  // W5: a link from a mission page names a mission once; an explicit choice here always wins.
+  const askedMission = useRef({ used: false, chosen: false });
   const [defaults] = useState(() => ({
     observed: fieldDate(new Date().toISOString()),
     due: fieldDate(new Date(Date.now() + 86400000).toISOString()),
@@ -377,6 +381,13 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
         if (active) {
           setData(d);
           setMessage('');
+          const asked = missionFromAddress(window.location.search);
+          if (asked && !askedMission.current.used && !askedMission.current.chosen) {
+            askedMission.current.used = true;
+            if ((d.missions as { id: string }[] | undefined)?.some((m) => m.id === asked))
+              setMission(asked);
+            else setMissionNote(true);
+          }
         }
       })
       .catch((e) => {
@@ -524,6 +535,8 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
             disabled={busy}
             value={mission}
             onChange={(e) => {
+              askedMission.current.chosen = true;
+              setMissionNote(false);
               setMission(e.target.value);
               setOffset(0);
             }}
@@ -548,6 +561,7 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
           Refresh Commercial Progress
         </button>
       </div>
+      {missionNote && <p role="note">{missionHintNote}</p>}
       <h3>Mission yield</h3>
       <p>
         Scope: {mission ? 'Selected mission' : 'All accessible missions'}. Attribution is
