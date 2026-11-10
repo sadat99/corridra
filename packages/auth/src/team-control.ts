@@ -21,8 +21,16 @@ import { setupIdentifier, setupInvitation } from './operator-setup';
 // record comes from the existing database triggers. Invite and cancel change app.membership, which
 // app.record_change writes to the workspace audit log (app.domain_event) with the owner as actor.
 // Existing MFA/session triggers keep recording target changes. The optional, narrow owner-audit
-// function records resend/reset in the same auth transaction, deriving the owner from the bearer
-// session. Until its reviewed migration is installed, results explicitly say audit is unavailable.
+// function records resend, reset and cancel in the same auth transaction, deriving the owner from
+// the bearer session. Until its reviewed migration (0006, and 0010 for cancel) is installed,
+// results explicitly say audit is unavailable.
+//
+// Cancel lock and commit order (CRUD G10): the runtime transaction takes the workspace lock that
+// member changes take, then the auth transaction locks the invitation row, the runtime connection
+// revokes the membership, the auth transaction records the audit row and deletes the invitation, and
+// the auth transaction commits before the runtime one. A runtime connection is always taken before
+// an auth connection, and nothing the auth transaction waits for is ever held by a transaction that
+// waits on the runtime transaction's locks, so the two cannot wait on each other.
 
 export const teamInviteInput = z
   .object({
@@ -78,13 +86,17 @@ async function recordOwnerAction(
   q: DatabasePool['query'],
   ctx: RequestContext,
   purpose: string,
-  operation: 'team.invitation.resent' | 'team.authenticator.reset',
+  operation: 'team.invitation.resent' | 'team.authenticator.reset' | 'team.invitation.cancelled',
   target: string,
   reference: string | null,
 ): Promise<'recorded' | 'unavailable'> {
-  // Do not disable existing controls before the protected additive installer has run.
+  // Do not disable existing controls before the protected additive installer has run. The check asks
+  // whether the installed writer knows this operation (cancel arrives with 0010, after 0006), in the
+  // same transaction as the write, so an install cannot land between the check and the write.
   const available = await q(
-    "SELECT to_regprocedure('identity.record_team_control(text,uuid,uuid)') IS NOT NULL AS ready",
+    `SELECT coalesce((SELECT strpos(prosrc,$1)>0 FROM pg_proc
+       WHERE oid=to_regprocedure('identity.record_team_control(text,uuid,uuid)')),false) AS ready`,
+    [`'${operation}'`],
   );
   if (!available.rows[0].ready) return 'unavailable';
   await q(
@@ -249,27 +261,43 @@ export class TeamControl {
     });
   }
 
-  /** Cancels a pending invitation and revokes its pending membership. Owner only, fresh check. */
+  /**
+   * Cancels a pending or expired invitation: revokes its pending membership, records the cancelling
+   * owner in the security log and removes the setup row, all or nothing. Owner only, fresh check.
+   */
   async cancel(ctx: RequestContext, input: unknown) {
     const { invitationId } = inviteRef.parse(input);
-    const { tenantId } = await authorize(this.runtime, ctx);
-    const row = (
-      await this.auth.query(
-        'SELECT id,value FROM identity.verification WHERE id=$1 AND identifier LIKE $2',
-        [invitationId, identifierPrefix + '%'],
-      )
-    ).rows[0];
-    const invite = row ? setupInvitation.parse(JSON.parse(row.value)) : null;
-    if (!row || !invite || invite.tenantId !== tenantId || invite.role === 'contributor')
-      throw new DomainError('Invitation not found', 404);
-    await withTenant(this.runtime, ctx, 'members.manage', async (t) => {
-      await t.db.query(
-        'UPDATE app.membership SET revoked_at=now() WHERE tenant_id=$1 AND user_id=$2 AND revoked_at IS NULL',
-        [t.tenantId, invite.principalId],
-      );
+    return withTenant(this.runtime, ctx, 'members.manage', async (t) => {
+      // The same workspace lock as AccessService.changeMember, so the two never interleave.
+      await t.db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [t.tenantId]);
+      return inAuth(this.auth, async (q) => {
+        const row = (
+          await q(
+            'SELECT id,value FROM identity.verification WHERE id=$1 AND identifier LIKE $2 FOR UPDATE',
+            [invitationId, identifierPrefix + '%'],
+          )
+        ).rows[0];
+        const invite = row ? setupInvitation.parse(JSON.parse(row.value)) : null;
+        // Missing, already cancelled or accepted, another workspace's or a contributor invitation all
+        // answer the same way, so nothing about another workspace is revealed.
+        if (!row || !invite || invite.tenantId !== t.tenantId || invite.role === 'contributor')
+          throw new DomainError('Invitation not found', 404);
+        await t.db.query(
+          'UPDATE app.membership SET revoked_at=now() WHERE tenant_id=$1 AND user_id=$2 AND revoked_at IS NULL',
+          [t.tenantId, invite.principalId],
+        );
+        const audit = await recordOwnerAction(
+          q,
+          ctx,
+          t.purpose,
+          'team.invitation.cancelled',
+          invite.principalId,
+          row.id,
+        );
+        await q('DELETE FROM identity.verification WHERE id=$1', [row.id]);
+        return { cancelled: true as const, audit };
+      });
     });
-    await this.auth.query('DELETE FROM identity.verification WHERE id=$1', [row.id]);
-    return { cancelled: true };
   }
 
   /**
