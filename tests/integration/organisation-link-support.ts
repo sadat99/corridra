@@ -489,6 +489,17 @@ export class World {
     await this.workspace(key, label, 'real', legalName, website, country);
     return { who: label, workspaceId: this.ws[key]! };
   }
+  // A synthetic person with a synthetic workspace, for the synthetic side of a search.
+  async freshSyntheticWriter(label: string, legalName: string) {
+    await admitSyntheticCustomer(this.f.owner, {
+      issuer,
+      subject: 'link-a-' + label,
+      executorId: this.f.serviceId,
+      reason: 'Explicit invented company link test identity; no real account or email',
+    });
+    await this.workspace('FS-' + label, label, 'synthetic', legalName, null);
+    return { who: label, workspaceId: this.ws['FS-' + label]! };
+  }
   async attempts(who: string) {
     if (baseCheck) return 0;
     return Number(

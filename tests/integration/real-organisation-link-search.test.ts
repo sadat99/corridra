@@ -102,6 +102,55 @@ beforeAll(async () => {
     ['ESC-TAILLOOK', 'Bau Alpha GmbH', 'bau-alpha.de'],
   ] as const)
     await w.addOrganisation({ key, name, synthetic: false, host });
+  // Names that begin with a word the name key deletes: a legal-form word on the real side, Synthetic on the synthetic side.
+  await w.addOrganisation({
+    key: 'QUILLON-AG',
+    name: 'AG Quillon Works',
+    synthetic: false,
+    host: 'quillon-works.de',
+  });
+  await w.addOrganisation({
+    key: 'QUILLON-SYN',
+    name: 'Synthetic Quillon Works',
+    synthetic: true,
+    host: 'quillon.example.invalid',
+  });
+  await w.addOrganisation({
+    key: 'QUILLON-SL',
+    name: 'SL Zzquillon Works',
+    synthetic: false,
+    host: 'zzquillon-works.de',
+  });
+  for (let n = 1; n <= 12; n += 1)
+    await w.addOrganisation({
+      key: 'QUILLON-FILL-' + n,
+      name: `Quillon Filler ${String(n).padStart(2, '0')} GmbH`,
+      synthetic: false,
+      host: `quillon-filler-${n}.de`,
+    });
+  // Candidates that sort first but are not eligible: expired identifier, suppressed, or the other side. Eligible ones sort later.
+  for (const prefix of ['Aardvark', 'Bisonfeld']) {
+    for (let n = 1; n <= 12; n += 1) {
+      const name = `${prefix} Skip ${String(n).padStart(2, '0')}`;
+      const key = `SKIP-${prefix}-${n}`;
+      const kind = n % 3;
+      await w.addOrganisation({
+        key,
+        name: name + (kind === 2 ? ' AG' : ' GmbH'),
+        synthetic: kind === 2,
+        host: `${prefix.toLowerCase()}-skip-${n}.${kind === 2 ? 'example.invalid' : 'de'}`,
+        expired: kind === 0,
+      });
+      if (kind === 1) await w.suppress(key);
+    }
+    for (let n = 1; n <= (prefix === 'Aardvark' ? 12 : 3); n += 1)
+      await w.addOrganisation({
+        key: `TAKE-${prefix}-${n}`,
+        name: `${prefix} Take ${String(n).padStart(2, '0')} GmbH`,
+        synthetic: false,
+        host: `${prefix.toLowerCase()}-take-${n}.de`,
+      });
+  }
   await w.addOrganisation({ key: 'ORAB', name: 'Ab GmbH', synthetic: false, host: 'ab-gmbh.de' });
 }, 300000);
 afterAll(async () => {
@@ -352,6 +401,54 @@ test('an organisation that matches the exact lane and the name lane is returned 
   expect(all).toHaveLength(10);
 });
 
+test('names that begin with a deleted word are found by the saved company or by the typed name, in the exact lane (F1)', async () => {
+  // Real side: AG is a legal-form word and is deleted from the key. The typed text matches no name pattern at all.
+  const byProfile = await w.freshWriter('qp-' + randomLabel(), 'Quillon Works GmbH');
+  expect(await found(byProfile.who, byProfile.workspaceId, 'zzzzz')).toEqual([w.org['QUILLON-AG']]);
+  const byTyped = await w.freshWriter('qt-' + randomLabel(), 'Unrelated Firma GmbH');
+  expect(await found(byTyped.who, byTyped.workspaceId, 'QUILLON, works')).toEqual([
+    w.org['QUILLON-AG'],
+  ]);
+  // Synthetic side: a leading Synthetic is deleted from the key. The real writer never sees it.
+  const syntheticByProfile = await w.freshSyntheticWriter(
+    'sp-' + randomLabel(),
+    'Synthetic Quillon Works',
+  );
+  expect(
+    await found(syntheticByProfile.who, syntheticByProfile.workspaceId, 'zzzzz', 'synthetic'),
+  ).toEqual([w.org['QUILLON-SYN']]);
+  const syntheticByTyped = await w.freshSyntheticWriter(
+    'st-' + randomLabel(),
+    'Synthetic Unrelated Firma',
+  );
+  expect(
+    await found(syntheticByTyped.who, syntheticByTyped.workspaceId, 'QUILLON, works', 'synthetic'),
+  ).toEqual([w.org['QUILLON-SYN']]);
+});
+
+test('an exact-lane row whose name starts with a deleted word beats name-lane rows for the last place of the cap (F1)', async () => {
+  const writer = await w.freshWriter('qcap-' + randomLabel(), 'Zzquillon Works');
+  const rows = (await search(writer.who, writer.workspaceId, 'quillon')).organisations;
+  // Thirteen names contain the typed text, ten fit. The saved company sorts last by name but takes the exact lane.
+  expect(rows).toHaveLength(10);
+  expect(rows[9]!.id).toBe(w.org['QUILLON-SL']);
+  expect(rows.map((o) => o.id)).not.toContain(w.org['QUILLON-FILL-12']);
+  expect(rows.map((o) => o.name)).toEqual([...rows.map((o) => o.name)].sort());
+});
+
+test('ineligible candidates that sort first do not use up the ten places (F1)', async () => {
+  const writer = await w.freshWriter('skip-' + randomLabel(), 'Unrelated Firma GmbH');
+  const many = (await search(writer.who, writer.workspaceId, 'aardvark')).organisations;
+  expect(many.map((o) => o.name)).toEqual(
+    Array.from({ length: 10 }, (_, n) => `Aardvark Take ${String(n + 1).padStart(2, '0')} GmbH`),
+  );
+  const few = (await search(writer.who, writer.workspaceId, 'bisonfeld')).organisations;
+  expect(few.map((o) => o.name)).toEqual(
+    Array.from({ length: 3 }, (_, n) => `Bisonfeld Take ${String(n + 1).padStart(2, '0')} GmbH`),
+  );
+  expect(many.map((o) => o.id)).not.toContain(w.org['SKIP-Aardvark-1']);
+});
+
 test('a second search of the same person waits for the first to commit (T2)', async () => {
   const writer = await w.freshWriter('lock-' + randomLabel());
   await w.addAttempts(writer.who, Array(9).fill('1 minute'));
@@ -378,7 +475,8 @@ test('a second search of the same person waits for the first to commit (T2)', as
     for (let n = 0; n < 50 && waiting === 0; n += 1) {
       waiting = (
         await w.f.owner.query(
-          "SELECT count(*)::int n FROM pg_locks WHERE locktype='advisory' AND NOT granted",
+          `SELECT count(*)::int n FROM pg_locks l JOIN pg_database d ON d.oid=l.database
+           WHERE l.locktype='advisory' AND NOT l.granted AND d.datname=current_database()`,
         )
       ).rows[0].n;
       if (waiting === 0) await new Promise((resolve) => setTimeout(resolve, 100));

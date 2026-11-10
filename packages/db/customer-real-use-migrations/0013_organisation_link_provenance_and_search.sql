@@ -200,7 +200,8 @@ BEGIN
  IF NEW.state='unlinked' AND (prev.id IS NULL OR prev.state<>'linked' OR prev.claim_id<>NEW.claim_id OR prev.organisation_id<>NEW.organisation_id) THEN
   RAISE EXCEPTION 'Only the active company link can be ended' USING ERRCODE='23514';
  END IF;
- -- The older checks above keep their order for direct writers. The new test comes last.
+ -- The older checks above keep their order for direct writers. The new test comes last. A row for an organisation that does not
+ -- exist gets this refusal (23514) before the foreign key can report its own (23503).
  IF NEW.state='linked' THEN
   SELECT * INTO o FROM app.organisation x WHERE x.id=NEW.organisation_id;
   IF NOT FOUND OR NOT customer_private.organisation_link_same_context(o.synthetic,app.tenant_is_synthetic(NEW.tenant_id))
@@ -601,9 +602,11 @@ BEGIN
   v_profile_host:=customer_private.organisation_link_host_key(v_details->>'website');
   -- Each key is computed once. A key shorter than three letters never takes the exact lane.
   v_keys:=ARRAY(SELECT DISTINCT k FROM unnest(ARRAY[v_profile_key,customer_private.organisation_link_name_key(p_term)]) k WHERE length(k)>=3);
-  -- A name key is its name with characters deleted, so the key letters must occur in order in the name. This cheap test keeps the
+  -- A name key is the lowercase name with characters deleted (punctuation, legal-form words, a leading Synthetic), from the start,
+  -- the middle or the end. So the key letters occur in order somewhere in the letters and digits of the name. The shape has no start
+  -- anchor, because a deleted word may come first, and no end anchor, because a deleted word may come last. This cheap test keeps the
   -- costly key function off names that cannot match. It only ever drops names whose key cannot equal a searched key.
-  v_shapes:=ARRAY(SELECT '^'||regexp_replace(k,'(.)','\1.*','g') FROM unnest(v_keys) k);
+  v_shapes:=ARRAY(SELECT regexp_replace(k,'(.)','\1.*','g') FROM unnest(v_keys) k);
   v_hosts:=ARRAY(SELECT i.organisation_id FROM app.public_identifier i WHERE v_profile_host IS NOT NULL
    AND i.domain IN (v_profile_host,'www.'||v_profile_host) AND regexp_replace(i.domain,'^www\.','')=v_profile_host);
   -- Cheap tests first, in the order of the answer. The eligibility helper then runs only until ten rows have passed, so its cost does not
