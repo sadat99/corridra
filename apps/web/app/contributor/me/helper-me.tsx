@@ -132,7 +132,7 @@ export function HelperMe({ workspace }: { workspace: string }) {
           onChange={(on) => setMovement(on ? 'on' : 'off')}
         />
         <UnsavedChoiceNote className="me-status" />
-        <p className="me-data-use">Corridra already keeps data use low.</p>
+        <p className="me-data-use">Corridra does not load other pages in the background.</p>
       </section>
       <section aria-labelledby="me-link" className="detail-card">
         <h2 id="me-link">Your private link</h2>

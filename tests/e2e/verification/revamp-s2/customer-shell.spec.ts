@@ -432,15 +432,13 @@ test('W7 a browser that will not save says so once, and the choice still holds f
   await menu.getByRole('menuitemradio', { name: 'A, Largest Text', exact: true }).click();
   expect(await comfort(page)).toMatchObject({ fontSize: '20px', textSize: 'largest' });
   await expect(note).toHaveText(
-    'This browser cannot save your choice. It lasts until you reload or close this tab.',
+    'This browser cannot save your choice. It lasts until the page loads again.',
   );
   // A second refused save does not add a second note.
   await menu.getByRole('menuitemcheckbox', { name: /Less Movement/ }).click();
   await expect(menu.locator('[aria-live="polite"]')).toHaveCount(1);
   await expect(
-    menu.getByText(
-      'This browser cannot save your choice. It lasts until you reload or close this tab.',
-    ),
+    menu.getByText('This browser cannot save your choice. It lasts until the page loads again.'),
   ).toHaveCount(1);
   // The note is the last thing in the Make It Easier to Read group, after Less Movement.
   const order = await menu.evaluate((panel) => {
@@ -472,8 +470,7 @@ test('W7 the save note stays while any choice is unsaved: Less Movement refused,
   await header(page).getByRole('button', { name: 'Help and accessibility' }).click();
   const menu = page.getByRole('menu', { name: 'Help and accessibility' });
   const note = menu.locator('[aria-live="polite"]');
-  const words =
-    'This browser cannot save your choice. It lasts until you reload or close this tab.';
+  const words = 'This browser cannot save your choice. It lasts until the page loads again.';
   await expect(note).toBeEmpty();
   await menu.getByRole('menuitemcheckbox', { name: /Less Movement/ }).click();
   await expect(note).toHaveText(words);

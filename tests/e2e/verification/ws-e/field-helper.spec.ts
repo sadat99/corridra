@@ -85,9 +85,10 @@ test('the field helper has four bottom tabs on a phone and the left bar on a wid
     .getByText('Stops animation and anything that moves by itself.')
     .boundingBox())!;
   const saverBox = (await comfort
-    .locator('p', { hasText: 'Corridra already keeps data use low.' })
+    .locator('p', { hasText: 'Corridra does not load other pages in the background.' })
     .boundingBox())!;
-  expect(saverBox.y - (hintBox.y + hintBox.height)).toBeGreaterThanOrEqual(11.5);
+  // A hairline and a 16 px gap set it apart from the hint above, so it does not read as part of the hint.
+  expect(saverBox.y - (hintBox.y + hintBox.height)).toBeGreaterThanOrEqual(15.5);
   const group = (await comfort.getByRole('group', { name: 'Text Size' }).boundingBox())!;
   const row = (await lessMovement.locator('xpath=ancestor::label').boundingBox())!;
   expect(group.width).toBeLessThanOrEqual(640.5);
@@ -95,10 +96,13 @@ test('the field helper has four bottom tabs on a phone and the left bar on a wid
   await expect(
     comfort.getByText('Stops animation and anything that moves by itself.'),
   ).toBeVisible();
-  const dataLine = comfort.locator('p', { hasText: 'Corridra already keeps data use low.' });
+  const dataLine = comfort.locator('p', {
+    hasText: 'Corridra does not load other pages in the background.',
+  });
   await expect(dataLine).toHaveCount(1);
   await expect(dataLine).toBeVisible();
-  await expect(dataLine).toHaveText('Corridra already keeps data use low.');
+  await expect(dataLine).toHaveText('Corridra does not load other pages in the background.');
+  expect(await dataLine.evaluate((el) => getComputedStyle(el).borderTopWidth)).toBe('1px');
   // It is a plain line: nothing in it to press or switch, no Coming soon tag in the card or anywhere on the Me page.
   await expect(dataLine.locator('input, button, a, [role], .ux-soon-tag')).toHaveCount(0);
   await expect(comfort.locator('.ux-soon-tag')).toHaveCount(0);

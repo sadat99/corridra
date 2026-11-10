@@ -28,7 +28,7 @@ export const deviceAsksNote = 'Your device asks for this';
 
 /** Said when this browser would not keep a choice. It is true: the choice holds for the open page only. */
 export const unsavedChoiceNote =
-  'This browser cannot save your choice. It lasts until you reload or close this tab.';
+  'This browser cannot save your choice. It lasts until the page loads again.';
 
 /** Anything that is not a known step is the default, so an old or damaged saved value is harmless. */
 export function parseTextSize(value: unknown): TextSize {
@@ -120,13 +120,19 @@ export function subscribeComfort(listener: () => void): () => void {
 
 /**
  * Puts the saved choices on the page. Used on load (a cached boot file can be older than this code) and when
- * another tab changes a choice. A browser that cannot read its storage leaves the page as it is.
+ * another tab changes a choice. A browser that cannot read its storage leaves the page as it is. Given the key that
+ * changed, it puts back only that control, so a choice this browser refused to keep, for another control, stays on
+ * the page; with no key it puts back all three.
  */
-export function applyStoredComfort() {
+export function applyStoredComfort(changedKey: string | null = null) {
+  const all = changedKey === null;
   try {
-    applyTextSize(parseTextSize(window.localStorage.getItem(textSizeStorageKey)));
-    applyLessMovement(parseLessMovement(window.localStorage.getItem(lessMovementStorageKey)));
-    applyContrast(parseContrast(window.localStorage.getItem(contrastStorageKey)));
+    if (all || changedKey === textSizeStorageKey)
+      applyTextSize(parseTextSize(window.localStorage.getItem(textSizeStorageKey)));
+    if (all || changedKey === lessMovementStorageKey)
+      applyLessMovement(parseLessMovement(window.localStorage.getItem(lessMovementStorageKey)));
+    if (all || changedKey === contrastStorageKey)
+      applyContrast(parseContrast(window.localStorage.getItem(contrastStorageKey)));
   } catch {
     return;
   }
@@ -142,9 +148,9 @@ const comfortStorageKeys: readonly string[] = [
 export function isComfortKey(key: string | null): boolean {
   return key === null || comfortStorageKeys.includes(key);
 }
-/** Another tab changed the saved choices: take them, but leave the page alone for any other key. */
+/** Another tab changed a saved choice: take that one, and leave the rest of the page alone, including any other key. */
 export function handleComfortStorage(event: Pick<StorageEvent, 'key'>) {
-  if (isComfortKey(event.key)) applyStoredComfort();
+  if (isComfortKey(event.key)) applyStoredComfort(event.key);
 }
 /** Follows the saved choices of other tabs. Returns the way to stop. */
 export function watchComfortStorage(): () => void {

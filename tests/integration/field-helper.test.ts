@@ -88,10 +88,17 @@ describe('nothing a helper reached before is lost', () => {
     expect(frame).toContain("key: 'tasks'");
     expect(frame).toContain("href: '/network'");
   });
-  test('Me says in one plain line that Corridra keeps data use low, with no Data Saver control and no Coming soon', () => {
+  test('Me says in one plain line what Corridra does not do (load other pages in the background), with no Data Saver control and no Coming soon', () => {
     const me = read('apps/web/app/contributor/me/helper-me.tsx');
     // W10 (owner decision, 10 Nov 2026): data use is kept low for everyone, so there is nothing to switch.
-    expect(me).toContain('<p className="me-data-use">Corridra already keeps data use low.</p>');
+    expect(me).toContain(
+      '<p className="me-data-use">Corridra does not load other pages in the background.</p>',
+    );
+    expect(me).not.toContain('already keeps data use low');
+    // The line is set apart from the hint above it by a hairline, not run into it.
+    expect(read('apps/web/app/contributor/me/helper-me.css')).toMatch(
+      /\.me-data-use \{[^}]*margin-top: var\(--space-4\);[^}]*border-top: 1px solid var\(--line\);/,
+    );
     expect(me).not.toMatch(/<(?:input|button|label)[^>]*Data Saver/i);
     expect(me).not.toMatch(/label="Data Saver"|name="Data Saver"|aria-label="Data Saver"/i);
     expect(me).not.toMatch(/Data Saver[\s\S]{0,200}(?:role="switch"|type="checkbox")/);

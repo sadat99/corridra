@@ -181,9 +181,9 @@ describe('a browser that blocks its storage', () => {
     expect(currentNoteFilled()).toBe(false);
   });
 
-  test('the note says what is true: the choice lasts until the page is reloaded or the tab is closed', () => {
+  test('the note says what is true: the choice lasts until the page loads again, by a reload, a link or a sign-in', () => {
     expect(unsavedChoiceNote).toBe(
-      'This browser cannot save your choice. It lasts until you reload or close this tab.',
+      'This browser cannot save your choice. It lasts until the page loads again.',
     );
   });
 
@@ -452,6 +452,23 @@ describe('another tab changing a saved value', () => {
     chooseTextSize('largest');
     handlers[0]({ key: null });
     expect(attributes.get('data-text-size')).toBe('large');
+  });
+
+  test('a change to one comfort key puts back only that control, so an unsaved choice for another control stays', () => {
+    // The old behaviour re-read all three keys on any comfort key, so a change to Stronger Colours in another tab put
+    // Text Size back to Normal and undid a Text Size choice that this browser could not keep.
+    const { attributes, handlers } = fakeWindow(readableOnly());
+    watchComfortStorage();
+    expect(chooseTextSize('largest')).toBe(false);
+    expect(chooseLessMovement('on')).toBe(false);
+    handlers[0]({ key: contrastStorageKey });
+    expect(attributes.get('data-text-size')).toBe('largest');
+    expect(attributes.get('data-less-movement')).toBe('on');
+    handlers[0]({ key: lessMovementStorageKey });
+    expect(attributes.has('data-less-movement')).toBe(false);
+    expect(attributes.get('data-text-size')).toBe('largest');
+    handlers[0]({ key: textSizeStorageKey });
+    expect(attributes.has('data-text-size')).toBe(false);
   });
 
   test('a change to Stronger Colours in another tab is followed, and its removal is too', () => {
