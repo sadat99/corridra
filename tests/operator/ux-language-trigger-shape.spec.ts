@@ -86,7 +86,9 @@ test.afterAll(async () => {
 });
 
 const kinds = ['customer', 'team'] as const;
-const widths = [320, 390, 768, 1024, 1440] as const;
+// 640 and 700 are the narrowest widths with the language trigger on the row, and the ones where the signed-in header
+// keeps one row (it may wrap above 700 px); 701 is the first width where it wraps.
+const widths = [320, 390, 640, 700, 701, 768, 1024, 1440] as const;
 // Below 640 px the language and help menus fold into the avatar menu, so their triggers are not on the row.
 const folded = (width: number) => width < 640;
 
@@ -145,10 +147,13 @@ for (const kind of kinds)
       }) => {
         await open(page, kind, width, zoomed);
         // The header row fits the window: giving the trigger the width its content needs must not add sideways scroll.
+        // At 640 px with 200% text the customer header scrolled 34 px sideways before the trigger was resized and 72 px
+        // after; the tools now wrap inside the header instead, so every width and text size has none.
         expect(
           await page.evaluate(
             () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
           ),
+          'sideways scroll in px',
         ).toBeLessThanOrEqual(0);
         const triggers = page.locator('header .ux-menu-button:visible');
         const names = await triggers.evaluateAll((all) =>
@@ -213,6 +218,28 @@ for (const kind of kinds)
           expect(code).not.toBeNull();
           expect(trigger!.width).toBeGreaterThan(globe!.width + code!.width);
         }
+      });
+
+// The language choice is reachable at every width and text size: from the trigger on the row where there is one, and
+// from the account menu below 640 px, where the trigger is folded into it. Nothing is lost at either size.
+for (const kind of kinds)
+  for (const width of widths)
+    for (const zoomed of [false, true])
+      test(`the ${kind} header offers every language at ${width} px${zoomed ? ' with 200% text' : ''}`, async ({
+        page,
+      }) => {
+        await open(page, kind, width, zoomed);
+        const language = page.getByRole('button', { name: 'Language', exact: true });
+        const opener = folded(width)
+          ? page.getByRole('button', { name: 'Account menu', exact: true })
+          : language;
+        if (!folded(width)) await expect(language).toBeVisible();
+        await opener.click();
+        for (const name of ['English', 'বাংলা', '中文'])
+          await expect(page.getByRole('menuitemradio', { name, exact: true })).toBeVisible();
+        await expect(
+          page.getByRole('menuitemradio', { name: 'English', exact: true }),
+        ).toHaveAttribute('aria-checked', 'true');
       });
 
 for (const kind of kinds)
