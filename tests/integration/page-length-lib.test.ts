@@ -43,16 +43,18 @@ describe('page length limits', () => {
       phone: { target: 4.25, hard: 4.25 },
       desktop: { target: 3.0, hard: 3.0 },
     });
-    // Sign-in and recovery pages carry the public footer; /plan keeps the signed-in limits.
+    // Sign-in and recovery pages carry the public footer; /plan has its own limits (S13 under the S5 brief,
+    // owner confirmed, 9 November 2026, relayed by the conductor: "proceed with /plan proposal"): the owner's targets 2.4 and 1.8,
+    // hard limits 2.6 and 1.85 after measuring 2.53 and 1.80, with a text line of room.
     expect(
       limitsFor({ route: '/signin', audience: 'public intake and customer identity' }, desktop),
     ).toEqual(publicPageLimits.desktop);
     expect(
       limitsFor({ route: '/plan', audience: 'public intake and customer identity' }, desktop),
-    ).toEqual({
-      target: desktop.target,
-      hard: desktop.hard,
-    });
+    ).toEqual({ target: 1.8, hard: 1.85 });
+    expect(
+      limitsFor({ route: '/plan', audience: 'public intake and customer identity' }, phone),
+    ).toEqual({ target: 2.4, hard: 2.6 });
     const about = { route: '/about', audience: 'public' };
     expect(limitsFor(about, desktop)).toEqual(publicPageLimits.desktop);
     expect(limitsFor(about, phone)).toEqual(publicPageLimits.phone);
@@ -72,9 +74,8 @@ describe('page length limits', () => {
     );
   });
 
-  it('keeps the viewport limits for /plan and every signed-in page', () => {
+  it('keeps the viewport limits for every signed-in page', () => {
     for (const entry of [
-      { route: '/plan', audience: 'public intake and customer identity' },
       { route: '/account', audience: 'customer' },
       { route: '/operator', audience: 'staff' },
     ]) {

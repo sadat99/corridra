@@ -4,6 +4,7 @@ import { workspaceSections } from '../../apps/web/lib/workspace-navigation';
 import {
   itemForPlace,
   settingsLevel,
+  teamAccountPlaces,
   teamItemsFor,
   teamMap,
   teamPlacesFor,
@@ -20,6 +21,8 @@ function reachable(role: string | null): Set<TeamPlaceId> {
   for (const item of teamItemsFor(role))
     for (const place of teamPlacesFor(item, role)) found.add(place.id);
   for (const place of settingsLevel(role)) found.add(place.id);
+  // The avatar menu: Authenticator for every role, Health and Readiness for a role with no Admin.
+  for (const place of teamAccountPlaces(role)) found.add(place.id);
   return found;
 }
 
@@ -36,6 +39,8 @@ describe('NAV-01 every old route is still reachable for each role that could ope
   test('every one of the 18 sections is placed somewhere and has an address', () => {
     const placed = new Set(teamMap.flatMap((item) => item.places.map((place) => place.id)));
     for (const place of settingsLevel('owner')) placed.add(place.id);
+    for (const place of teamAccountPlaces('operator')) placed.add(place.id);
+    for (const place of teamAccountPlaces('viewer')) placed.add(place.id);
     for (const section of workspaceSections) {
       expect(placed.has(section.id), section.id).toBe(true);
       expect(Object.hasOwn(operatorSlugs, section.id)).toBe(true);
@@ -44,17 +49,14 @@ describe('NAV-01 every old route is still reachable for each role that could ope
 });
 
 describe('NAV-02 five at most per level, and the right words', () => {
-  test('at most five daily items plus the Admin and Account groups, and five places each, for every role', () => {
+  test('at most five daily items plus the Admin group, and five places each, for every role', () => {
     for (const role of [...roles, null]) {
       const items = teamItemsFor(role);
-      expect(
-        items.filter((item) => item.key !== 'admin' && item.key !== 'account').length,
-      ).toBeLessThanOrEqual(5);
+      expect(items.filter((item) => item.key !== 'admin').length).toBeLessThanOrEqual(5);
       for (const item of items) expect(teamPlacesFor(item, role).length).toBeLessThanOrEqual(5);
       expect(settingsLevel(role).length).toBeLessThanOrEqual(5);
-      // The Account stopgap holds at most three places (Authenticator, Health, Readiness).
-      const account = items.find((item) => item.key === 'account');
-      if (account) expect(teamPlacesFor(account, role).length).toBeLessThanOrEqual(3);
+      // The avatar menu carries at most three places (Authenticator, Health, Readiness).
+      expect(teamAccountPlaces(role).length).toBeLessThanOrEqual(3);
     }
   });
   test('the board order and words', () => {
@@ -65,7 +67,6 @@ describe('NAV-02 five at most per level, and the right words', () => {
       'Meetings',
       'Money',
       'Admin',
-      'Account',
     ]);
     expect(teamMap.find((item) => item.key === 'admin')?.places.map((p) => p.label)).toEqual([
       'Health',
@@ -99,20 +100,17 @@ describe('NAV-03 same access: nothing is shown to a role that cannot open it', (
       }
     }
   });
-  test('an operator keeps Health and Readiness in Account, where Admin is not shown; owner and admin find them in Admin', () => {
-    const account = (role: string) =>
-      teamPlacesFor(
-        teamItemsFor(role).find((item) => item.key === 'account')!,
-        role,
-      ).map((p) => p.id);
-    expect(account('operator')).toEqual(['workspace-authenticator', 'ops-health', 'ops-gates']);
-    expect(account('viewer')).toEqual(['workspace-authenticator']);
-    expect(account('owner')).toEqual(['workspace-authenticator']);
+  test('an operator finds Health and Readiness in the avatar menu, where Admin is not shown; owner and admin find them in Admin', () => {
+    const ids = (role: string) => teamAccountPlaces(role).map((p) => p.id);
+    expect(ids('operator')).toEqual(['workspace-authenticator', 'ops-health', 'ops-gates']);
+    expect(ids('viewer')).toEqual(['workspace-authenticator']);
+    expect(ids('owner')).toEqual(['workspace-authenticator']);
+    expect(ids('admin')).toEqual(['workspace-authenticator']);
   });
   test('a place belongs to Admin for owner and admin and to its own item for others', () => {
     expect(itemForPlace('ops-health', 'owner')).toBe('admin');
-    expect(itemForPlace('ops-health', 'operator')).toBe('account');
-    expect(itemForPlace('workspace-authenticator', 'viewer')).toBe('account');
+    expect(itemForPlace('ops-health', 'operator')).toBe('none');
+    expect(itemForPlace('workspace-authenticator', 'viewer')).toBe('none');
     expect(itemForPlace('workspace-missions', 'owner')).toBe('missions');
     expect(itemForPlace('workspace-delivery', 'viewer')).toBe('meetings');
     expect(itemForPlace('owner', 'owner')).toBe('admin');

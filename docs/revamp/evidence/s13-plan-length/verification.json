@@ -1,0 +1,271 @@
+{
+  "branch": "claude/s13-plan-length",
+  "review_round": "after Guardian FIXES-NEEDED on b6009e16",
+  "final_code_head": "329ae317 (the commit after it adds only these receipts and the work log line)",
+  "final_receipts": [
+    {
+      "name": "format-check5",
+      "command": "pnpm format:check",
+      "exit": 0,
+      "head": "329ae317d58ba3a061387b3c54e085d3f9228375",
+      "seconds": 47.6
+    },
+    {
+      "name": "lint5",
+      "command": "pnpm lint",
+      "exit": 0,
+      "head": "329ae317d58ba3a061387b3c54e085d3f9228375",
+      "seconds": 53.4
+    },
+    {
+      "name": "typecheck5",
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "head": "329ae317d58ba3a061387b3c54e085d3f9228375",
+      "seconds": 28.4
+    },
+    {
+      "name": "test5",
+      "command": "pnpm test",
+      "exit": 0,
+      "head": "329ae317d58ba3a061387b3c54e085d3f9228375",
+      "seconds": 18.3
+    },
+    {
+      "name": "integration5",
+      "command": "pnpm exec vitest run tests/integration/page-length-lib.test.ts tests/integration/cq-06-sample-lines.test.ts tests/integration/language-form.test.ts",
+      "exit": 0,
+      "head": "329ae317d58ba3a061387b3c54e085d3f9228375",
+      "seconds": 3
+    },
+    {
+      "name": "e2e5",
+      "command": "pnpm test:e2e --trace off",
+      "exit": 0,
+      "head": "329ae317d58ba3a061387b3c54e085d3f9228375",
+      "seconds": 391
+    },
+    {
+      "name": "ux5",
+      "command": "pnpm test:ux --trace off",
+      "exit": 0,
+      "head": "329ae317d58ba3a061387b3c54e085d3f9228375",
+      "seconds": 499.5
+    },
+    {
+      "name": "plan-languages5",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-plan-languages.spec.ts",
+      "exit": 0,
+      "head": "329ae317d58ba3a061387b3c54e085d3f9228375",
+      "seconds": 838.7
+    }
+  ],
+  "explained_non_green": [
+    {
+      "receipts": "baseline-eq exit 1 then exit 0, both at head 0104585e",
+      "why": "Both runs had the same HEAD because the change between them was an uncommitted edit of tests/operator/ux-plan-languages.spec.ts. The first run failed 3 tests (en, de, ar with mode=real) on my own too-strict assertion 'has the notice and summary regions', which wrongly required a test-notice region in the real form (the real notice is unchanged and is compared in full). I removed that assertion and replaced it with the 'found' checks; the second run passed 30 of 30."
+    },
+    {
+      "receipts": "bite exit 1 at 0104585e",
+      "why": "Intended: one unrelated line of the baseline copy was changed, and the equality test failed. The copy was restored."
+    },
+    {
+      "receipts": "bite-notice exit 1 and bite-summary exit 1 (head b6009e16, working tree edited)",
+      "why": "Intended. The 'notice found' and 'summary found' checks added after the first bite proof: the sample notice (bite-notice) or the summary (bite-summary) was removed from BOTH the page and the baseline copy in a scratch edit, so the rest and the words stayed equal and only the new check failed ('en pages= step 1 notice found', 'en pages= step 1 summary found'). The first notice attempt failed to build (a bad scratch edit) and was redone. Both files were restored."
+    },
+    {
+      "receipts": "e2e exit 1 at 990de873, 40dc58dd, 95aadbf8",
+      "why": "One test each time, tests/browser/receipt-memory.spec.ts:72, since made to poll for the same assertion (KI-43); e2e5 exit 0 at 329ae317"
+    },
+    {
+      "receipts": "CI browser job exit 1 at b6009e16",
+      "why": "tests/integration/page-length-lib.test.ts still pinned /plan to 1.0 and 1.0 (2 of 3370 tests failed). Updated to the new limits (target 2.4 and 1.8, hard 2.6 and 1.85) and run locally: integration-focused exit 0 and integration5 exit 0. In that CI run all six operator shards, all ux shards and verification passed."
+    }
+  ],
+  "also_run": [
+    {
+      "name": "allow2",
+      "note": "en baseline, fq=1 and mode=real cases after the allowlist tightening: 3 passed, exit 0"
+    }
+  ],
+  "bite_and_allowlist_receipts": [
+    {
+      "name": "bite-notice",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-plan-languages.spec.ts -g en, page words unset: the request form is exactly",
+      "exit": 1,
+      "head": "b6009e1617b68270e83eaac6357de1516c2a7ec1",
+      "seconds": 6.1
+    },
+    {
+      "name": "bite-notice",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-plan-languages.spec.ts -g en, page words unset: the request form is exactly",
+      "exit": 1,
+      "head": "b6009e1617b68270e83eaac6357de1516c2a7ec1",
+      "seconds": 16.1
+    },
+    {
+      "name": "bite-summary",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-plan-languages.spec.ts -g en, page words unset: the request form is exactly",
+      "exit": 1,
+      "head": "b6009e1617b68270e83eaac6357de1516c2a7ec1",
+      "seconds": 19.4
+    },
+    {
+      "name": "bite-notice",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-plan-languages.spec.ts -g en, page words unset: the request form is exactly",
+      "exit": 1,
+      "head": "b6009e1617b68270e83eaac6357de1516c2a7ec1",
+      "seconds": 18.7
+    },
+    {
+      "name": "allow2",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-plan-languages.spec.ts -g en, page words unset: the request form is exactly|en, fq=1&pages=true|en, mode=real",
+      "exit": 0,
+      "head": "b6009e1617b68270e83eaac6357de1516c2a7ec1",
+      "seconds": 39.8
+    },
+    {
+      "name": "bite-footer",
+      "command": "pnpm exec playwright test tests/browser/layout-budget-plan.spec.ts -g compact footer fits --trace off --project desktop",
+      "exit": 1,
+      "head": "1d603c6722a5d73229ae21d4977ca03b72bd0f84",
+      "seconds": 13.7,
+      "note": "Intended failure: a scratch rule widened the compact footer groups (min-width 420px); all 6 cases of the 320 px footer test failed with 'boxes past the edge'. The rule was removed afterwards."
+    }
+  ],
+  "earlier_receipts": [
+    {
+      "name": "baseline-eq",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-plan-languages.spec.ts -g exactly the baseline",
+      "exit": 1,
+      "head": "0104585e4460cab0786f51429ae4cad584b6267e",
+      "seconds": 312
+    },
+    {
+      "name": "baseline-eq",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-plan-languages.spec.ts -g exactly the baseline",
+      "exit": 0,
+      "head": "0104585e4460cab0786f51429ae4cad584b6267e",
+      "seconds": 308.7
+    },
+    {
+      "name": "bite",
+      "command": "pnpm exec playwright test --config playwright.operator.config.ts tests/operator/ux-plan-languages.spec.ts -g en, page words unset: the request form is exactly",
+      "exit": 1,
+      "head": "0104585e4460cab0786f51429ae4cad584b6267e",
+      "seconds": 18.2
+    }
+  ],
+  "measured_current": [
+    {
+      "width": 390,
+      "height": 844,
+      "document": 2132,
+      "header": 72,
+      "head": 128.9375,
+      "notice": 189.171875,
+      "form": 967.140625,
+      "receipt": 94,
+      "summary": 54,
+      "footer": 482.546875,
+      "screens": 2.53
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "document": 1617,
+      "header": 81,
+      "head": 113.078125,
+      "notice": 62,
+      "form": 749.671875,
+      "receipt": 94,
+      "summary": 346.71875,
+      "footer": 471.375,
+      "screens": 1.8
+    },
+    {
+      "width": 1780,
+      "height": 900,
+      "document": 1617,
+      "header": 81,
+      "head": 113.078125,
+      "notice": 62,
+      "form": 749.671875,
+      "receipt": 94,
+      "summary": 346.71875,
+      "footer": 471.375,
+      "screens": 1.8
+    }
+  ],
+  "measured_before": [
+    {
+      "width": 390,
+      "height": 844,
+      "document": 2945,
+      "header": 72,
+      "head": 128.9375,
+      "notice": 259.53125,
+      "form": 974.453125,
+      "receipt": 94,
+      "summary": 350.71875,
+      "footer": 869.09375,
+      "screens": 3.49
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "document": 2034,
+      "header": 81,
+      "head": 113.078125,
+      "notice": 134.78125,
+      "form": 749.671875,
+      "receipt": 94,
+      "summary": 350.71875,
+      "footer": 633.75,
+      "screens": 2.26
+    },
+    {
+      "width": 1780,
+      "height": 900,
+      "document": 2034,
+      "header": 81,
+      "head": 113.078125,
+      "notice": 134.78125,
+      "form": 749.671875,
+      "receipt": 94,
+      "summary": 350.71875,
+      "footer": 633.75,
+      "screens": 2.26
+    }
+  ],
+  "folded_sentence_estimate": [
+    {
+      "name": "as built",
+      "document": 2132,
+      "screens": 2.53
+    },
+    {
+      "name": "availability sentence hidden",
+      "document": 2092,
+      "screens": 2.48
+    }
+  ],
+  "limits": {
+    "phone": {
+      "target": 2.4,
+      "hard": 2.6,
+      "measured": 2.53,
+      "room_px": 62
+    },
+    "desktop": {
+      "target": 1.8,
+      "hard": 1.85,
+      "measured": 1.8,
+      "room_px": 48
+    },
+    "realLastStepAt1440": {
+      "pass_mark": 1.12,
+      "measured": "1.095 de and fr, 1.092 ar"
+    }
+  }
+}

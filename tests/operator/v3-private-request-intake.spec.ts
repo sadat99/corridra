@@ -50,8 +50,11 @@ test.beforeAll(async () => {
               ? { path: 'router', namespace: 'logout-fixture' }
               : undefined,
           );
+          // The provider call lives in lib/end-session.ts, which the sign-out hook calls.
           builder.onResolve({ filter: /neon-auth-client$/ }, (args) =>
-            /\/(app\/account\/signout\.tsx|components\/use-sign-out\.ts)$/.test(args.importer)
+            /\/(app\/account\/signout\.tsx|components\/use-sign-out\.ts|lib\/end-session\.ts)$/.test(
+              args.importer,
+            )
               ? { path: 'provider', namespace: 'logout-fixture' }
               : undefined,
           );

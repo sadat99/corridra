@@ -281,7 +281,11 @@ describe('installing the archive gate on a populated database', () => {
       (await f.owner.query('SELECT customer_private.workspace_lifecycle_open() AS open')).rows[0]
         .open,
     ).toBe(false);
-    const replaced = Object.values(signatures) as string[];
+    // The three gated functions, and provisioning, which takes the account lifecycle lock since the follow-up (file 0006).
+    const replaced = [
+      ...Object.values(signatures),
+      'customer.provision_workspace(uuid,text)',
+    ] as string[];
     const names = new Set(after.functions.map((row) => row.name));
     for (const row of before.functions) {
       expect(names.has(row.name)).toBe(true);
@@ -300,7 +304,8 @@ describe('installing the archive gate on a populated database', () => {
       );
     }
     // The only existing trigger that changes is the one on customer.membership (membership_immutable becomes membership_guard);
-    // the two deferred owner checks are new, and every other trigger is on a new table.
+    // the two deferred owner checks are new, the revocation guard is a new trigger on the revocation table (a name that
+    // starts customer_private.workspace_ below), and every other trigger is on a new table.
     const triggerName = (row: { relation: string; name: string }) => `${row.relation}:${row.name}`;
     const existing = new Set(before.triggers.map(triggerName));
     const added = after.triggers.map(triggerName).filter((name) => !existing.has(name));

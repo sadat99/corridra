@@ -1,0 +1,76 @@
+{
+  "recordedOn": "2026-11-09",
+  "batch": "S10 brand: halftone sphere replaces the solid orb in the product mark and the favicon (ADR-077 amendment 1)",
+  "kind": "Presentation only. Code-only, no migration, no auth, data, money or event change. Owner decision 9 Nov 2026 quoted in docs/adr/0077-corridra-visual-identity.md.",
+  "baseCommit": "ba7390d534b0989502dc869f40bde57a52682dba",
+  "history": "First push aad01144454d9ef20f7fa67283bdd0aea8a277cc (CI job operator (2) failed there: team Today at 390 px was 2.0308 screens, budget 2.0). Guardian fix commit 39e2db641c676bc4200ba363fd590ee1215da967 and receipt 2068d369fcdfe327a587b9484457ebb65850f511 (CI operator (2) failed again with the same test). Phone header fix commit fb1673ba89e638cfa9b6033cc010044ef0976e73. The commands below ran on the tree of fb1673ba89e638cfa9b6033cc010044ef0976e73; the only change after it is this receipt file. Earlier runs on earlier commits are superseded.",
+  "headNote": "A file cannot hold its own commit hash. The head of the PR is the commit that adds this receipt; CI on that exact head is the final record.",
+  "commands": [
+    {
+      "command": "pnpm format:check",
+      "exit": 0,
+      "ranOn": "fb1673ba89e638cfa9b6033cc010044ef0976e73"
+    },
+    {
+      "command": "pnpm lint",
+      "exit": 0,
+      "ranOn": "fb1673ba89e638cfa9b6033cc010044ef0976e73"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exit": 0,
+      "ranOn": "fb1673ba89e638cfa9b6033cc010044ef0976e73"
+    },
+    {
+      "command": "node scripts/gate.mjs docs-tests -- pnpm test:docs (includes tests/brand-identity.test.mjs, 5 of 5 pass)",
+      "exit": 0,
+      "ranOn": "fb1673ba89e638cfa9b6033cc010044ef0976e73"
+    },
+    {
+      "command": "pnpm exec vitest run tests/integration/navigation-v1-public-header.test.ts (6 of 6 pass)",
+      "exit": 0,
+      "ranOn": "fb1673ba89e638cfa9b6033cc010044ef0976e73"
+    },
+    {
+      "command": "cd apps/web && node ../../scripts/gate.mjs build -- pnpm build",
+      "exit": 0,
+      "ranOn": "fb1673ba89e638cfa9b6033cc010044ef0976e73"
+    },
+    {
+      "command": "node scripts/gate.mjs ux -- pnpm test:ux --trace off, production build (85 passed)",
+      "exit": 0,
+      "ranOn": "fb1673ba89e638cfa9b6033cc010044ef0976e73"
+    },
+    {
+      "command": "pnpm exec playwright test tests/operator/team-today-layout.spec.ts (9 passed; fixture-only, run with a copy of playwright.operator.config.ts without the database web server)",
+      "exit": 0,
+      "ranOn": "fb1673ba89e638cfa9b6033cc010044ef0976e73",
+      "note": "The same file failed on aad0114 and 2068d36 with 2.0308 screens; reproduced locally before the fix"
+    },
+    {
+      "command": "pnpm exec playwright test tests/operator/team-nav-v1.spec.ts (10 passed, same fixture-only config)",
+      "exit": 0,
+      "ranOn": "fb1673ba89e638cfa9b6033cc010044ef0976e73"
+    }
+  ],
+  "rendered": [
+    "Production build served on port 3111. Public home at 320, 390, 768 and 1440 px: no horizontal overflow, mark 46 x 44 px, brand link 44 px tall. Public header rows: 320 and 360 px wrap to two rows as before (89 px); 390 and 430 px stay on one row (72 px) thanks to the 14 px wordmark rule at 430 px and below.",
+    "Real team header from the operator fixture (tests/operator/team-today-fixture.ts, real stylesheets): at 390 px its content is 342 px for 342 px of room; with the 46 px mark the row wrapped (header 61 px to 113 px, page 2.0308 screens). With the old 30 px mark and 8 px gap, and with the new 44 x 42 px mark and 4 px gap, header height is identical at 320 (165), 340, 360 and 375 (113), and 390, 414, 430, 500, 700 and 759 px (61). The earlier injected-markup check (three buttons) had missed this because its tool row was shorter than the real one; the fixture measurement supersedes it.",
+    "Wide layouts from injected markup (indicative only): header 64 px at 1280 expanded, collapsed rail and team, identical with the old 30 and 24 px mark; footer wordmark reversed on navy at 1440 px legible.",
+    "Favicon files rendered at 3x: favicon-16 orb tile, favicon-32, -48 and -64 halftone tile."
+  ],
+  "changedArtwork": {
+    "icon.svg": "halftone mark reversed on the navy tile, 0.92 of the tile, 21812 bytes; dot group equals the reversed mark's (test pins it)",
+    "favicon.ico": "16 px entry unchanged (orb); 32 and 48 px entries rasterised from icon.svg",
+    "docs/brand/assets/favicon": "favicon.svg, favicon-32, -48, -64 and favicon.ico replaced; favicon-16 unchanged; apple, android and maskable files were already the halftone mark and are unchanged",
+    "public/brand mark files": "corridra-mark-cobalt.svg and -reversed.svg are byte-identical to docs/brand/assets/svg (test pins it)"
+  },
+  "notDone": [
+    "No real signed-in session was rendered. The signed-in headers were measured through the operator fixtures for team Today and team navigation, and through injected markup for the rest. The customer shell was not rendered in a fixture here; the other operator shards passed on the first head and only gap and mark size changed since, in the direction that matches the old widths.",
+    "Open Graph and Twitter images already use the halftone lockup (checked by eye); not regenerated.",
+    "Browsers that prefer icon.svg show the halftone at 16 CSS px; only favicon.ico keeps the orb at 16 px.",
+    "Trademark check, vector master and legal handoff, tagline review and the art-direction review of the orb as a standalone mark stay open.",
+    "Contributor header (components/ux/app-header.tsx, class site-header ux-app-header, flex-wrap wrap): it received the 4 px gap at 430 px and below in PR 369 and keeps the 46 x 44 px mark. The follow-up PR scopes the gap to the customer and team headers only, so the contributor header is back to its own gap. It was not rendered or measured at 320 to 430 px."
+  ],
+  "baseNote": "Merge base of the PR head 7e8451a with main (the origin/main merged in before the first push). The branch started from main a3090c667cca7f36475da64efb5196113b56aa00. Corrected by the follow-up PR."
+}

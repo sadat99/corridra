@@ -2,52 +2,142 @@ import { createHash } from 'node:crypto';
 import { withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
 import { DomainError } from '@corridra/domain';
 import {
+  decodeCursor,
+  keysetPage,
+  optionalUuid,
+  pageLimit,
+  type PageRow,
+} from '@corridra/domain/paging';
+import {
   assertMeetingTransition,
   meetingCommand,
   type MeetingStatus,
 } from '@corridra/domain/access';
 export class MeetingService {
   constructor(private pool: DatabasePool) {}
-  workspace(ctx: RequestContext) {
+  /**
+   * CRUD G12: meetings and follow-ups come in pages of at most 50, each with an exact total and a keyset
+   * cursor (sort time, then id), so an insert between two reads never repeats or skips a listed row.
+   * `after` continues the meetings, `followupsAfter` continues the follow-ups, and a continuation returns
+   * only the list it continues (the other list is empty and its total is null). A continuation carries no
+   * total either: the client keeps the first page's (G12 follow-up). Only one list continues at a time.
+   * `missionId` or `missionIds` (at most 100) filter on the server before paging. Each page's briefs,
+   * participants, outcomes and history belong to that page's meetings.
+   */
+  async workspace(
+    ctx: RequestContext,
+    options: {
+      after?: string | null;
+      followupsAfter?: string | null;
+      missionId?: string | null;
+      missionIds?: string[] | null;
+      limit?: number | null;
+    } = {},
+  ) {
+    const limit = pageLimit(options.limit),
+      after = decodeCursor(options.after),
+      followupsAfter = decodeCursor(options.followupsAfter),
+      missionId = optionalUuid(options.missionId, 'Mission'),
+      // Sent at all, the list must hold 1 to 100 mission ids: an empty `?missionIds=` is refused, never
+      // read as "no filter" or as a filter that matches nothing.
+      missionIds =
+        options.missionIds == null
+          ? null
+          : options.missionIds.map((id) => optionalUuid(id, 'Mission'));
+    if (after && followupsAfter) throw new DomainError('Continue one list at a time.', 400);
+    if (
+      missionIds &&
+      (!missionIds.length || missionIds.length > 100 || missionIds.includes(null) || missionId)
+    )
+      throw new DomainError('Mission filter is invalid.', 400);
+    const wantMeetings = !followupsAfter,
+      wantFollowups = !after;
     return withTenant(this.pool, ctx, 'meetings.read', async ({ db, role }) => {
-      const meetings = (
-        await db.query(
-          `SELECT m.*,b.body AS brief FROM app.meeting m JOIN app.meeting_brief b ON b.tenant_id=m.tenant_id AND b.meeting_id=m.id
-        WHERE m.tenant_id=$1 ORDER BY coalesce(m.starts_at,m.due_at),m.id LIMIT 100`,
-          [ctx.tenantId],
-        )
-      ).rows;
+      let meetings: PageRow[] = [],
+        meetingsTotal: number | null = null,
+        next: string | null = null;
+      if (wantMeetings) {
+        const page = await keysetPage(db, {
+          // The brief is read below for this page only: joining it here made the database check the
+          // brief's policy against every meeting of the workspace once per meeting (G12 follow-up).
+          select: 'm.*',
+          from: 'app.meeting m',
+          where:
+            'm.tenant_id=$1 AND ($2::uuid IS NULL OR m.mission_id=$2) AND ($3::uuid[] IS NULL OR m.mission_id=ANY($3))',
+          values: [ctx.tenantId, missionId, missionIds],
+          sortExpression: 'CASE WHEN m.starts_at IS NULL THEN m.due_at ELSE m.starts_at END',
+          direction: 'asc',
+          cursor: after,
+          limit,
+        });
+        ({ rows: meetings, total: meetingsTotal, next } = page);
+      }
       const ids = meetings.map((m) => m.id);
-      const participants = (
-        await db.query(
-          'SELECT * FROM app.meeting_participant WHERE tenant_id=$1 AND meeting_id=ANY($2::uuid[]) ORDER BY created_at,id',
-          [ctx.tenantId, ids],
-        )
-      ).rows;
-      const outcomes = (
-        await db.query(
-          'SELECT * FROM app.meeting_outcome WHERE tenant_id=$1 AND meeting_id=ANY($2::uuid[]) ORDER BY observed_at DESC',
-          [ctx.tenantId, ids],
-        )
-      ).rows;
-      const followups = (
-        await db.query(
-          'SELECT * FROM app.follow_up WHERE tenant_id=$1 ORDER BY due_at,id LIMIT 100',
-          [ctx.tenantId],
-        )
-      ).rows;
-      const history = (
-        await db.query(
-          'SELECT * FROM app.meeting_command WHERE tenant_id=$1 AND meeting_id=ANY($2::uuid[]) ORDER BY created_at DESC LIMIT 200',
-          [ctx.tenantId, ids],
-        )
-      ).rows;
+      // Every meeting is written with its brief in one command, so each listed meeting has one.
+      const briefs = new Map(
+        (ids.length
+          ? (
+              await db.query(
+                'SELECT meeting_id,body FROM app.meeting_brief WHERE tenant_id=$1 AND meeting_id=ANY($2::uuid[])',
+                [ctx.tenantId, ids],
+              )
+            ).rows
+          : []
+        ).map((b) => [b.meeting_id as string, b.body as string]),
+      );
+      meetings = meetings.map((m) => ({ ...m, brief: briefs.get(m.id) ?? null }));
+      const participants = ids.length
+        ? (
+            await db.query(
+              'SELECT * FROM app.meeting_participant WHERE tenant_id=$1 AND meeting_id=ANY($2::uuid[]) ORDER BY created_at,id',
+              [ctx.tenantId, ids],
+            )
+          ).rows
+        : [];
+      const outcomes = ids.length
+        ? (
+            await db.query(
+              'SELECT * FROM app.meeting_outcome WHERE tenant_id=$1 AND meeting_id=ANY($2::uuid[]) ORDER BY observed_at DESC',
+              [ctx.tenantId, ids],
+            )
+          ).rows
+        : [];
+      const history = ids.length
+        ? (
+            await db.query(
+              'SELECT * FROM app.meeting_command WHERE tenant_id=$1 AND meeting_id=ANY($2::uuid[]) ORDER BY created_at DESC,id',
+              [ctx.tenantId, ids],
+            )
+          ).rows
+        : [];
+      let followups: PageRow[] = [],
+        followupsTotal: number | null = null,
+        followupsNext: string | null = null;
+      if (wantFollowups) {
+        const page = await keysetPage(db, {
+          select: 'f.*',
+          from: 'app.follow_up f',
+          where: `f.tenant_id=$1 AND (($2::uuid IS NULL AND $3::uuid[] IS NULL) OR EXISTS(
+            SELECT FROM app.meeting m WHERE m.tenant_id=f.tenant_id AND m.id=f.meeting_id
+              AND ($2::uuid IS NULL OR m.mission_id=$2) AND ($3::uuid[] IS NULL OR m.mission_id=ANY($3))))`,
+          values: [ctx.tenantId, missionId, missionIds],
+          sortExpression: 'f.due_at',
+          direction: 'asc',
+          cursor: followupsAfter,
+          limit,
+        });
+        ({ rows: followups, total: followupsTotal, next: followupsNext } = page);
+      }
       return {
         role,
         meetings,
+        meetingsTotal,
+        next,
         participants,
         outcomes,
         followups,
+        followupsTotal,
+        followupsNext,
         history,
         owners: (await db.query('SELECT * FROM app.mission_owners($1)', [ctx.tenantId])).rows,
       };

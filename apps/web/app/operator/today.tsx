@@ -25,7 +25,12 @@ type Meeting = {
   location: string | null;
 };
 type FollowUp = { id: string; status: string; due_at: string; next_action: string };
-type MeetingRead = { meetings: Meeting[]; followups: FollowUp[] };
+type MeetingRead = {
+  meetings: Meeting[];
+  followups: FollowUp[];
+  next?: string | null;
+  followupsNext?: string | null;
+};
 /** getTeamToday counts (CQ-34, CQ-73). Unread counts are listed in `unavailable`, never zero. */
 type TeamCounts = {
   acceptedQuotesNotStarted: number;
@@ -54,7 +59,8 @@ type Today = {
 };
 
 const week = 7 * 24 * 60 * 60 * 1000;
-const readLimit = 100;
+/** One server page (CRUD G12): the meetings read is ordered by date, earliest first. */
+const readLimit = 50;
 /** Rows shown in "Needs you now" before "Show N More", and rows per group in "This week". */
 const firstRows = 5;
 const weekRows = 3;
@@ -347,7 +353,8 @@ function ThisWeek({ today }: { today: Today }) {
           </WeekGroup>
           {work.partial && (
             <p className="ux-today-more">
-              Meeting and follow-up counts cover the first {readLimit} records of each kind.
+              Meeting and follow-up counts cover the {readLimit} earliest of each, by date. The
+              meetings section lists them all.
             </p>
           )}
         </>
@@ -439,7 +446,7 @@ export function TodayPanel({
               lateFollowUps: read.followups.filter(
                 (f) => f.status === 'OPEN' && Date.parse(f.due_at) < now,
               ),
-              partial: read.meetings.length >= readLimit || read.followups.length >= readLimit,
+              partial: Boolean(read.next || read.followupsNext),
             }
           : null;
         setToday({

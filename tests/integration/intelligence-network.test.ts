@@ -660,3 +660,83 @@ test('SQL tenant isolation, immutable records, revoked MFA and removed policy de
   ).rejects.toThrow();
   await f.owner.query('UPDATE identity.assurance SET verified_at=now()');
 });
+
+// CRUD G12: profiles and tasks page on their own cursors, newest first, with an exact total.
+test('network profiles and tasks come in pages with an exact total and no loss or duplicate', async () => {
+  const j = await setup('BD', 'CN');
+  await task(j);
+  const seed = await f.owner.connect();
+  try {
+    // Volume seeding only: copies of the rows above with new ids, versions and creation times.
+    await seed.query("SET session_replication_role = 'replica'");
+    await seed.query(
+      `INSERT INTO app.network_profile SELECT (jsonb_populate_record(null::app.network_profile, to_jsonb(p) ||
+         jsonb_build_object('id',gen_random_uuid(),'version',p.version+g,'created_at',now()+(g||' seconds')::interval))).*
+       FROM (SELECT * FROM app.network_profile WHERE tenant_id=$1 ORDER BY version DESC LIMIT 1) p, generate_series(1,6) g`,
+      [f.tenantA],
+    );
+    await seed.query(
+      `INSERT INTO app.network_task SELECT (jsonb_populate_record(null::app.network_task, to_jsonb(t) ||
+         jsonb_build_object('id',gen_random_uuid(),'created_at',now()+(g||' seconds')::interval))).*
+       FROM (SELECT * FROM app.network_task WHERE tenant_id=$1 ORDER BY created_at DESC LIMIT 1) t, generate_series(1,6) g`,
+      [f.tenantA],
+    );
+  } finally {
+    await seed.query('RESET session_replication_role');
+    seed.release();
+  }
+  type Page = Record<string, unknown>;
+  for (const name of ['profiles', 'tasks'] as const) {
+    const ids: string[] = [];
+    const sizes: number[] = [];
+    let after: string | null = null;
+    let total = -1;
+    for (let guard = 0; guard < 20; guard++) {
+      const page = (await network.workspace(f.ctx, {
+        [`${name}After`]: after,
+        limit: 3,
+      })) as unknown as Page;
+      const rows = page[name] as { id: string }[];
+      sizes.push(rows.length);
+      ids.push(...rows.map((r) => r.id));
+      // A continuation carries no total; the first page's stands (G12 follow-up).
+      if (guard === 0) total = page[`${name}Total`] as number;
+      else expect(page[`${name}Total`]).toBeNull();
+      after = page[`${name}Next`] as string | null;
+      if (!after) break;
+    }
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids.length).toBe(total);
+    expect(sizes.slice(0, -1).every((n) => n === 3)).toBe(true);
+    expect(total).toBeGreaterThanOrEqual(7);
+    const table = name === 'profiles' ? 'network_profile' : 'network_task';
+    const stored = (
+      await f.owner.query(
+        `SELECT id FROM app.${table} WHERE tenant_id=$1 ORDER BY created_at DESC,id DESC`,
+        [f.tenantA],
+      )
+    ).rows.map((r) => r.id);
+    expect(ids).toEqual(stored);
+  }
+  const first = (await network.workspace(f.ctx, { limit: 3 })) as unknown as Page;
+  const continued = (await network.workspace(f.ctx, {
+    tasksAfter: first.tasksNext as string,
+    limit: 3,
+  })) as unknown as Page;
+  expect(continued.profiles).toEqual([]);
+  expect(continued.profilesTotal).toBeNull();
+  for (const row of continued.tasks as { history: unknown; status: string }[]) {
+    expect(Array.isArray(row.history)).toBe(true);
+    expect(typeof row.status).toBe('string');
+  }
+  for (const bad of ['not-a-cursor', 'x'.repeat(400)])
+    await expect(network.workspace(f.ctx, { tasksAfter: bad })).rejects.toMatchObject({
+      status: 400,
+    });
+  await expect(
+    network.workspace(f.ctx, {
+      profilesAfter: first.profilesNext as string,
+      tasksAfter: first.tasksNext as string,
+    }),
+  ).rejects.toMatchObject({ status: 400 });
+});

@@ -48,12 +48,15 @@ export function BarInbox({
   endpoint,
   label = 'Inbox',
   grouped = false,
+  bulk = true,
 }: {
   counted: boolean;
   endpoint: string;
   label?: string;
   /** The customer panel (Needs You, Updates, Earlier, Mark All Read) instead of the plain list. */
   grouped?: boolean;
+  /** Whether the endpoint answers `?count=1` and accepts Mark All Read. The team inbox does neither. */
+  bulk?: boolean;
 }) {
   const [unread, setUnread] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
@@ -69,7 +72,7 @@ export function BarInbox({
           setUnread(Array.isArray(items) ? items.filter((i) => !i.readAt).length : null);
           // The customer list holds only the newest 30. A full list may hide older unread items, so the figure on
           // the bell is then the server's own count over every item.
-          if (grouped && Array.isArray(items) && items.length >= 30)
+          if (grouped && bulk && Array.isArray(items) && items.length >= 30)
             fetch(`${endpoint}?count=1`, { cache: 'no-store', signal })
               .then((r) => (r.ok ? r.json() : null))
               .then((body: { unread?: unknown } | null) => {
@@ -81,7 +84,7 @@ export function BarInbox({
           if (!signal?.aborted) setUnread(null);
         });
     },
-    [endpoint, grouped],
+    [endpoint, grouped, bulk],
   );
   useEffect(() => {
     if (!counted) return;
@@ -147,7 +150,12 @@ export function BarInbox({
       ) : null}
       <div id={panelId} className="ux-app-popover" hidden={!open}>
         {open ? (
-          <NotificationInbox endpoint={endpoint} grouped={grouped} onUnread={setUnread} />
+          <NotificationInbox
+            endpoint={endpoint}
+            grouped={grouped}
+            bulk={bulk}
+            onUnread={setUnread}
+          />
         ) : null}
       </div>
     </div>

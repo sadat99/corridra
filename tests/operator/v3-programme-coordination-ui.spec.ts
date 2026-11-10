@@ -361,10 +361,17 @@ test('attendance is marked per active participant and not offered for withdrawn 
   await expect(saved(page, 'Attendance saved.')).toBeVisible();
   expect(commands[0]).toMatchObject({
     action: 'attendance',
-    input: { registrationId: reg(2), state: 'ABSENT', workspaceId, programmeId },
+    input: {
+      registrationId: reg(2),
+      expectedVersion: 0,
+      state: 'ABSENT',
+      workspaceId,
+      programmeId,
+    },
   });
   expect(Object.keys((commands[0] as { input: object }).input).sort()).toEqual([
     'commandId',
+    'expectedVersion',
     'programmeId',
     'registrationId',
     'state',
@@ -478,6 +485,32 @@ test('a stale version keeps the draft and explains it', async ({ page }) => {
   await expect(page.getByLabel('Title (start with Synthetic)')).toHaveValue(
     'Synthetic a different title',
   );
+});
+test('an attendance mark sends the version shown, and a newer mark elsewhere is explained', async ({
+  page,
+}) => {
+  const commands: Record<string, unknown>[] = [];
+  await mock(page, {
+    post: (b) => {
+      commands.push(b);
+      return {
+        status: 409,
+        json: {
+          error:
+            'Attendance was changed by someone else. Reload to see the latest mark, then try again.',
+        },
+      };
+    },
+  });
+  await page.goto(origin);
+  await page.getByRole('button', { name: 'Mark absent for Synthetic participant Bob' }).click();
+  await expect(page.getByRole('alert')).toContainText('changed since you opened it');
+  expect(commands[0]).toMatchObject({
+    action: 'attendance',
+    input: { registrationId: reg(1), expectedVersion: 1, state: 'ABSENT' },
+  });
+  // Private details stay: a stale mark is not a lost account.
+  await expect(page.getByText('Synthetic participant Bob')).not.toHaveCount(0);
 });
 test('a changed account on save clears every private detail', async ({ page }) => {
   await mock(page, {

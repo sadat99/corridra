@@ -278,6 +278,8 @@ function PrivateDetail({ requestId, subject, issuer, serviceRequestsEnabled = fa
                   </time>
                 )}
               </p>
+              <p>Reference: {requestId}</p>
+              <p className="ux-hint">Quote this reference when you contact the Corridra team.</p>
             </section>
             {serviceRequestsEnabled && (
               <p>

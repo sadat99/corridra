@@ -5,7 +5,9 @@ import { formatDate, formatDateTime } from '../../../../lib/ux/format';
 import { formatMoney } from '../../../../lib/ux/money';
 import { CommercialMission } from '../../commercial-mission';
 import { DeliveryExperience } from '../../delivery-experience';
+import { ShowMore } from '../../show-more';
 import { MissionMoves } from '../../mission-moves';
+import { WithdrawalNote } from '../../mission-withdrawal-note';
 import {
   MissionActionForm,
   MissionFacts,
@@ -155,6 +157,7 @@ export function MissionPage({
           {m.route_label ?? 'not assigned yet'}
         </p>
         <p>Next action: {m.next_action || 'Not recorded'}</p>
+        <WithdrawalNote tenant={tenant} missionId={m.id} />
       </header>
       <div className="mission-tabs" role="tablist" aria-label="Mission sections">
         {tabs.map(([key, label], index) => (
@@ -366,13 +369,26 @@ function Loading({ error, children }: { error: string; children?: ReactNode }) {
 }
 
 /** The full workspace section, which works whether or not section addresses are switched on. */
-function sectionHref(tenant: string, slug: string) {
-  return `/operator?workspace=${encodeURIComponent(tenant)}#workspace-${slug}`;
+function sectionHref(tenant: string, slug: string, missionId?: string) {
+  // W5: the research and commercial sections open on this mission. The mission is only a hint to pick
+  // from what the section already lists; the section still ignores it when it is not in that list.
+  const mission = missionId ? `&mission=${encodeURIComponent(missionId)}` : '';
+  return `/operator?workspace=${encodeURIComponent(tenant)}${mission}#workspace-${slug}`;
 }
 
-function SectionLink({ tenant, slug, label }: { tenant: string; slug: string; label: string }) {
+function SectionLink({
+  tenant,
+  slug,
+  label,
+  missionId,
+}: {
+  tenant: string;
+  slug: string;
+  label: string;
+  missionId?: string;
+}) {
   return (
-    <a className="text-link" href={sectionHref(tenant, slug)}>
+    <a className="text-link" href={sectionHref(tenant, slug, missionId)}>
       {label}
     </a>
   );
@@ -487,7 +503,12 @@ function Companies({ tenant, missionId }: { tenant: string; missionId: string })
       ) : (
         <p>No companies on this mission&apos;s shortlist yet.</p>
       )}
-      <SectionLink tenant={tenant} slug="research" label="Find and add companies" />
+      <SectionLink
+        tenant={tenant}
+        slug="research"
+        label="Find and add companies"
+        missionId={missionId}
+      />
     </>
   );
 }
@@ -538,7 +559,12 @@ function Quotes({
       <button type="button" className="text-link" onClick={onRecord}>
         Record or Revise a Supplier Offer
       </button>{' '}
-      <SectionLink tenant={tenant} slug="commercial" label="Quotes and billing" />
+      <SectionLink
+        tenant={tenant}
+        slug="commercial"
+        label="Quotes and billing"
+        missionId={missionId}
+      />
     </>
   );
 }
@@ -552,10 +578,44 @@ function safeMoney(minor: string, currency: string) {
 }
 
 function Meetings({ tenant, missionId }: { tenant: string; missionId: string }) {
-  const { value, error } = useRead<{ meetings: Row[] }>(
-    `/api/workspace/meetings?tenant=${encodeURIComponent(tenant)}`,
+  const base = `/api/workspace/meetings?tenant=${encodeURIComponent(tenant)}&missionId=${encodeURIComponent(missionId)}`;
+  const first = useRead<{ meetings: Row[]; meetingsTotal: number | null; next: string | null }>(
+    base,
   );
-  const rows = value?.meetings.filter((m) => m.mission_id === missionId) ?? [];
+  // Extra pages belong to the first read they continue: when that read changes (another mission, or a
+  // fresh read), they are dropped instead of being shown under the wrong list (G12 follow-up).
+  const [more, setMore] = useState<{ of: unknown; rows: Row[]; next: string | null } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState('');
+  const { value, error } = first;
+  const extra = more && more.of === value ? more : null;
+  const rows = [...(value?.meetings ?? []), ...(extra?.rows ?? [])];
+  const next = extra ? extra.next : (value?.next ?? null);
+  // A continuation carries no total; the first page's stands.
+  const total = value?.meetingsTotal ?? null;
+  async function showMore() {
+    if (!next || busy) return;
+    const of = value;
+    setBusy(true);
+    setFailure('');
+    try {
+      const page = await read<{ meetings: Row[]; next: string | null }>(
+        `${base}&after=${encodeURIComponent(next)}`,
+      );
+      setMore((old) => ({
+        of,
+        rows: [
+          ...(old && old.of === of ? old.rows : []),
+          ...page.meetings.filter((m) => !rows.some((r) => r.id === m.id)),
+        ],
+        next: page.next,
+      }));
+    } catch (e) {
+      setFailure(e instanceof Error ? e.message : 'The next page could not be loaded.');
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
     <>
       <h3>Meetings</h3>
@@ -563,14 +623,25 @@ function Meetings({ tenant, missionId }: { tenant: string; missionId: string }) 
       {!value ? (
         <Loading error={error} />
       ) : rows.length ? (
-        <ul>
-          {rows.map((m) => (
-            <li key={m.id}>
-              {String(m.title)} · {plainCode(String(m.status))}
-              {m.starts_at ? ` · ${formatDateTime(String(m.starts_at))}` : ' · not scheduled'}
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul>
+            {rows.map((m) => (
+              <li key={m.id}>
+                {String(m.title)} · {plainCode(String(m.status))}
+                {m.starts_at ? ` · ${formatDateTime(String(m.starts_at))}` : ' · not scheduled'}
+              </li>
+            ))}
+          </ul>
+          <ShowMore
+            shown={rows.length}
+            total={total}
+            next={next}
+            busy={busy}
+            label="Meetings"
+            onMore={() => void showMore()}
+          />
+          {failure && <p role="alert">{failure}</p>}
+        </>
       ) : (
         <p>No meetings for this mission yet.</p>
       )}

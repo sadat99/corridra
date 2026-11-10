@@ -244,6 +244,7 @@ test('tasks, places and attendance are kept with versions; the delegate adds the
     workspaceId,
     programmeId,
     registrationId,
+    expectedVersion: 0,
     state: 'ATTENDED',
   });
   await coordination(delegate).submitRecord({

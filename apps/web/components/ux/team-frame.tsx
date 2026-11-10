@@ -10,10 +10,12 @@ import { useLanguage } from '../language-provider';
 import { localeMeta } from '../../lib/i18n/locales';
 import { subscribeToHash } from '../../lib/address-store';
 import { teamSidebarShown } from '../../lib/ux/shells';
+import { publishTeamFlags } from '../../lib/ux/team-flags';
 import { LeftNavFrame } from './left-nav';
 import { setLeftNavOpen } from './left-nav-store';
 import { useMarkedWord } from './marked-word';
 import { StepUpDialog } from './step-up-dialog';
+import { TeamPalette } from './team-palette';
 import { TeamSidebar } from './team-sidebar';
 
 export function TeamFrame({
@@ -29,6 +31,8 @@ export function TeamFrame({
   const { locale, t } = useLanguage();
   const word = useMarkedWord();
   const shown = teamSidebarShown(pathname);
+  // The header's account menu builds its addresses the way the sidebar does.
+  useEffect(() => publishTeamFlags({ urls }), [urls]);
   // A new page closes the drawer. An old "Back to workspace sections" link (#workspace-navigation)
   // opens it (on a wide screen the bar is already beside the page).
   useEffect(() => {
@@ -59,6 +63,7 @@ export function TeamFrame({
       >
         {children}
       </LeftNavFrame>
+      <TeamPalette urls={urls} ownerPage={ownerPage} />
       <StepUpDialog />
     </>
   );

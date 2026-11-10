@@ -50,7 +50,7 @@ test.beforeAll(async () => {
           ?<CustomerWorkspaceInvitation subject="synthetic-alice" issuer=${JSON.stringify(issuer)} onJoined={()=>window.__events.push('joined')} onDenied={(s)=>window.__events.push('denied:'+s)}/>
           :screen==='leave'
           ?<CustomerWorkspaceLeave workspace={props.workspace} subject="synthetic-alice" issuer=${JSON.stringify(issuer)} onLeft={(id)=>window.__events.push('left:'+id)} onDenied={(s)=>window.__events.push('denied:'+s)}/>
-          :<NotificationsForm initial={props.initial} unavailable={!!props.unavailable}/>}</main>);`,
+          :<NotificationsForm initial={props.initial} unavailable={!!props.unavailable} subject="synthetic-alice" issuer="https://ep-fixture.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth"/>}</main>);`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
     },

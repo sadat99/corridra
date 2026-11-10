@@ -146,6 +146,13 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: '/api/mission-withdrawal/:path*',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
         source: '/api/move/:path*',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },
@@ -212,6 +219,13 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/api/workspace/customer-organisation-links',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
+        source: '/api/workspace/customer-erasure-queue',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },
           { key: 'Cache-Control', value: 'no-store' },

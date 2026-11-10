@@ -119,7 +119,7 @@ describe('the public header on the server (navigation v1)', () => {
 
   it('keeps the logo lines and the session and language code it consumes unchanged', () => {
     const source = read('apps/web/components/site-header.tsx');
-    expect(source).toContain("import { ORB, WORDMARK } from './brand-paths';");
+    expect(source).toContain("import { WORDMARK } from './brand-paths';");
     expect(source).toContain('export function BrandLockup()');
     expect(source).toContain('useSignedIn(accounts)');
     expect(source).toContain('useSignOut()');

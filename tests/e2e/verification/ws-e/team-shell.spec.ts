@@ -60,7 +60,7 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   );
   await evidence(page, `V-06-today-${info.project.name}`);
 
-  // Tab order: Today, Missions, Companies, Meetings, Money, then the Admin and Account summaries. A closed group's
+  // Tab order: Today, Missions, Companies, Meetings, Money, then the Admin summary. A closed group's
   // links are not in the order. Enter and Space both toggle the group and focus stays on its summary.
   const focusedText = () =>
     page.evaluate(
@@ -71,11 +71,11 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
     );
   await sidebar.getByRole('link', { name: 'Today', exact: true }).focus();
   const order: string[] = [];
-  for (let step = 0; step < 6; step++) {
+  for (let step = 0; step < 5; step++) {
     await page.keyboard.press('Tab');
     order.push(await focusedText());
   }
-  expect(order).toEqual(['Missions', 'Companies', 'Meetings', 'Money', 'Admin', 'Account']);
+  expect(order).toEqual(['Missions', 'Companies', 'Meetings', 'Money', 'Admin']);
   const admin = sidebar.locator('summary', { hasText: 'Admin' });
   await expect(admin).toHaveAccessibleName('Admin');
   await expect(admin).toHaveAccessibleDescription('Owner and admin');
@@ -92,7 +92,7 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   // The command palette: Ctrl K opens it, Actions list only places this role may open, Tab changes scope,
   // Up and Down move, Escape closes and focus returns, and a mission is found by its company name.
   const palette = page.getByRole('dialog', { name: 'Search missions, companies and actions' });
-  const trigger = sidebar.getByRole('button', { name: /Search/ });
+  const trigger = page.locator('header.ux-app-header').getByRole('button', { name: /Search/ });
   expect((await trigger.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await trigger.focus();
   await page.keyboard.press('Control+k');
@@ -231,7 +231,7 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   const inbox = header.getByRole('button', { name: 'Inbox', exact: true });
   await expect(inbox).toBeVisible();
   await inbox.click();
-  await expect(page.getByRole('heading', { name: 'Inbox', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Notifications', exact: true })).toBeVisible();
   await expect(page.getByText('Nothing new.')).toBeVisible();
   const own = await page.request.get(`/api/notifications?tenant=${seed.tenantId}`);
   expect(own.status()).toBe(200);
@@ -274,6 +274,47 @@ test('V-06 and D14: the Team shell has the sidebar, renders one section at a tim
   expect(contributorInbox.status()).toBe(200);
   expect(await contributorInbox.json()).toEqual([]);
   await evidence(page, `GAP-004-contributor-${info.project.name}`);
+  // Choosing the Authenticator from the Account menu switches the section from another section (Missions here), on the
+  // real router: the menu's link must change what is on screen, not only the address. The current place is marked.
+  await page.goto(`/operator/missions?workspace=${seed.tenantId}`);
+  await expect(page.locator('#workspace-missions')).toBeVisible();
+  await header.getByRole('button', { name: 'Account menu' }).click();
+  await page.getByRole('menuitem', { name: 'Authenticator', exact: true }).click();
+  await expect(page.locator('#workspace-authenticator')).toBeVisible();
+  await expect(page.locator('#workspace-missions')).toHaveCount(0);
+  await header.getByRole('button', { name: 'Account menu' }).click();
+  await expect(page.getByRole('menuitem', { name: 'Authenticator', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  await page.keyboard.press('Escape');
+  // Sign Out from the avatar menu ends the session. The browser's own cookies are cleared by any sign-out, so the proof
+  // that the server revoked the session is a replay: the cookies held before the click, sent from a fresh context
+  // after it, must be refused. The same replay runs first as a control and must be accepted, so the refusal afterwards
+  // cannot be a context that never applied the cookies. The page also returns to the staff sign-in and the workspace
+  // address sends a signed-out visitor there.
+  const before = await page.context().cookies();
+  expect(before.length).toBeGreaterThan(0);
+  const replayStatus = async () => {
+    const replay = await page
+      .context()
+      .browser()!
+      .newContext({ baseURL: info.project.use.baseURL });
+    try {
+      await replay.addCookies(before);
+      return (await replay.request.get(`/api/notifications?tenant=${seed.tenantId}`)).status();
+    } finally {
+      await replay.close();
+    }
+  };
+  expect(await replayStatus(), 'control: the cookies are accepted before Sign Out').toBe(200);
+  await header.getByRole('button', { name: 'Account menu' }).click();
+  await page.getByRole('menuitem', { name: 'Sign Out', exact: true }).click();
+  await expect(page).toHaveURL(/\/operator\/signin/);
+  await page.goto(`/operator?workspace=${seed.tenantId}`);
+  await expect(page).toHaveURL(/\/operator\/signin/);
+  expect((await page.request.get(`/api/notifications?tenant=${seed.tenantId}`)).status()).toBe(401);
+  expect(await replayStatus(), 'the old session cookies are refused after Sign Out').toBe(401);
 });
 
 test('V-45 infrastructure: the inbox answers 401 to a signed-out visitor', async ({ request }) => {

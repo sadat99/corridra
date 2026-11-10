@@ -65,6 +65,7 @@ import {
   CustomerWorkspaceLifecycleService,
   customerWorkspaceLifecycleEnabled,
 } from '@corridra/auth/customer-workspace-lifecycle';
+import { CustomerErasureQueue } from '@corridra/auth/customer-erasure-queue';
 import {
   CustomerAccountLifecycleService,
   customerAccountLifecycleEnabled,
@@ -105,6 +106,7 @@ import {
 import { CustomerRequestService, customerRequestsEnabled } from '@corridra/auth/customer-requests';
 import { CustomerMoveService, customerMovesEnabled } from '@corridra/auth/customer-moves';
 import { MissionMoveService } from '@corridra/missions/moves';
+import { RequestWithdrawalSignalService } from '@corridra/missions/request-withdrawal-signal';
 import {
   CustomerNotificationService,
   PulseService,
@@ -237,6 +239,7 @@ function createServices() {
       emailVerified: data.user.emailVerified,
       email: data.user.email,
       expiresAt: new Date(data.session.expiresAt),
+      signedInAt: new Date(data.session.createdAt),
     };
   };
   // Mission mail. The service is cheap and always built (mute links must keep working if the switch is
@@ -540,6 +543,7 @@ function createServices() {
       readCustomerSession,
     ),
     moves: new MissionMoveService(runtimePool),
+    withdrawalSignal: new RequestWithdrawalSignalService(runtimePool),
     customerNotifications: new CustomerNotificationService(
       runtimePool,
       authPool,
@@ -585,6 +589,7 @@ function createServices() {
       },
       readCustomerSession,
     ),
+    customerErasureQueue: new CustomerErasureQueue(runtimePool),
     customerAccountLifecycle: new CustomerAccountLifecycleService(
       runtimePool,
       authPool,

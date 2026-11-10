@@ -27,6 +27,32 @@ import {
   subscribeTeamContext,
 } from '../../lib/ux/team-context';
 
+/** The header's Search button asks the palette to open; the palette itself lives once in the team frame. */
+export const openPaletteEvent = 'corridra:open-palette';
+
+/** The Search button for the top bar. It only asks; the dialog and its Ctrl K shortcut are `TeamPalette`. */
+export function PaletteTrigger() {
+  return (
+    <button
+      type="button"
+      className="ux-palette-trigger"
+      aria-haspopup="dialog"
+      aria-keyshortcuts="Control+K Meta+K"
+      title="Search"
+      onClick={(event) =>
+        // The trigger is passed along: Safari does not focus a clicked button, so focus could not be returned to it.
+        window.dispatchEvent(
+          new CustomEvent(openPaletteEvent, { detail: { opener: event.currentTarget } }),
+        )
+      }
+    >
+      <OperatorIcon name="search" />
+      <span>Search</span>
+      <kbd>Ctrl K</kbd>
+    </button>
+  );
+}
+
 type Found = {
   missions: { id: string; label: string; detail: string }[];
   companies: { id: string; label: string; detail: string }[];
@@ -69,8 +95,22 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
         document.activeElement instanceof HTMLElement ? document.activeElement : null;
       setOpen(true);
     };
+    const onOpen = (event: Event) => {
+      const given = (event as CustomEvent<{ opener?: unknown }>).detail?.opener;
+      opener.current =
+        given instanceof HTMLElement
+          ? given
+          : document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null;
+      setOpen(true);
+    };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener(openPaletteEvent, onOpen);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener(openPaletteEvent, onOpen);
+    };
   }, []);
 
   useEffect(() => {
@@ -207,21 +247,6 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
 
   return (
     <>
-      <button
-        type="button"
-        className="ux-palette-trigger"
-        aria-haspopup="dialog"
-        aria-keyshortcuts="Control+K Meta+K"
-        title="Search"
-        onClick={(event) => {
-          opener.current = event.currentTarget;
-          setOpen(true);
-        }}
-      >
-        <OperatorIcon name="search" />
-        <span>Search</span>
-        <kbd>Ctrl K</kbd>
-      </button>
       {mounted
         ? createPortal(
             <dialog

@@ -67,8 +67,13 @@ const saveTask = (
   target = workspaceId,
   programme = programmeId,
 ) => coord(p).saveTask({ commandId, ...scope(target, programme), expectedVersion, task: t });
-const attend = (reg: string, state: string, p = 'alice', commandId = randomUUID()) =>
-  coord(p).setAttendance({ commandId, ...scope(), registrationId: reg, state });
+const attend = (
+  reg: string,
+  state: string,
+  expectedVersion = 0,
+  p = 'alice',
+  commandId = randomUUID(),
+) => coord(p).setAttendance({ commandId, ...scope(), registrationId: reg, expectedVersion, state });
 const feedback = (reg: string, over: Record<string, unknown> = {}) => ({
   commandId: randomUUID(),
   registrationId: reg,
@@ -512,11 +517,11 @@ test('attendance is recorded for active registrations only and an unchanged stat
   const before = await counts();
   const first = await attend(bobReg, 'ATTENDED');
   expect(first).toMatchObject({ state: 'ATTENDED', version: 1 });
-  const same = await attend(bobReg, 'ATTENDED');
+  const same = await attend(bobReg, 'ATTENDED', 1);
   expect(same.version).toBe(1);
   expect((await counts()).attendance).toBe(before.attendance + 1);
-  expect((await attend(bobReg, 'ABSENT')).version).toBe(2);
-  expect((await attend(bobReg, 'ATTENDED')).version).toBe(3);
+  expect((await attend(bobReg, 'ABSENT', 1)).version).toBe(2);
+  expect((await attend(bobReg, 'ATTENDED', 2)).version).toBe(3);
   const r = await report();
   expect(r.attendance).toMatchObject({ attended: 1, absent: 0, notRecorded: 1 });
   expect(r.participants.find((p) => p.registrationId === bobReg)).toMatchObject({
@@ -525,6 +530,51 @@ test('attendance is recorded for active registrations only and an unchanged stat
   });
   expect((await rejected(attend(secondReg, 'ATTENDED'))).code).toBe('42501');
   expect((await rejected(attend(randomUUID(), 'ATTENDED'))).code).toBe('42501');
+});
+
+test('a stale attendance version is refused with 409 and writes nothing; a retried command keeps its result', async () => {
+  // Two organisers both opened the report at version 3 (the previous test left Bob ATTENDED at 3).
+  const opened = (await report()).participants.find((p) => p.registrationId === bobReg)!;
+  expect(opened.attendanceVersion).toBe(3);
+  const commandId = randomUUID();
+  const first = await attend(bobReg, 'ABSENT', 3, 'alice', commandId);
+  expect(first).toMatchObject({ state: 'ABSENT', version: 4, replayed: false });
+  const before = await counts();
+  // The second organiser still holds version 3: refused, with a retry message, and nothing is written.
+  const stale = await rejected(attend(bobReg, 'ATTENDED', 3));
+  expect(stale).toMatchObject({ status: 409 });
+  expect(stale.message).toMatch(/Reload to see the latest mark, then try again/);
+  // A stale version is refused even when the state would not change.
+  expect(await rejected(attend(bobReg, 'ABSENT', 3))).toMatchObject({ status: 409 });
+  expect(await counts()).toEqual(before);
+  expect((await report()).participants.find((p) => p.registrationId === bobReg)).toMatchObject({
+    attendance: 'ABSENT',
+    attendanceVersion: 4,
+  });
+  // A retry of the first command (its response was lost) still returns its stored result, whatever
+  // version it carried, and writes nothing.
+  expect(await attend(bobReg, 'ABSENT', 3, 'alice', commandId)).toMatchObject({
+    state: 'ABSENT',
+    version: 4,
+    replayed: true,
+  });
+  expect(await counts()).toEqual(before);
+  // After reloading, the second organiser's mark goes through.
+  expect(await attend(bobReg, 'ATTENDED', 4)).toMatchObject({ version: 5, replayed: false });
+  // A version from the future is refused too.
+  expect(await rejected(attend(bobReg, 'ABSENT', 9))).toMatchObject({ status: 409 });
+  // Two organisers marking at the same moment from the same version: exactly one is saved.
+  const race = await Promise.allSettled([
+    attend(bobReg, 'ABSENT', 5),
+    attend(bobReg, 'ABSENT', 5, 'alice'),
+  ]);
+  expect(race.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+  const lost = race.find((r) => r.status === 'rejected') as PromiseRejectedResult;
+  expect(lost.reason).toMatchObject({ status: 409 });
+  expect((await report()).participants.find((p) => p.registrationId === bobReg)).toMatchObject({
+    attendance: 'ABSENT',
+    attendanceVersion: 6,
+  });
 });
 
 test('feedback and outcomes are written only by the registered participant, as consented revisions', async () => {
@@ -775,7 +825,9 @@ test('only workspace owners and admins of this programme read the report or writ
     expect((await rejected(report(p))).code, p + ' report').toBe('42501');
     expect((await rejected(coord(p).tasks(scope()))).code, p + ' tasks').toBe('42501');
     expect((await rejected(saveTask(task(), 0, p))).code, p + ' task').toBe('42501');
-    expect((await rejected(attend(bobReg, 'ATTENDED', p))).code, p + ' attendance').toBe('42501');
+    expect((await rejected(attend(bobReg, 'ATTENDED', 0, p))).code, p + ' attendance').toBe(
+      '42501',
+    );
     expect(
       (
         await rejected(
@@ -947,4 +999,69 @@ test('the account-context guard and session checks run before any database work'
   );
   expect((await rejected(off.report(scope()))).message).toContain('unavailable');
   expect(await counts()).toEqual(before);
+});
+
+test('an attendance mark run alongside a report, a task save and a capacity save takes the workspace lock before the programme lock and never deadlocks', async () => {
+  const opened = await report();
+  const bob = opened.participants.find((p) => p.registrationId === bobReg)!;
+  const tasksBefore = opened.tasks.open;
+  const workspaceKey = (
+    await f.owner.query<{ key: string }>(
+      "SELECT hashtextextended('customer.access.workspace:'||$1::text,0)::text AS key",
+      [workspaceId],
+    )
+  ).rows[0].key;
+  const waiting = async () =>
+    (
+      await f.owner.query<{ n: number }>(
+        `SELECT count(*)::int n FROM pg_locks WHERE locktype='advisory' AND NOT granted AND objsubid=1
+          AND classid=(($1::bigint>>32)&4294967295)::oid AND objid=($1::bigint&4294967295)::oid`,
+        [workspaceKey],
+      )
+    ).rows[0].n;
+  // Another writer holds the workspace lock, as programme_report and every coordination save do first.
+  const holder = await f.owner.connect();
+  let results: PromiseSettledResult<unknown>[];
+  try {
+    await holder.query('BEGIN');
+    await holder.query('SELECT pg_advisory_xact_lock($1::bigint)', [workspaceKey]);
+    const work = Promise.allSettled([
+      attend(bobReg, bob.attendance === 'ATTENDED' ? 'ABSENT' : 'ATTENDED', bob.attendanceVersion),
+      report(),
+      saveTask(task({ title: 'Synthetic task saved beside an attendance mark' })),
+      coord().setCapacity({
+        commandId: randomUUID(),
+        ...scope(),
+        expectedVersion: opened.capacity.version,
+        capacity: 30,
+        reason: 'Synthetic capacity saved beside an attendance mark',
+      }),
+    ]);
+    // All four now queue on the workspace lock. Had the mark taken the programme lock first, it would
+    // be holding it here, and the holder taking the programme lock next would deadlock.
+    for (let tries = 0; (await waiting()) < 4; tries++) {
+      expect(tries).toBeLessThan(200);
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    await holder.query(
+      "SELECT pg_advisory_xact_lock(hashtextextended('customer.programme_coordination:'||$1::text,0))",
+      [programmeId],
+    );
+    await holder.query('COMMIT');
+    results = await work;
+  } catch (error) {
+    await holder.query('ROLLBACK');
+    throw error;
+  } finally {
+    holder.release();
+  }
+  for (const r of results)
+    expect(r.status === 'rejected' ? r.reason : 'fulfilled').toBe('fulfilled');
+  const after = await report();
+  expect(after.participants.find((p) => p.registrationId === bobReg)).toMatchObject({
+    attendance: bob.attendance === 'ATTENDED' ? 'ABSENT' : 'ATTENDED',
+    attendanceVersion: bob.attendanceVersion + 1,
+  });
+  expect(after.tasks.open).toBe(tasksBefore + 1);
+  expect(after.capacity).toMatchObject({ capacity: 30, version: opened.capacity.version + 1 });
 });

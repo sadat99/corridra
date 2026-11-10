@@ -5,7 +5,7 @@ import { translate } from '../../apps/web/lib/i18n/messages';
 import { operatorSlugs, sectionForSlug } from '../../apps/web/lib/operator-urls';
 import { workspaceSections } from '../../apps/web/lib/workspace-navigation';
 import { currentTeamSection } from '../../apps/web/lib/ux/shells';
-import { itemForPlace, type TeamPlaceId } from '../../apps/web/lib/ux/team-map';
+import { itemForPlace, teamAccountLinks, type TeamPlaceId } from '../../apps/web/lib/ux/team-map';
 
 // Team navigation as rendered (Navigation v1, docs/revamp/specs/navigation-v1.md; it replaced the
 // Signal Desk map S-01 to S-04). The map and its rules are in team-navigation-map.test.ts; this file
@@ -22,6 +22,7 @@ let pathname = '/operator';
 
 const sidebarPath = '../../apps/web/components/ux/team-sidebar';
 const secondPath = '../../apps/web/components/ux/team-second-level';
+const accountPath = '../../apps/web/components/ux/team-utility-menus';
 const render = async (
   role: string | null,
   at = '/operator',
@@ -56,17 +57,32 @@ const render = async (
     const context = { tenant: '', role };
     return { ...real, readTeamContext: () => context, readServerTeamContext: () => context };
   });
+  // The avatar menu reads the section-address flag the frame publishes.
+  vi.doMock('../../apps/web/lib/ux/team-flags', () => ({
+    publishTeamFlags: () => undefined,
+    subscribeTeamFlags: () => () => undefined,
+    readTeamFlags: () => ({ urls }),
+    readServerTeamFlags: () => ({ urls }),
+  }));
   vi.doMock('../../apps/web/components/language-provider', () => ({
     useLanguage: () => ({
       locale,
+      offered: [{ code: 'en' }, { code: 'bn' }],
       t: (key: Parameters<typeof translate>[1]) => translate(locale as 'en', key),
     }),
   }));
   const { TeamSidebar } = await import(/* @vite-ignore */ sidebarPath);
   const { TeamSecondLevel } = await import(/* @vite-ignore */ secondPath);
+  const { TeamAccountMenu } = await import(/* @vite-ignore */ accountPath);
   const markup = {
     sidebar: renderToStaticMarkup(createElement(TeamSidebar, { urls, ownerPage })),
     second: renderToStaticMarkup(createElement(TeamSecondLevel, { urls, ownerPage })),
+    // The menu keeps its panel empty until it is opened, so the links it will render are listed from the model
+    // it renders them from; the browser specs open the real menu.
+    account: teamAccountLinks(role, urls)
+      .map((link) => `<a href="${link.href}">${link.label}</a>`)
+      .join(''),
+    menu: renderToStaticMarkup(createElement(TeamAccountMenu)),
   };
   vi.unstubAllGlobals();
   return markup;
@@ -79,7 +95,6 @@ describe('NAV-04 the sidebar holds the five daily items, and Admin only for owne
     const { sidebar } = await render('owner');
     const words = [...sidebar.matchAll(/<span>([^<]+)<\/span>/g)].map((m) => m[1]);
     expect(words).toEqual([
-      'Search',
       'Today',
       'Missions',
       'Companies',
@@ -91,8 +106,6 @@ describe('NAV-04 the sidebar holds the five daily items, and Admin only for owne
       'Audit',
       'People and access',
       'Settings',
-      'Account',
-      'Authenticator',
     ]);
   });
   test('Admin carries the board caption as its description, and the name stays Admin', async () => {
@@ -105,12 +118,11 @@ describe('NAV-04 the sidebar holds the five daily items, and Admin only for owne
     );
     expect(sidebar).toMatch(/<span>Admin<\/span>/);
   });
-  test('no other role sees Admin or its pages; an operator keeps the daily items and Account', async () => {
+  test('no other role sees Admin or its pages; an operator keeps the daily items', async () => {
     for (const role of ['operator', 'reviewer', 'viewer', null]) {
       const { sidebar } = await render(role);
       expect(sidebar, String(role)).not.toContain('Admin');
-      // Account is the only group: Authenticator for everyone, Health and Readiness for an operator.
-      expect(sidebar.match(/<details/g)?.length).toBe(1);
+      expect(sidebar).not.toContain('<details');
       expect(hrefs(sidebar)).not.toContain('/operator/audit');
     }
     expect((await render('admin')).sidebar).toContain('Admin');
@@ -133,7 +145,27 @@ describe('NAV-05 every address and hash marks its place current, for every role 
     test(`/operator/${slug} (${id}) for ${allowed.join(', ')}`, async () => {
       for (const role of allowed) {
         const item = itemForPlace(id as TeamPlaceId, role);
-        const { sidebar, second } = await render(role, '/operator/' + slug);
+        const { sidebar, second, account } = await render(role, '/operator/' + slug);
+        if (item === 'none') {
+          // The Authenticator, and Health and Readiness for a role with no Admin, are reached from the avatar menu:
+          // no sidebar item or row link claims the page, and the menu's own link is the current page.
+          expect(account, `${role} ${slug} in the avatar menu`).toContain(
+            'href="/operator/' + slug + '"',
+          );
+          expect(sidebar + second, `${role} ${slug} no item current`).not.toContain('aria-current');
+          const here = teamAccountLinks(role, true, '', id as TeamPlaceId).find((l) => l.id === id);
+          expect(here?.current, `${role} ${slug} menu link is current`).toBe(true);
+          expect(
+            teamAccountLinks(role, true, '', id as TeamPlaceId).filter((l) => l.current),
+            `${role} ${slug} only one current`,
+          ).toHaveLength(1);
+          const hashed = await render(role, '/operator', 'en', true, {
+            urls: false,
+            hash: '#' + id,
+          });
+          expect(hashed.account).toContain('href="/operator#' + id + '"');
+          continue;
+        }
         // The place is the page's own link in the sidebar or the second level, and only that link says "page".
         expect(
           [sidebar, second].some((html) => currentLink(html, '/operator/' + slug)),
@@ -212,9 +244,9 @@ describe('NAV-06 every role reaches every one of its sections by following links
       const key = path + hash;
       if (seen.has(key)) continue;
       seen.set(key, idOf(path, hash));
-      const { sidebar, second } = await render(role, path, 'en', true, { urls, hash });
-      all += sidebar + second;
-      for (const next of hrefs(sidebar + second))
+      const { sidebar, second, account } = await render(role, path, 'en', true, { urls, hash });
+      all += sidebar + second + account;
+      for (const next of hrefs(sidebar + second + account))
         if (next.startsWith('/operator')) queue.push(next);
     }
     return { ids: new Set(seen.values()), html: all };

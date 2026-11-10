@@ -341,6 +341,46 @@
       "bytes": 9601,
       "sha256": "8f5fb1403debdbab5ccae03113ea56caa68f8490782a0fe1b189eea5264c3d9b",
       "meaning": "Exact active ledger at 2217fd5 (the PR 344 merge, 6 Nov), before PRs 341, 344 and 346 to 349, the 6 Nov G4/G5 decisions and the takeover lanes were recorded, including the full 'Merged 6 Nov' bullet for PRs 322 to 343, the Batch D, Batch E, production and product sequence bullets later condensed, and the Open and Next bullets replaced. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "f62e093de6b44a44bb848a5dc04d70cc3a6f8477",
+      "archive": "docs/v3/history/ledger-before-pr350-356-records-2026-11-09.md",
+      "bytes": 11309,
+      "sha256": "5f7d54640d74dff8a2205b2a7ceacca6587821039057f5b0a9ea812fb9c2d26b",
+      "meaning": "Exact active ledger at f62e093 (the PR 356 merge, 7 Nov), before PRs 350 to 356, the owner's 7 Nov G4/G5 install run 42364802587 and the 9 Nov lanes were recorded, including the full 6 Nov takeover, lanes, 'Merged since PR 345', install and Next bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "cfa22c2a9b143fbe7ceb433d078c1bff624d4b3f",
+      "archive": "docs/v3/history/ledger-before-9nov-evening-records-2026-11-09.md",
+      "bytes": 10814,
+      "sha256": "d78122d0af38e71b982d10ad093a80376a159cb4bdd6728c23c653ecf5a54fe6",
+      "meaning": "Exact active ledger at cfa22c2a (the PR 371 merge, 9 Nov), before PRs 359 to 371, the 9 Nov G4/G5 follow-up install run 42654373889, the evening lanes and the session rotation rule were recorded, including the S1 to S4 lanes, the takeover Resume bullets and the Open and Next bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "2bc003b3e919ecc4ef52a82fdfad44a7327e2e13",
+      "archive": "docs/v3/history/ledger-before-s15-records-2026-11-10.md",
+      "bytes": 11284,
+      "sha256": "665fcad3f2e1a1bf7cf1be5bd289f86270187e9e9fae30a289cee2a3ac373988",
+      "meaning": "Exact active ledger at 2bc003b3 (the PR 376 merge, 10 Nov), before PRs 372 and 374 to 376, the S15 and S16 rotations, the waiting install run 42729108780, the owner 9 and 10 Nov decisions on /plan and G4/G5 wording A and B and the KI-41 B4 correction were recorded, including the 9 Nov evening Resume, lanes, merged, G4/G5, Open and Next bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "c2137d43db0ff9ad34b7ae92bcdcf1c6f74e1c50",
+      "archive": "docs/v3/history/ledger-before-s19-records-2026-11-10.md",
+      "bytes": 11396,
+      "sha256": "e5a8d895c195ff30967595a9f3b5b4b0b0df6d1b4fc1c1e80d099458e337fd31",
+      "meaning": "Exact active ledger at c2137d43 (the PR 379 merge, 10 Nov), before PRs 378 to 381, the S15 to S19 and S16 to S20 rotations, the S17 workflow lane and the KI-45 resolution were recorded, including the 10 Nov S15 Lanes, Merged, Open and Next bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "b2d6362cfb8e6e4e2bd5d31cbf97842e688c26e0",
+      "archive": "docs/v3/history/ledger-before-s26-records-2026-11-10.md",
+      "bytes": 10664,
+      "sha256": "54d483aa73f1bad3564c2d2701cf8e56b8f07f6b6e9f78105dccd46e0d9e781f",
+      "meaning": "Exact active ledger at b2d6362c (the PR 388 merge, 10 Nov), unchanged since the S19 records merge bac878ef, before PRs 384, 387, 386 and 388, the S19 to S26 and S17 to S28 rotations, the S28 builder lanes, the G10 Guardian PASS and the owner-reported switch change were recorded, including the S19 Lanes, Merged (378 to 381), Open and Next bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

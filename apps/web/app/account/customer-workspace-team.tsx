@@ -84,7 +84,7 @@ export function CustomerWorkspaceTeam({
   issuer,
   onDenied,
   memberRolesEnabled = false,
-  ownerMemberId = null,
+  protectedMembers = [],
   bare = false,
   open = false,
   onBusyChange,
@@ -94,8 +94,8 @@ export function CustomerWorkspaceTeam({
   issuer: string;
   onDenied: (status: number) => void;
   memberRolesEnabled?: boolean;
-  /** The member who became owner by a handover, labelled Owner in the list. */
-  ownerMemberId?: string | null;
+  /** Invited members who are or were owners: labelled with their real access and offered no remove or role control. */
+  protectedMembers?: { memberId: string; role: 'owner' | 'admin' }[];
   /** Inside a dialog: no disclosure of its own. The team is read when `open` turns true. */
   bare?: boolean;
   open?: boolean;
@@ -611,42 +611,52 @@ export function CustomerWorkspaceTeam({
               <p className="ux-empty">No invited memberships on this page.</p>
             ) : (
               <ul>
-                {page.memberships.map((r) => (
-                  <li key={r.id}>
-                    <p className="ux-row-title">
-                      <strong>{r.label}</strong> · {r.id === ownerMemberId ? 'Owner' : r.role} ·{' '}
-                      {r.status}
-                    </p>
-                    <details className="ux-journey-disclosure">
-                      <summary>Membership reference</summary>
-                      <p>{r.id}</p>
-                    </details>
-                    {memberRolesEnabled &&
-                      typeof r.roleVersion === 'number' &&
-                      r.status === 'active' && (
+                {page.memberships.map((r) => {
+                  const kept = protectedMembers.find((m) => m.memberId === r.id);
+                  return (
+                    <li key={r.id}>
+                      <p className="ux-row-title">
+                        <strong>{r.label}</strong> ·{' '}
+                        {kept ? (kept.role === 'owner' ? 'Owner' : 'Admin') : r.role} · {r.status}
+                      </p>
+                      <details className="ux-journey-disclosure">
+                        <summary>Membership reference</summary>
+                        <p>{r.id}</p>
+                      </details>
+                      {memberRolesEnabled &&
+                        !kept &&
+                        typeof r.roleVersion === 'number' &&
+                        r.status === 'active' && (
+                          <button
+                            type="button"
+                            className="text-link"
+                            disabled={busy || !!removal || !!roleChange}
+                            onClick={() => askRole(r.id, r.label, r.role)}
+                          >
+                            {r.role === 'member'
+                              ? 'Make ' + r.label + ' an admin'
+                              : 'Make ' + r.label + ' a regular member'}
+                          </button>
+                        )}
+                      {kept && (
+                        <p className="ux-empty">
+                          This person is or was an owner and keeps admin access. Ask support to
+                          remove it.
+                        </p>
+                      )}
+                      {!kept && r.status !== 'revoked' && (
                         <button
                           type="button"
                           className="text-link"
                           disabled={busy || !!removal || !!roleChange}
-                          onClick={() => askRole(r.id, r.label, r.role)}
+                          onClick={() => confirm('membership', r.id, r.label)}
                         >
-                          {r.role === 'member'
-                            ? 'Make ' + r.label + ' an admin'
-                            : 'Make ' + r.label + ' a regular member'}
+                          Remove Invited Membership for {r.label}
                         </button>
                       )}
-                    {r.status !== 'revoked' && (
-                      <button
-                        type="button"
-                        className="text-link"
-                        disabled={busy || !!removal || !!roleChange}
-                        onClick={() => confirm('membership', r.id, r.label)}
-                      >
-                        Remove Invited Membership for {r.label}
-                      </button>
-                    )}
-                  </li>
-                ))}
+                    </li>
+                  );
+                })}
               </ul>
             )}
             {page.nextMemberAfter && (

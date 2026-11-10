@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { describe, expect, test, vi } from 'vitest';
+import { teamAccountLinks } from '../../apps/web/lib/ux/team-map';
 
 const web = createRequire(resolve('apps/web/package.json'));
 const createElement = web('react').createElement as (
@@ -34,9 +35,11 @@ describe('team sidebar sections while the role is unknown', () => {
   test('lists only what every role may open, and none of the restricted sections', async () => {
     const TeamSidebar = await load();
     const html = renderToStaticMarkup(createElement(TeamSidebar, { urls: true, ownerPage: true }));
-    for (const word of ['missions', 'research', 'meetings', 'commercial', 'authenticator'])
+    for (const word of ['missions', 'research', 'meetings', 'commercial'])
       expect(link(html, word), word).toBe(true);
     expect(html).not.toContain('Admin');
+    // The Authenticator is in the avatar menu for every role, the unknown one included.
+    expect(teamAccountLinks(null, true).map((l) => l.id)).toContain('workspace-authenticator');
     for (const word of [
       'controls',
       'audit',

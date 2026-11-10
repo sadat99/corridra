@@ -6,7 +6,8 @@ import { ReferencePicker } from '../../components/ux/reference-picker';
 import { SearchSelect } from '../../components/ux/search-select';
 import type { PickerOption } from '../../lib/ux/options';
 import { PanelHeading } from './panel-heading';
-import type { OperatorSnapshot } from './workspace-types';
+import type { MoreKind, OperatorSnapshot } from './workspace-types';
+import { ShowMore } from './show-more';
 
 type SourceRow = {
   id: string;
@@ -114,6 +115,7 @@ export function SourcesPanel({
   tenant: tenantProp,
   act,
   request,
+  more,
 }: {
   data: OperatorSnapshot;
   view: string;
@@ -123,6 +125,7 @@ export function SourcesPanel({
   tenant?: string;
   act?: (work: () => Promise<unknown>) => Promise<boolean>;
   request?: (action: string, body?: unknown) => Promise<unknown>;
+  more?: (kind: MoreKind) => Promise<void>;
 }) {
   const snapshot = data as OperatorSnapshot & { tenantId?: string };
   const tenant = tenantProp ?? snapshot.tenantId ?? '';
@@ -222,6 +225,16 @@ export function SourcesPanel({
             </li>
           ))}
         </ul>
+        {more && (
+          <ShowMore
+            shown={data.sources.length}
+            total={data.sourcesTotal}
+            next={data.sourcesNext}
+            busy={busy}
+            label="Sources"
+            onMore={() => void more('sources')}
+          />
+        )}
         {data.role !== 'viewer' && (
           <PhoneFold summary="Record a new source (6 fields)">
             {/* `source` stays the workspace's original handler; this form adds the optional links. */}
@@ -300,6 +313,16 @@ export function SourcesPanel({
             </li>
           ))}
         </ul>
+        {more && (
+          <ShowMore
+            shown={data.claims.length}
+            total={data.claimsTotal}
+            next={data.claimsNext}
+            busy={busy}
+            label="Claims"
+            onMore={() => void more('claims')}
+          />
+        )}
         {data.role !== 'viewer' && (
           <PhoneFold summary="Record a new claim (2 fields)">
             <form className="operator-form" onSubmit={claim}>

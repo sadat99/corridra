@@ -13,6 +13,7 @@ const words = (code: string) => {
 const place = (value: string) => (/^[A-Z]{2}$/.test(value) ? countryName(value) : value);
 import { readFailureKind, readFailureWords } from '../operator/read-failure';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { dueToday } from '../../lib/ux/field-helper';
 type Task = {
   id: string;
   version: number;
@@ -62,10 +63,16 @@ type Command = {
   reason: string;
   details: { kind: string; body?: string };
 };
-export function TaskBoard({ workspace }: { workspace: string }) {
-  return <ScopedTaskBoard key={workspace} workspace={workspace} />;
+export function TaskBoard({ workspace, today = false }: { workspace: string; today?: boolean }) {
+  return (
+    <ScopedTaskBoard
+      key={workspace + (today ? ':today' : '')}
+      workspace={workspace}
+      today={today}
+    />
+  );
 }
-function ScopedTaskBoard({ workspace }: { workspace: string }) {
+function ScopedTaskBoard({ workspace, today }: { workspace: string; today: boolean }) {
   const [tasks, setTasks] = useState<Task[]>([]),
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false),
@@ -169,6 +176,8 @@ function ScopedTaskBoard({ workspace }: { workspace: string }) {
           : { kind: 'decision' },
     });
   }
+  // Today is the same list narrowed to what is due on the person's current day: no new read, no new data.
+  const shown = today ? tasks.filter((task) => dueToday(task.deadline)) : tasks;
   return (
     <section aria-label="Assigned tasks">
       <p role="status" aria-live="polite">
@@ -237,7 +246,13 @@ function ScopedTaskBoard({ workspace }: { workspace: string }) {
           a task, it appears here.
         </p>
       )}
-      {tasks.map((task) => (
+      {loaded && today && tasks.length > 0 && !shown.length && (
+        <p role="status">
+          <strong>Nothing is due today.</strong> Your other tasks are under{' '}
+          <a href={'/contributor?workspace=' + encodeURIComponent(workspace)}>Tasks</a>.
+        </p>
+      )}
+      {shown.map((task) => (
         <article className="detail-card ux-task-card" key={task.id}>
           <p className="label">EXACT ASSIGNMENT · VERSION {task.version}</p>
           <h2>{words(task.disclosure.kind)}</h2>

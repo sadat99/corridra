@@ -139,7 +139,10 @@ describe('the module SQL', () => {
       .split('\n')
       .filter((line) => !line.trimStart().startsWith('--'))
       .join('\n');
-  const files = readdirSync(migrations).filter((name) => name.endsWith('.sql'));
+  const all = readdirSync(migrations).filter((name) => name.endsWith('.sql'));
+  // The installed first file only inserts. The follow-up files (0002 and later) may replace named functions, and are
+  // checked by the last tests of this group.
+  const files = all.filter((name) => name.startsWith('0001_'));
 
   test('contains no UPDATE, DELETE or TRUNCATE at all: it only inserts', () => {
     expect(files.length).toBeGreaterThan(0);
@@ -171,6 +174,27 @@ describe('the module SQL', () => {
         expect(table, `${file}: ${table}`).not.toMatch(/^app\./);
         expect(table, `${file}: ${table}`).toMatch(/^customer_private\.(account_|erasure_)/);
       }
+    }
+  });
+
+  test('the follow-up files replace only named functions, each behind a fingerprint of the live text, and never rewrite a row', () => {
+    const followUps = all.filter((name) => !name.startsWith('0001_'));
+    expect(followUps.length).toBeGreaterThan(0);
+    for (const file of followUps) {
+      const text = code(file);
+      expect(text, file).not.toMatch(/\bUPDATE\s+[a-z_.]+\s+SET\b/i);
+      expect(text, file).not.toMatch(/\bDELETE\s+FROM\b|\bTRUNCATE\b/i);
+      expect(text, file).not.toMatch(/\bDROP\s+(FUNCTION|TABLE|TRIGGER|POLICY)\b/i);
+      expect(text, file).not.toMatch(
+        /\bALTER\s+TABLE\s+(?!customer_private\.account_chain)[a-z_.]+\s+(ADD|DROP|ALTER)/i,
+      );
+      // every function that is replaced is first compared with the exact text it replaces
+      const replaced = [...text.matchAll(/CREATE\s+OR\s+REPLACE\s+FUNCTION\s+([a-z_.]+)/gi)].length;
+      const executed = [...text.matchAll(/\bEXECUTE\s+updated\b/g)].length;
+      const guards = [...text.matchAll(/encode\(sha256\(convert_to\(/g)].length;
+      expect(guards, file).toBe(replaced + executed);
+      for (const match of text.matchAll(/\bINSERT\s+INTO\s+([a-z_.]+)/g))
+        expect(match[1], file).toBe('customer_private.account_chain');
     }
   });
 });

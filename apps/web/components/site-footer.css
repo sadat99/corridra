@@ -45,10 +45,11 @@
   color: var(--on-brand);
 }
 .guide-footer-wordmark .brand-mark {
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 46px;
+  height: 44px;
 }
 .guide-footer-promise {
+  overflow-wrap: anywhere;
   max-width: 14ch;
   margin: var(--space-3) 0 0;
   font-family: var(--serif);
@@ -143,6 +144,7 @@
   margin: 0;
 }
 .guide-footer-group a {
+  overflow-wrap: anywhere;
   display: flex;
   align-items: center;
   min-height: 2.75rem;
@@ -313,5 +315,133 @@
   }
   .guide-footer-routes {
     display: none;
+  }
+}
+
+/* Large text. A container query counts rem at the page's text size, so these apply only when a footer block is
+   narrower than a dozen letters of its own text (a phone with the text at twice its size), never at normal size. */
+.guide-footer-top,
+.guide-footer-group {
+  container-type: inline-size;
+}
+.guide-footer-actions > a {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+@container (max-width: 12rem) {
+  .guide-footer-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .guide-footer-group ul {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The compact footer of the request page: the promise is one smaller line beside the actions, the trust legend is a
+   closed disclosure with the same words and link, and the spacing is tighter. The links and actions are unchanged. */
+.guide-footer-compact {
+  margin-top: var(--space-6);
+}
+.guide-footer-compact .guide-footer-top {
+  align-items: center;
+  gap: var(--space-4) var(--space-8);
+  padding: var(--space-6) 0 var(--space-4);
+}
+.guide-footer-compact .guide-footer-promise {
+  max-width: none;
+  margin-top: var(--space-1);
+  font-size: var(--text-xl);
+  line-height: 1.2;
+}
+.guide-footer-compact .guide-footer-groups {
+  padding: var(--space-4) 0;
+}
+.guide-footer-trust-fold > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2.75rem;
+  font-size: var(--text-sm);
+  color: var(--footer-text);
+  list-style: none;
+  cursor: pointer;
+}
+.guide-footer-trust-fold > summary::-webkit-details-marker {
+  display: none;
+}
+.guide-footer-trust-fold > summary::after {
+  content: '+';
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  color: var(--footer-quiet);
+}
+.guide-footer-trust-fold[open] > summary::after {
+  content: '\2212';
+}
+.guide-footer-trust-fold {
+  display: block;
+  padding: 0;
+}
+.guide-footer-trust-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-6);
+  padding-bottom: var(--space-3);
+}
+.guide-footer-trust-body > a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-size: var(--text-sm);
+}
+.guide-footer-compact .guide-footer-bottom {
+  padding-block: var(--space-2) var(--space-4);
+}
+@media (max-width: 700px) {
+  .guide-footer-compact {
+    margin-top: var(--space-4);
+  }
+  .guide-footer-compact .guide-footer-top {
+    gap: var(--space-3);
+    padding: var(--space-4) 0 var(--space-2);
+  }
+  .guide-footer-compact .guide-footer-already {
+    margin-top: calc(-1 * var(--space-2));
+  }
+  .guide-footer-compact .guide-footer-groups {
+    padding: var(--space-2) 0 var(--space-4);
+  }
+  .guide-footer-compact .guide-footer-details > summary {
+    min-height: 2.75rem;
+  }
+  .guide-footer-compact .guide-footer-copy {
+    flex-basis: auto;
+  }
+  /* Four closed groups in two columns: the same disclosures, half the rows. */
+  .guide-footer-compact .guide-footer-groups {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    column-gap: var(--space-4);
+  }
+  .guide-footer-compact .guide-footer-details:last-child {
+    border-bottom: 0;
+  }
+  .guide-footer-compact .guide-footer-details:nth-last-child(2) {
+    border-bottom: 0;
+  }
+  .guide-footer-compact .guide-footer-details > summary {
+    overflow-wrap: anywhere;
+  }
+  .guide-footer-compact .guide-footer-group ul {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .guide-footer-compact .guide-footer-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .guide-footer-compact .guide-footer-bottom {
+    padding-block: var(--space-2) var(--space-4);
   }
 }

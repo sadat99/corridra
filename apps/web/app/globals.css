@@ -4109,8 +4109,13 @@ th {
 }
 .intake-form {
   display: grid;
+  /* One column as wide as the form: a wide control or word gives way to it rather than widening the column past the
+     form's padding (a 320 px phone with text at 200 percent). */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-5);
   padding: var(--space-8);
+  /* Its choice cards follow its width (below). */
+  container: intake-form / inline-size;
   background: var(--surface-1);
   border: 1px solid var(--line);
   border-radius: var(--guided-hero-radius);
@@ -4255,6 +4260,42 @@ th {
 .guide-journey-bar li[aria-current='step'] b {
   font-weight: 700;
 }
+/* A narrow bar (a 320 px phone, or larger text in a narrow form) has columns narrower than a step word. There the
+   current step's word leaves its column and takes its own line under the five dots, from the bar's start edge and as
+   wide as the bar; its row keeps room for that line. The other words stay for screen readers only, and the
+   connectors give way. Rem here counts in the page's text size, so twice the text makes the bar compact sooner.
+   The bar is the container and the word's positioning box. 17.5rem is 280 px at normal text, under the 285 px bar of
+   a 375 px phone, which keeps its bar; with text at 200 percent it covers the 558 px bar of a 768 px tablet. */
+.guide-journey-bar {
+  position: relative;
+  container: journey-bar / inline-size;
+}
+@container journey-bar (max-width: 17.5rem) {
+  .guide-journey-bar li {
+    position: static;
+  }
+  .guide-journey-bar li::after {
+    display: none;
+  }
+  .guide-journey-bar li:not([aria-current='step']) b {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .guide-journey-bar li[aria-current='step'] {
+    padding-block-end: calc(1lh + var(--space-2));
+  }
+  .guide-journey-bar li[aria-current='step'] b {
+    position: absolute;
+    inset-block-end: 0;
+    inset-inline: 0 auto;
+    max-width: 100%;
+    white-space: nowrap;
+  }
+}
 
 /* Choices: whole card is the target; the checked card is clearly marked. */
 .guide-options {
@@ -4301,6 +4342,19 @@ th {
 .choice:has(input:focus-visible) {
   outline: 2px solid var(--brand);
   outline-offset: 3px;
+}
+/* A form narrower than two readable cards (larger text, or a narrow column) puts its choices in one column, and a
+   word wider than its card breaks inside the card rather than running out of it. Cards grow taller; nothing is cut.
+   Rem here counts in the page's text size. */
+@container intake-form (max-width: 22rem) {
+  .guide-options,
+  .guide-options-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .choice {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
 }
 .guide-actions {
   display: flex;
@@ -8320,6 +8374,17 @@ samp {
 /* Brand identity layer. Spec: docs/brand/CORRIDRA_BRAND_IDENTITY.md. Tokens only (D18).
    Orb is cobalt (--brand), wordmark is navy (--brand-deep); both turn white on the navy footer.
    Each wordmark height keeps the compact lockup's proportion: 25 / 42 of the orb beside it. */
+.brand-mark {
+  display: inline-block;
+  flex: none;
+  width: 46px;
+  height: 44px;
+  background-color: currentColor;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  -webkit-mask: url('/brand/corridra-mark-cobalt.svg') center / contain no-repeat;
+  mask: url('/brand/corridra-mark-cobalt.svg') center / contain no-repeat;
+}
 .brand .brand-mark {
   flex: none;
   color: var(--brand);
@@ -8344,6 +8409,25 @@ samp {
     height: 16px;
   }
 }
+@media (max-width: 430px) {
+  /* The customer and team header row has no spare width on a phone (the real team header measured 342 px of content for
+     342 px of room at 390 px). A 46 px mark wrapped it to a second row and pushed Today past two screens. A 4 px
+     gap and a 44 x 42 px mark give back the same widths at which the row stayed on one line with the old mark
+     (measured 9 Nov 2026 at 320 to 759 px; ADR-077 amendment 1). */
+  .site-header:is(.ux-customer-header, .ux-team-header) {
+    gap: 4px;
+  }
+  :is(.ux-customer-header, .ux-team-header) .brand .brand-mark {
+    width: 44px;
+    height: 42px;
+  }
+}
+@media (max-width: 430px) {
+  /* The mark is 46 px wide (ADR-077 amendment 1); this keeps the phone header on one row at 390 px as before. */
+  .brand .brand-word {
+    height: 14px;
+  }
+}
 @media (max-width: 760px) {
   /* The signed-in headers keep the orb and the link's name below 760 px: their row does not wrap up to 700 px and
      the lockup's wordmark (about 170 px) would push the inbox, account and help controls past the edge. */
@@ -8365,5 +8449,264 @@ samp {
   .guide-footer-wordmark .brand-mark,
   .guide-footer-wordmark .brand-word {
     color: CanvasText;
+  }
+  .brand .brand-mark,
+  .guide-footer-wordmark .brand-mark {
+    forced-color-adjust: none;
+    background-color: CanvasText;
+  }
+}
+
+/* Large text on the public pages (Wave 6 Q-02). With the text at twice its size a column, a tab row or a card can be
+   narrower than its longest word. A one-column grid sizes its column to its content unless the track may shrink, so
+   each of these says so; a band wraps its button under its words instead of squeezing either; a word may break at
+   the end of its box; and a tag may take a second line. Nothing changes while the content fits. */
+.ux-discovery,
+.guide-progress,
+.guide-directions,
+.guide-directions li,
+.guide-page-intro ul {
+  grid-template-columns: minmax(0, 1fr);
+}
+/* The phone already gives a phase step its own two-column layout, so the single shrinking track is only for wider screens. */
+@media (min-width: 701px) {
+  .guide-phase li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.guide-page-intro ul {
+  container-type: inline-size;
+}
+/* The tag column is fifteen letters wide, so a list narrower than twenty of them (a tablet at large text) stacks its rows. */
+@container (max-width: 20rem) {
+  .guide-page-intro li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.guide-band {
+  flex-wrap: wrap;
+}
+.guide-band > :not(.primary-link) {
+  min-width: 0;
+  max-width: 100%;
+}
+@media (min-width: 701px) {
+  .guide-band > :not(.primary-link) {
+    flex: 1 1 16rem;
+  }
+}
+.guide-band :is(h2, p) {
+  overflow-wrap: break-word;
+}
+.guide-band .primary-link {
+  max-width: 100%;
+}
+.ux-public .guide-tag {
+  max-width: 100%;
+  white-space: normal;
+}
+.guide-page-steps li :is(h3, p),
+.guide-phase li :is(h3, p, .label),
+.guide-progress :is(.label, h2, .guide-lead),
+.guide-directions :is(h2, h3, p, .text-link),
+.guide-page-intro :is(h2, p) {
+  overflow-wrap: break-word;
+}
+.guide-page-hero > div {
+  grid-template-columns: minmax(0, 1fr);
+}
+.guide-page-hero h1 {
+  overflow-wrap: anywhere;
+}
+/* A button or link on a public page never grows past the column it is in; its words wrap instead. */
+.ux-public :is(.primary-link, .button-secondary, .guide-page-actions) {
+  max-width: 100%;
+}
+.guide-progress .outcome-path li {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Request page length (S13 under the S5 brief, owner confirmed, 9 November 2026, relayed by the conductor:
+   "proceed with /plan proposal"). Four moves, each keeping every action: the test notice is one line
+   with the whole notice behind a toggle; on a phone or tablet the example-request summary is a closed disclosure
+   whose line keeps the live count; on a wide screen the receipt check sits under the summary column; the draft line
+   sits close under the buttons. Tokens only. */
+.intake-notice-compact {
+  flex-wrap: wrap;
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+}
+.intake-notice-compact > p {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+.intake-notice-more {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.intake-notice-more[open] {
+  flex-basis: 100%;
+}
+@media (max-width: 700px) {
+  .intake-notice-compact {
+    flex-direction: row;
+    gap: var(--space-1) var(--space-3);
+  }
+  .intake-notice-more {
+    flex-basis: 100%;
+  }
+}
+.intake-notice-more > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--brand-deep);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+.intake-notice-more[open] > summary {
+  margin-bottom: var(--space-1);
+}
+.ux-brief-details > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2.75rem;
+  gap: var(--space-2);
+  font-size: var(--text-base);
+  list-style: none;
+  cursor: pointer;
+}
+.ux-brief-details > summary::-webkit-details-marker {
+  display: none;
+}
+.ux-brief-details > summary::after {
+  content: '+';
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  color: var(--text-3);
+}
+.ux-brief-details[open] > summary::after {
+  content: '\2212';
+}
+.ux-brief-count {
+  font-weight: 600;
+  color: var(--text-1);
+}
+.ux-brief-details > dl {
+  margin-top: var(--space-3);
+}
+.ux-brief-details > p:last-child {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  color: var(--text-2);
+}
+.ux-brief-heading {
+  display: none;
+}
+@media (max-width: 1000px) {
+  .ux-brief-summary {
+    padding: var(--space-1) var(--space-4);
+  }
+  .guide-draft-line {
+    margin-top: calc(-1 * var(--space-3));
+    padding-top: 0;
+    border-top: 0;
+  }
+}
+/* From 1001 px the summary column is always open and shows its heading; where the browser cannot hold a closed
+   disclosure open, the toggle stays at every width. */
+@supports selector(::details-content) {
+  @media (min-width: 1001px) {
+    .ux-brief-details > summary {
+      display: none;
+    }
+    .ux-brief-details::details-content {
+      content-visibility: visible;
+    }
+    .ux-brief-heading {
+      display: block;
+      margin: 0;
+      color: var(--text-3);
+    }
+    .ux-brief-details > dl {
+      margin-top: 0;
+    }
+    .ux-brief-summary {
+      display: grid;
+    }
+  }
+}
+/* The receipt check sits under the summary column in the plain state (no pending request, job choice or receipt). */
+@media (min-width: 1001px) {
+  .guide-plan-body:has(.ux-brief-summary):not(
+      :has(.ux-job-choice, .receipt-saved, .receipt-panel:not(#receipt-check))
+    ) {
+    grid-template-rows: auto 1fr;
+  }
+  .guide-plan-body:has(.ux-brief-summary):not(
+      :has(.ux-job-choice, .receipt-saved, .receipt-panel:not(#receipt-check))
+    )
+    .guide-plan-main {
+    display: contents;
+  }
+  .guide-plan-body:has(.ux-brief-summary):not(
+      :has(.ux-job-choice, .receipt-saved, .receipt-panel:not(#receipt-check))
+    )
+    .intake-form {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+  .guide-plan-body:has(.ux-brief-summary):not(
+      :has(.ux-job-choice, .receipt-saved, .receipt-panel:not(#receipt-check))
+    )
+    .ux-brief-summary {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .guide-plan-body:has(.ux-brief-summary):not(
+      :has(.ux-job-choice, .receipt-saved, .receipt-panel:not(#receipt-check))
+    )
+    #receipt-check {
+    grid-column: 2;
+    grid-row: 2;
+  }
+}
+
+/* Request page spacing, second pass (S13 under the S5 brief, owner confirmed, 9 November 2026, relayed by the
+   conductor: "proceed with /plan proposal"): less empty space under the form, the notice and the
+   Bangla guide on one row where they fit, and tighter gaps on a phone. */
+.guide-plan {
+  padding-block-end: var(--space-6);
+}
+@media (min-width: 701px) {
+  .guide-plan-top:has(.intake-notice-compact) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .guide-plan-top:has(.intake-notice-compact) > .intake-notice {
+    flex: 1 1 24rem;
+    width: auto;
+  }
+}
+@media (max-width: 700px) {
+  .guide-draft-line .text-link {
+    min-height: 2.75rem;
+    padding-inline: var(--space-1);
+  }
+  .guide-plan {
+    padding-block-end: var(--space-4);
+  }
+  .ux-intake-layout,
+  .guide-plan-main {
+    gap: var(--space-4);
   }
 }

@@ -11,6 +11,7 @@ import {
   type MeetingStatus,
 } from '@corridra/domain/access';
 import { formatDateTime } from '../../lib/ux/format';
+import { ShowMore } from './show-more';
 /** Plain label for a stored delivery channel code. The stored code never changes. */
 function channelLabel(channel: string) {
   if (channel === 'SYNTHETIC') return 'Recorded receipt (no email sent)';
@@ -53,6 +54,14 @@ type Comms = {
   contacts: { id: string; name: string; email: string; relationship_id: string }[];
   messages: Message[];
   optouts: { id: string; contact_id: string; reason: string }[];
+  targetsTotal: number | null;
+  targetsNext: string | null;
+  contactsTotal: number | null;
+  contactsNext: string | null;
+  messagesTotal: number | null;
+  messagesNext: string | null;
+  optoutsTotal: number | null;
+  optoutsNext: string | null;
   attempts: { id: string; message_id: string; status: string; reason: string }[];
 };
 type Owner = { user_id: string; name: string };
@@ -77,6 +86,10 @@ type Meetings = {
   role: string;
   owners: Owner[];
   meetings: Meeting[];
+  meetingsTotal: number | null;
+  next: string | null;
+  followupsTotal: number | null;
+  followupsNext: string | null;
   participants: { id: string; meeting_id: string; name: string }[];
   outcomes: { id: string; meeting_id: string; status: string; summary: string }[];
   followups: {
@@ -163,9 +176,9 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
     week: utcField(new Date(Date.now() + 7 * 86400000).toISOString()),
     now: Date.now(),
   }));
-  async function request(action: string, body?: unknown) {
+  async function request(action: string, body?: unknown, extra = '') {
     const r = await fetch(
-      `/api/workspace/${action}?tenant=${encodeURIComponent(tenant)}`,
+      `/api/workspace/${action}?tenant=${encodeURIComponent(tenant)}${extra}`,
       body === undefined
         ? { cache: 'no-store' }
         : {
@@ -208,6 +221,82 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
       active = false;
     };
   }, [tenant, revision]);
+  /** Shows the next page of meetings or follow-ups below the ones already listed, never twice. */
+  async function showMore(kind: 'meetings' | 'followups') {
+    const cursor = kind === 'meetings' ? meetings?.next : meetings?.followupsNext;
+    if (!cursor) return;
+    setBusy(true);
+    setMessage('');
+    try {
+      const more: Meetings = await request(
+        'meetings',
+        undefined,
+        `&${kind === 'meetings' ? 'after' : 'followupsAfter'}=${encodeURIComponent(cursor)}`,
+      );
+      const add = <T extends { id: string }>(old: T[], extra: T[]) => [
+        ...old,
+        ...extra.filter((e) => !old.some((o) => o.id === e.id)),
+      ];
+      setMeetings((old) =>
+        old
+          ? kind === 'meetings'
+            ? {
+                ...old,
+                meetings: add(old.meetings, more.meetings),
+                participants: add(old.participants, more.participants),
+                outcomes: add(old.outcomes, more.outcomes),
+                history: add(old.history, more.history),
+                meetingsTotal: more.meetingsTotal ?? old.meetingsTotal,
+                next: more.next,
+              }
+            : {
+                ...old,
+                followups: add(old.followups, more.followups),
+                followupsTotal: more.followupsTotal ?? old.followupsTotal,
+                followupsNext: more.followupsNext,
+              }
+          : old,
+      );
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'The next page could not be loaded.');
+    } finally {
+      setBusy(false);
+    }
+  }
+  /** Shows the next page of targets, contacts, messages or opt-outs below the ones already listed. */
+  async function showMoreComms(kind: 'targets' | 'contacts' | 'messages' | 'optouts') {
+    const cursor = comms?.[`${kind}Next`];
+    if (!cursor) return;
+    setBusy(true);
+    setMessage('');
+    try {
+      const more: Comms = await request(
+        'communications',
+        undefined,
+        `&${kind}After=${encodeURIComponent(cursor)}`,
+      );
+      const add = <T extends { id: string }>(old: T[], extra: T[]) => [
+        ...old,
+        ...extra.filter((e) => !old.some((o) => o.id === e.id)),
+      ];
+      setComms((old) =>
+        old
+          ? {
+              ...old,
+              [kind]: add(old[kind] as { id: string }[], more[kind] as { id: string }[]),
+              attempts: kind === 'messages' ? add(old.attempts, more.attempts) : old.attempts,
+              // A continuation carries no total; the first page's stands (G12 follow-up).
+              [`${kind}Total`]: more[`${kind}Total`] ?? old[`${kind}Total`],
+              [`${kind}Next`]: more[`${kind}Next`],
+            }
+          : old,
+      );
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'The next page could not be loaded.');
+    } finally {
+      setBusy(false);
+    }
+  }
   async function act(endpoint: string, body: Record<string, unknown>) {
     setBusy(true);
     setMessage('');
@@ -443,6 +532,14 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                 ))}
               </select>
             </label>
+            <ShowMore
+              shown={comms.targets.length}
+              total={comms.targetsTotal}
+              next={comms.targetsNext}
+              busy={busy}
+              label="Targets"
+              onMore={() => void showMoreComms('targets')}
+            />
             <label className="field">
               Introduction recipient
               <select name="contactId" required key={target}>
@@ -456,6 +553,14 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                   ))}
               </select>
             </label>
+            <ShowMore
+              shown={comms.contacts.length}
+              total={comms.contactsTotal}
+              next={comms.contactsNext}
+              busy={busy}
+              label="Contacts"
+              onMore={() => void showMoreComms('contacts')}
+            />
             <label className="field">
               Approved policy
               <select name="policyId" required>
@@ -620,6 +725,14 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
           </details>
         </article>
       ))}
+      <ShowMore
+        shown={comms.messages.length}
+        total={comms.messagesTotal}
+        next={comms.messagesNext}
+        busy={busy}
+        label="Introductions"
+        onMore={() => void showMoreComms('messages')}
+      />
       <details>
         <summary>Recipient opt-outs</summary>
         <ul>
@@ -627,6 +740,14 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
             <li key={o.id}>{o.reason}</li>
           ))}
         </ul>
+        <ShowMore
+          shown={comms.optouts.length}
+          total={comms.optoutsTotal}
+          next={comms.optoutsNext}
+          busy={busy}
+          label="Opt-Outs"
+          onMore={() => void showMoreComms('optouts')}
+        />
         {manage && (
           <form
             className="operator-form"
@@ -730,6 +851,14 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
           submit={submit}
         />
       ))}
+      <ShowMore
+        shown={meetings.meetings.length}
+        total={meetings.meetingsTotal}
+        next={meetings.next}
+        busy={busy}
+        label="Meetings"
+        onMore={() => void showMore('meetings')}
+      />
       <h3>Owned follow-up</h3>
       {meetings.followups.map((f) => (
         <article key={f.id} className="detail-card">
@@ -775,6 +904,14 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
           )}
         </article>
       ))}
+      <ShowMore
+        shown={meetings.followups.length}
+        total={meetings.followupsTotal}
+        next={meetings.followupsNext}
+        busy={busy}
+        label="Follow-Ups"
+        onMore={() => void showMore('followups')}
+      />
     </section>
   );
 }

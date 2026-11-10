@@ -49,9 +49,14 @@ type SavedSettings = Pick<
 export function NotificationsForm({
   initial,
   unavailable,
+  subject,
+  issuer,
 }: {
   initial: NotificationPreferences;
   unavailable: boolean;
+  /** The person the page was drawn for: a save from a page of another account is refused. */
+  subject: string;
+  issuer: string;
 }) {
   // Email is off until the person switches it on (ADR-067): an empty list of kinds is "off".
   const [savedOn, setSavedOn] = useState(emailIsOn(initial));
@@ -125,7 +130,11 @@ export function NotificationsForm({
     try {
       const response = await fetch('/api/pulse/preferences', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-corridra-customer-subject': subject,
+          'x-corridra-customer-issuer': issuer,
+        },
         body: JSON.stringify({
           kinds: on ? notificationKinds.filter((kind) => kinds.includes(kind)) : [],
           ...(on ? chosen : lastSaved),

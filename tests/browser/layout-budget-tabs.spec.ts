@@ -124,8 +124,15 @@ for (const { path, tabs } of tabbed) {
       await page.goto(path);
       // Routes opens on the list of routes, whose way to start a request is the /plan link. The home is not
       // tabbed any more (concept G); its first-screen check is in home-concept-g.spec.ts.
+      // Changed knowingly (9 Nov 2026, PR 370): from 67rem the header bar shows Start a Request and the page hero
+      // does not repeat it, so the action in view is the header's there and the hero's below it. It is still the
+      // first visible primary action; public-hero-layout.spec.ts proves one of the two is always in view.
       const action = page
-        .locator(path === '/corridors' ? 'main a[href="/plan"]' : 'main a.primary-link')
+        .locator(
+          path === '/corridors'
+            ? 'main a[href="/plan"]'
+            : '.public-header .nav-cta:visible, main a.primary-link:visible',
+        )
         .first();
       await expect(action).toBeVisible();
       const box = (await action.boundingBox())!;

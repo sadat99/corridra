@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Dialog } from '../../components/ux/dialog';
 import { accountWords, erasureStatusWords } from './account-lifecycle-words';
 import {
@@ -9,7 +9,14 @@ import {
   type AccountCommand,
   type AccountState,
 } from './account-lifecycle-client';
-import { useLifecycleCommand, whenWords, type LifecycleResult } from './workspace-lifecycle-client';
+import {
+  sessionHeaders,
+  useLifecycleCommand,
+  whenWords,
+  type LifecycleResult,
+} from './workspace-lifecycle-client';
+import { LifecycleErrorLine } from './lifecycle-error-line';
+import { ErasureDialog } from './erasure-dialog';
 
 /** Shown while the real controls are closed or unavailable. Plain text, one sentence, no control. */
 export function AccountClosureComingSoon() {
@@ -28,22 +35,14 @@ export function AccountClosureComingSoon() {
   );
 }
 
-function ErrorLine({ message }: { message: string | null }) {
-  const ref = useRef<HTMLParagraphElement>(null);
-  useEffect(() => {
-    if (message) ref.current?.focus();
-  }, [message]);
-  return message ? (
-    <p ref={ref} tabIndex={-1} role="alert" className="ux-error-summary">
-      {message}
-    </p>
-  ) : null;
-}
-
-const noHeaders = {};
 type Asking = 'close' | 'erasure' | null;
 
-export function AccountClosure() {
+/**
+ * The person is named by the headers the page was drawn for: if someone else signed in on this browser since, every read
+ * and command is refused with a request to reload, instead of acting on the other account.
+ */
+export function AccountClosure({ subject, issuer }: { subject: string; issuer: string }) {
+  const headers = useMemo(() => sessionHeaders(subject, issuer), [subject, issuer]);
   const [state, setState] = useState<AccountState | null | undefined>(undefined);
   const [asking, setAsking] = useState<Asking>(null);
   const [typed, setTyped] = useState('');
@@ -51,18 +50,18 @@ export function AccountClosure() {
   const [announce, setAnnounce] = useState<string | null>(null);
   // One command id for each kind of action: a close that was not confirmed keeps its id for the retry of the close only,
   // and never lends it to an erasure request or an undo.
-  const closing = useLifecycleCommand<AccountCommand>(noHeaders, accountEndpoint);
-  const erasing = useLifecycleCommand<AccountCommand>(noHeaders, accountEndpoint);
-  const undoing = useLifecycleCommand<AccountCommand>(noHeaders, accountEndpoint);
+  const closing = useLifecycleCommand<AccountCommand>(headers, accountEndpoint);
+  const erasing = useLifecycleCommand<AccountCommand>(headers, accountEndpoint);
+  const undoing = useLifecycleCommand<AccountCommand>(headers, accountEndpoint);
   const busy = closing.busy || erasing.busy || undoing.busy;
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     const controller = new AbortController();
-    void readAccountState(controller.signal).then((next) => {
+    void readAccountState(headers, controller.signal).then((next) => {
       if (!controller.signal.aborted) setState(next);
     });
     return () => controller.abort();
-  }, []);
+  }, [headers]);
   // The button that opened a dialog may be gone once the account has changed, so focus goes to the section heading.
   useEffect(() => {
     if (announce) heading.current?.focus();
@@ -70,7 +69,7 @@ export function AccountClosure() {
   if (state === undefined) return null;
   if (state === null) return <AccountClosureComingSoon />;
 
-  const reload = async () => setState((await readAccountState()) ?? state);
+  const reload = async () => setState((await readAccountState(headers)) ?? state);
   const close = () => {
     setAsking(null);
     setTyped('');
@@ -154,35 +153,33 @@ export function AccountClosure() {
               {busy ? 'Please Wait…' : 'Reopen My Account'}
             </button>
           )}
-          <ErrorLine message={message} />
+          <LifecycleErrorLine message={message} />
         </>
       ) : (
-        <>
-          <div>
-            <h4>Close Account</h4>
-            <p>{accountWords.closeRow}</p>
-            <button
-              type="button"
-              className="button button-secondary"
-              onClick={() => setAsking('close')}
-            >
-              Close Account
-            </button>
-          </div>
-          {!erasure && (
-            <div>
-              <h4>Ask for Erasure</h4>
-              <p>{accountWords.erasureRow}</p>
-              <button
-                type="button"
-                className="button button-secondary"
-                onClick={() => setAsking('erasure')}
-              >
-                Ask for Erasure
-              </button>
-            </div>
-          )}
-        </>
+        <div>
+          <h4>Close Account</h4>
+          <p>{accountWords.closeRow}</p>
+          <button
+            type="button"
+            className="button button-secondary"
+            onClick={() => setAsking('close')}
+          >
+            Close Account
+          </button>
+        </div>
+      )}
+      {!erasure && (
+        <div>
+          <h4>Ask for Erasure</h4>
+          <p>{accountWords.erasureRow}</p>
+          <button
+            type="button"
+            className="button button-secondary"
+            onClick={() => setAsking('erasure')}
+          >
+            Ask for Erasure
+          </button>
+        </div>
       )}
       {erasure && (
         <div className="ux-draft-notice">
@@ -251,7 +248,7 @@ export function AccountClosure() {
                 spellCheck={false}
               />
             </label>
-            <ErrorLine message={message} />
+            <LifecycleErrorLine message={message} />
             <div className="ux-dialog-actions">
               <button
                 type="button"
@@ -274,32 +271,14 @@ export function AccountClosure() {
           </form>
         )}
       </Dialog>
-      <Dialog
+      <ErasureDialog
         open={asking === 'erasure'}
+        busy={busy}
+        message={message}
+        onSubmit={submitErasure}
         onClose={close}
-        title={accountWords.erasureTitle}
-        locked={busy}
         returnFocusTo={() => heading.current}
-      >
-        <form onSubmit={submitErasure}>
-          <p>{accountWords.erasureBody}</p>
-          <ErrorLine message={message} />
-          <div className="ux-dialog-actions">
-            <button
-              type="button"
-              className="button button-secondary"
-              data-autofocus=""
-              disabled={busy}
-              onClick={close}
-            >
-              Cancel
-            </button>
-            <button type="submit" className="primary-link" disabled={busy}>
-              {busy ? 'Please Wait…' : 'Send Erasure Request'}
-            </button>
-          </div>
-        </form>
-      </Dialog>
+      />
     </section>
   );
 }

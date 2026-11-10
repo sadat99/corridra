@@ -9,7 +9,7 @@
       "$value": "The lettering is artwork. Never retype it in Geist, Newsreader or any other face."
     },
     "status": {
-      "$value": "Owner-supplied logo adopted by owner instruction. Art-direction review, trademark check and legal handoff are still open (docs/adr/0077-corridra-visual-identity.md)."
+      "$value": "Owner-supplied logo adopted by owner instruction. Art-direction review is done only for the sphere in the header, footer, rail and favicon (owner, 9 Nov 2026). Trademark check, vector master and legal handoff, tagline review and the orb as a standalone mark stay open (docs/adr/0077-corridra-visual-identity.md)."
     }
   },
   "color": {
@@ -65,11 +65,19 @@
   },
   "sizeLadder": [
     {
-      "context": "Under 48 px (favicon, avatar, collapsed rail)",
+      "context": "The 16 px favicon file only (ADR-077 amendment 1)",
       "asset": "orb"
     },
     {
-      "context": "Product chrome 24 to 40 px tall (headers, footer)",
+      "context": "Product chrome 44 px tall beside the wordmark: public and signed-in headers, collapsed rail, footer (ADR-077 amendment 1). Deliberate exception: 44 x 42 px in the customer and team headers at 430 px and below, 2 px under the rule, measured row width",
+      "asset": "mark, painted by CSS from the mask file (BrandMark in site-header.tsx)"
+    },
+    {
+      "context": "Under 44 px outside the 16 px favicon: avatar, any other small slot",
+      "asset": "orb"
+    },
+    {
+      "context": "Product chrome lockup in a file, 24 to 40 px tall",
       "asset": "lockup-compact"
     },
     {
@@ -97,8 +105,8 @@
   },
   "assets": {
     "mark": {
-      "$description": "Large brand moments only (hero, splash, print). Minimum 64 px wide.",
-      "minimumSize": "64 px",
+      "$description": "Large brand moments, app icons, the favicon at 32 px and up, and product chrome at 44 px tall (ADR-077 amendment 1). Minimum 64 px wide in print and on pages, 44 px tall in headers.",
+      "minimumSize": "64 px wide in print and on pages (large brand moments, app icons); 44 px tall in product chrome (ADR-077 amendment 1); deliberate exception 44 x 42 px in the customer and team headers at 430 px and below",
       "variants": {
         "cobalt": {
           "svg": "docs/brand/assets/svg/corridra-mark-cobalt.svg",
@@ -488,7 +496,7 @@
   },
   "favicon": {
     "tile": "--ac-navy",
-    "glyph": "orb in --on-brand",
+    "glyph": "halftone mark in --on-brand at 0.92 of the tile for the SVG and the 32, 48 and 64 px files; the orb in --on-brand for favicon-16.png and the 16 px entry of favicon.ico only (ADR-077 amendment 1)",
     "files": [
       "favicon.svg",
       "favicon-16.png",

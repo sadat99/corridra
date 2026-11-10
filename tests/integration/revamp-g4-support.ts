@@ -23,6 +23,7 @@ export function harness(f: Fixture, prefix: string) {
     subject: `synthetic-${prefix}-${person}`,
     emailVerified: true,
     expiresAt: new Date(Date.now() + 3600000),
+    signedInAt: new Date(),
   });
   const workspaces = (person = 'alice') =>
     new CustomerWorkspaceService(f.runtime, f.auth, options, async () => session(person));
@@ -147,4 +148,38 @@ export async function digest(f: Fixture, tables: string[]) {
       )
     ).rows[0].d as string;
   return result;
+}
+
+export type Answer = { ok?: unknown; error?: { code?: string; message: string } };
+
+// Runs `first` for `person` inside a transaction that stays open while `second` starts, proves that the second really
+// waited on a lock, and then lets the first commit. The answer is what the second command returned or raised.
+export async function overlap(
+  f: Fixture,
+  h: ReturnType<typeof harness>,
+  person: string,
+  first: (db: DatabaseClient) => Promise<unknown>,
+  second: () => Promise<unknown>,
+) {
+  let racing: Promise<Answer> | undefined;
+  let waited = false;
+  let settled = false;
+  await h.as(person, async (db) => {
+    await first(db);
+    racing = second().then(
+      (ok): Answer => ({ ok }),
+      (error: { code?: string; message: string }): Answer => ({ error }),
+    );
+    void racing.then(() => {
+      settled = true;
+    });
+    for (let attempt = 0; attempt < 30 && !waited && !settled; attempt++) {
+      const waiting = await f.owner.query(
+        "SELECT count(*)::int AS n FROM pg_stat_activity WHERE wait_event_type='Lock'",
+      );
+      waited = waiting.rows[0].n > 0;
+      if (!waited) await new Promise((done) => setTimeout(done, 100));
+    }
+  });
+  return { waited, answer: await racing! };
 }

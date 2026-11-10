@@ -60,17 +60,61 @@ test('product code draws the logo in one place, from tokens, without the tagline
   assert.match(header, /export function BrandLockup/);
   assert.match(header, /fill="currentColor"/);
   const paths = await read('apps/web/components/brand-paths.ts');
-  assert.match(paths, /export const ORB/);
+  assert.match(paths, /export const MARK/);
   assert.match(paths, /export const WORDMARK/);
   // The inline geometry must equal the published SVG assets, so the two cannot drift apart.
-  const [orbPath, wordPath] = [...paths.matchAll(/\bd: '([^']+)'/g)].map((m) => m[1]);
-  assert.ok(orbPath && wordPath, 'path data found in brand-paths.ts');
-  assert.ok(
-    (await read('apps/web/public/brand/corridra-orb-cobalt.svg')).includes(`d="${orbPath}"`),
-  );
+  const [wordPath] = [...paths.matchAll(/\bd: '([^']+)'/g)].map((m) => m[1]);
+  assert.ok(wordPath, 'path data found in brand-paths.ts');
   assert.ok(
     (await read('apps/web/public/brand/corridra-wordmark-navy.svg')).includes(`d="${wordPath}"`),
   );
+  // ADR-077 amendment 1 (9 Nov 2026): the header, footer and rail paint the halftone sphere. BrandMark is a
+  // span; CSS masks it with the file MARK names, so the code and the artwork cannot disagree.
+  const markFile = paths.match(/file: '([^']+)'/)?.[1];
+  assert.equal(markFile, '/brand/corridra-mark-cobalt.svg');
+  const markSvg = await read(`apps/web/public${markFile}`);
+  assert.equal((markSvg.match(/<ellipse /g) ?? []).length, 230, 'the halftone mark has 230 dots');
+  assert.match(markSvg, /viewBox="0\.00 0\.00 533\.00 511\.00"/);
+  assert.match(header, /<span className="brand-mark" aria-hidden="true" \/>/);
+  assert.doesNotMatch(header, /ORB\b/, 'the solid orb is no longer drawn inline');
+  assert.match(
+    css,
+    /\.brand-mark\s*\{[^}]*background-color:\s*currentColor;[^}]*mask:\s*url\('\/brand\/corridra-mark-cobalt\.svg'\)/,
+  );
+  assert.match(
+    css,
+    /forced-colors: active\)[\s\S]*forced-color-adjust: none;\s*background-color: CanvasText/,
+  );
+  // The orb stays the 16 px favicon entry only (the dots turn to grey mush at 16 px).
+  const ico = await readFile(new URL('apps/web/app/favicon.ico', root));
+  assert.deepEqual(
+    [0, 1, 2].map((i) => ico[6 + 16 * i]),
+    [16, 32, 48],
+    'favicon.ico holds 16, 32 and 48 px',
+  );
+  assert.equal((await read('apps/web/app/icon.svg')).match(/<ellipse /g)?.length, 230);
+  // The art is the registry art, unedited: byte-identical copies, and the tile's dot group is the reversed mark's.
+  for (const colorway of ['cobalt', 'reversed']) {
+    assert.equal(
+      await read(`apps/web/public/brand/corridra-mark-${colorway}.svg`),
+      await read(`docs/brand/assets/svg/corridra-mark-${colorway}.svg`),
+      `corridra-mark-${colorway}.svg differs from the registry file`,
+    );
+  }
+  const dots = (svg) => svg.match(/<g fill="#FFFFFF">[\s\S]*?<\/g>/)?.[0];
+  const tileDots = dots(await read('apps/web/app/icon.svg'));
+  assert.ok(tileDots, 'icon.svg has the white dot group');
+  assert.equal(tileDots, dots(await read('apps/web/public/brand/corridra-mark-reversed.svg')));
+  assert.equal(
+    await read('apps/web/app/icon.svg'),
+    await read('docs/brand/assets/favicon/favicon.svg'),
+    'icon.svg and favicon.svg are the same file',
+  );
+  assert.match(
+    css,
+    /@media \(max-width: 430px\)\s*\{[^@]*\.site-header:is\(\.ux-customer-header, \.ux-team-header\)\s*\{\s*gap: 4px;[^@]*\.brand \.brand-mark\s*\{\s*width: 44px;\s*height: 42px/,
+  );
+  assert.match(css, /\.brand-mark\s*\{[^}]*print-color-adjust: exact/);
   const sources = (await readdir(new URL('apps/web/', root), { recursive: true })).filter(
     (f) => /\.(?:tsx|ts|css)$/.test(f) && !/(?:^|\/)(?:node_modules|\.next)\//.test(f),
   );

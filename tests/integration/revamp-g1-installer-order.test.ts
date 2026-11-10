@@ -158,6 +158,7 @@ describe('installing the withdrawal module on the production state', () => {
     expect(await withdrawalInstalled()).toBe(true);
     expect((await applied('customer_request_withdrawal_migrations')).map((r) => r.name)).toEqual([
       '0001_request_withdrawal.sql',
+      '0002_staff_withdrawal_signal.sql',
     ]);
     // Its control starts closed, so nothing is visible.
     expect(
@@ -169,7 +170,7 @@ describe('installing the withdrawal module on the production state', () => {
     expect(await Promise.all(readers.map(definition))).toEqual(before.readers);
     // Running it again changes nothing.
     await migrateCustomerRequestWithdrawal(f.owner);
-    expect(await applied('customer_request_withdrawal_migrations')).toHaveLength(1);
+    expect(await applied('customer_request_withdrawal_migrations')).toHaveLength(2);
   });
 
   test('opening withdrawals is refused while an installed mail module lacks its withdrawal upgrade, and pausing is never refused', async () => {

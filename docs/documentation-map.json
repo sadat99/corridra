@@ -314,6 +314,11 @@
       "use": "Append-only log; never read whole. Use v3-context outline --last N and section for affected entries"
     },
     {
+      "path": "docs/agents/session-rotation.md",
+      "classification": "Current guide/contract",
+      "use": "Owner rule of 9 November 2026: when a session rotates, the handoff packet and what a new session reads"
+    },
+    {
       "path": "docs/architecture/implementation-canvas-v1.0.md",
       "classification": "Preserved source/working copy",
       "use": "Complete requirements; apply later explicit decisions without editing originals"
@@ -1414,6 +1419,31 @@
       "use": "Exact hashed ledger at 2217fd5 (the PR 344 merge), before PRs 341, 344 and 346 to 349 and the 6 Nov takeover lanes were recorded; preserves the full PR 322 to 343 merge bullet, the condensed Batch D, Batch E, production and product sequence bullets and the replaced Open and Next bullets; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-pr350-356-records-2026-11-09.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at f62e093 (the PR 356 merge), before PRs 350 to 356, the owner's 7 Nov G4/G5 install run 42364802587 and the 9 Nov lanes were recorded; preserves the full 6 Nov takeover, lanes, merge, install and Next bullets; use the current ledger for live state."
+    },
+    {
+      "path": "docs/v3/history/ledger-before-9nov-evening-records-2026-11-09.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at cfa22c2a (the PR 371 merge), before PRs 359 to 371, the 9 Nov G4/G5 follow-up install run 42654373889, the evening lanes and the session rotation rule were recorded; preserves the S1 to S4 lanes, takeover Resume and Next bullets; use the current ledger for live state."
+    },
+    {
+      "path": "docs/v3/history/ledger-before-s15-records-2026-11-10.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at 2bc003b3 (the PR 376 merge), before PRs 372 and 374 to 376, the S15 and S16 rotations, the waiting install run 42729108780 and the owner's 9 and 10 Nov /plan and wording decisions were recorded; preserves the 9 Nov evening Resume, lanes, Open and Next bullets; use the current ledger for live state."
+    },
+    {
+      "path": "docs/v3/history/ledger-before-s19-records-2026-11-10.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at c2137d43 (the PR 379 merge), before PRs 378 to 381, the S19, S20 and S17 lanes and the KI-45 resolution were recorded; preserves the 10 Nov S15 Lanes, Merged, Open and Next bullets; use the current ledger for live state."
+    },
+    {
+      "path": "docs/v3/history/ledger-before-s26-records-2026-11-10.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at b2d6362c (the PR 388 merge), before PRs 384, 387, 386 and 388, the S26 and S28 lanes, the G10 Guardian PASS and the owner-reported switch change were recorded; preserves the 10 Nov S19 Lanes, Merged, Open and Next bullets; use the current ledger for live state."
+    },
+    {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"
@@ -1499,6 +1529,11 @@
       "use": "Owner request (5 Nov 2026): one create, read, update and remove standard for every object, four lifecycle classes, rules C-01 to A-03 and tests CRUD-1 to CRUD-6"
     },
     {
+      "path": "docs/revamp/specs/workflow-intelligence.md",
+      "classification": "Current guide/contract",
+      "use": "Owner mandate (10 Nov 2026): journey audit, open-source tool decisions, reading-level measurement W1, plain copy W2"
+    },
+    {
       "path": "docs/revamp/crud/summary.md",
       "classification": "Current guide/contract",
       "use": "CRUD audit of 5 Nov 2026: counts, stop-ship check, gaps G1 to G12 with owners, and the build order"
@@ -1522,6 +1557,11 @@
       "path": "docs/revamp/specs/navigation-v1/public-reachability.md",
       "classification": "Current guide/contract",
       "use": "Navigation v1 order 2a: every old public header item and route with its new place in the header and phone menu, and the test that proves it"
+    },
+    {
+      "path": "docs/revamp/specs/navigation-v1/team-reachability.md",
+      "classification": "Current guide/contract",
+      "use": "Navigation v1 team shell: every old team menu item and route with its new place in the header, sidebar and avatar menu, and the tests that prove it"
     }
   ]
 }

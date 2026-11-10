@@ -1,7 +1,14 @@
 // The team command palette's pure parts (Navigation v1): the actions a role may open, the scopes, and
 // the keyboard rules. Nothing here reads data or grants access: actions come from the same map the sidebar
 // uses and are listed only for a role that may open the place; the server still decides every page. Owner: S4.
-import { placeHref, settingsLevel, teamItemsFor, teamPlacesFor, type TeamPlace } from './team-map';
+import {
+  placeHref,
+  settingsLevel,
+  teamAccountPlaces,
+  teamItemsFor,
+  teamPlacesFor,
+  type TeamPlace,
+} from './team-map';
 
 export const paletteScopeList = [
   { id: 'all', label: 'All' },
@@ -43,6 +50,7 @@ export function paletteActions(
   for (const item of teamItemsFor(role))
     for (const place of teamPlacesFor(item, role)) add(place, item.label);
   for (const place of settingsLevel(role)) add(place, 'Settings');
+  for (const place of teamAccountPlaces(role)) add(place, 'Account');
   return entries;
 }
 
