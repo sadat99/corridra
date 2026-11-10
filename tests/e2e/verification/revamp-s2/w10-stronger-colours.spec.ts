@@ -478,10 +478,15 @@ test('Team Today tiles and rows made of links are not underlined; a link in a se
   await page.goto('/operator');
   await expect(page.locator('main h1, main h2').first()).toBeVisible();
   await expect(html(page)).toHaveAttribute('data-contrast', 'more');
+  // The count tiles are drawn once Today's list has loaded.
+  await expect(page.locator('main .ux-today-tiles li > a').first()).toBeVisible({
+    timeout: 30_000,
+  });
   const tiles = await underlineOf(page, 'main .ux-today-tiles li > a');
   expect(tiles.length, 'Team Today has count tiles').toBeGreaterThan(0);
   expect(new Set(tiles)).toEqual(new Set(['none']));
-  const standalone = await underlineOf(page, 'main a.text-link');
+  // The workspace toolbar's icon button is a control with its own look, not a standalone text link.
+  const standalone = await underlineOf(page, 'main a.text-link:not(.operator-toolbar a)');
   expect(standalone.length, 'Team Today has a standalone text link').toBeGreaterThan(0);
   expect(new Set(standalone)).toEqual(new Set(['underline']));
   await page.waitForTimeout(61_000);
