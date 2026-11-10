@@ -15,6 +15,8 @@ async function problems(page: Page) {
   return page.evaluate(() => {
     const edge = document.documentElement.clientWidth;
     // The right edge of what is in the flow inside a box: its text and its children, not decoration placed on top of it.
+    // Content that is not rendered, which is the content of every closed disclosure, is skipped: it can keep a stale
+    // box nobody sees. problemsWithFoldsOpen measures that content with every fold open.
     const contentRight = (el: HTMLElement) => {
       let right = 0;
       const range = document.createRange();
@@ -23,6 +25,7 @@ async function problems(page: Page) {
           range.selectNodeContents(node);
           right = Math.max(right, range.getBoundingClientRect().right);
         } else if (node instanceof HTMLElement) {
+          if (!node.checkVisibility()) continue;
           const position = getComputedStyle(node).position;
           if (position === 'absolute' || position === 'fixed') continue;
           right = Math.max(right, node.getBoundingClientRect().right);
@@ -31,6 +34,7 @@ async function problems(page: Page) {
       return right;
     };
     const offenders = Array.from(document.querySelectorAll<HTMLElement>('body *')).filter((el) => {
+      if (!el.checkVisibility()) return false;
       const box = el.getBoundingClientRect();
       // Visually hidden helper text (and what is inside it) is one pixel wide on purpose.
       if (box.width < 2 || el.clientWidth < 2) return false;
@@ -53,6 +57,26 @@ async function problems(page: Page) {
   });
 }
 
+/** What does not fit with every closed fold on the page opened; the folds that were closed are closed again after. */
+async function problemsWithFoldsOpen(page: Page) {
+  const closed = await page.evaluateHandle(() => {
+    const folds = Array.from(document.querySelectorAll('details')).filter((fold) => !fold.open);
+    for (const fold of folds) fold.open = true;
+    return folds;
+  });
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await new Promise<void>((done) => requestAnimationFrame(() => done()));
+  });
+  const stillClosed = await page.locator('details:not([open])').count();
+  const found = await problems(page);
+  await page.evaluate((folds) => {
+    for (const fold of folds) fold.open = false;
+  }, closed);
+  await closed.dispose();
+  return stillClosed > 0 ? [`${stillClosed} fold(s) did not open`, ...found] : found;
+}
+
 test('with 200% text the home, how it works, corridors, network, trust and request pages fit at 320, 390, 768 and 1280', async ({
   page,
 }) => {
@@ -65,6 +89,7 @@ test('with 200% text the home, how it works, corridors, network, trust and reque
       // The page's own fonts are wider or narrower than the fallback, so measure only once they are in.
       await page.evaluate(() => document.fonts.ready);
       expect(await problems(page), `${path} at ${width}`).toEqual([]);
+      expect(await problemsWithFoldsOpen(page), `${path} at ${width}, every fold open`).toEqual([]);
     }
   }
 });
@@ -106,8 +131,16 @@ test('with 200% text the request form fits at 320, 390, 768 and 1280 on its wher
     await expect(currentWord(page)).toHaveText('Where');
     await expect(page.locator('form.intake-form .guide-options-row .choice')).toHaveCount(3);
     expect(await problems(page), `/plan where step at ${width}`).toEqual([]);
+    expect(
+      await problemsWithFoldsOpen(page),
+      `/plan where step at ${width}, every fold open`,
+    ).toEqual([]);
     await continueToContact(page);
     expect(await problems(page), `/plan contact step at ${width}`).toEqual([]);
+    expect(
+      await problemsWithFoldsOpen(page),
+      `/plan contact step at ${width}, every fold open`,
+    ).toEqual([]);
   }
 });
 
