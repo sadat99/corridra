@@ -1464,6 +1464,11 @@
       "use": "Proposed: Help > Report a Problem; optional additive module, owner-installed; append-only reports, owner/admin triage, sample/real split, erasure removes words"
     },
     {
+      "path": "docs/adr/0079-real-company-linking-phase-1.md",
+      "classification": "Architecture decision",
+      "use": "Design only (relayed owner decisions of 10 Nov 2026): real company linking Phase 1, one provenance rule, source-rights record and takedown, combined search with anti-enumeration, erasure by redaction record, forward real-use files; nothing built, installed or enabled; amends ADR-052"
+    },
+    {
       "path": "docs/revamp/README.md",
       "classification": "Current guide/contract",
       "use": "Owner-approved V3 controlled revamp scope (4 Nov 2026), merge rules, session file ownership and the Wave 0 route/cleanup manifest; live state stays in the ledger"
@@ -1542,6 +1547,11 @@
       "path": "docs/revamp/specs/problem-reports.md",
       "classification": "Current guide/contract",
       "use": "Owner decisions (10 Nov 2026): Report a Problem build spec, addresses, words, states, staff queue, PR split and acceptance"
+    },
+    {
+      "path": "docs/revamp/specs/company-linking-phase1.md",
+      "classification": "Current guide/contract",
+      "use": "Phase plan for ADR-079 (design only): slices, named database objects, provenance and orphan matrices, owner steps, Phase 2 list"
     },
     {
       "path": "docs/revamp/crud/summary.md",

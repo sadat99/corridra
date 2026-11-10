@@ -2,6 +2,8 @@
 
 Status: bounded implementation, synthetic only, default off (`CORRIDRA_CUSTOMER_ORGANISATION_LINKS_ENABLED`). V3-06-002 and V3-06-011 stay PARTIAL for the whole product.
 
+Amended forward by [ADR-079](0079-real-company-linking-phase-1.md) (design only, 10 November 2026, owner decisions relayed by S17): real organisation search, provenance of candidates, rights record and redaction. The text below stays as the record of the synthetic build.
+
 ## Context
 
 ADR-044 gave every workspace a private, self-reported company profile and left `organisationId` null, because `app.organisation` is the globally readable canonical catalogue and anything a customer typed there would become visible across tenants and could be merged by name. The missing bridge is a rights-safe way to say "this workspace's company IS that canonical organisation", decided by staff from evidence, without customer input ever writing to or leaking across the catalogue.
