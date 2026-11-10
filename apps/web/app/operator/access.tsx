@@ -246,13 +246,13 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
                 participants: add(old.participants, more.participants),
                 outcomes: add(old.outcomes, more.outcomes),
                 history: add(old.history, more.history),
-                meetingsTotal: more.meetingsTotal,
+                meetingsTotal: more.meetingsTotal ?? old.meetingsTotal,
                 next: more.next,
               }
             : {
                 ...old,
                 followups: add(old.followups, more.followups),
-                followupsTotal: more.followupsTotal,
+                followupsTotal: more.followupsTotal ?? old.followupsTotal,
                 followupsNext: more.followupsNext,
               }
           : old,
@@ -285,7 +285,8 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
               ...old,
               [kind]: add(old[kind] as { id: string }[], more[kind] as { id: string }[]),
               attempts: kind === 'messages' ? add(old.attempts, more.attempts) : old.attempts,
-              [`${kind}Total`]: more[`${kind}Total`],
+              // A continuation carries no total; the first page's stands (G12 follow-up).
+              [`${kind}Total`]: more[`${kind}Total`] ?? old[`${kind}Total`],
               [`${kind}Next`]: more[`${kind}Next`],
             }
           : old,

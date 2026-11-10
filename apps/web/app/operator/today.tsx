@@ -59,6 +59,7 @@ type Today = {
 };
 
 const week = 7 * 24 * 60 * 60 * 1000;
+/** One server page (CRUD G12): the meetings read is ordered by date, earliest first. */
 const readLimit = 50;
 /** Rows shown in "Needs you now" before "Show N More", and rows per group in "This week". */
 const firstRows = 5;
@@ -352,7 +353,8 @@ function ThisWeek({ today }: { today: Today }) {
           </WeekGroup>
           {work.partial && (
             <p className="ux-today-more">
-              Meeting and follow-up counts cover the first {readLimit} records of each kind.
+              Meeting and follow-up counts cover the {readLimit} earliest of each, by date. The
+              meetings section lists them all.
             </p>
           )}
         </>

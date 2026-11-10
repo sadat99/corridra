@@ -5,6 +5,7 @@ import { formatDate, formatDateTime } from '../../../../lib/ux/format';
 import { formatMoney } from '../../../../lib/ux/money';
 import { CommercialMission } from '../../commercial-mission';
 import { DeliveryExperience } from '../../delivery-experience';
+import { ShowMore } from '../../show-more';
 import { MissionMoves } from '../../mission-moves';
 import { WithdrawalNote } from '../../mission-withdrawal-note';
 import {
@@ -558,34 +559,33 @@ function Meetings({ tenant, missionId }: { tenant: string; missionId: string }) 
   const first = useRead<{ meetings: Row[]; meetingsTotal: number | null; next: string | null }>(
     base,
   );
-  const [more, setMore] = useState<{
-    rows: Row[];
-    next: string | null;
-    total: number | null;
-  } | null>(null);
+  // Extra pages belong to the first read they continue: when that read changes (another mission, or a
+  // fresh read), they are dropped instead of being shown under the wrong list (G12 follow-up).
+  const [more, setMore] = useState<{ of: unknown; rows: Row[]; next: string | null } | null>(null);
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState('');
   const { value, error } = first;
-  const rows = [...(value?.meetings ?? []), ...(more?.rows ?? [])];
-  const next = more ? more.next : (value?.next ?? null);
-  const total = more ? more.total : (value?.meetingsTotal ?? null);
+  const extra = more && more.of === value ? more : null;
+  const rows = [...(value?.meetings ?? []), ...(extra?.rows ?? [])];
+  const next = extra ? extra.next : (value?.next ?? null);
+  // A continuation carries no total; the first page's stands.
+  const total = value?.meetingsTotal ?? null;
   async function showMore() {
-    if (!next) return;
+    if (!next || busy) return;
+    const of = value;
     setBusy(true);
     setFailure('');
     try {
-      const page = await read<{
-        meetings: Row[];
-        meetingsTotal: number | null;
-        next: string | null;
-      }>(`${base}&after=${encodeURIComponent(next)}`);
+      const page = await read<{ meetings: Row[]; next: string | null }>(
+        `${base}&after=${encodeURIComponent(next)}`,
+      );
       setMore((old) => ({
+        of,
         rows: [
-          ...(old?.rows ?? []),
+          ...(old && old.of === of ? old.rows : []),
           ...page.meetings.filter((m) => !rows.some((r) => r.id === m.id)),
         ],
         next: page.next,
-        total: page.meetingsTotal,
       }));
     } catch (e) {
       setFailure(e instanceof Error ? e.message : 'The next page could not be loaded.');
@@ -609,19 +609,14 @@ function Meetings({ tenant, missionId }: { tenant: string; missionId: string }) 
               </li>
             ))}
           </ul>
-          {next && (
-            <p>
-              Showing {rows.length} of {total} meetings.{' '}
-              <button
-                className="text-link"
-                type="button"
-                disabled={busy}
-                onClick={() => void showMore()}
-              >
-                Show More Meetings
-              </button>
-            </p>
-          )}
+          <ShowMore
+            shown={rows.length}
+            total={total}
+            next={next}
+            busy={busy}
+            label="Meetings"
+            onMore={() => void showMore()}
+          />
           {failure && <p role="alert">{failure}</p>}
         </>
       ) : (

@@ -64,7 +64,9 @@ async function walk(missionId?: string, limit?: number) {
       next: string | null;
     };
     pages.push(page.meetings.map((m) => m.id));
-    total = page.meetingsTotal;
+    // A continuation carries no total; the first page's stands (G12 follow-up).
+    if (guard === 0) total = page.meetingsTotal;
+    else expect(page.meetingsTotal).toBeNull();
     if (!page.next) break;
     after = page.next;
   }
@@ -176,7 +178,9 @@ test('follow-ups page on their own cursor with an exact total', { timeout: 24000
       followupsNext: string | null;
     };
     seen.push(...page.followups.map((x) => x.id));
-    total = page.followupsTotal;
+    // A continuation carries no total; the first page's stands (G12 follow-up).
+    if (guard === 0) total = page.followupsTotal;
+    else expect(page.followupsTotal).toBeNull();
     if (!page.followupsNext) break;
     after = page.followupsNext;
   }
@@ -195,4 +199,46 @@ test('the default page holds 50 meetings', { timeout: 240000 }, async () => {
   expect(page.meetings).toHaveLength(50);
   expect(page.next).toEqual(expect.any(String));
   expect(page.meetingsTotal).toBeGreaterThan(50);
+});
+
+test('continuing both lists at once is refused with 400', async () => {
+  const first = (await f.meetings.workspace(f.ctx, { limit: 2 })) as unknown as {
+    next: string;
+    followupsNext: string | null;
+  };
+  await expect(
+    f.meetings.workspace(f.ctx, { after: first.next, followupsAfter: first.next, limit: 2 }),
+  ).rejects.toMatchObject({ status: 400 });
+});
+
+test('a list of mission ids filters on the server and each meeting keeps its brief', async () => {
+  const other = randomUUID();
+  const page = (await f.meetings.workspace(f.ctx, {
+    missionIds: [other, seedMissionId],
+  })) as unknown as {
+    meetings: { id: string; mission_id: string; brief: string }[];
+    meetingsTotal: number;
+  };
+  const rows = (
+    await f.owner.query(
+      'SELECT count(*)::int AS n FROM app.meeting WHERE tenant_id=$1 AND mission_id=$2',
+      [f.ctx.tenantId, seedMissionId],
+    )
+  ).rows[0].n;
+  expect(page.meetingsTotal).toBe(rows);
+  expect(page.meetings.every((m) => m.mission_id === seedMissionId)).toBe(true);
+  expect(page.meetings.find((m) => m.id === seedMeetingId)?.brief).toBe(
+    'Seed meeting for the paging tests.',
+  );
+  expect(page.meetings.every((m) => typeof m.brief === 'string' && m.brief.length > 2)).toBe(true);
+  const none = (await f.meetings.workspace(f.ctx, { missionIds: [other] })) as unknown as {
+    meetingsTotal: number;
+    followupsTotal: number;
+  };
+  expect(none.meetingsTotal).toBe(0);
+  expect(none.followupsTotal).toBe(0);
+  for (const bad of [['not-a-uuid'], Array.from({ length: 101 }, () => randomUUID())])
+    await expect(f.meetings.workspace(f.ctx, { missionIds: bad })).rejects.toMatchObject({
+      status: 400,
+    });
 });

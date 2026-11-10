@@ -699,7 +699,9 @@ test('network profiles and tasks come in pages with an exact total and no loss o
       const rows = page[name] as { id: string }[];
       sizes.push(rows.length);
       ids.push(...rows.map((r) => r.id));
-      total = page[`${name}Total`] as number;
+      // A continuation carries no total; the first page's stands (G12 follow-up).
+      if (guard === 0) total = page[`${name}Total`] as number;
+      else expect(page[`${name}Total`]).toBeNull();
       after = page[`${name}Next`] as string | null;
       if (!after) break;
     }

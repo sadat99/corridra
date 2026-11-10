@@ -261,7 +261,8 @@ export function ExecutionNetwork({
             ...rows,
             ...(more[kind] as { id: string }[]).filter((m) => !rows.some((r) => r.id === m.id)),
           ],
-          [`${kind}Total`]: more[`${kind}Total`],
+          // A continuation carries no total; the first page's stands (G12 follow-up).
+          [`${kind}Total`]: more[`${kind}Total`] ?? old[`${kind}Total`],
           [`${kind}Next`]: more[`${kind}Next`],
         } as Snapshot;
       });

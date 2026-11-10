@@ -104,6 +104,7 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
             after: q.get('after'),
             followupsAfter: q.get('followupsAfter'),
             missionId: q.get('missionId'),
+            missionIds: q.get('missionIds')?.split(',') ?? null,
           });
         },
         research: () =>
