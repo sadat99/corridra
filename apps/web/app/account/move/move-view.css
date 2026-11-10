@@ -579,7 +579,7 @@
   line-height: 1.3;
 }
 .move-stat[data-warn='true'] dd {
-  color: var(--ac-warning);
+  color: var(--caution);
 }
 .move-private {
   display: flex;
