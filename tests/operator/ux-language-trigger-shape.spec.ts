@@ -242,6 +242,55 @@ for (const kind of kinds)
         ).toHaveAttribute('aria-checked', 'true');
       });
 
+/** Where the customer header's tools are: New Request, then the language, inbox, help and account triggers. */
+async function tools(page: Page) {
+  return page.evaluate(() => {
+    const box = (el: Element | null) => {
+      const rect = el?.getBoundingClientRect();
+      return rect
+        ? { left: rect.left, right: rect.right, centre: (rect.top + rect.bottom) / 2 }
+        : null;
+    };
+    const named = (name: string) =>
+      box(document.querySelector(`header button[aria-label="${name}"]`));
+    return {
+      request: box(document.querySelector('header .ux-bar-primary')),
+      language: named('Language'),
+      inbox: named('Inbox'),
+      help: named('Help and accessibility'),
+      account: named('Account menu'),
+    };
+  });
+}
+
+// At 768 px with 200% text the tools box is 688 px and the controls need 627 px plus their gaps. The gap is the space
+// token in rem, so it doubled with the text and left the account menu 3 px short, alone on a third line (the header
+// went from 225 to 329 px). The gap now stays 8 px, so all five controls share one line.
+test('the customer tools share one line at 768 px with 200% text', async ({ page }) => {
+  await open(page, 'customer', 768, true);
+  const all = await tools(page);
+  const centres = Object.values(all).map((one) => one!.centre);
+  // One line: the centres differ by a few px (the inbox box is shorter than the triggers). A control on a line of its
+  // own is a whole control height (44 px or more) away.
+  expect(
+    Math.max(...centres) - Math.min(...centres),
+    'vertical spread of the five tools',
+  ).toBeLessThan(44);
+});
+
+// From 640 px the language trigger sits beside New Request. The phone rule (up to 700 px) had set the gap between the
+// tools to zero, so the grown shade of the language trigger touched the blue button.
+for (const width of [640, 700])
+  for (const zoomed of [false, true])
+    test(`New Request and the language trigger keep a gap at ${width} px${zoomed ? ' with 200% text' : ''}`, async ({
+      page,
+    }) => {
+      await open(page, 'customer', width, zoomed);
+      const { request, language } = await tools(page);
+      expect(Math.abs(request!.centre - language!.centre), 'on the same line').toBeLessThan(4);
+      expect(language!.left - request!.right, 'gap in px').toBeGreaterThanOrEqual(4);
+    });
+
 for (const kind of kinds)
   test(`the ${kind} header has no accessibility violations with the language menu open`, async ({
     page,
