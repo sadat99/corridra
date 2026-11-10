@@ -269,7 +269,9 @@ export default function Page() {
                     WhatsApp, which opens WhatsApp outside Corridra). We receive what you send, with
                     the phone number and name WhatsApp shows us. WhatsApp (Meta) handles your
                     message under its own terms. To reply and keep a record. Basis: our legitimate
-                    interest in answering you, or the law where it requires a record.
+                    interest in answering you, or the law where it requires a record. We delete a
+                    WhatsApp conversation 12 months after its last message, unless the law requires
+                    us to keep it longer.
                   </li>
                 )}
                 {pulseEmail && (
@@ -494,6 +496,13 @@ export default function Page() {
                 you are in the European Economic Area or the United Kingdom and want to know what
                 safeguards apply to that access, contact us.
               </p>
+              {whatsapp && (
+                <p>
+                  WhatsApp messages stay in WhatsApp, on Meta’s systems and on the device we answer
+                  from, not in our Frankfurt database. Meta may process them in other countries
+                  under its own terms.
+                </p>
+              )}
             </div>
           </article>
           <article id="files">

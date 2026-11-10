@@ -343,6 +343,10 @@ describe('the privacy notice and Chat on WhatsApp', () => {
   const sample = { DATA_ENVIRONMENT: 'synthetic' };
   const summarySentence =
     'If you choose Chat on WhatsApp, you open WhatsApp yourself, and your messages travel under your own WhatsApp terms.';
+  const retentionSentence =
+    'We delete a WhatsApp conversation 12 months after its last message, unless the law requires us to keep it longer.';
+  const locationParagraph =
+    'WhatsApp messages stay in WhatsApp, on Meta’s systems and on the device we answer from, not in our Frankfurt database. Meta may process them in other countries under its own terms.';
   const sharingEntry =
     'WhatsApp (Meta): the channel you choose when you select Chat on WhatsApp. You open it yourself and your messages travel under your own WhatsApp terms. It is not a service we use to run Corridra.';
 
@@ -355,6 +359,8 @@ describe('the privacy notice and Chat on WhatsApp', () => {
         expect(page).not.toContain('WhatsApp');
         expect(page).not.toContain(summarySentence);
         expect(page).not.toContain(sharingEntry);
+        expect(page).not.toContain(retentionSentence);
+        expect(page).not.toContain(locationParagraph);
       }
     }
   });
@@ -370,6 +376,13 @@ describe('the privacy notice and Chat on WhatsApp', () => {
       // and the sharing list, which says it is the person's own channel and not a provider we use.
       expect(page).toContain(summarySentence);
       expect(page).toContain(sharingEntry);
+      // The retention sentence ends the WhatsApp item, and the location paragraph is in Where information is stored.
+      expect(page).toContain(retentionSentence);
+      expect(page).toContain(locationParagraph);
+      expect(page.indexOf(retentionSentence)).toBeGreaterThan(page.indexOf(item));
+      expect(page.indexOf(locationParagraph)).toBeGreaterThan(
+        page.indexOf('Application data and customer accounts are stored in Frankfurt'),
+      );
       // It is its own paragraph after the provider list and the sentence about providers, so it is not listed as a
       // provider "we use to run Corridra" and the sentence about information processed for us does not cover it.
       expect(page.indexOf(sharingEntry)).toBeGreaterThan(
