@@ -53,7 +53,7 @@ export const installOnlyModules = [
   {
     name: 'customer-problem-reports',
     label: 'Problem reports',
-    line: 'No separate application switch. Installing the database module is the activation; the Help menus keep Report a Problem as Coming soon until the application release that uses it.',
+    line: 'No separate application switch. Installing the database module is the activation; it installs the workspace and account lifecycle modules first and leaves their controls as they are (closed on a database that never opened them). The Help menus keep Report a Problem as Coming soon until the application release that uses it.',
     state: 'Installation not checked here',
     action: 'field_modules_action=problem_reports',
   },
