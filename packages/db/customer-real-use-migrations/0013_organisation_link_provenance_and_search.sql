@@ -194,18 +194,19 @@ DECLARE prev customer_private.organisation_link; o app.organisation;
 BEGIN
  SELECT * INTO prev FROM customer_private.organisation_link l WHERE l.tenant_id=NEW.tenant_id ORDER BY l.version DESC LIMIT 1;
  IF NEW.version<>coalesce(prev.version,0)+1 THEN RAISE EXCEPTION 'Link ledger must be appended in order' USING ERRCODE='23514'; END IF;
+ IF NEW.state='linked' AND prev.id IS NOT NULL AND prev.state<>'unlinked' THEN
+  RAISE EXCEPTION 'Only one active company link is allowed per workspace' USING ERRCODE='23514';
+ END IF;
+ IF NEW.state='unlinked' AND (prev.id IS NULL OR prev.state<>'linked' OR prev.claim_id<>NEW.claim_id OR prev.organisation_id<>NEW.organisation_id) THEN
+  RAISE EXCEPTION 'Only the active company link can be ended' USING ERRCODE='23514';
+ END IF;
+ -- The older checks above keep their order for direct writers. The new test comes last.
  IF NEW.state='linked' THEN
   SELECT * INTO o FROM app.organisation x WHERE x.id=NEW.organisation_id;
   IF NOT FOUND OR NOT customer_private.organisation_link_same_context(o.synthetic,app.tenant_is_synthetic(NEW.tenant_id))
    OR customer_private.organisation_link_suppressed(o.id) THEN
    RAISE EXCEPTION 'That organisation is not available for linking' USING ERRCODE='23514';
   END IF;
- END IF;
- IF NEW.state='linked' AND prev.id IS NOT NULL AND prev.state<>'unlinked' THEN
-  RAISE EXCEPTION 'Only one active company link is allowed per workspace' USING ERRCODE='23514';
- END IF;
- IF NEW.state='unlinked' AND (prev.id IS NULL OR prev.state<>'linked' OR prev.claim_id<>NEW.claim_id OR prev.organisation_id<>NEW.organisation_id) THEN
-  RAISE EXCEPTION 'Only the active company link can be ended' USING ERRCODE='23514';
  END IF;
  RETURN NEW;
 END $function$
@@ -579,7 +580,8 @@ CREATE OR REPLACE FUNCTION customer.organisation_link_search(p_target uuid, p_te
  SET search_path TO 'pg_catalog'
 AS $function$
 DECLARE v_actor uuid:=customer.actor_id(); v_country text; v_details jsonb; v_pattern text; v_items jsonb:='[]'::jsonb;
- v_profile_key text; v_profile_host text; v_term_key text; v_recent integer; v_day integer;
+ v_profile_key text; v_profile_host text; v_keys text[]; v_shapes text[]; v_hosts uuid[]; v_ids uuid[]:=ARRAY[]::uuid[]; v_row record;
+ v_recent integer; v_day integer;
 BEGIN
  IF v_actor IS NULL OR p_target IS NULL THEN RAISE EXCEPTION 'Customer access denied' USING ERRCODE='42501'; END IF;
  IF customer_private.organisation_profile_role(p_target,v_actor) IS DISTINCT FROM 'writer' THEN RAISE EXCEPTION 'Workspace owner or admin required' USING ERRCODE='42501'; END IF;
@@ -597,19 +599,32 @@ BEGIN
   INSERT INTO customer_private.organisation_link_search_attempt(actor_id) VALUES(v_actor);
   v_profile_key:=customer_private.organisation_link_name_key(v_details->>'legalName');
   v_profile_host:=customer_private.organisation_link_host_key(v_details->>'website');
-  v_term_key:=customer_private.organisation_link_name_key(p_term);
-  SELECT coalesce(jsonb_agg(jsonb_build_object('id',m.id,'name',m.name,'country',m.country) ORDER BY m.name,m.id),'[]'::jsonb) INTO v_items FROM (
-   SELECT t.id,t.name,t.country FROM (
-    SELECT DISTINCT ON (c.id) c.id,c.name,c.country,c.rank FROM (
-     SELECT o.id,o.name,o.country,
-      CASE WHEN (length(v_profile_key)>=3 AND k.nk=v_profile_key)
-        OR (v_profile_host IS NOT NULL AND EXISTS(SELECT FROM app.public_identifier i WHERE i.organisation_id=o.id AND regexp_replace(i.domain,'^www\.','')=v_profile_host))
-        OR (length(v_term_key)>=3 AND k.nk=v_term_key) THEN 0
-       WHEN lower(o.name) LIKE v_pattern THEN 1 END rank
-     FROM app.organisation o CROSS JOIN LATERAL (SELECT customer_private.organisation_link_name_key(o.name) nk) k
-     WHERE o.country=v_country AND customer_private.organisation_link_public_organisation(o.id)
-    ) c WHERE c.rank IS NOT NULL ORDER BY c.id,c.rank
-   ) t ORDER BY t.rank,t.name,t.id LIMIT 10) m;
+  -- Each key is computed once. A key shorter than three letters never takes the exact lane.
+  v_keys:=ARRAY(SELECT DISTINCT k FROM unnest(ARRAY[v_profile_key,customer_private.organisation_link_name_key(p_term)]) k WHERE length(k)>=3);
+  -- A name key is its name with characters deleted, so the key letters must occur in order in the name. This cheap test keeps the
+  -- costly key function off names that cannot match. It only ever drops names whose key cannot equal a searched key.
+  v_shapes:=ARRAY(SELECT '^'||regexp_replace(k,'(.)','\1.*','g') FROM unnest(v_keys) k);
+  v_hosts:=ARRAY(SELECT i.organisation_id FROM app.public_identifier i WHERE v_profile_host IS NOT NULL
+   AND i.domain IN (v_profile_host,'www.'||v_profile_host) AND regexp_replace(i.domain,'^www\.','')=v_profile_host);
+  -- Cheap tests first, in the order of the answer. The eligibility helper then runs only until ten rows have passed, so its cost does not
+  -- grow with the catalogue. Each organisation has one rank, so it can appear once only. OFFSET 0 keeps the rank from being computed twice.
+  FOR v_row IN
+   SELECT o.id FROM app.organisation o
+   CROSS JOIN LATERAL (SELECT CASE
+     WHEN o.id=ANY(v_hosts) THEN 0
+     WHEN cardinality(v_shapes)>0 AND regexp_replace(lower(o.name),'[^[:alnum:]]+','','g') ~ ANY(v_shapes)
+      AND customer_private.organisation_link_name_key(o.name)=ANY(v_keys) THEN 0
+     WHEN lower(o.name) LIKE v_pattern THEN 1 END AS rank OFFSET 0) r
+   WHERE o.country=v_country AND r.rank IS NOT NULL
+   ORDER BY r.rank,o.name,o.id
+  LOOP
+   IF customer_private.organisation_link_public_organisation(v_row.id) THEN
+    v_ids:=v_ids||v_row.id;
+    EXIT WHEN cardinality(v_ids)=10;
+   END IF;
+  END LOOP;
+  SELECT coalesce(jsonb_agg(jsonb_build_object('id',o.id,'name',o.name,'country',o.country) ORDER BY o.name,o.id),'[]'::jsonb) INTO v_items
+  FROM app.organisation o WHERE o.id=ANY(v_ids);
  END IF;
  IF customer.actor_id() IS DISTINCT FROM v_actor THEN RAISE EXCEPTION 'Company link access expired' USING ERRCODE='42501'; END IF;
  RETURN jsonb_build_object('workspaceId',p_target,'expiresAt',customer_private.organisation_link_expiry(),'organisations',v_items);
