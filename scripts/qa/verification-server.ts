@@ -209,9 +209,25 @@ const whatsappServer = startNext(3302, {
   CORRIDRA_SUPPORT_WHATSAPP_NUMBER: '+6500000000',
   APP_ORIGIN: 'http://127.0.0.1:3302',
 });
+const main: { server?: ChildProcess } = {};
 let whatsappExited = false;
-whatsappServer.on('exit', () => {
+function stopAll(code: number) {
+  if (main.server) stopGroup(main.server, 'SIGTERM');
+  stopGroup(whatsappServer, 'SIGTERM');
+  providerFixture.close();
+  process.exit(code);
+}
+// Handlers go in before the readiness wait, so a kill during it never leaves the detached 3302 server behind.
+for (const signal of ['SIGINT', 'SIGTERM'] as const)
+  process.on(signal, () => {
+    providerFixture.close();
+    if (main.server) stopGroup(main.server, signal);
+    stopGroup(whatsappServer, signal);
+  });
+whatsappServer.on('exit', (code) => {
   whatsappExited = true;
+  // 3302 stopping on its own is a failure even with exit code 0: the suite would lose its WhatsApp checks.
+  if (main.server) stopAll(code || 1);
 });
 const readyBy = Date.now() + 60_000;
 for (;;) {
@@ -224,24 +240,11 @@ for (;;) {
     /* Not listening yet. */
   }
   if (Date.now() > readyBy) {
-    stopGroup(whatsappServer, 'SIGTERM');
-    throw new Error('The support WhatsApp server on 3302 was not ready within 60 seconds.');
+    console.error('The support WhatsApp server on 3302 was not ready within 60 seconds.');
+    stopAll(1);
   }
   await new Promise((done) => setTimeout(done, 250));
 }
 const server = startNext(3300, env);
-for (const signal of ['SIGINT', 'SIGTERM'] as const)
-  process.on(signal, () => {
-    providerFixture.close();
-    stopGroup(server, signal);
-    stopGroup(whatsappServer, signal);
-  });
-function stopAll(code: number) {
-  stopGroup(server, 'SIGTERM');
-  stopGroup(whatsappServer, 'SIGTERM');
-  providerFixture.close();
-  process.exit(code);
-}
+main.server = server;
 server.on('exit', (code) => stopAll(code ?? 1));
-// 3302 stopping on its own is a failure even with exit code 0: the suite would lose its WhatsApp checks.
-whatsappServer.on('exit', (code) => stopAll(code || 1));

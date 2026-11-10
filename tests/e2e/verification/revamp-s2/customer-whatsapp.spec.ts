@@ -62,12 +62,16 @@ test.describe('with a support number set (port 3302)', () => {
     await expect(menu.getByRole('group', { name: 'Get Help' }).getByRole('menuitem')).toHaveCount(
       4,
     );
-    for (const name of ['Report a Problem', 'Text Size', 'Stronger Colours', 'Less Movement']) {
+    for (const name of ['Report a Problem', 'Stronger Colours']) {
       const soon = menu.getByRole('menuitem', { name: new RegExp(name) });
       await expect(soon, name).toHaveAttribute('aria-disabled', 'true');
       await expect(soon, name).toContainText('Coming soon');
       await expect(soon, name).not.toHaveAttribute('href', /.*/);
     }
+    // Text Size and Less Movement are real controls, not placeholders, and WhatsApp did not change them.
+    await expect(menu.getByRole('group', { name: 'Text Size' })).toBeVisible();
+    await expect(menu.getByRole('menuitemcheckbox', { name: /Less Movement/ })).toBeVisible();
+    await expect(menu.getByText('Coming soon')).toHaveCount(2);
   });
 
   test('the keyboard reaches the row, and Escape closes the menu and returns to the button', async ({
