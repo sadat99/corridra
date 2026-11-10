@@ -26,7 +26,12 @@ test.beforeAll(async () => {
           setNext(v.next);
           setBusy(false);
         }
+        async function reload(){
+          const v=await read('&reload=1');
+          setRows(v.meetings);setTotal(v.meetingsTotal);setNext(v.next);
+        }
         return <><ul>{rows.map((m)=><li key={m.id}>{m.title}</li>)}</ul>
+          <button type="button" onClick={()=>void reload()}>Reload</button>
           <ShowMore shown={rows.length} total={total} next={next} busy={busy} label="Meetings" onMore={()=>void more()}/></>;
       }
       createRoot(document.getElementById('root')).render(<List/>);`,
@@ -60,6 +65,9 @@ test('Show More keeps the focus, says it is busy and announces the new count', a
         body: `<!doctype html><html lang="en"><body><main id="root"></main><script type="module">${bundle.replace(/<\/script/g, '<\\/script')}</script></body></html>`,
       });
     const after = url.searchParams.get('after');
+    // A fresh read of a list that now fits on one page.
+    if (url.searchParams.get('reload'))
+      return route.fulfill({ json: { meetings: [meeting(1)], meetingsTotal: 1, next: null } });
     if (!after)
       return route.fulfill({
         json: { meetings: [1, 2].map(meeting), meetingsTotal: 5, next: 'page-2' },
@@ -89,12 +97,19 @@ test('Show More keeps the focus, says it is busy and announces the new count', a
   await expect(status).toHaveText('Showing 4 of 5 meetings.');
   await expect(button).not.toHaveAttribute('aria-disabled', 'true');
   await expect(button).toBeFocused();
-  // The last page removes the button; the focus moves to the count, which says everything is shown.
+  // The last page removes the button; the focus moves to the control's own container (not the status,
+  // which would be announced twice), and the status says everything is shown.
   await page.keyboard.press('Enter');
   await expect(page.getByRole('listitem')).toHaveCount(5);
   await expect(button).toHaveCount(0);
   await expect(status).toHaveText('Showing all 5 meetings.');
-  await expect(status).toBeFocused();
+  await expect(page.locator('.ux-show-more')).toBeFocused();
+  // A fresh read back to one page drops the control: the list was not paged in this read, and the
+  // focus is not pulled anywhere.
+  await page.getByRole('button', { name: 'Reload' }).click();
+  await expect(page.getByRole('listitem')).toHaveCount(1);
+  await expect(page.getByRole('status')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Reload' })).toBeFocused();
 });
 
 test('a list with one page shows no paging control', async ({ page }) => {
@@ -110,5 +125,5 @@ test('a list with one page shows no paging control', async ({ page }) => {
   await page.goto(origin);
   await expect(page.getByRole('listitem')).toHaveCount(1);
   await expect(page.getByRole('status')).toHaveCount(0);
-  await expect(page.getByRole('button')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Show More/ })).toHaveCount(0);
 });

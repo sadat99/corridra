@@ -1,7 +1,8 @@
 import { beforeAll, afterAll, test, expect } from 'vitest';
 import { randomUUID } from 'node:crypto';
-import { withTenant } from '../../packages/db/src/index';
-import { keysetPage } from '../../packages/domain/src/paging';
+import { withTenant, type DatabaseClient, type DatabasePool } from '../../packages/db/src/index';
+import { MeetingService } from '../../packages/missions/src/meetings';
+import { decodeCursor, encodeCursor, keysetPage } from '../../packages/domain/src/paging';
 import { accessFixture, command, future } from './access-fixture';
 
 // CRUD G12 follow-up: the meeting read policy (app.meeting_parent_access) is costly per row, so a page
@@ -15,15 +16,22 @@ const ROWS = 60;
 const POLICY_CALLS =
   "SELECT coalesce(sum(calls),0)::int AS n FROM pg_stat_xact_user_functions WHERE schemaname='app' AND funcname='meeting_parent_access'";
 
-async function setTrackFunctions(value: 'all' | 'none') {
-  await f.owner.query(`ALTER SYSTEM SET track_functions = '${value}'`);
+/** The server's track_functions before this file, and whether it came from ALTER SYSTEM. */
+let previous: { value: string; fromAlterSystem: boolean } | null = null;
+
+/** Sets track_functions (null: back to the value before this file) and waits until backends see it. */
+async function setTrackFunctions(value: 'all' | null) {
+  if (value) await f.owner.query(`ALTER SYSTEM SET track_functions = '${value}'`);
+  else if (previous?.fromAlterSystem)
+    await f.owner.query(`ALTER SYSTEM SET track_functions = '${previous.value}'`);
+  else await f.owner.query('ALTER SYSTEM RESET track_functions');
   await f.owner.query('SELECT pg_reload_conf()');
+  const want = value ?? previous!.value;
   // A reload reaches every backend at its next command; wait until a fresh one reports it.
   for (let i = 0; i < 50; i++) {
     const c = await f.runtime.connect();
     try {
-      const v = (await c.query('SHOW track_functions')).rows[0].track_functions;
-      if (v === value) return;
+      if ((await c.query('SHOW track_functions')).rows[0].track_functions === want) return;
     } finally {
       c.release();
     }
@@ -71,41 +79,70 @@ beforeAll(async () => {
     await seed.query('RESET session_replication_role');
     seed.release();
   }
+  previous = {
+    value: (await f.owner.query('SHOW track_functions')).rows[0].track_functions,
+    fromAlterSystem: !!(
+      await f.owner.query(
+        "SELECT 1 FROM pg_file_settings WHERE name='track_functions' AND sourcefile LIKE '%postgresql.auto.conf' AND applied",
+      )
+    ).rowCount,
+  };
   await setTrackFunctions('all');
 });
 afterAll(async () => {
-  if (f) await setTrackFunctions('none').catch(() => undefined);
+  if (f && previous) await setTrackFunctions(null).catch(() => undefined);
   await f?.close();
 });
 
-/** Reads one meetings page as the service does and returns it with the policy calls it cost. */
-function measured(cursor: { k: string; id: string } | null, missionId: string | null, limit = 5) {
-  return withTenant(f.runtime, f.ctx, 'meetings.read', async ({ db }) => {
-    // Calls not yet reported by earlier transactions on this connection are still listed: take a delta.
-    const policyCalls = async () => Number((await db.query(POLICY_CALLS)).rows[0]!.n);
-    const before = await policyCalls();
-    const page = await keysetPage(db, {
-      select: 'm.*',
-      from: 'app.meeting m',
-      where: 'm.tenant_id=$1 AND ($2::uuid IS NULL OR m.mission_id=$2)',
-      values: [f.ctx.tenantId, missionId],
-      sortExpression: 'CASE WHEN m.starts_at IS NULL THEN m.due_at ELSE m.starts_at END',
-      direction: 'asc',
-      cursor,
-      limit,
-    });
-    const calls = (await policyCalls()) - before;
-    return { page, calls };
-  });
+/**
+ * The meetings service on a pool that counts the policy calls of each read transaction: the count is
+ * taken right after BEGIN and right before COMMIT on the same connection, so it covers the whole read
+ * (page, briefs, participants, outcomes, history and follow-ups).
+ */
+function measuredService() {
+  const last = { calls: -1 };
+  const pool: DatabasePool = {
+    query: f.runtime.query.bind(f.runtime) as DatabasePool['query'],
+    end: () => Promise.resolve(),
+    async connect() {
+      const client = await f.runtime.connect();
+      const count = async () => Number((await client.query(POLICY_CALLS)).rows[0]!.n);
+      let before = 0;
+      return {
+        release: (e?: Error | boolean) => client.release(e),
+        query: (async (sql: string, values?: unknown[]) => {
+          if (sql === 'COMMIT') last.calls = (await count()) - before;
+          const result = await client.query(sql, values);
+          // Calls not yet reported by earlier transactions on this connection are still listed.
+          if (sql === 'BEGIN') before = await count();
+          return result;
+        }) as DatabaseClient['query'],
+      };
+    },
+  };
+  return { service: new MeetingService(pool), last };
 }
 
-test('the first page runs the read policy once per row, not again for the total', async () => {
-  const { page, calls } = await measured(null, null);
-  expect(page.total).toBe(ROWS);
-  expect(page.rows).toHaveLength(5);
-  // One check per meeting of the workspace: the order needs them all, and the total is a window over the
-  // same scan. Before the follow-up the brief join made this 1890 for 60 meetings.
-  expect(calls).toBe(ROWS);
+/** Reads one meetings page through the service and returns it with the policy calls it cost. */
+async function measured(options: { after?: string; missionId?: string; limit?: number }) {
+  const { service, last } = measuredService();
+  const page = (await service.workspace(f.ctx, { limit: 5, ...options })) as unknown as {
+    meetings: { id: string }[];
+    meetingsTotal: number | null;
+    next: string | null;
+  };
+  return { page, calls: last.calls };
+}
+
+test('the first page runs the read policy once per meeting, not again for the total', async () => {
+  const { page, calls } = await measured({});
+  expect(page.meetingsTotal).toBe(ROWS);
+  expect(page.meetings).toHaveLength(5);
+  // One check per meeting of the workspace (the order needs them all; the total is a window over the
+  // same scan), plus the page's own reads: each of its 5 briefs, and the seed's participants and
+  // follow-up reads. Before the follow-up the brief join made this 1890 for 60 meetings.
+  expect(calls).toBeGreaterThanOrEqual(ROWS);
+  expect(calls).toBeLessThanOrEqual(ROWS + 10);
 });
 
 test('a continuation near the end skips the rows before its cursor and returns no total', async () => {
@@ -118,18 +155,18 @@ test('a continuation near the end skips the rows before its cursor and returns n
     )
   ).rows as { id: string; k: string }[];
   const at = all[all.length - 6]!;
-  const { page, calls } = await measured({ k: at.k, id: at.id }, null);
-  expect(page.rows.map((r: { id: string }) => r.id)).toEqual(all.slice(-5).map((r) => r.id));
+  const { page, calls } = await measured({ after: encodeCursor({ k: at.k, id: at.id }) });
+  expect(page.meetings.map((r) => r.id)).toEqual(all.slice(-5).map((r) => r.id));
   expect(page.next).toBeNull();
-  expect(page.total).toBeNull();
-  // Only the five rows after the cursor reach the policy, not the 55 before it.
-  expect(calls).toBe(5);
+  expect(page.meetingsTotal).toBeNull();
+  // The five rows after the cursor and their five briefs, not the 55 rows before it.
+  expect(calls).toBeLessThanOrEqual(10);
 });
 
 test('a mission filter runs before the read policy', async () => {
-  const { page, calls } = await measured(null, randomUUID());
-  expect(page.rows).toHaveLength(0);
-  expect(page.total).toBe(0);
+  const { page, calls } = await measured({ missionId: randomUUID() });
+  expect(page.meetings).toHaveLength(0);
+  expect(page.meetingsTotal).toBe(0);
   expect(calls).toBe(0);
 });
 
@@ -152,8 +189,8 @@ test('a leaky sort expression is refused before it reaches the database', async 
 });
 
 test('a recount on a continuation returns the exact total', async () => {
-  const first = await measured(null, seedMissionId, 5);
-  expect(first.page.total).toBe(ROWS);
+  const first = await measured({ missionId: seedMissionId });
+  expect(first.page.meetingsTotal).toBe(ROWS);
   const next = await withTenant(f.runtime, f.ctx, 'meetings.read', ({ db }) =>
     keysetPage(db, {
       select: 'm.*',
@@ -162,7 +199,7 @@ test('a recount on a continuation returns the exact total', async () => {
       values: [f.ctx.tenantId],
       sortExpression: 'CASE WHEN m.starts_at IS NULL THEN m.due_at ELSE m.starts_at END',
       direction: 'asc',
-      cursor: JSON.parse(Buffer.from(first.page.next!, 'base64url').toString('utf8')),
+      cursor: decodeCursor(first.page.next),
       limit: 5,
       count: true,
     }),

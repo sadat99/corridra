@@ -237,7 +237,14 @@ test('a list of mission ids filters on the server and each meeting keeps its bri
   };
   expect(none.meetingsTotal).toBe(0);
   expect(none.followupsTotal).toBe(0);
-  for (const bad of [['not-a-uuid'], Array.from({ length: 101 }, () => randomUUID())])
+  for (const bad of [
+    ['not-a-uuid'],
+    // An empty `?missionIds=` reaches the service as one empty id; no ids at all is refused too.
+    [''],
+    [],
+    [seedMissionId, ''],
+    Array.from({ length: 101 }, () => randomUUID()),
+  ])
     await expect(f.meetings.workspace(f.ctx, { missionIds: bad })).rejects.toMatchObject({
       status: 400,
     });

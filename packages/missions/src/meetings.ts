@@ -38,11 +38,17 @@ export class MeetingService {
       after = decodeCursor(options.after),
       followupsAfter = decodeCursor(options.followupsAfter),
       missionId = optionalUuid(options.missionId, 'Mission'),
-      missionIds = options.missionIds?.length
-        ? options.missionIds.map((id) => optionalUuid(id, 'Mission')!)
-        : null;
+      // Sent at all, the list must hold 1 to 100 mission ids: an empty `?missionIds=` is refused, never
+      // read as "no filter" or as a filter that matches nothing.
+      missionIds =
+        options.missionIds == null
+          ? null
+          : options.missionIds.map((id) => optionalUuid(id, 'Mission'));
     if (after && followupsAfter) throw new DomainError('Continue one list at a time.', 400);
-    if (missionIds && (missionIds.length > 100 || missionId))
+    if (
+      missionIds &&
+      (!missionIds.length || missionIds.length > 100 || missionIds.includes(null) || missionId)
+    )
       throw new DomainError('Mission filter is invalid.', 400);
     const wantMeetings = !followupsAfter,
       wantFollowups = !after;
