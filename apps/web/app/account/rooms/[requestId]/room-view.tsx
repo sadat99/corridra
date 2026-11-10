@@ -66,6 +66,7 @@ export function RoomView({
   specificationConfirmationsEnabled = false,
   lenses = false,
   trip = false,
+  initialLens,
 }: {
   requestId: string;
   subject: string;
@@ -77,6 +78,8 @@ export function RoomView({
   lenses?: boolean;
   /** Batch E (`CORRIDRA_UX_TRIP`, read on the server): a fourth lens with the reviewed meetings and visits. */
   trip?: boolean;
+  /** Where the Room opens when the address asks for Meetings (`?view=meetings`). The Overview when absent. */
+  initialLens?: Lens;
 }) {
   const { locale } = useLanguage();
   const say = (key: MessageKey) => translate(locale, key);
@@ -92,7 +95,7 @@ export function RoomView({
     (data: DeliveryReport | null, status: string) => setReport({ data, status }),
     [],
   );
-  const [lens, setLens] = useState<Lens>('overview');
+  const [lens, setLens] = useState<Lens>(initialLens ?? 'overview');
   const [showAll, setShowAll] = useState(false);
   const [fullReport, setFullReport] = useState(false);
 

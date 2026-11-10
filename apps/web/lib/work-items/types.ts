@@ -33,6 +33,8 @@ export type WorkList = {
   unreadable: WorkSource[];
   /** A list was longer than the pages read. */
   partial: boolean;
+  /** Present only when the requests list was read but not to its end, so a request may be missing from `items`. */
+  requestsIncomplete?: true;
   /** Workspaces beyond the cap, not read. */
   skippedWorkspaces: number;
   /** The person's workspaces by id, for display only. A name never classifies or joins anything. */

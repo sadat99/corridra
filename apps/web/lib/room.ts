@@ -53,15 +53,18 @@ export function roomLinkFor(requestId: string, assignments: unknown): RoomLink {
   return { reportAvailable, savedResourceId };
 }
 
+/** Pages of 25 assignments followed to find a request's report: 200 pages is 5,000 assignments. */
+export const assignmentPageCap = 200;
+
 /**
  * Assignments are listed by id, not by request, so a request's report can be on any page. This stops as
  * soon as it is found and otherwise follows every page before it declares the report absent. The bound
- * only guards against a provider that never ends (200 pages of 25 is 5,000 assignments).
+ * only guards against a provider that never ends.
  */
 export async function followAssignments(
   requestId: string,
   page: (after?: string) => Promise<{ assignments?: unknown[]; nextAfter?: string | null }>,
-  maxPages = 200,
+  maxPages = assignmentPageCap,
 ): Promise<RoomLink> {
   const rows: unknown[] = [];
   let after: string | undefined;
@@ -74,7 +77,33 @@ export async function followAssignments(
   return roomLinkFor(requestId, rows);
 }
 
+/**
+ * The same answer as `followAssignments`, from assignment pages already read: rows are added page by page and the
+ * reading stops at the first page after which a report is available, so a later page never changes the report the
+ * Room opens. The Meetings page uses it to open the report the Room would.
+ */
+export function roomLinkFromPages(requestId: string, pages: readonly unknown[][]): RoomLink {
+  const rows: unknown[] = [];
+  for (const page of pages) {
+    rows.push(...page);
+    if (roomLinkFor(requestId, rows).reportAvailable) break;
+  }
+  return roomLinkFor(requestId, rows);
+}
+
 /** The records the Road may read for Compare and Decide. A decision is not readable here, so it is never claimed. */
 export function roadRecords(link: RoomLink) {
   return { compare: link.reportAvailable, decide: false };
+}
+
+/**
+ * The lens a Room link may open on, from the `view` in its address. Only exactly "meetings" counts, and only where
+ * the Trip lens exists (the Trip and lenses switches both on); an array, an unknown word or a switch off opens the
+ * Overview as always. It only chooses what is shown first and reads nothing.
+ */
+export function initialLensFor(
+  view: string | string[] | undefined,
+  on: { trip: boolean; lenses: boolean },
+): 'trip' | undefined {
+  return on.trip && on.lenses && view === 'meetings' ? 'trip' : undefined;
 }
