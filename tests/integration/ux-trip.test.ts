@@ -229,3 +229,46 @@ describe('the words', () => {
     expect(read('docs/product/language-review-record.md')).toMatch(/room\.trip\.\*/);
   });
 });
+
+describe('W8: the Meetings page shares the Trip words and shows the same itinerary only', () => {
+  const tripList = read(`${roomDir}/trip-list.tsx`);
+  const meetingsList = read('apps/web/app/account/meetings/meetings-list.tsx');
+  const cards = read('apps/web/lib/meetings/cards.ts');
+  it('keeps the status words in one place, lib/trip, and both lists read them from there', () => {
+    expect(tripList).not.toContain('const statusWords');
+    expect(tripList).toContain("from '../../../../lib/trip'");
+    expect(read('apps/web/lib/trip.ts')).toContain('export const statusWords');
+    expect(cards).toContain('statusWords');
+  });
+  it('the Meetings list has no money, contact, offer, outcome, form, export or map', () => {
+    for (const word of [
+      'totals',
+      'outcomes',
+      'experience',
+      'quotation',
+      'contact',
+      'email',
+      'phone',
+      'displayMoney',
+      'currency',
+      '<form',
+      '<textarea',
+      '<input',
+    ])
+      expect(meetingsList + cards, word).not.toContain(word);
+    expect(meetingsList).not.toMatch(
+      /download|\.ics|window\.print|navigator\.share|mailto:|calendar|maps\.|<svg|<img/i,
+    );
+  });
+  it('writes a time in the time zone of the place and keeps it left to right', () => {
+    expect(cards).toContain("timeZone: row.timezone ?? 'UTC'");
+    expect(meetingsList).toContain('dir="ltr"');
+    expect(meetingsList).toContain('lang={card.nameLang}');
+  });
+  it('adds only the h3 heading to the Trip list rule, with no media query or raw colour', () => {
+    const css = read(`${roomDir}/room-view.css`);
+    expect(css).toMatch(
+      /\.room \.room-trip-list \.room-trip-head h3,\n\.room \.room-trip-list \.room-trip-head h4 \{/,
+    );
+  });
+});
