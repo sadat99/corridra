@@ -28,8 +28,8 @@ type FollowUp = { id: string; status: string; due_at: string; next_action: strin
 type MeetingRead = {
   meetings: Meeting[];
   followups: FollowUp[];
-  next: string | null;
-  followupsNext: string | null;
+  next?: string | null;
+  followupsNext?: string | null;
 };
 /** getTeamToday counts (CQ-34, CQ-73). Unread counts are listed in `unavailable`, never zero. */
 type TeamCounts = {
@@ -444,7 +444,7 @@ export function TodayPanel({
               lateFollowUps: read.followups.filter(
                 (f) => f.status === 'OPEN' && Date.parse(f.due_at) < now,
               ),
-              partial: read.next !== null || read.followupsNext !== null,
+              partial: Boolean(read.next || read.followupsNext),
             }
           : null;
         setToday({
