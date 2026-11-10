@@ -196,8 +196,9 @@ const missionListCalls = (requests: string[]) =>
   requests.filter((r) => r.startsWith('/api/workspace/missions'));
 // A filtered request is fired from an effect after the select changes, so it can arrive after the
 // select already shows the value. A positive read therefore polls. A "nothing was asked" read first
-// waits for the section's own first load to be recorded and for the network to go quiet, so it cannot
-// pass before a late request would have arrived.
+// confirms the section's own first load was recorded (it is recorded before the options render, so
+// this is a guard against a load that never happened), then waits for the network to go quiet. The
+// quiet wait is what lets a late, effect-fired request arrive before the empty read.
 const quiet = (page: Page) => page.waitForLoadState('networkidle');
 
 test('W5-links: the mission page sends research and commercial links with the mission, and keeps the others', async ({
