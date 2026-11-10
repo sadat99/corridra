@@ -48,13 +48,6 @@ export function MeetingsList({ groups }: { groups: readonly MeetingGroup[] }) {
   );
   return (
     <>
-      <p>
-        {total > limit
-          ? `Showing ${limit} of ${total} meetings and visits.`
-          : total === 1
-            ? say('room.trip.count.one')
-            : fill(say('room.trip.count.other'), { count: total })}
-      </p>
       <div id={listId} className="room">
         {groups.map((group, groupIndex) => {
           const start = starts[groupIndex] ?? 0;
@@ -121,17 +114,26 @@ export function MeetingsList({ groups }: { groups: readonly MeetingGroup[] }) {
           );
         })}
       </div>
-      {total > meetingsFirstShown && (
-        <button
-          type="button"
-          className="text-link"
-          aria-expanded={expanded}
-          aria-controls={listId}
-          onClick={() => setExpanded((value) => !value)}
-        >
-          {expanded ? say('room.trip.fewer') : fill(say('room.trip.all'), { count: total })}
-        </button>
-      )}
+      <div className="room-actions">
+        <p>
+          {total > limit
+            ? `Showing ${limit} of ${total} meetings and visits.`
+            : total === 1
+              ? say('room.trip.count.one')
+              : fill(say('room.trip.count.other'), { count: total })}
+        </p>
+        {total > meetingsFirstShown && (
+          <button
+            type="button"
+            className="text-link"
+            aria-expanded={expanded}
+            aria-controls={listId}
+            onClick={() => setExpanded((value) => !value)}
+          >
+            {expanded ? say('room.trip.fewer') : fill(say('room.trip.all'), { count: total })}
+          </button>
+        )}
+      </div>
     </>
   );
 }
@@ -142,7 +144,7 @@ export function RequestsSection({
   withMeetings,
 }: {
   requests: readonly RequestLink[];
-  /** Meetings are shown above. Only then does the line say where they come from. */
+  /** Meetings are shown. Only then does the line say where they come from. */
   withMeetings: boolean;
 }) {
   const headingId = useId();
@@ -154,7 +156,7 @@ export function RequestsSection({
       <h2 id={headingId}>Your requests</h2>
       <p>
         {withMeetings
-          ? 'Meetings above come from the reports you have saved. Open any request to see all of it, including requests with no meetings yet.'
+          ? 'Meetings come from the reports you have saved. Open any request to see all of it, including requests with no meetings yet.'
           : 'Open any request to see all of it.'}
       </p>
       <ul className="ux-meeting-list" id={listId}>

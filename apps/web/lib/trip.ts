@@ -55,8 +55,11 @@ export function hanLang(text: string): 'zh' | undefined {
 /** How many meetings show before "Show all": the scroll budget of a report page (ui-direction.md). */
 export const tripFirstShown = 5;
 
-/** How many meetings show on the Meetings page before "Show All": it opens a longer list than one Room. */
-export const meetingsFirstShown = 3;
+/**
+ * How many meetings show on the Meetings page before "Show All". One row keeps the page within the layout budget
+ * (2.0 screens at 390 and 1.0 at 1440, docs/revamp/specs/layout-budget.md section 2) with the real header and footer.
+ */
+export const meetingsFirstShown = 1;
 
 /**
  * A changed schedule, or a status that says a new time is needed, is shown without its old time, place

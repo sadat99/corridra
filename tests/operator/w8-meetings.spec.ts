@@ -4,9 +4,23 @@ import { createServer, type Server } from 'node:http';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
+import {
+  fontCss,
+  fontFile,
+  longChineseState,
+  longName,
+  longPlace,
+  realPageUrl,
+  serveRealMeetingsPage,
+  typicalState,
+  type RealPage,
+  type RealPageState,
+} from './w8-meetings-real-page';
+import { screensOf, viewports } from '../ux/page-length-lib';
 
-// W8, the Meetings page (docs/revamp/specs/workflow-intelligence.md). The real list component and the real card
-// builder are mounted with the real stylesheets in a small page, as ux-room.spec.ts mounts the Room. The server's
+// W8, the Meetings page (docs/revamp/specs/workflow-intelligence.md). The real tabs, list component and card
+// builder are mounted with the real stylesheets in a small page, as ux-room.spec.ts mounts the Room. The real page
+// itself is mounted in the real shell further down, for the page length and the notices. The server's
 // reads are covered in tests/integration/w8-meetings.test.ts; what is proved here is what a person sees: the
 // groups and their order, a row's facts, the words, the changed schedule, the link names, the toggles and the
 // layout from a phone to a desktop. Every name, date and company is invented. The browser zone is set to one that
@@ -15,27 +29,8 @@ test.use({ locale: 'en-US', timezoneId: 'America/New_York' });
 let server: Server, origin: string;
 let bundle = '';
 let componentCss = '';
+let real: RealPage;
 const css = readFileSync(resolve('apps/web/app/globals.css'), 'utf8');
-// The real layout loads these faces with next/font and defines the variables that --font-ui reads. Without them the
-// whole --font-ui value is invalid and the text falls back to the browser default, which changes every length
-// measured below. The same files are served here under the same variable names.
-const fontDir = resolve('apps/web/app/fonts');
-const bengaliRange = 'U+0951-0952,U+0964-0965,U+0980-09FE,U+200C-200D,U+20B9,U+25CC';
-const fontFaces: [variable: string, family: string, file: string, range?: string][] = [
-  ['--font-newsreader', 'Newsreader', 'newsreader-latin-variable.woff2'],
-  ['--font-geist', 'Geist', 'geist-latin-variable.woff2'],
-  ['--font-geist-mono', 'Geist Mono', 'geist-mono-latin-variable.woff2'],
-  ['--font-bengali', 'Noto Serif Bengali', 'noto-serif-bengali-variable.woff2', bengaliRange],
-  ['--font-bengali-sans', 'Noto Sans Bengali', 'noto-sans-bengali-variable.woff2', bengaliRange],
-];
-const fontCss = `${fontFaces
-  .map(
-    ([, family, file, range]) =>
-      `@font-face{font-family:'${family}';src:url('/fonts/${file}') format('woff2');font-weight:100 900;font-display:block;${range ? `unicode-range:${range};` : ''}}`,
-  )
-  .join(
-    '\n',
-  )}\n:root{${fontFaces.map(([variable, family]) => `${variable}:'${family}'`).join(';')}}`;
 
 const now = '2026-11-10T12:00:00Z';
 const requestIds = [1, 2, 3, 4, 5, 6, 7].map((n) => `00000000-0000-4000-8000-00000000000${n}`);
@@ -111,7 +106,14 @@ const requestLinks = (count: number) =>
     href: `/account/rooms/${id}`,
   }));
 
-type Mount = { rows: Row[]; requests?: number; switches?: Switches; empty?: boolean };
+type Mount = {
+  rows: Row[];
+  requests?: number;
+  switches?: Switches;
+  empty?: boolean;
+  /** The ?tab= word in the address. */
+  tab?: string;
+};
 test.beforeAll(async () => {
   const result = await build({
     stdin: {
@@ -119,6 +121,7 @@ test.beforeAll(async () => {
       import{LanguageProvider}from ${JSON.stringify(resolve('apps/web/components/language-provider.tsx'))};
       import{WorkspaceShell}from ${JSON.stringify(resolve('apps/web/components/workspace-shell.tsx'))};
       import{MeetingsList,RequestsSection}from ${JSON.stringify(resolve('apps/web/app/account/meetings/meetings-list.tsx'))};
+      import{MeetingsTabs}from ${JSON.stringify(resolve('apps/web/app/account/meetings/meetings-tabs.tsx'))};
       import{meetingCard}from ${JSON.stringify(resolve('apps/web/lib/meetings/cards.ts'))};
       import{groupMeetings}from ${JSON.stringify(resolve('apps/web/lib/meetings/group.ts'))};
       import ${JSON.stringify(resolve('apps/web/app/account/rooms/[requestId]/room-view.css'))};
@@ -130,9 +133,12 @@ test.beforeAll(async () => {
         <LanguageProvider offered={[{code:'en',draft:false}]}>
           <WorkspaceShell eyebrow="YOUR ACCOUNT" title="Meetings">
             <div className="room">
-              {props.empty ? <p className="ux-empty">No meetings or visits are ready to show yet.</p> : null}
-              {props.rows.length>0 ? <MeetingsList groups={groups}/> : null}
-              {props.requests.length>0 ? <RequestsSection requests={props.requests} withMeetings={props.rows.length>0}/> : null}
+              <MeetingsTabs
+                meetings={<div className="room">
+                  {props.empty ? <p className="ux-empty">No meetings or visits are ready to show yet.</p> : null}
+                  {props.rows.length>0 ? <MeetingsList groups={groups}/> : null}
+                </div>}
+                requests={props.requests.length>0 ? <RequestsSection requests={props.requests} withMeetings={props.rows.length>0}/> : null}/>
             </div>
           </WorkspaceShell>
         </LanguageProvider>);`,
@@ -184,7 +190,7 @@ test.beforeAll(async () => {
     }
     if (path.startsWith('/fonts/')) {
       res.setHeader('content-type', 'font/woff2');
-      res.end(readFileSync(resolve(fontDir, path.slice('/fonts/'.length).replace(/[^\w.-]/g, ''))));
+      res.end(fontFile(path));
       return;
     }
     res.setHeader('content-type', 'text/html');
@@ -209,21 +215,29 @@ async function open(page: Page, mount: Mount) {
     now,
     empty: mount.empty ?? false,
   };
-  await page.goto(`${origin}/?props=${encodeURIComponent(JSON.stringify(props))}`);
+  const tab = mount.tab ? `&tab=${encodeURIComponent(mount.tab)}` : '';
+  await page.goto(`${origin}/?props=${encodeURIComponent(JSON.stringify(props))}${tab}`);
   await expect(page.locator('main h1')).toHaveText('Meetings');
 }
+const tabNamed = (page: Page, name: string) => page.getByRole('tab', { name, exact: true });
 const items = (page: Page) => page.locator('.room-trip-list > li');
 const showAll = (page: Page) =>
   page.getByRole('button', { name: /^Show All \d+ Meetings and Visits$/ });
 
-test('groups meetings under their own headings, in order, and shows the first three until Show All', async ({
+test('groups meetings under their own headings, in order, and shows the first one until Show All', async ({
   page,
 }) => {
   await open(page, { rows: sixRows() });
-  await expect(page.getByText('Showing 3 of 6 meetings and visits.')).toBeVisible();
-  // Only groups with a visible row have a heading; the first three are the two coming up and the newest past one.
-  await expect(page.locator('main h2')).toHaveText(['Coming up', 'Done and past', 'Your requests']);
-  await expect(items(page).locator('h3')).toHaveText(['Soon visit', 'Late visit', 'Recent visit']);
+  // The count and Show All share one row.
+  const actions = page.locator('.room-actions').last();
+  await expect(actions.getByText('Showing 1 of 6 meetings and visits.')).toBeVisible();
+  await expect(
+    actions.getByRole('button', { name: 'Show All 6 Meetings and Visits' }),
+  ).toBeVisible();
+  // Only groups with a visible row have a heading; the first one is the soonest of those coming up. The requests
+  // heading is in the other tab, which is hidden but in the page.
+  await expect(page.locator('main h2')).toHaveText(['Coming up', 'Your requests']);
+  await expect(items(page).locator('h3')).toHaveText(['Soon visit']);
   await showAll(page).click();
   await expect(page.getByText('6 meetings or visits')).toBeVisible();
   await expect(page.locator('main h2')).toHaveText([
@@ -262,7 +276,7 @@ test('the toggle names what it controls, keeps focus, and goes back', async ({ p
   await expect(fewer).toBeFocused();
   await expect(page.locator(`[id="${controlled}"] .room-trip-list > li`)).toHaveCount(6);
   await page.keyboard.press('Enter');
-  await expect(items(page)).toHaveCount(3);
+  await expect(items(page)).toHaveCount(1);
   await expect(showAll(page)).toBeFocused();
 });
 
@@ -352,6 +366,7 @@ test('Chinese names, places and request titles are marked as Chinese and read in
       }),
     ],
   });
+  await showAll(page).click();
   const chinese = items(page).nth(0);
   await expect(chinese.locator('h3')).toHaveAttribute('lang', 'zh');
   await expect(chinese.locator('h3')).toHaveAttribute('dir', 'auto');
@@ -426,11 +441,15 @@ test('shows no price, offer, contact, export or share control', async ({ page })
   await expect(main.locator('input, textarea, form, svg, img, iframe')).toHaveCount(0);
 });
 
-test('the requests section keeps every request link and shows five until Show All', async ({
+test('the requests tab keeps every request link and shows five until Show All', async ({
   page,
 }) => {
   await open(page, { rows: sixRows(), requests: 7 });
+  // The requests are in the second tab: hidden until it is chosen, then five rows and the toggle.
+  await expect(page.locator('.ux-meeting-list')).toBeHidden();
+  await tabNamed(page, 'Your Requests').click();
   const list = page.locator('.ux-meeting-list');
+  await expect(list).toBeVisible();
   await expect(list.locator('li')).toHaveCount(5);
   await expect(list.getByRole('link').first()).toHaveAccessibleName(
     /^Sell in Spain ?: meetings and visits$/,
@@ -440,21 +459,22 @@ test('the requests section keeps every request link and shows five until Show Al
   await toggle.click();
   await expect(list.locator('li')).toHaveCount(7);
   await expect(page.getByRole('button', { name: 'Show Fewer' }).last()).toBeFocused();
-  await open(page, { rows: sixRows(), requests: 5 });
+  await open(page, { rows: sixRows(), requests: 5, tab: 'requests' });
+  await expect(page.locator('.ux-meeting-list li')).toHaveCount(5);
   await expect(page.getByRole('button', { name: /Show All \d+ Requests/ })).toHaveCount(0);
 });
 
 test('the requests line says where meetings come from only when a meeting is shown', async ({
   page,
 }) => {
-  await open(page, { rows: sixRows(), requests: 3 });
+  await open(page, { rows: sixRows(), requests: 3, tab: 'requests' });
   const section = page.getByRole('region', { name: 'Your requests' });
-  await expect(section).toContainText('Meetings above come from the reports you have saved.');
+  await expect(section).toContainText('Meetings come from the reports you have saved.');
   await expect(section).toContainText(
     'Open any request to see all of it, including requests with no meetings yet.',
   );
-  await open(page, { rows: [], requests: 3, empty: true });
-  await expect(section).not.toContainText('Meetings above');
+  await open(page, { rows: [], requests: 3, empty: true, tab: 'requests' });
+  await expect(section).not.toContainText('Meetings come from');
   await expect(section).toContainText('Open any request to see all of it.');
   // The list of requests itself is the same either way.
   await expect(page.locator('.ux-meeting-list li')).toHaveCount(3);
@@ -479,10 +499,6 @@ test('the group cards sit one room gap apart, as the rest of the page does', asy
   for (const gap of gaps.between) expect(gap).toBe(parseFloat(gaps.room));
 });
 
-const longName = (n: number) =>
-  `与孟加拉国服装制造商和出口商协会的会议编号${n}：在达卡商会大楼的长时间访问和工厂参观`;
-const longPlace = (n: number) =>
-  `达卡商会 ${n} 号厅，摩提杰商业区，孟加拉国达卡 1000，Motijheel Commercial Area, Dhaka 1000 Bangladesh`;
 const twelve = (): Row[] =>
   Array.from({ length: 12 }, (_, n) =>
     row(
@@ -498,18 +514,29 @@ const twelve = (): Row[] =>
   );
 
 for (const width of [320, 390, 768, 1440]) {
-  for (const state of ['twelve meetings', 'no meetings'] as const) {
-    test(`no sideways scroll, large targets and no axe violation at ${width} px with ${state}`, async ({
+  const cases = [
+    ['twelve meetings', 'meetings'],
+    ['no meetings', 'meetings'],
+    ['seven requests', 'requests'],
+  ] as const;
+  for (const [state, tab] of cases) {
+    test(`no sideways scroll, large targets and no axe violation at ${width} px with ${state} on the ${tab} tab`, async ({
       page,
     }) => {
       await page.setViewportSize({ width, height: 900 });
       const data = state === 'twelve meetings';
       await open(page, {
-        rows: data ? twelve() : [],
-        requests: 3,
-        empty: !data,
+        rows: state === 'no meetings' ? [] : twelve(),
+        requests: state === 'seven requests' ? 7 : 3,
+        empty: state === 'no meetings',
+        tab,
       });
+      await expect(
+        tabNamed(page, tab === 'meetings' ? 'Meetings' : 'Your Requests'),
+      ).toHaveAttribute('aria-selected', 'true');
       if (data) await showAll(page).click();
+      if (tab === 'requests')
+        await page.getByRole('button', { name: 'Show All 7 Requests' }).click();
       const label = `${state} at ${width}`;
       if (data) await expect(items(page)).toHaveCount(12);
       const wide = await page.evaluate((limit) => {
@@ -571,29 +598,285 @@ async function toCustomerFrame(page: Page) {
   });
 }
 
-test('records the page length of twelve long meetings and three requests with the toggle closed', async ({
+// The tabs (layout-budget.md section 1: role=tablist, ?tab=<key>, keyboard, no capsule shape).
+test('has a labelled tablist of exactly two tabs, Meetings first, and the other panel is hidden', async ({
   page,
-}, info) => {
-  const figures: Record<string, number> = {};
-  for (const [width, height] of [
-    [390, 844],
-    [1440, 900],
-  ] as const) {
-    await page.setViewportSize({ width, height });
-    await open(page, { rows: twelve(), requests: 3 });
-    await expect(items(page)).toHaveCount(3);
-    await toCustomerFrame(page);
-    const total = await page.evaluate(() => document.documentElement.scrollHeight);
-    figures[`${width}`] = Math.round((total / height) * 100) / 100;
+}) => {
+  await open(page, { rows: sixRows() });
+  const list = page.getByRole('tablist', { name: 'Meetings sections' });
+  await expect(list.getByRole('tab')).toHaveText(['Meetings', 'Your Requests']);
+  await expect(tabNamed(page, 'Meetings')).toHaveAttribute('aria-selected', 'true');
+  await expect(tabNamed(page, 'Your Requests')).toHaveAttribute('aria-selected', 'false');
+  // Each tab controls a panel that exists and is named by the tab; only the chosen one shows.
+  for (const name of ['Meetings', 'Your Requests']) {
+    const controls = await tabNamed(page, name).getAttribute('aria-controls');
+    const panel = page.locator(`[id="${controls}"]`);
+    await expect(panel).toHaveCount(1);
+    await expect(panel).toHaveAttribute('role', 'tabpanel');
+    await expect(panel).toHaveAttribute(
+      'aria-labelledby',
+      (await tabNamed(page, name).getAttribute('id'))!,
+    );
   }
-  info.annotations.push({ type: 'page-length', description: JSON.stringify(figures) });
-  console.log(
-    `page length (Meetings list in the customer frame, twelve long meetings, toggle closed, no intro or notices): ${JSON.stringify(figures)}`,
+  await expect(page.getByRole('tabpanel', { name: 'Meetings' })).toBeVisible();
+  await expect(
+    page.getByRole('tabpanel', { name: 'Your Requests', includeHidden: true }),
+  ).toBeHidden();
+  // A tab is a flat tab, not a capsule.
+  const radius = await tabNamed(page, 'Meetings').evaluate(
+    (el) => getComputedStyle(el).borderBottomLeftRadius,
   );
-  // The layout-budget limits are 2.0 and 1.0 screens; the figures are reported to the owner, not hidden. This
-  // bound only stops the closed list growing past what was measured when it was built (toggle shows three rows).
-  expect(figures['390']).toBeLessThanOrEqual(2.6);
-  expect(figures['1440']).toBeLessThanOrEqual(1.9);
+  expect(parseFloat(radius)).toBeLessThan(12);
+  // Tabs are large enough to touch.
+  for (const name of ['Meetings', 'Your Requests'])
+    expect((await tabNamed(page, name).boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
+});
+
+test('opens Your Requests from ?tab=requests, and Meetings for no tab or an unknown one', async ({
+  page,
+}) => {
+  await open(page, { rows: sixRows(), tab: 'requests' });
+  await expect(tabNamed(page, 'Your Requests')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tabpanel', { name: 'Your Requests' })).toBeVisible();
+  await expect(page.locator('.room-trip-list')).toBeHidden();
+  for (const tab of ['junk', '', 'meetings']) {
+    await open(page, { rows: sixRows(), tab });
+    await expect(tabNamed(page, 'Meetings')).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('tabpanel', { name: 'Meetings' })).toBeVisible();
+    await expect(page.locator('.ux-meeting-list')).toBeHidden();
+  }
+});
+
+test('shows no tablist when there is only the Meetings panel', async ({ page }) => {
+  await open(page, { rows: sixRows(), requests: 0 });
+  await expect(page.getByRole('tablist')).toHaveCount(0);
+  await expect(page.getByRole('tab')).toHaveCount(0);
+  await expect(page.getByRole('tabpanel')).toHaveCount(0);
+  await expect(items(page)).toHaveCount(1);
+  // The unknown or requests word changes nothing when there is nothing to switch to.
+  await open(page, { rows: sixRows(), requests: 0, tab: 'requests' });
+  await expect(items(page)).toHaveCount(1);
+});
+
+test('arrow keys, Home and End move between the tabs, with one tab stop and the address kept', async ({
+  page,
+}) => {
+  await open(page, { rows: sixRows() });
+  const meetings = tabNamed(page, 'Meetings');
+  const requests = tabNamed(page, 'Your Requests');
+  // One tab stop: only the chosen tab is in the tab order.
+  await expect(meetings).toHaveAttribute('tabindex', '0');
+  await expect(requests).toHaveAttribute('tabindex', '-1');
+  await meetings.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(requests).toBeFocused();
+  await expect(requests).toHaveAttribute('aria-selected', 'true');
+  await expect(requests).toHaveAttribute('tabindex', '0');
+  await expect(meetings).toHaveAttribute('tabindex', '-1');
+  await expect(page.getByRole('tabpanel', { name: 'Your Requests' })).toBeVisible();
+  expect(new URL(page.url()).searchParams.get('tab')).toBe('requests');
+  await page.keyboard.press('Home');
+  await expect(meetings).toBeFocused();
+  await expect(meetings).toHaveAttribute('aria-selected', 'true');
+  expect(new URL(page.url()).searchParams.get('tab')).toBe('meetings');
+  await page.keyboard.press('End');
+  await expect(requests).toBeFocused();
+  await page.keyboard.press('ArrowLeft');
+  await expect(meetings).toBeFocused();
+  // The other words in the address stay, and the page is not loaded again.
+  expect(new URL(page.url()).searchParams.get('props')).toBeTruthy();
+  // The chosen tab shows a visible focus ring.
+  await expect(meetings).toBeFocused();
+  const outline = await meetings.evaluate((el) => getComputedStyle(el).outlineWidth);
+  expect(parseFloat(outline)).toBeGreaterThanOrEqual(3);
+});
+
+test('Show All stays open and keeps focus when the tab is switched away and back', async ({
+  page,
+}) => {
+  await open(page, { rows: sixRows() });
+  await showAll(page).click();
+  await expect(items(page)).toHaveCount(6);
+  const fewer = page.getByRole('button', { name: 'Show Fewer', exact: true }).first();
+  await expect(fewer).toBeFocused();
+  await tabNamed(page, 'Your Requests').click();
+  await expect(page.getByRole('tabpanel', { name: 'Meetings', includeHidden: true })).toBeHidden();
+  await tabNamed(page, 'Meetings').click();
+  await expect(items(page)).toHaveCount(6);
+  await expect(fewer).toHaveAttribute('aria-expanded', 'true');
+});
+
+// The real page, in the real shell. Only the session, the two loads and the module switches are stood in; the
+// header, footer, fonts, stylesheets, language provider and page are the real ones (w8-meetings-real-page.ts).
+test.describe('the real page', () => {
+  test.beforeAll(async () => {
+    real = await serveRealMeetingsPage();
+  });
+  test.afterAll(async () => {
+    await real.close();
+  });
+  const openReal = async (page: Page, state: RealPageState, tab?: string) => {
+    await page.goto(realPageUrl(real, state, tab));
+    await expect(page.locator('main h1')).toHaveText('Meetings');
+    await page.evaluate(() => document.fonts.ready);
+  };
+  const withMeetings = (state: RealPageState, over: Partial<RealPageState['meetings']>) => ({
+    ...state,
+    meetings: { ...state.meetings, ...over },
+  });
+
+  // The layout-budget limits for a signed-in page (docs/revamp/specs/layout-budget.md section 2, owner, 5 November
+  // 2026): at most 2.0 screens at 390 x 844 and 1.0 at 1440 x 900, as the full document height (header, content and
+  // footer) over the viewport height. A hard rule, not a target: the figures are recorded and may not pass them.
+  const limits = viewports;
+  // Seen but not held to a limit: the widths the budget does not name.
+  const recorded = [
+    { ...viewports[0]!, width: 320, height: 568 },
+    { ...viewports[0]!, width: 768, height: 1024 },
+  ];
+  const heightOf = (page: Page) =>
+    page.evaluate(() =>
+      Math.max(
+        document.documentElement.scrollHeight,
+        document.body ? document.body.scrollHeight : 0,
+      ),
+    );
+  // Where the footer ends. A page shorter than the window still measures 1.0 screen, so this shows the room left.
+  const endsAt = (page: Page) =>
+    page.evaluate(() =>
+      Math.round(document.querySelector('footer')!.getBoundingClientRect().bottom + window.scrollY),
+    );
+  const states: [string, () => RealPageState][] = [
+    ['typical: 3 meetings, 2 requests', typicalState],
+    ['12 long Chinese meetings, 3 requests', longChineseState],
+    ['typical with the partial notice', () => withMeetings(typicalState(), { partial: true })],
+    [
+      '12 long Chinese meetings with the cap notice',
+      () => withMeetings(longChineseState(), { capped: true }),
+    ],
+    ['typical with the not saved note', () => withMeetings(typicalState(), { notSaved: 1 })],
+  ];
+
+  for (const [name, state] of states)
+    test(`${name}, with Show All and What Happens Next closed, fits the page budget at 390 and 1440`, async ({
+      page,
+    }, info) => {
+      const figures: Record<string, number> = {};
+      const ends: Record<string, number> = {};
+      for (const viewport of limits) {
+        const { width, height, hard } = viewport;
+        await page.setViewportSize({ width, height });
+        await openReal(page, state());
+        await expect(items(page)).toHaveCount(1);
+        await expect(page.locator('details.ux-journey-disclosure')).not.toHaveAttribute(
+          'open',
+          /.*/,
+        );
+        await expect(page.locator('footer')).toBeVisible();
+        const screens = screensOf(await heightOf(page), viewport);
+        figures[String(width)] = screens;
+        ends[String(width)] = await endsAt(page);
+        expect(screens, `${name} at ${width}`).toBeLessThanOrEqual(hard);
+      }
+      for (const viewport of recorded) {
+        const { width, height } = viewport;
+        await page.setViewportSize({ width, height });
+        await openReal(page, state());
+        figures[String(width)] = screensOf(await heightOf(page), viewport);
+        ends[String(width)] = await endsAt(page);
+      }
+      info.annotations.push({
+        type: 'page-length',
+        description: JSON.stringify({ figures, ends }),
+      });
+      console.log(
+        `page length, real page and shell, ${name}: screens ${JSON.stringify(figures)}, footer ends at px ${JSON.stringify(ends)}`,
+      );
+    });
+
+  test('the Your Requests tab fits the page budget at 390 and 1440, with every request link in it', async ({
+    page,
+  }, info) => {
+    const figures: Record<string, number> = {};
+    for (const viewport of limits) {
+      const { width, height, hard } = viewport;
+      await page.setViewportSize({ width, height });
+      await openReal(page, longChineseState(), 'requests');
+      await expect(page.getByRole('tabpanel', { name: 'Your Requests' })).toBeVisible();
+      await expect(page.locator('.ux-meeting-list').getByRole('link')).toHaveCount(3);
+      const screens = screensOf(await heightOf(page), viewport);
+      figures[String(width)] = screens;
+      expect(screens, `Your Requests at ${width}`).toBeLessThanOrEqual(hard);
+    }
+    info.annotations.push({ type: 'page-length', description: JSON.stringify(figures) });
+    console.log(`page length, real page and shell, Your Requests tab: ${JSON.stringify(figures)}`);
+  });
+
+  test('the partial notice is above the tabs and shows on both tabs, with Try Again', async ({
+    page,
+  }) => {
+    await openReal(page, withMeetings(typicalState(), { partial: true }));
+    const notice = page
+      .getByRole('status')
+      .filter({ hasText: 'We could not check all your requests just now.' });
+    await expect(notice).toHaveCount(1);
+    await expect(notice).toBeVisible();
+    await expect(notice.getByRole('link', { name: 'Try Again' })).toHaveAttribute(
+      'href',
+      '/account/meetings',
+    );
+    const above = async () =>
+      page.evaluate(
+        () =>
+          document.querySelector('[role=status]')!.getBoundingClientRect().bottom <=
+          document.querySelector('[role=tablist]')!.getBoundingClientRect().top + 1,
+      );
+    expect(await above()).toBe(true);
+    await tabNamed(page, 'Your Requests').click();
+    await expect(notice).toBeVisible();
+    expect(await above()).toBe(true);
+  });
+
+  test('the cap notice and the not saved note are in the Meetings tab only', async ({ page }) => {
+    await openReal(page, withMeetings(typicalState(), { capped: true, notSaved: 2 }));
+    const cap = page.getByText(
+      'We show meetings from the first 12 reports only. Some meetings may be missing. Open a request in the Your Requests tab to see all of its meetings.',
+    );
+    const saved = page.getByText('2 of your requests have a report that is not saved yet.');
+    await expect(cap).toBeVisible();
+    await expect(saved).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Open Library' })).toBeVisible();
+    // Both come after the tablist, inside the Meetings panel.
+    await expect(
+      page.getByRole('tabpanel', { name: 'Meetings' }).getByText(/first 12 reports/),
+    ).toHaveCount(1);
+    await expect(
+      page.getByRole('tabpanel', { name: 'Meetings' }).getByText(/not saved yet/),
+    ).toHaveCount(1);
+    await tabNamed(page, 'Your Requests').click();
+    await expect(cap).toBeHidden();
+    await expect(saved).toBeHidden();
+  });
+
+  test('opens on Your Requests from ?tab=requests and on Meetings otherwise, in the real page', async ({
+    page,
+  }) => {
+    await openReal(page, typicalState(), 'requests');
+    await expect(tabNamed(page, 'Your Requests')).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('heading', { name: 'Your requests', level: 2 })).toBeVisible();
+    await openReal(page, typicalState(), 'junk');
+    await expect(tabNamed(page, 'Meetings')).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('heading', { name: 'Coming up', level: 2 })).toBeVisible();
+  });
+
+  test('has no tablist where the requests list is not available, and no heading', async ({
+    page,
+  }) => {
+    await openReal(page, { ...typicalState(), readable: false, items: [] });
+    await expect(page.getByRole('tablist')).toHaveCount(0);
+    await expect(page.locator('main h2')).toHaveCount(0);
+    await expect(page.getByText('Your requests list is not available here yet.')).toBeVisible();
+  });
 });
 
 test('moves nothing: no animation, and no transition except the design system link hover', async ({

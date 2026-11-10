@@ -328,9 +328,9 @@ describe('words, caps and links', () => {
   it('has words for every meeting status and no other key', () => {
     expect(Object.keys(statusWords).sort()).toEqual([...meetingStatus.options].sort());
   });
-  it('reads at most 12 reports and shows the first 3 meetings, fewer than a Room list shows', () => {
+  it('reads at most 12 reports and shows the first meeting, fewer than a Room list shows', () => {
     expect(meetingReportCap).toBe(12);
-    expect(meetingsFirstShown).toBe(3);
+    expect(meetingsFirstShown).toBe(1);
     expect(meetingsFirstShown).toBeLessThan(tripFirstShown);
   });
   it('opens the Room on Meetings only with Trip, the Room and the lenses all on', () => {

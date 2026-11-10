@@ -13,6 +13,7 @@ import { customerTabs } from '../../../lib/ux/customer-navigation';
 import { uxSwitchOn } from '../../../lib/ux-switches';
 import { loadWorkItems } from '../../../lib/work-items/load';
 import { MeetingsList, RequestsSection, type MeetingGroup } from './meetings-list';
+import { MeetingsTabs } from './meetings-tabs';
 import '../rooms/[requestId]/room-view.css';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -25,7 +26,8 @@ export const metadata = {
 // by when they start, each opening in its Request. It is read only: the same list of requests the Requests page
 // reads, the same assignments and saved reports the Room reads (up to meetingReportCap of them), with the same
 // session proof, so it shows nothing the person could not already open. A changed schedule is shown without its old
-// details, and nothing is claimed as empty that was not read to the end.
+// details, and nothing is claimed as empty that was not read to the end. The page is two tabs (Meetings, Your
+// Requests) so it fits the layout budget; the partial notice sits above the tabs because it concerns both lists.
 export default async function Page() {
   // The Meetings tab exists only with the shells switch, so the page does too: without it the address answers 404.
   if (!uxSwitchOn('CORRIDRA_UX_SHELLS_V2')) notFound();
@@ -68,25 +70,70 @@ export default async function Page() {
   const libraryHref = customerTabs({ companies: false, move: false }).find(
     (tab) => tab.key === 'reports',
   )?.href;
+  const intro =
+    'This page lists every meeting and visit the Corridra team has set up for your requests.';
+  const whatNext = (
+    <details className="ux-journey-disclosure">
+      <summary>What Happens Next</summary>
+      <p>{intro} Each one is a step between your request and your decision.</p>
+      {shown > 0 ? <p>Open a meeting in its Request to see what to do next.</p> : null}
+      <p>
+        Dates and places appear after the Corridra team reviews them. If a time changes, you see a
+        notice. The old time stays hidden until a new one is reviewed. Nothing is booked or changed
+        from this page.
+      </p>
+    </details>
+  );
+  const meetingsPanel = (
+    <div className="room">
+      {whatNext}
+      {meetings.capped ? (
+        <p role="status">
+          We show meetings from the first {meetingReportCap} reports only. Some meetings may be
+          missing. Open a request in the Your Requests tab to see all of its meetings.
+        </p>
+      ) : null}
+      {meetings.notSaved > 0 ? (
+        <p className="ux-draft-notice">
+          {meetings.notSaved === 1
+            ? '1 of your requests has a report that is not saved yet. Save it from your Library to see its meetings here.'
+            : `${meetings.notSaved} of your requests have a report that is not saved yet. Save them from your Library to see their meetings here.`}{' '}
+          <Link className="text-link" prefetch={false} href={libraryHref ?? '/account'}>
+            Open Library
+          </Link>
+        </p>
+      ) : null}
+      {requests.length === 0 && list.unreadable.length === 0 ? (
+        <p role="status">
+          You have no requests yet.{' '}
+          <Link className="text-link" prefetch={false} href="/plan">
+            Start a Request
+          </Link>
+        </p>
+      ) : null}
+      {requests.length > 0 && !partial && !meetings.capped && shown === 0 ? (
+        <p className="ux-empty">
+          No meetings or visits are ready to show yet. They appear here after the Corridra team
+          reviews them. You can open any request in the Your Requests tab.
+        </p>
+      ) : null}
+      {shown > 0 ? <MeetingsList groups={groups} /> : null}
+    </div>
+  );
+  const requestsPanel =
+    requests.length > 0 ? (
+      <RequestsSection
+        withMeetings={shown > 0}
+        requests={requests.map((request) => ({
+          key: request.key,
+          title: request.title ?? requestTitleFallback,
+          href: request.href,
+        }))}
+      />
+    ) : null;
   return (
     <CustomerShell tab="meetings" eyebrow="YOUR ACCOUNT" title="Meetings">
-      <p>
-        This page lists every meeting and visit the Corridra team has set up for your requests.
-        {readable ? ' Each one is a step between your request and your decision.' : null}
-      </p>
-      {readable ? (
-        <>
-          {shown > 0 ? <p>Open a meeting in its Request to see what to do next.</p> : null}
-          <details className="ux-journey-disclosure">
-            <summary>What Happens Next</summary>
-            <p>
-              Dates and places appear after the Corridra team reviews them. If a time changes, you
-              see a notice. The old time stays hidden until a new one is reviewed. Nothing is booked
-              or changed from this page.
-            </p>
-          </details>
-        </>
-      ) : null}
+      {readable ? null : <p>{intro}</p>}
       <div className="room">
         {partial ? (
           <p role="status">
@@ -96,57 +143,18 @@ export default async function Page() {
             </Link>
           </p>
         ) : null}
-        {meetings.capped ? (
-          <p role="status">
-            We show meetings from the first {meetingReportCap} reports only. Some meetings may be
-            missing. Open a request below to see all of its meetings.
-          </p>
-        ) : null}
-        {meetings.notSaved > 0 ? (
-          <p className="ux-draft-notice">
-            {meetings.notSaved === 1
-              ? '1 of your requests has a report that is not saved yet. Save it from your Library to see its meetings here.'
-              : `${meetings.notSaved} of your requests have a report that is not saved yet. Save them from your Library to see their meetings here.`}{' '}
-            <Link className="text-link" prefetch={false} href={libraryHref ?? '/account'}>
-              Open Library
-            </Link>
-          </p>
-        ) : null}
         {!readable ? <p role="status">Your requests list is not available here yet.</p> : null}
-        {readable && requests.length > 0 && meetings.reportsOff ? (
-          <p role="status">
-            Meetings and visits are not available here yet. Your requests are listed below.
-          </p>
+        {readable && meetings.reportsOff && requestsPanel ? (
+          <>
+            {whatNext}
+            <p role="status">
+              Meetings and visits are not available here yet. Your requests are listed below.
+            </p>
+            {requestsPanel}
+          </>
         ) : null}
-        {readable && requests.length === 0 && list.unreadable.length === 0 ? (
-          <p role="status">
-            You have no requests yet.{' '}
-            <Link className="text-link" prefetch={false} href="/plan">
-              Start a Request
-            </Link>
-          </p>
-        ) : null}
-        {readable &&
-        requests.length > 0 &&
-        !meetings.reportsOff &&
-        !partial &&
-        !meetings.capped &&
-        shown === 0 ? (
-          <p className="ux-empty">
-            No meetings or visits are ready to show yet. They appear here after the Corridra team
-            reviews them. You can open any request below.
-          </p>
-        ) : null}
-        {shown > 0 ? <MeetingsList groups={groups} /> : null}
-        {requests.length > 0 ? (
-          <RequestsSection
-            withMeetings={shown > 0}
-            requests={requests.map((request) => ({
-              key: request.key,
-              title: request.title ?? requestTitleFallback,
-              href: request.href,
-            }))}
-          />
+        {readable && !(meetings.reportsOff && requestsPanel) ? (
+          <MeetingsTabs meetings={meetingsPanel} requests={requestsPanel} />
         ) : null}
       </div>
     </CustomerShell>
