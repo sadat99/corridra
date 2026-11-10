@@ -3,10 +3,11 @@ import { expect, test, type Page } from '@playwright/test';
 // The request page length: /plan keeps its own limit, set from the measured result of the page-length change
 // (docs/revamp/evidence/s13-plan-length: 2.53 screens at 390 x 844, 1.80 at 1440 x 900 and 1780 x 900). The earlier
 // limits (2.0 and 1.0) were not reachable with the footer and the page head on the page. These numbers are the S5
-// conductor's proposal of 9 November 2026 after measurement, NOT an owner decision: the owner's targets were 2.4 and
+// conductor's proposal of 9 November 2026 after measurement, owner confirmed, 9 November 2026 (relayed by the
+// conductor: "proceed with /plan proposal"): the owner's targets were 2.4 and
 // 1.8, and the phone misses 2.4 (2.53). The test notice's availability sentence stays in view because existing
 // honesty tests need it; hiding it would still only reach 2.48 (a style in the current build, see the evidence
-// folder). The owner has not confirmed the limits. They never go up without the owner.
+// folder). They never go up without the owner.
 // Measured 2.53 phone (2132 px) and 1.80 desktop (1617 px); each limit leaves more than one text line of room, because
 // CI's fonts can differ from the local ones (KI-28): phone 2.60 is 2194 px (62 px of room), desktop 1.85 is 1665 px (48 px).
 const limits = { phone: 2.6, desktop: 1.85 } as const;

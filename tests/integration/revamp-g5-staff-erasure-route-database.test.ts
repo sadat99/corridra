@@ -8,12 +8,18 @@ import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-
 import { migrateCustomerMemberRoles } from '../../packages/db/src/customer-member-role-migrate';
 import { migrateCustomerAccountLifecycle } from '../../packages/db/src/customer-account-lifecycle-migrate';
 import { CustomerErasureQueue } from '../../packages/auth/src/customer-erasure-queue';
+import { CustomerAccountLifecycleService } from '../../packages/auth/src/customer-account-lifecycle';
+import { CustomerWorkspaceService } from '../../packages/auth/src/customer-workspaces';
+import { realStaffFixture } from './real-staff-fixture';
 
 // CRUD G5, staff side, end to end: the real route over the real service, the real database and the real restricted
 // roles. A staff workspace on the sample side sees only sample customers; a customer whose workspace is real is
-// not in its list, and moving that request is refused with the same "not found" words. The real staff side is proven
-// in revamp-g4-g5-followup-database.test.ts: every staff route in the web layer uses the sample purpose today, so a
-// real staff workspace cannot reach this page yet.
+// not in its list, and moving that request is refused with the same "not found" words. A real staff workspace reaches
+// this page too: the route asks for the sample purpose, and with CORRIDRA_REAL_USE_ENABLED=true the database layer
+// (withTenant in packages/db) swaps it for the staff workspace's own processing purpose, which is the real one on a
+// real workspace. The last block below proves that through the route; with the switch off the same call is refused.
+// The production value of the switch is not observed here. The SQL side of the split is also proven in
+// revamp-g4-g5-followup-database.test.ts.
 const live = vi.hoisted(() => ({ queue: null as unknown, token: '' }));
 const web = createRequire(resolve('apps/web/package.json'));
 const lifecycleFile = web.resolve('@corridra/auth/customer-account-lifecycle');
@@ -36,11 +42,11 @@ let ids: Record<string, string>;
 let tenant: string;
 const route = async () =>
   await import('../../apps/web/app/api/workspace/customer-erasure-queue/route');
-const url = (extra = '') =>
-  `https://app.corridra.test/api/workspace/customer-erasure-queue?tenant=${tenant}${extra}`;
-const list = async () => {
+const url = (extra = '', at = tenant) =>
+  `https://app.corridra.test/api/workspace/customer-erasure-queue?tenant=${at}${extra}`;
+const list = async (at = tenant) => {
   const { GET } = await route();
-  const response = await GET(new Request(url('&pageSize=100')));
+  const response = await GET(new Request(url('&pageSize=100', at)));
   expect(response.status).toBe(200);
   return (await response.json()) as {
     items: { id: string; reference: string }[];
@@ -52,10 +58,11 @@ const move = async (
   toState: string,
   note?: string,
   commandId = randomUUID(),
+  at = tenant,
 ) => {
   const { POST } = await route();
   const response = await POST(
-    new Request(url(), {
+    new Request(url('', at), {
       method: 'POST',
       headers: { 'content-type': 'application/json', origin: 'https://app.corridra.test' },
       body: JSON.stringify({
@@ -209,5 +216,125 @@ describe('refusals through the real route change nothing', () => {
     expect(second.status).toBe(200);
     expect(second.body.changed).toBe(false);
     expect(await statesOf(id)).toEqual(['received', 'in_progress']);
+  });
+});
+
+// The real staff side through the same route, on its own database: real data mode with the switch on, the real intake
+// workspace whose staff owner may manage requests, and a customer whose only workspace is real. The staff session is
+// the fixture owner's, with the fixture's fresh authenticator check, exactly as in the sample cases above.
+describe('a real staff workspace through the real route', () => {
+  const realIssuer =
+    'https://ep-g5-real-route-fixture.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth';
+  const realOptions = {
+    enabled: true,
+    synthetic: false,
+    production: false,
+    issuer: realIssuer,
+    openAdmission: true,
+    dataMode: 'real' as const,
+  };
+  const subject = 'g5-real-route-customer';
+  const customerSession = async () => ({
+    subject,
+    email: subject + '@business.test',
+    emailVerified: true,
+    expiresAt: new Date(Date.now() + 3600000),
+  });
+  let realTenant: string;
+  let customerTenant: string;
+  let request: string;
+  // What the move writes: status events of the request, and lifecycle events on the customer's workspace.
+  const written = async () =>
+    (
+      await f.owner.query(
+        `SELECT (SELECT count(*)::int FROM customer_private.erasure_status_event WHERE request_id=$1) statuses,
+          (SELECT count(*)::int FROM app.domain_event WHERE tenant_id=$2 AND aggregate_type='customer_account_lifecycle') events`,
+        [request, customerTenant],
+      )
+    ).rows[0] as { statuses: number; events: number };
+
+  beforeAll(async () => {
+    // The real fixture rebuilds the same integration database, so the sample one is closed first.
+    await f.close();
+    const real = await realStaffFixture(realIssuer, 'g5-real-route-fixture-secret');
+    f = real.f;
+    realTenant = real.intakeTenantId;
+    await migrateCustomerMemberRoles(f.owner);
+    await migrateCustomerAccountLifecycle(f.owner);
+    await f.owner.query(
+      'INSERT INTO customer_private.account_lifecycle_control(version,enabled,executor_id,reason) VALUES(1,true,$1,$2)',
+      [f.serviceId, 'Fixture control for the real staff route tests'],
+    );
+    customerTenant = (
+      await new CustomerWorkspaceService(f.runtime, f.auth, realOptions, customerSession).provision(
+        { commandId: randomUUID(), name: 'Dhaka Imports erasure workspace' },
+      )
+    ).id;
+    await new CustomerAccountLifecycleService(
+      f.runtime,
+      f.auth,
+      realOptions,
+      customerSession,
+    ).command({ action: 'file_erasure', commandId: randomUUID() });
+    request = (
+      await f.owner.query(
+        'SELECT r.id FROM customer_private.erasure_request r JOIN customer_private.principal p ON p.id=r.principal_id WHERE p.issuer=$1 AND p.subject=$2',
+        [realIssuer, subject],
+      )
+    ).rows[0].id as string;
+    live.queue = new CustomerErasureQueue(f.runtime);
+    live.token = f.users.owner!.ctx.token;
+  }, 240000);
+  afterAll(() => {
+    vi.unstubAllEnvs();
+  });
+
+  test('with the real-use switch off, the real workspace is refused on the list and on a move, and nothing is written', async () => {
+    const before = await written();
+    vi.stubEnv('CORRIDRA_REAL_USE_ENABLED', 'false');
+    try {
+      const { GET } = await route();
+      const listed = await GET(new Request(url('', realTenant)));
+      expect(listed.status).toBe(403);
+      expect(((await listed.json()) as { error: string }).error).toBe('Access denied');
+      const refused = await move(request, 'in_progress', undefined, randomUUID(), realTenant);
+      expect(refused.status).toBe(403);
+      expect(refused.body.error).toBe('Access denied');
+    } finally {
+      vi.stubEnv('CORRIDRA_REAL_USE_ENABLED', 'true');
+    }
+    expect(await written()).toEqual(before);
+  });
+
+  test('sample staff do not see the real request, and cannot move it', async () => {
+    const before = await written();
+    live.token = f.users.other!.ctx.token;
+    try {
+      expect((await list(f.tenantB)).items.map((item) => item.id)).not.toContain(request);
+      const refused = await move(request, 'in_progress', undefined, randomUUID(), f.tenantB);
+      expect(refused.status).toBe(409);
+      expect(refused.body.error).toBe('Erasure request not found');
+    } finally {
+      live.token = f.users.owner!.ctx.token;
+    }
+    expect(await written()).toEqual(before);
+  });
+
+  test('real staff see the real request and start work on it, with one status event and one event on its workspace', async () => {
+    const before = await written();
+    expect((await list(realTenant)).items.map((item) => item.id)).toContain(request);
+    const started = await move(request, 'in_progress', undefined, randomUUID(), realTenant);
+    expect(started.status).toBe(200);
+    expect(started.body.status).toBe('in_progress');
+    expect(started.body.changed).toBe(true);
+    expect(await written()).toEqual({
+      statuses: before.statuses + 1,
+      events: before.events + 1,
+    });
+    const event = await f.owner.query(
+      "SELECT type FROM app.domain_event WHERE tenant_id=$1 AND aggregate_type='customer_account_lifecycle' ORDER BY aggregate_version DESC LIMIT 1",
+      [customerTenant],
+    );
+    expect(event.rows[0].type).toBe('customer.account.erasure_in_progress');
   });
 });
