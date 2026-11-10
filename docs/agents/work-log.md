@@ -3209,6 +3209,18 @@ Fix round (S19 records, Guardian FIXES-NEEDED on 87a51dbb, two should-fix items)
 
 Fix-round verification: local, over 87a51dbb: `node scripts/authority.mjs check` exit 0 (77 governed documents); `node scripts/v3-context.mjs verify` exit 0; `node scripts/gate.mjs s19-records-fix-test-docs -- pnpm test:docs` exit 0 (77 of 77; receipt `work/s19-records-fix-test-docs-2026-11-10T05-40-59-302Z.log`, local); `npx prettier --check` on the three changed files exit 0. Ledger 10664 bytes, status output 10687 bytes, the four always-read files 36122 bytes (cap 36864). New stamp: auth-c36160a85b5b.
 
+### 10 November 2026: Navigation, Company Profile is a real link whenever profiles are on (S17 then S28, branch nav-company-profile-link from main 57eeb933, PR 388)
+
+Owner direction, 10 Nov 2026, verbatim: "For signed in users, there multiple navigation links as placeholders now in different menus on the header and others, we need to make them 100% functional(as per the latest prodcut vision and ambitions, ux/ui & other requirements), instead of just placeholders witth coming soon." Owner report the same day: a user with a company profile and a workspace could not find how to link the company to the workspace.
+
+Cause, found in source by S17's squad run (authority stamp auth-c36160a85b5b): `apps/web/lib/ux/customer-navigation.ts` made the avatar "Company Profile" a link only when one workspace resolved, so with the profiles module on, a person with 0 or 2+ workspaces off a workspace page, or a list still loading or failed, saw "Coming soon" for a working feature.
+
+Changed: with profiles on, Company Profile always links (`/account/profile/{id}` when a workspace resolves, else the existing chooser `/account/profile`); with profiles off it stays Coming soon, and the avatar workspace rows are plain names that describe Manage Workspaces instead of links to a page that only says the profile is unavailable. The reachable set lists the chooser and each workspace profile only with profiles on. `menu-link.tsx` gained an optional `describedBy`. Files: `apps/web/lib/ux/customer-navigation.ts`, `apps/web/components/ux/utility-menus.tsx`, `apps/web/components/ux/menu-link.tsx`, `tests/integration/revamp-nav-customer-model.test.ts` (one case replaced by a stricter exact-entries case), new `tests/operator/revamp-nav-avatar-company-profile-ui.spec.ts`, this entry. No auth, RLS, roles, money, events, migrations or switches changed. Sensitive: no.
+
+Verification: builder focused checks exit 0 (10-file vitest set 72 passed; avatar fixture with organisation-links UI 32 passed; operator shards test; format:check, lint, typecheck); the 3 new unit cases and 5 of the 6 new browser cases fail on the old code. Designer audit PASS (44 px rows, no sideways scroll at 320, 390, 768, 1440). Adversarial review: no blocking or should-fix findings. S28 checked in source that `/account/profile` renders the workspace chooser and that `.ux-menu-who` exists. S17's local full-gate verifier result was lost when S17 rotated; CI on the exact head is the proof.
+
+Not done here: switching modules on (owner, in Vercel); company links for real workspaces (separate Phase 1 project; `CORRIDRA_CUSTOMER_ORGANISATION_LINKS_ENABLED` stays off); the 0-workspace chooser has no linked next step (W6 follow-up).
+
 ### 10 November 2026: Report a Problem PR1, problem report module and installer (S29, branch problem-reports from main 57eeb93)
 
 Request: S28 asked S29 to build PR1 of Report a Problem exactly as ADR-078 and spec section 8 item 1 say. Owner decisions of 10 Nov 2026 are in the spec, verbatim. Authority Brief stamp auth-9120f8b17529 (squad run: authority, architect, two builders on disjoint files, reviewer and verifier in parallel, one fix round).
