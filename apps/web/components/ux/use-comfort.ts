@@ -7,6 +7,7 @@ import {
   chooseLessMovement,
   chooseTextSize,
   currentLessMovement,
+  currentSaveFailed,
   currentTextSize,
   subscribeComfort,
   type LessMovement,
@@ -23,6 +24,11 @@ export function useTextSize(): [TextSize, (size: TextSize) => boolean] {
 export function useLessMovement(): [LessMovement, (value: LessMovement) => boolean] {
   const value = useSyncExternalStore(subscribeComfort, currentLessMovement, () => 'off' as const);
   return [value, chooseLessMovement];
+}
+
+/** True after this browser refused to keep a choice; one flag shared by every comfort control on the page. */
+export function useSaveFailed(): boolean {
+  return useSyncExternalStore(subscribeComfort, currentSaveFailed, () => false);
 }
 
 /**

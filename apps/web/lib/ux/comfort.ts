@@ -53,6 +53,13 @@ function applyLessMovement(value: LessMovement) {
   else root()?.removeAttribute(lessMovementAttribute);
 }
 
+// True once this browser has refused to keep a choice. It is one flag for the page, so every control shows one note.
+let saveFailed = false;
+/** Whether the last attempt to keep a choice was refused by this browser. Never true on load. */
+export function currentSaveFailed(): boolean {
+  return saveFailed;
+}
+
 const listeners = new Set<() => void>();
 function notify() {
   listeners.forEach((listener) => listener());
@@ -85,19 +92,24 @@ export function applyStoredComfort() {
  */
 export function chooseTextSize(size: TextSize): boolean {
   applyTextSize(size);
-  notify();
-  return writeStored(textSizeStorageKey, size === 'normal' ? null : size);
+  return finishChoice(writeStored(textSizeStorageKey, size === 'normal' ? null : size));
 }
 export function chooseLessMovement(value: LessMovement): boolean {
   applyLessMovement(value);
+  return finishChoice(writeStored(lessMovementStorageKey, value === 'on' ? 'on' : null));
+}
+function finishChoice(saved: boolean): boolean {
+  saveFailed = !saved;
   notify();
-  return writeStored(lessMovementStorageKey, value === 'on' ? 'on' : null);
+  return saved;
 }
 
 /**
- * The script that runs before the first paint (appended to /language-boot.js). Only constants go into it,
- * and it never contains a closing tag. A browser that cannot read its storage is left at the defaults.
+ * The script that runs before the first paint (appended to /language-boot.js). It is one fixed piece of text with
+ * the storage keys and attribute names written in it, so nothing is built from a value and nothing can close a tag.
+ * tests/integration/comfort.test.ts checks the text still names the exported constants. A browser that cannot
+ * read its storage is left at the defaults.
  */
 export function comfortBootScript(): string {
-  return `(function(){try{var d=document.documentElement,s=null,m=null;try{s=localStorage.getItem(${JSON.stringify(textSizeStorageKey)});m=localStorage.getItem(${JSON.stringify(lessMovementStorageKey)})}catch(e){}if(s==='large'||s==='largest')d.setAttribute(${JSON.stringify(textSizeAttribute)},s);if(m==='on')d.setAttribute(${JSON.stringify(lessMovementAttribute)},'on')}catch(e){}})();`;
+  return `(function(){try{var d=document.documentElement,s=null,m=null;try{s=localStorage.getItem("corridra.text-size");m=localStorage.getItem("corridra.less-movement")}catch(e){}if(s==='large'||s==='largest')d.setAttribute("data-text-size",s);if(m==='on')d.setAttribute("data-less-movement",'on')}catch(e){}})();`;
 }

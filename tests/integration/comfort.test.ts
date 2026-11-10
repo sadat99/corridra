@@ -5,11 +5,14 @@ import {
   chooseTextSize,
   comfortBootScript,
   currentLessMovement,
+  currentSaveFailed,
   currentTextSize,
+  lessMovementAttribute,
   lessMovementStorageKey,
   parseLessMovement,
   parseTextSize,
   subscribeComfort,
+  textSizeAttribute,
   textSizeStorageKey,
 } from '../../apps/web/lib/ux/comfort';
 import { GET } from '../../apps/web/app/language-boot.js/route';
@@ -127,6 +130,27 @@ describe('a browser that blocks its storage', () => {
     expect(attributes.get('data-less-movement')).toBe('on');
   });
 
+  test('one shared flag says a save failed: false on load, set by either choice, cleared by a save that works', () => {
+    fakeBrowser(memoryStorage());
+    chooseTextSize('normal');
+    expect(currentSaveFailed()).toBe(false);
+    // Loading with blocked storage is not a failed save: nothing is shown until a person chooses.
+    fakeBrowser(blockedStorage);
+    applyStoredComfort();
+    expect(currentSaveFailed()).toBe(false);
+    chooseTextSize('large');
+    expect(currentSaveFailed()).toBe(true);
+    chooseLessMovement('on');
+    expect(currentSaveFailed()).toBe(true);
+    const heard = vi.fn();
+    const stop = subscribeComfort(heard);
+    fakeBrowser(memoryStorage());
+    chooseLessMovement('off');
+    expect(currentSaveFailed()).toBe(false);
+    expect(heard).toHaveBeenCalled();
+    stop();
+  });
+
   test('loading the page with blocked storage throws nothing and keeps what the page already shows', () => {
     const attributes = fakeBrowser(blockedStorage);
     chooseTextSize('large');
@@ -178,6 +202,25 @@ describe('the script that runs before the first paint', () => {
     expect(() =>
       new Function('localStorage', comfortBootScript())({ getItem: () => 'on' }),
     ).not.toThrow();
+  });
+
+  test('the script text names exactly the current storage keys and attribute names', () => {
+    // It is written as one fixed literal, so renaming an exported constant without the script fails here.
+    const script = comfortBootScript();
+    expect(textSizeStorageKey).toBe('corridra.text-size');
+    expect(lessMovementStorageKey).toBe('corridra.less-movement');
+    expect(textSizeAttribute).toBe('data-text-size');
+    expect(lessMovementAttribute).toBe('data-less-movement');
+    for (const value of [
+      textSizeStorageKey,
+      lessMovementStorageKey,
+      textSizeAttribute,
+      lessMovementAttribute,
+    ])
+      expect(script.split(`"${value}"`), value).toHaveLength(2);
+    expect(Array.from(script.matchAll(/"([^"]*)"/g), (match) => match[1]).sort()).toEqual(
+      [textSizeStorageKey, lessMovementStorageKey, textSizeAttribute, lessMovementAttribute].sort(),
+    );
   });
 
   test('the script holds only fixed text and can never close a tag', () => {

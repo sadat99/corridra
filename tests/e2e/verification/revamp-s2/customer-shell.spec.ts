@@ -419,17 +419,98 @@ test('W7 a browser that will not save says so once, and the choice still holds f
   await page.goto('/account');
   const menu = page.getByRole('menu', { name: 'Help and accessibility' });
   await header(page).getByRole('button', { name: 'Help and accessibility' }).click();
-  await expect(menu.getByRole('status')).toHaveCount(0);
+  // One live region is in the menu all the time and is empty until a save fails, so the note is announced when it
+  // appears. It takes no room while empty, and it is never shown on load.
+  const note = menu.locator('[aria-live="polite"]');
+  await expect(note).toHaveCount(1);
+  await expect(note).toBeEmpty();
+  expect((await note.boundingBox())!.height).toBe(0);
   await menu.getByRole('menuitemradio', { name: 'Largest Text' }).click();
   expect(await comfort(page)).toMatchObject({ fontSize: '20px', textSize: 'largest' });
-  await expect(menu.getByRole('status')).toHaveText(
+  await expect(note).toHaveText(
     'This browser cannot save your choice. It lasts until you leave this page.',
   );
+  // A second refused save does not add a second note.
+  await menu.getByRole('menuitemcheckbox', { name: /Less Movement/ }).click();
+  await expect(menu.locator('[aria-live="polite"]')).toHaveCount(1);
+  await expect(
+    menu.getByText('This browser cannot save your choice. It lasts until you leave this page.'),
+  ).toHaveCount(1);
+  // The note is the last thing in the Make It Easier to Read group, after Less Movement.
+  const order = await menu.evaluate((panel) => {
+    const nodes = Array.from(
+      panel.querySelectorAll('[role="menuitemcheckbox"], [aria-live="polite"]'),
+    );
+    return nodes.map((el) => (el.getAttribute('aria-live') ? 'note' : 'switch'));
+  });
+  expect(order.slice(-2)).toEqual(['switch', 'note']);
   await expect(menu.getByRole('menuitemradio', { name: 'Largest Text' })).toHaveAttribute(
     'aria-checked',
     'true',
   );
   expect(errors).toEqual([]);
+});
+
+test('W7 at the largest text on a short screen the Help menu scrolls inside the window and its last row can be reached', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Storage.prototype.setItem = () => {
+      throw new Error('blocked');
+    };
+    Storage.prototype.getItem = () => {
+      throw new Error('blocked');
+    };
+  });
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.goto('/account');
+  await header(page).getByRole('button', { name: 'Help and accessibility' }).click();
+  const menu = page.getByRole('menu', { name: 'Help and accessibility' });
+  await menu.getByRole('menuitemradio', { name: 'Largest Text' }).click();
+  const toggle = menu.getByRole('menuitemcheckbox', { name: /Less Movement/ });
+  await toggle.click();
+  const panel = await menu.evaluate((el) => ({
+    bottom: el.getBoundingClientRect().bottom,
+    overflowY: getComputedStyle(el).overflowY,
+  }));
+  expect(panel.bottom).toBeLessThanOrEqual(768);
+  expect(panel.overflowY).toBe('auto');
+  // The note under Less Movement scrolls into view inside the window.
+  const note = menu.locator('[aria-live="polite"]');
+  await note.scrollIntoViewIfNeeded();
+  const box = (await note.boundingBox())!;
+  expect(box.y).toBeGreaterThanOrEqual(0);
+  expect(box.y + box.height).toBeLessThanOrEqual(768);
+  await toggle.scrollIntoViewIfNeeded();
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-checked', 'false');
+});
+
+test('W7 with Less Movement on the busy ring runs once and rests, and with it off it still spins', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/account');
+  const ring = () =>
+    page.evaluate(() => {
+      let button = document.getElementById('w7-busy');
+      if (!button) {
+        button = document.createElement('button');
+        button.id = 'w7-busy';
+        button.className = 'button';
+        button.setAttribute('aria-busy', 'true');
+        button.textContent = 'Sending request';
+        document.querySelector('main')!.append(button);
+      }
+      return getComputedStyle(button, '::after').animationIterationCount;
+    });
+  expect(await ring()).toBe('infinite');
+  await header(page).getByRole('button', { name: 'Help and accessibility' }).click();
+  await page
+    .getByRole('menu', { name: 'Help and accessibility' })
+    .getByRole('menuitemcheckbox', { name: /Less Movement/ })
+    .click();
+  expect(await ring()).toBe('1');
 });
 
 for (const width of [320, 390, 768, 1440]) {

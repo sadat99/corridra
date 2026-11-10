@@ -1,12 +1,14 @@
 /* The reading comfort choices on a helper's Me page (W7). Tokens only. Text Size is three big choices that
    wrap as the screen narrows; the chosen one has a tint, a 2 px border, heavier weight and a tick as well as the
    radio state, so it is never shown by colour alone. The real radio covers its whole choice, so the target is
-   the whole 76 px box. */
+   the whole 76 px box. The group and the switch row stop at 40 rem so, on a wide screen, a label and its On or Off
+   still read as one row. */
 .me-textsize {
   margin: var(--space-3) 0 0;
   padding: 0;
   border: 0;
   min-width: 0;
+  max-width: 40rem;
 }
 .me-textsize legend {
   padding: 0;
@@ -27,7 +29,7 @@
   min-height: 4.75rem;
   padding: var(--space-2);
   border: 2px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--surface-1);
   color: var(--ink);
   cursor: pointer;
@@ -54,18 +56,18 @@
   position: absolute;
   top: var(--space-1);
   inset-inline-end: var(--space-1);
-  width: 1rem;
-  height: 1rem;
+  width: var(--space-4);
+  height: var(--space-4);
 }
 .me-textsize-glyph {
-  font-size: 1rem;
-  line-height: 1.5rem;
+  font-size: var(--text-base);
+  line-height: var(--space-6);
 }
 .me-textsize-choice[data-step='large'] .me-textsize-glyph {
-  font-size: 1.25rem;
+  font-size: var(--text-xl);
 }
 .me-textsize-choice[data-step='largest'] .me-textsize-glyph {
-  font-size: 1.5rem;
+  font-size: var(--text-2xl);
 }
 .me-switch {
   display: flex;
@@ -73,6 +75,7 @@
   justify-content: space-between;
   gap: var(--space-3);
   min-height: 44px;
+  max-width: 40rem;
   margin-top: var(--space-3);
   cursor: pointer;
 }
@@ -86,13 +89,30 @@
   outline-offset: 2px;
 }
 .me-switch input {
-  width: 1.25rem;
-  height: 1.25rem;
+  width: var(--space-5);
+  height: var(--space-5);
   margin: 0;
   cursor: pointer;
 }
 .detail-card .me-hint {
+  max-width: 40rem;
   margin: 0;
   color: var(--text-2);
   font-size: var(--text-sm);
+}
+/* The one live region for a failed save: empty (no space) until it is filled, then flush with the hint above. */
+.detail-card .me-status {
+  margin: 0;
+  padding: 0;
+  max-width: 40rem;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+.detail-card .me-status:not(:empty) {
+  margin-top: var(--space-2);
+}
+/* A line that follows the hint or the note keeps a gap from it. */
+.detail-card .me-data-saver {
+  margin-top: var(--space-3);
 }

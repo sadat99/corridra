@@ -4,7 +4,7 @@
 // Coming soon and is not a control. The private link note describes the invitation link only in words that are
 // true of any link: it is for one person and the Corridra team renews it. Owner: S4, W7.
 import './helper-me.css';
-import { useState } from 'react';
+import { useId } from 'react';
 import Link from 'next/link';
 import { LanguageSwitcher } from '../../../components/language-switcher';
 import { CorridraIcon } from '../../../components/corridra-icon';
@@ -17,7 +17,8 @@ export function HelperMe({ workspace }: { workspace: string }) {
   const listen = useListen();
   const [size, setSize] = useTextSize();
   const [movement, setMovement] = useLessMovement();
-  const [unsaved, setUnsaved] = useState(false);
+  const switchLabelId = useId();
+  const hintId = useId();
   return (
     <>
       <section aria-labelledby="me-language" className="detail-card">
@@ -46,7 +47,7 @@ export function HelperMe({ workspace }: { workspace: string }) {
                   name="me-text-size"
                   value={step}
                   checked={size === step}
-                  onChange={() => setUnsaved(!setSize(step))}
+                  onChange={() => setSize(step)}
                 />
                 <span aria-hidden="true" className="me-textsize-glyph">
                   A
@@ -58,20 +59,25 @@ export function HelperMe({ workspace }: { workspace: string }) {
           </div>
         </fieldset>
         <label className="me-switch">
-          <span>Less Movement</span>
+          <span id={switchLabelId}>Less Movement</span>
           <span className="me-switch-state">
+            {/* Named by its words alone and described by the hint, so the On or Off beside it is not read twice. */}
             <input
               type="checkbox"
               role="switch"
+              aria-labelledby={switchLabelId}
+              aria-describedby={hintId}
               checked={movement === 'on'}
-              onChange={(event) => setUnsaved(!setMovement(event.target.checked ? 'on' : 'off'))}
+              onChange={(event) => setMovement(event.target.checked ? 'on' : 'off')}
             />
             {movement === 'on' ? 'On' : 'Off'}
           </span>
         </label>
-        <p className="me-hint">Stops animation and anything that moves by itself.</p>
-        {unsaved ? <UnsavedChoiceNote /> : null}
-        <p>
+        <p id={hintId} className="me-hint">
+          Stops animation and anything that moves by itself.
+        </p>
+        <UnsavedChoiceNote className="me-status" />
+        <p className="me-data-saver">
           Data Saver <span className="ux-soon-tag">Coming soon</span>
         </p>
       </section>

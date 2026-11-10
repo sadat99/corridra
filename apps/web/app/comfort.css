@@ -16,6 +16,8 @@ html[data-less-movement='on'] *::before,
 html[data-less-movement='on'] *::after {
   transition-duration: 0.01ms !important;
   animation-duration: 0.01ms !important;
+  /* The busy ring is the one infinite animation: it ends and rests instead of flickering. */
+  animation-iteration-count: 1 !important;
   scroll-behavior: auto !important;
 }
 html[data-less-movement='on'] .primary-link:hover,

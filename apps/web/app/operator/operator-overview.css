@@ -856,7 +856,12 @@
   /* The system-wide phone rules stretch a lone link across its row and space a second one below the first;
      here the two toolbar links share one row at the content's left edge (the select's id outranks them). */
   .ux-operator-home .operator-toolbar:has(#operator-workspace-select) > :is(a, button).text-link {
-    flex: 0 0 auto;
+    /* They may shrink and wrap, so a long link at a large text size stays inside the screen. */
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal;
+    text-align: start;
     width: auto;
     gap: var(--space-1);
     margin: 0;

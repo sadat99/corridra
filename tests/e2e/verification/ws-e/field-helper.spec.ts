@@ -62,7 +62,26 @@ test('the field helper has four bottom tabs on a phone and the left bar on a wid
   await expect(comfort.getByRole('group', { name: 'Text Size' })).toBeVisible();
   await expect(comfort.getByRole('radio')).toHaveCount(3);
   await expect(comfort.getByRole('radio', { name: 'Normal' })).toBeChecked();
-  await expect(comfort.getByRole('switch', { name: /Less Movement/ })).not.toBeChecked();
+  // The switch is named by "Less Movement" alone (its On or Off word is not read twice) and described by the hint.
+  const lessMovement = comfort.getByRole('switch', { name: 'Less Movement', exact: true });
+  await expect(lessMovement).not.toBeChecked();
+  await expect(lessMovement).toHaveAccessibleDescription(
+    'Stops animation and anything that moves by itself.',
+  );
+  // One live region for a failed save is in the card all the time, empty and taking no room, and flush with the hint.
+  const note = comfort.getByRole('status');
+  await expect(note).toHaveCount(1);
+  await expect(note).toBeEmpty();
+  expect((await note.boundingBox())!.height).toBe(0);
+  const hintBox = (await comfort
+    .getByText('Stops animation and anything that moves by itself.')
+    .boundingBox())!;
+  const saverBox = (await comfort.locator('p', { hasText: 'Data Saver' }).boundingBox())!;
+  expect(saverBox.y - (hintBox.y + hintBox.height)).toBeGreaterThanOrEqual(11.5);
+  const group = (await comfort.getByRole('group', { name: 'Text Size' }).boundingBox())!;
+  const row = (await lessMovement.locator('xpath=ancestor::label').boundingBox())!;
+  expect(group.width).toBeLessThanOrEqual(640.5);
+  expect(row.width).toBeLessThanOrEqual(640.5);
   await expect(
     comfort.getByText('Stops animation and anything that moves by itself.'),
   ).toBeVisible();
@@ -79,9 +98,9 @@ test('the field helper has four bottom tabs on a phone and the left bar on a wid
   expect(await page.evaluate(() => getComputedStyle(document.documentElement).fontSize)).toBe(
     '20px',
   );
-  await comfort.getByRole('switch', { name: /Less Movement/ }).check();
+  await lessMovement.check();
   await expect(page.locator('html')).toHaveAttribute('data-less-movement', 'on');
-  await expect(comfort.getByRole('switch', { name: /Less Movement/ })).toBeChecked();
+  await expect(lessMovement).toBeChecked();
   await expect(page.getByRole('link', { name: 'About assigned work' })).toBeVisible();
   const axeMe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(axeMe.violations.map((v) => v.id)).toEqual([]);
