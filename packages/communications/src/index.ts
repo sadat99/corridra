@@ -2,6 +2,7 @@ import { createHash, createHmac } from 'node:crypto';
 import { withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
 import { DomainError } from '@corridra/domain';
 import { buyerRequest, communicationCommand } from '@corridra/domain/access';
+import { decodeCursor, keysetPage, pageLimit } from '@corridra/domain/paging';
 export const hash = (value: string) => createHash('sha256').update(value).digest('hex');
 export class CommunicationService {
   constructor(
@@ -67,58 +68,131 @@ export class CommunicationService {
       throw new DomainError('This private link is unavailable or expired', 404);
     return r.rows[0].result;
   }
-  workspace(ctx: RequestContext) {
+  /**
+   * CRUD G12: targets, contacts, messages and opt-outs come in pages of at most 50, newest first, each with
+   * an exact total and a keyset cursor. `targetsAfter`, `contactsAfter`, `messagesAfter` or `optoutsAfter`
+   * continues that one list and returns only it (the others are empty with a null total); at most one may
+   * be given. Attempts belong to the messages of the page. Current policies and templates are not paged
+   * and come with the first read only.
+   */
+  async workspace(
+    ctx: RequestContext,
+    options: {
+      targetsAfter?: string | null;
+      contactsAfter?: string | null;
+      messagesAfter?: string | null;
+      optoutsAfter?: string | null;
+      limit?: number | null;
+    } = {},
+  ) {
+    const limit = pageLimit(options.limit),
+      cursors = {
+        targets: decodeCursor(options.targetsAfter),
+        contacts: decodeCursor(options.contactsAfter),
+        messages: decodeCursor(options.messagesAfter),
+        optouts: decodeCursor(options.optoutsAfter),
+      };
+    const continuing = (['targets', 'contacts', 'messages', 'optouts'] as const).filter(
+      (k) => cursors[k],
+    );
+    if (continuing.length > 1) throw new DomainError('Continue one list at a time.', 400);
+    const wants = (k: keyof typeof cursors) => !continuing.length || continuing[0] === k;
     return withTenant(this.pool, ctx, 'communications.read', async ({ db, role }) => {
-      const policies = (
-        await db.query(
-          'SELECT DISTINCT ON(jurisdiction,channel,contact_purpose) * FROM app.communication_policy WHERE tenant_id=$1 ORDER BY jurisdiction,channel,contact_purpose,version DESC',
-          [ctx.tenantId],
-        )
-      ).rows;
-      const templates = (
-        await db.query(
-          'SELECT DISTINCT ON(name) * FROM app.communication_template WHERE tenant_id=$1 ORDER BY name,version DESC',
-          [ctx.tenantId],
-        )
-      ).rows;
-      const targets = (
-        await db.query(
-          `SELECT t.id,t.mission_id,t.relationship_id,o.name,m.status AS mission_status,i.brief->>'company' AS supplier
-        FROM app.target_account t JOIN app.relationship r ON r.tenant_id=t.tenant_id AND r.id=t.relationship_id JOIN app.organisation o ON o.id=r.organisation_id
-        JOIN app.mission m ON m.tenant_id=t.tenant_id AND m.id=t.mission_id JOIN app.mission_intake i ON i.tenant_id=m.tenant_id AND i.id=m.id
-        WHERE t.tenant_id=$1 AND m.status IN ('TARGETING','OUTREACH','MEETINGS') ORDER BY t.created_at DESC LIMIT 100`,
-          [ctx.tenantId],
-        )
-      ).rows;
-      const contacts = (
-        await db.query(
-          'SELECT id,relationship_id,name,email,valid_until FROM app.private_contact_data WHERE tenant_id=$1 AND valid_until>now() ORDER BY created_at DESC LIMIT 100',
-          [ctx.tenantId],
-        )
-      ).rows;
-      const messages = (
-        await db.query(
-          `SELECT c.*,p.channel,l.id AS link_id,br.status AS decision,br.id AS response_id,br.created_at AS response_at,j.status AS delivery_status,j.attempts,j.last_error,j.workflow_run_id,
-        EXISTS(SELECT FROM app.buyer_link_revocation r WHERE r.tenant_id=l.tenant_id AND r.link_id=l.id) AS revoked
-        FROM app.communication c JOIN app.communication_policy p ON p.tenant_id=c.tenant_id AND p.id=c.policy_id LEFT JOIN app.buyer_link l ON l.tenant_id=c.tenant_id AND l.message_id=c.id
-        LEFT JOIN app.buyer_response br ON br.tenant_id=l.tenant_id AND br.link_id=l.id LEFT JOIN app.communication_dispatch j ON j.tenant_id=c.tenant_id AND j.id=c.id
-        WHERE c.tenant_id=$1 ORDER BY c.created_at DESC LIMIT 50`,
-          [ctx.tenantId],
-        )
-      ).rows;
-      const optouts = (
-        await db.query(
-          'SELECT id,contact_id,reason,created_at FROM app.communication_optout WHERE tenant_id=$1 ORDER BY created_at DESC LIMIT 50',
-          [ctx.tenantId],
-        )
-      ).rows;
-      const attempts = (
-        await db.query(
-          'SELECT * FROM app.communication_attempt WHERE tenant_id=$1 AND message_id=ANY($2::uuid[]) ORDER BY created_at DESC LIMIT 100',
-          [ctx.tenantId, messages.map((m) => m.id)],
-        )
-      ).rows;
-      return { role, policies, templates, targets, contacts, messages, optouts, attempts };
+      const first = !continuing.length;
+      const policies = first
+        ? (
+            await db.query(
+              'SELECT DISTINCT ON(jurisdiction,channel,contact_purpose) * FROM app.communication_policy WHERE tenant_id=$1 ORDER BY jurisdiction,channel,contact_purpose,version DESC',
+              [ctx.tenantId],
+            )
+          ).rows
+        : [];
+      const templates = first
+        ? (
+            await db.query(
+              'SELECT DISTINCT ON(name) * FROM app.communication_template WHERE tenant_id=$1 ORDER BY name,version DESC',
+              [ctx.tenantId],
+            )
+          ).rows
+        : [];
+      const targets = wants('targets')
+        ? await keysetPage(db, {
+            select: `t.id,t.mission_id,t.relationship_id,o.name,m.status AS mission_status,i.brief->>'company' AS supplier`,
+            from: `app.target_account t JOIN app.relationship r ON r.tenant_id=t.tenant_id AND r.id=t.relationship_id JOIN app.organisation o ON o.id=r.organisation_id
+              JOIN app.mission m ON m.tenant_id=t.tenant_id AND m.id=t.mission_id JOIN app.mission_intake i ON i.tenant_id=m.tenant_id AND i.id=m.id`,
+            where: `t.tenant_id=$1 AND m.status IN ('TARGETING','OUTREACH','MEETINGS')`,
+            values: [ctx.tenantId],
+            sortExpression: 't.created_at',
+            direction: 'desc',
+            cursor: cursors.targets,
+            limit,
+          })
+        : null;
+      const contacts = wants('contacts')
+        ? await keysetPage(db, {
+            select: 'c.id,c.relationship_id,c.name,c.email,c.valid_until',
+            from: 'app.private_contact_data c',
+            where: 'c.tenant_id=$1 AND c.valid_until>now()',
+            values: [ctx.tenantId],
+            sortExpression: 'c.created_at',
+            direction: 'desc',
+            cursor: cursors.contacts,
+            limit,
+          })
+        : null;
+      const messages = wants('messages')
+        ? await keysetPage(db, {
+            select: `c.*,p.channel,l.id AS link_id,br.status AS decision,br.id AS response_id,br.created_at AS response_at,j.status AS delivery_status,j.attempts,j.last_error,j.workflow_run_id,
+              EXISTS(SELECT FROM app.buyer_link_revocation r WHERE r.tenant_id=l.tenant_id AND r.link_id=l.id) AS revoked`,
+            from: `app.communication c JOIN app.communication_policy p ON p.tenant_id=c.tenant_id AND p.id=c.policy_id LEFT JOIN app.buyer_link l ON l.tenant_id=c.tenant_id AND l.message_id=c.id
+              LEFT JOIN app.buyer_response br ON br.tenant_id=l.tenant_id AND br.link_id=l.id LEFT JOIN app.communication_dispatch j ON j.tenant_id=c.tenant_id AND j.id=c.id`,
+            where: 'c.tenant_id=$1',
+            values: [ctx.tenantId],
+            sortExpression: 'c.created_at',
+            direction: 'desc',
+            cursor: cursors.messages,
+            limit,
+          })
+        : null;
+      const optouts = wants('optouts')
+        ? await keysetPage(db, {
+            select: 'o.id,o.contact_id,o.reason,o.created_at',
+            from: 'app.communication_optout o',
+            where: 'o.tenant_id=$1',
+            values: [ctx.tenantId],
+            sortExpression: 'o.created_at',
+            direction: 'desc',
+            cursor: cursors.optouts,
+            limit,
+          })
+        : null;
+      const messageRows = messages?.rows ?? [];
+      const attempts = messageRows.length
+        ? (
+            await db.query(
+              'SELECT * FROM app.communication_attempt WHERE tenant_id=$1 AND message_id=ANY($2::uuid[]) ORDER BY created_at DESC,id',
+              [ctx.tenantId, messageRows.map((m) => m.id)],
+            )
+          ).rows
+        : [];
+      return {
+        role,
+        policies,
+        templates,
+        targets: targets?.rows ?? [],
+        targetsTotal: targets?.total ?? null,
+        targetsNext: targets?.next ?? null,
+        contacts: contacts?.rows ?? [],
+        contactsTotal: contacts?.total ?? null,
+        contactsNext: contacts?.next ?? null,
+        messages: messageRows,
+        messagesTotal: messages?.total ?? null,
+        messagesNext: messages?.next ?? null,
+        optouts: optouts?.rows ?? [],
+        optoutsTotal: optouts?.total ?? null,
+        optoutsNext: optouts?.next ?? null,
+        attempts,
+      };
     });
   }
   async command(ctx: RequestContext, input: unknown) {

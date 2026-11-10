@@ -93,10 +93,22 @@ export function DeliveryExperience(props: Props) {
       .catch((e) => {
         if (active) setMessage(e.message);
       });
-    fetch(`/api/workspace/meetings?tenant=${encodeURIComponent(tenant)}`).then(async (r) => {
-      const v = await r.json();
-      if (r.ok && active) setMeetings(v.meetings ?? []);
-    });
+    // Meetings come in pages of 50: read every page so the picker never hides a meeting.
+    void (async () => {
+      const all: { id: string; mission_id: string; title: string; status: string }[] = [];
+      let after = '';
+      for (let page = 0; page < 40; page++) {
+        const r = await fetch(
+          `/api/workspace/meetings?tenant=${encodeURIComponent(tenant)}${after}`,
+        );
+        const v = await r.json();
+        if (!r.ok) return;
+        all.push(...(v.meetings ?? []));
+        if (!v.next) break;
+        after = `&after=${encodeURIComponent(v.next)}`;
+      }
+      if (active) setMeetings(all);
+    })().catch(() => undefined);
     return () => {
       active = false;
     };

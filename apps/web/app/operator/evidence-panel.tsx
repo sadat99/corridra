@@ -1,5 +1,6 @@
 import { SCANNER_LINE } from '@corridra/auth/deferred-controls';
-import type { OperatorRecordRow, OperatorSnapshot } from './workspace-types';
+import type { MoreKind, OperatorRecordRow, OperatorSnapshot } from './workspace-types';
+import { ShowMore } from './show-more';
 
 const mimeLabels: Record<string, string> = {
   'application/pdf': 'PDF',
@@ -33,6 +34,7 @@ export function EvidencePanel({
   flags,
   act,
   request,
+  more,
 }: {
   data: OperatorSnapshot;
   view: string;
@@ -41,6 +43,7 @@ export function EvidencePanel({
   flags: OperatorRecordRow[];
   act: (work: () => Promise<unknown>) => Promise<boolean>;
   request: (action: string, body?: unknown) => Promise<unknown>;
+  more?: (kind: MoreKind) => Promise<void>;
 }) {
   const actorId = (data as OperatorSnapshot & { actorId?: string }).actorId;
   const evidence = data.evidence as EvidenceRow[];
@@ -106,6 +109,16 @@ export function EvidencePanel({
             )}
         </div>
       ))}
+      {more && (
+        <ShowMore
+          shown={evidence.length}
+          total={data.evidenceTotal}
+          next={data.evidenceNext}
+          busy={busy}
+          label="Evidence"
+          onMore={() => void more('evidence')}
+        />
+      )}
       {data.role !== 'viewer' && (
         <form
           className="operator-form"
@@ -134,6 +147,16 @@ export function EvidencePanel({
               ))}
             </select>
           </label>
+          {more && (
+            <ShowMore
+              shown={data.claims.length}
+              total={data.claimsTotal}
+              next={data.claimsNext}
+              busy={busy}
+              label="Claims"
+              onMore={() => void more('claims')}
+            />
+          )}
           <label className="field">
             Evidence file
             <input type="file" name="file" accept="application/pdf,image/png,image/jpeg" required />
