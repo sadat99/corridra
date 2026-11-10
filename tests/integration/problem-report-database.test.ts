@@ -272,6 +272,7 @@ beforeAll(async () => {
     'wes',
     'xia',
     'yan',
+    'zoe',
     ...filers,
   ]);
   for (const person of [
@@ -294,6 +295,7 @@ beforeAll(async () => {
     'wes',
     'xia',
     'yan',
+    'zoe',
     ...filers,
   ])
     sampleWorkspace[person] = await h.provision(person, `Synthetic ${person} workspace`);
@@ -1879,6 +1881,26 @@ describe('words are removed under an erasure request', () => {
     expect((await customerGet('yan', since)).words).toEqual({ removed: true });
   });
 
+  test('a retry of a command that removed nothing is not a replay: it runs again and reaches the reports filed since', async () => {
+    const requestId = await request('zoe');
+    await erasure(requestId, 'received', 'in_progress');
+    const command = randomUUID();
+    expect(await remove(owner(), requestId, command)).toMatchObject({ removed: 0 });
+    const erasures = (await counts()).erasures;
+    const filed = (
+      await customerFile('zoe', body({ detail: 'Zoe words filed after an empty call.' }))
+    ).reference as string;
+    expect((await customerGet('zoe', filed)).words).toMatchObject({
+      detail: 'Zoe words filed after an empty call.',
+    });
+    // no erasure row was written by the empty call, so there is nothing to replay
+    expect(await remove(owner(), requestId, command)).toMatchObject({ removed: 1 });
+    expect((await counts()).erasures).toBe(erasures + 1);
+    expect((await customerGet('zoe', filed)).words).toEqual({ removed: true });
+    // now that it removed something, the same command is a replay with that count
+    expect(await remove(owner(), requestId, command)).toMatchObject({ removed: 1 });
+  });
+
   test('a command already used for another erasure request is refused, and nothing is removed', async () => {
     const used = randomUUID();
     const firstRequest = await request('wes');
@@ -1960,16 +1982,23 @@ describe('words are removed under an erasure request', () => {
     await revoke('vic', sampleWorkspace.vic!, member);
     const requestId = await request('una');
     await erasure(requestId, 'received', 'in_progress');
-    await flip(sampleWorkspace.vic!, false);
-    await realUse(true);
-    await f.owner.query('ALTER TABLE app.membership DISABLE TRIGGER USER');
-    await f.owner.query(
-      "UPDATE app.membership SET allowed_purposes=allowed_purposes||ARRAY['commercial_qualification'] WHERE tenant_id=$1 AND NOT 'commercial_qualification'=ANY(allowed_purposes)",
-      [f.tenantB],
-    );
-    await f.owner.query('ALTER TABLE app.membership ENABLE TRIGGER USER');
-    await flip(f.tenantB, false);
+    // the members of the real staff workspace that lack the real purpose now, so that exactly those are put back
+    const lacking = (
+      await f.owner.query(
+        "SELECT user_id FROM app.membership WHERE tenant_id=$1 AND NOT 'commercial_qualification'=ANY(allowed_purposes)",
+        [f.tenantB],
+      )
+    ).rows.map((row) => row.user_id as string);
     try {
+      await flip(sampleWorkspace.vic!, false);
+      await realUse(true);
+      await f.owner.query('ALTER TABLE app.membership DISABLE TRIGGER USER');
+      await f.owner.query(
+        "UPDATE app.membership SET allowed_purposes=allowed_purposes||ARRAY['commercial_qualification'] WHERE tenant_id=$1 AND user_id=ANY($2)",
+        [f.tenantB, lacking],
+      );
+      await f.owner.query('ALTER TABLE app.membership ENABLE TRIGGER USER');
+      await flip(f.tenantB, false);
       const reference = (
         await customerFile('una', body({ detail: 'Una wrote words for the real side.' }))
       ).reference as string;
@@ -1988,6 +2017,12 @@ describe('words are removed under an erasure request', () => {
       expect(await remove(owner(), requestId)).toMatchObject({ removed: 1 });
       expect((await customerGet('una', reference)).words).toEqual({ removed: true });
     } finally {
+      await f.owner.query('ALTER TABLE app.membership DISABLE TRIGGER USER');
+      await f.owner.query(
+        "UPDATE app.membership SET allowed_purposes=array_remove(allowed_purposes,'commercial_qualification') WHERE tenant_id=$1 AND user_id=ANY($2)",
+        [f.tenantB, lacking],
+      );
+      await f.owner.query('ALTER TABLE app.membership ENABLE TRIGGER USER');
       await flip(f.tenantB, true);
       await flip(sampleWorkspace.vic!, true);
       await realUse(false);

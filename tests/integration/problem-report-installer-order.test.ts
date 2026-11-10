@@ -482,6 +482,82 @@ describe('the second file guard: absent, matching and changed', () => {
   });
 });
 
+// The production upgrade path: a database that already has the first file and its registry row (as the merged
+// installer left it) is brought up by the migrator, which applies only the second file.
+describe('upgrading a database that has only the first file through the migrator', () => {
+  let t: Fixture;
+  const grants = async () =>
+    (
+      await t.owner.query(
+        `SELECT prosecdef,proconfig,proargtypes::text AS args,
+          has_function_privilege('corridra_runtime',oid,'EXECUTE') AS runtime,
+          has_function_privilege('corridra_auth',oid,'EXECUTE') AS auth,
+          has_function_privilege('public',oid,'EXECUTE') AS public
+         FROM pg_proc WHERE oid=to_regprocedure('${removeWords}')`,
+      )
+    ).rows[0];
+  const settled = {
+    prosecdef: true,
+    proconfig: ['search_path=pg_catalog'],
+    args: '2950 2950',
+    runtime: true,
+    auth: false,
+    public: false,
+  };
+
+  beforeAll(async () => {
+    t = await fixture('corridra_upgrade_third');
+    await migrateCustomerRealUse(t.owner);
+    await migrateCustomerAccountLifecycle(t.owner);
+    await t.owner.query(source(file));
+    await t.owner.query(`CREATE SCHEMA ${schema}`);
+    await t.owner.query(
+      `REVOKE ALL ON SCHEMA ${schema} FROM PUBLIC,corridra_runtime,corridra_auth`,
+    );
+    await t.owner.query(
+      `CREATE TABLE ${schema}.applied(name text PRIMARY KEY,sha256 text NOT NULL,applied_at timestamptz NOT NULL DEFAULT now())`,
+    );
+    await t.owner.query(`INSERT INTO ${schema}.applied(name,sha256) VALUES($1,$2)`, [
+      file,
+      sha256(source(file)),
+    ]);
+  });
+  afterAll(async () => {
+    await t?.close();
+  });
+
+  test('applies only the second file, replaces the function, keeps the grants, and a second run changes nothing', async () => {
+    expect(await liveBodyHash(t)).toBe(firstBodyHash);
+    expect(await grants()).toEqual(settled);
+    await migrateCustomerProblemReports(t.owner);
+    expect(
+      (await t.owner.query(`SELECT name,sha256 FROM ${schema}.applied ORDER BY name`)).rows,
+    ).toEqual([
+      { name: file, sha256: sha256(source(file)) },
+      { name: bounds, sha256: sha256(source(bounds)) },
+    ]);
+    const live = await liveBodyHash(t);
+    expect(live).toBeDefined();
+    expect(live).not.toBe(firstBodyHash);
+    const body = (
+      await t.owner.query(`SELECT prosrc FROM pg_proc WHERE oid=to_regprocedure('${removeWords}')`)
+    ).rows[0].prosrc as string;
+    expect(body).toContain('transaction_timestamp()');
+    expect(body).toContain('Command conflicts with original request');
+    expect(await grants()).toEqual(settled);
+    const once = (
+      await t.owner.query(`SELECT name,sha256,applied_at FROM ${schema}.applied ORDER BY name`)
+    ).rows;
+    await migrateCustomerProblemReports(t.owner);
+    expect(
+      (await t.owner.query(`SELECT name,sha256,applied_at FROM ${schema}.applied ORDER BY name`))
+        .rows,
+    ).toEqual(once);
+    expect(await liveBodyHash(t)).toBe(live);
+    expect(await grants()).toEqual(settled);
+  });
+});
+
 describe('the install wiring', () => {
   const script = readFileSync(resolve('scripts/install-customer-modules.ts'), 'utf8');
   const installWorkflow = 'install-customer-modules.yml';
