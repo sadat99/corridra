@@ -8,6 +8,7 @@ import { CustomerShell } from '../../../components/customer-shell';
 import { meetingCard, requestTitleFallback } from '../../../lib/meetings/cards';
 import { groupMeetings, serverNowMs } from '../../../lib/meetings/group';
 import { loadMeetings, meetingReportCap } from '../../../lib/meetings/load';
+import { meetingsPartial, requestsMayBeMissing } from '../../../lib/meetings/notice';
 import { neonAuth } from '../../../lib/neon-auth';
 import { customerTabs } from '../../../lib/ux/customer-navigation';
 import { uxSwitchOn } from '../../../lib/ux-switches';
@@ -53,7 +54,7 @@ export default async function Page() {
   // the page must not say there are no requests.
   const readable = customerWorkspacesEnabled() && customerRequestsEnabled();
   const meetings = await loadMeetings(session.data.user.id, issuer, requests);
-  const partial = list.unreadable.length > 0 || list.partial || meetings.partial;
+  const partial = meetingsPartial(list, meetings);
   const switches = {
     trip: uxSwitchOn('CORRIDRA_UX_TRIP'),
     road: uxSwitchOn('CORRIDRA_UX_ROAD'),
@@ -112,7 +113,7 @@ export default async function Page() {
           {notSavedSentence} {openLibrary}
         </p>
       ) : null}
-      {requests.length === 0 && list.unreadable.length === 0 ? (
+      {requests.length === 0 && !requestsMayBeMissing(list) ? (
         <p role="status">
           You have no requests yet.{' '}
           <Link className="text-link" prefetch={false} href="/plan">

@@ -4,9 +4,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { meetingStatus } from '../../packages/domain/src/access';
 import { createRequire } from 'node:module';
 import { groupMeetings } from '../../apps/web/lib/meetings/group';
-import { meetingCard, meetingHref } from '../../apps/web/lib/meetings/cards';
-import { loadMeetings, meetingReportCap } from '../../apps/web/lib/meetings/load';
-import { followAssignments, initialLensFor, roomLinkFromPages } from '../../apps/web/lib/room';
+import { meetingCard, meetingLink } from '../../apps/web/lib/meetings/cards';
+import { loadMeetings, meetingReportCap, type MeetingRow } from '../../apps/web/lib/meetings/load';
+import { meetingsPartial, requestsMayBeMissing } from '../../apps/web/lib/meetings/notice';
+import {
+  assignmentPageCap,
+  followAssignments,
+  initialLensFor,
+  roomLinkFromPages,
+} from '../../apps/web/lib/room';
 import {
   meetingsFirstShown,
   orderTrip,
@@ -324,6 +330,49 @@ describe('grouping meetings by the server clock', () => {
   });
 });
 
+describe('when the partial notice is needed', () => {
+  const sources = [
+    'account',
+    'workspaces',
+    'drafts',
+    'requests',
+    'programmes',
+    'services',
+  ] as const;
+  it('counts only what makes the requests or meetings list incomplete', () => {
+    const counts: Record<(typeof sources)[number], boolean> = {
+      account: true,
+      workspaces: true,
+      requests: true,
+      drafts: false,
+      programmes: false,
+      services: false,
+    };
+    for (const source of sources) {
+      const list = { unreadable: [source] };
+      expect(requestsMayBeMissing(list), source).toBe(counts[source]);
+      expect(meetingsPartial(list, { partial: false }), source).toBe(counts[source]);
+    }
+    expect(requestsMayBeMissing({ unreadable: ['drafts', 'programmes', 'services'] })).toBe(false);
+  });
+  it('counts a requests list not followed to its end, and a partial meetings read', () => {
+    expect(requestsMayBeMissing({ unreadable: [], requestsIncomplete: true })).toBe(true);
+    expect(meetingsPartial({ unreadable: [], requestsIncomplete: true }, { partial: false })).toBe(
+      true,
+    );
+    expect(meetingsPartial({ unreadable: [] }, { partial: true })).toBe(true);
+  });
+  it('ignores the detail cap: it is not an input, because every request is still listed', () => {
+    // `WorkList.partial` is set by the detail cap and by drafts, programmes and services; the helper never reads it.
+    const list = { unreadable: [], partial: true } as { unreadable: never[] };
+    expect(requestsMayBeMissing(list)).toBe(false);
+    expect(meetingsPartial(list, { partial: false })).toBe(false);
+  });
+  it('is quiet when everything was read', () => {
+    expect(meetingsPartial({ unreadable: [] }, { partial: false })).toBe(false);
+  });
+});
+
 describe('words, caps and links', () => {
   it('has words for every meeting status and no other key', () => {
     expect(Object.keys(statusWords).sort()).toEqual([...meetingStatus.options].sort());
@@ -335,9 +384,10 @@ describe('words, caps and links', () => {
   });
   it('opens the Room on Meetings only with Trip, the Room and the lenses all on', () => {
     const row = { requestId: uuid(1), savedResourceId: saved(1) };
-    expect(meetingHref(row, { trip: true, road: true, lenses: true })).toBe(
-      `/account/rooms/${uuid(1)}?view=meetings`,
-    );
+    expect(meetingLink(row, { trip: true, road: true, lenses: true })).toEqual({
+      href: `/account/rooms/${uuid(1)}?view=meetings`,
+      label: 'Open in the Request',
+    });
   });
   it('opens the saved report in every other case, with no view, including Trip and the Room without the lenses', () => {
     const row = { requestId: uuid(1), savedResourceId: saved(1) };
@@ -347,7 +397,35 @@ describe('words, caps and links', () => {
       { trip: true, road: false, lenses: true },
       { trip: false, road: false, lenses: false },
     ])
-      expect(meetingHref(row, switches)).toBe(`/account/missions/${saved(1)}`);
+      expect(meetingLink(row, switches).href).toBe(`/account/missions/${saved(1)}`);
+  });
+  it('words every link by where it goes, for every combination of Trip, the Room and the lenses', () => {
+    const row: MeetingRow = {
+      requestId: uuid(1),
+      requestTitle: 'Request 1',
+      savedResourceId: saved(1),
+      label: 'Visit',
+      changed: false,
+      status: 'SCHEDULED',
+    };
+    let combinations = 0;
+    for (const trip of [true, false])
+      for (const road of [true, false])
+        for (const lenses of [true, false]) {
+          combinations += 1;
+          const card = meetingCard(row, 0, { trip, road, lenses });
+          const toRoom = trip && road && lenses;
+          expect(card.href, `${trip} ${road} ${lenses}`).toBe(
+            toRoom ? `/account/rooms/${uuid(1)}?view=meetings` : `/account/missions/${saved(1)}`,
+          );
+          expect(card.linkLabel, `${trip} ${road} ${lenses}`).toBe(
+            toRoom ? 'Open in the Request' : 'Open Saved Report',
+          );
+          // A changed schedule opens the same place with the same words.
+          const changed = meetingCard({ ...row, changed: true }, 0, { trip, road, lenses });
+          expect([changed.href, changed.linkLabel]).toEqual([card.href, card.linkLabel]);
+        }
+    expect(combinations).toBe(8);
   });
   it('opens the Room on Meetings only for exactly "meetings", and only with Trip and lenses on', () => {
     const both = { trip: true, lenses: true };
@@ -503,16 +581,64 @@ describe('reading the meetings of the person’s own requests', () => {
     expect(result.rows).toEqual([]);
   });
   it('is partial and calls no request unsaved when the assignment list is cut short', async () => {
-    // Every page says there is another one, so the bounded read ends incomplete.
-    pages = Array.from({ length: 8 }, (_, i) => ({
+    // Every page says there is another one, so the bounded read ends incomplete at the cap.
+    pages = Array.from({ length: assignmentPageCap + 5 }, (_, i) => ({
       assignments: i === 0 ? [assignment(1)] : [],
       nextAfter: String(i + 1),
     }));
     install({ [saved(1)]: [visit('One')] });
     const result = await loadMeetings(SUBJECT, ISSUER, [requestItem(1), requestItem(2)]);
+    expect(list).toHaveBeenCalledTimes(assignmentPageCap);
     expect(result.partial).toBe(true);
     expect(result.notSaved).toBe(0);
     expect(result.rows.map((r) => r.label)).toEqual(['One']);
+  });
+  it('follows as many assignment pages as the Room: the cap is 200 and is the Room default', async () => {
+    expect(assignmentPageCap).toBe(200);
+    const read = vi.fn(async () => ({ assignments: [], nextAfter: 'more' }));
+    await followAssignments(uuid(1), read);
+    expect(read).toHaveBeenCalledTimes(assignmentPageCap);
+  });
+  it('finds a saved report on page six, past 125 assignments, with the walk complete', async () => {
+    // Five full pages of other people's requests (125 assignments), then the report on page six.
+    const full = (page: number) =>
+      Array.from({ length: 25 }, (_, row) => assignment(100 + page * 25 + row));
+    pages = [
+      ...Array.from({ length: 5 }, (_, page) => ({
+        assignments: full(page),
+        nextAfter: String(page + 1),
+      })),
+      { assignments: [assignment(1)] },
+    ];
+    install({ [saved(1)]: [visit('One')] });
+    const result = await loadMeetings(SUBJECT, ISSUER, [requestItem(1)]);
+    expect(list).toHaveBeenCalledTimes(6);
+    expect(list.mock.calls.every((call) => call[0].pageSize === 25)).toBe(true);
+    expect(result.rows.map((r) => r.label)).toEqual(['One']);
+    expect(result).toMatchObject({ partial: false, notSaved: 0 });
+    expect(command).toHaveBeenCalledTimes(1);
+  });
+  it('reads the last page the cap allows, and a report past it is partial, not "not saved"', async () => {
+    const endless = (index: number, rows: unknown[] = []) => ({
+      assignments: rows,
+      nextAfter: String(index + 1),
+    });
+    pages = Array.from({ length: assignmentPageCap + 1 }, (_, i) =>
+      endless(i, i === assignmentPageCap - 1 ? [assignment(1)] : []),
+    );
+    install({ [saved(1)]: [visit('One')], [saved(2)]: [visit('Two')] });
+    // On the 200th page: found, but the walk was cut, so it is partial.
+    const atCap = await loadMeetings(SUBJECT, ISSUER, [requestItem(1)]);
+    expect(atCap.rows.map((r) => r.label)).toEqual(['One']);
+    expect(atCap.partial).toBe(true);
+    // On the 201st page: never read, so the request is neither shown nor called unsaved.
+    pages = Array.from({ length: assignmentPageCap + 1 }, (_, i) =>
+      endless(i, i === assignmentPageCap ? [assignment(2)] : []),
+    );
+    list.mockClear();
+    const past = await loadMeetings(SUBJECT, ISSUER, [requestItem(2)]);
+    expect(list).toHaveBeenCalledTimes(assignmentPageCap);
+    expect(past).toMatchObject({ rows: [], notSaved: 0, partial: true });
   });
   it('is partial when the assignment list cannot be read at all', async () => {
     install({});

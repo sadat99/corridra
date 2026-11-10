@@ -20,8 +20,14 @@ const renderToStaticMarkup = web('react-dom/server').renderToStaticMarkup as (
 
 const state = {
   readable: true,
-  list: { items: [] as WorkItem[], unreadable: [] as string[], partial: false },
+  list: { items: [], unreadable: [], partial: false } as {
+    items: WorkItem[];
+    unreadable: string[];
+    partial: boolean;
+    requestsIncomplete?: true;
+  },
   meetings: null as MeetingsRead | null,
+  off: [] as string[],
 };
 vi.mock('next/link', () => ({
   default: ({ children, href }: { children: unknown; href: string }) =>
@@ -49,7 +55,9 @@ vi.mock('../../apps/web/lib/neon-auth', () => ({
     getSession: async () => ({ data: { user: { id: 'user-1', emailVerified: true } } }),
   }),
 }));
-vi.mock('../../apps/web/lib/ux-switches', () => ({ uxSwitchOn: () => true }));
+vi.mock('../../apps/web/lib/ux-switches', () => ({
+  uxSwitchOn: (name: string) => !state.off.includes(name),
+}));
 vi.mock('../../apps/web/components/customer-shell', () => ({
   CustomerShell: ({ children }: { children: unknown }) => createElement('main', null, children),
 }));
@@ -108,6 +116,7 @@ const beforeEachState = () => {
   state.readable = true;
   state.list = { items: [request(1), request(2)], unreadable: [], partial: false };
   state.meetings = read();
+  state.off = [];
 };
 beforeEach(beforeEachState);
 
@@ -171,6 +180,141 @@ describe('the lines that point at meetings appear only when a meeting is shown',
     expect(html).not.toContain(lineTwo);
     expect(html).not.toContain(sourceLine);
   });
+});
+
+// The partial notice is for what makes the requests or the meetings incomplete, not for the detail cap or a failed
+// drafts, programmes or services list, which Try Again can never clear.
+describe('the partial notice and the no requests line', () => {
+  const notice = 'We could not check all your requests just now.';
+  const noRequests = 'You have no requests yet.';
+  const empty = 'No meetings or visits are ready to show yet.';
+  const quiet: [string, () => void][] = [
+    [
+      'there are more requests than the detail cap, all still listed',
+      () => {
+        state.list = {
+          items: Array.from({ length: 31 }, (_, n) => request(n + 1)),
+          unreadable: [],
+          partial: true,
+        };
+      },
+    ],
+    [
+      'only the drafts could not be read',
+      () => {
+        state.list = { items: [request(1)], unreadable: ['drafts'], partial: false };
+      },
+    ],
+    [
+      'only the programmes could not be read',
+      () => {
+        state.list = { items: [request(1)], unreadable: ['programmes'], partial: false };
+      },
+    ],
+    [
+      'only the services could not be read',
+      () => {
+        state.list = { items: [request(1)], unreadable: ['services'], partial: true };
+      },
+    ],
+  ];
+  for (const [name, arrange] of quiet)
+    it(`shows no partial notice, and the honest empty state, when ${name}`, async () => {
+      arrange();
+      const html = await render();
+      expect(html).not.toContain(notice);
+      expect(html).not.toContain('Try Again');
+      expect(html).toContain(empty);
+    });
+  it('still says there are no requests when only the drafts could not be read', async () => {
+    state.list = { items: [], unreadable: ['drafts'], partial: false };
+    const html = await render();
+    expect(html).toContain(noRequests);
+    expect(html).not.toContain(notice);
+  });
+  it('says there are no requests when nothing is listed and everything was read', async () => {
+    state.list = { items: [], unreadable: [], partial: false };
+    const html = await render();
+    expect(html).toContain(noRequests);
+    expect(html).not.toContain(notice);
+    expect(html).not.toContain('Try Again');
+  });
+  const loud: [string, () => void][] = [
+    [
+      'the requests list could not be read',
+      () => {
+        state.list = { items: [], unreadable: ['requests'], partial: false };
+      },
+    ],
+    [
+      'the account could not be read',
+      () => {
+        state.list = { items: [], unreadable: ['account'], partial: false };
+      },
+    ],
+    [
+      'the workspaces could not be read',
+      () => {
+        state.list = { items: [], unreadable: ['workspaces'], partial: false };
+      },
+    ],
+    [
+      'the requests list was not read to its end',
+      () => {
+        state.list = { items: [], unreadable: [], partial: true, requestsIncomplete: true };
+      },
+    ],
+  ];
+  for (const [name, arrange] of loud)
+    it(`shows the partial notice with Try Again, and never says there are no requests, when ${name}`, async () => {
+      arrange();
+      const html = await render();
+      expect(html).toContain(notice);
+      expect(html).toContain('Try Again');
+      expect(html).not.toContain(noRequests);
+      expect(html).not.toContain(empty);
+    });
+  it('shows the partial notice for a request list not read to its end even when requests are listed', async () => {
+    state.list = { items: [request(1)], unreadable: [], partial: true, requestsIncomplete: true };
+    const html = await render();
+    expect(html).toContain(notice);
+    expect(html).not.toContain(empty);
+  });
+  it('shows the partial notice when the meetings read was partial', async () => {
+    state.meetings = read({ partial: true });
+    const html = await render();
+    expect(html).toContain(notice);
+    expect(html).toContain('Try Again');
+  });
+  it('shows the notice when a failed drafts list comes with a failed requests list', async () => {
+    state.list = { items: [], unreadable: ['drafts', 'requests'], partial: false };
+    const html = await render();
+    expect(html).toContain(notice);
+    expect(html).not.toContain(noRequests);
+  });
+});
+
+// The link says where it goes: the saved report when the Room cannot open on Meetings.
+describe('the link words in the page', () => {
+  const switchNames = ['CORRIDRA_UX_TRIP', 'CORRIDRA_UX_ROAD', 'CORRIDRA_UX_LENSES'];
+  for (let mask = 0; mask < 8; mask += 1) {
+    const off = switchNames.filter((_, bit) => (mask >> bit) & 1);
+    it(`words the link to match its destination with ${off.length === 0 ? 'every switch on' : `${off.join(', ')} off`}`, async () => {
+      state.off = off;
+      state.meetings = read({ rows: [row('Visit one')] });
+      const html = await render();
+      const link = html.match(/<a [^>]*href="([^"]*)"[^>]*>(Open [^<]*)<span class="sr-only">/);
+      expect(link).not.toBeNull();
+      if (off.length === 0) {
+        expect(link?.[1]).toBe(`/account/rooms/${id(1)}?view=meetings`);
+        expect(link?.[2]).toBe('Open in the Request');
+      } else {
+        expect(link?.[1]).toBe(`/account/missions/${id(1001)}`);
+        expect(link?.[2]).toBe('Open Saved Report');
+      }
+      expect(html).toContain(`: Visit one, Request 1, item 1 of 1</span>`);
+    });
+  }
 });
 
 describe('the not saved note', () => {

@@ -396,21 +396,33 @@ test('every link has its own name, and opens the Room on Meetings or the saved r
   page,
 }) => {
   const rows = sixRows();
-  const cases: [Switches, (i: number) => string][] = [
-    [switchesOn, (i) => `/account/rooms/${requestIds[i]}?view=meetings`],
-    // The Trip lens needs the lenses, so without them the report is where the times are.
-    [{ trip: true, road: true, lenses: false }, (i) => `/account/missions/${savedIds[i]}`],
-    [{ trip: false, road: true, lenses: true }, (i) => `/account/missions/${savedIds[i]}`],
-    [{ trip: true, road: false, lenses: true }, (i) => `/account/missions/${savedIds[i]}`],
+  const cases: [Switches, (i: number) => string, string][] = [
+    [switchesOn, (i) => `/account/rooms/${requestIds[i]}?view=meetings`, 'Open in the Request'],
+    // The Trip lens needs the lenses, so without them the report is where the times are, and the link says so.
+    [
+      { trip: true, road: true, lenses: false },
+      (i) => `/account/missions/${savedIds[i]}`,
+      'Open Saved Report',
+    ],
+    [
+      { trip: false, road: true, lenses: true },
+      (i) => `/account/missions/${savedIds[i]}`,
+      'Open Saved Report',
+    ],
+    [
+      { trip: true, road: false, lenses: true },
+      (i) => `/account/missions/${savedIds[i]}`,
+      'Open Saved Report',
+    ],
   ];
-  for (const [switches, expected] of cases) {
+  for (const [switches, expected, label] of cases) {
     await open(page, { rows, switches });
     await showAll(page).click();
     const links = items(page).getByRole('link');
     await expect(links).toHaveCount(6);
     const names = await links.evaluateAll((all) => all.map((a) => a.textContent ?? ''));
     expect(new Set(names).size).toBe(6);
-    expect(names.every((name) => name.startsWith('Open in the Request: '))).toBe(true);
+    expect(names.every((name) => name.startsWith(`${label}: `))).toBe(true);
     const hrefs = await links.evaluateAll((all) => all.map((a) => a.getAttribute('href')));
     // In page order: Soon visit (request 2), Late visit (1), Recent visit (2), Old visit (1), Undated call (1), Moved visit (1).
     expect(hrefs).toEqual([1, 0, 1, 0, 0, 0].map((request) => expected(request)));

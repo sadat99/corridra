@@ -7,9 +7,8 @@
 import { customerDeliveryEnabled } from '@corridra/auth/customer-assigned-missions';
 import { customerSavedMissionsEnabled } from '@corridra/auth/customer-saved-missions';
 import { foundations } from '../foundations';
-import { movePageCap } from '../move-constants';
 import { followPages } from '../move-pages';
-import { roomLinkFromPages } from '../room';
+import { assignmentPageCap, roomLinkFromPages } from '../room';
 import { report } from '../saved-report-check';
 import { isChangedMeeting } from '../trip';
 import type { WorkItem } from '../work-items/types';
@@ -79,7 +78,8 @@ export async function loadMeetings(
     return { ...none, partial: true };
   }
 
-  // Each item is one page of assignments, so the pages stay apart and the report is chosen as the Room chooses it.
+  // Each item is one page of assignments, so the pages stay apart and the report is chosen as the Room chooses it. The
+  // walk is as long as the Room's, so a report the Room finds is found here; no report is read until it ends.
   const assignments = await followPages(async (after) => {
     const page = (await services.customerAssignedMissions.list(
       { pageSize: 25, ...(after ? { after } : {}) },
@@ -87,7 +87,7 @@ export async function loadMeetings(
       issuer,
     )) as { assignments?: Assignment[]; nextAfter?: string | null };
     return { items: [page.assignments ?? []], nextAfter: page.nextAfter };
-  }, movePageCap);
+  }, assignmentPageCap);
   // A list that failed or was cut short cannot prove that a report is missing, so no request is called unsaved.
   const proven = !assignments.failed && assignments.complete;
 

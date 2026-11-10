@@ -53,15 +53,18 @@ export function roomLinkFor(requestId: string, assignments: unknown): RoomLink {
   return { reportAvailable, savedResourceId };
 }
 
+/** Pages of 25 assignments followed to find a request's report: 200 pages is 5,000 assignments. */
+export const assignmentPageCap = 200;
+
 /**
  * Assignments are listed by id, not by request, so a request's report can be on any page. This stops as
  * soon as it is found and otherwise follows every page before it declares the report absent. The bound
- * only guards against a provider that never ends (200 pages of 25 is 5,000 assignments).
+ * only guards against a provider that never ends.
  */
 export async function followAssignments(
   requestId: string,
   page: (after?: string) => Promise<{ assignments?: unknown[]; nextAfter?: string | null }>,
-  maxPages = 200,
+  maxPages = assignmentPageCap,
 ): Promise<RoomLink> {
   const rows: unknown[] = [];
   let after: string | undefined;

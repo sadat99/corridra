@@ -18,6 +18,8 @@ export type MeetingCard = {
   requestTitle: string;
   requestLang: 'zh' | undefined;
   href: string;
+  /** What the link says, chosen with `href` so the words and the destination cannot disagree. */
+  linkLabel: string;
   /** Null for a changed schedule: it carries no time, place or status at all. */
   details: {
     starts: Timed | null;
@@ -36,15 +38,21 @@ export const requestTitleFallback = 'Your request';
 /**
  * The Room shows a meeting only in its Trip lens, and the lens bar exists only with the lenses on. So a meeting
  * opens in its Room, on Meetings, only when Trip, the Room and the lenses are all on. In every other case it opens
- * the saved report, where its times are, as the Room itself does.
+ * the saved report, where its times are, as the Room itself does. The link says where it goes.
  */
-export function meetingHref(
+export function meetingLink(
   row: Pick<MeetingRow, 'requestId' | 'savedResourceId'>,
   switches: MeetingLinkSwitches,
-): string {
+): { href: string; label: string } {
   if (switches.trip && switches.road && switches.lenses)
-    return `/account/rooms/${encodeURIComponent(row.requestId)}?view=meetings`;
-  return `/account/missions/${encodeURIComponent(row.savedResourceId)}`;
+    return {
+      href: `/account/rooms/${encodeURIComponent(row.requestId)}?view=meetings`,
+      label: 'Open in the Request',
+    };
+  return {
+    href: `/account/missions/${encodeURIComponent(row.savedResourceId)}`,
+    label: 'Open Saved Report',
+  };
 }
 
 export function meetingCard(
@@ -53,13 +61,15 @@ export function meetingCard(
   switches: MeetingLinkSwitches,
 ): MeetingCard {
   const requestTitle = row.requestTitle ?? requestTitleFallback;
+  const link = meetingLink(row, switches);
   const base = {
     key: `${row.savedResourceId}:${index}`,
     name: row.label,
     nameLang: hanLang(row.label),
     requestTitle,
     requestLang: hanLang(requestTitle),
-    href: meetingHref(row, switches),
+    href: link.href,
+    linkLabel: link.label,
   };
   if (row.changed)
     return {

@@ -66,7 +66,7 @@ export function MeetingsList({ groups }: { groups: readonly MeetingGroup[] }) {
                       </h3>
                       <StatusBadge tone={card.badge.tone}>{card.badge.text}</StatusBadge>
                       <Link className="text-link" prefetch={false} href={card.href}>
-                        Open in the Request
+                        {card.linkLabel}
                         <span className="sr-only">
                           : {card.name}, {card.requestTitle}, item {start + index + 1} of {total}
                         </span>
