@@ -1,9 +1,9 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { dirname, join, relative } from 'node:path';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { corridorPages } from '../../apps/web/content/corridors';
+import { gateRoutes } from './static-routes';
 
 // AC/1 UX quality gate. Contract: docs/design-system/README.md (section 8) and the AC/1 master
 // contract sections 10 and 12. It measures every static route at the AC/1 widths and fails when any
@@ -14,31 +14,8 @@ const widths = [320, 390, 768, 1024, 1440, 1920];
 const touchWidth = 768;
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..', '..');
-const appDir = join(root, 'apps/web/app');
 const baselinePath = join(here, 'ux-baseline.json');
 const reportDir = join(root, 'work/ux-gate');
-
-function staticRoutes(directory: string): string[] {
-  const routes: string[] = [];
-  for (const entry of readdirSync(directory)) {
-    const path = join(directory, entry);
-    if (statSync(path).isDirectory()) {
-      if (
-        entry.startsWith('[') ||
-        entry.startsWith('(') ||
-        entry.startsWith('_') ||
-        entry === 'api'
-      )
-        continue;
-      if (entry.startsWith('.')) continue;
-      routes.push(...staticRoutes(path));
-    } else if (entry === 'page.tsx') {
-      const route = '/' + relative(appDir, directory).split('\\').join('/');
-      routes.push(route === '/' ? '/' : route.replace(/\/$/, ''));
-    }
-  }
-  return routes.sort();
-}
 
 type Counts = Record<string, number>;
 const baseline: Record<string, Counts> = JSON.parse(readFileSync(baselinePath, 'utf8'));
@@ -200,11 +177,8 @@ async function measure(page: Page, width: number): Promise<Counts> {
   return counts;
 }
 
-// Dynamic segments are skipped above, except the corridor pages that generateStaticParams() renders
-// from content/corridors.ts: those are public static routes too.
-const generatedRoutes = Object.keys(corridorPages).map((slug) => `/corridors/${slug}`);
-
-for (const route of [...staticRoutes(appDir), ...generatedRoutes].sort()) {
+// The route walk lives in ./static-routes so the reading-level gate reads the same pages.
+for (const route of gateRoutes()) {
   test(`AC/1 UX gate ${route}`, async ({ page }) => {
     test.setTimeout(180_000);
     const totals: Counts = {};

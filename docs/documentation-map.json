@@ -1519,6 +1519,11 @@
       "use": "Owner request (5 Nov 2026): one create, read, update and remove standard for every object, four lifecycle classes, rules C-01 to A-03 and tests CRUD-1 to CRUD-6"
     },
     {
+      "path": "docs/revamp/specs/workflow-intelligence.md",
+      "classification": "Current guide/contract",
+      "use": "Owner mandate (10 Nov 2026): journey audit, open-source tool decisions, reading-level measurement W1, plain copy W2"
+    },
+    {
       "path": "docs/revamp/crud/summary.md",
       "classification": "Current guide/contract",
       "use": "CRUD audit of 5 Nov 2026: counts, stop-ship check, gaps G1 to G12 with owners, and the build order"

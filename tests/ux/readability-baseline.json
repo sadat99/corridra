@@ -1,0 +1,334 @@
+{
+  "/": {
+    "grade": 4.4,
+    "hard": 0,
+    "long": 0,
+    "sentences": 29,
+    "words": 212
+  },
+  "/#footer": {
+    "grade": 6,
+    "hard": 0,
+    "long": 0,
+    "sentences": 2,
+    "words": 7
+  },
+  "/about": {
+    "grade": 10.8,
+    "hard": 11,
+    "long": 0,
+    "sentences": 25,
+    "words": 294
+  },
+  "/account": {
+    "redirectsTo": "/signin"
+  },
+  "/account/all-tools": {
+    "unavailable": true
+  },
+  "/account/billing": {
+    "grade": 6.4,
+    "hard": 0,
+    "long": 0,
+    "sentences": 3,
+    "words": 16
+  },
+  "/account/companies": {
+    "grade": 0,
+    "hard": 0,
+    "long": 0,
+    "sentences": 0,
+    "words": 0
+  },
+  "/account/delegations": {
+    "grade": 26.5,
+    "hard": 0,
+    "long": 0,
+    "sentences": 1,
+    "words": 5
+  },
+  "/account/delegations/organise": {
+    "grade": 6.4,
+    "hard": 0,
+    "long": 0,
+    "sentences": 3,
+    "words": 16
+  },
+  "/account/meetings": {
+    "unavailable": true
+  },
+  "/account/move": {
+    "unavailable": true
+  },
+  "/account/notifications": {
+    "unavailable": true
+  },
+  "/account/profile": {
+    "grade": 6.4,
+    "hard": 0,
+    "long": 0,
+    "sentences": 3,
+    "words": 16
+  },
+  "/account/service-requests": {
+    "grade": 6.4,
+    "hard": 0,
+    "long": 0,
+    "sentences": 3,
+    "words": 16
+  },
+  "/account/service-requests/new": {
+    "grade": 0,
+    "hard": 0,
+    "long": 0,
+    "sentences": 0,
+    "words": 0
+  },
+  "/business-trips": {
+    "grade": 7.4,
+    "hard": 1,
+    "long": 0,
+    "sentences": 8,
+    "words": 56
+  },
+  "/buyer": {
+    "grade": 6.9,
+    "hard": 0,
+    "long": 0,
+    "sentences": 2,
+    "words": 11
+  },
+  "/client": {
+    "grade": 3.3,
+    "hard": 0,
+    "long": 0,
+    "sentences": 4,
+    "words": 36
+  },
+  "/coming-soon": {
+    "redirectsTo": "/"
+  },
+  "/contributor": {
+    "grade": 10.9,
+    "hard": 1,
+    "long": 0,
+    "sentences": 2,
+    "words": 15
+  },
+  "/contributor/me": {
+    "grade": 8.5,
+    "hard": 0,
+    "long": 0,
+    "sentences": 2,
+    "words": 17
+  },
+  "/contributor/setup": {
+    "grade": 10,
+    "hard": 3,
+    "long": 0,
+    "sentences": 6,
+    "words": 63
+  },
+  "/corridors": {
+    "grade": 6.4,
+    "hard": 1,
+    "long": 0,
+    "sentences": 8,
+    "words": 97
+  },
+  "/corridors/bangladesh-china": {
+    "grade": 8.3,
+    "hard": 2,
+    "long": 0,
+    "sentences": 4,
+    "words": 41
+  },
+  "/corridors/bangladesh-eu": {
+    "grade": 7.4,
+    "hard": 1,
+    "long": 0,
+    "sentences": 3,
+    "words": 36
+  },
+  "/corridors/bangladesh-spain": {
+    "grade": 7.7,
+    "hard": 1,
+    "long": 0,
+    "sentences": 4,
+    "words": 35
+  },
+  "/decision-card": {
+    "grade": 0,
+    "hard": 0,
+    "long": 0,
+    "sentences": 0,
+    "words": 0
+  },
+  "/enter-market": {
+    "grade": 6.3,
+    "hard": 2,
+    "long": 0,
+    "sentences": 8,
+    "words": 82
+  },
+  "/fairs": {
+    "unavailable": true
+  },
+  "/forgot-password": {
+    "grade": 5.9,
+    "hard": 0,
+    "long": 0,
+    "sentences": 3,
+    "words": 20
+  },
+  "/how-it-works": {
+    "grade": 4.6,
+    "hard": 0,
+    "long": 0,
+    "sentences": 5,
+    "words": 67
+  },
+  "/institutions": {
+    "grade": 9.8,
+    "hard": 4,
+    "long": 0,
+    "sentences": 9,
+    "words": 72
+  },
+  "/machinery": {
+    "grade": 9.7,
+    "hard": 2,
+    "long": 0,
+    "sentences": 8,
+    "words": 62
+  },
+  "/network": {
+    "grade": 7.2,
+    "hard": 1,
+    "long": 0,
+    "sentences": 7,
+    "words": 69
+  },
+  "/operator": {
+    "grade": 10.2,
+    "hard": 1,
+    "long": 0,
+    "sentences": 1,
+    "words": 9
+  },
+  "/operator/forgot-password": {
+    "grade": 9.2,
+    "hard": 0,
+    "long": 0,
+    "sentences": 6,
+    "words": 43
+  },
+  "/operator/owner": {
+    "unavailable": true
+  },
+  "/operator/reset-password": {
+    "grade": 14.2,
+    "hard": 0,
+    "long": 0,
+    "sentences": 2,
+    "words": 13
+  },
+  "/operator/setup": {
+    "grade": 12.4,
+    "hard": 3,
+    "long": 0,
+    "sentences": 4,
+    "words": 39
+  },
+  "/operator/signin": {
+    "grade": 5.4,
+    "hard": 0,
+    "long": 0,
+    "sentences": 2,
+    "words": 12
+  },
+  "/plan": {
+    "grade": 3.5,
+    "hard": 0,
+    "long": 0,
+    "sentences": 7,
+    "words": 36
+  },
+  "/privacy": {
+    "grade": 8.7,
+    "hard": 4,
+    "long": 0,
+    "sentences": 12,
+    "words": 108
+  },
+  "/programme": {
+    "grade": 3.3,
+    "hard": 0,
+    "long": 0,
+    "sentences": 4,
+    "words": 36
+  },
+  "/reset-password": {
+    "grade": 5.9,
+    "hard": 0,
+    "long": 0,
+    "sentences": 3,
+    "words": 20
+  },
+  "/sell": {
+    "grade": 2.8,
+    "hard": 1,
+    "long": 1,
+    "sentences": 12,
+    "words": 96
+  },
+  "/signin": {
+    "grade": 5,
+    "hard": 0,
+    "long": 0,
+    "sentences": 3,
+    "words": 22
+  },
+  "/signup": {
+    "grade": 5.3,
+    "hard": 0,
+    "long": 0,
+    "sentences": 4,
+    "words": 28
+  },
+  "/source": {
+    "grade": 5,
+    "hard": 1,
+    "long": 0,
+    "sentences": 8,
+    "words": 72
+  },
+  "/trade-missions": {
+    "grade": 5.8,
+    "hard": 1,
+    "long": 0,
+    "sentences": 8,
+    "words": 71
+  },
+  "/trust": {
+    "grade": 5.5,
+    "hard": 0,
+    "long": 0,
+    "sentences": 13,
+    "words": 84
+  },
+  "/verify-email": {
+    "grade": 4.3,
+    "hard": 0,
+    "long": 0,
+    "sentences": 2,
+    "words": 18
+  },
+  "/workspace": {
+    "grade": 1.7,
+    "hard": 0,
+    "long": 0,
+    "sentences": 5,
+    "words": 40
+  }
+}
