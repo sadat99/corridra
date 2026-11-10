@@ -280,4 +280,15 @@ describe('the Meetings page', () => {
     expect(page).toContain('customerRequestsEnabled()');
     expect(page).toContain('Your requests list is not available here yet');
   });
+  it('is a real list of meetings, not a Coming soon line, and keeps the partial and no-requests wording', () => {
+    expect(page).not.toMatch(/Coming soon|ux-soon/);
+    expect(page).toContain('loadMeetings(');
+    expect(page).toContain('We could not check all your requests just now.');
+    expect(page).toContain('You have no requests yet.');
+    expect(page).toContain(
+      'Your account could not be checked. Return to your account and try again.',
+    );
+    expect(page).toContain("redirect(`/signin?next=${encodeURIComponent('/account/meetings')}`)");
+    expect(page).toContain("redirect('/verify-email')");
+  });
 });

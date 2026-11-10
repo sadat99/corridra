@@ -813,7 +813,7 @@ test('CX-02 on a phone the language and help menus are inside the avatar menu, s
   expect(box.x + box.width).toBeLessThanOrEqual(391);
 });
 
-test('the Meetings tab opens a page that says what it is, with the combined list marked Coming soon and not a link', async ({
+test('the Meetings tab opens a real page: it says what it is for, has no Coming soon line, and never claims there are no requests when none were read', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -829,10 +829,20 @@ test('the Meetings tab opens a page that says what it is, with the combined list
   // says the list is not available and never claims there are no requests.
   await expect(page.locator('main')).not.toContainText('You have no requests yet');
   await expect(page.locator('main')).toContainText('Your requests list is not available here yet');
-  const soon = page.locator('.ux-soon-line');
-  await expect(soon).toContainText('One list of all your meetings');
-  await expect(soon).toContainText('Coming soon');
-  await expect(soon.getByRole('link')).toHaveCount(0);
+  // The placeholder is gone for good: no line, no tag, no Coming soon words in the page.
+  // (Other menu entries that are still Coming soon keep their tag, in the menus and not in the page.)
+  await expect(page.locator('main .ux-soon-line')).toHaveCount(0);
+  await expect(page.locator('main .ux-soon-tag')).toHaveCount(0);
+  await expect(page.locator('main')).not.toContainText('Coming soon');
+  await expect(page.locator('main')).not.toContainText('One list of all your meetings');
+  await expect(page.locator('main')).toContainText(
+    'This page lists every meeting and visit the Corridra team has set up for your requests.',
+  );
+  // Nothing was read here, so there are no meeting groups, no empty message and no count of meetings.
+  await expect(page.locator('main')).not.toContainText(
+    'No meetings or visits are ready to show yet',
+  );
+  await expect(page.locator('main h2')).toHaveCount(0);
 });
 
 for (const width of [320, 390, 768, 1440]) {
