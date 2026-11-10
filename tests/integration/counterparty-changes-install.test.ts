@@ -199,6 +199,7 @@ describe('installing the module', () => {
             'private_contact_inactive',
             'refuse_inactive_contact',
             'private_contact_message_active',
+            'private_record_redaction_reasons',
           ],
         ],
       )
@@ -221,6 +222,11 @@ describe('installing the module', () => {
       },
       {
         name: 'app.private_contact_message_active(uuid,text)',
+        prosecdef: true,
+        proconfig: ['search_path=pg_catalog'],
+      },
+      {
+        name: 'app.private_record_redaction_reasons(uuid,uuid[])',
         prosecdef: true,
         proconfig: ['search_path=pg_catalog'],
       },

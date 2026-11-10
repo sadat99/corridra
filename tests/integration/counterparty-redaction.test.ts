@@ -6,6 +6,7 @@ import { command } from './access-fixture';
 import { connection, rawContext, sandbox } from './support';
 import {
   addMember,
+  asOwner,
   changesWorld,
   correctContact,
   correctNote,
@@ -306,6 +307,126 @@ describe('what one hide covers (owner answers 3 and 8)', () => {
       expect(theirs).not.toHaveProperty('redaction_reason');
       expect(theirs).not.toHaveProperty('ticket_reference');
     }
+  });
+});
+
+describe('hide reasons and ticket references stay with owners and admins (Guardian H1)', () => {
+  test('an operator, reviewer or viewer cannot select the hide reason or ticket reference; owners and admins read them through the owner and admin function', async () => {
+    const t = await f.target();
+    await f.research.command(f.users.owner.ctx, hideContact(t.contactId));
+    // The operator owns the relationship and the reviewer oversees it; the viewer does not see an OWNER relationship.
+    for (const [ctx, visible] of [
+      [f.ctx, 1],
+      [f.users.reviewer.ctx, 1],
+      [f.users.viewer.ctx, 0],
+    ] as const) {
+      for (const column of ['reason', 'ticket_reference', '*'])
+        await expect(
+          rawContext(
+            f.runtime,
+            ctx,
+            `SELECT ${column} FROM app.private_record_redaction WHERE chain_id=$1`,
+            [t.contactId],
+          ),
+        ).rejects.toMatchObject({ code: '42501' });
+      // The same people still see the row itself (the views need it to mask), and the function gives them nothing.
+      expect(
+        (
+          await rawContext(
+            f.runtime,
+            ctx,
+            'SELECT id FROM app.private_record_redaction WHERE chain_id=$1',
+            [t.contactId],
+          )
+        ).rowCount,
+      ).toBe(visible);
+      expect(
+        (
+          await rawContext(
+            f.runtime,
+            ctx,
+            'SELECT * FROM app.private_record_redaction_reasons($1,$2::uuid[])',
+            [f.tenantA, [t.relationshipId]],
+          )
+        ).rows,
+      ).toEqual([]);
+    }
+    for (const ctx of [f.users.owner.ctx, admin.ctx])
+      expect(
+        (
+          await rawContext(
+            f.runtime,
+            ctx,
+            'SELECT reason,ticket_reference FROM app.private_record_redaction_reasons($1,$2::uuid[])',
+            [f.tenantA, [t.relationshipId]],
+          )
+        ).rows,
+      ).toEqual([{ reason: hideReason, ticket_reference: ticket }]);
+    // An owner of another workspace asking for this workspace gets nothing.
+    expect(
+      (
+        await rawContext(
+          f.runtime,
+          f.users.other.ctx,
+          'SELECT * FROM app.private_record_redaction_reasons($1,$2::uuid[])',
+          [f.tenantA, [t.relationshipId]],
+        )
+      ).rows,
+    ).toEqual([]);
+  });
+});
+
+describe('the refusal trigger answers no one without classification access (Guardian H2)', () => {
+  test('an operator who owns the relationship but may not see its classification is refused without the contact state words, exactly as for a random id', async () => {
+    const restricted = await addMember(f, 'operator');
+    const t = await f.target();
+    const relationship = await f.research.command(
+      f.users.owner.ctx,
+      command('relationship', {
+        organisationId: (
+          await f.owner.query('SELECT organisation_id FROM app.relationship WHERE id=$1', [
+            t.relationshipId,
+          ])
+        ).rows[0].organisation_id,
+        ownerId: restricted.id,
+        visibility: 'OWNER',
+        note: 'Owned by the restricted operator',
+      }),
+    );
+    const contact = await f.research.command(
+      f.users.owner.ctx,
+      command('contact', {
+        relationshipId: relationship.id,
+        sourceId: t.sourceId,
+        name: 'Restricted Buyer',
+        jobTitle: 'Buyer',
+        email: `${randomUUID()}@example.invalid`,
+        validUntil: new Date(Date.now() + 86400000).toISOString(),
+      }),
+    );
+    await f.research.command(f.users.owner.ctx, withdrawContact(contact.id));
+    await asOwner(
+      f,
+      "UPDATE app.membership SET allowed_classifications=ARRAY['PUBLIC'] WHERE user_id=$1",
+      [restricted.id],
+    );
+    const probe = (contactId: string) =>
+      rawContext(
+        f.runtime,
+        restricted.ctx,
+        "INSERT INTO app.target_contact(tenant_id,purpose,created_by,target_id,relationship_id,contact_id) VALUES($1,'synthetic_validation',$2,$3,$4,$5)",
+        [f.tenantA, restricted.id, randomUUID(), relationship.id, contactId],
+      ).then(
+        () => ({ code: 'none', message: 'none' }),
+        (e: { code: string; message: string }) => ({ code: e.code, message: e.message }),
+      );
+    // The new trigger returns early for this caller, so the existing refusal answers first: the reviewed research guard
+    // (it cannot see the contact) says "Current contact source required", the same as for an id that does not exist.
+    const answer = await probe(contact.id);
+    expect(answer).toEqual({ code: 'P0001', message: 'Current contact source required' });
+    expect(answer.message).not.toContain('Choose a current contact');
+    expect(answer.code).not.toBe('none');
+    expect(answer).toEqual(await probe(randomUUID()));
   });
 });
 
@@ -740,15 +861,22 @@ describe('source scan (Guardian C2)', () => {
     'apps/web/lib',
   ];
 
+  // Whole-file scan, so a statement split across lines is still found: every FROM or JOIN on a table, with the line of
+  // the keyword and the statement text from the nearest SELECT before it.
+  const inText = (file: string, text: string, table: RegExp) =>
+    [...text.matchAll(new RegExp(`\\b(FROM|JOIN)\\s+app\\.(${table.source})\\b`, 'g'))].map((m) => {
+      const at = m.index!;
+      const select = text.lastIndexOf('SELECT', at);
+      return {
+        where: `${file}:${text.slice(0, at).split('\n').length}`,
+        clause: text.slice(select < 0 ? at : select, at + m[0].length),
+      };
+    });
+  const statements = (table: RegExp) =>
+    roots.flatMap(files).flatMap((file) => inText(file, readFileSync(file, 'utf8'), table));
+
   test('no runtime reader selects contact or note text from the base tables outside the stated exceptions', () => {
-    const reads: string[] = [];
-    for (const file of roots.flatMap(files))
-      readFileSync(file, 'utf8')
-        .split('\n')
-        .forEach((line, index) => {
-          if (/(FROM|JOIN)\s+app\.(private_contact_data|private_note)\b/.test(line))
-            reads.push(`${file}:${index + 1}`);
-        });
+    const reads = statements(/private_contact_data|private_note/).map((r) => r.where);
     // Stated exceptions: the module-absent branches of detail and shortlist (no hide can exist without the module), the
     // opt-out insert and lookup that use the address only inside sha256, and the module-absent contact list.
     const allowed = [
@@ -787,31 +915,34 @@ describe('source scan (Guardian C2)', () => {
   // Conductor choice on Guardian G3: the read policies of the change and hide tables stay on the record's own boundary
   // (the views' LEFT JOIN needs it, or the mask would fail open), so runtime code is held to one reader of their words.
   test('change reasons, hide reasons and ticket references are read only through the masked views or the owner and admin detail branch', () => {
-    const reads: string[] = [];
-    for (const file of roots.flatMap(files))
+    // No statement on the change or hide tables selects a reason or ticket reference, even split across lines.
+    const reads = statements(
+      /private_record_redaction|private_contact_change|private_note_change/,
+    ).filter((r) => /\breason\b|ticket_reference|change_reason|redaction_reason/.test(r.clause));
+    expect(reads.map((r) => r.where)).toEqual([]);
+    // The one path to the hide reason and ticket is the owner and admin function, called only in that branch.
+    const calls = roots.flatMap(files).flatMap((file) =>
       readFileSync(file, 'utf8')
         .split('\n')
-        .forEach((line, index) => {
-          if (
-            /FROM\s+app\.(private_record_redaction|private_contact_change|private_note_change)\b/.test(
-              line,
-            ) &&
-            /\breason\b|ticket_reference/.test(line)
-          )
-            reads.push(`${file}:${index + 1}`);
-          if (
-            /change_reason|redaction_reason/.test(line) &&
-            /FROM\s+app\.private_(contact|note)_change\b/.test(line)
-          )
-            reads.push(`${file}:${index + 1}`);
-        });
-    expect(reads).toHaveLength(1);
-    expect(reads[0]).toMatch(/^packages\/counterparties\/src\/changes\.ts:/);
+        .flatMap((line, index) =>
+          line.includes('private_record_redaction_reasons(') ? [`${file}:${index + 1}`] : [],
+        ),
+    );
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toMatch(/^packages\/counterparties\/src\/changes\.ts:/);
     const source = readFileSync('packages/counterparties/src/changes.ts', 'utf8').split('\n');
-    const line = Number(reads[0]!.split(':')[1]);
+    const line = Number(calls[0]!.split(':')[1]);
     expect(source.slice(line - 6, line).join('\n')).toContain(
       "['owner', 'admin'].includes(t.role)",
     );
+    // The scan itself catches a read split across lines.
+    const split = inText(
+      'example.ts',
+      'const a = 1;\nawait db.query(`SELECT id,\n  reason,\n  ticket_reference\n FROM\n  app.private_record_redaction WHERE id=$1`);',
+      /private_record_redaction/,
+    );
+    expect(split.map((r) => r.where)).toEqual(['example.ts:5']);
+    expect(split[0]!.clause).toMatch(/\breason\b/);
   });
 
   test('packages/intelligence reads no private contact, note, target contact or message', () => {
