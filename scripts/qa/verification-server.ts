@@ -1,8 +1,10 @@
 // Commercial readiness verification server (program W0.5). A copy of operator-browser-server.ts on its
 // own database (corridra_verification) and port (3300), with the program flags on and the QA seed.
+// Ports: 3300 is the app, 3301 the synthetic provider fixture, 3302 the same app with a fake support WhatsApp
+// number (+6500000000, not a real number) so the Chat on WhatsApp link can be checked. 3300 never has one.
 import { createServer } from 'node:http';
 import { readFile, writeFile } from 'node:fs/promises';
-import { spawn } from 'node:child_process';
+import { spawn, type ChildProcess } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
@@ -99,6 +101,7 @@ for (const key of [
   'EVIDENCE_STORAGE_PROVIDER',
   'EVIDENCE_SCAN_MODE',
   'CORRIDRA_LIVE_ROLLOUT_ENABLED',
+  'CORRIDRA_SUPPORT_WHATSAPP_NUMBER',
   'EVIDENCE_BLOB_REGION',
   'EVIDENCE_BLOB_READS_ENABLED',
   'EVIDENCE_MIGRATED_BLOB_STORE_ID',
@@ -179,35 +182,66 @@ await new Promise<void>((resolve) => providerFixture.listen(3301, '127.0.0.1', r
 const nextCli = createRequire(import.meta.url).resolve('next/dist/bin/next', {
   paths: [resolve('apps/web')],
 });
-const server = spawn(
-  process.execPath,
-  [nextCli, 'start', '--hostname', '127.0.0.1', '--port', '3300'],
-  {
-    env,
-    cwd: resolve('apps/web'),
-    stdio: 'inherit',
-    detached: true,
-  },
-);
+function startNext(port: number, extraEnv: NodeJS.ProcessEnv) {
+  return spawn(
+    process.execPath,
+    [nextCli, 'start', '--hostname', '127.0.0.1', '--port', String(port)],
+    {
+      env: extraEnv,
+      cwd: resolve('apps/web'),
+      stdio: 'inherit',
+      detached: true,
+    },
+  );
+}
+function stopGroup(child: ChildProcess, signal: NodeJS.Signals) {
+  if (!child.pid) return;
+  try {
+    process.kill(-child.pid, signal);
+  } catch {
+    /* Already stopped. */
+  }
+}
+// The second instance goes first and must answer before the main one starts, so the suite never sees 3300 up
+// while 3302 is still starting. Every wait fails fast if the child has exited.
+const whatsappServer = startNext(3302, {
+  ...env,
+  CORRIDRA_SUPPORT_WHATSAPP_NUMBER: '+6500000000',
+  APP_ORIGIN: 'http://127.0.0.1:3302',
+});
+let whatsappExited = false;
+whatsappServer.on('exit', () => {
+  whatsappExited = true;
+});
+const readyBy = Date.now() + 60_000;
+for (;;) {
+  if (whatsappExited)
+    throw new Error('The support WhatsApp server on 3302 stopped before it was ready.');
+  try {
+    if ((await fetch('http://127.0.0.1:3302/', { signal: AbortSignal.timeout(2000) })).status < 500)
+      break;
+  } catch {
+    /* Not listening yet. */
+  }
+  if (Date.now() > readyBy) {
+    stopGroup(whatsappServer, 'SIGTERM');
+    throw new Error('The support WhatsApp server on 3302 was not ready within 60 seconds.');
+  }
+  await new Promise((done) => setTimeout(done, 250));
+}
+const server = startNext(3300, env);
 for (const signal of ['SIGINT', 'SIGTERM'] as const)
   process.on(signal, () => {
     providerFixture.close();
-    if (server.pid) {
-      try {
-        process.kill(-server.pid, signal);
-      } catch {
-        /* Already stopped. */
-      }
-    }
+    stopGroup(server, signal);
+    stopGroup(whatsappServer, signal);
   });
-server.on('exit', (code) => {
-  if (server.pid) {
-    try {
-      process.kill(-server.pid, 'SIGTERM');
-    } catch {
-      /* Own process group already stopped. */
-    }
-  }
+function stopAll(code: number) {
+  stopGroup(server, 'SIGTERM');
+  stopGroup(whatsappServer, 'SIGTERM');
   providerFixture.close();
-  process.exit(code ?? 1);
-});
+  process.exit(code);
+}
+server.on('exit', (code) => stopAll(code ?? 1));
+// 3302 stopping on its own is a failure even with exit code 0: the suite would lose its WhatsApp checks.
+whatsappServer.on('exit', (code) => stopAll(code || 1));

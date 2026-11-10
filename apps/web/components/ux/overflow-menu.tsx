@@ -2,7 +2,8 @@
 // The overflow menu (customer experience spec, shared components): a button that opens a menu. The button
 // has aria-haspopup and aria-expanded; the menu has role menu and its rows are menuitem or menuitemradio.
 // Enter, Space and the arrow keys open it and move through it, Home and End jump, Escape closes it and puts
-// focus back on the button, Tab and a click outside close it, and choosing a link closes it.
+// focus back on the button, Tab and a click outside close it, and choosing a link closes it (a link that opens a
+// new tab also puts focus back on the button).
 import {
   useEffect,
   useId,
@@ -114,7 +115,12 @@ export function OverflowMenu({
         className="ux-menu-panel"
         hidden={!open}
         onClick={(event) => {
-          if ((event.target as HTMLElement).closest('a[href], [data-menu-close]')) setOpen(false);
+          const target = event.target as HTMLElement;
+          if (!target.closest('a[href], [data-menu-close]')) return;
+          setOpen(false);
+          // A link that opens a new tab leaves this page where it is, so focus goes back to the button, not to the body.
+          if (target.closest('a[href]')?.getAttribute('target') === '_blank')
+            button.current?.focus();
         }}
       >
         {open ? children : null}

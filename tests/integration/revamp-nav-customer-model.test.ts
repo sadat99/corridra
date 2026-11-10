@@ -207,6 +207,50 @@ describe('the customer navigation model', () => {
     expect(flat.some((item) => item.kind === 'link' && /wa\.me|whatsapp/i.test(item.href))).toBe(
       false,
     );
+    // Stricter: the exact row, and nothing in any group leaves Corridra without a configured number.
+    expect(help[0]!.items[1]).toEqual({ kind: 'soon', label: 'Chat on WhatsApp' });
+    expect(flat.some((item) => item.kind === 'external')).toBe(false);
+    expect(JSON.stringify(help)).not.toMatch(/wa\.me/i);
+  });
+
+  it('with a support number set, Chat on WhatsApp is a link in the same place and nothing else moves', () => {
+    const href = 'https://wa.me/6500000000';
+    const before = customerHelpGroups();
+    const help = customerHelpGroups(href);
+    expect(help[0]!.items[1]).toEqual({ kind: 'external', label: 'Chat on WhatsApp', href });
+    expect(help.map((group) => group.items.length)).toEqual(
+      before.map((group) => group.items.length),
+    );
+    for (const group of help) expect(group.items.length).toBeLessThanOrEqual(4);
+    expect(help[0]!.items.map((item) => item.label)).toEqual(
+      before[0]!.items.map((item) => item.label),
+    );
+    // Only that row differs from the unset menu.
+    expect(
+      help
+        .flatMap((group) => group.items)
+        .filter(
+          (item, i) => JSON.stringify(item) !== JSON.stringify(before.flatMap((g) => g.items)[i]),
+        ),
+    ).toEqual([{ kind: 'external', label: 'Chat on WhatsApp', href }]);
+    expect(help[0]!.items.find((item) => item.label === 'Report a Problem')).toEqual({
+      kind: 'soon',
+      label: 'Report a Problem',
+    });
+  });
+
+  it('a blank or missing link keeps the Coming soon row (recovery)', () => {
+    for (const none of [undefined, null, '']) {
+      expect(customerHelpGroups(none)).toEqual(customerHelpGroups());
+    }
+  });
+
+  it('the reachable set lists in-site pages only, never the external WhatsApp address', () => {
+    const { reachable, help } = customerNavigation(all);
+    expect(reachable.some((href) => /^https?:/.test(href))).toBe(false);
+    expect(help.flatMap((group) => group.items).some((item) => item.kind === 'external')).toBe(
+      false,
+    );
   });
 
   it('customers say Request, never Mission, and every label is Title Case', () => {

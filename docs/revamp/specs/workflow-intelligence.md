@@ -135,6 +135,25 @@ For the GO sections the mission in the address is only a hint. It must be a well
 
 Tests: `tests/operator/w5-mission-context.spec.ts`, W5-links and W5-research and W5-commercial (listed, malformed, not listed, later choice wins), 9 cases; 7 fail with the source change reverted.
 
+### W9. WhatsApp help link
+
+Status: built, off until the owner sets a number. Nothing is measured: no click, use or conversion figure exists, and none is claimed.
+
+Owner, 10 Nov 2026: "For signed in users, there multiple navigation links as placeholders now in different menus on the header and others, we need to make them 100% functional(as per the latest prodcut vision and ambitions, ux/ui & other requirements), instead of just placeholders witth coming soon." Navigation v1 binding 3 already says a WhatsApp link needs an owner-supplied number in configuration and says Coming soon without one. W9 is that link, and only that link.
+
+1. The setting is `CORRIDRA_SUPPORT_WHATSAPP_NUMBER`, read on the server only by `apps/web/lib/ux/support-whatsapp.ts`. The value has its outer whitespace trimmed, may start with one `+`, and must then be 8 to 15 digits with the first digit not 0. Anything else (blank, spaces inside, dashes, letters, a pasted address, a leading 0) counts as unset. The link is `https://wa.me/<digits>`.
+2. Surfaces: Chat on WhatsApp in the customer Help and accessibility menu (and its copy in the phone Account menu), Help on WhatsApp at the foot of the customer left bar, and Chat on WhatsApp in the team Help and accessibility menu (and its copy in the team phone Account menu). It replaces the Coming soon row in the same place; no row is added and no group grows past four.
+3. Unset or unusable: every surface is exactly what it was, Coming soon text with no link, and no WhatsApp address appears in any page.
+4. The link has no prefilled text. A prefilled message would have to be written for every language and could put a request or a person's detail into a chat the person did not choose to write.
+5. It opens in a new tab with `rel="noopener noreferrer"`. The row's accessible name starts with its visible label and then says it opens WhatsApp outside Corridra, in a new tab. Closing the menu, or closing the drawer, after choosing it puts focus back on the button that opened it.
+6. The public header and the public corner Help sheet are not changed. ui-direction open decision 1 (an outside channel stays gated; the Help sheet has no contact channel) stays open. The signed-in menus carry the link because the person chooses it from inside their own account.
+7. Privacy: the privacy notice gets one more item, "Messages you send us on WhatsApp", shown only while a usable number is set. The wording is a draft and the owner reviews it before the number is set (ADR 0067, 0069). It is English only.
+8. It is a setting (a value), not a switch (navigation-v1 binding 7). The owner page shows "Support WhatsApp number" as Not set, Set, or Set, but not a usable number, and never shows the value.
+9. When a number is set, the link reaches the data of every page (the layout passes it to the signed-in header). It is a deliberately public contact, so this is not a secret. The value is never logged.
+10. No backend messaging, no Meta API, no template, no webhook and no outreach. The person starts the chat from their own WhatsApp.
+11. A new deploy is needed after the owner sets or changes the number. The owner must supply the number and approve the privacy wording; this change never contains a real number.
+12. Tests: `tests/integration/support-whatsapp.test.ts` (accepted and rejected values), `tests/integration/revamp-nav-customer-model.test.ts` and `tests/integration/team-menu-links.test.ts` (same position, unset unchanged), `tests/integration/whatsapp-menu-markup.test.ts` (the link row, the Coming soon row, the rail foot), `tests/integration/owner-page.test.ts` (the owner row), `tests/integration/privacy-notice.test.ts` (the item), and `tests/e2e/verification/revamp-s2/customer-whatsapp.spec.ts` (the menus, the rail and the keyboard on a server started with a fake number on port 3302; unset on port 3300). The team Help menu is checked in the same spec (signed in as the seeded owner on port 3302), and the team phone Account menu copy at the integration level.
+
 ## 5. Measurement
 
 Measured for each changed journey: steps and fields before and after, repeated inputs removed, reading-level numbers from W1, UX gate counts, and the page lengths from the layout budget tests. Conversion, satisfaction, revenue and speed are not claimed: no measurement for them exists.

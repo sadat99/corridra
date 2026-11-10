@@ -1,7 +1,8 @@
 // The field helper's phone navigation (Navigation v1, FieldHelper board): four bottom tabs, Today, Tasks, Messages and
 // Me, shown on a phone or tablet for a helper who opened the task page with a workspace link. Today is the same task
 // list narrowed to what is due today (no new read); Tasks is the whole list; Messages says Coming soon until a real
-// way to message exists (no WhatsApp number is configured, so it is never a link); Me holds language, reading aloud,
+// way to message exists (it stays unlinked: the signed-in Help menus carry the WhatsApp link when the owner sets a
+// number, and this tab does not); Me holds language, reading aloud,
 // the private-link note and Sign Out. Navigation only: the page and the server still decide what a helper may see.
 // Owner: S4.
 const workspaceId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

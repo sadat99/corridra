@@ -9,6 +9,7 @@ import { LanguageProvider } from '../components/language-provider';
 import { SkipLink } from '../components/skip-link';
 import { CanonicalLink } from '../components/ux/canonical-link';
 import { canonicalSiteOrigin } from '../lib/canonical-origin';
+import { supportWhatsappHref } from '../lib/ux/support-whatsapp';
 import { offeredLanguages } from '../lib/i18n/locales';
 import { languagesWithPages } from '../lib/i18n/pages';
 import { uxSwitchOn } from '../lib/ux-switches';
@@ -98,6 +99,7 @@ export const viewport: Viewport = { themeColor: '#142438' };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const offered = offeredLanguages();
+  const whatsappHref = supportWhatsappHref();
   return (
     // The boot script may set lang and dir before React loads; the provider keeps them after.
     <html lang="en" className={fontVariables} suppressHydrationWarning>
@@ -123,6 +125,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                     : 'sample'
                   : undefined
               }
+              {...(whatsappHref ? { whatsappHref } : {})}
             />
             {children}
             <SiteFooter />

@@ -5,6 +5,7 @@ import {
   realUseEnabled,
 } from '@corridra/auth/customer-production';
 import { languagesWithForm, languagesWithPages } from './i18n/pages';
+import { supportWhatsappHref } from './ux/support-whatsapp';
 
 /**
  * Plain-language registry of every CORRIDRA_* setting the application reads.
@@ -594,6 +595,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'flag',
   },
   {
+    name: 'CORRIDRA_SUPPORT_WHATSAPP_NUMBER',
+    label: 'Support WhatsApp number',
+    line: 'The number behind Chat on WhatsApp in the Help menus. Digits with an optional leading +, 8 to 15 digits, no spaces. Its value is never shown. It stays off, and the menus say Coming soon, until you set a number and approve the privacy line that appears with it. Needs a new deploy.',
+    group: 'Accounts and requests',
+    kind: 'setting',
+  },
+  {
     name: 'CORRIDRA_TEAM_INVITES',
     label: 'Team invitations in the app',
     line: 'Owners and admins invite team members by email with a role and a 7-day expiry, and can resend or cancel.',
@@ -640,6 +648,13 @@ function resolve(
   modules: Map<string, ActivationState>,
 ) {
   if (entry.kind === 'planned') return { text: 'Planned, not built yet', tone: 'unknown' as const };
+  if (entry.kind === 'setting' && entry.name === 'CORRIDRA_SUPPORT_WHATSAPP_NUMBER') {
+    // A value that is not a usable number leaves the menus on Coming soon, so the row says so instead of "Set".
+    if (!env[entry.name]?.trim()) return { text: 'Not set', tone: 'neutral' as const };
+    return supportWhatsappHref(env)
+      ? { text: 'Set', tone: 'info' as const }
+      : { text: 'Set, but not a usable number', tone: 'caution' as const };
+  }
   if (entry.kind === 'setting')
     return env[entry.name]
       ? { text: 'Set', tone: 'info' as const }

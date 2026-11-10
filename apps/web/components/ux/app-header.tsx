@@ -80,6 +80,7 @@ export function AppHeader({
   live,
   notifications,
   brandMark,
+  whatsappHref,
 }: {
   kind: SignedInShell;
   /** The wordmark drawing, passed in so the brand is drawn in one place (site-header.tsx). */
@@ -88,6 +89,8 @@ export function AppHeader({
   live: boolean;
   /** CORRIDRA_NOTIFICATIONS_V2: the inbox is shown only when it is on. */
   notifications: boolean;
+  /** The support WhatsApp link, set only when the owner has given a usable number; the signed-in Help menus use it. */
+  whatsappHref?: string;
 }) {
   const t = useT();
   const { locale } = useLanguage();
@@ -136,7 +139,7 @@ export function AppHeader({
         </span>
       ) : null}
       {customer ? (
-        <CustomerBar notifications={notifications} />
+        <CustomerBar notifications={notifications} whatsappHref={whatsappHref} />
       ) : kind === 'team' ? (
         <div className="ux-app-tools ux-team-tools">
           <PaletteTrigger />
@@ -150,8 +153,8 @@ export function AppHeader({
             />
           ) : null}
           <LanguageMenu />
-          <HelpMenu groups={teamHelpGroups()} />
-          <TeamAccountMenu />
+          <HelpMenu groups={teamHelpGroups(whatsappHref)} />
+          <TeamAccountMenu whatsappHref={whatsappHref} />
         </div>
       ) : (
         <div className="ux-app-tools">

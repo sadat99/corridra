@@ -6,6 +6,7 @@ import { customerSpecificationConfirmationEnabled } from '@corridra/auth/custome
 import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-requests';
 import { PublicShell } from '../../components/public-shell';
 import { languagesWithForm } from '../../lib/i18n/pages';
+import { supportWhatsappHref } from '../../lib/ux/support-whatsapp';
 import { WholeNoticeToggle } from './whole-notice-toggle';
 import '../../components/page-compact.css';
 import './privacy.css';
@@ -41,6 +42,8 @@ export default function Page() {
   const missionEmail = real && process.env.CORRIDRA_MISSION_EMAIL_ENABLED === 'true';
   // Email about what needs a person (Pulse) is described only while it can actually be sent.
   const pulseEmail = real && process.env.CORRIDRA_PULSE_ENABLED === 'true';
+  // The WhatsApp message line appears only while the Chat on WhatsApp link exists (the owner has set a number).
+  const whatsapp = supportWhatsappHref() !== null;
   // Billing records are described only while invoices can actually be issued; the practice payment flow only while it exists.
   const invoicing = real && customerRealInvoicingEnabled();
   const practicePayments = invoicing && customerSimulatedPaymentsEnabled();
@@ -258,6 +261,15 @@ export default function Page() {
                   keep a record. Basis: our legitimate interest in answering you, or the law where
                   it requires a record.
                 </li>
+                {whatsapp && (
+                  <li>
+                    <strong>Messages you send us on WhatsApp</strong> (only if you choose Chat on
+                    WhatsApp, which opens WhatsApp outside Corridra). We receive what you send, with
+                    the phone number and name WhatsApp shows us. WhatsApp (Meta) handles your
+                    message under its own terms. To reply and keep a record. Basis: our legitimate
+                    interest in answering you, or the law where it requires a record.
+                  </li>
+                )}
                 {pulseEmail && (
                   <li>
                     <strong>Email about your requests</strong> (your email choices with the time you
