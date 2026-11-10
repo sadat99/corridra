@@ -7,6 +7,7 @@ import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-
 import { CustomerShell } from '../../../../components/customer-shell';
 import { WorkspaceShell } from '../../../../components/workspace-shell';
 import { customerPageSession } from '../../../../lib/customer-page-session';
+import { initialLensFor } from '../../../../lib/room';
 import { loadRoomLink } from '../../../../lib/room-loader';
 import { uxSwitchOn } from '../../../../lib/ux-switches';
 import { RoomView } from './room-view';
@@ -22,7 +23,13 @@ export const metadata = {
  * The Room: one request in one place. Behind `CORRIDRA_UX_ROAD`: with the switch off this address does
  * not exist, and the saved request page and the saved mission page are exactly as they were.
  */
-export default async function Page({ params }: { params: Promise<{ requestId: string }> }) {
+export default async function Page({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ requestId: string }>;
+  searchParams: Promise<{ view?: string | string[] }>;
+}) {
   if (!uxSwitchOn('CORRIDRA_UX_ROAD')) notFound();
   const parsed = z.uuid().safeParse((await params).requestId);
   if (!parsed.success) notFound();
@@ -48,6 +55,11 @@ export default async function Page({ params }: { params: Promise<{ requestId: st
       </WorkspaceShell>
     );
   const link = await loadRoomLink(parsed.data, session.subject, session.issuer);
+  // Meetings opens the Room on its Trip lens. It is a display choice only: the same reads, the same guards.
+  const initialLens = initialLensFor((await searchParams).view, {
+    trip: uxSwitchOn('CORRIDRA_UX_TRIP'),
+    lenses: uxSwitchOn('CORRIDRA_UX_LENSES'),
+  });
   return (
     <CustomerShell
       tab="work"
@@ -64,6 +76,7 @@ export default async function Page({ params }: { params: Promise<{ requestId: st
         specificationConfirmationsEnabled={await specificationConfirmationForPage()}
         lenses={uxSwitchOn('CORRIDRA_UX_LENSES')}
         trip={uxSwitchOn('CORRIDRA_UX_TRIP')}
+        initialLens={initialLens}
       />
     </CustomerShell>
   );
