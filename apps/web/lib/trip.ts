@@ -55,6 +55,9 @@ export function hanLang(text: string): 'zh' | undefined {
 /** How many meetings show before "Show all": the scroll budget of a report page (ui-direction.md). */
 export const tripFirstShown = 5;
 
+/** How many meetings show on the Meetings page before "Show All": it opens a longer list than one Room. */
+export const meetingsFirstShown = 3;
+
 /**
  * A changed schedule, or a status that says a new time is needed, is shown without its old time, place
  * or status. The server already withholds those details; this is the second guard, on the same rule.

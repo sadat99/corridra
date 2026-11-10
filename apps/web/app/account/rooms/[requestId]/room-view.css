@@ -121,6 +121,7 @@
   align-items: center;
   gap: var(--space-1) var(--space-3);
 }
+.room .room-trip-list .room-trip-head h3,
 .room .room-trip-list .room-trip-head h4 {
   margin: 0;
   overflow-wrap: anywhere;

@@ -78,3 +78,15 @@ export async function followAssignments(
 export function roadRecords(link: RoomLink) {
   return { compare: link.reportAvailable, decide: false };
 }
+
+/**
+ * The lens a Room link may open on, from the `view` in its address. Only exactly "meetings" counts, and only where
+ * the Trip lens exists (the Trip and lenses switches both on); an array, an unknown word or a switch off opens the
+ * Overview as always. It only chooses what is shown first and reads nothing.
+ */
+export function initialLensFor(
+  view: string | string[] | undefined,
+  on: { trip: boolean; lenses: boolean },
+): 'trip' | undefined {
+  return on.trip && on.lenses && view === 'meetings' ? 'trip' : undefined;
+}

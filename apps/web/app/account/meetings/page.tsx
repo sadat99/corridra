@@ -5,9 +5,15 @@ import { customerWorkspacesEnabled } from '@corridra/auth/customer-workspaces';
 import { readNeonAuthConfig } from '@corridra/config';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { CustomerShell } from '../../../components/customer-shell';
+import { meetingCard, requestTitleFallback } from '../../../lib/meetings/cards';
+import { groupMeetings, serverNowMs } from '../../../lib/meetings/group';
+import { loadMeetings, meetingReportCap } from '../../../lib/meetings/load';
 import { neonAuth } from '../../../lib/neon-auth';
+import { customerTabs } from '../../../lib/ux/customer-navigation';
 import { uxSwitchOn } from '../../../lib/ux-switches';
 import { loadWorkItems } from '../../../lib/work-items/load';
+import { MeetingsList, RequestsSection, type MeetingGroup } from './meetings-list';
+import '../rooms/[requestId]/room-view.css';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const metadata = {
@@ -15,11 +21,11 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-// Navigation v1, the Meetings tab. The meetings and visits for a request are shown read only inside that request
-// (its Room), from the report the person holds. This page lists the person's requests and opens each one where its
-// meetings and visits are. One list of every meeting across requests is not built yet, and the page says so in
-// plain text, not a control. It reads the same list of requests the Requests page reads, with the same session
-// proof, so it shows nothing the person could not already open.
+// Navigation v1, the Meetings tab. One list of every meeting and visit in the reports the person has saved, grouped
+// by when they start, each opening in its Request. It is read only: the same list of requests the Requests page
+// reads, the same assignments and saved reports the Room reads (up to meetingReportCap of them), with the same
+// session proof, so it shows nothing the person could not already open. A changed schedule is shown without its old
+// details, and nothing is claimed as empty that was not read to the end.
 export default async function Page() {
   // The Meetings tab exists only with the shells switch, so the page does too: without it the address answers 404.
   if (!uxSwitchOn('CORRIDRA_UX_SHELLS_V2')) notFound();
@@ -44,41 +50,104 @@ export default async function Page() {
   // The list is read only where the workspaces and requests modules are on. Where they are not, nothing was read, so
   // the page must not say there are no requests.
   const readable = customerWorkspacesEnabled() && customerRequestsEnabled();
+  const meetings = await loadMeetings(session.data.user.id, issuer, requests);
+  const partial = list.unreadable.length > 0 || list.partial || meetings.partial;
+  const switches = {
+    trip: uxSwitchOn('CORRIDRA_UX_TRIP'),
+    road: uxSwitchOn('CORRIDRA_UX_ROAD'),
+    lenses: uxSwitchOn('CORRIDRA_UX_LENSES'),
+  };
+  const grouped = groupMeetings(meetings.rows, serverNowMs());
+  const groups: MeetingGroup[] = (['upcoming', 'past', 'undated', 'changed'] as const).map(
+    (key) => ({
+      key,
+      cards: grouped[key].map((row, index) => meetingCard(row, index, switches)),
+    }),
+  );
+  const shown = meetings.rows.length;
+  const libraryHref = customerTabs({ companies: false, move: false }).find(
+    (tab) => tab.key === 'reports',
+  )?.href;
   return (
     <CustomerShell tab="meetings" eyebrow="YOUR ACCOUNT" title="Meetings">
-      <p>Open a request to see its meetings and visits.</p>
-      <p className="ux-soon-line">
-        <span>One list of all your meetings</span> <span className="ux-soon-tag">Coming soon</span>
+      <p>
+        This page lists every meeting and visit the Corridra team has set up for your requests.
+        {readable ? ' Each one is a step between your request and your decision.' : null}
       </p>
-      {list.unreadable.length > 0 ? (
-        <p role="status">
-          We could not check all your requests just now.{' '}
-          <Link className="text-link" prefetch={false} href="/account/meetings">
-            Try Again
-          </Link>
-        </p>
+      {readable ? (
+        <>
+          <p>Open a meeting in its Request to see what to do next.</p>
+          <details className="ux-journey-disclosure">
+            <summary>What Happens Next</summary>
+            <p>
+              Dates and places appear after the Corridra team reviews them. If a time changes, you
+              see a notice. The old time stays hidden until a new one is reviewed. Nothing is booked
+              or changed from this page.
+            </p>
+          </details>
+        </>
       ) : null}
-      {!readable ? <p role="status">Your requests list is not available here yet.</p> : null}
-      {readable && requests.length === 0 && list.unreadable.length === 0 ? (
-        <p role="status">
-          You have no requests yet.{' '}
-          <Link className="text-link" prefetch={false} href="/plan">
-            Start a Request
-          </Link>
-        </p>
-      ) : null}
-      {requests.length > 0 ? (
-        <ul className="ux-meeting-list">
-          {requests.map((request) => (
-            <li key={request.key}>
-              <Link prefetch={false} className="text-link" href={request.href}>
-                {request.title ?? 'Your request'}
-                <span className="sr-only">: meetings and visits</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      <div className="room">
+        {partial ? (
+          <p role="status">
+            We could not check all your requests just now. Some meetings may be missing.{' '}
+            <Link className="text-link" prefetch={false} href="/account/meetings">
+              Try Again
+            </Link>
+          </p>
+        ) : null}
+        {meetings.capped ? (
+          <p role="status">
+            We show meetings from the first {meetingReportCap} reports only. Some meetings may be
+            missing. Open a request below to see all of its meetings.
+          </p>
+        ) : null}
+        {meetings.notSaved > 0 ? (
+          <p>
+            {meetings.notSaved === 1
+              ? '1 of your requests has a report that is not saved yet. Save it from your Library to see its meetings here.'
+              : `${meetings.notSaved} of your requests have a report that is not saved yet. Save them from your Library to see their meetings here.`}{' '}
+            <Link className="text-link" prefetch={false} href={libraryHref ?? '/account'}>
+              Open Library
+            </Link>
+          </p>
+        ) : null}
+        {!readable ? <p role="status">Your requests list is not available here yet.</p> : null}
+        {readable && requests.length > 0 && meetings.reportsOff ? (
+          <p role="status">
+            Meetings and visits are not available here yet. Your requests are listed below.
+          </p>
+        ) : null}
+        {readable && requests.length === 0 && list.unreadable.length === 0 ? (
+          <p role="status">
+            You have no requests yet.{' '}
+            <Link className="text-link" prefetch={false} href="/plan">
+              Start a Request
+            </Link>
+          </p>
+        ) : null}
+        {readable &&
+        requests.length > 0 &&
+        !meetings.reportsOff &&
+        !partial &&
+        !meetings.capped &&
+        shown === 0 ? (
+          <p className="ux-empty">
+            No meetings or visits are ready to show yet. They appear here after the Corridra team
+            reviews them. You can open any request below.
+          </p>
+        ) : null}
+        {shown > 0 ? <MeetingsList groups={groups} /> : null}
+        {requests.length > 0 ? (
+          <RequestsSection
+            requests={requests.map((request) => ({
+              key: request.key,
+              title: request.title ?? requestTitleFallback,
+              href: request.href,
+            }))}
+          />
+        ) : null}
+      </div>
     </CustomerShell>
   );
 }
