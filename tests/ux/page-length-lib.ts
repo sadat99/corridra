@@ -11,7 +11,8 @@ import type { Page } from '@playwright/test';
 // Public pages (owner, 6 November 2026, with the Ledger footer): up to 3.0 phone and 2.0 desktop screens, footer
 // included. The home keeps its own rule (at most 3.5 phone and 2.5 desktop screens). The sign-in pages
 // are not public pages here: they keep the limits above, as do the signed-in pages. /plan has its own limits
-// (`planLimits` below, S5 conductor proposal of 9 November 2026 after measuring; owner confirmation pending).
+// (`planLimits` below, S5 conductor proposal of 9 November 2026 after measuring; owner confirmed, 9 November 2026,
+// relayed by the conductor: "proceed with /plan proposal").
 // The routes come from docs/revamp/COVERAGE.json, page routes only (the file is a page.tsx; the
 // inventory also lists route.ts endpoints). This guard only REPORTS: it never fails on a value. The
 // last track PR switches it to failing over the hard limit. Each track reuses this module with its own
@@ -47,7 +48,8 @@ export const homeLimits: Record<Viewport['name'], Limits> = {
 };
 /**
  * The request page. Target: the owner's 9 November 2026 targets (2.4 phone, 1.8 desktop). Hard: the limits pinned by
- * tests/browser/layout-budget-plan.spec.ts after measuring (2.53 and 1.80); owner confirmation pending.
+ * tests/browser/layout-budget-plan.spec.ts after measuring (2.53 and 1.80); owner confirmed, 9 November 2026
+ * (relayed by the conductor: "proceed with /plan proposal").
  */
 const planLimits: Record<Viewport['name'], Limits> = {
   phone: { target: 2.4, hard: 2.6 },
