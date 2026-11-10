@@ -3,6 +3,7 @@ import {
   customerOrganisationLinkCommandInput,
   customerOrganisationLinksEnabled,
 } from '@corridra/auth/customer-organisation-links';
+import { z } from 'zod';
 import { foundations } from '../../../lib/foundations';
 import { boundedBody, deliveryError, deliveryHeaders } from '../../../lib/delivery-http';
 export const runtime = 'nodejs';
@@ -33,24 +34,29 @@ function client(request: Request) {
     ? (request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown')
     : 'local';
 }
-// scope=view (default), overview (every reachable workspace) or search (public catalogue lookup).
+// The company search writes an attempt row, so it is a POST with scope "search" in the body. This schema is
+// private to the route; the service keeps its own strict {workspaceId, q} schema, so scope is removed first.
+const searchBody = z
+  .object({
+    scope: z.literal('search'),
+    workspaceId: z.uuid(),
+    q: z.string().trim().min(3).max(80),
+  })
+  .strict();
+// scope=view (default) or overview (every reachable workspace). Search is a POST.
 export async function GET(request: Request) {
   try {
     const s = await services(),
       { scope, ...query } = Object.fromEntries(new URL(request.url).searchParams);
-    if (scope !== undefined && !['view', 'overview', 'search'].includes(scope))
+    if (scope !== undefined && !['view', 'overview'].includes(scope))
       throw new DomainError('Unknown scope', 400);
     if (scope === 'overview')
       return Response.json(await s.customerOrganisationLinks.overview(...context(request)), {
         headers: deliveryHeaders,
       });
-    if (scope === 'search') await s.missions.budget(client(request));
-    return Response.json(
-      scope === 'search'
-        ? await s.customerOrganisationLinks.search(query, ...context(request))
-        : await s.customerOrganisationLinks.view(query, ...context(request)),
-      { headers: deliveryHeaders },
-    );
+    return Response.json(await s.customerOrganisationLinks.view(query, ...context(request)), {
+      headers: deliveryHeaders,
+    });
   } catch (error) {
     return failure(error);
   }
@@ -64,6 +70,14 @@ export async function POST(request: Request) {
       throw new DomainError('JSON required', 415);
     const input: unknown = JSON.parse((await boundedBody(request, 8192)).toString('utf8'));
     await s.missions.budget(client(request));
+    // Decided on the parsed body without throwing: JSON null or a non-object goes to the command parse (a 400).
+    if (typeof input === 'object' && input !== null && 'scope' in input) {
+      const { workspaceId, q } = searchBody.parse(input);
+      return Response.json(
+        await s.customerOrganisationLinks.search({ workspaceId, q }, ...context(request)),
+        { headers: deliveryHeaders },
+      );
+    }
     return Response.json(
       await s.customerOrganisationLinks.command(
         customerOrganisationLinkCommandInput.parse(input),

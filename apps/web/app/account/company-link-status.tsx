@@ -1,8 +1,12 @@
 'use client';
 import { useEffect, useState } from 'react';
+import {
+  parseLinkOverview,
+  type LinkOverview,
+  type LinkStatus,
+} from '../../lib/organisation-link-replies';
 
-export type LinkStatus = 'none' | 'pending' | 'needs_evidence' | 'approved' | 'rejected';
-export type LinkOverview = Record<string, { status: LinkStatus; organisationName: string | null }>;
+export type { LinkOverview, LinkStatus };
 export function linkStatusText(status: LinkStatus, organisationName: string | null) {
   switch (status) {
     case 'pending':
@@ -17,7 +21,6 @@ export function linkStatusText(status: LinkStatus, organisationName: string | nu
       return 'No company link yet';
   }
 }
-const statuses = ['none', 'pending', 'needs_evidence', 'approved', 'rejected'];
 // Read-only status for the workspace list. A failure simply shows nothing: the list never depends on it.
 export function useCompanyLinkOverview(
   enabled: boolean,
@@ -38,29 +41,8 @@ export function useCompanyLinkOverview(
           headers: { 'x-corridra-customer-subject': subject, 'x-corridra-customer-issuer': issuer },
         });
         if (!r.ok) throw Error('overview');
-        const body = (await r.json()) as {
-          workspaces?: {
-            workspaceId: string;
-            status: LinkStatus;
-            organisationName: string | null;
-          }[];
-        };
-        if (
-          !Array.isArray(body.workspaces) ||
-          !body.workspaces.every(
-            (w) => typeof w.workspaceId === 'string' && statuses.includes(w.status),
-          )
-        )
-          throw Error('overview');
-        if (!controller.signal.aborted)
-          setOverview(
-            Object.fromEntries(
-              body.workspaces.map((w) => [
-                w.workspaceId,
-                { status: w.status, organisationName: w.organisationName ?? null },
-              ]),
-            ),
-          );
+        const parsed = parseLinkOverview(await r.json());
+        if (!controller.signal.aborted) setOverview(parsed);
       } catch {
         if (!controller.signal.aborted) setOverview(null);
       }

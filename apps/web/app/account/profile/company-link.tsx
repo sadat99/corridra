@@ -1,8 +1,16 @@
 'use client';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { linkStatusText, type LinkStatus } from '../company-link-status';
-import { onDeviceClock, privateViewMaxMs } from '../../../lib/server-clock';
+import { linkStatusText } from '../company-link-status';
+import {
+  hiddenText,
+  isHidden,
+  parseLinkSearch,
+  parseLinkView,
+  type LinkFound,
+  type LinkView,
+} from '../../../lib/organisation-link-replies';
+import { onDeviceClock } from '../../../lib/server-clock';
 import { ReplyError, loadReason, withReason } from '../../../lib/load-reason';
 
 const evidenceKinds = [
@@ -12,69 +20,8 @@ const evidenceKinds = [
   ['AUTHORISATION_STATEMENT', 'Authorisation statement'],
 ] as const;
 const evidenceLimit = 8;
-type Organisation = { name: string; country: string };
-type Claim = {
-  state: 'pending' | 'needs_evidence' | 'rejected';
-  awaitingCreation: boolean;
-  kind: 'EXISTING' | 'PROPOSED_NEW';
-  filedAt: string;
-  profileVersion: number;
-  profileChanged: boolean;
-  id?: string;
-  version?: number;
-  note?: string;
-  evidenceCount?: number;
-  evidence?: { id: string; kind: string; statement: string; url: string | null }[];
-  history?: { seq: number; kind: string; at: string; by: string; reason: string | null }[];
-  decision?: { kind: string; reason: string; at: string } | null;
-  target?: Organisation | null;
-  canAddEvidence?: boolean;
-  canWithdraw?: boolean;
-};
-type View = {
-  workspaceId: string;
-  expiresAt: string;
-  canEdit: boolean;
-  commandId?: string;
-  status: LinkStatus;
-  currentProfileVersion: number;
-  canFile: boolean;
-  link: null | {
-    organisation: Organisation;
-    linkedAt: string;
-    reviewedProfileVersion: number;
-    profileChanged: boolean;
-    label: string;
-    reason?: string | null;
-  };
-  claim: Claim | null;
-};
-type Found = { id: string; name: string; country: string };
-const statuses = ['none', 'pending', 'needs_evidence', 'approved', 'rejected'];
-function parseView(value: unknown, workspaceId: string): View {
-  const v = value as View;
-  if (!v || typeof v !== 'object') throw new ReplyError('reply empty');
-  const expires = Date.parse(v.expiresAt);
-  const checks: [string, boolean][] = [
-    ['workspace', v.workspaceId !== workspaceId],
-    ['status', !statuses.includes(v.status)],
-    ['can edit', typeof v.canEdit !== 'boolean'],
-    ['can file', typeof v.canFile !== 'boolean'],
-    ['version', !Number.isInteger(v.currentProfileVersion)],
-    ['expiry missing', !Number.isFinite(expires)],
-    ['expiry past', expires <= Date.now()],
-    ['expiry far', expires > Date.now() + privateViewMaxMs],
-    ['claim', v.claim !== null && typeof v.claim !== 'object'],
-    [
-      'link',
-      v.link !== null &&
-        (typeof v.link !== 'object' || typeof v.link.organisation?.name !== 'string'),
-    ],
-  ];
-  const failed = checks.find(([, bad]) => bad);
-  if (failed) throw new ReplyError(`reply ${failed[0]}`);
-  return v;
-}
+type Found = LinkFound;
+type View = LinkView;
 const day = (value: string) => new Date(value).toISOString().slice(0, 10);
 
 export function CompanyLink(props: { subject: string; issuer: string; workspaceId: string }) {
@@ -165,7 +112,7 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
             },
           );
           if (again.ok && active.current && !controller.signal.aborted)
-            setView(parseView(onDeviceClock(await again.json(), again), workspaceId));
+            setView(parseLinkView(onDeviceClock(await again.json(), again), workspaceId));
           return;
         }
         if (r.status === 400) {
@@ -177,7 +124,7 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
           return;
         }
         if (!r.ok) throw new ReplyError(`HTTP ${r.status}`);
-        const v = parseView(onDeviceClock(await r.json(), r), workspaceId);
+        const v = parseLinkView(onDeviceClock(await r.json(), r), workspaceId);
         if (body && v.commandId !== body.commandId) throw Error('Acknowledgement did not match');
         if (active.current && !controller.signal.aborted) {
           setView(v);
@@ -247,16 +194,15 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
     setBusy(true);
     setMessage(null);
     try {
-      const r = await fetch(
-        '/api/customer-organisation-links?' +
-          new URLSearchParams({ scope: 'search', workspaceId, q: term.trim() }),
-        { credentials: 'same-origin', cache: 'no-store', headers: headers() },
-      );
+      const r = await fetch('/api/customer-organisation-links', {
+        method: 'POST',
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: headers({ 'content-type': 'application/json' }),
+        body: JSON.stringify({ scope: 'search', workspaceId, q: term.trim() }),
+      });
       if (!r.ok) throw Error('search');
-      const body = (await r.json()) as { workspaceId: string; organisations: Found[] };
-      if (body.workspaceId !== workspaceId || !Array.isArray(body.organisations))
-        throw Error('search');
-      setFound(body.organisations);
+      setFound(parseLinkSearch(await r.json(), workspaceId));
       setChosen('');
     } catch {
       setMessage({ text: 'The company list could not be searched. Try again.', error: true });
@@ -345,7 +291,7 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
               className="ux-status"
               data-tone={view.status === 'approved' ? 'positive' : 'neutral'}
             >
-              {linkStatusText(view.status, view.link?.organisation.name ?? null)}
+              {linkStatusText(view.status, view.link?.organisation?.name ?? null)}
             </span>
           </p>
           {view.status === 'none' && (
@@ -359,11 +305,13 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
           )}
           {view.link && (
             <>
-              <p>
-                <strong>
-                  {view.link.organisation.name} ({view.link.organisation.country})
-                </strong>
-              </p>
+              {view.link.organisation && (
+                <p>
+                  <strong>
+                    {view.link.organisation.name} ({view.link.organisation.country})
+                  </strong>
+                </p>
+              )}
               <p>{view.link.label}</p>
               {view.link.profileChanged && (
                 <p>
@@ -371,7 +319,9 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
                   {view.link.reviewedProfileVersion}). The link still stands until staff change it.
                 </p>
               )}
-              {view.link.reason && <p>Staff note: {view.link.reason}</p>}
+              {view.link.reason && (
+                <p>{isHidden(view.link.reason) ? hiddenText : 'Staff note: ' + view.link.reason}</p>
+              )}
             </>
           )}
           {claim && (
@@ -388,7 +338,13 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
               {claim.state === 'needs_evidence' && (
                 <p>Staff need more evidence before they decide.</p>
               )}
-              {claim.decision && <p>Staff note: {claim.decision.reason}</p>}
+              {claim.decision && (
+                <p>
+                  {isHidden(claim.decision.reason)
+                    ? hiddenText
+                    : 'Staff note: ' + claim.decision.reason}
+                </p>
+              )}
               <dl>
                 <dt>Request</dt>
                 <dd>
@@ -421,8 +377,9 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
                     <ul>
                       {claim.evidence.map((e) => (
                         <li key={e.id}>
-                          {evidenceKinds.find(([k]) => k === e.kind)?.[1] ?? e.kind}: {e.statement}
-                          {e.url ? ` (${e.url})` : ''}
+                          {isHidden(e.statement)
+                            ? hiddenText
+                            : `${evidenceKinds.find(([k]) => k === e.kind)?.[1] ?? e.kind}: ${e.statement}${e.url ? ` (${e.url})` : ''}`}
                         </li>
                       ))}
                     </ul>
