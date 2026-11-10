@@ -43,6 +43,7 @@ import {
   refreshCustomerWorkspaceLifecycle,
 } from '../packages/db/src/customer-workspace-lifecycle-migrate';
 import { migrateCustomerAccountLifecycle } from '../packages/db/src/customer-account-lifecycle-migrate';
+import { migrateCustomerProblemReports } from '../packages/db/src/customer-problem-report-migrate';
 import { configureWorkspaceLifecycle } from '../packages/auth/src/customer-workspace-lifecycle-configuration';
 import { configureAccountLifecycle } from '../packages/auth/src/customer-account-lifecycle-configuration';
 import { migrateCustomerMoves } from '../packages/db/src/customer-move-migrate';
@@ -85,6 +86,7 @@ const v = z
     ACCOUNT_LIFECYCLE_ACTION: z
       .enum(['unchanged', 'install', 'enable', 'pause'])
       .default('unchanged'),
+    PROBLEM_REPORTS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     MOVE_RECORDS_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     MOVE_RECORDS_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
@@ -231,6 +233,8 @@ if (v.ACCOUNT_LIFECYCLE_ACTION !== 'unchanged' && !apply)
   throw new Error('Account lifecycle changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.ACCOUNT_LIFECYCLE_ACTION) && !v.ACCOUNT_LIFECYCLE_REASON)
   throw new Error('Account lifecycle changes require an explicit reason');
+if (v.PROBLEM_REPORTS_ACTION !== 'unchanged' && !apply)
+  throw new Error('Problem report installation requires INSTALL_APPLY=yes');
 if (v.MISSION_MAIL_ACTION !== 'unchanged' && !apply)
   throw new Error('Mission mail changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.MISSION_MAIL_ACTION) && !v.MISSION_MAIL_REASON)
@@ -252,6 +256,7 @@ const registries = [
   'customer_request_withdrawal_migrations',
   'customer_workspace_lifecycle_migrations',
   'customer_account_lifecycle_migrations',
+  'customer_problem_report_migrations',
   'customer_migrations',
   'customer_commercial_migrations',
   'customer_company_migrations',
@@ -549,6 +554,12 @@ try {
           `Account lifecycle ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
         );
       }
+    }
+    // Problem reports are never part of the base run. Installing the database module is the whole activation: there is no
+    // control and no application switch. It installs the account lifecycle module first (its own migration does it).
+    if (v.PROBLEM_REPORTS_ACTION === 'install') {
+      await migrateCustomerProblemReports(pool);
+      console.log('installed or already current: problem reports');
     }
     if (v.REAL_BILLING_ACTION !== 'unchanged') {
       await migrateCustomerBillingReal(pool);
