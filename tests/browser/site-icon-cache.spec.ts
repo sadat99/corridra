@@ -12,42 +12,33 @@ test.beforeEach(({}, info) => {
   );
 });
 
-async function iconRequests(page: Page) {
-  const cdp = await page.context().newCDPSession(page);
-  await cdp.send('Network.enable');
-  const seen = new Map<string, { url: string; status: number; cached: boolean }>();
-  const urls = new Map<string, string>();
-  cdp.on('Network.requestWillBeSent', (event: { requestId: string; request: { url: string } }) => {
-    urls.set(event.requestId, event.request.url);
-  });
-  cdp.on(
-    'Network.responseReceived',
-    (event: {
-      requestId: string;
-      response: {
-        url: string;
-        status: number;
-        fromDiskCache?: boolean;
-        fromPrefetchCache?: boolean;
-      };
-    }) => {
-      if (new URL(event.response.url).pathname !== '/icon.svg') return;
-      seen.set(event.requestId, {
-        url: event.response.url,
-        status: event.response.status,
-        cached: Boolean(event.response.fromDiskCache || event.response.fromPrefetchCache),
-      });
-    },
-  );
-  cdp.on('Network.requestServedFromCache', (event: { requestId: string }) => {
-    const url = urls.get(event.requestId);
-    if (url && new URL(url).pathname === '/icon.svg')
-      seen.set(event.requestId, { url, status: 200, cached: true });
-  });
-  return {
-    all: () => [...seen.values()],
-    network: () => [...seen.values()].filter((entry) => !entry.cached),
-  };
+/**
+ * Fetches an address from the page with a same-origin fetch(), so the browser's own HTTP cache rules apply, and says
+ * whether the bytes came over the network (resource timing: a response served from the cache has a transfer size of
+ * 0). These checks do not wait for the browser to ask for the tab icon by itself: whether and when a browser requests
+ * the favicon of a page depends on the browser and its headless mode (a headless Chromium of one version did not
+ * request it at all), so nothing below relies on that request or its timing.
+ */
+async function fetchFromPage(page: Page, address: string) {
+  return page.evaluate(async (target) => {
+    const url = new URL(target, location.href).href;
+    const seen = () => performance.getEntriesByName(url).length;
+    const before = seen();
+    const response = await fetch(url);
+    await response.arrayBuffer();
+    // The timing entry is added when the response has ended.
+    for (let wait = 0; wait < 100 && seen() <= before; wait++)
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    const entries = performance.getEntriesByName(url) as PerformanceResourceTiming[];
+    if (entries.length <= before) throw new Error(`no timing entry for ${url}`);
+    const transferSize = entries[entries.length - 1].transferSize;
+    return {
+      status: response.status,
+      cacheControl: response.headers.get('cache-control'),
+      transferSize,
+      fromNetwork: transferSize > 0,
+    };
+  }, address);
 }
 
 // The three icons the page links: the tab icon, the older .ico (some browsers ask for it) and the phone home screen icon.
@@ -114,16 +105,41 @@ test('the bare address of each icon is kept for a year too, and nothing links to
   }
 });
 
-test('the icon is fetched once and a tap to another page does not fetch it again', async ({
+async function iconAddresses(page: Page) {
+  return Promise.all(
+    icons.map(async (icon) => (await page.locator(icon.link).getAttribute('href')) as string),
+  );
+}
+
+for (const icon of icons) {
+  test(`${icon.name}: the first fetch comes over the network and the next one from the browser cache`, async ({
+    page,
+  }) => {
+    await page.goto('/');
+    const href = (await page.locator(icon.link).getAttribute('href')) as string;
+    // A new address (an extra query) is one this browser has never kept, so the first fetch cannot be a cache hit
+    // whether or not the browser asked for the icon by itself; the header rule is the same for it.
+    const fresh = `${href}&fresh=${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const first = await fetchFromPage(page, fresh);
+    expect(first.status).toBe(200);
+    expect(first.cacheControl).toBe('public, max-age=31536000, immutable');
+    expect(first.fromNetwork, 'the first fetch is a 200 from the network').toBe(true);
+    const second = await fetchFromPage(page, fresh);
+    expect(second.status).toBe(200);
+    expect(second.fromNetwork, 'the second fetch is served from the cache').toBe(false);
+    expect(second.transferSize).toBe(0);
+  });
+}
+
+test('a tap to another page does not fetch the icons again: a later fetch of each is a cache hit', async ({
   page,
 }) => {
-  const icon = await iconRequests(page);
   await page.goto('/');
-  await expect.poll(() => icon.all().length, { message: 'the icon loaded' }).toBeGreaterThan(0);
-  expect(icon.network()).toHaveLength(1);
-  expect(icon.all()[0].status).toBe(200);
-  const before = icon.all().length;
-  // A soft navigation inside the site (no full page load): the icon is not asked for again from the network.
+  const hrefs = await iconAddresses(page);
+  for (const href of hrefs) expect(href).toBeTruthy();
+  // Whatever the browser did by itself, after this fetch the icon is in the cache.
+  for (const href of hrefs) expect((await fetchFromPage(page, href)).status).toBe(200);
+  // A soft navigation inside the site (no full page load).
   await page.waitForLoadState('networkidle');
   await page.evaluate(() => {
     (window as unknown as { __softNavigation: boolean }).__softNavigation = true;
@@ -137,24 +153,31 @@ test('the icon is fetched once and a tap to another page does not fetch it again
     ),
     'the tap was a soft navigation',
   ).toBe(true);
-  await page.waitForTimeout(1500);
-  expect(icon.network()).toHaveLength(1);
-  expect(icon.all().length).toBeGreaterThanOrEqual(before);
+  expect(await iconAddresses(page), 'the icon addresses are the same on the next page').toEqual(
+    hrefs,
+  );
+  for (const href of hrefs) {
+    const again = await fetchFromPage(page, href);
+    expect(again.fromNetwork, `${href} after a tap`).toBe(false);
+    expect(again.transferSize, href).toBe(0);
+  }
 });
 
-test('a second visit takes the icon from the browser cache, not the network', async ({
+test('a second visit takes each icon from the browser cache, not the network', async ({
   page,
   context,
 }) => {
-  const first = await iconRequests(page);
   await page.goto('/');
-  await expect.poll(() => first.all().length).toBeGreaterThan(0);
-  expect(first.network()).toHaveLength(1);
+  const hrefs = await iconAddresses(page);
+  for (const href of hrefs) expect((await fetchFromPage(page, href)).status).toBe(200);
   const second = await context.newPage();
-  const again = await iconRequests(second);
   await second.goto('/network');
-  await expect.poll(() => again.all().length).toBeGreaterThan(0);
-  expect(again.network()).toHaveLength(0);
+  expect(await iconAddresses(second)).toEqual(hrefs);
+  for (const href of hrefs) {
+    const again = await fetchFromPage(second, href);
+    expect(again.fromNetwork, `${href} on a second visit`).toBe(false);
+    expect(again.transferSize, href).toBe(0);
+  }
 });
 
 test('a page view fetches no other page in the background', async ({ page }) => {
