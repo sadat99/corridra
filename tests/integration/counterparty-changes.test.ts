@@ -24,6 +24,7 @@ import {
 import { hash } from '../../packages/communications/src/index';
 import { SyntheticChannel } from '../../packages/communications/src/adapters';
 import { OutboxDispatcher } from '../../packages/workflows/src/index';
+import { notSentForContact } from '../../apps/web/app/operator/contact-not-sent';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { admitSyntheticCustomer } from '../../packages/auth/src/customer-admission';
 import { configureCustomerRealUse } from '../../packages/auth/src/customer-real-use-configuration';
@@ -426,6 +427,8 @@ describe('Guardian C4 send-time check', () => {
     });
     const listed = (await f.communications.workspace(f.ctx)).messages.find((m) => m.id === i.id);
     expect(listed).toMatchObject({ contact_status: 'WITHDRAWN' });
+    // The messages list says "Not sent: contact withdrawn or hidden." only for a message this check stopped.
+    expect(notSentForContact(listed!)).toBe(true);
   });
 
   test('same for a hidden chain and for an opted-out address elsewhere in the chain', async () => {
@@ -446,6 +449,32 @@ describe('Guardian C4 send-time check', () => {
       'DEAD',
     );
     expect((await dispatch(queued.id)).receipts).toBe(0);
+    const messages = (await f.communications.workspace(f.ctx)).messages;
+    expect(notSentForContact(messages.find((m) => m.id === hidden.id)!)).toBe(true);
+    // Stopped for an opted-out address, not for a withdrawn or hidden contact: no such words.
+    expect(notSentForContact(messages.find((m) => m.id === queued.id)!)).toBe(false);
+    // A message stopped for an unrelated reason, or a corrected contact, never reads as withdrawn or hidden.
+    expect(
+      notSentForContact({
+        delivery_status: 'SUPPRESSED',
+        last_error: 'POLICY_BLOCKED',
+        contact_status: 'WITHDRAWN',
+      }),
+    ).toBe(false);
+    expect(
+      notSentForContact({
+        delivery_status: 'DEAD',
+        last_error: 'PERMANENT',
+        contact_status: 'CORRECTED',
+      }),
+    ).toBe(false);
+    expect(
+      notSentForContact({
+        delivery_status: 'PENDING',
+        last_error: 'TRANSIENT',
+        contact_status: 'HIDDEN',
+      }),
+    ).toBe(false);
   });
 
   test('a message to a withdrawn contact, or to a correction of an opted-out address, is refused before it is queued', async () => {

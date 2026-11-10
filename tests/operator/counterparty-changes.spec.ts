@@ -471,6 +471,8 @@ test('G11-08 correct: two steps, save waits for a change, a discard prompt guard
   );
   await expect(dialog.getByRole('heading', { name: 'Latest saved details' })).toBeVisible();
   await expect(dialog).toContainText('Changed Elsewhere');
+  // U-02: compared with the latest saved version, saving would overwrite both the other person's name and the title.
+  await expect(dialog.getByText('You changed: Name, Job title.')).toBeVisible();
   await expect(dialog.getByLabel('Why are you correcting this contact?')).toHaveValue(
     'Title was wrong',
   );
@@ -658,5 +660,95 @@ test('G11-13 a signed-out answer says so, and a 409 in Withdraw shows the latest
   await expect(dialog).toContainText('Changed Elsewhere');
   await expect(dialog.getByRole('alert')).toHaveText(
     'Someone changed this contact after you opened it. Nothing was saved. The latest saved details are shown below.',
+  );
+});
+
+test('G11-14 a hide refused because the chain was hidden meanwhile names the record as Hidden, never null', async ({
+  page,
+}) => {
+  await open(page, {
+    role: 'owner',
+    answer: () => ({ status: 409, json: { error: 'This contact is hidden.', code: 'HIDDEN' } }),
+    after: {
+      contacts: [
+        contact({
+          status: 'HIDDEN',
+          name: null,
+          job_title: null,
+          email: null,
+          redaction_id: 'r',
+          hidden_at: '2026-11-10T14:05:00Z',
+          hidden_by: owner,
+        }),
+      ],
+    },
+  });
+  await group(page, 'Contact: Synthetic Buyer')
+    .getByRole('button', { name: 'Hide Contact Details' })
+    .click();
+  const dialog = page.getByRole('dialog', { name: "Hide This Contact's Details?" });
+  await dialog
+    .getByLabel('Why are these details being hidden?')
+    .fill('Request from the person to stop showing');
+  await dialog.getByLabel('Ticket reference').fill('REQ-2026-0142');
+  await dialog.getByLabel('Type the contact id to confirm').fill(contactId);
+  await dialog.getByRole('button', { name: 'Confirm and Hide' }).click();
+  await expect(dialog.getByRole('alert')).toHaveText(
+    "This contact's details were hidden after you opened it. Nothing was saved.",
+  );
+  await expect(dialog).toContainText(
+    'Hidden, Hidden, Hidden, on the relationship owned by Synthetic Owner.',
+  );
+  await expect(dialog).not.toContainText(/null|undefined|Synthetic Buyer/);
+});
+
+test('G11-15 Cancel and Discard Changes return focus to the button that opened the dialog', async ({
+  page,
+}) => {
+  await open(page);
+  const item = group(page, 'Contact: Synthetic Buyer');
+  await item.getByRole('button', { name: 'Withdraw Contact' }).click();
+  await page
+    .getByRole('dialog', { name: 'Withdraw This Contact?' })
+    .getByRole('button', { name: 'Cancel' })
+    .click();
+  await expect(page.getByRole('dialog')).toBeHidden();
+  await expect(item.getByRole('button', { name: 'Withdraw Contact' })).toBeFocused();
+  await item.getByRole('button', { name: 'Correct Contact' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Correct This Contact' });
+  await dialog.getByLabel('Job title').fill('Changed title');
+  await dialog.getByRole('button', { name: 'Cancel' }).click();
+  await dialog.getByRole('button', { name: 'Discard Changes' }).click();
+  await expect(page.getByRole('dialog')).toBeHidden();
+  await expect(item.getByRole('button', { name: 'Correct Contact' })).toBeFocused();
+});
+
+test('G11-16 a correction that changes only Valid until can be saved and is guarded by the discard prompt', async ({
+  page,
+}) => {
+  const sent = await open(page, {
+    contacts: [contact({ status: 'EXPIRED', valid_until: '2026-11-09T09:00:00Z' })],
+  });
+  await group(page, 'Contact: Synthetic Buyer')
+    .getByRole('button', { name: 'Correct Contact' })
+    .click();
+  const dialog = page.getByRole('dialog', { name: 'Correct This Contact' });
+  await dialog.getByRole('button', { name: 'Next' }).click();
+  await expect(dialog.getByText('You changed nothing yet.')).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Save Correction' })).toBeDisabled();
+  await dialog.locator('[data-date-field="validUntil"]').fill('2026-12-15T10:00');
+  await expect(dialog.getByText('You changed: Valid until.')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialog.getByText('Discard your changes to this contact?')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Keep Editing' }).click();
+  await dialog.getByLabel('Why are you correcting this contact?').fill('Source renewed');
+  await dialog.getByRole('button', { name: 'Save Correction' }).click();
+  await expect(page.getByRole('status', { name: 'Research status' })).toHaveText(
+    'Correction saved. The earlier version stays in the history, marked Corrected.',
+  );
+  expect(sent).toHaveLength(1);
+  expect(sent[0]).toMatchObject({ action: 'correct_contact', name: 'Synthetic Buyer' });
+  expect(new Date(String(sent[0]!.validUntil)).getTime()).not.toBe(
+    Date.parse('2026-11-09T09:00:00Z'),
   );
 });

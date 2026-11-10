@@ -309,6 +309,78 @@ describe('what one hide covers (owner answers 3 and 8)', () => {
   });
 });
 
+describe('a correction can never adopt a hidden chain (Guardian G1)', () => {
+  // An owner writing SQL directly in one transaction: add a new version Y, hide Y's chain, then try to name Y as the
+  // correction of X. The guard refuses, so Y's text never reappears under X's chain and Y is never messageable.
+  const attempt = async (subject: 'contact' | 'note') => {
+    const t = await f.target();
+    const x = subject === 'contact' ? t.contactId : (await noteOn(f, t)).id;
+    const runtime = new Pool(
+      connection('corridra_integration', 'corridra_runtime_local', sandbox.runtimePassword),
+    );
+    const client = await runtime.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(
+        "SELECT set_config('corridra.session_hash',$1,true),set_config('corridra.tenant_id',$2,true),set_config('corridra.purpose','synthetic_validation',true),set_config('corridra.correlation_id',$3,true),set_config('corridra.causation_id',$4,true)",
+        [sessionHash(f.users.owner.ctx.token), f.tenantA, randomUUID(), randomUUID()],
+      );
+      const owner = f.users.owner.id;
+      const y = (
+        subject === 'contact'
+          ? await client.query(
+              "INSERT INTO app.private_contact_data(tenant_id,purpose,created_by,relationship_id,source_id,name,job_title,email,valid_until) VALUES($1,'synthetic_validation',$2,$3,$4,'Hidden Elsewhere','Buyer',$5,now()+interval '2 days') RETURNING id",
+              [f.tenantA, owner, t.relationshipId, t.sourceId, `${randomUUID()}@example.invalid`],
+            )
+          : await client.query(
+              "INSERT INTO app.private_note(tenant_id,purpose,created_by,relationship_id,source_id,body) VALUES($1,'synthetic_validation',$2,$3,$4,'Hidden elsewhere') RETURNING id",
+              [f.tenantA, owner, t.relationshipId, t.sourceId],
+            )
+      ).rows[0].id;
+      await client.query(
+        `INSERT INTO app.private_record_redaction(tenant_id,relationship_id,subject,chain_id,${subject}_chain_id,reason,ticket_reference,command_id,request_hash,classification,purpose,created_by) VALUES($1,$2,$3,$4,$4,$5,$6,$7,$8,'INTERNAL','synthetic_validation',$9)`,
+        [
+          f.tenantA,
+          t.relationshipId,
+          subject,
+          y,
+          hideReason,
+          ticket,
+          randomUUID(),
+          'd'.repeat(64),
+          owner,
+        ],
+      );
+      const error = await client
+        .query(
+          `INSERT INTO app.private_${subject}_change(tenant_id,relationship_id,chain_id,${subject}_id,kind,replacement_id,reason,command_id,request_hash,classification,purpose,created_by) VALUES($1,$2,$3,$3,'CORRECT',$4,'Adopt a hidden chain',$5,$6,'INTERNAL','synthetic_validation',$7)`,
+          [f.tenantA, t.relationshipId, x, y, randomUUID(), 'e'.repeat(64), owner],
+        )
+        .then(
+          () => null,
+          (e: { code: string; message: string }) => e,
+        );
+      await client.query('ROLLBACK');
+      return error;
+    } finally {
+      client.release();
+      await runtime.end();
+    }
+  };
+  test('a contact: the correction naming a version whose chain is hidden is refused', async () => {
+    expect(await attempt('contact')).toMatchObject({
+      code: 'P0001',
+      message: 'A correction needs a new version created with it',
+    });
+  });
+  test('a note: the same', async () => {
+    expect(await attempt('note')).toMatchObject({
+      code: 'P0001',
+      message: 'A correction needs a new version created with it',
+    });
+  });
+});
+
 describe('every reader shows no hidden text (Guardian C2)', () => {
   let t: Awaited<ReturnType<World['target']>>;
   let message: Awaited<ReturnType<World['introduction']>>;
@@ -710,6 +782,36 @@ describe('source scan (Guardian C2)', () => {
           );
         }),
     ).toBe(true);
+  });
+
+  // Conductor choice on Guardian G3: the read policies of the change and hide tables stay on the record's own boundary
+  // (the views' LEFT JOIN needs it, or the mask would fail open), so runtime code is held to one reader of their words.
+  test('change reasons, hide reasons and ticket references are read only through the masked views or the owner and admin detail branch', () => {
+    const reads: string[] = [];
+    for (const file of roots.flatMap(files))
+      readFileSync(file, 'utf8')
+        .split('\n')
+        .forEach((line, index) => {
+          if (
+            /FROM\s+app\.(private_record_redaction|private_contact_change|private_note_change)\b/.test(
+              line,
+            ) &&
+            /\breason\b|ticket_reference/.test(line)
+          )
+            reads.push(`${file}:${index + 1}`);
+          if (
+            /change_reason|redaction_reason/.test(line) &&
+            /FROM\s+app\.private_(contact|note)_change\b/.test(line)
+          )
+            reads.push(`${file}:${index + 1}`);
+        });
+    expect(reads).toHaveLength(1);
+    expect(reads[0]).toMatch(/^packages\/counterparties\/src\/changes\.ts:/);
+    const source = readFileSync('packages/counterparties/src/changes.ts', 'utf8').split('\n');
+    const line = Number(reads[0]!.split(':')[1]);
+    expect(source.slice(line - 6, line).join('\n')).toContain(
+      "['owner', 'admin'].includes(t.role)",
+    );
   });
 
   test('packages/intelligence reads no private contact, note, target contact or message', () => {
