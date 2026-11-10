@@ -66,6 +66,24 @@ Files: `tests/ux/readability-lib.ts`, `tests/ux/readability.spec.ts`, `tests/ux/
 
 Acceptance: the spec passes on the current build with the recorded baseline; unit cases pass; `pnpm format:check`, `lint`, `typecheck`, `test`, `build` and `test:ux` pass; no file under `apps/` or `packages/` changes.
 
+#### W1 build notes
+
+Built on the production build at `bf17e42b`, 1440 px wide, default state. Baseline recorded once with `READABILITY_UPDATE_BASELINE=1`; two later runs gave byte-identical reports.
+
+- Route set: the UX gate's own route walk is not exported, so the spec uses `pageRoutes()` (docs/revamp/COVERAGE.json) filtered to the two public audiences with no dynamic segment, plus the corridor pages the gate also adds. That is 26 routes plus the footer under `/#footer`, 27 baseline entries. Two are not measured: `/coming-soon` redirects to `/`, and `/fairs` is unavailable. A static public page missing from COVERAGE.json would not be seen; there is no guard for that yet.
+- Measured: 24 routes plus the footer, 1,697 words in 193 sentences. `/decision-card` has no prose block of five words in its default state, so it records 0 words.
+- Totals: sentences over 20 words 1 (on `/sell`); hard sentences 33; grade median 5.95 and maximum 10.8 (`/about`), over the 24 routes and the footer that have prose.
+- Five worst routes by hard-sentence count: `/about` 11 (grade 10.8); `/institutions` 4 (9.8); `/privacy` 4 (8.7); `/machinery` 2 (9.7); `/corridors/bangladesh-china` 2 (8.3, tied with `/enter-market` on count).
+- `/plan` records only 28 words in its default state (5 sentences, grade 3.5, no hard sentence). Its later steps and hints behind a closed disclosure are not read, so the W2 rewrite list for `/plan` needs a second look at those steps.
+
+Limits of the measure, plainly:
+
+- The syllable counter is a vowel-group rule with a short exception list. It is often right and can be off by one on words such as "business", "every" or "doesn't". Short pages swing by a grade on one word.
+- The sentence splitter knows a short list of abbreviations. A block with no closing mark, such as a list item, counts as one sentence. "U.S." at the end of a sentence does not end it.
+- Only English prose in `p`, `li`, `dd`, `figcaption`, alerts, status blocks and the two hint classes is read. Headings, button and label text, and anything in `header`, `nav` or `footer` are not (the footer is read once, on `/`). A block that holds another prose block is read through the inner one only.
+- Only the default state is read. Closed `details`, later steps, signed-in pages and other languages are not measured.
+- The numbers guide plain wording. They are not a reading-level claim for any screen and never replace native review or user testing.
+
 ### W2. Early account notice and the worst copy
 
 1. On the first intake step a real-mode, signed-out visitor sees (not in private mode, not when signed in): one plain sentence that a password is set on the last step so only they can read the replies, and the existing "Sign In" link with its existing return path. English words carry `lang="en"` in translated forms. No payload, field, name or id changes.
