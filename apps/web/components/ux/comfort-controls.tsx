@@ -4,7 +4,7 @@
 // browser that will not save them still gets the choice for the current page, and says so. Owner: W7.
 import { CorridraIcon } from '../corridra-icon';
 import { textSizes, type TextSize } from '../../lib/ux/comfort';
-import { useLessMovement, useSaveFailed, useTextSize } from './use-comfort';
+import { useLessMovement, useSaveNoteFilled, useTextSize } from './use-comfort';
 
 export const textSizeNames: Record<TextSize, string> = {
   normal: 'Normal',
@@ -20,7 +20,7 @@ export const unsavedChoiceNote =
  * refuses to keep a choice, then it is filled, so assistive technology announces the note. Never shown on load.
  */
 export function UnsavedChoiceNote({ className, inMenu }: { className: string; inMenu?: boolean }) {
-  const failed = useSaveFailed();
+  const filled = useSaveNoteFilled();
   // A menu may hold only rows and groups (a status role or a bare ARIA attribute inside one fails the ARIA rules), so
   // there the live region is a group; elsewhere it is a status.
   const live = inMenu
@@ -28,7 +28,7 @@ export function UnsavedChoiceNote({ className, inMenu }: { className: string; in
     : { role: 'status' };
   return (
     <p className={className} {...live}>
-      {failed ? unsavedChoiceNote : null}
+      {filled ? unsavedChoiceNote : null}
     </p>
   );
 }
@@ -49,7 +49,8 @@ export function TextSizeRow({ label }: { label: string }) {
             type="button"
             role="menuitemradio"
             aria-checked={size === step}
-            aria-label={`${textSizeNames[step]} Text`}
+            // The name starts with the visible character, so the visible text is in the name (WCAG 2.5.3).
+            aria-label={`A, ${textSizeNames[step]} Text`}
             tabIndex={-1}
             className="ux-textsize-step"
             data-step={step}

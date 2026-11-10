@@ -7,7 +7,7 @@ import {
   chooseLessMovement,
   chooseTextSize,
   currentLessMovement,
-  currentSaveFailed,
+  currentNoteFilled,
   currentTextSize,
   subscribeComfort,
   type LessMovement,
@@ -26,9 +26,12 @@ export function useLessMovement(): [LessMovement, (value: LessMovement) => boole
   return [value, chooseLessMovement];
 }
 
-/** True after this browser refused to keep a choice; one flag shared by every comfort control on the page. */
-export function useSaveFailed(): boolean {
-  return useSyncExternalStore(subscribeComfort, currentSaveFailed, () => false);
+/**
+ * Whether the one save-failed note is filled: while any choice this browser refused to keep is still unsaved, and
+ * emptied for a moment when a further refusal comes, so it is announced again. Shared by every comfort control.
+ */
+export function useSaveNoteFilled(): boolean {
+  return useSyncExternalStore(subscribeComfort, currentNoteFilled, () => false);
 }
 
 /**

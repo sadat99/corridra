@@ -180,6 +180,11 @@
    At a large text size the header row can wrap, which leaves the avatar away from the row's end; a panel aligned to
    the avatar ran off the left edge of the screen. The header (already a positioned box) is the frame, not the button. */
 @media (max-width: 639.98px) {
+  /* The panel hangs from the header, so the header must be a positioned box. It already is (left-nav.css makes it
+     sticky); this is the fallback for a header that is not, at zero specificity so it can never override sticky. */
+  :where(.ux-app-header) {
+    position: relative;
+  }
   .ux-app-header .ux-menu.ux-util-avatar[data-align] {
     position: static;
   }
@@ -188,6 +193,11 @@
     min-width: 0;
     width: min(100%, 22rem);
     max-width: none;
+    /* Sized from the header's real bottom: the tallest phone header (the team's, wrapped to three rows) is about
+       10.3 rem at normal text (165 px) and 9.2 rem at the largest step (184 px). With the 0.5 rem gap under the header,
+       a 12 rem reserve leaves the panel's bottom inside the window; rem makes it grow with the text size. The panel
+       scrolls inside itself. */
+    max-height: calc(100dvh - 12rem);
   }
 }
 

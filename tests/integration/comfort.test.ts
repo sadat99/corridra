@@ -5,10 +5,12 @@ import {
   chooseTextSize,
   comfortBootScript,
   currentLessMovement,
+  currentNoteFilled,
   currentSaveFailed,
   currentTextSize,
   lessMovementAttribute,
   lessMovementStorageKey,
+  noteRefillDelayMs,
   parseLessMovement,
   parseTextSize,
   subscribeComfort,
@@ -130,25 +132,66 @@ describe('a browser that blocks its storage', () => {
     expect(attributes.get('data-less-movement')).toBe('on');
   });
 
-  test('one shared flag says a save failed: false on load, set by either choice, cleared by a save that works', () => {
+  test('a save failed is false on load, set by either choice, and cleared only by a save of the same control', () => {
     fakeBrowser(memoryStorage());
     chooseTextSize('normal');
+    chooseLessMovement('off');
     expect(currentSaveFailed()).toBe(false);
     // Loading with blocked storage is not a failed save: nothing is shown until a person chooses.
     fakeBrowser(blockedStorage);
     applyStoredComfort();
     expect(currentSaveFailed()).toBe(false);
-    chooseTextSize('large');
-    expect(currentSaveFailed()).toBe(true);
     chooseLessMovement('on');
     expect(currentSaveFailed()).toBe(true);
+    // Text Size saves fine, but Less Movement is still unsaved, so the note stays.
     const heard = vi.fn();
     const stop = subscribeComfort(heard);
     fakeBrowser(memoryStorage());
-    chooseLessMovement('off');
-    expect(currentSaveFailed()).toBe(false);
+    chooseTextSize('large');
+    expect(currentSaveFailed()).toBe(true);
+    expect(currentNoteFilled()).toBe(true);
     expect(heard).toHaveBeenCalled();
+    // A second control fails, then each save clears only its own control; the note goes with the last one.
+    fakeBrowser(blockedStorage);
+    chooseTextSize('largest');
+    fakeBrowser(memoryStorage());
+    chooseLessMovement('off');
+    expect(currentSaveFailed()).toBe(true);
+    chooseTextSize('normal');
+    expect(currentSaveFailed()).toBe(false);
+    expect(currentNoteFilled()).toBe(false);
     stop();
+  });
+
+  describe('announcing a repeated failure', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      fakeBrowser(memoryStorage());
+      chooseTextSize('normal');
+      chooseLessMovement('off');
+    });
+    afterEach(() => vi.useRealTimers());
+
+    test('the first failure fills the note at once; a further failure empties it for a moment and fills it again', () => {
+      fakeBrowser(blockedStorage);
+      chooseTextSize('large');
+      expect(currentNoteFilled()).toBe(true);
+      chooseLessMovement('on');
+      expect(currentNoteFilled()).toBe(false);
+      vi.advanceTimersByTime(noteRefillDelayMs);
+      expect(currentNoteFilled()).toBe(true);
+    });
+
+    test('a save that works while the note is emptied for the refill leaves it empty', () => {
+      fakeBrowser(blockedStorage);
+      chooseTextSize('large');
+      chooseTextSize('largest');
+      fakeBrowser(memoryStorage());
+      chooseTextSize('normal');
+      vi.advanceTimersByTime(noteRefillDelayMs);
+      expect(currentSaveFailed()).toBe(false);
+      expect(currentNoteFilled()).toBe(false);
+    });
   });
 
   test('loading the page with blocked storage throws nothing and keeps what the page already shows', () => {

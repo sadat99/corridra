@@ -53,11 +53,20 @@ function applyLessMovement(value: LessMovement) {
   else root()?.removeAttribute(lessMovementAttribute);
 }
 
-// True once this browser has refused to keep a choice. It is one flag for the page, so every control shows one note.
-let saveFailed = false;
-/** Whether the last attempt to keep a choice was refused by this browser. Never true on load. */
+// The choices this browser has refused to keep, one entry per control, so the page shows one note while any is
+// unsaved and a save that works clears only its own control. Never set on load.
+type Control = 'textSize' | 'lessMovement';
+const unsaved = new Set<Control>();
+// Whether the note is filled now. A refusal while it is already filled empties it for a moment and fills it again,
+// so assistive technology announces it again.
+let noteFilled = false;
+export const noteRefillDelayMs = 100;
+/** Whether any choice was refused by this browser and is still not kept. */
 export function currentSaveFailed(): boolean {
-  return saveFailed;
+  return unsaved.size > 0;
+}
+export function currentNoteFilled(): boolean {
+  return noteFilled;
 }
 
 const listeners = new Set<() => void>();
@@ -92,14 +101,29 @@ export function applyStoredComfort() {
  */
 export function chooseTextSize(size: TextSize): boolean {
   applyTextSize(size);
-  return finishChoice(writeStored(textSizeStorageKey, size === 'normal' ? null : size));
+  return finishChoice('textSize', writeStored(textSizeStorageKey, size === 'normal' ? null : size));
 }
 export function chooseLessMovement(value: LessMovement): boolean {
   applyLessMovement(value);
-  return finishChoice(writeStored(lessMovementStorageKey, value === 'on' ? 'on' : null));
+  return finishChoice(
+    'lessMovement',
+    writeStored(lessMovementStorageKey, value === 'on' ? 'on' : null),
+  );
 }
-function finishChoice(saved: boolean): boolean {
-  saveFailed = !saved;
+function finishChoice(control: Control, saved: boolean): boolean {
+  if (saved) {
+    unsaved.delete(control);
+    noteFilled = unsaved.size > 0;
+  } else {
+    const showing = noteFilled;
+    unsaved.add(control);
+    noteFilled = !showing;
+    if (showing)
+      setTimeout(() => {
+        noteFilled = unsaved.size > 0;
+        notify();
+      }, noteRefillDelayMs);
+  }
   notify();
   return saved;
 }

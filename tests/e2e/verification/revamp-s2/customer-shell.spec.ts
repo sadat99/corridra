@@ -268,14 +268,14 @@ test('W7 Text Size has three steps in the Help menu: each changes the text, show
   await trigger.click();
   const menu = page.getByRole('menu', { name: 'Help and accessibility' });
   const group = menu.getByRole('group', { name: 'Text Size' });
-  const radio = (name: string) => group.getByRole('menuitemradio', { name });
+  const radio = (name: string) => group.getByRole('menuitemradio', { name, exact: true });
   await expect(group.getByRole('menuitemradio')).toHaveCount(3);
-  await expect(radio('Normal Text')).toHaveAttribute('aria-checked', 'true');
+  await expect(radio('A, Normal Text')).toHaveAttribute('aria-checked', 'true');
   await expect(group).toContainText('Normal');
   for (const [name, word, size, attribute] of [
-    ['Large Text', 'Large', '18px', 'large'],
-    ['Largest Text', 'Largest', '20px', 'largest'],
-    ['Normal Text', 'Normal', '16px', null],
+    ['A, Large Text', 'Large', '18px', 'large'],
+    ['A, Largest Text', 'Largest', '20px', 'largest'],
+    ['A, Normal Text', 'Normal', '16px', null],
   ] as const) {
     await radio(name).click();
     await expect(radio(name)).toHaveAttribute('aria-checked', 'true');
@@ -284,15 +284,17 @@ test('W7 Text Size has three steps in the Help menu: each changes the text, show
     // Choosing a step keeps the menu open and keeps focus on the button just chosen.
     await expect(menu).toBeVisible();
     await expect(radio(name)).toBeFocused();
-    for (const other of ['Normal Text', 'Large Text', 'Largest Text'].filter((n) => n !== name))
+    for (const other of ['A, Normal Text', 'A, Large Text', 'A, Largest Text'].filter(
+      (n) => n !== name,
+    ))
       await expect(radio(other)).toHaveAttribute('aria-checked', 'false');
   }
   // The choice is kept in this browser: it is in place after a reload and after moving to another page.
-  await radio('Largest Text').click();
+  await radio('A, Largest Text').click();
   await page.reload();
   expect(await comfort(page)).toMatchObject({ fontSize: '20px', textSize: 'largest' });
   await trigger.click();
-  await expect(radio('Largest Text')).toHaveAttribute('aria-checked', 'true');
+  await expect(radio('A, Largest Text')).toHaveAttribute('aria-checked', 'true');
   await page.keyboard.press('Escape');
   await page.goto('/account/meetings');
   expect(await comfort(page)).toMatchObject({ fontSize: '20px' });
@@ -356,10 +358,9 @@ test('W7 the two controls work by keyboard, are at least 44 px, and Escape retur
   await expect(first).toBeFocused();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Space');
-  await expect(menu.getByRole('menuitemradio', { name: 'Large Text' })).toHaveAttribute(
-    'aria-checked',
-    'true',
-  );
+  await expect(
+    menu.getByRole('menuitemradio', { name: 'A, Large Text', exact: true }),
+  ).toHaveAttribute('aria-checked', 'true');
   await expect(menu).toBeVisible();
   const toggle = menu.getByRole('menuitemcheckbox', { name: /Less Movement/ });
   await toggle.focus();
@@ -389,9 +390,9 @@ test('W7 choosing a step or Less Movement sends nothing to a server and sets no 
     if (request.method() !== 'GET' || new URL(request.url()).pathname.startsWith('/api'))
       sent.push(`${request.method()} ${request.url()}`);
   });
-  await menu.getByRole('menuitemradio', { name: 'Largest Text' }).click();
+  await menu.getByRole('menuitemradio', { name: 'A, Largest Text', exact: true }).click();
   await menu.getByRole('menuitemcheckbox', { name: /Less Movement/ }).click();
-  await menu.getByRole('menuitemradio', { name: 'Normal Text' }).click();
+  await menu.getByRole('menuitemradio', { name: 'A, Normal Text', exact: true }).click();
   await menu.getByRole('menuitemcheckbox', { name: /Less Movement/ }).click();
   expect(sent).toEqual([]);
   expect(JSON.stringify(await context.cookies())).toBe(cookiesBefore);
@@ -425,7 +426,7 @@ test('W7 a browser that will not save says so once, and the choice still holds f
   await expect(note).toHaveCount(1);
   await expect(note).toBeEmpty();
   expect((await note.boundingBox())!.height).toBe(0);
-  await menu.getByRole('menuitemradio', { name: 'Largest Text' }).click();
+  await menu.getByRole('menuitemradio', { name: 'A, Largest Text', exact: true }).click();
   expect(await comfort(page)).toMatchObject({ fontSize: '20px', textSize: 'largest' });
   await expect(note).toHaveText(
     'This browser cannot save your choice. It lasts until you leave this page.',
@@ -444,11 +445,39 @@ test('W7 a browser that will not save says so once, and the choice still holds f
     return nodes.map((el) => (el.getAttribute('aria-live') ? 'note' : 'switch'));
   });
   expect(order.slice(-2)).toEqual(['switch', 'note']);
-  await expect(menu.getByRole('menuitemradio', { name: 'Largest Text' })).toHaveAttribute(
-    'aria-checked',
-    'true',
-  );
+  await expect(
+    menu.getByRole('menuitemradio', { name: 'A, Largest Text', exact: true }),
+  ).toHaveAttribute('aria-checked', 'true');
   expect(errors).toEqual([]);
+});
+
+test('W7 the save note stays while any choice is unsaved: Less Movement refused, Text Size saved, the note is still there', async ({
+  page,
+}) => {
+  // Only Less Movement is refused by this browser; Text Size saves normally.
+  await page.addInitScript(() => {
+    const setItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key: string, value: string) {
+      if (key === 'corridra.less-movement') throw new Error('blocked');
+      setItem.call(this, key, value);
+    };
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/account');
+  await header(page).getByRole('button', { name: 'Help and accessibility' }).click();
+  const menu = page.getByRole('menu', { name: 'Help and accessibility' });
+  const note = menu.locator('[aria-live="polite"]');
+  const words = 'This browser cannot save your choice. It lasts until you leave this page.';
+  await expect(note).toBeEmpty();
+  await menu.getByRole('menuitemcheckbox', { name: /Less Movement/ }).click();
+  await expect(note).toHaveText(words);
+  await menu.getByRole('menuitemradio', { name: 'A, Large Text', exact: true }).click();
+  expect(await page.evaluate(() => localStorage.getItem('corridra.text-size'))).toBe('large');
+  await expect(note).toHaveText(words);
+  // Turning Less Movement off removes its saved value, which this browser allows, so the last unsaved choice is gone
+  // and the note empties.
+  await menu.getByRole('menuitemcheckbox', { name: /Less Movement/ }).click();
+  await expect(note).toBeEmpty();
 });
 
 test('W7 at the largest text on a short screen the Help menu scrolls inside the window and its last row can be reached', async ({
@@ -466,7 +495,7 @@ test('W7 at the largest text on a short screen the Help menu scrolls inside the 
   await page.goto('/account');
   await header(page).getByRole('button', { name: 'Help and accessibility' }).click();
   const menu = page.getByRole('menu', { name: 'Help and accessibility' });
-  await menu.getByRole('menuitemradio', { name: 'Largest Text' }).click();
+  await menu.getByRole('menuitemradio', { name: 'A, Largest Text', exact: true }).click();
   const toggle = menu.getByRole('menuitemcheckbox', { name: /Less Movement/ });
   await toggle.click();
   const panel = await menu.evaluate((el) => ({
@@ -553,7 +582,7 @@ test('W7 on a phone the avatar menu holds the same two controls, and they work t
   await page.goto('/account');
   await header(page).getByRole('button', { name: 'Account menu' }).click();
   const menu = page.getByRole('menu', { name: 'Account menu' });
-  await menu.getByRole('menuitemradio', { name: 'Large Text' }).click();
+  await menu.getByRole('menuitemradio', { name: 'A, Large Text', exact: true }).click();
   expect(await comfort(page)).toMatchObject({ fontSize: '18px', textSize: 'large' });
   const toggle = menu.getByRole('menuitemcheckbox', { name: /Less Movement/ });
   await toggle.click();

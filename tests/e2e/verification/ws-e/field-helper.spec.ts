@@ -61,7 +61,7 @@ test('the field helper has four bottom tabs on a phone and the left bar on a wid
   });
   await expect(comfort.getByRole('group', { name: 'Text Size' })).toBeVisible();
   await expect(comfort.getByRole('radio')).toHaveCount(3);
-  await expect(comfort.getByRole('radio', { name: 'Normal' })).toBeChecked();
+  await expect(comfort.getByRole('radio', { name: 'Normal', exact: true })).toBeChecked();
   // The switch is named by "Less Movement" alone (its On or Off word is not read twice) and described by the hint.
   const lessMovement = comfort.getByRole('switch', { name: 'Less Movement', exact: true });
   await expect(lessMovement).not.toBeChecked();
@@ -94,7 +94,7 @@ test('the field helper has four bottom tabs on a phone and the left bar on a wid
     await expect(comfort.getByRole(role, { name: 'Data Saver' })).toHaveCount(0);
   for (const choice of await page.locator('.me-textsize-choice').all())
     expect((await choice.boundingBox())!.height).toBeGreaterThanOrEqual(75.5);
-  await comfort.getByRole('radio', { name: 'Largest' }).check();
+  await comfort.getByRole('radio', { name: 'Largest', exact: true }).check();
   expect(await page.evaluate(() => getComputedStyle(document.documentElement).fontSize)).toBe(
     '20px',
   );
