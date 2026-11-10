@@ -290,10 +290,13 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // The site icon's address carries a hash of the file (/icon.svg?icon.<hash>.svg), so a changed icon
-        // is a new address and this one can be kept for a year (W10). Without this it is checked again on
-        // every page view and soft navigation (Cache-Control: public, max-age=0, must-revalidate).
-        source: '/icon.svg',
+        // The three site icons (the tab icon, the older .ico and the phone home screen icon) are linked by an address
+        // that carries a hash of the file (for example /icon.svg?icon.<hash>.svg), so a changed icon is a new address
+        // and each can be kept for a year (W10). Without this each is checked again on every page view and soft
+        // navigation (Cache-Control: public, max-age=0, must-revalidate). The hash is part of the query's name and
+        // changes with the file, so a header rule cannot select "has a hash" (a query matcher takes one exact name):
+        // the bare address, which nothing in the site links to, gets the same header.
+        source: '/:icon(icon\\.svg|favicon\\.ico|apple-icon\\.png)',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
     ];

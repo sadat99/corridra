@@ -50,20 +50,68 @@ async function iconRequests(page: Page) {
   };
 }
 
-test('the site icon address carries the file hash and is kept for a year', async ({
+// The three icons the page links: the tab icon, the older .ico (some browsers ask for it) and the phone home screen icon.
+const icons = [
+  {
+    name: 'the tab icon',
+    link: 'link[rel="icon"][type="image/svg+xml"]',
+    address: iconAddress,
+    type: 'image/svg+xml',
+  },
+  {
+    name: 'the older .ico',
+    link: 'link[rel="icon"][type="image/x-icon"]',
+    address: /^\/favicon\.ico\?favicon\.[A-Za-z0-9_-]+\.ico$/,
+    type: /^image\/(?:x-icon|vnd\.microsoft\.icon)$/,
+  },
+  {
+    name: 'the phone home screen icon',
+    link: 'link[rel="apple-touch-icon"]',
+    address: /^\/apple-icon\.png\?apple-icon\.[A-Za-z0-9_-]+\.png$/,
+    type: 'image/png',
+  },
+] as const;
+
+for (const icon of icons) {
+  test(`${icon.name}: its address carries the file hash and it is kept for a year`, async ({
+    page,
+    request,
+  }) => {
+    await page.goto('/');
+    const href = await page.locator(icon.link).getAttribute('href');
+    expect(href).toMatch(icon.address);
+    const response = await request.get(href!);
+    expect(response.status()).toBe(200);
+    expect(response.headers()['content-type']).toMatch(icon.type);
+    expect(response.headers()['cache-control']).toBe('public, max-age=31536000, immutable');
+    // The rule is not kept by other addresses of the site: pages stay as they were.
+    const home = await request.get('/');
+    expect(home.headers()['cache-control'] ?? '').not.toContain('immutable');
+  });
+}
+
+test('the page links only the hashed form of each icon, never the bare address', async ({
   page,
-  request,
 }) => {
   await page.goto('/');
-  const href = await page.locator('link[rel="icon"][type="image/svg+xml"]').getAttribute('href');
-  expect(href).toMatch(iconAddress);
-  const response = await request.get(href!);
-  expect(response.status()).toBe(200);
-  expect(response.headers()['content-type']).toBe('image/svg+xml');
-  expect(response.headers()['cache-control']).toBe('public, max-age=31536000, immutable');
-  // The route is not kept by other addresses of the site: pages stay as they were.
-  const home = await request.get('/');
-  expect(home.headers()['cache-control'] ?? '').not.toContain('immutable');
+  const hrefs = await page
+    .locator('head link[rel~="icon"], head link[rel="apple-touch-icon"]')
+    .evaluateAll((links) => links.map((link) => link.getAttribute('href') ?? ''));
+  expect(hrefs.length).toBeGreaterThanOrEqual(3);
+  for (const href of hrefs)
+    expect(href, href).toMatch(/\?(?:icon|favicon|apple-icon)\.[A-Za-z0-9_-]+\./);
+});
+
+// A header rule cannot ask for "has a hash" (the hash is in the name of the query), so the bare address, which nothing
+// links to, is kept the same way. This records that, so the choice is known and a change to it is deliberate.
+test('the bare address of each icon is kept for a year too, and nothing links to it', async ({
+  request,
+}) => {
+  for (const path of ['/icon.svg', '/favicon.ico', '/apple-icon.png']) {
+    const response = await request.get(path);
+    expect(response.status(), path).toBe(200);
+    expect(response.headers()['cache-control'], path).toBe('public, max-age=31536000, immutable');
+  }
 });
 
 test('the icon is fetched once and a tap to another page does not fetch it again', async ({
