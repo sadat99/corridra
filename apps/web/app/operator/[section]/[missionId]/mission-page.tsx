@@ -369,13 +369,26 @@ function Loading({ error, children }: { error: string; children?: ReactNode }) {
 }
 
 /** The full workspace section, which works whether or not section addresses are switched on. */
-function sectionHref(tenant: string, slug: string) {
-  return `/operator?workspace=${encodeURIComponent(tenant)}#workspace-${slug}`;
+function sectionHref(tenant: string, slug: string, missionId?: string) {
+  // W5: the research and commercial sections open on this mission. The mission is only a hint to pick
+  // from what the section already lists; the section still ignores it when it is not in that list.
+  const mission = missionId ? `&mission=${encodeURIComponent(missionId)}` : '';
+  return `/operator?workspace=${encodeURIComponent(tenant)}${mission}#workspace-${slug}`;
 }
 
-function SectionLink({ tenant, slug, label }: { tenant: string; slug: string; label: string }) {
+function SectionLink({
+  tenant,
+  slug,
+  label,
+  missionId,
+}: {
+  tenant: string;
+  slug: string;
+  label: string;
+  missionId?: string;
+}) {
   return (
-    <a className="text-link" href={sectionHref(tenant, slug)}>
+    <a className="text-link" href={sectionHref(tenant, slug, missionId)}>
       {label}
     </a>
   );
@@ -490,7 +503,12 @@ function Companies({ tenant, missionId }: { tenant: string; missionId: string })
       ) : (
         <p>No companies on this mission&apos;s shortlist yet.</p>
       )}
-      <SectionLink tenant={tenant} slug="research" label="Find and add companies" />
+      <SectionLink
+        tenant={tenant}
+        slug="research"
+        label="Find and add companies"
+        missionId={missionId}
+      />
     </>
   );
 }
@@ -541,7 +559,12 @@ function Quotes({
       <button type="button" className="text-link" onClick={onRecord}>
         Record or Revise a Supplier Offer
       </button>{' '}
-      <SectionLink tenant={tenant} slug="commercial" label="Quotes and billing" />
+      <SectionLink
+        tenant={tenant}
+        slug="commercial"
+        label="Quotes and billing"
+        missionId={missionId}
+      />
     </>
   );
 }
