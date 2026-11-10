@@ -283,10 +283,13 @@ export default async function Page({
         </div>
       )}
       {view === 'more' && (
-        <div id="more" tabIndex={-1} className="ux-account-groups">
+        <div id="more" tabIndex={-1} className="ux-account-groups ux-account-settings">
           <AccountSettings
             profile={
-              <section className="ux-account-profile" aria-label="Your verified profile">
+              <section
+                className="ux-account-profile ux-account-card"
+                aria-label="Your verified profile"
+              >
                 <span className="ux-status" data-tone="positive">
                   Verified account email
                 </span>
@@ -296,7 +299,7 @@ export default async function Page({
               </section>
             }
             workspaces={
-              <section aria-label="Manage your work">
+              <section aria-label="Manage your work" className="ux-account-panel">
                 <h2>Manage your work</h2>
                 <ul className="ux-link-list">
                   <li>
@@ -334,7 +337,7 @@ export default async function Page({
             }
             notifications={
               customerNotificationsEnabled() && (
-                <section aria-label="Notifications">
+                <section aria-label="Notifications" className="ux-account-panel">
                   <h2>Notifications</h2>
                   <ul className="ux-link-list">
                     <li>
@@ -349,7 +352,7 @@ export default async function Page({
             }
             billing={
               customerBillingEnabled() && (
-                <section aria-label="Plan and billing">
+                <section aria-label="Plan and billing" className="ux-account-panel">
                   <h2>Plan and billing</h2>
                   <ul className="ux-link-list">
                     <li>
@@ -363,22 +366,17 @@ export default async function Page({
               )
             }
             security={
-              <section aria-label="Security">
+              <section aria-label="Security" className="ux-account-panel">
                 <h2>Security</h2>
-                <div className="ux-profile-actions">
+                <div className="ux-account-actions">
                   <AccountSignout />
                 </div>
-                <OperatorInvitationHint key={data.user.id} />
-                {uxSwitchOn('CORRIDRA_UX_NAV') ? (
-                  <p>
-                    <Link className="text-link ux-action" href="/account/all-tools">
-                      All Tools
-                    </Link>
-                  </p>
-                ) : (
-                  // Without the new navigation there is no All tools page, so the entry points stay here.
-                  <WaysIn />
-                )}
+                <OperatorInvitationHint
+                  key={data.user.id}
+                  headingLevel={3}
+                  className="ux-account-card ux-account-row"
+                />
+                {!uxSwitchOn('CORRIDRA_UX_NAV') && <WaysIn />}
                 {customerAccountLifecycleEnabled() && accountIssuer ? (
                   <AccountClosure subject={data.user.id} issuer={accountIssuer} />
                 ) : (
@@ -387,6 +385,14 @@ export default async function Page({
               </section>
             }
           />
+          {/* All Tools is in the left bar from 1024 px when it carries the link; this row is the way in below that. */}
+          {uxSwitchOn('CORRIDRA_UX_NAV') ? (
+            <div className="ux-account-actions ux-account-alltools">
+              <Link className="text-link ux-action" href="/account/all-tools">
+                All Tools
+              </Link>
+            </div>
+          ) : null}
         </div>
       )}
     </CustomerShell>
@@ -396,8 +402,8 @@ export default async function Page({
 /** The entry points All tools holds, kept on Account while the new navigation (and All tools) is off. */
 function WaysIn() {
   return (
-    <section aria-label="Other ways in" className="ux-ways-in">
-      <h2>Other ways in</h2>
+    <section aria-label="Other ways in" className="ux-ways-in ux-account-group">
+      <h3>Other ways in</h3>
       <ul className="ux-link-list">
         <li>
           <Link prefetch={false} href="/plan">

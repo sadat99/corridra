@@ -21,7 +21,11 @@ import { ErasureDialog } from './erasure-dialog';
 /** Shown while the real controls are closed or unavailable. Plain text, one sentence, no control. */
 export function AccountClosureComingSoon() {
   return (
-    <section aria-label={accountWords.sectionHeading}>
+    <section
+      aria-label={accountWords.sectionHeading}
+      className="ux-account-card ux-account-zone"
+      data-tone="notice"
+    >
       <h3>{accountWords.sectionHeading}</h3>
       <p>
         Coming soon. To close your account or ask for erasure now, write to the privacy contact on
@@ -66,7 +70,11 @@ export function AccountClosure({ subject, issuer }: { subject: string; issuer: s
   useEffect(() => {
     if (announce) heading.current?.focus();
   }, [announce]);
-  if (state === undefined) return null;
+  // Holds the room the block will fill, so the page does not jump when the state arrives.
+  if (state === undefined)
+    return (
+      <div className="ux-account-card ux-account-zone" data-tone="loading" aria-hidden="true" />
+    );
   if (state === null) return <AccountClosureComingSoon />;
 
   const reload = async () => setState((await readAccountState(headers)) ?? state);
@@ -122,7 +130,11 @@ export function AccountClosure({ subject, issuer }: { subject: string; issuer: s
   const [statusLabel, statusLine] = erasure ? erasureStatusWords[erasure.status] : ['', ''];
   const closed = state.status !== 'active';
   return (
-    <section aria-label={accountWords.sectionHeading}>
+    <section
+      aria-label={accountWords.sectionHeading}
+      className="ux-account-card ux-account-zone"
+      data-tone={closed ? 'neutral' : 'danger'}
+    >
       <h3 ref={heading} tabIndex={-1}>
         {accountWords.sectionHeading}
       </h3>
@@ -133,30 +145,32 @@ export function AccountClosure({ subject, issuer }: { subject: string; issuer: s
       )}
       {closed ? (
         <>
-          {state.status === 'closed' && state.undoUntil ? (
-            <p>Your account is closed until {whenWords(state.undoUntil)}.</p>
-          ) : (
-            <p>{accountWords.finalNotice}</p>
-          )}
-          {state.canUndo && (
-            <button
-              type="button"
-              className="primary-link"
-              disabled={busy}
-              onClick={() =>
-                void run(undoing.send, { action: 'undo' }, async () => {
-                  await reload();
-                  setAnnounce(accountWords.reopened);
-                })
-              }
-            >
-              {busy ? 'Please Wait…' : 'Reopen My Account'}
-            </button>
-          )}
+          <div className="ux-account-row">
+            {state.status === 'closed' && state.undoUntil ? (
+              <p>Your account is closed until {whenWords(state.undoUntil)}.</p>
+            ) : (
+              <p>{accountWords.finalNotice}</p>
+            )}
+            {state.canUndo && (
+              <button
+                type="button"
+                className="primary-link"
+                disabled={busy}
+                onClick={() =>
+                  void run(undoing.send, { action: 'undo' }, async () => {
+                    await reload();
+                    setAnnounce(accountWords.reopened);
+                  })
+                }
+              >
+                {busy ? 'Please Wait…' : 'Reopen My Account'}
+              </button>
+            )}
+          </div>
           <LifecycleErrorLine message={message} />
         </>
       ) : (
-        <div>
+        <div className="ux-account-row">
           <h4>Close Account</h4>
           <p>{accountWords.closeRow}</p>
           <button
@@ -169,7 +183,7 @@ export function AccountClosure({ subject, issuer }: { subject: string; issuer: s
         </div>
       )}
       {!erasure && (
-        <div>
+        <div className="ux-account-row">
           <h4>Ask for Erasure</h4>
           <p>{accountWords.erasureRow}</p>
           <button
@@ -182,7 +196,7 @@ export function AccountClosure({ subject, issuer }: { subject: string; issuer: s
         </div>
       )}
       {erasure && (
-        <div className="ux-draft-notice">
+        <div className="ux-account-status">
           <h4>Erasure Request</h4>
           <dl>
             <dt>Reference</dt>

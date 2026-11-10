@@ -27,6 +27,6 @@ export function AccountSettings({
   if (billing) tabs.push({ id: 'billing', label: 'Plan and Billing', panel: billing });
   if (security) tabs.push({ id: 'security', label: 'Security', panel: security });
   if (tabs.length === 0) return null;
-  if (tabs.length === 1) return <>{tabs[0]!.panel}</>;
-  return <SubTabs tabs={tabs} label="Account sections" />;
+  if (tabs.length === 1) return <div className="ux-account-tabs">{tabs[0]!.panel}</div>;
+  return <SubTabs tabs={tabs} label="Account sections" className="ux-account-tabs" />;
 }
