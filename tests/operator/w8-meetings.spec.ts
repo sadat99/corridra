@@ -767,16 +767,16 @@ test.describe('the real page', () => {
         const { width, height, hard } = viewport;
         await page.setViewportSize({ width, height });
         await openReal(page, state());
-        await expect(items(page)).toHaveCount(1);
-        await expect(page.locator('details.ux-journey-disclosure')).not.toHaveAttribute(
-          'open',
-          /.*/,
-        );
         await expect(page.locator('footer')).toBeVisible();
         const screens = screensOf(await heightOf(page), viewport);
         figures[String(width)] = screens;
         ends[String(width)] = await endsAt(page);
-        expect(screens, `${name} at ${width}`).toBeLessThanOrEqual(hard);
+        expect.soft(screens, `${name} at ${width}`).toBeLessThanOrEqual(hard);
+        // The measure is of the closed page: the first meeting only, and What Happens Next shut.
+        await expect.soft(items(page)).toHaveCount(1);
+        await expect
+          .soft(page.locator('details.ux-journey-disclosure'))
+          .not.toHaveAttribute('open', /.*/);
       }
       for (const viewport of recorded) {
         const { width, height } = viewport;
@@ -806,7 +806,7 @@ test.describe('the real page', () => {
       await expect(page.locator('.ux-meeting-list').getByRole('link')).toHaveCount(3);
       const screens = screensOf(await heightOf(page), viewport);
       figures[String(width)] = screens;
-      expect(screens, `Your Requests at ${width}`).toBeLessThanOrEqual(hard);
+      expect.soft(screens, `Your Requests at ${width}`).toBeLessThanOrEqual(hard);
     }
     info.annotations.push({ type: 'page-length', description: JSON.stringify(figures) });
     console.log(`page length, real page and shell, Your Requests tab: ${JSON.stringify(figures)}`);
