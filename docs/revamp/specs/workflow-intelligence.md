@@ -122,6 +122,33 @@ For the GO sections the mission in the address is only a hint. It must be a well
 
 Tests: `tests/operator/w5-mission-context.spec.ts`, W5-links and W5-research and W5-commercial (listed, malformed, not listed, later choice wins), 9 cases; 7 fail with the source change reverted.
 
+### W8. One list of all meetings
+
+Owner, 10 Nov 2026, in S17: "For signed in users, there multiple navigation links as placeholders now in different menus on the header and others, we need to make them 100% functional(as per the latest prodcut vision and ambitions, ux/ui & other requirements), instead of just placeholders witth coming soon." Customer presentation only, signed in: no migration, no new permission, route or switch, and no data the person cannot already open.
+
+`/account/meetings` (the Meetings tab, behind `CORRIDRA_UX_SHELLS_V2`) said "One list of all your meetings" with a "Coming soon" tag. It now lists every meeting and visit from the person's own saved reports, in one place. Each source was checked first (GO or STOP):
+
+1. The person's requests (`apps/web/lib/work-items/load.ts`, `loadWorkItems`): GO, unchanged. The page already read it. Only these request ids are ever used.
+2. Assigned missions (`customerAssignedMissions.list`, pages of 25, followed up to `movePageCap`, as `apps/web/lib/home-journeys/load.ts` does): GO, unchanged. `roomLinkFor` picks the one saved report for each request, exactly as the Room does. A list that failed or was cut short never labels a request "not saved".
+3. The saved report (`customerSavedMissions.command` view, audience `CLIENT_PROGRESS`, the same session proof the saved report page uses): GO, unchanged. At most `meetingReportCap` (12) reports are read in one page load, at the same time. Each result goes through the same `report()` check the report page uses, and only the itinerary block is kept (ADR 0076: no price, offer, contact or export).
+4. A request whose report is not saved to the Library: STOP. It is not read, because the Room cannot show it either. The page says so in plain words and links to the Library, the same next step the Room gives.
+5. More than 12 saved reports: STOP for the extra ones. A plain notice says some meetings may be missing, and the person can open a request to see all of its meetings.
+6. Delivery or saved-missions module off: STOP. No report is read; one plain sentence replaces the groups and the requests list stays.
+7. Operator Meetings (W5 STOP) and organiser programme meetings (ADR 0075): not touched.
+
+What the page does:
+
+- Meetings are grouped by their start time against the server clock: "Coming up" (soonest first), "Done and past" (newest first), "Time not confirmed yet", then "Date changed". A dated meeting is past when its end (or its start, when there is no end) is before now; equal to now is still upcoming. Status never decides the group; the badge tells the status.
+- A changed schedule (`isChangedMeeting`, the Trip rule) keeps only its name, the "Date changed" badge and the changed sentence. The old time, zone, place and status are dropped on the server, so they are not in the page text, attributes or `dateTime`.
+- Each row shows name, Starts and Ends with the time zone, Place (text only, "Not shared yet" when absent), status badge, request title and a link "Open in the Request". The first three meetings show, then "Show All N Meetings and Visits". Names and places in Chinese are marked `lang="zh"`.
+- The link opens the Room on Meetings (`?view=meetings`) when `CORRIDRA_UX_TRIP`, `CORRIDRA_UX_ROAD` and `CORRIDRA_UX_LENSES` are all on; otherwise the saved report at `/account/missions/<id>`, where the times are today. The Room reads `?view` only when the value is exactly `meetings` and the Trip and lenses switches are on; anything else opens Overview.
+- A read that fails, an incomplete assignment list or a capped read shows the partial notice. The page never says "no meetings" when nothing was read.
+- Copy is English only (the page has no reviewed translation), with no price, offer, contact, result or booking claim.
+
+Files: `apps/web/lib/saved-report-check.ts` (the report check, a pure move), `apps/web/lib/trip.ts` (`statusWords`, a pure move), `apps/web/lib/meetings/{load,group,cards}.ts`, `apps/web/lib/room.ts` (`initialLensFor`), `apps/web/app/account/meetings/{page.tsx,meetings-list.tsx}`, `apps/web/app/account/rooms/[requestId]/{page.tsx,room-view.tsx,room-view.css}` (one selector added). The two pure moves were proved with `diff` against the old lines.
+
+Tests: `tests/integration/w8-meetings.test.ts` (grouping, status map, cap, `?view` parsing, loader with mocked services, source checks), additions to `tests/integration/revamp-nav-customer-model.test.ts` and `tests/integration/ux-trip.test.ts`, `tests/operator/w8-meetings.spec.ts` (real component: language marks, times, badges, link names, widths 320, 390, 768 and 1440, axe), and the stricter replacement of the "Coming soon" case in `tests/e2e/verification/revamp-s2/customer-shell.spec.ts`. REVERT-PROOF-PLACEHOLDER
+
 ## 5. Measurement
 
 Measured for each changed journey: steps and fields before and after, repeated inputs removed, reading-level numbers from W1, UX gate counts, and the page lengths from the layout budget tests. Conversion, satisfaction, revenue and speed are not claimed: no measurement for them exists.
