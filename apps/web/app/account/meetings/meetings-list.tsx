@@ -65,6 +65,12 @@ export function MeetingsList({ groups }: { groups: readonly MeetingGroup[] }) {
                         {card.name}
                       </h3>
                       <StatusBadge tone={card.badge.tone}>{card.badge.text}</StatusBadge>
+                      <Link className="text-link" prefetch={false} href={card.href}>
+                        Open in the Request
+                        <span className="sr-only">
+                          : {card.name}, {card.requestTitle}, item {start + index + 1} of {total}
+                        </span>
+                      </Link>
                     </div>
                     {card.details ? null : <p>{say('room.trip.changed')}</p>}
                     <dl className="room-trip-facts">
@@ -99,14 +105,6 @@ export function MeetingsList({ groups }: { groups: readonly MeetingGroup[] }) {
                         </dd>
                       </div>
                     </dl>
-                    <div className="room-actions">
-                      <Link className="text-link" prefetch={false} href={card.href}>
-                        Open in the Request
-                        <span className="sr-only">
-                          : {card.name}, {card.requestTitle}, item {start + index + 1} of {total}
-                        </span>
-                      </Link>
-                    </div>
                   </li>
                 ))}
               </ol>

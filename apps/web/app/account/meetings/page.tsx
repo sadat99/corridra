@@ -89,8 +89,9 @@ export default async function Page() {
       {whatNext}
       {meetings.capped ? (
         <p role="status">
-          We show meetings from the first {meetingReportCap} reports only. Some meetings may be
-          missing. Open a request in the Your Requests tab to see all of its meetings.
+          We show meetings from the first {meetingReportCap} reports only.{' '}
+          {partial ? null : 'Some meetings may be missing. '}Open a request in the Your Requests tab
+          to see all of its meetings.
         </p>
       ) : null}
       {meetings.notSaved > 0 ? (

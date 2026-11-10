@@ -746,15 +746,25 @@ test.describe('the real page', () => {
     page.evaluate(() =>
       Math.round(document.querySelector('footer')!.getBoundingClientRect().bottom + window.scrollY),
     );
+  // Every state here is held to the limits. The cap, partial and not saved notices all showing at once is over the 1440
+  // limit and is recorded, with its figure, in docs/revamp/specs/workflow-intelligence.md (W8, Page length), not asserted.
   const states: [string, () => RealPageState][] = [
     ['typical: 3 meetings, 2 requests', typicalState],
     ['12 long Chinese meetings, 3 requests', longChineseState],
     ['typical with the partial notice', () => withMeetings(typicalState(), { partial: true })],
     [
+      '12 long Chinese meetings with the partial notice',
+      () => withMeetings(longChineseState(), { partial: true }),
+    ],
+    [
       '12 long Chinese meetings with the cap notice',
       () => withMeetings(longChineseState(), { capped: true }),
     ],
     ['typical with the not saved note', () => withMeetings(typicalState(), { notSaved: 1 })],
+    [
+      '12 long Chinese meetings with the cap and partial notices',
+      () => withMeetings(longChineseState(), { capped: true, partial: true }),
+    ],
   ];
 
   for (const [name, state] of states)

@@ -280,6 +280,21 @@ describe('the tabs', () => {
     expect(html.indexOf(cap)).toBeGreaterThan(html.indexOf(tablist));
     expect(html).not.toContain('Open a request below');
   });
+  it('drops the repeated sentence from the cap notice when the partial notice already says it', async () => {
+    state.meetings = read({ capped: true, partial: true, rows: [row('Visit one')] });
+    const html = await render();
+    const cap =
+      'We show meetings from the first 12 reports only. Open a request in the Your Requests tab to see all of its meetings.';
+    expect(panel(html, 'meetings')).toContain(cap);
+    expect(html.split('Some meetings may be missing.').length).toBe(2);
+    expect(html.indexOf('Some meetings may be missing.')).toBeLessThan(html.indexOf(tablist));
+  });
+  it('keeps the whole cap text when the partial notice is not showing', async () => {
+    state.meetings = read({ capped: true, rows: [row('Visit one')] });
+    const html = await render();
+    expect(html.split('Some meetings may be missing.').length).toBe(2);
+    expect(html.indexOf('Some meetings may be missing.')).toBeGreaterThan(html.indexOf(tablist));
+  });
   it('puts the not saved note inside the Meetings panel only', async () => {
     state.meetings = read({ notSaved: 1 });
     const html = await render();
