@@ -163,7 +163,8 @@ function TenantWorkspace({
         return {
           ...old,
           [kind]: add(old[kind], page[kind]),
-          [`${kind}Total`]: page[`${kind}Total`],
+          // A continuation carries no total; the first page's stands (G12 follow-up).
+          [`${kind}Total`]: page[`${kind}Total`] ?? old[`${kind}Total`],
           [`${kind}Next`]: page[`${kind}Next`],
         };
       });

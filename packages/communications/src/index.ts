@@ -168,9 +168,16 @@ export class CommunicationService {
         : null;
       const messageRows = messages?.rows ?? [];
       const attempts = messageRows.length
-        ? (
+        ? // Bounded (G12 follow-up): the newest 10 attempts of each listed message, so at most 500 a
+          // page. One dispatch round writes at most 7 (three claims, each with an end, and a retry
+          // row); a staff retry starts another round, so only a message retried more than once can
+          // have older attempts left out here.
+          (
             await db.query(
-              'SELECT * FROM app.communication_attempt WHERE tenant_id=$1 AND message_id=ANY($2::uuid[]) ORDER BY created_at DESC,id',
+              `SELECT a.* FROM unnest($2::uuid[]) AS m(id) CROSS JOIN LATERAL (
+                 SELECT * FROM app.communication_attempt x WHERE x.tenant_id=$1 AND x.message_id=m.id
+                 ORDER BY x.created_at DESC,x.id LIMIT 10) a
+               ORDER BY a.created_at DESC,a.id`,
               [ctx.tenantId, messageRows.map((m) => m.id)],
             )
           ).rows

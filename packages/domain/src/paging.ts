@@ -80,11 +80,19 @@ type Queryable = {
 export type PageRow = any;
 
 /**
- * One keyset page of a list: at most `limit` rows after the cursor in a stable order (sort time, then id),
- * the exact total, and the cursor of the next page. `select` must give the rows an `id` column and may
- * not use the names `sort_at`, `page_key` or `total`. The caller's `where` and `values` are applied before
- * paging, so a filter never shrinks a page after it was read. The base set is read once for both the page
- * and the total.
+ * One keyset page of a list: at most `limit` rows after the cursor in a stable order (sort time, then id)
+ * and the cursor of the next page. `select` must give the rows an `id` column and may not use the names
+ * `sort_at`, `page_key` or `total`. The caller's `where` and `values` are applied before paging, so a
+ * filter never shrinks a page after it was read.
+ *
+ * Cost (CRUD G12 follow-up): a row policy on the listed table runs once for every row the scan reads, and
+ * the database checks a condition before that policy only when the condition is leakproof. So:
+ * - The cursor condition sits in the same scan as the caller's filter. `sortExpression` must be leakproof
+ *   for that: a plain column, or `CASE WHEN a IS NULL THEN b ELSE a END` in place of `coalesce(a,b)`, which
+ *   the planner treats as leaky and would check after the policy on every row before the cursor.
+ * - The exact total is counted only when asked (`count`, on by default for the first page, where it is a
+ *   window over the same scan, so the policy does not run twice). A continuation returns `total: null`
+ *   and the client keeps the total of the first page; `count: true` on a continuation recounts.
  */
 export async function keysetPage(
   db: Queryable,
@@ -97,30 +105,34 @@ export async function keysetPage(
     direction: 'asc' | 'desc';
     cursor: PageCursor | null;
     limit: number;
+    count?: boolean;
   },
 ) {
+  if (/\bcoalesce\s*\(/i.test(q.sortExpression))
+    throw new Error('A page sort expression must be leakproof: write coalesce(a,b) as a CASE.');
   const n = q.values.length,
     compare = q.direction === 'asc' ? '>' : '<',
-    order = q.direction.toUpperCase();
+    order = q.direction.toUpperCase(),
+    count = q.count ?? q.cursor === null,
+    // Without a cursor the window counts every filtered row; with one it would count only the rest.
+    window = count && !q.cursor;
   const rows = (
     await db.query(
-      `WITH base AS MATERIALIZED (SELECT ${q.select},${q.sortExpression} AS sort_at FROM ${q.from} WHERE ${q.where})
-       SELECT base.*,${keyOf('sort_at')} AS page_key,(SELECT count(*)::int FROM base) AS total FROM base
-       WHERE $${n + 1}::timestamptz IS NULL OR (sort_at,id)${compare}($${n + 1}::timestamptz,$${n + 2}::uuid)
-       ORDER BY sort_at ${order},id ${order} LIMIT $${n + 3}`,
-      [...q.values, q.cursor?.k ?? null, q.cursor?.id ?? null, q.limit + 1],
+      `SELECT base.*,${keyOf('sort_at')} AS page_key${window ? ',count(*) OVER () AS total' : ''}
+       FROM (SELECT ${q.select},${q.sortExpression} AS sort_at FROM ${q.from} WHERE ${q.where}) base
+       ${q.cursor ? `WHERE (sort_at,id)${compare}($${n + 1}::timestamptz,$${n + 2}::uuid)` : ''}
+       ORDER BY sort_at ${order},id ${order} LIMIT $${n + (q.cursor ? 3 : 1)}`,
+      q.cursor ? [...q.values, q.cursor.k, q.cursor.id, q.limit + 1] : [...q.values, q.limit + 1],
     )
-  ).rows as { page_key: string; id: string; total: number }[];
+  ).rows as { page_key: string; id: string; total?: number }[];
   const { page, next } = splitPage(rows, q.limit);
-  // A cursor past the last row gives an empty page; the total is still exact.
-  const total = rows.length
-    ? Number(rows[0]!.total)
-    : q.cursor
-      ? Number(
-          (await db.query(`SELECT count(*)::int AS n FROM ${q.from} WHERE ${q.where}`, q.values))
-            .rows[0]!.n,
-        )
-      : 0;
+  let total: number | null = null;
+  if (window) total = rows.length ? Number(rows[0]!.total) : 0;
+  else if (count)
+    total = Number(
+      (await db.query(`SELECT count(*)::int AS n FROM ${q.from} WHERE ${q.where}`, q.values))
+        .rows[0]!.n,
+    );
   return {
     rows: page.map((r) => withoutPageFields(r, ['sort_at'])) as PageRow[],
     total,

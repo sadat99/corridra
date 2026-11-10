@@ -67,8 +67,11 @@ export function DeliveryExperience(props: Props) {
     [meetings, setMeetings] = useState<
       { id: string; mission_id: string; title: string; status: string }[]
     >([]),
+    [meetingNote, setMeetingNote] = useState(''),
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false);
+  // The picker asks only for these participants' meetings, filtered on the server (G12 follow-up).
+  const missionKey = [...new Set(participants.map((p) => p.mission_id))].sort().join(',');
   const endpoint = `/api/workspace/delivery?tenant=${encodeURIComponent(tenant)}`;
   async function load() {
     const r = await fetch(
@@ -93,26 +96,45 @@ export function DeliveryExperience(props: Props) {
       .catch((e) => {
         if (active) setMessage(e.message);
       });
-    // Meetings come in pages of 50: read every page so the picker never hides a meeting.
+    // Meetings of the listed participants only, in pages of 50 and at most 100 missions a request. The
+    // read stops at 10 pages per group and says so; a failed page keeps what was read and says so too.
     void (async () => {
       const all: { id: string; mission_id: string; title: string; status: string }[] = [];
-      let after = '';
-      for (let page = 0; page < 40; page++) {
-        const r = await fetch(
-          `/api/workspace/meetings?tenant=${encodeURIComponent(tenant)}${after}`,
-        );
-        const v = await r.json();
-        if (!r.ok) return;
-        all.push(...(v.meetings ?? []));
-        if (!v.next) break;
-        after = `&after=${encodeURIComponent(v.next)}`;
+      const ids = missionKey ? missionKey.split(',') : [];
+      let note = '';
+      for (let start = 0; start < ids.length && !note; start += 100) {
+        const group = ids.slice(start, start + 100).join(',');
+        let after = '';
+        for (let page = 0; ; page++) {
+          if (page === 10) {
+            note = `Showing the first ${all.length} meetings for these participants. Pick from the meetings section for the rest.`;
+            break;
+          }
+          const r = await fetch(
+            `/api/workspace/meetings?tenant=${encodeURIComponent(tenant)}&missionIds=${group}${after}`,
+            { cache: 'no-store' },
+          ).catch(() => null);
+          const v = r ? await r.json().catch(() => ({})) : {};
+          if (!r?.ok) {
+            // A role without meetings access sees no picker list, as before; any other failure is shown.
+            if (r?.status !== 403)
+              note = `Some meetings could not be loaded${all.length ? `; showing ${all.length}` : ''}. Reload to try again.`;
+            break;
+          }
+          all.push(...(v.meetings ?? []));
+          if (!v.next) break;
+          after = `&after=${encodeURIComponent(v.next)}`;
+        }
       }
-      if (active) setMeetings(all);
-    })().catch(() => undefined);
+      if (active) {
+        setMeetings(all);
+        setMeetingNote(note);
+      }
+    })();
     return () => {
       active = false;
     };
-  }, [endpoint, programme, mission, tenant]);
+  }, [endpoint, programme, mission, tenant, missionKey]);
   async function submit(
     e: FormEvent<HTMLFormElement>,
     action: string,
@@ -278,6 +300,7 @@ export function DeliveryExperience(props: Props) {
               </fieldset>
               <fieldset>
                 <legend>Actual meetings for those participants</legend>
+                {meetingNote && <p role="status">{meetingNote}</p>}
                 {meetings
                   .filter((m) => participants.some((p) => p.mission_id === m.mission_id))
                   .map((m) => (

@@ -93,7 +93,9 @@ for (const list of lists)
       const rows = page[list.name] as { id: string }[];
       sizes.push(rows.length);
       ids.push(...rows.map((r) => r.id));
-      total = page[list.total] as number;
+      // A continuation carries no total; the first page's stands (G12 follow-up).
+      if (guard === 0) total = page[list.total] as number;
+      else expect(page[list.total]).toBeNull();
       after = page[list.next] as string | null;
       if (!after) break;
     }
