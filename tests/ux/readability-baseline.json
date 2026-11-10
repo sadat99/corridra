@@ -109,11 +109,11 @@
     "redirectsTo": "/"
   },
   "/contributor": {
-    "grade": 7.6,
-    "hard": 0,
+    "grade": 10.9,
+    "hard": 1,
     "long": 0,
     "sentences": 2,
-    "words": 18
+    "words": 15
   },
   "/contributor/me": {
     "grade": 8.5,
@@ -234,8 +234,8 @@
     "words": 13
   },
   "/operator/setup": {
-    "grade": 11.1,
-    "hard": 2,
+    "grade": 12.4,
+    "hard": 3,
     "long": 0,
     "sentences": 4,
     "words": 39
