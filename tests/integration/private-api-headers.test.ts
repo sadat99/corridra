@@ -88,3 +88,24 @@ describe('the team palette search API and the framework header overrides', () =>
     expect(matching[0]!.headers).toContain("key: 'Cache-Control', value: 'no-store'");
   });
 });
+
+// The team problem report API (ADR-078) answers with a person's own words and the staff triage queue, so the framework
+// must never replace its no-store or no-referrer headers. It is under /api/workspace, not customer-*, so it is named here;
+// the customer problem report API is covered by the customer-* list above.
+describe('the team problem report API and the framework header overrides', () => {
+  const matching = rules.filter((rule) => rule.source === '/api/workspace/problem-reports');
+  it('has one explicit rule for /api/workspace/problem-reports with no-referrer and no-store', () => {
+    expect(
+      matching,
+      'the team problem report API is missing from the private-header overrides in next.config.ts',
+    ).toHaveLength(1);
+    expect(matching[0]!.headers).toContain("key: 'Referrer-Policy', value: 'no-referrer'");
+    expect(matching[0]!.headers).toContain("key: 'Cache-Control', value: 'no-store'");
+  });
+  it('registers the customer problem report API among the customer pages', () => {
+    expect(
+      rules.some((rule) => covers(rule.source, 'customer-problem-reports')),
+      'customer-problem-reports is missing from the private-header overrides',
+    ).toBe(true);
+  });
+});
