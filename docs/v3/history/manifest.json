@@ -365,6 +365,14 @@
       "bytes": 11284,
       "sha256": "665fcad3f2e1a1bf7cf1be5bd289f86270187e9e9fae30a289cee2a3ac373988",
       "meaning": "Exact active ledger at 2bc003b3 (the PR 376 merge, 10 Nov), before PRs 372 and 374 to 376, the S15 and S16 rotations, the waiting install run 42729108780, the owner 9 and 10 Nov decisions on /plan and G4/G5 wording A and B and the KI-41 B4 correction were recorded, including the 9 Nov evening Resume, lanes, merged, G4/G5, Open and Next bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "c2137d43db0ff9ad34b7ae92bcdcf1c6f74e1c50",
+      "archive": "docs/v3/history/ledger-before-s19-records-2026-11-10.md",
+      "bytes": 11396,
+      "sha256": "e5a8d895c195ff30967595a9f3b5b4b0b0df6d1b4fc1c1e80d099458e337fd31",
+      "meaning": "Exact active ledger at c2137d43 (the PR 379 merge, 10 Nov), before PRs 378 to 381, the S15 to S19 and S16 to S20 rotations, the S17 workflow lane and the KI-45 resolution were recorded, including the 10 Nov S15 Lanes, Merged, Open and Next bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
