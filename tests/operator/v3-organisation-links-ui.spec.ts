@@ -558,6 +558,7 @@ const queueItem = {
   filedAt: '2026-10-20T08:00:00.000Z',
   legalName: 'Synthetic Dhaka Textiles Ltd',
   country: 'BD',
+  redacted: false,
   evidenceCount: 1,
   candidateCount: 2,
 };
@@ -627,6 +628,7 @@ const review = (over: Json = {}): Json => ({
     ],
   },
   decisions: ['approve', 'request_evidence', 'reject'],
+  redacted: false,
   ...over,
 });
 async function openStaff(

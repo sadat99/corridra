@@ -9,6 +9,7 @@ import {
   ladderHash,
   liveConstraintFingerprint,
   liveFingerprints,
+  liveTriggerCheck,
   openLadder,
   syntheticOptions,
 } from './organisation-link-support';
@@ -103,6 +104,9 @@ test('fingerprints: the values in the file are the values of a clean install at 
   }
   expect(live.map((r) => ({ ...r }))).toEqual(byName(fileFingerprints()).map((r) => ({ ...r })));
   expect(await liveConstraintFingerprint(w.f.owner)).toBe(fileConstraintFingerprint());
+  // The trigger check is the third plain query in the file. The query lists exactly the guarded functions.
+  expect(await liveTriggerCheck(w.f.owner)).toBe(true);
+  expect(live.map((r) => r.signature)).toEqual(byName(fileFingerprints()).map((r) => r.signature));
   // Grants at the base: only the five entry points that the application calls are granted to the runtime login.
   const granted = live.filter((r) => r.grantees === 'corridra_runtime').map((r) => r.signature);
   expect(granted.sort()).toEqual(

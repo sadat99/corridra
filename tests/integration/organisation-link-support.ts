@@ -65,20 +65,27 @@ type Db = {
   query: (sql: string, args?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
 };
 // The same query text the file runs, taken from between its markers, so a test cannot drift from the guard.
+export function fingerprintQueries() {
+  const sql = ladderSql();
+  return {
+    functions: between(sql, 'fingerprint-query'),
+    constraint: between(sql, 'constraint-query'),
+    trigger: between(sql, 'trigger-query'),
+  };
+}
 export async function liveFingerprints(db: Db) {
-  const query = between(ladderSql(), 'fingerprint-query');
-  const signatures = fileFingerprints()
-    .map((r) => `('${r.signature}')`)
-    .join(',');
-  return (
-    await db.query(
-      `SELECT v.signature,f.fp fingerprint,f.grantees FROM (VALUES ${signatures}) v(signature) LEFT JOIN LATERAL (${query}) f ON true ORDER BY v.signature`,
-    )
-  ).rows as unknown as { signature: string; fingerprint: string | null; grantees: string | null }[];
+  const rows = (await db.query(fingerprintQueries().functions + ' ORDER BY 1')).rows as unknown as {
+    signature: string;
+    fp: string | null;
+    grantees: string | null;
+  }[];
+  return rows.map((r) => ({ signature: r.signature, fingerprint: r.fp, grantees: r.grantees }));
 }
 export async function liveConstraintFingerprint(db: Db) {
-  const query = between(ladderSql(), 'constraint-query').replace(' INTO v_url', '').trim();
-  return (await db.query(query.replace(/;$/, ''))).rows[0]?.encode as string | undefined;
+  return (await db.query(fingerprintQueries().constraint)).rows[0]?.encode as string | undefined;
+}
+export async function liveTriggerCheck(db: Db) {
+  return (await db.query(fingerprintQueries().trigger)).rows[0]?.exists as boolean;
 }
 
 export const issuer =
@@ -489,14 +496,21 @@ export class World {
     await this.workspace(key, label, 'real', legalName, website, country);
     return { who: label, workspaceId: this.ws[key]! };
   }
-  // A synthetic person with a synthetic workspace, for the synthetic side of a search.
-  async freshSyntheticWriter(label: string, legalName: string) {
+  // Staff authority needs an authenticator check from the last five minutes, so a long test renews it.
+  async freshStaff() {
+    await this.f.owner.query('UPDATE identity.assurance SET verified_at=now()');
+  }
+  async admitSynthetic(label: string) {
     await admitSyntheticCustomer(this.f.owner, {
       issuer,
       subject: 'link-a-' + label,
       executorId: this.f.serviceId,
       reason: 'Explicit invented company link test identity; no real account or email',
     });
+  }
+  // A synthetic person with a synthetic workspace, for the synthetic side of a search.
+  async freshSyntheticWriter(label: string, legalName: string) {
+    await this.admitSynthetic(label);
     await this.workspace('FS-' + label, label, 'synthetic', legalName, null);
     return { who: label, workspaceId: this.ws['FS-' + label]! };
   }

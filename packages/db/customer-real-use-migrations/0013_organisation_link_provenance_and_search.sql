@@ -4,6 +4,9 @@
 -- the ledger trigger binding and the evidence URL constraint. Nothing is changed unless all of them match.
 -- Function fingerprints cover the body, settings, security mode, volatility, argument types, defaults and grants.
 -- They do not use pg_get_functiondef. The URL constraint fingerprint ignores quoting and cast layout.
+-- The three checks below are plain SELECT statements between marker comments. An owner can copy each one, add a semicolon and run it
+-- on any database to read the live values. The function query lists nine signatures and returns one row each. The constraint query
+-- returns one hash. The trigger query returns true or false.
 DO $guard$
 DECLARE spec record; v_url text;
  v_url_expected constant text :=
@@ -13,7 +16,7 @@ DECLARE spec record; v_url text;
  ;
 BEGIN
  FOR spec IN
-  SELECT v.signature,v.fingerprint,v.grantees,f.fp,f.grantees live_grantees
+  SELECT e.signature,e.fingerprint,e.grantees,q.fp,q.grantees live_grantees
   FROM (VALUES
    -- fingerprint-begin
    ('customer_private.organisation_link_candidates(uuid)','56de8e772d582208ef012bc8263b525201a6db7fdb74dd11f04f58bc7315064e',''),
@@ -26,34 +29,54 @@ BEGIN
    ('app.customer_organisation_link_decide(uuid,jsonb)','9413d9e413be071ee1cbb1a0493eec99b96e339fea892373547938a75a779560','corridra_runtime'),
    ('customer.organisation_link_search(uuid,text)','87dc608e7f12a70091ecaf6d5297dacab4f0064972b454a41b1b1fa09c727fde','corridra_runtime')
    -- fingerprint-end
-  ) AS v(signature,fingerprint,grantees)
-  LEFT JOIN LATERAL (
+  ) AS e(signature,fingerprint,grantees)
+  LEFT JOIN (
    -- fingerprint-query-begin
-   SELECT encode(sha256(convert_to(concat_ws(E'\x1f',p.prosrc,coalesce(array_to_string(p.proconfig,E'\x1e'),''),p.prosecdef::text,p.provolatile::text,
-     p.proisstrict::text,p.proretset::text,p.prokind::text,p.proparallel::text,p.proleakproof::text,array_to_string(p.proargtypes::regtype[],','),
-     p.prorettype::regtype::text,l.lanname,coalesce(array_to_string(p.proargnames,','),''),p.pronargdefaults::text,coalesce(pg_get_expr(p.proargdefaults,0),'')),'UTF8')),'hex') fp,
-    (SELECT coalesce(string_agg(CASE a.grantee WHEN 0 THEN 'PUBLIC' ELSE a.grantee::regrole::text END,',' ORDER BY CASE a.grantee WHEN 0 THEN 'PUBLIC' ELSE a.grantee::regrole::text END),'')
-     FROM aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a WHERE a.privilege_type='EXECUTE' AND a.grantee<>p.proowner) grantees
-   FROM pg_proc p JOIN pg_language l ON l.oid=p.prolang WHERE p.oid=to_regprocedure(v.signature)
+   SELECT v.signature,f.fp,f.grantees
+   FROM (VALUES
+    ('customer_private.organisation_link_candidates(uuid)'),
+    ('customer_private.organisation_link_public_organisation(uuid)'),
+    ('customer_private.organisation_link_ledger_guard()'),
+    ('customer_private.organisation_link_state(uuid,boolean)'),
+    ('app.customer_organisation_link_review(uuid)'),
+    ('app.customer_organisation_link_queue(text,uuid,integer)'),
+    ('customer.organisation_link_command(uuid,text,jsonb)'),
+    ('app.customer_organisation_link_decide(uuid,jsonb)'),
+    ('customer.organisation_link_search(uuid,text)')
+   ) v(signature)
+   LEFT JOIN LATERAL (
+    SELECT encode(sha256(convert_to(concat_ws(E'\x1f',p.prosrc,coalesce(array_to_string(p.proconfig,E'\x1e'),''),p.prosecdef::text,p.provolatile::text,
+      p.proisstrict::text,p.proretset::text,p.prokind::text,p.proparallel::text,p.proleakproof::text,array_to_string(p.proargtypes::regtype[],','),
+      p.prorettype::regtype::text,l.lanname,coalesce(array_to_string(p.proargnames,','),''),p.pronargdefaults::text,coalesce(pg_get_expr(p.proargdefaults,0),'')),'UTF8')),'hex') fp,
+     (SELECT coalesce(string_agg(CASE a.grantee WHEN 0 THEN 'PUBLIC' ELSE a.grantee::regrole::text END,',' ORDER BY CASE a.grantee WHEN 0 THEN 'PUBLIC' ELSE a.grantee::regrole::text END),'')
+      FROM aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a WHERE a.privilege_type='EXECUTE' AND a.grantee<>p.proowner) grantees
+    FROM pg_proc p JOIN pg_language l ON l.oid=p.prolang WHERE p.oid=to_regprocedure(v.signature)
+   ) f ON true
    -- fingerprint-query-end
-  ) f ON true
+  ) q ON q.signature=e.signature
  LOOP
   IF spec.fp IS DISTINCT FROM spec.fingerprint OR spec.live_grantees IS DISTINCT FROM spec.grantees THEN
    RAISE EXCEPTION 'Real-use prerequisite function differs: %',split_part(spec.signature,'(',1);
   END IF;
  END LOOP;
- IF NOT EXISTS(SELECT FROM pg_trigger t WHERE t.tgrelid='customer_private.organisation_link'::regclass AND t.tgname='organisation_link_ledger_guard'
-   AND NOT t.tgisinternal AND t.tgenabled='O' AND t.tgtype=7 AND t.tgfoid=to_regprocedure('customer_private.organisation_link_ledger_guard()')) THEN
+ IF NOT (
+  -- trigger-query-begin
+  SELECT EXISTS(SELECT FROM pg_trigger t WHERE t.tgrelid='customer_private.organisation_link'::regclass AND t.tgname='organisation_link_ledger_guard'
+   AND NOT t.tgisinternal AND t.tgenabled='O' AND t.tgtype=7 AND t.tgfoid=to_regprocedure('customer_private.organisation_link_ledger_guard()'))
+  -- trigger-query-end
+ ) THEN
   RAISE EXCEPTION 'Real-use prerequisite trigger differs: organisation_link_ledger_guard';
  END IF;
- -- constraint-query-begin
- SELECT encode(sha256(convert_to(concat_ws(E'\x1f',c.contype::text,c.convalidated::text,
-   (SELECT string_agg(a.attname,',' ORDER BY a.attnum) FROM pg_attribute a WHERE a.attrelid=c.conrelid AND a.attnum=ANY(c.conkey)),
-   regexp_replace(regexp_replace(regexp_replace(d.def,$q$'(?:[^']|'')*'$q$,'?','g'),'::text','','g'),'[[:space:]()]','','g'),
-   (SELECT string_agg(m.lit[1],E'\x1e' ORDER BY m.n) FROM regexp_matches(d.def,$q$('(?:[^']|'')*')$q$,'g') WITH ORDINALITY AS m(lit,n))),'UTF8')),'hex')
-  INTO v_url FROM pg_constraint c CROSS JOIN LATERAL (SELECT pg_get_constraintdef(c.oid) def) d
-  WHERE c.conrelid='customer_private.organisation_link_evidence'::regclass AND c.conname='organisation_link_evidence_url_check';
- -- constraint-query-end
+ v_url:=(
+  -- constraint-query-begin
+  SELECT encode(sha256(convert_to(concat_ws(E'\x1f',c.contype::text,c.convalidated::text,
+    (SELECT string_agg(a.attname,',' ORDER BY a.attnum) FROM pg_attribute a WHERE a.attrelid=c.conrelid AND a.attnum=ANY(c.conkey)),
+    regexp_replace(regexp_replace(regexp_replace(d.def,$q$'(?:[^']|'')*'$q$,'?','g'),'::text','','g'),'[[:space:]()]','','g'),
+    (SELECT string_agg(m.lit[1],E'\x1e' ORDER BY m.n) FROM regexp_matches(d.def,$q$('(?:[^']|'')*')$q$,'g') WITH ORDINALITY AS m(lit,n))),'UTF8')),'hex')
+  FROM pg_constraint c CROSS JOIN LATERAL (SELECT pg_get_constraintdef(c.oid) def) d
+  WHERE c.conrelid='customer_private.organisation_link_evidence'::regclass AND c.conname='organisation_link_evidence_url_check'
+  -- constraint-query-end
+ );
  IF v_url IS DISTINCT FROM v_url_expected THEN
   RAISE EXCEPTION 'Real-use prerequisite constraint differs: organisation_link_evidence.url';
  END IF;
@@ -137,6 +160,9 @@ $function$
 ;
 
 -- Staff candidates. A claim of the other side or a redacted claim gets empty lists. Every other row passes the rule.
+-- Cost does not grow with the catalogue: the session side is read once, the cheap reason tests run first (for the name key, with
+-- the in-order letters test that the search uses), and only the organisations and claims that have a reason go on to the
+-- provenance, suppression, redaction, head and linked-workspace tests. The linked workspaces are counted once for the whole ledger.
 CREATE OR REPLACE FUNCTION customer_private.organisation_link_candidates(p_claim uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -144,41 +170,56 @@ CREATE OR REPLACE FUNCTION customer_private.organisation_link_candidates(p_claim
  SET search_path TO 'pg_catalog'
 AS $function$
 DECLARE c customer_private.organisation_link_claim; organisations jsonb; workspaces jsonb;
+ v_side boolean:=customer_private.synthetic_context(); v_shape text; v_hosts uuid[];
 BEGIN
  SELECT * INTO c FROM customer_private.organisation_link_claim x WHERE x.id=p_claim;
- IF NOT FOUND OR NOT customer_private.organisation_link_same_context(app.tenant_is_synthetic(c.tenant_id),customer_private.synthetic_context())
+ IF NOT FOUND OR NOT customer_private.organisation_link_same_context(app.tenant_is_synthetic(c.tenant_id),v_side)
   OR customer_private.organisation_link_redacted(c.id) THEN
   RETURN jsonb_build_object('organisations','[]'::jsonb,'workspaces','[]'::jsonb);
  END IF;
- SELECT coalesce(jsonb_agg(jsonb_build_object('id',m.id,'name',m.name,'country',m.country,'reasons',to_jsonb(m.reasons),'linkedWorkspaces',m.linked) ORDER BY cardinality(m.reasons) DESC,m.name,m.id),'[]'::jsonb)
- INTO organisations FROM (
-  SELECT o.id,o.name,o.country,
-   array_remove(ARRAY[
-    CASE WHEN customer_private.organisation_link_name_key(o.name)=c.name_key AND o.country=c.country_code THEN 'name_country' END,
-    CASE WHEN c.host_key IS NOT NULL AND EXISTS(SELECT FROM app.public_identifier i WHERE i.organisation_id=o.id AND i.valid_until>clock_timestamp() AND i.domain=c.host_key) THEN 'website_host' END,
-    CASE WHEN c.organisation_id=o.id THEN 'chosen_by_customer' END],NULL) reasons,
-   (SELECT count(*)::int FROM (SELECT DISTINCT ON (l.tenant_id) l.state,l.organisation_id,l.tenant_id FROM customer_private.organisation_link l ORDER BY l.tenant_id,l.version DESC) h
-    WHERE h.state='linked' AND h.organisation_id=o.id AND h.tenant_id<>c.tenant_id
-    AND customer_private.organisation_link_same_context(app.tenant_is_synthetic(h.tenant_id),customer_private.synthetic_context())) linked
-  FROM app.organisation o WHERE customer_private.organisation_link_same_context(o.synthetic,customer_private.synthetic_context())
-   AND NOT customer_private.organisation_link_suppressed(o.id)
- ) m WHERE cardinality(m.reasons)>0;
- SELECT coalesce(jsonb_agg(jsonb_build_object('claimId',m.id,'workspaceId',m.tenant_id,'state',m.state,'legalName',m.legal_name,'country',m.country_code,'reasons',to_jsonb(m.reasons)) ORDER BY m.created_at,m.id),'[]'::jsonb)
- INTO workspaces FROM (
-  SELECT x.id,x.tenant_id,x.created_at,x.country_code,head.state,r.details->>'legalName' legal_name,
+ -- A name key is its name with characters deleted, so its letters occur in order in the name. No start or end anchor: a deleted word may come first or last.
+ v_shape:=regexp_replace(c.name_key,'(.)','\1.*','g');
+ v_hosts:=ARRAY(SELECT i.organisation_id FROM app.public_identifier i WHERE c.host_key IS NOT NULL AND i.domain=c.host_key AND i.valid_until>clock_timestamp());
+ WITH hit AS MATERIALIZED (
+  -- OFFSET 0 keeps the three tests from being computed again in the filter and in the list.
+  SELECT o.id,o.name,o.country,o.synthetic,f.name_country,f.website_host,f.chosen
+  FROM app.organisation o
+  CROSS JOIN LATERAL (SELECT
+    (o.country=c.country_code AND regexp_replace(lower(o.name),'[^[:alnum:]]+','','g') ~ v_shape
+     AND customer_private.organisation_link_name_key(o.name)=c.name_key) AS name_country,
+    o.id=ANY(v_hosts) AS website_host,
+    coalesce(c.organisation_id=o.id,false) AS chosen OFFSET 0) f
+  WHERE f.name_country OR f.website_host OR f.chosen),
+ linked AS MATERIALIZED (
+  SELECT h.organisation_id,count(*)::int AS n
+  FROM (SELECT DISTINCT ON (l.tenant_id) l.state,l.organisation_id,l.tenant_id FROM customer_private.organisation_link l ORDER BY l.tenant_id,l.version DESC) h
+  WHERE h.state='linked' AND h.tenant_id<>c.tenant_id
+   AND customer_private.organisation_link_same_context(app.tenant_is_synthetic(h.tenant_id),v_side)
+  GROUP BY h.organisation_id)
+ SELECT coalesce(jsonb_agg(jsonb_build_object('id',m.id,'name',m.name,'country',m.country,
+   'reasons',to_jsonb(array_remove(ARRAY[CASE WHEN m.name_country THEN 'name_country' END,CASE WHEN m.website_host THEN 'website_host' END,CASE WHEN m.chosen THEN 'chosen_by_customer' END],NULL)),
+   'linkedWorkspaces',coalesce(k.n,0))
+   ORDER BY (m.name_country::int+m.website_host::int+m.chosen::int) DESC,m.name,m.id),'[]'::jsonb)
+ INTO organisations FROM hit m LEFT JOIN linked k ON k.organisation_id=m.id
+ WHERE customer_private.organisation_link_same_context(m.synthetic,v_side) AND NOT customer_private.organisation_link_suppressed(m.id);
+ WITH reasoned AS MATERIALIZED (
+  SELECT x.id,x.tenant_id,x.created_at,x.country_code,x.profile_revision_id,
    array_remove(ARRAY[
     CASE WHEN x.name_key=c.name_key AND x.country_code=c.country_code THEN 'name_country' END,
     CASE WHEN c.host_key IS NOT NULL AND x.host_key=c.host_key THEN 'website_host' END,
     CASE WHEN c.organisation_id IS NOT NULL AND x.organisation_id=c.organisation_id THEN 'same_organisation' END],NULL) reasons
   FROM customer_private.organisation_link_claim x
-  JOIN customer_private.organisation_profile_revision r ON r.tenant_id=x.tenant_id AND r.id=x.profile_revision_id
-  CROSS JOIN LATERAL customer_private.organisation_link_head(x.id) head
   WHERE x.tenant_id<>c.tenant_id
-  AND customer_private.organisation_link_same_context(app.tenant_is_synthetic(x.tenant_id),customer_private.synthetic_context())
-  AND NOT customer_private.organisation_link_redacted(x.id)
+   AND ((x.name_key=c.name_key AND x.country_code=c.country_code) OR (c.host_key IS NOT NULL AND x.host_key=c.host_key)
+    OR (c.organisation_id IS NOT NULL AND x.organisation_id=c.organisation_id)))
+ SELECT coalesce(jsonb_agg(jsonb_build_object('claimId',m.id,'workspaceId',m.tenant_id,'state',head.state,'legalName',r.details->>'legalName','country',m.country_code,'reasons',to_jsonb(m.reasons)) ORDER BY m.created_at,m.id),'[]'::jsonb)
+ INTO workspaces FROM reasoned m
+ JOIN customer_private.organisation_profile_revision r ON r.tenant_id=m.tenant_id AND r.id=m.profile_revision_id
+ CROSS JOIN LATERAL customer_private.organisation_link_head(m.id) head
+ WHERE customer_private.organisation_link_same_context(app.tenant_is_synthetic(m.tenant_id),v_side)
+  AND NOT customer_private.organisation_link_redacted(m.id)
   AND (head.state IN ('pending','needs_evidence','creation_approved')
-   OR (head.state='approved' AND EXISTS(SELECT FROM (SELECT DISTINCT ON (l.tenant_id) l.state,l.claim_id FROM customer_private.organisation_link l WHERE l.tenant_id=x.tenant_id ORDER BY l.tenant_id,l.version DESC) h WHERE h.state='linked' AND h.claim_id=x.id)))
- ) m WHERE cardinality(m.reasons)>0;
+   OR (head.state='approved' AND EXISTS(SELECT FROM (SELECT DISTINCT ON (l.tenant_id) l.state,l.claim_id FROM customer_private.organisation_link l WHERE l.tenant_id=m.tenant_id ORDER BY l.tenant_id,l.version DESC) h WHERE h.state='linked' AND h.claim_id=m.id)));
  RETURN jsonb_build_object('organisations',organisations,'workspaces',workspaces);
 END $function$
 ;
@@ -315,7 +356,7 @@ BEGIN
  RETURN jsonb_build_object('claimId',c.id,'workspaceId',c.tenant_id,'workspaceName',(SELECT t.name FROM app.tenant t WHERE t.id=c.tenant_id),
   'expiresAt',clock_timestamp()+interval '60 seconds','kind',c.kind,'state',v_state,'version',v_seq,'filedAt',c.created_at,'note',CASE WHEN v_red THEN v_hidden ELSE c.note END,
   'profile',jsonb_build_object('version',c.profile_version,'currentVersion',v_profile,'legalName',CASE WHEN v_red THEN v_hidden ELSE r.details->>'legalName' END,'countryCode',r.details->>'countryCode',
-   'website',CASE WHEN v_red THEN to_jsonb(v_hidden) ELSE r.details->'website' END,'summary',CASE WHEN v_red THEN v_hidden ELSE r.details->>'summary' END,
+   'website',CASE WHEN v_red AND jsonb_typeof(r.details->'website')='string' THEN to_jsonb(v_hidden) ELSE r.details->'website' END,'summary',CASE WHEN v_red THEN v_hidden ELSE r.details->>'summary' END,
    'commercialRoles',r.details->'commercialRoles','sectors',r.details->'sectors','sizeBand',r.details->>'sizeBand'),
   'chosenOrganisation',v_chosen,'activeLink',v_active,'evidence',v_evidence,'history',v_history,
   'candidates',customer_private.organisation_link_candidates(c.id),
@@ -334,11 +375,12 @@ CREATE OR REPLACE FUNCTION app.customer_organisation_link_queue(p_scope text DEF
  SET search_path TO 'pg_catalog'
 AS $function$
 DECLARE v_staff uuid:=customer_private.organisation_link_staff(); v_items jsonb; v_next uuid; v_after_at timestamptz;
+ v_side boolean:=customer_private.synthetic_context();
 BEGIN
  IF p_scope IS NULL OR p_scope NOT IN ('open','closed') OR p_page_size IS NULL OR p_page_size NOT BETWEEN 1 AND 50 THEN RAISE EXCEPTION 'Invalid queue request' USING ERRCODE='23514'; END IF;
  IF p_after IS NOT NULL THEN
   SELECT c.created_at INTO v_after_at FROM customer_private.organisation_link_claim c WHERE c.id=p_after
-   AND customer_private.organisation_link_same_context(app.tenant_is_synthetic(c.tenant_id),customer_private.synthetic_context());
+   AND customer_private.organisation_link_same_context(app.tenant_is_synthetic(c.tenant_id),v_side);
   IF NOT FOUND THEN RAISE EXCEPTION 'Invalid queue request' USING ERRCODE='23514'; END IF;
  END IF;
  WITH rows AS (
@@ -348,7 +390,7 @@ BEGIN
   FROM customer_private.organisation_link_claim c
   JOIN customer_private.organisation_profile_revision r ON r.tenant_id=c.tenant_id AND r.id=c.profile_revision_id
   CROSS JOIN LATERAL customer_private.organisation_link_head(c.id) head
-  WHERE customer_private.organisation_link_same_context(app.tenant_is_synthetic(c.tenant_id),customer_private.synthetic_context()) AND ((p_scope='open')=(head.state IN ('pending','needs_evidence','creation_approved')))
+  WHERE customer_private.organisation_link_same_context(app.tenant_is_synthetic(c.tenant_id),v_side) AND ((p_scope='open')=(head.state IN ('pending','needs_evidence','creation_approved')))
   AND (p_after IS NULL OR (c.created_at,c.id)>(v_after_at,p_after))
   ORDER BY c.created_at,c.id LIMIT p_page_size+1),
  shown AS (SELECT * FROM rows ORDER BY created_at,id LIMIT p_page_size)
@@ -360,7 +402,7 @@ BEGIN
   CASE WHEN (SELECT count(*) FROM rows)>p_page_size THEN (SELECT id FROM shown ORDER BY created_at DESC,id DESC LIMIT 1) ELSE NULL END
  INTO v_items,v_next;
  IF app.actor_id() IS DISTINCT FROM v_staff THEN RAISE EXCEPTION 'Staff access expired' USING ERRCODE='42501'; END IF;
- RETURN jsonb_build_object('scope',p_scope,'items',v_items,'nextAfter',v_next,'synthetic',customer_private.synthetic_context());
+ RETURN jsonb_build_object('scope',p_scope,'items',v_items,'nextAfter',v_next,'synthetic',v_side);
 END $function$
 ;
 

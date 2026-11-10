@@ -1,11 +1,7 @@
 import { afterAll, beforeAll, expect, test, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { hidden, World } from './organisation-link-support';
-import type {
-  CustomerOrganisationLinkView,
-  StaffOrganisationLinkQueue,
-  StaffOrganisationLinkReview,
-} from '../../packages/auth/src/customer-organisation-links';
+import type { CustomerOrganisationLinkView } from '../../packages/auth/src/customer-organisation-links';
 
 // ADR-079 slice A, readers and decision paths. The ladder file under test is hidden while the world is built at the
 // base state and applied afterwards (see organisation-link-support.ts). LINK_BASE_CHECK=1 never applies it.
@@ -30,15 +26,9 @@ vi.mock('node:fs/promises', async (importOriginal) => {
 let w: World;
 const text = (value: unknown) => JSON.stringify(value);
 const ids = (rows: { id: string }[]) => rows.map((r) => r.id);
-// The staff answers carry a redacted flag that the application types do not list yet (the types are slice B scope).
-type Review = StaffOrganisationLinkReview & { redacted: boolean };
-type Queue = Omit<StaffOrganisationLinkQueue, 'items'> & {
-  items: (StaffOrganisationLinkQueue['items'][number] & { redacted: boolean })[];
-};
-const reviewOf = async (ctx: World['rsCtx'], claimId: string) =>
-  (await w.staff().review(ctx, claimId)) as Review;
-const queueOf = async (ctx: World['rsCtx'], input: object) =>
-  (await w.staff().queue(ctx, input)) as Queue;
+const reviewOf = (ctx: World['rsCtx'], claimId: string) => w.staff().review(ctx, claimId);
+const queueOf = (ctx: World['rsCtx'], input: object) => w.staff().queue(ctx, input);
+type Queue = Awaited<ReturnType<typeof queueOf>>;
 const rowOf = (queue: Queue, claimId: string) => {
   const row = queue.items.find((item) => item.claimId === claimId);
   if (!row) throw new Error('The claim is not in the queue');
@@ -462,9 +452,8 @@ test('redaction: every reader masks the claim text, the replay never returns sto
 });
 
 // The customer state of the claim being shown, with redaction rows made as table owner (the writer is slice B).
-type ShownClaim = NonNullable<CustomerOrganisationLinkView['claim']> & { redacted?: boolean };
 function expectMasked(view: CustomerOrganisationLinkView, plain: string[]) {
-  const claim = view.claim as ShownClaim;
+  const claim = view.claim!;
   expect(claim.redacted).toBe(true);
   expect(claim.note).toBe(hidden);
   expect(claim.evidence!.length).toBeGreaterThan(0);
@@ -519,6 +508,8 @@ test('customer state masks the text of a rejected, redacted claim and of its rep
   const view = await person.view({ workspaceId: w.ws.WR9 });
   expect(view.status).toBe('rejected');
   expectMasked(view, plain);
+  // A field keeps its type when it is hidden: a profile with no website still has none.
+  expect((await reviewOf(w.rsCtx, claimId)).profile.website).toBeNull();
   const replay = await person.command(fileCommand);
   expect(replay.commandId).toBe(fileCommand.commandId);
   expectMasked(replay, plain);
