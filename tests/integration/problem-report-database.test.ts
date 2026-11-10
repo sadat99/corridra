@@ -2054,7 +2054,7 @@ describe('a customer removes the words of their own reports, with the account li
     expect((await filing)!.changed).toBe(true);
   });
 
-  test('a filing and a removal at the same time are seen one after the other: every report has its words or a row, never both and never neither', async () => {
+  test('a filing and a removal at the same time leave no report with both its words and a removal row, and none with neither', async () => {
     await customerFile('sro', body({ detail: 'First words of sro.' }));
     for (let round = 0; round < 4; round++) {
       const [removed, filed] = await Promise.all([
@@ -2582,7 +2582,7 @@ describe('a customer removal beside the staff removal under an erasure request',
     expect(await removeOwn('srl')).toEqual({ removed: 0, changed: false });
   });
 
-  test('works while the control is paused, and the staff removal under an erasure request still follows its own rules', async () => {
+  test('works while the account control is paused', async () => {
     const reference = (await customerFile('srs', body({ detail: 'Words of srs.' })))
       .reference as string;
     await setAccountControl(false);

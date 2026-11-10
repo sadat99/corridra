@@ -666,6 +666,26 @@ describe('the third stage: migration 0003 and the check of the removal of a cust
     await othersWork();
     expect((await removeOwn()).status).toBe(200);
   });
+
+  test('a removal check that fails leaves nothing remembered, so the next call asks again and a found answer is then kept', async () => {
+    const seen: string[] = [];
+    const pool = watching(f.runtime, seen, { next: true });
+    const ask = async () => {
+      const db = await pool.connect();
+      try {
+        return await selfRemovalAvailable(db);
+      } finally {
+        db.release();
+      }
+    };
+    resetSelfRemovalProbe();
+    await expect(ask()).rejects.toThrow('the catalogue could not be read');
+    expect(seen).toHaveLength(1);
+    expect(await ask()).toBe(true);
+    expect(seen).toHaveLength(2);
+    expect(await ask()).toBe(true);
+    expect(seen).toHaveLength(2);
+  });
 });
 
 describe('the removal check markers follow the migrations', () => {

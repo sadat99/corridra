@@ -909,8 +909,8 @@ describe('the customer route removes the words of the person own reports', () =>
     expect(first.status).toBe(200);
     expect(first.headers.get('cache-control')).toBe('no-store');
     expect(first.headers.get('referrer-policy')).toBe('no-referrer');
-    expect(first.body).toEqual({ removed: expect.any(Number), changed: true });
-    expect(first.body.removed).toBeGreaterThanOrEqual(2);
+    // the report filed by the signed-out test above and the two filed here
+    expect(first.body).toEqual({ removed: 3, changed: true });
     // the budget was spent once, for this caller, after the session
     expect(live.budget).toHaveBeenCalledTimes(1);
     expect(live.budget).toHaveBeenCalledWith('local');
