@@ -3103,3 +3103,15 @@ Also recorded for the review: (1) the translated sample notice now reads lead, E
 Verification (exit codes and heads in `docs/revamp/evidence/s13-plan-length/verification.json`). Not run: the full operator suite (only ux-plan-languages, as asked), CI.
 
 Next: S5 Guardian review and merge on exact-head green CI; the owner decides whether the availability sentence may fold (phone 2.48 by hiding it in the current build, four tests to change) and checks the footer legend now needs a tap on `/plan`.
+
+### 10 November 2026: CRUD G12 paging (S14, branch crud-g12-paging from main 466f8ee)
+
+Scope: CRUD item 2 (G12), the owner order "finish what's left, crud and /plan length" (9 Nov 2026, relayed by S12). Lists that stopped at a fixed limit now page. No migration, no installer change; every existing action and field is kept.
+
+Built: `packages/domain/src/paging.ts` (page size 50, an opaque keyset cursor made of a UTC microsecond sort key and the row id, `keysetPage` returning rows, the exact total and the next cursor from one materialized base set, cursor validation that answers 400). Services: meetings (meetings by start or due time, follow-ups by due time, a server-side mission filter), evidence (sources, claims, evidence objects, newest first), communications (targets, contacts, introductions, opt-outs, newest first, attempts for the page's introductions), network (profiles and tasks, newest first). A continuation call returns only the list it continues (the others are empty with a null total); at most one cursor per call for evidence, communications and network. Operator screens: one `ShowMore` control ("Showing X of Y", "Show More Meetings", and so on) on Introductions and meetings, the mission Meetings tab, Sources, Evidence review, and Network. Today reads the first page and shows its existing partial notice when a next page exists. The delivery picker reads every meeting page so it hides nothing.
+
+Also in this PR, the three PR 372 test-only follow-ups: a database test that pauses admissions the real way and still expects withdrawn true, a database-backed test of `RequestWithdrawalSignalService` (ISO date, then not withdrawn after a restore), and the trailing period removed from the PR 372 work-log Read row.
+
+Known limits, recorded not hidden: (1) Reading meetings is slow per row because `app.meeting_parent_access` runs nested access checks (measured about 225 ms per row on 120 cloned rows in the local fixture); paging at 50 bounds it, speeding up that function is a separate piece of work. (2) Other screens that read the evidence or meetings snapshots as pickers (opportunities, commercial mission, counterparties) still see the first page, as they saw the first 50 or 100 before. (3) Meeting cards look up their introduction in the loaded introductions, so a meeting whose introduction is on a later page shows no response until that page is loaded. (4) Task history for network tasks and follow-up owners are unchanged.
+
+Verification: see the PR body receipts (exact commands, exit codes and head SHA). Next: S15 Guardian review; then CRUD item 3 (attendance version check).
