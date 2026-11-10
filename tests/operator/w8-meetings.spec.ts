@@ -16,6 +16,26 @@ let server: Server, origin: string;
 let bundle = '';
 let componentCss = '';
 const css = readFileSync(resolve('apps/web/app/globals.css'), 'utf8');
+// The real layout loads these faces with next/font and defines the variables that --font-ui reads. Without them the
+// whole --font-ui value is invalid and the text falls back to the browser default, which changes every length
+// measured below. The same files are served here under the same variable names.
+const fontDir = resolve('apps/web/app/fonts');
+const bengaliRange = 'U+0951-0952,U+0964-0965,U+0980-09FE,U+200C-200D,U+20B9,U+25CC';
+const fontFaces: [variable: string, family: string, file: string, range?: string][] = [
+  ['--font-newsreader', 'Newsreader', 'newsreader-latin-variable.woff2'],
+  ['--font-geist', 'Geist', 'geist-latin-variable.woff2'],
+  ['--font-geist-mono', 'Geist Mono', 'geist-mono-latin-variable.woff2'],
+  ['--font-bengali', 'Noto Serif Bengali', 'noto-serif-bengali-variable.woff2', bengaliRange],
+  ['--font-bengali-sans', 'Noto Sans Bengali', 'noto-sans-bengali-variable.woff2', bengaliRange],
+];
+const fontCss = `${fontFaces
+  .map(
+    ([, family, file, range]) =>
+      `@font-face{font-family:'${family}';src:url('/fonts/${file}') format('woff2');font-weight:100 900;font-display:block;${range ? `unicode-range:${range};` : ''}}`,
+  )
+  .join(
+    '\n',
+  )}\n:root{${fontFaces.map(([variable, family]) => `${variable}:'${family}'`).join(';')}}`;
 
 const now = '2026-11-10T12:00:00Z';
 const requestIds = [1, 2, 3, 4, 5, 6, 7].map((n) => `00000000-0000-4000-8000-00000000000${n}`);
@@ -112,7 +132,7 @@ test.beforeAll(async () => {
             <div className="room">
               {props.empty ? <p className="ux-empty">No meetings or visits are ready to show yet.</p> : null}
               {props.rows.length>0 ? <MeetingsList groups={groups}/> : null}
-              {props.requests.length>0 ? <RequestsSection requests={props.requests}/> : null}
+              {props.requests.length>0 ? <RequestsSection requests={props.requests} withMeetings={props.rows.length>0}/> : null}
             </div>
           </WorkspaceShell>
         </LanguageProvider>);`,
@@ -159,7 +179,12 @@ test.beforeAll(async () => {
     }
     if (path === '/app.css') {
       res.setHeader('content-type', 'text/css');
-      res.end(`${css}\n${componentCss}`);
+      res.end(`${css}\n${componentCss}\n${fontCss}`);
+      return;
+    }
+    if (path.startsWith('/fonts/')) {
+      res.setHeader('content-type', 'font/woff2');
+      res.end(readFileSync(resolve(fontDir, path.slice('/fonts/'.length).replace(/[^\w.-]/g, ''))));
       return;
     }
     res.setHeader('content-type', 'text/html');
@@ -417,6 +442,41 @@ test('the requests section keeps every request link and shows five until Show Al
   await expect(page.getByRole('button', { name: 'Show Fewer' }).last()).toBeFocused();
   await open(page, { rows: sixRows(), requests: 5 });
   await expect(page.getByRole('button', { name: /Show All \d+ Requests/ })).toHaveCount(0);
+});
+
+test('the requests line says where meetings come from only when a meeting is shown', async ({
+  page,
+}) => {
+  await open(page, { rows: sixRows(), requests: 3 });
+  const section = page.getByRole('region', { name: 'Your requests' });
+  await expect(section).toContainText('Meetings above come from the reports you have saved.');
+  await expect(section).toContainText(
+    'Open any request to see all of it, including requests with no meetings yet.',
+  );
+  await open(page, { rows: [], requests: 3, empty: true });
+  await expect(section).not.toContainText('Meetings above');
+  await expect(section).toContainText('Open any request to see all of it.');
+  // The list of requests itself is the same either way.
+  await expect(page.locator('.ux-meeting-list li')).toHaveCount(3);
+});
+
+test('the group cards sit one room gap apart, as the rest of the page does', async ({ page }) => {
+  await open(page, { rows: sixRows() });
+  await showAll(page).click();
+  // The customer kit adds margins to headings and lists; the gap is measured under it, as in the real page.
+  await toCustomerFrame(page);
+  const gaps = await page.evaluate(() => {
+    const sections = Array.from(document.querySelectorAll('.room section'))
+      .filter((el) => el.querySelector('.room-trip-list'))
+      .map((el) => el.getBoundingClientRect());
+    const room = getComputedStyle(document.querySelector('.room')!).rowGap;
+    return {
+      room,
+      between: sections.slice(1).map((box, i) => Math.round(box.top - sections[i]!.bottom)),
+    };
+  });
+  expect(gaps.between.length).toBeGreaterThan(1);
+  for (const gap of gaps.between) expect(gap).toBe(parseFloat(gaps.room));
 });
 
 const longName = (n: number) =>

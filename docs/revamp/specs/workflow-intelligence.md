@@ -138,18 +138,42 @@ Owner, 10 Nov 2026, in S17: "For signed in users, there multiple navigation link
 
 What the page does:
 
-- Meetings are grouped by their start time against the server clock: "Coming up" (soonest first), "Done and past" (newest first), "Time not confirmed yet", then "Date changed". A dated meeting is past when its end (or its start, when there is no end) is before now; equal to now is still upcoming. Status never decides the group; the badge tells the status.
+- Meetings are grouped by their time against the server clock: "Coming up" (soonest first), "Done and past" (newest first), "Time not confirmed yet", then "Date changed". A dated meeting is past when its end (or its start, when there is no end) is before now; equal to now is still upcoming. Status never decides the group; the badge tells the status.
 - A changed schedule (`isChangedMeeting`, the Trip rule) keeps only its name, the "Date changed" badge and the changed sentence. The old time, zone, place and status are dropped on the server, so they are not in the page text, attributes or `dateTime`.
 - Each row shows name, Starts and Ends with the time zone, Place (text only, "Not shared yet" when absent), status badge, request title and a link "Open in the Request". The first three meetings show, then "Show All N Meetings and Visits". Names and places in Chinese are marked `lang="zh"`.
 - The link opens the Room on Meetings (`?view=meetings`) only when `CORRIDRA_UX_TRIP`, `CORRIDRA_UX_ROAD` and `CORRIDRA_UX_LENSES` are all on, because the Trip lens bar exists only with the lenses; in every other case, including Trip and the Room without the lenses, it opens the saved report at `/account/missions/<id>`, where the times are today. The saved report is the one the Room itself opens: assignment pages are added one at a time and reading stops at the first page that shows a report for the request (`roomLinkFromPages`, the same result as `followAssignments`). The Room reads `?view` only when the value is exactly `meetings` and the Trip and lenses switches are on; anything else opens Overview.
+- "Open a meeting in its Request to see what to do next." and "Meetings above come from the reports you have saved." show only when at least one meeting is shown; with none shown the requests line says "Open any request to see all of it." The "not saved yet" note uses the quiet notice panel (`ux-draft-notice`, no status role).
 - A read that fails, an incomplete assignment list or a capped read shows the partial notice. The page never says "no meetings" when nothing was read.
 - Copy is English only (the page has no reviewed translation), with no price, offer, contact, result or booking claim.
 
 Files: `apps/web/lib/saved-report-check.ts` (the report check, a pure move), `apps/web/lib/trip.ts` (`statusWords`, a pure move), `apps/web/lib/meetings/{load,group,cards}.ts`, `apps/web/lib/room.ts` (`initialLensFor`, `roomLinkFromPages`), `apps/web/app/account/meetings/{page.tsx,meetings-list.tsx}`, `apps/web/app/account/rooms/[requestId]/{page.tsx,room-view.tsx,room-view.css}` (one selector added). The two pure moves were proved with `diff` against the old lines.
 
-Tests: `tests/integration/w8-meetings.test.ts` (grouping, status map, cap, `?view` parsing, loader with mocked services, source checks), additions to `tests/integration/revamp-nav-customer-model.test.ts` and `tests/integration/ux-trip.test.ts`, `tests/operator/w8-meetings.spec.ts` (real component: language marks, times, badges, link names, widths 320, 390, 768 and 1440, axe), one case in `tests/operator/ux-room.spec.ts` (the Room opens on Meetings when asked), and the stricter replacement of the "Coming soon" case in `tests/e2e/verification/revamp-s2/customer-shell.spec.ts`.
+Tests: `tests/integration/w8-meetings-page.test.ts` (the page written out as HTML for each state), `tests/integration/w8-meetings.test.ts` (grouping, status map, cap, `?view` parsing, loader with mocked services, source checks), additions to `tests/integration/revamp-nav-customer-model.test.ts` and `tests/integration/ux-trip.test.ts`, `tests/operator/w8-meetings.spec.ts` (real component: language marks, times, badges, link names, widths 320, 390, 768 and 1440, axe), one case in `tests/operator/ux-room.spec.ts` (the Room opens on Meetings when asked), and the stricter replacement of the "Coming soon" case in `tests/e2e/verification/revamp-s2/customer-shell.spec.ts`.
 
-With the source change reverted (tests kept), every new case fails: 41 in `w8-meetings.test.ts` (the file cannot load), 4 added to `ux-trip.test.ts`, 1 added to `revamp-nav-customer-model.test.ts`, 20 in `w8-meetings.spec.ts` (the fixture cannot build), 1 in `ux-room.spec.ts`, and the replaced case in `customer-shell.spec.ts` at all three widths of its project. That is 67 new cases, all failing, and the replaced case, which fails too. Measured page length of the closed list (three of twelve long Chinese meetings, three requests, in the customer frame, without the intro and notices): 2.28 screens at 390 and 1.54 at 1440, over the layout-budget limits of 2.0 and 1.0; this is reported to the owner and not hidden. The Meetings page was not walked signed in against a live account: no such claim is made.
+With the source change reverted (tests kept), every new case fails: 42 in `w8-meetings.test.ts` and 9 in `w8-meetings-page.test.ts` (neither file can load without the new modules), 4 added to `ux-trip.test.ts`, 1 added to `revamp-nav-customer-model.test.ts`, 22 in `w8-meetings.spec.ts` (the fixture cannot build), 1 in `ux-room.spec.ts`, and the replaced case in `customer-shell.spec.ts` at all three widths of its project. That is 79 new cases and the replaced case. The count was measured at dc69400 (59 cases then) and the cases added since depend on the same new files; the three post-build fixes (grid gap, notice panel, the two lines that point at meetings) were each shown to fail against the source before the fix. The Meetings page was not walked signed in against a live account: no such claim is made.
+
+Page length and the OWNER DECISION. Measured by the designer on the real page in the real shell with the real fonts, header and footer included, with the toggle and the disclosure closed:
+
+| State                                   | 390 px                 | 1440 px |
+| --------------------------------------- | ---------------------- | ------- |
+| 12 long Chinese meetings, 3 requests    | 2.35 screens (1983 px) | 1.63    |
+| Typical English, 3 meetings, 2 requests | 2.09                   | 1.46    |
+| 4 meetings (3 shown and the toggle)     | 2.16                   | 1.53    |
+| No meetings, 3 requests                 | 1.21                   | 1.00    |
+| Reports not saved yet                   | 1.38                   | 1.00    |
+| Modules off                             | 1.00                   | 1.00    |
+
+The layout-budget limits (owner, 5 November 2026) are 2.0 screens at 390 and 1.0 at 1440. With meetings the page is 0.09 to 0.16 over at 390 and about 0.5 over at 1440. One screen at 1440 is not reachable with three rows: the page head alone is about 420 px and the footer 100 to 150 px. This is an OWNER DECISION, not made here and not hidden. The smallest restructures, as estimates and not measurements:
+
+1. Put "Open in the Request" on the head row of each meeting. It needs one more CSS rule and saves about 56 px per row.
+2. Fold the second intro paragraph into "What Happens Next" and fold "Your requests" into a closed details headed "Your requests (3)". The links stay mounted. It saves about 245 px at 390.
+3. Change `meetingsFirstShown` from 3 to 2. It saves about 177 px at 1440.
+
+Options 1 and 2 together put 390 at about 1.5 to 1.7. Adding option 3 puts 1440 at about 0.9 to 1.1. None of these is built.
+
+The operator spec measures only the list in the customer frame (no intro, notices or footer) and only guards against growth: 2.31 at 390 and 1.54 at 1440 with the real fonts, against bounds of 2.6 and 1.9. Its first figures (2.28 and 1.54) were taken without the fonts, because the font variables that `--font-ui` reads were not defined in the fixture; they are defined now.
+
+Past is decided by the end of a meeting (or by its start when it has no end), not by the start alone. This is a documented refinement of "startsAt only" in the task: a meeting that has started and not ended stays under "Coming up".
 
 ## 5. Measurement
 

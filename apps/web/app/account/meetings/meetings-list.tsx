@@ -55,7 +55,7 @@ export function MeetingsList({ groups }: { groups: readonly MeetingGroup[] }) {
             ? say('room.trip.count.one')
             : fill(say('room.trip.count.other'), { count: total })}
       </p>
-      <div id={listId}>
+      <div id={listId} className="room">
         {groups.map((group, groupIndex) => {
           const start = starts[groupIndex] ?? 0;
           const cards = group.cards.slice(0, Math.max(0, limit - start));
@@ -137,7 +137,14 @@ export function MeetingsList({ groups }: { groups: readonly MeetingGroup[] }) {
 }
 
 /** The person's requests, each opening where its meetings and visits are. Over five, the rest are behind "Show All". */
-export function RequestsSection({ requests }: { requests: readonly RequestLink[] }) {
+export function RequestsSection({
+  requests,
+  withMeetings,
+}: {
+  requests: readonly RequestLink[];
+  /** Meetings are shown above. Only then does the line say where they come from. */
+  withMeetings: boolean;
+}) {
   const headingId = useId();
   const listId = useId();
   const [expanded, setExpanded] = useState(false);
@@ -146,8 +153,9 @@ export function RequestsSection({ requests }: { requests: readonly RequestLink[]
     <section aria-labelledby={headingId}>
       <h2 id={headingId}>Your requests</h2>
       <p>
-        Meetings above come from the reports you have saved. Open any request to see all of it,
-        including requests with no meetings yet.
+        {withMeetings
+          ? 'Meetings above come from the reports you have saved. Open any request to see all of it, including requests with no meetings yet.'
+          : 'Open any request to see all of it.'}
       </p>
       <ul className="ux-meeting-list" id={listId}>
         {shown.map((request) => (

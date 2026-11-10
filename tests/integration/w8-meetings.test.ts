@@ -682,6 +682,17 @@ describe('the Meetings page source', () => {
     );
     expect(page).toContain('initialLens={initialLens}');
   });
+  it('shows the lines that point at meetings only when a meeting is shown', () => {
+    const page = read(`${dir}/page.tsx`);
+    expect(page).toMatch(
+      /shown > 0 \? <p>Open a meeting in its Request to see what to do next\.<\/p>/,
+    );
+    expect(page).toContain('withMeetings={shown > 0}');
+    expect(page).toContain('className="ux-draft-notice"');
+    const list = read(`${dir}/meetings-list.tsx`);
+    expect(list).toContain('Open any request to see all of it.');
+    expect(list).toContain('<div id={listId} className="room">');
+  });
   it('the list component writes nothing, books nothing and links no map', () => {
     const list = read(`${dir}/meetings-list.tsx`);
     expect(list).not.toMatch(/fetch\(|\.ics|mailto:|maps\.|navigator\.share|method:/);

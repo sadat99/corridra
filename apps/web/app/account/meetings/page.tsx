@@ -76,7 +76,7 @@ export default async function Page() {
       </p>
       {readable ? (
         <>
-          <p>Open a meeting in its Request to see what to do next.</p>
+          {shown > 0 ? <p>Open a meeting in its Request to see what to do next.</p> : null}
           <details className="ux-journey-disclosure">
             <summary>What Happens Next</summary>
             <p>
@@ -103,7 +103,7 @@ export default async function Page() {
           </p>
         ) : null}
         {meetings.notSaved > 0 ? (
-          <p>
+          <p className="ux-draft-notice">
             {meetings.notSaved === 1
               ? '1 of your requests has a report that is not saved yet. Save it from your Library to see its meetings here.'
               : `${meetings.notSaved} of your requests have a report that is not saved yet. Save them from your Library to see their meetings here.`}{' '}
@@ -140,6 +140,7 @@ export default async function Page() {
         {shown > 0 ? <MeetingsList groups={groups} /> : null}
         {requests.length > 0 ? (
           <RequestsSection
+            withMeetings={shown > 0}
             requests={requests.map((request) => ({
               key: request.key,
               title: request.title ?? requestTitleFallback,
