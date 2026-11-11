@@ -65,6 +65,11 @@
 .ux-intake-page:not(:lang(en)) [lang='en']:not(.ux-brief-summary dd *) {
   overflow-wrap: normal;
 }
+/* The Bengali guidance holds the test address, one long token. It may break at any width, so that opening the guidance
+   never makes the page wider than the window (W6-A, Largest text with the browser text at 200 percent). */
+.ux-intake-page .guide-bn p {
+  overflow-wrap: anywhere;
+}
 /* On a 320 px phone with text at twice its size a button's longest word can be wider than the card it sits in. Only there a
    word may break, so that no button pushes the page sideways. (A media query counts in the browser's own text size, so it
    matches the 320 px phone whatever the text is set to, and nothing changes at the larger widths.) */
@@ -84,6 +89,25 @@
   .ux-intake-page:not(:lang(en)) .choice,
   .ux-intake-page:not(:lang(en)) .choice[lang='en']:not(.ux-brief-summary dd *),
   .ux-intake-page:not(:lang(en)) .choice [lang='en']:not(.ux-brief-summary dd *) {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  /* Largest text with the browser text at 200 percent (W6-A): a fieldset is as wide as its longest word unless told
+     otherwise, and a select is as wide as its longest option, so on this width both may be as narrow as the card. */
+  .ux-intake-page fieldset,
+  .ux-intake-page .choice {
+    min-width: 0;
+  }
+  /* A choice card is padding, a tick box, a gap and a word. At 250 percent the padding and the gap alone are wider than a
+     320 px card, so they give way to the window (the viewport units are the larger value at the sizes people use now). */
+  .ux-intake-page .choice {
+    padding-inline: min(var(--space-4), 6vw);
+    gap: min(var(--space-3), 4vw);
+  }
+  .ux-intake-page select {
+    max-width: 100%;
+  }
+  .ux-intake-page :is(.guide-hint, .field) {
     min-width: 0;
     overflow-wrap: anywhere;
   }
@@ -154,4 +178,41 @@
 }
 .ux-intake-page .ux-job-choice p {
   margin: 0;
+}
+
+/* Large or Largest text saved by the person (W6-A). With Largest and the browser text at 200 percent the text is 250
+   percent of its default, and a long word in any line of the form or its guidance is wider than a phone card. At those
+   two steps only, a word may break inside itself anywhere on the page, and a box may be as narrow as its card. Normal text
+   keeps the wrapping above, which is pinned by ux-plan-languages.spec.ts. */
+html:is([data-text-size='large'], [data-text-size='largest'])
+  .ux-intake-page
+  :is(
+    h1,
+    h2,
+    h3,
+    p,
+    li,
+    dt,
+    dd,
+    label,
+    legend,
+    summary,
+    strong,
+    .guide-hint,
+    .guide-tag,
+    .field,
+    .choice,
+    .primary-link,
+    .text-link,
+    aside,
+    details
+  ) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+html:is([data-text-size='large'], [data-text-size='largest'])
+  .ux-intake-page
+  :is(fieldset, select, input, textarea) {
+  min-width: 0;
+  max-width: 100%;
 }
