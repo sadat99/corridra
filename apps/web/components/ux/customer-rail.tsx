@@ -7,6 +7,7 @@
 // action still checks on the server.
 import './customer-rail.css';
 import Link from 'next/link';
+import { useEffect, useRef, useState, type FocusEvent, type PointerEvent } from 'react';
 import { usePathname } from 'next/navigation';
 import { CorridraIcon } from '../corridra-icon';
 import { newRequestHref } from '../../lib/ux/customer-navigation';
@@ -28,6 +29,64 @@ export function NewRequestLink({ className = 'ux-rail-new' }: { className?: stri
   );
 }
 
+/**
+ * The name of a foot row when the bar is collapsed to icons. The words are kept for assistive technology (see
+ * customer-rail.css) and, for everyone else, shown beside the icon while the pointer is on the row or keyboard focus is
+ * on it. They go on Esc (without moving focus) and when the pointer or focus leaves; the pointer can move onto the
+ * words without them closing, as they are inside the row. It only shows in the collapsed bar from 1024 px (the css
+ * decides that); touch has no hover and gets none. W6-A.
+ */
+function useRailTip(focusable: boolean) {
+  const row = useRef<HTMLElement | null>(null);
+  const [tip, setTip] = useState<'off' | 'on' | 'dismissed'>('off');
+  const place = () => {
+    const el = row.current;
+    if (!el) return;
+    const box = el.getBoundingClientRect();
+    const rtl = getComputedStyle(el).direction === 'rtl';
+    el.style.setProperty('--tip-x', `${rtl ? window.innerWidth - box.left : box.right}px`);
+    el.style.setProperty('--tip-y', `${box.top + box.height / 2}px`);
+  };
+  useEffect(() => {
+    if (tip !== 'on') return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.stopPropagation();
+      setTip('dismissed');
+    };
+    document.addEventListener('keydown', close, true);
+    window.addEventListener('scroll', place, true);
+    window.addEventListener('resize', place);
+    return () => {
+      document.removeEventListener('keydown', close, true);
+      window.removeEventListener('scroll', place, true);
+      window.removeEventListener('resize', place);
+    };
+  }, [tip]);
+  const show = () => {
+    place();
+    setTip((now) => (now === 'dismissed' ? now : 'on'));
+  };
+  return {
+    ref: (el: HTMLElement | null) => {
+      row.current = el;
+    },
+    'data-tip': tip,
+    onPointerEnter: (event: PointerEvent) => {
+      if (event.pointerType !== 'touch') show();
+    },
+    onPointerLeave: () => setTip('off'),
+    ...(focusable
+      ? {
+          onFocus: (event: FocusEvent) => {
+            if (event.currentTarget.matches(':focus-visible')) show();
+          },
+          onBlur: () => setTip('off'),
+        }
+      : {}),
+  };
+}
+
 export function CustomerRailTop() {
   return <NewRequestLink />;
 }
@@ -40,26 +99,50 @@ export function CustomerRailTop() {
 export function CustomerRailFoot({ href, allTools }: { href?: string | null; allTools?: boolean }) {
   return (
     <div className="ux-rail-foot">
-      {allTools ? (
-        <Link prefetch={false} className="ux-rail-tools" href="/account/all-tools">
-          <CorridraIcon name="grid" />
-          <span>All Tools</span>
-        </Link>
-      ) : null}
-      {href ? (
-        <a className="ux-rail-help" href={href} target="_blank" rel="noopener noreferrer" lang="en">
-          <CorridraIcon name="help" />
-          <span>Help on WhatsApp</span>
-          <CorridraIcon name="open" className="ux-rail-help-open" />
-          <span className="sr-only"> (opens WhatsApp outside Corridra, in a new tab)</span>
-        </a>
-      ) : (
-        <p className="ux-rail-soon">
-          <CorridraIcon name="help" />
-          <span>Help on WhatsApp</span>
-          <span className="ux-soon-tag">Coming soon</span>
-        </p>
-      )}
+      {allTools ? <RailAllTools /> : null}
+      {href ? <RailHelpLink href={href} /> : <RailHelpSoon />}
     </div>
+  );
+}
+
+function RailAllTools() {
+  const tip = useRailTip(true);
+  return (
+    <Link prefetch={false} className="ux-rail-tools" href="/account/all-tools" {...tip}>
+      <CorridraIcon name="grid" />
+      <span className="ux-rail-label">All Tools</span>
+    </Link>
+  );
+}
+
+function RailHelpLink({ href }: { href: string }) {
+  const tip = useRailTip(true);
+  return (
+    <a
+      className="ux-rail-help"
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      lang="en"
+      {...tip}
+    >
+      <CorridraIcon name="help" />
+      <span className="ux-rail-label">Help on WhatsApp</span>
+      <CorridraIcon name="open" className="ux-rail-help-open" />
+      <span className="sr-only"> (opens WhatsApp outside Corridra, in a new tab)</span>
+    </a>
+  );
+}
+
+/** Not a link, so it is not a keyboard stop and its words show on hover only; they are in the page for assistive technology. */
+function RailHelpSoon() {
+  const tip = useRailTip(false);
+  return (
+    <p className="ux-rail-soon" {...tip}>
+      <CorridraIcon name="help" />
+      <span className="ux-rail-label">
+        <span>Help on WhatsApp</span> <span className="ux-soon-tag">Coming soon</span>
+      </span>
+    </p>
   );
 }

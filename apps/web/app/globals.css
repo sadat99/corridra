@@ -2131,10 +2131,10 @@ html {
    item's minimum width, so headings, paragraphs, list items, links and labels may break inside a word when the box
    is too narrow; `break-word` stays on buttons, table cells and chips, whose width is set by their content. Every
    rule is `:where`, so any component rule with its own value still wins, and nothing changes when a word fits. */
-:where(.ux-public, .site-header, .site-footer) {
+:where(.ux-public, .site-header, .site-footer, .guide-footer) {
   overflow-wrap: break-word;
 }
-:where(.ux-public, .site-header, .site-footer)
+:where(.ux-public, .site-header, .site-footer, .guide-footer)
   :where(
     h1,
     h2,
@@ -2157,7 +2157,7 @@ html {
   ) {
   overflow-wrap: anywhere;
 }
-:where(.ux-public, .site-header, .site-footer) :where(button, th, td, .ux-badge) {
+:where(.ux-public, .site-header, .site-footer, .guide-footer) :where(button, th, td, .ux-badge) {
   overflow-wrap: break-word;
 }
 body {
@@ -5776,10 +5776,6 @@ th {
 .ux-customer .ux-more-grid .ux-account-sidebar {
   max-width: none;
 }
-.ux-profile-actions {
-  display: grid;
-  margin-top: var(--space-4);
-}
 .ux-link-list {
   display: grid;
   gap: var(--space-2);
@@ -8583,6 +8579,7 @@ samp {
 }
 .guide-progress .outcome-path li {
   min-width: 0;
+  max-width: 100%;
   overflow-wrap: anywhere;
 }
 

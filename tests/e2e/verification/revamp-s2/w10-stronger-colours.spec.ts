@@ -437,6 +437,18 @@ const underlineOf = (page: Page, selector: string) =>
     selector,
   );
 
+/**
+ * The Team sidebar lists what the person's role allows, and the role arrives with the workspace read, after the page
+ * has drawn. Until then it lists only the places every member sees, with no Admin group. A signed-in owner's sidebar is
+ * ready when the Admin group is there; counting before that read the half-built sidebar (a flake on main, CI run
+ * 42951732751, attempt 1). The count and its bound are not changed.
+ */
+const sidebarReady = (page: Page) =>
+  expect(
+    page.locator('nav.ux-team-sidebar details.ux-team-group > summary'),
+    'the sidebar has its owner items',
+  ).toBeVisible({ timeout: 30_000 });
+
 for (const way of ways) {
   test(`with ${way} the focus ring on the navy Team sidebar reaches 3 to 1, and the selected stripe is white, at 1440 and 800`, async ({
     page,
@@ -452,6 +464,7 @@ for (const way of ways) {
       await page.goto('/operator');
       await expect(page.locator('main h1, main h2').first()).toBeVisible();
       await expectWay(page, way);
+      await sidebarReady(page);
       const { rings } = await measureColours(page, 'nav.ux-team-sidebar');
       expect(rings.length, `the sidebar has focusable items at ${size.width}`).toBeGreaterThan(5);
       expect(weakRings(rings), `at ${size.width}`).toEqual([]);
@@ -467,6 +480,31 @@ for (const way of ways) {
     await page.waitForTimeout(61_000);
   });
 }
+
+// The race behind that flake, made on purpose: the workspace read is held back, so the sidebar is half built when the
+// page has drawn. It has too few links then, and the check waits for the owner's Admin group before it counts.
+test('with the workspace read held back the sidebar is half built at first, and the count waits for it', async ({
+  page,
+}) => {
+  test.setTimeout(200_000);
+  await signInOwner(page, '/operator');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.route('**/api/workspace/workspace?*', async (route) => {
+    await new Promise((done) => setTimeout(done, 5_000));
+    await route.continue();
+  });
+  await page.goto('/operator');
+  await expect(page.locator('nav.ux-team-sidebar')).toBeVisible();
+  const early = await measureColours(page, 'nav.ux-team-sidebar');
+  expect(
+    early.rings.length,
+    'before the role arrives the sidebar has few links',
+  ).toBeLessThanOrEqual(5);
+  await sidebarReady(page);
+  const { rings } = await measureColours(page, 'nav.ux-team-sidebar');
+  expect(rings.length, 'once the role is known the sidebar has its links').toBeGreaterThan(5);
+  await page.waitForTimeout(61_000);
+});
 
 test('Team Today tiles and rows made of links are not underlined; a link in a sentence and a standalone text link are', async ({
   page,

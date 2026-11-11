@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { clippedText, problems, problemsWithFoldsOpen } from './fit';
+import { clippedText, problems, withFoldsOpen } from './fit';
 import { hasDynamicSegment, pageRoutes } from '../ux/page-length-lib';
 import { generatedRoutes } from '../ux/static-routes';
 
@@ -15,7 +15,8 @@ import { generatedRoutes } from '../ux/static-routes';
 //
 // What this is not: the root size is injected as a style, so it is not the browser's own 200 percent setting, and
 // it does not rescale a media query (which the real setting does); it was run on Chromium only. A second pass forces a
-// wider face on every box (KI-28: runners differ in fonts), so the result does not depend on the runner's font.
+// wider face on every box (KI-28: runners differ in fonts); it gives headroom where the face is installed, and falls back
+// to another face where it is not, so it does not prove the result for every runner.
 const publicAudiences = new Set(['public', 'public intake and customer identity']);
 const routes = [
   ...pageRoutes()
@@ -66,15 +67,19 @@ for (const [face, style] of faces)
           step: 'largest',
           fontSize: '40px',
         });
+        // /about holds a row of cards that scrolls sideways by design; the edge test skips what is inside a scroll
+        // box there and nowhere else.
+        const allowScrollers = path === '/about';
         const misses = [
-          ...(await problems(page, { allowScrollers: true })).map(
-            (item) => `does not fit: ${item}`,
-          ),
+          ...(await problems(page, { allowScrollers })).map((item) => `does not fit: ${item}`),
           ...(await clippedText(page)).map((item) => `cut off: ${item}`),
-          ...(await problemsWithFoldsOpen(page, { allowScrollers: true })).map(
-            (item) => `folds open, does not fit: ${item}`,
-          ),
-          ...(await clippedText(page)).map((item) => `folds open, cut off: ${item}`),
+          // The same two measures with every fold on the page opened, in one opened state.
+          ...(
+            await withFoldsOpen(page, async () => [
+              ...(await problems(page, { allowScrollers })).map((item) => `does not fit: ${item}`),
+              ...(await clippedText(page)).map((item) => `cut off: ${item}`),
+            ])
+          ).map((item) => `folds open, ${item}`),
         ];
         for (const miss of new Set(misses)) failures.push(`${path} at ${width}: ${miss}`);
       }

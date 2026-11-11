@@ -10,6 +10,8 @@
 .ux-subtabs-tab {
   display: inline-flex;
   align-items: center;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   min-height: 44px;
   padding: 0 var(--space-4);
   border: 0;

@@ -57,11 +57,11 @@ export async function problems(page: Page, options: { allowScrollers?: boolean }
   }, options.allowScrollers === true);
 }
 
-/** What does not fit with every closed fold on the page opened; the folds that were closed are closed again after. */
-export async function problemsWithFoldsOpen(
-  page: Page,
-  options: { allowScrollers?: boolean } = {},
-) {
+/**
+ * Runs a measurement with every closed fold on the page opened, and closes again the folds it opened. A fold that will
+ * not open is reported in front of the findings.
+ */
+export async function withFoldsOpen(page: Page, measure: () => Promise<string[]>) {
   const closed = await page.evaluateHandle(() => {
     const folds = Array.from(document.querySelectorAll('details')).filter((fold) => !fold.open);
     for (const fold of folds) fold.open = true;
@@ -72,12 +72,20 @@ export async function problemsWithFoldsOpen(
     await new Promise<void>((done) => requestAnimationFrame(() => done()));
   });
   const stillClosed = await page.locator('details:not([open])').count();
-  const found = await problems(page, options);
+  const found = await measure();
   await page.evaluate((folds) => {
     for (const fold of folds) fold.open = false;
   }, closed);
   await closed.dispose();
   return stillClosed > 0 ? [`${stillClosed} fold(s) did not open`, ...found] : found;
+}
+
+/** What does not fit with every closed fold on the page opened; the folds that were closed are closed again after. */
+export async function problemsWithFoldsOpen(
+  page: Page,
+  options: { allowScrollers?: boolean } = {},
+) {
+  return withFoldsOpen(page, () => problems(page, options));
 }
 
 /**
@@ -105,7 +113,7 @@ export async function clippedText(page: Page) {
           `${el.tagName.toLowerCase()}.${String(el.className).slice(0, 40)} ${(el.textContent ?? '').trim().slice(0, 30)} (${el.scrollWidth}x${el.scrollHeight} in ${el.clientWidth}x${el.clientHeight})`,
         );
     }
-    // Report the innermost boxes only.
+    // The first eight, in page order, so a message stays short; the count is what matters.
     return found.slice(0, 8);
   });
 }
