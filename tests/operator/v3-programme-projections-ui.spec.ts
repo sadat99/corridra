@@ -276,6 +276,64 @@ test('agenda preserves exact instants when displaying and saving programme-local
       expectedVersion: 1,
     });
 });
+test('agenda groups activities by programme-zone day with overlap badges and unscheduled items', async ({
+  page,
+}) => {
+  const fixture = owner();
+  const base = fixture.agenda[0]!;
+  const agenda: Record<string, unknown>[] = [
+    {
+      ...base,
+      title: 'Synthetic late session',
+      startsAt: '2030-07-15T17:30:00Z',
+      endsAt: '2030-07-15T18:00:00Z',
+    },
+    {
+      ...base,
+      taskId: '00000000-0000-4000-8000-0000000000a1',
+      title: 'Synthetic early session',
+      startsAt: '2030-07-15T18:30:00Z',
+      endsAt: '2030-07-15T19:00:00Z',
+    },
+    {
+      ...base,
+      taskId: '00000000-0000-4000-8000-0000000000a2',
+      title: 'Synthetic parallel session',
+      startsAt: '2030-07-15T17:45:00Z',
+      endsAt: '2030-07-15T18:15:00Z',
+      needsReview: true,
+    },
+    {
+      ...base,
+      taskId: '00000000-0000-4000-8000-0000000000a3',
+      title: 'Synthetic open session',
+      scheduled: false,
+      startsAt: null,
+      endsAt: null,
+      timezone: null,
+    },
+  ];
+  const view = {
+    ...fixture,
+    agenda,
+    conflicts: [{ left: base.taskId, right: '00000000-0000-4000-8000-0000000000a2' }],
+  };
+  await page.route('**/api/customer-programme-projections**', (r) => r.fulfill({ json: view }));
+  await page.goto(origin + '/?view=agenda');
+  // 23:30 and 23:45 in Dhaka stay on 15 July; 00:30 is already 16 July.
+  await expect(page.getByRole('heading', { name: '15 Jul 2030' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '16 Jul 2030' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Not scheduled yet' })).toBeVisible();
+  await expect(page.getByText('Overlaps with Synthetic parallel session')).toBeVisible();
+  await expect(page.getByText('Overlaps with Synthetic late session')).toBeVisible();
+  await expect(page.getByText('Needs review', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Attendee overlaps' })).toBeVisible();
+  const first = page.getByRole('region', { name: '15 Jul 2030' });
+  await expect(first.getByRole('listitem')).toHaveCount(2);
+  await expect(page.getByRole('region', { name: '16 Jul 2030' }).getByRole('listitem')).toHaveCount(
+    1,
+  );
+});
 for (const status of [403, 409, 503])
   test('save ' + status + ' clears private content with recovery', async ({ page }) => {
     await page.route('**/api/customer-programme-projections**', (r) =>
