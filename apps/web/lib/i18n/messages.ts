@@ -5,6 +5,7 @@
 import { sellWords } from './sell-words';
 import { defaultLocale, type Locale } from './locales';
 import { homeEn, homeWords } from './home-words';
+import { programmePagesWords } from './programme-pages-words';
 import { wsA, wsAEn } from './ws/ws-a';
 import { wsB, wsBEn } from './ws/ws-b';
 import { wsC, wsCEn } from './ws/ws-c';
@@ -259,6 +260,7 @@ export const en = {
   // English placeholder until native review (D16)
   ...sellWords,
   ...tripWords,
+  ...programmePagesWords,
   ...bookWords,
   ...footerWords,
   ...headerWords,
@@ -420,6 +422,7 @@ const bn: Catalog = {
   // English placeholder until native review (D16)
   ...sellWords,
   ...tripWords,
+  ...programmePagesWords,
   ...bookWords,
   ...footerWords,
   ...headerWords,
@@ -568,6 +571,7 @@ const zh: Catalog = {
   // English placeholder until native review (D16)
   ...sellWords,
   ...tripWords,
+  ...programmePagesWords,
   ...bookWords,
   ...footerWords,
   ...headerWords,
@@ -721,6 +725,7 @@ const es: Catalog = {
   // English placeholder until native review (D16)
   ...sellWords,
   ...tripWords,
+  ...programmePagesWords,
   ...bookWords,
   ...footerWords,
   ...headerWords,
@@ -873,6 +878,7 @@ const ar: Catalog = {
   // English placeholder until native review (D16)
   ...sellWords,
   ...tripWords,
+  ...programmePagesWords,
   ...bookWords,
   ...footerWords,
   ...headerWords,
@@ -1026,6 +1032,7 @@ const fr: Catalog = {
   // English placeholder until native review (D16)
   ...sellWords,
   ...tripWords,
+  ...programmePagesWords,
   ...bookWords,
   ...footerWords,
   ...headerWords,
@@ -1183,6 +1190,7 @@ const de: Catalog = {
   // English placeholder until native review (D16)
   ...sellWords,
   ...tripWords,
+  ...programmePagesWords,
   ...bookWords,
   ...footerWords,
   ...headerWords,

@@ -1,5 +1,11 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
-import { buildWorld, functionState, type Row, type World } from './removed-member-support';
+import {
+  buildWorld,
+  bulkOwnedRequests,
+  functionState,
+  type Row,
+  type World,
+} from './removed-member-support';
 
 // Removed members, cost (owner decision, 11 Nov 2026: "No, remove access (Recommended)"). The membership rule runs for every
 // row of a list, so it must stay cheap on a large database: 6,000 requests of one person across three workspaces (one of them
@@ -55,30 +61,8 @@ const listQuery = (filtered: boolean) =>
   ' AND NOT EXISTS(SELECT FROM customer_private.request_revocation v WHERE v.request_id=r.id) ORDER BY r.id LIMIT 25';
 const SAVED_FILTER = 'customer_private.link_workspace_current(link_tenant_id,link_id,actor)';
 
-async function bulkRequests(person: string, workspace: string, count: number) {
-  const db = await w.f.owner.connect();
-  try {
-    await db.query('SET session_replication_role = replica');
-    await db.query(
-      'CREATE TEMP TABLE bulk AS SELECT n,gen_random_uuid() AS mid FROM generate_series(1,$1::int) n',
-      [count],
-    );
-    await db.query(
-      `INSERT INTO app.mission(id,tenant_id,owner_id,next_action,due_at,reason,created_by)
-       SELECT mid,$1,$2,'Synthetic bulk row',now()+interval '1 day','Synthetic bulk row',$2 FROM bulk`,
-      [w.f.tenantA, w.f.users.owner.id],
-    );
-    await db.query(
-      `INSERT INTO customer_private.owned_request(principal_id,command_id,workspace_id,mission_tenant_id,mission_id,request_key,brief_digest,receipt_hash)
-       SELECT $1,gen_random_uuid(),$2,$3,mid,gen_random_uuid(),encode(sha256(mid::text::bytea),'hex'),encode(sha256(('r'||mid::text)::bytea),'hex') FROM bulk`,
-      [w.principals[person], workspace, w.f.tenantA],
-    );
-    await db.query('DROP TABLE bulk');
-  } finally {
-    await db.query('RESET session_replication_role').catch(() => undefined);
-    db.release();
-  }
-}
+const bulkRequests = (person: string, workspace: string, count: number) =>
+  bulkOwnedRequests(w, { person, workspace, count });
 
 beforeAll(async () => {
   w = await buildWorld({ requestsPerPerson: 1, extraPeople: ['perf', 'perf2'] });

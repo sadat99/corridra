@@ -27,7 +27,7 @@ import { useProgrammeGlance } from './programme-projections';
 // panel the first time it is opened and keeps it mounted afterwards, so anything typed in a panel is still
 // there when the person comes back to it. The room reads nothing the participants panel and the programme
 // projection do not already read, and shows only counts and states, never a participant's own answers.
-type LensKey = RoomLensKey | 'companies' | 'agenda' | 'results';
+type LensKey = RoomLensKey | 'companies' | 'agenda' | 'results' | 'page';
 export type RoomPanels = Partial<Record<LensKey, ReactNode>>;
 type Live = { counts: BoardingCounts | null; notice: string };
 

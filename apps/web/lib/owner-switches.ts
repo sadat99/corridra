@@ -210,6 +210,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'module',
   },
   {
+    name: 'CORRIDRA_PROGRAMME_PAGES',
+    label: 'Public programme pages and applications',
+    line: 'Lets an organiser who is an owner or admin publish a public page for a programme at its own address, and lets signed-in people apply to it. Only the words the organiser writes for the page are public. Needs participant invitations on, its database module installed and the recorded privacy review. A page can be taken down, but what was read cannot be recalled.',
+    group: 'Programmes and delegations',
+    kind: 'flag',
+  },
+  {
     name: 'CORRIDRA_CUSTOMER_PROGRAMME_CONTEXT_ENABLED',
     label: 'Programme context',
     line: 'Shares consented participant objectives with the organiser.',

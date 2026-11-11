@@ -46,6 +46,11 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // Public programme pages are never offered to search engines (owner decision, 11 November 2026, ADR-080).
+        source: '/delegations/:path*',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      },
+      {
         source: '/api/intake/pending/:path*',
         headers: [
           { key: 'Cache-Control', value: 'no-store' },
@@ -282,7 +287,7 @@ const nextConfig: NextConfig = {
       },
       {
         source:
-          '/api/:page(customer-inbox|customer-workspaces|customer-workspace-access|customer-workspace-members|customer-requests|customer-request-withdrawals|customer-saved-missions|customer-companies|customer-decisions|customer-assigned-missions|customer-programmes|customer-programme-participants|customer-programme-objectives|customer-programme-context|customer-organisation-profiles|customer-organisation-links|customer-mission-drafts|customer-programme-economics|customer-programme-coordination|customer-programme-templates|customer-programme-terms|customer-programme-projections|customer-programme-pricing|customer-programme-lifecycle|customer-workspace-lifecycle|customer-account-lifecycle|customer-problem-reports|customer-programme-exports|customer-service-requests|customer-billing|customer-missions|customer-books|customer-decision-cards)',
+          '/api/:page(customer-inbox|customer-workspaces|customer-workspace-access|customer-workspace-members|customer-requests|customer-request-withdrawals|customer-saved-missions|customer-companies|customer-decisions|customer-assigned-missions|customer-programmes|customer-programme-participants|customer-programme-pages|customer-programme-objectives|customer-programme-context|customer-organisation-profiles|customer-organisation-links|customer-mission-drafts|customer-programme-economics|customer-programme-coordination|customer-programme-templates|customer-programme-terms|customer-programme-projections|customer-programme-pricing|customer-programme-lifecycle|customer-workspace-lifecycle|customer-account-lifecycle|customer-problem-reports|customer-programme-exports|customer-service-requests|customer-billing|customer-missions|customer-books|customer-decision-cards)',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },
           { key: 'Cache-Control', value: 'no-store' },
