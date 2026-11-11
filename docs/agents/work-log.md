@@ -3469,3 +3469,25 @@ Guardian-round verification (local PG16, head 05453d3): `g11-i-integration` exit
 Guardian round 2 (S26 at 2c101191): H1 the runtime role reads app.private_record_redaction column by column without reason and ticket_reference (the views read neither), owners and admins read them through the SECURITY DEFINER app.private_record_redaction_reasons, and the source scans are whole-file so a read split across lines is caught; H2 an operator without classification access gets the existing guard's "Current contact source required", the same as for a random id, never the contact state words. Main 87a4757 merged in without conflicts.
 
 Next: S26 re-reviews the changed lines on the exact head with CI green; the owner merges, then runs install-customer-modules with `apply=yes` and `field_modules_action=contact_changes_install`, and later decides on `contact_changes_enable`. The scribe records the ledger after the merge.
+
+### 11 November 2026: CRUD G10 follow-ups, code only (S39 CRUD lane, branch crud-g10-followups from main a456b586)
+
+Stamp auth-7d946ac5a673. Lane handover S33 to S39; conductor S26 rotated to S40. No migration, no switch, no install.
+
+Built:
+
+- Programme coordination writers `saveTask`, `setCapacity`, `setAttendance` and `submitRecord` map 40P01 and 55P03 to 503 RETRYABLE "Busy right now. Try again in a moment." (precedent customer-decision-cards.ts:138). Chose "map" over a TypeScript lock reorder because the command lock key is private SQL with no exported helper (S40 agreed: reorder only if key derivation is a stable exported helper or test-pinned; otherwise map). 55P03 is defensive (no lock_timeout or NOWAIT today). The `setAttendance` comment is corrected: programme_report takes C(random) then W then P; programme_attendance_set takes C(real) after W.
+- (a) Overstated lock comments corrected in team-control.ts and the db index.ts; 0010 untouched (immutable; its lines 5-6 overstate, corrected in code comments).
+- (b) `TeamControl.cancel` re-checks members.manage plus fresh MFA through a new exported `reauthorize()` after the workspace lock; it catches only changes committed during the wait (now() is fixed at BEGIN).
+- (c)/(d) Cancel with a setup row but no membership, or with an active membership that appeared after the revoke, answers 503 RETRYABLE before the audit and delete; an already-revoked membership still cancels. A true orphan keeps getting RETRYABLE until a future 0011.
+- (5) `withTenant`, `inAuth` and `CustomerSessionBoundary.transaction`: a failed ROLLBACK now calls release(rollbackError) and rethrows the original error, through a shared exported `rollback()` helper.
+
+Commits: 5816c43, 0e63aad, aa95a05 (review round).
+
+Deferred to a candidate 0011 (owner-merged, Sensitive: yes): (e) lower(v.id) in 0010:27 defeats the primary key index; (c) a real orphan cancel with audit (record_team_control requires a membership row); an orphan resend can renew a setup with no membership. (f) Fingerprint hardening, future. No Retry-After header added to the coordination and team-control routes (decision-cards adds 2s).
+
+Verification, local PG16 127.0.0.1:54329. Round 1 at head 0e63aad: focused 64/64 three repeats, exit 0; full `pnpm test:e2e` exit 0, 563 passed, 343 skipped; operator team and invite subset (team-today-layout, v3-workspace-team-ui, team-nav-v1, revamp-cx3b-invitation, v3-workspace-invitation-ui) 40/40 exit 0 after fetching two old commits (KI-15 shallow clone; the first try had 2 beforeAll failures in `git show`); `test:verification` ws-d/team-control 4 passed, 2 skipped by design. Round 2 at head aa95a05: focused-r2 68/68 exit 0; tx-release-r2 6/6; typecheck, lint and format:check exit 0; test:docs 78/78; `pnpm test:integration` exit 1 with 3991 passed, 1 skipped and only the four local-only failures (foundations backup, blob, adapters ClamAV, scan-bypass); build exit 0; authority check PASS 77. Red proof: every new test fails on the old source (raw 40P01; 42501 'Fresh workspace owner required'; 42501 'Workspace member unavailable'; release() without the rollback error; the race test resolved cancelled:true). CI deadlock tests: SET LOCAL deadlock_timeout needs superuser; the CI owner is the postgres superuser (ci.yml:122-125, scripts/local-database.mjs, tests/integration/support.ts:6-10).
+
+Review: two independent corridra-reviewer passes, no blocking findings; one should-fix (an active membership appearing after the revoke) survived a refute pass and was fixed with a deterministic statement-trigger test; four notes fixed.
+
+Next: push, draft PR, CI on the exact head, Guardian review by S40; main is frozen for merges until install run 2 is verified (S40). Then the G11 follow-ups from the PR 399 body.
