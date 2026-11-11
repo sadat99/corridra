@@ -157,8 +157,7 @@ jobs:
       # (short timeout, retries), bound the step, and retry once. A step timeout stops the step but not
       # the root-owned apt-get it started, which keeps the dpkg lock, so the retry stops it first.
       - name: Resilient apt settings
-        run: |
-          printf 'Acquire::http::Timeout "15";\nAcquire::https::Timeout "15";\nAcquire::Retries "3";\n' | sudo tee /etc/apt/apt.conf.d/99-ci-resilience
+        run: bash scripts/ci-apt-network.sh
       - name: Browser runtime
         id: browser-runtime
         timeout-minutes: 4
@@ -172,6 +171,7 @@ jobs:
           sudo pkill -KILL -x dpkg || true
           sleep 2
           sudo dpkg --configure -a
+          bash scripts/ci-apt-network.sh
           pnpm exec playwright install --with-deps chromium
       - name: Browser runtime fingerprint (KI-28)
         continue-on-error: true
@@ -264,8 +264,7 @@ jobs:
       # (short timeout, retries), bound the step, and retry once. A step timeout stops the step but not
       # the root-owned apt-get it started, which keeps the dpkg lock, so the retry stops it first.
       - name: Resilient apt settings
-        run: |
-          printf 'Acquire::http::Timeout "15";\nAcquire::https::Timeout "15";\nAcquire::Retries "3";\n' | sudo tee /etc/apt/apt.conf.d/99-ci-resilience
+        run: bash scripts/ci-apt-network.sh
       - name: Browser runtime
         id: browser-runtime
         timeout-minutes: 4
@@ -279,6 +278,7 @@ jobs:
           sudo pkill -KILL -x dpkg || true
           sleep 2
           sudo dpkg --configure -a
+          bash scripts/ci-apt-network.sh
           pnpm exec playwright install --with-deps chromium
       - name: Browser runtime fingerprint (KI-28)
         continue-on-error: true
@@ -382,8 +382,7 @@ jobs:
           # measured public pages are built with it on.
           CORRIDRA_UX_FAIRS: 'true'
       - name: Resilient apt settings
-        run: |
-          printf 'Acquire::http::Timeout "15";\nAcquire::https::Timeout "15";\nAcquire::Retries "3";\n' | sudo tee /etc/apt/apt.conf.d/99-ci-resilience
+        run: bash scripts/ci-apt-network.sh
       - name: Playwright browser cache
         uses: actions/cache@v5
         with:
@@ -402,6 +401,7 @@ jobs:
           sudo pkill -KILL -x dpkg || true
           sleep 2
           sudo dpkg --configure -a
+          bash scripts/ci-apt-network.sh
           pnpm exec playwright install --with-deps chromium
       - name: Verification suite (390, 768 and 1280 px)
         run: pnpm test:verification
@@ -483,8 +483,7 @@ jobs:
           path: ~/.cache/ms-playwright
           key: ms-playwright-${{ steps.playwright.outputs.image }}-${{ runner.arch }}-${{ steps.playwright.outputs.version }}
       - name: Resilient apt settings
-        run: |
-          printf 'Acquire::http::Timeout "15";\nAcquire::https::Timeout "15";\nAcquire::Retries "3";\n' | sudo tee /etc/apt/apt.conf.d/99-ci-resilience
+        run: bash scripts/ci-apt-network.sh
       - name: Browser runtime
         id: browser-runtime
         timeout-minutes: 4
@@ -498,6 +497,7 @@ jobs:
           sudo pkill -KILL -x dpkg || true
           sleep 2
           sudo dpkg --configure -a
+          bash scripts/ci-apt-network.sh
           pnpm exec playwright install --with-deps chromium
       - name: Browser runtime fingerprint (KI-28)
         continue-on-error: true
