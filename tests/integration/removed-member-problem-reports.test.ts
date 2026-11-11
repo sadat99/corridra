@@ -104,7 +104,10 @@ describe('CONTROL (ADR-078 is untouched; holds on main too): no problem report f
     expect(Object.keys(after).length).toBeGreaterThan(10);
     expect(after).toEqual(before);
   });
+});
 
+// The four helpers are created by the removed member files, so this case cannot hold on main.
+describe('ADR-078 is untouched by the new bodies (fails on main: the helpers do not exist there)', () => {
   test('the files name no problem_report function and the report tables are not read by any new body', async () => {
     const { rows } = await w.f.owner.query(
       `SELECT p.oid::regprocedure::text AS signature FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
