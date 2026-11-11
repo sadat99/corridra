@@ -1459,6 +1459,11 @@
       "use": "Exact hashed ledger at 61213338 (the PR 412 merge), before PRs 409, 408, 407, 411 and 412 and the 11 Nov owner decisions after records 1 were recorded; preserves the S40 records 1c Resume bullets; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-s40-records-3-2026-11-11.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at c4007697 (the PR 416 merge), before PRs 415, 413, 410 and 416 and install run 43003370618 were recorded; preserves the S40 records 2 Resume bullets; use the current ledger for live state."
+    },
+    {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"
