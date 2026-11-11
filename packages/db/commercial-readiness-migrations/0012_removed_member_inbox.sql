@@ -86,7 +86,7 @@ BEGIN
  INTO before_state FROM pg_class c WHERE c.oid=to_regclass('app.inbox_notification');
  EXECUTE $fn$
 CREATE OR REPLACE FUNCTION app.inbox_notice_visible(recipient uuid,notice_type text,notice_key text,body jsonb) RETURNS boolean
- LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
+ LANGUAGE plpgsql STABLE COST 1000 SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE href text:=coalesce(body->>'href',''); rid uuid;
 BEGIN
  -- Only the signed-in customer's own notices are looked at. For anyone else the answer is true and says nothing.
