@@ -145,6 +145,106 @@ export type ProgrammeEconomics = {
   }[];
   counts: { registered: number; active: number; withdrawnOrRemoved: number };
 };
+// U10c: a participant declares a payment ("I have paid"); the organiser acknowledges or does not accept it. A declaration is not
+// proof of bank receipt and never changes a recorded or outstanding amount; only an acknowledgement writes a ledger entry.
+const reference = (max: number) =>
+  z
+    .string()
+    .trim()
+    .min(2)
+    .max(max)
+    .refine((v) => !control.test(v), 'Control characters are not allowed');
+export const paymentDeclareInput = z
+  .object({
+    commandId: z.uuid(),
+    registrationId: z.uuid(),
+    currency: z.string().regex(/^[A-Z]{3}$/),
+    amountMinor,
+    paidOn: day.refine((v) => v <= new Date(Date.now() + 86_400_000).toISOString().slice(0, 10), {
+      message: 'A payment cannot be dated in the future',
+    }),
+    payerReference: reference(120).nullable(),
+    note: reference(500).nullable(),
+  })
+  .strict();
+export const paymentOwnQuery = z.object({ registrationId: z.uuid() }).strict();
+export const paymentDecideInput = z
+  .object({
+    commandId: z.uuid(),
+    workspaceId: z.uuid(),
+    programmeId: z.uuid(),
+    declarationId: z.uuid(),
+    decision: z.enum(['ACKNOWLEDGED', 'REJECTED']),
+    reason: reference(300).min(10).nullable(),
+    receivedAmountMinor: amountMinor.nullable(),
+    receivedOn: day.nullable(),
+  })
+  .strict()
+  .refine(
+    (v) =>
+      v.decision === 'REJECTED'
+        ? v.reason !== null && v.receivedAmountMinor === null && v.receivedOn === null
+        : v.reason === null,
+    { message: 'A rejection needs a reason; an acknowledgement carries none' },
+  )
+  .refine(
+    (v) =>
+      v.receivedOn === null ||
+      v.receivedOn <= new Date(Date.now() + 86_400_000).toISOString().slice(0, 10),
+    { message: 'A payment cannot be dated in the future' },
+  );
+export type PaymentDeclaration = {
+  id: string;
+  registrationId: string;
+  currency: string;
+  exponent: number;
+  amountMinor: string;
+  paidOn: string;
+  payerReference: string | null;
+  note: string | null;
+  declaredAt: string;
+  status: 'AWAITING_REVIEW' | 'ACKNOWLEDGED' | 'REJECTED';
+  reason: string | null;
+  decidedAt: string | null;
+  verified: false;
+  // Organiser view only.
+  registrationLabel?: string | null;
+  ledgerEntryId?: string | null;
+  outstandingMinor?: string;
+};
+export type OwnPaymentDeclarations = {
+  registrationId: string;
+  programmeId: string;
+  expiresAt: string;
+  provenance: 'PARTICIPANT_DECLARED';
+  verified: false;
+  collectsPayments: false;
+  declarations: PaymentDeclaration[];
+};
+export type PendingPaymentDeclarations = {
+  workspaceId: string;
+  programmeId: string;
+  expiresAt: string;
+  provenance: 'PARTICIPANT_DECLARED';
+  verified: false;
+  declarations: PaymentDeclaration[];
+};
+export type PaymentDeclareResult = {
+  registrationId: string;
+  expiresAt: string;
+  commandId: string;
+  replayed: boolean;
+  declaration: PaymentDeclaration;
+};
+export type PaymentDecideResult = {
+  workspaceId: string;
+  programmeId: string;
+  expiresAt: string;
+  commandId: string;
+  replayed: boolean;
+  declaration: PaymentDeclaration;
+  entry: LedgerEntry | null;
+};
 export class CustomerProgrammeEconomicsService extends CustomerSessionBoundary {
   async summary(input: unknown, subject?: string, issuer?: string) {
     const q = ledgerScope.parse(input);
@@ -184,6 +284,62 @@ export class CustomerProgrammeEconomicsService extends CustomerSessionBoundary {
           await db.query<{ result: LedgerRecordResult }>(
             'SELECT customer.programme_ledger_record($1,$2,$3,$4) AS result',
             [commandId, workspaceId, programmeId, JSON.stringify(entry)],
+          )
+        ).rows[0].result,
+      subject,
+      issuer,
+    );
+  }
+  async declarePayment(input: unknown, subject?: string, issuer?: string) {
+    const { commandId, ...payload } = paymentDeclareInput.parse(input);
+    return this.transaction(
+      async (db) =>
+        (
+          await db.query<{ result: PaymentDeclareResult }>(
+            'SELECT customer.declare_programme_payment($1,$2) AS result',
+            [commandId, JSON.stringify(payload)],
+          )
+        ).rows[0].result,
+      subject,
+      issuer,
+    );
+  }
+  async ownPaymentDeclarations(input: unknown, subject?: string, issuer?: string) {
+    const q = paymentOwnQuery.parse(input);
+    return this.transaction(
+      async (db) =>
+        (
+          await db.query<{ result: OwnPaymentDeclarations }>(
+            'SELECT customer.own_programme_payment_declarations($1) AS result',
+            [q.registrationId],
+          )
+        ).rows[0].result,
+      subject,
+      issuer,
+    );
+  }
+  async pendingPaymentDeclarations(input: unknown, subject?: string, issuer?: string) {
+    const q = ledgerScope.parse(input);
+    return this.transaction(
+      async (db) =>
+        (
+          await db.query<{ result: PendingPaymentDeclarations }>(
+            'SELECT customer.programme_payment_declarations_pending($1,$2) AS result',
+            [q.workspaceId, q.programmeId],
+          )
+        ).rows[0].result,
+      subject,
+      issuer,
+    );
+  }
+  async decidePayment(input: unknown, subject?: string, issuer?: string) {
+    const { commandId, workspaceId, programmeId, ...payload } = paymentDecideInput.parse(input);
+    return this.transaction(
+      async (db) =>
+        (
+          await db.query<{ result: PaymentDecideResult }>(
+            'SELECT customer.decide_programme_payment($1,$2,$3,$4) AS result',
+            [commandId, workspaceId, programmeId, JSON.stringify(payload)],
           )
         ).rows[0].result,
       subject,
