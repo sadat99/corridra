@@ -179,14 +179,23 @@ export class CommunicationService {
       if (contactStates && messageRows.length) {
         // CRUD G11: the state of each listed message's contact, read for this page only. Joined into the page query,
         // the masked view was evaluated again for every message. A contact this reader cannot see has no state.
+        // opted_out matches app.private_contact_inactive: an opt-out of any address in the chain. It is read under
+        // this reader's own policies, so it is true only for a reader who may read that opt-out, and the address is
+        // used only inside sha256.
         const states = (
-          await db.query<{ id: string; status: string }>(
-            'SELECT cs.id,cs.status FROM app.private_contact_state cs WHERE cs.tenant_id=$1 AND cs.id=ANY($2::uuid[])',
+          await db.query<{ id: string; status: string; opted_out: boolean }>(
+            `SELECT cs.id,cs.status,EXISTS(SELECT FROM app.communication_optout o
+               JOIN app.private_contact_data pc ON pc.tenant_id=o.tenant_id AND o.recipient_key=encode(sha256(convert_to(lower(pc.email),'UTF8')),'hex')
+               WHERE pc.tenant_id=cs.tenant_id AND (pc.id=cs.chain_id OR pc.id IN (SELECT x.replacement_id FROM app.private_contact_change x WHERE x.tenant_id=cs.tenant_id AND x.chain_id=cs.chain_id))) AS opted_out
+             FROM app.private_contact_state cs WHERE cs.tenant_id=$1 AND cs.id=ANY($2::uuid[])`,
             [ctx.tenantId, [...new Set(messageRows.map((m) => m.contact_id as string))]],
           )
         ).rows;
-        for (const m of messageRows)
-          m.contact_status = states.find((s) => s.id === m.contact_id)?.status ?? null;
+        for (const m of messageRows) {
+          const state = states.find((s) => s.id === m.contact_id);
+          m.contact_status = state?.status ?? null;
+          m.contact_opted_out = state?.opted_out ?? false;
+        }
       }
       const attempts = messageRows.length
         ? // Bounded (G12 follow-up): the newest 10 attempts of each listed message, so at most 500 a

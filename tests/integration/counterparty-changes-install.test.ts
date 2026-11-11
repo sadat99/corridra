@@ -120,7 +120,9 @@ describe('with the module absent', () => {
     );
     const lists = await f.communications.workspace(f.ctx);
     expect(lists.contacts.some((c) => c.id === t.contactId)).toBe(true);
-    expect(lists.messages.every((m) => !('contact_status' in m))).toBe(true);
+    expect(
+      lists.messages.every((m) => !('contact_status' in m) && !('contact_opted_out' in m)),
+    ).toBe(true);
     await noteOn(f, t);
     const events = async () =>
       (await f.owner.query('SELECT count(*)::int n FROM app.domain_event')).rows[0].n;

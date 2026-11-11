@@ -25,7 +25,7 @@ import {
 import { hash } from '../../packages/communications/src/index';
 import { SyntheticChannel, type ChannelAdapter } from '../../packages/communications/src/adapters';
 import { OutboxDispatcher } from '../../packages/workflows/src/index';
-import { notSentForContact } from '../../apps/web/app/operator/contact-not-sent';
+import { notSentWords } from '../../apps/web/app/operator/contact-not-sent';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { admitSyntheticCustomer } from '../../packages/auth/src/customer-admission';
 import { configureCustomerRealUse } from '../../packages/auth/src/customer-real-use-configuration';
@@ -407,6 +407,15 @@ describe('CRUD-6 and Guardian C3 events', () => {
 });
 
 describe('Guardian C4 send-time check', () => {
+  // The messages list words, from the UI spec.
+  const words = {
+    optedOut: 'Not sent: the person opted out. It cannot be sent again.',
+    hidden: 'Not sent: contact hidden. It cannot be sent again.',
+    withdrawn: 'Not sent: contact withdrawn. It cannot be sent again.',
+    corrected:
+      'Not sent: the contact was corrected after this introduction was created. It cannot be sent again.',
+    neutral: 'Not sent: this contact can no longer be used.',
+  };
   const worker = () => new OutboxDispatcher(f.runtime, new SyntheticChannel(f.runtime));
   const dispatch = async (id: string) =>
     (
@@ -428,8 +437,8 @@ describe('Guardian C4 send-time check', () => {
     });
     const listed = (await f.communications.workspace(f.ctx)).messages.find((m) => m.id === i.id);
     expect(listed).toMatchObject({ contact_status: 'WITHDRAWN' });
-    // The messages list says "Not sent: contact withdrawn or hidden." only for a message this check stopped.
-    expect(notSentForContact(listed!)).toBe(true);
+    // The messages list names the reason only for a message this check stopped.
+    expect(notSentWords(listed!)).toBe(words.withdrawn);
   });
 
   test('the claim, the module check, the contact check and the PERMANENT finish run in one transaction on one connection, released before any delivery', async () => {
@@ -617,31 +626,122 @@ describe('Guardian C4 send-time check', () => {
     );
     expect((await dispatch(queued.id)).receipts).toBe(0);
     const messages = (await f.communications.workspace(f.ctx)).messages;
-    expect(notSentForContact(messages.find((m) => m.id === hidden.id)!)).toBe(true);
-    // Stopped for an opted-out address, not for a withdrawn or hidden contact: no such words.
-    expect(notSentForContact(messages.find((m) => m.id === queued.id)!)).toBe(false);
-    // A message stopped for an unrelated reason, or a corrected contact, never reads as withdrawn or hidden.
+    const listedHidden = messages.find((m) => m.id === hidden.id)!;
+    expect(notSentWords(listedHidden)).toBe(words.hidden);
+    // A hidden contact's name and address are not in the message row.
+    const hiddenText = JSON.stringify(listedHidden);
+    expect(hiddenText).not.toContain('Synthetic Buyer');
+    expect(hiddenText).not.toContain('@example.invalid');
+    // Stopped for an opted-out address, not for a withdrawn or hidden contact: the opt-out words, never those.
+    const optedOut = notSentWords(messages.find((m) => m.id === queued.id)!);
+    expect(optedOut).toBe(words.optedOut);
+    expect(optedOut).not.toMatch(/withdrawn|hidden/);
+  });
+
+  test('the not-sent words give the true reason: an opt-out before a withdrawal, and a correction after queueing', async () => {
+    const t = await f.target();
+    const corrected = await f.research.command(f.ctx, correctContact(t.contactId, t.sourceId));
+    const both = await f.introduction({ ...t, contactId: corrected.replacementId });
+    await f.communications.command(
+      f.ctx,
+      command('optout', { contactId: t.contactId, reason: 'The person asked not to be contacted' }),
+    );
+    await f.research.command(f.ctx, withdrawContact(corrected.replacementId));
+    expect(await worker().attempt(both.id, f.communications.dispatchCapability(both.id))).toBe(
+      'DEAD',
+    );
+    const u = await f.target();
+    const changed = await f.introduction(u);
+    await f.research.command(f.ctx, correctContact(u.contactId, u.sourceId));
     expect(
-      notSentForContact({
-        delivery_status: 'SUPPRESSED',
-        last_error: 'POLICY_BLOCKED',
-        contact_status: 'WITHDRAWN',
+      await worker().attempt(changed.id, f.communications.dispatchCapability(changed.id)),
+    ).toBe('DEAD');
+    const messages = (await f.communications.workspace(f.ctx)).messages;
+    const listedBoth = messages.find((m) => m.id === both.id)!;
+    expect(listedBoth).toMatchObject({ contact_status: 'WITHDRAWN', contact_opted_out: true });
+    expect(notSentWords(listedBoth)).toBe(words.optedOut);
+    expect(notSentWords(listedBoth)).not.toMatch(/withdrawn|hidden/);
+    const listedChanged = messages.find((m) => m.id === changed.id)!;
+    expect(listedChanged).toMatchObject({ contact_status: 'CORRECTED', contact_opted_out: false });
+    expect(notSentWords(listedChanged)).toBe(words.corrected);
+  });
+
+  test('an opt-out the reader may not read is never named: that reader gets the neutral words, a workspace owner the opt-out words', async () => {
+    // The message goes to a correction; its chain's first address is opted out through a contact on another
+    // relationship, owned by another operator with owner-only visibility, so the sending operator cannot read it.
+    const t = await f.target();
+    const email = (
+      await f.owner.query('SELECT email FROM app.private_contact_data WHERE id=$1', [t.contactId])
+    ).rows[0].email as string;
+    const corrected = await f.research.command(f.ctx, correctContact(t.contactId, t.sourceId));
+    const queued = await f.introduction({ ...t, contactId: corrected.replacementId });
+    const elsewhere = await f.research.command(
+      f.users.owner.ctx,
+      command('relationship', {
+        organisationId: await organisationOf(t.relationshipId),
+        ownerId: otherOperator.id,
+        visibility: 'OWNER',
+        note: 'Another operator keeps this relationship',
       }),
-    ).toBe(false);
+    );
+    const sameAddress = await f.research.command(
+      f.users.owner.ctx,
+      command('contact', {
+        relationshipId: elsewhere.id,
+        sourceId: t.sourceId,
+        name: 'Same Address Elsewhere',
+        jobTitle: 'Buyer',
+        email,
+        validUntil: future(6),
+      }),
+    );
+    const optoutReason = `Private opt-out reason ${randomUUID()}`;
+    await f.communications.command(
+      otherOperator.ctx,
+      command('optout', { contactId: sameAddress.id, reason: optoutReason }),
+    );
+    expect(await worker().attempt(queued.id, f.communications.dispatchCapability(queued.id))).toBe(
+      'DEAD',
+    );
+    const asSender = (await f.communications.workspace(f.ctx)).messages;
+    expect(asSender.find((m) => m.id === queued.id)).toMatchObject({
+      contact_status: 'SOURCE_REPORTED',
+      contact_opted_out: false,
+    });
+    expect(notSentWords(asSender.find((m) => m.id === queued.id)!)).toBe(words.neutral);
+    const asOwnerOfWorkspace = (await f.communications.workspace(f.users.owner.ctx)).messages;
+    expect(notSentWords(asOwnerOfWorkspace.find((m) => m.id === queued.id)!)).toBe(words.optedOut);
+    for (const list of [asSender, asOwnerOfWorkspace])
+      expect(JSON.stringify(list)).not.toContain(optoutReason);
+  });
+
+  test('only a message the send-time check stopped gets contact words, and never with the module absent', () => {
+    for (const contact_status of ['WITHDRAWN', 'HIDDEN', 'CORRECTED', 'SOURCE_REPORTED', null])
+      for (const contact_opted_out of [true, false]) {
+        for (const [delivery_status, last_error] of [
+          ['SUPPRESSED', 'POLICY_BLOCKED'],
+          ['PENDING', 'TRANSIENT'],
+          ['DEAD', 'TRANSIENT'],
+          ['DELIVERED', null],
+        ])
+          expect(
+            notSentWords({ delivery_status, last_error, contact_status, contact_opted_out }),
+          ).toBeNull();
+        // Without the module the row carries no opt-out field.
+        expect(
+          notSentWords({ delivery_status: 'DEAD', last_error: 'PERMANENT', contact_status }),
+        ).toBeNull();
+      }
+    const stopped = { delivery_status: 'DEAD', last_error: 'PERMANENT' };
+    expect(notSentWords({ ...stopped, contact_status: 'HIDDEN', contact_opted_out: true })).toBe(
+      words.optedOut,
+    );
     expect(
-      notSentForContact({
-        delivery_status: 'DEAD',
-        last_error: 'PERMANENT',
-        contact_status: 'CORRECTED',
-      }),
-    ).toBe(false);
-    expect(
-      notSentForContact({
-        delivery_status: 'PENDING',
-        last_error: 'TRANSIENT',
-        contact_status: 'HIDDEN',
-      }),
-    ).toBe(false);
+      notSentWords({ ...stopped, contact_status: 'WITHDRAWN', contact_opted_out: false }),
+    ).toBe(words.withdrawn);
+    expect(notSentWords({ ...stopped, contact_status: null, contact_opted_out: false })).toBe(
+      words.neutral,
+    );
   });
 
   test('a message to a withdrawn contact, or to a correction of an opted-out address, is refused before it is queued', async () => {
