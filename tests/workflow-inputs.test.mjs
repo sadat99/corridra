@@ -95,7 +95,17 @@ test('each field-module choice maps to install only and reaches the exact-head c
     Object.entries(declared).map(([name, input]) => [name, input.default]),
   );
   const u = 'unchanged';
-  for (const [choice, confirmation, arrangements, lifecycle, labels, revision, g4g5, reports, pages] of [
+  for (const [
+    choice,
+    confirmation,
+    arrangements,
+    lifecycle,
+    labels,
+    revision,
+    g4g5,
+    reports,
+    pages,
+  ] of [
     ['unchanged', u, u, u, u, u, u, u, u],
     ['specification_confirmation', 'install', u, u, u, u, u, u, u],
     ['commercial_arrangements', u, 'install', u, u, u, u, u, u],

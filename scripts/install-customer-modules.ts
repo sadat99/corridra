@@ -619,7 +619,9 @@ try {
     // anything unless the three participant tables it writes to have a shape it was proven against.
     if (v.PROGRAMME_PAGES_ACTION === 'install') {
       await migrateCustomerProgrammePublication(pool);
-      console.log('installed or already current: programme pages and applications (application switch unchanged)');
+      console.log(
+        'installed or already current: programme pages and applications (application switch unchanged)',
+      );
     }
     // Withdraw, correct and hide for private contacts and notes (CRUD G11) are never part of the base run. Install leaves
     // the one control closed; enable and pause are owner decisions with a reason. Reached through field_modules_action
