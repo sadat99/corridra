@@ -11,12 +11,23 @@ const issuer = 'https://ep-ui-fixture.neonauth.c-5.eu-central-1.aws.neon.tech/co
 const workspaceId = '00000000-0000-4000-8000-000000000001',
   programmeId = '00000000-0000-4000-8000-000000000002';
 const address = 'synthetic-china-machinery-delegation-k3f9x2ab7q';
+const fixtureSource = `import {createRoot} from 'react-dom/client';
+import {AppRouterContext} from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import {ProgrammePage} from './app/account/delegations/programme-page.tsx';
+import {ProgrammeApplications} from './app/account/delegations/programme-applications.tsx';
+const host=document.getElementById('fixture');
+const query=new URLSearchParams(location.search);
+const who={subject:'synthetic-alice',issuer:host.dataset.issuer};
+const router={push:p=>location.assign(p),replace:p=>location.replace(p),back:()=>history.back(),forward:()=>history.forward(),refresh:()=>{},hmrRefresh:()=>{},prefetch:async()=>{}};
+const target=query.get('apply')?{address:query.get('apply'),version:1,title:'Synthetic China machinery delegation',organiser:'Synthetic Dhaka Agro Traders Association',open:query.get('closed')!=='1'}:null;
+createRoot(host).render(<AppRouterContext.Provider value={router}>{query.get('mode')==='organiser'?<ProgrammePage {...who} workspaceId={host.dataset.workspace} programmeId={host.dataset.programme} programmeName="Synthetic organiser programme"/>:<ProgrammeApplications {...who} target={target} asked={query.has('apply')||query.has('gone')}/>}</AppRouterContext.Provider>);`;
 let server: Server, origin: string;
 test.beforeAll(async () => {
-  const path = (file: string) => JSON.stringify(resolve('apps/web/app/account/delegations', file));
   const result = await build({
     stdin: {
-      contents: `import {createRoot} from 'react-dom/client';import {AppRouterContext} from 'next/dist/shared/lib/app-router-context.shared-runtime';import {ProgrammePage} from ${path('programme-page.tsx')};import {ProgrammeApplications} from ${path('programme-applications.tsx')};const query=new URLSearchParams(location.search);const who={subject:'synthetic-alice',issuer:${JSON.stringify(issuer)}};const router={push:p=>location.assign(p),replace:p=>location.replace(p),back:()=>history.back(),forward:()=>history.forward(),refresh:()=>{},hmrRefresh:()=>{},prefetch:async()=>{}};const target=query.get('apply')?{address:query.get('apply'),version:1,title:'Synthetic China machinery delegation',organiser:'Synthetic Dhaka Agro Traders Association',open:query.get('closed')!=='1'}:null;createRoot(document.getElementById('fixture')).render(<AppRouterContext.Provider value={router}>{query.get('mode')==='organiser'?<ProgrammePage {...who} workspaceId=${JSON.stringify(workspaceId)} programmeId=${JSON.stringify(programmeId)} programmeName="Synthetic organiser programme"/>:<ProgrammeApplications {...who} target={target} asked={query.has('apply')||query.has('gone')}/>}</AppRouterContext.Provider>);`,
+      // A constant source: nothing is interpolated into the code. The paths are relative to resolveDir and the
+      // fixture values are read from the page's own data attributes.
+      contents: fixtureSource,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
     },
@@ -79,7 +90,7 @@ test.beforeAll(async () => {
     } else if (file === '/' || file === '/account/delegations') {
       response.setHeader('Content-Type', 'text/html');
       response.end(
-        `<!doctype html><html lang="en" class="${fontClass}"><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Synthetic programme page fixture</title><link rel="stylesheet" href="/fixture.css"></head><body><main id="main" class="operator-page ux-workspace ux-customer"><h1>Synthetic programme page fixture</h1><div id="fixture"></div></main><script type="module" src="/fixture.js"></script></body></html>`,
+        `<!doctype html><html lang="en" class="${fontClass}"><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Synthetic programme page fixture</title><link rel="stylesheet" href="/fixture.css"></head><body><main id="main" class="operator-page ux-workspace ux-customer"><h1>Synthetic programme page fixture</h1><div id="fixture" data-issuer="${issuer}" data-workspace="${workspaceId}" data-programme="${programmeId}"></div></main><script type="module" src="/fixture.js"></script></body></html>`,
       );
     } else {
       response.statusCode = 404;
