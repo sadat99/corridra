@@ -26,7 +26,12 @@ import {
   operatorSignInPath,
   workspaceSections,
 } from '../../lib/workspace-navigation';
-import { fragmentFor, operatorSectionPath, sectionOfFragment } from '../../lib/operator-urls';
+import {
+  addressDestination,
+  fragmentFor,
+  operatorSectionPath,
+  sectionOfFragment,
+} from '../../lib/operator-urls';
 import { subscribeToHash } from '../../lib/address-store';
 import { resolveSubTabsAgain } from '../../components/ux/sub-tabs';
 import { authenticatorReturnTarget } from '../../lib/authenticator-check';
@@ -260,23 +265,38 @@ function TenantWorkspace({
     if (!loaded) return;
     const allowed = fragment === 'main' || fragment === 'workspace-navigation' || sectionAllowed;
     const target = allowed ? document.getElementById(fragment) : null;
+    // A block inside a section can be missing (its role never gets it) or appear after the section does
+    // (its data loads first). The section that holds it is then where the eyes go.
+    const holder =
+      allowed && !target && sectionId !== fragment ? document.getElementById(sectionId) : null;
+    const place = addressDestination({
+      fragment,
+      sectionId,
+      allowed,
+      blockExists: !!target,
+      holderExists: !!holder,
+    });
     const destination =
-      target ?? (fragment ? document.getElementById('workspace-navigation') : null);
+      place === 'block'
+        ? target
+        : place === 'section'
+          ? holder
+          : place === 'directory'
+            ? document.getElementById('workspace-navigation')
+            : null;
     if (destination?.id === 'workspace-navigation') {
       const directory = destination.querySelector('details');
       if (directory) directory.open = true;
     }
-    // A tab that holds the block opens first, so the scroll has something to land on.
+    // A hidden tab that holds the block is shown before the scroll below. The sub-tabs' own effect also
+    // scrolls to and focuses the block once its tab shows, so either one may land first.
     if (target?.closest<HTMLElement>('[data-subtab]')?.hidden) resolveSubTabsAgain();
     if (target) openFoldsAround(target);
     destination?.scrollIntoView();
     destination?.focus({ preventScroll: true });
-    // A block inside a section can appear after the section does (its data loads first). Until then
-    // the section is shown and the address waits; the watch ends when the block lands, when the
-    // address changes or when the workspace unmounts.
-    const holder =
-      allowed && !target && sectionId !== fragment ? document.getElementById(sectionId) : null;
-    if (!holder) return undefined;
+    // Until the block lands the section is shown and the address waits; the watch ends when the block
+    // lands, when the address changes or when the workspace unmounts.
+    if (place !== 'section' || !holder) return undefined;
     const watch = new MutationObserver(() => {
       const block = document.getElementById(fragment);
       if (!block) return;
@@ -728,7 +748,7 @@ function TenantWorkspace({
               <AuthenticatorCheck
                 busy={busy}
                 act={act}
-                returnTo={authenticatorReturnTarget(nav.previous, currentRole)}
+                returnTo={authenticatorReturnTarget(sectionOfFragment(nav.previous), currentRole)}
                 tenant={tenant}
               />
             </section>

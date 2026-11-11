@@ -2,6 +2,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  addressDestination,
   fragmentFor,
   operatorPlaceFor,
   operatorSectionPath,
@@ -126,6 +127,56 @@ describe('addresses inside a section', () => {
     expect(
       operatorReturnTo('/operator?workspace=11111111-1111-4111-8111-111111111111#billing-services'),
     ).toBe('/operator');
+  });
+});
+
+describe('where the workspace sends the eyes for an address', () => {
+  const tile = { fragment: 'billing-services', sectionId: 'workspace-delivery', allowed: true };
+  it('lands on the block when it is there', () => {
+    expect(addressDestination({ ...tile, blockExists: true, holderExists: true })).toBe('block');
+    expect(
+      addressDestination({
+        fragment: 'workspace-research',
+        sectionId: 'workspace-research',
+        allowed: true,
+        blockExists: true,
+        holderExists: true,
+      }),
+    ).toBe('block');
+  });
+  it('falls back to the section that holds the block, not the directory, when the block is missing for the role or not loaded yet', () => {
+    expect(addressDestination({ ...tile, blockExists: false, holderExists: true })).toBe('section');
+  });
+  it('opens the directory when neither the block nor its section is there, or the section is not allowed', () => {
+    expect(addressDestination({ ...tile, blockExists: false, holderExists: false })).toBe(
+      'directory',
+    );
+    expect(
+      addressDestination({ ...tile, allowed: false, blockExists: false, holderExists: false }),
+    ).toBe('directory');
+    expect(
+      addressDestination({ ...tile, allowed: false, blockExists: true, holderExists: true }),
+    ).toBe('directory');
+    expect(
+      addressDestination({
+        fragment: 'workspace-research',
+        sectionId: 'workspace-research',
+        allowed: true,
+        blockExists: false,
+        holderExists: true,
+      }),
+    ).toBe('directory');
+  });
+  it('goes nowhere for an empty address', () => {
+    expect(
+      addressDestination({
+        fragment: '',
+        sectionId: '',
+        allowed: false,
+        blockExists: false,
+        holderExists: false,
+      }),
+    ).toBe('none');
   });
 });
 
