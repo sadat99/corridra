@@ -2152,11 +2152,12 @@ html {
     strong,
     label,
     .primary-link,
-    .text-link
+    .text-link,
+    .guide-tag
   ) {
   overflow-wrap: anywhere;
 }
-:where(.ux-public, .site-header, .site-footer) :where(button, th, td, .ux-badge, .guide-tag) {
+:where(.ux-public, .site-header, .site-footer) :where(button, th, td, .ux-badge) {
   overflow-wrap: break-word;
 }
 body {

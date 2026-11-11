@@ -4,7 +4,7 @@ import { hasDynamicSegment, pageRoutes } from '../ux/page-length-lib';
 import { generatedRoutes } from '../ux/static-routes';
 
 // W6-A: the Largest Text Size step together with 200 percent browser text (250 percent of the default, a root size
-// of 40 px) on every public page, at the phone and the desktop width. W10 recorded that this case failed on many
+// of 40 px) on every public page, at the phone and the desktop widths, 320 included (WCAG 1.4.10 reflow is defined at 320 CSS px). W10 recorded that this case failed on many
 // public components and had no test. The saved step is set the way a person sets it (the saved choice, read before
 // the first paint) and the browser text is set on top of it, as the browser setting is.
 //
@@ -23,7 +23,7 @@ const routes = [
     .map((entry) => entry.route),
   ...generatedRoutes,
 ].sort();
-const widths = [390, 1440] as const;
+const widths = [320, 390, 1440] as const;
 
 test.beforeEach(({}, info) => {
   test.skip(info.project.name !== 'desktop', 'sizes are set in each case');
@@ -44,7 +44,7 @@ const faces = [
 ] as const;
 
 for (const [face, style] of faces)
-  test(`with Largest text and 200% browser text every public page fits at 390 and 1440, ${face}`, async ({
+  test(`with Largest text and 200% browser text every public page fits at 320, 390 and 1440, ${face}`, async ({
     page,
   }) => {
     test.setTimeout(900_000);
