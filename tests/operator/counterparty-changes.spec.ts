@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 import { build } from 'esbuild';
 import { createServer, type Server } from 'node:http';
 import { readFileSync } from 'node:fs';
@@ -26,8 +26,11 @@ test.beforeAll(async () => {
     stdin: {
       contents: `import{createRoot}from'react-dom/client';
       import{Counterparties}from ${JSON.stringify(resolve('apps/web/app/operator/counterparties.tsx'))};
+      import{ControlledAccess}from ${JSON.stringify(resolve('apps/web/app/operator/access.tsx'))};
       createRoot(document.getElementById('fixture')).render(
-        <main className="operator-page"><Counterparties tenant=${JSON.stringify(tenant)}/></main>);`,
+        <main className="operator-page">{location.search==='?introductions'
+          ?<ControlledAccess tenant=${JSON.stringify(tenant)} revision={0}/>
+          :<Counterparties tenant=${JSON.stringify(tenant)}/>}</main>);`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
     },
@@ -484,8 +487,45 @@ test('G11-08 correct: two steps, save waits for a change, a discard prompt guard
   expect(sent[1]!.commandId).not.toBe(sent[0]!.commandId);
 });
 
-for (const width of [360, 1440])
-  test(`G11-09 at ${width} px the buttons and history summary are at least 44 pixels and there are no axe violations`, async ({
+/**
+ * Every control in the open dialog meets A-03 (buttons at least 44 x 44 px, fields at least 44 px tall), the dialog
+ * fits the viewport width, each button can be scrolled into view inside it, and the keyboard focus ring shows.
+ */
+async function dialogFits(page: Page, dialog: Locator) {
+  const viewport = page.viewportSize()!;
+  const box = (await dialog.boundingBox())!;
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
+  for (const button of await dialog.getByRole('button').all()) {
+    await button.scrollIntoViewIfNeeded();
+    const b = (await button.boundingBox())!;
+    const name = await button.innerText();
+    expect(b.height, name).toBeGreaterThanOrEqual(44);
+    expect(b.width, name).toBeGreaterThanOrEqual(44);
+    expect(b.y, name).toBeGreaterThanOrEqual(0);
+    expect(b.y + b.height, name).toBeLessThanOrEqual(viewport.height);
+  }
+  for (const control of await dialog
+    .locator('input:visible, textarea:visible, select:visible')
+    .all())
+    expect((await control.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Shift+Tab');
+  expect(
+    await page.evaluate(() => {
+      const focused = document.activeElement as HTMLElement;
+      const style = getComputedStyle(focused);
+      return (
+        focused.closest('dialog') !== null &&
+        ((style.outlineStyle !== 'none' && style.outlineWidth !== '0px') ||
+          style.boxShadow !== 'none')
+      );
+    }),
+  ).toBe(true);
+}
+
+for (const width of [320, 360, 768, 1024, 1440])
+  test(`G11-09 at ${width} px the buttons, fields and history summary are at least 44 pixels, every dialog fits, and there are no axe violations`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
@@ -502,6 +542,7 @@ for (const width of [360, 1440])
         }),
         contact({ id: newer, name: 'Synthetic Buyer' }),
       ],
+      answer: () => ({ status: 401, json: { error: 'Sign in to continue' } }),
     });
     if (width < 640)
       await page.locator('summary', { hasText: 'Show private relationships' }).click();
@@ -509,13 +550,53 @@ for (const width of [360, 1440])
     for (const target of [...(await item.getByRole('button').all()), item.locator('summary')]) {
       const box = await target.boundingBox();
       expect(box!.height).toBeGreaterThanOrEqual(44);
+      expect(box!.width).toBeGreaterThanOrEqual(44);
     }
     await expect(item.locator('summary')).toHaveText('Earlier versions and changes (2)');
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);
     expect(await axe(page)).toEqual([]);
+
+    await item.getByRole('button', { name: 'Correct Contact' }).click();
+    const correct = page.getByRole('dialog', { name: 'Correct This Contact' });
+    await dialogFits(page, correct);
+    expect(await axe(page)).toEqual([]);
+    await correct.getByLabel('Job title').fill('Head of procurement');
+    await correct.getByRole('button', { name: 'Next' }).click();
+    await expect(
+      correct.getByRole('heading', { name: 'Step 2 of 2: Source and reason' }),
+    ).toBeVisible();
+    await dialogFits(page, correct);
+    expect(await axe(page)).toEqual([]);
+    await correct.getByLabel('Why are you correcting this contact?').fill('Title was wrong');
+    await page.keyboard.press('Escape');
+    await expect(correct.getByRole('group', { name: 'Discard changes' })).toBeVisible();
+    await dialogFits(page, correct);
+    expect(await axe(page)).toEqual([]);
+    await correct.getByRole('button', { name: 'Discard Changes' }).click();
+    await expect(page.getByRole('dialog')).toBeHidden();
+
+    await item.getByRole('button', { name: 'Hide Contact Details' }).click();
+    const hide = page.getByRole('dialog', { name: "Hide This Contact's Details?" });
+    await dialogFits(page, hide);
+    expect(await axe(page)).toEqual([]);
+    await hide
+      .getByLabel('Why are these details being hidden?')
+      .fill('Request from the person to stop showing');
+    await hide.getByLabel('Ticket reference').fill('REQ-2026-0142');
+    await hide.getByLabel('Type the contact id to confirm').fill(newer);
+    await hide.getByRole('button', { name: 'Confirm and Hide' }).click();
+    await expect(hide.getByRole('alert')).toHaveText(
+      'Your session has ended. Sign in again, then send the same request again.',
+    );
+    await dialogFits(page, hide);
+    expect(await axe(page)).toEqual([]);
+    await hide.getByRole('button', { name: 'Cancel' }).click();
+    await expect(page.getByRole('dialog')).toBeHidden();
+
     await item.getByRole('button', { name: 'Withdraw Contact' }).click();
+    await dialogFits(page, page.getByRole('dialog', { name: 'Withdraw This Contact?' }));
     expect(await axe(page)).toEqual([]);
     // With no edits, Escape closes the change dialog at once (a dialog without confirmClose is covered by
     // revamp-cx2-components.spec.ts CX-05, lines 139-170).
@@ -723,34 +804,47 @@ test('G11-15 Cancel and Discard Changes return focus to the button that opened t
   await expect(item.getByRole('button', { name: 'Correct Contact' })).toBeFocused();
 });
 
-test('G11-16 a correction that changes only Valid until can be saved and is guarded by the discard prompt', async ({
-  page,
-}) => {
-  const sent = await open(page, {
-    contacts: [contact({ status: 'EXPIRED', valid_until: '2026-11-09T09:00:00Z' })],
+test.describe('in a +05:30 time zone', () => {
+  // A half-hour offset, so both an hour and a half-hour time zone mistake change the instant sent.
+  test.use({ timezoneId: 'Asia/Kolkata' });
+  test('G11-16 a correction that changes only Valid until can be saved, is guarded by the discard prompt, and sends exactly the values seen with the new instant', async ({
+    page,
+  }) => {
+    const sent = await open(page, {
+      contacts: [contact({ status: 'EXPIRED', valid_until: '2026-11-09T09:00:00Z' })],
+    });
+    await group(page, 'Contact: Synthetic Buyer')
+      .getByRole('button', { name: 'Correct Contact' })
+      .click();
+    const dialog = page.getByRole('dialog', { name: 'Correct This Contact' });
+    await dialog.getByRole('button', { name: 'Next' }).click();
+    await expect(dialog.getByText('You changed nothing yet.')).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Save Correction' })).toBeDisabled();
+    await dialog.locator('[data-date-field="validUntil"]').fill('2026-12-15T10:00');
+    await expect(dialog.getByText('You changed: Valid until.')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(dialog.getByText('Discard your changes to this contact?')).toBeVisible();
+    await dialog.getByRole('button', { name: 'Keep Editing' }).click();
+    await dialog.getByLabel('Why are you correcting this contact?').fill('Source renewed');
+    await dialog.getByRole('button', { name: 'Save Correction' }).click();
+    await expect(page.getByRole('status', { name: 'Research status' })).toHaveText(
+      'Correction saved. The earlier version stays in the history, marked Corrected.',
+    );
+    // 10:00 on 15 December in Asia/Kolkata (+05:30) is 04:30 UTC.
+    expect(sent).toEqual([
+      {
+        action: 'correct_contact',
+        contactId,
+        sourceId: source,
+        name: 'Synthetic Buyer',
+        jobTitle: 'Procurement lead',
+        email: 'buyer@example.invalid',
+        validUntil: '2026-12-15T04:30:00.000Z',
+        reason: 'Source renewed',
+        commandId: expect.any(String),
+      },
+    ]);
   });
-  await group(page, 'Contact: Synthetic Buyer')
-    .getByRole('button', { name: 'Correct Contact' })
-    .click();
-  const dialog = page.getByRole('dialog', { name: 'Correct This Contact' });
-  await dialog.getByRole('button', { name: 'Next' }).click();
-  await expect(dialog.getByText('You changed nothing yet.')).toBeVisible();
-  await expect(dialog.getByRole('button', { name: 'Save Correction' })).toBeDisabled();
-  await dialog.locator('[data-date-field="validUntil"]').fill('2026-12-15T10:00');
-  await expect(dialog.getByText('You changed: Valid until.')).toBeVisible();
-  await page.keyboard.press('Escape');
-  await expect(dialog.getByText('Discard your changes to this contact?')).toBeVisible();
-  await dialog.getByRole('button', { name: 'Keep Editing' }).click();
-  await dialog.getByLabel('Why are you correcting this contact?').fill('Source renewed');
-  await dialog.getByRole('button', { name: 'Save Correction' }).click();
-  await expect(page.getByRole('status', { name: 'Research status' })).toHaveText(
-    'Correction saved. The earlier version stays in the history, marked Corrected.',
-  );
-  expect(sent).toHaveLength(1);
-  expect(sent[0]).toMatchObject({ action: 'correct_contact', name: 'Synthetic Buyer' });
-  expect(new Date(String(sent[0]!.validUntil)).getTime()).not.toBe(
-    Date.parse('2026-11-09T09:00:00Z'),
-  );
 });
 
 test('G11-20 a corrected contact and a corrected note keep their place in the list, in the order the server gives', async ({
@@ -835,3 +929,176 @@ test('G11-19 a browser close that skips the discard prompt shows the dialog agai
   await expect(page.getByRole('dialog')).toBeHidden();
   await expect(item.getByRole('button', { name: 'Correct Contact' })).toBeFocused();
 });
+
+test('G11-17 a contact whose source passed its keep-until date can still be withdrawn', async ({
+  page,
+}) => {
+  // The contact's own date is still ahead; it reads Expired because its source's keep-until date has passed.
+  const sent = await open(page, {
+    contacts: [contact({ status: 'EXPIRED', valid_until: '2027-03-01T09:00:00Z' })],
+    after: {
+      contacts: [
+        contact({
+          status: 'WITHDRAWN',
+          change_kind: 'WITHDRAW',
+          change_reason: 'Source ended',
+          changed_by: owner,
+          changed_at: '2026-11-10T14:05:00Z',
+        }),
+      ],
+    },
+  });
+  const item = group(page, 'Contact: Synthetic Buyer');
+  await expect(item).toContainText(
+    "Past its valid-until date or its source's keep-until date. You can still withdraw or correct it.",
+  );
+  await item.getByRole('button', { name: 'Withdraw Contact' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Withdraw This Contact?' });
+  await dialog.getByLabel('Why are you withdrawing this contact?').fill('Source ended');
+  await dialog.getByRole('button', { name: 'Confirm Withdrawal' }).click();
+  await expect(page.getByRole('status', { name: 'Research status' })).toHaveText(
+    'Contact withdrawn. It stays in the history, marked Withdrawn.',
+  );
+  expect(sent).toEqual([
+    {
+      action: 'withdraw_contact',
+      contactId,
+      reason: 'Source ended',
+      commandId: expect.any(String),
+    },
+  ]);
+});
+
+test('G11-18 a signed-out answer in Correct and in Hide says so and keeps every value typed', async ({
+  page,
+}) => {
+  const sent = await open(page, {
+    role: 'owner',
+    answer: () => ({ status: 401, json: { error: 'Sign in to continue' } }),
+  });
+  const item = group(page, 'Contact: Synthetic Buyer');
+  const signedOut = 'Your session has ended. Sign in again, then send the same request again.';
+  await item.getByRole('button', { name: 'Correct Contact' }).click();
+  const correct = page.getByRole('dialog', { name: 'Correct This Contact' });
+  await correct.getByLabel('Job title').fill('Head of procurement');
+  await correct.getByRole('button', { name: 'Next' }).click();
+  await correct.getByLabel('Why are you correcting this contact?').fill('Title was wrong');
+  await correct.getByRole('button', { name: 'Save Correction' }).click();
+  await expect(correct.getByRole('alert')).toHaveText(signedOut);
+  await expect(correct.getByLabel('Why are you correcting this contact?')).toHaveValue(
+    'Title was wrong',
+  );
+  await correct.getByRole('button', { name: 'Back' }).click();
+  await expect(correct.getByLabel('Job title')).toHaveValue('Head of procurement');
+  await correct.getByRole('button', { name: 'Cancel' }).click();
+  await correct.getByRole('button', { name: 'Discard Changes' }).click();
+  await expect(page.getByRole('dialog')).toBeHidden();
+
+  await item.getByRole('button', { name: 'Hide Contact Details' }).click();
+  const hide = page.getByRole('dialog', { name: "Hide This Contact's Details?" });
+  await hide
+    .getByLabel('Why are these details being hidden?')
+    .fill('Request from the person to stop showing');
+  await hide.getByLabel('Ticket reference').fill('REQ-2026-0142');
+  await hide.getByLabel('Type the contact id to confirm').fill(contactId);
+  await hide.getByRole('button', { name: 'Confirm and Hide' }).click();
+  await expect(hide.getByRole('alert')).toHaveText(signedOut);
+  await expect(hide.getByLabel('Why are these details being hidden?')).toHaveValue(
+    'Request from the person to stop showing',
+  );
+  await expect(hide.getByLabel('Ticket reference')).toHaveValue('REQ-2026-0142');
+  await expect(hide.getByLabel('Type the contact id to confirm')).toHaveValue(contactId);
+  expect(sent.map((body) => body.action)).toEqual(['correct_contact', 'redact_contact']);
+});
+
+for (const width of [320, 1440])
+  test(`G11-21 at ${width} px each not-sent reason reads in the introduction line, wraps, and has no axe violations`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const words = [
+      'Not sent: the person opted out. It cannot be sent again.',
+      'Not sent: contact hidden. It cannot be sent again.',
+      'Not sent: contact withdrawn. It cannot be sent again.',
+      'Not sent: the contact was corrected after this introduction was created. It cannot be sent again.',
+      'Not sent: this contact can no longer be used.',
+    ];
+    const stopped = { delivery_status: 'DEAD', last_error: 'PERMANENT' };
+    const facts: Row[] = [
+      { ...stopped, contact_status: 'WITHDRAWN', contact_opted_out: true },
+      { ...stopped, contact_status: 'HIDDEN', contact_opted_out: false },
+      { ...stopped, contact_status: 'WITHDRAWN', contact_opted_out: false },
+      { ...stopped, contact_status: 'CORRECTED', contact_opted_out: false },
+      { ...stopped, contact_status: null, contact_opted_out: false },
+      { delivery_status: 'SUPPRESSED', last_error: 'POLICY_BLOCKED', contact_opted_out: true },
+    ];
+    const messages = facts.map((fact, i) => ({
+      id: `00000000-0000-4000-8000-00000000100${i}`,
+      link_id: `00000000-0000-4000-8000-00000000200${i}`,
+      presentation: { company: `Synthetic Supplier ${i + 1}` },
+      channel: 'SYNTHETIC',
+      decision: null,
+      response_id: null,
+      attempts: 1,
+      revoked: false,
+      expires_at: '2026-12-01T09:00:00Z',
+      ...fact,
+    }));
+    await page.route('**/api/workspace/**', (route) => {
+      const action = new URL(route.request().url()).pathname.split('/').pop();
+      return route.fulfill({
+        json:
+          action === 'communications'
+            ? {
+                role: 'operator',
+                policies: [],
+                templates: [],
+                targets: [],
+                contacts: [],
+                messages,
+                optouts: [],
+                attempts: [],
+                targetsTotal: null,
+                targetsNext: null,
+                contactsTotal: null,
+                contactsNext: null,
+                messagesTotal: null,
+                messagesNext: null,
+                optoutsTotal: null,
+                optoutsNext: null,
+              }
+            : {
+                role: 'operator',
+                owners: [],
+                meetings: [],
+                meetingsTotal: null,
+                next: null,
+                followupsTotal: null,
+                followupsNext: null,
+                participants: [],
+                outcomes: [],
+                followups: [],
+                history: [],
+              },
+      });
+    });
+    await page.goto(`${origin}/?introductions`);
+    const cards = page.locator('article.introduction-card');
+    await expect(cards).toHaveCount(facts.length);
+    for (const [i, text] of words.entries()) await expect(cards.nth(i)).toContainText(text);
+    // A message stopped for another reason keeps only its own status words.
+    await expect(cards.nth(5)).not.toContainText('Not sent');
+    for (const card of await cards.all())
+      expect(await card.evaluate((c) => c.scrollWidth <= c.clientWidth)).toBe(true);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
+    expect(
+      (
+        await new AxeBuilder({ page })
+          .include('article.introduction-card')
+          .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
+          .analyze()
+      ).violations.map((v) => v.id),
+    ).toEqual([]);
+  });
