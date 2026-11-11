@@ -6,6 +6,7 @@ import { realReportSignedInEnabled, realReportsOffMessage } from './real-report-
 import { DomainError } from '@corridra/domain';
 import {
   assertRestrictedPool,
+  rollback,
   sessionHash,
   type DatabaseClient,
   type DatabasePool,
@@ -205,6 +206,7 @@ export class CustomerSessionBoundary {
         [hash, issuer, session.subject, session.expiresAt],
       );
     let db: DatabaseClient | undefined;
+    let rollbackError: Error | undefined;
     try {
       // Display metadata is separate from the short authentication proof. Old schemas keep their strict window.
       try {
@@ -239,10 +241,10 @@ export class CustomerSessionBoundary {
       await db.query('COMMIT');
       return result;
     } catch (error) {
-      if (db) await db.query('ROLLBACK');
+      if (db) rollbackError = await rollback(db);
       throw error;
     } finally {
-      db?.release();
+      db?.release(rollbackError);
       await this.auth.query(
         'DELETE FROM customer_private.session_proof WHERE hash=$1 OR expires_at<=clock_timestamp()',
         [hash],
