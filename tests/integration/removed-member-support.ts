@@ -48,6 +48,15 @@ export const hideNewFiles = () => {
 export const openNewFiles = () => {
   (globalThis as { __removedHide?: boolean }).__removedHide = false;
 };
+// The erasure file (account lifecycle 0005) has its own switch: it is hidden alone while the ten files stay in place, which is the
+// state of main. ERASURE_BASE_CHECK=1 hides it for the whole run, and the erasure suite is then shown to fail on main.
+export const erasureBaseCheck = baseCheck || process.env.ERASURE_BASE_CHECK === '1';
+export const hideErasureFile = () => {
+  (globalThis as { __erasureHide?: boolean }).__erasureHide = true;
+};
+export const openErasureFile = () => {
+  (globalThis as { __erasureHide?: boolean }).__erasureHide = false;
+};
 export const sha = (value: string) => createHash('sha256').update(value).digest('hex');
 
 export type Fixture = Awaited<ReturnType<typeof fixture>>;
@@ -135,6 +144,22 @@ export function fileSql(key: FileKey) {
   );
 }
 export const fileHash = (key: FileKey) => sha(fileSql(key));
+
+// The eleventh file: the erasure file of the account lifecycle module. It is not one of the ten (FILE_KEYS), because it replaces
+// functions of a module the ten suites do not all install. Under ERASURE_BASE_CHECK it throws, as it would on main.
+export const ERASURE_FILE = {
+  directory: 'customer-account-lifecycle-migrations',
+  registry: 'customer_account_lifecycle_migrations',
+  name: '0005_removed_member_erasure.sql',
+  previous: '0004_erasure_scope_by_workspaces.sql',
+} as const;
+export function erasureSql() {
+  if (erasureBaseCheck) throw new Error(`${ERASURE_FILE.name} does not exist on the base commit`);
+  return readFileSync(
+    new URL(`../../packages/db/${ERASURE_FILE.directory}/${ERASURE_FILE.name}`, import.meta.url),
+    'utf8',
+  );
+}
 export const stripComments = (sql: string) => sql.replace(/^\s*--.*$/gm, '');
 const between = (sql: string, name: string) => {
   const open = new RegExp(`^\\s*-- ${name}-begin\\s*$`, 'm').exec(sql);
@@ -142,20 +167,25 @@ const between = (sql: string, name: string) => {
   if (!open || !close || close.index < open.index) throw new Error('Missing marker ' + name);
   return sql.slice(open.index + open[0].length, close.index);
 };
-// What the file claims the fingerprints of the functions it replaces are.
-export function fileFingerprints(key: FileKey) {
-  return [
-    ...between(fileSql(key), 'fingerprint').matchAll(/\('([^']+)','([0-9a-f]{64})','([^']*)'\)/g),
-  ].map((m) => ({ signature: m[1]!, fingerprint: m[2]!, grantees: m[3]! }));
-}
-// The live values, read with the query the file carries for the owner (between the fingerprint-query markers).
-export async function liveFingerprints(owner: Fixture['owner'], key: FileKey) {
-  const query = between(fileSql(key), 'fingerprint-query');
-  return (
-    await owner.query<{ signature: string; fp: string | null; grantees: string | null }>(query)
+// What a file claims the fingerprints of the functions it replaces are, and the live values read with the query the file
+// carries for the owner (between the fingerprint-query markers).
+const fingerprintsIn = (sql: string) =>
+  [...between(sql, 'fingerprint').matchAll(/\('([^']+)','([0-9a-f]{64})','([^']*)'\)/g)].map(
+    (m) => ({ signature: m[1]!, fingerprint: m[2]!, grantees: m[3]! }),
+  );
+const liveFingerprintsIn = async (owner: Fixture['owner'], sql: string) =>
+  (
+    await owner.query<{ signature: string; fp: string | null; grantees: string | null }>(
+      between(sql, 'fingerprint-query'),
+    )
   ).rows.map((r) => ({ signature: r.signature, fingerprint: r.fp, grantees: r.grantees }));
-}
+export const fileFingerprints = (key: FileKey) => fingerprintsIn(fileSql(key));
+export const liveFingerprints = (owner: Fixture['owner'], key: FileKey) =>
+  liveFingerprintsIn(owner, fileSql(key));
 export const fileSignatures = (key: FileKey) => fileFingerprints(key).map((r) => r.signature);
+export const erasureFingerprints = () => fingerprintsIn(erasureSql());
+export const liveErasureFingerprints = (owner: Fixture['owner']) =>
+  liveFingerprintsIn(owner, erasureSql());
 
 // One function: its stored text and every setting, owner and grantees, for before and after comparisons.
 export async function functionState(owner: Fixture['owner'], signature: string) {
@@ -595,6 +625,49 @@ export async function buildWorld(
     bearer,
     w2Requests,
   };
+}
+
+// Owned requests written straight into the table as the owner with triggers and foreign keys off, as weight and as the requests
+// of a person: each gets a mission row in the named staff workspace. Nothing here is a real person or a real request.
+export async function bulkOwnedRequests(
+  w: World,
+  config: { person: string; workspace: string; count: number; missionTenant?: string },
+) {
+  const db = await w.f.owner.connect();
+  try {
+    await db.query('SET session_replication_role = replica');
+    await db.query(
+      'CREATE TEMP TABLE bulk AS SELECT n,gen_random_uuid() AS mid FROM generate_series(1,$1::int) n',
+      [config.count],
+    );
+    await db.query(
+      `INSERT INTO app.mission(id,tenant_id,owner_id,next_action,due_at,reason,created_by)
+       SELECT mid,$1,$2,'Synthetic bulk row',now()+interval '1 day','Synthetic bulk row',$2 FROM bulk`,
+      [config.missionTenant ?? w.f.tenantA, w.f.users.owner.id],
+    );
+    await db.query(
+      `INSERT INTO customer_private.owned_request(principal_id,command_id,workspace_id,mission_tenant_id,mission_id,request_key,brief_digest,receipt_hash)
+       SELECT $1,gen_random_uuid(),$2,$3,mid,gen_random_uuid(),encode(sha256(mid::text::bytea),'hex'),encode(sha256(('r'||mid::text)::bytea),'hex') FROM bulk`,
+      [w.principals[config.person], config.workspace, config.missionTenant ?? w.f.tenantA],
+    );
+    await db.query('DROP TABLE bulk');
+  } finally {
+    await db.query('RESET session_replication_role').catch(() => undefined);
+    db.release();
+  }
+}
+
+// A control row for the account lifecycle module, appended as the owner, as a fixture does.
+export async function setAccountLifecycleControl(w: World, enabled: boolean, label: string) {
+  const latest = (
+    await w.f.owner.query(
+      'SELECT coalesce(max(version),0)::int AS v FROM customer_private.account_lifecycle_control',
+    )
+  ).rows[0].v as number;
+  await w.f.owner.query(
+    'INSERT INTO customer_private.account_lifecycle_control(version,enabled,executor_id,reason) VALUES($1,$2,$3,$4)',
+    [latest + 1, enabled, w.f.serviceId, `Fixture control for the ${label} tests`],
+  );
 }
 
 // The same refusal an unknown id gets, byte for byte: the code and the exact text.
