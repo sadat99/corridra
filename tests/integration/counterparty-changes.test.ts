@@ -10,6 +10,7 @@ import {
   correctNote,
   counts,
   hideContact,
+  hideNote,
   hideReason,
   noteOn,
   reasonText,
@@ -160,6 +161,118 @@ describe('CRUD-1 who may withdraw and correct', () => {
   });
 });
 
+describe('CRUD-1 refusals for every change action', () => {
+  const denied = 'Only the relationship owner or a workspace owner or admin can change this.';
+  type Ids = { contactId: string; noteId: string; sourceId: string };
+  const actions: [string, (ids: Ids) => Record<string, unknown>, string][] = [
+    ['correct_contact', (i) => correctContact(i.contactId, i.sourceId), denied],
+    ['correct_note', (i) => correctNote(i.noteId, i.sourceId), denied],
+    ['withdraw_note', (i) => withdrawNote(i.noteId), denied],
+    [
+      'hide_contact',
+      (i) => hideContact(i.contactId),
+      'Only a workspace owner or admin can hide contact details.',
+    ],
+    ['hide_note', (i) => hideNote(i.noteId), 'Only a workspace owner or admin can hide notes.'],
+  ];
+  /** A target with a note, and a team relationship on the same company with its own contact and note. */
+  async function world() {
+    const t = await f.target();
+    const note = await noteOn(f, t);
+    const team = await f.research.command(
+      f.ctx,
+      command('relationship', {
+        organisationId: await organisationOf(t.relationshipId),
+        ownerId: f.users.operator.id,
+        visibility: 'TEAM',
+        note: 'Shared team relationship',
+      }),
+    );
+    const teamContact = await f.research.command(
+      f.ctx,
+      command('contact', {
+        relationshipId: team.id,
+        sourceId: t.sourceId,
+        name: 'Team Buyer',
+        jobTitle: 'Buyer',
+        email: `${randomUUID()}@example.invalid`,
+        validUntil: future(6),
+      }),
+    );
+    const teamNote = await noteOn(f, { relationshipId: team.id, sourceId: t.sourceId });
+    return {
+      own: { contactId: t.contactId, noteId: note.id, sourceId: t.sourceId },
+      team: { contactId: teamContact.id as string, noteId: teamNote.id, sourceId: t.sourceId },
+    };
+  }
+
+  test('correct, withdraw note and hide are refused with 403 and plain words for every caller without the right, and nothing is written', async () => {
+    const w = await world();
+    const callers: [string, () => Member['ctx'], keyof typeof w][] = [
+      ['reviewer', () => f.users.reviewer.ctx, 'own'],
+      ['viewer', () => f.users.viewer.ctx, 'own'],
+      ['non-owner operator on a team relationship', () => otherOperator.ctx, 'team'],
+      ['revoked member', () => revoked.ctx, 'own'],
+      ['disabled principal', () => disabled.ctx, 'own'],
+      ['outsider', () => f.users.outsider.ctx, 'own'],
+    ];
+    const rows = actions.flatMap((a) => callers.map((c) => [a, c] as const));
+    expect(rows).toHaveLength(30);
+    const before = await counts(f);
+    for (const [[action, input, words], [caller, ctx, ids]] of rows) {
+      const error = await refused(f.research.command(ctx(), input(w[ids])), 403);
+      expect({ action, caller, message: error.message }).toEqual({
+        action,
+        caller,
+        message: words,
+      });
+    }
+    expect(await counts(f)).toEqual(before);
+  });
+
+  test('hide is refused for the operator who owns the relationship (403), and for an owner or admin without a fresh authenticator check (STEP_UP_REQUIRED)', async () => {
+    const w = await world();
+    const staleOwner = await addMember(f, 'owner', { staleMfa: true });
+    const staleAdmin = await addMember(f, 'admin', { staleMfa: true });
+    const before = await counts(f);
+    for (const [, input, words] of actions.slice(3)) {
+      expect((await refused(f.research.command(f.ctx, input(w.own)), 403)).message).toBe(words);
+      for (const stale of [staleOwner, staleAdmin])
+        await refused(f.research.command(stale.ctx, input(w.own)), 401, 'STEP_UP_REQUIRED');
+    }
+    expect(await counts(f)).toEqual(before);
+  });
+
+  test('every change action on an item the caller cannot see, or in another workspace, answers 404 exactly like a random id', async () => {
+    const w = await world();
+    const random = { contactId: randomUUID(), noteId: randomUUID(), sourceId: w.own.sourceId };
+    const before = await counts(f);
+    let rows = 0;
+    for (const [action, input, words] of actions) {
+      // The workspace owner has every right, so a random id gives the plain not-found answer.
+      const missing = await refused(f.research.command(f.users.owner.ctx, input(random)), 404);
+      const hide = action.startsWith('hide');
+      for (const ctx of [otherOperator.ctx, f.users.other.ctx]) {
+        // An operator may never hide, so hide is refused on the role before any item is looked up: the same 403
+        // for every id, which tells nothing about the item.
+        if (hide && ctx === otherOperator.ctx) {
+          expect((await refused(f.research.command(ctx, input(w.own)), 403)).message).toBe(words);
+          continue;
+        }
+        const error = await refused(f.research.command(ctx, input(w.own)), 404);
+        expect({ action, message: error.message, code: error.code }).toEqual({
+          action,
+          message: missing.message,
+          code: missing.code,
+        });
+        rows++;
+      }
+    }
+    expect(rows).toBe(8);
+    expect(await counts(f)).toEqual(before);
+  });
+});
+
 describe('CRUD-2 retries', () => {
   test('the same command id twice gives one change and the same ids; changed values are refused; a double click writes one row', async () => {
     const t = await f.target();
@@ -266,6 +379,11 @@ describe('CRUD-3 list order', () => {
     for (let i = 0; i < 100; i++)
       latest = (await f.research.command(f.ctx, correctContact(latest, t.sourceId)))
         .replacementId as string;
+    // A real database's autovacuum analyses tables after this many inserts; this fresh one would not before the read,
+    // and without statistics the planner scans every change row for each contact row of the state view.
+    await f.owner.query(
+      'ANALYZE app.private_contact_data,app.private_contact_change,app.private_record_redaction',
+    );
     const contacts = (await f.research.detail(f.ctx, await organisationOf(t.relationshipId)))
       .contacts;
     expect(contacts).toHaveLength(100);
@@ -325,6 +443,53 @@ describe('CRUD-4 references and recovery', () => {
       kind: 'WITHDRAW',
     });
     await refused(f.research.command(f.ctx, correctContact(t.contactId, randomUUID())), 409);
+  });
+
+  test('a contact whose source passed its keep-until date can still be withdrawn, and a correction naming that source is refused', async () => {
+    const t = await f.target();
+    // A contact may not outlive its source, so both end together.
+    const ends = new Date(Date.now() + 1500).toISOString();
+    const unexpected = async () => {
+      throw new Error('No file operation in this test');
+    };
+    const evidence = new EvidenceService(
+      f.runtime,
+      { put: unexpected, get: unexpected },
+      { scan: unexpected },
+    );
+    const ending = await evidence.createSource(f.ctx, {
+      kind: 'public_record',
+      classification: 'PUBLIC',
+      locator: 'https://example.invalid/registry-ending',
+      observedAt: new Date().toISOString(),
+      purpose: 'synthetic_validation',
+      retentionUntil: ends,
+      aiPolicy: 'DENY',
+    });
+    const onEnding = await f.research.command(
+      f.ctx,
+      command('contact', {
+        relationshipId: t.relationshipId,
+        sourceId: ending.id,
+        name: 'Source Ending Buyer',
+        jobTitle: 'Buyer',
+        email: `${randomUUID()}@example.invalid`,
+        validUntil: ends,
+      }),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const before = await counts(f);
+    const error = await refused(
+      f.research.command(f.ctx, correctContact(onEnding.id, ending.id)),
+      409,
+    );
+    expect(error.message).toBe('Current source required');
+    expect(await counts(f)).toEqual(before);
+    expect(await f.research.command(f.ctx, withdrawContact(onEnding.id))).toMatchObject({
+      kind: 'WITHDRAW',
+      contactId: onEnding.id,
+    });
+    expect((await contactIn(t.relationshipId, onEnding.id))?.status).toBe('WITHDRAWN');
   });
 
   test('research intake paused: correct is refused, withdraw still works', async () => {
