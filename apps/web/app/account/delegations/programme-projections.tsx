@@ -5,6 +5,8 @@ import type {
   OwnProgrammeProjection,
 } from '@corridra/auth/customer-programme-projections';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
+import { formatDate } from '../../../lib/ux/format';
+import { groupAgendaByDay } from '../../../lib/programme-agenda';
 import { DateTimeInput } from '../../../components/ux/date-time-input';
 
 type Identity = { subject: string; issuer: string };
@@ -324,6 +326,48 @@ function OwnerPanel(
         )}
       </div>
     ) : null;
+  const grouped = groupAgendaByDay(d?.agenda ?? [], d?.conflicts ?? [], zone);
+  const agendaRow = (row: ProgrammeProjection['agenda'][number], overlapsWith: string[]) => (
+    <li key={row.taskId}>
+      <strong>{row.title}</strong> · {row.status}
+      {row.needsReview && (
+        <>
+          {' · '}
+          <strong>Needs review</strong>
+        </>
+      )}
+      {row.scheduled && (
+        <p>
+          {new Intl.DateTimeFormat('en-GB', {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+            timeZone: zone ?? row.timezone ?? 'UTC',
+          }).format(new Date(row.startsAt!))}{' '}
+          to{' '}
+          {new Intl.DateTimeFormat('en-GB', {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+            timeZone: zone ?? row.timezone ?? 'UTC',
+          }).format(new Date(row.endsAt!))}
+          {!(zone ?? row.timezone) && ' (UTC, time zone not recorded)'}
+        </p>
+      )}
+      {overlapsWith.length > 0 && (
+        <p>
+          <strong>Overlaps with {overlapsWith.join(', ')}</strong>
+        </p>
+      )}
+      {row.needsReview && <p role="status">Programme dates changed. Review this activity.</p>}
+      <button
+        className="text-link"
+        type="button"
+        disabled={view.busy}
+        onClick={() => edit(row.taskId)}
+      >
+        Edit Schedule for {row.title}
+      </button>
+    </li>
+  );
   return (
     <section
       ref={host}
@@ -491,39 +535,26 @@ function OwnerPanel(
               been saved. Check its schedule in the list before changing it again.
             </p>
           )}
-          <ul>
-            {d.agenda.map((row) => (
-              <li key={row.taskId}>
-                <strong>{row.title}</strong> · {row.status}
-                {row.scheduled && (
-                  <p>
-                    {new Intl.DateTimeFormat('en-GB', {
-                      dateStyle: 'medium',
-                      timeStyle: 'short',
-                      timeZone: zone ?? row.timezone ?? 'UTC',
-                    }).format(new Date(row.startsAt!))}{' '}
-                    to{' '}
-                    {new Intl.DateTimeFormat('en-GB', {
-                      dateStyle: 'medium',
-                      timeStyle: 'short',
-                      timeZone: zone ?? row.timezone ?? 'UTC',
-                    }).format(new Date(row.endsAt!))}
-                  </p>
-                )}
-                {row.needsReview && (
-                  <p role="status">Programme dates changed. Review this activity.</p>
-                )}
-                <button
-                  className="text-link"
-                  type="button"
-                  disabled={view.busy}
-                  onClick={() => edit(row.taskId)}
-                >
-                  Edit Schedule for {row.title}
-                </button>
-              </li>
-            ))}
-          </ul>
+          {grouped.days.map((day) => (
+            <section key={day.zone + day.dayKey} aria-labelledby={'agenda-day-' + day.dayKey}>
+              <h5 id={'agenda-day-' + day.dayKey}>
+                {formatDate(day.headingAt, { timeZone: day.zone })}
+              </h5>
+              <ul>{day.items.map(({ row, overlapsWith }) => agendaRow(row, overlapsWith))}</ul>
+            </section>
+          ))}
+          {grouped.zoneMissing.length > 0 && (
+            <section aria-labelledby="agenda-zone-missing">
+              <h5 id="agenda-zone-missing">Time zone not recorded</h5>
+              <ul>{grouped.zoneMissing.map((row) => agendaRow(row, []))}</ul>
+            </section>
+          )}
+          {grouped.unscheduled.length > 0 && (
+            <section aria-labelledby="agenda-unscheduled">
+              <h5 id="agenda-unscheduled">Not scheduled yet</h5>
+              <ul>{grouped.unscheduled.map((row) => agendaRow(row, []))}</ul>
+            </section>
+          )}
           {d.agenda.length === 0 ? (
             <p>Create a coordination task in Plan and report, then return here to schedule it.</p>
           ) : (
