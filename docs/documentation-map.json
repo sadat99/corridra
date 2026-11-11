@@ -1454,6 +1454,11 @@
       "use": "Exact hashed ledger at a456b586 (the PR 399 merge), before PRs 400, 398, 397 and 399, install run 42938648119 and the S40 and S39 lanes were recorded; preserves the 10 Nov S26 records 2 Takeover, Lanes, Merged, Installs, Switches, owner items and Next bullets; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-s40-records-2-2026-11-11.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at 61213338 (the PR 412 merge), before PRs 409, 408, 407, 411 and 412 and the 11 Nov owner decisions after records 1 were recorded; preserves the S40 records 1c Resume bullets; use the current ledger for live state."
+    },
+    {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"

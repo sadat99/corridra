@@ -397,6 +397,14 @@
       "bytes": 8049,
       "sha256": "f29128859b00e6b9702691b74234e40b5d3c785d452ae3dad78b6d41ea44e7b4",
       "meaning": "Exact active ledger at a456b586 (the PR 399 merge, 11 Nov), unchanged since the S26 records 2 merge 8c437a23, before PRs 400, 398, 397 and 399, install run 42938648119, the pause and resume, the S26 to S40 and S33 to S39 rotations and the open PRs 402 to 404 were recorded, including the S26 records 2 Takeover, Lanes, Merged (357 to 394), Installs, Switches, ADR-078 decision 6, Owner decisions open and Next bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "61213338e76ef6d36ebb2f835635b7b98e7b5614",
+      "archive": "docs/v3/history/ledger-before-s40-records-2-2026-11-11.md",
+      "bytes": 9539,
+      "sha256": "37d9426d722925befe190a60672f64ac14fec994dcf1e2987be2bfb4de957e08",
+      "meaning": "Exact active ledger at 61213338 (the PR 412 merge, 11 Nov), unchanged since the S40 records 1 merge 48b37648, before PRs 409, 408, 407, 411 and 412, the PR 410 and 413 states, the owner's 11 Nov decisions after records 1 and the S41 to S45 lane changes were recorded, including the S40 records 1c Takeover, access gap, open PRs, installs, merged, lanes, owner items and Next bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
