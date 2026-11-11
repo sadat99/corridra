@@ -232,6 +232,20 @@
   "/operator/owner": {
     "unavailable": true
   },
+  "/operator/problem-reports": {
+    "grade": 10.2,
+    "hard": 1,
+    "long": 0,
+    "sentences": 1,
+    "words": 9
+  },
+  "/operator/problem-reports/new": {
+    "grade": 10.2,
+    "hard": 1,
+    "long": 0,
+    "sentences": 1,
+    "words": 9
+  },
   "/operator/reset-password": {
     "grade": 14.2,
     "hard": 0,

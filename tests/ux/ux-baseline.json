@@ -59,6 +59,8 @@
   "/operator/owner": {
     "unavailable": 6
   },
+  "/operator/problem-reports": {},
+  "/operator/problem-reports/new": {},
   "/operator/reset-password": {},
   "/operator/setup": {},
   "/operator/signin": {},
