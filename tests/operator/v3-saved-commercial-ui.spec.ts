@@ -333,7 +333,7 @@ test('approved commercial report reuses requirements,qualification,original quot
   await expect(
     page.getByText('Original approved requirements 工厂 বাংলা', { exact: true }),
   ).toBeVisible();
-  await expect(page.getByText('Synthetic supplier 工厂', { exact: true })).toBeVisible();
+  await expect(page.getByText('Synthetic supplier 工厂', { exact: true }).first()).toBeVisible();
   await expect(page.getByText(/Installation and commissioning not quoted/)).toBeVisible();
   await expect(page.getByText(/BHD.*1\.234/).first()).toBeVisible();
   await expect(page.getByText('PROPOSED', { exact: false })).toBeVisible();
@@ -430,9 +430,11 @@ test('saved list and approved report support keyboard,axe and three responsive w
     .getByText('Companies,qualification,requirements and original quotations', { exact: true })
     .focus();
   await page.keyboard.press('Enter');
-  await expect(page.getByText('Synthetic supplier 工厂', { exact: true })).not.toBeVisible();
+  await expect(
+    page.getByText('Synthetic supplier 工厂', { exact: true }).first(),
+  ).not.toBeVisible();
   await page.keyboard.press('Enter');
-  await expect(page.getByText('Synthetic supplier 工厂', { exact: true })).toBeVisible();
+  await expect(page.getByText('Synthetic supplier 工厂', { exact: true }).first()).toBeVisible();
 });
 
 function responseReport(body?: string) {
