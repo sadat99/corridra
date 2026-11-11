@@ -100,7 +100,6 @@
   white-space: nowrap;
 }
 /* The language, help and avatar triggers: 44 px targets. */
-.ux-bar-inbox > .ux-menu-button,
 .ux-util-language > .ux-menu-button,
 .ux-util-help > .ux-menu-button,
 .ux-util-avatar > .ux-menu-button {
@@ -123,6 +122,11 @@
 .ux-util-language > .ux-menu-button > .corridra-icon {
   width: 1.25rem;
   height: 1.25rem;
+}
+.ux-bar-inbox > .ux-menu-button {
+  /* The inbox keeps its 44 px floor (px, from overflow-menu.css) and takes no side padding of its own: the icon is the
+     width of the button once the text is large, so the five tools still share one line at 768 px with 200% text. */
+  padding-inline: 0;
 }
 .ux-bar-inbox > .ux-menu-button > .corridra-icon,
 .ux-util-help > .ux-menu-button > .corridra-icon {
