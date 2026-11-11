@@ -357,7 +357,7 @@ test('separate module repeats safely and remains independently default-off,synth
   expect(
     (await f.owner.query('SELECT * FROM customer_commercial_migrations.applied')).rows,
   ).toEqual(receipts);
-  expect((await f.owner.query('SELECT * FROM customer_migrations.applied')).rows).toHaveLength(3);
+  expect((await f.owner.query('SELECT * FROM customer_migrations.applied')).rows).toHaveLength(4);
   const enabled = {
     CORRIDRA_CUSTOMER_WORKSPACES_ENABLED: 'true',
     CORRIDRA_CUSTOMER_SAVED_MISSIONS_ENABLED: 'true',

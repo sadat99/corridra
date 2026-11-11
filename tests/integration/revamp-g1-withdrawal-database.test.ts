@@ -173,6 +173,7 @@ describe('installation', () => {
     expect(before.map((r) => r.name)).toEqual([
       '0001_request_withdrawal.sql',
       '0002_staff_withdrawal_signal.sql',
+      '0003_removed_member_withdrawals.sql',
     ]);
     await migrateCustomerRequestWithdrawal(f.owner);
     expect(
@@ -182,9 +183,11 @@ describe('installation', () => {
       "UPDATE customer_request_withdrawal_migrations.applied SET sha256=repeat('0',64)",
     );
     await expect(migrateCustomerRequestWithdrawal(f.owner)).rejects.toThrow('history mismatch');
-    await f.owner.query('UPDATE customer_request_withdrawal_migrations.applied SET sha256=$1', [
-      before[0].sha256,
-    ]);
+    for (const row of before)
+      await f.owner.query(
+        'UPDATE customer_request_withdrawal_migrations.applied SET sha256=$1 WHERE name=$2',
+        [row.sha256, row.name],
+      );
     expect(
       (
         await f.owner.query(

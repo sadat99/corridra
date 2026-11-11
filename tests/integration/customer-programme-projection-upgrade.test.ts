@@ -109,7 +109,7 @@ describe('upgrading from installed 0001 to the source and retention file', () =>
     expect(await Promise.all(replaced.map(functionState))).toEqual(before);
   });
 
-  test('the installer applies 0002 alone, whatever the server renders for the replaced definitions, and again does nothing', async () => {
+  test('the installer applies 0002 (and then 0003), whatever the server renders for the replaced definitions, and again does nothing', async () => {
     const earlier = (await registry())[0]!;
     // A setting that changes how the server prints a definition but not its stored body must not stop the install:
     // servers of different major versions print definitions differently, so the guard compares stored bodies.
@@ -119,7 +119,12 @@ describe('upgrading from installed 0001 to the source and retention file', () =>
     ).not.toEqual(before.map((state) => state.definition));
     await migrateCustomerProgrammeProjections(f.owner);
     const applied = await registry();
-    expect(applied.map((row) => row.name)).toEqual([first, second]);
+    // 0003 is removed member access (owner decision 11 Nov 2026), applied after 0002 in the same run.
+    expect(applied.map((row) => row.name)).toEqual([
+      first,
+      second,
+      '0003_removed_member_projection.sql',
+    ]);
     expect(applied[0]).toEqual(earlier);
     expect(applied[1]!.sha256).toBe(sha(readFileSync(`${directory}/${second}`, 'utf8')));
     await migrateCustomerProgrammeProjections(f.owner);

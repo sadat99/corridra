@@ -17,6 +17,29 @@ export async function freshDatabase(name: string) {
   await admin.end();
   return new Pool(connection(name));
 }
+// Pool.end() resolves as soon as the pool has handed every idle client to client.end(), which is BEFORE the server side of those
+// connections has gone. The next fixture then runs DROP DATABASE ... WITH (FORCE), which signals the backends that are still
+// shutting down; the client of such a backend gets "terminating connection due to administrator command" (57P01) on an idle
+// listener that the pool still holds, and with no 'error' handler on the pool that becomes an unhandled error that fails the
+// whole run, in whichever file happens to be running. Waiting here until the database has no backend left closes the race at its
+// source. Nothing is swallowed: a connection that really is still busy keeps the wait going until the limit, and then the next
+// DROP behaves exactly as before.
+export async function waitForNoBackends(database: string, limitMs = 10000) {
+  const admin = new Pool(connection('postgres'));
+  try {
+    const stop = Date.now() + limitMs;
+    for (;;) {
+      const { rows } = await admin.query(
+        'SELECT count(*)::int AS n FROM pg_stat_activity WHERE datname=$1 AND pid<>pg_backend_pid()',
+        [database],
+      );
+      if (rows[0].n === 0 || Date.now() > stop) return;
+      await new Promise((done) => setTimeout(done, 25));
+    }
+  } finally {
+    await admin.end();
+  }
+}
 export async function fixture(database = 'corridra_integration', through?: string) {
   const owner = await freshDatabase(database);
   await migrate(owner, through);
@@ -101,6 +124,7 @@ export async function fixture(database = 'corridra_integration', through?: strin
     serviceId,
     async close() {
       await Promise.all([owner.end(), runtime.end(), auth.end()]);
+      await waitForNoBackends(database);
     },
   };
 }

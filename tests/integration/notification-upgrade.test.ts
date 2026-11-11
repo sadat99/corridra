@@ -114,6 +114,7 @@ describe('upgrading from the installed first file to email off until chosen', ()
       '0003_withdrawal_and_issuer_check.sql',
       '0004_mute_events.sql',
       '0005_withdrawn_requests.sql',
+      '0006_removed_member_notifications.sql',
     ]);
     expect(applied[0].sha256).toBe(sha(first));
     expect(applied[1].sha256).toBe(
@@ -126,7 +127,7 @@ describe('upgrading from the installed first file to email off until chosen', ()
     expect(
       (await f.owner.query('SELECT count(*)::int n FROM customer_notification_migrations.applied'))
         .rows[0].n,
-    ).toBe(5);
+    ).toBe(6);
   });
 
   test('a person with no choice now has email off, and a person who chose keeps their choice', async () => {

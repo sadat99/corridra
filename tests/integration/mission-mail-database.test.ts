@@ -180,6 +180,7 @@ describe('installation', () => {
       '0001_mission_mail.sql',
       '0002_mute_events.sql',
       '0003_withdrawn_requests.sql',
+      '0004_removed_member_mail.sql',
     ]);
     await migrateCustomerMissionMail(f.owner);
     expect(

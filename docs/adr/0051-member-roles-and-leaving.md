@@ -41,3 +41,11 @@ Rules, decided by S1 (Conductor and Guardian) for the G4 build and binding on it
 - Known limit: the new owner cannot remove the former owner, who stays `admin`. A step-down needs a later reviewed change.
 
 The capability ships as an optional module, closed by default, installed only by an owner-approved protected run.
+
+## Amendment, 11 November 2026: leaving and removal end reads of workspace requests
+
+Owner decision, 11 November 2026: "No, remove access (Recommended)" (answer verbatim; question paraphrased; ledger entry by S28). Requests and reports made in a workspace belong to that workspace; once a person is removed or leaves, they see none of them, including the ones they wrote. Items made outside any workspace stay theirs.
+
+Scope line. The decision "Leaving acts on your own membership ... records the same revocation row the owner's revoke writes" stands and is now the single fact the rule reads: no revocation row for the member means a current member, a revocation row means not. The readers of this ADR do not change. Every principal-bound path that read a person's requests and saved reports by authorship alone now also requires that fact, as listed in the [ADR-033 amendment](0033-private-customer-request-authority.md#amendment-11-november-2026-a-removed-member-sees-no-workspace-request-fail-closed). Leaving still deletes nothing.
+
+Consequences. The "Leave" confirmation words should tell the person that requests made in the workspace stop being visible to them (customer copy is the designer's and the owner's to approve; no copy is written here). Re-admission by a new invitation creates a new member row and restores access to requests that were not withdrawn or revoked. Erasure path, DECIDED by the owner on 11 November 2026: "Yes, add an erasure path (Recommended)", to be built in a follow-up PR after the access fix; this PR does not build it. Until that PR lands the stated state is: A removed member cannot withdraw their former workspace request or start an erasure request reaching it. This widens ADR-078 gap 2.

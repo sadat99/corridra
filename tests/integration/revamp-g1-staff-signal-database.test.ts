@@ -161,13 +161,17 @@ describe('the team signal for a withdrawn request', () => {
   const none = (missionId: string) => ({ missionId, withdrawn: false, at: null });
   const staffOf = (p: Person, who = f.users.operator) => ({ ...who.ctx, tenantId: p.tenantId });
 
-  test('is a second additive file in the same module, recorded once and idempotent', async () => {
+  test('is a second additive file in the same module (a third, removed member access, follows it), recorded once and idempotent', async () => {
     const names = (
       await f.owner.query(
         'SELECT name FROM customer_request_withdrawal_migrations.applied ORDER BY name',
       )
     ).rows.map((row) => row.name);
-    expect(names).toEqual(['0001_request_withdrawal.sql', '0002_staff_withdrawal_signal.sql']);
+    expect(names).toEqual([
+      '0001_request_withdrawal.sql',
+      '0002_staff_withdrawal_signal.sql',
+      '0003_removed_member_withdrawals.sql',
+    ]);
     await migrateCustomerRequestWithdrawal(f.owner);
     expect(
       (
@@ -175,7 +179,7 @@ describe('the team signal for a withdrawn request', () => {
           'SELECT count(*)::int n FROM customer_request_withdrawal_migrations.applied',
         )
       ).rows[0].n,
-    ).toBe(2);
+    ).toBe(3);
   });
 
   test('says nothing is withdrawn, then withdrawn with the date, then not withdrawn after a restore', async () => {

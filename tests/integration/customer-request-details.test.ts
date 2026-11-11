@@ -140,7 +140,14 @@ test('separate additive disclosure module retains the accepted three-module life
   expect(
     (await f.owner.query('SELECT * FROM customer_migrations.applied ORDER BY name')).rows,
   ).toEqual(oldReceipts);
-  expect(oldReceipts).toHaveLength(3);
+  // The base customer ladder is four files: 0001 to 0003 and 0004_workspace_member_current.sql, the helpers of removed member
+  // access (owner decision 11 Nov 2026, "No, remove access (Recommended)"). Before it was three.
+  expect((oldReceipts as { name: string }[]).map((row) => row.name)).toEqual([
+    '0001_synthetic_workspace_authority.sql',
+    '0002_workspace_collaboration.sql',
+    '0003_private_customer_requests.sql',
+    '0004_workspace_member_current.sql',
+  ]);
   await migrateCustomerRequestDetails(f.owner);
   expect(
     (await f.owner.query('SELECT * FROM customer_detail_migrations.applied')).rows,
