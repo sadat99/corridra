@@ -131,12 +131,43 @@ describe('Selling numbers on Home', () => {
           item('PROPOSED', []),
           item('PROPOSED', []),
           item('CONFIRMED', [meeting('m1', 'HELD'), meeting('m2', 'SCHEDULED')]),
+          item('CONFIRMED', [meeting('m3', 'SCHEDULED')]),
           item('REVIEW_REQUIRED', [meeting('m1', 'HELD')]),
           item('CANCELLED', []),
         ],
       }),
     ]);
+    // The first confirmed visit has a held meeting, so it is counted as held only.
     expect(facts).toEqual({ shortlisted: 2, proposed: 2, confirmed: 1, held: 1 });
+  });
+
+  it('counts a confirmed visit with a held meeting as held only, never in both', () => {
+    const meeting = (id: string, status: string) => ({ id, status, scheduleChanged: false });
+    const item = (version: number, state: string, meetings: ReturnType<typeof meeting>[]) => ({
+      id: `v1-${version}`,
+      itemId: 'v1',
+      version,
+      label: 'Visit',
+      state,
+      nextAction: 'Prepare',
+      dueAt: at,
+      responsibility: 'Team',
+      meetings,
+    });
+    const held = sellFacts([
+      experience({ agenda: [item(1, 'CONFIRMED', [meeting('m1', 'HELD')])] }),
+    ]);
+    expect(held).toMatchObject({ confirmed: 0, held: 1 });
+    // Only the newest version counts: an older held version does not hide a newer plain confirmation.
+    const newer = sellFacts([
+      experience({
+        agenda: [
+          item(1, 'CONFIRMED', [meeting('m1', 'HELD')]),
+          item(2, 'CONFIRMED', [meeting('m2', 'SCHEDULED')]),
+        ],
+      }),
+    ]);
+    expect(newer).toMatchObject({ confirmed: 1, held: 0 });
   });
 
   it('reads experiences only from well formed report missions', () => {
@@ -179,7 +210,7 @@ describe('two saved reports of one request (guardian review of PR 310)', () => {
     expect(sellFacts([first, second])).toEqual({
       shortlisted: 2,
       proposed: 0,
-      confirmed: 1,
+      confirmed: 0,
       held: 1,
     });
   });
