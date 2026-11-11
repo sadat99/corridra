@@ -74,8 +74,13 @@ test('WS-D actions: team invite, roles, authenticator reset, audit, route pack, 
     await expect(item).toContainText('Works until');
     await evidence(page, 'V-01-team-invite');
     const pending = await db.query(
-      `SELECT v.id,v.value::jsonb->>'principalId' AS principal_id,("expiresAt"-"createdAt") AS window FROM identity.verification v
-       WHERE v.value::jsonb->>'tenantId'=$1 AND v.value::jsonb->>'role'='operator'`,
+      // Other sign-in rows in this table hold values that are not JSON (a one-time code is "123456:0"), so the cast
+      // runs only on an invitation row: the CASE guarantees the order, which a WHERE clause does not.
+      `SELECT v.id,v.invitation->>'principalId' AS principal_id,(v."expiresAt"-v."createdAt") AS window
+       FROM (SELECT id,"createdAt","expiresAt",
+              CASE WHEN identifier LIKE 'corridra-operator-setup:%' THEN value::jsonb END AS invitation
+             FROM identity.verification WHERE identifier LIKE 'corridra-operator-setup:%') v
+       WHERE v.invitation->>'tenantId'=$1 AND v.invitation->>'role'='operator'`,
       [tenant],
     );
     expect(pending.rowCount).toBe(1);

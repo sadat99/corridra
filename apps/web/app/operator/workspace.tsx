@@ -28,8 +28,14 @@ import {
   operatorSignInPath,
   workspaceSections,
 } from '../../lib/workspace-navigation';
-import { fragmentFor, operatorSectionPath } from '../../lib/operator-urls';
+import {
+  addressDestination,
+  fragmentFor,
+  operatorSectionPath,
+  sectionOfFragment,
+} from '../../lib/operator-urls';
 import { subscribeToHash } from '../../lib/address-store';
+import { resolveSubTabsAgain } from '../../components/ux/sub-tabs';
 import { authenticatorReturnTarget } from '../../lib/authenticator-check';
 import { AuthenticatorCheck } from './authenticator-check';
 import { SourcesPanel } from './sources-panel';
@@ -39,6 +45,15 @@ import type { MoreKind, OperatorRecordRow, OperatorSnapshot } from './workspace-
 type RecordRow = OperatorRecordRow;
 type Snapshot = OperatorSnapshot;
 type Tenant = { id: string; name: string; role: string };
+// A closed fold (the phone fold in Delivery) hides what an address names, so a link to a block inside one opens it.
+function openFoldsAround(element: Element) {
+  for (
+    let fold = element.closest('details');
+    fold;
+    fold = fold.parentElement?.closest('details') ?? null
+  )
+    fold.open = true;
+}
 export function Workspace({
   tenants,
   initialTenant,
@@ -243,18 +258,19 @@ function TenantWorkspace({
     window.addEventListener('hashchange', read);
     return () => window.removeEventListener('hashchange', read);
   }, [loaded, initialSection]);
+  // An address inside a section (a billing block) belongs to that section: the role check and the view
+  // follow the section, so the same note shows for a role that may not see it.
+  const sectionId = sectionOfFragment(fragment);
   // The queue of problem reports sits inside Settings, so its own address (#problem-report-queue) is allowed for the
   // people who may see Settings, and panelFor puts it in that panel. Not offered, the address is an unknown fragment.
+  const reportQueueAddress = problemReports && fragment === problemReportQueueFragment;
   const sectionAllowed = workspaceSections.some(
     (section) =>
-      (section.id === fragment ||
-        (fragment === problemReportQueueFragment &&
-          problemReports &&
-          section.id === 'workspace-settings')) &&
+      (section.id === sectionId || (reportQueueAddress && section.id === 'workspace-settings')) &&
       (section.roles as readonly string[]).includes(currentRole ?? ''),
   );
   // One panel is in view at a time. Every panel stays mounted so entries survive a switch.
-  const view = sectionAllowed ? panelFor(fragment) : 'overview';
+  const view = sectionAllowed ? panelFor(sectionId) : 'overview';
   // With the shells switch on only the section in view is rendered (D14); open forms keep their
   // drafts through useFormDraft. Off, every panel stays mounted and is only hidden.
   const shown = (panel: string) => !shellsV2 || view === panel;
@@ -264,15 +280,60 @@ function TenantWorkspace({
     if (!loaded) return;
     const allowed = fragment === 'main' || fragment === 'workspace-navigation' || sectionAllowed;
     const target = allowed ? document.getElementById(fragment) : null;
+    // A block inside a section can be missing (its role never gets it) or appear after the section does
+    // (its data loads first). The section that holds it is then where the eyes go.
+    const holder =
+      allowed && !target && sectionId !== fragment ? document.getElementById(sectionId) : null;
+    const place = addressDestination({
+      fragment,
+      sectionId,
+      allowed,
+      blockExists: !!target,
+      holderExists: !!holder,
+    });
     const destination =
-      target ?? (fragment ? document.getElementById('workspace-navigation') : null);
+      place === 'block'
+        ? target
+        : place === 'section'
+          ? holder
+          : place === 'directory'
+            ? document.getElementById('workspace-navigation')
+            : null;
     if (destination?.id === 'workspace-navigation') {
       const directory = destination.querySelector('details');
       if (directory) directory.open = true;
     }
-    destination?.scrollIntoView();
-    destination?.focus({ preventScroll: true });
-  }, [loaded, fragment, sectionAllowed]);
+    if (target) openFoldsAround(target);
+    const land = () => {
+      destination?.scrollIntoView();
+      destination?.focus({ preventScroll: true });
+    };
+    // A hidden tab that holds the block is shown first. React does not flush a forced update from inside an
+    // effect, so the tab is shown right after this effect ends and the scroll and focus follow it; the
+    // sub-tabs' own effect also scrolls to and focuses the block once its tab shows.
+    if (target?.closest<HTMLElement>('[data-subtab]')?.hidden) {
+      queueMicrotask(() => {
+        resolveSubTabsAgain();
+        land();
+      });
+    } else {
+      land();
+    }
+    // Until the block lands the section is shown and the address waits; the watch ends when the block
+    // lands, when the address changes or when the workspace unmounts.
+    if (place !== 'section' || !holder) return undefined;
+    const watch = new MutationObserver(() => {
+      const block = document.getElementById(fragment);
+      if (!block) return;
+      watch.disconnect();
+      resolveSubTabsAgain();
+      openFoldsAround(block);
+      block.scrollIntoView();
+      block.focus({ preventScroll: true });
+    });
+    watch.observe(holder, { childList: true, subtree: true });
+    return () => watch.disconnect();
+  }, [loaded, fragment, sectionId, sectionAllowed]);
   async function retryRead() {
     setBusy(true);
     setMessage('');
@@ -412,7 +473,7 @@ function TenantWorkspace({
         <>
           {!shellsV2 && (
             <div hidden={view === 'overview'}>
-              <WorkspaceAreaBar role={data.role} fragment={fragment} />
+              <WorkspaceAreaBar role={data.role} fragment={sectionId} />
             </div>
           )}
           {shown('overview') && (
@@ -712,7 +773,7 @@ function TenantWorkspace({
               <AuthenticatorCheck
                 busy={busy}
                 act={act}
-                returnTo={authenticatorReturnTarget(nav.previous, currentRole)}
+                returnTo={authenticatorReturnTarget(sectionOfFragment(nav.previous), currentRole)}
                 tenant={tenant}
               />
             </section>

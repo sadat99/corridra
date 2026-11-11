@@ -16,6 +16,9 @@ import type { WorkItem } from '../work-items/types';
 /** At most this many saved reports are read in one page load. */
 export const meetingReportCap = 12;
 
+/** One saved report read that has not answered after this long counts as a read that failed. */
+export const meetingReadTimeoutMs = 8000;
+
 /**
  * One meeting or visit of one of the person's requests. A changed schedule carries its name alone: the old status,
  * time, zone and place are never kept.
@@ -47,11 +50,20 @@ export type MeetingsRead = {
 
 type Assignment = { requestId?: unknown; available?: unknown; savedResourceId?: unknown };
 
+// A read that fails, or has not answered in `meetingReadTimeoutMs`, is null, which the loader reports as `partial`.
+// The pending call cannot be cancelled: the pool call finishes in the background, and the cap of 12 reads bounds
+// how many can be waiting. The timer is always cleared, so a fast read leaves nothing running.
 async function attempt<T>(read: () => Promise<T>): Promise<T | null> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timedOut = new Promise<null>((resolve) => {
+    timer = setTimeout(() => resolve(null), meetingReadTimeoutMs);
+  });
   try {
-    return await read();
+    return await Promise.race([read(), timedOut]);
   } catch {
     return null;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -101,6 +113,10 @@ export async function loadMeetings(
   }
   const reads = saved.slice(0, meetingReportCap);
 
+  // The reads do not spend `delivery.budget`, as Home does not. That budget allows 60 a hour per client address and
+  // per resource, so 12 reads a load would lock a person out of every delivery action from that address after five
+  // loads; it also counts replays and reads, so it can refuse a retry whose first try had committed. On the HTTP
+  // route it guards guessing of bearer links; this read needs the person's own session proof and is capped at 12.
   const results = await Promise.all(
     reads.map(async ({ request, savedResourceId }) => {
       const value = await attempt(() =>

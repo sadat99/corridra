@@ -52,6 +52,48 @@ export function operatorSectionPath(id: string): string | null {
 }
 
 /**
+ * Addresses of a block inside a section, not sections of their own: a link to one shows the section that
+ * holds it, then lands on the block. The list is closed. These are not sign-in return addresses
+ * (`operatorReturnTo` keeps only section ids), so a sign-in return link for one opens the workspace
+ * address (`/operator?workspace=...`) instead of the section's own page.
+ */
+export const inSectionAddresses = {
+  'billing-services': 'workspace-delivery',
+  'billing-plans': 'workspace-delivery',
+  'billing-sample-invoices': 'workspace-delivery',
+  'billing-invoices': 'workspace-delivery',
+  'billing-payments': 'workspace-delivery',
+} as const satisfies Record<string, SectionId>;
+
+/** The section an address belongs to: its own id for a section, the holding section for an in-section address, else the address itself. */
+export function sectionOfFragment(fragment: string): string {
+  return Object.hasOwn(inSectionAddresses, fragment)
+    ? (inSectionAddresses as Record<string, string>)[fragment]!
+    : fragment;
+}
+
+export type AddressDestination = 'block' | 'section' | 'directory' | 'none';
+
+/**
+ * Where the workspace sends the eyes for an address. The block itself when it is there; else, for an
+ * address inside a section the person may open, the section that holds it (the block may not exist for
+ * their role, or may not have loaded yet); else the navigation directory; nothing for an empty address.
+ */
+export function addressDestination(address: {
+  fragment: string;
+  sectionId: string;
+  allowed: boolean;
+  blockExists: boolean;
+  holderExists: boolean;
+}): AddressDestination {
+  if (!address.fragment) return 'none';
+  if (address.allowed && address.blockExists) return 'block';
+  if (address.allowed && address.sectionId !== address.fragment && address.holderExists)
+    return 'section';
+  return 'directory';
+}
+
+/**
  * What the workspace shows for an address: a `#` part always wins, so every old link keeps working on a
  * section address too; with none, the section the address names (or nothing, as before).
  */
