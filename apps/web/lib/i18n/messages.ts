@@ -3,6 +3,7 @@
 // bn, zh, es, ar, fr and de entries are drafts until a native reviewer is recorded (see locales.ts); they
 // are never shown to the public before that.
 import { organiseEntryWords } from './organise-entry-words';
+import { sellWords } from './sell-words';
 import { defaultLocale, type Locale } from './locales';
 import { homeEn, homeWords } from './home-words';
 import { programmePagesWords } from './programme-pages-words';
@@ -259,6 +260,7 @@ export const en = {
   'room.replies.all': 'Read Every Reply',
   // English placeholder until native review (D16)
   ...organiseEntryWords,
+  ...sellWords,
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
@@ -421,6 +423,7 @@ const bn: Catalog = {
   'room.replies.all': 'সব উত্তর পড়ুন',
   // English placeholder until native review (D16)
   ...organiseEntryWords,
+  ...sellWords,
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
@@ -570,6 +573,7 @@ const zh: Catalog = {
   'room.replies.all': '阅读全部回复',
   // English placeholder until native review (D16)
   ...organiseEntryWords,
+  ...sellWords,
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
@@ -724,6 +728,7 @@ const es: Catalog = {
   'room.replies.all': 'Leer todas las respuestas',
   // English placeholder until native review (D16)
   ...organiseEntryWords,
+  ...sellWords,
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
@@ -877,6 +882,7 @@ const ar: Catalog = {
   'room.replies.all': 'اقرأ كل الردود',
   // English placeholder until native review (D16)
   ...organiseEntryWords,
+  ...sellWords,
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
@@ -1031,6 +1037,7 @@ const fr: Catalog = {
   'room.replies.all': 'Lire toutes les réponses',
   // English placeholder until native review (D16)
   ...organiseEntryWords,
+  ...sellWords,
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
@@ -1189,6 +1196,7 @@ const de: Catalog = {
   'room.replies.all': 'Alle Antworten lesen',
   // English placeholder until native review (D16)
   ...organiseEntryWords,
+  ...sellWords,
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,

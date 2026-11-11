@@ -1,6 +1,7 @@
 // The Sell room's buyers view (approved work rooms, 5 Nov 2026). Pure, so every rule is tested without a
 // browser. The funnel uses Home's own counting rules (home-journeys/facts.ts), so Home and the room never
-// disagree; the follow-ups are the recorded commercial outcomes the report already carries. A buyer is shown
+// disagree; what follows the meetings is the recorded commercial outcomes the report already carries, each
+// kind on its own: a price request, a sample and a proposal are not an agreement, so they are never added up. A buyer is shown
 // as the report states it: the shortlist names no meeting per buyer, so none is guessed.
 import type { DeliveryReport, MissionExperience } from '@corridra/delivery/report';
 import { sellFacts } from './home-journeys/facts';
@@ -12,8 +13,14 @@ export type SellFunnel = {
   proposed: number;
   confirmed: number;
   held: number;
-  /** RFQs, samples and agreements recorded for this request. */
-  followUps: number;
+  /**
+   * What the report records after the meetings, one count per kind and never a sum. Null when the report
+   * carries no outcomes: that is unknown, not zero.
+   */
+  priceRequests: number | null;
+  samples: number | null;
+  proposals: number | null;
+  agreements: number | null;
 };
 export type BuyerRow = {
   id: string;
@@ -36,7 +43,10 @@ export function sellBoard(e: MissionExperience, outcomes: Outcomes | null) {
   const facts = sellFacts([e]);
   const funnel: SellFunnel = {
     ...facts,
-    followUps: outcomes ? outcomes.rfqs + outcomes.samples + outcomes.contracts : 0,
+    priceRequests: outcomes ? outcomes.rfqs : null,
+    samples: outcomes ? outcomes.samples : null,
+    proposals: outcomes ? outcomes.proposals : null,
+    agreements: outcomes ? outcomes.contracts : null,
   };
   const order = ['STRONG', 'POSSIBLE', 'RESEARCH', 'UNSUITABLE'];
   const rank = (fit: string) => {

@@ -12,6 +12,11 @@ export type LedgerColumn = {
   supplier: string;
   supplierLang?: string;
   place?: string;
+  /** The supplier's quote version and the currency it was quoted in, so two quotes are never mistaken for one. */
+  revision: number;
+  currency: string;
+  /** Source kind and claim status exactly as the approved report states them; shown when there is no fact label. */
+  provenance: string;
   trust: FactName | null;
   comparable: boolean;
   reason?: string;
@@ -58,6 +63,9 @@ export function sourceLedger(
     supplier: card.supplier,
     supplierLang: card.supplierLang,
     place: card.place,
+    revision: card.revision,
+    currency: card.currency,
+    provenance: card.provenance,
     trust: card.trust,
     comparable: card.comparable,
     reason: card.reason,
