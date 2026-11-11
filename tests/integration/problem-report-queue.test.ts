@@ -464,8 +464,9 @@ describe('where the panel sits and how it is reached', () => {
     expect(text.match(/<ProblemReportQueue/g)).toHaveLength(1);
     // The address is allowed through the Settings section only, so other roles still get the same refusal as before.
     expect(text).toMatch(
-      /fragment === problemReportQueueFragment &&\s+problemReports &&\s+section\.id === 'workspace-settings'/,
+      /const reportQueueAddress =\s+problemReports && fragment === problemReportQueueFragment;/,
     );
+    expect(text).toMatch(/reportQueueAddress && section\.id === 'workspace-settings'/);
   });
   test('with Report a Problem not offered nothing is added: the panel is not mounted and its address is an unknown fragment', () => {
     const text = source('app/operator/workspace.tsx');
