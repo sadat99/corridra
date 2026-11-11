@@ -2,9 +2,9 @@
 // a missing or empty entry falls back to English. Brand and company names stay as written. The
 // bn, zh, es, ar, fr and de entries are drafts until a native reviewer is recorded (see locales.ts); they
 // are never shown to the public before that.
+import { sellWords } from './sell-words';
 import { defaultLocale, type Locale } from './locales';
 import { homeEn, homeWords } from './home-words';
-import { sellWords } from './sell-words';
 import { wsA, wsAEn } from './ws/ws-a';
 import { wsB, wsBEn } from './ws/ws-b';
 import { wsC, wsCEn } from './ws/ws-c';
@@ -257,11 +257,11 @@ export const en = {
   'room.replies.none': 'No replies yet.',
   'room.replies.all': 'Read Every Reply',
   // English placeholder until native review (D16)
+  ...sellWords,
   ...tripWords,
   ...bookWords,
   ...footerWords,
   ...headerWords,
-  ...sellWords,
   'room.lens.overview': 'Overview',
   'room.lens.compare': 'Compare',
   'room.lens.evidence': 'Evidence',
@@ -418,11 +418,11 @@ const bn: Catalog = {
   'room.replies.none': 'এখনও কোনো উত্তর নেই।',
   'room.replies.all': 'সব উত্তর পড়ুন',
   // English placeholder until native review (D16)
+  ...sellWords,
   ...tripWords,
   ...bookWords,
   ...footerWords,
   ...headerWords,
-  ...sellWords,
   'room.lens.overview': 'সারসংক্ষেপ',
   'room.lens.compare': 'তুলনা',
   'room.lens.evidence': 'প্রমাণ',
@@ -566,11 +566,11 @@ const zh: Catalog = {
   'room.replies.none': '暂无回复。',
   'room.replies.all': '阅读全部回复',
   // English placeholder until native review (D16)
+  ...sellWords,
   ...tripWords,
   ...bookWords,
   ...footerWords,
   ...headerWords,
-  ...sellWords,
   'room.lens.overview': '概览',
   'room.lens.compare': '比较',
   'room.lens.evidence': '证据',
@@ -719,11 +719,11 @@ const es: Catalog = {
   'room.replies.none': 'Aún no hay respuestas.',
   'room.replies.all': 'Leer todas las respuestas',
   // English placeholder until native review (D16)
+  ...sellWords,
   ...tripWords,
   ...bookWords,
   ...footerWords,
   ...headerWords,
-  ...sellWords,
   'room.lens.overview': 'Resumen',
   'room.lens.compare': 'Comparar',
   'room.lens.evidence': 'Pruebas',
@@ -871,11 +871,11 @@ const ar: Catalog = {
   'room.replies.none': 'لا توجد ردود بعد.',
   'room.replies.all': 'اقرأ كل الردود',
   // English placeholder until native review (D16)
+  ...sellWords,
   ...tripWords,
   ...bookWords,
   ...footerWords,
   ...headerWords,
-  ...sellWords,
   'room.lens.overview': 'نظرة عامة',
   'room.lens.compare': 'المقارنة',
   'room.lens.evidence': 'الأدلة',
@@ -1024,11 +1024,11 @@ const fr: Catalog = {
   'room.replies.none': 'Aucune réponse pour le moment.',
   'room.replies.all': 'Lire toutes les réponses',
   // English placeholder until native review (D16)
+  ...sellWords,
   ...tripWords,
   ...bookWords,
   ...footerWords,
   ...headerWords,
-  ...sellWords,
   'room.lens.overview': 'Aperçu',
   'room.lens.compare': 'Comparer',
   'room.lens.evidence': 'Preuves',
@@ -1181,11 +1181,11 @@ const de: Catalog = {
   'room.replies.none': 'Noch keine Antworten.',
   'room.replies.all': 'Alle Antworten lesen',
   // English placeholder until native review (D16)
+  ...sellWords,
   ...tripWords,
   ...bookWords,
   ...footerWords,
   ...headerWords,
-  ...sellWords,
   'room.lens.overview': 'Übersicht',
   'room.lens.compare': 'Vergleichen',
   'room.lens.evidence': 'Nachweise',
