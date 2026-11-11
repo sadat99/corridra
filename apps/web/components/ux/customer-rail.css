@@ -158,8 +158,8 @@
     transform: translateY(-50%);
     width: auto;
     height: auto;
-    max-width: min(20rem, calc(100vw - var(--tip-x, 0px) - 1rem));
-    margin-inline-start: 0.5rem;
+    max-width: min(20rem, calc(100vw - var(--tip-x, 0px) - var(--tip-gap, 0.5rem) - 1rem));
+    margin-inline-start: var(--tip-gap, 0.5rem);
     padding: var(--space-1) var(--space-2);
     overflow: visible;
     clip: auto;
@@ -181,7 +181,7 @@
     position: absolute;
     inset-block: 0;
     inset-inline-end: 100%;
-    width: 0.5rem;
+    width: var(--tip-gap, 0.5rem);
   }
   [data-collapsed='true'] .ux-rail-soon[data-tip='on'] > .ux-rail-label .ux-soon-tag {
     margin-inline-start: var(--space-2);

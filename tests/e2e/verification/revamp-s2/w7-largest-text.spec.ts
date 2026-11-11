@@ -260,10 +260,15 @@ test('the Me page holds language, reading and the switches in one card and stays
   await expect(card.getByRole('switch', { name: 'Less Movement', exact: true })).toBeVisible();
   // The Language card is gone as its own card. Its chip, when offered, is in this one and names itself.
   await expect(page.getByRole('heading', { name: 'Language', exact: true })).toHaveCount(0);
-  const chip = page.locator('.lang-switcher');
-  if (await chip.count()) await expect(card.locator('.lang-switcher')).toHaveCount(1);
+  // The row shows only when more than one language is offered; the figure below says which it was measured with.
+  const rowShown = (await card.locator('.lang-switcher').count()) === 1;
+  if (rowShown) await expect(card.locator('.me-language')).toContainText('Language');
+  else await expect(page.locator('.me-language')).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Your private link', level: 2 })).toBeVisible();
   const screens = (await page.evaluate(() => document.documentElement.scrollHeight)) / 844;
-  info.annotations.push({ type: 'me-page-screens', description: `${screens.toFixed(2)} screens` });
+  info.annotations.push({
+    type: 'me-page-screens',
+    description: `${screens.toFixed(2)} screens, language row ${rowShown ? 'shown' : 'not shown'}`,
+  });
   expect(screens, 'Me at 390 by 844, hard limit').toBeLessThanOrEqual(2);
 });

@@ -44,8 +44,12 @@ function useRailTip(focusable: boolean) {
     if (!el) return;
     const box = el.getBoundingClientRect();
     const rtl = getComputedStyle(el).direction === 'rtl';
+    // The words start at the row's edge and are pushed out past the bar's edge, 8 px clear of it.
+    const bar = el.closest('.ux-leftnav-rail')?.getBoundingClientRect() ?? box;
+    const gap = (rtl ? box.left - bar.left : bar.right - box.right) + 8;
     el.style.setProperty('--tip-x', `${rtl ? window.innerWidth - box.left : box.right}px`);
     el.style.setProperty('--tip-y', `${box.top + box.height / 2}px`);
+    el.style.setProperty('--tip-gap', `${Math.max(gap, 8)}px`);
   };
   useEffect(() => {
     if (tip !== 'on') return;
