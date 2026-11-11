@@ -4,7 +4,7 @@
 
 Module-specific guidance. Read [the current plan](../implementation/current-plan.md), [developer handoff](../START_HERE.md), [identity recovery](neon-auth-accounts.md) and [deployment](deployment.md) for current programme/access/release status. Part-specific counts and dated rollout/settings observations below refer to their own release; inspect the current schema and executed evidence before acting. These instructions never authorize real operations or bypass readiness gates.
 
-Read ADR-016 and the deferred controls register before activation. This release extends the existing synthetic Frankfurt database; do not repoint it to the owner's separate production-candidate database or delete corridra-live-synthetic.
+Read ADR-016 and the deferred controls register before activation. This release extends the existing synthetic Frankfurt database; do not repoint it to the owner's separate production-candidate database or delete the live branch. That branch is `live` (`br-lucky-darkness-b1ppj8en`, renamed on 11 Nov 2026 from `corridra-live-synthetic`; same ID and endpoint).
 
 ## Development and acceptance
 
