@@ -14,6 +14,7 @@ export function Dialog({
   keepMounted = false,
   locked = false,
   returnFocusTo,
+  confirmClose,
   children,
 }: {
   open: boolean;
@@ -29,6 +30,11 @@ export function Dialog({
   locked?: boolean;
   /** Where focus goes on close when the control that opened the dialog is no longer in the page. */
   returnFocusTo?: () => HTMLElement | null;
+  /**
+   * Optional. Asked before Escape, Close or a click on the dimmed area closes the dialog; answering false keeps it
+   * open (for example while the caller asks whether to discard unsaved edits). Absent: closing works as always.
+   */
+  confirmClose?: () => boolean;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -52,7 +58,7 @@ export function Dialog({
       className="ux-dialog"
       aria-labelledby={titleId}
       onCancel={(event) => {
-        if (locked) event.preventDefault();
+        if (locked || (confirmClose && !confirmClose())) event.preventDefault();
       }}
       onClose={() => {
         const dialog = ref.current;
@@ -70,7 +76,7 @@ export function Dialog({
         opener.current = null;
       }}
       onKeyDown={(event) => {
-        if (event.key === 'Escape' && locked) {
+        if (event.key === 'Escape' && (locked || (confirmClose && !confirmClose()))) {
           event.preventDefault();
           return;
         }
@@ -96,7 +102,8 @@ export function Dialog({
       }}
       onClick={(event) => {
         // A click on the dimmed area (the dialog element itself, not its content) closes it.
-        if (event.target === ref.current && !locked) ref.current?.close();
+        if (event.target === ref.current && !locked && (!confirmClose || confirmClose()))
+          ref.current?.close();
       }}
     >
       <div className="ux-dialog-head">
@@ -110,7 +117,9 @@ export function Dialog({
           type="button"
           className="ux-dialog-close"
           disabled={locked}
-          onClick={() => ref.current?.close()}
+          onClick={() => {
+            if (!confirmClose || confirmClose()) ref.current?.close();
+          }}
         >
           {closeLabel}
         </button>

@@ -5,13 +5,29 @@ import {
   type RequestContext,
   type TenantTransaction,
 } from '@corridra/db';
-import { DomainError } from '@corridra/domain';
+import { DomainError, stepUpRequired } from '@corridra/domain';
 import {
+  recordChangeActions,
   researchCommand,
   researchQuery,
+  type RecordChangeCommand,
   type ResearchCommand,
 } from '@corridra/domain/counterparties';
+import {
+  CHANGES_UNAVAILABLE,
+  changeFailure,
+  changeState,
+  changeWords,
+  replayChange,
+  shortlistExport,
+  stateDetail,
+  stateShortlistContacts,
+  writeChange,
+} from './changes';
 const fields = `tenant_id,purpose,created_by`;
+type RecordCommand = Exclude<ResearchCommand, RecordChangeCommand>;
+const isRecordChange = (v: ResearchCommand): v is RecordChangeCommand =>
+  (recordChangeActions as readonly string[]).includes(v.action);
 const actor = (t: TenantTransaction) => [t.tenantId, t.purpose, t.actorId];
 async function one(t: TenantTransaction, sql: string, args: unknown[]) {
   const r = await t.db.query(sql, args);
@@ -71,18 +87,26 @@ export class CounterpartyService {
         )
       ).rows;
       const rids = relationships.map((r) => r.id);
-      const contacts = (
-        await t.db.query(
-          `SELECT id,relationship_id,name,job_title,email,source_id,valid_until,CASE WHEN valid_until<=now() THEN 'EXPIRED' ELSE 'SOURCE_REPORTED' END status FROM app.private_contact_data WHERE tenant_id=$1 AND relationship_id=ANY($2::uuid[]) ORDER BY created_at,id LIMIT 100`,
-          [t.tenantId, rids],
-        )
-      ).rows;
-      const notes = (
-        await t.db.query(
-          'SELECT id,relationship_id,body,source_id,created_at FROM app.private_note WHERE tenant_id=$1 AND relationship_id=ANY($2::uuid[]) ORDER BY created_at DESC,id LIMIT 100',
-          [t.tenantId, rids],
-        )
-      ).rows;
+      const changes = await changeState(t);
+      // CRUD G11: with the module installed, contact and note text comes only from the state views.
+      const state = changes.installed ? await stateDetail(t, rids) : null;
+      if (state) for (const r of relationships) r.can_change = state.canChange.get(r.id) === true;
+      const contacts = state
+        ? state.contacts
+        : (
+            await t.db.query(
+              `SELECT id,relationship_id,name,job_title,email,source_id,valid_until,CASE WHEN valid_until<=now() THEN 'EXPIRED' ELSE 'SOURCE_REPORTED' END status FROM app.private_contact_data WHERE tenant_id=$1 AND relationship_id=ANY($2::uuid[]) ORDER BY created_at,id LIMIT 100`,
+              [t.tenantId, rids],
+            )
+          ).rows;
+      const notes = state
+        ? state.notes
+        : (
+            await t.db.query(
+              'SELECT id,relationship_id,body,source_id,created_at FROM app.private_note WHERE tenant_id=$1 AND relationship_id=ANY($2::uuid[]) ORDER BY created_at DESC,id LIMIT 100',
+              [t.tenantId, rids],
+            )
+          ).rows;
       const attributes = (
         await t.db.query(
           `SELECT a.id,a.organisation_id,a.kind,a.claim_id,c.statement,c.status claim_status,s.id source_id,s.kind source_kind,s.locator,s.observed_at,s.retention_until,s.ai_policy,s.classification,a.valid_until,CASE WHEN least(a.valid_until,s.retention_until)<=now() THEN 'EXPIRED' WHEN f.id IS NOT NULL THEN 'VERIFIED' ELSE 'SELF_DECLARED' END status,f.id fact_id,v.method,v.scope,v.valid_until verification_valid_until,es.scan_status
@@ -122,6 +146,7 @@ export class CounterpartyService {
         publicFacts,
         candidates,
         resolutions,
+        changes,
       };
     });
   }
@@ -141,12 +166,15 @@ export class CounterpartyService {
       ).rows;
       const ids = rows.map((r) => r.id),
         assessmentIds = rows.map((r) => r.assessment_id);
-      const contacts = (
-        await t.db.query(
-          `SELECT tc.target_id,c.name,c.job_title,c.email,c.valid_until,CASE WHEN c.valid_until<=now() THEN 'EXPIRED' ELSE 'SOURCE_REPORTED' END status FROM app.target_contact tc JOIN app.private_contact_data c ON c.tenant_id=tc.tenant_id AND c.id=tc.contact_id WHERE tc.tenant_id=$1 AND tc.target_id=ANY($2::uuid[])`,
-          [t.tenantId, ids],
-        )
-      ).rows;
+      const changes = await changeState(t);
+      const contacts = changes.installed
+        ? await stateShortlistContacts(t, ids)
+        : (
+            await t.db.query(
+              `SELECT tc.target_id,c.name,c.job_title,c.email,c.valid_until,CASE WHEN c.valid_until<=now() THEN 'EXPIRED' ELSE 'SOURCE_REPORTED' END status FROM app.target_contact tc JOIN app.private_contact_data c ON c.tenant_id=tc.tenant_id AND c.id=tc.contact_id WHERE tc.tenant_id=$1 AND tc.target_id=ANY($2::uuid[])`,
+              [t.tenantId, ids],
+            )
+          ).rows;
       const sources = (
         await t.db.query(
           `WITH linked AS MATERIALIZED(SELECT assessment_id,claim_id,attribute_id FROM app.assessment_claim WHERE tenant_id=$1 AND assessment_id=ANY($2::uuid[])),
@@ -172,11 +200,17 @@ export class CounterpartyService {
         'SELECT count(*)::int total FROM app.target_account WHERE tenant_id=$1 AND mission_id=$2',
         [t.tenantId, missionId],
       );
-      return { missionId, offset, total: count.rows[0].total, targets: rows };
+      return { missionId, offset, total: count.rows[0].total, targets: rows, changes };
     });
   }
+  /** The shortlist page as an export: a hidden contact reads "Hidden", never null or empty. */
+  async shortlistExport(ctx: RequestContext, missionId: string, offset = 0) {
+    return shortlistExport(await this.shortlist(ctx, missionId, offset));
+  }
   command(ctx: RequestContext, input: unknown) {
-    const v = researchCommand.parse(input);
+    const parsed = researchCommand.parse(input);
+    if (isRecordChange(parsed)) return this.change(ctx, parsed);
+    const v: RecordCommand = parsed;
     const permission = ['resolve', 'reverse'].includes(v.action)
       ? 'research.resolve'
       : v.action === 'publish'
@@ -227,6 +261,45 @@ export class CounterpartyService {
       throw error;
     });
   }
+  /** CRUD G11: withdraw, correct or hide one private contact or note (ADR-017 amendment). */
+  private change(ctx: RequestContext, v: RecordChangeCommand) {
+    const hide = v.action === 'redact_contact' || v.action === 'redact_note';
+    return withTenant(this.pool, ctx, hide ? 'research.redact' : 'research.manage', async (t) => {
+      const hash = createHash('sha256').update(JSON.stringify(v)).digest('hex');
+      await t.db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [
+        `${t.tenantId}:research:${v.commandId}`,
+      ]);
+      if (
+        (
+          await t.db.query('SELECT 1 FROM app.research_command WHERE tenant_id=$1 AND id=$2', [
+            t.tenantId,
+            v.commandId,
+          ])
+        ).rowCount
+      )
+        throw new DomainError('Command ID reused with different values', 409);
+      const state = await changeState(t);
+      if (!state.installed)
+        throw new DomainError(changeWords.notInstalled, 409, CHANGES_UNAVAILABLE);
+      const replay = await replayChange(t, v.commandId, hash);
+      if (replay) return replay;
+      const visible = await t.db.query(
+        `SELECT 1 FROM ${v.action.endsWith('_contact') ? 'app.private_contact_state' : 'app.private_note_state'} WHERE tenant_id=$1 AND id=$2`,
+        [t.tenantId, 'contactId' in v ? v.contactId : v.noteId],
+      );
+      if (!visible.rowCount) throw new DomainError('Record unavailable', 404);
+      if (!state.open) throw new DomainError(changeWords.closed, 409, CHANGES_UNAVAILABLE);
+      // A correction adds a record, so the research intake switch applies. Withdraw and hide protect people and work
+      // while intake is paused.
+      if (v.action === 'correct_contact' || v.action === 'correct_note')
+        await enabled(t, 'research.ingestion');
+      if (hide && !t.freshMfa)
+        throw stepUpRequired(
+          v.action === 'redact_contact' ? changeWords.stepUpContact : changeWords.stepUpNote,
+        );
+      return writeChange(t, v, hash);
+    }).catch((error: unknown) => changeFailure(error, v));
+  }
   private async assess(
     t: TenantTransaction,
     targetId: string,
@@ -276,7 +349,7 @@ export class CounterpartyService {
     }
     return a;
   }
-  private async write(t: TenantTransaction, v: ResearchCommand): Promise<Record<string, unknown>> {
+  private async write(t: TenantTransaction, v: RecordCommand): Promise<Record<string, unknown>> {
     switch (v.action) {
       case 'ingest':
         return one(t, 'SELECT app.ingest_public_organisation($1,$2,$3,$4,$5,$6,$7,$8) id', [

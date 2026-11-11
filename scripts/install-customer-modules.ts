@@ -44,6 +44,8 @@ import {
 } from '../packages/db/src/customer-workspace-lifecycle-migrate';
 import { migrateCustomerAccountLifecycle } from '../packages/db/src/customer-account-lifecycle-migrate';
 import { migrateCustomerProblemReports } from '../packages/db/src/customer-problem-report-migrate';
+import { migrateCounterpartyChanges } from '../packages/db/src/counterparty-change-migrate';
+import { configureCounterpartyChanges } from '../packages/auth/src/counterparty-change-configuration';
 import { configureWorkspaceLifecycle } from '../packages/auth/src/customer-workspace-lifecycle-configuration';
 import { configureAccountLifecycle } from '../packages/auth/src/customer-account-lifecycle-configuration';
 import { migrateCustomerMoves } from '../packages/db/src/customer-move-migrate';
@@ -87,6 +89,13 @@ const v = z
       .enum(['unchanged', 'install', 'enable', 'pause'])
       .default('unchanged'),
     PROBLEM_REPORTS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
+    COUNTERPARTY_CHANGES_ACTION: z
+      .enum(['unchanged', 'install', 'enable', 'pause'])
+      .default('unchanged'),
+    COUNTERPARTY_CHANGES_REASON: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.string().trim().min(10).max(500).optional(),
+    ),
     MOVE_RECORDS_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
     MOVE_RECORDS_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
@@ -235,6 +244,10 @@ if (['enable', 'pause'].includes(v.ACCOUNT_LIFECYCLE_ACTION) && !v.ACCOUNT_LIFEC
   throw new Error('Account lifecycle changes require an explicit reason');
 if (v.PROBLEM_REPORTS_ACTION !== 'unchanged' && !apply)
   throw new Error('Problem report installation requires INSTALL_APPLY=yes');
+if (v.COUNTERPARTY_CHANGES_ACTION !== 'unchanged' && !apply)
+  throw new Error('Contact and note changes require INSTALL_APPLY=yes');
+if (['enable', 'pause'].includes(v.COUNTERPARTY_CHANGES_ACTION) && !v.COUNTERPARTY_CHANGES_REASON)
+  throw new Error('Contact and note changes require an explicit reason');
 if (v.MISSION_MAIL_ACTION !== 'unchanged' && !apply)
   throw new Error('Mission mail changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.MISSION_MAIL_ACTION) && !v.MISSION_MAIL_REASON)
@@ -257,6 +270,7 @@ const registries = [
   'customer_workspace_lifecycle_migrations',
   'customer_account_lifecycle_migrations',
   'customer_problem_report_migrations',
+  'counterparty_change_migrations',
   'customer_migrations',
   'customer_commercial_migrations',
   'customer_company_migrations',
@@ -560,6 +574,23 @@ try {
     if (v.PROBLEM_REPORTS_ACTION === 'install') {
       await migrateCustomerProblemReports(pool);
       console.log('installed or already current: problem reports');
+    }
+    // Withdraw, correct and hide for private contacts and notes (CRUD G11) are never part of the base run. Install leaves
+    // the one control closed; enable and pause are owner decisions with a reason. Reached through field_modules_action
+    // (contact_changes_install, contact_changes_enable, contact_changes_pause).
+    if (v.COUNTERPARTY_CHANGES_ACTION !== 'unchanged') {
+      await migrateCounterpartyChanges(pool);
+      if (v.COUNTERPARTY_CHANGES_ACTION === 'install')
+        console.log('Contact and note changes installed or already current (control stays closed)');
+      else {
+        const result = await configureCounterpartyChanges(pool, {
+          enabled: v.COUNTERPARTY_CHANGES_ACTION === 'enable',
+          reason: v.COUNTERPARTY_CHANGES_REASON,
+        });
+        console.log(
+          `Contact and note changes ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
+        );
+      }
     }
     if (v.REAL_BILLING_ACTION !== 'unchanged') {
       await migrateCustomerBillingReal(pool);

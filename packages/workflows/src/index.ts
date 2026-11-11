@@ -21,6 +21,29 @@ export class OutboxDispatcher {
       ])
     ).rows[0].job as { status: string; channel?: string };
     if (job.status !== 'CLAIMED') return job.status;
+    // CRUD G11 send-time check: a message whose contact was withdrawn, corrected or hidden after it was queued, or whose
+    // chain has an opted-out address, ends at once and is never retried. A receipt trigger is the database backstop.
+    const changes = (
+      await this.pool.query(
+        "SELECT to_regprocedure('app.private_contact_message_active(uuid,text)') IS NOT NULL AS installed",
+      )
+    ).rows[0] as { installed: boolean };
+    if (
+      changes.installed &&
+      !(
+        await this.pool.query('SELECT app.private_contact_message_active($1,$2) AS active', [
+          messageId,
+          capabilityHash,
+        ])
+      ).rows[0].active
+    )
+      return (
+        await this.pool.query("SELECT app.finish_communication($1,$2,$3,'PERMANENT') AS status", [
+          messageId,
+          capabilityHash,
+          leaseId,
+        ])
+      ).rows[0].status as string;
     try {
       if (!['SYNTHETIC', 'MANUAL'].includes(job.channel ?? ''))
         throw new Error('Unsupported channel');
