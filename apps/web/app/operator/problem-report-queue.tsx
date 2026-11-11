@@ -71,6 +71,11 @@ function QueuePanel({ tenant }: { tenant: string }) {
   const kept = useRef<{ id: string; text: string } | null>(null);
   const details = useRef<HTMLDetailsElement>(null);
   const run = useRef(0);
+  // The filter a read is for is taken when the read starts, never from the render that began a save: a filter changed
+  // while a move was being saved must not bring the old filter's rows back under the new one.
+  const filterRef = useRef<QueueFilter>('all');
+  // True while the read that follows a saved move is under way, so a filter change cannot leave pre-move counts on screen.
+  const reloading = useRef(false);
   const links = teamReportLinks(tenant);
   // One line per failure, so the line takes focus when the failure appears and not again on every key typed in the note.
   const loadLine = useMemo(() => failureLine(loadFailure), [loadFailure]);
@@ -114,11 +119,12 @@ function QueuePanel({ tenant }: { tenant: string }) {
   async function load(after: number | null, moved?: { reference: string; status: Item['status'] }) {
     if (busy && !moved) return;
     const token = ++run.current;
+    if (moved) reloading.current = true;
     setBusy(true);
     setLoadFailure(null);
     setMessage(null);
     try {
-      const fresh = await readQueue(tenant, filter, after);
+      const fresh = await readQueue(tenant, filterRef.current, after);
       if (token !== run.current) return;
       setFigures({ counts: fresh.counts, oldestReceivedAt: fresh.oldestReceivedAt });
       setPage({ total: fresh.total, nextAfter: fresh.nextAfter });
@@ -153,6 +159,7 @@ function QueuePanel({ tenant }: { tenant: string }) {
         });
       } else setLoadFailure(failure);
     } finally {
+      if (moved) reloading.current = false;
       if (token === run.current) setBusy(false);
     }
   }
@@ -226,7 +233,12 @@ function QueuePanel({ tenant }: { tenant: string }) {
           options={options}
           onChange={(value) => {
             run.current += 1;
+            filterRef.current = value;
             setFilter(value);
+            // A note typed for an open move belongs to its report: it is kept for that report, not dropped with the form.
+            if (pending) kept.current = { id: pending.item.id, text: note };
+            // The read that follows a saved move was abandoned, so the counts from before the move are not shown.
+            if (reloading.current) setFigures(null);
             // The rows, their total and Load More Problem Reports belong to the filter that was read, so they go until it is
             // read again. The counts and the oldest waiting do not, and a kept note is for its report, so they stay.
             setPage(null);
