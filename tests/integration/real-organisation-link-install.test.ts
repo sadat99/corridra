@@ -23,6 +23,9 @@ import { CustomerOrganisationLinkService } from '../../packages/auth/src/custome
 // from the migrator until each step needs it, and the guards, the preservation of data and the installers are shown.
 vi.hoisted(() => {
   (globalThis as { __linkHide?: boolean }).__linkHide = true;
+  // Real-use 0014 (removed member access) has its own gate here, so that this suite still proves that 0013 alone replaces
+  // exactly nine functions. The last test of this file opens it. Owner decision 11 Nov 2026, "No, remove access (Recommended)".
+  (globalThis as { __removedHide?: boolean }).__removedHide = true;
 });
 vi.mock('node:fs/promises', async (importOriginal) => {
   const real = await importOriginal<typeof import('node:fs/promises')>();
@@ -31,10 +34,14 @@ vi.mock('node:fs/promises', async (importOriginal) => {
       path,
       ...rest,
     )) as unknown[];
-    return (globalThis as { __linkHide?: boolean }).__linkHide &&
-      String(path).includes('customer-real-use-migrations')
-      ? names.filter((n) => !String(n).startsWith('0013_organisation_link_provenance_and_search'))
-      : names;
+    const gate = globalThis as { __linkHide?: boolean; __removedHide?: boolean };
+    if (!String(path).includes('customer-real-use-migrations')) return names;
+    return names.filter(
+      (n) =>
+        !(
+          gate.__linkHide && String(n).startsWith('0013_organisation_link_provenance_and_search')
+        ) && !((gate.__linkHide || gate.__removedHide) && String(n).startsWith('0014_')),
+    );
   }) as typeof real.readdir;
   return { ...real, readdir, default: { ...real, readdir } };
 });
@@ -584,4 +591,20 @@ test('the evidence URL rule follows the side of the workspace', async () => {
   await expect(
     withUrl('https://user@acme-gmbh.de/about', second.claim!.version!),
   ).rejects.toThrow();
+});
+
+test('removed member access (real-use 0014) is the fourteenth file, replaces functions only and is repeatable', async () => {
+  expect(await appliedNames()).toHaveLength(13);
+  const tables = await tableHashes();
+  (globalThis as { __removedHide?: boolean }).__removedHide = false;
+  await migrateCustomerRealUse(w.f.owner);
+  const applied = await appliedNames();
+  expect(applied).toHaveLength(14);
+  expect(applied[13]).toMatch(/^0014_removed_member_access/);
+  expect(await reportLine()).toBe('customer_real_use_migrations: 14 applied');
+  // Functions only: every row of every table is the same bytes.
+  expect(await tableHashes()).toEqual(tables);
+  await migrateCustomerRealUse(w.f.owner);
+  expect(await appliedNames()).toHaveLength(14);
+  expect(await tableHashes()).toEqual(tables);
 });

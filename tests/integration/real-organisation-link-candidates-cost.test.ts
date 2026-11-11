@@ -18,7 +18,11 @@ vi.mock('node:fs/promises', async (importOriginal) => {
     )) as unknown[];
     return (globalThis as { __linkHide?: boolean }).__linkHide &&
       String(path).includes('customer-real-use-migrations')
-      ? names.filter((n) => !String(n).startsWith('0013_organisation_link_provenance_and_search'))
+      ? // Real-use 0014 (removed member access) is applied after 0013, so it stays hidden together with it and the
+        // exact base state of this suite is unchanged. Owner decision 11 Nov 2026, "No, remove access (Recommended)".
+        names.filter(
+          (n) => !/^(0013_organisation_link_provenance_and_search|0014_)/.test(String(n)),
+        )
       : names;
   }) as typeof real.readdir;
   return { ...real, readdir, default: { ...real, readdir } };

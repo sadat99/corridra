@@ -222,17 +222,23 @@ describe('installation', () => {
     expect((await snapshot()).tb.length - before.tb.length).toBeGreaterThanOrEqual(4);
   });
 
-  test('is idempotent, records one applied file with its hash and refuses a changed history', async () => {
+  test('is idempotent, records its applied files with their hashes and refuses a changed history', async () => {
     const before = (await f.owner.query('SELECT * FROM customer_move_migrations.applied')).rows;
-    expect(before).toHaveLength(1);
+    // 0001 is the module, 0002 is removed member access (owner decision 11 Nov 2026).
+    expect(before).toHaveLength(2);
     await migrateCustomerMoves(f.owner);
     expect((await f.owner.query('SELECT * FROM customer_move_migrations.applied')).rows).toEqual(
       before,
     );
     await f.owner.query("UPDATE customer_move_migrations.applied SET sha256=repeat('0',64)");
     await expect(migrateCustomerMoves(f.owner)).rejects.toThrow('history mismatch');
-    await f.owner.query('UPDATE customer_move_migrations.applied SET sha256=$1', [
+    await f.owner.query('UPDATE customer_move_migrations.applied SET sha256=$1 WHERE name=$2', [
       before[0].sha256,
+      before[0].name,
+    ]);
+    await f.owner.query('UPDATE customer_move_migrations.applied SET sha256=$1 WHERE name=$2', [
+      before[1].sha256,
+      before[1].name,
     ]);
   });
 

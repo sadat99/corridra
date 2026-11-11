@@ -29,6 +29,7 @@ describe('installation', () => {
       '0008_quote_sent_notification.sql',
       '0009_reply_posted_notification.sql',
       '0010_team_invitation_cancel_audit.sql',
+      '0011_removed_member_request_received.sql',
     ]);
     await migrateCommercialReadiness(f.owner);
     expect(

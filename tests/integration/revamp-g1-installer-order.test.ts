@@ -159,6 +159,7 @@ describe('installing the withdrawal module on the production state', () => {
     expect((await applied('customer_request_withdrawal_migrations')).map((r) => r.name)).toEqual([
       '0001_request_withdrawal.sql',
       '0002_staff_withdrawal_signal.sql',
+      '0003_removed_member_withdrawals.sql',
     ]);
     // Its control starts closed, so nothing is visible.
     expect(
@@ -170,7 +171,7 @@ describe('installing the withdrawal module on the production state', () => {
     expect(await Promise.all(readers.map(definition))).toEqual(before.readers);
     // Running it again changes nothing.
     await migrateCustomerRequestWithdrawal(f.owner);
-    expect(await applied('customer_request_withdrawal_migrations')).toHaveLength(2);
+    expect(await applied('customer_request_withdrawal_migrations')).toHaveLength(3);
   });
 
   test('opening withdrawals is refused while an installed mail module lacks its withdrawal upgrade, and pausing is never refused', async () => {
@@ -204,6 +205,7 @@ describe('installing the withdrawal module on the production state', () => {
       '0001_mission_mail.sql',
       '0002_mute_events.sql',
       '0003_withdrawn_requests.sql',
+      '0004_removed_member_mail.sql',
     ]);
     expect(pulse.map((r) => r.name)).toEqual([
       '0001_notifications.sql',
@@ -211,6 +213,7 @@ describe('installing the withdrawal module on the production state', () => {
       '0003_withdrawal_and_issuer_check.sql',
       '0004_mute_events.sql',
       '0005_withdrawn_requests.sql',
+      '0006_removed_member_notifications.sql',
     ]);
     // The files production already has are byte for byte what they were.
     expect(mail.slice(0, 2)).toEqual(mailBefore);

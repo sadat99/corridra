@@ -406,7 +406,7 @@ test('changed optional history fails closed without altering original three-modu
   }
   expect(
     (await f.owner.query('SELECT count(*)::int n FROM customer_migrations.applied')).rows[0].n,
-  ).toBe(3);
+  ).toBe(4);
   expect(
     (await f.owner.query('SELECT count(*)::int n FROM customer_commercial_migrations.applied'))
       .rows[0].n,

@@ -192,7 +192,7 @@ test('optional upgrade preserves populated records,all policies/ACLs/history and
   await migrateCustomerAuthority(f.owner);
   expect(
     (await f.owner.query('SELECT count(*)::int n FROM customer_migrations.applied')).rows[0].n,
-  ).toBe(3);
+  ).toBe(4);
   expect(
     (await f.owner.query('SELECT count(*)::int n FROM customer_programme_migrations.applied'))
       .rows[0].n,
@@ -568,7 +568,7 @@ test('installer refuses changed original security contract before installing opt
     ).toBeNull();
     expect(
       (await pool.query('SELECT count(*)::int n FROM customer_migrations.applied')).rows[0].n,
-    ).toBe(3);
+    ).toBe(4);
   } finally {
     await pool.end();
   }
@@ -593,6 +593,6 @@ test('unknown or changed optional receipts fail closed without changing base or 
   }
   expect(
     (await f.owner.query('SELECT count(*)::int n FROM customer_migrations.applied')).rows[0].n,
-  ).toBe(3);
+  ).toBe(4);
   await expect(service().list({ workspaceId })).resolves.toHaveProperty('programmes');
 });

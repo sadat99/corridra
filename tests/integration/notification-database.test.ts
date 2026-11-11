@@ -343,6 +343,7 @@ describe('installation', () => {
       '0003_withdrawal_and_issuer_check.sql',
       '0004_mute_events.sql',
       '0005_withdrawn_requests.sql',
+      '0006_removed_member_notifications.sql',
     ]);
     await migrateCustomerNotifications(f.owner);
     expect(

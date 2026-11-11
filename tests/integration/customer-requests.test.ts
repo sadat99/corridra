@@ -202,7 +202,7 @@ test('populated additive upgrade preserves all original rows, functions, policie
   await migrateCustomerAuthority(f.owner);
   expect(
     (await f.owner.query('SELECT count(*)::int n FROM customer_migrations.applied')).rows[0].n,
-  ).toBe(3);
+  ).toBe(4);
 });
 
 test('request gate is independent, default-off, synthetic-only and hard-disabled in production', async () => {
@@ -317,11 +317,15 @@ test('owner and teammates never inherit another creator request; cross-workspace
     targetId: memberId,
   });
   await expect(service('bob').submit(input(), prepare)).rejects.toThrow('Workspace access denied');
-  expect(
-    await service('bob').submit(value, () => {
-      throw new Error('Must not derive a new key');
-    }),
-  ).toEqual(owned);
+  // Owner decision, 11 Nov 2026, "No, remove access (Recommended)" (ADR-033 amendment): requests belong to the workspace,
+  // so a removed member's replay of their own command is refused like any other workspace they cannot use. Before the
+  // decision this returned the stored request. customer.request_retry now answers nothing for a person who is no longer a
+  // current member, so the call takes the normal path and stops at the workspace check.
+  await expect(service('bob').submit(value, prepare)).rejects.toThrow('Workspace access denied');
+  // Base-only ladder, real-use not installed (this suite applies customer authority only): customer.private_requests keeps
+  // its original body there on purpose, because the real-use schema pins that text (ADR-033, consequence 5), and real
+  // requests cannot exist on this ladder. The removed-member list is proved on the real-use ladder in
+  // removed-member-requests.test.ts, which asserts the opposite of this line.
   expect((await service('bob').list()).requests[0].id).toBe(owned.id);
 });
 
