@@ -1,13 +1,14 @@
 import { test, expect, type Page } from '@playwright/test';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { clearSignInLimits, totp } from './operator-signin';
 import { openSection } from './workspace-nav';
 
 // The five "Mission workflow" shortcuts on the team workspace start page open the section they name, with the team
 // shell (CORRIDRA_UX_SHELLS_V2) off and on. With it on only the section in view is in the page, so a target is not
 // there before the click: the check is the outcome of the click, not the presence of the target. This file signs in
-// by itself (it enrols the authenticator when the database has none), so it can run alone with the switch on.
-const secretFile = '.cache/part06-browser-authenticator.json';
+// by itself: it enrols an authenticator when the database has none and uses the secret at once (it writes no file,
+// so workspace.spec.ts stays the only spec that does), so it can run alone with the switch on.
+const shellsOn = process.env.CORRIDRA_UX_SHELLS_V2 === 'true';
 
 async function signIn(page: Page) {
   const local = JSON.parse(await readFile('.cache/part03-local.json', 'utf8')),
@@ -24,9 +25,8 @@ async function signIn(page: Page) {
   if (await page.getByRole('heading', { name: 'Set up your authenticator' }).isVisible()) {
     await page.getByRole('button', { name: 'Set Up Authenticator', exact: true }).click();
     secret = await page.getByLabel('Authenticator setup key').inputValue();
-    await writeFile(secretFile, JSON.stringify({ secret }), { mode: 0o600 });
   } else {
-    secret = JSON.parse(await readFile(secretFile, 'utf8')).secret;
+    secret = JSON.parse(await readFile('.cache/part06-browser-authenticator.json', 'utf8')).secret;
   }
   // A code is refused a second time in the same 30 second step, so wait for the next one.
   await page.waitForTimeout(30000 - (Date.now() % 30000) + 1000);
@@ -40,6 +40,17 @@ test('each Mission workflow shortcut opens the section it names', async ({ page 
   test.setTimeout(180000);
   await signIn(page);
   await openSection(page, 'main');
+  // First prove which shell the running app has: the switch is read when the app starts, so this fails if the
+  // switch did not take effect and the check below would be testing the other shell.
+  const teamShell = page.getByRole('navigation', { name: 'Team sections', exact: true });
+  const oldDirectory = page.getByRole('navigation', { name: 'Workspace sections', exact: true });
+  if (shellsOn) {
+    await expect(teamShell).toBeVisible();
+    await expect(oldDirectory).toHaveCount(0);
+  } else {
+    await expect(teamShell).toHaveCount(0);
+    await expect(oldDirectory).toHaveCount(1);
+  }
   const shortcuts = page.getByRole('navigation', { name: 'Mission workflow' });
   const hrefs = await shortcuts
     .getByRole('link')
