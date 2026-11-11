@@ -68,6 +68,10 @@ import { configureRealInvoicing } from '../packages/auth/src/customer-invoicing-
 import { migrateCustomerPaymentsSimulated } from '../packages/db/src/customer-payments-simulated-migrate';
 import { configureSimulatedPayments } from '../packages/auth/src/customer-payments-simulated-configuration';
 import { migrateViewAs } from '../packages/db/src/view-as-migrate';
+import {
+  assertNoneBehind,
+  refreshInstalledOptionalModules,
+} from '../packages/db/src/customer-optional-refresh';
 import { z } from 'zod';
 
 // Owner-run release job only. It installs the optional customer modules, in dependency order, into the
@@ -369,6 +373,23 @@ async function report(label: string) {
   const core = await pool.query<{ n: string }>(
     'SELECT count(*)::text AS n FROM migrations.applied',
   );
+  // Read-only blast radius for removed member access (owner decision 11 Nov 2026): how many requests belong to a person who
+  // is no longer a member of the workspace they were made in. A number only, no id. Inline SQL on purpose, so it works before
+  // and after the helpers are installed; it is skipped while the revocation table does not exist.
+  const ready = await pool.query<{ ready: boolean }>(
+    `SELECT to_regclass('customer_private.workspace_access_revocation') IS NOT NULL
+      AND to_regclass('customer_private.owned_request') IS NOT NULL AS ready`,
+  );
+  if (!ready.rows[0]!.ready) out.push('requests whose author is no longer a member: not installed');
+  else {
+    const hidden = await pool.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM customer_private.owned_request r
+      WHERE NOT EXISTS(SELECT FROM customer.membership m WHERE m.tenant_id=r.workspace_id AND m.principal_id=r.principal_id)
+      AND NOT EXISTS(SELECT FROM customer_private.workspace_member w WHERE w.tenant_id=r.workspace_id AND w.principal_id=r.principal_id
+       AND NOT EXISTS(SELECT FROM customer_private.workspace_access_revocation x WHERE x.member_id=w.id))`,
+    );
+    out.push(`requests whose author is no longer a member: ${hidden.rows[0]!.n}`);
+  }
   console.log(`${label}\ncore migrations applied: ${core.rows[0]!.n}\n${out.join('\n')}`);
 }
 try {
@@ -396,6 +417,14 @@ try {
     }
     if (v.REAL_USE_ACTION !== 'unchanged') {
       await migrateCustomerRealUse(pool);
+      // Removed member access reaches the optional modules that are already installed (request withdrawal, move records,
+      // mission mail, notifications). Only for an explicit install: it installs nothing that is absent, calls no configure
+      // step and writes no control row. A module that cannot advance is reported here and fails the run at the end.
+      if (v.REAL_USE_ACTION === 'install')
+        for (const row of await refreshInstalledOptionalModules(pool))
+          console.log(
+            `optional module ${row.module}: ${row.state}${row.detail ? ' (' + row.detail + ')' : ''}`,
+          );
       if (v.REAL_USE_ACTION !== 'install') {
         const result = await configureCustomerRealUse(pool, {
           enabled: v.REAL_USE_ACTION === 'enable',
@@ -653,6 +682,10 @@ try {
       console.log('View-as audit function: installed or already current');
     }
     await report('After install');
+    // Once more after every mail, notifications and withdrawal step above, so a run that also passes
+    // mission_mail_action=install or notifications_action=install ends green, and a module that is still behind ends it red.
+    if (v.REAL_USE_ACTION === 'install')
+      assertNoneBehind(await refreshInstalledOptionalModules(pool));
     console.log('Install complete. No secret values were written to output.');
   } else {
     console.log('Dry run only. Set INSTALL_APPLY=yes to install.');
