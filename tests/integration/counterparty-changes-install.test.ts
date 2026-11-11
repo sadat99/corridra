@@ -7,6 +7,7 @@ import {
   storedRow,
   withdrawContact,
   noteOn,
+  recordingPool,
   type World,
 } from './counterparty-changes-support';
 import { migrateCounterpartyChanges } from '../../packages/db/src/counterparty-change-migrate';
@@ -142,11 +143,19 @@ describe('with the module absent', () => {
     ).rejects.toThrow('Contact and note changes are not installed');
   });
 
-  test('the dispatcher sends a queued synthetic message exactly as today', async () => {
-    const worker = new OutboxDispatcher(f.runtime, new SyntheticChannel(f.runtime));
+  test('the dispatcher sends a queued synthetic message exactly as today, with no contact check', async () => {
+    const recorded = recordingPool(f.runtime);
+    const worker = new OutboxDispatcher(recorded.pool, new SyntheticChannel(f.runtime));
     expect(await worker.attempt(queued.id, f.communications.dispatchCapability(queued.id))).toBe(
       'DELIVERED',
     );
+    expect(recorded.calls).toEqual([
+      ...['BEGIN', 'claim_communication', 'probe', 'COMMIT', 'release'].map((step) => ({
+        client: 1,
+        step,
+      })),
+      { client: 'pool', step: 'finish_communication DELIVERED' },
+    ]);
   });
 });
 

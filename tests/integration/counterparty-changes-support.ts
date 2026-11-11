@@ -3,7 +3,7 @@ import { expect } from 'vitest';
 import { accessFixture, command, future } from './access-fixture';
 import { migrateCounterpartyChanges } from '../../packages/db/src/counterparty-change-migrate';
 import { configureCounterpartyChanges } from '../../packages/auth/src/counterparty-change-configuration';
-import type { RequestContext } from '../../packages/db/src/index';
+import type { DatabasePool, RequestContext } from '../../packages/db/src/index';
 
 // CRUD G11 test world: the Part 06 access fixture (relationships, contacts, targets and synthetic messages), extra
 // members for the role cases, and short helpers for each command. The relationship of every target() is owned by
@@ -166,4 +166,50 @@ export async function refused(promise: Promise<unknown>, status: number, code?: 
   expect(error.status, error.message).toBe(status);
   if (code) expect(error.code).toBe(code);
   return error;
+}
+
+/**
+ * A pool that records which connection ran each dispatcher statement ('pool' for a statement sent without one) and
+ * each release. `lose` makes the matching statement, and every later one on that connection, fail as a lost
+ * connection would.
+ */
+export function recordingPool(pool: DatabasePool, lose?: RegExp) {
+  const calls: { client: number | 'pool' | 'deliver'; step: string }[] = [],
+    releases: unknown[] = [];
+  let serial = 0;
+  const recording = {
+    query: (sql: string, values?: unknown[]) => {
+      calls.push({ client: 'pool', step: step(sql) });
+      return pool.query(sql, values);
+    },
+    end: () => pool.end(),
+    async connect() {
+      const client = await pool.connect(),
+        id = ++serial;
+      let lost = false;
+      return {
+        async query(sql: string, values?: unknown[]) {
+          calls.push({ client: id, step: step(sql) });
+          if (lost || lose?.test(sql)) {
+            lost = true;
+            throw new Error('connection lost');
+          }
+          return client.query(sql, values);
+        },
+        release(error?: Error | boolean) {
+          calls.push({ client: id, step: 'release' });
+          releases.push(error);
+          client.release(error);
+        },
+      };
+    },
+  } as unknown as DatabasePool;
+  return { pool: recording, calls, releases };
+}
+/** BEGIN, COMMIT and ROLLBACK as written, 'probe' for the module check, else the app function and any outcome. */
+function step(sql: string) {
+  if (sql.includes('to_regprocedure')) return 'probe';
+  const fn = /app\.(\w+)\(/.exec(sql)?.[1],
+    outcome = /'(PERMANENT|DELIVERED|TRANSIENT)'/.exec(sql)?.[1];
+  return fn ? [fn, outcome].filter(Boolean).join(' ') : sql;
 }

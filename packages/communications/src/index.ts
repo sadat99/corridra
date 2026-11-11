@@ -152,9 +152,9 @@ export class CommunicationService {
       const messages = wants('messages')
         ? await keysetPage(db, {
             select: `c.*,p.channel,l.id AS link_id,br.status AS decision,br.id AS response_id,br.created_at AS response_at,j.status AS delivery_status,j.attempts,j.last_error,j.workflow_run_id,
-              EXISTS(SELECT FROM app.buyer_link_revocation r WHERE r.tenant_id=l.tenant_id AND r.link_id=l.id) AS revoked${contactStates ? ',cs.status AS contact_status' : ''}`,
+              EXISTS(SELECT FROM app.buyer_link_revocation r WHERE r.tenant_id=l.tenant_id AND r.link_id=l.id) AS revoked`,
             from: `app.communication c JOIN app.communication_policy p ON p.tenant_id=c.tenant_id AND p.id=c.policy_id LEFT JOIN app.buyer_link l ON l.tenant_id=c.tenant_id AND l.message_id=c.id
-              LEFT JOIN app.buyer_response br ON br.tenant_id=l.tenant_id AND br.link_id=l.id LEFT JOIN app.communication_dispatch j ON j.tenant_id=c.tenant_id AND j.id=c.id${contactStates ? ' LEFT JOIN app.private_contact_state cs ON cs.tenant_id=c.tenant_id AND cs.id=c.contact_id' : ''}`,
+              LEFT JOIN app.buyer_response br ON br.tenant_id=l.tenant_id AND br.link_id=l.id LEFT JOIN app.communication_dispatch j ON j.tenant_id=c.tenant_id AND j.id=c.id`,
             where: 'c.tenant_id=$1',
             values: [ctx.tenantId],
             sortExpression: 'c.created_at',
@@ -176,6 +176,18 @@ export class CommunicationService {
           })
         : null;
       const messageRows = messages?.rows ?? [];
+      if (contactStates && messageRows.length) {
+        // CRUD G11: the state of each listed message's contact, read for this page only. Joined into the page query,
+        // the masked view was evaluated again for every message. A contact this reader cannot see has no state.
+        const states = (
+          await db.query<{ id: string; status: string }>(
+            'SELECT cs.id,cs.status FROM app.private_contact_state cs WHERE cs.tenant_id=$1 AND cs.id=ANY($2::uuid[])',
+            [ctx.tenantId, [...new Set(messageRows.map((m) => m.contact_id as string))]],
+          )
+        ).rows;
+        for (const m of messageRows)
+          m.contact_status = states.find((s) => s.id === m.contact_id)?.status ?? null;
+      }
       const attempts = messageRows.length
         ? // Bounded (G12 follow-up): the newest 10 attempts of each listed message, so at most 500 a
           // page. One dispatch round writes at most 7 (three claims, each with an end, and a retry

@@ -13,6 +13,7 @@ import {
   hideReason,
   noteOn,
   reasonText,
+  recordingPool,
   refused,
   storedRow,
   ticket,
@@ -22,7 +23,7 @@ import {
   type World,
 } from './counterparty-changes-support';
 import { hash } from '../../packages/communications/src/index';
-import { SyntheticChannel } from '../../packages/communications/src/adapters';
+import { SyntheticChannel, type ChannelAdapter } from '../../packages/communications/src/adapters';
 import { OutboxDispatcher } from '../../packages/workflows/src/index';
 import { notSentForContact } from '../../apps/web/app/operator/contact-not-sent';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
@@ -430,6 +431,172 @@ describe('Guardian C4 send-time check', () => {
     // The messages list says "Not sent: contact withdrawn or hidden." only for a message this check stopped.
     expect(notSentForContact(listed!)).toBe(true);
   });
+
+  test('the claim, the module check, the contact check and the PERMANENT finish run in one transaction on one connection, released before any delivery', async () => {
+    const stopped = await f.introduction();
+    await f.research.command(f.ctx, withdrawContact(stopped.contactId));
+    const first = recordingPool(f.runtime);
+    expect(
+      await new OutboxDispatcher(first.pool, new SyntheticChannel(f.runtime)).attempt(
+        stopped.id,
+        f.communications.dispatchCapability(stopped.id),
+      ),
+    ).toBe('DEAD');
+    expect(first.calls).toEqual(
+      [
+        'BEGIN',
+        'claim_communication',
+        'probe',
+        'private_contact_message_active',
+        'finish_communication PERMANENT',
+        'COMMIT',
+        'release',
+      ].map((s) => ({ client: 1, step: s })),
+    );
+    expect(first.releases).toEqual([undefined]);
+    expect(await dispatch(stopped.id)).toMatchObject({ status: 'DEAD', receipts: 0 });
+
+    const current = await f.introduction();
+    const second = recordingPool(f.runtime);
+    const channel = new SyntheticChannel(f.runtime);
+    const recordedChannel: ChannelAdapter = {
+      async deliver(effect) {
+        second.calls.push({ client: 'deliver', step: 'deliver' });
+        // The claim is committed before the channel runs: another connection sees the lease.
+        expect(await dispatch(current.id)).toMatchObject({ status: 'RUNNING', attempts: 1 });
+        return channel.deliver(effect);
+      },
+    };
+    expect(
+      await new OutboxDispatcher(second.pool, recordedChannel).attempt(
+        current.id,
+        f.communications.dispatchCapability(current.id),
+      ),
+    ).toBe('DELIVERED');
+    expect(second.calls).toEqual([
+      ...['BEGIN', 'claim_communication', 'probe', 'private_contact_message_active', 'COMMIT'].map(
+        (s) => ({ client: 1, step: s }),
+      ),
+      { client: 1, step: 'release' },
+      { client: 'deliver', step: 'deliver' },
+      { client: 'pool', step: 'finish_communication DELIVERED' },
+    ]);
+  });
+
+  test.each([
+    ['the PERMANENT finish', /finish_communication/],
+    ['the contact check', /SELECT app\.private_contact_message_active/],
+  ])(
+    'a connection lost at %s rolls the claim back: the message stays PENDING with no attempt, and the next attempt ends it DEAD with no receipt',
+    async (_where, lose) => {
+      const i = await f.introduction();
+      await f.research.command(f.ctx, withdrawContact(i.contactId));
+      const delivery = async () =>
+        (
+          await f.owner.query(
+            'SELECT d.attempts FROM app.outbox_delivery d JOIN app.communication_dispatch j ON j.event_id=d.event_id WHERE j.id=$1',
+            [i.id],
+          )
+        ).rows[0].attempts as number;
+      const attemptRows = async () =>
+        (
+          await f.owner.query(
+            'SELECT count(*)::int n FROM app.communication_attempt WHERE message_id=$1',
+            [i.id],
+          )
+        ).rows[0].n as number;
+      const outboxAttempts = await delivery();
+      const broken = recordingPool(f.runtime, lose);
+      await expect(
+        new OutboxDispatcher(broken.pool, new SyntheticChannel(f.runtime)).attempt(
+          i.id,
+          f.communications.dispatchCapability(i.id),
+        ),
+      ).rejects.toThrow('connection lost');
+      // The failed ROLLBACK hands its error to release(), so the broken connection is discarded, not reused.
+      expect(broken.releases).toHaveLength(1);
+      expect(broken.releases[0]).toBeInstanceOf(Error);
+      expect(await dispatch(i.id)).toMatchObject({ status: 'PENDING', attempts: 0, receipts: 0 });
+      expect(await attemptRows()).toBe(0);
+      expect(await delivery()).toBe(outboxAttempts);
+      expect(await worker().attempt(i.id, f.communications.dispatchCapability(i.id))).toBe('DEAD');
+      expect(await dispatch(i.id)).toMatchObject({
+        status: 'DEAD',
+        attempts: 1,
+        last_error: 'PERMANENT',
+        receipts: 0,
+      });
+    },
+  );
+
+  test('a claim whose worker stopped during delivery keeps its lease until it expires, then the next attempt reclaims it', async () => {
+    const i = await f.introduction();
+    let stop: (reason: Error) => void = () => undefined;
+    const stalled = new OutboxDispatcher(f.runtime, {
+      deliver: () =>
+        new Promise<string>((_resolve, reject) => {
+          stop = reject;
+        }),
+    }).attempt(i.id, f.communications.dispatchCapability(i.id));
+    await vi.waitFor(async () => expect((await dispatch(i.id)).status).toBe('RUNNING'));
+    expect(await worker().attempt(i.id, f.communications.dispatchCapability(i.id))).toBe('WAIT');
+    await asOwner(
+      f,
+      "UPDATE app.communication_dispatch SET lease_until=now()-interval '1 second' WHERE id=$1",
+      [i.id],
+    );
+    expect(await worker().attempt(i.id, f.communications.dispatchCapability(i.id))).toBe(
+      'DELIVERED',
+    );
+    expect(await dispatch(i.id)).toMatchObject({ status: 'DELIVERED', attempts: 2, receipts: 1 });
+    // The stalled worker's late finish cannot undo the delivery.
+    stop(new Error('worker stopped'));
+    expect(await stalled).toBe('DELIVERED');
+  });
+
+  test.each(['withdraw', 'hide', 'opt-out'] as const)(
+    'a change (%s) committed after the check and before delivery is stopped by the receipt trigger, and the next attempt ends it DEAD with no receipt',
+    async (change) => {
+      const t = await f.target();
+      const corrected = await f.research.command(f.ctx, correctContact(t.contactId, t.sourceId));
+      const i = await f.introduction({ ...t, contactId: corrected.replacementId });
+      const channel = new SyntheticChannel(f.runtime);
+      const racing = new OutboxDispatcher(f.runtime, {
+        async deliver(effect) {
+          if (change === 'withdraw')
+            await f.research.command(f.ctx, withdrawContact(corrected.replacementId));
+          else if (change === 'hide')
+            await f.research.command(f.users.owner.ctx, hideContact(corrected.replacementId));
+          // An opt-out of an earlier address in the chain: the message's own address is not opted out.
+          else
+            await f.communications.command(
+              f.ctx,
+              command('optout', {
+                contactId: t.contactId,
+                reason: 'The person asked not to be contacted',
+              }),
+            );
+          return channel.deliver(effect);
+        },
+      });
+      expect(await racing.attempt(i.id, f.communications.dispatchCapability(i.id))).toBe('PENDING');
+      expect(await dispatch(i.id)).toMatchObject({
+        attempts: 1,
+        last_error: 'TRANSIENT',
+        receipts: 0,
+      });
+      await asOwner(f, 'UPDATE app.communication_dispatch SET available_at=now() WHERE id=$1', [
+        i.id,
+      ]);
+      expect(await worker().attempt(i.id, f.communications.dispatchCapability(i.id))).toBe('DEAD');
+      expect(await dispatch(i.id)).toMatchObject({
+        status: 'DEAD',
+        attempts: 2,
+        last_error: 'PERMANENT',
+        receipts: 0,
+      });
+    },
+  );
 
   test('same for a hidden chain and for an opted-out address elsewhere in the chain', async () => {
     const hidden = await f.introduction();
