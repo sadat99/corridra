@@ -164,6 +164,7 @@ const selfRemovers = [
   'srs',
   'srt',
   'srx',
+  'sru',
   'srhost',
 ];
 const filers = ['fil0', 'fil1', 'fil2', 'fil3', 'fil4', 'fil5', 'fil6', 'fil7'];
@@ -1869,7 +1870,9 @@ describe('a customer removes the words of their own reports, with the account li
       (await customerFile('srb', body())).reference as string,
     ];
     await revoke('srhost', hosted.srhost!, member);
-    // the gap the staff path cannot close: no chain row, so no erasure request can be filed
+    // Owner decision, 11 Nov 2026: "Yes, add an erasure path (Recommended)" (account lifecycle 0005). No chain row exists yet, and
+    // the chain now falls back to the workspace the person left, so an erasure request can be filed (it was refused before). The
+    // call runs in a transaction that is rolled back, because it writes the chain row.
     expect(
       (
         await f.owner.query(
@@ -1878,8 +1881,20 @@ describe('a customer removes the words of their own reports, with the account li
         )
       ).rows[0].n,
     ).toBe(0);
+    const db = await f.owner.connect();
+    try {
+      await db.query('BEGIN');
+      expect(
+        (await db.query('SELECT customer_private.account_chain_tenant($1) AS t', [ids.srb])).rows[0]
+          .t,
+      ).toBe(hosted.srhost);
+    } finally {
+      await db.query('ROLLBACK');
+      db.release();
+    }
+    // a person who never had a workspace is still refused (ADR-078 gap 1)
     await expect(
-      f.owner.query('SELECT customer_private.account_chain_tenant($1)', [ids.srb]),
+      f.owner.query('SELECT customer_private.account_chain_tenant($1)', [ids.sru]),
     ).rejects.toMatchObject({ code: '23514', message: expect.stringContaining('no workspace') });
     expect(await removeOwn('srb')).toEqual({ removed: 2, changed: true });
     for (const reference of made)

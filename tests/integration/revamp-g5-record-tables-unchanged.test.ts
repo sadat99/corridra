@@ -10,6 +10,7 @@ import { migrateCustomerInvoicingReal } from '../../packages/db/src/customer-inv
 import { migrateCustomerPaymentsSimulated } from '../../packages/db/src/customer-payments-simulated-migrate';
 import { migrateCustomerDecisionCards } from '../../packages/db/src/customer-decision-card-migrate';
 import { migrateCustomerSpecificationConfirmation } from '../../packages/db/src/customer-specification-confirmation-migrate';
+import { removedFileHidden } from './removed-member-hide';
 import { migrateCustomerAccountLifecycle } from '../../packages/db/src/customer-account-lifecycle-migrate';
 
 // CRUD G5 closes accounts and files erasure requests, and never touches records the law or a customer relies on:
@@ -139,7 +140,10 @@ describe('the module SQL', () => {
       .split('\n')
       .filter((line) => !line.trimStart().startsWith('--'))
       .join('\n');
-  const all = readdirSync(migrations).filter((name) => name.endsWith('.sql'));
+  // ERASURE_BASE_CHECK=1 (or REMOVED_BASE_CHECK=1) hides the erasure file, as it does from the migrators (removed-member-hide.ts).
+  const all = readdirSync(migrations).filter(
+    (name) => name.endsWith('.sql') && !removedFileHidden(migrations, name),
+  );
   // The installed first file only inserts. The follow-up files (0002 and later) may replace named functions, and are
   // checked by the last tests of this group.
   const files = all.filter((name) => name.startsWith('0001_'));
@@ -177,6 +181,15 @@ describe('the module SQL', () => {
     }
   });
 
+  test('the erasure file is one of the follow-up files and carries a fingerprint block with a row for each function it replaces (fails on main)', () => {
+    const name = '0005_removed_member_erasure.sql';
+    expect(all).toContain(name);
+    const raw = readFileSync(resolve(migrations, name), 'utf8');
+    expect(raw).toMatch(/^\s*-- fingerprint-begin\s*$/m);
+    expect(raw).toMatch(/^\s*-- fingerprint-query-begin\s*$/m);
+    expect([...raw.matchAll(/\('([^']+)','[0-9a-f]{64}','[^']*'\)/g)]).toHaveLength(2);
+  });
+
   test('the follow-up files replace only named functions, each behind a fingerprint of the live text, and never rewrite a row', () => {
     const followUps = all.filter((name) => !name.startsWith('0001_'));
     expect(followUps.length).toBeGreaterThan(0);
@@ -189,10 +202,24 @@ describe('the module SQL', () => {
         /\bALTER\s+TABLE\s+(?!customer_private\.account_chain)[a-z_.]+\s+(ADD|DROP|ALTER)/i,
       );
       // every function that is replaced is first compared with the exact text it replaces
-      const replaced = [...text.matchAll(/CREATE\s+OR\s+REPLACE\s+FUNCTION\s+([a-z_.]+)/gi)].length;
+      const replacedNames = [
+        ...text.matchAll(/CREATE\s+OR\s+REPLACE\s+FUNCTION\s+([a-z_.]+)/gi),
+      ].map((match) => match[1]!);
       const executed = [...text.matchAll(/\bEXECUTE\s+updated\b/g)].length;
       const guards = [...text.matchAll(/encode\(sha256\(convert_to\(/g)].length;
-      expect(guards, file).toBe(replaced + executed);
+      const raw = readFileSync(resolve(migrations, file), 'utf8');
+      const block = /^\s*-- fingerprint-begin\s*$([\s\S]*?)^\s*-- fingerprint-end\s*$/m.exec(raw);
+      if (block) {
+        // A file with a fingerprint block (the erasure file, 0005, owner decisions 11 Nov 2026) compares the stored parts of each
+        // function it replaces (body, settings, security mode, volatility, argument types, grants), one fingerprint row per function.
+        const fingerprinted = [...block[1]!.matchAll(/\('([^']+)','[0-9a-f]{64}','[^']*'\)/g)].map(
+          (match) => match[1]!.split('(')[0],
+        );
+        expect([...fingerprinted].sort(), file).toEqual([...replacedNames].sort());
+        expect(executed, file).toBe(0);
+      } else {
+        expect(guards, file).toBe(replacedNames.length + executed);
+      }
       for (const match of text.matchAll(/\bINSERT\s+INTO\s+([a-z_.]+)/g))
         expect(match[1], file).toBe('customer_private.account_chain');
     }

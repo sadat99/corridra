@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from 'vitest';
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { fixture, rawContext } from './support';
 import { harness, overlap as sharedOverlap, type Fixture } from './revamp-g4-support';
@@ -7,6 +7,21 @@ import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-
 import { migrateCustomerMemberRoles } from '../../packages/db/src/customer-member-role-migrate';
 import { migrateCustomerAccountLifecycle } from '../../packages/db/src/customer-account-lifecycle-migrate';
 import { migrateCustomerWorkspaceLifecycle } from '../../packages/db/src/customer-workspace-lifecycle-migrate';
+
+// ERASURE_BASE_CHECK=1 (or REMOVED_BASE_CHECK=1) keeps the erasure file away from the migrators, which is how the cases that need it
+// are shown to fail on main. Without those variables nothing is hidden. See removed-member-hide.ts.
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const real = await importOriginal<typeof import('node:fs/promises')>();
+  const readdir = (async (path: unknown, ...rest: unknown[]) => {
+    const names = (await (real.readdir as (...a: unknown[]) => Promise<unknown[]>)(
+      path,
+      ...rest,
+    )) as unknown[];
+    const { removedFileHidden } = await import('./removed-member-hide');
+    return names.filter((n) => !removedFileHidden(String(path), String(n)));
+  }) as typeof real.readdir;
+  return { ...real, readdir, default: { ...real, readdir } };
+});
 
 // CRUD G4 and G5 follow-up, real database and real restricted roles: a transferred owner keeps admin access that no
 // revocation can end (so no revocation may claim to), closing an account and provisioning a workspace run in turn, the
@@ -160,6 +175,7 @@ beforeAll(async () => {
     'xan',
     'tim',
     'uma',
+    'nan',
   ]);
   await migrateCustomerAccountLifecycle(f.owner);
   await h.setControl(true);
@@ -434,14 +450,46 @@ describe('the workspace that carries a person account events', () => {
     expect(await counts()).toEqual(before);
   });
 
-  test('a person removed before ever closing or filing still needs a workspace, and the final path is told the truth', async () => {
+  // Owner decision, 11 Nov 2026: "Yes, add an erasure path (Recommended)" (account lifecycle 0005). Before it, a person removed
+  // from their only workspace before ever closing or filing was refused with the privacy contact text (ADR-078 gap 2); now the
+  // chain falls back to the workspace they left. A person who never had a workspace is still refused (gap 1).
+  test('a person removed before ever closing or filing keeps the right to file and close: the chain is the workspace they left', async () => {
     const t = await joined('sue');
     await revoke(owner, t.target, t.memberId);
-    await expect(close('sue')).rejects.toMatchObject({ code: '23514', message: noWorkspace });
-    await expect(account('sue', 'file_erasure')).rejects.toMatchObject({
+    await expect(account('sue', 'file_erasure')).resolves.toMatchObject({
+      operation: 'file_erasure',
+      changed: true,
+    });
+    await expect(close('sue')).resolves.toMatchObject({ changed: true, status: 'closed' });
+    expect(
+      (
+        await f.owner.query(
+          'SELECT tenant_id FROM customer_private.account_chain WHERE principal_id=$1',
+          [ids.sue],
+        )
+      ).rows.map((row) => row.tenant_id),
+    ).toEqual([t.target]);
+  });
+
+  test('CONTROL (holds on main too): a person who never had a workspace still needs one, and nothing is written for them', async () => {
+    const was = await counts();
+    await expect(close('nan')).rejects.toMatchObject({ code: '23514', message: noWorkspace });
+    await expect(account('nan', 'file_erasure')).rejects.toMatchObject({
       code: '23514',
       message: noWorkspace,
     });
+    expect(await counts()).toEqual(was);
+    expect(
+      (
+        await f.owner.query(
+          'SELECT count(*)::int AS n FROM customer_private.account_chain WHERE principal_id=$1',
+          [ids.nan],
+        )
+      ).rows[0].n,
+    ).toBe(0);
+  });
+
+  test('CONTROL (holds on main too): the final path is told the truth', async () => {
     // closed, removed, then day 30 passes: no erasure request, and the refusal does not claim there is one
     const g = await joined('tim');
     await close('tim');
