@@ -78,7 +78,7 @@ export default async function Page({
         <a className="text-link" href="/account">
           Retry account access
         </a>
-        <Link className="text-link" href="/signin">
+        <Link prefetch={false} className="text-link" href="/signin">
           Return to sign-in
         </Link>
       </WorkspaceShell>
@@ -89,7 +89,7 @@ export default async function Page({
       <WorkspaceShell eyebrow="YOUR ACCOUNT" title="Verify your email." compact>
         <p>Verify the email address on your account to continue.</p>
         <PendingRequestNotice where="verify" />
-        <Link className="primary-link" href="/verify-email">
+        <Link prefetch={false} className="primary-link" href="/verify-email">
           Verify Email
         </Link>
         <AccountSignout />
@@ -217,7 +217,11 @@ export default async function Page({
                 )}
                 {workspaceIssuer && customerParticipantsEnabled() && (
                   <p>
-                    <Link className="text-link ux-action" href="/account/delegations">
+                    <Link
+                      prefetch={false}
+                      className="text-link ux-action"
+                      href="/account/delegations"
+                    >
                       Delegation registrations
                     </Link>
                   </p>
@@ -268,7 +272,11 @@ export default async function Page({
                       <SavedMissions subject={data.user.id} issuer={savedMissionIssuer} />
                       {customerCompaniesEnabled() && (
                         <p>
-                          <Link className="text-link ux-action" href="/account/companies">
+                          <Link
+                            prefetch={false}
+                            className="text-link ux-action"
+                            href="/account/companies"
+                          >
                             Browse approved companies
                           </Link>
                         </p>
@@ -371,7 +379,11 @@ export default async function Page({
                 <OperatorInvitationHint key={data.user.id} />
                 {uxSwitchOn('CORRIDRA_UX_NAV') ? (
                   <p>
-                    <Link className="text-link ux-action" href="/account/all-tools">
+                    <Link
+                      prefetch={false}
+                      className="text-link ux-action"
+                      href="/account/all-tools"
+                    >
                       All Tools
                     </Link>
                   </p>

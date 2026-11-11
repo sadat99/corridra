@@ -349,7 +349,7 @@ function TenantWorkspace({
             ))}
           </select>
         </label>
-        <Link className="text-link" href="/workspace">
+        <Link prefetch={false} className="text-link" href="/workspace">
           <OperatorIcon name="help" /> All workspaces and access help
         </Link>
         <button className="text-link" disabled={busy} onClick={signOut}>
@@ -387,7 +387,7 @@ function TenantWorkspace({
           >
             Verify workspace access
           </a>
-          <Link className="text-link" href="/signin">
+          <Link prefetch={false} className="text-link" href="/signin">
             Other sign-in options
           </Link>
         </AccessState>
@@ -505,7 +505,7 @@ function TenantWorkspace({
                           </a>
                         </nav>
                         {ownerPage && (
-                          <Link className="text-link" href="/operator/owner">
+                          <Link prefetch={false} className="text-link" href="/operator/owner">
                             What is on and off
                           </Link>
                         )}

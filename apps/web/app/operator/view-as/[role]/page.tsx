@@ -73,7 +73,7 @@ export default async function Page({
             then open the preview again.
           </p>
         </AccessState>
-        <Link className="text-link" href="/operator">
+        <Link prefetch={false} className="text-link" href="/operator">
           Back to your workspace
         </Link>
       </WorkspaceShell>

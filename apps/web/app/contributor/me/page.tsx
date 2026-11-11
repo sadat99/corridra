@@ -29,7 +29,7 @@ export default async function Page({
           Open the workspace link supplied with your reviewed invitation. A customer account does
           not grant assigned-task access.
         </p>
-        <Link className="text-link" href="/contributor">
+        <Link prefetch={false} className="text-link" href="/contributor">
           Back to assigned work
         </Link>
       </WorkspaceShell>

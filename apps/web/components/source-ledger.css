@@ -107,7 +107,7 @@
 }
 .ledger-verdict small {
   margin-top: var(--space-1);
-  color: var(--ac-warning) !important;
+  color: var(--caution) !important;
 }
 .ledger-missing,
 .ledger-badge {
@@ -122,14 +122,14 @@
 .ledger-missing,
 .ledger-badge[data-ok='false'] {
   background: var(--caution-surface);
-  color: var(--ac-warning);
+  color: var(--caution);
 }
 .ledger-badge[data-ok='true'] {
   background: var(--positive-surface);
   color: var(--positive);
 }
 .ledger-earlier {
-  color: var(--ac-warning) !important;
+  color: var(--caution) !important;
 }
 .ledger-foot {
   display: flex;
@@ -243,7 +243,7 @@
     border-top: 1px solid var(--line);
   }
   .ledger-card footer small {
-    color: var(--ac-warning);
+    color: var(--caution);
     font-size: var(--text-xs);
   }
 }

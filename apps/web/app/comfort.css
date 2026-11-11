@@ -2,7 +2,9 @@
    Text Size: the page is sized in rem, so a larger root size makes the text larger (112.5 percent is
    18 px, 125 percent is 20 px). Normal sets nothing.
    Less Movement: exactly the effect of the visitor's reduced motion setting in globals.css, switched on
-   by the person. It only ever reduces motion; the system setting still applies on its own. */
+   by the person. It only ever reduces motion; the system setting still applies on its own.
+   Stronger Colours (W10): the same effect is in force when the person chose it (html[data-contrast='more']) or the
+   device asks (prefers-contrast: more). See the block at the end of this file. */
 html[data-text-size='large'] {
   font-size: 112.5%;
 }
@@ -23,4 +25,204 @@ html[data-less-movement='on'] *::after {
 html[data-less-movement='on'] .primary-link:hover,
 html[data-less-movement='on'] .button:hover {
   transform: none;
+}
+
+/* Stronger Colours (W10). The rules below are written twice, once for the saved choice and once, word for word, for
+   the device setting; tests/integration/stronger-colours-contrast.test.ts fails when the two differ. html:root and
+   html[data-contrast] both outrank the plain :root token blocks, which load first. */
+html[data-contrast='more'] {
+  /* The four neutral colour names the design system already declares, set toward Ink so text and lines are darker.
+     No colour name is added and the cobalt, navy, ink, paper and copper primitives are not touched. */
+  --ac-text-secondary: color-mix(in srgb, var(--ac-ink) 86%, var(--ac-paper));
+  --ac-text-tertiary: color-mix(in srgb, var(--ac-ink) 82%, var(--ac-paper));
+  --ac-border: color-mix(in srgb, var(--ac-ink) 55%, var(--ac-paper));
+  --ac-border-strong: color-mix(in srgb, var(--ac-ink) 68%, var(--ac-paper));
+  /* Cobalt toward navy: still cobalt, and white on it is 8.16 to 1 or better. */
+  --brand: color-mix(in srgb, var(--ac-cobalt) 75%, var(--ac-navy));
+  --action: var(--brand);
+  --selected: var(--brand);
+  --focus: var(--brand);
+  --info: var(--brand);
+  --accent: var(--brand);
+  --brand-hover: color-mix(in srgb, var(--ac-cobalt) 62%, var(--ac-navy));
+  --action-hover: var(--brand-hover);
+  --action-pressed: color-mix(in srgb, var(--ac-cobalt) 50%, var(--ac-navy));
+  --ring: color-mix(in srgb, var(--brand) 30%, transparent);
+  /* Status text and marks toward Ink; the status surfaces and their meaning are unchanged. */
+  --positive: color-mix(in srgb, var(--ac-positive) 76%, var(--ac-ink));
+  --caution: color-mix(in srgb, var(--ac-warning) 76%, var(--ac-ink));
+  --critical: color-mix(in srgb, var(--ac-critical) 80%, var(--ac-ink));
+  --unknown: color-mix(in srgb, var(--ac-unknown) 72%, var(--ac-ink));
+}
+/* The logo keeps its own cobalt. */
+html[data-contrast='more'] .brand .brand-mark {
+  color: var(--ac-cobalt);
+}
+html[data-contrast='more'] .guide-footer {
+  --footer-text: var(--on-brand);
+  --footer-quiet: color-mix(in srgb, var(--on-brand) 90%, var(--brand-deep));
+  --footer-line: color-mix(in srgb, var(--on-brand) 50%, var(--brand-deep));
+}
+html[data-contrast='more']
+  :is(
+    .ac1-hook,
+    .ac1-truth-number,
+    .move-tag[data-journey='organise'],
+    .room-tag[data-journey='organise']
+  ) {
+  color: color-mix(in srgb, var(--ac-copper-ink) 85%, var(--ink));
+}
+html[data-contrast='more'] ::placeholder {
+  color: var(--text-2);
+  opacity: 1;
+}
+html[data-contrast='more'] :focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--surface-1);
+}
+/* On the navy regions the ring is white with a navy edge: cobalt on navy is only 2.41 to 1. */
+html[data-contrast='more']
+  :is(.guide-footer, .guide-band, .ac1-player, nav.ux-team-sidebar)
+  :focus-visible {
+  outline-color: var(--on-brand);
+  box-shadow: 0 0 0 2px var(--brand-deep);
+}
+/* A tab filled white inside the navy player draws its ring inside itself, so the ring is navy on that white. */
+html[data-contrast='more'] .ac1-record-tabs button[aria-selected='true']:focus-visible {
+  outline-color: var(--brand-deep);
+}
+/* The selected item of the navy sidebar carries a stripe: white, because cobalt on navy is only 1.91 to 1. */
+html[data-contrast='more'] nav.ux-team-sidebar {
+  --selected: var(--on-brand);
+}
+/* An action filled control on navy is edged in white, so its boundary shows: the fill alone is darker than the navy. */
+html[data-contrast='more'] .guide-footer .guide-footer-actions .primary-link {
+  border-color: var(--on-brand);
+}
+html[data-contrast='more'] .ac1-play {
+  border: 2px solid var(--on-brand);
+}
+/* A link in running text (a paragraph, a definition or a caption) is underlined, so it is not found by colour alone, and
+   so is a link that stands alone as a text link. A row, a tile or a badge made of a link is not text: its shape tells it
+   apart. Controls, navigation and tabs keep their own look. Underlining shifts nothing on the page. */
+html[data-contrast='more']
+  :is(main a.text-link, main :is(p, dd, figcaption) a, .guide-footer p a):not(
+    [role],
+    nav a,
+    .primary-link,
+    .button,
+    .button-secondary,
+    .secondary-link,
+    :has(div, ul, dl, [class*='tag'], [class*='badge'], [class*='status'])
+  ) {
+  text-decoration-line: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+html[data-contrast='more'] .ux-soon-tag {
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+html[data-contrast='more'] :is(.ux-menu-panel, .ux-notice-panel) {
+  box-shadow:
+    var(--shadow-3),
+    0 0 0 1px var(--border-strong);
+}
+@media (prefers-contrast: more) {
+  html:root {
+    /* The four neutral colour names the design system already declares, set toward Ink so text and lines are darker.
+       No colour name is added and the cobalt, navy, ink, paper and copper primitives are not touched. */
+    --ac-text-secondary: color-mix(in srgb, var(--ac-ink) 86%, var(--ac-paper));
+    --ac-text-tertiary: color-mix(in srgb, var(--ac-ink) 82%, var(--ac-paper));
+    --ac-border: color-mix(in srgb, var(--ac-ink) 55%, var(--ac-paper));
+    --ac-border-strong: color-mix(in srgb, var(--ac-ink) 68%, var(--ac-paper));
+    /* Cobalt toward navy: still cobalt, and white on it is 8.16 to 1 or better. */
+    --brand: color-mix(in srgb, var(--ac-cobalt) 75%, var(--ac-navy));
+    --action: var(--brand);
+    --selected: var(--brand);
+    --focus: var(--brand);
+    --info: var(--brand);
+    --accent: var(--brand);
+    --brand-hover: color-mix(in srgb, var(--ac-cobalt) 62%, var(--ac-navy));
+    --action-hover: var(--brand-hover);
+    --action-pressed: color-mix(in srgb, var(--ac-cobalt) 50%, var(--ac-navy));
+    --ring: color-mix(in srgb, var(--brand) 30%, transparent);
+    /* Status text and marks toward Ink; the status surfaces and their meaning are unchanged. */
+    --positive: color-mix(in srgb, var(--ac-positive) 76%, var(--ac-ink));
+    --caution: color-mix(in srgb, var(--ac-warning) 76%, var(--ac-ink));
+    --critical: color-mix(in srgb, var(--ac-critical) 80%, var(--ac-ink));
+    --unknown: color-mix(in srgb, var(--ac-unknown) 72%, var(--ac-ink));
+  }
+  /* The logo keeps its own cobalt. */
+  html:root .brand .brand-mark {
+    color: var(--ac-cobalt);
+  }
+  html:root .guide-footer {
+    --footer-text: var(--on-brand);
+    --footer-quiet: color-mix(in srgb, var(--on-brand) 90%, var(--brand-deep));
+    --footer-line: color-mix(in srgb, var(--on-brand) 50%, var(--brand-deep));
+  }
+  html:root
+    :is(
+      .ac1-hook,
+      .ac1-truth-number,
+      .move-tag[data-journey='organise'],
+      .room-tag[data-journey='organise']
+    ) {
+    color: color-mix(in srgb, var(--ac-copper-ink) 85%, var(--ink));
+  }
+  html:root ::placeholder {
+    color: var(--text-2);
+    opacity: 1;
+  }
+  html:root :focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px var(--surface-1);
+  }
+  /* On the navy regions the ring is white with a navy edge: cobalt on navy is only 2.41 to 1. */
+  html:root :is(.guide-footer, .guide-band, .ac1-player, nav.ux-team-sidebar) :focus-visible {
+    outline-color: var(--on-brand);
+    box-shadow: 0 0 0 2px var(--brand-deep);
+  }
+  /* A tab filled white inside the navy player draws its ring inside itself, so the ring is navy on that white. */
+  html:root .ac1-record-tabs button[aria-selected='true']:focus-visible {
+    outline-color: var(--brand-deep);
+  }
+  /* The selected item of the navy sidebar carries a stripe: white, because cobalt on navy is only 1.91 to 1. */
+  html:root nav.ux-team-sidebar {
+    --selected: var(--on-brand);
+  }
+  /* An action filled control on navy is edged in white, so its boundary shows: the fill alone is darker than the navy. */
+  html:root .guide-footer .guide-footer-actions .primary-link {
+    border-color: var(--on-brand);
+  }
+  html:root .ac1-play {
+    border: 2px solid var(--on-brand);
+  }
+  /* A link in running text (a paragraph, a definition or a caption) is underlined, so it is not found by colour alone, and
+     so is a link that stands alone as a text link. A row, a tile or a badge made of a link is not text: its shape tells it
+     apart. Controls, navigation and tabs keep their own look. Underlining shifts nothing on the page. */
+  html:root
+    :is(main a.text-link, main :is(p, dd, figcaption) a, .guide-footer p a):not(
+      [role],
+      nav a,
+      .primary-link,
+      .button,
+      .button-secondary,
+      .secondary-link,
+      :has(div, ul, dl, [class*='tag'], [class*='badge'], [class*='status'])
+    ) {
+    text-decoration-line: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+  html:root .ux-soon-tag {
+    box-shadow: inset 0 0 0 1px var(--border-strong);
+  }
+  html:root :is(.ux-menu-panel, .ux-notice-panel) {
+    box-shadow:
+      var(--shadow-3),
+      0 0 0 1px var(--border-strong);
+  }
 }

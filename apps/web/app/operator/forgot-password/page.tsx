@@ -30,13 +30,13 @@ export default function Page() {
         </p>
       )}
       <nav className="access-options" aria-label="Recovery options">
-        <Link className="text-link" href="/operator/setup">
+        <Link prefetch={false} className="text-link" href="/operator/setup">
           Finish a pending invitation
         </Link>
         <a className="text-link" href={operatorSignInPage}>
           Back to operator sign-in
         </a>
-        <Link className="text-link" href="/forgot-password">
+        <Link prefetch={false} className="text-link" href="/forgot-password">
           Reset a customer account password
         </Link>
       </nav>

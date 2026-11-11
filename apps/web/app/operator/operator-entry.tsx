@@ -27,10 +27,10 @@ export async function OperatorEntry({
     return (
       <WorkspaceShell eyebrow="OPERATOR WORKSPACE" title="Workspace access is unavailable.">
         <p>The protected workspace is not configured in this environment.</p>
-        <Link className="text-link" href="/signin">
+        <Link prefetch={false} className="text-link" href="/signin">
           Other sign-in options
         </Link>
-        <Link className="text-link" href="/">
+        <Link prefetch={false} className="text-link" href="/">
           Back to Corridra
         </Link>
       </WorkspaceShell>
@@ -54,17 +54,17 @@ export async function OperatorEntry({
           Ask your workspace owner to confirm the invitation and your assigned role. A customer
           account uses a separate sign-in and does not grant operator membership.
         </p>
-        <Link className="text-link" href="/workspace">
+        <Link prefetch={false} className="text-link" href="/workspace">
           Choose your workspace or tool
         </Link>
         <p>
           Invited contributors use their assigned-task link, which does not grant workspace
           membership.
         </p>
-        <Link className="text-link" href="/contributor">
+        <Link prefetch={false} className="text-link" href="/contributor">
           Assigned-task invitation help
         </Link>
-        <Link className="text-link" href="/signin">
+        <Link prefetch={false} className="text-link" href="/signin">
           Other sign-in options
         </Link>
         {/* Full page load: drops cached workspace; Next 16.4.3 doubles a # on soft return. */}

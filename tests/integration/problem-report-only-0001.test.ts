@@ -13,13 +13,17 @@ import {
   StaffProblemReports,
   TeamProblemReports,
   resetProblemReportProbe,
+  resetSelfRemovalProbe,
+  selfRemovalAvailable,
 } from '../../packages/auth/src/problem-reports';
 
 // ADR-078 decision 8 and the merge gate: the application treats the module as present only when the catalogue shows its
 // command function AND the bodies migration 0002 replaced. A database that has 0001 alone (what production had before the
 // second file) has the functions but the narrower plain-text rule and a word removal with no time bound, so both routes
-// must answer 503 on every method, change nothing, and start working within a minute of 0002 with no redeploy. The same
-// routes over the fully installed module are in problem-report-routes.test.ts.
+// must answer 503 on every method, change nothing, and start working within a minute of 0002 with no redeploy. Migration
+// 0003 adds the customer's own removal of their words, behind a second, separate availability check: with 0001 and 0002
+// everything works except that removal (503), and within a minute of 0003 the removal works too, again with no redeploy.
+// The same routes over the fully installed module are in problem-report-routes.test.ts.
 const live = vi.hoisted(() => ({
   person: 'ann' as string | null,
   token: '',
@@ -74,6 +78,13 @@ const calls = (): [string, () => Promise<Response>][] => [
     'customer POST',
     async () =>
       (await customerRoute()).POST(post(customerUrl, { commandId: randomUUID(), ...filing })),
+  ],
+  [
+    'customer POST remove own words',
+    async () =>
+      (await customerRoute()).POST(
+        post(customerUrl, { action: 'remove_words', commandId: randomUUID() }),
+      ),
   ],
   ['team GET list', async () => (await teamRoute()).GET(new Request(teamUrl()))],
   [
@@ -172,6 +183,7 @@ beforeAll(async () => {
   live.staff = new StaffProblemReports(f.runtime);
   live.token = f.users.owner!.ctx.token;
   resetProblemReportProbe();
+  resetSelfRemovalProbe();
   vi.useFakeTimers({ toFake: ['Date'] });
 });
 afterAll(async () => {
@@ -486,5 +498,214 @@ describe('the probe markers follow the migrations', () => {
     );
     expect(source).toContain("position(chr(92)||'u2066-'||chr(92)||'u2069' IN p.prosrc)");
     expect(source).toContain(`position('${removalMarker}' IN p.prosrc)`);
+  });
+});
+
+// Migration 0003 is the third stage. The removal of a customer's own words has its own availability check, so with 0001 and
+// 0002 alone every method works except that one, which answers 503 and changes nothing; once 0003 is applied it starts
+// working within a minute with no redeploy; and each of its two conditions decides on its own without touching the check
+// filing, reading and triage depend on.
+const thirdRemoval = async () =>
+  (await sql('0003_problem_report_self_removal.sql')).match(
+    /\$removefn\$\n([\s\S]*?)\n\$removefn\$/,
+  )![1]!;
+const removal = () => ({ action: 'remove_words', commandId: randomUUID() });
+const removeOwn = async () => (await customerRoute()).POST(post(customerUrl, removal()));
+const fileOwn = async () =>
+  (await customerRoute()).POST(post(customerUrl, { commandId: randomUUID(), ...filing }));
+const wordsHeld = async () =>
+  (
+    await f.owner.query(
+      "SELECT count(*)::int AS n FROM customer_private.problem_report_words w JOIN customer_private.problem_report r ON r.id=w.report_id WHERE r.reporter_kind='customer'",
+    )
+  ).rows[0].n as number;
+const selfRemovalMade = async () =>
+  (
+    await f.owner.query(
+      "SELECT to_regclass('customer_private.problem_report_self_removal') IS NOT NULL AS made",
+    )
+  ).rows[0].made as boolean;
+// What the runtime login sees of the two things the removal check asks for.
+const selfMarked = async () =>
+  (
+    await f.runtime.query<{ present: boolean; marker: boolean }>(
+      `SELECT EXISTS (SELECT 1 FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace
+         WHERE n.nspname='customer' AND p.proname='problem_report_remove_own_words' AND p.pronargs=1) AS present,
+        EXISTS (SELECT 1 FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid=p.pronamespace
+         WHERE n.nspname='customer' AND p.proname='problem_report_remove_words'
+          AND position('problem_report_self_removal' IN p.prosrc)>0) AS marker`,
+    )
+  ).rows[0]!;
+const available = async () => {
+  const db = await f.runtime.connect();
+  try {
+    return await selfRemovalAvailable(db);
+  } finally {
+    db.release();
+  }
+};
+// Everything but the removal answers as usual.
+const othersWork = async () => {
+  expect((await fileOwn()).status).toBe(200);
+  expect((await (await customerRoute()).GET(new Request(customerUrl))).status).toBe(200);
+  expect(await asked()).toBe(200);
+  expect(
+    (
+      await (
+        await teamRoute()
+      ).POST(
+        post(teamUrl(), {
+          action: 'file',
+          commandId: randomUUID(),
+          ...filing,
+          page: '/operator/requests',
+        }),
+      )
+    ).status,
+  ).toBe(200);
+  expect((await (await teamRoute()).GET(new Request(`${teamUrl()}&view=queue`))).status).toBe(200);
+};
+const removalUnavailable = async () => {
+  const before = await wordsHeld();
+  const response = await removeOwn();
+  expect(response.status).toBe(503);
+  expect(await response.json()).toEqual(unavailable);
+  expect(await wordsHeld()).toBe(before);
+};
+
+describe('the third stage: migration 0003 and the check of the removal of a customer own words', () => {
+  test('with 0001 and 0002 only, the removal is a 503 that changes nothing, and filing, reading and triage work', async () => {
+    resetProblemReportProbe();
+    resetSelfRemovalProbe();
+    expect(await selfRemovalMade()).toBe(false);
+    expect(await selfMarked()).toEqual({ present: false, marker: false });
+    expect(await available()).toBe(false);
+    resetSelfRemovalProbe();
+    await removalUnavailable();
+    await othersWork();
+  });
+
+  test('right after 0003 the removal is still the remembered 503, and nothing is removed', async () => {
+    await f.owner.query(await sql('0003_problem_report_self_removal.sql'));
+    expect(await selfRemovalMade()).toBe(true);
+    expect(await selfMarked()).toEqual({ present: true, marker: true });
+    await removalUnavailable();
+    await othersWork();
+  });
+
+  test('a minute later the check runs again, finds both, and the removal works with no redeploy', async () => {
+    later(61000);
+    const response = await removeOwn();
+    expect(response.status).toBe(200);
+    const done = (await response.json()) as { removed: number; changed: boolean };
+    expect(done.changed).toBe(true);
+    expect(done.removed).toBeGreaterThan(0);
+    expect(await wordsHeld()).toBe(0);
+    expect(Object.keys(done).sort()).toEqual(['changed', 'removed']);
+    await othersWork();
+  });
+
+  test('once found it stays found, and a fresh process starts by asking again', async () => {
+    expect(await available()).toBe(true);
+    expect(((await (await removeOwn()).json()) as { changed: boolean }).changed).toBe(true);
+    expect(await wordsHeld()).toBe(0);
+    expect(await (await removeOwn()).json()).toEqual({ removed: 0, changed: false });
+    resetSelfRemovalProbe();
+    expect(await (await removeOwn()).json()).toEqual({ removed: 0, changed: false });
+  });
+
+  test('a missing new function alone makes only the removal unavailable', async () => {
+    await f.owner.query(
+      'ALTER FUNCTION customer.problem_report_remove_own_words(uuid) RENAME TO problem_report_remove_own_words_held',
+    );
+    try {
+      expect(await selfMarked()).toEqual({ present: false, marker: true });
+      resetSelfRemovalProbe();
+      await removalUnavailable();
+      await othersWork();
+    } finally {
+      await f.owner.query(
+        'ALTER FUNCTION customer.problem_report_remove_own_words_held(uuid) RENAME TO problem_report_remove_own_words',
+      );
+    }
+    resetSelfRemovalProbe();
+    expect((await removeOwn()).status).toBe(200);
+  });
+
+  test('a word removal without the self-removal marker alone makes only the removal unavailable', async () => {
+    await f.owner.query(await replaced.removal());
+    try {
+      expect(await selfMarked()).toEqual({ present: true, marker: false });
+      // the first check still holds: the word removal keeps its cutoff
+      expect(await marked()).toEqual({ plain: true, removal: true });
+      resetSelfRemovalProbe();
+      await removalUnavailable();
+      await othersWork();
+    } finally {
+      await f.owner.query(await thirdRemoval());
+    }
+    expect(await selfMarked()).toEqual({ present: true, marker: true });
+    resetSelfRemovalProbe();
+    expect((await removeOwn()).status).toBe(200);
+  });
+
+  test('the first check false alone makes everything unavailable while the removal check still holds on its own', async () => {
+    await f.owner.query(asOriginal(await original.plain()));
+    try {
+      expect(await marked()).toEqual({ plain: false, removal: true });
+      resetProblemReportProbe();
+      resetSelfRemovalProbe();
+      expect(await available()).toBe(true);
+      expect((await fileOwn()).status).toBe(503);
+      await removalUnavailable();
+    } finally {
+      await f.owner.query(await replaced.plain());
+    }
+    resetProblemReportProbe();
+    resetSelfRemovalProbe();
+    await othersWork();
+    expect((await removeOwn()).status).toBe(200);
+  });
+
+  test('a removal check that fails leaves nothing remembered, so the next call asks again and a found answer is then kept', async () => {
+    const seen: string[] = [];
+    const pool = watching(f.runtime, seen, { next: true });
+    const ask = async () => {
+      const db = await pool.connect();
+      try {
+        return await selfRemovalAvailable(db);
+      } finally {
+        db.release();
+      }
+    };
+    resetSelfRemovalProbe();
+    await expect(ask()).rejects.toThrow('the catalogue could not be read');
+    expect(seen).toHaveLength(1);
+    expect(await ask()).toBe(true);
+    expect(seen).toHaveLength(2);
+    expect(await ask()).toBe(true);
+    expect(seen).toHaveLength(2);
+  });
+});
+
+describe('the removal check markers follow the migrations', () => {
+  test('the latest definition of the word removal still names the self-removal table, and the first two do not', async () => {
+    const latest = await latestDefinition('customer.problem_report_remove_words');
+    expect(latest.name).toBe('0003_problem_report_self_removal.sql');
+    expect(
+      latest.text.includes('problem_report_self_removal'),
+      'The latest definition of customer.problem_report_remove_words no longer names problem_report_self_removal. The removal check in packages/auth/src/problem-reports.ts must move with it.',
+    ).toBe(true);
+    expect((await original.removal()).includes('problem_report_self_removal')).toBe(false);
+    expect((await replaced.removal()).includes('problem_report_self_removal')).toBe(false);
+  });
+  test('the service check still looks for exactly that marker and the one function', async () => {
+    const source = await readFile(
+      new URL('../../packages/auth/src/problem-reports.ts', import.meta.url),
+      'utf8',
+    );
+    expect(source).toContain("position('problem_report_self_removal' IN p.prosrc)");
+    expect(source).toContain("p.proname='problem_report_remove_own_words' AND p.pronargs=1");
+    expect(source).toContain("p.proargtypes[0]='uuid'::regtype");
   });
 });

@@ -20,6 +20,29 @@ export default defineConfig([
       ],
     },
   },
+  {
+    // Every next/link Link keeps prefetch={false} (W10): a Link that prefetches fetches its target in the
+    // background, on every page view, on a metered connection. The import must stay `import Link from
+    // 'next/link'` so the Link selector below cannot be bypassed by an alias.
+    files: ['apps/web/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            'JSXOpeningElement[name.name="Link"]:not(:has(> JSXAttribute[name.name="prefetch"][value.expression.value=false]))',
+          message:
+            'Every next/link Link needs prefetch={false}, so a page never fetches other pages in the background.',
+        },
+        {
+          selector:
+            'ImportDeclaration[source.value="next/link"] > :matches(ImportDefaultSpecifier[local.name!="Link"], ImportNamespaceSpecifier, ImportSpecifier)',
+          message:
+            "Import next/link only as `import Link from 'next/link'`, so the prefetch={false} rule can see every Link.",
+        },
+      ],
+    },
+  },
   { settings: { next: { rootDir: './apps/web' }, react: { version: '19.3' } } },
   globalIgnores([
     '**/.next/**',
