@@ -213,6 +213,19 @@ type Receipt = {
   expiresAt: string;
 };
 
+// A coordination writer that lost a lock wait (deadlock victim or lock timeout) wrote nothing: its transaction rolled
+// back. Retrying with the same command id is safe, a completed command replays its first result.
+async function retryableWhenBusy<T>(write: () => Promise<T>): Promise<T> {
+  try {
+    return await write();
+  } catch (error) {
+    const code = (error as { code?: string }).code;
+    if (code === '40P01' || code === '55P03')
+      throw new DomainError('Busy right now. Try again in a moment.', 503, 'RETRYABLE');
+    throw error;
+  }
+}
+
 export class CustomerProgrammeCoordinationService extends CustomerSessionBoundary {
   private call<T>(sql: string, values: unknown[], subject?: string, issuer?: string) {
     return this.transaction(
@@ -257,37 +270,45 @@ export class CustomerProgrammeCoordinationService extends CustomerSessionBoundar
   }
   saveTask(input: unknown, subject?: string, issuer?: string) {
     const v = taskSaveInput.parse(input);
-    return this.call<Receipt & { task: ProgrammeTask }>(
-      'SELECT customer.programme_task_save($1,$2,$3,$4,$5) AS result',
-      [v.commandId, v.workspaceId, v.programmeId, v.expectedVersion, JSON.stringify(v.task)],
-      subject,
-      issuer,
+    return retryableWhenBusy(() =>
+      this.call<Receipt & { task: ProgrammeTask }>(
+        'SELECT customer.programme_task_save($1,$2,$3,$4,$5) AS result',
+        [v.commandId, v.workspaceId, v.programmeId, v.expectedVersion, JSON.stringify(v.task)],
+        subject,
+        issuer,
+      ),
     );
   }
   setCapacity(input: unknown, subject?: string, issuer?: string) {
     const v = capacitySetInput.parse(input);
-    return this.call<Receipt & { capacity: number; version: number; reason: string }>(
-      'SELECT customer.programme_capacity_set($1,$2,$3,$4,$5) AS result',
-      [
-        v.commandId,
-        v.workspaceId,
-        v.programmeId,
-        v.expectedVersion,
-        JSON.stringify({ capacity: v.capacity, reason: v.reason }),
-      ],
-      subject,
-      issuer,
+    return retryableWhenBusy(() =>
+      this.call<Receipt & { capacity: number; version: number; reason: string }>(
+        'SELECT customer.programme_capacity_set($1,$2,$3,$4,$5) AS result',
+        [
+          v.commandId,
+          v.workspaceId,
+          v.programmeId,
+          v.expectedVersion,
+          JSON.stringify({ capacity: v.capacity, reason: v.reason }),
+        ],
+        subject,
+        issuer,
+      ),
     );
   }
   /**
    * CRUD item 3: an attendance mark carries the version the organiser saw, so two organisers cannot silently
    * overwrite each other; a stale version is refused with 409 and nothing is written. The database function
-   * has no version argument, so the check runs here. programme_report takes the workspace lock and then the
-   * programme lock, in the same order as every other coordination function, and both are held until this
-   * transaction commits: the version read below cannot change before the write. No lock is taken here, so
-   * the order cannot be inverted. A retried command (same command id) still returns its first result: on a
-   * version mismatch the call runs in a savepoint and is kept only when the database answers with that
-   * stored replay, which writes nothing.
+   * has no version argument, so the check runs here. programme_report goes through participant_scope with a
+   * random command id, so it takes that command's lock, then the workspace lock, then the programme lock, and
+   * the workspace and programme locks are held until this transaction commits: the version read below cannot
+   * change before the write. programme_attendance_set then takes the lock of the real command id while the
+   * workspace lock is already held, the reverse of the order every writer uses (command, then workspace). A
+   * concurrent writer with the same actor and command id that holds the command lock and waits for the
+   * workspace lock therefore deadlocks with this call; the database ends one of the two, which writes
+   * nothing and is answered as RETRYABLE (503). Retrying with the same command id replays the first result.
+   * A retried command still returns its first result on a version mismatch too: the call runs in a savepoint
+   * and is kept only when the database answers with that stored replay, which writes nothing.
    */
   setAttendance(input: unknown, subject?: string, issuer?: string) {
     const v = attendanceSetInput.parse(input);
@@ -296,49 +317,53 @@ export class CustomerProgrammeCoordinationService extends CustomerSessionBoundar
       state: 'ATTENDED' | 'ABSENT';
       version: number;
     };
-    return this.transaction(
-      async (db) => {
-        const report = (
-          await db.query<{ result: ProgrammeReport }>(
-            'SELECT customer.programme_report($1,$2) AS result',
-            [v.workspaceId, v.programmeId],
-          )
-        ).rows[0].result;
-        const current = report.participants.find((p) => p.registrationId === v.registrationId);
-        const set = async () =>
-          (
-            await db.query<{ result: Result }>(
-              'SELECT customer.programme_attendance_set($1,$2,$3,$4) AS result',
-              [
-                v.commandId,
-                v.workspaceId,
-                v.programmeId,
-                JSON.stringify({ registrationId: v.registrationId, state: v.state }),
-              ],
+    return retryableWhenBusy(() =>
+      this.transaction(
+        async (db) => {
+          const report = (
+            await db.query<{ result: ProgrammeReport }>(
+              'SELECT customer.programme_report($1,$2) AS result',
+              [v.workspaceId, v.programmeId],
             )
           ).rows[0].result;
-        // An unknown registration is refused by the database function with its own error.
-        if (!current || current.attendanceVersion === v.expectedVersion) return set();
-        await db.query('SAVEPOINT attendance_version');
-        const result = await set();
-        if (result.replayed) return result;
-        await db.query('ROLLBACK TO SAVEPOINT attendance_version');
-        throw new DomainError(
-          'Attendance was changed by someone else. Reload to see the latest mark, then try again.',
-          409,
-        );
-      },
-      subject,
-      issuer,
+          const current = report.participants.find((p) => p.registrationId === v.registrationId);
+          const set = async () =>
+            (
+              await db.query<{ result: Result }>(
+                'SELECT customer.programme_attendance_set($1,$2,$3,$4) AS result',
+                [
+                  v.commandId,
+                  v.workspaceId,
+                  v.programmeId,
+                  JSON.stringify({ registrationId: v.registrationId, state: v.state }),
+                ],
+              )
+            ).rows[0].result;
+          // An unknown registration is refused by the database function with its own error.
+          if (!current || current.attendanceVersion === v.expectedVersion) return set();
+          await db.query('SAVEPOINT attendance_version');
+          const result = await set();
+          if (result.replayed) return result;
+          await db.query('ROLLBACK TO SAVEPOINT attendance_version');
+          throw new DomainError(
+            'Attendance was changed by someone else. Reload to see the latest mark, then try again.',
+            409,
+          );
+        },
+        subject,
+        issuer,
+      ),
     );
   }
   submitRecord(input: unknown, subject?: string, issuer?: string) {
     const { commandId, ...rest } = recordSubmitInput.parse(input);
-    return this.call<Receipt & { registrationId: string; record: ParticipantRecord }>(
-      'SELECT customer.programme_record_submit($1,$2) AS result',
-      [commandId, JSON.stringify(rest)],
-      subject,
-      issuer,
+    return retryableWhenBusy(() =>
+      this.call<Receipt & { registrationId: string; record: ParticipantRecord }>(
+        'SELECT customer.programme_record_submit($1,$2) AS result',
+        [commandId, JSON.stringify(rest)],
+        subject,
+        issuer,
+      ),
     );
   }
 }
