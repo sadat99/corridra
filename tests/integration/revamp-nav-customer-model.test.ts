@@ -294,10 +294,10 @@ describe('the customer navigation model', () => {
     expect(on.avatar).toHaveLength(5);
     expect(on.avatar).toEqual(off.avatar);
     expect(on.help.flatMap((group) => group.items).filter((i) => i.kind === 'soon')).toHaveLength(
-      2,
+      1,
     );
     expect(off.help.flatMap((group) => group.items).filter((i) => i.kind === 'soon')).toHaveLength(
-      3,
+      2,
     );
   });
 

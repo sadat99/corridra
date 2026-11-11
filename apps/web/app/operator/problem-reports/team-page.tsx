@@ -34,7 +34,7 @@ export async function TeamProblemReportsPage({
     return (
       <WorkspaceShell eyebrow="OPERATOR WORKSPACE" title="Workspace access is unavailable.">
         <p>The protected workspace is not configured in this environment.</p>
-        <Link className="text-link" href="/operator">
+        <Link prefetch={false} className="text-link" href="/operator">
           Return to Today
         </Link>
       </WorkspaceShell>
@@ -62,7 +62,11 @@ export async function TeamProblemReportsPage({
       ) : (
         <>
           <ProblemReportsUnavailable filing={filing} />
-          <Link className="text-link" href={`/operator${workspaceQuery(tenant.id)}`}>
+          <Link
+            prefetch={false}
+            className="text-link"
+            href={`/operator${workspaceQuery(tenant.id)}`}
+          >
             Return to Today
           </Link>
         </>

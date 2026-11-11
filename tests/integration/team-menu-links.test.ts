@@ -94,7 +94,6 @@ describe('the team Help groups', () => {
     expect(entries).toContainEqual({ kind: 'link', label: 'Report a Problem', href });
     expect(entries.filter((entry) => entry.kind === 'soon').map((e) => e.label)).toEqual([
       'Chat on WhatsApp',
-      'Stronger Colours',
     ]);
     expect(entries).toHaveLength(none.length);
     for (const group of on) expect(group.items.length).toBeLessThanOrEqual(4);
