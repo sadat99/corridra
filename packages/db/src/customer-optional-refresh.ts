@@ -43,62 +43,65 @@ export async function refreshInstalledOptionalModules(pool: DatabasePool) {
     notifications: await appliedCount(pool, 'notifications'),
   };
   const result: OptionalRefresh[] = [];
-  const settle = async (module: OptionalRefresh['module']) => {
+  const notInstalled = (module: OptionalRefresh['module']) =>
+    result.push({ module, state: 'not installed' });
+  const behind = (module: OptionalRefresh['module'], detail: string) =>
+    result.push({ module, state: 'behind', detail });
+  // One module's migrator runs; if it cannot, that module is recorded as behind with the reason, and the others still run.
+  const advance = async (module: OptionalRefresh['module'], migrate: () => Promise<void>) => {
+    try {
+      await migrate();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      behind(
+        module,
+        `its migrator stopped with: ${message}. Nothing of this module changed. Fix the cause, then run Install customer modules again with apply=yes and real_use_action=install`,
+      );
+      return;
+    }
     const after = await appliedCount(pool, module);
     result.push({
       module,
       state: after !== null && after > (counts[module] ?? 0) ? 'advanced' : 'current',
     });
   };
-  const notInstalled = (module: OptionalRefresh['module']) =>
-    result.push({ module, state: 'not installed' });
 
   if (counts['request withdrawal'] === null) notInstalled('request withdrawal');
-  else {
-    await migrateCustomerRequestWithdrawal(pool);
-    await settle('request withdrawal');
-  }
+  else await advance('request withdrawal', () => migrateCustomerRequestWithdrawal(pool));
 
   if (counts['move records'] === null) notInstalled('move records');
-  else {
-    await migrateCustomerMoves(pool);
-    await settle('move records');
-  }
+  else await advance('move records', () => migrateCustomerMoves(pool));
 
   if (counts['mission mail'] === null) notInstalled('mission mail');
   else if (counts['request withdrawal'] === null)
-    result.push({
-      module: 'mission mail',
-      state: 'behind',
-      detail:
-        'mission mail 0003 needs request withdrawal; run mission_mail_action install, which installs request withdrawal first (its control stays closed)',
-    });
-  else {
-    await migrateCustomerMissionMail(pool);
-    await settle('mission mail');
-  }
+    behind(
+      'mission mail',
+      'mission mail 0003 needs request withdrawal. Run Install customer modules with apply=yes and mission_mail_action=install, which installs request withdrawal first (its control stays closed)',
+    );
+  else await advance('mission mail', () => migrateCustomerMissionMail(pool));
 
   if (counts.notifications === null) notInstalled('notifications');
-  else if (counts['request withdrawal'] === null || counts['move records'] === null)
-    result.push({
-      module: 'notifications',
-      state: 'behind',
-      detail:
-        'notifications 0005 needs request withdrawal and move records; run notifications_action install, which installs them first (their controls stay closed)',
-    });
-  else {
-    await migrateCustomerNotifications(pool);
-    await settle('notifications');
-  }
+  else if (counts['request withdrawal'] === null || counts['move records'] === null) {
+    const missing = [
+      ...(counts['request withdrawal'] === null ? ['request withdrawal'] : []),
+      ...(counts['move records'] === null ? ['move records'] : []),
+    ].join(' and ');
+    behind(
+      'notifications',
+      `notifications 0005 needs ${missing}. Run Install customer modules with apply=yes and notifications_action=install, which installs ${missing} first (their controls stay closed)`,
+    );
+  } else await advance('notifications', () => migrateCustomerNotifications(pool));
   return result;
 }
 
+// The refusal names every module that is behind and, for each, the step that fixes that one. The steps come from the rows, so a
+// module that is not installed is never told to be installed.
 export function assertNoneBehind(rows: OptionalRefresh[]) {
   const behind = rows.filter((row) => row.state === 'behind');
   if (behind.length === 0) return;
   throw new Error(
-    'Removed member access is installed for everything that could advance, but these optional modules are behind: ' +
-      behind.map((row) => `${row.module} (${row.detail ?? 'cannot advance'})`).join('; ') +
-      '. Next step: run Install customer modules again with apply=yes, mission_mail_action=install and notifications_action=install (they install request withdrawal, control closed, first). No switch is changed by this.',
+    'Removed member access is installed everywhere it could be, but these optional modules still need a step: ' +
+      behind.map((row) => `${row.module}: ${row.detail ?? 'cannot advance'}`).join('; ') +
+      '. No switch or control is changed by any of these steps.',
   );
 }
