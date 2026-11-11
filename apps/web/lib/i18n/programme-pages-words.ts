@@ -233,7 +233,7 @@ export const programmePagesWords = {
   'pp.apply.consent':
     'Send this name and statement to the organiser. They do not see my private requests, contacts or prices. Applying is not a booking.',
   'pp.apply.privacy':
-    'Corridra stores your application and shows it only to the owners and admins of the organiser. You can withdraw it at any time, and it stays on record as withdrawn.',
+    'Corridra stores your application and shows it only to the owners and admins of the organiser. Until you join, you can withdraw it, and it stays on record as withdrawn.',
   'pp.apply.privacyLink': 'How Corridra Handles Your Data',
   'pp.apply.send': 'Send Application',
   'pp.apply.sending': 'Sending…',
