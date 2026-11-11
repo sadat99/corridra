@@ -4,7 +4,7 @@ import { fixture, rawContext } from './support';
 import { harness, options, type Fixture } from './revamp-g4-support';
 import { DomainError } from '../../packages/domain/src/index';
 import { plainTextBetween } from '../../packages/domain/src/problem-report';
-import type { RequestContext } from '../../packages/db/src/index';
+import type { DatabaseClient, RequestContext } from '../../packages/db/src/index';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateCustomerProblemReports } from '../../packages/db/src/customer-problem-report-migrate';
 import {
@@ -13,7 +13,10 @@ import {
   TeamProblemReports,
   problemReportError,
   resetProblemReportProbe,
+  resetSelfRemovalProbe,
+  selfRemovalAvailable,
 } from '../../packages/auth/src/problem-reports';
+import { resetClosedAccountGateCache } from '../../packages/auth/src/customer-account-gate';
 
 // ADR-078 PR2, real database, real restricted roles: the three services behind the problem report routes. Customers and
 // team members file and read their own reports, owners and admins triage with a fresh authenticator check, and every
@@ -66,6 +69,11 @@ beforeAll(async () => {
     'limiter',
     'lines',
     'erased',
+    'rmva',
+    'rmvb',
+    'rmvc',
+    'rmvd',
+    'rmve',
   ]);
   const workspaces: Record<string, string> = {};
   for (const person of ['alice', 'carol', 'dave', 'erin', 'limiter', 'lines', 'gone', 'erased'])
@@ -680,5 +688,210 @@ describe('removing words under an erasure request', () => {
         (row) => row.reference === mine.reference,
       ),
     ).toMatchObject({ wordsRemoved: true, page: null, detail: null, pageKind: null });
+  });
+});
+
+// ADR-078 decision 6 as amended by migration 0003: the customer service removes the words of the signed-in person's own
+// reports through the same POST as a filing. The route-level order (origin, body, budget) is in problem-report-routes.test.ts
+// and the stages of the install in problem-report-only-0001.test.ts.
+describe('a customer removing the words of their own reports', () => {
+  const removal = (commandId: string = randomUUID()) => ({ action: 'remove_words', commandId });
+  const act = (person: string, input: unknown) => customer(person).act(input);
+  const wordsOf = async (person: string) =>
+    (
+      await f.owner.query(
+        'SELECT count(*)::int AS n FROM customer_private.problem_report_words w JOIN customer_private.problem_report r ON r.id=w.report_id WHERE r.customer_principal_id=$1',
+        [ids[person]],
+      )
+    ).rows[0].n as number;
+  const selfRows = async () => count('problem_report_self_removal');
+  const rename = (from: string, to: string) =>
+    f.owner.query(`ALTER FUNCTION customer.${from}(uuid) RENAME TO ${to}`);
+  const client = async <T>(work: (db: DatabaseClient) => Promise<T>) => {
+    const db = await f.runtime.connect();
+    try {
+      return await work(db);
+    } finally {
+      db.release();
+    }
+  };
+
+  test('removes the words, answers only the count and whether this call did it, and a replay answers the first count', async () => {
+    const first = await fileAs('rmva', body({ detail: 'Words of rmva, one.' }));
+    await fileAs('rmva', body());
+    const command = randomUUID();
+    const done = await act('rmva', removal(command));
+    expect(done).toEqual({ removed: 2, changed: true });
+    expect(Object.keys(done).sort()).toEqual(['changed', 'removed']);
+    expect(await wordsOf('rmva')).toBe(0);
+    expect((await customer('rmva').get(first.reference)).words).toEqual({ removed: true });
+    expect((await customer('rmva').list({})).every((row) => row.wordsRemoved)).toBe(true);
+    await fileAs('rmva', body({ detail: 'Words filed afterwards.' }));
+    expect(await act('rmva', removal(command))).toEqual({ removed: 2, changed: false });
+    expect(await wordsOf('rmva')).toBe(1);
+    expect(await act('rmva', removal())).toEqual({ removed: 1, changed: true });
+    expect(await act('rmva', removal())).toEqual({ removed: 0, changed: false });
+  });
+
+  test('a filing through the same entry point is exactly the filing as before', async () => {
+    const input = body({ detail: 'Filed through act.' });
+    const made = await customer('rmvb').act(input);
+    expect(made).toMatchObject({ status: 'received', changed: true });
+    expect(Object.keys(made).sort()).toEqual(['changed', 'filedAt', 'reference', 'status']);
+    expect(await customer('rmvb').act(input)).toEqual({ ...made, changed: false });
+    expect(
+      (await customer('rmvb').get((made as { reference: string }).reference)).words,
+    ).toMatchObject({
+      detail: 'Filed through act.',
+    });
+  });
+
+  test('a body that is not exactly one of the two shapes is refused before the database, and nothing is removed', async () => {
+    await fileAs('rmvb', body({ detail: 'Words that must stay.' }));
+    const before = { words: await wordsOf('rmvb'), rows: await selfRows() };
+    for (const input of [
+      { action: 'remove_words' },
+      { commandId: randomUUID() },
+      { ...removal(), personId: ids.rmvb },
+      { ...removal(), reportId: randomUUID() },
+      { ...removal(), erasureRequestId: randomUUID() },
+      { ...removal(), category: 'did_not_work' },
+      { action: 'remove_words', commandId: 'not-a-uuid' },
+      { action: 'file', ...body() },
+      { action: 'delete', commandId: randomUUID() },
+      null,
+      'remove_words',
+    ])
+      await expect(act('rmvb', input), JSON.stringify(input)).rejects.toMatchObject({
+        name: 'ZodError',
+      });
+    expect({ words: await wordsOf('rmvb'), rows: await selfRows() }).toEqual(before);
+  });
+
+  test('signed out is a 401 whatever the body, the body is never read and the budget is never spent', async () => {
+    const out = new CustomerProblemReports(f.runtime, f.auth, options, async () => null);
+    const budget = vi.fn(async () => undefined);
+    const read = vi.fn(() => {
+      throw new Error('the body was read');
+    });
+    await expect(out.act(read, undefined, undefined, budget)).rejects.toMatchObject({
+      status: 401,
+    });
+    expect(read).not.toHaveBeenCalled();
+    expect(budget).not.toHaveBeenCalled();
+    // signed in, the budget is spent once, after the session, and before the body
+    const order: string[] = [];
+    const signedIn = customer('rmvb');
+    await signedIn.act(
+      () => {
+        order.push('body');
+        return removal();
+      },
+      undefined,
+      undefined,
+      async () => {
+        order.push('budget');
+      },
+    );
+    expect(order).toEqual(['budget', 'body']);
+  });
+
+  test('a disabled customer is refused with a 403 and keeps the words', async () => {
+    await fileAs('rmvd', body({ detail: 'Words of a disabled person.' }));
+    await f.owner.query('ALTER TABLE customer_private.principal DISABLE TRIGGER USER');
+    await f.owner.query('UPDATE customer_private.principal SET disabled_at=now() WHERE id=$1', [
+      ids.rmvd,
+    ]);
+    try {
+      await expect(act('rmvd', removal())).rejects.toMatchObject({ status: 403 });
+      expect(await wordsOf('rmvd')).toBe(1);
+    } finally {
+      await f.owner.query('UPDATE customer_private.principal SET disabled_at=NULL WHERE id=$1', [
+        ids.rmvd,
+      ]);
+      await f.owner.query('ALTER TABLE customer_private.principal ENABLE TRIGGER USER');
+    }
+    expect(await act('rmvd', removal())).toEqual({ removed: 1, changed: true });
+  });
+
+  test('works for a closed account even with the closed account gate switched on, which refuses every other customer call', async () => {
+    const mine = await fileAs('rmvc', body({ detail: 'Words of a closed account.' }));
+    await f.owner.query(
+      `WITH t AS (SELECT clock_timestamp() AS at)
+       INSERT INTO customer_private.account_closure_event(principal_id,state,occurred_at,final_at,command_id)
+       SELECT $1,'closed',t.at,t.at+interval '720 hours',$2 FROM t`,
+      [ids.rmvc, randomUUID()],
+    );
+    vi.stubEnv('DATA_ENVIRONMENT', 'synthetic');
+    vi.stubEnv('CORRIDRA_CUSTOMER_WORKSPACES_ENABLED', 'true');
+    vi.stubEnv('CORRIDRA_CUSTOMER_ACCOUNT_LIFECYCLE_ENABLED', 'true');
+    resetClosedAccountGateCache();
+    try {
+      // the gate is on: an ordinary customer call of the closed account is refused with the closed account code
+      await expect(
+        h.sql('rmvc', 'SELECT customer.problem_report_list(NULL,25)'),
+      ).rejects.toMatchObject({ status: 403, code: 'account_closed' });
+      // the removal gets through the boundary and the database, and a filing is still refused by the database
+      expect(await act('rmvc', removal())).toEqual({ removed: 1, changed: true });
+      expect((await customer('rmvc').get(mine.reference)).words).toEqual({ removed: true });
+      await expect(fileAs('rmvc')).rejects.toMatchObject({ status: 403, code: 'account_closed' });
+    } finally {
+      vi.unstubAllEnvs();
+      resetClosedAccountGateCache();
+    }
+  });
+
+  describe('until migration 0003 is there', () => {
+    test('the removal is a 503 and writes nothing while filing, reading and the team and staff paths work', async () => {
+      await fileAs('rmve', body({ detail: 'Words that wait for 0003.' }));
+      await rename('problem_report_remove_own_words', 'problem_report_remove_own_words_held');
+      try {
+        resetSelfRemovalProbe();
+        const before = { words: await wordsOf('rmve'), rows: await selfRows() };
+        await expect(act('rmve', removal())).rejects.toMatchObject({
+          status: 503,
+          code: 'unavailable',
+          message: 'Problem reports are not available yet.',
+        });
+        expect({ words: await wordsOf('rmve'), rows: await selfRows() }).toEqual(before);
+        // everything else is unaffected
+        expect((await fileAs('rmve', body())).changed).toBe(true);
+        expect(await customer('rmve').list({})).toHaveLength(2);
+        expect((await team.file(ctxOf('owner'), teamBody())).changed).toBe(true);
+        expect((await staff.queue(ctxOf('owner'), {})).items.length).toBeGreaterThan(0);
+      } finally {
+        await rename('problem_report_remove_own_words_held', 'problem_report_remove_own_words');
+      }
+      // a missing answer is remembered for a minute, then asked again
+      await expect(act('rmve', removal())).rejects.toMatchObject({ status: 503 });
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(Date.now() + 61000));
+      expect(await act('rmve', removal())).toMatchObject({ changed: true });
+    });
+
+    test('the availability check answers on its own, is remembered when present and asked again after a minute when missing', async () => {
+      resetSelfRemovalProbe();
+      expect(await client((db) => selfRemovalAvailable(db))).toBe(true);
+      await rename('problem_report_remove_own_words', 'problem_report_remove_own_words_held');
+      try {
+        // present is remembered whatever happens to the catalogue
+        expect(await client((db) => selfRemovalAvailable(db))).toBe(true);
+        resetSelfRemovalProbe();
+        expect(await client((db) => selfRemovalAvailable(db))).toBe(false);
+        await rename('problem_report_remove_own_words_held', 'problem_report_remove_own_words');
+        expect(await client((db) => selfRemovalAvailable(db))).toBe(false);
+        vi.useFakeTimers({ toFake: ['Date'] });
+        vi.setSystemTime(new Date(Date.now() + 61000));
+        expect(await client((db) => selfRemovalAvailable(db))).toBe(true);
+      } finally {
+        vi.useRealTimers();
+        const held = await f.owner.query(
+          "SELECT to_regprocedure('customer.problem_report_remove_own_words_held(uuid)') IS NOT NULL AS held",
+        );
+        if (held.rows[0].held)
+          await rename('problem_report_remove_own_words_held', 'problem_report_remove_own_words');
+        resetSelfRemovalProbe();
+      }
+    });
   });
 });

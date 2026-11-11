@@ -14,7 +14,9 @@ import {
   StaffProblemReports,
   TeamProblemReports,
   resetProblemReportProbe,
+  resetSelfRemovalProbe,
 } from '../../packages/auth/src/problem-reports';
+import { resetClosedAccountGateCache } from '../../packages/auth/src/customer-account-gate';
 
 // ADR-078 PR2, the two routes over the real services, the real database and the real restricted roles. The customer
 // route reads only the customer session and the team route only the operator session, so a session of the other kind is
@@ -104,7 +106,19 @@ beforeAll(async () => {
   f = await fixture();
   await migrateCustomerRealUse(f.owner);
   h = harness(f, 'prrt');
-  ids = await h.admit(['ann', 'ben', 'cat', 'dan', 'eve', 'fay']);
+  ids = await h.admit([
+    'ann',
+    'ben',
+    'cat',
+    'dan',
+    'eve',
+    'fay',
+    'gus',
+    'hal',
+    'ivy',
+    'jon',
+    'kim',
+  ]);
   for (const person of ['ann', 'cat', 'dan', 'eve', 'fay'])
     await h.provision(person, `Synthetic ${person} workspace`);
   await migrateCustomerProblemReports(f.owner);
@@ -114,6 +128,7 @@ beforeAll(async () => {
   live.team = new TeamProblemReports(runtime);
   live.staff = new StaffProblemReports(runtime);
   resetProblemReportProbe();
+  resetSelfRemovalProbe();
 });
 beforeEach(() => {
   trace.length = 0;
@@ -817,5 +832,258 @@ describe('the team route', () => {
     const refused = await answer(await POST(post(teamUrl(), teamFiling())));
     expect(refused.status).toBe(429);
     expect(refused.body).toEqual({ error: limitWords, code: 'limit' });
+  });
+});
+
+// ADR-078 decision 6 as amended by migration 0003: the customer route's POST also removes the words of the signed-in
+// person's own reports (action remove_words, a command id and nothing else). It follows the order of a filing: the origin,
+// the session, the request budget, the body read and checked, and only then a database connection. The stages of the install
+// (503 until 0003) are in problem-report-only-0001.test.ts, and the service in problem-report-services.test.ts.
+describe('the customer route removes the words of the person own reports', () => {
+  const removal = (over: Record<string, unknown> = {}) => ({
+    action: 'remove_words',
+    commandId: randomUUID(),
+    ...over,
+  });
+  const wordsOf = async (person: string) =>
+    (
+      await f.owner.query(
+        'SELECT count(*)::int AS n FROM customer_private.problem_report_words w JOIN customer_private.problem_report r ON r.id=w.report_id WHERE r.customer_principal_id=$1',
+        [ids[person]],
+      )
+    ).rows[0].n as number;
+  const selfRows = async () =>
+    (
+      await f.owner.query(
+        'SELECT count(*)::int AS n FROM customer_private.problem_report_self_removal',
+      )
+    ).rows[0].n as number;
+  const file = async (person: string, detail: string) => {
+    customerAs(person);
+    const { POST } = await customerRoute();
+    const response = await POST(post(customerUrl(), filing({ detail })));
+    expect(response.status).toBe(200);
+    return ((await response.json()) as { reference: string }).reference;
+  };
+
+  test('signed out is a 401 whatever the body, and the body is never read and the budget never spent', async () => {
+    await file('gus', 'Words of gus.');
+    const { POST } = await customerRoute();
+    customerAs(null);
+    live.budget.mockClear();
+    const before = { words: await wordsOf('gus'), rows: await selfRows() };
+    for (const text of [
+      JSON.stringify(removal()),
+      '{not json',
+      'x'.repeat(9000),
+      JSON.stringify(removal({ personId: 'x' })),
+    ]) {
+      trace.length = 0;
+      const response = await POST(
+        new Request(customerUrl(), {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', origin },
+          body: text,
+        }),
+      );
+      expect(response.status).toBe(401);
+      expect(trace).toEqual([]);
+    }
+    expect(live.budget).not.toHaveBeenCalled();
+    expect({ words: await wordsOf('gus'), rows: await selfRows() }).toEqual(before);
+  });
+
+  test('a team session does not sign a customer in for a removal either', async () => {
+    teamAs('owner');
+    const { POST } = await customerRoute();
+    expect((await POST(post(customerUrl(), removal()))).status).toBe(401);
+    expect(live.getSession).not.toHaveBeenCalled();
+  });
+
+  test('removes every word of the person, answers with private headers and exactly the count and the flag, and a retry is the same count', async () => {
+    const references = [await file('gus', 'One of gus.'), await file('gus', 'Two of gus.')];
+    const { GET, POST } = await customerRoute();
+    live.budget.mockClear();
+    const command = randomUUID();
+    const first = await answer(await POST(post(customerUrl(), removal({ commandId: command }))));
+    expect(first.status).toBe(200);
+    expect(first.headers.get('cache-control')).toBe('no-store');
+    expect(first.headers.get('referrer-policy')).toBe('no-referrer');
+    // the report filed by the signed-out test above and the two filed here
+    expect(first.body).toEqual({ removed: 3, changed: true });
+    // the budget was spent once, for this caller, after the session
+    expect(live.budget).toHaveBeenCalledTimes(1);
+    expect(live.budget).toHaveBeenCalledWith('local');
+    expect(await wordsOf('gus')).toBe(0);
+    for (const reference of references) {
+      const read = await answer(await GET(new Request(customerUrl(`?reference=${reference}`))));
+      expect(read.body.words).toEqual({ removed: true });
+    }
+    const listed = await answer(await GET(new Request(customerUrl())));
+    expect(listed.body.items.every((row: { wordsRemoved: boolean }) => row.wordsRemoved)).toBe(
+      true,
+    );
+    const again = await answer(await POST(post(customerUrl(), removal({ commandId: command }))));
+    expect(again.body).toEqual({ removed: first.body.removed, changed: false });
+    // nothing left: a new command removes nothing and says so
+    expect((await answer(await POST(post(customerUrl(), removal())))).body).toEqual({
+      removed: 0,
+      changed: false,
+    });
+  });
+
+  test('another person is untouched, and the same command id from another person acts only on their own', async () => {
+    await file('hal', 'Words of hal.');
+    await file('ivy', 'Words of ivy.');
+    const { POST } = await customerRoute();
+    const command = randomUUID();
+    customerAs('hal');
+    expect(
+      (await answer(await POST(post(customerUrl(), removal({ commandId: command }))))).body,
+    ).toEqual({
+      removed: 1,
+      changed: true,
+    });
+    expect(await wordsOf('ivy')).toBe(1);
+    customerAs('ivy');
+    expect(
+      (await answer(await POST(post(customerUrl(), removal({ commandId: command }))))).body,
+    ).toEqual({
+      removed: 1,
+      changed: true,
+    });
+    expect(await wordsOf('ivy')).toBe(0);
+  });
+
+  describe('an invalid request ends it with no connection and no query', () => {
+    test('another origin is a 403 before the session, a body that is not JSON a 415, a large one a 413, bad JSON a 400', async () => {
+      await file('jon', 'Words of jon.');
+      customerAs('jon');
+      const { POST } = await customerRoute();
+      const before = { words: await wordsOf('jon'), rows: await selfRows() };
+      const cases: [string, Request, number][] = [
+        ['another origin', post(customerUrl(), removal(), { origin: 'https://evil.invalid' }), 403],
+        ['not JSON', post(customerUrl(), removal(), { 'content-type': 'text/plain' }), 415],
+        ['an oversized body', post(customerUrl(), removal({ padding: 'x'.repeat(9000) })), 413],
+        ['bad JSON', post(customerUrl(), '{not json'), 400],
+      ];
+      for (const [name, request, status] of cases) {
+        trace.length = 0;
+        expect((await POST(request)).status, name).toBe(status);
+        expect(trace, name).toEqual([]);
+      }
+      expect({ words: await wordsOf('jon'), rows: await selfRows() }).toEqual(before);
+    });
+
+    test('a key that names a person, a report, an erasure request or anything else, a missing or malformed command id and an unknown action are a 400', async () => {
+      customerAs('jon');
+      const { POST } = await customerRoute();
+      const before = { words: await wordsOf('jon'), rows: await selfRows() };
+      for (const key of [
+        'personId',
+        'principalId',
+        'reportId',
+        'reference',
+        'erasureRequestId',
+        'side',
+        'tenantId',
+      ])
+        for (const text of [removal({ [key]: ids.jon })]) {
+          trace.length = 0;
+          expect((await POST(post(customerUrl(), text))).status, key).toBe(400);
+          expect(trace, key).toEqual([]);
+        }
+      for (const bad of [
+        { action: 'remove_words' },
+        { commandId: randomUUID() },
+        removal({ commandId: 'not-a-uuid' }),
+        removal({ commandId: 5 }),
+        { action: 'delete', commandId: randomUUID() },
+        { action: 'file', ...filing() },
+        [],
+        'remove_words',
+      ]) {
+        trace.length = 0;
+        expect((await POST(post(customerUrl(), bad as never))).status, JSON.stringify(bad)).toBe(
+          400,
+        );
+        expect(trace, JSON.stringify(bad)).toEqual([]);
+      }
+      expect({ words: await wordsOf('jon'), rows: await selfRows() }).toEqual(before);
+    });
+  });
+
+  test('a budget that is spent is a 429 with the shared words, and nothing is removed', async () => {
+    await file('kim', 'Words of kim.');
+    customerAs('kim');
+    const { POST } = await customerRoute();
+    live.budget.mockRejectedValueOnce(new DomainError('Too many requests', 429));
+    const before = await wordsOf('kim');
+    const refused = await answer(await POST(post(customerUrl(), removal())));
+    expect(refused.status).toBe(429);
+    expect(refused.body.error).toBe(limitWords);
+    expect(await wordsOf('kim')).toBe(before);
+  });
+
+  test('a closed account removes its words with the closed account gate on, where its filing is still refused', async () => {
+    await file('eve', 'Words of eve.');
+    await f.owner.query(
+      `WITH t AS (SELECT clock_timestamp() AS at)
+       INSERT INTO customer_private.account_closure_event(principal_id,state,occurred_at,final_at,command_id)
+       SELECT $1,'closed',t.at,t.at+interval '720 hours',$2 FROM t`,
+      [ids.eve, randomUUID()],
+    );
+    vi.stubEnv('DATA_ENVIRONMENT', 'synthetic');
+    vi.stubEnv('CORRIDRA_CUSTOMER_WORKSPACES_ENABLED', 'true');
+    vi.stubEnv('CORRIDRA_CUSTOMER_ACCOUNT_LIFECYCLE_ENABLED', 'true');
+    resetClosedAccountGateCache();
+    try {
+      customerAs('eve');
+      const { POST } = await customerRoute();
+      const removed = await answer(await POST(post(customerUrl(), removal())));
+      expect(removed.status).toBe(200);
+      expect(removed.body).toEqual({ removed: expect.any(Number), changed: true });
+      expect(await wordsOf('eve')).toBe(0);
+      const refused = await answer(await POST(post(customerUrl(), filing())));
+      expect(refused.status).toBe(403);
+      expect(refused.body).toEqual({ error: 'That account is closed', code: 'account_closed' });
+    } finally {
+      vi.unstubAllEnvs();
+      resetClosedAccountGateCache();
+    }
+  });
+
+  test('is a 503 until migration 0003 is there, and filing, reading and the team route are not affected', async () => {
+    await file('fay', 'Words of fay.');
+    await f.owner.query(
+      'ALTER FUNCTION customer.problem_report_remove_own_words(uuid) RENAME TO problem_report_remove_own_words_held',
+    );
+    try {
+      resetSelfRemovalProbe();
+      customerAs('fay');
+      const { GET, POST } = await customerRoute();
+      const before = { words: await wordsOf('fay'), rows: await selfRows() };
+      const unavailable = await answer(await POST(post(customerUrl(), removal())));
+      expect(unavailable.status).toBe(503);
+      expect(unavailable.body).toEqual({
+        error: 'Problem reports are not available yet.',
+        code: 'unavailable',
+      });
+      expect({ words: await wordsOf('fay'), rows: await selfRows() }).toEqual(before);
+      expect((await POST(post(customerUrl(), filing()))).status).toBe(200);
+      expect((await GET(new Request(customerUrl()))).status).toBe(200);
+      teamAs('owner');
+      const team = await teamRoute();
+      expect((await team.GET(new Request(teamUrl()))).status).toBe(200);
+      expect((await team.GET(new Request(teamUrl('&view=queue')))).status).toBe(200);
+    } finally {
+      await f.owner.query(
+        'ALTER FUNCTION customer.problem_report_remove_own_words_held(uuid) RENAME TO problem_report_remove_own_words',
+      );
+      resetSelfRemovalProbe();
+    }
+    customerAs('fay');
+    const { POST } = await customerRoute();
+    expect((await answer(await POST(post(customerUrl(), removal())))).body.changed).toBe(true);
   });
 });

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  customerProblemReportAction,
   customerProblemReportInput,
   oneLine,
   plainTextAllowed,
@@ -8,6 +9,7 @@ import {
   problemReportPathOk,
   problemReportQueueQuery,
   problemReportReference,
+  problemReportRemoveOwnWordsInput,
   sanitiseProblemPath,
   teamProblemReportAction,
   trimEdges,
@@ -275,6 +277,76 @@ describe('the team actions', () => {
       }).success,
     ).toBe(true);
     expect(teamProblemReportAction.safeParse({ action: 'remove_words' }).success).toBe(false);
+  });
+});
+
+describe('a customer removing the words of their own reports', () => {
+  const removal = (over: Record<string, unknown> = {}) => ({
+    action: 'remove_words',
+    commandId: '00000000-0000-4000-8000-000000000005',
+    ...over,
+  });
+  it('takes the action and a command id and nothing else: no person, report, erasure request or any other key', () => {
+    expect(problemReportRemoveOwnWordsInput.parse(removal())).toEqual(removal());
+    for (const key of [
+      'personId',
+      'principalId',
+      'customerId',
+      'reportId',
+      'reference',
+      'erasureRequestId',
+      'reporterKind',
+      'side',
+      'tenantId',
+    ])
+      expect(problemReportRemoveOwnWordsInput.safeParse(removal({ [key]: 'x' })).success, key).toBe(
+        false,
+      );
+  });
+  it('needs the exact action and a uuid command id', () => {
+    for (const bad of [
+      {},
+      { action: 'remove_words' },
+      { commandId: '00000000-0000-4000-8000-000000000005' },
+      removal({ action: 'file' }),
+      removal({ action: 'transition' }),
+      removal({ commandId: 'not-a-uuid' }),
+      removal({ commandId: 5 }),
+      removal({ commandId: null }),
+    ])
+      expect(problemReportRemoveOwnWordsInput.safeParse(bad).success, JSON.stringify(bad)).toBe(
+        false,
+      );
+  });
+  it('is one of two shapes a customer may send: the filing without an action, or this removal', () => {
+    expect(customerProblemReportAction.safeParse(customerBody()).success).toBe(true);
+    expect(customerProblemReportAction.safeParse(removal()).success).toBe(true);
+    // the filing never takes an action key, and the removal never takes the words of a filing
+    expect(customerProblemReportAction.safeParse(customerBody({ action: 'file' })).success).toBe(
+      false,
+    );
+    expect(
+      customerProblemReportAction.safeParse(customerBody({ action: 'remove_words' })).success,
+    ).toBe(false);
+    expect(
+      customerProblemReportAction.safeParse(removal({ category: 'did_not_work' })).success,
+    ).toBe(false);
+    expect(customerProblemReportAction.safeParse(removal({ personId: 'x' })).success).toBe(false);
+    expect(customerProblemReportAction.safeParse(customerBody({ personId: 'x' })).success).toBe(
+      false,
+    );
+    expect(customerProblemReportAction.safeParse({ action: 'delete' }).success).toBe(false);
+  });
+  it('leaves the filing exactly as it was, and the staff action keeps its own shape', () => {
+    expect(customerProblemReportAction.parse(customerBody())).toEqual(
+      customerProblemReportInput.parse(customerBody()),
+    );
+    expect(
+      teamProblemReportAction.safeParse(
+        removal({ erasureRequestId: '00000000-0000-4000-8000-000000000004' }),
+      ).success,
+    ).toBe(true);
+    expect(teamProblemReportAction.safeParse(removal()).success).toBe(false);
   });
 });
 
