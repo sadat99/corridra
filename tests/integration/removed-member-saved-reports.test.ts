@@ -202,9 +202,17 @@ describe.each([
   ['leave', 'lena'],
   ['owner revoke', 'rex'],
 ])('a member removed by %s', (how, person) => {
-  test('is removed', async () => {
+  test('CONTROL (holds on main too): is removed, and the revocation row is there', async () => {
     if (how === 'leave') await w.leave(person, w.W);
     else await w.revoke('olive', w.W, w.members[person]!);
+    expect(
+      (
+        await w.f.owner.query(
+          'SELECT count(*)::int AS n FROM customer_private.workspace_access_revocation WHERE member_id=$1',
+          [w.members[person]],
+        )
+      ).rows[0].n,
+    ).toBe(1);
   });
 
   test('lists no report that staff delivered for their request, and no assignment, but keeps both bearer-saved reports', async () => {

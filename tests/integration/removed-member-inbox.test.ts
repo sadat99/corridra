@@ -124,9 +124,17 @@ describe.each([
   ['leave', 'lena'],
   ['owner revoke', 'rex'],
 ])('a member removed by %s', (how, person) => {
-  test('is removed', async () => {
+  test('CONTROL (holds on main too): is removed, and the revocation row is there', async () => {
     if (how === 'leave') await w.leave(person, w.W);
     else await w.revoke('olive', w.W, w.members[person]!);
+    expect(
+      (
+        await w.f.owner.query(
+          'SELECT count(*)::int AS n FROM customer_private.workspace_access_revocation WHERE member_id=$1',
+          [w.members[person]],
+        )
+      ).rows[0].n,
+    ).toBe(1);
   });
 
   test('no longer sees a notice that points at a request, a delivered report or a service request of the workspace', async () => {
@@ -134,7 +142,7 @@ describe.each([
     for (const key of seeded[person]!.hidden) expect(keys, `${how}: ${key}`).not.toContain(key);
   });
 
-  test('still sees the notice that points at no request and the one about a request made outside any workspace', async () => {
+  test('CONTROL (holds on main too): still sees the notice that points at no request and the one about a request made outside any workspace', async () => {
     const keys = (await inbox(person)).map(keyOf);
     expect(keys).toContain('PARTICIPANT_INVITE:');
     expect(keys).toContain(`REQUEST_RECEIVED:request:${w.ownWorkspaceRequest[person]}`);
@@ -159,7 +167,7 @@ describe.each([
 });
 
 describe('everyone else', () => {
-  test('other members keep every notice, and the staff notice is untouched', async () => {
+  test('CONTROL (holds on main too): other members keep every notice, and the staff notice is untouched', async () => {
     for (const person of ['sam', 'rita']) {
       const keys = (await inbox(person)).map(keyOf);
       for (const key of [...seeded[person]!.hidden, ...seeded[person]!.keep])
@@ -199,7 +207,7 @@ describe('everyone else', () => {
     ).rejects.toMatchObject({ code: '42501' });
   });
 
-  test('the staff side cannot reach a customer notice through the policy', async () => {
+  test('CONTROL (holds on main too): the staff side cannot reach a customer notice through the policy', async () => {
     const rows = (
       await rawContext(
         w.f.runtime,
@@ -222,4 +230,60 @@ describe('a new invitation brings the notices back', () => {
     for (const key of [...seeded.rita!.hidden, ...seeded.rita!.keep])
       expect(back, key).toContain(key);
   });
+});
+
+// Cost: the policy calls one function per row, so it must run after the cheap recipient test and the list must stay quick on a
+// large table. Several thousand rows of mixed kinds are seeded as the table owner.
+describe('the inbox on a large table', () => {
+  const bulkFor = async (recipient: string, kind: string, count: number) =>
+    w.f.owner.query(
+      `INSERT INTO app.inbox_notification(tenant_id,recipient_kind,recipient_account_id,type,event_key,payload)
+       SELECT NULL,$1,$2,t.type,t.type||':'||gen_random_uuid()::text,'{"title":"Bulk","href":"/account"}'::jsonb
+       FROM generate_series(1,$3::int) n CROSS JOIN LATERAL (VALUES (CASE n%3 WHEN 0 THEN 'REQUEST_RECEIVED' WHEN 1 THEN 'REPLY_POSTED' ELSE 'PARTICIPANT_INVITE' END)) t(type)`,
+      [kind, recipient, count],
+    );
+  test('a customer lists exactly their visible rows among thousands, within a generous bound, and the function runs after the recipient test', async () => {
+    fileSql('inbox');
+    await bulkFor(w.principals.sam!, 'customer', 1500);
+    for (let i = 0; i < 5; i++) await bulkFor(randomUUID(), 'customer', 500);
+    await bulkFor(randomUUID(), 'staff', 1000);
+    await w.f.owner.query('ANALYZE app.inbox_notification');
+    const expected = (
+      await w.f.owner.query(
+        "SELECT count(*)::int AS n FROM app.inbox_notification WHERE recipient_kind='customer' AND recipient_account_id=$1",
+        [w.principals.sam],
+      )
+    ).rows[0].n as number;
+    expect(expected).toBeGreaterThanOrEqual(1500);
+    const count = () =>
+      w.as(
+        'sam',
+        async (db) =>
+          (await db.query('SELECT count(*)::int AS n FROM app.inbox_notification')).rows[0]
+            .n as number,
+      );
+    expect(await count()).toBe(expected);
+    const times: number[] = [];
+    for (let i = 0; i < 10; i++) {
+      const start = performance.now();
+      await count();
+      times.push(performance.now() - start);
+    }
+    expect([...times].sort((a, b) => a - b)[8]!).toBeLessThan(1500);
+    // Loose plan check: the cheap recipient test comes before the function, either as an index condition or earlier in the filter.
+    const plan = (
+      await w.as('sam', async (db) =>
+        db.query('EXPLAIN (FORMAT JSON) SELECT count(*) FROM app.inbox_notification'),
+      )
+    ).rows[0]['QUERY PLAN'] as { Plan: Record<string, unknown> }[];
+    const text = JSON.stringify(plan[0]!.Plan);
+    expect(text).toContain('inbox_notice_visible');
+    const filter = [...text.matchAll(/"Filter":"((?:[^"\\]|\\.)*)"/g)]
+      .map((m) => m[1]!)
+      .find((f) => f.includes('inbox_notice_visible'));
+    if (filter)
+      expect(filter.indexOf('recipient_account_id')).toBeLessThan(
+        filter.indexOf('inbox_notice_visible'),
+      );
+  }, 300000);
 });
