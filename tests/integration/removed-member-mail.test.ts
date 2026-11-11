@@ -179,7 +179,7 @@ async function moveNotifications(person: string, request: string) {
         verb: 'Add',
         holder: 'customer',
         dueOn: null,
-        object: `your licence number ${commandId.slice(0, 8)}`,
+        object: 'your licence number',
       },
     ],
   });

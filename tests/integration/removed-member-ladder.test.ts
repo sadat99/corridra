@@ -73,6 +73,7 @@ const PRE = {
   mail: 3,
   notifications: 5,
   decisionCards: 1,
+  projection: 2,
 };
 const POST = {
   customer: 4,
@@ -83,6 +84,7 @@ const POST = {
   mail: 4,
   notifications: 6,
   decisionCards: 2,
+  projection: 3,
 };
 let w: World;
 let before: Record<string, string>;

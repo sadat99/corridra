@@ -429,7 +429,8 @@ describe('the participant projection follows the workspace membership of the req
     expect(JSON.stringify(managed)).toContain(sharedBySam);
   });
 
-  test('a new invitation restores the summary', async () => {
+  test('a new invitation restores the summary: absent while he is out, present after', async () => {
+    expect((await projectionLink('sam', registrations.sam!, samLink))?.summary).toBeNull();
     await w.join('olive', 'sam', w.W);
     const link = await projectionLink('sam', registrations.sam!, samLink);
     expect(link?.summary).toBe(sharedBySam);
