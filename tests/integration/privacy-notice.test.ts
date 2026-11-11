@@ -58,6 +58,9 @@ const text = async (env: Record<string, string | undefined>) => {
     'CORRIDRA_CUSTOMER_SIMULATED_PAYMENTS_ENABLED',
     'CORRIDRA_LANGUAGES_FORM',
     'CORRIDRA_LANGUAGES_PAGES',
+    'CORRIDRA_CUSTOMER_PROGRAMMES_ENABLED',
+    'CORRIDRA_CUSTOMER_PARTICIPANTS_ENABLED',
+    'CORRIDRA_PROGRAMME_PAGES',
     'VERCEL_ENV',
   ])
     delete process.env[key];
@@ -405,5 +408,46 @@ describe('the privacy notice and Chat on WhatsApp', () => {
     expect(start).toBeGreaterThan(-1);
     expect(end).toBeGreaterThan(start);
     expect(page.slice(start, end)).not.toMatch(/\u2014|\u2013/);
+  });
+});
+
+describe('public programme pages and applications (ADR-080)', () => {
+  const pages = {
+    ...real,
+    CORRIDRA_CUSTOMER_WORKSPACES_ENABLED: 'true',
+    CORRIDRA_CUSTOMER_PROGRAMMES_ENABLED: 'true',
+    CORRIDRA_CUSTOMER_PARTICIPANTS_ENABLED: 'true',
+    CORRIDRA_PROGRAMME_PAGES: 'true',
+  };
+  const heading = 'Public programme pages and applications';
+  it('describes what an application stores, who sees it, withdrawal and deletion while the pages are on', async () => {
+    const page = await text(pages);
+    expect(page).toContain(heading);
+    expect(page).toContain('Programme pages are not offered to search engines.');
+    expect(page).toContain(
+      'Corridra stores your account reference, that name and statement, the version of the page you read and the time you consented',
+    );
+    expect(page).toContain(
+      'Only you and the current owners and administrators of the organising workspace see your application.',
+    );
+    expect(page).toContain(
+      'They never see your email address, your private requests, contacts or prices.',
+    );
+    expect(page).toContain(
+      'It then stays on record as withdrawn; withdrawing does not delete your name or statement.',
+    );
+    expect(page).toContain('Automatic deletion of applications is not operational yet.');
+    expect(page).toContain('Updated 11 November 2026.');
+    expect(page).not.toMatch(/—|–| - /);
+  });
+  it('leaves the section, its contents line and the new date out while the switch is off', async () => {
+    for (const off of [
+      { ...pages, CORRIDRA_PROGRAMME_PAGES: 'false' },
+      { ...pages, CORRIDRA_CUSTOMER_PARTICIPANTS_ENABLED: 'false' },
+    ]) {
+      const page = await text(off);
+      expect(page).not.toContain(heading);
+      expect(page).not.toContain('11 November 2026');
+    }
   });
 });

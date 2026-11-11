@@ -4,6 +4,7 @@ import { customerSimulatedPaymentsEnabled } from '@corridra/auth/customer-paymen
 import { realUseEnabled } from '@corridra/auth/customer-production';
 import { customerSpecificationConfirmationEnabled } from '@corridra/auth/customer-specification-confirmation';
 import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-requests';
+import { customerProgrammePagesEnabled } from '@corridra/auth/customer-programme-publication';
 import { PublicShell } from '../../components/public-shell';
 import { languagesWithForm } from '../../lib/i18n/pages';
 import { supportWhatsappHref } from '../../lib/ux/support-whatsapp';
@@ -26,6 +27,7 @@ const contents = [
   ['drafts', 'Drafts and account activation'],
   ['access', 'Who can see the work'],
   ['contributors', 'Invited contributor work'],
+  ['programme-applications', 'Public programme pages and applications'],
   ['sharing', 'Who we share information with'],
   ['storage', 'Cookies and browser storage'],
   ['transfers', 'Where information is stored'],
@@ -53,6 +55,9 @@ export default function Page() {
   // the hosting provider's records show which file was loaded. The language sentence says so only while that is true.
   const translatedForm = languagesWithForm().length > 0;
   const updatedDay = specificationConfirmation || arrangements || translatedForm ? '30' : '25';
+  // Public programme pages and applications (ADR-080) are described only while the pages can be published and read.
+  const programmePages = customerProgrammePagesEnabled();
+  const updated = programmePages ? '11 November 2026' : `${updatedDay} October 2026`;
   const noticeVersion = real ? 'real-intake-2026-10-21-v1' : 'synthetic-intake-2026-10-05-v1';
   return (
     <PublicShell>
@@ -81,7 +86,7 @@ export default function Page() {
           )}
           {/* The version the database pins. Without real use it names the preview notice, a made-up data setting. */}
           <p className="guide-hint" data-madeup-panel={real ? undefined : ''}>
-            Updated {updatedDay} October 2026. Request notice version: {noticeVersion}.
+            Updated {updated}. Request notice version: {noticeVersion}.
           </p>
         </div>
       </section>
@@ -95,7 +100,8 @@ export default function Page() {
                 {contents
                   .filter(
                     ([id]) =>
-                      id !== 'contributors' || process.env.CORRIDRA_NETWORK_ENABLED === 'true',
+                      (id !== 'contributors' || process.env.CORRIDRA_NETWORK_ENABLED === 'true') &&
+                      (id !== 'programme-applications' || programmePages),
                   )
                   .map(([id, title]) => (
                     <li key={id}>
@@ -406,6 +412,40 @@ export default function Page() {
                   <Link className="text-link" prefetch={false} href="/network">
                     How invited contributor access works
                   </Link>
+                </p>
+              </div>
+            </article>
+          )}
+          {programmePages && (
+            <article id="programme-applications">
+              <h2>Public programme pages and applications</h2>
+              <div>
+                <p>
+                  An organiser can publish a public page for a programme. Anyone can read it without
+                  an account. The page shows only the words the organiser wrote and reviewed for it:
+                  no person, contact, number of applicants, price record or private programme
+                  information. Everything on it is the organiser’s statement and is not checked by
+                  Corridra. Programme pages are not offered to search engines.
+                </p>
+                <p>
+                  To apply, you sign in and send a display name and a statement in your own words,
+                  after ticking your consent. Corridra stores your account reference, that name and
+                  statement, the version of the page you read and the time you consented, and each
+                  later decision, such as an invitation, a place on the waiting list or a decline
+                  with its reason.
+                </p>
+                <p>
+                  Only you and the current owners and administrators of the organising workspace see
+                  your application. They never see your email address, your private requests,
+                  contacts or prices. A person who leaves or is removed from that workspace loses
+                  access.
+                </p>
+                <p>
+                  You can withdraw an application at any time. It then stays on record as withdrawn;
+                  withdrawing does not delete your name or statement. A closed page stays readable
+                  as closed for 30 days and is then no longer shown. To ask for your application to
+                  be deleted, contact us as described under Retention and deletion requests.
+                  Automatic deletion of applications is not operational yet.
                 </p>
               </div>
             </article>
