@@ -1,7 +1,14 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { hashPassword } from 'better-auth/crypto';
 import { z } from 'zod';
-import { sessionHash, withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
+import {
+  reauthorize,
+  rollback,
+  sessionHash,
+  withTenant,
+  type DatabasePool,
+  type RequestContext,
+} from '@corridra/db';
 import { DomainError, role } from '@corridra/domain';
 import { setupIdentifier, setupInvitation } from './operator-setup';
 
@@ -26,12 +33,16 @@ import { setupIdentifier, setupInvitation } from './operator-setup';
 // results explicitly say audit is unavailable.
 //
 // Cancel lock and commit order (CRUD G10), always in this order: runtime workspace lock (the one
-// member changes take) -> auth invitation row FOR UPDATE -> auth KEY SHARE on the target principal
-// -> runtime revoke of the membership -> auth audit write and invitation delete -> commit auth ->
-// commit runtime. A runtime connection is always taken before an auth connection. Invariant: nothing
-// the auth transaction waits for is held by a transaction that waits on the runtime transaction's
-// locks. The principal key share is taken before the revoke because the audit row's foreign key needs
-// it, and an authenticator reset holds the principal while it waits for the membership row.
+// member changes take) -> owner authority checked again -> auth invitation row FOR UPDATE -> auth
+// KEY SHARE on the target principal -> runtime revoke of the membership -> auth audit write and
+// invitation delete -> commit auth -> commit runtime. The second authority check runs after the
+// lock wait, so a role change or an expired authenticator check that committed meanwhile is refused
+// before anything is read or written. A runtime connection is always taken before an auth
+// connection. Invariant, among the paths in this package that touch these rows (invite, resend,
+// reset, operator setup and member changes): nothing the auth transaction waits for is held by a
+// transaction that waits on the runtime transaction's locks. The principal key share is taken
+// before the revoke because the audit row's foreign key needs it, and an authenticator reset holds
+// the principal while it waits for the membership row.
 
 export const teamInviteInput = z
   .object({
@@ -70,16 +81,17 @@ async function inAuth<T>(
   work: (q: DatabasePool['query']) => Promise<T>,
 ): Promise<T> {
   const db = await auth.connect();
+  let rollbackError: Error | undefined;
   try {
     await db.query('BEGIN');
     const result = await work(db.query.bind(db) as DatabasePool['query']);
     await db.query('COMMIT');
     return result;
   } catch (error) {
-    await db.query('ROLLBACK');
+    rollbackError = await rollback(db);
     throw error;
   } finally {
-    db.release();
+    db.release(rollbackError);
   }
 }
 
@@ -92,8 +104,9 @@ async function recordOwnerAction(
   reference: string | null,
 ): Promise<'recorded' | 'unavailable'> {
   // Do not disable existing controls before the protected additive installer has run. The check asks
-  // whether the installed writer knows this operation (cancel arrives with 0010, after 0006), in the
-  // same transaction as the write, so an install cannot land between the check and the write.
+  // whether the installed writer knows this operation (cancel arrives with 0010, after 0006). The check
+  // and the write are separate READ COMMITTED statements, so an install that commits between them is
+  // harmless: the action reports 'unavailable' or is recorded once, never twice.
   const available = await q(
     `SELECT coalesce((SELECT strpos(prosrc,$1)>0 FROM pg_proc
        WHERE oid=to_regprocedure('identity.record_team_control(text,uuid,uuid)')),false) AS ready`,
@@ -271,6 +284,8 @@ export class TeamControl {
     return withTenant(this.runtime, ctx, 'members.manage', async (t) => {
       // The same workspace lock as AccessService.changeMember, so the two never interleave.
       await t.db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [t.tenantId]);
+      // A demotion or an expired authenticator check may have committed while this waited for the lock.
+      await reauthorize(t, 'members.manage');
       return inAuth(this.auth, async (q) => {
         const row = (
           await q(
@@ -284,12 +299,25 @@ export class TeamControl {
         if (!row || !invite || invite.tenantId !== t.tenantId || invite.role === 'contributor')
           throw new DomainError('Invitation not found', 404);
         // Key share only, so setup and resend, which change the principal without touching its key, are
-        // not blocked; a reset that holds the principal finishes before the membership is touched.
+        // not blocked. A reset takes the principal FOR UPDATE, which conflicts with key share, so a reset
+        // that already holds the principal commits before this continues, and one that starts later waits.
         await q('SELECT 1 FROM identity.principal WHERE id=$1 FOR KEY SHARE', [invite.principalId]);
-        await t.db.query(
+        const revoked = await t.db.query(
           'UPDATE app.membership SET revoked_at=now() WHERE tenant_id=$1 AND user_id=$2 AND revoked_at IS NULL',
           [t.tenantId, invite.principalId],
         );
+        // A setup row whose membership is missing altogether cannot be cancelled with a membership change,
+        // so the invitation stays and nothing is recorded; the owner can try again once it is repaired.
+        if (
+          !revoked.rowCount &&
+          !(
+            await t.db.query('SELECT 1 FROM app.membership WHERE tenant_id=$1 AND user_id=$2', [
+              t.tenantId,
+              invite.principalId,
+            ])
+          ).rowCount
+        )
+          throw new DomainError('Busy right now. Try again in a moment.', 503, 'RETRYABLE');
         const audit = await recordOwnerAction(
           q,
           ctx,

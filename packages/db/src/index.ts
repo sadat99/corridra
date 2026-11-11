@@ -57,6 +57,31 @@ export async function assertRestrictedPool(
   )
     throw new Error('Runtime database identity is not restricted');
 }
+// Permissions that also need an authenticator check from the last few minutes (otherwise STEP_UP_REQUIRED).
+const freshMfaPermissions: readonly Permission[] = [
+  'trust.verify',
+  'members.manage',
+  'config.manage',
+  'research.resolve',
+  'communications.approve',
+  'opportunities.accounting',
+  'delivery.share',
+  'viewas.open',
+  'problems.triage',
+];
+/** The session's actor, role and authenticator freshness in this workspace, refused unless they allow `permission`. */
+async function currentAuthority(db: DatabaseClient, tenantId: string, permission: Permission) {
+  const {
+    rows: [a],
+  } = await db.query<{ actor_id: string | null; role: Role | null; fresh: boolean }>(
+    'SELECT app.actor_id() AS actor_id,app.member_role($1::uuid) AS role,app.fresh_mfa() AS fresh',
+    [tenantId],
+  );
+  if (!a?.actor_id || !a.role) throw new DomainError('Access denied');
+  authorize(a.role, permission);
+  if (freshMfaPermissions.includes(permission) && !a.fresh) throw stepUpRequired();
+  return { actorId: a.actor_id, role: a.role, freshMfa: a.fresh };
+}
 export async function withTenant<T>(
   pool: DatabasePool,
   ctx: RequestContext,
@@ -64,6 +89,7 @@ export async function withTenant<T>(
   work: (tx: TenantTransaction) => Promise<T>,
 ): Promise<T> {
   const db = await pool.connect();
+  let rollbackError: Error | undefined;
   try {
     await db.query('BEGIN');
     const processingPurpose =
@@ -85,43 +111,41 @@ export async function withTenant<T>(
         ctx.causationId ?? randomUUID(),
       ],
     );
-    const {
-      rows: [a],
-    } = await db.query(
-      'SELECT app.actor_id() AS actor_id,app.member_role($1::uuid) AS role,app.fresh_mfa() AS fresh',
-      [ctx.tenantId],
-    );
-    if (!a?.actor_id || !a.role) throw new DomainError('Access denied');
-    authorize(a.role, permission);
-    if (
-      [
-        'trust.verify',
-        'members.manage',
-        'config.manage',
-        'research.resolve',
-        'communications.approve',
-        'opportunities.accounting',
-        'delivery.share',
-        'viewas.open',
-        'problems.triage',
-      ].includes(permission) &&
-      !a.fresh
-    )
-      throw stepUpRequired();
+    const a = await currentAuthority(db, ctx.tenantId, permission);
     const result = await work({
       db,
-      actorId: a.actor_id,
+      actorId: a.actorId,
       tenantId: ctx.tenantId,
       role: a.role,
       purpose: processingPurpose,
-      freshMfa: a.fresh,
+      freshMfa: a.freshMfa,
     });
     await db.query('COMMIT');
     return result;
   } catch (error) {
-    await db.query('ROLLBACK');
+    rollbackError = await rollback(db);
     throw error;
   } finally {
-    db.release();
+    db.release(rollbackError);
+  }
+}
+/**
+ * Re-checks the caller's authority inside an open tenant transaction, for work that waited on a lock after
+ * withTenant's own check: a role change or an expired authenticator check that committed meanwhile is seen here.
+ */
+export async function reauthorize(tx: TenantTransaction, permission: Permission) {
+  const a = await currentAuthority(tx.db, tx.tenantId, permission);
+  if (a.actorId !== tx.actorId) throw new DomainError('Access denied');
+}
+/**
+ * Ends a failed transaction. A failed ROLLBACK leaves the connection in an unknown state, so its error is returned
+ * for release() to discard the connection, and the caller still reports the error that started the rollback.
+ */
+export async function rollback(db: DatabaseClient): Promise<Error | undefined> {
+  try {
+    await db.query('ROLLBACK');
+    return undefined;
+  } catch (error) {
+    return error instanceof Error ? error : new Error('Rollback failed');
   }
 }
