@@ -19,3 +19,48 @@ Research command IDs serialize retries and reject changed payloads. Their immuta
 No AI enrichment, crawler, automatic email, buyer outreach, production contact import, irreversible global merge, separate search service or automatic retention executor is introduced. Those limits do not prevent the complete manual research and shortlist workflow from operating with invented records.
 
 The protected mission queue uses materialized scoped mission, intake and market reads, followed by the original joined-record pagination and a single latest-profile read for that page. This prevents PostgreSQL from repeatedly evaluating protected joins for each mission. RLS remains active on every underlying relation; no new database capability or bypass is added. The 105-fixture test retains record completeness, filters and cross-tenant denial and bounds the combined queue reads. This is a read-query correction, not a schema or state-machine change.
+
+## Amendment, 10 November 2026: withdraw, correct and hide private contacts and notes (CRUD gap G11)
+
+Status: accepted for build. Installed only by the owner's explicit module action; the control ships closed.
+
+Owner decisions (owner, 10 November 2026, answered to S33):
+
+1. How to meet a request to stop showing a third party's details: "Redact by new record (Recommended)".
+2. Who may hide: "Owner/admin + MFA (Recommended)".
+3. What one hide covers: "One contact or note (Recommended)".
+4. Real workspaces: "Real and sample (Recommended)".
+5. Switches: "One switch (Recommended)".
+6. Second approver: "No, one person (Recommended)".
+7. Server rate limit: "No, UI handles 429 (Recommended)".
+8. Note scope: "Yes, all versions (Recommended)".
+
+### Context
+
+Private contacts and notes were append-only with no way to withdraw a wrong entry, correct it, or honour a request to stop showing a third party's details. Real-use workspaces admitted by ADR-056 (customer-real-use 0003 and 0007) can already hold real third-party contact data, so the line above, "production personal data is not admitted", is out of date. Opt-out suppression recomputes `sha256(lower(email))` from the stored email, so any mask or null in the stored row would silently break it.
+
+### Decision
+
+1. Contacts and notes stay Record class. Their rows are never updated or deleted (`reject_rewrite` unchanged). A withdrawal or correction is a new row in `app.private_contact_change` or `app.private_note_change` that references the exact version the person saw, with a reason, actor and time. A correction also adds a new contact or note row that passes the same provenance, source-retention and email rules as any new row. Each version can be superseded once (unique per version, serialised by a per-chain advisory lock), so of two concurrent changes exactly one succeeds and the other is told to refresh. A change records its chain: the id of the first version.
+2. Hiding (redact by new record, decision 1) is a permanent `app.private_record_redaction` row for one contact chain, covering all its corrected versions, or one note chain with all its corrected versions (decisions 3 and 8). Only a workspace owner or admin with a fresh authenticator check may hide, with a written reason, a ticket reference that holds no personal data, and the id of the current version typed again (decisions 2 and 6). The typed id is compared after the chain lock is taken, so a hide never acts on a version that changed while it waited. There is no undo row and no update path.
+3. Every runtime read of contact or note text goes through the views `app.private_contact_state` and `app.private_note_state`. They show the state (current, expired, withdrawn, corrected, hidden) and, for a hidden chain, return NULL for the name, job title, email, body and change reason with status `HIDDEN`; screens and the shortlist export write the word "Hidden" from that status. Relationship detail, shortlist, shortlist export and the communications contact list use these views; command replay returns ids only. Ids, times, actors, events and every reference held by targets, communications and opt-outs remain.
+4. Stored bytes are not changed, so opt-out suppression keeps working after hiding. New targets and new communications are refused for a withdrawn, corrected or hidden version, and new communications also for any chain with an opted-out address. A queued message whose contact changed is stopped at send time (dispatcher check and a receipt trigger), and a staff retry of it is refused. These are separate additive triggers; the reviewed research and communication guards are not replaced.
+5. Change and hide rows inherit the relationship's access boundary for reading. Writing requires the relationship owner or a workspace owner or admin; hiding requires owner or admin with a fresh authenticator check. Events carry ids and version only, never text, reasons, ticket references or emails. Each change row carries its own command id and request hash for safe retries. No server rate limiter is added (decision 7); the screen handles a 429 and resends the same command id.
+6. Real and sample workspaces behave the same (decision 4). This corrects forward the line "The synthetic contact format requires @example.invalid; production personal data is not admitted": sample workspaces still require @example.invalid, and real-use workspaces admitted under ADR-056 may hold real contact data within the same boundaries. D08 (privacy, legal basis, retention) stays open and V3-09-043 stays gated; this amendment does not close them and admits no new real data.
+7. The schema is an optional module (`packages/db/counterparty-change-migrations`), installed by the owner with `field_modules_action=contact_changes_install` and its one control closed (decision 5). `contact_changes_enable` and `contact_changes_pause` open and pause withdraw, correct and hide together; pausing keeps every record and state.
+
+### Consequences
+
+- Hidden means the text is no longer shown or exported in the workspace. What remains: the original values in the database rows and in backups, the sha256 request hashes in the command and change records (they are computed over the submitted text), text already sent in communications, and `relationship.note`, the free text on the relationship itself, which this amendment does not cover.
+- Opt-out reasons and introduction presentation text are operator-written and are not hidden by this feature.
+- Readers that bypass the views would show hidden text; a source scan test fails if runtime code reads contact or note text from the base tables outside the stated module-absent branches and the opt-out hash.
+- No automatic retention executor is added; expiry stays visible through validity and source retention.
+
+### Rejected options
+
+- Hard delete: breaks target, communication, opt-out and event links, lifts append-only, and can stop opt-out suppression.
+- Crypto-shredding: closest to true erasure of the bytes but needs key management and its own ADR.
+- Masking or nulling stored columns: breaks the recomputed opt-out hash and the append-only rule.
+- Hiding everything on a relationship, or every contact with the same address: wider than the request (decision 3).
+- Replacing `guard_research_record` or `guard_communication`: both are fingerprinted by later modules; additive triggers achieve the same refusals.
+- A core migration: it would install on every base run and could not ship closed.

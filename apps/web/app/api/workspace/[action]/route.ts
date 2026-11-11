@@ -155,7 +155,7 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
         config: () => s.access.config(ctx),
       };
       if (action === 'shortlist-export') {
-        const list = await s.counterparties.shortlist(
+        const list = await s.counterparties.shortlistExport(
           ctx,
           z.uuid().parse(new URL(request.url).searchParams.get('mission')),
           z.coerce

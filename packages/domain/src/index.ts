@@ -84,6 +84,8 @@ export const permissions = {
   'research.read': ['owner', 'admin', 'operator', 'reviewer', 'viewer'],
   'research.manage': ['owner', 'admin', 'operator'],
   'research.resolve': ['owner', 'admin', 'reviewer'],
+  // Hiding a private contact's details or a private note (CRUD G11). Fresh authenticator check required.
+  'research.redact': ['owner', 'admin'],
   'missions.read': ['owner', 'admin', 'operator', 'reviewer', 'viewer'],
   'missions.manage': ['owner', 'admin', 'operator'],
   'trust.read': ['owner', 'admin', 'operator', 'reviewer', 'viewer'],

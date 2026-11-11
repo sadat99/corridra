@@ -878,6 +878,25 @@ summary:hover {
 .research-evidence p {
   margin: 0.5rem 0;
 }
+.research-item {
+  border-top: 1px solid var(--line);
+  padding-block: var(--space-3);
+  display: grid;
+  gap: var(--space-2);
+}
+/* Only the item's own lines; the change dialogs inside an item keep their own spacing. */
+.research-item > p {
+  margin: 0;
+}
+.research-item .button,
+.research-history summary {
+  min-height: 44px;
+}
+.research-history summary {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
 .research-panel fieldset {
   min-width: 0;
   border: 0;

@@ -2173,21 +2173,32 @@
       },
       "update": {
         "supported": false,
-        "evidence": "packages/db/migrations/0008_counterparty_research.sql:205"
+        "note": "never edited; Correct Contact / Correct Note insert a new version plus a private_contact_change / private_note_change row naming the version seen (CRUD G11, optional module, installed by the owner)",
+        "api": "POST research actions correct_contact, correct_note apps/web/app/api/workspace/[action]/route.ts",
+        "code": "packages/counterparties/src/changes.ts writeChange (per-chain advisory lock, one change per version)",
+        "evidence": "packages/db/counterparty-change-migrations/0001_contact_and_note_changes.sql"
       },
       "delete": {
-        "kind": "void",
-        "how": "only entity_resolution has reverse_of; notes/contacts/attributes have no retraction",
-        "evidence": "packages/counterparties/src/index.ts:55"
+        "kind": "withdraw",
+        "how": "withdraw_contact / withdraw_note append a change row with a reason; redact_contact / redact_note (owner or admin, fresh authenticator check, ticket reference, typed id) append a private_record_redaction row that hides one whole contact or note chain from every reader; stored bytes are kept, so hidden is not deleted. entity_resolution keeps reverse_of; organisation attributes still have no retraction or correction",
+        "evidence": "packages/db/counterparty-change-migrations/0001_contact_and_note_changes.sql; packages/counterparties/src/changes.ts",
+        "ui": "apps/web/app/operator/record-changes.tsx \"Withdraw Contact\", \"Correct Contact\", \"Hide Contact Details\", \"Withdraw Note\", \"Correct Note\", \"Hide Note\" with D-02 dialogs",
+        "confirmation": "Dialog with reason; hide also needs ticket reference and the id typed again; default focus on Cancel"
       },
-      "auditTrail": "record_change packages/db/migrations/0008_counterparty_research.sql:206",
-      "tests": ["tests/integration/counterparties.test.ts"],
+      "auditTrail": "record_change packages/db/migrations/0008_counterparty_research.sql:206; change and hide rows: record_change triggers in packages/db/counterparty-change-migrations/0001_contact_and_note_changes.sql (payload id and version only)",
+      "tests": [
+        "tests/integration/counterparties.test.ts",
+        "tests/integration/counterparty-changes.test.ts",
+        "tests/integration/counterparty-redaction.test.ts",
+        "tests/integration/counterparty-changes-install.test.ts",
+        "tests/operator/counterparty-changes.spec.ts"
+      ],
       "gaps": [
         {
           "op": "delete",
           "severity": "medium",
-          "what": "Private notes and contact data cannot be retracted or corrected (contact only expires via valid_until); no erase path for personal data.",
-          "evidence": "packages/db/migrations/0008_counterparty_research.sql:38-49"
+          "what": "Organisation attributes cannot be retracted or corrected; contact and note withdraw, correct and hide exist only once the owner installs and opens the G11 module.",
+          "evidence": "packages/db/migrations/0008_counterparty_research.sql"
         }
       ]
     },

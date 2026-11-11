@@ -86,6 +86,9 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'lifecycle_enable',
     'lifecycle_pause',
     'problem_reports',
+    'contact_changes_install',
+    'contact_changes_enable',
+    'contact_changes_pause',
   ]);
   const defaults = Object.fromEntries(
     Object.entries(declared).map(([name, input]) => [name, input.default]),
@@ -105,6 +108,9 @@ test('each field-module choice maps to install only and reaches the exact-head c
     ['lifecycle_enable', u, u, u, u, u, 'enable', u],
     ['lifecycle_pause', u, u, u, u, u, 'pause', u],
     ['problem_reports', u, u, u, u, u, u, 'install'],
+    ['contact_changes_install', u, u, u, u, u, u, u],
+    ['contact_changes_enable', u, u, u, u, u, u, u],
+    ['contact_changes_pause', u, u, u, u, u, u, u],
   ]) {
     const inputs = { ...defaults, field_modules_action: choice };
     assert.equal(evaluate(env.SPECIFICATION_CONFIRMATION_ACTION, inputs), confirmation);
@@ -128,5 +134,35 @@ test('each field-module choice maps to install only and reaches the exact-head c
   }
   for (const name of Object.keys(defaults).filter((name) => name.endsWith('_action'))) {
     assert.equal(evaluate(guard, { ...defaults, [name]: 'install' }), true, name);
+  }
+});
+
+test('the contact change choices install, open and pause only that module, each open or pause with a reason', () => {
+  const workflow = parseDocument(
+    readFileSync('.github/workflows/install-customer-modules.yml', 'utf8'),
+  ).toJS();
+  const declared = workflow.on.workflow_dispatch.inputs;
+  const env = workflow.jobs.install.steps.find(
+    (step) => step.name === 'Report or install the customer modules',
+  ).env;
+  const evaluate = (expression, inputs) =>
+    runInNewContext(expression.replace(/^\$\{\{\s*|\s*\}\}$/g, ''), { inputs });
+  const defaults = Object.fromEntries(
+    Object.entries(declared).map(([name, input]) => [name, input.default]),
+  );
+  for (const choice of declared.field_modules_action.options) {
+    const inputs = { ...defaults, field_modules_action: choice };
+    const expected =
+      {
+        contact_changes_install: 'install',
+        contact_changes_enable: 'enable',
+        contact_changes_pause: 'pause',
+      }[choice] ?? 'unchanged';
+    assert.equal(evaluate(env.COUNTERPARTY_CHANGES_ACTION, inputs), expected, choice);
+    const reason = evaluate(env.COUNTERPARTY_CHANGES_REASON, inputs);
+    if (expected === 'enable' || expected === 'pause') {
+      assert.ok(reason.length >= 10 && reason.length <= 500, `${choice} reason length`);
+      assert.match(reason, expected === 'enable' ? /opened/ : /paused/);
+    } else assert.equal(reason, '');
   }
 });
