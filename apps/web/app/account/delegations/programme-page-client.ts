@@ -1,6 +1,6 @@
 'use client';
 import { pp } from '../../../lib/i18n/programme-pages';
-import { object } from './pricing-client';
+import { customerHeaders, object } from './pricing-client';
 
 // Browser helpers for the programme page and applications (ADR-080). Nothing here decides authority: the database
 // checks every request again.
@@ -119,8 +119,10 @@ export const refusalWords: Record<string, string> = {
 };
 export type Outcome =
   { ok: true; body: Record<string, unknown> } | { ok: false; message: string; denied: boolean };
+// Every write names the signed-in person here, where it is sent: the server refuses a request whose identity is not the
+// current session's.
 export async function pageRequest(
-  headers: Record<string, string>,
+  identity: { subject: string; issuer: string },
   payload: Record<string, unknown>,
 ): Promise<Outcome> {
   let r: Response;
@@ -129,7 +131,10 @@ export async function pageRequest(
       method: 'POST',
       cache: 'no-store',
       credentials: 'same-origin',
-      headers: { 'content-type': 'application/json', ...headers },
+      headers: {
+        'content-type': 'application/json',
+        ...customerHeaders(identity.subject, identity.issuer),
+      },
       body: JSON.stringify(payload),
     });
   } catch {

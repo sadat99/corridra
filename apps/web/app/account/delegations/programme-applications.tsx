@@ -117,16 +117,19 @@ function Scoped({ subject, issuer, target, asked }: Props) {
     writing.current = true;
     setBusy(true);
     setError('');
-    const result = await pageRequest(headers, {
-      kind: 'application',
-      action: 'apply',
-      commandId: commands.forIntent('apply' + target.address + target.version + label + words),
-      address: target.address,
-      version: target.version,
-      displayLabel: label,
-      statement: words,
-      consented: true,
-    });
+    const result = await pageRequest(
+      { subject, issuer },
+      {
+        kind: 'application',
+        action: 'apply',
+        commandId: commands.forIntent('apply' + target.address + target.version + label + words),
+        address: target.address,
+        version: target.version,
+        displayLabel: label,
+        statement: words,
+        consented: true,
+      },
+    );
     writing.current = false;
     setBusy(false);
     if (!result.ok) return setError(result.message);
@@ -151,13 +154,16 @@ function Scoped({ subject, issuer, target, asked }: Props) {
     writing.current = true;
     setBusy(true);
     setRowError(null);
-    const result = await pageRequest(headers, {
-      kind: 'application',
-      action,
-      commandId: commands.forIntent(action + item.id + item.decisionVersion),
-      applicationId: item.id,
-      ...(action === 'join' ? { consented: true } : { acknowledged: true }),
-    });
+    const result = await pageRequest(
+      { subject, issuer },
+      {
+        kind: 'application',
+        action,
+        commandId: commands.forIntent(action + item.id + item.decisionVersion),
+        applicationId: item.id,
+        ...(action === 'join' ? { consented: true } : { acknowledged: true }),
+      },
+    );
     writing.current = false;
     setBusy(false);
     if (!result.ok) return setRowError({ id: item.id, message: result.message });

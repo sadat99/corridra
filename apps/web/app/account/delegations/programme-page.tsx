@@ -302,17 +302,20 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
     setError('');
     const copy = copyFrom(draft);
     const closesAt = `${draft.closes}T23:59:00.000Z`;
-    const result = await pageRequest(headers, {
-      kind: 'page',
-      action: 'publish',
-      commandId: commands.forIntent('publish' + view.version + JSON.stringify(copy) + closesAt),
-      workspaceId,
-      programmeId,
-      expectedVersion: view.version,
-      copy,
-      closesAt,
-      acknowledged: true,
-    });
+    const result = await pageRequest(
+      { subject, issuer },
+      {
+        kind: 'page',
+        action: 'publish',
+        commandId: commands.forIntent('publish' + view.version + JSON.stringify(copy) + closesAt),
+        workspaceId,
+        programmeId,
+        expectedVersion: view.version,
+        copy,
+        closesAt,
+        acknowledged: true,
+      },
+    );
     writing.current = false;
     setBusy(false);
     if (!result.ok) {
@@ -335,14 +338,17 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
     writing.current = true;
     setBusy(true);
     setError('');
-    const result = await pageRequest(headers, {
-      kind: 'page',
-      action: 'withdraw',
-      commandId: commands.forIntent('withdraw' + view.version),
-      workspaceId,
-      programmeId,
-      acknowledged: true,
-    });
+    const result = await pageRequest(
+      { subject, issuer },
+      {
+        kind: 'page',
+        action: 'withdraw',
+        commandId: commands.forIntent('withdraw' + view.version),
+        workspaceId,
+        programmeId,
+        acknowledged: true,
+      },
+    );
     writing.current = false;
     setBusy(false);
     if (!result.ok) return setError(result.message);
@@ -363,18 +369,21 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
     writing.current = true;
     setBusy(true);
     setRowError(null);
-    const result = await pageRequest(headers, {
-      kind: 'application',
-      action: 'decide',
-      commandId: commands.forIntent('decide' + item.id + item.decisionVersion + decision + note),
-      workspaceId,
-      programmeId,
-      applicationId: item.id,
-      expectedVersion: item.decisionVersion,
-      decision,
-      ...(note ? { note } : {}),
-      acknowledged: true,
-    });
+    const result = await pageRequest(
+      { subject, issuer },
+      {
+        kind: 'application',
+        action: 'decide',
+        commandId: commands.forIntent('decide' + item.id + item.decisionVersion + decision + note),
+        workspaceId,
+        programmeId,
+        applicationId: item.id,
+        expectedVersion: item.decisionVersion,
+        decision,
+        ...(note ? { note } : {}),
+        acknowledged: true,
+      },
+    );
     writing.current = false;
     setBusy(false);
     if (!result.ok) {
