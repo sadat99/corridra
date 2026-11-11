@@ -51,6 +51,26 @@ export function operatorSectionPath(id: string): string | null {
 }
 
 /**
+ * Addresses of a block inside a section, not sections of their own: a link to one shows the section that
+ * holds it, then lands on the block. The list is closed. These are not sign-in return addresses
+ * (`operatorReturnTo` keeps only section ids), so a return link still opens the section's own page.
+ */
+export const inSectionAddresses = {
+  'billing-services': 'workspace-delivery',
+  'billing-plans': 'workspace-delivery',
+  'billing-sample-invoices': 'workspace-delivery',
+  'billing-invoices': 'workspace-delivery',
+  'billing-payments': 'workspace-delivery',
+} as const satisfies Record<string, SectionId>;
+
+/** The section an address belongs to: its own id for a section, the holding section for an in-section address, else the address itself. */
+export function sectionOfFragment(fragment: string): string {
+  return Object.hasOwn(inSectionAddresses, fragment)
+    ? (inSectionAddresses as Record<string, string>)[fragment]!
+    : fragment;
+}
+
+/**
  * What the workspace shows for an address: a `#` part always wins, so every old link keeps working on a
  * section address too; with none, the section the address names (or nothing, as before).
  */

@@ -26,8 +26,9 @@ import {
   operatorSignInPath,
   workspaceSections,
 } from '../../lib/workspace-navigation';
-import { fragmentFor, operatorSectionPath } from '../../lib/operator-urls';
+import { fragmentFor, operatorSectionPath, sectionOfFragment } from '../../lib/operator-urls';
 import { subscribeToHash } from '../../lib/address-store';
+import { resolveSubTabsAgain } from '../../components/ux/sub-tabs';
 import { authenticatorReturnTarget } from '../../lib/authenticator-check';
 import { AuthenticatorCheck } from './authenticator-check';
 import { SourcesPanel } from './sources-panel';
@@ -37,6 +38,15 @@ import type { MoreKind, OperatorRecordRow, OperatorSnapshot } from './workspace-
 type RecordRow = OperatorRecordRow;
 type Snapshot = OperatorSnapshot;
 type Tenant = { id: string; name: string; role: string };
+// A closed fold (the phone fold in Delivery) hides what an address names, so a link to a block inside one opens it.
+function openFoldsAround(element: Element) {
+  for (
+    let fold = element.closest('details');
+    fold;
+    fold = fold.parentElement?.closest('details') ?? null
+  )
+    fold.open = true;
+}
 export function Workspace({
   tenants,
   initialTenant,
@@ -232,12 +242,15 @@ function TenantWorkspace({
     window.addEventListener('hashchange', read);
     return () => window.removeEventListener('hashchange', read);
   }, [loaded, initialSection]);
+  // An address inside a section (a billing block) belongs to that section: the role check and the view
+  // follow the section, so the same note shows for a role that may not see it.
+  const sectionId = sectionOfFragment(fragment);
   const sectionAllowed = workspaceSections.some(
     (section) =>
-      section.id === fragment && (section.roles as readonly string[]).includes(currentRole ?? ''),
+      section.id === sectionId && (section.roles as readonly string[]).includes(currentRole ?? ''),
   );
   // One panel is in view at a time. Every panel stays mounted so entries survive a switch.
-  const view = sectionAllowed ? panelFor(fragment) : 'overview';
+  const view = sectionAllowed ? panelFor(sectionId) : 'overview';
   // With the shells switch on only the section in view is rendered (D14); open forms keep their
   // drafts through useFormDraft. Off, every panel stays mounted and is only hidden.
   const shown = (panel: string) => !shellsV2 || view === panel;
@@ -253,9 +266,29 @@ function TenantWorkspace({
       const directory = destination.querySelector('details');
       if (directory) directory.open = true;
     }
+    // A tab that holds the block opens first, so the scroll has something to land on.
+    if (target?.closest<HTMLElement>('[data-subtab]')?.hidden) resolveSubTabsAgain();
+    if (target) openFoldsAround(target);
     destination?.scrollIntoView();
     destination?.focus({ preventScroll: true });
-  }, [loaded, fragment, sectionAllowed]);
+    // A block inside a section can appear after the section does (its data loads first). Until then
+    // the section is shown and the address waits; the watch ends when the block lands, when the
+    // address changes or when the workspace unmounts.
+    const holder =
+      allowed && !target && sectionId !== fragment ? document.getElementById(sectionId) : null;
+    if (!holder) return undefined;
+    const watch = new MutationObserver(() => {
+      const block = document.getElementById(fragment);
+      if (!block) return;
+      watch.disconnect();
+      resolveSubTabsAgain();
+      openFoldsAround(block);
+      block.scrollIntoView();
+      block.focus({ preventScroll: true });
+    });
+    watch.observe(holder, { childList: true, subtree: true });
+    return () => watch.disconnect();
+  }, [loaded, fragment, sectionId, sectionAllowed]);
   async function retryRead() {
     setBusy(true);
     setMessage('');
@@ -395,7 +428,7 @@ function TenantWorkspace({
         <>
           {!shellsV2 && (
             <div hidden={view === 'overview'}>
-              <WorkspaceAreaBar role={data.role} fragment={fragment} />
+              <WorkspaceAreaBar role={data.role} fragment={sectionId} />
             </div>
           )}
           {shown('overview') && (

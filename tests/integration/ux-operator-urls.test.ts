@@ -8,6 +8,8 @@ import {
   operatorSlugs,
   reservedOperatorSegments,
   sectionForSlug,
+  inSectionAddresses,
+  sectionOfFragment,
 } from '../../apps/web/lib/operator-urls';
 import {
   operatorReturnTo,
@@ -90,6 +92,40 @@ describe('what the workspace shows for an address', () => {
     expect(
       operatorReturnTo('/operator?workspace=11111111-1111-4111-8111-111111111111#ops-gates'),
     ).toBe('/operator?workspace=11111111-1111-4111-8111-111111111111#ops-gates');
+  });
+});
+
+describe('addresses inside a section', () => {
+  it('the closed list names the five billing blocks and the section that holds them', () => {
+    expect(inSectionAddresses).toEqual({
+      'billing-services': 'workspace-delivery',
+      'billing-plans': 'workspace-delivery',
+      'billing-sample-invoices': 'workspace-delivery',
+      'billing-invoices': 'workspace-delivery',
+      'billing-payments': 'workspace-delivery',
+    });
+    for (const section of Object.values(inSectionAddresses))
+      expect(workspaceSections.map((s) => s.id as string)).toContain(section);
+  });
+  it('a section id gives itself, an in-section address gives its section, anything else is kept', () => {
+    expect(sectionOfFragment('workspace-research')).toBe('workspace-research');
+    expect(sectionOfFragment('ops-gates')).toBe('ops-gates');
+    expect(sectionOfFragment('billing-services')).toBe('workspace-delivery');
+    expect(sectionOfFragment('billing-payments')).toBe('workspace-delivery');
+    expect(sectionOfFragment('main')).toBe('main');
+    expect(sectionOfFragment('')).toBe('');
+    expect(sectionOfFragment('billing-unknown')).toBe('billing-unknown');
+  });
+  it('never reads a name from the object prototype', () => {
+    for (const junk of ['__proto__', 'constructor', 'toString', 'hasOwnProperty'])
+      expect(sectionOfFragment(junk), junk).toBe(junk);
+  });
+  it('is not a sign-in return address: only section ids are, so the open-redirect surface is the same', () => {
+    for (const id of Object.keys(inSectionAddresses))
+      expect(operatorReturnTo('/operator#' + id), id).toBe('/operator');
+    expect(
+      operatorReturnTo('/operator?workspace=11111111-1111-4111-8111-111111111111#billing-services'),
+    ).toBe('/operator');
   });
 });
 

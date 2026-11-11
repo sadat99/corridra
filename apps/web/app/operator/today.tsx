@@ -641,8 +641,8 @@ export function TodayPanel({
                     : undefined
               }
             >
-              {/* The request list sits in the Delivery section; the router accepts section addresses only. */}
-              <a href="#workspace-delivery">
+              {/* The request list is the billing hub's first block in the Delivery section; the router maps this address to that section. */}
+              <a href="#billing-services">
                 <strong>
                   {today.team.unavailable?.includes('serviceRequestsToQuote')
                     ? 'Not available'
