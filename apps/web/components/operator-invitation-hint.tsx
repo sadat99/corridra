@@ -55,7 +55,7 @@ export function OperatorInvitationHint({
         You have a pending team invitation. Set your team password, then sign in and add your
         authenticator app.
       </p>
-      <Link className="primary-link" href="/operator/setup">
+      <Link prefetch={false} className="primary-link" href="/operator/setup">
         Finish team setup
       </Link>
     </section>

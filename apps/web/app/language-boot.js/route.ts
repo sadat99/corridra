@@ -3,7 +3,7 @@ import { comfortBootScript } from '../../lib/ux/comfort';
 import { languageBootScript } from '../../lib/ux/language-boot';
 
 // The pre-paint script as a same-origin file (CQ-10, CQ-48): first the language script, then the saved
-// reading comfort choices (text size, Less Movement). Served from here instead of an inline script so no
+// reading comfort choices (text size, Stronger Colours, Less Movement). Served from here instead of an inline script so no
 // HTML is injected into the page (security rule corridra-no-raw-html). Its body is built only from the
 // offered language codes, their fixed meta and fixed storage keys, never from request data.
 export const dynamic = 'force-dynamic';

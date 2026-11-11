@@ -949,7 +949,10 @@ function IntakeForm({
               )}{' '}
               {englishIsland(
                 <>
-                  <Link href="/privacy">Read the privacy and request notice</Link>.
+                  <Link prefetch={false} href="/privacy">
+                    Read the privacy and request notice
+                  </Link>
+                  .
                 </>,
               )}
             </p>
@@ -973,7 +976,10 @@ function IntakeForm({
                 {say('form.notice.sampleEmail')}{' '}
                 {englishIsland(
                   <>
-                    <Link href="/privacy">Read the test intake notice</Link>.
+                    <Link prefetch={false} href="/privacy">
+                      Read the test intake notice
+                    </Link>
+                    .
                   </>,
                 )}
               </p>
@@ -1045,6 +1051,7 @@ function IntakeForm({
                   </button>
                 ) : (
                   <Link
+                    prefetch={false}
                     className="primary-link"
                     href={accountAccessPath(account ? '/verify-email' : '/signin', '/plan')}
                   >
@@ -1052,12 +1059,20 @@ function IntakeForm({
                   </Link>
                 )}
                 {!account && (
-                  <Link className="text-link" href={accountAccessPath('/signup', '/plan')}>
+                  <Link
+                    prefetch={false}
+                    className="text-link"
+                    href={accountAccessPath('/signup', '/plan')}
+                  >
                     {say('form.pending.create')}
                   </Link>
                 )}
                 {!account && codeSignIn && (
-                  <Link className="text-link" href={accountAccessPath('/signin', '/plan', 'code')}>
+                  <Link
+                    prefetch={false}
+                    className="text-link"
+                    href={accountAccessPath('/signin', '/plan', 'code')}
+                  >
                     {say('form.pending.codeSignIn')}
                   </Link>
                 )}
@@ -1477,7 +1492,11 @@ function IntakeForm({
                         ? sayWith('form.contact.signedInAs', { email: english(account.email) })
                         : `${say('form.contact.haveAccount')} `}{' '}
                       {!account && (
-                        <Link className="text-link" href={accountAccessPath('/signin', '/plan')}>
+                        <Link
+                          prefetch={false}
+                          className="text-link"
+                          href={accountAccessPath('/signin', '/plan')}
+                        >
                           {say('form.contact.signInReturn')}
                         </Link>
                       )}
@@ -1696,7 +1715,11 @@ function IntakeForm({
             </details>
             {realMode && !privateMode && !account && codeSignIn && (
               <p className="guide-hint">
-                <Link className="text-link" href={accountAccessPath('/signin', '/account', 'code')}>
+                <Link
+                  prefetch={false}
+                  className="text-link"
+                  href={accountAccessPath('/signin', '/account', 'code')}
+                >
                   {say('form.pending.codeSignIn')}
                 </Link>
               </p>

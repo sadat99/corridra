@@ -287,6 +287,15 @@
   align-items: center;
   gap: var(--space-1);
 }
+/* A switch row's label with the optional line under it ("Your device asks for this"). */
+.ux-menu-toggle-text {
+  display: grid;
+  min-width: 0;
+}
+/* While the device already asks for the effect the row reads On and does nothing: no pointer, no hover change. */
+.ux-menu-toggle[aria-disabled='true'] {
+  cursor: default;
+}
 
 /* The one live region under Less Movement: in the menu all the time, empty and taking no space until a save fails. */
 .ux-menu-note.ux-comfort-status {

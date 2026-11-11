@@ -8389,7 +8389,7 @@ samp {
   margin: 0;
 }
 .receipt-disclosure > summary:focus-visible {
-  outline: 3px solid var(--ac-cobalt);
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
 

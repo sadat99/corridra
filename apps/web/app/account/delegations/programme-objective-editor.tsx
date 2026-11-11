@@ -440,7 +440,11 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
                 </p>
                 {o.status === 'SHARED' && <p>Self-declared · stated by the participant</p>}
                 {scope.view === 'own' && o.requestId && (
-                  <Link className="text-link" href={'/account/requests/' + o.requestId}>
+                  <Link
+                    prefetch={false}
+                    className="text-link"
+                    href={'/account/requests/' + o.requestId}
+                  >
                     Open my original private request
                   </Link>
                 )}

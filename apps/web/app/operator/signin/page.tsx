@@ -16,10 +16,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
     return (
       <WorkspaceShell eyebrow="OPERATOR ACCESS" title="Workspace sign-in is unavailable." compact>
         <p>Workspace access is not configured here. This page does not collect credentials.</p>
-        <Link className="text-link" href="/signin">
+        <Link prefetch={false} className="text-link" href="/signin">
           Other sign-in options
         </Link>
-        <Link className="text-link" href="/">
+        <Link prefetch={false} className="text-link" href="/">
           Back to Corridra
         </Link>
       </WorkspaceShell>
@@ -28,11 +28,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
     <WorkspaceShell eyebrow="OPERATOR ACCESS" title="Sign in to your workspace." compact>
       <OperatorInvitationHint />
       <OperatorSignin returnTo={returnTo} />
-      <Link className="text-link" href="/operator/forgot-password">
+      <Link prefetch={false} className="text-link" href="/operator/forgot-password">
         Forgot operator password?
       </Link>
       <nav className="access-options" aria-label="Sign-in alternatives">
         <Link
+          prefetch={false}
           className="text-link"
           href={returnTo.startsWith('/contributor?') ? '/contributor/setup' : '/operator/setup'}
         >
@@ -40,16 +41,16 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
             ? 'Set up invited contributor access'
             : 'Set up invited operator access'}
         </Link>
-        <Link className="text-link" href="/workspace">
+        <Link prefetch={false} className="text-link" href="/workspace">
           All workspaces and tools
         </Link>
-        <Link className="text-link" href="/signin">
+        <Link prefetch={false} className="text-link" href="/signin">
           Customer account sign-in
         </Link>
-        <Link className="text-link" href="/contributor">
+        <Link prefetch={false} className="text-link" href="/contributor">
           Assigned-task invitation help
         </Link>
-        <Link className="text-link" href="/">
+        <Link prefetch={false} className="text-link" href="/">
           Back to Corridra
         </Link>
       </nav>

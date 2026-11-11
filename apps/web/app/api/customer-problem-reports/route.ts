@@ -12,7 +12,8 @@ export const dynamic = 'force-dynamic';
 
 // A customer's own problem reports (ADR-078). The signed-in customer session decides who acts: no person id, workspace,
 // side or reporter is read from the body or the query, a person with no workspace may file, and a closed account can
-// read but not file. Until the optional database module is installed every method answers 503 and touches nothing.
+// read and remove its words but not file. Until the optional database module is installed every method answers 503 and
+// touches nothing; the removal of a person's own words also waits for migration 0003 (its own availability check).
 const subject = (request: Request) =>
   request.headers.get('x-corridra-customer-subject') ?? undefined;
 const issuer = (request: Request) => request.headers.get('x-corridra-customer-issuer') ?? undefined;
@@ -44,9 +45,10 @@ export async function GET(request: Request) {
   }
 }
 
-// Files a problem report. The command id makes a retry safe: the same id with the same words answers again. Only the
-// origin is checked before the session; the request budget is spent, and the body is read, limited and checked, after it
-// and before any database connection is taken, so a signed-out caller always gets a 401 and a slow body holds no connection.
+// Files a problem report, or removes the words of the signed-in person's own reports (action remove_words, which carries
+// only a command id). The command id makes a retry safe: the same id answers again. Only the origin is checked before the
+// session; the request budget is spent, and the body is read, limited and checked, after it and before any database
+// connection is taken, so a signed-out caller always gets a 401 and a slow body holds no connection.
 export async function POST(request: Request) {
   try {
     const s = await problemReportServices();
@@ -55,7 +57,7 @@ export async function POST(request: Request) {
       ? (request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown')
       : 'local';
     return Response.json(
-      await s.customerProblemReports.file(
+      await s.customerProblemReports.act(
         () => problemReportBody(request),
         subject(request),
         issuer(request),

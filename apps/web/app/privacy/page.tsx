@@ -342,7 +342,10 @@ export default function Page() {
                 <p>
                   For test submissions, keep your private receipt code. Anyone with that code can
                   read the associated status and replies at{' '}
-                  <Link href="/plan">the request page</Link>. A receipt expires after 30 days.
+                  <Link prefetch={false} href="/plan">
+                    the request page
+                  </Link>
+                  . A receipt expires after 30 days.
                 </p>
               )}
               {!real && (

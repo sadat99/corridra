@@ -33,7 +33,7 @@ export function SignupAccess() {
             </Suspense>
             <p>
               Your name and email are used for account access, verification and recovery. Read the{' '}
-              <Link href="/privacy">
+              <Link prefetch={false} href="/privacy">
                 {realUseEnabled() ? 'privacy and request notice' : 'account and request notice'}
               </Link>{' '}
               before creating an account. Team access needs a separate invitation.
@@ -42,7 +42,7 @@ export function SignupAccess() {
         ) : (
           <AccessState kind="unavailable">
             <p>Account access is not available yet.</p>
-            <Link className="text-link" href="/plan">
+            <Link prefetch={false} className="text-link" href="/plan">
               Start a Request Without an Account
             </Link>
           </AccessState>

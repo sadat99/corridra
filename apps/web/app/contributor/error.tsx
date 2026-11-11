@@ -26,10 +26,10 @@ export default function ContributorError() {
         Retry Assigned Work
       </a>
       <nav className="access-options" aria-label="Assigned work recovery">
-        <Link className="text-link" href="/signin">
+        <Link prefetch={false} className="text-link" href="/signin">
           Choose your sign-in route
         </Link>
-        <Link className="text-link" href="/workspace">
+        <Link prefetch={false} className="text-link" href="/workspace">
           All workspaces and tools
         </Link>
       </nav>

@@ -15,6 +15,7 @@ import { migrateCustomerProblemReports } from '../../packages/db/src/customer-pr
 const schema = 'customer_problem_report_migrations';
 const file = '0001_problem_reports.sql';
 const bounds = '0002_word_removal_bounds.sql';
+const selfRemoval = '0003_problem_report_self_removal.sql';
 const removeWords = 'customer.problem_report_remove_words(uuid,uuid)';
 const plainText = 'customer_private.problem_report_plain(text,integer,integer)';
 // What 0001 created: the SHA-256 of the stored function body (pg_proc.prosrc, read from a database that applied 0001
@@ -22,6 +23,64 @@ const plainText = 'customer_private.problem_report_plain(text,integer,integer)';
 const firstBodyHash = '582ab8289185d2bbeefb5bbba84ecb14a536274db2fd9c8e90b30dfa8a2267df';
 const firstPlainHash = '67f5be7abee4ff564d1bd83cac2bc30bc5b090da8f068bb5699bc196f9f4961d';
 const firstFileHash = '52d32043f9b8138b78e11114d3683fd5ff385d4a498d35689e1f0fa5dedb88cc';
+const boundsFileHash = '74603ba692aca8b9108ffb72ce10ef8742a93a0ecebf1aaefb262e5efa2e8707';
+// What 0001 and 0002 left: the SHA-256 of the stored body (pg_proc.prosrc) of the five functions 0003 replaces, with the
+// argument types the guard compares. Read from a database that applied both files by the migrator; the word removal is the
+// 0002 form, the other four are still the 0001 form.
+const boundsBodyHash = 'f27a8f09f4c98c526b11a2f49929829bfc67802f1f172a8738d4c72dad3c4777';
+const guardFunction = 'customer_private.problem_report_words_guard()';
+const listFunction = 'customer.problem_report_list(bigint,integer)';
+const getFunction = 'customer.problem_report_get(text)';
+const queueFunction = 'customer.problem_report_queue(bigint,integer,text)';
+const ownWords = 'customer.problem_report_remove_own_words(uuid)';
+const replacedBySelfRemoval = [
+  {
+    name: 'staff word removal',
+    signature: removeWords,
+    hash: boundsBodyHash,
+    args: '2950 2950',
+    params: 'command uuid,erasure_request uuid',
+    returns: 'jsonb',
+    language: 'plpgsql VOLATILE SECURITY DEFINER',
+  },
+  {
+    name: 'words guard',
+    signature: guardFunction,
+    hash: 'c684a2835e16949c509e8dd03316088ce9a42a5fedeeb9335edb446e7a32cc06',
+    args: '',
+    params: '',
+    returns: 'trigger',
+    language: 'plpgsql VOLATILE SECURITY DEFINER',
+  },
+  {
+    name: 'list',
+    signature: listFunction,
+    hash: 'e11fcea3a92ed45bd0497d6f7b10ec7363391ef51322907aa1029bb16ddf5aea',
+    args: '20 23',
+    params: 'before_number bigint DEFAULT NULL,page_size integer DEFAULT 25',
+    returns: 'jsonb',
+    language: 'plpgsql VOLATILE SECURITY DEFINER',
+  },
+  {
+    name: 'get',
+    signature: getFunction,
+    hash: 'f6bc8bb6376f39d0824fbc55f4c29529481456cc808eb284f62a3a46909a7bb0',
+    args: '25',
+    params: 'ref text',
+    returns: 'jsonb',
+    language: 'plpgsql VOLATILE SECURITY DEFINER',
+  },
+  {
+    name: 'staff queue',
+    signature: queueFunction,
+    hash: '0df0814aa8f4cd9264cae20e2724a35b01d8938e6ef0be3620bf5c71d339007b',
+    args: '20 23 25',
+    params:
+      'after_number bigint DEFAULT NULL,page_size integer DEFAULT 25,state_filter text DEFAULT NULL',
+    returns: 'jsonb',
+    language: 'plpgsql VOLATILE SECURITY DEFINER',
+  },
+] as const;
 const directory = resolve('packages/db/customer-problem-report-migrations');
 const source = (name: string) => readFileSync(join(directory, name), 'utf8');
 const sha256 = (text: string) => createHash('sha256').update(text).digest('hex');
@@ -35,6 +94,7 @@ const ownTables = [
   'customer_private.problem_report_words',
   'customer_private.problem_report_status_event',
   'customer_private.problem_report_erasure',
+  'customer_private.problem_report_self_removal',
 ];
 let f: Fixture;
 let g: Fixture;
@@ -131,15 +191,17 @@ describe('installing the problem report module', () => {
         (await f.owner.query(`SELECT to_regclass('${table}') IS NOT NULL AS present`)).rows[0]
           .present,
       ).toBe(true);
-    // both files are in the registry, each with the hash of its own text, and the second ran over the first
+    // all three files are in the registry, each with the hash of its own text, and each ran over the one before
     expect(await applied(f)).toEqual([
       { name: file, sha256: sha256(source(file)) },
       { name: bounds, sha256: sha256(source(bounds)) },
+      { name: selfRemoval, sha256: sha256(source(selfRemoval)) },
     ]);
     expect(sha256(source(file))).toBe(firstFileHash);
     const live = await liveBodyHash(f);
     expect(live).toBeDefined();
     expect(live).not.toBe(firstBodyHash);
+    expect(live).not.toBe(boundsBodyHash);
     // the plain text rule is replaced too: it refuses a C1 control now and still accepts its neighbour
     expect(await liveBodyHash(f, plainText)).not.toBe(firstPlainHash);
     expect(await plainAccepts(f, 'a\u0085b')).toBe(false);
@@ -173,24 +235,27 @@ describe('installing the problem report module', () => {
     expect(await digest(f, tables)).toEqual(before);
   });
 
-  test.each([file, bounds])('refuses to run over a changed applied file %s', async (name) => {
-    const row = (await applied(f)).find((item) => item.name === name)!;
-    await f.owner.query(`UPDATE ${schema}.applied SET sha256=$2 WHERE name=$1`, [
-      name,
-      'f'.repeat(64),
-    ]);
-    try {
-      await expect(migrateCustomerProblemReports(f.owner)).rejects.toThrow(
-        'Problem report migration history mismatch',
-      );
-    } finally {
+  test.each([file, bounds, selfRemoval])(
+    'refuses to run over a changed applied file %s',
+    async (name) => {
+      const row = (await applied(f)).find((item) => item.name === name)!;
       await f.owner.query(`UPDATE ${schema}.applied SET sha256=$2 WHERE name=$1`, [
         name,
-        row.sha256,
+        'f'.repeat(64),
       ]);
-    }
-    await expect(migrateCustomerProblemReports(f.owner)).resolves.toBeUndefined();
-  });
+      try {
+        await expect(migrateCustomerProblemReports(f.owner)).rejects.toThrow(
+          'Problem report migration history mismatch',
+        );
+      } finally {
+        await f.owner.query(`UPDATE ${schema}.applied SET sha256=$2 WHERE name=$1`, [
+          name,
+          row.sha256,
+        ]);
+      }
+      await expect(migrateCustomerProblemReports(f.owner)).resolves.toBeUndefined();
+    },
+  );
 
   test('refuses, replacing nothing, when the second file has lost its registry row while the function is already replaced', async () => {
     const row = (await applied(f)).find((item) => item.name === bounds)!;
@@ -199,7 +264,7 @@ describe('installing the problem report module', () => {
     try {
       await expect(migrateCustomerProblemReports(f.owner)).rejects.toThrow(differs);
       expect(await liveBodyHash(f)).toBe(before);
-      expect((await applied(f)).map((item) => item.name)).toEqual([file]);
+      expect((await applied(f)).map((item) => item.name)).toEqual([file, selfRemoval]);
     } finally {
       await f.owner.query(`INSERT INTO ${schema}.applied(name,sha256) VALUES($1,$2)`, [
         bounds,
@@ -232,8 +297,8 @@ describe('the migration source is additive', () => {
   const second = strip(source(bounds));
   const pattern = /^customer_private\.problem_report(_[a-z_]+)?$/;
 
-  test('is exactly the two expected files', () => {
-    expect(names).toEqual([file, bounds]);
+  test('is exactly the three expected files', () => {
+    expect(names).toEqual([file, bounds, selfRemoval]);
   });
   test('the first file never replaces, drops or alters an existing object, and has no em dash', () => {
     expect(first).not.toMatch(/CREATE\s+OR\s+REPLACE/i);
@@ -291,6 +356,157 @@ describe('the migration source is additive', () => {
     expect(second).toContain('proargtypes::text=f.argument_types');
     expect(second).toContain("'2950 2950'");
     expect(second).toContain("'25 23 23'");
+  });
+
+  describe('the third file', () => {
+    const third = strip(source(selfRemoval));
+    const body = (text: string, tag: string) =>
+      new RegExp(`\\$${tag}\\$\\n([\\s\\S]*?)\\n\\$${tag}\\$;`).exec(text)![1]!;
+    // the text of a function in an earlier file, cut from its CREATE to the end of its body
+    const earlier = (text: string, start: string, end: string) => {
+      const from = text.indexOf(start);
+      expect(from, start).toBeGreaterThanOrEqual(0);
+      return text.slice(from, text.indexOf(end, from) + end.length);
+    };
+    const once = (text: string, from: string, to: string) => {
+      expect(text.split(from).length - 1, from).toBe(1);
+      return text.replace(from, () => to);
+    };
+    const replace = (text: string) => once(text, 'CREATE FUNCTION', 'CREATE OR REPLACE FUNCTION');
+    const erased = (alias: string, report: string) =>
+      `EXISTS(SELECT FROM customer_private.problem_report_erasure ${alias} WHERE ${alias}.report_id=${report})`;
+    const selfRemoved = (alias: string, report: string) =>
+      `EXISTS(SELECT FROM customer_private.problem_report_self_removal ${alias} WHERE ${alias}.report_id=${report})`;
+
+    test('replaces exactly the five functions and creates only its own table, index, trigger function, triggers and function', () => {
+      const replaced = [...third.matchAll(/CREATE\s+OR\s+REPLACE\s+(\w+)\s+([\w.]+)/gi)];
+      expect(replaced.map((match) => [match[1]!.toUpperCase(), match[2]])).toEqual([
+        ['FUNCTION', 'customer_private.problem_report_words_guard'],
+        ['FUNCTION', 'customer.problem_report_list'],
+        ['FUNCTION', 'customer.problem_report_get'],
+        ['FUNCTION', 'customer.problem_report_queue'],
+        ['FUNCTION', 'customer.problem_report_remove_words'],
+      ]);
+      const created = [...third.matchAll(/\bCREATE\s+(?!OR\s+REPLACE)(\w+)\s+([\w.]+)/gi)];
+      expect(created.map((match) => [match[1]!.toUpperCase(), match[2]])).toEqual([
+        ['TABLE', 'customer_private.problem_report_self_removal'],
+        ['INDEX', 'problem_report_self_removal_command'],
+        ['FUNCTION', 'customer_private.problem_report_self_removal_check'],
+        ['TRIGGER', 'problem_report_self_removal_check'],
+        ['TRIGGER', 'problem_report_self_removal_immutable'],
+        ['FUNCTION', 'customer.problem_report_remove_own_words'],
+      ]);
+    });
+    test('drops, truncates and updates nothing, alters only its own table, and grants only its own function', () => {
+      expect(third).not.toMatch(/\bDROP\s/i);
+      expect(third).not.toMatch(/\bTRUNCATE\b/i);
+      expect(third).not.toMatch(/\bUPDATE\s+[\w.]+\s+SET\b/i);
+      const alters = [...third.matchAll(/\bALTER\s+(\w+)\s+([\w.]+)\s+([A-Z ]+)/g)];
+      expect(alters.map((match) => [match[1], match[2], match[3]!.trim()])).toEqual([
+        ['TABLE', 'customer_private.problem_report_self_removal', 'ENABLE ROW LEVEL SECURITY'],
+      ]);
+      const privileges = [
+        ...third.matchAll(
+          /\b(GRANT|REVOKE)\b[^;]*?\bON\s+(?:FUNCTION\s+)?([\w.]+(?:\(uuid\)|\(\))?)/g,
+        ),
+      ];
+      expect(privileges.map((match) => [match[1], match[2]])).toEqual([
+        ['REVOKE', 'customer_private.problem_report_self_removal'],
+        ['REVOKE', 'customer_private.problem_report_self_removal_check()'],
+        ['REVOKE', 'customer.problem_report_remove_own_words(uuid)'],
+        ['GRANT', 'customer.problem_report_remove_own_words(uuid)'],
+      ]);
+    });
+    test('has one delete, from the words table, and its inserts are the staff erasure row and its own row, with no event, audit, outbox or definition text', () => {
+      const deletes = [...third.matchAll(/\bDELETE\s+FROM\s+([\w.]+)/gi)];
+      expect(deletes.map((match) => match[1])).toEqual([
+        'customer_private.problem_report_words',
+        'customer_private.problem_report_words',
+      ]);
+      const inserts = [...third.matchAll(/\bINSERT\s+INTO\s+([\w.]+)/gi)];
+      expect(inserts.map((match) => match[1])).toEqual([
+        'customer_private.problem_report_erasure',
+        'customer_private.problem_report_self_removal',
+      ]);
+      expect(third).not.toMatch(/app\.domain_event|app\.audit_event|outbox/i);
+      expect(third).not.toMatch(/pg_get_functiondef/i);
+      expect(source(selfRemoval)).not.toContain('\u2014');
+    });
+    test('compares each of the five by body hash, security, volatility, search path and argument types, and pins both earlier files', () => {
+      const text = source(selfRemoval);
+      for (const entry of replacedBySelfRemoval)
+        expect(text).toContain(`'${entry.signature}','${entry.hash}',true,'v','${entry.args}'`);
+      expect(text).toContain(`'${firstFileHash}'`);
+      expect(text).toContain(`'${boundsFileHash}'`);
+      expect(sha256(source(file))).toBe(firstFileHash);
+      expect(sha256(source(bounds))).toBe(boundsFileHash);
+      expect(text).toContain('prosecdef=f.secdef');
+      expect(text).toContain('provolatile=f.volatility');
+      expect(text).toContain("proconfig=ARRAY['search_path=pg_catalog']");
+      expect(text).toContain('proargtypes::text=f.argument_types');
+    });
+    test('the list, get and queue bodies differ from the first file in the words removed expression alone', () => {
+      const first = source(file);
+      const list = once(
+        replace(earlier(first, 'CREATE FUNCTION customer.problem_report_list(', 'END $$;')).slice(
+          0,
+          -1,
+        ),
+        `'wordsRemoved',${erased('e', 'r.id')}`,
+        `'wordsRemoved',(${erased('e', 'r.id')} OR ${selfRemoved('q', 'r.id')})`,
+      );
+      const get = once(
+        replace(earlier(first, 'CREATE FUNCTION customer.problem_report_get(', 'END $$;')).slice(
+          0,
+          -1,
+        ),
+        `CASE WHEN ${erased('e', 'r.id')} THEN`,
+        `CASE WHEN ${erased('e', 'r.id')} OR ${selfRemoved('q', 'r.id')} THEN`,
+      );
+      const queue = once(
+        replace(earlier(first, 'CREATE FUNCTION customer.problem_report_queue(', 'END $$;')).slice(
+          0,
+          -1,
+        ),
+        `'wordsRemoved',${erased('e', 'p.id')},`,
+        `'wordsRemoved',(${erased('e', 'p.id')} OR ${selfRemoved('q', 'p.id')}),`,
+      );
+      expect(body(source(selfRemoval), 'listfn')).toBe(list);
+      expect(body(source(selfRemoval), 'getfn')).toBe(get);
+      expect(body(source(selfRemoval), 'queuefn')).toBe(queue);
+    });
+    test('the words guard allows a delete for an erasure row or a self-removal row, and the staff removal differs from the second file by the lock and the skip alone', () => {
+      const guard = once(
+        replace(
+          earlier(
+            source(file),
+            'CREATE FUNCTION customer_private.problem_report_words_guard(',
+            'END $$;',
+          ),
+        ).slice(0, -1),
+        "IF TG_OP='DELETE' AND EXISTS(SELECT FROM customer_private.problem_report_erasure e WHERE e.report_id=OLD.report_id) THEN RETURN OLD; END IF;",
+        "IF TG_OP='DELETE' AND (EXISTS(SELECT FROM customer_private.problem_report_erasure e WHERE e.report_id=OLD.report_id)\n  OR EXISTS(SELECT FROM customer_private.problem_report_self_removal s WHERE s.report_id=OLD.report_id)) THEN RETURN OLD; END IF;",
+      );
+      expect(body(source(selfRemoval), 'guardfn')).toBe(guard);
+      const lifecycle =
+        " PERFORM pg_advisory_xact_lock(hashtextextended('customer.account.lifecycle:'||filed.principal_id::text,0));\n";
+      const removal = once(
+        once(
+          body(source(bounds), 'fn'),
+          lifecycle,
+          lifecycle +
+            " PERFORM pg_advisory_xact_lock(hashtextextended('customer.problem_report:'||filed.principal_id::text,0));\n",
+        ),
+        '  AND NOT EXISTS(SELECT FROM customer_private.problem_report_erasure e WHERE e.report_id=r.id) ORDER BY r.number LOOP',
+        '  AND NOT EXISTS(SELECT FROM customer_private.problem_report_erasure e WHERE e.report_id=r.id)\n  AND NOT EXISTS(SELECT FROM customer_private.problem_report_self_removal s WHERE s.report_id=r.id) ORDER BY r.number LOOP',
+      );
+      expect(body(source(selfRemoval), 'removefn')).toBe(removal);
+      // the probe marker of the first availability check stays, and the lock order is the lifecycle lock, then the report lock
+      expect(removal).toContain('cutoff');
+      expect(removal.indexOf('customer.account.lifecycle:')).toBeLessThan(
+        removal.indexOf('customer.problem_report:'),
+      );
+    });
   });
 });
 
@@ -601,7 +817,7 @@ describe('the second file guard: absent, matching and changed, for each function
 });
 
 // The production upgrade path: a database that already has the first file and its registry row (as the merged
-// installer left it) is brought up by the migrator, which applies only the second file.
+// installer left it) is brought up by the migrator, which applies the second file and then the third.
 describe('upgrading a database that has only the first file through the migrator', () => {
   let t: Fixture;
   const grants = async () =>
@@ -739,7 +955,7 @@ describe('upgrading a database that has only the first file through the migrator
     await t?.close();
   });
 
-  test('applies only the second file, replaces both functions, keeps the grants and the older rows, and a second run changes nothing', async () => {
+  test('applies the second and the third file, replaces the functions, keeps the grants and the older rows, and a second run changes nothing', async () => {
     expect(await liveBodyHash(t)).toBe(firstBodyHash);
     expect(await liveBodyHash(t, plainText)).toBe(firstPlainHash);
     expect(await grants()).toEqual(settled);
@@ -749,6 +965,7 @@ describe('upgrading a database that has only the first file through the migrator
     ).toEqual([
       { name: file, sha256: sha256(source(file)) },
       { name: bounds, sha256: sha256(source(bounds)) },
+      { name: selfRemoval, sha256: sha256(source(selfRemoval)) },
     ]);
     const live = await liveBodyHash(t);
     expect(live).toBeDefined();
@@ -758,6 +975,7 @@ describe('upgrading a database that has only the first file through the migrator
     ).rows[0].prosrc as string;
     expect(body).toContain('transaction_timestamp()');
     expect(body).toContain('Command conflicts with original request');
+    expect(body).toContain('problem_report_self_removal');
     expect(await grants()).toEqual(settled);
     // the plain text rule is replaced: a new class character is refused, its neighbour and old rules are not changed
     const plain = await liveBodyHash(t, plainText);
@@ -896,6 +1114,547 @@ describe('upgrading a database that has only the first file through the migrator
       teamFiles(input({ page: '/operator/requests', detail: 'a long enough\u2028 detail' })),
     ).rejects.toMatchObject({ code: '22023' });
     await expect(addWords(await teamReport(), oldDetail)).rejects.toMatchObject({ code: '23514' });
+  });
+});
+
+// The guard of the third file, like the second one's: absent, matching and changed, for each of the five functions it
+// replaces. Each attempt runs the third file's SQL text on its own in a transaction that is always rolled back, and says
+// what it did and what the five functions and the new objects are afterwards (after a refusal, read behind a savepoint, so
+// a half-done replacement would show).
+describe('the third file guard: absent, matching and changed, for each function it replaces', () => {
+  let t: Fixture;
+  const notices: string[] = [];
+  const text = () => source(selfRemoval);
+  const differsFor = (signature: string) =>
+    `Problem report prerequisite function differs: ${signature.split('(')[0]}`;
+  const secondFileDiffers =
+    'Problem report prerequisite file differs: 0002_word_removal_bounds.sql';
+  const recordBoth = async (
+    db: Db,
+    first: string = firstFileHash,
+    second: string = boundsFileHash,
+  ) => {
+    await recordFirstFile(db, first);
+    await db.query(`INSERT INTO ${schema}.applied(name,sha256) VALUES($1,$2)`, [bounds, second]);
+  };
+  const objects = async (db: Db) =>
+    (
+      await db.query(
+        `SELECT to_regprocedure('${ownWords}') IS NOT NULL AS function,
+          to_regclass('customer_private.problem_report_self_removal') IS NOT NULL AS "table",
+          to_regprocedure('customer_private.problem_report_self_removal_check()') IS NOT NULL AS trigger_function`,
+      )
+    ).rows[0] as { function: boolean; table: boolean; trigger_function: boolean };
+  const attempt = async (
+    prepare: (db: Db) => Promise<void>,
+    probe?: (db: Db) => Promise<boolean>,
+  ) => {
+    const db = await t.owner.connect();
+    notices.length = 0;
+    db.on('notice', (notice) => notices.push(notice.message ?? ''));
+    try {
+      await db.query('BEGIN');
+      await prepare(db);
+      await db.query('SAVEPOINT guarded');
+      let error: string | undefined;
+      try {
+        await db.query(text());
+      } catch (caught) {
+        error = (caught as Error).message;
+        await db.query('ROLLBACK TO SAVEPOINT guarded');
+      }
+      const hashes: Record<string, string | undefined> = {};
+      for (const entry of replacedBySelfRemoval)
+        hashes[entry.signature] = await bodyHashIn(db, entry.signature);
+      return {
+        error,
+        hashes,
+        created: await objects(db),
+        probed: error === undefined && probe ? await probe(db) : undefined,
+      };
+    } finally {
+      await db.query('ROLLBACK');
+      db.removeAllListeners('notice');
+      db.release();
+    }
+  };
+  const nothingCreated = { function: false, table: false, trigger_function: false };
+
+  beforeAll(async () => {
+    t = await fixture('corridra_upgrade_third');
+  });
+  afterAll(async () => {
+    await t?.close();
+  });
+
+  describe('ABSENT: the first file is not applied', () => {
+    test('skips with a notice, raises no error and creates nothing, with no registry or an empty one', async () => {
+      const bare = await attempt(async () => undefined);
+      expect(bare.error).toBeUndefined();
+      expect(notices).toEqual([
+        'Problem report self-removal skipped: 0001_problem_reports.sql is not applied',
+      ]);
+      expect(bare.created).toEqual(nothingCreated);
+      for (const entry of replacedBySelfRemoval)
+        expect(bare.hashes[entry.signature]).toBeUndefined();
+      const withRegistry = await attempt(async (db) => {
+        for (const statement of registrySql) await db.query(statement);
+      });
+      expect(withRegistry.error).toBeUndefined();
+      expect(notices).toHaveLength(1);
+      expect(withRegistry.created).toEqual(nothingCreated);
+      for (const entry of replacedBySelfRemoval)
+        expect(await liveBodyHash(t, entry.signature)).toBeUndefined();
+      expect(
+        (await t.owner.query(`SELECT to_regclass('${schema}.applied') IS NOT NULL AS present`))
+          .rows[0].present,
+      ).toBe(false);
+    });
+
+    test('a registry that records both files while the functions are missing is not absent: it is refused', async () => {
+      const lost = await attempt((db) => recordBoth(db));
+      expect(lost.error).toBe(differsFor(removeWords));
+      expect(lost.created).toEqual(nothingCreated);
+    });
+
+    test('a new table or function with nothing else is not absent: it is refused, and nothing is created', async () => {
+      // the schemas are not there before the prerequisites, so each attempt makes its own (undone with the attempt)
+      const table = await attempt(async (db) => {
+        await db.query('CREATE SCHEMA customer_private');
+        await db.query('CREATE TABLE customer_private.problem_report_self_removal(id int)');
+      });
+      expect(table.error).toBe(differsFor(removeWords));
+      const fn = await attempt(async (db) => {
+        await db.query('CREATE SCHEMA customer');
+        await db.query(
+          `CREATE FUNCTION ${ownWords.replace('(uuid)', '(command uuid)')} RETURNS jsonb LANGUAGE sql AS 'SELECT NULL::jsonb'`,
+        );
+      });
+      expect(fn.error).toBe(differsFor(removeWords));
+    });
+  });
+
+  describe('with the prerequisites applied', () => {
+    let third: Awaited<ReturnType<typeof attempt>>;
+
+    beforeAll(async () => {
+      await migrateCustomerRealUse(t.owner);
+      await migrateCustomerAccountLifecycle(t.owner);
+      await t.owner.query(source(file));
+    });
+
+    test('CHANGED: a database with the first file alone, where the word removal is still its first form, is refused and nothing is created', async () => {
+      expect(await liveBodyHash(t)).toBe(firstBodyHash);
+      for (const recorded of [false, true]) {
+        const outcome = await attempt(async (db) => {
+          if (recorded) await recordFirstFile(db);
+        });
+        expect(outcome.error).toBe(differsFor(removeWords));
+        expect(outcome.created).toEqual(nothingCreated);
+        expect(outcome.hashes[removeWords]).toBe(firstBodyHash);
+      }
+    });
+
+    test('the second file created the forms the guard fingerprints, read live', async () => {
+      await t.owner.query(source(bounds));
+      expect(sha256(source(file))).toBe(firstFileHash);
+      expect(sha256(source(bounds))).toBe(boundsFileHash);
+      for (const entry of replacedBySelfRemoval) {
+        expect(await liveBodyHash(t, entry.signature), entry.signature).toBe(entry.hash);
+        expect(
+          (
+            await t.owner.query(
+              `SELECT prosecdef,provolatile,proconfig,proargtypes::text AS args FROM pg_proc WHERE oid=to_regprocedure('${entry.signature}')`,
+            )
+          ).rows[0],
+          entry.signature,
+        ).toEqual({
+          prosecdef: true,
+          provolatile: 'v',
+          proconfig: ['search_path=pg_catalog'],
+          args: entry.args,
+        });
+      }
+      third = await attempt(async () => undefined);
+      expect(third.error).toBeUndefined();
+    });
+
+    const changes = (entry: (typeof replacedBySelfRemoval)[number]) =>
+      [
+        [
+          'a changed body',
+          replaceBody(
+            `${entry.signature.split('(')[0]}(${entry.params})`,
+            entry.returns,
+            entry.language,
+            entry.returns === 'trigger'
+              ? 'BEGIN RETURN NULL; END'
+              : "BEGIN RETURN '{}'::jsonb; END",
+          ),
+        ],
+        ['a changed security setting', `ALTER FUNCTION ${entry.signature} SECURITY INVOKER`],
+        ['a changed volatility', `ALTER FUNCTION ${entry.signature} STABLE`],
+        [
+          'a changed search path',
+          `ALTER FUNCTION ${entry.signature} SET search_path=pg_catalog,public`,
+        ],
+        ['a removed search path', `ALTER FUNCTION ${entry.signature} RESET search_path`],
+        [
+          'a missing function while the others are there',
+          `ALTER FUNCTION ${entry.signature} RENAME TO elsewhere`,
+        ],
+      ] as const;
+    const changed = replacedBySelfRemoval.flatMap((entry) =>
+      changes(entry).map(([change, statement]) => ({ ...entry, change, statement })),
+    );
+
+    test.each(changed)(
+      '$name function: CHANGED by $change refuses, with the earlier files recorded or not, and replaces none of the five',
+      async ({ statement, signature, change }) => {
+        for (const recorded of [false, true]) {
+          const outcome = await attempt(async (db) => {
+            if (recorded) await recordBoth(db);
+            await db.query(statement);
+          });
+          expect(outcome.error, change).toBe(differsFor(signature));
+          expect(outcome.created).toEqual(nothingCreated);
+          for (const entry of replacedBySelfRemoval) {
+            if (entry.signature === signature) {
+              // the changed one is not the third file's either (a renamed one is not there at all)
+              if (!change.includes('missing'))
+                expect(outcome.hashes[signature]).not.toBe(third.hashes[signature]);
+            } else expect(outcome.hashes[entry.signature]).toBe(entry.hash);
+          }
+        }
+        for (const entry of replacedBySelfRemoval)
+          expect(await liveBodyHash(t, entry.signature)).toBe(entry.hash);
+      },
+    );
+
+    test('CHANGED: a registry row of the first or second file with another hash or none refuses, and creates and replaces nothing', async () => {
+      const cases: [string, (db: Db) => Promise<void>, string][] = [
+        ['the first file with another hash', (db) => recordBoth(db, 'f'.repeat(64)), fileDiffers],
+        [
+          'the second file with another hash',
+          (db) => recordBoth(db, firstFileHash, 'f'.repeat(64)),
+          secondFileDiffers,
+        ],
+        [
+          'no row for the first file',
+          async (db) => {
+            for (const statement of registrySql) await db.query(statement);
+            await db.query(`INSERT INTO ${schema}.applied(name,sha256) VALUES($1,$2)`, [
+              bounds,
+              boundsFileHash,
+            ]);
+          },
+          fileDiffers,
+        ],
+        ['no row for the second file', (db) => recordFirstFile(db), secondFileDiffers],
+        [
+          'no rows at all in a registry that exists',
+          async (db) => {
+            for (const statement of registrySql) await db.query(statement);
+          },
+          fileDiffers,
+        ],
+      ];
+      for (const [name, prepare, message] of cases) {
+        const outcome = await attempt(prepare);
+        expect(outcome.error, name).toBe(message);
+        expect(outcome.created, name).toEqual(nothingCreated);
+        for (const entry of replacedBySelfRemoval)
+          expect(outcome.hashes[entry.signature], name).toBe(entry.hash);
+      }
+    });
+
+    test('CHANGED: the new function or the new table already there refuses, and nothing is replaced', async () => {
+      const fn = await attempt(async (db) => {
+        await db.query(
+          `CREATE FUNCTION ${ownWords.replace('(uuid)', '(command uuid)')} RETURNS jsonb LANGUAGE sql AS 'SELECT NULL::jsonb'`,
+        );
+      });
+      expect(fn.error).toBe(
+        'Problem report self-removal already exists: customer.problem_report_remove_own_words',
+      );
+      const table = await attempt(async (db) => {
+        await db.query('CREATE TABLE customer_private.problem_report_self_removal(id int)');
+      });
+      expect(table.error).toBe(
+        'Problem report self-removal already exists: customer_private.problem_report_self_removal',
+      );
+      for (const outcome of [fn, table])
+        for (const entry of replacedBySelfRemoval)
+          expect(outcome.hashes[entry.signature]).toBe(entry.hash);
+    });
+
+    test('a statement that fails half way leaves nothing behind: the table made before the failure is rolled back with the rest', async () => {
+      // the index name is taken, so the second statement fails after the table was created
+      const outcome = await attempt(async (db) => {
+        await db.query('CREATE TABLE customer_private.problem_report_self_removal_command(id int)');
+      });
+      expect(outcome.error).toContain('problem_report_self_removal_command');
+      expect(outcome.error).toContain('already exists');
+      expect(outcome.created).toEqual(nothingCreated);
+      for (const entry of replacedBySelfRemoval)
+        expect(outcome.hashes[entry.signature]).toBe(entry.hash);
+    });
+
+    test.each(replacedBySelfRemoval)(
+      '$name function: EXACT MATCH replaces it, with the registry absent or recording both files, and it now names the self-removal table',
+      async ({ signature, hash }) => {
+        const named = async (db: Db) =>
+          (
+            (await db.query(`SELECT prosrc FROM pg_proc WHERE oid=to_regprocedure('${signature}')`))
+              .rows[0]!.prosrc as string
+          ).includes('problem_report_self_removal');
+        const unregistered = await attempt(async () => undefined, named);
+        expect(unregistered.error).toBeUndefined();
+        expect(unregistered.probed).toBe(true);
+        const registered = await attempt((db) => recordBoth(db), named);
+        expect(registered.error).toBeUndefined();
+        expect(registered.probed).toBe(true);
+        expect(notices).toEqual([]);
+        expect(registered.hashes).toEqual(unregistered.hashes);
+        expect(unregistered.hashes[signature]).not.toBe(hash);
+        expect(unregistered.created).toEqual({
+          function: true,
+          table: true,
+          trigger_function: true,
+        });
+        // and the attempt was undone
+        expect(await liveBodyHash(t, signature)).toBe(hash);
+        expect((await objects(t.owner)).table).toBe(false);
+      },
+    );
+
+    test('committed, the third file leaves security, volatility, search path and grants as they were, gives the runtime the new function alone, and a second run is refused', async () => {
+      await t.owner.query(text());
+      const state = async (signature: string) =>
+        (
+          await t.owner.query(
+            `SELECT prosecdef,provolatile,proconfig,proargtypes::text AS args,
+              has_function_privilege('corridra_runtime',oid,'EXECUTE') AS runtime,
+              has_function_privilege('corridra_auth',oid,'EXECUTE') AS auth,
+              has_function_privilege('public',oid,'EXECUTE') AS public
+             FROM pg_proc WHERE oid=to_regprocedure('${signature}')`,
+          )
+        ).rows[0];
+      for (const entry of replacedBySelfRemoval)
+        expect(await state(entry.signature), entry.signature).toEqual({
+          prosecdef: true,
+          provolatile: 'v',
+          proconfig: ['search_path=pg_catalog'],
+          args: entry.args,
+          runtime: entry.signature !== guardFunction,
+          auth: false,
+          public: false,
+        });
+      expect(await state(ownWords)).toEqual({
+        prosecdef: true,
+        provolatile: 'v',
+        proconfig: ['search_path=pg_catalog'],
+        args: '2950',
+        runtime: true,
+        auth: false,
+        public: false,
+      });
+      for (const entry of replacedBySelfRemoval)
+        expect(await liveBodyHash(t, entry.signature)).toBe(third.hashes[entry.signature]);
+      const again = await attempt(async () => undefined);
+      expect(again.error).toBe(differsFor(removeWords));
+    });
+  });
+});
+
+// The upgrade of a database that has the first two files and their registry rows (production after install 42835562806):
+// the migrator applies only the third file.
+describe('upgrading a database that has the first two files through the migrator', () => {
+  let t: Fixture;
+  let h: ReturnType<typeof harness>;
+  const storedTables = [
+    'customer_private.problem_report',
+    'customer_private.problem_report_words',
+    'customer_private.problem_report_status_event',
+    'customer_private.problem_report_erasure',
+  ];
+  const state = async () =>
+    (
+      await t.owner.query(
+        `SELECT p.oid::regprocedure::text AS signature,p.prosecdef,p.provolatile,p.proconfig,
+          has_function_privilege('corridra_runtime',p.oid,'EXECUTE') AS runtime,
+          has_function_privilege('corridra_auth',p.oid,'EXECUTE') AS auth,
+          has_function_privilege('public',p.oid,'EXECUTE') AS public,
+          encode(sha256(convert_to(p.prosrc,'UTF8')),'hex') AS hash
+         FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+         WHERE n.nspname IN ('app','customer','customer_private') AND (p.proname LIKE 'problem_report%' OR p.proname='staff_problem_actor')
+         ORDER BY 1`,
+      )
+    ).rows as { signature: string; hash: string }[];
+  const filenodes = async () =>
+    (
+      await t.owner.query(
+        `SELECT c.relname,c.relfilenode::text AS filenode,
+          (SELECT count(*)::int FROM pg_constraint k WHERE k.conrelid=c.oid AND k.contype='c' AND NOT k.convalidated) AS unvalidated
+         FROM pg_class c WHERE c.oid=ANY($1::regclass[]) ORDER BY c.relname`,
+        [storedTables],
+      )
+    ).rows;
+  const registry = async () =>
+    (await t.owner.query(`SELECT name,sha256,applied_at FROM ${schema}.applied ORDER BY name`))
+      .rows as { name: string; sha256: string; applied_at: Date }[];
+  const personRow = (reference: string) =>
+    h
+      .sql<{ r: Row }>('upa', 'SELECT customer.problem_report_get($1) AS r', [reference])
+      .then((row) => row.r);
+  const staffAs = (statement: string, params: unknown[]) =>
+    rawContext(t.runtime, t.users.owner!.ctx, statement, params).then((result) => result.rows[0]);
+  const references: string[] = [];
+  let before: { signature: string; hash: string }[];
+  let stored: Awaited<ReturnType<typeof filenodes>>;
+  let first: Awaited<ReturnType<typeof registry>>;
+
+  beforeAll(async () => {
+    t = await fixture('corridra_upgrade_third');
+    await migrateCustomerRealUse(t.owner);
+    await migrateCustomerAccountLifecycle(t.owner);
+    await t.owner.query(source(file));
+    await t.owner.query(source(bounds));
+    for (const statement of registrySql) await t.owner.query(statement);
+    for (const name of [file, bounds])
+      await t.owner.query(`INSERT INTO ${schema}.applied(name,sha256) VALUES($1,$2)`, [
+        name,
+        sha256(source(name)),
+      ]);
+    h = harness(t, 'prup3');
+    await h.admit(['upa']);
+    // no workspace: a person the staff erasure path cannot reach
+    for (const detail of ['first words of upa', 'second words of upa'])
+      references.push(
+        (
+          await h.sql<{ r: Row }>('upa', 'SELECT customer.problem_report_command($1,$2) AS r', [
+            randomUUID(),
+            JSON.stringify({
+              category: 'did_not_work',
+              pageKind: 'this_page',
+              page: '/account/x',
+              detail,
+            }),
+          ])
+        ).r.reference as string,
+      );
+    const id = (
+      await t.owner.query('SELECT id FROM customer_private.problem_report WHERE reference=$1', [
+        references[0],
+      ])
+    ).rows[0].id as string;
+    await staffAs('SELECT customer.problem_report_transition($1,$2,$3,$4,$5) AS r', [
+      randomUUID(),
+      id,
+      'received',
+      'in_review',
+      'We are reading what you wrote.',
+    ]);
+    before = await state();
+    stored = await filenodes();
+    first = await registry();
+  });
+  afterAll(async () => {
+    await t?.close();
+  });
+
+  test('is in the state the guard expects before the migrator runs', async () => {
+    expect(first.map((row) => row.name)).toEqual([file, bounds]);
+    expect(before.find((row) => row.signature === removeWords)?.hash).toBe(boundsBodyHash);
+    expect(
+      (
+        await t.owner.query(
+          `SELECT to_regclass('customer_private.problem_report_self_removal') IS NOT NULL AS made`,
+        )
+      ).rows[0].made,
+    ).toBe(false);
+  });
+
+  test('applies only the third file, keeps every grant, security and search path, and leaves the first two rows as they were', async () => {
+    await migrateCustomerProblemReports(t.owner);
+    const rows = await registry();
+    expect(rows.map((row) => row.name)).toEqual([file, bounds, selfRemoval]);
+    expect(rows.map((row) => row.sha256)).toEqual([
+      sha256(source(file)),
+      sha256(source(bounds)),
+      sha256(source(selfRemoval)),
+    ]);
+    expect(rows.slice(0, 2)).toEqual(first);
+    const after = await state();
+    const key = (row: Record<string, unknown>) => JSON.stringify({ ...row, hash: undefined });
+    const was = new Map(before.map((row) => [row.signature, row]));
+    const added = after.filter((row) => !was.has(row.signature));
+    expect(added.map((row) => row.signature).sort()).toEqual(
+      [ownWords, 'customer_private.problem_report_self_removal_check()'].sort(),
+    );
+    const replaced: string[] = [];
+    for (const row of after.filter((entry) => was.has(entry.signature))) {
+      // security, volatility, search path and grants are exactly as they were
+      expect(key(row), row.signature).toBe(key(was.get(row.signature)!));
+      if (row.hash !== was.get(row.signature)!.hash) replaced.push(row.signature);
+    }
+    expect(replaced.sort()).toEqual(replacedBySelfRemoval.map((entry) => entry.signature).sort());
+  });
+
+  test('older rows still read the same, no stored table was rewritten, and a second run changes nothing', async () => {
+    expect(await filenodes()).toEqual(stored);
+    for (const row of await filenodes()) expect(row.unvalidated).toBe(0);
+    for (const [index, detail] of ['first words of upa', 'second words of upa'].entries())
+      expect((await personRow(references[index]!)).words).toMatchObject({ detail });
+    const reviewed = (await personRow(references[0]!)).history as Row[];
+    expect(reviewed.map((row) => [row.state, row.note])).toEqual([
+      ['received', null],
+      ['in_review', 'We are reading what you wrote.'],
+    ]);
+    const queue = (await staffAs('SELECT customer.problem_report_queue(NULL,100,NULL) AS r', []))
+      .r as {
+      items: Row[];
+    };
+    for (const reference of references)
+      expect(queue.items.find((item) => item.reference === reference)).toMatchObject({
+        wordsRemoved: false,
+      });
+    const once = await registry();
+    const hashes = await state();
+    await migrateCustomerProblemReports(t.owner);
+    expect(await registry()).toEqual(once);
+    expect(await state()).toEqual(hashes);
+  });
+
+  test('the new function works on the older reports, and every read says the words were removed', async () => {
+    const done = (
+      await h.sql<{ r: Row }>('upa', 'SELECT customer.problem_report_remove_own_words($1) AS r', [
+        randomUUID(),
+      ])
+    ).r;
+    expect(done).toEqual({ removed: 2, changed: true });
+    for (const reference of references)
+      expect((await personRow(reference)).words).toEqual({ removed: true });
+    const list = (
+      await h.sql<{ r: Row[] }>('upa', 'SELECT customer.problem_report_list(NULL,25) AS r')
+    ).r;
+    expect(list.map((row) => row.wordsRemoved)).toEqual([true, true]);
+    const queue = (await staffAs('SELECT customer.problem_report_queue(NULL,100,NULL) AS r', []))
+      .r as {
+      items: Row[];
+    };
+    for (const reference of references)
+      expect(queue.items.find((item) => item.reference === reference)).toMatchObject({
+        wordsRemoved: true,
+        page: null,
+        detail: null,
+        pageKind: null,
+      });
+    // and the history, reference, category and filing time are as they were
+    expect(((await personRow(references[0]!)).history as Row[]).map((row) => row.note)).toEqual([
+      null,
+      'We are reading what you wrote.',
+    ]);
   });
 });
 

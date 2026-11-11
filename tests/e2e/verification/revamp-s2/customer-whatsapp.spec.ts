@@ -62,20 +62,26 @@ test.describe('with a support number set (port 3302)', () => {
     await expect(menu.getByRole('group', { name: 'Get Help' }).getByRole('menuitem')).toHaveCount(
       4,
     );
-    for (const name of ['Report a Problem', 'Stronger Colours']) {
-      const soon = menu.getByRole('menuitem', { name: new RegExp(name) });
-      await expect(soon, name).toHaveAttribute('aria-disabled', 'true');
-      await expect(soon, name).toContainText('Coming soon');
-      await expect(soon, name).not.toHaveAttribute('href', /.*/);
-    }
-    // Text Size and Less Movement are real controls, not placeholders, and WhatsApp did not change them.
+    const soon = menu.getByRole('menuitem', { name: /Report a Problem/ });
+    await expect(soon).toHaveAttribute('aria-disabled', 'true');
+    await expect(soon).toContainText('Coming soon');
+    await expect(soon).not.toHaveAttribute('href', /.*/);
+    // Text Size, Stronger Colours and Less Movement are real controls, not placeholders (W7, W10), and WhatsApp
+    // did not change them.
     await expect(menu.getByRole('group', { name: 'Text Size' })).toBeVisible();
+    await expect(menu.getByRole('menuitemcheckbox', { name: /Stronger Colours/ })).toBeVisible();
     await expect(menu.getByRole('menuitemcheckbox', { name: /Less Movement/ })).toBeVisible();
-    // One Coming soon row is left in each Help group that has one (Report a Problem, Stronger Colours).
-    for (const group of ['Get Help', 'Make It Easier to Read'])
-      await expect(menu.getByRole('group', { name: group }).getByText('Coming soon')).toHaveCount(
-        1,
-      );
+    await expect(
+      menu.getByRole('menuitem', { name: /Text Size|Stronger Colours|Less Movement/ }),
+    ).toHaveCount(0);
+    // Report a Problem is the one Coming soon row left in the Help groups (the phone Account menu also holds
+    // account rows of its own, so the count is taken per group).
+    await expect(
+      menu.getByRole('group', { name: 'Get Help' }).getByText('Coming soon'),
+    ).toHaveCount(1);
+    await expect(
+      menu.getByRole('group', { name: 'Make It Easier to Read' }).getByText('Coming soon'),
+    ).toHaveCount(0);
   });
 
   test('the keyboard reaches the row, and Escape closes the menu and returns to the button', async ({
