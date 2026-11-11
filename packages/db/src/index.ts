@@ -131,7 +131,9 @@ export async function withTenant<T>(
 }
 /**
  * Re-checks the caller's authority inside an open tenant transaction, for work that waited on a lock after
- * withTenant's own check: a role change or an expired authenticator check that committed meanwhile is seen here.
+ * withTenant's own check. Only changes committed meanwhile are caught (a role change, a revocation, a sign-out, a
+ * new or aged authenticator check); now() is fixed when the transaction began, so a check that merely ran out of
+ * time during the wait is not.
  */
 export async function reauthorize(tx: TenantTransaction, permission: Permission) {
   const a = await currentAuthority(tx.db, tx.tenantId, permission);

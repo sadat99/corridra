@@ -548,45 +548,139 @@ const setupRowWithoutMembership = async () => {
   );
   return { id, principalId };
 };
-const busy = { status: 503, code: 'RETRYABLE', message: 'Busy right now. Try again in a moment.' };
-
-test('a setup row without its membership is not cancelled or recorded, with or without the audit writer, and cancels once the membership exists', async () => {
-  for (const writerInstalled of [true, false]) {
-    const orphan = await setupRowWithoutMembership();
-    if (!writerInstalled)
-      await f.owner.query(
-        'ALTER FUNCTION identity.record_team_control(text,uuid,uuid) RENAME TO record_team_control_install_pending',
-      );
-    try {
-      await expect(
-        team.cancel(f.users.owner.ctx, { invitationId: orphan.id }),
-      ).rejects.toMatchObject(busy);
-    } finally {
-      if (!writerInstalled)
-        await f.owner.query(
-          'ALTER FUNCTION identity.record_team_control_install_pending(text,uuid,uuid) RENAME TO record_team_control',
-        );
-    }
-    expect(await invitationRows(orphan.id)).toBe(1);
-    expect(await audit(orphan.principalId)).toEqual([]);
-    expect(await pendingMember(orphan.principalId)).toBeUndefined();
-  }
-  // Recovery: once the pending membership exists, the same cancel completes and is recorded.
-  const orphan = await setupRowWithoutMembership();
-  await rawContext(
+// A pending membership for a principal, written as the owner session the way invite writes it.
+const addPendingMembership = (principalId: string) =>
+  rawContext(
     f.owner,
     f.users.owner.ctx,
     'INSERT INTO app.membership(tenant_id,user_id,role,allowed_countries) SELECT $1,$2,$3,allowed_countries FROM app.membership WHERE tenant_id=$1 AND user_id=$4',
-    [f.tenantA, orphan.principalId, 'operator', f.users.owner.id],
+    [f.tenantA, principalId, 'operator', f.users.owner.id],
   );
+const busy = { status: 503, code: 'RETRYABLE', message: 'Busy right now. Try again in a moment.' };
+
+// Removes the identity rows of setup rows that were never cancelled; a cancelled one keeps its rows for its audit row.
+const removeSetupRows = async (rows: { id: string; principalId: string }[]) => {
+  for (const row of rows) {
+    if ((await audit(row.principalId)).length || (await pendingMember(row.principalId))) continue;
+    const identityId = await identityOf(row.principalId);
+    await f.owner.query('DELETE FROM identity.verification WHERE id=$1', [row.id]);
+    await f.owner.query('DELETE FROM identity.principal WHERE id=$1', [row.principalId]);
+    await f.owner.query('DELETE FROM identity."user" WHERE id=$1', [identityId]);
+  }
+};
+
+test('a setup row without its membership is not cancelled or recorded, with or without the audit writer, and cancels once the membership exists', async () => {
+  const created: { id: string; principalId: string }[] = [];
+  try {
+    for (const writerInstalled of [true, false]) {
+      const orphan = await setupRowWithoutMembership();
+      created.push(orphan);
+      if (!writerInstalled)
+        await f.owner.query(
+          'ALTER FUNCTION identity.record_team_control(text,uuid,uuid) RENAME TO record_team_control_install_pending',
+        );
+      try {
+        await expect(
+          team.cancel(f.users.owner.ctx, { invitationId: orphan.id }),
+        ).rejects.toMatchObject(busy);
+      } finally {
+        if (!writerInstalled)
+          await f.owner.query(
+            'ALTER FUNCTION identity.record_team_control_install_pending(text,uuid,uuid) RENAME TO record_team_control',
+          );
+      }
+      expect(await invitationRows(orphan.id)).toBe(1);
+      expect(await audit(orphan.principalId)).toEqual([]);
+      expect(await pendingMember(orphan.principalId)).toBeUndefined();
+    }
+    // Recovery: once the pending membership exists, the same cancel completes and is recorded.
+    const orphan = await setupRowWithoutMembership();
+    created.push(orphan);
+    await addPendingMembership(orphan.principalId);
+    await expect(team.cancel(f.users.owner.ctx, { invitationId: orphan.id })).resolves.toEqual({
+      cancelled: true,
+      audit: 'recorded',
+    });
+    expect(await invitationRows(orphan.id)).toBe(0);
+    expect((await pendingMember(orphan.principalId)).revoked_at).not.toBeNull();
+    expect(await audit(orphan.principalId)).toMatchObject([
+      { action: 'team.invitation.cancelled', reference_id: orphan.id },
+    ]);
+  } finally {
+    await removeSetupRows(created);
+  }
+});
+
+test('an active membership committed after the revoke ran is not left behind: cancel is refused and changes nothing, and a retry cancels it', async () => {
+  // Invite writes its membership in a transaction of its own, without the workspace lock, so it can commit after
+  // cancel's revoke matched no row. A temporary trigger pauses cancel right after that revoke, on a lock the test
+  // holds, while the test commits the active membership, as such an invite would.
+  const orphan = await setupRowWithoutMembership();
+  const pauseKey = randomUUID();
+  await f.owner.query(
+    `CREATE FUNCTION app.pause_after_revoke_test() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER AS $$
+     BEGIN PERFORM pg_advisory_xact_lock(hashtextextended('${pauseKey}',0)); RETURN NULL; END $$;
+     CREATE TRIGGER pause_after_revoke_test AFTER UPDATE ON app.membership FOR EACH STATEMENT
+     EXECUTE FUNCTION app.pause_after_revoke_test()`,
+  );
+  const holder = await f.owner.connect();
+  let cancelled: Promise<unknown> | undefined;
+  try {
+    await holder.query('BEGIN');
+    await holder.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [pauseKey]);
+    cancelled = team.cancel(f.users.owner.ctx, { invitationId: orphan.id });
+    cancelled.catch(() => undefined);
+    for (let tries = 0; ; tries++) {
+      const waiting = (
+        await f.owner.query(
+          "SELECT count(*)::int AS n FROM pg_locks WHERE locktype='advisory' AND NOT granted",
+        )
+      ).rows[0].n as number;
+      if (waiting) break;
+      expect(tries).toBeLessThan(200);
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    await addPendingMembership(orphan.principalId);
+  } finally {
+    await holder.query('COMMIT');
+    holder.release();
+  }
+  try {
+    await expect(cancelled).rejects.toMatchObject(busy);
+  } finally {
+    await f.owner.query(
+      'DROP TRIGGER pause_after_revoke_test ON app.membership; DROP FUNCTION app.pause_after_revoke_test()',
+    );
+  }
+  expect(await invitationRows(orphan.id)).toBe(1);
+  expect(await audit(orphan.principalId)).toEqual([]);
+  expect((await pendingMember(orphan.principalId)).revoked_at).toBeNull();
+  // Recovery: the retry revokes the active membership and cancels.
   await expect(team.cancel(f.users.owner.ctx, { invitationId: orphan.id })).resolves.toEqual({
     cancelled: true,
     audit: 'recorded',
   });
-  expect(await invitationRows(orphan.id)).toBe(0);
   expect((await pendingMember(orphan.principalId)).revoked_at).not.toBeNull();
-  expect(await audit(orphan.principalId)).toMatchObject([
-    { action: 'team.invitation.cancelled', reference_id: orphan.id },
+  expect(await invitationRows(orphan.id)).toBe(0);
+});
+
+test('an invitation whose membership is already revoked still cancels and is recorded', async () => {
+  const original = await invite();
+  await changeMemberNow(new AccessService(f.runtime), f.users.owner.ctx, {
+    userId: original.principalId,
+    role: 'operator',
+    revoked: true,
+  });
+  const before = await pendingMember(original.principalId);
+  expect(before.revoked_at).not.toBeNull();
+  await expect(team.cancel(f.users.owner.ctx, { invitationId: original.id })).resolves.toEqual({
+    cancelled: true,
+    audit: 'recorded',
+  });
+  expect(await pendingMember(original.principalId)).toEqual(before);
+  expect(await invitationRows(original.id)).toBe(0);
+  expect(await audit(original.principalId)).toMatchObject([
+    { action: 'team.invitation.cancelled', reference_id: original.id },
   ]);
 });
 

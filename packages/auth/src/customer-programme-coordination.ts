@@ -213,8 +213,9 @@ type Receipt = {
   expiresAt: string;
 };
 
-// A coordination writer that lost a lock wait (deadlock victim or lock timeout) wrote nothing: its transaction rolled
-// back. Retrying with the same command id is safe, a completed command replays its first result.
+// A coordination writer that lost a lock wait as a deadlock victim (40P01) wrote nothing: its transaction rolled
+// back. Retrying with the same command id is safe, a completed command replays its first result. 55P03 (lock not
+// available) is mapped defensively: no lock_timeout or NOWAIT is set on these paths today.
 async function retryableWhenBusy<T>(write: () => Promise<T>): Promise<T> {
   try {
     return await write();

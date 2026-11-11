@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { withTenant, type DatabaseClient, type DatabasePool } from '../../packages/db/src/index';
 import { TeamControl } from '../../packages/auth/src/team-control';
+import { CustomerSessionBoundary } from '../../packages/auth/src/customer-session';
 
 // CRUD G10 follow-up: a transaction that fails is rolled back, and when the ROLLBACK itself fails the connection is
 // released with that error, so the pool discards it instead of handing a connection in an unknown state to the next
@@ -17,7 +18,15 @@ type FakeClient = { statements: string[]; released: unknown[] };
 function fakePool(failAt: RegExp, failure: Error, rollbackFailure?: Error) {
   const client: FakeClient = { statements: [], released: [] };
   const pool: DatabasePool = {
-    query: (() => Promise.reject(new Error('not used'))) as DatabasePool['query'],
+    // Pool-level statements (the restricted-role checks and session proof of the customer boundary) succeed. A
+    // restricted, non-owning role answers member true and every other flag false.
+    query: (async () => ({
+      command: 'SELECT',
+      oid: 0,
+      fields: [],
+      rows: [{ member: true }],
+      rowCount: 1,
+    })) as DatabasePool['query'],
     end: () => Promise.resolve(),
     connect: async () =>
       ({
@@ -94,5 +103,56 @@ describe('team control auth transaction', () => {
     ).rejects.toBe(original);
     expect(auth.client.statements).toEqual(['BEGIN', expect.stringMatching(failAt), 'ROLLBACK']);
     expect(auth.client.released).toEqual([undefined]);
+  });
+});
+
+describe('customer session transaction', () => {
+  class Probe extends CustomerSessionBoundary {
+    run<T>(work: () => Promise<T>) {
+      return this.transaction(work);
+    }
+  }
+  const probe = (runtime: DatabasePool, auth: DatabasePool) =>
+    new Probe(
+      runtime,
+      auth,
+      {
+        enabled: true,
+        synthetic: true,
+        production: false,
+        issuer: 'https://ep-release-fixture.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth',
+      },
+      async () => ({
+        subject: 'synthetic-release-fixture',
+        emailVerified: true,
+        expiresAt: new Date(Date.now() + 3600000),
+      }),
+    );
+
+  test('a failed ROLLBACK still reports the original error and releases the connection with the rollback error', async () => {
+    const original = new Error('work failed');
+    const rollbackFailure = new Error('rollback failed');
+    const runtime = fakePool(/^$/, new Error('not used'), rollbackFailure);
+    const auth = fakePool(/^$/, new Error('not used'));
+    await expect(
+      probe(runtime.pool, auth.pool).run(async () => {
+        throw original;
+      }),
+    ).rejects.toBe(original);
+    expect(runtime.client.statements.at(-1)).toBe('ROLLBACK');
+    expect(runtime.client.released).toEqual([rollbackFailure]);
+  });
+
+  test('a successful ROLLBACK reports the original error and returns the connection to the pool', async () => {
+    const original = new Error('work failed');
+    const runtime = fakePool(/^$/, new Error('not used'));
+    const auth = fakePool(/^$/, new Error('not used'));
+    await expect(
+      probe(runtime.pool, auth.pool).run(async () => {
+        throw original;
+      }),
+    ).rejects.toBe(original);
+    expect(runtime.client.statements.at(-1)).toBe('ROLLBACK');
+    expect(runtime.client.released).toEqual([undefined]);
   });
 });

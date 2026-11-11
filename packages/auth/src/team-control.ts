@@ -36,8 +36,10 @@ import { setupIdentifier, setupInvitation } from './operator-setup';
 // member changes take) -> owner authority checked again -> auth invitation row FOR UPDATE -> auth
 // KEY SHARE on the target principal -> runtime revoke of the membership -> auth audit write and
 // invitation delete -> commit auth -> commit runtime. The second authority check runs after the
-// lock wait, so a role change or an expired authenticator check that committed meanwhile is refused
-// before anything is read or written. A runtime connection is always taken before an auth
+// lock wait, so a change committed meanwhile (a role change, a revocation, a sign-out or an
+// authenticator change) is refused before anything is read or written. now() is fixed when the
+// transaction began, so a check that only ran out of time during the wait is not caught there.
+// A runtime connection is always taken before an auth
 // connection. Invariant, among the paths in this package that touch these rows (invite, resend,
 // reset, operator setup and member changes): nothing the auth transaction waits for is held by a
 // transaction that waits on the runtime transaction's locks. The principal key share is taken
@@ -284,7 +286,8 @@ export class TeamControl {
     return withTenant(this.runtime, ctx, 'members.manage', async (t) => {
       // The same workspace lock as AccessService.changeMember, so the two never interleave.
       await t.db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [t.tenantId]);
-      // A demotion or an expired authenticator check may have committed while this waited for the lock.
+      // A role change, revocation, sign-out or authenticator change may have committed during the wait.
+      // Only committed changes are seen: now() is fixed at BEGIN, so time alone does not expire the check.
       await reauthorize(t, 'members.manage');
       return inAuth(this.auth, async (q) => {
         const row = (
@@ -306,18 +309,22 @@ export class TeamControl {
           'UPDATE app.membership SET revoked_at=now() WHERE tenant_id=$1 AND user_id=$2 AND revoked_at IS NULL',
           [t.tenantId, invite.principalId],
         );
-        // A setup row whose membership is missing altogether cannot be cancelled with a membership change,
-        // so the invitation stays and nothing is recorded; the owner can try again once it is repaired.
-        if (
-          !revoked.rowCount &&
-          !(
-            await t.db.query('SELECT 1 FROM app.membership WHERE tenant_id=$1 AND user_id=$2', [
-              t.tenantId,
-              invite.principalId,
-            ])
-          ).rowCount
-        )
-          throw new DomainError('Busy right now. Try again in a moment.', 503, 'RETRYABLE');
+        // When the revoke matched nothing, cancel goes on only if the membership exists and is already
+        // revoked. A missing membership (a setup row left half made), or an active one the revoke missed
+        // (an invite that committed its membership after the revoke ran, since invite does not take the
+        // workspace lock), leaves the invitation and records nothing. One statement, so both counts come
+        // from the same snapshot.
+        if (!revoked.rowCount) {
+          const membership = (
+            await t.db.query<{ total: number; active: number }>(
+              `SELECT count(*)::int AS total,count(*) FILTER (WHERE revoked_at IS NULL)::int AS active
+               FROM app.membership WHERE tenant_id=$1 AND user_id=$2`,
+              [t.tenantId, invite.principalId],
+            )
+          ).rows[0];
+          if (!membership.total || membership.active)
+            throw new DomainError('Busy right now. Try again in a moment.', 503, 'RETRYABLE');
+        }
         const audit = await recordOwnerAction(
           q,
           ctx,
