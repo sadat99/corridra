@@ -44,8 +44,9 @@ export async function generateMetadata({
     title,
     description,
     alternates: { canonical: url },
-    // A sample page is never offered to search engines.
-    robots: { index: !page.sample, follow: !page.sample },
+    // Owner decision, 11 Nov 2026: no programme page is offered to search engines, sample or real. A page is
+    // reached through the address its organiser shares.
+    robots: { index: false, follow: false },
     openGraph: { title: page.programme.title, description, url, type: 'website' },
     twitter: { card: 'summary', title: page.programme.title, description },
   };

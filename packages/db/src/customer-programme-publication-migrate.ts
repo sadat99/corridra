@@ -1,11 +1,18 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerParticipants } from './customer-participant-migrate';
 // Optional public programme page and applications (ADR-080). The module holds several files: each applied file is
 // immutable (its hash is recorded), a correction is a new file, and only files not yet recorded are applied.
 // This installer never enables application exposure: the switch CORRIDRA_PROGRAMME_PAGES stays the owner's choice.
-export async function migrateCustomerProgrammePublication(pool: DatabasePool) {
+export function migrateCustomerProgrammePublication(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerProgrammePublication', () =>
+    migrateCustomerProgrammePublicationRun(pool),
+  );
+}
+
+async function migrateCustomerProgrammePublicationRun(pool: DatabasePool) {
   await migrateCustomerParticipants(pool);
   const directory = new URL('../customer-programme-publication-migrations/', import.meta.url);
   const sources = new Map<string, { sql: string; hash: string }>();

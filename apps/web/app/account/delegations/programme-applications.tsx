@@ -228,6 +228,12 @@ function Scoped({ subject, issuer, target, asked }: Props) {
                 />{' '}
                 {pp('pp.apply.consent')}
               </label>
+              <p className="programme-note">
+                {pp('pp.apply.privacy')}{' '}
+                <a className="text-link" href="/privacy">
+                  {pp('pp.apply.privacyLink')}
+                </a>
+              </p>
               {error && <p role="alert">{error}</p>}
               <button type="submit" className="primary-link" disabled={busy}>
                 {busy ? pp('pp.apply.sending') : pp('pp.apply.send')}
