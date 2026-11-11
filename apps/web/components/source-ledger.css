@@ -350,3 +350,7 @@
     overflow-wrap: anywhere;
   }
 }
+/* The quote version and currency under each supplier name: tabular figures, like every other number here. */
+.ledger-num {
+  font-variant-numeric: tabular-nums;
+}
