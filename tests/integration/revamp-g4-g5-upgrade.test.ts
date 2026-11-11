@@ -30,6 +30,7 @@ const changedFunctions = [
   'customer_private.account_chain_tenant(uuid)',
 ];
 const newFunctions = [
+  'customer.erasure_request_reach(uuid)',
   'customer_private.erasure_in_scope(uuid)',
   'customer_private.member_role_keeps_access_guard()',
   'customer_private.revocation_keeps_access_guard()',
@@ -47,8 +48,12 @@ const newFiles = {
     '0002_account_chain_and_undo_words.sql',
     '0003_erasure_queue_scope.sql',
     '0004_erasure_scope_by_workspaces.sql',
+    '0005_removed_member_erasure.sql',
   ],
 };
+// The one new function an application login may call: the staff reach list of the erasure file (owner decisions 11 Nov 2026:
+// "Yes, add an erasure path (Recommended)", "Staff by hand, tracked (Recommended)"). It is granted to the runtime login only.
+const staffCallable = ['customer.erasure_request_reach(uuid)'];
 const recordTables = [
   'customer_private.workspace_revision',
   'customer_private.workspace_lifecycle_request',
@@ -193,17 +198,21 @@ describe('the follow-up reaches an installed database', () => {
     expect([...after.keys()].filter((name) => !before.functions.has(name)).sort()).toEqual(
       newFunctions,
     );
-    // no new function is callable by the application logins except through the customer functions that already were
-    for (const name of newFunctions)
-      expect(
-        (
-          await old.owner.query('SELECT has_function_privilege($1,$2::regprocedure,$3) AS yes', [
-            'corridra_runtime',
-            name,
-            'EXECUTE',
-          ])
-        ).rows[0].yes,
-      ).toBe(false);
+    // no new function is callable by the application logins, except the staff reach list, which only the runtime login may call
+    for (const name of newFunctions) {
+      const rights = (
+        await old.owner.query(
+          `SELECT has_function_privilege('corridra_runtime',$1::regprocedure,'EXECUTE') AS runtime,
+            has_function_privilege('corridra_auth',$1::regprocedure,'EXECUTE') AS auth,has_function_privilege('public',$1::regprocedure,'EXECUTE') AS pub`,
+          [name],
+        )
+      ).rows[0];
+      expect(rights, name).toEqual({
+        runtime: staffCallable.includes(name),
+        auth: false,
+        pub: false,
+      });
+    }
     const names = await triggers(old);
     expect(before.triggers.filter((name) => !names.includes(name))).toEqual([]);
     expect(names.filter((name) => !before.triggers.includes(name)).sort()).toEqual([
@@ -306,6 +315,7 @@ describe('the follow-up reaches an installed database', () => {
       [accountSchema, '0001_account_closure_and_erasure.sql', migrateCustomerAccountLifecycle],
       [accountSchema, '0003_erasure_queue_scope.sql', migrateCustomerAccountLifecycle],
       [accountSchema, '0004_erasure_scope_by_workspaces.sql', migrateCustomerAccountLifecycle],
+      [accountSchema, '0005_removed_member_erasure.sql', migrateCustomerAccountLifecycle],
     ] as const) {
       const recorded = (
         await old.owner.query(`SELECT sha256 FROM ${schema}.applied WHERE name=$1`, [name])

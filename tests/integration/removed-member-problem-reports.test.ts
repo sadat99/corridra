@@ -4,6 +4,7 @@ import {
   buildWorld,
   hideNewFiles,
   openNewFiles,
+  setAccountLifecycleControl,
   type Row,
   type World,
 } from './removed-member-support';
@@ -11,16 +12,17 @@ import { rawContext } from './support';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateCommercialReadiness } from '../../packages/db/src/commercial-readiness-migrate';
 import { migrateCustomerProblemReports } from '../../packages/db/src/customer-problem-report-migrate';
+import { migrateCustomerAccountLifecycle } from '../../packages/db/src/customer-account-lifecycle-migrate';
 import { refreshInstalledOptionalModules } from '../../packages/db/src/customer-optional-refresh';
 
 // Removed members and problem reports (ADR-078; owner decision, 11 Nov 2026: "No, remove access (Recommended)"). A problem
 // report is the person's own words about the product, not a workspace request. A person who has left a workspace can still
 // file, list, read and remove the words of their own problem reports, with the account lifecycle control closed and open, and no
-// problem_report function is changed by any of the ten files. What the owner decision does widen is recorded here as a test:
-// a person who has no workspace left cannot hold an erasure request (ADR-078 gap 2); the follow-up that adds an erasure path
-// is a separate pull request, decided by the owner on 11 Nov 2026 ("Yes, add an erasure path (Recommended)"), and the withdrawal
-// exception is not decided. Fails on main (the signed-in cases need the new files only for the removal of the workspace
-// requests they rely on to be real).
+// problem_report function is changed by any of the eleven files. The erasure file (account lifecycle 0005, owner decision 11 Nov
+// 2026: "Yes, add an erasure path (Recommended)") closes ADR-078 gap 2: a person with no workspace left now holds an erasure
+// request, and staff remove the words of their reports under it. A person who never had a workspace is still refused (gap 1).
+// The withdrawal exception is not decided ("No, workspace decides (Recommended)"). Fails on main (the signed-in cases need the
+// new files only for the removal of the workspace requests they rely on to be real; the gap 2 case needs the erasure file).
 vi.mock('node:fs/promises', async (importOriginal) => {
   const real = await importOriginal<typeof import('node:fs/promises')>();
   const readdir = (async (path: unknown, ...rest: unknown[]) => {
@@ -59,22 +61,8 @@ const removeOwn = (person: string) =>
   w
     .row(person, 'SELECT customer.problem_report_remove_own_words($1) AS r', [randomUUID()])
     .then((row) => row.r as Row);
-const setAccountControl = async (enabled: boolean) => {
-  const latest = (
-    await w.f.owner.query(
-      'SELECT coalesce(max(version),0)::int AS v FROM customer_private.account_lifecycle_control',
-    )
-  ).rows[0].v as number;
-  await w.f.owner.query(
-    'INSERT INTO customer_private.account_lifecycle_control(version,enabled,executor_id,reason) VALUES($1,$2,$3,$4)',
-    [
-      latest + 1,
-      enabled,
-      w.f.serviceId,
-      'Fixture control for the removed member problem report tests',
-    ],
-  );
-};
+const setAccountControl = (enabled: boolean) =>
+  setAccountLifecycleControl(w, enabled, 'removed member problem report');
 // Every problem_report function, by what is stored: body, settings, security mode, owner and grants.
 const reportFunctions = async () =>
   Object.fromEntries(
@@ -91,7 +79,7 @@ const as = (who: 'owner' | 'operator', text: string, params: unknown[] = []) =>
   rawContext(w.f.runtime, w.f.users[who]!.ctx, text, params).then((result) => result.rows[0]);
 
 beforeAll(async () => {
-  // The state production is in: problem reports installed, the ten new files not yet there.
+  // The state production is in: problem reports installed, the ten new files and the erasure file not yet there.
   hideNewFiles();
   w = await buildWorld({ requestsPerPerson: 1, extraPeople: ['gone'] });
   await migrateCustomerProblemReports(w.f.owner);
@@ -100,6 +88,8 @@ beforeAll(async () => {
   await migrateCustomerRealUse(w.f.owner);
   await migrateCommercialReadiness(w.f.owner);
   await refreshInstalledOptionalModules(w.f.owner);
+  // The refresh does not reach the account lifecycle module, so its newest file (the erasure file) is applied here.
+  await migrateCustomerAccountLifecycle(w.f.owner);
   await w.join('olive', 'gone', w.W);
   await w.leave('lena', w.W);
   await w.leave('gone', w.W);
@@ -164,8 +154,8 @@ describe.each([
   });
 });
 
-describe('CONTROL (ADR-078, holds on main too): the staff erasure path and the gap that stays', () => {
-  test('staff remove the words of a removed member under an erasure request as before', async () => {
+describe('the staff erasure path, and who can hold an erasure request', () => {
+  test('CONTROL (ADR-078, holds on main too): staff remove the words of a removed member under an erasure request as before', async () => {
     await setAccountControl(true);
     const reference = (await file('lena', body({ detail: 'Words staff will remove.' })))
       .reference as string;
@@ -199,21 +189,60 @@ describe('CONTROL (ADR-078, holds on main too): the staff erasure path and the g
     expect((await get('lena', reference)).words).toEqual({ removed: true });
   });
 
-  test('a person with no workspace left still cannot hold an erasure request: ADR-078 gap 2 is unchanged, and the follow-up is a separate change', async () => {
+  test('a person with no workspace left now holds an erasure request, and staff remove the words of their reports (ADR-078 gap 2 is closed: "Yes, add an erasure path (Recommended)"; fails on main)', async () => {
+    await setAccountControl(true);
+    const reference = (await file('gone', body({ detail: 'Words staff will remove for gone.' })))
+      .reference as string;
+    const filed = (
+      await w.row('gone', 'SELECT customer.account_lifecycle_command($1,$2,$3) AS r', [
+        randomUUID(),
+        'file_erasure',
+        '{}',
+      ])
+    ).r as Row;
+    expect(filed.changed).toBe(true);
+    const requestId = (
+      await w.f.owner.query(
+        'SELECT id FROM customer_private.erasure_request WHERE principal_id=$1 ORDER BY number DESC LIMIT 1',
+        [w.principals.gone],
+      )
+    ).rows[0].id as string;
+    await as('owner', 'SELECT customer.erasure_transition($1,$2,$3,$4,$5) AS r', [
+      randomUUID(),
+      requestId,
+      'received',
+      'in_progress',
+      null,
+    ]);
+    const removed = (
+      await as('owner', 'SELECT customer.problem_report_remove_words($1,$2) AS r', [
+        randomUUID(),
+        requestId,
+      ])
+    ).r as Row;
+    expect(Number(removed.removed)).toBeGreaterThanOrEqual(1);
+    expect((await get('gone', reference)).words).toEqual({ removed: true });
+  });
+
+  test('CONTROL (ADR-078 gap 1, holds on main too): a person who never had a workspace is still refused, and nothing is written', async () => {
     const requests = async () =>
       (
         await w.f.owner.query(
-          'SELECT count(*)::int AS n FROM customer_private.problem_report_erasure',
+          'SELECT (SELECT count(*) FROM customer_private.erasure_request)::int AS n, (SELECT count(*) FROM customer_private.account_chain)::int AS c',
         )
-      ).rows[0].n as number;
+      ).rows[0] as { n: number; c: number };
     const before = await requests();
     await expect(
-      w.row('gone', 'SELECT customer.account_lifecycle_command($1,$2,$3) AS r', [
+      w.row('stranger', 'SELECT customer.account_lifecycle_command($1,$2,$3) AS r', [
         randomUUID(),
         'file_erasure',
         '{}',
       ]),
-    ).rejects.toThrow();
-    expect(await requests()).toBe(before);
+    ).rejects.toMatchObject({
+      code: '23514',
+      message:
+        'There is no workspace on this account. Write to the privacy contact on the privacy page.',
+    });
+    expect(await requests()).toEqual(before);
   });
 });

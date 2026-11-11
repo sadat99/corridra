@@ -1,4 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { fixture } from './support';
 import { digest, type Fixture } from './revamp-g4-support';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
@@ -104,9 +106,28 @@ describe('installing the account lifecycle module', () => {
     // the workspace lifecycle module is installed first, and also left closed
     expect(await workspaceModule(f)).toBe(true);
     expect(await workspaceOpen(f)).toBe(false);
-    expect((await applied(f)).map((row) => row.name)).toContain(
+    // five files since the erasure file (owner decisions 11 Nov 2026), each recorded with the hash of its own text
+    expect((await applied(f)).map((row) => row.name)).toEqual([
       '0001_account_closure_and_erasure.sql',
-    );
+      '0002_account_chain_and_undo_words.sql',
+      '0003_erasure_queue_scope.sql',
+      '0004_erasure_scope_by_workspaces.sql',
+      '0005_removed_member_erasure.sql',
+    ]);
+    for (const row of await applied(f))
+      expect(row.sha256).toBe(
+        createHash('sha256')
+          .update(
+            readFileSync(
+              new URL(
+                `../../packages/db/customer-account-lifecycle-migrations/${row.name}`,
+                import.meta.url,
+              ),
+              'utf8',
+            ),
+          )
+          .digest('hex'),
+      );
     expect(await digest(f, tables)).toEqual(before);
     const once = await applied(f);
     await migrateCustomerAccountLifecycle(f.owner);

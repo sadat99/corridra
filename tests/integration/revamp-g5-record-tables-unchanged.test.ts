@@ -189,10 +189,24 @@ describe('the module SQL', () => {
         /\bALTER\s+TABLE\s+(?!customer_private\.account_chain)[a-z_.]+\s+(ADD|DROP|ALTER)/i,
       );
       // every function that is replaced is first compared with the exact text it replaces
-      const replaced = [...text.matchAll(/CREATE\s+OR\s+REPLACE\s+FUNCTION\s+([a-z_.]+)/gi)].length;
+      const replacedNames = [
+        ...text.matchAll(/CREATE\s+OR\s+REPLACE\s+FUNCTION\s+([a-z_.]+)/gi),
+      ].map((match) => match[1]!);
       const executed = [...text.matchAll(/\bEXECUTE\s+updated\b/g)].length;
       const guards = [...text.matchAll(/encode\(sha256\(convert_to\(/g)].length;
-      expect(guards, file).toBe(replaced + executed);
+      const raw = readFileSync(resolve(migrations, file), 'utf8');
+      const block = /^\s*-- fingerprint-begin\s*$([\s\S]*?)^\s*-- fingerprint-end\s*$/m.exec(raw);
+      if (block) {
+        // A file with a fingerprint block (the erasure file, 0005, owner decisions 11 Nov 2026) compares the stored parts of each
+        // function it replaces (body, settings, security mode, volatility, argument types, grants), one fingerprint row per function.
+        const fingerprinted = [...block[1]!.matchAll(/\('([^']+)','[0-9a-f]{64}','[^']*'\)/g)].map(
+          (match) => match[1]!.split('(')[0],
+        );
+        expect([...fingerprinted].sort(), file).toEqual([...replacedNames].sort());
+        expect(executed, file).toBe(0);
+      } else {
+        expect(guards, file).toBe(replacedNames.length + executed);
+      }
       for (const match of text.matchAll(/\bINSERT\s+INTO\s+([a-z_.]+)/g))
         expect(match[1], file).toBe('customer_private.account_chain');
     }

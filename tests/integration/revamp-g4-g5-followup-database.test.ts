@@ -160,6 +160,7 @@ beforeAll(async () => {
     'xan',
     'tim',
     'uma',
+    'nan',
   ]);
   await migrateCustomerAccountLifecycle(f.owner);
   await h.setControl(true);
@@ -434,14 +435,46 @@ describe('the workspace that carries a person account events', () => {
     expect(await counts()).toEqual(before);
   });
 
-  test('a person removed before ever closing or filing still needs a workspace, and the final path is told the truth', async () => {
+  // Owner decision, 11 Nov 2026: "Yes, add an erasure path (Recommended)" (account lifecycle 0005). Before it, a person removed
+  // from their only workspace before ever closing or filing was refused with the privacy contact text (ADR-078 gap 2); now the
+  // chain falls back to the workspace they left. A person who never had a workspace is still refused (gap 1).
+  test('a person removed before ever closing or filing keeps the right to file and close: the chain is the workspace they left', async () => {
     const t = await joined('sue');
     await revoke(owner, t.target, t.memberId);
-    await expect(close('sue')).rejects.toMatchObject({ code: '23514', message: noWorkspace });
-    await expect(account('sue', 'file_erasure')).rejects.toMatchObject({
+    await expect(account('sue', 'file_erasure')).resolves.toMatchObject({
+      operation: 'file_erasure',
+      changed: true,
+    });
+    await expect(close('sue')).resolves.toMatchObject({ changed: true, status: 'closed' });
+    expect(
+      (
+        await f.owner.query(
+          'SELECT tenant_id FROM customer_private.account_chain WHERE principal_id=$1',
+          [ids.sue],
+        )
+      ).rows.map((row) => row.tenant_id),
+    ).toEqual([t.target]);
+  });
+
+  test('a person who never had a workspace still needs one, and nothing is written for them', async () => {
+    const was = await counts();
+    await expect(close('nan')).rejects.toMatchObject({ code: '23514', message: noWorkspace });
+    await expect(account('nan', 'file_erasure')).rejects.toMatchObject({
       code: '23514',
       message: noWorkspace,
     });
+    expect(await counts()).toEqual(was);
+    expect(
+      (
+        await f.owner.query(
+          'SELECT count(*)::int AS n FROM customer_private.account_chain WHERE principal_id=$1',
+          [ids.nan],
+        )
+      ).rows[0].n,
+    ).toBe(0);
+  });
+
+  test('the final path is told the truth', async () => {
     // closed, removed, then day 30 passes: no erasure request, and the refusal does not claim there is one
     const g = await joined('tim');
     await close('tim');
