@@ -4,7 +4,9 @@ import { describe, expect, it } from 'vitest';
 import {
   boardingCounts,
   boardingLine,
+  checklistTermsFrom,
   meetingCoverage,
+  programmeChecklist,
   programmeAttention,
   programmeGlance,
   programmeNextStep,
@@ -356,6 +358,166 @@ describe('the Organise room overview (approved work rooms, 5 Nov 2026)', () => {
     expect(list).toContain('projectionsEnabled={projectionsEnabled}');
     expect(read('apps/web/app/account/delegations/programme-room-styles.tsx')).toContain(
       "'../../../components/mr/stage-bar.css'",
+    );
+  });
+});
+
+describe('the plan stage and the checklist (GAP-039)', () => {
+  const done = { scheduled: true, needsReview: false };
+  const full = boardingCounts(
+    boarding({ invitations: [inv('USED'), inv('USED')], registrations: [reg(), reg()] }),
+  );
+  const projection = (over: Record<string, unknown> = {}) => ({
+    readiness: { activeParticipants: 4, readyParticipants: 3, definition: 'Ready means a place.' },
+    meetings: { state: 'NOT_SHARED' as const, scheduled: null, qualifiedHeld: null },
+    agenda: [done, done],
+    conflicts: [],
+    context: {
+      startsAt: '2026-12-01T00:00:00.000Z',
+      endsAt: '2026-12-03T00:00:00.000Z',
+      timezone: 'UTC',
+    },
+    ...over,
+  });
+  const value = (rows: ReturnType<typeof programmeChecklist>, key: string) =>
+    rows.find((r) => r.key === key)!.value;
+
+  it('keeps Plan the days not tracked without a projection', () => {
+    expect(programmeRoadStates(full).plan).toBe('notTracked');
+    expect(programmeRoadStates(full, null).plan).toBe('notTracked');
+  });
+  it('marks Plan the days done only when every activity is scheduled and none needs review', () => {
+    expect(programmeRoadStates(full, projection()).plan).toBe('done');
+    expect(programmeRoadStates(full, projection({ agenda: [] })).plan).toBe('notTracked');
+    expect(
+      programmeRoadStates(
+        full,
+        projection({ agenda: [done, { scheduled: false, needsReview: null }] }),
+      ).plan,
+    ).toBe('notTracked');
+    expect(
+      programmeRoadStates(
+        full,
+        projection({ agenda: [done, { scheduled: true, needsReview: true }] }),
+      ).plan,
+    ).toBe('notTracked');
+    expect(
+      programmeRoadStates(
+        full,
+        projection({ agenda: [done, { scheduled: true, needsReview: null }] }),
+      ).plan,
+    ).toBe('notTracked');
+  });
+  it('leaves a cancelled activity out of the plan', () => {
+    const agenda = [done, { scheduled: false, needsReview: null, status: 'CANCELLED' }];
+    expect(programmeRoadStates(full, projection({ agenda })).plan).toBe('done');
+  });
+  it('never marks run or report, and never has more than one step now', () => {
+    for (const counts of [null, boardingCounts(boarding({})), full]) {
+      for (const p of [null, projection(), projection({ agenda: [] })]) {
+        const s = programmeRoadStates(counts, p);
+        expect([s.run, s.report]).toEqual(['notTracked', 'notTracked']);
+        expect(Object.values(s).filter((x) => x === 'now').length).toBeLessThanOrEqual(1);
+      }
+    }
+    expect(programmeStage(full, projection()).states.plan).toBe('done');
+  });
+
+  it('says Not measured yet for everything when nothing is loaded, and never gives a zero', () => {
+    const rows = programmeChecklist(null, null, null);
+    expect(rows.map((r) => r.value)).toEqual(rows.map(() => 'Not measured yet'));
+    expect(rows.every((r) => !r.known)).toBe(true);
+  });
+  it('reads each fact from its record', () => {
+    const rows = programmeChecklist(
+      full,
+      projection({
+        agenda: [
+          done,
+          { scheduled: false, needsReview: null },
+          { scheduled: true, needsReview: true },
+        ],
+        conflicts: [{ left: 'a', right: 'b' }],
+      }),
+      { termsSet: true, minimum: 2, maximum: 10 },
+    );
+    expect(value(rows, 'registered')).toBe('2');
+    expect(value(rows, 'capacity')).toBe('2 of 10');
+    expect(value(rows, 'minimum')).toBe('2 of 2');
+    expect(value(rows, 'terms')).toBe('Set');
+    expect(value(rows, 'dates')).toBe('1 Dec 2026 to 3 Dec 2026');
+    expect(value(rows, 'activities')).toBe('2 of 3');
+    expect(value(rows, 'overlaps')).toBe('1 pair overlaps');
+    expect(value(rows, 'review')).toBe('1');
+    expect(value(rows, 'ready')).toBe('3 of 4');
+    expect(rows.find((r) => r.key === 'ready')!.note).toBe('Ready means a place.');
+  });
+  it('has no overall ready verdict', () => {
+    const rows = programmeChecklist(full, projection(), { termsSet: true, minimum: 1, maximum: 5 });
+    expect(
+      rows.map((r) => r.fact.toLowerCase()).filter((f) => f === 'ready' || f === 'overall'),
+    ).toEqual([]);
+  });
+  it('says what is not set when the record was read and holds nothing', () => {
+    const rows = programmeChecklist(full, projection({ agenda: [], context: null }), {
+      termsSet: false,
+      minimum: null,
+      maximum: null,
+    });
+    expect(value(rows, 'terms')).toBe('Not set yet');
+    expect(value(rows, 'capacity')).toBe('No maximum set');
+    expect(value(rows, 'minimum')).toBe('No minimum set');
+    expect(value(rows, 'dates')).toBe('Not set yet');
+    expect(value(rows, 'activities')).toBe('No activities yet');
+  });
+  it('degrades to Not measured yet when the participants list is partial or the terms read failed', () => {
+    const partial = boardingCounts(boarding({ moreRegistrations: true, registrations: [reg()] }));
+    const rows = programmeChecklist(partial, projection(), {
+      termsSet: true,
+      minimum: 2,
+      maximum: 10,
+    });
+    expect(value(rows, 'registered')).toBe('Not measured yet');
+    expect(value(rows, 'capacity')).toBe('Not measured yet');
+    expect(value(rows, 'minimum')).toBe('Not measured yet');
+    const noTerms = programmeChecklist(full, projection(), null);
+    expect(['capacity', 'minimum', 'terms'].map((k) => value(noTerms, k))).toEqual([
+      'Not measured yet',
+      'Not measured yet',
+      'Not measured yet',
+    ]);
+    expect(value(noTerms, 'activities')).toBe('2 of 2');
+  });
+  it('does not call an unknown review flag zero', () => {
+    const rows = programmeChecklist(
+      full,
+      projection({ agenda: [{ scheduled: true, needsReview: null }] }),
+      null,
+    );
+    expect(value(rows, 'review')).toBe('Not measured yet');
+  });
+  it('reads terms facts from the terms state shape', () => {
+    expect(
+      checklistTermsFrom({ terms: { current: null }, places: { minimum: null, maximum: 8 } }),
+    ).toEqual({ termsSet: false, minimum: null, maximum: 8 });
+    expect(
+      checklistTermsFrom({
+        terms: { current: { version: 1 } },
+        places: { minimum: 3, maximum: 8 },
+      }),
+    ).toEqual({ termsSet: true, minimum: 3, maximum: 8 });
+  });
+  it('wires the checklist to the existing terms read behind the terms switch, and degrades on failure', () => {
+    const hook = read('apps/web/app/account/delegations/programme-checklist.ts');
+    expect(hook).toContain("from './terms-client'");
+    expect(hook).toContain('parseState');
+    expect(hook).toMatch(
+      /\.catch\(\(\) => \{\s*if \(!controller\.signal\.aborted\) setTerms\(null\)/,
+    );
+    const room = read('apps/web/app/account/delegations/programme-room.tsx');
+    expect(room).toContain('participantsEnabled && termsEnabled');
+    expect(read('apps/web/app/account/delegations/customer-programmes.tsx')).toContain(
+      'termsEnabled={termsEnabled}',
     );
   });
 });
