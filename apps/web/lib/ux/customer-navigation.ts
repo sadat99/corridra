@@ -33,6 +33,7 @@ export type MenuEntry =
   | { kind: 'soon'; label: string }
   | { kind: 'listen'; label: string }
   | { kind: 'textsize'; label: string }
+  | { kind: 'contrast'; label: string }
   | { kind: 'lessmovement'; label: string }
   | { kind: 'signout'; label: string };
 export type HelpGroup = { label: string; items: MenuEntry[] };
@@ -149,9 +150,9 @@ export function customerAvatarItems(
  * The help and accessibility menu. Chat on WhatsApp needs a number the owner configures: with no `whatsappHref` it is
  * Coming soon, and with one it is a link in the same place (never an extra row). Report a Problem is a link in the same
  * way, only where its module and the customer's own word removal are both installed (`reportProblemHref`), and Coming
- * soon everywhere else. Stronger Colours is Coming soon. Listen to This Page, Text Size and Less Movement are real (the speech the corner Help
- * sheet offers, and two choices kept in this browser only), and the About group keeps the website and privacy
- * notice the old account menu held.
+ * soon everywhere else. Listen to This Page, Text Size, Stronger Colours and Less Movement are real (the speech the
+ * corner Help sheet offers, and three choices kept in this browser only), and the About group keeps the website and
+ * privacy notice the old account menu held.
  */
 export function customerHelpGroups(
   whatsappHref?: string | null,
@@ -176,7 +177,7 @@ export function customerHelpGroups(
       items: [
         { kind: 'listen', label: 'Listen to This Page' },
         { kind: 'textsize', label: 'Text Size' },
-        { kind: 'soon', label: 'Stronger Colours' },
+        { kind: 'contrast', label: 'Stronger Colours' },
         { kind: 'lessmovement', label: 'Less Movement' },
       ],
     },

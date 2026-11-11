@@ -75,7 +75,7 @@ export function OperatorRecoveryForm({ mode }: { mode: 'request' | 'reset' }) {
           Return to Operator Sign-in
         </a>
         {mode === 'request' && (
-          <Link className="text-link" href="/operator/setup">
+          <Link prefetch={false} className="text-link" href="/operator/setup">
             Finish a pending invitation
           </Link>
         )}
@@ -88,7 +88,7 @@ export function OperatorRecoveryForm({ mode }: { mode: 'request' | 'reset' }) {
           This operator reset link is incomplete or invalid. Request a new link and open it in your
           browser.
         </p>
-        <Link className="primary-link" href="/operator/forgot-password">
+        <Link prefetch={false} className="primary-link" href="/operator/forgot-password">
           Request a New Operator Reset Link
         </Link>
       </div>

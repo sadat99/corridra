@@ -2,7 +2,17 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-export function OperatorInvitationHint() {
+/**
+ * `headingLevel` and `className` let a page that nests the hint under its own heading (the Account Security tab)
+ * lower the heading and style the section. With neither, the markup is exactly what it always was.
+ */
+export function OperatorInvitationHint({
+  headingLevel = 2,
+  className = 'operator-section',
+}: {
+  headingLevel?: 2 | 3;
+  className?: string;
+}) {
   const [available, setAvailable] = useState(false);
   useEffect(() => {
     let active = true;
@@ -37,14 +47,15 @@ export function OperatorInvitationHint() {
     };
   }, []);
   if (!available) return null;
+  const Heading = headingLevel === 3 ? 'h3' : 'h2';
   return (
-    <section className="operator-section" aria-label="Pending team invitation">
-      <h2>Finish your team setup</h2>
+    <section className={className} aria-label="Pending team invitation">
+      <Heading>Finish your team setup</Heading>
       <p>
         You have a pending team invitation. Set your team password, then sign in and add your
         authenticator app.
       </p>
-      <Link className="primary-link" href="/operator/setup">
+      <Link prefetch={false} className="primary-link" href="/operator/setup">
         Finish team setup
       </Link>
     </section>

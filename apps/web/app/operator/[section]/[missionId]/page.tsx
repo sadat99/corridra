@@ -40,7 +40,7 @@ export default async function Page({
     return (
       <WorkspaceShell eyebrow="OPERATOR WORKSPACE" title="Workspace access is unavailable.">
         <p>The protected workspace is not configured in this environment.</p>
-        <Link className="text-link" href="/">
+        <Link prefetch={false} className="text-link" href="/">
           Back to Corridra
         </Link>
       </WorkspaceShell>
@@ -59,7 +59,7 @@ export default async function Page({
     return (
       <WorkspaceShell eyebrow="OPERATOR WORKSPACE" title="Workspace access is unavailable.">
         <p>Your session needs a current authenticator check and an active membership.</p>
-        <Link className="text-link" href="/operator">
+        <Link prefetch={false} className="text-link" href="/operator">
           Back to your workspace
         </Link>
       </WorkspaceShell>

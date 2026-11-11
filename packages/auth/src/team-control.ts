@@ -1,7 +1,14 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { hashPassword } from 'better-auth/crypto';
 import { z } from 'zod';
-import { sessionHash, withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
+import {
+  reauthorize,
+  rollback,
+  sessionHash,
+  withTenant,
+  type DatabasePool,
+  type RequestContext,
+} from '@corridra/db';
 import { DomainError, role } from '@corridra/domain';
 import { setupIdentifier, setupInvitation } from './operator-setup';
 
@@ -26,12 +33,18 @@ import { setupIdentifier, setupInvitation } from './operator-setup';
 // results explicitly say audit is unavailable.
 //
 // Cancel lock and commit order (CRUD G10), always in this order: runtime workspace lock (the one
-// member changes take) -> auth invitation row FOR UPDATE -> auth KEY SHARE on the target principal
-// -> runtime revoke of the membership -> auth audit write and invitation delete -> commit auth ->
-// commit runtime. A runtime connection is always taken before an auth connection. Invariant: nothing
-// the auth transaction waits for is held by a transaction that waits on the runtime transaction's
-// locks. The principal key share is taken before the revoke because the audit row's foreign key needs
-// it, and an authenticator reset holds the principal while it waits for the membership row.
+// member changes take) -> owner authority checked again -> auth invitation row FOR UPDATE -> auth
+// KEY SHARE on the target principal -> runtime revoke of the membership -> auth audit write and
+// invitation delete -> commit auth -> commit runtime. The second authority check runs after the
+// lock wait, so a change committed meanwhile (a role change, a revocation, a sign-out or an
+// authenticator change) is refused before anything is read or written. now() is fixed when the
+// transaction began, so a check that only ran out of time during the wait is not caught there.
+// A runtime connection is always taken before an auth
+// connection. Invariant, among the paths in this package that touch these rows (invite, resend,
+// reset, operator setup and member changes): nothing the auth transaction waits for is held by a
+// transaction that waits on the runtime transaction's locks. The principal key share is taken
+// before the revoke because the audit row's foreign key needs it, and an authenticator reset holds
+// the principal while it waits for the membership row.
 
 export const teamInviteInput = z
   .object({
@@ -70,16 +83,17 @@ async function inAuth<T>(
   work: (q: DatabasePool['query']) => Promise<T>,
 ): Promise<T> {
   const db = await auth.connect();
+  let rollbackError: Error | undefined;
   try {
     await db.query('BEGIN');
     const result = await work(db.query.bind(db) as DatabasePool['query']);
     await db.query('COMMIT');
     return result;
   } catch (error) {
-    await db.query('ROLLBACK');
+    rollbackError = await rollback(db);
     throw error;
   } finally {
-    db.release();
+    db.release(rollbackError);
   }
 }
 
@@ -92,8 +106,9 @@ async function recordOwnerAction(
   reference: string | null,
 ): Promise<'recorded' | 'unavailable'> {
   // Do not disable existing controls before the protected additive installer has run. The check asks
-  // whether the installed writer knows this operation (cancel arrives with 0010, after 0006), in the
-  // same transaction as the write, so an install cannot land between the check and the write.
+  // whether the installed writer knows this operation (cancel arrives with 0010, after 0006). The check
+  // and the write are separate READ COMMITTED statements, so an install that commits between them is
+  // harmless: the action reports 'unavailable' or is recorded once, never twice.
   const available = await q(
     `SELECT coalesce((SELECT strpos(prosrc,$1)>0 FROM pg_proc
        WHERE oid=to_regprocedure('identity.record_team_control(text,uuid,uuid)')),false) AS ready`,
@@ -271,6 +286,9 @@ export class TeamControl {
     return withTenant(this.runtime, ctx, 'members.manage', async (t) => {
       // The same workspace lock as AccessService.changeMember, so the two never interleave.
       await t.db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [t.tenantId]);
+      // A role change, revocation, sign-out or authenticator change may have committed during the wait.
+      // Only committed changes are seen: now() is fixed at BEGIN, so time alone does not expire the check.
+      await reauthorize(t, 'members.manage');
       return inAuth(this.auth, async (q) => {
         const row = (
           await q(
@@ -283,13 +301,32 @@ export class TeamControl {
         // answer the same way, so nothing about another workspace is revealed.
         if (!row || !invite || invite.tenantId !== t.tenantId || invite.role === 'contributor')
           throw new DomainError('Invitation not found', 404);
-        // Key share only, so setup and resend, which change the principal without touching its key, are
-        // not blocked; a reset that holds the principal finishes before the membership is touched.
+        // Key share only. Resend changes the principal with a non-key UPDATE, which key share allows.
+        // Setup (OperatorSetup.complete) takes the principal FOR UPDATE, which conflicts with key share,
+        // but setup and cancel both first lock this same setup row FOR UPDATE, so they serialise on it and
+        // never deadlock. A reset takes the principal FOR UPDATE too, so a reset that already holds the
+        // principal commits before this continues, and one that starts later waits.
         await q('SELECT 1 FROM identity.principal WHERE id=$1 FOR KEY SHARE', [invite.principalId]);
-        await t.db.query(
+        const revoked = await t.db.query(
           'UPDATE app.membership SET revoked_at=now() WHERE tenant_id=$1 AND user_id=$2 AND revoked_at IS NULL',
           [t.tenantId, invite.principalId],
         );
+        // When the revoke matched nothing, cancel goes on only if the membership exists and is already
+        // revoked. A missing membership (a setup row left half made), or an active one the revoke missed
+        // (an invite that committed its membership after the revoke ran, since invite does not take the
+        // workspace lock), leaves the invitation and records nothing. One statement, so both counts come
+        // from the same snapshot.
+        if (!revoked.rowCount) {
+          const membership = (
+            await t.db.query<{ total: number; active: number }>(
+              `SELECT count(*)::int AS total,count(*) FILTER (WHERE revoked_at IS NULL)::int AS active
+               FROM app.membership WHERE tenant_id=$1 AND user_id=$2`,
+              [t.tenantId, invite.principalId],
+            )
+          ).rows[0];
+          if (!membership.total || membership.active)
+            throw new DomainError('Busy right now. Try again in a moment.', 503, 'RETRYABLE');
+        }
         const audit = await recordOwnerAction(
           q,
           ctx,

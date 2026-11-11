@@ -55,7 +55,8 @@ test('the field helper has four bottom tabs on a phone and the left bar on a wid
     'page',
   );
   await expect(page.getByRole('button', { name: 'Sign Out of Assigned Work' })).toBeVisible();
-  // W7: Text Size (three steps) and Less Movement are real; Data Saver is still plain text tagged Coming soon.
+  // W7, W10: Text Size (three steps), Stronger Colours and Less Movement are real. Data use is kept low for everyone, so the
+  // card has one plain line about it and no Data Saver control and no Coming soon tag.
   const comfort = page.locator('section', {
     has: page.getByRole('heading', { name: 'Make it easier to read' }),
   });
@@ -68,6 +69,13 @@ test('the field helper has four bottom tabs on a phone and the left bar on a wid
   await expect(lessMovement).toHaveAccessibleDescription(
     'Stops animation and anything that moves by itself.',
   );
+  // Stronger Colours is the second switch, named by its words alone and described by its own hint.
+  await expect(comfort.getByRole('switch')).toHaveCount(2);
+  const strongerColours = comfort.getByRole('switch', { name: 'Stronger Colours', exact: true });
+  await expect(strongerColours).not.toBeChecked();
+  await expect(strongerColours).toHaveAccessibleDescription(
+    'Darker text, clearer lines and underlined links.',
+  );
   // One live region for a failed save is in the card all the time, empty and taking no room, and flush with the hint.
   const note = comfort.getByRole('status');
   await expect(note).toHaveCount(1);
@@ -76,8 +84,11 @@ test('the field helper has four bottom tabs on a phone and the left bar on a wid
   const hintBox = (await comfort
     .getByText('Stops animation and anything that moves by itself.')
     .boundingBox())!;
-  const saverBox = (await comfort.locator('p', { hasText: 'Data Saver' }).boundingBox())!;
-  expect(saverBox.y - (hintBox.y + hintBox.height)).toBeGreaterThanOrEqual(11.5);
+  const saverBox = (await comfort
+    .locator('p', { hasText: 'Corridra does not load other pages in the background.' })
+    .boundingBox())!;
+  // A hairline and a 16 px gap set it apart from the hint above, so it does not read as part of the hint.
+  expect(saverBox.y - (hintBox.y + hintBox.height)).toBeGreaterThanOrEqual(15.5);
   const group = (await comfort.getByRole('group', { name: 'Text Size' }).boundingBox())!;
   const row = (await lessMovement.locator('xpath=ancestor::label').boundingBox())!;
   expect(group.width).toBeLessThanOrEqual(640.5);
@@ -85,13 +96,21 @@ test('the field helper has four bottom tabs on a phone and the left bar on a wid
   await expect(
     comfort.getByText('Stops animation and anything that moves by itself.'),
   ).toBeVisible();
-  await expect(comfort.getByText('Data Saver')).toBeVisible();
-  await expect(comfort.locator('.ux-soon-tag')).toHaveText(['Coming soon']);
-  await expect(comfort.locator('p', { hasText: 'Data Saver' }).locator('.ux-soon-tag')).toHaveText(
-    'Coming soon',
-  );
+  const dataLine = comfort.locator('p', {
+    hasText: 'Corridra does not load other pages in the background.',
+  });
+  await expect(dataLine).toHaveCount(1);
+  await expect(dataLine).toBeVisible();
+  await expect(dataLine).toHaveText('Corridra does not load other pages in the background.');
+  expect(await dataLine.evaluate((el) => getComputedStyle(el).borderTopWidth)).toBe('1px');
+  // It is a plain line: nothing in it to press or switch, no Coming soon tag in the card or anywhere on the Me page.
+  await expect(dataLine.locator('input, button, a, [role], .ux-soon-tag')).toHaveCount(0);
+  await expect(comfort.locator('.ux-soon-tag')).toHaveCount(0);
+  await expect(page.locator('.ux-soon-tag')).toHaveCount(0);
+  await expect(comfort.getByText('Data Saver')).toHaveCount(0);
+  await expect(comfort.getByText('Coming soon')).toHaveCount(0);
   for (const role of ['button', 'checkbox', 'switch', 'radio', 'link'] as const)
-    await expect(comfort.getByRole(role, { name: 'Data Saver' })).toHaveCount(0);
+    await expect(comfort.getByRole(role, { name: /data saver|data use/i })).toHaveCount(0);
   for (const choice of await page.locator('.me-textsize-choice').all())
     expect((await choice.boundingBox())!.height).toBeGreaterThanOrEqual(75.5);
   await comfort.getByRole('radio', { name: 'Largest', exact: true }).check();
@@ -101,6 +120,10 @@ test('the field helper has four bottom tabs on a phone and the left bar on a wid
   await lessMovement.check();
   await expect(page.locator('html')).toHaveAttribute('data-less-movement', 'on');
   await expect(lessMovement).toBeChecked();
+  await strongerColours.check();
+  await expect(page.locator('html')).toHaveAttribute('data-contrast', 'more');
+  await expect(strongerColours).toBeChecked();
+  expect(await page.evaluate(() => localStorage.getItem('corridra.contrast'))).toBe('more');
   await expect(page.getByRole('link', { name: 'About assigned work' })).toBeVisible();
   const axeMe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(axeMe.violations.map((v) => v.id)).toEqual([]);

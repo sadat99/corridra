@@ -24,13 +24,13 @@ export default function Page() {
       </p>
       <SetupForm kind="contributor" />
       <nav className="access-options" aria-label="Contributor setup help">
-        <Link className="text-link" href="/account">
+        <Link prefetch={false} className="text-link" href="/account">
           Account and email verification
         </Link>
-        <Link className="text-link" href="/contributor">
+        <Link prefetch={false} className="text-link" href="/contributor">
           Assigned-task access help
         </Link>
-        <Link className="text-link" href="/network">
+        <Link prefetch={false} className="text-link" href="/network">
           About Corridra Network
         </Link>
       </nav>

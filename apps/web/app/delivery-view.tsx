@@ -235,10 +235,10 @@ function ScopedDeliveryView({
                 Try again
               </button>
             }
-            <Link className="text-link" href="/account">
+            <Link prefetch={false} className="text-link" href="/account">
               Customer account
             </Link>
-            <Link className="text-link" href="/">
+            <Link prefetch={false} className="text-link" href="/">
               Back to Corridra
             </Link>
           </>

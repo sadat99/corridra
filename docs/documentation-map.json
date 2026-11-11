@@ -1449,6 +1449,11 @@
       "use": "Exact hashed ledger at dda3f43b (the PR 394 merge), before PRs 357, 389, 385, 390, 393, 395, 383, 391, 396 and 394, the two 10 Nov problem report installs and the S33 to S37 lanes were recorded; preserves the 10 Nov S26 Lanes, Merged, switch report, G10, Install, G4/G5, owner items and Next bullets; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-s40-records-1-2026-11-11.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at a456b586 (the PR 399 merge), before PRs 400, 398, 397 and 399, install run 42938648119 and the S40 and S39 lanes were recorded; preserves the 10 Nov S26 records 2 Takeover, Lanes, Merged, Installs, Switches, owner items and Next bullets; use the current ledger for live state."
+    },
+    {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"

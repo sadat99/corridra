@@ -244,17 +244,20 @@ test('CX-02 Help and accessibility: real things are links or switches, the rest 
       .getByRole('group', { name: 'Get Help' })
       .getByRole('menuitem', { name: /Report a Problem/ }),
   ).toHaveCount(1);
-  for (const name of ['Chat on WhatsApp', 'Report a Problem', 'Stronger Colours']) {
+  for (const name of ['Chat on WhatsApp', 'Report a Problem']) {
     const row = menu.getByRole('menuitem', { name: new RegExp(name) });
     await expect(row, name).toHaveAttribute('aria-disabled', 'true');
     await expect(row, name).toContainText('Coming soon');
     await expect(row, name).not.toHaveAttribute('href', /.*/);
   }
   await expect(page.locator('a[href*="wa.me"]')).toHaveCount(0);
-  await expect(menu.getByText('Coming soon')).toHaveCount(3);
-  // Text Size and Less Movement are real controls now, not Coming soon rows.
-  await expect(menu.getByRole('menuitem', { name: /Text Size|Less Movement/ })).toHaveCount(0);
+  await expect(menu.getByText('Coming soon')).toHaveCount(2);
+  // Text Size, Stronger Colours and Less Movement are real controls now, not Coming soon rows.
+  await expect(
+    menu.getByRole('menuitem', { name: /Text Size|Stronger Colours|Less Movement/ }),
+  ).toHaveCount(0);
   await expect(menu.getByRole('group', { name: 'Text Size' })).toBeVisible();
+  await expect(menu.getByRole('menuitemcheckbox', { name: 'Stronger Colours' })).toBeVisible();
   await expect(menu.getByRole('menuitemcheckbox', { name: /Less Movement/ })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(trigger).toBeFocused();
@@ -439,13 +442,13 @@ test('W7 a browser that will not save says so once, and the choice still holds f
   await menu.getByRole('menuitemradio', { name: 'A, Largest Text', exact: true }).click();
   expect(await comfort(page)).toMatchObject({ fontSize: '20px', textSize: 'largest' });
   await expect(note).toHaveText(
-    'This browser cannot save your choice. It lasts until you leave this page.',
+    'This browser cannot save your choice. It lasts until the page loads again.',
   );
   // A second refused save does not add a second note.
   await menu.getByRole('menuitemcheckbox', { name: /Less Movement/ }).click();
   await expect(menu.locator('[aria-live="polite"]')).toHaveCount(1);
   await expect(
-    menu.getByText('This browser cannot save your choice. It lasts until you leave this page.'),
+    menu.getByText('This browser cannot save your choice. It lasts until the page loads again.'),
   ).toHaveCount(1);
   // The note is the last thing in the Make It Easier to Read group, after Less Movement.
   const order = await menu.evaluate((panel) => {
@@ -477,7 +480,7 @@ test('W7 the save note stays while any choice is unsaved: Less Movement refused,
   await header(page).getByRole('button', { name: 'Help and accessibility' }).click();
   const menu = page.getByRole('menu', { name: 'Help and accessibility' });
   const note = menu.locator('[aria-live="polite"]');
-  const words = 'This browser cannot save your choice. It lasts until you leave this page.';
+  const words = 'This browser cannot save your choice. It lasts until the page loads again.';
   await expect(note).toBeEmpty();
   await menu.getByRole('menuitemcheckbox', { name: /Less Movement/ }).click();
   await expect(note).toHaveText(words);
@@ -488,6 +491,34 @@ test('W7 the save note stays while any choice is unsaved: Less Movement refused,
   // and the note empties.
   await menu.getByRole('menuitemcheckbox', { name: /Less Movement/ }).click();
   await expect(note).toBeEmpty();
+});
+
+test('W10 another tab changing an unrelated saved value does not undo a choice this browser could not save', async ({
+  page,
+}) => {
+  // Saving is refused but reading works, so a choice holds for this page only. Every storage event used to re-read the
+  // saved values and put the page back to Normal, whatever key had changed.
+  await page.addInitScript(() => {
+    Storage.prototype.setItem = () => {
+      throw new Error('blocked');
+    };
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/account');
+  await header(page).getByRole('button', { name: 'Help and accessibility' }).click();
+  const menu = page.getByRole('menu', { name: 'Help and accessibility' });
+  await menu.getByRole('menuitemradio', { name: 'A, Largest Text', exact: true }).click();
+  expect(await comfort(page)).toMatchObject({ fontSize: '20px', textSize: 'largest' });
+  const storageEvent = (key: string | null) =>
+    page.evaluate((changed) => {
+      window.dispatchEvent(new StorageEvent('storage', { key: changed }));
+    }, key);
+  await storageEvent('unrelated');
+  await storageEvent('corridra.language');
+  expect(await comfort(page)).toMatchObject({ fontSize: '20px', textSize: 'largest' });
+  // A change to one of the comfort values is taken from storage, where nothing was kept: back to Normal.
+  await storageEvent('corridra.text-size');
+  expect(await comfort(page)).toMatchObject({ fontSize: '16px', textSize: null });
 });
 
 test('W7 at the largest text on a short screen the Help menu scrolls inside the window and its last row can be reached', async ({
@@ -585,7 +616,7 @@ for (const width of [320, 390, 768, 1440]) {
   });
 }
 
-test('W7 on a phone the avatar menu holds the same two controls, and they work there', async ({
+test('W7 on a phone the avatar menu holds the same three controls, and they work there', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
@@ -597,8 +628,12 @@ test('W7 on a phone the avatar menu holds the same two controls, and they work t
   const toggle = menu.getByRole('menuitemcheckbox', { name: /Less Movement/ });
   await toggle.click();
   await expect(toggle).toHaveAttribute('aria-checked', 'true');
-  await expect(menu.getByRole('menuitem', { name: /Stronger Colours/ })).toContainText(
-    'Coming soon',
+  const contrast = menu.getByRole('menuitemcheckbox', { name: 'Stronger Colours' });
+  await expect(contrast).toHaveAttribute('aria-checked', 'false');
+  await contrast.click();
+  await expect(contrast).toHaveAttribute('aria-checked', 'true');
+  expect(await page.evaluate(() => document.documentElement.getAttribute('data-contrast'))).toBe(
+    'more',
   );
 });
 

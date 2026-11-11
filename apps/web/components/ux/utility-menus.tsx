@@ -2,8 +2,8 @@
 // Navigation v1, the utility menus (UtilityMenus board), shared by the signed-in shells:
 //   NotificationsPanel  the bell with its count and the panel: Needs You, Updates, Earlier, Mark All Read.
 //   LanguageMenu        the language code and a menu of languages in their own names.
-//   HelpMenu            help and accessibility: what is real is a link, a switch or a choice (Listen, Text Size and
-//                       Less Movement), the rest says Coming soon.
+//   HelpMenu            help and accessibility: what is real is a link, a switch or a choice (Listen, Text Size,
+//                       Stronger Colours and Less Movement), the rest says Coming soon.
 //   AvatarMenu          the customer's account menu (identity, workspace, Account and the rest).
 // They read only what the signed-in header already reads (the inbox, the workspaces, the person's own session);
 // nothing here decides access, and every page and action still checks on the server. A feature that is not real
@@ -38,7 +38,7 @@ import {
   subscribeCustomerNote,
 } from './customer-bar-store';
 import { BarInbox, LanguageMenuGroup, useWorkspaces } from './customer-bar';
-import { LessMovementRow, TextSizeRow } from './comfort-controls';
+import { ContrastRow, LessMovementRow, TextSizeRow } from './comfort-controls';
 import { MenuLink } from './menu-link';
 import { MenuButton, MenuRadio, OverflowMenu } from './overflow-menu';
 
@@ -163,6 +163,7 @@ export function Entry({
   if (entry.kind === 'link') return <MenuLink href={entry.href}>{entry.label}</MenuLink>;
   if (entry.kind === 'soon') return <MenuSoon>{entry.label}</MenuSoon>;
   if (entry.kind === 'textsize') return <TextSizeRow label={entry.label} />;
+  if (entry.kind === 'contrast') return <ContrastRow label={entry.label} />;
   if (entry.kind === 'lessmovement') return <LessMovementRow label={entry.label} />;
   if (entry.kind === 'listen')
     // Hidden, never broken: where the browser cannot speak this page it is left out.

@@ -199,12 +199,13 @@ describe('the customer navigation model', () => {
     expect(link('Listen to This Page').kind).toBe('listen');
     // There is no owner-configured WhatsApp number and no problem report link given (the module and the customer's own
     // word removal are not both installed), so each says Coming soon and is not a link.
-    for (const label of ['Chat on WhatsApp', 'Report a Problem', 'Stronger Colours'])
+    for (const label of ['Chat on WhatsApp', 'Report a Problem'])
       expect(link(label).kind, label).toBe('soon');
-    // W7: Text Size and Less Movement are real controls kept in this browser, no longer Coming soon.
+    // W7, W10: Text Size, Stronger Colours and Less Movement are real controls kept in this browser, no longer Coming soon.
     expect(link('Text Size').kind).toBe('textsize');
+    expect(link('Stronger Colours').kind).toBe('contrast');
     expect(link('Less Movement').kind).toBe('lessmovement');
-    expect(flat.filter((item) => item.kind === 'soon')).toHaveLength(3);
+    expect(flat.filter((item) => item.kind === 'soon')).toHaveLength(2);
     expect(flat.some((item) => item.kind === 'link' && /wa\.me|whatsapp/i.test(item.href))).toBe(
       false,
     );

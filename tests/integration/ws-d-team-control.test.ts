@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, expect, test } from 'vitest';
-import { fixture } from './support';
+import { fixture, rawContext } from './support';
 import { changeMemberNow } from './change-member';
 import { AccessService } from '../../packages/auth/src/access';
 import { TeamControl } from '../../packages/auth/src/team-control';
@@ -322,6 +322,85 @@ test('a stale authenticator check stops cancel before anything is written', asyn
   expect(await setupRow(pending.id)).toBe(1);
   expect(await cancelAudit(pending.principalId)).toEqual([]);
 });
+
+// The owner's authority is checked again once cancel holds the workspace lock: a change that committed while cancel
+// waited for it decides. Holds the lock, starts cancel, applies `change` while cancel waits, then releases the lock.
+const cancelAfterLockWait = async (invitationId: string, change: () => Promise<unknown>) => {
+  const holder = await f.owner.connect();
+  let cancelled: Promise<unknown> | undefined;
+  try {
+    await holder.query('BEGIN');
+    await holder.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [f.tenantA]);
+    cancelled = team.cancel(f.users.owner.ctx, { invitationId });
+    // Settled here so a refusal that arrives while the lock is still held is not reported as unhandled.
+    cancelled.catch(() => undefined);
+    await waitingOnLocks(1);
+    await change();
+  } finally {
+    await holder.query('COMMIT');
+    holder.release();
+  }
+  return cancelled;
+};
+// Written as the owner session (the membership history needs an actor), past the member rules a demotion would meet.
+const ownerRole = (role: 'owner' | 'admin') =>
+  rawContext(
+    f.owner,
+    f.users.owner.ctx,
+    'UPDATE app.membership SET role=$3 WHERE tenant_id=$1 AND user_id=$2',
+    [f.tenantA, f.users.owner.id, role],
+  );
+
+test('an owner demoted while cancel waits for the workspace lock is refused and nothing changes, with or without the audit writer', async () => {
+  for (const writerInstalled of [true, false]) {
+    const pending = await freshInvite();
+    const before = await pendingOf(pending.principalId);
+    if (!writerInstalled)
+      await f.owner.query(
+        'ALTER FUNCTION identity.record_team_control(text,uuid,uuid) RENAME TO record_team_control_install_pending',
+      );
+    try {
+      await expect(cancelAfterLockWait(pending.id, () => ownerRole('admin'))).rejects.toMatchObject(
+        { status: 403, message: 'Access denied' },
+      );
+    } finally {
+      await ownerRole('owner');
+      if (!writerInstalled)
+        await f.owner.query(
+          'ALTER FUNCTION identity.record_team_control_install_pending(text,uuid,uuid) RENAME TO record_team_control',
+        );
+    }
+    expect(await pendingOf(pending.principalId)).toEqual(before);
+    expect(await setupRow(pending.id)).toBe(1);
+    expect(await cancelAudit(pending.principalId)).toEqual([]);
+  }
+  // Recovery: with the owner role back, the same invitation is cancelled.
+  const pending = await freshInvite();
+  await expect(team.cancel(f.users.owner.ctx, { invitationId: pending.id })).resolves.toEqual({
+    cancelled: true,
+    audit: 'recorded',
+  });
+}, 15000);
+
+test('an authenticator check that lapses while cancel waits for the workspace lock asks for a new check and nothing changes', async () => {
+  const pending = await freshInvite();
+  const before = await pendingOf(pending.principalId);
+  try {
+    await expect(
+      cancelAfterLockWait(pending.id, () => stale(f.users.owner.sessionId)),
+    ).rejects.toMatchObject({ status: 401, code: 'STEP_UP_REQUIRED' });
+  } finally {
+    await refresh(f.users.owner.sessionId);
+  }
+  expect(await pendingOf(pending.principalId)).toEqual(before);
+  expect(await setupRow(pending.id)).toBe(1);
+  expect(await cancelAudit(pending.principalId)).toEqual([]);
+  // Recovery: after a fresh check the same invitation is cancelled.
+  await expect(team.cancel(f.users.owner.ctx, { invitationId: pending.id })).resolves.toEqual({
+    cancelled: true,
+    audit: 'recorded',
+  });
+}, 15000);
 
 test('cancel and a member change wait for the same workspace lock; the change made on the older version is refused', async () => {
   const pending = await freshInvite();

@@ -123,9 +123,9 @@ export function CustomerClosedAccount({
             </Link>
           </p>
         )}
-        <p>
+        <div className="ux-account-actions">
           <AccountSignout />
-        </p>
+        </div>
       </section>
     </main>
   );
