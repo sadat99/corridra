@@ -119,10 +119,15 @@
     clip: rect(0 0 0 0);
   }
 }
+/* The name of the Help row is a span of its own. Expanded, it has no box, so the icon, the words and the tag lay out as
+   they always did. */
+.ux-rail-label {
+  display: contents;
+}
 [data-collapsed='true'] .ux-rail-new span,
-[data-collapsed='true'] .ux-rail-soon span,
-[data-collapsed='true'] .ux-rail-help span,
-[data-collapsed='true'] .ux-rail-tools span {
+[data-collapsed='true'] .ux-rail-tools span,
+[data-collapsed='true'] .ux-rail-label {
+  display: block;
   position: absolute;
   width: 1px;
   height: 1px;
@@ -137,4 +142,47 @@
 }
 [data-collapsed='true'] .ux-rail-help .ux-rail-help-open {
   display: none;
+}
+
+/* Collapsed bar, 1024 px and up: the name of the Help on WhatsApp row shows beside its icon while the
+   pointer is on the row or keyboard focus is on it (customer-rail.tsx sets data-tip and where it goes). Fixed, because
+   the bar scrolls and would cut off anything placed inside it. It is inside the row, so the pointer can move onto it,
+   and a strip on its near side bridges the gap. Esc sets it away without moving focus. Colours are the page tokens,
+   so Stronger Colours and the dark border follow. No transition, so Less Movement has nothing to switch off. */
+@media (min-width: 1024px) {
+  [data-collapsed='true'] :is(.ux-rail-help, .ux-rail-soon)[data-tip='on'] > .ux-rail-label {
+    position: fixed;
+    inset-inline-start: var(--tip-x, 0);
+    inset-block-start: var(--tip-y, 0);
+    transform: translateY(-50%);
+    width: auto;
+    height: auto;
+    max-width: min(20rem, calc(100vw - var(--tip-x, 0px) - var(--tip-gap, 0.5rem) - 1rem));
+    margin-inline-start: var(--tip-gap, 0.5rem);
+    padding: var(--space-1) var(--space-2);
+    overflow: visible;
+    clip: auto;
+    z-index: 70;
+    background: var(--surface-raised);
+    color: var(--text-1);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-2);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    line-height: 1.3;
+    white-space: nowrap;
+  }
+  [data-collapsed='true']
+    :is(.ux-rail-help, .ux-rail-soon)[data-tip='on']
+    > .ux-rail-label::before {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inset-inline-end: 100%;
+    width: var(--tip-gap, 0.5rem);
+  }
+  [data-collapsed='true'] .ux-rail-soon[data-tip='on'] > .ux-rail-label .ux-soon-tag {
+    margin-inline-start: var(--space-2);
+  }
 }

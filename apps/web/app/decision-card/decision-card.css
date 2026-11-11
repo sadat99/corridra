@@ -8,6 +8,9 @@
   min-height: 60vh;
   align-content: start;
 }
+.decision-card :is(h1, p) {
+  overflow-wrap: anywhere;
+}
 .decision-card h1 {
   margin: 0;
   font-family: var(--serif);
