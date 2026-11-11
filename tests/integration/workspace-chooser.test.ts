@@ -89,6 +89,7 @@ const anchors = (html: string) =>
     href: m[1]!.replaceAll('&amp;', '&'),
     name: m[2]!.replace(/<[^>]+>/g, ''),
   }));
+const headingOf = (html: string) => /<h2[^>]*>(.*?)<\/h2>/.exec(html)?.[1];
 const workspace = (id: string, role = 'owner') => ({
   id,
   name: 'Name ' + id,
@@ -108,8 +109,9 @@ describe('a person with no workspace is offered one next action', () => {
     it(`${kind}: one sentence and one link, to the create control`, async () => {
       const html = await chooser(kind);
       expect(html).toContain('You do not have a workspace yet. Create one to continue.');
+      expect(headingOf(html)).toBe('Create a workspace');
       expect(anchors(html)).toEqual([
-        { href: '/account?view=work#customer-workspaces', name: 'Create Your Workspace' },
+        { href: '/account?view=work#customer-workspaces', name: 'Create a Workspace' },
       ]);
       expect(html).not.toContain('Manage your workspaces');
       expect(html).not.toContain('Start a request');
@@ -118,7 +120,8 @@ describe('a person with no workspace is offered one next action', () => {
     state.workspaces = [workspace(a, 'member'), workspace(b, 'member')];
     const html = await chooser('programmes');
     expect(html).toContain('Programme management is available to workspace owners and admins.');
-    expect(html).not.toContain('Create Your Workspace');
+    expect(headingOf(html)).toBe('Choose a workspace');
+    expect(html).not.toContain('Create a Workspace');
     expect(anchors(html).map((x) => x.name)).toEqual([
       'Manage your workspaces',
       'Your programme registrations',
@@ -135,7 +138,8 @@ describe('a person with workspaces keeps the link to manage them', () => {
       { href: `/account/profile/${b}`, name: 'Name ' + b + 'You are a member of this workspace.' },
       { href: '/account?view=work#customer-workspaces', name: 'Manage your workspaces' },
     ]);
-    expect(html).not.toContain('Create Your Workspace');
+    expect(html).not.toContain('Create a Workspace');
+    expect(headingOf(html)).toBe('Choose a workspace');
   });
 });
 

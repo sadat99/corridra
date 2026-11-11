@@ -64,7 +64,9 @@ export async function WorkspaceChooser({
   if (visible.length === 1) redirect(workspacePath(kind, visible[0]!.id));
   return (
     <section aria-labelledby="workspace-choice-title">
-      <h2 id="workspace-choice-title">Choose a workspace</h2>
+      <h2 id="workspace-choice-title">
+        {visible.length || kind === 'programmes' ? 'Choose a workspace' : 'Create a workspace'}
+      </h2>
       <p>{workspaceDescription(kind, linksEnabled)}</p>
       {visible.length ? (
         <ul className="ux-quick-links">
@@ -97,7 +99,7 @@ export async function WorkspaceChooser({
               prefetch={false}
               href="/account?view=work#customer-workspaces"
             >
-              Create Your Workspace
+              Create a Workspace
             </Link>
           </p>
         </>
