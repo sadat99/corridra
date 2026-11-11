@@ -84,10 +84,21 @@ async function chooser(kind: Kind, linksEnabled?: boolean) {
     }),
   );
 }
+// The words between tags, read one character at a time so no tag text can survive a partial match.
+const textOf = (html: string) => {
+  let out = '';
+  let inTag = false;
+  for (const char of html) {
+    if (char === '<') inTag = true;
+    else if (char === '>' && inTag) inTag = false;
+    else if (!inTag) out += char;
+  }
+  return out;
+};
 const anchors = (html: string) =>
   [...html.matchAll(/<a [^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/g)].map((m) => ({
     href: m[1]!.replaceAll('&amp;', '&'),
-    name: m[2]!.replace(/<[^>]+>/g, ''),
+    name: textOf(m[2]!),
   }));
 const headingOf = (html: string) => /<h2[^>]*>(.*?)<\/h2>/.exec(html)?.[1];
 const workspace = (id: string, role = 'owner') => ({
