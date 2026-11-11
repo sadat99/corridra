@@ -112,9 +112,9 @@ export function CustomerClosedAccount({
           onClose={() => setAsking(false)}
           returnFocusTo={() => heading.current}
         />
-        <p>
+        <div className="ux-account-actions">
           <AccountSignout />
-        </p>
+        </div>
       </section>
     </main>
   );
