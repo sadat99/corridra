@@ -3,7 +3,6 @@ import AxeBuilder from '@axe-core/playwright';
 import { mkdir, readFile } from 'node:fs/promises';
 import { createHmac } from 'node:crypto';
 import { clearSignInLimits } from './operator-signin';
-import { openTab } from './workspace-nav';
 
 function totp(secret: string) {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
@@ -193,8 +192,9 @@ test('Operator Today panel reads the real mission list, shows new and overdue wo
 });
 
 // W3-6 and W3-7: the paid-service requests tile on the real server. The tile must open the Delivery section
-// through the real section router; an address the router does not know shows the "section is unavailable" alert
-// on the overview instead. Only the Today count read is answered here (the real database holds no waiting
+// and its request list through the real section router (the billing blocks are in-section addresses of
+// Delivery); an address the router does not know shows the "section is unavailable" alert on the overview
+// instead. Only the Today count read is answered here (the real database holds no waiting
 // request); the router, the Delivery section and its request list are the real ones.
 const tileCount = (counts: Record<string, unknown>) => ({
   acceptedQuotesNotStarted: 0,
@@ -249,19 +249,17 @@ test('W3-6 as an owner, the paid-service requests tile opens the Delivery sectio
   await expect(delivery).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Client and programme delivery' })).toBeVisible();
   await expect(unavailableAlert(page)).toHaveCount(0);
-  await expect(page).toHaveURL(/#workspace-delivery$/);
+  await expect(page).toHaveURL(/#billing-services$/);
   await expect(page.getByRole('heading', { name: 'Start with a mission.' })).toHaveCount(0);
-  // The request list is mounted in the Delivery section for owners and admins. It sits in the section's tab
-  // for mission and delegation experience, so it is in the page but hidden until that tab is chosen.
-  const heading = delivery.getByRole('heading', {
-    name: 'Customer paid-service requests',
-    includeHidden: true,
-  });
-  await expect(heading).toBeAttached();
-  await expect(heading).toBeHidden();
-  await openTab(delivery, 'Mission and delegation experience');
-  await heading.scrollIntoViewIfNeeded();
+  // The request list is mounted in the Delivery section for owners and admins, in the tab for mission and
+  // delegation experience. The address names a block inside that tab, so the tab opens by itself and the
+  // list is in view, with nothing to click first.
+  await expect(
+    delivery.getByRole('tab', { name: 'Mission and delegation experience', exact: true }),
+  ).toHaveAttribute('aria-selected', 'true');
+  const heading = delivery.getByRole('heading', { name: 'Customer paid-service requests' });
   await expect(heading).toBeVisible();
+  await expect(page.locator('#billing-services')).toBeInViewport();
   await expect(unavailableAlert(page)).toHaveCount(0);
 });
 
@@ -278,8 +276,204 @@ test('W3-7 when the count is Not available, the tile still opens the Delivery se
     .filter({ hasText: 'paid-service requests to quote' });
   await expect(tile.locator('strong')).toHaveText('Not available');
   await tile.getByRole('link').click();
-  await expect(page).toHaveURL(/#workspace-delivery$/);
+  await expect(page).toHaveURL(/#billing-services$/);
   await expect(page.locator('#workspace-delivery')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Client and programme delivery' })).toBeVisible();
   await expect(unavailableAlert(page)).toHaveCount(0);
+  await expect(
+    page
+      .locator('#workspace-delivery')
+      .getByRole('tab', { name: 'Mission and delegation experience', exact: true }),
+  ).toHaveAttribute('aria-selected', 'true');
+  await expect(
+    page
+      .locator('#workspace-delivery')
+      .getByRole('heading', { name: 'Customer paid-service requests' }),
+  ).toBeVisible();
+});
+
+// Which billing blocks are empty (their feature is off). A block is drawn before its feature answers, so
+// wait until the answer has stayed the same for two seconds.
+async function emptyBillingBlocks(page: Page, ids: readonly string[]) {
+  const read = () =>
+    page.evaluate(
+      (blockIds) =>
+        blockIds.filter((id) => document.getElementById(id)?.childElementCount === 0).join(),
+      ids,
+    );
+  let last = await read();
+  let steady = 0;
+  while (steady < 4) {
+    await page.waitForTimeout(500);
+    const now = await read();
+    steady = now === last ? steady + 1 : 0;
+    last = now;
+  }
+  return last.split(',');
+}
+
+// The page scrolls smoothly, so a block lands in view a moment after the address changes. Empty blocks have no
+// height, so the check is on the top edge: inside the window.
+async function expectAtTop(page: Page, id: string) {
+  await expect
+    .poll(() =>
+      page.evaluate((blockId) => {
+        const top = document.getElementById(blockId)?.getBoundingClientRect().top ?? -1;
+        return top >= 0 && top < window.innerHeight;
+      }, id),
+    )
+    .toBe(true);
+}
+
+test('W3-8 as an owner, each billing jump link and a full page load of a billing address keep Delivery open and land on their block', async ({
+  page,
+}) => {
+  test.setTimeout(180000);
+  const seed = JSON.parse(await readFile('.cache/part03-browser.json', 'utf8'));
+  const today = await ownerOverview(page, { serviceRequestsToQuote: 1 });
+  await today.getByRole('link', { name: /paid-service request/ }).click();
+  const delivery = page.locator('#workspace-delivery');
+  const jump = delivery.getByRole('navigation', { name: 'Jump to a billing section' });
+  const blocks = [
+    ['Services', 'billing-services'],
+    ['Plans', 'billing-plans'],
+    ['Sample invoices', 'billing-sample-invoices'],
+    ['Invoices', 'billing-invoices'],
+    ['Payments', 'billing-payments'],
+  ] as const;
+  await expect(jump).toBeVisible();
+  // A block whose feature is off renders nothing: its link and the block itself are hidden, so nothing
+  // empty can take focus. Which blocks are off depends on the switches of this database, so read it.
+  const empty = await emptyBillingBlocks(
+    page,
+    blocks.map(([, id]) => id),
+  );
+  for (const [name, id] of blocks) {
+    const link = jump.getByRole('link', { name, exact: true });
+    if (empty.includes(id)) {
+      await expect(link).toBeHidden();
+      await expect(page.locator('#' + id)).toBeHidden();
+      continue;
+    }
+    await link.click();
+    await expect(page).toHaveURL(new RegExp('#' + id + '$'));
+    await expect(delivery).toBeVisible();
+    await expect(unavailableAlert(page)).toHaveCount(0);
+    await expect(
+      delivery.getByRole('tab', { name: 'Mission and delegation experience', exact: true }),
+    ).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('#' + id)).toBeFocused();
+    await expectAtTop(page, id);
+  }
+  // A shared address opened cold: the section and the tab show first and the block lands once its data
+  // has loaded, without a click.
+  for (const [, id] of blocks) {
+    if (empty.includes(id)) continue;
+    await page.goto(
+      '/operator?workspace=' + encodeURIComponent(seed.tenantId) + '&open=' + id + '#' + id,
+    );
+    await expect(page.locator('#workspace-delivery')).toBeVisible({ timeout: 30000 });
+    await expect(
+      page
+        .locator('#workspace-delivery')
+        .getByRole('tab', { name: 'Mission and delegation experience', exact: true }),
+    ).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('#' + id)).toBeFocused();
+    await expect(unavailableAlert(page)).toHaveCount(0);
+    await expectAtTop(page, id);
+  }
+  // On a phone the billing hub sits in a closed fold. An address that names a block inside it opens the fold.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(
+    '/operator?workspace=' + encodeURIComponent(seed.tenantId) + '&open=phone#billing-plans',
+  );
+  await expect(page.locator('#billing-plans > section.detail-card')).toBeVisible({
+    timeout: 30000,
+  });
+  await expect(unavailableAlert(page)).toHaveCount(0);
+});
+
+test('W3-9 when invoicing and payments are off, their jump links and empty blocks are hidden and the others still land and take focus', async ({
+  page,
+}) => {
+  test.setTimeout(180000);
+  const today = await ownerOverview(page, { serviceRequestsToQuote: 1 });
+  // The three optional blocks answer "switched off" (503), exactly as a deployment with them off does.
+  await page.route('**/api/workspace/customer-billing?*scope=pending*', (route) =>
+    route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"off"}' }),
+  );
+  await page.route('**/api/workspace/customer-simulated-payments?*', (route) =>
+    route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"off"}' }),
+  );
+  await page.reload();
+  await today.getByRole('link', { name: /paid-service request/ }).click();
+  const delivery = page.locator('#workspace-delivery');
+  const jump = delivery.getByRole('navigation', { name: 'Jump to a billing section' });
+  await expect(jump).toBeVisible();
+  for (const [name, id] of [
+    ['Sample invoices', 'billing-sample-invoices'],
+    ['Invoices', 'billing-invoices'],
+    ['Payments', 'billing-payments'],
+  ] as const) {
+    await expect(jump.getByRole('link', { name, exact: true })).toBeHidden();
+    await expect(page.locator('#' + id)).toBeHidden();
+  }
+  for (const [name, id] of [
+    ['Services', 'billing-services'],
+    ['Plans', 'billing-plans'],
+  ] as const) {
+    await jump.getByRole('link', { name, exact: true }).click();
+    await expect(page).toHaveURL(new RegExp('#' + id + '$'));
+    await expect(page.locator('#' + id)).toBeFocused();
+    await expectAtTop(page, id);
+  }
+});
+
+// W6-A: "Not available" read "Not availabl / e" in a narrow tile. A tile that cannot give its count now takes two
+// tiles' width and the word is never split inside itself: at the phone widths, at the widest layout, and at
+// Largest text. Each word is measured by its own range: a word split across two lines has two boxes.
+test('W6-A when counts are Not available, no word in the tile is split across lines at 320, 390 and 1440, at Normal and Largest text', async ({
+  page,
+}) => {
+  test.setTimeout(240000);
+  const today = await ownerOverview(page, {
+    unavailable: ['acceptedQuotesNotStarted', 'serviceRequestsToQuote', 'repliesToReview'],
+  });
+  const tiles = today.getByRole('list', { name: 'Counts' }).locator('li[data-tone="unavailable"]');
+  await expect(tiles).toHaveCount(3);
+  for (const step of ['normal', 'largest'] as const) {
+    await page.evaluate((value) => {
+      if (value === 'normal') document.documentElement.removeAttribute('data-text-size');
+      else document.documentElement.setAttribute('data-text-size', value);
+    }, step);
+    for (const width of [320, 390, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.evaluate(() => document.fonts.ready);
+      const strong = tiles.locator('strong');
+      await expect(strong).toHaveText(['Not available', 'Not available', 'Not available']);
+      const split = await strong.evaluateAll((els) =>
+        els.flatMap((el) => {
+          const node = el.firstChild as Text;
+          const text = node.textContent ?? '';
+          const found: string[] = [];
+          for (const match of text.matchAll(/\S+/g)) {
+            const range = document.createRange();
+            range.setStart(node, match.index ?? 0);
+            range.setEnd(node, (match.index ?? 0) + match[0].length);
+            if (range.getClientRects().length > 1) found.push(match[0]);
+          }
+          return found;
+        }),
+      );
+      expect(split, `${step} text at ${width}: words split across lines`).toEqual([]);
+      // Each tile still goes where it went: accepted quotes and the Delivery section, replies and the commercial
+      // section, and (W6-B) paid-service requests and the Services section.
+      expect(
+        await tiles
+          .getByRole('link')
+          .evaluateAll((links) => links.map((a) => a.getAttribute('href'))),
+        `${step} text at ${width}: where the tiles go`,
+      ).toEqual(['#workspace-delivery', '#workspace-commercial', '#billing-services']);
+    }
+  }
 });

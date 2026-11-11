@@ -74,6 +74,22 @@ export function totp(secret: string, at = Date.now()) {
   return ((mac.readUInt32BE(offset) & 0x7fffffff) % 1000000).toString().padStart(6, '0');
 }
 
+const codeWindowMs = 30000;
+/** A code made with less than this left in its window can expire before the server checks it. */
+const codeMarginMs = 3000;
+/** The longest `codeWaitMs` can return, plus a margin for the clock and the page, rounded up. */
+const maxCodeWaitMs = 40000;
+export const codeWindow = (at: number) => Math.floor(at / codeWindowMs);
+/**
+ * How long to wait, from `now`, before a code can be made: 0 when `now` is in a window after `lastWindow` with at
+ * least `codeMarginMs` left, otherwise the time to the start of the next window that is after `lastWindow`.
+ */
+export function codeWaitMs(now: number, lastWindow: number) {
+  if (codeWindow(now) <= lastWindow) return (lastWindow + 1) * codeWindowMs - now;
+  const left = (codeWindow(now) + 1) * codeWindowMs - now;
+  return left < codeMarginMs ? left : 0;
+}
+
 const authenticatorFile = '.cache/qa-verification-authenticator.json';
 type SavedAuthenticator = { tenantId: string; secret: string; lastWindow: number };
 
@@ -123,12 +139,20 @@ export async function signInOwner(page: Page, next = '/operator') {
   }
   if (!secret) throw new Error('No authenticator key for this run');
   const lastWindow = saved?.lastWindow ?? 0;
-  while (Math.floor(Date.now() / 30000) <= lastWindow) await page.waitForTimeout(1000);
-  const window = Math.floor(Date.now() / 30000);
-  await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
+  // A code from a window already used is refused, so this can wait for the next window. The wait is not part of the
+  // 30 second test budget a sign-in is given, so the budget grows by the longest wait.
+  const info = base.info();
+  info.setTimeout(info.timeout + maxCodeWaitMs);
+  let at = Date.now();
+  for (let wait = codeWaitMs(at, lastWindow); wait > 0; wait = codeWaitMs(at, lastWindow)) {
+    await page.waitForTimeout(wait);
+    at = Date.now();
+  }
+  // The recorded window and the code come from the same moment, so a window edge cannot split them.
+  await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret, at));
   writeFileSync(
     authenticatorFile,
-    JSON.stringify({ tenantId: seed.tenantId, secret, lastWindow: window }),
+    JSON.stringify({ tenantId: seed.tenantId, secret, lastWindow: codeWindow(at) }),
     { mode: 0o600 },
   );
   await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();

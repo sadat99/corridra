@@ -186,6 +186,18 @@ describe('role shells (D14)', () => {
     expect(at('/operator/owner')).toBe('admin');
     expect(at('/operator/missions/abc')).toBe('missions');
     expect(at('/operator', '#workspace-delivery')).toBe('meetings');
+    // An address inside a section (a billing block) keeps the section that holds it marked in the shell.
+    for (const id of [
+      'billing-services',
+      'billing-plans',
+      'billing-sample-invoices',
+      'billing-invoices',
+      'billing-payments',
+    ]) {
+      expect(currentTeamSection('/operator', '#' + id, sectionForSlug)).toBe('workspace-delivery');
+      expect(at('/operator', '#' + id)).toBe('meetings');
+    }
+    expect(at('/operator', '#billing-unknown')).toBe('today');
     expect(at('/operator/missions', '#workspace-network')).toBe('missions');
     expect(at('/operator/dashboard')).toBe('money');
     expect(at('/operator', '#workspace-navigation')).toBe('today');

@@ -70,11 +70,11 @@ describe('the customer rail foot', () => {
     const CustomerRailFoot = await load<unknown>(rail, 'CustomerRailFoot');
     return renderToStaticMarkup(createElement(CustomerRailFoot, props));
   }
-  test('without a number it is exactly the Coming soon text it always was', async () => {
+  test('without a number it is the same Coming soon words, with the name and the tag in one name span', async () => {
     const expected =
       '<div class="ux-rail-foot"><p class="ux-rail-soon">' +
       (await iconMarkup('help')) +
-      '<span>Help on WhatsApp</span><span class="ux-soon-tag">Coming soon</span></p></div>';
+      '<span class="ux-rail-label"><span>Help on WhatsApp</span><span class="ux-soon-tag">Coming soon</span></span></p></div>';
     expect(await foot({})).toBe(expected);
     expect(await foot({ href: null })).toBe(expected);
     expect(await foot({ href: '' })).toBe(expected);
@@ -85,7 +85,7 @@ describe('the customer rail foot', () => {
       '<div class="ux-rail-foot">' +
         `<a class="ux-rail-help" href="${href}" target="_blank" rel="noopener noreferrer" lang="en">` +
         (await iconMarkup('help')) +
-        '<span>Help on WhatsApp</span>' +
+        '<span class="ux-rail-label">Help on WhatsApp</span>' +
         (await iconMarkup('open', 'ux-rail-help-open')) +
         `<span class="sr-only">${suffix}</span></a></div>`,
     );

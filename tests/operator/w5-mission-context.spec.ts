@@ -2,6 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 import { build } from 'esbuild';
 import { createServer, type Server } from 'node:http';
 import { resolve } from 'node:path';
+import { MISSION_A, MISSION_B, NOTE, UNLISTED, commercial, listed } from './mission-hint-fixture';
 
 // W5: operator section links keep the mission. The real components are mounted with the data their
 // own endpoints return (mocked at the network edge). What is proved: the mission page links for
@@ -10,10 +11,6 @@ import { resolve } from 'node:path';
 // listed shows one plain note and changes nothing else; the person's own choice always wins; and
 // nothing new is fetched. Meetings and delivery keep the links they had.
 const TENANT = '99999999-9999-4999-8999-999999999999';
-const MISSION_A = '11111111-1111-4111-8111-111111111111';
-const MISSION_B = '22222222-2222-4222-8222-222222222222';
-const UNLISTED = '33333333-3333-4333-8333-333333333333';
-const NOTE = 'This mission is not in the list shown here.';
 
 let server: Server, origin: string;
 let bundle = '';
@@ -22,15 +19,22 @@ test.beforeAll(async () => {
   const result = await build({
     stdin: {
       contents: `import{createRoot}from'react-dom/client';
+      import{useState}from'react';
       import{Counterparties}from ${JSON.stringify(resolve('apps/web/app/operator/counterparties.tsx'))};
       import{CommercialProgress}from ${JSON.stringify(resolve('apps/web/app/operator/opportunities.tsx'))};
       import{MissionPage}from ${JSON.stringify(resolve('apps/web/app/operator/[section]/[missionId]/mission-page.tsx'))};
       const c=new URLSearchParams(location.search).get('c');
       const tenant=${JSON.stringify(TENANT)};
+      // The team shell draws only the section in view, so leaving a section unmounts it. This stands in for that.
+      function Leaving(){const[shown,setShown]=useState(true);return <>
+        <button type="button" onClick={()=>setShown(!shown)}>{shown?'Leave the section':'Return to the section'}</button>
+        {shown&&<Counterparties tenant={tenant} purpose="synthetic_validation"/>}</>}
       createRoot(document.getElementById('fixture')).render(
         <main id="main" className="operator-page">
           {c==='research'&&<Counterparties tenant={tenant} purpose="synthetic_validation"/>}
           {c==='commercial'&&<CommercialProgress tenant={tenant} revision={0}/>}
+          {c==='both'&&<><Counterparties tenant={tenant} purpose="synthetic_validation"/><CommercialProgress tenant={tenant} revision={0}/></>}
+          {c==='leaving'&&<Leaving/>}
           {c==='mission'&&<MissionPage tenant={tenant} workspaceName="Sample team" missionId=${JSON.stringify(MISSION_A)} moveRecords={false}/>}
         </main>);`,
       loader: 'tsx',
@@ -86,38 +90,6 @@ test.beforeAll(async () => {
 test.afterAll(async () => {
   await new Promise<void>((done) => server.close(() => done()));
 });
-
-const listed = [
-  { id: MISSION_A, status: 'OPEN', brief: { company: 'Acme Textiles' } },
-  { id: MISSION_B, status: 'OPEN', brief: { company: 'Borealis Trading' } },
-];
-
-const commercial = {
-  role: 'owner',
-  freshMfa: true,
-  enabled: true,
-  opportunities: [],
-  total: 0,
-  records: [],
-  recordsTruncated: false,
-  recordCounts: [],
-  confirmations: [],
-  owners: [],
-  meetings: [],
-  origins: [],
-  missions: [
-    { id: MISSION_A, label: 'Acme Textiles' },
-    { id: MISSION_B, label: 'Borealis Trading' },
-  ],
-  sources: [],
-  evidence: [],
-  history: [],
-  metrics: {},
-  activity: {},
-  totals: [],
-  overdue: [],
-  meetingFollowups: [],
-};
 
 /** Answers the workspace endpoints the mounted section already uses, and records every request. */
 async function mock(page: Page) {
@@ -184,8 +156,15 @@ async function mock(page: Page) {
   return { requests, errors };
 }
 
-const open = (page: Page, component: string, mission?: string) =>
-  page.goto(`${origin}/?c=${component}${mission === undefined ? '' : `&mission=${mission}`}`);
+// The links from a mission page name the section in the # part, so the section applies the hint.
+const hashes: Record<string, string> = {
+  research: '#workspace-research',
+  commercial: '#workspace-commercial',
+};
+const open = (page: Page, component: string, mission?: string, hash = hashes[component] ?? '') =>
+  page.goto(
+    `${origin}/?c=${component}${mission === undefined ? '' : `&mission=${mission}`}${hash}`,
+  );
 const shortlistCalls = (requests: string[]) =>
   requests.filter((r) => r.startsWith('/api/workspace/shortlist'));
 const filteredCommercial = (requests: string[]) =>
@@ -343,4 +322,87 @@ test('W5-commercial: the person own later choice wins over the address', async (
   await expect(select).toHaveValue('');
   await page.waitForTimeout(300);
   await expect(select).toHaveValue('');
+});
+
+const researchSelect = (page: Page) => page.getByLabel('Shortlist mission');
+const commercialSelect = (page: Page) => page.getByLabel('Commercial report mission');
+
+test('W5-both: with both panels mounted, the hint opens only the section the address names', async ({
+  page,
+}) => {
+  const seen = await mock(page);
+  await open(page, 'both', MISSION_A, '#workspace-research');
+  await expect(researchSelect(page)).toHaveValue(MISSION_A);
+  await expect(commercialSelect(page).locator('option')).toHaveCount(3);
+  await expect(commercialSelect(page)).toHaveValue('');
+  await quiet(page);
+  expect(filteredCommercial(seen.requests)).toEqual([]);
+  await expect(page.getByText(NOTE)).toHaveCount(0);
+  expect(seen.errors).toEqual([]);
+});
+
+test('W5-both: the other address opens only the Commercial section', async ({ page }) => {
+  const seen = await mock(page);
+  await open(page, 'both', MISSION_A, '#workspace-commercial');
+  await expect(commercialSelect(page)).toHaveValue(MISSION_A);
+  await expect(researchSelect(page).locator('option')).toHaveCount(3);
+  await expect(researchSelect(page)).toHaveValue('');
+  await quiet(page);
+  expect(shortlistCalls(seen.requests)).toEqual([]);
+});
+
+test('W5-both: an unlisted mission shows the note only in the named section', async ({ page }) => {
+  await mock(page);
+  await open(page, 'both', UNLISTED, '#workspace-commercial');
+  await expect(commercialSelect(page).locator('option')).toHaveCount(3);
+  await expect(researchSelect(page).locator('option')).toHaveCount(3);
+  await expect(page.getByText(NOTE)).toHaveCount(1);
+  // The note sits right after the Commercial mission select, not after the Research one.
+  await expect(
+    page.locator('p[role="note"]').locator('xpath=preceding::select[1]').locator('option').first(),
+  ).toHaveText('All accessible missions');
+});
+
+test('W5-both: an address that names no section opens neither', async ({ page }) => {
+  await mock(page);
+  await open(page, 'both', MISSION_A, '');
+  await expect(researchSelect(page).locator('option')).toHaveCount(3);
+  await expect(commercialSelect(page).locator('option')).toHaveCount(3);
+  await expect(researchSelect(page)).toHaveValue('');
+  await expect(commercialSelect(page)).toHaveValue('');
+  await expect(page.getByText(NOTE)).toHaveCount(0);
+});
+
+test('W5-leaving: a section that is left and returned to does not apply the old hint again', async ({
+  page,
+}) => {
+  const seen = await mock(page);
+  await open(page, 'leaving', MISSION_A, '#workspace-research');
+  await expect(researchSelect(page)).toHaveValue(MISSION_A);
+  await researchSelect(page).selectOption(MISSION_B);
+  await expect(researchSelect(page)).toHaveValue(MISSION_B);
+  await page.getByRole('button', { name: 'Leave the section' }).click();
+  await expect(researchSelect(page)).toHaveCount(0);
+  await page.getByRole('button', { name: 'Return to the section' }).click();
+  await expect(researchSelect(page).locator('option')).toHaveCount(3);
+  await expect(researchSelect(page)).toHaveValue('');
+  await quiet(page);
+  await expect(researchSelect(page)).toHaveValue('');
+  expect(
+    shortlistCalls(seen.requests).filter((request) => request.includes(`mission=${MISSION_A}`)),
+  ).toHaveLength(1);
+});
+
+test('W5-leaving: the note for an unlisted mission is not shown again on return', async ({
+  page,
+}) => {
+  await mock(page);
+  await open(page, 'leaving', UNLISTED, '#workspace-research');
+  await expect(researchSelect(page).locator('option')).toHaveCount(3);
+  await expect(page.getByText(NOTE)).toHaveCount(1);
+  await page.getByRole('button', { name: 'Leave the section' }).click();
+  await page.getByRole('button', { name: 'Return to the section' }).click();
+  await expect(researchSelect(page).locator('option')).toHaveCount(3);
+  await quiet(page);
+  await expect(page.getByText(NOTE)).toHaveCount(0);
 });

@@ -280,31 +280,48 @@
 .ux-operator-home .ux-today-state {
   margin: 0;
 }
-/* The counts: one strip. One row on a wide screen; four columns on a phone, the last count filling its row. */
+/* The counts: one strip of tiles that wrap, the one-pixel gap between them the divider. Four to a row up to 68.75rem,
+   the last count filling its row; one row from there. A tile that says Not available takes two tiles' width (and at
+   least 7rem), so the word is never split inside itself, whatever the text size (W6-A). */
 .ux-operator-home .ux-today-tiles {
-  display: grid;
-  grid-template-columns: none;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
-  gap: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
   margin: 0;
   padding: 0;
   list-style: none;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: var(--surface-1);
+  background: var(--line);
   overflow: hidden;
 }
 .ux-operator-home .ux-today-tiles li {
   display: block;
+  flex: 1 1 0;
   min-width: 0;
   padding: 0;
   border: 0;
   border-radius: 0;
-  background: none;
+  background: var(--surface-1);
 }
-.ux-operator-home .ux-today-tiles li + li {
-  border-inline-start: 1px solid var(--line);
+.ux-operator-home .ux-today-tiles li[data-tone='unavailable'] {
+  min-width: 7rem;
+}
+@media (max-width: 68.75rem) {
+  .ux-operator-home .ux-today-tiles li {
+    flex-basis: calc(25% - 1px);
+  }
+  .ux-operator-home .ux-today-tiles li[data-tone='unavailable'] {
+    flex-basis: calc(50% - 1px);
+  }
+}
+@media (min-width: 68.8125rem) {
+  .ux-operator-home .ux-today-tiles li {
+    min-width: 4.5rem;
+  }
+  .ux-operator-home .ux-today-tiles li[data-tone='unavailable'] {
+    min-width: 7rem;
+  }
 }
 .ux-operator-home .ux-today-tiles a {
   display: flex;
@@ -796,25 +813,6 @@
   .ux-operator-home .ux-today-summary {
     flex-basis: 100%;
     margin: 0;
-  }
-  .ux-operator-home .ux-today-tiles {
-    grid-auto-flow: row;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-  .ux-operator-home .ux-today-tiles li:nth-child(4n + 1) {
-    border-inline-start: 0;
-  }
-  .ux-operator-home .ux-today-tiles li:nth-child(n + 5) {
-    border-top: 1px solid var(--line);
-  }
-  .ux-operator-home .ux-today-tiles li:last-child:nth-child(4n + 1) {
-    grid-column: 1 / -1;
-  }
-  .ux-operator-home .ux-today-tiles li:last-child:nth-child(4n + 2) {
-    grid-column: span 3;
-  }
-  .ux-operator-home .ux-today-tiles li:last-child:nth-child(4n + 3) {
-    grid-column: span 2;
   }
   .ux-operator-home .ux-today-tiles a {
     padding: var(--space-2) var(--space-2) var(--space-3);

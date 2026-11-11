@@ -2126,6 +2126,41 @@ html {
   scroll-padding-top: 104px;
   text-rendering: optimizeLegibility;
 }
+/* Long words never push a public page wider than the window (W6-A). With Largest Text Size and 200 percent browser
+   text a single word such as a country name is wider than a phone column. Only `anywhere` lowers a flex or grid
+   item's minimum width, so headings, paragraphs, list items, links and labels may break inside a word when the box
+   is too narrow; `break-word` stays on buttons, table cells and chips, whose width is set by their content. Every
+   rule is `:where`, so any component rule with its own value still wins, and nothing changes when a word fits. */
+:where(.ux-public:not(.ux-intake-page), .site-header, .site-footer, .guide-footer) {
+  overflow-wrap: break-word;
+}
+:where(.ux-public:not(.ux-intake-page), .site-header, .site-footer, .guide-footer)
+  :where(
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    p,
+    li,
+    dt,
+    dd,
+    figcaption,
+    blockquote,
+    summary,
+    strong,
+    label,
+    .primary-link,
+    .text-link,
+    .guide-tag
+  ) {
+  overflow-wrap: anywhere;
+}
+:where(.ux-public:not(.ux-intake-page), .site-header, .site-footer, .guide-footer)
+  :where(button, th, td, .ux-badge) {
+  overflow-wrap: break-word;
+}
 body {
   font-family: var(--font-ui);
   font-size: var(--text-base);
@@ -3250,6 +3285,7 @@ th {
 }
 .guide-crumb {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
   font-size: var(--text-md);
@@ -3270,6 +3306,7 @@ th {
 }
 .guide-route {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-2);
   padding: var(--space-6);
   background: var(--surface-1);
@@ -3413,6 +3450,7 @@ th {
 }
 .guide-reverse-actions {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
   justify-items: start;
 }
@@ -5738,10 +5776,6 @@ th {
 }
 .ux-customer .ux-more-grid .ux-account-sidebar {
   max-width: none;
-}
-.ux-profile-actions {
-  display: grid;
-  margin-top: var(--space-4);
 }
 .ux-link-list {
   display: grid;
@@ -8271,7 +8305,15 @@ samp {
 }
 .billing-hub > div {
   min-width: 0;
+  max-width: 64rem;
   scroll-margin-top: var(--space-16);
+}
+/* A block whose feature is off renders nothing: it takes no focus, and its jump link is hidden. */
+.billing-hub > div:empty,
+.billing-hub:has(> #billing-sample-invoices:empty) .billing-jump a[href='#billing-sample-invoices'],
+.billing-hub:has(> #billing-invoices:empty) .billing-jump a[href='#billing-invoices'],
+.billing-hub:has(> #billing-payments:empty) .billing-jump a[href='#billing-payments'] {
+  display: none;
 }
 .billing-hub .detail-card {
   display: grid;
@@ -8546,6 +8588,7 @@ samp {
 }
 .guide-progress .outcome-path li {
   min-width: 0;
+  max-width: 100%;
   overflow-wrap: anywhere;
 }
 

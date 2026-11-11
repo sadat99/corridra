@@ -151,13 +151,24 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
     await page.screenshot({ path: `.cache/ux06/after/admin-start-${width}.png` });
   }
   await page.setViewportSize({ width: 1280, height: 720 });
-  expect(
-    await shortcuts
-      .locator('a')
-      .evaluateAll((links) =>
-        links.every((link) => !!document.getElementById((link as HTMLAnchorElement).hash.slice(1))),
-      ),
-  ).toBe(true);
+  // Each shortcut opens the section it names: the address changes, the section is shown and it holds focus. With the
+  // team shell on, only the section in view is in the page, so the target is not expected to exist before the click.
+  const shortcutHrefs = await shortcuts
+    .getByRole('link')
+    .evaluateAll((links) => links.map((link) => link.getAttribute('href') ?? ''));
+  expect(shortcutHrefs).toHaveLength(5);
+  for (const href of shortcutHrefs) {
+    expect(href).toMatch(/^#workspace-[a-z-]+$/);
+    const section = page.locator(href);
+    await shortcuts.locator(`a[href="${href}"]`).click();
+    await expect(page).toHaveURL(new RegExp(`${href}$`));
+    await expect(section).toBeVisible();
+    await expect(section).toBeFocused();
+    await expect(
+      page.getByRole('alert').filter({ hasText: 'This section is unavailable' }),
+    ).toHaveCount(0);
+    await openSection(page, 'main');
+  }
   await page.evaluate(() => {
     window.location.hash = 'missing-tool';
   });

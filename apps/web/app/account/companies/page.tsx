@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { customerOrganisationLinksEnabled } from '@corridra/auth/customer-organisation-links';
 import { customerOrganisationProfilesEnabled } from '@corridra/auth/customer-organisation-profiles';
 import { redirect } from 'next/navigation';
 import { readNeonAuthConfig } from '@corridra/config';
@@ -7,6 +8,7 @@ import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { CustomerShell } from '../../../components/customer-shell';
 import { neonAuth } from '../../../lib/neon-auth';
+import { companyProfilesTitle } from '../../../lib/workspace-choice';
 import { CompanyPortfolio } from './company-portfolio';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -47,7 +49,7 @@ export default async function Page() {
       {customerOrganisationProfilesEnabled() && (
         <p>
           <Link className="text-link" prefetch={false} href="/account/profile">
-            Manage your company profiles and links
+            Manage your {companyProfilesTitle(customerOrganisationLinksEnabled()).toLowerCase()}
           </Link>
         </p>
       )}

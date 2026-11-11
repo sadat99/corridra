@@ -1,11 +1,16 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { meetingStatus } from '../../packages/domain/src/access';
 import { createRequire } from 'node:module';
 import { groupMeetings } from '../../apps/web/lib/meetings/group';
 import { meetingCard, meetingLink } from '../../apps/web/lib/meetings/cards';
-import { loadMeetings, meetingReportCap, type MeetingRow } from '../../apps/web/lib/meetings/load';
+import {
+  loadMeetings,
+  meetingReadTimeoutMs,
+  meetingReportCap,
+  type MeetingRow,
+} from '../../apps/web/lib/meetings/load';
 import { meetingsPartial, requestsMayBeMissing } from '../../apps/web/lib/meetings/notice';
 import {
   assignmentPageCap,
@@ -734,6 +739,107 @@ describe('reading the meetings of the person’s own requests', () => {
       expect(JSON.stringify(cards), text).not.toContain(text);
       expect(html, text).not.toContain(text);
     }
+  });
+});
+
+describe('bounding each saved report read', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+  const never = new Promise<never>(() => {});
+  it('says what the bound is: eight seconds, at most 12 reads at once', () => {
+    expect(meetingReadTimeoutMs).toBe(8000);
+    expect(meetingReportCap).toBe(12);
+  });
+  it('keeps the rows of the reads that answered and is partial when one read never answers', async () => {
+    vi.useFakeTimers();
+    pages = [{ assignments: [assignment(1), assignment(2), assignment(3)] }];
+    install({ [saved(1)]: [visit('One')], [saved(3)]: [visit('Three')] });
+    command.mockImplementation(async (input: { resourceId: string }) =>
+      input.resourceId === saved(2)
+        ? never
+        : reportFor(input.resourceId, [visit(`Report ${input.resourceId.slice(-4)}`)]),
+    );
+    const pending = loadMeetings(SUBJECT, ISSUER, [requestItem(1), requestItem(2), requestItem(3)]);
+    await vi.advanceTimersByTimeAsync(meetingReadTimeoutMs);
+    const result = await pending;
+    expect(result.rows.map((r) => r.requestId)).toEqual([uuid(1), uuid(3)]);
+    expect(result.partial).toBe(true);
+    expect(result.notSaved).toBe(0);
+  });
+  it('returns no rows and a partial result, never "no meetings", when every read hangs', async () => {
+    vi.useFakeTimers();
+    pages = [{ assignments: [assignment(1), assignment(2)] }];
+    install({});
+    command.mockImplementation(() => never);
+    const pending = loadMeetings(SUBJECT, ISSUER, [requestItem(1), requestItem(2)]);
+    await vi.advanceTimersByTimeAsync(meetingReadTimeoutMs);
+    expect(await pending).toMatchObject({ rows: [], partial: true, reportsOff: false });
+  });
+  it('does not wait for the timer when the reads answer, and leaves no timer running', async () => {
+    vi.useFakeTimers();
+    pages = [{ assignments: [assignment(1), assignment(2)] }];
+    install({ [saved(1)]: [visit('One')], [saved(2)]: [visit('Two')] });
+    const result = await loadMeetings(SUBJECT, ISSUER, [requestItem(1), requestItem(2)]);
+    expect(result.rows.map((r) => r.label)).toEqual(['One', 'Two']);
+    expect(result.partial).toBe(false);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it('clears the timer of a read that failed fast, and of one that threw at once', async () => {
+    vi.useFakeTimers();
+    pages = [{ assignments: [assignment(1), assignment(2)] }];
+    install({ [saved(2)]: [visit('Two')] });
+    command.mockImplementationOnce(async () => {
+      throw new Error('down');
+    });
+    command.mockImplementationOnce(() => {
+      throw new Error('threw before it returned a promise');
+    });
+    const result = await loadMeetings(SUBJECT, ISSUER, [requestItem(1), requestItem(2)]);
+    expect(result).toMatchObject({ rows: [], partial: true });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it('does not time out a read before the bound', async () => {
+    vi.useFakeTimers();
+    pages = [{ assignments: [assignment(1)] }];
+    install({});
+    command.mockImplementation(
+      (input: { resourceId: string }) =>
+        new Promise((resolve) =>
+          setTimeout(
+            () => resolve(reportFor(input.resourceId, [visit('Late')])),
+            meetingReadTimeoutMs - 1,
+          ),
+        ),
+    );
+    const pending = loadMeetings(SUBJECT, ISSUER, [requestItem(1)]);
+    await vi.advanceTimersByTimeAsync(meetingReadTimeoutMs);
+    expect(await pending).toMatchObject({ partial: false, rows: [{ label: 'Late' }] });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+});
+
+describe('the delivery budget is not spent by the page', () => {
+  // app.intake_budget allows 60 a hour per client and per resource; 12 reads a load would lock a person out of
+  // every delivery action after five loads. The read needs the person's own session proof and is capped at 12.
+  it('reads the reports without touching delivery.budget or the rate-limit function', async () => {
+    pages = [{ assignments: [assignment(1), assignment(2)] }];
+    install({ [saved(1)]: [visit('One')], [saved(2)]: [visit('Two')] });
+    const budget = vi.fn(async () => {
+      throw new Error('delivery.budget must not be called');
+    });
+    const query = vi.fn(async () => {
+      throw new Error('the rate-limit function must not be called');
+    });
+    (services as Services).delivery = { budget };
+    (services as Services).missions = { budget };
+    (services as Services).pool = { query };
+    const result = await loadMeetings(SUBJECT, ISSUER, [requestItem(1), requestItem(2)]);
+    expect(result.rows.map((r) => r.label)).toEqual(['One', 'Two']);
+    expect(result.partial).toBe(false);
+    expect(command).toHaveBeenCalledTimes(2);
+    expect(budget).not.toHaveBeenCalled();
+    expect(query).not.toHaveBeenCalled();
   });
 });
 

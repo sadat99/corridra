@@ -3,6 +3,7 @@ import {
   authenticatorReturnTarget,
   classifyVerifyResult,
 } from '../../apps/web/lib/authenticator-check';
+import { sectionOfFragment } from '../../apps/web/lib/operator-urls';
 import { workspaceSections } from '../../apps/web/lib/workspace-navigation';
 
 const roles = ['owner', 'admin', 'operator', 'reviewer', 'viewer'] as const;
@@ -74,6 +75,26 @@ test('the return link targets the previous section only when the role may open i
   expect(authenticatorReturnTarget('workspace-controls', 'owner')).toEqual({
     href: '#workspace-controls',
     label: 'Workspace controls',
+  });
+});
+
+test('the way back works after a billing address too: the workspace passes the section that holds it', () => {
+  for (const block of [
+    'billing-services',
+    'billing-plans',
+    'billing-sample-invoices',
+    'billing-invoices',
+    'billing-payments',
+  ]) {
+    expect(authenticatorReturnTarget(block, 'owner')).toBeNull();
+    expect(authenticatorReturnTarget(sectionOfFragment(block), 'owner'), block).toEqual({
+      href: '#workspace-delivery',
+      label: 'Client and institution delivery',
+    });
+  }
+  expect(authenticatorReturnTarget(sectionOfFragment('billing-services'), 'viewer')).toEqual({
+    href: '#workspace-delivery',
+    label: 'Client and institution delivery',
   });
 });
 

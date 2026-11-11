@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { problems } from './fit';
+import { problems, problemsWithFoldsOpen } from './fit';
 
 // Wave 6 Q-02: with the text at twice its size, the public page bodies fit the window at the four widths people use,
 // and nothing is cut off or runs out of its own box. The whole page is measured, header and footer included, so a
@@ -10,26 +10,6 @@ const widths = [320, 390, 768, 1280] as const;
 test.beforeEach(({}, info) => {
   test.skip(info.project.name !== 'desktop', 'sizes are set in each case');
 });
-
-/** What does not fit with every closed fold on the page opened; the folds that were closed are closed again after. */
-async function problemsWithFoldsOpen(page: Page) {
-  const closed = await page.evaluateHandle(() => {
-    const folds = Array.from(document.querySelectorAll('details')).filter((fold) => !fold.open);
-    for (const fold of folds) fold.open = true;
-    return folds;
-  });
-  await page.evaluate(async () => {
-    await document.fonts.ready;
-    await new Promise<void>((done) => requestAnimationFrame(() => done()));
-  });
-  const stillClosed = await page.locator('details:not([open])').count();
-  const found = await problems(page);
-  await page.evaluate((folds) => {
-    for (const fold of folds) fold.open = false;
-  }, closed);
-  await closed.dispose();
-  return stillClosed > 0 ? [`${stillClosed} fold(s) did not open`, ...found] : found;
-}
 
 test('with 200% text the home, how it works, corridors, network, trust and request pages fit at 320, 390, 768 and 1280', async ({
   page,
