@@ -8,6 +8,8 @@ import { useId, useMemo, useState, type ReactNode } from 'react';
 import { sourceLedger, type LedgerCell } from '../lib/source-ledger';
 import { FactLabel } from './fact-label';
 import { CorridraIcon } from './corridra-icon';
+import { useLanguage } from './language-provider';
+import { translate } from '../lib/i18n/messages';
 import './source-ledger.css';
 
 function Cell({ cell }: { cell: LedgerCell }) {
@@ -35,6 +37,9 @@ export function SourceLedger({
   const [allTerms, setAllTerms] = useState(false);
   const [includeEarlier, setIncludeEarlier] = useState(false);
   const toggleId = useId();
+  const { locale } = useLanguage();
+  // The words the quote cards already use for a supplier's quote version, in the reader's language.
+  const versionLabel = translate(locale, 'mr.quote.revision');
   const ledger = useMemo(
     () => sourceLedger(experience, { includeEarlier, language }),
     [experience, includeEarlier, language],
@@ -81,7 +86,15 @@ export function SourceLedger({
                 <th scope="col" key={column.id}>
                   <b lang={column.supplierLang}>{column.supplier}</b>
                   {column.place ? <small>{column.place}</small> : null}
-                  {column.trust ? <FactLabel label={column.trust} /> : null}
+                  <small>
+                    {versionLabel} <span className="ledger-num">{column.revision}</span> ·{' '}
+                    {column.currency}
+                  </small>
+                  {column.trust ? (
+                    <FactLabel label={column.trust} />
+                  ) : (
+                    <small>{column.provenance}</small>
+                  )}
                   {column.historical ? (
                     <small className="ledger-earlier">Earlier quote</small>
                   ) : null}
@@ -128,7 +141,15 @@ export function SourceLedger({
                 <header>
                   <b lang={column.supplierLang}>{column.supplier}</b>
                   {column.place ? <small>{column.place}</small> : null}
-                  {column.trust ? <FactLabel label={column.trust} /> : null}
+                  <small>
+                    {versionLabel} <span className="ledger-num">{column.revision}</span> ·{' '}
+                    {column.currency}
+                  </small>
+                  {column.trust ? (
+                    <FactLabel label={column.trust} />
+                  ) : (
+                    <small>{column.provenance}</small>
+                  )}
                   {column.historical ? (
                     <small className="ledger-earlier">Earlier quote</small>
                   ) : null}
