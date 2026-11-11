@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from 'vitest';
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { fixture } from './support';
 import { digest, harness, type Fixture } from './revamp-g4-support';
@@ -8,6 +8,21 @@ import { migrateCustomerProgrammeLifecycle } from '../../packages/db/src/custome
 import { migrateCustomerMemberRoles } from '../../packages/db/src/customer-member-role-migrate';
 import { migrateCustomerAccountLifecycle } from '../../packages/db/src/customer-account-lifecycle-migrate';
 import { migrateCustomerWorkspaceLifecycle } from '../../packages/db/src/customer-workspace-lifecycle-migrate';
+
+// ERASURE_BASE_CHECK=1 (or REMOVED_BASE_CHECK=1) keeps the erasure file away from the migrators, which is how the cases that need it
+// are shown to fail on main. Without those variables nothing is hidden. See removed-member-hide.ts.
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const real = await importOriginal<typeof import('node:fs/promises')>();
+  const readdir = (async (path: unknown, ...rest: unknown[]) => {
+    const names = (await (real.readdir as (...a: unknown[]) => Promise<unknown[]>)(
+      path,
+      ...rest,
+    )) as unknown[];
+    const { removedFileHidden } = await import('./removed-member-hide');
+    return names.filter((n) => !removedFileHidden(String(path), String(n)));
+  }) as typeof real.readdir;
+  return { ...real, readdir, default: { ...real, readdir } };
+});
 
 // CRUD G4 and G5 are installed and enabled in production, so the follow-up reaches an installed database. This builds a
 // database exactly the way production was built (the files of merge f62e093d, recorded with their hashes), puts data and the
@@ -30,6 +45,7 @@ const changedFunctions = [
   'customer_private.account_chain_tenant(uuid)',
 ];
 const newFunctions = [
+  'customer.erasure_request_reach(uuid,timestamp with time zone,uuid)',
   'customer_private.erasure_in_scope(uuid)',
   'customer_private.member_role_keeps_access_guard()',
   'customer_private.revocation_keeps_access_guard()',
@@ -47,8 +63,12 @@ const newFiles = {
     '0002_account_chain_and_undo_words.sql',
     '0003_erasure_queue_scope.sql',
     '0004_erasure_scope_by_workspaces.sql',
+    '0005_removed_member_erasure.sql',
   ],
 };
+// The one new function an application login may call: the staff reach list of the erasure file (owner decisions 11 Nov 2026:
+// "Yes, add an erasure path (Recommended)", "Staff by hand, tracked (Recommended)"). It is granted to the runtime login only.
+const staffCallable = ['customer.erasure_request_reach(uuid,timestamp with time zone,uuid)'];
 const recordTables = [
   'customer_private.workspace_revision',
   'customer_private.workspace_lifecycle_request',
@@ -193,17 +213,21 @@ describe('the follow-up reaches an installed database', () => {
     expect([...after.keys()].filter((name) => !before.functions.has(name)).sort()).toEqual(
       newFunctions,
     );
-    // no new function is callable by the application logins except through the customer functions that already were
-    for (const name of newFunctions)
-      expect(
-        (
-          await old.owner.query('SELECT has_function_privilege($1,$2::regprocedure,$3) AS yes', [
-            'corridra_runtime',
-            name,
-            'EXECUTE',
-          ])
-        ).rows[0].yes,
-      ).toBe(false);
+    // no new function is callable by the application logins, except the staff reach list, which only the runtime login may call
+    for (const name of newFunctions) {
+      const rights = (
+        await old.owner.query(
+          `SELECT has_function_privilege('corridra_runtime',$1::regprocedure,'EXECUTE') AS runtime,
+            has_function_privilege('corridra_auth',$1::regprocedure,'EXECUTE') AS auth,has_function_privilege('public',$1::regprocedure,'EXECUTE') AS pub`,
+          [name],
+        )
+      ).rows[0];
+      expect(rights, name).toEqual({
+        runtime: staffCallable.includes(name),
+        auth: false,
+        pub: false,
+      });
+    }
     const names = await triggers(old);
     expect(before.triggers.filter((name) => !names.includes(name))).toEqual([]);
     expect(names.filter((name) => !before.triggers.includes(name)).sort()).toEqual([
@@ -306,6 +330,7 @@ describe('the follow-up reaches an installed database', () => {
       [accountSchema, '0001_account_closure_and_erasure.sql', migrateCustomerAccountLifecycle],
       [accountSchema, '0003_erasure_queue_scope.sql', migrateCustomerAccountLifecycle],
       [accountSchema, '0004_erasure_scope_by_workspaces.sql', migrateCustomerAccountLifecycle],
+      [accountSchema, '0005_removed_member_erasure.sql', migrateCustomerAccountLifecycle],
     ] as const) {
       const recorded = (
         await old.owner.query(`SELECT sha256 FROM ${schema}.applied WHERE name=$1`, [name])
