@@ -184,9 +184,8 @@ export class CommunicationService {
         // used only inside sha256.
         const states = (
           await db.query<{ id: string; status: string; opted_out: boolean }>(
-            `SELECT cs.id,cs.status,EXISTS(SELECT FROM app.communication_optout o
-               JOIN app.private_contact_data pc ON pc.tenant_id=o.tenant_id AND o.recipient_key=encode(sha256(convert_to(lower(pc.email),'UTF8')),'hex')
-               WHERE pc.tenant_id=cs.tenant_id AND (pc.id=cs.chain_id OR pc.id IN (SELECT x.replacement_id FROM app.private_contact_change x WHERE x.tenant_id=cs.tenant_id AND x.chain_id=cs.chain_id))) AS opted_out
+            `SELECT cs.id,cs.status,EXISTS(SELECT FROM (SELECT cs.chain_id AS id UNION SELECT x.replacement_id FROM app.private_contact_change x WHERE x.tenant_id=cs.tenant_id AND x.chain_id=cs.chain_id) chain
+               JOIN app.private_contact_data pc ON pc.tenant_id=cs.tenant_id AND pc.id=chain.id JOIN app.communication_optout o ON o.tenant_id=pc.tenant_id AND o.recipient_key=encode(sha256(convert_to(lower(pc.email),'UTF8')),'hex')) AS opted_out
              FROM app.private_contact_state cs WHERE cs.tenant_id=$1 AND cs.id=ANY($2::uuid[])`,
             [ctx.tenantId, [...new Set(messageRows.map((m) => m.contact_id as string))]],
           )
