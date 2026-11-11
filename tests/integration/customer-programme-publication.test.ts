@@ -1,5 +1,6 @@
 import { beforeAll, afterAll, afterEach, test, expect, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
 import { fixture } from './support';
 import { migrateCustomerParticipants } from '../../packages/db/src/customer-participant-migrate';
 import { migrateCustomerProgrammePublication } from '../../packages/db/src/customer-programme-publication-migrate';
@@ -273,6 +274,17 @@ test('the install refuses, and creates nothing, when a table it writes to has a 
       'ALTER TABLE customer_private.programme_participant_revocation DROP CONSTRAINT shorter_reason',
       'programme_participant_revocation',
     );
+    // The fingerprint sorts in byte order, so it is the same under any database collation (CI and production use an
+    // English collation, this suite's local database may not). Without it the CI database refused the install.
+    const sql = await readFile(
+      new URL(
+        '../../packages/db/customer-programme-publication-migrations/0001_public_programme_page_and_applications.sql',
+        import.meta.url,
+      ),
+      'utf8',
+    );
+    expect(sql).toContain('ORDER BY a.attname::text COLLATE "C")');
+    expect(sql).toContain('ORDER BY pg_get_constraintdef(c.oid) COLLATE "C")');
     // With the proven shapes back, the same install succeeds.
     await migrateCustomerProgrammePublication(g.owner);
     expect(

@@ -24,7 +24,8 @@ DO $guard$ BEGIN
 END $guard$;
 -- The module inserts rows into three older tables. Their shape (every column with its type, NOT NULL and whether it has
 -- a default, and every CHECK constraint) must be one this file was proven against; any other shape refuses the install
--- before anything is created. Proven shapes: the participant module alone (sample), the base modules without real use,
+-- before anything is created. Lists are sorted in byte order (COLLATE "C"), so the result does not depend on the
+-- database's collation. Proven shapes: the participant module alone (sample), the base modules without real use,
 -- and the full install with real use. Function bodies are deliberately not fingerprinted: the real-use module
 -- legitimately replaces participant_scope and lock_workspace_access.
 DO $guard$
@@ -37,9 +38,9 @@ BEGIN
    '2b86e1837ff0522b466195211b6496d51156a9e960a001704fa26cfc5d0481e5']),
   ('customer_private.programme_participant_revocation'::regclass,ARRAY['a2c31eb71d1e40f4f947856c6a750c2ea2ea3c9ee06f2f4d821c2c3b78c8ff32'])
  ) v(tbl,known) LOOP
-  SELECT (SELECT string_agg(a.attname||':'||format_type(a.atttypid,a.atttypmod)||':'||a.attnotnull::text||':'||a.atthasdef::text,',' ORDER BY a.attname)
+  SELECT (SELECT string_agg(a.attname||':'||format_type(a.atttypid,a.atttypmod)||':'||a.attnotnull::text||':'||a.atthasdef::text,',' ORDER BY a.attname::text COLLATE "C")
     FROM pg_attribute a WHERE a.attrelid=r.tbl AND a.attnum>0 AND NOT a.attisdropped)
-   ||'|'||coalesce((SELECT string_agg(pg_get_constraintdef(c.oid),';' ORDER BY pg_get_constraintdef(c.oid))
+   ||'|'||coalesce((SELECT string_agg(pg_get_constraintdef(c.oid),';' ORDER BY pg_get_constraintdef(c.oid) COLLATE "C")
     FROM pg_constraint c WHERE c.conrelid=r.tbl AND c.contype='c'),'') INTO shape;
   IF shape IS NULL OR NOT (encode(sha256(convert_to(shape,'UTF8')),'hex')=ANY(r.known)) THEN
    RAISE EXCEPTION 'Programme publication prerequisite differs: %',r.tbl;
