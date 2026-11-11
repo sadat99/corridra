@@ -4,6 +4,7 @@
 // are never shown to the public before that.
 import { defaultLocale, type Locale } from './locales';
 import { homeEn, homeWords } from './home-words';
+import { sellWords } from './sell-words';
 import { wsA, wsAEn } from './ws/ws-a';
 import { wsB, wsBEn } from './ws/ws-b';
 import { wsC, wsCEn } from './ws/ws-c';
@@ -260,6 +261,7 @@ export const en = {
   ...bookWords,
   ...footerWords,
   ...headerWords,
+  ...sellWords,
   'room.lens.overview': 'Overview',
   'room.lens.compare': 'Compare',
   'room.lens.evidence': 'Evidence',
@@ -420,6 +422,7 @@ const bn: Catalog = {
   ...bookWords,
   ...footerWords,
   ...headerWords,
+  ...sellWords,
   'room.lens.overview': 'সারসংক্ষেপ',
   'room.lens.compare': 'তুলনা',
   'room.lens.evidence': 'প্রমাণ',
@@ -567,6 +570,7 @@ const zh: Catalog = {
   ...bookWords,
   ...footerWords,
   ...headerWords,
+  ...sellWords,
   'room.lens.overview': '概览',
   'room.lens.compare': '比较',
   'room.lens.evidence': '证据',
@@ -719,6 +723,7 @@ const es: Catalog = {
   ...bookWords,
   ...footerWords,
   ...headerWords,
+  ...sellWords,
   'room.lens.overview': 'Resumen',
   'room.lens.compare': 'Comparar',
   'room.lens.evidence': 'Pruebas',
@@ -870,6 +875,7 @@ const ar: Catalog = {
   ...bookWords,
   ...footerWords,
   ...headerWords,
+  ...sellWords,
   'room.lens.overview': 'نظرة عامة',
   'room.lens.compare': 'المقارنة',
   'room.lens.evidence': 'الأدلة',
@@ -1022,6 +1028,7 @@ const fr: Catalog = {
   ...bookWords,
   ...footerWords,
   ...headerWords,
+  ...sellWords,
   'room.lens.overview': 'Aperçu',
   'room.lens.compare': 'Comparer',
   'room.lens.evidence': 'Preuves',
@@ -1178,6 +1185,7 @@ const de: Catalog = {
   ...bookWords,
   ...footerWords,
   ...headerWords,
+  ...sellWords,
   'room.lens.overview': 'Übersicht',
   'room.lens.compare': 'Vergleichen',
   'room.lens.evidence': 'Nachweise',

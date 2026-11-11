@@ -317,6 +317,8 @@ test('a selling request opens on its buyers and meetings, with the proposed meet
     { label: 'Meeting with Lantern Cutting Works', status: 'PROPOSED', scheduleChanged: false },
   ]);
   const e = body.report.missions[0].experience;
+  // Two price requests, one sample, one proposal and no agreement: four separate facts.
+  Object.assign(body.report.missions[0].outcomes, { rfqs: 2, samples: 1, proposals: 1 });
   e.quotations = [];
   e.agenda = [
     {
@@ -360,8 +362,19 @@ test('a selling request opens on its buyers and meetings, with the proposed meet
   await expect(page.getByRole('heading', { name: 'Your meetings and visits' })).toBeVisible();
   await lens(page, 'Buyers').click();
   const funnel = page.getByRole('definition');
-  await expect(page.locator('.sellb-funnel > div')).toHaveCount(5);
-  await expect(funnel.first()).toHaveText('2');
+  // One tile per state: price requests, samples, proposals and agreements are never one number.
+  await expect(page.locator('.sellb-funnel > div')).toHaveCount(8);
+  await expect(page.locator('.sellb-funnel dt')).toHaveText([
+    'buyers shortlisted',
+    'meetings proposed',
+    'confirmed',
+    'held',
+    'price requests',
+    'samples',
+    'proposals',
+    'agreements',
+  ]);
+  await expect(funnel).toHaveText(['2', '1', '0', '0', '2', '1', '1', '0']);
   const table = page.locator('.sellb-table');
   await expect(table.getByRole('rowheader')).toHaveCount(2);
   await expect(table.locator('thead th')).toHaveText(['Buyer', 'Fit', 'How it is backed']);

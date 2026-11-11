@@ -55,11 +55,48 @@ const outcomes = {
 };
 
 describe('the Sell room buyers view', () => {
-  it('counts the funnel exactly as Home does, plus the recorded RFQs, samples and agreements', () => {
+  it('counts the funnel exactly as Home does, and each recorded outcome on its own', () => {
     const { funnel } = sellBoard(e, outcomes);
-    expect(funnel).toEqual({ ...sellFacts([e]), followUps: 4 });
+    expect(funnel).toEqual({
+      ...sellFacts([e]),
+      priceRequests: 2,
+      samples: 1,
+      proposals: 1,
+      agreements: 1,
+    });
     expect(funnel).toMatchObject({ shortlisted: 4, proposed: 1, confirmed: 1, held: 1 });
-    expect(sellBoard(e, null).funnel.followUps).toBe(0);
+  });
+
+  // Regression (Sell lane, 11 Nov 2026): price requests, samples and agreements were added into one number and
+  // proposals were left out. A price request or a sample is not an agreed transaction.
+  it('never adds a price request, a sample or a proposal to the agreements', () => {
+    const only = (part: Partial<typeof outcomes>) =>
+      sellBoard(e, { ...outcomes, rfqs: 0, samples: 0, proposals: 0, contracts: 0, ...part })
+        .funnel;
+    expect(only({ rfqs: 3 })).toMatchObject({
+      priceRequests: 3,
+      samples: 0,
+      proposals: 0,
+      agreements: 0,
+    });
+    expect(only({ samples: 2 })).toMatchObject({ priceRequests: 0, samples: 2, agreements: 0 });
+    expect(only({ proposals: 5 })).toMatchObject({ proposals: 5, agreements: 0 });
+    expect(only({ contracts: 1 })).toMatchObject({
+      priceRequests: 0,
+      samples: 0,
+      proposals: 0,
+      agreements: 1,
+    });
+    expect(Object.keys(sellBoard(e, outcomes).funnel)).not.toContain('followUps');
+  });
+
+  it('says a count the report does not carry is unknown, never zero', () => {
+    expect(sellBoard(e, null).funnel).toMatchObject({
+      priceRequests: null,
+      samples: null,
+      proposals: null,
+      agreements: null,
+    });
   });
 
   it('lists the strongest fits first, in plain words, and an unknown fit as written', () => {

@@ -4,11 +4,13 @@
 // model is lib/sell-board.ts; nothing here adds a number or a meeting the report does not hold.
 import type { DeliveryReport, MissionExperience } from '@corridra/delivery/report';
 import { useMemo, useState, type ReactNode } from 'react';
+import { translate } from '../lib/i18n/messages';
 import { sellBoard } from '../lib/sell-board';
 import { CorridraIcon } from './corridra-icon';
 import './sell-board.css';
 
 const firstShown = 6;
+const say = (key: Parameters<typeof translate>[1]) => translate('en', key);
 
 export function SellBoard({
   experience,
@@ -23,20 +25,32 @@ export function SellBoard({
   const { funnel, buyers } = useMemo(() => sellBoard(experience, outcomes), [experience, outcomes]);
   const [all, setAll] = useState(false);
   const shown = all ? buyers : buyers.slice(0, firstShown);
-  const steps: [number, string][] = [
-    [funnel.shortlisted, funnel.shortlisted === 1 ? 'buyer shortlisted' : 'buyers shortlisted'],
-    [funnel.proposed, 'meetings proposed'],
-    [funnel.confirmed, 'confirmed'],
-    [funnel.held, 'held'],
-    [funnel.followUps, 'RFQs, samples or agreements'],
+  // One tile per state. A price request, a sample, a proposal and an agreement are different states, so each
+  // has its own count; a count the report does not carry is said as not measured, never as zero.
+  const steps: [number | null, string][] = [
+    [
+      funnel.shortlisted,
+      say(funnel.shortlisted === 1 ? 'sell.board.shortlisted.one' : 'sell.board.shortlisted.other'),
+    ],
+    [funnel.proposed, say('sell.board.proposed')],
+    [funnel.confirmed, say('sell.board.confirmed')],
+    [funnel.held, say('sell.board.held')],
+    [funnel.priceRequests, say('sell.board.priceRequests')],
+    [funnel.samples, say('sell.board.samples')],
+    [funnel.proposals, say('sell.board.proposals')],
+    [funnel.agreements, say('sell.board.agreements')],
   ];
   return (
     <section className="sellb" aria-label="Buyers">
-      <dl className="sellb-funnel" aria-label="Where your buyers stand">
+      <dl className="sellb-funnel" aria-label={say('sell.board.funnel')}>
         {steps.map(([value, label]) => (
           <div key={label}>
             <dt>{label}</dt>
-            <dd>{value}</dd>
+            {value === null ? (
+              <dd className="sellb-unknown">{say('sell.board.notMeasured')}</dd>
+            ) : (
+              <dd>{value}</dd>
+            )}
           </div>
         ))}
       </dl>
