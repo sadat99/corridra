@@ -2,12 +2,15 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  addressDestination,
   fragmentFor,
   operatorPlaceFor,
   operatorSectionPath,
   operatorSlugs,
   reservedOperatorSegments,
   sectionForSlug,
+  inSectionAddresses,
+  sectionOfFragment,
 } from '../../apps/web/lib/operator-urls';
 import {
   operatorReturnTo,
@@ -90,6 +93,90 @@ describe('what the workspace shows for an address', () => {
     expect(
       operatorReturnTo('/operator?workspace=11111111-1111-4111-8111-111111111111#ops-gates'),
     ).toBe('/operator?workspace=11111111-1111-4111-8111-111111111111#ops-gates');
+  });
+});
+
+describe('addresses inside a section', () => {
+  it('the closed list names the five billing blocks and the section that holds them', () => {
+    expect(inSectionAddresses).toEqual({
+      'billing-services': 'workspace-delivery',
+      'billing-plans': 'workspace-delivery',
+      'billing-sample-invoices': 'workspace-delivery',
+      'billing-invoices': 'workspace-delivery',
+      'billing-payments': 'workspace-delivery',
+    });
+    for (const section of Object.values(inSectionAddresses))
+      expect(workspaceSections.map((s) => s.id as string)).toContain(section);
+  });
+  it('a section id gives itself, an in-section address gives its section, anything else is kept', () => {
+    expect(sectionOfFragment('workspace-research')).toBe('workspace-research');
+    expect(sectionOfFragment('ops-gates')).toBe('ops-gates');
+    expect(sectionOfFragment('billing-services')).toBe('workspace-delivery');
+    expect(sectionOfFragment('billing-payments')).toBe('workspace-delivery');
+    expect(sectionOfFragment('main')).toBe('main');
+    expect(sectionOfFragment('')).toBe('');
+    expect(sectionOfFragment('billing-unknown')).toBe('billing-unknown');
+  });
+  it('never reads a name from the object prototype', () => {
+    for (const junk of ['__proto__', 'constructor', 'toString', 'hasOwnProperty'])
+      expect(sectionOfFragment(junk), junk).toBe(junk);
+  });
+  it('is not a sign-in return address: only section ids are, so the open-redirect surface is the same', () => {
+    for (const id of Object.keys(inSectionAddresses))
+      expect(operatorReturnTo('/operator#' + id), id).toBe('/operator');
+    expect(
+      operatorReturnTo('/operator?workspace=11111111-1111-4111-8111-111111111111#billing-services'),
+    ).toBe('/operator');
+  });
+});
+
+describe('where the workspace sends the eyes for an address', () => {
+  const tile = { fragment: 'billing-services', sectionId: 'workspace-delivery', allowed: true };
+  it('lands on the block when it is there', () => {
+    expect(addressDestination({ ...tile, blockExists: true, holderExists: true })).toBe('block');
+    expect(
+      addressDestination({
+        fragment: 'workspace-research',
+        sectionId: 'workspace-research',
+        allowed: true,
+        blockExists: true,
+        holderExists: true,
+      }),
+    ).toBe('block');
+  });
+  it('falls back to the section that holds the block, not the directory, when the block is missing for the role or not loaded yet', () => {
+    expect(addressDestination({ ...tile, blockExists: false, holderExists: true })).toBe('section');
+  });
+  it('opens the directory when neither the block nor its section is there, or the section is not allowed', () => {
+    expect(addressDestination({ ...tile, blockExists: false, holderExists: false })).toBe(
+      'directory',
+    );
+    expect(
+      addressDestination({ ...tile, allowed: false, blockExists: false, holderExists: false }),
+    ).toBe('directory');
+    expect(
+      addressDestination({ ...tile, allowed: false, blockExists: true, holderExists: true }),
+    ).toBe('directory');
+    expect(
+      addressDestination({
+        fragment: 'workspace-research',
+        sectionId: 'workspace-research',
+        allowed: true,
+        blockExists: false,
+        holderExists: true,
+      }),
+    ).toBe('directory');
+  });
+  it('goes nowhere for an empty address', () => {
+    expect(
+      addressDestination({
+        fragment: '',
+        sectionId: '',
+        allowed: false,
+        blockExists: false,
+        holderExists: false,
+      }),
+    ).toBe('none');
   });
 });
 

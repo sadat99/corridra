@@ -20,6 +20,20 @@ export const workspaceDestinations = {
 } as const;
 export type WorkspaceKind = keyof typeof workspaceDestinations;
 
+/**
+ * What a destination says it holds. Company links are mentioned only while the company links switch is on;
+ * with it off the profile destination names only what exists.
+ */
+export function workspaceDescription(kind: WorkspaceKind, linksEnabled: boolean): string {
+  return kind === 'profile' && !linksEnabled
+    ? 'Your company details and supporting statements.'
+    : workspaceDestinations[kind].description;
+}
+
+/** The name of the company profiles entry: it names links only while the company links switch is on. */
+export const companyProfilesTitle = (linksEnabled: boolean) =>
+  linksEnabled ? 'Company profiles and links' : 'Company profiles';
+
 /** Programme management is for owners and admins; the other sections are open to every member. */
 export function workspacesFor<T extends { role: string }>(kind: WorkspaceKind, rows: T[]): T[] {
   return kind === 'programmes' ? rows.filter((row) => ['owner', 'admin'].includes(row.role)) : rows;

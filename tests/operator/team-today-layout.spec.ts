@@ -360,7 +360,7 @@ test('W3-1 a count of service requests waiting for a quote shows the number, the
   await expect(tile.locator('strong')).toHaveText('3');
   await expect(tile.locator('span')).toHaveText('paid-service requests to quote');
   await expect(tile).not.toHaveAttribute('data-tone', /.+/);
-  await expect(tile.getByRole('link')).toHaveAttribute('href', '#workspace-delivery');
+  await expect(tile.getByRole('link')).toHaveAttribute('href', '#billing-services');
   // The tile sits directly after "accepted quotes not started" and the earlier tiles are unchanged.
   await expect(
     counts(page)
@@ -395,7 +395,7 @@ test('W3-3 zero service requests waiting shows 0 with the quiet zero tone, and t
   await expect(toQuote(page)).toHaveAttribute('data-tone', 'zero');
   await expect(toQuote(page).locator('strong')).toHaveText('0');
   await expect(toQuote(page).locator('span')).toHaveText('paid-service requests to quote');
-  await expect(toQuote(page).getByRole('link')).toHaveAttribute('href', '#workspace-delivery');
+  await expect(toQuote(page).getByRole('link')).toHaveAttribute('href', '#billing-services');
   const accepted = counts(page).filter({ hasText: 'accepted quotes not started' });
   await expect(accepted.locator('strong')).toHaveText('2');
   await expect(accepted).not.toHaveAttribute('data-tone', /.+/);
@@ -418,7 +418,7 @@ test('W3-4 service requests that cannot be read say Not available and are never 
   await expect(toQuote(page)).toHaveAttribute('data-tone', 'unavailable');
   await expect(toQuote(page).locator('strong')).toHaveText('Not available');
   await expect(toQuote(page).locator('span')).toHaveText('paid-service requests to quote');
-  await expect(toQuote(page).getByRole('link')).toHaveAttribute('href', '#workspace-delivery');
+  await expect(toQuote(page).getByRole('link')).toHaveAttribute('href', '#billing-services');
   const accepted = counts(page).filter({ hasText: 'accepted quotes not started' });
   await expect(accepted.locator('strong')).toHaveText('Not available');
   expect(await axe(page)).toEqual([]);

@@ -43,6 +43,15 @@ function subscribe(listener: () => void) {
 }
 
 /**
+ * Reads the address again for every SubTabs on the page and shows the tab it points at. For an element
+ * named by the address that only appeared after the tabs were drawn (a block that loads its data first):
+ * the address and the history are left as they are.
+ */
+export function resolveSubTabsAgain() {
+  flushSync(notify);
+}
+
+/**
  * Opens the tab that holds an element, if its panel is hidden, and returns once the panel is shown, so
  * the caller can scroll to the element and focus it. For a control that jumps to a heading or a
  * disclosure somewhere on the page (the "Jump to" list of a workbench). Does nothing for an element

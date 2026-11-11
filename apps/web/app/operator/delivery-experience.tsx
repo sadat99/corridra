@@ -578,19 +578,19 @@ export function DeliveryExperience(props: Props) {
             <a href="#billing-invoices">Invoices</a>
             <a href="#billing-payments">Payments</a>
           </nav>
-          <div id="billing-services">
+          <div id="billing-services" tabIndex={-1}>
             <CustomerServiceRequests tenant={tenant} />
           </div>
-          <div id="billing-plans">
+          <div id="billing-plans" tabIndex={-1}>
             <CustomerBilling tenant={tenant} />
           </div>
-          <div id="billing-sample-invoices">
+          <div id="billing-sample-invoices" tabIndex={-1}>
             <CustomerInvoicing tenant={tenant} />
           </div>
-          <div id="billing-invoices">
+          <div id="billing-invoices" tabIndex={-1}>
             <CustomerRealInvoicing tenant={tenant} />
           </div>
-          <div id="billing-payments">
+          <div id="billing-payments" tabIndex={-1}>
             <CustomerSimulatedPayments tenant={tenant} />
           </div>
         </section>

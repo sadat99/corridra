@@ -8271,7 +8271,15 @@ samp {
 }
 .billing-hub > div {
   min-width: 0;
+  max-width: 64rem;
   scroll-margin-top: var(--space-16);
+}
+/* A block whose feature is off renders nothing: it takes no focus, and its jump link is hidden. */
+.billing-hub > div:empty,
+.billing-hub:has(> #billing-sample-invoices:empty) .billing-jump a[href='#billing-sample-invoices'],
+.billing-hub:has(> #billing-invoices:empty) .billing-jump a[href='#billing-invoices'],
+.billing-hub:has(> #billing-payments:empty) .billing-jump a[href='#billing-payments'] {
+  display: none;
 }
 .billing-hub .detail-card {
   display: grid;
