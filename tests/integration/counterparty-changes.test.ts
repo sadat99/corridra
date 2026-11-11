@@ -227,6 +227,56 @@ describe('CRUD-3 versions', () => {
   });
 });
 
+describe('CRUD-3 list order', () => {
+  /** Chain ids in the order the detail first lists each chain, as the screen groups them. */
+  const chainOrder = (rows: { chain_id?: unknown; id?: unknown }[]) => [
+    ...new Set(rows.map((r) => String(r.chain_id ?? r.id))),
+  ];
+  const addContact = async (t: { relationshipId: string; sourceId: string }, name: string) =>
+    (
+      await f.research.command(
+        f.ctx,
+        command('contact', {
+          relationshipId: t.relationshipId,
+          sourceId: t.sourceId,
+          name,
+          jobTitle: 'Buyer',
+          email: `${randomUUID()}@example.invalid`,
+          validUntil: future(6),
+        }),
+      )
+    ).id as string;
+
+  test('a corrected contact or note keeps its place: contacts oldest first, notes newest first', async () => {
+    const t = await f.target();
+    const later = await addContact(t, 'Later Buyer');
+    const first = await noteOn(f, t),
+      second = await noteOn(f, t);
+    await f.research.command(f.ctx, correctContact(t.contactId, t.sourceId));
+    await f.research.command(f.ctx, correctNote(first.id, t.sourceId));
+    const detail = await f.research.detail(f.ctx, await organisationOf(t.relationshipId));
+    expect(chainOrder(detail.contacts)).toEqual([t.contactId, later]);
+    expect(chainOrder(detail.notes)).toEqual([second.id, first.id]);
+  });
+
+  test('with more than 100 versions every current version is still listed, before any earlier one, in chain order', async () => {
+    const t = await f.target();
+    const others = [await addContact(t, 'Second Buyer'), await addContact(t, 'Third Buyer')];
+    let latest = t.contactId;
+    for (let i = 0; i < 100; i++)
+      latest = (await f.research.command(f.ctx, correctContact(latest, t.sourceId)))
+        .replacementId as string;
+    const contacts = (await f.research.detail(f.ctx, await organisationOf(t.relationshipId)))
+      .contacts;
+    expect(contacts).toHaveLength(100);
+    const corrected = contacts.map((c) => c.change_kind === 'CORRECT');
+    expect(corrected.slice(0, 3)).toEqual([false, false, false]);
+    expect(corrected.slice(3).every(Boolean)).toBe(true);
+    expect(contacts.slice(0, 3).map((c) => c.id)).toEqual([latest, ...others]);
+    expect(chainOrder(contacts)).toEqual([t.contactId, ...others]);
+  });
+});
+
 describe('CRUD-4 references and recovery', () => {
   test('a withdrawn or corrected contact cannot be chosen for a new target, and existing targets still show it as Withdrawn', async () => {
     const t = await f.target();

@@ -752,3 +752,46 @@ test('G11-16 a correction that changes only Valid until can be saved and is guar
     Date.parse('2026-11-09T09:00:00Z'),
   );
 });
+
+test('G11-20 a corrected contact and a corrected note keep their place in the list, in the order the server gives', async ({
+  page,
+}) => {
+  // Regression guard: the server orders each chain by its first version (counterparty-changes.test.ts, CRUD-3 list
+  // order); the screen groups versions by chain in that order and never re-sorts them.
+  const laterContact = '00000000-0000-4000-8000-000000000d03';
+  const laterNote = '00000000-0000-4000-8000-000000000e02';
+  const correctedNote = '00000000-0000-4000-8000-000000000e03';
+  const corrected = {
+    status: 'CORRECTED',
+    change_kind: 'CORRECT',
+    change_reason: 'Title',
+    changed_by: owner,
+    changed_at: '2026-11-10T14:05:00Z',
+  };
+  await open(page, {
+    contacts: [
+      contact({ id: newer, name: 'Corrected First Buyer', created_at: '2026-11-10T14:05:00Z' }),
+      contact({
+        id: laterContact,
+        chain_id: laterContact,
+        name: 'Later Buyer',
+        created_at: '2026-11-09T10:00:00Z',
+      }),
+      contact({ ...corrected, replacement_id: newer }),
+    ],
+    notes: [
+      note({ id: laterNote, chain_id: laterNote, created_at: '2026-11-09T10:00:00Z' }),
+      note({ id: correctedNote, body: 'Corrected note', created_at: '2026-11-10T14:05:00Z' }),
+      note({ ...corrected, replacement_id: correctedNote }),
+    ],
+  });
+  expect(
+    await page
+      .locator('[data-chain]')
+      .evaluateAll((items) => items.map((item) => item.getAttribute('data-chain'))),
+  ).toEqual([contactId, laterContact, laterNote, noteId]);
+  await expect(page.getByRole('group', { name: /^Contact: / })).toHaveText([
+    /Corrected First Buyer/,
+    /Later Buyer/,
+  ]);
+});
