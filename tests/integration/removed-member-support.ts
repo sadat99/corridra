@@ -1,7 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { fixture } from './support';
-import { REMOVED_FILES } from './removed-member-hide';
 import type { DatabaseClient } from '../../packages/db/src/index';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateCommercialReadiness } from '../../packages/db/src/commercial-readiness-migrate';
@@ -10,6 +9,11 @@ import { migrateCustomerMoves } from '../../packages/db/src/customer-move-migrat
 import { migrateCustomerMissionMail } from '../../packages/db/src/customer-mission-mail-migrate';
 import { migrateCustomerNotifications } from '../../packages/db/src/customer-notification-migrate';
 import { migrateCustomerWorkspaceLifecycle } from '../../packages/db/src/customer-workspace-lifecycle-migrate';
+import { migrateCustomerSpecificationConfirmation } from '../../packages/db/src/customer-specification-confirmation-migrate';
+import { migrateCustomerBooks } from '../../packages/db/src/customer-book-migrate';
+import { migrateCustomerDecisionCards } from '../../packages/db/src/customer-decision-card-migrate';
+import { pinCustomerAuthority } from '../../packages/auth/src/customer-authority-pin';
+import { configureCustomerRealUse } from '../../packages/auth/src/customer-real-use-configuration';
 import { admitSyntheticCustomer } from '../../packages/auth/src/customer-admission';
 import { admitSyntheticCustomerRequests } from '../../packages/auth/src/customer-request-admission';
 import { CustomerSessionBoundary } from '../../packages/auth/src/customer-session';
@@ -55,48 +59,64 @@ export const NEW_FILES = {
   customer: {
     directory: 'customer-migrations',
     registry: 'customer_migrations',
-    name: REMOVED_FILES['customer-migrations']!,
+    name: '0004_workspace_member_current.sql',
     previous: '0003_private_customer_requests.sql',
   },
   realUse: {
     directory: 'customer-real-use-migrations',
     registry: 'customer_real_use_migrations',
-    name: REMOVED_FILES['customer-real-use-migrations']!,
+    name: '0014_removed_member_access.sql',
     previous: '0013_organisation_link_provenance_and_search.sql',
   },
   readiness: {
     directory: 'commercial-readiness-migrations',
     registry: 'commercial_readiness_migrations',
-    name: REMOVED_FILES['commercial-readiness-migrations']!,
-    previous: '0002_request_received.sql',
+    name: '0011_removed_member_request_received.sql',
+    previous: '0010_team_invitation_cancel_audit.sql',
+  },
+  inbox: {
+    directory: 'commercial-readiness-migrations',
+    registry: 'commercial_readiness_migrations',
+    name: '0012_removed_member_inbox.sql',
+    previous: '0011_removed_member_request_received.sql',
   },
   move: {
     directory: 'customer-move-migrations',
     registry: 'customer_move_migrations',
-    name: REMOVED_FILES['customer-move-migrations']!,
+    name: '0002_removed_member_moves.sql',
     previous: '0001_move_records.sql',
   },
   withdrawal: {
     directory: 'customer-request-withdrawal-migrations',
     registry: 'customer_request_withdrawal_migrations',
-    name: REMOVED_FILES['customer-request-withdrawal-migrations']!,
+    name: '0003_removed_member_withdrawals.sql',
     previous: '0002_staff_withdrawal_signal.sql',
   },
   mail: {
     directory: 'customer-mission-mail-migrations',
     registry: 'customer_mission_mail_migrations',
-    name: REMOVED_FILES['customer-mission-mail-migrations']!,
+    name: '0004_removed_member_mail.sql',
     previous: '0003_withdrawn_requests.sql',
   },
   notifications: {
     directory: 'customer-notification-migrations',
     registry: 'customer_notification_migrations',
-    name: REMOVED_FILES['customer-notification-migrations']!,
+    name: '0006_removed_member_notifications.sql',
     previous: '0005_withdrawn_requests.sql',
+  },
+  decisionCards: {
+    directory: 'customer-decision-card-migrations',
+    registry: 'customer_decision_card_migrations',
+    name: '0002_removed_member_decision_cards.sql',
+    previous: '0001_decision_cards.sql',
   },
 } as const;
 export type FileKey = keyof typeof NEW_FILES;
 export const FILE_KEYS = Object.keys(NEW_FILES) as FileKey[];
+// The files that replace functions. The inbox file alters a row level security policy instead, and is tested on its own.
+export const FUNCTION_KEYS = FILE_KEYS.filter((key) => key !== 'inbox');
+// One entry per module registry, with the key of the file that arrives there (the readiness registry gets two).
+export const REGISTRY_KEYS = FUNCTION_KEYS;
 
 // The text of a new file. On the base commit the file does not exist, so under REMOVED_BASE_CHECK this fails like main.
 export function fileSql(key: FileKey) {
@@ -110,11 +130,10 @@ export function fileSql(key: FileKey) {
 export const fileHash = (key: FileKey) => sha(fileSql(key));
 export const stripComments = (sql: string) => sql.replace(/^\s*--.*$/gm, '');
 const between = (sql: string, name: string) => {
-  const open = `-- ${name}-begin`;
-  const a = sql.indexOf(open);
-  const b = sql.indexOf(`-- ${name}-end`);
-  if (a < 0 || b < a) throw new Error('Missing marker ' + name);
-  return sql.slice(a + open.length, b);
+  const open = new RegExp(`^\\s*-- ${name}-begin\\s*$`, 'm').exec(sql);
+  const close = new RegExp(`^\\s*-- ${name}-end\\s*$`, 'm').exec(sql);
+  if (!open || !close || close.index < open.index) throw new Error('Missing marker ' + name);
+  return sql.slice(open.index + open[0].length, close.index);
 };
 // What the file claims the fingerprints of the functions it replaces are.
 export function fileFingerprints(key: FileKey) {
@@ -243,6 +262,16 @@ export async function buildWorld(
     await migrateCustomerMissionMail(f.owner);
     await migrateCustomerNotifications(f.owner);
     await migrateCustomerWorkspaceLifecycle(f.owner);
+    // The base installers that bring more of the saved report surface: specification confirmation, books and decision cards.
+    // Without them their functions do not exist and a refusal test would pass for the wrong reason.
+    await migrateCustomerSpecificationConfirmation(f.owner);
+    await migrateCustomerBooks(f.owner);
+    await migrateCustomerDecisionCards(f.owner);
+    await pinCustomerAuthority(f.owner, { issuer, executorId: f.serviceId });
+    await configureCustomerRealUse(f.owner, {
+      enabled: true,
+      reason: 'Owner approved real work for the removed member fixture',
+    });
     await configureRequestWithdrawal(f.owner, {
       enabled: true,
       reason: 'Owner approved request withdrawal for the removed member fixture',
@@ -444,7 +473,8 @@ export async function buildWorld(
   const personal: Record<string, string> = {};
   for (const person of ['lena', 'rex', 'sam', 'olive'] as const)
     personal[person] = await provision(person, `Synthetic own workspace of ${person}`);
-  const perPerson = config.requestsPerPerson ?? 2;
+  // Sam always has a second request: the unassigned link and the programme objective are made on it.
+  const perPerson = Math.max(2, config.requestsPerPerson ?? 2);
   const requests: Record<string, string[]> = {};
   for (const person of ['olive', 'lena', 'rex', 'sam', 'rita'] as const) {
     requests[person] = [];
