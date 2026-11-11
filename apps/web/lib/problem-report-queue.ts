@@ -83,7 +83,7 @@ export const queueWords = {
     `Problem report ${reference} is now ${statusLabels[status]}, but the list could not be reloaded. ${reason}`,
   movedOn: (status: ProblemReportStatus) =>
     `This problem report is now ${statusLabels[status]}. Choose its next step. Your note is kept.`,
-  gone: 'This problem report is no longer in this list. Your note was not saved.',
+  gone: 'This problem report is no longer in this list. Your note is kept if you open it again.',
   summary: (shown: number, total: number) =>
     `Showing ${shown} of ${total} problem report${total === 1 ? '' : 's'}.`,
   waiting: (received: number, total: number) => `${received} of ${total} waiting`,

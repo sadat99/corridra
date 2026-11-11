@@ -62,8 +62,10 @@ export function RemoveMyWords({
             {removalWords.button}
           </button>
         </div>
-        {result ? <p role="status">{result}</p> : null}
       </div>
+      <p role="status" className="pr-status">
+        {result}
+      </p>
       <Dialog
         open={asking}
         onClose={() => setAsking(false)}

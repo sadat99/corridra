@@ -448,8 +448,38 @@ describe('where the panel sits and how it is reached', () => {
     expect(text.match(/<ProblemReportQueue/g)).toHaveLength(1);
     // The address is allowed through the Settings section only, so other roles still get the same refusal as before.
     expect(text).toMatch(
-      /fragment === problemReportQueueFragment && section\.id === 'workspace-settings'/,
+      /fragment === problemReportQueueFragment &&\s+problemReports &&\s+section\.id === 'workspace-settings'/,
     );
+  });
+  test('with Report a Problem not offered nothing is added: the panel is not mounted and its address is an unknown fragment', () => {
+    const text = source('app/operator/workspace.tsx');
+    // The flag is the one the team frame publishes from the server probe; until it is known it is false (fail closed).
+    expect(text).toMatch(
+      /const \{ problemReports \} = useSyncExternalStore\(\s+subscribeTeamFlags,/,
+    );
+    expect(text).toMatch(/\{problemReports \? \(\s+<ProblemReportQueue/);
+    // Not offered, the address fails the same section check as any unknown fragment and lands on the navigation.
+    expect(text).toMatch(/const unavailableSection =\s+!!fragment && fragment !== 'main'/);
+    const flags = source('lib/ux/team-flags.ts');
+    expect(flags).toMatch(/empty: TeamFlags = \{ urls: false, problemReports: false \}/);
+    expect(flags).toContain('readServerTeamFlags = () => empty');
+  });
+});
+
+describe('the panel keeps its place while a person works', () => {
+  const text = source('app/operator/problem-report-queue.tsx');
+  test('a failure line is built once per failure, so typing in the note never moves focus back to the line', () => {
+    expect(text).toMatch(/useMemo\(\(\) => failureLine\(loadFailure\), \[loadFailure\]\)/);
+    expect(text).toMatch(/useMemo\(\(\) => failureLine\(moveFailure\), \[moveFailure\]\)/);
+    // No object made in the render is handed to the line: a new object on each key would refocus it each time.
+    expect(text).not.toMatch(/failure=\{\{/);
+  });
+  test('choosing another filter forgets the read of the old one, so its summary and Load More go until it is read again', () => {
+    const change = text.slice(text.indexOf('onChange={(value) => {'));
+    expect(change.slice(0, change.indexOf('}}')).includes('setQueue(null)')).toBe(true);
+    // Load More depends on the read being on screen.
+    expect(text).toMatch(/\{queue && !loadFailure \? \(/);
+    expect(text).toMatch(/queue\.nextAfter !== null/);
   });
 });
 

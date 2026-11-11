@@ -330,6 +330,7 @@ describe('the stylesheets of the teaching layer', () => {
       'app/account/delegations/programme-room-styles.tsx',
       'app/operator/view-as/[role]/sample-screens.tsx',
       'app/about/page.tsx',
+      'app/operator/problem-report-queue.tsx',
     ];
     const importers = walk(app)
       .filter((f) => /\.(tsx?|css)$/.test(f))

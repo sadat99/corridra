@@ -82,6 +82,8 @@ const stubs: Record<string, string> = {
   '@corridra/auth/customer-account-lifecycle': `export const customerAccountLifecycleEnabled=()=>false;`,
   '@corridra/auth/customer-companies': `export const customerCompaniesEnabled=()=>false;`,
   '@corridra/auth/customer-notifications': `export const customerNotificationsEnabled=()=>false;export const customerNotificationWithdrawalEnabled=()=>false;`,
+  // The closed-account gate asks the server probe whether Report a Problem is offered; here it is not, and no database is read.
+  'lib/problem-reports-offered': `export const problemReportsOffered=async()=>false;`,
   '@corridra/auth/customer-organisation-profiles': `export const customerOrganisationProfilesEnabled=()=>false;`,
 };
 

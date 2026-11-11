@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { z } from 'zod';
 import { displayDate } from '@corridra/domain/locale';
 import { Dialog } from '../../components/ux/dialog';
+import '../../components/problem-reports/problem-reports.css';
 import {
   canRemoveWords,
   queueFailure,
@@ -308,7 +309,9 @@ function Queue({ tenant, role }: Props) {
           ))}
         </ul>
       )}
-      {removalResult && <p role="status">{removalResult}</p>}
+      <p role="status" className="pr-status">
+        {removalResult}
+      </p>
       {queue?.nextAfter !== null && queue?.nextAfter !== undefined && (
         <button
           className="text-link"

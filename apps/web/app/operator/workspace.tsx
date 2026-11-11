@@ -35,6 +35,7 @@ import { AuthenticatorCheck } from './authenticator-check';
 import { SourcesPanel } from './sources-panel';
 import { EvidencePanel } from './evidence-panel';
 import { publishTeamContext } from '../../lib/ux/team-context';
+import { readServerTeamFlags, readTeamFlags, subscribeTeamFlags } from '../../lib/ux/team-flags';
 import type { MoreKind, OperatorRecordRow, OperatorSnapshot } from './workspace-types';
 type RecordRow = OperatorRecordRow;
 type Snapshot = OperatorSnapshot;
@@ -105,6 +106,12 @@ function TenantWorkspace({
     subscribeToHash,
     () => window.location.hash,
     () => '',
+  );
+  // Whether Report a Problem is offered, as the team frame published it. Fail closed: until it is known, the queue is absent.
+  const { problemReports } = useSyncExternalStore(
+    subscribeTeamFlags,
+    readTeamFlags,
+    readServerTeamFlags,
   );
   const [data, setData] = useState<Snapshot | null>(null),
     [message, setMessage] = useState(''),
@@ -235,11 +242,13 @@ function TenantWorkspace({
     return () => window.removeEventListener('hashchange', read);
   }, [loaded, initialSection]);
   // The queue of problem reports sits inside Settings, so its own address (#problem-report-queue) is allowed for the
-  // people who may see Settings, and panelFor puts it in that panel.
+  // people who may see Settings, and panelFor puts it in that panel. Not offered, the address is an unknown fragment.
   const sectionAllowed = workspaceSections.some(
     (section) =>
       (section.id === fragment ||
-        (fragment === problemReportQueueFragment && section.id === 'workspace-settings')) &&
+        (fragment === problemReportQueueFragment &&
+          problemReports &&
+          section.id === 'workspace-settings')) &&
       (section.roles as readonly string[]).includes(currentRole ?? ''),
   );
   // One panel is in view at a time. Every panel stays mounted so entries survive a switch.
@@ -710,11 +719,13 @@ function TenantWorkspace({
             <div className="ux-panel" hidden={view !== 'workspace-settings'}>
               <ReviewSettings key={`settings-${tenant}`} tenant={tenant} role={data.role} />
               <ErasureQueue key={`erasure-${tenant}`} tenant={tenant} role={data.role} />
-              <ProblemReportQueue
-                key={`problem-reports-${tenant}`}
-                tenant={tenant}
-                role={data.role}
-              />
+              {problemReports ? (
+                <ProblemReportQueue
+                  key={`problem-reports-${tenant}`}
+                  tenant={tenant}
+                  role={data.role}
+                />
+              ) : null}
             </div>
           )}
           {shown('workspace-audit') && ['owner', 'admin'].includes(data.role) && (

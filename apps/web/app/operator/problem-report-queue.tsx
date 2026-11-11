@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { problemReportLimits, problemReportStatuses } from '@corridra/domain/problem-report';
 import type {
   ProblemReportQueue as Queue,
@@ -9,6 +9,7 @@ import '../../components/problem-reports/problem-reports.css';
 import { whenWords } from '../account/workspace-lifecycle-client';
 import { ModeLabel } from '../../components/mr/mode-label';
 import { ReportFailure } from '../../components/problem-reports/failure-line';
+import type { FailureLine } from '../../lib/problem-report-client';
 import { SegmentedFilter, type SegmentOption } from '../../components/ux/segmented-filter';
 import { teamReportLinks } from '../../lib/problem-report-links';
 import {
@@ -40,6 +41,10 @@ type Pending = {
 };
 type Message = { tone: 'status' | 'alert'; text: string };
 
+function failureLine(failure: QueueFailure | null): FailureLine | null {
+  return failure ? { message: failure.message, link: failure.signIn ? 'sign_in' : null } : null;
+}
+
 export function ProblemReportQueue({ tenant, role }: { tenant: string; role: string }) {
   // The workspace mounts this for owners and admins only; the role is checked here as well, so it can never draw for another.
   return canTriage(role) ? <QueuePanel key={tenant} tenant={tenant} /> : null;
@@ -62,6 +67,9 @@ function QueuePanel({ tenant }: { tenant: string }) {
   const details = useRef<HTMLDetailsElement>(null);
   const run = useRef(0);
   const links = teamReportLinks(tenant);
+  // One line per failure, so the line takes focus when the failure appears and not again on every key typed in the note.
+  const loadLine = useMemo(() => failureLine(loadFailure), [loadFailure]);
+  const moveLine = useMemo(() => failureLine(moveFailure), [moveFailure]);
 
   // The address #problem-report-queue opens the panel, and the workspace scrolls to it.
   useEffect(() => {
@@ -212,6 +220,8 @@ function QueuePanel({ tenant }: { tenant: string }) {
           onChange={(value) => {
             run.current += 1;
             setFilter(value);
+            // The summary and Load More Problem Reports belong to the filter that was read, so they go until it is read again.
+            setQueue(null);
             setItems([]);
             setPending(null);
             kept.current = null;
@@ -230,12 +240,7 @@ function QueuePanel({ tenant }: { tenant: string }) {
             {busy && items.length === 0 ? queueWords.loading : queueWords.load}
           </button>
         </div>
-        {loadFailure ? (
-          <ReportFailure
-            failure={{ message: loadFailure.message, link: loadFailure.signIn ? 'sign_in' : null }}
-            links={links}
-          />
-        ) : null}
+        {loadLine ? <ReportFailure failure={loadLine} links={links} /> : null}
         {message ? (
           <p role={message.tone === 'alert' ? 'alert' : 'status'}>{message.text}</p>
         ) : null}
@@ -341,15 +346,7 @@ function QueuePanel({ tenant }: { tenant: string }) {
                       </span>
                       <strong id={`note-${item.id}-caution`}>{queueWords.caution}</strong>
                       {noteError ? <p role="alert">{noteError}</p> : null}
-                      {moveFailure ? (
-                        <ReportFailure
-                          failure={{
-                            message: moveFailure.message,
-                            link: moveFailure.signIn ? 'sign_in' : null,
-                          }}
-                          links={links}
-                        />
-                      ) : null}
+                      {moveLine ? <ReportFailure failure={moveLine} links={links} /> : null}
                       <div className="pr-actions">
                         <button className="primary-link" type="submit" disabled={saving}>
                           {saving ? queueWords.saving : queueWords.save}
