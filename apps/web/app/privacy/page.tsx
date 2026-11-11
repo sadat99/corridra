@@ -441,11 +441,13 @@ export default function Page() {
                   access.
                 </p>
                 <p>
-                  You can withdraw an application at any time. It then stays on record as withdrawn;
-                  withdrawing does not delete your name or statement. A closed page stays readable
-                  as closed for 30 days and is then no longer shown. To ask for your application to
-                  be deleted, contact us as described under Retention and deletion requests.
-                  Automatic deletion of applications is not operational yet.
+                  Until you join the programme, you can withdraw your application. It then stays on
+                  record as withdrawn; withdrawing does not delete your name or statement. After you
+                  join, you leave the programme through your registration instead, and the
+                  application stays on record as joined. A closed page stays readable as closed for
+                  30 days and is then no longer shown. To ask for your application to be deleted,
+                  contact us as described under Retention and deletion requests. Automatic deletion
+                  of applications is not operational yet.
                 </p>
               </div>
             </article>

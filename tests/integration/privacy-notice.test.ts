@@ -434,7 +434,10 @@ describe('public programme pages and applications (ADR-080)', () => {
       'They never see your email address, your private requests, contacts or prices.',
     );
     expect(page).toContain(
-      'It then stays on record as withdrawn; withdrawing does not delete your name or statement.',
+      'Until you join the programme, you can withdraw your application. It then stays on record as withdrawn; withdrawing does not delete your name or statement.',
+    );
+    expect(page).toContain(
+      'After you join, you leave the programme through your registration instead, and the application stays on record as joined.',
     );
     expect(page).toContain('Automatic deletion of applications is not operational yet.');
     expect(page).toContain('Updated 11 November 2026.');

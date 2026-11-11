@@ -461,7 +461,7 @@ for (const width of [390, 1440])
     ).toBeVisible();
     await expect(page.locator('.programme-apply-form .field')).toHaveCount(2);
     // What is stored, who reads it and how to take it back is said before anything is sent.
-    await expect(page.getByText('You can withdraw it at any time')).toBeVisible();
+    await expect(page.getByText('Until you join, you can withdraw it')).toBeVisible();
     await expect(
       page.getByRole('link', { name: 'How Corridra Handles Your Data' }),
     ).toHaveAttribute('href', '/privacy');
