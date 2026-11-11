@@ -913,6 +913,7 @@ test('optional installer repeats on populated data, preserves existing records, 
   expect(applied.map((row) => row.name)).toEqual([
     '0001_consented_programme_projections.sql',
     '0002_projection_source_and_retention.sql',
+    '0003_removed_member_projection.sql',
   ]);
   const restore = async () => {
     for (const row of applied)

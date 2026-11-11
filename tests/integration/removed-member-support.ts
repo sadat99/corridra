@@ -11,6 +11,7 @@ import { migrateCustomerNotifications } from '../../packages/db/src/customer-not
 import { migrateCustomerWorkspaceLifecycle } from '../../packages/db/src/customer-workspace-lifecycle-migrate';
 import { migrateCustomerSpecificationConfirmation } from '../../packages/db/src/customer-specification-confirmation-migrate';
 import { migrateCustomerBooks } from '../../packages/db/src/customer-book-migrate';
+import { migrateCustomerProgrammeProjections } from '../../packages/db/src/customer-programme-projection-migrate';
 import { migrateCustomerDecisionCards } from '../../packages/db/src/customer-decision-card-migrate';
 import { pinCustomerAuthority } from '../../packages/auth/src/customer-authority-pin';
 import { configureCustomerRealUse } from '../../packages/auth/src/customer-real-use-configuration';
@@ -34,7 +35,7 @@ import { InboxService } from '../../packages/communications/src/inbox';
 // Shared set-up for the removed member suites (owner decision, 11 Nov 2026: "No, remove access (Recommended)"; ADR-033
 // amendment). Real PostgreSQL, the real restricted logins, invented synthetic customers. Nothing here is a real account.
 //
-// REMOVED_BASE_CHECK=1 hides the seven new files from every migrator (see removed-member-hide.ts) and makes fileSql() throw
+// REMOVED_BASE_CHECK=1 hides the ten new files from every migrator (see removed-member-hide.ts) and makes fileSql() throw
 // as it would on the commit before this change, so every suite is shown to fail on main.
 export const baseCheck = process.env.REMOVED_BASE_CHECK === '1';
 export const issuer =
@@ -54,7 +55,7 @@ export type Row = Record<string, unknown>;
 export type Outcome =
   { ok: true; row: Row } | { ok: false; code: string | undefined; message: string };
 
-// The seven files, with the module registry each one is recorded in and the file that comes before it in that module.
+// The ten files, with the module registry each one is recorded in and the file that comes before it in that module.
 export const NEW_FILES = {
   customer: {
     directory: 'customer-migrations',
@@ -103,6 +104,12 @@ export const NEW_FILES = {
     registry: 'customer_notification_migrations',
     name: '0006_removed_member_notifications.sql',
     previous: '0005_withdrawn_requests.sql',
+  },
+  projection: {
+    directory: 'customer-programme-projection-migrations',
+    registry: 'customer_programme_projection_migrations',
+    name: '0003_removed_member_projection.sql',
+    previous: '0002_projection_source_and_retention.sql',
   },
   decisionCards: {
     directory: 'customer-decision-card-migrations',
@@ -267,6 +274,7 @@ export async function buildWorld(
     await migrateCustomerSpecificationConfirmation(f.owner);
     await migrateCustomerBooks(f.owner);
     await migrateCustomerDecisionCards(f.owner);
+    await migrateCustomerProgrammeProjections(f.owner);
     await pinCustomerAuthority(f.owner, { issuer, executorId: f.serviceId });
     await configureCustomerRealUse(f.owner, {
       enabled: true,

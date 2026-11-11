@@ -26,6 +26,7 @@ import { migrateCustomerRequestWithdrawal } from '../../packages/db/src/customer
 import { migrateCustomerMoves } from '../../packages/db/src/customer-move-migrate';
 import { migrateCustomerMissionMail } from '../../packages/db/src/customer-mission-mail-migrate';
 import { migrateCustomerNotifications } from '../../packages/db/src/customer-notification-migrate';
+import { migrateCustomerProgrammeProjections } from '../../packages/db/src/customer-programme-projection-migrate';
 import { migrateCustomerDecisionCards } from '../../packages/db/src/customer-decision-card-migrate';
 import { migrateCustomerWorkspaceLifecycle } from '../../packages/db/src/customer-workspace-lifecycle-migrate';
 import { migrateCustomerAccountLifecycle } from '../../packages/db/src/customer-account-lifecycle-migrate';
@@ -34,7 +35,7 @@ import { refreshInstalledOptionalModules } from '../../packages/db/src/customer-
 
 // Removed members, the ladder (owner decision, 11 Nov 2026: "No, remove access (Recommended)"). Later modules fingerprint the
 // exact text of some functions on every fresh ladder, so six of them are NOT replaced by this change and a catalogue test
-// proves their text is untouched by each new file. The seven files apply in every install order without raising and leave the
+// proves their text is untouched by each new file. The ten files apply in every install order without raising and leave the
 // same bodies, the upgrade from the production state (real-use 13, mail 0001 to 0003, notifications 0001 to 0005, move 0001,
 // withdrawal 0001 and 0002) adds one file per module and no row of any history table changes. Fails on main.
 vi.mock('node:fs/promises', async (importOriginal) => {
@@ -97,7 +98,7 @@ const counts = async (owner: World['f']['owner']) => {
 
 describe('the production state, populated, then upgraded', () => {
   beforeAll(async () => {
-    // Everything is built with the seven files hidden, so people leave and write under the old functions.
+    // Everything is built with the ten files hidden, so people leave and write under the old functions.
     hideNewFiles();
     w = await buildWorld();
     await w.leave('lena', w.W);
@@ -155,6 +156,10 @@ describe('the production state, populated, then upgraded', () => {
     expect((await appliedNames(w.f.owner, 'customer_real_use_migrations')).length).toBe(14);
     expect(await digest(w.f.owner, HISTORY_TABLES)).toEqual(before);
     await migrateCustomerDecisionCards(w.f.owner);
+    await migrateCustomerProgrammeProjections(w.f.owner);
+    expect((await appliedNames(w.f.owner, 'customer_programme_projection_migrations')).length).toBe(
+      3,
+    );
     expect((await appliedNames(w.f.owner, 'customer_decision_card_migrations')).length).toBe(2);
     expect(await digest(w.f.owner, HISTORY_TABLES)).toEqual(before);
     const refreshed = await refreshInstalledOptionalModules(w.f.owner);
@@ -212,6 +217,7 @@ describe('fresh ladders in every install order', () => {
       await migrateCustomerAuthority(o);
       await migrateCommercialReadiness(o);
       await migrateCustomerDecisionCards(o);
+      await migrateCustomerProgrammeProjections(o);
       await migrateCustomerRealUse(o);
       await migrateCustomerRequestWithdrawal(o);
       await migrateCustomerMoves(o);
@@ -231,6 +237,7 @@ describe('fresh ladders in every install order', () => {
       await migrateCustomerProblemReports(o);
       await migrateCommercialReadiness(o);
       await migrateCustomerDecisionCards(o);
+      await migrateCustomerProgrammeProjections(o);
     },
     'the explicit mail path, withdrawal first, notifications before lifecycle': async (o) => {
       await migrateCustomerRealUse(o);
@@ -239,6 +246,7 @@ describe('fresh ladders in every install order', () => {
       await migrateCustomerNotifications(o);
       await migrateCommercialReadiness(o);
       await migrateCustomerDecisionCards(o);
+      await migrateCustomerProgrammeProjections(o);
     },
     'workspace lifecycle before mail': async (o) => {
       await migrateCustomerRealUse(o);
@@ -248,6 +256,7 @@ describe('fresh ladders in every install order', () => {
       await migrateCustomerNotifications(o);
       await migrateCommercialReadiness(o);
       await migrateCustomerDecisionCards(o);
+      await migrateCustomerProgrammeProjections(o);
       await migrateCustomerWorkspaceLifecycle(o);
     },
   };

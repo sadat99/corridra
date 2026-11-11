@@ -16,7 +16,7 @@ import { refreshInstalledOptionalModules } from '../../packages/db/src/customer-
 // Removed members and problem reports (ADR-078; owner decision, 11 Nov 2026: "No, remove access (Recommended)"). A problem
 // report is the person's own words about the product, not a workspace request. A person who has left a workspace can still
 // file, list, read and remove the words of their own problem reports, with the account lifecycle control closed and open, and no
-// problem_report function is changed by any of the seven files. What the owner decision does widen is recorded here as a test:
+// problem_report function is changed by any of the ten files. What the owner decision does widen is recorded here as a test:
 // a person who has no workspace left cannot hold an erasure request (ADR-078 gap 2); the follow-up that adds an erasure path
 // is a separate pull request, decided by the owner on 11 Nov 2026 ("Yes, add an erasure path (Recommended)"), and the withdrawal
 // exception is not decided. Fails on main (the signed-in cases need the new files only for the removal of the workspace
@@ -91,7 +91,7 @@ const as = (who: 'owner' | 'operator', text: string, params: unknown[] = []) =>
   rawContext(w.f.runtime, w.f.users[who]!.ctx, text, params).then((result) => result.rows[0]);
 
 beforeAll(async () => {
-  // The state production is in: problem reports installed, the seven new files not yet there.
+  // The state production is in: problem reports installed, the ten new files not yet there.
   hideNewFiles();
   w = await buildWorld({ requestsPerPerson: 1, extraPeople: ['gone'] });
   await migrateCustomerProblemReports(w.f.owner);

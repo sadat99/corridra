@@ -56,6 +56,15 @@ const shares = (person: string) =>
   new CustomerMissionShareService(w.f.runtime, w.f.auth, options, async () => w.session(person));
 const participants = (person: string) =>
   new CustomerParticipantService(w.f.runtime, w.f.auth, options, async () => w.session(person));
+// One mission link as customer.programme_projection_own returns it to the participant.
+const projectionLink = async (person: string, registration: string, link: string) => {
+  const own = (
+    await w.row(person, 'SELECT customer.programme_projection_own($1,NULL) AS r', [registration])
+  ).r as {
+    missionLinks: { id: string; summary: string | null; available: boolean }[];
+  };
+  return own.missionLinks.find((item) => item.id === link);
+};
 const portfolio = async (person: string) =>
   (await w.row(person, 'SELECT customer.company_portfolio(NULL,5) AS r')).r as Row;
 
@@ -322,6 +331,13 @@ describe('the programme objective of a removed participant', () => {
     expect(sameBytes(refused, await share(randomUUID()))).toBe(true);
   });
 
+  test('the participant projection (programme_projection_own) shows the link with no summary and not available, like an expired source', async () => {
+    const link = await projectionLink(person, registrations.lena!, shared!.id);
+    expect(link).toBeTruthy();
+    expect(link!.summary).toBeNull();
+    expect(link!.available).toBe(false);
+  });
+
   test('CONTROL (stop-only, holds on main too): the objective can still be withdrawn, and the organiser sees it withdrawn', async () => {
     await expect(
       shares(person).command({
@@ -384,6 +400,39 @@ describe('everyone else (CONTROLS, they hold on main too)', () => {
   test('staff still see the link delivered for the removed authors request', async () => {
     const options = await w.staff.options(w.staffCtx, await w.missionOf(w.requests.lena![0]!));
     expect(options.links.map((l: { id: string }) => l.id)).toContain(w.reports.lena!.link.id);
+  });
+});
+
+describe('the participant projection follows the workspace membership of the request author', () => {
+  const sharedBySam = 'Synthetic supplier objective of sam';
+  let samLink: string;
+  test('a current member sees the summary of the shared objective (CONTROL, holds on main too)', async () => {
+    const managed = await shares('olive').summaries({
+      registrationId: registrations.sam,
+      view: 'manage',
+    });
+    samLink = managed.objectives[0].id;
+    const link = await projectionLink('sam', registrations.sam!, samLink);
+    expect(link?.summary).toBe(sharedBySam);
+  });
+
+  test('sam leaves: his link reads with summary NULL and available false, and the organiser view of the objective is unchanged', async () => {
+    await w.leave('sam', w.W);
+    const link = await projectionLink('sam', registrations.sam!, samLink);
+    expect(link?.summary).toBeNull();
+    expect(link?.available).toBe(false);
+    // CONTROL (organiser side, unchanged): the organiser still sees the text he shared.
+    const managed = await shares('olive').summaries({
+      registrationId: registrations.sam,
+      view: 'manage',
+    });
+    expect(JSON.stringify(managed)).toContain(sharedBySam);
+  });
+
+  test('a new invitation restores the summary', async () => {
+    await w.join('olive', 'sam', w.W);
+    const link = await projectionLink('sam', registrations.sam!, samLink);
+    expect(link?.summary).toBe(sharedBySam);
   });
 });
 

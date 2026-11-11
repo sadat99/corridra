@@ -97,8 +97,9 @@ afterEach(async () => {
   f = undefined;
 });
 
-// The state production is in: real-use 13, move records 0001, mission mail 0001 and 0002, notifications 0001 to 0004, no request
-// withdrawal. Everything is built with the seven new files hidden.
+// A database where request withdrawal is absent: real-use 13, move records 0001, mission mail 0001 and 0002, notifications 0001
+// to 0004. This is NOT production (production has withdrawal 2, mail 3 and notifications 5, see removed-member-production.test.ts);
+// it is the case the refusal wording is for. Everything is built with the ten new files hidden.
 async function productionState() {
   hideNewFiles();
   f = await fixture();
@@ -179,7 +180,7 @@ describe('the refresh', () => {
     expect(await appliedNames(f.owner, 'customer_request_withdrawal_migrations')).toHaveLength(3);
   }, 300000);
 
-  test('on the production state it advances move records, reports mail and notifications as behind, and changes no control', async () => {
+  test('on a database without request withdrawal it advances move records, reports mail and notifications as behind, and changes no control', async () => {
     await productionState();
     const owner = f!.owner;
     openNewFiles();

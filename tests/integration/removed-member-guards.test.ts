@@ -20,6 +20,7 @@ import { migrateCommercialReadiness } from '../../packages/db/src/commercial-rea
 import { migrateCustomerRequestWithdrawal } from '../../packages/db/src/customer-request-withdrawal-migrate';
 import { migrateCustomerMoves } from '../../packages/db/src/customer-move-migrate';
 import { migrateCustomerMissionMail } from '../../packages/db/src/customer-mission-mail-migrate';
+import { migrateCustomerProgrammeProjections } from '../../packages/db/src/customer-programme-projection-migrate';
 import { migrateCustomerDecisionCards } from '../../packages/db/src/customer-decision-card-migrate';
 import { migrateCustomerNotifications } from '../../packages/db/src/customer-notification-migrate';
 
@@ -27,7 +28,7 @@ import { migrateCustomerNotifications } from '../../packages/db/src/customer-not
 // compares every function it replaces with an owner-run fingerprint (stored body, settings, security mode, volatility,
 // argument types, defaults and EXECUTE grantees; never pg_get_functiondef, because the production PostgreSQL major version is
 // not observed). Three states: ABSENT changes and creates nothing, CHANGED refuses and replaces none, MATCHING replaces all
-// and leaves owner, settings and grants as they were. The database is built at the exact state before the seven files (they
+// and leaves owner, settings and grants as they were. The database is built at the exact state before the ten files (they
 // are hidden from the migrators), and every case runs in a transaction that is rolled back. Fails on main.
 vi.mock('node:fs/promises', async (importOriginal) => {
   const real = await importOriginal<typeof import('node:fs/promises')>();
@@ -100,7 +101,7 @@ const mutations: Record<string, (signature: string) => string> = {
 };
 
 beforeAll(async () => {
-  // The exact state before the seven files, with every module at the file before its new one.
+  // The exact state before the ten files, with every module at the file before its new one.
   hideNewFiles();
   f = await fixture();
   await migrateCustomerRealUse(f.owner);
@@ -110,6 +111,7 @@ beforeAll(async () => {
   await migrateCustomerMissionMail(f.owner);
   await migrateCustomerNotifications(f.owner);
   await migrateCustomerDecisionCards(f.owner);
+  await migrateCustomerProgrammeProjections(f.owner);
 }, 600000);
 afterAll(async () => {
   await f?.close();
@@ -473,8 +475,8 @@ describe('inbox (the policy inbox_customer_read)', () => {
 });
 
 describe('across the files', () => {
-  test('there are exactly seven new files, each recorded by its own module migrator and none before it exists', async () => {
-    expect(FILE_KEYS).toHaveLength(9);
+  test('there are exactly ten new files, each recorded by its own module migrator and none before it exists', async () => {
+    expect(FILE_KEYS).toHaveLength(10);
     for (const key of FUNCTION_KEYS) {
       const names = (
         await f.owner.query(`SELECT name FROM ${NEW_FILES[key].registry}.applied ORDER BY name`)

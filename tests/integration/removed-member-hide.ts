@@ -1,7 +1,7 @@
 // Pure gate shared by the removed member suites. It imports nothing, because the vi.mock of node:fs/promises in each suite
 // loads it while that module is being replaced.
 //
-// The nine files of "removed member access" (owner decision 11 Nov 2026, "No, remove access (Recommended)") are kept away
+// The ten files of "removed member access" (owner decision 11 Nov 2026, "No, remove access (Recommended)") are kept away
 // from the migrators in two cases: while a suite is building the state production is in today (globalThis.__removedHide is
 // true), and for the whole run when REMOVED_BASE_CHECK=1. The second is how every suite is shown to fail on the commit before
 // this change: the migrators then build exactly what main builds.
@@ -17,6 +17,7 @@ export const REMOVED_FILES: Record<string, string[]> = {
   'customer-mission-mail-migrations': ['0004_removed_member_mail.sql'],
   'customer-notification-migrations': ['0006_removed_member_notifications.sql'],
   'customer-decision-card-migrations': ['0002_removed_member_decision_cards.sql'],
+  'customer-programme-projection-migrations': ['0003_removed_member_projection.sql'],
 };
 export function removedFileHidden(directory: string, name: string) {
   const gate = globalThis as { __removedHide?: boolean };

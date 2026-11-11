@@ -83,7 +83,7 @@ const BASE_INSTALLERS = {
 };
 
 // Removed members, the verified production ladder (install run 42950597177, 11 Nov 2026): customer migrations 3, real-use 13,
-// commercial readiness 10, decision cards 1, move records 1, request withdrawal 2, mission mail 3, notifications 5, response
+// commercial readiness 10, decision cards 1, programme projections 2 (in the base run: 2 to 3), move records 1, request withdrawal 2, mission mail 3, notifications 5, response
 // revision not installed. The fixture below is built to exactly those counts with the new files hidden. One run is then made the
 // way the install job makes it for apply=yes with real_use_action=install: the base installers in the order the script lists
 // them (read from the script, so the list cannot drift), the real-use migration, the refresh, the report, the refresh again and
@@ -232,6 +232,8 @@ describe('the verified production ladder', () => {
     customer_real_use_migrations: 13,
     commercial_readiness_migrations: 10,
     customer_decision_card_migrations: 1,
+    // The projection module is in the base run: it moves by one on every apply=yes. N is read from the fixture below.
+    customer_programme_projection_migrations: 2,
     customer_move_migrations: 1,
     customer_request_withdrawal_migrations: 2,
     customer_mission_mail_migrations: 3,
@@ -270,6 +272,7 @@ describe('the verified production ladder', () => {
       customer_real_use_migrations: 14,
       commercial_readiness_migrations: 12,
       customer_decision_card_migrations: 2,
+      customer_programme_projection_migrations: 3,
       customer_move_migrations: 2,
       customer_request_withdrawal_migrations: 3,
       customer_mission_mail_migrations: 4,
@@ -284,6 +287,7 @@ describe('the verified production ladder', () => {
       'readiness',
       'inbox',
       'decisionCards',
+      'projection',
       'move',
       'withdrawal',
       'mail',
