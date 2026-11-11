@@ -272,7 +272,18 @@ test('an owner reads a real tax invoice with both parties, the tax lines, paymen
   await expect(
     taxInvoice.getByText(/not a valid tax invoice until the supplier details are real/),
   ).toBeVisible();
+  await expect(
+    taxInvoice.getByText('Quote this reference when you pay: INV-2026-000001'),
+  ).toBeVisible();
+  await expect(
+    taxInvoice.getByText(
+      /Payment happens outside Corridra\. The team records a payment only after it has checked that it arrived\. Until then the amount stays under "Still to pay"\./,
+    ),
+  ).toBeVisible();
   await taxInvoice.getByText('Payments and credit notes for INV-2026-000001').click();
+  await expect(
+    taxInvoice.getByText(/Recorded by the Corridra team: SGD\s20\.00 on 25 October 2026/),
+  ).toBeVisible();
   await expect(
     taxInvoice.getByText(/SGD\s20\.00 on 25 October 2026 · Bank transfer/),
   ).toBeVisible();
@@ -287,6 +298,39 @@ test('an owner reads a real tax invoice with both parties, the tax lines, paymen
   await expect(page.getByText(/sample/i)).toHaveCount(0);
   await expect(page.getByRole('textbox')).toHaveCount(0);
   expect(await axe(page)).toEqual([]);
+});
+
+test('nothing claims a payment is confirmed before the team records it, and a settled invoice needs no reference', async ({
+  page,
+}) => {
+  await serve(page, () => ({
+    json: invoicingBody({
+      invoices: [
+        invoice({ paidMinor: '0', outstandingMinor: '10900', status: 'unpaid', payments: [] }),
+        invoice({
+          id: randomUUID(),
+          number: 'INV-2026-000009',
+          paidMinor: '10900',
+          outstandingMinor: '0',
+          status: 'paid',
+        }),
+      ],
+    }),
+  }));
+  await page.goto(origin + '/');
+  const open = page.getByRole('listitem').filter({ hasText: 'INV-2026-000001' });
+  await expect(open.getByText('Quote this reference when you pay: INV-2026-000001')).toBeVisible();
+  await open.getByText('Payments and credit notes for INV-2026-000001').click();
+  await expect(open.getByText('None yet.')).toBeVisible();
+  await expect(open.getByText(/Recorded by the Corridra team/)).toHaveCount(0);
+  const text = (await open.innerText()).toLowerCase();
+  expect(text).not.toMatch(/payment (received|confirmed|verified|successful)|verified payment/);
+  expect(text).not.toContain('\u2014');
+  const settled = page.getByRole('listitem').filter({ hasText: 'INV-2026-000009' });
+  await expect(settled.getByText(/Quote this reference/)).toHaveCount(0);
+  await expect(settled.getByText(/Payment happens outside Corridra/)).toHaveCount(0);
+  // No pending-proposal wording: the customer read carries no proposal.
+  await expect(page.getByText(/being checked by the team/)).toHaveCount(0);
 });
 
 test('an owner sees that a real payment was reversed, and never why', async ({ page }) => {
