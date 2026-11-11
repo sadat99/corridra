@@ -389,6 +389,14 @@
       "bytes": 11306,
       "sha256": "49dc19f1b5e9093ce5a049ac1d18fddca312bf124cb5a2b4bd3dc9e8c883dc33",
       "meaning": "Exact active ledger at dda3f43b (the PR 394 merge, 10 Nov), unchanged since the S26 records merge 9e105ee4, before PRs 357, 389, 385, 390, 393, 395, 383, 391, 396 and 394, the two 10 Nov problem report installs, the S33 to S37 lanes and the G11, PR 390, PR 397 and PR 399 Guardian results were recorded, including the S26 Lanes, Merged (384, 387, 386, 388), switch report, G10, Install, G4/G5, /plan, Owner decisions open and Next bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "a456b58614b909895592ca649bafab55f2e2688a",
+      "archive": "docs/v3/history/ledger-before-s40-records-1-2026-11-11.md",
+      "bytes": 8049,
+      "sha256": "f29128859b00e6b9702691b74234e40b5d3c785d452ae3dad78b6d41ea44e7b4",
+      "meaning": "Exact active ledger at a456b586 (the PR 399 merge, 11 Nov), unchanged since the S26 records 2 merge 8c437a23, before PRs 400, 398, 397 and 399, install run 42938648119, the pause and resume, the S26 to S40 and S33 to S39 rotations and the open PRs 402 to 404 were recorded, including the S26 records 2 Takeover, Lanes, Merged (357 to 394), Installs, Switches, ADR-078 decision 6, Owner decisions open and Next bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
