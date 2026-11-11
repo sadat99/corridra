@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { DomainError } from '@corridra/domain';
 import { foundations } from '../lib/foundations';
 import {
-  workspaceDestinations,
+  workspaceDescription,
   workspacePath,
   workspacesFor,
   type WorkspaceKind,
@@ -13,9 +13,12 @@ import {
 export async function WorkspaceChooser({
   kind,
   enabled,
+  linksEnabled = false,
 }: {
   kind: WorkspaceKind;
   enabled: boolean;
+  /** Whether company links are on; the profile description mentions them only then. */
+  linksEnabled?: boolean;
 }) {
   if (!enabled)
     return (
@@ -62,7 +65,7 @@ export async function WorkspaceChooser({
   return (
     <section aria-labelledby="workspace-choice-title">
       <h2 id="workspace-choice-title">Choose a workspace</h2>
-      <p>{workspaceDestinations[kind].description}</p>
+      <p>{workspaceDescription(kind, linksEnabled)}</p>
       {visible.length ? (
         <ul className="ux-quick-links">
           {visible.map((workspace) => (
@@ -81,18 +84,35 @@ export async function WorkspaceChooser({
             </li>
           ))}
         </ul>
-      ) : (
+      ) : kind === 'programmes' ? (
         <p className="ux-empty">
-          {kind === 'programmes'
-            ? 'Programme management is available to workspace owners and admins.'
-            : 'No workspaces yet. Start a request or create your workspace to continue.'}
+          Programme management is available to workspace owners and admins.
+        </p>
+      ) : (
+        <>
+          <p className="ux-empty">You do not have a workspace yet. Create one to continue.</p>
+          <p>
+            <Link
+              className="primary-link"
+              prefetch={false}
+              href="/account?view=work#customer-workspaces"
+            >
+              Create Your Workspace
+            </Link>
+          </p>
+        </>
+      )}
+      {(visible.length > 0 || kind === 'programmes') && (
+        <p>
+          <Link
+            className="text-link"
+            prefetch={false}
+            href="/account?view=work#customer-workspaces"
+          >
+            Manage your workspaces
+          </Link>
         </p>
       )}
-      <p>
-        <Link className="text-link" prefetch={false} href="/account?view=work#customer-workspaces">
-          Manage your workspaces
-        </Link>
-      </p>
       {kind === 'programmes' && (
         <p>
           <Link className="text-link" prefetch={false} href="/account/delegations">

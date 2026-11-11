@@ -27,6 +27,7 @@ import { customerRequestsEnabled } from '@corridra/auth/customer-requests';
 import { missionStatus } from '@corridra/domain/missions';
 import { CustomerRequests } from './customer-requests';
 import { foundations } from '../../lib/foundations';
+import { companyProfilesTitle } from '../../lib/workspace-choice';
 import { AccountHashRedirect } from './hash-redirect';
 import { DeliveredReports } from './delivered-reports';
 import { uxSwitchOn } from '../../lib/ux-switches';
@@ -316,7 +317,7 @@ export default async function Page({
                   {customerOrganisationProfilesEnabled() && (
                     <li>
                       <Link prefetch={false} href="/account/profile">
-                        <strong>Company profiles and links</strong>
+                        <strong>{companyProfilesTitle(customerOrganisationLinksEnabled())}</strong>
                         <span>Your company details and supporting statements.</span>
                       </Link>
                     </li>
