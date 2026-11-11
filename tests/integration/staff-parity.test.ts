@@ -47,7 +47,15 @@ const frozen: [string, string, string, string[]][] = [
   ['workspace-authenticator', 'authenticator', 'Authenticator', all],
   ['workspace-controls', 'controls', 'Workspace controls', ['owner']],
 ];
-const reserved = ['owner', 'setup', 'signin', 'forgot-password', 'reset-password', 'view-as'];
+const reserved = [
+  'owner',
+  'setup',
+  'signin',
+  'forgot-password',
+  'reset-password',
+  'view-as',
+  'problem-reports',
+];
 const root = join(__dirname, '../../apps/web');
 const read = (path: string) => readFileSync(join(root, path), 'utf8');
 

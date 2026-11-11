@@ -20,6 +20,7 @@ export const customerRoots = [
   // The rest of the components the customer track owns.
   'apps/web/components/customer-nav.tsx',
   'apps/web/components/workspace-shell.tsx',
+  'apps/web/components/problem-reports',
   'apps/web/components/workspace-chooser.tsx',
   'apps/web/components/workspace-area-bar.tsx',
   'apps/web/components/compare-lens.tsx',

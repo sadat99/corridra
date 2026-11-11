@@ -53,10 +53,13 @@ export async function startTodayFixture(root = resolve('.')) {
       const ownerPage = flag('owner') === 'on';
       // ?urls=off builds the hash links the sidebar and menus use while section addresses are switched off.
       const urls = flag('urls') !== 'off';
+      // ?reports=on is a workspace where Report a Problem is offered (both probes hold), as the server tells the workspace
+      // (and, with the shells on, the team frame). Off or missing, nothing is added.
+      const reports = flag('reports') === 'on';
       const workspace = (
         <OperatorFlags replyReview={false}>
           <Workspace tenants={[{id:${JSON.stringify(fixtureTenant)},name:'Synthetic request operations',role:'owner'}]}
-            initialTenant=${JSON.stringify(fixtureTenant)} shellsV2={shells}/>
+            initialTenant=${JSON.stringify(fixtureTenant)} shellsV2={shells} problemReports={reports}/>
         </OperatorFlags>
       );
       createRoot(document.getElementById('fixture')).render(
@@ -65,7 +68,7 @@ export async function startTodayFixture(root = resolve('.')) {
             {shells ? (
               <>
                 <AppHeader kind="team" live={false} notifications brandMark={<BrandLockup/>}/>
-                <TeamFrame urls={urls} ownerPage={ownerPage}>
+                <TeamFrame urls={urls} ownerPage={ownerPage} problemReports={reports}>
                   <WorkspaceShell eyebrow="TEAM WORKSPACE" title="Today" className="ux-operator-home ux-titled-today">
                     <TeamSecondLevel urls={urls} ownerPage={ownerPage}/>
                     {workspace}

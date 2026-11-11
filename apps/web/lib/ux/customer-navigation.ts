@@ -59,6 +59,8 @@ export type CustomerNavigationInput = {
    * none, Company Profile opens the chooser.
    */
   currentWorkspaceId?: string;
+  /** True where Report a Problem is installed with the customer's own word removal: the Help row is then a link. */
+  problemReports?: boolean;
 };
 
 /** Where New Request goes: a person with a workspace goes to where requests are made, otherwise to the plan page. */
@@ -146,12 +148,16 @@ export function customerAvatarItems(
 
 /**
  * The help and accessibility menu. Chat on WhatsApp needs a number the owner configures: with no `whatsappHref` it is
- * Coming soon, and with one it is a link in the same place (never an extra row). Report a Problem is Coming soon.
- * Listen to This Page, Text Size, Stronger Colours and Less Movement are real (the speech the corner Help sheet
- * offers, and three choices kept in this browser only), and the About group keeps the website and privacy notice
- * the old account menu held.
+ * Coming soon, and with one it is a link in the same place (never an extra row). Report a Problem is a link in the same
+ * way, only where its module and the customer's own word removal are both installed (`reportProblemHref`), and Coming
+ * soon everywhere else. Listen to This Page, Text Size, Stronger Colours and Less Movement are real (the speech the
+ * corner Help sheet offers, and three choices kept in this browser only), and the About group keeps the website and
+ * privacy notice the old account menu held.
  */
-export function customerHelpGroups(whatsappHref?: string | null): HelpGroup[] {
+export function customerHelpGroups(
+  whatsappHref?: string | null,
+  reportProblemHref?: string | null,
+): HelpGroup[] {
   return [
     {
       label: 'Get Help',
@@ -161,7 +167,9 @@ export function customerHelpGroups(whatsappHref?: string | null): HelpGroup[] {
           ? { kind: 'external', label: 'Chat on WhatsApp', href: whatsappHref }
           : { kind: 'soon', label: 'Chat on WhatsApp' },
         { kind: 'link', label: 'How We Label Facts', href: '/trust' },
-        { kind: 'soon', label: 'Report a Problem' },
+        reportProblemHref
+          ? { kind: 'link', label: 'Report a Problem', href: reportProblemHref }
+          : { kind: 'soon', label: 'Report a Problem' },
       ],
     },
     {
@@ -183,11 +191,21 @@ export function customerHelpGroups(whatsappHref?: string | null): HelpGroup[] {
   ];
 }
 
+export const customerProblemReportsPath = '/account/problem-reports';
+
+/** The address of the Report a Problem form for a side, carrying the page the person is on (the form checks it). */
+export function reportProblemHref(base: string, pathname: string, extraQuery = '') {
+  return `${base}/new?from=${encodeURIComponent(pathname)}${extraQuery}`;
+}
+
 /** Everything in one place, with the set of addresses a person can reach from it (used by the reachability test). */
 export function customerNavigation(input: CustomerNavigationInput) {
   const tabs = customerTabs(input);
   const avatar = customerAvatarItems(input);
-  const help = customerHelpGroups();
+  const help = customerHelpGroups(
+    null,
+    input.problemReports ? reportProblemHref(customerProblemReportsPath, '/account') : null,
+  );
   const reachable = new Set<string>([
     ...tabs.map((tab) => tab.href),
     newRequestHref(input.workspaces.length > 0),

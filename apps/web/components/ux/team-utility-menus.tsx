@@ -10,7 +10,11 @@ import { usePathname } from 'next/navigation';
 import { useState, useSyncExternalStore, type ReactNode } from 'react';
 import { CorridraIcon } from '../corridra-icon';
 import { operatorSignInPage } from '../../lib/workspace-navigation';
-import { teamHelpGroups } from '../../lib/ux/team-help';
+import {
+  teamHelpGroups,
+  teamProblemReportsPath,
+  teamReportProblemHref,
+} from '../../lib/ux/team-help';
 import { subscribeToHash } from '../../lib/address-store';
 import { sectionForSlug } from '../../lib/operator-urls';
 import { currentTeamSection } from '../../lib/ux/shells';
@@ -113,7 +117,11 @@ export function TeamAccountMenu({ whatsappHref }: { whatsappHref?: string | null
     readTeamContext,
     readServerTeamContext,
   );
-  const { urls } = useSyncExternalStore(subscribeTeamFlags, readTeamFlags, readServerTeamFlags);
+  const { urls, problemReports } = useSyncExternalStore(
+    subscribeTeamFlags,
+    readTeamFlags,
+    readServerTeamFlags,
+  );
   const pathname = usePathname() ?? '/operator';
   const hash = useSyncExternalStore(
     subscribeToHash,
@@ -123,7 +131,13 @@ export function TeamAccountMenu({ whatsappHref }: { whatsappHref?: string | null
   const { offered } = useLanguage();
   const place = (currentTeamSection(pathname, hash, sectionForSlug) || 'home') as TeamPlaceId;
   const plain = pathname !== '/operator' && !sectionForSlug(pathname.split('/')[2] ?? '');
-  const links = teamAccountLinks(role, urls, tenant, place);
+  const links = teamAccountLinks(
+    role,
+    urls,
+    tenant,
+    place,
+    problemReports ? { current: pathname.startsWith(teamProblemReportsPath) } : undefined,
+  );
   return (
     <OverflowMenu
       label="Account menu"
@@ -159,7 +173,10 @@ export function TeamAccountMenu({ whatsappHref }: { whatsappHref?: string | null
             <LanguageMenuGroup />
           </div>
         ) : null}
-        {teamHelpGroups(whatsappHref).map((group) => (
+        {teamHelpGroups(
+          whatsappHref,
+          problemReports ? teamReportProblemHref(pathname, tenant) : null,
+        ).map((group) => (
           <div key={group.label} role="group" aria-label={group.label} className="ux-menu-group">
             <p className="ux-menu-heading" aria-hidden="true">
               {group.label}

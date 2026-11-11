@@ -65,3 +65,17 @@ export function readCustomerOrganisationProfiles() {
 export function readServerCustomerOrganisationProfiles() {
   return false;
 }
+
+// Whether Report a Problem is installed with the customer's own word removal, so the help menu links it or says Coming soon. A flag only.
+let problemReports = false;
+export function setCustomerProblemReports(next: boolean) {
+  if (next === problemReports) return;
+  problemReports = next;
+  for (const listener of listeners) listener();
+}
+export function readCustomerProblemReports() {
+  return problemReports;
+}
+export function readServerCustomerProblemReports() {
+  return false;
+}

@@ -5,6 +5,7 @@
 // The page language and direction come from the chosen language (CQ-10). Owner: WS-E.
 import './shells.css';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { CornerDock } from '../corner-dock';
 import { shellWords } from '../site-header';
@@ -20,7 +21,8 @@ import {
 import { CustomerBar } from './customer-header';
 import { LeftNavMenuButton } from './left-nav';
 import { NotificationInbox } from './notification-inbox';
-import { teamHelpGroups } from '../../lib/ux/team-help';
+import { teamHelpGroups, teamReportProblemHref } from '../../lib/ux/team-help';
+import { readServerTeamFlags, readTeamFlags, subscribeTeamFlags } from '../../lib/ux/team-flags';
 import { PaletteTrigger } from './team-palette';
 import { TeamAccountMenu } from './team-utility-menus';
 import { HelpMenu, LanguageMenu, NotificationsPanel } from './utility-menus';
@@ -99,6 +101,12 @@ export function AppHeader({
     readTeamContext,
     readServerTeamContext,
   );
+  const { problemReports } = useSyncExternalStore(
+    subscribeTeamFlags,
+    readTeamFlags,
+    readServerTeamFlags,
+  );
+  const pathname = usePathname() ?? '/operator';
   const meta = localeMeta[locale];
   const inboxEndpoint =
     kind === 'customer'
@@ -153,7 +161,12 @@ export function AppHeader({
             />
           ) : null}
           <LanguageMenu />
-          <HelpMenu groups={teamHelpGroups(whatsappHref)} />
+          <HelpMenu
+            groups={teamHelpGroups(
+              whatsappHref,
+              problemReports ? teamReportProblemHref(pathname, tenant) : null,
+            )}
+          />
           <TeamAccountMenu whatsappHref={whatsappHref} />
         </div>
       ) : (

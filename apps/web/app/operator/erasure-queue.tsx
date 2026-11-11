@@ -2,6 +2,15 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { z } from 'zod';
 import { displayDate } from '@corridra/domain/locale';
+import { Dialog } from '../../components/ux/dialog';
+import '../../components/problem-reports/problem-reports.css';
+import {
+  queueFailure,
+  removalOnRequest,
+  removalWordsUnderRequest,
+  removeWordsUnderRequest,
+  wordsRemovedMessage,
+} from '../../lib/problem-report-queue';
 
 // Staff queue of customer erasure requests (CRUD G5). It shows a reference, a state, the due date and whether the
 // closed account can still be undone, and nothing else about the person. There is no scope control: the database
@@ -105,17 +114,29 @@ function failureText(status: number) {
   return 'The request could not be completed. Please try again.';
 }
 
-type Props = { tenant: string };
+type Props = {
+  tenant: string;
+  role?: string;
+  /** Whether Report a Problem is offered: only then is the owner's word removal drawn. Missing means not offered. */
+  problemReports?: boolean;
+};
 export function ErasureQueue(props: Props) {
   return <Queue key={props.tenant} {...props} />;
 }
-function Queue({ tenant }: Props) {
+function Queue({ tenant, role, problemReports = false }: Props) {
   const [queue, setQueue] = useState<Queue | null>(null),
     [filter, setFilter] = useState<Status | ''>(''),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState(''),
     [pending, setPending] = useState<Pending | null>(null),
-    [note, setNote] = useState('');
+    [note, setNote] = useState(''),
+    [removing, setRemoving] = useState<Item | null>(null),
+    [removalBusy, setRemovalBusy] = useState(false),
+    [removalFailure, setRemovalFailure] = useState(''),
+    [removalResult, setRemovalResult] = useState('');
+  // One command id per request, kept until the removal is confirmed, so a retry of an answer that did not arrive is the
+  // same command and never removes twice.
+  const removalCommands = useRef(new Map<string, string>());
   const controller = useRef<AbortController | null>(null);
   const endpoint = '/api/workspace/customer-erasure-queue?tenant=' + encodeURIComponent(tenant);
   useEffect(() => () => controller.current?.abort(), []);
@@ -200,6 +221,27 @@ function Queue({ tenant }: Props) {
     }
   }
 
+  // Owner only (members.manage): the server refuses anyone else, so the control is not drawn for them. The count in the
+  // result is the one in the answer; nothing is counted before the person confirms.
+  async function removeWords() {
+    if (!removing || removalBusy) return;
+    const id = removing.id;
+    const commandId = removalCommands.current.get(id) ?? crypto.randomUUID();
+    removalCommands.current.set(id, commandId);
+    setRemovalBusy(true);
+    setRemovalFailure('');
+    try {
+      const done = await removeWordsUnderRequest(tenant, commandId, id);
+      removalCommands.current.delete(id);
+      setRemoving(null);
+      setRemovalResult(wordsRemovedMessage(done.removed));
+    } catch (e) {
+      setRemovalFailure(queueFailure(e, 'remove').message);
+    } finally {
+      setRemovalBusy(false);
+    }
+  }
+
   return (
     <section aria-labelledby="erasure-queue-title" className="ux-panel">
       <h2 id="erasure-queue-title">Erasure Requests</h2>
@@ -253,10 +295,28 @@ function Queue({ tenant }: Props) {
                   {actionLabel[to]}
                 </button>
               ))}
+              {removalOnRequest(role, problemReports, i.status) && (
+                <button
+                  className="text-link"
+                  type="button"
+                  disabled={busy || removalBusy}
+                  aria-label={removalWordsUnderRequest.button + ' ' + i.reference}
+                  onClick={() => {
+                    setRemovalFailure('');
+                    setRemovalResult('');
+                    setRemoving(i);
+                  }}
+                >
+                  {removalWordsUnderRequest.button}
+                </button>
+              )}
             </li>
           ))}
         </ul>
       )}
+      <p role="status" className="pr-status">
+        {removalResult}
+      </p>
       {queue?.nextAfter !== null && queue?.nextAfter !== undefined && (
         <button
           className="text-link"
@@ -267,6 +327,39 @@ function Queue({ tenant }: Props) {
           Show More Requests
         </button>
       )}
+      <Dialog
+        open={removing !== null}
+        onClose={() => setRemoving(null)}
+        title={removalWordsUnderRequest.title}
+        locked={removalBusy}
+      >
+        <p>{removalWordsUnderRequest.body}</p>
+        {removing && (
+          <p>
+            <strong>{removing.reference}</strong>
+          </p>
+        )}
+        {removalFailure && <p role="alert">{removalFailure}</p>}
+        <div className="ux-dialog-actions">
+          <button
+            type="button"
+            className="button button-secondary"
+            data-autofocus=""
+            disabled={removalBusy}
+            onClick={() => setRemoving(null)}
+          >
+            {removalWordsUnderRequest.keep}
+          </button>
+          <button
+            type="button"
+            className="primary-link"
+            disabled={removalBusy}
+            onClick={() => void removeWords()}
+          >
+            {removalBusy ? 'Please Wait…' : removalWordsUnderRequest.confirm}
+          </button>
+        </div>
+      </Dialog>
       {pending && (
         <form onSubmit={(e) => void submit(e)} aria-label={'Answer ' + pending.item.reference}>
           <h3>

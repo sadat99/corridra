@@ -1,0 +1,139 @@
+/* Report a Problem: tokens only. One readable column on every width; nothing has a fixed height. */
+.pr-column {
+  display: grid;
+  gap: var(--space-5);
+  max-width: 40rem;
+}
+.pr-column fieldset {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+.pr-column legend {
+  padding: 0;
+  margin-block-end: var(--space-2);
+  font-weight: 600;
+}
+.pr-status {
+  margin: 0;
+}
+.pr-status:not(:empty) {
+  margin-block-start: var(--space-3);
+}
+/* The Big choices of the first step are at least 76 px high (the shared card is 72 px). */
+.pr-column .mr-fq-card {
+  min-height: 4.75rem;
+}
+.pr-meta {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.pr-tag {
+  margin-inline-start: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: 400;
+}
+.pr-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+.pr-actions .primary-link {
+  min-height: 3.75rem;
+}
+.pr-summary {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+}
+.pr-summary > div {
+  display: grid;
+  gap: var(--space-1);
+}
+.pr-summary dt {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.pr-summary dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.pr-gone {
+  display: block;
+  margin-block-start: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: 400;
+}
+.pr-history {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding-inline-start: var(--space-5);
+}
+.pr-history li {
+  overflow-wrap: anywhere;
+}
+.pr-meanings {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+.pr-meanings dd {
+  margin: 0 0 var(--space-2);
+}
+
+/* The staff queue (apps/web/app/operator/problem-report-queue.tsx): rows stack under 30rem, every control is 44px. */
+.pr-queue {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 48rem;
+}
+.pr-queue-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-4);
+}
+.pr-queue-rows {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pr-queue-row {
+  display: grid;
+  gap: var(--space-3);
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--line);
+}
+.pr-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 30rem) {
+  .pr-facts {
+    flex-direction: column;
+  }
+}
+.pr-queue button,
+.pr-queue summary {
+  min-height: 2.75rem;
+}
+.pr-queue-move {
+  display: grid;
+  gap: var(--space-3);
+}
+.pr-queue-move textarea {
+  width: 100%;
+}

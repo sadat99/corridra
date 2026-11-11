@@ -236,6 +236,14 @@ test('CX-02 Help and accessibility: real things are links or switches, the rest 
   await expect(link('How We Label Facts')).toHaveAttribute('href', '/trust');
   await expect(link('Corridra Website')).toHaveAttribute('href', '/');
   await expect(link('Privacy Notice')).toHaveAttribute('href', '/privacy');
+  // This database has no problem report module (only the installer adds it), so the probe is off: Report a Problem is
+  // exactly the Coming soon row, and no link to the problem report pages is anywhere in the menu.
+  await expect(menu.locator('a[href*="problem-reports"]')).toHaveCount(0);
+  await expect(
+    menu
+      .getByRole('group', { name: 'Get Help' })
+      .getByRole('menuitem', { name: /Report a Problem/ }),
+  ).toHaveCount(1);
   for (const name of ['Chat on WhatsApp', 'Report a Problem']) {
     const row = menu.getByRole('menuitem', { name: new RegExp(name) });
     await expect(row, name).toHaveAttribute('aria-disabled', 'true');

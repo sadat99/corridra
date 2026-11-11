@@ -14,6 +14,8 @@ import { identityClient } from '@corridra/auth/client';
 import { Counterparties } from './counterparties';
 import { CompanyLinkReview } from './company-link-review';
 import { ErasureQueue } from './erasure-queue';
+import { ProblemReportQueue } from './problem-report-queue';
+import { problemReportQueueFragment } from '../../lib/problem-report-queue';
 import { Missions } from './missions';
 import { TodayPanel } from './today';
 import { CommercialProgress } from './opportunities';
@@ -59,6 +61,7 @@ export function Workspace({
   moveRecords = false,
   initialSection = '',
   shellsV2 = false,
+  problemReports = false,
 }: {
   tenants: Tenant[];
   initialTenant: string;
@@ -71,6 +74,11 @@ export function Workspace({
    * and only the section in view is rendered. Off, every panel stays mounted as before.
    */
   shellsV2?: boolean;
+  /**
+   * Whether Report a Problem is offered, as the server decided it (both probes hold). Fail closed: missing means not
+   * offered, and then nothing is added to Settings and its address is an unknown fragment.
+   */
+  problemReports?: boolean;
 }) {
   const router = useRouter();
   const [tenant, setTenant] = useState(initialTenant);
@@ -92,6 +100,7 @@ export function Workspace({
       moveRecords={moveRecords}
       initialSection={initialSection}
       shellsV2={shellsV2}
+      problemReports={problemReports}
     />
   );
 }
@@ -103,6 +112,7 @@ function TenantWorkspace({
   moveRecords,
   initialSection,
   shellsV2,
+  problemReports,
 }: {
   tenants: Tenant[];
   tenant: string;
@@ -111,6 +121,7 @@ function TenantWorkspace({
   moveRecords: boolean;
   initialSection: string;
   shellsV2: boolean;
+  problemReports: boolean;
 }) {
   const edited = useRef(false);
   const memberCommand = useRef<{ key: string; id: string } | null>(null);
@@ -250,9 +261,13 @@ function TenantWorkspace({
   // An address inside a section (a billing block) belongs to that section: the role check and the view
   // follow the section, so the same note shows for a role that may not see it.
   const sectionId = sectionOfFragment(fragment);
+  // The queue of problem reports sits inside Settings, so its own address (#problem-report-queue) is allowed for the
+  // people who may see Settings, and panelFor puts it in that panel. Not offered, the address is an unknown fragment.
+  const reportQueueAddress = problemReports && fragment === problemReportQueueFragment;
   const sectionAllowed = workspaceSections.some(
     (section) =>
-      section.id === sectionId && (section.roles as readonly string[]).includes(currentRole ?? ''),
+      (section.id === sectionId || (reportQueueAddress && section.id === 'workspace-settings')) &&
+      (section.roles as readonly string[]).includes(currentRole ?? ''),
   );
   // One panel is in view at a time. Every panel stays mounted so entries survive a switch.
   const view = sectionAllowed ? panelFor(sectionId) : 'overview';
@@ -766,7 +781,19 @@ function TenantWorkspace({
           {shown('workspace-settings') && ['owner', 'admin'].includes(data.role) && (
             <div className="ux-panel" hidden={view !== 'workspace-settings'}>
               <ReviewSettings key={`settings-${tenant}`} tenant={tenant} role={data.role} />
-              <ErasureQueue key={`erasure-${tenant}`} tenant={tenant} />
+              <ErasureQueue
+                key={`erasure-${tenant}`}
+                tenant={tenant}
+                role={data.role}
+                problemReports={problemReports}
+              />
+              {problemReports ? (
+                <ProblemReportQueue
+                  key={`problem-reports-${tenant}`}
+                  tenant={tenant}
+                  role={data.role}
+                />
+              ) : null}
             </div>
           )}
           {shown('workspace-audit') && ['owner', 'admin'].includes(data.role) && (

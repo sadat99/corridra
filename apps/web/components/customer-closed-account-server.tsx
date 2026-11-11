@@ -9,9 +9,14 @@ import { ClosedAccountGate } from './customer-closed-account';
 export async function IdentifiedClosedAccountGate({ children }: { children: ReactNode }) {
   // Loaded only when the account module is on, so the frame itself carries no server-only import.
   const { customerIdentity } = await import('../lib/customer-page-session');
+  const { problemReportsOffered } = await import('../lib/problem-reports-offered');
   const identity = await customerIdentity();
   return (
-    <ClosedAccountGate subject={identity?.subject} issuer={identity?.issuer}>
+    <ClosedAccountGate
+      subject={identity?.subject}
+      issuer={identity?.issuer}
+      problemReports={await problemReportsOffered()}
+    >
       {children}
     </ClosedAccountGate>
   );

@@ -36,8 +36,9 @@ const words = {
  */
 export function CustomerShell(props: CustomerShellProps) {
   const frame = <CustomerFrame {...props} />;
-  // With the account module off nothing is added: the frame is exactly what it was.
-  return customerAccountLifecycleEnabled() ? (
+  // With the account module off nothing is added: the frame is exactly what it was. A page that opts out
+  // (`closedAccountReads`) is drawn for a closed account too; the closed-account screen then links to it.
+  return customerAccountLifecycleEnabled() && !props.closedAccountReads ? (
     <IdentifiedClosedAccountGate>{frame}</IdentifiedClosedAccountGate>
   ) : (
     frame
@@ -51,6 +52,11 @@ type CustomerShellProps = {
   title: ReactNode;
   /** What waits for the person, shown as a small count beside Home in the left bar. */
   count?: number;
+  /**
+   * The page is drawn for a closed account instead of the closed-account screen. Only for pages a closed account may still
+   * use (reading its problem reports and removing their words, ADR-078 decision 4); every other page keeps the gate.
+   */
+  closedAccountReads?: boolean;
   children: ReactNode;
 };
 

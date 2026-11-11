@@ -355,10 +355,16 @@ describe('installation-only records are distinct from application switches', () 
     expect(installOnlyModules).toContainEqual({
       name: 'customer-problem-reports',
       label: 'Problem reports',
-      line: 'No separate application switch. Installing the database module is the activation; it installs the workspace and account lifecycle modules first and leaves their controls as they are (closed on a database that never opened them). The Help menus keep Report a Problem as Coming soon until the application release that uses it.',
+      line: 'No separate application switch. Installing the database module is the activation; it installs the workspace and account lifecycle modules first and leaves their controls as they are (closed on a database that never opened them). The Help menus show Report a Problem only where this module and the customer self-service word removal (migration 0003) are both installed, and keep it as Coming soon everywhere else.',
       state: 'Installation not checked here',
       action: 'field_modules_action=problem_reports',
     });
+    // The Help row is live only with both installs, and the line says which, and that Coming soon stays the rest of the time.
+    const problemReports = installOnlyModules.find((m) => m.name === 'customer-problem-reports')!;
+    expect(problemReports.line).toMatch(/both installed/);
+    expect(problemReports.line).toMatch(/migration 0003/);
+    expect(problemReports.line).toMatch(/Coming soon everywhere else/);
+    expect(problemReports.line).not.toMatch(/until the application release/);
     expect(switchRegistry.some((entry) => entry.name.includes('COMMERCIAL_ARRANGEMENT'))).toBe(
       false,
     );

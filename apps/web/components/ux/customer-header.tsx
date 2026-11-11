@@ -6,9 +6,14 @@
 // still checks on the server.
 import './customer-bar.css';
 import { usePathname } from 'next/navigation';
-import { customerHelpGroups } from '../../lib/ux/customer-navigation';
 import { NewRequestLink } from './customer-rail';
-import { AvatarMenu, HelpMenu, LanguageMenu, NotificationsPanel } from './utility-menus';
+import {
+  AvatarMenu,
+  HelpMenu,
+  LanguageMenu,
+  NotificationsPanel,
+  useCustomerHelpGroups,
+} from './utility-menus';
 
 export function CustomerBar({
   notifications,
@@ -20,6 +25,7 @@ export function CustomerBar({
 }) {
   const pathname = usePathname() ?? '';
   const onAccount = pathname === '/account' || pathname.startsWith('/account/');
+  const helpGroups = useCustomerHelpGroups(whatsappHref);
   return (
     <div className="ux-bar-tools">
       <NewRequestLink className="ux-bar-primary ux-bar-new-narrow" />
@@ -27,7 +33,7 @@ export function CustomerBar({
       {notifications ? (
         <NotificationsPanel counted={onAccount} endpoint="/api/customer-inbox" />
       ) : null}
-      <HelpMenu groups={customerHelpGroups(whatsappHref)} />
+      <HelpMenu groups={helpGroups} />
       <AvatarMenu active={onAccount} whatsappHref={whatsappHref} />
     </div>
   );

@@ -35,6 +35,7 @@ export const reservedOperatorSegments = [
   'forgot-password',
   'reset-password',
   'view-as',
+  'problem-reports',
 ] as const;
 
 /** The section id for an address word, or null. Exact match on a closed list; nothing is parsed. */

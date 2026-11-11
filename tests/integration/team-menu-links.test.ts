@@ -1,7 +1,8 @@
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { describe, expect, test, vi } from 'vitest';
-import { teamHelpGroups } from '../../apps/web/lib/ux/team-help';
+import { teamHelpGroups, teamReportProblemHref } from '../../apps/web/lib/ux/team-help';
+import { teamAccountLinks } from '../../apps/web/lib/ux/team-map';
 
 // The avatar menu's place links (Navigation v1 part 3). The workspace switches section on `hashchange`, and Next's
 // router makes a same-page `#` change without one, so a `#` address must be a plain anchor, as in the sidebar. The
@@ -74,9 +75,62 @@ describe('the team Help groups', () => {
     expect(entries).toContainEqual({ kind: 'link', label: 'Start a Request', href: '/plan' });
     for (const group of set) expect(group.items.length).toBeLessThanOrEqual(4);
   });
+  test('Report a Problem is the plain Coming soon row without the link and one link in the same place with it', () => {
+    const none = teamHelpGroups().flatMap((group) => group.items);
+    for (const off of [undefined, null, ''])
+      expect(teamHelpGroups(undefined, off).flatMap((group) => group.items)).toEqual(none);
+    expect(none).toContainEqual({ kind: 'soon', label: 'Report a Problem' });
+    const workspace = '0f8fad5b-d9cb-469f-a165-70867728950e';
+    const href = teamReportProblemHref('/operator/missions', workspace);
+    expect(href).toBe(
+      `/operator/problem-reports/new?from=%2Foperator%2Fmissions&workspace=${workspace}`,
+    );
+    // A value that is not a workspace id is never put in the address.
+    expect(teamReportProblemHref('/operator', 'not-a-workspace')).toBe(
+      '/operator/problem-reports/new?from=%2Foperator',
+    );
+    const on = teamHelpGroups(undefined, href);
+    const entries = on.flatMap((group) => group.items);
+    expect(entries).toContainEqual({ kind: 'link', label: 'Report a Problem', href });
+    expect(entries.filter((entry) => entry.kind === 'soon').map((e) => e.label)).toEqual([
+      'Chat on WhatsApp',
+    ]);
+    expect(entries).toHaveLength(none.length);
+    for (const group of on) expect(group.items.length).toBeLessThanOrEqual(4);
+    expect(entries).toContainEqual({ kind: 'link', label: 'Start a Request', href: '/plan' });
+  });
   test('without a number the team Help says Coming soon and has no external row', () => {
     const entries = teamHelpGroups().flatMap((group) => group.items);
     expect(entries).toContainEqual({ kind: 'soon', label: 'Chat on WhatsApp' });
     expect(entries.some((entry) => entry.kind === 'external')).toBe(false);
+  });
+});
+
+describe('the team Account group and Your Problem Reports', () => {
+  const roles = ['owner', 'admin', 'operator', 'reviewer', 'viewer', null];
+  test('without the probes no role gets the row', () => {
+    for (const role of roles)
+      expect(teamAccountLinks(role, true).map((link) => link.label)).not.toContain(
+        'Your Problem Reports',
+      );
+  });
+  test('with them every role gets it last, and the group stays at four rows or fewer', () => {
+    for (const role of roles) {
+      const links = teamAccountLinks(role, true, '', '', { current: false });
+      expect(links.at(-1)).toEqual({
+        id: 'problem-reports',
+        label: 'Your Problem Reports',
+        href: '/operator/problem-reports',
+        current: false,
+      });
+      expect(links.length, String(role)).toBeLessThanOrEqual(4);
+      expect(links.slice(0, -1)).toEqual(teamAccountLinks(role, true));
+    }
+  });
+  test('it keeps the chosen workspace and marks itself as the current page', () => {
+    const workspace = '0f8fad5b-d9cb-469f-a165-70867728950e';
+    const row = teamAccountLinks('owner', true, workspace, '', { current: true }).at(-1)!;
+    expect(row.href).toBe(`/operator/problem-reports?workspace=${workspace}`);
+    expect(row.current).toBe(true);
   });
 });

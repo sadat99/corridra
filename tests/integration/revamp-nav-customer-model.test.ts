@@ -4,7 +4,9 @@ import {
   customerAvatarItems,
   customerHelpGroups,
   customerNavigation,
+  customerProblemReportsPath,
   customerTabs,
+  reportProblemHref,
   type MenuEntry,
 } from '../../apps/web/lib/ux/customer-navigation';
 
@@ -195,7 +197,8 @@ describe('the customer navigation model', () => {
     expect(link('Corridra Website')).toMatchObject({ kind: 'link', href: '/' });
     expect(link('Privacy Notice')).toMatchObject({ kind: 'link', href: '/privacy' });
     expect(link('Listen to This Page').kind).toBe('listen');
-    // There is no owner-configured WhatsApp number, so it says Coming soon and is not a link.
+    // There is no owner-configured WhatsApp number and no problem report link given (the module and the customer's own
+    // word removal are not both installed), so each says Coming soon and is not a link.
     for (const label of ['Chat on WhatsApp', 'Report a Problem'])
       expect(link(label).kind, label).toBe('soon');
     // W7, W10: Text Size, Stronger Colours and Less Movement are real controls kept in this browser, no longer Coming soon.
@@ -208,6 +211,7 @@ describe('the customer navigation model', () => {
     );
     // Stricter: the exact row, and nothing in any group leaves Corridra without a configured number.
     expect(help[0]!.items[1]).toEqual({ kind: 'soon', label: 'Chat on WhatsApp' });
+    expect(help[0]!.items[3]).toEqual({ kind: 'soon', label: 'Report a Problem' });
     expect(flat.some((item) => item.kind === 'external')).toBe(false);
     expect(JSON.stringify(help)).not.toMatch(/wa\.me/i);
   });
@@ -242,6 +246,59 @@ describe('the customer navigation model', () => {
     for (const none of [undefined, null, '']) {
       expect(customerHelpGroups(none)).toEqual(customerHelpGroups());
     }
+  });
+
+  it('Report a Problem is exactly Coming soon without the link, and exactly one link in the same place with it', () => {
+    // Without the module and the customer's own word removal there is no link: the row is the plain Coming soon row.
+    for (const none of [undefined, null, '']) {
+      const row = customerHelpGroups(undefined, none)[0]!.items[3];
+      expect(row).toEqual({ kind: 'soon', label: 'Report a Problem' });
+    }
+    const href = '/account/problem-reports/new?from=%2Faccount%2Frequests';
+    expect(reportProblemHref(customerProblemReportsPath, '/account/requests')).toBe(href);
+    const before = customerHelpGroups();
+    const help = customerHelpGroups(undefined, href);
+    expect(help[0]!.items[3]).toEqual({ kind: 'link', label: 'Report a Problem', href });
+    // In place: no group grows, the labels keep their order, and only that row differs from the menu without it.
+    expect(help.map((group) => group.items.length)).toEqual(
+      before.map((group) => group.items.length),
+    );
+    for (const group of help) expect(group.items.length).toBeLessThanOrEqual(4);
+    expect(help.flatMap((group) => group.items.map((item) => item.label))).toEqual(
+      before.flatMap((group) => group.items.map((item) => item.label)),
+    );
+    expect(
+      help
+        .flatMap((group) => group.items)
+        .filter(
+          (item, i) => JSON.stringify(item) !== JSON.stringify(before.flatMap((g) => g.items)[i]),
+        ),
+    ).toEqual([{ kind: 'link', label: 'Report a Problem', href }]);
+    // Chat on WhatsApp is independent of it.
+    expect(customerHelpGroups('https://wa.me/6500000000', href)[0]!.items.slice(1, 4)).toEqual([
+      { kind: 'external', label: 'Chat on WhatsApp', href: 'https://wa.me/6500000000' },
+      { kind: 'link', label: 'How We Label Facts', href: '/trust' },
+      { kind: 'link', label: 'Report a Problem', href },
+    ]);
+  });
+
+  it('the model offers the problem report address only when told both probes hold, and the avatar stays five items', () => {
+    const off = customerNavigation({ ...all, problemReports: false });
+    const unset = customerNavigation(all);
+    const on = customerNavigation({ ...all, problemReports: true });
+    expect(off.help).toEqual(unset.help);
+    expect(off.reachable).toEqual(unset.reachable);
+    expect(off.reachable.some((href) => href.startsWith('/account/problem-reports'))).toBe(false);
+    expect(on.reachable).toContain('/account/problem-reports/new?from=%2Faccount');
+    // The customer avatar menu is not changed by it: five items, with the same labels.
+    expect(on.avatar).toHaveLength(5);
+    expect(on.avatar).toEqual(off.avatar);
+    expect(on.help.flatMap((group) => group.items).filter((i) => i.kind === 'soon')).toHaveLength(
+      1,
+    );
+    expect(off.help.flatMap((group) => group.items).filter((i) => i.kind === 'soon')).toHaveLength(
+      2,
+    );
   });
 
   it('the reachable set lists in-site pages only, never the external WhatsApp address', () => {

@@ -186,7 +186,7 @@ let probe: { installed: boolean; at: number } | undefined;
 export function resetProblemReportProbe() {
   probe = undefined;
 }
-async function installed(db: DatabaseClient) {
+async function installed(db: Pick<DatabaseClient, 'query'>) {
   const now = Date.now();
   if (probe && (probe.installed || now - probe.at < reprobeAfterMs)) return probe.installed;
   const row = (
@@ -219,7 +219,7 @@ let removalProbe: { available: boolean; at: number } | undefined;
 export function resetSelfRemovalProbe() {
   removalProbe = undefined;
 }
-export async function selfRemovalAvailable(db: DatabaseClient) {
+export async function selfRemovalAvailable(db: Pick<DatabaseClient, 'query'>) {
   const now = Date.now();
   if (removalProbe && (removalProbe.available || now - removalProbe.at < reprobeAfterMs))
     return removalProbe.available;
@@ -235,6 +235,16 @@ export async function selfRemovalAvailable(db: DatabaseClient) {
   ).rows[0];
   removalProbe = { available: row?.available === true, at: now };
   return removalProbe.available;
+}
+// Whether the screens may offer Report a Problem at all: the module and the customer's own removal are both installed.
+// Both checks are cached as above, so this costs one catalogue read a minute while the module is missing and none once it
+// is there. Any failure to read the catalogue means not offered, so a menu says Coming soon rather than link to a 503.
+export async function problemReportsOffered(db: Pick<DatabaseClient, 'query'>) {
+  try {
+    return (await installed(db)) && (await selfRemovalAvailable(db));
+  } catch {
+    return false;
+  }
 }
 // A reference the database could not hold is answered like an unknown one, without asking it.
 function readReference(value: unknown) {
