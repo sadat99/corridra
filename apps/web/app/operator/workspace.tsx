@@ -35,7 +35,6 @@ import { AuthenticatorCheck } from './authenticator-check';
 import { SourcesPanel } from './sources-panel';
 import { EvidencePanel } from './evidence-panel';
 import { publishTeamContext } from '../../lib/ux/team-context';
-import { readServerTeamFlags, readTeamFlags, subscribeTeamFlags } from '../../lib/ux/team-flags';
 import type { MoreKind, OperatorRecordRow, OperatorSnapshot } from './workspace-types';
 type RecordRow = OperatorRecordRow;
 type Snapshot = OperatorSnapshot;
@@ -47,6 +46,7 @@ export function Workspace({
   moveRecords = false,
   initialSection = '',
   shellsV2 = false,
+  problemReports = false,
 }: {
   tenants: Tenant[];
   initialTenant: string;
@@ -59,6 +59,11 @@ export function Workspace({
    * and only the section in view is rendered. Off, every panel stays mounted as before.
    */
   shellsV2?: boolean;
+  /**
+   * Whether Report a Problem is offered, as the server decided it (both probes hold). Fail closed: missing means not
+   * offered, and then nothing is added to Settings and its address is an unknown fragment.
+   */
+  problemReports?: boolean;
 }) {
   const router = useRouter();
   const [tenant, setTenant] = useState(initialTenant);
@@ -80,6 +85,7 @@ export function Workspace({
       moveRecords={moveRecords}
       initialSection={initialSection}
       shellsV2={shellsV2}
+      problemReports={problemReports}
     />
   );
 }
@@ -91,6 +97,7 @@ function TenantWorkspace({
   moveRecords,
   initialSection,
   shellsV2,
+  problemReports,
 }: {
   tenants: Tenant[];
   tenant: string;
@@ -99,6 +106,7 @@ function TenantWorkspace({
   moveRecords: boolean;
   initialSection: string;
   shellsV2: boolean;
+  problemReports: boolean;
 }) {
   const edited = useRef(false);
   const memberCommand = useRef<{ key: string; id: string } | null>(null);
@@ -106,12 +114,6 @@ function TenantWorkspace({
     subscribeToHash,
     () => window.location.hash,
     () => '',
-  );
-  // Whether Report a Problem is offered, as the team frame published it. Fail closed: until it is known, the queue is absent.
-  const { problemReports } = useSyncExternalStore(
-    subscribeTeamFlags,
-    readTeamFlags,
-    readServerTeamFlags,
   );
   const [data, setData] = useState<Snapshot | null>(null),
     [message, setMessage] = useState(''),
@@ -718,7 +720,12 @@ function TenantWorkspace({
           {shown('workspace-settings') && ['owner', 'admin'].includes(data.role) && (
             <div className="ux-panel" hidden={view !== 'workspace-settings'}>
               <ReviewSettings key={`settings-${tenant}`} tenant={tenant} role={data.role} />
-              <ErasureQueue key={`erasure-${tenant}`} tenant={tenant} role={data.role} />
+              <ErasureQueue
+                key={`erasure-${tenant}`}
+                tenant={tenant}
+                role={data.role}
+                problemReports={problemReports}
+              />
               {problemReports ? (
                 <ProblemReportQueue
                   key={`problem-reports-${tenant}`}

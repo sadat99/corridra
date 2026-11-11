@@ -80,6 +80,23 @@ describe('the panel before anything is loaded', () => {
     expect(html).not.toMatch(/waiting|Showing|Oldest|ux-segment-count|<li/);
     expect(html.replace(/<[^>]*>/g, ' ')).not.toMatch(/\d/);
   });
+  test.each(roles)(
+    '%s: the removal under an erasure request needs the owner, the offered flag and an in-progress or completed request',
+    async (role) => {
+      const { removalOnRequest } = await load('lib/problem-report-queue.ts');
+      const statuses = ['received', 'in_progress', 'completed', 'declined'];
+      for (const status of statuses) {
+        const expected = role === 'owner' && (status === 'in_progress' || status === 'completed');
+        expect(removalOnRequest(role, true, status), `${role} ${status} offered`).toBe(expected);
+        expect(removalOnRequest(role, false, status), `${role} ${status} not offered`).toBe(false);
+      }
+    },
+  );
+  test('the erasure queue takes the offered flag as a prop and, when it is missing, adds no button', () => {
+    const text = source('app/operator/erasure-queue.tsx');
+    expect(text).toMatch(/problemReports\?: boolean/);
+    expect(text).toContain('function Queue({ tenant, role, problemReports = false }: Props)');
+  });
   test('the erasure queue draws no removal before a read, for any role', async () => {
     const { ErasureQueue } = await load('app/operator/erasure-queue.tsx');
     for (const role of [...roles, undefined]) {
@@ -416,8 +433,7 @@ describe('the removed count exists only after the answer', () => {
   });
   test('the erasure queue holds the control for the owner only, with a confirmation and no count of its own', () => {
     const text = source('app/operator/erasure-queue.tsx');
-    expect(text).toContain('canRemoveWords(role)');
-    expect(text).toMatch(/i\.status === 'in_progress' \|\| i\.status === 'completed'/);
+    expect(text).toContain('removalOnRequest(role, problemReports, i.status)');
     expect(text).toContain('wordsRemovedMessage(done.removed)');
     // The count is not read, summed or guessed anywhere else on the page.
     expect(text.match(/removed/g)?.length ?? 0).toBeLessThanOrEqual(4);
@@ -453,13 +469,19 @@ describe('where the panel sits and how it is reached', () => {
   });
   test('with Report a Problem not offered nothing is added: the panel is not mounted and its address is an unknown fragment', () => {
     const text = source('app/operator/workspace.tsx');
-    // The flag is the one the team frame publishes from the server probe; until it is known it is false (fail closed).
-    expect(text).toMatch(
-      /const \{ problemReports \} = useSyncExternalStore\(\s+subscribeTeamFlags,/,
-    );
+    // The flag is a prop the server decides, so it holds with the team shell off too; missing, it is false (fail closed).
+    expect(text).toContain('problemReports = false,');
+    expect(text).not.toMatch(/subscribeTeamFlags|readTeamFlags/);
+    expect(text).toMatch(/<ErasureQueue[^>]*problemReports=\{problemReports\}/s);
     expect(text).toMatch(/\{problemReports \? \(\s+<ProblemReportQueue/);
     // Not offered, the address fails the same section check as any unknown fragment and lands on the navigation.
     expect(text).toMatch(/const unavailableSection =\s+!!fragment && fragment !== 'main'/);
+    // The server entry reads the probe once, for the workspace itself, whether or not the team frame is there.
+    const entry = source('app/operator/operator-entry.tsx');
+    expect(entry).toContain(
+      "import { problemReportsOffered } from '../../lib/problem-reports-offered';",
+    );
+    expect(entry).toMatch(/<Workspace[^>]*problemReports=\{await problemReportsOffered\(\)\}/s);
     const flags = source('lib/ux/team-flags.ts');
     expect(flags).toMatch(/empty: TeamFlags = \{ urls: false, problemReports: false \}/);
     expect(flags).toContain('readServerTeamFlags = () => empty');
@@ -468,18 +490,28 @@ describe('where the panel sits and how it is reached', () => {
 
 describe('the panel keeps its place while a person works', () => {
   const text = source('app/operator/problem-report-queue.tsx');
+  test('a filter change drops the rows, the total and the cursor only; the counts, the oldest and a kept note stay', () => {
+    const change = text.slice(
+      text.indexOf('onChange={(value) => {'),
+      text.indexOf('<div className="pr-actions">'),
+    );
+    expect(change).toContain('setPage(null)');
+    expect(change).toContain('setItems([])');
+    expect(change).not.toMatch(/setFigures|kept\.current/);
+    // Load More reads the cursor of the page that was read, which is gone until it is read again.
+    expect(text).toContain('void load(page.nextAfter)');
+    expect(text).toMatch(/\{page && !loadFailure \? \(/);
+    expect(text).toMatch(/\{figures && !loadFailure \? \(/);
+  });
   test('a failure line is built once per failure, so typing in the note never moves focus back to the line', () => {
     expect(text).toMatch(/useMemo\(\(\) => failureLine\(loadFailure\), \[loadFailure\]\)/);
     expect(text).toMatch(/useMemo\(\(\) => failureLine\(moveFailure\), \[moveFailure\]\)/);
     // No object made in the render is handed to the line: a new object on each key would refocus it each time.
     expect(text).not.toMatch(/failure=\{\{/);
   });
-  test('choosing another filter forgets the read of the old one, so its summary and Load More go until it is read again', () => {
-    const change = text.slice(text.indexOf('onChange={(value) => {'));
-    expect(change.slice(0, change.indexOf('}}')).includes('setQueue(null)')).toBe(true);
-    // Load More depends on the read being on screen.
-    expect(text).toMatch(/\{queue && !loadFailure \? \(/);
-    expect(text).toMatch(/queue\.nextAfter !== null/);
+  test('Load More and the rows depend on the page being on screen, and the cursor is read from that page only', () => {
+    expect(text).toMatch(/\{page && !loadFailure \? \(/);
+    expect(text).toMatch(/page\.nextAfter !== null/);
   });
 });
 

@@ -29,6 +29,15 @@ const route = '/api/workspace/problem-reports';
 export const canTriage = (role: string | null | undefined) => role === 'owner' || role === 'admin';
 /** Only an owner removes the words under an erasure request (members.manage); the server decides again. */
 export const canRemoveWords = (role: string | null | undefined) => role === 'owner';
+/**
+ * The owner's removal sits on an erasure request that is in progress or completed, and only where Report a Problem is
+ * offered: before it is installed the service answers 503, so no dead control is drawn.
+ */
+export const removalOnRequest = (
+  role: string | null | undefined,
+  offered: boolean,
+  status: string,
+) => offered && canRemoveWords(role) && (status === 'in_progress' || status === 'completed');
 
 export type QueueFilter = 'all' | ProblemReportStatus;
 export const reporterKindLabels: Record<ProblemReporterKind, string> = {
@@ -97,7 +106,10 @@ const wholeDaysSince = (iso: string, now: Date) =>
   Math.max(0, Math.floor((now.getTime() - new Date(iso).getTime()) / 86_400_000));
 
 /** The "Oldest waiting" line: a date and an age, or why there is none. Nothing is guessed. */
-export function oldestWaitingLine(queue: ProblemReportQueue, now: Date = new Date()) {
+export function oldestWaitingLine(
+  queue: Pick<ProblemReportQueue, 'counts' | 'oldestReceivedAt'>,
+  now: Date = new Date(),
+) {
   if (queue.oldestReceivedAt)
     return queueWords.oldest(queue.oldestReceivedAt, wholeDaysSince(queue.oldestReceivedAt, now));
   return queue.counts.received === 0 ? queueWords.noneWaiting : queueWords.oldestUnknown;

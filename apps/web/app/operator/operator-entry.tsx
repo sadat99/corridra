@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { customerMovesEnabled } from '@corridra/auth/customer-moves';
 import { foundations } from '../../lib/foundations';
 import { ownerCapable, ownerPageEnabled } from '../../lib/owner-access';
+import { problemReportsOffered } from '../../lib/problem-reports-offered';
 import { uxSwitchOn } from '../../lib/ux-switches';
 import { operatorSignInPath } from '../../lib/workspace-navigation';
 import { OperatorFlags } from './operator-flags';
@@ -96,6 +97,7 @@ export async function OperatorEntry({
           ownerPage={ownerPage}
           moveRecords={customerMovesEnabled()}
           shellsV2={shellsV2}
+          problemReports={await problemReportsOffered()}
         />
       </OperatorFlags>
     </WorkspaceShell>

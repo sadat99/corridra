@@ -5,8 +5,8 @@ import { displayDate } from '@corridra/domain/locale';
 import { Dialog } from '../../components/ux/dialog';
 import '../../components/problem-reports/problem-reports.css';
 import {
-  canRemoveWords,
   queueFailure,
+  removalOnRequest,
   removalWordsUnderRequest,
   removeWordsUnderRequest,
   wordsRemovedMessage,
@@ -114,11 +114,16 @@ function failureText(status: number) {
   return 'The request could not be completed. Please try again.';
 }
 
-type Props = { tenant: string; role?: string };
+type Props = {
+  tenant: string;
+  role?: string;
+  /** Whether Report a Problem is offered: only then is the owner's word removal drawn. Missing means not offered. */
+  problemReports?: boolean;
+};
 export function ErasureQueue(props: Props) {
   return <Queue key={props.tenant} {...props} />;
 }
-function Queue({ tenant, role }: Props) {
+function Queue({ tenant, role, problemReports = false }: Props) {
   const [queue, setQueue] = useState<Queue | null>(null),
     [filter, setFilter] = useState<Status | ''>(''),
     [busy, setBusy] = useState(false),
@@ -290,7 +295,7 @@ function Queue({ tenant, role }: Props) {
                   {actionLabel[to]}
                 </button>
               ))}
-              {canRemoveWords(role) && (i.status === 'in_progress' || i.status === 'completed') && (
+              {removalOnRequest(role, problemReports, i.status) && (
                 <button
                   className="text-link"
                   type="button"

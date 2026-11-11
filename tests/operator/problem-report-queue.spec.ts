@@ -63,12 +63,18 @@ async function open(
     }),
     erasure = [],
     offered = true,
+    shells = true,
+    hash = 'problem-report-queue',
   }: {
     queue?: () => unknown;
     answer?: (sent: Sent, count: number) => Answer;
     erasure?: unknown[];
-    /** Whether Report a Problem is offered to this workspace (the team frame's flag). */
+    /** Whether Report a Problem is offered to this workspace (the server's answer, given to the workspace). */
     offered?: boolean;
+    /** The team shell switch: off, the workspace is mounted without the team frame. */
+    shells?: boolean;
+    /** The address the page opens on. */
+    hash?: string;
   } = {},
 ) {
   const sent: Sent[] = [];
@@ -106,7 +112,7 @@ async function open(
     return route.fulfill({ status, json });
   });
   await page.goto(
-    `${origin}/?workspace=${tenant}&reports=${offered ? 'on' : 'off'}#problem-report-queue`,
+    `${origin}/?workspace=${tenant}&reports=${offered ? 'on' : 'off'}${shells ? '' : '&shells=off'}#${hash}`,
   );
   if (offered)
     await expect(page.getByRole('heading', { name: 'Problem reports', level: 2 })).toBeVisible();
@@ -298,6 +304,40 @@ test('with Report a Problem not offered the panel is absent and its address is a
   await expect(page.getByRole('button', { name: 'Load Problem Reports' })).toHaveCount(0);
 });
 
+test('a workspace mounted without the team frame (shells off) shows the panel when offered and nothing when not', async ({
+  page,
+}) => {
+  await open(page, { shells: false });
+  // The team frame is not there: the page is the plain operator workspace, as with the switch off.
+  await expect(page.getByText('OPERATOR WORKSPACE')).toBeVisible();
+  await expect(page.getByText('TEAM WORKSPACE')).toHaveCount(0);
+  await expect(panel(page)).toHaveJSProperty('open', true);
+  await loadQueue(page);
+  await expect(panel(page).locator(':scope > summary')).toContainText('1 of 2 waiting');
+});
+
+test('with Report a Problem not offered and the shells off the panel is absent and its address is an unknown fragment', async ({
+  page,
+}) => {
+  await open(page, { offered: false, shells: false });
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'This section is unavailable' }),
+  ).toBeVisible();
+  await expect(panel(page)).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Load Problem Reports' })).toHaveCount(0);
+});
+
+test('with Report a Problem not offered the owner is shown no Remove Words button on erasure requests', async ({
+  page,
+}) => {
+  await open(page, { offered: false, erasure: erasureRows, hash: 'workspace-settings' });
+  await loadErasure(page);
+  await expect(page.getByRole('button', { name: /Remove Words Under This Request/ })).toHaveCount(
+    0,
+  );
+  await expect(page.getByRole('button', { name: 'Start Work ERA-2026-0072' })).toBeVisible();
+});
+
 test('choosing another filter takes away the old summary and Load More until that filter is loaded', async ({
   page,
 }) => {
@@ -323,6 +363,70 @@ test('choosing another filter takes away the old summary and Load More until tha
   await expect(
     panel(page).getByRole('button', { name: 'Load More Problem Reports' }),
   ).toBeVisible();
+});
+
+test('choosing another filter keeps the counts and the oldest waiting, which do not depend on the filter', async ({
+  page,
+}) => {
+  await open(page, {
+    queue: () => ({ ...queueOf([row(1, 'received'), row(2, 'in_review')]), nextAfter: 2 }),
+  });
+  await loadQueue(page);
+  await panel(page)
+    .locator('.ux-segment')
+    .filter({ hasText: /^Resolved/ })
+    .click();
+  await expect(
+    panel(page).getByText('Choose Load Problem Reports to show this selection.'),
+  ).toBeVisible();
+  await expect(panel(page).getByText(/^Showing /)).toHaveCount(0);
+  await expect(panel(page).getByRole('button', { name: 'Load More Problem Reports' })).toHaveCount(
+    0,
+  );
+  await expect(panel(page).locator(':scope > summary')).toContainText('1 of 2 waiting');
+  await expect(
+    panel(page).getByText(/^Oldest waiting: filed .* \(UTC\), 1 day ago\.$/),
+  ).toBeVisible();
+  for (const label of ['All 2', 'Received 1', 'In review 1', 'Resolved 0', 'Closed 0'])
+    await expect(panel(page).locator('.ux-segment').filter({ hasText: label })).toHaveCount(1);
+});
+
+test('a note kept for a report that left the list is offered again after the filter is changed', async ({
+  page,
+}) => {
+  let listed = [row(1, 'received'), row(2, 'in_review')];
+  await open(page, {
+    queue: () => queueOf(listed),
+    answer: () => ({
+      status: 409,
+      json: { error: 'This problem report has changed. Reload and try again' },
+    }),
+  });
+  await loadQueue(page);
+  await rowOf(page, 'RP-000002').getByRole('button', { name: 'Mark Closed RP-000002' }).click();
+  const form = panel(page).getByRole('form', { name: 'Mark Closed RP-000002' });
+  await form.getByLabel('Note to the reporter').fill('Closed: a duplicate of an older report.');
+  await form.getByRole('button', { name: 'Save' }).click();
+  listed = [row(1, 'received')];
+  await form.getByRole('button', { name: 'Reload' }).click();
+  await expect(
+    panel(page).getByText(
+      'This problem report is no longer in this list. Your note is kept if you open it again.',
+    ),
+  ).toBeVisible();
+  // The report is back in the list under another filter; the sentence above stays true.
+  listed = [row(1, 'received'), row(2, 'in_review')];
+  await panel(page)
+    .locator('.ux-segment')
+    .filter({ hasText: /^In review/ })
+    .click();
+  await loadQueue(page);
+  await rowOf(page, 'RP-000002').getByRole('button', { name: 'Mark Closed RP-000002' }).click();
+  await expect(
+    panel(page)
+      .getByRole('form', { name: 'Mark Closed RP-000002' })
+      .getByLabel('Note to the reporter'),
+  ).toHaveValue('Closed: a duplicate of an older report.');
 });
 
 test('typing in the note after a failure keeps the focus in the note', async ({ page }) => {

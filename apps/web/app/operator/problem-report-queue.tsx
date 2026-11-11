@@ -40,6 +40,8 @@ type Pending = {
   commandId: string;
 };
 type Message = { tone: 'status' | 'alert'; text: string };
+type Figures = Pick<Queue, 'counts' | 'oldestReceivedAt'>;
+type Page = Pick<Queue, 'total' | 'nextAfter'>;
 
 function failureLine(failure: QueueFailure | null): FailureLine | null {
   return failure ? { message: failure.message, link: failure.signIn ? 'sign_in' : null } : null;
@@ -52,7 +54,10 @@ export function ProblemReportQueue({ tenant, role }: { tenant: string; role: str
 
 function QueuePanel({ tenant }: { tenant: string }) {
   const [filter, setFilter] = useState<QueueFilter>('all');
-  const [queue, setQueue] = useState<Queue | null>(null);
+  // What the last read said about the whole workspace: it does not depend on the filter, so it stays when the filter changes.
+  const [figures, setFigures] = useState<Figures | null>(null);
+  // What belongs to the filter that was read: the total of that filter and where its next page starts.
+  const [page, setPage] = useState<Page | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<Message | null>(null);
@@ -115,7 +120,8 @@ function QueuePanel({ tenant }: { tenant: string }) {
     try {
       const fresh = await readQueue(tenant, filter, after);
       if (token !== run.current) return;
-      setQueue(fresh);
+      setFigures({ counts: fresh.counts, oldestReceivedAt: fresh.oldestReceivedAt });
+      setPage({ total: fresh.total, nextAfter: fresh.nextAfter });
       const next = after === null ? fresh.items : [...items, ...fresh.items];
       setItems(next);
       if (after === null) {
@@ -137,7 +143,8 @@ function QueuePanel({ tenant }: { tenant: string }) {
       const failure = queueFailure(error, 'load');
       if (moved) {
         // The list on screen would still show the old status, so it is cleared.
-        setQueue(null);
+        setFigures(null);
+        setPage(null);
         setItems([]);
         setPending(null);
         setMessage({
@@ -193,7 +200,7 @@ function QueuePanel({ tenant }: { tenant: string }) {
     }
   }
 
-  const counts = queue?.counts;
+  const counts = figures?.counts;
   const options: SegmentOption<QueueFilter>[] = [
     { value: 'all', label: queueWords.filterAll, count: counts ? queueTotal(counts) : undefined },
     ...problemReportStatuses.map((status) => ({
@@ -220,11 +227,11 @@ function QueuePanel({ tenant }: { tenant: string }) {
           onChange={(value) => {
             run.current += 1;
             setFilter(value);
-            // The summary and Load More Problem Reports belong to the filter that was read, so they go until it is read again.
-            setQueue(null);
+            // The rows, their total and Load More Problem Reports belong to the filter that was read, so they go until it is
+            // read again. The counts and the oldest waiting do not, and a kept note is for its report, so they stay.
+            setPage(null);
             setItems([]);
             setPending(null);
-            kept.current = null;
             setBusy(false);
             setLoadFailure(null);
             setMessage({ tone: 'status', text: queueWords.chooseLoad });
@@ -244,12 +251,14 @@ function QueuePanel({ tenant }: { tenant: string }) {
         {message ? (
           <p role={message.tone === 'alert' ? 'alert' : 'status'}>{message.text}</p>
         ) : null}
-        {queue && !loadFailure ? (
+        {figures && !loadFailure ? (
+          <p className="pr-queue-summary">
+            {page ? <span>{queueWords.summary(items.length, page.total)}</span> : null}
+            <span>{oldestWaitingLine(figures)}</span>
+          </p>
+        ) : null}
+        {page && !loadFailure ? (
           <>
-            <p className="pr-queue-summary">
-              <span>{queueWords.summary(items.length, queue.total)}</span>
-              <span>{oldestWaitingLine(queue)}</span>
-            </p>
             <ul className="pr-queue-rows">
               {items.map((item) => (
                 <li key={item.id} className="pr-queue-row">
@@ -375,13 +384,13 @@ function QueuePanel({ tenant }: { tenant: string }) {
                 </li>
               ))}
             </ul>
-            {queue.nextAfter !== null ? (
+            {page.nextAfter !== null ? (
               <div className="pr-actions">
                 <button
                   className="text-link"
                   type="button"
                   disabled={busy}
-                  onClick={() => void load(queue.nextAfter)}
+                  onClick={() => void load(page.nextAfter)}
                 >
                   {queueWords.loadMore}
                 </button>
