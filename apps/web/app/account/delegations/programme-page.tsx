@@ -667,7 +667,7 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
               Share on Facebook
             </a>
           </div>
-          <p role="status" className="programme-note">
+          <p role="status" className={copied ? 'programme-note' : 'sr-only'}>
             {copied}
           </p>
         </>

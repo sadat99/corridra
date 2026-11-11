@@ -2,8 +2,30 @@
    one primary action. Tokens only. */
 .programme-public {
   display: grid;
+  grid-template-columns: minmax(0, 44rem);
   gap: var(--space-6);
-  max-width: 44rem;
+}
+/* Wide screens: the reading column on the left, the one action beside it and always in view. */
+@media (min-width: 40rem) {
+  .programme-public .programme-public-facts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 64rem) {
+  .programme-public:has(> .programme-public-apply) {
+    grid-template-columns: minmax(0, 44rem) minmax(18rem, 22rem);
+    column-gap: var(--space-12);
+  }
+  .programme-public > * {
+    grid-column: 1;
+  }
+  .programme-public > .programme-public-apply {
+    grid-column: 2;
+    grid-row: 1 / span 5;
+    align-self: start;
+    position: sticky;
+    top: var(--space-6);
+  }
 }
 .programme-public section {
   display: grid;
@@ -21,8 +43,9 @@
   margin: 0;
   max-width: 62ch;
 }
-.programme-public-lead {
+.programme-public .programme-public-lead {
   font-size: var(--text-lg);
+  line-height: 1.5;
 }
 .programme-public-note {
   font-size: var(--text-sm);
@@ -30,7 +53,7 @@
 }
 .programme-public-facts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
   gap: 0 var(--space-6);
   margin: 0;
   border-top: 1px solid var(--border-subtle);
@@ -78,10 +101,13 @@
 }
 .programme-public-pair ul {
   margin: var(--space-2) 0 0;
-  padding-inline-start: var(--space-6);
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--border-subtle);
 }
 .programme-public-pair li {
-  margin-top: var(--space-1);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-subtle);
 }
 /* A status word. A capsule is allowed for status only (AC/1 geometry). */
 .programme-public-state {
@@ -110,8 +136,18 @@
   width: 100%;
   max-width: 40rem;
 }
+/* An address is read character by character: mono, and no automatic swap of x for a multiplication sign. */
 .programme-page-address {
   overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-feature-settings: 'calt' 0;
+}
+.programme-page-editor progress {
+  width: 100%;
+  max-width: 20rem;
+  height: var(--space-2);
+  accent-color: var(--action);
 }
 .programme-page-confirm {
   display: grid;

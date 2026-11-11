@@ -37,7 +37,7 @@ export function ShareRow({ url, title }: { url: string; title: string }) {
           Share on Facebook
         </a>
       </div>
-      <p role="status" className="programme-public-note">
+      <p role="status" className={copied === 'idle' ? 'sr-only' : 'programme-public-note'}>
         {copied === 'done' ? 'Link copied.' : copied === 'failed' ? `Copy this link: ${url}` : ''}
       </p>
     </section>
