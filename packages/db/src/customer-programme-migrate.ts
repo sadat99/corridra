@@ -1,10 +1,15 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerAuthority } from './customer-migrate';
 // A separately opted-in programme creation module. The accepted three-module request
 // authority installer and its existing callers keep their original lifecycle.
-export async function migrateCustomerProgrammes(pool: DatabasePool) {
+export function migrateCustomerProgrammes(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerProgrammes', () => migrateCustomerProgrammesRun(pool));
+}
+
+async function migrateCustomerProgrammesRun(pool: DatabasePool) {
   await migrateCustomerAuthority(pool);
   const name = '0001_customer_programme_creation.sql';
   const sql = await readFile(

@@ -1,13 +1,20 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerProgrammeEconomics } from './customer-programme-economics-migrate';
 import { migrateCustomerProgrammeCoordination } from './customer-programme-coordination-migrate';
 import { migrateCustomerMemberRoles } from './customer-member-role-migrate';
 // Explicit optional programme terms, eligibility and places authority. It reads the economics ledger (fees),
 // the coordination task board and capacity, the organisation profile and the member roles, so those are
 // installed first. Accepted base lifecycles are unchanged.
-export async function migrateCustomerProgrammeTerms(pool: DatabasePool) {
+export function migrateCustomerProgrammeTerms(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerProgrammeTerms', () =>
+    migrateCustomerProgrammeTermsRun(pool),
+  );
+}
+
+async function migrateCustomerProgrammeTermsRun(pool: DatabasePool) {
   await migrateCustomerProgrammeEconomics(pool);
   await migrateCustomerProgrammeCoordination(pool);
   await migrateCustomerMemberRoles(pool);

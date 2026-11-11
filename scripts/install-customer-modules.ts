@@ -72,6 +72,7 @@ import {
   assertNoneBehind,
   refreshInstalledOptionalModules,
 } from '../packages/db/src/customer-optional-refresh';
+import { endMigrationRun, startMigrationRun } from '../packages/db/src/migration-run';
 import { z } from 'zod';
 
 // Owner-run release job only. It installs the optional customer modules, in dependency order, into the
@@ -395,6 +396,10 @@ async function report(label: string) {
 try {
   await report(apply ? 'Before install' : 'Read-only report (nothing written)');
   if (apply) {
+    // Each migrator runs at most once in this run, instead of once per module that depends on it (KI-51). Ended in the
+    // finally below. migrateCustomerWorkspaceLifecycle and refreshCustomerWorkspaceLifecycle are deliberately not covered:
+    // they are re-run on purpose, after the programme lifecycle is installed.
+    startMigrationRun(pool);
     // Only for an explicit mail install: the real-use schema first (the mail installers include it anyway), then the
     // withdrawal tables, so mission mail 0003 and notifications 0005 find them. Never run by a base run.
     const installWithdrawalFirst = async () => {
@@ -691,5 +696,6 @@ try {
     console.log('Dry run only. Set INSTALL_APPLY=yes to install.');
   }
 } finally {
+  endMigrationRun(pool);
   await pool.end();
 }

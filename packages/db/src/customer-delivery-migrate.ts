@@ -1,10 +1,15 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerSavedMissions } from './customer-commercial-migrate';
 // A separately opted-in reviewed account delivery module. The accepted three-module request
 // authority installer and its existing callers keep their original lifecycle.
-export async function migrateCustomerDelivery(pool: DatabasePool) {
+export function migrateCustomerDelivery(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerDelivery', () => migrateCustomerDeliveryRun(pool));
+}
+
+async function migrateCustomerDeliveryRun(pool: DatabasePool) {
   await migrateCustomerSavedMissions(pool);
   const name = '0001_reviewed_customer_mission_delivery.sql';
   const sql = await readFile(

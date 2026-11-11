@@ -1,12 +1,19 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 
 // Explicit optional installation of request withdrawal, run only as the first step of an explicit mission mail or
 // notifications install. It changes nothing anyone can see: the control it creates starts closed. It never applies
 // the real-use schema itself: when that schema is not current it stops with a plain message and writes nothing.
 // No runtime request receives this owner connection.
-export async function migrateCustomerRequestWithdrawal(pool: DatabasePool) {
+export function migrateCustomerRequestWithdrawal(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerRequestWithdrawal', () =>
+    migrateCustomerRequestWithdrawalRun(pool),
+  );
+}
+
+async function migrateCustomerRequestWithdrawalRun(pool: DatabasePool) {
   const directory = new URL('../customer-request-withdrawal-migrations/', import.meta.url);
   const sources = new Map<string, { sql: string; hash: string }>();
   for (const name of (await readdir(directory)).filter((name) => name.endsWith('.sql')).sort()) {

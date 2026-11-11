@@ -1,10 +1,17 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerRealUse } from './customer-real-use-migrate';
 
 // Optional extension of versioned service quotes. This installer never enables application exposure.
-export async function migrateCustomerCommercialArrangements(pool: DatabasePool) {
+export function migrateCustomerCommercialArrangements(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerCommercialArrangements', () =>
+    migrateCustomerCommercialArrangementsRun(pool),
+  );
+}
+
+async function migrateCustomerCommercialArrangementsRun(pool: DatabasePool) {
   await migrateCustomerRealUse(pool);
   const directory = new URL('../customer-commercial-arrangement-migrations/', import.meta.url);
   const sources = new Map<string, { sql: string; hash: string }>();

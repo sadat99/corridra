@@ -1,9 +1,16 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerParticipants } from './customer-participant-migrate';
 // Explicit optional programme-context authority; accepted base lifecycles unchanged.
-export async function migrateCustomerProgrammeContext(pool: DatabasePool) {
+export function migrateCustomerProgrammeContext(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerProgrammeContext', () =>
+    migrateCustomerProgrammeContextRun(pool),
+  );
+}
+
+async function migrateCustomerProgrammeContextRun(pool: DatabasePool) {
   await migrateCustomerParticipants(pool);
   const name = '0001_canonical_programme_context.sql';
   const sql = await readFile(

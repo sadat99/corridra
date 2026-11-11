@@ -1,10 +1,17 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerAuthority } from './customer-migrate';
 // A separately opted-in saved invitation module. The accepted three-module request
 // authority installer and its existing callers keep their original lifecycle.
-export async function migrateCustomerSavedMissions(pool: DatabasePool) {
+export function migrateCustomerSavedMissions(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerSavedMissions', () =>
+    migrateCustomerSavedMissionsRun(pool),
+  );
+}
+
+async function migrateCustomerSavedMissionsRun(pool: DatabasePool) {
   await migrateCustomerAuthority(pool);
   const name = '0001_saved_mission_invitations.sql';
   const sql = await readFile(
