@@ -78,7 +78,13 @@ describe('the public programme page', () => {
       expect(words).toContain(value);
     expect(html.match(/class="primary-link"/g)).toHaveLength(1);
     expect(html).toContain(`href="/account/delegations?apply=${address}"`);
-    expect(words).toContain('Applications close on 1 Feb 2027 (UTC)');
+    // The facts a person weighs before applying sit with the action, and what follows it is said in three lines.
+    expect(words).toMatch(/Applications close\s+1 Feb 2027 \(UTC\)/);
+    expect(words).toContain('What happens next');
+    expect(words).toContain(
+      'If you are invited, you join and read the terms and the fee before you accept them.',
+    );
+    expect(words).toContain('1 confirmed, 1 planned');
     expect(words).toContain('Applying is not a booking and no fee is taken on this page.');
     expect(words).toContain(
       'Corridra is not the travel operator and has not checked these details.',
@@ -94,6 +100,8 @@ describe('the public programme page', () => {
     const { ProgrammePageView } = await load();
     const html = render(ce(ProgrammePageView, { page: page({ state: 'CLOSED' }) }));
     expect(text(html)).toContain('Applications are closed');
+    expect(text(html)).toMatch(/Applications closed\s+1 Feb 2027 \(UTC\)/);
+    expect(text(html)).not.toContain('What happens next');
     expect(html).not.toContain('primary-link');
     expect(html).not.toContain('/account/delegations?apply=');
   });

@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { pp } from '../lib/i18n/programme-pages';
 import { type ApplyIntent, clearApplyIntent, readApplyIntent } from '../lib/programme-apply-intent';
 
 /**
@@ -18,13 +19,13 @@ export function ProgrammeApplyNotice() {
   if (!intent) return null;
   return (
     <div className="ux-draft-notice" data-programme-apply-notice>
-      <span>You chose to apply to {intent.title}. Your application has not been sent yet. </span>
+      <span>{pp('pp.notice.text', { title: intent.title })} </span>
       <Link
         className="text-link"
         prefetch={false}
         href={`/account/delegations?apply=${intent.address}`}
       >
-        Continue Your Application
+        {pp('pp.notice.continue')}
       </Link>{' '}
       <button
         type="button"
@@ -34,7 +35,7 @@ export function ProgrammeApplyNotice() {
           setIntent(null);
         }}
       >
-        Not Now
+        {pp('pp.notice.dismiss')}
       </button>
     </div>
   );

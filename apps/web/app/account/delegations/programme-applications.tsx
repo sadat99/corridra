@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { clearApplyIntent } from '../../../lib/programme-apply-intent';
 import '../../delegations/[address]/programme-page.css';
+import { pp } from '../../../lib/i18n/programme-pages';
 import { customerHeaders, useCommandIds } from './pricing-client';
 import {
   type Application,
@@ -106,15 +107,13 @@ function Scoped({ subject, issuer, target, asked }: Props) {
     const label = name.trim();
     const words = statement.trim();
     if ([...label].length < (sample ? 11 : 2) || [...label].length > 120)
-      return setError('Write your company name or your own name (up to 120 characters).');
+      return setError(pp('pp.apply.problem.name'));
     if ([...words].length < 10 || [...words].length > 1000)
-      return setError('Say what you want from this programme (10 to 1000 characters).');
+      return setError(pp('pp.apply.problem.statement'));
     if (sample && (!label.startsWith('Synthetic ') || !words.startsWith('Synthetic ')))
-      return setError(
-        'This is a sample programme. Start the name and the statement with "Synthetic " and use no real details.',
-      );
-    if (/[\r\n]/.test(words)) return setError('Write the statement as one paragraph.');
-    if (!consent) return setError('Tick the box to send your application to the organiser.');
+      return setError(pp('pp.apply.problem.sample'));
+    if (/[\r\n]/.test(words)) return setError(pp('pp.apply.problem.paragraph'));
+    if (!consent) return setError(pp('pp.apply.problem.consent'));
     writing.current = true;
     setBusy(true);
     setError('');
@@ -141,20 +140,14 @@ function Scoped({ subject, issuer, target, asked }: Props) {
     setName('');
     setStatement('');
     setConsent(false);
-    setNotice(
-      'Your application was sent to the organiser. Their answer will appear here. Nothing is booked or charged yet.',
-    );
+    setNotice(pp('pp.apply.sent'));
     await read();
   }
   async function act(item: Application, action: 'withdraw' | 'join') {
     if (writing.current) return;
     if (action === 'join' && !joinConsent)
-      return setRowError({ id: item.id, message: 'Tick the box to join the programme.' });
-    if (
-      action === 'withdraw' &&
-      !window.confirm('Withdraw this application? The organiser will see it as withdrawn.')
-    )
-      return;
+      return setRowError({ id: item.id, message: pp('pp.apply.joinNeeded') });
+    if (action === 'withdraw' && !window.confirm(pp('pp.apply.withdrawConfirm'))) return;
     writing.current = true;
     setBusy(true);
     setRowError(null);
@@ -182,13 +175,8 @@ function Scoped({ subject, issuer, target, asked }: Props) {
   if (load === 'unavailable') return null;
   return (
     <section className="detail-card programme-applications" aria-labelledby="applications-title">
-      <h2 id="applications-title">Your applications</h2>
-      {asked && !target && (
-        <p role="status">
-          That programme page is not available. It may have been taken down or its address may be
-          wrong. Ask the organiser for the current link.
-        </p>
-      )}
+      <h2 id="applications-title">{pp('pp.apply.heading')}</h2>
+      {asked && !target && <p role="status">{pp('pp.apply.gone')}</p>}
       {target && !live && (
         <form
           className="programme-apply-form"
@@ -198,12 +186,14 @@ function Scoped({ subject, issuer, target, asked }: Props) {
             void send();
           }}
         >
-          <h3>Apply to {target.title}</h3>
-          <p className="programme-note">Organised by {target.organiser}.</p>
+          <h3>{pp('pp.apply.to', { title: target.title })}</h3>
+          <p className="programme-note">
+            {pp('pp.apply.organisedBy', { organiser: target.organiser })}
+          </p>
           {target.open ? (
             <>
               <label className="field">
-                <span>Your company name, or your own name</span>
+                <span>{pp('pp.apply.name.label')}</span>
                 <input
                   name="application-name"
                   maxLength={120}
@@ -211,10 +201,10 @@ function Scoped({ subject, issuer, target, asked }: Props) {
                   onChange={(event) => setName(event.target.value)}
                   autoComplete="organization"
                 />
-                <small>The organiser sees this name.</small>
+                <small>{pp('pp.apply.name.hint')}</small>
               </label>
               <label className="field">
-                <span>What you want from this programme</span>
+                <span>{pp('pp.apply.statement.label')}</span>
                 <textarea
                   name="application-statement"
                   rows={4}
@@ -222,9 +212,7 @@ function Scoped({ subject, issuer, target, asked }: Props) {
                   value={statement}
                   onChange={(event) => setStatement(event.target.value)}
                 />
-                <small>
-                  For example what you want to buy or sell and who you want to meet. One paragraph.
-                </small>
+                <small>{pp('pp.apply.statement.hint')}</small>
               </label>
               <label className="programme-page-agree">
                 <input
@@ -232,64 +220,57 @@ function Scoped({ subject, issuer, target, asked }: Props) {
                   checked={consent}
                   onChange={(event) => setConsent(event.target.checked)}
                 />{' '}
-                Send this name and statement to the organiser. They do not see my private requests,
-                contacts or prices. Applying is not a booking.
+                {pp('pp.apply.consent')}
               </label>
               {error && <p role="alert">{error}</p>}
               <button type="submit" className="primary-link" disabled={busy}>
-                {busy ? 'Sending…' : 'Send Application'}
+                {busy ? pp('pp.apply.sending') : pp('pp.apply.send')}
               </button>
             </>
           ) : (
-            <p role="status">This programme is not taking applications right now.</p>
+            <p role="status">{pp('pp.apply.closed')}</p>
           )}
         </form>
       )}
       {notice && <p role="status">{notice}</p>}
-      {load === 'loading' && <p role="status">Loading your applications…</p>}
+      {load === 'loading' && <p role="status">{pp('pp.apply.loading')}</p>}
       {load === 'failed' && (
         <div role="alert">
-          <p>Your applications could not be loaded. Nothing was changed.</p>
+          <p>{pp('pp.apply.failed')}</p>
           <button type="button" className="text-link" onClick={() => void read()}>
-            Try Again
+            {pp('pp.tryAgain')}
           </button>
         </div>
       )}
       {load === 'ready' && rows.length === 0 && !target && (
-        <p className="ux-empty">
-          You have not applied to a programme. An organiser can send you the link to their programme
-          page.
-        </p>
+        <p className="ux-empty">{pp('pp.apply.empty')}</p>
       )}
       {rows.length > 0 && (
         <ul className="programme-application-list">
           {rows.map((item) => (
             <li key={item.id}>
               <p>
-                <strong>{item.title ?? 'Programme'}</strong>{' '}
+                <strong>{item.title ?? pp('pp.apply.row.fallbackTitle')}</strong>{' '}
                 <span className="programme-public-state">{statusWords[item.status]}</span>
               </p>
               <p className="programme-note">
-                Applied {shortDay(item.appliedAt)} as {item.displayLabel}.
-                {item.status === 'SUBMITTED' ? ' The organiser has not answered yet.' : ''}
-                {item.status === 'WAITLISTED'
-                  ? ' The organiser put you on the waiting list. This is not a place.'
-                  : ''}
+                {pp('pp.apply.row.applied', {
+                  date: shortDay(item.appliedAt),
+                  name: item.displayLabel,
+                })}
+                {item.status === 'SUBMITTED' ? pp('pp.apply.row.submitted') : ''}
+                {item.status === 'WAITLISTED' ? pp('pp.apply.row.waitlisted') : ''}
                 {item.status === 'INVITED' && item.invitationExpiresAt
-                  ? ` You are invited. Join by ${shortDay(item.invitationExpiresAt)} (UTC).`
+                  ? pp('pp.apply.row.invited', { date: shortDay(item.invitationExpiresAt) })
                   : ''}
-                {item.status === 'INVITATION_EXPIRED'
-                  ? ' Your invitation expired before you joined. Ask the organiser to invite you again.'
-                  : ''}
-                {item.status === 'JOINED'
-                  ? ' You are registered. See your registration below.'
-                  : ''}
+                {item.status === 'INVITATION_EXPIRED' ? pp('pp.apply.row.expired') : ''}
+                {item.status === 'JOINED' ? pp('pp.apply.row.joined') : ''}
               </p>
-              {item.note && <p>From the organiser: {item.note}</p>}
+              {item.note && <p>{pp('pp.apply.row.note', { note: item.note })}</p>}
               {item.address && (
                 <p>
                   <a className="text-link" href={`/delegations/${item.address}`}>
-                    Open the Programme Page
+                    {pp('pp.apply.row.open')}
                   </a>
                 </p>
               )}
@@ -302,9 +283,7 @@ function Scoped({ subject, issuer, target, asked }: Props) {
                         checked={joinConsent}
                         onChange={(event) => setJoinConsent(event.target.checked)}
                       />{' '}
-                      Register me in this programme under the name {item.displayLabel}. The
-                      organiser&apos;s terms, places and fees come next and are shown before you
-                      accept them.
+                      {pp('pp.apply.joinConsent', { name: item.displayLabel })}
                     </label>
                     <div className="guide-actions-row">
                       <button
@@ -313,10 +292,10 @@ function Scoped({ subject, issuer, target, asked }: Props) {
                         disabled={busy}
                         onClick={() => void act(item, 'join')}
                       >
-                        Confirm and Join
+                        {pp('pp.apply.joinConfirm')}
                       </button>
                       <button type="button" className="text-link" onClick={() => setJoining(null)}>
-                        Cancel
+                        {pp('pp.cancel')}
                       </button>
                     </div>
                   </div>
@@ -331,7 +310,7 @@ function Scoped({ subject, issuer, target, asked }: Props) {
                       setRowError(null);
                     }}
                   >
-                    Join the Programme
+                    {pp('pp.apply.join')}
                   </button>
                 ))}
               {['SUBMITTED', 'WAITLISTED', 'INVITED', 'INVITATION_EXPIRED'].includes(item.status) &&
@@ -342,7 +321,7 @@ function Scoped({ subject, issuer, target, asked }: Props) {
                     disabled={busy}
                     onClick={() => void act(item, 'withdraw')}
                   >
-                    Withdraw Application
+                    {pp('pp.apply.withdraw')}
                   </button>
                 )}
               {rowError?.id === item.id && <p role="alert">{rowError.message}</p>}

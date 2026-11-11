@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { pp } from '../../../lib/i18n/programme-pages';
 import { saveApplyIntent } from '../../../lib/programme-apply-intent';
 
 /** The one action of the public page. It remembers the programme in this browser first, so a visitor who has to
@@ -12,7 +13,7 @@ export function ApplyLink({ address, title }: { address: string; title: string }
       href={`/account/delegations?apply=${address}`}
       onClick={() => saveApplyIntent({ address, title })}
     >
-      Apply for a Place
+      {pp('pp.public.apply.action')}
     </Link>
   );
 }

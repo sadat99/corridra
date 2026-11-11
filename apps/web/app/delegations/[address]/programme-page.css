@@ -1,31 +1,10 @@
-/* The public programme page (ADR-080). Meridian composition: one reading column, facts as a ruled ledger,
-   one primary action. Tokens only. */
+/* The public programme page (ADR-080). Meridian composition: the purpose, then where and when under one copper
+   hairline, then the one action with the facts a person weighs before applying. Detail follows in one reading
+   column. Typography and rules carry the page; there is one raised surface, the action. Tokens only. */
 .programme-public {
   display: grid;
   grid-template-columns: minmax(0, 44rem);
   gap: var(--space-6);
-}
-/* Wide screens: the reading column on the left, the one action beside it and always in view. */
-@media (min-width: 40rem) {
-  .programme-public .programme-public-facts {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-@media (min-width: 64rem) {
-  .programme-public:has(> .programme-public-apply) {
-    grid-template-columns: minmax(0, 44rem) minmax(18rem, 22rem);
-    column-gap: var(--space-12);
-  }
-  .programme-public > * {
-    grid-column: 1;
-  }
-  .programme-public > .programme-public-apply {
-    grid-column: 2;
-    grid-row: 1 / span 5;
-    align-self: start;
-    position: sticky;
-    top: var(--space-6);
-  }
 }
 .programme-public section {
   display: grid;
@@ -33,7 +12,10 @@
 }
 .programme-public h2 {
   margin: 0;
-  font-size: var(--text-xl);
+  font-family: var(--serif);
+  font-size: var(--text-title);
+  font-weight: 500;
+  letter-spacing: -0.01em;
 }
 .programme-public h3 {
   margin: var(--space-2) 0 0;
@@ -47,36 +29,108 @@
   font-size: var(--text-lg);
   line-height: 1.5;
 }
-.programme-public-note {
+.programme-public .programme-public-note {
   font-size: var(--text-sm);
   color: var(--text-muted);
 }
-.programme-public-facts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
-  gap: 0 var(--space-6);
+.programme-public dl {
   margin: 0;
-  border-top: 1px solid var(--border-subtle);
 }
-.programme-public-facts > div {
-  padding: var(--space-3) 0;
-  border-bottom: 1px solid var(--border-subtle);
+.programme-public dt {
+  font: 600 var(--text-xs) var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-2);
 }
-.programme-public-facts dt {
-  font-size: var(--text-sm);
-  color: var(--text-muted);
-}
-.programme-public-facts dd {
+.programme-public dd {
   margin: var(--space-1) 0 0;
-  font-weight: 600;
   overflow-wrap: anywhere;
 }
-.programme-public-apply {
+/* Where and when: the two facts a visitor looks for first, set as a headline pair. Copper is the editorial rule. */
+.programme-public-key {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-4) var(--space-8);
+  padding-top: var(--space-4);
+  border-top: 2px solid var(--editorial-accent);
+}
+.programme-public-key dd {
+  font-family: var(--serif);
+  font-size: var(--text-title);
+  font-weight: 500;
+  line-height: 1.25;
+}
+/* Organiser and focus: a ruled pair. */
+.programme-public-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0 var(--space-8);
+  border-bottom: 1px solid var(--border-subtle);
+}
+/* The rule sits above each fact, so the rules of one row line up whatever the length of the words under them. */
+.programme-public-facts > div {
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.programme-public-facts dd {
+  font-weight: 600;
+}
+/* The one action, with what a person weighs before taking it and what follows it. */
+.programme-public .programme-public-apply {
+  gap: var(--space-4);
   padding: var(--space-6);
   background: var(--surface-raised);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   justify-items: start;
+}
+.programme-public-apply .primary-link {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+.programme-public-terms {
+  width: 100%;
+  border-top: 1px solid var(--border-subtle);
+}
+.programme-public-terms > div {
+  display: grid;
+  grid-template-columns: minmax(6rem, 2fr) 3fr;
+  gap: var(--space-3);
+  align-items: baseline;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.programme-public-terms dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.programme-public-next {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: programme-next;
+  font-size: var(--text-sm);
+}
+.programme-public-next li {
+  display: grid;
+  grid-template-columns: var(--space-6) 1fr;
+  counter-increment: programme-next;
+}
+.programme-public-next li::before {
+  content: counter(programme-next);
+  font: 600 var(--text-xs) / 1.9 var(--font-mono);
+  color: var(--text-2);
+}
+.programme-public-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-4);
 }
 .programme-public-plan {
   display: grid;
@@ -95,9 +149,9 @@
   padding: var(--space-3) 0;
   border-bottom: 1px solid var(--border-subtle);
 }
-.programme-public-pair {
+.programme-public .programme-public-pair {
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  gap: var(--space-4) var(--space-6);
+  gap: var(--space-4) var(--space-8);
 }
 .programme-public-pair ul {
   margin: var(--space-2) 0 0;
@@ -109,16 +163,41 @@
   padding: var(--space-2) 0;
   border-bottom: 1px solid var(--border-subtle);
 }
-/* A status word. A capsule is allowed for status only (AC/1 geometry). */
+/* A status word. A capsule is allowed for status only (AC/1 geometry). Confirmed is set heavier than planned, and
+   the word itself always carries the meaning. */
 .programme-public-state {
   display: inline-block;
   padding: 0 var(--space-2);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  color: var(--ink);
+  color: var(--text-2);
   font-size: var(--text-sm);
   font-weight: 600;
   line-height: 1.6;
+}
+.programme-public-state[data-status='CONFIRMED'] {
+  border-color: var(--border-strong);
+  color: var(--ink);
+}
+/* Wide screens: the reading column on the left, the one action beside it and always in view. */
+@media (min-width: 64rem) {
+  .programme-public {
+    row-gap: var(--space-8);
+  }
+  .programme-public:has(> .programme-public-apply) {
+    grid-template-columns: minmax(0, 44rem) minmax(18rem, 24rem);
+    column-gap: var(--space-16);
+  }
+  .programme-public > * {
+    grid-column: 1;
+  }
+  .programme-public > .programme-public-apply {
+    grid-column: 2;
+    grid-row: 1 / span 7;
+    align-self: start;
+    position: sticky;
+    top: var(--space-6);
+  }
 }
 /* The organiser's editor and the two application lists reuse the page's words and add only spacing. */
 .programme-page-panel,

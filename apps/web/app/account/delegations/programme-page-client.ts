@@ -1,4 +1,5 @@
 'use client';
+import { pp } from '../../../lib/i18n/programme-pages';
 import { object } from './pricing-client';
 
 // Browser helpers for the programme page and applications (ADR-080). Nothing here decides authority: the database
@@ -91,38 +92,30 @@ export function parsePageView(v: unknown): PageView {
   return v as unknown as PageView;
 }
 export const statusWords: Record<ApplicationStatus, string> = {
-  SUBMITTED: 'Waiting for the organiser',
-  WAITLISTED: 'On the waiting list',
-  DECLINED: 'Declined',
-  INVITED: 'Invited',
-  INVITATION_EXPIRED: 'Invitation expired',
-  JOINED: 'Joined',
-  REGISTRATION_ENDED: 'No longer registered',
-  WITHDRAWN: 'Withdrawn',
+  SUBMITTED: pp('pp.status.SUBMITTED'),
+  WAITLISTED: pp('pp.status.WAITLISTED'),
+  DECLINED: pp('pp.status.DECLINED'),
+  INVITED: pp('pp.status.INVITED'),
+  INVITATION_EXPIRED: pp('pp.status.INVITATION_EXPIRED'),
+  JOINED: pp('pp.status.JOINED'),
+  REGISTRATION_ENDED: pp('pp.status.REGISTRATION_ENDED'),
+  WITHDRAWN: pp('pp.status.WITHDRAWN'),
 };
 // The words for each named refusal. A refusal is a state the person can act on, so each says what to do next.
 export const refusalWords: Record<string, string> = {
-  PROGRAMME_PUBLICATION_CHANGED:
-    'This page changed since you opened it. Nothing was saved. Reload to see the latest version.',
-  PROGRAMME_PUBLICATION_PAUSED:
-    'This programme or its workspace is archived. Restore it before publishing, inviting or joining.',
-  PROGRAMME_PUBLICATION_RATE_LIMITED:
-    'This page was published many times in the last hour. Wait a while, then publish again.',
-  PROGRAMME_APPLICATIONS_CLOSED: 'This programme is not taking applications right now.',
-  PROGRAMME_ALREADY_REGISTERED: 'This person is already registered in this programme.',
-  PROGRAMME_APPLICATION_CHANGED:
-    'This application changed since you opened it. Nothing was saved. Reload to see the latest.',
-  PROGRAMME_APPLICATION_WITHDRAWN: 'The applicant withdrew this application.',
-  PROGRAMME_APPLICATION_JOINED:
-    'This applicant has already joined. Manage the registration under Participants.',
-  PROGRAMME_APPLICATION_ALREADY_INVITED: 'This applicant already has an invitation they can use.',
-  PROGRAMME_APPLICATION_NOT_INVITED: 'The organiser has not invited this application yet.',
-  PROGRAMME_INVITATION_EXPIRED:
-    'This invitation has expired. Ask the organiser to invite you again.',
-  PROGRAMME_APPLICATION_LIMIT:
-    'No more applications can be made to this programme from this account.',
-  PROGRAMME_APPLICATION_RATE_LIMITED:
-    'You made many applications in the last hour. Wait a while, then try again.',
+  PROGRAMME_PUBLICATION_CHANGED: pp('pp.refusal.PROGRAMME_PUBLICATION_CHANGED'),
+  PROGRAMME_PUBLICATION_PAUSED: pp('pp.refusal.PROGRAMME_PUBLICATION_PAUSED'),
+  PROGRAMME_PUBLICATION_RATE_LIMITED: pp('pp.refusal.PROGRAMME_PUBLICATION_RATE_LIMITED'),
+  PROGRAMME_APPLICATIONS_CLOSED: pp('pp.refusal.PROGRAMME_APPLICATIONS_CLOSED'),
+  PROGRAMME_ALREADY_REGISTERED: pp('pp.refusal.PROGRAMME_ALREADY_REGISTERED'),
+  PROGRAMME_APPLICATION_CHANGED: pp('pp.refusal.PROGRAMME_APPLICATION_CHANGED'),
+  PROGRAMME_APPLICATION_WITHDRAWN: pp('pp.refusal.PROGRAMME_APPLICATION_WITHDRAWN'),
+  PROGRAMME_APPLICATION_JOINED: pp('pp.refusal.PROGRAMME_APPLICATION_JOINED'),
+  PROGRAMME_APPLICATION_ALREADY_INVITED: pp('pp.refusal.PROGRAMME_APPLICATION_ALREADY_INVITED'),
+  PROGRAMME_APPLICATION_NOT_INVITED: pp('pp.refusal.PROGRAMME_APPLICATION_NOT_INVITED'),
+  PROGRAMME_INVITATION_EXPIRED: pp('pp.refusal.PROGRAMME_INVITATION_EXPIRED'),
+  PROGRAMME_APPLICATION_LIMIT: pp('pp.refusal.PROGRAMME_APPLICATION_LIMIT'),
+  PROGRAMME_APPLICATION_RATE_LIMITED: pp('pp.refusal.PROGRAMME_APPLICATION_RATE_LIMITED'),
 };
 export type Outcome =
   { ok: true; body: Record<string, unknown> } | { ok: false; message: string; denied: boolean };
@@ -140,11 +133,7 @@ export async function pageRequest(
       body: JSON.stringify(payload),
     });
   } catch {
-    return {
-      ok: false,
-      denied: false,
-      message: 'No connection. What you typed is kept. Try again when you are online.',
-    };
+    return { ok: false, denied: false, message: pp('pp.error.offline') };
   }
   const body: unknown = await r.json().catch(() => null);
   if (r.ok && object(body)) return { ok: true, body };
@@ -153,26 +142,12 @@ export async function pageRequest(
   if (object(body) && body.code === 'archived' && typeof body.error === 'string')
     return { ok: false, denied: false, message: body.error };
   if ([401, 403].includes(r.status))
-    return {
-      ok: false,
-      denied: true,
-      message: 'Your account or workspace access changed. Reload and sign in again.',
-    };
+    return { ok: false, denied: true, message: pp('pp.error.denied') };
   if (r.status === 400 || r.status === 409)
-    return {
-      ok: false,
-      denied: false,
-      message: 'Some details are not valid. Check the wording and try again.',
-    };
-  if (r.status === 429)
-    return { ok: false, denied: false, message: 'Too many requests. Wait a minute and try again.' };
-  if (r.status === 503)
-    return { ok: false, denied: false, message: 'Programme pages are unavailable right now.' };
-  return {
-    ok: false,
-    denied: false,
-    message: 'It could not be saved. What you typed is kept. Try again.',
-  };
+    return { ok: false, denied: false, message: pp('pp.error.invalid') };
+  if (r.status === 429) return { ok: false, denied: false, message: pp('pp.error.tooMany') };
+  if (r.status === 503) return { ok: false, denied: false, message: pp('pp.error.unavailable') };
+  return { ok: false, denied: false, message: pp('pp.error.notSaved') };
 }
 export const shortDay = (iso: string) =>
   new Intl.DateTimeFormat('en-GB', {

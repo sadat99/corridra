@@ -22,6 +22,8 @@ An organiser can already create a programme, invite participants by private code
 10. **Sharing is started by a person.** The page and the organiser's panel offer Copy Link and links that open WhatsApp or Facebook with the address filled in. Corridra sends nothing. Social previews use only the published title and purpose. A sample page is never offered to search engines.
 11. **The visitor's choice survives sign-up.** Pressing Apply stores the public address and title in the visitor's own browser for seven days. After sign-up, verification and sign-in the account pages show one line that leads back to the application. The sign-in return rules are unchanged.
 
+12. **Words are keyed, English first.** Every word of these screens is an English-source entry with a stable `pp.*` key in `apps/web/lib/i18n/programme-pages-words.ts`. All catalogues carry the English words until a native review is recorded, so no unreviewed translation is shown. What an organiser publishes and what an applicant writes are originals and are never translated by Corridra. Programme, Application, Invited, Joined, Planned and Confirmed are defined there and stay distinct from Mission, Request, Introduction, Verified and Reviewed.
+
 ## Blast radius
 
 - New: six tables in `customer_private` (row security on, no grant, immutable), thirteen private helper functions and seven functions granted to the runtime role, in `packages/db/customer-programme-publication-migrations/0001_public_programme_page_and_applications.sql`. One service, one signed-in route, one public page, two signed-in panels, one owner switch.

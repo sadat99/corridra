@@ -6,6 +6,7 @@ import {
 } from '@corridra/auth/customer-programme-publication';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { foundations } from '../../../lib/foundations';
+import { pp } from '../../../lib/i18n/programme-pages';
 import { ProgrammePageView } from './programme-page-view';
 import './programme-page.css';
 
@@ -34,7 +35,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const found = await read((await params).address).catch(() => null);
   // An address that opens nothing gets the generic title, so no programme name reaches a page that is not found.
-  if (!found) return { title: 'Business delegation | Corridra', robots: { index: false } };
+  if (!found) return { title: pp('pp.public.metaTitle'), robots: { index: false } };
   const { page, origin } = found;
   const title = `${page.programme.title} | Corridra`;
   const description = clip(page.programme.summary, 200);
@@ -57,7 +58,7 @@ export default async function Page({ params }: { params: Promise<{ address: stri
   return (
     <WorkspaceShell
       className="programme-page"
-      eyebrow={page.sample ? 'BUSINESS DELEGATION · SAMPLE' : 'BUSINESS DELEGATION'}
+      eyebrow={page.sample ? pp('pp.public.eyebrowSample') : pp('pp.public.eyebrow')}
       title={page.programme.title}
     >
       <ProgrammePageView page={page} url={`${origin}/delegations/${page.address}`} />

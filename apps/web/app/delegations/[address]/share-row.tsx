@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { pp } from '../../../lib/i18n/programme-pages';
 
 /** Ways to pass the page on. Each one is started by the person: nothing is sent by Corridra. */
 export function ShareRow({ url, title }: { url: string; title: string }) {
@@ -15,10 +16,10 @@ export function ShareRow({ url, title }: { url: string; title: string }) {
   }
   return (
     <section className="programme-public-share" aria-labelledby="programme-share-title">
-      <h2 id="programme-share-title">Share this page</h2>
+      <h2 id="programme-share-title">{pp('pp.share.title')}</h2>
       <div className="guide-actions-row">
         <button type="button" className="text-link" onClick={() => void copy()}>
-          Copy Link
+          {pp('pp.share.copy')}
         </button>
         <a
           className="text-link"
@@ -26,7 +27,7 @@ export function ShareRow({ url, title }: { url: string; title: string }) {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Share on WhatsApp
+          {pp('pp.share.whatsapp')}
         </a>
         <a
           className="text-link"
@@ -34,11 +35,15 @@ export function ShareRow({ url, title }: { url: string; title: string }) {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Share on Facebook
+          {pp('pp.share.facebook')}
         </a>
       </div>
       <p role="status" className={copied === 'idle' ? 'sr-only' : 'programme-public-note'}>
-        {copied === 'done' ? 'Link copied.' : copied === 'failed' ? `Copy this link: ${url}` : ''}
+        {copied === 'done'
+          ? pp('pp.share.copied')
+          : copied === 'failed'
+            ? pp('pp.share.copyManually', { url })
+            : ''}
       </p>
     </section>
   );

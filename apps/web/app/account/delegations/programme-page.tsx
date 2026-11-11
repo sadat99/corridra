@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { ProgrammePageView } from '../../delegations/[address]/programme-page-view';
 import '../../delegations/[address]/programme-page.css';
+import { pp } from '../../../lib/i18n/programme-pages';
 import { customerHeaders, useCommandIds } from './pricing-client';
 import {
   type Application,
@@ -41,12 +42,12 @@ type Draft = {
   closes: string;
 };
 const steps = [
-  'Basics',
-  'Where and when',
-  'Who it is for',
-  'The programme',
-  'Fee',
-  'Check and publish',
+  pp('pp.edit.step.basics'),
+  pp('pp.edit.step.where'),
+  pp('pp.edit.step.who'),
+  pp('pp.edit.step.programme'),
+  pp('pp.edit.step.fee'),
+  pp('pp.edit.step.publish'),
 ];
 const lines = (text: string) =>
   text
@@ -123,39 +124,33 @@ const between = (text: string, min: number, max: number) => {
 function problem(step: number, draft: Draft, sample: boolean): string {
   const mark = (text: string) => !sample || text.trim().startsWith('Synthetic ');
   if (step === 0) {
-    if (!between(draft.title, sample ? 11 : 3, 160)) return 'Write a title of 3 to 160 characters.';
-    if (!between(draft.organiser, sample ? 11 : 2, 160)) return 'Write the name of the organiser.';
-    if (!mark(draft.title) || !mark(draft.organiser))
-      return 'This is a sample workspace. Start the title and the organiser name with "Synthetic ".';
-    if (!between(draft.summary, 10, 1200))
-      return 'Say in one or two sentences what the programme is for (10 to 1200 characters).';
+    if (!between(draft.title, sample ? 11 : 3, 160)) return pp('pp.edit.problem.title');
+    if (!between(draft.organiser, sample ? 11 : 2, 160)) return pp('pp.edit.problem.organiser');
+    if (!mark(draft.title) || !mark(draft.organiser)) return pp('pp.edit.problem.sample');
+    if (!between(draft.summary, 10, 1200)) return pp('pp.edit.problem.summary');
   }
   if (step === 1) {
-    if (!between(draft.destination, 2, 160)) return 'Write where the programme goes.';
-    if (!between(draft.dates, 2, 160))
-      return 'Write the dates. If they are not fixed, say so, for example "April 2027, to be confirmed".';
-    if (!between(draft.focus, 2, 300)) return 'Write the industry or business focus.';
+    if (!between(draft.destination, 2, 160)) return pp('pp.edit.problem.destination');
+    if (!between(draft.dates, 2, 160)) return pp('pp.edit.problem.dates');
+    if (!between(draft.focus, 2, 300)) return pp('pp.edit.problem.focus');
   }
   if (step === 2) {
-    if (!between(draft.audience, 10, 600)) return 'Say who should apply (10 to 600 characters).';
-    if (!between(draft.eligibility, 10, 600))
-      return 'Say what a company needs to take part (10 to 600 characters).';
+    if (!between(draft.audience, 10, 600)) return pp('pp.edit.problem.audience');
+    if (!between(draft.eligibility, 10, 600)) return pp('pp.edit.problem.eligibility');
     if (draft.capacity.trim() && !/^([1-9][0-9]{0,2}|1000)$/.test(draft.capacity.trim()))
-      return 'Places must be a whole number from 1 to 1000, or left empty.';
+      return pp('pp.edit.problem.capacity');
   }
   if (step === 3) {
     const items = lines(draft.activities);
-    if (items.length > 12) return 'List at most 12 visits or meetings.';
-    if (items.some((item) => !between(item, 3, 160)))
-      return 'Each line must be 3 to 160 characters.';
-    if (new Set(items).size !== items.length) return 'Two lines are the same. Change one of them.';
+    if (items.length > 12) return pp('pp.edit.problem.activitiesCount');
+    if (items.some((item) => !between(item, 3, 160))) return pp('pp.edit.problem.activityLength');
+    if (new Set(items).size !== items.length) return pp('pp.edit.problem.activitySame');
   }
   if (step === 4) {
-    if (draft.fee.trim() && !between(draft.fee, 2, 300)) return 'The fee line is too long.';
+    if (draft.fee.trim() && !between(draft.fee, 2, 300)) return pp('pp.edit.problem.fee');
     for (const list of [lines(draft.included), lines(draft.excluded)]) {
-      if (list.length > 8) return 'List at most 8 lines in each box.';
-      if (list.some((item) => !between(item, 2, 160)))
-        return 'Each line must be 2 to 160 characters.';
+      if (list.length > 8) return pp('pp.edit.problem.listCount');
+      if (list.some((item) => !between(item, 2, 160))) return pp('pp.edit.problem.listLength');
     }
   }
   if (step === 5) {
@@ -164,17 +159,17 @@ function problem(step: number, draft: Draft, sample: boolean): string {
       draft.closes < isoDay(1) ||
       draft.closes > isoDay(179)
     )
-      return 'Choose a closing date from tomorrow up to 179 days from now.';
+      return pp('pp.edit.problem.closes');
   }
   return '';
 }
 const stateWords: Record<PageView['state'], string> = {
-  NONE: 'Not published',
-  OPEN: 'Published and taking applications',
-  CLOSED: 'Published, applications closed',
-  ENDED: 'Closed for more than 30 days: the page is no longer shown',
-  WITHDRAWN: 'Taken down',
-  PAUSED: 'Not shown while the programme or workspace is archived',
+  NONE: pp('pp.state.NONE'),
+  OPEN: pp('pp.state.OPEN'),
+  CLOSED: pp('pp.state.CLOSED'),
+  ENDED: pp('pp.state.ENDED'),
+  WITHDRAWN: pp('pp.state.WITHDRAWN'),
+  PAUSED: pp('pp.state.PAUSED'),
 };
 
 /** The organiser's side of the public programme page: write, preview, publish, share, take down and answer
@@ -299,7 +294,7 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
       }
     }
     if (!agreed) {
-      setError('Tick the box to confirm you checked the page before it goes public.');
+      setError(pp('pp.edit.agreeNeeded'));
       return;
     }
     writing.current = true;
@@ -331,13 +326,12 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
       /* Nothing to clear. */
     }
     setDraft(null);
-    setNotice('Published. The page is public at its address below.');
+    setNotice(pp('pp.org.published'));
     await read();
   }
   async function takeDown() {
     if (!view || writing.current) return;
-    if (!window.confirm('Take the page down? The address stops working until you publish again.'))
-      return;
+    if (!window.confirm(pp('pp.org.takeDownConfirm'))) return;
     writing.current = true;
     setBusy(true);
     setError('');
@@ -353,7 +347,7 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
     setBusy(false);
     if (!result.ok) return setError(result.message);
     commands.clear();
-    setNotice('The page is taken down. Applications already made are kept.');
+    setNotice(pp('pp.org.takenDown'));
     await read();
   }
   async function decide(item: Application, decision: 'INVITED' | 'WAITLISTED' | 'DECLINED') {
@@ -362,7 +356,7 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
     if (decision === 'DECLINED' && !between(note, 10, 500)) {
       setRowError({
         id: item.id,
-        message: 'Write a short reason the applicant will read (10 to 500 characters).',
+        message: pp('pp.org.declineReasonNeeded'),
       });
       return;
     }
@@ -402,7 +396,7 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
       `/api/customer-programme-pages?view=applications&workspaceId=${workspaceId}&programmeId=${programmeId}&after=${nextAfter}`,
       { cache: 'no-store', credentials: 'same-origin', headers },
     ).catch(() => null);
-    if (!r?.ok) return setError('More applications could not be loaded. Try again.');
+    if (!r?.ok) return setError(pp('pp.org.applications.moreFailed'));
     const body = (await r.json()) as { applications?: unknown[]; nextAfter?: string | null };
     setApplications((rows) => [...rows, ...(body.applications ?? []).map(parseApplication)]);
     setNextAfter(typeof body.nextAfter === 'string' ? body.nextAfter : null);
@@ -410,23 +404,21 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
   async function copyLink(url: string) {
     try {
       await navigator.clipboard.writeText(url);
-      setCopied('Link copied.');
+      setCopied(pp('pp.share.copied'));
     } catch {
-      setCopied(`Copy this link: ${url}`);
+      setCopied(pp('pp.share.copyManually', { url }));
     }
   }
 
-  if (load === 'loading') return <p role="status">Loading the public page…</p>;
-  if (load === 'unavailable')
-    return <p className="programme-note">Public programme pages are not available yet.</p>;
-  if (load === 'denied')
-    return <p role="alert">Only owners and admins of this workspace can manage the public page.</p>;
+  if (load === 'loading') return <p role="status">{pp('pp.org.loading')}</p>;
+  if (load === 'unavailable') return <p className="programme-note">{pp('pp.org.unavailable')}</p>;
+  if (load === 'denied') return <p role="alert">{pp('pp.org.denied')}</p>;
   if (load === 'failed' || !view)
     return (
       <div role="alert">
-        <p>The public page could not be loaded. Nothing was changed.</p>
+        <p>{pp('pp.org.failed')}</p>
         <button type="button" className="text-link" onClick={() => void read()}>
-          Try Again
+          {pp('pp.tryAgain')}
         </button>
       </div>
     );
@@ -478,18 +470,18 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
         }}
       >
         <h5 ref={heading} tabIndex={-1}>
-          Step {step + 1} of {steps.length}: {steps[step]}
+          {pp('pp.edit.step', { step: step + 1, total: steps.length, name: steps[step]! })}
         </h5>
-        <progress max={steps.length} value={step + 1} aria-label="Progress through the page">
-          {step + 1} of {steps.length}
+        <progress max={steps.length} value={step + 1} aria-label={pp('pp.edit.progress')}>
+          {pp('pp.edit.progressValue', { step: step + 1, total: steps.length })}
         </progress>
         {step === 0 && (
           <>
-            {field('title', 'Title', 'What the delegation is called in public.', { max: 160 })}
-            {field('organiser', 'Organised by', 'Your organisation or your own name.', {
+            {field('title', pp('pp.edit.title.label'), pp('pp.edit.title.hint'), { max: 160 })}
+            {field('organiser', pp('pp.edit.organiser.label'), pp('pp.edit.organiser.hint'), {
               max: 160,
             })}
-            {field('summary', 'What it is for', 'One or two sentences. One paragraph.', {
+            {field('summary', pp('pp.edit.summary.label'), pp('pp.edit.summary.hint'), {
               area: true,
               max: 1200,
             })}
@@ -497,41 +489,38 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
         )}
         {step === 1 && (
           <>
-            {field('destination', 'Where', 'City and country, for example "Guangzhou, China".', {
+            {field('destination', pp('pp.edit.destination.label'), pp('pp.edit.destination.hint'), {
               max: 160,
             })}
-            {field('dates', 'When', 'If the dates are not fixed yet, say so.', { max: 160 })}
-            {field('focus', 'Industry or business focus', 'For example "Agricultural machinery".', {
+            {field('dates', pp('pp.edit.dates.label'), pp('pp.edit.dates.hint'), { max: 160 })}
+            {field('focus', pp('pp.edit.focus.label'), pp('pp.edit.focus.hint'), {
               max: 300,
             })}
           </>
         )}
         {step === 2 && (
           <>
-            {field('audience', 'Who should apply', 'The kind of company and person.', {
+            {field('audience', pp('pp.edit.audience.label'), pp('pp.edit.audience.hint'), {
               area: true,
               max: 600,
             })}
-            {field('eligibility', 'What a company needs to take part', 'Your own conditions.', {
+            {field('eligibility', pp('pp.edit.eligibility.label'), pp('pp.edit.eligibility.hint'), {
               area: true,
               max: 600,
             })}
-            {field('capacity', 'Places (optional)', 'How many companies you plan to take.', {
+            {field('capacity', pp('pp.edit.capacity.label'), pp('pp.edit.capacity.hint'), {
               max: 4,
             })}
           </>
         )}
         {step === 3 && (
           <>
-            {field(
-              'activities',
-              'Visits and meetings (optional)',
-              'One per line, up to 12. Each is shown as Planned unless you mark it confirmed below.',
-              { area: true },
-            )}
+            {field('activities', pp('pp.edit.activities.label'), pp('pp.edit.activities.hint'), {
+              area: true,
+            })}
             {planned.length > 0 && (
               <fieldset className="programme-page-confirm">
-                <legend>Mark only what is already confirmed</legend>
+                <legend>{pp('pp.edit.confirmed.legend')}</legend>
                 {planned.map((label) => (
                   <label key={label}>
                     <input
@@ -559,25 +548,24 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
         )}
         {step === 4 && (
           <>
-            {field('fee', 'Fee (optional)', 'The amount, the currency and who it is paid to.', {
+            {field('fee', pp('pp.edit.fee.label'), pp('pp.edit.fee.hint'), {
               max: 300,
             })}
-            {field('included', 'Included (optional)', 'One per line, up to 8.', { area: true })}
-            {field('excluded', 'Not included (optional)', 'One per line, up to 8.', { area: true })}
+            {field('included', pp('pp.edit.included.label'), pp('pp.edit.list.hint'), {
+              area: true,
+            })}
+            {field('excluded', pp('pp.edit.excluded.label'), pp('pp.edit.list.hint'), {
+              area: true,
+            })}
           </>
         )}
         {step === 5 && (
           <>
-            {field(
-              'closes',
-              'Applications close on',
-              'End of that day, UTC. You can reopen later.',
-              {
-                type: 'date',
-              },
-            )}
+            {field('closes', pp('pp.edit.closes.label'), pp('pp.edit.closes.hint'), {
+              type: 'date',
+            })}
             <details className="programme-page-preview" open>
-              <summary>Preview: this is exactly what the public will read</summary>
+              <summary>{pp('pp.edit.preview')}</summary>
               <ProgrammePageView
                 preview
                 page={{
@@ -594,15 +582,18 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
                 checked={agreed}
                 onChange={(event) => setAgreed(event.target.checked)}
               />{' '}
-              I checked this page. It contains no private contact, price list or participant detail,
-              and I am allowed to publish it.
+              {pp('pp.edit.agree')}
             </label>
           </>
         )}
         {error && <p role="alert">{error}</p>}
         <div className="guide-actions-row">
           <button type="submit" className="primary-link" disabled={busy}>
-            {step === steps.length - 1 ? (busy ? 'Publishing…' : 'Publish the Page') : 'Continue'}
+            {step === steps.length - 1
+              ? busy
+                ? pp('pp.edit.publishing')
+                : pp('pp.edit.publish')
+              : pp('pp.edit.continue')}
           </button>
           {step > 0 && (
             <button
@@ -613,11 +604,11 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
                 setStep((s) => s - 1);
               }}
             >
-              Back
+              {pp('pp.edit.back')}
             </button>
           )}
           <button type="button" className="text-link" onClick={stopEditing}>
-            Close and Keep Draft
+            {pp('pp.edit.close')}
           </button>
         </div>
       </form>
@@ -627,16 +618,13 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
   return (
     <div className="programme-page-panel">
       <p>
-        <strong>Public page:</strong> {stateWords[view.state]}
-        {view.state === 'OPEN' && view.closesAt ? ` until ${shortDay(view.closesAt)} (UTC)` : ''}
-        {view.version > 0 ? ` · version ${view.version}` : ''}
+        <strong>{pp('pp.org.label')}</strong> {stateWords[view.state]}
+        {view.state === 'OPEN' && view.closesAt
+          ? pp('pp.org.until', { date: shortDay(view.closesAt) })
+          : ''}
+        {view.version > 0 ? pp('pp.org.version', { version: view.version }) : ''}
       </p>
-      {view.state === 'NONE' && (
-        <p className="programme-note">
-          Publish a page to let companies read about this programme and apply. Only the words you
-          write for the page become public. Participants, prices and private requests stay private.
-        </p>
-      )}
+      {view.state === 'NONE' && <p className="programme-note">{pp('pp.org.intro')}</p>}
       {notice && <p role="status">{notice}</p>}
       {error && <p role="alert">{error}</p>}
       {shown && url && (
@@ -648,7 +636,7 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
           </p>
           <div className="guide-actions-row">
             <button type="button" className="text-link" onClick={() => void copyLink(url)}>
-              Copy Link
+              {pp('pp.share.copy')}
             </button>
             <a
               className="text-link"
@@ -656,7 +644,7 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
               target="_blank"
               rel="noopener noreferrer"
             >
-              Share on WhatsApp
+              {pp('pp.share.whatsapp')}
             </a>
             <a
               className="text-link"
@@ -664,7 +652,7 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
               target="_blank"
               rel="noopener noreferrer"
             >
-              Share on Facebook
+              {pp('pp.share.facebook')}
             </a>
           </div>
           <p role="status" className={copied ? 'programme-note' : 'sr-only'}>
@@ -675,10 +663,10 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
       <div className="guide-actions-row">
         <button type="button" className="primary-link" onClick={startEditing} disabled={busy}>
           {view.version === 0
-            ? 'Write the Public Page'
+            ? pp('pp.org.write')
             : shown
-              ? 'Edit the Page'
-              : 'Edit and Publish Again'}
+              ? pp('pp.org.edit')
+              : pp('pp.org.editAgain')}
         </button>
         {shown && (
           <button
@@ -687,19 +675,23 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
             onClick={() => void takeDown()}
             disabled={busy}
           >
-            Take the Page Down
+            {pp('pp.org.takeDown')}
           </button>
         )}
       </div>
       {view.version > 0 && (
-        <section aria-label="Applications" className="programme-page-applications">
+        <section
+          aria-label={pp('pp.org.applications.label')}
+          className="programme-page-applications"
+        >
           <h5>
-            Applications: {view.awaiting} waiting for your answer, {view.applications} in all
+            {pp('pp.org.applications.count', {
+              awaiting: view.awaiting,
+              total: view.applications,
+            })}
           </h5>
           {applications.length === 0 ? (
-            <p className="ux-empty">
-              No applications yet. Share the page address with the companies you want to reach.
-            </p>
+            <p className="ux-empty">{pp('pp.org.applications.empty')}</p>
           ) : (
             <ul>
               {applications.map((item) => (
@@ -710,22 +702,21 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
                   </p>
                   <p>{item.statement}</p>
                   <p className="programme-note">
-                    Applied {shortDay(item.appliedAt)}. Stated by the applicant, not checked.
+                    {pp('pp.org.row.applied', { date: shortDay(item.appliedAt) })}
                     {item.status === 'INVITED' && item.invitationExpiresAt
-                      ? ` Invitation can be used until ${shortDay(item.invitationExpiresAt)}.`
+                      ? pp('pp.org.row.invitationUntil', {
+                          date: shortDay(item.invitationExpiresAt),
+                        })
                       : ''}
-                    {item.note ? ` Your note: ${item.note}` : ''}
+                    {item.note ? pp('pp.org.row.yourNote', { note: item.note }) : ''}
                   </p>
                   {item.status === 'JOINED' && (
-                    <p className="programme-note">
-                      Registered. Terms, places and fees for this participant are under Participants
-                      and Terms.
-                    </p>
+                    <p className="programme-note">{pp('pp.org.row.joined')}</p>
                   )}
                   {declining === item.id ? (
                     <div className="programme-page-decline">
                       <label className="field">
-                        <span>Reason the applicant will read</span>
+                        <span>{pp('pp.org.declineReason')}</span>
                         <textarea
                           rows={3}
                           maxLength={500}
@@ -740,7 +731,7 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
                           disabled={busy}
                           onClick={() => void decide(item, 'DECLINED')}
                         >
-                          Confirm Decline
+                          {pp('pp.org.declineConfirm')}
                         </button>
                         <button
                           type="button"
@@ -750,7 +741,7 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
                             setRowError(null);
                           }}
                         >
-                          Cancel
+                          {pp('pp.cancel')}
                         </button>
                       </div>
                     </div>
@@ -771,8 +762,8 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
                             onClick={() => void decide(item, 'INVITED')}
                           >
                             {item.status === 'INVITATION_EXPIRED'
-                              ? 'Invite Again'
-                              : 'Invite to Join'}
+                              ? pp('pp.org.inviteAgain')
+                              : pp('pp.org.invite')}
                           </button>
                         )}
                         {['SUBMITTED', 'DECLINED', 'INVITATION_EXPIRED'].includes(item.status) && (
@@ -782,7 +773,7 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
                             disabled={busy}
                             onClick={() => void decide(item, 'WAITLISTED')}
                           >
-                            Put on Waiting List
+                            {pp('pp.org.waitlist')}
                           </button>
                         )}
                         {item.status !== 'DECLINED' && (
@@ -796,7 +787,7 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
                               setRowError(null);
                             }}
                           >
-                            Decline
+                            {pp('pp.org.decline')}
                           </button>
                         )}
                       </div>
@@ -809,7 +800,7 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
           )}
           {nextAfter && (
             <button type="button" className="text-link" onClick={() => void more()}>
-              Show More Applications
+              {pp('pp.org.applications.more')}
             </button>
           )}
         </section>

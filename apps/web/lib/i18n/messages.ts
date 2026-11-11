@@ -4,6 +4,7 @@
 // are never shown to the public before that.
 import { defaultLocale, type Locale } from './locales';
 import { homeEn, homeWords } from './home-words';
+import { programmePagesWords } from './programme-pages-words';
 import { wsA, wsAEn } from './ws/ws-a';
 import { wsB, wsBEn } from './ws/ws-b';
 import { wsC, wsCEn } from './ws/ws-c';
@@ -257,6 +258,7 @@ export const en = {
   'room.replies.all': 'Read Every Reply',
   // English placeholder until native review (D16)
   ...tripWords,
+  ...programmePagesWords,
   ...bookWords,
   ...footerWords,
   ...headerWords,
@@ -417,6 +419,7 @@ const bn: Catalog = {
   'room.replies.all': 'সব উত্তর পড়ুন',
   // English placeholder until native review (D16)
   ...tripWords,
+  ...programmePagesWords,
   ...bookWords,
   ...footerWords,
   ...headerWords,
@@ -564,6 +567,7 @@ const zh: Catalog = {
   'room.replies.all': '阅读全部回复',
   // English placeholder until native review (D16)
   ...tripWords,
+  ...programmePagesWords,
   ...bookWords,
   ...footerWords,
   ...headerWords,
@@ -716,6 +720,7 @@ const es: Catalog = {
   'room.replies.all': 'Leer todas las respuestas',
   // English placeholder until native review (D16)
   ...tripWords,
+  ...programmePagesWords,
   ...bookWords,
   ...footerWords,
   ...headerWords,
@@ -867,6 +872,7 @@ const ar: Catalog = {
   'room.replies.all': 'اقرأ كل الردود',
   // English placeholder until native review (D16)
   ...tripWords,
+  ...programmePagesWords,
   ...bookWords,
   ...footerWords,
   ...headerWords,
@@ -1019,6 +1025,7 @@ const fr: Catalog = {
   'room.replies.all': 'Lire toutes les réponses',
   // English placeholder until native review (D16)
   ...tripWords,
+  ...programmePagesWords,
   ...bookWords,
   ...footerWords,
   ...headerWords,
@@ -1175,6 +1182,7 @@ const de: Catalog = {
   'room.replies.all': 'Alle Antworten lesen',
   // English placeholder until native review (D16)
   ...tripWords,
+  ...programmePagesWords,
   ...bookWords,
   ...footerWords,
   ...headerWords,
