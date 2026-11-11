@@ -47,3 +47,53 @@ export async function problems(page: Page) {
     return sideways > 0 ? [`sideways scroll ${sideways}px`, ...found] : found;
   });
 }
+
+/** What does not fit with every closed fold on the page opened; the folds that were closed are closed again after. */
+export async function problemsWithFoldsOpen(page: Page) {
+  const closed = await page.evaluateHandle(() => {
+    const folds = Array.from(document.querySelectorAll('details')).filter((fold) => !fold.open);
+    for (const fold of folds) fold.open = true;
+    return folds;
+  });
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await new Promise<void>((done) => requestAnimationFrame(() => done()));
+  });
+  const stillClosed = await page.locator('details:not([open])').count();
+  const found = await problems(page);
+  await page.evaluate((folds) => {
+    for (const fold of folds) fold.open = false;
+  }, closed);
+  await closed.dispose();
+  return stillClosed > 0 ? [`${stillClosed} fold(s) did not open`, ...found] : found;
+}
+
+/**
+ * Text that a box cuts off: a visible box that clips its overflow (hidden, clip or an ellipsis) and holds text
+ * that is wider or taller than the box shows. Visually hidden helper text is one pixel on purpose and is skipped.
+ * `problems` finds text that runs out of a box that does not clip; this finds text a box hides.
+ */
+export async function clippedText(page: Page) {
+  return page.evaluate(() => {
+    const found: string[] = [];
+    for (const el of Array.from(document.querySelectorAll<HTMLElement>('body *'))) {
+      if (!el.checkVisibility()) continue;
+      const style = getComputedStyle(el);
+      const clipsX = style.overflowX !== 'visible' || style.textOverflow === 'ellipsis';
+      const clipsY = style.overflowY !== 'visible';
+      if (!clipsX && !clipsY) continue;
+      if (el.clientWidth < 2 || el.clientHeight < 2) continue;
+      if (!(el.textContent ?? '').trim()) continue;
+      // A scroll container shows its overflow by scrolling; only a box that cannot scroll hides it.
+      const scrolls = (value: string) => value === 'auto' || value === 'scroll';
+      const cutX = clipsX && !scrolls(style.overflowX) && el.scrollWidth > el.clientWidth + 1;
+      const cutY = clipsY && !scrolls(style.overflowY) && el.scrollHeight > el.clientHeight + 1;
+      if (cutX || cutY)
+        found.push(
+          `${el.tagName.toLowerCase()}.${String(el.className).slice(0, 40)} ${(el.textContent ?? '').trim().slice(0, 30)} (${el.scrollWidth}x${el.scrollHeight} in ${el.clientWidth}x${el.clientHeight})`,
+        );
+    }
+    // Report the innermost boxes only.
+    return found.slice(0, 8);
+  });
+}
