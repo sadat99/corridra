@@ -49,6 +49,7 @@ function madeupText(i: RealInvoice) {
 
 function InvoiceDocument({ i }: { i: RealInvoice }) {
   const rate = ratePercent(i.taxRateBps);
+  const owing = /^\d+$/.test(i.outstandingMinor) && BigInt(i.outstandingMinor) > BigInt(0);
   const print = () => {
     const body = document.body;
     const card = document.getElementById('real-invoice-' + i.id);
@@ -150,6 +151,17 @@ function InvoiceDocument({ i }: { i: RealInvoice }) {
       <p>
         <span style={{ overflowWrap: 'anywhere' }}>{i.paymentInstructions}</span>
       </p>
+      {owing && (
+        <>
+          <p>
+            Quote this reference when you pay: <strong>{i.number}</strong>
+          </p>
+          <p>
+            Payment happens outside Corridra. The team records a payment only after it has checked
+            that it arrived. Until then the amount stays under &quot;Still to pay&quot;.
+          </p>
+        </>
+      )}
       <details className="ux-journey-disclosure">
         <summary>Payments and credit notes for {i.number}</summary>
         <p>Payments the team recorded</p>
@@ -159,8 +171,8 @@ function InvoiceDocument({ i }: { i: RealInvoice }) {
           <ul>
             {i.payments.map((p) => (
               <li key={p.seq}>
-                {money(p.amountMinor, i.currency)} on {dayText(p.receivedOn)} ·{' '}
-                {methodText[p.method] ?? p.method}
+                Recorded by the Corridra team: {money(p.amountMinor, i.currency)} on{' '}
+                {dayText(p.receivedOn)} · {methodText[p.method] ?? p.method}
                 {p.reversed && ' · Reversed'}
               </li>
             ))}
