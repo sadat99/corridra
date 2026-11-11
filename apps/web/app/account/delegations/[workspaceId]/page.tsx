@@ -1,3 +1,4 @@
+import { customerProgrammePagesEnabled } from '@corridra/auth/customer-programme-publication';
 import { customerProgrammeProjectionsEnabled } from '@corridra/auth/customer-programme-projections';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerProgrammeContextEnabled } from '@corridra/auth/customer-programme-context';
@@ -84,6 +85,7 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
         termsEnabled={customerProgrammeTermsEnabled()}
         projectionsEnabled={customerProgrammeProjectionsEnabled()}
         pricingEnabled={customerProgrammePricingEnabled()}
+        pagesEnabled={customerProgrammePagesEnabled()}
         serviceRequestsEnabled={customerServiceRequestsEnabled()}
         roomEnabled={uxSwitchOn('CORRIDRA_UX_PROGRAMME')}
       />

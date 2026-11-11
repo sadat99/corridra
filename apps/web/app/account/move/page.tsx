@@ -7,6 +7,7 @@ import { buildMoveModel } from '../../../lib/move-cards';
 import { loadMoveInput } from '../../../lib/move-loader';
 import { uxSwitchOn } from '../../../lib/ux-switches';
 import { PendingRequestNotice } from '../../../components/pending-request-notice';
+import { ProgrammeApplyNotice } from '../../../components/programme-apply-notice';
 import { EmailNudge } from '../../../components/email-nudge';
 import { AccountHashRedirect } from '../hash-redirect';
 import { MoveView } from './move-view';
@@ -93,6 +94,7 @@ export default async function Page({
     >
       <AccountHashRedirect view="move" />
       <PendingRequestNotice where="account" />
+      <ProgrammeApplyNotice />
       {customerNotificationsEnabled() && <EmailNudge />}
       <MoveView
         model={model}

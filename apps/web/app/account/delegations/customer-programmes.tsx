@@ -28,6 +28,9 @@ const ProgrammeCoordination = lazy(() =>
 const ProgrammeTerms = lazy(() =>
   import('./programme-terms').then((module) => ({ default: module.ProgrammeTerms })),
 );
+const ProgrammePage = lazy(() =>
+  import('./programme-page').then((module) => ({ default: module.ProgrammePage })),
+);
 const ProgrammeEconomics = lazy(() =>
   import('./programme-economics').then((module) => ({ default: module.ProgrammeEconomics })),
 );
@@ -61,6 +64,8 @@ type Props = {
   templatesEnabled?: boolean;
   termsEnabled?: boolean;
   pricingEnabled?: boolean;
+  /** The public programme page and applications (ADR-080). */
+  pagesEnabled?: boolean;
   serviceRequestsEnabled?: boolean;
   roomEnabled?: boolean;
   projectionsEnabled?: boolean;
@@ -107,6 +112,7 @@ function ScopedProgrammes({
   templatesEnabled = false,
   termsEnabled = false,
   pricingEnabled = false,
+  pagesEnabled = false,
   serviceRequestsEnabled = false,
   roomEnabled = false,
   projectionsEnabled = false,
@@ -131,6 +137,7 @@ function ScopedProgrammes({
   const [financeProgramme, setFinanceProgramme] = useState<string | null>(null);
   const [coordinationProgramme, setCoordinationProgramme] = useState<string | null>(null);
   const [termsProgramme, setTermsProgramme] = useState<string | null>(null);
+  const [pageProgramme, setPageProgramme] = useState<string | null>(null);
   const [rows, setRows] = useState<Programme[]>([]),
     [next, setNext] = useState<string | null>(null);
   // Archived programmes (CRUD gap G7): hidden from the list and the picker unless the Archived filter is on.
@@ -737,6 +744,18 @@ function ScopedProgrammes({
                         </p>
                       )
                     ) : null,
+                    page:
+                      participantsEnabled && pagesEnabled && p.archived !== true ? (
+                        <Suspense fallback={<p role="status">Loading the public page…</p>}>
+                          <ProgrammePage
+                            subject={subject}
+                            issuer={issuer}
+                            workspaceId={workspaceId}
+                            programmeId={p.id}
+                            programmeName={p.name}
+                          />
+                        </Suspense>
+                      ) : null,
                     overview: contextEnabled ? (
                       <ProgrammeContext
                         subject={subject}
@@ -923,6 +942,30 @@ function ScopedProgrammes({
                             issuer={issuer}
                             workspaceId={workspaceId}
                             programmeId={p.id}
+                          />
+                        </Suspense>
+                      )}
+                    </>
+                  )}
+                  {participantsEnabled && pagesEnabled && p.archived !== true && (
+                    <>
+                      <button
+                        type="button"
+                        className="text-link"
+                        onClick={() => setPageProgramme(pageProgramme === p.id ? null : p.id)}
+                      >
+                        {pageProgramme === p.id
+                          ? 'Hide Public Page and Applications'
+                          : 'Public Page and Applications'}
+                      </button>
+                      {pageProgramme === p.id && (
+                        <Suspense fallback={<p role="status">Loading the public page…</p>}>
+                          <ProgrammePage
+                            subject={subject}
+                            issuer={issuer}
+                            workspaceId={workspaceId}
+                            programmeId={p.id}
+                            programmeName={p.name}
                           />
                         </Suspense>
                       )}

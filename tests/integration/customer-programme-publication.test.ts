@@ -1,4 +1,4 @@
-import { beforeAll, afterAll, test, expect } from 'vitest';
+import { beforeAll, afterAll, afterEach, test, expect, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { fixture } from './support';
 import { migrateCustomerParticipants } from '../../packages/db/src/customer-participant-migrate';
@@ -17,6 +17,12 @@ import {
   programmePublicationRefusal,
   proposeProgrammeAddress,
 } from '../../packages/auth/src/customer-programme-publication';
+
+// The signed-in route is called for real against the real database functions with the restricted runtime role.
+// Only the identity provider is replaced: the session is a fixed synthetic one.
+const account = vi.hoisted(() => ({ services: null as unknown }));
+vi.mock('../../apps/web/lib/foundations', () => ({ foundations: () => account.services }));
+import * as pagesRoute from '../../apps/web/app/api/customer-programme-pages/route';
 
 const issuer =
   'https://ep-publication-fixture.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth';
@@ -188,12 +194,14 @@ afterAll(async () => {
 
 test('the switch is off unless exactly true and only where participants are on', () => {
   const on = {
+    DATA_ENVIRONMENT: 'synthetic',
     CORRIDRA_CUSTOMER_WORKSPACES_ENABLED: 'true',
     CORRIDRA_CUSTOMER_PROGRAMMES_ENABLED: 'true',
     CORRIDRA_CUSTOMER_PARTICIPANTS_ENABLED: 'true',
   } as unknown as NodeJS.ProcessEnv;
   expect(customerProgrammePagesEnabled(on)).toBe(false);
   expect(customerProgrammePagesEnabled({ ...on, CORRIDRA_PROGRAMME_PAGES: 'TRUE' })).toBe(false);
+  expect(customerProgrammePagesEnabled({ ...on, CORRIDRA_PROGRAMME_PAGES: 'true' })).toBe(true);
   expect(customerProgrammePagesEnabled({ CORRIDRA_PROGRAMME_PAGES: 'true' } as never)).toBe(false);
 });
 test('a proposed address is readable, well formed and different every time', () => {
@@ -675,4 +683,91 @@ test('a person is capped at three applications to one programme', async () => {
     'PROGRAMME_APPLICATION_LIMIT',
   );
   expect(await list()).toHaveLength(3);
+});
+
+const origin = 'https://corridra.example.invalid';
+const switchesOn = () => {
+  vi.stubEnv('CORRIDRA_CUSTOMER_WORKSPACES_ENABLED', 'true');
+  vi.stubEnv('DATA_ENVIRONMENT', 'synthetic');
+  vi.stubEnv('CORRIDRA_CUSTOMER_PROGRAMMES_ENABLED', 'true');
+  vi.stubEnv('CORRIDRA_CUSTOMER_PARTICIPANTS_ENABLED', 'true');
+  vi.stubEnv('CORRIDRA_PROGRAMME_PAGES', 'true');
+};
+const serve = (person: string) => {
+  account.services = {
+    missions: { budget: async () => {} },
+    customerProgrammePages: pages(person),
+    ready: Promise.resolve(),
+    config: { APP_ORIGIN: origin },
+  };
+};
+const post = (body: unknown, headers: Record<string, string> = {}) =>
+  pagesRoute.POST(
+    new Request(origin + '/api/customer-programme-pages', {
+      method: 'POST',
+      headers: { Origin: origin, 'Content-Type': 'application/json', ...headers },
+      body: JSON.stringify(body),
+    }),
+  );
+const get = (query: string) =>
+  pagesRoute.GET(new Request(origin + '/api/customer-programme-pages?' + query));
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
+test('the route answers unavailable while the switch is off, whatever is asked', async () => {
+  serve('alice');
+  expect(
+    (await get(`view=page&workspaceId=${workspaceId}&programmeId=${programmeId}`)).status,
+  ).toBe(503);
+  expect((await get('view=own')).status).toBe(503);
+  expect((await post({ kind: 'page', ...publish(4) })).status).toBe(503);
+  vi.stubEnv('CORRIDRA_PROGRAMME_PAGES', 'true');
+  // The switch alone is not enough: participants must be on too.
+  expect((await get('view=own')).status).toBe(503);
+});
+
+test('the route checks origin and content type, names refusals by code and never caches', async () => {
+  switchesOn();
+  serve('alice');
+  expect(
+    (await post({ kind: 'page', ...publish(4) }, { Origin: 'https://evil.example' })).status,
+  ).toBe(403);
+  expect(
+    (await post({ kind: 'page', ...publish(4) }, { 'Content-Type': 'text/plain' })).status,
+  ).toBe(415);
+  expect((await post({ kind: 'other' })).status).toBe(400);
+  expect((await get('view=other')).status).toBe(400);
+  const stale = await post({ kind: 'page', ...publish(0) });
+  expect(stale.status).toBe(409);
+  expect(stale.headers.get('cache-control')).toBe('no-store');
+  expect(await stale.json()).toMatchObject({ code: 'PROGRAMME_PUBLICATION_CHANGED' });
+  const view = await get(`view=page&workspaceId=${workspaceId}&programmeId=${programmeId}`);
+  expect(view.status).toBe(200);
+  expect(view.headers.get('cache-control')).toBe('no-store');
+  const current = await view.json();
+  expect(current).toMatchObject({ state: 'OPEN', address });
+  const revised = await post({ kind: 'page', ...publish(current.version) });
+  expect(revised.status).toBe(200);
+  expect(await revised.json()).toMatchObject({ version: current.version + 1, address });
+  const list = await get(`view=applications&workspaceId=${workspaceId}&programmeId=${programmeId}`);
+  expect(list.status).toBe(200);
+  expect((await list.json()).applications.length).toBeGreaterThan(0);
+  // A member who is not an owner or admin is refused with 403, not told what exists.
+  serve('member');
+  expect(
+    (await get(`view=page&workspaceId=${workspaceId}&programmeId=${programmeId}`)).status,
+  ).toBe(403);
+  expect((await post({ kind: 'page', ...publish(current.version + 1) })).status).toBe(403);
+  // An applicant reads their own list and is told by code when a programme takes no more of their applications.
+  serve('charlie');
+  const own = await get('view=own');
+  expect(own.status).toBe(200);
+  expect((await own.json()).applications).toHaveLength(3);
+  const capped = await post({
+    kind: 'application',
+    ...apply(address, current.version + 1, 'Charlie'),
+  });
+  expect(capped.status).toBe(409);
+  expect(await capped.json()).toMatchObject({ code: 'PROGRAMME_APPLICATION_LIMIT' });
 });

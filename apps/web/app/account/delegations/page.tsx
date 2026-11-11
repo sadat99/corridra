@@ -10,7 +10,13 @@ import { readNeonAuthConfig } from '@corridra/config';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { CustomerShell } from '../../../components/customer-shell';
 import { neonAuth } from '../../../lib/neon-auth';
+import {
+  customerProgrammePagesEnabled,
+  programmeAddress,
+} from '@corridra/auth/customer-programme-publication';
+import { foundations } from '../../../lib/foundations';
 import { ParticipantAccount } from './participant-account';
+import { ProgrammeApplications, type ApplyTarget } from './programme-applications';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const metadata = {
@@ -31,8 +37,31 @@ function unavailable(
     </WorkspaceShell>
   );
 }
-export default async function Page() {
+// The programme a person chose to apply to, read from its public page. Only what that page shows is passed on.
+async function applyTarget(address: string): Promise<ApplyTarget | null> {
+  const s = foundations();
+  if (!s) return null;
+  await s.ready;
+  const page = await s.programmePageReader.read(address).catch(() => null);
+  if (!page || page.state === 'unknown') return null;
+  return {
+    address: page.address,
+    version: page.version,
+    title: page.programme.title,
+    organiser: page.programme.organiser,
+    open: page.state === 'OPEN',
+  };
+}
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   if (!customerParticipantsEnabled()) return unavailable();
+  const pagesOn = customerProgrammePagesEnabled();
+  const asked = pagesOn ? (await searchParams).apply : undefined;
+  const address =
+    typeof asked === 'string' && programmeAddress.safeParse(asked).success ? asked : null;
   const issuer = readNeonAuthConfig()?.NEON_AUTH_BASE_URL,
     auth = neonAuth();
   if (!issuer || !auth) return unavailable();
@@ -43,6 +72,14 @@ export default async function Page() {
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
     <CustomerShell tab="work" eyebrow="REQUESTS" title="Delegation registrations">
+      {pagesOn && (
+        <ProgrammeApplications
+          subject={session.data.user.id}
+          issuer={issuer}
+          target={address ? await applyTarget(address) : null}
+          asked={typeof asked === 'string'}
+        />
+      )}
       <ParticipantAccount
         contextEnabled={customerProgrammeContextEnabled()}
         missionSharesEnabled={customerMissionSharesEnabled()}
