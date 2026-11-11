@@ -15,6 +15,9 @@ const classification: Record<string, string> = {
   'app.mission_request_withdrawal': 'signals withdrawn',
   'app.customer_delivery_scope': 'revoked only',
   'app.record_reply_posted': 'revoked only',
+  // The staff reach list of an erasure request (account lifecycle 0005; owner decision, 11 Nov 2026: "Staff by hand, tracked
+  // (Recommended)"): it lists the requests a person wrote with the revoked and withdrawn flags and hides none of them.
+  'customer.erasure_request_reach': 'flags withdrawn',
   'customer.enqueue_move_notifications': 'revoked or withdrawn',
   'customer.mission_draft_close': 'revoked only',
   'customer.my_mission_mail_mutes': 'own',
