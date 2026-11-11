@@ -11,6 +11,22 @@ Owner decisions, 10 November 2026, given directly to session S17 (verbatim answe
 
 Data contract: [ADR-078](../../adr/0078-problem-reports.md). This spec never overrides the V3 contract, the UI direction, the design system or an accepted ADR. Squad stages that produced it (authority stamp auth-c36160a85b5b): corridra-product, corridra-architect and corridra-designer, all in S17's run.
 
+## Status as merged (11 November 2026)
+
+All of the build is merged to main. Live state (installs, switches) stays in the [ledger](../../V3_LEDGER.md); this block is the build and decision status only.
+
+| Part | What                                                                        | PR  |
+| ---- | --------------------------------------------------------------------------- | --- |
+| PR1  | Problem report module and installer (ADR-078)                               | 390 |
+| PR1b | Bounded word removal, replay order, stricter plain text                     | 396 |
+| PR2  | Backend: domain, services, routes (Sensitive)                               | 400 |
+| PR2b | Customers remove the words of their own reports (migration 0003, Sensitive) | 403 |
+| PR3  | Screens, menus and the staff panel (Sensitive)                              | 412 |
+
+- Migrations 0001 to 0003 are installed in production: the problem report module reports 3 applied (owner-approved installs; the ledger holds the run numbers).
+- Owner, 11 November 2026: approved all 16 customer sentences of the screens. This approves the words only; it is not an acceptance of the module's real use, which keeps its own switch and the real-staff triage requirement in section 7.
+- ADR-078 decision 6 (an erasure path for removing words) was answered "A" by the owner on 10 November 2026 and is built in PR2b and PR3.
+
 ## 1. Outcome
 
 Signed-in customers and signed-in team members report a problem from the Help menu where they hit it. They get a reference such as RP-000123 and see who acts next. A page lists only their own problem reports, with every status change and every staff note. Owners and admins triage in a protected queue (Received, In review, Resolved, Closed) with a note the reporter reads. No email or WhatsApp message is sent; the in-app page is the only channel.
