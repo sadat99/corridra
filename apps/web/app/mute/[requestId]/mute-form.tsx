@@ -45,7 +45,7 @@ export function MuteForm({ requestId }: { requestId: string }) {
         <p role="status">
           Done. We will not send more messages about this request. Your request itself is unchanged.
         </p>
-        <Link className="text-link" href="/account">
+        <Link prefetch={false} className="text-link" href="/account">
           Go to your account
         </Link>
       </>

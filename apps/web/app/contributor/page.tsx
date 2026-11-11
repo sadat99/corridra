@@ -36,13 +36,13 @@ export default async function Page({
           Assigned-task access is not configured in this environment. Keep the invitation supplied
           by your operator.
         </p>
-        <Link className="text-link" href="/network">
+        <Link prefetch={false} className="text-link" href="/network">
           How assigned work works
         </Link>
-        <Link className="text-link" href="/signin">
+        <Link prefetch={false} className="text-link" href="/signin">
           Other sign-in options
         </Link>
-        <Link className="text-link" href="/">
+        <Link prefetch={false} className="text-link" href="/">
           Back to Corridra
         </Link>
       </WorkspaceShell>
@@ -62,7 +62,7 @@ export default async function Page({
           When the Corridra team assigns you a task, you get a link that opens it here with its
           instructions, deadline and the evidence it needs.
         </p>
-        <Link className="text-link" href="/network">
+        <Link prefetch={false} className="text-link" href="/network">
           How assigned work works
         </Link>
         <ContributorSignout />
@@ -79,18 +79,18 @@ export default async function Page({
           <FrontDoor label="Ways in for a helper" items={helperDoor} />
         ) : (
           <>
-            <Link className="primary-link" href="/contributor/setup">
+            <Link prefetch={false} className="primary-link" href="/contributor/setup">
               Accept a Reviewed Contributor Invitation
             </Link>
-            <Link className="text-link" href="/network">
+            <Link prefetch={false} className="text-link" href="/network">
               How assigned work works
             </Link>
-            <Link className="text-link" href="/signin">
+            <Link prefetch={false} className="text-link" href="/signin">
               Choose your sign-in route
             </Link>
           </>
         )}
-        <Link className="text-link" href="/">
+        <Link prefetch={false} className="text-link" href="/">
           Back to Corridra
         </Link>
       </WorkspaceShell>
@@ -117,6 +117,7 @@ export default async function Page({
         <p>The execution network is awaiting activation review. No work is currently available.</p>
       )}
       <Link
+        prefetch={false}
         className="text-link"
         href={
           '/operator/signin?next=' + encodeURIComponent('/contributor?workspace=' + workspace.data)
@@ -127,7 +128,7 @@ export default async function Page({
         Verify your authenticator again (opens a new tab)
       </Link>
       <p>Keep this task page open while verifying so unreceived work remains available to retry.</p>
-      <Link className="text-link" href="/network">
+      <Link prefetch={false} className="text-link" href="/network">
         About assigned work
       </Link>
       {process.env.CORRIDRA_NETWORK_ENABLED !== 'true' && <ContributorSignout />}

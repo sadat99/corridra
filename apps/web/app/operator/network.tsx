@@ -497,7 +497,11 @@ export function ExecutionNetwork({
         <a href="#workspace-missions">Open missions</a>
         <a href="#workspace-sources">Open sources and claims</a>
         <a href="#workspace-authenticator">Verify current access</a>
-        <Link className="text-link" href={'/contributor?workspace=' + encodeURIComponent(tenant)}>
+        <Link
+          prefetch={false}
+          className="text-link"
+          href={'/contributor?workspace=' + encodeURIComponent(tenant)}
+        >
           Open assigned task access
         </Link>
       </div>

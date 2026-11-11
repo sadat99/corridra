@@ -20,10 +20,10 @@ export default function BuyerPage() {
         chineseReleased={offeredLanguages().some((language) => language.code === 'zh')}
       />
       <nav className="access-options" aria-label="Private introduction help">
-        <Link className="text-link" href="/workspace">
+        <Link prefetch={false} className="text-link" href="/workspace">
           Workspace and invitation help
         </Link>
-        <Link className="text-link" href="/">
+        <Link prefetch={false} className="text-link" href="/">
           Back to Corridra
         </Link>
       </nav>

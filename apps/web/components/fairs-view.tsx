@@ -18,7 +18,7 @@ export function FairsIndexView({ list, today }: { list: readonly Fair[]; today: 
             Going to a trade fair? Tell us which one and we will help you plan who to meet and what
             to follow up.
           </p>
-          <Link className="primary-link" href="/plan?job=trade_fairs">
+          <Link prefetch={false} className="primary-link" href="/plan?job=trade_fairs">
             Ask us about a fair
           </Link>
         </div>
@@ -29,7 +29,9 @@ export function FairsIndexView({ list, today }: { list: readonly Fair[]; today: 
             return (
               <li key={fair.slug}>
                 <h2>
-                  <Link href={`/fairs/${fair.slug}`}>{fair.name}</Link>
+                  <Link prefetch={false} href={`/fairs/${fair.slug}`}>
+                    {fair.name}
+                  </Link>
                 </h2>
                 <p>
                   {fair.city}, {fair.countryCode}
@@ -91,7 +93,7 @@ export function FairDetailView({ fair, today }: { fair: Fair; today: string }) {
           </div>
         ))}
       </dl>
-      <Link className="text-link" href="/fairs">
+      <Link prefetch={false} className="text-link" href="/fairs">
         All fairs we have checked
       </Link>
     </>

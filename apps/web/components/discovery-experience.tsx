@@ -222,11 +222,11 @@ export function DiscoveryExperience({ children }: { children?: ReactNode }) {
           <h3>{route.label}</h3>
           <p className="ux-atlas-note">{route.note}</p>
           <div className="guide-route-actions">
-            <Link className="primary-link" href={briefUrl}>
+            <Link prefetch={false} className="primary-link" href={briefUrl}>
               Plan a Mission on This Route
             </Link>
             {route.slug && (
-              <Link className="button-secondary" href={`/corridors/${route.slug}`}>
+              <Link prefetch={false} className="button-secondary" href={`/corridors/${route.slug}`}>
                 Read About This Route
               </Link>
             )}
@@ -257,7 +257,7 @@ export function DiscoveryExperience({ children }: { children?: ReactNode }) {
               <span>{item.text}</span>
             </button>
           ))}
-          <Link className="ux-situation" href="/network">
+          <Link prefetch={false} className="ux-situation" href="/network">
             <strong>Help locally</strong>
             <span>Do clear local tasks for a stated reward.</span>
           </Link>
@@ -400,7 +400,7 @@ export function DiscoveryExperience({ children }: { children?: ReactNode }) {
               ? 'This route runs the other way and needs its own review. No operating offer is announced yet.'
               : 'This is one of the routes we start with.'}
           </p>
-          <Link className="text-link" href={briefUrl}>
+          <Link prefetch={false} className="text-link" href={briefUrl}>
             Start a request on this route <Arrow />
           </Link>
           <button

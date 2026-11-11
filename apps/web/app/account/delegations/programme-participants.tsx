@@ -416,7 +416,7 @@ function ScopedParticipants(props: Props) {
                 once and clears when this view is hidden or expires; after that, create a
                 replacement code. If you entered an email, you can also choose Email invitation. The
                 recipient can use{' '}
-                <Link className="text-link" href="/account/delegations">
+                <Link prefetch={false} className="text-link" href="/account/delegations">
                   Delegation registrations
                 </Link>{' '}
                 to inspect and accept it.

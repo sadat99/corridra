@@ -116,7 +116,10 @@ export function SetupForm({ kind = 'operator' }: { kind?: 'operator' | 'contribu
       {invite?.available && !done && (invite.role === 'contributor') !== contributor && (
         <p>
           This invitation uses a different access route.{' '}
-          <Link href={invite.role === 'contributor' ? '/contributor/setup' : '/operator/setup'}>
+          <Link
+            prefetch={false}
+            href={invite.role === 'contributor' ? '/contributor/setup' : '/operator/setup'}
+          >
             Open the invited setup route
           </Link>
           .

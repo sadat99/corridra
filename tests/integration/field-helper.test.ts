@@ -88,11 +88,23 @@ describe('nothing a helper reached before is lost', () => {
     expect(frame).toContain("key: 'tasks'");
     expect(frame).toContain("href: '/network'");
   });
-  test('Me says Coming soon for what is not built, and builds no control for it', () => {
+  test('Me says in one plain line what Corridra does not do (load other pages in the background), with no Data Saver control and no Coming soon', () => {
     const me = read('apps/web/app/contributor/me/helper-me.tsx');
-    expect(me).toMatch(/Data Saver[\s\S]{0,80}Coming soon/);
-    expect(me).not.toContain('Stronger Colours');
-    expect(me.match(/className="ux-soon-tag"/g)).toHaveLength(1);
+    // W10 (owner decision, 10 Nov 2026): data use is kept low for everyone, so there is nothing to switch.
+    expect(me).toContain(
+      '<p className="me-data-use">Corridra does not load other pages in the background.</p>',
+    );
+    expect(me).not.toContain('already keeps data use low');
+    // The line is set apart from the hint above it by a hairline, not run into it.
+    expect(read('apps/web/app/contributor/me/helper-me.css')).toMatch(
+      /\.me-data-use \{[^}]*margin-top: var\(--space-4\);[^}]*border-top: 1px solid var\(--line\);/,
+    );
+    expect(me).not.toMatch(/<(?:input|button|label)[^>]*Data Saver/i);
+    expect(me).not.toMatch(/label="Data Saver"|name="Data Saver"|aria-label="Data Saver"/i);
+    expect(me).not.toMatch(/Data Saver[\s\S]{0,200}(?:role="switch"|type="checkbox")/);
+    expect(me).not.toMatch(/Data Saver[\s\S]{0,80}Coming soon/);
+    expect(me).not.toContain('ux-soon-tag');
+    expect(me).not.toContain('Coming soon');
   });
   test('Me builds real Text Size and Less Movement controls, kept in this browser only', () => {
     const me = read('apps/web/app/contributor/me/helper-me.tsx');
@@ -104,6 +116,11 @@ describe('nothing a helper reached before is lost', () => {
     expect(me).toContain('Stops animation and anything that moves by itself.');
     expect(me).toContain('useTextSize');
     expect(me).toContain('useLessMovement');
+    // W10: Stronger Colours is a real switch beside them, and each switch yields to the device's own setting.
+    expect(me).toContain('label="Stronger Colours"');
+    expect(me).toContain('Darker text, clearer lines and underlined links.');
+    expect(me).toContain('useContrast');
+    expect(me).toContain('useSystemSetting');
     expect(me).not.toMatch(/fetch\(|\/api\//);
   });
 });

@@ -42,7 +42,7 @@ function Denied({ children }: { children: string }) {
       <AccessState kind="denied">
         <p>{children}</p>
       </AccessState>
-      <Link className="text-link" href="/operator">
+      <Link prefetch={false} className="text-link" href="/operator">
         Back to your workspace
       </Link>
     </WorkspaceShell>
@@ -143,6 +143,7 @@ export default async function Page({
                             </span>
                           ) : (
                             <Link
+                              prefetch={false}
                               key={choice.id}
                               className="text-link"
                               href={'/operator/owner?workspace=' + choice.id}
@@ -306,7 +307,7 @@ export default async function Page({
           },
         ]}
       />
-      <Link className="text-link" href="/operator">
+      <Link prefetch={false} className="text-link" href="/operator">
         Back to your workspace
       </Link>
     </WorkspaceShell>

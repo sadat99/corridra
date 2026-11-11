@@ -14,10 +14,10 @@ export default function NotFound() {
           <h1>This page isn’t here.</h1>
           <p className="guide-lead">Go back to the home page, or start a request.</p>
           <div className="guide-page-actions">
-            <Link className="primary-link" href="/">
+            <Link prefetch={false} className="primary-link" href="/">
               Back to Corridra
             </Link>
-            <Link className="button-secondary" href="/plan">
+            <Link prefetch={false} className="button-secondary" href="/plan">
               Start a Request
             </Link>
           </div>

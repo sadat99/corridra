@@ -15,7 +15,7 @@
   margin: 0;
 }
 .ux-kit-error {
-  color: var(--ac-critical);
+  color: var(--critical);
   font-size: 0.875rem;
   margin: 0;
 }
@@ -34,11 +34,11 @@
 .ux-kit-input:focus-visible,
 .ux-kit-option:focus-visible,
 .ux-kit-button:focus-visible {
-  outline: 3px solid var(--ac-cobalt);
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
 .ux-kit-input[aria-invalid='true'] {
-  border-color: var(--ac-critical);
+  border-color: var(--critical);
 }
 .ux-kit-row {
   display: flex;
@@ -111,7 +111,7 @@
   color: var(--ac-ink);
 }
 .ux-kit-summary {
-  border: 2px solid var(--ac-critical);
+  border: 2px solid var(--critical);
   border-radius: 8px;
   padding: 0.75rem 1rem;
   background: var(--ac-critical-surface);
@@ -213,7 +213,7 @@
 .ux-kit-inbox button:focus-visible,
 .ux-kit-help-toggle:focus-visible,
 .ux-kit-crumbs a:focus-visible {
-  outline: 3px solid var(--ac-cobalt);
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
 .ux-kit-summary li a,
@@ -245,7 +245,7 @@
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--ac-cobalt);
+  color: var(--brand);
   font: inherit;
   font-weight: 700;
   cursor: pointer;

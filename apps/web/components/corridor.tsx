@@ -47,7 +47,9 @@ export function Corridor() {
         Shared mission workflows. Each direction requires its own reviewed scope.
       </p>
       <p>
-        <Link href="/corridors">Explore the initial directions</Link>
+        <Link prefetch={false} href="/corridors">
+          Explore the initial directions
+        </Link>
       </p>
     </div>
   );

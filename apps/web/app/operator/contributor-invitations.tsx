@@ -319,7 +319,7 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
           >
             Copy Assigned-task Link
           </button>
-          <Link className="text-link" href="/network">
+          <Link prefetch={false} className="text-link" href="/network">
             Network access and work overview
           </Link>
           <button
