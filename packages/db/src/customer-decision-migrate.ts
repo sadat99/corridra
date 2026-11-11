@@ -1,10 +1,15 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerSavedMissions } from './customer-commercial-migrate';
 // A separately opted-in decision disclosure module. The accepted three-module request
 // authority installer and its existing callers keep their original lifecycle.
-export async function migrateCustomerDecisions(pool: DatabasePool) {
+export function migrateCustomerDecisions(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerDecisions', () => migrateCustomerDecisionsRun(pool));
+}
+
+async function migrateCustomerDecisionsRun(pool: DatabasePool) {
   await migrateCustomerSavedMissions(pool);
   const name = '0001_reviewed_commercial_decisions.sql';
   const sql = await readFile(

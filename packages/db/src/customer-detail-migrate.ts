@@ -1,10 +1,17 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerAuthority } from './customer-migrate';
 // A separately opted-in disclosure module. The accepted three-module request
 // authority installer and its existing callers keep their original lifecycle.
-export async function migrateCustomerRequestDetails(pool: DatabasePool) {
+export function migrateCustomerRequestDetails(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerRequestDetails', () =>
+    migrateCustomerRequestDetailsRun(pool),
+  );
+}
+
+async function migrateCustomerRequestDetailsRun(pool: DatabasePool) {
   await migrateCustomerAuthority(pool);
   const name = '0001_original_request_details.sql';
   const sql = await readFile(

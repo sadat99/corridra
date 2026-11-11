@@ -1,12 +1,19 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerMemberRoles } from './customer-member-role-migrate';
 import { migrateCustomerProgrammes } from './customer-programme-migrate';
 import { migrateCustomerCompanies } from './customer-company-migrate';
 // Explicit optional paid-service request authority. It reads the workspace roles, programmes and company
 // portfolio, so those modules are installed first. Accepted base lifecycles are unchanged.
-export async function migrateCustomerServiceRequests(pool: DatabasePool) {
+export function migrateCustomerServiceRequests(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerServiceRequests', () =>
+    migrateCustomerServiceRequestsRun(pool),
+  );
+}
+
+async function migrateCustomerServiceRequestsRun(pool: DatabasePool) {
   await migrateCustomerMemberRoles(pool);
   await migrateCustomerProgrammes(pool);
   await migrateCustomerCompanies(pool);
