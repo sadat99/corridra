@@ -43,16 +43,19 @@ const noteColumns = `id,chain_id,relationship_id,body,source_id,created_at,statu
 
 /** Relationship detail through the state views. Owners and admins also get the hide reason and ticket reference. */
 export async function stateDetail(t: TenantTransaction, relationshipIds: string[]) {
-  // The page limit counts current versions first, so earlier versions never push a current one off the page.
+  // The page limit counts current versions first, so earlier versions never push a current one off the page. Each
+  // chain keeps its place by the creation time of its first version (contacts oldest first, notes newest first), so a
+  // correction never moves an item in the list; the window runs before the limit, so the key holds even when the
+  // limit leaves earlier versions out.
   const contacts = (
     await t.db.query(
-      `SELECT ${contactColumns} FROM app.private_contact_state WHERE tenant_id=$1 AND relationship_id=ANY($2::uuid[]) ORDER BY change_kind IS NOT DISTINCT FROM 'CORRECT',created_at,id LIMIT 100`,
+      `SELECT ${contactColumns} FROM app.private_contact_state WHERE tenant_id=$1 AND relationship_id=ANY($2::uuid[]) ORDER BY change_kind IS NOT DISTINCT FROM 'CORRECT',min(created_at) OVER (PARTITION BY chain_id),chain_id,created_at,id LIMIT 100`,
       [t.tenantId, relationshipIds],
     )
   ).rows;
   const notes = (
     await t.db.query(
-      `SELECT ${noteColumns} FROM app.private_note_state WHERE tenant_id=$1 AND relationship_id=ANY($2::uuid[]) ORDER BY change_kind IS NOT DISTINCT FROM 'CORRECT',created_at DESC,id LIMIT 100`,
+      `SELECT ${noteColumns} FROM app.private_note_state WHERE tenant_id=$1 AND relationship_id=ANY($2::uuid[]) ORDER BY change_kind IS NOT DISTINCT FROM 'CORRECT',min(created_at) OVER (PARTITION BY chain_id) DESC,chain_id,created_at DESC,id LIMIT 100`,
       [t.tenantId, relationshipIds],
     )
   ).rows;

@@ -3586,3 +3586,25 @@ Changed files: `docs/V3_LEDGER.md` (Resume: main 3bfe4097, the open access gap n
 Verification: this branch, local, on the working tree over d72d03e (s40-records-1 with main 3bfe4097 merged): `node scripts/authority.mjs check` exit 0 (77 governed documents); `node scripts/v3-context.mjs verify` exit 0 (48 exact additional archives; active ledger within 12 KiB); `node scripts/gate.mjs s40-records1c-docs-2 -- pnpm test:docs` exit 0 (receipt `work/s40-records1c-docs-2-2026-11-11T04-19-55-337Z.log`, local, not committed); `pnpm exec prettier --check` on the six changed files exit 0. Sizes: ledger 9539 bytes, `node scripts/v3-context.mjs status` output 9562 bytes, the four always-read files 34997 bytes (cap 36864, 1867 bytes of headroom; the next records PR should condense). Not verified by the scribe: the relayed owner, Guardian and Codex words marked above, and the final state of main CI and CodeQL on 3bfe4097.
 
 Next: (1) S44 removed-member access PR: Guardian with two reviewers focused on access and tenants, the owner merges, S28 dispatches the install; (2) Guardian review of S41's PR3 (menus only when both installed() and selfRemovalAvailable hold); (3) S42 and S43 W6 PRs; (4) S45 G11 follow-ups; (5) owner items in the ledger.
+
+### 11 November 2026: CRUD G11 follow-ups, code only (S45 CRUD lane, branch crud-g11-followups from main 3bfe409)
+
+Stamp auth-8a9450979f1b. No migration, no switch, no install. Tested head f4b382c.
+
+Built (the six PR 399 follow-ups):
+
+- Dispatcher claim, probe, contact check and PERMANENT finish run in one transaction on one client (packages/workflows/src/index.ts), through installed functions only, no SQL.
+- The messages list names the true reason (contact-not-sent.ts `notSentWords`): "Not sent: the person opted out. It cannot be sent again." / "Not sent: contact hidden. It cannot be sent again." / "Not sent: contact withdrawn. It cannot be sent again." / "Not sent: the contact was corrected after this introduction was created. It cannot be sent again." / "Not sent: this contact can no longer be used." The old "withdrawn or hidden" words are removed. Precedence: opted out, hidden, withdrawn, corrected. The opt-out fact is read only under the reader's own RLS in a page-bounded follow-up query (builder deviation from the plan, for a measured 28 s page query; reviewer A traced it equivalent).
+- A corrected chain keeps its place (changes.ts window ORDER BY; the current-first page rule is kept).
+- Dialog `confirmClose` re-show fallback (dialog.tsx; `data-autofocus` on Keep Editing).
+- Coverage: G11-09 at 320/360/768/1024/1440 with axe and 44 px in six dialog states; ended-source withdraw (integration and G11-17); 30-row 403 matrix and 8-row 404 matrix (two hide rows are a role 403 before lookup); 401 in Correct and Hide (G11-18); G11-16 exact body under Asia/Kolkata; G11-19 to G11-21.
+
+Defaults taken (S40 accepted, owner may revisit): opt-out words only for readers who can already read the opt-out row, neutral words otherwise; corrected-contact words state the fact only.
+
+Verification (verifier, local, head f4b382c): preflight READY TO PUSH; format, lint, typecheck exit 0; `pnpm test` 78/78 plus python 7 OK; v3-context verify pass; gitleaks no leaks; changed integration 847 passed, 1 skipped; build exit 0; `test:e2e` 633 passed, 413 skipped (project guards); `test:ux` 157 passed; operator 95 of 100 specs, 1413 passed, 2 skipped, 0 failed; full integration 4172 passed, 4 failed local-only (adapters, blob, foundations, scan-bypass; KI-15 Docker/ClamAV), 1 skipped; packages/db diff empty. Revert proofs per test recorded by the builder (each new test fails with its guarded line broken). Reviews: two independent reviewers and a design audit, no blocking or should-fix finding.
+
+Notes not fixed (follow-ups): a deterministic fault inside the check now rolls back the claim, so attempts never reach the dead-letter limit (ADR-005 dead-letter; no realistic cause found); a rolled-back fault leaves no attempt row; the dialog re-show swallows a showModal error (dialog.tsx:95-99) and the fallback focus takes the first `data-autofocus`, not Keep Editing; one test runs ANALYZE (the state view is slow on unanalysed tables, pre-existing); the expired-source tests use a real 2 s wait; the Hide dialog has no discard guard; "Current source required" is not plain language; the check-to-delivery window still relies on the installed receipt trigger (closing it would need an additive 0002, owner-merged).
+
+Sensitive: yes (consent stop). No migration; S40 merges. Control `contact_changes_enable` stays closed. Requirements unchanged (V3-09-043, V3-09-045 GATED; V3-05-013, V3-05-014 PARTIAL; V3-04-054, V3-07-044, V3-09-059 NOT VERIFIED).
+
+Next: push, draft PR, CI on the exact head, Guardian review by S40; then the next CRUD gap from crud/summary.md Order; candidate 0011 only on S40's go.

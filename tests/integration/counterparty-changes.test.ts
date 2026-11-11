@@ -10,9 +10,11 @@ import {
   correctNote,
   counts,
   hideContact,
+  hideNote,
   hideReason,
   noteOn,
   reasonText,
+  recordingPool,
   refused,
   storedRow,
   ticket,
@@ -22,9 +24,9 @@ import {
   type World,
 } from './counterparty-changes-support';
 import { hash } from '../../packages/communications/src/index';
-import { SyntheticChannel } from '../../packages/communications/src/adapters';
+import { SyntheticChannel, type ChannelAdapter } from '../../packages/communications/src/adapters';
 import { OutboxDispatcher } from '../../packages/workflows/src/index';
-import { notSentForContact } from '../../apps/web/app/operator/contact-not-sent';
+import { notSentWords } from '../../apps/web/app/operator/contact-not-sent';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { admitSyntheticCustomer } from '../../packages/auth/src/customer-admission';
 import { configureCustomerRealUse } from '../../packages/auth/src/customer-real-use-configuration';
@@ -159,6 +161,118 @@ describe('CRUD-1 who may withdraw and correct', () => {
   });
 });
 
+describe('CRUD-1 refusals for every change action', () => {
+  const denied = 'Only the relationship owner or a workspace owner or admin can change this.';
+  type Ids = { contactId: string; noteId: string; sourceId: string };
+  const actions: [string, (ids: Ids) => Record<string, unknown>, string][] = [
+    ['correct_contact', (i) => correctContact(i.contactId, i.sourceId), denied],
+    ['correct_note', (i) => correctNote(i.noteId, i.sourceId), denied],
+    ['withdraw_note', (i) => withdrawNote(i.noteId), denied],
+    [
+      'hide_contact',
+      (i) => hideContact(i.contactId),
+      'Only a workspace owner or admin can hide contact details.',
+    ],
+    ['hide_note', (i) => hideNote(i.noteId), 'Only a workspace owner or admin can hide notes.'],
+  ];
+  /** A target with a note, and a team relationship on the same company with its own contact and note. */
+  async function world() {
+    const t = await f.target();
+    const note = await noteOn(f, t);
+    const team = await f.research.command(
+      f.ctx,
+      command('relationship', {
+        organisationId: await organisationOf(t.relationshipId),
+        ownerId: f.users.operator.id,
+        visibility: 'TEAM',
+        note: 'Shared team relationship',
+      }),
+    );
+    const teamContact = await f.research.command(
+      f.ctx,
+      command('contact', {
+        relationshipId: team.id,
+        sourceId: t.sourceId,
+        name: 'Team Buyer',
+        jobTitle: 'Buyer',
+        email: `${randomUUID()}@example.invalid`,
+        validUntil: future(6),
+      }),
+    );
+    const teamNote = await noteOn(f, { relationshipId: team.id, sourceId: t.sourceId });
+    return {
+      own: { contactId: t.contactId, noteId: note.id, sourceId: t.sourceId },
+      team: { contactId: teamContact.id as string, noteId: teamNote.id, sourceId: t.sourceId },
+    };
+  }
+
+  test('correct, withdraw note and hide are refused with 403 and plain words for every caller without the right, and nothing is written', async () => {
+    const w = await world();
+    const callers: [string, () => Member['ctx'], keyof typeof w][] = [
+      ['reviewer', () => f.users.reviewer.ctx, 'own'],
+      ['viewer', () => f.users.viewer.ctx, 'own'],
+      ['non-owner operator on a team relationship', () => otherOperator.ctx, 'team'],
+      ['revoked member', () => revoked.ctx, 'own'],
+      ['disabled principal', () => disabled.ctx, 'own'],
+      ['outsider', () => f.users.outsider.ctx, 'own'],
+    ];
+    const rows = actions.flatMap((a) => callers.map((c) => [a, c] as const));
+    expect(rows).toHaveLength(30);
+    const before = await counts(f);
+    for (const [[action, input, words], [caller, ctx, ids]] of rows) {
+      const error = await refused(f.research.command(ctx(), input(w[ids])), 403);
+      expect({ action, caller, message: error.message }).toEqual({
+        action,
+        caller,
+        message: words,
+      });
+    }
+    expect(await counts(f)).toEqual(before);
+  });
+
+  test('hide is refused for the operator who owns the relationship (403), and for an owner or admin without a fresh authenticator check (STEP_UP_REQUIRED)', async () => {
+    const w = await world();
+    const staleOwner = await addMember(f, 'owner', { staleMfa: true });
+    const staleAdmin = await addMember(f, 'admin', { staleMfa: true });
+    const before = await counts(f);
+    for (const [, input, words] of actions.slice(3)) {
+      expect((await refused(f.research.command(f.ctx, input(w.own)), 403)).message).toBe(words);
+      for (const stale of [staleOwner, staleAdmin])
+        await refused(f.research.command(stale.ctx, input(w.own)), 401, 'STEP_UP_REQUIRED');
+    }
+    expect(await counts(f)).toEqual(before);
+  });
+
+  test('every change action on an item the caller cannot see, or in another workspace, answers 404 exactly like a random id', async () => {
+    const w = await world();
+    const random = { contactId: randomUUID(), noteId: randomUUID(), sourceId: w.own.sourceId };
+    const before = await counts(f);
+    let rows = 0;
+    for (const [action, input, words] of actions) {
+      // The workspace owner has every right, so a random id gives the plain not-found answer.
+      const missing = await refused(f.research.command(f.users.owner.ctx, input(random)), 404);
+      const hide = action.startsWith('hide');
+      for (const ctx of [otherOperator.ctx, f.users.other.ctx]) {
+        // An operator may never hide, so hide is refused on the role before any item is looked up: the same 403
+        // for every id, which tells nothing about the item.
+        if (hide && ctx === otherOperator.ctx) {
+          expect((await refused(f.research.command(ctx, input(w.own)), 403)).message).toBe(words);
+          continue;
+        }
+        const error = await refused(f.research.command(ctx, input(w.own)), 404);
+        expect({ action, message: error.message, code: error.code }).toEqual({
+          action,
+          message: missing.message,
+          code: missing.code,
+        });
+        rows++;
+      }
+    }
+    expect(rows).toBe(8);
+    expect(await counts(f)).toEqual(before);
+  });
+});
+
 describe('CRUD-2 retries', () => {
   test('the same command id twice gives one change and the same ids; changed values are refused; a double click writes one row', async () => {
     const t = await f.target();
@@ -226,6 +340,61 @@ describe('CRUD-3 versions', () => {
   });
 });
 
+describe('CRUD-3 list order', () => {
+  /** Chain ids in the order the detail first lists each chain, as the screen groups them. */
+  const chainOrder = (rows: { chain_id?: unknown; id?: unknown }[]) => [
+    ...new Set(rows.map((r) => String(r.chain_id ?? r.id))),
+  ];
+  const addContact = async (t: { relationshipId: string; sourceId: string }, name: string) =>
+    (
+      await f.research.command(
+        f.ctx,
+        command('contact', {
+          relationshipId: t.relationshipId,
+          sourceId: t.sourceId,
+          name,
+          jobTitle: 'Buyer',
+          email: `${randomUUID()}@example.invalid`,
+          validUntil: future(6),
+        }),
+      )
+    ).id as string;
+
+  test('a corrected contact or note keeps its place: contacts oldest first, notes newest first', async () => {
+    const t = await f.target();
+    const later = await addContact(t, 'Later Buyer');
+    const first = await noteOn(f, t),
+      second = await noteOn(f, t);
+    await f.research.command(f.ctx, correctContact(t.contactId, t.sourceId));
+    await f.research.command(f.ctx, correctNote(first.id, t.sourceId));
+    const detail = await f.research.detail(f.ctx, await organisationOf(t.relationshipId));
+    expect(chainOrder(detail.contacts)).toEqual([t.contactId, later]);
+    expect(chainOrder(detail.notes)).toEqual([second.id, first.id]);
+  });
+
+  test('with more than 100 versions every current version is still listed, before any earlier one, in chain order', async () => {
+    const t = await f.target();
+    const others = [await addContact(t, 'Second Buyer'), await addContact(t, 'Third Buyer')];
+    let latest = t.contactId;
+    for (let i = 0; i < 100; i++)
+      latest = (await f.research.command(f.ctx, correctContact(latest, t.sourceId)))
+        .replacementId as string;
+    // A real database's autovacuum analyses tables after this many inserts; this fresh one would not before the read,
+    // and without statistics the planner scans every change row for each contact row of the state view.
+    await f.owner.query(
+      'ANALYZE app.private_contact_data,app.private_contact_change,app.private_record_redaction',
+    );
+    const contacts = (await f.research.detail(f.ctx, await organisationOf(t.relationshipId)))
+      .contacts;
+    expect(contacts).toHaveLength(100);
+    const corrected = contacts.map((c) => c.change_kind === 'CORRECT');
+    expect(corrected.slice(0, 3)).toEqual([false, false, false]);
+    expect(corrected.slice(3).every(Boolean)).toBe(true);
+    expect(contacts.slice(0, 3).map((c) => c.id)).toEqual([latest, ...others]);
+    expect(chainOrder(contacts)).toEqual([t.contactId, ...others]);
+  });
+});
+
 describe('CRUD-4 references and recovery', () => {
   test('a withdrawn or corrected contact cannot be chosen for a new target, and existing targets still show it as Withdrawn', async () => {
     const t = await f.target();
@@ -274,6 +443,53 @@ describe('CRUD-4 references and recovery', () => {
       kind: 'WITHDRAW',
     });
     await refused(f.research.command(f.ctx, correctContact(t.contactId, randomUUID())), 409);
+  });
+
+  test('a contact whose source passed its keep-until date can still be withdrawn, and a correction naming that source is refused', async () => {
+    const t = await f.target();
+    // A contact may not outlive its source, so both end together.
+    const ends = new Date(Date.now() + 1500).toISOString();
+    const unexpected = async () => {
+      throw new Error('No file operation in this test');
+    };
+    const evidence = new EvidenceService(
+      f.runtime,
+      { put: unexpected, get: unexpected },
+      { scan: unexpected },
+    );
+    const ending = await evidence.createSource(f.ctx, {
+      kind: 'public_record',
+      classification: 'PUBLIC',
+      locator: 'https://example.invalid/registry-ending',
+      observedAt: new Date().toISOString(),
+      purpose: 'synthetic_validation',
+      retentionUntil: ends,
+      aiPolicy: 'DENY',
+    });
+    const onEnding = await f.research.command(
+      f.ctx,
+      command('contact', {
+        relationshipId: t.relationshipId,
+        sourceId: ending.id,
+        name: 'Source Ending Buyer',
+        jobTitle: 'Buyer',
+        email: `${randomUUID()}@example.invalid`,
+        validUntil: ends,
+      }),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const before = await counts(f);
+    const error = await refused(
+      f.research.command(f.ctx, correctContact(onEnding.id, ending.id)),
+      409,
+    );
+    expect(error.message).toBe('Current source required');
+    expect(await counts(f)).toEqual(before);
+    expect(await f.research.command(f.ctx, withdrawContact(onEnding.id))).toMatchObject({
+      kind: 'WITHDRAW',
+      contactId: onEnding.id,
+    });
+    expect((await contactIn(t.relationshipId, onEnding.id))?.status).toBe('WITHDRAWN');
   });
 
   test('research intake paused: correct is refused, withdraw still works', async () => {
@@ -406,6 +622,15 @@ describe('CRUD-6 and Guardian C3 events', () => {
 });
 
 describe('Guardian C4 send-time check', () => {
+  // The messages list words, from the UI spec.
+  const words = {
+    optedOut: 'Not sent: the person opted out. It cannot be sent again.',
+    hidden: 'Not sent: contact hidden. It cannot be sent again.',
+    withdrawn: 'Not sent: contact withdrawn. It cannot be sent again.',
+    corrected:
+      'Not sent: the contact was corrected after this introduction was created. It cannot be sent again.',
+    neutral: 'Not sent: this contact can no longer be used.',
+  };
   const worker = () => new OutboxDispatcher(f.runtime, new SyntheticChannel(f.runtime));
   const dispatch = async (id: string) =>
     (
@@ -427,9 +652,175 @@ describe('Guardian C4 send-time check', () => {
     });
     const listed = (await f.communications.workspace(f.ctx)).messages.find((m) => m.id === i.id);
     expect(listed).toMatchObject({ contact_status: 'WITHDRAWN' });
-    // The messages list says "Not sent: contact withdrawn or hidden." only for a message this check stopped.
-    expect(notSentForContact(listed!)).toBe(true);
+    // The messages list names the reason only for a message this check stopped.
+    expect(notSentWords(listed!)).toBe(words.withdrawn);
   });
+
+  test('the claim, the module check, the contact check and the PERMANENT finish run in one transaction on one connection, released before any delivery', async () => {
+    const stopped = await f.introduction();
+    await f.research.command(f.ctx, withdrawContact(stopped.contactId));
+    const first = recordingPool(f.runtime);
+    expect(
+      await new OutboxDispatcher(first.pool, new SyntheticChannel(f.runtime)).attempt(
+        stopped.id,
+        f.communications.dispatchCapability(stopped.id),
+      ),
+    ).toBe('DEAD');
+    expect(first.calls).toEqual(
+      [
+        'BEGIN',
+        'claim_communication',
+        'probe',
+        'private_contact_message_active',
+        'finish_communication PERMANENT',
+        'COMMIT',
+        'release',
+      ].map((s) => ({ client: 1, step: s })),
+    );
+    expect(first.releases).toEqual([undefined]);
+    expect(await dispatch(stopped.id)).toMatchObject({ status: 'DEAD', receipts: 0 });
+
+    const current = await f.introduction();
+    const second = recordingPool(f.runtime);
+    const channel = new SyntheticChannel(f.runtime);
+    const recordedChannel: ChannelAdapter = {
+      async deliver(effect) {
+        second.calls.push({ client: 'deliver', step: 'deliver' });
+        // The claim is committed before the channel runs: another connection sees the lease.
+        expect(await dispatch(current.id)).toMatchObject({ status: 'RUNNING', attempts: 1 });
+        return channel.deliver(effect);
+      },
+    };
+    expect(
+      await new OutboxDispatcher(second.pool, recordedChannel).attempt(
+        current.id,
+        f.communications.dispatchCapability(current.id),
+      ),
+    ).toBe('DELIVERED');
+    expect(second.calls).toEqual([
+      ...['BEGIN', 'claim_communication', 'probe', 'private_contact_message_active', 'COMMIT'].map(
+        (s) => ({ client: 1, step: s }),
+      ),
+      { client: 1, step: 'release' },
+      { client: 'deliver', step: 'deliver' },
+      { client: 'pool', step: 'finish_communication DELIVERED' },
+    ]);
+  });
+
+  test.each([
+    ['the PERMANENT finish', /finish_communication/],
+    ['the contact check', /SELECT app\.private_contact_message_active/],
+  ])(
+    'a connection lost at %s rolls the claim back: the message stays PENDING with no attempt, and the next attempt ends it DEAD with no receipt',
+    async (_where, lose) => {
+      const i = await f.introduction();
+      await f.research.command(f.ctx, withdrawContact(i.contactId));
+      const delivery = async () =>
+        (
+          await f.owner.query(
+            'SELECT d.attempts FROM app.outbox_delivery d JOIN app.communication_dispatch j ON j.event_id=d.event_id WHERE j.id=$1',
+            [i.id],
+          )
+        ).rows[0].attempts as number;
+      const attemptRows = async () =>
+        (
+          await f.owner.query(
+            'SELECT count(*)::int n FROM app.communication_attempt WHERE message_id=$1',
+            [i.id],
+          )
+        ).rows[0].n as number;
+      const outboxAttempts = await delivery();
+      const broken = recordingPool(f.runtime, lose);
+      await expect(
+        new OutboxDispatcher(broken.pool, new SyntheticChannel(f.runtime)).attempt(
+          i.id,
+          f.communications.dispatchCapability(i.id),
+        ),
+      ).rejects.toThrow('connection lost');
+      // The failed ROLLBACK hands its error to release(), so the broken connection is discarded, not reused.
+      expect(broken.releases).toHaveLength(1);
+      expect(broken.releases[0]).toBeInstanceOf(Error);
+      expect(await dispatch(i.id)).toMatchObject({ status: 'PENDING', attempts: 0, receipts: 0 });
+      expect(await attemptRows()).toBe(0);
+      expect(await delivery()).toBe(outboxAttempts);
+      expect(await worker().attempt(i.id, f.communications.dispatchCapability(i.id))).toBe('DEAD');
+      expect(await dispatch(i.id)).toMatchObject({
+        status: 'DEAD',
+        attempts: 1,
+        last_error: 'PERMANENT',
+        receipts: 0,
+      });
+    },
+  );
+
+  test('a claim whose worker stopped during delivery keeps its lease until it expires, then the next attempt reclaims it', async () => {
+    const i = await f.introduction();
+    let stop: (reason: Error) => void = () => undefined;
+    const stalled = new OutboxDispatcher(f.runtime, {
+      deliver: () =>
+        new Promise<string>((_resolve, reject) => {
+          stop = reject;
+        }),
+    }).attempt(i.id, f.communications.dispatchCapability(i.id));
+    await vi.waitFor(async () => expect((await dispatch(i.id)).status).toBe('RUNNING'));
+    expect(await worker().attempt(i.id, f.communications.dispatchCapability(i.id))).toBe('WAIT');
+    await asOwner(
+      f,
+      "UPDATE app.communication_dispatch SET lease_until=now()-interval '1 second' WHERE id=$1",
+      [i.id],
+    );
+    expect(await worker().attempt(i.id, f.communications.dispatchCapability(i.id))).toBe(
+      'DELIVERED',
+    );
+    expect(await dispatch(i.id)).toMatchObject({ status: 'DELIVERED', attempts: 2, receipts: 1 });
+    // The stalled worker's late finish cannot undo the delivery.
+    stop(new Error('worker stopped'));
+    expect(await stalled).toBe('DELIVERED');
+  });
+
+  test.each(['withdraw', 'hide', 'opt-out'] as const)(
+    'a change (%s) committed after the check and before delivery is stopped by the receipt trigger, and the next attempt ends it DEAD with no receipt',
+    async (change) => {
+      const t = await f.target();
+      const corrected = await f.research.command(f.ctx, correctContact(t.contactId, t.sourceId));
+      const i = await f.introduction({ ...t, contactId: corrected.replacementId });
+      const channel = new SyntheticChannel(f.runtime);
+      const racing = new OutboxDispatcher(f.runtime, {
+        async deliver(effect) {
+          if (change === 'withdraw')
+            await f.research.command(f.ctx, withdrawContact(corrected.replacementId));
+          else if (change === 'hide')
+            await f.research.command(f.users.owner.ctx, hideContact(corrected.replacementId));
+          // An opt-out of an earlier address in the chain: the message's own address is not opted out.
+          else
+            await f.communications.command(
+              f.ctx,
+              command('optout', {
+                contactId: t.contactId,
+                reason: 'The person asked not to be contacted',
+              }),
+            );
+          return channel.deliver(effect);
+        },
+      });
+      expect(await racing.attempt(i.id, f.communications.dispatchCapability(i.id))).toBe('PENDING');
+      expect(await dispatch(i.id)).toMatchObject({
+        attempts: 1,
+        last_error: 'TRANSIENT',
+        receipts: 0,
+      });
+      await asOwner(f, 'UPDATE app.communication_dispatch SET available_at=now() WHERE id=$1', [
+        i.id,
+      ]);
+      expect(await worker().attempt(i.id, f.communications.dispatchCapability(i.id))).toBe('DEAD');
+      expect(await dispatch(i.id)).toMatchObject({
+        status: 'DEAD',
+        attempts: 2,
+        last_error: 'PERMANENT',
+        receipts: 0,
+      });
+    },
+  );
 
   test('same for a hidden chain and for an opted-out address elsewhere in the chain', async () => {
     const hidden = await f.introduction();
@@ -450,31 +841,122 @@ describe('Guardian C4 send-time check', () => {
     );
     expect((await dispatch(queued.id)).receipts).toBe(0);
     const messages = (await f.communications.workspace(f.ctx)).messages;
-    expect(notSentForContact(messages.find((m) => m.id === hidden.id)!)).toBe(true);
-    // Stopped for an opted-out address, not for a withdrawn or hidden contact: no such words.
-    expect(notSentForContact(messages.find((m) => m.id === queued.id)!)).toBe(false);
-    // A message stopped for an unrelated reason, or a corrected contact, never reads as withdrawn or hidden.
+    const listedHidden = messages.find((m) => m.id === hidden.id)!;
+    expect(notSentWords(listedHidden)).toBe(words.hidden);
+    // A hidden contact's name and address are not in the message row.
+    const hiddenText = JSON.stringify(listedHidden);
+    expect(hiddenText).not.toContain('Synthetic Buyer');
+    expect(hiddenText).not.toContain('@example.invalid');
+    // Stopped for an opted-out address, not for a withdrawn or hidden contact: the opt-out words, never those.
+    const optedOut = notSentWords(messages.find((m) => m.id === queued.id)!);
+    expect(optedOut).toBe(words.optedOut);
+    expect(optedOut).not.toMatch(/withdrawn|hidden/);
+  });
+
+  test('the not-sent words give the true reason: an opt-out before a withdrawal, and a correction after queueing', async () => {
+    const t = await f.target();
+    const corrected = await f.research.command(f.ctx, correctContact(t.contactId, t.sourceId));
+    const both = await f.introduction({ ...t, contactId: corrected.replacementId });
+    await f.communications.command(
+      f.ctx,
+      command('optout', { contactId: t.contactId, reason: 'The person asked not to be contacted' }),
+    );
+    await f.research.command(f.ctx, withdrawContact(corrected.replacementId));
+    expect(await worker().attempt(both.id, f.communications.dispatchCapability(both.id))).toBe(
+      'DEAD',
+    );
+    const u = await f.target();
+    const changed = await f.introduction(u);
+    await f.research.command(f.ctx, correctContact(u.contactId, u.sourceId));
     expect(
-      notSentForContact({
-        delivery_status: 'SUPPRESSED',
-        last_error: 'POLICY_BLOCKED',
-        contact_status: 'WITHDRAWN',
+      await worker().attempt(changed.id, f.communications.dispatchCapability(changed.id)),
+    ).toBe('DEAD');
+    const messages = (await f.communications.workspace(f.ctx)).messages;
+    const listedBoth = messages.find((m) => m.id === both.id)!;
+    expect(listedBoth).toMatchObject({ contact_status: 'WITHDRAWN', contact_opted_out: true });
+    expect(notSentWords(listedBoth)).toBe(words.optedOut);
+    expect(notSentWords(listedBoth)).not.toMatch(/withdrawn|hidden/);
+    const listedChanged = messages.find((m) => m.id === changed.id)!;
+    expect(listedChanged).toMatchObject({ contact_status: 'CORRECTED', contact_opted_out: false });
+    expect(notSentWords(listedChanged)).toBe(words.corrected);
+  });
+
+  test('an opt-out the reader may not read is never named: that reader gets the neutral words, a workspace owner the opt-out words', async () => {
+    // The message goes to a correction; its chain's first address is opted out through a contact on another
+    // relationship, owned by another operator with owner-only visibility, so the sending operator cannot read it.
+    const t = await f.target();
+    const email = (
+      await f.owner.query('SELECT email FROM app.private_contact_data WHERE id=$1', [t.contactId])
+    ).rows[0].email as string;
+    const corrected = await f.research.command(f.ctx, correctContact(t.contactId, t.sourceId));
+    const queued = await f.introduction({ ...t, contactId: corrected.replacementId });
+    const elsewhere = await f.research.command(
+      f.users.owner.ctx,
+      command('relationship', {
+        organisationId: await organisationOf(t.relationshipId),
+        ownerId: otherOperator.id,
+        visibility: 'OWNER',
+        note: 'Another operator keeps this relationship',
       }),
-    ).toBe(false);
+    );
+    const sameAddress = await f.research.command(
+      f.users.owner.ctx,
+      command('contact', {
+        relationshipId: elsewhere.id,
+        sourceId: t.sourceId,
+        name: 'Same Address Elsewhere',
+        jobTitle: 'Buyer',
+        email,
+        validUntil: future(6),
+      }),
+    );
+    const optoutReason = `Private opt-out reason ${randomUUID()}`;
+    await f.communications.command(
+      otherOperator.ctx,
+      command('optout', { contactId: sameAddress.id, reason: optoutReason }),
+    );
+    expect(await worker().attempt(queued.id, f.communications.dispatchCapability(queued.id))).toBe(
+      'DEAD',
+    );
+    const asSender = (await f.communications.workspace(f.ctx)).messages;
+    expect(asSender.find((m) => m.id === queued.id)).toMatchObject({
+      contact_status: 'SOURCE_REPORTED',
+      contact_opted_out: false,
+    });
+    expect(notSentWords(asSender.find((m) => m.id === queued.id)!)).toBe(words.neutral);
+    const asOwnerOfWorkspace = (await f.communications.workspace(f.users.owner.ctx)).messages;
+    expect(notSentWords(asOwnerOfWorkspace.find((m) => m.id === queued.id)!)).toBe(words.optedOut);
+    for (const list of [asSender, asOwnerOfWorkspace])
+      expect(JSON.stringify(list)).not.toContain(optoutReason);
+  });
+
+  test('only a message the send-time check stopped gets contact words, and never with the module absent', () => {
+    for (const contact_status of ['WITHDRAWN', 'HIDDEN', 'CORRECTED', 'SOURCE_REPORTED', null])
+      for (const contact_opted_out of [true, false]) {
+        for (const [delivery_status, last_error] of [
+          ['SUPPRESSED', 'POLICY_BLOCKED'],
+          ['PENDING', 'TRANSIENT'],
+          ['DEAD', 'TRANSIENT'],
+          ['DELIVERED', null],
+        ])
+          expect(
+            notSentWords({ delivery_status, last_error, contact_status, contact_opted_out }),
+          ).toBeNull();
+        // Without the module the row carries no opt-out field.
+        expect(
+          notSentWords({ delivery_status: 'DEAD', last_error: 'PERMANENT', contact_status }),
+        ).toBeNull();
+      }
+    const stopped = { delivery_status: 'DEAD', last_error: 'PERMANENT' };
+    expect(notSentWords({ ...stopped, contact_status: 'HIDDEN', contact_opted_out: true })).toBe(
+      words.optedOut,
+    );
     expect(
-      notSentForContact({
-        delivery_status: 'DEAD',
-        last_error: 'PERMANENT',
-        contact_status: 'CORRECTED',
-      }),
-    ).toBe(false);
-    expect(
-      notSentForContact({
-        delivery_status: 'PENDING',
-        last_error: 'TRANSIENT',
-        contact_status: 'HIDDEN',
-      }),
-    ).toBe(false);
+      notSentWords({ ...stopped, contact_status: 'WITHDRAWN', contact_opted_out: false }),
+    ).toBe(words.withdrawn);
+    expect(notSentWords({ ...stopped, contact_status: null, contact_opted_out: false })).toBe(
+      words.neutral,
+    );
   });
 
   test('a message to a withdrawn contact, or to a correction of an opted-out address, is refused before it is queued', async () => {

@@ -1,5 +1,5 @@
 'use client';
-import { notSentForContact } from './contact-not-sent';
+import { notSentWords } from './contact-not-sent';
 import { DateTimeField } from '../../components/ux/date-time-input';
 import { PhoneFold } from '../../components/phone-fold';
 import { OperatorWorkbench } from '../../components/operator-workbench';
@@ -47,7 +47,9 @@ type Message = {
   revoked: boolean;
   expires_at: string;
   /** CRUD G11: the state of the message's contact, present only when contact changes are installed. */
-  contact_status?: string;
+  contact_status?: string | null;
+  /** CRUD G11: true when an opt-out this reader may read covers an address in the contact's chain (installed only). */
+  contact_opted_out?: boolean;
   last_error?: string | null;
 };
 type Comms = {
@@ -668,68 +670,75 @@ export function ControlledAccess({ tenant, revision }: { tenant: string; revisio
           Dispatch Pending Introductions
         </button>
       )}
-      {comms.messages.map((m) => (
-        <article className="detail-card introduction-card" key={m.id}>
-          <h4>{m.presentation.company}</h4>
-          <p>
-            {channelLabel(m.channel)}: {plain(m.delivery_status)}. Attempts: {m.attempts}. Buyer
-            response: {m.decision ? plain(m.decision) : 'Awaiting response'}.{' '}
-            {m.revoked ? 'Link revoked.' : ''}
-            {notSentForContact(m) && ' Not sent: contact withdrawn or hidden.'}
-          </p>
-          <p>Link expires {formatDateTime(m.expires_at)}.</p>
-          {manage && !m.revoked && (
-            <form
-              className="operator-form"
-              aria-label={`Revoke introduction ${m.id}`}
-              onSubmit={(e) =>
-                submit(e, (f) => ({
-                  action: 'revoke',
-                  linkId: m.link_id,
-                  reason: field(f, 'reason'),
-                }))
-              }
-            >
-              <label className="field">
-                Link revocation reason
-                <input name="reason" required minLength={3} maxLength={500} />
-              </label>
-              <button data-intent="destructive" className="text-link" disabled={busy}>
-                Revoke Buyer Link
-              </button>
-            </form>
-          )}
-          {manage && ['DEAD', 'SUPPRESSED'].includes(m.delivery_status) && (
-            <form
-              className="operator-form"
-              aria-label={`Retry introduction ${m.id}`}
-              onSubmit={(e) =>
-                submit(e, (f) => ({ action: 'retry', messageId: m.id, reason: field(f, 'reason') }))
-              }
-            >
-              <label className="field">
-                Delivery retry reason
-                <input name="reason" required minLength={3} maxLength={500} />
-              </label>
-              <button className="text-link" disabled={busy}>
-                Requeue Failed Delivery
-              </button>
-            </form>
-          )}
-          <details>
-            <summary>Delivery history</summary>
-            <ul>
-              {comms.attempts
-                .filter((a) => a.message_id === m.id)
-                .map((a) => (
-                  <li key={a.id}>
-                    {a.status}: {a.reason}
-                  </li>
-                ))}
-            </ul>
-          </details>
-        </article>
-      ))}
+      {comms.messages.map((m) => {
+        const notSent = notSentWords(m);
+        return (
+          <article className="detail-card introduction-card" key={m.id}>
+            <h4>{m.presentation.company}</h4>
+            <p>
+              {channelLabel(m.channel)}: {plain(m.delivery_status)}. Attempts: {m.attempts}. Buyer
+              response: {m.decision ? plain(m.decision) : 'Awaiting response'}.{' '}
+              {m.revoked ? 'Link revoked.' : ''}
+              {notSent && ` ${notSent}`}
+            </p>
+            <p>Link expires {formatDateTime(m.expires_at)}.</p>
+            {manage && !m.revoked && (
+              <form
+                className="operator-form"
+                aria-label={`Revoke introduction ${m.id}`}
+                onSubmit={(e) =>
+                  submit(e, (f) => ({
+                    action: 'revoke',
+                    linkId: m.link_id,
+                    reason: field(f, 'reason'),
+                  }))
+                }
+              >
+                <label className="field">
+                  Link revocation reason
+                  <input name="reason" required minLength={3} maxLength={500} />
+                </label>
+                <button data-intent="destructive" className="text-link" disabled={busy}>
+                  Revoke Buyer Link
+                </button>
+              </form>
+            )}
+            {manage && ['DEAD', 'SUPPRESSED'].includes(m.delivery_status) && (
+              <form
+                className="operator-form"
+                aria-label={`Retry introduction ${m.id}`}
+                onSubmit={(e) =>
+                  submit(e, (f) => ({
+                    action: 'retry',
+                    messageId: m.id,
+                    reason: field(f, 'reason'),
+                  }))
+                }
+              >
+                <label className="field">
+                  Delivery retry reason
+                  <input name="reason" required minLength={3} maxLength={500} />
+                </label>
+                <button className="text-link" disabled={busy}>
+                  Requeue Failed Delivery
+                </button>
+              </form>
+            )}
+            <details>
+              <summary>Delivery history</summary>
+              <ul>
+                {comms.attempts
+                  .filter((a) => a.message_id === m.id)
+                  .map((a) => (
+                    <li key={a.id}>
+                      {a.status}: {a.reason}
+                    </li>
+                  ))}
+              </ul>
+            </details>
+          </article>
+        );
+      })}
       <ShowMore
         shown={comms.messages.length}
         total={comms.messagesTotal}

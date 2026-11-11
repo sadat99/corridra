@@ -7,6 +7,7 @@ import {
   storedRow,
   withdrawContact,
   noteOn,
+  recordingPool,
   type World,
 } from './counterparty-changes-support';
 import { migrateCounterpartyChanges } from '../../packages/db/src/counterparty-change-migrate';
@@ -119,7 +120,9 @@ describe('with the module absent', () => {
     );
     const lists = await f.communications.workspace(f.ctx);
     expect(lists.contacts.some((c) => c.id === t.contactId)).toBe(true);
-    expect(lists.messages.every((m) => !('contact_status' in m))).toBe(true);
+    expect(
+      lists.messages.every((m) => !('contact_status' in m) && !('contact_opted_out' in m)),
+    ).toBe(true);
     await noteOn(f, t);
     const events = async () =>
       (await f.owner.query('SELECT count(*)::int n FROM app.domain_event')).rows[0].n;
@@ -142,11 +145,19 @@ describe('with the module absent', () => {
     ).rejects.toThrow('Contact and note changes are not installed');
   });
 
-  test('the dispatcher sends a queued synthetic message exactly as today', async () => {
-    const worker = new OutboxDispatcher(f.runtime, new SyntheticChannel(f.runtime));
+  test('the dispatcher sends a queued synthetic message exactly as today, with no contact check', async () => {
+    const recorded = recordingPool(f.runtime);
+    const worker = new OutboxDispatcher(recorded.pool, new SyntheticChannel(f.runtime));
     expect(await worker.attempt(queued.id, f.communications.dispatchCapability(queued.id))).toBe(
       'DELIVERED',
     );
+    expect(recorded.calls).toEqual([
+      ...['BEGIN', 'claim_communication', 'probe', 'COMMIT', 'release'].map((step) => ({
+        client: 1,
+        step,
+      })),
+      { client: 'pool', step: 'finish_communication DELIVERED' },
+    ]);
   });
 });
 

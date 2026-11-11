@@ -32,13 +32,19 @@ export function Dialog({
   returnFocusTo?: () => HTMLElement | null;
   /**
    * Optional. Asked before Escape, Close or a click on the dimmed area closes the dialog; answering false keeps it
-   * open (for example while the caller asks whether to discard unsaved edits). Absent: closing works as always.
+   * open (for example while the caller asks whether to discard unsaved edits). A close the browser makes on its own
+   * (a second Escape, or other code closing the element) is asked too, and the dialog is shown again with its
+   * content and focus kept. Absent: closing works as always.
    */
   confirmClose?: () => boolean;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const opener = useRef<HTMLElement | null>(null);
+  // Set just before every close this component makes or allows, so a close it did not approve can be told apart.
+  const approved = useRef(false);
+  // The browser moves focus out before the close event, so the last focused control inside is kept for a re-show.
+  const lastFocused = useRef<HTMLElement | null>(null);
   const titleId = `${useId().replace(/[^a-zA-Z0-9_-]/g, '')}-title`;
   useEffect(() => {
     const dialog = ref.current;
@@ -50,8 +56,15 @@ export function Dialog({
       // A confirmation puts focus on its safe choice, not on the first control in the dialog.
       dialog.querySelector<HTMLElement>('[data-autofocus]')?.focus();
     }
-    if (!open && dialog.open) dialog.close();
+    if (!open && dialog.open) {
+      approved.current = true;
+      dialog.close();
+    }
   }, [open]);
+  function approvedClose() {
+    approved.current = true;
+    ref.current?.close();
+  }
   return (
     <dialog
       ref={ref}
@@ -59,13 +72,35 @@ export function Dialog({
       aria-labelledby={titleId}
       onCancel={(event) => {
         if (locked || (confirmClose && !confirmClose())) event.preventDefault();
+        else approved.current = true;
+      }}
+      onFocus={(event) => {
+        if (event.target instanceof HTMLElement) lastFocused.current = event.target;
       }}
       onClose={() => {
         const dialog = ref.current;
+        const wasApproved = approved.current;
+        approved.current = false;
         // Some browsers close a dialog on a second Escape even when the first was cancelled; a dialog that
         // is still locked and still meant to be open is shown again.
         if (locked && open && dialog && !dialog.open) {
           dialog.showModal();
+          return;
+        }
+        // A close nobody approved, while the caller still holds the dialog open and refuses the close: show it again
+        // without calling onClose, so edits and any discard prompt stay, and put focus back inside.
+        if (!wasApproved && confirmClose && open && dialog?.isConnected && !confirmClose()) {
+          // Read before showModal(), whose own focusing moves focus and so updates lastFocused.
+          const last = lastFocused.current;
+          try {
+            dialog.showModal();
+          } catch {
+            return;
+          }
+          (last?.isConnected && dialog.contains(last)
+            ? last
+            : dialog.querySelector<HTMLElement>('[data-autofocus]')
+          )?.focus();
           return;
         }
         onClose();
@@ -103,7 +138,7 @@ export function Dialog({
       onClick={(event) => {
         // A click on the dimmed area (the dialog element itself, not its content) closes it.
         if (event.target === ref.current && !locked && (!confirmClose || confirmClose()))
-          ref.current?.close();
+          approvedClose();
       }}
     >
       <div className="ux-dialog-head">
@@ -118,7 +153,7 @@ export function Dialog({
           className="ux-dialog-close"
           disabled={locked}
           onClick={() => {
-            if (!confirmClose || confirmClose()) ref.current?.close();
+            if (!confirmClose || confirmClose()) approvedClose();
           }}
         >
           {closeLabel}
