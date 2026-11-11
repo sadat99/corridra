@@ -238,6 +238,20 @@ test.describe('with a support number set (port 3302)', () => {
     await expect(link).toHaveAccessibleName(/^Help on WhatsApp \(opens WhatsApp outside Corridra/);
   });
 
+  test('with the rail expanded the name shows no tip and takes no key: the first Escape closes an open menu', async ({
+    page,
+  }) => {
+    test.skip(width(page) < 1024, 'the rail is shown from 1024 px');
+    const link = page.locator('.ux-rail-foot a.ux-rail-help');
+    const { trigger, menu } = helpMenu(page);
+    await trigger.click();
+    await expect(menu).toBeVisible();
+    await link.hover();
+    await expect(link).not.toHaveAttribute('data-tip', /.*/);
+    await page.keyboard.press('Escape');
+    await expect(menu).toBeHidden();
+  });
+
   test('the public header is unchanged: no WhatsApp text on a public page', async ({ page }) => {
     await page.goto('/how-it-works');
     await expect(page.locator('header').first()).toBeVisible();

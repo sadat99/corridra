@@ -68,6 +68,13 @@ function useRailTip(focusable: boolean) {
     };
   }, [tip]);
   const show = () => {
+    // Only the collapsed bar from 1024 px has words to show; anywhere else the tip stays off, so no key is taken.
+    const el = row.current;
+    if (
+      !el?.closest("[data-collapsed='true']") ||
+      !window.matchMedia('(min-width: 1024px)').matches
+    )
+      return;
     place();
     setTip((now) => (now === 'dismissed' ? now : 'on'));
   };
@@ -145,7 +152,8 @@ function RailHelpSoon() {
     <p className="ux-rail-soon" {...tip}>
       <CorridraIcon name="help" />
       <span className="ux-rail-label">
-        <span>Help on WhatsApp</span> <span className="ux-soon-tag">Coming soon</span>
+        <span>Help on WhatsApp</span>
+        <span className="ux-soon-tag">Coming soon</span>
       </span>
     </p>
   );

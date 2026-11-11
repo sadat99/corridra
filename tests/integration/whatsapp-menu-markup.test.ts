@@ -74,7 +74,7 @@ describe('the customer rail foot', () => {
     const expected =
       '<div class="ux-rail-foot"><p class="ux-rail-soon">' +
       (await iconMarkup('help')) +
-      '<span class="ux-rail-label"><span>Help on WhatsApp</span> <span class="ux-soon-tag">Coming soon</span></span></p></div>';
+      '<span class="ux-rail-label"><span>Help on WhatsApp</span><span class="ux-soon-tag">Coming soon</span></span></p></div>';
     expect(await foot({})).toBe(expected);
     expect(await foot({ href: null })).toBe(expected);
     expect(await foot({ href: '' })).toBe(expected);
