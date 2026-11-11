@@ -26,6 +26,11 @@ import { loadWorkItems } from '../../apps/web/lib/work-items/load';
 // only be published through a reviewed introduction, and introductions are synthetic only in real-use mode
 // ("Synthetic communications only"), so a real-mode report with a meeting cannot be built from the services.
 // The membership rules are the same functions in both modes.
+// Known gap, not intended behaviour and not asserted here: after removal the services still answer a direct link to a
+// request or saved report the removed person wrote, because those reads check the author and not the current
+// membership. The owner decided on 11 Nov 2026 that a removed member loses access to the workspace's requests and
+// reports, even ones they wrote; a separate Sensitive change with migrations (removed-member-access) closes it.
+// What this file proves is only what the Meetings page lists.
 type Services = Record<string, unknown> & { ready: Promise<void> };
 let services: Services | null = null;
 vi.mock('../../apps/web/lib/foundations', () => ({ foundations: () => services }));
