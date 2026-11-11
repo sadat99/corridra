@@ -314,7 +314,9 @@ describe('the install script and the workflow', () => {
     expect(calls[1]).toBeGreaterThan(after);
     expect(calls[1]).toBeLessThan(complete);
     expect(script.slice(after, calls[1]!)).toContain("if (v.REAL_USE_ACTION === 'install')");
-    expect(script.slice(calls[1]!, complete)).toContain('assertNoneBehind(');
+    expect(script.slice(after, complete)).toContain(
+      'assertNoneBehind(await refreshInstalledOptionalModules(pool))',
+    );
     expect([...script.matchAll(/assertNoneBehind\(/g)]).toHaveLength(1);
   });
 
