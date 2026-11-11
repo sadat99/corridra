@@ -75,19 +75,19 @@ function useRailTip(focusable: boolean) {
     ref: (el: HTMLElement | null) => {
       row.current = el;
     },
-    'data-tip': tip,
+    // Rendered only while shown or dismissed, so the server markup carries no state.
+    'data-tip': tip === 'off' ? undefined : tip,
     onPointerEnter: (event: PointerEvent) => {
       if (event.pointerType !== 'touch') show();
     },
     onPointerLeave: () => setTip('off'),
-    ...(focusable
-      ? {
-          onFocus: (event: FocusEvent) => {
-            if (event.currentTarget.matches(':focus-visible')) show();
-          },
-          onBlur: () => setTip('off'),
+    // A row that is not a link is not a keyboard stop, so it has no focus handlers.
+    onFocus: focusable
+      ? (event: FocusEvent) => {
+          if (event.currentTarget.matches(':focus-visible')) show();
         }
-      : {}),
+      : undefined,
+    onBlur: focusable ? () => setTip('off') : undefined,
   };
 }
 
@@ -98,7 +98,8 @@ export function CustomerRailTop() {
 /**
  * Help on WhatsApp. `href` is the owner's support link; without it the row says Coming soon, as it always did.
  * `allTools` adds the All Tools link first in the foot (the one place the signed-in frame links to that page on
- * a wide screen); left off, the markup is exactly what it was.
+ * a wide screen); left off, the markup is exactly what it was. The name of the Help row is in a span of its own
+ * (`ux-rail-label`), which the collapsed bar shows beside the icon on hover and focus.
  */
 export function CustomerRailFoot({ href, allTools }: { href?: string | null; allTools?: boolean }) {
   return (
@@ -110,11 +111,10 @@ export function CustomerRailFoot({ href, allTools }: { href?: string | null; all
 }
 
 function RailAllTools() {
-  const tip = useRailTip(true);
   return (
-    <Link prefetch={false} className="ux-rail-tools" href="/account/all-tools" {...tip}>
+    <Link prefetch={false} className="ux-rail-tools" href="/account/all-tools">
       <CorridraIcon name="grid" />
-      <span className="ux-rail-label">All Tools</span>
+      <span>All Tools</span>
     </Link>
   );
 }

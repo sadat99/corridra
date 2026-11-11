@@ -119,12 +119,13 @@
     clip: rect(0 0 0 0);
   }
 }
-/* The name of a foot row is a span of its own. Expanded, it has no box, so the icon, the words and the tag lay out as
+/* The name of the Help row is a span of its own. Expanded, it has no box, so the icon, the words and the tag lay out as
    they always did. */
 .ux-rail-label {
   display: contents;
 }
 [data-collapsed='true'] .ux-rail-new span,
+[data-collapsed='true'] .ux-rail-tools span,
 [data-collapsed='true'] .ux-rail-label {
   display: block;
   position: absolute;
@@ -143,15 +144,13 @@
   display: none;
 }
 
-/* Collapsed bar, 1024 px and up: the name of a foot row (All Tools, Help on WhatsApp) shows beside its icon while the
+/* Collapsed bar, 1024 px and up: the name of the Help on WhatsApp row shows beside its icon while the
    pointer is on the row or keyboard focus is on it (customer-rail.tsx sets data-tip and where it goes). Fixed, because
    the bar scrolls and would cut off anything placed inside it. It is inside the row, so the pointer can move onto it,
    and a strip on its near side bridges the gap. Esc sets it away without moving focus. Colours are the page tokens,
    so Stronger Colours and the dark border follow. No transition, so Less Movement has nothing to switch off. */
 @media (min-width: 1024px) {
-  [data-collapsed='true']
-    :is(.ux-rail-tools, .ux-rail-help, .ux-rail-soon)[data-tip='on']
-    > .ux-rail-label {
+  [data-collapsed='true'] :is(.ux-rail-help, .ux-rail-soon)[data-tip='on'] > .ux-rail-label {
     position: fixed;
     inset-inline-start: var(--tip-x, 0);
     inset-block-start: var(--tip-y, 0);
@@ -175,7 +174,7 @@
     white-space: nowrap;
   }
   [data-collapsed='true']
-    :is(.ux-rail-tools, .ux-rail-help, .ux-rail-soon)[data-tip='on']
+    :is(.ux-rail-help, .ux-rail-soon)[data-tip='on']
     > .ux-rail-label::before {
     content: '';
     position: absolute;
