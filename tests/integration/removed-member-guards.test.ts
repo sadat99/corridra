@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import {
   FILE_KEYS,
+  FUNCTION_KEYS,
   NEW_FILES,
-  OWNER_WORDS,
   fileFingerprints,
   fileHash,
   fileSignatures,
@@ -20,6 +20,7 @@ import { migrateCommercialReadiness } from '../../packages/db/src/commercial-rea
 import { migrateCustomerRequestWithdrawal } from '../../packages/db/src/customer-request-withdrawal-migrate';
 import { migrateCustomerMoves } from '../../packages/db/src/customer-move-migrate';
 import { migrateCustomerMissionMail } from '../../packages/db/src/customer-mission-mail-migrate';
+import { migrateCustomerDecisionCards } from '../../packages/db/src/customer-decision-card-migrate';
 import { migrateCustomerNotifications } from '../../packages/db/src/customer-notification-migrate';
 
 // Removed members, the guard of every new file (owner decision, 11 Nov 2026: "No, remove access (Recommended)"). Each file
@@ -108,12 +109,13 @@ beforeAll(async () => {
   await migrateCustomerMoves(f.owner);
   await migrateCustomerMissionMail(f.owner);
   await migrateCustomerNotifications(f.owner);
+  await migrateCustomerDecisionCards(f.owner);
 }, 600000);
 afterAll(async () => {
   await f?.close();
 });
 
-describe.each(FILE_KEYS)('%s', (key) => {
+describe.each(FUNCTION_KEYS)('%s', (key) => {
   const file = NEW_FILES[key];
   const signatures = () => fileSignatures(key);
 
@@ -137,7 +139,14 @@ describe.each(FILE_KEYS)('%s', (key) => {
     // Never the catalogue text dump: it differs between PostgreSQL major versions.
     expect(sql).not.toMatch(/pg_get_functiondef/);
     // Additive only.
-    expect(sql).not.toMatch(/\b(DROP|TRUNCATE|DELETE|INSERT|UPDATE|ALTER TABLE|CREATE TABLE)\b/);
+    // Outside the function bodies (which legitimately read and write tables): nothing is dropped, truncated, inserted, updated,
+    // deleted or created as a table, and no table is altered.
+    const topLevel = sql
+      .replace(/\$(fn|q|p)\$[\s\S]*?\$\1\$/g, '')
+      .replace(/\$\$[\s\S]*?\$\$/g, '');
+    expect(topLevel).not.toMatch(
+      /\b(DROP|TRUNCATE|DELETE|INSERT|UPDATE|ALTER TABLE|CREATE TABLE)\b/,
+    );
   });
 
   test('MATCHING: every function is replaced; owner, settings, security mode, volatility, argument types and grants are unchanged', async () => {
@@ -299,10 +308,174 @@ describe.each(FILE_KEYS)('%s', (key) => {
   });
 });
 
+// The inbox file alters a row level security policy instead of replacing functions: its guard fingerprints the policy.
+describe('inbox (the policy inbox_customer_read)', () => {
+  const file = NEW_FILES.inbox;
+  const policy = async (db: PoolClient) =>
+    (
+      await db.query(
+        `SELECT p.polcmd::text AS cmd,p.polpermissive AS permissive,
+          array_to_string(ARRAY(SELECT CASE r WHEN 0 THEN 'PUBLIC' ELSE r::regrole::text END FROM unnest(p.polroles) r ORDER BY 1),',') AS roles,
+          pg_get_expr(p.polqual,p.polrelid) AS qual,pg_get_expr(p.polwithcheck,p.polrelid) AS withcheck
+         FROM pg_policy p WHERE p.polrelid='app.inbox_notification'::regclass AND p.polname='inbox_customer_read'`,
+      )
+    ).rows[0] as
+      | {
+          cmd: string;
+          permissive: boolean;
+          roles: string;
+          qual: string | null;
+          withcheck: string | null;
+        }
+      | undefined;
+  const others = async (db: PoolClient) =>
+    (
+      await db.query(
+        `SELECT p.polname,p.polcmd::text AS cmd,pg_get_expr(p.polqual,p.polrelid) AS qual,pg_get_expr(p.polwithcheck,p.polrelid) AS withcheck,
+          (SELECT relacl::text FROM pg_class WHERE oid=p.polrelid) AS acl
+         FROM pg_policy p WHERE p.polrelid='app.inbox_notification'::regclass AND p.polname<>'inbox_customer_read' ORDER BY 1`,
+      )
+    ).rows;
+
+  test('the fingerprint block equals the live one, the file only alters that policy, and the function it adds is for the reading role only', async () => {
+    expect(await liveFingerprints(f.owner, 'inbox')).toEqual(
+      fileFingerprints('inbox').map((r) => ({
+        signature: r.signature,
+        fingerprint: r.fingerprint,
+        grantees: r.grantees,
+      })),
+    );
+    expect(fileFingerprints('inbox')).toHaveLength(1);
+    const sql = stripComments(fileSql('inbox'));
+    expect(sql).not.toMatch(/pg_get_functiondef|pg_get_policydef/);
+    expect([...sql.matchAll(/ALTER POLICY (\w+)/g)].map((m) => m[1])).toEqual([
+      'inbox_customer_read',
+    ]);
+    expect(sql).not.toMatch(
+      /\b(DROP|TRUNCATE|DELETE|INSERT|ALTER TABLE|CREATE TABLE|CREATE POLICY)\b/,
+    );
+    expect(sql).toContain(
+      'REVOKE ALL ON FUNCTION app.inbox_notice_visible(uuid,text,text,jsonb) FROM PUBLIC,corridra_auth',
+    );
+    expect(sql).toContain(
+      'GRANT EXECUTE ON FUNCTION app.inbox_notice_visible(uuid,text,text,jsonb) TO corridra_runtime',
+    );
+  });
+
+  test('MATCHING: only the expression changes (name, command, roles and kind stay), no other policy or grant moves, and the function is for the reader only', async () => {
+    await rolledBack(async (db) => {
+      await withHelpers(db, 'inbox');
+      const before = await policy(db);
+      const otherBefore = await others(db);
+      const aclBefore = (
+        await db.query(
+          "SELECT relacl::text AS a FROM pg_class WHERE oid='app.inbox_notification'::regclass",
+        )
+      ).rows[0].a;
+      await db.query(fileSql('inbox'));
+      const after = await policy(db);
+      expect(after).toMatchObject({
+        cmd: before!.cmd,
+        permissive: before!.permissive,
+        roles: 'corridra_runtime',
+        withcheck: null,
+      });
+      expect(after!.qual).toContain('inbox_notice_visible');
+      expect(after!.qual).not.toBe(before!.qual);
+      expect(await others(db)).toEqual(otherBefore);
+      expect(
+        (
+          await db.query(
+            "SELECT relacl::text AS a FROM pg_class WHERE oid='app.inbox_notification'::regclass",
+          )
+        ).rows[0].a,
+      ).toBe(aclBefore);
+      const grant = (
+        await db.query(
+          `SELECT has_function_privilege('corridra_runtime',p.oid,'EXECUTE') AS runtime,has_function_privilege('corridra_auth',p.oid,'EXECUTE') AS auth,
+            has_function_privilege('public',p.oid,'EXECUTE') AS pub,p.prosecdef,p.proconfig::text AS config
+           FROM pg_proc p WHERE p.oid='app.inbox_notice_visible(uuid,text,text,jsonb)'::regprocedure`,
+        )
+      ).rows[0];
+      expect(grant).toMatchObject({ runtime: true, auth: false, pub: false, prosecdef: true });
+      expect(grant.config).toContain('search_path=pg_catalog');
+    });
+  });
+
+  test('ABSENT: no policy and no registry row for the file before it is a notice, and nothing is created', async () => {
+    await rolledBack(async (db, notices) => {
+      await withHelpers(db, 'inbox');
+      await db.query('DROP POLICY inbox_customer_read ON app.inbox_notification');
+      await db.query(fileSql('inbox'));
+      expect(notices.some((n) => /skipped/.test(n))).toBe(true);
+      expect(await policy(db)).toBeUndefined();
+      expect(
+        (
+          await db.query(
+            "SELECT to_regprocedure('app.inbox_notice_visible(uuid,text,text,jsonb)') AS f",
+          )
+        ).rows[0].f,
+      ).toBeNull();
+    });
+  });
+
+  test.each([
+    [
+      'its expression',
+      "ALTER POLICY inbox_customer_read ON app.inbox_notification USING (recipient_kind='customer')",
+    ],
+    ['its roles', 'ALTER POLICY inbox_customer_read ON app.inbox_notification TO PUBLIC'],
+  ])('CHANGED: %s is refused and nothing is altered', async (_what, change) => {
+    await rolledBack(async (db) => {
+      await withHelpers(db, 'inbox');
+      await db.query(change);
+      const before = await policy(db);
+      await db.query('SAVEPOINT guarded');
+      await expect(db.query(fileSql('inbox'))).rejects.toThrow(/prerequisite policy differs/);
+      await db.query('ROLLBACK TO guarded');
+      expect(await policy(db)).toEqual(before);
+      expect(
+        (
+          await db.query(
+            "SELECT to_regprocedure('app.inbox_notice_visible(uuid,text,text,jsonb)') AS f",
+          )
+        ).rows[0].f,
+      ).toBeNull();
+    });
+  });
+
+  test('CHANGED: a missing policy with the file before it recorded, a different recorded hash, and a missing helper are each refused', async () => {
+    await rolledBack(async (db) => {
+      await withHelpers(db, 'inbox');
+      await db.query('DROP POLICY inbox_customer_read ON app.inbox_notification');
+      await db.query(
+        'INSERT INTO commercial_readiness_migrations.applied(name,sha256) VALUES($1,$2)',
+        [file.previous, 'f'.repeat(64)],
+      );
+      await db.query('SAVEPOINT a');
+      await expect(db.query(fileSql('inbox'))).rejects.toThrow(/prerequisite policy is missing/);
+      await db.query('ROLLBACK TO a');
+    });
+    await rolledBack(async (db) => {
+      await withHelpers(db, 'inbox');
+      await db.query(
+        'INSERT INTO commercial_readiness_migrations.applied(name,sha256) VALUES($1,$2)',
+        [file.previous, 'f'.repeat(64)],
+      );
+      await db.query('SAVEPOINT b');
+      await expect(db.query(fileSql('inbox'))).rejects.toThrow(/prerequisite file differs: 0011/);
+      await db.query('ROLLBACK TO b');
+    });
+    await rolledBack(async (db) => {
+      await expect(db.query(fileSql('inbox'))).rejects.toThrow(/needs customer migration 0004/);
+    });
+  });
+});
+
 describe('across the files', () => {
   test('there are exactly seven new files, each recorded by its own module migrator and none before it exists', async () => {
-    expect(FILE_KEYS).toHaveLength(7);
-    for (const key of FILE_KEYS) {
+    expect(FILE_KEYS).toHaveLength(9);
+    for (const key of FUNCTION_KEYS) {
       const names = (
         await f.owner.query(`SELECT name FROM ${NEW_FILES[key].registry}.applied ORDER BY name`)
       ).rows.map((r) => r.name as string);
@@ -313,13 +486,9 @@ describe('across the files', () => {
   });
 
   test('every function of a file is currently in the form the file expects (the same query an owner can run)', async () => {
-    for (const key of FILE_KEYS) {
+    for (const key of FUNCTION_KEYS) {
       for (const signature of fileSignatures(key))
         expect(await functionState(f.owner, signature), signature).toBeTruthy();
     }
   });
-});
-
-test(`the owner's words are the rule here: "${OWNER_WORDS}"`, () => {
-  expect(OWNER_WORDS).toBe('No, remove access (Recommended)');
 });

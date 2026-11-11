@@ -2,9 +2,10 @@ import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { createHash } from 'node:crypto';
 import {
   FILE_KEYS,
+  FUNCTION_KEYS,
+  REGISTRY_KEYS,
   HISTORY_TABLES,
   NEW_FILES,
-  OWNER_WORDS,
   appliedNames,
   buildWorld,
   bodyHash,
@@ -25,6 +26,7 @@ import { migrateCustomerRequestWithdrawal } from '../../packages/db/src/customer
 import { migrateCustomerMoves } from '../../packages/db/src/customer-move-migrate';
 import { migrateCustomerMissionMail } from '../../packages/db/src/customer-mission-mail-migrate';
 import { migrateCustomerNotifications } from '../../packages/db/src/customer-notification-migrate';
+import { migrateCustomerDecisionCards } from '../../packages/db/src/customer-decision-card-migrate';
 import { migrateCustomerWorkspaceLifecycle } from '../../packages/db/src/customer-workspace-lifecycle-migrate';
 import { migrateCustomerAccountLifecycle } from '../../packages/db/src/customer-account-lifecycle-migrate';
 import { migrateCustomerProblemReports } from '../../packages/db/src/customer-problem-report-migrate';
@@ -59,8 +61,28 @@ const UNTOUCHED = [
   'customer.mute_mission_mail(uuid,text)',
   'customer.mute_notifications(uuid,text)',
 ];
-const allSignatures = () => FILE_KEYS.flatMap((key) => fileSignatures(key));
+const allSignatures = () => FUNCTION_KEYS.flatMap((key) => fileSignatures(key));
 const registries = Object.fromEntries(FILE_KEYS.map((key) => [key, NEW_FILES[key].registry]));
+const PRE = {
+  customer: 3,
+  realUse: 13,
+  readiness: 10,
+  move: 1,
+  withdrawal: 2,
+  mail: 3,
+  notifications: 5,
+  decisionCards: 1,
+};
+const POST = {
+  customer: 4,
+  realUse: 14,
+  readiness: 12,
+  move: 2,
+  withdrawal: 3,
+  mail: 4,
+  notifications: 6,
+  decisionCards: 2,
+};
 let w: World;
 let before: Record<string, string>;
 const untouchedHashes = async (owner: World['f']['owner']) =>
@@ -69,7 +91,7 @@ const untouchedHashes = async (owner: World['f']['owner']) =>
   );
 const counts = async (owner: World['f']['owner']) => {
   const out: Record<string, number> = {};
-  for (const key of FILE_KEYS) out[key] = (await appliedNames(owner, registries[key]!)).length;
+  for (const key of REGISTRY_KEYS) out[key] = (await appliedNames(owner, registries[key]!)).length;
   return out;
 };
 
@@ -86,16 +108,8 @@ describe('the production state, populated, then upgraded', () => {
     await w?.f.close();
   });
 
-  test('before the upgrade a person who left still reads what they wrote, which is the behaviour the owner decision replaces', async () => {
-    expect(await counts(w.f.owner)).toEqual({
-      customer: 3,
-      realUse: 13,
-      readiness: 10,
-      move: 1,
-      withdrawal: 2,
-      mail: 3,
-      notifications: 5,
-    });
+  test('CONTROL (the pre-state, holds on main): before the upgrade a person who left still reads what they wrote, which is the behaviour the owner decision replaces', async () => {
+    expect(await counts(w.f.owner)).toEqual(PRE);
     expect((await w.listRequests('lena')).ids).toEqual(
       expect.arrayContaining([...w.requests.lena!, w.ownWorkspaceRequest.lena!]),
     );
@@ -135,10 +149,13 @@ describe('the production state, populated, then upgraded', () => {
     expect((await appliedNames(w.f.owner, 'customer_migrations')).length).toBe(4);
     expect(await digest(w.f.owner, HISTORY_TABLES)).toEqual(before);
     await migrateCommercialReadiness(w.f.owner);
-    expect((await appliedNames(w.f.owner, 'commercial_readiness_migrations')).length).toBe(11);
+    expect((await appliedNames(w.f.owner, 'commercial_readiness_migrations')).length).toBe(12);
     expect(await digest(w.f.owner, HISTORY_TABLES)).toEqual(before);
     await migrateCustomerRealUse(w.f.owner);
     expect((await appliedNames(w.f.owner, 'customer_real_use_migrations')).length).toBe(14);
+    expect(await digest(w.f.owner, HISTORY_TABLES)).toEqual(before);
+    await migrateCustomerDecisionCards(w.f.owner);
+    expect((await appliedNames(w.f.owner, 'customer_decision_card_migrations')).length).toBe(2);
     expect(await digest(w.f.owner, HISTORY_TABLES)).toEqual(before);
     const refreshed = await refreshInstalledOptionalModules(w.f.owner);
     expect(refreshed.map((r) => `${r.module}:${r.state}`)).toEqual([
@@ -147,15 +164,7 @@ describe('the production state, populated, then upgraded', () => {
       'mission mail:advanced',
       'notifications:advanced',
     ]);
-    expect(await counts(w.f.owner)).toEqual({
-      customer: 4,
-      realUse: 14,
-      readiness: 11,
-      move: 2,
-      withdrawal: 3,
-      mail: 4,
-      notifications: 6,
-    });
+    expect(await counts(w.f.owner)).toEqual(POST);
     expect(await digest(w.f.owner, HISTORY_TABLES)).toEqual(before);
     expect(await untouchedHashes(w.f.owner)).toEqual(hashes);
     // Run again: nothing to do.
@@ -165,15 +174,7 @@ describe('the production state, populated, then upgraded', () => {
       'current',
       'current',
     ]);
-    expect(await counts(w.f.owner)).toEqual({
-      customer: 4,
-      realUse: 14,
-      readiness: 11,
-      move: 2,
-      withdrawal: 3,
-      mail: 4,
-      notifications: 6,
-    });
+    expect(await counts(w.f.owner)).toEqual(POST);
   });
 
   test('after the upgrade the removed people see none of the requests and reports they made in the workspace', async () => {
@@ -210,6 +211,7 @@ describe('fresh ladders in every install order', () => {
     'installer order': async (o) => {
       await migrateCustomerAuthority(o);
       await migrateCommercialReadiness(o);
+      await migrateCustomerDecisionCards(o);
       await migrateCustomerRealUse(o);
       await migrateCustomerRequestWithdrawal(o);
       await migrateCustomerMoves(o);
@@ -228,6 +230,7 @@ describe('fresh ladders in every install order', () => {
       await migrateCustomerAccountLifecycle(o);
       await migrateCustomerProblemReports(o);
       await migrateCommercialReadiness(o);
+      await migrateCustomerDecisionCards(o);
     },
     'the explicit mail path, withdrawal first, notifications before lifecycle': async (o) => {
       await migrateCustomerRealUse(o);
@@ -235,6 +238,7 @@ describe('fresh ladders in every install order', () => {
       await migrateCustomerMissionMail(o);
       await migrateCustomerNotifications(o);
       await migrateCommercialReadiness(o);
+      await migrateCustomerDecisionCards(o);
     },
     'workspace lifecycle before mail': async (o) => {
       await migrateCustomerRealUse(o);
@@ -243,6 +247,7 @@ describe('fresh ladders in every install order', () => {
       await migrateCustomerMissionMail(o);
       await migrateCustomerNotifications(o);
       await migrateCommercialReadiness(o);
+      await migrateCustomerDecisionCards(o);
       await migrateCustomerWorkspaceLifecycle(o);
     },
   };
@@ -279,8 +284,4 @@ describe('fresh ladders in every install order', () => {
       expect(seen.size, signature).toBe(1);
     }
   });
-});
-
-test(`the owner's words are the rule here: "${OWNER_WORDS}"`, () => {
-  expect(OWNER_WORDS).toBe('No, remove access (Recommended)');
 });

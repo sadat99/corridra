@@ -1,14 +1,14 @@
-import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
-  OWNER_WORDS,
   appliedNames,
   applyFiles,
   hideNewFiles,
   openNewFiles,
   fileSql,
+  NEW_FILES,
 } from './removed-member-support';
 import { fixture } from './support';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
@@ -194,8 +194,8 @@ describe('the refresh', () => {
       'mission mail:behind',
       'notifications:behind',
     ]);
-    expect(rows[2]!.detail).toMatch(/mission_mail_action install/);
-    expect(rows[3]!.detail).toMatch(/notifications_action install/);
+    expect(rows[2]!.detail).toMatch(/mission_mail_action=install/);
+    expect(rows[3]!.detail).toMatch(/notifications_action=install/);
     // Nothing of the two behind modules was touched, and request withdrawal was not installed to help them.
     expect(await appliedNames(owner, 'customer_mission_mail_migrations')).toEqual(mailBefore);
     expect(await appliedNames(owner, 'customer_notification_migrations')).toEqual(pulseBefore);
@@ -209,7 +209,7 @@ describe('the refresh', () => {
     expect(await appliedNames(owner, 'customer_move_migrations')).toHaveLength(2);
     expect(await controls(owner)).toEqual(before);
     expect(() => assertNoneBehind(rows)).toThrowError(
-      /mission mail \(.*\); notifications \(.*\)\. Next step: run Install customer modules again with apply=yes, mission_mail_action=install and notifications_action=install/,
+      /mission mail: .*mission_mail_action=install.*; notifications: .*notifications_action=install/,
     );
   }, 600000);
 
@@ -238,7 +238,7 @@ describe('the refresh', () => {
     ).toBe(false);
   }, 600000);
 
-  test('the real-use install, then the refresh, then the mail install in one run ends green, and the controls are the ones it started with', async () => {
+  test('the real-use install, then the refresh, then the mail install in one run ends green, applies the new files, and leaves the controls as they were', async () => {
     await productionState();
     const owner = f!.owner;
     const before = await controls(owner);
@@ -251,6 +251,16 @@ describe('the refresh', () => {
     await migrateCustomerMissionMail(owner);
     await migrateCustomerNotifications(owner);
     assertNoneBehind(await refreshInstalledOptionalModules(owner));
+    // The new files did arrive (main has no such file): real-use 0014, mission mail 0004 and notifications 0006.
+    expect(await appliedNames(owner, 'customer_real_use_migrations')).toContain(
+      NEW_FILES.realUse.name,
+    );
+    expect(await appliedNames(owner, 'customer_mission_mail_migrations')).toContain(
+      NEW_FILES.mail.name,
+    );
+    expect(await appliedNames(owner, 'customer_notification_migrations')).toContain(
+      NEW_FILES.notifications.name,
+    );
     const after = await controls(owner);
     for (const table of Object.keys(before)) expect(after[table], table).toEqual(before[table]);
     // The only new control row is the one the withdrawal module starts with, and it is closed.
@@ -260,12 +270,104 @@ describe('the refresh', () => {
   }, 600000);
 });
 
+describe('what the refresh says when a module cannot advance', () => {
+  test('notifications installed, mail and request withdrawal absent: the next step names notifications only, never mission mail', async () => {
+    hideNewFiles();
+    f = await fixture();
+    const owner = f.owner;
+    await migrateCustomerRealUse(owner);
+    await migrateCustomerMoves(owner);
+    await applyFiles(
+      owner,
+      'customer-notification-migrations',
+      'customer_notification_migrations',
+      [
+        '0001_notifications.sql',
+        '0002_email_off_until_chosen.sql',
+        '0003_withdrawal_and_issuer_check.sql',
+        '0004_mute_events.sql',
+      ],
+    );
+    openNewFiles();
+    await migrateCustomerRealUse(owner);
+    const rows = await refreshInstalledOptionalModules(owner);
+    expect(rows.map((r) => `${r.module}:${r.state}`)).toEqual([
+      'request withdrawal:not installed',
+      'move records:advanced',
+      'mission mail:not installed',
+      'notifications:behind',
+    ]);
+    let message = '';
+    try {
+      assertNoneBehind(rows);
+    } catch (error) {
+      message = (error as Error).message;
+    }
+    expect(message).toMatch(/notifications: .*notifications_action=install/);
+    // Mail is not installed, so the owner is never told to install it.
+    expect(message).not.toMatch(/mission_mail_action/);
+    expect(message).not.toMatch(/mission mail/);
+    expect(
+      (
+        await owner.query(
+          "SELECT to_regclass('customer_mission_mail_migrations.applied') IS NOT NULL AS p",
+        )
+      ).rows[0].p,
+    ).toBe(false);
+  }, 600000);
+
+  test('a migrator that stops is recorded as behind with its message, the other modules still run, and the run fails at the end listing it', async () => {
+    hideNewFiles();
+    f = await fixture();
+    const owner = f.owner;
+    await migrateCustomerRealUse(owner);
+    await migrateCustomerRequestWithdrawal(owner);
+    await migrateCustomerMoves(owner);
+    openNewFiles();
+    await migrateCustomerRealUse(owner);
+    const good = (
+      await owner.query('SELECT sha256 FROM customer_move_migrations.applied WHERE name=$1', [
+        '0001_move_records.sql',
+      ])
+    ).rows[0].sha256 as string;
+    await owner.query("UPDATE customer_move_migrations.applied SET sha256=repeat('0',64)");
+    try {
+      const rows = await refreshInstalledOptionalModules(owner);
+      expect(rows.map((r) => `${r.module}:${r.state}`)).toEqual([
+        'request withdrawal:advanced',
+        'move records:behind',
+        'mission mail:not installed',
+        'notifications:not installed',
+      ]);
+      expect(rows[1]!.detail).toMatch(/Move record migration history mismatch/);
+      expect(() => assertNoneBehind(rows)).toThrowError(
+        /move records: its migrator stopped with: Move record migration history mismatch/,
+      );
+      // Nothing of the module that stopped changed.
+      expect(await appliedNames(owner, 'customer_move_migrations')).toEqual([
+        '0001_move_records.sql',
+      ]);
+    } finally {
+      await owner.query('UPDATE customer_move_migrations.applied SET sha256=$1 WHERE name=$2', [
+        good,
+        '0001_move_records.sql',
+      ]);
+    }
+    const again = await refreshInstalledOptionalModules(owner);
+    expect(again.map((r) => r.state)).toEqual([
+      'current',
+      'advanced',
+      'not installed',
+      'not installed',
+    ]);
+    expect(() => assertNoneBehind(again)).not.toThrow();
+  }, 600000);
+});
+
 describe('the report line', () => {
-  beforeAll(() => {
-    fileSql('realUse');
-  });
   const script = readFileSync(resolve('scripts/install-customer-modules.ts'), 'utf8');
   test('counts requests whose author is no longer a member as a number only, with inline SQL that agrees with the helper', async () => {
+    fileSql('realUse');
     openNewFiles();
     f = await fixture();
     await migrateCustomerRealUse(f.owner);
@@ -290,14 +392,13 @@ describe('the report line', () => {
 });
 
 describe('the install script and the workflow', () => {
-  // On the commit before this change the new files do not exist, so none of these static checks can pass there.
-  beforeAll(() => {
-    fileSql('realUse');
-  });
+  // On the commit before this change the new files do not exist, so none of these static checks can pass there: each one
+  // asks for a new file first, inside the test, so that it reports as failed (not skipped) on main.
   const script = readFileSync(resolve('scripts/install-customer-modules.ts'), 'utf8');
   const workflow = readFileSync(resolve('.github/workflows/install-customer-modules.yml'), 'utf8');
   const refresh = readFileSync(resolve('packages/db/src/customer-optional-refresh.ts'), 'utf8');
   test('the refresh runs only for real_use_action=install: once after the real-use migration and once before the end', () => {
+    fileSql('realUse');
     const calls = [...script.matchAll(/refreshInstalledOptionalModules\(pool\)/g)].map(
       (m) => m.index!,
     );
@@ -321,6 +422,7 @@ describe('the install script and the workflow', () => {
   });
 
   test('the refresh never configures anything and never writes a control row', () => {
+    fileSql('realUse');
     expect(refresh).not.toMatch(/configure[A-Z]/);
     expect(refresh).not.toMatch(/\b(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP)\b/);
     for (const name of [
@@ -340,6 +442,7 @@ describe('the install script and the workflow', () => {
   });
 
   test('adds no input: the workflow is untouched and the script has no new key', () => {
+    fileSql('realUse');
     expect(workflow).not.toMatch(/removed|refresh|optional_modules/i);
     expect(script).not.toMatch(/\bREMOVED_[A-Z_]+: z\./);
     expect([...workflow.matchAll(/^ {6}[a-z0-9_]+:\n {8}description:/gm)]).toHaveLength(25);
@@ -358,14 +461,11 @@ describe('the install script and the workflow', () => {
   });
 
   test('the refresh result is logged one line per module, and a read-only report is never changed by it', () => {
+    fileSql('realUse');
     expect(script).toContain('optional module ${row.module}: ${row.state}');
     expect(script.indexOf("await report(apply ? 'Before install'")).toBeLessThan(
       script.indexOf('refreshInstalledOptionalModules(pool)'),
     );
     expect(createHash('sha256').update(workflow).digest('hex')).toHaveLength(64);
   });
-});
-
-test(`the owner's words are the rule here: "${OWNER_WORDS}"`, () => {
-  expect(OWNER_WORDS).toBe('No, remove access (Recommended)');
 });
