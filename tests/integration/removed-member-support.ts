@@ -641,8 +641,8 @@ export async function bulkOwnedRequests(
       [config.count],
     );
     await db.query(
-      `INSERT INTO app.mission(id,tenant_id,owner_id,next_action,due_at,reason,created_by)
-       SELECT mid,$1,$2,'Synthetic bulk row',now()+interval '1 day','Synthetic bulk row',$2 FROM bulk`,
+      `INSERT INTO app.mission(id,tenant_id,owner_id,next_action,due_at,reason,created_by,purpose)
+       SELECT mid,$1,$2,'Synthetic bulk row',now()+interval '1 day','Synthetic bulk row',$2,app.tenant_processing_purpose($1) FROM bulk`,
       [config.missionTenant ?? w.f.tenantA, w.f.users.owner.id],
     );
     await db.query(

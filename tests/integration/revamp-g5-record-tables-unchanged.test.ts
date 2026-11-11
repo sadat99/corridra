@@ -10,6 +10,7 @@ import { migrateCustomerInvoicingReal } from '../../packages/db/src/customer-inv
 import { migrateCustomerPaymentsSimulated } from '../../packages/db/src/customer-payments-simulated-migrate';
 import { migrateCustomerDecisionCards } from '../../packages/db/src/customer-decision-card-migrate';
 import { migrateCustomerSpecificationConfirmation } from '../../packages/db/src/customer-specification-confirmation-migrate';
+import { removedFileHidden } from './removed-member-hide';
 import { migrateCustomerAccountLifecycle } from '../../packages/db/src/customer-account-lifecycle-migrate';
 
 // CRUD G5 closes accounts and files erasure requests, and never touches records the law or a customer relies on:
@@ -139,7 +140,10 @@ describe('the module SQL', () => {
       .split('\n')
       .filter((line) => !line.trimStart().startsWith('--'))
       .join('\n');
-  const all = readdirSync(migrations).filter((name) => name.endsWith('.sql'));
+  // ERASURE_BASE_CHECK=1 (or REMOVED_BASE_CHECK=1) hides the erasure file, as it does from the migrators (removed-member-hide.ts).
+  const all = readdirSync(migrations).filter(
+    (name) => name.endsWith('.sql') && !removedFileHidden(migrations, name),
+  );
   // The installed first file only inserts. The follow-up files (0002 and later) may replace named functions, and are
   // checked by the last tests of this group.
   const files = all.filter((name) => name.startsWith('0001_'));
@@ -175,6 +179,15 @@ describe('the module SQL', () => {
         expect(table, `${file}: ${table}`).toMatch(/^customer_private\.(account_|erasure_)/);
       }
     }
+  });
+
+  test('the erasure file is one of the follow-up files and carries a fingerprint block with a row for each function it replaces (fails on main)', () => {
+    const name = '0005_removed_member_erasure.sql';
+    expect(all).toContain(name);
+    const raw = readFileSync(resolve(migrations, name), 'utf8');
+    expect(raw).toMatch(/^\s*-- fingerprint-begin\s*$/m);
+    expect(raw).toMatch(/^\s*-- fingerprint-query-begin\s*$/m);
+    expect([...raw.matchAll(/\('([^']+)','[0-9a-f]{64}','[^']*'\)/g)]).toHaveLength(2);
   });
 
   test('the follow-up files replace only named functions, each behind a fingerprint of the live text, and never rewrite a row', () => {

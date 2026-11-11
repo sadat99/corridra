@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from 'vitest';
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { fixture } from './support';
 import { digest, harness, type Fixture } from './revamp-g4-support';
@@ -8,6 +8,21 @@ import { migrateCustomerProgrammeLifecycle } from '../../packages/db/src/custome
 import { migrateCustomerMemberRoles } from '../../packages/db/src/customer-member-role-migrate';
 import { migrateCustomerAccountLifecycle } from '../../packages/db/src/customer-account-lifecycle-migrate';
 import { migrateCustomerWorkspaceLifecycle } from '../../packages/db/src/customer-workspace-lifecycle-migrate';
+
+// ERASURE_BASE_CHECK=1 (or REMOVED_BASE_CHECK=1) keeps the erasure file away from the migrators, which is how the cases that need it
+// are shown to fail on main. Without those variables nothing is hidden. See removed-member-hide.ts.
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const real = await importOriginal<typeof import('node:fs/promises')>();
+  const readdir = (async (path: unknown, ...rest: unknown[]) => {
+    const names = (await (real.readdir as (...a: unknown[]) => Promise<unknown[]>)(
+      path,
+      ...rest,
+    )) as unknown[];
+    const { removedFileHidden } = await import('./removed-member-hide');
+    return names.filter((n) => !removedFileHidden(String(path), String(n)));
+  }) as typeof real.readdir;
+  return { ...real, readdir, default: { ...real, readdir } };
+});
 
 // CRUD G4 and G5 are installed and enabled in production, so the follow-up reaches an installed database. This builds a
 // database exactly the way production was built (the files of merge f62e093d, recorded with their hashes), puts data and the

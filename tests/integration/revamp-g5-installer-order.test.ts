@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from 'vitest';
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { fixture } from './support';
@@ -9,6 +9,21 @@ import { pinCustomerAuthority } from '../../packages/auth/src/customer-authority
 import { configureCustomerRealUse } from '../../packages/auth/src/customer-real-use-configuration';
 import { configureAccountLifecycle } from '../../packages/auth/src/customer-account-lifecycle-configuration';
 import { configureSyntheticIntake } from '../../packages/missions/src/bootstrap';
+
+// ERASURE_BASE_CHECK=1 (or REMOVED_BASE_CHECK=1) keeps the erasure file away from the migrators, which is how the cases that need it
+// are shown to fail on main. Without those variables nothing is hidden. See removed-member-hide.ts.
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const real = await importOriginal<typeof import('node:fs/promises')>();
+  const readdir = (async (path: unknown, ...rest: unknown[]) => {
+    const names = (await (real.readdir as (...a: unknown[]) => Promise<unknown[]>)(
+      path,
+      ...rest,
+    )) as unknown[];
+    const { removedFileHidden } = await import('./removed-member-hide');
+    return names.filter((n) => !removedFileHidden(String(path), String(n)));
+  }) as typeof real.readdir;
+  return { ...real, readdir, default: { ...real, readdir } };
+});
 
 // CRUD G5, the install order. The account lifecycle module is optional: nothing installs it unless it is asked for.
 // It never applies the real-use schema itself, installs with its control closed, is repeatable, and refuses to run

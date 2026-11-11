@@ -429,13 +429,20 @@ describe('the real migrator applies the erasure file over account lifecycle 0001
   test('it is recorded with its own hash after the four, says how many open requests move, and writes no row anywhere else', async () => {
     openErasureFile();
     const notices: string[] = [];
-    const listen = (client: PoolClient) =>
-      client.on('notice', (notice) => notices.push(String(notice.message)));
+    // The pool announces every checkout, so a client is given its listener once and the listener is taken off afterwards.
+    const listening = new Map<PoolClient, (notice: { message?: string }) => void>();
+    const listen = (client: PoolClient) => {
+      if (listening.has(client)) return;
+      const onNotice = (notice: { message?: string }) => notices.push(String(notice.message));
+      listening.set(client, onNotice);
+      client.on('notice', onNotice);
+    };
     w.f.owner.on('acquire', listen);
     try {
       await migrateCustomerAccountLifecycle(w.f.owner);
     } finally {
       w.f.owner.off('acquire', listen);
+      for (const [client, onNotice] of listening) client.off('notice', onNotice);
     }
     const applied = (
       await w.f.owner.query(`SELECT name,sha256 FROM ${registry}.applied ORDER BY name`)
