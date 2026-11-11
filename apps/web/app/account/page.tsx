@@ -32,6 +32,7 @@ import { AccountHashRedirect } from './hash-redirect';
 import { DeliveredReports } from './delivered-reports';
 import { uxSwitchOn } from '../../lib/ux-switches';
 import { PendingRequestNotice } from '../../components/pending-request-notice';
+import { customerProgrammePagesEnabled } from '@corridra/auth/customer-programme-publication';
 import { ProgrammeApplyNotice } from '../../components/programme-apply-notice';
 import { Suspense } from 'react';
 import { WorkList } from './work-list';
@@ -130,7 +131,7 @@ export default async function Page({
       {view === 'home' && (
         <>
           <PendingRequestNotice where="account" />
-          <ProgrammeApplyNotice />
+          {customerProgrammePagesEnabled() && <ProgrammeApplyNotice />}
           <HomeNextStep
             title="New request"
             text={

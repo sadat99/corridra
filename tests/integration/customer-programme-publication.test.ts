@@ -238,6 +238,55 @@ test('installing the module changes no existing function, policy, table, constra
   ).rejects.toMatchObject({ code: '42501' });
 });
 
+test('the install refuses, and creates nothing, when a table it writes to has a shape it was not proven against', async () => {
+  // A second isolated database, so the fixture of this file stays as it is.
+  const g = await fixture('corridra_upgrade');
+  try {
+    await migrateCustomerParticipants(g.owner);
+    const refused = async (change: string, undo: string, table: string) => {
+      await g.owner.query(change);
+      await expect(migrateCustomerProgrammePublication(g.owner)).rejects.toThrow(
+        'Programme publication prerequisite differs: customer_private.' + table,
+      );
+      expect(
+        (
+          await g.owner.query(
+            "SELECT to_regclass('customer_private.programme_publication') AS made,to_regprocedure('app.read_programme_publication(text)') AS read",
+          )
+        ).rows[0],
+      ).toEqual({ made: null, read: null });
+      await g.owner.query(undo);
+    };
+    // A new column, a dropped NOT NULL and a changed CHECK: one for each table the module inserts into.
+    await refused(
+      "ALTER TABLE customer_private.programme_registration ADD COLUMN note text NOT NULL DEFAULT 'x'",
+      'ALTER TABLE customer_private.programme_registration DROP COLUMN note',
+      'programme_registration',
+    );
+    await refused(
+      'ALTER TABLE customer_private.programme_invitation ALTER COLUMN label DROP NOT NULL',
+      'ALTER TABLE customer_private.programme_invitation ALTER COLUMN label SET NOT NULL',
+      'programme_invitation',
+    );
+    await refused(
+      'ALTER TABLE customer_private.programme_participant_revocation ADD CONSTRAINT shorter_reason CHECK(length(reason)<=400)',
+      'ALTER TABLE customer_private.programme_participant_revocation DROP CONSTRAINT shorter_reason',
+      'programme_participant_revocation',
+    );
+    // With the proven shapes back, the same install succeeds.
+    await migrateCustomerProgrammePublication(g.owner);
+    expect(
+      (
+        await g.owner.query(
+          'SELECT count(*)::int n FROM customer_programme_publication_migrations.applied',
+        )
+      ).rows[0].n,
+    ).toBe(1);
+  } finally {
+    await g.close();
+  }
+}, 240000);
+
 let address = '';
 test('only a current owner or admin publishes; the first version makes the address; an exact retry answers the same', async () => {
   expect((await pages().view({ workspaceId, programmeId })).state).toBe('NONE');

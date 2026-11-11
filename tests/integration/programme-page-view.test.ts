@@ -137,3 +137,17 @@ describe('the public programme page', () => {
     expect(html).not.toContain('Share this page');
   });
 });
+
+it('programme pages are kept from search engines by a response header, and the apply reminder follows the switch', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = (path: string) => readFile(new URL('../../' + path, import.meta.url), 'utf8');
+  const config = (await source('apps/web/next.config.ts')).replace(/\s+/g, ' ');
+  expect(config).toContain(
+    "source: '/delegations/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }]",
+  );
+  for (const page of ['apps/web/app/account/page.tsx', 'apps/web/app/account/move/page.tsx']) {
+    const text = await source(page);
+    expect(text).toContain('{customerProgrammePagesEnabled() && <ProgrammeApplyNotice />}');
+    expect(text.match(/<ProgrammeApplyNotice \/>/g)).toHaveLength(1);
+  }
+});

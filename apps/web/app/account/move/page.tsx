@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { customerNotificationsEnabled } from '@corridra/auth/customer-notifications';
+import { customerProgrammePagesEnabled } from '@corridra/auth/customer-programme-publication';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { CustomerShell } from '../../../components/customer-shell';
 import { customerPageSession } from '../../../lib/customer-page-session';
@@ -94,7 +95,7 @@ export default async function Page({
     >
       <AccountHashRedirect view="move" />
       <PendingRequestNotice where="account" />
-      <ProgrammeApplyNotice />
+      {customerProgrammePagesEnabled() && <ProgrammeApplyNotice />}
       {customerNotificationsEnabled() && <EmailNudge />}
       <MoveView
         model={model}

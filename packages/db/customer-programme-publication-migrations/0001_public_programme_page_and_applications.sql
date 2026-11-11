@@ -22,6 +22,30 @@ DO $guard$ BEGIN
   RAISE EXCEPTION 'Programme publication prerequisite is missing';
  END IF;
 END $guard$;
+-- The module inserts rows into three older tables. Their shape (every column with its type, NOT NULL and whether it has
+-- a default, and every CHECK constraint) must be one this file was proven against; any other shape refuses the install
+-- before anything is created. Proven shapes: the participant module alone (sample), the base modules without real use,
+-- and the full install with real use. Function bodies are deliberately not fingerprinted: the real-use module
+-- legitimately replaces participant_scope and lock_workspace_access.
+DO $guard$
+DECLARE r record;shape text;
+BEGIN
+ FOR r IN SELECT * FROM (VALUES
+  ('customer_private.programme_invitation'::regclass,ARRAY['7a7024daeb51e39aa85d31b8acc27b97919027e74650906fb11b00d5557bd7a7',
+   'f0c30bcd23c365a526ddfcec5eda4526e53b67eabfc75d340a119ed0a14a46e1','d3f0949c5584ec5e193182c9137e6d73a240d17346832cc9c8285b18981b4437']),
+  ('customer_private.programme_registration'::regclass,ARRAY['ae94351a50b942e71074659bb3330bf33286ba6011a407385d0a3d6b61b0ab6f',
+   '2b86e1837ff0522b466195211b6496d51156a9e960a001704fa26cfc5d0481e5']),
+  ('customer_private.programme_participant_revocation'::regclass,ARRAY['a2c31eb71d1e40f4f947856c6a750c2ea2ea3c9ee06f2f4d821c2c3b78c8ff32'])
+ ) v(tbl,known) LOOP
+  SELECT (SELECT string_agg(a.attname||':'||format_type(a.atttypid,a.atttypmod)||':'||a.attnotnull::text||':'||a.atthasdef::text,',' ORDER BY a.attname)
+    FROM pg_attribute a WHERE a.attrelid=r.tbl AND a.attnum>0 AND NOT a.attisdropped)
+   ||'|'||coalesce((SELECT string_agg(pg_get_constraintdef(c.oid),';' ORDER BY pg_get_constraintdef(c.oid))
+    FROM pg_constraint c WHERE c.conrelid=r.tbl AND c.contype='c'),'') INTO shape;
+  IF shape IS NULL OR NOT (encode(sha256(convert_to(shape,'UTF8')),'hex')=ANY(r.known)) THEN
+   RAISE EXCEPTION 'Programme publication prerequisite differs: %',r.tbl;
+  END IF;
+ END LOOP;
+END $guard$;
 
 -- Limits live here and nowhere else in the database. Hours, not days: a day interval follows the session time zone.
 CREATE FUNCTION customer_private.programme_publication_max_open() RETURNS interval
@@ -313,8 +337,19 @@ BEGIN
  RETURN jsonb_build_object('programmeId',programme,'version',latest.version,'state','WITHDRAWN');
 END $$;
 
--- The anonymous read. Malformed, unknown, never published, withdrawn, archived and long-closed addresses all answer
--- the same single value. It writes nothing and records nothing about the visitor.
+-- Real use is an optional module and the owner's control. The page of a real (not sample) workspace is public only
+-- while real use is on: with it off no organiser can sign in to take the page down, so the page must not stay public.
+CREATE FUNCTION customer_private.programme_publication_real_use() RETURNS boolean
+ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE live boolean:=false;
+BEGIN
+ IF to_regclass('customer_private.real_use_configuration') IS NULL THEN RETURN false; END IF;
+ EXECUTE 'SELECT EXISTS(SELECT FROM customer_private.real_use_configuration WHERE enabled)' INTO live;
+ RETURN coalesce(live,false);
+END $$;
+-- The anonymous read. Malformed, unknown, never published, withdrawn, archived and long-closed addresses, and a real
+-- workspace's page while real use is off, all answer the same single value. It writes nothing and records nothing
+-- about the visitor.
 CREATE FUNCTION app.read_programme_publication(address text) RETURNS jsonb
  LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE a customer_private.programme_public_address;p customer_private.programme_publication;live text;
@@ -322,6 +357,9 @@ BEGIN
  IF address IS NULL OR length(address) NOT BETWEEN 12 AND 80 OR address !~ '^[a-z0-9]+(-[a-z0-9]+)*-[a-z0-9]{10}$' THEN RETURN jsonb_build_object('state','unknown'); END IF;
  SELECT * INTO a FROM customer_private.programme_public_address WHERE slug=address;
  IF NOT FOUND THEN RETURN jsonb_build_object('state','unknown'); END IF;
+ IF NOT coalesce((SELECT synthetic FROM app.tenant WHERE id=a.workspace_id),false) AND NOT customer_private.programme_publication_real_use() THEN
+  RETURN jsonb_build_object('state','unknown');
+ END IF;
  p:=customer_private.programme_publication_latest(a.programme_id);
  live:=customer_private.programme_publication_state(p);
  IF live NOT IN ('OPEN','CLOSED') THEN RETURN jsonb_build_object('state','unknown'); END IF;
@@ -571,6 +609,7 @@ REVOKE ALL ON FUNCTION customer_private.programme_publication_max_open(),custome
  customer_private.programme_application_cap(),customer_private.programme_application_person_cap(),customer_private.programme_application_hourly_limit(),
  customer_private.programme_publication_iso(timestamptz),customer_private.programme_publication_text(jsonb,integer,integer),
  customer_private.programme_publication_copy_valid(jsonb,boolean),customer_private.programme_publication_paused(uuid,uuid),
+ customer_private.programme_publication_real_use(),
  customer_private.programme_publication_latest(uuid),customer_private.programme_publication_state(customer_private.programme_publication),
  customer_private.programme_application_summary(customer_private.programme_application),
  customer.programme_publication_view(uuid,uuid),customer.publish_programme(uuid,uuid,uuid,integer,text,jsonb,timestamptz),

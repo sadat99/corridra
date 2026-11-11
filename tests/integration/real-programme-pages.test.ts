@@ -124,6 +124,37 @@ test('a real organiser publishes real words; the page is not a sample; an outsid
   expect(page).toMatchObject({ state: 'OPEN', sample: false, programme: copy });
 });
 
+test('with real use switched off the real page is not public; switched back on it is readable again', async () => {
+  // The configuration row is immutable for the application; only the database owner can change it, as here.
+  const realUse = async (enabled: boolean) => {
+    await s.f.owner.query(
+      'ALTER TABLE customer_private.real_use_configuration DISABLE TRIGGER USER',
+    );
+    try {
+      await s.f.owner.query('UPDATE customer_private.real_use_configuration SET enabled=$1', [
+        enabled,
+      ]);
+    } finally {
+      await s.f.owner.query(
+        'ALTER TABLE customer_private.real_use_configuration ENABLE TRIGGER USER',
+      );
+    }
+  };
+  expect(await reader().read(address)).toMatchObject({ state: 'OPEN', sample: false });
+  await realUse(false);
+  try {
+    // Nobody can sign in to take the page down while real use is off, so it must not stay public.
+    expect(await reader().read(address)).toEqual({ state: 'unknown' });
+  } finally {
+    await realUse(true);
+  }
+  expect(await reader().read(address)).toMatchObject({
+    state: 'OPEN',
+    sample: false,
+    programme: copy,
+  });
+});
+
 test('a real applicant applies, is invited and joins; the registration is the ordinary one', async () => {
   const applied = await pages(delegate).application(apply(1));
   expect(applied).toMatchObject({ status: 'SUBMITTED', displayLabel: 'Rahman Agro Imports' });

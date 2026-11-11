@@ -46,6 +46,11 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // Public programme pages are never offered to search engines (owner decision, 11 November 2026, ADR-080).
+        source: '/delegations/:path*',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      },
+      {
         source: '/api/intake/pending/:path*',
         headers: [
           { key: 'Cache-Control', value: 'no-store' },
