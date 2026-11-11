@@ -288,12 +288,22 @@ function TenantWorkspace({
       const directory = destination.querySelector('details');
       if (directory) directory.open = true;
     }
-    // A hidden tab that holds the block is shown before the scroll below. The sub-tabs' own effect also
-    // scrolls to and focuses the block once its tab shows, so either one may land first.
-    if (target?.closest<HTMLElement>('[data-subtab]')?.hidden) resolveSubTabsAgain();
     if (target) openFoldsAround(target);
-    destination?.scrollIntoView();
-    destination?.focus({ preventScroll: true });
+    const land = () => {
+      destination?.scrollIntoView();
+      destination?.focus({ preventScroll: true });
+    };
+    // A hidden tab that holds the block is shown first. React does not flush a forced update from inside an
+    // effect, so the tab is shown right after this effect ends and the scroll and focus follow it; the
+    // sub-tabs' own effect also scrolls to and focuses the block once its tab shows.
+    if (target?.closest<HTMLElement>('[data-subtab]')?.hidden) {
+      queueMicrotask(() => {
+        resolveSubTabsAgain();
+        land();
+      });
+    } else {
+      land();
+    }
     // Until the block lands the section is shown and the address waits; the watch ends when the block
     // lands, when the address changes or when the workspace unmounts.
     if (place !== 'section' || !holder) return undefined;
