@@ -29,7 +29,7 @@ BEGIN
   SELECT e.signature,e.fingerprint,e.grantees,q.fp,q.grantees live_grantees
   FROM (VALUES
    -- fingerprint-begin
-   ('customer.programme_projection_own(uuid,uuid)','886543d4ccca7518aacd758740f04b91265dfe81df64b5da1778f4fcea27cd0e','corridra_runtime')
+   ('customer.programme_projection_own(uuid,uuid)','eefe46009f627f90bef94fab9fa22a94bad6935c46e530c96dea18ac0641d5db','corridra_runtime')
    -- fingerprint-end
   ) AS e(signature,fingerprint,grantees)
   LEFT JOIN (
@@ -98,7 +98,7 @@ BEGIN
   END LOOP;
  END LOOP;
  EXECUTE $fn$
-CREATE OR REPLACE FUNCTION customer.programme_projection_own(registration uuid,after_link uuid) RETURNS jsonb
+CREATE OR REPLACE FUNCTION customer.programme_projection_own(registration uuid,after_link uuid DEFAULT NULL) RETURNS jsonb
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE actor uuid:=customer.actor_id();reg customer_private.programme_registration;work uuid;source_workspace uuid;
  profile customer_private.organisation_profile_revision;company_head customer_private.programme_projection_company;links jsonb;source_expiry timestamptz;
