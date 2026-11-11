@@ -32,10 +32,20 @@ export function CustomerRailTop() {
   return <NewRequestLink />;
 }
 
-/** Help on WhatsApp. `href` is the owner's support link; without it the row says Coming soon, as it always did. */
-export function CustomerRailFoot({ href }: { href?: string | null }) {
+/**
+ * Help on WhatsApp. `href` is the owner's support link; without it the row says Coming soon, as it always did.
+ * `allTools` adds the All Tools link first in the foot (the one place the signed-in frame links to that page on
+ * a wide screen); left off, the markup is exactly what it was.
+ */
+export function CustomerRailFoot({ href, allTools }: { href?: string | null; allTools?: boolean }) {
   return (
     <div className="ux-rail-foot">
+      {allTools ? (
+        <Link prefetch={false} className="ux-rail-tools" href="/account/all-tools">
+          <CorridraIcon name="grid" />
+          <span>All Tools</span>
+        </Link>
+      ) : null}
       {href ? (
         <a className="ux-rail-help" href={href} target="_blank" rel="noopener noreferrer" lang="en">
           <CorridraIcon name="help" />

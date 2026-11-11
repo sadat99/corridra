@@ -1065,3 +1065,107 @@ test('an attendance mark run alongside a report, a task save and a capacity save
   expect(after.tasks.open).toBe(tasksBefore + 1);
   expect(after.capacity).toMatchObject({ capacity: 30, version: opened.capacity.version + 1 });
 });
+
+// A coordination writer the database ends as a deadlock victim wrote nothing and is answered as RETRYABLE; a retry
+// with the same command id then completes. The holder waits longer before checking for a deadlock, so the writer is
+// always the one the database ends.
+const advisoryKey = async (text: string) =>
+  (await f.owner.query<{ key: string }>('SELECT hashtextextended($1,0)::text AS key', [text]))
+    .rows[0].key;
+const commandKey = async (commandId: string) => {
+  const actor = (
+    await f.owner.query<{ id: string }>(
+      'SELECT id FROM customer_private.principal WHERE issuer=$1 AND subject=$2',
+      [issuer, subject('alice')],
+    )
+  ).rows[0].id;
+  return advisoryKey(`customer.access.command:${actor}:${commandId}`);
+};
+const waitingOn = async (key: string) => {
+  for (let tries = 0; tries < 200; tries++) {
+    const waiting = (
+      await f.owner.query<{ n: number }>(
+        `SELECT count(*)::int n FROM pg_locks WHERE locktype='advisory' AND NOT granted AND objsubid=1
+          AND classid=(($1::bigint>>32)&4294967295)::oid AND objid=($1::bigint&4294967295)::oid`,
+        [key],
+      )
+    ).rows[0].n;
+    if (waiting > 0) return;
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+  throw new Error('Expected a session waiting on the lock');
+};
+const busy = { status: 503, code: 'RETRYABLE', message: 'Busy right now. Try again in a moment.' };
+/** Holds `first`, starts `write`, and once it waits on `waitKey` takes `second`, closing the cycle. */
+async function deadlockVictim(
+  first: string,
+  waitKey: string,
+  second: string,
+  write: () => Promise<unknown>,
+) {
+  const holder = await f.owner.connect();
+  try {
+    await holder.query('BEGIN');
+    await holder.query("SET LOCAL deadlock_timeout='5s'");
+    await holder.query('SELECT pg_advisory_xact_lock($1::bigint)', [first]);
+    const written = write();
+    written.catch(() => undefined);
+    await waitingOn(waitKey);
+    await holder.query('SELECT pg_advisory_xact_lock($1::bigint)', [second]);
+    await holder.query('COMMIT');
+    return await written.then(
+      () => 'fulfilled',
+      (error: unknown) => error,
+    );
+  } catch (error) {
+    await holder.query('ROLLBACK');
+    throw error;
+  } finally {
+    holder.release();
+  }
+}
+
+test('an attendance mark ended as a deadlock victim is answered as retryable, changes nothing and a retry with the same command id completes', async () => {
+  const opened = await report();
+  const bob = opened.participants.find((p) => p.registrationId === bobReg)!;
+  const next = bob.attendance === 'ATTENDED' ? 'ABSENT' : 'ATTENDED';
+  const commandId = randomUUID();
+  const command = await commandKey(commandId);
+  const workspace = await advisoryKey(`customer.access.workspace:${workspaceId}`);
+  const before = await counts();
+  // The holder plays a writer with the same command id: it holds the command lock and then wants the workspace lock,
+  // which the mark already holds from its report while it waits for the command lock.
+  await expect(
+    deadlockVictim(command, command, workspace, () =>
+      attend(bobReg, next, bob.attendanceVersion, 'alice', commandId),
+    ),
+  ).resolves.toMatchObject(busy);
+  expect(await counts()).toEqual(before);
+  expect((await report()).participants.find((p) => p.registrationId === bobReg)).toMatchObject({
+    attendance: bob.attendance,
+    attendanceVersion: bob.attendanceVersion,
+  });
+  await expect(
+    attend(bobReg, next, bob.attendanceVersion, 'alice', commandId),
+  ).resolves.toMatchObject({ replayed: false, state: next, version: bob.attendanceVersion + 1 });
+  expect((await report()).participants.find((p) => p.registrationId === bobReg)).toMatchObject({
+    attendance: next,
+    attendanceVersion: bob.attendanceVersion + 1,
+  });
+}, 30000);
+
+test('a task save ended as a deadlock victim is answered as retryable, changes nothing and a retry with the same command id completes', async () => {
+  const opened = await report();
+  const commandId = randomUUID();
+  const command = await commandKey(commandId);
+  const workspace = await advisoryKey(`customer.access.workspace:${workspaceId}`);
+  const before = await counts();
+  const saved = () =>
+    saveTask(task({ title: 'Synthetic task saved after a deadlock' }), 0, 'alice', commandId);
+  // The task save holds its command lock and waits for the workspace lock the holder has; the holder then wants the
+  // command lock.
+  await expect(deadlockVictim(workspace, workspace, command, saved)).resolves.toMatchObject(busy);
+  expect(await counts()).toEqual(before);
+  await expect(saved()).resolves.toMatchObject({ replayed: false });
+  expect((await report()).tasks.open).toBe(opened.tasks.open + 1);
+}, 30000);
