@@ -166,3 +166,109 @@ test('the team menus stay inside the screen on every side at normal and the larg
     }
   }
 });
+
+// W6-A: the Inbox and Help icons used to have no size of their own: they were what was left of the 44 px button
+// box, which is 12 px or less once the text is large. They are 1.75 rem now, so they follow the text size, and the
+// buttons keep at least 44 by 44 px. Measured at Normal, at Largest, and at Largest with the browser text at 200
+// percent (a root size of 40 px, injected as a style, which is not the browser's own setting).
+test('the Inbox and Help icons follow the text size and the buttons keep 44 px targets', async ({
+  page,
+  context,
+}) => {
+  test.setTimeout(240_000);
+  await signInCustomer(context);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/account');
+  const header = page.locator('header.ux-app-header');
+  const buttons = {
+    Inbox: header.getByRole('button', { name: 'Inbox', exact: true }),
+    Help: header.getByRole('button', { name: 'Help and accessibility', exact: true }),
+  };
+  const measure = async (name: keyof typeof buttons) => {
+    const button = buttons[name];
+    await expect(button).toBeVisible();
+    const box = (await button.boundingBox())!;
+    const icon = (await button.locator('.corridra-icon').first().boundingBox())!;
+    const root = await page.evaluate(() =>
+      parseFloat(getComputedStyle(document.documentElement).fontSize),
+    );
+    return {
+      root,
+      icon: icon.width,
+      iconHeight: icon.height,
+      width: box.width,
+      height: box.height,
+    };
+  };
+  const seen: Record<string, number[]> = { Inbox: [], Help: [] };
+  const cases = [
+    { name: 'Normal', root: 16, style: '' },
+    { name: 'Largest', root: 20, style: '' },
+    {
+      name: 'Largest with 200% browser text',
+      root: 40,
+      style: 'html { font-size: 250% !important; }',
+    },
+  ] as const;
+  for (const step of cases) {
+    await setStep(page, step.name === 'Normal' ? 'normal' : 'largest');
+    if (step.style) await page.addStyleTag({ content: step.style });
+    for (const name of ['Inbox', 'Help'] as const) {
+      const m = await measure(name);
+      const label = `${name} at ${step.name}`;
+      expect(m.root, `${label}: root size`).toBe(step.root);
+      // 1.75 rem: 28, 35 and 70 px. Never the 12 px it was.
+      expect(m.icon, `${label}: icon width`).toBeCloseTo(1.75 * step.root, 0);
+      expect(m.iconHeight, `${label}: icon height`).toBeCloseTo(1.75 * step.root, 0);
+      expect(m.icon, `${label}: icon is not 12 px`).not.toBe(12);
+      expect(m.width, `${label}: target width`).toBeGreaterThanOrEqual(44);
+      expect(m.height, `${label}: target height`).toBeGreaterThanOrEqual(44);
+      seen[name].push(m.icon);
+    }
+  }
+  // Each icon grows with the text: larger at Largest than at Normal, larger again at 200 percent.
+  for (const name of ['Inbox', 'Help'] as const) {
+    expect(seen[name][1], `${name}: Largest is larger than Normal`).toBeGreaterThan(seen[name][0]);
+    expect(seen[name][2], `${name}: 200% is larger than Largest`).toBeGreaterThan(seen[name][1]);
+  }
+  // Back to Normal: the size returns with it.
+  await setStep(page, 'normal');
+  for (const name of ['Inbox', 'Help'] as const)
+    expect((await measure(name)).icon, `${name} after returning to Normal`).toBeCloseTo(28, 0);
+});
+
+// W6-A: the Language card is folded into the "Make it easier to read" card, so the Me page is one card shorter. No
+// control is lost (language shows only when more than one language is offered, as the chip always did), the page
+// stays inside the layout budget at 390 by 844 (target 1.5 screens, hard limit 2.0), and the heading, the three
+// Text Size radios and the two switches are in the one card.
+test('the Me page holds language, reading and the switches in one card and stays within the page budget', async ({
+  page,
+}, info) => {
+  test.setTimeout(240_000);
+  const seed = await signInOwner(page, '/operator');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`/contributor/me?workspace=${seed.tenantId}`);
+  await expect(page.getByRole('heading', { level: 1, name: 'Me.' })).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  const card = page.locator('section', {
+    has: page.getByRole('heading', { name: 'Make it easier to read', level: 2 }),
+  });
+  await expect(card).toHaveCount(1);
+  await expect(card.getByRole('radio')).toHaveCount(3);
+  await expect(card.getByRole('switch')).toHaveCount(2);
+  await expect(card.getByRole('switch', { name: 'Stronger Colours', exact: true })).toBeVisible();
+  await expect(card.getByRole('switch', { name: 'Less Movement', exact: true })).toBeVisible();
+  // The Language card is gone as its own card. Its chip, when offered, is in this one and names itself.
+  await expect(page.getByRole('heading', { name: 'Language', exact: true })).toHaveCount(0);
+  // The row shows only when more than one language is offered; the figure below says which it was measured with.
+  const rowShown = (await card.locator('.lang-switcher').count()) === 1;
+  if (rowShown) await expect(card.locator('.me-language')).toContainText('Language');
+  else await expect(page.locator('.me-language')).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Your private link', level: 2 })).toBeVisible();
+  const screens = (await page.evaluate(() => document.documentElement.scrollHeight)) / 844;
+  info.annotations.push({
+    type: 'me-page-screens',
+    description: `${screens.toFixed(2)} screens, language row ${rowShown ? 'shown' : 'not shown'}`,
+  });
+  expect(screens, 'Me at 390 by 844, hard limit').toBeLessThanOrEqual(2);
+});

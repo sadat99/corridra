@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect, signInCustomer, signInOwner } from '../fixtures';
-import type { BrowserContext, Page } from '@playwright/test';
+import type { BrowserContext, Locator, Page } from '@playwright/test';
 
 // Chat on WhatsApp in the signed-in customer menus and rail (docs/revamp/specs/workflow-intelligence.md, W9).
 // Port 3302 is the same app with a made-up support number (scripts/qa/verification-server.ts); port 3300 has none.
@@ -31,6 +31,33 @@ function helpMenu(page: Page) {
   });
   return { trigger, menu, row };
 }
+
+/** The words of a foot row in the collapsed rail, and whether they are shown beside the icon (W6-A). */
+async function collapseRail(page: Page) {
+  await page.locator('.ux-leftnav-collapse').click();
+  await expect(page.locator('.ux-leftnav-frame')).toHaveAttribute('data-collapsed', 'true');
+}
+const railLabel = (row: Locator) => row.locator(':scope > .ux-rail-label');
+async function expectNameShown(row: Locator, words: string[]) {
+  const label = railLabel(row);
+  await expect(label).toBeInViewport({ ratio: 1 });
+  for (const word of words) await expect(label).toContainText(word);
+  const rail = (await row.page().locator('.ux-leftnav-rail').boundingBox())!;
+  const box = (await label.boundingBox())!;
+  expect(box.x, 'the name sits beside the rail, not inside it').toBeGreaterThanOrEqual(
+    rail.x + rail.width - 1,
+  );
+  expect(box.x + box.width, 'and inside the window').toBeLessThanOrEqual(
+    row.page().viewportSize()!.width,
+  );
+  const colours = await label.evaluate((el) => {
+    const style = getComputedStyle(el);
+    return { text: style.color, back: style.backgroundColor };
+  });
+  expect(colours.text, 'the words have a fill of their own to read against').not.toBe(colours.back);
+}
+const expectNameHidden = (row: Locator) =>
+  expect(railLabel(row)).not.toBeInViewport({ ratio: 0.01 });
 
 test.describe('with a support number set (port 3302)', () => {
   test.use({ baseURL: 'http://127.0.0.1:3302' });
@@ -172,6 +199,61 @@ test.describe('with a support number set (port 3302)', () => {
     });
   });
 
+  test('in the collapsed rail the name shows on hover and on keyboard focus, stays while the pointer is on it, and Esc and leaving close it', async ({
+    page,
+  }) => {
+    test.skip(width(page) < 1024, 'the rail is shown from 1024 px');
+    const link = page.locator('.ux-rail-foot a.ux-rail-help');
+    // Expanded: the words are in the row already and nothing floats.
+    await link.hover();
+    expect(await railLabel(link).evaluate((el) => getComputedStyle(el).position)).not.toBe('fixed');
+    await collapseRail(page);
+    await page.mouse.move(5, 5);
+    await expectNameHidden(link);
+    // Hover shows it; the pointer can cross onto the words without them closing.
+    await link.hover();
+    await expectNameShown(link, ['Help on WhatsApp']);
+    const words = (await railLabel(link).boundingBox())!;
+    await page.mouse.move(words.x + words.width / 2, words.y + words.height / 2, { steps: 8 });
+    await expectNameShown(link, ['Help on WhatsApp']);
+    // Esc closes them without moving focus or the pointer, and they stay closed until the pointer comes back.
+    await page.keyboard.press('Escape');
+    await expectNameHidden(link);
+    await page.mouse.move(5, 5);
+    await link.hover();
+    await expectNameShown(link, ['Help on WhatsApp']);
+    await page.mouse.move(5, 5);
+    await expectNameHidden(link);
+    // Keyboard focus shows them too, and moving focus away closes them.
+    await page.keyboard.press('Shift');
+    await link.focus();
+    await expect(link).toBeFocused();
+    await expectNameShown(link, ['Help on WhatsApp']);
+    await page.keyboard.press('Escape');
+    await expectNameHidden(link);
+    await expect(link).toBeFocused();
+    await page.locator('.ux-leftnav-collapse').focus();
+    await expectNameHidden(link);
+    // The accessible name has the words once (the visible words and the new-tab note, nothing doubled).
+    const name = await link.evaluate((el) => (el.textContent ?? '').replace(/\s+/g, ' ').trim());
+    expect(name.match(/Help on WhatsApp/g)).toHaveLength(1);
+    await expect(link).toHaveAccessibleName(/^Help on WhatsApp \(opens WhatsApp outside Corridra/);
+  });
+
+  test('with the rail expanded the name shows no tip and takes no key: the first Escape closes an open menu', async ({
+    page,
+  }) => {
+    test.skip(width(page) < 1024, 'the rail is shown from 1024 px');
+    const link = page.locator('.ux-rail-foot a.ux-rail-help');
+    const { trigger, menu } = helpMenu(page);
+    await trigger.click();
+    await expect(menu).toBeVisible();
+    await link.hover();
+    await expect(link).not.toHaveAttribute('data-tip', /.*/);
+    await page.keyboard.press('Escape');
+    await expect(menu).toBeHidden();
+  });
+
   test('the public header is unchanged: no WhatsApp text on a public page', async ({ page }) => {
     await page.goto('/how-it-works');
     await expect(page.locator('header').first()).toBeVisible();
@@ -203,6 +285,29 @@ test.describe('without a support number (port 3300)', () => {
       await expect(soon.getByRole('link')).toHaveCount(0);
       await expect(soon.getByRole('button')).toHaveCount(0);
     }
+  });
+
+  test('in the collapsed rail the Coming soon row shows its words on hover only, and it is not a keyboard stop', async ({
+    page,
+  }) => {
+    test.skip(width(page) < 1024, 'the rail is shown from 1024 px');
+    const soon = page.locator('.ux-rail-foot p.ux-rail-soon');
+    await expect(soon).not.toHaveAttribute('tabindex', /.*/);
+    await collapseRail(page);
+    await page.mouse.move(5, 5);
+    await expectNameHidden(soon);
+    await soon.hover();
+    await expectNameShown(soon, ['Help on WhatsApp', 'Coming soon']);
+    await page.keyboard.press('Escape');
+    await expectNameHidden(soon);
+    await page.mouse.move(5, 5);
+    await soon.hover();
+    await expectNameShown(soon, ['Help on WhatsApp', 'Coming soon']);
+    await page.mouse.move(5, 5);
+    await expectNameHidden(soon);
+    // The words are in the page for assistive technology all the while.
+    await expect(soon).toContainText('Help on WhatsApp');
+    await expect(soon.getByRole('link')).toHaveCount(0);
   });
 
   test('the page carries no trace of a WhatsApp address', async ({ page }) => {

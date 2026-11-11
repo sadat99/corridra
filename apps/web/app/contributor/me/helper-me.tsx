@@ -1,5 +1,5 @@
 'use client';
-// The settings a field helper uses in one place. Language, reading aloud, text size (three steps), Stronger Colours
+// The settings a field helper uses in one place. Language (a row in the reading card, W6-A), reading aloud, text size (three steps), Stronger Colours
 // and Less Movement are real; the last three are kept in this browser only. A switch whose effect the device already
 // asks for reads On and does nothing. Corridra keeps data use low for everyone (W10, owner decision: the site icon is
 // cached and no link prefetches), so there is no Data Saver switch and the card says so in one plain line. The
@@ -9,6 +9,7 @@ import './helper-me.css';
 import { useId } from 'react';
 import Link from 'next/link';
 import { LanguageSwitcher } from '../../../components/language-switcher';
+import { useLanguage } from '../../../components/language-provider';
 import { CorridraIcon } from '../../../components/corridra-icon';
 import { textSizeNames, UnsavedChoiceNote } from '../../../components/ux/comfort-controls';
 import {
@@ -71,6 +72,8 @@ function MeSwitch({
 
 export function HelperMe({ workspace }: { workspace: string }) {
   const listen = useListen();
+  // The language row is there only when more than one language is offered, as the chip itself is.
+  const { offered } = useLanguage();
   const [size, setSize] = useTextSize();
   const [contrast, setContrast] = useContrast();
   const [movement, setMovement] = useLessMovement();
@@ -78,12 +81,14 @@ export function HelperMe({ workspace }: { workspace: string }) {
   const systemReducedMotion = useSystemSetting(systemReducedMotionQuery);
   return (
     <>
-      <section aria-labelledby="me-language" className="detail-card">
-        <h2 id="me-language">Language</h2>
-        <LanguageSwitcher />
-      </section>
       <section aria-labelledby="me-comfort" className="detail-card">
         <h2 id="me-comfort">Make it easier to read</h2>
+        {offered.length > 1 ? (
+          <div className="me-language">
+            <span aria-hidden="true">Language</span>
+            <LanguageSwitcher />
+          </div>
+        ) : null}
         {listen.supported ? (
           <button
             type="button"

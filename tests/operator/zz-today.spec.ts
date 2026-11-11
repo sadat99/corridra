@@ -428,3 +428,52 @@ test('W3-9 when invoicing and payments are off, their jump links and empty block
     await expectAtTop(page, id);
   }
 });
+
+// W6-A: "Not available" read "Not availabl / e" in a narrow tile. A tile that cannot give its count now takes two
+// tiles' width and the word is never split inside itself: at the phone widths, at the widest layout, and at
+// Largest text. Each word is measured by its own range: a word split across two lines has two boxes.
+test('W6-A when counts are Not available, no word in the tile is split across lines at 320, 390 and 1440, at Normal and Largest text', async ({
+  page,
+}) => {
+  test.setTimeout(240000);
+  const today = await ownerOverview(page, {
+    unavailable: ['acceptedQuotesNotStarted', 'serviceRequestsToQuote', 'repliesToReview'],
+  });
+  const tiles = today.getByRole('list', { name: 'Counts' }).locator('li[data-tone="unavailable"]');
+  await expect(tiles).toHaveCount(3);
+  for (const step of ['normal', 'largest'] as const) {
+    await page.evaluate((value) => {
+      if (value === 'normal') document.documentElement.removeAttribute('data-text-size');
+      else document.documentElement.setAttribute('data-text-size', value);
+    }, step);
+    for (const width of [320, 390, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.evaluate(() => document.fonts.ready);
+      const strong = tiles.locator('strong');
+      await expect(strong).toHaveText(['Not available', 'Not available', 'Not available']);
+      const split = await strong.evaluateAll((els) =>
+        els.flatMap((el) => {
+          const node = el.firstChild as Text;
+          const text = node.textContent ?? '';
+          const found: string[] = [];
+          for (const match of text.matchAll(/\S+/g)) {
+            const range = document.createRange();
+            range.setStart(node, match.index ?? 0);
+            range.setEnd(node, (match.index ?? 0) + match[0].length);
+            if (range.getClientRects().length > 1) found.push(match[0]);
+          }
+          return found;
+        }),
+      );
+      expect(split, `${step} text at ${width}: words split across lines`).toEqual([]);
+      // Each tile still goes where it went: accepted quotes and the Delivery section, replies and the commercial
+      // section, and (W6-B) paid-service requests and the Services section.
+      expect(
+        await tiles
+          .getByRole('link')
+          .evaluateAll((links) => links.map((a) => a.getAttribute('href'))),
+        `${step} text at ${width}: where the tiles go`,
+      ).toEqual(['#workspace-delivery', '#workspace-commercial', '#billing-services']);
+    }
+  }
+});
