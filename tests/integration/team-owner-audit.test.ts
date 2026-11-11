@@ -623,31 +623,33 @@ test('an active membership committed after the revoke ran is not left behind: ca
      CREATE TRIGGER pause_after_revoke_test AFTER UPDATE ON app.membership FOR EACH STATEMENT
      EXECUTE FUNCTION app.pause_after_revoke_test()`,
   );
-  const holder = await f.owner.connect();
   let cancelled: Promise<unknown> | undefined;
+  // One finally removes the trigger whatever fails, once cancel has settled.
   try {
-    await holder.query('BEGIN');
-    await holder.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [pauseKey]);
-    cancelled = team.cancel(f.users.owner.ctx, { invitationId: orphan.id });
-    cancelled.catch(() => undefined);
-    for (let tries = 0; ; tries++) {
-      const waiting = (
-        await f.owner.query(
-          "SELECT count(*)::int AS n FROM pg_locks WHERE locktype='advisory' AND NOT granted",
-        )
-      ).rows[0].n as number;
-      if (waiting) break;
-      expect(tries).toBeLessThan(200);
-      await new Promise((resolve) => setTimeout(resolve, 25));
+    const holder = await f.owner.connect();
+    try {
+      await holder.query('BEGIN');
+      await holder.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [pauseKey]);
+      cancelled = team.cancel(f.users.owner.ctx, { invitationId: orphan.id });
+      cancelled.catch(() => undefined);
+      for (let tries = 0; ; tries++) {
+        const waiting = (
+          await f.owner.query(
+            "SELECT count(*)::int AS n FROM pg_locks WHERE locktype='advisory' AND NOT granted",
+          )
+        ).rows[0].n as number;
+        if (waiting) break;
+        expect(tries).toBeLessThan(200);
+        await new Promise((resolve) => setTimeout(resolve, 25));
+      }
+      await addPendingMembership(orphan.principalId);
+    } finally {
+      await holder.query('COMMIT');
+      holder.release();
     }
-    await addPendingMembership(orphan.principalId);
-  } finally {
-    await holder.query('COMMIT');
-    holder.release();
-  }
-  try {
     await expect(cancelled).rejects.toMatchObject(busy);
   } finally {
+    await cancelled?.catch(() => undefined);
     await f.owner.query(
       'DROP TRIGGER pause_after_revoke_test ON app.membership; DROP FUNCTION app.pause_after_revoke_test()',
     );

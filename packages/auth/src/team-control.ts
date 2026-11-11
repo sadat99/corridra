@@ -301,9 +301,11 @@ export class TeamControl {
         // answer the same way, so nothing about another workspace is revealed.
         if (!row || !invite || invite.tenantId !== t.tenantId || invite.role === 'contributor')
           throw new DomainError('Invitation not found', 404);
-        // Key share only, so setup and resend, which change the principal without touching its key, are
-        // not blocked. A reset takes the principal FOR UPDATE, which conflicts with key share, so a reset
-        // that already holds the principal commits before this continues, and one that starts later waits.
+        // Key share only. Resend changes the principal with a non-key UPDATE, which key share allows.
+        // Setup (OperatorSetup.complete) takes the principal FOR UPDATE, which conflicts with key share,
+        // but setup and cancel both first lock this same setup row FOR UPDATE, so they serialise on it and
+        // never deadlock. A reset takes the principal FOR UPDATE too, so a reset that already holds the
+        // principal commits before this continues, and one that starts later waits.
         await q('SELECT 1 FROM identity.principal WHERE id=$1 FOR KEY SHARE', [invite.principalId]);
         const revoked = await t.db.query(
           'UPDATE app.membership SET revoked_at=now() WHERE tenant_id=$1 AND user_id=$2 AND revoked_at IS NULL',
