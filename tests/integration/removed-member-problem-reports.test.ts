@@ -1,7 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import {
-  OWNER_WORDS,
   buildWorld,
   hideNewFiles,
   openNewFiles,
@@ -109,7 +108,7 @@ afterAll(async () => {
   await w?.f.close();
 });
 
-describe('no problem report function is touched', () => {
+describe('CONTROL (ADR-078 is untouched; holds on main too): no problem report function is touched', () => {
   test('body, settings, security mode, owner and grants of every problem_report function are the same after all seven files', async () => {
     const after = await reportFunctions();
     expect(Object.keys(after).length).toBeGreaterThan(10);
@@ -134,7 +133,7 @@ describe('no problem report function is touched', () => {
 describe.each([
   ['closed', false],
   ['open', true],
-])('with the account lifecycle control %s', (_name, open) => {
+])('CONTROL (ADR-078, holds on main too): with the account lifecycle control %s', (_name, open) => {
   test('a person who left a workspace files, lists, reads and removes the words of their own problem reports', async () => {
     if (open) await setAccountControl(true);
     // lena still has her own workspace; gone has none at all. Both have left the shared one.
@@ -165,7 +164,7 @@ describe.each([
   });
 });
 
-describe('the staff erasure path and the gap that stays', () => {
+describe('CONTROL (ADR-078, holds on main too): the staff erasure path and the gap that stays', () => {
   test('staff remove the words of a removed member under an erasure request as before', async () => {
     await setAccountControl(true);
     const reference = (await file('lena', body({ detail: 'Words staff will remove.' })))
@@ -217,8 +216,4 @@ describe('the staff erasure path and the gap that stays', () => {
     ).rejects.toThrow();
     expect(await requests()).toBe(before);
   });
-});
-
-test(`the owner's words are the rule here: "${OWNER_WORDS}"`, () => {
-  expect(OWNER_WORDS).toBe('No, remove access (Recommended)');
 });

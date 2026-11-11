@@ -1,7 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { randomBytes, randomUUID } from 'node:crypto';
 import {
-  OWNER_WORDS,
   Probe,
   appliedNames,
   applyFiles,
@@ -229,6 +228,7 @@ beforeAll(async () => {
     reason: 'Owner approved real work for the removed member mail tests',
   });
   process.env.CORRIDRA_REAL_USE_ENABLED = 'true';
+  process.env.DATA_ENVIRONMENT = 'real';
   missions = new MissionService(f.runtime, secret, 'real');
   moves = new MissionMoveService(f.runtime);
   oldMail = (
@@ -284,6 +284,7 @@ beforeAll(async () => {
 }, 900000);
 afterAll(async () => {
   delete process.env.CORRIDRA_REAL_USE_ENABLED;
+  delete process.env.DATA_ENVIRONMENT;
   await f?.close();
 });
 
@@ -320,7 +321,7 @@ describe('the upgrade from the production state', () => {
 
 describe('a current member and a member who leaves', () => {
   const queued: Record<string, string> = {};
-  test('while members, both queue mail', async () => {
+  test('CONTROL (holds on main too): while members, both queue mail', async () => {
     for (const [person, key] of [
       ['lena', 'before'],
       ['lena', 'mutable'],
@@ -332,7 +333,7 @@ describe('a current member and a member who leaves', () => {
     }
   });
 
-  test('lena leaves', async () => {
+  test('CONTROL (holds on main too): lena leaves', async () => {
     await leave('lena');
     expect(
       (
@@ -415,7 +416,7 @@ describe('a current member and a member who leaves', () => {
     ).rejects.toMatchObject({ code: '42501', message: 'Request is not available' });
   });
 
-  test('a withdrawn request keeps its own reason when its author has also left', async () => {
+  test('CONTROL (holds on main too): a withdrawn request keeps its own reason when its author has also left', async () => {
     const request = requests.wil![0]!;
     await sql('wil', 'SELECT customer.withdraw_request($1,$2,$3) AS r', [
       request,
@@ -427,6 +428,12 @@ describe('a current member and a member who leaves', () => {
   });
 
   test('a new invitation lets new messages queue again, and the suppressed message stays suppressed', async () => {
+    // Between the leave and the new invitation nothing queues and the suppressed message stays suppressed (main queues here).
+    expect(await enqueue('lena', requests.lena![1]!, 'between')).toEqual({
+      queued: false,
+      reason: 'removed',
+    });
+    expect((await queueRow(queued['lena:before']!)).status).toBe('SUPPRESSED');
     await join('lena');
     const result = await enqueue('lena', requests.lena![1]!, 'again');
     expect(result.queued).toBe(true);
@@ -435,7 +442,7 @@ describe('a current member and a member who leaves', () => {
     expect(await addressRows(result.id!)).toBe(1);
   });
 
-  test('what is shown stays real: real requests keep their provenance whoever left', async () => {
+  test('CONTROL (holds on main too): what is shown stays real: real requests keep their provenance whoever left', async () => {
     const page = (await sql('sam', 'SELECT customer.private_requests(NULL,25) AS r')).r as {
       synthetic: boolean;
       requests: { synthetic: boolean }[];
@@ -444,8 +451,4 @@ describe('a current member and a member who leaves', () => {
     expect(page.requests).toHaveLength(2);
     for (const request of page.requests) expect(request.synthetic).toBe(false);
   });
-});
-
-test(`the owner's words are the rule here: "${OWNER_WORDS}"`, () => {
-  expect(OWNER_WORDS).toBe('No, remove access (Recommended)');
 });

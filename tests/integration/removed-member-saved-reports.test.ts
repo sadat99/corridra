@@ -1,7 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import {
-  OWNER_WORDS,
   buildWorld,
   digest,
   options,
@@ -90,6 +89,13 @@ const paths: { name: string; sql: string; args: (id: string) => unknown[]; messa
     name: 'saved_mission_book',
     sql: 'SELECT customer.saved_mission_book($1,$2,$3,true) AS r',
     args: (id) => [id, 'TRIP', randomUUID()],
+    message: 'Saved mission unavailable',
+  },
+  {
+    name: 'decision_card_state',
+    sql: 'SELECT customer.decision_card_state($1) AS r',
+    args: (id) => [id],
+    message: 'Saved mission unavailable',
   },
   {
     name: 'remove_saved_mission',
@@ -159,7 +165,7 @@ afterAll(async () => {
   await w?.f.close();
 });
 
-describe('while everyone is a member', () => {
+describe('while everyone is a member (CONTROLS, they hold on main too)', () => {
   test('lena and rex hold the report delivered for their request and both bearer-saved reports', async () => {
     for (const person of ['lena', 'rex']) {
       const ids = await w.savedIds(person);
@@ -265,42 +271,50 @@ describe.each([
     ).resolves.toMatchObject({ removed: true });
     expect(await w.savedIds(person)).toEqual([own.assignedToSam]);
   });
+});
 
-  test('the objective in the programme shows as unavailable, with no request id and no text, and can still be withdrawn', async () => {
-    if (person !== 'lena') return;
-    const own = (
-      await shares(person).summaries({ registrationId: registrations.lena, view: 'own' })
-    ).objectives[0];
+// Lena left the workspace in the block above, so these run against a removed participant.
+describe('the programme objective of a removed participant', () => {
+  const person = 'lena';
+  const share = (request: string) =>
+    w.attempt(person, 'SELECT customer.programme_mission_command($1,$2,$3) AS r', [
+      randomUUID(),
+      'share',
+      JSON.stringify({
+        registrationId: registrations.lena,
+        requestId: request,
+        summary: 'Synthetic supplier objective again',
+        consented: true,
+        expectedVersion: 0,
+      }),
+    ]);
+  test('shows as unavailable, with no request id and no text anywhere in the view', async () => {
+    const view = await shares(person).summaries({
+      registrationId: registrations.lena,
+      view: 'own',
+    });
+    const own = view.objectives[0];
     expect(own).toMatchObject({ id: shared!.id, status: 'UNAVAILABLE' });
     expect(own).not.toHaveProperty('requestId');
     expect(own).not.toHaveProperty('summary');
-    const view = JSON.stringify(
-      await shares(person).summaries({ registrationId: registrations.lena, view: 'own' }),
-    );
-    expect(view).not.toContain(sharedSummary);
-    for (const id of w.requests.lena!) expect(view).not.toContain(id);
-    // The choices list no longer offers a request of the workspace.
+    expect(JSON.stringify(view)).not.toContain(sharedSummary);
+    for (const id of w.requests.lena!) expect(JSON.stringify(view)).not.toContain(id);
+  });
+
+  test('the choices no longer offer a request of the workspace', async () => {
     const choices = JSON.stringify(
       await shares(person).choices({ registrationId: registrations.lena }),
     );
     for (const id of w.requests.lena!) expect(choices).not.toContain(id);
-    // A new share of a workspace request is refused like an unknown request.
-    const share = (request: string) =>
-      w.attempt(person, 'SELECT customer.programme_mission_command($1,$2,$3) AS r', [
-        randomUUID(),
-        'share',
-        JSON.stringify({
-          registrationId: registrations.lena,
-          requestId: request,
-          summary: 'Synthetic supplier objective again',
-          consented: true,
-          expectedVersion: 0,
-        }),
-      ]);
+  });
+
+  test('a new share of a workspace request is refused like an unknown request', async () => {
     const refused = await share(w.requests.lena![0]!);
     expect(text(refused)).toBe('42501 Private request unavailable');
     expect(sameBytes(refused, await share(randomUUID()))).toBe(true);
-    // Stop-only: withdrawing the objective is still allowed.
+  });
+
+  test('CONTROL (stop-only, holds on main too): the objective can still be withdrawn, and the organiser sees it withdrawn', async () => {
     await expect(
       shares(person).command({
         action: 'withdraw',
@@ -318,9 +332,17 @@ describe.each([
   });
 });
 
-describe('everyone else', () => {
+describe('everyone else (CONTROLS, they hold on main too)', () => {
   test('other members and the owner keep every report and assignment', async () => {
     for (const person of ['sam', 'rita', 'olive']) {
+      expect(
+        (
+          await w.attempt(person, 'SELECT customer.decision_card_state($1) AS r', [
+            w.reports[person]!.savedId,
+          ])
+        ).ok,
+        `${person}: card state`,
+      ).toBe(true);
       expect(await w.savedIds(person)).toContain(w.reports[person]!.savedId);
       expect(await w.assignedIds(person)).toEqual([w.reports[person]!.assignmentId]);
       await expect(
@@ -363,11 +385,31 @@ describe('a new invitation gives the reports back', () => {
     await w.leave('rita', w.W);
     expect(await w.savedIds('rita')).not.toContain(rita.savedId);
     expect(await w.assignedIds('rita')).toEqual([]);
-    expect((await w.attempt('rita', paths[0]!.sql, paths[0]!.args(rita.savedId))).ok).toBe(false);
+    // The reads that go through the saved report each refuse while she is out, with the text of an unknown id ...
+    const reads = paths.filter(
+      (path) => !['saved_mission_action (respond)', 'remove_saved_mission'].includes(path.name),
+    );
+    const refused = async () =>
+      Promise.all(
+        reads.map(async (path) => {
+          const outcome = await w.attempt('rita', path.sql, path.args(rita.savedId));
+          return `${path.name}: ${text(outcome)}`;
+        }),
+      );
+    expect(await refused()).toEqual(
+      reads.map((path) => `${path.name}: 42501 Saved mission unavailable`),
+    );
     await w.join('olive', 'rita', w.W);
     expect(await w.savedIds('rita')).toContain(rita.savedId);
     expect(await w.assignedIds('rita')).toEqual([rita.assignmentId]);
-    expect((await w.attempt('rita', paths[0]!.sql, paths[0]!.args(rita.savedId))).ok).toBe(true);
+    // ... and none of them says "unavailable" once she is let back in (the book and the card state included).
+    for (const path of reads) {
+      const outcome = await w.attempt('rita', path.sql, path.args(rita.savedId));
+      expect(outcome.ok || outcome.message !== 'Saved mission unavailable', path.name).toBe(true);
+    }
+    expect(
+      (await w.attempt('rita', 'SELECT customer.decision_card_state($1) AS r', [rita.savedId])).ok,
+    ).toBe(true);
   });
 
   test('a report that was removed by its holder stays removed after the person is let back in', async () => {
@@ -379,8 +421,4 @@ describe('a new invitation gives the reports back', () => {
     await w.join('olive', 'rita', w.W);
     expect(await w.savedIds('rita')).not.toContain(rita.savedId);
   });
-});
-
-test(`the owner's words are the rule here: "${OWNER_WORDS}"`, () => {
-  expect(OWNER_WORDS).toBe('No, remove access (Recommended)');
 });

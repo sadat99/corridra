@@ -1,11 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
-import {
-  OWNER_WORDS,
-  buildWorld,
-  functionState,
-  type Row,
-  type World,
-} from './removed-member-support';
+import { buildWorld, functionState, type Row, type World } from './removed-member-support';
 
 // Removed members, cost (owner decision, 11 Nov 2026: "No, remove access (Recommended)"). The membership rule runs for every
 // row of a list, so it must stay cheap on a large database: 6,000 requests of one person across three workspaces (one of them
@@ -53,7 +47,7 @@ async function explain(sql: string, args: unknown[]) {
 // The inner list query of customer.private_requests as it stands in the function body, with the actor and the cursor as
 // parameters; the test asserts that the member filter is in the stored body, so the copy cannot drift.
 const MEMBER_FILTER =
-  'r.workspace_id IN (SELECT wsc.wid FROM customer_private.workspace_ids_current(actor) AS wsc(wid))';
+  'r.workspace_id = ANY (ARRAY(SELECT wsc.wid FROM customer_private.workspace_ids_current(actor) AS wsc(wid)))';
 const listQuery = (filtered: boolean) =>
   'SELECT r.id FROM customer_private.owned_request r WHERE r.principal_id=$1' +
   (filtered ? ' AND ' + MEMBER_FILTER.replace('(actor)', '($1)') : '') +
@@ -131,6 +125,7 @@ beforeAll(async () => {
   // The two people leave the big workspace the ordinary way.
   await w.revoke('olive', w.W, left);
   await w.revoke('olive', w.W, left2);
+  await w.revoke('olive', w.W, w.members.rex!);
   for (const table of [
     'customer_private.owned_request',
     'customer_private.workspace_member',
@@ -160,7 +155,7 @@ describe('what the stored bodies carry', () => {
 
 describe('the list query on a large database', () => {
   const person = () => w.principals.perf!;
-  test('computes the member set once, hashed, and reads the membership tables by index', async () => {
+  test('computes the member set once (an initplan array, not once per row), and reads the membership tables by index', async () => {
     const { all, text } = await explain(listQuery(true), [person(), null]);
     const scans = all.filter((n) => n['Node Type'] === 'Seq Scan');
     for (const table of ['workspace_member', 'workspace_access_revocation', 'membership'])
@@ -172,7 +167,9 @@ describe('the list query on a large database', () => {
     const set = all.filter((n) => n['Function Name'] === 'workspace_ids_current');
     expect(set.length).toBeGreaterThan(0);
     for (const node of set) expect(node['Actual Loops']).toBe(1);
-    expect(text).toMatch(/Hash/);
+    // It is an initplan: evaluated once, before the scan, and not a subplan that runs for every candidate row.
+    expect(text).toContain('InitPlan');
+    expect(text).not.toMatch(/"Node Type":"Hash"/);
     // The list itself does not read every request of the person to return one page. If it did, add owned_request(principal_id,id)
     // in a customer migration (the open question in the plan) rather than raising this bound.
     const requestScan = all.filter(
@@ -213,6 +210,22 @@ describe('the functions through a customer session', () => {
     const page = (await w.row('perf', 'SELECT customer.private_requests(NULL,25) AS r')).r as Row;
     expect((page.requests as unknown[]).length).toBe(25);
     expect(page.nextAfter).toBeTruthy();
+    // Correctness next to the timing: reading every page returns exactly the 4,000 kept requests and none of the 2,000 hidden ones
+    // (main returns all 6,000).
+    const seen: string[] = [];
+    let after: string | null = null;
+    for (let i = 0; i < 80; i++) {
+      const next = (await w.row('perf', 'SELECT customer.private_requests($1,100) AS r', [after]))
+        .r as {
+        requests: { id: string; workspaceId: string }[];
+        nextAfter: string | null;
+      };
+      seen.push(...next.requests.map((r) => r.id));
+      for (const request of next.requests) expect(request.workspaceId).not.toBe(w.W);
+      after = next.nextAfter;
+      if (!after) break;
+    }
+    expect(seen).toHaveLength(4000);
     const timing = await timed(30, () =>
       w.row('perf', 'SELECT customer.private_requests(NULL,25) AS r'),
     );
@@ -233,6 +246,10 @@ describe('the functions through a customer session', () => {
     const page = (await w.row('perf', 'SELECT customer.saved_missions(NULL,25) AS r')).r as Row;
     expect((page.missions as unknown[]).length).toBe(25);
     expect(page.nextAfter).toBeTruthy();
+    // Correctness next to the timing: rex was removed from the big workspace, so the report staff delivered for his request is
+    // hidden while his two bearer-saved reports stay (main lists all three).
+    expect(await w.savedIds('rex')).not.toContain(w.reports.rex!.savedId);
+    expect(await w.savedIds('rex')).toHaveLength(2);
     const timing = await timed(30, () =>
       w.row('perf', 'SELECT customer.saved_missions(NULL,25) AS r'),
     );
@@ -247,8 +264,4 @@ describe('the functions through a customer session', () => {
     const rule = await timed(30, () => w.f.owner.query(withRule, [principal, null]));
     expect(rule.p95).toBeLessThanOrEqual(Math.max(3 * base.median, 20));
   });
-});
-
-test(`the owner's words are the rule here: "${OWNER_WORDS}"`, () => {
-  expect(OWNER_WORDS).toBe('No, remove access (Recommended)');
 });

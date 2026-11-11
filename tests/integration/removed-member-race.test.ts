@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
-import { OWNER_WORDS, buildWorld, sha, type Row, type World } from './removed-member-support';
+import { buildWorld, sha, type Row, type World } from './removed-member-support';
 import type { DatabaseClient } from '../../packages/db/src/index';
 
 // Removed members, races (owner decision, 11 Nov 2026: "No, remove access (Recommended)"). Leaving and submitting take the
@@ -77,7 +77,7 @@ afterAll(async () => {
 });
 
 describe('leaving and submitting', () => {
-  test('a leave that commits first makes the waiting submit fail with the workspace text, and nothing is created', async () => {
+  test('CONTROL (the old behaviour, holds on main too): a leave that commits first makes the waiting submit fail with the workspace text, and nothing is created', async () => {
     const person = 'racer0';
     const input = w.submitInput(w.W);
     const result = await overlap(
@@ -251,8 +251,4 @@ describe('a revocation against a list', () => {
     expect((await w.listRequests(person)).ids).toEqual([]);
     expect((moves.requests as unknown[]).length).toBe(0);
   });
-});
-
-test(`the owner's words are the rule here: "${OWNER_WORDS}"`, () => {
-  expect(OWNER_WORDS).toBe('No, remove access (Recommended)');
 });

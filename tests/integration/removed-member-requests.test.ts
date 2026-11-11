@@ -1,7 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import {
-  OWNER_WORDS,
   buildWorld,
   sameBytes,
   type Outcome,
@@ -102,7 +101,7 @@ afterAll(async () => {
 });
 
 describe('while everyone is a member', () => {
-  test('each person lists exactly the requests they made, and a stranger lists none', async () => {
+  test('CONTROL (holds on main too): each person lists exactly the requests they made, and a stranger lists none', async () => {
     expect(sorted(await list('sam'))).toEqual(sorted(w.requests.sam!));
     expect(sorted(await list('lena'))).toEqual(
       sorted([...w.requests.lena!, replayId.lena!, w.ownWorkspaceRequest.lena!]),
@@ -113,7 +112,7 @@ describe('while everyone is a member', () => {
     expect(await list('stranger')).toEqual([]);
   });
 
-  test('the member helpers agree with the rule: the set and the single answer give the same result for every pair', async () => {
+  test('the member helpers agree with the rule: the set and the single answer give the same result for every pair (fails on main: the helpers do not exist)', async () => {
     for (const person of w.people)
       for (const workspace of [w.W, w.W2, ...Object.values(w.personal)]) {
         const set = (
@@ -139,7 +138,7 @@ describe.each([
 ])('a member removed by %s', (how, person) => {
   const unknown = () => randomUUID();
 
-  test('is removed, and the same revocation row is written in both ways', async () => {
+  test('CONTROL (holds on main too): is removed, and the same revocation row is written in both ways', async () => {
     if (how === 'leave') await w.leave(person, w.W);
     else await w.revoke('olive', w.W, w.members[person]!);
     const rows = (
@@ -212,13 +211,13 @@ describe.each([
     ).toBe(before);
   });
 
-  test('cannot start a new request in the workspace either', async () => {
+  test('CONTROL (holds on main too): cannot start a new request in the workspace either', async () => {
     await expect(w.requestService(person).submit(w.submitInput(w.W), w.prepare)).rejects.toThrow(
       'Workspace access denied',
     );
   });
 
-  test('sees their personal items as before: list, detail and withdrawal of a request made outside any workspace', async () => {
+  test('CONTROL (holds on main too): sees their personal items as before: list, detail and withdrawal of a request made outside any workspace', async () => {
     const own = w.ownWorkspaceRequest[person]!;
     const detail = (await w.row(person, 'SELECT customer.private_request_detail($1) AS r', [own]))
       .r as Row;
@@ -235,7 +234,7 @@ describe.each([
   });
 });
 
-describe('everyone else', () => {
+describe('everyone else (CONTROLS, they hold on main too)', () => {
   test('other members and the owner still list and open every request they made', async () => {
     expect(sorted(await list('sam'))).toEqual(sorted(w.requests.sam!));
     expect(sorted(await list('olive'))).toEqual(sorted([...w.requests.olive!, w.w2Requests.olive]));
@@ -377,7 +376,7 @@ describe('a new invitation gives access back, and nothing that was ended comes b
     expect(withdrawals.items.map((i) => i.requestId)).toEqual([second]);
   });
 
-  test('a person who was removed and invited again can act on the old requests again', async () => {
+  test('CONTROL (holds on main too): a person who was removed and invited again can act on the old requests again', async () => {
     const first = w.requests.rita![0]!;
     for (const path of paths.slice(0, 2))
       expect((await call('rita', path, first)).ok, path.name).toBe(true);
@@ -387,8 +386,4 @@ describe('a new invitation gives access back, and nothing that was ended comes b
       workspaceId: w.W,
     });
   });
-});
-
-test(`the owner's words are the rule here: "${OWNER_WORDS}"`, () => {
-  expect(OWNER_WORDS).toBe('No, remove access (Recommended)');
 });
