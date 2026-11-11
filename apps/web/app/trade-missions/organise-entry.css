@@ -1,0 +1,27 @@
+/* The organiser entry on the trade missions page. It reuses the step list of the public pages; this file only sets
+   the heading block and the action row. Tokens only, no media query. */
+.organise-entry > div {
+  display: grid;
+  gap: var(--space-6);
+}
+.organise-entry-head {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 44rem;
+}
+.organise-entry-head h2,
+.organise-entry-head p {
+  margin: 0;
+}
+.organise-entry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-6);
+}
+.organise-entry-actions p {
+  margin: 0;
+  max-width: 44ch;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}

@@ -4,6 +4,7 @@ import { CorridraIcon } from './corridra-icon';
 import { SubTabs } from './ux/sub-tabs';
 import { FactLabel } from './fact-label';
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import type { PublicPageContent } from '../content/public-pages';
 import './page-compact.css';
 import './public-page.css';
@@ -93,7 +94,14 @@ function Steps({ content }: { content: PublicPageContent }) {
   );
 }
 
-export function PublicPage({ content }: { content: PublicPageContent }) {
+export function PublicPage({
+  content,
+  after,
+}: {
+  content: PublicPageContent;
+  /** An optional section shown after the approach and before Show More. Nothing is rendered when absent. */
+  after?: ReactNode;
+}) {
   const labelled = content.sections.some((section) => section.tag);
   const heroHref =
     content.ctaHref ?? (content.intakeJob ? `/plan?job=${content.intakeJob}` : '/plan');
@@ -157,6 +165,8 @@ export function PublicPage({ content }: { content: PublicPageContent }) {
       </section>
 
       {!labelled && <Steps content={content} />}
+
+      {after}
 
       {/* The sections after the approach stay in the page, behind one native disclosure (layout budget). */}
       <details className="guide-more">
