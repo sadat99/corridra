@@ -212,10 +212,21 @@ export async function buildWorld(
     database?: string;
     modules?: boolean;
     requestsPerPerson?: number;
+    extraPeople?: string[];
   } = {},
 ) {
   const f = await fixture(config.database ?? 'corridra_integration');
-  const people = ['olive', 'lena', 'rex', 'sam', 'rita', 'hana', 'bea', 'stranger'] as const;
+  const people: string[] = [
+    'olive',
+    'lena',
+    'rex',
+    'sam',
+    'rita',
+    'hana',
+    'bea',
+    'stranger',
+    ...(config.extraPeople ?? []),
+  ];
   const session = (person: string) => ({
     subject: `synthetic-removed-${person}`,
     emailVerified: true,
