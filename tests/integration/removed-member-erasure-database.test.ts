@@ -28,10 +28,14 @@ import { migrateCustomerAccountLifecycle } from '../../packages/db/src/customer-
 // Removed members and erasure (owner decisions, 11 Nov 2026: "Yes, add an erasure path (Recommended)", "Staff by hand, tracked
 // (Recommended)", "One team only (Recommended)" and "No, workspace decides (Recommended)", after "No, remove access
 // (Recommended)"; ADR-078 decision 6 and its erasure amendment; ADR-033 amendment). The last two decisions of the four are cited
-// as relayed by the orchestrating session. The erasure file (account lifecycle 0005) does three things and only these:
+// as relayed by the orchestrating session. Two later answers of the owner, 11 Nov 2026, relayed by Guardian S40: "Owning team
+// sees all ids (Recommended)" (the team that owns an erasure request lists every request id of that person, in every workspace and
+// on both sides, a page of 100 at a time) and "Allow self-close (Recommended)" (a removed, revoked-only or left person may close
+// and undo their own account like anyone else). The erasure file (account lifecycle 0005) does three things and only these:
 //  1. a person who left every workspace can hold an erasure request (the chain falls back to the earliest workspace they ever held),
 //  2. one team handles the whole request, the real team when the person wrote any request in a real workspace,
-//  3. staff get a read-only list of the requests that person wrote, found by author and not by membership, without any word.
+//  3. the owning team gets a read-only list of every request that person wrote, found by author and not by membership, in pages
+//     of at most 100 by a (created_at, id) cursor, without any word.
 // Nothing is erased, withdrawn, restored or revoked by it, and the customer gains no read path and no new copy: the removed member
 // still cannot list, open, withdraw or restore the requests ("No, workspace decides"). Removing request words stays a manual step
 // for staff (removalIsManual).
@@ -59,7 +63,7 @@ const notFound = { code: '23514', message: 'Erasure request not found' };
 const denied = { code: '42501', message: 'Privacy queue access denied' };
 const reason = 'A reason that is long enough to be accepted';
 const registry = ERASURE_FILE.registry;
-const REACH = 'customer.erasure_request_reach(uuid)';
+const REACH = 'customer.erasure_request_reach(uuid,timestamptz,uuid)';
 const REPLACED = [
   'customer_private.account_chain_tenant(uuid)',
   'customer_private.erasure_in_scope(uuid)',
@@ -93,12 +97,13 @@ type ReachRequest = {
   revoked: boolean;
   withdrawn: boolean;
 };
+type Cursor = { createdAt: string; id: string };
 type Reach = {
   reference: string;
   removalIsManual: boolean;
   total: number;
-  otherTenants: number;
   requests: ReachRequest[];
+  nextAfter: Cursor | null;
 };
 type Staff = 'sample' | 'real' | 'operator';
 
@@ -110,6 +115,9 @@ let sampleOwn: string;
 let realWorkspace: string;
 let realSideRequest: string;
 let heavyWorkspace: string;
+let pagerWorkspace: string;
+let blendWorkspace: string;
+let soloWorkspace: string;
 let readsBefore: Awaited<ReturnType<typeof readsOf>>;
 let before: {
   chain: string | null;
@@ -222,10 +230,36 @@ const queue = (who: Staff) =>
   );
 const queued = async (who: Staff, person: string) =>
   (await queue(who)).some((item) => item.principalId === w.principals[person]);
-const reach = (who: Staff, request: string) =>
-  staff(who, 'SELECT customer.erasure_request_reach($1) AS r', [request]).then(
-    (row) => row.r as Reach,
-  );
+// The cursor is passed on exactly as the function returned it: createdAt keeps its microseconds only as text.
+const reach = (who: Staff, request: string, after: Cursor | null = null) =>
+  (after
+    ? staff(who, 'SELECT customer.erasure_request_reach($1,$2,$3) AS r', [
+        request,
+        after.createdAt,
+        after.id,
+      ])
+    : staff(who, 'SELECT customer.erasure_request_reach($1) AS r', [request])
+  ).then((row) => row.r as Reach);
+// Every page of one erasure request, from the first to the page whose nextAfter is null.
+const reachPages = async (who: Staff, request: string) => {
+  const pages: Reach[] = [];
+  let after: Cursor | null = null;
+  for (let guard = 0; guard < 100; guard++) {
+    const page: Reach = await reach(who, request, after);
+    pages.push(page);
+    if (!page.nextAfter) return pages;
+    after = page.nextAfter;
+  }
+  throw new Error('The reach list did not end');
+};
+// The requests a person wrote, oldest first, as the database orders them: the order every page must follow.
+const writtenInOrder = async (person: string) =>
+  (
+    await w.f.owner.query(
+      'SELECT id FROM customer_private.owned_request WHERE principal_id=$1 ORDER BY created_at,id',
+      [w.principals[person]],
+    )
+  ).rows.map((row) => row.id as string);
 const transition = (
   who: Staff,
   request: string,
@@ -318,7 +352,7 @@ beforeAll(async () => {
   hideErasureFile();
   w = await buildWorld({
     requestsPerPerson: 1,
-    extraPeople: ['gone', 'mover', 'back', 'redo', 'heavy'],
+    extraPeople: ['gone', 'mover', 'back', 'redo', 'heavy', 'pager', 'blend', 'solo'],
   });
 
   // Three people who wrote requests in the shared workspace and left it, and have no workspace of their own: no account chain row.
@@ -348,6 +382,10 @@ beforeAll(async () => {
 
   // Heavy: many requests, for the cost cases.
   heavyWorkspace = await w.provision('heavy', 'Synthetic own workspace of heavy');
+  // Pager, blend and solo: the paging, mixed person and sample-only cases of the reach list.
+  pagerWorkspace = await w.provision('pager', 'Synthetic own workspace of pager');
+  blendWorkspace = await w.provision('blend', 'Synthetic own workspace of blend');
+  soloWorkspace = await w.provision('solo', 'Synthetic own workspace of solo');
 
   // The account lifecycle module as production has it: files 0001 to 0004, the control open.
   await migrateCustomerAccountLifecycle(w.f.owner);
@@ -675,6 +713,58 @@ describe('a person who left every workspace can also close the account and undo 
     expect(await digest(w.f.owner, records)).toEqual(was);
   });
 
+  // Owner decision, 11 Nov 2026, relayed by Guardian S40: "Allow self-close (Recommended)". A person removed by the workspace owner,
+  // and a person whose only access was revoked before they wrote anything, close and undo themselves like a person who left.
+  // Before the erasure file both are refused with the privacy contact text, so these two fail on main like the case above.
+  const lifecycleEvents = async (person: string) =>
+    (
+      await w.f.owner.query(
+        `SELECT tenant_id FROM app.domain_event WHERE aggregate_type='customer_account_lifecycle' AND aggregate_id=$1`,
+        [w.principals[person]],
+      )
+    ).rows.map((row) => row.tenant_id as string);
+
+  test('a person the workspace owner removed can close and undo too, repeatedly, and every event lands in the workspace they left', async () => {
+    await w.revoke('olive', w.W, w.members.rita!);
+    expect((await w.listRequests('rita')).ids).toEqual([]);
+    const records = HISTORY_TABLES.filter(
+      (table) => !['app.domain_event', 'app.audit_event', 'app.outbox'].includes(table),
+    );
+    const was = await digest(w.f.owner, records);
+    for (let round = 0; round < 2; round++) {
+      expect(await account('rita', 'close', { confirmation: 'Close my account' })).toMatchObject({
+        changed: true,
+        status: 'closed',
+      });
+      expect(await account('rita', 'undo')).toMatchObject({ changed: true, status: 'active' });
+    }
+    expect(await chainOf('rita')).toEqual([w.W]);
+    const events = await lifecycleEvents('rita');
+    expect(events.length).toBeGreaterThanOrEqual(4);
+    expect(new Set(events)).toEqual(new Set([w.W]));
+    expect(await digest(w.f.owner, records)).toEqual(was);
+  });
+
+  test('a person whose only access was revoked before they wrote any request can close and undo too', async () => {
+    const memberId = await w.join('olive', 'bea', w.W);
+    await w.revoke('olive', w.W, memberId);
+    expect(
+      (
+        await w.f.owner.query(
+          'SELECT count(*)::int AS n FROM customer_private.owned_request WHERE principal_id=$1',
+          [w.principals.bea],
+        )
+      ).rows[0].n,
+    ).toBe(0);
+    expect(await account('bea', 'close', { confirmation: 'Close my account' })).toMatchObject({
+      changed: true,
+      status: 'closed',
+    });
+    expect(await account('bea', 'undo')).toMatchObject({ changed: true, status: 'active' });
+    expect(await chainOf('bea')).toEqual([w.W]);
+    expect(new Set(await lifecycleEvents('bea'))).toEqual(new Set([w.W]));
+  });
+
   test('back then files an erasure request, which the reach cases below use', async () => {
     expect(await account('back', 'file_erasure')).toMatchObject({ changed: true });
   });
@@ -716,8 +806,11 @@ describe('the staff reach list', () => {
       reference: goneFiled.reference,
       removalIsManual: true,
       total: 3,
-      otherTenants: 0,
+      // Owner decision, 11 Nov 2026, relayed by Guardian S40: "Owning team sees all ids (Recommended)". The count of other
+      // tenants is gone from the answer; every id is listed. Three requests fit one page, so there is no next page.
+      nextAfter: null,
     });
+    expect(result).not.toHaveProperty('otherTenants');
     expect(result.requests.map((item) => item.id)).toEqual(written.gone);
     const order = (
       await w.f.owner.query(
@@ -932,20 +1025,32 @@ describe('one team handles the whole request (owner decision: "One team only (Re
     ).toEqual(['received']);
   });
 
-  test('real staff list the requests of the real staff workspace, and only count those held by other workspaces', async () => {
+  // Owner decision, 11 Nov 2026, relayed by Guardian S40: "Owning team sees all ids (Recommended)". This case used to expect
+  // total 1 with the other two requests only counted in otherTenants, and the two ids absent from the answer. It now expects all
+  // three ids, each with its own workspace and side.
+  test('real staff list every request of the person in every workspace and both sides, with the side of each', async () => {
     const result = await reach('real', (await requestOf('mover'))!);
-    expect(result).toMatchObject({ removalIsManual: true, total: 1, otherTenants: 2 });
-    expect(result.requests).toHaveLength(1);
-    expect(result.requests[0]).toMatchObject({
-      id: realSideRequest,
+    expect(result).toMatchObject({ removalIsManual: true, total: 3, nextAfter: null });
+    expect(result).not.toHaveProperty('otherTenants');
+    expect(result.requests.map((item) => item.id)).toEqual(await writtenInOrder('mover'));
+    expect(result.requests.map((item) => item.id).sort()).toEqual(
+      [written.mover![0]!, written.mover![1]!, realSideRequest].sort(),
+    );
+    const byId = Object.fromEntries(result.requests.map((item) => [item.id, item]));
+    expect(byId[realSideRequest]).toMatchObject({
       workspaceId: realWorkspace,
       side: 'real',
       authorStillMember: false,
       revoked: false,
       withdrawn: false,
     });
-    expect(JSON.stringify(result)).not.toContain(written.mover![0]!);
-    expect(JSON.stringify(result)).not.toContain(written.mover![1]!);
+    // written in the workspace they were later removed from, which is real now, with its mission in the sample staff workspace
+    expect(byId[written.mover![0]!]).toMatchObject({
+      workspaceId: realWorkspace,
+      side: 'real',
+      authorStillMember: false,
+    });
+    expect(byId[written.mover![1]!]).toMatchObject({ workspaceId: sampleOwn, side: 'sample' });
   });
 
   test('real staff move it along, and it stays with them', async () => {
@@ -992,6 +1097,238 @@ describe('one team handles the whole request (owner decision: "One team only (Re
     // a person with no chain row is in no queue at all
     expect(await ask('stranger', w.f.tenantA)).toBe(false);
     expect(await ask('stranger', w.f.tenantB)).toBe(false);
+  });
+});
+
+// Owner decision, 11 Nov 2026, relayed by Guardian S40: "Owning team sees all ids (Recommended)". The team that owns an erasure
+// request lists every request id of that person, whatever the workspace, side or mission tenant, a page of 100 at a time by a
+// (created_at, id) cursor, so erasure can be complete. Every case here calls the new function, so every case fails on main.
+describe('the owning team reaches every request id of the person, in pages', () => {
+  const REACH_KEYS = ['nextAfter', 'reference', 'removalIsManual', 'requests', 'total'];
+  const ITEM_KEYS = [
+    'authorStillMember',
+    'createdAt',
+    'id',
+    'missionId',
+    'retentionUntil',
+    'revoked',
+    'side',
+    'status',
+    'withdrawn',
+    'workspaceId',
+  ];
+  let pagerRequest: string;
+  let blendRequest: string;
+  let soloRequest: string;
+
+  beforeAll(async () => {
+    // Pager: 230 requests, so the pages are 100, 100 and 30. Seven of them, the 98th to the 104th, share one created_at, so the
+    // tie straddles the end of the first page. The rows are rewritten the way the fixture wrote them, with the guards off.
+    await bulkOwnedRequests(w, { person: 'pager', workspace: pagerWorkspace, count: 230 });
+    const db = await w.f.owner.connect();
+    try {
+      await db.query('SET session_replication_role = replica');
+      await db.query(
+        `WITH ranked AS (SELECT id,created_at,row_number() OVER (ORDER BY created_at,id) AS n
+          FROM customer_private.owned_request WHERE principal_id=$1)
+         UPDATE customer_private.owned_request o SET created_at=(SELECT r.created_at FROM ranked r WHERE r.n=98)
+         WHERE o.id IN (SELECT r.id FROM ranked r WHERE r.n BETWEEN 98 AND 104)`,
+        [w.principals.pager],
+      );
+    } finally {
+      await db.query('RESET session_replication_role').catch(() => undefined);
+      db.release();
+    }
+    // Blend: the mixed person. One request in the real customer workspace, with its mission in the real staff workspace, and
+    // three in their own sample workspace. Their first workspace is a sample one, so the real request is what makes the real
+    // team the owner of the erasure request.
+    await bulkOwnedRequests(w, {
+      person: 'blend',
+      workspace: realWorkspace,
+      count: 1,
+      missionTenant: w.f.tenantB,
+    });
+    await bulkOwnedRequests(w, { person: 'blend', workspace: blendWorkspace, count: 3 });
+    // Solo: sample requests only, one with its mission in each staff workspace.
+    await bulkOwnedRequests(w, { person: 'solo', workspace: soloWorkspace, count: 1 });
+    await bulkOwnedRequests(w, {
+      person: 'solo',
+      workspace: soloWorkspace,
+      count: 1,
+      missionTenant: w.f.tenantB,
+    });
+    for (const person of ['pager', 'blend', 'solo']) await account(person, 'file_erasure');
+    pagerRequest = (await requestOf('pager'))!;
+    blendRequest = (await requestOf('blend'))!;
+    soloRequest = (await requestOf('solo'))!;
+  }, 600000);
+
+  test('230 requests come in pages of 100, 100 and 30, with no id repeated or lost, the total on every page and nextAfter null on the last', async () => {
+    const pages = await reachPages('sample', pagerRequest);
+    expect(pages.map((page) => page.requests.length)).toEqual([100, 100, 30]);
+    expect(pages.map((page) => page.total)).toEqual([230, 230, 230]);
+    const ids = pages.flatMap((page) => page.requests.map((item) => item.id));
+    expect(new Set(ids).size).toBe(230);
+    expect(ids).toEqual(await writtenInOrder('pager'));
+    for (const page of pages) {
+      expect(Object.keys(page).sort()).toEqual(REACH_KEYS);
+      for (const item of page.requests) {
+        expect(Object.keys(item).sort()).toEqual(ITEM_KEYS);
+        expect(item).toMatchObject({ workspaceId: pagerWorkspace, side: 'sample' });
+      }
+    }
+    // nextAfter is the (createdAt, id) of the last row of the page, and null, not absent, after the last page
+    for (const page of pages.slice(0, 2)) {
+      const last = page.requests[99]!;
+      expect(page.nextAfter).toEqual({ createdAt: last.createdAt, id: last.id });
+    }
+    expect(pages[2]).toHaveProperty('nextAfter', null);
+  });
+
+  test('seven requests that share one created_at across the end of a page are neither repeated nor skipped', async () => {
+    const tied = (
+      await w.f.owner.query(
+        `WITH ranked AS (SELECT id,created_at,row_number() OVER (ORDER BY created_at,id) AS n
+          FROM customer_private.owned_request WHERE principal_id=$1)
+         SELECT count(DISTINCT created_at)::int AS stamps,array_agg(id::text ORDER BY id) AS ids,
+          (SELECT r.id FROM ranked r WHERE r.n=100) AS last_of_first,(SELECT r.id FROM ranked r WHERE r.n=101) AS first_of_second
+         FROM ranked WHERE n BETWEEN 98 AND 104`,
+        [w.principals.pager],
+      )
+    ).rows[0] as { stamps: number; ids: string[]; last_of_first: string; first_of_second: string };
+    expect(tied.stamps).toBe(1);
+    const [first, second] = await reachPages('sample', pagerRequest);
+    // the cursor falls inside the tie: both sides of the page end carry the same time, and the id breaks it
+    expect(first!.requests[99]!.id).toBe(tied.last_of_first);
+    expect(second!.requests[0]!.id).toBe(tied.first_of_second);
+    expect(second!.requests[0]!.createdAt).toBe(first!.requests[99]!.createdAt);
+    expect(second!.requests[0]!.id > first!.requests[99]!.id).toBe(true);
+    const listedTie = [...first!.requests, ...second!.requests]
+      .filter((item) => tied.ids.includes(item.id))
+      .map((item) => item.id);
+    expect(listedTie).toEqual(tied.ids);
+  });
+
+  test('a cursor on the 130th row leaves exactly 100, with no next page, and one on the last row leaves none', async () => {
+    const cursorAt = async (position: number) =>
+      (
+        await w.f.owner.query(
+          `SELECT to_jsonb(x) AS c FROM (SELECT created_at AS "createdAt",id FROM customer_private.owned_request
+            WHERE principal_id=$1 ORDER BY created_at,id OFFSET $2 LIMIT 1) x`,
+          [w.principals.pager, position - 1],
+        )
+      ).rows[0].c as Cursor;
+    const exactly = await reach('sample', pagerRequest, await cursorAt(130));
+    expect(exactly.requests).toHaveLength(100);
+    expect(exactly).toMatchObject({ total: 230, nextAfter: null });
+    const past = await reach('sample', pagerRequest, await cursorAt(230));
+    expect(past).toMatchObject({ total: 230, requests: [], nextAfter: null });
+  });
+
+  test('a cursor with only one of its two parts is refused, whichever part is missing, and says so in plain words', async () => {
+    const cursor = (await reach('sample', pagerRequest)).nextAfter!;
+    for (const params of [
+      [pagerRequest, cursor.createdAt, null],
+      [pagerRequest, null, cursor.id],
+    ])
+      expect(
+        await refused(staff('sample', 'SELECT customer.erasure_request_reach($1,$2,$3)', params)),
+      ).toEqual({
+        code: '22023',
+        message: 'Give both parts of the cursor, or neither',
+      });
+    // Authority is checked before the cursor: an unknown id with half a cursor is still just not found
+    expect(
+      await refused(
+        staff('sample', 'SELECT customer.erasure_request_reach($1,$2,$3)', [
+          randomUUID(),
+          cursor.createdAt,
+          null,
+        ]),
+      ),
+    ).toEqual(notFound);
+  });
+
+  test('a mixed person, one real request and three sample ones, has all four ids reachable by the owning real team, each with its side', async () => {
+    expect(await queued('real', 'blend')).toBe(true);
+    expect(await queued('sample', 'blend')).toBe(false);
+    const [realId] = (
+      await w.f.owner.query(
+        'SELECT id FROM customer_private.owned_request WHERE principal_id=$1 AND workspace_id=$2',
+        [w.principals.blend, realWorkspace],
+      )
+    ).rows.map((row) => row.id as string);
+    const all = await writtenInOrder('blend');
+    expect(all).toHaveLength(4);
+    const result = await reach('real', blendRequest);
+    expect(result).toMatchObject({ removalIsManual: true, total: 4, nextAfter: null });
+    expect(result.requests.map((item) => item.id)).toEqual(all);
+    expect(Object.fromEntries(result.requests.map((item) => [item.id, item.side]))).toEqual(
+      Object.fromEntries(all.map((id) => [id, id === realId ? 'real' : 'sample'])),
+    );
+    expect(result.requests.filter((item) => item.workspaceId === blendWorkspace)).toHaveLength(3);
+    expect(result.requests.find((item) => item.id === realId)).toMatchObject({
+      workspaceId: realWorkspace,
+      side: 'real',
+    });
+    // the listed side follows the workspace of the request, never the staff workspace that asked
+    for (const item of result.requests.filter((entry) => entry.id !== realId))
+      expect(item).toMatchObject({ workspaceId: blendWorkspace, side: 'sample' });
+  });
+
+  test('the mixed person carries exactly the allowed keys: no word, name, email, company, objective, reason, person id or tenant id', async () => {
+    const result = await reach('real', blendRequest);
+    expect(Object.keys(result).sort()).toEqual(REACH_KEYS);
+    for (const item of result.requests) expect(Object.keys(item).sort()).toEqual(ITEM_KEYS);
+    const body = JSON.stringify(result);
+    for (const forbidden of [
+      w.principals.blend!,
+      'principalId',
+      'principal_id',
+      'tenant',
+      'Synthetic hotel towels',
+      'Test Person',
+      'mission@example.invalid',
+      'Example Test Company',
+      'Sell in a new market',
+      reason,
+    ])
+      expect(body).not.toContain(forbidden);
+    // no staff workspace appears: the only workspace ids are the two customer workspaces of the person
+    for (const item of result.requests)
+      expect([realWorkspace, blendWorkspace]).toContain(item.workspaceId);
+    expect(body).not.toContain(w.f.tenantA);
+    expect(body).not.toContain(w.f.tenantB);
+  });
+
+  test('sample staff still cannot open the erasure request of the mixed person, and the refusal is the one an unknown id gets', async () => {
+    const refusedForSample = await refused(reach('sample', blendRequest));
+    expect(refusedForSample).toEqual(notFound);
+    const unknown = await refused(reach('sample', randomUUID()));
+    expect(Buffer.from(refusedForSample.message)).toEqual(Buffer.from(unknown.message));
+    expect(refusedForSample.code).toBe(unknown.code);
+    expect(await refused(transition('sample', blendRequest, 'received', 'in_progress'))).toEqual(
+      notFound,
+    );
+    // nor can it page: a cursor changes nothing about who may ask
+    const first = await reach('real', blendRequest);
+    expect(first.requests.length).toBeGreaterThan(0);
+    expect(
+      await refused(
+        reach('sample', blendRequest, { createdAt: '2000-01-01T00:00:00+00:00', id: randomUUID() }),
+      ),
+    ).toEqual(notFound);
+  });
+
+  test('a person with only sample requests, routed to sample staff, still has every request listed, whichever staff workspace holds its mission', async () => {
+    expect(await queued('sample', 'solo')).toBe(true);
+    expect(await queued('real', 'solo')).toBe(false);
+    const result = await reach('sample', soloRequest);
+    expect(result).toMatchObject({ total: 2, nextAfter: null });
+    expect(result.requests.map((item) => item.id)).toEqual(await writtenInOrder('solo'));
+    for (const item of result.requests)
+      expect(item).toMatchObject({ workspaceId: soloWorkspace, side: 'sample' });
+    expect(await refused(reach('real', soloRequest))).toEqual(notFound);
   });
 });
 
@@ -1358,7 +1695,9 @@ describe('cost: the scope rule and the reach list on a large database', () => {
     }
   });
 
-  test('the reach list for a person with 3,000 requests returns the first 100, says how many there are, and answers fast', async () => {
+  // This case used to say that the first 100 were all the list gave, with no second page. The cap of 100 a page stays; the owner
+  // decision of 11 Nov 2026, relayed by Guardian S40 ("Owning team sees all ids (Recommended)"), adds the cursor that pages onward.
+  test('the reach list for a person with 3,000 requests returns 100 a page, says how many there are, pages onward, and answers fast', async () => {
     const request = (await requestOf('heavy'))!;
     const result = await reach('sample', request);
     expect(result.total).toBe(3000);
@@ -1370,11 +1709,20 @@ describe('cost: the scope rule and the reach list on a large database', () => {
         side: 'sample',
         authorStillMember: true,
       });
+    expect(result.nextAfter).toEqual({
+      createdAt: result.requests[99]!.createdAt,
+      id: result.requests[99]!.id,
+    });
+    const second = await reach('sample', request, result.nextAfter);
+    expect(second.total).toBe(3000);
+    expect(second.requests).toHaveLength(100);
+    expect(new Set([...result.requests, ...second.requests].map((item) => item.id)).size).toBe(200);
     const times: number[] = [];
     for (let i = 0; i < 15; i++) {
       const start = performance.now();
       await reach('sample', request);
-      times.push(performance.now() - start);
+      await reach('sample', request, result.nextAfter);
+      times.push((performance.now() - start) / 2);
     }
     expect(percentile(times, 0.95)).toBeLessThan(500);
   });

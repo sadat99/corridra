@@ -10,13 +10,17 @@
 --  (2) customer_private.erasure_in_scope: "has a real workspace now" also counts a request the person wrote in a real (not sample)
 --      workspace. Routing stays exclusive: one team handles the whole erasure request, the real team when any request is in a real
 --      workspace. customer.problem_report_remove_words and customer.erasure_queue and customer.erasure_transition call it unchanged.
---  (3) customer.erasure_request_reach(request): staff only, under the erasure authority (staff_privacy_actor and erasure_in_scope),
---      keyed on the erasure request id and never on a person id. It lists the owned requests of the person who filed it by
---      owned_request.principal_id with no membership test, so removal does not hide the data from erasure. It returns ids, side, status
---      word, times and flags, never a word the person wrote. removalIsManual is always true: removing request words stays a manual step
---      for staff, who record exactly what was and was not erased in the staff note. Nothing here withdraws, revokes, restores, closes,
---      rewrites or deletes a request, and no money or history record is read or changed.
--- Closing an account uses the same chain, so a person who left their last workspace can now also close and undo; closing deletes nothing.
+--  (3) customer.erasure_request_reach(request, after_created, after_id): staff only, under the erasure authority (staff_privacy_actor
+--      and erasure_in_scope), keyed on the erasure request id and never on a person id. Owner decision, 11 Nov 2026 (relayed by
+--      Guardian S40): "Owning team sees all ids (Recommended)". The team that owns the erasure request lists every owned request of
+--      the person who filed it, in every workspace and on both sides, by owned_request.principal_id with no membership test, so removal
+--      does not hide the data from erasure. Pages of at most 100 in (created_at, id) order; the optional cursor is the pair of the last
+--      row of the page before, and nextAfter in the answer is that pair, or null on the last page. It returns ids, workspace, side,
+--      status word, times and flags, never a word, name, email or person id. removalIsManual is always true: removing request words
+--      stays a manual step for staff, who record exactly what was and was not erased in the staff note. Nothing here withdraws,
+--      revokes, restores, closes, rewrites or deletes a request, and no money or history record is read or changed.
+-- Closing an account uses the same chain, so a person who left or was removed from their last workspace can now also close and undo
+-- (owner decision, 11 Nov 2026, relayed by Guardian S40: "Allow self-close (Recommended)"); closing deletes nothing.
 -- Guard, one DO block that runs first and holds every statement that changes anything. It compares the two functions this file
 -- replaces with the owner-run fingerprint below (stored body, settings, security mode, volatility, argument types, defaults and
 -- EXECUTE grantees; no catalogue text dump, so the result is the same on every PostgreSQL major version). Three states. ABSENT: neither
@@ -152,25 +156,31 @@ CREATE OR REPLACE FUNCTION customer_private.erasure_in_scope(person uuid) RETURN
    ELSE first_side.synthetic AND NOT real_now.yes END FROM staff,first_side,real_now),false)
 $$
 $fn$;
- -- Staff only. For one erasure request, the requests its person wrote in the staff workspace named in the session (the intake
- -- workspace), oldest first, at most 100, with the total and the count held by other workspaces. No brief, name, email, company,
- -- objective or reason: staff read the words with their existing mission tools. A withdrawal module that is not installed means no
- -- request can have been withdrawn.
+ -- Staff only. For one erasure request, every request its person wrote, in every workspace and on both sides, oldest first in
+ -- (created_at, id) order, at most 100 a page, with the total of all of them and the keyset cursor of the next page. No brief, name,
+ -- email, company, objective, reason or person id: staff read the words with their existing mission tools. A withdrawal module
+ -- that is not installed means no request can have been withdrawn.
  EXECUTE $fn$
-CREATE FUNCTION customer.erasure_request_reach(request uuid) RETURNS jsonb
+CREATE FUNCTION customer.erasure_request_reach(request uuid,after_created timestamptz DEFAULT NULL,after_id uuid DEFAULT NULL) RETURNS jsonb
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
-DECLARE filed customer_private.erasure_request%ROWTYPE;staff_tenant uuid:=NULLIF(current_setting('corridra.tenant_id',true),'')::uuid;
- page uuid[];withdrawn uuid[]:=ARRAY[]::uuid[];listed integer;elsewhere integer;items jsonb;
+DECLARE filed customer_private.erasure_request%ROWTYPE;
+ page uuid[];withdrawn uuid[]:=ARRAY[]::uuid[];listed integer;next_after jsonb;items jsonb;
 BEGIN
  PERFORM customer_private.staff_privacy_actor();
  SELECT * INTO filed FROM customer_private.erasure_request r WHERE r.id=request;
  IF NOT FOUND OR NOT customer_private.erasure_in_scope(filed.principal_id) THEN
   RAISE EXCEPTION 'Erasure request not found' USING ERRCODE='23514';
  END IF;
- SELECT count(*) FILTER (WHERE o.mission_tenant_id=staff_tenant),count(*) FILTER (WHERE o.mission_tenant_id<>staff_tenant) INTO listed,elsewhere
- FROM customer_private.owned_request o WHERE o.principal_id=filed.principal_id;
- page:=ARRAY(SELECT o.id FROM customer_private.owned_request o WHERE o.principal_id=filed.principal_id AND o.mission_tenant_id=staff_tenant
-  ORDER BY o.created_at,o.id LIMIT 100);
+ IF (after_created IS NULL) <> (after_id IS NULL) THEN
+  RAISE EXCEPTION 'Give both parts of the cursor, or neither' USING ERRCODE='22023';
+ END IF;
+ SELECT count(*)::integer INTO listed FROM customer_private.owned_request o WHERE o.principal_id=filed.principal_id;
+ page:=ARRAY(SELECT o.id FROM customer_private.owned_request o WHERE o.principal_id=filed.principal_id
+  AND (after_id IS NULL OR (o.created_at,o.id)>(after_created,after_id)) ORDER BY o.created_at,o.id LIMIT 101);
+ IF cardinality(page)>100 THEN
+  page:=page[1:100];
+  SELECT jsonb_build_object('createdAt',o.created_at,'id',o.id) INTO next_after FROM customer_private.owned_request o WHERE o.id=page[100];
+ END IF;
  IF to_regclass('customer_private.request_withdrawal_event') IS NOT NULL THEN
   withdrawn:=ARRAY(SELECT x.request_id FROM (SELECT DISTINCT ON (e.request_id) e.request_id,e.state FROM customer_private.request_withdrawal_event e
    WHERE e.request_id=ANY(page) ORDER BY e.request_id,e.seq DESC) x WHERE x.state='withdrawn');
@@ -183,14 +193,14 @@ BEGIN
  JOIN app.mission m ON m.tenant_id=o.mission_tenant_id AND m.id=o.mission_id
  LEFT JOIN app.mission_intake i ON i.tenant_id=o.mission_tenant_id AND i.id=o.mission_id
  WHERE o.id=ANY(page);
- RETURN jsonb_build_object('reference',filed.reference,'removalIsManual',true,'total',listed,'otherTenants',elsewhere,'requests',items);
+ RETURN jsonb_build_object('reference',filed.reference,'removalIsManual',true,'total',listed,'requests',items,'nextAfter',next_after);
 END $$
 $fn$;
- EXECUTE 'REVOKE ALL ON FUNCTION customer.erasure_request_reach(uuid) FROM PUBLIC,corridra_auth';
- EXECUTE 'GRANT EXECUTE ON FUNCTION customer.erasure_request_reach(uuid) TO corridra_runtime';
+ EXECUTE 'REVOKE ALL ON FUNCTION customer.erasure_request_reach(uuid,timestamptz,uuid) FROM PUBLIC,corridra_auth';
+ EXECUTE 'GRANT EXECUTE ON FUNCTION customer.erasure_request_reach(uuid,timestamptz,uuid) TO corridra_runtime';
  -- The helper is a definer owned by whoever installed it. The new function needs EXECUTE on it when its owner is another role.
  helper:='customer_private.workspace_member_current(uuid,uuid)';
- holder:=pg_get_userbyid((SELECT p.proowner FROM pg_proc p WHERE p.oid=to_regprocedure('customer.erasure_request_reach(uuid)')));
+ holder:=pg_get_userbyid((SELECT p.proowner FROM pg_proc p WHERE p.oid=to_regprocedure('customer.erasure_request_reach(uuid,timestamptz,uuid)')));
  IF pg_get_userbyid((SELECT h.proowner FROM pg_proc h WHERE h.oid=to_regprocedure(helper)))<>holder THEN
   EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO %I',helper,holder);
  END IF;
@@ -209,7 +219,7 @@ $fn$;
  END IF;
  SELECT coalesce(string_agg(CASE a.grantee WHEN 0 THEN 'PUBLIC' ELSE a.grantee::regrole::text END,',' ORDER BY CASE a.grantee WHEN 0 THEN 'PUBLIC' ELSE a.grantee::regrole::text END),'') INTO reach_grants
  FROM pg_proc p, aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a
- WHERE p.oid=to_regprocedure('customer.erasure_request_reach(uuid)') AND a.privilege_type='EXECUTE' AND a.grantee<>p.proowner;
+ WHERE p.oid=to_regprocedure('customer.erasure_request_reach(uuid,timestamptz,uuid)') AND a.privilege_type='EXECUTE' AND a.grantee<>p.proowner;
  IF reach_grants<>'corridra_runtime' THEN
   RAISE EXCEPTION 'Removed member erasure reach function has the wrong grants: %',reach_grants;
  END IF;

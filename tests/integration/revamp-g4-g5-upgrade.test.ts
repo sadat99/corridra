@@ -45,7 +45,7 @@ const changedFunctions = [
   'customer_private.account_chain_tenant(uuid)',
 ];
 const newFunctions = [
-  'customer.erasure_request_reach(uuid)',
+  'customer.erasure_request_reach(uuid,timestamp with time zone,uuid)',
   'customer_private.erasure_in_scope(uuid)',
   'customer_private.member_role_keeps_access_guard()',
   'customer_private.revocation_keeps_access_guard()',
@@ -68,7 +68,7 @@ const newFiles = {
 };
 // The one new function an application login may call: the staff reach list of the erasure file (owner decisions 11 Nov 2026:
 // "Yes, add an erasure path (Recommended)", "Staff by hand, tracked (Recommended)"). It is granted to the runtime login only.
-const staffCallable = ['customer.erasure_request_reach(uuid)'];
+const staffCallable = ['customer.erasure_request_reach(uuid,timestamp with time zone,uuid)'];
 const recordTables = [
   'customer_private.workspace_revision',
   'customer_private.workspace_lifecycle_request',
