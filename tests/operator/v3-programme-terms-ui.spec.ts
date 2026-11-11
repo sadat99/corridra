@@ -689,7 +689,28 @@ test('a participant must accept the terms and choose a profile before applying, 
   page,
 }) => {
   const { posts } = await mock(page, {
-    views: { place: () => ({ json: place() }) },
+    views: {
+      place: () => ({ json: place() }),
+      fees: () => ({
+        json: {
+          registrationId,
+          programmeId,
+          expiresAt: expires(),
+          provenance: 'ORGANISER_RECORDED',
+          verified: false,
+          collectsPayments: false,
+          amounts: [
+            {
+              currency: 'BDT',
+              exponent: 2,
+              dueMinor: '12000050',
+              recordedMinor: '5000000',
+              outstandingMinor: '7000050',
+            },
+          ],
+        },
+      }),
+    },
     post: (b) => ({ json: { commandId: b.input.commandId, status: 'PLACED', position: null } }),
   });
   await organiser(page, '?c=participant');
@@ -698,6 +719,12 @@ test('a participant must accept the terms and choose a profile before applying, 
   await p.getByText('Programme terms, version 2').click();
   await expect(
     p.getByText(/Recorded for you by the organiser: 120000.50 BDT\. Nothing is collected here/),
+  ).toBeVisible();
+  await expect(
+    p.getByText('Recorded by the organiser. Corridra does not handle or check this payment.'),
+  ).toBeVisible();
+  await expect(
+    p.getByText('BDT: fee due 120000.50, recorded as received 50000.00, outstanding 70000.50.'),
   ).toBeVisible();
   await p.getByText('Who can take part').click();
   await expect(p.getByText('Commercial roles: Seller')).toBeVisible();
@@ -971,3 +998,43 @@ for (const width of [320, 390, 768, 1440])
     );
     await noViolations(page);
   });
+
+test('recorded payments read plainly when above the fee, and the place still shows when they cannot be read', async ({
+  page,
+}) => {
+  const fees = (recordedMinor: string, outstandingMinor: string) => () => ({
+    json: {
+      registrationId,
+      programmeId,
+      expiresAt: expires(),
+      provenance: 'ORGANISER_RECORDED',
+      verified: false,
+      collectsPayments: false,
+      amounts: [
+        { currency: 'BDT', exponent: 2, dueMinor: '1000', recordedMinor, outstandingMinor },
+      ],
+    },
+  });
+  await mock(page, {
+    views: { place: () => ({ json: place() }), fees: fees('1500', '-500') },
+  });
+  await organiser(page, '?c=participant');
+  const p = page.getByRole('region', { name: 'Your place in Synthetic Dhaka trade programme' });
+  await p.getByText('Programme terms, version 2').click();
+  await expect(
+    p.getByText('BDT: fee due 10.00, recorded as received 15.00, recorded above the fee by 5.00.'),
+  ).toBeVisible();
+  await expect(p.getByText(/Nothing is collected here/)).toBeVisible();
+  // A failed payment read leaves the place and the amount due as they were.
+  await page.unroute('**/api/customer-programme-terms**');
+  await mock(page, {
+    views: {
+      place: () => ({ json: place() }),
+      fees: () => ({ status: 503, json: { error: 'x' } }),
+    },
+  });
+  await organiser(page, '?c=participant');
+  await p.getByText('Programme terms, version 2').click();
+  await expect(p.getByText(/Nothing is collected here/)).toBeVisible();
+  await expect(p.getByText(/Recorded by the organiser\. Corridra does not handle/)).toHaveCount(0);
+});

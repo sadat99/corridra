@@ -26,6 +26,7 @@ vi.hoisted(() => {
   // Real-use 0014 (removed member access) has its own gate here, so that this suite still proves that 0013 alone replaces
   // exactly nine functions. The last test of this file opens it. Owner decision 11 Nov 2026, "No, remove access (Recommended)".
   (globalThis as { __removedHide?: boolean }).__removedHide = true;
+  (globalThis as { __feeHide?: boolean }).__feeHide = true;
 });
 vi.mock('node:fs/promises', async (importOriginal) => {
   const real = await importOriginal<typeof import('node:fs/promises')>();
@@ -34,13 +35,20 @@ vi.mock('node:fs/promises', async (importOriginal) => {
       path,
       ...rest,
     )) as unknown[];
-    const gate = globalThis as { __linkHide?: boolean; __removedHide?: boolean };
+    const gate = globalThis as {
+      __linkHide?: boolean;
+      __removedHide?: boolean;
+      __feeHide?: boolean;
+    };
     if (!String(path).includes('customer-real-use-migrations')) return names;
     return names.filter(
       (n) =>
         !(
           gate.__linkHide && String(n).startsWith('0013_organisation_link_provenance_and_search')
-        ) && !((gate.__linkHide || gate.__removedHide) && String(n).startsWith('0014_')),
+        ) &&
+        !((gate.__linkHide || gate.__removedHide) && String(n).startsWith('0014_')) &&
+        // Real-use 0015 (participant fee status) is applied after 0014 and has its own gate: the last test of this file opens it.
+        !(gate.__feeHide && String(n).startsWith('0015_')),
     );
   }) as typeof real.readdir;
   return { ...real, readdir, default: { ...real, readdir } };
@@ -606,5 +614,29 @@ test('removed member access (real-use 0014) is the fourteenth file, replaces fun
   expect(await tableHashes()).toEqual(tables);
   await migrateCustomerRealUse(w.f.owner);
   expect(await appliedNames()).toHaveLength(14);
+  expect(await tableHashes()).toEqual(tables);
+});
+
+test('participant fee status (real-use 0015) is the fifteenth file, is found by the installer with no workflow change and adds one function', async () => {
+  expect(await appliedNames()).toHaveLength(14);
+  const tables = await tableHashes();
+  expect(
+    (await q("SELECT to_regprocedure('customer.own_programme_fee_status(uuid)')::text t")).rows[0]
+      .t,
+  ).toBeNull();
+  (globalThis as { __feeHide?: boolean }).__feeHide = false;
+  await migrateCustomerRealUse(w.f.owner);
+  const applied = await appliedNames();
+  expect(applied).toHaveLength(15);
+  expect(applied[14]).toMatch(/^0015_participant_fee_status/);
+  expect(await reportLine()).toBe('customer_real_use_migrations: 15 applied');
+  expect(
+    (await q("SELECT to_regprocedure('customer.own_programme_fee_status(uuid)')::text t")).rows[0]
+      .t,
+  ).toBe('customer.own_programme_fee_status(uuid)');
+  // One function only: every row of every table is the same bytes.
+  expect(await tableHashes()).toEqual(tables);
+  await migrateCustomerRealUse(w.f.owner);
+  expect(await appliedNames()).toHaveLength(15);
   expect(await tableHashes()).toEqual(tables);
 });

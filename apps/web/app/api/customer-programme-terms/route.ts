@@ -39,6 +39,8 @@ export async function GET(request: Request) {
       return Response.json(await t.report(query, ...ctx), { headers: deliveryHeaders });
     if (view === 'place')
       return Response.json(await t.ownPlace(query, ...ctx), { headers: deliveryHeaders });
+    if (view === 'fees')
+      return Response.json(await t.ownFeeStatus(query, ...ctx), { headers: deliveryHeaders });
     if (view === 'reminders')
       return Response.json(await t.reminders(query, ...ctx), { headers: deliveryHeaders });
     throw new DomainError('Unknown terms view', 400);
