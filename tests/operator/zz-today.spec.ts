@@ -466,8 +466,8 @@ test('W6-A when counts are Not available, no word in the tile is split across li
         }),
       );
       expect(split, `${step} text at ${width}: words split across lines`).toEqual([]);
-      // The tile still opens the Delivery section.
-      await expect(tiles.first().getByRole('link')).toHaveAttribute('href', '#workspace-delivery');
+      // The tile still opens the Services section (its address is #billing-services after W6-B).
+      await expect(tiles.first().getByRole('link')).toHaveAttribute('href', '#billing-services');
     }
   }
 });
