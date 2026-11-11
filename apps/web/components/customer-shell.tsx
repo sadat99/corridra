@@ -117,7 +117,7 @@ function CustomerFrame({ tab, eyebrow, title, count, children }: CustomerShellPr
       narrow="tabs"
       nav={<LeftNavList id={navId} label={words.navLabel} items={items} current={here ?? ''} />}
       top={<CustomerRailTop />}
-      foot={<CustomerRailFoot href={supportWhatsappHref()} />}
+      foot={<CustomerRailFoot href={supportWhatsappHref()} allTools={plainNames} />}
     >
       <CustomerBarNote
         billing={customerBillingEnabled()}
