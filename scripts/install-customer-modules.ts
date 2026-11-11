@@ -3,6 +3,7 @@ import { migrateCustomerBooks } from '../packages/db/src/customer-book-migrate';
 import { migrateCustomerDecisionCards } from '../packages/db/src/customer-decision-card-migrate';
 import { migrateCustomerProgrammeLifecycle } from '../packages/db/src/customer-programme-lifecycle-migrate';
 import { migrateCustomerParticipantLabels } from '../packages/db/src/customer-participant-label-migrate';
+import { migrateCustomerProgrammePublication } from '../packages/db/src/customer-programme-publication-migrate';
 import { migrateRecipientResponseRevision } from '../packages/db/src/recipient-response-revision-migrate';
 import { databasePool } from './database-pool';
 import { migrateCustomerAuthority } from '../packages/db/src/customer-migrate';
@@ -94,6 +95,7 @@ const v = z
       .enum(['unchanged', 'install', 'enable', 'pause'])
       .default('unchanged'),
     PROBLEM_REPORTS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
+    PROGRAMME_PAGES_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     COUNTERPARTY_CHANGES_ACTION: z
       .enum(['unchanged', 'install', 'enable', 'pause'])
       .default('unchanged'),
@@ -249,6 +251,8 @@ if (['enable', 'pause'].includes(v.ACCOUNT_LIFECYCLE_ACTION) && !v.ACCOUNT_LIFEC
   throw new Error('Account lifecycle changes require an explicit reason');
 if (v.PROBLEM_REPORTS_ACTION !== 'unchanged' && !apply)
   throw new Error('Problem report installation requires INSTALL_APPLY=yes');
+if (v.PROGRAMME_PAGES_ACTION !== 'unchanged' && !apply)
+  throw new Error('Programme page installation requires INSTALL_APPLY=yes');
 if (v.COUNTERPARTY_CHANGES_ACTION !== 'unchanged' && !apply)
   throw new Error('Contact and note changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.COUNTERPARTY_CHANGES_ACTION) && !v.COUNTERPARTY_CHANGES_REASON)
@@ -308,6 +312,7 @@ const registries = [
   'customer_real_use_migrations',
   'customer_programme_lifecycle_migrations',
   'customer_participant_label_migrations',
+  'customer_programme_publication_migrations',
   'recipient_response_revision_migrations',
   'network_real_use_migrations',
   'customer_billing_real_migrations',
@@ -608,6 +613,15 @@ try {
     if (v.PROBLEM_REPORTS_ACTION === 'install') {
       await migrateCustomerProblemReports(pool);
       console.log('installed or already current: problem reports');
+    }
+    // Public programme pages and applications (ADR-080) are never part of the base run. Installing the database module
+    // exposes nothing: the application switch CORRIDRA_PROGRAMME_PAGES is separate, and the install refuses before creating
+    // anything unless the three participant tables it writes to have a shape it was proven against.
+    if (v.PROGRAMME_PAGES_ACTION === 'install') {
+      await migrateCustomerProgrammePublication(pool);
+      console.log(
+        'installed or already current: programme pages and applications (application switch unchanged)',
+      );
     }
     // Withdraw, correct and hide for private contacts and notes (CRUD G11) are never part of the base run. Install leaves
     // the one control closed; enable and pause are owner decisions with a reason. Reached through field_modules_action
