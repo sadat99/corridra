@@ -307,3 +307,25 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Seen (main CI 42951732751 on 18e88ee2, the PR 402 merge, attempt 1):** the verification job failed at `tests/e2e/verification/revamp-s2/w10-stronger-colours.spec.ts:441` ("with the device setting the focus ring on the navy Team sidebar reaches 3 to 1 ..."), project w1280, with `Error: the sidebar has focusable items at 1440` from `expect(rings.length).toBeGreaterThan(5)` at line 456; validate failed as the rollup. The same spec passed on PR 402's head 02cb64cb (CI 42940329139) and on PR 404's head d17be663, which contains 18e88ee2. S40 re-ran the failed jobs once: attempt 2 success.
 - **Cause, traced (W6-A):** the Team sidebar lists the places the person's role allows, and the role arrives with the workspace read (`publishTeamContext` in `apps/web/app/operator/workspace.tsx`), after the page has drawn. Until then it lists only what every member sees and has no Admin group, so a count taken when the heading showed was of a half-built sidebar. Reproduced by holding the workspace read back 5 s.
 - **Fixed in W6-A (PR 407):** the test waits for the owner's Admin group (attached; at 800 px wide it is drawn hidden) before it counts; the bound of more than 5 items and every other assertion are unchanged. A new test holds the read back and shows the sidebar has 5 or fewer links first, then waits and counts more than 5. Nine runs (3 each of both cases and the slow case) passed while another suite ran. A failure at this place now is a different problem.
+
+### KI-47 CI runs the operator suite with the team shell off, except one step (11 November 2026, open, by design for now)
+
+- **Seen:** the CI operator job runs `pnpm test:operator` with the defaults, which leave the navigation and team shell switches off. Pages that only exist with a shell on (for example the left bar and the Team sidebar) are measured there only by the verification job and by the one extra step PR 409 added, which runs the operator workflow links check once with the team shell on.
+- **Effect:** a layout or link regression that shows only with a shell switch on can pass the operator job. The verification job (which turns the program switches on) and local runs with the switch set (`CORRIDRA_UX_NAV=true`) catch more.
+- **Do:** when a change touches a shell-only page, run the matching spec locally with the switch on and say so in the PR; do not treat a green operator job as proof of a shell-on page. A full shell-on operator pass is not scheduled.
+
+### KI-48 The Settings tab is over the hard page-length limits (11 November 2026, open)
+
+- **Seen (reported by the orchestrator, S28, on 11 November 2026; not re-measured in this docs change):** the Settings tab measures 4.2, 2.97 and 1.68 screens at the three widths the layout-budget guard reads. The hard limits are 2.0 screens at 390 by 844 and 1.0 at 1440 by 900 ([layout budget](../revamp/specs/layout-budget.md)).
+- **Do:** restructure the tab so its overflow goes to in-page tabs (the standing rule), then measure with `tests/ux/page-length-lib.ts` and record the real figures. Until then the tab is a known breach, not a pass.
+
+### KI-49 A word-removal retry that removes zero words (Report a Problem, PR1b, 11 November 2026, open, noted by the Guardian)
+
+- **Seen (reported by the orchestrator, S28; the source is the PR 396 and PR 403 reviews; not re-traced in this docs change):** the bounded word removal added in PR 396 can be retried after a first call has already removed the words, and the retry then removes zero words.
+- **Do:** decide whether a zero-removal retry should answer as a replay of the first result (the same exact answer, no second audit entry) or as "nothing left to remove", and pin it with a test in `tests/integration` before the screens rely on it. Until decided, treat the answer to a zero-removal retry as undefined and do not claim it.
+
+### KI-50 `TeamControl.list()` casts every matching verification row to jsonb (11 November 2026, open)
+
+- **Seen:** `packages/auth/src/team-control.ts` (`list`, around lines 132 to 150) joins `identity.verification` on `v.value::jsonb->>'userId'` and filters on `v.value::jsonb->>'tenantId'` and `'role'` for every row whose identifier starts with the invitation prefix, then `JSON.parse`s each value again. The cast is not guarded.
+- **Effect:** one malformed `value` in a matching row makes the cast raise, and the whole list of pending and expired team invitations fails for that workspace instead of skipping the row.
+- **Do:** guard the cast (select only rows whose value is valid JSON, or parse in application code and skip and log a row that does not parse), with a test that has one bad row next to good ones. Not fixed here; `Sensitive: yes` (auth package).
