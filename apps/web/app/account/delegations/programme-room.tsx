@@ -6,6 +6,7 @@ import {
   boardingCounts,
   boardingLine,
   meetingCoverage,
+  programmeChecklist,
   programmeAttention,
   programmeGlance,
   programmeNextStep,
@@ -14,10 +15,13 @@ import {
   roomGroups,
   roomViewLabels,
   type BoardingCounts,
+  type ChecklistTerms,
+  type ProgrammeGlanceSource,
   type RoomGroupKey,
   type RoomLensKey,
 } from '../../../lib/programme-room';
 import { useParticipantView, type ParticipantScope } from './participant-client';
+import { useChecklistTerms } from './programme-checklist';
 import { useProgrammeGlance } from './programme-projections';
 
 // The Programme Room (Lane 10; the Organise work room, owner-approved mockups of 5 Nov 2026): one programme in
@@ -37,8 +41,16 @@ const nothingRead: Live = { counts: null, notice: '' };
 // Where the programme stands, drawn as every room draws it (CX-06): a stage with a record is done or current,
 // and any other stage is a plain grey segment with no words. CQ-85: the Invite stage still opens the People
 // view, where invitations are created.
-function Stage({ counts, onInvite }: { counts: BoardingCounts | null; onInvite?: () => void }) {
-  const { states, current } = programmeStage(counts);
+function Stage({
+  counts,
+  projection,
+  onInvite,
+}: {
+  counts: BoardingCounts | null;
+  projection?: ProgrammeGlanceSource | null;
+  onInvite?: () => void;
+}) {
+  const { states, current } = programmeStage(counts, projection);
   const labels = mrLabels.road;
   const at = current ? programmeRoadSteps.findIndex((step) => step.key === current) : -1;
   return (
@@ -142,12 +154,17 @@ function Glance({
   counts,
   projection,
   projectionsOn,
+  terms,
+  termsOn,
   onOpen,
   host,
 }: {
   counts: BoardingCounts | null;
   projection: Parameters<typeof programmeGlance>[1];
   projectionsOn: boolean;
+  /** Terms, places and minimum from the terms read; null while unread or where it cannot be read. */
+  terms: ChecklistTerms | null;
+  termsOn: boolean;
   onOpen: (target: 'people' | 'plan') => (() => void) | undefined;
   /** Where the projection read watches whether the Overview is on screen. */
   host?: (node: HTMLElement | null) => void;
@@ -155,6 +172,7 @@ function Glance({
   const tiles = programmeGlance(counts, projection, projectionsOn);
   const coverage = meetingCoverage(projection);
   const attention = programmeAttention(projection);
+  const checklist = projectionsOn || termsOn ? programmeChecklist(counts, projection, terms) : [];
   return (
     <>
       <section ref={host} className="programme-card programme-glance-card" aria-label="At a glance">
@@ -176,6 +194,28 @@ function Glance({
           Counts only. Participants&apos; quotes, contacts and costs stay private to them.
         </p>
       </section>
+      {checklist.length > 0 ? (
+        <section
+          className="programme-card programme-checklist-card"
+          aria-label="Programme checklist"
+        >
+          <h5 className="programme-card-title">Programme checklist</h5>
+          <dl className="programme-tiles programme-checklist">
+            {checklist.map((row) => (
+              <div key={row.key} data-known={row.known ? undefined : 'false'}>
+                <dt>{row.fact}</dt>
+                <dd>
+                  {row.value}
+                  {row.note ? <small> {row.note}</small> : null}
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <p className="programme-card-note">
+            Facts from this programme&apos;s records. Corridra does not judge whether it is ready.
+          </p>
+        </section>
+      ) : null}
       {projectionsOn ? (
         <section
           className="programme-card programme-attention-card"
@@ -223,6 +263,9 @@ function Glance({
 function LiveGlance(props: {
   scope: ParticipantScope;
   counts: BoardingCounts | null;
+  terms: ChecklistTerms | null;
+  termsOn: boolean;
+  onProjection: (projection: ProgrammeGlanceSource | null) => void;
   onOpen: (target: 'people' | 'plan') => (() => void) | undefined;
 }) {
   const { subject, issuer, workspaceId, programmeId } = props.scope;
@@ -231,12 +274,20 @@ function LiveGlance(props: {
     workspaceId ?? '',
     programmeId ?? '',
   );
+  const { onProjection } = props;
+  const projection = view.data;
+  useEffect(() => {
+    onProjection(projection);
+    return () => onProjection(null);
+  }, [projection, onProjection]);
   return (
     <>
       <Glance
         counts={props.counts}
-        projection={view.data}
+        projection={projection}
         projectionsOn
+        terms={props.terms}
+        termsOn={props.termsOn}
         onOpen={props.onOpen}
         host={host}
       />
@@ -302,6 +353,7 @@ export function ProgrammeRoom({
   panels: parts,
   sharedMoneyNote = false,
   projectionsEnabled = false,
+  termsEnabled = false,
 }: {
   programmeId: string;
   name: string;
@@ -315,6 +367,8 @@ export function ProgrammeRoom({
   sharedMoneyNote?: boolean;
   /** True where the programme projections are on: the Overview then reads readiness, meetings and flags. */
   projectionsEnabled?: boolean;
+  /** True where the terms panel is on: the checklist then reads terms, places and minimum from it. */
+  termsEnabled?: boolean;
 }) {
   // An old link to one of this programme's sections (#<programme id>-<view>) opens the group that holds it
   // (layout budget L-03); the section is then scrolled to.
@@ -391,6 +445,16 @@ export function ProgrammeRoom({
   const reading = participantsEnabled && onScreen;
   const live = reading ? read : nothingRead;
   const refresh = () => setReads((count) => count + 1);
+  // The programme projection is read inside the glance; its agenda also marks the "Plan the days" stage. The
+  // terms read runs here, beside it, so neither waits for the other (nor does the Overview wait for either).
+  const [readProjection, setReadProjection] = useState<ProgrammeGlanceSource | null>(null);
+  const onProjection = useCallback(
+    (value: ProgrammeGlanceSource | null) => setReadProjection(value),
+    [],
+  );
+  const termsOn = participantsEnabled && termsEnabled;
+  const terms = useChecklistTerms(scope, termsOn && reading, reads);
+  const projection = reading && projectionsEnabled ? readProjection : null;
   const onInvite = panels.people ? () => choose('people') : undefined;
   const onOpen = (target: 'people' | 'plan') => (panels[target] ? () => choose(target) : undefined);
   const glanceOn = participantsEnabled || projectionsEnabled;
@@ -413,7 +477,7 @@ export function ProgrammeRoom({
         <p className="room-meta">{purpose}</p>
         <div className="programme-notes">{notes}</div>
         <div className="room-stage">
-          <Stage counts={live.counts} onInvite={onInvite} />
+          <Stage counts={live.counts} projection={projection} onInvite={onInvite} />
         </div>
       </header>
       {reading ? <LiveStatus key={reads} scope={scope} onRead={onRead} /> : null}
@@ -470,12 +534,22 @@ export function ProgrammeRoom({
               </h4>
               {item.key === 'overview' && glanceOn ? (
                 projectionsEnabled && reading && scope.workspaceId && scope.programmeId ? (
-                  <LiveGlance key={reads} scope={scope} counts={live.counts} onOpen={onOpen} />
+                  <LiveGlance
+                    key={reads}
+                    scope={scope}
+                    counts={live.counts}
+                    terms={terms}
+                    termsOn={termsOn}
+                    onProjection={onProjection}
+                    onOpen={onOpen}
+                  />
                 ) : (
                   <Glance
                     counts={live.counts}
                     projection={null}
                     projectionsOn={projectionsEnabled}
+                    terms={terms}
+                    termsOn={termsOn}
                     onOpen={onOpen}
                   />
                 )

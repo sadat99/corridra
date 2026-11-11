@@ -405,3 +405,20 @@ article.room.programme-room .programme-attention > li > .button.button-secondary
     line-height: 1.35;
   }
 }
+/* The checklist reads facts, not tiles of numbers: two columns and a body-size value. */
+article.room.programme-room .programme-checklist {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+article.room.programme-room .programme-checklist > div > dd {
+  font-size: var(--text-md, 1rem);
+  line-height: 1.4;
+}
+article.room.programme-room .programme-checklist > div > dd small {
+  display: block;
+  font-weight: 400;
+}
+@media (max-width: 40rem) {
+  article.room.programme-room .programme-checklist {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

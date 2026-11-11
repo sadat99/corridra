@@ -708,6 +708,7 @@ function ScopedProgrammes({
                   participantsEnabled={participantsEnabled}
                   sharedMoneyNote={templatesEnabled && pricingEnabled}
                   projectionsEnabled={projectionsEnabled}
+                  termsEnabled={termsEnabled}
                   panels={{
                     companies: projectionsEnabled ? (
                       <ProgrammeProjectionPanel
