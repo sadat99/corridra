@@ -11,10 +11,10 @@ import {
 const web = createRequire(resolve('apps/web/package.json'));
 const ce = web('react').createElement as (type: unknown, props?: unknown) => unknown;
 const render = web('react-dom/server').renderToStaticMarkup as (element: unknown) => string;
+// The path is assembled at run time: the packages type project does not compile the web application's screens.
+const view = 'app/delegations/[address]/programme-page-view';
 const load = async () =>
-  (await import(
-    /* @vite-ignore */ '../../apps/web/app/delegations/[address]/programme-page-view'
-  )) as { ProgrammePageView: unknown };
+  (await import(/* @vite-ignore */ `../../apps/web/${view}`)) as { ProgrammePageView: unknown };
 
 const address = 'china-agri-machinery-2027-k3f9x2ab7q';
 const programme = programmePublicCopy.parse({
