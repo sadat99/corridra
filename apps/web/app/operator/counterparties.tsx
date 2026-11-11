@@ -4,7 +4,7 @@ import { PhoneFold } from '../../components/phone-fold';
 import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { CountryOptions } from './country-options';
-import { missionFromAddress, missionHintNote } from './mission-hint';
+import { missionHintNote, takeMissionHint } from './mission-hint';
 import {
   ChangeAvailability,
   RecordItem,
@@ -141,8 +141,9 @@ export function Counterparties({
   const pending = useRef(new Map<string, string>());
   // CRUD G11: command ids of withdraw, correct and hide requests, kept per identical body until one succeeds.
   const [changeCommands] = useState(() => new Map<string, string>());
-  // W5: a link from a mission page names a mission once; an explicit choice here always wins.
-  const askedMission = useRef({ used: false, chosen: false });
+  // W5: a link from a mission page names a mission and a section; only the named section applies it, once per
+  // page load, and an explicit choice here always wins.
+  const choseMission = useRef(false);
   async function get(action: string, params: Record<string, string | number> = {}) {
     const p = new URLSearchParams({
       tenant,
@@ -178,9 +179,8 @@ export function Counterparties({
             company_name: String((r.brief as { company: string })?.company ?? r.id),
           }));
           setMissions(listed);
-          const asked = missionFromAddress(window.location.search);
-          if (asked && !askedMission.current.used && !askedMission.current.chosen) {
-            askedMission.current.used = true;
+          const asked = takeMissionHint('workspace-research', window.location);
+          if (asked && !choseMission.current) {
             if (listed.some((r: Row) => r.id === asked)) setMission(asked);
             else setMissionNote(true);
           }
@@ -1018,7 +1018,7 @@ export function Counterparties({
               disabled={busy}
               value={mission}
               onChange={(e) => {
-                askedMission.current.chosen = true;
+                choseMission.current = true;
                 setMissionNote(false);
                 setMission(e.target.value);
                 setShortlist([]);

@@ -1,7 +1,7 @@
 // The four role shells (commercial readiness program, D14 and UX-02). Behind CORRIDRA_UX_SHELLS_V2:
 // with the switch off nothing here is used and every page renders as before. Navigation is a
 // convenience only; access is still decided by each route and the server. Owner: WS-E.
-import { operatorSectionPath } from '../operator-urls';
+import { operatorSectionPath, sectionOfFragment } from '../operator-urls';
 import { workspaceSections } from '../workspace-navigation';
 
 export type SignedInShell = 'team' | 'customer' | 'contributor';
@@ -59,7 +59,8 @@ export function currentTeamSection(
   hash: string,
   slugToId: (slug: string) => string | null,
 ) {
-  const fragment = hash.replace(/^#/, '');
+  // An address inside a section (a billing block) is in view in the section that holds it.
+  const fragment = sectionOfFragment(hash.replace(/^#/, ''));
   if (fragment && workspaceSections.some((section) => section.id === fragment)) return fragment;
   const [, first = '', second] = /^\/operator(?:\/([^/]+))?(?:\/([^/]+))?/.exec(pathname) ?? [];
   if (first === 'owner') return 'owner';
