@@ -8769,3 +8769,213 @@ samp {
     gap: var(--space-4);
   }
 }
+
+/* Account settings. One column, one rhythm (24 px from the tabs to the panel, 16 px between blocks in a panel); tokens and logical properties only. */
+.ux-customer .ux-account-settings {
+  --account-column: 44rem;
+  gap: var(--space-6);
+  padding-block: 0 var(--space-6);
+}
+.ux-customer .ux-account-groups > .ux-account-tabs {
+  gap: var(--space-6);
+  max-width: var(--account-column);
+  min-width: 0;
+}
+.ux-account-tabs > .ux-subtabs-list {
+  margin-block-end: 0;
+}
+@media (max-width: 39.99rem) {
+  .ux-account-tabs .ux-subtabs-tab {
+    padding-inline: var(--space-3);
+  }
+}
+@media (forced-colors: active) {
+  .ux-account-tabs .ux-subtabs-tab {
+    border-bottom-color: Canvas;
+  }
+  .ux-account-tabs .ux-subtabs-tab[aria-selected='true'] {
+    border-bottom-color: Highlight;
+  }
+}
+
+/* Panels and link lists. */
+.ux-customer .ux-account-panel {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  min-width: 0;
+}
+.ux-customer .ux-account-panel .ux-link-list {
+  max-width: none;
+}
+.ux-customer .ux-account-group {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  min-width: 0;
+}
+.ux-customer .ux-account-group .ux-link-list a {
+  padding-block: var(--space-2);
+}
+
+/* Card chrome shared by the profile, the team setup hint and the closure block. */
+.ux-customer .ux-account-card {
+  box-sizing: border-box;
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-4) var(--space-6);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--guided-hero-radius);
+}
+@media (max-width: 39.99rem) {
+  .ux-customer .ux-account-card {
+    padding: var(--space-4);
+  }
+}
+
+/* Profile block: one group of text. */
+.ux-customer .ux-account-settings .ux-account-profile {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: start;
+  align-content: start;
+}
+.ux-customer .ux-account-settings .ux-account-profile > h2 {
+  margin-block-start: var(--space-2);
+}
+.ux-customer .ux-account-settings .ux-account-profile > p {
+  margin: 0;
+  max-width: 65ch;
+}
+.ux-customer .ux-account-settings .ux-account-profile > p:last-child {
+  margin-block-start: var(--space-2);
+}
+
+/* Actions: Sign Out, All Tools, and Sign Out on the closed-account screen. */
+.ux-customer .ux-account-actions {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.ux-customer .ux-account-actions > :is(a, button) {
+  margin: 0;
+}
+.ux-customer .ux-account-actions > [role='alert'] {
+  margin: 0;
+  max-width: 65ch;
+}
+/* The left bar carries All Tools from 1024 px; this row is the way in below that, or when no bar carries it. */
+@media (min-width: 1024px) {
+  .ux-leftnav-frame:has(.ux-rail-tools) .ux-account-alltools {
+    display: none;
+  }
+}
+
+/* Row: text on the start side, the button on the end side from 40rem. */
+.ux-customer .ux-account-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-1);
+  align-items: start;
+  min-width: 0;
+}
+.ux-customer .ux-account-row > :is(h3, h4, p) {
+  margin: 0;
+  grid-column: 1;
+}
+.ux-customer .ux-account-row > p {
+  max-width: 65ch;
+}
+.ux-customer .ux-account-row > :is(.button, .primary-link) {
+  margin: var(--space-2) 0 0;
+}
+@media (min-width: 40rem) {
+  .ux-customer .ux-account-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: var(--space-6);
+    align-items: center;
+  }
+  .ux-customer .ux-account-row > :is(.button, .primary-link) {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+    justify-self: end;
+    margin: 0;
+  }
+  /* A row of one paragraph and a button (the closed state): the text centres against the button. */
+  .ux-customer .ux-account-row > p:first-child {
+    grid-row: 1 / span 2;
+    align-self: center;
+  }
+}
+
+/* Closure block. */
+.ux-customer .ux-account-card.ux-account-zone {
+  display: grid;
+  gap: 0;
+  align-content: start;
+  padding-block-end: 0;
+}
+.ux-customer .ux-account-card.ux-account-zone[data-tone='danger'] {
+  border-color: var(--critical);
+}
+.ux-customer .ux-account-card.ux-account-zone > h3,
+.ux-customer .ux-account-zone > [role='status'] {
+  margin-block-end: var(--space-4);
+}
+.ux-customer .ux-account-zone > :is(.ux-account-row, .ux-account-status) {
+  padding-block: var(--space-4);
+  border-block-start: 1px solid var(--line);
+}
+@media (min-width: 64rem) {
+  .ux-customer .ux-account-zone > :is(.ux-account-row, .ux-account-status) {
+    padding-block: var(--space-3);
+  }
+}
+.ux-customer .ux-account-status {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.ux-customer .ux-account-status > :is(h4, p, dl) {
+  margin: 0;
+}
+.ux-customer .ux-account-status > p {
+  max-width: 65ch;
+}
+@media (min-width: 48rem) {
+  .ux-customer .ux-account-zone > .ux-account-status > dl {
+    grid-template-columns: max-content minmax(0, 1fr) max-content minmax(0, 1fr);
+    column-gap: var(--space-4);
+  }
+}
+.ux-customer .ux-account-card.ux-account-zone[data-tone='notice'] {
+  background: var(--surface-2);
+  gap: var(--space-2);
+  padding-block-end: var(--space-4);
+}
+.ux-customer .ux-account-card.ux-account-zone[data-tone='notice'] > h3 {
+  margin-block-end: 0;
+}
+.ux-customer .ux-account-card.ux-account-zone[data-tone='notice'] p {
+  margin: 0;
+  max-width: 65ch;
+}
+.ux-customer .ux-account-card.ux-account-zone[data-tone='loading'] {
+  min-height: calc(var(--space-16) * 3.5);
+  border-color: transparent;
+  background: none;
+}
+@media (max-width: 39.99rem) {
+  .ux-customer .ux-account-card.ux-account-zone[data-tone='loading'] {
+    min-height: calc(var(--space-16) * 6);
+  }
+}
+.ux-customer .ux-account-zone p > a.text-link {
+  display: inline;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+}

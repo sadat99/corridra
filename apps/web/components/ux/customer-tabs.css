@@ -74,4 +74,8 @@
   .ux-leftnav-frame[data-narrow='tabs'] .ux-leftnav-page {
     padding-block-end: 4.5rem;
   }
+  /* The site footer sits below the page column and must not hide behind the tabs either: same room as the page, plus the safe area. */
+  .site-shell:has(.ux-leftnav-frame[data-narrow='tabs']) > .site-footer {
+    padding-block-end: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  }
 }
