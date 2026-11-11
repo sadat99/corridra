@@ -2,6 +2,7 @@
 // a missing or empty entry falls back to English. Brand and company names stay as written. The
 // bn, zh, es, ar, fr and de entries are drafts until a native reviewer is recorded (see locales.ts); they
 // are never shown to the public before that.
+import { sellWords } from './sell-words';
 import { defaultLocale, type Locale } from './locales';
 import { homeEn, homeWords } from './home-words';
 import { programmePagesWords } from './programme-pages-words';
@@ -257,6 +258,7 @@ export const en = {
   'room.replies.none': 'No replies yet.',
   'room.replies.all': 'Read Every Reply',
   // English placeholder until native review (D16)
+  ...sellWords,
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
@@ -418,6 +420,7 @@ const bn: Catalog = {
   'room.replies.none': 'এখনও কোনো উত্তর নেই।',
   'room.replies.all': 'সব উত্তর পড়ুন',
   // English placeholder until native review (D16)
+  ...sellWords,
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
@@ -566,6 +569,7 @@ const zh: Catalog = {
   'room.replies.none': '暂无回复。',
   'room.replies.all': '阅读全部回复',
   // English placeholder until native review (D16)
+  ...sellWords,
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
@@ -719,6 +723,7 @@ const es: Catalog = {
   'room.replies.none': 'Aún no hay respuestas.',
   'room.replies.all': 'Leer todas las respuestas',
   // English placeholder until native review (D16)
+  ...sellWords,
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
@@ -871,6 +876,7 @@ const ar: Catalog = {
   'room.replies.none': 'لا توجد ردود بعد.',
   'room.replies.all': 'اقرأ كل الردود',
   // English placeholder until native review (D16)
+  ...sellWords,
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
@@ -1024,6 +1030,7 @@ const fr: Catalog = {
   'room.replies.none': 'Aucune réponse pour le moment.',
   'room.replies.all': 'Lire toutes les réponses',
   // English placeholder until native review (D16)
+  ...sellWords,
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
@@ -1181,6 +1188,7 @@ const de: Catalog = {
   'room.replies.none': 'Noch keine Antworten.',
   'room.replies.all': 'Alle Antworten lesen',
   // English placeholder until native review (D16)
+  ...sellWords,
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
