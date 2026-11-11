@@ -14,6 +14,8 @@ import { identityClient } from '@corridra/auth/client';
 import { Counterparties } from './counterparties';
 import { CompanyLinkReview } from './company-link-review';
 import { ErasureQueue } from './erasure-queue';
+import { ProblemReportQueue } from './problem-report-queue';
+import { problemReportQueueFragment } from '../../lib/problem-report-queue';
 import { Missions } from './missions';
 import { TodayPanel } from './today';
 import { CommercialProgress } from './opportunities';
@@ -232,9 +234,13 @@ function TenantWorkspace({
     window.addEventListener('hashchange', read);
     return () => window.removeEventListener('hashchange', read);
   }, [loaded, initialSection]);
+  // The queue of problem reports sits inside Settings, so its own address (#problem-report-queue) is allowed for the
+  // people who may see Settings, and panelFor puts it in that panel.
   const sectionAllowed = workspaceSections.some(
     (section) =>
-      section.id === fragment && (section.roles as readonly string[]).includes(currentRole ?? ''),
+      (section.id === fragment ||
+        (fragment === problemReportQueueFragment && section.id === 'workspace-settings')) &&
+      (section.roles as readonly string[]).includes(currentRole ?? ''),
   );
   // One panel is in view at a time. Every panel stays mounted so entries survive a switch.
   const view = sectionAllowed ? panelFor(fragment) : 'overview';
@@ -703,7 +709,12 @@ function TenantWorkspace({
           {shown('workspace-settings') && ['owner', 'admin'].includes(data.role) && (
             <div className="ux-panel" hidden={view !== 'workspace-settings'}>
               <ReviewSettings key={`settings-${tenant}`} tenant={tenant} role={data.role} />
-              <ErasureQueue key={`erasure-${tenant}`} tenant={tenant} />
+              <ErasureQueue key={`erasure-${tenant}`} tenant={tenant} role={data.role} />
+              <ProblemReportQueue
+                key={`problem-reports-${tenant}`}
+                tenant={tenant}
+                role={data.role}
+              />
             </div>
           )}
           {shown('workspace-audit') && ['owner', 'admin'].includes(data.role) && (

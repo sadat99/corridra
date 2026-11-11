@@ -78,3 +78,52 @@
 .pr-meanings dd {
   margin: 0 0 var(--space-2);
 }
+
+/* The staff queue (apps/web/app/operator/problem-report-queue.tsx): rows stack under 30rem, every control is 44px. */
+.pr-queue {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 48rem;
+}
+.pr-queue-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-4);
+}
+.pr-queue-rows {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pr-queue-row {
+  display: grid;
+  gap: var(--space-3);
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--line);
+}
+.pr-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 30rem) {
+  .pr-facts {
+    flex-direction: column;
+  }
+}
+.pr-queue button,
+.pr-queue summary {
+  min-height: 2.75rem;
+}
+.pr-queue-move {
+  display: grid;
+  gap: var(--space-3);
+}
+.pr-queue-move textarea {
+  width: 100%;
+}

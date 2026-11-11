@@ -53,7 +53,7 @@ export const installOnlyModules = [
   {
     name: 'customer-problem-reports',
     label: 'Problem reports',
-    line: 'No separate application switch. Installing the database module is the activation; it installs the workspace and account lifecycle modules first and leaves their controls as they are (closed on a database that never opened them). The Help menus keep Report a Problem as Coming soon until the application release that uses it.',
+    line: 'No separate application switch. Installing the database module is the activation; it installs the workspace and account lifecycle modules first and leaves their controls as they are (closed on a database that never opened them). The Help menus show Report a Problem only where this module and the customer self-service word removal (migration 0003) are both installed, and keep it as Coming soon everywhere else.',
     state: 'Installation not checked here',
     action: 'field_modules_action=problem_reports',
   },
