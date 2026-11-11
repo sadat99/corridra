@@ -440,14 +440,15 @@ const underlineOf = (page: Page, selector: string) =>
 /**
  * The Team sidebar lists what the person's role allows, and the role arrives with the workspace read, after the page
  * has drawn. Until then it lists only the places every member sees, with no Admin group. A signed-in owner's sidebar is
- * ready when the Admin group is there; counting before that read the half-built sidebar (a flake on main, CI run
- * 42951732751, attempt 1). The count and its bound are not changed.
+ * ready when the Admin group is in the page (at 800 wide its row is drawn hidden, so it is waited for as attached, not
+ * visible); counting before that read the half-built sidebar (a flake on main, CI run 42951732751, attempt 1). The
+ * count and its bound are not changed.
  */
 const sidebarReady = (page: Page) =>
   expect(
     page.locator('nav.ux-team-sidebar details.ux-team-group > summary'),
     'the sidebar has its owner items',
-  ).toBeVisible({ timeout: 30_000 });
+  ).toBeAttached({ timeout: 30_000 });
 
 for (const way of ways) {
   test(`with ${way} the focus ring on the navy Team sidebar reaches 3 to 1, and the selected stripe is white, at 1440 and 800`, async ({
