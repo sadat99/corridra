@@ -20,7 +20,7 @@ vi.mock('node:fs/promises', async (importOriginal) => {
       ? // Real-use 0014 (removed member access) is applied after 0013, so it stays hidden together with it and the
         // exact base state of this suite is unchanged. Owner decision 11 Nov 2026, "No, remove access (Recommended)".
         names.filter(
-          (n) => !/^(0013_organisation_link_provenance_and_search|0014_)/.test(String(n)),
+          (n) => !/^(0013_organisation_link_provenance_and_search|0014_|0015_)/.test(String(n)),
         )
       : names;
   }) as typeof real.readdir;

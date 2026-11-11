@@ -1779,3 +1779,135 @@ test('the terms reminder list is capped at the size the page accepts, in a fixed
     first.termsToAccept.map((t) => t.registrationId),
   );
 }, 240000);
+
+// U10b: a participant sees what the organiser has recorded for their own registration only. Real-use 0015 adds one function.
+const feeStatusSql = () =>
+  readFile(
+    new URL(
+      '../../packages/db/customer-real-use-migrations/0015_participant_fee_status.sql',
+      import.meta.url,
+    ),
+    'utf8',
+  );
+const money = (reg: string, kind: string, amountMinor: string, currency = 'BDT', over = {}) =>
+  ledger().record({
+    commandId: randomUUID(),
+    ...scope(),
+    entry: {
+      kind,
+      costBasis: null,
+      registrationId: reg,
+      amountMinor,
+      currency,
+      occurredOn: '2026-10-02',
+      description: 'Synthetic recorded by the organiser',
+      ...over,
+    },
+    acknowledged: true,
+  });
+const status = (p: string, registration = reg[p]) =>
+  terms(p).ownFeeStatus({ registrationId: registration });
+
+test('real-use 0015 is additive, repeatable and grants the new function to the runtime login only', async () => {
+  const sql = await feeStatusSql();
+  const before = await f.owner.query(
+    "SELECT pg_get_functiondef('customer.own_programme_place(uuid)'::regprocedure) d",
+  );
+  await f.owner.query(sql);
+  await f.owner.query(sql);
+  const after = await f.owner.query(
+    "SELECT pg_get_functiondef('customer.own_programme_place(uuid)'::regprocedure) d",
+  );
+  expect(after.rows[0].d).toBe(before.rows[0].d);
+  const acl = (
+    await f.owner.query(
+      `SELECT p.prosecdef,p.proconfig,has_function_privilege('corridra_runtime','customer.own_programme_fee_status(uuid)','EXECUTE') runtime,
+ has_function_privilege('corridra_auth','customer.own_programme_fee_status(uuid)','EXECUTE') auth,
+ has_function_privilege('public','customer.own_programme_fee_status(uuid)','EXECUTE') pub
+ FROM pg_proc p WHERE p.oid='customer.own_programme_fee_status(uuid)'::regprocedure`,
+    )
+  ).rows[0];
+  expect(acl).toMatchObject({ prosecdef: true, runtime: true, auth: false, pub: false });
+  expect(acl.proconfig).toEqual(['search_path=pg_catalog']);
+});
+
+test('a participant sees only their own due, recorded and outstanding per currency, net of reversals', async () => {
+  const gwenBefore = await status('gwen');
+  expect(gwenBefore).toMatchObject({
+    registrationId: reg.gwen,
+    provenance: 'ORGANISER_RECORDED',
+    verified: false,
+    collectsPayments: false,
+    amounts: [],
+  });
+  // finn already owes 120000 BDT from the ledger test above.
+  const first = await money(reg.finn, 'PARTICIPANT_PAYMENT', '50000');
+  const mistake = await money(reg.finn, 'PARTICIPANT_PAYMENT', '30000');
+  await money(reg.finn, 'PARTICIPANT_PAYMENT', '5', 'JPY');
+  const own = (await status('finn')).amounts;
+  const bdt = () => status('finn').then((s) => s.amounts.find((a) => a.currency === 'BDT'));
+  expect(await bdt()).toMatchObject({
+    dueMinor: '120000',
+    recordedMinor: '80000',
+    outstandingMinor: '40000',
+  });
+  // A payment with no fee in that currency is still shown.
+  expect(own.find((a) => a.currency === 'JPY')).toMatchObject({
+    dueMinor: '0',
+    recordedMinor: '5',
+    outstandingMinor: '-5',
+  });
+  // A reversal reduces what is recorded.
+  await ledger().record({
+    commandId: randomUUID(),
+    ...scope(),
+    entry: {
+      reverseOf: mistake.entry.id,
+      occurredOn: '2026-10-03',
+      description: 'Synthetic correction of a mistaken payment',
+    },
+    acknowledged: true,
+  });
+  expect(await bdt()).toMatchObject({
+    dueMinor: '120000',
+    recordedMinor: '50000',
+    outstandingMinor: '70000',
+  });
+  expect(first.entry.id).toBeTruthy();
+  // Nothing of finn's reaches gwen, and the organiser's costs never reach a participant.
+  await money(reg.finn, 'ORGANISER_EXPENSE', '999', 'BDT', {
+    kind: 'ORGANISER_EXPENSE',
+    costBasis: 'PLANNED',
+    registrationId: null,
+  });
+  expect((await status('gwen')).amounts).toEqual([]);
+  const shown = JSON.stringify(await status('finn'));
+  expect(shown).not.toMatch(/999|margin|expense|obligation|corridra/i);
+  expect(Object.keys(await status('finn')).sort()).toEqual(
+    [
+      'amounts',
+      'collectsPayments',
+      'expiresAt',
+      'programmeId',
+      'provenance',
+      'registrationId',
+      'verified',
+    ].sort(),
+  );
+  // The place read is unchanged: only the amount due, as before.
+  expect((await place('finn')).fees).toEqual([
+    { currency: 'BDT', exponent: expect.any(Number), dueMinor: '120000' },
+  ]);
+});
+
+test('another participant, the organiser and a stranger get the same denial as the place read', async () => {
+  const same = (await rejected(place('bob', reg.finn))).message;
+  for (const who of ['bob', 'alice', 'olga']) {
+    const denied = await rejected(status(who, reg.finn));
+    expect(denied.code).toBe('42501');
+    expect(denied.message).toBe(same);
+  }
+  const unknown = await rejected(status('finn', randomUUID()));
+  expect(unknown.code).toBe('42501');
+  expect(() => status('finn', 'not-a-uuid')).toThrow();
+});

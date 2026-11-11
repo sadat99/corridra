@@ -1,5 +1,6 @@
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import type {
+  OwnFeeStatus,
   OwnPlace,
   PlacesReport,
   Reminders,
@@ -234,6 +235,29 @@ export function parseOwnPlace(v: unknown, registrationId: string): OwnPlace {
     )
       throw Error('Invalid choice');
   return v as unknown as OwnPlace;
+}
+export function parseOwnFeeStatus(v: unknown, registrationId: string): OwnFeeStatus {
+  if (
+    !object(v) ||
+    v.registrationId !== registrationId ||
+    v.provenance !== 'ORGANISER_RECORDED' ||
+    v.verified !== false ||
+    v.collectsPayments !== false ||
+    !Array.isArray(v.amounts) ||
+    v.amounts.length > 20
+  )
+    throw Error('Invalid fee status');
+  for (const a of v.amounts)
+    if (
+      !object(a) ||
+      !/^[A-Z]{3}$/.test(String(a.currency)) ||
+      !count(a.exponent) ||
+      !['dueMinor', 'recordedMinor', 'outstandingMinor'].every((k) =>
+        /^-?[0-9]{1,40}$/.test(String(a[k])),
+      )
+    )
+      throw Error('Invalid fee status');
+  return v as unknown as OwnFeeStatus;
 }
 export function parseReminders(v: unknown): Reminders {
   if (

@@ -1,9 +1,10 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { OwnPlace } from '@corridra/auth/customer-programme-terms';
+import type { OwnFeeStatus, OwnPlace } from '@corridra/auth/customer-programme-terms';
 import {
   failureText,
   money,
+  parseOwnFeeStatus,
   parseOwnPlace,
   participantReason,
   roleLabel,
@@ -21,7 +22,36 @@ export function ParticipantPlace(props: Props) {
   );
 }
 
-function Terms({ terms, fees }: { terms: NonNullable<OwnPlace['terms']>; fees: OwnPlace['fees'] }) {
+// Per currency, as the organiser recorded it. Corridra collects nothing and checks nothing here; payment is made directly to the organiser.
+function FeeStatus({ status }: { status: OwnFeeStatus }) {
+  return (
+    <>
+      <p>Recorded by the organiser. Corridra does not handle or check this payment.</p>
+      <ul>
+        {status.amounts.map((a) => (
+          <li key={a.currency}>
+            {a.currency}: fee due {money(a.dueMinor, a.exponent)}, recorded as received{' '}
+            {money(a.recordedMinor, a.exponent)},{' '}
+            {BigInt(a.outstandingMinor) < BigInt(0)
+              ? 'recorded above the fee by ' + money(a.outstandingMinor.slice(1), a.exponent)
+              : 'outstanding ' + money(a.outstandingMinor, a.exponent)}
+            .
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
+function Terms({
+  terms,
+  fees,
+  status,
+}: {
+  terms: NonNullable<OwnPlace['terms']>;
+  fees: OwnPlace['fees'];
+  status: OwnFeeStatus | null;
+}) {
   return (
     <dl>
       <dt>What is included</dt>
@@ -46,6 +76,14 @@ function Terms({ terms, fees }: { terms: NonNullable<OwnPlace['terms']>; fees: O
               fees.map((f) => money(f.dueMinor, f.exponent) + ' ' + f.currency).join(', ') +
               '. Nothing is collected here.')}
       </dd>
+      {terms.feesApply && status && status.amounts.length > 0 && (
+        <>
+          <dt>Fee status</dt>
+          <dd>
+            <FeeStatus status={status} />
+          </dd>
+        </>
+      )}
     </dl>
   );
 }
@@ -53,6 +91,7 @@ function Terms({ terms, fees }: { terms: NonNullable<OwnPlace['terms']>; fees: O
 function ScopedPlace({ subject, issuer, registrationId }: Props) {
   const [phase, setPhase] = useState<Phase>('loading');
   const [data, setData] = useState<OwnPlace | null>(null);
+  const [feeStatus, setFeeStatus] = useState<OwnFeeStatus | null>(null);
   const [profile, setProfile] = useState('');
   const [agree, setAgree] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
@@ -69,6 +108,7 @@ function ScopedPlace({ subject, issuer, registrationId }: Props) {
   const lose = useCallback((to: Phase) => {
     if (timer.current) clearTimeout(timer.current);
     setData(null);
+    setFeeStatus(null);
     setProfile('');
     setAgree(false);
     setConfirmCancel(false);
@@ -85,7 +125,22 @@ function ScopedPlace({ subject, issuer, registrationId }: Props) {
         registrationId,
       );
       if (controller.signal.aborted || !active.current) return;
+      // The recorded-payment view is secondary: if it cannot be read the place still shows, without it.
+      let status: OwnFeeStatus | null = null;
+      if (body.terms?.feesApply) {
+        try {
+          status = parseOwnFeeStatus(
+            await api.current.get({ view: 'fees', registrationId }, controller.signal),
+            registrationId,
+          );
+        } catch (e) {
+          if (controller.signal.aborted || !active.current) return;
+          if (e instanceof TermsError && e.kind === 'denied') throw e;
+        }
+        if (controller.signal.aborted || !active.current) return;
+      }
       setData(body);
+      setFeeStatus(status);
       setPhase('ready');
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(
@@ -212,7 +267,7 @@ function ScopedPlace({ subject, issuer, registrationId }: Props) {
           {data.terms && (
             <details>
               <summary>Programme Terms, Version {data.terms.version}</summary>
-              <Terms terms={data.terms} fees={data.fees} />
+              <Terms terms={data.terms} fees={data.fees} status={feeStatus} />
             </details>
           )}
           {c && (

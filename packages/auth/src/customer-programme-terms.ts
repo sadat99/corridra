@@ -274,6 +274,22 @@ export type OwnPlace = {
   profileChoices: { workspaceId: string; name: string; hasProfile: boolean }[];
   sendsMessages: false;
 };
+// What the organiser has recorded for the participant's own registration. Not verified; Corridra does not handle payments.
+export type OwnFeeStatus = {
+  registrationId: string;
+  programmeId: string;
+  expiresAt: string;
+  provenance: 'ORGANISER_RECORDED';
+  verified: false;
+  collectsPayments: false;
+  amounts: {
+    currency: string;
+    exponent: number;
+    dueMinor: string;
+    recordedMinor: string;
+    outstandingMinor: string;
+  }[];
+};
 export type Reminders = {
   asOf: string;
   windowDays: 3;
@@ -336,6 +352,15 @@ export class CustomerProgrammeTermsService extends CustomerSessionBoundary {
     const q = ownPlaceQuery.parse(input);
     return this.call<OwnPlace>(
       'SELECT customer.own_programme_place($1) AS result',
+      [q.registrationId],
+      subject,
+      issuer,
+    );
+  }
+  ownFeeStatus(input: unknown, subject?: string, issuer?: string) {
+    const q = ownPlaceQuery.parse(input);
+    return this.call<OwnFeeStatus>(
+      'SELECT customer.own_programme_fee_status($1) AS result',
       [q.registrationId],
       subject,
       issuer,
