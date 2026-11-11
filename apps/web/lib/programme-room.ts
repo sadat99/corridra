@@ -65,6 +65,30 @@ export function boardingLine(counts: BoardingCounts | null): string {
  */
 export function programmeRoadStates(
   counts: BoardingCounts | null,
+  projection?: ProgrammePlanSource | null,
+): Record<ProgrammeStepKey, ProgrammeStepState> {
+  const states = boardingRoadStates(counts);
+  // Plan the days is done only from a record: the projection lists at least one activity, every one is
+  // scheduled and none needs review. Without a projection, or with any other reading, it stays "not tracked".
+  // Never "now": the boarding steps own the one current stage.
+  if (projection && planIsDone(projection.agenda)) states.plan = 'done';
+  return states;
+}
+
+/** The part of the programme projection the road reads: the agenda only. */
+export type ProgrammePlanSource = {
+  agenda: { scheduled?: boolean; needsReview: boolean | null; status?: string }[];
+};
+/** A cancelled activity is no longer part of the plan, as the projection's overlap check also treats it. */
+const live = <T extends { status?: string }>(agenda: T[]) =>
+  agenda.filter((a) => a.status !== 'CANCELLED');
+function planIsDone(agenda: ProgrammePlanSource['agenda']): boolean {
+  const items = live(agenda);
+  return items.length > 0 && items.every((a) => a.scheduled === true && a.needsReview === false);
+}
+
+function boardingRoadStates(
+  counts: BoardingCounts | null,
 ): Record<ProgrammeStepKey, ProgrammeStepState> {
   const states: Record<ProgrammeStepKey, ProgrammeStepState> = {
     setup: 'done',
@@ -98,11 +122,14 @@ export function programmeRoadStates(
  * segment with no words. It never says "not tracked yet" and never guesses a later stage.
  */
 export type ProgrammeStageShown = 'done' | 'now' | 'grey';
-export function programmeStage(counts: BoardingCounts | null): {
+export function programmeStage(
+  counts: BoardingCounts | null,
+  projection?: ProgrammePlanSource | null,
+): {
   states: Record<ProgrammeStepKey, ProgrammeStageShown>;
   current: ProgrammeStepKey | null;
 } {
-  const road = programmeRoadStates(counts);
+  const road = programmeRoadStates(counts, projection);
   const states = {} as Record<ProgrammeStepKey, ProgrammeStageShown>;
   let current: ProgrammeStepKey | null = null;
   for (const step of programmeRoadSteps) {
@@ -128,7 +155,7 @@ export function programmeNextStep(counts: BoardingCounts | null): ProgrammeNextS
 
 /** What the Overview's "At a glance" reads from the programme projection: counts only, never a record. */
 export type ProgrammeGlanceSource = {
-  readiness: { activeParticipants: number; readyParticipants: number };
+  readiness: { activeParticipants: number; readyParticipants: number; definition?: string };
   meetings: {
     state: 'NOT_SHARED' | 'UNAVAILABLE' | 'AVAILABLE' | 'PARTIAL';
     scheduled: number | null;
@@ -136,8 +163,10 @@ export type ProgrammeGlanceSource = {
     /** How many active participants allowed their shared missions to be counted. */
     participantsSharing?: number;
   };
-  agenda: { needsReview: boolean | null }[];
+  agenda: { scheduled?: boolean; needsReview: boolean | null; status?: string }[];
   conflicts: unknown[];
+  /** Present on the real projection; the readiness definition is the system's own wording for "ready". */
+  context?: { startsAt: string; endsAt: string; timezone: string } | null;
 };
 export type GlanceTile = {
   key: string;
@@ -206,6 +235,156 @@ export function meetingCoverage(projection: ProgrammeGlanceSource | null): strin
   if (!projection || m?.state !== 'AVAILABLE' || m.participantsSharing === undefined) return null;
   const of = projection.readiness.activeParticipants;
   return `Meetings from ${m.participantsSharing} of ${of} participants who allowed counting; not all activity.`;
+}
+
+/** What the checklist reads from the existing terms 'state' view: whether terms exist and the places set. */
+export type ChecklistTerms = {
+  termsSet: boolean;
+  minimum: number | null;
+  maximum: number | null;
+};
+/** Reads the checklist's terms facts out of the terms 'state' view; the shape is the one `parseState` returns. */
+export function checklistTermsFrom(state: {
+  terms: { current: unknown | null };
+  places: { minimum: number | null; maximum: number | null };
+}): ChecklistTerms {
+  return {
+    termsSet: state.terms.current !== null,
+    minimum: state.places.minimum,
+    maximum: state.places.maximum,
+  };
+}
+export type ChecklistFact = {
+  key: string;
+  fact: string;
+  /** From a record, or "Not measured yet" when the record is not loaded or its switch is off. */
+  value: string;
+  /** False for "Not measured yet", so the row can be drawn quietly. Never a zero for an unknown. */
+  known: boolean;
+  /** The system's own wording, shown where one exists. */
+  note?: string;
+};
+
+function formatDay(iso: string, timezone: string): string {
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return iso.slice(0, 10);
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      timeZone: timezone,
+    }).format(at);
+  } catch {
+    return at.toISOString().slice(0, 10);
+  }
+}
+
+/**
+ * The programme checklist: plain facts read from records the room already has, each one a value or "Not measured
+ * yet". There is deliberately no overall "ready" verdict (GAP-039): the organiser reads the facts. Registered
+ * counts need the whole participants list (a partial page is only a sample). The places and terms facts need the
+ * terms read, the dates, activities, overlaps, review flags and readiness need the programme projection.
+ */
+export function programmeChecklist(
+  counts: BoardingCounts | null,
+  projection: ProgrammeGlanceSource | null,
+  terms: ChecklistTerms | null,
+): ChecklistFact[] {
+  const registered = counts?.complete ? counts.registered : null;
+  const fact = (
+    key: string,
+    label: string,
+    value: string | null,
+    note?: string,
+  ): ChecklistFact => ({
+    key,
+    fact: label,
+    value: value ?? notMeasured,
+    known: value !== null,
+    ...(note && value !== null ? { note } : {}),
+  });
+  const of = (n: number | null, total: number) => (n === null ? null : `${n} of ${total}`);
+  const agenda = projection ? live(projection.agenda) : null;
+  const scheduled = agenda ? agenda.filter((a) => a.scheduled === true).length : null;
+  const reviewing = agenda ? agenda.filter((a) => a.needsReview === true).length : null;
+  // A review flag of null is not "no": it is unknown, so the count is not given unless it is complete.
+  const reviewKnown = agenda
+    ? agenda.every((a) => a.scheduled !== true || a.needsReview !== null)
+    : false;
+  const r = projection?.readiness;
+  const context = projection?.context;
+  return [
+    fact('registered', 'Registered', registered === null ? null : String(registered)),
+    fact(
+      'capacity',
+      'Registered against the maximum places',
+      !terms
+        ? null
+        : terms.maximum === null
+          ? 'No maximum set'
+          : registered === null
+            ? null
+            : `${registered} of ${terms.maximum}`,
+    ),
+    fact(
+      'minimum',
+      'Registered against the minimum to run',
+      !terms
+        ? null
+        : terms.minimum === null
+          ? 'No minimum set'
+          : registered === null
+            ? null
+            : `${registered} of ${terms.minimum}`,
+    ),
+    fact('terms', 'Terms', !terms ? null : terms.termsSet ? 'Set' : 'Not set yet'),
+    fact(
+      'dates',
+      'Programme dates',
+      !projection
+        ? null
+        : context
+          ? `${formatDay(context.startsAt, context.timezone)} to ${formatDay(context.endsAt, context.timezone)}`
+          : context === null
+            ? 'Not set yet'
+            : null,
+    ),
+    fact(
+      'activities',
+      'Activities scheduled',
+      agenda === null || scheduled === null
+        ? null
+        : agenda.length === 0
+          ? 'No activities yet'
+          : of(scheduled, agenda.length),
+    ),
+    fact(
+      'overlaps',
+      'Attendee overlaps',
+      !projection
+        ? null
+        : projection.conflicts.length === 0
+          ? 'None found'
+          : String(projection.conflicts.length) +
+            plural(projection.conflicts.length, ' pair overlaps', ' pairs overlap'),
+    ),
+    fact(
+      'review',
+      'Activities needing review',
+      agenda === null || reviewing === null
+        ? null
+        : reviewing > 0 || reviewKnown
+          ? String(reviewing)
+          : null,
+    ),
+    fact(
+      'ready',
+      'Participants ready',
+      r ? `${r.readyParticipants} of ${r.activeParticipants}` : null,
+      r?.definition,
+    ),
+  ];
 }
 
 /** One thing that needs the organiser, with the view that resolves it. */
