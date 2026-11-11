@@ -1489,6 +1489,11 @@
       "use": "Design only (relayed owner decisions of 10 Nov 2026): real company linking Phase 1, one provenance rule, source-rights record and takedown, combined search with anti-enumeration, erasure by redaction record, forward real-use files; nothing built, installed or enabled; amends ADR-052"
     },
     {
+      "path": "docs/adr/0080-public-programme-pages-and-applications.md",
+      "classification": "Architecture decision",
+      "use": "Proposed: an organiser's reviewed public programme page at a stable address, anonymous read, account-bound applications with distinct states and a consented join into the existing registration; built behind CORRIDRA_PROGRAMME_PAGES (off); module not in the installer and not installed; privacy review and activation are the owner's"
+    },
+    {
       "path": "docs/revamp/README.md",
       "classification": "Current guide/contract",
       "use": "Owner-approved V3 controlled revamp scope (4 Nov 2026), merge rules, session file ownership and the Wave 0 route/cleanup manifest; live state stays in the ledger"

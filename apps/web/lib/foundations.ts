@@ -153,6 +153,11 @@ import {
 } from '@corridra/auth/customer-specification-confirmation';
 import { CustomerBookService, customerBooksEnabled } from '@corridra/auth/customer-books';
 import {
+  CustomerProgrammePublicationService,
+  ProgrammePageReader,
+  customerProgrammePagesEnabled,
+} from '@corridra/auth/customer-programme-publication';
+import {
   CustomerDecisionCardService,
   DecisionCardReader,
   customerDecisionCardsEnabled,
@@ -348,6 +353,20 @@ function createServices() {
       config.AUTH_SECRET,
     ),
     decisionCardReader: new DecisionCardReader(runtimePool),
+    customerProgrammePages: new CustomerProgrammePublicationService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerProgrammePagesEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
+        issuer: customerIssuerFromEnv(),
+      },
+      readCustomerSession,
+    ),
+    programmePageReader: new ProgrammePageReader(runtimePool),
     customerDecisions: new CustomerDecisionService(
       runtimePool,
       authPool,

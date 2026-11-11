@@ -273,7 +273,11 @@ export type RoomLensKey = (typeof roomLenses)[number]['key'];
  */
 export const roomGroups = [
   { key: 'overview', label: 'Overview', members: ['overview'] },
-  { key: 'people', label: 'Participants and eligibility', members: ['people', 'companies'] },
+  {
+    key: 'people',
+    label: 'Participants and eligibility',
+    members: ['people', 'companies', 'page'],
+  },
   { key: 'plan', label: 'Programme and meetings', members: ['plan', 'agenda'] },
   { key: 'terms', label: 'Terms and fees', members: ['terms', 'money'] },
   { key: 'results', label: 'Results', members: ['results'] },
@@ -284,6 +288,7 @@ export const roomViewLabels = {
   overview: 'Overview',
   people: 'People',
   companies: 'Companies',
+  page: 'Public page and applications',
   plan: 'Plan and report',
   agenda: 'Agenda',
   terms: 'Terms and places',
