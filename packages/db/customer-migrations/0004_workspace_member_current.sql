@@ -1,7 +1,7 @@
 -- Removed members, part 1: the membership helpers and the replay of a submitted request.
 -- Three read-only definer helpers carry the rule for every later file. They write nothing, have no runtime or auth grant and are
 -- called only by definer functions: customer_private.workspace_member_current(workspace, person) for one pair,
--- customer_private.workspace_ids_current(person) for the set a list filters on (computed once per call), and
+-- customer_private.workspace_ids_current(person) for the set a list filters on (read once per call: the callers put it in an uncorrelated ARRAY(SELECT ...), which the database evaluates one time, not once per row), and
 -- customer_private.request_author_current(request), which is false for an unknown request. They use the existing indexes on
 -- customer.membership (principal_id, tenant_id), workspace_member (principal_id, tenant_id) and the unique member_id of
 -- workspace_access_revocation. No new index.
@@ -23,8 +23,8 @@
 -- for the file before this one: a notice, nothing changed, nothing created. CHANGED: any function differs, only some exist, or the
 -- registry holds another hash for the file before this one: an error, and none is replaced because all are compared first.
 -- MATCHING: every function equals its constant and every grantee list is equal: all are replaced, then the owner, settings, security
--- mode, volatility, argument types and grantees are proved unchanged. The constants sit between the fingerprint-begin and
--- fingerprint-end markers. The live query sits between the fingerprint-query markers; an owner can copy it, add a semicolon and
+-- mode, volatility, argument types and grantees are proved unchanged. The constants sit between the begin and end marker comments of the
+-- fingerprint block. The live query sits between the begin and end marker comments of the fingerprint query block; an owner can copy it, add a semicolon and
 -- run it on any database to read the live values.
 DO $guard$
 DECLARE spec record; total integer:=0; present integer:=0; wrong text; registered boolean; recorded text;

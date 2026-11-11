@@ -15,8 +15,8 @@
 -- for the file before this one: a notice, nothing changed, nothing created. CHANGED: any function differs, only some exist, or the
 -- registry holds another hash for the file before this one: an error, and none is replaced because all are compared first.
 -- MATCHING: every function equals its constant and every grantee list is equal: all are replaced, then the owner, settings, security
--- mode, volatility, argument types and grantees are proved unchanged. The constants sit between the fingerprint-begin and
--- fingerprint-end markers. The live query sits between the fingerprint-query markers; an owner can copy it, add a semicolon and
+-- mode, volatility, argument types and grantees are proved unchanged. The constants sit between the begin and end marker comments of the
+-- fingerprint block. The live query sits between the begin and end marker comments of the fingerprint query block; an owner can copy it, add a semicolon and
 -- run it on any database to read the live values.
 DO $guard$
 DECLARE spec record; total integer:=0; present integer:=0; wrong text; registered boolean; recorded text;
@@ -109,7 +109,7 @@ BEGIN
    FROM app.mission_move m WHERE m.tenant_id=o.mission_tenant_id AND m.mission_id=o.mission_id
    AND NOT EXISTS(SELECT FROM app.mission_move_close c WHERE c.move_id=m.id))) ORDER BY o.id),'[]'::jsonb) INTO items
  FROM (SELECT r.id,r.mission_tenant_id,r.mission_id FROM customer_private.owned_request r
-   WHERE r.principal_id=actor AND r.workspace_id IN (SELECT wsc.wid FROM customer_private.workspace_ids_current(actor) AS wsc(wid)) AND (after_id IS NULL OR r.id>after_id)
+   WHERE r.principal_id=actor AND r.workspace_id = ANY (ARRAY(SELECT wsc.wid FROM customer_private.workspace_ids_current(actor) AS wsc(wid))) AND (after_id IS NULL OR r.id>after_id)
    AND NOT EXISTS(SELECT FROM customer_private.request_revocation v WHERE v.request_id=r.id)
    AND EXISTS(SELECT FROM app.mission_intake i WHERE i.id=r.mission_id AND i.tenant_id=r.mission_tenant_id AND i.retention_until>clock_timestamp())
    AND EXISTS(SELECT FROM app.mission_move m WHERE m.tenant_id=r.mission_tenant_id AND m.mission_id=r.mission_id
@@ -117,7 +117,7 @@ BEGIN
    ORDER BY r.id LIMIT page_size) o;
  IF jsonb_array_length(items)=page_size THEN
   next_id:=(items->(page_size-1)->>'requestId')::uuid;
-  IF NOT EXISTS(SELECT FROM customer_private.owned_request r WHERE r.principal_id=actor AND r.workspace_id IN (SELECT wsc.wid FROM customer_private.workspace_ids_current(actor) AS wsc(wid)) AND r.id>next_id
+  IF NOT EXISTS(SELECT FROM customer_private.owned_request r WHERE r.principal_id=actor AND r.workspace_id = ANY (ARRAY(SELECT wsc.wid FROM customer_private.workspace_ids_current(actor) AS wsc(wid))) AND r.id>next_id
     AND NOT EXISTS(SELECT FROM customer_private.request_revocation v WHERE v.request_id=r.id)
     AND EXISTS(SELECT FROM app.mission_move m WHERE m.tenant_id=r.mission_tenant_id AND m.mission_id=r.mission_id
      AND NOT EXISTS(SELECT FROM app.mission_move_close c WHERE c.move_id=m.id))) THEN next_id:=NULL; END IF;

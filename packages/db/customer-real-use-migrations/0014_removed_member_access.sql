@@ -1,4 +1,6 @@
 -- Removed members, part 2: requests, saved reports, assigned missions and programme objectives.
+-- A hand run on a database that has the base modules but not real-use raises 'prerequisite function is missing (N of 14 present)';
+-- ABSENT in this file means only a database with no customer schema at all.
 -- Needs customer migration 0004 (the helpers) and replaces fourteen functions, and adds customer_private.link_workspace_current
 -- (a saved report is tied to a workspace through the assignment of its link to a request: the report is denied only when the link
 -- was delivered for a request this person wrote and they are not a current member; a report saved by a link with no assignment,
@@ -24,8 +26,8 @@
 -- for the file before this one: a notice, nothing changed, nothing created. CHANGED: any function differs, only some exist, or the
 -- registry holds another hash for the file before this one: an error, and none is replaced because all are compared first.
 -- MATCHING: every function equals its constant and every grantee list is equal: all are replaced, then the owner, settings, security
--- mode, volatility, argument types and grantees are proved unchanged. The constants sit between the fingerprint-begin and
--- fingerprint-end markers. The live query sits between the fingerprint-query markers; an owner can copy it, add a semicolon and
+-- mode, volatility, argument types and grantees are proved unchanged. The constants sit between the begin and end marker comments of the
+-- fingerprint block. The live query sits between the begin and end marker comments of the fingerprint query block; an owner can copy it, add a semicolon and
 -- run it on any database to read the live values.
 DO $guard$
 DECLARE spec record; total integer:=0; present integer:=0; wrong text; registered boolean; recorded text;
@@ -168,11 +170,11 @@ DECLARE actor uuid:=customer_private.request_actor(); items jsonb; next_id uuid;
 BEGIN
  IF page_size IS NULL OR page_size NOT BETWEEN 1 AND 100 THEN RAISE EXCEPTION 'Invalid page size' USING ERRCODE='23514'; END IF;
  SELECT coalesce(jsonb_agg(customer_private.request_result(o.id,actor) ORDER BY o.id),'[]'::jsonb) INTO items
- FROM (SELECT r.id FROM customer_private.owned_request r WHERE r.principal_id=actor AND r.workspace_id IN (SELECT wsc.wid FROM customer_private.workspace_ids_current(actor) AS wsc(wid)) AND (after_id IS NULL OR r.id>after_id)
+ FROM (SELECT r.id FROM customer_private.owned_request r WHERE r.principal_id=actor AND r.workspace_id = ANY (ARRAY(SELECT wsc.wid FROM customer_private.workspace_ids_current(actor) AS wsc(wid))) AND (after_id IS NULL OR r.id>after_id)
  AND NOT EXISTS(SELECT FROM customer_private.request_revocation v WHERE v.request_id=r.id) ORDER BY r.id LIMIT page_size) o;
  IF jsonb_array_length(items)=page_size THEN
   next_id:=(items->(page_size-1)->>'id')::uuid;
-  IF NOT EXISTS(SELECT FROM customer_private.owned_request r WHERE r.principal_id=actor AND r.workspace_id IN (SELECT wsc.wid FROM customer_private.workspace_ids_current(actor) AS wsc(wid)) AND r.id>next_id
+  IF NOT EXISTS(SELECT FROM customer_private.owned_request r WHERE r.principal_id=actor AND r.workspace_id = ANY (ARRAY(SELECT wsc.wid FROM customer_private.workspace_ids_current(actor) AS wsc(wid))) AND r.id>next_id
     AND NOT EXISTS(SELECT FROM customer_private.request_revocation v WHERE v.request_id=r.id)) THEN next_id:=NULL; END IF;
  END IF;
  IF customer.actor_id() IS DISTINCT FROM actor THEN RAISE EXCEPTION 'Customer request access expired' USING ERRCODE='42501'; END IF;
@@ -249,10 +251,10 @@ CREATE OR REPLACE FUNCTION customer.assigned_missions(after_id uuid DEFAULT NULL
 DECLARE actor uuid:=customer_private.request_actor();entry record;items jsonb:='[]'::jsonb;checked jsonb:='[]'::jsonb;last_id uuid;more boolean;
 BEGIN
  IF page_size IS NULL OR page_size<1 OR page_size>25 THEN RAISE EXCEPTION 'Invalid assignment page' USING ERRCODE='22023';END IF;
- FOR entry IN SELECT a.id FROM app.customer_delivery_assignment a JOIN customer_private.owned_request r ON r.id=a.request_id AND r.principal_id=actor AND r.workspace_id IN (SELECT wsc.wid FROM customer_private.workspace_ids_current(actor) AS wsc(wid)) WHERE after_id IS NULL OR a.id>after_id ORDER BY a.id LIMIT page_size LOOP
+ FOR entry IN SELECT a.id FROM app.customer_delivery_assignment a JOIN customer_private.owned_request r ON r.id=a.request_id AND r.principal_id=actor AND r.workspace_id = ANY (ARRAY(SELECT wsc.wid FROM customer_private.workspace_ids_current(actor) AS wsc(wid))) WHERE after_id IS NULL OR a.id>after_id ORDER BY a.id LIMIT page_size LOOP
   items:=items||jsonb_build_array(customer_private.assignment_summary(entry.id,actor));last_id:=entry.id;
  END LOOP;
- SELECT EXISTS(SELECT FROM app.customer_delivery_assignment a JOIN customer_private.owned_request r ON r.id=a.request_id AND r.principal_id=actor AND r.workspace_id IN (SELECT wsc.wid FROM customer_private.workspace_ids_current(actor) AS wsc(wid)) WHERE last_id IS NOT NULL AND a.id>last_id) INTO more;
+ SELECT EXISTS(SELECT FROM app.customer_delivery_assignment a JOIN customer_private.owned_request r ON r.id=a.request_id AND r.principal_id=actor AND r.workspace_id = ANY (ARRAY(SELECT wsc.wid FROM customer_private.workspace_ids_current(actor) AS wsc(wid))) WHERE last_id IS NOT NULL AND a.id>last_id) INTO more;
  IF customer_private.request_actor() IS DISTINCT FROM actor THEN RAISE EXCEPTION 'Customer access expired' USING ERRCODE='42501';END IF;
  FOR entry IN SELECT value FROM jsonb_array_elements(items) LOOP checked:=checked||jsonb_build_array(customer_private.assignment_summary((entry.value->>'id')::uuid,actor));END LOOP;
  IF checked IS DISTINCT FROM items OR EXISTS(SELECT FROM jsonb_array_elements(items) item WHERE (item->>'available')::boolean AND (item->>'expiresAt')::timestamptz<=clock_timestamp()) THEN RAISE EXCEPTION 'Assigned mission availability changed' USING ERRCODE='42501';END IF;
@@ -418,7 +420,7 @@ BEGIN
  SELECT * INTO reg FROM customer_private.programme_registration WHERE id=registration AND principal_id=actor;
  IF NOT FOUND THEN RAISE EXCEPTION 'Programme registration unavailable' USING ERRCODE='42501'; END IF;
  IF page_size IS NULL OR page_size NOT BETWEEN 1 AND 25 THEN RAISE EXCEPTION 'Invalid objective page size' USING ERRCODE='23514'; END IF;
- SELECT array_agg(id ORDER BY id) INTO selected FROM (SELECT id FROM customer_private.owned_request o WHERE o.principal_id=actor AND o.workspace_id IN (SELECT wsc.wid FROM customer_private.workspace_ids_current(actor) AS wsc(wid)) AND (after_id IS NULL OR o.id>after_id) AND NOT EXISTS(SELECT FROM customer_private.request_revocation WHERE request_id=o.id) ORDER BY id LIMIT page_size) page;
+ SELECT array_agg(id ORDER BY id) INTO selected FROM (SELECT id FROM customer_private.owned_request o WHERE o.principal_id=actor AND o.workspace_id = ANY (ARRAY(SELECT wsc.wid FROM customer_private.workspace_ids_current(actor) AS wsc(wid))) AND (after_id IS NULL OR o.id>after_id) AND NOT EXISTS(SELECT FROM customer_private.request_revocation WHERE request_id=o.id) ORDER BY id LIMIT page_size) page;
  FOR work IN SELECT workspace_id FROM (SELECT reg.workspace_id AS workspace_id UNION SELECT o.workspace_id FROM customer_private.owned_request o WHERE o.id=ANY(selected)) w ORDER BY workspace_id LOOP PERFORM customer_private.lock_workspace_access(command,work);END LOOP;
  PERFORM customer_private.participant_scope(command,reg.workspace_id,reg.programme_id,false);
  IF EXISTS(SELECT FROM customer_private.programme_participant_revocation WHERE registration_id=registration) THEN RAISE EXCEPTION 'Programme registration unavailable' USING ERRCODE='42501'; END IF;
@@ -431,7 +433,7 @@ BEGIN
    items:=items||jsonb_build_array(jsonb_build_object('id',r.id,'available',true,'label',concat_ws(' · ',detail->'original'->>'company',detail->'original'->>'objective',detail->'original'->>'market')));
   ELSE items:=items||jsonb_build_array(jsonb_build_object('id',r.id,'available',false,'label','Original request unavailable')); END IF;
  END LOOP;
- IF NOT EXISTS(SELECT FROM customer_private.owned_request o WHERE o.principal_id=actor AND o.workspace_id IN (SELECT wsc.wid FROM customer_private.workspace_ids_current(actor) AS wsc(wid)) AND o.id>next_id AND NOT EXISTS(SELECT FROM customer_private.request_revocation WHERE request_id=o.id)) THEN next_id:=NULL; END IF;
+ IF NOT EXISTS(SELECT FROM customer_private.owned_request o WHERE o.principal_id=actor AND o.workspace_id = ANY (ARRAY(SELECT wsc.wid FROM customer_private.workspace_ids_current(actor) AS wsc(wid))) AND o.id>next_id AND NOT EXISTS(SELECT FROM customer_private.request_revocation WHERE request_id=o.id)) THEN next_id:=NULL; END IF;
  IF EXISTS(SELECT FROM customer_private.programme_participant_revocation WHERE registration_id=registration) OR customer.actor_id() IS DISTINCT FROM actor OR expiry<=clock_timestamp() THEN RAISE EXCEPTION 'Private source expired' USING ERRCODE='42501'; END IF;
  RETURN jsonb_build_object('registrationId',registration,'requests',items,'nextAfter',next_id,'viewExpiresAt',expiry,'synthetic',customer_private.synthetic_context());
 END $$

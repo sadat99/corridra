@@ -16,8 +16,8 @@
 -- for the file before this one: a notice, nothing changed, nothing created. CHANGED: any function differs, only some exist, or the
 -- registry holds another hash for the file before this one: an error, and none is replaced because all are compared first.
 -- MATCHING: every function equals its constant and every grantee list is equal: all are replaced, then the owner, settings, security
--- mode, volatility, argument types and grantees are proved unchanged. The constants sit between the fingerprint-begin and
--- fingerprint-end markers. The live query sits between the fingerprint-query markers; an owner can copy it, add a semicolon and
+-- mode, volatility, argument types and grantees are proved unchanged. The constants sit between the begin and end marker comments of the
+-- fingerprint block. The live query sits between the begin and end marker comments of the fingerprint query block; an owner can copy it, add a semicolon and
 -- run it on any database to read the live values.
 DO $guard$
 DECLARE spec record; total integer:=0; present integer:=0; wrong text; registered boolean; recorded text;
@@ -59,7 +59,7 @@ BEGIN
  END IF;
  -- ABSENT: none of the functions exists and the registry has no row for the file before this one. Nothing is changed or created.
  IF present=0 AND recorded IS NULL THEN
-  RAISE NOTICE 'Removed member access skipped: commercial readiness 0002 is not applied';
+  RAISE NOTICE 'Removed member access skipped: commercial readiness 0010 is not applied';
   RETURN;
  END IF;
  -- CHANGED: some function is missing, or any compared property of any function differs, or the registry holds another hash

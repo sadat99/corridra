@@ -20,8 +20,8 @@
 -- for the file before this one: a notice, nothing changed, nothing created. CHANGED: any function differs, only some exist, or the
 -- registry holds another hash for the file before this one: an error, and none is replaced because all are compared first.
 -- MATCHING: every function equals its constant and every grantee list is equal: all are replaced, then the owner, settings, security
--- mode, volatility, argument types and grantees are proved unchanged. The constants sit between the fingerprint-begin and
--- fingerprint-end markers. The live query sits between the fingerprint-query markers; an owner can copy it, add a semicolon and
+-- mode, volatility, argument types and grantees are proved unchanged. The constants sit between the begin and end marker comments of the
+-- fingerprint block. The live query sits between the begin and end marker comments of the fingerprint query block; an owner can copy it, add a semicolon and
 -- run it on any database to read the live values.
 DO $guard$
 DECLARE spec record; total integer:=0; present integer:=0; wrong text; registered boolean; recorded text;
