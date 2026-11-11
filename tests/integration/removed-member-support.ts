@@ -177,7 +177,7 @@ export const HISTORY_TABLES = [
 ];
 
 // A customer session as the application opens one: a short proof, then one transaction on the restricted runtime login.
-class Probe extends CustomerSessionBoundary {
+export class Probe extends CustomerSessionBoundary {
   run<T>(work: (db: DatabaseClient) => Promise<T>) {
     return this.transaction(async (db) => work(db));
   }
@@ -553,3 +553,30 @@ export function sameBytes(a: Outcome, b: Outcome) {
   if (a.ok || b.ok) return false;
   return a.code === b.code && Buffer.compare(Buffer.from(a.message), Buffer.from(b.message)) === 0;
 }
+
+// The state production is in before this change, built by hand: the files of a module are applied as text and recorded, the
+// way the installer-order suites do it.
+export async function applyFiles(
+  owner: Fixture['owner'],
+  directory: string,
+  schema: string,
+  files: string[],
+) {
+  await owner.query(`CREATE SCHEMA IF NOT EXISTS ${schema}`);
+  await owner.query(`REVOKE ALL ON SCHEMA ${schema} FROM PUBLIC,corridra_runtime,corridra_auth`);
+  await owner.query(
+    `CREATE TABLE IF NOT EXISTS ${schema}.applied(name text PRIMARY KEY,sha256 text NOT NULL,applied_at timestamptz NOT NULL DEFAULT now())`,
+  );
+  for (const name of files) {
+    const sql = readFileSync(
+      new URL(`../../packages/db/${directory}/${name}`, import.meta.url),
+      'utf8',
+    );
+    await owner.query(sql);
+    await owner.query(`INSERT INTO ${schema}.applied(name,sha256) VALUES($1,$2)`, [name, sha(sql)]);
+  }
+}
+export const appliedNames = async (owner: Fixture['owner'], schema: string) =>
+  (await owner.query(`SELECT name FROM ${schema}.applied ORDER BY name`)).rows.map(
+    (r) => r.name as string,
+  );
