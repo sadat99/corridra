@@ -1,12 +1,19 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerBillingReal } from './customer-billing-real-migrate';
 import { migrateCustomerInvoicing } from './customer-invoicing-migrate';
 
 // Explicit optional installation (ADR-064, billing stage 2). It serves no real workspace by itself: the control it creates
 // starts closed. Sample invoicing behaves as before. No runtime request receives this owner connection.
-export async function migrateCustomerInvoicingReal(pool: DatabasePool) {
+export function migrateCustomerInvoicingReal(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerInvoicingReal', () =>
+    migrateCustomerInvoicingRealRun(pool),
+  );
+}
+
+async function migrateCustomerInvoicingRealRun(pool: DatabasePool) {
   await migrateCustomerInvoicing(pool);
   await migrateCustomerBillingReal(pool);
   const directory = new URL('../customer-invoicing-real-migrations/', import.meta.url);

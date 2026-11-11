@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerAccountLifecycle } from './customer-account-lifecycle-migrate';
 
 // Explicit optional installation of problem reports (Report a Problem). It first installs the account lifecycle
@@ -8,7 +9,13 @@ import { migrateCustomerAccountLifecycle } from './customer-account-lifecycle-mi
 // That installer already refuses a real-use schema that is not current, so this one never applies it either.
 // There is no control table: installing is the activation, and nothing anyone can see changes until the application
 // release that uses it. No runtime request receives this owner connection.
-export async function migrateCustomerProblemReports(pool: DatabasePool) {
+export function migrateCustomerProblemReports(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerProblemReports', () =>
+    migrateCustomerProblemReportsRun(pool),
+  );
+}
+
+async function migrateCustomerProblemReportsRun(pool: DatabasePool) {
   await migrateCustomerAccountLifecycle(pool);
   const directory = new URL('../customer-problem-report-migrations/', import.meta.url);
   const sources = new Map<string, { sql: string; hash: string }>();

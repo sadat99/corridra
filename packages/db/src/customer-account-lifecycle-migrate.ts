@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerWorkspaceLifecycle } from './customer-workspace-lifecycle-migrate';
 
 // Explicit optional installation of account closure and erasure requests. It first installs the workspace lifecycle
@@ -8,7 +9,13 @@ import { migrateCustomerWorkspaceLifecycle } from './customer-workspace-lifecycl
 // starts closed, so installing changes nothing anyone can see. It never applies the real-use schema itself: when that
 // schema is not current it stops with a plain message and writes nothing.
 // No runtime request receives this owner connection.
-export async function migrateCustomerAccountLifecycle(pool: DatabasePool) {
+export function migrateCustomerAccountLifecycle(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerAccountLifecycle', () =>
+    migrateCustomerAccountLifecycleRun(pool),
+  );
+}
+
+async function migrateCustomerAccountLifecycleRun(pool: DatabasePool) {
   await migrateCustomerWorkspaceLifecycle(pool);
   const directory = new URL('../customer-account-lifecycle-migrations/', import.meta.url);
   const sources = new Map<string, { sql: string; hash: string }>();

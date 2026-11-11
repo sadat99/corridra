@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerAuthority } from './customer-migrate';
 import { migrateCustomerSavedMissions } from './customer-commercial-migrate';
 import { migrateCustomerCompanies } from './customer-company-migrate';
@@ -24,7 +25,11 @@ import { migrateCustomerServiceRequests } from './customer-service-request-migra
 import { migrateCustomerAdmission } from './customer-admission-migrate';
 import { migrateCustomerRequestAdmission } from './customer-request-admission-migrate';
 // Explicit optional ADR056 authority. Installation alone does not activate real admission.
-export async function migrateCustomerRealUse(pool: DatabasePool) {
+export function migrateCustomerRealUse(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerRealUse', () => migrateCustomerRealUseRun(pool));
+}
+
+async function migrateCustomerRealUseRun(pool: DatabasePool) {
   await migrateCustomerAuthority(pool);
   await migrateCustomerSavedMissions(pool);
   await migrateCustomerCompanies(pool);

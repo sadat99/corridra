@@ -1,12 +1,17 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerParticipants } from './customer-participant-migrate';
 
 // Commercial readiness program (31 Oct 2026): the in-app inbox, optional source and claim links and the
 // optional participant email. Additive only. It changes nothing anyone can see: the application reads
 // the inbox only behind CORRIDRA_NOTIFICATIONS_V2. No runtime request receives this owner connection.
-export async function migrateCommercialReadiness(pool: DatabasePool) {
+export function migrateCommercialReadiness(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCommercialReadiness', () => migrateCommercialReadinessRun(pool));
+}
+
+async function migrateCommercialReadinessRun(pool: DatabasePool) {
   // The participant invitation table and customer.actor_id() come from these earlier modules.
   await migrateCustomerParticipants(pool);
   const directory = new URL('../commercial-readiness-migrations/', import.meta.url);

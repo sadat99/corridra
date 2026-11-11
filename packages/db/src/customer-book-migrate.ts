@@ -1,11 +1,16 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerSavedMissions } from './customer-commercial-migrate';
 // Optional Trip Book and Supplier Book function (ADR-076). The module holds several files: each applied file is
 // immutable (its hash is recorded), a correction is a new file, and only files not yet recorded are applied.
 // This installer never enables application exposure: the switch CORRIDRA_UX_BOOKS stays the owner's choice.
-export async function migrateCustomerBooks(pool: DatabasePool) {
+export function migrateCustomerBooks(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerBooks', () => migrateCustomerBooksRun(pool));
+}
+
+async function migrateCustomerBooksRun(pool: DatabasePool) {
   await migrateCustomerSavedMissions(pool);
   const directory = new URL('../customer-book-migrations/', import.meta.url);
   const sources = new Map<string, { sql: string; hash: string }>();

@@ -1,11 +1,16 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerRealUse } from './customer-real-use-migrate';
 
 // Explicit optional installation of Move records (ADR-068). It changes nothing anyone can see: the
 // control it creates starts closed. No runtime request receives this owner connection.
-export async function migrateCustomerMoves(pool: DatabasePool) {
+export function migrateCustomerMoves(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerMoves', () => migrateCustomerMovesRun(pool));
+}
+
+async function migrateCustomerMovesRun(pool: DatabasePool) {
   await migrateCustomerRealUse(pool);
   const directory = new URL('../customer-move-migrations/', import.meta.url);
   const sources = new Map<string, { sql: string; hash: string }>();

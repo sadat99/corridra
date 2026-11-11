@@ -1,10 +1,15 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 
 // Explicit optional Phase 0 installation: the audit function for the view-as preview. Installing it
 // shows nothing to anyone; the preview itself stays off until its application switch is set.
-export async function migrateViewAs(pool: DatabasePool) {
+export function migrateViewAs(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateViewAs', () => migrateViewAsRun(pool));
+}
+
+async function migrateViewAsRun(pool: DatabasePool) {
   const directory = new URL('../view-as-migrations/', import.meta.url);
   const sources = new Map<string, { sql: string; hash: string }>();
   for (const name of (await readdir(directory)).filter((name) => name.endsWith('.sql')).sort()) {

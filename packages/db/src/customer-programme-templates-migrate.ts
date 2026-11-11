@@ -1,10 +1,17 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerProgrammeCoordination } from './customer-programme-coordination-migrate';
 import { migrateCustomerProgrammeEconomics } from './customer-programme-economics-migrate';
 // Explicit optional repeatable programme-template authority; accepted base lifecycles unchanged.
-export async function migrateCustomerProgrammeTemplates(pool: DatabasePool) {
+export function migrateCustomerProgrammeTemplates(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerProgrammeTemplates', () =>
+    migrateCustomerProgrammeTemplatesRun(pool),
+  );
+}
+
+async function migrateCustomerProgrammeTemplatesRun(pool: DatabasePool) {
   await migrateCustomerProgrammeCoordination(pool);
   await migrateCustomerProgrammeEconomics(pool);
   const name = '0001_repeatable_programme_templates.sql';

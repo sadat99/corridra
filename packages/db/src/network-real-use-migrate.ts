@@ -1,10 +1,15 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerRealUse } from './customer-real-use-migrate';
 
 // Explicit optional ADR057 installation. No runtime request receives this owner connection.
-export async function migrateNetworkRealUse(pool: DatabasePool) {
+export function migrateNetworkRealUse(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateNetworkRealUse', () => migrateNetworkRealUseRun(pool));
+}
+
+async function migrateNetworkRealUseRun(pool: DatabasePool) {
   await migrateCustomerRealUse(pool);
   const directory = new URL('../network-real-use-migrations/', import.meta.url);
   const sources = new Map<string, { sql: string; hash: string }>();

@@ -1,11 +1,18 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerProgrammeTemplates } from './customer-programme-templates-migrate';
 // Explicit optional pricing, series and export authority. Fees land in the economics ledger and editions are seeded by
 // the template module, so that module (and the coordination and economics modules it installs) comes first.
 // Accepted base lifecycles are unchanged.
-export async function migrateCustomerProgrammePricing(pool: DatabasePool) {
+export function migrateCustomerProgrammePricing(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerProgrammePricing', () =>
+    migrateCustomerProgrammePricingRun(pool),
+  );
+}
+
+async function migrateCustomerProgrammePricingRun(pool: DatabasePool) {
   await migrateCustomerProgrammeTemplates(pool);
   const name = '0001_pricing_series_and_exports.sql';
   const sql = await readFile(

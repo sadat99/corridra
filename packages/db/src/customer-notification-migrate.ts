@@ -1,11 +1,18 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerMoves } from './customer-move-migrate';
 
 // Explicit optional installation of Pulse notification records (ADR-067). It changes nothing anyone can see: the
 // control it creates starts closed. No runtime request receives this owner connection.
-export async function migrateCustomerNotifications(pool: DatabasePool) {
+export function migrateCustomerNotifications(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerNotifications', () =>
+    migrateCustomerNotificationsRun(pool),
+  );
+}
+
+async function migrateCustomerNotificationsRun(pool: DatabasePool) {
   // Message 4 reads Move records, which in turn need real use. Both install without changing anything visible.
   await migrateCustomerMoves(pool);
   const directory = new URL('../customer-notification-migrations/', import.meta.url);

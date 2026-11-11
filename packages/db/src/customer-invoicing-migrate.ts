@@ -1,10 +1,15 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerBilling } from './customer-billing-migrate';
 // Explicit optional synthetic invoicing authority (ADR-061). It reads subscription periods, so the billing module is
 // installed first. Accepted base lifecycles are unchanged and no other module reads these tables.
-export async function migrateCustomerInvoicing(pool: DatabasePool) {
+export function migrateCustomerInvoicing(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerInvoicing', () => migrateCustomerInvoicingRun(pool));
+}
+
+async function migrateCustomerInvoicingRun(pool: DatabasePool) {
   await migrateCustomerBilling(pool);
   const directory = new URL('../customer-invoicing-migrations/', import.meta.url);
   const sources = new Map<string, { sql: string; hash: string }>();

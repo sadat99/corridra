@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerDecisions } from './customer-decision-migrate';
 import { migrateCustomerDelivery } from './customer-delivery-migrate';
 import { migrateCustomerOrganisationProfiles } from './customer-organisation-profile-migrate';
@@ -8,7 +9,13 @@ import { migrateCustomerMemberRoles } from './customer-member-role-migrate';
 // Optional decision card function (ADR-076 item 4). The module holds several files: each applied file is immutable
 // (its hash is recorded), a correction is a new file, and only files not yet recorded are applied.
 // This installer never enables application exposure: the switch CORRIDRA_SHARE_CARD stays the owner's choice.
-export async function migrateCustomerDecisionCards(pool: DatabasePool) {
+export function migrateCustomerDecisionCards(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerDecisionCards', () =>
+    migrateCustomerDecisionCardsRun(pool),
+  );
+}
+
+async function migrateCustomerDecisionCardsRun(pool: DatabasePool) {
   await migrateCustomerDecisions(pool);
   await migrateCustomerDelivery(pool);
   await migrateCustomerOrganisationProfiles(pool);
