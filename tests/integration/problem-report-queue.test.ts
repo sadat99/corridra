@@ -498,7 +498,16 @@ describe('the panel keeps its place while a person works', () => {
     );
     expect(change).toContain('setPage(null)');
     expect(change).toContain('setItems([])');
-    expect(change).not.toMatch(/setFigures|kept\.current/);
+    // The counts go only when the read after a saved move was abandoned (they would still show the pre-move figures).
+    expect(change).toContain('if (reloading.current) setFigures(null);');
+    expect(change.match(/setFigures/g)).toHaveLength(1);
+    // The note typed for the open move is kept for its report before the form is dropped, and never lost.
+    expect(change).toContain('if (pending) kept.current = { id: pending.item.id, text: note };');
+    expect(change.indexOf('kept.current')).toBeLessThan(change.indexOf('setPending(null)'));
+    // Every read takes its filter when it starts, so a filter changed during a save is not undone by the reload after it.
+    expect(text).toContain('readQueue(tenant, filterRef.current, after)');
+    expect(text).not.toMatch(/readQueue\(tenant, filter,/);
+    expect(change).toContain('filterRef.current = value;');
     // Load More reads the cursor of the page that was read, which is gone until it is read again.
     expect(text).toContain('void load(page.nextAfter)');
     expect(text).toMatch(/\{page && !loadFailure \? \(/);

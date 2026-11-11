@@ -62,13 +62,16 @@ async function open(
       json: { id: id(1), reference: 'RP-000001', status: 'in_review', note: null, changed: true },
     }),
     erasure = [],
+    hold,
     offered = true,
     shells = true,
     hash = 'problem-report-queue',
   }: {
-    queue?: () => unknown;
+    queue?: (url: string) => unknown;
     answer?: (sent: Sent, count: number) => Answer;
     erasure?: unknown[];
+    /** Holds every POST answer until it settles, so a person can act while a save is under way. */
+    hold?: Promise<void>;
     /** Whether Report a Problem is offered to this workspace (the server's answer, given to the workspace). */
     offered?: boolean;
     /** The team shell switch: off, the workspace is mounted without the team frame. */
@@ -103,11 +106,12 @@ async function open(
   await page.route('**/api/workspace/customer-erasure-queue?*', (route) =>
     route.fulfill({ json: { items: erasure, nextAfter: null } }),
   );
-  await page.route('**/api/workspace/problem-reports?*', (route) => {
+  await page.route('**/api/workspace/problem-reports?*', async (route) => {
     const request = route.request();
-    if (request.method() === 'GET') return route.fulfill({ json: queue() });
+    if (request.method() === 'GET') return route.fulfill({ json: queue(request.url()) });
     const entry = { url: request.url(), body: request.postDataJSON() as Record<string, unknown> };
     sent.push(entry);
+    if (hold) await hold;
     const { status = 200, json } = answer(entry, sent.length);
     return route.fulfill({ status, json });
   });
@@ -427,6 +431,66 @@ test('a note kept for a report that left the list is offered again after the fil
       .getByRole('form', { name: 'Mark Closed RP-000002' })
       .getByLabel('Note to the reporter'),
   ).toHaveValue('Closed: a duplicate of an older report.');
+});
+
+test('a note typed for an open move is kept when the filter is changed, and comes back with that report', async ({
+  page,
+}) => {
+  await open(page);
+  await loadQueue(page);
+  await rowOf(page, 'RP-000002').getByRole('button', { name: 'Mark Closed RP-000002' }).click();
+  const note = 'Closed: a duplicate of an older report.';
+  await panel(page)
+    .getByRole('form', { name: 'Mark Closed RP-000002' })
+    .getByLabel('Note to the reporter')
+    .fill(note);
+  await panel(page)
+    .locator('.ux-segment')
+    .filter({ hasText: /^Received/ })
+    .click();
+  await expect(panel(page).getByRole('form', { name: 'Mark Closed RP-000002' })).toHaveCount(0);
+  await panel(page).locator('.ux-segment').filter({ hasText: /^All/ }).click();
+  await loadQueue(page);
+  await rowOf(page, 'RP-000002').getByRole('button', { name: 'Mark Closed RP-000002' }).click();
+  await expect(
+    panel(page)
+      .getByRole('form', { name: 'Mark Closed RP-000002' })
+      .getByLabel('Note to the reporter'),
+  ).toHaveValue(note);
+});
+
+test('a filter changed while a move is being saved is the filter the list is read for afterwards', async ({
+  page,
+}) => {
+  const asked: (string | null)[] = [];
+  let release: () => void = () => {};
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await open(page, {
+    hold: held,
+    queue: (url) => {
+      asked.push(new URL(url).searchParams.get('status'));
+      return queueOf([row(1, 'received'), row(2, 'in_review')]);
+    },
+    answer: () => ({
+      json: { id: id(2), reference: 'RP-000002', status: 'closed', note: 'x', changed: true },
+    }),
+  });
+  await loadQueue(page);
+  await rowOf(page, 'RP-000002').getByRole('button', { name: 'Mark Closed RP-000002' }).click();
+  const form = panel(page).getByRole('form', { name: 'Mark Closed RP-000002' });
+  await form.getByLabel('Note to the reporter').fill('Closed: a duplicate of an older report.');
+  await form.getByRole('button', { name: 'Save' }).click();
+  // The save is under way: the person chooses another filter, then the answer comes.
+  await panel(page)
+    .locator('.ux-segment')
+    .filter({ hasText: /^Received/ })
+    .click();
+  release();
+  await expect(
+    panel(page).getByRole('status').filter({ hasText: 'Problem report RP-000002 is now Closed.' }),
+  ).toBeVisible();
+  // The read after the save asked for the filter that is selected now, not the one the save began under.
+  expect(asked.at(-1)).toBe('received');
 });
 
 test('typing in the note after a failure keeps the focus in the note', async ({ page }) => {
