@@ -1,10 +1,15 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerSavedMissions } from './customer-commercial-migrate';
 // A separately opted-in company portfolio module. The accepted three-module request
 // authority installer and its existing callers keep their original lifecycle.
-export async function migrateCustomerCompanies(pool: DatabasePool) {
+export function migrateCustomerCompanies(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerCompanies', () => migrateCustomerCompaniesRun(pool));
+}
+
+async function migrateCustomerCompaniesRun(pool: DatabasePool) {
   await migrateCustomerSavedMissions(pool);
   const name = '0001_approved_company_portfolio.sql';
   const sql = await readFile(

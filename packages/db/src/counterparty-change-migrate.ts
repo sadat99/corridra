@@ -1,13 +1,18 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 
 // Explicit optional installation of withdraw, correct and hide for private contacts and notes (CRUD G11, ADR-017
 // amendment). Its control starts closed, so installing changes nothing anyone can see. It needs only the core research
 // and communication tables (core migrations 0008 and 0009), never the real-use schema: real-use workspaces work the same
 // way because each change inherits the provenance of the record it changes.
 // No runtime request receives this owner connection.
-export async function migrateCounterpartyChanges(pool: DatabasePool) {
+export function migrateCounterpartyChanges(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCounterpartyChanges', () => migrateCounterpartyChangesRun(pool));
+}
+
+async function migrateCounterpartyChangesRun(pool: DatabasePool) {
   const directory = new URL('../counterparty-change-migrations/', import.meta.url);
   const sources = new Map<string, { sql: string; hash: string }>();
   for (const name of (await readdir(directory)).filter((name) => name.endsWith('.sql')).sort()) {

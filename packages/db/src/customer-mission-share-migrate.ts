@@ -1,10 +1,17 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerParticipants } from './customer-participant-migrate';
 import { migrateCustomerRequestDetails } from './customer-detail-migrate';
 // Explicit optional objective-sharing authority; accepted base lifecycles unchanged.
-export async function migrateCustomerMissionShares(pool: DatabasePool) {
+export function migrateCustomerMissionShares(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerMissionShares', () =>
+    migrateCustomerMissionSharesRun(pool),
+  );
+}
+
+async function migrateCustomerMissionSharesRun(pool: DatabasePool) {
   await migrateCustomerParticipants(pool);
   await migrateCustomerRequestDetails(pool);
   const name = '0001_participant_mission_summaries.sql';

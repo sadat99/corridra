@@ -1,11 +1,16 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerRealUse } from './customer-real-use-migrate';
 
 // Explicit optional Phase 0 installation. It sends nothing: the control it creates starts closed.
 // No runtime request receives this owner connection.
-export async function migrateCustomerMissionMail(pool: DatabasePool) {
+export function migrateCustomerMissionMail(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerMissionMail', () => migrateCustomerMissionMailRun(pool));
+}
+
+async function migrateCustomerMissionMailRun(pool: DatabasePool) {
   await migrateCustomerRealUse(pool);
   const directory = new URL('../customer-mission-mail-migrations/', import.meta.url);
   const sources = new Map<string, { sql: string; hash: string }>();

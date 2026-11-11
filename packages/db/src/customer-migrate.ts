@@ -2,11 +2,16 @@ import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrate } from './migrate';
 
 // Customer authority has an independent admission/rollout lifecycle. Core-only
 // installations continue using migrate(); this explicit opt-in installs both.
-export async function migrateCustomerAuthority(pool: DatabasePool) {
+export function migrateCustomerAuthority(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerAuthority', () => migrateCustomerAuthorityRun(pool));
+}
+
+async function migrateCustomerAuthorityRun(pool: DatabasePool) {
   await migrate(pool);
   const directory = fileURLToPath(new URL('../customer-migrations/', import.meta.url));
   const files = (await readdir(directory)).filter((name) => name.endsWith('.sql')).sort();

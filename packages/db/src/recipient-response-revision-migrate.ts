@@ -1,12 +1,19 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerRealUse } from './customer-real-use-migrate';
 
 // Explicit optional installation of recipient response revision (CRUD gap G7, module 3). It adds one append-only table and two
 // functions and replaces the recipient's own view behind a hash guard of the definition it replaces. It never installs anything
 // else, and no runtime request receives this owner connection.
-export async function migrateRecipientResponseRevision(pool: DatabasePool) {
+export function migrateRecipientResponseRevision(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateRecipientResponseRevision', () =>
+    migrateRecipientResponseRevisionRun(pool),
+  );
+}
+
+async function migrateRecipientResponseRevisionRun(pool: DatabasePool) {
   // Its read policies come in the usual pair (sample and real use), so the real-use functions must exist.
   // Installing them changes nothing anyone can see.
   await migrateCustomerRealUse(pool);

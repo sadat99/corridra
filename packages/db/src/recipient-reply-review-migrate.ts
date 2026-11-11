@@ -1,11 +1,16 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerRealUse } from './customer-real-use-migrate';
 
 // Explicit optional installation of reply review (ADR-069). It changes nothing anyone can see: the
 // control it creates starts closed. No runtime request receives this owner connection.
-export async function migrateReplyReview(pool: DatabasePool) {
+export function migrateReplyReview(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateReplyReview', () => migrateReplyReviewRun(pool));
+}
+
+async function migrateReplyReviewRun(pool: DatabasePool) {
   // The review policies come in the usual pairs (sample and real use), so the real-use functions must exist.
   // Installing them changes nothing anyone can see.
   await migrateCustomerRealUse(pool);

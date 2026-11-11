@@ -1,11 +1,18 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerMemberRoles } from './customer-member-role-migrate';
 // Explicit optional canonical organisation-link authority. It reads the profile revisions and the role readers
 // (so the profile and member-role modules are installed first) and the staff intake authority of the core.
 // Accepted base lifecycles are unchanged and app.organisation is never written.
-export async function migrateCustomerOrganisationLinks(pool: DatabasePool) {
+export function migrateCustomerOrganisationLinks(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerOrganisationLinks', () =>
+    migrateCustomerOrganisationLinksRun(pool),
+  );
+}
+
+async function migrateCustomerOrganisationLinksRun(pool: DatabasePool) {
   await migrateCustomerMemberRoles(pool);
   const name = '0001_canonical_organisation_links.sql';
   const sql = await readFile(

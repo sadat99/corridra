@@ -1,9 +1,16 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 // Explicit optional programme lifecycle authority (rename, archive and restore). It replaces the real-use readers of the
 // programme name, so the real-use state must already be installed (this installer never installs it). Accepted base lifecycles are unchanged: no business row is rewritten.
-export async function migrateCustomerProgrammeLifecycle(pool: DatabasePool) {
+export function migrateCustomerProgrammeLifecycle(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerProgrammeLifecycle', () =>
+    migrateCustomerProgrammeLifecycleRun(pool),
+  );
+}
+
+async function migrateCustomerProgrammeLifecycleRun(pool: DatabasePool) {
   const realUse = await pool.query<{ present: boolean }>(
     "SELECT to_regclass('customer_real_use_migrations.applied') IS NOT NULL AS present",
   );

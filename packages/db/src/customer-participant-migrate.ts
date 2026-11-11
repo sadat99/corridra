@@ -1,9 +1,16 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerProgrammes } from './customer-programme-migrate';
 // Explicit optional participant authority;accepted programme/base lifecycles unchanged.
-export async function migrateCustomerParticipants(pool: DatabasePool) {
+export function migrateCustomerParticipants(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerParticipants', () =>
+    migrateCustomerParticipantsRun(pool),
+  );
+}
+
+async function migrateCustomerParticipantsRun(pool: DatabasePool) {
   await migrateCustomerProgrammes(pool);
   const name = '0001_private_programme_participants.sql';
   const sql = await readFile(

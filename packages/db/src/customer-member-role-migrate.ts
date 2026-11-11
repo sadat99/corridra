@@ -1,10 +1,15 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerOrganisationProfiles } from './customer-organisation-profile-migrate';
 // Explicit optional member-role and leaving authority; it reads the roles that the profile module also reads,
 // so that module is installed first. Accepted base lifecycles are unchanged.
-export async function migrateCustomerMemberRoles(pool: DatabasePool) {
+export function migrateCustomerMemberRoles(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerMemberRoles', () => migrateCustomerMemberRolesRun(pool));
+}
+
+async function migrateCustomerMemberRolesRun(pool: DatabasePool) {
   await migrateCustomerOrganisationProfiles(pool);
   const name = '0001_workspace_member_roles.sql';
   const sql = await readFile(

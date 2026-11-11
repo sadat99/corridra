@@ -1,13 +1,20 @@
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerOrganisationProfiles } from './customer-organisation-profile-migrate';
 import { migrateCustomerProgrammeTerms } from './customer-programme-terms-migrate';
 import { migrateCustomerProgrammeContext } from './customer-programme-context-migrate';
 import { migrateCustomerMissionShares } from './customer-mission-share-migrate';
 // Explicit optional programme projection/consent lifecycle. The module holds several files: each applied file is
 // immutable (its hash is recorded), a correction is a new file, and only files not yet recorded are applied.
-export async function migrateCustomerProgrammeProjections(pool: DatabasePool) {
+export function migrateCustomerProgrammeProjections(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerProgrammeProjections', () =>
+    migrateCustomerProgrammeProjectionsRun(pool),
+  );
+}
+
+async function migrateCustomerProgrammeProjectionsRun(pool: DatabasePool) {
   await migrateCustomerOrganisationProfiles(pool);
   await migrateCustomerProgrammeTerms(pool);
   await migrateCustomerProgrammeContext(pool);

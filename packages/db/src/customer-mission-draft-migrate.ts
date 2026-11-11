@@ -1,9 +1,16 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerOrganisationProfiles } from './customer-organisation-profile-migrate';
 // Explicit optional private mission-draft authority; accepted base lifecycles unchanged.
-export async function migrateCustomerMissionDrafts(pool: DatabasePool) {
+export function migrateCustomerMissionDrafts(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerMissionDrafts', () =>
+    migrateCustomerMissionDraftsRun(pool),
+  );
+}
+
+async function migrateCustomerMissionDraftsRun(pool: DatabasePool) {
   await migrateCustomerOrganisationProfiles(pool);
   const name = '0001_private_mission_drafts.sql';
   const sql = await readFile(

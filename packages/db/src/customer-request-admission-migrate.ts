@@ -1,9 +1,16 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import type { DatabasePool } from './index';
+import { migrateOnce } from './migration-run';
 import { migrateCustomerAdmission } from './customer-admission-migrate';
 // Explicit optional module: open synthetic admission also writes request authority; accepted lifecycles unchanged.
-export async function migrateCustomerRequestAdmission(pool: DatabasePool) {
+export function migrateCustomerRequestAdmission(pool: DatabasePool) {
+  return migrateOnce(pool, 'migrateCustomerRequestAdmission', () =>
+    migrateCustomerRequestAdmissionRun(pool),
+  );
+}
+
+async function migrateCustomerRequestAdmissionRun(pool: DatabasePool) {
   await migrateCustomerAdmission(pool);
   const name = '0001_admit_requests_with_open_admission.sql';
   const sql = await readFile(
