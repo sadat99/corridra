@@ -413,6 +413,14 @@
       "bytes": 8822,
       "sha256": "5cfe95c4f1d806911201c0e44d5114716a78571027eb0d94c62f0577c0997738",
       "meaning": "Exact active ledger at c4007697 (the PR 416 merge, 11 Nov), unchanged since the S40 records 2 merge c626fc7e, before PRs 415, 413, 410 and 416 and install run 43003370618, which closed the removed-member access gap, were recorded, including the S40 records 2 Takeover, open access gap, PR 410, PR 413, installs, merged, lanes, owner items and Next bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "b7115de0480251a7a0468a23e5764ac3d1cc1524",
+      "archive": "docs/v3/history/ledger-before-s40-records-4-2026-11-11.md",
+      "bytes": 8529,
+      "sha256": "a18bbdb146ac22b00646b303b47ffc43e4ec87caebdf536e0e688ddb8e873227",
+      "meaning": "Exact active ledger at b7115de0 (the PR 428 merge, 11 Nov), unchanged from the PR 420 merge f8ef199f to the PR 430 merge f123bfdf, before PRs 418 to 426 and 428 to 430, install runs 43075593229 and 43090643867 and the programme pages switch were recorded, including the S40 records 3 Takeover, closed access gap, installed counts, merged, owner decisions, switches, process, PR 420 open, lanes and Next bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
