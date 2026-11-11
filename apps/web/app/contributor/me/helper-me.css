@@ -123,3 +123,21 @@
   padding-top: var(--space-3);
   border-top: 1px solid var(--line);
 }
+/* The language row at the top of the reading card (W6-A, the Language card folded in): the word, then the chip, on one
+   line when they fit and on two when the text is large. The chip names itself ("Language: English"), so the word is for
+   the eye only. */
+.detail-card .me-language {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 2.75rem;
+  max-width: 40rem;
+}
+.detail-card .me-language > span {
+  font-weight: 600;
+}
+.detail-card .me-language .lang-switcher > summary {
+  align-self: center;
+}

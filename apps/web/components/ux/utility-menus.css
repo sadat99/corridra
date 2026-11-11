@@ -100,6 +100,7 @@
   white-space: nowrap;
 }
 /* The language, help and avatar triggers: 44 px targets. */
+.ux-bar-inbox > .ux-menu-button,
 .ux-util-language > .ux-menu-button,
 .ux-util-help > .ux-menu-button,
 .ux-util-avatar > .ux-menu-button {
@@ -113,13 +114,20 @@
 /* The language trigger is a globe and a code side by side. A CorridraIcon with no size adds nothing to a button's
    natural width, so the trigger sat at its 44 px minimum and the globe and the code ran out of its hover, open and
    focus shapes. The globe now has a size of its own, on the icon grid (20 px, in rem so it follows the text size), and
-   the trigger grows with both. Single-icon triggers (inbox, help) are left as they were: they fit their 44 px box. */
+   the trigger grows with both. The inbox and help icons have a size of their own too (W6-A): with no size they were
+   only what was left of the 44 px box, which is 12 px or less once the text is large, so they now follow the text
+   size at 28 px and the 44 px floor stays. */
 .ux-util-language > .ux-menu-button {
   white-space: nowrap;
 }
 .ux-util-language > .ux-menu-button > .corridra-icon {
   width: 1.25rem;
   height: 1.25rem;
+}
+.ux-bar-inbox > .ux-menu-button > .corridra-icon,
+.ux-util-help > .ux-menu-button > .corridra-icon {
+  width: 1.75rem;
+  height: 1.75rem;
 }
 .ux-avatar-face {
   width: 2rem;

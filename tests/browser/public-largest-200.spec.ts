@@ -12,6 +12,10 @@ import { generatedRoutes } from '../ux/static-routes';
 // the corridor pages the build generates. For each page and width: no sideways scroll, nothing past a window
 // edge, no text running out of its own box, and no text cut off by a box that hides its overflow, first as the
 // page loads and then with every fold on it opened.
+//
+// What this is not: the root size is injected as a style, so it is not the browser's own 200 percent setting, and
+// it does not rescale a media query (which the real setting does); it was run on Chromium only. A second pass forces a
+// wider face on every box (KI-28: runners differ in fonts), so the result does not depend on the runner's font.
 const publicAudiences = new Set(['public', 'public intake and customer identity']);
 const routes = [
   ...pageRoutes()
@@ -31,36 +35,49 @@ test('the route list is the public pages, not a short list', () => {
     expect(routes).toContain(path);
 });
 
-test('with Largest text and 200% browser text every public page fits at 390 and 1440', async ({
-  page,
-}) => {
-  test.setTimeout(900_000);
-  await page.addInitScript(() => localStorage.setItem('corridra.text-size', 'largest'));
-  // Every page and width is measured and every miss is listed, so one run shows the whole picture.
-  const failures: string[] = [];
-  for (const path of routes) {
-    for (const width of widths) {
-      await page.setViewportSize({ width, height: 900 });
-      await page.goto(path);
-      await page.addStyleTag({ content: 'html { font-size: 250% !important; }' });
-      // The page's own fonts are wider or narrower than the fallback, so measure only once they are in.
-      await page.evaluate(() => document.fonts.ready);
-      const root = await page.evaluate(() => ({
-        step: document.documentElement.getAttribute('data-text-size'),
-        fontSize: getComputedStyle(document.documentElement).fontSize,
-      }));
-      expect(root, `${path} at ${width}: Largest saved, root size 250 percent of 16 px`).toEqual({
-        step: 'largest',
-        fontSize: '40px',
-      });
-      const misses = [
-        ...(await problems(page)).map((item) => `does not fit: ${item}`),
-        ...(await clippedText(page)).map((item) => `cut off: ${item}`),
-        ...(await problemsWithFoldsOpen(page)).map((item) => `folds open, does not fit: ${item}`),
-        ...(await clippedText(page)).map((item) => `folds open, cut off: ${item}`),
-      ];
-      for (const miss of new Set(misses)) failures.push(`${path} at ${width}: ${miss}`);
+const faces = [
+  ['the product fonts', ''],
+  [
+    'a wider face forced on every box',
+    '* { font-family: "DejaVu Sans", Verdana, sans-serif !important; }',
+  ],
+] as const;
+
+for (const [face, style] of faces)
+  test(`with Largest text and 200% browser text every public page fits at 390 and 1440, ${face}`, async ({
+    page,
+  }) => {
+    test.setTimeout(900_000);
+    await page.addInitScript(() => localStorage.setItem('corridra.text-size', 'largest'));
+    // Every page and width is measured and every miss is listed, so one run shows the whole picture.
+    const failures: string[] = [];
+    for (const path of routes) {
+      for (const width of widths) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(path);
+        await page.addStyleTag({ content: `html { font-size: 250% !important; } ${style}` });
+        // The page's own fonts are wider or narrower than the fallback, so measure only once they are in.
+        await page.evaluate(() => document.fonts.ready);
+        const root = await page.evaluate(() => ({
+          step: document.documentElement.getAttribute('data-text-size'),
+          fontSize: getComputedStyle(document.documentElement).fontSize,
+        }));
+        expect(root, `${path} at ${width}: Largest saved, root size 250 percent of 16 px`).toEqual({
+          step: 'largest',
+          fontSize: '40px',
+        });
+        const misses = [
+          ...(await problems(page, { allowScrollers: true })).map(
+            (item) => `does not fit: ${item}`,
+          ),
+          ...(await clippedText(page)).map((item) => `cut off: ${item}`),
+          ...(await problemsWithFoldsOpen(page, { allowScrollers: true })).map(
+            (item) => `folds open, does not fit: ${item}`,
+          ),
+          ...(await clippedText(page)).map((item) => `folds open, cut off: ${item}`),
+        ];
+        for (const miss of new Set(misses)) failures.push(`${path} at ${width}: ${miss}`);
+      }
     }
-  }
-  expect(failures).toEqual([]);
-});
+    expect(failures).toEqual([]);
+  });
