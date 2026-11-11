@@ -22,17 +22,20 @@ export function TeamFrame({
   children,
   urls,
   ownerPage,
+  problemReports,
 }: {
   children: ReactNode;
   urls: boolean;
   ownerPage: boolean;
+  /** Report a Problem is installed with the customer's own word removal: the header menus link it. */
+  problemReports: boolean;
 }) {
   const pathname = usePathname();
   const { locale, t } = useLanguage();
   const word = useMarkedWord();
   const shown = teamSidebarShown(pathname);
   // The header's account menu builds its addresses the way the sidebar does.
-  useEffect(() => publishTeamFlags({ urls }), [urls]);
+  useEffect(() => publishTeamFlags({ urls, problemReports }), [urls, problemReports]);
   // A new page closes the drawer. An old "Back to workspace sections" link (#workspace-navigation)
   // opens it (on a wide screen the bar is already beside the page).
   useEffect(() => {

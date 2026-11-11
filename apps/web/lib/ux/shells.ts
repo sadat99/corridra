@@ -37,14 +37,17 @@ export function sectionAllowedFor(id: string, role: string | null): boolean {
   return !!section && (section.roles as readonly string[]).includes(role);
 }
 
+/** The chosen workspace as a query, or nothing when it is not a workspace id. */
+export function workspaceQuery(workspace: string): string {
+  return /^[0-9a-f-]{36}$/i.test(workspace) ? '?workspace=' + encodeURIComponent(workspace) : '';
+}
+
 /**
  * The address of a section. With section addresses on it is `/operator/<word>`, otherwise the
  * `#` link the workspace always had. The chosen workspace is kept in both.
  */
 export function teamSectionHref(id: string | undefined, urls: boolean, workspace = ''): string {
-  const query = /^[0-9a-f-]{36}$/i.test(workspace)
-    ? '?workspace=' + encodeURIComponent(workspace)
-    : '';
+  const query = workspaceQuery(workspace);
   if (!id) return '/operator' + query;
   const path = urls ? operatorSectionPath(id) : null;
   return path ? path + query : '/operator' + query + '#' + id;

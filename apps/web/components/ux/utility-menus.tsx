@@ -17,7 +17,9 @@ import { useSignOut } from '../use-sign-out';
 import {
   customerAvatarItems,
   customerHelpGroups,
+  customerProblemReportsPath,
   manageWorkspacesHref,
+  reportProblemHref,
   type HelpGroup,
   type MenuEntry,
 } from '../../lib/ux/customer-navigation';
@@ -27,10 +29,12 @@ import {
   readCustomerNotificationSettings,
   readCustomerOrganisationProfiles,
   readCustomerNote,
+  readCustomerProblemReports,
   readServerCustomerBilling,
   readServerCustomerNotificationSettings,
   readServerCustomerOrganisationProfiles,
   readServerCustomerNote,
+  readServerCustomerProblemReports,
   subscribeCustomerNote,
 } from './customer-bar-store';
 import { BarInbox, LanguageMenuGroup, useWorkspaces } from './customer-bar';
@@ -195,6 +199,23 @@ export function Entry({
   return <SignOutRow label={entry.label} />;
 }
 
+/**
+ * The customer's help groups. Report a Problem is a link, carrying the page the person is on, only while the page says
+ * Report a Problem is installed with the customer's own word removal; otherwise it is Coming soon.
+ */
+export function useCustomerHelpGroups(whatsappHref?: string | null): HelpGroup[] {
+  const pathname = usePathname() ?? '';
+  const problemReports = useSyncExternalStore(
+    subscribeCustomerNote,
+    readCustomerProblemReports,
+    readServerCustomerProblemReports,
+  );
+  return customerHelpGroups(
+    whatsappHref,
+    problemReports ? reportProblemHref(customerProblemReportsPath, pathname) : null,
+  );
+}
+
 /** Help and accessibility: groups of at most four, Get Help, Make It Easier to Read, About Corridra. */
 export function HelpMenu({ groups = customerHelpGroups() }: { groups?: HelpGroup[] }) {
   const listen = useListen();
@@ -293,6 +314,7 @@ export function AvatarMenu({
     readCustomerNote,
     readServerCustomerNote,
   );
+  const helpGroups = useCustomerHelpGroups(whatsappHref);
   const [who, setWho] = useState<{ name: string; email: string } | null>(null);
   useEffect(() => {
     // Like the workspaces, the person's own session is read only on the customer account pages. Elsewhere the
@@ -380,7 +402,7 @@ export function AvatarMenu({
           </p>
           <LanguageMenuGroup />
         </div>
-        {customerHelpGroups(whatsappHref).map((group) => (
+        {helpGroups.map((group) => (
           <div key={group.label} role="group" aria-label={group.label} className="ux-menu-group">
             <p className="ux-menu-heading" aria-hidden="true">
               {group.label}

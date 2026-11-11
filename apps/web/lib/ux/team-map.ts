@@ -4,8 +4,9 @@
 // mission page keep their address; this file only says where each one is found. Navigation never
 // grants access: a place is listed only for a role that may open it, and the server still decides.
 // Owner: S4.
-import { sectionAllowedFor, teamSectionHref } from './shells';
+import { sectionAllowedFor, teamSectionHref, workspaceQuery } from './shells';
 import { workspaceSections } from '../workspace-navigation';
+import { teamProblemReportsPath } from './team-help';
 
 type SectionId = (typeof workspaceSections)[number]['id'];
 /** A place is a workspace section, the workspace home (''), or the owner page. */
@@ -175,11 +176,24 @@ export function teamAccountLinks(
   urls: boolean,
   workspace = '',
   current: TeamPlaceId | '' = '',
-): { id: TeamPlaceId; label: string; href: string; current: boolean }[] {
-  return teamAccountPlaces(role).map((place) => ({
+  problemReports?: { current: boolean },
+): { id: TeamPlaceId | 'problem-reports'; label: string; href: string; current: boolean }[] {
+  const places = teamAccountPlaces(role).map((place) => ({
     id: place.id,
     label: place.label,
     href: placeHref(place.id, urls, workspace),
     current: place.id === current,
   }));
+  // Their own problem reports, for every role, only where Report a Problem is offered. The fourth row at most.
+  return problemReports
+    ? [
+        ...places,
+        {
+          id: 'problem-reports',
+          label: 'Your Problem Reports',
+          href: teamProblemReportsPath + workspaceQuery(workspace),
+          current: problemReports.current,
+        },
+      ]
+    : places;
 }

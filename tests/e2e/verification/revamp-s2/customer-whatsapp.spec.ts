@@ -62,6 +62,8 @@ test.describe('with a support number set (port 3302)', () => {
     await expect(menu.getByRole('group', { name: 'Get Help' }).getByRole('menuitem')).toHaveCount(
       4,
     );
+    // No problem report module in this database, so the probe is off and Report a Problem is exactly Coming soon.
+    await expect(menu.locator('a[href*="problem-reports"]')).toHaveCount(0);
     for (const name of ['Report a Problem', 'Stronger Colours']) {
       const soon = menu.getByRole('menuitem', { name: new RegExp(name) });
       await expect(soon, name).toHaveAttribute('aria-disabled', 'true');

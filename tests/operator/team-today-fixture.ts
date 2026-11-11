@@ -65,7 +65,7 @@ export async function startTodayFixture(root = resolve('.')) {
             {shells ? (
               <>
                 <AppHeader kind="team" live={false} notifications brandMark={<BrandLockup/>}/>
-                <TeamFrame urls={urls} ownerPage={ownerPage}>
+                <TeamFrame urls={urls} ownerPage={ownerPage} problemReports={false}>
                   <WorkspaceShell eyebrow="TEAM WORKSPACE" title="Today" className="ux-operator-home ux-titled-today">
                     <TeamSecondLevel urls={urls} ownerPage={ownerPage}/>
                     {workspace}

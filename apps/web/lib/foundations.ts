@@ -68,6 +68,7 @@ import {
 import { CustomerErasureQueue } from '@corridra/auth/customer-erasure-queue';
 import {
   CustomerProblemReports,
+  problemReportsOffered,
   StaffProblemReports,
   TeamProblemReports,
 } from '@corridra/auth/problem-reports';
@@ -609,6 +610,7 @@ function createServices() {
       readCustomerSession,
     ),
     teamProblemReports: new TeamProblemReports(runtimePool),
+    problemReportsOffered: () => problemReportsOffered(runtimePool),
     staffProblemReports: new StaffProblemReports(runtimePool),
     customerAccountLifecycle: new CustomerAccountLifecycleService(
       runtimePool,
