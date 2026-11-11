@@ -63,6 +63,12 @@
   "/account/notifications": {
     "unavailable": true
   },
+  "/account/problem-reports": {
+    "redirectsTo": "/signin"
+  },
+  "/account/problem-reports/new": {
+    "redirectsTo": "/signin"
+  },
   "/account/profile": {
     "grade": 6.4,
     "hard": 0,

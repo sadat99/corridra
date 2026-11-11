@@ -222,6 +222,18 @@ export const excludedPages: readonly ExcludedPage[] = [
     why: 'Needs one programme. It opens from the delegation list.',
   },
   {
+    route: '/account/problem-reports',
+    why: 'It opens from Report a Problem in the Help menu, from the sent screen of a problem report, and from the closed account screen. It exists only where problem reports are installed.',
+  },
+  {
+    route: '/account/problem-reports/new',
+    why: 'It opens from Report a Problem in the Help menu, which sends the page the person is on. It exists only where problem reports are installed.',
+  },
+  {
+    route: '/account/problem-reports/[reference]',
+    why: 'Needs one problem report. It opens from Your problem reports.',
+  },
+  {
     route: '/client',
     why: 'A person who receives a private link opens it. It is not a signed-in page and has no list entry.',
   },

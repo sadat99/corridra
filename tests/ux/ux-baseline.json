@@ -16,6 +16,12 @@
   "/account/notifications": {
     "unavailable": 6
   },
+  "/account/problem-reports": {
+    "redirectsTo:/signin": 1
+  },
+  "/account/problem-reports/new": {
+    "redirectsTo:/signin": 1
+  },
   "/account/companies": {},
   "/account/billing": {},
   "/account/delegations": {},

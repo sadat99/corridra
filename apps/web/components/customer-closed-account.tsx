@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { accountWords } from '../app/account/account-lifecycle-words';
 import {
@@ -21,10 +22,13 @@ import { ErasureDialog } from '../app/account/erasure-dialog';
 export function CustomerClosedAccount({
   state,
   headers,
+  problemReports = false,
   onReopened,
 }: {
   state: AccountState;
   headers: SessionHeaders;
+  /** Report a Problem is offered: a closed account may still read its problem reports and remove their words. */
+  problemReports?: boolean;
   onReopened: () => void;
 }) {
   const { send, busy } = useLifecycleCommand<AccountCommand>(headers, accountEndpoint);
@@ -112,6 +116,13 @@ export function CustomerClosedAccount({
           onClose={() => setAsking(false)}
           returnFocusTo={() => heading.current}
         />
+        {problemReports && (
+          <p>
+            <Link prefetch={false} className="text-link" href="/account/problem-reports">
+              Your Problem Reports
+            </Link>
+          </p>
+        )}
         <p>
           <AccountSignout />
         </p>
@@ -127,11 +138,14 @@ export function CustomerClosedAccount({
 export function ClosedAccountGate({
   subject,
   issuer,
+  problemReports = false,
   children,
 }: {
   /** Both or neither: without them (the identity could not be read just now) the server checks the session itself. */
   subject?: string;
   issuer?: string;
+  /** Report a Problem is offered: the closed-account screen links to the person's own problem reports. */
+  problemReports?: boolean;
   children: ReactNode;
 }) {
   const headers = useMemo(
@@ -157,6 +171,7 @@ export function ClosedAccountGate({
       <CustomerClosedAccount
         state={state}
         headers={headers}
+        problemReports={problemReports}
         onReopened={() => {
           setState(null);
           window.location.reload();
