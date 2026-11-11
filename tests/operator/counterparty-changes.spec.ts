@@ -795,3 +795,43 @@ test('G11-20 a corrected contact and a corrected note keep their place in the li
     /Later Buyer/,
   ]);
 });
+
+test('G11-19 a browser close that skips the discard prompt shows the dialog again with the edits, the prompt and focus kept', async ({
+  page,
+}) => {
+  const sent = await open(page);
+  const item = group(page, 'Contact: Synthetic Buyer');
+  await item.getByRole('button', { name: 'Correct Contact' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Correct This Contact' });
+  await dialog.getByLabel('Job title').fill('Changed title');
+  await page.keyboard.press('Escape');
+  const prompt = dialog.getByRole('group', { name: 'Discard changes' });
+  await expect(prompt).toContainText('Discard your changes to this contact?');
+  const keep = dialog.getByRole('button', { name: 'Keep Editing' });
+  await expect(keep).toBeFocused();
+  const stillOpen = async () => {
+    await expect(dialog).toBeVisible();
+    expect(await dialog.evaluate((d) => (d as HTMLDialogElement).open && d.matches(':modal'))).toBe(
+      true,
+    );
+    await expect(dialog.getByLabel('Job title')).toHaveValue('Changed title');
+    await expect(prompt).toBeVisible();
+    await expect(keep).toBeFocused();
+    expect(sent).toHaveLength(0);
+  };
+  // A second Escape with no click in between, then other code closing the element directly.
+  await page.keyboard.press('Escape');
+  await stillOpen();
+  await page.evaluate(() => document.querySelector<HTMLDialogElement>('dialog[open]')!.close());
+  await stillOpen();
+  // No trap: Discard Changes still closes it and focus returns to the opener.
+  await dialog.getByRole('button', { name: 'Discard Changes' }).click();
+  await expect(page.getByRole('dialog')).toBeHidden();
+  await expect(item.getByRole('button', { name: 'Correct Contact' })).toBeFocused();
+  // With no edits, Escape closes it at once and focus returns.
+  await item.getByRole('button', { name: 'Correct Contact' }).click();
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toBeHidden();
+  await expect(item.getByRole('button', { name: 'Correct Contact' })).toBeFocused();
+});

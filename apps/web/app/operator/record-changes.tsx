@@ -766,6 +766,7 @@ function ChangeDialog({
                 type="button"
                 className="button button-secondary"
                 ref={keepEditing}
+                data-autofocus
                 onClick={() => setDiscard(false)}
               >
                 Keep Editing
