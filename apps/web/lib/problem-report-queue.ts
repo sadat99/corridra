@@ -282,8 +282,22 @@ export async function removeWordsUnderRequest(
   return done;
 }
 
-export const wordsRemovedMessage = (count: number) =>
-  `Words removed from ${count} problem report${count === 1 ? '' : 's'}.`;
+// The programme and payment counts come from the same answer and are said only when the server sent them (the modules can be
+// off). They are display only: nothing is counted before the person confirms.
+const items = (count: number) => `${count} item${count === 1 ? '' : 's'}`;
+export const wordsRemovedMessage = (
+  count: number,
+  extra: { programmeWords?: number; paymentWords?: number } = {},
+) =>
+  [
+    `Words removed from ${count} problem report${count === 1 ? '' : 's'}.`,
+    ...(extra.programmeWords === undefined
+      ? []
+      : [`Programme application and label words replaced in ${items(extra.programmeWords)}.`]),
+    ...(extra.paymentWords === undefined
+      ? []
+      : [`Payment reference and note words replaced in ${items(extra.paymentWords)}.`]),
+  ].join(' ');
 export const removalWordsUnderRequest = {
   button: 'Remove Words Under This Request',
   title: 'Remove words under this request?',
