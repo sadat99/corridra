@@ -1,0 +1,24 @@
+/* All Tools in the locked AC/1 look (owner-approved mockups, revision 2): each group is one card of links, and from
+   64rem the groups sit side by side so the page reads at a glance. Tokens only; the links and words are unchanged. */
+.ux-tools-grid {
+  display: grid;
+  gap: var(--space-4);
+  align-items: start;
+}
+@media (min-width: 64rem) {
+  .ux-tools-grid {
+    grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  }
+}
+.ux-customer .ux-tools-grid > section {
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+}
+.ux-customer .ux-tools-grid > section > h2 {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-ui);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
