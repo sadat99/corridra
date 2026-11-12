@@ -41,6 +41,56 @@ nav.ux-team-sidebar .ux-team-group {
   border-top: 1px solid var(--ac-surface-navy-hover);
   padding-top: var(--space-2);
 }
+/* The Admin row is two lines: its name, and under it the caption "Owner and admin", beside one icon and one
+   chevron. A flex row squeezed the caption to about 80 px; the grid gives it the full width. The summary keeps
+   its one child per cell and never gets shorter than the 60 px row (min-height, not a fixed height). */
+nav.ux-team-sidebar .ux-team-group > summary {
+  display: grid;
+  grid-template-columns: 1.25rem minmax(0, 1fr) 1.25rem;
+  grid-template-areas:
+    'icon label chevron'
+    'icon caption chevron';
+  align-content: center;
+  align-items: center;
+  column-gap: var(--space-2);
+  row-gap: 0;
+  line-height: 1.4;
+  min-height: 60px;
+  padding-block: var(--space-2);
+}
+nav.ux-team-sidebar .ux-team-group > summary > .operator-icon:first-child {
+  grid-area: icon;
+}
+nav.ux-team-sidebar .ux-team-group > summary > span {
+  grid-area: label;
+  min-width: 0;
+}
+nav.ux-team-sidebar .ux-team-group > summary > .ux-team-chevron {
+  grid-area: chevron;
+  justify-self: end;
+  align-self: center;
+  margin-inline-start: 0;
+}
+/* A hover fills the row; the underline the page-wide details rule adds would cut through both lines. */
+nav.ux-team-sidebar summary:hover {
+  text-decoration: none;
+}
+/* Closed, the chevron points the reading direction; shells.css turns it down when open. */
+[dir='rtl'] .ux-team-group:not([open]) .ux-team-chevron {
+  transform: scaleX(-1);
+}
+/* The five Admin pages are links, not expanders: a small dot marks them as items inside the group. The dot
+   is a 4 px circle in a 20 px cell (the old icon's cell), so the labels share one left edge. */
+nav.ux-team-sidebar .ux-team-group ul a::before {
+  content: '';
+  flex: none;
+  box-sizing: content-box;
+  width: var(--space-1);
+  height: var(--space-1);
+  margin-inline: var(--space-2);
+  border-radius: 50%;
+  background: currentColor;
+}
 
 .ux-team-second {
   margin: 0 0 var(--space-4);
@@ -500,6 +550,19 @@ nav.ux-team-sidebar .operator-icon {
   }
 }
 @media (forced-colors: active) {
+  nav.ux-team-sidebar .ux-team-group ul a::before {
+    background: LinkText;
+  }
+  nav.ux-team-sidebar a[aria-current='page'],
+  nav.ux-team-sidebar summary[aria-current='true'] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+  nav.ux-team-sidebar a:focus-visible,
+  nav.ux-team-sidebar summary:focus-visible {
+    outline: 3px solid Highlight;
+    outline-offset: 2px;
+  }
   .ux-palette-row[aria-selected='true'] {
     outline: 2px solid Highlight;
     outline-offset: -2px;
@@ -518,13 +581,21 @@ nav.ux-team-sidebar .operator-icon {
 }
 
 /* The Admin caption: small, white, never in the collapsed rail. */
-nav.ux-team-sidebar .ux-team-caption {
+nav.ux-team-sidebar .ux-team-group > summary > .ux-team-caption {
+  grid-area: caption;
+  min-width: 0;
+  overflow-wrap: break-word;
   color: var(--ac-paper);
   font-size: var(--text-sm, 0.875rem);
-  font-weight: 500;
+  font-weight: 400;
   opacity: 1;
 }
 @media (min-width: 1024px) {
+  .ux-leftnav-frame[data-collapsed='true'] nav.ux-team-sidebar .ux-team-group > summary {
+    display: flex;
+    min-height: 44px;
+    padding-block: 0;
+  }
   .ux-leftnav-frame[data-collapsed='true'] nav.ux-team-sidebar .ux-team-caption {
     position: absolute;
     width: 1px;
