@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fixture, rawContext } from './support';
-import { harness, issuer, options, type Fixture, type Row } from './revamp-g4-support';
+import { harness, options, type Fixture, type Row } from './revamp-g4-support';
 import type { RequestContext } from '../../packages/db/src/index';
 import { migrateCustomerCompanies } from '../../packages/db/src/customer-company-migrate';
 import { migrateCustomerDecisions } from '../../packages/db/src/customer-decision-migrate';
