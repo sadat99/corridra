@@ -31,7 +31,6 @@ nav.ux-team-sidebar summary:hover {
 nav.ux-team-sidebar a[aria-current],
 nav.ux-team-sidebar summary[aria-current='true'] {
   background: var(--ac-surface-navy-hover);
-  box-shadow: none;
   font-weight: 600;
 }
 nav.ux-team-sidebar a:focus-visible,
