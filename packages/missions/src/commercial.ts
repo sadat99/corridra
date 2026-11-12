@@ -1,7 +1,11 @@
 import { createHash } from 'node:crypto';
 import { withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
 import { DomainError } from '@corridra/domain';
-import { commercialMissionCommand, compareOffers } from '@corridra/domain/commercial-missions';
+import {
+  commercialMissionCommand,
+  compareOffers,
+  offerContext,
+} from '@corridra/domain/commercial-missions';
 import { z } from 'zod';
 
 export class CommercialMissionService {
@@ -85,7 +89,7 @@ export class CommercialMissionService {
             evidenceCurrent: o.evidence_current,
           })),
           undefined,
-          assignments[0]?.type_key === 'machinery_procurement' ? 'MACHINERY' : 'GENERAL',
+          offerContext(assignments[0]?.type_key),
         ),
       };
     });
