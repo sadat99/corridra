@@ -119,23 +119,23 @@ test('every job link opens its request with the contract name in its accessible 
   await page.goto('/');
   const jobs = page.getByRole('navigation', { name: 'Choose your commercial objective' });
   await expect(jobs.getByRole('link')).toHaveCount(3);
-  // Owner decision, 12 November 2026: the jobs are unequal (Buy leads, then the group trip, then Sell) and each
-  // names its first route. Same titles, lines, contract names and links as before.
+  // Owner decision, 12 November 2026: Buy, the group trip and Sell, in that order and at equal weight, each naming its
+  // first route. Same titles, lines, contract names and links as before.
   const expected = [
     [
       'Buy products or machines Find suppliers. Compare price quotes. Bangladesh to China Find Suppliers & Products',
       '/plan?job=sourcing',
-      'lead',
+      'equal',
     ],
     [
       'Lead a group trip Plan the programme and the meetings. Delegations and trade missions Organise a Delegation',
       '/plan?job=delegations',
-      'normal',
+      'equal',
     ],
     [
       'Sell my products Find buyers and partners abroad. Bangladesh to Spain and the EU Find Buyers & Partners',
       '/plan?job=buyers',
-      'compact',
+      'equal',
     ],
   ] as const;
   for (const [name, href] of expected)
@@ -366,4 +366,38 @@ test('the Delegation example uses the six steps, says it is an example and names
   // Selling and Sourcing are unchanged by the third example.
   await record.getByRole('tab', { name: 'Selling', exact: true }).click();
   await expect(panel).toContainText('Meet three knitwear buyers during a Madrid trade fair.');
+});
+
+test('the three jobs are the same size and weight at 1440, 768 and 390, in the order Buy, group trip, Sell', async ({
+  page,
+}) => {
+  for (const width of [1440, 768, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    await page.evaluate(() => document.fonts.ready);
+    const jobs = page
+      .getByRole('navigation', { name: 'Choose your commercial objective' })
+      .getByRole('link');
+    await expect(jobs).toHaveCount(3);
+    const cards = await jobs.evaluateAll((links) =>
+      links.map((link) => {
+        const box = link.getBoundingClientRect();
+        const title = getComputedStyle(link.querySelector('strong')!);
+        const card = getComputedStyle(link);
+        return {
+          href: link.getAttribute('href'),
+          width: Math.round(box.width),
+          height: Math.round(box.height),
+          title: [title.fontSize, title.fontFamily, title.fontWeight].join(' '),
+          surface: [card.backgroundColor, card.borderTopColor, card.paddingTop].join(' '),
+        };
+      }),
+    );
+    expect(
+      cards.map((card) => card.href),
+      `${width}px order`,
+    ).toEqual(['/plan?job=sourcing', '/plan?job=delegations', '/plan?job=buyers']);
+    for (const key of ['width', 'height', 'title', 'surface'] as const)
+      expect(new Set(cards.map((card) => card[key])).size, `${width}px ${key}`).toBe(1);
+  }
 });

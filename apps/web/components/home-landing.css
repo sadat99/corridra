@@ -73,12 +73,13 @@
   font-size: var(--text-lead);
   line-height: 1.5;
 }
-/* The three jobs, unequal by default (owner decision, 12 November 2026; order in lib/home-jobs.ts): the lead
-   is a card on a soft cobalt surface with a 26 px serif title, the next is a row, the last is compact but always
-   shown. Each names its first route in a small chip. */
+/* The three jobs at equal weight (owner decision, 12 November 2026, "Equal weight"; order in lib/home-jobs.ts):
+   three cards of one size and one style, each naming its first route in a small chip. Every row of the grid is as
+   tall as the tallest card. The lead and compact rules below apply only if lib/home-jobs.ts names a lead. */
 .ac1-jobs {
   container: ac1-jobs / inline-size;
   display: grid;
+  grid-auto-rows: 1fr;
   gap: var(--space-2);
 }
 .ac1-jobs .ac1-job {
@@ -165,7 +166,7 @@
 .ac1-jobs .ac1-job:hover strong {
   color: var(--action);
 }
-/* The lead: a larger card on the soft cobalt surface, the route chip above the title. */
+/* Only when lib/home-jobs.ts names a lead: a larger card on the soft cobalt surface, the route chip above the title. */
 .ac1-jobs .ac1-job[data-weight='lead'] {
   align-items: start;
   padding: var(--space-5) min(var(--space-5), 5vw);
@@ -209,7 +210,7 @@
     display: none;
   }
 }
-/* The compact job: one quiet row, still a full 44 px target. */
+/* Only when a lead is named, the other jobs are compact: one quiet row, still a full 44 px target. */
 .ac1-jobs .ac1-job[data-weight='compact'] {
   min-height: 3.5rem;
   padding-block: var(--space-2);
@@ -980,8 +981,8 @@
   .ac1-jobs .ac1-job[data-weight='lead'] strong {
     font-size: var(--text-2xl);
   }
-  /* On a phone the two jobs after the lead show their title and route; each line stays in the link's accessible
-     name and is not drawn, so the three jobs and the example fit the phone budget. */
+  /* On a phone each job card shows its title and route; the line stays in the link's accessible name and is not
+     drawn, so the three jobs and the example fit the phone budget. A named lead keeps its line. */
   .ac1-job:not([data-weight='lead']) .ac1-job-text {
     position: absolute;
     width: 1px;
