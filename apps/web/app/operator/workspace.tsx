@@ -272,12 +272,14 @@ function TenantWorkspace({
   const sectionId = sectionOfFragment(fragment);
   // The queue of problem reports sits inside Settings, so its own address (#problem-report-queue) is allowed for the
   // people who may see Settings, and panelFor puts it in that panel. Not offered, the address is an unknown fragment.
-  const reportQueueAddress =
-    (problemReports && fragment === problemReportQueueFragment) ||
-    (programmeApplications && fragment === applicationQueueFragment);
+  const reportQueueAddress = problemReports && fragment === problemReportQueueFragment;
+  // The list of programme applications sits inside Settings the same way (ADR-080), only while it is offered.
+  const applicationListAddress = programmeApplications && fragment === applicationQueueFragment;
   const sectionAllowed = workspaceSections.some(
     (section) =>
-      (section.id === sectionId || (reportQueueAddress && section.id === 'workspace-settings')) &&
+      (section.id === sectionId ||
+        (reportQueueAddress && section.id === 'workspace-settings') ||
+        (applicationListAddress && section.id === 'workspace-settings')) &&
       (section.roles as readonly string[]).includes(currentRole ?? ''),
   );
   // One panel is in view at a time. Every panel stays mounted so entries survive a switch.
