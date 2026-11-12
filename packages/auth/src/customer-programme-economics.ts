@@ -247,6 +247,65 @@ export type PaymentDecideResult = {
   declaration: PaymentDeclaration;
   entry: LedgerEntry | null;
 };
+// U10d: a participant flags a question about their own fee or payment status; the organiser marks it resolved or declined.
+// Record only: no amount, no free text, no ledger entry. It never changes a recorded or outstanding amount or a payment status.
+export const feeDisputeReasons = [
+  'AMOUNT_WRONG',
+  'ALREADY_PAID',
+  'NOT_ATTENDING',
+  'OTHER',
+] as const;
+export type FeeDisputeReason = (typeof feeDisputeReasons)[number];
+export const feeDisputeFileInput = z
+  .object({
+    commandId: z.uuid(),
+    registrationId: z.uuid(),
+    reason: z.enum(feeDisputeReasons),
+  })
+  .strict();
+export const feeDisputeOwnQuery = z.object({ registrationId: z.uuid() }).strict();
+export const feeDisputeDecideInput = z
+  .object({
+    commandId: z.uuid(),
+    workspaceId: z.uuid(),
+    programmeId: z.uuid(),
+    disputeId: z.uuid(),
+    outcome: z.enum(['RESOLVED', 'DECLINED']),
+  })
+  .strict();
+export type FeeDispute = {
+  id: string;
+  registrationId: string;
+  reason: FeeDisputeReason;
+  filedAt: string;
+  status: 'OPEN' | 'RESOLVED' | 'DECLINED';
+  decidedAt: string | null;
+};
+export type OwnFeeDisputes = {
+  registrationId: string;
+  programmeId: string;
+  expiresAt: string;
+  recordOnly: true;
+  collectsPayments: false;
+  disputes: FeeDispute[];
+};
+export type OpenFeeDisputes = {
+  workspaceId: string;
+  programmeId: string;
+  expiresAt: string;
+  recordOnly: true;
+  disputes: FeeDispute[];
+};
+export type FeeDisputeResult = {
+  registrationId?: string;
+  workspaceId?: string;
+  programmeId?: string;
+  expiresAt: string;
+  commandId: string;
+  replayed: boolean;
+  recordOnly: true;
+  dispute: FeeDispute;
+};
 export class CustomerProgrammeEconomicsService extends CustomerSessionBoundary {
   async summary(input: unknown, subject?: string, issuer?: string) {
     const q = ledgerScope.parse(input);
@@ -341,6 +400,62 @@ export class CustomerProgrammeEconomicsService extends CustomerSessionBoundary {
         (
           await db.query<{ result: PaymentDecideResult }>(
             'SELECT customer.decide_programme_payment($1,$2,$3,$4) AS result',
+            [commandId, workspaceId, programmeId, JSON.stringify(payload)],
+          )
+        ).rows[0].result,
+      subject,
+      issuer,
+    );
+  }
+  async fileFeeDispute(input: unknown, subject?: string, issuer?: string) {
+    const { commandId, ...payload } = feeDisputeFileInput.parse(input);
+    return this.transaction(
+      async (db) =>
+        (
+          await db.query<{ result: FeeDisputeResult }>(
+            'SELECT customer.file_programme_fee_dispute($1,$2) AS result',
+            [commandId, JSON.stringify(payload)],
+          )
+        ).rows[0].result,
+      subject,
+      issuer,
+    );
+  }
+  async ownFeeDisputes(input: unknown, subject?: string, issuer?: string) {
+    const q = feeDisputeOwnQuery.parse(input);
+    return this.transaction(
+      async (db) =>
+        (
+          await db.query<{ result: OwnFeeDisputes }>(
+            'SELECT customer.own_programme_fee_disputes($1) AS result',
+            [q.registrationId],
+          )
+        ).rows[0].result,
+      subject,
+      issuer,
+    );
+  }
+  async openFeeDisputes(input: unknown, subject?: string, issuer?: string) {
+    const q = ledgerScope.parse(input);
+    return this.transaction(
+      async (db) =>
+        (
+          await db.query<{ result: OpenFeeDisputes }>(
+            'SELECT customer.programme_fee_disputes_open($1,$2) AS result',
+            [q.workspaceId, q.programmeId],
+          )
+        ).rows[0].result,
+      subject,
+      issuer,
+    );
+  }
+  async decideFeeDispute(input: unknown, subject?: string, issuer?: string) {
+    const { commandId, workspaceId, programmeId, ...payload } = feeDisputeDecideInput.parse(input);
+    return this.transaction(
+      async (db) =>
+        (
+          await db.query<{ result: FeeDisputeResult }>(
+            'SELECT customer.decide_programme_fee_dispute($1,$2,$3,$4) AS result',
             [commandId, workspaceId, programmeId, JSON.stringify(payload)],
           )
         ).rows[0].result,

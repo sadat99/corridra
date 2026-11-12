@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { OwnFeeStatus, OwnPlace } from '@corridra/auth/customer-programme-terms';
+import { ParticipantFeeDispute } from './participant-fee-dispute';
 import { ParticipantPaymentDeclaration } from './participant-payment-declaration';
 import {
   failureText,
@@ -90,6 +91,7 @@ function Terms({
                 .filter((a) => BigInt(a.dueMinor) > BigInt(0))
                 .map((a) => a.currency)}
             />
+            <ParticipantFeeDispute {...who} />
           </dd>
         </>
       )}

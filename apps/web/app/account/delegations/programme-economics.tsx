@@ -2,6 +2,7 @@
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { currencies, formatMoney, parseMoney } from '@corridra/domain/opportunities';
+import { ProgrammeFeeDisputeReview } from './programme-fee-dispute-review';
 import { ProgrammePaymentReview } from './programme-payment-review';
 
 type Code = keyof typeof currencies;
@@ -506,6 +507,15 @@ function ScopedEconomics(props: Props) {
               summary.participants.map((r) => [r.registrationId, r.label]),
             )}
             onDecided={() => void load(true)}
+          />
+          <ProgrammeFeeDisputeReview
+            subject={subject}
+            issuer={issuer}
+            workspaceId={workspaceId}
+            programmeId={programmeId}
+            labels={Object.fromEntries(
+              summary.participants.map((r) => [r.registrationId, r.label]),
+            )}
           />
           <h5>Totals by currency</h5>
           {summary.currencies.length === 0 ? (
