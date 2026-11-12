@@ -632,7 +632,7 @@ test('stored revision constraints reject null shared objectives and null withdra
     ).rejects.toMatchObject({ code: '23514' });
 });
 test('programme count of shared objectives is one integer, follows share, withdrawal and source, and is owner/admin only', async () => {
-  const { reg, req, command } = await scenario();
+  const { reg, command } = await scenario();
   const count = async (person = 'alice', workspaceId = programmeWorkspace) =>
     shares(person).sharedCount({ workspaceId, programmeId });
   expect(await count()).toEqual({ count: 0 });
