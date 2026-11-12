@@ -141,6 +141,28 @@ describe('the search answer is checked on the client', () => {
     expect(found.companies[0]!.label).toBe('C'.repeat(200));
     expect(found.companies[0]!.detail).toBe('ES');
   });
+  test('F a cut never splits a surrogate pair at the boundary', () => {
+    const astral = '\u{1F3ED}';
+    const found = parseFound({
+      missions: [
+        { id, label: 'a'.repeat(199) + astral + 'tail', detail: 'b'.repeat(199) + astral },
+      ],
+      companies: [{ id: 'c-1', label: 'c'.repeat(198) + astral + 'tail', detail: '' }],
+      denied: [],
+      partial: [],
+    })!;
+    // The pair would start at index 199 and end at 200: it is dropped whole, with no lone half left.
+    expect(found.missions[0]!.label).toBe('a'.repeat(199));
+    expect(found.missions[0]!.detail).toBe('b'.repeat(199));
+    // A pair that fits before the boundary is kept whole.
+    expect(found.companies[0]!.label).toBe('c'.repeat(198) + astral);
+    for (const text of [
+      found.missions[0]!.label,
+      found.missions[0]!.detail,
+      found.companies[0]!.label,
+    ])
+      expect(text.isWellFormed()).toBe(true);
+  });
   test('something that is not an answer is not parsed', () => {
     expect(parseFound(null)).toBeNull();
     expect(parseFound('x')).toBeNull();

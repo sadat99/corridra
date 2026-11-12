@@ -27,6 +27,13 @@ const statusShape = /^[A-Z][A-Z_]{0,31}$/;
 const factKey =
   /^(?:mission|company):[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** The first 200 characters, without cutting a surrogate pair in two (no ellipsis: it would join the accessible name). */
+function cut(value: string): string {
+  if (value.length <= textLimit) return value;
+  const code = value.charCodeAt(textLimit - 1);
+  return value.slice(0, code >= 0xd800 && code <= 0xdbff ? textLimit - 1 : textLimit);
+}
+
 const record = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -42,8 +49,8 @@ function hits(value: unknown): FoundHit[] {
     // A long name or detail is shown cut, not dropped: the match may have come from it.
     out.push({
       id,
-      label: label.slice(0, textLimit),
-      detail: typeof detail === 'string' ? detail.slice(0, textLimit) : '',
+      label: cut(label),
+      detail: typeof detail === 'string' ? cut(detail) : '',
     });
   }
   return out;
