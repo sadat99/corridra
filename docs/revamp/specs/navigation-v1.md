@@ -16,7 +16,7 @@ The footer board (`Footer.dc.html`) is **out of scope**: the owner excluded the 
 2. **Five at most.** Every level holds five items or fewer. More means regroup, not scroll.
 3. **One word per thing.** Customers say Request. The team says Mission. Never both on one screen.
 4. **Thumb first on phones.** Bottom tabs, always labelled, 48 px targets, no hamburger for daily work (signed-in shells).
-5. **Search beats browsing.** Staff jump with Ctrl K. Customers search inside Requests and Companies.
+5. **Search beats browsing.** Staff jump with Ctrl K. Customers search inside Requests and Companies. The 12 Nov request for a customer top-bar Search is specified in [customer search](navigation-v1/customer-search.md).
 6. **Honest and local.** Bangla and WhatsApp are first class. Unfinished features say Coming soon.
 
 ## Audiences and boards
