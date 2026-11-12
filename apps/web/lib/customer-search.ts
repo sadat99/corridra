@@ -48,6 +48,7 @@ export const customerSearchLimits = {
   perPersonSearches: 10,
   perPersonWindowMs: 10000,
   perPersonKeys: 5000,
+  slotCeilingMs: 30000,
 } as const;
 
 const personLimit = createSearchLimit({
@@ -84,6 +85,66 @@ export function takeSearchSlot(): (() => void) | null {
   };
 }
 
+/**
+ * Counts the service calls a search has started and not yet seen settle. Giving up on a call (an abort, the deadline)
+ * does not stop it: the provider read or the database transaction behind it runs on and holds a connection. So the
+ * route keeps the search's slot until every call it started has settled, not until the answer is sent.
+ */
+export function createCallTracker() {
+  let outstanding = 0;
+  let waiting: (() => void)[] = [];
+  return {
+    /** Counts one call started. The returned function ends it; calling it twice counts once. */
+    begin(): () => void {
+      outstanding += 1;
+      let ended = false;
+      return () => {
+        if (ended) return;
+        ended = true;
+        outstanding -= 1;
+        if (outstanding === 0) {
+          const done = waiting;
+          waiting = [];
+          for (const resolve of done) resolve();
+        }
+      };
+    },
+    /** Resolves when no call is outstanding. Never rejects. */
+    settled(): Promise<void> {
+      return outstanding === 0
+        ? Promise.resolve()
+        : new Promise<void>((resolve) => waiting.push(resolve));
+    },
+  };
+}
+export type CallTracker = ReturnType<typeof createCallTracker>;
+
+/**
+ * Gives the slot back when the calls of a finished search have all settled, and at the latest slotCeilingMs after the
+ * search ended, so one call that never settles cannot take a slot for ever. A forced release writes one fixed line with
+ * the request id and nothing else. The answer never waits for this.
+ */
+export function releaseWhenSettled(
+  release: () => void,
+  tracker: CallTracker,
+  correlationId: string,
+) {
+  let done = false;
+  const finish = () => {
+    if (done) return;
+    done = true;
+    clearTimeout(ceiling);
+    release();
+  };
+  const ceiling = setTimeout(() => {
+    if (done) return;
+    console.error(JSON.stringify({ event: 'customer_search_slot_forced', correlationId }));
+    finish();
+  }, customerSearchLimits.slotCeilingMs);
+  ceiling.unref?.();
+  void tracker.settled().then(finish);
+}
+
 type Read = (value: unknown, subject?: string, issuer?: string) => Promise<unknown>;
 export type CustomerSearchServices = {
   requests: { list: Read };
@@ -115,6 +176,8 @@ export type CustomerSearchContext = {
   client: string;
   /** The request's own signal: when it aborts, no further lookup or page is started and a call in flight is given up on. */
   signal?: AbortSignal;
+  /** Counts the calls this search starts so the caller can wait for them to settle; one is made when none is given. */
+  tracker?: CallTracker;
   /** The clock for the title time budget; replaced in tests. */
   now?: () => number;
 };
@@ -122,6 +185,12 @@ export type CustomerSearchAnswer = {
   hits: CustomerHit[];
   scopes: Partial<Record<CustomerScopeName, ScopeState>>;
   facts?: Record<string, CustomerFacts>;
+  /**
+   * Present when the Companies scope was read: the earliest moment an approved scope behind the company hits expires (ISO
+   * time), or null when none of them carries an expiry. The Companies page clears what it shows at the earlier of that
+   * moment and 60 seconds after loading; the dialog clears company hits the same way.
+   */
+  expiresAt?: string | null;
 };
 
 type Candidate = {
@@ -133,7 +202,12 @@ type Candidate = {
   key: string;
   facts: CustomerFacts;
 };
-type Found = { state: ScopeState; candidates: Candidate[] };
+type Found = {
+  state: ScopeState;
+  candidates: Candidate[];
+  /** Companies only: the earliest expiry of what was loaded (ISO), or null for none. */
+  expiresAt?: string | null;
+};
 
 const record = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -226,6 +300,7 @@ type Guard = {
   bounded: <T>(run: () => Promise<T>) => Promise<T>;
 };
 function guardFor(context: CustomerSearchContext): Guard {
+  const tracker = context.tracker ?? createCallTracker();
   const now = context.now ?? Date.now;
   const started = now();
   const left = () => customerSearchLimits.searchDeadlineMs - (now() - started);
@@ -236,12 +311,30 @@ function guardFor(context: CustomerSearchContext): Guard {
       const stop = () => reject(new DeadlineReached());
       const timer = setTimeout(stop, left());
       context.signal?.addEventListener('abort', stop, { once: true });
-      run()
-        .then(resolve, reject)
-        .finally(() => {
-          clearTimeout(timer);
-          context.signal?.removeEventListener('abort', stop);
-        });
+      // The call counts until the call itself settles, not until this wrapper is given up on.
+      const end = tracker.begin();
+      const finish = () => {
+        clearTimeout(timer);
+        context.signal?.removeEventListener('abort', stop);
+        end();
+      };
+      let call: Promise<T>;
+      try {
+        call = run();
+      } catch (error) {
+        finish();
+        return reject(error);
+      }
+      call.then(
+        (value) => {
+          finish();
+          resolve(value);
+        },
+        (error) => {
+          finish();
+          reject(error);
+        },
+      );
     });
   return { now, expired, bounded };
 }
@@ -435,6 +528,32 @@ function mergeCompanies(
   return clean;
 }
 
+/**
+ * The expiry of one loaded portfolio page, read as the Companies page reads it: the page's own `expiresAt` must be null or
+ * a time still ahead, and every context must carry a time still ahead. Returns the earliest time (ms) or null when the
+ * page has no expiry of its own, and `false` for a page the Companies page would refuse (expired, or not a time at all).
+ */
+function loadedExpiry(
+  page: Record<string, unknown>,
+  companies: unknown[],
+  now: number,
+): number | null | false {
+  let earliest: number | null = null;
+  const ahead = (raw: unknown) => {
+    if (typeof raw !== 'string') return false;
+    const at = Date.parse(raw);
+    if (!Number.isFinite(at) || at <= now) return false;
+    earliest = earliest === null ? at : Math.min(earliest, at);
+    return true;
+  };
+  if (page.expiresAt !== null && !ahead(page.expiresAt)) return false;
+  for (const entry of companies)
+    if (record(entry) && Array.isArray(entry.contexts))
+      for (const context of entry.contexts)
+        if (!record(context) || !ahead(context.expiresAt)) return false;
+  return earliest;
+}
+
 async function findCompanies(
   services: CustomerSearchServices,
   switches: CustomerSearchSwitches,
@@ -460,6 +579,7 @@ async function findCompanies(
   const merged = new Map<string, Company>();
   let partial = false;
   let after: string | undefined;
+  let earliest: number | null = null;
   for (let page = 0; page < limits.companyPages; page++) {
     if (guard.expired()) {
       if (page === 0) return none('partial');
@@ -504,6 +624,14 @@ async function findCompanies(
       partial = true;
       break;
     }
+    // A page whose scope has expired is not shown, as on the Companies page: it is not read, and the scope says so.
+    const expiry = loadedExpiry(value, value.companies, guard.now());
+    if (expiry === false) {
+      if (page === 0) return none('unavailable');
+      partial = true;
+      break;
+    }
+    if (expiry !== null) earliest = earliest === null ? expiry : Math.min(earliest, expiry);
     if (!mergeCompanies(merged, value.companies, value.synthetic === true)) partial = true;
     if (typeof value.unavailableScopes === 'number' && value.unavailableScopes > 0) partial = true;
     const more = value.nextAfter;
@@ -548,7 +676,11 @@ async function findCompanies(
       },
     });
   }
-  return { state: partial ? 'partial' : 'ok', candidates };
+  return {
+    state: partial ? 'partial' : 'ok',
+    candidates,
+    expiresAt: earliest === null ? null : new Date(earliest).toISOString(),
+  };
 }
 
 /** True when the words are worth reading for: two characters or more, with at least one letter or digit among them. */
@@ -574,6 +706,7 @@ export async function searchCustomer(
   const facts: Record<string, CustomerFacts> = {};
   const take = (name: CustomerScopeName, found: Found) => {
     answer.scopes[name] = found.state;
+    if (found.expiresAt !== undefined) answer.expiresAt = found.expiresAt;
     for (const candidate of found.candidates.sort(inOrder).slice(0, shown)) {
       answer.hits.push(candidate.hit);
       facts[candidate.key] = candidate.facts;

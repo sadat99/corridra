@@ -41,7 +41,13 @@ vi.mock('../../apps/web/lib/foundations', () => ({
           customerCompanies: {
             async list(...args: unknown[]) {
               state.companies.push(args);
-              return { companies: [], nextAfter: null, unavailableScopes: 0, synthetic: true };
+              return {
+                companies: [],
+                nextAfter: null,
+                unavailableScopes: 0,
+                expiresAt: null,
+                synthetic: true,
+              };
             },
           },
         }
@@ -106,6 +112,7 @@ describe('the control: a correct request reaches both services once', () => {
     expect(await response.json()).toEqual({
       hits: [],
       scopes: { requests: 'ok', companies: 'ok' },
+      expiresAt: null,
     });
     privateHeaders(response);
     expect(state.list).toEqual([

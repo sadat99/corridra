@@ -2,6 +2,9 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { DomainError } from '../../packages/domain/src/index';
 import {
   customerSearchLimits,
+  createCallTracker,
+  releaseWhenSettled,
+  type CallTracker,
   searchCustomer,
   takeSearchSlot,
   type CustomerSearchServices,
@@ -103,21 +106,31 @@ const search = (
   q: string,
   scope: 'all' | 'requests' | 'companies' = 'all',
   switches = allOn,
-  extra: Partial<typeof context> & { signal?: AbortSignal; now?: () => number } = {},
+  extra: Partial<typeof context> & {
+    signal?: AbortSignal;
+    now?: () => number;
+    tracker?: CallTracker;
+  } = {},
 ) => searchCustomer(h.services, switches, { ...context, ...extra }, q, scope);
 const page = (companies: unknown[], nextAfter: string | null = null, over = {}) => ({
   companies,
   nextAfter,
   scopesRead: 5,
   unavailableScopes: 0,
-  expiresAt: '2030-01-01T00:00:00.000Z',
+  expiresAt: '2099-01-01T00:00:00.000Z',
   synthetic: true,
   ...over,
 });
 const company = (n: number, name: string, resource: number, country = 'Spain') => ({
   id: companyId(n),
   contexts: [
-    { resourceId: resourceId(resource), targetId: uuid('22222222', n), company: name, country },
+    {
+      resourceId: resourceId(resource),
+      targetId: uuid('22222222', n),
+      company: name,
+      country,
+      expiresAt: '2099-06-01T00:00:00.000Z',
+    },
   ],
 });
 
@@ -558,6 +571,7 @@ describe('M1 bounded work', () => {
       perPersonSearches: 10,
       perPersonWindowMs: 10000,
       perPersonKeys: 5000,
+      slotCeilingMs: 30000,
     });
   });
 });
@@ -857,5 +871,180 @@ describe('failures that must not throw away what was found', () => {
       hits: [],
       scopes: { requests: 'denied' },
     });
+  });
+});
+
+describe('calls that are given up on keep counting until they settle', () => {
+  afterEach(() => vi.useRealTimers());
+  test('the tracker settles only when every call started has ended, and an ending counts once', async () => {
+    const tracker = createCallTracker();
+    await tracker.settled();
+    const first = tracker.begin();
+    const second = tracker.begin();
+    let settled = false;
+    void tracker.settled().then(() => (settled = true));
+    first();
+    first();
+    await Promise.resolve();
+    expect(settled).toBe(false);
+    second();
+    await Promise.resolve();
+    expect(settled).toBe(true);
+  });
+  test('an aborted search returns at once while its hung call is still counted, and settles when the call does', async () => {
+    const controller = new AbortController();
+    let finish!: () => void;
+    const hung = new Promise<never>(
+      (_resolve, reject) => (finish = () => reject(new Error('late'))),
+    );
+    const h = harness({ list: () => hung });
+    const tracker = createCallTracker();
+    const running = search(h, 'spain', 'requests', allOn, { signal: controller.signal, tracker });
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    controller.abort();
+    expect(await running).toEqual({ hits: [], scopes: { requests: 'partial' } });
+    let settled = false;
+    void tracker.settled().then(() => (settled = true));
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    expect(settled).toBe(false);
+    finish();
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    expect(settled).toBe(true);
+  });
+  test('a call that throws at once is not left counted', async () => {
+    const tracker = createCallTracker();
+    const h = harness({
+      list: () => {
+        throw new Error('sync boom');
+      },
+    });
+    await expect(search(h, 'spain', 'requests', allOn, { tracker })).rejects.toThrow('sync boom');
+    await tracker.settled();
+  });
+  test('the slot is released when the calls settle, or at the ceiling with one fixed line', async () => {
+    vi.useFakeTimers();
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const taken = Array.from({ length: 2 }, () => takeSearchSlot()!);
+    const tracker = createCallTracker();
+    const end = tracker.begin();
+    releaseWhenSettled(taken[0]!, tracker, 'id-1');
+    const hungTracker = createCallTracker();
+    hungTracker.begin();
+    releaseWhenSettled(taken[1]!, hungTracker, 'id-2');
+    const others = Array.from({ length: customerSearchLimits.maxConcurrentSearches - 2 }, () =>
+      takeSearchSlot()!,
+    );
+    expect(takeSearchSlot()).toBeNull();
+    end();
+    await vi.advanceTimersByTimeAsync(0);
+    const one = takeSearchSlot();
+    expect(one).not.toBeNull();
+    expect(takeSearchSlot()).toBeNull();
+    await vi.advanceTimersByTimeAsync(customerSearchLimits.slotCeilingMs - 1);
+    expect(takeSearchSlot()).toBeNull();
+    await vi.advanceTimersByTimeAsync(1);
+    const forced = takeSearchSlot();
+    expect(forced).not.toBeNull();
+    expect(spy.mock.calls.map((call) => JSON.parse(String(call[0])))).toEqual([
+      { event: 'customer_search_slot_forced', correlationId: 'id-2' },
+    ]);
+    for (const slot of [one, forced, ...others]) slot!();
+  });
+});
+
+describe('the approved scope expires, as the Companies page treats it', () => {
+  const dated = (n: number, name: string, resource: number, expiresAt: unknown) => ({
+    id: companyId(n),
+    contexts: [
+      {
+        resourceId: resourceId(resource),
+        targetId: uuid('22222222', n),
+        company: name,
+        country: 'Spain',
+        expiresAt,
+      },
+    ],
+  });
+  const future = (ms: number) => new Date(Date.now() + ms).toISOString();
+  test('the earliest expiry of the loaded pages and contexts is carried, as an ISO time', async () => {
+    const soon = future(40_000);
+    const h = harness({
+      pages: [
+        page([dated(1, 'Spain Foods', 1, future(300_000))], resourceId(1), {
+          expiresAt: future(200_000),
+        }),
+        page([dated(2, 'Spain Tools', 2, soon)], null, { expiresAt: future(100_000) }),
+      ],
+    });
+    const found = await search(h, 'spain', 'companies');
+    expect(found.expiresAt).toBe(soon);
+    expect(found.hits).toHaveLength(2);
+  });
+  test('a page expiry earlier than every context is the one carried', async () => {
+    const early = future(10_000);
+    const h = harness({
+      pages: [page([dated(1, 'Spain Foods', 1, future(300_000))], null, { expiresAt: early })],
+    });
+    expect((await search(h, 'spain', 'companies')).expiresAt).toBe(early);
+  });
+  test('a page with no expiry of its own carries its contexts expiry; an empty portfolio carries null', async () => {
+    const soon = future(50_000);
+    const h = harness({
+      pages: [page([dated(1, 'Spain Foods', 1, soon)], null, { expiresAt: null })],
+    });
+    expect((await search(h, 'spain', 'companies')).expiresAt).toBe(soon);
+    const empty = harness({ pages: [page([], null, { expiresAt: null })] });
+    expect(await search(empty, 'spain', 'companies')).toEqual({
+      hits: [],
+      scopes: { companies: 'ok' },
+      expiresAt: null,
+    });
+  });
+  test('a search that never reaches Companies has no expiry key', async () => {
+    const h = harness({ rows: [row(1)] });
+    expect(await search(h, 'spain', 'requests')).not.toHaveProperty('expiresAt');
+  });
+  test('an already expired first page is unavailable, never an empty list, and shows no company', async () => {
+    const h = harness({
+      pages: [
+        page([dated(1, 'Spain Foods', 1, future(300_000))], null, { expiresAt: future(-1000) }),
+      ],
+    });
+    expect(await search(h, 'spain', 'companies')).toEqual({
+      hits: [],
+      scopes: { companies: 'unavailable' },
+    });
+  });
+  test('a context that has expired, or has no time, refuses its page in the same way', async () => {
+    for (const expiresAt of [future(-1000), 'not a time', undefined, null, 5]) {
+      const h = harness({ pages: [page([dated(1, 'Spain Foods', 1, expiresAt)])] });
+      expect(await search(h, 'spain', 'companies'), String(expiresAt)).toEqual({
+        hits: [],
+        scopes: { companies: 'unavailable' },
+      });
+    }
+  });
+  test('a page that is not a time, or has none, is refused too', async () => {
+    for (const expiresAt of ['soon', undefined, 7]) {
+      const h = harness({
+        pages: [page([dated(1, 'Spain Foods', 1, future(300_000))], null, { expiresAt })],
+      });
+      expect((await search(h, 'spain', 'companies')).scopes, String(expiresAt)).toEqual({
+        companies: 'unavailable',
+      });
+    }
+  });
+  test('an expired later page is dropped: the earlier companies stay, the scope is partial, and the expiry is the earlier one', async () => {
+    const first = future(90_000);
+    const h = harness({
+      pages: [
+        page([dated(1, 'Spain Foods', 1, first)], resourceId(1)),
+        page([dated(2, 'Spain Tools', 2, future(-5))], resourceId(2)),
+      ],
+    });
+    const found = await search(h, 'spain', 'companies');
+    expect(found.scopes).toEqual({ companies: 'partial' });
+    expect(found.hits.map((hit) => hit.label)).toEqual(['Spain Foods']);
+    expect(found.expiresAt).toBe(first);
   });
 });

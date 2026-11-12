@@ -164,7 +164,15 @@ describe('words of the quiet states', () => {
 });
 
 describe('R5 no state that is not a complete search says "No match"', () => {
-  const states: ScopeState[] = ['ok', 'partial', 'unavailable', 'denied', 'archived', 'limited'];
+  const states: ScopeState[] = [
+    'ok',
+    'partial',
+    'unavailable',
+    'denied',
+    'archived',
+    'limited',
+    'expired',
+  ];
   const phases: SearchPhase[] = [
     'idle',
     'searching',
@@ -214,7 +222,7 @@ describe('R5 no state that is not a complete search says "No match"', () => {
                   expect(text, label).toMatch(/No match for “spain” in (Requests|Companies)/);
                 } else expect(text, label).toMatch(/No match for “spain”/);
               }
-    expect(seen).toBe(9 * 4 * 6 * 6 * 2 * 2);
+    expect(seen).toBe(9 * 4 * 7 * 7 * 2 * 2);
   });
   test('a complete search with nothing found says no match, with the typed words', () => {
     const view = describeStatus(input({}));
@@ -360,6 +368,21 @@ describe('R5 no state that is not a complete search says "No match"', () => {
       input({ count: 2, scopes: { requests: 'ok', companies: 'limited' } }),
     );
     expect(listed.spoken).toContain('Searching Companies is paused');
+  });
+  test('cleared Companies say so calmly, offer Retry, and never read as no match', () => {
+    const text = 'Company results were cleared. Search again to load them.';
+    const view = describeStatus(
+      input({ count: 2, scopes: { requests: 'ok', companies: 'expired' } }),
+    );
+    expect(view.notices).toEqual([{ tone: 'neutral', text }]);
+    expect(view.retry).toBe(true);
+    expect(view.spoken).toContain(text);
+    const none = describeStatus(input({ scope: 'companies', scopes: { companies: 'expired' } }));
+    expect(none.block).toBeNull();
+    expect(none.retry).toBe(true);
+    expect(everything(none)).not.toMatch(noMatch);
+    const mixed = describeStatus(input({ scopes: { requests: 'ok', companies: 'expired' } }));
+    expect(mixed.block?.heading).toBe('No match for “spain” in Requests');
   });
   test('the whole route unavailable still lets the person open pages', () => {
     expect(describeStatus(input({ phase: 'unavailable' })).notices[0]!.text).toBe(

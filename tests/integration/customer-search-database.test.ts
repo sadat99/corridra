@@ -394,6 +394,8 @@ describe('Companies through the search', () => {
   test('Sam finds the approved company through the search, opening the report it came from', async () => {
     const answer = await searchCompanies('sam');
     expect(answer.scopes).toEqual({ companies: 'ok' });
+    // The real portfolio carries the approved scope's expiry, which the dialog clears the company at.
+    expect(Date.parse(answer.expiresAt!)).toBeGreaterThan(Date.now());
     expect(answer.hits).toHaveLength(1);
     expect(answer.hits[0]!.label).toBe(companyName);
     expect(answer.hits[0]!.href).toBe(`/account/missions/${reportId}`);
@@ -401,14 +403,15 @@ describe('Companies through the search', () => {
   });
   test('another customer, a stranger and a member of another workspace never find it', async () => {
     for (const person of ['stranger', 'hana', 'olive', 'rita'])
-      expect(await searchCompanies(person), person).toEqual({
+      // Their own saved reports may carry an expiry; none of them has a company to find.
+      expect(await searchCompanies(person), person).toMatchObject({
         hits: [],
         scopes: { companies: 'ok' },
       });
   });
   test('after Sam is removed from the workspace the company is not found, and a new invitation brings it back', async () => {
     await w.revoke('olive', w.W, w.members.sam!);
-    expect(await searchCompanies('sam')).toEqual({ hits: [], scopes: { companies: 'ok' } });
+    expect(await searchCompanies('sam')).toMatchObject({ hits: [], scopes: { companies: 'ok' } });
     await w.join('olive', 'sam', w.W);
     const back = await searchCompanies('sam');
     expect(back.hits.map((hit) => hit.label)).toEqual([companyName]);

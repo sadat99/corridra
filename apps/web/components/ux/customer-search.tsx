@@ -188,6 +188,9 @@ function useFlag<T>(read: () => T, server: () => T) {
   return useSyncExternalStore(subscribeCustomerNote, read, server);
 }
 
+/** How long company hits stay on screen at most: the Companies page's own minute. */
+const companyHoldMs = 60_000;
+
 function SearchDialog({ onAccount, pathname }: { onAccount: boolean; pathname: string }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -196,7 +199,12 @@ function SearchDialog({ onAccount, pathname }: { onAccount: boolean; pathname: s
   const [answer, setAnswer] = useState<{
     key: string;
     outcome: SearchOutcome<CustomerFound>;
+    /** When company hits in this answer are cleared: the earlier of their scope's expiry and a minute after loading. */
+    clearAt?: number;
   } | null>(null);
+  // The answer whose company hits the clock has cleared (at its `clearAt`): they go, the Requests and the pages stay. A new
+  // answer is another object, so it starts with its company hits shown.
+  const [clearedAnswer, setClearedAnswer] = useState<typeof answer>(null);
   // Retry sends the same words again: it changes the key of the search, so an older answer cannot be shown for it.
   const [attempt, setAttempt] = useState(0);
   const [selected, setSelected] = useState(0);
@@ -267,6 +275,7 @@ function SearchDialog({ onAccount, pathname }: { onAccount: boolean; pathname: s
     setQuery('');
     setScope('all');
     setAnswer(null);
+    setClearedAnswer(null);
     setAttempt(0);
     setSelected(0);
     setScopeNote('');
@@ -398,15 +407,37 @@ function SearchDialog({ onAccount, pathname }: { onAccount: boolean; pathname: s
       } catch {
         outcome = { kind: 'failed' };
       }
+      // The Companies page clears what it shows at the earlier of the scope's expiry and 60 seconds after loading.
+      const loaded =
+        outcome.kind === 'ok' && outcome.found.hits.some((hit) => hit.kind === 'company')
+          ? outcome.found
+          : null;
+      const expires = loaded?.expiresAt ? Date.parse(loaded.expiresAt) : Number.POSITIVE_INFINITY;
       if (controller.signal.aborted) return;
-      setAnswer({ key, outcome });
+      setAnswer({
+        key,
+        outcome,
+        ...(loaded ? { clearAt: Math.min(expires, Date.now() + companyHoldMs) } : {}),
+      });
     }, searchDelay);
     return () => {
       clearTimeout(timer);
       controller.abort();
     };
   }, [open, sendable, key, scope, text, identity]);
+  const clearAt = answer?.clearAt;
+  useEffect(() => {
+    if (clearAt === undefined) return;
+    const timer = setTimeout(() => setClearedAnswer(answer), Math.max(0, clearAt - Date.now()));
+    return () => clearTimeout(timer);
+  }, [clearAt, answer]);
   const outcome = sendable ? currentOutcome(answer, key) : null;
+  // Company hits of the answer on screen have been cleared: the same moment the Companies page clears its rows.
+  const companiesCleared =
+    clearedAnswer !== null &&
+    clearedAnswer === answer &&
+    outcome?.kind === 'ok' &&
+    clearAt !== undefined;
   const found = outcome?.kind === 'ok' ? outcome.found : null;
   const phase = phaseOf(scope, text, outcome);
 
@@ -437,7 +468,8 @@ function SearchDialog({ onAccount, pathname }: { onAccount: boolean; pathname: s
   if (found && (scope === 'all' || scope === 'requests'))
     for (const hit of found.hits) if (hit.kind === 'request') content.push(hitRow(hit));
   if (found && (scope === 'all' || scope === 'companies'))
-    for (const hit of found.hits) if (hit.kind === 'company') content.push(hitRow(hit));
+    for (const hit of found.hits)
+      if (hit.kind === 'company' && !companiesCleared) content.push(hitRow(hit));
   const pageRows: PageMatch[] = pagesFor(pages, scope, text);
   for (const page of pageRows)
     content.push({
@@ -455,7 +487,7 @@ function SearchDialog({ onAccount, pathname }: { onAccount: boolean; pathname: s
     scope,
     text,
     phase,
-    scopes: found?.scopes ?? {},
+    scopes: companiesCleared ? { ...found?.scopes, companies: 'expired' } : (found?.scopes ?? {}),
     // Pages listed here count as results; nothing is called "No match" while a row is shown.
     count: content.length,
     offline: !online,

@@ -4,8 +4,11 @@
 // access, and nothing says "verified": a fact is only what the person's own services already returned.
 
 export type CustomerHitKind = 'request' | 'company';
-export type ScopeState = 'ok' | 'partial' | 'unavailable' | 'denied' | 'archived' | 'limited';
+/** `expired` is never sent by the server: the dialog sets it on Companies when it has cleared them. */
+export type ScopeState =
+  'ok' | 'partial' | 'unavailable' | 'denied' | 'archived' | 'limited' | 'expired';
 export type CustomerScopeName = 'requests' | 'companies';
+/** The states the server may send. */
 export const scopeStates: readonly ScopeState[] = [
   'ok',
   'partial',
@@ -36,6 +39,8 @@ export type CustomerFound = {
   hits: CustomerHit[];
   scopes: Partial<Record<CustomerScopeName, ScopeState>>;
   facts: Record<string, CustomerFacts>;
+  /** When the approved scope behind the company hits expires (ISO), null for no expiry, absent when Companies were not read. */
+  expiresAt?: string | null;
 };
 
 /** At most this many hits per scope are read from an answer, whatever the server sends. */
@@ -154,7 +159,15 @@ export function parseFound(value: unknown): CustomerFound | null {
       const fact = record(raw) ? factsOf(hit.kind, raw) : null;
       if (fact) facts[factKey(hit.kind, hit.id)] = fact;
     }
-  return { hits, scopes, facts };
+  const expiry =
+    value.expiresAt === null
+      ? null
+      : typeof value.expiresAt === 'string' &&
+          value.expiresAt.length <= sentLimit &&
+          Number.isFinite(Date.parse(value.expiresAt))
+        ? value.expiresAt
+        : undefined;
+  return { hits, scopes, facts, ...(expiry !== undefined ? { expiresAt: expiry } : {}) };
 }
 
 /** Looks a hit's facts up, whatever the case of the id. */

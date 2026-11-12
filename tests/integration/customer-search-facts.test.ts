@@ -147,6 +147,16 @@ describe('parseFound', () => {
       requests: 'limited',
     });
   });
+  test('the expiry of the approved scope is kept when it is a time or null, and left out otherwise', () => {
+    const time = '2099-01-01T00:00:00.000Z';
+    expect(parseFound(answer({ expiresAt: time }))!.expiresAt).toBe(time);
+    expect(parseFound(answer({ expiresAt: null }))!).toHaveProperty('expiresAt', null);
+    for (const bad of ['soon', 5, 'x'.repeat(60), undefined, {}])
+      expect(parseFound(answer({ expiresAt: bad }))!).not.toHaveProperty('expiresAt');
+  });
+  test('the server never sends expired as a scope state; the dialog alone sets it', () => {
+    expect(parseFound(answer({ scopes: { companies: 'expired' } }))!.scopes).toEqual({});
+  });
   test('a withdrawn Request keeps its flag', () => {
     const found = parseFound(
       answer({ facts: { [`request:${requestId}`]: { sent: '2026-11-03', withdrawn: true } } }),

@@ -1626,3 +1626,82 @@ test.describe('the wide field switch is an em query (KI-54)', () => {
     expect(await page.evaluate(() => matchMedia('(min-width:64em)').matches)).toBe(before);
   });
 });
+
+test.describe('the approved Companies scope expires, as on the Companies page', () => {
+  const companies = (expiresAt: string | null) => ({
+    ...spain,
+    expiresAt,
+  });
+  async function ask(page: Page, expiresAt: string | null) {
+    await page.clock.install();
+    const mounted = await mount(page, '/account', { json: companies(expiresAt) });
+    await openDialog(page);
+    await type(page, 'spain');
+    await expect(options(page).filter({ hasText: 'Madrid Textiles SL' })).toBeVisible();
+    return mounted;
+  }
+  const requestRow = (page: Page) => options(page).filter({ hasText: 'Sell in Spain' });
+  const companyRow = (page: Page) => options(page).filter({ hasText: 'Madrid Textiles SL' });
+  const cleared = 'Company results were cleared. Search again to load them.';
+
+  test('with no expiry the companies stay for a minute and then go, with a calm notice; Requests and pages stay', async ({
+    page,
+  }) => {
+    await ask(page, null);
+    await page.clock.fastForward(58_000);
+    await expect(companyRow(page)).toBeVisible();
+    await expect(dialogOf(page).getByText(cleared)).toHaveCount(0);
+    await page.clock.fastForward(3_000);
+    await expect(companyRow(page)).toHaveCount(0);
+    await expect(requestRow(page)).toBeVisible();
+    await expect(dialogOf(page).getByText(cleared)).toBeVisible();
+    await expect(dialogOf(page).getByText(/No match/)).toHaveCount(0);
+    await expect(options(page).first()).toContainText('Retry');
+  });
+
+  test('an expiry sooner than a minute clears them at that moment', async ({ page }) => {
+    await ask(page, new Date(Date.now() + 10_000).toISOString());
+    await page.clock.fastForward(5_000);
+    await expect(companyRow(page)).toBeVisible();
+    await page.clock.fastForward(6_000);
+    await expect(companyRow(page)).toHaveCount(0);
+    await expect(requestRow(page)).toBeVisible();
+    await expect(dialogOf(page).getByText(cleared)).toBeVisible();
+  });
+
+  test('an expiry later than a minute does not keep them longer than a minute', async ({
+    page,
+  }) => {
+    await ask(page, new Date(Date.now() + 3_600_000).toISOString());
+    await page.clock.fastForward(59_000);
+    await expect(companyRow(page)).toBeVisible();
+    await page.clock.fastForward(2_000);
+    await expect(companyRow(page)).toHaveCount(0);
+  });
+
+  test('searching again loads them again, and the minute starts over', async ({ page }) => {
+    const mounted = await ask(page, null);
+    await page.clock.fastForward(61_000);
+    await expect(companyRow(page)).toHaveCount(0);
+    mounted.next({ json: companies(null) });
+    await page.keyboard.press('Enter');
+    await expect(companyRow(page)).toBeVisible();
+    await expect(dialogOf(page).getByText(cleared)).toHaveCount(0);
+    await page.clock.fastForward(30_000);
+    await expect(companyRow(page)).toBeVisible();
+    expect(mounted.searches).toHaveLength(2);
+  });
+
+  test('a search with only Requests has nothing to clear', async ({ page }) => {
+    await page.clock.install();
+    await mount(page, '/account', {
+      json: { ...spain, hits: spain.hits.filter((hit) => hit.kind === 'request'), expiresAt: null },
+    });
+    await openDialog(page);
+    await type(page, 'spain');
+    await expect(requestRow(page)).toBeVisible();
+    await page.clock.fastForward(120_000);
+    await expect(requestRow(page)).toBeVisible();
+    await expect(dialogOf(page).getByText(cleared)).toHaveCount(0);
+  });
+});

@@ -107,12 +107,14 @@ vi.mock('../../apps/web/lib/foundations', () => {
                     resourceId: `0c5a0000-0000-4000-8000-${String(state.companyPages).padStart(12, '0')}`,
                     company: `Spain Foods ${state.companyPages}`,
                     country: 'Spain',
+                    expiresAt: '2099-06-01T00:00:00.000Z',
                   },
                 ],
               },
             ],
             nextAfter: '0c5a0000-0000-4000-8000-000000000999',
             unavailableScopes: 0,
+            expiresAt: '2099-01-01T00:00:00.000Z',
             synthetic: state.synthetic,
           };
         },
@@ -648,5 +650,95 @@ describe('the Companies budget through the route', () => {
       scopes: Record<string, string>;
     };
     expect(body.scopes).toEqual({ requests: 'ok', companies: 'unavailable' });
+  });
+});
+
+describe('a slot stays taken until the calls of its search have settled', () => {
+  const slots = customerSearchLimits.maxConcurrentSearches;
+  const pause = (ms = 20) => new Promise((resolve) => setTimeout(resolve, ms));
+  const hang = async () => {
+    const controllers = Array.from({ length: slots }, () => new AbortController());
+    const running = controllers.map((controller) =>
+      post({ q: 'spain', scope: 'requests' }, {}, controller.signal),
+    );
+    await pause();
+    expect(count('requests')).toBe(slots);
+    return { controllers, running };
+  };
+  test('aborted searches answer at once, but their hung calls keep every slot until they settle', async () => {
+    let open!: () => void;
+    state.gate = new Promise<void>((resolve) => (open = resolve));
+    const { controllers, running } = await hang();
+    for (const controller of controllers) controller.abort();
+    // The answers do not wait for the calls: the gate is still shut.
+    for (const response of await Promise.all(running)) {
+      expect(response.status).toBe(200);
+      expect(((await response.json()) as { scopes: unknown }).scopes).toEqual({
+        requests: 'partial',
+      });
+    }
+    const busy = await post({ q: 'spain', scope: 'requests' });
+    expect(busy.status).toBe(503);
+    expect(busy.headers.get('Retry-After')).toBe('2');
+    expect(count('requests')).toBe(slots);
+    open();
+    await pause();
+    state.gate = null;
+    expect((await post({ q: 'spain', scope: 'requests' })).status).toBe(200);
+  });
+  test('a call that fails after it was given up on frees its slot too', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    let fail!: () => void;
+    state.gate = new Promise<void>(
+      (_resolve, reject) => (fail = () => reject(new Error('late failure'))),
+    );
+    const { controllers, running } = await hang();
+    for (const controller of controllers) controller.abort();
+    await Promise.all(running);
+    expect((await post({ q: 'spain', scope: 'requests' })).status).toBe(503);
+    fail();
+    await pause();
+    state.gate = null;
+    expect((await post({ q: 'spain', scope: 'requests' })).status).toBe(200);
+  });
+  test('a call that never settles is let go at the ceiling, with one fixed line per search', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+    try {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      state.gate = new Promise<void>(() => undefined);
+      const controllers = Array.from({ length: slots }, () => new AbortController());
+      const running = controllers.map((controller) =>
+        post({ q: 'spain', scope: 'requests' }, {}, controller.signal),
+      );
+      await vi.advanceTimersByTimeAsync(5);
+      for (const controller of controllers) controller.abort();
+      const answered = await Promise.all(running);
+      state.gate = null;
+      expect((await post({ q: 'spain', scope: 'requests' })).status).toBe(503);
+      await vi.advanceTimersByTimeAsync(customerSearchLimits.slotCeilingMs - 100);
+      expect((await post({ q: 'spain', scope: 'requests' })).status).toBe(503);
+      await vi.advanceTimersByTimeAsync(200);
+      expect((await post({ q: 'spain', scope: 'requests' })).status).toBe(200);
+      const lines = spy.mock.calls.map(
+        (call) => JSON.parse(String(call[0])) as Record<string, unknown>,
+      );
+      expect(lines).toHaveLength(slots);
+      for (const line of lines)
+        expect(Object.keys(line).sort()).toEqual(['correlationId', 'event']);
+      expect(new Set(lines.map((line) => line.correlationId))).toEqual(
+        new Set(answered.map((response) => response.headers.get('X-Corridra-Request-ID'))),
+      );
+      for (const line of lines) expect(line.event).toBe('customer_search_slot_forced');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  test('a search that finishes normally frees its slot at once and writes no line', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    for (let n = 0; n < slots * 2; n++) {
+      resetPersonLimit();
+      expect((await post({ q: 'spain', scope: 'requests' })).status).toBe(200);
+    }
+    expect(spy).not.toHaveBeenCalled();
   });
 });

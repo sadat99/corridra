@@ -76,7 +76,7 @@ describe('D9 the typed words are never logged', () => {
         );
       }
     }
-    expect(seen).toBe(3);
+    expect(seen).toBe(4);
   });
   test('the log events are the two named ones', () => {
     const events = both.flatMap((path) =>
@@ -86,6 +86,7 @@ describe('D9 the typed words are never logged', () => {
       'customer_search_failed',
       'customer_search_page_failed',
       'customer_search_scope_failed',
+      'customer_search_slot_forced',
     ]);
   });
   test('the query leaves the core only as a score, never as an argument to a service', () => {

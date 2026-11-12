@@ -9,9 +9,11 @@ import { foundations } from '../../../lib/foundations';
 import { customerIdentity } from '../../../lib/customer-page-session';
 import { boundedBody, deliveryHeaders } from '../../../lib/delivery-http';
 import {
+  createCallTracker,
   customerSearchScopes,
   errorFacts,
   failedScope,
+  releaseWhenSettled,
   searchCustomer,
   spendPersonSearch,
   takeSearchSlot,
@@ -54,6 +56,7 @@ export async function POST(request: Request) {
       headers: { ...deliveryHeaders, 'X-Corridra-Request-ID': correlationId, ...more },
     });
   let release: (() => void) | null = null;
+  const tracker = createCallTracker();
   try {
     const s = foundations();
     if (!s) return answer({ error: 'Search is not available right now', correlationId }, 503);
@@ -104,6 +107,7 @@ export async function POST(request: Request) {
         issuer: request.headers.get('x-corridra-customer-issuer') ?? undefined,
         correlationId,
         client: budgetClient(request),
+        tracker,
         signal: request.signal,
       },
       input.q,
@@ -135,6 +139,8 @@ export async function POST(request: Request) {
     );
     return answer({ error: 'The request could not be completed', correlationId }, 500);
   } finally {
-    release?.();
+    // The slot is held until every service call this search started has settled, even one given up on (an abort, the
+    // deadline): it still holds a connection. The answer does not wait for it.
+    if (release) releaseWhenSettled(release, tracker, correlationId);
   }
 }

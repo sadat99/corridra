@@ -50,7 +50,13 @@ vi.mock('../../apps/web/lib/foundations', () => ({
     customerCompanies: {
       async list() {
         state.calls += 1;
-        return { companies: [], nextAfter: null, unavailableScopes: 0, synthetic: true };
+        return {
+          companies: [],
+          nextAfter: null,
+          unavailableScopes: 0,
+          expiresAt: null,
+          synthetic: true,
+        };
       },
     },
   }),

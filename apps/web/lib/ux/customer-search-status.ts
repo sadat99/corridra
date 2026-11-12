@@ -182,6 +182,7 @@ const unavailableSentence = (list: CustomerScopeName[]) =>
 // The budget behind the Companies page ran out: it counts per hour, so the words say "later", not "a few seconds".
 const limitedSentence = (list: CustomerScopeName[]) =>
   `Searching ${join(list.map(plural))} is paused because of too many requests. Try again later.`;
+const expiredText = 'Company results were cleared. Search again to load them.';
 const archivedText = 'Requests cannot be searched while one of your workspaces is archived.';
 const partialNotice = (list: CustomerScopeName[]): StatusNotice => ({
   tone: 'caution',
@@ -261,6 +262,7 @@ export function describeStatus(input: StatusInput): StatusView {
   const unavailable = only('unavailable');
   const archived = only('archived');
   const limited = only('limited');
+  const expired = only('expired');
   const denied = only('denied');
   const complete = only('ok');
   const notices: StatusNotice[] = [];
@@ -281,8 +283,15 @@ export function describeStatus(input: StatusInput): StatusView {
     notices.push({ tone: 'neutral', text: limitedSentence(limited) });
     sentences.push(limitedSentence(limited));
   }
+  if (expired.length > 0) {
+    // The Companies page clears what it shows when the approved scope ends, or a minute after loading; so does the dialog.
+    notices.push({ tone: 'neutral', text: expiredText });
+    sentences.push(expiredText);
+  }
   if (partial.length > 0) notices.push(partialNotice(partial));
   const signIn = denied.length > 0;
+  // Search again is the way back for cleared Companies.
+  const retry = expired.length > 0;
   if (count > 0) {
     const spoken = [
       `${results(count)}.`,
@@ -293,7 +302,7 @@ export function describeStatus(input: StatusInput): StatusView {
         : []),
       ...sentences,
     ].join(' ');
-    return { ...base, summary: results(count), notices, spoken, signIn };
+    return { ...base, summary: results(count), notices, spoken, signIn, retry };
   }
   // Nothing listed. Only a complete search may say there is no match.
   if (partial.length > 0)
@@ -301,6 +310,7 @@ export function describeStatus(input: StatusInput): StatusView {
       ...base,
       notices,
       signIn,
+      retry,
       block: {
         kind: 'nomatch',
         icon: 'search',
@@ -315,7 +325,7 @@ export function describeStatus(input: StatusInput): StatusView {
       ].join(' '),
     };
   if (searched.length > 0 && complete.length === 0)
-    return { ...base, notices, signIn, spoken: sentences.join(' ') };
+    return { ...base, notices, signIn, retry, spoken: sentences.join(' ') };
   const lines = ['Try a different spelling or fewer letters.'];
   if (scope === 'all' || scope === 'requests') lines.push('Only Requests you sent are searched.');
   if (scope === 'requests' || scope === 'companies')
@@ -327,6 +337,7 @@ export function describeStatus(input: StatusInput): StatusView {
     ...base,
     notices,
     signIn,
+    retry,
     block: {
       kind: 'nomatch',
       icon: 'search',
