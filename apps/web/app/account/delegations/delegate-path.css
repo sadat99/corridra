@@ -1,0 +1,110 @@
+/* The delegate's objective path. One raised surface per registration with the person's own words, then three
+   numbered steps; the next one is the only step with a primary action. Tokens only. */
+.delegate-path {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 46rem;
+  margin: var(--space-3) 0;
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface-raised);
+}
+.delegate-path h4,
+.delegate-path h5,
+.delegate-path p {
+  margin: 0;
+}
+.delegate-path h4 {
+  font-family: var(--serif);
+  font-size: var(--text-title);
+  font-weight: 500;
+}
+.delegate-path h5 {
+  font-weight: 600;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: var(--text-base);
+}
+.delegate-path-lead,
+.delegate-path p {
+  max-width: 62ch;
+}
+.delegate-path-note {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+.delegate-path-words {
+  margin: 0;
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--editorial-accent);
+}
+.delegate-path-words figcaption {
+  font: 600 var(--text-xs) var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.delegate-path-words blockquote {
+  margin: var(--space-1) 0 0;
+  overflow-wrap: anywhere;
+}
+.delegate-path ol {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: delegate-step;
+}
+.delegate-path ol > li {
+  display: grid;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+  counter-increment: delegate-step;
+}
+.delegate-path ol > li > h5::before {
+  content: counter(delegate-step) '.';
+  font-family: var(--font-mono);
+  color: var(--text-2);
+}
+.delegate-path-state {
+  font: 600 var(--text-xs) var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.delegate-path-state[data-state='next'] {
+  color: var(--ac-copper-ink);
+}
+.delegate-path-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.delegate-path-actions .button {
+  flex: 1 1 12rem;
+  margin: 0;
+}
+.delegate-path .field {
+  display: grid;
+  gap: var(--space-1);
+  max-width: 32rem;
+}
+.delegate-path-start {
+  display: grid;
+  gap: var(--space-2);
+}
+.delegate-path details > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.delegate-path details[open] > summary {
+  margin-bottom: var(--space-2);
+}
+.delegate-path ol > li > .button {
+  justify-self: start;
+}
