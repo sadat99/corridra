@@ -15,7 +15,7 @@ import type { MessageKey } from '../lib/i18n/messages';
 // The home page, concept G (owner decision of 6 November 2026: "E with F"). The words are keys in the message
 // files (lib/i18n/home-words.ts). They show in the chosen language only while `CORRIDRA_LANGUAGES_PAGES` is on;
 // until then every key shows its English words. The five trust names, airport codes and company letters stay as
-// written. The three jobs and their order are in components/home-jobs.tsx (one constant sets which job leads).
+// written. The three jobs and their order are in lib/home-jobs.ts (one constant sets which job leads).
 type Fact = (typeof factLabels)[number]['label'];
 
 // The labels a company record shows. The first three are trust names; the fourth says a fact was asked for and

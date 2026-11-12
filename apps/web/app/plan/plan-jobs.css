@@ -1,5 +1,5 @@
 /* The first step of the request page draws its objectives in the home page's order and weight (owner decision,
-   12 November 2026; components/home-jobs.tsx). Visual only: the radio inputs, their names, values and label words are
+   12 November 2026; lib/home-jobs.ts). Visual only: the radio inputs, their names, values and label words are
    unchanged, and each card keeps its place in the two-column grid so the step stays within its length budget. The
    lead sits on a soft cobalt surface with a serif title. AC/1 tokens only. */
 .plan-job-words {

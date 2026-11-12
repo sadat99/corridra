@@ -21,7 +21,7 @@ import {
 import { issueSeparator } from '../../lib/i18n/form-words/messages';
 import { useFormWords } from './form-words';
 import './plan-jobs.css';
-import { orderedJobs, type HomeJob, type JobWeight } from '../../components/home-jobs';
+import { orderedJobs, type HomeJob, type JobWeight } from '../../lib/home-jobs';
 import { rememberSentRequest } from '../../lib/private-request-storage';
 import { customerStatusLabel } from '../../lib/ux/customer-road';
 import { formatDateTime } from '../../lib/ux/format';
@@ -138,7 +138,7 @@ const objectiveWords = {
 /**
  * The order the objectives are drawn in on the first step. Visual only: the values, names and the intake logic are
  * unchanged. The three objectives that start the home page's jobs come first, in the home page's order and weight
- * (components/home-jobs.tsx); the other objectives follow in their own order. Each label keeps its exact words, so
+ * (lib/home-jobs.ts); the other objectives follow in their own order. Each label keeps its exact words, so
  * every radio keeps its accessible name, and the step keeps its length budget (no route chip here).
  */
 const objectiveForHomeJob = {

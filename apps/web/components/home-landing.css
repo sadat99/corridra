@@ -73,7 +73,7 @@
   font-size: var(--text-lead);
   line-height: 1.5;
 }
-/* The three jobs, unequal by default (owner decision, 12 November 2026; order in components/home-jobs.tsx): the lead
+/* The three jobs, unequal by default (owner decision, 12 November 2026; order in lib/home-jobs.ts): the lead
    is a card on a soft cobalt surface with a 26 px serif title, the next is a row, the last is compact but always
    shown. Each names its first route in a small chip. */
 .ac1-jobs {

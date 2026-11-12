@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { homeJobOrder, homeJobs, orderedJobs } from '../../apps/web/components/home-jobs';
+import { homeJobOrder, homeJobs, orderedJobs } from '../../apps/web/lib/home-jobs';
 import { homeEn, homeWords } from '../../apps/web/lib/i18n/home-words';
+import { translate } from '../../apps/web/lib/i18n/messages';
 
 // Owner decision, 12 November 2026: the three home jobs are unequal by default and one constant sets the order.
 describe('home jobs order', () => {
@@ -25,7 +26,7 @@ describe('home jobs order', () => {
   });
 
   it('names only the routes the repository already states', () => {
-    expect(Object.values(homeJobs).map((job) => homeEn[job.route])).toEqual([
+    expect(Object.values(homeJobs).map((job) => translate('en', job.route))).toEqual([
       'Bangladesh to China',
       'Delegations and trade missions',
       'Bangladesh to Spain and the EU',
