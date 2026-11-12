@@ -1474,6 +1474,11 @@
       "use": "Exact hashed ledger at ae13e57b (the PR 440 merge), before PRs 427, 431, 432 and 434 to 440 and install runs 43124287253, 43141811834, 43146873106 and 43157562455 were recorded; preserves the S40 records 4 Resume bullets; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-s40-records-6-2026-11-12.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at d802fff9 (the PR 448 merge; unchanged to a0af8ba1), before PRs 443 to 449 and install runs 43166686843, 43177502058, 43185334464 and 43192001693 were recorded; preserves the S40 records 5 Resume bullets; use the current ledger for live state."
+    },
+    {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"
