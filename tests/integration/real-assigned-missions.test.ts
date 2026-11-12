@@ -14,7 +14,10 @@ import { migrateCommercialReadiness } from '../../packages/db/src/commercial-rea
 import { InboxService } from '../../packages/communications/src/inbox';
 import { CustomerInboxService } from '../../apps/web/lib/customer-inbox';
 const reportReceipts: string[] = [];
+// The Room's loader brings its service wiring; these tests give it the pages read with each person's own session.
+vi.mock('../../apps/web/lib/foundations', () => ({ foundations: () => null }));
 import { MissionService } from '../../packages/missions/src/index';
+import { roomLoadFrom } from '../../apps/web/lib/room-loader';
 
 // Staff assign a reviewed report to the real customer who made the request, and the customer accepts it into
 // their saved reports. The sample suite (customer-delivery) proves the same rules for sample workspaces.
@@ -318,4 +321,57 @@ test('a real customer can answer a staff evidence request from the saved report'
       await saved().command({ action: 'view', resourceId: savedId, audience: 'CLIENT_PROGRESS' }),
     ),
   ).toContain('second week of November');
+});
+
+// Customer handoff: the Room reads the delivered list with the person's own session, and an address hint only
+// chooses among what that list returns. These run last because the final one revokes the shared link.
+const roomFor = (who: string, hint?: string) =>
+  roomLoadFrom(requestId, async (after) => assigned(who).list({ pageSize: 25, after }), hint);
+
+test("the Room finds the creator's own saved report from the hint and opens it directly", async () => {
+  const room = await roomFor('assigned-alice', assignmentId);
+  const savedId = (await assigned().list()).assignments[0].savedResourceId;
+  expect(room).toMatchObject({
+    status: 'ok',
+    task: { kind: 'saved' },
+    hintClosed: false,
+    count: 1,
+    link: { reportAvailable: true, savedResourceId: savedId },
+  });
+});
+
+test('the same hint gives a colleague or a stranger nothing, and their save is refused by the server', async () => {
+  for (const who of ['assigned-bob', 'assigned-stranger']) {
+    expect(await roomFor(who, assignmentId)).toEqual({
+      status: 'ok',
+      link: { reportAvailable: false, savedResourceId: null },
+      task: { kind: 'none' },
+      hintClosed: true,
+      count: 0,
+    });
+    await expect(
+      assigned(who).accept({ commandId: randomUUID(), assignmentId, acknowledged: true }),
+    ).rejects.toMatchObject({ code: '42501' });
+  }
+});
+
+test('a revoked report is no longer open: the Room says so and a new or repeated save is refused', async () => {
+  const repeat = { commandId: randomUUID(), assignmentId, acknowledged: true as const };
+  await assigned().accept(repeat);
+  await delivery.revoke(staffCtx(), {
+    commandId: randomUUID(),
+    linkId: link.id,
+    publicationId: null,
+    reason: 'Report withdrawn for the handoff test',
+  });
+  expect(await roomFor('assigned-alice', assignmentId)).toMatchObject({
+    status: 'ok',
+    task: { kind: 'none' },
+    hintClosed: true,
+    link: { reportAvailable: false, savedResourceId: null },
+  });
+  await expect(
+    assigned().accept({ commandId: randomUUID(), assignmentId, acknowledged: true }),
+  ).rejects.toMatchObject({ code: '42501' });
+  await expect(assigned().accept(repeat)).rejects.toMatchObject({ code: '42501' });
 });

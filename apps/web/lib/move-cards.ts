@@ -3,7 +3,12 @@
 // invented: a card exists only where a real state exists, a date only where a real date exists, and an
 // action only for a role that may take it.
 import type { Holder, MoveVerb } from '../components/mr/types';
+import { z } from 'zod';
 import { formatDate } from './ux/format';
+
+/** The address of a saved report, exactly as the delivered list builds it. */
+const savedReport =
+  /^\/account\/missions\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export type WorkspaceRole = 'owner' | 'admin' | 'member';
 
@@ -113,6 +118,16 @@ export function buildMoveModel(
 ): MoveModel {
   const requestHref = (id: string) =>
     options.rooms ? `/account/rooms/${id}` : `/account/requests/${id}`;
+  // A saved report opens itself. An unsaved one opens where it can be saved: its request's Room, naming the report
+  // as a hint the Room checks against the person's own list, or else the Library's Delivered tab.
+  const reportHref = (report: NonNullable<MoveInput['reports']>[number]) => {
+    if (savedReport.test(report.href)) return report.href;
+    const request = z.uuid().safeParse(report.requestId);
+    const assignment = z.uuid().safeParse(report.id);
+    return options.rooms && request.success && assignment.success
+      ? `/account/rooms/${request.data}?report=${assignment.data}`
+      : '/account?view=results&tab=delivered';
+  };
   const many = input.workspaces.length > 1;
   const role = new Map(input.workspaces.map((w) => [w.id, w.role] as const));
   const name = new Map(input.workspaces.map((w) => [w.id, w.name] as const));
@@ -223,7 +238,7 @@ export function buildMoveModel(
       verb: 'Read',
       holder: 'you',
       context: report.title,
-      href: report.href,
+      href: reportHref(report),
       requestId: report.requestId,
     });
 

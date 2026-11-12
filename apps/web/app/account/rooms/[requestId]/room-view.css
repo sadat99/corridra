@@ -162,3 +162,60 @@
   flex-basis: 14rem;
   flex-grow: 2;
 }
+
+/* Saving a delivered report from the next step: the Library's own acknowledgement and button. */
+.room-save {
+  display: grid;
+  flex: 1 1 100%;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.room-save form {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+.room-save .check-field {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-height: 44px;
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+.room-save .check-field input[type='checkbox'] {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.15rem;
+}
+.room-save .primary-link {
+  min-height: 44px;
+}
+.room-save-item {
+  display: grid;
+  gap: var(--space-2);
+  padding-block-start: var(--space-3);
+  border-top: 1px solid var(--line);
+}
+.room-save-item h3 {
+  margin: 0;
+  font-size: var(--text-base);
+  overflow-wrap: anywhere;
+}
+.room-save-item p,
+.room-save > p {
+  margin: 0;
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+.room-note {
+  margin: 0;
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+.room-note .text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
