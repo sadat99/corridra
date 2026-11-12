@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, test } from 'vitest';
 import {
   forgetAllRecents,
@@ -232,5 +233,58 @@ describe('S3 recents go on every sign-out path', () => {
     }
     expect(() => forgetDeviceRecents()).not.toThrow();
     expect(forgetDeviceRecents()).toBe(0);
+  });
+});
+
+describe('S3 every sign-out path forgets the recents after the sign-out succeeded', () => {
+  // Each file ends the session, checks that it worked, then forgets the recents, then leaves the page.
+  const paths: [string, string, string, RegExp | null][] = [
+    [
+      'the staff menu Sign Out',
+      'apps/web/components/ux/team-utility-menus.tsx',
+      'if (!response.ok) throw new Error();',
+      /window\.location\.replace\(/,
+    ],
+    [
+      'the workspace toolbar Sign Out',
+      'apps/web/app/operator/workspace.tsx',
+      "if (result.error) throw new Error('Sign-out could not be confirmed.",
+      /window\.location\.replace\(operatorSignInPage\)/,
+    ],
+    [
+      'the shared endSession helper (use-sign-out, account sign-out, account lifecycle error line)',
+      'apps/web/lib/end-session.ts',
+      "if (result.error) throw new Error('The session could not be ended.');",
+      /announceSessionChange\(\)/,
+    ],
+    [
+      'the contributor sign-out',
+      'apps/web/app/contributor/signout.tsx',
+      "if (result.error) throw new Error('Sign-out could not be completed. Try again.');",
+      /window\.location\.replace\('\/contributor'\)/,
+    ],
+  ];
+  for (const [name, file, failure, after] of paths) {
+    test(`${name} imports forgetDeviceRecents and calls it after the failure check`, () => {
+      const source = readFileSync(file, 'utf8');
+      expect(source).toMatch(
+        /import \{[^}]*\bforgetDeviceRecents\b[^}]*\} from '[^']*palette-recents'/,
+      );
+      const check = source.indexOf(failure);
+      const call = source.indexOf('forgetDeviceRecents();');
+      expect(check, 'the failure check is present').toBeGreaterThanOrEqual(0);
+      expect(call, 'forgetDeviceRecents() is called').toBeGreaterThan(check);
+      if (after) {
+        const next = source.slice(call).search(after);
+        expect(next, 'the call comes before the page is left').toBeGreaterThan(0);
+      }
+    });
+  }
+  test('the endSession helper has these callers and nothing else ends a session around it', () => {
+    for (const caller of [
+      'apps/web/components/use-sign-out.ts',
+      'apps/web/app/account/lifecycle-error-line.tsx',
+    ])
+      expect(readFileSync(caller, 'utf8')).toMatch(/await endSession\(\)/);
   });
 });
