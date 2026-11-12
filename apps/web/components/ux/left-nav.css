@@ -109,6 +109,10 @@
     z-index: 90;
     width: min(20rem, 88vw);
     overflow-y: auto;
+    overscroll-behavior: contain;
+    scroll-padding-block: var(--space-3);
+    scrollbar-width: thin;
+    scrollbar-color: var(--ac-text-tertiary) var(--ac-surface-subtle);
     padding: var(--space-3);
     background: var(--surface-1);
     border-inline-end: 1px solid var(--line);
@@ -255,10 +259,18 @@
     height: 100%;
     min-height: 0;
   }
+  /* At a short window with the Admin group open, the list needs more than the room: it then scrolls on its
+     own (the collapse button below it stays in view), with a thin bar made for the navy and a little
+     padding so a focused item is brought fully into view with its ring uncut. */
   .ux-leftnav-panel > nav {
     flex: 0 1 auto;
     min-height: 0;
+    overflow-x: hidden;
     overflow-y: auto;
+    overscroll-behavior: contain;
+    scroll-padding-block: var(--space-3);
+    scrollbar-width: thin;
+    scrollbar-color: var(--ac-border-strong) var(--ac-surface-navy);
   }
   .ux-leftnav-page {
     grid-column: 2;
@@ -269,6 +281,7 @@
     gap: var(--space-1);
   }
   .ux-leftnav-panel .ux-leftnav-collapse {
+    flex: none;
     margin-top: auto;
     color: var(--text-2);
     font-weight: 500;
@@ -318,5 +331,44 @@
     z-index: 40;
     background: color-mix(in srgb, var(--paper) 92%, transparent);
     backdrop-filter: blur(8px);
+  }
+}
+/* Engines without the standard scrollbar properties get the same thin bar through the WebKit pseudo-elements. */
+@supports not (scrollbar-color: auto) {
+  @media (min-width: 1024px) {
+    .ux-leftnav-panel > nav::-webkit-scrollbar {
+      width: var(--space-2);
+    }
+    .ux-leftnav-panel > nav::-webkit-scrollbar-track {
+      background: var(--ac-surface-navy);
+    }
+    .ux-leftnav-panel > nav::-webkit-scrollbar-thumb {
+      background: var(--ac-border-strong);
+      border-radius: var(--radius-sm);
+    }
+    .ux-leftnav-panel > nav::-webkit-scrollbar-thumb:hover {
+      background: var(--ac-border);
+    }
+  }
+  @media (max-width: 1023.98px) {
+    .ux-leftnav-panel::-webkit-scrollbar {
+      width: var(--space-2);
+    }
+    .ux-leftnav-panel::-webkit-scrollbar-track {
+      background: var(--ac-surface-subtle);
+    }
+    .ux-leftnav-panel::-webkit-scrollbar-thumb {
+      background: var(--ac-text-tertiary);
+      border-radius: var(--radius-sm);
+    }
+    .ux-leftnav-panel::-webkit-scrollbar-thumb:hover {
+      background: var(--ac-text-secondary);
+    }
+  }
+}
+@media (forced-colors: active) {
+  .ux-leftnav-panel > nav,
+  .ux-leftnav-panel {
+    scrollbar-color: auto;
   }
 }
