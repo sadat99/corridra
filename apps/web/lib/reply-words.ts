@@ -131,12 +131,14 @@ const en: ReplyWords = {
     installation: 'Installation',
     training: 'Training',
     spares: 'Spare parts',
+    commissioning: 'Commissioning',
   },
   hints: {
     unitPriceMinor: 'In the currency above, for example 12.50',
     totalPriceMinor: 'In the currency above',
     validUntil: 'The last day you will honour this quote',
     incoterm: 'The agreed delivery term, for example FOB or DAP',
+    commissioning: 'Setting up and testing the machine at the buyer site',
   },
   shippingValues: {
     INCLUDED: 'Included in the price',
@@ -241,12 +243,14 @@ const zh: ReplyWords = {
     installation: '安装',
     training: '培训',
     spares: '备件',
+    commissioning: '调试',
   },
   hints: {
     unitPriceMinor: '使用上面选择的币种，例如 12.50',
     totalPriceMinor: '使用上面选择的币种',
     validUntil: '您愿意按此报价履约的最后一天',
     incoterm: '约定的交货术语，例如 FOB 或 DAP',
+    commissioning: '在买方现场安装后进行调试和试运转',
   },
   shippingValues: {
     INCLUDED: '已含在价格内',

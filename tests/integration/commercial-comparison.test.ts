@@ -31,7 +31,7 @@ describe('quotation scope comparison', () => {
     for (const item of compareOffers(input, now, 'MACHINERY')) {
       expect(item.status).toBe('NOT COMPARABLE');
       expect(item.missing).toEqual(
-        expect.arrayContaining(['installation', 'warranty', 'training', 'spares']),
+        expect.arrayContaining(['installation', 'commissioning', 'warranty', 'training', 'spares']),
       );
     }
     expect(
@@ -44,6 +44,7 @@ describe('quotation scope comparison', () => {
       terms: {
         ...item.terms,
         installation: 'Customer arranges installation',
+        commissioning: 'Included, two engineers for five days',
         warranty: 'One year parts',
         training: 'Remote training included',
         spares: 'Quoted separately',
@@ -52,6 +53,23 @@ describe('quotation scope comparison', () => {
     expect(
       compareOffers(explicit, now, 'MACHINERY').every(
         (item) => item.status === 'COMPARABLE ON SUPPLIED TERMS',
+      ),
+    ).toBe(true);
+    // An offer that states everything except commissioning is reported as missing exactly that, never as comparable.
+    const withoutCommissioning = explicit.map(({ terms: t, ...rest }) => ({
+      ...rest,
+      terms: Object.fromEntries(
+        Object.entries(t).filter(([k]) => k !== 'commissioning'),
+      ) as OfferTerms,
+    }));
+    for (const item of compareOffers(withoutCommissioning, now, 'MACHINERY')) {
+      expect(item.status).toBe('NOT COMPARABLE');
+      expect(item.missing).toEqual(['commissioning']);
+    }
+    // Finished goods are not asked for it.
+    expect(
+      compareOffers(withoutCommissioning, now, 'GENERAL').every(
+        (item) => !item.missing.includes('commissioning'),
       ),
     ).toBe(true);
   });

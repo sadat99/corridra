@@ -375,7 +375,9 @@ test('supplier disclosure and declaration reuse expiring recipient capability wi
   await expect(f.communications.buyer(reply)).rejects.toThrow();
 });
 
-test('the Reply Page form sends all eighteen terms the database function accepts, leaves blanks out, and records exactly what was typed', async () => {
+test('the Reply Page form sends all nineteen terms the database function accepts, leaves blanks out, and records exactly what was typed', async () => {
+  // The nineteenth term is accepted by the real-use ladder (0020), as installed in production.
+  await migrateCustomerRealUse(f.owner);
   const j = await sourceJourney(),
     intro = await f.introduction(j.t);
   await experience.disclosure(f.users.owner.ctx, {
@@ -410,6 +412,7 @@ test('the Reply Page form sends all eighteen terms the database function accepts
       installation: 'Not included',
       training: 'One day on site',
       spares: 'Ten percent spare parts shipped free',
+      commissioning: 'Two engineers for five days, travel included',
     },
     'USD',
   );

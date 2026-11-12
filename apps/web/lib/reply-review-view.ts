@@ -23,6 +23,7 @@ export const termLabels: Record<ReplyTermName, string> = {
   installation: 'Installation',
   training: 'Training',
   spares: 'Spare parts',
+  commissioning: 'Commissioning',
   paymentTerms: 'Payment terms',
 };
 export const reasonLabels: Record<ReplyReviewReason, string> = {

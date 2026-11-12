@@ -29,9 +29,16 @@ describe('what the form may send', () => {
       /'([A-Za-z]+)'/g,
     ),
   ].map((m) => m[1]);
+  // Real-use 0020 adds one key to that list, by replacing the function with one token added.
+  const addedLater = read(
+    'packages/db/customer-real-use-migrations/0020_offer_commissioning_term.sql',
+  ).includes("''spares'',''commissioning'',''paymentTerms''")
+    ? ['commissioning']
+    : [];
+  accepted.push(...addedLater);
 
-  it('offers exactly the eighteen terms the database function accepts', () => {
-    expect(accepted).toHaveLength(18);
+  it('offers exactly the nineteen terms the database function accepts', () => {
+    expect(accepted).toHaveLength(19);
     expect([...replyTermKeys].sort()).toEqual([...accepted].sort());
   });
   it('uses the same trade terms and shipping scopes as the database and the staff schema', () => {
@@ -44,7 +51,7 @@ describe('what the form may send', () => {
     expect(replyGroups).toEqual(['what', 'price', 'terms', 'included']);
     for (const group of replyGroups)
       expect(replyFields.filter((f) => f.group === group).length).toBeGreaterThan(0);
-    expect(new Set(replyFields.map((f) => f.key)).size).toBe(18);
+    expect(new Set(replyFields.map((f) => f.key)).size).toBe(19);
   });
 
   const everything = {
@@ -66,6 +73,7 @@ describe('what the form may send', () => {
     installation: 'Not included',
     training: 'One day on site',
     spares: 'Ten percent spare parts shipped free',
+    commissioning: 'Two engineers for five days, travel included',
   };
   it('turns everything typed into the database form, which the staff schema also accepts', () => {
     const result = buildReplyTerms(everything, 'USD');
@@ -163,7 +171,7 @@ describe('what a link says about language and the terms asked for', () => {
     });
     expect(parseReplyFragment(`t=${token}`)).toEqual({ token, language: 'en', ask: [] });
   });
-  it('allows two languages and eighteen terms and nothing else', () => {
+  it('allows two languages and nineteen terms and nothing else', () => {
     expect(parseReplyFragment(`t=${token}&l=fr`).language).toBe('en');
     expect(parseReplyFragment(`t=${token}&l=ZH`).language).toBe('en');
     expect(parseReplyFragment(`t=${token}&ask=leadTime,<script>,leadTime,../x,unit`).ask).toEqual([
@@ -231,7 +239,7 @@ describe('the words of the page', () => {
   it('has a Chinese word for every English word and nothing more', () => {
     expect(Object.keys(zh).sort()).toEqual(Object.keys(en).sort());
   });
-  it('has a name for all eighteen terms and every error', () => {
+  it('has a name for all nineteen terms and every error', () => {
     for (const key of replyTermKeys) {
       expect(replyWords.en.fields[key].length).toBeGreaterThan(2);
       expect(replyWords.zh.fields[key].length).toBeGreaterThan(0);

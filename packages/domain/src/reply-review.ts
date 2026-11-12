@@ -13,7 +13,7 @@ export const replyReviewReasons = [
 ] as const;
 export type ReplyReviewReason = (typeof replyReviewReasons)[number];
 
-/** The eighteen terms a supplier reply may hold. */
+/** The nineteen terms a supplier reply may hold. */
 export const replyTermNames = [
   'specification',
   'quantity',
@@ -32,6 +32,7 @@ export const replyTermNames = [
   'installation',
   'training',
   'spares',
+  'commissioning',
   'paymentTerms',
 ] as const;
 export type ReplyTermName = (typeof replyTermNames)[number];
@@ -61,7 +62,7 @@ export const replyReviewCommand = z.discriminatedUnion('decision', [
       // The answer version the reviewer read (0 is the first answer). Needed once corrections are installed.
       seen: z.int().min(0).max(20).optional(),
       decision: z.literal('ASK'),
-      askTerms: z.array(z.enum(replyTermNames)).min(1).max(18),
+      askTerms: z.array(z.enum(replyTermNames)).min(1).max(19),
       note: note.optional(),
     })
     .strict(),
