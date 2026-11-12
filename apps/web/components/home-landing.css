@@ -1087,6 +1087,34 @@
   .ac1-stamp {
     margin-top: var(--space-2);
   }
+  /* The home footer on a phone: the same Option B footer, content and links, with tighter spacing so the page stays
+     within the 4.25 screen budget. Scoped to the home so every other page keeps its footer rhythm. */
+  .ux-guide-home.ac1-home ~ .guide-footer {
+    margin-top: var(--space-4);
+  }
+  .ux-guide-home.ac1-home ~ .guide-footer .guide-footer-top {
+    gap: var(--space-3);
+    padding-top: var(--space-4);
+  }
+  .ux-guide-home.ac1-home ~ .guide-footer .guide-footer-brand {
+    gap: var(--space-2);
+  }
+  .ux-guide-home.ac1-home ~ .guide-footer .guide-footer-promise {
+    margin-block: 0;
+  }
+  .ux-guide-home.ac1-home ~ .guide-footer .guide-footer-actions {
+    gap: var(--space-2);
+  }
+  .ux-guide-home.ac1-home ~ .guide-footer .guide-footer-groups {
+    padding-bottom: var(--space-2);
+  }
+  .ux-guide-home.ac1-home ~ .guide-footer .guide-footer-trust {
+    gap: var(--space-1);
+    padding-block: var(--space-2);
+  }
+  .ux-guide-home.ac1-home ~ .guide-footer .guide-footer-bottom {
+    padding-top: var(--space-2);
+  }
   .ac1-routes {
     gap: var(--space-2);
   }
