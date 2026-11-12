@@ -67,3 +67,49 @@
     align-self: start;
   }
 }
+
+/* Locked AC/1 look (owner-approved mockups, revision 2): one card table with a quiet head row. Table semantics and
+   the phone rows are unchanged. */
+.ux-ws-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+}
+.ux-ws-table th,
+.ux-ws-table td {
+  padding: var(--space-3) var(--space-4);
+}
+.ux-ws-table thead th {
+  padding-block: var(--space-2);
+  background: var(--surface-2);
+  font: 600 var(--text-xs) var(--font-ui);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.ux-ws-table tbody tr:last-child > :is(th, td) {
+  border-bottom: 0;
+}
+.ux-ws-table tbody tr:hover > :is(th, td) {
+  background: var(--selected-surface);
+}
+.ux-ws-table td {
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 700px) {
+  .ux-ws-table tr {
+    padding: var(--space-3) var(--space-4);
+  }
+  .ux-ws-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+  .ux-ws-table th,
+  .ux-ws-table td {
+    padding: 0;
+  }
+  .ux-ws-table tbody tr:hover > :is(th, td) {
+    background: none;
+  }
+}

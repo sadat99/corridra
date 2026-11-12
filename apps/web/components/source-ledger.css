@@ -354,3 +354,29 @@
 .ledger-num {
   font-variant-numeric: tabular-nums;
 }
+
+/* Locked AC/1 SourceLedger (owner-approved mockups, revision 2). Presentation only: the same table, words, trust
+   labels, currencies and source references. Badges are capsules; a row with a term not stated is tinted so the
+   gap reads at a glance, never ranked. */
+.ledger-missing,
+.ledger-badge {
+  border-radius: 999px;
+  font-weight: 600;
+}
+.ledger-missing,
+.ledger-badge[data-ok='false'] {
+  color: var(--caution-text);
+}
+.ledger .ledger-table tbody tr:has(.ledger-missing) {
+  background: color-mix(in srgb, var(--caution-surface) 50%, var(--surface-1));
+}
+.ledger .ledger-table tbody tr:has(.ledger-missing) > th {
+  color: var(--ink);
+  font-weight: 600;
+}
+.ledger .ledger-table thead th > b {
+  font-weight: 600;
+}
+.ledger .ledger-foot {
+  padding: var(--space-3) var(--space-4);
+}

@@ -19,5 +19,5 @@ export function MeetingsTabs({
   if (requests) tabs.push({ id: 'requests', label: 'Your Requests', panel: requests });
   if (tabs.length === 0) return null;
   if (tabs.length === 1) return <>{tabs[0]!.panel}</>;
-  return <SubTabs tabs={tabs} label="Meetings sections" />;
+  return <SubTabs tabs={tabs} label="Meetings sections" className="ux-subtabs-segmented" />;
 }

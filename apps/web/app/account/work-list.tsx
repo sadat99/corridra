@@ -13,7 +13,7 @@ import {
   workStatusWords,
   type WorkFilter,
 } from '../../lib/work-items/view';
-import type { WorkItem, WorkList as WorkListData } from '../../lib/work-items/types';
+import type { WorkFamily, WorkItem, WorkList as WorkListData } from '../../lib/work-items/types';
 import { formatDate } from '../../lib/ux/format';
 import { RowLink } from '../../components/ux/row-list';
 import { WorkFilterBar } from './work-filter';
@@ -42,6 +42,14 @@ function Starts() {
   );
 }
 
+// The Journey cell uses the filter's own words, so one idea has one word on the page. Work in no single family is Other.
+const journeyFilter: Record<WorkFamily, Exclude<WorkFilter, 'all'>> = {
+  SELL: 'sell',
+  SOURCE: 'source',
+  ORGANISE: 'organise',
+  UNCLASSIFIED: 'other',
+};
+
 function Row({ item, names }: { item: WorkItem; names: Map<string, string> }) {
   const heading = item.title ?? kindWords[item.kind];
   const status = workStatusWords(item);
@@ -53,6 +61,7 @@ function Row({ item, names }: { item: WorkItem; names: Map<string, string> }) {
       title={heading}
       titleLang={contentLang(heading)}
       cells={[
+        { name: 'Journey', value: workFilterLabels[journeyFilter[item.family]] },
         { name: 'Kind', value: kindWords[item.kind] },
         { name: 'Workspace', value: workspace ?? '', lang: contentLang(workspace ?? '') },
         { name: 'Status', value: status, status: true },

@@ -162,6 +162,8 @@
   width: min(45rem, calc(100vw - 2rem));
   max-height: min(36rem, calc(100dvh - 7rem));
   margin-block-start: min(6rem, 10dvh);
+  /* Centred over the page at every width. */
+  margin-inline: auto;
   padding: 0;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
@@ -279,20 +281,20 @@
   min-height: 44px;
   min-width: 44px;
   padding: 0 var(--space-4);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--surface-1);
-  color: var(--ink);
+  color: var(--text-2);
   font: inherit;
   font-size: var(--text-base);
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
 }
 .ux-csearch-scopes button[aria-pressed='true'] {
-  border-color: var(--selected);
-  box-shadow: inset 0 0 0 1px var(--selected);
+  border-color: color-mix(in srgb, var(--selected) 35%, var(--line));
   background: var(--selected-surface);
-  color: var(--brand-deep);
+  color: var(--selected);
+  font-weight: 600;
 }
 .ux-csearch-scopes button:focus-visible {
   outline: 3px solid var(--focus);
@@ -377,6 +379,7 @@
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 .ux-csearch-row {
   display: grid;
@@ -467,9 +470,10 @@
   visibility: visible;
 }
 .ux-csearch-list mark {
-  background: transparent;
-  color: var(--brand);
-  font-weight: 600;
+  /* Copper is a tint behind the matched words, never their colour. */
+  background: color-mix(in srgb, var(--editorial-accent) 22%, transparent);
+  color: inherit;
+  font-weight: 650;
   text-decoration: none;
 }
 .ux-csearch .ux-csearch-hint {
