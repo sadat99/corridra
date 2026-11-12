@@ -26,11 +26,13 @@ nav.ux-team-sidebar summary span,
 }
 nav.ux-team-sidebar a:hover,
 nav.ux-team-sidebar summary:hover {
-  background: var(--ac-surface-navy-hover);
+  background: var(--ac-surface-navy);
 }
 nav.ux-team-sidebar a[aria-current],
 nav.ux-team-sidebar summary[aria-current='true'] {
-  background: var(--ac-surface-navy);
+  background: var(--ac-surface-navy-hover);
+  box-shadow: none;
+  font-weight: 600;
 }
 nav.ux-team-sidebar a:focus-visible,
 nav.ux-team-sidebar summary:focus-visible {
@@ -92,38 +94,53 @@ nav.ux-team-sidebar .ux-team-group ul a::before {
   background: currentColor;
 }
 
+/* The second level is the Signal Desk segmented control: a subtle track, the current place a raised white segment. */
 .ux-team-second {
   margin: 0 0 var(--space-4);
-  border-bottom: 1px solid var(--line);
 }
 .ux-team-second ul {
   display: flex;
   flex-wrap: wrap;
-  gap: 0 var(--space-1);
+  gap: 2px;
+  width: max-content;
+  max-width: 100%;
   margin: 0;
-  padding: 0;
+  padding: 3px;
   list-style: none;
+  border: 1px solid var(--ac-border);
+  border-radius: var(--radius-md);
+  background: var(--ac-surface-subtle);
 }
 .ux-team-second a {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
   padding: 0 var(--space-3);
-  border-bottom: 3px solid transparent;
-  color: var(--ink);
-  font-weight: 600;
+  border-radius: var(--radius-sm);
+  color: var(--ac-text-secondary);
+  font-weight: 500;
   text-decoration: none;
+  white-space: nowrap;
 }
 .ux-team-second a:hover {
-  background: var(--surface-2);
+  color: var(--ac-ink);
+  background: var(--ac-paper);
 }
 .ux-team-second a[aria-current='page'] {
-  border-bottom-color: var(--selected);
-  color: var(--brand-deep);
+  background: var(--ac-paper);
+  color: var(--ac-ink);
+  font-weight: 600;
+  box-shadow: var(--shadow-1);
 }
 .ux-team-second a:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: -3px;
+}
+@media (forced-colors: active) {
+  .ux-team-second a[aria-current='page'] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
 }
 
 /* The command palette: the dialog the Search button and Ctrl K open (docs/revamp/specs/navigation-v1/command-palette-search.md).
