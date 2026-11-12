@@ -168,7 +168,7 @@ describe('the five Admin pages read as links, not expanders', () => {
   });
   test('in forced colours the dot and the focus ring use system colours', () => {
     const forced = /^@media \(forced-colors: active\)$/;
-    expect(declared(only(find(teamRules, dot, forced)), 'background')).toBe('CanvasText');
+    expect(declared(only(find(teamRules, dot, forced)), 'background')).toBe('LinkText');
     const ring = only(
       find(
         teamRules,
@@ -194,6 +194,37 @@ describe('the five Admin pages read as links, not expanders', () => {
     expect(sidebar).toContain('title={labelText(adminItem)}');
     expect(sidebar).not.toContain('scrollIntoView');
     expect(sidebar).not.toContain('onToggle');
+  });
+});
+
+describe('Stronger Colours gives the sidebar scrollbar its white thumb and changes nothing else', () => {
+  // The Today fixture does not load comfort.css, so this source check is the only guard for these two rules.
+  const comfortRules = rulesOf(read('apps/web/app/comfort.css'));
+  const blocks = comfortRules.filter(
+    (rule) =>
+      rule.selector === "html[data-contrast='more'] nav.ux-team-sidebar" ||
+      rule.selector === 'html:root nav.ux-team-sidebar',
+  );
+  test('both blocks (the chosen setting and the device setting) carry the thumb, the track and the white stripe colour', () => {
+    expect(blocks).toHaveLength(2);
+    expect(blocks.map((rule) => rule.context.length).sort()).toEqual([0, 1]);
+    for (const rule of blocks) {
+      expect(declared(rule, 'scrollbar-width')).toBe('auto');
+      expect(declared(rule, 'scrollbar-color')).toBe('var(--on-brand) var(--ac-surface-navy)');
+      expect(declared(rule, '--selected')).toBe('var(--on-brand)');
+    }
+  });
+  test('the ring and the stripe rules are as W10 pinned them: no scrollbar declaration, no new box-shadow or outline', () => {
+    const ringRules = comfortRules.filter((rule) =>
+      /nav\.ux-team-sidebar\)? :focus-visible/.test(rule.selector),
+    );
+    expect(ringRules).toHaveLength(2);
+    for (const rule of ringRules) {
+      expect(rule.body).toBe(
+        'outline-color: var(--on-brand); box-shadow: 0 0 0 2px var(--brand-deep);',
+      );
+    }
+    for (const rule of blocks) expect(rule.body).not.toMatch(/box-shadow|outline/);
   });
 });
 

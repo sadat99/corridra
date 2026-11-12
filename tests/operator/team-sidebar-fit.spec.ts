@@ -344,6 +344,25 @@ test.describe('the five Admin pages', () => {
   });
 });
 
+test.describe('the Admin chevron in a right-to-left page', () => {
+  test('points the reading direction when closed and turns down when open, once the transition has settled', async ({
+    page,
+  }) => {
+    await open(page, { width: 1440, height: 900 });
+    // The frame carries the page's direction, as the Arabic page does (ws-e/team-quality Q-04).
+    await page.locator('.ux-leftnav-frame').evaluate((el) => el.setAttribute('dir', 'rtl'));
+    await page.addStyleTag({ content: '.ux-team-chevron { transition: none !important; }' });
+    const chevron = page.locator('details.ux-team-group > summary svg.ux-team-chevron');
+    const transform = () => chevron.evaluate((el) => getComputedStyle(el).transform);
+    expect(await transform()).toBe('matrix(-1, 0, 0, 1, 0, 0)');
+    await adminSummary(page).click();
+    await expect(page.locator('details.ux-team-group')).toHaveJSProperty('open', true);
+    // rotate(90deg) is matrix(cos, sin, -sin, cos): (0, 1, -1, 0).
+    const open90 = (await transform()).match(/-?[\d.]+(?:e-?\d+)?/g)?.map(Number) ?? [];
+    expect(open90.map((n) => Math.round(n))).toEqual([0, 1, -1, 0, 0, 0]);
+  });
+});
+
 test.describe('the phone drawer', () => {
   for (const [width, height] of [
     [768, 900],

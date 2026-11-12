@@ -551,7 +551,7 @@ nav.ux-team-sidebar .operator-icon {
 }
 @media (forced-colors: active) {
   nav.ux-team-sidebar .ux-team-group ul a::before {
-    background: CanvasText;
+    background: LinkText;
   }
   nav.ux-team-sidebar a[aria-current='page'],
   nav.ux-team-sidebar summary[aria-current='true'] {
