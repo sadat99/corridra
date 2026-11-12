@@ -42,7 +42,7 @@ An organiser can already create a programme, invite participants by private code
 
 ## Amendment: redaction of applicant words under an erasure request
 
-Privacy accepted the launch of public applications without automated redaction. This amendment adds it, as an optional module `packages/db/customer-programme-erasure-migrations/` (registry `customer_programme_erasure_migrations`, installer `migrateCustomerProgrammeErasure`, run inside the programme pages install block).
+Privacy accepted the launch of public applications without automated redaction. This amendment adds it, as an optional module `packages/db/customer-programme-erasure-migrations/` (registry `customer_programme_erasure_migrations`, installer `migrateCustomerProgrammeErasure`, workflow option `programme_erasure` of `field_modules_action`).
 
 1. Staff, under the existing erasure authority, call `customer.programme_words_remove(command, erasure_request)`. The person comes from the erasure request, never from input. It follows `problem_report_remove_words`: staff privacy actor and erasure scope, the same two advisory locks, command replay, only while the request is in progress or completed, a cutoff at completion (or now while in progress).
 2. It replaces the words with a fixed placeholder in: the application label and statement, the invitation label copied from the application, the registration label, every label revision, and the replay records of joining and of a label correction. Ids, people, times, decisions, invitations, registrations, fees, money, audit and event rows are not deleted or changed. Organiser words (decision notes, invitation labels typed for a code invitation) are not touched.

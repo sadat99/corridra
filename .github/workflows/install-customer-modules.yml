@@ -82,6 +82,7 @@ on:
             lifecycle_pause,
             problem_reports,
             programme_pages,
+            programme_erasure,
             contact_changes_install,
             contact_changes_enable,
             contact_changes_pause,
@@ -202,6 +203,7 @@ jobs:
           ACCOUNT_LIFECYCLE_REASON: ${{ inputs.field_modules_action == 'lifecycle_enable' && 'Owner opened account close and erasure requests from the install workflow' || inputs.field_modules_action == 'lifecycle_pause' && 'Owner paused account close and erasure requests from the install workflow' || '' }}
           PROBLEM_REPORTS_ACTION: ${{ inputs.field_modules_action == 'problem_reports' && 'install' || 'unchanged' }}
           PROGRAMME_PAGES_ACTION: ${{ inputs.field_modules_action == 'programme_pages' && 'install' || 'unchanged' }}
+          PROGRAMME_ERASURE_ACTION: ${{ inputs.field_modules_action == 'programme_erasure' && 'install' || 'unchanged' }}
           COUNTERPARTY_CHANGES_ACTION: ${{ inputs.field_modules_action == 'contact_changes_install' && 'install' || inputs.field_modules_action == 'contact_changes_enable' && 'enable' || inputs.field_modules_action == 'contact_changes_pause' && 'pause' || 'unchanged' }}
           COUNTERPARTY_CHANGES_REASON: ${{ inputs.field_modules_action == 'contact_changes_enable' && 'Owner opened withdraw, correct and hide from the install workflow' || inputs.field_modules_action == 'contact_changes_pause' && 'Owner paused withdraw, correct and hide from the install workflow' || '' }}
           REPLY_REVIEW_REASON: ${{ inputs.reply_review_reason }}

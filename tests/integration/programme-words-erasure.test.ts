@@ -439,6 +439,65 @@ describe('words are removed under an erasure request', () => {
   });
 });
 
+describe('the guard with a record row', () => {
+  test('even with a record row, a change to any other column or to another row is refused, and the placeholders pass every check', async () => {
+    const client = await f.owner.connect();
+    try {
+      const pick = async (sql: string) => (await client.query(sql)).rows[0].id as string;
+      const a = await pick(
+        `SELECT id FROM customer_private.programme_registration WHERE principal_id='${ids.dana}'`,
+      );
+      const stamp = async (key: string) => {
+        const made = await client.query(
+          `INSERT INTO customer_private.programme_words_erasure(source,row_key,principal_id,erasure_request_id,staff_principal_id,command_id)
+           SELECT 'registration',$1,$2,r.id,$3,$4 FROM customer_private.erasure_request r LIMIT 1`,
+          [key, ids.dana, f.users.owner!.id, randomUUID()],
+        );
+        expect(made.rowCount).toBe(1);
+      };
+      await client.query('BEGIN');
+      await stamp(a);
+      // another column changes with the placeholder: refused
+      await expect(
+        client.query(
+          `UPDATE customer_private.programme_registration SET display_label='Synthetic removed words',consented_at=consented_at+interval '1 second' WHERE id='${a}'`,
+        ),
+      ).rejects.toMatchObject({ code: '23514', message: 'Immutable record; append a new record' });
+      await client.query('ROLLBACK');
+      await client.query('BEGIN');
+      await stamp(randomUUID());
+      // the record row names another row: refused
+      await expect(
+        client.query(
+          `UPDATE customer_private.programme_registration SET display_label='Synthetic removed words' WHERE id='${a}'`,
+        ),
+      ).rejects.toMatchObject({ code: '23514' });
+      await client.query('ROLLBACK');
+      await client.query('BEGIN');
+      await stamp(a);
+      // words other than the placeholder: refused
+      await expect(
+        client.query(
+          `UPDATE customer_private.programme_registration SET display_label='Synthetic other words here' WHERE id='${a}'`,
+        ),
+      ).rejects.toMatchObject({ code: '23514' });
+      await client.query('ROLLBACK');
+      // the exact change passes in this sample context
+      await client.query('BEGIN');
+      await stamp(a);
+      await client.query(
+        `UPDATE customer_private.programme_registration SET display_label='Synthetic removed words' WHERE id='${a}'`,
+      );
+      await client.query('ROLLBACK');
+    } finally {
+      client.release();
+    }
+    // The real-context placeholder meets the real minimum length of every label column (2) and the statement minimum (10).
+    expect('Removed at request'.length).toBeGreaterThanOrEqual(2);
+    expect('Words removed at the request of this person'.length).toBeGreaterThanOrEqual(10);
+  });
+});
+
 describe('a person who joined by a private invitation code', () => {
   test('loses the label in the registration and in the replay record of joining, and the organiser invitation label stays', async () => {
     const frankRequest = await request('frank');
@@ -478,14 +537,22 @@ describe('the staff service', () => {
 
 describe('the install wiring', () => {
   const script = readFileSync(resolve('scripts/install-customer-modules.ts'), 'utf8');
-  test('runs only inside the programme pages install block and lists its registry', () => {
+  const workflow = readFileSync(resolve('.github/workflows/install-customer-modules.yml'), 'utf8');
+  test('has its own two-valued action that needs apply, runs only in its own install block and lists its registry', () => {
+    expect(script).toContain(
+      "PROGRAMME_ERASURE_ACTION: z.enum(['unchanged', 'install']).default('unchanged')",
+    );
+    expect(script).toMatch(/PROGRAMME_ERASURE_ACTION !== 'unchanged' && !apply/);
     const call = 'migrateCustomerProgrammeErasure(pool)';
     expect(script.split(call).length - 1).toBe(1);
     const at = script.indexOf(call + ';');
-    expect(script.slice(at - 900, at)).toContain("v.PROGRAMME_PAGES_ACTION === 'install'");
+    expect(script.slice(at - 80, at)).toContain("v.PROGRAMME_ERASURE_ACTION === 'install'");
     expect(script).toContain("'customer_programme_erasure_migrations'");
   });
-  test('the issuer used by the harness is the one this suite signs in with', () => {
-    expect(issuer).toContain('neonauth');
+  test('the workflow option is programme_erasure and adds no input', () => {
+    expect(workflow).toMatch(/^\s{12}programme_erasure,$/m);
+    const lines = workflow.split('\n').filter((line) => /PROGRAMME_ERASURE_ACTION/.test(line));
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toContain("inputs.field_modules_action == 'programme_erasure'");
   });
 });

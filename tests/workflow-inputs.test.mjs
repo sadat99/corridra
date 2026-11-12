@@ -87,6 +87,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'lifecycle_pause',
     'problem_reports',
     'programme_pages',
+    'programme_erasure',
     'contact_changes_install',
     'contact_changes_enable',
     'contact_changes_pause',
@@ -120,6 +121,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     ['lifecycle_pause', u, u, u, u, u, 'pause', u, u],
     ['problem_reports', u, u, u, u, u, u, 'install', u],
     ['programme_pages', u, u, u, u, u, u, u, 'install'],
+    ['programme_erasure', u, u, u, u, u, u, u, u],
     ['contact_changes_install', u, u, u, u, u, u, u, u],
     ['contact_changes_enable', u, u, u, u, u, u, u, u],
     ['contact_changes_pause', u, u, u, u, u, u, u, u],
@@ -137,6 +139,11 @@ test('each field-module choice maps to install only and reaches the exact-head c
     assert.equal(evaluate(env.PROBLEM_REPORTS_ACTION, inputs), reports);
     // Programme pages (ADR-080): the choice installs the database module and nothing else; the app switch is separate.
     assert.equal(evaluate(env.PROGRAMME_PAGES_ACTION, inputs), pages);
+    // Programme words erasure: its own choice installs the database module and nothing else.
+    assert.equal(
+      evaluate(env.PROGRAMME_ERASURE_ACTION, inputs),
+      choice === 'programme_erasure' ? 'install' : u,
+    );
     for (const reason of [env.WORKSPACE_LIFECYCLE_REASON, env.ACCOUNT_LIFECYCLE_REASON]) {
       const value = evaluate(reason, inputs);
       if (g4g5 === 'enable' || g4g5 === 'pause') {

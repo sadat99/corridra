@@ -97,6 +97,7 @@ const v = z
       .default('unchanged'),
     PROBLEM_REPORTS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     PROGRAMME_PAGES_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
+    PROGRAMME_ERASURE_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     COUNTERPARTY_CHANGES_ACTION: z
       .enum(['unchanged', 'install', 'enable', 'pause'])
       .default('unchanged'),
@@ -254,6 +255,8 @@ if (v.PROBLEM_REPORTS_ACTION !== 'unchanged' && !apply)
   throw new Error('Problem report installation requires INSTALL_APPLY=yes');
 if (v.PROGRAMME_PAGES_ACTION !== 'unchanged' && !apply)
   throw new Error('Programme page installation requires INSTALL_APPLY=yes');
+if (v.PROGRAMME_ERASURE_ACTION !== 'unchanged' && !apply)
+  throw new Error('Programme words erasure installation requires INSTALL_APPLY=yes');
 if (v.COUNTERPARTY_CHANGES_ACTION !== 'unchanged' && !apply)
   throw new Error('Contact and note changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.COUNTERPARTY_CHANGES_ACTION) && !v.COUNTERPARTY_CHANGES_REASON)
@@ -624,8 +627,10 @@ try {
       console.log(
         'installed or already current: programme pages and applications (application switch unchanged)',
       );
-      // Redaction of the applicant's and participant's words under an erasure request (privacy). It installs the account
-      // lifecycle and participant label modules it depends on, both with their controls left as they were.
+    }
+    // Redaction of the applicant's and participant's words under an erasure request (privacy). Never part of the base run. It
+    // installs the account lifecycle, programme pages and participant label modules it depends on, controls left as they were.
+    if (v.PROGRAMME_ERASURE_ACTION === 'install') {
       await migrateCustomerProgrammeErasure(pool);
       console.log('installed or already current: programme words erasure');
     }
