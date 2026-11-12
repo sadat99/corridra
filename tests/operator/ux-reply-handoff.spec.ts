@@ -158,6 +158,9 @@ type Options = {
   missionsV2?: boolean;
   /** Never answers the prefill request. */
   prefillStalls?: boolean;
+  /** Milliseconds to hold the flags answer, and an answer to give instead of the flags. */
+  flagsDelay?: number;
+  flagsAnswer?: Answer;
 };
 /** Answers the workspace interfaces and records what the page asked for. */
 async function stub(page: Page, options: Options) {
@@ -168,8 +171,14 @@ async function stub(page: Page, options: Options) {
     const url = new URL(request.url());
     const json = (status: number, value: unknown) =>
       route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(value) });
-    if (url.pathname === '/api/team-work/flags')
-      return json(200, { missionsV2: options.missionsV2 !== false });
+    if (url.pathname === '/api/team-work/flags') {
+      if (options.flagsDelay) await new Promise((done) => setTimeout(done, options.flagsDelay));
+      const answer = options.flagsAnswer ?? {
+        status: 200,
+        body: { missionsV2: options.missionsV2 !== false },
+      };
+      return json(answer.status, answer.body);
+    }
     if (url.pathname === '/api/reply/review') return json(200, { open: false, reviews: published });
     if (url.pathname === '/api/workspace/reply-quotation-prefill') {
       prefillRequests.push(url.search);
@@ -285,6 +294,36 @@ test.describe('the reply card', () => {
     await expect(page.getByRole('link', { name: 'Open Prepared Offer' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Copy the Prepared Quotation' })).toBeVisible();
   });
+  test('says it is checking while the mission-pages answer is pending, then shows the link', async ({
+    page,
+  }) => {
+    const { prefillRequests } = await stub(page, { flagsDelay: 2500 });
+    await openCard(page, 'owner');
+    // The prefill answer has come back, so what shows now is the wait for the mission-pages answer.
+    await expect.poll(() => prefillRequests.length).toBe(1);
+    await page.waitForTimeout(600);
+    await expect(page.getByText('Checking whether this reply can be prepared.')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Open Prepared Offer' })).toHaveCount(0);
+    await expect(page.locator('body')).not.toContainText('not available yet');
+    await expect(page.getByRole('button', { name: 'Copy the Prepared Quotation' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Open Prepared Offer' })).toBeVisible();
+  });
+  for (const status of [500, 401]) {
+    test(`says it could not check, not that offers are unavailable, when the flags answer ${status}`, async ({
+      page,
+    }) => {
+      await stub(page, { flagsAnswer: { status, body: { error: 'No' } } });
+      await openCard(page, 'owner');
+      await expect(
+        page.getByText(
+          'We could not check whether this offer can be opened. Nothing was changed. Copy the prepared quotation below and use it to fill the form by hand.',
+        ),
+      ).toBeVisible();
+      await expect(page.locator('body')).not.toContainText('not available yet');
+      await expect(page.getByRole('link', { name: 'Open Prepared Offer' })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Copy the Prepared Quotation' })).toBeVisible();
+    });
+  }
   test('does not call a refused reply prepared', async ({ page }) => {
     await stub(page, { prefill: { status: 200, body: { eligible: false, reason: 'REJECTED' } } });
     await openCard(page, 'owner');

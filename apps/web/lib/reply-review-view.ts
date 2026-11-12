@@ -115,6 +115,8 @@ export const prefillFailureMessage =
   'We could not check this reply. Nothing was changed. Try again, or copy the prepared quotation.';
 export const prefillUnavailableMessage =
   'Prepared offers are not available yet on this system. Copy the prepared quotation below and use it to fill the form by hand.';
+export const prefillLinkUnknownMessage =
+  'We could not check whether this offer can be opened. Nothing was changed. Copy the prepared quotation below and use it to fill the form by hand.';
 export const prefillDeniedMessage =
   'You can review this reply, but only an owner, admin or operator can record an offer from it.';
 export const prefillMessage = (code: string) =>

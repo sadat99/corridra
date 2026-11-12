@@ -16,6 +16,7 @@ import {
   preparedQuotation,
   prefillDeniedMessage,
   prefillFailureMessage,
+  prefillLinkUnknownMessage,
   prefillMessage,
   prefillUnavailableMessage,
   reasonLabels,
@@ -216,17 +217,23 @@ function ReplyCard({
   const prefill = useReplyPrefill(tenant, published && canRecord ? reply.id : null);
   // Mission pages exist only while CORRIDRA_UX_MISSIONS_V2 is on (the page answers 404 otherwise), so the link
   // is offered only once the flag read the Missions panel uses says they are on.
-  const [missionPages, setMissionPages] = useState(false);
+  // 'failed' is a check that could not be made, which is not the same as the pages being off.
+  const [missionPages, setMissionPages] = useState<'unknown' | 'on' | 'off' | 'failed'>('unknown');
   const eligible = prefill.kind === 'eligible';
   useEffect(() => {
     if (!eligible) return;
     let active = true;
     fetch('/api/team-work/flags')
-      .then(async (r) => (r.ok ? ((await r.json()) as { missionsV2?: boolean }) : null))
-      .then((flags) => {
-        if (active) setMissionPages(flags?.missionsV2 === true);
+      .then(async (r) => {
+        if (!r.ok) return 'failed' as const;
+        const flags = (await r.json()) as { missionsV2?: unknown } | null;
+        if (typeof flags?.missionsV2 !== 'boolean') return 'failed' as const;
+        return flags.missionsV2 ? ('on' as const) : ('off' as const);
       })
-      .catch(() => {});
+      .catch(() => 'failed' as const)
+      .then((next) => {
+        if (active) setMissionPages(next);
+      });
     return () => {
       active = false;
     };
@@ -360,7 +367,7 @@ function ReplyCard({
           {canRecord && (
             <div className="reply-handoff-status" role="status">
               {prefill.kind === 'loading' && <p>Checking whether this reply can be prepared.</p>}
-              {prefill.kind === 'eligible' && missionPages && (
+              {prefill.kind === 'eligible' && missionPages === 'on' && (
                 <a
                   className="primary-link"
                   href={`/operator/missions/${prefill.prefill.missionId}?workspace=${encodeURIComponent(tenant)}&reply=${reply.id}#requirements`}
@@ -368,7 +375,15 @@ function ReplyCard({
                   Open Prepared Offer
                 </a>
               )}
-              {prefill.kind === 'eligible' && !missionPages && <p>{prefillUnavailableMessage}</p>}
+              {prefill.kind === 'eligible' && missionPages === 'unknown' && (
+                <p>Checking whether this reply can be prepared.</p>
+              )}
+              {prefill.kind === 'eligible' && missionPages === 'off' && (
+                <p>{prefillUnavailableMessage}</p>
+              )}
+              {prefill.kind === 'eligible' && missionPages === 'failed' && (
+                <p>{prefillLinkUnknownMessage}</p>
+              )}
               {prefill.kind === 'ineligible' && <p>{prefillMessage(prefill.code)}</p>}
               {prefill.kind === 'unavailable' && <p>{prefillUnavailableMessage}</p>}
               {prefill.kind === 'denied' && <p>{prefillDeniedMessage}</p>}
