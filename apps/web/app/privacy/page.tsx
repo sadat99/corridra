@@ -5,6 +5,7 @@ import { realUseEnabled } from '@corridra/auth/customer-production';
 import { customerSpecificationConfirmationEnabled } from '@corridra/auth/customer-specification-confirmation';
 import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-requests';
 import { customerProgrammePagesEnabled } from '@corridra/auth/customer-programme-publication';
+import { customerMissionSharesEnabled } from '@corridra/auth/customer-mission-shares';
 import { PublicShell } from '../../components/public-shell';
 import { languagesWithForm } from '../../lib/i18n/pages';
 import { supportWhatsappHref } from '../../lib/ux/support-whatsapp';
@@ -57,6 +58,8 @@ export default function Page() {
   const updatedDay = specificationConfirmation || arrangements || translatedForm ? '30' : '25';
   // Public programme pages and applications (ADR-080) are described only while the pages can be published and read.
   const programmePages = customerProgrammePagesEnabled();
+  // Starting a request from an application is described only while the objective path that offers it is shown.
+  const objectivePath = programmePages && customerMissionSharesEnabled();
   const updated = programmePages ? '11 November 2026' : `${updatedDay} October 2026`;
   const noticeVersion = real ? 'real-intake-2026-10-21-v1' : 'synthetic-intake-2026-10-05-v1';
   return (
@@ -449,6 +452,15 @@ export default function Page() {
                   contact us as described under Retention and deletion requests. Automatic deletion
                   of applications is not operational yet.
                 </p>
+                {objectivePath && (
+                  <p>
+                    After you join, you can start a private request from your application. Only when
+                    you press that button are your words copied into a request draft in your own
+                    workspace, which you review before sending. From then on that copy is part of
+                    the request and follows what this notice says about requests, including
+                    deletion; it is separate from your application.
+                  </p>
+                )}
               </div>
             </article>
           )}

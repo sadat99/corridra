@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { OwnFeeStatus, OwnPlace } from '@corridra/auth/customer-programme-terms';
+import { ParticipantPaymentDeclaration } from './participant-payment-declaration';
 import {
   failureText,
   money,
@@ -47,10 +48,12 @@ function Terms({
   terms,
   fees,
   status,
+  who,
 }: {
   terms: NonNullable<OwnPlace['terms']>;
   fees: OwnPlace['fees'];
   status: OwnFeeStatus | null;
+  who: { subject: string; issuer: string; registrationId: string };
 }) {
   return (
     <dl>
@@ -81,6 +84,12 @@ function Terms({
           <dt>Fee status</dt>
           <dd>
             <FeeStatus status={status} />
+            <ParticipantPaymentDeclaration
+              {...who}
+              feeCurrencies={status.amounts
+                .filter((a) => BigInt(a.dueMinor) > BigInt(0))
+                .map((a) => a.currency)}
+            />
           </dd>
         </>
       )}
@@ -267,7 +276,12 @@ function ScopedPlace({ subject, issuer, registrationId }: Props) {
           {data.terms && (
             <details>
               <summary>Programme Terms, Version {data.terms.version}</summary>
-              <Terms terms={data.terms} fees={data.fees} status={feeStatus} />
+              <Terms
+                terms={data.terms}
+                fees={data.fees}
+                status={feeStatus}
+                who={{ subject, issuer, registrationId }}
+              />
             </details>
           )}
           {c && (

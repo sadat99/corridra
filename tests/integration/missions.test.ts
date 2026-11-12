@@ -302,6 +302,9 @@ test('queue pagination retains every mission and server filters include overdue 
   });
   const overdue = await s.queue(f.users.operator.ctx, 'overdue');
   expect(overdue.missions.some((m) => m.id === id)).toBe(true);
+  const stale = await s.queue(f.users.operator.ctx, 'stale');
+  expect(stale.missions.some((m) => m.id === id)).toBe(false);
+  expect(stale.total).toBe(0);
   expect((await s.queue(f.users.other.ctx)).total).toBe(0);
   expect(performance.now() - readStarted).toBeLessThan(10000);
 });

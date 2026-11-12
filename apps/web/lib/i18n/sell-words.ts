@@ -14,4 +14,9 @@ export const sellWords = {
   'sell.board.proposals': 'proposals',
   'sell.board.agreements': 'agreements',
   'sell.board.notMeasured': 'Not measured yet',
+  'sell.board.approached': 'buyers approached',
+  'sell.board.responded': 'buyers responded',
+  'sell.board.interested': 'buyers interested',
+  'sell.board.notShared': 'Not shared',
+  'sell.board.outreachAsOf': 'Outreach counts as of',
 } as const;
