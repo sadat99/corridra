@@ -55,3 +55,53 @@
     white-space: normal;
   }
 }
+
+/* Locked AC/1 look (owner-approved mockups, revision 2): one card table with a quiet head row. Table semantics and
+   the phone rows are unchanged. */
+.ux-co-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+}
+.ux-co-table th,
+.ux-co-table td {
+  padding: var(--space-3) var(--space-4);
+}
+.ux-co-table thead th {
+  padding-block: var(--space-2);
+  background: var(--surface-2);
+  font: 600 var(--text-xs) var(--font-ui);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.ux-co-table tbody tr:last-child > :is(th, td) {
+  border-bottom: 0;
+}
+.ux-co-table tbody tr:hover > :is(th, td) {
+  background: var(--selected-surface);
+}
+.ux-co-table td {
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 700px) {
+  .ux-co-table tr {
+    padding: var(--space-3) var(--space-4);
+  }
+  .ux-co-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+  .ux-co-table th,
+  .ux-co-table td {
+    padding: 0;
+  }
+  .ux-co-table tbody tr:hover > :is(th, td) {
+    background: none;
+  }
+}
+/* The search over loaded companies is a short field, not a full-width bar. */
+section[aria-label='Your approved company portfolio'] > label.field {
+  max-width: 24rem;
+}
