@@ -433,18 +433,6 @@
   font-size: var(--text-xs);
   font-weight: 650;
 }
-.move-tag[data-journey='source'] {
-  background: var(--selected-surface);
-  color: var(--brand);
-}
-.move-tag[data-journey='sell'] {
-  background: var(--positive-surface);
-  color: var(--positive);
-}
-.move-tag[data-journey='organise'] {
-  background: var(--caution-surface);
-  color: var(--ac-copper-ink);
-}
 .move-journey-body {
   display: grid;
   gap: var(--space-3);
@@ -540,10 +528,6 @@
 .move-task-tag {
   margin-inline-end: var(--space-2);
   vertical-align: 1px;
-}
-.move-tag[data-journey='part'] {
-  background: var(--surface-2);
-  color: var(--text-2);
 }
 .move-card > .move-head-tag {
   margin-inline-start: var(--space-3);
@@ -923,4 +907,211 @@
 }
 .move-hello {
   margin-top: calc(-1 * var(--space-4));
+}
+
+/* Locked AC/1 look (owner-approved mockups, revision 2). Presentation only: the same tasks, cards, links and words.
+   The next-step card: the first task is the one navy card on the page, with one light button. Every other task
+   stays a white row. */
+.move-items > .move-list:first-of-type > li:first-child {
+  margin: var(--space-2);
+  border-radius: var(--radius-lg);
+  background: var(--brand-deep);
+  box-shadow: var(--shadow-2);
+  color: var(--on-brand);
+}
+.move-items > .move-list:first-of-type > li:first-child > .mr-move {
+  gap: var(--space-3);
+  padding-block: var(--space-4);
+  color: var(--on-brand);
+}
+.move-view .move-items > .move-list:first-of-type > li:first-child .mr-move h3 {
+  color: var(--on-brand);
+  font-family: var(--serif);
+  font-size: var(--text-xl);
+  font-weight: 500;
+  line-height: 1.25;
+  white-space: normal;
+}
+.move-view
+  .move-items
+  > .move-list:first-of-type
+  > li:first-child
+  .mr-move
+  :is(.mr-move-context, .mr-move-meta) {
+  color: color-mix(in srgb, var(--on-brand) 82%, transparent);
+}
+.move-items > .move-list:first-of-type > li:first-child > .mr-move::before {
+  background: var(--nav-hover);
+}
+.move-items > .move-list:first-of-type > li:first-child > .mr-move::after {
+  background: var(--on-brand);
+}
+/* The one light button: below the words on the content's left edge up to 64rem, and at the end of the row from
+   64rem, as every other task's action is, so a busy Home stays within one desktop screen. */
+@media (max-width: 63.99rem) {
+  .move-items > .move-list:first-of-type > li:first-child > .mr-move {
+    flex-wrap: wrap;
+  }
+  .move-items > .move-list:first-of-type > li:first-child .mr-move-body {
+    flex: 1 1 100%;
+  }
+}
+.move-view
+  .move-items
+  > .move-list:first-of-type
+  > li:first-child
+  .mr-move
+  > .mr-move-action.button.button-secondary {
+  flex: none;
+  width: auto;
+  min-height: 44px;
+  padding-inline: var(--space-4);
+  border-color: var(--on-brand);
+  background: var(--on-brand);
+  color: var(--brand-deep);
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+.move-view
+  .move-items
+  > .move-list:first-of-type
+  > li:first-child
+  .mr-move
+  > .mr-move-action.button.button-secondary:hover {
+  background: var(--selected-surface);
+  color: var(--brand-deep);
+}
+.move-view .move-items > .move-list:first-of-type > li:first-child .mr-move-action:focus-visible,
+.move-view .move-items > .move-list:first-of-type > li:first-child > .button:focus-visible {
+  outline: 3px solid var(--on-brand);
+  outline-offset: 2px;
+}
+/* A reply that is the next step keeps its quiet Mark As Read under the card, outlined in light. */
+.move-view .move-items > .move-list:first-of-type > li.move-reply:first-child > .button {
+  border-color: color-mix(in srgb, var(--on-brand) 60%, transparent);
+  background: transparent;
+  color: var(--on-brand);
+}
+.move-view .move-items > .move-list:first-of-type > li.move-reply:first-child > .button:hover {
+  background: var(--nav-hover);
+}
+.move-items > .move-list:first-of-type > li:first-child + li {
+  border-top: 0;
+}
+
+/* Your journeys: three cards of unequal width on a wide screen, the lead (most recent activity) widest. The
+   four-card sideways row and the phone row are the rules above, unchanged. */
+@media (min-width: 64rem) {
+  .move-journeys:has(> .move-journey:nth-of-type(3)):not(:has(> .move-journey:nth-of-type(4))) {
+    grid-template-columns: minmax(0, 1.5fr) repeat(2, minmax(0, 1fr));
+  }
+  .move-journeys:has(> .move-journey:nth-of-type(2)):not(:has(> .move-journey:nth-of-type(3))) {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  }
+  .move-journeys:not(:has(> .move-journey:nth-of-type(2))) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.move-journey {
+  box-shadow: none;
+}
+.move-journey[data-lead='true'] {
+  border-color: color-mix(in srgb, var(--selected) 30%, var(--line));
+  box-shadow: var(--shadow-2);
+}
+.move-journey-head,
+.move-journey-foot {
+  border: 0;
+}
+.move-journey-head {
+  padding-block-end: 0;
+}
+.move-view .move-journey[data-lead='true'] .move-stat dd:not([data-words='true']) {
+  font-family: var(--serif);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  line-height: 1.1;
+}
+.move-view .move-journey .move-stat dd {
+  font-weight: 600;
+}
+.move-stat {
+  background: var(--surface-1);
+}
+.move-stat[data-warn='true'] {
+  border-color: color-mix(in srgb, var(--caution) 35%, var(--line));
+  background: var(--caution-surface);
+}
+.move-view .move-journey .move-stat dt {
+  color: var(--text-3);
+}
+
+/* Journey tags: a neutral tag with a coloured dot. Status colours carry meaning only, so none is used for a
+   journey; each word keeps an ink-safe colour of its own. */
+.move-tag[data-journey] {
+  gap: 6px;
+  border: 1px solid var(--line);
+  background: var(--surface-1);
+  color: var(--ink);
+}
+.move-tag[data-journey]::before {
+  content: '';
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-3);
+}
+.move-tag[data-journey='source']::before {
+  background: var(--brand);
+}
+.move-tag[data-journey='sell']::before {
+  background: var(--editorial-accent);
+}
+.move-tag[data-journey='organise']::before {
+  background: var(--brand-deep);
+}
+.move-tag[data-journey='source'] {
+  color: var(--brand);
+}
+.move-tag[data-journey='sell'] {
+  color: var(--ac-copper-ink);
+}
+.move-tag[data-journey='organise'] {
+  color: var(--brand-deep);
+}
+
+/* The switch: the segmented control, counts in mono. */
+.move-seg {
+  flex-wrap: wrap;
+  overflow-x: visible;
+}
+.move-seg em {
+  background: transparent;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+}
+.move-seg a[aria-current='page'] em {
+  background: transparent;
+  color: var(--ink);
+}
+
+/* Room for the three numbers in the narrower cards, so no label is cut. */
+.move-journey-head,
+.move-journey-body {
+  padding-inline: var(--space-4);
+}
+.move-journey-foot {
+  padding-inline-start: var(--space-4);
+}
+.move-view .move-journey .move-stats {
+  gap: var(--space-1);
+}
+.move-view .move-journey .move-stat {
+  padding-inline: 6px;
+}
+/* The journey row scrolls sideways on a phone; it holds its own visually hidden labels, so a card out of view never
+   widens the page. */
+.move-journeys {
+  position: relative;
 }

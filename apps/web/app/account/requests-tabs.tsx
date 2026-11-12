@@ -31,5 +31,5 @@ export function RequestsTabs({
     tabs.push({ id: 'saved', label: 'Saved', panel: saved, aliases: ['customer-requests'] });
   if (tabs.length === 0) return null;
   if (tabs.length === 1) return <>{tabs[0]!.panel}</>;
-  return <SubTabs tabs={tabs} label="Requests sections" />;
+  return <SubTabs tabs={tabs} label="Requests sections" className="ux-subtabs-segmented" />;
 }

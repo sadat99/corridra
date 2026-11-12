@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import type { DeliveryReport } from '@corridra/delivery/report';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { formatDateTime } from '../../../../lib/ux/format';
@@ -16,11 +17,13 @@ import { sellFacts } from '../../../../lib/home-journeys/facts';
 import { fill } from '../../../../lib/i18n/fill';
 import { localeMeta } from '../../../../lib/i18n/locales';
 import { translate, type MessageKey } from '../../../../lib/i18n/messages';
-import { roadRecords, type RoomLink } from '../../../../lib/room';
+import { afterSaveHref, roadRecords, type RoomLink, type RoomTask } from '../../../../lib/room';
+import { MissingTermNotice } from '../../../../components/missing-term-notice';
 import { classifyObjective } from '../../../../lib/work-items/classify';
 import { isCurrentOffer } from '../../../../lib/experience-offers';
 import { SavedCommercialReport, type ReportSection } from '../../missions/saved-commercial-report';
 import { useRoomDetail } from './room-data';
+import { RoomSave } from './room-save';
 import { TripList } from './trip-list';
 import './room-view.css';
 import './room-frame.css';
@@ -67,6 +70,10 @@ export function RoomView({
   lenses = false,
   trip = false,
   initialLens,
+  task,
+  hintClosed = false,
+  unreadable = false,
+  reportCount = 0,
 }: {
   requestId: string;
   subject: string;
@@ -78,9 +85,22 @@ export function RoomView({
   lenses?: boolean;
   /** Batch E (`CORRIDRA_UX_TRIP`, read on the server): a fourth lens with the reviewed meetings and visits. */
   trip?: boolean;
-  /** Where the Room opens when the address asks for Meetings (`?view=meetings`). The Overview when absent. */
+  /**
+   * Where the Room opens when the address asks for Meetings (`?view=meetings`) or the comparison
+   * (`?view=compare`). The Overview when absent. The comparison opens only once the saved report shows something
+   * to compare; until then, and when it has nothing, the Overview stays.
+   */
   initialLens?: Lens;
+  /** What the delivered reports ask of the person, resolved on the server from their own list. */
+  task?: RoomTask;
+  /** The address named a report that is not open to this person for this request. */
+  hintClosed?: boolean;
+  /** The list of delivered reports could not be read: nothing is claimed, offered or saved. */
+  unreadable?: boolean;
+  /** How many reports are open for this request. */
+  reportCount?: number;
 }) {
+  const router = useRouter();
   const { locale } = useLanguage();
   const say = (key: MessageKey) => translate(locale, key);
   const labels = useMemo(() => mrLabelsFor(locale), [locale]);
@@ -91,15 +111,39 @@ export function RoomView({
     data: null,
     status: 'loading',
   });
-  const onReport = useCallback(
-    (data: DeliveryReport | null, status: string) => setReport({ data, status }),
-    [],
+  // The report saved in this visit, from its confirmed receipt, before the server's next answer names it too.
+  const [saved, setSaved] = useState<{ assignmentId: string; resourceId: string } | null>(null);
+  // Asked to open the comparison: decided once the saved report is read, never promised before.
+  const arriving = useRef(initialLens === 'compare');
+  const [waiting, setWaiting] = useState(initialLens === 'compare');
+  const [nothingToCompare, setNothingToCompare] = useState(false);
+  const [lens, setLens] = useState<Lens>(
+    initialLens === 'compare' ? 'overview' : (initialLens ?? 'overview'),
   );
-  const [lens, setLens] = useState<Lens>(initialLens ?? 'overview');
   const [showAll, setShowAll] = useState(false);
   const [fullReport, setFullReport] = useState(false);
 
   const original = detail?.original ?? null;
+  const sellJob = classifyObjective(original?.objective) === 'SELL';
+  const onReport = useCallback(
+    (data: DeliveryReport | null, status: string) => {
+      setReport({ data, status });
+      if (!arriving.current || status === 'loading') return;
+      arriving.current = false;
+      setWaiting(false);
+      const e = data?.missions[0]?.experience;
+      const something =
+        status === 'ready' && e
+          ? sellJob
+            ? e.shortlist.length > 0
+            : e.quotations.some((q) => isCurrentOffer(e, q))
+          : false;
+      // A report that could not be read opens the comparison, where the report's own message says why.
+      if (something || status !== 'ready') setLens('compare');
+      else setNothingToCompare(true);
+    },
+    [sellJob],
+  );
   // CQ-23: the same plain title as the requests list ("Sell in Spain").
   const title = requestTitle(original) ?? (original?.objective?.trim() || '…');
   const day = (value: string) => formatDateTime(value, { locale });
@@ -116,8 +160,36 @@ export function RoomView({
     ? [...detail.progress.replies].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     : [];
   const shown = showAll ? replies : replies.slice(0, 1);
-  const hasReport = link.reportAvailable;
-  const reportHref = link.savedResourceId ? `/account/missions/${link.savedResourceId}` : null;
+  const savedResourceId = saved?.resourceId ?? link.savedResourceId;
+  const hasReport = link.reportAvailable || !!saved;
+  const reportHref = savedResourceId ? `/account/missions/${savedResourceId}` : null;
+  // A report saved here is done; otherwise the server's answer says what is left to save.
+  const saveTask = saved || unreadable ? null : task;
+  // Reports the server refused in this visit are gone from the offer; the Room says so once below the card.
+  const [refused, setRefused] = useState<string[]>([]);
+  const toSave = (
+    saveTask?.kind === 'save'
+      ? [saveTask.report]
+      : saveTask?.kind === 'choose'
+        ? saveTask.reports
+        : []
+  ).filter((report) => !refused.includes(report.assignmentId));
+  // A waiting arrival with no saved report has nothing to wait for.
+  const opening = waiting && !!savedResourceId;
+  function onSaved(assignmentId: string, resourceId: string) {
+    // Without the lenses there is no comparison here: the saved report opens on its own page, as in the Library.
+    if (!lenses) {
+      router.push('/account/missions/' + resourceId);
+      return;
+    }
+    setSaved({ assignmentId, resourceId });
+    setReport({ data: null, status: 'loading' });
+    setNothingToCompare(false);
+    setLens('overview');
+    arriving.current = true;
+    setWaiting(true);
+    router.replace(afterSaveHref(requestId, assignmentId, reportCount), { scroll: false });
+  }
   const helpHref = `/account/service-requests/new?kind=request&ref=${encodeURIComponent(requestId)}`;
   const status = detail?.progress?.status ?? null;
   const subline = status
@@ -139,51 +211,69 @@ export function RoomView({
   const next: {
     words: string;
     small: string;
-    act: 'compare' | 'lens' | 'report' | 'library' | 'help' | 'request';
+    act: 'compare' | 'lens' | 'report' | 'library' | 'help' | 'request' | 'save' | 'retry';
     lens?: Lens;
     label?: string;
   } =
-    lenses && board && board.proposed > 0
+    unreadable && !saved
       ? {
-          words: `Review ${board.proposed === 1 ? 'the proposed meeting' : `${board.proposed} proposed meetings`}`,
-          // Only point to where the times are, and ask for a reply only where the question link is beside it.
-          // With the Trip switch off the room has no Meetings view, so the times are in the saved report.
-          small: `${trip ? 'See the proposed times in Meetings' : 'The proposed times are in your saved report'}${serviceRequestsEnabled ? ', then tell the Corridra team which work for you.' : '.'}`,
-          act: trip ? 'lens' : 'report',
-          lens: 'trip',
-          label: trip ? 'See Meetings' : 'Open the Saved Report',
+          words: 'We could not check this report just now.',
+          small: 'Nothing was saved and nothing has changed.',
+          act: 'retry',
         }
-      : lenses && board && board.shortlisted > 0
+      : toSave.length
         ? {
-            words: `Review ${board.shortlisted === 1 ? 'the shortlisted buyer' : `${board.shortlisted} shortlisted buyers`}`,
-            small: serviceRequestsEnabled
-              ? 'See how each buyer fits and how it is backed, then tell us whom to meet.'
-              : 'See how each buyer fits and how it is backed.',
-            act: 'lens',
-            lens: 'compare',
-            label: 'See Buyers',
+            words:
+              toSave.length > 1
+                ? 'Your reports are ready'
+                : `Your report is ready: ${toSave[0]!.title}`,
+            small:
+              toSave.length > 1
+                ? 'Choose the report to save. Each one is saved on its own.'
+                : 'Save it here to read and compare it in this room.',
+            act: 'save',
           }
-        : !sell && lenses && quotes.length > 0
+        : lenses && board && board.proposed > 0
           ? {
-              words: `Compare ${quotes.length === 1 ? 'the quote' : `${quotes.length} quotes`}`,
-              small: serviceRequestsEnabled
-                ? 'See how each supplier is backed and what is missing, then tell us which to visit.'
-                : 'See how each supplier is backed and what is missing.',
-              act: 'compare',
+              words: `Review ${board.proposed === 1 ? 'the proposed meeting' : `${board.proposed} proposed meetings`}`,
+              // Only point to where the times are, and ask for a reply only where the question link is beside it.
+              // With the Trip switch off the room has no Meetings view, so the times are in the saved report.
+              small: `${trip ? 'See the proposed times in Meetings' : 'The proposed times are in your saved report'}${serviceRequestsEnabled ? ', then tell the Corridra team which work for you.' : '.'}`,
+              act: trip ? 'lens' : 'report',
+              lens: 'trip',
+              label: trip ? 'See Meetings' : 'Open the Saved Report',
             }
-          : hasReport && !link.savedResourceId
+          : lenses && board && board.shortlisted > 0
             ? {
-                words: 'Your report is ready',
-                small: 'Save it from your Library to read and compare it here.',
-                act: 'library',
+                words: `Review ${board.shortlisted === 1 ? 'the shortlisted buyer' : `${board.shortlisted} shortlisted buyers`}`,
+                small: serviceRequestsEnabled
+                  ? 'See how each buyer fits and how it is backed, then tell us whom to meet.'
+                  : 'See how each buyer fits and how it is backed.',
+                act: 'lens',
+                lens: 'compare',
+                label: 'See Buyers',
               }
-            : {
-                words: subline ?? 'Waiting on the Corridra team',
-                small: replies[0]
-                  ? `Latest reply ${day(replies[0].createdAt)}.`
-                  : 'The Corridra team will tell you here when something needs you.',
-                act: serviceRequestsEnabled ? 'help' : 'request',
-              };
+            : !sell && lenses && quotes.length > 0
+              ? {
+                  words: `Compare ${quotes.length === 1 ? 'the quote' : `${quotes.length} quotes`}`,
+                  small: serviceRequestsEnabled
+                    ? 'See how each supplier is backed and what is missing, then tell us which to visit.'
+                    : 'See how each supplier is backed and what is missing.',
+                  act: 'compare',
+                }
+              : hasReport && !savedResourceId && refused.length === 0
+                ? {
+                    words: 'Your report is ready',
+                    small: 'Save it from your Library to read and compare it here.',
+                    act: 'library',
+                  }
+                : {
+                    words: subline ?? 'Waiting on the Corridra team',
+                    small: replies[0]
+                      ? `Latest reply ${day(replies[0].createdAt)}.`
+                      : 'The Corridra team will tell you here when something needs you.',
+                    act: serviceRequestsEnabled ? 'help' : 'request',
+                  };
 
   // Everything the report page shows for the comparison stays one tap away: the requirement, the shortlist,
   // every offer with its evidence lens, the cards and the original table.
@@ -300,7 +390,15 @@ export function RoomView({
                   Ask a Question
                 </Link>
               ) : null}
-              {next.act === 'compare' ? (
+              {next.act === 'retry' ? (
+                <button
+                  type="button"
+                  className="button button-primary"
+                  onClick={() => router.refresh()}
+                >
+                  Try Again
+                </button>
+              ) : next.act === 'save' ? null : next.act === 'compare' ? (
                 <button
                   type="button"
                   className="button button-primary"
@@ -342,7 +440,49 @@ export function RoomView({
                 </Link>
               )}
             </span>
+            {next.act === 'save' ? (
+              <RoomSave
+                reports={toSave}
+                subject={subject}
+                issuer={issuer}
+                onSaved={onSaved}
+                onRefused={(id) => setRefused((ids) => [...ids, id])}
+              />
+            ) : null}
           </section>
+
+          {refused.length > 0 && !saved ? (
+            <p role="status" className="room-note" lang="en">
+              This report is no longer open to you. Nothing was saved.
+            </p>
+          ) : null}
+          {hintClosed && !saved ? (
+            <p role="status" className="room-note" lang="en">
+              This report is no longer open to you.{' '}
+              <Link
+                prefetch={false}
+                className="text-link"
+                href="/account?view=results&tab=delivered"
+              >
+                Open Your Library
+              </Link>
+            </p>
+          ) : null}
+          {opening ? (
+            <p role="status" className="room-note" lang="en">
+              Opening your saved report…
+            </p>
+          ) : null}
+          {nothingToCompare && reportHref ? (
+            <p role="status" className="room-note" lang="en">
+              {sellJob
+                ? 'Your report is saved. There are no buyers to compare yet.'
+                : 'Your report is saved. There are no current quotes to compare yet.'}{' '}
+              <Link prefetch={false} className="text-link" href={reportHref}>
+                Open the Saved Report
+              </Link>
+            </p>
+          ) : null}
 
           {lenses && (
             <div className="room-lenses" role="group" aria-label={say('room.lens.overview')}>
@@ -353,7 +493,12 @@ export function RoomView({
                   className="room-lens"
                   aria-pressed={lens === item}
                   data-count={lensCount(item)}
-                  onClick={() => setLens(item)}
+                  onClick={() => {
+                    arriving.current = false;
+                    setWaiting(false);
+                    setNothingToCompare(false);
+                    setLens(item);
+                  }}
                 >
                   {/* An English word until native review (D16), marked so it is read as English. */}
                   <span lang={lensLang(item)}>{lensWords(item)}</span>
@@ -385,7 +530,7 @@ export function RoomView({
             </section>
           )}
 
-          {lenses && lens === 'compare' && link.savedResourceId && (
+          {lenses && lens === 'compare' && savedResourceId && (
             <div className="room-compare" lang="en" dir="ltr">
               {report.status === 'loading' && <p role="status">Opening your approved report…</p>}
               {report.status === 'ready' &&
@@ -397,7 +542,19 @@ export function RoomView({
                       more={fullToggle}
                     />
                   ) : (
-                    <SourceLedger experience={experience} language={locale} more={fullToggle} />
+                    <>
+                      <MissingTermNotice
+                        experience={experience}
+                        action={
+                          serviceRequestsEnabled ? (
+                            <Link prefetch={false} className="text-link" href={helpHref}>
+                              Ask a Question
+                            </Link>
+                          ) : null
+                        }
+                      />
+                      <SourceLedger experience={experience} language={locale} more={fullToggle} />
+                    </>
                   )
                 ) : (
                   <>
@@ -430,10 +587,10 @@ export function RoomView({
               anything typed in it survives a switch. The Overview and the comparison summary draw nothing
               from it (section none); the full comparison, Evidence and Trip draw their own part. A report
               that could not be read shows the report's own message in the comparison. */}
-          {lenses && link.savedResourceId ? (
+          {lenses && savedResourceId ? (
             <div lang="en" dir="ltr" className="room-report">
               <SavedCommercialReport
-                resourceId={link.savedResourceId}
+                resourceId={savedResourceId}
                 subject={subject}
                 issuer={issuer}
                 decisionsEnabled={decisionsEnabled}

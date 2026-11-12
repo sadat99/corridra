@@ -1,0 +1,40 @@
+/* The notice above the comparison: a quiet card in the design layer's tokens, the action beside the words on a wide
+   screen and under them on a phone. It never covers or replaces the table below. */
+.missing-term-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+  margin-block-end: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+.missing-term-notice-words {
+  display: grid;
+  flex: 1 1 18rem;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.missing-term-notice h3 {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 650;
+}
+.missing-term-notice p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+.missing-term-notice-action > * {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+@media (max-width: 40rem) {
+  .missing-term-notice-action {
+    width: 100%;
+  }
+}
