@@ -482,6 +482,8 @@ function TenantWorkspace({
                 key={`today-${tenant}`}
                 tenant={tenant}
                 revision={missionRevision}
+                role={data.role}
+                problemReports={problemReports}
                 start={
                   <section
                     className="workspace-panel workspace-start"

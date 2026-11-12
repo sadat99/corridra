@@ -81,6 +81,11 @@ type Scenario = {
   };
   teamStatus?: number;
   missionsStatus?: number;
+  /** Answers of the two existing queue routes; missing means the fixture refuses them as it refuses any other read. */
+  problemReports?: unknown;
+  erasure?: { status?: number; items?: unknown[]; nextAfter?: number | null };
+  /** Every queue read the page made, so a test can prove a role made none. */
+  queueReads?: string[];
 };
 
 async function open(page: Page, scenario: Scenario, query = '') {
@@ -98,7 +103,7 @@ async function open(page: Page, scenario: Scenario, query = '') {
         purpose: 'synthetic_validation',
         uploadsConfigured: false,
         scanMode: 'bypass',
-        role: 'owner',
+        role: query.includes('role=operator') ? 'operator' : 'owner',
         sources: [],
         claims: [],
         evidence: [],
@@ -150,6 +155,21 @@ async function open(page: Page, scenario: Scenario, query = '') {
           },
         }),
   );
+  await page.route('**/api/workspace/problem-reports?*', (route) => {
+    scenario.queueReads?.push(route.request().url());
+    return scenario.problemReports
+      ? route.fulfill({ json: scenario.problemReports })
+      : route.fulfill({ status: 503, json: { error: 'Synthetic' } });
+  });
+  await page.route('**/api/workspace/customer-erasure-queue?*', (route) => {
+    scenario.queueReads?.push(route.request().url());
+    const status = new URL(route.request().url()).searchParams.get('status');
+    const answer = scenario.erasure;
+    if (!answer || answer.status)
+      return route.fulfill({ status: answer?.status ?? 503, json: { error: 'Synthetic' } });
+    const items = (answer.items ?? []).filter((i) => (i as { status: string }).status === status);
+    return route.fulfill({ json: { items, nextAfter: answer.nextAfter ?? null } });
+  });
   await page.goto(origin + query);
   await expect(page.getByRole('heading', { name: 'Start with a mission.' })).toBeVisible();
 }
@@ -556,4 +576,124 @@ test('with mission pages switched off, a Needs you now row opens the mission lis
   await expect(rows).toHaveCount(3);
   for (const index of [0, 1, 2])
     await expect(rows.nth(index).getByRole('link')).toHaveAttribute('href', '#workspace-missions');
+});
+
+// Mandate F (11 Nov 2026): "Also waiting" and the overdue erasure rows.
+const erasureItem = (n: number, daysLeft: number, status = 'received') => ({
+  id: id(500 + n),
+  number: n,
+  reference: `ER-000${n}`,
+  filedAt: daysAgo(40),
+  dueAt: inDays(daysLeft),
+  daysLeft,
+  status,
+  note: null,
+  accountStatus: 'closed',
+  closedAt: null,
+  undoUntil: null,
+  name: 'Rafiq Hasan',
+  email: 'rafiq@example.test',
+  workspaceName: 'Synthetic Workspace Ltd',
+});
+const reportQueue = {
+  counts: { received: 2, in_review: 1, resolved: 4, closed: 0 },
+  oldestReceivedAt: daysAgo(6),
+  items: [],
+};
+const empty = { fresh: [], overdue: [], totals: { fresh: 0, overdue: 0, open: 0 } };
+
+test('an owner sees Also waiting with both queues, and overdue erasure rows show only the reference, days overdue and due date', async ({
+  page,
+}) => {
+  const queueReads: string[] = [];
+  await open(
+    page,
+    {
+      ...operatorRows,
+      problemReports: reportQueue,
+      erasure: {
+        items: [
+          erasureItem(1, -3),
+          erasureItem(2, -9, 'in_progress'),
+          erasureItem(3, 4),
+          erasureItem(4, -1),
+          erasureItem(5, -2),
+          erasureItem(6, -4),
+          erasureItem(7, -5),
+          erasureItem(8, -6),
+        ],
+      },
+      queueReads,
+    },
+    '?reports=on',
+  );
+  await loaded(page);
+  const also = page.getByRole('region', { name: 'Also waiting' });
+  await expect(
+    also.getByRole('link', { name: /3 problem reports open, oldest waiting 6 days/ }),
+  ).toHaveAttribute('href', '#problem-report-queue');
+  await expect(
+    also.getByRole('link', { name: /8 erasure requests open, 7 overdue, nearest due/ }),
+  ).toHaveAttribute('href', '#workspace-settings');
+  const rows = needs(page).getByRole('list', { name: 'Overdue erasure requests' });
+  await expect(rows.getByRole('listitem')).toHaveCount(6);
+  await expect(rows.getByText('9 days overdue')).toBeVisible();
+  await expect(rows.getByRole('link', { name: 'and 2 more' })).toHaveAttribute(
+    'href',
+    '#workspace-settings',
+  );
+  const text = (await rows.textContent()) ?? '';
+  expect(text).toContain('ER-0002');
+  for (const word of ['Rafiq', 'example.test', 'Synthetic Workspace']) {
+    expect(text).not.toContain(word);
+    expect(await also.textContent()).not.toContain(word);
+  }
+  expect(queueReads.length).toBeGreaterThan(0);
+  expect(await axe(page)).toEqual([]);
+});
+
+test('an operator role gets no Also waiting tiles and the page makes no queue read', async ({
+  page,
+}) => {
+  const queueReads: string[] = [];
+  await open(
+    page,
+    {
+      ...operatorRows,
+      problemReports: reportQueue,
+      erasure: { items: [erasureItem(1, -3)] },
+      queueReads,
+    },
+    '?reports=on&role=operator',
+  );
+  await loaded(page);
+  await expect(page.getByRole('region', { name: 'Also waiting' })).toHaveCount(0);
+  await expect(needs(page).getByRole('list', { name: 'Overdue erasure requests' })).toHaveCount(0);
+  await expect(page.getByText('ER-0001')).toHaveCount(0);
+  expect(queueReads).toEqual([]);
+});
+
+test('with Report a Problem not installed or a queue unavailable, that tile is absent and never zero', async ({
+  page,
+}) => {
+  const queueReads: string[] = [];
+  // Not offered: no problem report read at all; the erasure queue answers 503 (account module not installed).
+  await open(page, { ...empty, erasure: { status: 503 }, queueReads });
+  await loaded(page);
+  await expect(page.getByRole('region', { name: 'Also waiting' })).toHaveCount(0);
+  expect(queueReads.some((url) => url.includes('/problem-reports'))).toBe(false);
+  expect(queueReads.some((url) => url.includes('/customer-erasure-queue'))).toBe(true);
+});
+
+test('with only the erasure queue readable, Also waiting shows that one tile and no problem report tile', async ({
+  page,
+}) => {
+  await open(page, { ...empty, erasure: { items: [erasureItem(1, 10)] } }, '?reports=on');
+  await loaded(page);
+  const also = page.getByRole('region', { name: 'Also waiting' });
+  await expect(
+    also.getByRole('link', { name: /1 erasure request open, nearest due/ }),
+  ).toBeVisible();
+  await expect(also.getByText(/problem report/)).toHaveCount(0);
+  await expect(needs(page).getByRole('list', { name: 'Overdue erasure requests' })).toHaveCount(0);
 });

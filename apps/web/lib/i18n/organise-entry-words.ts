@@ -20,7 +20,7 @@ export const organiseEntryWords = {
     'Write the public page, check the preview, then publish it and share the address.',
   'organise.entry.step.review.title': 'Review applications',
   'organise.entry.step.review.text':
-    'Read each application. Invite, wait-list or decline. A decline always carries a reason.',
+    'Read each application. Invite, put on the Waiting List or decline. A decline always carries a reason.',
   'organise.entry.action': 'Open Your Programmes',
   'organise.entry.note':
     'Want the Corridra team to plan the trip with you? Use the request above instead.',

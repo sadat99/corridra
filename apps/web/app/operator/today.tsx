@@ -13,6 +13,16 @@ import {
   type NeedsFilter,
   type NeedsRow,
 } from '../../lib/ux/team-today';
+import {
+  alsoWaitingReads,
+  capOverdue,
+  erasureTile,
+  overdueChip,
+  problemReportsTile,
+  type ErasureTile,
+  type ProblemReportsTile,
+} from '../../lib/ux/also-waiting';
+import { ageWords } from '../../lib/problem-report-queue';
 import { readFailureKind, readFailureWords, type ReadFailureKind } from './read-failure';
 import { missionHref, stageLabel } from './[section]/[missionId]/mission-labels';
 
@@ -58,6 +68,9 @@ type Today = {
   } | null;
   /** Why meetings could not be read; null when they were read. */
   workFailure: ReadFailureKind | null;
+  /** Null when the role may not see the queue, the module is not installed or the read failed: no tile, never zero. */
+  problemReports: ProblemReportsTile | null;
+  erasure: ErasureTile | null;
 };
 
 const week = 7 * 24 * 60 * 60 * 1000;
@@ -86,6 +99,41 @@ async function missions(tenant: string, query: string, signal: AbortSignal): Pro
 function optional(error: unknown): { failure: ReadFailureKind } {
   if (error instanceof DOMException && error.name === 'AbortError') throw error;
   return { failure: readFailureKind(error) };
+}
+
+/** The existing queue routes, read only for the roles that already see them. Any failure means no tile. */
+async function readProblemReports(tenant: string, signal: AbortSignal) {
+  try {
+    const r = await fetch(
+      `/api/workspace/problem-reports?${new URLSearchParams({ tenant, view: 'queue' })}`,
+      { signal, cache: 'no-store' },
+    );
+    return r.ok ? problemReportsTile(await r.json(), new Date()) : null;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') throw error;
+    return null;
+  }
+}
+async function readErasure(tenant: string, signal: AbortSignal) {
+  try {
+    const items: unknown[] = [];
+    let full = false;
+    for (const status of ['received', 'in_progress']) {
+      const r = await fetch(
+        `/api/workspace/customer-erasure-queue?${new URLSearchParams({ tenant, status, pageSize: '100' })}`,
+        { signal, cache: 'no-store' },
+      );
+      if (!r.ok) return null;
+      const body = (await r.json()) as { items?: unknown; nextAfter?: unknown };
+      if (!Array.isArray(body.items)) return null;
+      items.push(...body.items);
+      if (body.nextAfter !== null && body.nextAfter !== undefined) full = true;
+    }
+    return erasureTile(items, full);
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') throw error;
+    return null;
+  }
 }
 
 const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
@@ -139,6 +187,41 @@ function WeekGroup({
         {link}
       </a>
     </section>
+  );
+}
+
+/** Overdue erasure requests: reference, days overdue and due date only, never a person or workspace name. */
+function ErasureRows({ erasure }: { erasure: ErasureTile }) {
+  const { shown, more } = capOverdue(erasure.rows);
+  return (
+    <ul className="ux-needs-list" aria-label="Overdue erasure requests">
+      {shown.map((row) => (
+        <li key={row.id}>
+          <a href="#workspace-settings">
+            <span className="ux-needs-text">
+              <strong>Erasure request {row.reference}</strong>
+              <span>Answer owed to the person who asked</span>
+            </span>
+            <span className="ux-needs-chips">
+              <span className="ux-needs-chip" data-tone="late">
+                {overdueChip(row.daysOverdue)}
+              </span>
+              <span className="sr-only">
+                due <time dateTime={row.dueAt}>{formatDate(row.dueAt)}</time>
+              </span>
+            </span>
+            <OperatorIcon name="chevron" className="ux-needs-arrow" />
+          </a>
+        </li>
+      ))}
+      {more > 0 && (
+        <li>
+          <a className="text-link" href="#workspace-settings">
+            and {more} more
+          </a>
+        </li>
+      )}
+    </ul>
   );
 }
 
@@ -266,6 +349,9 @@ function NeedsYouNow({
               ))}
             </ul>
           )}
+          {filter !== 'new' && today.erasure && today.erasure.rows.length > 0 && (
+            <ErasureRows erasure={today.erasure} />
+          )}
           {shown.length > firstRows && (
             <button
               type="button"
@@ -285,6 +371,48 @@ function NeedsYouNow({
           )}
         </>
       )}
+    </section>
+  );
+}
+
+/** Problem reports and erasure requests that wait for an owner or admin; each links to its existing queue. */
+function AlsoWaiting({ today }: { today: Today }) {
+  const { problemReports: reports, erasure } = today;
+  return (
+    <section className="ux-also-waiting" aria-labelledby="today-also-title">
+      <h3 id="today-also-title">Also waiting</h3>
+      <ul className="ux-today-tiles" aria-label="Also waiting">
+        {reports && (
+          <li data-tone={reports.count === 0 ? 'zero' : undefined}>
+            <a href="#problem-report-queue">
+              <strong>{reports.count}</strong>
+              <span>
+                {plural(reports.count, 'problem report open', 'problem reports open')}
+                {reports.oldestDays !== null && reports.count > 0
+                  ? `, oldest waiting ${ageWords(reports.oldestDays).replace(' ago', '')}`
+                  : ''}
+              </span>
+            </a>
+          </li>
+        )}
+        {erasure && (
+          <li data-tone={erasure.count === 0 ? 'zero' : erasure.overdue > 0 ? 'late' : undefined}>
+            <a href="#workspace-settings">
+              <strong>{erasure.atLeast ? `${erasure.count}+` : erasure.count}</strong>
+              <span>
+                {plural(erasure.count, 'erasure request open', 'erasure requests open')}
+                {erasure.overdue > 0 ? `, ${erasure.overdue} overdue` : ''}
+                {erasure.nearestDueAt ? (
+                  <>
+                    , nearest due{' '}
+                    <time dateTime={erasure.nearestDueAt}>{formatDate(erasure.nearestDueAt)}</time>
+                  </>
+                ) : null}
+              </span>
+            </a>
+          </li>
+        )}
+      </ul>
     </section>
   );
 }
@@ -397,10 +525,16 @@ export function TodayPanel({
   tenant,
   revision,
   start,
+  role,
+  problemReports = false,
 }: {
   tenant: string;
   revision: number;
   start?: ReactNode;
+  /** The signed-in role: only an owner or admin triggers the two "Also waiting" reads. */
+  role?: string;
+  /** Whether Report a Problem is installed and offered. */
+  problemReports?: boolean;
 }) {
   const [today, setToday] = useState<Today | null>(null);
   // Why the list could not be read: the person's role, too many requests, or anything else (an
@@ -410,6 +544,7 @@ export function TodayPanel({
   useEffect(() => {
     const controller = new AbortController();
     const { signal } = controller;
+    const reads = alsoWaitingReads(role, problemReports);
     Promise.all([
       missions(tenant, 'filter=open&stage=DRAFT', signal),
       missions(tenant, 'filter=overdue', signal),
@@ -429,8 +564,10 @@ export function TodayPanel({
       get(tenant, 'meetings', '', signal)
         .then((body: MeetingRead): Optional<MeetingRead> => ({ value: body }))
         .catch(optional),
+      reads.problemReports ? readProblemReports(tenant, signal) : Promise.resolve(null),
+      reads.erasure ? readErasure(tenant, signal) : Promise.resolve(null),
     ])
-      .then(([fresh, overdue, open, teamRead, meetingRead]) => {
+      .then(([fresh, overdue, open, teamRead, meetingRead, reportsTile, erasure]) => {
         const now = Date.now();
         const read = 'value' in meetingRead ? meetingRead.value : null;
         const work = read
@@ -459,6 +596,8 @@ export function TodayPanel({
           teamFailure: 'failure' in teamRead ? teamRead.failure : null,
           work,
           workFailure: 'failure' in meetingRead ? meetingRead.failure : null,
+          problemReports: reportsTile,
+          erasure,
           observedAt: new Date(now).toISOString(),
         });
         setFailure(null);
@@ -468,7 +607,7 @@ export function TodayPanel({
         setFailure(readFailureKind(error));
       });
     return () => controller.abort();
-  }, [tenant, revision, attempt]);
+  }, [tenant, revision, attempt, role, problemReports]);
   const work = today?.work ?? null;
   const rows = today ? needsYouNow(today.fresh, today.overdue) : [];
   const summary = today ? needsSummary(today.fresh, today.overdue, rows) : null;
@@ -476,6 +615,7 @@ export function TodayPanel({
     !!today &&
     today.fresh.total === 0 &&
     today.overdue.total === 0 &&
+    !(today.erasure && today.erasure.overdue > 0) &&
     (!today.team ||
       (today.team.acceptedQuotesNotStarted === 0 &&
         today.team.serviceRequestsToQuote === 0 &&
@@ -658,6 +798,9 @@ export function TodayPanel({
             </li>
           )}
         </ul>
+      )}
+      {today && !failure && (today.problemReports || today.erasure) && (
+        <AlsoWaiting today={today} />
       )}
       <div className="ux-today-columns">
         <div className="ux-today-main">

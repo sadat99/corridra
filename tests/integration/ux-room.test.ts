@@ -272,7 +272,7 @@ describe('the switches and the pages', () => {
     const view = read('apps/web/app/mission-experience-view.tsx');
     expect(view).toContain('lenses = false');
     expect(view).toMatch(
-      /\) : \(\s*<ComparisonMatrix offers=\{e\.quotations\.filter\(inLens\)\} language=\{language\} \/>/,
+      /\) : \(\s*<ComparisonMatrix\s+offers=\{e\.quotations\.filter\(inLens\)\}\s+shortlist=\{e\.shortlist\}\s+language=\{language\}\s+\/>/,
     );
   });
   it('the comparison matrix file is not touched', () => {

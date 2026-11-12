@@ -119,11 +119,16 @@ export function sellFacts(experiences: MissionExperience[]): SellFacts {
     }
   }
   for (const [key, item] of newest) {
-    if (item.state === 'PROPOSED') proposed.add(key);
-    else if (item.state === 'CONFIRMED') confirmed.add(key);
     // A meeting shared by two agenda items is one held meeting, as the report counts it.
+    let hasHeld = false;
     for (const meeting of list<{ id?: unknown; status?: unknown }>(item.meetings))
-      if (meeting.status === 'HELD' && typeof meeting.id === 'string') held.add(meeting.id);
+      if (meeting.status === 'HELD' && typeof meeting.id === 'string') {
+        held.add(meeting.id);
+        hasHeld = true;
+      }
+    if (item.state === 'PROPOSED') proposed.add(key);
+    // A confirmed visit that has been held is counted as held only, never in both.
+    else if (item.state === 'CONFIRMED' && !hasHeld) confirmed.add(key);
   }
   return {
     shortlisted: companies.size,
