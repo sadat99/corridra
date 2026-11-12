@@ -45,6 +45,7 @@ import {
 } from '../packages/db/src/customer-workspace-lifecycle-migrate';
 import { migrateCustomerAccountLifecycle } from '../packages/db/src/customer-account-lifecycle-migrate';
 import { migrateCustomerProblemReports } from '../packages/db/src/customer-problem-report-migrate';
+import { migrateCustomerProgrammeErasure } from '../packages/db/src/customer-programme-erasure-migrate';
 import { migrateCounterpartyChanges } from '../packages/db/src/counterparty-change-migrate';
 import { configureCounterpartyChanges } from '../packages/auth/src/counterparty-change-configuration';
 import { configureWorkspaceLifecycle } from '../packages/auth/src/customer-workspace-lifecycle-configuration';
@@ -96,6 +97,7 @@ const v = z
       .default('unchanged'),
     PROBLEM_REPORTS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     PROGRAMME_PAGES_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
+    PROGRAMME_ERASURE_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     COUNTERPARTY_CHANGES_ACTION: z
       .enum(['unchanged', 'install', 'enable', 'pause'])
       .default('unchanged'),
@@ -253,6 +255,8 @@ if (v.PROBLEM_REPORTS_ACTION !== 'unchanged' && !apply)
   throw new Error('Problem report installation requires INSTALL_APPLY=yes');
 if (v.PROGRAMME_PAGES_ACTION !== 'unchanged' && !apply)
   throw new Error('Programme page installation requires INSTALL_APPLY=yes');
+if (v.PROGRAMME_ERASURE_ACTION !== 'unchanged' && !apply)
+  throw new Error('Programme words erasure installation requires INSTALL_APPLY=yes');
 if (v.COUNTERPARTY_CHANGES_ACTION !== 'unchanged' && !apply)
   throw new Error('Contact and note changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.COUNTERPARTY_CHANGES_ACTION) && !v.COUNTERPARTY_CHANGES_REASON)
@@ -313,6 +317,7 @@ const registries = [
   'customer_programme_lifecycle_migrations',
   'customer_participant_label_migrations',
   'customer_programme_publication_migrations',
+  'customer_programme_erasure_migrations',
   'recipient_response_revision_migrations',
   'network_real_use_migrations',
   'customer_billing_real_migrations',
@@ -622,6 +627,12 @@ try {
       console.log(
         'installed or already current: programme pages and applications (application switch unchanged)',
       );
+    }
+    // Redaction of the applicant's and participant's words under an erasure request (privacy). Never part of the base run. It
+    // installs the account lifecycle, programme pages and participant label modules it depends on, controls left as they were.
+    if (v.PROGRAMME_ERASURE_ACTION === 'install') {
+      await migrateCustomerProgrammeErasure(pool);
+      console.log('installed or already current: programme words erasure');
     }
     // Withdraw, correct and hide for private contacts and notes (CRUD G11) are never part of the base run. Install leaves
     // the one control closed; enable and pause are owner decisions with a reason. Reached through field_modules_action

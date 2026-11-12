@@ -40,6 +40,17 @@ An organiser can already create a programme, invite participants by private code
 - Merge of PR 420: "[u merge]" after green CI and the Guardian review.
 - Installer registration: "[check and update]". The installer run-time fix merged as `8dd2062` (PR 419), so the ordering condition is met. Registration is a separate change after this one merges.
 
+## Amendment: redaction of applicant words under an erasure request
+
+Privacy accepted the launch of public applications without automated redaction. This amendment adds it, as an optional module `packages/db/customer-programme-erasure-migrations/` (registry `customer_programme_erasure_migrations`, installer `migrateCustomerProgrammeErasure`, workflow option `programme_erasure` of `field_modules_action`).
+
+1. Staff, under the existing erasure authority, call `customer.programme_words_remove(command, erasure_request)`. The person comes from the erasure request, never from input. It follows `problem_report_remove_words`: staff privacy actor and erasure scope, the same two advisory locks, command replay, only while the request is in progress or completed, a cutoff at completion (or now while in progress).
+2. It replaces the words with a fixed placeholder in: the application label and statement, the invitation label copied from the application, the registration label, every label revision, and the replay records of joining and of a label correction. Ids, people, times, decisions, invitations, registrations, fees, money, audit and event rows are not deleted or changed. Organiser words (decision notes, invitation labels typed for a code invitation) are not touched.
+3. The append-only trigger on those six tables becomes `customer_private.programme_words_guard`: every delete and every other update fails with the same message and code. The one allowed update needs a no-words record row in `programme_words_erasure` for that item, changes only the word columns and writes only the placeholder. No function of an older module is replaced, so no function fingerprint changes.
+4. The staff removal that already runs under an erasure request (`StaffProblemReports.removeWords`) calls it in the same transaction when installed and returns `programmeWords`. A person who is not a member of a workspace is covered because the scope check is by person.
+
+Limit: an application filed in the same instant as the removal can commit after the scan; staff run the removal again (a new command skips finished items).
+
 ## Follow-through, 12 November 2026: the delegate's objective is carried, not asked again
 
 Decision record for the owner's directive of 12 November 2026 (find the binding constraint and implement the highest-leverage correction).

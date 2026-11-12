@@ -92,7 +92,13 @@ export type ProblemReportMoved = {
   note: string | null;
   changed: boolean;
 };
-export type ProblemReportWordsRemoved = { reference: string; removed: number };
+// `programmeWords` is the number of programme application and registration items whose words were replaced in the same step
+// (customer.programme_words_remove). It is absent when that module is not installed.
+export type ProblemReportWordsRemoved = {
+  reference: string;
+  removed: number;
+  programmeWords?: number;
+};
 // A customer's own removal (migration 0003): how many reports lost their words, and whether this call did it (false for a
 // replay of the same command and for a call that found nothing left).
 export type ProblemReportOwnWordsRemoved = { removed: number; changed: boolean };
@@ -555,14 +561,34 @@ export class StaffProblemReports {
     try {
       const done = await withTenant(this.runtime, ctx, 'members.manage', async (t) => {
         await requireInstalled(t.db);
-        return (
+        const reports = (
           await t.db.query<{ result: ProblemReportWordsRemoved }>(
             'SELECT customer.problem_report_remove_words($1,$2) AS result',
             [value.commandId, value.erasureRequestId],
           )
         ).rows[0]!.result;
+        // The same erasure request also clears the words of the person's programme applications and registration labels
+        // when that module is installed. Both run in this one transaction under the same command, so a failure of either
+        // leaves nothing half removed.
+        const programme = (
+          await t.db.query<{ present: boolean }>(
+            "SELECT to_regprocedure('customer.programme_words_remove(uuid,uuid)') IS NOT NULL AS present",
+          )
+        ).rows[0]?.present
+          ? (
+              await t.db.query<{ result: { removed: number } }>(
+                'SELECT customer.programme_words_remove($1,$2) AS result',
+                [value.commandId, value.erasureRequestId],
+              )
+            ).rows[0]!.result.removed
+          : undefined;
+        return { ...reports, ...(programme === undefined ? {} : { programmeWords: programme }) };
       });
-      return { reference: done.reference, removed: done.removed };
+      return {
+        reference: done.reference,
+        removed: done.removed,
+        ...(done.programmeWords === undefined ? {} : { programmeWords: done.programmeWords }),
+      };
     } catch (error) {
       throw problemReportError(error);
     }
