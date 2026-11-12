@@ -161,7 +161,9 @@ describe('the search answer is checked on the client', () => {
       found.missions[0]!.detail,
       found.companies[0]!.label,
     ])
-      expect(text.isWellFormed()).toBe(true);
+      expect(text).not.toMatch(
+        /[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/,
+      );
   });
   test('something that is not an answer is not parsed', () => {
     expect(parseFound(null)).toBeNull();
