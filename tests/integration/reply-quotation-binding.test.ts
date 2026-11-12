@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { commercialFixture } from './commercial-fixture';
 import { command, future } from './access-fixture';
 import { changeMemberNow } from './change-member';
@@ -1374,6 +1374,11 @@ describe('the workspace route', () => {
   beforeEach(() => {
     session.mockResolvedValue({ token: f.users.operator.token });
   });
+  // Restore the environment even when an assertion fails, so a switch value never leaks into a later test.
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    session.mockResolvedValue({ token: f.users.operator.token });
+  });
 
   test('the reply read and the bound offer are unavailable until the switch is on, then work and stay private', async () => {
     const r = await publishedReply();
@@ -1407,15 +1412,13 @@ describe('the workspace route', () => {
     expect(await bindingOf(r.responseId)).toHaveLength(1);
     const again = await post('commercial-mission', input);
     expect(again.status).toBe(201);
-    vi.unstubAllEnvs();
   });
 
-  test('a plain offer through the route is unchanged whether the switch is on or off', async () => {
+  test('a plain offer through the route is unchanged and records no binding while the switch is off', async () => {
     const r = await publishedReply();
     const plain = await offerFor(r, { replyBinding: undefined });
     vi.stubEnv('CORRIDRA_REPLY_PAGE', 'false');
     expect((await post('commercial-mission', plain)).status).toBe(201);
-    vi.unstubAllEnvs();
     expect(await bindingOf(r.responseId)).toHaveLength(0);
   });
 });

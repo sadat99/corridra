@@ -367,6 +367,14 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
               : 'The request could not be completed';
     if (status === 500)
       console.error(JSON.stringify({ event: 'foundation_request_failed', correlationId }));
+    else if (status === 503 && !(error instanceof DomainError))
+      console.error(
+        JSON.stringify({
+          event: 'foundation_request_failed',
+          correlationId,
+          code: (error as { code?: string }).code,
+        }),
+      );
     const code = error instanceof DomainError ? error.code : undefined;
     return Response.json(
       code ? { error: message, code, correlationId } : { error: message, correlationId },
