@@ -1,7 +1,13 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
+import { future } from './access-fixture';
 import { buildWorld, options, type World } from './removed-member-support';
 import { CustomerRequestDetailService } from '../../packages/auth/src/customer-request-details';
+import { migrateCustomerCompanies } from '../../packages/db/src/customer-company-migrate';
+import { CounterpartyService } from '../../packages/counterparties/src/index';
+import { EvidenceService } from '../../packages/evidence/src/index';
+import { DeliveryExperienceService } from '../../packages/delivery/src/experience';
+import { CustomerCompanyService } from '../../packages/auth/src/customer-companies';
 import { CustomerRequestService } from '../../packages/auth/src/customer-requests';
 import { customerProvenanceAllowed } from '../../packages/domain/src/customer-input-mode';
 import {
@@ -37,7 +43,7 @@ const reason = 'A reason that is long enough to be accepted';
 const sorted = (ids: string[]) => [...ids].sort();
 const never = {
   async list(): Promise<never> {
-    throw new Error('the Companies service must not be read in this file');
+    throw new Error('this service must not be read by this part of the test');
   },
 };
 const tally = { details: 0 };
@@ -203,5 +209,208 @@ describe('D3 the withdrawn, the revoked and the removed', () => {
     expect(sorted(rex)).toEqual(sorted(await listed('rex')));
     const lena = await found('lena');
     for (const id of w.requests.lena!) expect(lena).not.toContain(id);
+  });
+});
+
+// The Companies scope through the search, against the real approved portfolio. The fixture is the one the Companies suite
+// builds, applied to a Request of this world: staff qualify its mission, ingest a company with a claim and a contact, target
+// it, publish a report that approves that target, share it and assign it to the Request's author, who accepts it. Sam then
+// holds a saved report with an approved shortlist, so `customer.company_portfolio` returns the company for Sam alone.
+describe('Companies through the search', () => {
+  let companyName = '';
+  let reportId = '';
+  const portfolio = (person: string) => {
+    const readSession = async () => w.session(person);
+    return new CustomerCompanyService(w.f.runtime, w.f.auth, options, readSession);
+  };
+  const searchCompanies = (person: string, q = 'buyer') =>
+    searchCustomerWith(person, q, 'companies');
+  async function searchCustomerWith(person: string, q: string, scope: CustomerSearchScope) {
+    return searchCustomer(
+      {
+        requests: never,
+        details: { detail: never.list },
+        companies: portfolio(person),
+        companyBudget: async () => undefined,
+      },
+      { requests: false, details: false, companies: true, provenance: customerProvenanceAllowed },
+      { correlationId: randomUUID(), client: 'local' },
+      q,
+      scope,
+    );
+  }
+
+  beforeAll(async () => {
+    await migrateCustomerCompanies(w.f.owner);
+    const ctx = w.operatorCtx;
+    const research = new CounterpartyService(w.f.runtime);
+    const evidence = new EvidenceService(
+      w.f.runtime,
+      {
+        async put() {},
+        async get() {
+          return new Uint8Array();
+        },
+      },
+      {
+        async scan() {
+          return { verdict: 'ERROR', engine: 'not-used' };
+        },
+      },
+    );
+    const request = await w.submit('sam', w.W);
+    const missionId = await w.missionOf(request);
+    const source = await evidence.createSource(ctx, {
+      kind: 'public_record',
+      locator: 'https://example.invalid/customer-search',
+      observedAt: new Date().toISOString(),
+      classification: 'PUBLIC',
+      purpose: 'synthetic_validation',
+      retentionUntil: future(7),
+      aiPolicy: 'DENY',
+    });
+    const command = (action: string, data: Record<string, unknown>) => ({
+      action,
+      commandId: randomUUID(),
+      ...data,
+    });
+    const company = await research.command(
+      ctx,
+      command('ingest', {
+        sourceId: source.id,
+        name: `Synthetic Buyer ${randomUUID()}`,
+        country: 'ES',
+        domain: `${randomUUID()}.example.invalid`,
+        address: 'Synthetic business address',
+        identifierType: 'registry',
+        identifier: randomUUID(),
+      }),
+    );
+    const relationship = await research.command(
+      ctx,
+      command('relationship', {
+        organisationId: company.id,
+        ownerId: w.f.users.operator.id,
+        visibility: 'OWNER',
+        note: 'Private negotiation details never shown to the buyer',
+      }),
+    );
+    const contact = await research.command(
+      ctx,
+      command('contact', {
+        relationshipId: relationship.id,
+        sourceId: source.id,
+        name: 'Synthetic Buyer Person',
+        jobTitle: 'Procurement',
+        email: `${randomUUID()}@example.invalid`,
+        validUntil: future(6),
+      }),
+    );
+    const claim = await evidence.createClaim(ctx, {
+      sourceId: source.id,
+      statement: 'Synthetic buyer declares interest in towels',
+    });
+    await research.command(
+      ctx,
+      command('attribute', {
+        organisationId: company.id,
+        kind: 'requirement',
+        claimId: claim.id,
+        validUntil: future(6),
+      }),
+    );
+    const version = (
+      await w.f.owner.query('SELECT version FROM app.mission WHERE id=$1', [missionId])
+    ).rows[0].version as number;
+    for (const [i, action] of ['qualify', 'activate', 'targeting'].entries())
+      await w.missions.command(ctx, {
+        id: missionId,
+        version: version + i,
+        commandId: randomUUID(),
+        action,
+        ownerId: w.f.users.operator.id,
+        reason: 'Synthetic customer search qualification',
+        nextAction: 'Review relevant introduction',
+        dueAt: future(),
+        marketCode: 'ES',
+        targetProfile: 'Synthetic hotel distributor profile',
+      });
+    const target = await research.command(
+      ctx,
+      command('target', {
+        missionId,
+        relationshipId: relationship.id,
+        contactId: contact.id,
+        claimIds: [claim.id],
+        fit: 'POSSIBLE',
+        rationale: 'Declared needs fit the synthetic offer',
+        uncertainty: 'No buyer interest verified',
+        gaps: 'Need actual buyer response',
+        nextAction: 'Review an introduction',
+        dueAt: future(),
+      }),
+    );
+    const publication = await w.delivery.publication(w.staffCtx, {
+      commandId: randomUUID(),
+      missionId,
+      title: 'Approved buyer context',
+      company: 'Synthetic requesting company',
+      objective: 'Develop a commercial relationship',
+      brief: 'Approved fictional requirements without private contacts or negotiation notes',
+      nextAction: 'Review the approved counterparty',
+      dueAt: future(),
+      meetings: [],
+      opportunityIds: [],
+      includeFinancials: false,
+      approved: true,
+    });
+    await new DeliveryExperienceService(w.f.runtime).publication(w.staffCtx, {
+      commandId: randomUUID(),
+      publicationId: publication.id,
+      requirementId: null,
+      targetIds: [target.id],
+      quotationIds: [],
+      agendaItemIds: [],
+      approved: true,
+      reason: 'Explicitly approve this original target and qualification only',
+    });
+    const link = await w.delivery.share(w.staffCtx, {
+      commandId: randomUUID(),
+      programmeId: null,
+      publicationIds: [publication.id],
+      audience: 'CLIENT_PROGRESS',
+      purpose: 'Explicit synthetic commercial report scope',
+      expiresAt: future(),
+      allowExport: false,
+      approved: true,
+    });
+    const assignment = await w.assign(request, link.id);
+    reportId = await w.accept('sam', assignment);
+    companyName = (
+      await w.f.owner.query('SELECT name FROM app.organisation WHERE id=$1', [company.id])
+    ).rows[0].name as string;
+  }, 300000);
+
+  test('Sam finds the approved company through the search, opening the report it came from', async () => {
+    const answer = await searchCompanies('sam');
+    expect(answer.scopes).toEqual({ companies: 'ok' });
+    expect(answer.hits).toHaveLength(1);
+    expect(answer.hits[0]!.label).toBe(companyName);
+    expect(answer.hits[0]!.href).toBe(`/account/missions/${reportId}`);
+    expect(answer.facts?.[`company:${answer.hits[0]!.id}`]?.reports).toBe(1);
+  });
+  test('another customer, a stranger and a member of another workspace never find it', async () => {
+    for (const person of ['stranger', 'hana', 'olive', 'rita'])
+      expect(await searchCompanies(person), person).toEqual({
+        hits: [],
+        scopes: { companies: 'ok' },
+      });
+  });
+  test('after Sam is removed from the workspace the company is not found, and a new invitation brings it back', async () => {
+    await w.revoke('olive', w.W, w.members.sam!);
+    expect(await searchCompanies('sam')).toEqual({ hits: [], scopes: { companies: 'ok' } });
+    await w.join('olive', 'sam', w.W);
+    const back = await searchCompanies('sam');
+    expect(back.hits.map((hit) => hit.label)).toEqual([companyName]);
   });
 });
