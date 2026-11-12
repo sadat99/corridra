@@ -162,6 +162,8 @@
   width: min(45rem, calc(100vw - 2rem));
   max-height: min(36rem, calc(100dvh - 7rem));
   margin-block-start: min(6rem, 10dvh);
+  /* Centred over the page at every width. */
+  margin-inline: auto;
   padding: 0;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
