@@ -186,3 +186,109 @@
     margin-inline-start: var(--space-2);
   }
 }
+
+/* The customer list (owner-approved mockups, revision 2, 12 Nov 2026): a white sidebar. The list carries the shared
+   `ux-team-sidebar` class for its targets, drawer and icons-only rules, and the team's navy stylesheet (team-nav.css,
+   loaded with the header) also matches that class, so every rule here is scoped to `.ux-customer-nav` and is one
+   class stronger than the navy one. The team and contributor bars are unchanged. The current item is cobalt words
+   on the selected surface at every width, with no edge stripe (the words use --brand, not --selected, which Stronger
+   Colours turns white for the navy team bar); counts are small quiet badges; Your Journeys and Groups have a small
+   mono label each, and the lead journey (Sourcing) is a little bolder and taller. Tokens only. */
+nav.ux-team-sidebar.ux-customer-nav {
+  display: block;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+}
+nav.ux-team-sidebar.ux-customer-nav a span,
+.ux-leftnav-panel nav.ux-team-sidebar.ux-customer-nav a,
+.ux-leftnav-panel nav.ux-team-sidebar.ux-customer-nav a:hover,
+.ux-leftnav-panel nav.ux-team-sidebar.ux-customer-nav a[aria-current] {
+  color: inherit;
+}
+.ux-leftnav-panel nav.ux-team-sidebar.ux-customer-nav a {
+  color: var(--text-2);
+  font-weight: 500;
+}
+.ux-leftnav-panel nav.ux-team-sidebar.ux-customer-nav a:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+.ux-leftnav-panel nav.ux-team-sidebar.ux-customer-nav a[aria-current='page'],
+[dir='rtl'] .ux-leftnav-panel nav.ux-team-sidebar.ux-customer-nav a[aria-current='page'] {
+  background: var(--selected-surface);
+  color: var(--brand);
+  font-weight: 600;
+  box-shadow: none;
+}
+.ux-leftnav-panel nav.ux-team-sidebar.ux-customer-nav a:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.ux-leftnav-panel nav.ux-team-sidebar.ux-customer-nav .ux-leftnav-count {
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-weight: 600;
+}
+.ux-leftnav-panel nav.ux-team-sidebar.ux-customer-nav a[aria-current='page'] .ux-leftnav-count {
+  background: var(--surface-1);
+  color: var(--brand);
+}
+.ux-customer-nav-group {
+  margin-top: var(--space-3);
+}
+.ux-customer-nav-label {
+  margin: 0;
+  padding: var(--space-2) var(--space-3) var(--space-1);
+  color: var(--text-3);
+  font: 500 var(--text-xs) / 1.3 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.ux-customer-nav-dot {
+  flex: none;
+  width: 0.5625rem;
+  height: 0.5625rem;
+  margin-inline: 0.34375rem;
+  border-radius: 50%;
+  background: var(--brand);
+}
+.ux-customer-nav-dot[data-tone='positive'] {
+  background: var(--positive);
+}
+.ux-customer-nav-dot[data-tone='ornament'] {
+  background: var(--editorial-accent);
+}
+.ux-leftnav-panel nav.ux-team-sidebar.ux-customer-nav a[data-lead='true'] {
+  min-height: 3rem;
+  color: var(--ink);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+.ux-leftnav-panel nav.ux-team-sidebar.ux-customer-nav a[data-lead='true'][aria-current='page'] {
+  color: var(--brand);
+}
+@media (forced-colors: active) {
+  .ux-customer-nav-dot {
+    background: CanvasText;
+  }
+}
+/* Icons-only bar: a group's label gives way to a thin rule, so the groups stay apart; the names stay for
+   assistive technology. */
+@media (min-width: 1024px) {
+  [data-collapsed='true'] .ux-customer-nav-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  [data-collapsed='true'] .ux-customer-nav-group {
+    margin-top: var(--space-2);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--line);
+  }
+}

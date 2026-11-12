@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { compareOffers, offerTerms, type OfferTerms } from './commercial-missions';
+import { currency } from './opportunities';
 
 // Reply review (ADR-069): the Corridra team's decision about one supplier reply. The words and limits
 // here repeat what the database enforces, so the team gets the early, plain message.
@@ -156,3 +157,50 @@ export function replyGaps(reply: ReplyBody, now = new Date().toISOString()) {
 export function suggestedAsk(missing: readonly string[]): ReplyTermName[] {
   return replyTermNames.filter((name) => missing.includes(name));
 }
+
+/** Why a published reply cannot be carried into the offer form (ADR-081). A refusal carries only this code, never words or terms. */
+export const replyPrefillReasons = [
+  'NOT_FOUND',
+  'NOT_PUBLISHED',
+  'REJECTED',
+  'ASKED_ONLY',
+  'ALREADY_RECORDED',
+  'NO_QUOTATION',
+  'REVIEW_CLOSED',
+  'CURRENCY_NOT_ON_ROUTE',
+  'REQUIREMENT_SUPERSEDED',
+  'MISSION_CLOSED',
+  'TERM_NOT_RECORDABLE',
+] as const;
+export type ReplyPrefillReason = (typeof replyPrefillReasons)[number];
+
+const id = z.uuid();
+/**
+ * What `app.reply_quotation_prefill` returns. Terms are the supplier's exact strings (minor units are integer strings, never numbers)
+ * under the nineteen known names only, and the currency is the one the supplier stated.
+ */
+export const replyQuotationPrefill = z.discriminatedUnion('eligible', [
+  z.object({ eligible: z.literal(false), reason: z.enum(replyPrefillReasons) }).strict(),
+  z
+    .object({
+      eligible: z.literal(true),
+      reason: z.null(),
+      responseId: id,
+      seen: z.int().min(0).max(20),
+      digest: z.string().regex(/^[0-9a-f]{64}$/),
+      missionId: id,
+      rfqId: id,
+      requirementId: id,
+      targetId: id,
+      currency,
+      terms: z.partialRecord(z.enum(replyTermNames), z.string().max(1000)),
+      uncertainties: z.string().min(3).max(1000),
+      // Microsecond UTC text, so the database compares the supplier's statement time exactly.
+      observedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/),
+      sourceKind: z.literal('SELF_DECLARATION'),
+      revision: z.int().positive(),
+      previousId: id.nullable(),
+    })
+    .strict(),
+]);
+export type ReplyQuotationPrefill = z.infer<typeof replyQuotationPrefill>;

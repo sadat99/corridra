@@ -1,9 +1,11 @@
 import AxeBuilder from '@axe-core/playwright';
 import { test, expect, type Page } from '@playwright/test';
 
-// The Ledger footer (owner decision of 6 November 2026): a full-width navy band with the promise and two actions,
-// four link groups of four, the trust legend and one quiet line. On a phone each group is a native disclosure;
-// from 701 px every group is open with no tap and one copy of each link. A signed-in person is never offered
+// The footer, Option B (owner decision of 12 November 2026, locked mockups revision 2; it replaces the Ledger layout
+// of 6 November): a full-width navy band with the logo, promise and actions on the left, three family tiles (Buy
+// Abroad, Groups and Trips, Sell and Expand) and the Corridra links as one row, the trust legend and one quiet line.
+// On a phone each group is a native disclosure and Buy Abroad starts open; from 701 px every group is open with no
+// tap and one copy of each link. A signed-in person is never offered
 // sign-in (public-home spec rule 5): the footer follows the answer the public header already has.
 const sizes = {
   phone: { width: 390, height: 844 },
@@ -21,20 +23,20 @@ const groups = [
     ],
   },
   {
+    title: 'Groups and Trips',
+    links: [
+      ['Run a Trade Mission', '/trade-missions'],
+      ['Plan a Business Trip', '/business-trips'],
+      ['For Institutions', '/institutions'],
+      ['Join the Corridra Network', '/network'],
+    ],
+  },
+  {
     title: 'Sell and Expand',
     links: [
       ['Sell in a New Market', '/sell'],
       ['Enter a New Market', '/enter-market'],
-      ['Plan a Business Trip', '/business-trips'],
       ['Bangladesh to Spain', '/corridors/bangladesh-spain'],
-    ],
-  },
-  {
-    title: 'Groups and Partners',
-    links: [
-      ['Run a Trade Mission', '/trade-missions'],
-      ['For Institutions', '/institutions'],
-      ['Join the Corridra Network', '/network'],
       ['Explore Every Route', '/corridors'],
     ],
   },
@@ -79,7 +81,7 @@ test.beforeEach(({}, info) => {
   test.skip(info.project.name !== 'desktop', 'sizes are set in each case');
 });
 
-test('the footer has four groups of four links, each with its exact address, open with no tap on a wide screen', async ({
+test('the footer has three family tiles and the Corridra row, four links each with its exact address, open with no tap on a wide screen', async ({
   page,
 }) => {
   for (const width of [1440, 768]) {
@@ -102,6 +104,59 @@ test('the footer has four groups of four links, each with its exact address, ope
     }
     // One copy of each link: nothing is rendered twice for the phone.
     await expect(nav.getByRole('link')).toHaveCount(16);
+    // The families are tiles of unequal width: Buy Abroad is the widest.
+    const widths = await nav
+      .locator('details[data-family]')
+      .evaluateAll((items) => items.map((item) => item.getBoundingClientRect().width));
+    expect(widths, `${width}px`).toHaveLength(3);
+    expect(widths[0]!, `${width}px`).toBeGreaterThan(widths[1]! + 1);
+  }
+});
+
+// Nothing dropped (owner rule for Option B): every one of the 16 links, the three actions, the four trust labels and
+// the four bottom items are present once each, at desktop and on a phone.
+test('nothing is dropped: 16 links, three actions, four trust labels and four bottom items, once each, at 1440 and 390', async ({
+  page,
+}) => {
+  const hrefs = groups.flatMap((group) => group.links.map(([, href]) => href));
+  expect(new Set(hrefs).size).toBe(16);
+  for (const size of Object.values(sizes)) {
+    await page.setViewportSize(size);
+    await page.goto('/about');
+    const nav = footer(page).getByRole('navigation', { name: 'Footer', exact: true });
+    for (const href of hrefs)
+      await expect(nav.locator(`a[href="${href}"]`), `${size.width}px ${href}`).toHaveCount(1);
+    const actions = footer(page).locator('.guide-footer-actions');
+    for (const [name, href] of [
+      ['Start a Request', '/plan'],
+      ['Sign In', '/signin'],
+      ['Open Your Workspace', '/workspace'],
+    ] as const) {
+      const link = actions.getByRole('link', { name, exact: true });
+      await expect(link, `${size.width}px ${name}`).toHaveCount(1);
+      await expect(link).toHaveAttribute('href', href);
+      await expect(link).toBeVisible();
+    }
+    await expect(footer(page).locator('.guide-footer-legend .guide-tag')).toHaveText([
+      'Self-declared',
+      'Evidence available',
+      'Verified',
+      'Not confirmed',
+    ]);
+    const bottom = footer(page).locator('.guide-footer-bottom');
+    for (const words of [
+      '© 2026 Corridra',
+      'Your work stays private to the people given access',
+      'First routes: Bangladesh to China, Spain and the EU',
+    ])
+      await expect(
+        bottom.getByText(words, { exact: true }),
+        `${size.width}px ${words}`,
+      ).toHaveCount(1);
+    // The language switcher is drawn only when two or more languages are offered; never twice.
+    expect(await bottom.locator('.lang-switcher').count(), `${size.width}px`).toBeLessThanOrEqual(
+      1,
+    );
   }
 });
 
@@ -189,11 +244,18 @@ test('signed in, the footer opens the workspace and never offers sign-in', async
   );
 });
 
-test('on a phone each group opens and closes with the keyboard and shows its four links in two columns', async ({
+test('on a phone Buy Abroad starts open, and each group opens and closes with the keyboard and shows its four links in two columns', async ({
   page,
 }) => {
   await page.setViewportSize(sizes.phone);
   await page.goto('/about');
+  // Buy Abroad starts open; the keyboard closes it, so every group is then checked from closed.
+  const first = footer(page).locator('details.guide-footer-details').first();
+  await expect(first).toHaveAttribute('open', '');
+  await expect(first.getByRole('link').first()).toBeVisible();
+  await first.locator('summary').focus();
+  await page.keyboard.press('Enter');
+  await expect(first).not.toHaveAttribute('open', '');
   for (const [index, group] of groups.entries()) {
     const details = footer(page).locator('details.guide-footer-details').nth(index);
     const summary = details.locator('summary');
@@ -219,9 +281,10 @@ test('every footer control is at least a 44 px target, at 390 and 1440', async (
   for (const size of Object.values(sizes)) {
     await page.setViewportSize(size);
     await page.goto('/about');
-    // Open every group on a phone so its links are measured too.
-    for (const summary of await footer(page).locator('summary').all())
-      if (await summary.isVisible()) await summary.click();
+    // Open every group on a phone so its links are measured too (Buy Abroad is open already).
+    for (const details of await footer(page).locator('details.guide-footer-details').all())
+      if ((await details.locator('summary').isVisible()) && !(await details.getAttribute('open')))
+        await details.locator('summary').click();
     const small = await footer(page)
       .locator('a, summary, button')
       .evaluateAll((items) =>
@@ -247,8 +310,12 @@ test('no sideways scroll at 320, 390, 768 and 1440, with every group open on a p
     await page.setViewportSize({ width, height: 900 });
     for (const path of ['/', '/about']) {
       await page.goto(path);
-      for (const summary of await footer(page).locator('summary').all())
-        if (await summary.isVisible()) await summary.click();
+      for (const details of await footer(page).locator('details').all())
+        if (
+          (await details.locator('summary').isVisible()) &&
+          (await details.getAttribute('open')) === null
+        )
+          await details.locator('summary').click();
       const wide = await page.evaluate(
         () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
       );
@@ -276,13 +343,11 @@ test('keyboard focus is visible on the navy band', async ({ page }) => {
 });
 
 for (const [name, size] of Object.entries(sizes))
-  test(`the footer has no axe violations at ${name}, with a group open on a phone`, async ({
+  test(`the footer has no axe violations at ${name}, with Buy Abroad open on a phone`, async ({
     page,
   }) => {
     await page.setViewportSize(size);
     await page.goto('/about');
-    const summary = footer(page).locator('summary').first();
-    if (await summary.isVisible()) await summary.click();
     const result = await new AxeBuilder({ page })
       .include('footer.guide-footer')
       .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
