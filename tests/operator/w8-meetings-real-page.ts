@@ -85,6 +85,9 @@ const stubs: Record<string, string> = {
   // The closed-account gate asks the server probe whether Report a Problem is offered; here it is not, and no database is read.
   'lib/problem-reports-offered': `export const problemReportsOffered=async()=>false;`,
   '@corridra/auth/customer-organisation-profiles': `export const customerOrganisationProfilesEnabled=()=>false;`,
+  // The sidebar's Groups (Programmes and Registrations) are off here, so the frame is the one the budget was set on.
+  '@corridra/auth/customer-programmes': `export const customerProgrammesEnabled=()=>false;`,
+  '@corridra/auth/customer-participants': `export const customerParticipantsEnabled=()=>false;`,
 };
 
 const entry = `import{createRoot}from'react-dom/client';

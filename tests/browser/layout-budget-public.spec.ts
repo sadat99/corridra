@@ -29,20 +29,30 @@ const footerLinks = [
 ];
 
 test.describe('the footer (L-02)', () => {
-  test('on a phone the link groups are collapsed, the footer stays within its height and every link is still there', async ({
+  test('on a phone Buy Abroad starts open and the other groups are collapsed, the footer stays within its height and every link is still there', async ({
     page,
   }) => {
     await page.setViewportSize(sizes.phone);
     await page.goto('/about');
     const footer = page.locator('footer.guide-footer');
+    const groups = footer.locator('details.guide-footer-details');
+    await expect(groups).toHaveCount(4);
+    // Option B (owner decision, 12 Nov 2026): Buy Abroad starts open on a phone; it measured 952 px at 390 x 844
+    // when it shipped, and this bound stops it growing.
+    await expect(groups.first()).toHaveAttribute('open', '');
+    for (const group of (await groups.all()).slice(1))
+      await expect(group).not.toHaveAttribute('open', '');
+    const open = await footer.boundingBox();
+    expect(open!.height / sizes.phone.height, 'footer height, Buy Abroad open').toBeLessThanOrEqual(
+      1.15,
+    );
+    // With every group closed the footer keeps the Ledger bound (874 px when it shipped).
+    await groups.first().locator('summary').click();
+    await expect(groups.first()).not.toHaveAttribute('open', '');
     const box = await footer.boundingBox();
-    // The Ledger footer measured 874 px at 390 x 844 when it shipped; this bound stops it growing.
     expect(box!.height / sizes.phone.height, 'footer height in phone screens').toBeLessThanOrEqual(
       1.05,
     );
-    const groups = footer.locator('details.guide-footer-details');
-    await expect(groups).toHaveCount(4);
-    for (const group of await groups.all()) await expect(group).not.toHaveAttribute('open', '');
     for (const href of footerLinks)
       expect(await footer.locator(`a[href="${href}"]`).count(), href).toBeGreaterThan(0);
     // Opening a group shows its links; the summary is a 44 px target.
@@ -66,7 +76,8 @@ test.describe('the footer (L-02)', () => {
     ).toBeLessThanOrEqual(0.72);
     for (const href of footerLinks)
       expect(await footer.locator(`a[href="${href}"]`).count(), href).toBeGreaterThan(0);
-    // Every group is open from 701 px: its summary is hidden and its four links are in view, in one row of four.
+    // Every group is open from 701 px: its summary is hidden and its four links are in view. Option B: the three
+    // family tiles share one row and the Corridra links are one row under them.
     await expect(footer.locator('a[href="/privacy"]')).toBeVisible();
     const groups = footer.locator('details.guide-footer-details');
     for (const group of await groups.all()) {
@@ -76,7 +87,8 @@ test.describe('the footer (L-02)', () => {
     const tops = await groups.evaluateAll((items) =>
       items.map((item) => Math.round(item.getBoundingClientRect().top)),
     );
-    expect(new Set(tops).size, 'the four groups share one row').toBe(1);
+    expect(new Set(tops.slice(0, 3)).size, 'the three family tiles share one row').toBe(1);
+    expect(tops[3]!, 'the Corridra row is under the tiles').toBeGreaterThan(tops[0]!);
   });
 
   for (const [name, size] of Object.entries(sizes))

@@ -5,9 +5,12 @@ import type { Page } from '@playwright/test';
 // Navigation v1, the customer shell (docs/revamp/specs/navigation-v1.md, boards CustomerDesktop, CustomerMobile and
 // UtilityMenus), run on a production build with the test-only customer sign-in. Supersedes the CX PR 1 shell cases
 // that described the left drawer and the account menu at the foot of the bar; the case ids are kept.
-// Case ids: L-01 (sidebar from 1024 px, labelled bottom tabs below), CX-02 (every old destination is still
+// Case ids: L-01 (sidebar from 1024 px; below it the same sidebar as a left drawer from the header's Menu button,
+// owner rule of 12 Nov 2026, with the labelled bottom tabs kept as a shortcut), CX-02 (every old destination is still
 // reachable), CX-03 (the header row and its menus), CX-06 (no banner, no eyebrow, no tab row).
 const sidebar = (page: Page) => page.getByRole('navigation', { name: 'Customer navigation' });
+// The five destinations are the sidebar's first list; Your Journeys and Groups follow it under their own switches.
+const mainLinks = (page: Page) => sidebar(page).locator(':scope > ul').getByRole('link');
 const tabs = (page: Page) => page.getByRole('navigation', { name: 'Customer tabs' });
 const header = (page: Page) => page.locator('header.ux-app-header');
 // Companies appears only where the approved-companies module is on, and Home is Your Move only with its switch,
@@ -31,7 +34,7 @@ test('L-01 at 1440 the destinations are a sidebar beside the page, with New Requ
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/account');
   await expect(sidebar(page)).toBeVisible();
-  const links = sidebar(page).getByRole('link');
+  const links = mainLinks(page);
   await expect(links).toHaveText(destinations.map(([name]) => name));
   expect(await hrefsOf(links)).toEqual(destinations.map(([, href]) => href));
   await expect(sidebar(page).getByRole('link', { name: 'Home' })).toHaveAttribute(
@@ -64,7 +67,7 @@ test('L-01 at 1440 the destinations are a sidebar beside the page, with New Requ
 });
 
 for (const width of [320, 390, 768]) {
-  test(`L-01 at ${width} the destinations are labelled bottom tabs, 48 px high, with no Menu button and no sideways scroll`, async ({
+  test(`L-01 at ${width} the destinations are labelled bottom tabs, 48 px high, and the same sidebar opens as a drawer from Menu, with no sideways scroll`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 844 });
@@ -81,8 +84,20 @@ for (const width of [320, 390, 768]) {
       all.map((a) => a.getBoundingClientRect().toJSON()),
     ))
       expect(box.height).toBeGreaterThanOrEqual(47.5);
-    await expect(page.getByRole('button', { name: 'Menu', exact: true })).toHaveCount(0);
-    await expect(page.locator('.ux-leftnav-rail')).toBeHidden();
+    // The sidebar is a closed drawer, out of view and out of the tab order, until Menu opens it.
+    const menu = page.getByRole('button', { name: 'Menu', exact: true });
+    await expect(menu).toBeVisible();
+    expect((await menu.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
+    await expect(page.locator('.ux-leftnav-panel')).toBeHidden();
+    await menu.click();
+    const drawer = page.getByRole('dialog', { name: 'Customer navigation' });
+    await expect(drawer).toBeVisible();
+    await expect(mainLinks(page)).toHaveText(destinations.map(([name]) => name));
+    expect(await hrefsOf(mainLinks(page))).toEqual(destinations.map(([, href]) => href));
+    await expect(drawer.getByRole('link', { name: 'New Request' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.ux-leftnav-panel')).toBeHidden();
+    await expect(menu).toBeFocused();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);

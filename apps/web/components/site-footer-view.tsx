@@ -18,13 +18,20 @@ type FooterLink = {
 };
 
 /**
- * The footer's four link groups, four links each (the Ledger footer, owner decision of 6 November 2026). Every
- * destination the earlier footer had is here or in the actions above them. The page is built in English; the
- * language is applied after load.
+ * The footer's link groups, Option B (owner decision of 12 November 2026, locked mockups revision 2): three family
+ * tiles of unequal width (Buy Abroad leads, then Groups and Trips, then Sell and Expand), each with a small dot, and
+ * the four Corridra links as one inline row. The same 16 destinations as the Ledger footer it replaces, each once.
+ * The page is built in English; the language is applied after load.
  */
-const groups: readonly { title: MessageKey; links: readonly FooterLink[] }[] = [
+type FooterGroup = {
+  title: MessageKey;
+  family?: 'buy' | 'trips' | 'sell';
+  links: readonly FooterLink[];
+};
+export const footerGroups: readonly FooterGroup[] = [
   {
     title: 'footer.group.buy',
+    family: 'buy',
     links: [
       { href: '/source', key: 'way.source' },
       { href: '/machinery', key: 'way.machinery' },
@@ -33,20 +40,22 @@ const groups: readonly { title: MessageKey; links: readonly FooterLink[] }[] = [
     ],
   },
   {
-    title: 'footer.group.sell',
+    title: 'footer.group.trips',
+    family: 'trips',
     links: [
-      { href: '/sell', key: 'way.sell' },
-      { href: '/enter-market', key: 'way.enterMarket' },
+      { href: '/trade-missions', key: 'way.tradeMissions' },
       { href: '/business-trips', key: 'way.businessTrips' },
-      { href: '/corridors/bangladesh-spain', key: 'footer.link.spain' },
+      { href: '/institutions', key: 'footer.institutions' },
+      { href: '/network', key: 'footer.link.network' },
     ],
   },
   {
-    title: 'footer.group.partners',
+    title: 'footer.group.sell',
+    family: 'sell',
     links: [
-      { href: '/trade-missions', key: 'way.tradeMissions' },
-      { href: '/institutions', key: 'footer.institutions' },
-      { href: '/network', key: 'footer.link.network' },
+      { href: '/sell', key: 'way.sell' },
+      { href: '/enter-market', key: 'way.enterMarket' },
+      { href: '/corridors/bangladesh-spain', key: 'footer.link.spain' },
       { href: '/corridors', key: 'footer.link.routes' },
     ],
   },
@@ -96,56 +105,58 @@ export function SiteFooterView({ realUse }: { realUse: boolean }) {
             <span className="sr-only">Corridra</span>
           </Link>
           <p className="guide-footer-promise">{t('footer.tagline')}</p>
-        </div>
-        {preview ? null : (
-          <div className="guide-footer-actions">
-            <Link prefetch={false} className="primary-link" href="/plan">
-              {t('header.start')}
-            </Link>
-            {who ? (
-              <Link
-                prefetch={false}
-                className="button-secondary"
-                href={who === 'staff' ? '/operator' : '/account'}
-              >
-                {t('footer.openWorkspace')}
+          {preview ? null : (
+            <div className="guide-footer-actions">
+              <Link prefetch={false} className="primary-link" href="/plan">
+                {t('header.start')}
               </Link>
-            ) : (
-              <>
-                <Link prefetch={false} className="button-secondary" href="/signin">
-                  {t('footer.signIn')}
+              {who ? (
+                <Link
+                  prefetch={false}
+                  className="button-secondary"
+                  href={who === 'staff' ? '/operator' : '/account'}
+                >
+                  {t('footer.openWorkspace')}
                 </Link>
-                <p className="guide-footer-already">
-                  {t('footer.already')}{' '}
-                  <Link prefetch={false} href="/workspace">
-                    {t('footer.openWorkspace')}
+              ) : (
+                <>
+                  <Link prefetch={false} className="button-secondary" href="/signin">
+                    {t('footer.signIn')}
                   </Link>
-                </p>
-              </>
-            )}
-          </div>
-        )}
-      </div>
-      {/* One copy of each link. On a phone each group is a disclosure; from 701 px every group shows open. */}
-      <nav className="guide-footer-groups" aria-label={t('footer.nav')}>
-        {groups.map(({ title, links }) => (
-          <details className="guide-footer-details" key={title}>
-            <summary>{t(title)}</summary>
-            <div className="guide-footer-group">
-              <h2 className="guide-footer-title">{t(title)}</h2>
-              <ul>
-                {links.map(({ href, key, testKey }) => (
-                  <li key={href}>
-                    <Link prefetch={false} href={href}>
-                      {t(!realUse && testKey ? testKey : key)}
+                  <p className="guide-footer-already">
+                    {t('footer.already')}{' '}
+                    <Link prefetch={false} href="/workspace">
+                      {t('footer.openWorkspace')}
                     </Link>
-                  </li>
-                ))}
-              </ul>
+                  </p>
+                </>
+              )}
             </div>
-          </details>
-        ))}
-      </nav>
+          )}
+        </div>
+        {/* One copy of each link. On a phone each group is a disclosure and Buy Abroad starts open (not in the
+            compact footer of the request page, which keeps its length budget); from 701 px every
+            group shows open: the three family tiles, then the Corridra links as one row. */}
+        <nav className="guide-footer-groups" aria-label={t('footer.nav')}>
+          <div className="guide-footer-families">
+            {footerGroups
+              .filter((group) => group.family)
+              .map((group, index) => (
+                <FooterGroupBox
+                  key={group.title}
+                  group={group}
+                  open={!compact && index === 0}
+                  realUse={realUse}
+                />
+              ))}
+          </div>
+          {footerGroups
+            .filter((group) => !group.family)
+            .map((group) => (
+              <FooterGroupBox key={group.title} group={group} open={false} realUse={realUse} />
+            ))}
+        </nav>
+      </div>
       {compact ? (
         <details className="guide-footer-trust guide-footer-trust-fold">
           <summary>{t('footer.facts')}</summary>
@@ -161,5 +172,39 @@ export function SiteFooterView({ realUse }: { realUse: boolean }) {
         <LanguageSwitcher />
       </div>
     </footer>
+  );
+}
+
+function FooterGroupBox({
+  group,
+  open,
+  realUse,
+}: {
+  group: FooterGroup;
+  open: boolean;
+  realUse: boolean;
+}) {
+  const t = useT();
+  const { title, family, links } = group;
+  return (
+    <details
+      className={family ? 'guide-footer-details' : 'guide-footer-details guide-footer-corp'}
+      data-family={family}
+      open={open || undefined}
+    >
+      <summary>{t(title)}</summary>
+      <div className="guide-footer-group">
+        <h2 className="guide-footer-title">{t(title)}</h2>
+        <ul>
+          {links.map(({ href, key, testKey }) => (
+            <li key={href}>
+              <Link prefetch={false} href={href}>
+                {t(!realUse && testKey ? testKey : key)}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </details>
   );
 }

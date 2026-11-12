@@ -7,14 +7,28 @@ import { customerOrganisationProfilesEnabled } from '@corridra/auth/customer-org
 import { uxSwitchOn } from '../lib/ux-switches';
 import { CustomerNav, type CustomerTab } from './customer-nav';
 import { T } from './language-provider';
-import { customerTabs, type CustomerTabKey } from '../lib/ux/customer-navigation';
+import { customerProgrammesEnabled } from '@corridra/auth/customer-programmes';
+import { customerParticipantsEnabled } from '@corridra/auth/customer-participants';
+import { customerWorkspacesEnabled } from '@corridra/auth/customer-workspaces';
+import { readNeonAuthConfig } from '@corridra/config';
+import {
+  customerGroupLinks,
+  customerJourneyLinks,
+  customerTabs,
+  type CustomerTabKey,
+} from '../lib/ux/customer-navigation';
 import { notificationSettingsAvailable } from '../lib/ux/notification-settings';
 import { supportWhatsappHref } from '../lib/ux/support-whatsapp';
 import { CustomerTabs } from './ux/customer-tabs';
 import { CustomerBarNote } from './ux/customer-bar-note';
 import { CustomerBarIdentity } from './ux/customer-bar-identity';
-import { LeftNavFrame, LeftNavList, type LeftNavItem } from './ux/left-nav';
-import { CustomerRailFoot, CustomerRailTop } from './ux/customer-rail';
+import { LeftNavFrame } from './ux/left-nav';
+import {
+  CustomerRailFoot,
+  CustomerRailTop,
+  CustomerSideNav,
+  type CustomerSideItem,
+} from './ux/customer-rail';
 import { WorkspaceShell } from './workspace-shell';
 import { IdentifiedClosedAccountGate } from './customer-closed-account-server';
 
@@ -95,8 +109,9 @@ function CustomerFrame({ tab, eyebrow, title, count, children }: CustomerShellPr
         {children}
       </WorkspaceShell>
     );
-  // Navigation v1: the sidebar (1024 px and wider) and the labelled bottom tabs (below) list the same five
-  // destinations from one model. Account, Company Profile, Plan and Billing and the rest are under the avatar.
+  // Navigation v1 and the owner's 12 Nov 2026 rule (main navigation on the left for every signed-in user): the
+  // sidebar beside the page from 1024 px, and below that the same sidebar as a left drawer opened from the header's
+  // Menu button, with the labelled bottom tabs kept as a shortcut. Both list the five destinations from one model. Account, Company Profile, Plan and Billing and the rest are under the avatar.
   // Home is Your Move only with both the navigation and the Move switches, exactly as the old list decided.
   const companies = customerCompaniesEnabled();
   const homeIsMove = plainNames && move;
@@ -111,7 +126,7 @@ function CustomerFrame({ tab, eyebrow, title, count, children }: CustomerShellPr
           : tab === 'companies' || tab === 'meetings'
             ? tab
             : null;
-  const items: LeftNavItem[] = tabs.map((item) => ({
+  const items: CustomerSideItem[] = tabs.map((item) => ({
     key: item.key,
     // Meetings is a new word with no reviewed translation yet, so it is marked as English.
     label: item.labelKey ? <T k={item.labelKey} /> : <span lang="en">{item.label}</span>,
@@ -119,12 +134,33 @@ function CustomerFrame({ tab, eyebrow, title, count, children }: CustomerShellPr
     icon: item.icon,
     count: item.key === 'home' && here === 'home' ? count : undefined,
   }));
+  // Your Journeys and Groups (owner-approved mockups, revision 2): pages that were reachable only from links inside
+  // pages, now in the sidebar too, each under the same switch or gate as its page and its account-page link.
+  const journeys: CustomerSideItem[] = customerJourneyLinks(move).map((link) => ({
+    ...link,
+    label: <span lang="en">{link.label}</span>,
+  }));
+  const groups: CustomerSideItem[] = customerGroupLinks({
+    programmes: customerProgrammesEnabled(),
+    registrations:
+      customerParticipantsEnabled() &&
+      customerWorkspacesEnabled() &&
+      !!readNeonAuthConfig()?.NEON_AUTH_BASE_URL,
+  }).map((link) => ({ ...link, label: <span lang="en">{link.label}</span> }));
   return (
     <LeftNavFrame
       navId={navId}
       words={words}
-      narrow="tabs"
-      nav={<LeftNavList id={navId} label={words.navLabel} items={items} current={here ?? ''} />}
+      nav={
+        <CustomerSideNav
+          id={navId}
+          label={words.navLabel}
+          items={items}
+          current={here ?? ''}
+          journeys={journeys}
+          groups={groups}
+        />
+      }
       top={<CustomerRailTop />}
       foot={<CustomerRailFoot href={supportWhatsappHref()} allTools={plainNames} />}
     >

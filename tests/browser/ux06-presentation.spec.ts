@@ -178,7 +178,7 @@ const openFooterGroups = async (page: import('@playwright/test').Page) => {
       await summary.click();
 };
 
-test('footer keeps four links in each of four groups, collapsed on a phone and open from 701 px, at every width', async ({
+test('footer keeps four links in each of four groups, collapsed on a phone except Buy Abroad and open from 701 px, at every width', async ({
   page,
 }) => {
   for (const width of [1440, 1000, 768, 701, 700, 390]) {
@@ -187,14 +187,22 @@ test('footer keeps four links in each of four groups, collapsed on a phone and o
     const footer = page.locator('footer');
     const groups = footer.locator('details.guide-footer-details');
     await expect(groups, `four link groups at ${width}px`).toHaveCount(4);
-    for (const group of await groups.all())
-      await expect(group, `no group starts open at ${width}px`).not.toHaveAttribute('open', '');
+    // Option B (owner decision, 12 Nov 2026): Buy Abroad starts open; no other group does.
+    await expect(groups.first(), `Buy Abroad starts open at ${width}px`).toHaveAttribute(
+      'open',
+      '',
+    );
+    for (const group of (await groups.all()).slice(1))
+      await expect(group, `no other group starts open at ${width}px`).not.toHaveAttribute(
+        'open',
+        '',
+      );
     const nav = footer.getByRole('navigation', { name: 'Footer', exact: true });
     if (width <= 700) {
-      for (const group of await groups.all()) {
+      for (const group of await groups.all())
         await expect(group.locator('summary'), `${width}px`).toBeVisible();
+      for (const group of (await groups.all()).slice(1))
         await expect(group.getByRole('link').first(), `${width}px`).toBeHidden();
-      }
       await openFooterGroups(page);
     } else {
       for (const group of await groups.all())
