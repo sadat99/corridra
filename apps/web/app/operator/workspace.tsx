@@ -41,6 +41,7 @@ import { AuthenticatorCheck } from './authenticator-check';
 import { SourcesPanel } from './sources-panel';
 import { EvidencePanel } from './evidence-panel';
 import { publishTeamContext } from '../../lib/ux/team-context';
+import { forgetDeviceRecents } from '../../lib/ux/palette-recents';
 import type { MoreKind, OperatorRecordRow, OperatorSnapshot } from './workspace-types';
 type RecordRow = OperatorRecordRow;
 type Snapshot = OperatorSnapshot;
@@ -387,6 +388,8 @@ function TenantWorkspace({
     try {
       const result = await identityClient.signOut();
       if (result.error) throw new Error('Sign-out could not be confirmed. Please try again.');
+      // The command palette's recent items are this person's, on this device: they go with the session.
+      forgetDeviceRecents();
       setData(null);
       window.location.replace(operatorSignInPage);
     } catch {

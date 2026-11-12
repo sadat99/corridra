@@ -1609,6 +1609,11 @@
       "use": "Owner decision 4 Nov 2026: left navigation, page length budget and 1 to 3 fields per form step (L-01 to L-06)"
     },
     {
+      "path": "docs/revamp/specs/navigation-v1/command-palette-search.md",
+      "classification": "Current guide/contract",
+      "use": "Navigation v1 staff command palette search: depth caps, ranking, facts, states, recents and the tests that prove them"
+    },
+    {
       "path": "docs/revamp/specs/navigation-v1/public-reachability.md",
       "classification": "Current guide/contract",
       "use": "Navigation v1 order 2a: every old public header item and route with its new place in the header and phone menu, and the test that proves it"
