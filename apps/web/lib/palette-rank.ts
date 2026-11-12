@@ -231,6 +231,13 @@ export function rankFields(words: string[], fields: RankField[]): Ranked | null 
   return { score, close };
 }
 
+/** A strong row has every query word as an exact word or a word start in its label. Used to stop reading early. */
+export function strongLabel(words: string[], label: unknown): boolean {
+  if (words.length === 0) return false;
+  const tokens = tokenise(foldText(typeof label === 'string' ? label : ''));
+  return words.every((word) => tokens.some((token) => token.text.startsWith(word)));
+}
+
 export type Segment = { text: string; hit: boolean };
 
 /** The shortest run of the token within the limit of the word, earliest first, as folded offsets in the token. */

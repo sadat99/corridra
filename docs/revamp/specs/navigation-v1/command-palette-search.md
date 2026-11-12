@@ -53,7 +53,7 @@ Per request, in order, one scope after the other (the runtime pool is 5):
 
 `paletteLimits` is `{ queuePages: 3, cataloguePages: 4, showAll: 5, showScope: 10, strongStop: 5 }`. Most calls per request: missions 3, companies 5, scope All 8. Hits returned: 5 per scope under All, 10 per scope for a single scope. A strong row has every query word as an exact or prefix match in the label; a scope stops early after 5 strong rows.
 
-Partial: a scope is partial when it stopped at the cap with rows still unread (total greater than rows read), including a whole-word read whose total exceeds 50. Stopping early on strong hits is not partial; order is among the rows read. A scope read completely is never partial.
+Partial: a scope is partial when it stopped at the cap with rows still unread (total greater than rows read), including a whole-word read whose total exceeds 50. Stopping the scan early on strong hits is not partial; order is among the rows read. A whole-word read whose total exceeds the 50 rows returned is partial even then, because rows of it were never read. A scope read completely is never partial.
 
 Failures: a 403 on the first read of a scope puts it in `denied`. Any other error on the first read of a scope fails the request with 500 and the generic message. A later page failing with a non-403 error keeps the earlier hits and marks the scope partial, and logs one line `{event:'palette_search_page_failed', scope, page, correlationId}` (never the query). A later page 403 puts the scope in `denied` and clears that scope's rows. `denied` and `partial` list scopes in the order missions, companies.
 

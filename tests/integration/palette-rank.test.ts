@@ -8,6 +8,7 @@ import {
   queryWords,
   rankFields,
   rankLimits,
+  strongLabel,
   tierScore,
   type RankField,
 } from '../../apps/web/lib/palette-rank';
@@ -246,5 +247,14 @@ describe('P3 highlighting', () => {
       { text: 'Madr', hit: true },
       { text: 'id', hit: false },
     ]);
+  });
+});
+
+describe('a strong label', () => {
+  test('every word is an exact word or a word start in the label', () => {
+    expect(strongLabel(queryWords('mad tex'), 'Madrid Textiles')).toBe(true);
+    expect(strongLabel(queryWords('mad'), 'Nomad Freight')).toBe(false);
+    expect(strongLabel(queryWords('mad'), undefined)).toBe(false);
+    expect(strongLabel([], 'Madrid')).toBe(false);
   });
 });
