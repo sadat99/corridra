@@ -242,10 +242,20 @@ export function MissionExperienceView({
             shortlist: e.shortlist,
             language,
           })}
-          matrix={<ComparisonMatrix offers={e.quotations.filter(inLens)} language={language} />}
+          matrix={
+            <ComparisonMatrix
+              offers={e.quotations.filter(inLens)}
+              shortlist={e.shortlist}
+              language={language}
+            />
+          }
         />
       ) : (
-        <ComparisonMatrix offers={e.quotations.filter(inLens)} language={language} />
+        <ComparisonMatrix
+          offers={e.quotations.filter(inLens)}
+          shortlist={e.shortlist}
+          language={language}
+        />
       )}
       {e.quotations.length ? (
         e.quotations.map(

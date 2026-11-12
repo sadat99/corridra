@@ -116,8 +116,16 @@ describe('M-03 quotes in different currencies stay separate', () => {
   it('shows each total in its own currency and sums nothing', async () => {
     const { ComparisonMatrix } = await loadWeb('components/comparison-matrix');
     const html = plain(
-      render(ce(ComparisonMatrix, { offers: [usd, eur] as never[], language: 'en' })),
+      render(
+        ce(ComparisonMatrix, {
+          offers: [usd, eur] as never[],
+          shortlist: [{ id: usd.targetId, company: '绿野机械有限公司' }] as never[],
+          language: 'en',
+        }),
+      ),
     );
+    // Each column head names its supplier (original script kept); no match shows no name.
+    expect(html).toContain('<span lang="zh">绿野机械有限公司</span>');
     expect(html).toContain('USD 36,800.00');
     expect(html).toContain('EUR 34,000.00');
     // 36,800 + 34,000 = 70,800: no figure that adds the two may appear.

@@ -64,7 +64,8 @@ describe('the Sell room buyers view', () => {
       proposals: 1,
       agreements: 1,
     });
-    expect(funnel).toMatchObject({ shortlisted: 4, proposed: 1, confirmed: 1, held: 1 });
+    // The confirmed visit a2 has a held meeting, so it counts as held only.
+    expect(funnel).toMatchObject({ shortlisted: 4, proposed: 1, confirmed: 0, held: 1 });
   });
 
   // Regression (Sell lane, 11 Nov 2026): price requests, samples and agreements were added into one number and

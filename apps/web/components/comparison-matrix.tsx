@@ -42,9 +42,11 @@ const labels: Record<string, string> = {
 };
 export function ComparisonMatrix({
   offers,
+  shortlist,
   language,
 }: {
   offers: MissionExperience['quotations'];
+  shortlist: MissionExperience['shortlist'];
   language: string;
 }) {
   if (!offers.length) return null;
@@ -62,13 +64,25 @@ export function ComparisonMatrix({
         <thead>
           <tr>
             <th scope="col">Term</th>
-            {offers.map((q) => (
-              <th scope="col" key={q.id}>
-                Offer revision {q.revision}
-                <br />
-                {q.currency}
-              </th>
-            ))}
+            {offers.map((q) => {
+              // The supplier is the shortlisted company the quotation is for; no match, no name line.
+              const company = shortlist.find((t) => t.id === q.targetId)?.company;
+              return (
+                <th scope="col" key={q.id}>
+                  Offer revision {q.revision}
+                  {company ? (
+                    <>
+                      <br />
+                      <span lang={/\p{Script=Han}/u.test(company) ? 'zh' : undefined}>
+                        {company}
+                      </span>
+                    </>
+                  ) : null}
+                  <br />
+                  {q.currency}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>
