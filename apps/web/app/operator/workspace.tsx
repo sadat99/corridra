@@ -15,7 +15,9 @@ import { Counterparties } from './counterparties';
 import { CompanyLinkReview } from './company-link-review';
 import { ErasureQueue } from './erasure-queue';
 import { ProblemReportQueue } from './problem-report-queue';
+import { ProgrammeApplicationQueue } from './programme-application-queue';
 import { problemReportQueueFragment } from '../../lib/problem-report-queue';
+import { applicationQueueFragment } from '../../lib/programme-application-queue';
 import { Missions } from './missions';
 import { TodayPanel } from './today';
 import { CommercialProgress } from './opportunities';
@@ -63,6 +65,7 @@ export function Workspace({
   initialSection = '',
   shellsV2 = false,
   problemReports = false,
+  programmeApplications = false,
 }: {
   tenants: Tenant[];
   initialTenant: string;
@@ -80,6 +83,8 @@ export function Workspace({
    * offered, and then nothing is added to Settings and its address is an unknown fragment.
    */
   problemReports?: boolean;
+  /** Whether the staff list of programme applications is offered (switch on and module installed). Fail closed. */
+  programmeApplications?: boolean;
 }) {
   const router = useRouter();
   const [tenant, setTenant] = useState(initialTenant);
@@ -102,6 +107,7 @@ export function Workspace({
       initialSection={initialSection}
       shellsV2={shellsV2}
       problemReports={problemReports}
+      programmeApplications={programmeApplications}
     />
   );
 }
@@ -114,6 +120,7 @@ function TenantWorkspace({
   initialSection,
   shellsV2,
   problemReports,
+  programmeApplications,
 }: {
   tenants: Tenant[];
   tenant: string;
@@ -123,6 +130,7 @@ function TenantWorkspace({
   initialSection: string;
   shellsV2: boolean;
   problemReports: boolean;
+  programmeApplications: boolean;
 }) {
   const edited = useRef(false);
   const memberCommand = useRef<{ key: string; id: string } | null>(null);
@@ -264,7 +272,9 @@ function TenantWorkspace({
   const sectionId = sectionOfFragment(fragment);
   // The queue of problem reports sits inside Settings, so its own address (#problem-report-queue) is allowed for the
   // people who may see Settings, and panelFor puts it in that panel. Not offered, the address is an unknown fragment.
-  const reportQueueAddress = problemReports && fragment === problemReportQueueFragment;
+  const reportQueueAddress =
+    (problemReports && fragment === problemReportQueueFragment) ||
+    (programmeApplications && fragment === applicationQueueFragment);
   const sectionAllowed = workspaceSections.some(
     (section) =>
       (section.id === sectionId || (reportQueueAddress && section.id === 'workspace-settings')) &&
@@ -795,6 +805,13 @@ function TenantWorkspace({
               {problemReports ? (
                 <ProblemReportQueue
                   key={`problem-reports-${tenant}`}
+                  tenant={tenant}
+                  role={data.role}
+                />
+              ) : null}
+              {programmeApplications ? (
+                <ProgrammeApplicationQueue
+                  key={`programme-applications-${tenant}`}
                   tenant={tenant}
                   role={data.role}
                 />

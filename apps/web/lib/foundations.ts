@@ -155,6 +155,7 @@ import { CustomerBookService, customerBooksEnabled } from '@corridra/auth/custom
 import {
   CustomerProgrammePublicationService,
   ProgrammePageReader,
+  StaffProgrammeApplications,
   customerProgrammePagesEnabled,
 } from '@corridra/auth/customer-programme-publication';
 import {
@@ -631,6 +632,7 @@ function createServices() {
     teamProblemReports: new TeamProblemReports(runtimePool),
     problemReportsOffered: () => problemReportsOffered(runtimePool),
     staffProblemReports: new StaffProblemReports(runtimePool),
+    staffProgrammeApplications: new StaffProgrammeApplications(runtimePool),
     customerAccountLifecycle: new CustomerAccountLifecycleService(
       runtimePool,
       authPool,
