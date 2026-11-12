@@ -1621,7 +1621,7 @@
     {
       "path": "docs/revamp/specs/navigation-v1/customer-search.md",
       "classification": "Current guide/contract",
-      "use": "Navigation v1 customer and regular-user search: scope, route contract, caps, privacy rules, states, words and the tests written for them; built on PR 451 (draft, head 1e0a587, exact-head CI and Guardian PASS pending), not merged, nothing enabled or live"
+      "use": "Navigation v1 customer and regular-user search: scope, route contract, caps, per-person limit, Companies budget, privacy rules, states, words and the tests written for them; built on PR 451 (draft, head 1e0a587, exact-head CI and Guardian PASS pending), not merged, nothing enabled or live"
     },
     {
       "path": "docs/revamp/specs/navigation-v1/public-reachability.md",

@@ -22,7 +22,7 @@ export const dynamic = 'force-dynamic';
 
 // The customer search (docs/revamp/specs/navigation-v1/customer-search.md). POST only, so the typed words travel in the
 // body and never in an address. It reads through the services the person's own pages use, each under their own
-// session, and writes nothing. The words are never logged: a failure logs only the request id.
+// session, and writes no search data (the session boundary writes its short session proof rows, as for every customer read). The words are never logged: a failure logs only the request id.
 const body = z
   .object({ q: z.string().max(80), scope: z.enum(customerSearchScopes).default('all') })
   .strict();

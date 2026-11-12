@@ -34,23 +34,26 @@ Not searched, and not built: Requests written by other members, delegations, pro
 
 `POST /api/customer-search`, `Content-Type: application/json`, body `{ q, scope }`. The words typed travel only in the body so they never enter a URL, an access log, history or a Referer.
 
-Validation order. Nothing at or before step 3 touches a service.
+Validation order. Nothing before step 10, the search itself, touches a service.
 
 1. `foundations()` null: 503, every requested scope unavailable.
 2. `Origin` is not `APP_ORIGIN`: 403.
 3. Content type does not start `application/json`: 415.
 4. Body over 8192 bytes: 413. Invalid JSON or a body that fails the schema: 400.
 5. Strict schema `{ q: string up to 80, scope: all | requests | companies, default all }`. An unknown scope (including `pages`), an extra key or a query over 80 UTF-16 units is 400.
-6. A trimmed query shorter than 2 characters, or with no letter or digit: 200 `{ "hits": [], "scopes": {} }` and zero reads.
+6. A trimmed query shorter than 2 characters, or with no letter or digit: 200 `{ "hits": [], "scopes": {} }`, zero reads, and no allowance spent.
+7. The signed-in person is read first, on the server, from the identity provider session (`customerIdentity()`): never from the body, never from the identity headers the browser sends, never from an address. Nobody signed in, or a provider that does not answer: 401 `Sign in to continue`, with no slot held, no allowance counted and no service read, so an anonymous request cannot crowd out signed-in people.
+8. The person's own allowance, keyed on that verified issuer and subject alone: a person who has already started 10 searches in the last 10 seconds gets 429 `{ error: 'Too many searches, try again in a moment', correlationId }` with `Retry-After`, before the slot and before any service call. Varying the workspace, a request id, the scope, the identity headers or the address does not change the key.
+9. A process slot (section 4); none free: 503 `Search is busy, try again in a moment` with `Retry-After: 2`.
 
-The 200 answer:
+The 200 answer (`sample: true` marks a hit that comes from sample data, which the dialog labels "Sample"; real data carries no marker):
 
 ```
-{ hits: [{ id, label, detail, href, kind: 'request' | 'company' }],
+{ hits: [{ id, label, detail, href, kind: 'request' | 'company', sample?: true }],
   scopes: { requests?: State, companies?: State },
   facts?: { 'request:<uuid>': { sent, status?, withdrawn?, close? },
             'company:<hex64>': { reports, close? } } }
-State = ok | partial | unavailable | denied | archived
+State = ok | partial | unavailable | denied | archived | limited
 ```
 
 Requests first, then Companies, each ranked by `palette-rank.ts` (unchanged). 5 hits per scope under All, 10 for a single scope. Labels are cut to 200 characters. Only the requested scopes appear in `scopes`. A Request hit has an empty `detail`; the client builds the detail line from `facts.sent` (an ISO date and time) and `facts.status` (the stored status word, which the client turns into the words the Requests page uses). A Company hit's detail is the country and `facts.reports` is the count from loaded pages only. `facts` never carries fit, rationale, uncertainty, gaps, verification, contact, brief text or any money field. The answer carries no total and no "more exist" count.
@@ -61,15 +64,16 @@ Status codes:
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | 200  | Answered (scopes may each be unavailable, denied, archived or partial).                                                               |
 | 400  | Bad body, query over 80 characters, unknown scope, or a malformed subject or issuer header (from the session boundary).               |
-| 401  | No customer session. A staff session is invisible to the customer boundary, so staff without a customer session also get 401.        |
+| 401  | No signed-in person (step 7), including a provider that does not answer; or a service that finds no session. A staff session is invisible to the customer boundary, so staff without a customer session also get 401.        |
 | 403  | Wrong Origin, a closed account (`account_closed` is kept in the body), or an unverified email.                                        |
 | 409  | The subject or issuer header does not match the live session (the boundary refuses before any read).                                  |
 | 413  | Body over 8 KB.                                                                                                                       |
 | 415  | Content type is not JSON.                                                                                                             |
+| 429  | The same person has used their allowance of searches (step 8; `Retry-After` is the seconds to wait), or every scope asked for was refused by the Companies budget (`code: 'scope_limited'`, no `Retry-After`, as the Companies route answers). The dialog shows a calm "try again" state with Retry, never "No match". |
 | 500  | `{ error: 'The request could not be completed', correlationId }` for any other failure, and for a service refusal whose status is not 400, 401, 403, 409, 413, 415 or 503.                                    |
 | 503  | The route is unavailable, every requested scope is unavailable, or the process is already running its limit of searches (`Search is busy, try again in a moment`, with `Retry-After: 2`). The dialog shows all three as its one whole-route state.                                                                    |
 
-A DomainError of 400, 401, 403 (any) or 409 from a service is returned for the whole request and stops the remaining scopes and lookups. Per scope: a DomainError 503 or SQLSTATE `42P01`, `3F000`, `42883` is `unavailable`; raw SQLSTATE `42501` is `denied`; the archived-workspace refusal is `archived` for Requests (Companies still answer). A scope whose switch is off is `unavailable` with zero calls to its service. A refusal shows its own words and code only for the statuses in the table; any other status is the generic 500. Every answer of the route handler, errors included, carries `Cache-Control: no-store`, `Referrer-Policy: no-referrer`, `X-Content-Type-Options: nosniff` and `X-Corridra-Request-ID`. The route is registered in `apps/web/next.config.ts` with its own rule.
+A DomainError of 400, 401, 403 (any) or 409 from a service is returned for the whole request and stops the remaining scopes and lookups. Per scope: a DomainError 503 or SQLSTATE `42P01`, `3F000`, `42883` is `unavailable`; raw SQLSTATE `42501` is `denied`; the archived-workspace refusal is `archived` for Requests (Companies still answer). A scope whose switch is off is `unavailable` with zero calls to its service. A DomainError 429 from a service is `limited` for its scope. A refusal shows its own words and code only for the statuses in the table; any other status is the generic 500. Every answer of the route handler, errors included, carries `Cache-Control: no-store`, `Referrer-Policy: no-referrer`, `X-Content-Type-Options: nosniff` and `X-Corridra-Request-ID`. The route is registered in `apps/web/next.config.ts` with its own rule.
 
 Subject and issuer headers are passed through exactly as `/api/customer-requests` passes them. They are rejection-only: they can make the boundary refuse, never grant. The header Search sends them when the page supplied them (the server reads `customerIdentity()` once per request for the customer frame); with none it sends none, and the server answers 401. A mismatch is a 409, which the dialog shows as the access-could-not-be-confirmed state.
 
@@ -88,16 +92,21 @@ All limits live in one exported object, `customerSearchLimits`, in `apps/web/lib
 | `companyPageSize`  | 5     | Scopes per page (the service maximum).                                                                    |
 | `showAll`          | 5     | Hits per scope under All.                                                                                 |
 | `showScope`        | 10    | Hits for a single scope.                                                                                  |
+| `perPersonSearches` | 10 | Searches one person may start in each window, counted in this process before any read. A third of the staff palette's 30, because a search here can make up to 35 service calls. |
+| `perPersonWindowMs` | 10000 | The sliding window for that allowance. |
+| `perPersonKeys` | 5000 | People the allowance remembers; the least recently used are dropped, so memory stays bounded. |
 | `maxConcurrentSearches` | 4 | Searches one process runs at once; the next is refused with 503 and `Retry-After: 2`. The slot is given back when the search ends for any reason. |
 | `searchDeadlineMs` | 12000 | One deadline for the whole search, both scopes and every service call. A call still running at the deadline, or when the request aborts, is given up on, and its scope is partial, never ok. |
 
 Scopes run one after the other, under one clock. Requests are ordered by id, not by time, so beyond the cap the unread part is arbitrary: that is why a capped read says partial and never "No match". Companies are partial when `nextAfter` remains after page 4, when any page has `unavailableScopes` above 0, or when a later page failed.
 
+The Companies page spends a per-client budget before every portfolio page it reads (`missions.budget(client)`, the first address of `x-vercel-forwarded-for` on Vercel and `local` elsewhere; in the synthetic mode that is `app.intake_budget` at 6 an hour per client, in the real mode `customer.real_request_budget` at 120 an hour, both shared with public intake). The search spends the same budget with the same client before every portfolio page it reads, so a customer refused on the Companies page cannot read the portfolio through search. A refusal on the first page makes the Companies scope `limited` (the Requests scope still answers); a refusal on a later page keeps the companies already found and makes the scope `partial`; the whole request is a 429 only when every scope asked for is `limited`. A full Companies search reads up to 4 pages, so it spends up to 4 units of that budget.
+
 The query never reaches SQL, a service argument, a URL, a header or a log field. It exists only in the validated body, where it feeds `queryWords` and `rankFields`.
 
 ## 5. Failure handling and logging
 
-A first-read failure that is not a DomainError and not a known SQL state is a 500 and logs one fixed-shape line `{ event: 'customer_search_failed', scope, correlationId, errorName, errorCode }` (scope when known; name at most 64 characters, code at most 32, otherwise left out; never the message). A failure on a later company page keeps the earlier hits, marks the scope partial and logs one line `{ event: 'customer_search_page_failed', scope, page, correlationId, errorName, errorCode }`, name at most 64 characters, code at most 32, never the message (a database may fill a message with the typed words). A lookup failure counts toward partial. SQLSTATE `42501` on a later page makes the scope denied and clears its rows. The access log, console and logger never receive the query or a result.
+A first-read failure that is not a DomainError and not a known SQL state is a 500 and logs one fixed-shape line `{ event: 'customer_search_failed', scope, correlationId, errorName, errorCode }` (scope when known; name at most 64 characters, code at most 32, otherwise left out; never the message). An unexpected Companies failure after Requests answered keeps the Requests hits, makes Companies `unavailable` and logs one line `{ event: 'customer_search_scope_failed', scope, correlationId, errorName, errorCode }`. A failure on a later company page keeps the earlier hits, marks the scope partial and logs one line `{ event: 'customer_search_page_failed', scope, page, correlationId, errorName, errorCode }`, name at most 64 characters, code at most 32, never the message (a database may fill a message with the typed words). A lookup failure counts toward partial. SQLSTATE `42501` on a later page makes the scope denied and clears its rows. The access log, console and logger never receive the query or a result.
 
 ## 6. Privacy rules
 
@@ -120,7 +129,7 @@ Flags come from the same holders the avatar and Help menus read. Without them th
 
 ## 8. Honest incompleteness and words
 
-A scope that is partial, denied, unavailable, archived, closed, signed out or failed is never called "No match". Partial says "Partial results" and "Narrow your search"; a partial scope with nothing listed says "Search was partial", never "No match". Signed out says "You are signed out" with a Sign In option that never carries the typed words. A closed account has its own block. Words are Request and Company, never Mission. English only (`lang="en"`), Title Case buttons, curly quotes on screen, no em dashes, no reviewed translation claimed. Never shown: "verified", "evidence", "enabled", "live", totals, "more exist" counts, "complete search".
+A scope that is partial, denied, unavailable, archived, closed, signed out or failed is never called "No match". A search that is limited (429) says "Too many searches just now. Wait a little, then try again." with Retry first and the pages still listed, and the screen reader hears "Too many searches just now. Wait a little. Retry is the first option." A Companies scope held back by the budget says "Searching Companies is paused because of too many requests. Try again later." (it counts per hour, so the words say later) and the Requests still answer. A hit from sample data shows a "Sample" chip. Partial says "Partial results" and "Narrow your search"; a partial scope with nothing listed says "Search was partial", never "No match". Signed out says "You are signed out" with a Sign In option that never carries the typed words. A closed account has its own block. Words are Request and Company, never Mission. English only (`lang="en"`), Title Case buttons, curly quotes on screen, no em dashes, no reviewed translation claimed. Never shown: "verified", "evidence", "enabled", "live", totals, "more exist" counts, "complete search".
 
 The final copy and layout are owned by the UI specification of the UI stage; the pure words module `customer-search-status.ts` carries the strings, and `customer-search-words.test.ts` pins them.
 
@@ -142,11 +151,13 @@ Requests need the request switch and, for titles, `CORRIDRA_CUSTOMER_REQUEST_DET
 
 ## 12. Cost, rate limit and follow-ups
 
-Every service call is one transaction: it reads the identity-provider session remotely, writes a short proof row and holds a pool connection. A search makes up to 1 + 30 + 4 = 35 such calls. A per-process cap of 4 concurrent searches and one 12 second deadline now bound the cost, but there is still no per-person rate limit, and the cost is unmeasured (M3): no latency or capacity claim is made until it is measured on a seeded database, and the measurement goes in the work log.
+Every service call is one transaction: it reads the identity-provider session remotely, writes a short proof row and holds a pool connection. A search makes up to 1 + 30 + 4 = 35 such calls. Three things now bound the cost: a per-process cap of 4 concurrent searches, one 12 second deadline per search, and a per-person allowance of 10 searches in 10 seconds (in process, so per server instance; it keeps only the signed-in person's key in a bounded map, never the words typed, and it is the same sliding window the staff palette uses, with its own map and numbers, so a customer never spends a staff allowance). The per-person allowance is what stops one person from taking every concurrency slot. The cost is still unmeasured (M3): no latency or capacity claim is made until it is measured on a seeded database, and the measurement goes in the work log. Reading the signed-in person costs one identity-provider read before the allowance is checked.
 
 Open follow-ups, not built here:
 
-- No per-person rate limit (the process cap and the deadline are not one). The per-IP budget used by public intake is deliberately not reused, so heavy search from one address cannot throttle intake. A per-person budget needs a table, so it is a migration and owner-gated.
+- No limit shared across server instances. The per-person allowance counts in each instance's own memory, so several instances allow more in total. A shared limit needs a table, so it is a migration and owner-gated.
+- The Companies budget is the per-client budget public intake also uses (6 an hour in the synthetic mode), so searching Companies and loading the Companies page draw on the same allowance as intake from the same address. Whether that is the right allowance for a search that reads up to 4 pages is an owner question; it is mirrored here exactly because the Companies page spends it.
+- A 429 writes no log line, so a flood cannot also flood the log; the 429 carries only the request id.
 - A batch title lookup in `packages/auth` would cut the lookups; build it only if the measured cost is high.
 - The dialog stylesheet is a prefixed copy of the staff palette rules because the staff files must not change. Consolidating the two is a later task.
 - The request detail page has no withdrawn wording.
@@ -160,14 +171,17 @@ Open follow-ups, not built here:
 | P3  | Pages are only what the shell offers; Companies absent when off; no "soon" hit                                  | `customer-search-pages.test.ts`                                                           |
 | P4  | Keyboard and scope helpers match the staff behaviour                                                            | `customer-search-status.test.ts`                                                          |
 | P5  | Empty, one-letter and symbol-only queries read nothing                                                          | `customer-search-route.test.ts`                                                           |
-| D1  | Signed out is 401 with at most one service call                                                                 | `customer-search-route.test.ts`, `customer-search-route-depth.test.ts`                    |
-| D2  | Cross-tenant and header mismatch; extra ids in the body rejected; B finds nothing of A (Requests only; Companies are tested with counting services)                          | `customer-search-route-depth.test.ts`, `customer-search-database.test.ts`                 |
-| D3  | Removed member finds nothing; re-admission restores; revoked not found; withdrawn shown (Requests only; Companies are tested with counting services)                         | `customer-search-database.test.ts`, `customer-search-core.test.ts`                        |
+| D1  | Signed out is a 401 with no service call, before any slot or allowance                                                                 | `customer-search-route.test.ts`, `customer-search-route-depth.test.ts`                    |
+| D2  | Cross-tenant and header mismatch; extra ids in the body rejected; B finds nothing of A (Requests and Companies, both against the database)                          | `customer-search-route-depth.test.ts`, `customer-search-database.test.ts`                 |
+| D3  | Removed member finds nothing; re-admission restores; revoked not found; withdrawn shown (Requests and Companies, both against the database)                         | `customer-search-database.test.ts`, `customer-search-core.test.ts`                        |
 | D4  | No staff service, no SQL, no catalogue in the route or core                                                     | `customer-search-source.test.ts`                                                          |
 | D5  | Closed account is 403 with its code; archived is a Requests state                                              | `customer-search-route-depth.test.ts`                                                     |
 | D6  | Each flag off makes that scope unavailable with zero calls; all off is 503                                      | `customer-search-route-depth.test.ts`                                                     |
 | D7  | Generic 500; later-page failure partial with one log line; three failed lookups stop                            | `customer-search-route-depth.test.ts`, `customer-search-core.test.ts`                     |
 | D8  | Bad body, scope, size, origin, content type                                                                     | `customer-search-route.test.ts`                                                           |
+| D10 | A person past 10 searches in 10 seconds gets 429 before any service call; the key is the signed-in person, so no browser-sent value resets it; nobody signed in is not counted; the map is bounded; a customer never spends a staff allowance | `customer-search-limit.test.ts`, `customer-search-status.test.ts`, `customer-search-ui.spec.ts` |
+| D11 | The Companies budget is spent before every portfolio page; a spent budget gives a `limited` scope (or a 429 when every scope is limited) with zero portfolio reads; the Requests scope is unaffected | `customer-search-core.test.ts`, `customer-search-route-depth.test.ts` |
+| D12 | Anonymous requests hold no slot and read no service (401 first); sample data is labelled and never described as verified or live | `customer-search-route-depth.test.ts`, `customer-search-core.test.ts`, `customer-search-facts.test.ts`, `customer-search-ui.spec.ts` |
 | D9  | The query is in no log, response or service argument                                                            | `customer-search-route-depth.test.ts`                                                     |
 | R5  | No state that is not a complete search ever says "No match"                                                     | `customer-search-status.test.ts`                                                          |
 | M1  | Bounded work: caps, the process slots, the overall deadline and the abort signal                               | `customer-search-core.test.ts`, `customer-search-route-depth.test.ts`                                                            |
