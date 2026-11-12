@@ -96,6 +96,8 @@ Company chip: "Source on record" for a source-reported identity (a source record
 
 Denied, partial, failed and signed out never read "No match" or "Nothing found". Rows from the allowed scope still show when the other is denied.
 
+When the page cap was reached and no hit was found, the block reads “No match in the part searched” with “Narrow your search.” and not “Try again.”: the rows past the cap are not searched by trying again, so narrowing is the right advice.
+
 ## 6. Recents
 
 Per device, in `localStorage` under `corridra:palette-recents:v1:` plus the workspace id and the signed-in subject. At most 8 items, each `{kind, id, label}`; never query text, detail, status, address, role, e-mail or time. Written when a mission or company hit or recent is opened (never an action). Shown only for an empty query in All, Missions or Companies, 5 in All, and only when the role may open Missions (for mission recents) or Companies (for company recents). Recents are not a way in: the opened page still decides. The subject comes from `/api/operator-auth/get-session` once per open; with no subject nothing is shown or written. Another person's recents on the same device are removed on open. All are removed at every sign-out path, each only after the sign-out itself succeeded: the staff account menu Sign Out, the workspace toolbar Sign Out, the contributor Sign Out of Assigned Work, and the shared `endSession` helper (called by `use-sign-out`, which the site header, the staff utility menus and the account Sign Out use, and by the account lifecycle error line); also when the session is found signed out on open. "No recent missions yet." is said only when the signed-in person is known. Stored values are validated on read and rendered as text.

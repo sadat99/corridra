@@ -4,7 +4,7 @@ import type { RequestContext } from '../../packages/db/src/index';
 import { paletteLimits, searchPalette } from '../../apps/web/lib/palette-search';
 
 // The palette's depth and facts (docs/revamp/specs/navigation-v1/command-palette-search.md, section 3 and 4), with
-// fake services so the page caps, the page caps, the partial rule and the failure rules are exact. The database
+// fake services so the page caps, the partial rule and the failure rules are exact. The database
 // proof for a role is tests/integration/palette-search.test.ts.
 const ctx: RequestContext = {
   token: 't',
