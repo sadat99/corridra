@@ -61,6 +61,9 @@ const text = async (env: Record<string, string | undefined>) => {
     'CORRIDRA_CUSTOMER_PROGRAMMES_ENABLED',
     'CORRIDRA_CUSTOMER_PARTICIPANTS_ENABLED',
     'CORRIDRA_PROGRAMME_PAGES',
+    'CORRIDRA_CUSTOMER_REQUESTS_ENABLED',
+    'CORRIDRA_CUSTOMER_REQUEST_DETAILS_ENABLED',
+    'CORRIDRA_CUSTOMER_MISSION_SHARES_ENABLED',
     'VERCEL_ENV',
   ])
     delete process.env[key];
@@ -440,8 +443,26 @@ describe('public programme pages and applications (ADR-080)', () => {
       'After you join, you leave the programme through your registration instead, and the application stays on record as joined.',
     );
     expect(page).toContain('Automatic deletion of applications is not operational yet.');
+    // Shared objectives are off here, so the path that starts a request from an application is not offered,
+    // and the notice does not describe it.
+    expect(page).not.toContain('start a private request from your application');
     expect(page).toContain('Updated 11 November 2026.');
     expect(page).not.toMatch(/—|–| - /);
+  });
+  it('says the application words are copied only on the person’s own press, while the objective path is offered', async () => {
+    const page = await text({
+      ...pages,
+      CORRIDRA_CUSTOMER_REQUESTS_ENABLED: 'true',
+      CORRIDRA_CUSTOMER_REQUEST_DETAILS_ENABLED: 'true',
+      CORRIDRA_CUSTOMER_MISSION_SHARES_ENABLED: 'true',
+    });
+    expect(page).toContain(
+      'After you join, you can start a private request from your application. Only when you press that button are your words copied into a request draft in your own workspace, which you review before sending.',
+    );
+    expect(page).toContain(
+      'that copy is part of the request and follows what this notice says about requests, including deletion; it is separate from your application.',
+    );
+    expect(page).not.toMatch(/\u2014|\u2013| - /);
   });
   it('leaves the section, its contents line and the new date out while the switch is off', async () => {
     for (const off of [
