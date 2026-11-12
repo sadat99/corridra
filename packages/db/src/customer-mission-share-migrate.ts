@@ -11,15 +11,23 @@ export function migrateCustomerMissionShares(pool: DatabasePool) {
   );
 }
 
+const names = [
+  '0001_participant_mission_summaries.sql',
+  '0002_programme_shared_objective_count.sql',
+];
+
 async function migrateCustomerMissionSharesRun(pool: DatabasePool) {
   await migrateCustomerParticipants(pool);
   await migrateCustomerRequestDetails(pool);
-  const name = '0001_participant_mission_summaries.sql';
-  const sql = await readFile(
-    new URL('../customer-mission-share-migrations/' + name, import.meta.url),
-    'utf8',
+  const files = await Promise.all(
+    names.map(async (name) => {
+      const sql = await readFile(
+        new URL('../customer-mission-share-migrations/' + name, import.meta.url),
+        'utf8',
+      );
+      return { name, sql, hash: createHash('sha256').update(sql).digest('hex') };
+    }),
   );
-  const hash = createHash('sha256').update(sql).digest('hex');
   const db = await pool.connect();
   try {
     await db.query('BEGIN');
@@ -34,13 +42,17 @@ async function migrateCustomerMissionSharesRun(pool: DatabasePool) {
     const previous = await db.query<{ name: string; sha256: string }>(
       'SELECT name,sha256 FROM customer_mission_share_migrations.applied ORDER BY name',
     );
-    if (previous.rows.some((row) => row.name !== name || row.sha256 !== hash))
+    // The history must be a prefix of the ordered list, each file with its recorded hash.
+    if (
+      previous.rows.length > files.length ||
+      previous.rows.some((row, i) => row.name !== files[i]!.name || row.sha256 !== files[i]!.hash)
+    )
       throw new Error('Customer mission-share migration history mismatch');
-    if (previous.rowCount === 0) {
-      await db.query(sql);
+    for (const file of files.slice(previous.rows.length)) {
+      await db.query(file.sql);
       await db.query(
         'INSERT INTO customer_mission_share_migrations.applied(name,sha256) VALUES($1,$2)',
-        [name, hash],
+        [file.name, file.hash],
       );
     }
     await db.query('COMMIT');
