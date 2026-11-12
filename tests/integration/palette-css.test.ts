@@ -44,6 +44,14 @@ function topLevel(source: string): Block[] {
 const blocks = topLevel(css);
 const trigger = '.ux-team-header .ux-palette-trigger';
 const wide = (block: Block) => block.query !== null && /\(min-width:\s*64em\)/.test(block.query);
+/** The declarations of the first `selector { ... }` rule in a flattened block body, or null. No regex is built from the selector. */
+function ruleBody(body: string, selector: string): string | null {
+  const start = body.indexOf(`${selector} {`);
+  if (start < 0) return null;
+  const from = start + selector.length + 2;
+  const end = body.indexOf('}', from);
+  return end < 0 ? null : body.slice(from, end);
+}
 const withRule = (block: Block, selector: string) => block.body.includes(`${selector} {`);
 
 describe('R2-2 the wide field follows the browser font size', () => {
@@ -66,10 +74,10 @@ describe('R2-2 the wide field follows the browser font size', () => {
     // container.
     const rule = blocks
       .filter(wide)
-      .map((block) => new RegExp(`${trigger.replace(/\./g, '\\.')} \\{([^}]*)\\}`).exec(block.body))
-      .find((found) => found !== null && /flex:\s*1 1 0/.test(found[1]!));
+      .map((block) => ruleBody(block.body, trigger))
+      .find((found) => found !== null && /flex:\s*1 1 0/.test(found));
     expect(rule, 'the wide-field trigger rule').toBeTruthy();
-    const floor = /(?:^|[\s;])min-width:\s*([^;]+?)\s*(?:;|$)/.exec(rule![1]!);
+    const floor = /(?:^|[\s;])min-width:\s*([^;]+?)\s*(?:;|$)/.exec(rule!);
     expect(floor?.[1]?.replace(/\s+/g, ' ')).toBe('min(11rem, 100%)');
   });
   test('no wide-field trigger rule remains in a 1024px block', () => {
