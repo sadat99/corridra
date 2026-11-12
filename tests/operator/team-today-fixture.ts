@@ -56,9 +56,11 @@ export async function startTodayFixture(root = resolve('.')) {
       // ?reports=on is a workspace where Report a Problem is offered (both probes hold), as the server tells the workspace
       // (and, with the shells on, the team frame). Off or missing, nothing is added.
       const reports = flag('reports') === 'on';
+      // ?role=operator is a team member who may not see the problem report or erasure queues. Default owner.
+      const role = flag('role') ?? 'owner';
       const workspace = (
         <OperatorFlags replyReview={false}>
-          <Workspace tenants={[{id:${JSON.stringify(fixtureTenant)},name:'Synthetic request operations',role:'owner'}]}
+          <Workspace tenants={[{id:${JSON.stringify(fixtureTenant)},name:'Synthetic request operations',role:role}]}
             initialTenant=${JSON.stringify(fixtureTenant)} shellsV2={shells} problemReports={reports}/>
         </OperatorFlags>
       );
