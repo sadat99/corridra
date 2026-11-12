@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { SubTabs, type SubTab } from '../../components/ux/sub-tabs';
+import './account-settings.css';
 
 /**
  * The Account page as a settings layout on the shared sub-tabs (customer experience spec): Profile, Workspaces
