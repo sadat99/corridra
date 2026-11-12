@@ -30,6 +30,7 @@ vi.hoisted(() => {
   (globalThis as { __paymentHide?: boolean }).__paymentHide = true;
   (globalThis as { __outreachHide?: boolean }).__outreachHide = true;
   (globalThis as { __disputeHide?: boolean }).__disputeHide = true;
+  (globalThis as { __contextHide?: boolean }).__contextHide = true;
 });
 vi.mock('node:fs/promises', async (importOriginal) => {
   const real = await importOriginal<typeof import('node:fs/promises')>();
@@ -45,6 +46,7 @@ vi.mock('node:fs/promises', async (importOriginal) => {
       __paymentHide?: boolean;
       __outreachHide?: boolean;
       __disputeHide?: boolean;
+      __contextHide?: boolean;
     };
     if (!String(path).includes('customer-real-use-migrations')) return names;
     return names.filter(
@@ -60,7 +62,9 @@ vi.mock('node:fs/promises', async (importOriginal) => {
         // Real-use 0017 (experience outreach counts) is applied after 0016 and has its own gate: the last test of this file opens it.
         !(gate.__outreachHide && String(n).startsWith('0017_')) &&
         // Real-use 0018 (participant fee dispute) is applied after 0017 and has its own gate: the last test of this file opens it.
-        !(gate.__disputeHide && String(n).startsWith('0018_')),
+        !(gate.__disputeHide && String(n).startsWith('0018_')) &&
+        // Real-use 0019 (offer context) is applied after 0018 and has its own gate: the last test of this file opens it.
+        !(gate.__contextHide && String(n).startsWith('0019_')),
     );
   }) as typeof real.readdir;
   return { ...real, readdir, default: { ...real, readdir } };
@@ -733,4 +737,27 @@ test('participant fee dispute (real-use 0018) is the eighteenth file, adds only 
   await migrateCustomerRealUse(w.f.owner);
   expect(await appliedNames()).toHaveLength(18);
   expect(await tableHashes()).toEqual(after);
+});
+
+test('offer context (real-use 0019) is the nineteenth file, changes no table and is repeatable', async () => {
+  expect(await appliedNames()).toHaveLength(18);
+  const tables = await tableHashes();
+  (globalThis as { __contextHide?: boolean }).__contextHide = false;
+  await migrateCustomerRealUse(w.f.owner);
+  const applied = await appliedNames();
+  expect(applied).toHaveLength(19);
+  expect(applied[18]).toMatch(/^0019_offer_context/);
+  expect(await reportLine()).toBe('customer_real_use_migrations: 19 applied');
+  expect(await tableHashes()).toEqual(tables);
+  const report = (
+    await q(
+      "SELECT pg_get_functiondef('app.delivery_report(text,text)'::regprocedure) d, to_regprocedure('app.delivery_report_v1(text,text)')::text v",
+    )
+  ).rows[0];
+  expect(report.d).toContain('assignmentType');
+  expect(report.d).toContain('e.outreach');
+  expect(report.v).toBe('app.delivery_report_v1(text,text)');
+  await migrateCustomerRealUse(w.f.owner);
+  expect(await appliedNames()).toHaveLength(19);
+  expect(await tableHashes()).toEqual(tables);
 });

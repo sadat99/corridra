@@ -22,6 +22,8 @@ export type AgendaItem = {
     endsAt?: string;
     timezone?: string;
     location?: string;
+    /** FACTORY_VISIT, SHOWROOM_VISIT, TRADE_FAIR_MEETING and the other stored kinds. Absent before real-use 0019. */
+    activityKind?: string;
   }[];
 };
 export type MissionExperience = {
@@ -32,6 +34,8 @@ export type MissionExperience = {
     sourceKind: string;
     claimStatus: string;
     current: boolean;
+    /** Mission type key of the latest route assignment (null when untyped). Absent before real-use 0019. */
+    assignmentType?: string | null;
   };
   shortlist: {
     id: string;
@@ -50,6 +54,9 @@ export type MissionExperience = {
     terms: OfferTerms;
     revision: number;
     uncertainties: string;
+    /** Source record of the original quotation and when it was observed. A reference only. Absent before real-use 0019. */
+    sourceId?: string;
+    observedAt?: string;
     sourceKind: string;
     claimStatus: string;
     superseded: boolean;
