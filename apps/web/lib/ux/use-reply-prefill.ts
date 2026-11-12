@@ -16,16 +16,14 @@ export type PrefillState =
  * The answer only decides what is shown; the database decides again when the offer is saved.
  */
 export function useReplyPrefill(tenant: string, replyId: string | null): PrefillState {
-  const [state, setState] = useState<PrefillState>({ kind: 'idle' });
+  const valid = replyId && isUuid(replyId) ? replyId : null;
+  // The answer is kept with the reply it belongs to, so a different reply is "loading" without setting state in the effect.
+  const [answer, setAnswer] = useState<{ reply: string; state: PrefillState } | null>(null);
   useEffect(() => {
-    if (!replyId || !isUuid(replyId)) {
-      setState({ kind: 'idle' });
-      return;
-    }
+    if (!valid) return;
     let active = true;
-    setState({ kind: 'loading' });
     fetch(
-      `/api/workspace/reply-quotation-prefill?tenant=${encodeURIComponent(tenant)}&reply=${replyId}`,
+      `/api/workspace/reply-quotation-prefill?tenant=${encodeURIComponent(tenant)}&reply=${valid}`,
       { cache: 'no-store' },
     )
       .then(async (response): Promise<PrefillState> => {
@@ -41,11 +39,12 @@ export function useReplyPrefill(tenant: string, replyId: string | null): Prefill
       })
       .catch((): PrefillState => ({ kind: 'error' }))
       .then((next) => {
-        if (active) setState(next);
+        if (active) setAnswer({ reply: valid, state: next });
       });
     return () => {
       active = false;
     };
-  }, [tenant, replyId]);
-  return state;
+  }, [tenant, valid]);
+  if (!valid) return { kind: 'idle' };
+  return answer?.reply === valid ? answer.state : { kind: 'loading' };
 }

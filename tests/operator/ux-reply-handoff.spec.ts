@@ -102,7 +102,7 @@ test.beforeAll(async () => {
       const q=new URLSearchParams(location.search);
       const props=JSON.parse(q.get('props'));
       createRoot(document.getElementById('fixture')).render(
-        <main className="operator-page ux-workspace"><h1>Mission</h1><h2>Work</h2>
+        <main className="operator-page ux-workspace"><h1>Mission</h1><h2>Work</h2><h3>Requirements</h3>
         <OperatorFlags replyReview>{q.get('entry')==='card'
           ?<ReplyReview {...props}/>
           :<CommercialMission {...props}/>}</OperatorFlags></main>);`,
@@ -228,7 +228,7 @@ async function openForm(page: Page, reference: string | null = replyId) {
 async function fillAndSave(page: Page) {
   await page.getByLabel('Declared source').selectOption(sourceId);
   await page.getByLabel('Source declaration').selectOption(claimId);
-  await page.getByRole('button', { name: 'Save Quotation' }).click();
+  await page.getByRole('button', { name: 'Save Quotation', exact: true }).click();
 }
 
 test.describe('the reply card', () => {
@@ -259,6 +259,11 @@ test.describe('the reply card', () => {
       await expect(page.getByRole('button', { name: 'Copy the Prepared Quotation' })).toBeVisible();
       await expect(page.getByRole('link', { name: 'Open Prepared Offer' })).toHaveCount(0);
       expect(prefillRequests).toHaveLength(0);
+      // Control: the same card for an owner does offer it, so the absence above is the role, not a missing feature.
+      const owner = await page.context().newPage();
+      await stub(owner, {});
+      await openCard(owner, 'owner');
+      await expect(owner.getByRole('link', { name: 'Open Prepared Offer' })).toBeVisible();
     });
   }
   for (const code of refusalCodes) {
@@ -327,7 +332,7 @@ test.describe('the prepared offer form', () => {
     await expect(
       page.getByText('Offer saved. It is not yet confirmed and not shown to the customer.'),
     ).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Save Quotation' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Save Quotation', exact: true })).toHaveCount(0);
     expect(prefillRequests).toHaveLength(1);
     expect(saved).toHaveLength(1);
     const { commandId, ...rest } = saved[0]!;
@@ -399,8 +404,15 @@ test.describe('the prepared offer form', () => {
       await openForm(page);
       await expect(page.getByRole('button', { name: /Review Requirements/ })).toBeVisible();
       await expect(page.getByText('Prefilled from a reviewed supplier reply')).toHaveCount(0);
-      await expect(page.getByRole('button', { name: 'Save Quotation' })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Save Quotation', exact: true })).toHaveCount(
+        0,
+      );
       expect(prefillRequests).toHaveLength(0);
+      // Control: an owner with the same link does get the bound form.
+      const owner = await page.context().newPage();
+      await stub(owner, {});
+      await openForm(owner);
+      await expect(owner.getByText('Prefilled from a reviewed supplier reply')).toBeVisible();
     });
   }
   test('shows the plain form and asks nothing when the reply in the link is not an id', async ({
@@ -412,6 +424,11 @@ test.describe('the prepared offer form', () => {
     await expect(page.getByLabel('Next task')).toBeVisible();
     await expect(page.getByText('Prefilled from a reviewed supplier reply')).toHaveCount(0);
     expect(prefillRequests).toHaveLength(0);
+    // Control: a real reply id in the same link does ask and does prefill.
+    const real = await page.context().newPage();
+    await stub(real, {});
+    await openForm(real);
+    await expect(real.getByText('Prefilled from a reviewed supplier reply')).toBeVisible();
   });
   test('keeps the values and the command id when a save fails, and a retry sends the same id', async ({
     page,
@@ -426,7 +443,7 @@ test.describe('the prepared offer form', () => {
     await fillAndSave(page);
     await expect(page.getByText('Could not save. Your values are kept. Try again.')).toBeVisible();
     await expect(page.locator('body')).not.toContainText('Internal detail');
-    await page.getByRole('button', { name: 'Save Quotation' }).click();
+    await page.getByRole('button', { name: 'Save Quotation', exact: true }).click();
     await expect(page.getByText(/Offer saved\./)).toBeVisible();
     expect(saved).toHaveLength(2);
     expect(saved[1]!.commandId).toBe(saved[0]!.commandId);
@@ -436,7 +453,7 @@ test.describe('the prepared offer form', () => {
     await openForm(page);
     await page.getByLabel('Declared source').selectOption(sourceId);
     await page.getByLabel('Source declaration').selectOption(claimId);
-    const save = page.getByRole('button', { name: 'Save Quotation' });
+    const save = page.getByRole('button', { name: 'Save Quotation', exact: true });
     await save.dblclick();
     await expect(page.getByText(/Offer saved\./)).toBeVisible();
     expect(saved).toHaveLength(1);
@@ -465,12 +482,12 @@ test.describe('the prepared offer form', () => {
       'href',
       `/operator/delivery?workspace=${tenant}`,
     );
-    await expect(page.getByRole('button', { name: 'Save Quotation' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Save Quotation', exact: true })).toHaveCount(0);
     await page.waitForTimeout(500);
     expect(saved).toHaveLength(1);
     await page.getByRole('button', { name: 'Fill This Form by Hand Instead' }).click();
     await expect(page.getByLabel('Next task')).toHaveValue('quotation');
-    await expect(page.getByLabel('RFQ', { exact: true })).toBeVisible();
+    await expect(page.getByRole('combobox', { name: 'RFQ' })).toBeVisible();
     expect(saved).toHaveLength(1);
   });
   test('shows the recorded state when the reply is already an offer', async ({ page }) => {
@@ -480,7 +497,7 @@ test.describe('the prepared offer form', () => {
     await openForm(page);
     await fillAndSave(page);
     await expect(page.getByText('This reply is already recorded as an offer.')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Save Quotation' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Save Quotation', exact: true })).toHaveCount(0);
   });
   for (const [label, answer, text] of [
     [
@@ -510,7 +527,9 @@ test.describe('the prepared offer form', () => {
       await expect(page.getByText(text)).toBeVisible();
       await expect(page.getByLabel('Next task')).toBeVisible();
       await expect(page.getByText('Prefilled from a reviewed supplier reply')).toHaveCount(0);
-      await expect(page.getByRole('button', { name: 'Save Quotation' })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Save Quotation', exact: true })).toHaveCount(
+        0,
+      );
     });
   }
   for (const [width, height] of [
@@ -524,7 +543,7 @@ test.describe('the prepared offer form', () => {
       await page.setViewportSize({ width, height });
       await stub(page, {});
       await openForm(page);
-      await expect(page.getByRole('button', { name: 'Save Quotation' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Save Quotation', exact: true })).toBeVisible();
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
       );

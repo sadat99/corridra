@@ -61,7 +61,7 @@ describe('termRows', () => {
     );
   });
   it('shows the exact string and the code for a currency this build does not know', () => {
-    const rows = termRows({ currency: 'ZZZ', terms: { unitPriceMinor: '1250' } });
+    const rows = termRows({ currency: 'ZZZ' as never, terms: { unitPriceMinor: '1250' } });
     expect(rows.find((row) => row.key === 'unitPriceMinor')?.text).toBe('1250 ZZZ');
   });
 });

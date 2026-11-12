@@ -347,7 +347,7 @@ export function CommercialMission({
     [proof, setProof] = useState<Proof | null>(null),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState(''),
-    [job, setJob] = useState('requirements'),
+    [job, setJob] = useState(() => (replyId && isUuid(replyId) ? 'quotation' : 'requirements')),
     [source, setSource] = useState(''),
     [target, setTarget] = useState(''),
     [selectedPack, setSelectedPack] = useState(''),
@@ -409,8 +409,7 @@ export function CommercialMission({
     typeKey = String(assignment?.type_key ?? ''),
     template = missionCatalogue.find((t) => t.key === typeKey);
   const config = assignment?.configuration as
-    | { requirements: string[]; assessments: string[]; currencies: string[] }
-    | undefined;
+    { requirements: string[]; assessments: string[]; currencies: string[] } | undefined;
   const requirementDefinition = catalogue?.requirements.find(
     (r) =>
       config?.requirements.includes(r.id) && (r.schema as { typeKey: string })?.typeKey === typeKey,
@@ -429,13 +428,13 @@ export function CommercialMission({
   // A link from the reply card opens the offer task and loads the mission once; nothing is requested without a reply id.
   const wanted = Boolean(replyId && isUuid(replyId));
   useEffect(() => {
-    if (!wanted) return;
-    setJob('quotation');
-    void load();
-  }, [wanted]);
+    if (wanted) void Promise.resolve().then(load);
+    // Once, when the link opens the page: load is recreated every render and must not restart the request.
+  }, [wanted]); // eslint-disable-line react-hooks/exhaustive-deps
+  const boundId = bound?.responseId;
   useEffect(() => {
-    if (bound) boundHeading.current?.focus();
-  }, [bound?.responseId]);
+    if (boundId) boundHeading.current?.focus();
+  }, [boundId]);
   useEffect(() => {
     if (outcome === 'stale') staleHeading.current?.focus();
   }, [outcome]);
