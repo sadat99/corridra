@@ -582,10 +582,10 @@ describe('the order of the checks: who is asking, then their allowance, then a s
 
 describe('the Companies budget through the route', () => {
   const spent = () => new DomainError('Too many requests. Try again in an hour.', 429);
-  test('the budget is spent before every portfolio page, once per page', async () => {
+  test('one unit is spent for the whole search, however many pages it reads', async () => {
     await post({ q: 'spain', scope: 'companies' });
     expect(count('companies')).toBe(customerSearchLimits.companyPages);
-    expect(state.budget).toEqual(Array(customerSearchLimits.companyPages).fill('local'));
+    expect(state.budget).toEqual(['local']);
   });
   test('the client is derived as the Companies route derives it', async () => {
     vi.stubEnv('VERCEL', '1');
@@ -597,6 +597,17 @@ describe('the Companies budget through the route', () => {
     state.budget.length = 0;
     await post({ q: 'spain', scope: 'companies' });
     expect(new Set(state.budget)).toEqual(new Set(['unknown']));
+  });
+  test('a search refused earlier spends no Companies unit: nobody signed in, a person over their allowance, a short query', async () => {
+    state.identity = false;
+    await post({ q: 'spain', scope: 'companies' });
+    state.identity = true;
+    await post({ q: 'a', scope: 'companies' });
+    for (let n = 0; n < customerSearchLimits.perPersonSearches; n++)
+      await post({ q: 'spain', scope: 'requests' });
+    expect((await post({ q: 'spain', scope: 'companies' })).status).toBe(429);
+    expect(state.budget).toHaveLength(0);
+    expect(count('companies')).toBe(0);
   });
   test('a spent budget refuses the portfolio: scope Companies alone is a 429 with zero portfolio reads', async () => {
     state.budgetFails = spent;

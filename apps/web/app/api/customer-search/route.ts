@@ -90,7 +90,7 @@ export async function POST(request: Request) {
         requests: s.customerRequests,
         details: s.customerRequestDetails,
         companies: s.customerCompanies,
-        // The budget the Companies route spends before every portfolio page, spent here before every page too.
+        // The budget the Companies route spends before a portfolio page, spent here once per search that reaches Companies.
         companyBudget: (client) => s.missions.budget(client),
       },
       {

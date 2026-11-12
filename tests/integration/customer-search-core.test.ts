@@ -710,17 +710,44 @@ describe('P5 and ordering', () => {
   });
 });
 
-describe('the Companies budget, spent before every portfolio page', () => {
-  test('one spend per page read, with the client the route derived, before the page', async () => {
+describe('the Companies budget, spent once per search that reaches Companies', () => {
+  test('one unit, with the client the route derived, spent before the first page and not again for later pages', async () => {
     const h = harness({ pages: [page([company(1, 'Spain Foods', 1)], resourceId(1)), page([])] });
     await search(h, 'spain', 'companies', allOn, { client: '203.0.113.7' });
     expect(h.calls.companyList).toHaveLength(2);
-    expect(h.calls.budget).toEqual([['203.0.113.7'], ['203.0.113.7']]);
+    expect(h.calls.budget).toEqual([['203.0.113.7']]);
   });
-  test('four pages cost four spends', async () => {
+  test('a four page search charges exactly one unit', async () => {
     const h = harness({ pages: [() => page([company(1, 'Spain Foods', 1)], resourceId(1))] });
     await search(h, 'spain', 'companies');
-    expect(h.calls.budget).toHaveLength(customerSearchLimits.companyPages);
+    expect(h.calls.companyList).toHaveLength(customerSearchLimits.companyPages);
+    expect(h.calls.budget).toHaveLength(1);
+  });
+  test('the unit is spent before the page is read', async () => {
+    const order: string[] = [];
+    const h = harness({
+      pages: [
+        () => {
+          order.push('page');
+          return page([company(1, 'Spain Foods', 1)]);
+        },
+      ],
+      budget: () => {
+        order.push('budget');
+        return undefined;
+      },
+    });
+    await search(h, 'spain', 'companies');
+    expect(order).toEqual(['budget', 'page']);
+  });
+  test('a search that does not reach Companies spends nothing: Requests only, short words, nothing to read', async () => {
+    const h = harness({ rows: [row(1)], pages: [page([company(1, 'Spain Foods', 1)])] });
+    await search(h, 'spain', 'requests');
+    await search(h, 'a', 'all');
+    await search(h, '!!', 'companies');
+    await search(h, 'spain', 'companies', { ...allOn, companies: false });
+    expect(h.calls.budget).toHaveLength(0);
+    expect(h.calls.companyList).toHaveLength(0);
   });
   test('a spent budget refuses the first page: limited, zero portfolio reads, Requests still answer', async () => {
     const h = harness({
@@ -745,17 +772,17 @@ describe('the Companies budget, spent before every portfolio page', () => {
     await search(requests, 'spain', 'requests');
     expect(requests.calls.budget).toHaveLength(0);
   });
-  test('a budget that runs out on a later page keeps the earlier companies and is partial', async () => {
+  test('a budget that fails in any other way is an unavailable scope with the Requests kept, and no page is read', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const h = harness({
-      pages: [page([company(1, 'Spain Foods', 1)], resourceId(1))],
-      budget: (call) => (call === 2 ? new DomainError('Too many requests.', 429) : undefined),
+      rows: [row(1)],
+      briefs: { [requestId(1)]: marketBrief('Sell in a new market', 'ES') },
+      pages: [page([company(1, 'Spain Foods', 1)])],
+      budget: () => new Error('the budget table is gone'),
     });
-    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    const found = await search(h, 'spain', 'companies');
-    expect(found.scopes).toEqual({ companies: 'partial' });
-    expect(found.hits).toHaveLength(1);
-    expect(h.calls.companyList).toHaveLength(1);
-    expect(spy).not.toHaveBeenCalled();
+    const found = await search(h, 'spain', 'all');
+    expect(found.scopes).toEqual({ requests: 'ok', companies: 'unavailable' });
+    expect(h.calls.companyList).toHaveLength(0);
   });
 });
 

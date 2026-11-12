@@ -90,9 +90,9 @@ export type CustomerSearchServices = {
   details: { detail: Read };
   companies: { list: Read };
   /**
-   * The budget the Companies page spends before every portfolio page it reads (the same per-client allowance, in the mode
-   * the deployment is in). A refusal is a DomainError 429. The search spends it before every page it reads, so a person
-   * refused on the Companies page cannot read the portfolio through search.
+   * The budget the Companies page spends before a portfolio page (the same per-client allowance, in the mode the
+   * deployment is in). A refusal is a DomainError 429. The search spends it once, before the first page it reads, so a
+   * person refused on the Companies page cannot read the portfolio through search.
    */
   companyBudget: (client: string) => Promise<void>;
 };
@@ -444,6 +444,19 @@ async function findCompanies(
 ): Promise<Found> {
   const limits = customerSearchLimits;
   if (!switches.companies) return none('unavailable');
+  // Out of time before the first page: nothing is spent and nothing is read.
+  if (guard.expired()) return none('partial');
+  // The budget the Companies page spends before a portfolio page is spent here once, before the first page, by a search
+  // that reaches Companies. A person it refuses there is refused here in the same way, with no portfolio page read. The
+  // later pages of the same search spend nothing more.
+  try {
+    await guard.bounded(() => services.companyBudget(context.client));
+  } catch (error) {
+    if (error instanceof DeadlineReached) return none('partial');
+    const state = scopeFailure(error, 'companies');
+    if (!state) throw failed(error, 'companies');
+    return none(state);
+  }
   const merged = new Map<string, Company>();
   let partial = false;
   let after: string | undefined;
@@ -455,25 +468,18 @@ async function findCompanies(
     }
     let value: unknown;
     try {
-      // The same budget the Companies page spends before every portfolio page, spent here before every page too.
-      value = await guard.bounded(async () => {
-        await services.companyBudget(context.client);
-        return services.companies.list(
+      value = await guard.bounded(() =>
+        services.companies.list(
           after
             ? { pageSize: limits.companyPageSize, after }
             : { pageSize: limits.companyPageSize },
           context.subject,
           context.issuer,
-        );
-      });
+        ),
+      );
     } catch (error) {
       if (error instanceof DeadlineReached) {
         if (page === 0) return none('partial');
-        partial = true;
-        break;
-      }
-      if (page > 0 && error instanceof DomainError && error.status === 429) {
-        // The budget ran out part-way: what was found stays, and the scope says it was not read in full.
         partial = true;
         break;
       }
