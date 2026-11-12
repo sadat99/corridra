@@ -8,7 +8,7 @@ import {
   type RoomReport,
 } from '../../apps/web/lib/room';
 import { buildMoveModel, type MoveInput } from '../../apps/web/lib/move-cards';
-import { missingTermNotice } from '../../apps/web/components/missing-term-notice';
+import { missingTermNotice } from '../../apps/web/lib/room';
 import type { MissionExperience } from '../../packages/delivery/src/report';
 
 // The loader's service wiring is not under test here; its answer to the pages it reads is.
