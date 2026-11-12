@@ -95,6 +95,7 @@ export function SourceLedger({
                   ) : (
                     <small>{column.provenance}</small>
                   )}
+                  {column.reference ? <small>{column.reference}</small> : null}
                   {column.historical ? (
                     <small className="ledger-earlier">Earlier quote</small>
                   ) : null}
@@ -150,6 +151,7 @@ export function SourceLedger({
                   ) : (
                     <small>{column.provenance}</small>
                   )}
+                  {column.reference ? <small>{column.reference}</small> : null}
                   {column.historical ? (
                     <small className="ledger-earlier">Earlier quote</small>
                   ) : null}

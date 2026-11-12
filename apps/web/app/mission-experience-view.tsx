@@ -1,11 +1,16 @@
 'use client';
 import { ComparisonMatrix } from '../components/comparison-matrix';
 import { CompareLens } from '../components/compare-lens';
-import { quoteCardsFrom } from '../lib/quote-cards';
+import { quoteCardsFrom, referenceLine } from '../lib/quote-cards';
+import { visitKindWord } from '../lib/visit-kinds';
 import { StatusBadge } from '../components/access-state';
 import { useId, useState } from 'react';
 import type { AgendaItem, MissionExperience } from '@corridra/delivery/report';
-import { compareExperienceOffers, isCurrentOffer } from '../lib/experience-offers';
+import {
+  compareExperienceOffers,
+  experienceOfferContext,
+  isCurrentOffer,
+} from '../lib/experience-offers';
 import { displayMoney, displayDate } from '@corridra/domain/locale';
 const offerFieldLabels: Record<string, string> = {
   specification: 'Quoted specification',
@@ -25,6 +30,7 @@ const offerFieldLabels: Record<string, string> = {
   installation: 'Installation',
   training: 'Training',
   spares: 'Spares',
+  commissioning: 'Commissioning',
   paymentTerms: 'Payment terms',
 };
 export function AgendaView({
@@ -44,6 +50,7 @@ export function AgendaView({
           </p>
           {a.meetings.map((m) => (
             <p key={m.id}>
+              {visitKindWord(m.activityKind) ? `${visitKindWord(m.activityKind)} · ` : ''}
               {m.status.toLowerCase().replaceAll('_', ' ')}:{' '}
               {m.scheduleChanged
                 ? 'Schedule changed. An updated review is required.'
@@ -73,6 +80,7 @@ export function MissionExperienceView({
     dateId = useId();
   const r = e.requirements;
   const comparisons = compareExperienceOffers(e);
+  const machinery = experienceOfferContext(r) === 'MACHINERY';
   const isCurrent = (q: MissionExperience['quotations'][number]) => isCurrentOffer(e, q);
   const inLens = (q: MissionExperience['quotations'][number]) =>
     lens === 'all' || (lens === 'current' ? isCurrent(q) : !isCurrent(q));
@@ -247,6 +255,7 @@ export function MissionExperienceView({
               offers={e.quotations.filter(inLens)}
               shortlist={e.shortlist}
               language={language}
+              machinery={machinery}
             />
           }
         />
@@ -255,6 +264,7 @@ export function MissionExperienceView({
           offers={e.quotations.filter(inLens)}
           shortlist={e.shortlist}
           language={language}
+          machinery={machinery}
         />
       )}
       {e.quotations.length ? (
@@ -278,6 +288,7 @@ export function MissionExperienceView({
                   {e.shortlist.find((t) => t.id === q.targetId)?.company ?? 'Selected supplier'} ·{' '}
                   {q.sourceKind} · {q.claimStatus}
                 </p>
+                {referenceLine(q, language) ? <p>{referenceLine(q, language)}</p> : null}
                 <p>
                   Original unit price:{' '}
                   {q.terms.unitPriceMinor !== undefined

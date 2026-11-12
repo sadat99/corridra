@@ -83,9 +83,12 @@ describe('the review command', () => {
         .success,
     ).toBe(false);
   });
-  it('uses the same eighteen terms and reasons as the supplier form and the database', () => {
+  it('uses the same nineteen terms and reasons as the supplier form and the database', () => {
     expect([...replyTermNames].sort()).toEqual([...replyTermKeys].sort());
-    const sql = read('packages/db/recipient-reply-review-migrations/0001_reply_review.sql');
+    // The nineteenth term is added to the list by the module's second file.
+    const sql =
+      read('packages/db/recipient-reply-review-migrations/0001_reply_review.sql') +
+      read('packages/db/recipient-reply-review-migrations/0002_commissioning_term.sql');
     for (const term of replyTermNames) expect(sql).toContain(`'${term}'`);
     for (const reason of replyReviewReasons) expect(sql).toContain(`'${reason}'`);
     for (const term of replyTermNames) expect(termLabels[term].length).toBeGreaterThan(2);

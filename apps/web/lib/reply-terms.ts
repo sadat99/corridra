@@ -1,5 +1,5 @@
 // The supplier Reply Page (ADR-069): what the form may send, and how a link names its language. Pure
-// functions, no browser and no network. The database function accepts exactly eighteen quotation term
+// functions, no browser and no network. The database function accepts exactly nineteen quotation term
 // keys; the form now offers every one of them. A blank term is "not stated" and is left out of the
 // message, never sent as zero. A charge is zero only when the supplier says "no charge".
 import { currencies } from '@corridra/domain/currencies';
@@ -45,6 +45,7 @@ export const replyFields = [
   { key: 'installation', kind: 'text', group: 'included' },
   { key: 'training', kind: 'text', group: 'included' },
   { key: 'spares', kind: 'text', group: 'included' },
+  { key: 'commissioning', kind: 'text', group: 'included' },
 ] as const satisfies readonly { key: string; kind: ReplyKind; group: ReplyGroup }[];
 
 export type ReplyTermKey = (typeof replyFields)[number]['key'];
@@ -171,7 +172,7 @@ const hex = /^[a-f0-9]{64}$/;
  * Reads the part of the address after the hash. An older link is the bare token and means English with
  * nothing asked. The same token followed by `&l=zh&ask=<terms>` (what the team adds to the issued link),
  * and `t=<token>&l=en|zh&ask=<term>,<term>`, are the two ways to say more. The language is a
- * fixed list of two and the terms asked for are a fixed list of eighteen, so no other value can reach
+ * fixed list of two and the terms asked for are a fixed list of nineteen, so no other value can reach
  * the page. Nothing here is stored.
  */
 export function parseReplyFragment(fragment: string): ReplyFragment {

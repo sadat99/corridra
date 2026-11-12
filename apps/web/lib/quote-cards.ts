@@ -6,6 +6,7 @@
 // currency with its code, and the fact label is shown only for the five names the product uses.
 import type { MissionExperience } from '@corridra/delivery/report';
 import { displayDate, displayMoney } from '@corridra/domain/locale';
+import { locale as parseLocale } from '@corridra/domain/geography';
 import type { QuoteTerm } from '../components/mr/types';
 
 type Offer = MissionExperience['quotations'][number];
@@ -38,6 +39,7 @@ const termLabels: Record<string, string> = {
   installation: 'Installation',
   training: 'Training',
   spares: 'Spares',
+  commissioning: 'Commissioning',
   paymentTerms: 'Payment terms',
 };
 /** Differences the engine reports that are not terms of the offer itself. */
@@ -95,6 +97,11 @@ export type QuoteCardView = {
   provenance: string;
   /** True when the offer is superseded, assigned in the past or the requirement needs review. */
   historical: boolean;
+  /**
+   * When the original quote was observed and the first eight characters of its source record, so a buyer can quote them back.
+   * Nothing that opens a file or a link. Absent when the approved detail does not carry them.
+   */
+  reference?: string;
 };
 
 const han = /\p{Script=Han}/u;
@@ -116,6 +123,21 @@ export function reasonFor(verdict: OfferVerdict): string {
   if (verdict.evidenceCurrent === false) parts.push('It does not match the current request.');
   if (!parts.length) parts.push('Its terms differ from the other offers.');
   return parts.join(' ');
+}
+
+/** "Quoted 11 Nov 2026 · Source ref 3f9a2c1d" from what the approved detail carries; nothing is shown for a part it lacks. */
+export function referenceLine(
+  offer: { sourceId?: string; observedAt?: string },
+  language = 'en',
+): string | undefined {
+  const parts: string[] = [];
+  if (offer.observedAt && !Number.isNaN(Date.parse(offer.observedAt)))
+    parts.push(
+      `Quoted ${new Intl.DateTimeFormat(parseLocale.parse(language), { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(offer.observedAt))}`,
+    );
+  if (offer.sourceId && /^[0-9a-f]{8}-/i.test(offer.sourceId))
+    parts.push(`Source ref ${offer.sourceId.slice(0, 8).toLowerCase()}`);
+  return parts.length ? parts.join(' · ') : undefined;
 }
 
 export function quoteCardsFrom({
@@ -157,7 +179,14 @@ export function quoteCardsFrom({
     for (const key of required) add(key);
     // An omitted warranty, installation, training, spares or MOQ shows as not stated on its own card, so
     // a lower price never hides what it leaves out.
-    for (const key of optional) add(key);
+    // Commissioning is a machinery obligation: a card shows it when the offer states it or the engine reports it missing
+    // (machinery missions only), so a simple buyer mission does not carry a machinery row.
+    const showCommissioning =
+      offer.terms.commissioning !== undefined || verdict.missing.includes('commissioning');
+    for (const key of optional) {
+      add(key);
+      if (key === 'installation' && showCommissioning) add('commissioning');
+    }
     const trust = factNameFor(offer.claimStatus);
     const comparable = verdict.status === 'COMPARABLE ON SUPPLIED TERMS';
     return {
@@ -175,6 +204,7 @@ export function quoteCardsFrom({
       trust,
       provenance: `${offer.sourceKind} · ${offer.claimStatus}`,
       historical: offer.superseded || !offer.assignmentCurrent,
+      reference: referenceLine(offer, language),
     };
   });
 }

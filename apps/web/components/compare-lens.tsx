@@ -55,6 +55,7 @@ export function CompareLens({ cards, matrix }: { cards: QuoteCardView[]; matrix:
               terms={card.terms}
               trust={card.trust}
               provenance={card.provenance}
+              reference={card.reference}
               labels={labels.quote}
             />
           ))}

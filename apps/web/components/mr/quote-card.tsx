@@ -26,6 +26,7 @@ export function QuoteCard({
   terms,
   trust = 'Self-declared',
   provenance,
+  reference,
   labels = mrLabels.quote,
 }: {
   supplier: string;
@@ -45,6 +46,8 @@ export function QuoteCard({
   trust?: Parameters<typeof FactLabel>[0]['label'] | null;
   /** The source and claim status exactly as the approved report states them; shown when there is no fact label. */
   provenance?: string;
+  /** When the original quote was observed and its short source reference; shown on its own line under the price line. */
+  reference?: string;
   labels?: typeof mrLabels.quote;
 }) {
   return (
@@ -55,6 +58,7 @@ export function QuoteCard({
           {place ? `${place} · ` : ''}
           {labels.revision} <span className="mr-num">{revision}</span> · {currency}
         </p>
+        {reference ? <p className="mr-quote-sub">{reference}</p> : null}
       </header>
       <p className="mr-quote-verdict">
         <span className="mr-quote-seal" aria-hidden="true">
