@@ -2,6 +2,8 @@
 import { useEffect } from 'react';
 import {
   setCustomerBilling,
+  setCustomerCompanies,
+  setCustomerMove,
   setCustomerNote,
   setCustomerNotificationSettings,
   setCustomerOrganisationProfiles,
@@ -16,11 +18,17 @@ export function CustomerBarNote({
   billing = false,
   notificationSettings = false,
   organisationProfiles = false,
+  companies = false,
+  move = false,
 }: {
   text: string;
   billing?: boolean;
   notificationSettings?: boolean;
   organisationProfiles?: boolean;
+  /** The approved-companies module is on: the Search dialog lists the Companies page only then. */
+  companies?: boolean;
+  /** Home is Your Move: the Search dialog opens the same address as the Home tab. */
+  move?: boolean;
 }) {
   useEffect(() => {
     setCustomerNote(text);
@@ -38,6 +46,14 @@ export function CustomerBarNote({
     setCustomerOrganisationProfiles(organisationProfiles);
     return () => setCustomerOrganisationProfiles(false);
   }, [organisationProfiles]);
+  useEffect(() => {
+    setCustomerCompanies(companies);
+    return () => setCustomerCompanies(false);
+  }, [companies]);
+  useEffect(() => {
+    setCustomerMove(move);
+    return () => setCustomerMove(false);
+  }, [move]);
   return (
     <p hidden className="ux-customer-note">
       {text}
