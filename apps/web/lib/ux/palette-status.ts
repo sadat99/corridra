@@ -4,17 +4,23 @@
 // described as "No match": the reader is told what happened. Owner: S4.
 import type { PaletteScopeId } from './palette';
 
-export type SearchPhase = 'idle' | 'searching' | 'ok' | 'signedout' | 'denied' | 'failed';
+export type SearchPhase =
+  'idle' | 'searching' | 'ok' | 'signedout' | 'denied' | 'failed' | 'limited';
 export type SearchOutcome<T> =
-  { kind: 'ok'; found: T } | { kind: 'signedout' } | { kind: 'denied' } | { kind: 'failed' };
+  | { kind: 'ok'; found: T }
+  | { kind: 'signedout' }
+  | { kind: 'denied' }
+  | { kind: 'failed' }
+  | { kind: 'limited' };
 
 /** How long the spoken message must stay the same before it is announced, so typing makes one announcement. */
 export const settleDelay = 500;
 
 /** Which outcome an HTTP status means. 200 is handled by the caller (it has to read the answer). */
-export function outcomeForStatus(status: number): 'signedout' | 'denied' | 'failed' {
+export function outcomeForStatus(status: number): 'signedout' | 'denied' | 'failed' | 'limited' {
   if (status === 401) return 'signedout';
   if (status === 403) return 'denied';
+  if (status === 429) return 'limited';
   return 'failed';
 }
 
@@ -153,6 +159,16 @@ export function describeStatus(input: StatusInput): StatusView {
       retry: true,
       notices: [{ tone: 'critical', text: line }],
       spoken: `${input.offline ? line : 'The search did not finish.'} Retry is the first option.`,
+    };
+  }
+  if (phase === 'limited') {
+    // Too many searches in a short time: calm, never "No match", and the typed words are kept.
+    const line = 'Searching is paused for a few seconds. Try again.';
+    return {
+      ...base,
+      retry: true,
+      notices: [{ tone: 'neutral', text: line }],
+      spoken: 'Searching is paused for a few seconds. Try again is the first option.',
     };
   }
   const searched = searchedScopes(scope);

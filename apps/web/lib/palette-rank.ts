@@ -30,15 +30,35 @@ const letterMap: Record<string, string> = {
   ı: 'i',
 };
 
+// Optional marks of Arabic and Hebrew: Arabic harakat and the dagger alef (U+064B to U+065F, U+0670), the tatweel
+// (U+0640) and the Hebrew points and cantillation (U+0591 to U+05BD, U+05BF, U+05C1, U+05C2, U+05C4, U+05C5,
+// U+05C7). A name is written with or without them, so they never decide a match. Bengali and Devanagari vowel
+// signs are NOT in this list: they are letters of the word (KI-56).
+const optionalMarks =
+  /[\u0591-\u05bd\u05bf\u05c1\u05c2\u05c4\u05c5\u05c7\u0640\u064b-\u065f\u0670]/g;
+// Spellings of one letter that people type either way: alef forms, Persian yeh and kaf, Hebrew final forms.
+const scriptMap: Record<string, string> = {
+  ٱ: 'ا',
+  ى: 'ي',
+  ی: 'ي',
+  ک: 'ك',
+  ך: 'כ',
+  ם: 'מ',
+  ן: 'נ',
+  ף: 'פ',
+  ץ: 'צ',
+};
+
 function foldPoint(point: string): string {
-  // Only the combining accents of Latin, Greek and Cyrillic letters go (U+0300 to U+036F). Every other mark, such
-  // as the vowel signs of Bengali and Devanagari or the points of Arabic and Hebrew, is part of the word and stays.
+  // Only the combining accents of Latin, Greek and Cyrillic letters (U+0300 to U+036F) and the optional marks of
+  // Arabic and Hebrew go. Every other mark, such as the vowel signs of Bengali and Devanagari, is part of the word.
   const lowered = point
     .normalize('NFKD')
     .toLowerCase()
-    .replace(/[\u0300-\u036f]/g, '');
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(optionalMarks, '');
   let out = '';
-  for (const char of lowered) out += letterMap[char] ?? char;
+  for (const char of lowered) out += letterMap[char] ?? scriptMap[char] ?? char;
   return out;
 }
 

@@ -37,6 +37,7 @@ export const LATER_FILES: Record<string, string[]> = {
     '0017_experience_outreach_counts.sql',
     '0018_participant_fee_dispute.sql',
     '0019_offer_context.sql',
+    '0020_offer_commissioning_term.sql',
   ],
 };
 export function removedFileHidden(directory: string, name: string) {
