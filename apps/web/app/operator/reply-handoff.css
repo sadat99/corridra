@@ -1,0 +1,75 @@
+/* The offer prepared from a reviewed supplier reply (ADR-081): the card's status line and the bound offer form.
+   Tokens only; the term rows reuse .reply-review-terms. */
+.reply-handoff-status {
+  display: grid;
+  gap: var(--space-2);
+}
+.reply-handoff-status p {
+  margin: 0;
+}
+.reply-handoff {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  min-inline-size: 0;
+}
+.reply-handoff h3,
+.reply-handoff h4 {
+  margin: 0;
+}
+.reply-handoff-source {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.reply-handoff-source p {
+  margin: 0;
+}
+.reply-handoff-group {
+  display: grid;
+  gap: var(--space-2);
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--border-subtle);
+  min-inline-size: 0;
+}
+.reply-handoff-group dd {
+  font-variant-numeric: tabular-nums;
+}
+.reply-handoff-check {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--caution-surface);
+  border-inline-start: 3px solid var(--caution);
+}
+.reply-handoff-check h4,
+.reply-handoff-check p,
+.reply-handoff-check ul {
+  margin: 0;
+}
+.reply-handoff-stale {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--critical-surface);
+  border: 1px solid var(--critical);
+  border-radius: var(--radius-md);
+}
+.reply-handoff-stale h4,
+.reply-handoff-stale p {
+  margin: 0;
+}
+.reply-handoff-stale .primary-link,
+.reply-handoff-stale .secondary-link,
+.reply-handoff .primary-link,
+.reply-handoff-status .primary-link {
+  min-height: 2.75rem;
+}
+@media (min-width: 48rem) {
+  .reply-handoff .operator-form {
+    max-inline-size: 40rem;
+  }
+}

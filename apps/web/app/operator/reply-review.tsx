@@ -12,10 +12,21 @@ import {
   type StoredReview,
 } from '@corridra/domain/reply-review';
 import { displayDate } from '@corridra/domain/locale';
-import { preparedQuotation, reasonLabels, termLabels, termText } from '../../lib/reply-review-view';
+import {
+  preparedQuotation,
+  prefillDeniedMessage,
+  prefillFailureMessage,
+  prefillMessage,
+  prefillUnavailableMessage,
+  reasonLabels,
+  termLabels,
+  termText,
+} from '../../lib/reply-review-view';
+import { useReplyPrefill } from '../../lib/ux/use-reply-prefill';
 import { replyLinkSuffix, type ReplyLanguage } from '../../lib/reply-terms';
 import { useOperatorFlags } from './operator-flags';
 import './reply-review.css';
+import './reply-handoff.css';
 
 // The Corridra team's review of supplier replies (ADR-069), shown only where it is switched on. Each reply
 // is set beside the requirement the supplier was shown, term by term, with the gaps the existing
@@ -103,6 +114,7 @@ export function ReplyReview({
             requirement={disclosures.find((d) => d.link_id === reply.link_id)?.shared_requirements}
             reviews={reviews.filter((r) => r.responseId === reply.id)}
             tenant={tenant}
+            canRecord={['owner', 'admin', 'operator'].includes(role)}
             canAct={canReview && open === true && !unavailable}
             onChanged={reload}
             onStale={async () => {
@@ -120,6 +132,7 @@ function ReplyCard({
   requirement,
   reviews,
   tenant,
+  canRecord,
   canAct,
   onChanged,
   onStale,
@@ -128,6 +141,8 @@ function ReplyCard({
   requirement?: string;
   reviews: StoredReview[];
   tenant: string;
+  /** Owner, admin or operator may record an offer; the database checks again. */
+  canRecord: boolean;
   canAct: boolean;
   onChanged: () => Promise<void>;
   onStale: () => Promise<void>;
@@ -196,7 +211,9 @@ function ReplyCard({
     }
   }
 
-  const prepared = state.final?.decision === 'PUBLISH' ? preparedQuotation(reply.body) : null;
+  const published = state.final?.decision === 'PUBLISH';
+  const prepared = published ? preparedQuotation(reply.body) : null;
+  const prefill = useReplyPrefill(tenant, published && canRecord ? reply.id : null);
   const han = (text: string) => (/\p{Script=Han}/u.test(text) ? 'zh' : undefined);
 
   return (
@@ -320,6 +337,27 @@ function ReplyCard({
       {prepared && (
         <div className="reply-review-prepared">
           <h4>Prepared quotation</h4>
+          <p>
+            Published. Prepared as a mission quotation, not yet confirmed. Nothing reaches a
+            customer from here. Customer publication is a separate decision.
+          </p>
+          {canRecord && (
+            <div className="reply-handoff-status" role="status">
+              {prefill.kind === 'loading' && <p>Checking whether this reply can be prepared.</p>}
+              {prefill.kind === 'eligible' && (
+                <a
+                  className="primary-link"
+                  href={`/operator/missions/${prefill.prefill.missionId}?workspace=${encodeURIComponent(tenant)}&reply=${reply.id}#requirements`}
+                >
+                  Open Prepared Offer
+                </a>
+              )}
+              {prefill.kind === 'ineligible' && <p>{prefillMessage(prefill.code)}</p>}
+              {prefill.kind === 'unavailable' && <p>{prefillUnavailableMessage}</p>}
+              {prefill.kind === 'denied' && <p>{prefillDeniedMessage}</p>}
+              {prefill.kind === 'error' && <p>{prefillFailureMessage}</p>}
+            </div>
+          )}
           <p>
             Confirm this through Record a supplier offer on the mission. The reply is the
             self-declared source; nothing reaches a customer until the publication path approves it.

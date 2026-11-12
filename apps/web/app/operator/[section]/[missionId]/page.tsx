@@ -8,6 +8,7 @@ import { TeamContextPublisher } from '../../../../components/ux/team-context-pub
 import { WorkspaceShell } from '../../../../components/workspace-shell';
 import { TeamSecondLevel } from '../../../../components/ux/team-second-level';
 import { foundations } from '../../../../lib/foundations';
+import { isUuid } from '../../../../lib/reply-review-view';
 import { uxSwitchOn } from '../../../../lib/ux-switches';
 import { OperatorFlags } from '../../operator-flags';
 import { MissionPage } from './mission-page';
@@ -28,13 +29,13 @@ export default async function Page({
   searchParams,
 }: {
   params: Promise<{ section: string; missionId: string }>;
-  searchParams: Promise<{ workspace?: string }>;
+  searchParams: Promise<{ workspace?: string; reply?: string }>;
 }) {
   const { section, missionId } = await params;
   if (section !== 'missions' || !uxSwitchOn('CORRIDRA_UX_MISSIONS_V2')) notFound();
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(missionId))
     notFound();
-  const requested = (await searchParams).workspace;
+  const { workspace: requested, reply } = await searchParams;
   const s = foundations();
   if (!s)
     return (
@@ -76,6 +77,7 @@ export default async function Page({
           tenant={tenant}
           workspaceName={tenants.find((t) => t.id === tenant)?.name ?? ''}
           missionId={missionId}
+          replyId={isUuid(reply) ? reply : undefined}
           moveRecords={customerMovesEnabled()}
         />
       </OperatorFlags>
