@@ -25,6 +25,9 @@ type Experience = {
   }[];
   requirements: { id: string; version: number; fields: { product: string } }[];
   targets: { id: string; name: string }[];
+  /** Per listed target, from the private records, for owners and admins where the counts are installed; null otherwise. */
+  targetOutreach:
+    { id: string; approached: boolean; responded: boolean; interested: boolean }[] | null;
   quotations: {
     id: string;
     target_id: string;
@@ -68,8 +71,15 @@ export function DeliveryExperience(props: Props) {
       { id: string; mission_id: string; title: string; status: string }[]
     >([]),
     [meetingNote, setMeetingNote] = useState(''),
+    [picked, setPicked] = useState<string[]>([]),
+    [pickedFor, setPickedFor] = useState(mission),
     [message, setMessage] = useState(''),
     [busy, setBusy] = useState(false);
+  // The ticked targets belong to one mission: choosing another mission starts with none ticked, as its fresh checkboxes are.
+  if (pickedFor !== mission) {
+    setPickedFor(mission);
+    setPicked([]);
+  }
   // The picker asks only for these participants' meetings, filtered on the server (G12 follow-up).
   const missionKey = [...new Set(participants.map((p) => p.mission_id))].sort().join(',');
   const endpoint = `/api/workspace/delivery?tenant=${encodeURIComponent(tenant)}`;
@@ -391,10 +401,37 @@ export function DeliveryExperience(props: Props) {
               <legend>Approved target shortlist</legend>
               {data.targets.map((t) => (
                 <label className="check-field" key={t.id}>
-                  <input name="targetIds" type="checkbox" value={t.id} />
+                  <input
+                    name="targetIds"
+                    type="checkbox"
+                    value={t.id}
+                    onChange={(e) =>
+                      setPicked((old) =>
+                        e.target.checked ? [...old, t.id] : old.filter((id) => id !== t.id),
+                      )
+                    }
+                  />
                   {t.name}
                 </label>
               ))}
+              {data.targetOutreach ? (
+                <p role="status">
+                  Approving also shares, as counts only and never as names, how many of the ticked
+                  targets were approached (
+                  {data.targetOutreach.filter((o) => picked.includes(o.id) && o.approached).length}
+                  ), responded (
+                  {data.targetOutreach.filter((o) => picked.includes(o.id) && o.responded).length})
+                  and were interested (
+                  {data.targetOutreach.filter((o) => picked.includes(o.id) && o.interested).length}
+                  ), as of the moment you approve. Later outreach is not shared until you approve
+                  again.
+                </p>
+              ) : (
+                <p>
+                  Outreach counts are not available here, so the client sees &quot;Not shared&quot;
+                  for them.
+                </p>
+              )}
             </fieldset>
             <fieldset>
               <legend>Explicitly approved quotations</legend>

@@ -18,7 +18,24 @@ export class DeliveryExperienceService {
   workspace(ctx: RequestContext, programmeId?: string, missionId?: string) {
     if (programmeId) z.uuid().parse(programmeId);
     if (missionId) z.uuid().parse(missionId);
-    return withTenant(this.pool, ctx, 'delivery.read', async ({ db }) => ({
+    return withTenant(this.pool, ctx, 'delivery.read', async ({ db, role }) => ({
+      // Where the outreach counts are installed (real-use 0017), the owner or admin sees, per listed target, whether it was
+      // approached, responded or was interested, so the counts that approval will freeze are on screen before approving.
+      // Anyone else, and a database without the counts, get null: nothing is guessed.
+      targetOutreach:
+        ['owner', 'admin'].includes(role) &&
+        (
+          await db.query(
+            "SELECT to_regprocedure('app.experience_outreach_preview(uuid[])') IS NOT NULL AS ok",
+          )
+        ).rows[0]?.ok
+          ? (
+              await db.query(
+                'SELECT target_id AS id,approached,responded,interested FROM app.experience_outreach_preview(ARRAY(SELECT t.id FROM app.target_account t JOIN app.relationship r ON r.tenant_id=t.tenant_id AND r.id=t.relationship_id JOIN app.organisation o ON o.id=r.organisation_id WHERE t.tenant_id=$1 AND t.mission_id=$2 ORDER BY o.name LIMIT 100))',
+                [ctx.tenantId, missionId ?? null],
+              )
+            ).rows
+          : null,
       contexts: (
         await db.query(
           'SELECT * FROM app.delivery_programme_context WHERE tenant_id=$1 AND programme_id=$2 ORDER BY version DESC LIMIT 20',

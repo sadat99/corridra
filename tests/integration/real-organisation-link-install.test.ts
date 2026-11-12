@@ -28,6 +28,7 @@ vi.hoisted(() => {
   (globalThis as { __removedHide?: boolean }).__removedHide = true;
   (globalThis as { __feeHide?: boolean }).__feeHide = true;
   (globalThis as { __paymentHide?: boolean }).__paymentHide = true;
+  (globalThis as { __outreachHide?: boolean }).__outreachHide = true;
 });
 vi.mock('node:fs/promises', async (importOriginal) => {
   const real = await importOriginal<typeof import('node:fs/promises')>();
@@ -41,6 +42,7 @@ vi.mock('node:fs/promises', async (importOriginal) => {
       __removedHide?: boolean;
       __feeHide?: boolean;
       __paymentHide?: boolean;
+      __outreachHide?: boolean;
     };
     if (!String(path).includes('customer-real-use-migrations')) return names;
     return names.filter(
@@ -52,7 +54,9 @@ vi.mock('node:fs/promises', async (importOriginal) => {
         // Real-use 0015 (participant fee status) is applied after 0014 and has its own gate: the last test of this file opens it.
         !(gate.__feeHide && String(n).startsWith('0015_')) &&
         // Real-use 0016 (participant payment declaration) is applied after 0015 and has its own gate: the last test opens it.
-        !(gate.__paymentHide && String(n).startsWith('0016_')),
+        !(gate.__paymentHide && String(n).startsWith('0016_')) &&
+        // Real-use 0017 (experience outreach counts) is applied after 0016 and has its own gate: the last test of this file opens it.
+        !(gate.__outreachHide && String(n).startsWith('0017_')),
     );
   }) as typeof real.readdir;
   return { ...real, readdir, default: { ...real, readdir } };
@@ -671,4 +675,29 @@ test('participant payment declaration (real-use 0016) is the sixteenth file, add
   await migrateCustomerRealUse(w.f.owner);
   expect(await appliedNames()).toHaveLength(16);
   expect(await tableHashes()).toEqual(after);
+});
+
+test('experience outreach counts (real-use 0017) is the seventeenth file, is found by the installer with no workflow change and adds a column, a trigger and four functions', async () => {
+  expect(await appliedNames()).toHaveLength(16);
+  const before = (
+    await q(
+      "SELECT encode(sha256(convert_to(pg_get_functiondef('app.delivery_report(text,text)'::regprocedure),'UTF8')),'hex') h",
+    )
+  ).rows[0].h;
+  expect(before).toBe('40ff104e2be96a328ee4d8002f474f05cc1bcc1eeef6b896952d4208dc77cad4');
+  (globalThis as { __outreachHide?: boolean }).__outreachHide = false;
+  await migrateCustomerRealUse(w.f.owner);
+  const applied = await appliedNames();
+  expect(applied).toHaveLength(17);
+  expect(applied[16]).toMatch(/^0017_experience_outreach_counts/);
+  expect(await reportLine()).toBe('customer_real_use_migrations: 17 applied');
+  const after = (
+    await q(
+      "SELECT pg_get_functiondef('app.delivery_report(text,text)'::regprocedure) d, to_regprocedure('app.delivery_report_v1(text,text)')::text v",
+    )
+  ).rows[0];
+  expect(after.d).toContain('e.outreach');
+  expect(after.v).toBe('app.delivery_report_v1(text,text)');
+  await migrateCustomerRealUse(w.f.owner);
+  expect(await appliedNames()).toHaveLength(17);
 });

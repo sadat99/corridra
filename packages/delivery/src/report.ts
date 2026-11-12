@@ -57,6 +57,12 @@ export type MissionExperience = {
   }[];
   agenda: AgendaItem[];
   documentAccess: string;
+  /**
+   * Buyers approached, responded and interested among the approved targets, counted once when staff approved
+   * this detail and as of that time. Absent when the approval carries no counts (approved before they existed):
+   * unknown, not zero. Counts only, never a name.
+   */
+  outreach?: { approached: number; responded: number; interested: number; asOf: string };
 };
 export type DeliveryMission = {
   experience?: MissionExperience;
