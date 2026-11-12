@@ -432,11 +432,26 @@ nav.ux-team-sidebar .operator-icon {
 @media (max-width: 639.98px) {
   .ux-palette {
     width: calc(100vw - 1rem);
-    max-height: min(calc(100dvh - 1rem), 28rem);
+    /* The browser's own modal-dialog rule (max-width: calc(100% - 6px - 2em)) would win over the width above. */
+    max-width: none;
+    max-height: min(calc(100dvh - 1rem), 36rem);
     margin-block-start: var(--space-2);
   }
+  /* The list gives way on a phone, so the footer line is never pushed out of the panel. */
+  .ux-palette-region {
+    min-height: 0;
+  }
+  /* At large text the Close button wraps under the field instead of squeezing it. */
+  .ux-palette-input {
+    flex-wrap: wrap;
+  }
   .ux-palette-input input {
+    flex: 1 1 8rem;
+    min-width: 8rem;
     font-size: var(--text-base);
+  }
+  .ux-palette-summary {
+    padding-block-start: var(--space-2);
   }
   .ux-palette-input .ux-palette-esc {
     display: none;
@@ -455,11 +470,20 @@ nav.ux-team-sidebar .operator-icon {
   }
   .ux-palette-row {
     grid-template-columns: auto minmax(0, 1fr);
+    gap: 0 var(--space-3);
   }
-  /* The badge or chip moves under the words. */
+  /* The badge or chip moves under the words; a row with nothing to put there keeps no gap. */
   .ux-palette-trail {
     grid-column: 2;
     flex-wrap: wrap;
+  }
+  .ux-palette-trail:has(> :not(.ux-palette-enter)) {
+    margin-block-start: var(--space-1);
+  }
+  .ux-palette-detail {
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+    white-space: normal;
   }
   .ux-palette-keys {
     display: none;
@@ -558,8 +582,9 @@ nav.ux-team-sidebar .ux-team-caption {
 /* From 1024 px the Search button is a wide field-style control: Search and the Ctrl K keycap show, it takes the
    room between the shell name and the other tools (176 to 560 px), and the inbox, language, help and account
    controls stay at the right edge. It is still the one button (not an input), and the wordmark does not yield:
-   below 1024 px the button is as it was (docs/revamp/specs/navigation-v1/command-palette-search.md, section 7). */
-@media (min-width: 1024px) {
+   below 64em (1024 px at the browser's default font size) the button is as it was; the query is in em so a person
+   with a larger default font falls back to it (docs/revamp/specs/navigation-v1/command-palette-search.md, section 7). */
+@media (min-width: 64em) {
   .ux-team-header .ux-team-tools {
     flex: 1 1 0;
     min-width: 0;
@@ -596,18 +621,21 @@ nav.ux-team-sidebar .ux-team-caption {
     direction: ltr;
     white-space: nowrap;
   }
-  .ux-team-header .ux-palette-trigger:active {
-    border-color: var(--selected);
-    background: var(--selected-surface);
-  }
 }
-@media (min-width: 1024px) and (hover: hover) {
+@media (min-width: 64em) and (hover: hover) {
   .ux-team-header .ux-palette-trigger:hover {
     border-color: var(--text-3);
     background: var(--surface-2);
   }
   .ux-team-header .ux-palette-trigger:hover kbd {
     background: var(--surface-1);
+  }
+}
+/* After the hover rule, at the same weight, so a pressed button shows the selected colour with a mouse over it. */
+@media (min-width: 64em) {
+  .ux-team-header .ux-palette-trigger:active {
+    border-color: var(--selected);
+    background: var(--selected-surface);
   }
 }
 @media (forced-colors: active) {

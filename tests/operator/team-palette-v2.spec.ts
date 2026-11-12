@@ -875,3 +875,170 @@ test.describe('N5 and S3 recents', () => {
       ).toBeNull();
     });
 });
+
+test.describe('B1 and B2 the palette fits a phone', () => {
+  const states = [
+    ['a failed search', () => 500, 'The search did not finish. Try again.'],
+    [
+      'a denied scope with no match',
+      () => answer({ denied: ['companies'] }),
+      'Your role cannot search companies.',
+    ],
+  ] as const;
+  for (const width of [320, 390])
+    for (const [label, reply, words] of states)
+      test(`at ${width} px the panel is ${width - 16} px wide, 8 px from the side, and the footer line is whole in ${label}`, async ({
+        page,
+      }) => {
+        await open(page, { width });
+        await serve(page, reply);
+        await type(page, 'madrid');
+        await expect(palette(page)).toContainText(words);
+        const box = await page.evaluate(() => {
+          const dialog = document.querySelector('dialog.ux-palette') as HTMLElement;
+          const line = document.querySelector('.ux-palette-hint > span:last-child') as HTMLElement;
+          const d = dialog.getBoundingClientRect();
+          const l = line.getBoundingClientRect();
+          return {
+            width: d.width,
+            left: d.left,
+            right: window.innerWidth - d.right,
+            lineInside:
+              l.height > 0 &&
+              l.left >= d.left - 0.5 &&
+              l.right <= d.right + 0.5 &&
+              l.bottom <= d.bottom + 0.5,
+            lineClipped: line.scrollWidth > line.clientWidth,
+          };
+        });
+        expect(box.width).toBe(width - 16);
+        expect(box.left).toBe(8);
+        expect(box.right).toBe(8);
+        expect(box.lineInside).toBe(true);
+        expect(box.lineClipped).toBe(false);
+      });
+  test('on a short phone the list region gives way so the footer line is still whole', async ({
+    page,
+  }) => {
+    await open(page, { width: 390 });
+    await page.setViewportSize({ width: 390, height: 440 });
+    await serve(page, () => 500);
+    await type(page, 'madrid');
+    await expect(palette(page)).toContainText('The search did not finish. Try again.');
+    const inside = await page.evaluate(() => {
+      const d = document.querySelector('dialog.ux-palette')!.getBoundingClientRect();
+      const l = document
+        .querySelector('.ux-palette-hint > span:last-child')!
+        .getBoundingClientRect();
+      return l.height > 0 && l.bottom <= d.bottom + 0.5;
+    });
+    expect(inside).toBe(true);
+  });
+  test('the panel uses the height of a tall phone, up to 36rem', async ({ page }) => {
+    await open(page, { width: 390 });
+    await serve(page, () => answer());
+    await page.keyboard.press('Control+k');
+    await expect(palette(page)).toBeVisible();
+    const max = await palette(page).evaluate((node) => getComputedStyle(node).maxHeight);
+    expect(max).toBe('576px');
+  });
+});
+
+test.describe('DS the palette on a phone, in detail', () => {
+  const recentsKey =
+    'corridra:palette-recents:v1:' +
+    encodeURIComponent(JSON.stringify(['person-a', fixtureTenant]));
+  test('DS-7 at 200% text the field keeps 8rem and the footer line stays', async ({ page }) => {
+    await open(page, { width: 390 });
+    await page.evaluate(() => (document.documentElement.style.fontSize = '32px'));
+    await serve(page, () => answer());
+    await type(page, 'madrid');
+    await expect(palette(page)).toContainText('No match for');
+    const m = await page.evaluate(() => {
+      const input = document.querySelector('.ux-palette-input input') as HTMLElement;
+      const d = document.querySelector('dialog.ux-palette')!.getBoundingClientRect();
+      const l = document
+        .querySelector('.ux-palette-hint > span:last-child')!
+        .getBoundingClientRect();
+      return {
+        input: input.getBoundingClientRect().width,
+        rem: parseFloat(getComputedStyle(document.documentElement).fontSize),
+        lineInside: l.height > 0 && l.bottom <= d.bottom + 0.5 && l.right <= d.right + 0.5,
+      };
+    });
+    expect(m.input).toBeGreaterThanOrEqual(m.rem * 8 - 0.5);
+    expect(m.lineInside).toBe(true);
+    await expect(field(page)).toHaveValue('madrid');
+  });
+  test('DS-1 the pressed Search button shows the selected colour with a mouse over it', async ({
+    page,
+  }) => {
+    await open(page, { width: 1280 });
+    const trigger = page.locator('header.ux-app-header').getByRole('button', { name: /Search/ });
+    const selected = await page.evaluate(() => {
+      const probe = document.createElement('div');
+      probe.style.border = '1px solid var(--selected)';
+      document.body.append(probe);
+      const colour = getComputedStyle(probe).borderTopColor;
+      probe.remove();
+      return colour;
+    });
+    await trigger.hover();
+    await page.mouse.down();
+    await expect
+      .poll(() => trigger.evaluate((node) => getComputedStyle(node).borderTopColor))
+      .toBe(selected);
+    await page.mouse.up();
+  });
+  test('DS-3 the summary line has room above it on a phone', async ({ page }) => {
+    await open(page, { width: 390 });
+    await page.keyboard.press('Control+k');
+    await expect(palette(page)).toBeVisible();
+    const top = await palette(page)
+      .locator('.ux-palette-summary')
+      .evaluate((node) => parseFloat(getComputedStyle(node).paddingTop));
+    expect(top).toBeGreaterThanOrEqual(8);
+  });
+  test('DS-4 a row with no detail has no blank gap, and an empty trail adds no height', async ({
+    page,
+  }) => {
+    await open(page, { width: 390, user: { id: 'person-a' } });
+    await page.evaluate(
+      ([key, mission]) =>
+        localStorage.setItem(
+          key!,
+          JSON.stringify({ v: 1, items: [{ k: 'm', id: mission!, l: 'Madrid Textiles' }] }),
+        ),
+      [recentsKey, missionId(1)],
+    );
+    await page.keyboard.press('Control+k');
+    const recent = palette(page).getByRole('option', { name: /Madrid Textiles/ });
+    await expect(recent).toBeVisible();
+    const gap = await recent.evaluate((row) => {
+      const text = row.querySelector('.ux-palette-text')!.getBoundingClientRect();
+      const trail = row.querySelector('.ux-palette-kind')!.getBoundingClientRect();
+      return trail.top - text.bottom;
+    });
+    expect(gap).toBeLessThanOrEqual(6);
+    const clear = palette(page).getByRole('option', { name: /Clear Recents/ });
+    const extra = await clear.evaluate((row) => {
+      const r = row.getBoundingClientRect();
+      const t = row.querySelector('.ux-palette-text')!.getBoundingClientRect();
+      const style = getComputedStyle(row);
+      return r.height - t.height - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+    });
+    expect(extra).toBeLessThanOrEqual(1);
+  });
+  test('DS-6 the Retry detail wraps instead of being cut at 320 px', async ({ page }) => {
+    await open(page, { width: 320 });
+    await serve(page, () => 500);
+    await type(page, 'madrid');
+    const retry = palette(page).getByRole('option', { name: /Retry/ });
+    await expect(retry).toBeVisible();
+    const cut = await retry
+      .locator('.ux-palette-detail')
+      .evaluate((node) => node.scrollWidth > node.clientWidth);
+    expect(cut).toBe(false);
+    await expect(retry).toContainText('Search again with the same words');
+  });
+});
