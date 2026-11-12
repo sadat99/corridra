@@ -29,6 +29,7 @@ vi.hoisted(() => {
   (globalThis as { __feeHide?: boolean }).__feeHide = true;
   (globalThis as { __paymentHide?: boolean }).__paymentHide = true;
   (globalThis as { __outreachHide?: boolean }).__outreachHide = true;
+  (globalThis as { __disputeHide?: boolean }).__disputeHide = true;
 });
 vi.mock('node:fs/promises', async (importOriginal) => {
   const real = await importOriginal<typeof import('node:fs/promises')>();
@@ -43,6 +44,7 @@ vi.mock('node:fs/promises', async (importOriginal) => {
       __feeHide?: boolean;
       __paymentHide?: boolean;
       __outreachHide?: boolean;
+      __disputeHide?: boolean;
     };
     if (!String(path).includes('customer-real-use-migrations')) return names;
     return names.filter(
@@ -56,7 +58,9 @@ vi.mock('node:fs/promises', async (importOriginal) => {
         // Real-use 0016 (participant payment declaration) is applied after 0015 and has its own gate: the last test opens it.
         !(gate.__paymentHide && String(n).startsWith('0016_')) &&
         // Real-use 0017 (experience outreach counts) is applied after 0016 and has its own gate: the last test of this file opens it.
-        !(gate.__outreachHide && String(n).startsWith('0017_')),
+        !(gate.__outreachHide && String(n).startsWith('0017_')) &&
+        // Real-use 0018 (participant fee dispute) is applied after 0017 and has its own gate: the last test of this file opens it.
+        !(gate.__disputeHide && String(n).startsWith('0018_')),
     );
   }) as typeof real.readdir;
   return { ...real, readdir, default: { ...real, readdir } };
@@ -700,4 +704,33 @@ test('experience outreach counts (real-use 0017) is the seventeenth file, is fou
   expect(after.v).toBe('app.delivery_report_v1(text,text)');
   await migrateCustomerRealUse(w.f.owner);
   expect(await appliedNames()).toHaveLength(17);
+});
+
+test('participant fee dispute (real-use 0018) is the eighteenth file, adds only its own tables and functions and is repeatable', async () => {
+  expect(await appliedNames()).toHaveLength(17);
+  const tables = await tableHashes();
+  const present = async () =>
+    (await q("SELECT to_regclass('customer_private.programme_fee_dispute')::text t")).rows[0].t;
+  expect(await present()).toBeNull();
+  (globalThis as { __disputeHide?: boolean }).__disputeHide = false;
+  await migrateCustomerRealUse(w.f.owner);
+  const applied = await appliedNames();
+  expect(applied).toHaveLength(18);
+  expect(applied[17]).toMatch(/^0018_participant_fee_dispute/);
+  expect(await reportLine()).toBe('customer_real_use_migrations: 18 applied');
+  expect(await present()).toBe('customer_private.programme_fee_dispute');
+  const after = await tableHashes();
+  for (const [name, hash] of Object.entries(tables)) expect(after[name]).toBe(hash);
+  expect(
+    Object.keys(after)
+      .filter((k) => !(k in tables))
+      .sort(),
+  ).toEqual([
+    'customer_private.programme_fee_dispute',
+    'customer_private.programme_fee_dispute_command',
+    'customer_private.programme_fee_dispute_resolution',
+  ]);
+  await migrateCustomerRealUse(w.f.owner);
+  expect(await appliedNames()).toHaveLength(18);
+  expect(await tableHashes()).toEqual(after);
 });
