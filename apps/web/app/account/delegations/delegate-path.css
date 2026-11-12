@@ -78,7 +78,7 @@
   color: var(--text-2);
 }
 .delegate-path-state[data-state='next'] {
-  color: var(--ac-copper-ink);
+  color: var(--accent);
 }
 .delegate-path-actions {
   display: flex;
