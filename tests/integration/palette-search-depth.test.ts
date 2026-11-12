@@ -4,7 +4,7 @@ import type { RequestContext } from '../../packages/db/src/index';
 import { paletteLimits, searchPalette } from '../../apps/web/lib/palette-search';
 
 // The palette's depth and facts (docs/revamp/specs/navigation-v1/command-palette-search.md, section 3 and 4), with
-// fake services so the page caps, the early stop, the partial rule and the failure rules are exact. The database
+// fake services so the page caps, the page caps, the partial rule and the failure rules are exact. The database
 // proof for a role is tests/integration/palette-search.test.ts.
 const ctx: RequestContext = {
   token: 't',
@@ -138,23 +138,67 @@ describe('P6 depth: a target beyond the first page is found', () => {
     const found = await searchPalette(services, ctx, 'zebra', 'companies');
     expect(found.partial).toEqual(['companies']);
   });
-  test('five strong hits stop the reading early without calling the result partial', async () => {
-    const rows = filler(250);
-    for (let n = 0; n < 6; n++) rows[n] = mission(n, `Zebra Co ${n}`);
+  test('S1 the Acme probe: an exact label on page 2 of 3 is read and ranked first', async () => {
+    const rows = filler(300);
+    for (let n = 0; n < 5; n++) rows[n] = mission(n, `Acme ${n}`);
+    rows[100] = mission(100, 'Acme');
     const { services, calls } = fakes(rows, []);
-    const found = await searchPalette(services, ctx, 'zebra', 'missions');
-    expect(calls.queue).toEqual([0]);
-    expect(found.missions).toHaveLength(6);
+    const found = await searchPalette(services, ctx, 'acme', 'missions');
+    expect(calls.queue).toEqual([0, 100, 200]);
+    expect(found.missions[0]!.label).toBe('Acme');
+    expect(found.missions.map((hit) => hit.label)).toEqual([
+      'Acme',
+      'Acme 0',
+      'Acme 1',
+      'Acme 2',
+      'Acme 3',
+      'Acme 4',
+    ]);
     expect(found.partial).toEqual([]);
   });
-  test('strong company hits stop the scan after its first page', async () => {
+  test('five exact labels on page 1 with a total of 400 still read to the cap and are partial', async () => {
+    const rows = filler(400);
+    for (let n = 0; n < 5; n++) rows[n] = mission(n, `Zebra ${n}`);
+    const { services, calls } = fakes(rows, []);
+    const found = await searchPalette(services, ctx, 'zebra', 'missions');
+    expect(calls.queue).toEqual([0, 100, 200]);
+    expect(found.missions).toHaveLength(5);
+    expect(found.partial).toEqual(['missions']);
+  });
+  test('five exact labels on page 1 with a total of 300 are read to the end and are not partial', async () => {
+    const rows = filler(300);
+    for (let n = 0; n < 5; n++) rows[n] = mission(n, `Zebra ${n}`);
+    const { services, calls } = fakes(rows, []);
+    const found = await searchPalette(services, ctx, 'zebra', 'missions');
+    expect(calls.queue).toEqual([0, 100, 200]);
+    expect(found.partial).toEqual([]);
+  });
+  test('company hits on the first scan page do not stop the scan before the cap', async () => {
     const rows = fillerCompanies(220);
     for (let n = 0; n < 6; n++) rows[n] = company(n, `Zebrax Co ${n}`);
+    rows[120] = company(120, 'Zebra');
     const { services, calls } = fakes([], rows);
     const found = await searchPalette(services, ctx, 'zebra', 'companies');
-    expect(calls.catalogue).toEqual([{ q: 'zebra' }, { q: '', offset: 0 }]);
-    expect(found.companies.length).toBeGreaterThan(0);
-    expect(found.partial).toEqual([]);
+    expect(calls.catalogue).toEqual([
+      { q: 'zebra' },
+      { q: '', offset: 0 },
+      { q: '', offset: 50 },
+      { q: '', offset: 100 },
+      { q: '', offset: 150 },
+    ]);
+    expect(found.companies[0]!.label).toBe('Zebra');
+    expect(found.partial).toEqual(['companies']);
+  });
+  test('the call bounds hold with no early stop: 3, 5 and 8 for All', async () => {
+    const rows = filler(1000);
+    for (let n = 0; n < 8; n++) rows[n] = mission(n, `Zebra ${n}`);
+    const orgs = fillerCompanies(1000);
+    for (let n = 0; n < 8; n++) orgs[n] = company(n, `Zebra ${n}`);
+    const { services, calls } = fakes(rows, orgs);
+    await searchPalette(services, ctx, 'zebra', 'all');
+    expect(calls.queue).toHaveLength(paletteLimits.queuePages);
+    expect(calls.catalogue).toHaveLength(1 + paletteLimits.cataloguePages);
+    expect(calls.queue.length + calls.catalogue.length).toBe(8);
   });
 });
 
@@ -355,8 +399,32 @@ describe('R2 and D6 other failures', () => {
       scope: 'missions',
       page: 1,
       correlationId: 'req-1',
+      errorName: 'Error',
     });
     expect(line).not.toContain('zebra');
+  });
+  test('N11 the log line names the kind of error and its code, never its message or the query', async () => {
+    const rows = filler(250);
+    rows[10] = mission(10, 'Zebra Early');
+    const { services } = fakes(rows, []);
+    const real = services.missions.queue;
+    services.missions.queue = async (c, f, offset) => {
+      if (offset >= 100)
+        throw Object.assign(new TypeError('relation of zebra is missing'), { code: '57014' });
+      return real(c, f, offset);
+    };
+    await searchPalette(services, ctx, 'zebra', 'missions');
+    const line = String(spy.mock.calls[0]![0]);
+    expect(JSON.parse(line)).toEqual({
+      event: 'palette_search_page_failed',
+      scope: 'missions',
+      page: 1,
+      correlationId: 'req-1',
+      errorName: 'TypeError',
+      errorCode: '57014',
+    });
+    expect(line).not.toContain('zebra');
+    expect(line).not.toContain('missing');
   });
   test('a company scan page failing keeps the whole-word hits and marks companies partial', async () => {
     const { services } = fakes([], [company(1, 'Zebra Ltd'), ...fillerCompanies(120, 10)]);

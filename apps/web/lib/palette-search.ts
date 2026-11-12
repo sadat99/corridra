@@ -7,7 +7,7 @@
 // present only when there are hits. It writes nothing and never logs the query. Owner: S4.
 import { DomainError } from '@corridra/domain';
 import type { RequestContext } from '@corridra/db';
-import { queryWords, rankFields, strongLabel } from './palette-rank';
+import { queryWords, rankFields } from './palette-rank';
 import type { PaletteFacts } from './ux/palette-facts';
 
 export type { PaletteFacts } from './ux/palette-facts';
@@ -28,15 +28,15 @@ export type PaletteResult = {
 /**
  * Work per request. Missions: up to 3 queue pages of 100 (300 missions). Companies: the whole-word read, then up to 4
  * scan pages of 50 (200 companies). Scopes run one after the other, so one search holds one database connection at a
- * time. showAll hits per scope under All, showScope for a single scope. A scope stops early after strongStop rows
- * whose label starts with every word.
+ * time. showAll hits per scope under All, showScope for a single scope. Pages are read until the scope is read
+ * completely, a page is empty or the cap is reached; there is no early stop, so a better match on a later page is
+ * never skipped.
  */
 export const paletteLimits = {
   queuePages: 3,
   cataloguePages: 4,
   showAll: 5,
   showScope: 10,
-  strongStop: 5,
 } as const;
 
 type Services = {
@@ -89,14 +89,23 @@ function inOrder(a: Candidate, b: Candidate) {
   return b.score - a.score || a.position - b.position || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 }
 
-function pageFailed(scope: string, page: number, ctx: RequestContext) {
-  // The scope, the page and the request id only: never the words that were typed.
+function pageFailed(scope: string, page: number, ctx: RequestContext, error: unknown) {
+  // The scope, the page, the request id and the kind of error and its code: never the words that were typed and
+  // never the error message, which a database may fill with them.
+  const name = error instanceof Error && error.name.length <= 64 ? error.name : undefined;
+  const raw = (error as { code?: unknown } | null)?.code;
+  const code =
+    (typeof raw === 'string' || typeof raw === 'number') && String(raw).length <= 32
+      ? raw
+      : undefined;
   console.error(
     JSON.stringify({
       event: 'palette_search_page_failed',
       scope,
       page,
       correlationId: ctx.correlationId,
+      errorName: name,
+      errorCode: code,
     }),
   );
 }
@@ -110,9 +119,7 @@ async function findMissions(
   const seen = new Set<string>();
   let read = 0;
   let position = 0;
-  let strong = 0;
   let total = 0;
-  let early = false;
   for (let page = 0; page < paletteLimits.queuePages; page++) {
     let rows: { missions: Record<string, unknown>[]; total: number };
     try {
@@ -121,7 +128,7 @@ async function findMissions(
       // A role refused on any page gets nothing from this scope; another failure after the first page keeps what was found.
       if (isForbidden(error)) return { candidates: [], denied: true, partial: false };
       if (page === 0) throw error;
-      pageFailed('missions', page, ctx);
+      pageFailed('missions', page, ctx, error);
       return { candidates, denied: false, partial: true };
     }
     for (const row of rows.missions) {
@@ -138,7 +145,6 @@ async function findMissions(
         { value: row.country_code },
       ]);
       if (!ranked) continue;
-      if (strongLabel(words, brief.company)) strong += 1;
       candidates.push({
         id,
         position,
@@ -155,12 +161,8 @@ async function findMissions(
     read += rows.missions.length;
     total = rows.total;
     if (rows.missions.length === 0 || total <= read) break;
-    if (strong >= paletteLimits.strongStop) {
-      early = true;
-      break;
-    }
   }
-  return { candidates, denied: false, partial: !early && total > read };
+  return { candidates, denied: false, partial: total > read };
 }
 
 const sourceRank: Record<string, number> = { SOURCE_REPORTED: 2, EXPIRED: 1 };
@@ -185,7 +187,6 @@ async function findCompanies(
   // An organisation may appear once for each public identifier; the best source flag of its rows is kept.
   const sources = new Map<string, string>();
   let position = 0;
-  let strong = 0;
   const take = (row: Record<string, unknown>, keepUnmatched: boolean) => {
     position += 1;
     const id = String(row.id);
@@ -196,7 +197,6 @@ async function findCompanies(
     // A row the catalogue itself matched (a domain or an identifier) is kept, as before.
     if (!ranked && !keepUnmatched) return;
     seen.add(id);
-    if (ranked && strongLabel(words, row.name)) strong += 1;
     candidates.push({
       id,
       position,
@@ -206,30 +206,28 @@ async function findCompanies(
     });
   };
   for (const row of exact.organisations) take(row, true);
-  let early = strong >= paletteLimits.strongStop;
   const exactIncomplete = exact.total > exact.organisations.length;
   let read = 0;
   let total = 0;
-  for (let page = 0; !early && page < paletteLimits.cataloguePages; page++) {
+  for (let page = 0; page < paletteLimits.cataloguePages; page++) {
     let rows: { organisations: Record<string, unknown>[]; total: number };
     try {
       rows = await services.counterparties.catalogue(ctx, { q: '', offset: read });
     } catch (error) {
       if (isForbidden(error)) return { candidates: [], denied: true, partial: false };
-      pageFailed('companies', page + 1, ctx);
+      pageFailed('companies', page + 1, ctx, error);
       return { candidates, denied: false, partial: true, sources };
     }
     for (const row of rows.organisations) take(row, false);
     read += rows.organisations.length;
     total = rows.total;
     if (rows.organisations.length === 0 || total <= read) break;
-    if (strong >= paletteLimits.strongStop) early = true;
   }
-  // Stopping early on strong hits is not partial for the scan; rows of the whole-word read that were never read are.
+  // Partial when rows remain unread at the cap, or when the whole-word read had more rows than one page.
   return {
     candidates,
     denied: false,
-    partial: exactIncomplete || (!early && total > read),
+    partial: exactIncomplete || total > read,
     sources,
   };
 }

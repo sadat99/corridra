@@ -38,11 +38,12 @@ function hits(value: unknown): FoundHit[] {
     if (!record(item)) continue;
     const { id, label, detail } = item;
     if (typeof id !== 'string' || id === '' || id.length > textLimit) continue;
-    if (typeof label !== 'string' || label.length > textLimit) continue;
+    if (typeof label !== 'string') continue;
+    // A long name or detail is shown cut, not dropped: the match may have come from it.
     out.push({
       id,
-      label,
-      detail: typeof detail === 'string' && detail.length <= textLimit ? detail : '',
+      label: label.slice(0, textLimit),
+      detail: typeof detail === 'string' ? detail.slice(0, textLimit) : '',
     });
   }
   return out;

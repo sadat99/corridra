@@ -11,6 +11,7 @@ export const rankLimits = {
   unanchoredFuzzyLength: 6,
   maxTokenLength: 40,
   maxTokensPerField: 64,
+  maxFieldLength: 256,
 } as const;
 export const tierScore = { exact: 400, prefix: 300, substring: 200, fuzzy: 100 } as const;
 export const labelBonus = 50;
@@ -30,7 +31,12 @@ const letterMap: Record<string, string> = {
 };
 
 function foldPoint(point: string): string {
-  const lowered = point.normalize('NFKD').toLowerCase().replace(/\p{M}/gu, '');
+  // Only the combining accents of Latin, Greek and Cyrillic letters go (U+0300 to U+036F). Every other mark, such
+  // as the vowel signs of Bengali and Devanagari or the points of Arabic and Hebrew, is part of the word and stays.
+  const lowered = point
+    .normalize('NFKD')
+    .toLowerCase()
+    .replace(/[\u0300-\u036f]/g, '');
   let out = '';
   for (const char of lowered) out += letterMap[char] ?? char;
   return out;
@@ -75,7 +81,7 @@ type Token = { text: string; from: number };
 
 function tokenise(folded: string): Token[] {
   const tokens: Token[] = [];
-  for (const match of folded.matchAll(/[\p{L}\p{N}]+/gu))
+  for (const match of folded.matchAll(/[\p{L}\p{M}\p{N}]+/gu))
     tokens.push({ text: match[0], from: match.index });
   return tokens;
 }
@@ -189,7 +195,12 @@ export function rankFields(words: string[], fields: RankField[]): Ranked | null 
   if (words.length === 0) return null;
   const prepared = fields.map((field) => ({
     label: field.label === true,
-    tokens: tokenise(foldText(typeof field.value === 'string' ? field.value : '')),
+    // Only the start of a long field is read, so a very long name cannot make the ranking slow.
+    tokens: tokenise(
+      foldText(
+        typeof field.value === 'string' ? field.value.slice(0, rankLimits.maxFieldLength) : '',
+      ),
+    ),
   }));
   let score = 0;
   let close = false;
@@ -229,13 +240,6 @@ export function rankFields(words: string[], fields: RankField[]): Ranked | null 
   )
     score += exactLabelBonus;
   return { score, close };
-}
-
-/** A strong row has every query word as an exact word or a word start in its label. Used to stop reading early. */
-export function strongLabel(words: string[], label: unknown): boolean {
-  if (words.length === 0) return false;
-  const tokens = tokenise(foldText(typeof label === 'string' ? label : ''));
-  return words.every((word) => tokens.some((token) => token.text.startsWith(word)));
 }
 
 export type Segment = { text: string; hit: boolean };

@@ -129,6 +129,18 @@ describe('the search answer is checked on the client', () => {
     expect(found.denied).toEqual(['missions']);
     expect(found.partial).toEqual(['companies']);
   });
+  test('R2-7 a label or detail over 200 characters is shown cut to 200, not dropped or blanked', () => {
+    const found = parseFound({
+      missions: [{ id, label: 'Mission', detail: 'd'.repeat(250) }],
+      companies: [{ id: 'c-1', label: 'C'.repeat(250), detail: 'ES' }],
+      denied: [],
+      partial: [],
+    })!;
+    expect(found.missions[0]!.detail).toBe('d'.repeat(200));
+    expect(found.companies).toHaveLength(1);
+    expect(found.companies[0]!.label).toBe('C'.repeat(200));
+    expect(found.companies[0]!.detail).toBe('ES');
+  });
   test('something that is not an answer is not parsed', () => {
     expect(parseFound(null)).toBeNull();
     expect(parseFound('x')).toBeNull();

@@ -8,7 +8,6 @@ import {
   queryWords,
   rankFields,
   rankLimits,
-  strongLabel,
   tierScore,
   type RankField,
 } from '../../apps/web/lib/palette-rank';
@@ -250,11 +249,45 @@ describe('P3 highlighting', () => {
   });
 });
 
-describe('a strong label', () => {
-  test('every word is an exact word or a word start in the label', () => {
-    expect(strongLabel(queryWords('mad tex'), 'Madrid Textiles')).toBe(true);
-    expect(strongLabel(queryWords('mad'), 'Nomad Freight')).toBe(false);
-    expect(strongLabel(queryWords('mad'), undefined)).toBe(false);
-    expect(strongLabel([], 'Madrid')).toBe(false);
+describe('S4 scripts whose vowel signs are letters of the word', () => {
+  test('only the Latin accent marks are removed; Bengali and Devanagari signs stay', () => {
+    expect(queryWords('ঢাকা')).toEqual(['ঢাকা']);
+    expect(queryWords('कि')).toEqual(['कि']);
+    expect(foldText('Zürich')).toBe('zurich');
+    expect(foldText('Łódź')).toBe('lodz');
+    expect(foldText('Dhaka')).toBe('dhaka');
+  });
+  test('words that differ only in a vowel sign are different words and never an exact hit', () => {
+    expect(score('कि', { value: 'की', label: true })).toBeNull();
+    expect(score('ঢাকা', { value: 'ঢুকি Traders', label: true })).toBeNull();
+    expect(score('ঢাকা', { value: 'ঢাকা Traders', label: true })!.score).toBe(tierScore.exact + 50);
+  });
+  test('a mark in a non-matching word is not marked as a hit', () => {
+    expect(highlightSegments('ঢুকি Traders', 'ঢাকা').some((s) => s.hit)).toBe(false);
+    expect(highlightSegments('ঢাকা Traders', 'ঢাকা')[0]).toEqual({ text: 'ঢাকা', hit: true });
+  });
+});
+
+describe('N8 a long field costs a bounded amount of work', () => {
+  test('a 5000 character field of 40 character tokens is ranked in well under 50 ms', () => {
+    const token = (n: number) => 'a'.repeat(39) + String.fromCharCode(98 + (n % 20));
+    const field = Array.from({ length: 125 }, (_, n) => token(n)).join(' ');
+    expect(field.length).toBeGreaterThanOrEqual(5000);
+    const words = queryWords('x'.repeat(40) + 'qz');
+    const fields = [
+      { value: field, label: true },
+      { value: field },
+      { value: field },
+      { value: field },
+      { value: field },
+    ];
+    const started = performance.now();
+    rankFields(words, fields);
+    expect(performance.now() - started).toBeLessThan(50);
+  });
+  test('only the first 256 characters of a field are read', () => {
+    const tail = 'a'.repeat(300) + ' zebra';
+    expect(score('zebra', { value: tail, label: true })).toBeNull();
+    expect(score('zebra', { value: 'a '.repeat(100) + 'zebra', label: true })).not.toBeNull();
   });
 });
