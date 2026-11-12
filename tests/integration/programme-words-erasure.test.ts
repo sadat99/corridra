@@ -525,12 +525,33 @@ describe('the staff service', () => {
   test('one removal under an erasure request also reports the programme words it replaced', async () => {
     const ginaRequest = await request('gina');
     await erasure(ginaRequest, 'received', 'in_progress');
-    const done = await new StaffProblemReports(f.runtime).removeWords(staff(), {
+    // gina filed no problem report: the report removal answers 0 without raising and the programme words still go.
+    const input = {
       action: 'remove_words',
       commandId: randomUUID(),
       erasureRequestId: ginaRequest,
-    });
+    };
+    const service = new StaffProblemReports(f.runtime);
+    const done = await service.removeWords(staff(), input);
     expect(done).toMatchObject({ removed: 0, programmeWords: 1 });
+    // The same command again: the same programme count, no second set of record rows, no clash with the report record.
+    expect(await service.removeWords(staff(), input)).toEqual(done);
+    expect(
+      (
+        await f.owner.query(
+          'SELECT count(*)::int n FROM customer_private.programme_words_erasure WHERE command_id=$1',
+          [input.commandId],
+        )
+      ).rows[0].n,
+    ).toBe(1);
+    expect(
+      (
+        await f.owner.query(
+          'SELECT count(*)::int n FROM customer_private.problem_report_erasure WHERE command_id=$1',
+          [input.commandId],
+        )
+      ).rows[0].n,
+    ).toBe(0);
     expect(await holders(secret('gina'))).toEqual([]);
   });
 });
