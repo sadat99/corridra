@@ -241,7 +241,11 @@ export function MissionPage({
                   )}
                 </div>
               )}
-              <MissionFacts m={m} owners={data.owners} />
+              <MissionFacts
+                m={m}
+                owners={data.owners}
+                history={data.history.filter((h) => h.mission_id === m.id)}
+              />
             </>
           )}
           {tab === 'requirements' && (
