@@ -15,7 +15,7 @@ const web = createRequire(resolve('apps/web/package.json'));
 const ce = web('react').createElement as (type: unknown, props?: unknown) => unknown;
 const render = web('react-dom/server').renderToStaticMarkup as (element: unknown) => string;
 const loadWeb = async (path: string) => await import(/* @vite-ignore */ `../../apps/web/${path}`);
-const plain = (html: string) => html.replace(/ /g, ' ');
+const plain = (html: string) => html.replace(/\u00a0/g, ' ');
 
 const at = '2026-11-11T00:00:00Z';
 const sourceId = '3f9a2c1d-1111-4222-8333-444455556666';
