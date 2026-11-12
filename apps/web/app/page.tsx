@@ -3,6 +3,7 @@
 import { Arrow } from '../components/arrow';
 import { CorridraIcon } from '../components/corridra-icon';
 import { FactLabel, NotConfirmedLabel, type factLabels } from '../components/fact-label';
+import { HomeJobs } from '../components/home-jobs';
 import { HomeMissionPlayer } from '../components/home-mission-player';
 import Link from 'next/link';
 import { LegacyHashRedirect } from '../components/legacy-hash-redirect';
@@ -14,37 +15,7 @@ import type { MessageKey } from '../lib/i18n/messages';
 // The home page, concept G (owner decision of 6 November 2026: "E with F"). The words are keys in the message
 // files (lib/i18n/home-words.ts). They show in the chosen language only while `CORRIDRA_LANGUAGES_PAGES` is on;
 // until then every key shows its English words. The five trust names, airport codes and company letters stay as
-// written.
-const starts = [
-  {
-    href: '/plan?job=buyers',
-    title: 'home.start.sell.title',
-    text: 'home.start.sell.text',
-    name: 'home.start.sell.name',
-    icon: 'sell',
-  },
-  {
-    href: '/plan?job=sourcing',
-    title: 'home.start.buy.title',
-    text: 'home.start.buy.text',
-    name: 'home.start.buy.name',
-    icon: 'buy',
-  },
-  {
-    href: '/plan?job=delegations',
-    title: 'home.start.trip.title',
-    text: 'home.start.trip.text',
-    name: 'home.start.trip.name',
-    icon: 'trip',
-  },
-] as const satisfies readonly {
-  href: string;
-  title: MessageKey;
-  text: MessageKey;
-  name: MessageKey;
-  icon: string;
-}[];
-
+// written. The three jobs and their order are in lib/home-jobs.ts (one constant sets which job leads).
 type Fact = (typeof factLabels)[number]['label'];
 
 // The labels a company record shows. The first three are trust names; the fourth says a fact was asked for and
@@ -109,19 +80,7 @@ export default function Home() {
           <p className="label ac1-rule">{t('home.eyebrow')}</p>
           <h1 id="home-title">{t('home.title')}</h1>
           <p className="ac1-lead">{t('home.lead.watch')}</p>
-          <nav className="ac1-jobs" aria-label={t('home.jobs.aria')}>
-            {starts.map((start) => (
-              <Link prefetch={false} key={start.href} href={start.href}>
-                <CorridraIcon name={start.icon} className="ac1-job-icon" />
-                <span>
-                  <strong>{t(start.title)}</strong>
-                  <span className="ac1-job-text">{t(start.text)}</span>
-                  <span className="label ac1-job-name">{t(start.name)}</span>
-                </span>
-                <CorridraIcon name="arrow" className="ac1-job-go" />
-              </Link>
-            ))}
-          </nav>
+          <HomeJobs />
           <Link prefetch={false} className="ac1-quiet" href="/plan">
             {t('home.else')} <Arrow />
           </Link>

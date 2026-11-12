@@ -75,11 +75,17 @@ test('the home example switches between selling and sourcing by pointer and keyb
   await sourcing.click();
   await expect(sourcing).toHaveAttribute('aria-selected', 'true');
   await expect(record.getByRole('tabpanel')).toContainText('circular knitting machines');
+  // A third example, Delegation, follows Sourcing (owner decision, 12 November 2026).
+  const delegation = tabs.getByRole('tab', { name: 'Delegation', exact: true });
   await sourcing.press('ArrowRight');
+  await expect(delegation).toBeFocused();
+  await expect(delegation).toHaveAttribute('aria-selected', 'true');
+  await expect(record.getByRole('tabpanel')).toContainText('garment exporters');
+  await delegation.press('ArrowRight');
   await expect(selling).toBeFocused();
   await expect(selling).toHaveAttribute('aria-selected', 'true');
   await selling.press('End');
-  await expect(sourcing).toBeFocused();
+  await expect(delegation).toBeFocused();
   // Selling and buying carry equal weight: a buyer shortlist (step Find) and a price quote comparison (step
   // Compare) are screens of the example player (concept G); the routes are on the page.
   await selling.press('Home');

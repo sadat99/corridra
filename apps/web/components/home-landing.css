@@ -73,11 +73,16 @@
   font-size: var(--text-lead);
   line-height: 1.5;
 }
+/* The three jobs at equal weight (owner decision, 12 November 2026, "Equal weight"; order in lib/home-jobs.ts):
+   three cards of one size and one style, each naming its first route in a small chip. Every row of the grid is as
+   tall as the tallest card. */
 .ac1-jobs {
+  container: ac1-jobs / inline-size;
   display: grid;
-  border-top: 1px solid var(--line);
+  grid-auto-rows: 1fr;
+  gap: var(--space-2);
 }
-.ac1-jobs a {
+.ac1-jobs .ac1-job {
   display: grid;
   grid-template-columns: 2.5rem minmax(0, 1fr) 1.25rem;
   /* The gaps give way on a narrow window (4vw is under 1rem only below 400 px), so with large text the icon, the arrow
@@ -85,10 +90,19 @@
   gap: min(var(--space-4), 4vw);
   align-items: center;
   min-height: 4.5rem;
-  padding: var(--space-3) 0;
-  border-bottom: 1px solid var(--line);
+  padding: var(--space-3) min(var(--space-4), 4vw);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
   color: var(--text-1);
   text-decoration: none;
+  transition:
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+.ac1-jobs .ac1-job:hover {
+  border-color: var(--action);
+  box-shadow: var(--shadow-1);
 }
 .ac1-jobs .ac1-job-icon {
   width: 2.5rem;
@@ -98,19 +112,44 @@
   background: var(--selected-surface);
   color: var(--brand);
 }
+.ac1-job-words {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--space-2);
+  min-width: 0;
+}
+.ac1-job-words > * {
+  min-width: 0;
+  max-width: 100%;
+}
 .ac1-jobs strong {
-  display: block;
   overflow-wrap: anywhere;
   font-size: var(--text-lg);
   font-weight: 600;
   line-height: 1.3;
 }
 .ac1-job-text {
-  display: block;
+  flex: 1 0 100%;
+  order: 3;
   overflow-wrap: anywhere;
   color: var(--text-2);
   font-size: var(--text-sm);
   line-height: 1.4;
+}
+.ac1-job-route {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-1);
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 /* The contract name stays in each link's accessible name (P-07) and is not drawn. */
 .ac1-home .ac1-job-name {
@@ -124,8 +163,19 @@
 .ac1-jobs .ac1-job-go {
   color: var(--action);
 }
-.ac1-jobs a:hover strong {
+.ac1-jobs .ac1-job:hover strong {
   color: var(--action);
+}
+/* With very large text the jobs column is narrower than 15 of its own rem: the words take the whole card and the
+   icon and arrow, which repeat the words, are not drawn. */
+@container ac1-jobs (max-width: 15rem) {
+  .ac1-jobs .ac1-job {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ac1-jobs .ac1-job-icon,
+  .ac1-jobs .ac1-job-go {
+    display: none;
+  }
 }
 .ac1-hero .ac1-quiet {
   margin-top: var(--space-2);
@@ -864,9 +914,32 @@
   .ac1-lead {
     margin-bottom: var(--space-3);
   }
-  .ac1-jobs a {
+  .ac1-jobs .ac1-job {
     min-height: 3.5rem;
-    padding: var(--space-2) 0;
+    padding: var(--space-2) min(var(--space-3), 4vw);
+  }
+  /* On a phone the route chip uses the interface face so each chip stays on one line. */
+  .ac1-job-route {
+    padding: 0 6px;
+    font-family: var(--font-ui);
+    letter-spacing: 0;
+  }
+  /* Three example tabs and the Example tag share one row on a phone. */
+  .ac1-record-head {
+    gap: var(--space-2);
+  }
+  .ac1-record-tabs button {
+    padding: 0 var(--space-2);
+  }
+  /* On a phone each job card shows its title and route; the line stays in the link's accessible name and is not
+     drawn, so the three jobs and the example fit the phone budget. */
+  .ac1-job .ac1-job-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
   .ac1-hero .ac1-quiet {
     margin-top: 0;
@@ -1033,5 +1106,11 @@
   .ac1-pass-text,
   .ac1-pass-stub {
     font-size: var(--text-xs);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ac1-jobs .ac1-job {
+    transition: none;
   }
 }

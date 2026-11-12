@@ -71,7 +71,7 @@ const notStated: Value = { key: 'home.value.notStated' };
 const notConfirmed: Value = { key: 'home.value.notConfirmed' };
 
 /**
- * The two example missions, one screen per step. Sample data only: no real company, no stored record, no count
+ * The three example missions (selling, sourcing and a delegation), one screen per step. Sample data only: no real company, no stored record, no count
  * presented as a result. The words are keys in the message files; the five trust names stay English everywhere.
  */
 const examples: readonly Example[] = [
@@ -240,6 +240,83 @@ const examples: readonly Example[] = [
       ['home.player.buy.follow.a', 'home.player.state.now'],
       ['home.player.buy.follow.b', 'home.player.state.next'],
       ['home.player.buy.follow.c', 'home.player.state.later'],
+    ],
+  },
+  // Owner decision, 12 November 2026: a third example for a group trip, from the request page's own sample
+  // ("Twelve garment exporters visit buyers in Guangzhou for four days in March", lib/i18n/ws/ws-a.ts).
+  {
+    id: 'trip',
+    tab: 'home.ex.trip.tab',
+    title: 'home.ex.trip.title',
+    note: 'home.player.trip.note',
+    notReal: 'home.exhibit.companies',
+    request: {
+      headline: 'home.player.trip.request',
+      job: 'home.start.trip.title',
+      to: 'home.country.cn',
+      product: 'home.player.trip.product',
+      timing: 'home.player.trip.timing',
+      meta: 'home.ex.trip.meta',
+    },
+    find: {
+      title: 'home.buyers.title',
+      aria: 'home.player.trip.find.aria',
+      companies: [
+        ['home.player.trip.a.name', 'home.player.trip.a.note', 'Evidence available'],
+        ['home.player.trip.b.name', 'home.player.trip.b.note', 'Self-declared'],
+        ['home.player.trip.c.name', 'home.player.trip.c.note', 'Verified'],
+        ['home.player.trip.d.name', 'home.player.trip.d.note', 'Self-declared'],
+      ],
+    },
+    compare: {
+      title: 'home.player.trip.compare.title',
+      aria: 'home.player.trip.compare.aria',
+      columns: ['home.player.trip.col.a', 'home.player.trip.col.b', 'home.player.trip.col.c'],
+      rows: [
+        {
+          term: 'home.player.trip.term.product',
+          values: [
+            [{ key: 'home.player.trip.value.knitwear' }, 'num', 'Evidence available'],
+            [{ key: 'home.player.trip.value.denim' }, 'num', 'Self-declared'],
+            [notStated, 'miss'],
+          ],
+        },
+        {
+          term: 'home.player.trip.term.meetings',
+          values: [
+            [{ key: 'home.player.trip.value.twoOfTwo' }, 'ok'],
+            [{ key: 'home.player.trip.value.oneOfTwo' }, 'num'],
+            [notConfirmed, 'miss'],
+          ],
+        },
+        {
+          term: 'home.player.trip.term.samples',
+          values: [
+            [{ key: 'home.player.trip.value.sent' }, 'ok'],
+            [{ key: 'home.player.trip.value.notSent' }, 'bad'],
+            [notConfirmed, 'miss'],
+          ],
+        },
+      ],
+    },
+    visit: [
+      ['home.player.day.one', 'home.player.trip.a.name', 'home.player.trip.visit.a'],
+      ['home.player.day.two', 'home.player.trip.c.name', 'home.player.trip.visit.c'],
+      ['home.player.day.three', 'home.player.trip.b.name', 'home.player.trip.visit.b'],
+    ],
+    decide: {
+      name: 'home.player.trip.a.name',
+      why: 'home.player.trip.a.note',
+      evidence: [
+        ['home.player.trip.decide.samples', 'Evidence available'],
+        ['home.dossier.registration', 'Verified'],
+        ['home.dossier.volume', 'Self-declared'],
+      ],
+    },
+    follow: [
+      ['home.player.trip.follow.a', 'home.player.state.now'],
+      ['home.player.trip.follow.b', 'home.player.state.next'],
+      ['home.player.trip.follow.c', 'home.player.state.later'],
     ],
   },
 ];
@@ -416,7 +493,7 @@ function Screen({ example, step }: { example: Example; step: number }) {
 
 /**
  * The Mission Player on the home page (concept G, owner decision of 6 November 2026): one example request moving
- * through the six steps, for selling or for sourcing. It moves on every 4 seconds with a visible Pause (WCAG
+ * through the six steps, for selling, sourcing or a delegation. It moves on every 4 seconds with a visible Pause (WCAG
  * 2.2.2), holds while the pointer is over it, stops for good once keyboard focus enters or a control is used,
  * and never moves on by itself under reduced motion. A step change is announced only when the visitor makes it.
  */
