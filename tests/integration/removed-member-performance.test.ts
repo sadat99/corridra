@@ -30,8 +30,14 @@ let own: string;
 let shared: string;
 const percentile = (values: number[], p: number) =>
   [...values].sort((a, b) => a - b)[Math.min(values.length - 1, Math.ceil(values.length * p) - 1)]!;
+// A p95 over 30 calls is the second slowest call, so one stall of the machine that lasts a few calls (a checkpoint or autovacuum
+// after the bulk load, a busy neighbour on a shared runner) fails the test although nothing in the function changed. A warm-up of
+// five calls and 100 samples make the p95 the sixth slowest, which a short stall cannot reach, while a function that really got
+// slower is slower on every call and still fails. The limits themselves are unchanged.
+const WARM_UP = 5;
+const SAMPLES = 100;
 async function timed(runs: number, work: () => Promise<unknown>) {
-  await work();
+  for (let i = 0; i < WARM_UP; i++) await work();
   const times: number[] = [];
   for (let i = 0; i < runs; i++) {
     const start = performance.now();
@@ -164,8 +170,8 @@ describe('the list query on a large database', () => {
 
   test('the new query costs at most three times the same query without the rule (and never more than five milliseconds more than that floor)', async () => {
     const run = (filtered: boolean) => () => w.f.owner.query(listQuery(filtered), [person(), null]);
-    const without = await timed(30, run(false));
-    const withRule = await timed(30, run(true));
+    const without = await timed(SAMPLES, run(false));
+    const withRule = await timed(SAMPLES, run(true));
     expect(withRule.p95).toBeLessThanOrEqual(Math.max(3 * without.median, 5));
   });
 
@@ -210,7 +216,7 @@ describe('the functions through a customer session', () => {
       if (!after) break;
     }
     expect(seen).toHaveLength(4000);
-    const timing = await timed(30, () =>
+    const timing = await timed(SAMPLES, () =>
       w.row('perf', 'SELECT customer.private_requests(NULL,25) AS r'),
     );
     expect(timing.p95).toBeLessThan(250);
@@ -220,7 +226,7 @@ describe('the functions through a customer session', () => {
     const page = (await w.row('perf2', 'SELECT customer.private_requests(NULL,25) AS r')).r as Row;
     expect(page.requests).toEqual([]);
     expect(page.nextAfter).toBeNull();
-    const timing = await timed(30, () =>
+    const timing = await timed(SAMPLES, () =>
       w.row('perf2', 'SELECT customer.private_requests(NULL,25) AS r'),
     );
     expect(timing.p95).toBeLessThan(250);
@@ -234,7 +240,7 @@ describe('the functions through a customer session', () => {
     // hidden while his two bearer-saved reports stay (main lists all three).
     expect(await w.savedIds('rex')).not.toContain(w.reports.rex!.savedId);
     expect(await w.savedIds('rex')).toHaveLength(2);
-    const timing = await timed(30, () =>
+    const timing = await timed(SAMPLES, () =>
       w.row('perf', 'SELECT customer.saved_missions(NULL,25) AS r'),
     );
     expect(timing.p95).toBeLessThan(250);
@@ -244,8 +250,8 @@ describe('the functions through a customer session', () => {
     const principal = w.principals.perf!;
     const withRule = `SELECT id FROM customer_private.saved_mission WHERE principal_id=$1 AND removed_at IS NULL AND ${SAVED_FILTER.replace('actor', '$1')} AND ($2::uuid IS NULL OR id>$2::uuid) ORDER BY id LIMIT 25`;
     const without = `SELECT id FROM customer_private.saved_mission WHERE principal_id=$1 AND removed_at IS NULL AND ($2::uuid IS NULL OR id>$2::uuid) ORDER BY id LIMIT 25`;
-    const base = await timed(30, () => w.f.owner.query(without, [principal, null]));
-    const rule = await timed(30, () => w.f.owner.query(withRule, [principal, null]));
+    const base = await timed(SAMPLES, () => w.f.owner.query(without, [principal, null]));
+    const rule = await timed(SAMPLES, () => w.f.owner.query(withRule, [principal, null]));
     expect(rule.p95).toBeLessThanOrEqual(Math.max(3 * base.median, 20));
   });
 });

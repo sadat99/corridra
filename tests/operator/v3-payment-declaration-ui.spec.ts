@@ -232,6 +232,8 @@ test.describe('participant: I Have Paid', () => {
       ]),
     );
     await page.goto(origin);
+    // The list arrives after the page load event; read the text only once it is on screen.
+    await expect(page.getByText('Confirmed by the organiser', { exact: true })).toBeVisible();
     const text = await page.locator('#fixture').innerText();
     expect(text).toContain('You say you paid BDT 40000.00 on 2026-11-09');
     expect(text).toContain('Confirmed by the organiser');
@@ -315,7 +317,9 @@ test.describe('participant: I Have Paid', () => {
   });
   test('where declarations are switched off nothing is shown', async ({ page }) => {
     await mock(page, () => own([]), { status: 503 });
+    const read = page.waitForResponse((r) => r.url().includes('/api/customer-programme-payment-'));
     await page.goto(origin);
+    expect((await read).status()).toBe(503);
     await expect(page.locator('#fixture')).toBeEmpty();
   });
 });
@@ -363,9 +367,10 @@ test.describe('organiser: Awaiting Your Check', () => {
       receivedAmountMinor: '3900000',
       receivedOn: '2026-11-09',
     });
-    expect(await page.evaluate(() => (window as unknown as { __decided: number }).__decided)).toBe(
-      1,
-    );
+    // The component refreshes the list and only then tells its parent, so the count follows the notice by a moment.
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as { __decided: number }).__decided))
+      .toBe(1);
   });
   test('not accepting needs a reason, sends it and does not refresh the totals', async ({
     page,
@@ -397,11 +402,15 @@ test.describe('organiser: Awaiting Your Check', () => {
   });
   test('an empty list or a switched-off feature shows nothing', async ({ page }) => {
     await mock(page, () => pending([]));
+    const empty = page.waitForResponse((r) => r.url().includes('/api/customer-programme-payment-'));
     await organiser(page);
+    expect((await empty).status()).toBe(200);
     await expect(page.locator('#fixture')).toBeEmpty();
     await page.unroute('**/api/customer-programme-payment-declarations**');
     await mock(page, () => pending([]), { status: 503 });
+    const off = page.waitForResponse((r) => r.url().includes('/api/customer-programme-payment-'));
     await organiser(page);
+    expect((await off).status()).toBe(503);
     await expect(page.locator('#fixture')).toBeEmpty();
   });
   test('at 390 px wide the list needs no sideways scroll', async ({ page }) => {

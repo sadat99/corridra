@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
-import type { DatabasePool } from '@corridra/db';
+import { withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
+import { DomainError } from '@corridra/domain';
 import { CustomerSessionBoundary } from './customer-session';
 import { customerParticipantsEnabled } from './customer-participants';
 
@@ -260,6 +261,86 @@ export class ProgrammePageReader {
     } catch (error) {
       if (['42883', '42P01', '3F000'].includes((error as { code?: string }).code ?? ''))
         return unknown;
+      throw error;
+    }
+  }
+}
+
+// Corridra staff reading applications to public programme pages (ADR-080, owner decision of 12 November 2026). Read only:
+// there is no decide, edit, invite or export here. Owners and admins of the staff workspace with a fresh authenticator
+// check (programme.applications.read); the database repeats the session, the role and the check and decides sample or
+// real from the staff workspace, so no scope is accepted. Until migration 0002 of the publication module is installed the
+// read answers 503 and nothing else happens.
+export const staffApplicationQuery = z.strictObject({
+  after: z.uuid().optional(),
+  pageSize: z.coerce.number().int().min(1).max(25).default(25),
+});
+export type StaffApplicationRow = {
+  id: string;
+  programmeId: string;
+  workspaceId: string;
+  status: string;
+  displayLabel: string;
+  statement: string;
+  appliedAt: string;
+  decisionVersion: number;
+  note?: string;
+  decidedAt?: string;
+  invitationExpiresAt?: string;
+  programmeTitle: string;
+  organiser: string;
+  address: string;
+  pageState: string;
+};
+export type StaffApplicationPage = {
+  applications: StaffApplicationRow[];
+  total: number;
+  nextAfter: string | null;
+};
+const staffUnavailable = 'Programme applications are not available yet.';
+export class StaffProgrammeApplications {
+  constructor(private readonly pool: DatabasePool) {}
+  /** Whether the screens may offer the staff list: the switch is on and migration 0002 is installed. Any failure means no. */
+  async offered(env: NodeJS.ProcessEnv = process.env): Promise<boolean> {
+    if (!customerProgrammePagesEnabled(env)) return false;
+    try {
+      const row = (
+        await this.pool.query<{ installed: boolean }>(
+          "SELECT to_regprocedure('customer.staff_programme_applications(uuid,integer)') IS NOT NULL AS installed",
+        )
+      ).rows[0];
+      return row?.installed === true;
+    } catch {
+      return false;
+    }
+  }
+  async list(ctx: RequestContext, query: unknown): Promise<StaffApplicationPage> {
+    const q = staffApplicationQuery.parse(query);
+    try {
+      const page = await withTenant(
+        this.pool,
+        ctx,
+        'programme.applications.read',
+        async (t) =>
+          (
+            await t.db.query<{ result: Partial<StaffApplicationPage> }>(
+              'SELECT customer.staff_programme_applications($1,$2) AS result',
+              [q.after ?? null, q.pageSize],
+            )
+          ).rows[0]!.result,
+      );
+      return {
+        applications: page.applications ?? [],
+        total: Number(page.total ?? 0),
+        nextAfter: page.nextAfter ?? null,
+      };
+    } catch (error) {
+      const { code } = error as { code?: string };
+      if (code === '42883' || code === '3F000')
+        throw new DomainError(staffUnavailable, 503, 'unavailable');
+      if (code === '42501')
+        throw new DomainError('You cannot read programme applications from this account.', 403);
+      if (code === '22023') throw new DomainError('Check the submitted values.', 400);
       throw error;
     }
   }

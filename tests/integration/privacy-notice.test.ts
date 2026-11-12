@@ -431,10 +431,20 @@ describe('public programme pages and applications (ADR-080)', () => {
       'Corridra stores your account reference, that name and statement, the version of the page you read and the time you consented',
     );
     expect(page).toContain(
-      'Only you and the current owners and administrators of the organising workspace see your application.',
+      'Besides you, the current owners and administrators of the organising workspace see your application.',
     );
     expect(page).toContain(
       'They never see your email address, your private requests, contacts or prices.',
+    );
+    // The owner's decision of 12 November 2026: the Corridra team can read applications, read only, and only newer ones.
+    expect(page).toContain(
+      'Owners and administrators of the Corridra team can also read applications.',
+    );
+    expect(page).toContain(
+      'They cannot change or answer an application, and they do not see your email address.',
+    );
+    expect(page).toContain(
+      'This applies only to applications sent after the Corridra team was given this access; earlier ones stay visible only to you and the organiser.',
     );
     expect(page).toContain(
       'Until you join the programme, you can withdraw your application. It then stays on record as withdrawn; withdrawing does not delete your name or statement.',
@@ -446,7 +456,7 @@ describe('public programme pages and applications (ADR-080)', () => {
     // Shared objectives are off here, so the path that starts a request from an application is not offered,
     // and the notice does not describe it.
     expect(page).not.toContain('start a private request from your application');
-    expect(page).toContain('Updated 11 November 2026.');
+    expect(page).toContain('Updated 12 November 2026.');
     expect(page).not.toMatch(/—|–| - /);
   });
   it('says the application words are copied only on the person’s own press, while the objective path is offered', async () => {
@@ -471,7 +481,7 @@ describe('public programme pages and applications (ADR-080)', () => {
     ]) {
       const page = await text(off);
       expect(page).not.toContain(heading);
-      expect(page).not.toContain('11 November 2026');
+      expect(page).not.toContain('12 November 2026');
     }
   });
 });

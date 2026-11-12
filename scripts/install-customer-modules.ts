@@ -625,7 +625,7 @@ try {
     if (v.PROGRAMME_PAGES_ACTION === 'install') {
       await migrateCustomerProgrammePublication(pool);
       console.log(
-        'installed or already current: programme pages and applications (application switch unchanged)',
+        'installed or already current: programme pages and applications, with the read only staff list (application switch unchanged)',
       );
     }
     // Redaction of the applicant's and participant's words under an erasure request (privacy). Never part of the base run. It
