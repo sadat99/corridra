@@ -204,8 +204,8 @@ describe('R5 no state that is not a complete search says "No match"', () => {
                   continue;
                 }
                 if (searched.includes('partial')) {
-                  expect(text, label).toMatch(/No match in the part searched/);
-                  expect(text, label).not.toMatch(/No match for/);
+                  expect(text, label).toMatch(/Search was partial/);
+                  expect(text, label).not.toMatch(noMatch);
                 } else if (searched.length > 0 && !searched.includes('ok')) {
                   expect(text, label).not.toMatch(noMatch);
                 } else if (searched.some((state) => state !== 'ok')) {
@@ -256,13 +256,14 @@ describe('R5 no state that is not a complete search says "No match"', () => {
     );
     expect(both.notices[0]!.text).toContain('Not every Request or Company was searched');
   });
-  test('nothing listed from a partial scope says no match in the part searched', () => {
+  test('nothing listed from a partial scope says the search was partial, never no match', () => {
     const view = describeStatus(input({ scopes: { requests: 'partial', companies: 'ok' } }));
     expect(view.block).toMatchObject({
-      heading: 'No match in the part searched',
-      lines: ['More may exist. Narrow your search.'],
+      heading: 'Search was partial',
+      lines: ['Nothing in the part that was searched matched. More may exist. Narrow your search.'],
     });
-    expect(view.spoken).toBe('No match in the part searched. More may exist.');
+    expect(view.spoken).toBe('Search was partial. Nothing in the part that was searched matched.');
+    expect(everything(view)).not.toMatch(noMatch);
   });
   test('one scope unavailable: the other still answers, and the notice stays', () => {
     const view = describeStatus(input({ scopes: { requests: 'ok', companies: 'unavailable' } }));

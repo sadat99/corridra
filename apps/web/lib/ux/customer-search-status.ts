@@ -275,10 +275,15 @@ export function describeStatus(input: StatusInput): StatusView {
       block: {
         kind: 'nomatch',
         icon: 'search',
-        heading: 'No match in the part searched',
-        lines: ['More may exist. Narrow your search.'],
+        heading: 'Search was partial',
+        lines: [
+          'Nothing in the part that was searched matched. More may exist. Narrow your search.',
+        ],
       },
-      spoken: ['No match in the part searched. More may exist.', ...sentences].join(' '),
+      spoken: [
+        'Search was partial. Nothing in the part that was searched matched.',
+        ...sentences,
+      ].join(' '),
     };
   if (searched.length > 0 && complete.length === 0)
     return { ...base, notices, signIn, spoken: sentences.join(' ') };

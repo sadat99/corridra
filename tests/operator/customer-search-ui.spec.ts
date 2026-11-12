@@ -893,7 +893,7 @@ test.describe('denial and failure states: never "No match"', () => {
     await expect(dialogOf(page)).toContainText(
       'Not every Request was searched. More may exist. Narrow your search or try again.',
     );
-    await expect(dialogOf(page)).toContainText('No match in the part searched');
+    await expect(dialogOf(page)).toContainText('Search was partial');
     await expect(dialogOf(page).getByText(/No match for/)).toHaveCount(0);
   });
 
