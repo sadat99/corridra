@@ -12,6 +12,11 @@ const state = vi.hoisted(() => ({
   detail: [] as unknown[][],
   companies: [] as unknown[][],
   failList: null as null | (() => unknown),
+  signedIn: true,
+}));
+vi.mock('../../apps/web/lib/customer-page-session', () => ({
+  customerIdentity: async () =>
+    state.signedIn ? { subject: 'person-a', issuer: 'https://issuer.example.invalid/auth' } : null,
 }));
 vi.mock('../../apps/web/lib/foundations', () => ({
   foundations: () =>
@@ -19,6 +24,7 @@ vi.mock('../../apps/web/lib/foundations', () => ({
       ? {
           ready: Promise.resolve(),
           config: { APP_ORIGIN: 'https://corridra.example.invalid' },
+          missions: { budget: async () => undefined },
           customerRequests: {
             async list(...args: unknown[]) {
               state.list.push(args);
@@ -42,6 +48,7 @@ vi.mock('../../apps/web/lib/foundations', () => ({
       : null,
 }));
 import * as route from '../../apps/web/app/api/customer-search/route';
+import { resetPersonLimit } from '../../apps/web/lib/customer-search';
 
 const url = `${origin}/api/customer-search`;
 const ids = {
@@ -86,6 +93,8 @@ beforeEach(() => {
   vi.stubEnv('CORRIDRA_CUSTOMER_COMPANIES_ENABLED', 'true');
   state.available = true;
   state.failList = null;
+  state.signedIn = true;
+  resetPersonLimit();
   state.list.length = state.detail.length = state.companies.length = 0;
 });
 afterEach(() => vi.unstubAllEnvs());
@@ -115,6 +124,22 @@ describe('the control: a correct request reaches both services once', () => {
   });
   test('the route answers POST only', () => {
     expect(Object.keys(route).filter((name) => /^[A-Z]+$/.test(name))).toEqual(['POST']);
+  });
+});
+
+describe('D1 nobody signed in is refused before any service is read', () => {
+  test('a 401 with the private headers, a request id and no service call', async () => {
+    state.signedIn = false;
+    const response = await post({ q: 'spain' });
+    expect(response.status).toBe(401);
+    expect(await response.json()).toMatchObject({ error: 'Sign in to continue' });
+    privateHeaders(response);
+    untouched();
+  });
+  test('the identity headers the browser sends do not make a visitor a person', async () => {
+    state.signedIn = false;
+    expect((await post({ q: 'spain' })).status).toBe(401);
+    untouched();
   });
 });
 

@@ -29,8 +29,11 @@ describe('D4 no staff service, no catalogue, no company linking', () => {
     expect(text.route).toContain('s.customerRequests');
     expect(text.route).toContain('s.customerRequestDetails');
     expect(text.route).toContain('s.customerCompanies');
+    // The one use of the missions service is the public intake budget the Companies route also spends; never its staff queue.
+    expect(text.route.match(/\.missions\b/g)).toHaveLength(1);
+    expect(text.route).toContain('s.missions.budget(client)');
     for (const source of Object.values(text)) {
-      expect(source).not.toMatch(
+      expect(source.replace('s.missions.budget(client)', '')).not.toMatch(
         /\.missions\b|\.counterparties\b|\.provider\b|\.catalogue\b|catalogue/,
       );
       expect(source).not.toMatch(/organisation_link_search|customerOrganisationLinks/);
@@ -73,13 +76,17 @@ describe('D9 the typed words are never logged', () => {
         );
       }
     }
-    expect(seen).toBe(2);
+    expect(seen).toBe(3);
   });
   test('the log events are the two named ones', () => {
     const events = both.flatMap((path) =>
       [...readFileSync(path, 'utf8').matchAll(/event: '([a-z_]+)'/g)].map((match) => match[1]),
     );
-    expect(events.sort()).toEqual(['customer_search_failed', 'customer_search_page_failed']);
+    expect(events.sort()).toEqual([
+      'customer_search_failed',
+      'customer_search_page_failed',
+      'customer_search_scope_failed',
+    ]);
   });
   test('the query leaves the core only as a score, never as an argument to a service', () => {
     // The services are called with page sizes and cursors, and the title lookup with a Request id.

@@ -4,7 +4,7 @@
 // access, and nothing says "verified": a fact is only what the person's own services already returned.
 
 export type CustomerHitKind = 'request' | 'company';
-export type ScopeState = 'ok' | 'partial' | 'unavailable' | 'denied' | 'archived';
+export type ScopeState = 'ok' | 'partial' | 'unavailable' | 'denied' | 'archived' | 'limited';
 export type CustomerScopeName = 'requests' | 'companies';
 export const scopeStates: readonly ScopeState[] = [
   'ok',
@@ -12,6 +12,7 @@ export const scopeStates: readonly ScopeState[] = [
   'unavailable',
   'denied',
   'archived',
+  'limited',
 ];
 
 export type CustomerHit = {
@@ -20,6 +21,8 @@ export type CustomerHit = {
   detail: string;
   href: string;
   kind: CustomerHitKind;
+  /** Set only when the hit comes from sample data, which is always labelled as such. */
+  sample?: true;
 };
 /** Beside a hit, keyed `request:<uuid>` or `company:<hex64>`. A Request has `sent`; a Company has `reports`. */
 export type CustomerFacts = {
@@ -77,7 +80,7 @@ const record = (value: unknown): value is Record<string, unknown> =>
 
 function hitOf(item: unknown): CustomerHit | null {
   if (!record(item)) return null;
-  const { id, label, detail, href, kind } = item;
+  const { id, label, detail, href, kind, sample } = item;
   if (typeof id !== 'string' || typeof label !== 'string' || typeof href !== 'string') return null;
   if (kind === 'request') {
     if (!requestId.test(id) || !requestAddress.test(href)) return null;
@@ -92,6 +95,7 @@ function hitOf(item: unknown): CustomerHit | null {
     detail: typeof detail === 'string' ? cutText(detail) : '',
     href,
     kind,
+    ...(sample === true ? { sample: true as const } : {}),
   };
 }
 

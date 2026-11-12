@@ -55,9 +55,10 @@ describe('the words never say what the search cannot promise', () => {
       'denied',
       'closed',
       'unavailable',
+      'limited',
       'failed',
     ];
-    const states: ScopeState[] = ['ok', 'partial', 'unavailable', 'denied', 'archived'];
+    const states: ScopeState[] = ['ok', 'partial', 'unavailable', 'denied', 'archived', 'limited'];
     const scopes: CustomerScopeId[] = ['all', 'requests', 'companies', 'pages'];
     const said: string[] = Object.values(customerSearchWords);
     for (const phase of phases)

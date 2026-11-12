@@ -134,6 +134,19 @@ describe('parseFound', () => {
     expect(other.facts[`request:${requestId}`]).toEqual({ sent: '2026-11-03' });
     expect(other.facts[`company:${companyId}`]).toBeUndefined();
   });
+  test('a hit from sample data keeps sample: true; anything else is not sample', () => {
+    const found = parseFound(
+      answer({
+        hits: [requestHit({ sample: true }), companyHit({ sample: 'yes' })],
+        facts: {},
+      }),
+    )!;
+    expect(found.hits[0]!.sample).toBe(true);
+    expect(found.hits[1]).not.toHaveProperty('sample');
+    expect(parseFound(answer({ scopes: { requests: 'limited' } }))!.scopes).toEqual({
+      requests: 'limited',
+    });
+  });
   test('a withdrawn Request keeps its flag', () => {
     const found = parseFound(
       answer({ facts: { [`request:${requestId}`]: { sent: '2026-11-03', withdrawn: true } } }),

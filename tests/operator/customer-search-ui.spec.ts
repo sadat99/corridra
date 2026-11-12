@@ -1018,6 +1018,65 @@ test.describe('denial and failure states: never "No match"', () => {
     await expect(field(page)).toBeFocused();
   });
 
+  test('a limited search (429) is calm, offers Retry first, keeps pages, and Retry after the window works', async ({
+    page,
+  }) => {
+    const mounted = await ask(page, {
+      status: 429,
+      json: { error: 'Too many searches, try again in a moment', correlationId: 'c' },
+    });
+    await expect(
+      dialogOf(page).getByText('Too many searches just now. Wait a little, then try again.'),
+    ).toBeVisible();
+    await expect(noMatch(page)).toHaveCount(0);
+    await expect(dialogOf(page).getByText('The search did not finish.')).toHaveCount(0);
+    await expect(options(page).first()).toContainText('Retry');
+    expect(mounted.searches).toHaveLength(1);
+    mounted.next({ json: spain });
+    await page.keyboard.press('Enter');
+    await expect(options(page).filter({ hasText: 'Sell in Spain' })).toBeVisible();
+    expect(mounted.searches).toEqual([
+      { q: 'spain', scope: 'all' },
+      { q: 'spain', scope: 'all' },
+    ]);
+    await expect(noMatch(page)).toHaveCount(0);
+  });
+
+  test('a Companies scope held back by the request budget is a calm notice and the Requests still answer', async ({
+    page,
+  }) => {
+    await ask(page, {
+      json: {
+        hits: spain.hits.filter((hit) => hit.kind === 'request'),
+        scopes: { requests: 'ok', companies: 'limited' },
+        facts: spain.facts,
+      },
+    });
+    await expect(
+      dialogOf(page).getByText(
+        'Searching Companies is paused because of too many requests. Try again later.',
+      ),
+    ).toBeVisible();
+    await expect(options(page).filter({ hasText: 'Sell in Spain' })).toBeVisible();
+    await expect(noMatch(page)).toHaveCount(0);
+  });
+
+  test('a hit from sample data carries a Sample chip, and a real one does not', async ({
+    page,
+  }) => {
+    await ask(page, {
+      json: {
+        ...spain,
+        hits: spain.hits.map((hit, n) => (n === 0 ? { ...hit, sample: true } : hit)),
+      },
+    });
+    const first = options(page).filter({ hasText: 'Sell in Spain' });
+    await expect(first).toContainText('Sample');
+    await expect(options(page).filter({ hasText: 'Madrid Textiles SL' })).not.toContainText(
+      'Sample',
+    );
+  });
+
   test('R1: an answer that is not an answer is a failed search', async ({ page }) => {
     await ask(page, { json: { hits: 'no' } });
     await expect(options(page).first()).toContainText('Retry');

@@ -87,6 +87,8 @@ type Row = {
   kind?: string;
   close?: boolean;
   withdrawn?: boolean;
+  /** The hit comes from sample data, which is always labelled. */
+  sample?: boolean;
   /** The typed words to mark in the label and detail; absent for the status rows. */
   mark?: { query: string; close: boolean };
 };
@@ -154,6 +156,7 @@ function SearchRow({
       <span className="ux-csearch-trail">
         {row.close ? <span className="ux-csearch-close-match">{words.closeMatch}</span> : null}
         {row.withdrawn ? <span className="ux-csearch-chip">{words.withdrawn}</span> : null}
+        {row.sample ? <span className="ux-csearch-chip">{words.sample}</span> : null}
         {row.kind ? <span className="ux-csearch-kind">{row.kind}</span> : null}
         <kbd className="ux-csearch-enter" aria-hidden="true">
           Enter
@@ -425,6 +428,7 @@ function SearchDialog({ onAccount, pathname }: { onAccount: boolean; pathname: s
       kind: hit.kind === 'request' ? words.kindRequest : words.kindCompany,
       close: facts?.close === true,
       withdrawn: facts?.withdrawn === true,
+      sample: hit.sample === true,
       mark: { query: text, close: facts?.close === true },
     };
   };

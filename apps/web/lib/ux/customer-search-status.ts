@@ -32,6 +32,7 @@ export const customerSearchWords = {
   kindPage: 'Page',
   closeMatch: 'Close match',
   withdrawn: 'Withdrawn',
+  sample: 'Sample',
   footerKeys: 'Up Down Move · Enter Open · Tab Change scope',
   footerHonesty: 'Only your own Requests and Companies',
   retry: 'Retry',
@@ -40,13 +41,22 @@ export const customerSearchWords = {
 } as const;
 
 export type SearchPhase =
-  'idle' | 'searching' | 'ok' | 'signedout' | 'denied' | 'closed' | 'unavailable' | 'failed';
+  | 'idle'
+  | 'searching'
+  | 'ok'
+  | 'signedout'
+  | 'denied'
+  | 'closed'
+  | 'unavailable'
+  | 'limited'
+  | 'failed';
 export type SearchOutcome<T> =
   | { kind: 'ok'; found: T }
   | { kind: 'signedout' }
   | { kind: 'denied' }
   | { kind: 'closed' }
   | { kind: 'unavailable' }
+  | { kind: 'limited' }
   | { kind: 'failed' };
 
 /** How long a search waits after the last key before it is sent. */
@@ -60,11 +70,12 @@ export const accountClosedCode = 'account_closed';
 export function outcomeForStatus(
   status: number,
   code?: unknown,
-): 'signedout' | 'denied' | 'closed' | 'unavailable' | 'failed' {
+): 'signedout' | 'denied' | 'closed' | 'unavailable' | 'limited' | 'failed' {
   if (status === 401) return 'signedout';
   if (status === 403) return code === accountClosedCode ? 'closed' : 'denied';
   if (status === 409) return 'denied';
   if (status === 503) return 'unavailable';
+  if (status === 429) return 'limited';
   return 'failed';
 }
 
@@ -168,6 +179,9 @@ const deniedText =
 const deniedNotice: StatusNotice = { tone: 'neutral', icon: 'lock', text: deniedText };
 const unavailableSentence = (list: CustomerScopeName[]) =>
   `Searching ${join(list.map(plural))} is not available right now.`;
+// The budget behind the Companies page ran out: it counts per hour, so the words say "later", not "a few seconds".
+const limitedSentence = (list: CustomerScopeName[]) =>
+  `Searching ${join(list.map(plural))} is paused because of too many requests. Try again later.`;
 const archivedText = 'Requests cannot be searched while one of your workspaces is archived.';
 const partialNotice = (list: CustomerScopeName[]): StatusNotice => ({
   tone: 'caution',
@@ -217,6 +231,16 @@ export function describeStatus(input: StatusInput): StatusView {
     const line = 'Search is not available right now. You can still open pages.';
     return { ...base, notices: [{ tone: 'neutral', text: line }], spoken: line };
   }
+  if (phase === 'limited') {
+    // Too many searches in a short time: calm, never "No match", and the typed words are kept for Retry.
+    const line = 'Too many searches just now. Wait a little, then try again.';
+    return {
+      ...base,
+      retry: true,
+      notices: [{ tone: 'neutral', text: line }],
+      spoken: 'Too many searches just now. Wait a little. Retry is the first option.',
+    };
+  }
   if (phase === 'failed') {
     const line = input.offline
       ? 'You are offline. Check your connection, then try again.'
@@ -236,6 +260,7 @@ export function describeStatus(input: StatusInput): StatusView {
   const partial = only('partial');
   const unavailable = only('unavailable');
   const archived = only('archived');
+  const limited = only('limited');
   const denied = only('denied');
   const complete = only('ok');
   const notices: StatusNotice[] = [];
@@ -251,6 +276,10 @@ export function describeStatus(input: StatusInput): StatusView {
   if (unavailable.length > 0) {
     notices.push({ tone: 'neutral', text: unavailableSentence(unavailable) });
     sentences.push(unavailableSentence(unavailable));
+  }
+  if (limited.length > 0) {
+    notices.push({ tone: 'neutral', text: limitedSentence(limited) });
+    sentences.push(limitedSentence(limited));
   }
   if (partial.length > 0) notices.push(partialNotice(partial));
   const signIn = denied.length > 0;

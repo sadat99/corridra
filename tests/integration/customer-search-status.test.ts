@@ -126,8 +126,8 @@ describe('P5 what is worth sending', () => {
     expect(outcomeForStatus(403, 'account_closed')).toBe('closed');
     expect(outcomeForStatus(409)).toBe('denied');
     expect(outcomeForStatus(503)).toBe('unavailable');
-    for (const status of [400, 413, 415, 429, 500, 502])
-      expect(outcomeForStatus(status)).toBe('failed');
+    expect(outcomeForStatus(429)).toBe('limited');
+    for (const status of [400, 413, 415, 500, 502]) expect(outcomeForStatus(status)).toBe('failed');
   });
 });
 
@@ -164,7 +164,7 @@ describe('words of the quiet states', () => {
 });
 
 describe('R5 no state that is not a complete search says "No match"', () => {
-  const states: ScopeState[] = ['ok', 'partial', 'unavailable', 'denied', 'archived'];
+  const states: ScopeState[] = ['ok', 'partial', 'unavailable', 'denied', 'archived', 'limited'];
   const phases: SearchPhase[] = [
     'idle',
     'searching',
@@ -173,6 +173,7 @@ describe('R5 no state that is not a complete search says "No match"', () => {
     'denied',
     'closed',
     'unavailable',
+    'limited',
     'failed',
   ];
   const scopes: CustomerScopeId[] = ['all', 'requests', 'companies', 'pages'];
@@ -213,7 +214,7 @@ describe('R5 no state that is not a complete search says "No match"', () => {
                   expect(text, label).toMatch(/No match for “spain” in (Requests|Companies)/);
                 } else expect(text, label).toMatch(/No match for “spain”/);
               }
-    expect(seen).toBe(8 * 4 * 5 * 5 * 2 * 2);
+    expect(seen).toBe(9 * 4 * 6 * 6 * 2 * 2);
   });
   test('a complete search with nothing found says no match, with the typed words', () => {
     const view = describeStatus(input({}));
@@ -329,6 +330,36 @@ describe('R5 no state that is not a complete search says "No match"', () => {
       'You are offline. Check your connection, then try again.',
     );
     expect(offline.spoken).toContain('Retry is the first option.');
+  });
+  test('a limited search is calm, offers Retry first and is never no match', () => {
+    const view = describeStatus(input({ phase: 'limited' }));
+    expect(view.retry).toBe(true);
+    expect(view.block).toBeNull();
+    expect(view.notices).toEqual([
+      { tone: 'neutral', text: 'Too many searches just now. Wait a little, then try again.' },
+    ]);
+    expect(view.spoken).toBe(
+      'Too many searches just now. Wait a little. Retry is the first option.',
+    );
+    expect(everything(view)).not.toMatch(noMatch);
+    expect(phaseOf('all', 'spain', { kind: 'limited' })).toBe('limited');
+  });
+  test('a Companies scope held back by the request budget is calm, names the wait as later, and keeps the other scope', () => {
+    const view = describeStatus(input({ scopes: { requests: 'ok', companies: 'limited' } }));
+    expect(view.notices).toEqual([
+      {
+        tone: 'neutral',
+        text: 'Searching Companies is paused because of too many requests. Try again later.',
+      },
+    ]);
+    expect(view.block?.heading).toBe('No match for “spain” in Requests');
+    const only = describeStatus(input({ scope: 'companies', scopes: { companies: 'limited' } }));
+    expect(only.block).toBeNull();
+    expect(everything(only)).not.toMatch(noMatch);
+    const listed = describeStatus(
+      input({ count: 2, scopes: { requests: 'ok', companies: 'limited' } }),
+    );
+    expect(listed.spoken).toContain('Searching Companies is paused');
   });
   test('the whole route unavailable still lets the person open pages', () => {
     expect(describeStatus(input({ phase: 'unavailable' })).notices[0]!.text).toBe(

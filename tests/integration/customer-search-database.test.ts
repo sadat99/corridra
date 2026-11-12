@@ -57,11 +57,17 @@ function searchAs(
       },
     },
     companies: never,
+    companyBudget: async () => undefined,
   };
   return searchCustomer(
     services,
     { requests: true, details: true, companies: false, provenance: customerProvenanceAllowed },
-    { correlationId: randomUUID(), subject: options2.subject, issuer: options2.issuer },
+    {
+      correlationId: randomUUID(),
+      client: 'local',
+      subject: options2.subject,
+      issuer: options2.issuer,
+    },
     options2.q ?? 'spain',
     options2.scope ?? 'requests',
   );

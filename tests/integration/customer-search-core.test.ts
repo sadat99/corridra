@@ -26,7 +26,7 @@ const row = (n: number, over: Record<string, unknown> = {}) => ({
   progress: { status: 'ACTIVE', receivedAt: '2026-11-03T09:00:00.000Z', replies: [] },
   ...over,
 });
-const context = { correlationId: 'c0ffee00-0000-4000-8000-000000000000' };
+const context = { correlationId: 'c0ffee00-0000-4000-8000-000000000000', client: 'local' };
 const allOn: CustomerSearchSwitches = {
   requests: true,
   details: true,
@@ -43,12 +43,14 @@ function harness(
     pages?: unknown[];
     detail?: (id: string, call: number) => unknown;
     list?: () => unknown;
+    budget?: (call: number) => unknown;
   } = {},
 ) {
   const calls = {
     requestList: [] as unknown[][],
     detail: [] as unknown[][],
     companyList: [] as unknown[][],
+    budget: [] as unknown[][],
     inFlight: 0,
     peak: 0,
   };
@@ -78,6 +80,11 @@ function harness(
           calls.inFlight -= 1;
         }
       },
+    },
+    companyBudget: async (...args) => {
+      calls.budget.push(args);
+      const refused = options.budget?.(calls.budget.length);
+      if (refused) throw refused;
     },
     companies: {
       async list(...args) {
@@ -134,6 +141,7 @@ describe('P1 Requests: the title comes from the brief and the typo is close', ()
         detail: '',
         href: `/account/requests/${requestId(1)}`,
         kind: 'request',
+        sample: true,
       },
     ]);
     expect(found.facts).toEqual({
@@ -232,6 +240,7 @@ describe('P2 Companies: from the loaded approved reports', () => {
         detail: 'Spain',
         href: `/account/missions/${resourceId(4)}`,
         kind: 'company',
+        sample: true,
       },
     ]);
     expect(found.facts).toEqual({ [`company:${companyId(1)}`]: { reports: 2 } });
@@ -546,6 +555,9 @@ describe('M1 bounded work', () => {
       showScope: 10,
       maxConcurrentSearches: 4,
       searchDeadlineMs: 12000,
+      perPersonSearches: 10,
+      perPersonWindowMs: 10000,
+      perPersonKeys: 5000,
     });
   });
 });
@@ -695,5 +707,128 @@ describe('P5 and ordering', () => {
       briefs: { [requestId(1)]: marketBrief('Sell in a new market', 'ES') },
     });
     expect(await search(h, 'zebra', 'requests')).toEqual({ hits: [], scopes: { requests: 'ok' } });
+  });
+});
+
+describe('the Companies budget, spent before every portfolio page', () => {
+  test('one spend per page read, with the client the route derived, before the page', async () => {
+    const h = harness({ pages: [page([company(1, 'Spain Foods', 1)], resourceId(1)), page([])] });
+    await search(h, 'spain', 'companies', allOn, { client: '203.0.113.7' });
+    expect(h.calls.companyList).toHaveLength(2);
+    expect(h.calls.budget).toEqual([['203.0.113.7'], ['203.0.113.7']]);
+  });
+  test('four pages cost four spends', async () => {
+    const h = harness({ pages: [() => page([company(1, 'Spain Foods', 1)], resourceId(1))] });
+    await search(h, 'spain', 'companies');
+    expect(h.calls.budget).toHaveLength(customerSearchLimits.companyPages);
+  });
+  test('a spent budget refuses the first page: limited, zero portfolio reads, Requests still answer', async () => {
+    const h = harness({
+      rows: [row(1)],
+      briefs: { [requestId(1)]: marketBrief('Sell in a new market', 'ES') },
+      pages: [page([company(1, 'Spain Foods', 1)])],
+      budget: () => new DomainError('Too many requests. Try again in an hour.', 429),
+    });
+    const found = await search(h, 'spain', 'all');
+    expect(found.scopes).toEqual({ requests: 'ok', companies: 'limited' });
+    expect(found.hits.map((hit) => hit.kind)).toEqual(['request']);
+    expect(h.calls.companyList).toHaveLength(0);
+  });
+  test('scope Companies alone is limited, never an empty list, and scope Requests spends nothing', async () => {
+    const refused = () => new DomainError('Too many requests. Try again in an hour.', 429);
+    const h = harness({ pages: [page([company(1, 'Spain Foods', 1)])], budget: refused });
+    expect(await search(h, 'spain', 'companies')).toEqual({
+      hits: [],
+      scopes: { companies: 'limited' },
+    });
+    const requests = harness({ rows: [row(1)], budget: refused });
+    await search(requests, 'spain', 'requests');
+    expect(requests.calls.budget).toHaveLength(0);
+  });
+  test('a budget that runs out on a later page keeps the earlier companies and is partial', async () => {
+    const h = harness({
+      pages: [page([company(1, 'Spain Foods', 1)], resourceId(1))],
+      budget: (call) => (call === 2 ? new DomainError('Too many requests.', 429) : undefined),
+    });
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const found = await search(h, 'spain', 'companies');
+    expect(found.scopes).toEqual({ companies: 'partial' });
+    expect(found.hits).toHaveLength(1);
+    expect(h.calls.companyList).toHaveLength(1);
+    expect(spy).not.toHaveBeenCalled();
+  });
+});
+
+describe('sample data is labelled', () => {
+  test('a Request and a Company from sample data carry sample: true; real ones do not', async () => {
+    const sampleBrief = marketBrief('Sell in a new market', 'ES');
+    const h = harness({
+      rows: [row(1), row(2, { synthetic: false })],
+      briefs: { [requestId(1)]: sampleBrief, [requestId(2)]: sampleBrief },
+      pages: [page([company(1, 'Spain Foods', 1)])],
+    });
+    const found = await search(h, 'spain', 'all', { ...allOn, provenance: () => true });
+    expect(found.hits.map((hit) => [hit.kind, hit.sample])).toEqual([
+      ['request', true],
+      ['request', undefined],
+      ['company', true],
+    ]);
+    const real = harness({
+      pages: [page([company(1, 'Spain Foods', 1)], null, { synthetic: false })],
+    });
+    const hit = (await search(real, 'spain', 'companies', { ...allOn, provenance: () => true }))
+      .hits[0]!;
+    expect(hit).not.toHaveProperty('sample');
+  });
+});
+
+describe('failures that must not throw away what was found', () => {
+  test('an unexpected Companies failure after Requests answered keeps the Requests hits', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const h = harness({
+      rows: [row(1)],
+      briefs: { [requestId(1)]: marketBrief('Sell in a new market', 'ES') },
+      pages: [
+        () => Promise.reject(Object.assign(new Error('boom secret-words'), { code: '57014' })),
+      ],
+    });
+    const found = await search(h, 'spain', 'all');
+    expect(found.scopes).toEqual({ requests: 'ok', companies: 'unavailable' });
+    expect(found.hits).toHaveLength(1);
+    const lines = spy.mock.calls.map((call) => JSON.parse(String(call[0])));
+    expect(lines).toEqual([
+      {
+        event: 'customer_search_scope_failed',
+        scope: 'companies',
+        correlationId: context.correlationId,
+        errorName: 'Error',
+        errorCode: '57014',
+      },
+    ]);
+  });
+  test('the same failure with Companies alone still ends the search', async () => {
+    const error = new Error('boom');
+    const h = harness({ pages: [() => Promise.reject(error)] });
+    await expect(search(h, 'spain', 'companies')).rejects.toBe(error);
+  });
+  test('a refusal from Companies still ends the search and drops the Requests hits', async () => {
+    const h = harness({
+      rows: [row(1)],
+      briefs: { [requestId(1)]: marketBrief('Sell in a new market', 'ES') },
+      pages: [() => Promise.reject(new DomainError('Account closed', 403, 'account_closed'))],
+    });
+    await expect(search(h, 'spain', 'all')).rejects.toMatchObject({ code: 'account_closed' });
+  });
+  test('access that ends while titles are read is denied for Requests, with no rows', async () => {
+    const h = harness({
+      rows: [row(1), row(2)],
+      detail: () => {
+        throw Object.assign(new Error('Customer access expired'), { code: '42501' });
+      },
+    });
+    expect(await search(h, 'spain', 'requests')).toEqual({
+      hits: [],
+      scopes: { requests: 'denied' },
+    });
   });
 });

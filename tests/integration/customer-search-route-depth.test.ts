@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { DomainError } from '../../packages/domain/src/index';
-import { customerSearchLimits } from '../../apps/web/lib/customer-search';
+import { customerSearchLimits, resetPersonLimit } from '../../apps/web/lib/customer-search';
 
 // The customer search route with counting services (docs/revamp/specs/navigation-v1/customer-search.md, sections 3 to 5):
 // a signed-out visitor reads nothing, a staff session is no customer session, each switch decides only its own scope,
@@ -18,9 +18,21 @@ const state = vi.hoisted(() => ({
   companyPages: 0,
   synthetic: true,
   gate: null as null | Promise<void>,
+  identity: true as boolean,
+  identityGate: null as null | Promise<void>,
+  budget: [] as string[],
+  budgetFails: null as null | (() => unknown),
   onDetail: null as null | (() => void),
 }));
 const requestId = (n: number) => `0b5a${String(n).padStart(4, '0')}-0000-4000-8000-000000000001`;
+vi.mock('../../apps/web/lib/customer-page-session', () => ({
+  customerIdentity: async () => {
+    // Decided when the call is made: a request that starts anonymous stays anonymous while the provider hangs.
+    const signedIn = state.identity;
+    if (state.identityGate) await state.identityGate;
+    return signedIn ? { subject: 'person-a', issuer: 'https://issuer.example.invalid/auth' } : null;
+  },
+}));
 vi.mock('../../apps/web/lib/foundations', () => {
   // A staff service is reached only by mistake: every property read is counted and fails.
   const staffTrap = new Proxy(
@@ -42,7 +54,18 @@ vi.mock('../../apps/web/lib/foundations', () => {
       ready: Promise.resolve(),
       config: { APP_ORIGIN: 'https://corridra.example.invalid' },
       provider: staffTrap,
-      missions: staffTrap,
+      missions: {
+        async budget(client: string) {
+          state.budget.push(client);
+          const failure = state.budgetFails?.();
+          if (failure) throw failure;
+        },
+        // Only the budget of the public intake is read here; the staff queue is a trap.
+        get queue(): never {
+          state.staff += 1;
+          throw new Error('a staff service was reached');
+        },
+      },
       counterparties: staffTrap,
       customerRequests: {
         async list(...args: unknown[]) {
@@ -141,6 +164,11 @@ beforeEach(() => {
   state.synthetic = true;
   state.gate = null;
   state.onDetail = null;
+  state.identity = true;
+  state.identityGate = null;
+  state.budget.length = 0;
+  state.budgetFails = null;
+  resetPersonLimit();
 });
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -413,7 +441,7 @@ describe('which refusals show their own words', () => {
       expect(await response.json()).toMatchObject({ error: 'A plain refusal', code: 'plain_code' });
     },
   );
-  test.each([404, 418, 429, 500, 502, 504])(
+  test.each([404, 418, 500, 502, 504])(
     'a service refusal with status %i is the generic failure',
     async (status) => {
       vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -489,11 +517,14 @@ describe('the search slots: a burst is told to come back, and every slot is give
   test('slots come back after a failed search and after an aborted one', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
     state.requestFails = () => new Error('boom');
-    for (let n = 0; n < slots * 2; n++)
+    for (let n = 0; n < slots * 2; n++) {
+      resetPersonLimit();
       expect((await post({ q: 'spain', scope: 'requests' })).status).toBe(500);
+    }
     state.requestFails = null;
     state.onDetail = null;
     for (let n = 0; n < slots * 2; n++) {
+      resetPersonLimit();
       const controller = new AbortController();
       state.onDetail = () => controller.abort();
       expect((await post({ q: 'spain', scope: 'requests' }, {}, controller.signal)).status).toBe(
@@ -502,5 +533,109 @@ describe('the search slots: a burst is told to come back, and every slot is give
     }
     state.onDetail = null;
     expect((await post({ q: 'spain', scope: 'requests' })).status).toBe(200);
+  });
+});
+
+describe('the order of the checks: who is asking, then their allowance, then a slot, then the work', () => {
+  test('nobody signed in is a 401 with no slot, no allowance and no service read', async () => {
+    state.identity = false;
+    const response = await post({ q: 'spain' });
+    expect(response.status).toBe(401);
+    expect(await response.json()).toMatchObject({ error: 'Sign in to continue' });
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    expect(response.headers.get('Referrer-Policy')).toBe('no-referrer');
+    expect(response.headers.get('X-Corridra-Request-ID')).toMatch(/^[0-9a-f-]{36}$/);
+    expect(state.calls).toHaveLength(0);
+    expect(state.budget).toHaveLength(0);
+    expect(state.staff).toBe(0);
+  });
+  test('anonymous requests while the provider hangs hold no slot: a signed-in search still gets through', async () => {
+    let open!: () => void;
+    state.identityGate = new Promise<void>((resolve) => (open = resolve));
+    state.identity = false;
+    const anonymous = Array.from({ length: customerSearchLimits.maxConcurrentSearches * 3 }, () =>
+      post({ q: 'spain', scope: 'requests' }),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    // The provider answers for one signed-in person while the anonymous requests are still waiting.
+    state.identityGate = null;
+    state.identity = true;
+    const real = await post({ q: 'spain', scope: 'requests' });
+    expect(real.status).toBe(200);
+    open();
+    for (const response of await Promise.all(anonymous)) expect(response.status).toBe(401);
+    expect(count('requests')).toBe(1);
+  });
+  test('a person past their allowance is refused before the slot, so they cannot hold every slot', async () => {
+    const slots = customerSearchLimits.maxConcurrentSearches;
+    for (let n = 0; n < customerSearchLimits.perPersonSearches; n++)
+      expect((await post({ q: 'spain', scope: 'requests' })).status).toBe(200);
+    const before = state.calls.length;
+    state.gate = new Promise<void>(() => undefined);
+    const refused = await Promise.all(
+      Array.from({ length: slots + 3 }, () => post({ q: 'spain', scope: 'requests' })),
+    );
+    for (const response of refused) expect(response.status).toBe(429);
+    expect(state.calls).toHaveLength(before);
+  });
+});
+
+describe('the Companies budget through the route', () => {
+  const spent = () => new DomainError('Too many requests. Try again in an hour.', 429);
+  test('the budget is spent before every portfolio page, once per page', async () => {
+    await post({ q: 'spain', scope: 'companies' });
+    expect(count('companies')).toBe(customerSearchLimits.companyPages);
+    expect(state.budget).toEqual(Array(customerSearchLimits.companyPages).fill('local'));
+  });
+  test('the client is derived as the Companies route derives it', async () => {
+    vi.stubEnv('VERCEL', '1');
+    await post(
+      { q: 'spain', scope: 'companies' },
+      { 'x-vercel-forwarded-for': '203.0.113.7, 10.0.0.1' },
+    );
+    expect(new Set(state.budget)).toEqual(new Set(['203.0.113.7']));
+    state.budget.length = 0;
+    await post({ q: 'spain', scope: 'companies' });
+    expect(new Set(state.budget)).toEqual(new Set(['unknown']));
+  });
+  test('a spent budget refuses the portfolio: scope Companies alone is a 429 with zero portfolio reads', async () => {
+    state.budgetFails = spent;
+    const response = await post({ q: 'spain', scope: 'companies' });
+    expect(response.status).toBe(429);
+    expect(await response.json()).toMatchObject({ code: 'scope_limited' });
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    expect(count('companies')).toBe(0);
+  });
+  test('scope All keeps the Requests results and calls Companies limited, never empty', async () => {
+    state.budgetFails = spent;
+    state.rows = 3;
+    const response = await post({ q: 'spain', scope: 'all' });
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {
+      scopes: Record<string, string>;
+      hits: { kind: string }[];
+    };
+    expect(body.scopes).toEqual({ requests: 'ok', companies: 'limited' });
+    expect(body.hits.length).toBeGreaterThan(0);
+    expect(count('companies')).toBe(0);
+  });
+  test('scope Requests is unaffected and cannot be used to reach the portfolio', async () => {
+    state.budgetFails = spent;
+    state.rows = 3;
+    const requests = await post({ q: 'spain', scope: 'requests' });
+    expect(requests.status).toBe(200);
+    expect(state.budget).toHaveLength(0);
+    for (const scope of ['all', 'companies'])
+      await post({ q: 'spain', scope, workspaceId: undefined });
+    expect(count('companies')).toBe(0);
+  });
+  test('a budget that fails in any other way is an unavailable Companies scope with the Requests kept', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    state.budgetFails = () => new Error('the budget table is gone');
+    state.rows = 3;
+    const body = (await (await post({ q: 'spain', scope: 'all' })).json()) as {
+      scopes: Record<string, string>;
+    };
+    expect(body.scopes).toEqual({ requests: 'ok', companies: 'unavailable' });
   });
 });

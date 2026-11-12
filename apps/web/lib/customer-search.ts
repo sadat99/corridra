@@ -3,10 +3,11 @@
 // and row security, so it can show nothing the person could not already open. It reads a bounded number of rows
 // (customerSearchLimits), ranks what it read in memory (palette-rank.ts) and returns a label, a detail, an address and a
 // few facts per hit. The typed words exist only in this module's arguments: they are never passed to a service, a
-// database, a log or a header. It writes nothing. A scope that cannot be read says so; it is never an empty list.
+// database, a log or a header. It writes no search data (the session boundary writes its short session proof rows, as for every customer read). A scope that cannot be read says so; it is never an empty list.
 import { DomainError } from '@corridra/domain';
 import { archivedWorkspaceRefusal } from '@corridra/auth/customer-workspace-lifecycle';
 import { requestTitle } from '../app/account/request-words';
+import { createSearchLimit, type SearchAllowance } from './search-limit';
 import { queryWords, rankFields } from './palette-rank';
 import {
   cutText,
@@ -28,7 +29,9 @@ export type CustomerSearchScope = (typeof customerSearchScopes)[number];
  * Work per search. Requests: one page of 100 saved Requests, then at most 30 title lookups, two at a time, within 6
  * seconds, stopping after 3 failures in a row. Companies: up to 4 pages of 5 approved report scopes. Scopes run one
  * after the other. showAll hits per scope under All, showScope for a single scope. One search never holds more than
- * searchDeadlineMs overall, and one process runs at most maxConcurrentSearches searches at once.
+ * searchDeadlineMs overall, one process runs at most maxConcurrentSearches searches at once, and one person may start
+ * perPersonSearches searches in each perPersonWindowMs (10 in 10 seconds, a third of the staff palette's 30, because a search
+ * here can make up to 35 service calls).
  */
 export const customerSearchLimits = {
   requestPage: 100,
@@ -42,7 +45,27 @@ export const customerSearchLimits = {
   showScope: 10,
   maxConcurrentSearches: 4,
   searchDeadlineMs: 12000,
+  perPersonSearches: 10,
+  perPersonWindowMs: 10000,
+  perPersonKeys: 5000,
 } as const;
+
+const personLimit = createSearchLimit({
+  searches: customerSearchLimits.perPersonSearches,
+  windowMs: customerSearchLimits.perPersonWindowMs,
+  maxKeys: customerSearchLimits.perPersonKeys,
+});
+/**
+ * Counts one search for this person. The key must be the signed-in person from the server-side provider session, never a
+ * value the browser sent. In process, so per server instance; its own map, so a staff search never spends it.
+ */
+export function spendPersonSearch(key: string, now?: number): SearchAllowance {
+  return personLimit.spend(key, now);
+}
+/** How many people the limit holds (a test checks that it stays bounded). */
+export const personLimitSize = () => personLimit.size();
+/** For tests only: forget every count. */
+export const resetPersonLimit = () => personLimit.reset();
 
 let activeSearches = 0;
 /**
@@ -66,6 +89,12 @@ export type CustomerSearchServices = {
   requests: { list: Read };
   details: { detail: Read };
   companies: { list: Read };
+  /**
+   * The budget the Companies page spends before every portfolio page it reads (the same per-client allowance, in the mode
+   * the deployment is in). A refusal is a DomainError 429. The search spends it before every page it reads, so a person
+   * refused on the Companies page cannot read the portfolio through search.
+   */
+  companyBudget: (client: string) => Promise<void>;
 };
 export type CustomerSearchSwitches = {
   /** The Requests module is on. */
@@ -82,6 +111,8 @@ export type CustomerSearchContext = {
   subject?: string;
   issuer?: string;
   correlationId: string;
+  /** The client the Companies budget counts, derived by the route exactly as the Companies route derives it. */
+  client: string;
   /** The request's own signal: when it aborts, no further lookup or page is started and a call in flight is given up on. */
   signal?: AbortSignal;
   /** The clock for the title time budget; replaced in tests. */
@@ -128,7 +159,10 @@ export const endsSearch = (error: unknown): error is DomainError =>
  */
 function scopeFailure(error: unknown, scope: CustomerScopeName): ScopeState | undefined {
   if (scope === 'requests' && archivedWorkspaceRefusal(error)) return 'archived';
-  if (error instanceof DomainError) return error.status === 503 ? 'unavailable' : undefined;
+  if (error instanceof DomainError) {
+    if (error.status === 503) return 'unavailable';
+    return error.status === 429 ? 'limited' : undefined;
+  }
   const code = sqlState(error);
   if (code && missingModule.has(code)) return 'unavailable';
   if (code === '42501') return 'denied';
@@ -158,6 +192,18 @@ function failed(error: unknown, scope: CustomerScopeName): unknown {
 /** The scope an unexpected failure came from, when the core knows it. */
 export const failedScope = (error: unknown): CustomerScopeName | undefined =>
   typeof error === 'object' && error !== null ? failedIn.get(error) : undefined;
+
+/** One fixed line for a scope that failed after another scope had answered: the kind and code of the error, never its message. */
+function scopeFailed(scope: CustomerScopeName, correlationId: string, error: unknown) {
+  console.error(
+    JSON.stringify({
+      event: 'customer_search_scope_failed',
+      scope,
+      correlationId,
+      ...errorFacts(error),
+    }),
+  );
+}
 
 function pageFailed(page: number, correlationId: string, error: unknown) {
   console.error(
@@ -200,7 +246,13 @@ function guardFor(context: CustomerSearchContext): Guard {
   return { now, expired, bounded };
 }
 
-type RequestRow = { id: string; sent: string; status?: string; withdrawn: boolean };
+type RequestRow = {
+  id: string;
+  sent: string;
+  status?: string;
+  withdrawn: boolean;
+  sample: boolean;
+};
 
 async function findRequests(
   services: CustomerSearchServices,
@@ -242,6 +294,7 @@ async function findRequests(
       sent: new Date(sent).toISOString(),
       status: statusWord(progress.status),
       withdrawn: row.withdrawn === true,
+      sample: row.synthetic === true,
     });
   }
   if (page.requests.length > limits.requestPage) partial = true;
@@ -253,7 +306,7 @@ async function findRequests(
   let next = 0;
   let consecutive = 0;
   let stopped = false;
-  const ended: { refusal?: DomainError } = {};
+  const ended: { refusal?: DomainError; denied?: boolean } = {};
   const worker = async () => {
     while (!stopped && next < lookups.length) {
       if (guard.expired() || guard.now() - started >= limits.titleBudgetMs) {
@@ -275,6 +328,12 @@ async function findRequests(
           stopped = true;
           return;
         }
+        // A person whose access ended while the titles were read gets nothing from this scope.
+        if (sqlState(error) === '42501') {
+          ended.denied = true;
+          stopped = true;
+          return;
+        }
         partial = true;
         if (error instanceof DeadlineReached) {
           stopped = true;
@@ -289,6 +348,7 @@ async function findRequests(
     Array.from({ length: Math.min(limits.titleConcurrency, lookups.length) }, worker),
   );
   if (ended.refusal) throw ended.refusal;
+  if (ended.denied) return none('denied');
 
   const candidates: Candidate[] = [];
   rows.forEach((row, index) => {
@@ -312,16 +372,27 @@ async function findRequests(
         detail: '',
         href: requestHref(row.id),
         kind: 'request',
+        ...(row.sample ? { sample: true as const } : {}),
       },
     });
   });
   return { state: partial ? 'partial' : 'ok', candidates };
 }
 
-type Company = { name: string; country: string; lowest: string; reports: Set<string> };
+type Company = {
+  name: string;
+  country: string;
+  lowest: string;
+  reports: Set<string>;
+  sample: boolean;
+};
 
 /** Reads one page of the portfolio into the companies met so far. Returns false when a context was malformed. */
-function mergeCompanies(into: Map<string, Company>, companies: unknown[]): boolean {
+function mergeCompanies(
+  into: Map<string, Company>,
+  companies: unknown[],
+  sample: boolean,
+): boolean {
   let clean = true;
   for (const entry of companies) {
     if (!record(entry) || !isCompanyId(entry.id) || !Array.isArray(entry.contexts)) {
@@ -347,10 +418,12 @@ function mergeCompanies(into: Map<string, Company>, companies: unknown[]): boole
           country,
           lowest: resource,
           reports: new Set([resource]),
+          sample,
         });
         continue;
       }
       company.reports.add(resource);
+      company.sample ||= sample;
       // The first approved context, by report id, names the company and is where the hit opens.
       if (resource < company.lowest) {
         company.lowest = resource;
@@ -382,18 +455,25 @@ async function findCompanies(
     }
     let value: unknown;
     try {
-      value = await guard.bounded(() =>
-        services.companies.list(
+      // The same budget the Companies page spends before every portfolio page, spent here before every page too.
+      value = await guard.bounded(async () => {
+        await services.companyBudget(context.client);
+        return services.companies.list(
           after
             ? { pageSize: limits.companyPageSize, after }
             : { pageSize: limits.companyPageSize },
           context.subject,
           context.issuer,
-        ),
-      );
+        );
+      });
     } catch (error) {
       if (error instanceof DeadlineReached) {
         if (page === 0) return none('partial');
+        partial = true;
+        break;
+      }
+      if (page > 0 && error instanceof DomainError && error.status === 429) {
+        // The budget ran out part-way: what was found stays, and the scope says it was not read in full.
         partial = true;
         break;
       }
@@ -418,7 +498,7 @@ async function findCompanies(
       partial = true;
       break;
     }
-    if (!mergeCompanies(merged, value.companies)) partial = true;
+    if (!mergeCompanies(merged, value.companies, value.synthetic === true)) partial = true;
     if (typeof value.unavailableScopes === 'number' && value.unavailableScopes > 0) partial = true;
     const more = value.nextAfter;
     if (more === null || more === undefined) {
@@ -458,11 +538,16 @@ async function findCompanies(
         detail: cutText(company.country),
         href: reportHref(company.lowest),
         kind: 'company',
+        ...(company.sample ? { sample: true as const } : {}),
       },
     });
   }
   return { state: partial ? 'partial' : 'ok', candidates };
 }
+
+/** True when the words are worth reading for: two characters or more, with at least one letter or digit among them. */
+export const worthSearching = (rawQuery: string) =>
+  rawQuery.trim().length >= 2 && queryWords(rawQuery.trim()).length > 0;
 
 /**
  * Searches the person's own Requests and approved Companies. A query that is too short, or has no letter or digit,
@@ -476,10 +561,8 @@ export async function searchCustomer(
   rawQuery: string,
   scope: CustomerSearchScope,
 ): Promise<CustomerSearchAnswer> {
-  const text = rawQuery.trim();
-  if (text.length < 2) return { hits: [], scopes: {} };
-  const words = queryWords(text);
-  if (words.length === 0) return { hits: [], scopes: {} };
+  if (!worthSearching(rawQuery)) return { hits: [], scopes: {} };
+  const words = queryWords(rawQuery.trim());
   const shown = scope === 'all' ? customerSearchLimits.showAll : customerSearchLimits.showScope;
   const answer: CustomerSearchAnswer = { hits: [], scopes: {} };
   const facts: Record<string, CustomerFacts> = {};
@@ -493,7 +576,15 @@ export async function searchCustomer(
   const guard = guardFor(context);
   if (scope === 'all' || scope === 'requests')
     take('requests', await findRequests(services, switches, context, guard, words));
-  if (scope === 'all' || scope === 'companies')
-    take('companies', await findCompanies(services, switches, context, guard, words));
+  if (scope === 'all' || scope === 'companies') {
+    try {
+      take('companies', await findCompanies(services, switches, context, guard, words));
+    } catch (error) {
+      // Requests were already read: an unexpected Companies failure must not throw them away. A refusal still ends the search.
+      if (scope === 'companies' || endsSearch(error)) throw error;
+      scopeFailed('companies', context.correlationId, error);
+      answer.scopes.companies = 'unavailable';
+    }
+  }
   return Object.keys(facts).length > 0 ? { ...answer, facts } : answer;
 }
