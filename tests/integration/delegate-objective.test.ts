@@ -7,6 +7,7 @@ import {
   delegateNextStep,
   draftFromObjective,
   objectiveReturnKey,
+  prefillFromContext,
   readObjectiveReturn,
   saveObjectiveReturn,
 } from '../../apps/web/lib/delegate-objective';
@@ -89,6 +90,76 @@ describe('a private request draft from the application words', () => {
       requirements: [],
       profileVersion: null,
       sourcingContext: null,
+    });
+  });
+  describe('shared programme context', () => {
+    const shared = {
+      marketCode: 'CN',
+      startsAt: '2027-03-09T08:00:00+08:00',
+      endsAt: '2027-03-13T18:00:00+08:00',
+      timezone: 'Asia/Shanghai',
+    };
+    const input = {
+      programmeName: 'Spring machinery delegation',
+      statement,
+      displayLabel: 'Rahman Agro Imports',
+      direction: 'SUPPLIERS_PRODUCTS' as const,
+    };
+    it('real mode: destination, dates in the programme time zone and the zone fill the draft, and it still saves', () => {
+      real();
+      const details = draftFromObjective({ ...input, context: shared });
+      expect(details).toMatchObject({
+        market: 'CN',
+        startDate: '2027-03-09',
+        endDate: '2027-03-13',
+        timezone: 'Asia/Shanghai',
+        attendance: 'Not decided',
+      });
+      // The origin note says the values came from the programme, so the team and the person can see why.
+      expect(details.notes).toContain('filled in from the programme details its organisers shared');
+      expect(missionDraftDetails.safeParse(details).success).toBe(true);
+      expect(draftProblems(details)).toEqual([]);
+    });
+    it('the date is the calendar day in the programme zone, not in UTC', () => {
+      // 01:00 on 9 March in Shanghai is still 8 March in UTC.
+      expect(
+        prefillFromContext({ ...shared, startsAt: '2027-03-09T01:00:00+08:00' })?.startDate,
+      ).toBe('2027-03-09');
+      expect(
+        prefillFromContext({
+          ...shared,
+          timezone: 'America/New_York',
+          startsAt: '2027-03-09T01:00:00Z',
+        })?.startDate,
+      ).toBe('2027-03-08');
+    });
+    it('carries nothing when the context is absent or unusable: no half a window, no invented zone', () => {
+      real();
+      for (const bad of [
+        null,
+        undefined,
+        { ...shared, timezone: 'Not/AZone' },
+        { ...shared, startsAt: 'soon' },
+        { ...shared, marketCode: '  ' },
+        { ...shared, startsAt: shared.endsAt, endsAt: shared.startsAt },
+      ]) {
+        expect(prefillFromContext(bad)).toBeNull();
+        const details = draftFromObjective({ ...input, context: bad });
+        expect(details).toMatchObject({ market: '', startDate: '', endDate: '', timezone: 'UTC' });
+        expect(details.notes).not.toContain('organisers shared');
+      }
+    });
+    it('sample mode: the shared values are still carried and the draft still satisfies the sample rule', () => {
+      const sample = draftFromObjective({
+        programmeName: 'Synthetic China machinery delegation',
+        statement: 'Synthetic plan to compare two rice transplanters',
+        displayLabel: 'Synthetic Rahman Agro',
+        direction: 'SUPPLIERS_PRODUCTS',
+        context: shared,
+      });
+      expect(sample).toMatchObject({ market: 'CN', startDate: '2027-03-09' });
+      expect(missionDraftDetails.safeParse(sample).success).toBe(true);
+      expect(draftProblems(sample)).toEqual([]);
     });
   });
   it('a person who joined by code has no words to carry: the description starts empty and still saves', () => {
@@ -195,6 +266,7 @@ describe('the path adds no authority', () => {
     const routes = [...path.matchAll(/'(\/api\/[a-z-]+)/g)].map((m) => m[1]);
     expect([...new Set(routes)].sort()).toEqual([
       '/api/customer-mission-drafts',
+      '/api/customer-programme-context',
       '/api/customer-programme-objectives',
       '/api/customer-programme-pages',
       '/api/customer-workspaces',
