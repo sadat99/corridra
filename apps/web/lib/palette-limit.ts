@@ -2,7 +2,7 @@
 // burst of searches (a held key, a script, a stuck client) is bounded here before any page is read. The repository
 // has no shared helper that fits: app.intake_budget allows only 6 or 60 a HOUR (changing that is a migration) and
 // the customer budget guards the public intake. So this is an in-process sliding window: it is per server
-// instance, not shared across replicas, keeps nothing on disk and holds only a key, never the words typed. It
+// instance, not shared across replicas, keeps nothing on disk and holds only the server-side user id, never the words typed and never a client-supplied value such as the workspace. It
 // refuses with the seconds to wait; the route answers 429 and the palette shows a calm "try again", never an
 // empty result. Owner: S67.
 export const paletteLimit = { searches: 30, windowMs: 10_000, maxKeys: 5_000 } as const;

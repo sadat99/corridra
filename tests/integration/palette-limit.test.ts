@@ -62,11 +62,10 @@ describe('the sliding window', () => {
     for (let n = 0; n < 100; n++) spendPaletteSearch('k', 5_000);
     expect(spendPaletteSearch('k', paletteLimit.windowMs + 1)).toEqual({ allowed: true });
   });
-  test('one person never spends another person or workspace allowance', () => {
-    for (let n = 0; n < paletteLimit.searches; n++) spendPaletteSearch('a|t1', 0);
-    expect(spendPaletteSearch('a|t1', 1).allowed).toBe(false);
-    expect(spendPaletteSearch('b|t1', 1).allowed).toBe(true);
-    expect(spendPaletteSearch('a|t2', 1).allowed).toBe(true);
+  test('one key never spends another key allowance', () => {
+    for (let n = 0; n < paletteLimit.searches; n++) spendPaletteSearch('a', 0);
+    expect(spendPaletteSearch('a', 1).allowed).toBe(false);
+    expect(spendPaletteSearch('b', 1).allowed).toBe(true);
   });
   test('memory stays bounded for many people', () => {
     for (let n = 0; n < paletteLimit.maxKeys + 500; n++) spendPaletteSearch(`p${n}`, n);
@@ -86,11 +85,21 @@ describe('the route', () => {
     expect(body.error).toMatch(/try again/i);
     expect(JSON.stringify(body)).not.toContain('mad');
   });
-  test('another person, and another workspace, are not limited by it', async () => {
+  test('another person is not limited by it', async () => {
     for (let n = 0; n < paletteLimit.searches + 3; n++) await get(tenantA);
-    expect((await get(tenantB)).status).toBe(200);
     state.user = 'user-b';
     expect((await get(tenantA)).status).toBe(200);
+  });
+  test('varying the workspace id does not reset the count', async () => {
+    for (let n = 0; n < paletteLimit.searches; n++) await get(tenantA);
+    expect((await get(tenantA)).status).toBe(429);
+    // The workspace id comes from the request, so it must never start a fresh allowance.
+    expect((await get(tenantB)).status).toBe(429);
+    for (let n = 0; n < 5; n++) {
+      const other = `33333333-3333-4333-8333-${String(n).padStart(12, '0')}`;
+      expect((await get(other)).status).toBe(429);
+    }
+    expect(state.touched).toBe(0);
   });
   test('a bad request is still a 400 and a visitor still a 401 before the limit counts', async () => {
     expect((await get('not-a-uuid')).status).toBe(400);
