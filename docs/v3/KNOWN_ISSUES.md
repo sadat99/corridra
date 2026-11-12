@@ -343,3 +343,28 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 - **Seen:** PR 420 (runs 43028259244, 43032983768, 43038421496) and the removed-member PR (43030584381) failed `browser`, `verification`, `ux (1-3)` and `operator (1-6)` at `Browser runtime` and `Browser runtime (retry)`, about 15 minutes per job. The log shows `Temporary failure resolving 'azure.archive.ubuntu.com'`, `archive.ubuntu.com` and `security.ubuntu.com` for every fetch and `E: Unable to fetch some archives`, exit 100; `packages.microsoft.com` resolved in the same step. Earlier runs the same day on the same image (`ubuntu-26.04`, release 20261101.186) fetched at 5 to 30 MB/s. `validate` was red only as the roll-up. KI-02's mitigation covers a slow mirror, not one that cannot be resolved, so the retry failed the same way.
 - **Cause:** not proven. The runner's resolver (or the mirror names upstream) was unreachable for about 15 minutes. Nothing in the repository touches that step's inputs.
 - **Mitigation (`scripts/ci-apt-network.sh`, called by the `Resilient apt settings` step and again before the retry in all four jobs):** keeps the KI-02 apt timeouts, checks that the three mirror names resolve, prints the resolver state if not, tries public resolvers through `resolvectl` and then `resolv.conf`, and prints how many names resolve before and after. It never fails the step and emits a warning if the names still do not resolve. Whether the fallback helps is not yet shown: if the next outage prints "not resolving" after both fallbacks, the upstream names are down and one re-run of the failed jobs is the answer (KI-39). Do not change tests for it.
+
+### KI-52 A native dialog closes on Escape before React's `onClose` runs, so a state-driven reopen can be swallowed (staff command palette, 12 November 2026, fixed in the palette Phase 1 PR)
+
+- **Seen:** pressing Ctrl K straight after Escape sometimes did not reopen the palette. Reproduced by the verifier, the design audit and the refute reviewer. The browser closes the `<dialog>` itself on Escape; React's `onClose` (which resets the state) runs after that, so a Ctrl K that arrives in between sees stale state and the later reset closes the dialog it just opened.
+- **Do:** open through one function that checks `element.open` (not React state) before calling `showModal()`, and guard `onClose` and the reset so they only act when the element is really closed. Any component that mixes a native `<dialog>` with state-driven open needs the same guard. The spec test is R3 in `docs/revamp/specs/navigation-v1/command-palette-search.md`.
+
+### KI-53 The browser's `dialog:modal` max-width overrides a plain `width: calc(...)` (phone width of the palette, 12 November 2026, fixed in the palette Phase 1 PR)
+
+- **Seen:** the phone panel was narrower than its `calc()` width and the footer role line was clipped, because the browser's default style for a modal dialog sets its own `max-width`, which wins over a `width` that is wider than it.
+- **Do:** set `max-width: none` (or the width you want) on the dialog when you set its width. Check the measured box, not the CSS you wrote, at the narrowest phone widths.
+
+### KI-54 An `em` media query reads the browser's default font size, so root-font-size emulation cannot test it (12 November 2026, handled in the palette Phase 1 tests)
+
+- **Seen:** the wide Search field starts at `64em` so that a person with a large default font gets the old layout. Setting the root font size in the page does not move a media query in `em`, which reads the browser's own default font size, so such a test passes without testing anything.
+- **Do:** test it in a Chromium profile whose preferences set `default_font_size` (the 200% check used 32), and assert `matchMedia('(min-width:64em)')` as well as the layout. The 200% overflow of the team header at 1024 and 1100 px with the rail expanded is a separate, pre-existing issue on main and is not covered by this entry.
+
+### KI-55 A timing assertion on a pure function depends on the machine (12 November 2026, handled in the palette Phase 1 tests)
+
+- **Seen:** a wall-clock limit on a pure ranking function passes on a fast machine and fails on a loaded runner, and says nothing about the code.
+- **Do:** assert on a deterministic bound instead (for the palette rank module, the 256-character field cap, which `palette-rank.test.ts` pins), and measure real latency on a seeded database before any speed claim. No palette latency is claimed (M3 in the spec).
+
+### KI-56 Stripping every `\p{M}` mark destroys Indic words (12 November 2026, fixed in the palette Phase 1 PR)
+
+- **Seen:** the first ranking draft removed all combining marks to ignore accents. Bengali and Devanagari vowel signs are marks, so different words became the same string and ranked and highlighted as exact matches, and a highlight could split a consonant from its vowel sign.
+- **Do:** strip only the Latin combining block (U+0300 to U+036F) and keep other marks in the tokeniser; when marking a span, move its end over the marks that follow, so a letter is never marked apart from its vowel sign. Arabic and Hebrew marks are now kept too, so variant spellings of those scripts match less often than before; that recall loss is recorded in the spec.
