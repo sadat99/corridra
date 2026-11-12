@@ -19,6 +19,16 @@
   line-height: 1.65;
   text-wrap: pretty;
 }
+/* From 1000 px the intro uses the hero's column split (page-compact.css) and its text sits on the heading's first
+   baseline, so the two blocks of the page share one grid. */
+@media (min-width: 1000px) {
+  .ux-public .guide-page-intro--compact:not(.is-labelled) > div {
+    grid-template-columns: var(--public-split);
+    column-gap: var(--space-12);
+    justify-content: start;
+    align-items: first baseline;
+  }
+}
 
 /* Trust: the five evidence labels read as a list with space between rows, not a ruled table. */
 .ux-public .guide-page-intro--compact.is-labelled ul {
