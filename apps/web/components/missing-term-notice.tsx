@@ -72,13 +72,16 @@ export function missingTermNotice(
         words: `has not stated: ${termWords(verdict.missing)}.`,
       });
   }
-  // Only two current quotes in the same currency with the same exact unit price in minor units are called equal.
+  // Only two current quotes in the same currency, unit and Incoterm with the same exact unit price in minor units are
+  // called equal; a price per set is never called the same as a price per piece.
   const [a, b] = current;
   const samePrice =
     current.length === 2 &&
     a &&
     b &&
     a.offer.currency === b.offer.currency &&
+    a.offer.terms.unit === b.offer.terms.unit &&
+    a.offer.terms.incoterm === b.offer.terms.incoterm &&
     typeof a.offer.terms.unitPriceMinor === 'string' &&
     a.offer.terms.unitPriceMinor === b.offer.terms.unitPriceMinor
       ? `Both quotes are ${displayMoney(a.offer.terms.unitPriceMinor, a.offer.currency)} a unit.`

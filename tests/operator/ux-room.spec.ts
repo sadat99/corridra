@@ -1866,8 +1866,11 @@ for (const [name, answer, words] of [
     await expect(page.getByText(words)).toBeVisible();
     expect(await navigations(page)).toEqual([]);
     await expect(page.getByRole('link', { name: 'Open the saved report' })).toHaveCount(0);
-    if (words.startsWith('This report'))
+    if (words.startsWith('This report')) {
       await expect(saveCard(page).getByRole('checkbox', { name: consent })).toHaveCount(0);
+      // The card no longer claims a report is ready, and no Library button stands in for it.
+      await expect(saveCard(page)).not.toContainText('Your report is ready');
+    }
   });
 
 test('handoff: several reports are a choice, each with its own unchecked box, and the saved one is named', async ({
@@ -2084,3 +2087,37 @@ for (const width of [1440, 390])
     await expect(lens(page, 'Compare')).toHaveAttribute('aria-pressed', 'true');
     expect(posts.map((p) => p.assignmentId)).toEqual([assignmentA]);
   });
+
+test('handoff: an unconfirmed save of one report keeps its own command while another is saved in between', async ({
+  page,
+}) => {
+  const posts = await answerSaves(page, [
+    () => ({ abort: true }),
+    () => ({ abort: true }),
+    () => ({}),
+  ]);
+  await open(page, {
+    link: unsavedLink,
+    task: {
+      kind: 'choose',
+      reports: [pending(assignmentA, 'First report'), pending(assignmentB, 'Second report')],
+    },
+    reportCount: 2,
+  });
+  const items = saveCard(page).locator('.room-save-item');
+  const unconfirmed = page.getByText(
+    'Saving was not confirmed. Retry the same command or refresh current deliveries.',
+  );
+  await items.nth(0).getByRole('checkbox').check();
+  await items.nth(0).getByRole('button', { name: 'Save and Open Approved Report' }).click();
+  await expect(unconfirmed).toBeVisible();
+  await items.nth(1).getByRole('checkbox').check();
+  await items.nth(1).getByRole('button', { name: 'Save and Open Approved Report' }).click();
+  await expect.poll(() => posts.length).toBe(2);
+  await expect(unconfirmed).toBeVisible();
+  await items.nth(0).getByRole('button', { name: 'Save and Open Approved Report' }).click();
+  await expect(lens(page, 'Compare')).toHaveAttribute('aria-pressed', 'true');
+  expect(posts.map((p) => p.assignmentId)).toEqual([assignmentA, assignmentB, assignmentA]);
+  expect(posts[2]).toEqual(posts[0]);
+  expect(posts[1]!.commandId).not.toBe(posts[0]!.commandId);
+});

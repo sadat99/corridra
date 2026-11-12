@@ -165,12 +165,15 @@ export function RoomView({
   const reportHref = savedResourceId ? `/account/missions/${savedResourceId}` : null;
   // A report saved here is done; otherwise the server's answer says what is left to save.
   const saveTask = saved || unreadable ? null : task;
-  const toSave =
+  // Reports the server refused in this visit are gone from the offer; the Room says so once below the card.
+  const [refused, setRefused] = useState<string[]>([]);
+  const toSave = (
     saveTask?.kind === 'save'
       ? [saveTask.report]
       : saveTask?.kind === 'choose'
         ? saveTask.reports
-        : [];
+        : []
+  ).filter((report) => !refused.includes(report.assignmentId));
   // A waiting arrival with no saved report has nothing to wait for.
   const opening = waiting && !!savedResourceId;
   function onSaved(assignmentId: string, resourceId: string) {
@@ -211,65 +214,66 @@ export function RoomView({
     act: 'compare' | 'lens' | 'report' | 'library' | 'help' | 'request' | 'save' | 'retry';
     lens?: Lens;
     label?: string;
-  } = unreadable
-    ? {
-        words: 'We could not check this report just now.',
-        small: 'Nothing was saved and nothing has changed.',
-        act: 'retry',
-      }
-    : toSave.length
+  } =
+    unreadable && !saved
       ? {
-          words:
-            toSave.length > 1
-              ? 'Your reports are ready'
-              : `Your report is ready: ${toSave[0]!.title}`,
-          small:
-            toSave.length > 1
-              ? 'Choose the report to save. Each one is saved on its own.'
-              : 'Save it here to read and compare it in this room.',
-          act: 'save',
+          words: 'We could not check this report just now.',
+          small: 'Nothing was saved and nothing has changed.',
+          act: 'retry',
         }
-      : lenses && board && board.proposed > 0
+      : toSave.length
         ? {
-            words: `Review ${board.proposed === 1 ? 'the proposed meeting' : `${board.proposed} proposed meetings`}`,
-            // Only point to where the times are, and ask for a reply only where the question link is beside it.
-            // With the Trip switch off the room has no Meetings view, so the times are in the saved report.
-            small: `${trip ? 'See the proposed times in Meetings' : 'The proposed times are in your saved report'}${serviceRequestsEnabled ? ', then tell the Corridra team which work for you.' : '.'}`,
-            act: trip ? 'lens' : 'report',
-            lens: 'trip',
-            label: trip ? 'See Meetings' : 'Open the Saved Report',
+            words:
+              toSave.length > 1
+                ? 'Your reports are ready'
+                : `Your report is ready: ${toSave[0]!.title}`,
+            small:
+              toSave.length > 1
+                ? 'Choose the report to save. Each one is saved on its own.'
+                : 'Save it here to read and compare it in this room.',
+            act: 'save',
           }
-        : lenses && board && board.shortlisted > 0
+        : lenses && board && board.proposed > 0
           ? {
-              words: `Review ${board.shortlisted === 1 ? 'the shortlisted buyer' : `${board.shortlisted} shortlisted buyers`}`,
-              small: serviceRequestsEnabled
-                ? 'See how each buyer fits and how it is backed, then tell us whom to meet.'
-                : 'See how each buyer fits and how it is backed.',
-              act: 'lens',
-              lens: 'compare',
-              label: 'See Buyers',
+              words: `Review ${board.proposed === 1 ? 'the proposed meeting' : `${board.proposed} proposed meetings`}`,
+              // Only point to where the times are, and ask for a reply only where the question link is beside it.
+              // With the Trip switch off the room has no Meetings view, so the times are in the saved report.
+              small: `${trip ? 'See the proposed times in Meetings' : 'The proposed times are in your saved report'}${serviceRequestsEnabled ? ', then tell the Corridra team which work for you.' : '.'}`,
+              act: trip ? 'lens' : 'report',
+              lens: 'trip',
+              label: trip ? 'See Meetings' : 'Open the Saved Report',
             }
-          : !sell && lenses && quotes.length > 0
+          : lenses && board && board.shortlisted > 0
             ? {
-                words: `Compare ${quotes.length === 1 ? 'the quote' : `${quotes.length} quotes`}`,
+                words: `Review ${board.shortlisted === 1 ? 'the shortlisted buyer' : `${board.shortlisted} shortlisted buyers`}`,
                 small: serviceRequestsEnabled
-                  ? 'See how each supplier is backed and what is missing, then tell us which to visit.'
-                  : 'See how each supplier is backed and what is missing.',
-                act: 'compare',
+                  ? 'See how each buyer fits and how it is backed, then tell us whom to meet.'
+                  : 'See how each buyer fits and how it is backed.',
+                act: 'lens',
+                lens: 'compare',
+                label: 'See Buyers',
               }
-            : hasReport && !savedResourceId
+            : !sell && lenses && quotes.length > 0
               ? {
-                  words: 'Your report is ready',
-                  small: 'Save it from your Library to read and compare it here.',
-                  act: 'library',
+                  words: `Compare ${quotes.length === 1 ? 'the quote' : `${quotes.length} quotes`}`,
+                  small: serviceRequestsEnabled
+                    ? 'See how each supplier is backed and what is missing, then tell us which to visit.'
+                    : 'See how each supplier is backed and what is missing.',
+                  act: 'compare',
                 }
-              : {
-                  words: subline ?? 'Waiting on the Corridra team',
-                  small: replies[0]
-                    ? `Latest reply ${day(replies[0].createdAt)}.`
-                    : 'The Corridra team will tell you here when something needs you.',
-                  act: serviceRequestsEnabled ? 'help' : 'request',
-                };
+              : hasReport && !savedResourceId && refused.length === 0
+                ? {
+                    words: 'Your report is ready',
+                    small: 'Save it from your Library to read and compare it here.',
+                    act: 'library',
+                  }
+                : {
+                    words: subline ?? 'Waiting on the Corridra team',
+                    small: replies[0]
+                      ? `Latest reply ${day(replies[0].createdAt)}.`
+                      : 'The Corridra team will tell you here when something needs you.',
+                    act: serviceRequestsEnabled ? 'help' : 'request',
+                  };
 
   // Everything the report page shows for the comparison stays one tap away: the requirement, the shortlist,
   // every offer with its evidence lens, the cards and the original table.
@@ -437,10 +441,21 @@ export function RoomView({
               )}
             </span>
             {next.act === 'save' ? (
-              <RoomSave reports={toSave} subject={subject} issuer={issuer} onSaved={onSaved} />
+              <RoomSave
+                reports={toSave}
+                subject={subject}
+                issuer={issuer}
+                onSaved={onSaved}
+                onRefused={(id) => setRefused((ids) => [...ids, id])}
+              />
             ) : null}
           </section>
 
+          {refused.length > 0 && !saved ? (
+            <p role="status" className="room-note" lang="en">
+              This report is no longer open to you. Nothing was saved.
+            </p>
+          ) : null}
           {hintClosed && !saved ? (
             <p role="status" className="room-note" lang="en">
               This report is no longer open to you.{' '}

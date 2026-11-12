@@ -221,8 +221,9 @@ export function resolveRoomTask(
   const match = hint ? reports.find((report) => report.assignmentId === hint) : undefined;
   const hintClosed = !!hint && !match;
   const firstSaved = reports.find((report) => report.savedResourceId)?.savedResourceId ?? null;
-  // A hinted report decides what the Room shows; otherwise the first saved one, as before.
-  const savedResourceId = match ? match.savedResourceId : firstSaved;
+  // A hinted saved report is the one shown; otherwise the first saved one, as before, so a hint for a report still to
+  // save never hides one the person already saved for this request.
+  const savedResourceId = match?.savedResourceId ?? firstSaved;
   const link: RoomLink = { reportAvailable: reports.length > 0, savedResourceId };
   const count = reports.length;
   if (match)

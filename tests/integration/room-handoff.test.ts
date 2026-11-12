@@ -121,8 +121,8 @@ describe('which report is the task', () => {
   it('a hint that matches an unsaved report makes it the task, even beside an older saved one', () => {
     const r = resolveRoomTask(done([report(a1, s1), report(a2)]), a2);
     expect(r.task).toEqual({ kind: 'save', report: report(a2) });
-    // The Room is about the hinted report: an older saved one is not shown as if it were this one.
-    expect(r.link.savedResourceId).toBeNull();
+    // The report already saved stays reachable in the Room while the hinted one waits to be saved.
+    expect(r.link.savedResourceId).toBe(s1);
   });
   it('several reports and no settling hint: the person chooses among the unsaved ones', () => {
     const r = resolveRoomTask(done([report(a1, s1), report(a2), report(a3)]));
@@ -317,6 +317,9 @@ describe('the notice above the comparison', () => {
       )?.samePrice;
     expect(differ(terms, { currency: 'EUR' })).toBeNull();
     expect(differ({ ...terms, unitPriceMinor: '1840001', totalPriceMinor: '3680002' })).toBeNull();
+    // The same number per a different unit or on different delivery terms is not the same price.
+    expect(differ({ ...terms, unit: 'set' })).toBeNull();
+    expect(differ({ ...terms, incoterm: 'DDP' })).toBeNull();
   });
   it('names other missing terms with the engine labels, and says nothing when nothing is missing', () => {
     const general = missingTermNotice(

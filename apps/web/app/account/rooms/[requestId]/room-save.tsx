@@ -24,16 +24,20 @@ export function RoomSave({
   subject,
   issuer,
   onSaved,
+  onRefused,
 }: {
   reports: RoomReport[];
   subject: string;
   issuer: string;
   onSaved: (assignmentId: string, resourceId: string) => void;
+  /** The server refused this report: it is not open to the person now, and nothing was saved. */
+  onRefused: (assignmentId: string) => void;
 }) {
   const [busy, setBusy] = useState(false);
-  const [pending, setPending] = useState<AcceptCommand | null>(null);
+  // The unconfirmed command per report, so a retry of any report sends that report's own command again.
+  const [pending, setPending] = useState<Record<string, AcceptCommand>>({});
+  const [last, setLast] = useState<AcceptCommand | null>(null);
   const [notice, setNotice] = useState('');
-  const [closed, setClosed] = useState<string[]>([]);
   const inFlight = useRef(false);
   const controller = useRef<AbortController | null>(null);
   useEffect(() => () => controller.current?.abort(), []);
@@ -44,7 +48,8 @@ export function RoomSave({
     inFlight.current = true;
     const task = new AbortController();
     controller.current = task;
-    setPending(command);
+    setPending((all) => ({ ...all, [command.assignmentId]: command }));
+    setLast(command);
     setBusy(true);
     setNotice('');
     try {
@@ -55,9 +60,11 @@ export function RoomSave({
       const reason = error instanceof Error ? error.message : 'failed';
       if (reason === 'denied') {
         // The server refused: this report is not open to the person now. Nothing was saved.
-        setPending(null);
-        setClosed((ids) => [...ids, command.assignmentId]);
-        setNotice('This report is no longer open to you. Nothing was saved.');
+        setPending((all) =>
+          Object.fromEntries(Object.entries(all).filter(([id]) => id !== command.assignmentId)),
+        );
+        setLast(null);
+        onRefused(command.assignmentId);
       } else if (reason === 'limit') setNotice(limitWords);
       else if (reason === 'unavailable')
         setNotice('Account mission delivery is unavailable. Nothing was saved.');
@@ -73,16 +80,13 @@ export function RoomSave({
   function submit(event: FormEvent<HTMLFormElement>, assignmentId: string) {
     event.preventDefault();
     // The same report again after an unconfirmed attempt is the same command; another report is a new one.
-    void send(
-      pending && pending.assignmentId === assignmentId ? pending : acceptCommand(assignmentId),
-    );
+    void send(pending[assignmentId] ?? acceptCommand(assignmentId));
   }
 
-  const open = reports.filter((report) => !closed.includes(report.assignmentId));
   const many = reports.length > 1;
   return (
     <div className="room-save">
-      {open.map((report) =>
+      {reports.map((report) =>
         many ? (
           <article className="room-save-item" key={report.assignmentId}>
             <h3 dir="auto">{report.title}</h3>
@@ -98,8 +102,8 @@ export function RoomSave({
         ),
       )}
       {notice && <p role="status">{notice}</p>}
-      {pending && !busy && notice === notConfirmed && (
-        <button className="primary-link" type="button" onClick={() => void send(pending)}>
+      {last && !busy && notice === notConfirmed && (
+        <button className="primary-link" type="button" onClick={() => void send(last)}>
           Retry Saving the Same Report
         </button>
       )}
