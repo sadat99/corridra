@@ -260,6 +260,10 @@ for (const mode of ['synthetic', 'real'] as const) {
         collectsPayments: false,
       });
       expect(own.declarations.map((d) => d.status)).toEqual(['AWAITING_REVIEW']);
+      expect(own.declarations[0]).toMatchObject({
+        acknowledgedAmountMinor: null,
+        acknowledgedOn: null,
+      });
       // The participant never sees organiser-only fields.
       expect(Object.keys(own.declarations[0]).sort()).not.toEqual(
         expect.arrayContaining(['registrationLabel']),
@@ -403,6 +407,10 @@ for (const mode of ['synthetic', 'real'] as const) {
         decisions: before.decisions + 1,
       });
       expect(await outstanding('other')).toBe('60000');
+      expect(done.declaration).toMatchObject({
+        acknowledgedAmountMinor: '30000',
+        acknowledgedOn: made.declaration.paidOn,
+      });
       expect((await feeStatus('other')).amounts.find((a) => a.currency === 'BDT')).toMatchObject({
         recordedMinor: '30000',
       });
@@ -468,6 +476,23 @@ for (const mode of ['synthetic', 'real'] as const) {
       });
       expect(done.entry).toMatchObject({ amountMinor: '24000', occurredOn: day(-2) });
       expect(done.declaration.amountMinor).toBe('25000');
+      // The participant sees what the organiser recorded, separately from what they declared, and no entry id.
+      const seen = (
+        await ledger('pat').ownPaymentDeclarations({ registrationId: reg.pat })
+      ).declarations.find((d) => d.id === made.declaration.id)!;
+      expect(seen).toMatchObject({
+        status: 'ACKNOWLEDGED',
+        amountMinor: '25000',
+        paidOn: day(-3),
+        acknowledgedAmountMinor: '24000',
+        acknowledgedOn: day(-2),
+      });
+      expect(JSON.stringify(seen)).not.toMatch(/ledgerEntryId/);
+      expect(done.declaration).toMatchObject({
+        acknowledgedAmountMinor: '24000',
+        acknowledgedOn: day(-2),
+      });
+      // The same amount recorded as declared reads the same on both sides.
       // A received date in the future is refused by the existing ledger rule and nothing is half written.
       const other = await declare('pat', { amountMinor: '10' });
       const before = await counts();
@@ -501,6 +526,8 @@ for (const mode of ['synthetic', 'real'] as const) {
       expect(own.declarations.find((d) => d.id === made.declaration.id)).toMatchObject({
         status: 'REJECTED',
         reason,
+        acknowledgedAmountMinor: null,
+        acknowledgedOn: null,
       });
       expect((await rejected(decide(made.declaration.id, 'ACKNOWLEDGED'))).code).toBe('23514');
       // An acknowledgement carries no reason, and a rejection carries no received amount.

@@ -171,10 +171,14 @@ CREATE OR REPLACE FUNCTION customer_private.programme_payment_declaration_json(s
  SELECT jsonb_build_object('id',d.id,'registrationId',d.registration_id,'currency',d.currency,'exponent',c.exponent,'amountMinor',d.amount_minor::text,
   'paidOn',to_char(d.paid_on,'YYYY-MM-DD'),'payerReference',d.payer_reference,'note',d.note,'declaredAt',d.declared_at,
   'status',CASE WHEN x.declaration_id IS NULL THEN 'AWAITING_REVIEW' ELSE x.decision END,
-  'reason',x.reason,'decidedAt',x.decided_at,'verified',false)
+  'reason',x.reason,'decidedAt',x.decided_at,'verified',false,
+  -- What the organiser actually recorded, shown only for an acknowledgement. It can differ from what was declared.
+  'acknowledgedAmountMinor',CASE WHEN x.decision='ACKNOWLEDGED' THEN le.amount_minor::text END,
+  'acknowledgedOn',CASE WHEN x.decision='ACKNOWLEDGED' THEN to_char(le.occurred_on,'YYYY-MM-DD') END)
   || CASE WHEN for_organiser THEN jsonb_build_object('ledgerEntryId',x.ledger_entry_id) ELSE '{}'::jsonb END
  FROM customer_private.programme_payment_declaration d JOIN app.currency c ON c.code=d.currency
- LEFT JOIN customer_private.programme_payment_decision x ON x.declaration_id=d.id WHERE d.id=selected
+ LEFT JOIN customer_private.programme_payment_decision x ON x.declaration_id=d.id
+ LEFT JOIN customer_private.programme_ledger_entry le ON le.id=x.ledger_entry_id WHERE d.id=selected
 $$;
 
 CREATE OR REPLACE FUNCTION customer.declare_programme_payment(command uuid,input jsonb) RETURNS jsonb

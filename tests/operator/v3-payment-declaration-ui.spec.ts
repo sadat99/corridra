@@ -118,6 +118,8 @@ const declaration = (over: Record<string, unknown> = {}) => ({
   status: 'AWAITING_REVIEW',
   reason: null,
   decidedAt: null,
+  acknowledgedAmountMinor: null,
+  acknowledgedOn: null,
   verified: false,
   ...over,
 });
@@ -192,6 +194,8 @@ test.describe('participant: I Have Paid', () => {
           id: declarationA,
           status: 'ACKNOWLEDGED',
           decidedAt: '2026-11-11T08:00:00Z',
+          acknowledgedAmountMinor: '4000000',
+          acknowledgedOn: '2026-11-09',
         }),
         declaration({
           id: declarationB,
@@ -205,9 +209,34 @@ test.describe('participant: I Have Paid', () => {
     await page.goto(origin);
     await expect(page.getByText('Confirmed by the organiser', { exact: true })).toBeVisible();
     await expect(
+      page.getByText('The organiser recorded BDT 40000.00 on 2026-11-09.'),
+    ).toBeVisible();
+    await expect(page.getByText('different from what you declared')).toHaveCount(0);
+    await expect(
       page.getByText('Not accepted by the organiser: Synthetic nothing reached the account'),
     ).toBeVisible();
     await expect(page.getByText('not yet confirmed')).toHaveCount(0);
+    await axe(page);
+  });
+  test('a partial acknowledgement shows what the organiser recorded next to what was declared', async ({
+    page,
+  }) => {
+    await mock(page, () =>
+      own([
+        declaration({
+          status: 'ACKNOWLEDGED',
+          decidedAt: '2026-11-11T08:00:00Z',
+          acknowledgedAmountMinor: '2400000',
+          acknowledgedOn: '2026-11-10',
+        }),
+      ]),
+    );
+    await page.goto(origin);
+    const text = await page.locator('#fixture').innerText();
+    expect(text).toContain('You say you paid BDT 40000.00 on 2026-11-09');
+    expect(text).toContain('Confirmed by the organiser');
+    expect(text).toContain('The organiser recorded BDT 24000.00 on 2026-11-10.');
+    expect(text).toContain('This is different from what you declared.');
     await axe(page);
   });
   test('the form sends exact minor units, a command id and the account headers', async ({

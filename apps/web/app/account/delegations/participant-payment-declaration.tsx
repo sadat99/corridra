@@ -157,6 +157,16 @@ function Scoped({ subject, issuer, registrationId, feeCurrencies }: Props) {
               >
                 {declarationState(d)}
               </span>
+              {d.status === 'ACKNOWLEDGED' && d.acknowledgedAmountMinor && d.acknowledgedOn && (
+                <>
+                  {' '}
+                  The organiser recorded{' '}
+                  {formatMoney(d.acknowledgedAmountMinor, d.currency as Code)} on {d.acknowledgedOn}
+                  .
+                  {(d.acknowledgedAmountMinor !== d.amountMinor || d.acknowledgedOn !== d.paidOn) &&
+                    ' This is different from what you declared.'}
+                </>
+              )}
             </li>
           ))}
         </ul>

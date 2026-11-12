@@ -33,6 +33,11 @@ function parseDeclaration(v: unknown): PaymentDeclaration {
     !statuses.includes(String(v.status)) ||
     !maybeText(v.reason, 300) ||
     v.verified !== false ||
+    (v.status === 'ACKNOWLEDGED') !== (v.acknowledgedAmountMinor !== null) ||
+    (v.status === 'ACKNOWLEDGED') !== (v.acknowledgedOn !== null) ||
+    (v.acknowledgedAmountMinor !== null &&
+      !/^[1-9][0-9]{0,17}$/.test(String(v.acknowledgedAmountMinor))) ||
+    (v.acknowledgedOn !== null && !/^\d{4}-\d{2}-\d{2}$/.test(String(v.acknowledgedOn))) ||
     (v.status === 'REJECTED') !== (typeof v.reason === 'string') ||
     (v.outstandingMinor !== undefined && !/^-?[0-9]{1,40}$/.test(String(v.outstandingMinor)))
   )

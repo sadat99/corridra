@@ -206,6 +206,9 @@ export type PaymentDeclaration = {
   status: 'AWAITING_REVIEW' | 'ACKNOWLEDGED' | 'REJECTED';
   reason: string | null;
   decidedAt: string | null;
+  // What the organiser recorded when they acknowledged it. It can differ from the declared amount and date.
+  acknowledgedAmountMinor: string | null;
+  acknowledgedOn: string | null;
   verified: false;
   // Organiser view only.
   ledgerEntryId?: string | null;
