@@ -61,6 +61,12 @@ export type CustomerNavigationInput = {
   currentWorkspaceId?: string;
   /** True where Report a Problem is installed with the customer's own word removal: the Help row is then a link. */
   problemReports?: boolean;
+  /** `CORRIDRA_UX_MOVE` alone: the Your Journeys links (the Move page exists). Defaults to `move`. */
+  journeys?: boolean;
+  /** Customer programmes on: the Programmes link. */
+  programmes?: boolean;
+  /** Participants and customer workspaces on: the Registrations link. */
+  registrations?: boolean;
 };
 
 /** Where New Request goes: a person with a workspace goes to where requests are made, otherwise to the plan page. */
@@ -108,6 +114,97 @@ export function customerTabs({
       labelKey: 'wse.nav.results',
     },
   ];
+}
+
+/**
+ * A sidebar link below the five destinations (owner-approved mockups, revision 2, 12 Nov 2026). These pages were
+ * reachable only from links inside pages; the sidebar now lists them too. `tone` picks the journey's small dot.
+ */
+export type CustomerSideLink = {
+  key: string;
+  label: string;
+  href: string;
+  icon?: string;
+  tone?: 'action' | 'positive' | 'ornament';
+  /** The lead journey (Sourcing) is drawn a little bolder and taller. */
+  lead?: boolean;
+};
+
+/**
+ * Your Journeys: the Your Move page filtered to one journey (`/account/move?journey=`, values from
+ * app/account/move/journeys.ts). Only where that page exists (`CORRIDRA_UX_MOVE`); otherwise the group is not drawn.
+ * No counts: the sidebar is on every page and a count would add a read of the work list to each of them.
+ */
+export function customerJourneyLinks(move: boolean): CustomerSideLink[] {
+  if (!move) return [];
+  return [
+    {
+      key: 'journey-source',
+      label: 'Sourcing',
+      href: '/account/move?journey=source',
+      tone: 'action',
+      lead: true,
+    },
+    {
+      key: 'journey-organise',
+      label: 'Organising',
+      href: '/account/move?journey=organise',
+      tone: 'positive',
+    },
+    {
+      key: 'journey-sell',
+      label: 'Selling',
+      href: '/account/move?journey=sell',
+      tone: 'ornament',
+    },
+  ];
+}
+
+/**
+ * Groups: Programmes and Registrations, with the same gates as the links on the account page
+ * (app/account/page.tsx): Programmes where customer programmes are on, Registrations where participants and
+ * customer workspaces are on. The pages still check on the server.
+ */
+export function customerGroupLinks({
+  programmes,
+  registrations,
+}: {
+  programmes: boolean;
+  registrations: boolean;
+}): CustomerSideLink[] {
+  return [
+    ...(programmes
+      ? [
+          {
+            key: 'programmes',
+            label: 'Programmes',
+            href: '/account/delegations/organise',
+            icon: 'trip',
+          },
+        ]
+      : []),
+    ...(registrations
+      ? [
+          {
+            key: 'registrations',
+            label: 'Registrations',
+            href: '/account/delegations',
+            icon: 'people',
+          },
+        ]
+      : []),
+  ];
+}
+
+/** Which sidebar group link a path belongs to, so it, not the destination above it, is marked current. */
+export function customerGroupHere(pathname: string): string | null {
+  if (
+    pathname === '/account/delegations/organise' ||
+    pathname.startsWith('/account/delegations/organise/')
+  )
+    return 'programmes';
+  if (pathname === '/account/delegations') return 'registrations';
+  return null;
 }
 
 /** The avatar menu: identity first (drawn by the menu), then these five. Nothing here is a fake control. */
@@ -206,8 +303,15 @@ export function customerNavigation(input: CustomerNavigationInput) {
     null,
     input.problemReports ? reportProblemHref(customerProblemReportsPath, '/account') : null,
   );
+  const journeys = customerJourneyLinks(input.journeys ?? input.move);
+  const groups = customerGroupLinks({
+    programmes: !!input.programmes,
+    registrations: !!input.registrations,
+  });
   const reachable = new Set<string>([
     ...tabs.map((tab) => tab.href),
+    ...journeys.map((link) => link.href),
+    ...groups.map((link) => link.href),
     newRequestHref(input.workspaces.length > 0),
     manageWorkspacesHref,
     // With the profiles module on, the chooser and each workspace's profile (the avatar's workspace rows).
@@ -217,5 +321,5 @@ export function customerNavigation(input: CustomerNavigationInput) {
   ]);
   for (const entry of [...avatar, ...help.flatMap((group) => group.items)])
     if (entry.kind === 'link') reachable.add(entry.href);
-  return { tabs, avatar, help, reachable: [...reachable] };
+  return { tabs, journeys, groups, avatar, help, reachable: [...reachable] };
 }
