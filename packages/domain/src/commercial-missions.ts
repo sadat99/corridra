@@ -135,6 +135,7 @@ export const offerTerms = z
     installation: text.optional(),
     training: text.optional(),
     spares: text.optional(),
+    commissioning: text.optional(),
     paymentTerms: text.optional(),
   })
   .strict();
