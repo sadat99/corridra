@@ -6,8 +6,10 @@ import { pp } from '../../../lib/i18n/programme-pages';
 import {
   delegateNextStep,
   draftFromObjective,
+  prefillFromContext,
   saveObjectiveReturn,
   type DelegateDirection,
+  type ProgrammeContextShared,
 } from '../../../lib/delegate-objective';
 import { customerHeaders } from './pricing-client';
 import { isUuid } from './participant-client';
@@ -33,9 +35,24 @@ type Loaded = {
   workspaces: Workspace[] | null;
   privateRequests: number | null;
   sharedObjectives: number | null;
+  /** The programme's destination and dates, only if the organisers shared them with this registration. */
+  context: ProgrammeContextShared | null;
 };
 const object = (v: unknown): v is Record<string, unknown> =>
   !!v && typeof v === 'object' && !Array.isArray(v);
+/** The shared context of this registration, or null when nothing is shared or the answer is not as expected. */
+function sharedContext(value: unknown, registrationId: string): ProgrammeContextShared | null {
+  if (!object(value) || value.registrationId !== registrationId || !object(value.context))
+    return null;
+  const { marketCode, startsAt, endsAt, timezone } = value.context;
+  return typeof marketCode === 'string' &&
+    typeof startsAt === 'string' &&
+    typeof endsAt === 'string' &&
+    typeof timezone === 'string' &&
+    prefillFromContext({ marketCode, startsAt, endsAt, timezone })
+    ? { marketCode, startsAt, endsAt, timezone }
+    : null;
+}
 
 export function DelegatePath(props: {
   subject: string;
@@ -82,7 +99,8 @@ export function DelegatePath(props: {
       read('/api/customer-workspaces'),
       read('/api/customer-programme-objectives?view=choices&' + query),
       read('/api/customer-programme-objectives?view=own&' + query),
-    ]).then(([applications, workspaces, choices, own]) => {
+      read('/api/customer-programme-context?' + query),
+    ]).then(([applications, workspaces, choices, own, shared]) => {
       if (!active.current) return;
       const mine =
         applications.status === 'fulfilled' &&
@@ -125,6 +143,7 @@ export function DelegatePath(props: {
         workspaces: rooms,
         privateRequests: count(choices, 'requests', (r) => object(r) && r.available === true),
         sharedObjectives: count(own, 'objectives', (o) => object(o) && o.status === 'SHARED'),
+        context: shared.status === 'fulfilled' ? sharedContext(shared.value, registrationId) : null,
       });
       if (rooms?.length === 1) setWorkspaceId(rooms[0].id);
     });
@@ -179,6 +198,13 @@ export function DelegatePath(props: {
         target = made.id;
         if (active.current) setWorkspaceId(target);
       }
+      // Read the shared context again now, so a context the organisers have since withdrawn is not carried. A read
+      // that fails carries nothing: the draft then starts without a market or dates, as before.
+      const context = await read(
+        '/api/customer-programme-context?' + new URLSearchParams({ registrationId }),
+      )
+        .then((value) => sharedContext(value, registrationId))
+        .catch(() => null);
       commands.current.draft ??= crypto.randomUUID();
       const saved = await send('/api/customer-mission-drafts', {
         action: 'save',
@@ -192,6 +218,7 @@ export function DelegatePath(props: {
             statement: loaded.statement ?? '',
             displayLabel: loaded.displayLabel,
             direction,
+            context,
           }),
           acknowledged: true,
         },
@@ -245,6 +272,7 @@ export function DelegatePath(props: {
     );
   };
   const rooms = loaded.workspaces;
+  const prefill = prefillFromContext(loaded.context);
   const directions = [
     ['SUPPLIERS_PRODUCTS', pp('pp.path.find.suppliers')],
     ['BUYERS_PARTNERS', pp('pp.path.find.buyers')],
@@ -329,6 +357,16 @@ export function DelegatePath(props: {
             {pp('pp.path.step.request.text')}{' '}
             {loaded.statement && props.draftsEnabled ? pp('pp.path.step.request.carried') : ''}
           </p>
+          {prefill && state('request') !== 'done' && props.draftsEnabled && (
+            <p className="delegate-path-note" data-testid="delegate-path-prefill">
+              {pp('pp.path.step.request.prefill', {
+                market: prefill.market,
+                start: prefill.startDate,
+                end: prefill.endDate,
+                zone: prefill.timezone,
+              })}
+            </p>
+          )}
           {state('request') === 'done' && (
             <p className="delegate-path-note">{pp('pp.path.step.request.have')}</p>
           )}

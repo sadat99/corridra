@@ -27,33 +27,85 @@ const allowed = (value: string, max: number) => {
 };
 
 /**
+ * The programme's destination, dates and time zone, exactly as the organisers shared them with this registration
+ * (the programme context read returns them only after the organiser chooses to share). Dates carry a UTC offset.
+ */
+export type ProgrammeContextShared = {
+  marketCode: string;
+  startsAt: string;
+  endsAt: string;
+  timezone: string;
+};
+
+const zoneOk = (zone: string) => {
+  try {
+    new Intl.DateTimeFormat('en', { timeZone: zone });
+    return zone.length > 0 && zone.length <= 80;
+  } catch {
+    return false;
+  }
+};
+/** The calendar date of an instant in the programme's own time zone, as YYYY-MM-DD, or empty if it cannot be told. */
+function dateIn(instant: string, zone: string) {
+  const at = Date.parse(instant);
+  if (!Number.isFinite(at) || !zoneOk(zone)) return '';
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: zone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(at);
+  const part = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
+  const value = `${part('year')}-${part('month')}-${part('day')}`;
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : '';
+}
+/**
+ * What the shared programme context contributes to a request draft: the target market, the visit dates and the
+ * time zone. Returns null unless the dates and zone are all usable, so a draft never holds half a window.
+ */
+export function prefillFromContext(context: ProgrammeContextShared | null | undefined) {
+  if (!context) return null;
+  const market = clean(context.marketCode, 120);
+  const startDate = dateIn(context.startsAt, context.timezone);
+  const endDate = dateIn(context.endsAt, context.timezone);
+  if (!market || !startDate || !endDate || endDate < startDate) return null;
+  return { market, startDate, endDate, timezone: context.timezone };
+}
+
+/**
  * The details of a guided private request started from a programme. Every value is the delegate's own words or the
  * programme's name: the statement becomes the description, the display name the company, and the note says where
- * the request came from so the team does not have to ask. Dates, market, outcomes and contact stay empty, because
- * nothing here knows them. The person reviews and completes the draft before anything is sent.
+ * the request came from so the team does not have to ask. Market and dates come only from a programme context the
+ * organisers shared (and say so in the note); otherwise, like outcomes and contact, they stay empty. The person reviews and completes the draft before anything is sent.
  */
 export function draftFromObjective(input: {
   programmeName: string;
   statement: string;
   displayLabel: string;
   direction: DelegateDirection;
+  /** Shared programme context. Optional: without it the market, dates and time zone stay empty as before. */
+  context?: ProgrammeContextShared | null;
 }): DraftFormValues {
   const name = clean(input.programmeName, 100);
+  const prefill = prefillFromContext(input.context);
   const title = allowed(`${name}: my objective`, 120) || allowed(name, 120);
   return {
     title,
     family: input.direction,
     objective: objectiveFor[input.direction],
-    market: '',
+    market: prefill?.market ?? '',
     attendance: 'Not decided',
-    startDate: '',
-    endDate: '',
-    timezone: 'UTC',
+    startDate: prefill?.startDate ?? '',
+    endDate: prefill?.endDate ?? '',
+    timezone: prefill?.timezone ?? 'UTC',
     offer: allowed(input.statement, 2000),
     website: '',
     outcomes: [],
     notes: allowed(
-      `Started from the programme "${name}", where I am a registered participant.`,
+      `Started from the programme "${name}", where I am a registered participant.` +
+        (prefill
+          ? ' The destination and dates were filled in from the programme details its organisers shared; I will change them if my visit differs.'
+          : ''),
       1000,
     ),
     requirements: [],
