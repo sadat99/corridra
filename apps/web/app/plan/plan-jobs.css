@@ -1,21 +1,8 @@
 /* The first step of the request page draws its objectives in the home page's order (lib/home-jobs.ts). Visual only:
    the radio inputs, their names, values and label words are unchanged, and each card keeps its place in the
-   two-column grid. Owner decision, 12 November 2026: the jobs carry equal weight, so no card is emphasised; the
-   lead rule applies only if lib/home-jobs.ts names a lead. AC/1 tokens only. */
+   two-column grid. Owner decision, 12 November 2026, "Equal weight": no card is emphasised. AC/1 tokens only. */
 .plan-job-words {
   min-width: 0;
-}
-.plan-jobs .choice[data-weight='lead'] {
-  border-color: color-mix(in srgb, var(--action) 28%, var(--border-strong));
-  background: var(--selected-surface);
-  font-family: var(--serif);
-  font-size: var(--text-xl);
-  font-weight: 500;
-  line-height: 1.2;
-}
-.plan-jobs .choice[data-weight='lead']:has(input:checked) {
-  background: var(--selected-surface);
-  font-weight: 500;
 }
 .plan-jobs .choice:hover {
   border-color: var(--action);

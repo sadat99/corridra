@@ -44,26 +44,12 @@ export const homeJobs: Record<HomeJob['key'], HomeJob> = {
 };
 
 /**
- * The order of the three jobs. Owner decision, 12 November 2026 ("Equal weight"): Buy, the group trip and Sell are
- * drawn at the same size and weight, in this order. To change the order, reorder this list.
+ * The order of the three jobs. Owner decision, 12 November 2026, "Equal weight": Buy, the group trip and Sell get the
+ * same size, in the order Buy, trip, Sell.
  */
 export const homeJobOrder: readonly HomeJob['key'][] = ['buy', 'trip', 'sell'];
 
-/**
- * The job drawn larger than the others, or null for equal weight (the owner's current decision). Setting a key here
- * makes that job the lead card and the others compact, with no other change.
- */
-export const homeJobLead: HomeJob['key'] | null = null;
-
-export type JobWeight = 'equal' | 'lead' | 'compact';
-
-/** The jobs in display order, each with its weight. */
-export function orderedJobs(
-  order: readonly HomeJob['key'][] = homeJobOrder,
-  lead: HomeJob['key'] | null = homeJobLead,
-) {
-  return order.map((key) => ({
-    job: homeJobs[key],
-    weight: (lead === null ? 'equal' : key === lead ? 'lead' : 'compact') as JobWeight,
-  }));
+/** The jobs in display order. */
+export function orderedJobs(order: readonly HomeJob['key'][] = homeJobOrder) {
+  return order.map((key) => homeJobs[key]);
 }

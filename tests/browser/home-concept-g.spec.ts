@@ -125,26 +125,20 @@ test('every job link opens its request with the contract name in its accessible 
     [
       'Buy products or machines Find suppliers. Compare price quotes. Bangladesh to China Find Suppliers & Products',
       '/plan?job=sourcing',
-      'equal',
     ],
     [
       'Lead a group trip Plan the programme and the meetings. Delegations and trade missions Organise a Delegation',
       '/plan?job=delegations',
-      'equal',
     ],
     [
       'Sell my products Find buyers and partners abroad. Bangladesh to Spain and the EU Find Buyers & Partners',
       '/plan?job=buyers',
-      'equal',
     ],
   ] as const;
   for (const [name, href] of expected)
     await expect(jobs.getByRole('link', { name, exact: true })).toHaveAttribute('href', href);
-  for (const [index, [name, , weight]] of expected.entries()) {
-    const link = jobs.getByRole('link').nth(index);
-    await expect(link).toHaveAccessibleName(name);
-    await expect(link).toHaveAttribute('data-weight', weight);
-  }
+  for (const [index, [name]] of expected.entries())
+    await expect(jobs.getByRole('link').nth(index)).toHaveAccessibleName(name);
   await expect(
     page.getByRole('link', { name: 'Something else? Tell us your business goal' }),
   ).toHaveAttribute('href', '/plan');

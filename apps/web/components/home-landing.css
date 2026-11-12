@@ -75,7 +75,7 @@
 }
 /* The three jobs at equal weight (owner decision, 12 November 2026, "Equal weight"; order in lib/home-jobs.ts):
    three cards of one size and one style, each naming its first route in a small chip. Every row of the grid is as
-   tall as the tallest card. The lead and compact rules below apply only if lib/home-jobs.ts names a lead. */
+   tall as the tallest card. */
 .ac1-jobs {
   container: ac1-jobs / inline-size;
   display: grid;
@@ -166,39 +166,6 @@
 .ac1-jobs .ac1-job:hover strong {
   color: var(--action);
 }
-/* Only when lib/home-jobs.ts names a lead: a larger card on the soft cobalt surface, the route chip above the title. */
-.ac1-jobs .ac1-job[data-weight='lead'] {
-  align-items: start;
-  padding: var(--space-5) min(var(--space-5), 5vw);
-  border-color: color-mix(in srgb, var(--action) 28%, var(--line));
-  background: var(--selected-surface);
-}
-.ac1-job[data-weight='lead'] .ac1-job-icon {
-  background: var(--surface-1);
-}
-.ac1-job[data-weight='lead'] .ac1-job-words {
-  flex-direction: column;
-  align-items: flex-start;
-  flex-wrap: nowrap;
-  gap: var(--space-1);
-}
-.ac1-job[data-weight='lead'] .ac1-job-route {
-  order: -1;
-}
-.ac1-jobs .ac1-job[data-weight='lead'] strong {
-  font-family: var(--serif);
-  font-size: 1.625rem;
-  font-weight: 500;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
-}
-.ac1-job[data-weight='lead'] .ac1-job-text {
-  flex: none;
-  font-size: var(--text-base);
-}
-.ac1-job[data-weight='lead'] .ac1-job-go {
-  align-self: center;
-}
 /* With very large text the jobs column is narrower than 15 of its own rem: the words take the whole card and the
    icon and arrow, which repeat the words, are not drawn. */
 @container ac1-jobs (max-width: 15rem) {
@@ -209,14 +176,6 @@
   .ac1-jobs .ac1-job-go {
     display: none;
   }
-}
-/* Only when a lead is named, the other jobs are compact: one quiet row, still a full 44 px target. */
-.ac1-jobs .ac1-job[data-weight='compact'] {
-  min-height: 3.5rem;
-  padding-block: var(--space-2);
-}
-.ac1-jobs .ac1-job[data-weight='compact'] strong {
-  font-size: var(--text-base);
 }
 .ac1-hero .ac1-quiet {
   margin-top: var(--space-2);
@@ -959,17 +918,11 @@
     min-height: 3.5rem;
     padding: var(--space-2) min(var(--space-3), 4vw);
   }
-  .ac1-jobs .ac1-job[data-weight='lead'] {
-    padding: var(--space-3) min(var(--space-3), 4vw);
-  }
   /* On a phone the route chip uses the interface face so each chip stays on one line. */
   .ac1-job-route {
     padding: 0 6px;
     font-family: var(--font-ui);
     letter-spacing: 0;
-  }
-  .ac1-job[data-weight='lead'] .ac1-job-text {
-    font-size: var(--text-sm);
   }
   /* Three example tabs and the Example tag share one row on a phone. */
   .ac1-record-head {
@@ -978,12 +931,9 @@
   .ac1-record-tabs button {
     padding: 0 var(--space-2);
   }
-  .ac1-jobs .ac1-job[data-weight='lead'] strong {
-    font-size: var(--text-2xl);
-  }
   /* On a phone each job card shows its title and route; the line stays in the link's accessible name and is not
-     drawn, so the three jobs and the example fit the phone budget. A named lead keeps its line. */
-  .ac1-job:not([data-weight='lead']) .ac1-job-text {
+     drawn, so the three jobs and the example fit the phone budget. */
+  .ac1-job .ac1-job-text {
     position: absolute;
     width: 1px;
     height: 1px;

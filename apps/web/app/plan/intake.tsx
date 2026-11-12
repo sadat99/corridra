@@ -21,7 +21,7 @@ import {
 import { issueSeparator } from '../../lib/i18n/form-words/messages';
 import { useFormWords } from './form-words';
 import './plan-jobs.css';
-import { orderedJobs, type HomeJob, type JobWeight } from '../../lib/home-jobs';
+import { orderedJobs, type HomeJob } from '../../lib/home-jobs';
 import { rememberSentRequest } from '../../lib/private-request-storage';
 import { customerStatusLabel } from '../../lib/ux/customer-road';
 import { formatDateTime } from '../../lib/ux/format';
@@ -137,7 +137,7 @@ const objectiveWords = {
 } satisfies Record<(typeof objectiveOptions)[number], FormKey>;
 /**
  * The order the objectives are drawn in on the first step. Visual only: the values, names and the intake logic are
- * unchanged. The three objectives that start the home page's jobs come first, in the home page's order and weight
+ * unchanged. The three objectives that start the home page's jobs come first, in the home page's order
  * (lib/home-jobs.ts); the other objectives follow in their own order. Each label keeps its exact words, so
  * every radio keeps its accessible name, and the step keeps its length budget (no route chip here).
  */
@@ -146,17 +146,11 @@ const objectiveForHomeJob = {
   trip: 'Run a multi-company mission',
   sell: 'Sell in a new market',
 } as const satisfies Record<HomeJob['key'], (typeof objectiveOptions)[number]>;
-const leadObjectives: readonly string[] = Object.values(objectiveForHomeJob);
-const isOther = ({ value }: { value: string }) => !leadObjectives.includes(value);
+const jobObjectives: readonly string[] = Object.values(objectiveForHomeJob);
+const isOther = ({ value }: { value: string }) => !jobObjectives.includes(value);
 const otherObjectives = objectiveOptions.map((value) => ({ value })).filter(isOther);
-const objectiveDisplay: readonly {
-  value: (typeof objectiveOptions)[number];
-  weight?: JobWeight;
-}[] = [
-  ...orderedJobs().map(({ job, weight }) => ({
-    value: objectiveForHomeJob[job.key],
-    weight,
-  })),
+const objectiveDisplay: readonly { value: (typeof objectiveOptions)[number] }[] = [
+  ...orderedJobs().map((job) => ({ value: objectiveForHomeJob[job.key] })),
   ...otherObjectives,
 ];
 const outcomeWords = {
@@ -1191,8 +1185,8 @@ function IntakeForm({
                     />
                   ) : (
                     <div className="guide-options plan-jobs">
-                      {objectiveDisplay.map(({ value: v, weight }) => (
-                        <label className="choice" key={v} data-weight={weight}>
+                      {objectiveDisplay.map(({ value: v }) => (
+                        <label className="choice" key={v}>
                           <input
                             type="radio"
                             name="objective"

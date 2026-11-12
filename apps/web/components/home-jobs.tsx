@@ -10,14 +10,8 @@ export function HomeJobs({ className = 'ac1-jobs' }: { className?: string }) {
   const t = useT();
   return (
     <nav className={className} aria-label={t('home.jobs.aria')}>
-      {orderedJobs().map(({ job, weight }) => (
-        <Link
-          prefetch={false}
-          key={job.href}
-          href={job.href}
-          className="ac1-job"
-          data-weight={weight}
-        >
+      {orderedJobs().map((job) => (
+        <Link prefetch={false} key={job.href} href={job.href} className="ac1-job">
           <CorridraIcon name={job.icon} className="ac1-job-icon" />
           <span className="ac1-job-words">
             <strong>{t(job.title)}</strong>
