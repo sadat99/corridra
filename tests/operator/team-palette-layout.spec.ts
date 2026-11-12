@@ -162,7 +162,10 @@ async function atRootFont32(width: number, height: number): Promise<BrowserConte
   );
   return chromium.launchPersistentContext(dir, {
     viewport: { width, height },
-    executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined,
+    // The headless shell ignores the profile's default font size, so use the full Chromium build (KI-54).
+    ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+      ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
+      : { channel: 'chromium' as const }),
   });
 }
 
