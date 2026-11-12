@@ -2,7 +2,7 @@
 
 Document status: CURRENT.
 
-Amends [navigation system v1](../navigation-v1.md) rule 3 (honest scopes) and rule 4 (the palette searches only what the person's role may open). Sibling of [team-reachability](team-reachability.md). Sensitive: yes, because the search route reads through role-checked services. No migration, no schema change, no new service, no new dependency, no new switch. People search is not built and is not shown. Phase 2 (database full-text and more entities) and Phase 3 (customer search) are out of scope.
+Amends [navigation system v1](../navigation-v1.md) rule 3 (honest scopes) and rule 4 (the palette searches only what the person's role may open). Sibling of [team-reachability](team-reachability.md). Sensitive: yes, because the search route reads through role-checked services. No migration, no schema change, no new service, no new dependency, no new switch. People search is not built and is not shown. Phase 2 (database full-text and more entities) and Phase 3 (customer search) are out of scope here; customer search is specified in [customer search](customer-search.md).
 
 Owner direction, 12 Nov 2026: upgrade the staff command palette to the platform's standard. Binding condition 7 of navigation v1 still holds: no switch, provider, payment, outreach, AI or migration change; the D gates stay closed.
 

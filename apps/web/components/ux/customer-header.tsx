@@ -6,6 +6,7 @@
 // still checks on the server.
 import './customer-bar.css';
 import { usePathname } from 'next/navigation';
+import { CustomerSearch } from './customer-search';
 import { NewRequestLink } from './customer-rail';
 import {
   AvatarMenu,
@@ -28,6 +29,7 @@ export function CustomerBar({
   const helpGroups = useCustomerHelpGroups(whatsappHref);
   return (
     <div className="ux-bar-tools">
+      <CustomerSearch />
       <NewRequestLink className="ux-bar-primary ux-bar-new-narrow" />
       <LanguageMenu />
       {notifications ? (

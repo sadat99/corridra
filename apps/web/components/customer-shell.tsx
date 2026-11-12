@@ -1,5 +1,5 @@
 import { realUseEnabled } from '@corridra/auth/customer-production';
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { customerBillingEnabled } from '@corridra/auth/customer-billing';
 import { customerAccountLifecycleEnabled } from '@corridra/auth/customer-account-lifecycle';
 import { customerCompaniesEnabled } from '@corridra/auth/customer-companies';
@@ -12,6 +12,7 @@ import { notificationSettingsAvailable } from '../lib/ux/notification-settings';
 import { supportWhatsappHref } from '../lib/ux/support-whatsapp';
 import { CustomerTabs } from './ux/customer-tabs';
 import { CustomerBarNote } from './ux/customer-bar-note';
+import { CustomerBarIdentity } from './ux/customer-bar-identity';
 import { LeftNavFrame, LeftNavList, type LeftNavItem } from './ux/left-nav';
 import { CustomerRailFoot, CustomerRailTop } from './ux/customer-rail';
 import { WorkspaceShell } from './workspace-shell';
@@ -97,7 +98,9 @@ function CustomerFrame({ tab, eyebrow, title, count, children }: CustomerShellPr
   // Navigation v1: the sidebar (1024 px and wider) and the labelled bottom tabs (below) list the same five
   // destinations from one model. Account, Company Profile, Plan and Billing and the rest are under the avatar.
   // Home is Your Move only with both the navigation and the Move switches, exactly as the old list decided.
-  const tabs = customerTabs({ companies: customerCompaniesEnabled(), move: plainNames && move });
+  const companies = customerCompaniesEnabled();
+  const homeIsMove = plainNames && move;
+  const tabs = customerTabs({ companies, move: homeIsMove });
   const here: CustomerTabKey | null =
     tab === 'home' || tab === 'move'
       ? 'home'
@@ -129,12 +132,18 @@ function CustomerFrame({ tab, eyebrow, title, count, children }: CustomerShellPr
         billing={customerBillingEnabled()}
         notificationSettings={notificationSettingsAvailable()}
         organisationProfiles={customerOrganisationProfilesEnabled()}
+        companies={companies}
+        move={homeIsMove}
         text={
           real
             ? 'Your work stays private to the people given access.'
             : 'Preview workspace: use made-up names and details here.'
         }
       />
+      {/* Streams after the frame: the identity is for the header's Search only and nothing waits for it. */}
+      <Suspense fallback={null}>
+        <CustomerBarIdentity />
+      </Suspense>
       <WorkspaceShell title={title} customer>
         {children}
       </WorkspaceShell>
