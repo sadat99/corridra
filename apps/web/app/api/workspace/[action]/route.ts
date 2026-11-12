@@ -126,7 +126,7 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
           const query = new URL(request.url).searchParams;
           return s.missions.queue(
             ctx,
-            z.enum(['all', 'open', 'overdue']).parse(query.get('filter') ?? 'all'),
+            z.enum(['all', 'open', 'overdue', 'stale']).parse(query.get('filter') ?? 'all'),
             z.coerce
               .number()
               .int()

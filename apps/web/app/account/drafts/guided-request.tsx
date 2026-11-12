@@ -20,6 +20,12 @@ import {
   type SourcingContext,
 } from '@corridra/domain/mission-drafts';
 import { outcomeOptions } from '@corridra/domain/missions';
+import { pp } from '../../../lib/i18n/programme-pages';
+import {
+  clearObjectiveReturn,
+  readObjectiveReturn,
+  type ObjectiveReturn,
+} from '../../../lib/delegate-objective';
 
 type Status = 'OPEN' | 'SUBMITTED' | 'DISCARDED';
 type ServerDraft = {
@@ -335,6 +341,28 @@ function Guided(scope: Scope) {
       if (active.current) setBusy(false);
     }
   };
+  // A link can name the draft to open: the delegate's path prepares one from their programme application and sends
+  // the person straight to it, so they do not look for it in the list. Once, and only for an open draft listed here.
+  const linked = useRef(false);
+  useEffect(() => {
+    if (linked.current || !rows) return;
+    linked.current = true;
+    const id = new URLSearchParams(window.location.search).get('draft');
+    const row = id ? rows.find((r) => r.id === id && r.status === 'OPEN') : undefined;
+    if (row) void Promise.resolve().then(() => open(row));
+  });
+  // The programme this request was started from, when it is the draft just sent: the confirmation leads back there.
+  const [programme, setProgramme] = useState<ObjectiveReturn | null>(null);
+  useEffect(() => {
+    if (!sent) return;
+    void Promise.resolve().then(() => {
+      const found = readObjectiveReturn(window.sessionStorage);
+      if (found && found.draftId === draftId) {
+        setProgramme(found);
+        clearObjectiveReturn(window.sessionStorage);
+      }
+    });
+  }, [sent, draftId]);
   // Saving writes a new version. An unchanged retry reuses its command id so it can never double-save.
   const persist = async (): Promise<{ id: string; version: number } | null> => {
     if (!form) return null;
@@ -616,6 +644,17 @@ function Guided(scope: Scope) {
           Corridra staff can reply with questions. You will see replies and status under your saved
           requests.
         </p>
+        {programme && (
+          <p className="ux-draft-notice" data-programme-return>
+            <span>{pp('pp.path.return.text', { programme: programme.programmeName })} </span>
+            <a
+              className="text-link"
+              href={`/account/delegations?objective=${programme.registrationId}#registration-${programme.registrationId}`}
+            >
+              {pp('pp.path.return.link')}
+            </a>
+          </p>
+        )}
         <p>
           <a className="text-link" href="/account#customer-requests">
             See your saved requests
