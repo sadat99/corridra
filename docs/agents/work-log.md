@@ -3912,3 +3912,17 @@ Changed files: `docs/v3/history/ledger-before-s40-records-8-2026-11-12.md` (exac
 Preserved: gates D01-D06/D08, real payments and providers closed; the PR 335 withdrawal control CLOSED; no direct production SQL.
 
 Next: Orchestrator 4 confirms main CI and the deployment on 625747f2; owner deletes the typo env var; follow-ups in the ledger (signed-in runtime checks, ADR-080 acceptance, native review of new Chinese words, a cross-instance search limit needs an owner-approved table).
+
+### 12 November 2026: ADR-081 PR B, operator screens for a prepared supplier offer (scribe record; branch claude/operator-handoff-b, head b44dce9, 3 commits on main 966d8af9, not pushed, no PR yet)
+
+Request: record the operator side of ADR-081. PR A (#461, merged as 109f0f4) holds the SQL, server and domain bind; this branch changes screens only. Squad route run: authority, product, architect, designer, builder, two reviewer passes (no blocking findings), designer audit, refute pass, one fix round.
+
+- Reply card: "Open Prepared Offer" for owner, admin and operator only; one prefill request per published card; the link shows only when mission pages are on (read from /api/team-work/flags), otherwise the copy fallback.
+- Mission page `?reply=<uuid>` opens the Requirements tab with a bound "Record a supplier offer" form: exact terms read-only, "Not stated" where absent, self-declared source and claim chosen by the team, a reason, Save Quotation. It sends the exact strings plus `replyBinding {responseId, seen, digest}` through the unchanged commercial-mission POST, reuses the same command id on retry, shows a 409 stale answer and never resubmits it, shows an already-recorded state, explains the 11 ineligible codes in plain words, and on 503, 403 or any error falls back to copy and the hand form.
+- Files: `apps/web/lib/reply-review-view.ts`, `apps/web/lib/ux/use-reply-prefill.ts`, `apps/web/app/operator/reply-review.tsx`, `commercial-mission.tsx`, `reply-handoff.css`, `[section]/[missionId]/page.tsx`, `mission-page.tsx`, `tests/integration/reply-handoff-view.test.ts`, `tests/operator/ux-reply-handoff.spec.ts`. No SQL, server, domain or route change; nothing installed.
+- Verification run locally: `pnpm format:check` exit 0; `pnpm lint` exit 0; `pnpm typecheck` exit 0; vitest reply-handoff-view 7/7; `node --test tests/design-system.test.mjs` 14/14; Playwright (stubbed, real components, no database) ux-reply-handoff plus ux-reply-review 59/59 including axe at 390, 768 and 1440. 34 of 39 new handoff tests failed against main source; the 5 vacuous negative guards were given positive controls; the fix-round tests failed without their fixes.
+- NOT run: the full protected operator suite (needs PostgreSQL; CI is the proof), tests/integration database suites, `pnpm build`, `pnpm test:e2e`, the real-database path of the bind (covered by PR A's integration tests), any signed-in production journey.
+- Open items: the C6 redirect keeps `?reply` (no stub test); "revision N of M" is shown as "Reply version N, offer revision M" because the prefill has no total; "Open the Full Original Reply" dropped (no target).
+- Preserved: production stays on the copy fallback until the owner installs migration 0003; decision 4 stays the owner's. Gates D01-D06/D08 and real payments closed. Not changed: ADRs, tests outside the two named, PLAN_STATUS, KNOWN_ISSUES.
+
+Next: push, CI on the exact head, Guardian review and merge by the orchestrator; owner decision on installing 0003. PR: none yet. Tested head: b44dce9 (local only).
