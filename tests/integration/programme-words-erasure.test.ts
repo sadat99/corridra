@@ -151,6 +151,67 @@ const outside = async () =>
  (SELECT count(*)::int FROM customer_private.programme_participant_revocation) revocations`)
   ).rows[0];
 
+// Every test that erases words sets up and erases its own people, so the tests pass in any order. The bystanders below are never
+// erased by any test: carol (wait-listed), dana (joined and corrected her label), erin (unanswered) and zed (joined by a code).
+const enrol = async (person: string) => {
+  Object.assign(ids, await h.admit([person]));
+  await h.provision(person, `Synthetic ${person} workspace`);
+};
+const applicant = async (person: string) => {
+  await enrol(person);
+  return (await pages(person).application(apply(person))).id;
+};
+const registration = async (person: string) =>
+  (
+    await f.owner.query(
+      'SELECT id FROM customer_private.programme_registration WHERE principal_id=$1',
+      [ids[person]],
+    )
+  ).rows[0].id as string;
+// Applies, is invited (the invitation copies the label), joins, and corrects the label.
+const joined = async (person: string) => {
+  const application = await applicant(person);
+  await pages('alice').application(decide(application, 0, 'INVITED'));
+  await pages(person).application({
+    action: 'join',
+    commandId: randomUUID(),
+    applicationId: application,
+    consented: true,
+  });
+  await h.sql(person, 'SELECT customer.programme_registration_label($1,$2,$3,$4)', [
+    randomUUID(),
+    await registration(person),
+    0,
+    `Synthetic ${secret(person)} corrected`,
+  ]);
+};
+// Joins by the private invitation code and writes the label there; the replay record of that step keeps the label too.
+const byCode = async (person: string) => {
+  await enrol(person);
+  const invitation = (await participants('alice').command({
+    action: 'invite',
+    commandId: randomUUID(),
+    workspaceId,
+    programmeId,
+    label: `Synthetic participant invitation for ${person}`,
+    acknowledged: true,
+  })) as { token: string };
+  await participants(person).command({
+    action: 'accept',
+    commandId: randomUUID(),
+    programmeId,
+    token: invitation.token,
+    displayLabel: `Synthetic ${secret(person)} by code`,
+    consented: true,
+  });
+};
+// A person whose erasure request is in progress, ready for the words to be removed.
+const underRequest = async (person: string) => {
+  const requestId = await request(person);
+  await erasure(requestId, 'received', 'in_progress');
+  return requestId;
+};
+
 beforeAll(async () => {
   f = await fixture();
   await migrateCustomerCompanies(f.owner);
@@ -162,11 +223,9 @@ beforeAll(async () => {
   await migrateCustomerProgrammeErasure(f.owner);
   await migrateCustomerProblemReports(f.owner);
   h = harness(f, 'pwe');
-  ids = await h.admit(['alice', 'bob', 'carol', 'dana', 'erin', 'frank', 'gina']);
+  ids = await h.admit(['alice']);
   await setAccountControl(true);
   workspaceId = await h.provision('alice', 'Synthetic organiser workspace');
-  for (const person of ['bob', 'carol', 'dana', 'erin', 'frank', 'gina'])
-    await h.provision(person, `Synthetic ${person} workspace`);
   programmeId = (
     await programmes('alice').create({
       commandId: randomUUID(),
@@ -187,52 +246,10 @@ beforeAll(async () => {
     acknowledged: true,
   });
   address = published.address;
-  // bob: applies, is invited (the invitation copies the label), joins, and corrects the label. carol: applies and is wait-listed.
-  // dana: applies, is invited and joins; her words must stay. erin: applies and stays unanswered.
-  const applications: Record<string, string> = {};
-  for (const person of ['bob', 'carol', 'dana', 'erin', 'gina'])
-    applications[person] = (await pages(person).application(apply(person))).id;
-  await pages('alice').application(decide(applications.carol!, 0, 'WAITLISTED'));
-  for (const person of ['bob', 'dana']) {
-    await pages('alice').application(decide(applications[person]!, 0, 'INVITED'));
-    await pages(person).application({
-      action: 'join',
-      commandId: randomUUID(),
-      applicationId: applications[person],
-      consented: true,
-    });
-  }
-  // frank joins by the private invitation code and writes his own label there; the replay record of that step keeps the label too.
-  const invitation = (await participants('alice').command({
-    action: 'invite',
-    commandId: randomUUID(),
-    workspaceId,
-    programmeId,
-    label: 'Synthetic participant invitation',
-    acknowledged: true,
-  })) as { token: string };
-  await participants('frank').command({
-    action: 'accept',
-    commandId: randomUUID(),
-    programmeId,
-    token: invitation.token,
-    displayLabel: `Synthetic ${secret('frank')} by code`,
-    consented: true,
-  });
-  const registration = async (person: string) =>
-    (
-      await f.owner.query(
-        'SELECT id FROM customer_private.programme_registration WHERE principal_id=$1',
-        [ids[person]],
-      )
-    ).rows[0].id as string;
-  for (const person of ['bob', 'dana'])
-    await h.sql(person, 'SELECT customer.programme_registration_label($1,$2,$3,$4)', [
-      randomUUID(),
-      await registration(person),
-      0,
-      `Synthetic ${secret(person)} corrected`,
-    ]);
+  await pages('alice').application(decide(await applicant('carol'), 0, 'WAITLISTED'));
+  await joined('dana');
+  await applicant('erin');
+  await byCode('zed');
 }, 240000);
 afterAll(async () => {
   await f?.close();
@@ -293,10 +310,9 @@ describe('the install', () => {
 });
 
 describe('words are removed under an erasure request', () => {
-  let bobRequest = '';
-  let before: Record<string, unknown> = {};
   test('a received request, a stranger and an unknown request are refused and nothing changes', async () => {
-    bobRequest = await request('bob');
+    await joined('refused');
+    const bobRequest = await request('refused');
     const events = await outside();
     await expect(remove(bobRequest)).rejects.toMatchObject({
       code: '23514',
@@ -310,18 +326,23 @@ describe('words are removed under an erasure request', () => {
       code: '42501',
     });
     await expect(
-      h.sql('bob', 'SELECT customer.programme_words_remove($1,$2)', [randomUUID(), bobRequest]),
+      h.sql('refused', 'SELECT customer.programme_words_remove($1,$2)', [randomUUID(), bobRequest]),
     ).rejects.toMatchObject({ code: '42501' });
-    expect(await holders(secret('bob'))).not.toEqual([]);
+    expect(await holders(secret('refused'))).not.toEqual([]);
     expect(await outside()).toEqual(events);
     expect(
-      (await f.owner.query('SELECT count(*)::int n FROM customer_private.programme_words_erasure'))
-        .rows[0].n,
+      (
+        await f.owner.query(
+          'SELECT count(*)::int n FROM customer_private.programme_words_erasure WHERE erasure_request_id=$1',
+          [bobRequest],
+        )
+      ).rows[0].n,
     ).toBe(0);
   });
 
   test('an in progress request replaces only the words of that person, in every place they were kept', async () => {
-    await erasure(bobRequest, 'received', 'in_progress');
+    await joined('bob');
+    const bobRequest = await underRequest('bob');
     const bob = ids.bob!;
     const keep = {
       application: await without(
@@ -348,7 +369,7 @@ describe('words are removed under an erasure request', () => {
     };
     const danaWords = await holders(secret('dana'));
     const carolWords = await holders(secret('carol'));
-    before = await outside();
+    const before = await outside();
     const done = await remove(bobRequest);
     expect(done).toMatchObject({
       removed: 5,
@@ -398,7 +419,8 @@ describe('words are removed under an erasure request', () => {
     // The record rows hold no words and name the request, the staff member and the command.
     const rows = (
       await f.owner.query(
-        'SELECT source,erasure_request_id,staff_principal_id FROM customer_private.programme_words_erasure ORDER BY source',
+        'SELECT source,erasure_request_id,staff_principal_id FROM customer_private.programme_words_erasure WHERE erasure_request_id=$1 ORDER BY source',
+        [bobRequest],
       )
     ).rows;
     expect(rows).toHaveLength(5);
@@ -406,35 +428,36 @@ describe('words are removed under an erasure request', () => {
   });
 
   test('the same command answers with the same counts, a new command finds nothing left, and a changed request is refused', async () => {
+    await applicant('replayed');
+    await applicant('other');
+    const replayedRequest = await underRequest('replayed');
+    const otherRequest = await underRequest('other');
     const command = randomUUID();
-    const first = await remove(bobRequest, command);
-    expect(first.removed).toBe(0);
-    const carolRequest = await request('carol');
-    await erasure(carolRequest, 'received', 'in_progress');
-    const carolCommand = randomUUID();
-    const carol = await remove(carolRequest, carolCommand);
-    expect(carol).toMatchObject({ removed: 1, applications: 1 });
-    expect(await remove(carolRequest, carolCommand)).toEqual(carol);
-    await expect(remove(bobRequest, carolCommand)).rejects.toMatchObject({
+    const replayed = await remove(replayedRequest, command);
+    expect(replayed).toMatchObject({ removed: 1, applications: 1 });
+    expect(await remove(replayedRequest, command)).toEqual(replayed);
+    expect((await remove(replayedRequest)).removed).toBe(0);
+    await expect(remove(otherRequest, command)).rejects.toMatchObject({
       code: '23514',
       message: 'Command conflicts with original request',
     });
-    expect(await holders(secret('carol'))).toEqual([]);
+    expect(await holders(secret('replayed'))).toEqual([]);
+    expect(await holders(secret('other'))).not.toEqual([]);
   });
 
   test('a completed request removes the words written up to its completion and no later ones', async () => {
-    const erinRequest = await request('erin');
-    await erasure(erinRequest, 'received', 'in_progress');
-    await erasure(erinRequest, 'in_progress', 'completed', 'Erased as asked.');
+    await applicant('late');
+    const lateRequest = await underRequest('late');
+    await erasure(lateRequest, 'in_progress', 'completed', 'Erased as asked.');
     const late = (
       await f.owner.query(
         'SELECT count(*)::int n FROM customer_private.programme_application WHERE principal_id=$1 AND created_at<=(SELECT max(created_at) FROM customer_private.erasure_status_event WHERE request_id=$2)',
-        [ids.erin, erinRequest],
+        [ids.late, lateRequest],
       )
     ).rows[0].n;
     expect(late).toBe(1);
-    expect(await remove(erinRequest)).toMatchObject({ removed: 1, applications: 1 });
-    expect(await holders(secret('erin'))).toEqual([]);
+    expect(await remove(lateRequest)).toMatchObject({ removed: 1, applications: 1 });
+    expect(await holders(secret('late'))).toEqual([]);
     // dana never asked: her words are still there.
     expect(await holders(secret('dana'))).not.toEqual([]);
   });
@@ -442,6 +465,8 @@ describe('words are removed under an erasure request', () => {
 
 describe('the guard with a record row', () => {
   test('even with a record row, a change to any other column or to another row is refused, and the placeholders pass every check', async () => {
+    await applicant('guarded');
+    await request('guarded');
     const client = await f.owner.connect();
     try {
       const pick = async (sql: string) => (await client.query(sql)).rows[0].id as string;
@@ -501,8 +526,8 @@ describe('the guard with a record row', () => {
 
 describe('a person who joined by a private invitation code', () => {
   test('loses the label in the registration and in the replay record of joining, and the organiser invitation label stays', async () => {
-    const frankRequest = await request('frank');
-    await erasure(frankRequest, 'received', 'in_progress');
+    await byCode('frank');
+    const frankRequest = await underRequest('frank');
     expect(await holders(secret('frank'))).toContain(
       'customer_private.programme_participant_command.request',
     );
@@ -515,7 +540,7 @@ describe('a person who joined by a private invitation code', () => {
     expect(
       (
         await f.owner.query(
-          "SELECT count(*)::int n FROM customer_private.programme_invitation WHERE label='Synthetic participant invitation'",
+          "SELECT count(*)::int n FROM customer_private.programme_invitation WHERE label='Synthetic participant invitation for frank'",
         )
       ).rows[0].n,
     ).toBe(1);
@@ -524,8 +549,8 @@ describe('a person who joined by a private invitation code', () => {
 
 describe('the staff service', () => {
   test('one removal under an erasure request also reports the programme words it replaced', async () => {
-    const ginaRequest = await request('gina');
-    await erasure(ginaRequest, 'received', 'in_progress');
+    await applicant('gina');
+    const ginaRequest = await underRequest('gina');
     // gina filed no problem report: the report removal answers 0 without raising and the programme words still go.
     const input = {
       action: 'remove_words',
