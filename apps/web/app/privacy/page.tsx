@@ -60,7 +60,7 @@ export default function Page() {
   const programmePages = customerProgrammePagesEnabled();
   // Starting a request from an application is described only while the objective path that offers it is shown.
   const objectivePath = programmePages && customerMissionSharesEnabled();
-  const updated = programmePages ? '11 November 2026' : `${updatedDay} October 2026`;
+  const updated = programmePages ? '12 November 2026' : `${updatedDay} October 2026`;
   const noticeVersion = real ? 'real-intake-2026-10-21-v1' : 'synthetic-intake-2026-10-05-v1';
   return (
     <PublicShell>
@@ -438,10 +438,18 @@ export default function Page() {
                   with its reason.
                 </p>
                 <p>
-                  Only you and the current owners and administrators of the organising workspace see
+                  Besides you, the current owners and administrators of the organising workspace see
                   your application. They never see your email address, your private requests,
                   contacts or prices. A person who leaves or is removed from that workspace loses
                   access.
+                </p>
+                <p>
+                  Owners and administrators of the Corridra team can also read applications. They
+                  see your display name and statement, the programme and its page, your application
+                  status and any note the organiser gave. They cannot change or answer an
+                  application, and they do not see your email address. This applies only to
+                  applications sent after the Corridra team was given this access; earlier ones stay
+                  visible only to you and the organiser.
                 </p>
                 <p>
                   Until you join the programme, you can withdraw your application. It then stays on

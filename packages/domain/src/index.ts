@@ -97,6 +97,8 @@ export const permissions = {
   // Problem reports (ADR-078): every role may report one; owners and admins triage them with a fresh authenticator check.
   'problems.report': ['owner', 'admin', 'operator', 'reviewer', 'viewer'],
   'problems.triage': ['owner', 'admin'],
+  // Reading public programme applications (ADR-080, owner decision 12 Nov 2026): read only, owners and admins with a fresh authenticator check.
+  'programme.applications.read': ['owner', 'admin'],
   // Opening a read-only preview of what a customer, delegate or supplier sees. Always logged.
   'viewas.open': ['owner', 'admin'],
 } satisfies Record<string, Role[]>;

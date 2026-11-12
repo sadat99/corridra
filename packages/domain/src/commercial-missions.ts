@@ -289,6 +289,13 @@ export const commercialMissionCommand = z.discriminatedUnion('action', [
     })
     .strict(),
 ]);
+/**
+ * The one rule for which comparison context applies to a mission: its latest route assignment is a machinery
+ * procurement. The team's and the buyer's comparison both call this, so one offer never gets two verdicts.
+ */
+export function offerContext(typeKey: string | null | undefined): 'GENERAL' | 'MACHINERY' {
+  return typeKey === 'machinery_procurement' ? 'MACHINERY' : 'GENERAL';
+}
 export function compareOffers(
   offers: {
     id: string;

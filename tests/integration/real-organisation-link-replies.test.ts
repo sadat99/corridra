@@ -28,7 +28,7 @@ vi.mock('node:fs/promises', async (importOriginal) => {
         // exact base state of this suite is unchanged. Owner decision 11 Nov 2026, "No, remove access (Recommended)".
         names.filter(
           (n) =>
-            !/^(0013_organisation_link_provenance_and_search|0014_|0015_|0016_|0017_|0018_)/.test(
+            !/^(0013_organisation_link_provenance_and_search|0014_|0015_|0016_|0017_|0018_|0019_)/.test(
               String(n),
             ),
         )
