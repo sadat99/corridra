@@ -602,8 +602,9 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
       event.preventDefault();
       // With no row listed there is nothing to move to; a stored -1 would outlive the wait for the answer.
       if (entries.length > 0) setSelected(moveSelection(active, event.key, entries.length));
-    } else if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
-      // Enter that commits an input method composition (Chinese, Japanese, Korean) is not "open".
+    } else if (event.key === 'Enter' && !event.nativeEvent.isComposing && event.keyCode !== 229) {
+      // Enter that commits an input method composition (Chinese, Japanese, Korean) is not "open". Safari ends the
+      // composition before that Enter arrives, so isComposing is already false there; keyCode 229 still says so.
       event.preventDefault();
       go(entries[active]);
     } else if (event.key === 'Tab' && !(event.target as HTMLElement).closest('.ux-palette-hint')) {

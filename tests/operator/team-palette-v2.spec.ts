@@ -900,6 +900,35 @@ test.describe('R2-1 and R2-13 the keyboard', () => {
     await page.keyboard.press('Enter');
     await page.waitForURL(/operator\/missions\//);
   });
+  test('Safari ends the composition before the committing Enter: keyCode 229 does not open a result', async ({
+    page,
+  }) => {
+    await open(page);
+    await serve(page, () => found);
+    await page.route('**/operator/missions/**', (route) =>
+      route.fulfill({ status: 200, body: '<html></html>', contentType: 'text/html' }),
+    );
+    await type(page, 'madrid');
+    await expect(palette(page).getByRole('option', { name: /Madrid Textiles/ })).toBeVisible();
+    const before = page.url();
+    const prevented = await field(page).evaluate((input) => {
+      const event = new KeyboardEvent('keydown', {
+        key: 'Enter',
+        keyCode: 229,
+        isComposing: false,
+        bubbles: true,
+        cancelable: true,
+      });
+      input.dispatchEvent(event);
+      return event.defaultPrevented;
+    });
+    await page.waitForTimeout(400);
+    expect(prevented).toBe(false);
+    expect(page.url()).toBe(before);
+    await expect(palette(page)).toBeVisible();
+    await page.keyboard.press('Enter');
+    await page.waitForURL(/operator\/missions\//);
+  });
 });
 
 test.describe('N5 and S3 recents', () => {
