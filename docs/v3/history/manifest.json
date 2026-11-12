@@ -445,6 +445,14 @@
       "bytes": 10246,
       "sha256": "f98cb7f01b5951e7c41bd22a46b6642413198ebc6a093f448fea41474019abdf",
       "meaning": "Exact active ledger at 584e3f46 (the PR 455 merge, 12 Nov), byte-identical (cmp) to the S40 records 6 merge 6947d2f4 and unchanged through PRs 450 and 453 to 455, before PRs 450, 453, 454 and 455 and install runs 43201110968 and 43207833724 were recorded, including the S40 records 6 Takeover, merges 443 to 449, installs, installed counts, programme pages, owner words, lanes and follow-up bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "625747f29fa8944536e183c322b85e3c7ca25037",
+      "archive": "docs/v3/history/ledger-before-s40-records-8-2026-11-12.md",
+      "bytes": 10732,
+      "sha256": "5f9eb4db5362008c69f081147e432fbcbbad84475227cb9a97626843a0f7c5e0",
+      "meaning": "Exact active ledger at 625747f2 (the PR 451 merge, 12 Nov), byte-identical (cmp) to the S40 records 7 merge d9b75287 and unchanged through PR 451, before PR 451, its Guardian rounds and the owner decisions taken by Orchestrator 4 under \"u do all that's possible\" were recorded, including the S40 records 7 Takeover, merges 450 and 453 to 455, installs, installed counts, owner words, lanes and follow-up bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
