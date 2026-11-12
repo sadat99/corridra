@@ -339,27 +339,27 @@
   }
 }
 
-/* AC/1 stage timeline: from 40rem the six stages stand in one column with a rule between square nodes. The
+/* AC/1 stage timeline, customer Room only (the programme room shares .room-stage and keeps its bar): from 40rem the six stages stand in one column with a rule between square nodes. The
    words, order and aria-current are the StageBar's own. On phones the slim bar stays, so the next step keeps
    its place on the first screen. */
 @media (min-width: 40.01rem) {
-  .room-stage .mr-stage-wrap[data-named='true'] .mr-stage {
+  .room-stage--timeline .mr-stage-wrap[data-named='true'] .mr-stage {
     grid-template-columns: minmax(0, 1fr);
     gap: 0;
   }
-  .room-stage .mr-stage-wrap[data-named='true'] .mr-stage li {
+  .room-stage--timeline .mr-stage-wrap[data-named='true'] .mr-stage li {
     position: relative;
     grid-template-columns: 12px minmax(0, 1fr);
     column-gap: var(--space-3);
     align-items: center;
     padding-block: var(--space-1);
   }
-  .room-stage .mr-stage-wrap[data-named='true'] .mr-stage li::before {
+  .room-stage--timeline .mr-stage-wrap[data-named='true'] .mr-stage li::before {
     width: 12px;
     height: 12px;
     border-radius: 2px;
   }
-  .room-stage .mr-stage-wrap[data-named='true'] .mr-stage li:not(:last-child)::after {
+  .room-stage--timeline .mr-stage-wrap[data-named='true'] .mr-stage li:not(:last-child)::after {
     content: '';
     position: absolute;
     inset-inline-start: 5px;
@@ -374,7 +374,7 @@
     li[data-state='done']:not(:last-child)::after {
     background: var(--brand);
   }
-  .room-stage .mr-stage-wrap[data-named='true'] .mr-stage li .mr-stage-name {
+  .room-stage--timeline .mr-stage-wrap[data-named='true'] .mr-stage li .mr-stage-name {
     font-size: var(--text-sm);
   }
 }

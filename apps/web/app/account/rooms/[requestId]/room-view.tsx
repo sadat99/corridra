@@ -363,7 +363,7 @@ export function RoomView({
                 date: day(detail.progress.receivedAt),
               })}
             </p>
-            <div className="room-stage">
+            <div className="room-stage room-stage--timeline">
               <StageBar
                 status={detail.progress.status}
                 records={roadRecords(link)}
