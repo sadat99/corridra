@@ -3,6 +3,7 @@ import { ParticipantProjectionSharing } from './programme-projections';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { ProgrammeContext } from './programme-context';
 import { ProgrammeObjectives } from './programme-objectives';
+import { DelegatePath } from './delegate-path';
 import { ParticipantResults } from './participant-results';
 import { ParticipantPlace } from './participant-place';
 import { MyReminders } from './my-reminders';
@@ -16,6 +17,9 @@ export function ParticipantAccount(
     coordinationEnabled?: boolean;
     termsEnabled?: boolean;
     projectionsEnabled?: boolean;
+    /** Programme pages and shared objectives are both on: the delegate's objective path is shown. */
+    objectivePathEnabled?: boolean;
+    draftsEnabled?: boolean;
   },
 ) {
   return <ScopedAccount key={props.issuer + ':' + props.subject} {...props} />;
@@ -27,6 +31,9 @@ function ScopedAccount(
     coordinationEnabled?: boolean;
     termsEnabled?: boolean;
     projectionsEnabled?: boolean;
+    /** Programme pages and shared objectives are both on: the delegate's objective path is shown. */
+    objectivePathEnabled?: boolean;
+    draftsEnabled?: boolean;
   },
 ) {
   const [token, setToken] = useState(''),
@@ -36,6 +43,10 @@ function ScopedAccount(
     [withdrawAck, setWithdrawAck] = useState(false),
     [error, setError] = useState('');
   const [withdrawTarget, setWithdrawTarget] = useState<string | null>(null);
+  // The delegate asked to share their objective from the path: the objective tools open with these words ready.
+  const [shareStart, setShareStart] = useState<{ registrationId: string; summary: string } | null>(
+    null,
+  );
   const [withdrawError, setWithdrawError] = useState('');
   const clear = useCallback(() => {
     // Whatever refused access, the typed label corrections go with the rest of the private details.
@@ -196,7 +207,7 @@ function ScopedAccount(
           ) : (
             <ul>
               {view.data.registrations.map((r) => (
-                <li key={r.id}>
+                <li key={r.id} id={'registration-' + r.id}>
                   {r.status === 'REGISTERED' ? (
                     <>
                       <h3>{r.name}</h3>
@@ -223,6 +234,17 @@ function ScopedAccount(
                           onDenied={view.deny}
                         />
                       )}
+                      {props.objectivePathEnabled && props.missionSharesEnabled && (
+                        <DelegatePath
+                          subject={props.subject}
+                          issuer={props.issuer}
+                          registrationId={r.id}
+                          programmeName={r.name ?? ''}
+                          displayLabel={r.displayLabel ?? ''}
+                          draftsEnabled={!!props.draftsEnabled}
+                          onShare={(summary) => setShareStart({ registrationId: r.id, summary })}
+                        />
+                      )}
                       {props.contextEnabled && (
                         <ProgrammeContext
                           subject={props.subject}
@@ -237,6 +259,7 @@ function ScopedAccount(
                           issuer={props.issuer}
                           registrationId={r.id}
                           view="own"
+                          start={shareStart?.registrationId === r.id ? shareStart : undefined}
                         />
                       )}
                       {props.termsEnabled && (

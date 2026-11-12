@@ -40,6 +40,13 @@ export function SellBoard({
     [funnel.proposals, say('sell.board.proposals')],
     [funnel.agreements, say('sell.board.agreements')],
   ];
+  // Outreach is counted by staff when they approve the detail. A report approved before that, or without counts,
+  // says not shared, never zero.
+  const outreachSteps: [number | null, string][] = [
+    [funnel.approached, say('sell.board.approached')],
+    [funnel.responded, say('sell.board.responded')],
+    [funnel.interested, say('sell.board.interested')],
+  ];
   return (
     <section className="sellb" aria-label="Buyers">
       <dl className="sellb-funnel" aria-label={say('sell.board.funnel')}>
@@ -54,6 +61,27 @@ export function SellBoard({
           </div>
         ))}
       </dl>
+      <dl className="sellb-outreach" aria-label="Buyer outreach">
+        {outreachSteps.map(([value, label]) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            {value === null ? (
+              <dd className="sellb-unknown">{say('sell.board.notShared')}</dd>
+            ) : (
+              <dd>{value}</dd>
+            )}
+          </div>
+        ))}
+      </dl>
+      {funnel.outreachAsOf ? (
+        <p className="sellb-asof">
+          {say('sell.board.outreachAsOf')}{' '}
+          <time dateTime={funnel.outreachAsOf}>
+            {new Date(funnel.outreachAsOf).toISOString().slice(0, 10)}
+          </time>
+          .
+        </p>
+      ) : null}
       <div className="sellb-card">
         {buyers.length === 0 ? (
           <p className="sellb-empty" role="status">

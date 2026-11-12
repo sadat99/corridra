@@ -21,6 +21,15 @@ export type SellFunnel = {
   samples: number | null;
   proposals: number | null;
   agreements: number | null;
+  /**
+   * Buyers approached, responded and interested, as counted when staff approved this detail. Null when the
+   * approval carries no counts: that is not shared, never zero. Each is its own count and none is added to another.
+   */
+  approached: number | null;
+  responded: number | null;
+  interested: number | null;
+  /** When the three counts above were taken; null with them. */
+  outreachAsOf: string | null;
 };
 export type BuyerRow = {
   id: string;
@@ -41,8 +50,17 @@ const han = /\p{Script=Han}/u;
 
 export function sellBoard(e: MissionExperience, outcomes: Outcomes | null) {
   const facts = sellFacts([e]);
+  // Counts the report carries are shown as written; anything that is not a whole count is treated as not shared.
+  const whole = (n: unknown): n is number => typeof n === 'number' && Number.isInteger(n) && n >= 0;
+  const o = e.outreach;
+  const outreach =
+    o && whole(o.approached) && whole(o.responded) && whole(o.interested) && o.asOf ? o : null;
   const funnel: SellFunnel = {
     ...facts,
+    approached: outreach ? outreach.approached : null,
+    responded: outreach ? outreach.responded : null,
+    interested: outreach ? outreach.interested : null,
+    outreachAsOf: outreach ? outreach.asOf : null,
     priceRequests: outcomes ? outcomes.rfqs : null,
     samples: outcomes ? outcomes.samples : null,
     proposals: outcomes ? outcomes.proposals : null,

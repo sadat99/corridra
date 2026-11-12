@@ -2,6 +2,7 @@ import { customerProgrammeProjectionsEnabled } from '@corridra/auth/customer-pro
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerProgrammeContextEnabled } from '@corridra/auth/customer-programme-context';
 import { customerMissionSharesEnabled } from '@corridra/auth/customer-mission-shares';
+import { customerMissionDraftsEnabled } from '@corridra/auth/customer-mission-drafts';
 import { redirect } from 'next/navigation';
 import { customerParticipantsEnabled } from '@corridra/auth/customer-participants';
 import { customerProgrammeCoordinationEnabled } from '@corridra/auth/customer-programme-coordination';
@@ -86,6 +87,8 @@ export default async function Page({
         coordinationEnabled={customerProgrammeCoordinationEnabled()}
         termsEnabled={customerProgrammeTermsEnabled()}
         projectionsEnabled={customerProgrammeProjectionsEnabled()}
+        objectivePathEnabled={pagesOn && customerMissionSharesEnabled()}
+        draftsEnabled={customerMissionDraftsEnabled()}
         subject={session.data.user.id}
         issuer={issuer}
       />

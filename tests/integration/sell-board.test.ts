@@ -59,6 +59,10 @@ describe('the Sell room buyers view', () => {
     const { funnel } = sellBoard(e, outcomes);
     expect(funnel).toEqual({
       ...sellFacts([e]),
+      approached: null,
+      responded: null,
+      interested: null,
+      outreachAsOf: null,
       priceRequests: 2,
       samples: 1,
       proposals: 1,
@@ -98,6 +102,39 @@ describe('the Sell room buyers view', () => {
       proposals: null,
       agreements: null,
     });
+  });
+
+  // Outreach is counted by staff at approval and carried in the approved detail. Without it the customer is told
+  // "Not shared"; a recorded zero is a real zero and stays a number.
+  it('shows the outreach counts the approval carries, each on its own, and unknown as null', () => {
+    const asOf = '2026-11-12T00:00:00Z';
+    expect(sellBoard(e, null).funnel).toMatchObject({
+      approached: null,
+      responded: null,
+      interested: null,
+      outreachAsOf: null,
+    });
+    expect(
+      sellBoard({ ...e, outreach: { approached: 3, responded: 2, interested: 1, asOf } }, null)
+        .funnel,
+    ).toMatchObject({ approached: 3, responded: 2, interested: 1, outreachAsOf: asOf });
+    expect(
+      sellBoard({ ...e, outreach: { approached: 0, responded: 0, interested: 0, asOf } }, null)
+        .funnel,
+    ).toMatchObject({ approached: 0, responded: 0, interested: 0 });
+  });
+
+  it('treats counts that are not whole numbers as not shared rather than guessing', () => {
+    const bad = (o: unknown) =>
+      sellBoard({ ...e, outreach: o as MissionExperience['outreach'] }, null).funnel;
+    for (const o of [
+      { approached: '3', responded: 2, interested: 1, asOf: 'x' },
+      { approached: -1, responded: 0, interested: 0, asOf: 'x' },
+      { approached: 1.5, responded: 0, interested: 0, asOf: 'x' },
+      { approached: 1, responded: 1, interested: 1, asOf: '' },
+      { approached: 1, responded: 1, asOf: 'x' },
+    ])
+      expect(bad(o)).toMatchObject({ approached: null, responded: null, interested: null });
   });
 
   it('lists the strongest fits first, in plain words, and an unknown fit as written', () => {

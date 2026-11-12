@@ -7,7 +7,7 @@
 .sellb p {
   margin: 0;
 }
-.sellb-funnel {
+:is(.sellb-funnel, .sellb-outreach) {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
   margin: 0;
@@ -16,29 +16,36 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
 }
-.sellb-funnel > div {
+.sellb .sellb-outreach {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.sellb-asof {
+  color: var(--text-2);
+  font-size: var(--text-xs);
+}
+:is(.sellb-funnel, .sellb-outreach) > div {
   display: flex;
   flex-direction: column-reverse;
   justify-content: flex-end;
   padding: var(--space-2) var(--space-4);
   border-inline-end: 1px solid var(--line);
 }
-.sellb-funnel > div:last-child {
+:is(.sellb-funnel, .sellb-outreach) > div:last-child {
   border-inline-end: 0;
 }
-.sellb .sellb-funnel > div > dd {
+.sellb :is(.sellb-funnel, .sellb-outreach) > div > dd {
   margin: 0;
   font-size: var(--text-xl);
   font-weight: 650;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
 }
-.sellb .sellb-funnel > div > dd.sellb-unknown {
+.sellb :is(.sellb-funnel, .sellb-outreach) > div > dd.sellb-unknown {
   color: var(--text-2);
   font-size: var(--text-sm);
   font-weight: 500;
 }
-.sellb .sellb-funnel > div > dt {
+.sellb :is(.sellb-funnel, .sellb-outreach) > div > dt {
   color: var(--text-2);
   font-size: var(--text-xs);
 }
@@ -115,17 +122,29 @@
   font-weight: 600;
 }
 @media (max-width: 40rem) {
-  .sellb-funnel {
+  :is(.sellb-funnel, .sellb-outreach) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .sellb-funnel > div {
+  .sellb .sellb-outreach {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .sellb .sellb-outreach > div {
+    border-bottom: 0;
+  }
+  .sellb .sellb-outreach > div:nth-child(2n) {
+    border-inline-end: 1px solid var(--line);
+  }
+  .sellb .sellb-outreach > div:last-child {
+    border-inline-end: 0;
+  }
+  :is(.sellb-funnel, .sellb-outreach) > div {
     padding: var(--space-2) var(--space-3);
     border-bottom: 1px solid var(--line);
   }
-  .sellb-funnel > div:nth-child(2n) {
+  :is(.sellb-funnel, .sellb-outreach) > div:nth-child(2n) {
     border-inline-end: 0;
   }
-  .sellb-funnel > div:nth-last-child(-n + 2) {
+  :is(.sellb-funnel, .sellb-outreach) > div:nth-last-child(-n + 2) {
     border-bottom: 0;
   }
   .sellb .sellb-table thead {

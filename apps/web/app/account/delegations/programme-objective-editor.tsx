@@ -312,6 +312,9 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
         setChoices((old) =>
           after ? [...old, ...rows.filter((r) => !old.some((o) => o.id === r.id))] : rows,
         );
+        // Started from the delegate's path: the newest usable request is already chosen, and can be changed.
+        if (scope.start && !after)
+          setRequestId((chosen) => chosen || rows.find((r) => r.available)?.id || '');
         setChoiceNext(v.nextAfter as string | null);
         setMessage(
           rows.length
@@ -327,7 +330,7 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
         setBusy(false);
       }
     },
-    [read, scope.registrationId, clear],
+    [read, scope.registrationId, scope.start, clear],
   );
   const send = useCallback(
     async (command: Command) => {
@@ -387,6 +390,12 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
         setChoices([]);
         setRequestId('');
         inFlight.current = false;
+        // The delegate's path on the same registration shows whether an objective is shared: tell it to look again.
+        window.dispatchEvent(
+          new CustomEvent('corridra-objective-changed', {
+            detail: { registrationId: scope.registrationId },
+          }),
+        );
         await load();
       } catch (e) {
         if (!controller.signal.aborted)
@@ -398,6 +407,20 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
     },
     [headers, scope.registrationId, clear, load],
   );
+  // The delegate's path opens these tools with their own words ready: load the request choices and fill the text
+  // once. Consent is never pre-ticked, and nothing is sent until the person presses the button.
+  const started = useRef<object | null>(null);
+  useEffect(() => {
+    const start = scope.start;
+    if (!start || started.current === start) return;
+    if (status !== 'ready' || scope.view !== 'own' || !active || pending) return;
+    started.current = start;
+    void Promise.resolve().then(() => {
+      const text = start.summary.trim().slice(0, 500);
+      if (customerLabelAllowed(text)) setSummary(text);
+      void choose();
+    });
+  }, [scope.start, scope.view, status, active, pending, choose]);
   const current = items.find((o) => o.requestId === requestId);
   return (
     <section aria-label="Shared commercial objectives" className="operator-form">
@@ -599,13 +622,13 @@ export function ProgrammeObjectiveEditor(scope: ObjectiveScope) {
                     </button>
                   )}
                   <label className="field">
-                    Fictional objective to share
+                    {realCustomerInput() ? 'Objective to share' : 'Fictional objective to share'}
                     <textarea
                       value={summary}
                       minLength={realCustomerInput() ? 2 : 11}
                       maxLength={500}
                       required
-                      placeholder="Synthetic supplier objective"
+                      placeholder={realCustomerInput() ? undefined : 'Synthetic supplier objective'}
                       disabled={busy}
                       onChange={(e) => {
                         setSummary(e.target.value);
