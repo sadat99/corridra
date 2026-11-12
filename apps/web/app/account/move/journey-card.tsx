@@ -123,11 +123,14 @@ export function JourneyCardView({
   facts,
   labels,
   locale,
+  lead = false,
 }: {
   card: JourneyCard;
   facts: SourceFacts | SellFacts | OrganiseFacts | null;
   labels: MrLabels['road'];
   locale: string;
+  /** The journey with the most recent activity, drawn widest. */
+  lead?: boolean;
 }) {
   const body = !facts
     ? null
@@ -141,6 +144,7 @@ export function JourneyCardView({
     <article
       className="move-journey"
       data-journey={card.journey}
+      data-lead={lead ? 'true' : undefined}
       aria-labelledby={`move-journey-${card.journey}`}
     >
       <header className="move-journey-head">
