@@ -6,6 +6,7 @@ import { RefreshButton } from './refresh-button';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { displayDate } from '@corridra/domain/locale';
 import { limitWords } from '../../lib/account-limit';
+import './library-ac1.css';
 export type SavedMissionScope = { subject: string; issuer: string };
 type Item = {
   id: string;
@@ -299,7 +300,12 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
     </form>
   );
   return (
-    <section ref={place} tabIndex={-1} className="detail-card" aria-label="Saved missions">
+    <section
+      ref={place}
+      tabIndex={-1}
+      className="detail-card library-card"
+      aria-label="Saved missions"
+    >
       <div className="ux-section-head">
         <h2>Saved missions</h2>
         {status !== 'loading' && status !== 'denied' && (
@@ -340,7 +346,7 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
       )}
       {status === 'ready' &&
         data?.missions.map((m) => (
-          <article className="detail-card" key={m.id}>
+          <article className="detail-card library-card" key={m.id}>
             <h3>{m.available ? m.title : 'Saved invitation unavailable'}</h3>
             {m.available && m.expiresAt ? (
               <>

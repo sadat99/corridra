@@ -1,0 +1,29 @@
+/* The customer Library in the AC/1 look (Reports page: Delivered, Saved Missions). Presentation only, tokens
+   only, no media query. A card is a porcelain-paper panel with a navy-tinted lift; the report rows are cards
+   that turn to the selected surface on hover. Words, links and trust labels are unchanged. */
+.library-card {
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-1);
+}
+.library-card > h2,
+.library-card > .ux-section-head h2 {
+  font-family: var(--serif);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.library-card .ux-link-list a {
+  border-radius: var(--radius-md);
+}
+.library-card .ux-link-list a:hover {
+  background: var(--selected-surface);
+}
+.library-card .ux-link-list span {
+  color: var(--text-2);
+}
+@media (forced-colors: active) {
+  .library-card {
+    border-color: CanvasText;
+  }
+}
