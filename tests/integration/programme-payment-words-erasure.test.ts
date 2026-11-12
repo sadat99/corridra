@@ -273,7 +273,7 @@ describe('the install', () => {
     expect(grants).not.toContain('corridra_auth');
   });
 
-  test('without the payment declaration module the file only raises a notice, and a second run on an installed module refuses', async () => {
+  test('without the payment declaration module the file refuses loudly, and a second run on an installed module refuses', async () => {
     const sql = readFileSync(
       resolve(
         'packages/db/customer-programme-erasure-migrations/0002_programme_payment_words_erasure.sql',
@@ -282,14 +282,13 @@ describe('the install', () => {
     );
     const client = await f.owner.connect();
     try {
-      const notices: string[] = [];
-      client.on('notice', (n: { message?: string }) => notices.push(n.message ?? ''));
       await client.query('BEGIN');
       await client.query(
         'ALTER TABLE customer_private.programme_payment_command RENAME TO programme_payment_command_away',
       );
-      await client.query(sql);
-      expect(notices.join(' ')).toContain('Programme payment words erasure skipped');
+      await expect(client.query(sql)).rejects.toMatchObject({
+        message: expect.stringContaining('install real use 0016 before programme erasure 0002'),
+      });
       await client.query('ROLLBACK');
       await client.query('BEGIN');
       await expect(client.query(sql)).rejects.toMatchObject({

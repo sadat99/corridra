@@ -10,13 +10,13 @@
 -- A field that is NULL stays NULL. Changes to existing objects: the append-only trigger of the same name on the two tables above is
 -- replaced by customer_private.programme_payment_words_guard (same refusal message and code). No function of an older module is
 -- replaced, so there is no function fingerprint to compare. Additive: one table, two functions and one customer function.
--- When the payment declaration module (real-use 0016) is absent, this file only raises a notice and creates nothing.
+-- When the payment declaration module (real-use 0016) is absent, this file refuses loudly and records nothing, so the install is run
+-- again after real use. A skipped file must never be recorded as applied: payment words would stay unredacted without a sign.
 DO $module$
 DECLARE spec record;
 BEGIN
  IF to_regclass('customer_private.programme_payment_declaration') IS NULL OR to_regclass('customer_private.programme_payment_command') IS NULL THEN
-  RAISE NOTICE 'Programme payment words erasure skipped: the participant payment declaration module (real-use 0016) is not installed';
-  RETURN;
+  RAISE EXCEPTION 'Programme payment words erasure needs the participant payment declaration module: install real use 0016 before programme erasure 0002';
  END IF;
  FOR spec IN SELECT * FROM (VALUES
   ('customer_private.programme_payment_declaration','programme_payment_declaration_immutable'),
