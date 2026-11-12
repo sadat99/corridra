@@ -132,7 +132,8 @@ async function holders(word: string) {
     ).rows[0].n as number;
     if (n > 0) found.push(`${col.s}.${col.t}.${col.c}`);
   }
-  return found;
+  // The catalogue gives no order, so the answer is sorted and two calls can be compared.
+  return found.sort();
 }
 const without = (table: string, keys: string[], where: string, params: unknown[]) =>
   f.owner
