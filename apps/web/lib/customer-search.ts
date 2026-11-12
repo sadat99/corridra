@@ -27,7 +27,8 @@ export type CustomerSearchScope = (typeof customerSearchScopes)[number];
 /**
  * Work per search. Requests: one page of 100 saved Requests, then at most 30 title lookups, two at a time, within 6
  * seconds, stopping after 3 failures in a row. Companies: up to 4 pages of 5 approved report scopes. Scopes run one
- * after the other. showAll hits per scope under All, showScope for a single scope.
+ * after the other. showAll hits per scope under All, showScope for a single scope. One search never holds more than
+ * searchDeadlineMs overall, and one process runs at most maxConcurrentSearches searches at once.
  */
 export const customerSearchLimits = {
   requestPage: 100,
@@ -39,7 +40,26 @@ export const customerSearchLimits = {
   companyPageSize: 5,
   showAll: 5,
   showScope: 10,
+  maxConcurrentSearches: 4,
+  searchDeadlineMs: 12000,
 } as const;
+
+let activeSearches = 0;
+/**
+ * Takes one of the process's search slots, or returns null when all are taken. Every search costs several remote
+ * identity checks and held database connections, so a burst of searches must not starve the rest of the application.
+ * The caller releases the slot in a finally block.
+ */
+export function takeSearchSlot(): (() => void) | null {
+  if (activeSearches >= customerSearchLimits.maxConcurrentSearches) return null;
+  activeSearches += 1;
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    activeSearches -= 1;
+  };
+}
 
 type Read = (value: unknown, subject?: string, issuer?: string) => Promise<unknown>;
 export type CustomerSearchServices = {
@@ -62,7 +82,7 @@ export type CustomerSearchContext = {
   subject?: string;
   issuer?: string;
   correlationId: string;
-  /** The request's own signal: when it aborts, no further lookup or page is started. */
+  /** The request's own signal: when it aborts, no further lookup or page is started and a call in flight is given up on. */
   signal?: AbortSignal;
   /** The clock for the title time budget; replaced in tests. */
   now?: () => number;
@@ -115,25 +135,69 @@ function scopeFailure(error: unknown, scope: CustomerScopeName): ScopeState | un
   return undefined;
 }
 
-function pageFailed(page: number, correlationId: string, error: unknown) {
-  // The scope, the page, the request id and the kind of error and its code: never the words that were typed and
-  // never the error message, which a database may fill with them.
+/**
+ * The only parts of an error a log line may carry: its kind and its code, capped. Never the message, which a database
+ * may fill with the words that were typed.
+ */
+export function errorFacts(error: unknown): { errorName?: string; errorCode?: string | number } {
   const name = error instanceof Error && error.name.length <= 64 ? error.name : undefined;
   const raw = (error as { code?: unknown } | null)?.code;
   const code =
     (typeof raw === 'string' || typeof raw === 'number') && String(raw).length <= 32
       ? raw
       : undefined;
+  return { errorName: name, errorCode: code };
+}
+
+const failedIn = new WeakMap<object, CustomerScopeName>();
+/** Remembers which scope an unexpected failure came from, so the route can log it. Returns the same error. */
+function failed(error: unknown, scope: CustomerScopeName): unknown {
+  if (typeof error === 'object' && error !== null) failedIn.set(error, scope);
+  return error;
+}
+/** The scope an unexpected failure came from, when the core knows it. */
+export const failedScope = (error: unknown): CustomerScopeName | undefined =>
+  typeof error === 'object' && error !== null ? failedIn.get(error) : undefined;
+
+function pageFailed(page: number, correlationId: string, error: unknown) {
   console.error(
     JSON.stringify({
       event: 'customer_search_page_failed',
       scope: 'companies',
       page,
       correlationId,
-      errorName: name,
-      errorCode: code,
+      ...errorFacts(error),
     }),
   );
+}
+
+class DeadlineReached extends Error {}
+type Guard = {
+  now: () => number;
+  /** True once the request has aborted or the overall deadline has passed. */
+  expired: () => boolean;
+  /** Runs one service call, giving up on it (DeadlineReached) when the request aborts or the deadline passes. */
+  bounded: <T>(run: () => Promise<T>) => Promise<T>;
+};
+function guardFor(context: CustomerSearchContext): Guard {
+  const now = context.now ?? Date.now;
+  const started = now();
+  const left = () => customerSearchLimits.searchDeadlineMs - (now() - started);
+  const expired = () => context.signal?.aborted === true || left() <= 0;
+  const bounded = <T>(run: () => Promise<T>) =>
+    new Promise<T>((resolve, reject) => {
+      if (expired()) return reject(new DeadlineReached());
+      const stop = () => reject(new DeadlineReached());
+      const timer = setTimeout(stop, left());
+      context.signal?.addEventListener('abort', stop, { once: true });
+      run()
+        .then(resolve, reject)
+        .finally(() => {
+          clearTimeout(timer);
+          context.signal?.removeEventListener('abort', stop);
+        });
+    });
+  return { now, expired, bounded };
 }
 
 type RequestRow = { id: string; sent: string; status?: string; withdrawn: boolean };
@@ -142,20 +206,21 @@ async function findRequests(
   services: CustomerSearchServices,
   switches: CustomerSearchSwitches,
   context: CustomerSearchContext,
+  guard: Guard,
   words: string[],
 ): Promise<Found> {
   const limits = customerSearchLimits;
   if (!switches.requests || !switches.details) return none('unavailable');
   let page: unknown;
   try {
-    page = await services.requests.list(
-      { pageSize: limits.requestPage },
-      context.subject,
-      context.issuer,
+    page = await guard.bounded(() =>
+      services.requests.list({ pageSize: limits.requestPage }, context.subject, context.issuer),
     );
   } catch (error) {
+    // Out of time before the first answer: nothing was searched, and that is said as partial, never as "ok".
+    if (error instanceof DeadlineReached) return none('partial');
     const state = scopeFailure(error, 'requests');
-    if (!state) throw error;
+    if (!state) throw failed(error, 'requests');
     return none(state);
   }
   if (!record(page) || !Array.isArray(page.requests) || !switches.provenance(page.synthetic))
@@ -183,8 +248,7 @@ async function findRequests(
 
   const lookups = rows.slice(0, limits.titleCap);
   if (rows.length > lookups.length) partial = true;
-  const now = context.now ?? Date.now;
-  const started = now();
+  const started = guard.now();
   const titles = new Map<string, string>();
   let next = 0;
   let consecutive = 0;
@@ -192,14 +256,16 @@ async function findRequests(
   const ended: { refusal?: DomainError } = {};
   const worker = async () => {
     while (!stopped && next < lookups.length) {
-      if (context.signal?.aborted || now() - started >= limits.titleBudgetMs) {
+      if (guard.expired() || guard.now() - started >= limits.titleBudgetMs) {
         partial = true;
         stopped = true;
         return;
       }
       const row = lookups[next++]!;
       try {
-        const detail = await services.details.detail(row.id, context.subject, context.issuer);
+        const detail = await guard.bounded(() =>
+          services.details.detail(row.id, context.subject, context.issuer),
+        );
         consecutive = 0;
         const title = requestTitle(record(detail) ? detail.original : undefined);
         if (title) titles.set(row.id, title);
@@ -210,6 +276,10 @@ async function findRequests(
           return;
         }
         partial = true;
+        if (error instanceof DeadlineReached) {
+          stopped = true;
+          return;
+        }
         consecutive += 1;
         if (consecutive >= limits.titleFailureStop) stopped = true;
       }
@@ -296,6 +366,7 @@ async function findCompanies(
   services: CustomerSearchServices,
   switches: CustomerSearchSwitches,
   context: CustomerSearchContext,
+  guard: Guard,
   words: string[],
 ): Promise<Found> {
   const limits = customerSearchLimits;
@@ -304,21 +375,31 @@ async function findCompanies(
   let partial = false;
   let after: string | undefined;
   for (let page = 0; page < limits.companyPages; page++) {
-    if (page > 0 && context.signal?.aborted) {
+    if (guard.expired()) {
+      if (page === 0) return none('partial');
       partial = true;
       break;
     }
     let value: unknown;
     try {
-      value = await services.companies.list(
-        after ? { pageSize: limits.companyPageSize, after } : { pageSize: limits.companyPageSize },
-        context.subject,
-        context.issuer,
+      value = await guard.bounded(() =>
+        services.companies.list(
+          after
+            ? { pageSize: limits.companyPageSize, after }
+            : { pageSize: limits.companyPageSize },
+          context.subject,
+          context.issuer,
+        ),
       );
     } catch (error) {
+      if (error instanceof DeadlineReached) {
+        if (page === 0) return none('partial');
+        partial = true;
+        break;
+      }
       if (page === 0) {
         const state = scopeFailure(error, 'companies');
-        if (!state) throw error;
+        if (!state) throw failed(error, 'companies');
         return none(state);
       }
       if (endsSearch(error)) throw error;
@@ -409,9 +490,10 @@ export async function searchCustomer(
       facts[candidate.key] = candidate.facts;
     }
   };
+  const guard = guardFor(context);
   if (scope === 'all' || scope === 'requests')
-    take('requests', await findRequests(services, switches, context, words));
+    take('requests', await findRequests(services, switches, context, guard, words));
   if (scope === 'all' || scope === 'companies')
-    take('companies', await findCompanies(services, switches, context, words));
+    take('companies', await findCompanies(services, switches, context, guard, words));
   return Object.keys(facts).length > 0 ? { ...answer, facts } : answer;
 }

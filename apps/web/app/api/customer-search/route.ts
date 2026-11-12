@@ -7,7 +7,13 @@ import { customerRequestsEnabled } from '@corridra/auth/customer-requests';
 import { customerRequestDetailsEnabled } from '@corridra/auth/customer-request-details';
 import { foundations } from '../../../lib/foundations';
 import { boundedBody, deliveryHeaders } from '../../../lib/delivery-http';
-import { customerSearchScopes, searchCustomer } from '../../../lib/customer-search';
+import {
+  customerSearchScopes,
+  errorFacts,
+  failedScope,
+  searchCustomer,
+  takeSearchSlot,
+} from '../../../lib/customer-search';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -18,14 +24,17 @@ const body = z
   .object({ q: z.string().max(80), scope: z.enum(customerSearchScopes).default('all') })
   .strict();
 const bodyLimit = 8192;
+// The only refusals whose own words may reach the person. Any other status is the generic failure below.
+const shownStatuses = [400, 401, 403, 409, 413, 415, 503];
 
 export async function POST(request: Request) {
   const correlationId = randomUUID();
-  const answer = (value: unknown, status = 200) =>
+  const answer = (value: unknown, status = 200, more: Record<string, string> = {}) =>
     Response.json(value, {
       status,
-      headers: { ...deliveryHeaders, 'X-Corridra-Request-ID': correlationId },
+      headers: { ...deliveryHeaders, 'X-Corridra-Request-ID': correlationId, ...more },
     });
+  let release: (() => void) | null = null;
   try {
     const s = foundations();
     if (!s) return answer({ error: 'Search is not available right now', correlationId }, 503);
@@ -35,6 +44,13 @@ export async function POST(request: Request) {
     if (!request.headers.get('content-type')?.startsWith('application/json'))
       throw new DomainError('JSON required', 415);
     const input = body.parse(JSON.parse((await boundedBody(request, bodyLimit)).toString('utf8')));
+    // Nothing above reads a service. Past this point a search costs remote identity checks and held connections, so the
+    // process runs only a few at once and tells the rest to come back in a moment.
+    release = takeSearchSlot();
+    if (!release)
+      return answer({ error: 'Search is busy, try again in a moment', correlationId }, 503, {
+        'Retry-After': '2',
+      });
     const result = await searchCustomer(
       {
         requests: s.customerRequests,
@@ -62,11 +78,20 @@ export async function POST(request: Request) {
       return answer({ error: 'Search is not available right now', correlationId }, 503);
     return answer(result);
   } catch (error) {
-    if (error instanceof DomainError)
+    if (error instanceof DomainError && shownStatuses.includes(error.status))
       return answer({ error: error.message, code: error.code, correlationId }, error.status);
     if (error instanceof z.ZodError || error instanceof SyntaxError)
       return answer({ error: 'Check the submitted values', correlationId }, 400);
-    console.error(JSON.stringify({ event: 'customer_search_failed', correlationId }));
+    console.error(
+      JSON.stringify({
+        event: 'customer_search_failed',
+        scope: failedScope(error),
+        correlationId,
+        ...errorFacts(error),
+      }),
+    );
     return answer({ error: 'The request could not be completed', correlationId }, 500);
+  } finally {
+    release?.();
   }
 }

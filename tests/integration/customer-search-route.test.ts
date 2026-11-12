@@ -202,6 +202,9 @@ describe('M2 every answer carries the private headers and a request id', () => {
     const response = await post({ q: 'spain' });
     expect(response.status).toBe(status);
     privateHeaders(response);
+    // A refusal ends the search at the first read: the second scope is not reached. Only a failure that ends nothing goes on.
+    expect(state.list).toHaveLength(1);
+    expect(state.companies).toHaveLength(status === 200 ? 1 : 0);
     const body = (await response.json()) as { correlationId?: string };
     if (status !== 200)
       expect(body.correlationId).toBe(response.headers.get('X-Corridra-Request-ID'));

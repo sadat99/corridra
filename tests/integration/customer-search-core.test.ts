@@ -3,6 +3,7 @@ import { DomainError } from '../../packages/domain/src/index';
 import {
   customerSearchLimits,
   searchCustomer,
+  takeSearchSlot,
   type CustomerSearchServices,
   type CustomerSearchSwitches,
 } from '../../apps/web/lib/customer-search';
@@ -373,6 +374,25 @@ describe('R5 and D7 failures keep what was found and say so', () => {
     await expect(search(h, 'spain', 'all')).rejects.toMatchObject({ code: 'account_closed' });
     expect(h.calls.companyList).toHaveLength(0);
   });
+  test.each([400, 401, 403, 409])(
+    'a %i during a title lookup, or on a later company page, ends the search',
+    async (status) => {
+      const refusal = new DomainError('refused', status);
+      const lookup = harness({
+        rows: [row(1), row(2)],
+        detail: () => {
+          throw refusal;
+        },
+        pages: [page([company(1, 'Spain Foods', 1)])],
+      });
+      await expect(search(lookup, 'spain', 'all')).rejects.toBe(refusal);
+      expect(lookup.calls.companyList).toHaveLength(0);
+      const later = harness({
+        pages: [page([company(1, 'Spain Foods', 1)], resourceId(1)), () => Promise.reject(refusal)],
+      });
+      await expect(search(later, 'spain', 'companies')).rejects.toBe(refusal);
+    },
+  );
   test('a lookup that fails makes the scope partial and a later success resets the run', async () => {
     const briefs = marketBrief('Sell in a new market', 'ES');
     const h = harness({
@@ -481,16 +501,20 @@ describe('M1 bounded work', () => {
     const found = await search(h, 'spain', 'all', allOn, { signal: controller.signal });
     expect(h.calls.detail.length).toBeLessThanOrEqual(customerSearchLimits.titleConcurrency);
     expect(found.scopes.requests).toBe('partial');
-    expect(h.calls.companyList).toHaveLength(1);
+    // The request is gone: the Companies scope does not start, and says it was not searched.
+    expect(h.calls.companyList).toHaveLength(0);
     expect(found.scopes.companies).toBe('partial');
   });
   test('the time budget stops the lookups (fake clock)', async () => {
     let clock = 0;
     const h = harness({
       rows: Array.from({ length: 30 }, (_, i) => row(i + 1)),
-      detail: () => ({ original: brief }),
+      detail: () => {
+        clock += 2000;
+        return { original: brief };
+      },
     });
-    const found = await search(h, 'spain', 'requests', allOn, { now: () => (clock += 2000) });
+    const found = await search(h, 'spain', 'requests', allOn, { now: () => clock });
     expect(found.scopes).toEqual({ requests: 'partial' });
     expect(h.calls.detail.length).toBeGreaterThan(0);
     expect(h.calls.detail.length).toBeLessThan(customerSearchLimits.titleCap);
@@ -520,7 +544,122 @@ describe('M1 bounded work', () => {
       companyPageSize: 5,
       showAll: 5,
       showScope: 10,
+      maxConcurrentSearches: 4,
+      searchDeadlineMs: 12000,
     });
+  });
+});
+
+describe('more saved Requests than the page holds', () => {
+  test('a next page with only three available rows is still partial: the rest were never read', async () => {
+    const brief = marketBrief('Sell in a new market', 'ES');
+    const h = harness({
+      rows: [row(1), row(2), row(3)],
+      nextAfter: requestId(900),
+      detail: () => ({ original: brief }),
+    });
+    const found = await search(h, 'spain', 'requests');
+    expect(found.scopes).toEqual({ requests: 'partial' });
+    expect(found.hits).toHaveLength(3);
+  });
+});
+
+describe('the overall deadline', () => {
+  const brief = marketBrief('Sell in a new market', 'ES');
+  afterEach(() => vi.useRealTimers());
+  test('time spent before the lookups leaves both scopes partial and unread (fake clock)', async () => {
+    let clock = 0;
+    const h = harness({
+      list: () => {
+        clock += customerSearchLimits.searchDeadlineMs;
+        return { requests: [row(1), row(2)], nextAfter: null, synthetic: true };
+      },
+      pages: [page([company(1, 'Spain Foods', 1)])],
+    });
+    const found = await search(h, 'spain', 'all', allOn, { now: () => clock });
+    expect(found).toEqual({ hits: [], scopes: { requests: 'partial', companies: 'partial' } });
+    expect(h.calls.detail).toHaveLength(0);
+    expect(h.calls.companyList).toHaveLength(0);
+  });
+  test('a first read that never answers is given up on at the deadline, and is partial, never ok', async () => {
+    vi.useFakeTimers();
+    const h = harness({ list: () => new Promise(() => undefined) });
+    const running = search(h, 'spain', 'requests', allOn, { now: Date.now });
+    await vi.advanceTimersByTimeAsync(customerSearchLimits.searchDeadlineMs - 1);
+    let settled = false;
+    void running.then(() => (settled = true));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(await running).toEqual({ hits: [], scopes: { requests: 'partial' } });
+  });
+  test('a title lookup that never answers is given up on, and the hits already found are kept', async () => {
+    vi.useFakeTimers();
+    const h = harness({
+      rows: [row(1), row(2), row(3)],
+      detail: (id) => (id === requestId(1) ? { original: brief } : new Promise(() => undefined)),
+    });
+    const running = search(h, 'spain', 'requests', allOn, { now: Date.now });
+    await vi.advanceTimersByTimeAsync(customerSearchLimits.searchDeadlineMs);
+    const found = await running;
+    expect(found.scopes).toEqual({ requests: 'partial' });
+    expect(found.hits.map((hit) => hit.id)).toEqual([requestId(1)]);
+  });
+  test('a company page that never answers keeps the earlier hits and is partial', async () => {
+    vi.useFakeTimers();
+    const h = harness({
+      pages: [
+        page([company(1, 'Spain Foods', 1)], resourceId(1)),
+        () => new Promise(() => undefined),
+      ],
+    });
+    const running = search(h, 'spain', 'companies', allOn, { now: Date.now });
+    await vi.advanceTimersByTimeAsync(customerSearchLimits.searchDeadlineMs);
+    const found = await running;
+    expect(found.scopes).toEqual({ companies: 'partial' });
+    expect(found.hits).toHaveLength(1);
+  });
+  test('one deadline covers both scopes: Companies get what Requests left', async () => {
+    vi.useFakeTimers();
+    const h = harness({
+      list: () => new Promise(() => undefined),
+      pages: [page([company(1, 'Spain Foods', 1)])],
+    });
+    const running = search(h, 'spain', 'all', allOn, { now: Date.now });
+    await vi.advanceTimersByTimeAsync(customerSearchLimits.searchDeadlineMs);
+    expect(await running).toEqual({
+      hits: [],
+      scopes: { requests: 'partial', companies: 'partial' },
+    });
+    expect(h.calls.companyList).toHaveLength(0);
+  });
+  test('an aborted request gives up on a call in flight at once', async () => {
+    const controller = new AbortController();
+    const h = harness({ list: () => new Promise(() => undefined) });
+    const running = search(h, 'spain', 'requests', allOn, { signal: controller.signal });
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    controller.abort();
+    expect(await running).toEqual({ hits: [], scopes: { requests: 'partial' } });
+  });
+});
+
+describe('the search slots', () => {
+  test('four searches may run at once, the fifth is refused, and a released slot is free again', () => {
+    const slots = Array.from({ length: customerSearchLimits.maxConcurrentSearches }, () =>
+      takeSearchSlot(),
+    );
+    expect(slots.every((slot) => typeof slot === 'function')).toBe(true);
+    expect(takeSearchSlot()).toBeNull();
+    slots[0]!();
+    slots[0]!();
+    const again = takeSearchSlot();
+    expect(again).not.toBeNull();
+    expect(takeSearchSlot()).toBeNull();
+    again!();
+    for (const slot of slots.slice(1)) slot!();
+    const clean = Array.from({ length: 4 }, () => takeSearchSlot());
+    expect(clean.every(Boolean)).toBe(true);
+    for (const slot of clean) slot!();
   });
 });
 

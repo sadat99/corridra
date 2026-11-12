@@ -17,6 +17,8 @@ const state = vi.hoisted(() => ({
   rows: 100,
   companyPages: 0,
   synthetic: true,
+  gate: null as null | Promise<void>,
+  onDetail: null as null | (() => void),
 }));
 const requestId = (n: number) => `0b5a${String(n).padStart(4, '0')}-0000-4000-8000-000000000001`;
 vi.mock('../../apps/web/lib/foundations', () => {
@@ -45,6 +47,7 @@ vi.mock('../../apps/web/lib/foundations', () => {
       customerRequests: {
         async list(...args: unknown[]) {
           call('requests', args);
+          if (state.gate) await state.gate;
           if (state.requestFails) throw state.requestFails();
           return {
             requests: Array.from({ length: state.rows }, (_, n) => ({
@@ -62,6 +65,7 @@ vi.mock('../../apps/web/lib/foundations', () => {
       customerRequestDetails: {
         async detail(...args: unknown[]) {
           call('detail', args);
+          state.onDetail?.();
           return { original: { objective: 'Sell in a new market', market: 'ES' } };
         },
       },
@@ -95,10 +99,11 @@ vi.mock('../../apps/web/lib/foundations', () => {
 });
 import * as route from '../../apps/web/app/api/customer-search/route';
 
-const post = (body: unknown, headers: Record<string, string> = {}) =>
+const post = (body: unknown, headers: Record<string, string> = {}, signal?: AbortSignal) =>
   route.POST(
     new Request(`${origin}/api/customer-search`, {
       method: 'POST',
+      signal,
       headers: {
         Origin: origin,
         'Content-Type': 'application/json',
@@ -134,6 +139,8 @@ beforeEach(() => {
   state.rows = 100;
   state.companyPages = 0;
   state.synthetic = true;
+  state.gate = null;
+  state.onDetail = null;
 });
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -279,9 +286,39 @@ describe('D7 failures', () => {
     const body = (await response.json()) as { error: string; correlationId: string };
     expect(body.error).toBe('The request could not be completed');
     expect(spy.mock.calls.map((call) => JSON.parse(String(call[0])))).toEqual([
-      { event: 'customer_search_failed', correlationId: body.correlationId },
+      {
+        event: 'customer_search_failed',
+        scope: 'requests',
+        correlationId: body.correlationId,
+        errorName: 'Error',
+      },
     ]);
     expect(JSON.stringify(body)).not.toContain(secret);
+  });
+  test('the failure line carries the scope, the kind of error and its capped code, and never the message', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    state.companyFails = () =>
+      Object.assign(new TypeError(`bad ${secret}`), { code: 'X'.repeat(40) });
+    await post({ q: 'spain', scope: 'companies' });
+    state.companyFails = () =>
+      Object.assign(new Error(`bad ${secret}`), { code: '57014', name: 'N'.repeat(70) });
+    await post({ q: 'spain', scope: 'companies' });
+    state.companyFails = () => Object.assign(new Error(secret), { code: '57014' });
+    await post({ q: 'spain', scope: 'companies' });
+    const lines = spy.mock.calls.map(
+      (call) => JSON.parse(String(call[0])) as Record<string, unknown>,
+    );
+    expect(lines).toHaveLength(3);
+    // A code of more than 32 characters and a name of more than 64 are left out, not cut or passed on.
+    expect(lines[0]).toMatchObject({
+      event: 'customer_search_failed',
+      scope: 'companies',
+      errorName: 'TypeError',
+    });
+    expect(lines[0]).not.toHaveProperty('errorCode');
+    expect(lines[1]).not.toHaveProperty('errorName');
+    expect(lines[2]).toMatchObject({ errorName: 'Error', errorCode: '57014' });
+    for (const line of lines) expect(JSON.stringify(line)).not.toContain(secret);
   });
   test('a company page that fails after the first keeps the hits, is partial and logs one allowed line', async () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -363,5 +400,107 @@ describe('D9 the words typed are in no log, response or service argument', () =>
       for (const call of spy.mock.calls) expect(JSON.stringify(call)).not.toContain(secret);
     for (const text of bodies) expect(text).not.toContain(secret);
     expect(bodies.length).toBe(8);
+  });
+});
+
+describe('which refusals show their own words', () => {
+  test.each([400, 401, 403, 409])(
+    'a service refusal with status %i keeps its message and code',
+    async (status) => {
+      state.requestFails = () => new DomainError('A plain refusal', status, 'plain_code');
+      const response = await post({ q: 'spain' });
+      expect(response.status).toBe(status);
+      expect(await response.json()).toMatchObject({ error: 'A plain refusal', code: 'plain_code' });
+    },
+  );
+  test.each([404, 418, 429, 500, 502, 504])(
+    'a service refusal with status %i is the generic failure',
+    async (status) => {
+      vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      state.requestFails = () =>
+        new DomainError(`internal detail ${secret}`, status, 'internal_code');
+      const response = await post({ q: 'spain' });
+      expect(response.status).toBe(500);
+      const body = await response.json();
+      expect(body).toMatchObject({ error: 'The request could not be completed' });
+      expect(JSON.stringify(body)).not.toMatch(/internal|detail|secret/);
+    },
+  );
+});
+
+describe('an aborted request stops the work (the request signal reaches the core)', () => {
+  test('aborted while the first title is looked up: far fewer lookups than the cap, no company page', async () => {
+    const controller = new AbortController();
+    state.onDetail = () => controller.abort();
+    const response = await post({ q: 'spain' }, {}, controller.signal);
+    expect(response.status).toBe(200);
+    expect(count('detail')).toBeLessThanOrEqual(customerSearchLimits.titleConcurrency);
+    expect(count('detail')).toBeLessThan(customerSearchLimits.titleCap);
+    expect(count('companies')).toBe(0);
+    expect(((await response.json()) as { scopes: unknown }).scopes).toEqual({
+      requests: 'partial',
+      companies: 'partial',
+    });
+  });
+  test('aborted before the search starts: no service is read at all', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    await post({ q: 'spain' }, {}, controller.signal);
+    expect(state.calls).toHaveLength(0);
+  });
+});
+
+describe('the search slots: a burst is told to come back, and every slot is given back', () => {
+  const busy = { error: 'Search is busy, try again in a moment' };
+  const slots = customerSearchLimits.maxConcurrentSearches;
+  const waiting = async () => {
+    let open!: () => void;
+    state.gate = new Promise<void>((resolve) => (open = resolve));
+    const running = Array.from({ length: slots }, () => post({ q: 'spain', scope: 'requests' }));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    return { open, running };
+  };
+  test('the search after the limit is a 503 with Retry-After and the private headers, and reads nothing', async () => {
+    const { open, running } = await waiting();
+    expect(count('requests')).toBe(slots);
+    const extra = await post({ q: 'spain', scope: 'requests' });
+    expect(extra.status).toBe(503);
+    expect(await extra.json()).toMatchObject(busy);
+    expect(extra.headers.get('Retry-After')).toBe('2');
+    expect(extra.headers.get('Cache-Control')).toBe('no-store');
+    expect(extra.headers.get('Referrer-Policy')).toBe('no-referrer');
+    expect(extra.headers.get('X-Corridra-Request-ID')).toMatch(/^[0-9a-f-]{36}$/);
+    expect(count('requests')).toBe(slots);
+    open();
+    for (const response of await Promise.all(running)) expect(response.status).toBe(200);
+    // Every slot is free again.
+    state.gate = null;
+    expect((await post({ q: 'spain', scope: 'requests' })).status).toBe(200);
+  });
+  test('refusals at the door do not take a slot', async () => {
+    const { open, running } = await waiting();
+    expect((await post({ q: 'a'.repeat(81) })).status).toBe(400);
+    expect((await post({ q: 'spain' }, { Origin: 'https://evil.example.invalid' })).status).toBe(
+      403,
+    );
+    open();
+    await Promise.all(running);
+  });
+  test('slots come back after a failed search and after an aborted one', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    state.requestFails = () => new Error('boom');
+    for (let n = 0; n < slots * 2; n++)
+      expect((await post({ q: 'spain', scope: 'requests' })).status).toBe(500);
+    state.requestFails = null;
+    state.onDetail = null;
+    for (let n = 0; n < slots * 2; n++) {
+      const controller = new AbortController();
+      state.onDetail = () => controller.abort();
+      expect((await post({ q: 'spain', scope: 'requests' }, {}, controller.signal)).status).toBe(
+        200,
+      );
+    }
+    state.onDetail = null;
+    expect((await post({ q: 'spain', scope: 'requests' })).status).toBe(200);
   });
 });
