@@ -4,7 +4,7 @@ Document status: CURRENT.
 
 Sibling of [staff command palette search](command-palette-search.md), which is the pattern this follows. Amends [navigation system v1](../navigation-v1.md) rule 5 in one respect only (section 1). Sensitive: yes, because a new authenticated route reads customer-owned data under the customer's own session. No migration, no schema change, no new SQL function, no new service in `packages/**`, no new dependency, no new switch, no environment variable. The D gates, payments, outreach and AI stay closed, and the search neither triggers, enables nor reads any of them.
 
-Build state: the pure client modules (pages, facts, status words), the route and its core are built and tested. The dialog is not built yet. Nothing here is claimed enabled, live or verified. Production switch values are owner-reported and not observed.
+Build state: the pure client modules (pages, facts, status words), the route and its core are built and tested, including a test against a real database for the Requests scope (Companies are tested with counting services only). The dialog is not built yet. Nothing here is claimed enabled, live or verified. Production switch values are owner-reported and not observed.
 
 ## 1. Owner direction and what it changes
 
