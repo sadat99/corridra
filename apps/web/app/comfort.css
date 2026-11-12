@@ -95,6 +95,9 @@ html[data-contrast='more'] .ac1-record-tabs button[aria-selected='true']:focus-v
 /* The selected item of the navy sidebar carries a stripe: white, because cobalt on navy is only 1.91 to 1. */
 html[data-contrast='more'] nav.ux-team-sidebar {
   --selected: var(--on-brand);
+  /* When the list scrolls, its thumb is white on the navy, like the ring and the stripe. */
+  scrollbar-width: auto;
+  scrollbar-color: var(--on-brand) var(--ac-surface-navy);
 }
 /* An action filled control on navy is edged in white, so its boundary shows: the fill alone is darker than the navy. */
 html[data-contrast='more'] .guide-footer .guide-footer-actions .primary-link {
@@ -192,6 +195,9 @@ html[data-contrast='more'] :is(.ux-menu-panel, .ux-notice-panel) {
   /* The selected item of the navy sidebar carries a stripe: white, because cobalt on navy is only 1.91 to 1. */
   html:root nav.ux-team-sidebar {
     --selected: var(--on-brand);
+    /* When the list scrolls, its thumb is white on the navy, like the ring and the stripe. */
+    scrollbar-width: auto;
+    scrollbar-color: var(--on-brand) var(--ac-surface-navy);
   }
   /* An action filled control on navy is edged in white, so its boundary shows: the fill alone is darker than the navy. */
   html:root .guide-footer .guide-footer-actions .primary-link {

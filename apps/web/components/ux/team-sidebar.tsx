@@ -84,13 +84,13 @@ export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
     key: string,
     text: ReactNode,
     name: string,
-    icon: string,
+    icon: string | null,
     target: string,
     current: Current,
   ) {
     const content = (
       <>
-        <OperatorIcon name={icon} />
+        {icon ? <OperatorIcon name={icon} /> : null}
         <span>{text}</span>
       </>
     );
@@ -155,7 +155,7 @@ export function TeamSidebar({ urls }: { urls: boolean; ownerPage?: boolean }) {
                   entry.id,
                   english(entry.label),
                   entry.label,
-                  'chevron',
+                  null,
                   placeHref(entry.id, urls, tenant),
                   mark(
                     place === entry.id,

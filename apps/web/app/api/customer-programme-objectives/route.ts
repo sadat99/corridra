@@ -33,8 +33,12 @@ export async function GET(request: Request) {
     const s = await services(),
       query = Object.fromEntries(new URL(request.url).searchParams);
     const { view, ...input } = query;
-    if (view !== 'own' && view !== 'manage' && view !== 'choices')
+    if (view !== 'own' && view !== 'manage' && view !== 'choices' && view !== 'count')
       throw new DomainError('Choose an objective view', 400);
+    if (view === 'count')
+      return Response.json(await s.customerMissionShares.sharedCount(input, ...context(request)), {
+        headers: deliveryHeaders,
+      });
     return Response.json(
       view === 'choices'
         ? await s.customerMissionShares.choices(input, ...context(request))
