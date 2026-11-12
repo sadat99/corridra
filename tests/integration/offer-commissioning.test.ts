@@ -174,7 +174,8 @@ test('the team can record an offer with a commissioning term, and a key that was
     commissioning: 'Included, two engineers for five days',
   });
   const workspace = await commercial.workspace(f.ctx, j.t.missionId);
-  expect(workspace.quotations.find((o: { id: string }) => o.id === q.id)?.terms.commissioning).toBe(
+  const quotations = workspace.quotations as { id: string; terms: Record<string, string> }[];
+  expect(quotations.find((o) => o.id === q.id)?.terms.commissioning).toBe(
     'Included, two engineers for five days',
   );
 });
