@@ -76,6 +76,8 @@ export const programmePagesWords = {
   'pp.path.step.request': 'Start your private request',
   'pp.path.step.request.text': 'Only you and the Corridra team see it, not the organisers.',
   'pp.path.step.request.carried': 'Your words are already in it. You review it before it is sent.',
+  'pp.path.step.request.prefill':
+    'The organisers shared the destination and dates: {market}, {start} to {end} ({zone}). They are added to your draft. You can change them before it is sent.',
   'pp.path.step.request.have': 'You have a private request.',
   'pp.path.step.request.another': 'Start Another Request',
   'pp.path.step.request.elsewhere': 'Start a Request From Your Workspaces',
