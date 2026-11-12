@@ -6,6 +6,11 @@ import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { displayDate } from '@corridra/domain/locale';
 import { savedMissionHeaders, savedMissionRead, type SavedMissionScope } from './saved-missions';
+import {
+  acceptAssignedMission,
+  acceptCommand,
+  type AcceptCommand,
+} from './assigned-mission-accept';
 import { limitWords } from '../../lib/account-limit';
 const unavailable = z
   .object({ id: z.uuid(), requestId: z.uuid(), available: z.literal(false) })
@@ -28,7 +33,28 @@ const pageSchema = z
   })
   .strict();
 type Page = z.infer<typeof pageSchema> & { displayUntil: number };
-type Pending = { commandId: string; assignmentId: string; acknowledged: true };
+type Pending = AcceptCommand;
+
+/** The acknowledgement and the save, exactly as the Library shows them. The box starts unchecked every time. */
+export function SaveReportForm({
+  busy,
+  onSave,
+}: {
+  busy: boolean;
+  onSave: (e: FormEvent<HTMLFormElement>) => void;
+}) {
+  return (
+    <form onSubmit={onSave}>
+      <label className="check-field">
+        <input type="checkbox" required disabled={busy} />I understand this saves a private shortcut
+        to the approved report. It grants no access to colleagues.
+      </label>
+      <button className="primary-link" disabled={busy} type="submit">
+        Save and Open Approved Report
+      </button>
+    </form>
+  );
+}
 export function AssignedMissions(props: SavedMissionScope) {
   return <PrivateAssignments key={JSON.stringify([props.issuer, props.subject])} {...props} />;
 }
@@ -153,25 +179,8 @@ function PrivateAssignments({ subject, issuer }: SavedMissionScope) {
     setBusy(true);
     setNotice('');
     try {
-      const raw = await fetch('/api/customer-assigned-missions', {
-        method: 'POST',
-        cache: 'no-store',
-        signal: task.signal,
-        headers: savedMissionHeaders({ subject, issuer }),
-        body: JSON.stringify(value),
-      }).then(savedMissionRead);
-      const receipt = z
-        .object({
-          id: z.uuid(),
-          available: z.boolean(),
-          removed: z.boolean(),
-          title: z.string().optional(),
-          expiresAt: z.string().optional(),
-        })
-        .strict()
-        .parse(raw);
-      if (!receipt.available || receipt.removed) throw Error('denied');
-      if (!task.signal.aborted) router.push('/account/missions/' + receipt.id);
+      const id = await acceptAssignedMission(value, { subject, issuer }, task.signal);
+      if (!task.signal.aborted) router.push('/account/missions/' + id);
     } catch (e) {
       if (!task.signal.aborted) {
         if (e instanceof Error && e.message === 'limit') {
@@ -191,7 +200,7 @@ function PrivateAssignments({ subject, issuer }: SavedMissionScope) {
   }
   function submit(e: FormEvent<HTMLFormElement>, assignmentId: string) {
     e.preventDefault();
-    void accept({ commandId: crypto.randomUUID(), assignmentId, acknowledged: true });
+    void accept(acceptCommand(assignmentId));
   }
   return (
     <section
@@ -252,15 +261,7 @@ function PrivateAssignments({ subject, issuer }: SavedMissionScope) {
                       Open Approved Commercial Mission
                     </a>
                   ) : (
-                    <form onSubmit={(e) => submit(e, item.id)}>
-                      <label className="check-field">
-                        <input type="checkbox" required disabled={busy} />I understand this saves a
-                        private shortcut to the approved report. It grants no access to colleagues.
-                      </label>
-                      <button className="primary-link" disabled={busy} type="submit">
-                        Save and Open Approved Report
-                      </button>
-                    </form>
+                    <SaveReportForm busy={busy} onSave={(e) => submit(e, item.id)} />
                   )}
                 </>
               ) : (

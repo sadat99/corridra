@@ -159,7 +159,11 @@ type Options = {
   trip?: boolean;
   service?: boolean;
   offered?: string;
-  initialLens?: 'trip';
+  initialLens?: 'trip' | 'compare';
+  task?: unknown;
+  hintClosed?: boolean;
+  unreadable?: boolean;
+  reportCount?: number;
 };
 const props = (o: Options) => ({
   requestId,
@@ -171,6 +175,10 @@ const props = (o: Options) => ({
   lenses: o.lenses ?? true,
   trip: o.trip ?? false,
   initialLens: o.initialLens,
+  task: o.task,
+  hintClosed: o.hintClosed,
+  unreadable: o.unreadable,
+  reportCount: o.reportCount,
 });
 
 test.beforeAll(async () => {
@@ -218,7 +226,8 @@ test.beforeAll(async () => {
             contents:
               args.path === 'next/link'
                 ? 'export default function Link({prefetch,...props}){return <a {...props}/>}'
-                : 'const router={replace:()=>{},refresh:()=>{}};export function useRouter(){return router}',
+                : // Every navigation the page asks for is recorded, so a test can prove where a confirmed save goes.
+                  'const nav=(window.__nav=window.__nav||[]);const router={replace:(h)=>{nav.push(["replace",h])},push:(h)=>{nav.push(["push",h])},refresh:()=>{nav.push(["refresh"])}};export function useRouter(){return router}',
           }));
         },
       },
@@ -1670,3 +1679,408 @@ test('marks Chinese names and places as Chinese for a screen reader and leaves o
   await expect(latin.locator('h4')).not.toHaveAttribute('lang', /.*/);
   await expect(latin.locator('dd[lang]').filter({ hasText: 'Gazipur factory' })).toHaveCount(0);
 });
+
+// Customer handoff (approved delivered report to the comparison): the Room offers the save itself, with the Library's
+// own acknowledgement unchecked, sends one command per attempt, moves on only on a confirmed receipt, and opens
+// the comparison only when the saved report has something to compare. Every answer below is the test's own.
+const assignmentA = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1';
+const assignmentB = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2';
+const consent =
+  'I understand this saves a private shortcut to the approved report. It grants no access to colleagues.';
+const unsavedLink = { reportAvailable: true, savedResourceId: null };
+const pending = (id = assignmentA, title = 'Cutting machine report') => ({
+  assignmentId: id,
+  savedResourceId: null,
+  title,
+  expiresAt: '2099-01-01T00:00:00Z',
+});
+const receipt = {
+  id: resourceId,
+  available: true,
+  removed: false,
+  title: 'Cutting machine report',
+};
+type Post = { commandId: string; assignmentId: string; acknowledged: boolean };
+async function answerSaves(
+  page: Page,
+  answers: ((post: Post) => { status?: number; body?: unknown; abort?: boolean; delay?: number })[],
+) {
+  const posts: Post[] = [];
+  await page.route('**/api/customer-assigned-missions', async (route) => {
+    const post = route.request().postDataJSON() as Post;
+    posts.push(post);
+    const answer = (answers[posts.length - 1] ?? answers[answers.length - 1]!)(post);
+    if (answer.delay) await new Promise((done) => setTimeout(done, answer.delay));
+    if (answer.abort) return route.abort('connectionreset');
+    await route.fulfill({
+      status: answer.status ?? 200,
+      contentType: 'application/json',
+      body: JSON.stringify(answer.body ?? receipt),
+    });
+  });
+  return posts;
+}
+const navigations = (page: Page) =>
+  page.evaluate(() => (window as unknown as { __nav?: string[][] }).__nav ?? []);
+const saveCard = (page: Page) => page.getByRole('region', { name: 'Your next step' });
+const noQuotes = () => {
+  const body = reportBody();
+  (body.report.missions[0].experience as { quotations: unknown[] }).quotations = [];
+  return body;
+};
+
+test('handoff: an unsaved report is saved in the Room, unchecked first, and the comparison opens', async ({
+  page,
+}) => {
+  const posts = await answerSaves(page, [() => ({})]);
+  await open(page, {
+    link: unsavedLink,
+    task: { kind: 'save', report: pending() },
+    reportCount: 1,
+  });
+  const card = saveCard(page);
+  await expect(card).toContainText('Your report is ready: Cutting machine report');
+  const box = card.getByRole('checkbox', { name: consent });
+  await expect(box).not.toBeChecked();
+  // No trip through the Library: the save is here, and the old Library button is not the next step.
+  await expect(card.getByRole('link', { name: 'Open Your Library' })).toHaveCount(0);
+  await expect(page.getByText('Waiting on the Corridra team')).toHaveCount(0);
+  // The browser refuses the submit while the box is unchecked: nothing is sent.
+  await card.getByRole('button', { name: 'Save and Open Approved Report' }).click();
+  expect(posts).toHaveLength(0);
+  await box.check();
+  await card.getByRole('button', { name: 'Save and Open Approved Report' }).click();
+  await expect(lens(page, 'Compare')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.ledger-table')).toBeVisible();
+  expect(posts).toHaveLength(1);
+  expect(posts[0]).toEqual({
+    commandId: expect.stringMatching(/^[0-9a-f-]{36}$/),
+    assignmentId: assignmentA,
+    acknowledged: true,
+  });
+  expect(await navigations(page)).toEqual([
+    ['replace', `/account/rooms/${requestId}?view=compare`],
+  ]);
+  // The recovery link stays where it was.
+  await lens(page, 'Overview').click();
+  await expect(page.getByRole('link', { name: 'Open the saved report' })).toHaveAttribute(
+    'href',
+    `/account/missions/${resourceId}`,
+  );
+});
+
+test('handoff: with no current quotes the save opens the Overview and says so honestly', async ({
+  page,
+}) => {
+  await answerSaves(page, [() => ({})]);
+  await open(
+    page,
+    { link: unsavedLink, task: { kind: 'save', report: pending() }, reportCount: 1 },
+    {},
+    { body: noQuotes() },
+  );
+  await saveCard(page).getByRole('checkbox', { name: consent }).check();
+  await saveCard(page).getByRole('button', { name: 'Save and Open Approved Report' }).click();
+  await expect(
+    page.getByText('Your report is saved. There are no current quotes to compare yet.'),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Open the Saved Report', exact: true }),
+  ).toHaveAttribute('href', `/account/missions/${resourceId}`);
+  await expect(lens(page, 'Overview')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.ledger-table')).toHaveCount(0);
+});
+
+test('handoff: a double click sends one save', async ({ page }) => {
+  const posts = await answerSaves(page, [() => ({ delay: 600 })]);
+  await open(page, {
+    link: unsavedLink,
+    task: { kind: 'save', report: pending() },
+    reportCount: 1,
+  });
+  await saveCard(page).getByRole('checkbox', { name: consent }).check();
+  const button = saveCard(page).getByRole('button', { name: 'Save and Open Approved Report' });
+  await button.evaluate((el: HTMLButtonElement) => {
+    el.click();
+    el.click();
+  });
+  await expect(lens(page, 'Compare')).toHaveAttribute('aria-pressed', 'true');
+  expect(posts).toHaveLength(1);
+});
+
+test('handoff: a lost answer is not a save; the retry sends the same command and then moves on', async ({
+  page,
+}) => {
+  const posts = await answerSaves(page, [() => ({ abort: true }), () => ({})]);
+  await open(page, {
+    link: unsavedLink,
+    task: { kind: 'save', report: pending() },
+    reportCount: 1,
+  });
+  await saveCard(page).getByRole('checkbox', { name: consent }).check();
+  await saveCard(page).getByRole('button', { name: 'Save and Open Approved Report' }).click();
+  await expect(
+    page.getByText(
+      'Saving was not confirmed. Retry the same command or refresh current deliveries.',
+    ),
+  ).toBeVisible();
+  expect(await navigations(page)).toEqual([]);
+  await expect(lens(page, 'Overview')).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Retry Saving the Same Report' }).click();
+  await expect(lens(page, 'Compare')).toHaveAttribute('aria-pressed', 'true');
+  expect(posts).toHaveLength(2);
+  expect(posts[1]).toEqual(posts[0]);
+});
+
+for (const [name, answer, words] of [
+  [
+    'refused (403)',
+    { status: 403, body: { error: 'Forbidden' } },
+    'This report is no longer open to you. Nothing was saved.',
+  ],
+  [
+    'a receipt that says removed',
+    { body: { ...receipt, removed: true } },
+    'This report is no longer open to you. Nothing was saved.',
+  ],
+  [
+    'a receipt that does not parse',
+    { body: { id: resourceId } },
+    'Saving was not confirmed. Retry the same command or refresh current deliveries.',
+  ],
+  [
+    'unavailable (503)',
+    { status: 503, body: {} },
+    'Account mission delivery is unavailable. Nothing was saved.',
+  ],
+] as const)
+  test(`handoff: ${name} moves nowhere and says so`, async ({ page }) => {
+    await answerSaves(page, [() => answer]);
+    await open(page, {
+      link: unsavedLink,
+      task: { kind: 'save', report: pending() },
+      reportCount: 1,
+    });
+    await saveCard(page).getByRole('checkbox', { name: consent }).check();
+    await saveCard(page).getByRole('button', { name: 'Save and Open Approved Report' }).click();
+    await expect(page.getByText(words)).toBeVisible();
+    expect(await navigations(page)).toEqual([]);
+    await expect(page.getByRole('link', { name: 'Open the saved report' })).toHaveCount(0);
+    if (words.startsWith('This report'))
+      await expect(saveCard(page).getByRole('checkbox', { name: consent })).toHaveCount(0);
+  });
+
+test('handoff: several reports are a choice, each with its own unchecked box, and the saved one is named', async ({
+  page,
+}) => {
+  const posts = await answerSaves(page, [() => ({})]);
+  await open(page, {
+    link: unsavedLink,
+    task: {
+      kind: 'choose',
+      reports: [pending(assignmentA, 'First report'), pending(assignmentB, 'Second report')],
+    },
+    reportCount: 2,
+  });
+  const card = saveCard(page);
+  await expect(card).toContainText('Your reports are ready');
+  const items = card.locator('.room-save-item');
+  await expect(items).toHaveCount(2);
+  await expect(card.getByRole('checkbox', { name: consent })).toHaveCount(2);
+  for (const box of await card.getByRole('checkbox', { name: consent }).all())
+    await expect(box).not.toBeChecked();
+  // Ticking one box never saves or ticks the other.
+  await items.nth(1).getByRole('checkbox').check();
+  await expect(items.nth(0).getByRole('checkbox')).not.toBeChecked();
+  await items.nth(1).getByRole('button', { name: 'Save and Open Approved Report' }).click();
+  await expect(lens(page, 'Compare')).toHaveAttribute('aria-pressed', 'true');
+  expect(posts.map((p) => p.assignmentId)).toEqual([assignmentB]);
+  expect(await navigations(page)).toEqual([
+    ['replace', `/account/rooms/${requestId}?view=compare&report=${assignmentB}`],
+  ]);
+});
+
+test('handoff: an address naming a report not open to the person says so and keeps the real state', async ({
+  page,
+}) => {
+  await open(page, {
+    link: { reportAvailable: false, savedResourceId: null },
+    task: { kind: 'none' },
+    hintClosed: true,
+  });
+  await expect(page.getByText('This report is no longer open to you.')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Open Your Library' })).toHaveAttribute(
+    'href',
+    '/account?view=results&tab=delivered',
+  );
+  await expect(page.getByRole('checkbox')).toHaveCount(0);
+});
+
+test('handoff: a list that could not be read is never a waiting state and offers Try Again', async ({
+  page,
+}) => {
+  await open(page, {
+    link: { reportAvailable: false, savedResourceId: null },
+    unreadable: true,
+  });
+  const card = saveCard(page);
+  await expect(card).toContainText('We could not check this report just now.');
+  await expect(card).toContainText('Nothing was saved and nothing has changed.');
+  await expect(page.getByText('Waiting on the Corridra team')).toHaveCount(0);
+  await expect(page.getByRole('checkbox')).toHaveCount(0);
+  await card.getByRole('button', { name: 'Try Again' }).click();
+  expect(await navigations(page)).toEqual([['refresh']]);
+});
+
+test('handoff: a saved report opens directly, and ?view=compare opens the comparison only with quotes', async ({
+  page,
+}) => {
+  await open(page, { task: { kind: 'saved' }, initialLens: 'compare', reportCount: 1 });
+  await expect(lens(page, 'Compare')).toHaveAttribute('aria-pressed', 'true');
+  await expect(saveCard(page).getByRole('checkbox')).toHaveCount(0);
+  await page.unrouteAll({ behavior: 'ignoreErrors' });
+  await open(page, { task: { kind: 'saved' }, initialLens: 'compare' }, {}, { body: noQuotes() });
+  await expect(
+    page.getByText('Your report is saved. There are no current quotes to compare yet.'),
+  ).toBeVisible();
+  await expect(lens(page, 'Overview')).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('handoff: without the lenses a confirmed save opens the saved report page, as the Library does', async ({
+  page,
+}) => {
+  await answerSaves(page, [() => ({})]);
+  await open(page, {
+    lenses: false,
+    link: unsavedLink,
+    task: { kind: 'save', report: pending() },
+    reportCount: 1,
+  });
+  await saveCard(page).getByRole('checkbox', { name: consent }).check();
+  await saveCard(page).getByRole('button', { name: 'Save and Open Approved Report' }).click();
+  await expect.poll(() => navigations(page)).toEqual([['push', `/account/missions/${resourceId}`]]);
+});
+
+const machineryBody = (secondUnitMinor = '1840000') => {
+  const body = reportBody();
+  const e = body.report.missions[0].experience as unknown as {
+    requirements: Record<string, unknown>;
+    quotations: Record<string, unknown>[];
+  };
+  e.requirements.assignmentType = 'machinery_procurement';
+  const machine = {
+    installation: 'Included',
+    warranty: 'One year',
+    training: 'Two days',
+    spares: 'Quoted separately',
+  };
+  e.quotations = [
+    quote('qa', 't1', { ...terms, ...machine, commissioning: 'Two engineers for five days' }),
+    quote('qb', 't2', {
+      ...terms,
+      ...machine,
+      unitPriceMinor: secondUnitMinor,
+      totalPriceMinor: String(BigInt(secondUnitMinor) * BigInt(2)),
+    }),
+  ];
+  return body;
+};
+
+for (const width of [1440, 390])
+  test(`handoff: the comparison names the missing machine set-up beside Ask a Question at ${width}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await open(page, {}, {}, { body: machineryBody() });
+    await lens(page, 'Compare').click();
+    const notice = page.getByRole('region', { name: 'One quote leaves out the machine set-up' });
+    await expect(notice).toContainText(
+      '绿野机械有限公司 has not said who will set up and test the machine at your site.',
+    );
+    await expect(notice).toContainText('Lantern Cutting Works quotes Two engineers for five days.');
+    await expect(notice).toContainText('Both quotes are USD 18,400.00 a unit.');
+    await expect(notice.locator('[lang="zh"]')).toHaveText('绿野机械有限公司');
+    await expect(notice.getByRole('link', { name: 'Ask a Question' })).toHaveAttribute(
+      'href',
+      `/account/service-requests/new?kind=request&ref=${requestId}`,
+    );
+    for (const word of ['cheaper', 'recommended', 'best'])
+      await expect(notice).not.toContainText(word, { ignoreCase: true });
+    // The full comparison is still there, unchanged, below the notice.
+    if (width >= 768) {
+      await expect(page.locator('.ledger-table')).toBeVisible();
+      await expect(
+        page.locator('.ledger-table').getByRole('row', { name: /^Commissioning/ }),
+      ).toContainText('Not stated');
+    } else await expect(page.locator('.ledger-card')).toHaveCount(2);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      width,
+    );
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    if (process.env.UX_SHOTS_DIR)
+      await page.screenshot({
+        path: `${process.env.UX_SHOTS_DIR}/handoff-notice-${width}.png`,
+        fullPage: true,
+      });
+  });
+
+test('handoff: different unit prices are never called equal, and without the question link none is shown', async ({
+  page,
+}) => {
+  await open(page, { service: false }, {}, { body: machineryBody('1840001') });
+  await lens(page, 'Compare').click();
+  const notice = page.getByRole('region', { name: 'One quote leaves out the machine set-up' });
+  await expect(notice).toBeVisible();
+  await expect(notice).not.toContainText('Both quotes');
+  await expect(notice.getByRole('link')).toHaveCount(0);
+});
+
+for (const width of [1440, 390])
+  test(`handoff: the save card fits at ${width}, works from the keyboard and has no accessibility violation`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const posts = await answerSaves(page, [() => ({})]);
+    await open(page, {
+      link: unsavedLink,
+      task: {
+        kind: 'choose',
+        reports: [pending(assignmentA, 'First report'), pending(assignmentB, 'Second report')],
+      },
+      reportCount: 2,
+    });
+    const card = saveCard(page);
+    await expect(card.getByRole('checkbox', { name: consent })).toHaveCount(2);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      width,
+    );
+    const small = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('.room-next :is(a[href], button, label)'))
+        .filter((el) => (el as HTMLElement).offsetParent !== null)
+        .filter((el) => el.getBoundingClientRect().height < 43.5)
+        .map((el) => (el.textContent || '').trim().slice(0, 30)),
+    );
+    expect(small).toEqual([]);
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    if (process.env.UX_SHOTS_DIR)
+      await page.screenshot({
+        path: `${process.env.UX_SHOTS_DIR}/handoff-save-${width}.png`,
+        fullPage: true,
+      });
+    // Keyboard only: focus the first box, tick it with Space, move to its button and press Enter.
+    await card.getByRole('checkbox', { name: consent }).first().focus();
+    await page.keyboard.press('Space');
+    await expect(card.getByRole('checkbox', { name: consent }).first()).toBeChecked();
+    await page.keyboard.press('Tab');
+    await expect(
+      card
+        .locator('.room-save-item')
+        .first()
+        .getByRole('button', { name: 'Save and Open Approved Report' }),
+    ).toBeFocused();
+    const ring = await page.evaluate(() => getComputedStyle(document.activeElement!).outlineStyle);
+    expect(ring).not.toBe('none');
+    await page.keyboard.press('Enter');
+    await expect(lens(page, 'Compare')).toHaveAttribute('aria-pressed', 'true');
+    expect(posts.map((p) => p.assignmentId)).toEqual([assignmentA]);
+  });

@@ -97,13 +97,154 @@ export function roadRecords(link: RoomLink) {
 }
 
 /**
- * The lens a Room link may open on, from the `view` in its address. Only exactly "meetings" counts, and only where
- * the Trip lens exists (the Trip and lenses switches both on); an array, an unknown word or a switch off opens the
- * Overview as always. It only chooses what is shown first and reads nothing.
+ * The lens a Room link may open on, from the `view` in its address. Exactly "meetings" counts only where the Trip
+ * lens exists (the Trip and lenses switches both on); exactly "compare" only where the lenses exist, and the Room
+ * still opens the comparison only once the saved report shows something to compare. An array, an unknown word or a
+ * switch off opens the Overview as always. It only chooses what is shown first and reads nothing.
  */
 export function initialLensFor(
   view: string | string[] | undefined,
   on: { trip: boolean; lenses: boolean },
-): 'trip' | undefined {
+): 'trip' | 'compare' | undefined {
+  if (on.lenses && view === 'compare') return 'compare';
   return on.trip && on.lenses && view === 'meetings' ? 'trip' : undefined;
+}
+
+/** One delivered report the person may read for this request, as the assignment list states it. */
+export type RoomReport = {
+  assignmentId: string;
+  savedResourceId: string | null;
+  title: string;
+  expiresAt: string;
+};
+
+type ListedAssignment = Assignment & { title?: unknown; expiresAt?: unknown };
+
+/**
+ * Every report for one request in list order: the readable ones, and the ids of rows that are listed but no
+ * longer open. A row for another request, a malformed row and a report whose access has already ended are left
+ * out, never trusted. The list says only available or not, so expired, revoked and changed stay one state.
+ */
+export function roomReportsFor(
+  requestId: string,
+  assignments: unknown,
+  now = Date.now(),
+): { reports: RoomReport[]; closed: string[] } {
+  const rows = Array.isArray(assignments) ? (assignments as ListedAssignment[]) : [];
+  const reports: RoomReport[] = [];
+  const closed: string[] = [];
+  const seen = new Set<string>();
+  for (const row of rows) {
+    if (!row || row.requestId !== requestId) continue;
+    if (typeof row.id !== 'string' || !uuid.test(row.id) || seen.has(row.id)) continue;
+    seen.add(row.id);
+    const expiresAt = typeof row.expiresAt === 'string' ? Date.parse(row.expiresAt) : NaN;
+    if (
+      row.available !== true ||
+      typeof row.title !== 'string' ||
+      !Number.isFinite(expiresAt) ||
+      expiresAt <= now
+    ) {
+      closed.push(row.id);
+      continue;
+    }
+    reports.push({
+      assignmentId: row.id,
+      savedResourceId:
+        typeof row.savedResourceId === 'string' && uuid.test(row.savedResourceId)
+          ? row.savedResourceId
+          : null,
+      title: row.title,
+      expiresAt: row.expiresAt as string,
+    });
+  }
+  return { reports, closed };
+}
+
+/**
+ * Follows every assignment page, unlike `followAssignments`, which stops at the first report: a newer report for
+ * the same request may be on a later page, and the Room must never pick one for the person while another is
+ * unseen. `complete` is false only when the page bound was reached with more pages left.
+ */
+export async function followRoomReports(
+  requestId: string,
+  page: (after?: string) => Promise<{ assignments?: unknown[]; nextAfter?: string | null }>,
+  maxPages = assignmentPageCap,
+  now = Date.now(),
+): Promise<{ reports: RoomReport[]; closed: string[]; complete: boolean }> {
+  const rows: unknown[] = [];
+  let after: string | undefined;
+  for (let n = 0; n < maxPages; n += 1) {
+    const result = await page(after);
+    rows.push(...(result.assignments ?? []));
+    if (!result.nextAfter) return { ...roomReportsFor(requestId, rows, now), complete: true };
+    // A page that points back at itself can never end: stop, and say the list was not read to the end.
+    if (result.nextAfter === after) break;
+    after = result.nextAfter;
+  }
+  return { ...roomReportsFor(requestId, rows, now), complete: false };
+}
+
+/**
+ * What the Room asks of the person about delivered reports.
+ * - `none`: no report is open to them.
+ * - `saved`: nothing to save; the saved report shown is `savedResourceId`.
+ * - `save`: exactly one report is the task, and it is not saved yet.
+ * - `choose`: more than one report could be meant; the person chooses, the Room never does.
+ */
+export type RoomTask =
+  | { kind: 'none' }
+  | { kind: 'saved' }
+  | { kind: 'save'; report: RoomReport }
+  | { kind: 'choose'; reports: RoomReport[] };
+
+export type RoomResolution = {
+  link: RoomLink;
+  task: RoomTask;
+  /** The address named a report that is not open to this person for this request. Its reason is not known. */
+  hintClosed: boolean;
+  /** How many reports are open for this request, so the address after a save can name the one saved. */
+  count: number;
+};
+
+/**
+ * Resolves the report an address hints at against the reports just read for this person and request. The hint
+ * only chooses among those; it never grants anything, and one that matches nothing is said plainly. Without a
+ * settling hint, one report that is the only one is the task; several are a choice; an unread rest of the list
+ * is never treated as settled.
+ */
+export function resolveRoomTask(
+  read: { reports: RoomReport[]; complete: boolean },
+  hint?: string,
+): RoomResolution {
+  const { reports, complete } = read;
+  const match = hint ? reports.find((report) => report.assignmentId === hint) : undefined;
+  const hintClosed = !!hint && !match;
+  const firstSaved = reports.find((report) => report.savedResourceId)?.savedResourceId ?? null;
+  // A hinted report decides what the Room shows; otherwise the first saved one, as before.
+  const savedResourceId = match ? match.savedResourceId : firstSaved;
+  const link: RoomLink = { reportAvailable: reports.length > 0, savedResourceId };
+  const count = reports.length;
+  if (match)
+    return {
+      link,
+      task: match.savedResourceId ? { kind: 'saved' } : { kind: 'save', report: match },
+      hintClosed,
+      count,
+    };
+  const unsaved = reports.filter((report) => !report.savedResourceId);
+  if (unsaved.length === 0)
+    return { link, task: count ? { kind: 'saved' } : { kind: 'none' }, hintClosed, count };
+  if (count === 1 && complete)
+    return { link, task: { kind: 'save', report: unsaved[0]! }, hintClosed, count };
+  return { link, task: { kind: 'choose', reports: unsaved }, hintClosed, count };
+}
+
+/**
+ * Where the Room goes after a confirmed save: the comparison of this request. The saved report is named only when
+ * the request has more than one, so the Room opens the one just saved and not an older one.
+ */
+export function afterSaveHref(requestId: string, assignmentId: string, count: number) {
+  const base = `/account/rooms/${requestId}?view=compare`;
+  return count > 1 ? `${base}&report=${assignmentId}` : base;
 }

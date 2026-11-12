@@ -28,7 +28,7 @@ export default async function Page({
   searchParams,
 }: {
   params: Promise<{ requestId: string }>;
-  searchParams: Promise<{ view?: string | string[] }>;
+  searchParams: Promise<{ view?: string | string[]; report?: string | string[] }>;
 }) {
   if (!uxSwitchOn('CORRIDRA_UX_ROAD')) notFound();
   const parsed = z.uuid().safeParse((await params).requestId);
@@ -54,9 +54,19 @@ export default async function Page({
         </a>
       </WorkspaceShell>
     );
-  const link = await loadRoomLink(parsed.data, session.subject, session.issuer);
-  // Meetings opens the Room on its Trip lens. It is a display choice only: the same reads, the same guards.
-  const initialLens = initialLensFor((await searchParams).view, {
+  const query = await searchParams;
+  // `report` names one delivered report, from a Home card or after a save. It is a hint only: it is checked as a
+  // uuid here and then only chooses among the reports this person's own list returns for this request.
+  const hint = z.uuid().safeParse(query.report);
+  const load = await loadRoomLink(
+    parsed.data,
+    session.subject,
+    session.issuer,
+    hint.success ? hint.data : undefined,
+  );
+  // Meetings opens the Room on its Trip lens, and a saved report on its comparison. Display choices only: the same
+  // reads, the same guards.
+  const initialLens = initialLensFor(query.view, {
     trip: uxSwitchOn('CORRIDRA_UX_TRIP'),
     lenses: uxSwitchOn('CORRIDRA_UX_LENSES'),
   });
@@ -70,7 +80,11 @@ export default async function Page({
         requestId={parsed.data}
         subject={session.subject}
         issuer={session.issuer}
-        link={link}
+        link={load.link}
+        task={load.status === 'ok' ? load.task : undefined}
+        hintClosed={load.status === 'ok' && load.hintClosed}
+        unreadable={load.status === 'unreadable'}
+        reportCount={load.status === 'ok' ? load.count : 0}
         serviceRequestsEnabled={customerServiceRequestsEnabled()}
         decisionsEnabled={customerDecisionsEnabled()}
         specificationConfirmationsEnabled={await specificationConfirmationForPage()}
