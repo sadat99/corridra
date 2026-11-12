@@ -223,11 +223,6 @@
   .site-shell:has(.ux-leftnav-frame) > .ux-app-header .brand + * {
     margin-inline-start: var(--space-8);
   }
-  .site-shell:has(.ux-leftnav-frame)
-    > .ux-app-header
-    :is(.ux-bar-primary, .ux-app-button, .ux-app-link) {
-    min-height: 40px;
-  }
   .ux-leftnav-frame {
     position: relative;
     z-index: 1;

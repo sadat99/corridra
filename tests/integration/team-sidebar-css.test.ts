@@ -197,6 +197,15 @@ describe('the five Admin pages read as links, not expanders', () => {
   });
 });
 
+describe('the header controls beside the left bar keep their 44 px targets', () => {
+  test('no rule in left-nav.css shortens a header button or link below 44 px at 1024 px and wider', () => {
+    for (const rule of leftRules)
+      if (/ux-bar-primary|ux-app-button|ux-app-link/.test(rule.selector))
+        expect(declared(rule, 'min-height') ?? '44px').toBe('44px');
+    expect(leftNav).not.toMatch(/min-height:\s*40px/);
+  });
+});
+
 describe('the stylesheets stay within the design system', () => {
   test('every token the two stylesheets use is defined (in globals.css or in the sheet), with no text-transform and no em dash', () => {
     for (const source of [teamNav, leftNav]) {
