@@ -24,7 +24,7 @@
 @media (min-width: 1000px) {
   .ux-public .guide-page-intro--compact:not(.is-labelled) > div {
     grid-template-columns: var(--public-split);
-    column-gap: var(--space-12);
+    column-gap: var(--public-split-gap);
     justify-content: start;
     align-items: first baseline;
   }

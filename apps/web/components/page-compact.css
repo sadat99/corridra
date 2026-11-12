@@ -43,16 +43,13 @@
 }
 
 /* One column split for the hero and the intro below it (public-body.css), so the lead and the intro text start on the
-   same line: a heading column as wide as the heading measure (26ch of the heading, so a three-sentence headline keeps each
-   sentence on one line), then a reading column. Both stay at the left edge
-   of the page, so a heading and its text sit together instead of at opposite ends of a wide screen. */
+   same line: a heading column as wide as the heading measure (26ch of the heading, so a three-sentence headline keeps
+   each sentence on one line), then a reading column that takes the rest. Both stay at the left edge of the page, so a
+   heading and its text sit together instead of at opposite ends of a wide screen. The heading column is capped as a
+   share of the page as well as in rem, so large text sizes keep the reading column inside the window. */
 :root {
-  --public-split: minmax(0, 37rem) minmax(0, 36rem);
-}
-@media (min-width: 1280px) {
-  :root {
-    --public-split: minmax(0, 37rem) minmax(0, 1fr);
-  }
+  --public-split: minmax(0, min(37rem, 52%)) minmax(0, 1fr);
+  --public-split-gap: min(var(--space-12), 4%);
 }
 
 /* From 1000 px the heading block and the lead sit side by side. The lead starts at the top of the heading (owner,
@@ -63,7 +60,7 @@
   .guide-page-hero.guide-page-hero--compact:not(:has(.guide-route)) > div {
     grid-template-columns: var(--public-split);
     grid-template-rows: auto auto auto 1fr;
-    column-gap: var(--space-12);
+    column-gap: var(--public-split-gap);
     justify-content: start;
     align-items: start;
   }
@@ -79,8 +76,6 @@
     grid-column: 2;
     grid-row: 3;
     max-width: 40rem;
-    /* The first line of the lead is centred on the first line of the heading, so the pair reads as one unit. */
-    padding-top: calc((var(--text-h1) * 1.12 - var(--text-lg) * 1.6) / 2);
   }
   .guide-page-hero--compact:not(:has(.guide-route)) > div > .guide-hint,
   .guide-page-hero--compact:not(:has(.guide-route)) > div > .guide-page-actions {
