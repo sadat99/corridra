@@ -71,6 +71,49 @@ export function isOverdue(dueAt: string | null | undefined, status: string) {
   );
 }
 
+/** Days without any recorded change before an open mission is called stale. */
+export const staleAfterDays = 7;
+
+/**
+ * An open mission nobody has touched for `staleAfterDays`. `updatedAt` is the mission row's own change
+ * stamp, which every command moves. A paused mission waits on purpose, so it is never stale.
+ */
+export function isStale(updatedAt: string | null | undefined, status: string, now = Date.now()) {
+  if (!updatedAt || ['CANCELLED', 'CLOSED', 'ON_HOLD'].includes(status)) return false;
+  const time = new Date(updatedAt).getTime();
+  return !Number.isNaN(time) && now - time >= staleAfterDays * 86_400_000;
+}
+
+/** Whole days since the last change. */
+export function quietDays(updatedAt: string, now = Date.now()) {
+  return Math.max(0, Math.floor((now - new Date(updatedAt).getTime()) / 86_400_000));
+}
+
+type HandoverSource = {
+  reason: string;
+  created_at: string;
+  actor_id?: string;
+  details: { ownerId: string };
+};
+
+/**
+ * The latest change of owner, read from the append-only command history (newest first). The reason the
+ * person gave for that command is the hand-over note. Returns null while the owner never changed.
+ */
+export function latestHandover<T extends HandoverSource>(history: T[]) {
+  for (let i = 0; i < history.length - 1; i += 1) {
+    const next = history[i];
+    const before = history[i + 1];
+    if (
+      next.details?.ownerId &&
+      before.details?.ownerId &&
+      next.details.ownerId !== before.details.ownerId
+    )
+      return { entry: next, fromOwnerId: before.details.ownerId, toOwnerId: next.details.ownerId };
+  }
+  return null;
+}
+
 /** Address of the mission page; the workspace is kept so a person with several workspaces lands in the right one. */
 export function missionHref(missionId: string, tenant: string) {
   return `/operator/missions/${missionId}?workspace=${encodeURIComponent(tenant)}`;

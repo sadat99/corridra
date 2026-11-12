@@ -199,13 +199,13 @@ export class MissionService {
   }
   queue(
     ctx: RequestContext,
-    filter: 'all' | 'open' | 'overdue' = 'all',
+    filter: 'all' | 'open' | 'overdue' | 'stale' = 'all',
     offset = 0,
     filters: z.infer<typeof queueFilters> = {},
   ) {
     const selected = queueFilters.parse(filters);
     return withTenant(this.pool, ctx, 'missions.read', async ({ db, role }) => {
-      const where = `m.tenant_id=$1 AND ($2='all' OR (m.status NOT IN ('CANCELLED','CLOSED') AND ($2<>'overdue' OR m.due_at<now())))
+      const where = `m.tenant_id=$1 AND ($2='all' OR (m.status NOT IN ('CANCELLED','CLOSED') AND ($2<>'overdue' OR m.due_at<now()) AND ($2<>'stale' OR (m.status<>'ON_HOLD' AND m.updated_at<now()-interval '7 days'))))
          AND ($3::uuid IS NULL OR m.owner_id=$3) AND ($4::text IS NULL OR m.status=$4)
          AND (($5::uuid IS NULL AND $6::text IS NULL) OR EXISTS(SELECT FROM app.mission_route_assignment a JOIN app.corridor_pack_version p ON p.tenant_id=a.tenant_id AND p.id=a.pack_id JOIN app.mission_type_definition t ON t.tenant_id=a.tenant_id AND t.id=a.mission_type_id WHERE a.tenant_id=m.tenant_id AND a.mission_id=m.id AND a.version=(SELECT max(version) FROM app.mission_route_assignment WHERE tenant_id=m.tenant_id AND mission_id=m.id) AND ($5::uuid IS NULL OR p.route_id=$5) AND ($6::text IS NULL OR t.key=$6)))`;
       const args = [
