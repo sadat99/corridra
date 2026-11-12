@@ -1,12 +1,40 @@
 import { createHash } from 'node:crypto';
-import { withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
+import {
+  withTenant,
+  type DatabasePool,
+  type RequestContext,
+  type TenantTransaction,
+} from '@corridra/db';
 import { DomainError } from '@corridra/domain';
 import {
   commercialMissionCommand,
   compareOffers,
   offerContext,
 } from '@corridra/domain/commercial-missions';
+import { replyQuotationPrefill } from '@corridra/domain/reply-review';
 import { z } from 'zod';
+
+// ADR-081: the only refusals of app.bind_reply_quotation that are shown as words. Matched by exact message and answered with the
+// fixed text below, so nothing the database says, and nothing a supplier typed, can reach a person through this path.
+const replyBindingRefusals = new Map<string, number>([
+  ['Access denied', 403],
+  ['Reply not found', 404],
+  ['Reply review is not open', 409],
+  ['This reply is already recorded as an offer', 409],
+  ['This reply has not been published', 409],
+  ['Reply version changed; reload before confirming', 409],
+  ['This reply changed after it was published', 409],
+  ['Offer does not match the published reply', 409],
+  ['Offer source must be a self-declared source', 409],
+  ['Offer must be recorded in this request', 409],
+  ['Invalid reply binding', 400],
+]);
+const bindFunction = 'app.bind_reply_quotation(uuid,uuid,integer,text)';
+const prefillFunction = 'app.reply_quotation_prefill(uuid)';
+export type CommercialCommandOptions = {
+  /** True only where the reply switch is on (CORRIDRA_REPLY_PAGE); false refuses a reply-bound offer instead of recording a plain one. */
+  replyBinding?: boolean;
+};
 
 export class CommercialMissionService {
   constructor(private pool: DatabasePool) {}
@@ -94,7 +122,7 @@ export class CommercialMissionService {
       };
     });
   }
-  async command(ctx: RequestContext, input: unknown) {
+  async command(ctx: RequestContext, input: unknown, options: CommercialCommandOptions = {}) {
     const v = commercialMissionCommand.parse(input),
       hash = createHash('sha256').update(JSON.stringify(v)).digest('hex');
     return withTenant(this.pool, ctx, 'missions.manage', async ({ db, actorId }) => {
@@ -172,6 +200,8 @@ export class CommercialMissionService {
             due_at: v.dueAt,
           });
         } else if (v.action === 'quotation') {
+          // Never record a plain offer when the team asked to record a reply: fail closed before anything is written.
+          if (v.replyBinding) await this.requireReplyBinding(db, bindFunction, options);
           const rfq = (
             await db.query(
               'SELECT requirement_id FROM app.mission_rfq WHERE tenant_id=$1 AND id=$2',
@@ -211,6 +241,21 @@ export class CommercialMissionService {
         `INSERT INTO app.${table}(${keys.join(',')}) VALUES(${keys.map((_, i) => '$' + (i + 1)).join(',')})`,
         Object.values(row),
       );
+      if (v.action === 'quotation' && v.replyBinding) {
+        try {
+          await db.query('SELECT app.bind_reply_quotation($1,$2,$3,$4)', [
+            v.commandId,
+            v.replyBinding.responseId,
+            v.replyBinding.seen,
+            v.replyBinding.digest,
+          ]);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : '';
+          const status = replyBindingRefusals.get(message);
+          if (status === undefined) throw error;
+          throw new DomainError(message, status);
+        }
+      }
       const result = { id: v.commandId };
       await db.query(
         'INSERT INTO app.commercial_mission_command(id,tenant_id,mission_id,action,input_hash,result,created_by) VALUES($1,$2,$3,$4,$5,$6,$7)',
@@ -218,5 +263,29 @@ export class CommercialMissionService {
       );
       return result;
     });
+  }
+  /** The published reply, typed for the offer form (ADR-081). Authority is checked before anything is read. */
+  async replyPrefill(ctx: RequestContext, replyId: string, options: CommercialCommandOptions = {}) {
+    const reply = z.uuid().parse(replyId);
+    return withTenant(this.pool, ctx, 'missions.manage', async ({ db }) => {
+      await this.requireReplyBinding(db, prefillFunction, options);
+      const row = (await db.query('SELECT app.reply_quotation_prefill($1) AS prefill', [reply]))
+        .rows[0];
+      const prefill = replyQuotationPrefill.safeParse(row.prefill);
+      // The database answered with a shape this code does not know: an internal fault, not a bad request.
+      if (!prefill.success) throw new Error('Reply prefill returned an unknown shape');
+      return prefill.data;
+    });
+  }
+  private async requireReplyBinding(
+    db: TenantTransaction['db'],
+    signature: string,
+    options: CommercialCommandOptions,
+  ) {
+    if (!options.replyBinding) throw new DomainError('Reply binding is unavailable', 503);
+    const present = (
+      await db.query('SELECT to_regprocedure($1) IS NOT NULL AS present', [signature])
+    ).rows[0].present;
+    if (!present) throw new DomainError('Reply binding is unavailable', 503);
   }
 }

@@ -6,11 +6,14 @@ import { queueFilters } from '@corridra/missions';
 import { foundations } from '../../../../lib/foundations';
 import { communicationOrchestrator } from '../../../../lib/communication-orchestrator';
 import { notify } from '../../../../lib/notify';
+import { uxSwitchOn } from '../../../../lib/ux-switches';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 async function handle(request: Request, { params }: { params: Promise<{ action: string }> }) {
   const correlationId = randomUUID();
   const headers = { 'Cache-Control': 'no-store', 'X-Corridra-Request-ID': correlationId };
+  // ADR-081: true only for a reply-bound offer or a reply read, so a missing function there means "unavailable", never a plain 500.
+  let replyPath = false;
   try {
     const s = foundations();
     if (!s)
@@ -64,6 +67,14 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
             ctx,
             z.uuid().parse(new URL(request.url).searchParams.get('mission')),
           ),
+        'reply-quotation-prefill': () => {
+          replyPath = true;
+          return s.commercialMissions.replyPrefill(
+            ctx,
+            z.uuid().parse(new URL(request.url).searchParams.get('reply')),
+            { replyBinding: uxSwitchOn('CORRIDRA_REPLY_PAGE') },
+          );
+        },
         'commercial-records': () =>
           s.opportunities.records(
             ctx,
@@ -275,7 +286,12 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
       'network-assess': () => s.network.assess(ctx, input),
       'network-reward': () => s.network.reward(ctx, input),
       'network-reverse': () => s.network.reverse(ctx, input),
-      'commercial-mission': () => s.commercialMissions.command(ctx, input),
+      'commercial-mission': () => {
+        replyPath = typeof input === 'object' && input !== null && 'replyBinding' in input;
+        return s.commercialMissions.command(ctx, input, {
+          replyBinding: uxSwitchOn('CORRIDRA_REPLY_PAGE'),
+        });
+      },
       'commercial-origin': () => s.opportunities.registerOrigin(ctx, input),
       'mission-route': () => s.corridors.assign(ctx, input),
       'mission-templates': () => s.corridors.installTemplates(ctx),
@@ -329,13 +345,16 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
         ? error.status
         : error instanceof z.ZodError || error instanceof SyntaxError
           ? 400
-          : ['23514', '23503', '23505', 'P0001', '54000'].includes(
-                (error as { code?: string }).code ?? '',
-              )
-            ? 409
-            : (error as { code?: string }).code === '42501'
-              ? 403
-              : 500;
+          : replyPath &&
+              ['42883', '42P01', '3F000'].includes((error as { code?: string }).code ?? '')
+            ? 503
+            : ['23514', '23503', '23505', 'P0001', '54000'].includes(
+                  (error as { code?: string }).code ?? '',
+                )
+              ? 409
+              : (error as { code?: string }).code === '42501'
+                ? 403
+                : 500;
     const message =
       error instanceof DomainError
         ? error.message

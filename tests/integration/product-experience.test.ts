@@ -535,7 +535,7 @@ test('reply review installs additively and closed, and the staff function refuse
   expect(after.length).toBeGreaterThan(before.length);
   const once = (await f.owner.query('SELECT * FROM recipient_reply_review_migrations.applied'))
     .rows;
-  expect(once).toHaveLength(2);
+  expect(once).toHaveLength(3);
   await migrateReplyReview(f.owner);
   expect(
     (await f.owner.query('SELECT * FROM recipient_reply_review_migrations.applied')).rows,

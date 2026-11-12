@@ -227,6 +227,15 @@ export const commercialMissionCommand = z.discriminatedUnion('action', [
       terms: offerTerms,
       uncertainties: text,
       observedAt: timestamp,
+      // ADR-081: the published supplier reply this offer records, with the version and digest the team read.
+      replyBinding: z
+        .object({
+          responseId: z.uuid(),
+          seen: z.int().min(0).max(20),
+          digest: z.string().regex(/^[0-9a-f]{64}$/),
+        })
+        .strict()
+        .optional(),
     })
     .strict(),
   z
