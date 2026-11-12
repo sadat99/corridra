@@ -532,16 +532,18 @@ test('reply review installs additively and closed, and the staff function refuse
   expect(after.length).toBeGreaterThan(before.length);
   const once = (await f.owner.query('SELECT * FROM recipient_reply_review_migrations.applied'))
     .rows;
-  expect(once).toHaveLength(1);
+  expect(once).toHaveLength(2);
   await migrateReplyReview(f.owner);
   expect(
     (await f.owner.query('SELECT * FROM recipient_reply_review_migrations.applied')).rows,
   ).toEqual(once);
   await f.owner.query("UPDATE recipient_reply_review_migrations.applied SET sha256=repeat('0',64)");
   await expect(migrateReplyReview(f.owner)).rejects.toThrow('history mismatch');
-  await f.owner.query('UPDATE recipient_reply_review_migrations.applied SET sha256=$1', [
-    once[0].sha256,
-  ]);
+  for (const row of once)
+    await f.owner.query(
+      'UPDATE recipient_reply_review_migrations.applied SET sha256=$1 WHERE name=$2',
+      [row.sha256, row.name],
+    );
 
   const r = await replyFor();
   expect((await f.runtime.query('SELECT app.reply_review_status() AS open')).rows[0].open).toBe(
@@ -1424,7 +1426,7 @@ test('response revision installs additively and idempotently, and a changed defi
   await migrateRecipientResponseRevision(f.owner);
   const once = (await f.owner.query('SELECT * FROM recipient_response_revision_migrations.applied'))
     .rows;
-  expect(once).toHaveLength(1);
+  expect(once).toHaveLength(2);
   await migrateRecipientResponseRevision(f.owner);
   expect(
     (await f.owner.query('SELECT * FROM recipient_response_revision_migrations.applied')).rows,
@@ -1433,9 +1435,11 @@ test('response revision installs additively and idempotently, and a changed defi
     "UPDATE recipient_response_revision_migrations.applied SET sha256=repeat('0',64)",
   );
   await expect(migrateRecipientResponseRevision(f.owner)).rejects.toThrow('history mismatch');
-  await f.owner.query('UPDATE recipient_response_revision_migrations.applied SET sha256=$1', [
-    once[0].sha256,
-  ]);
+  for (const row of once)
+    await f.owner.query(
+      'UPDATE recipient_response_revision_migrations.applied SET sha256=$1 WHERE name=$2',
+      [row.sha256, row.name],
+    );
   // The original table is untouched by installation: still immutable, still no revision rows.
   expect(
     (await f.owner.query('SELECT count(*)::int n FROM app.recipient_detail_response_revision'))

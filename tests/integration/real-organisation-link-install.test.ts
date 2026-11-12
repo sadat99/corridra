@@ -31,6 +31,7 @@ vi.hoisted(() => {
   (globalThis as { __outreachHide?: boolean }).__outreachHide = true;
   (globalThis as { __disputeHide?: boolean }).__disputeHide = true;
   (globalThis as { __contextHide?: boolean }).__contextHide = true;
+  (globalThis as { __commissioningHide?: boolean }).__commissioningHide = true;
 });
 vi.mock('node:fs/promises', async (importOriginal) => {
   const real = await importOriginal<typeof import('node:fs/promises')>();
@@ -47,6 +48,7 @@ vi.mock('node:fs/promises', async (importOriginal) => {
       __outreachHide?: boolean;
       __disputeHide?: boolean;
       __contextHide?: boolean;
+      __commissioningHide?: boolean;
     };
     if (!String(path).includes('customer-real-use-migrations')) return names;
     return names.filter(
@@ -64,7 +66,9 @@ vi.mock('node:fs/promises', async (importOriginal) => {
         // Real-use 0018 (participant fee dispute) is applied after 0017 and has its own gate: the last test of this file opens it.
         !(gate.__disputeHide && String(n).startsWith('0018_')) &&
         // Real-use 0019 (offer context) is applied after 0018 and has its own gate: the last test of this file opens it.
-        !(gate.__contextHide && String(n).startsWith('0019_')),
+        !(gate.__contextHide && String(n).startsWith('0019_')) &&
+        // Real-use 0020 (offer commissioning term) is applied after 0019 and has its own gate: the last test of this file opens it.
+        !(gate.__commissioningHide && String(n).startsWith('0020_')),
     );
   }) as typeof real.readdir;
   return { ...real, readdir, default: { ...real, readdir } };
@@ -759,5 +763,20 @@ test('offer context (real-use 0019) is the nineteenth file, changes no table and
   expect(report.v).toBe('app.delivery_report_v1(text,text)');
   await migrateCustomerRealUse(w.f.owner);
   expect(await appliedNames()).toHaveLength(19);
+  expect(await tableHashes()).toEqual(tables);
+});
+
+test('offer commissioning term (real-use 0020) is the twentieth file, changes no table and is repeatable', async () => {
+  expect(await appliedNames()).toHaveLength(19);
+  const tables = await tableHashes();
+  (globalThis as { __commissioningHide?: boolean }).__commissioningHide = false;
+  await migrateCustomerRealUse(w.f.owner);
+  const applied = await appliedNames();
+  expect(applied).toHaveLength(20);
+  expect(applied[19]).toMatch(/^0020_offer_commissioning_term/);
+  expect(await reportLine()).toBe('customer_real_use_migrations: 20 applied');
+  expect(await tableHashes()).toEqual(tables);
+  await migrateCustomerRealUse(w.f.owner);
+  expect(await appliedNames()).toHaveLength(20);
   expect(await tableHashes()).toEqual(tables);
 });
