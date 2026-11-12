@@ -82,6 +82,19 @@ export function journeysOf(list: WorkList, latestRequestId: string | null) {
   return { cards, latest };
 }
 
+/**
+ * The journey cards with the lead first (locked AC/1 Home, revision 2): the card with the most recent activity leads,
+ * and on a tie or a missing date the earlier card in the usual order (Sourcing, Selling, Organising) leads. The other
+ * cards keep that order. `journeysOf` keeps its own order; this only chooses which card is drawn widest.
+ */
+export function leadFirst(cards: JourneyCard[]): JourneyCard[] {
+  const lead = cards.reduce<JourneyCard | undefined>(
+    (best, card) => (!best || card.at > best.at ? card : best),
+    undefined,
+  );
+  return lead ? [lead, ...cards.filter((card) => card !== lead)] : cards;
+}
+
 export const journeys = ['source', 'sell', 'organise'] as const;
 export function isJourney(value: unknown): value is Journey {
   return typeof value === 'string' && (journeys as readonly string[]).includes(value);

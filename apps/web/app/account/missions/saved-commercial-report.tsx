@@ -13,6 +13,7 @@ import { SpecificationConfirmation } from './specification-confirmation';
 import { BookDownloads, createPendingBooks } from './book-downloads';
 import { limitWords } from '../../../lib/account-limit';
 import { report } from '../../../lib/saved-report-check';
+import './report-page.css';
 /** `none` reads and keeps the report without drawing it: the Room's Overview uses it for its summary. */
 export type ReportSection = 'all' | 'compare' | 'evidence' | 'trip' | 'none';
 type Scope = SavedMissionScope & {

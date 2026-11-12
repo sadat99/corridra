@@ -44,3 +44,31 @@
   gap: var(--space-4);
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
 }
+
+/* Locked AC/1 look: the lens switch is a segmented control; the pressed lens is the raised white segment, not a
+   cobalt fill (cobalt stays for the one primary action). aria-pressed is unchanged. */
+.compare-lens-bar > div {
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-color: var(--line);
+  background: var(--surface-2);
+}
+.compare-lens-toggle {
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: transparent;
+  color: var(--text-2);
+}
+.compare-lens-toggle + .compare-lens-toggle {
+  border-inline-start: 0;
+}
+.compare-lens-toggle[aria-pressed='true'] {
+  background: var(--surface-1);
+  box-shadow: var(--shadow-1);
+  color: var(--ink);
+}
+@media (forced-colors: active) {
+  .compare-lens-toggle[aria-pressed='true'] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+}

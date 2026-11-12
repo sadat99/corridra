@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { SubTabs, type SubTab } from '../../components/ux/sub-tabs';
+import './account-settings.css';
 
 /**
  * The Account page as a settings layout on the shared sub-tabs (customer experience spec): Profile, Workspaces
@@ -28,5 +29,11 @@ export function AccountSettings({
   if (security) tabs.push({ id: 'security', label: 'Security', panel: security });
   if (tabs.length === 0) return null;
   if (tabs.length === 1) return <div className="ux-account-tabs">{tabs[0]!.panel}</div>;
-  return <SubTabs tabs={tabs} label="Account sections" className="ux-account-tabs" />;
+  return (
+    <SubTabs
+      tabs={tabs}
+      label="Account sections"
+      className="ux-account-tabs ux-subtabs-segmented"
+    />
+  );
 }
