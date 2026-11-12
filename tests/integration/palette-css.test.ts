@@ -52,12 +52,26 @@ describe('R2-2 the wide field follows the browser font size', () => {
       blocks.some(
         (block) =>
           wide(block) &&
-          block.body.includes(`${trigger} { flex: 1 1 0; min-width: 11rem; max-width: 35rem;`),
+          block.body.includes(
+            `${trigger} { flex: 1 1 0; min-width: min(11rem, 100%); max-width: 35rem;`,
+          ),
       ),
     ).toBe(true);
     expect(blocks.some((block) => wide(block) && withRule(block, `${trigger}:hover`))).toBe(true);
   });
 
+  test('the floor of the wide field is min(11rem, 100%), never a bare rem value', () => {
+    // An author-set root size (Corridra's text-size setting) does not move an em query, so at 200% text the wide field
+    // applies and a bare 11rem floor (352 px) is wider than the tools box beside it. The floor must give way to the
+    // container.
+    const rule = blocks
+      .filter(wide)
+      .map((block) => new RegExp(`${trigger.replace(/\./g, '\\.')} \\{([^}]*)\\}`).exec(block.body))
+      .find((found) => found !== null && /flex:\s*1 1 0/.test(found[1]!));
+    expect(rule, 'the wide-field trigger rule').toBeTruthy();
+    const floor = /(?:^|[\s;])min-width:\s*([^;]+?)\s*(?:;|$)/.exec(rule![1]!);
+    expect(floor?.[1]?.replace(/\s+/g, ' ')).toBe('min(11rem, 100%)');
+  });
   test('no wide-field trigger rule remains in a 1024px block', () => {
     const pixel = blocks.filter((block) => block.query !== null && /1024px/.test(block.query));
     for (const block of pixel) expect(block.body).not.toContain('ux-palette-trigger');

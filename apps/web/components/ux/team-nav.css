@@ -591,7 +591,7 @@ nav.ux-team-sidebar .ux-team-caption {
   }
   .ux-team-header .ux-palette-trigger {
     flex: 1 1 0;
-    min-width: 11rem;
+    min-width: min(11rem, 100%);
     max-width: 35rem;
     margin-inline-end: auto;
     padding: 0 var(--space-2) 0 var(--space-3);

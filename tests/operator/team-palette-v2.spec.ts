@@ -163,6 +163,47 @@ test.describe('P8 the Search control in the top bar', () => {
       }
     }
   });
+  test('R3 at 200% text the Search field never runs past its container or the window', async ({
+    page,
+  }) => {
+    // Corridra's own text-size setting, like this style, sets the root font size as an author style. An em media query
+    // reads the browser default instead, so the wide field applies here and its floor of 11rem is 352 px: at 1024 px
+    // that was wider than the tools box (249 px), and the page scrolled sideways by 63 px.
+    await open(page);
+    // The rail is collapsed so the header has the room the field is measured against: with the rail open, the header
+    // itself is already wider than the window at 200% text and 1024 or 1100 px on main as well (a separate matter).
+    await page.locator('.ux-leftnav-collapse').click();
+    await expect(page.locator('.ux-leftnav-frame')).toHaveAttribute('data-collapsed', 'true');
+    await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
+    const trigger = page.locator('header.ux-app-header').getByRole('button', { name: /Search/ });
+    for (const width of [1024, 1100, 1280]) {
+      await page.setViewportSize({ width, height: 900 });
+      const m = await trigger.evaluate((node) => {
+        const box = node.getBoundingClientRect();
+        const room = node.parentElement!.getBoundingClientRect();
+        return {
+          right: box.right,
+          roomRight: room.right,
+          scroll: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        };
+      });
+      expect(m.scroll, `sideways scroll in px at ${width}`).toBeLessThanOrEqual(0);
+      expect(m.right, `trigger right edge against its container at ${width}`).toBeLessThanOrEqual(
+        m.roomRight + 0.5,
+      );
+      expect(m.right, `trigger right edge against the window at ${width}`).toBeLessThanOrEqual(
+        width,
+      );
+    }
+  });
+  test('R3 at normal text the Search field at 1024 px is still at least 176 px wide', async ({
+    page,
+  }) => {
+    await open(page);
+    const trigger = page.locator('header.ux-app-header').getByRole('button', { name: /Search/ });
+    await page.setViewportSize({ width: 1024, height: 900 });
+    expect((await trigger.boundingBox())!.width).toBeGreaterThanOrEqual(176);
+  });
   test('it is one button: no input and no second combobox in the header', async ({ page }) => {
     await open(page);
     const header = page.locator('header.ux-app-header');
