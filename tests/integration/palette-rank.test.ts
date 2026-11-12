@@ -268,6 +268,36 @@ describe('S4 scripts whose vowel signs are letters of the word', () => {
   });
 });
 
+describe('a highlight never splits a letter from its vowel sign', () => {
+  const join = (segments: { text: string }[]) => segments.map((s) => s.text).join('');
+  test('a query that ends before a Devanagari vowel sign marks the sign with its consonant', () => {
+    const segments = highlightSegments('कि Traders', 'क');
+    expect(segments[0]).toEqual({ text: 'कि', hit: true });
+    expect(segments.filter((s) => s.hit)).toHaveLength(1);
+    expect(join(segments)).toBe('कि Traders');
+  });
+  test('the same for Bengali text, in the middle of a word and at its end', () => {
+    expect(highlightSegments('ঢাকা Traders', 'ঢ')[0]).toEqual({ text: 'ঢা', hit: true });
+    const middle = highlightSegments('ঢাকা Traders', 'ক');
+    expect(middle.filter((s) => s.hit)).toEqual([{ text: 'কা', hit: true }]);
+    expect(join(middle)).toBe('ঢাকা Traders');
+    expect(highlightSegments('ঢাকা', 'কা')).toEqual([
+      { text: 'ঢা', hit: false },
+      { text: 'কা', hit: true },
+    ]);
+  });
+  test('Latin text is cut as before', () => {
+    expect(highlightSegments('Madrid Textiles', 'mad')).toEqual([
+      { text: 'Mad', hit: true },
+      { text: 'rid Textiles', hit: false },
+    ]);
+    expect(highlightSegments('Zürich', 'zu')).toEqual([
+      { text: 'Zü', hit: true },
+      { text: 'rich', hit: false },
+    ]);
+  });
+});
+
 describe('N8 a long field costs a bounded amount of work', () => {
   test('a 5000 character field of 40 character tokens is ranked in well under 50 ms', () => {
     const token = (n: number) => 'a'.repeat(39) + String.fromCharCode(98 + (n % 20));

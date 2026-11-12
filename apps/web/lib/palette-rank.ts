@@ -266,6 +266,16 @@ function fuzzySpan(
   return null;
 }
 
+/** Moves a span's end over the marks that follow it, so a letter is never marked apart from its vowel sign. */
+function keepMarks(text: string, to: number): number {
+  let at = to;
+  for (const point of text.slice(to)) {
+    if (!/^\p{M}$/u.test(point)) break;
+    at += point.length;
+  }
+  return at;
+}
+
 /**
  * The text cut into pieces, each saying whether the query marks it. Exact, prefix and part-of-word matches are
  * always marked; a near-miss span is marked only when the hit is close, so a typo is never drawn as an exact
@@ -306,7 +316,7 @@ export function highlightSegments(
   }
   const raw = spans
     .filter(([from, to]) => to > from && to <= start.length)
-    .map(([from, to]): [number, number] => [start[from]!, end[to - 1]!])
+    .map(([from, to]): [number, number] => [start[from]!, keepMarks(text, end[to - 1]!)])
     .sort((a, b) => a[0] - b[0] || a[1] - b[1]);
   const merged: [number, number][] = [];
   for (const span of raw) {
