@@ -324,6 +324,7 @@ export function compareOffers(
     'paymentTerms',
     'warranty',
     'installation',
+    'commissioning',
     'training',
     'spares',
   ] as const;
@@ -342,7 +343,9 @@ export function compareOffers(
       'toolingMinor',
       'setupMinor',
       'packagingMinor',
-      ...(context === 'MACHINERY' ? ['installation', 'warranty', 'training', 'spares'] : []),
+      ...(context === 'MACHINERY'
+        ? ['installation', 'commissioning', 'warranty', 'training', 'spares']
+        : []),
     ].filter(
       (k) =>
         terms[k as keyof OfferTerms] === undefined ||

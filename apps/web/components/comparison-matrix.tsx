@@ -39,17 +39,25 @@ const labels: Record<string, string> = {
   installation: 'Installation',
   training: 'Training',
   spares: 'Spares',
+  commissioning: 'Commissioning',
 };
 export function ComparisonMatrix({
   offers,
   shortlist,
   language,
+  machinery = false,
 }: {
   offers: MissionExperience['quotations'];
   shortlist: MissionExperience['shortlist'];
   language: string;
+  /** Machinery missions always show the commissioning row; other missions show it only when an offer states it. */
+  machinery?: boolean;
 }) {
   if (!offers.length) return null;
+  const rows: readonly string[] =
+    machinery || offers.some((q) => q.terms.commissioning !== undefined)
+      ? fields.flatMap((field) => (field === 'installation' ? [field, 'commissioning'] : [field]))
+      : fields;
   return (
     <div
       className="ux-comparison-scroll"
@@ -86,11 +94,11 @@ export function ComparisonMatrix({
           </tr>
         </thead>
         <tbody>
-          {fields.map((field) => (
+          {rows.map((field) => (
             <tr key={field}>
               <th scope="row">{labels[field]}</th>
               {offers.map((q) => {
-                const value = q.terms[field];
+                const value = (q.terms as Record<string, string | undefined>)[field];
                 const missing = value === undefined || value === 'NOT_SUPPLIED';
                 return (
                   <td key={q.id} className={missing ? 'ux-cell-missing' : undefined}>

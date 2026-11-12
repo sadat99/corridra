@@ -562,6 +562,80 @@ test('without lenses there is no lens control, and without a report the Road doe
   await expect(page.getByText('Not tracked yet')).toHaveCount(0);
 });
 
+// Source follow-ups 1 and 3 (S63): a machinery mission says which offer leaves out commissioning, and each quote carries the date it
+// was observed and the first eight characters of its source record. No other mission shows a machinery row.
+for (const width of [1440, 390]) {
+  test(`a machinery mission shows commissioning and the quote reference in the comparison at ${width}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const body = reportBody();
+    const e = body.report.missions[0].experience as unknown as {
+      requirements: Record<string, unknown>;
+      quotations: Record<string, unknown>[];
+    };
+    e.requirements.assignmentType = 'machinery_procurement';
+    const ref = {
+      sourceId: '3f9a2c1d-1111-4222-8333-444455556666',
+      observedAt: '2026-10-07T09:30:00Z',
+    };
+    e.quotations = [
+      {
+        ...quote('qa', 't1', {
+          ...terms,
+          installation: 'Included',
+          warranty: 'One year',
+          training: 'Two days',
+          spares: 'Quoted separately',
+          commissioning: 'Two engineers for five days',
+        }),
+        ...ref,
+      },
+      {
+        ...quote('qb', 't2', {
+          ...terms,
+          installation: 'Included',
+          warranty: 'One year',
+          training: 'Two days',
+          spares: 'Quoted separately',
+        }),
+        ...ref,
+        sourceId: '9b8e7d6c-1111-4222-8333-444455556666',
+      },
+    ];
+    await open(page, {}, {}, { body });
+    await lens(page, 'Compare').click();
+    if (width >= 768) {
+      const ledger = page.locator('.ledger-table');
+      await expect(ledger.getByRole('row', { name: /^Commissioning/ })).toContainText(
+        'Two engineers for five days',
+      );
+      await expect(ledger.getByRole('row', { name: /^Commissioning/ })).toContainText('Not stated');
+      await expect(ledger).toContainText('Quoted Oct 7, 2026 · Source ref 3f9a2c1d');
+      await expect(ledger).toContainText('Source ref 9b8e7d6c');
+      await expect(ledger.getByRole('row', { name: /^Can be compared/ })).toContainText(
+        'Missing: Commissioning',
+      );
+    } else {
+      const cards = page.locator('.ledger-card');
+      await expect(cards.nth(0)).toContainText('Two engineers for five days');
+      await expect(cards.nth(0)).toContainText('Quoted Oct 7, 2026 · Source ref 3f9a2c1d');
+      await expect(cards.nth(1)).toContainText('Commissioning');
+      await expect(cards.nth(1)).toContainText('Source ref 9b8e7d6c');
+      await expect(cards.nth(1)).toContainText('Missing: Commissioning');
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      width,
+    );
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    if (process.env.UX_SHOTS_DIR)
+      await page.screenshot({
+        path: `${process.env.UX_SHOTS_DIR}/commissioning-compare-${width}.png`,
+        fullPage: true,
+      });
+  });
+}
+
 test('the Compare lens puts the suppliers side by side with the verdict, the cards and table one tap away', async ({
   page,
 }) => {

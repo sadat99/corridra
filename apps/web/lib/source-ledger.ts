@@ -22,6 +22,8 @@ export type LedgerColumn = {
   reason?: string;
   /** Superseded, from an earlier assignment, or the request changed since: shown only when asked for. */
   historical: boolean;
+  /** "Quoted 11 Nov 2026 · Source ref 3f9a2c1d", or absent when the approved detail does not carry it. */
+  reference?: string;
 };
 export type LedgerCell = { value: string | null; sub?: string };
 export type LedgerRow = {
@@ -42,7 +44,15 @@ export type Ledger = {
 };
 
 /** The rows a buyer reads first, after the price. Machinery obligations are always among them. */
-const keyLabels = ['Incoterm', 'Lead time', 'Installation', 'Warranty', 'Training', 'Spares'];
+const keyLabels = [
+  'Incoterm',
+  'Lead time',
+  'Installation',
+  'Commissioning',
+  'Warranty',
+  'Training',
+  'Spares',
+];
 
 export function sourceLedger(
   e: MissionExperience,
@@ -70,6 +80,7 @@ export function sourceLedger(
     comparable: card.comparable,
     reason: card.reason,
     historical: card.historical,
+    reference: card.reference,
   }));
 
   const value = (cardIndex: number, label: string) => {
