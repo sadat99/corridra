@@ -360,6 +360,61 @@ describe('the mount', () => {
   });
 });
 
+describe('the identity the header sends', () => {
+  test('the server component loads customerIdentity only dynamically and never throws', () => {
+    const source = stripComments(read('apps/web/components/ux/customer-bar-identity.tsx'));
+    expect(source).toContain("await import('../../lib/customer-page-session')");
+    expect(source).not.toMatch(/^import[^;]*customer-page-session/m);
+    expect(source).not.toContain("'use client'");
+    expect(source).toMatch(/try \{[\s\S]*await customerIdentity\(\);[\s\S]*\} catch \{/);
+    expect(source).toContain(
+      '<CustomerBarIdentityNote subject={identity?.subject} issuer={identity?.issuer} />',
+    );
+  });
+
+  test('the frame mounts it beside the note, always, and carries no server-only import itself', () => {
+    const shell = read('apps/web/components/customer-shell.tsx');
+    expect(shell).toContain("import { CustomerBarIdentity } from './ux/customer-bar-identity';");
+    expect(shell.match(/<CustomerBarIdentity \/>/g)).toHaveLength(1);
+    expect(shell).not.toMatch(/customer-page-session|server-only/);
+  });
+
+  test('the dialog sends the two header names inline from the holder, and the holder is two strings', () => {
+    const code = stripComments(read(component));
+    expect(code).toContain("'x-corridra-customer-subject': identity.subject");
+    expect(code).toContain("'x-corridra-customer-issuer': identity.issuer");
+    expect(code).toContain('useFlag(readCustomerIdentity, readServerCustomerIdentity)');
+    // The words stay out of the headers: the only header values are the content type and the two identity strings.
+    const headers = code.slice(code.indexOf('headers: {'), code.indexOf('body: JSON.stringify'));
+    expect(headers).not.toMatch(/\btext\b|\bquery\b/);
+    const store = stripComments(read('apps/web/components/ux/customer-bar-store.ts'));
+    expect(store).toContain('export type CustomerIdentity = { subject: string; issuer: string };');
+    expect(store).toMatch(
+      /readServerCustomerIdentity\(\): CustomerIdentity \| null \{\s*return null;/,
+    );
+    // Cleared when the page goes away and on a change of session.
+    const note = stripComments(read('apps/web/components/ux/customer-bar-note.tsx'));
+    expect(note).toContain('addEventListener(sessionChanged, clear)');
+    expect(note).toMatch(
+      /return \(\) => \{\s*window\.removeEventListener\(sessionChanged, clear\);\s*clear\(\);/,
+    );
+  });
+
+  test('no client file imports a server-only module, the auth package or the page session', () => {
+    for (const path of [
+      ...clientFiles,
+      'apps/web/components/ux/customer-bar-note.tsx',
+      'apps/web/components/ux/customer-bar-store.ts',
+    ])
+      for (const specifier of [...read(path).matchAll(/(?:from|import)\s+'([^']+)'/g)].map(
+        (match) => match[1]!,
+      ))
+        expect(specifier, path).not.toMatch(
+          /server-only|packages\/auth|@corridra\/|customer-page-session|neon-auth/,
+        );
+  });
+});
+
 describe('the words on screen', () => {
   const code = stripComments(read(component))
     // Attribute names and roles are not words on screen.

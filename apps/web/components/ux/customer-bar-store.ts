@@ -107,3 +107,25 @@ export function readCustomerMove() {
 export function readServerCustomerMove() {
   return false;
 }
+
+// Who the page is drawn for, as the server gave it to the frame: the subject and issuer the customer routes take as
+// rejection-only headers (they can make a route refuse, never grant). Two strings, no query, no results, no token.
+// Null when nobody is signed in or the provider could not answer; the route then answers 401 itself.
+export type CustomerIdentity = { subject: string; issuer: string };
+let identity: CustomerIdentity | null = null;
+export function setCustomerIdentity(next: CustomerIdentity | null) {
+  if (
+    next === null
+      ? identity === null
+      : identity?.subject === next.subject && identity.issuer === next.issuer
+  )
+    return;
+  identity = next;
+  for (const listener of listeners) listener();
+}
+export function readCustomerIdentity() {
+  return identity;
+}
+export function readServerCustomerIdentity(): CustomerIdentity | null {
+  return null;
+}

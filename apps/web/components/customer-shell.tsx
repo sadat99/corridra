@@ -12,6 +12,7 @@ import { notificationSettingsAvailable } from '../lib/ux/notification-settings';
 import { supportWhatsappHref } from '../lib/ux/support-whatsapp';
 import { CustomerTabs } from './ux/customer-tabs';
 import { CustomerBarNote } from './ux/customer-bar-note';
+import { CustomerBarIdentity } from './ux/customer-bar-identity';
 import { LeftNavFrame, LeftNavList, type LeftNavItem } from './ux/left-nav';
 import { CustomerRailFoot, CustomerRailTop } from './ux/customer-rail';
 import { WorkspaceShell } from './workspace-shell';
@@ -139,6 +140,7 @@ function CustomerFrame({ tab, eyebrow, title, count, children }: CustomerShellPr
             : 'Preview workspace: use made-up names and details here.'
         }
       />
+      <CustomerBarIdentity />
       <WorkspaceShell title={title} customer>
         {children}
       </WorkspaceShell>

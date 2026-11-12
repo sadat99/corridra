@@ -92,6 +92,7 @@ import{customerTabs}from ${source('apps/web/lib/ux/customer-navigation.ts')};
 import{CustomerTabs}from ${source('apps/web/components/ux/customer-tabs.tsx')};
 import{CustomerRailTop,CustomerRailFoot}from ${source('apps/web/components/ux/customer-rail.tsx')};
 import*as store from ${source('apps/web/components/ux/customer-bar-store.ts')};
+import{CustomerBarIdentityNote}from ${source('apps/web/components/ux/customer-bar-note.tsx')};
 const flags=new URLSearchParams(location.search);
 const on=(name)=>flags.get(name)!=='off';
 store.setCustomerCompanies(on('companies'));
@@ -103,15 +104,18 @@ store.setCustomerProblemReports(on('problems'));
 const words={navLabel:'Navigation',menuLabel:'Menu',closeLabel:'Close menu',collapseLabel:'Collapse menu',expandLabel:'Expand menu'};
 const tabs=customerTabs({companies:on('companies'),move:flags.get('move')==='on'});
 const items=tabs.map(t=>({key:t.key,label:t.label,href:t.href,icon:t.icon}));
-createRoot(document.getElementById('fixture')).render(
+const root=createRoot(document.getElementById('fixture'));
+const draw=(show)=>root.render(
   <LanguageProvider offered={[{code:'en',draft:false},{code:'bn',draft:false},{code:'zh',draft:false}]}>
+    {show&&flags.get('identity')!=='none'?<CustomerBarIdentityNote subject="synthetic-subject-1" issuer="https://auth.example.invalid/neondb/auth"/>:null}
     <div className="site-shell">
       <AppHeader kind="customer" live={false} notifications brandMark={<BrandLockup/>}/>
       <LeftNavFrame navId="customer-navigation" words={words} nav={<><CustomerRailTop/><LeftNavList id="customer-navigation" label="Navigation" items={items} current="home"/><CustomerRailFoot/></>}>
         <main><h1>Synthetic page</h1><p>Synthetic content</p><button id="outside" type="button">Outside</button></main>
       </LeftNavFrame><CustomerTabs tabs={tabs} current="home"/>
     </div>
-  </LanguageProvider>);`,
+  </LanguageProvider>);
+draw(true);window.drawIdentity=draw;`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
     },
@@ -193,14 +197,20 @@ test.afterAll(async () => {
   }
 });
 
-type Mounted = { searches: { q: string; scope: string }[]; next: (answer: Answer) => void };
+type Mounted = {
+  searches: { q: string; scope: string }[];
+  heard: Record<string, string>[];
+  next: (answer: Answer) => void;
+};
 /** Mounts the customer frame at `path`, answering the search with whatever `next` last set. */
 async function mount(page: Page, path = '/account', answer: Answer = { json: spain }) {
   let current = answer;
   const searches: Mounted['searches'] = [];
+  const heard: Record<string, string>[] = [];
   await page.route('**/api/customer-search', async (route: Route) => {
     const request = route.request();
     searches.push(JSON.parse(request.postData() ?? '{}'));
+    heard.push(request.headers());
     const given = current;
     if (given.delay) await new Promise((done) => setTimeout(done, given.delay));
     if (given.abort) return route.abort('failed').catch(() => undefined);
@@ -217,7 +227,7 @@ async function mount(page: Page, path = '/account', answer: Answer = { json: spa
   );
   await page.goto(`${origin}${path}`);
   await page.waitForSelector('header.ux-app-header');
-  return { searches, next: (value: Answer) => (current = value) } satisfies Mounted;
+  return { searches, heard, next: (value: Answer) => (current = value) } satisfies Mounted;
 }
 const trigger = (page: Page) => page.getByRole('button', { name: 'Search', exact: true });
 const dialogOf = (page: Page) =>
@@ -795,6 +805,86 @@ test.describe('privacy', () => {
         method: 'POST',
       },
     ]);
+  });
+});
+
+test.describe('the rejection-only identity headers', () => {
+  const subject = 'synthetic-subject-1';
+  const issuer = 'https://auth.example.invalid/neondb/auth';
+  const names = ['x-corridra-customer-subject', 'x-corridra-customer-issuer'] as const;
+
+  test('the headers carry exactly the identity the shell supplied, and never the words, the address or the body', async ({
+    page,
+  }) => {
+    const mounted = await mount(page);
+    await openDialog(page);
+    await type(page, 'secretphrase');
+    await expect(options(page).first()).toBeVisible();
+    expect(mounted.heard).toHaveLength(1);
+    expect(mounted.heard[0]![names[0]]).toBe(subject);
+    expect(mounted.heard[0]![names[1]]).toBe(issuer);
+    // The words are in no header, and the identity is in neither the address nor the body.
+    expect(JSON.stringify(mounted.heard[0])).not.toContain('secretphrase');
+    expect(mounted.searches[0]).toEqual({ q: 'secretphrase', scope: 'all' });
+    expect(page.url()).not.toContain(subject);
+  });
+
+  test('with no identity (signed out, or the provider could not answer) no identity header is sent', async ({
+    page,
+  }) => {
+    const mounted = await mount(page, '/account?identity=none');
+    await openDialog(page);
+    await type(page, 'spain');
+    await expect(options(page).first()).toBeVisible();
+    expect(mounted.heard).toHaveLength(1);
+    for (const name of names) expect(mounted.heard[0]![name]).toBeUndefined();
+  });
+
+  test('a change of session clears it: the next search sends none', async ({ page }) => {
+    const mounted = await mount(page);
+    await openDialog(page);
+    await type(page, 'spain');
+    await expect(options(page).first()).toBeVisible();
+    expect(mounted.heard[0]![names[0]]).toBe(subject);
+    await page.evaluate(() => window.dispatchEvent(new Event('corridra-session-changed')));
+    await trigger(page).click();
+    await type(page, 'madrid');
+    await expect(options(page).first()).toBeVisible();
+    expect(mounted.heard).toHaveLength(2);
+    for (const name of names) expect(mounted.heard[1]![name]).toBeUndefined();
+  });
+
+  test('when the page that supplied it goes away the holder is cleared', async ({ page }) => {
+    const mounted = await mount(page);
+    await page.evaluate(() =>
+      (window as unknown as { drawIdentity: (show: boolean) => void }).drawIdentity(false),
+    );
+    await openDialog(page);
+    await type(page, 'spain');
+    await expect(options(page).first()).toBeVisible();
+    for (const name of names) expect(mounted.heard[0]![name]).toBeUndefined();
+  });
+
+  test('a conflict (the account changed in another tab) reads as denied, never No match', async ({
+    page,
+  }) => {
+    await mount(page, '/account', { status: 409, json: { error: 'Conflict' } });
+    await openDialog(page);
+    await type(page, 'spain');
+    await expect(dialogOf(page)).toContainText('Your access could not be confirmed.');
+    await expect(options(page).filter({ hasText: 'Sign In' })).toBeVisible();
+    await expect(dialogOf(page).getByText(/No match/)).toHaveCount(0);
+  });
+
+  test('a malformed identity header (400) reads as a failed search with Retry, never No match', async ({
+    page,
+  }) => {
+    await mount(page, '/account', { status: 400, json: { error: 'Bad request' } });
+    await openDialog(page);
+    await type(page, 'spain');
+    await expect(dialogOf(page).getByText('The search did not finish. Try again.')).toBeVisible();
+    await expect(options(page).first()).toContainText('Retry');
+    await expect(dialogOf(page).getByText(/No match/)).toHaveCount(0);
   });
 });
 

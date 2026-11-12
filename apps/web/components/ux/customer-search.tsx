@@ -53,12 +53,14 @@ import {
 } from '../../lib/ux/customer-search-status';
 import {
   readCustomerBilling,
+  readCustomerIdentity,
   readCustomerCompanies,
   readCustomerMove,
   readCustomerNotificationSettings,
   readCustomerOrganisationProfiles,
   readCustomerProblemReports,
   readServerCustomerBilling,
+  readServerCustomerIdentity,
   readServerCustomerCompanies,
   readServerCustomerMove,
   readServerCustomerNotificationSettings,
@@ -179,7 +181,7 @@ function SearchRow({
   );
 }
 
-function useFlag(read: () => boolean, server: () => boolean) {
+function useFlag<T>(read: () => T, server: () => T) {
   return useSyncExternalStore(subscribeCustomerNote, read, server);
 }
 
@@ -226,6 +228,8 @@ function SearchDialog({ onAccount, pathname }: { onAccount: boolean; pathname: s
     readServerCustomerOrganisationProfiles,
   );
   const problemReports = useFlag(readCustomerProblemReports, readServerCustomerProblemReports);
+  // Who the page was drawn for; sent back as the rejection-only identity headers, never the words.
+  const identity = useFlag(readCustomerIdentity, readServerCustomerIdentity);
   const workspaces = useWorkspaces(open && onAccount);
   const pages = useMemo(() => {
     const list = workspaces ?? [];
@@ -361,7 +365,15 @@ function SearchDialog({ onAccount, pathname }: { onAccount: boolean; pathname: s
           credentials: 'same-origin',
           cache: 'no-store',
           referrerPolicy: 'no-referrer',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(identity
+              ? {
+                  'x-corridra-customer-subject': identity.subject,
+                  'x-corridra-customer-issuer': identity.issuer,
+                }
+              : {}),
+          },
           body: JSON.stringify({ q: text, scope }),
           signal: controller.signal,
         });
@@ -390,7 +402,7 @@ function SearchDialog({ onAccount, pathname }: { onAccount: boolean; pathname: s
       clearTimeout(timer);
       controller.abort();
     };
-  }, [open, sendable, key, scope, text]);
+  }, [open, sendable, key, scope, text, identity]);
   const outcome = sendable ? currentOutcome(answer, key) : null;
   const found = outcome?.kind === 'ok' ? outcome.found : null;
   const phase = phaseOf(scope, text, outcome);
