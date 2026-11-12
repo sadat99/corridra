@@ -340,7 +340,11 @@ nav.ux-team-sidebar .operator-icon {
 .ux-palette-list {
   flex: 1;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
+  /* A slim classic scrollbar (Windows, Linux) keeps the width of a narrow panel for the words. */
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
   padding: 0 var(--space-2) var(--space-2);
 }
 .ux-palette-group {
@@ -542,6 +546,38 @@ nav.ux-team-sidebar .operator-icon {
 @media (max-width: 359.98px) {
   .ux-palette-scopes button {
     padding-inline: var(--space-2);
+  }
+}
+/* A short window: a landscape phone, or large text on an ordinary screen. The `em` query reads the browser's own
+   default font size (KI-54), so 30em is 480 px at 16 px and 960 px at 32 px. The panel then scrolls as one piece
+   with the field kept at the top, so the list is never squeezed to a sliver between the controls and the footer. */
+@media (max-height: 30em) {
+  .ux-palette {
+    max-height: calc(100dvh - 1rem);
+    margin-block: var(--space-2) 0;
+  }
+  .ux-palette-body {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .ux-palette-input {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 1;
+    min-height: 0;
+    padding-block: var(--space-1);
+    background: var(--surface-1);
+  }
+  .ux-palette-region {
+    flex: none;
+    min-height: 0;
+  }
+  .ux-palette-list {
+    flex: none;
+    overflow-y: visible;
+  }
+  .ux-palette-keys {
+    display: none;
   }
 }
 @media (hover: none) {

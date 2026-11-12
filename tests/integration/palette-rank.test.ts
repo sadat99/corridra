@@ -305,3 +305,53 @@ describe('N8 a long field costs a bounded amount of work', () => {
     expect(score('zebra', { value: 'a '.repeat(100) + 'zebra', label: true })).not.toBeNull();
   });
 });
+
+describe('S67 names in Arabic and Hebrew match with or without their optional marks', () => {
+  const join = (segments: { text: string }[]) => segments.map((s) => s.text).join('');
+  // The same row written without marks is the reference: marks must not change the score or make it close.
+  const same = (query: string, value: string, plain: string) => {
+    const a = score(query, { value, label: true });
+    expect(a).not.toBeNull();
+    expect(a!.close).toBe(false);
+    expect(a).toEqual(score(query, { value: plain, label: true }));
+  };
+  test('Arabic harakat and tatweel do not decide a match, in either direction', () => {
+    same('محمد', 'مُحَمَّد للتجارة', 'محمد للتجارة');
+    same('مُحَمَّد', 'محمد للتجارة', 'محمد للتجارة');
+    same('محمد', 'مـحـمـد', 'محمد');
+  });
+  test('alef, yeh and kaf spellings match each other', () => {
+    same('احمد', 'أحمد', 'احمد');
+    same('احمد', 'إحمد', 'احمد');
+    same('علي', 'علىّ', 'علي');
+    same('کریم', 'كريم', 'كريم');
+  });
+  test('Hebrew points and final letters match their plain spelling', () => {
+    same('שלום', 'שָׁלוֹם', 'שלום');
+    same('שָׁלוֹם', 'שלום', 'שלום');
+    expect(score('מלך', { value: 'מלכים', label: true })!.score).toBe(tierScore.prefix + 50);
+    same('מלכ', 'מלך', 'מלכ');
+  });
+  test('different Arabic and Hebrew words stay different', () => {
+    // One letter apart is a near miss at most: never an exact match.
+    expect(score('محمد', { value: 'احمد', label: true })?.close ?? true).toBe(true);
+    expect(score('שלום', { value: 'שמות', label: true })?.close ?? true).toBe(true);
+    expect(score('محمد', { value: 'علي', label: true })).toBeNull();
+  });
+  test('Indic vowel signs still separate words after the new folding', () => {
+    expect(score('कि', { value: 'की', label: true })).toBeNull();
+  });
+  test('a highlight covers the whole marked word and the pieces join back to the text', () => {
+    const arabic = 'مُحَمَّد للتجارة';
+    const segments = highlightSegments(arabic, 'محمد');
+    expect(segments[0]).toEqual({ text: 'مُحَمَّد', hit: true });
+    expect(join(segments)).toBe(arabic);
+    const hebrew = 'שָׁלוֹם Ltd';
+    const marked = highlightSegments(hebrew, 'שלו');
+    expect(marked.filter((s) => s.hit)).toEqual([{ text: 'שָׁלוֹ', hit: true }]);
+    expect(join(marked)).toBe(hebrew);
+  });
+  test('a query of only optional marks makes no word', () => {
+    expect(queryWords('َّ')).toEqual([]);
+  });
+});

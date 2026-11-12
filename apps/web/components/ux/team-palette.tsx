@@ -439,11 +439,11 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
   const mark = text ? { query: text, close: false } : undefined;
 
   const entries: PaletteEntry[] = [];
-  if (phase === 'failed')
+  if (phase === 'failed' || phase === 'limited')
     entries.push({
       key: 'command:retry',
       group: 'Search',
-      label: 'Retry',
+      label: phase === 'limited' ? 'Try Again' : 'Retry',
       detail: 'Search again with the same words',
       href: '',
       command: 'retry',

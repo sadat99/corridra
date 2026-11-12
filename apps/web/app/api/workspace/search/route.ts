@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
 import { foundations } from '../../../../lib/foundations';
+import { spendPaletteSearch } from '../../../../lib/palette-limit';
 import { paletteScopes, searchPalette } from '../../../../lib/palette-search';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,6 +30,19 @@ export async function GET(request: Request) {
       .max(80)
       .parse(params.get('q') ?? '');
     const scope = z.enum(paletteScopes).parse(params.get('scope') ?? 'all');
+    // The key is the signed-in person only (from the server-side session): the workspace id is a client-supplied
+    // value, so keying on it would let a person start a fresh allowance by changing it.
+    // After the session and the input are checked and before any page is read: a person who searches too fast is
+    // told to wait, which the palette shows as "try again" and never as an empty result.
+    const allowance = spendPaletteSearch(identity.userId ?? identity.token);
+    if (!allowance.allowed)
+      return Response.json(
+        { error: 'Searching is paused for a few seconds. Try again.', correlationId },
+        {
+          status: 429,
+          headers: { ...headers, 'Retry-After': String(allowance.retryAfterSeconds) },
+        },
+      );
     const ctx = { token: identity.token, tenantId, purpose: 'synthetic_validation', correlationId };
     return Response.json(await searchPalette(s, ctx, q, scope), { headers });
   } catch (error) {
