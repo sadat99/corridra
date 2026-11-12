@@ -76,36 +76,73 @@ nav.ux-team-sidebar .ux-team-group {
   outline-offset: -3px;
 }
 
-/* The command palette: the Search button in the sidebar and the dialog it opens. */
+/* The command palette: the dialog the Search button and Ctrl K open (docs/revamp/specs/navigation-v1/command-palette-search.md).
+   AC tokens only; every target is at least 44 px; text is never below 12 px; selection and expiry never rely on colour alone. */
 nav.ux-team-sidebar .operator-icon {
   flex: none;
 }
 .ux-palette {
-  width: min(40rem, calc(100vw - 2rem));
-  max-height: min(34rem, calc(100dvh - 2rem));
-  margin-block-start: 10vh;
+  width: min(45rem, calc(100vw - 2rem));
+  max-height: min(36rem, calc(100dvh - 7rem));
+  margin-block-start: min(6rem, 10dvh);
   padding: 0;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
   background: var(--surface-1);
   color: var(--ink);
   box-shadow: var(--shadow-3);
+  overflow: hidden;
+  animation: ux-palette-in var(--dur) var(--ease);
+}
+.ux-palette[open] {
+  display: flex;
+  flex-direction: column;
 }
 .ux-palette::backdrop {
-  background: color-mix(in srgb, var(--ink) 45%, transparent);
+  background: color-mix(in srgb, var(--ac-navy) 50%, transparent);
+  animation: ux-palette-fade var(--dur) var(--ease);
+}
+@keyframes ux-palette-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes ux-palette-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ux-palette,
+  .ux-palette::backdrop {
+    animation: none;
+  }
 }
 .ux-palette-body {
-  display: grid;
-  gap: var(--space-2);
-  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
 }
 .ux-palette-input {
   display: flex;
+  flex: none;
   align-items: center;
-  gap: var(--space-2);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  padding: 0 var(--space-3);
+  gap: var(--space-3);
+  min-height: var(--space-16);
+  padding-inline: var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+.ux-palette-input > .operator-icon {
+  color: var(--selected);
 }
 .ux-palette-input input {
   flex: 1;
@@ -113,84 +150,371 @@ nav.ux-team-sidebar .operator-icon {
   min-height: 44px;
   border: 0;
   background: transparent;
-  color: inherit;
+  color: var(--ink);
   font: inherit;
+  font-size: var(--text-xl);
+}
+.ux-palette-input input::placeholder {
+  color: var(--text-3);
 }
 .ux-palette-input input:focus-visible {
   outline: 3px solid var(--focus);
-  outline-offset: 4px;
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 .ux-palette kbd {
-  font: inherit;
-  font-size: var(--text-sm, 0.875rem);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
   color: var(--text-2);
+}
+.ux-palette-input kbd {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.ux-palette-close {
+  display: none;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 var(--space-2);
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--text-base);
+  font-weight: 600;
+  cursor: pointer;
+}
+.ux-palette-close:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 .ux-palette-scopes {
   display: flex;
+  flex: none;
   flex-wrap: wrap;
   gap: var(--space-1);
+  padding: var(--space-3) var(--space-4) 0;
 }
 .ux-palette-scopes button {
   min-height: 44px;
-  padding: 0 var(--space-3);
+  min-width: 44px;
+  padding: 0 var(--space-4);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   background: var(--surface-1);
   color: var(--ink);
   font: inherit;
+  font-size: var(--text-base);
   font-weight: 600;
   cursor: pointer;
 }
 .ux-palette-scopes button[aria-pressed='true'] {
+  border-color: var(--selected);
+  box-shadow: inset 0 0 0 1px var(--selected);
   background: var(--selected-surface);
   color: var(--brand-deep);
 }
-.ux-palette-list {
-  max-height: 18rem;
-  overflow-y: auto;
+.ux-palette-scopes button:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
 }
-.ux-palette-group {
-  margin: var(--space-2) 0 var(--space-1);
+/* The line between the scopes and the list: its height is kept so the list does not jump while a search runs. */
+.ux-palette-summary {
+  display: flex;
+  flex: none;
+  align-items: center;
+  min-height: 2.5rem;
+  margin: 0;
+  padding-inline: var(--space-4);
   color: var(--text-2);
-  font-size: var(--text-sm, 0.875rem);
+  font-size: var(--text-sm);
+}
+.ux-palette-notice {
+  display: flex;
+  flex: none;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0 var(--space-4) var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: var(--text-sm);
+}
+.ux-palette-notice p {
+  margin: 0;
+}
+.ux-palette-notice[data-tone='caution'] {
+  border-color: var(--caution);
+  background: var(--caution-surface);
+  color: var(--caution-text);
+}
+.ux-palette-notice[data-tone='critical'] {
+  border-color: var(--critical);
+  background: var(--critical-surface);
+  color: var(--critical);
+}
+.ux-palette-region {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 12rem;
+}
+.ux-palette-block {
+  display: grid;
+  flex: none;
+  justify-items: center;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.ux-palette-block p {
+  margin: 0;
+}
+.ux-palette-block .operator-icon {
+  color: var(--text-3);
+}
+.ux-palette-block-title {
+  color: var(--ink);
+  font-size: var(--text-base);
   font-weight: 600;
 }
-.ux-palette-list a {
+/* The listbox is the scroll viewport. */
+.ux-palette-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 var(--space-2) var(--space-2);
+}
+.ux-palette-group {
+  margin: 0;
+  padding: var(--space-3) var(--space-2) var(--space-1);
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+}
+.ux-palette-row {
   display: grid;
-  gap: 2px;
-  min-height: 44px;
-  padding: var(--space-2) var(--space-3);
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 56px;
+  padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-sm);
   color: var(--ink);
   text-decoration: none;
+  cursor: pointer;
 }
-.ux-palette-list a span {
+.ux-palette-icon {
+  display: grid;
+  width: 1.25rem;
+  height: 1.25rem;
+  place-items: center;
   color: var(--text-2);
-  font-size: var(--text-sm, 0.875rem);
 }
-.ux-palette-list a[aria-selected='true'] {
+.ux-palette-text {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-1);
+}
+.ux-palette-label {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: var(--text-base);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+.ux-palette-detail {
+  overflow: hidden;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ux-palette-row[aria-selected='true'] {
   background: var(--selected-surface);
   box-shadow: inset 3px 0 0 var(--selected);
 }
-.ux-palette-status {
-  margin: 0;
-  min-height: 1.5rem;
+.ux-palette-row[aria-selected='true'] .ux-palette-icon {
+  color: var(--selected);
+}
+.ux-palette-trail {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.ux-palette-close-match,
+.ux-palette-kind {
+  color: var(--text-3);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+.ux-palette-badge,
+.ux-palette-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--surface-2);
   color: var(--text-2);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.ux-palette-row[aria-selected='true'] .ux-palette-badge,
+.ux-palette-row[aria-selected='true'] .ux-palette-chip[data-tone='neutral'] {
+  background: var(--surface-1);
+}
+.ux-palette-badge[data-tone='caution'],
+.ux-palette-chip[data-tone='caution'] {
+  border-color: var(--caution);
+  background: var(--caution-surface);
+  color: var(--caution-text);
+}
+.ux-palette-badge[data-tone='critical'] {
+  background: var(--critical-surface);
+  color: var(--critical);
+}
+.ux-palette-chip .operator-icon {
+  width: 1rem;
+  height: 1rem;
+}
+.ux-palette-enter {
+  display: none;
+  min-width: 3.5rem;
+  visibility: hidden;
+  text-align: center;
+}
+.ux-palette-row[aria-selected='true'] .ux-palette-enter {
+  visibility: visible;
+}
+.ux-palette-list mark {
+  background: transparent;
+  color: var(--brand);
+  font-weight: 600;
+  text-decoration: none;
 }
 .ux-palette .ux-palette-hint {
   display: flex;
+  flex: none;
   flex-wrap: wrap;
   justify-content: space-between;
   gap: var(--space-2);
-  padding-top: var(--space-2);
+  padding: var(--space-3) var(--space-4);
   border-top: 1px solid var(--line);
+  background: var(--surface-0);
   color: var(--text-2);
-  font-size: var(--text-sm, 0.875rem);
+  font-size: var(--text-sm);
 }
 .ux-palette .operator-icon {
   flex: none;
   width: 1.25rem;
   height: 1.25rem;
+}
+@media (min-width: 640px) {
+  .ux-palette-enter {
+    display: inline-block;
+  }
+}
+@media (max-width: 639.98px) {
+  .ux-palette {
+    width: calc(100vw - 1rem);
+    /* The browser's own modal-dialog rule (max-width: calc(100% - 6px - 2em)) would win over the width above. */
+    max-width: none;
+    max-height: min(calc(100dvh - 1rem), 36rem);
+    margin-block-start: var(--space-2);
+  }
+  /* The list gives way on a phone, so the footer line is never pushed out of the panel. */
+  .ux-palette-region {
+    min-height: 0;
+  }
+  /* At large text the Close button wraps under the field instead of squeezing it. */
+  .ux-palette-input {
+    flex-wrap: wrap;
+  }
+  .ux-palette-input input {
+    flex: 1 1 8rem;
+    min-width: 8rem;
+    font-size: var(--text-base);
+  }
+  .ux-palette-summary {
+    padding-block-start: var(--space-2);
+  }
+  .ux-palette-input .ux-palette-esc {
+    display: none;
+  }
+  .ux-palette-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ux-palette-scopes {
+    padding-inline: var(--space-3);
+  }
+  .ux-palette-scopes button {
+    padding-inline: var(--space-3);
+    font-size: var(--text-sm);
+  }
+  .ux-palette-row {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0 var(--space-3);
+  }
+  /* The badge or chip moves under the words; a row with nothing to put there keeps no gap. */
+  .ux-palette-trail {
+    grid-column: 2;
+    flex-wrap: wrap;
+  }
+  .ux-palette-trail:has(> :not(.ux-palette-enter)) {
+    margin-block-start: var(--space-1);
+  }
+  .ux-palette-detail {
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+    white-space: normal;
+  }
+  .ux-palette-keys {
+    display: none;
+  }
+}
+@media (max-width: 359.98px) {
+  .ux-palette-scopes button {
+    padding-inline: var(--space-2);
+  }
+}
+@media (hover: none) {
+  .ux-palette-enter {
+    display: none;
+  }
+}
+@media (forced-colors: active) {
+  .ux-palette-row[aria-selected='true'] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+  .ux-palette-list mark {
+    background: Mark;
+    color: MarkText;
+  }
+  .ux-palette-badge,
+  .ux-palette-chip {
+    border-color: ButtonText;
+  }
+  .ux-palette-scopes button[aria-pressed='true'] {
+    outline: 2px solid Highlight;
+  }
 }
 
 /* The Admin caption: small, white, never in the collapsed rail. */
@@ -253,6 +577,83 @@ nav.ux-team-sidebar .ux-team-caption {
   flex: none;
   width: 1.25rem;
   height: 1.25rem;
+}
+
+/* From 1024 px the Search button is a wide field-style control: Search and the Ctrl K keycap show, it takes the
+   room between the shell name and the other tools (176 to 560 px), and the inbox, language, help and account
+   controls stay at the right edge. It is still the one button (not an input), and the wordmark does not yield:
+   below 64em (1024 px at the browser's default font size) the button is as it was; the query is in em so a person
+   with a larger default font falls back to it (docs/revamp/specs/navigation-v1/command-palette-search.md, section 7). */
+@media (min-width: 64em) {
+  .ux-team-header .ux-team-tools {
+    flex: 1 1 0;
+    min-width: 0;
+    container-type: inline-size;
+  }
+  .ux-team-header .ux-palette-trigger {
+    flex: 1 1 0;
+    min-width: min(11rem, 100%);
+    max-width: 35rem;
+    margin-inline-end: auto;
+    padding: 0 var(--space-2) 0 var(--space-3);
+    color: var(--text-2);
+    font-size: var(--text-base);
+    font-weight: 400;
+    text-align: start;
+    transition:
+      background-color var(--dur) var(--ease),
+      border-color var(--dur) var(--ease);
+  }
+  .ux-team-header .ux-palette-trigger span {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ux-team-header .ux-palette-trigger kbd {
+    flex: none;
+    padding: var(--space-1) var(--space-2);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    direction: ltr;
+    white-space: nowrap;
+  }
+  /* The hint is a shortcut aid. When the tools box has no room for it beside the icon and the word (rem follows the root
+     size, so this happens at large text with the rail open, never at normal text), it gives way; the button keeps its
+     icon, the word Search and its name. */
+  @container (max-width: 14rem) {
+    .ux-team-header .ux-palette-trigger kbd {
+      display: none;
+    }
+  }
+}
+@media (min-width: 64em) and (hover: hover) {
+  .ux-team-header .ux-palette-trigger:hover {
+    border-color: var(--text-3);
+    background: var(--surface-2);
+  }
+  .ux-team-header .ux-palette-trigger:hover kbd {
+    background: var(--surface-1);
+  }
+}
+/* After the hover rule, at the same weight, so a pressed button shows the selected colour with a mouse over it. */
+@media (min-width: 64em) {
+  .ux-team-header .ux-palette-trigger:active {
+    border-color: var(--selected);
+    background: var(--selected-surface);
+  }
+}
+@media (forced-colors: active) {
+  .ux-team-header .ux-palette-trigger {
+    border-color: ButtonText;
+  }
+  .ux-team-header .ux-palette-trigger:focus-visible {
+    outline-color: Highlight;
+  }
 }
 
 /* The Help menu in the team header replaces the floating Help and Listen buttons, as on the customer pages. */
