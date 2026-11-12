@@ -42,7 +42,7 @@ async function numbers(page: Page) {
         : null;
     };
     const visible = (selector: string) =>
-      [...document.querySelectorAll(selector)].find(
+      Array.from(document.querySelectorAll(selector)).find(
         (node) => node.getBoundingClientRect().width > 0,
       );
     const head = document.querySelector('header.ux-app-header');
@@ -79,6 +79,13 @@ for (const text of ['normal', '200%'] as const)
       expect(n.scrollWidth, 'no sideways scroll').toBeLessThanOrEqual(n.viewport);
       expect(n.search!.width).toBeGreaterThanOrEqual(44);
       expect(n.search!.height).toBeGreaterThanOrEqual(44);
+      // Below 1024 px, and at 200 percent text at any width, it is a fixed 44 by 44 px target with a 24 px glyph.
+      if (width < 1024 || text === '200%') {
+        expect(Math.abs(n.search!.width - 44)).toBeLessThanOrEqual(0.5);
+        expect(Math.abs(n.search!.height - 44)).toBeLessThanOrEqual(0.5);
+        const glyph = (await button.locator('svg').boundingBox())!;
+        expect([glyph.width, glyph.height]).toEqual([24, 24]);
+      }
       expect(n.search!.left).toBeGreaterThanOrEqual(n.header!.left - 0.5);
       expect(n.search!.right).toBeLessThanOrEqual(n.header!.right + 0.5);
       // At 200 percent from 1024 px the fixed 4 rem header already clips a wrapped second row on main; that is recorded

@@ -13,7 +13,10 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
+  /* A fixed target, in px: it does not grow with the text size, so at 200% text the six tools still fit one line at 768 px. */
+  width: 44px;
   min-width: 44px;
+  height: 44px;
   min-height: 44px;
   padding: 0;
   border: 0;
@@ -32,8 +35,8 @@
 }
 .ux-customer-header .ux-csearch-trigger .corridra-icon {
   flex: none;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 24px;
+  height: 24px;
 }
 /* The word is the accessible name; it is visually hidden until the field shows it. */
 .ux-customer-header .ux-csearch-trigger span {
@@ -52,6 +55,8 @@
   }
   .ux-customer-header .ux-csearch-trigger {
     flex: 1 1 0;
+    width: auto;
+    height: auto;
     min-width: min(11rem, 100%);
     max-width: 35rem;
     margin-inline-end: auto;
@@ -81,6 +86,8 @@
   @container (max-width: 26rem) {
     .ux-customer-header .ux-csearch-trigger {
       flex: none;
+      width: 44px;
+      height: 44px;
       min-width: 44px;
       margin-inline-end: 0;
       justify-content: center;
@@ -90,8 +97,8 @@
       font-weight: 600;
     }
     .ux-customer-header .ux-csearch-trigger .corridra-icon {
-      width: 1.75rem;
-      height: 1.75rem;
+      width: 24px;
+      height: 24px;
     }
     .ux-customer-header .ux-csearch-trigger span {
       position: absolute;
@@ -131,7 +138,15 @@
 }
 @media (min-width: 701px) and (max-width: 1023.98px) {
   .ux-customer-header .ux-bar-tools {
-    column-gap: var(--space-1);
+    /* 4 px at every text size (the token is in rem and would double at 200%), as it already is from 640 to 700 px. */
+    column-gap: min(var(--space-1), 4px);
+  }
+}
+/* From 701 to 1023 px at 200% text the six tools fill the 704 px box to within a fraction of a pixel. The icon is a 24 px
+   glyph in a 44 px target, so the target may touch the next one: no pixel of the glyph moves, and no target overlaps. */
+@media (min-width: 701px) and (max-width: 1023.98px) and (max-width: 63.99em) {
+  .ux-customer-header .ux-csearch-trigger {
+    margin-inline-end: -4px;
   }
 }
 /* From 1024 px the field starts where the page column starts (the left bar's first item after the brand, less the

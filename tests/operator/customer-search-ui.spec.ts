@@ -1,9 +1,8 @@
-import { test, expect, chromium, type Page, type Route } from '@playwright/test';
+import { test, expect, type Page, type Route } from '@playwright/test';
 import { build } from 'esbuild';
 import { createServer, type Server } from 'node:http';
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { basename, join, resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { basename, resolve } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
 
 // The customer search (docs/revamp/specs/navigation-v1/customer-search.md): the Search button first in the customer top
@@ -236,6 +235,16 @@ const selectedLabel = (page: Page) =>
 async function type(page: Page, words: string) {
   await field(page).fill(words);
 }
+/**
+ * Waits for the dialog's opening fade to finish. Axe blends a text colour with the opacity of the element it sits in, so a
+ * scan taken while the dialog is still fading in (about 0.8 opaque on a slow runner) sees muted text at 3.2 to 4.2 to 1
+ * where the finished dialog has 5.75 to 6.63 to 1. The scan is of the dialog as it stays on screen.
+ */
+async function steady(page: Page) {
+  await dialogOf(page).evaluate((element) =>
+    Promise.all(element.getAnimations({ subtree: true }).map((animation) => animation.finished)),
+  );
+}
 /** Waits for the debounce and the answer to settle: the summary line leaves "Searching". */
 async function settled(page: Page) {
   await expect(dialogOf(page).locator('.ux-csearch-list')).not.toHaveAttribute('aria-busy', 'true');
@@ -256,7 +265,7 @@ test.describe('the Search button', () => {
     expect(await button.evaluate((node) => node.textContent?.trim())).toBe('Search');
     // First in the tools row, before New Request, and it opens nothing by itself.
     const order = await page.evaluate(() =>
-      [...document.querySelectorAll('.ux-bar-tools > *')].map(
+      Array.from(document.querySelectorAll('.ux-bar-tools > *')).map(
         (node) => node.getAttribute('class') ?? node.tagName,
       ),
     );
@@ -278,7 +287,13 @@ test.describe('the Search button', () => {
       expect(box.height).toBeGreaterThanOrEqual(44);
       expect(box.width).toBeGreaterThanOrEqual(44);
       if (wide) expect(box.width).toBeGreaterThanOrEqual(176);
-      else expect(box.width).toBeLessThan(60);
+      else {
+        // Below 64em it is a fixed 44 by 44 px target with a fixed 24 px glyph, so larger text cannot grow it.
+        expect(box.width).toBeCloseTo(44, 1);
+        expect(box.height).toBeCloseTo(44, 1);
+        const glyph = (await trigger(page).locator('svg').boundingBox())!;
+        expect([glyph.width, glyph.height]).toEqual([24, 24]);
+      }
       // The word is on screen only in the field; the name is the same either way.
       const word = await trigger(page)
         .locator('span')
@@ -1067,6 +1082,7 @@ test.describe('accessibility', () => {
       await type(page, words);
       if (words) await page.waitForTimeout(600);
       await settled(page);
+      await steady(page);
       const result = await new AxeBuilder({ page })
         .include('dialog.ux-csearch')
         .withTags(tags)
@@ -1115,7 +1131,7 @@ async function headerNumbers(page: Page) {
   return page.evaluate(() => {
     const header = document.querySelector('header.ux-app-header')!.getBoundingClientRect();
     const box = (selector: string) => {
-      const node = [...document.querySelectorAll(selector)].find(
+      const node = Array.from(document.querySelectorAll(selector)).find(
         (item) => item.getBoundingClientRect().width > 0,
       );
       const rect = node?.getBoundingClientRect();
@@ -1166,6 +1182,14 @@ test.describe('header geometry (M4)', () => {
         expect(numbers.scrollWidth).toBeLessThanOrEqual(numbers.viewport);
         expect(numbers.search!.width).toBeGreaterThanOrEqual(44);
         expect(numbers.search!.height).toBeGreaterThanOrEqual(44);
+        // Everywhere but the field (1024 px and wider at normal text) it is a fixed 44 by 44 px target with a 24 px
+        // glyph at every text size: the root font size must not grow it.
+        if (width < 1024 || text !== 100) {
+          expect(numbers.search!.width).toBeCloseTo(44, 1);
+          expect(numbers.search!.height).toBeCloseTo(44, 1);
+          const glyph = (await trigger(page).locator('svg').boundingBox())!;
+          expect([glyph.width, glyph.height]).toEqual([24, 24]);
+        }
         expect(numbers.search!.left).toBeGreaterThanOrEqual(numbers.header.left - 0.5);
         expect(numbers.search!.right).toBeLessThanOrEqual(numbers.header.right + 0.5);
         // At 200% text from 1024 px the fixed 4 rem header already clips a wrapped second row on main (recorded, not
@@ -1192,6 +1216,26 @@ test.describe('header geometry (M4)', () => {
       });
     }
   }
+
+  test('768 px with 200% text: Search and the five tools share one line (the header stays 225 px)', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 768, height: 800 });
+    await mount(page);
+    await page.addStyleTag({ content: 'html{font-size:200% !important}' });
+    await page.waitForTimeout(250);
+    const centres = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('.ux-bar-tools > *'))
+        .filter((node) => node.getBoundingClientRect().width > 0)
+        .map((node) => {
+          const rect = node.getBoundingClientRect();
+          return (rect.top + rect.bottom) / 2;
+        }),
+    );
+    expect(centres).toHaveLength(6);
+    expect(Math.max(...centres) - Math.min(...centres)).toBeLessThan(44);
+    expect((await headerNumbers(page)).header.height).toBeLessThanOrEqual(225);
+  });
 
   test('1024 and wider: the field starts at the page column and the other tools stay at the right edge', async ({
     page,
@@ -1327,13 +1371,14 @@ test.describe('the dialog panel', () => {
     await openAt(page, 390, 844, 100);
     const small = await page.evaluate(() => {
       const panel = document.querySelector('dialog.ux-csearch')!;
-      const targets = [...panel.querySelectorAll('button, input, [role="option"]')]
+      const targets = Array.from(panel.querySelectorAll('button, input, [role="option"]'))
         .map((node) => node.getBoundingClientRect())
         .filter((rect) => rect.height > 0 && (rect.height < 44 || rect.width < 44)).length;
-      const text = [...panel.querySelectorAll('*')].filter(
+      const text = Array.from(panel.querySelectorAll('*')).filter(
         (node) =>
-          [...node.childNodes].some((child) => child.nodeType === 3 && child.textContent?.trim()) &&
-          parseFloat(getComputedStyle(node).fontSize) < 12,
+          Array.from(node.childNodes).some(
+            (child) => child.nodeType === 3 && child.textContent?.trim(),
+          ) && parseFloat(getComputedStyle(node).fontSize) < 12,
       ).length;
       return { targets, text };
     });
@@ -1341,38 +1386,94 @@ test.describe('the dialog panel', () => {
   });
 });
 
-test.describe('a larger default font (KI-54)', () => {
-  test('with a browser default font of 32 px the query in em keeps the icon at 1440 px', async () => {
-    const directory = mkdtempSync(join(tmpdir(), 'csearch-profile-'));
-    mkdirSync(join(directory, 'Default'), { recursive: true });
-    writeFileSync(
-      join(directory, 'Default', 'Preferences'),
-      JSON.stringify({ webkit: { webprefs: { default_font_size: 32 } } }),
-    );
-    const context = await chromium.launchPersistentContext(directory, {
-      viewport: { width: 1440, height: 900 },
-      executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined,
+// KI-54: the wide field starts at 64em, which reads the browser's own default font size, so emulating a larger root
+// font size in the page cannot test it, and a browser profile with a larger default font is not honoured by every
+// Chromium build. So this proves what holds in any build: the rule that makes the field is written in em (read back
+// from the loaded stylesheet), and the query is true exactly when the window is at least 64 default-size ems wide,
+// whatever the default size is. It cannot show the layout under a 32 px default font; the source test pins the rule.
+test.describe('the wide field switch is an em query (KI-54)', () => {
+  test('the stylesheet rule that makes the field sits inside a (min-width: 64em) media rule, nothing else', async ({
+    page,
+  }) => {
+    await mount(page);
+    const rules = await page.evaluate(() => {
+      const found: { condition: string; selector: string; text: string }[] = [];
+      const visit = (list: CSSRuleList, conditions: string[]) => {
+        for (const rule of Array.from(list)) {
+          if (rule instanceof CSSStyleRule) {
+            if (rule.selectorText.includes('ux-csearch-trigger'))
+              found.push({
+                condition: conditions.join(' && '),
+                selector: rule.selectorText,
+                text: rule.style.cssText,
+              });
+          } else if ('cssRules' in rule)
+            visit(
+              (rule as CSSGroupingRule).cssRules,
+              'conditionText' in rule
+                ? [...conditions, String((rule as CSSMediaRule).conditionText)]
+                : conditions,
+            );
+        }
+      };
+      for (const sheet of Array.from(document.styleSheets)) visit(sheet.cssRules, []);
+      return found;
     });
-    try {
-      const page = context.pages()[0] ?? (await context.newPage());
-      await page.route('**/api/**', (route) => route.fulfill({ json: [] }));
-      await page.goto(`${origin}/account`);
-      await page.waitForSelector('header.ux-app-header');
-      // 64em is now 2048 px: the wide field does not apply, the icon does, and it is still a 44 px button.
-      expect(await page.evaluate(() => matchMedia('(min-width:64em)').matches)).toBe(false);
-      expect(await page.evaluate(() => matchMedia('(min-width:1024px)').matches)).toBe(true);
-      const search = page.getByRole('button', { name: 'Search', exact: true });
-      const box = (await search.boundingBox())!;
-      expect(box.width).toBeGreaterThanOrEqual(44);
-      expect(box.height).toBeGreaterThanOrEqual(44);
-      expect(box.width).toBeLessThan(80);
-      expect(
-        await page.evaluate(
-          () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
-        ),
-      ).toBe(true);
-    } finally {
-      await context.close();
+    // The field is the rule that caps the width at 35rem and lets the button grow.
+    const field = rules.filter((rule) => rule.text.includes('max-width: 35rem'));
+    expect(field).toHaveLength(1);
+    expect(field[0]!.condition).toBe('(min-width: 64em)');
+    expect(field[0]!.text).toContain('flex: 1 1 0');
+    // No rule outside that query grows the button or caps its width: below 64em it is the fixed icon.
+    const button = '.ux-customer-header .ux-csearch-trigger';
+    for (const rule of rules.filter((item) => item !== field[0] && item.selector === button)) {
+      expect(rule.text, `${rule.selector} in ${rule.condition}`).not.toContain('max-width: 35rem');
+      expect(rule.text, `${rule.selector} in ${rule.condition}`).not.toMatch(/flex:\s*1 1 0/);
     }
+    // And no condition on the trigger switches on a pixel or rem minimum width, except the one that only narrows the icon
+    // state and is itself closed by the em query (max-width: 63.99em).
+    for (const rule of rules)
+      if (/min-width:\s*[\d.]+(?:px|rem)/.test(rule.condition))
+        expect(rule.condition, rule.selector).toContain('(max-width: 63.99em)');
+  });
+
+  test('the query matches exactly when the window is 64 default-size ems wide, at 1023, 1024 and 1440 px', async ({
+    page,
+  }) => {
+    await mount(page);
+    for (const width of [1023, 1024, 1440]) {
+      await page.setViewportSize({ width, height: 800 });
+      const read = await page.evaluate(() => {
+        // `medium` is the browser's default font size, whatever the page sets on html.
+        const probe = document.createElement('div');
+        probe.style.fontSize = 'medium';
+        document.body.append(probe);
+        const em = parseFloat(getComputedStyle(probe).fontSize);
+        probe.remove();
+        return {
+          em,
+          wide: matchMedia('(min-width:64em)').matches,
+          width: document.documentElement.clientWidth,
+        };
+      });
+      expect(read.wide, `${width} px with a default size of ${read.em} px`).toBe(
+        read.width >= 64 * read.em,
+      );
+      // The button is the field exactly when the query is true, and the fixed icon otherwise.
+      const box = (await trigger(page).boundingBox())!;
+      if (read.wide) expect(box.width).toBeGreaterThanOrEqual(176);
+      else {
+        expect(box.width).toBeCloseTo(44, 1);
+        expect(box.height).toBeCloseTo(44, 1);
+      }
+    }
+  });
+
+  test('a larger root font size in the page does not move the query', async ({ page }) => {
+    await page.setViewportSize({ width: 1023, height: 800 });
+    await mount(page);
+    const before = await page.evaluate(() => matchMedia('(min-width:64em)').matches);
+    await page.addStyleTag({ content: 'html{font-size:200% !important}' });
+    expect(await page.evaluate(() => matchMedia('(min-width:64em)').matches)).toBe(before);
   });
 });

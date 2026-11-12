@@ -94,7 +94,7 @@ describe('the stylesheet', () => {
     const used = new Set([...css.matchAll(/var\(\s*(--[a-zA-Z0-9-]+)/g)].map((match) => match[1]!));
     expect(used.size).toBeGreaterThan(20);
     for (const name of used)
-      expect(globals, name).toMatch(new RegExp(`${name.replace(/-/g, '\\-')}\\s*:`));
+      expect(globals.includes(`${name}:`) || globals.includes(`${name} :`), name).toBe(true);
     // No raw font family either.
     for (const [, value] of css.matchAll(/font-family\s*:\s*([^;]+);/g))
       expect(value, 'font-family').toMatch(/^var\(/);
@@ -135,7 +135,10 @@ describe('the stylesheet', () => {
       if (rule.inside.length === 0) {
         const at = css.indexOf(`${rule.selector} {`);
         const body = css.slice(at, css.indexOf('}', at));
+        // A fixed target in px, so the text size cannot grow it and push the tools onto another line.
+        expect(body).toContain('width: 44px');
         expect(body).toContain('min-width: 44px');
+        expect(body).toContain('height: 44px');
         expect(body).toContain('min-height: 44px');
         expect(body).toContain('border: 0');
         expect(body).toContain('background: transparent');
@@ -143,6 +146,33 @@ describe('the stylesheet', () => {
         break;
       }
     }
+    // The glyph below 64em is 24 px, not rem: the only rem-sized glyph is the field's.
+    const glyphs = [...css.matchAll(/\.ux-csearch-trigger \.corridra-icon\s*\{([^}]*)\}/g)].map(
+      (m) => m[1]!,
+    );
+    expect(glyphs).toHaveLength(3);
+    expect(
+      glyphs.filter((body) => /width:\s*24px/.test(body) && /height:\s*24px/.test(body)),
+    ).toHaveLength(2);
+    expect(glyphs.filter((body) => /width:\s*1\.25rem/.test(body))).toHaveLength(1);
+    expect(css).not.toContain('1.75rem');
+    // The tools keep a 4 px gap from 701 to 1023 px at every text size.
+    expect(css).toContain('column-gap: min(var(--space-1), 4px)');
+    // Every condition the trigger's rules sit in is the em query, the container query on the tools box, or a media
+    // feature that is not a width (colour, contrast, motion); none is a pixel or rem width that could stand in for 64em.
+    for (const rule of allRules.filter((item) => item.selector.includes('ux-csearch-trigger')))
+      for (const condition of rule.inside)
+        expect(
+          [
+            '@media (min-width: 64em)',
+            '@media (forced-colors: active)',
+            '@media (prefers-contrast: more)',
+            '@media (min-width: 701px) and (max-width: 1023.98px) and (max-width: 63.99em)',
+            '@container (max-width: 26rem)',
+            '@container (width > 26rem)',
+          ],
+          `${rule.selector} in ${condition}`,
+        ).toContain(condition);
     expect(css).toMatch(/@container \(max-width: 26rem\)/);
     // The field's own rules are all inside the 64em query.
     const fieldRules = allRules.filter(
@@ -344,17 +374,17 @@ describe('the words on screen', () => {
   test('no Mission, no em or en dash, and no word that claims what the search cannot promise', () => {
     expect(code).not.toMatch(/\bmissions?\b/i);
     expect(code).not.toMatch(/[—–]/);
-    for (const word of [
-      'verified',
-      'verify',
-      'verification',
-      'enabled',
-      'live',
-      'total',
-      'totals',
-      'evidence',
-    ])
-      expect(code, word).not.toMatch(new RegExp(`\\b${word}\\b`, 'i'));
+    const claims: [string, RegExp][] = [
+      ['verified', /\bverified\b/i],
+      ['verify', /\bverify\b/i],
+      ['verification', /\bverification\b/i],
+      ['enabled', /\benabled\b/i],
+      ['live', /\blive\b/i],
+      ['total', /\btotal\b/i],
+      ['totals', /\btotals\b/i],
+      ['evidence', /\bevidence\b/i],
+    ];
+    for (const [word, pattern] of claims) expect(code, word).not.toMatch(pattern);
     expect(code).not.toMatch(/\bcomplete search\b/i);
     expect(read(stylesheet)).not.toMatch(/[—–]/);
   });
