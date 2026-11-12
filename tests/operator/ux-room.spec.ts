@@ -361,7 +361,7 @@ test('a selling request opens on its buyers and meetings, with the proposed meet
   await expect(lens(page, 'Meetings')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('heading', { name: 'Your meetings and visits' })).toBeVisible();
   await lens(page, 'Buyers').click();
-  const funnel = page.getByRole('definition');
+  const funnel = page.locator('.sellb-funnel dd');
   // One tile per state: price requests, samples, proposals and agreements are never one number.
   await expect(page.locator('.sellb-funnel > div')).toHaveCount(8);
   await expect(page.locator('.sellb-funnel dt')).toHaveText([
@@ -375,6 +375,17 @@ test('a selling request opens on its buyers and meetings, with the proposed meet
     'agreements',
   ]);
   await expect(funnel).toHaveText(['2', '1', '0', '0', '2', '1', '1', '0']);
+  // Outreach is counted by staff when they approve the detail. This report carries none, so it is not shared, never zero.
+  await expect(page.locator('.sellb-outreach dt')).toHaveText([
+    'buyers approached',
+    'buyers responded',
+    'buyers interested',
+  ]);
+  await expect(page.locator('.sellb-outreach dd')).toHaveText([
+    'Not shared',
+    'Not shared',
+    'Not shared',
+  ]);
   const table = page.locator('.sellb-table');
   await expect(table.getByRole('rowheader')).toHaveCount(2);
   await expect(table.locator('thead th')).toHaveText(['Buyer', 'Fit', 'How it is backed']);
