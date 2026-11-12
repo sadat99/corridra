@@ -7,6 +7,7 @@ import { customerMovesEnabled } from '@corridra/auth/customer-moves';
 import { foundations } from '../../lib/foundations';
 import { ownerCapable, ownerPageEnabled } from '../../lib/owner-access';
 import { problemReportsOffered } from '../../lib/problem-reports-offered';
+import { programmeApplicationsOffered } from '../../lib/programme-applications-offered';
 import { uxSwitchOn } from '../../lib/ux-switches';
 import { operatorSignInPath } from '../../lib/workspace-navigation';
 import { OperatorFlags } from './operator-flags';
@@ -98,6 +99,7 @@ export async function OperatorEntry({
           moveRecords={customerMovesEnabled()}
           shellsV2={shellsV2}
           problemReports={await problemReportsOffered()}
+          programmeApplications={await programmeApplicationsOffered()}
         />
       </OperatorFlags>
     </WorkspaceShell>

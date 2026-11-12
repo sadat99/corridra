@@ -1,4 +1,5 @@
 import { problemReportQueueFragment } from '../lib/problem-report-queue';
+import { applicationQueueFragment } from '../lib/programme-application-queue';
 import { workspaceSections } from '../lib/workspace-navigation';
 import { missionSections, toolAreas } from './role-navigation';
 
@@ -10,9 +11,10 @@ const areas = [
   { key: 'settings', label: 'Settings and access', ids: [...toolAreas[3].ids] as string[] },
 ];
 
-/** The panel that owns a fragment: the four ops-* anchors live inside the operations panel, the problem report queue inside Settings. */
+/** The panel that owns a fragment: the four ops-* anchors live inside the operations panel, the problem report queue and the programme application list inside Settings. */
 export function panelFor(fragment: string): string {
-  if (fragment === problemReportQueueFragment) return 'workspace-settings';
+  if (fragment === problemReportQueueFragment || fragment === applicationQueueFragment)
+    return 'workspace-settings';
   return fragment.startsWith('ops-') ? 'workspace-operations' : fragment;
 }
 

@@ -93,11 +93,14 @@ export type ProblemReportMoved = {
   changed: boolean;
 };
 // `programmeWords` is the number of programme application and registration items whose words were replaced in the same step
-// (customer.programme_words_remove). It is absent when that module is not installed.
+// (customer.programme_words_remove). It is absent when that module is not installed. `paymentWords` is the number of programme
+// payment declarations and declaration records whose payer reference or note was replaced (customer.programme_payment_words_remove);
+// it is absent when the module or the payment declaration schema is not installed.
 export type ProblemReportWordsRemoved = {
   reference: string;
   removed: number;
   programmeWords?: number;
+  paymentWords?: number;
 };
 // A customer's own removal (migration 0003): how many reports lost their words, and whether this call did it (false for a
 // replay of the same command and for a call that found nothing left).
@@ -582,12 +585,29 @@ export class StaffProblemReports {
               )
             ).rows[0]!.result.removed
           : undefined;
-        return { ...reports, ...(programme === undefined ? {} : { programmeWords: programme }) };
+        const payments = (
+          await t.db.query<{ present: boolean }>(
+            "SELECT to_regprocedure('customer.programme_payment_words_remove(uuid,uuid)') IS NOT NULL AS present",
+          )
+        ).rows[0]?.present
+          ? (
+              await t.db.query<{ result: { removed: number } }>(
+                'SELECT customer.programme_payment_words_remove($1,$2) AS result',
+                [value.commandId, value.erasureRequestId],
+              )
+            ).rows[0]!.result.removed
+          : undefined;
+        return {
+          ...reports,
+          ...(programme === undefined ? {} : { programmeWords: programme }),
+          ...(payments === undefined ? {} : { paymentWords: payments }),
+        };
       });
       return {
         reference: done.reference,
         removed: done.removed,
         ...(done.programmeWords === undefined ? {} : { programmeWords: done.programmeWords }),
+        ...(done.paymentWords === undefined ? {} : { paymentWords: done.paymentWords }),
       };
     } catch (error) {
       throw problemReportError(error);

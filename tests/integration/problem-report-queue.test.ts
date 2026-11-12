@@ -407,6 +407,13 @@ describe('the removed count exists only after the answer', () => {
     expect(wordsRemovedMessage(done.removed)).toBe('Words removed from 3 problem reports.');
     expect(wordsRemovedMessage(1)).toBe('Words removed from 1 problem report.');
     expect(wordsRemovedMessage(0)).toBe('Words removed from 0 problem reports.');
+    // The programme and payment counts are said only when the answer carries them.
+    expect(wordsRemovedMessage(0, { programmeWords: 5, paymentWords: 1 })).toBe(
+      'Words removed from 0 problem reports. Programme application and label words replaced in 5 items. Payment reference and note words replaced in 1 item.',
+    );
+    expect(wordsRemovedMessage(2, { paymentWords: 0 })).toBe(
+      'Words removed from 2 problem reports. Payment reference and note words replaced in 0 items.',
+    );
   });
   test('an answer without a whole count is a failure, never a made-up number', async () => {
     const { removeWordsUnderRequest } = await load('lib/problem-report-queue.ts');
@@ -434,7 +441,7 @@ describe('the removed count exists only after the answer', () => {
   test('the erasure queue holds the control for the owner only, with a confirmation and no count of its own', () => {
     const text = source('app/operator/erasure-queue.tsx');
     expect(text).toContain('removalOnRequest(role, problemReports, i.status)');
-    expect(text).toContain('wordsRemovedMessage(done.removed)');
+    expect(text).toContain('wordsRemovedMessage(done.removed, done)');
     // The count is not read, summed or guessed anywhere else on the page.
     expect(text.match(/removed/g)?.length ?? 0).toBeLessThanOrEqual(4);
     expect(text).not.toMatch(/localStorage|sessionStorage/);
