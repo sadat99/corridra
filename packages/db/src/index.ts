@@ -68,6 +68,7 @@ const freshMfaPermissions: readonly Permission[] = [
   'delivery.share',
   'viewas.open',
   'problems.triage',
+  'programme.applications.read',
 ];
 /** The session's actor, role and authenticator freshness in this workspace, refused unless they allow `permission`. */
 async function currentAuthority(db: DatabaseClient, tenantId: string, permission: Permission) {
