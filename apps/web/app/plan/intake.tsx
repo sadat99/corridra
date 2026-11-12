@@ -20,6 +20,8 @@ import {
 } from './send-reply';
 import { issueSeparator } from '../../lib/i18n/form-words/messages';
 import { useFormWords } from './form-words';
+import './plan-jobs.css';
+import { orderedJobs, type HomeJob, type JobWeight } from '../../components/home-jobs';
 import { rememberSentRequest } from '../../lib/private-request-storage';
 import { customerStatusLabel } from '../../lib/ux/customer-road';
 import { formatDateTime } from '../../lib/ux/format';
@@ -133,6 +135,30 @@ const objectiveWords = {
   'Run a multi-company mission': 'form.goal.mission',
   'Something else': 'form.goal.other',
 } satisfies Record<(typeof objectiveOptions)[number], FormKey>;
+/**
+ * The order the objectives are drawn in on the first step. Visual only: the values, names and the intake logic are
+ * unchanged. The three objectives that start the home page's jobs come first, in the home page's order and weight
+ * (components/home-jobs.tsx); the other objectives follow in their own order. Each label keeps its exact words, so
+ * every radio keeps its accessible name, and the step keeps its length budget (no route chip here).
+ */
+const objectiveForHomeJob = {
+  buy: 'Source suppliers',
+  trip: 'Run a multi-company mission',
+  sell: 'Sell in a new market',
+} as const satisfies Record<HomeJob['key'], (typeof objectiveOptions)[number]>;
+const leadObjectives: readonly string[] = Object.values(objectiveForHomeJob);
+const isOther = ({ value }: { value: string }) => !leadObjectives.includes(value);
+const otherObjectives = objectiveOptions.map((value) => ({ value })).filter(isOther);
+const objectiveDisplay: readonly {
+  value: (typeof objectiveOptions)[number];
+  weight?: JobWeight;
+}[] = [
+  ...orderedJobs().map(({ job, weight }) => ({
+    value: objectiveForHomeJob[job.key],
+    weight,
+  })),
+  ...otherObjectives,
+];
 const outcomeWords = {
   'Relevant meetings': 'form.results.meetings',
   'Buyers / customers': 'form.results.buyers',
@@ -1164,9 +1190,9 @@ function IntakeForm({
                       }}
                     />
                   ) : (
-                    <div className="guide-options">
-                      {objectiveOptions.map((v) => (
-                        <label className="choice" key={v}>
+                    <div className="guide-options plan-jobs">
+                      {objectiveDisplay.map(({ value: v, weight }) => (
+                        <label className="choice" key={v} data-weight={weight}>
                           <input
                             type="radio"
                             name="objective"
@@ -1174,7 +1200,7 @@ function IntakeForm({
                             checked={draft.objective === v}
                             onChange={() => change('objective', v)}
                           />
-                          {say(objectiveWords[v])}
+                          <span className="plan-job-words">{say(objectiveWords[v])}</span>
                         </label>
                       ))}
                     </div>

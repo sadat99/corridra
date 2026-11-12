@@ -91,7 +91,8 @@ describe('the three places that name a job agree', () => {
         );
   });
   it('the home cards open jobs that sit under the picture of the same name', () => {
-    const home = read('apps/web/app/page.tsx');
+    // The home cards are drawn by one component in the owner's order (owner decision, 12 November 2026).
+    const home = read('apps/web/components/home-jobs.tsx');
     const jobs = [...home.matchAll(/\/plan\?job=([a-z_]+)/g)].map((m) => m[1]);
     expect(jobs.sort()).toEqual(['buyers', 'delegations', 'sourcing']);
     expect(pictureForJob('buyers')).toBe('sell-abroad');

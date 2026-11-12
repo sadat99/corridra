@@ -42,7 +42,8 @@ test('V3 entry remains keyboard accessible and cannot replace an unfinished requ
   await expect(page.getByRole('heading', { name: 'Where?', exact: true })).toBeFocused();
   await page.goto('/');
   const choices = page.getByRole('navigation', { name: 'Choose your commercial objective' });
-  await choices.getByRole('link').first().focus();
+  // A link for another job than the saved draft (the jobs are drawn in the owner's order, so it is named here).
+  await choices.getByRole('link', { name: /Find Buyers & Partners/ }).focus();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Where?', exact: true })).toBeVisible();

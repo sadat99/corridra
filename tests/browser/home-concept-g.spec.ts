@@ -28,7 +28,7 @@ const currentStep = (page: Page) =>
     .locator('li[aria-current="step"]');
 const announced = (page: Page) => player(page).locator('[aria-live="polite"]');
 
-test('the home is 2.0 to 3.0 screens at 1440 x 900 and at most 4.25 at 390 x 844, for both examples', async ({
+test('the home is 2.0 to 3.0 screens at 1440 x 900 and at most 4.25 at 390 x 844, for every example', async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -37,7 +37,7 @@ test('the home is 2.0 to 3.0 screens at 1440 x 900 and at most 4.25 at 390 x 844
     await page.setViewportSize(size);
     await page.goto('/');
     await page.evaluate(() => document.fonts.ready);
-    for (const example of ['Selling', 'Sourcing']) {
+    for (const example of ['Selling', 'Sourcing', 'Delegation']) {
       await player(page).getByRole('tab', { name: example, exact: true }).click();
       const length = await screens(page);
       measured.push(`${name} ${example} ${length.toFixed(2)}`);
@@ -109,6 +109,8 @@ for (const width of widths)
     await player(page).getByRole('button', { name: 'Next Step' }).click();
     await player(page).getByRole('button', { name: 'Next Step' }).click();
     await check('Sourcing, Compare');
+    await player(page).getByRole('tab', { name: 'Delegation', exact: true }).click();
+    await check('Delegation, Compare');
   });
 
 test('every job link opens its request with the contract name in its accessible name', async ({
@@ -117,21 +119,32 @@ test('every job link opens its request with the contract name in its accessible 
   await page.goto('/');
   const jobs = page.getByRole('navigation', { name: 'Choose your commercial objective' });
   await expect(jobs.getByRole('link')).toHaveCount(3);
-  for (const [name, href] of [
+  // Owner decision, 12 November 2026: the jobs are unequal (Buy leads, then the group trip, then Sell) and each
+  // names its first route. Same titles, lines, contract names and links as before.
+  const expected = [
     [
-      'Sell my products Find buyers and partners abroad. Find Buyers & Partners',
-      '/plan?job=buyers',
-    ],
-    [
-      'Buy products or machines Find suppliers. Compare price quotes. Find Suppliers & Products',
+      'Buy products or machines Find suppliers. Compare price quotes. Bangladesh to China Find Suppliers & Products',
       '/plan?job=sourcing',
+      'lead',
     ],
     [
-      'Lead a group trip Plan the programme and the meetings. Organise a Delegation',
+      'Lead a group trip Plan the programme and the meetings. Delegations and trade missions Organise a Delegation',
       '/plan?job=delegations',
+      'normal',
     ],
-  ])
+    [
+      'Sell my products Find buyers and partners abroad. Bangladesh to Spain and the EU Find Buyers & Partners',
+      '/plan?job=buyers',
+      'compact',
+    ],
+  ] as const;
+  for (const [name, href] of expected)
     await expect(jobs.getByRole('link', { name, exact: true })).toHaveAttribute('href', href);
+  for (const [index, [name, , weight]] of expected.entries()) {
+    const link = jobs.getByRole('link').nth(index);
+    await expect(link).toHaveAccessibleName(name);
+    await expect(link).toHaveAttribute('data-weight', weight);
+  }
   await expect(
     page.getByRole('link', { name: 'Something else? Tell us your business goal' }),
   ).toHaveAttribute('href', '/plan');
@@ -207,14 +220,20 @@ test('the player works by keyboard: the example tabs, Previous and Next, and onl
   const record = player(page);
   const selling = record.getByRole('tab', { name: 'Selling', exact: true });
   const sourcing = record.getByRole('tab', { name: 'Sourcing', exact: true });
+  const delegation = record.getByRole('tab', { name: 'Delegation', exact: true });
   await selling.focus();
   await page.keyboard.press('ArrowRight');
   await expect(sourcing).toBeFocused();
   await expect(sourcing).toHaveAttribute('aria-selected', 'true');
   await page.keyboard.press('ArrowRight');
+  await expect(delegation).toBeFocused();
+  await expect(delegation).toHaveAttribute('aria-selected', 'true');
+  await page.keyboard.press('ArrowRight');
   await expect(selling).toBeFocused();
+  await page.keyboard.press('ArrowLeft');
+  await expect(delegation).toBeFocused();
   await page.keyboard.press('End');
-  await expect(sourcing).toHaveAttribute('aria-selected', 'true');
+  await expect(delegation).toHaveAttribute('aria-selected', 'true');
   await page.keyboard.press('Home');
   await expect(selling).toHaveAttribute('aria-selected', 'true');
   await expect(currentStep(page)).toContainText('Define');
@@ -307,4 +326,44 @@ test('under reduced motion the player never moves on by itself and offers no Pla
   // The steps are still all reachable by hand.
   await record.getByRole('button', { name: 'Next Step' }).click();
   await expect(currentStep(page)).toContainText('Find');
+});
+
+test('the Delegation example uses the six steps, says it is an example and names no real company', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  const record = player(page);
+  await record.getByRole('tab', { name: 'Delegation', exact: true }).click();
+  const panel = record.getByRole('tabpanel');
+  await expect(panel).toContainText('Take twelve garment exporters to meet buyers in Guangzhou.');
+  await expect(panel).toContainText('Example mission. Not real companies.');
+  await expect(record).toContainText('Example');
+  await expect(panel).toContainText('Lead a group trip');
+  await expect(panel).toContainText('Four days in March');
+  await expect(record.getByRole('list', { name: 'How a mission works' }).locator('li')).toHaveCount(
+    6,
+  );
+  const next = record.getByRole('button', { name: 'Next Step' });
+  await next.click();
+  const buyers = record.getByRole('list', { name: 'Example delegation buyer shortlist' });
+  await expect(buyers.locator('li')).toHaveCount(4);
+  await expect(buyers).toContainText('Buyer A, Guangzhou');
+  await expect(record.getByRole('list', { name: 'Example buyer shortlist' })).toHaveCount(0);
+  await next.click();
+  const meetings = record.getByRole('table', { name: 'Example meetings for each exporter' });
+  await expect(meetings.getByRole('row')).toHaveCount(4);
+  await expect(meetings.getByRole('columnheader')).toHaveText([
+    'Term',
+    'Exporter 1',
+    'Exporter 2',
+    'Exporter 3',
+  ]);
+  await next.click();
+  await expect(
+    record.getByRole('list', { name: 'Example meeting plan' }).locator('li'),
+  ).toHaveCount(3);
+  // Selling and Sourcing are unchanged by the third example.
+  await record.getByRole('tab', { name: 'Selling', exact: true }).click();
+  await expect(panel).toContainText('Meet three knitwear buyers during a Madrid trade fair.');
 });
