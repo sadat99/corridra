@@ -3,6 +3,7 @@
 // assigned work works. Sign-out stays where it is on the page. Navigation only: the page and the
 // server still decide who sees what. Owner: WS-E.
 import './shells.css';
+import './contributor-frame.css';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, type ReactNode } from 'react';
 import { useLanguage } from '../language-provider';

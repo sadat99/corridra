@@ -1,0 +1,50 @@
+/* The contributor left bar in the AC/1 sidebar look: a white rail, quiet items, the current item in cobalt on the
+   selected surface with a cobalt edge. Presentation only. Tokens only. Scoped by the bar's own id, so the Team and
+   Customer bars (which share left-nav.css) are untouched, and an id outranks the navy panel rules in team-nav.css
+   whether or not that file is on the page. Owner: contributor shell. */
+nav#contributor-navigation.ux-team-sidebar {
+  padding: 0;
+  background: transparent;
+  color: var(--text-2);
+  scrollbar-color: var(--ac-text-tertiary) var(--ac-surface-subtle);
+}
+nav#contributor-navigation.ux-team-sidebar a,
+nav#contributor-navigation.ux-team-sidebar a span {
+  color: var(--text-2);
+  font-weight: 500;
+  opacity: 1;
+}
+nav#contributor-navigation.ux-team-sidebar a {
+  border-inline-start: 3px solid transparent;
+  box-shadow: none;
+}
+nav#contributor-navigation.ux-team-sidebar a:hover,
+nav#contributor-navigation.ux-team-sidebar a:hover span {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+nav#contributor-navigation.ux-team-sidebar a[aria-current='page'],
+nav#contributor-navigation.ux-team-sidebar a[aria-current='page'] span {
+  background: var(--selected-surface);
+  color: var(--action-pressed);
+  font-weight: 600;
+}
+nav#contributor-navigation.ux-team-sidebar a[aria-current='page'] {
+  border-inline-start-color: var(--accent);
+}
+nav#contributor-navigation.ux-team-sidebar a:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}
+/* Icons-only bar: the edge would push the icon off centre. */
+.ux-leftnav-frame[data-collapsed='true'] nav#contributor-navigation.ux-team-sidebar a {
+  border-inline-start-width: 0;
+}
+@media (forced-colors: active) {
+  nav#contributor-navigation.ux-team-sidebar a[aria-current='page'] {
+    border-inline-start-color: Highlight;
+  }
+  nav#contributor-navigation.ux-team-sidebar a:focus-visible {
+    outline-color: Highlight;
+  }
+}
