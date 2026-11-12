@@ -113,6 +113,14 @@ describe('the palette says "try again", not "no match"', () => {
     expect(phaseOf(true, { kind: 'limited' })).toBe('limited');
     expect(outcomeForStatus(500)).toBe('failed');
   });
+  test('a limited search is never confused with a denied one', () => {
+    expect(outcomeForStatus(429)).not.toBe(outcomeForStatus(403));
+    const limited = JSON.stringify(describeStatus(input('limited')));
+    const denied = JSON.stringify(describeStatus(input('denied')));
+    expect(limited).not.toMatch(/role|access|owner or admin/i);
+    expect(denied).not.toMatch(/try again|paused/i);
+    expect(describeStatus(input('denied')).retry).toBe(false);
+  });
   test('the view offers a retry, has no block and never reads as empty', () => {
     const view = describeStatus(input('limited'));
     expect(view.retry).toBe(true);

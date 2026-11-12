@@ -73,15 +73,15 @@ const measure = (page: Page) =>
     const dialog = document.querySelector<HTMLElement>('dialog.ux-palette[open]')!;
     const list = dialog.querySelector<HTMLElement>('.ux-palette-list')!;
     const panel = dialog.getBoundingClientRect();
-    const wide = [...dialog.querySelectorAll<HTMLElement>('*')].filter(
+    const wide = Array.from(dialog.querySelectorAll<HTMLElement>('*')).filter(
       (el) => el.getBoundingClientRect().right > panel.right + 0.5,
     ).length;
-    const clipped = [
-      ...dialog.querySelectorAll<HTMLElement>('.ux-palette-label, .ux-palette-row'),
-    ].filter(
+    const clipped = Array.from(
+      dialog.querySelectorAll<HTMLElement>('.ux-palette-label, .ux-palette-row'),
+    ).filter(
       (el) => el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).overflowX !== 'visible',
     ).length;
-    const rows = [...dialog.querySelectorAll<HTMLElement>('[role="option"]')];
+    const rows = Array.from(dialog.querySelectorAll<HTMLElement>('[role="option"]'));
     return {
       rootFont: parseFloat(getComputedStyle(document.documentElement).fontSize),
       left: panel.left,
