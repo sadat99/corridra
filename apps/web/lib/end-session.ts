@@ -1,5 +1,6 @@
 import { clearPrivateRequestStorage } from './private-request-storage';
 import { announceSessionChange } from '../components/session-events';
+import { forgetDeviceRecents } from './ux/palette-recents';
 
 /**
  * The steps of signing out that need no router: end the provider session, clear what the browser kept for private
@@ -15,5 +16,7 @@ export async function endSession() {
   } catch {
     /* Logout still clears the provider session. */
   }
+  // The command palette's recent items are this person's, on this device: they go with the session.
+  forgetDeviceRecents();
   announceSessionChange();
 }
