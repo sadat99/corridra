@@ -154,6 +154,10 @@ type Options = {
   /** Answers to saving the offer, one per attempt; the last repeats. */
   saves?: Answer[];
   saveDelay?: number;
+  /** Whether mission pages are on (CORRIDRA_UX_MISSIONS_V2); on unless false. */
+  missionsV2?: boolean;
+  /** Never answers the prefill request. */
+  prefillStalls?: boolean;
 };
 /** Answers the workspace interfaces and records what the page asked for. */
 async function stub(page: Page, options: Options) {
@@ -164,9 +168,12 @@ async function stub(page: Page, options: Options) {
     const url = new URL(request.url());
     const json = (status: number, value: unknown) =>
       route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(value) });
+    if (url.pathname === '/api/team-work/flags')
+      return json(200, { missionsV2: options.missionsV2 !== false });
     if (url.pathname === '/api/reply/review') return json(200, { open: false, reviews: published });
     if (url.pathname === '/api/workspace/reply-quotation-prefill') {
       prefillRequests.push(url.search);
+      if (options.prefillStalls) return;
       const answer = options.prefill ?? { status: 200, body: eligible() };
       return json(answer.status, answer.body);
     }
@@ -244,10 +251,9 @@ test.describe('the reply card', () => {
         `/operator/missions/${missionId}?workspace=${tenant}&reply=${replyId}#requirements`,
       );
       await expect(
-        page.getByText(
-          'Published. Prepared as a mission quotation, not yet confirmed. Nothing reaches a customer from here. Customer publication is a separate decision.',
-        ),
+        page.getByText('Published: prepared as a mission quotation, not yet confirmed.'),
       ).toBeVisible();
+      await expect(page.getByText(/Copy this into Record a supplier offer/)).toHaveCount(0);
       await expect(page.getByRole('button', { name: 'Copy the Prepared Quotation' })).toBeVisible();
       expect(prefillRequests).toEqual([`?tenant=${tenant}&reply=${replyId}`]);
     });
@@ -266,6 +272,38 @@ test.describe('the reply card', () => {
       await expect(owner.getByRole('link', { name: 'Open Prepared Offer' })).toBeVisible();
     });
   }
+  test('offers no link and says so while mission pages are off, and copy stays', async ({
+    page,
+  }) => {
+    await stub(page, { missionsV2: false });
+    await openCard(page, 'owner');
+    await expect(
+      page.getByText(
+        'Prepared offers are not available yet on this system. Copy the prepared quotation below and use it to fill the form by hand.',
+      ),
+    ).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Open Prepared Offer' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Copy the Prepared Quotation' })).toBeVisible();
+  });
+  test('does not call a refused reply prepared', async ({ page }) => {
+    await stub(page, { prefill: { status: 200, body: { eligible: false, reason: 'REJECTED' } } });
+    await openCard(page, 'owner');
+    await expect(
+      page.getByText('Published. This reply cannot be prepared as an offer.'),
+    ).toBeVisible();
+    await expect(page.locator('body')).not.toContainText('prepared as a mission quotation');
+  });
+  test('says copy this into the form by hand where the binding is not installed', async ({
+    page,
+  }) => {
+    await stub(page, { prefill: { status: 503, body: { error: 'Reply binding is unavailable' } } });
+    await openCard(page, 'owner');
+    await expect(
+      page.getByText(
+        'Copy this into Record a supplier offer on the mission and confirm it there. The reply is the self-declared source. Nothing reaches a customer until the publication path approves it.',
+      ),
+    ).toBeVisible();
+  });
   for (const code of refusalCodes) {
     test(`says in fixed words why ${code} cannot be prepared`, async ({ page }) => {
       await stub(page, { prefill: { status: 200, body: { eligible: false, reason: code } } });
@@ -321,8 +359,8 @@ test.describe('the prepared offer form', () => {
     await expect(terms.filter({ hasText: 'USD 12.50' })).toHaveCount(1);
     await expect(page.locator('.reply-handoff input[name="unitPrice"]')).toHaveCount(0);
     const check = page.getByRole('group', { name: 'Check before saving' });
-    await expect(check).toContainText('Not stated: Commissioning');
-    await expect(check).toContainText('Not stated: Minimum order');
+    await expect(check).toContainText('Commissioning');
+    await expect(check).toContainText('Minimum order');
     await expect(check).not.toContainText('Tooling');
     await expect(page.getByLabel('Reason for recording this change')).toHaveValue(
       'Offer from reviewed reply, revision 3',
@@ -395,6 +433,47 @@ test.describe('the prepared offer form', () => {
     await expect.poll(() => saved.length).toBe(1);
     expect(saved[0]!.currency).toBe('JPY');
     expect((saved[0]!.terms as Record<string, string>).unitPriceMinor).toBe('123456789012345678');
+  });
+  test('ends a prefill request that never answers and shows the plain form', async ({ page }) => {
+    await page.clock.install();
+    await stub(page, { prefillStalls: true });
+    await openForm(page);
+    await expect(page.getByText('Loading the prepared offer.')).toBeVisible();
+    await expect(page.getByLabel('Next task')).toHaveCount(0);
+    await page.clock.runFor(10500);
+    await expect(
+      page.getByText('We could not check this reply. Nothing was changed.'),
+    ).toBeVisible();
+    await expect(page.getByLabel('Next task')).toBeVisible();
+  });
+  test('shows the bound default reason even when a hand-form reason was typed earlier', async ({
+    page,
+  }) => {
+    await page.addInitScript(
+      ([key, value]) => window.sessionStorage.setItem(key!, value!),
+      [
+        `corridra.draft.commercial-mission:${JSON.stringify([tenant, missionId, 'quotation'])}`,
+        JSON.stringify({ reason: 'Typed by hand earlier' }),
+      ],
+    );
+    const { saved } = await stub(page, {});
+    await openForm(page);
+    const reason = page.getByLabel('Reason for recording this change');
+    await expect(reason).toHaveValue('Offer from reviewed reply, revision 3');
+    await fillAndSave(page);
+    await expect.poll(() => saved.length).toBe(1);
+    expect(saved[0]!.reason).toBe('Offer from reviewed reply, revision 3');
+    const kept = await page.evaluate(() =>
+      Object.keys(window.sessionStorage).filter((key) => key.startsWith('corridra.draft.')),
+    );
+    expect(kept).toHaveLength(1);
+  });
+  test('lists many missing terms as one sentence', async ({ page }) => {
+    await stub(page, { prefill: { status: 200, body: eligible({ terms: { quantity: '10' } }) } });
+    await openForm(page);
+    const check = page.getByRole('group', { name: 'Check before saving' });
+    await expect(check.locator('li')).toHaveCount(0);
+    await expect(check).toContainText('Not stated: Specification, Minimum order, Unit,');
   });
   for (const role of ['reviewer', 'viewer']) {
     test(`gives ${role} no bound form and asks nothing, even with a reply in the link`, async ({

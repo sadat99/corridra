@@ -49,9 +49,10 @@ export default async function Page({
   await s.ready;
   const identity = await s.provider.getSession(await headers());
   if (!identity) {
-    const back =
-      `/operator/missions/${missionId}` +
-      (requested && /^[0-9a-f-]{36}$/i.test(requested) ? `?workspace=${requested}` : '');
+    const keep = new URLSearchParams();
+    if (requested && /^[0-9a-f-]{36}$/i.test(requested)) keep.set('workspace', requested);
+    if (isUuid(reply)) keep.set('reply', reply);
+    const back = `/operator/missions/${missionId}${keep.size ? `?${keep}` : ''}`;
     redirect('/operator/signin?next=' + encodeURIComponent(back));
   }
   const tenants = await s.access.tenants(identity.token);

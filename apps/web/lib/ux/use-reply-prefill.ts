@@ -22,9 +22,12 @@ export function useReplyPrefill(tenant: string, replyId: string | null): Prefill
   useEffect(() => {
     if (!valid) return;
     let active = true;
+    // A request that never answers ends as a failure, so the hand form is never held back.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
     fetch(
       `/api/workspace/reply-quotation-prefill?tenant=${encodeURIComponent(tenant)}&reply=${valid}`,
-      { cache: 'no-store' },
+      { cache: 'no-store', signal: controller.signal },
     )
       .then(async (response): Promise<PrefillState> => {
         if (response.status === 503) return { kind: 'unavailable' };
@@ -39,10 +42,13 @@ export function useReplyPrefill(tenant: string, replyId: string | null): Prefill
       })
       .catch((): PrefillState => ({ kind: 'error' }))
       .then((next) => {
+        clearTimeout(timer);
         if (active) setAnswer({ reply: valid, state: next });
       });
     return () => {
       active = false;
+      clearTimeout(timer);
+      controller.abort();
     };
   }, [tenant, valid]);
   if (!valid) return { kind: 'idle' };

@@ -214,6 +214,24 @@ function ReplyCard({
   const published = state.final?.decision === 'PUBLISH';
   const prepared = published ? preparedQuotation(reply.body) : null;
   const prefill = useReplyPrefill(tenant, published && canRecord ? reply.id : null);
+  // Mission pages exist only while CORRIDRA_UX_MISSIONS_V2 is on (the page answers 404 otherwise), so the link
+  // is offered only once the flag read the Missions panel uses says they are on.
+  const [missionPages, setMissionPages] = useState(false);
+  const eligible = prefill.kind === 'eligible';
+  useEffect(() => {
+    if (!eligible) return;
+    let active = true;
+    fetch('/api/team-work/flags')
+      .then(async (r) => (r.ok ? ((await r.json()) as { missionsV2?: boolean }) : null))
+      .then((flags) => {
+        if (active) setMissionPages(flags?.missionsV2 === true);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [eligible]);
+  const ineligible = published && canRecord && prefill.kind === 'ineligible';
   const han = (text: string) => (/\p{Script=Han}/u.test(text) ? 'zh' : undefined);
 
   return (
@@ -226,7 +244,9 @@ function ReplyCard({
         {state.final ? (
           <p className="reply-review-state" data-state={state.final.decision}>
             {state.final.decision === 'PUBLISH'
-              ? 'Published: prepared as a mission quotation, not yet confirmed.'
+              ? ineligible
+                ? 'Published. This reply cannot be prepared as an offer.'
+                : 'Published: prepared as a mission quotation, not yet confirmed.'
               : `Rejected: ${reasonLabels[state.final.reasonCode as ReplyReviewReason] ?? 'reason recorded'}.`}
           </p>
         ) : state.asked ? (
@@ -337,14 +357,10 @@ function ReplyCard({
       {prepared && (
         <div className="reply-review-prepared">
           <h4>Prepared quotation</h4>
-          <p>
-            Published. Prepared as a mission quotation, not yet confirmed. Nothing reaches a
-            customer from here. Customer publication is a separate decision.
-          </p>
           {canRecord && (
             <div className="reply-handoff-status" role="status">
               {prefill.kind === 'loading' && <p>Checking whether this reply can be prepared.</p>}
-              {prefill.kind === 'eligible' && (
+              {prefill.kind === 'eligible' && missionPages && (
                 <a
                   className="primary-link"
                   href={`/operator/missions/${prefill.prefill.missionId}?workspace=${encodeURIComponent(tenant)}&reply=${reply.id}#requirements`}
@@ -352,16 +368,20 @@ function ReplyCard({
                   Open Prepared Offer
                 </a>
               )}
+              {prefill.kind === 'eligible' && !missionPages && <p>{prefillUnavailableMessage}</p>}
               {prefill.kind === 'ineligible' && <p>{prefillMessage(prefill.code)}</p>}
               {prefill.kind === 'unavailable' && <p>{prefillUnavailableMessage}</p>}
               {prefill.kind === 'denied' && <p>{prefillDeniedMessage}</p>}
               {prefill.kind === 'error' && <p>{prefillFailureMessage}</p>}
             </div>
           )}
-          <p>
-            Confirm this through Record a supplier offer on the mission. The reply is the
-            self-declared source; nothing reaches a customer until the publication path approves it.
-          </p>
+          {!['eligible', 'ineligible', 'loading'].includes(prefill.kind) && (
+            <p>
+              Copy this into Record a supplier offer on the mission and confirm it there. The reply
+              is the self-declared source. Nothing reaches a customer until the publication path
+              approves it.
+            </p>
+          )}
           <pre tabIndex={0}>{prepared}</pre>
           <button
             type="button"

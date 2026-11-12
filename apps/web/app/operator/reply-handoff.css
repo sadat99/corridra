@@ -68,8 +68,12 @@
 .reply-handoff-status .primary-link {
   min-height: 2.75rem;
 }
+.reply-handoff-groups {
+  display: grid;
+  gap: var(--space-4);
+}
 @media (min-width: 48rem) {
-  .reply-handoff .operator-form {
-    max-inline-size: 40rem;
+  .reply-handoff-groups {
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
   }
 }

@@ -28,6 +28,7 @@ import {
   termRows,
   type EligiblePrefill,
 } from '../../lib/reply-review-view';
+import '../../components/ux/row-list.css';
 import './reply-handoff.css';
 
 type Row = { id: string; version: number; created_at: string; [key: string]: unknown };
@@ -273,50 +274,56 @@ function ReplyTerms({ prefill }: { prefill: EligiblePrefill }) {
   const missing = rows.filter((row) => row.missing);
   return (
     <>
-      {termGroups.map((group) => {
-        const shown = rows.filter((row) => group.keys.includes(row.key));
-        const filled = shown.filter((row) => !row.missing).length;
-        return (
-          <section key={group.title} className="reply-handoff-group" aria-label={group.title}>
-            <h4>{group.title}</h4>
-            <dl className="reply-review-terms">
-              {group.title === 'Price' && (
-                <div>
-                  <dt>Original currency</dt>
-                  <dd>{prefill.currency}</dd>
-                </div>
+      <div className="reply-handoff-groups">
+        {termGroups.map((group) => {
+          const shown = rows.filter((row) => group.keys.includes(row.key));
+          const filled = shown.filter((row) => !row.missing).length;
+          return (
+            <section key={group.title} className="reply-handoff-group" aria-label={group.title}>
+              <h4>{group.title}</h4>
+              <dl className="reply-review-terms">
+                {group.title === 'Price' && (
+                  <div>
+                    <dt>Original currency</dt>
+                    <dd>{prefill.currency}</dd>
+                  </div>
+                )}
+                {shown.map((row) => (
+                  <div key={row.key} data-gap={row.missing ? 'true' : undefined}>
+                    <dt>{row.label}</dt>
+                    <dd className={row.missing ? 'reply-review-gap' : undefined}>
+                      {row.missing ? 'Not stated' : row.text}
+                    </dd>
+                  </div>
+                ))}
+                {group.title === 'Payment and notes' && (
+                  <div>
+                    <dt>Uncertainties</dt>
+                    <dd>{prefill.uncertainties}</dd>
+                  </div>
+                )}
+              </dl>
+              {group.title === 'After-sales' && (
+                <p className="reply-review-note">
+                  {filled} of {shown.length} filled
+                </p>
               )}
-              {shown.map((row) => (
-                <div key={row.key} data-gap={row.missing ? 'true' : undefined}>
-                  <dt>{row.label}</dt>
-                  <dd className={row.missing ? 'reply-review-gap' : undefined}>
-                    {row.missing ? 'Not stated' : row.text}
-                  </dd>
-                </div>
-              ))}
-              {group.title === 'Payment and notes' && (
-                <div>
-                  <dt>Uncertainties</dt>
-                  <dd>{prefill.uncertainties}</dd>
-                </div>
-              )}
-            </dl>
-            {group.title === 'After-sales' && (
-              <p className="reply-review-note">
-                {filled} of {shown.length} filled
-              </p>
-            )}
-          </section>
-        );
-      })}
+            </section>
+          );
+        })}
+      </div>
       {missing.length > 0 && (
         <div className="reply-handoff-check" role="group" aria-label="Check before saving">
           <h4>Check before saving</h4>
-          <ul>
-            {missing.map((row) => (
-              <li key={row.key}>Not stated: {row.label}</li>
-            ))}
-          </ul>
+          {missing.length > 4 ? (
+            <p>Not stated: {missing.map((row) => row.label).join(', ')}.</p>
+          ) : (
+            <ul>
+              {missing.map((row) => (
+                <li key={row.key}>Not stated: {row.label}</li>
+              ))}
+            </ul>
+          )}
           <p>These were not in the reply. They will be saved as not stated.</p>
         </div>
       )}
@@ -681,7 +688,7 @@ export function CommercialMission({
       await request(action, payload);
       delete form.dataset.commandId;
       formAcknowledged(form);
-      formDraft.clear();
+      if (!bound) formDraft.clear();
       setData(await request('commercial-mission'));
       onChanged?.();
       if (bound) {
@@ -1041,7 +1048,7 @@ export function CommercialMission({
             <p role="status">This reply is already recorded as an offer.</p>
           )}
           {manage && bound && (
-            <CommercialTextDraft value={typedText}>
+            <CommercialTextDraft value={{}}>
               <section className="reply-handoff" aria-labelledby="reply-handoff-heading">
                 <h3 id="reply-handoff-heading" ref={boundHeading} tabIndex={-1}>
                   Record a supplier offer
