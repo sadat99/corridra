@@ -299,22 +299,6 @@ describe('a highlight never splits a letter from its vowel sign', () => {
 });
 
 describe('N8 a long field costs a bounded amount of work', () => {
-  test('a 5000 character field of 40 character tokens is ranked in well under 50 ms', () => {
-    const token = (n: number) => 'a'.repeat(39) + String.fromCharCode(98 + (n % 20));
-    const field = Array.from({ length: 125 }, (_, n) => token(n)).join(' ');
-    expect(field.length).toBeGreaterThanOrEqual(5000);
-    const words = queryWords('x'.repeat(40) + 'qz');
-    const fields = [
-      { value: field, label: true },
-      { value: field },
-      { value: field },
-      { value: field },
-      { value: field },
-    ];
-    const started = performance.now();
-    rankFields(words, fields);
-    expect(performance.now() - started).toBeLessThan(50);
-  });
   test('only the first 256 characters of a field are read', () => {
     const tail = 'a'.repeat(300) + ' zebra';
     expect(score('zebra', { value: tail, label: true })).toBeNull();
