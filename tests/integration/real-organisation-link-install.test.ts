@@ -27,6 +27,7 @@ vi.hoisted(() => {
   // exactly nine functions. The last test of this file opens it. Owner decision 11 Nov 2026, "No, remove access (Recommended)".
   (globalThis as { __removedHide?: boolean }).__removedHide = true;
   (globalThis as { __feeHide?: boolean }).__feeHide = true;
+  (globalThis as { __paymentHide?: boolean }).__paymentHide = true;
 });
 vi.mock('node:fs/promises', async (importOriginal) => {
   const real = await importOriginal<typeof import('node:fs/promises')>();
@@ -39,6 +40,7 @@ vi.mock('node:fs/promises', async (importOriginal) => {
       __linkHide?: boolean;
       __removedHide?: boolean;
       __feeHide?: boolean;
+      __paymentHide?: boolean;
     };
     if (!String(path).includes('customer-real-use-migrations')) return names;
     return names.filter(
@@ -48,7 +50,9 @@ vi.mock('node:fs/promises', async (importOriginal) => {
         ) &&
         !((gate.__linkHide || gate.__removedHide) && String(n).startsWith('0014_')) &&
         // Real-use 0015 (participant fee status) is applied after 0014 and has its own gate: the last test of this file opens it.
-        !(gate.__feeHide && String(n).startsWith('0015_')),
+        !(gate.__feeHide && String(n).startsWith('0015_')) &&
+        // Real-use 0016 (participant payment declaration) is applied after 0015 and has its own gate: the last test opens it.
+        !(gate.__paymentHide && String(n).startsWith('0016_')),
     );
   }) as typeof real.readdir;
   return { ...real, readdir, default: { ...real, readdir } };
@@ -639,4 +643,32 @@ test('participant fee status (real-use 0015) is the fifteenth file, is found by 
   await migrateCustomerRealUse(w.f.owner);
   expect(await appliedNames()).toHaveLength(15);
   expect(await tableHashes()).toEqual(tables);
+});
+
+test('participant payment declaration (real-use 0016) is the sixteenth file, adds only its own tables and functions and is repeatable', async () => {
+  expect(await appliedNames()).toHaveLength(15);
+  const tables = await tableHashes();
+  const present = async () =>
+    (await q("SELECT to_regclass('customer_private.programme_payment_declaration')::text t"))
+      .rows[0].t;
+  expect(await present()).toBeNull();
+  (globalThis as { __paymentHide?: boolean }).__paymentHide = false;
+  await migrateCustomerRealUse(w.f.owner);
+  const applied = await appliedNames();
+  expect(applied).toHaveLength(16);
+  expect(applied[15]).toMatch(/^0016_participant_payment_declaration/);
+  expect(await reportLine()).toBe('customer_real_use_migrations: 16 applied');
+  expect(await present()).toBe('customer_private.programme_payment_declaration');
+  // Every existing table keeps the same bytes; the three new tables start empty.
+  const after = await tableHashes();
+  for (const [name, hash] of Object.entries(tables)) expect(after[name]).toBe(hash);
+  const added = Object.keys(after).filter((k) => !(k in tables));
+  expect(added.sort()).toEqual([
+    'customer_private.programme_payment_command',
+    'customer_private.programme_payment_decision',
+    'customer_private.programme_payment_declaration',
+  ]);
+  await migrateCustomerRealUse(w.f.owner);
+  expect(await appliedNames()).toHaveLength(16);
+  expect(await tableHashes()).toEqual(after);
 });
