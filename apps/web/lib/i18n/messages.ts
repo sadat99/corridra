@@ -92,7 +92,8 @@ const bookWords = {
 } as const;
 
 /**
- * Footer words added with the Ledger footer (owner decision of 6 November 2026). English only: no translation
+ * Footer words added with the Ledger footer (owner decision of 6 November 2026; regrouped by Option B, owner decision
+ * of 12 November 2026, which renamed Groups and Partners to Groups and Trips). English only: no translation
  * has been written or reviewed, so every catalog carries these English words and no screen claims a translation.
  */
 const footerWords = {
@@ -102,7 +103,7 @@ const footerWords = {
   'footer.nav': 'Footer',
   'footer.group.buy': 'Buy Abroad',
   'footer.group.sell': 'Sell and Expand',
-  'footer.group.partners': 'Groups and Partners',
+  'footer.group.trips': 'Groups and Trips',
   'footer.link.china': 'Bangladesh to China',
   'footer.link.spain': 'Bangladesh to Spain',
   'footer.link.sample': 'See a Sample Mission',

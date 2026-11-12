@@ -1519,6 +1519,11 @@
       "use": "Proposed: an organiser's reviewed public programme page at a stable address, anonymous read, account-bound applications with distinct states and a consented join into the existing registration; built behind CORRIDRA_PROGRAMME_PAGES (off); module not in the installer and not installed; privacy review and activation are the owner's"
     },
     {
+      "path": "docs/adr/0081-reviewed-reply-to-supplier-offer.md",
+      "classification": "Architecture decision",
+      "use": "Accepted for build (12 Nov 2026): a published supplier reply carried into the existing supplier offer form; one append-only binding row, one optional strict command field, one prefill read, additive reply review migration 0003; behind CORRIDRA_REPLY_PAGE; schema review and install are the owner's"
+    },
+    {
       "path": "docs/revamp/README.md",
       "classification": "Current guide/contract",
       "use": "Owner-approved V3 controlled revamp scope (4 Nov 2026), merge rules, session file ownership and the Wave 0 route/cleanup manifest; live state stays in the ledger"
