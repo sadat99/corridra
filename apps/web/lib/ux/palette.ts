@@ -18,12 +18,29 @@ export const paletteScopeList = [
 ] as const;
 export type PaletteScopeId = (typeof paletteScopeList)[number]['id'];
 
+/** What a row shows beside its words: a stage badge or source chip, a close-match note, a kind word. All optional. */
+export type RowFacts = {
+  badge?: { text: string; tone: 'neutral' | 'caution' | 'critical' };
+  chip?: { text: string; tone: 'neutral' | 'caution'; icon: 'document' | 'clock' };
+  close?: boolean;
+  kind?: 'Mission' | 'Company';
+};
+
 export type PaletteEntry = {
   key: string;
-  group: 'Missions' | 'Companies' | 'Actions';
+  group: 'Missions' | 'Companies' | 'Actions' | 'Recent' | 'Search';
   label: string;
   detail: string;
   href: string;
+  /** Words after the detail that are not searched or marked, such as the staff stage and "Opens Missions". */
+  suffix?: string;
+  /** The typed words to mark in the label and detail; `close` when the hit was found through a near miss. */
+  match?: { query: string; close: boolean };
+  facts?: RowFacts;
+  /** A mission or company opened from the palette is remembered on this device; an action never is. */
+  remember?: { kind: 'mission' | 'company'; id: string; label: string };
+  /** A row that runs something instead of opening an address. */
+  command?: 'retry' | 'clear-recents';
 };
 
 /** Every place the role may open, as an "Open ..." action. Each place appears once. */
