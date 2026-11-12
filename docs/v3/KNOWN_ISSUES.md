@@ -357,7 +357,7 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 ### KI-54 An `em` media query reads the browser's default font size, so root-font-size emulation cannot test it (12 November 2026, handled in the palette Phase 1 tests)
 
 - **Seen:** the wide Search field starts at `64em` so that a person with a large default font gets the old layout. Setting the root font size in the page does not move a media query in `em`, which reads the browser's own default font size, so such a test passes without testing anything.
-- **Do:** test it in a Chromium profile whose preferences set `default_font_size` (the 200% check used 32), and assert `matchMedia('(min-width:64em)')` as well as the layout. The 200% overflow of the team header at 1024 and 1100 px with the rail expanded is a separate, pre-existing issue on main and is not covered by this entry.
+- **Do:** test it in a Chromium profile whose preferences set `default_font_size` (the 200% check used 32; `team-palette-layout.spec.ts` writes that profile and also relaunches with scrollbars shown, since Playwright hides them by default), and assert `matchMedia('(min-width:64em)')` as well as the layout. The 200% overflow of the team header at 1024 and 1100 px with the rail expanded is a separate, pre-existing issue on main and is not covered by this entry.
 
 ### KI-55 A timing assertion on a pure function depends on the machine (12 November 2026, handled in the palette Phase 1 tests)
 
@@ -367,7 +367,7 @@ Read this before debugging CI or deciding who may merge. Add an entry when a fai
 ### KI-56 Stripping every `\p{M}` mark destroys Indic words (12 November 2026, fixed in the palette Phase 1 PR)
 
 - **Seen:** the first ranking draft removed all combining marks to ignore accents. Bengali and Devanagari vowel signs are marks, so different words became the same string and ranked and highlighted as exact matches, and a highlight could split a consonant from its vowel sign.
-- **Do:** strip only the Latin combining block (U+0300 to U+036F) and keep other marks in the tokeniser; when marking a span, move its end over the marks that follow, so a letter is never marked apart from its vowel sign. Arabic and Hebrew marks are now kept too, so variant spellings of those scripts match less often than before; that recall loss is recorded in the spec.
+- **Do:** strip only the Latin combining block (U+0300 to U+036F) and keep other marks in the tokeniser; when marking a span, move its end over the marks that follow, so a letter is never marked apart from its vowel sign. Arabic and Hebrew marks are now kept too, so variant spellings of those scripts match less often than before; that recall loss is recorded in the spec. Update (S67): the optional Arabic marks (U+064B to U+065F, U+0670, tatweel U+0640), the Hebrew points and cantillation, and a few one-letter spellings (alef forms, Persian yeh and kaf, Hebrew final letters) are now folded in `palette-rank.ts`, so those names match with or without them again; Indic marks are still kept. Tests: the S67 block in `palette-rank.test.ts`.
 
 ### KI-57 `programme-words-erasure` failed under a shuffled order (12 November 2026, fixed in the flaky-test PR)
 
