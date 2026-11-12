@@ -588,6 +588,7 @@ nav.ux-team-sidebar .ux-team-caption {
   .ux-team-header .ux-team-tools {
     flex: 1 1 0;
     min-width: 0;
+    container-type: inline-size;
   }
   .ux-team-header .ux-palette-trigger {
     flex: 1 1 0;
@@ -620,6 +621,14 @@ nav.ux-team-sidebar .ux-team-caption {
     font-size: var(--text-xs);
     direction: ltr;
     white-space: nowrap;
+  }
+  /* The hint is a shortcut aid. When the tools box has no room for it beside the icon and the word (rem follows the root
+     size, so this happens at large text with the rail open, never at normal text), it gives way; the button keeps its
+     icon, the word Search and its name. */
+  @container (max-width: 14rem) {
+    .ux-team-header .ux-palette-trigger kbd {
+      display: none;
+    }
   }
 }
 @media (min-width: 64em) and (hover: hover) {

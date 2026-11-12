@@ -80,6 +80,21 @@ describe('R2-2 the wide field follows the browser font size', () => {
     const floor = /(?:^|[\s;])min-width:\s*([^;]+?)\s*(?:;|$)/.exec(rule!);
     expect(floor?.[1]?.replace(/\s+/g, ' ')).toBe('min(11rem, 100%)');
   });
+  test('R4 the tools box is a size container and the keycap yields in a container under 14rem', () => {
+    // At 200% text with the rail open the tools box is narrower than the icon, padding and keycap together. The hint
+    // gives way by container width (14rem follows the root size), so at normal text it is always shown.
+    const tools = blocks
+      .filter(wide)
+      .map((block) => ruleBody(block.body, '.ux-team-header .ux-team-tools'))
+      .find((found) => found !== null && /container-type:\s*inline-size/.test(found));
+    expect(tools, 'the tools box rule with container-type: inline-size').toBeTruthy();
+    const query = blocks.find(
+      (block) => wide(block) && /@container\s*\(max-width:\s*14rem\)/.test(block.body),
+    );
+    expect(query, 'an @container (max-width: 14rem) rule inside a 64em block').toBeTruthy();
+    const after = query!.body.slice(query!.body.search(/@container\s*\(max-width:\s*14rem\)/));
+    expect(ruleBody(after, `${trigger} kbd`)).toMatch(/display:\s*none/);
+  });
   test('no wide-field trigger rule remains in a 1024px block', () => {
     const pixel = blocks.filter((block) => block.query !== null && /1024px/.test(block.query));
     for (const block of pixel) expect(block.body).not.toContain('ux-palette-trigger');

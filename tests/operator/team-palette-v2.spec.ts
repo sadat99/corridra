@@ -204,6 +204,55 @@ test.describe('P8 the Search control in the top bar', () => {
     await page.setViewportSize({ width: 1024, height: 900 });
     expect((await trigger.boundingBox())!.width).toBeGreaterThanOrEqual(176);
   });
+  test('R4 at 200% text with the rail open the page does not scroll sideways, and the Ctrl K hint yields', async ({
+    page,
+  }) => {
+    // At 1280 px with the rail open, the tools box is 153 px wide at 200% text: narrower than the icon, padding and the
+    // Ctrl K keycap together, so the keycap ended at 1296 px and the page scrolled 16 px sideways. The hint is a
+    // shortcut aid: it gives way when its container is under 14rem, and the button keeps its icon and the word Search.
+    await open(page);
+    await expect(page.locator('.ux-leftnav-frame')).toHaveAttribute('data-collapsed', 'false');
+    await page.addStyleTag({ content: 'html { font-size: 200% !important; }' });
+    const trigger = page.locator('header.ux-app-header').getByRole('button', { name: /Search/ });
+    for (const width of [1280, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      const m = await trigger.evaluate((node) => {
+        const keycap = node.querySelector('kbd')!;
+        const box = keycap.getBoundingClientRect();
+        return {
+          scroll: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+          keycapDisplay: getComputedStyle(keycap).display,
+          keycapRight: box.right,
+        };
+      });
+      expect(m.scroll, `sideways scroll in px at ${width}, rail open`).toBeLessThanOrEqual(0);
+      expect(m.keycapDisplay, `the keycap yields in a narrow container at ${width}`).toBe('none');
+      expect(m.keycapRight, `no keycap runs past the window at ${width}`).toBeLessThanOrEqual(
+        width,
+      );
+      // It stays a button with its icon, the word Search and its name.
+      await expect(trigger).toBeVisible();
+      await expect(trigger.locator('svg')).toBeVisible();
+      await expect(trigger).toContainText('Search');
+    }
+  });
+  test('R4 at normal text the Ctrl K hint is shown at 1024, 1280 and 1440 px with the rail open', async ({
+    page,
+  }) => {
+    await open(page);
+    await expect(page.locator('.ux-leftnav-frame')).toHaveAttribute('data-collapsed', 'false');
+    const trigger = page.locator('header.ux-app-header').getByRole('button', { name: /Search/ });
+    for (const width of [1024, 1280, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      const keycap = trigger.locator('kbd');
+      await expect(keycap, `the keycap at ${width}`).toBeVisible();
+      const outer = (await trigger.boundingBox())!;
+      const inner = (await keycap.boundingBox())!;
+      expect(inner.x + inner.width, `keycap inside the button at ${width}`).toBeLessThanOrEqual(
+        outer.x + outer.width,
+      );
+    }
+  });
   test('it is one button: no input and no second combobox in the header', async ({ page }) => {
     await open(page);
     const header = page.locator('header.ux-app-header');
