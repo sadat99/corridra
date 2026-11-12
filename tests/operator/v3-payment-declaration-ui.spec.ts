@@ -27,7 +27,7 @@ const base={subject:'synthetic-alice',issuer:${JSON.stringify(issuer)}};
 window.__decided=0;
 const root=createRoot(document.getElementById('fixture'));
 root.render(q.get('c')==='organiser'
- ?<ProgrammePaymentReview {...base} workspaceId=${JSON.stringify(workspaceId)} programmeId=${JSON.stringify(programmeId)} onDecided={()=>{window.__decided+=1}}/>
+ ?<ProgrammePaymentReview {...base} workspaceId=${JSON.stringify(workspaceId)} programmeId=${JSON.stringify(programmeId)} labels={{${JSON.stringify(registrationId)}:'Synthetic Buyer Alpha'}} onDecided={()=>{window.__decided+=1}}/>
  :<ParticipantPaymentDeclaration {...base} registrationId=${JSON.stringify(registrationId)} feeCurrencies={['BDT','USD']}/>);`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
@@ -140,7 +140,6 @@ const pending = (declarations: unknown[]) => ({
 });
 const queued = (over: Record<string, unknown> = {}) =>
   declaration({
-    registrationLabel: 'Synthetic Buyer Alpha',
     outstandingMinor: '12000000',
     ...over,
   });

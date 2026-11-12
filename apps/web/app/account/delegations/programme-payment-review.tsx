@@ -12,6 +12,8 @@ type Props = {
   issuer: string;
   workspaceId: string;
   programmeId: string;
+  // Participant labels by registration, from the economics summary the organiser already sees.
+  labels: Record<string, string>;
   // Called after an acknowledgement, because the ledger changed and the totals must be read again.
   onDecided: () => void;
 };
@@ -27,7 +29,7 @@ export function ProgrammePaymentReview(props: Props) {
   );
 }
 
-function Scoped({ subject, issuer, workspaceId, programmeId, onDecided }: Props) {
+function Scoped({ subject, issuer, workspaceId, programmeId, labels, onDecided }: Props) {
   const [phase, setPhase] = useState<'loading' | 'ready' | 'hidden'>('loading');
   const [items, setItems] = useState<PaymentDeclaration[]>([]);
   const [open, setOpen] = useState<{ id: string; mode: 'ack' | 'reject' } | null>(null);
@@ -154,7 +156,7 @@ function Scoped({ subject, issuer, workspaceId, programmeId, onDecided }: Props)
             {items.map((d) => (
               <li key={d.id}>
                 <p>
-                  {d.registrationLabel ?? 'A participant'} says they paid{' '}
+                  {labels[d.registrationId] ?? 'A participant'} says they paid{' '}
                   {formatMoney(d.amountMinor, d.currency as Code)} on {d.paidOn}.
                   {d.payerReference ? ' Their reference: ' + d.payerReference + '.' : ''}
                   {d.note ? ' Note: ' + d.note : ''}

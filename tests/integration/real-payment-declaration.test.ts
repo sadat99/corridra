@@ -276,7 +276,7 @@ for (const mode of ['synthetic', 'real'] as const) {
       const pending = await ledger().pendingPaymentDeclarations(scope());
       const mine = pending.declarations.find((d) => d.id === made.declaration.id)!;
       expect(mine).toMatchObject({
-        registrationLabel: w('Participant pat'),
+        registrationId: reg.pat,
         outstandingMinor: '120000',
         status: 'AWAITING_REVIEW',
       });

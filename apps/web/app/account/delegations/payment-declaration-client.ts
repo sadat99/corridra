@@ -34,7 +34,6 @@ function parseDeclaration(v: unknown): PaymentDeclaration {
     !maybeText(v.reason, 300) ||
     v.verified !== false ||
     (v.status === 'REJECTED') !== (typeof v.reason === 'string') ||
-    (v.registrationLabel !== undefined && !maybeText(v.registrationLabel, 120)) ||
     (v.outstandingMinor !== undefined && !/^-?[0-9]{1,40}$/.test(String(v.outstandingMinor)))
   )
     throw Error('Invalid payment declaration');

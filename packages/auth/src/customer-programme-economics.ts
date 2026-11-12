@@ -208,7 +208,6 @@ export type PaymentDeclaration = {
   decidedAt: string | null;
   verified: false;
   // Organiser view only.
-  registrationLabel?: string | null;
   ledgerEntryId?: string | null;
   outstandingMinor?: string;
 };

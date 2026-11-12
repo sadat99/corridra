@@ -502,6 +502,9 @@ function ScopedEconomics(props: Props) {
             issuer={issuer}
             workspaceId={workspaceId}
             programmeId={programmeId}
+            labels={Object.fromEntries(
+              summary.participants.map((r) => [r.registrationId, r.label]),
+            )}
             onDecided={() => void load(true)}
           />
           <h5>Totals by currency</h5>

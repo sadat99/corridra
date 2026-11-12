@@ -165,15 +165,15 @@ BEGIN
 END $$;
 
 -- One declaration as the caller may see it. For the participant, the rejection reason is shown and nothing else of the decision.
+-- No participant label is read here: the organiser screen already holds the labels from the economics summary.
 CREATE OR REPLACE FUNCTION customer_private.programme_payment_declaration_json(selected uuid,for_organiser boolean) RETURNS jsonb
  LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
  SELECT jsonb_build_object('id',d.id,'registrationId',d.registration_id,'currency',d.currency,'exponent',c.exponent,'amountMinor',d.amount_minor::text,
   'paidOn',to_char(d.paid_on,'YYYY-MM-DD'),'payerReference',d.payer_reference,'note',d.note,'declaredAt',d.declared_at,
   'status',CASE WHEN x.declaration_id IS NULL THEN 'AWAITING_REVIEW' ELSE x.decision END,
   'reason',x.reason,'decidedAt',x.decided_at,'verified',false)
-  || CASE WHEN for_organiser THEN jsonb_build_object('registrationLabel',r.display_label,'ledgerEntryId',x.ledger_entry_id) ELSE '{}'::jsonb END
+  || CASE WHEN for_organiser THEN jsonb_build_object('ledgerEntryId',x.ledger_entry_id) ELSE '{}'::jsonb END
  FROM customer_private.programme_payment_declaration d JOIN app.currency c ON c.code=d.currency
- JOIN customer_private.programme_registration r ON r.id=d.registration_id
  LEFT JOIN customer_private.programme_payment_decision x ON x.declaration_id=d.id WHERE d.id=selected
 $$;
 
