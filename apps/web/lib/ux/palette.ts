@@ -91,6 +91,14 @@ export function moveSelection(
   return Math.max(current - 1, 0);
 }
 
+/**
+ * The row that is selected: the stored index clamped to the rows that exist, and -1 only when there are none. The
+ * stored index may be -1 (Up or Down pressed while no row was listed) or past the end (the list shrank).
+ */
+export function selectionIndex(selected: number, count: number): number {
+  return count === 0 ? -1 : Math.min(Math.max(selected, 0), count - 1);
+}
+
 /** Tab moves to the next scope and Shift+Tab to the previous, wrapping. */
 export function nextScope(current: PaletteScopeId, backwards: boolean): PaletteScopeId {
   const ids = paletteScopeList.map((scope) => scope.id);

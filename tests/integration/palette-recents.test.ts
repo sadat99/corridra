@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import {
   forgetAllRecents,
+  forgetDeviceRecents,
   forgetOtherRecents,
   forgetRecents,
   readRecents,
@@ -193,5 +194,43 @@ describe('what is read back is checked', () => {
     expect(rememberRecent(store, '', X, item(1))).toEqual([]);
     expect(rememberRecent(store, 'a', '', item(1))).toEqual([]);
     expect(store.length).toBe(0);
+  });
+});
+
+describe('S3 recents go on every sign-out path', () => {
+  const host = globalThis as { window?: unknown };
+  const had = 'window' in host;
+  const before = host.window;
+  const restore = () => {
+    if (had) host.window = before;
+    else delete host.window;
+  };
+  test('forgetDeviceRecents removes every v1 list on the device and nothing else', () => {
+    const store = new MemoryStore();
+    rememberRecent(store, 'person-a', X, item(1));
+    rememberRecent(store, 'person-b', Y, item(2));
+    store.setItem('corridra:other', 'keep');
+    host.window = { localStorage: store };
+    try {
+      expect(forgetDeviceRecents()).toBe(2);
+      expect([...store.data.keys()]).toEqual(['corridra:other']);
+    } finally {
+      restore();
+    }
+  });
+  test('it does not throw when storage is blocked or missing', () => {
+    host.window = {
+      get localStorage() {
+        throw new Error('blocked');
+      },
+    };
+    try {
+      expect(() => forgetDeviceRecents()).not.toThrow();
+      expect(forgetDeviceRecents()).toBe(0);
+    } finally {
+      restore();
+    }
+    expect(() => forgetDeviceRecents()).not.toThrow();
+    expect(forgetDeviceRecents()).toBe(0);
   });
 });

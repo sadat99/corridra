@@ -139,6 +139,18 @@ export function forgetAllRecents(store: RecentsStore | null): number {
   return keys.length;
 }
 
+/**
+ * Removes every saved recents list from this device's own storage (every sign-out path). It never throws: blocked
+ * or missing storage holds nothing to remove. Returns how many lists were removed.
+ */
+export function forgetDeviceRecents(): number {
+  try {
+    return forgetAllRecents(window.localStorage);
+  } catch {
+    return 0;
+  }
+}
+
 /** Removes the lists of everyone except this person, so another person on the same device never sees them. */
 export function forgetOtherRecents(store: RecentsStore | null, subject: string): number {
   if (!store) return 0;

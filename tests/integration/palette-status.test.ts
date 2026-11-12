@@ -44,6 +44,17 @@ describe('empty and short queries', () => {
     expect(view.summary).toBe(helperLine('all'));
     expect(view.spoken).toBe('');
   });
+  test('R2-8 three letters with no published workspace say search is not ready, not "type 2 letters"', () => {
+    const view = describeStatus(input({ phase: 'idle', text: 'mad', notReady: true }));
+    expect(view.summary).toBe('Search is not ready yet.');
+    expect(view.spoken).toBe('');
+    expect(describeStatus(input({ phase: 'idle', text: 'm', notReady: true })).summary).toBe(
+      helperLine('all'),
+    );
+    expect(describeStatus(input({ phase: 'idle', text: '', notReady: true })).summary).toBe(
+      helperLine('all'),
+    );
+  });
   test('searching says what is searched', () => {
     expect(describeStatus(input({ phase: 'searching' })).summary).toBe(
       'Searching missions and companies',
@@ -70,10 +81,12 @@ describe('results', () => {
       {
         tone: 'caution',
         lead: 'Partial results.',
-        text: 'Not every mission was searched. More may exist. Narrow your search.',
+        text: 'Not every mission was searched. More may exist. Narrow your search or try again.',
       },
     ]);
-    expect(view.spoken).toBe('5 results. Not every mission was searched. Narrow your search.');
+    expect(view.spoken).toBe(
+      '5 results. Not every mission was searched. Narrow your search or try again.',
+    );
     expect(describeStatus(input({ count: 2, partial: ['companies'] })).notices[0]!.text).toContain(
       'Not every company was searched.',
     );

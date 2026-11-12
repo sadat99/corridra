@@ -79,6 +79,8 @@ export type StatusInput = {
   /** The options listed in the groups, actions included. */
   count: number;
   offline: boolean;
+  /** Three or more letters were typed but the workspace is not published yet, so nothing can be searched. */
+  notReady?: boolean;
 };
 
 /** The helper line for a short or empty query. */
@@ -111,7 +113,7 @@ const deniedNotice = (list: string[]): StatusNotice => ({
 const partialNotice = (list: string[]): StatusNotice => ({
   tone: 'caution',
   lead: 'Partial results.',
-  text: `Not every ${names(list.map(singular), ' or ')} was searched. More may exist. Narrow your search.`,
+  text: `Not every ${names(list.map(singular), ' or ')} was searched. More may exist. Narrow your search or try again.`,
 });
 
 export function describeStatus(input: StatusInput): StatusView {
@@ -124,7 +126,11 @@ export function describeStatus(input: StatusInput): StatusView {
     signIn: false,
   };
   const { scope, text, phase, count } = input;
-  if (phase === 'idle') return { ...base, summary: helperLine(scope) };
+  if (phase === 'idle') {
+    if (input.notReady && scope !== 'actions' && text.length >= 3)
+      return { ...base, summary: 'Search is not ready yet.' };
+    return { ...base, summary: helperLine(scope) };
+  }
   if (phase === 'searching') return { ...base, summary: searchingLine(scope), spoken: 'Searching' };
   if (phase === 'signedout')
     return {
@@ -167,7 +173,7 @@ export function describeStatus(input: StatusInput): StatusView {
         allowed.length > 0 ? ` from ${names(allowed, ' and ')}` : ''
       }.`;
     else if (partial.length > 0)
-      spoken = `${results(count)}. Not every ${names(partial.map(singular), ' or ')} was searched. Narrow your search.`;
+      spoken = `${results(count)}. Not every ${names(partial.map(singular), ' or ')} was searched. Narrow your search or try again.`;
     return { ...base, summary: results(count), notices, spoken };
   }
   // Nothing listed. Only a complete search with no denial may say there is no match.

@@ -16,7 +16,7 @@ import {
   teamReportProblemHref,
 } from '../../lib/ux/team-help';
 import { subscribeToHash } from '../../lib/address-store';
-import { forgetAllRecents } from '../../lib/ux/palette-recents';
+import { forgetDeviceRecents } from '../../lib/ux/palette-recents';
 import { sectionForSlug } from '../../lib/operator-urls';
 import { currentTeamSection } from '../../lib/ux/shells';
 import { teamAccountLinks, type TeamPlaceId } from '../../lib/ux/team-map';
@@ -91,11 +91,7 @@ function SignOutRow() {
       });
       if (!response.ok) throw new Error();
       // The command palette's recent items are this person's, on this device: they go with the session.
-      try {
-        forgetAllRecents(window.localStorage);
-      } catch {
-        // Blocked storage holds no recents to remove.
-      }
+      forgetDeviceRecents();
       // A full page load: it drops the cached workspace (see operatorSignInPage).
       window.location.replace(operatorSignInPage);
     } catch {

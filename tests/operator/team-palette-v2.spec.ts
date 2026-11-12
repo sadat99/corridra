@@ -297,7 +297,7 @@ test.describe('states that are not "no match"', () => {
     await type(page, 'mad');
     await expect(palette(page)).toContainText('Partial results.');
     await expect(palette(page)).toContainText(
-      'Not every mission was searched. More may exist. Narrow your search.',
+      'Not every mission was searched. More may exist. Narrow your search or try again.',
     );
     await expect(palette(page).getByRole('option', { name: /Madrid Textiles/ })).toBeVisible();
   });
@@ -671,4 +671,207 @@ test.describe('M4 accessibility', () => {
       (await palette(page).getByRole('option').first().boundingBox())!.height,
     ).toBeGreaterThanOrEqual(56);
   });
+});
+
+test.describe('FAIL 2 the palette reopens after every kind of close', () => {
+  // The dialog is closed natively (Escape) before React hears of it. A reopen in the same turn used to be lost:
+  // the open state was still true, so Ctrl K changed nothing and the close handler then closed it for good.
+  const modes = [
+    ['close()', 'close'],
+    ['requestClose()', 'requestClose'],
+    ['close() and a task later', 'closeThenTask'],
+  ] as const;
+  for (const [label, mode] of modes)
+    test(`Ctrl K straight after ${label} opens an empty, focused palette`, async ({ page }) => {
+      await open(page, { user: { id: 'person-a' } });
+      await serve(page, () => answer());
+      await page.keyboard.press('Control+k');
+      await expect(palette(page)).toBeVisible();
+      await field(page).fill('mad');
+      const state = await page.evaluate(async (how) => {
+        const dialog = document.querySelector('dialog.ux-palette') as HTMLDialogElement;
+        const press = () =>
+          window.dispatchEvent(
+            new KeyboardEvent('keydown', {
+              key: 'k',
+              ctrlKey: true,
+              bubbles: true,
+              cancelable: true,
+            }),
+          );
+        if (how === 'close') dialog.close();
+        else if (how === 'requestClose') dialog.requestClose();
+        else {
+          dialog.close();
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        }
+        press();
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        const input = dialog.querySelector('input') as HTMLInputElement;
+        return {
+          open: dialog.open,
+          value: input.value,
+          focused: document.activeElement === input,
+        };
+      }, mode);
+      expect(state).toEqual({ open: true, value: '', focused: true });
+      await expect(palette(page)).toBeVisible();
+      await expect(field(page)).toHaveValue('');
+      await expect(field(page)).toBeFocused();
+      // And it closes again, with focus back where it was opened.
+      await page.keyboard.press('Escape');
+      await expect(palette(page)).toBeHidden();
+    });
+  test('Escape then Ctrl K with no wait between them opens it every time', async ({ page }) => {
+    await open(page, { user: { id: 'person-a' } });
+    await serve(page, () => answer());
+    await page.keyboard.press('Control+k');
+    await expect(palette(page)).toBeVisible();
+    for (let round = 0; round < 12; round++) {
+      await field(page).fill('mad');
+      await page.keyboard.press('Escape');
+      await page.keyboard.press('Control+k');
+      await expect(palette(page), `round ${round}`).toBeVisible();
+      await expect(field(page), `round ${round}`).toHaveValue('');
+      await expect(field(page), `round ${round}`).toBeFocused();
+    }
+  });
+  test('Ctrl K while it is open keeps the words and does not change where focus returns', async ({
+    page,
+  }) => {
+    await open(page, { user: { id: 'person-a' } });
+    await serve(page, () => answer());
+    const trigger = page.locator('header.ux-app-header').getByRole('button', { name: /Search/ });
+    await trigger.click();
+    await field(page).fill('mad');
+    await page.keyboard.press('Control+k');
+    await expect(field(page)).toHaveValue('mad');
+    await page.keyboard.press('Escape');
+    await expect(palette(page)).toBeHidden();
+    await expect(trigger).toBeFocused();
+  });
+});
+
+test.describe('R2-1 and R2-13 the keyboard', () => {
+  const found = answer({
+    missions: [
+      { id: missionId(1), label: 'Madrid Textiles', detail: 'Sell · Spain' },
+      { id: missionId(2), label: 'Mad Dogs', detail: 'Buy · Italy' },
+    ],
+  });
+  test('Down pressed while the search runs still leaves a selected row when the answer arrives, and Enter opens it', async ({
+    page,
+  }) => {
+    await open(page);
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    const asked = await serve(page, async () => {
+      await gate;
+      return found;
+    });
+    await page.route('**/operator/missions/**', (route) =>
+      route.fulfill({ status: 200, body: '<html></html>', contentType: 'text/html' }),
+    );
+    await type(page, 'madrid');
+    await expect(palette(page)).toContainText('Searching missions and companies');
+    await expect(palette(page).getByRole('option')).toHaveCount(0);
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowUp');
+    await expect.poll(() => asked.length).toBe(1);
+    release();
+    const first = palette(page).getByRole('option', { name: /Madrid Textiles/ });
+    await expect(first).toBeVisible();
+    const id = await field(page).getAttribute('aria-activedescendant');
+    expect(id).toBeTruthy();
+    const active = palette(page).locator(`[id="${id}"]`);
+    await expect(active).toHaveAttribute('role', 'option');
+    await expect(active).toHaveAttribute('aria-selected', 'true');
+    await page.keyboard.press('Enter');
+    await page.waitForURL(/operator\/missions\//);
+  });
+  test('Enter that commits an input method composition does not open a result', async ({
+    page,
+  }) => {
+    await open(page);
+    await serve(page, () => found);
+    await page.route('**/operator/missions/**', (route) =>
+      route.fulfill({ status: 200, body: '<html></html>', contentType: 'text/html' }),
+    );
+    await type(page, 'madrid');
+    await expect(palette(page).getByRole('option', { name: /Madrid Textiles/ })).toBeVisible();
+    const before = page.url();
+    const prevented = await field(page).evaluate((input) => {
+      const event = new KeyboardEvent('keydown', {
+        key: 'Enter',
+        isComposing: true,
+        bubbles: true,
+        cancelable: true,
+      });
+      input.dispatchEvent(event);
+      return event.defaultPrevented;
+    });
+    await page.waitForTimeout(400);
+    expect(prevented).toBe(false);
+    expect(page.url()).toBe(before);
+    await expect(palette(page)).toBeVisible();
+    await page.keyboard.press('Enter');
+    await page.waitForURL(/operator\/missions\//);
+  });
+});
+
+test.describe('N5 and S3 recents', () => {
+  const recentsKey = (subject: string) =>
+    'corridra:palette-recents:v1:' + encodeURIComponent(JSON.stringify([subject, fixtureTenant]));
+  test('"No recent missions yet." is not said while who is signed in is still being read', async ({
+    page,
+  }) => {
+    await open(page);
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    await page.route('**/api/operator-auth/get-session', async (route) => {
+      await gate;
+      await route.fulfill({ json: { user: { id: 'person-a' }, session: { id: 's' } } });
+    });
+    await page.keyboard.press('Control+k');
+    await palette(page).getByRole('button', { name: 'Missions', exact: true }).click();
+    await expect(palette(page)).toContainText('Type at least 2 letters to search missions.');
+    await expect(palette(page)).not.toContainText('No recent missions yet.');
+    release();
+    await expect(palette(page)).toContainText('No recent missions yet.');
+  });
+  for (const [label, signOut] of [
+    ['the workspace toolbar Sign Out', 'toolbar'],
+    ['the account menu Sign Out', 'menu'],
+  ] as const)
+    test(`S3 ${label} removes the recents from this device`, async ({ page }) => {
+      await open(page, { user: { id: 'person-a' } });
+      await page.evaluate(
+        ([key, mission]) =>
+          localStorage.setItem(
+            key!,
+            JSON.stringify({ v: 1, items: [{ k: 'm', id: mission!, l: 'Madrid Textiles' }] }),
+          ),
+        [recentsKey('person-a'), missionId(1)],
+      );
+      await page.route('**/api/operator-auth/sign-out', (route) => route.fulfill({ json: {} }));
+      await page.route('**/operator/signin*', (route) =>
+        route.fulfill({ status: 200, body: '<html></html>', contentType: 'text/html' }),
+      );
+      expect(
+        await page.evaluate((key) => localStorage.getItem(key), recentsKey('person-a')),
+      ).not.toBeNull();
+      if (signOut === 'toolbar')
+        await page.locator('.operator-toolbar').getByRole('button', { name: 'Sign Out' }).click();
+      else {
+        await page
+          .locator('header.ux-app-header')
+          .getByRole('button', { name: /Account/ })
+          .click();
+        await page.getByRole('menuitem', { name: 'Sign Out', exact: true }).click();
+      }
+      await page.waitForURL(/signin/);
+      expect(
+        await page.evaluate((key) => localStorage.getItem(key), recentsKey('person-a')),
+      ).toBeNull();
+    });
 });

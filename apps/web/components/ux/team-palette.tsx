@@ -8,7 +8,15 @@
 // never shown as "No match". People is not offered: no search can answer it yet. "Searches only what your role may
 // open" is true because the server reads through the same role-checked services as the workspace lists. Owner: S4.
 import './team-nav.css';
-import { Fragment, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { OperatorIcon } from '../operator-icon';
 import { highlightSegments } from '../../lib/palette-rank';
@@ -20,6 +28,7 @@ import {
   nextScope,
   paletteActions,
   paletteScopeList,
+  selectionIndex,
   type PaletteEntry,
   type PaletteScopeId,
   type RowFacts,
@@ -248,6 +257,9 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
   const [cleared, setCleared] = useState(false);
   const [spoken, setSpoken] = useState('');
   const [selected, setSelected] = useState(0);
+  // Counts the times the palette is opened, so the session is asked again on every open even when a native Escape
+  // closed the dialog before React heard of it (the open state is then still true).
+  const [session, setSession] = useState(0);
   const dialog = useRef<HTMLDialogElement>(null);
   const field = useRef<HTMLInputElement>(null);
   const opener = useRef<HTMLElement | null>(null);
@@ -263,25 +275,57 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
     () => true,
   );
 
+  // Every open starts clean: no words, scope All, no answer, nothing selected, nobody known yet.
+  const reset = useCallback(() => {
+    setQuery('');
+    setScope('all');
+    setAnswer(null);
+    setAttempt(0);
+    setSelected(0);
+    setCleared(false);
+    setSpoken('');
+    setSubject({ kind: 'unknown' });
+    setRecents([]);
+  }, []);
+  // The dialog is opened here, from the key or the event, and not from the open state: a native Escape closes the
+  // dialog before React's close handler runs, so the state can still say open and a state-driven open would be lost.
+  const openPalette = useCallback(
+    (given: HTMLElement | null) => {
+      const element = dialog.current;
+      if (!element) return;
+      if (element.open) {
+        field.current?.focus();
+        return;
+      }
+      opener.current = given;
+      reset();
+      element.showModal();
+      field.current?.focus();
+      setSession((count) => count + 1);
+      setOpen(true);
+    },
+    [reset],
+  );
+
   // Ctrl K (Command K on a Mac) opens it from anywhere in the team shell.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const onKey = (event: KeyboardEvent) => {
       if (!isPaletteShortcut(event)) return;
       event.preventDefault();
-      opener.current =
-        document.activeElement instanceof HTMLElement ? document.activeElement : null;
-      setOpen(true);
+      // Already open: the opener on record stays the real one, so focus returns to it on close.
+      if (dialog.current?.open) return;
+      openPalette(document.activeElement instanceof HTMLElement ? document.activeElement : null);
     };
     const onOpen = (event: Event) => {
       const given = (event as CustomEvent<{ opener?: unknown }>).detail?.opener;
-      opener.current =
+      openPalette(
         given instanceof HTMLElement
           ? given
           : document.activeElement instanceof HTMLElement
             ? document.activeElement
-            : null;
-      setOpen(true);
+            : null,
+      );
     };
     window.addEventListener('keydown', onKey);
     window.addEventListener(openPaletteEvent, onOpen);
@@ -289,12 +333,12 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
       window.removeEventListener('keydown', onKey);
       window.removeEventListener(openPaletteEvent, onOpen);
     };
-  }, []);
+  }, [openPalette]);
 
+  // Closing from the state (the Close button, the backdrop): the close event then runs close().
   useEffect(() => {
     const element = dialog.current;
     if (!element) return;
-    if (open && !element.open) element.showModal();
     if (!open && element.open) element.close();
   }, [open, mounted]);
 
@@ -349,7 +393,7 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
       setSubject(next);
     })();
     return () => controller.abort();
-  }, [open, tenant]);
+  }, [open, tenant, session]);
 
   // One search at a time: a newer search cancels the older, and an answer for an old search is dropped.
   const text = query.trim();
@@ -391,6 +435,7 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
     scope !== 'actions' &&
     (outcome?.kind === 'signedout' || (text.length < 2 && subject.kind === 'signedout'));
   const phase = signedOut ? 'signedout' : phaseOf(searchable, outcome);
+  const notReady = scope !== 'actions' && text.length >= 3 && !workspaceId.test(tenant);
   const mark = text ? { query: text, close: false } : undefined;
 
   const entries: PaletteEntry[] = [];
@@ -486,7 +531,7 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
   if (scope === 'all' || scope === 'actions')
     for (const action of filterActions(actions, query).slice(0, scope === 'actions' ? 20 : 4))
       entries.push({ ...action, match: mark });
-  const active = Math.min(selected, entries.length - 1);
+  const active = selectionIndex(selected, entries.length);
   // The keyboard moves the selection while focus stays in the field, so the list is scrolled to keep it in view.
   useEffect(() => {
     if (!open || active < 0) return;
@@ -505,6 +550,7 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
     partial: found?.partial ?? [],
     count: resultCount,
     offline: !online,
+    notReady,
   });
   // The screen reader hears the message only after it has stayed the same for a moment, so typing makes one
   // announcement and a fast search never says "Searching".
@@ -517,20 +563,13 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
   const noRecents =
     text === '' &&
     (scope === 'missions' || scope === 'companies') &&
+    subject.kind === 'known' &&
     !signedOut &&
     shownRecents.length === 0;
 
   function close() {
     setOpen(false);
-    setQuery('');
-    setScope('all');
-    setAnswer(null);
-    setAttempt(0);
-    setSelected(0);
-    setCleared(false);
-    setSpoken('');
-    setSubject({ kind: 'unknown' });
-    setRecents([]);
+    reset();
     const back = opener.current;
     if (back?.isConnected) back.focus();
     opener.current = null;
@@ -561,8 +600,10 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
   function onKeyDown(event: React.KeyboardEvent) {
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
-      setSelected(moveSelection(active, event.key, entries.length));
-    } else if (event.key === 'Enter') {
+      // With no row listed there is nothing to move to; a stored -1 would outlive the wait for the answer.
+      if (entries.length > 0) setSelected(moveSelection(active, event.key, entries.length));
+    } else if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+      // Enter that commits an input method composition (Chinese, Japanese, Korean) is not "open".
       event.preventDefault();
       go(entries[active]);
     } else if (event.key === 'Tab' && !(event.target as HTMLElement).closest('.ux-palette-hint')) {
@@ -590,7 +631,11 @@ export function TeamPalette({ urls, ownerPage }: { urls: boolean; ownerPage: boo
               ref={dialog}
               className="ux-palette"
               aria-label="Search missions, companies and actions"
-              onClose={close}
+              onClose={() => {
+                // A close event that arrives after the palette was opened again belongs to the earlier close.
+                if (dialog.current?.open) return;
+                close();
+              }}
               onKeyDown={onKeyDown}
               onClick={(event) => {
                 if (event.target === event.currentTarget) setOpen(false);
