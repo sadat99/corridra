@@ -12,6 +12,7 @@ import { WorkspaceShell } from '../../../components/workspace-shell';
 import { groupLabel, toolGroups, toolsFor } from '../../../lib/all-tools';
 import { customerPageSession } from '../../../lib/customer-page-session';
 import { uxSwitchOn } from '../../../lib/ux-switches';
+import './all-tools.css';
 
 export const dynamic = 'force-dynamic';
 export const metadata = {
@@ -47,26 +48,28 @@ export default async function Page() {
   });
   return (
     <CustomerShell tab="more" eyebrow="ALL TOOLS" title="Every tool you can open.">
-      {toolGroups.map((group) => {
-        const inGroup = listed.filter((tool) => tool.group === group);
-        if (inGroup.length === 0) return null;
-        const id = `tools-${group.toLowerCase().replace(/\s+/g, '-')}`;
-        return (
-          <section key={group} className="guide-area ux-account-groups" aria-labelledby={id}>
-            <h2 id={id}>{groupLabel(group)}</h2>
-            <ul className="ux-link-list">
-              {inGroup.map((tool) => (
-                <li key={tool.href}>
-                  <Link prefetch={false} href={tool.href}>
-                    <strong>{tool.label}</strong>
-                    <span>{tool.line}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        );
-      })}
+      <div className="ux-tools-grid">
+        {toolGroups.map((group) => {
+          const inGroup = listed.filter((tool) => tool.group === group);
+          if (inGroup.length === 0) return null;
+          const id = `tools-${group.toLowerCase().replace(/\s+/g, '-')}`;
+          return (
+            <section key={group} className="guide-area ux-account-groups" aria-labelledby={id}>
+              <h2 id={id}>{groupLabel(group)}</h2>
+              <ul className="ux-link-list">
+                {inGroup.map((tool) => (
+                  <li key={tool.href}>
+                    <Link prefetch={false} href={tool.href}>
+                      <strong>{tool.label}</strong>
+                      <span>{tool.line}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          );
+        })}
+      </div>
     </CustomerShell>
   );
 }

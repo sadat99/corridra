@@ -38,3 +38,46 @@
   /* A page rule that gives a panel its own display must never show a hidden panel. */
   display: none !important;
 }
+
+/* Segmented look (locked AC/1 mockups, revision 2), opt in with className="ux-subtabs-segmented". The tabs sit
+   in one quiet track and the chosen tab is a raised white segment; no underline and no capsule. Roles, ids,
+   ?tab= and the keyboard are the shared component's, unchanged. Every target stays 44 px. */
+.ux-subtabs-segmented > .ux-subtabs-list {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  max-width: 100%;
+  padding: var(--space-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.ux-subtabs-segmented .ux-subtabs-tab {
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: transparent;
+  color: var(--text-2);
+  font: 500 var(--text-base) var(--font-ui);
+}
+.ux-subtabs-segmented .ux-subtabs-tab:hover {
+  background: color-mix(in srgb, var(--surface-1) 60%, transparent);
+  color: var(--ink);
+}
+.ux-subtabs-segmented .ux-subtabs-tab[aria-selected='true'] {
+  background: var(--surface-1);
+  box-shadow: var(--shadow-1);
+  color: var(--ink);
+  font-weight: 600;
+}
+@media (max-width: 39.99rem) {
+  .ux-subtabs-segmented .ux-subtabs-tab {
+    padding-inline: var(--space-3);
+  }
+}
+@media (forced-colors: active) {
+  .ux-subtabs-segmented .ux-subtabs-tab[aria-selected='true'] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+}

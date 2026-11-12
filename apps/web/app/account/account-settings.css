@@ -1,0 +1,14 @@
+/* Account in the locked AC/1 look (owner-approved mockups, revision 2): a panel that holds only links is one card.
+   Panels that already hold their own cards (the profile, the closure block) stay as they are, so no card sits in a
+   card. Tokens only; the tabs take the segmented look from components/ux/sub-tabs.css. */
+.ux-customer .ux-account-panel:not(:has(.ux-account-card)) {
+  padding: var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+}
+.ux-customer .ux-account-panel > h2 {
+  font-family: var(--font-ui);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}

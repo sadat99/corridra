@@ -1,0 +1,52 @@
+/* The saved report page in the locked AC/1 look (owner-approved mockups, revision 2). CSS only: the page's markup is
+   pinned byte for byte (tests/operator/golden/saved-report-all.golden). Scoped to the passport and the mission, since
+   the company portfolio reuses the report's outer class. Tokens only. */
+.ux-customer header.ux-participant-passport > h2 {
+  font: 500 var(--text-h2) / 1.2 var(--serif);
+  margin-block: var(--space-2);
+}
+@media (min-width: 64rem) {
+  .ux-customer .ux-participant-passport .ux-mission-focus-grid {
+    grid-template-columns: minmax(0, 1fr) 17.5rem;
+    gap: var(--space-5);
+    align-items: start;
+  }
+}
+/* The properties panel: one column, each fact a mono label over its value. */
+.ux-customer .ux-participant-passport .ux-mission-facts {
+  padding: var(--space-4);
+  border-color: var(--line);
+  border-radius: var(--radius-md);
+}
+.ux-customer .ux-participant-passport .ux-mission-facts dl > div {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+  padding-block: var(--space-2);
+  border-bottom-color: var(--line);
+}
+.ux-customer .ux-participant-passport .ux-mission-facts dl > div:last-child {
+  border-bottom: 0;
+}
+.ux-customer .ux-participant-passport .ux-mission-facts dt {
+  color: var(--text-3);
+  font: 500 var(--text-xs) / 1.4 var(--font-mono);
+}
+.ux-customer .ux-participant-passport .ux-mission-facts dd {
+  color: var(--ink);
+  font-size: var(--text-sm);
+  text-align: start;
+}
+.ux-customer .ux-participant-passport .ux-mission-next {
+  border-radius: var(--radius-lg);
+}
+/* Section headings: sans, one step down, so the page reads as a record and not a stack of titles. */
+.ux-customer .ux-participant-mission > :is(h2, h3),
+.ux-customer .ux-participant-mission > section > h2 {
+  font-family: var(--font-ui);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+/* The next action's own label is read on the navy card, so it takes the light text of that card. */
+.ux-customer .ux-participant-passport .ux-mission-next h3 {
+  color: color-mix(in srgb, var(--on-brand) 82%, transparent);
+}

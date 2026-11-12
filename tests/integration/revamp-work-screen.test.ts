@@ -313,3 +313,46 @@ describe('language marks for stored text', () => {
     expect(contentLang('')).toBeUndefined();
   });
 });
+
+// Locked AC/1 look (revision 2): each row says its journey in the filter's own words, and work in no single family is
+// Other, shown under All and Other only. The filter values, counts and addresses are unchanged.
+describe('the Journey column', () => {
+  const journeyCell = (html: string, title: string) => {
+    const row = html.slice(html.indexOf(`>${title}</span>`));
+    return row.match(/Journey: <\/span><span class="ux-row-value">([^<]*)<\/span>/)?.[1];
+  };
+  const items = [
+    item(1, { title: 'Sell row' }),
+    item(2, { title: 'Source row', family: 'SOURCE' }),
+    item(3, { title: 'Organise row', family: 'ORGANISE' }),
+    item(4, { title: 'Unsorted row', family: 'UNCLASSIFIED' }),
+  ];
+
+  it('names the journey of each row with the filter word, and Other for work in no single family', async () => {
+    const html = await view(list(items));
+    expect(journeyCell(html, 'Sell row')).toBe('Sell');
+    expect(journeyCell(html, 'Source row')).toBe('Source');
+    expect(journeyCell(html, 'Organise row')).toBe('Organise');
+    expect(journeyCell(html, 'Unsorted row')).toBe('Other');
+    expect(html).toContain('<span>Journey</span>');
+  });
+
+  it('shows work in no single family under All and Other only', async () => {
+    expect(await view(list(items), 'all')).toContain('Unsorted row');
+    expect(await view(list(items), 'other')).toContain('Unsorted row');
+    for (const filter of ['sell', 'source', 'organise'] as const)
+      expect(await view(list(items), filter)).not.toContain('Unsorted row');
+  });
+
+  it('keeps the filter counts and the five values', async () => {
+    const html = await view(list(items));
+    expect(workCounts(list(items))).toEqual({
+      all: '4',
+      sell: '1',
+      source: '1',
+      organise: '1',
+      other: '1',
+    });
+    for (const value of workFilters) expect(html).toContain(`value="${value}"`);
+  });
+});

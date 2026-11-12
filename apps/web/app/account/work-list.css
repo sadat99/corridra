@@ -142,3 +142,125 @@
     display: block;
   }
 }
+
+/* Locked AC/1 look (owner-approved mockups, revision 2). Presentation only: the same rows, links, radios and words.
+   The list is one card table: a quiet head row, divided rows, status as a capsule badge. */
+.ux-customer .work-list > h2 {
+  font-family: var(--font-ui);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+.work-list .ux-rows {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+}
+.work-list .ux-rows ul {
+  border-top: 0;
+}
+.work-list .ux-row:last-child {
+  border-bottom: 0;
+}
+.work-list .ux-row-link {
+  margin-inline-start: 0;
+  padding: var(--space-3) var(--space-4);
+}
+.work-list .ux-badge {
+  border: 0;
+  border-radius: 999px;
+  background: var(--unknown-surface);
+  color: var(--ink);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1.8;
+}
+@media (min-width: 64rem) {
+  .work-list .ux-rows-head {
+    padding: var(--space-2) var(--space-4);
+    border-bottom: 1px solid var(--line);
+    background: var(--surface-2);
+    font: 600 var(--text-xs) var(--font-ui);
+    letter-spacing: 0;
+    text-transform: none;
+  }
+}
+
+/* The journey filter as chips: separate items, the chosen one in the selected colour. The legend stays for
+   assistive technology. */
+.work-list .ux-segments legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.work-list .ux-segments-row {
+  gap: var(--space-2);
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+}
+.work-list .ux-segment {
+  gap: var(--space-2);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  color: var(--text-2);
+  font-weight: 500;
+}
+.work-list .ux-segment + .ux-segment {
+  border-inline-start: 1px solid var(--line);
+}
+.work-list .ux-segment:has(input:checked) {
+  border-color: color-mix(in srgb, var(--selected) 35%, var(--line));
+  background: var(--selected-surface);
+  color: var(--selected);
+  font-weight: 600;
+}
+.work-list .ux-segment:has(input:checked) .ux-segment-count {
+  color: var(--selected);
+}
+.work-list .ux-segment-count {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+@media (forced-colors: active) {
+  .work-list .ux-segment:has(input:checked) {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+}
+.work-list .work-more {
+  justify-self: start;
+}
+.work-list .ux-segments-row > .ux-segment {
+  display: inline-flex;
+  align-items: center;
+}
+.work-list .ux-segment > input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+/* Below 64rem a row is its title, then its cells on wrapping lines (each still named for assistive technology). */
+@media (max-width: 63.99rem) {
+  .work-list .ux-row-link {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
+  }
+  .work-list .ux-row-title {
+    flex: 1 0 100%;
+  }
+  .work-list .ux-row-cell .sr-only {
+    position: absolute;
+  }
+  .work-list .ux-row-cell:has(.ux-row-value:empty) {
+    display: none;
+  }
+}

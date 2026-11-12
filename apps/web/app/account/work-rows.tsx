@@ -13,7 +13,13 @@ export function WorkRows({ children }: { children: ReactNode }) {
       <RowList
         label="Your work"
         title="Request"
-        columns={[{ name: 'Kind' }, { name: 'Workspace' }, { name: 'Status' }, { name: 'Date' }]}
+        columns={[
+          { name: 'Journey', width: 'minmax(0, 0.8fr)' },
+          { name: 'Kind' },
+          { name: 'Workspace' },
+          { name: 'Status' },
+          { name: 'Date' },
+        ]}
       >
         {rows.slice(0, shown)}
       </RowList>

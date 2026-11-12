@@ -19,6 +19,7 @@ import {
 } from '../../../lib/move-cards';
 import {
   isJourney,
+  leadFirst,
   journeys as journeyOrder,
   journeyWords,
   type Journey,
@@ -316,7 +317,7 @@ export function MoveView({
   ];
   const items = allItems.filter((item) => shown(String(item.key)));
   const nothing = items.length === 0;
-  const cards = journey ? journeys.filter((card) => card.journey === journey) : journeys;
+  const cards = leadFirst(journey ? journeys.filter((card) => card.journey === journey) : journeys);
   const waiting = model.waiting.filter((row) => shown(row.id));
   const participant = !journey ? (facts?.participant ?? null) : null;
   // The latest request has its own card only when no journey card already shows it.
@@ -556,12 +557,13 @@ export function MoveView({
       {cards.length > 0 || participant ? (
         <section className="move-journeys" aria-labelledby="move-journeys" lang="en">
           <h2 id="move-journeys" className="sr-only">
-            Your work by journey
+            Your journeys
           </h2>
-          {cards.map((card) => (
+          {cards.map((card, index) => (
             <JourneyCardView
               key={card.journey}
               card={card}
+              lead={index === 0}
               facts={facts?.[card.journey] ?? null}
               labels={labels.road}
               locale={locale}
