@@ -125,6 +125,8 @@ test.afterAll(async () => {
 // What the stand-in routes hold. Shapes follow the real routes; posts are kept so each test reads what was sent.
 type World = {
   joinedByApplication: boolean;
+  /** What the organisers shared of the programme dates and destination; null until they share it. */
+  context: { marketCode: string; startsAt: string; endsAt: string; timezone: string } | null;
   workspaces: { id: string; name: string }[];
   requests: { id: string; label: string; available: boolean }[];
   shared: { summary: string; requestId: string } | null;
@@ -134,6 +136,7 @@ type World = {
 };
 const world = (over: Partial<World> = {}): World => ({
   joinedByApplication: true,
+  context: null,
   workspaces: [{ id: workspaceId, name: 'Synthetic Rahman Agro' }],
   requests: [],
   shared: null,
@@ -214,6 +217,22 @@ async function serve(page: Page, w: World) {
       role: 'owner',
       synthetic: true,
       organisationId: null,
+    });
+  });
+  await page.route('**/api/customer-programme-context**', (route) => {
+    identified(route);
+    return json(route, {
+      registrationId,
+      programmeId,
+      expiresAt: later(),
+      synthetic: true,
+      context: w.context && {
+        version: 1,
+        organiser: 'Synthetic organiser',
+        purpose: 'Synthetic purpose',
+        updatedAt: '2026-11-10T00:00:00Z',
+        ...w.context,
+      },
     });
   });
   await page.route('**/api/customer-programme-objectives**', (route) => {
@@ -545,4 +564,52 @@ test('with guided drafts off the step links to the workspaces; with the path off
   await expect(page.getByRole('heading', { name: programmeName })).toBeVisible();
   await expect(path(page)).toHaveCount(0);
   await shot(page, 'before-1440');
+});
+
+test('shared programme dates and destination are shown, added to the draft for editing, and nothing is sent', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  const w = world({
+    context: {
+      marketCode: 'CN',
+      startsAt: '2027-03-09T08:00:00+08:00',
+      endsAt: '2027-03-13T18:00:00+08:00',
+      timezone: 'Asia/Shanghai',
+    },
+  });
+  await serve(page, w);
+  await page.goto(origin + '/');
+  // Said before the press, in the step the person is on, with the exact values.
+  await expect(step(page, 1)).toContainText(
+    'The organisers shared the destination and dates: CN, 2027-03-09 to 2027-03-13 (Asia/Shanghai). They are added to your draft. You can change them before it is sent.',
+  );
+  await step(page, 1).getByRole('button', { name: 'Find Suppliers or Products' }).click();
+  await page.waitForURL(`**/account/drafts/${workspaceId}?draft=${draftId}`);
+  // Only the draft is saved. The request is not sent, and no sharing command is made.
+  expect(w.posts.map((p) => p.url)).toEqual(['/api/customer-mission-drafts']);
+  expect(w.posts[0]!.body.input).toMatchObject({
+    details: {
+      market: 'CN',
+      startDate: '2027-03-09',
+      endDate: '2027-03-13',
+      timezone: 'Asia/Shanghai',
+      attendance: 'Not decided',
+    },
+  });
+});
+
+test('with nothing shared the draft keeps its market and dates empty and no prefill line is shown', async ({
+  page,
+}) => {
+  const w = world();
+  await serve(page, w);
+  await page.goto(origin + '/');
+  await expect(step(page, 1)).toBeVisible();
+  await expect(page.getByTestId('delegate-path-prefill')).toHaveCount(0);
+  await step(page, 1).getByRole('button', { name: 'Find Suppliers or Products' }).click();
+  await page.waitForURL(`**/account/drafts/${workspaceId}?draft=${draftId}`);
+  expect(w.posts[0]!.body.input).toMatchObject({
+    details: { market: '', startDate: '', endDate: '', timezone: 'UTC' },
+  });
 });
