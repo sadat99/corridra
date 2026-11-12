@@ -20,6 +20,12 @@ export function SiteFooterPlace({ realUse, shells }: { realUse: boolean; shells:
   if (!shells || !signedInShellFor(pathname)) return <SiteFooterView realUse={realUse} />;
   return (
     <footer className="site-footer">
+      {/* Owner decision, 12 Nov 2026 (locked mockups revision 2): the quiet footer gains How We Label Facts. */}
+      <span>
+        <Link prefetch={false} href="/trust">
+          {t('footer.factsMore')}
+        </Link>
+      </span>
       <span>© 2026 Corridra</span>
       <span>
         <Link prefetch={false} href="/privacy">

@@ -24,7 +24,10 @@ function block(source: string, header: string) {
 }
 
 const narrow = block(css, '@media (max-width: 1023.98px)');
-const footerSelector = ".site-shell:has(.ux-leftnav-frame[data-narrow='tabs']) > .site-footer";
+// Since the owner's 12 Nov 2026 rule the customer frame is a drawer frame too (the sidebar opens from the header's
+// Menu button) and keeps the tabs as a shortcut, so the rules are scoped by the tab bar itself, which only the
+// customer shell draws.
+const footerSelector = '.site-shell:has(.ux-customer-tabs) > .site-footer';
 const rule = (source: string, selector: string) => {
   const start = source.indexOf(selector);
   expect(start, selector).toBeGreaterThan(-1);
@@ -40,17 +43,16 @@ describe('the site footer clears the phone tab bar', () => {
     expect(css.replace(narrow, '')).not.toContain('.site-footer');
   });
   test('it leaves the same room as the page column, plus the safe area, with a logical property', () => {
-    const page = rule(narrow, ".ux-leftnav-frame[data-narrow='tabs'] .ux-leftnav-page");
+    const page = rule(narrow, '.ux-leftnav-page:has(> .ux-customer-tabs)');
     expect(page).toContain('padding-block-end: 4.5rem');
     const footer = rule(narrow, footerSelector);
     expect(footer).toContain('padding-block-end: calc(4.5rem + env(safe-area-inset-bottom, 0px))');
     expect(footer).not.toMatch(/padding-bottom/);
   });
-  test('the selector is scoped to the tabs frame, so the team shell, drawer frames and public pages cannot match', () => {
-    expect(footerSelector).toContain("[data-narrow='tabs']");
-    expect(footerSelector).toContain(':has(.ux-leftnav-frame');
+  test('the selector is scoped to the customer tab bar, so the team shell, contributor frame and public pages cannot match', () => {
+    expect(footerSelector).toContain(':has(.ux-customer-tabs)');
     expect(footerSelector).toContain('> .site-footer');
-    expect(footerSelector).not.toContain("data-narrow='drawer'");
+    expect(footerSelector).not.toContain('data-narrow');
   });
   test('the tab bar is displayed only below 1024 px, the same breakpoint as the footer rule', () => {
     expect(css.slice(0, css.indexOf('@media'))).toMatch(/\.ux-customer-tabs \{\s*display: none;/);

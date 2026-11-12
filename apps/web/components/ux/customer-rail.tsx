@@ -7,10 +7,18 @@
 // action still checks on the server.
 import './customer-rail.css';
 import Link from 'next/link';
-import { useEffect, useRef, useState, type FocusEvent, type PointerEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FocusEvent,
+  type PointerEvent,
+  type ReactNode,
+} from 'react';
 import { usePathname } from 'next/navigation';
 import { CorridraIcon } from '../corridra-icon';
-import { newRequestHref } from '../../lib/ux/customer-navigation';
+import { OperatorIcon } from '../operator-icon';
+import { customerGroupHere, newRequestHref } from '../../lib/ux/customer-navigation';
 import { useWorkspaces } from './customer-bar';
 
 /** New Request: a person with a workspace goes to where requests are made, otherwise to the plan page. */
@@ -96,6 +104,112 @@ function useRailTip(focusable: boolean) {
       : undefined,
     onBlur: focusable ? () => setTip('off') : undefined,
   };
+}
+
+export type CustomerSideItem = {
+  key: string;
+  label: ReactNode;
+  href: string;
+  icon?: string;
+  tone?: 'action' | 'positive' | 'ornament';
+  lead?: boolean;
+  count?: number;
+};
+
+function SideLink({ item, current }: { item: CustomerSideItem; current: boolean }) {
+  return (
+    <Link
+      prefetch={false}
+      href={item.href}
+      aria-current={current ? 'page' : undefined}
+      data-lead={item.lead ? 'true' : undefined}
+    >
+      {item.icon ? (
+        <OperatorIcon name={item.icon} />
+      ) : (
+        <i className="ux-customer-nav-dot" data-tone={item.tone} aria-hidden="true" />
+      )}
+      <span>{item.label}</span>
+      {item.count ? (
+        <span className="ux-leftnav-count" aria-hidden="true">
+          {item.count}
+        </span>
+      ) : null}
+    </Link>
+  );
+}
+
+function SideGroup({
+  id,
+  label,
+  items,
+  here,
+}: {
+  id: string;
+  label: string;
+  items: readonly CustomerSideItem[];
+  here: string | null;
+}) {
+  // A group with no visible item is not drawn.
+  if (!items.length) return null;
+  return (
+    <div className="ux-customer-nav-group">
+      <p className="ux-customer-nav-label" id={id}>
+        {label}
+      </p>
+      <ul aria-labelledby={id}>
+        {items.map((item) => (
+          <li key={item.key}>
+            <SideLink item={item} current={item.key === here} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/**
+ * The customer sidebar's list (owner-approved mockups, revision 2, 12 Nov 2026): the five destinations in their
+ * fixed order, then Your Journeys and Groups, which list pages that were reachable only from links inside pages. The
+ * same markup and targets as the shared flat list (left-nav.tsx), so the drawer, the collapse to icons and the team
+ * shell are unchanged. A Groups link is marked current on its own page instead of the destination above it.
+ */
+export function CustomerSideNav({
+  id,
+  label,
+  items,
+  current,
+  journeys,
+  groups,
+}: {
+  id: string;
+  label: string;
+  items: readonly CustomerSideItem[];
+  current: string;
+  journeys: readonly CustomerSideItem[];
+  groups: readonly CustomerSideItem[];
+}) {
+  const pathname = usePathname() ?? '';
+  const groupHere = customerGroupHere(pathname);
+  const here = groupHere && groups.some((item) => item.key === groupHere) ? groupHere : null;
+  return (
+    <nav
+      id={id}
+      tabIndex={-1}
+      className="ux-team-sidebar ux-leftnav-list ux-customer-nav"
+      aria-label={label}
+    >
+      <ul>
+        {items.map((item) => (
+          <li key={item.key}>
+            <SideLink item={item} current={!here && item.key === current} />
+          </li>
+        ))}
+      </ul>
+      <SideGroup id={`${id}-journeys`} label="Your Journeys" items={journeys} here={null} />
+      <SideGroup id={`${id}-groups`} label="Groups" items={groups} here={here} />
+    </nav>
+  );
 }
 
 export function CustomerRailTop() {

@@ -1,8 +1,9 @@
 'use client';
 // The customer's labelled bottom tabs on phones and tablets (navigation v1, CustomerMobile board): the same five
-// destinations as the sidebar, always with their names, 48 px targets, the current one marked aria-current. They
-// replace the left drawer below 1024 px, so there is no hamburger for daily work. Pure links: no access is decided
-// here and every page still checks on the server.
+// destinations as the sidebar, always with their names, 48 px targets, the current one marked aria-current. Since
+// the owner's 12 Nov 2026 rule (main navigation on the left for every signed-in user) the full sidebar is also a left
+// drawer below 1024 px, and these tabs stay as a shortcut. Pure links: no access is decided here and every page still
+// checks on the server.
 import './customer-tabs.css';
 import Link from 'next/link';
 import { CorridraIcon } from '../corridra-icon';

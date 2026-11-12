@@ -1,5 +1,7 @@
-/* The Ledger footer (owner decision of 6 November 2026). A full-width navy band: the promise and the two actions,
-   four link groups of four, the trust legend and one quiet line. The band keeps the page's own width, so its
+/* The footer, Option B (owner decision of 12 November 2026, locked mockups revision 2; it replaces the Ledger
+   layout of 6 November). A full-width navy band: the logo, the promise and the actions in the left column, three
+   family tiles of unequal width on the right (Buy Abroad leads), the Corridra links as one row, the trust legend and
+   one quiet line. Same 16 links, three actions, trust labels and bottom items as before. The band keeps the page's own width, so its
    content lines up with the page, and a shadow carries the navy to both edges of the window without making the
    page wider. Every link is in the server HTML once. On a phone each group is a native disclosure; from 701 px
    every group shows open and its summary is hidden. Where the browser cannot force a closed group open (no
@@ -27,13 +29,13 @@
   text-underline-offset: 4px;
 }
 
-/* The promise and the actions. */
+/* The logo, the promise and the actions, then the link groups. */
 .guide-footer-top {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-  align-items: end;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
   gap: var(--space-8);
-  padding: var(--space-12) 0 var(--space-8);
+  padding: var(--space-12) 0 0;
   border-bottom: 1px solid var(--footer-line);
 }
 /* The logo is the compact lockup in white; its name is the link's hidden text. */
@@ -51,7 +53,7 @@
 .guide-footer-promise {
   overflow-wrap: anywhere;
   max-width: 14ch;
-  margin: var(--space-3) 0 0;
+  margin: var(--space-5) 0 var(--space-5);
   font-family: var(--serif);
   font-size: clamp(1.875rem, 1.2rem + 1.5vw, 2.5rem);
   font-weight: 500;
@@ -62,7 +64,8 @@
 .guide-footer-actions {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: flex-start;
+  align-items: center;
   gap: var(--space-3);
 }
 .guide-footer .guide-footer-actions .primary-link {
@@ -83,7 +86,7 @@
   flex-basis: 100%;
   margin: 0;
   font-size: var(--text-sm);
-  text-align: end;
+  text-align: start;
   color: var(--footer-quiet);
 }
 .guide-footer-already a {
@@ -93,10 +96,32 @@
   color: var(--on-brand);
 }
 
-/* The four link groups. The summary is the phone's disclosure row; the title is the group's heading. */
+/* The link groups. The summary is the phone's disclosure row; the title is the group's heading. Each family has a
+   small dot: cobalt for buying, green for groups and trips, copper for selling (ornament only, never text). */
 .guide-footer-groups {
-  padding: var(--space-8) 0;
-  border-bottom: 1px solid var(--footer-line);
+  min-width: 0;
+  padding: 0 0 var(--space-8);
+}
+.guide-footer-details[data-family] > summary::before,
+.guide-footer-details[data-family] .guide-footer-title::before {
+  content: '';
+  flex: none;
+  width: 0.5625rem;
+  height: 0.5625rem;
+  margin-inline-end: var(--space-2);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--brand) 70%, var(--on-brand));
+}
+.guide-footer-details[data-family='trips'] > summary::before,
+.guide-footer-details[data-family='trips'] .guide-footer-title::before {
+  background: color-mix(in srgb, var(--positive) 55%, var(--on-brand));
+}
+.guide-footer-details[data-family='sell'] > summary::before,
+.guide-footer-details[data-family='sell'] .guide-footer-title::before {
+  background: var(--editorial-accent);
+}
+.guide-footer-details > summary::before {
+  display: inline-block;
 }
 .guide-footer-details > summary {
   display: flex;
@@ -114,6 +139,7 @@
 }
 .guide-footer-details > summary::after {
   content: '+';
+  margin-inline-start: auto;
   padding-inline-end: var(--space-1);
   font-family: var(--font-mono);
   font-size: var(--text-xl);
@@ -125,8 +151,9 @@
 }
 .guide-footer-title {
   display: none;
+  align-items: center;
   margin: 0 0 var(--space-2);
-  font-family: var(--font-ui);
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
   font-weight: 600;
   line-height: 1.2;
@@ -225,17 +252,95 @@
   margin: 0 0 var(--space-1);
 }
 
-/* From 701 px: four columns (two up to 1000 px), every group open. */
+/* From 701 px: the three families are tiles of unequal width (Buy Abroad the largest, with larger links), every
+   group open, and the Corridra links one row under them with their label inline. */
 @media (min-width: 701px) {
-  .guide-footer-groups {
+  .guide-footer-families {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: var(--space-6) var(--space-8);
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-3);
+    align-items: stretch;
+  }
+  .guide-footer-details[data-family] {
+    padding: var(--space-5) var(--space-6);
+    background: var(--ac-surface-navy);
+    border: 1px solid var(--footer-line);
+    border-radius: var(--radius-md);
+  }
+  .guide-footer-details[data-family='buy'] {
+    padding: var(--space-6);
+    background: color-mix(in srgb, var(--brand) 10%, var(--ac-surface-navy));
+    border-color: color-mix(in srgb, var(--brand) 35%, var(--footer-line));
+  }
+  .guide-footer-details[data-family='buy'] .guide-footer-group a {
+    font-size: var(--text-lg);
+    font-weight: 600;
+  }
+  .guide-footer-groups {
+    padding-bottom: var(--space-2);
+  }
+  .guide-footer-corp {
+    margin-top: var(--space-8);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--footer-line);
+  }
+  .guide-footer-corp .guide-footer-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 var(--space-6);
+  }
+  .guide-footer-corp .guide-footer-title {
+    margin: 0;
+  }
+  .guide-footer-corp .guide-footer-group ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-6);
   }
 }
-@media (min-width: 701px) and (max-width: 1000px) {
+/* From 1001 px: the logo, promise and actions on the left, the tiles on the right, and the Corridra row the full
+   width under both (a subgrid, so the row lines up with the left column). */
+@media (min-width: 1001px) {
+  .guide-footer-top {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.6fr);
+    column-gap: var(--space-12);
+    row-gap: 0;
+  }
+  .guide-footer-brand {
+    grid-column: 1;
+    grid-row: 1;
+  }
   .guide-footer-groups {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+@supports (grid-template-columns: subgrid) {
+  @media (min-width: 1001px) {
+    .guide-footer-brand {
+      position: relative;
+      z-index: 1;
+    }
+    .guide-footer-groups {
+      grid-column: 1 / -1;
+      grid-row: 1 / span 2;
+      display: grid;
+      grid-template-columns: subgrid;
+      grid-template-rows: subgrid;
+      pointer-events: none;
+    }
+    .guide-footer-groups > * {
+      pointer-events: auto;
+    }
+    .guide-footer-families {
+      grid-column: 2;
+      grid-row: 1;
+    }
+    .guide-footer-corp {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
   }
 }
 @supports selector(::details-content) {
@@ -247,7 +352,7 @@
       content-visibility: visible;
     }
     .guide-footer-title {
-      display: block;
+      display: flex;
     }
   }
 }
@@ -266,9 +371,8 @@
     margin-top: var(--space-8);
   }
   .guide-footer-top {
-    grid-template-columns: minmax(0, 1fr);
     gap: var(--space-5);
-    padding: var(--space-8) 0 var(--space-6);
+    padding: var(--space-8) 0 0;
   }
   .guide-footer-promise {
     max-width: none;
@@ -285,12 +389,12 @@
     text-align: start;
   }
   .guide-footer-groups {
-    padding: var(--space-4) 0 var(--space-6);
+    padding: 0 0 var(--space-6);
   }
   .guide-footer-details {
     border-top: 1px solid var(--footer-line);
   }
-  .guide-footer-details:last-child {
+  .guide-footer-groups > .guide-footer-details:last-child {
     border-bottom: 1px solid var(--footer-line);
   }
   .guide-footer-group ul {
@@ -419,7 +523,11 @@
   .guide-footer-compact .guide-footer-copy {
     flex-basis: auto;
   }
-  /* Four closed groups in two columns: the same disclosures, half the rows. */
+  /* Four closed groups in two columns: the same disclosures, half the rows. The family wrapper gives way so its
+     three groups and the Corridra group share the one grid. */
+  .guide-footer-compact .guide-footer-families {
+    display: contents;
+  }
   .guide-footer-compact .guide-footer-groups {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));

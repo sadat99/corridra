@@ -52,7 +52,7 @@ describe('message files', () => {
       'footer.nav',
       'footer.group.buy',
       'footer.group.sell',
-      'footer.group.partners',
+      'footer.group.trips',
       'footer.link.china',
       'footer.link.spain',
       'footer.link.sample',
