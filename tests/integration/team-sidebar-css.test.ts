@@ -156,6 +156,16 @@ describe('the list scrolls on its own, with a thin bar made for the navy', () =>
   });
 });
 
+describe('the icon rail gives each icon a full 44 px target', () => {
+  const rail = ".ux-leftnav-frame[data-collapsed='true'] nav.ux-team-sidebar";
+  test('the collapsed list gives up its side padding and draws the focus ring inside the 44 px box', () => {
+    const list = only(find(leftRules, rail, wide));
+    expect(declared(list, 'padding-inline')).toBe('0');
+    const ring = only(find(leftRules, `${rail} :is(a, summary):focus-visible`, wide));
+    expect(declared(ring, 'outline-offset')).toBe('-3px');
+  });
+});
+
 describe('the five Admin pages read as links, not expanders', () => {
   const dot = 'nav.ux-team-sidebar .ux-team-group ul a::before';
   test('each link has a round dot drawn in CSS, in its own colour, in a 20 px cell', () => {

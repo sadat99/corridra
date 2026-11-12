@@ -457,6 +457,43 @@ test.describe('the icon rail', () => {
   }
 });
 
+test.describe('the icon rail targets', () => {
+  test('every icon is a full 44 px wide target and its focus ring stays inside the list at 1440x900', async ({
+    page,
+  }) => {
+    await open(page, { width: 1440, height: 900, collapsed: true });
+    await expect(page.locator('.ux-leftnav-frame')).toHaveAttribute('data-collapsed', 'true');
+    const stops = page.locator(
+      '#workspace-navigation > ul > li a, details.ux-team-group > summary',
+    );
+    await expect(stops).toHaveCount(6);
+    for (const stop of await stops.all()) {
+      const box = await boxOf(stop);
+      expect(box.right - box.left).toBeGreaterThanOrEqual(44);
+      expect(box.bottom - box.top).toBeGreaterThanOrEqual(44);
+    }
+    // Tab through all six: the ring (its width plus its offset out from the box) is never outside the list.
+    await todayLink(page).focus();
+    for (let stop = 0; stop < 6; stop += 1) {
+      const focused = page.locator('#workspace-navigation :focus');
+      await expect(focused).toHaveCount(1);
+      const ringBox = await focused.evaluate((el) => {
+        const style = getComputedStyle(el);
+        const grow = parseFloat(style.outlineWidth) + parseFloat(style.outlineOffset);
+        const { top, bottom, left, right } = el.getBoundingClientRect();
+        return { top: top - grow, bottom: bottom + grow, left: left - grow, right: right + grow };
+      });
+      const area = await listBox(page);
+      const room = insideWithRing(ringBox, area);
+      expect(room.left, `stop ${stop} left`).toBeGreaterThanOrEqual(-0.5);
+      expect(room.right, `stop ${stop} right`).toBeGreaterThanOrEqual(-0.5);
+      expect(room.top, `stop ${stop} top`).toBeGreaterThanOrEqual(-0.5);
+      expect(room.bottom, `stop ${stop} bottom`).toBeGreaterThanOrEqual(-0.5);
+      if (stop < 5) await page.keyboard.press('Tab');
+    }
+  });
+});
+
 test.describe('roles that are not shown Admin', () => {
   for (const role of ['operator', 'reviewer', 'viewer']) {
     test(`${role} sees no Admin, no group and no audit page, and nothing scrolls`, async ({
