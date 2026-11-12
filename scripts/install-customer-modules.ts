@@ -45,6 +45,7 @@ import {
 } from '../packages/db/src/customer-workspace-lifecycle-migrate';
 import { migrateCustomerAccountLifecycle } from '../packages/db/src/customer-account-lifecycle-migrate';
 import { migrateCustomerProblemReports } from '../packages/db/src/customer-problem-report-migrate';
+import { migrateCustomerProgrammeErasure } from '../packages/db/src/customer-programme-erasure-migrate';
 import { migrateCounterpartyChanges } from '../packages/db/src/counterparty-change-migrate';
 import { configureCounterpartyChanges } from '../packages/auth/src/counterparty-change-configuration';
 import { configureWorkspaceLifecycle } from '../packages/auth/src/customer-workspace-lifecycle-configuration';
@@ -313,6 +314,7 @@ const registries = [
   'customer_programme_lifecycle_migrations',
   'customer_participant_label_migrations',
   'customer_programme_publication_migrations',
+  'customer_programme_erasure_migrations',
   'recipient_response_revision_migrations',
   'network_real_use_migrations',
   'customer_billing_real_migrations',
@@ -622,6 +624,10 @@ try {
       console.log(
         'installed or already current: programme pages and applications (application switch unchanged)',
       );
+      // Redaction of the applicant's and participant's words under an erasure request (privacy). It installs the account
+      // lifecycle and participant label modules it depends on, both with their controls left as they were.
+      await migrateCustomerProgrammeErasure(pool);
+      console.log('installed or already current: programme words erasure');
     }
     // Withdraw, correct and hide for private contacts and notes (CRUD G11) are never part of the base run. Install leaves
     // the one control closed; enable and pause are owner decisions with a reason. Reached through field_modules_action
