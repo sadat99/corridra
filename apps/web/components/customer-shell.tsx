@@ -1,5 +1,5 @@
 import { realUseEnabled } from '@corridra/auth/customer-production';
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { customerBillingEnabled } from '@corridra/auth/customer-billing';
 import { customerAccountLifecycleEnabled } from '@corridra/auth/customer-account-lifecycle';
 import { customerCompaniesEnabled } from '@corridra/auth/customer-companies';
@@ -140,7 +140,10 @@ function CustomerFrame({ tab, eyebrow, title, count, children }: CustomerShellPr
             : 'Preview workspace: use made-up names and details here.'
         }
       />
-      <CustomerBarIdentity />
+      {/* Streams after the frame: the identity is for the header's Search only and nothing waits for it. */}
+      <Suspense fallback={null}>
+        <CustomerBarIdentity />
+      </Suspense>
       <WorkspaceShell title={title} customer>
         {children}
       </WorkspaceShell>

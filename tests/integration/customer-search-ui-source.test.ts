@@ -376,6 +376,8 @@ describe('the identity the header sends', () => {
     const shell = read('apps/web/components/customer-shell.tsx');
     expect(shell).toContain("import { CustomerBarIdentity } from './ux/customer-bar-identity';");
     expect(shell.match(/<CustomerBarIdentity \/>/g)).toHaveLength(1);
+    // Inside Suspense, so the frame renders without waiting for the provider read.
+    expect(shell).toMatch(/<Suspense fallback=\{null\}>\s*<CustomerBarIdentity \/>\s*<\/Suspense>/);
     expect(shell).not.toMatch(/customer-page-session|server-only/);
   });
 
