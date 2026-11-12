@@ -4,7 +4,7 @@ Document status: CURRENT.
 
 Sibling of [staff command palette search](command-palette-search.md), which is the pattern this follows. Amends [navigation system v1](../navigation-v1.md) rule 5 in one respect only (section 1). Sensitive: yes, because a new authenticated route reads customer-owned data under the customer's own session. No migration, no schema change, no new SQL function, no new service in `packages/**`, no new dependency, no new switch, no environment variable. The D gates, payments, outreach and AI stay closed, and the search neither triggers, enables nor reads any of them.
 
-Build state: the pure client modules (pages, facts, status words) are built and tested. The route, its core and the dialog are not built yet. Nothing here is claimed enabled, live or verified. Production switch values are owner-reported and not observed.
+Build state: the pure client modules (pages, facts, status words), the route and its core are built and tested. The dialog is not built yet. Nothing here is claimed enabled, live or verified. Production switch values are owner-reported and not observed.
 
 ## 1. Owner direction and what it changes
 
@@ -53,7 +53,7 @@ The 200 answer:
 State = ok | partial | unavailable | denied | archived
 ```
 
-Requests first, then Companies, each ranked by `palette-rank.ts` (unchanged). 5 hits per scope under All, 10 for a single scope. Labels are cut to 200 characters. Only the requested scopes appear in `scopes`. A Request hit has an empty `detail`; the client builds the detail line from `facts.sent` and `facts.status`. A Company hit's detail is the country and `facts.reports` is the count from loaded pages only. `facts` never carries fit, rationale, uncertainty, gaps, verification, contact, brief text or any money field. The answer carries no total and no "more exist" count.
+Requests first, then Companies, each ranked by `palette-rank.ts` (unchanged). 5 hits per scope under All, 10 for a single scope. Labels are cut to 200 characters. Only the requested scopes appear in `scopes`. A Request hit has an empty `detail`; the client builds the detail line from `facts.sent` (an ISO date and time) and `facts.status` (the stored status word, which the client turns into the words the Requests page uses). A Company hit's detail is the country and `facts.reports` is the count from loaded pages only. `facts` never carries fit, rationale, uncertainty, gaps, verification, contact, brief text or any money field. The answer carries no total and no "more exist" count.
 
 Status codes:
 
@@ -69,7 +69,7 @@ Status codes:
 | 500  | `{ error: 'The request could not be completed', correlationId }` for any other first-read failure.                                    |
 | 503  | The route is unavailable, or every requested scope is unavailable.                                                                    |
 
-A DomainError of 401, 403 (any) or 409 from a service is returned for the whole request and stops the remaining scopes and lookups. Per scope: a DomainError 503 or SQLSTATE `42P01`, `3F000`, `42883` is `unavailable`; raw SQLSTATE `42501` is `denied`; the archived-workspace refusal is `archived` for Requests (Companies still answer). A scope whose switch is off is `unavailable` with zero calls to its service. Every answer, errors included, carries `Cache-Control: no-store`, `Referrer-Policy: no-referrer`, `X-Content-Type-Options: nosniff` and `X-Corridra-Request-ID`. The route is registered in `apps/web/next.config.ts` with its own rule.
+A DomainError of 400, 401, 403 (any) or 409 from a service is returned for the whole request and stops the remaining scopes and lookups. Per scope: a DomainError 503 or SQLSTATE `42P01`, `3F000`, `42883` is `unavailable`; raw SQLSTATE `42501` is `denied`; the archived-workspace refusal is `archived` for Requests (Companies still answer). A scope whose switch is off is `unavailable` with zero calls to its service. Every answer, errors included, carries `Cache-Control: no-store`, `Referrer-Policy: no-referrer`, `X-Content-Type-Options: nosniff` and `X-Corridra-Request-ID`. The route is registered in `apps/web/next.config.ts` with its own rule.
 
 Subject and issuer headers are passed through exactly as `/api/customer-requests` passes them. They are rejection-only: they can make the boundary refuse, never grant.
 

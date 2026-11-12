@@ -1,0 +1,417 @@
+// The customer search (docs/revamp/specs/navigation-v1/customer-search.md). It reads a person's own Requests and
+// approved Companies only through the services they already use, each of which runs under that person's own session
+// and row security, so it can show nothing the person could not already open. It reads a bounded number of rows
+// (customerSearchLimits), ranks what it read in memory (palette-rank.ts) and returns a label, a detail, an address and a
+// few facts per hit. The typed words exist only in this module's arguments: they are never passed to a service, a
+// database, a log or a header. It writes nothing. A scope that cannot be read says so; it is never an empty list.
+import { DomainError } from '@corridra/domain';
+import { archivedWorkspaceRefusal } from '@corridra/auth/customer-workspace-lifecycle';
+import { requestTitle } from '../app/account/request-words';
+import { queryWords, rankFields } from './palette-rank';
+import {
+  cutText,
+  isCompanyId,
+  isUuid,
+  reportHref,
+  requestHref,
+  statusWord,
+  type CustomerFacts,
+  type CustomerHit,
+  type CustomerScopeName,
+  type ScopeState,
+} from './ux/customer-search-facts';
+
+export const customerSearchScopes = ['all', 'requests', 'companies'] as const;
+export type CustomerSearchScope = (typeof customerSearchScopes)[number];
+
+/**
+ * Work per search. Requests: one page of 100 saved Requests, then at most 30 title lookups, two at a time, within 6
+ * seconds, stopping after 3 failures in a row. Companies: up to 4 pages of 5 approved report scopes. Scopes run one
+ * after the other. showAll hits per scope under All, showScope for a single scope.
+ */
+export const customerSearchLimits = {
+  requestPage: 100,
+  titleCap: 30,
+  titleConcurrency: 2,
+  titleBudgetMs: 6000,
+  titleFailureStop: 3,
+  companyPages: 4,
+  companyPageSize: 5,
+  showAll: 5,
+  showScope: 10,
+} as const;
+
+type Read = (value: unknown, subject?: string, issuer?: string) => Promise<unknown>;
+export type CustomerSearchServices = {
+  requests: { list: Read };
+  details: { detail: Read };
+  companies: { list: Read };
+};
+export type CustomerSearchSwitches = {
+  /** The Requests module is on. */
+  requests: boolean;
+  /** The request details module is on: titles come from it, so Requests cannot be searched without it. */
+  details: boolean;
+  /** The approved Companies module is on. */
+  companies: boolean;
+  /** True when the data's provenance may be shown in this environment. */
+  provenance: (synthetic: unknown) => boolean;
+};
+export type CustomerSearchContext = {
+  /** Rejection-only: the browser's claim of who it is, which the session boundary checks and never trusts. */
+  subject?: string;
+  issuer?: string;
+  correlationId: string;
+  /** The request's own signal: when it aborts, no further lookup or page is started. */
+  signal?: AbortSignal;
+  /** The clock for the title time budget; replaced in tests. */
+  now?: () => number;
+};
+export type CustomerSearchAnswer = {
+  hits: CustomerHit[];
+  scopes: Partial<Record<CustomerScopeName, ScopeState>>;
+  facts?: Record<string, CustomerFacts>;
+};
+
+type Candidate = {
+  id: string;
+  position: number;
+  score: number;
+  close: boolean;
+  hit: CustomerHit;
+  key: string;
+  facts: CustomerFacts;
+};
+type Found = { state: ScopeState; candidates: Candidate[] };
+
+const record = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+const none = (state: ScopeState): Found => ({ state, candidates: [] });
+const sqlState = (error: unknown) => {
+  const code = (error as { code?: unknown } | null)?.code;
+  return typeof code === 'string' ? code : undefined;
+};
+const missingModule = new Set(['42P01', '3F000', '42883']);
+
+/** Best score first, then the order the service gave the rows, then the id by plain code unit. */
+function inOrder(a: Candidate, b: Candidate) {
+  return b.score - a.score || a.position - b.position || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+}
+
+/** A refusal that ends the whole search: not signed in, not allowed, a bad claim, or a bad request. */
+export const endsSearch = (error: unknown): error is DomainError =>
+  error instanceof DomainError && [400, 401, 403, 409].includes(error.status);
+
+/**
+ * What a first read that failed means for its scope, or undefined when the failure is not one the person can be told
+ * about (the caller then lets it end the search as a generic failure).
+ */
+function scopeFailure(error: unknown, scope: CustomerScopeName): ScopeState | undefined {
+  if (scope === 'requests' && archivedWorkspaceRefusal(error)) return 'archived';
+  if (error instanceof DomainError) return error.status === 503 ? 'unavailable' : undefined;
+  const code = sqlState(error);
+  if (code && missingModule.has(code)) return 'unavailable';
+  if (code === '42501') return 'denied';
+  return undefined;
+}
+
+function pageFailed(page: number, correlationId: string, error: unknown) {
+  // The scope, the page, the request id and the kind of error and its code: never the words that were typed and
+  // never the error message, which a database may fill with them.
+  const name = error instanceof Error && error.name.length <= 64 ? error.name : undefined;
+  const raw = (error as { code?: unknown } | null)?.code;
+  const code =
+    (typeof raw === 'string' || typeof raw === 'number') && String(raw).length <= 32
+      ? raw
+      : undefined;
+  console.error(
+    JSON.stringify({
+      event: 'customer_search_page_failed',
+      scope: 'companies',
+      page,
+      correlationId,
+      errorName: name,
+      errorCode: code,
+    }),
+  );
+}
+
+type RequestRow = { id: string; sent: string; status?: string; withdrawn: boolean };
+
+async function findRequests(
+  services: CustomerSearchServices,
+  switches: CustomerSearchSwitches,
+  context: CustomerSearchContext,
+  words: string[],
+): Promise<Found> {
+  const limits = customerSearchLimits;
+  if (!switches.requests || !switches.details) return none('unavailable');
+  let page: unknown;
+  try {
+    page = await services.requests.list(
+      { pageSize: limits.requestPage },
+      context.subject,
+      context.issuer,
+    );
+  } catch (error) {
+    const state = scopeFailure(error, 'requests');
+    if (!state) throw error;
+    return none(state);
+  }
+  if (!record(page) || !Array.isArray(page.requests) || !switches.provenance(page.synthetic))
+    return none('unavailable');
+  // More saved Requests than one page holds: the rest are not read.
+  let partial = page.nextAfter !== null && page.nextAfter !== undefined;
+  const rows: RequestRow[] = [];
+  for (const row of page.requests.slice(0, limits.requestPage)) {
+    // A Request whose retention has ended is not searchable and is not "partial": there is nothing to find.
+    if (record(row) && row.available === false) continue;
+    const sent = record(row) && typeof row.createdAt === 'string' ? Date.parse(row.createdAt) : NaN;
+    if (!record(row) || row.available !== true || !isUuid(row.id) || Number.isNaN(sent)) {
+      partial = true;
+      continue;
+    }
+    const progress = record(row.progress) ? row.progress : {};
+    rows.push({
+      id: row.id.toLowerCase(),
+      sent: new Date(sent).toISOString(),
+      status: statusWord(progress.status),
+      withdrawn: row.withdrawn === true,
+    });
+  }
+  if (page.requests.length > limits.requestPage) partial = true;
+
+  const lookups = rows.slice(0, limits.titleCap);
+  if (rows.length > lookups.length) partial = true;
+  const now = context.now ?? Date.now;
+  const started = now();
+  const titles = new Map<string, string>();
+  let next = 0;
+  let consecutive = 0;
+  let stopped = false;
+  const ended: { refusal?: DomainError } = {};
+  const worker = async () => {
+    while (!stopped && next < lookups.length) {
+      if (context.signal?.aborted || now() - started >= limits.titleBudgetMs) {
+        partial = true;
+        stopped = true;
+        return;
+      }
+      const row = lookups[next++]!;
+      try {
+        const detail = await services.details.detail(row.id, context.subject, context.issuer);
+        consecutive = 0;
+        const title = requestTitle(record(detail) ? detail.original : undefined);
+        if (title) titles.set(row.id, title);
+      } catch (error) {
+        if (endsSearch(error)) {
+          ended.refusal ??= error;
+          stopped = true;
+          return;
+        }
+        partial = true;
+        consecutive += 1;
+        if (consecutive >= limits.titleFailureStop) stopped = true;
+      }
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(limits.titleConcurrency, lookups.length) }, worker),
+  );
+  if (ended.refusal) throw ended.refusal;
+
+  const candidates: Candidate[] = [];
+  rows.forEach((row, index) => {
+    const title = titles.get(row.id);
+    const ranked = title ? rankFields(words, [{ value: title, label: true }]) : null;
+    if (!title || !ranked) return;
+    const facts: CustomerFacts = { sent: row.sent };
+    if (row.status) facts.status = row.status;
+    if (row.withdrawn) facts.withdrawn = true;
+    if (ranked.close) facts.close = true;
+    candidates.push({
+      id: row.id,
+      position: index,
+      score: ranked.score,
+      close: ranked.close,
+      key: `request:${row.id}`,
+      facts,
+      hit: {
+        id: row.id,
+        label: cutText(title),
+        detail: '',
+        href: requestHref(row.id),
+        kind: 'request',
+      },
+    });
+  });
+  return { state: partial ? 'partial' : 'ok', candidates };
+}
+
+type Company = { name: string; country: string; lowest: string; reports: Set<string> };
+
+/** Reads one page of the portfolio into the companies met so far. Returns false when a context was malformed. */
+function mergeCompanies(into: Map<string, Company>, companies: unknown[]): boolean {
+  let clean = true;
+  for (const entry of companies) {
+    if (!record(entry) || !isCompanyId(entry.id) || !Array.isArray(entry.contexts)) {
+      clean = false;
+      continue;
+    }
+    for (const context of entry.contexts) {
+      if (
+        !record(context) ||
+        !isUuid(context.resourceId) ||
+        typeof context.company !== 'string' ||
+        context.company === ''
+      ) {
+        clean = false;
+        continue;
+      }
+      const resource = context.resourceId.toLowerCase();
+      const country = typeof context.country === 'string' ? context.country : '';
+      const company = into.get(entry.id);
+      if (!company) {
+        into.set(entry.id, {
+          name: context.company,
+          country,
+          lowest: resource,
+          reports: new Set([resource]),
+        });
+        continue;
+      }
+      company.reports.add(resource);
+      // The first approved context, by report id, names the company and is where the hit opens.
+      if (resource < company.lowest) {
+        company.lowest = resource;
+        company.name = context.company;
+        company.country = country;
+      }
+    }
+  }
+  return clean;
+}
+
+async function findCompanies(
+  services: CustomerSearchServices,
+  switches: CustomerSearchSwitches,
+  context: CustomerSearchContext,
+  words: string[],
+): Promise<Found> {
+  const limits = customerSearchLimits;
+  if (!switches.companies) return none('unavailable');
+  const merged = new Map<string, Company>();
+  let partial = false;
+  let after: string | undefined;
+  for (let page = 0; page < limits.companyPages; page++) {
+    if (page > 0 && context.signal?.aborted) {
+      partial = true;
+      break;
+    }
+    let value: unknown;
+    try {
+      value = await services.companies.list(
+        after ? { pageSize: limits.companyPageSize, after } : { pageSize: limits.companyPageSize },
+        context.subject,
+        context.issuer,
+      );
+    } catch (error) {
+      if (page === 0) {
+        const state = scopeFailure(error, 'companies');
+        if (!state) throw error;
+        return none(state);
+      }
+      if (endsSearch(error)) throw error;
+      // A person whose access ended while the pages were read gets nothing from this scope.
+      if (sqlState(error) === '42501') return none('denied');
+      pageFailed(page + 1, context.correlationId, error);
+      partial = true;
+      break;
+    }
+    if (
+      !record(value) ||
+      !Array.isArray(value.companies) ||
+      !switches.provenance(value.synthetic)
+    ) {
+      if (page === 0) return none('unavailable');
+      partial = true;
+      break;
+    }
+    if (!mergeCompanies(merged, value.companies)) partial = true;
+    if (typeof value.unavailableScopes === 'number' && value.unavailableScopes > 0) partial = true;
+    const more = value.nextAfter;
+    if (more === null || more === undefined) {
+      after = undefined;
+      break;
+    }
+    if (!isUuid(more)) {
+      partial = true;
+      break;
+    }
+    after = more;
+  }
+  // The pages ran out of budget while the portfolio had more.
+  if (after !== undefined) partial = true;
+
+  const candidates: Candidate[] = [];
+  let position = 0;
+  for (const [id, company] of merged) {
+    position += 1;
+    const ranked = rankFields(words, [
+      { value: company.name, label: true },
+      { value: company.country },
+    ]);
+    if (!ranked) continue;
+    const facts: CustomerFacts = { reports: company.reports.size };
+    if (ranked.close) facts.close = true;
+    candidates.push({
+      id,
+      position,
+      score: ranked.score,
+      close: ranked.close,
+      key: `company:${id}`,
+      facts,
+      hit: {
+        id,
+        label: cutText(company.name),
+        detail: cutText(company.country),
+        href: reportHref(company.lowest),
+        kind: 'company',
+      },
+    });
+  }
+  return { state: partial ? 'partial' : 'ok', candidates };
+}
+
+/**
+ * Searches the person's own Requests and approved Companies. A query that is too short, or has no letter or digit,
+ * reads nothing. A refusal that ends the search (not signed in, closed account, a bad claim) is thrown as a DomainError;
+ * any other first-read failure is thrown as it came, for the route to answer generically.
+ */
+export async function searchCustomer(
+  services: CustomerSearchServices,
+  switches: CustomerSearchSwitches,
+  context: CustomerSearchContext,
+  rawQuery: string,
+  scope: CustomerSearchScope,
+): Promise<CustomerSearchAnswer> {
+  const text = rawQuery.trim();
+  if (text.length < 2) return { hits: [], scopes: {} };
+  const words = queryWords(text);
+  if (words.length === 0) return { hits: [], scopes: {} };
+  const shown = scope === 'all' ? customerSearchLimits.showAll : customerSearchLimits.showScope;
+  const answer: CustomerSearchAnswer = { hits: [], scopes: {} };
+  const facts: Record<string, CustomerFacts> = {};
+  const take = (name: CustomerScopeName, found: Found) => {
+    answer.scopes[name] = found.state;
+    for (const candidate of found.candidates.sort(inOrder).slice(0, shown)) {
+      answer.hits.push(candidate.hit);
+      facts[candidate.key] = candidate.facts;
+    }
+  };
+  if (scope === 'all' || scope === 'requests')
+    take('requests', await findRequests(services, switches, context, words));
+  if (scope === 'all' || scope === 'companies')
+    take('companies', await findCompanies(services, switches, context, words));
+  return Object.keys(facts).length > 0 ? { ...answer, facts } : answer;
+}

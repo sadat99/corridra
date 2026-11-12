@@ -48,6 +48,18 @@ const statusShape = /^[A-Z][A-Z_]{0,31}$/;
 const sentLimit = 40;
 const reportLimit = 1000;
 
+/** A Request id or a report id: a UUID. */
+export const isUuid = (value: unknown): value is string =>
+  typeof value === 'string' && requestId.test(value);
+/** A Company id: the 64 hexadecimal characters of the portfolio's hashed identity key. */
+export const isCompanyId = (value: unknown): value is string =>
+  typeof value === 'string' && companyId.test(value);
+
+/** The status of a Request as the service stores it, or undefined for anything that is not shaped like one. */
+export function statusWord(value: unknown): string | undefined {
+  return typeof value === 'string' && statusShape.test(value) ? value : undefined;
+}
+
 /** Where a Request hit opens. */
 export const requestHref = (id: string) => `/account/requests/${id}`;
 /** Where a Company hit opens: the private report page of its first approved context. */
@@ -89,7 +101,8 @@ function factsOf(kind: CustomerHitKind, raw: Record<string, unknown>): CustomerF
     if (typeof raw.sent !== 'string' || raw.sent.length > sentLimit) return null;
     if (!Number.isFinite(Date.parse(raw.sent))) return null;
     fact.sent = raw.sent;
-    if (typeof raw.status === 'string' && statusShape.test(raw.status)) fact.status = raw.status;
+    const status = statusWord(raw.status);
+    if (status) fact.status = status;
     if (raw.withdrawn === true) fact.withdrawn = true;
   } else {
     if (!Number.isInteger(raw.reports)) return null;
