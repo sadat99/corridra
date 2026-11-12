@@ -154,11 +154,11 @@ export function MissionFacts({
         )}
         {m.updated_at && (
           <>
-            <dt>Last activity</dt>
+            <dt>Last mission update</dt>
             <dd>
               <time dateTime={m.updated_at}>{formatDate(m.updated_at)}</time>
               {isStale(m.updated_at, m.status)
-                ? ` · No activity for ${quietDays(m.updated_at)} days`
+                ? ` · No mission update in ${quietDays(m.updated_at)} days`
                 : ''}
             </dd>
           </>
@@ -523,6 +523,7 @@ export function Missions({
             <option value="open">Open</option>
             <option value="all">All</option>
             <option value="overdue">Overdue</option>
+            <option value="stale">No update in 7+ days</option>
           </select>
         </label>
         <button
@@ -707,7 +708,7 @@ function CompactQueue({ queue, tenant }: { queue: Queue; tenant: string }) {
                 <td>
                   <time dateTime={m.due_at}>{formatDate(m.due_at)}</time>
                   {isStale(m.updated_at, m.status) && m.updated_at && (
-                    <span data-stale> · No activity for {quietDays(m.updated_at)} days</span>
+                    <span data-stale> · No mission update in {quietDays(m.updated_at)} days</span>
                   )}
                 </td>
                 <td>{m.next_action || 'Not recorded'}</td>
