@@ -52,11 +52,14 @@ The 200 answer (`sample: true` marks a hit that comes from sample data, which th
 { hits: [{ id, label, detail, href, kind: 'request' | 'company', sample?: true }],
   scopes: { requests?: State, companies?: State },
   facts?: { 'request:<uuid>': { sent, status?, withdrawn?, close? },
-            'company:<hex64>': { reports, close? } } }
+            'company:<hex64>': { reports, close? } },
+  expiresAt?: string | null }   // present when Companies were read
 State = ok | partial | unavailable | denied | archived | limited
 ```
 
 Requests first, then Companies, each ranked by `palette-rank.ts` (unchanged). 5 hits per scope under All, 10 for a single scope. Labels are cut to 200 characters. Only the requested scopes appear in `scopes`. A Request hit has an empty `detail`; the client builds the detail line from `facts.sent` (an ISO date and time) and `facts.status` (the stored status word, which the client turns into the words the Requests page uses). A Company hit's detail is the country and `facts.reports` is the count from loaded pages only. `facts` never carries fit, rationale, uncertainty, gaps, verification, contact, brief text or any money field. The answer carries no total and no "more exist" count.
+
+The approved Companies scope expires, and the search follows the Companies page exactly. The server reads each portfolio page as that page does: the page's own `expiresAt` must be null or a time still ahead, and every context must carry a time still ahead; a page that fails this is not shown (on the first page the scope is `unavailable`, on a later page the earlier companies stay and the scope is `partial`, never an empty list). The answer carries `expiresAt`, the earliest of the loaded pages' and contexts' expiries as an ISO time, or null when nothing was loaded that expires. The dialog clears the company hits (only them; Requests and Pages stay) at the earlier of that time and 60 seconds after the answer arrived, the same moment the Companies page clears its rows, shows "Company results were cleared. Search again to load them." with Retry first, and a new search loads them again. The cleared state is the client-only scope state `expired`, which the parser never accepts from the server.
 
 Status codes:
 
@@ -95,7 +98,8 @@ All limits live in one exported object, `customerSearchLimits`, in `apps/web/lib
 | `perPersonSearches` | 10 | Searches one person may start in each window, counted in this process before any read. A third of the staff palette's 30, because a search here can make up to 35 service calls. |
 | `perPersonWindowMs` | 10000 | The sliding window for that allowance. |
 | `perPersonKeys` | 5000 | People the allowance remembers; the least recently used are dropped, so memory stays bounded. |
-| `maxConcurrentSearches` | 4 | Searches one process runs at once; the next is refused with 503 and `Retry-After: 2`. The slot is given back when the search ends for any reason. |
+| `maxConcurrentSearches` | 4 | Searches one process runs at once; the next is refused with 503 and `Retry-After: 2`. A slot is given back when its search is done AND every service call it started has settled, not when the answer is sent: a call given up on at the deadline or on an abort still holds a provider read or a database transaction. |
+| `slotCeilingMs` | 30000 | The most a slot is held after its search is done. A call that has not settled by then is let go, one line `{ event: 'customer_search_slot_forced', correlationId }` is written, and the slot is given back. This is a safety limit, not a bound on the abandoned call itself, which keeps running; with a hung provider the process can have more than 4 such calls in flight after the ceiling. |
 | `searchDeadlineMs` | 12000 | One deadline for the whole search, both scopes and every service call. A call still running at the deadline, or when the request aborts, is given up on, and its scope is partial, never ok. |
 
 Scopes run one after the other, under one clock. Requests are ordered by id, not by time, so beyond the cap the unread part is arbitrary: that is why a capped read says partial and never "No match". Companies are partial when `nextAfter` remains after page 4, when any page has `unavailableScopes` above 0, or when a later page failed.
@@ -143,6 +147,8 @@ The final copy and layout are owned by the UI specification of the UI stage; the
 
 ## 10. Cleanup
 
+Company hits are also cleared on their own clock (section 3, expiry).
+
 The dialog closes and clears its query, scope, answer and workspaces on the `sessionChanged` event (which covers `endSession`, `useSignOut`, the account sign-out, the lifecycle error line, the closed-account screen and the sign-in forms), on `pagehide`, and on a persisted `pageshow`. It clears the answer and query when the page becomes hidden.
 
 ## 11. Coupling to other switches
@@ -182,6 +188,8 @@ Open follow-ups, not built here:
 | D10 | A person past 10 searches in 10 seconds gets 429 before any service call; the key is the signed-in person, so no browser-sent value resets it; nobody signed in is not counted; the map is bounded; a customer never spends a staff allowance | `customer-search-limit.test.ts`, `customer-search-status.test.ts`, `customer-search-ui.spec.ts` |
 | D11 | The Companies budget is spent once per search that reaches Companies, before the first portfolio page (a four page search charges exactly one unit; a search that never reaches Companies charges none); a spent budget gives a `limited` scope (or a 429 when every scope is limited) with zero portfolio reads; the Requests scope is unaffected | `customer-search-core.test.ts`, `customer-search-route-depth.test.ts` |
 | D12 | Anonymous requests hold no slot and read no service (401 first); sample data is labelled and never described as verified or live | `customer-search-route-depth.test.ts`, `customer-search-core.test.ts`, `customer-search-facts.test.ts`, `customer-search-ui.spec.ts` |
+| D13 | Expiry as on the Companies page: the earliest expiry is carried, an expired page is not shown, company hits clear at the earlier of the expiry and 60 seconds, Requests and Pages stay, a new search restores them | `customer-search-core.test.ts`, `customer-search-facts.test.ts`, `customer-search-status.test.ts`, `customer-search-ui.spec.ts` |
+| D14 | A slot stays taken until the abandoned calls settle (a fifth search is told 503 while they hang), is freed when they settle or fail, and is let go at the ceiling with one fixed line; the answer never waits | `customer-search-core.test.ts`, `customer-search-route-depth.test.ts` |
 | D9  | The query is in no log, response or service argument                                                            | `customer-search-route-depth.test.ts`                                                     |
 | R5  | No state that is not a complete search ever says "No match"                                                     | `customer-search-status.test.ts`                                                          |
 | M1  | Bounded work: caps, the process slots, the overall deadline and the abort signal                               | `customer-search-core.test.ts`, `customer-search-route-depth.test.ts`                                                            |
