@@ -596,7 +596,9 @@ test('the owner removes words under an in-progress or completed erasure request;
 }) => {
   const sent = await open(page, {
     erasure: erasureRows,
-    answer: () => ({ json: { reference: 'ERA-2026-0071', removed: 3 } }),
+    answer: () => ({
+      json: { reference: 'ERA-2026-0071', removed: 3, programmeWords: 5, paymentWords: 1 },
+    }),
   });
   await loadErasure(page);
   await expect(page.getByRole('button', { name: /^Remove Words Under This Request/ })).toHaveCount(
@@ -615,7 +617,10 @@ test('the owner removes words under an in-progress or completed erasure request;
   await expect(dialog.getByRole('button', { name: 'Keep Words' })).toBeFocused();
   await dialog.getByRole('button', { name: 'Remove Words' }).click();
   await expect(
-    page.getByRole('status').filter({ hasText: 'Words removed from 3 problem reports.' }),
+    page.getByRole('status').filter({
+      hasText:
+        'Words removed from 3 problem reports. Programme application and label words replaced in 5 items. Payment reference and note words replaced in 1 item.',
+    }),
   ).toBeVisible();
   expect(sent[0]!.body).toMatchObject({ action: 'remove_words', erasureRequestId: id(71) });
 });

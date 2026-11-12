@@ -234,7 +234,7 @@ function Queue({ tenant, role, problemReports = false }: Props) {
       const done = await removeWordsUnderRequest(tenant, commandId, id);
       removalCommands.current.delete(id);
       setRemoving(null);
-      setRemovalResult(wordsRemovedMessage(done.removed));
+      setRemovalResult(wordsRemovedMessage(done.removed, done));
     } catch (e) {
       setRemovalFailure(queueFailure(e, 'remove').message);
     } finally {

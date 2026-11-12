@@ -239,7 +239,7 @@ afterAll(async () => {
 });
 
 describe('the install', () => {
-  test('is recorded once, repeatable, and gives the runtime role only the one function', async () => {
+  test('is recorded once (0001 and 0002), repeatable, and gives the runtime role only the one function', async () => {
     await migrateCustomerProgrammeErasure(f.owner);
     expect(
       (
@@ -247,7 +247,7 @@ describe('the install', () => {
           'SELECT count(*)::int n FROM customer_programme_erasure_migrations.applied',
         )
       ).rows[0].n,
-    ).toBe(1);
+    ).toBe(2);
     await expect(
       f.runtime.query('SELECT * FROM customer_private.programme_words_erasure'),
     ).rejects.toMatchObject({ code: '42501' });
