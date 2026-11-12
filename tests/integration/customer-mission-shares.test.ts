@@ -631,3 +631,118 @@ test('stored revision constraints reject null shared objectives and null withdra
       ),
     ).rejects.toMatchObject({ code: '23514' });
 });
+test('programme count of shared objectives is one integer, follows share, withdrawal and source, and is owner/admin only', async () => {
+  const { reg, command } = await scenario();
+  const count = async (person = 'alice', workspaceId = programmeWorkspace) =>
+    shares(person).sharedCount({ workspaceId, programmeId });
+  expect(await count()).toEqual({ count: 0 });
+  const saved = await shares().command(command);
+  const result = await count();
+  expect(result).toEqual({ count: 1 });
+  expect(Object.keys(result)).toEqual(['count']);
+  // The kind and the words of the private request are not in the answer.
+  const text =
+    JSON.stringify(result) +
+    JSON.stringify(await shares('alice').summaries({ registrationId: reg.id, view: 'manage' }))
+      .length;
+  expect(text).not.toMatch(/Source suppliers|Supplier visits|Synthetic Private Company/);
+  // A plain member, the delegate, a stranger and a wrong workspace are refused.
+  await expect(count('member')).rejects.toThrow();
+  await expect(count('bob')).rejects.toThrow();
+  await expect(count('carol')).rejects.toThrow();
+  await expect(count('alice', requestWorkspace)).rejects.toThrow();
+  await expect(
+    shares('alice').sharedCount({ workspaceId: programmeWorkspace, programmeId: randomUUID() }),
+  ).rejects.toThrow();
+  await expect(
+    shares('alice').sharedCount({ workspaceId: programmeWorkspace, programmeId, extra: 1 }),
+  ).rejects.toThrow();
+  // A withdrawn summary no longer counts.
+  const withdrawn = await shares().command({
+    action: 'withdraw',
+    commandId: randomUUID(),
+    linkId: saved.id,
+    expectedVersion: saved.version,
+    reason: 'Synthetic explicit objective withdrawal',
+    acknowledged: true,
+  });
+  expect(withdrawn.status).toBe('WITHDRAWN');
+  expect(await count()).toEqual({ count: 0 });
+  // Share again, then end the registration: an ended registration does not count.
+  await shares().command({
+    ...command,
+    commandId: randomUUID(),
+    expectedVersion: withdrawn.version,
+  });
+  expect(await count()).toEqual({ count: 1 });
+  await participants().command({
+    action: 'withdraw',
+    commandId: randomUUID(),
+    registrationId: reg.id,
+    reason: 'Synthetic independent programme departure',
+    acknowledged: true,
+  });
+  expect(await count()).toEqual({ count: 0 });
+});
+test('programme count drops when the private source is withdrawn, and never opens the request', async () => {
+  const { req, command } = await scenario();
+  await shares().command(command);
+  expect(
+    await shares('alice').sharedCount({ workspaceId: programmeWorkspace, programmeId }),
+  ).toEqual({ count: 1 });
+  await revokeSyntheticCustomerRequest(f.owner, {
+    requestId: req.id,
+    reason: 'Synthetic original source permission withdrawal',
+  });
+  expect(
+    await shares('alice').sharedCount({ workspaceId: programmeWorkspace, programmeId }),
+  ).toEqual({ count: 0 });
+  await expect(
+    raw('alice', 'SELECT customer.programme_shared_objective_count($1,$2)', [
+      programmeWorkspace,
+      randomUUID(),
+    ]),
+  ).rejects.toThrow();
+});
+test('installer adds the count function to a database that has only the first mission-share file', async () => {
+  await f.owner.query('DROP FUNCTION customer.programme_shared_objective_count(uuid,uuid)');
+  await f.owner.query(
+    "DELETE FROM customer_mission_share_migrations.applied WHERE name='0002_programme_shared_objective_count.sql'",
+  );
+  const first = (await f.owner.query('SELECT name FROM customer_mission_share_migrations.applied'))
+    .rows;
+  expect(first.map((r) => r.name)).toEqual(['0001_participant_mission_summaries.sql']);
+  await migrateCustomerMissionShares(f.owner);
+  const after = (
+    await f.owner.query('SELECT name FROM customer_mission_share_migrations.applied ORDER BY name')
+  ).rows;
+  expect(after.map((r) => r.name)).toEqual([
+    '0001_participant_mission_summaries.sql',
+    '0002_programme_shared_objective_count.sql',
+  ]);
+  const acl = (
+    await f.owner.query(
+      "SELECT has_function_privilege('corridra_runtime','customer.programme_shared_objective_count(uuid,uuid)','EXECUTE') runtime,has_function_privilege('corridra_auth','customer.programme_shared_objective_count(uuid,uuid)','EXECUTE') auth,has_function_privilege('public','customer.programme_shared_objective_count(uuid,uuid)','EXECUTE') pub",
+    )
+  ).rows[0];
+  expect(acl).toEqual({ runtime: true, auth: false, pub: false });
+  // The first file is unchanged on disk: a changed receipt hash fails closed.
+  await f.owner.query(
+    "UPDATE customer_mission_share_migrations.applied SET sha256=repeat('0',64) WHERE name LIKE '0001%'",
+  );
+  try {
+    await expect(migrateCustomerMissionShares(f.owner)).rejects.toThrow('history mismatch');
+  } finally {
+    const { createHash } = await import('node:crypto');
+    const { readFileSync } = await import('node:fs');
+    const sql = readFileSync(
+      'packages/db/customer-mission-share-migrations/0001_participant_mission_summaries.sql',
+      'utf8',
+    );
+    await f.owner.query(
+      "UPDATE customer_mission_share_migrations.applied SET sha256=$1 WHERE name LIKE '0001%'",
+      [createHash('sha256').update(sql).digest('hex')],
+    );
+  }
+  await migrateCustomerMissionShares(f.owner);
+});

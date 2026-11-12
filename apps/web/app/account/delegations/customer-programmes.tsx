@@ -13,6 +13,7 @@ import { ProgrammeRoom } from './programme-room';
 import { SubTabs } from '../../../components/ux/sub-tabs';
 import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { useFormDraft } from '../../../lib/ux/use-form-draft';
+import { ProgrammeSharedObjectiveCount } from './programme-shared-objective-count';
 const ProgrammeParticipants = lazy(() =>
   import('./programme-participants').then((module) => ({ default: module.ProgrammeParticipants })),
 );
@@ -787,24 +788,36 @@ function ScopedProgrammes({
                       </Suspense>
                     ) : null,
                     plan:
-                      participantsEnabled && coordinationEnabled ? (
-                        <Suspense
-                          fallback={
-                            <p role="status">
-                              {' '}
-                              {realCustomerInput()
-                                ? 'Loading coordination tools…'
-                                : 'Loading sample coordination tools…'}{' '}
-                            </p>
-                          }
-                        >
-                          <ProgrammeCoordination
-                            subject={subject}
-                            issuer={issuer}
-                            workspaceId={workspaceId}
-                            programmeId={p.id}
-                          />
-                        </Suspense>
+                      participantsEnabled && (coordinationEnabled || missionSharesEnabled) ? (
+                        <>
+                          {missionSharesEnabled && (
+                            <ProgrammeSharedObjectiveCount
+                              subject={subject}
+                              issuer={issuer}
+                              workspaceId={workspaceId}
+                              programmeId={p.id}
+                            />
+                          )}
+                          {coordinationEnabled && (
+                            <Suspense
+                              fallback={
+                                <p role="status">
+                                  {' '}
+                                  {realCustomerInput()
+                                    ? 'Loading coordination tools…'
+                                    : 'Loading sample coordination tools…'}{' '}
+                                </p>
+                              }
+                            >
+                              <ProgrammeCoordination
+                                subject={subject}
+                                issuer={issuer}
+                                workspaceId={workspaceId}
+                                programmeId={p.id}
+                              />
+                            </Suspense>
+                          )}
+                        </>
                       ) : null,
                     terms:
                       participantsEnabled && termsEnabled ? (

@@ -95,4 +95,22 @@ export class CustomerMissionShareService extends CustomerSessionBoundary {
       issuer,
     );
   }
+  /** How many delegates of one programme currently share an objective summary. One integer, owners and admins only. */
+  async sharedCount(input: unknown, subject?: string, issuer?: string) {
+    const v = z.object({ workspaceId: z.uuid(), programmeId: z.uuid() }).strict().parse(input);
+    return this.transaction(
+      async (db) => ({
+        count: Number(
+          (
+            await db.query('SELECT customer.programme_shared_objective_count($1,$2) AS result', [
+              v.workspaceId,
+              v.programmeId,
+            ])
+          ).rows[0].result,
+        ),
+      }),
+      subject,
+      issuer,
+    );
+  }
 }
