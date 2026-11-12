@@ -137,6 +137,32 @@ test.describe('P8 the Search control in the top bar', () => {
       ).toBeLessThanOrEqual(0);
     }
   });
+  test('R2-6 the account and help buttons stay inside the header and the window, rail open and collapsed', async ({
+    page,
+  }) => {
+    await open(page);
+    const header = page.locator('header.ux-app-header');
+    for (const width of [1024, 1280]) {
+      await page.setViewportSize({ width, height: 900 });
+      for (const collapsed of [false, true]) {
+        const frame = page.locator('.ux-leftnav-frame');
+        if ((await frame.getAttribute('data-collapsed')) !== String(collapsed))
+          await page.locator('.ux-leftnav-collapse').click();
+        await expect(frame).toHaveAttribute('data-collapsed', String(collapsed));
+        const bar = (await header.boundingBox())!;
+        for (const name of ['Account menu', 'Help and accessibility']) {
+          const box = (await header.getByRole('button', { name }).boundingBox())!;
+          const where = `${name} at ${width}, rail ${collapsed ? 'collapsed' : 'open'}`;
+          expect(box.x, where).toBeGreaterThanOrEqual(0);
+          expect(box.x + box.width, where).toBeLessThanOrEqual(bar.x + bar.width + 0.5);
+          expect(box.x + box.width, where).toBeLessThanOrEqual(width);
+          // Tools that wrap or overflow drop out of the fixed-height header.
+          expect(box.y, where).toBeGreaterThanOrEqual(bar.y - 0.5);
+          expect(box.y + box.height, where).toBeLessThanOrEqual(bar.y + bar.height + 0.5);
+        }
+      }
+    }
+  });
   test('it is one button: no input and no second combobox in the header', async ({ page }) => {
     await open(page);
     const header = page.locator('header.ux-app-header');
@@ -350,19 +376,40 @@ test.describe('states that are not "no match"', () => {
   });
   test('R1 typing again drops the answer to the older search', async ({ page }) => {
     await open(page);
-    await serve(page, async (url) => {
-      if (url.searchParams.get('q') === 'madr') {
-        await new Promise((resolve) => setTimeout(resolve, 700));
-        return answer({ missions: [{ id: missionId(1), label: 'Old Answer Co', detail: '' }] });
+    let releaseOld: () => void = () => undefined;
+    const oldGate = new Promise<void>((resolve) => (releaseOld = resolve));
+    let oldDone: () => void = () => undefined;
+    const oldAnswered = new Promise<void>((resolve) => (oldDone = resolve));
+    const asked: string[] = [];
+    await page.route('**/api/workspace/search?*', async (route) => {
+      const q = new URL(route.request().url()).searchParams.get('q') ?? '';
+      asked.push(q);
+      if (q === 'madr') {
+        await oldGate;
+        // The page has abandoned this request; answering it is the stale answer arriving late.
+        await route
+          .fulfill({
+            json: answer({ missions: [{ id: missionId(1), label: 'Old Answer Co', detail: '' }] }),
+          })
+          .catch(() => undefined);
+        oldDone();
+        return;
       }
-      return answer({ missions: [{ id: missionId(2), label: 'New Answer Co', detail: '' }] });
+      await route.fulfill({
+        json: answer({ missions: [{ id: missionId(2), label: 'New Answer Co', detail: '' }] }),
+      });
     });
     await type(page, 'madr');
-    await page.waitForTimeout(300);
+    await expect.poll(() => asked).toContain('madr');
     await field(page).fill('madri');
     await expect(palette(page).getByRole('option', { name: /New Answer Co/ })).toBeVisible();
-    await page.waitForTimeout(900);
+    releaseOld();
+    await oldAnswered;
+    await page.evaluate(
+      () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+    );
     await expect(palette(page).getByRole('option', { name: /Old Answer Co/ })).toHaveCount(0);
+    await expect(palette(page).getByRole('option', { name: /New Answer Co/ })).toBeVisible();
   });
 });
 
@@ -518,7 +565,7 @@ test.describe('P9 keyboard and announcements', () => {
     await expect(field(page)).not.toHaveAttribute('aria-activedescendant', /.+/);
     await expect(field(page)).toHaveAttribute('aria-autocomplete', 'list');
   });
-  test('typing quickly makes at most one announcement per pause, and the count is spoken', async ({
+  test('typing quickly makes exactly one announcement, the settled count, and never says Searching', async ({
     page,
   }) => {
     await open(page);
@@ -538,8 +585,44 @@ test.describe('P9 keyboard and announcements', () => {
     const changes = await page.evaluate(
       () => (window as unknown as { __changes: string[] }).__changes,
     );
-    expect(changes.length).toBeLessThanOrEqual(2);
-    expect(changes.at(-1)).toBe('2 results');
+    // Without the settle delay "Searching" would be spoken first, and the sequence would be two long.
+    expect(changes.filter(Boolean)).toEqual(['2 results']);
+  });
+  test('the status node shows the settled message only after the settle delay', async ({
+    page,
+  }) => {
+    await open(page);
+    await serve(page, () =>
+      answer({
+        missions: [{ id: missionId(1), label: 'Madrid Textiles', detail: 'Sell · Spain' }],
+      }),
+    );
+    await page.keyboard.press('Control+k');
+    await expect(palette(page)).toBeVisible();
+    const status = palette(page).locator('[role="status"]');
+    await expect(status).toHaveText('');
+    await page.evaluate(() => {
+      const times: { shown?: number; spoken?: number } = {};
+      (window as unknown as { __times: typeof times }).__times = times;
+      const dialog = document.querySelector('dialog.ux-palette')!;
+      new MutationObserver(() => {
+        const now = performance.now();
+        if (times.shown === undefined && dialog.querySelector('[role="option"]')) times.shown = now;
+        if (
+          times.spoken === undefined &&
+          dialog.querySelector('[role="status"]')?.textContent === '1 result'
+        )
+          times.spoken = now;
+      }).observe(dialog, { childList: true, characterData: true, subtree: true });
+    });
+    await field(page).fill('madrid');
+    await expect(palette(page).getByRole('option', { name: /Madrid Textiles/ })).toBeVisible();
+    // The visible summary already says it; the screen reader line follows once the message has stayed the same.
+    await expect(status).toHaveText('1 result', { timeout: 3000 });
+    const times = await page.evaluate(
+      () => (window as unknown as { __times: { shown: number; spoken: number } }).__times,
+    );
+    expect(times.spoken - times.shown).toBeGreaterThanOrEqual(450);
   });
   test('Tab cycles the scopes and stays in the field; Escape closes, resets and returns focus', async ({
     page,
