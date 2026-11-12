@@ -4,7 +4,7 @@ Document status: CURRENT.
 
 Sibling of [staff command palette search](command-palette-search.md), which is the pattern this follows. Amends [navigation system v1](../navigation-v1.md) rule 5 in one respect only (section 1). Sensitive: yes, because a new authenticated route reads customer-owned data under the customer's own session. No migration, no schema change, no new SQL function, no new service in `packages/**`, no new dependency, no new switch, no environment variable. The D gates, payments, outreach and AI stay closed, and the search neither triggers, enables nor reads any of them.
 
-Build state: the pure client modules (pages, facts, status words), the route and its core are built and tested, including a test against a real database for the Requests scope (Companies are tested with counting services only). The dialog is not built yet. Nothing here is claimed enabled, live or verified. Production switch values are owner-reported and not observed.
+Build state: the route and its core, the pure client modules and the dialog are built. The tests listed in section 13 are written; the real-database test is written and runs in CI. Nothing here is claimed enabled, live or verified. Production switch values are owner-reported and not observed.
 
 ## 1. Owner direction and what it changes
 
@@ -66,12 +66,12 @@ Status codes:
 | 409  | The subject or issuer header does not match the live session (the boundary refuses before any read).                                  |
 | 413  | Body over 8 KB.                                                                                                                       |
 | 415  | Content type is not JSON.                                                                                                             |
-| 500  | `{ error: 'The request could not be completed', correlationId }` for any other first-read failure.                                    |
-| 503  | The route is unavailable, or every requested scope is unavailable.                                                                    |
+| 500  | `{ error: 'The request could not be completed', correlationId }` for any other failure, and for a service refusal whose status is not 400, 401, 403, 409, 413, 415 or 503.                                    |
+| 503  | The route is unavailable, every requested scope is unavailable, or the process is already running its limit of searches (`Search is busy, try again in a moment`, with `Retry-After: 2`). The dialog shows all three as its one whole-route state.                                                                    |
 
-A DomainError of 400, 401, 403 (any) or 409 from a service is returned for the whole request and stops the remaining scopes and lookups. Per scope: a DomainError 503 or SQLSTATE `42P01`, `3F000`, `42883` is `unavailable`; raw SQLSTATE `42501` is `denied`; the archived-workspace refusal is `archived` for Requests (Companies still answer). A scope whose switch is off is `unavailable` with zero calls to its service. Every answer, errors included, carries `Cache-Control: no-store`, `Referrer-Policy: no-referrer`, `X-Content-Type-Options: nosniff` and `X-Corridra-Request-ID`. The route is registered in `apps/web/next.config.ts` with its own rule.
+A DomainError of 400, 401, 403 (any) or 409 from a service is returned for the whole request and stops the remaining scopes and lookups. Per scope: a DomainError 503 or SQLSTATE `42P01`, `3F000`, `42883` is `unavailable`; raw SQLSTATE `42501` is `denied`; the archived-workspace refusal is `archived` for Requests (Companies still answer). A scope whose switch is off is `unavailable` with zero calls to its service. A refusal shows its own words and code only for the statuses in the table; any other status is the generic 500. Every answer of the route handler, errors included, carries `Cache-Control: no-store`, `Referrer-Policy: no-referrer`, `X-Content-Type-Options: nosniff` and `X-Corridra-Request-ID`. The route is registered in `apps/web/next.config.ts` with its own rule.
 
-Subject and issuer headers are passed through exactly as `/api/customer-requests` passes them. They are rejection-only: they can make the boundary refuse, never grant.
+Subject and issuer headers are passed through exactly as `/api/customer-requests` passes them. They are rejection-only: they can make the boundary refuse, never grant. The header Search sends them when the page supplied them (the server reads `customerIdentity()` once per request for the customer frame); with none it sends none, and the server answers 401. A mismatch is a 409, which the dialog shows as the access-could-not-be-confirmed state.
 
 ## 4. Bounded work (M1)
 
@@ -88,14 +88,16 @@ All limits live in one exported object, `customerSearchLimits`, in `apps/web/lib
 | `companyPageSize`  | 5     | Scopes per page (the service maximum).                                                                    |
 | `showAll`          | 5     | Hits per scope under All.                                                                                 |
 | `showScope`        | 10    | Hits for a single scope.                                                                                  |
+| `maxConcurrentSearches` | 4 | Searches one process runs at once; the next is refused with 503 and `Retry-After: 2`. The slot is given back when the search ends for any reason. |
+| `searchDeadlineMs` | 12000 | One deadline for the whole search, both scopes and every service call. A call still running at the deadline, or when the request aborts, is given up on, and its scope is partial, never ok. |
 
-Scopes run one after the other. Requests are ordered by id, not by time, so beyond the cap the unread part is arbitrary: that is why a capped read says partial and never "No match". Companies are partial when `nextAfter` remains after page 4, when any page has `unavailableScopes` above 0, or when a later page failed.
+Scopes run one after the other, under one clock. Requests are ordered by id, not by time, so beyond the cap the unread part is arbitrary: that is why a capped read says partial and never "No match". Companies are partial when `nextAfter` remains after page 4, when any page has `unavailableScopes` above 0, or when a later page failed.
 
 The query never reaches SQL, a service argument, a URL, a header or a log field. It exists only in the validated body, where it feeds `queryWords` and `rankFields`.
 
 ## 5. Failure handling and logging
 
-A first-read failure that is not a DomainError and not a known SQL state is a 500 and logs one fixed-shape line `{ event: 'customer_search_failed', correlationId }`. A failure on a later company page keeps the earlier hits, marks the scope partial and logs one line `{ event: 'customer_search_page_failed', scope, page, correlationId, errorName, errorCode }`, name at most 64 characters, code at most 32, never the message (a database may fill a message with the typed words). A lookup failure counts toward partial. SQLSTATE `42501` on a later page makes the scope denied and clears its rows. The access log, console and logger never receive the query or a result.
+A first-read failure that is not a DomainError and not a known SQL state is a 500 and logs one fixed-shape line `{ event: 'customer_search_failed', scope, correlationId, errorName, errorCode }` (scope when known; name at most 64 characters, code at most 32, otherwise left out; never the message). A failure on a later company page keeps the earlier hits, marks the scope partial and logs one line `{ event: 'customer_search_page_failed', scope, page, correlationId, errorName, errorCode }`, name at most 64 characters, code at most 32, never the message (a database may fill a message with the typed words). A lookup failure counts toward partial. SQLSTATE `42501` on a later page makes the scope denied and clears its rows. The access log, console and logger never receive the query or a result.
 
 ## 6. Privacy rules
 
@@ -118,13 +120,14 @@ Flags come from the same holders the avatar and Help menus read. Without them th
 
 ## 8. Honest incompleteness and words
 
-A scope that is partial, denied, unavailable, archived, closed, signed out or failed is never called "No match". Partial says "Partial results" and "Narrow your search". Signed out says "You are signed out" with a Sign In option that never carries the typed words. A closed account has its own block. Words are Request and Company, never Mission. English only (`lang="en"`), Title Case buttons, curly quotes on screen, no em dashes, no reviewed translation claimed. Never shown: "verified", "evidence", "enabled", "live", totals, "more exist" counts, "complete search".
+A scope that is partial, denied, unavailable, archived, closed, signed out or failed is never called "No match". Partial says "Partial results" and "Narrow your search"; a partial scope with nothing listed says "Search was partial", never "No match". Signed out says "You are signed out" with a Sign In option that never carries the typed words. A closed account has its own block. Words are Request and Company, never Mission. English only (`lang="en"`), Title Case buttons, curly quotes on screen, no em dashes, no reviewed translation claimed. Never shown: "verified", "evidence", "enabled", "live", totals, "more exist" counts, "complete search".
 
 The final copy and layout are owned by the UI specification of the UI stage; the pure words module `customer-search-status.ts` carries the strings, and `customer-search-words.test.ts` pins them.
 
 ## 9. Trigger, dialog and CSS rules
 
 - One real `<button type="button">`, first in the customer top bar tools, accessible name exactly "Search", `aria-haspopup="dialog"`, `aria-keyshortcuts="Control+K Meta+K"`, `title="Search"`, no keycap. It mounts only in the customer branch of the header, so team and contributor markup is unchanged byte for byte. It appears on every `/account/*` page, because the customer header is keyed on the path; for a signed-out visitor the route answers 401 and the dialog says so.
+- The Close button is visible at every width and there is no Esc keycap. Below 64em the trigger is a fixed 44 by 44 target with a fixed-size icon, so the five tools share one line at 768 px with 200% text (the pinned `ux-language-trigger-shape` test).
 - New classes only (`ux-csearch*`), tokens only, targets at least 44 px, text at least 12 px, no shared selector with the team header.
 - The wide-word query is in `em`: `@media (min-width: 64em)` (KI-54). Under 640 px the dialog panel is the viewport width less 1 rem with `max-width: none` (KI-53). The native `<dialog>` is opened from its own `open` state and ignores a close event that arrives after a reopen (KI-52). Ranking and highlighting are the unchanged `palette-rank.ts`, which keeps vowel signs (KI-56).
 - Ctrl K and Command K open the dialog, and are ignored when another modal `dialog[open]` exists.
@@ -139,11 +142,11 @@ Requests need the request switch and, for titles, `CORRIDRA_CUSTOMER_REQUEST_DET
 
 ## 12. Cost, rate limit and follow-ups
 
-Up to 1 plus 30 provider-checked transactions per Requests search, plus up to 4 for Companies. No latency claim is made until measured on a seeded database; the measurement goes in the work log.
+Every service call is one transaction: it reads the identity-provider session remotely, writes a short proof row and holds a pool connection. A search makes up to 1 + 30 + 4 = 35 such calls. A per-process cap of 4 concurrent searches and one 12 second deadline now bound the cost, but there is still no per-person rate limit, and the cost is unmeasured (M3): no latency or capacity claim is made until it is measured on a seeded database, and the measurement goes in the work log.
 
 Open follow-ups, not built here:
 
-- No per-person rate limit. The per-IP budget used by public intake is deliberately not reused, so heavy search from one address cannot throttle intake. A per-person budget needs a table, so it is a migration and owner-gated.
+- No per-person rate limit (the process cap and the deadline are not one). The per-IP budget used by public intake is deliberately not reused, so heavy search from one address cannot throttle intake. A per-person budget needs a table, so it is a migration and owner-gated.
 - A batch title lookup in `packages/auth` would cut the lookups; build it only if the measured cost is high.
 - The dialog stylesheet is a prefixed copy of the staff palette rules because the staff files must not change. Consolidating the two is a later task.
 - The request detail page has no withdrawn wording.
@@ -158,8 +161,8 @@ Open follow-ups, not built here:
 | P4  | Keyboard and scope helpers match the staff behaviour                                                            | `customer-search-status.test.ts`                                                          |
 | P5  | Empty, one-letter and symbol-only queries read nothing                                                          | `customer-search-route.test.ts`                                                           |
 | D1  | Signed out is 401 with at most one service call                                                                 | `customer-search-route.test.ts`, `customer-search-route-depth.test.ts`                    |
-| D2  | Cross-tenant and header mismatch; extra ids in the body rejected; B finds nothing of A                          | `customer-search-route-depth.test.ts`, `customer-search-database.test.ts`                 |
-| D3  | Removed member finds nothing; re-admission restores; revoked not found; withdrawn shown                         | `customer-search-database.test.ts`, `customer-search-core.test.ts`                        |
+| D2  | Cross-tenant and header mismatch; extra ids in the body rejected; B finds nothing of A (Requests only; Companies are tested with counting services)                          | `customer-search-route-depth.test.ts`, `customer-search-database.test.ts`                 |
+| D3  | Removed member finds nothing; re-admission restores; revoked not found; withdrawn shown (Requests only; Companies are tested with counting services)                         | `customer-search-database.test.ts`, `customer-search-core.test.ts`                        |
 | D4  | No staff service, no SQL, no catalogue in the route or core                                                     | `customer-search-source.test.ts`                                                          |
 | D5  | Closed account is 403 with its code; archived is a Requests state                                              | `customer-search-route-depth.test.ts`                                                     |
 | D6  | Each flag off makes that scope unavailable with zero calls; all off is 503                                      | `customer-search-route-depth.test.ts`                                                     |
@@ -167,7 +170,7 @@ Open follow-ups, not built here:
 | D8  | Bad body, scope, size, origin, content type                                                                     | `customer-search-route.test.ts`                                                           |
 | D9  | The query is in no log, response or service argument                                                            | `customer-search-route-depth.test.ts`                                                     |
 | R5  | No state that is not a complete search ever says "No match"                                                     | `customer-search-status.test.ts`                                                          |
-| M1  | Bounded work                                                                                                    | `customer-search-core.test.ts`                                                            |
-| M2  | Headers on every answer                                                                                         | `customer-search-route.test.ts`, `private-api-headers.test.ts`                            |
+| M1  | Bounded work: caps, the process slots, the overall deadline and the abort signal                               | `customer-search-core.test.ts`, `customer-search-route-depth.test.ts`                                                            |
+| M2  | Headers on every answer of the route handler                                                                                         | `customer-search-route.test.ts`, `private-api-headers.test.ts`                            |
 
 The browser checks (R1 to R4, M4) belong to the UI stage and are listed in its own specification.
