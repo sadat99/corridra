@@ -13,6 +13,15 @@
 .organise-entry-head p {
   margin: 0;
 }
+/* The same heading scale as the sibling section headings (.guide-reverse h2, .guide-record h2), which are scoped to
+   their own sections and so do not reach this one. */
+.organise-entry-head h2 {
+  font-family: var(--serif);
+  font-size: var(--text-h2);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
 .organise-entry-actions {
   display: flex;
   flex-wrap: wrap;
