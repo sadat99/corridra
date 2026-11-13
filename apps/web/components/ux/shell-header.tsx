@@ -15,6 +15,7 @@ export function ShellHeader({
   accounts,
   mode,
   whatsappHref,
+  pocket = false,
 }: {
   /** CORRIDRA_UX_SHELLS_V2, read on the server. */
   shells: boolean;
@@ -26,6 +27,8 @@ export function ShellHeader({
   mode?: 'sample' | 'real';
   /** The support WhatsApp link, only when the owner has set a usable number. Signed-in headers only, never the public one. */
   whatsappHref?: string;
+  /** CORRIDRA_UX_POCKET, read on the server: the customer header adds the page title for the phone header. */
+  pocket?: boolean;
 }) {
   const pathname = usePathname();
   // A bare page (the decision card) renders no header, so nothing here can ask the server who is signed in.
@@ -39,6 +42,7 @@ export function ShellHeader({
         notifications={notifications}
         brandMark={<BrandLockup />}
         whatsappHref={whatsappHref}
+        {...(pocket ? { pocket } : {})}
       />
     );
   return <SiteHeader accounts={accounts} mode={mode} />;

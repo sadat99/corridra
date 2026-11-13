@@ -1,0 +1,223 @@
+/* Pocket (phone). The Next Move button, its list, and the short phone header that goes with it. Tokens only. Everything
+   here is inside the phone width (640 px and under, the installed app included) and keyed on the button being in the
+   page, so a wider window, a form step, a staff page and a public page are untouched. */
+.ux-pocket,
+.ux-pocket-title {
+  display: none;
+}
+@media (max-width: 640px) {
+  .ux-pocket {
+    display: block;
+    position: fixed;
+    inset-inline-end: var(--space-4);
+    /* Above the bottom tabs, however tall they are at this text size; the tabs' own height already holds the safe area.
+       Until the tabs are measured the same sum is written with the safe area for the installed app. */
+    inset-block-end: calc(
+      var(--pocket-tabs, calc(3.5rem + env(safe-area-inset-bottom, 0px))) + var(--space-4)
+    );
+    z-index: 82;
+    max-width: calc(100vw - 2 * var(--space-4));
+    transition:
+      opacity 160ms ease,
+      transform 160ms ease;
+  }
+  /* Slides away while the page scrolls down and when the page is at its end, comes back on the way up. */
+  .ux-pocket[data-hidden='true']:not(:focus-within) {
+    opacity: 0;
+    transform: translateY(1.5rem);
+    pointer-events: none;
+  }
+  .ux-pocket-dock {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-2);
+  }
+  .ux-pocket-main {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-width: 0;
+    min-height: 3.5rem;
+    padding: var(--space-2) var(--space-5);
+    border: 0;
+    border-radius: 1.75rem;
+    background: var(--brand);
+    color: var(--on-brand);
+    box-shadow: var(--shadow-2);
+    font: 600 var(--text-md) var(--font-ui);
+    line-height: 1.25;
+    text-align: center;
+    text-decoration: none;
+    /* One press can become a slide: the page must not scroll, text must not select, no callout may open. */
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .ux-pocket-main:hover,
+  .ux-pocket-main:active {
+    background: var(--brand-hover);
+  }
+  .ux-pocket-main .corridra-icon {
+    flex: none;
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+  .ux-pocket-label {
+    overflow-wrap: anywhere;
+  }
+  .ux-pocket-badge {
+    position: absolute;
+    inset-block-start: -0.25rem;
+    inset-inline-end: -0.125rem;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.3125rem;
+    border: 2px solid var(--paper);
+    border-radius: 0.625rem;
+    box-sizing: content-box;
+    background: var(--ac-navy);
+    color: var(--ac-paper);
+    font: 600 var(--text-xs) var(--font-ui);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.25rem;
+    text-align: center;
+  }
+  .ux-pocket-more {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0 var(--space-3);
+    border: 1px solid var(--border-strong);
+    border-radius: 1.375rem;
+    background: var(--surface-1);
+    color: var(--brand-deep);
+    box-shadow: var(--shadow-1);
+    font: 600 var(--text-md) var(--font-ui);
+    cursor: pointer;
+  }
+  .ux-pocket-more .corridra-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  .ux-pocket-more[aria-expanded='true'] {
+    background: var(--ac-surface-selected);
+  }
+  .ux-pocket-main:focus-visible,
+  .ux-pocket-more:focus-visible,
+  .ux-pocket-row:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .ux-pocket-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: color-mix(in srgb, var(--ink) 40%, transparent);
+  }
+  /* The list sits above the buttons, in the same end corner, the nearest row to the thumb last. */
+  .ux-pocket-panel {
+    position: absolute;
+    inset-inline-end: 0;
+    inset-block-end: calc(100% + var(--space-3));
+    display: grid;
+    gap: var(--space-2);
+    width: min(20rem, calc(100vw - 2 * var(--space-4)));
+    max-height: calc(100dvh - 12rem);
+    overflow-y: auto;
+    padding: var(--space-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface-1);
+    box-shadow: var(--shadow-3);
+    overscroll-behavior: contain;
+  }
+  .ux-pocket-why {
+    margin: 0;
+    padding: 0 var(--space-1);
+    color: var(--text-2);
+    font-size: var(--text-sm);
+  }
+  .ux-pocket-list {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .ux-pocket-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    min-height: 48px;
+    padding: 0 var(--space-4);
+    border: 1px solid var(--line);
+    border-radius: 1.5rem;
+    background: var(--ac-paper);
+    color: var(--ink);
+    font: 600 var(--text-md) var(--font-ui);
+    text-align: start;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .ux-pocket-row .corridra-icon {
+    flex: none;
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--brand);
+  }
+  /* The row under the thumb while sliding. */
+  .ux-pocket-row[data-hot='true'] {
+    border-color: var(--brand);
+    background: var(--brand);
+    color: var(--on-brand);
+  }
+  .ux-pocket-row[data-hot='true'] .corridra-icon {
+    color: var(--on-brand);
+  }
+  .ux-pocket-help .ux-menu-group {
+    display: grid;
+  }
+  .ux-pocket-back {
+    justify-content: flex-start;
+  }
+
+  /* The short phone header, only on a page that has the button: the menu, the page title, the inbox and the account.
+     Brand, Search, New Request and the language and Help menus are in the list, the tabs or the account menu. */
+  body:has(.ux-pocket) .ux-customer-header .brand,
+  body:has(.ux-pocket) .ux-customer-header .ux-csearch-trigger,
+  body:has(.ux-pocket) .ux-customer-header .ux-bar-new-narrow,
+  body:has(.ux-pocket) .ux-customer-header .ux-menu.ux-util-language,
+  body:has(.ux-pocket) .ux-customer-header .ux-menu.ux-util-help {
+    display: none;
+  }
+  /* The account menu carries language and Help below 640 px already; at 640 itself it must too. */
+  body:has(.ux-pocket) .ux-customer-header .ux-phone-only {
+    display: block;
+  }
+  body:has(.ux-pocket) .ux-customer-header .ux-pocket-title {
+    display: block;
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--ink);
+    font: 600 var(--text-lg) var(--font-ui);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  body:has(.ux-pocket) .ux-customer-header .ux-bar-tools {
+    flex: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ux-pocket {
+    transition: none;
+  }
+}
