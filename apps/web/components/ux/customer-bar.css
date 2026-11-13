@@ -157,3 +157,8 @@
 body:has(.ux-customer-header) .corner-dock:not(.header-help) {
   display: none;
 }
+
+/* Pocket (phone): the page title mirror exists only with the Pocket switch on; it is drawn by pocket-button.css. */
+.ux-pocket-title {
+  display: none;
+}

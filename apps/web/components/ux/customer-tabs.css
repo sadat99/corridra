@@ -70,6 +70,12 @@
     line-height: 16px;
     text-align: center;
   }
+  /* How much of the bottom edge the tabs take (the safe area is added by whatever sits above them). A floating control
+     such as the Pocket button reads this one property, so it sits above the tabs while they exist and drops to the
+     bottom edge on its own the day they are not in the page. */
+  .site-shell:has(.ux-customer-tabs) {
+    --shell-bottom-bar: 3.0625rem;
+  }
   /* The page must not hide behind the tabs. */
   .ux-leftnav-page:has(> .ux-customer-tabs) {
     padding-block-end: 4.5rem;

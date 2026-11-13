@@ -88,10 +88,12 @@ const uxFlags = [
   'CORRIDRA_UX_BOOKS',
   'CORRIDRA_UX_MOVE_RECORDS',
   'CORRIDRA_UX_FRONT_DOORS',
+  'CORRIDRA_UX_POCKET',
   'CORRIDRA_UX_OPERATOR_URLS',
   'CORRIDRA_NOTIFICATIONS_V2',
   'CORRIDRA_PULSE_ENABLED',
   'CORRIDRA_PROGRAMME_PAGES',
+  'CORRIDRA_DELEGATION_FIRST_RUN',
   'CORRIDRA_TEAM_INVITES',
   'CORRIDRA_ROUTE_PACK_FORM',
   'CORRIDRA_STATUS_LINK',
@@ -239,6 +241,8 @@ async function localSetup(): Promise<Local> {
       .join(' '),
   };
   // Every customer module switch is on; the real billing, real invoicing and real-use gates stay off.
+  // QA_SWEEP_POCKET=off sweeps the same build with the Pocket switch unset, to compare its off state with main.
+  if (process.env.QA_SWEEP_POCKET === 'off') delete env.CORRIDRA_UX_POCKET;
   for (const key of Object.keys(process.env))
     if (/^CORRIDRA_(CUSTOMER_.*_ENABLED)$/.test(key)) delete env[key];
   for (const name of [
