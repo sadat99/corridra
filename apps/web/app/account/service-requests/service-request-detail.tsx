@@ -1,4 +1,5 @@
 'use client';
+import '../page-budget.css';
 import { CommercialArrangementSummary } from '../../../components/commercial-arrangement';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerLabelAllowed } from '@corridra/domain/customer-input-mode';
@@ -246,7 +247,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
     !!detail && detail.canAct && !stale && (detail.actions as string[]).includes(a);
   const quote = detail?.quote ?? null;
   return (
-    <section aria-label="Help request">
+    <section aria-label="Help request" className="account-compact">
       <p>
         <a className="text-link" href={'/account/service-requests/' + workspaceId}>
           All help requests
@@ -273,7 +274,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
       )}
       {state === 'ready' && detail && label && (
         <>
-          <div className="detail-card">
+          <div className="detail-card account-inline">
             <h2>{detail.service.title}</h2>
             <p>
               <span className="ux-status" data-tone={label.tone}>
@@ -302,7 +303,7 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
           {message && <p role={message === 'Saved.' ? 'status' : 'alert'}>{message}</p>}
 
           <h3>What you asked for</h3>
-          <dl>
+          <dl className="account-facts account-wide">
             <dt>Need</dt>
             <dd style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{detail.need.text}</dd>
             <dt>Place</dt>
@@ -701,31 +702,35 @@ function ScopedDetail({ subject, issuer, workspaceId, requestId }: Props) {
             <p>You can read this request. Only an owner or admin of the workspace can act on it.</p>
           )}
 
-          <section aria-label="Timeline">
-            <h3>What has happened</h3>
-            <ol>
-              {detail.timeline.map((e) => (
-                <li key={e.seq}>
-                  <strong>
-                    {kindText[e.kind] ?? e.kind}
-                    {e.quoteVersion ? ' (version ' + e.quoteVersion + ')' : ''}
-                  </strong>{' '}
-                  · {e.by} · <time dateTime={e.at}>{dateTimeText(e.at)}</time>
-                  {e.note && (
-                    <>
-                      <br />
-                      <span style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-                        {e.note}
-                      </span>
-                    </>
-                  )}
-                </li>
-              ))}
-            </ol>
-          </section>
-          <button type="button" className="text-link" disabled={busy} onClick={() => void load()}>
-            Reload This Request
-          </button>
+          <div className="account-row">
+            <section aria-label="Timeline">
+              <details className="account-fold">
+                <summary>What has happened ({detail.timeline.length})</summary>
+                <ol>
+                  {detail.timeline.map((e) => (
+                    <li key={e.seq}>
+                      <strong>
+                        {kindText[e.kind] ?? e.kind}
+                        {e.quoteVersion ? ' (version ' + e.quoteVersion + ')' : ''}
+                      </strong>{' '}
+                      · {e.by} · <time dateTime={e.at}>{dateTimeText(e.at)}</time>
+                      {e.note && (
+                        <>
+                          <br />
+                          <span style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+                            {e.note}
+                          </span>
+                        </>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              </details>
+            </section>
+            <button type="button" className="text-link" disabled={busy} onClick={() => void load()}>
+              Reload This Request
+            </button>
+          </div>
         </>
       )}
     </section>

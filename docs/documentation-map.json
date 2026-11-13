@@ -1499,6 +1499,11 @@
       "use": "Exact hashed ledger at 8165ee3d (the PR 468 merge; byte-identical to the S40 records 8 merge bd3b425), before merges 458 to 468, install run 43337124311 and the 12 to 13 Nov owner decisions were recorded; preserves the S40 records 8 Resume bullets; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-g3-records-1-2026-11-13.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at 04d65799 (the PR 483 merge; unchanged since fb0cab8), before merge window 1, PRs 482 and 483, install runs 43423006437 and 43423566950 and the 13 Nov owner decisions were recorded; preserves the S40 records 9 Resume bullets; use the current ledger for live state."
+    },
+    {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"

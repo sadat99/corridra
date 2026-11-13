@@ -1,0 +1,78 @@
+/* Page budget for the programme page (owner, 13 Nov 2026): a desktop page fits one screen and a phone page two,
+   with every disclosure closed. Layout only: the title block and the stage timeline sit side by side at desktop,
+   the checklist is a closed disclosure with its count, and the spacing between blocks tightens. */
+.programme-room .programme-checklist-card > summary {
+  cursor: pointer;
+  list-style: none;
+  min-height: 2.75rem;
+}
+.programme-room .programme-checklist-card > summary > .programme-card-title {
+  border-bottom: 0;
+}
+.programme-room .programme-checklist-card[open] > summary > .programme-card-title {
+  border-bottom: 1px solid var(--line);
+}
+@media (min-width: 64rem) {
+  article.room.programme-room > .room-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) max-content;
+    column-gap: var(--space-5);
+    align-items: start;
+  }
+  article.room.programme-room > .room-head > .room-stage {
+    grid-column: 2;
+    grid-row: 1 / span 5;
+  }
+  article.room.programme-room > .room-head > :not(.room-stage) {
+    grid-column: 1;
+  }
+  /* "Show Archived Programmes" sits on the tab row, at its far end, instead of a row of its own. */
+  .programme-page-tabs {
+    position: relative;
+  }
+  .programme-page .programme-page-tabs > .ux-subtabs-panel > p:has(> button[aria-pressed]) {
+    position: absolute;
+    top: 0;
+    inset-inline-end: 0;
+    display: flex;
+    align-items: center;
+    height: 2.75rem;
+    margin: 0;
+  }
+  .programme-page
+    .programme-page-tabs
+    > .ux-subtabs-panel
+    > p:has(> button[aria-pressed])
+    > button {
+    padding-block: 0;
+  }
+  article.room.programme-room {
+    gap: var(--space-1);
+  }
+  .programme-room > section.programme-overview:not([hidden]) {
+    gap: var(--space-2);
+  }
+  /* The attention card sits beside the glance; the dates and details control takes the space under it. */
+  .programme-room > section.programme-overview > .programme-attention-card {
+    grid-row: 1;
+  }
+  .programme-room > section.programme-overview > :not(h4):not(.programme-card) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  article.room.programme-room .programme-glance-card .programme-tiles {
+    padding-block-start: var(--space-2);
+  }
+  article.room.programme-room .programme-glance-card .programme-card-foot {
+    padding-block: var(--space-2);
+  }
+  article.room.programme-room .programme-card-title {
+    padding-block: var(--space-2);
+  }
+  .ux-customer section.delivery-view.programme-page .programme-page-foot > button.text-link {
+    min-height: 2.25rem;
+  }
+  article.room.programme-room > .room-next {
+    padding-block: var(--space-1);
+  }
+}

@@ -4,6 +4,7 @@ import { customerOrganisationProfilesEnabled } from '@corridra/auth/customer-org
 import { redirect, notFound } from 'next/navigation';
 import { z } from 'zod';
 import { readNeonAuthConfig } from '@corridra/config';
+import { SubTabs } from '../../../../components/ux/sub-tabs';
 import { WorkspaceShell } from '../../../../components/workspace-shell';
 import { CustomerShell } from '../../../../components/customer-shell';
 import { neonAuth } from '../../../../lib/neon-auth';
@@ -47,9 +48,32 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
     <CustomerShell tab="work" eyebrow="REQUESTS" title="Company profile">
-      <OrganisationProfile subject={session.data.user.id} issuer={issuer} workspaceId={id.data} />
-      {customerOrganisationLinksEnabled() && (
-        <CompanyLink subject={session.data.user.id} issuer={issuer} workspaceId={id.data} />
+      {customerOrganisationLinksEnabled() ? (
+        <SubTabs
+          label="Company profile sections"
+          tabs={[
+            {
+              id: 'profile',
+              label: realCustomerInput() ? 'Company profile' : 'Sample company profile',
+              panel: (
+                <OrganisationProfile
+                  subject={session.data.user.id}
+                  issuer={issuer}
+                  workspaceId={id.data}
+                />
+              ),
+            },
+            {
+              id: 'link',
+              label: 'Company link',
+              panel: (
+                <CompanyLink subject={session.data.user.id} issuer={issuer} workspaceId={id.data} />
+              ),
+            },
+          ]}
+        />
+      ) : (
+        <OrganisationProfile subject={session.data.user.id} issuer={issuer} workspaceId={id.data} />
       )}
     </CustomerShell>
   );

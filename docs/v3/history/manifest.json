@@ -461,6 +461,14 @@
       "bytes": 11151,
       "sha256": "9023ff3027ee44359db6f6ad0f27d5a84e0bcd71d2d3ea27d087c1ec30623581",
       "meaning": "Exact active ledger at 8165ee3d (the PR 468 merge, 13 Nov), byte-identical (cmp) to the S40 records 8 merge bd3b425 and unchanged through PRs 458 to 468, before those merges, install run 43337124311 and the 12 to 13 Nov owner decisions were recorded, including the S40 records 8 Takeover, the PR 451 merge, installs, installed counts, owner words, lanes and follow-up bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "04d657995c1383e2297b49d1cc347933b86c45f2",
+      "archive": "docs/v3/history/ledger-before-g3-records-1-2026-11-13.md",
+      "bytes": 10660,
+      "sha256": "dd90031c6b929bbec832ef8b491a4dfeae2e873a5785744b3f6adb3a95766256",
+      "meaning": "Exact active ledger at 04d65799 (the PR 483 merge, 13 Nov), unchanged since fb0cab8 (S40 records 9 follow-up) through PRs 469 to 483, before Guardian 3 recorded merge window 1 (477 to 480, 482, 483), install runs 43423006437 and 43423566950 and the 13 Nov owner decisions, including the S40 records 9 Takeover, merges 458 to 468, installs, installed counts, owner words, lanes and follow-up bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
