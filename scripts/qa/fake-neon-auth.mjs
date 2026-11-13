@@ -5,26 +5,29 @@
 //
 // It adds no sign-in code to the app: the app still asks the Neon Auth SDK for the session and the SDK
 // still checks the answer. It refuses to start unless the process is plainly a local synthetic test.
-const names = [
-  'QA_FAKE_NEON_AUTH_BASE_URL',
-  'QA_FAKE_NEON_AUTH_TOKEN',
-  'QA_FAKE_NEON_AUTH_SUBJECT',
-  'QA_FAKE_NEON_AUTH_EMAIL',
-];
-const missing = names.filter((name) => !process.env[name]);
+// One user comes from the three single-user variables; several come from QA_FAKE_NEON_AUTH_USERS, a JSON list of
+// { token, subject, email, name } made up for this run (used by scripts/qa/signed-in-sweep.ts). Both can be set.
+const users = [];
+if (process.env.QA_FAKE_NEON_AUTH_TOKEN)
+  users.push({
+    token: process.env.QA_FAKE_NEON_AUTH_TOKEN,
+    subject: process.env.QA_FAKE_NEON_AUTH_SUBJECT,
+    email: process.env.QA_FAKE_NEON_AUTH_EMAIL,
+    name: 'Synthetic Customer',
+  });
+if (process.env.QA_FAKE_NEON_AUTH_USERS)
+  users.push(...JSON.parse(process.env.QA_FAKE_NEON_AUTH_USERS));
 if (
-  missing.length ||
+  !process.env.QA_FAKE_NEON_AUTH_BASE_URL ||
+  !users.length ||
+  users.some((u) => !u.subject || !u.email || String(u.token).length < 32) ||
   process.env.DATA_ENVIRONMENT !== 'synthetic' ||
   process.env.VERCEL_ENV ||
-  !String(process.env.APP_ORIGIN).startsWith('http://127.0.0.1:') ||
-  process.env.QA_FAKE_NEON_AUTH_TOKEN.length < 32
+  !String(process.env.APP_ORIGIN).startsWith('http://127.0.0.1:')
 )
   throw new Error('The test sign-in stand-in only runs in a local synthetic test.');
 
 const base = new URL(process.env.QA_FAKE_NEON_AUTH_BASE_URL);
-const token = process.env.QA_FAKE_NEON_AUTH_TOKEN;
-const subject = process.env.QA_FAKE_NEON_AUTH_SUBJECT;
-const email = process.env.QA_FAKE_NEON_AUTH_EMAIL;
 const cookieName = '__Secure-neon-auth.session_token';
 const realFetch = globalThis.fetch;
 
@@ -33,10 +36,10 @@ globalThis.fetch = async function standIn(input, init) {
   if (url.host !== base.host) return realFetch(input, init);
   if (url.pathname !== `${base.pathname}/get-session`) return new Response('{}', { status: 404 });
   const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : {}));
-  const signedIn = (headers.get('cookie') ?? '')
-    .split(';')
-    .some((part) => part.trim() === `${cookieName}=${token}`);
-  if (!signedIn) return Response.json(null);
+  const parts = (headers.get('cookie') ?? '').split(';').map((part) => part.trim());
+  const user = users.find((u) => parts.includes(`${cookieName}=${u.token}`));
+  if (!user) return Response.json(null);
+  const { token, subject, email } = user;
   const now = new Date().toISOString();
   const later = new Date(Date.now() + 60 * 60 * 1000).toISOString();
   return Response.json({
@@ -52,7 +55,7 @@ globalThis.fetch = async function standIn(input, init) {
       id: subject,
       email,
       emailVerified: true,
-      name: 'Synthetic Customer',
+      name: user.name ?? 'Synthetic Customer',
       createdAt: now,
       updatedAt: now,
     },
