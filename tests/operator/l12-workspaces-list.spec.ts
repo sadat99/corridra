@@ -3,7 +3,6 @@ import { build } from 'esbuild';
 import { createServer, type Server } from 'node:http';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import AxeBuilder from '@axe-core/playwright';
 
 // L12 (signed-in sweep, owner screenshots of 13 November 2026): the Workspaces list with archived workspaces. Harness
 // copied from revamp-g4-workspace-lifecycle.spec.ts; each case fails on the code before the L12 fixes.
