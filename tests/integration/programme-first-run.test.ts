@@ -529,6 +529,15 @@ describe('the room keeps what it had', () => {
       /\{decisions \? \(\s+<Decisions[\s\S]+?\) : participantsEnabled \? \(\s+<NextStep live=\{live\}/,
     );
   });
+  it('styles the action of a later decision as a plain link on the navy card, not as a light box', () => {
+    // The global button look is a white box; without this rule its words are white on white (seen in the sweep shot).
+    const css = read('apps/web/app/account/delegations/programme-room.css');
+    const rule =
+      css.match(/\.room-decisions-then > li > \.text-link \{([^}]*)\}/g)?.join('\n') ?? '';
+    expect(rule).toMatch(/background:\s*none;/);
+    expect(rule).toMatch(/border:\s*0;/);
+    expect(room).toContain('className="text-link"');
+  });
   it('keeps the vertical stage timeline in the header in both states (owner lock, 12 Nov)', () => {
     expect(room).toContain('<div className="room-stage room-stage--timeline">');
     expect(room.match(/<Stage counts=/g)).toHaveLength(1);
