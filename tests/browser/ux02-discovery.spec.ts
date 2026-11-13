@@ -249,7 +249,8 @@ test('saved request receipt uses the shared cards, copies safely, checks replies
   for (const width of [1440, 768, 390]) {
     await page.setViewportSize({ width, height: 1000 });
     await expect(saved).toHaveCSS('padding', '24px');
-    await expect(saved.getByRole('heading', { level: 2 })).toHaveCSS('font-size', '20px');
+    // A card title is 18 px on the UI/UX.v3 type scale (the retired 20 px step is gone).
+    await expect(saved.getByRole('heading', { level: 2 })).toHaveCSS('font-size', '18px');
     const input = (await saved.getByLabel('Private receipt code', { exact: true }).boundingBox())!;
     expect(input.height).toBeGreaterThanOrEqual(48);
     const savedBox = (await saved.boundingBox())!;
