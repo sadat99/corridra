@@ -531,6 +531,9 @@ test('a failed publish keeps the draft, and a second press never creates the pro
   expect((await draftKeys(page)).text).toContain(createdId);
   // Even after a reload the next press continues from the saved programme.
   await page.reload();
+  // The programme now exists, so the room opens on its own programmes; the kept draft waits in the new programme tab.
+  await expect(page.getByRole('tab').first()).toHaveText('Programmes');
+  await page.getByRole('tab', { name: /^New .*Programme$/ }).click();
   await expect(run.getByRole('heading', { name: 'Step 3 of 3: Fee and places' })).toBeVisible();
   await expect(
     run.getByText('Your programme is saved in this workspace. Its page is not public yet.'),
@@ -640,7 +643,8 @@ test('on a phone the first run fits, keeps its preview one tap away and is acces
   await fold.locator('summary').click();
   await fillToLastStep(page);
   await fits('step 3');
-  // Every action label in the first run is written in Title Case.
+  // Every action label in the first run is written in Title Case (from a clean session, so it opens on step 1).
+  await page.evaluate(() => window.sessionStorage.clear());
   await page.goto(`${origin}/?room=1&first=1&pages=1&tpl=1`);
   const labels: string[] = [];
   const collect = async () =>
@@ -650,6 +654,17 @@ test('on a phone the first run fits, keeps its preview one tap away and is acces
         .evaluateAll((nodes) => nodes.map((node) => (node.textContent ?? '').trim()))),
     );
   await collect();
+  await run.getByLabel('Programme name').fill('Synthetic machinery delegation');
+  await run.getByLabel('Where').fill('Guangzhou, China');
+  await run.getByRole('button', { name: 'Continue' }).click();
+  await collect();
+  await run.getByLabel('When').fill('12 to 16 March 2027');
+  await run
+    .getByLabel('Who should apply')
+    .fill('Synthetic importers and distributors of farm machinery.');
+  await run
+    .getByLabel('What it is for')
+    .fill('Synthetic five day visit to machinery makers for importers.');
   await run.getByRole('button', { name: 'Continue' }).click();
   await collect();
   expect(new Set(labels)).toEqual(
@@ -658,6 +673,8 @@ test('on a phone the first run fits, keeps its preview one tap away and is acces
       'Back',
       'Start Again',
       'Preview Your Page',
+      'More Page Lines',
+      'Publish the Page',
       'Create Without a Public Page',
     ]),
   );

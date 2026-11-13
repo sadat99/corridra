@@ -13,23 +13,29 @@ import {
   type Boarding,
   type ProgrammeGlanceSource,
 } from '../../apps/web/lib/programme-room';
-import {
-  copyFrom,
-  emptyDraft,
-  isoDay,
-  lineProblem,
-  lineStep,
-  problem,
-  type Draft,
-  type FirstRunLine,
-} from '../../apps/web/app/account/delegations/programme-page';
-import {
-  firstRunMoreLines,
-  firstRunPageDraft,
-  firstRunPurpose,
-  firstRunStepLines,
-  type FirstRunKept,
-} from '../../apps/web/app/account/delegations/first-run';
+// The two page modules are .tsx files and the root typecheck has no jsx setting, so they load the way the other
+// integration tests load components (a dynamic import). Their shapes are restated here, narrowly, for the tests.
+type FirstRunLine =
+  | 'title'
+  | 'organiser'
+  | 'summary'
+  | 'destination'
+  | 'dates'
+  | 'focus'
+  | 'audience'
+  | 'eligibility'
+  | 'capacity'
+  | 'fee'
+  | 'closes';
+type Draft = Record<string, string | string[]>;
+type FirstRunKept = Record<string, string | number | boolean | undefined>;
+const load = async (path: string) => await import(/* @vite-ignore */ `../../apps/web/${path}`);
+const { copyFrom, emptyDraft, isoDay, lineProblem, lineStep, problem } = await load(
+  'app/account/delegations/programme-page.tsx',
+);
+const { firstRunMoreLines, firstRunPageDraft, firstRunPurpose, firstRunStepLines } = await load(
+  'app/account/delegations/first-run.tsx',
+);
 
 // ADR-084 slice S0: the guided first run and the decisions-first overview, as pure rules and as source facts.
 // The browser behaviour (session-only draft, no server write before Publish, the order of the commands) is in

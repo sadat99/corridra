@@ -106,9 +106,8 @@ const loadRoute = async (href: string) =>
 
 /** The address the entry action on the public trade missions page points at. */
 async function entryHref() {
-  const page = (await import(/* @vite-ignore */ '../../apps/web/app/trade-missions/page')) as {
-    default: () => unknown;
-  };
+  const file = '../../apps/web/app/trade-missions/page.tsx';
+  const page = (await import(/* @vite-ignore */ file)) as { default: () => unknown };
   const action = anchors(renderToStaticMarkup(page.default())).filter(
     (link) => link.name === 'Open Your Programmes',
   );
