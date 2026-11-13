@@ -78,7 +78,7 @@ function canSpeak() {
  * Hides the corner buttons while the page scrolls down on a wide screen, so they never sit on top of
  * what is being read, and brings them back on the way up or once scrolling stops (UX-15).
  */
-function useScrollHide(enabled: boolean) {
+export function useScrollHide(enabled: boolean) {
   const [hidden, setHidden] = useState(false);
   useEffect(() => {
     if (!enabled) return;
