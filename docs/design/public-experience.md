@@ -1,6 +1,6 @@
 # Public experience and design system
 
-Historical Part 2 design/route acceptance baseline. Later UX10X changes extend this presentation under the [UX architecture contract](../ux10x/architecture.md) and [complete UX handoff](../ux10x/master-handoff.md). Use [the current plan](../implementation/current-plan.md) for what is implemented and still unverified; old statements about absent forms or client state describe only Part 2.
+LEGACY look (ivory and forest, pre-AC/1), superseded by [UI/UX.v3](../agents/ui-direction.md) since 13 November 2026 wherever it differs. Historical Part 2 design/route acceptance baseline. Later UX10X changes extend this presentation under the [UX architecture contract](../ux10x/architecture.md) and [complete UX handoff](../ux10x/master-handoff.md). Use [the current plan](../implementation/current-plan.md) for what is implemented and still unverified; old statements about absent forms or client state describe only Part 2.
 
 Part 02 uses the supplied public-experience document and positioning constitution. Their source and working copies remain unchanged. Published copy keeps the approved job framing and evidence semantics, adapts operational promises to clearly identified planned capabilities, and removes em dashes. No invented results, contacts, testimonials or coverage appear.
 
