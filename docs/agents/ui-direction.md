@@ -28,7 +28,7 @@ This section is the index a builder reads first. Each row is a decision in force
 
 Open slots, to be filled by the lane that owns them, never by a guess:
 
-- **Footer phone fit (L14), decided 13 Nov 2026 under the owner's "finish everything" authority.** On a phone (390 px wide) the Option B footer with Buy Abroad open fits within one 844 px screen (measured 817 px). Group order and content, Buy Abroad as the largest tile, 52 px group rows and 44 px targets stay; only spacing and type scale tighten, in the phone block of `components/site-footer.css`. In a signed-in workspace the quiet footer sits at the bottom of the window on a short page (the shell is a column of at least one window height and the footer takes the free space, never `position: fixed`) with no scrollbar added. Proof: `tests/browser/footer-option-b.spec.ts`.
+- **Footer phone fit (L14), decided 13 Nov 2026 under the owner's "finish everything" authority.** On a phone (390 px wide) the Option B footer with Buy Abroad open fits within one 844 px screen (measured 819 px). Group order and content, Buy Abroad as the largest tile, 52 px group rows and 44 px targets stay; only spacing and type scale tighten, in the phone block of `components/site-footer.css`. In a signed-in workspace the quiet footer sits at the bottom of the window on a short page (the shell is a column of at least one window height and the footer takes the free space, never `position: fixed`) with no scrollbar added. Proof: `tests/browser/footer-option-b.spec.ts`.
 - **Sidebar journey counts (L16).** Pending. Journey counts stay out of the sidebar until the extra read is measured and the owner decision is recorded here.
 
 ### Superseded, do not follow

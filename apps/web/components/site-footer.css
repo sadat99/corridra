@@ -379,7 +379,7 @@
   .guide-footer-promise {
     max-width: none;
     margin: var(--space-2) 0 var(--space-3);
-    font-size: 1.75rem;
+    font-size: var(--text-h1);
     line-height: 1.1;
   }
   .guide-footer-actions {
