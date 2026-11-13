@@ -3,7 +3,8 @@ import { createHash, randomUUID } from 'node:crypto';
 import { candidateWorld, iso, refused, type CandidateWorld } from './supply-support';
 import { rawContext } from './support';
 import { configureSyntheticIntake } from '../../packages/missions/src/bootstrap';
-import { supplyWords } from '../../packages/domain/src/supply-sources';
+import { supplyFileColumns, supplyWords } from '../../packages/domain/src/supply-sources';
+import { parseSupplyCandidateFile } from '../../packages/delivery/src/supply-candidate-file';
 
 // ADR-082 slice S3: source registry, candidates (manual and file), review, match and the company do-not-contact record. The
 // world is the S2 world with the module open. Controls other than `module` are opened by the table owner, as the plan says.
@@ -1281,6 +1282,41 @@ describe('file import (D6)', () => {
       ),
     ).toBeTruthy();
     expect(await refused(upload('operator', [row(2)], { digest: 'short' }))).toBeTruthy();
+  });
+
+  test('a 100 row file with a quoted newline lands, and one over-long cell rejects only its own row', async () => {
+    const header = supplyFileColumns.join(',');
+    const line = (
+      n: number,
+      name = `Quoted Trading ${n} Ltd`,
+      locator = `https://registry.example/${n}`,
+    ) => `"${name}",DE,quoted${n}.example,HRB ${n},small,importer,${iso(-day)},${locator}`;
+    const lines = Array.from({ length: 100 }, (_, i) => line(i + 2));
+    // A quoted newline inside one cell, so every later row starts on a physical line past the row count.
+    lines[0] = line(2, 'Quoted\r\nNewline Trading Ltd');
+    lines[1] = line(3, 'Over Long Trading Ltd', `https://registry.example/${'x'.repeat(520)}`);
+    const parsed = await parseSupplyCandidateFile(
+      Buffer.from([header, ...lines].join('\r\n') + '\r\n'),
+      'CSV',
+    );
+    expect(parsed.rows).toHaveLength(100);
+    expect(parsed.rows.at(-1)!.row).toBeGreaterThan(101);
+    const done = await upload('operator', parsed.rows);
+    expect(done).toMatchObject({ accepted: 99, rejected: 1, duplicate: false });
+    const results = (
+      await w.owner.query('SELECT row_results FROM app.supply_import_batch WHERE id=$1', [
+        done.batchId,
+      ])
+    ).rows[0].row_results as { row: number; code: string }[];
+    expect(results.filter((r) => r.code !== 'ok')).toEqual([
+      { row: parsed.rows[1].row, code: 'too_long' },
+    ]);
+    expect(
+      await count('supply_candidate', 'import_batch_id=$1 AND company_name=$2', [
+        done.batchId,
+        'Quoted\r\nNewline Trading Ltd',
+      ]),
+    ).toBe(1);
   });
 
   test('a source that is not active refuses the whole file and writes no batch', async () => {
