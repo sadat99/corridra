@@ -263,7 +263,7 @@ function ScopedFirstRun({
       setBusy('');
       setError(message);
     };
-    const json = { 'content-type': 'application/json', ...headersRef.current };
+    const headers = { 'content-type': 'application/json', ...headersRef.current };
     try {
       let programmeId = now.programmeId;
       if (!programmeId) {
@@ -278,7 +278,7 @@ function ScopedFirstRun({
           method: 'POST',
           cache: 'no-store',
           credentials: 'same-origin',
-          headers: json,
+          headers,
           body: JSON.stringify({
             commandId: now.createId,
             workspaceId,
@@ -308,7 +308,7 @@ function ScopedFirstRun({
           method: 'POST',
           cache: 'no-store',
           credentials: 'same-origin',
-          headers: json,
+          headers,
           body: JSON.stringify({
             action: 'apply',
             input: {
