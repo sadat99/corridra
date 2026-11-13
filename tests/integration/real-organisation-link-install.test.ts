@@ -13,6 +13,7 @@ import {
   openLadder,
   syntheticOptions,
 } from './organisation-link-support';
+import { between, rightsSql } from './source-rights-support';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateCustomerWorkspaceLifecycle } from '../../packages/db/src/customer-workspace-lifecycle-migrate';
 import { migrateCustomerAccountLifecycle } from '../../packages/db/src/customer-account-lifecycle-migrate';
@@ -32,6 +33,7 @@ vi.hoisted(() => {
   (globalThis as { __disputeHide?: boolean }).__disputeHide = true;
   (globalThis as { __contextHide?: boolean }).__contextHide = true;
   (globalThis as { __commissioningHide?: boolean }).__commissioningHide = true;
+  (globalThis as { __sourceRightsHide?: boolean }).__sourceRightsHide = true;
 });
 vi.mock('node:fs/promises', async (importOriginal) => {
   const real = await importOriginal<typeof import('node:fs/promises')>();
@@ -49,6 +51,7 @@ vi.mock('node:fs/promises', async (importOriginal) => {
       __disputeHide?: boolean;
       __contextHide?: boolean;
       __commissioningHide?: boolean;
+      __sourceRightsHide?: boolean;
     };
     if (!String(path).includes('customer-real-use-migrations')) return names;
     return names.filter(
@@ -68,7 +71,9 @@ vi.mock('node:fs/promises', async (importOriginal) => {
         // Real-use 0019 (offer context) is applied after 0018 and has its own gate: the last test of this file opens it.
         !(gate.__contextHide && String(n).startsWith('0019_')) &&
         // Real-use 0020 (offer commissioning term) is applied after 0019 and has its own gate: the last test of this file opens it.
-        !(gate.__commissioningHide && String(n).startsWith('0020_')),
+        !(gate.__commissioningHide && String(n).startsWith('0020_')) &&
+        // Real-use 0021 (organisation source rights and takedown) is applied after 0020 and has its own gate: the last test opens it.
+        !(gate.__sourceRightsHide && String(n).startsWith('0021_')),
     );
   }) as typeof real.readdir;
   return { ...real, readdir, default: { ...real, readdir } };
@@ -779,4 +784,163 @@ test('offer commissioning term (real-use 0020) is the twentieth file, changes no
   await migrateCustomerRealUse(w.f.owner);
   expect(await appliedNames()).toHaveLength(20);
   expect(await tableHashes()).toEqual(tables);
+});
+
+// Real-use 0021 (ADR-079 slice B, built as ADR-082 S1). The guard names the eight functions it relies on and the three tables of 0013.
+const rightsSignatures = () =>
+  [...between(rightsSql(), 'fingerprint').matchAll(/\('([^']+)','[0-9a-f]{64}','[^']*'\)/g)].map(
+    (m) => m[1]!,
+  );
+const rightsObjects = async () =>
+  (
+    await q(
+      `SELECT to_regclass('customer_private.organisation_source_rights')::text t,
+        to_regprocedure('app.ingest_public_organisation_with_rights(uuid,uuid,text,text,text,text,text,text,text)')::text f`,
+    )
+  ).rows[0] as { t: string | null; f: string | null };
+
+test('source rights (real-use 0021) refuses a drifted prerequisite and creates nothing', async () => {
+  expect(await appliedNames()).toHaveLength(20);
+  const signatures = rightsSignatures();
+  expect(signatures).toHaveLength(8);
+  (globalThis as { __sourceRightsHide?: boolean }).__sourceRightsHide = false;
+  const refuse = async (message: string) => {
+    await expect(migrateCustomerRealUse(w.f.owner)).rejects.toThrow(message);
+    expect(await appliedNames()).toHaveLength(20);
+    expect(await rightsObjects()).toEqual({ t: null, f: null });
+  };
+  try {
+    for (const signature of signatures) {
+      const original = (await q('SELECT pg_get_functiondef($1::regprocedure) d', [signature]))
+        .rows[0].d as string;
+      const at = original.lastIndexOf('$function$');
+      await q(original.slice(0, at) + '\n-- drift\n' + original.slice(at));
+      try {
+        await refuse('Real-use prerequisite function differs: ' + name(signature));
+      } finally {
+        await q(original);
+      }
+    }
+    // A changed grant on a relied-on function is refused too.
+    await q(
+      'GRANT EXECUTE ON FUNCTION customer_private.organisation_link_name_key(text) TO corridra_runtime',
+    );
+    try {
+      await refuse(
+        'Real-use prerequisite function differs: customer_private.organisation_link_name_key',
+      );
+    } finally {
+      await q(
+        'REVOKE EXECUTE ON FUNCTION customer_private.organisation_link_name_key(text) FROM corridra_runtime',
+      );
+    }
+    // A missing function and a missing table are refused with their own messages.
+    await q(
+      'ALTER FUNCTION customer_private.organisation_link_head(uuid) RENAME TO organisation_link_head_moved',
+    );
+    try {
+      await refuse(
+        'Real-use prerequisite function differs: customer_private.organisation_link_head',
+      );
+    } finally {
+      await q(
+        'ALTER FUNCTION customer_private.organisation_link_head_moved(uuid) RENAME TO organisation_link_head',
+      );
+    }
+    await q(
+      'ALTER TABLE customer_private.organisation_suppression RENAME TO organisation_suppression_moved',
+    );
+    try {
+      await refuse('Real-use prerequisite table is missing');
+    } finally {
+      await q(
+        'ALTER TABLE customer_private.organisation_suppression_moved RENAME TO organisation_suppression',
+      );
+    }
+  } finally {
+    (globalThis as { __sourceRightsHide?: boolean }).__sourceRightsHide = true;
+  }
+  const live = (await q(between(rightsSql(), 'fingerprint-query') + ' ORDER BY 1')).rows;
+  expect(live.map((r) => [r.signature, r.fp, r.grantees])).toEqual(
+    [...between(rightsSql(), 'fingerprint').matchAll(/\('([^']+)','([0-9a-f]{64})','([^']*)'\)/g)]
+      .map((m) => [m[1], m[2], m[3]])
+      .sort((a, b) => (a[0]! < b[0]! ? -1 : 1)),
+  );
+});
+
+test('organisation source rights and takedown (real-use 0021) is the twenty-first file, changes no existing table and is repeatable', async () => {
+  expect(await appliedNames()).toHaveLength(20);
+  // A populated database: real and sample organisations, identifiers, claims with events, ledger rows, receipts, profile
+  // revisions, and one existing takedown and one existing redaction made as table owner.
+  await w.suppress('OR3');
+  await w.redact(w.claim.CR1!);
+  const tables = await tableHashes();
+  const functions = await functionHashes();
+  const populated = (
+    await q(
+      `SELECT (SELECT count(*) FROM app.organisation WHERE synthetic)::int syn,(SELECT count(*) FROM app.organisation WHERE NOT synthetic)::int real,
+        (SELECT count(*) FROM app.public_identifier)::int ids,(SELECT count(*) FROM customer_private.organisation_link_claim)::int claims,
+        (SELECT count(*) FROM customer_private.organisation_link_event)::int events,(SELECT count(*) FROM customer_private.organisation_link)::int ledger,
+        (SELECT count(*) FROM customer_private.organisation_link_request)::int receipts,(SELECT count(*) FROM customer_private.organisation_profile_revision)::int revisions,
+        (SELECT count(*) FROM customer_private.organisation_suppression)::int suppressions,(SELECT count(*) FROM customer_private.organisation_link_redaction)::int redactions`,
+    )
+  ).rows[0];
+  for (const [key, value] of Object.entries(populated))
+    expect(Number(value), key).toBeGreaterThan(0);
+  const cross = {
+    LX: await w.crossHash(w.ws.WR3!),
+    LX2: await w.crossHash(w.ws.WR4!),
+    LX3: await w.crossHash(w.ws.WS3!),
+  };
+  (globalThis as { __sourceRightsHide?: boolean }).__sourceRightsHide = false;
+  await migrateCustomerRealUse(w.f.owner);
+  const applied = await appliedNames();
+  expect(applied).toHaveLength(21);
+  expect(applied[20]).toMatch(/^0021_organisation_source_rights/);
+  expect(await reportLine()).toBe('customer_real_use_migrations: 21 applied');
+  const after = await tableHashes();
+  for (const [table, hash] of Object.entries(tables)) expect(after[table], table).toBe(hash);
+  expect(Object.keys(after).filter((k) => !(k in tables))).toEqual([
+    'customer_private.organisation_source_rights',
+  ]);
+  expect(after['customer_private.organisation_source_rights']).toBe(md5Empty);
+  expect({
+    LX: await w.crossHash(w.ws.WR3!),
+    LX2: await w.crossHash(w.ws.WR4!),
+    LX3: await w.crossHash(w.ws.WS3!),
+  }).toEqual(cross);
+  // Every function that existed has the same body, settings, security mode and grants, so the 8-argument ingest function is untouched.
+  const next = await functionHashes();
+  for (const [signature, hash] of functions) expect(next.get(signature), signature).toBe(hash);
+  expect([...next.keys()].filter((signature) => !functions.has(signature)).sort()).toEqual(
+    [
+      'app.adjust_organisation_source_rights(uuid,jsonb)',
+      'app.customer_organisation_link_closed_claims(uuid)',
+      'app.customer_organisation_link_redact(uuid,jsonb)',
+      'app.customer_organisation_suppress(uuid,jsonb)',
+      'app.ingest_public_organisation_with_rights(uuid,uuid,text,text,text,text,text,text,text)',
+      'app.organisation_source_rights_read(uuid)',
+      'customer_private.organisation_catalogue_domain_event(uuid,uuid,text,uuid,integer,text)',
+      'customer_private.organisation_catalogue_visible(uuid)',
+      'customer_private.organisation_rights_authority(uuid)',
+      'customer_private.organisation_rights_defaults(text)',
+      'customer_private.organisation_source_rights_json(customer_private.organisation_source_rights)',
+    ].sort(),
+  );
+  // The installer found the file with no registry or workflow change, and the migrator took its hash.
+  expect(
+    (
+      await q('SELECT sha256 FROM customer_real_use_migrations.applied WHERE name=$1', [
+        applied[20],
+      ])
+    ).rows[0].sha256,
+  ).toBe((await import('node:crypto')).createHash('sha256').update(rightsSql()).digest('hex'));
+  await migrateCustomerRealUse(w.f.owner);
+  expect(await appliedNames()).toHaveLength(21);
+  expect(await tableHashes()).toEqual(after);
+  expect([...(await functionHashes())]).toEqual([...next]);
+  // The refusing installers run with the new file applied.
+  await migrateCustomerWorkspaceLifecycle(w.f.owner);
+  await migrateCustomerAccountLifecycle(w.f.owner);
+  await migrateCustomerRequestWithdrawal(w.f.owner);
 });
