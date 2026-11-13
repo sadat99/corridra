@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { RequestContext } from '@corridra/db';
 import { currency } from '@corridra/domain/opportunities';
 import { locale, timeZone } from '@corridra/domain/geography';
-import type { RouteConfiguration } from '@corridra/domain/corridors';
+import { sourcingProfile, type RouteConfiguration } from '@corridra/domain/corridors';
 import type { CorridorService } from './corridors';
 
 // createRoutePack (commercial readiness program, 5.2, CQ-66). Takes guided form input and builds the
@@ -25,12 +25,14 @@ export const guidedRoutePack = z
     currencies: z.array(currency).max(30).default([]),
     timeZones: z.array(timeZone).max(30).default([]),
     manualChannel: z.boolean().default(false),
+    // ADR-083 S1. Optional and carried unchanged into the reviewed pack; absent means the pack is exactly as before.
+    sourcing: sourcingProfile.optional(),
   })
   .strict();
 export type GuidedRoutePack = z.input<typeof guidedRoutePack>;
 
 export function routePackConfiguration(v: z.infer<typeof guidedRoutePack>): RouteConfiguration {
-  return {
+  const configuration: RouteConfiguration = {
     missionTypes: v.missionTypes,
     requiredCapabilities: [],
     languages: v.languages,
@@ -50,6 +52,7 @@ export function routePackConfiguration(v: z.infer<typeof guidedRoutePack>): Rout
     aiPolicyRef: null,
     pricingRef: null,
   };
+  return v.sourcing ? { ...configuration, sourcing: v.sourcing } : configuration;
 }
 
 export function createRoutePack(corridors: CorridorService, ctx: RequestContext, input: unknown) {
