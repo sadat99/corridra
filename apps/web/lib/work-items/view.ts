@@ -78,5 +78,7 @@ export function workStatusWords(item: WorkItem): string {
   if (item.kind === 'request')
     return item.status ? customerStatusLabel(item.status, true).label : '';
   if (item.kind === 'service_request') return statusLabel[item.status as ServiceStatus]?.text ?? '';
+  // A programme has no status of its own. The cell says so instead of staying empty (owner, 13 Nov 2026).
+  if (item.kind === 'programme') return 'No status yet';
   return '';
 }

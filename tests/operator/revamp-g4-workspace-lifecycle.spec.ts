@@ -418,8 +418,9 @@ test('G4-08 the Undo line goes after ten seconds, the Archived filter holds the 
     'This workspace is archived. New private requests, invitations and registrations are paused. Existing records stay readable.';
   await expect(page.getByText(banner, { exact: true })).toBeVisible();
   await expect(page.locator('body')).not.toContainText(/read-only/i);
-  // No New Request for an archived workspace, and the reason is in words.
-  await expect(row).toContainText('New requests are closed while this workspace is archived.');
+  // No New Request for an archived workspace. The reason is said once, in the banner above: the owner decided on
+  // 13 November 2026 (screenshots relayed by the orchestrator, task L12) that the row must not repeat it.
+  await expect(row).not.toContainText('New requests are closed while this workspace is archived.');
   expect(await menuNames(page, owner)).not.toContain('New Request');
   await page.getByRole('menuitem', { name: 'Restore Workspace' }).click();
   const dialog = page.getByRole('dialog', { name: 'Restore ' + owner + '?' });

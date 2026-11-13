@@ -3,12 +3,12 @@
 //
 // Local (default): builds a throwaway database, installs every optional module, seeds "QA Test" identities with
 // passwords and session tokens made up for this run, starts the production build with the test sign-in stand-in and sweeps it.
-//   pnpm build && pnpm exec tsx scripts/qa/signed-in-sweep.ts [--roles customer,staff] [--out work/signed-in-sweep]
+//   pnpm build && pnpm exec tsx scripts/qa/signed-in-sweep.ts [--roles customer,staff] [--out work/signed-in-sweep] [--shots]
 // Needs the local PostgreSQL of docs/runbooks/development.md (pnpm db:local, or the native route in KI-15) and
 // PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH when the browser is not Playwright's own.
 //
 // Remote (later, against a deployment that has real test accounts): nothing is seeded or started.
-//   QA_SWEEP_IDENTITIES=path/to/identities.json pnpm exec tsx scripts/qa/signed-in-sweep.ts --base https://example
+//   QA_SWEEP_IDENTITIES=path/to/identities.json pnpm exec tsx scripts/qa/signed-in-sweep.ts --target https://example
 // identities.json is kept outside the repository and holds per role { "cookies": [...] } or, for staff,
 // { "staff": { "email", "password", "totpSecret" } }, plus optional "ids" for dynamic routes. Nothing is created, so
 // run it only against accounts that already exist. It is read-only: it opens pages and clicks nothing that writes.
@@ -22,7 +22,7 @@ import { chromium, type Browser, type BrowserContext, type Page } from '@playwri
 import { Pool } from '../../packages/db/src/index';
 import { seedSyntheticWorkspace } from '../../packages/auth/src/bootstrap';
 import { configureSyntheticIntake } from '../../packages/missions/src/bootstrap';
-import { installLocalModules, pinLocalCustomerIssuer } from './local-install';
+import { installLocalModules, openLocalControls, pinLocalCustomerIssuer } from './local-install';
 import { measurePage, targetsBroken } from './ux-measure';
 import { totp } from '../../tests/operator/operator-signin';
 import {
@@ -41,7 +41,7 @@ const arg = (name: string) => {
   return at >= 0 ? process.argv[at + 1] : undefined;
 };
 const roles = (arg('roles')?.split(',') ?? [...sweepRoles]) as SweepRole[];
-const remoteBase = arg('base');
+const remoteBase = arg('target');
 const stamp = new Date().toISOString().replace(/[:.]/g, '-');
 const outDir = resolve(arg('out') ?? 'work/signed-in-sweep', stamp);
 mkdirSync(outDir, { recursive: true });
@@ -90,7 +90,10 @@ const host = new URL(origin).hostname;
 
 if (remoteBase) {
   if (!/^https:\/\//.test(remoteBase)) throw new Error('A remote base must be https.');
-  if (!process.env.QA_SWEEP_IDENTITIES) throw new Error('Remote mode needs QA_SWEEP_IDENTITIES.');
+  if (!process.env.QA_SWEEP_IDENTITIES)
+    throw new Error(
+      '--target needs QA_SWEEP_IDENTITIES, the test-account file kept outside the repository.',
+    );
 } else if (process.env.DATA_ENVIRONMENT === 'real' || process.env.VERCEL_ENV === 'production') {
   throw new Error('The local sweep refuses a real or production environment.');
 }
@@ -119,6 +122,7 @@ async function api(
   body?: unknown,
   subject?: string,
 ) {
+  await resetLimits();
   const response = await fetch(origin + path, {
     method,
     headers: {
@@ -139,6 +143,15 @@ async function api(
   }
   return { status: response.status, json: json as Record<string, unknown> | null, text };
 }
+
+// The sign-in and request budgets are counters in the local throwaway database. A sweep opens hundreds of pages from one
+// address, so it clears the counters (never raises a limit) before each page. Never done in remote mode.
+let resetPool: Pool | undefined;
+const resetLimits = async () => {
+  if (!resetPool) return;
+  await resetPool.query('DELETE FROM app.intake_rate_limit');
+  await resetPool.query('DELETE FROM identity."rateLimit"');
+};
 
 type Local = { identities: Identity[]; staffSecretFile: string };
 async function localSetup(): Promise<Local> {
@@ -161,6 +174,8 @@ async function localSetup(): Promise<Local> {
     database: 'corridra_sweep',
   });
   await installLocalModules(db, (line) => note(`  ${line}`));
+  await openLocalControls(db);
+  resetPool = db;
   const staffPassword = randomBytes(24).toString('base64url');
   const seed = await seedSyntheticWorkspace(db, {
     email: 'qa-test-staff@example.invalid',
@@ -169,7 +184,6 @@ async function localSetup(): Promise<Local> {
   });
   await configureSyntheticIntake(db, seed.tenantId, seed.principalId);
   await pinLocalCustomerIssuer(db, customerAuthBase);
-  await db.end();
 
   const customers = (['customer', 'organiser', 'participant', 'seller'] as const).map((role) => ({
     role,
@@ -378,6 +392,45 @@ async function seedCustomers(identities: Identity[]) {
       }
     }
   }
+  // The customer also holds a programme and a paid-service request about it, so the Your work list has a programme row
+  // and a delegation service row to draw (task L12, owner screenshots of 13 November).
+  const customer = by('customer');
+  if (customer.ids.workspaceId) {
+    const own = await api(customer, 'POST', '/api/customer-programmes', {
+      commandId: randomUUID(),
+      workspaceId: customer.ids.workspaceId,
+      name: 'Synthetic QA Test buyer delegation',
+      reportingPurpose: 'Synthetic QA Test delegation for the signed-in sweep.',
+      acknowledged: true,
+    });
+    seeded['programme:customer'] = { status: own.status, body: own.json ?? own.text.slice(0, 160) };
+    const programmeId = own.json?.id as string | undefined;
+    const key = resetPool
+      ? (
+          await resetPool.query(
+            'SELECT service_key FROM customer_private.service_catalogue_version WHERE active LIMIT 1',
+          )
+        ).rows[0]?.service_key
+      : undefined;
+    if (programmeId && key) {
+      const asked = await api(customer, 'POST', '/api/customer-service-requests', {
+        action: 'create',
+        commandId: randomUUID(),
+        workspaceId: customer.ids.workspaceId,
+        contextKind: 'programme',
+        contextRef: programmeId,
+        serviceKey: key,
+        need: 'Synthetic QA Test need for local support during the delegation visit.',
+        preferredFrom: null,
+        preferredTo: null,
+        region: 'Dhaka',
+      });
+      seeded['service-request'] = {
+        status: asked.status,
+        body: asked.json ?? asked.text.slice(0, 160),
+      };
+    }
+  }
   writeFileSync(resolve(outDir, 'seed.json'), JSON.stringify(seeded, null, 2));
   for (const [key, value] of Object.entries(seeded)) {
     const status = (value as { status: number }).status;
@@ -449,6 +502,7 @@ async function visit(
   route: string,
   links: Set<string>,
 ) {
+  await resetLimits();
   const page: Page = await context.newPage();
   const problems: string[] = [];
   const failed: string[] = [];
@@ -486,6 +540,11 @@ async function visit(
   const actual = looksGated(new URL(page.url()).pathname, route, status, text)
     ? 'gated'
     : 'content';
+  if (process.argv.includes('--shots')) {
+    const name = `${who.role}-${width}-${route.replace(/[^a-z0-9]+/gi, '_').slice(0, 80)}.png`;
+    mkdirSync(resolve(outDir, 'shots'), { recursive: true });
+    await page.screenshot({ path: resolve(outDir, 'shots', name), fullPage: true });
+  }
   let measure: unknown;
   if (actual === 'content') {
     const m = await measurePage(page, route, status).catch(() => undefined);
@@ -584,6 +643,7 @@ try {
     }
   } finally {
     await browser.close();
+    await resetPool?.end();
   }
   const bad = rows.filter((r) => r.problems.length);
   const lines = [

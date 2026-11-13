@@ -4,6 +4,9 @@
   padding: 0;
   border: 0;
   min-width: 0;
+  /* As wide as its segments, never stretched across a flex or grid parent (owner screenshot, 13 Nov 2026). */
+  width: fit-content;
+  max-width: 100%;
 }
 .ux-segments legend {
   padding: 0;

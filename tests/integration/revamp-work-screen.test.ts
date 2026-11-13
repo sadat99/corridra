@@ -270,7 +270,8 @@ describe('rows', () => {
   });
   it('use no status word that does not already exist', () => {
     expect(workStatusWords(item(1))).toBe('Draft');
-    expect(workStatusWords(item(2, { kind: 'programme', status: '' }))).toBe('');
+    // Owner decision of 13 November 2026 (screenshots, task L12): a programme row says it has no status, not nothing.
+    expect(workStatusWords(item(2, { kind: 'programme', status: '' }))).toBe('No status yet');
     expect(workStatusWords(item(3, { kind: 'request', status: 'CLOSED' }))).toBe('Finished');
   });
   it('show ten rows and one button for more', async () => {

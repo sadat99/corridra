@@ -100,7 +100,12 @@ function WorkspaceLifecycleCard({
     <div className="ux-draft-notice" role="group" aria-label={`Workspace notices for ${name}`}>
       <p>
         <strong>{name}</strong>
-        {state.archived && <span className="ux-badge"> Archived</span>}
+        {state.archived && (
+          <>
+            {' '}
+            <span className="ux-badge">Archived</span>
+          </>
+        )}
       </p>
       {state.archived && <p role="status">{archivedBannerWords}</p>}
       {offer && state.role === 'owner' && offer.byYou && (

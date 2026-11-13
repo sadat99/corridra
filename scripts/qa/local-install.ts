@@ -51,6 +51,8 @@ import {
   migrateCustomerWorkspaceLifecycle,
   refreshCustomerWorkspaceLifecycle,
 } from '../../packages/db/src/customer-workspace-lifecycle-migrate';
+import { configureReplyReview } from '../../packages/delivery/src/reply-review-configuration';
+import { configureRecipientRevision } from '../../packages/delivery/src/recipient-revision-configuration';
 import { pinCustomerAuthority } from '../../packages/auth/src/customer-authority-pin';
 
 // Installs every optional module that scripts/install-customer-modules.ts installs, in the same order, into a LOCAL
@@ -127,4 +129,19 @@ export async function pinLocalCustomerIssuer(pool: DatabasePool, issuer: string)
   } = await pool.query("SELECT id FROM identity.principal WHERE kind='service' LIMIT 1");
   if (!service) throw new Error('No service principal to record customer events under');
   return pinCustomerAuthority(pool, { issuer, executorId: service.id });
+}
+
+/**
+ * Opens the reply review and answer correction controls in the local throwaway database (ADR-081 needs them). The
+ * controls that depend on the real-use configuration (workspace and account lifecycle, notifications, move records)
+ * stay closed: initialising that configuration would open real use, which no sweep may do. Mission mail, real billing,
+ * real invoicing and the network controls are never opened either.
+ */
+export async function openLocalControls(pool: DatabasePool) {
+  const reason = 'Local signed-in sweep opens this control in a throwaway database';
+  const opened: Record<string, (pool: DatabasePool, input: unknown) => Promise<unknown>> = {
+    'answer correction': configureRecipientRevision,
+    'reply review': configureReplyReview,
+  };
+  for (const configure of Object.values(opened)) await configure(pool, { enabled: true, reason });
 }
