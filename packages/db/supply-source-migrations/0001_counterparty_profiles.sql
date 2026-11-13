@@ -91,6 +91,7 @@ BEGIN
  OR NOT NEW.fields ?& ARRAY['productCategory','counterpartyTypes','candidatesWanted','deadline'] THEN
   RAISE EXCEPTION 'The profile has an unknown or missing field';
  END IF;
+ IF jsonb_typeof(NEW.fields->'deadline')<>'string' OR NEW.fields->>'deadline' !~ '^\d{4}-\d{2}-\d{2}$' THEN RAISE EXCEPTION 'The deadline must be a date'; END IF;
  IF jsonb_typeof(NEW.fields->'candidatesWanted')<>'number' OR (NEW.fields->>'candidatesWanted')::numeric NOT BETWEEN 1 AND 100 THEN
   RAISE EXCEPTION 'Candidates wanted must be 1 to 100';
  END IF;
@@ -107,10 +108,10 @@ END $$;
 CREATE TRIGGER counterparty_profile_version_guard BEFORE INSERT ON app.counterparty_profile_version
  FOR EACH ROW EXECUTE FUNCTION app.guard_counterparty_profile_version();
 
--- Append only and events (ids, version and role only: record_change keeps nothing else).
+-- Append only, and events (ids, version and role only: record_change keeps nothing else) on the profile table. app.supply_command has
+-- no event trigger (ADR-082 section 2): customer commands have no actor for record_change, and the row is itself the audit.
 CREATE TRIGGER supply_command_immutable BEFORE UPDATE OR DELETE ON app.supply_command FOR EACH ROW EXECUTE FUNCTION app.reject_rewrite();
 CREATE TRIGGER counterparty_profile_version_immutable BEFORE UPDATE OR DELETE ON app.counterparty_profile_version FOR EACH ROW EXECUTE FUNCTION app.reject_rewrite();
-CREATE TRIGGER supply_command_event AFTER INSERT ON app.supply_command FOR EACH ROW EXECUTE FUNCTION app.record_change();
 CREATE TRIGGER counterparty_profile_version_event AFTER INSERT ON app.counterparty_profile_version FOR EACH ROW EXECUTE FUNCTION app.record_change();
 
 -- Staff of the tenant read; nobody writes through the table. Synthetic and real tenants are separate policies.
@@ -154,7 +155,7 @@ BEGIN
  END IF;
  PERFORM pg_advisory_xact_lock(hashtextextended(p_tenant::text||':counterparty-profile:'||p_mission::text||':'||p_role,0));
  SELECT coalesce(max(version),0) INTO latest FROM app.counterparty_profile_version WHERE tenant_id=p_tenant AND mission_id=p_mission AND role=p_role;
- IF latest<>p_expected_version THEN RAISE EXCEPTION 'This profile changed. Reload it and try again.'; END IF;
+ IF latest IS DISTINCT FROM p_expected_version THEN RAISE EXCEPTION 'This profile changed. Reload it and try again.'; END IF;
  INSERT INTO app.counterparty_profile_version(id,tenant_id,mission_id,role,version,target_profile_id,fields,fields_digest,reason,created_by)
   VALUES(made,p_tenant,p_mission,p_role,latest+1,p_target_profile,p_fields,encode(sha256(convert_to(p_fields::text,'UTF8')),'hex'),p_reason,actor);
  answer:=jsonb_build_object('profileVersionId',made,'version',latest+1);

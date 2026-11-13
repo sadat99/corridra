@@ -133,6 +133,25 @@ describe('saving and versions', () => {
     expect(await direct({ ...goodFields(), candidatesWanted: '20' })).toBe(
       'Candidates wanted must be 1 to 100',
     );
+    expect(await direct({ ...goodFields(), deadline: 'soon' })).toBe('The deadline must be a date');
+    // A NULL expected version cannot skip the stale check.
+    const nullVersion = await refused(
+      rawContext(
+        w.runtime,
+        w.users.operator.ctx,
+        'SELECT app.save_counterparty_profile($1,$2,$3,$4,$5,NULL,$6::jsonb,$7,NULL)',
+        [
+          w.tenantA,
+          randomUUID(),
+          'a'.repeat(64),
+          w.missionId,
+          'BUYER',
+          JSON.stringify(goodFields()),
+          'Null version',
+        ],
+      ),
+    );
+    expect(nullVersion).toBe(profileWords.stale);
     expect((await stored()).length).toBe(before);
   });
 
@@ -332,7 +351,8 @@ describe('events', () => {
         /Cotton|towels|candidatesWanted|Synthetic profile/,
       );
     }
+    expect(events.rows.some((e) => e.aggregate_type === 'supply_command')).toBe(false);
     const kinds = new Set(events.rows.map((e) => e.aggregate_type));
-    expect(kinds).toEqual(new Set(['counterparty_profile_version', 'supply_command']));
+    expect(kinds).toEqual(new Set(['counterparty_profile_version']));
   });
 });
