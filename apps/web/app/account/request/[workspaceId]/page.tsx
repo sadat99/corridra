@@ -69,12 +69,12 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
   }
   return (
     <CustomerShell tab="work" eyebrow="REQUESTS" title="What do you want to achieve?">
-      <p>Workspace: {name}</p>
       <PrivateRequestIntake
         issuer={issuer}
         subject={data.user.id}
         workspaceId={id.data}
         realMode={realMode}
+        workspaceName={name}
       />
     </CustomerShell>
   );

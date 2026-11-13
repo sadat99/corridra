@@ -163,7 +163,14 @@ async function mock(
     return route.fulfill({ status: out.status ?? 200, json: out.json });
   });
 }
+// An existing profile shows a summary; the form opens only when Edit Company Profile is chosen (one form at a time).
+async function openEdit(page: Page) {
+  const edit = page.getByRole('button', { name: 'Edit Company Profile', exact: true });
+  await expect(edit.or(page.getByLabel('Company name (start with Synthetic)'))).toBeVisible();
+  if (await edit.count()) await edit.click();
+}
 async function fillRequired(page: Page, reason = 'Synthetic revised profile') {
+  await openEdit(page);
   await page.getByLabel('Reason for this change', { exact: true }).fill(reason);
   await page
     .getByLabel('I confirm these details are accurate to the best of my knowledge.')
@@ -172,6 +179,25 @@ async function fillRequired(page: Page, reason = 'Synthetic revised profile') {
 const saveButton = (page: Page) =>
   page.getByRole('button', { name: 'Save Company Profile', exact: true });
 
+test('an existing profile shows its summary and opens the form only when Edit is chosen', async ({
+  page,
+}) => {
+  const commands: Record<string, unknown>[] = [];
+  await mock(page, {
+    post: (body) => {
+      commands.push(body);
+      return { json: view({ version: 2 }) };
+    },
+  });
+  await page.goto(origin);
+  await expect(page.getByText('Self-reported, not verified')).toBeVisible();
+  await expect(page.getByRole('textbox')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Edit Company Profile', exact: true }).click();
+  await expect(page.getByLabel('Reason for this change', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Cancel Editing', exact: true }).click();
+  await expect(page.getByRole('textbox')).toHaveCount(0);
+  expect(commands).toHaveLength(0);
+});
 test('an empty workspace invites the owner to add a profile and shows the unverified boundary', async ({
   page,
 }) => {
@@ -274,6 +300,7 @@ test('a short reason stays editable without sending a rejected save', async ({ p
     },
   });
   await page.goto(origin);
+  await openEdit(page);
   const reason = page.getByLabel('Reason for this change', { exact: true });
   await reason.pressSequentially('ab');
   await page
@@ -405,6 +432,8 @@ for (const width of [320, 390, 768, 1440])
     await page.setViewportSize({ width, height: 1000 });
     await mock(page, {});
     await page.goto(origin);
+    await expect(page.getByText('Self-reported, not verified')).toBeVisible();
+    await openEdit(page);
     await expect(page.getByLabel('Company name (start with Synthetic)')).toBeVisible();
     await page.keyboard.press('Tab');
     expect(await page.evaluate(() => document.activeElement?.tagName)).toBe('INPUT');

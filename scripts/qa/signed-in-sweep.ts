@@ -651,6 +651,12 @@ async function visit(
       try {
         await tab.click({ timeout: 5000 });
         await page.waitForTimeout(250);
+        if (process.argv.includes('--shots')) {
+          const tabName = `${who.role}-${width}-${tabRoute(route, label)
+            .replace(/[^a-z0-9]+/gi, '_')
+            .slice(0, 100)}.png`;
+          await page.screenshot({ path: resolve(outDir, 'shots', tabName), fullPage: true });
+        }
         const tm = await measurePage(page, tabRoute(route, label), status, measureOptions);
         tabProblems.push(...targetsBroken(tm, judged));
         rows.push(tabRow(who, width, tabRoute(route, label), finalPath, status, tabProblems, tm));
@@ -734,6 +740,13 @@ try {
     const prepared = await localSetup();
     identities = prepared.identities;
     secretFile = prepared.staffSecretFile;
+    // --serve: keep the seeded application running and write the identities, so a layout can be tried page by page
+    // (for example with a style injected in the browser) without a new build and a full sweep each time.
+    if (process.argv.includes('--serve')) {
+      writeFileSync(resolve(outDir, 'identities.json'), JSON.stringify(identities));
+      note(`Serving; identities in ${outDir}/identities.json`);
+      await new Promise(() => undefined);
+    }
   }
   const browser = await chromium.launch(
     process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
