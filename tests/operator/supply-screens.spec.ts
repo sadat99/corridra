@@ -304,7 +304,7 @@ test.describe('candidates', () => {
   }) => {
     const w = await open(page, 'mission');
     await expect(page.getByRole('heading', { name: /^Candidates for / })).toBeVisible();
-    await expect(page.getByText('Profile version 3')).toBeVisible();
+    await expect(page.getByText('Profile version 3', { exact: true })).toBeVisible();
     await expect(
       page.getByText('1 qualified', { exact: false }).or(page.getByText('0 qualified')),
     ).toBeVisible();
