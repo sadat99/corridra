@@ -476,7 +476,7 @@ export function ProgrammeRoom({
         <h3>{name}</h3>
         <p className="room-meta">{purpose}</p>
         <div className="programme-notes">{notes}</div>
-        <div className="room-stage">
+        <div className="room-stage room-stage--timeline">
           <Stage counts={live.counts} projection={projection} onInvite={onInvite} />
         </div>
       </header>
