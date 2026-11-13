@@ -2,11 +2,11 @@
 
 ## Checks run (exact commands and results; list what was not run)
 
-## Design checklist (every visible change; contract: [docs/agents/ui-direction.md](../docs/agents/ui-direction.md))
+## Design checklist (every visible change; contract: UI/UX.v3, [docs/agents/ui-direction.md](../docs/agents/ui-direction.md))
 
 Delete this section only for a PR with no visible change, and say so.
 
-- [ ] Read "Current locked decisions" and followed "How to build a new screen"
+- [ ] Built to UI/UX.v3: read "Current locked decisions", followed "How to build a new screen", copied nothing from its "Legacy" section
 - [ ] Reused the shared shell, tokens, `CorridraIcon` and existing components (no raw colours, no CSS `text-transform` on actions, no inline type size or px spacing)
 - [ ] Screenshots at 390, 768 and 1440 px attached, page length inside the budget
 - [ ] States covered: loading, empty, error, denied, success, switch-off

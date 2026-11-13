@@ -46,6 +46,7 @@ import { migrateCustomerAccountLifecycle } from '../../packages/db/src/customer-
 import { migrateCustomerProblemReports } from '../../packages/db/src/customer-problem-report-migrate';
 import { migrateCustomerProgrammeErasure } from '../../packages/db/src/customer-programme-erasure-migrate';
 import { migrateCounterpartyChanges } from '../../packages/db/src/counterparty-change-migrate';
+import { migrateSupplySources } from '../../packages/db/src/supply-source-migrate';
 import { migrateCustomerPaymentsSimulated } from '../../packages/db/src/customer-payments-simulated-migrate';
 import {
   migrateCustomerWorkspaceLifecycle,
@@ -107,6 +108,7 @@ export const localInstallers: Installer[] = [
   ['problem reports', migrateCustomerProblemReports],
   ['programme erasure', migrateCustomerProgrammeErasure],
   ['counterparty changes', migrateCounterpartyChanges],
+  ['supply sources', migrateSupplySources],
   ['simulated payments', migrateCustomerPaymentsSimulated],
   ['view as', migrateViewAs],
 ];
