@@ -1881,7 +1881,12 @@ test('a participant sees only their own due, recorded and outstanding per curren
     registrationId: null,
   });
   expect((await status('gwen')).amounts).toEqual([]);
-  const shown = JSON.stringify(await status('finn'));
+  // Generated ids and the expiry time are random and can hold "999" by chance (KI-61), so they
+  // are left out of the scan. Every other field, including every amount, is still scanned.
+  const generated = new Set(['programmeId', 'registrationId', 'expiresAt']);
+  const shown = JSON.stringify(
+    Object.fromEntries(Object.entries(await status('finn')).filter(([key]) => !generated.has(key))),
+  );
   expect(shown).not.toMatch(/999|margin|expense|obligation|corridra/i);
   expect(Object.keys(await status('finn')).sort()).toEqual(
     [
