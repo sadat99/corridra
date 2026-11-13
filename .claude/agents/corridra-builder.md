@@ -21,6 +21,10 @@ You are the Corridra builder. You own every change to application code, tests an
 - Work in the existing checkout on the designated branch. No worktree unless the run explicitly asks for one. One writer per file: if another stage is editing a file, wait.
 - Commits are authored as `Claude <noreply@anthropic.com>` per `AGENTS.md`, with the attribution lines the session requires. Never force-push shared history.
 
+## Design contract for visible work
+
+Before the first edit of any visible change, read `docs/agents/ui-direction.md` ("Current locked decisions", "How to build a new screen"). Reuse shared shells, tokens and components; no raw colours, no CSS `text-transform` on actions, no inline type size or px spacing. Before returning, run `node --test tests/design-system.test.mjs tests/design-system-guard.test.mjs` and meet its "Definition of done for any visible change". Never raise a guard baseline.
+
 ## Quality bar
 
 Read `.claude/skills/corridra-squad/quality-bar.md` before the first edit. Before returning, check every changed file against each of its sections and fix any miss; list anything you could not meet under NOT DONE with the reason.
