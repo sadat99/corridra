@@ -312,10 +312,13 @@ export const programmePagesWords = {
   // editor's own lines and sends the existing create, template and publish commands.
   'pp.first.title': 'Set up your delegation',
   'pp.first.lead':
-    'Three short steps. Your answers stay in this browser until you press Publish. Nothing is saved to your workspace or made public before that.',
+    'Four short steps. Your answers stay in this browser until you press Publish. Nothing is saved to your workspace or made public before that.',
   'pp.first.step.name': 'Name and place',
   'pp.first.step.dates': 'Dates and people',
   'pp.first.step.fee': 'Fee and places',
+  'pp.first.step.review': 'Review and publish',
+  'pp.first.review.edit': 'Edit',
+  'pp.first.review.editName': 'Edit {name}',
   'pp.first.name.label': 'Programme name',
   'pp.first.template.label': 'Start from a template (optional)',
   'pp.first.template.none': 'No template',

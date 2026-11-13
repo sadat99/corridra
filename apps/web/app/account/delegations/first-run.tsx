@@ -62,12 +62,19 @@ export type FirstRunKept = {
   publishFor?: string;
 };
 type TemplateChoice = { id: string; version: number; name: string };
-const steps = [pp('pp.first.step.name'), pp('pp.first.step.dates'), pp('pp.first.step.fee')];
+const steps = [
+  pp('pp.first.step.name'),
+  pp('pp.first.step.dates'),
+  pp('pp.first.step.fee'),
+  pp('pp.first.step.review'),
+];
 // The lines each step asks for, in the order they are shown and judged.
 export const firstRunStepLines: readonly (readonly FirstRunLine[])[] = [
   ['title', 'destination'],
   ['dates', 'audience', 'summary'],
   ['fee', 'capacity'],
+  // The review step asks for no line of its own: it shows the others with an Edit action each, and the two ticks.
+  [],
 ];
 export const firstRunMoreLines: readonly FirstRunLine[] = [
   'organiser',
@@ -243,6 +250,7 @@ function ScopedFirstRun({
     const more = wrongIn(firstRunMoreLines);
     if (more) {
       setMoreOpen(true);
+      if (step !== 2) go(2);
       setError(more);
       return;
     }
@@ -413,12 +421,45 @@ function ScopedFirstRun({
   // The sample mark offered in the name box is not a name yet, so the preview does not show it as one.
   const previewName = copy.title.trim() === 'Synthetic' ? '' : copy.title;
   const previewCloses = day.test(page.closes) ? page.closes : isoDay(30);
+  // The review step: every answer of the first three steps, each group with an Edit action back to its step.
+  const reviewGroups: {
+    step: number;
+    lines: {
+      key: 'title' | 'destination' | 'dates' | 'audience' | 'summary' | 'fee' | 'capacity';
+      label: string;
+    }[];
+  }[] = [
+    {
+      step: 0,
+      lines: [
+        { key: 'title', label: pp('pp.first.name.label') },
+        { key: 'destination', label: pp('pp.edit.destination.label') },
+      ],
+    },
+    {
+      step: 1,
+      lines: [
+        { key: 'dates', label: pp('pp.edit.dates.label') },
+        { key: 'audience', label: pp('pp.edit.audience.label') },
+        { key: 'summary', label: pp('pp.edit.summary.label') },
+      ],
+    },
+    {
+      step: 2,
+      lines: [
+        { key: 'fee', label: pp('pp.edit.fee.label') },
+        { key: 'capacity', label: pp('pp.edit.capacity.label') },
+      ],
+    },
+  ];
 
   return (
     <section className="first-run" aria-labelledby={titleId}>
-      <div className="first-run-form">
+      <header className="first-run-head">
         <h2 id={titleId}>{pp('pp.first.title')}</h2>
         <p className="programme-note">{pp('pp.first.lead')}</p>
+      </header>
+      <div className="first-run-form">
         <form
           className="programme-page-editor"
           noValidate
@@ -491,7 +532,7 @@ function ScopedFirstRun({
               })}
             </>
           )}
-          {step === last && (
+          {step === 2 && (
             <>
               {text('fee', pp('pp.edit.fee.label'), pp('pp.edit.fee.hint'), { max: 300 })}
               {text('capacity', pp('pp.edit.capacity.label'), pp('pp.edit.capacity.hint'), {
@@ -518,6 +559,34 @@ function ScopedFirstRun({
                   type: 'date',
                 })}
               </details>
+            </>
+          )}
+          {step === last && (
+            <>
+              <div className="first-run-review">
+                {reviewGroups.map((group) => (
+                  <div key={group.step} className="first-run-review-group">
+                    <h4>{steps[group.step]}</h4>
+                    <dl>
+                      {group.lines.map((line) => (
+                        <div key={line.key}>
+                          <dt>{line.label}</dt>
+                          <dd>{page[line.key] || pp('pp.first.preview.empty')}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <button
+                      type="button"
+                      className="text-link"
+                      disabled={locked}
+                      aria-label={pp('pp.first.review.editName', { name: steps[group.step]! })}
+                      onClick={() => go(group.step)}
+                    >
+                      {pp('pp.first.review.edit')}
+                    </button>
+                  </div>
+                ))}
+              </div>
               <label className="check-field">
                 <input
                   type="checkbox"

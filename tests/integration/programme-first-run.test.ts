@@ -128,13 +128,15 @@ const kept = (over: Partial<FirstRunKept> = {}): FirstRunKept => ({
 });
 const workspace = 'Synthetic Dhaka Agro Traders Association';
 
-describe('the first run asks in three steps of one to three fields', () => {
-  it('has three steps, each of one to three lines, and no line twice', () => {
-    expect(firstRunStepLines).toHaveLength(3);
-    for (const step of firstRunStepLines) {
+describe('the first run asks in four steps of at most three fields (L-04)', () => {
+  it('has three question steps of one to three lines and a review step, and no line twice', () => {
+    expect(firstRunStepLines).toHaveLength(4);
+    for (const step of firstRunStepLines.slice(0, 3)) {
       expect(step.length).toBeGreaterThanOrEqual(1);
       expect(step.length).toBeLessThanOrEqual(3);
     }
+    // The review step asks for no line: it shows the others with an Edit action each, and the two ticks.
+    expect(firstRunStepLines[3]).toEqual([]);
     const all = [...firstRunStepLines.flat(), ...firstRunMoreLines];
     expect(new Set(all).size).toBe(all.length);
   });
@@ -319,6 +321,7 @@ describe('the words of the first run and the overview', () => {
       'pp.first.preview.open',
       'pp.first.startAgain',
       'pp.first.plain',
+      'pp.first.review.edit',
       'pp.edit.publish',
       'pp.edit.continue',
       'pp.edit.back',
@@ -537,6 +540,8 @@ describe('the room keeps what it had', () => {
     expect(rule).toMatch(/background:\s*none;/);
     expect(rule).toMatch(/border:\s*0;/);
     expect(room).toContain('className="text-link"');
+    // The card's own gap pushed the Overview 10 px past one desktop screen (sweep, 1440 x 900).
+    expect(css).toMatch(/\.programme-room \.room-next\.room-decisions \{[^}]*row-gap:\s*0;/);
   });
   it('keeps the public page in the first run preview to one reading column on a wide screen', () => {
     const css = read('apps/web/app/account/delegations/first-run.css');
@@ -545,6 +550,16 @@ describe('the room keeps what it had', () => {
     );
     expect(css).toMatch(
       /\.first-run-preview-page \.programme-public > \.programme-public-apply \{[^}]*position:\s*static;/,
+    );
+  });
+  it('lets the disclosure under the first run heading run the full width, and keeps the review in groups', () => {
+    const css = read('apps/web/app/account/delegations/first-run.css');
+    // The room page caps a note at 60ch with a rule this one has to outrank, or the lead takes two lines.
+    expect(css).toMatch(
+      /\.first-run \.first-run-head > p\.programme-note \{[^}]*max-width:\s*none;/,
+    );
+    expect(css).toMatch(
+      /\.first-run-review \{[^}]*grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\);/,
     );
   });
   it('keeps the vertical stage timeline in the header in both states (owner lock, 12 Nov)', () => {

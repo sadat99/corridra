@@ -312,7 +312,7 @@ async function fillToLastStep(page: Page) {
   await run.getByLabel('Programme name').fill('Synthetic machinery delegation');
   await run.getByLabel('Where').fill('Guangzhou, China');
   await run.getByRole('button', { name: 'Continue' }).click();
-  await expect(run.getByRole('heading', { name: 'Step 2 of 3: Dates and people' })).toBeFocused();
+  await expect(run.getByRole('heading', { name: 'Step 2 of 4: Dates and people' })).toBeFocused();
   await run.getByLabel('When').fill('12 to 16 March 2027');
   await run
     .getByLabel('Who should apply')
@@ -321,8 +321,18 @@ async function fillToLastStep(page: Page) {
     .getByLabel('What it is for')
     .fill('Synthetic five day visit to machinery makers for importers.');
   await run.getByRole('button', { name: 'Continue' }).click();
-  await expect(run.getByRole('heading', { name: 'Step 3 of 3: Fee and places' })).toBeFocused();
+  await expect(run.getByRole('heading', { name: 'Step 3 of 4: Fee and places' })).toBeFocused();
+  await run.getByRole('button', { name: 'Continue' }).click();
+  await expect(run.getByRole('heading', { name: 'Step 4 of 4: Review and publish' })).toBeFocused();
 }
+// L-04: a step shows at most three inputs. A group answered as one counts as one, so the "not sure yet" tick
+// belongs to the dates line.
+const inputGroups = (page: Page) =>
+  firstRun(page)
+    .locator(
+      "label.field:visible, .check-field:visible:not(:has(input[name='first-dates-unsure']))",
+    )
+    .count();
 
 test('the first run goes from an empty workspace to a published page, and nothing reaches the server before Publish', async ({
   page,
@@ -339,10 +349,11 @@ test('the first run goes from an empty workspace to a published page, and nothin
     'aria-selected',
     'true',
   );
-  await expect(run.getByRole('heading', { name: 'Step 1 of 3: Name and place' })).toBeVisible();
+  await expect(run.getByRole('heading', { name: 'Step 1 of 4: Name and place' })).toBeVisible();
   const form = run.locator('form');
   // Step 1: name, destination and the template choice. One to three fields.
   await expect(form.locator('label.field')).toHaveCount(3);
+  expect(await inputGroups(page), 'step 1 input groups').toBe(3);
   await run.getByLabel('Programme name').fill('Synthetic machinery delegation');
   await run.getByLabel('Where').fill('Guangzhou, China');
   await run
@@ -368,13 +379,14 @@ test('the first run goes from an empty workspace to a published page, and nothin
   expect(state.writes).toEqual([]);
 
   await run.getByRole('button', { name: 'Continue' }).click();
-  await expect(run.getByRole('heading', { name: 'Step 2 of 3: Dates and people' })).toBeFocused();
+  await expect(run.getByRole('heading', { name: 'Step 2 of 4: Dates and people' })).toBeFocused();
   // Step 2: dates, who it is for and what it is for. Three fields and the "not sure" tick.
   await expect(form.locator('label.field')).toHaveCount(3);
+  expect(await inputGroups(page), 'step 2 input groups').toBe(3);
   // A step does not move on until its lines are written.
   await run.getByRole('button', { name: 'Continue' }).click();
   await expect(run.getByRole('alert')).toBeVisible();
-  await expect(run.getByRole('heading', { name: 'Step 2 of 3: Dates and people' })).toBeVisible();
+  await expect(run.getByRole('heading', { name: 'Step 2 of 4: Dates and people' })).toBeVisible();
   await run.getByLabel('I am not sure yet').check();
   await expect(run.getByLabel('When')).toBeDisabled();
   await expect(preview(page).locator('.programme-public-key')).toContainText(
@@ -390,9 +402,10 @@ test('the first run goes from an empty workspace to a published page, and nothin
     'Synthetic five day visit to machinery makers for importers.',
   );
   await run.getByRole('button', { name: 'Continue' }).click();
-  await expect(run.getByRole('heading', { name: 'Step 3 of 3: Fee and places' })).toBeFocused();
+  await expect(run.getByRole('heading', { name: 'Step 3 of 4: Fee and places' })).toBeFocused();
   // Step 3: the fee line and places, with the other page lines folded away.
   await expect(form.locator('label.field:visible')).toHaveCount(2);
+  expect(await inputGroups(page), 'step 3 input groups').toBe(2);
   await run.getByLabel('Fee (optional)').fill('USD 1,200 per company, paid to the organiser');
   await run.getByLabel('Places (optional)').fill('20');
   await expect(preview(page).locator('.programme-public-terms')).toContainText('USD 1,200');
@@ -417,6 +430,26 @@ test('the first run goes from an empty workspace to a published page, and nothin
   await run.getByLabel('Industry or business focus').fill('Not stated yet');
   await expect(focus.locator('dd')).toHaveText('Not stated yet');
 
+  // Step 4 reviews every answer, with an Edit action back to each step, and holds the two ticks.
+  await run.getByRole('button', { name: 'Continue' }).click();
+  await expect(run.getByRole('heading', { name: 'Step 4 of 4: Review and publish' })).toBeFocused();
+  expect(await inputGroups(page), 'step 4 input groups').toBe(2);
+  const review = run.locator('.first-run-review');
+  await expect(review.locator('h4')).toHaveText([
+    'Name and place',
+    'Dates and people',
+    'Fee and places',
+  ]);
+  await expect(review.getByText('Synthetic machinery delegation')).toBeVisible();
+  await expect(review.getByText('Dates to be confirmed')).toBeVisible();
+  await expect(review.getByText('USD 1,200 per company, paid to the organiser')).toBeVisible();
+  await expect(review.getByRole('button')).toHaveText(['Edit', 'Edit', 'Edit']);
+  // Edit goes back to that step with everything still there, and Continue comes forward again.
+  await review.getByRole('button', { name: 'Edit Fee and places' }).click();
+  await expect(run.getByRole('heading', { name: 'Step 3 of 4: Fee and places' })).toBeFocused();
+  await expect(run.getByLabel('Places (optional)')).toHaveValue('20');
+  await run.getByRole('button', { name: 'Continue' }).click();
+  await expect(run.getByRole('heading', { name: 'Step 4 of 4: Review and publish' })).toBeFocused();
   // Publish needs both confirmations, and until then nothing is sent.
   await run.getByRole('button', { name: 'Publish the Page' }).click();
   await expect(run.getByRole('alert')).toHaveText('Tick both boxes before you publish.');
@@ -530,14 +563,14 @@ test('a failed publish keeps the draft, and a second press never creates the pro
     '/api/customer-programmes',
     '/api/customer-programme-pages',
   ]);
-  await expect(run.getByLabel('Fee (optional)')).toBeVisible();
+  await expect(run.getByRole('heading', { name: 'Step 4 of 4: Review and publish' })).toBeVisible();
   expect((await draftKeys(page)).text).toContain(createdId);
   // Even after a reload the next press continues from the saved programme.
   await page.reload();
   // The programme now exists, so the room opens on its own programmes; the kept draft waits in the new programme tab.
   await expect(page.getByRole('tab').first()).toHaveText('Programmes');
   await page.getByRole('tab', { name: /^New .*Programme$/ }).click();
-  await expect(run.getByRole('heading', { name: 'Step 3 of 3: Fee and places' })).toBeVisible();
+  await expect(run.getByRole('heading', { name: 'Step 4 of 4: Review and publish' })).toBeVisible();
   await expect(
     run.getByText('Your programme is saved in this workspace. Its page is not public yet.'),
   ).toBeVisible();
@@ -602,7 +635,7 @@ test('on a phone the first run fits, keeps its preview one tap away and is acces
   await standIn(page);
   await page.goto(`${origin}/?room=1&first=1&pages=1&tpl=1`);
   const run = firstRun(page);
-  await expect(run.getByRole('heading', { name: 'Step 1 of 3: Name and place' })).toBeVisible();
+  await expect(run.getByRole('heading', { name: 'Step 1 of 4: Name and place' })).toBeVisible();
   const fits = async (step: string) => {
     const size = await page.evaluate(() => ({
       wide: document.documentElement.scrollWidth,
@@ -645,6 +678,8 @@ test('on a phone the first run fits, keeps its preview one tap away and is acces
   await expect(preview(page)).toBeVisible();
   await fold.locator('summary').click();
   await fillToLastStep(page);
+  await fits('step 4');
+  await run.getByRole('button', { name: 'Back' }).click();
   await fits('step 3');
   // Every action label in the first run is written in Title Case (from a clean session, so it opens on step 1).
   await page.evaluate(() => window.sessionStorage.clear());
@@ -670,6 +705,8 @@ test('on a phone the first run fits, keeps its preview one tap away and is acces
     .fill('Synthetic five day visit to machinery makers for importers.');
   await run.getByRole('button', { name: 'Continue' }).click();
   await collect();
+  await run.getByRole('button', { name: 'Continue' }).click();
+  await collect();
   expect(new Set(labels)).toEqual(
     new Set([
       'Continue',
@@ -678,6 +715,7 @@ test('on a phone the first run fits, keeps its preview one tap away and is acces
       'Preview Your Page',
       'More Page Lines',
       'Publish the Page',
+      'Edit',
       'Create Without a Public Page',
       // The folded plain create form keeps its own action.
       'Save Sample Programme',
