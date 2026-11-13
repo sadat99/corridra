@@ -1060,7 +1060,7 @@ export function CommercialMission({
                   save.{' '}
                   <a
                     className="text-link"
-                    href={`/operator/delivery?workspace=${encodeURIComponent(tenant)}#reply-${bound.responseId}`}
+                    href={`/operator/delivery?workspace=${encodeURIComponent(tenant)}&reply=${bound.responseId}`}
                   >
                     Open the Full Original Reply
                   </a>{' '}

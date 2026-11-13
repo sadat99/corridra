@@ -385,7 +385,7 @@ test.describe('the prepared offer form', () => {
     const link = page.getByRole('link', { name: 'Open the Full Original Reply' });
     await expect(link).toHaveAttribute(
       'href',
-      `/operator/delivery?workspace=${tenant}#reply-${replyId}`,
+      `/operator/delivery?workspace=${tenant}&reply=${replyId}`,
     );
     // The address ends at an element that exists on the reply card, so the link lands on the reply.
     await openCard(page, 'owner');
@@ -409,7 +409,7 @@ test.describe('the prepared offer form', () => {
             { link_id: linkId, role: 'SUPPLIER', shared_requirements: 'Curtain track' },
           ],
         }),
-      )}#reply-${replyId}`,
+      )}&reply=${replyId}`,
     );
     await expect(page.locator(`li#reply-${replyId}`)).toBeInViewport();
   });

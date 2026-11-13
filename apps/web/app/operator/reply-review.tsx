@@ -212,11 +212,11 @@ function ReplyCard({
     }
   }
 
-  // The card is drawn after the replies load, so the browser has already looked for #reply-<id> and found nothing.
-  // A link from the offer form ends at that address: bring the card into view once it exists.
+  // The card is drawn after the replies load, so the browser cannot jump to it. A link from the offer form names the
+  // reply in ?reply=<id> (a # part would be read as a workspace section): bring that card into view once it exists.
   const card = useRef<HTMLLIElement>(null);
   useEffect(() => {
-    if (window.location.hash === `#reply-${reply.id}`)
+    if (new URLSearchParams(window.location.search).get('reply') === reply.id)
       card.current?.scrollIntoView({ block: 'start' });
   }, [reply.id]);
 
