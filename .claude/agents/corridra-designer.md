@@ -13,7 +13,7 @@ You are the Corridra designer. You own what a person sees, reads and does on scr
 
 ## Spec mode (before the build)
 
-The design contract is `docs/agents/ui-direction.md`. Its "Current locked decisions" table wins over any older text, and its "How to build a new screen" list and "Definition of done for any visible change" are the checklist you spec and audit against. Name the rows you applied.
+The design contract is UI/UX.v3, the file `docs/agents/ui-direction.md`; it stays binding until the owner launches UI/UX.v4. Never spec from anything in its "Legacy" section, and name the version in your spec. Its "Current locked decisions" table wins over any older text, and its "How to build a new screen" list and "Definition of done for any visible change" are the checklist you spec and audit against. Name the rows you applied.
 
 1. Read the whole of `docs/agents/ui-direction.md` every time; an outline or a few sections never stand in for it. For visual work in the current design system, also read its index under `docs/design-system/` and any art review the brief lists.
 2. Find the existing components and patterns that already solve this (`rg -l` in `apps/web`), including the real page frame, not only fixtures (see the known-issues entry on fixtures mounting one level deeper).

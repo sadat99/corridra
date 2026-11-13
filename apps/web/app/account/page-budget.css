@@ -1,0 +1,419 @@
+/* Page budget for the signed-in customer pages (owner, 13 Nov 2026): a desktop page fits one screen and a phone page
+   two, measured with every disclosure closed. Shared pieces only: a closed disclosure with a count, and facts laid
+   out two pairs to a row at desktop. Nothing here hides an action; each one stays one tap or click away. */
+.account-fold {
+  margin-block: var(--space-2);
+  border-top: 1px solid var(--line);
+}
+.account-fold > summary {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+.account-facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: var(--space-3);
+  row-gap: var(--space-1);
+  margin-block: var(--space-2);
+}
+.account-facts dt,
+.account-facts dd {
+  margin: 0;
+}
+@media (min-width: 64rem) {
+  .account-facts {
+    grid-template-columns: max-content 1fr max-content 1fr;
+    column-gap: var(--space-4);
+  }
+}
+
+/* Two columns of work at desktop; one column on a phone. */
+.account-split {
+  display: grid;
+  gap: var(--space-4);
+  align-items: start;
+}
+@media (min-width: 64rem) {
+  .account-split {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+}
+.ux-customer .account-compact {
+  gap: var(--space-2);
+}
+/* The shell turns every direct child section into a card with a large padding and gap; this outweighs it. */
+.ux-customer
+  > section.account-compact:not(.detail-card):not(.guide-band):not(.guide-area):not(
+    .ux-request-page
+  ) {
+  padding-block: var(--space-3);
+  gap: var(--space-2);
+}
+.ux-customer .account-compact .detail-card {
+  padding: var(--space-3) var(--space-4);
+  gap: var(--space-1);
+}
+.ux-customer .account-compact .detail-card > ul > li {
+  padding: var(--space-3);
+  gap: var(--space-1);
+}
+.ux-customer .account-compact :is(p, li, dd, summary) {
+  line-height: 1.4;
+}
+.ux-customer .account-compact p {
+  margin-block: var(--space-1);
+}
+.ux-customer .account-compact :is(h2, h3) {
+  margin-block: var(--space-2) var(--space-1);
+}
+/* Choices (radio cards) side by side at desktop. */
+.account-choices {
+  display: grid;
+  gap: var(--space-3);
+}
+@media (min-width: 64rem) {
+  .account-choices {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .account-choices > legend {
+    grid-column: 1 / -1;
+  }
+}
+.account-start {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-2) 0;
+}
+.account-start > li > p {
+  margin: var(--space-1) 0 0;
+}
+/* A form that keeps its steps close together. At desktop the step's two answers sit side by side under the choices. */
+.account-tight .pr-column {
+  max-width: none;
+  gap: var(--space-2);
+}
+.account-tight h2,
+.account-tight .pr-meta,
+.account-tight .guide-hint,
+.account-tight .field {
+  margin-block: var(--space-1);
+}
+.account-tight textarea {
+  min-height: 5rem;
+  height: 5rem;
+}
+@media (min-width: 64rem) {
+  .account-tight .mr-fq-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .account-tight form.pr-column {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2) var(--space-5);
+    align-items: start;
+  }
+  .account-tight form.pr-column > * {
+    grid-column: 1 / -1;
+  }
+  .account-tight form.pr-column > fieldset:nth-of-type(2),
+  .account-tight form.pr-column > .field {
+    grid-column: auto;
+  }
+}
+
+/* The private request page: the guided form with its spacing tightened so the first step fits one desktop screen. At
+   desktop the step count sits beside the question, the job and its hint share a row, and the draft note sits beside
+   Continue; the order on the page for a screen reader does not change. */
+.account-request.detail-card {
+  padding: var(--space-3) var(--space-4);
+}
+.account-request .ux-intake-layout,
+.account-request .guide-plan-main,
+.account-request .guide-plan-top {
+  gap: var(--space-3);
+}
+.account-request .intake-form {
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+}
+.account-request > p {
+  margin-block: var(--space-1);
+}
+@media (min-width: 64rem) {
+  .account-request {
+    gap: var(--space-2);
+  }
+  .account-request > p {
+    margin: 0;
+  }
+  .account-request > p > a.text-link {
+    padding-block: 0;
+  }
+  .account-request .ux-intake-layout,
+  .account-request .guide-plan-body {
+    gap: var(--space-2);
+  }
+  .account-request .intake-form {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-2) var(--space-3);
+    padding: var(--space-3) var(--space-4);
+  }
+  .account-request .intake-form > * {
+    grid-column: 1 / -1;
+  }
+  .account-request .intake-form > .guide-journey-bar {
+    order: 1;
+  }
+  .account-request .intake-form > h2 {
+    order: 2;
+    grid-column: 1;
+    margin-block: 0;
+  }
+  .account-request .intake-form > p.label {
+    order: 3;
+    grid-column: 2;
+    align-self: center;
+    margin: 0;
+  }
+  .account-request .intake-form > fieldset {
+    order: 3;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-2) var(--space-3);
+    align-items: center;
+  }
+  .account-request .intake-form > fieldset > * {
+    grid-column: 1 / -1;
+  }
+  .account-request .intake-form > fieldset > label.guide-more {
+    grid-column: 1;
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    align-items: center;
+    gap: var(--space-3);
+    max-width: none;
+    padding-top: 0;
+  }
+  .account-request .intake-form > fieldset > #job-hint {
+    grid-column: 2;
+    margin: 0;
+  }
+  .account-request .intake-form > .guide-draft-line {
+    grid-column: 1;
+    order: 98;
+    align-self: center;
+    margin: 0;
+    border-top: 0;
+  }
+  .account-request .intake-form > .guide-actions {
+    grid-column: 2;
+    order: 99;
+  }
+  .account-request .guide-options {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .account-request .guide-options .choice {
+    padding: var(--space-2) var(--space-3);
+  }
+  .account-request .guide-journey-bar li {
+    gap: var(--space-1);
+  }
+  .account-request .intake-notice {
+    padding-block: var(--space-1);
+  }
+}
+
+/* The same page on a phone: tighter rows, so the first step fits two screens. */
+@media (max-width: 63.99rem) {
+  .ux-customer .detail-card.account-request {
+    gap: var(--space-2);
+  }
+  .ux-customer .detail-card.account-request > p,
+  .account-request .guide-hint,
+  .account-request .intake-notice p {
+    font-size: var(--text-sm);
+    line-height: 1.4;
+    margin: 0;
+  }
+  .account-request > p > a.text-link {
+    padding-block: 0;
+  }
+  .account-request .ux-intake-layout,
+  .account-request .guide-plan-body,
+  .account-request .guide-plan-top,
+  .account-request .guide-options,
+  .account-request .intake-form,
+  .account-request .intake-form fieldset {
+    gap: var(--space-2);
+  }
+  .account-request .intake-form {
+    padding: var(--space-3);
+  }
+  .account-request .guide-options .choice {
+    min-height: 0;
+    align-content: center;
+    padding: var(--space-2) var(--space-3);
+  }
+  .account-request .intake-notice {
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-2);
+    padding: var(--space-2) var(--space-3);
+  }
+  .account-request .intake-form > h2,
+  .account-request .intake-form > p.label {
+    margin: 0;
+  }
+  .account-request .guide-draft-line {
+    margin: 0;
+  }
+  .account-request .intake-form fieldset > label.guide-more {
+    padding-top: 0;
+  }
+  .account-request .guide-journey-bar li {
+    gap: 0;
+  }
+  .account-request .guide-draft-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 var(--space-2);
+  }
+  .account-request .guide-actions {
+    margin-top: 0;
+  }
+}
+
+.account-cards {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 64rem) {
+  .account-cards {
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    align-items: start;
+  }
+}
+
+/* The registrations page: the page copy, headings and rows sit closer together so one registration, its closed
+   details, the invitation check and the reload fit one desktop screen. */
+.ux-customer .account-compact section.delivery-view > p {
+  max-width: none;
+  margin-block: var(--space-1);
+  line-height: 1.4;
+}
+.ux-customer .account-compact section.delivery-view > h2 {
+  margin-block: var(--space-1);
+}
+.ux-customer .account-compact section.delivery-view > ul {
+  margin-block: var(--space-1);
+}
+.ux-customer .account-compact section.delivery-view li > :is(p, h3) {
+  margin-block: var(--space-1);
+  line-height: 1.4;
+}
+.ux-customer .account-compact section.delivery-view button.text-link,
+.ux-customer .account-compact section.delivery-view details.account-fold {
+  margin-block: var(--space-1);
+}
+.ux-customer .account-compact a.ux-back {
+  min-height: 2.25rem;
+}
+.ux-customer .account-compact p.ux-empty {
+  padding-block: var(--space-1);
+}
+.ux-customer .account-compact p > a.text-link {
+  padding-block: var(--space-1);
+}
+.ux-customer .account-compact p[role='status']:empty {
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+}
+.ux-customer .account-compact .ux-link-list a {
+  padding-block: var(--space-2);
+}
+
+/* The company link request: the two choices and the two answers sit side by side at desktop. */
+.ux-customer .detail-card.account-compact {
+  padding: var(--space-3) var(--space-4);
+  gap: var(--space-1);
+}
+.ux-customer .account-compact textarea {
+  min-height: 4.5rem;
+}
+@media (min-width: 64rem) {
+  .account-linkform > fieldset {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2) var(--space-5);
+    align-items: start;
+  }
+  .account-linkform > fieldset > legend,
+  .account-linkform > fieldset > p {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Billing on a phone: the copy and plan cards use the small type, and the tabs keep one row with tighter padding. */
+@media (max-width: 63.99rem) {
+  .ux-customer .account-compact > p {
+    font-size: var(--text-sm);
+    line-height: 1.4;
+  }
+  .account-compact .ux-subtabs-tab {
+    padding-inline: var(--space-2);
+  }
+  .ux-customer .account-compact .account-cards > li.detail-card {
+    padding: var(--space-3);
+  }
+  .ux-customer .account-compact .account-cards > li.detail-card :is(p, summary) {
+    font-size: var(--text-sm);
+  }
+  .ux-customer .account-compact .account-cards > li.detail-card h3 {
+    font-size: var(--text-lg);
+  }
+}
+.ux-customer .account-compact .detail-card :is(p, li, dd, summary) {
+  line-height: 1.4;
+}
+
+/* A closed disclosure and its reload button share a row at desktop. */
+.account-row {
+  display: grid;
+  gap: var(--space-2);
+}
+@media (min-width: 64rem) {
+  .account-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+  .account-facts.account-wide {
+    grid-template-columns: max-content minmax(0, 2fr) max-content minmax(0, 1fr) max-content minmax(
+        0,
+        1fr
+      );
+  }
+}
+.ux-customer .account-compact > a.text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding-block: 0;
+}
+@media (min-width: 64rem) {
+  .ux-customer .account-compact .detail-card.account-inline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-4);
+  }
+  .ux-customer .account-compact .detail-card.account-inline > * {
+    margin: 0;
+  }
+}

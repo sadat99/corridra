@@ -1,4 +1,6 @@
 'use client';
+import '../page-budget.css';
+import { SubTabs } from '../../../components/ux/sub-tabs';
 import {
   useCallback,
   useEffect,
@@ -37,6 +39,8 @@ type Props = {
   // Shown after the plan, and only for a sample workspace once its plan has loaded: sample invoices (ADR-061) exist
   // for sample workspaces only, so a real workspace is never asked for them.
   sampleOnly?: ReactNode;
+  /** Further tabs after the plan tabs: the real invoices and the simulated payments. */
+  extraTabs?: { id: string; label: string; panel: ReactNode }[];
 };
 type Panel = { kind: 'request'; plan: BillingPlan } | { kind: 'cancel' | 'withdraw' } | null;
 
@@ -62,7 +66,14 @@ function StatusBadge({ s }: { s: SubscriptionSummary }) {
   );
 }
 
-function ScopedOverview({ subject, issuer, workspaceId, invoicing = false, sampleOnly }: Props) {
+function ScopedOverview({
+  subject,
+  issuer,
+  workspaceId,
+  invoicing = false,
+  sampleOnly,
+  extraTabs,
+}: Props) {
   const id = useId();
   const [overview, setOverview] = useState<BillingOverview | null>(null),
     [plans, setPlans] = useState<BillingPlans | null>(null),
@@ -231,7 +242,7 @@ function ScopedOverview({ subject, issuer, workspaceId, invoicing = false, sampl
       : 'Nothing is charged here, no invoice is made and no payment is taken through Corridra. The limits in a plan are shown for information only.';
   return (
     <>
-      <section aria-label="Plan and billing">
+      <section aria-label="Plan and billing" className="account-compact">
         <p>{intro}</p>
         {state === 'loading' && <p role="status">Loading your plan…</p>}
         {state !== 'loading' && state !== 'ready' && (
@@ -273,289 +284,353 @@ function ScopedOverview({ subject, issuer, workspaceId, invoicing = false, sampl
             )}
             {message && <p role={message === 'Saved.' ? 'status' : 'alert'}>{message}</p>}
 
-            <section aria-labelledby={id + 'plan'} className="detail-card">
-              <h2 id={id + 'plan'}>Your plan</h2>
-              {current ? (
-                <>
-                  <h3>{current.planTitle}</h3>
-                  <p>
-                    <StatusBadge s={current} />
-                  </p>
-                  <p>
-                    {priceText(current)} · {taxText[current.taxTreatment]}
-                  </p>
-                  {periodText(current) && <p>Current period: {periodText(current)}.</p>}
-                  {current.periodElapsed && (
-                    <p role="status">
-                      This period has ended and has not been renewed. Nothing from this plan applies
-                      now.
-                    </p>
-                  )}
-                  {current.status === 'cancel_scheduled' && !current.periodElapsed && (
-                    <p>
-                      You asked to cancel. The plan stays until the end of this period, then it
-                      ends.
-                    </p>
-                  )}
-                </>
-              ) : (
-                <p>Your workspace does not hold a plan.</p>
-              )}
-              {asked && (
-                <p>
-                  You asked for <strong>{asked.planTitle}</strong>. <StatusBadge s={asked} /> The
-                  Corridra team will answer. Nothing starts until they do.
-                </p>
-              )}
-              {overview.canAct && overview.actions.length > 0 && (
-                <div className="guide-actions-row">
-                  {can('cancel') && (
-                    <button
-                      type="button"
-                      className="button button-secondary"
-                      data-intent="destructive"
-                      onClick={() => open({ kind: 'cancel' })}
-                    >
-                      Cancel at the End of the Period
-                    </button>
-                  )}
-                  {can('keep') && current && (
-                    <form onSubmit={(e) => submitChange(e, 'keep', current.id)}>
-                      <button type="submit" className="button button-secondary" disabled={busy}>
-                        Keep My Plan
-                      </button>
-                    </form>
-                  )}
-                  {can('withdraw') && (
-                    <button
-                      type="button"
-                      className="button button-secondary"
-                      data-intent="destructive"
-                      onClick={() => open({ kind: 'withdraw' })}
-                    >
-                      Withdraw My Request
-                    </button>
-                  )}
-                </div>
-              )}
-              {panel?.kind === 'cancel' && current && (
-                <form onSubmit={(e) => submitChange(e, 'cancel', current.id)} aria-label="Cancel">
-                  <p>
-                    The plan stays until{' '}
-                    {current.periodEnd ? dayText(current.periodEnd) : 'the end'}. You can take the
-                    cancellation back before then.
-                  </p>
-                  <button
-                    type="submit"
-                    className="button"
-                    data-intent="destructive"
-                    disabled={busy}
-                  >
-                    Confirm Cancellation
-                  </button>{' '}
-                  <button type="button" className="text-link" onClick={() => open(null)}>
-                    Not Now
-                  </button>
-                </form>
-              )}
-              {panel?.kind === 'withdraw' && asked && (
-                <form onSubmit={(e) => submitChange(e, 'withdraw', asked.id)} aria-label="Withdraw">
-                  <p>
-                    The request for {asked.planTitle} will be withdrawn. You can ask again later.
-                  </p>
-                  <button
-                    type="submit"
-                    className="button"
-                    data-intent="destructive"
-                    disabled={busy}
-                  >
-                    Confirm Withdrawal
-                  </button>{' '}
-                  <button type="button" className="text-link" onClick={() => open(null)}>
-                    Not Now
-                  </button>
-                </form>
-              )}
-            </section>
+            <SubTabs
+              label="Plan and billing sections"
+              tabs={[
+                {
+                  id: 'plan',
+                  label: 'Your plan',
+                  panel: (
+                    <>
+                      <section aria-labelledby={id + 'plan'} className="detail-card">
+                        <h2 id={id + 'plan'}>Your plan</h2>
+                        {current ? (
+                          <>
+                            <h3>{current.planTitle}</h3>
+                            <p>
+                              <StatusBadge s={current} />
+                            </p>
+                            <p>
+                              {priceText(current)} · {taxText[current.taxTreatment]}
+                            </p>
+                            {periodText(current) && <p>Current period: {periodText(current)}.</p>}
+                            {current.periodElapsed && (
+                              <p role="status">
+                                This period has ended and has not been renewed. Nothing from this
+                                plan applies now.
+                              </p>
+                            )}
+                            {current.status === 'cancel_scheduled' && !current.periodElapsed && (
+                              <p>
+                                You asked to cancel. The plan stays until the end of this period,
+                                then it ends.
+                              </p>
+                            )}
+                          </>
+                        ) : (
+                          <p>Your workspace does not hold a plan.</p>
+                        )}
+                        {asked && (
+                          <p>
+                            You asked for <strong>{asked.planTitle}</strong>.{' '}
+                            <StatusBadge s={asked} /> The Corridra team will answer. Nothing starts
+                            until they do.
+                          </p>
+                        )}
+                        {overview.canAct && overview.actions.length > 0 && (
+                          <div className="guide-actions-row">
+                            {can('cancel') && (
+                              <button
+                                type="button"
+                                className="button button-secondary"
+                                data-intent="destructive"
+                                onClick={() => open({ kind: 'cancel' })}
+                              >
+                                Cancel at the End of the Period
+                              </button>
+                            )}
+                            {can('keep') && current && (
+                              <form onSubmit={(e) => submitChange(e, 'keep', current.id)}>
+                                <button
+                                  type="submit"
+                                  className="button button-secondary"
+                                  disabled={busy}
+                                >
+                                  Keep My Plan
+                                </button>
+                              </form>
+                            )}
+                            {can('withdraw') && (
+                              <button
+                                type="button"
+                                className="button button-secondary"
+                                data-intent="destructive"
+                                onClick={() => open({ kind: 'withdraw' })}
+                              >
+                                Withdraw My Request
+                              </button>
+                            )}
+                          </div>
+                        )}
+                        {panel?.kind === 'cancel' && current && (
+                          <form
+                            onSubmit={(e) => submitChange(e, 'cancel', current.id)}
+                            aria-label="Cancel"
+                          >
+                            <p>
+                              The plan stays until{' '}
+                              {current.periodEnd ? dayText(current.periodEnd) : 'the end'}. You can
+                              take the cancellation back before then.
+                            </p>
+                            <button
+                              type="submit"
+                              className="button"
+                              data-intent="destructive"
+                              disabled={busy}
+                            >
+                              Confirm Cancellation
+                            </button>{' '}
+                            <button type="button" className="text-link" onClick={() => open(null)}>
+                              Not Now
+                            </button>
+                          </form>
+                        )}
+                        {panel?.kind === 'withdraw' && asked && (
+                          <form
+                            onSubmit={(e) => submitChange(e, 'withdraw', asked.id)}
+                            aria-label="Withdraw"
+                          >
+                            <p>
+                              The request for {asked.planTitle} will be withdrawn. You can ask again
+                              later.
+                            </p>
+                            <button
+                              type="submit"
+                              className="button"
+                              data-intent="destructive"
+                              disabled={busy}
+                            >
+                              Confirm Withdrawal
+                            </button>{' '}
+                            <button type="button" className="text-link" onClick={() => open(null)}>
+                              Not Now
+                            </button>
+                          </form>
+                        )}
+                      </section>
 
-            <section aria-labelledby={id + 'inc'} className="detail-card">
-              <h2 id={id + 'inc'}>What your plan includes</h2>
-              {overview.entitlements.length ? (
-                <div
-                  role="region"
-                  aria-label="What your plan gives"
-                  tabIndex={0}
-                  style={{ overflowX: 'auto' }}
-                >
-                  <table style={{ width: '100%' }}>
-                    <caption style={{ textAlign: 'left' }}>
-                      One row for everything the plan covers
-                    </caption>
-                    <thead>
-                      <tr>
-                        <th scope="col">What</th>
-                        <th scope="col">What the plan gives</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {overview.entitlements.map((e) => (
-                        <tr key={e.key}>
-                          <td>
-                            <strong>{e.label}</strong>
-                            <br />
-                            {e.description}
-                          </td>
-                          <td>{grantText(e)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <p>
-                  {current?.periodElapsed
-                    ? 'The period has ended, so nothing is listed.'
-                    : 'No plan is active, so nothing is listed.'}
-                </p>
-              )}
-              <p>
-                Corridra does not apply these limits yet. Nothing in your workspace is blocked or
-                changed by your plan.
-              </p>
-            </section>
-
-            <section aria-labelledby={id + 'offer'}>
-              <h2 id={id + 'offer'}>Plans on offer</h2>
-              {plans.plans.length === 0 ? (
-                <div className="ux-state" data-state="empty">
-                  <p className="ux-state-label">No plans yet</p>
-                  <div role="status">No plan is on offer right now.</div>
-                </div>
-              ) : (
-                <ul className="guide-list">
-                  {plans.plans.map((p) => {
-                    const held = current?.planKey === p.key && current.planVersion === p.version;
-                    const choosing = panel?.kind === 'request' && panel.plan.id === p.id;
-                    return (
-                      <li key={p.id} className="detail-card">
-                        <h3>{p.title}</h3>
-                        <p>
-                          <strong>{priceText(p)}</strong> · {taxText[p.taxTreatment]}
-                        </p>
-                        <p>{p.summary}</p>
-                        <details className="ux-journey-disclosure">
-                          <summary>Everything in this plan</summary>
-                          <p>Included</p>
-                          <ul>
-                            {p.included.map((x) => (
-                              <li key={x}>{x}</li>
-                            ))}
-                          </ul>
-                          <p>Left out</p>
-                          <ul>
-                            {p.excluded.map((x) => (
-                              <li key={x}>{x}</li>
-                            ))}
-                          </ul>
-                          <p>Limits (shown for information)</p>
-                          <ul>
-                            {p.entitlements.map((e) => (
-                              <li key={e.key}>
-                                {e.label}: {grantText(e)}
+                      {overview.subscriptions.length > 0 && (
+                        <details className="account-fold" aria-labelledby={id + 'hist'}>
+                          <summary id={id + 'hist'}>
+                            History ({overview.subscriptions.length})
+                          </summary>
+                          <ul className="guide-list">
+                            {overview.subscriptions.map((s) => (
+                              <li key={s.id} className="detail-card">
+                                <h3>{s.planTitle}</h3>
+                                <p>
+                                  <StatusBadge s={s} /> · {money(s.priceMinor, s.currency)}{' '}
+                                  {s.interval === 'month' ? 'per month' : 'per year'}
+                                </p>
+                                <ol>
+                                  {s.timeline.map((t) => (
+                                    <li key={t.seq}>
+                                      <strong>
+                                        {kindText[t.kind] ?? t.kind}
+                                        {t.endReason ? ' (' + endReasonText[t.endReason] + ')' : ''}
+                                      </strong>{' '}
+                                      · {t.by} · <time dateTime={t.at}>{dateTimeText(t.at)}</time>
+                                      {t.periodStart && t.periodEnd && (
+                                        <>
+                                          <br />
+                                          Period: {dayText(t.periodStart)} until{' '}
+                                          {dayText(t.periodEnd)}
+                                        </>
+                                      )}
+                                      {t.note && (
+                                        <>
+                                          <br />
+                                          <span
+                                            style={{
+                                              whiteSpace: 'pre-wrap',
+                                              overflowWrap: 'anywhere',
+                                            }}
+                                          >
+                                            {t.note}
+                                          </span>
+                                        </>
+                                      )}
+                                    </li>
+                                  ))}
+                                </ol>
                               </li>
                             ))}
                           </ul>
                         </details>
-                        {held ? (
-                          <p>Your workspace holds this plan.</p>
-                        ) : can('request') ? (
-                          <div className="guide-actions-row">
-                            <button
-                              type="button"
-                              className="button button-secondary"
-                              onClick={() => open(choosing ? null : { kind: 'request', plan: p })}
-                            >
-                              {choosing ? 'Close' : 'Ask for This Plan'}
-                            </button>
-                          </div>
-                        ) : null}
-                        {choosing && (
-                          <form
-                            onSubmit={(e) => submitRequest(e, p)}
-                            aria-label={'Ask for ' + p.title}
+                      )}
+                    </>
+                  ),
+                },
+                {
+                  id: 'includes',
+                  label: 'Included',
+                  panel: (
+                    <>
+                      <section aria-labelledby={id + 'inc'} className="detail-card">
+                        <h2 id={id + 'inc'}>What your plan includes</h2>
+                        {overview.entitlements.length ? (
+                          <div
+                            role="region"
+                            aria-label="What your plan gives"
+                            tabIndex={0}
+                            style={{ overflowX: 'auto' }}
                           >
-                            <p>
-                              This sends a request to the Corridra team. Nothing is charged and
-                              nothing starts until they answer.
-                            </p>
-                            <label
-                              style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={ack}
-                                disabled={busy}
-                                onChange={(e) => setAck(e.target.checked)}
-                              />
-                              I have read the price, the tax note, what is included and what is left
-                              out.
-                            </label>
-                            <button type="submit" className="button" disabled={busy || !ack}>
-                              {pending ? 'Send the Same Request Again' : 'Send Request'}
-                            </button>
-                          </form>
+                            <table style={{ width: '100%' }}>
+                              <caption style={{ textAlign: 'left' }}>
+                                One row for everything the plan covers
+                              </caption>
+                              <thead>
+                                <tr>
+                                  <th scope="col">What</th>
+                                  <th scope="col">What the plan gives</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {overview.entitlements.map((e) => (
+                                  <tr key={e.key}>
+                                    <td>
+                                      <strong>{e.label}</strong>
+                                      <br />
+                                      {e.description}
+                                    </td>
+                                    <td>{grantText(e)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <p>
+                            {current?.periodElapsed
+                              ? 'The period has ended, so nothing is listed.'
+                              : 'No plan is active, so nothing is listed.'}
+                          </p>
                         )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-              {!overview.canAct && (
-                <p className="ux-empty">Only a workspace owner or admin can ask for a plan.</p>
-              )}
-            </section>
-
-            {overview.subscriptions.length > 0 && (
-              <section aria-labelledby={id + 'hist'}>
-                <h2 id={id + 'hist'}>History</h2>
-                <ul className="guide-list">
-                  {overview.subscriptions.map((s) => (
-                    <li key={s.id} className="detail-card">
-                      <h3>{s.planTitle}</h3>
-                      <p>
-                        <StatusBadge s={s} /> · {money(s.priceMinor, s.currency)}{' '}
-                        {s.interval === 'month' ? 'per month' : 'per year'}
-                      </p>
-                      <ol>
-                        {s.timeline.map((t) => (
-                          <li key={t.seq}>
-                            <strong>
-                              {kindText[t.kind] ?? t.kind}
-                              {t.endReason ? ' (' + endReasonText[t.endReason] + ')' : ''}
-                            </strong>{' '}
-                            · {t.by} · <time dateTime={t.at}>{dateTimeText(t.at)}</time>
-                            {t.periodStart && t.periodEnd && (
-                              <>
-                                <br />
-                                Period: {dayText(t.periodStart)} until {dayText(t.periodEnd)}
-                              </>
-                            )}
-                            {t.note && (
-                              <>
-                                <br />
-                                <span style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-                                  {t.note}
-                                </span>
-                              </>
-                            )}
-                          </li>
-                        ))}
-                      </ol>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
+                        <p>
+                          Corridra does not apply these limits yet. Nothing in your workspace is
+                          blocked or changed by your plan.
+                        </p>
+                      </section>
+                    </>
+                  ),
+                },
+                {
+                  id: 'plans',
+                  label: 'Plans',
+                  panel: (
+                    <>
+                      <section aria-labelledby={id + 'offer'} className="account-compact">
+                        <h2 id={id + 'offer'}>Plans on offer</h2>
+                        {plans.plans.length === 0 ? (
+                          <div className="ux-state" data-state="empty">
+                            <p className="ux-state-label">No plans yet</p>
+                            <div role="status">No plan is on offer right now.</div>
+                          </div>
+                        ) : (
+                          <ul className="guide-list account-cards">
+                            {plans.plans.map((p) => {
+                              const held =
+                                current?.planKey === p.key && current.planVersion === p.version;
+                              const choosing = panel?.kind === 'request' && panel.plan.id === p.id;
+                              return (
+                                <li key={p.id} className="detail-card">
+                                  <h3>{p.title}</h3>
+                                  <p>
+                                    <strong>{priceText(p)}</strong> · {taxText[p.taxTreatment]}
+                                  </p>
+                                  <p>{p.summary}</p>
+                                  <details className="ux-journey-disclosure">
+                                    <summary>Everything in this plan</summary>
+                                    <p>Included</p>
+                                    <ul>
+                                      {p.included.map((x) => (
+                                        <li key={x}>{x}</li>
+                                      ))}
+                                    </ul>
+                                    <p>Left out</p>
+                                    <ul>
+                                      {p.excluded.map((x) => (
+                                        <li key={x}>{x}</li>
+                                      ))}
+                                    </ul>
+                                    <p>Limits (shown for information)</p>
+                                    <ul>
+                                      {p.entitlements.map((e) => (
+                                        <li key={e.key}>
+                                          {e.label}: {grantText(e)}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </details>
+                                  {held ? (
+                                    <p>Your workspace holds this plan.</p>
+                                  ) : can('request') ? (
+                                    <div className="guide-actions-row">
+                                      <button
+                                        type="button"
+                                        className="button button-secondary"
+                                        onClick={() =>
+                                          open(choosing ? null : { kind: 'request', plan: p })
+                                        }
+                                      >
+                                        {choosing ? 'Close' : 'Ask for This Plan'}
+                                      </button>
+                                    </div>
+                                  ) : null}
+                                  {choosing && (
+                                    <form
+                                      onSubmit={(e) => submitRequest(e, p)}
+                                      aria-label={'Ask for ' + p.title}
+                                    >
+                                      <p>
+                                        This sends a request to the Corridra team. Nothing is
+                                        charged and nothing starts until they answer.
+                                      </p>
+                                      <label
+                                        style={{
+                                          display: 'flex',
+                                          gap: '0.75rem',
+                                          alignItems: 'flex-start',
+                                        }}
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          checked={ack}
+                                          disabled={busy}
+                                          onChange={(e) => setAck(e.target.checked)}
+                                        />
+                                        I have read the price, the tax note, what is included and
+                                        what is left out.
+                                      </label>
+                                      <button
+                                        type="submit"
+                                        className="button"
+                                        disabled={busy || !ack}
+                                      >
+                                        {pending ? 'Send the Same Request Again' : 'Send Request'}
+                                      </button>
+                                    </form>
+                                  )}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                        {!overview.canAct && (
+                          <p className="ux-empty">
+                            Only a workspace owner or admin can ask for a plan.
+                          </p>
+                        )}
+                      </section>
+                    </>
+                  ),
+                },
+                ...(state === 'ready' && !real && sampleOnly
+                  ? [{ id: 'invoices', label: 'Invoices', panel: sampleOnly }]
+                  : []),
+                ...(extraTabs ?? []),
+              ]}
+            />
           </>
         )}
         <p>
@@ -564,7 +639,6 @@ function ScopedOverview({ subject, issuer, workspaceId, invoicing = false, sampl
           </a>
         </p>
       </section>
-      {state === 'ready' && !real && sampleOnly}
     </>
   );
 }

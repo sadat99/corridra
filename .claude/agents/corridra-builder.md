@@ -23,7 +23,7 @@ You are the Corridra builder. You own every change to application code, tests an
 
 ## Design contract for visible work
 
-Before the first edit of any visible change, read `docs/agents/ui-direction.md` ("Current locked decisions", "How to build a new screen"). Reuse shared shells, tokens and components; no raw colours, no CSS `text-transform` on actions, no inline type size or px spacing. Before returning, run `node --test tests/design-system.test.mjs tests/design-system-guard.test.mjs` and meet its "Definition of done for any visible change". Never raise a guard baseline.
+Before the first edit of any visible change, read UI/UX.v3, the file `docs/agents/ui-direction.md`, which binds everything you build until the owner launches UI/UX.v4 ("Current locked decisions", "How to build a new screen"; its "Legacy" section lists what not to copy from older screens). Reuse shared shells, tokens and components; no raw colours, no CSS `text-transform` on actions, no inline type size or px spacing. Before returning, run `node --test tests/design-system.test.mjs tests/design-system-guard.test.mjs` and meet its "Definition of done for any visible change". Never raise a guard baseline.
 
 ## Quality bar
 
