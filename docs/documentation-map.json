@@ -1529,6 +1529,11 @@
       "use": "Accepted for build (12 Nov 2026): a published supplier reply carried into the existing supplier offer form; one append-only binding row, one optional strict command field, one prefill read, additive reply review migration 0003; behind CORRIDRA_REPLY_PAGE; schema review and install are the owner's"
     },
     {
+      "path": "docs/adr/0082-supply-sources-for-counterparty-candidates.md",
+      "classification": "Architecture decision",
+      "use": "Accepted for build by the owner, 13 Nov 2026 (pre-approval met after clean reviews); design only: supply sources (staff research, partner organisation, individual partner, data platform) feeding one role-agnostic candidate record; nomination is not identity; two rights registers, no third; ADR-079 slice B first and unchanged; supplier never named to the seller; everything ships off behind separate closed controls; nothing built, installed or enabled"
+    },
+    {
       "path": "docs/revamp/README.md",
       "classification": "Current guide/contract",
       "use": "Owner-approved V3 controlled revamp scope (4 Nov 2026), merge rules, session file ownership and the Wave 0 route/cleanup manifest; live state stays in the ledger"
