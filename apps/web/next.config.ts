@@ -230,6 +230,34 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: '/api/workspace/organisation-source-rights',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
+        source: '/api/workspace/organisation-suppression',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
+        source: '/api/workspace/organisation-link-redaction',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
+        source: '/api/workspace/organisation-link-closed-claims',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
         source: '/api/workspace/customer-erasure-queue',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },
