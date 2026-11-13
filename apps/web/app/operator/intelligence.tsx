@@ -202,10 +202,6 @@ export function GovernedAssistance({ tenant, role }: { tenant: string; role: str
           },
         ]}
       />
-      <p>
-        Assistance produces source-linked drafts. Accepting a draft records your review. Apply
-        changes separately through mission commands.
-      </p>
       <p role="status" aria-live="polite">
         {message}
       </p>
@@ -236,22 +232,31 @@ export function GovernedAssistance({ tenant, role }: { tenant: string; role: str
             : 'Loading reviewed workspace…'}
         </p>
       )}
-      {data && !data.enabled && (
+      <details className="ux-ai-state">
+        <summary>
+          {`How assistance works here (${1 + (data && !data.enabled ? 1 : 0) + (data && !data.policies.length ? 1 : 0)} notes)`}
+        </summary>
         <p>
-          AI assistance is awaiting provider and policy activation. Existing manual work remains
-          available. <a href="#workspace-missions">Continue with manual mission work</a>.
+          Assistance produces source-linked drafts. Accepting a draft records your review. Apply
+          changes separately through mission commands.
         </p>
-      )}
-      {data && !data.policies.length && (
-        <p>
-          No reviewed model policy is available. Ask a workspace owner to review the source rights
-          and provider policy.{' '}
-          {['owner', 'admin'].includes(role) && (
-            <a href="#workspace-settings">Open owner policy settings</a>
-          )}
-          .
-        </p>
-      )}
+        {data && !data.enabled && (
+          <p>
+            AI assistance is awaiting provider and policy activation. Existing manual work remains
+            available. <a href="#workspace-missions">Continue with manual mission work</a>.
+          </p>
+        )}
+        {data && !data.policies.length && (
+          <p>
+            No reviewed model policy is available. Ask a workspace owner to review the source rights
+            and provider policy.{' '}
+            {['owner', 'admin'].includes(role) && (
+              <a href="#workspace-settings">Open owner policy settings</a>
+            )}
+            .
+          </p>
+        )}
+      </details>
       <SubTabs
         label="AI assistance sections"
         tabs={[

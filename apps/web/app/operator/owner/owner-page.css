@@ -393,3 +393,61 @@
     padding-block: 0;
   }
 }
+
+/* Phone (L21): the five founder areas read as one compact row each, and the board's blocks sit one step apart,
+   so each tab of the owner page stays inside two phone screens with its disclosures closed. */
+@media (max-width: 1023px) {
+  .ux-owner .front-door ul {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+  .ux-owner .front-door-card {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--space-2);
+    padding: var(--space-2) var(--space-3);
+  }
+  .ux-owner .front-door-card b {
+    font-size: var(--text-base);
+  }
+  .ux-owner .front-door-card span {
+    font-size: var(--text-xs);
+  }
+  .ux-owner .owner-waiting > li {
+    padding: var(--space-2) var(--space-3);
+    gap: 0 var(--space-2);
+  }
+  .ux-owner .owner-board > * + *,
+  .ux-owner .owner-technical > * + * {
+    margin-block-start: var(--space-2);
+  }
+  .ux-owner .owner-section {
+    margin-block: var(--space-2) 0;
+  }
+  .ux-owner .owner-live {
+    margin-block: var(--space-1);
+  }
+  .ux-owner .owner-count,
+  .ux-owner .owner-section > p {
+    margin-block: var(--space-1);
+    font-size: var(--text-sm);
+  }
+  .ux-owner .owner-board h2,
+  .ux-owner .owner-section h2 {
+    margin-block: 0;
+    font-size: var(--text-lg);
+  }
+  .ux-owner > a.text-link:last-child {
+    min-height: 2.75rem;
+  }
+}
+@media (max-width: 1023px) {
+  .ux-owner .owner-gap-cards > li {
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
+  }
+  .ux-owner .owner-gap-cards > li > * {
+    margin: 0;
+  }
+}

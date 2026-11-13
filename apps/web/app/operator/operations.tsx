@@ -1015,7 +1015,10 @@ export function Operations({
                             </button>
                           </>
                         )}
-                        <PhoneFold summary="How to edit the configuration and where related settings are">
+                        <PhoneFold
+                          summary="How to edit the configuration and where related settings are"
+                          fold="always"
+                        >
                           <p>
                             Create routes and install reusable templates in{' '}
                             <a href="#workspace-settings">Corridors and policies</a>. Manage

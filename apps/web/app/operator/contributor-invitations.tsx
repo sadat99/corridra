@@ -259,6 +259,7 @@ export function ContributorInvitations({ tenant }: { tenant: string }) {
           <PhoneFold
             summary="What happens after you invite (3 steps)"
             className="ux-invitation-steps"
+            fold="always"
           >
             <aside className="ux-invitation-guide" aria-label="Contributor onboarding steps">
               <h4>What happens next</h4>
