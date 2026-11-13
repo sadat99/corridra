@@ -379,6 +379,24 @@ h1 {
   gap: 10px;
   padding: 10px 0;
 }
+/* L14 (owner, 13 Nov 2026): inside a signed-in workspace the quiet footer sits at the bottom of the window on a
+   short page instead of floating under the content. The shell becomes a column at least one window tall and the
+   footer takes the free space above it (min-height, never position: fixed, so a long page still scrolls and the
+   footer follows its content). The shell and its children are matched with :where() so this adds no specificity:
+   every page rule that sizes its own column wins, and a column that sized itself by auto margins and a max-width
+   keeps that width. Only a shell that holds the quiet footer changes; public pages are untouched. */
+:where(.site-shell:has(> .site-footer)) {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+:where(.site-shell:has(> .site-footer)) > :where(:not(.site-footer, .corner-dock)) {
+  width: 100%;
+}
+.site-shell:has(> .site-footer) > .site-footer {
+  margin-top: auto;
+}
 
 @media (min-width: 1440px) {
   .hero {
