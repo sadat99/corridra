@@ -1,6 +1,6 @@
 # ADR-081: A published supplier reply carried into the supplier offer form
 
-Status: Accepted for build by the owner, 12 November 2026 (answers recorded under Owner decisions). The schema review of migration 0003 and its install remain the owner's. Nothing is installed or enabled. It extends [ADR-069](0069-reply-page.md) (Publish "prepares the mission quotation ... the Corridra team confirms it through the existing quotation form") and [ADR-026](0026-commercial-mission-execution.md) (original offers and revisions) and keeps [ADR-016](0016-mission-intake-and-operator-commands.md) command rules, [ADR-039](0039-explicit-commercial-decision-disclosures.md) and [ADR-040](0040-reviewed-delivery-to-requesting-customer.md) publication and delivery authority unchanged.
+Status: Accepted for build by the owner, 12 November 2026 (answers recorded under Owner decisions). Built: PR A #461 (109f0f45) and PR B #466 (e73b0497) are merged. The owner approved the install of migration 0003 on 13 November 2026 (decision 4), and the reviewed installer workflow installed it (run 43337124311 on main 9a2803ce). The reply page switch `CORRIDRA_REPLY_PAGE` is not claimed on, and enable or pause of reply review remains a separate owner step. It extends [ADR-069](0069-reply-page.md) (Publish "prepares the mission quotation ... the Corridra team confirms it through the existing quotation form") and [ADR-026](0026-commercial-mission-execution.md) (original offers and revisions) and keeps [ADR-016](0016-mission-intake-and-operator-commands.md) command rules, [ADR-039](0039-explicit-commercial-decision-disclosures.md) and [ADR-040](0040-reviewed-delivery-to-requesting-customer.md) publication and delivery authority unchanged.
 
 ## Context
 
@@ -77,9 +77,9 @@ The smallest safe change: one append-only binding row written in the same transa
 1. Who may confirm a bound offer: A, owner, admin or operator, the same as recording any offer today (recommended); B, owner or admin only.
 2. Fresh authenticator check on the bound path: A, none, the same as the existing command (recommended, see Rejected options); B, required.
 3. Source for the bound offer: A, the team picks an existing self-declared source and claim, checked in SQL (recommended); B, the transaction creates a self-declared source and claim from the reply (larger change, new trust writes).
-4. Schema review of migration 0003 and the install through `reply_review_action=install` stay with the owner.
+4. Schema review of migration 0003 and the install through `reply_review_action=install` stay with the owner. Given 13 November 2026: the owner approved the install with the exact words "approve the 0003 install" (verified first hand, event 6d5019e5-43ea-45ea-9bee-f795a29ca135, 2026-11-13T00:18:08Z).
 
-Owner answers, 12 November 2026, verbatim choices: build "Approve and build (Recommended)"; decision 1 "Owner, admin or operator (Recommended)"; decision 2 "No, same as today (Recommended)"; decision 3 "Team picks an existing self-declared source (Recommended)". Decision 4 stays open until the owner reviews migration 0003 and approves its install.
+Owner answers, 12 November 2026, verbatim choices: build "Approve and build (Recommended)"; decision 1 "Owner, admin or operator (Recommended)"; decision 2 "No, same as today (Recommended)"; decision 3 "Team picks an existing self-declared source (Recommended)". Decision 4 was given on 13 November 2026 (above). Migration 0003 was installed by the reviewed installer workflow, run 43337124311 on main 9a2803ce (apply=yes, reply_review_action=install, after the owner's protected-environment approval); the job log shows recipient_reply_review_migrations 2 applied -> 3 applied and every other module unchanged. No requirement state changes with this record.
 
 ## Required acceptance
 

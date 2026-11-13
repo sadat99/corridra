@@ -1489,6 +1489,11 @@
       "use": "Exact hashed ledger at 625747f2 (the PR 451 merge; byte-identical to the S40 records 7 merge d9b75287), before PR 451 and the owner decisions taken under \"u do all that's possible\" were recorded; preserves the S40 records 7 Resume bullets; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-s40-records-9-2026-11-13.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at 8165ee3d (the PR 468 merge; byte-identical to the S40 records 8 merge bd3b425), before merges 458 to 468, install run 43337124311 and the 12 to 13 Nov owner decisions were recorded; preserves the S40 records 8 Resume bullets; use the current ledger for live state."
+    },
+    {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"
