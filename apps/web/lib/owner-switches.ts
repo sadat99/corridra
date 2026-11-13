@@ -625,7 +625,7 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_SOURCING_WORKFLOW',
     label: 'Sourcing workflow',
-    line: 'Shows the sourcing steps built on a route profile (category questions, comparison terms, sample steps) once its database module is installed and opened. Nothing is shown while it is off. Opening the module is not launch approval.',
+    line: 'Shows the sourcing steps built on a route profile (category questions, comparison terms, sample steps) once its database module is installed and opened. Nothing is shown while it is off. Steps, in order: run the real-use install first, then the install workflow with field_modules_action sourcing_workflow_install, then sourcing_workflow_enable to open it (sourcing_workflow_pause closes it and keeps every record). Opening the module is not launch approval.',
     group: 'Delivery',
     kind: 'flag',
   },
