@@ -1534,6 +1534,11 @@
       "use": "Accepted for build by the owner, 13 Nov 2026 (pre-approval met after clean reviews); design only: supply sources (staff research, partner organisation, individual partner, data platform) feeding one role-agnostic candidate record; nomination is not identity; two rights registers, no third; ADR-079 slice B first and unchanged; supplier never named to the seller; everything ships off behind separate closed controls; nothing built, installed or enabled"
     },
     {
+      "path": "docs/adr/0083-source-workflow-on-the-shared-base.md",
+      "classification": "Architecture decision",
+      "use": "Accepted for build by the owner, 13 Nov 2026 (pre-approval met), ready to implement: the buying workflow on the shared base, an optional route profile block in the pack configuration, requirement-anchored comparison, landed cost, samples, machinery after-award records, derived readiness; supplier candidates only through ADR-082; designed only"
+    },
+    {
       "path": "docs/revamp/README.md",
       "classification": "Current guide/contract",
       "use": "Owner-approved V3 controlled revamp scope (4 Nov 2026), merge rules, session file ownership and the Wave 0 route/cleanup manifest; live state stays in the ledger"
