@@ -1504,6 +1504,11 @@
       "use": "Exact hashed ledger at 04d65799 (the PR 483 merge; unchanged since fb0cab8), before merge window 1, PRs 482 and 483, install runs 43423006437 and 43423566950 and the 13 Nov owner decisions were recorded; preserves the S40 records 9 Resume bullets; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-g5-records-2-2026-11-13.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at 0689b7d1 (the PR 489 merge; unchanged since 97543d3), before merge window 2, the sourcing workflow install run 43442829587, PR 489, the Orchestrator and Guardian rotations and the later 13 Nov owner words were recorded; preserves the Guardian 3 records 1 Resume bullets; use the current ledger for live state."
+    },
+    {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"
