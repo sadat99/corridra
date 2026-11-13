@@ -1544,6 +1544,11 @@
       "use": "Accepted for build by the owner, 13 Nov 2026 (pre-approval met), ready to implement: the buying workflow on the shared base, an optional route profile block in the pack configuration, requirement-anchored comparison, landed cost, samples, machinery after-award records, derived readiness; supplier candidates only through ADR-082; designed only"
     },
     {
+      "path": "docs/adr/0084-delegation-guided-first-run-share-kit-notices-report-operator-desk.md",
+      "classification": "Architecture decision",
+      "use": "Proposed, awaiting owner merge approval, 13 Nov 2026; design only: delegation guided first run, share kit, notices, published results report, operator desk read, people and money views, participant home and buying-trip template (slices S0 to S7, each off by default, reusing ADR-080)"
+    },
+    {
       "path": "docs/revamp/README.md",
       "classification": "Current guide/contract",
       "use": "Owner-approved V3 controlled revamp scope (4 Nov 2026), merge rules, session file ownership, current lanes snapshot, UI/UX.v3 as the design contract and the Wave 0 route/cleanup manifest; live state stays in the ledger"
