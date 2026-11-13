@@ -4,6 +4,8 @@ Document status: CURRENT (owner, 9 November 2026)
 
 Owner, 9 November 2026 (relayed by the previous conductor session): "I want to work in new sessions(s5, s6,...etc) only, leaving old s2, s3, s4, to avoid losing tokens unnecessarily. We must set a rules for starting new session with right and correct context before any existing session becomes big to load and cost tokens unnecessarily."
 
+Owner, 13 November 2026: the standing "Parallel work operating rules" (sections 0 to 11) in [AGENTS.md](../../AGENTS.md) restate and extend this rule: "Rotate any session at 250k tokens of context, or at 150k after a finished unit, using a one-page handover note. The orchestrator obeys this too." They also set at most 4 builder sessions at once, one session per PR, and the cost stops ("any builder passes $30, or the orchestrator passes $60"). Read that section with this file.
+
 ## When a session rotates
 
 A session hands over to a new one, with the next free number (S5, S6, S7 and so on, never reused), when any of these holds:
