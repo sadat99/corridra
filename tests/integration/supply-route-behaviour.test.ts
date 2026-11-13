@@ -232,6 +232,49 @@ describe('how much the route reads', () => {
       body: { error: 'This file is over 1 MiB. Split it and try again.' },
     });
   });
+
+  test('a real upload is read whole: the file lands as candidate rows and an unknown file type is refused', async () => {
+    await w.openControl('staff_file_import');
+    const columns =
+      'company_name,country,website_host,public_identifier,size_band,counterparty_types,observed_at,source_locator';
+    const csv = `${columns}\r\n"Uploaded\r\nTrading Ltd",DE,uploaded.example,HRB 9,small,importer,${new Date(Date.now() - 86400000).toISOString()},https://registry.example/9\r\n`;
+    const upload = (name: string) => {
+      const form = new FormData();
+      form.set('commandId', randomUUID());
+      form.set('missionId', ids.missionId);
+      form.set('profileVersionId', ids.profileVersionId);
+      form.set('sourceVersionId', ids.sourceVersionId);
+      form.set('file', new File([csv], name, { type: 'text/csv' }));
+      return form;
+    };
+    const sendForm = async (name: string) => {
+      const { POST } = await import('../../apps/web/app/api/supply/[action]/route');
+      const request = new Request(
+        `${origin}/api/supply/import-file?${new URLSearchParams({ tenant: w.tenantA })}`,
+        {
+          method: 'POST',
+          headers: { origin, 'x-test-token': w.users.operator.token },
+          body: upload(name),
+        },
+      );
+      const response = await POST(request, { params: Promise.resolve({ action: 'import-file' }) });
+      return { status: response.status, body: (await response.json()) as Record<string, unknown> };
+    };
+    expect(await sendForm('rows.txt')).toMatchObject({
+      status: 400,
+      body: { error: 'Use a CSV or XLSX file.' },
+    });
+    const done = await sendForm('rows.csv');
+    expect(done).toMatchObject({ status: 201, body: { accepted: 1, rejected: 0 } });
+    expect(
+      (
+        await w.owner.query(
+          'SELECT count(*)::int n FROM app.supply_candidate WHERE import_batch_id=$1',
+          [(done.body as { batchId: string }).batchId],
+        )
+      ).rows[0].n,
+    ).toBe(1);
+  });
 });
 
 describe('what the screens ask the service before they offer a control', () => {
