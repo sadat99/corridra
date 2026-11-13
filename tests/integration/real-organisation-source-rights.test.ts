@@ -772,3 +772,45 @@ test('rights adjust writes no event, and no new payload carries a reason, refere
     synthetic: false,
   });
 });
+
+test('the application call site uses the wrapper when it is installed and the 8-argument function when it is not', async () => {
+  const wrapper =
+    'app.ingest_public_organisation_with_rights(uuid,uuid,text,text,text,text,text,text,text)';
+  const installed = await s.ingest(
+    'real',
+    s.identity('real', 'Call Site Installed GmbH'),
+    'trade_body_list',
+  );
+  expect(installed.warnings).toEqual([]);
+  expect((await s.rightsRows(installed.id))[0]).toMatchObject({ source_type: 'trade_body_list' });
+  await w.f.owner.query(
+    `ALTER FUNCTION ${wrapper} RENAME TO ingest_public_organisation_with_rights_moved`,
+  );
+  try {
+    const hiddenWrapper = await s.ingest(
+      'real',
+      s.identity('real', 'Call Site Hidden GmbH'),
+      'trade_body_list',
+    );
+    expect(Object.keys(hiddenWrapper)).toEqual(['id']);
+    expect(await s.rightsRows(hiddenWrapper.id)).toHaveLength(0);
+    expect(
+      (
+        await w.f.owner.query('SELECT count(*)::int n FROM app.organisation WHERE id=$1', [
+          hiddenWrapper.id,
+        ])
+      ).rows[0].n,
+    ).toBe(1);
+  } finally {
+    await w.f.owner.query(
+      'ALTER FUNCTION app.ingest_public_organisation_with_rights_moved(uuid,uuid,text,text,text,text,text,text,text) RENAME TO ingest_public_organisation_with_rights',
+    );
+  }
+  expect(
+    (await s.ingest('real', s.identity('real', 'Call Site Back GmbH'), undefined)).warnings,
+  ).toEqual(['source_not_classified']);
+  // An unknown source type is refused at the service boundary, before the database.
+  await expect(
+    s.ingest('real', s.identity('real', 'Call Site Bad GmbH'), 'banana'),
+  ).rejects.toThrow();
+});
