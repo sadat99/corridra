@@ -163,9 +163,28 @@ describe('saving and versions', () => {
   });
 
   test('a closed mission cannot take a new profile', async () => {
-    const closed = await w.mission(w.tenantA, w.users.operator.id, 'CANCELLED').catch(() => null);
-    if (!closed) return;
+    const closed = await w.mission(w.tenantA, w.users.operator.id);
+    const client = await w.owner.connect();
+    try {
+      await client.query('BEGIN');
+      // Fixture setup only, in the isolated test database: the mission guards need a full command session.
+      await client.query('SET LOCAL session_replication_role=replica');
+      await client.query(
+        "UPDATE app.mission SET status='CANCELLED',version=version+1,reason='Synthetic cancellation' WHERE id=$1",
+        [closed],
+      );
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+    expect(
+      (await w.owner.query('SELECT status FROM app.mission WHERE id=$1', [closed])).rows[0].status,
+    ).toBe('CANCELLED');
     expect(await refused(w.save('operator', closed))).toBe(profileWords.missionClosed);
+    expect(await stored(closed)).toHaveLength(0);
   });
 });
 
