@@ -6692,6 +6692,13 @@ th {
 .site-shell:has(.ux-operator-home) > .site-header {
   position: static;
 }
+
+/* The offline page is the whole window. The service worker may show it at any address when the network
+   cannot be reached, so the shared chrome is hidden there: its links cannot work without a connection and
+   its header would say who is signed in from a reading it could not make. The page says the one true thing. */
+.site-shell:has(.ux-offline) > :is(.site-header, .guide-footer, .site-footer, .corner-dock) {
+  display: none;
+}
 .ux-workspace-controls {
   display: grid;
   gap: var(--space-6);

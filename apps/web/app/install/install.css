@@ -1,0 +1,75 @@
+/* The install steps. Three platforms, one page: on a phone each platform is a native disclosure so the page
+   stays inside the public length budget (owner, 6 November 2026: up to 3.0 screens at 390 x 844), and from
+   701 px every platform shows open with its own heading and the summary is hidden. The same pattern the
+   Option B footer uses; where the browser cannot force a closed group open (no ::details-content), the
+   groups stay collapsible at every width and nothing is lost. */
+.ux-install-step {
+  border-top: 1px solid var(--line);
+}
+.ux-install-step > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 2.75rem;
+  padding-block: var(--space-3);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  color: var(--text-1);
+}
+.ux-install-step > summary::-webkit-details-marker {
+  display: none;
+}
+.ux-install-step > summary::after {
+  content: '+';
+  font-family: var(--font-mono);
+  color: var(--brand-deep);
+}
+.ux-install-step[open] > summary::after {
+  content: '\2212';
+}
+.ux-install-step .ux-install-title {
+  display: none;
+  font-family: var(--font-ui);
+  font-size: inherit;
+  font-weight: 600;
+  line-height: inherit;
+  letter-spacing: normal;
+  color: var(--text-1);
+}
+.ux-install-step ol {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-block-end: var(--space-4);
+  padding-inline-start: var(--space-6);
+  color: var(--text-2);
+}
+
+@supports selector(::details-content) {
+  @media (min-width: 701px) {
+    .ux-install-step > summary {
+      display: none;
+    }
+    .ux-install-step::details-content {
+      content-visibility: visible;
+    }
+    .ux-install-step .ux-install-title {
+      display: block;
+      margin-block: var(--space-4) var(--space-2);
+    }
+  }
+}
+
+@media (min-width: 701px) {
+  .ux-install-steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-6);
+    align-items: start;
+  }
+  .ux-install-step {
+    border-top: 1px solid var(--line);
+  }
+}
