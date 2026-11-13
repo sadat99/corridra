@@ -43,7 +43,7 @@ export function OrganiseEntry() {
           </li>
         </ol>
         <div className="organise-entry-actions">
-          <Link prefetch={false} className="button-secondary" href="/account/delegations">
+          <Link prefetch={false} className="button-secondary" href="/account/delegations/organise">
             {t('organise.entry.action')}
           </Link>
           <p>{t('organise.entry.note')}</p>

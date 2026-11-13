@@ -43,7 +43,7 @@ describe('/trade-missions organiser entry', () => {
     expect(out).toContain('Create the programme');
     expect(out).toContain('Publish its page');
     expect(out).toContain('Review applications');
-    expect(out).toMatch(/href="\/account\/delegations"[^>]*>Open Your Programmes</);
+    expect(out).toMatch(/href="\/account\/delegations\/organise"[^>]*>Open Your Programmes</);
   });
 
   it('keeps the team request first and unchanged', async () => {
