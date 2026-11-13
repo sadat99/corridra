@@ -581,6 +581,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'flag',
   },
   {
+    name: 'CORRIDRA_DELEGATION_FIRST_RUN',
+    label: 'Delegation guided first run',
+    line: 'Lets an organiser set up a delegation in three short steps with a live preview of the public page, ending on Publish, and puts the next decision first in the programme overview. It sends the same create, template and publish commands as before and adds no new data. Needs public programme pages on. With it off the programme screens are as they were.',
+    group: 'Programmes and delegations',
+    kind: 'flag',
+  },
+  {
     name: 'CORRIDRA_UX_FAIRS',
     label: 'Fair pages and Countdown',
     line: 'Fair pages with dates the Corridra team has checked, and the days to each date. The list stays empty until a checked entry is added.',

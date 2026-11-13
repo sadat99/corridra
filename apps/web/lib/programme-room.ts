@@ -436,6 +436,174 @@ export function programmeAttention(projection: ProgrammeGlanceSource | null): At
   return items;
 }
 
+/**
+ * The decisions-first Overview (ADR-084 slice S0, behind CORRIDRA_DELEGATION_FIRST_RUN). Everything below reads
+ * the same records as the functions above plus the two application counts of the organiser's own page read. It
+ * estimates nothing: a decision is offered only from a record, and a count is given out of its total.
+ */
+/** The two counts the organiser's page read returns. Null while it is not read or where pages are off. */
+export type ApplicationCounts = { applications: number; awaiting: number };
+export type DecisionTarget = 'page' | 'people' | 'plan';
+export type ProgrammeDecision = {
+  key: 'applications' | 'overlaps' | 'review' | 'boarding' | 'readiness';
+  /** What is waiting, as a sentence with its count out of the total. */
+  title: string;
+  /** The label of the action that opens it, written in Title Case. */
+  action: string;
+  target: DecisionTarget;
+};
+
+const boardingAction = (counts: BoardingCounts | null): string => {
+  if (!counts || !counts.complete) return 'Open Participants';
+  if (counts.invitations === 0) return 'Invite Participants';
+  if (counts.open > 0 || counts.registered === 0) return 'Open Participants';
+  return 'Plan the Days';
+};
+
+/**
+ * The organiser's decisions, the next real one first. Applications waiting for an answer come first: a person is
+ * waiting on the organiser. Then what the plan itself flags (overlaps, activities to review), then the boarding
+ * step, then readiness. There is always at least the boarding step, so the list is never empty.
+ */
+export function programmeDecisions(
+  counts: BoardingCounts | null,
+  projection: ProgrammeGlanceSource | null,
+  applications: ApplicationCounts | null,
+): ProgrammeDecision[] {
+  const decisions: ProgrammeDecision[] = [];
+  if (applications && applications.awaiting > 0) {
+    const n = applications.awaiting;
+    decisions.push({
+      key: 'applications',
+      title: `${n} of ${applications.applications} ${plural(applications.applications, 'application', 'applications')} ${plural(n, 'is', 'are')} waiting for your answer`,
+      action: `Answer ${n} ${plural(n, 'Application', 'Applications')}`,
+      target: 'page',
+    });
+  }
+  const attention = programmeAttention(projection);
+  const overlaps = attention.find((item) => item.key === 'overlaps');
+  if (overlaps) {
+    const n = projection!.conflicts.length;
+    decisions.push({
+      key: 'overlaps',
+      title: `${overlaps.title}. ${overlaps.detail}`,
+      action: `Resolve ${n} ${plural(n, 'Overlap', 'Overlaps')}`,
+      target: 'plan',
+    });
+  }
+  const review = attention.find((item) => item.key === 'review');
+  if (review) {
+    const agenda = projection!.agenda;
+    const n = agenda.filter((a) => a.needsReview === true).length;
+    decisions.push({
+      key: 'review',
+      title: `${n} of ${agenda.length} ${plural(agenda.length, 'activity', 'activities')} ${plural(n, 'needs', 'need')} review. ${review.detail}`,
+      action: `Review ${n} ${plural(n, 'Activity', 'Activities')}`,
+      target: 'plan',
+    });
+  }
+  const next = programmeNextStep(counts);
+  decisions.push({
+    key: 'boarding',
+    title: `${next.title}. ${boardingLine(counts)}.`,
+    action: boardingAction(counts),
+    target: next.target,
+  });
+  const readiness = attention.find((item) => item.key === 'readiness');
+  if (readiness) {
+    const { activeParticipants, readyParticipants } = projection!.readiness;
+    decisions.push({
+      key: 'readiness',
+      title: `${readyParticipants} of ${activeParticipants} ${plural(activeParticipants, 'participant is', 'participants are')} ready. ${readiness.detail}`,
+      action: 'See Who Is Not Ready',
+      target: 'people',
+    });
+  }
+  return decisions;
+}
+
+/**
+ * The facts under the decisions: each a count out of its total. A value whose record is not read yet, or whose
+ * switch is off, is left out instead of being called unknown. "Not measured yet" is kept only where the record was
+ * read and still cannot give the number: a participants list longer than the page, or meeting counts read in part.
+ */
+export function programmeFacts(
+  counts: BoardingCounts | null,
+  projection: ProgrammeGlanceSource | null,
+  terms: ChecklistTerms | null,
+  applications: ApplicationCounts | null,
+): GlanceTile[] {
+  const tiles: GlanceTile[] = [];
+  if (applications && applications.applications > 0)
+    tiles.push({
+      key: 'answered',
+      value: String(applications.applications - applications.awaiting),
+      of: `of ${applications.applications}`,
+      known: true,
+      label: 'applications answered',
+    });
+  if (counts && !counts.complete)
+    tiles.push({ key: 'registered', value: notMeasured, known: false, label: 'registered' });
+  else if (counts) {
+    if (counts.invitations > 0)
+      tiles.push({
+        key: 'used',
+        value: String(counts.used),
+        of: `of ${counts.invitations}`,
+        known: true,
+        label: 'invitations used',
+      });
+    const maximum = terms?.maximum ?? null;
+    tiles.push({
+      key: 'registered',
+      value: String(counts.registered),
+      ...(maximum !== null ? { of: `of ${maximum}` } : {}),
+      known: true,
+      label: maximum !== null ? 'places filled' : 'registered',
+    });
+  }
+  if (!projection) return tiles;
+  const r = projection.readiness;
+  if (r.activeParticipants > 0)
+    tiles.push({
+      key: 'ready',
+      value: String(r.readyParticipants),
+      of: `of ${r.activeParticipants}`,
+      known: true,
+      label: 'participants ready',
+    });
+  const agenda = live(projection.agenda);
+  if (agenda.length > 0)
+    tiles.push({
+      key: 'activities',
+      value: String(agenda.filter((a) => a.scheduled === true).length),
+      of: `of ${agenda.length}`,
+      known: true,
+      label: 'activities scheduled',
+    });
+  // Scheduled and qualified-held meetings are two separate counts (ADR-075 decision 5) and neither has a total,
+  // so each is given as a plain number, and only from a complete read. "Not shared" is a known state, said once.
+  const m = projection.meetings;
+  if (m.state === 'AVAILABLE' && m.scheduled !== null && m.qualifiedHeld !== null)
+    tiles.push(
+      { key: 'scheduled', value: String(m.scheduled), known: true, label: 'meetings scheduled' },
+      {
+        key: 'held',
+        value: String(m.qualifiedHeld),
+        known: true,
+        label: 'qualified meetings held',
+      },
+    );
+  else
+    tiles.push({
+      key: 'meetings',
+      value: m.state === 'NOT_SHARED' ? 'Not shared' : notMeasured,
+      known: false,
+      label: 'meeting counts',
+    });
+  return tiles;
+}
+
 /** The views of a programme room, in order. A view appears only where its panel is on. */
 export const roomLenses = [
   { key: 'overview', label: 'Overview' },

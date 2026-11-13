@@ -88,7 +88,7 @@ function parseContent(c: unknown): Content {
       throw Error('Invalid cost');
   return c as unknown as Content;
 }
-function parseTemplate(t: unknown): Template {
+export function parseTemplate(t: unknown): Template {
   if (
     !object(t) ||
     !uuid(t.id) ||

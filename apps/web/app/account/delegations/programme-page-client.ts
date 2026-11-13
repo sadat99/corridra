@@ -1,4 +1,5 @@
 'use client';
+import { useEffect, useState } from 'react';
 import { pp } from '../../../lib/i18n/programme-pages';
 import { customerHeaders, object } from './pricing-client';
 
@@ -161,3 +162,49 @@ export const shortDay = (iso: string) =>
     year: 'numeric',
     timeZone: 'UTC',
   }).format(new Date(iso));
+
+// The two application counts of the organiser's own page read (existing GET, nothing new). Counts only; null while
+// unread, where pages are off for this programme, or when the read fails.
+export function useApplicationCounts(
+  scope: { subject: string; issuer: string; workspaceId?: string; programmeId?: string },
+  on: boolean,
+  reads: number,
+): { applications: number; awaiting: number } | null {
+  const { subject, issuer, workspaceId, programmeId } = scope;
+  const key = `${workspaceId}:${programmeId}:${reads}`;
+  const [state, setState] = useState<{
+    key: string;
+    counts: { applications: number; awaiting: number } | null;
+  }>({
+    key: '',
+    counts: null,
+  });
+  useEffect(() => {
+    if (!on || !workspaceId || !programmeId) return;
+    const task = new AbortController();
+    void Promise.resolve().then(async () => {
+      let counts: { applications: number; awaiting: number } | null = null;
+      try {
+        const r = await fetch(
+          `/api/customer-programme-pages?view=page&workspaceId=${workspaceId}&programmeId=${programmeId}`,
+          {
+            cache: 'no-store',
+            credentials: 'same-origin',
+            headers: customerHeaders(subject, issuer),
+            signal: task.signal,
+          },
+        );
+        if (r.ok) {
+          const view = parsePageView(await r.json());
+          counts = { applications: view.applications, awaiting: view.awaiting };
+        }
+      } catch {
+        counts = null;
+      }
+      if (!task.signal.aborted) setState({ key, counts });
+    });
+    return () => task.abort();
+  }, [on, subject, issuer, workspaceId, programmeId, key]);
+  // A refresh keeps the last counts on screen until the new read settles.
+  return on && state.key.startsWith(`${workspaceId}:${programmeId}:`) ? state.counts : null;
+}
