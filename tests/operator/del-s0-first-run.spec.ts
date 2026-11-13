@@ -291,7 +291,9 @@ async function standIn(
   });
   return state;
 }
-const firstRun = (page: Page) => page.getByRole('region', { name: 'Set up your delegation' });
+const firstRunRegion = (page: Page) => page.getByRole('region', { name: 'Set up your delegation' });
+// The form column of the region: the folded plain create form sits in the same region and has fields of the same names.
+const firstRun = (page: Page) => firstRunRegion(page).locator('.first-run-form');
 const preview = (page: Page) => page.getByRole('region', { name: 'Your public page so far' });
 const draftKeys = (page: Page) =>
   page.evaluate(() => ({
@@ -329,6 +331,7 @@ test('the first run goes from an empty workspace to a published page, and nothin
   const state = await standIn(page);
   await page.goto(`${origin}/?room=1&first=1&pages=1&tpl=1`);
   const run = firstRun(page);
+  await expect(firstRunRegion(page)).toBeVisible();
   await expect(run).toBeVisible();
   // A workspace with no programme opens on the first run: it is the first tab and the one shown.
   await expect(page.getByRole('tab').first()).toHaveText('New Sample Programme');
@@ -676,6 +679,8 @@ test('on a phone the first run fits, keeps its preview one tap away and is acces
       'More Page Lines',
       'Publish the Page',
       'Create Without a Public Page',
+      // The folded plain create form keeps its own action.
+      'Save Sample Programme',
     ]),
   );
   expect(labels.filter((label) => !isTitleCase(label))).toEqual([]);

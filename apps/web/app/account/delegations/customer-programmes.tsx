@@ -1229,13 +1229,15 @@ function ScopedProgrammes({
           templatesEnabled={templatesEnabled}
           onPublished={published}
           onDenied={deny}
+          plain={
+            <details className="first-run-plain">
+              <summary>{pp('pp.first.plain')}</summary>
+              {intro}
+              {createForm}
+            </details>
+          }
         />
       </Suspense>
-      <details className="first-run-plain">
-        <summary>{pp('pp.first.plain')}</summary>
-        {intro}
-        {createForm}
-      </details>
     </>
   ) : null;
   // A workspace with no programme opens on the first run: it is the first tab there, and the list comes second.

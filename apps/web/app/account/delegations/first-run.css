@@ -1,6 +1,6 @@
 /* The guided first run (ADR-084 S0): the form and, beside it, the page it is building. Tokens only.
    One column on a phone with the preview one tap away; two columns from 64rem, where the preview stays in view
-   inside its own frame so the page keeps to one screen. */
+   inside its own frame so the page keeps to one screen; the folded plain form sits under it. */
 .first-run {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -9,8 +9,14 @@
 }
 .first-run-form {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-2);
   justify-items: start;
+  min-width: 0;
+}
+.first-run-side {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
   min-width: 0;
 }
 .first-run-form > h2,
@@ -75,17 +81,14 @@
   line-height: 1.2;
   overflow-wrap: anywhere;
 }
-.first-run-plain {
-  margin-top: var(--space-4);
-}
 @media (min-width: 64rem) {
   .first-run {
-    grid-template-columns: minmax(0, 26rem) minmax(0, 1fr);
-    gap: var(--space-8);
+    grid-template-columns: minmax(0, 32rem) minmax(0, 1fr);
+    gap: var(--space-6);
   }
   /* The preview is as tall as the window allows and scrolls inside its frame; the frame takes keyboard focus. */
   .first-run-preview-page {
-    max-height: max(18rem, calc(100dvh - 24rem));
+    max-height: max(14rem, calc(100dvh - 32rem));
     overflow-y: auto;
     overscroll-behavior: contain;
   }

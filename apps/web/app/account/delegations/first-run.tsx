@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { ProgrammePageView } from '../../delegations/[address]/programme-page-view';
 import '../../delegations/[address]/programme-page.css';
@@ -32,6 +32,8 @@ type Props = {
   onPublished: (programmeId: string) => void;
   /** The account or the workspace role changed; the page clears what it holds. */
   onDenied: () => void;
+  /** The plain create form, folded; it sits under the preview on a wide screen and after it on a phone. */
+  plain?: ReactNode;
 };
 // What is kept in the session. The four lines under "More Page Lines" are absent until the organiser changes one,
 // so the workspace's own name and the page's plain "Not stated yet" stand in for them and are seen in the preview.
@@ -129,6 +131,7 @@ function ScopedFirstRun({
   templatesEnabled,
   onPublished,
   onDenied,
+  plain,
 }: Props) {
   const sample = !realCustomerInput();
   const store = useFormDraft<FirstRunKept>(
@@ -380,7 +383,7 @@ function ScopedFirstRun({
         {options.area ? (
           <textarea
             name={`first-${key}`}
-            rows={3}
+            rows={2}
             maxLength={options.max}
             value={value as string}
             disabled={locked}
@@ -407,6 +410,8 @@ function ScopedFirstRun({
   // preview only; Publish refuses until every line the page needs is written.
   const copy = copyFrom(page);
   const shown = (line: string) => line || pp('pp.first.preview.empty');
+  // The sample mark offered in the name box is not a name yet, so the preview does not show it as one.
+  const previewName = copy.title.trim() === 'Synthetic' ? '' : copy.title;
   const previewCloses = day.test(page.closes) ? page.closes : isoDay(30);
 
   return (
@@ -579,40 +584,44 @@ function ScopedFirstRun({
           </div>
         </form>
       </div>
-      <details
-        className="first-run-preview"
-        open={previewOpen}
-        onToggle={(event) => setPreviewOpen(event.currentTarget.open)}
-      >
-        <summary>{pp('pp.first.preview.open')}</summary>
-        <div
-          className="first-run-preview-page"
-          role="region"
-          aria-label={pp('pp.first.preview.title')}
-          tabIndex={0}
+      <div className="first-run-side">
+        <details
+          className="first-run-preview"
+          open={previewOpen}
+          onToggle={(event) => setPreviewOpen(event.currentTarget.open)}
         >
-          <p className="programme-note">{pp('pp.first.preview.note')}</p>
-          <p className="first-run-preview-name">{copy.title || pp('pp.first.preview.name')}</p>
-          <ProgrammePageView
-            preview
-            page={{
-              state: 'OPEN',
-              programme: {
-                ...copy,
-                summary: shown(copy.summary),
-                destination: shown(copy.destination),
-                dates: shown(copy.dates),
-                organiser: shown(copy.organiser),
-                focus: shown(copy.focus),
-                audience: shown(copy.audience),
-                eligibility: shown(copy.eligibility),
-              },
-              closesAt: `${previewCloses}T23:59:00.000Z`,
-              sample,
-            }}
-          />
-        </div>
-      </details>
+          <summary>{pp('pp.first.preview.open')}</summary>
+          <div
+            className="first-run-preview-page"
+            role="region"
+            aria-label={pp('pp.first.preview.title')}
+            tabIndex={0}
+          >
+            <p className="programme-note">{pp('pp.first.preview.note')}</p>
+            <p className="first-run-preview-name">{previewName || pp('pp.first.preview.name')}</p>
+            <ProgrammePageView
+              preview
+              page={{
+                state: 'OPEN',
+                programme: {
+                  ...copy,
+                  title: previewName || pp('pp.first.preview.name'),
+                  summary: shown(copy.summary),
+                  destination: shown(copy.destination),
+                  dates: shown(copy.dates),
+                  organiser: shown(copy.organiser),
+                  focus: shown(copy.focus),
+                  audience: shown(copy.audience),
+                  eligibility: shown(copy.eligibility),
+                },
+                closesAt: `${previewCloses}T23:59:00.000Z`,
+                sample,
+              }}
+            />
+          </div>
+        </details>
+        {plain}
+      </div>
     </section>
   );
 }
