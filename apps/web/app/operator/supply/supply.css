@@ -1,0 +1,292 @@
+/* Supply source screens (ADR-082 slice S3). Tokens only: no raw colour, no text-transform, no inline size. */
+.supply-mode {
+  margin: 0;
+}
+.supply-quiet {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  max-inline-size: 60ch;
+  overflow-wrap: anywhere;
+}
+.supply-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.supply-notice-icon {
+  flex: none;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+}
+.supply-failure {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+.supply-list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.supply-item {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.supply-item-title {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.supply-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  margin: 0;
+}
+.supply-facts > div {
+  min-inline-size: 0;
+}
+/* A fact reads on one line, name then value, so a row stays one or two lines tall. */
+.supply-facts > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-1);
+}
+.supply-facts dt {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.supply-facts dt::after {
+  content: ':';
+}
+.supply-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.supply-check {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+}
+.supply-choices {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.supply-choice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: var(--space-12);
+}
+.supply-disclosure {
+  margin-block-start: var(--space-3);
+}
+.supply-disclosure > summary {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--space-12);
+}
+.supply-table {
+  overflow-x: auto;
+  max-inline-size: 100%;
+}
+.supply-table table {
+  inline-size: 100%;
+  border-collapse: collapse;
+}
+.supply-table th,
+.supply-table td {
+  padding: var(--space-2) var(--space-3);
+  text-align: start;
+  vertical-align: top;
+  border-block-end: 1px solid var(--border-subtle);
+}
+/* Compact rows (layout budget): the title, the facts and the actions share a line from 48 rem; the versions and history
+   disclosures stay closed and take the whole row only while open. */
+.supply-list .supply-item .operator-toolbar {
+  gap: var(--space-2) var(--space-3);
+  margin-block: 0;
+}
+.supply-list .supply-item .operator-toolbar > button.text-link,
+.supply-list .supply-item > button.text-link {
+  margin-inline-start: 0;
+  min-block-size: 44px;
+}
+/* On a phone the two row actions sit side by side and share the width, and a row's lines sit close together. */
+@media (max-width: 47.99rem) {
+  .supply-list .supply-item .operator-toolbar > button.text-link {
+    flex: 1 1 8rem;
+    inline-size: auto;
+    justify-content: center;
+  }
+  .supply-item {
+    gap: var(--space-1);
+  }
+  .supply-facts {
+    gap: 0 var(--space-4);
+  }
+  .supply-item > .supply-check {
+    display: block;
+  }
+  /* The way back and the other screen share the first line; the name comes under them. */
+  .supply-head > nav {
+    order: 1;
+  }
+  .supply-head > .supply-head-end {
+    order: 2;
+  }
+  .supply-head > h2 {
+    order: 3;
+    flex-basis: 100%;
+  }
+  .supply-head > p:not(.supply-head-end) {
+    order: 4;
+  }
+}
+.supply-item > details.research-history {
+  min-inline-size: 0;
+}
+.supply-item > details.research-history > summary {
+  min-block-size: 44px;
+}
+/* One line of text the width of the content column, for a notice that fits on it. */
+.supply-quiet.supply-wide,
+.supply-item > .supply-quiet {
+  max-inline-size: none;
+}
+/* The mission screen's way back, its name, the profile version and the other screen share one line. */
+.supply-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-4);
+}
+.supply-head > h2,
+.supply-head > p {
+  margin: 0;
+}
+.supply-head-end {
+  margin-inline-start: auto;
+}
+.supply-head > h2 {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+/* The filter and its counts share a line from 48 rem. */
+.supply-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-2) var(--space-6);
+}
+.supply-filter-row > p {
+  margin: 0;
+  padding-block-end: var(--space-3);
+}
+/* Showing N of M and Show More share a line. */
+.supply-more {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-4);
+}
+.supply-more > p {
+  margin: 0;
+}
+@media (min-width: 48rem) {
+  .supply-item {
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
+    align-items: center;
+    gap: 0 var(--space-4);
+  }
+  /* Row of a list: title, facts, then the actions, all on one line when the width allows. */
+  .supply-item > .supply-item-title {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .supply-item > .supply-facts,
+  .supply-item > .supply-quiet.supply-inline {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .supply-item > .operator-toolbar,
+  .supply-item > button.text-link {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+  }
+  .supply-item > details.research-history {
+    grid-column: 4;
+    grid-row: 1;
+  }
+  .supply-item > details.research-history[open],
+  .supply-item > .operator-form,
+  .supply-item > .supply-check,
+  .supply-item > .supply-quiet:not(.supply-inline),
+  .supply-item > [data-feedback-scope]:not(:empty) {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+  .supply-item > .supply-item-title .text-link {
+    min-block-size: 0;
+    padding-block: 0;
+  }
+  /* An empty live region stays in the page for assistive technology but takes no room. */
+  .supply-item > [data-feedback-scope]:empty {
+    position: absolute;
+  }
+}
+@media (min-width: 40rem) {
+  .supply-item .operator-form {
+    max-inline-size: 40rem;
+  }
+}
+
+/* A screen's closing controls share a line: Showing N of M, Show More and the disclosure that adds a record. */
+.supply-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-6);
+}
+.supply-flow > * {
+  flex: 1 0 100%;
+  margin-block: 0;
+}
+.supply-flow > .supply-quiet.supply-inline {
+  flex: 1 1 auto;
+  inline-size: auto;
+}
+.supply-flow > .supply-more,
+.supply-flow > details.supply-disclosure:not([open]) {
+  flex: 0 0 auto;
+}
+
+/* The five choices of the filter explain themselves; the group keeps its name for assistive technology. */
+.supply-filter-row .ux-segments legend {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

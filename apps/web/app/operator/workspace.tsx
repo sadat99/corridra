@@ -41,6 +41,7 @@ import { SubTabs, resolveSubTabsAgain } from '../../components/ux/sub-tabs';
 import { authenticatorReturnTarget } from '../../lib/authenticator-check';
 import { AuthenticatorCheck } from './authenticator-check';
 import { SourcesPanel } from './sources-panel';
+import { useOperatorFlags } from './operator-flags';
 import { EvidencePanel } from './evidence-panel';
 import { publishTeamContext } from '../../lib/ux/team-context';
 import { forgetDeviceRecents } from '../../lib/ux/palette-recents';
@@ -132,6 +133,7 @@ function TenantWorkspace({
   problemReports: boolean;
   programmeApplications: boolean;
 }) {
+  const { supplySources } = useOperatorFlags();
   const edited = useRef(false);
   const memberCommand = useRef<{ key: string; id: string } | null>(null);
   const hash = useSyncExternalStore(
@@ -651,6 +653,17 @@ function TenantWorkspace({
               />
               {['owner', 'admin', 'reviewer'].includes(data.role) && (
                 <CompanyLinkReview key={`links-${tenant}`} tenant={tenant} />
+              )}
+              {supplySources && (
+                <p>
+                  <Link
+                    prefetch={false}
+                    className="text-link"
+                    href={`/operator/supply?workspace=${encodeURIComponent(tenant)}`}
+                  >
+                    Supply Sources
+                  </Link>
+                </p>
               )}
               <a className="text-link" href="#workspace-navigation">
                 Back to workspace sections

@@ -56,7 +56,11 @@ function decode(bytes: Uint8Array) {
 }
 
 // Strict RFC 4180 parser. Physical source rows remain visible across quoted newlines.
-export function csvRows(text: string): { row: number; cells: string[] }[] {
+export function csvRows(
+  text: string,
+  limit: number = importLimits.rows,
+  label = 'participant',
+): { row: number; cells: string[] }[] {
   if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
   const rows: { row: number; cells: string[] }[] = [];
   let cells: string[] = [],
@@ -73,7 +77,7 @@ export function csvRows(text: string): { row: number; cells: string[] }[] {
     cell = '';
     afterQuote = false;
     pending = false;
-    if (rows.length > importLimits.rows + 1) invalid('Use at most 100 participant rows');
+    if (rows.length > limit + 1) invalid(`Use at most ${limit} ${label} rows`);
   };
   for (let i = 0; i < text.length; i++) {
     const ch = text[i];
@@ -238,7 +242,7 @@ function richText(value: unknown): string {
         .map((r) => stringValue(r.t))
         .join('');
 }
-async function excelRows(bytes: Buffer) {
+async function excelRows(bytes: Buffer, limit: number = importLimits.rows) {
   const files = await unzip(bytes);
   const documents = new Map<string, Xml>();
   for (const [name, bytes] of files)
@@ -283,11 +287,11 @@ async function excelRows(bytes: Buffer) {
     if (
       !Number.isInteger(n) ||
       n <= last ||
-      n > importLimits.rows + 1 ||
+      n > limit + 1 ||
       row['@hidden'] === '1' ||
       row['@hidden'] === 'true'
     )
-      invalid('Rows must be visible, ordered and within the 100 row limit');
+      invalid(`Rows must be visible, ordered and within the ${limit} row limit`);
     while (last + 1 < n) {
       rows.push({ row: ++last, cells: [] });
     }
@@ -316,14 +320,27 @@ async function excelRows(bytes: Buffer) {
   return rows;
 }
 
+/**
+ * The generic table reader the participant import and the supply candidate file share: size check, decode, then the strict
+ * CSV or the safe XLSX reader. It returns every physical row, the header row first. `rows` is the most data rows allowed.
+ */
+export async function tableRows(
+  bytes: Buffer,
+  options: { format: 'CSV' | 'XLSX'; rows?: number; label?: string },
+): Promise<{ row: number; cells: string[] }[]> {
+  const limit = options.rows ?? importLimits.rows;
+  const label = options.label ?? 'participant';
+  if (!bytes.length || bytes.length > importLimits.bytes)
+    invalid('Use a file between 1 byte and 1 MiB');
+  return options.format === 'CSV' ? csvRows(decode(bytes), limit, label) : excelRows(bytes, limit);
+}
+
 export async function parseImport(
   bytes: Buffer,
   format: 'CSV' | 'XLSX',
   mode: 'synthetic' | 'real' = 'synthetic',
 ): Promise<ImportRow[]> {
-  if (!bytes.length || bytes.length > importLimits.bytes)
-    invalid('Use a file between 1 byte and 1 MiB');
-  const rows = format === 'CSV' ? csvRows(decode(bytes)) : await excelRows(bytes);
+  const rows = await tableRows(bytes, { format });
   const header = rows.shift()?.cells.map((v) => v.trim());
   if (
     !header?.length ||

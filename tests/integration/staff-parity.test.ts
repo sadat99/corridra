@@ -55,6 +55,7 @@ const reserved = [
   'reset-password',
   'view-as',
   'problem-reports',
+  'supply',
 ];
 const root = join(__dirname, '../../apps/web');
 const read = (path: string) => readFileSync(join(root, path), 'utf8');
