@@ -106,11 +106,24 @@ const counts = (items, key) => {
   return map;
 };
 
+// The baseline is an exact list: a new violation fails, and so does an entry that no longer violates
+// (or violates less), so the list can only shrink. Lower or delete the entry when you remove debt.
+export function baselineDrift(found, allowed) {
+  const out = [];
+  for (const [file, n] of Object.entries(found)) {
+    if (n > (allowed[file] ?? 0))
+      out.push(`new violation ${file}: ${n} found, ${allowed[file] ?? 0} allowed`);
+  }
+  for (const [file, n] of Object.entries(allowed)) {
+    if ((found[file] ?? 0) < n)
+      out.push(`stale entry ${file}: ${found[file] ?? 0} found, ${n} listed`);
+  }
+  return out;
+}
+
 function exceeds(found, allowed, label) {
-  const over = Object.entries(found)
-    .filter(([file, n]) => n > (allowed[file] ?? 0))
-    .map(([file, n]) => `${file}: ${n} found, ${allowed[file] ?? 0} allowed`);
-  assert.deepEqual(over, [], `${label} (see docs/agents/ui-direction.md): ${over.join('; ')}`);
+  const drift = baselineDrift(found, allowed);
+  assert.deepEqual(drift, [], `${label} (see docs/agents/ui-direction.md): ${drift.join('; ')}`);
 }
 
 test('TypeScript uses no raw colour outside the web manifest and viewport', () => {
@@ -143,8 +156,11 @@ test('no new inline font size or px spacing', () => {
 
 test('every signed-in account page renders inside a shared shell', () => {
   const missing = signedInPages.filter((p) => !usesShell(p)).map(rel);
-  const fresh = missing.filter((p) => !baseline.signedInPagesOutsideShell.includes(p));
+  const listed = baseline.signedInPagesOutsideShell;
+  const fresh = missing.filter((p) => !listed.includes(p));
+  const stale = listed.filter((p) => !missing.includes(p));
   assert.deepEqual(fresh, [], `page outside the shared shell: ${fresh.join(', ')}`);
+  assert.deepEqual(stale, [], `stale shell baseline entry, remove it: ${stale.join(', ')}`);
 });
 
 test('the baseline only lists files that still exist and still have debt', () => {
@@ -159,6 +175,13 @@ test('the baseline only lists files that still exist and still have debt', () =>
 });
 
 // Each rule must fail on a planted violation, or the guard proves nothing.
+test('the baseline fails on a new violation and on a stale entry', () => {
+  assert.equal(baselineDrift({ 'a.tsx': 1 }, {}).length, 1);
+  assert.equal(baselineDrift({}, { 'a.tsx': 1 }).length, 1);
+  assert.equal(baselineDrift({ 'a.tsx': 1 }, { 'a.tsx': 2 }).length, 1);
+  assert.equal(baselineDrift({ 'a.tsx': 2 }, { 'a.tsx': 2 }).length, 0);
+});
+
 test('rule 1 flags a planted raw colour and passes a token', () => {
   assert.equal(rawColours("const c = '#ff0000';").length, 1);
   assert.equal(rawColours("el.style.color = 'rgb(1, 2, 3)';").length, 1);
