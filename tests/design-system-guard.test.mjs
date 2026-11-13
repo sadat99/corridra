@@ -32,9 +32,15 @@ const styles = walk(web, (p) => p.endsWith('.css'));
 
 // Rule 1: no raw colour in TypeScript. Tokens live in CSS custom properties; the web manifest and
 // viewport metadata are the only places a browser needs a literal value, and they carry AC/1 primitives.
+// `lib/ux/web-manifest.ts` holds what the manifest says, as plain data, so a test can read it without the
+// framework's types; it is the manifest and is allowed the same two literals, which a test pins to AC/1.
 const colourLiteral =
   /(['"`])#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\1|\b(?:rgb|rgba|hsl|hsla|oklch|oklab)\(/g;
-const RAW_COLOUR_ALLOWED = new Set(['apps/web/app/manifest.ts', 'apps/web/app/layout.tsx']);
+const RAW_COLOUR_ALLOWED = new Set([
+  'apps/web/app/manifest.ts',
+  'apps/web/app/layout.tsx',
+  'apps/web/lib/ux/web-manifest.ts',
+]);
 
 export function rawColours(text) {
   const code = text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
