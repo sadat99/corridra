@@ -379,6 +379,19 @@ test.describe('the reply card', () => {
 });
 
 test.describe('the prepared offer form', () => {
+  test('links to the full original reply on the reply card it came from', async ({ page }) => {
+    await stub(page, {});
+    await openForm(page);
+    const link = page.getByRole('link', { name: 'Open the Full Original Reply' });
+    await expect(link).toHaveAttribute(
+      'href',
+      `/operator/delivery?workspace=${tenant}#reply-${replyId}`,
+    );
+    // The address ends at an element that exists on the reply card, so the link lands on the reply.
+    await openCard(page, 'owner');
+    await expect(page.locator(`li.reply-review-card#reply-${replyId}`)).toHaveCount(1);
+  });
+
   test('shows the supplier terms read only, says what is not stated, and saves the exact strings with the reply binding', async ({
     page,
   }) => {

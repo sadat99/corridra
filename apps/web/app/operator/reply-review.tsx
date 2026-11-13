@@ -242,7 +242,7 @@ function ReplyCard({
   const han = (text: string) => (/\p{Script=Han}/u.test(text) ? 'zh' : undefined);
 
   return (
-    <li className="reply-review-card">
+    <li className="reply-review-card" id={`reply-${reply.id}`}>
       <header>
         <p className="reply-review-meta">
           Recipient link {reply.link_id.slice(0, 8)}

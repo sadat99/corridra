@@ -1058,6 +1058,12 @@ export function CommercialMission({
                   revision {bound.revision}, received{' '}
                   {bound.observedAt.slice(0, 16).replace('T', ' ')} UTC. Check every value, then
                   save.{' '}
+                  <a
+                    className="text-link"
+                    href={`/operator/delivery?workspace=${encodeURIComponent(tenant)}#reply-${bound.responseId}`}
+                  >
+                    Open the Full Original Reply
+                  </a>{' '}
                   <button type="button" className="text-link" onClick={() => setHandFill(true)}>
                     Fill This Form by Hand Instead
                   </button>
