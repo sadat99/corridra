@@ -272,6 +272,13 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: '/api/supply/:path*',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
         source: '/api/workspace/programme-applications',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },

@@ -175,6 +175,7 @@ import { ClamAvScanner } from '@corridra/evidence/adapters';
 import { createEvidenceStorage } from '@corridra/evidence/storage';
 import { readFoundationConfig } from '@corridra/config';
 import { CounterpartyService } from '@corridra/counterparties';
+import { SupplyCandidateService } from '@corridra/counterparties/supply-candidates';
 import { MissionService } from '@corridra/missions';
 import { DeliveryService } from '@corridra/delivery';
 import { DeliveryExperienceService } from '@corridra/delivery/experience';
@@ -872,6 +873,7 @@ function createServices() {
         : undefined,
     ),
     counterparties: new CounterpartyService(runtimePool),
+    supplyCandidates: new SupplyCandidateService(runtimePool),
     missions: new MissionService(
       runtimePool,
       config.AUTH_SECRET,

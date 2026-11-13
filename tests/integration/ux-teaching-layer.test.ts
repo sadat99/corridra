@@ -331,6 +331,7 @@ describe('the stylesheets of the teaching layer', () => {
       'app/operator/view-as/[role]/sample-screens.tsx',
       'app/about/page.tsx',
       'app/operator/problem-report-queue.tsx',
+      'app/operator/supply/supply-ui.tsx',
     ];
     const importers = walk(app)
       .filter((f) => /\.(tsx?|css)$/.test(f))
