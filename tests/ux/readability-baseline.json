@@ -194,6 +194,13 @@
     "sentences": 5,
     "words": 67
   },
+  "/install": {
+    "grade": 2.7,
+    "hard": 0,
+    "long": 0,
+    "sentences": 7,
+    "words": 60
+  },
   "/institutions": {
     "grade": 8.2,
     "hard": 1,
@@ -207,6 +214,13 @@
     "long": 0,
     "sentences": 10,
     "words": 65
+  },
+  "/offline": {
+    "grade": 3.7,
+    "hard": 0,
+    "long": 0,
+    "sentences": 2,
+    "words": 18
   },
   "/network": {
     "grade": 6.7,
