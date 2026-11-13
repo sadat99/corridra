@@ -4,9 +4,11 @@ import { EmptyState } from '../../../components/ux/empty-state';
 import { ActionFeedback, useActionFeedback } from '../../../components/ux/feedback';
 import { formatDate } from '../../../lib/ux/format';
 import { withStepUp } from '../../../lib/ux/step-up';
+import { supplyListLimit } from '@corridra/domain/supply-sources';
 import {
   canLift,
   canWrite,
+  listLimitWords,
   refusalWords,
   supplyGet,
   supplyPost,
@@ -35,12 +37,12 @@ type Block = {
   by: string;
   current: boolean;
 };
-type Subject = { organisationId?: string; companyName?: string; country?: string };
 const subjectKey = (b: Block) => b.organisationId ?? `${b.nameKey ?? ''}:${b.country ?? ''}`;
-const subjectOf = (b: Block): Subject =>
-  b.organisationId
-    ? { organisationId: b.organisationId }
-    : { companyName: b.nameKey ?? '', country: b.country ?? '' };
+/**
+ * Lift Block and Block Again name the row they act on. The server reads the company from that row, so a name block is lifted
+ * exactly as it was recorded; the name key held here is not a company name and must not be sent back as one.
+ */
+const subjectOf = (b: Block) => ({ blockId: b.id });
 const label = (b: Block) => b.organisationName ?? b.nameKey ?? 'This company';
 
 /** Lift Block and Block Again: one small form, Reason and Reference. A stale authenticator check asks again, entries kept. */
@@ -139,6 +141,11 @@ function BlockForm({ tenant, onDone }: { tenant: string; onDone: (text: string) 
   async function send(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
+    // Enter in an early step means Next, not Block Company.
+    if (step === 1) {
+      next();
+      return;
+    }
     const data = new FormData(event.currentTarget);
     setBusy(true);
     try {
@@ -374,6 +381,9 @@ export function DncPanel({ tenant, role }: { tenant: string; role: string }) {
             Show More
           </button>
         </div>
+      ) : null}
+      {rows.length >= supplyListLimit ? (
+        <p className="supply-quiet">{listLimitWords.blocks}</p>
       ) : null}
       {canWrite(role) ? (
         <BlockForm

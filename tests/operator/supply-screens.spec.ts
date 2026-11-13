@@ -50,6 +50,7 @@ const candidateRow = (name: string, extra: Record<string, unknown> = {}) => ({
   counterpartyTypes: [],
   latestReview: null,
   latestMatch: null,
+  currentMatch: null,
   reviews: [],
   matches: [],
   ...extra,
@@ -107,6 +108,15 @@ async function open(page: Page, screen: string, world: Partial<World> = {}, role
           },
         ];
         return json({ blockId: 'blk1' }, 201);
+      }
+      if (action === 'lift') {
+        const [latest, ...rest] = w.blocks;
+        w.blocks = [
+          { ...latest, id: 'blk2', state: 'LIFTED', current: true },
+          { ...latest, current: false },
+          ...rest,
+        ];
+        return json({ blockId: 'blk2' }, 201);
       }
       return json({ ok: true }, 201);
     }
@@ -397,6 +407,52 @@ test.describe('candidates', () => {
       page.getByText('Qualify this candidate before matching it to a company.'),
     ).toBeVisible();
   });
+
+  test('only the match that still stands offers a reversal', async ({ page }) => {
+    const matches = [
+      {
+        id: 'm3',
+        decision: 'NO_MATCH',
+        organisationId: 'o2',
+        organisationName: 'Nope SL',
+        reverseOf: null,
+        at: now,
+        reversed: false,
+      },
+      {
+        id: 'm2',
+        decision: 'MATCH',
+        organisationId: 'o1',
+        organisationName: 'Frutas Unidas SL',
+        reverseOf: null,
+        at: now,
+        reversed: false,
+      },
+      {
+        id: 'm1',
+        decision: 'MATCH',
+        organisationId: 'o1',
+        organisationName: 'Frutas Unidas SL',
+        reverseOf: null,
+        at: now,
+        reversed: true,
+      },
+    ];
+    await open(page, 'candidate', {
+      candidates: [
+        candidateRow('Ibérica Frutas SL', {
+          matches,
+          latestMatch: { id: 'm3', decision: 'NO_MATCH', organisationId: 'o2', at: now },
+          currentMatch: { id: 'm2', decision: 'MATCH', organisationId: 'o1', at: now },
+        }),
+      ],
+    });
+    await page.getByText('Match history (3)').click();
+    await expect(page.getByRole('button', { name: 'Reverse This Match' })).toHaveCount(1);
+    await expect(
+      page.getByText('Reverse the match to Frutas Unidas SL recorded on', { exact: false }),
+    ).toBeVisible();
+  });
 });
 
 test.describe('do not contact', () => {
@@ -429,6 +485,52 @@ test.describe('do not contact', () => {
       body: { companyName: 'Acme Imports', country: 'DE', reference: 'CASE-204' },
     });
     await expect(page.getByRole('button', { name: 'Lift Block' })).toBeVisible();
+    // Lift and block again name the entry itself, never the stored name key, which is not a company name.
+    await page.getByRole('button', { name: 'Lift Block' }).click();
+    const entry = page.getByRole('list', { name: 'Do-not-contact entries' });
+    await entry.getByLabel('Reason', { exact: true }).fill('They agreed to be listed');
+    await entry.getByLabel(/^Reference/).fill('CASE-205');
+    await entry.getByRole('button', { name: 'Lift Block' }).click();
+    await expect(page.getByRole('button', { name: 'Block Again' })).toBeVisible();
+    expect(w.sent[1]).toMatchObject({ action: 'lift', body: { blockId: 'blk1' } });
+    expect(w.sent[1].body.companyName).toBeUndefined();
+    expect(w.sent[1].body.country).toBeUndefined();
+  });
+
+  test('Enter in the first step of Block a Company goes to the next step instead of saving', async ({
+    page,
+  }) => {
+    const w = await open(page, 'dnc');
+    await page.getByText('Block a Company', { exact: true }).click();
+    await page.getByRole('radio', { name: 'Not in the catalogue yet' }).check();
+    await page.getByLabel('Company name').fill('Acme Imports');
+    await page.getByLabel('Country').selectOption('DE');
+    await page.getByLabel('Company name').press('Enter');
+    await expect(page.getByRole('heading', { name: 'Why?' })).toBeVisible();
+    expect(w.sent).toEqual([]);
+  });
+
+  test('a full list says that older entries are kept', async ({ page }) => {
+    await open(page, 'dnc', {
+      blocks: Array.from({ length: 100 }, (_, i) => ({
+        id: `b${i}`,
+        state: 'BLOCKED',
+        organisationId: null,
+        organisationName: null,
+        nameKey: `acme${i}`,
+        country: 'DE',
+        reason: 'Asked in writing',
+        reference: `CASE-${i}`,
+        at: now,
+        by: 'u',
+        current: true,
+      })),
+    });
+    await expect(
+      page.getByText(
+        'Showing 100 entries. Companies blocked now come first, and older history is kept.',
+      ),
+    ).toBeVisible();
   });
 
   test('an operator is told only an owner or admin can lift a block', async ({ page }) => {

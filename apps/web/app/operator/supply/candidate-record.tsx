@@ -55,6 +55,8 @@ type Detail = Candidate & {
     at: string;
     reversed: boolean;
   }[];
+  /** The newest un-reversed match. It is the only decision the server lets staff reverse. */
+  currentMatch: { id: string; decision: string; organisationId: string; at: string } | null;
 };
 
 const matchWords: Record<string, string> = {
@@ -213,7 +215,6 @@ function MatchPanel({
       setBusy(false);
     }
   }
-  const matchActionable = detail.matches.filter((m) => m.decision !== 'REVERSE' && !m.reversed);
   return (
     <section aria-labelledby="match-heading">
       <h3 id="match-heading">Match to a Company</h3>
@@ -265,7 +266,7 @@ function MatchPanel({
               {matchWords[m.decision] ?? m.decision}
               {m.organisationName ? `: ${m.organisationName}` : ''}. {formatDate(m.at)}
               {m.reversed ? ' Reversed.' : ''}
-              {matchActionable.some((x) => x.id === m.id) && !paused ? (
+              {m.id === detail.currentMatch?.id && !paused ? (
                 <>
                   {' '}
                   <button
@@ -277,11 +278,8 @@ function MatchPanel({
                   </button>
                   <span className="supply-quiet">
                     {' '}
-                    Reverse the{' '}
-                    {m.decision === 'NO_MATCH'
-                      ? 'no match'
-                      : `match to ${m.organisationName ?? 'this company'}`}{' '}
-                    recorded on {formatDate(m.at)}.
+                    Reverse the match to {m.organisationName ?? 'this company'} recorded on{' '}
+                    {formatDate(m.at)}.
                   </span>
                 </>
               ) : null}

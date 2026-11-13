@@ -57,6 +57,11 @@ export function CandidateForm({
   }
   async function send(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    // Enter in an early step means Next, not Add Candidate.
+    if (step < 3) {
+      next(step);
+      return;
+    }
     if (busy || paused || !source) return;
     const data = new FormData(event.currentTarget);
     const text = (name: string) => String(data.get(name) ?? '').trim() || undefined;

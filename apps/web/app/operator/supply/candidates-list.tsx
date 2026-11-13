@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { EmptyState } from '../../../components/ux/empty-state';
 import { SegmentedFilter } from '../../../components/ux/segmented-filter';
 import { formatDate } from '../../../lib/ux/format';
+import { supplyListLimit } from '@corridra/domain/supply-sources';
 import {
+  listLimitWords,
   methodWords,
   reviewWords,
   sourceKindWords,
@@ -174,6 +176,9 @@ export function CandidatesList({
                 Show More
               </button>
             </div>
+          ) : null}
+          {all.length >= supplyListLimit ? (
+            <p className="supply-quiet">{listLimitWords.candidates}</p>
           ) : null}
         </>
       ) : null}

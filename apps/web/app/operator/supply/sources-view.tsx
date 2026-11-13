@@ -225,6 +225,11 @@ function SourceForm({
   const commandId = useRef(crypto.randomUUID());
   async function send(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    // Enter in the first step means Next, not Create Source.
+    if (step === 1) {
+      setStep(2);
+      return;
+    }
     if (busy || paused) return;
     const form = new FormData(event.currentTarget);
     setBusy(true);

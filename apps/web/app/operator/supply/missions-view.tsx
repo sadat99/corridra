@@ -27,7 +27,7 @@ export function MissionsView({ tenant }: { tenant: string }) {
       {missions.error ? <ReadFailure error={missions.error} onRetry={missions.reload} /> : null}
       {missions.data && rows.length === 0 ? (
         <EmptyState icon="mission">
-          No supply missions yet. A mission appears here once the team marks it as a supply mission.
+          No missions yet. A mission appears here once the team creates one.
         </EmptyState>
       ) : null}
       <ul className="supply-list" aria-label="Supply missions">

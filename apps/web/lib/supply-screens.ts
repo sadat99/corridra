@@ -1,6 +1,6 @@
 // Shared parts of the supply source screens (ADR-082 slice S3): the one fetch helper, the words for each status, source kind,
 // refusal and file row code, and the review reason choices. Presentation only: the server decides every allow and refuse.
-import { supplyRowCodes, supplyWords } from '@corridra/domain/supply-sources';
+import { supplyListLimit, supplyRowCodes, supplyWords } from '@corridra/domain/supply-sources';
 import { ActionError, readJson } from './ux/step-up';
 
 export const supplyBase = '/operator/supply';
@@ -119,6 +119,15 @@ export const whatToFix: Record<(typeof supplyRowCodes)[number], string> = {
 export const unknownRowFix = 'This row was rejected. Check it against the eight columns.';
 export const rowFix = (code: string) =>
   (whatToFix as Record<string, string>)[code] ?? unknownRowFix;
+
+/**
+ * What a list says when it holds as many rows as the server returns at once. The rows are still there; this screen simply
+ * does not show more of them yet.
+ */
+export const listLimitWords = {
+  candidates: `Showing the newest ${supplyListLimit} candidates. Older ones are kept.`,
+  blocks: `Showing ${supplyListLimit} entries. Companies blocked now come first, and older history is kept.`,
+};
 
 /** Short sentences for the refusals the server words may leave unexplained. */
 export const refusalWords = {
