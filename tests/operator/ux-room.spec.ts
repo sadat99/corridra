@@ -2121,3 +2121,106 @@ test('handoff: an unconfirmed save of one report keeps its own command while ano
   expect(posts[2]).toEqual(posts[0]);
   expect(posts[1]!.commandId).not.toBe(posts[0]!.commandId);
 });
+
+// AC/1 Room look (owner lock, 12 Nov 2026): the next-step card is navy with one light button, muted text on it
+// reads at 4.5:1 or better, and the six stages stand as a vertical timeline from tablet width up. On a phone the
+// slim bar stays so the card keeps its place on the first screen.
+async function paint(page: Page, selector: string) {
+  return page.evaluate((sel) => {
+    const el = document.querySelector(sel) as HTMLElement;
+    const cs = getComputedStyle(el);
+    const ctx = document.createElement('canvas').getContext('2d')!;
+    const flat = (back: string, fore: string) => {
+      ctx.clearRect(0, 0, 1, 1);
+      ctx.fillStyle = back;
+      ctx.fillRect(0, 0, 1, 1);
+      ctx.fillStyle = fore;
+      ctx.fillRect(0, 0, 1, 1);
+      return Array.from(ctx.getImageData(0, 0, 1, 1).data.slice(0, 3));
+    };
+    const card = getComputedStyle(document.querySelector('.room-next') as HTMLElement);
+    const back = flat(card.backgroundColor, card.backgroundColor);
+    return { back, fore: flat(card.backgroundColor, cs.color), fill: cs.backgroundColor };
+  }, selector);
+}
+const lum = (c: number[]) => {
+  const [r, g, b] = c.map((v) => {
+    const s = v / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+};
+const ratio = (a: number[], b: number[]) => {
+  const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+  return (hi! + 0.05) / (lo! + 0.05);
+};
+
+test('AC/1: the next-step card is navy, its muted text reads at 4.5:1 and it has one light button', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, idle({ service: true }));
+  const next = page.getByRole('region', { name: 'Your next step' });
+  await expect(next).toBeVisible();
+  const navy = await page.evaluate(() => {
+    const probe = document.createElement('i');
+    probe.style.color = 'var(--brand-deep)';
+    document.body.append(probe);
+    const c = getComputedStyle(probe).color;
+    probe.remove();
+    return c;
+  });
+  await expect(next).toHaveCSS('background-color', navy);
+  for (const sel of ['.room-next-words small', '.room-next-words span']) {
+    const { back, fore } = await paint(page, sel);
+    expect(ratio(fore, back), sel).toBeGreaterThanOrEqual(4.5);
+  }
+  const buttons = next.locator('.button-primary');
+  await expect(buttons).toHaveCount(1);
+  const light = await paint(page, '.room-next .button-primary');
+  const rgb = light.fill.match(/\d+/g)!.slice(0, 3).map(Number);
+  expect(lum(rgb)).toBeGreaterThan(0.8);
+  expect(ratio(light.fore, rgb)).toBeGreaterThanOrEqual(4.5);
+  const fill = await buttons.evaluate((el) => getComputedStyle(el).backgroundColor);
+  expect(fill).not.toBe(navy);
+  expect(fill).not.toBe('rgb(40, 86, 197)');
+  await buttons.focus();
+  await expect(buttons).toHaveCSS('outline-style', 'solid');
+});
+
+test('AC/1: the stage timeline is vertical from tablet width, in order, and the card stays first on a phone', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page);
+  const items = page.locator('.room-stage .mr-stage li');
+  await expect(items).toHaveCount(6);
+  const boxes = await items.evaluateAll((els) =>
+    els.map((el) => {
+      const r = el.getBoundingClientRect();
+      return { x: Math.round(r.x), y: r.y };
+    }),
+  );
+  expect(new Set(boxes.map((b) => b.x)).size).toBe(1);
+  expect(boxes.map((b) => b.y)).toEqual([...boxes.map((b) => b.y)].sort((a, b) => a - b));
+  const words = await page.locator('.room-stage .mr-stage-name').allTextContents();
+  expect(words).toEqual(['Define', 'Find', 'Compare', 'Visit', 'Decide', 'Follow through']);
+  await expect(page.locator('.room-stage .mr-stage [aria-current="step"]')).toContainText('Visit');
+  await page.setViewportSize({ width: 390, height: 844 });
+  const phone = await items.evaluateAll((els) =>
+    els.map((el) => Math.round(el.getBoundingClientRect().y)),
+  );
+  expect(new Set(phone).size).toBe(1);
+  const card = await page.locator('.room-next').boundingBox();
+  expect(card!.y + card!.height).toBeLessThan(844);
+});
+
+test('AC/1: in forced colours the next-step card keeps a visible border and its button an outline', async ({
+  page,
+}) => {
+  await page.emulateMedia({ forcedColors: 'active' });
+  await open(page, idle({ service: true }));
+  await expect(page.locator('.room-next')).toHaveCSS('border-inline-start-width', '1px');
+  await expect(page.locator('.room-next')).not.toHaveCSS('border-top-width', '0px');
+  await expect(page.locator('.room-next .button-primary')).not.toHaveCSS('border-top-width', '0px');
+});

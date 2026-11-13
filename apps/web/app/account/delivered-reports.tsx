@@ -3,6 +3,7 @@ import type { CustomerDeliveredReportService } from '@corridra/auth/customer-del
 import { EmptyState } from '../../components/ux/empty-state';
 import { foundations } from '../../lib/foundations';
 import { formatDate } from '../../lib/ux/format';
+import './library-ac1.css';
 
 // CQ-77 (customer side): reports the Corridra team published for the customer's own requests, read
 // through listDeliveredPublications (WS-C) behind the customer session proof. Until the service wiring
@@ -31,7 +32,11 @@ export async function DeliveredReports({
     reports = await service.list(subject, issuer);
   } catch {
     return (
-      <section className="detail-card" aria-labelledby="delivered-reports-heading" lang="en">
+      <section
+        className="detail-card library-card"
+        aria-labelledby="delivered-reports-heading"
+        lang="en"
+      >
         <h2 id="delivered-reports-heading">Reports for your requests</h2>
         <p role="status">
           Your reports could not be loaded just now. Nothing was lost. Refresh this page to try
@@ -42,7 +47,7 @@ export async function DeliveredReports({
   }
   if (reports.length === 0) return none;
   return (
-    <section className="detail-card" aria-labelledby="delivered-reports-heading">
+    <section className="detail-card library-card" aria-labelledby="delivered-reports-heading">
       <h2 id="delivered-reports-heading">Reports for your requests</h2>
       <ul className="ux-link-list">
         {reports.map((report) => (
