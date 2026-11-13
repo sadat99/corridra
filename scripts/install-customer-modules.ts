@@ -48,6 +48,8 @@ import { migrateCustomerProblemReports } from '../packages/db/src/customer-probl
 import { migrateCustomerProgrammeErasure } from '../packages/db/src/customer-programme-erasure-migrate';
 import { migrateCounterpartyChanges } from '../packages/db/src/counterparty-change-migrate';
 import { configureCounterpartyChanges } from '../packages/auth/src/counterparty-change-configuration';
+import { migrateSourcingWorkflow } from '../packages/db/src/sourcing-workflow-migrate';
+import { configureSourcingWorkflow } from '../packages/auth/src/sourcing-workflow-configuration';
 import { configureWorkspaceLifecycle } from '../packages/auth/src/customer-workspace-lifecycle-configuration';
 import { configureAccountLifecycle } from '../packages/auth/src/customer-account-lifecycle-configuration';
 import { migrateCustomerMoves } from '../packages/db/src/customer-move-migrate';
@@ -102,6 +104,13 @@ const v = z
       .enum(['unchanged', 'install', 'enable', 'pause'])
       .default('unchanged'),
     COUNTERPARTY_CHANGES_REASON: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.string().trim().min(10).max(500).optional(),
+    ),
+    SOURCING_WORKFLOW_ACTION: z
+      .enum(['unchanged', 'install', 'enable', 'pause'])
+      .default('unchanged'),
+    SOURCING_WORKFLOW_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
       z.string().trim().min(10).max(500).optional(),
     ),
@@ -261,6 +270,10 @@ if (v.COUNTERPARTY_CHANGES_ACTION !== 'unchanged' && !apply)
   throw new Error('Contact and note changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.COUNTERPARTY_CHANGES_ACTION) && !v.COUNTERPARTY_CHANGES_REASON)
   throw new Error('Contact and note changes require an explicit reason');
+if (v.SOURCING_WORKFLOW_ACTION !== 'unchanged' && !apply)
+  throw new Error('Sourcing workflow changes require INSTALL_APPLY=yes');
+if (['enable', 'pause'].includes(v.SOURCING_WORKFLOW_ACTION) && !v.SOURCING_WORKFLOW_REASON)
+  throw new Error('Sourcing workflow changes require an explicit reason');
 if (v.MISSION_MAIL_ACTION !== 'unchanged' && !apply)
   throw new Error('Mission mail changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.MISSION_MAIL_ACTION) && !v.MISSION_MAIL_REASON)
@@ -284,6 +297,7 @@ const registries = [
   'customer_account_lifecycle_migrations',
   'customer_problem_report_migrations',
   'counterparty_change_migrations',
+  'sourcing_workflow_migrations',
   'customer_migrations',
   'customer_commercial_migrations',
   'customer_company_migrations',
@@ -648,6 +662,23 @@ try {
         });
         console.log(
           `Contact and note changes ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
+        );
+      }
+    }
+    // The sourcing route profile guard and its one control (ADR-083 slice S1) are never part of the base run. Install leaves the
+    // control closed; enable and pause are owner decisions with a reason. Reached through field_modules_action
+    // (sourcing_workflow_install, sourcing_workflow_enable, sourcing_workflow_pause). It needs the real-use modules installed.
+    if (v.SOURCING_WORKFLOW_ACTION !== 'unchanged') {
+      await migrateSourcingWorkflow(pool);
+      if (v.SOURCING_WORKFLOW_ACTION === 'install')
+        console.log('Sourcing workflow installed or already current (control stays closed)');
+      else {
+        const result = await configureSourcingWorkflow(pool, {
+          enabled: v.SOURCING_WORKFLOW_ACTION === 'enable',
+          reason: v.SOURCING_WORKFLOW_REASON,
+        });
+        console.log(
+          `Sourcing workflow ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
         );
       }
     }
