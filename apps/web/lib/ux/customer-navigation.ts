@@ -133,7 +133,7 @@ export type CustomerSideLink = {
 /**
  * Your Journeys: the Your Move page filtered to one journey (`/account/move?journey=`, values from
  * app/account/move/journeys.ts). Only where that page exists (`CORRIDRA_UX_MOVE`); otherwise the group is not drawn.
- * No counts: the sidebar is on every page and a count would add a read of the work list to each of them.
+ * The counts beside them are added by the shell (lib/work-items/journey-counts.ts), streamed and shared per request.
  */
 export function customerJourneyLinks(move: boolean): CustomerSideLink[] {
   if (!move) return [];
