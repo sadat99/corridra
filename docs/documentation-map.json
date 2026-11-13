@@ -1529,6 +1529,11 @@
       "use": "Accepted for build (12 Nov 2026): a published supplier reply carried into the existing supplier offer form; one append-only binding row, one optional strict command field, one prefill read, additive reply review migration 0003; behind CORRIDRA_REPLY_PAGE; schema review and install are the owner's"
     },
     {
+      "path": "docs/adr/0083-source-workflow-on-the-shared-base.md",
+      "classification": "Architecture decision",
+      "use": "Proposed, reviews pending (13 Nov 2026): the buying workflow on the shared base, an optional route profile block in the pack configuration, requirement-anchored comparison, landed cost, samples, machinery after-award records, derived readiness; supplier candidates only through ADR-082; designed only"
+    },
+    {
       "path": "docs/revamp/README.md",
       "classification": "Current guide/contract",
       "use": "Owner-approved V3 controlled revamp scope (4 Nov 2026), merge rules, session file ownership and the Wave 0 route/cleanup manifest; live state stays in the ledger"

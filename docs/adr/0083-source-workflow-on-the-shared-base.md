@@ -1,0 +1,130 @@
+# ADR-083: The sourcing workflow on the shared base
+
+Status: Proposed. Reviews pending (product, designer, independent architecture and security review). Designed only: nothing is implemented, tested, deployed, enabled or approved by this record. No SQL, application code, migration, installer change, workflow input or switch change accompanies it. No requirement moves to VERIFIED on design alone, and the whole of V3 stays PARTIAL. Date: 13 November 2026.
+
+Related: ADR-082 (supply sources for counterparty candidates) is accepted for build in PR 476 at head `d4a8c53`, locked ready to implement, and is not yet on main (`758ace4`). This record cites it as accepted for build, not as built. Sequencing follows owner decision 1, option b, per Orchestrator 9: slice S6 of this record starts only after ADR-082's own build.
+
+## Owner request
+
+On 13 November 2026 the owner asked for the buying (sourcing of products and machinery) module to be built "exceptionally efficient and effective", with exceptional focus on the Bangladesh to China workflow, while being 100 percent configurable for any other direction (Bangladesh to Malaysia, France to America, any country to any country), at the same sophisticated grade as the selling module, with different functions, all on the same base: "the best efficient, effective, simplest, synced, integrated, safe, secure". The owner shared a Bangladesh to China example workflow earlier. Its field foundation is section 3 of the owner's Field-Validated Commercial Workflow directive. That prose is not in the repository: only its scenario table 01 to 16 is, in `docs/implementation/field-workflow-acceptance-2026-10-28.md` (rows at lines 19 to 34). This record cites that table and nothing beyond it. Any conversion or fee figures the operator reported in conversation are deliberately absent from this record and must never be written into it or into pack data.
+
+## Context
+
+The buying workflow already runs on the shared base. What is missing is a route-level description of it, requirement-anchored comparison, landed-cost visibility, samples, machinery after-award records and a few typed fields. Evidence, re-opened at the commit above:
+
+- Route packs are versioned jsonb. `app.corridor_pack_version` has `status` in DRAFT, TESTING, LIMITED, ACTIVE, PAUSED and `configuration jsonb NOT NULL CHECK(jsonb_typeof(configuration)='object')` (`packages/db/migrations/0020_versioned_corridors.sql:29-33`). Publication goes through the reviewed flow: an independent reviewer is required and the published pack's configuration must equal the proposal's (`packages/db/migrations/0028_operations_control_center.sql:100-105`). The pack schema already carries `missionTypes`, `requiredCapabilities`, `languages`, `currencies`, `timeZones`, `sourceCategories` and others (`packages/domain/src/corridors.ts:10-20`); `createRoute` is at `packages/missions/src/corridors.ts:182`.
+- `compareOffers(offers, calculatedAt, context)` compares offers with each other only. Each offer carries `requirementId` but the function receives no pinned requirement version to check against; it lists `specification`, `quantity`, `moq`, `unit`, `incoterm`, `shipping`, `leadTime`, `paymentTerms`, `warranty`, `installation` as scope terms (`packages/domain/src/commercial-missions.ts:309-335`). `offerContext` already switches machinery handling by mission type key (`:305-308`). `paymentTerms` is one free-text field (`:139`).
+- Money conversion exists once: `fxObservation` (source, observedAt, from, to, numerator, denominator, `RATIONAL_HALF_UP`) and `deriveConversion` (`packages/domain/src/economics.ts:25-36`), "derived reporting only: original ledger currency and amount are never replaced".
+- Follow-through records already have kinds RFQ, SAMPLE, PROPOSAL, COMMITMENT, CONTRACT, INVOICE, CASH_RECEIPT, REPEAT_ORDER; SAMPLE carries no amount or currency (`packages/db/migrations/0011_commercial_followthrough.sql:15,22`).
+- Mission commands are a closed enum including `close`, `pause`, `resume` with no typed reason code (`packages/domain/src/missions.ts:145-160`).
+- Starting points are seven customer declarations (`packages/domain/src/mission-drafts.ts:40-48`, `requestStartingPoints`), stored as an ordinary versioned requirement and not tied to a first step.
+- Partner task kinds already include `supplier_research`, `introductions`, `factory_coordination`, `price_checks`, `interpreting`, `translation`, `samples`, `followup`, `site_support` (`packages/network/src/schema.ts:17-27`).
+- Identity status is derived, not asserted: UNKNOWN, EXPIRED or SOURCE_REPORTED (`packages/counterparties/src/index.ts:57`).
+- The reviewed reply path exists: the installer input `reply_review_action` (`.github/workflows/install-customer-modules.yml:57`) installed ADR-081's migration 0003 from `packages/db/recipient-reply-review-migrations`; `CORRIDRA_REPLY_PAGE` is registered in `apps/web/lib/owner-switches.ts` and is not claimed on.
+- The paid ADR-055 "Supplier sample check" service is referenced by `tests/integration/customer-service-requests.test.ts`.
+- The scenario table already lists tests for the 16 field scenarios (`docs/implementation/field-workflow-acceptance-2026-10-28.md:19-34`), among them China to Bangladesh supplier case and BD/CN, BD/ES, ES/BD, JP/KE, CN/BD configured TESTING routes (rows 12 and 16).
+
+Conclusion: no new engine is needed. Every decision below reuses an existing record, function or review flow and adds optional, additive, versioned structure.
+
+## Decisions
+
+1. Route profile. A new optional, versioned key block (`sourcing`, with its own `profileVersion`) inside the existing pack `configuration` jsonb. No new table or column; packs without the block parse unchanged and behave exactly as today. It holds category contexts, required requirement fields per category, applicable landed-cost elements, default Incoterm guidance (a hint only, never a term), sample steps, supplier reply languages, document kinds and readiness field lists. The Bangladesh to China reference pack is seeded as data at status TESTING (owner decision 2) through the reviewed flow with an independent reviewer; it is configuration, not launch approval. A property test generates country pairs in both orders and asserts a valid pack and the identical engine path; the codebase gets no country branch. Rejected here: a per-country module.
+2. Requirement-anchored comparison. Extend `compareOffers` with an optional pinned requirement version input and check each offer against it, on top of the existing peer checks. A failing check gives the verdict NOT COMPARABLE with typed reasons: missing, differs from requirement, differs between offers, expired, inconsistent total, stale evidence, unsupplied landed-cost element. One function serves team and buyer. It never names a winner or recommends. Without the input the function behaves as today (the current behaviour is the floor).
+3. Landed cost elements. Goods, tooling, packaging, inland freight, export clearance, sea or air freight, insurance, duty and tax, port and clearance, inland delivery, installation and commissioning, certification, bank and FX charges, agent fee, spares. Each is `supplied`, `excluded` or `not stated` per offer, stored with the offer's existing terms. A derived view sums only supplied same-currency elements, lists its assumptions and is labelled "derived, not an offer". Conversion happens only through `fxObservation` and `deriveConversion` with rate, source and date shown. Samples reuse the paid ADR-055 "Supplier sample check" service; portfolio reuse follows ADR-038. Incoterm guidance per route comes from the pack.
+4. Structured payment terms. Optional keys beside the free text `paymentTerms`: deposit share, balance trigger, instrument (T/T, L/C at sight, usance), due days. A mismatch between offers or with the requirement is a flag, not a verdict on merit.
+5. Samples and trials. States on the existing SAMPLE follow-through record: requested, sent, received, tested, passed, failed, waived. Entries are declarations with a source and are never verification. Amount stays null.
+6. Machinery after award. Records for installation, commissioning, acceptance test, warranty start, warranty claim and spare-part request. Records only: no engineering or legal claim and no machinery app (V3-02-039).
+7. Supplier candidates only through ADR-082's candidate record and structured profile. ADR-082 is role-agnostic and uses the word "supply" for its module; for a buyer mission the nominee is the SUPPLIER-side counterparty (profile `role` SUPPLIER), and "supply candidate" there means a candidate seller of what the buyer wants, not the customer's own supply activity. Identity status comes from `packages/counterparties/src/index.ts`; source rights follow ADR-079 slice B. Platform and partner source kinds stay locked off. No second candidate layer. Starts after ADR-082's build (owner decision 1).
+8. Supplier-side RFQ by reply page in Chinese. Sample only (`@example.invalid`, SYNTHETIC or MANUAL channel) until outreach opens; no real supplier is contacted. Five questions: what, how many, price and terms, lead time, anything you cannot do. One-tap decline with an optional reason. The Chinese copy is marked "pending native review" (owner decision 3); native review stays a closed gate. It rides ADR-081's reviewed reply path and its switch.
+9. Buyer-side Bangla behind the language release. A marked fallback shows where a string is missing. With the release off, English is unaffected.
+10. Field partner tasks reuse the existing task kinds with independent review (ADR-028). No payouts.
+11. Four readiness levels: understood, enough to research, enough for comparable quotes, ready to commit. Pure functions of the requirement fields and the pack's field lists, listing what is missing. No percentage, never stored. "Ready to commit" never authorises a purchase.
+12. One clarification thread per requirement version through the existing delivery questions. The specification changes only on customer confirmation (ADR-072); an unconfirmed reply changes nothing.
+13. Starting point drives the first step: a mapping from the seven starting points to a first step and to the pack's questions. The selection remains a customer declaration, not evidence.
+14. "Decided not to proceed": typed reason codes (price, specification mismatch, supplier not responsive, quality or sample failed, timing, compliance or certification, found another route, internal decision, other with text) as an optional additive field on the existing close, cancel and pause commands. No fault attribution. History is kept and resume rules are unchanged.
+15. Arrangement mode "who you deal with" on the supplier offer: factory direct, trader, agent, Corridra service partner (labels settled by the designer), linked to ADR-073 arrangement types. Cost and markup stay staff-only (ADR-073). Corridra is never the principal seller.
+16. Team queue grouped by who acts next (customer, supplier, Corridra team, partner, waiting on a date), derived from the existing owner, next action and due date. The filter runs on the server before pagination.
+17. Lead partner grouping: design only. Build is blocked until the owner opens it.
+18. Acceptance tests for scenarios 01, 03, 05, 06, 07, 10, 12 and 16, named in the Slices section. They are written to fail on today's code (reason given per test) and to pass once the slice ships. They do not replace the existing tests in the scenario table.
+
+## Slices
+
+Common to every slice: ships with its switch off and its control closed; one or two PRs; leaves main releasable; additive migration only, installed by the reviewed installer after merge, never by a build. Installer names: the builder adds values to the existing `field_modules_action` choice, `sourcing_workflow_install`, `sourcing_workflow_enable`, `sourcing_workflow_pause`, mapped in the workflow `env` like ADR-082's `supply_sources_*`, because ADR-081 added a dedicated input (`reply_review_action`, line 57) and the workflow's input count must be checked first. App switch `CORRIDRA_SOURCING_WORKFLOW`, unset means off, registered in `apps/web/lib/ux-switches.ts` and `apps/web/lib/owner-switches.ts`. Migration folder and file numbers are the next free ones at build time. Each visible slice must pass `docs/agents/ui-direction.md` and `tests/design-system-guard.test.mjs`, at 320, 390 and 1440 wide, and show loading, empty, conflict, error and revoked states. Each slice states positive and denial cases. Rollback for every slice: switch off hides the surface and keeps all records; pause control refuses new commands while reads stay.
+
+| Slice | Scope (decisions)                                                   | Depends on                      | Files (expected)                                                                                                                                          | Migration                                                      | Requirements moved (PARTIAL at most)                           | Key checks                                                                                                                       |
+| ----- | ------------------------------------------------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| S1    | Route profile and BD to CN reference pack (1, 13 data part)         | none                            | `packages/domain/src/corridors.ts`, `packages/missions/src/corridors.ts`, `packages/missions/src/route-pack-form.ts`, seed data through the reviewed flow | none (jsonb)                                                   | V3-02-019                                                      | old pack parses unchanged; generated pairs both orders; no country branch; pack not independently reviewed is refused            |
+| S2    | Requirement-anchored comparison and structured payment terms (2, 4) | S1                              | `packages/domain/src/commercial-missions.ts`, offer terms schema, comparison screen                                                                       | none if terms stay in existing jsonb; else one additive column | V3-02-021 to V3-02-024                                         | missing, differs, expired, inconsistent total, stale evidence each give NOT COMPARABLE; no winner; floor unchanged without input |
+| S2b   | Readiness and clarification thread (11, 12)                         | S1                              | new pure function in `packages/domain`, delivery question reuse                                                                                           | none                                                           | V3-02-025 to V3-02-027                                         | levels list missing fields; nothing stored; unconfirmed reply changes nothing                                                    |
+| S3    | Landed cost elements and "who you deal with" (3, 15)                | S2                              | `packages/domain/src/commercial-missions.ts`, `packages/domain/src/economics.ts` use only, ADR-073 arrangement link                                       | additive, one file                                             | V3-02-028 to V3-02-031                                         | only same-currency supplied elements summed; conversion shows rate, source, date; markup absent from customer reads              |
+| S4    | Samples and trials (5)                                              | S3                              | follow-through domain and screen                                                                                                                          | additive state record beside SAMPLE                            | V3-02-032 to V3-02-034                                         | states in order; declarations never read as verified; ADR-055 service untouched                                                  |
+| S5    | Machinery after award (6)                                           | S4                              | follow-through records, no new app                                                                                                                        | additive                                                       | V3-02-035 to V3-02-039                                         | records only; no claim wording                                                                                                   |
+| S6    | Supplier candidates through ADR-082 (7)                             | ADR-082 built and installed; S1 | profile role SUPPLIER fixture                                                                                                                             | none of its own (reuses ADR-082 tables)                        | V3-02-040                                                      | locked kinds stay locked; identity status shown from derived value                                                               |
+| S7    | Chinese RFQ reply (8)                                               | ADR-081 reply path; S1          | reply page, pack reply languages                                                                                                                          | additive only if a decline reason needs storage                | V3-02-041                                                      | sample only; decline in one tap; Chinese marked pending native review                                                            |
+| S8    | Bangla buyer side (9)                                               | language release                | locale files, fallback marker                                                                                                                             | none                                                           | V3-02-041 (shared)                                             | English unchanged when off; fallback marked                                                                                      |
+| S9    | Starting point, not-proceed reasons, team queue (13, 14, 16)        | S1                              | `packages/domain/src/mission-drafts.ts`, `packages/domain/src/missions.ts`, operator queue                                                                | additive optional reason column or event field                 | V3-02-019 (shared), V3-02-021 to V3-02-041 as stated per check | server-side filter before pagination; reason optional; resume unchanged                                                          |
+
+V3-02-005 to V3-02-007 are reused unchanged. The 507 requirement identities are not changed. Which exact requirement moves in which slice must be confirmed by the ledger lane against `node scripts/v3-context.mjs` at build time; this record names the intended range only.
+
+### Named acceptance tests (decision 18)
+
+Each is new, each fails on today's code for the reason given, and none edits an existing test.
+
+- Scenario 01, `tests/integration/sourcing-readiness.test.ts`: a photo-only inquiry reports "understood" with the missing fields listed. Fails today because no readiness function exists (nothing in `packages/domain` computes levels).
+- Scenario 03, `tests/integration/sourcing-not-proceeding.test.ts`: an umbrella inquiry paused with a typed reason code, then resumed with original gaps. Fails today because `missionCommand` has no reason code field (`packages/domain/src/missions.ts:145-160`).
+- Scenario 05, `tests/integration/sourcing-existing-supplier.test.ts`: starting point "An existing supplier" gives the existing-supplier first step and pack questions. Fails today because `requestStartingPoints` drives no step (`mission-drafts.ts:40-48`).
+- Scenario 06, `tests/integration/sourcing-repeat-purchase.test.ts`: a repeat order's new offer is checked against the pinned requirement version and flagged on price or terms change without authorising a purchase. Fails today because `compareOffers` takes no pinned requirement (`commercial-missions.ts:309-318`).
+- Scenario 07, `tests/integration/sourcing-landed-cost.test.ts`: a bundled offer shows each landed-cost element supplied, excluded or not stated, with only same-currency supplied elements summed and the derived label. Fails today because offer terms have no element states.
+- Scenario 10, `tests/integration/sourcing-partner-tasks.test.ts`: a partner sample or factory coordination task is reviewed by someone other than the doer, with no payout. Fails today only for the new pack-driven task suggestions; the underlying kinds exist (`packages/network/src/schema.ts:17-27`), so this test asserts the pack-to-task link.
+- Scenario 12, `tests/integration/sourcing-supplier-seeks-buyers.test.ts`: a SUPPLIER-role CN to BD mission uses the same engine path as BD to CN, nominating through ADR-082 candidates. Fails today because the profile block and ADR-082 are absent; it is blocked until S6.
+- Scenario 16, `tests/integration/sourcing-route-profile.test.ts`: the generated-pairs property test of decision 1. Fails today because no `sourcing` block is parsed.
+
+## Blast radius
+
+- Auth: none. No new role, no second permission system. Staff-only fields use existing roles.
+- RLS: new records use the existing tenant-scoped pattern; the integration/RLS suite gets cross-tenant denial cases per slice. Customer reads never expose cost or markup (ADR-073).
+- Roles: none added.
+- Money: exact minor units and original currencies preserved. The landed-cost sum is derived and unstored; conversions only through `fxObservation`. Customer trade value is never Corridra revenue. No payment, payout or invoice change; real payments and payouts stay closed.
+- Events: new records are append-only with the existing event helpers; original offers and revisions are never rewritten.
+- Migrations: additive, reviewed, installed only by the protected installer; builds never migrate. Rollback is switch off plus control pause; records stay; the migrations are not reversed.
+- Privacy: no new personal data field. Supplier contact is not stored by this module; ADR-082's refusal of contact shapes applies to candidates. Sample channels use `@example.invalid` until outreach opens.
+- Tenants: all tenants see nothing until the switch and control are on. Data of one tenant is never read by another.
+
+## What stays locked
+
+Outreach, D01 to D06, D08, real payments and payouts, AI inference, native language review, platform agreements, and partner and platform source kinds. ADR-073 markup stays staff-only. Corridra is never principal seller. Lead partner grouping (decision 17) stays unbuilt. Real supplier contact stays closed, so S7 is sample only. Nothing here claims operational coverage of any country pair.
+
+## Preserved behaviour
+
+Original offers and revisions; exact money in minor units; ADR-072, 073, 055, 069, 081, 079, 038, 017, 018 and 028 behaviour; the 507 requirement identities; evidence classes kept distinct (declared, source-reported, observed, verified; vision lines 438 to 467); a closed gate is not opened by any slice.
+
+## Rejected options
+
+- A machinery app: the owner and V3-02-039 keep machinery as records on the existing mission. A second app would duplicate state and permissions.
+- A country fork (a BD to CN module and separate code for other pairs): breaks the owner's "any country to any country" requirement and doubles tests. Replaced by the pack block and the property test.
+- A second candidate layer for suppliers: ADR-082 already stores candidates with source rights and takedown. A parallel one would split do-not-contact and attribution.
+- A stored readiness score or percentage: it would age silently, imply a recommendation and be mistaken for approval. Readiness is derived on read.
+- Folding landed cost into a single converted total: hides assumptions and breaks the exact-money rule.
+
+## Owner decisions
+
+Defaults taken in this record (change by saying so; none blocks review):
+
+1. Sequence S6 after ADR-082's own build (option b, per Orchestrator 9). Taken.
+2. Seed the BD to CN reference pack at TESTING. Taken.
+3. Chinese supplier copy is a marked fallback, "pending native review". Taken. Native review stays a closed gate.
+4. Labels for "who you deal with" are settled by the designer. Taken.
+5. The artifact page was unreachable at the product stage, so the designer must re-read it before the UI specification.
+6. Open: whether the three installer values extend `field_modules_action` or become a new input, once the input cap is counted at build (default: extend).
+
+## Later items
+
+Lead partner grouping build (owner opens first); real supplier outreach (gate); native Chinese and Bangla review (gate); ADR-082 connector and platform sources; supplier performance measures after real data exists; section 3 of the owner's directive to be committed to the repository so slices can cite it directly.
+
+## UI specification
+
+To be added by designer stage. Visible slices: S2b (readiness and clarification), S3 (landed cost and who you deal with), S4 (samples), S7 (Chinese reply page), S8 (Bangla), S9 (starting point, not-proceed reason, team queue).
+
+## What this record does not claim
+
+Nothing is built, tested, installed or enabled. No requirement is VERIFIED and V3 stays PARTIAL. The Bangladesh to China pack is not launch approval. ADR-082 is not on main.
