@@ -616,6 +616,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'flag',
   },
   {
+    name: 'CORRIDRA_SUPPLY_SOURCES',
+    label: 'Supply sources and counterparty profiles',
+    line: 'Gates the staff supply source and counterparty profile screens. Unset means off: those screens answer not found and nothing is shown, and records stay. The database module and its own module control are separate, and neither starts outreach or opens a connector.',
+    group: 'Team access',
+    kind: 'flag',
+  },
+  {
     name: 'CORRIDRA_ROUTE_PACK_FORM',
     label: 'Guided route pack form',
     line: 'Route packs are added with a guided form instead of raw JSON, which stays under Advanced (developers).',
