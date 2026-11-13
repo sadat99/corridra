@@ -79,8 +79,10 @@ describe('the saved request notice', () => {
     expect(access).toContain('<PendingRequestNotice where={mode} />');
     expect((access.match(/<PendingRequestNotice/g) ?? []).length).toBe(1);
     const account = readFileSync(resolve('apps/web/app/account/page.tsx'), 'utf8');
-    expect(account).toContain('<PendingRequestNotice where="account" />');
-    expect(account).toContain('<PendingRequestNotice where="verify" />');
+    expect(account).toContain(
+      '<PendingRequestNotice where="account" enabled={realUseEnabled()} />',
+    );
+    expect(account).toContain('<PendingRequestNotice where="verify" enabled={realUseEnabled()} />');
   });
 
   it('reads the answer body whether or not the answer is ok, so the page can settle', () => {

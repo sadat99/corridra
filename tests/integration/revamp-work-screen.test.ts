@@ -270,7 +270,8 @@ describe('rows', () => {
   });
   it('use no status word that does not already exist', () => {
     expect(workStatusWords(item(1))).toBe('Draft');
-    expect(workStatusWords(item(2, { kind: 'programme', status: '' }))).toBe('');
+    // A programme row says it has no status, not nothing: owner, 13 Nov 2026 (session_0187kU9uRvNguE7Dz4mt8zgM): "giving u some screenshots randomly with what i see, so u may add them in your work, like what issues are visible in them. there could be more", and earlier "dont be afraid of updating anything" (task L12, screenshot item 6).
+    expect(workStatusWords(item(2, { kind: 'programme', status: '' }))).toBe('No status yet');
     expect(workStatusWords(item(3, { kind: 'request', status: 'CLOSED' }))).toBe('Finished');
   });
   it('show ten rows and one button for more', async () => {
