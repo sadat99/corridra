@@ -73,3 +73,44 @@ export function fillRoute(route: string, ids: Record<string, string | undefined>
   });
   return missing ? null : path;
 }
+
+/** The widest width goes first: it harvests the links that the narrower widths then open too. */
+export const sweepWidthOrder = [
+  1440, 390, 768,
+] as const satisfies readonly (typeof sweepWidths)[number][];
+
+/** An in-app link worth opening: customer or staff area, query strings kept, in-page anchors left out. */
+export function isSweepLink(href: string | null | undefined): href is string {
+  return !!href && /^\/(account|operator)(\/|\?|$)/.test(href) && !href.includes('#');
+}
+
+/** Hrefs from a page reduced to the links the sweep opens, without repeats. */
+export function harvestLinks(hrefs: Iterable<string | null | undefined>): string[] {
+  return [...new Set([...hrefs].filter(isSweepLink))];
+}
+
+/**
+ * Pages that exist only as a query on a known page: the programme room (organiser and participant views) and an open
+ * draft. They are not files in apps/web/app, so the inventory cannot list them; a missing id leaves them out.
+ */
+export function stateRoutes(ids: Record<string, string | undefined>): string[] {
+  const routes: string[] = [];
+  if (ids.workspaceId && ids.programmeId)
+    routes.push(`/account/delegations/${ids.workspaceId}?programme=${ids.programmeId}`);
+  if (ids.workspaceId && ids.draftId)
+    routes.push(`/account/drafts/${ids.workspaceId}?draft=${ids.draftId}`);
+  return routes;
+}
+
+/** The name a tab state is recorded under, so a finding says which tab was open. */
+export const tabRoute = (route: string, tab: string) => `${route} [tab: ${tab}]`;
+
+/** Pages for one width: files, filled parameters, state pages, then harvested links, each once. */
+export function buildQueue(parts: {
+  base: string[];
+  dynamic: string[];
+  state: string[];
+  links: Iterable<string>;
+}): string[] {
+  return [...new Set([...parts.base, ...parts.dynamic, ...parts.state, ...parts.links])];
+}
