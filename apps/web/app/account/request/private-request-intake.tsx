@@ -1,4 +1,5 @@
 'use client';
+import '../page-budget.css';
 import { archivedRefusalText } from '../archived-refusal';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
@@ -33,7 +34,9 @@ function pendingValue(raw: string, workspaceId: string, realMode = false): Pendi
     );
   return v as Pending;
 }
-export function PrivateRequestIntake(scope: PrivateRequestScope & { realMode?: boolean }) {
+export function PrivateRequestIntake(
+  scope: PrivateRequestScope & { realMode?: boolean; workspaceName?: string },
+) {
   return (
     <ScopedIntake
       key={JSON.stringify([scope.issuer, scope.subject, scope.workspaceId])}
@@ -41,7 +44,7 @@ export function PrivateRequestIntake(scope: PrivateRequestScope & { realMode?: b
     />
   );
 }
-function ScopedIntake(scope: PrivateRequestScope & { realMode?: boolean }) {
+function ScopedIntake(scope: PrivateRequestScope & { realMode?: boolean; workspaceName?: string }) {
   const keys = privateRequestStorageKeys(scope);
   const [loaded, setLoaded] = useState(false);
   const [pending, setPending] = useState<Pending | null>(null);
@@ -267,14 +270,18 @@ function ScopedIntake(scope: PrivateRequestScope & { realMode?: boolean }) {
     );
   return (
     <section
-      className="detail-card"
+      className="detail-card account-request"
       aria-label={scope.realMode ? 'Private request' : 'Private sample request'}
       aria-busy={busy}
     >
       <p>
+        {scope.workspaceName ? <>Workspace: {scope.workspaceName}. </> : null}
         {scope.realMode
           ? 'Each request stays private to its creator; workspace membership does not share it.'
-          : 'Use invented details only. Each request stays private to its creator; workspace membership does not share it.'}
+          : 'Use invented details only. Each request stays private to its creator; workspace membership does not share it.'}{' '}
+        <a className="text-link" href="/account#customer-requests">
+          Review my saved requests
+        </a>
       </p>
       {!loaded && <p role="status">Loading your private request draft…</p>}
       {problem && <p role="alert">{problem}</p>}
@@ -317,11 +324,6 @@ function ScopedIntake(scope: PrivateRequestScope & { realMode?: boolean }) {
             : 'Forget Local Retry Details'}
         </button>
       )}
-      <p>
-        <a className="text-link" href="/account#customer-requests">
-          Review my saved requests
-        </a>
-      </p>
       {loaded && !invalid && !denied && (
         <div hidden={pending !== null || saved !== null}>
           <Intake

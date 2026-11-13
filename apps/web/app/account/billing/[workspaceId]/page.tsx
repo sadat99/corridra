@@ -37,21 +37,39 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
             />
           ) : null
         }
+        extraTabs={[
+          ...(realUseEnabled() && customerRealInvoicingEnabled()
+            ? [
+                {
+                  id: 'invoices',
+                  label: 'Invoices',
+                  panel: (
+                    <RealInvoicesSection
+                      subject={session.subject}
+                      issuer={session.issuer}
+                      workspaceId={id.data}
+                    />
+                  ),
+                },
+              ]
+            : []),
+          ...(realUseEnabled() && customerSimulatedPaymentsEnabled()
+            ? [
+                {
+                  id: 'payments',
+                  label: 'Payments',
+                  panel: (
+                    <SimulatedPaymentsSection
+                      subject={session.subject}
+                      issuer={session.issuer}
+                      workspaceId={id.data}
+                    />
+                  ),
+                },
+              ]
+            : []),
+        ]}
       />
-      {realUseEnabled() && customerRealInvoicingEnabled() && (
-        <RealInvoicesSection
-          subject={session.subject}
-          issuer={session.issuer}
-          workspaceId={id.data}
-        />
-      )}
-      {realUseEnabled() && customerSimulatedPaymentsEnabled() && (
-        <SimulatedPaymentsSection
-          subject={session.subject}
-          issuer={session.issuer}
-          workspaceId={id.data}
-        />
-      )}
     </CustomerShell>
   );
 }

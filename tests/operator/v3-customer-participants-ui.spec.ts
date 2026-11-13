@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { build } from 'esbuild';
 import { createServer, type Server } from 'node:http';
 import { readFile, mkdir } from 'node:fs/promises';
@@ -148,6 +148,22 @@ const preview = () => ({
   expiresAt: expires(),
   synthetic: true,
 });
+// The registrations page keeps the invitation check closed until asked for (page budget, L20).
+async function openInvitation(page: Page) {
+  const summary = page.locator('summary', { hasText: /invitation$/ }).first();
+  const shown = await summary
+    .waitFor({ state: 'visible', timeout: 4000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!shown) return;
+  const open = await page
+    .locator('details.account-fold')
+    .filter({ has: summary })
+    .first()
+    .evaluate((el) => (el as HTMLDetailsElement).open);
+  if (!open) await summary.click();
+}
+
 test('owner issues a real scoped command,shows the secret once and follows a relative participant route without a token URL', async ({
   page,
 }) => {
@@ -199,6 +215,7 @@ test('owner issues a real scoped command,shows the secret once and follows a rel
   page.on('dialog', (dialog) => dialog.accept());
   await page.getByRole('link', { name: 'Delegation registrations', exact: true }).click();
   await expect(page).toHaveURL(origin + '/account/delegations');
+  await openInvitation(page);
   await expect(page.getByRole('heading', { name: 'Inspect a sample invitation' })).toBeVisible();
   expect(page.url()).not.toContain(token);
 });
@@ -219,6 +236,7 @@ test('participant inspects the actual programme and explicitly consents before r
     });
   });
   await page.goto(origin);
+  await openInvitation(page);
   await page.getByLabel('Private sample invitation code', { exact: true }).fill(token);
   await page.getByRole('button', { name: 'Preview Sample Invitation' }).click();
   await expect(page.getByRole('heading', { name: preview().name })).toBeVisible();
@@ -277,6 +295,7 @@ test('uncertain registration retains exact text,code and command;wrong-scope ack
     });
   });
   await page.goto(origin);
+  await openInvitation(page);
   await page.getByLabel('Private sample invitation code', { exact: true }).fill(token);
   await page.getByRole('button', { name: 'Preview Sample Invitation' }).click();
   await page
@@ -395,6 +414,7 @@ test('participant withdrawal is explicit,scoped and removes stale programme meta
     });
   });
   await page.goto(origin);
+  await openInvitation(page);
   await expect(page.getByLabel('Reason for withdrawal', { exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Withdraw From Programme', exact: true }).click();
   await expect(page.getByLabel('Reason for withdrawal', { exact: true })).toBeVisible();
@@ -502,6 +522,7 @@ test('malformed,wrong-scope,unavailable and expired previews never expose action
     return route.fulfill({ json: own() });
   });
   await page.goto(origin);
+  await openInvitation(page);
   await expect(
     page.getByText('Sample delegation participation is unavailable.', { exact: true }),
   ).toBeVisible();
@@ -512,6 +533,7 @@ test('malformed,wrong-scope,unavailable and expired previews never expose action
   await expect(page.getByText(ownRegistration().name, { exact: true })).toHaveCount(0);
   stage = 2;
   await page.getByRole('button', { name: 'Reload My Sample Registrations' }).click();
+  await openInvitation(page);
   await page.getByLabel('Private sample invitation code', { exact: true }).fill(token);
   await page.getByRole('button', { name: 'Preview Sample Invitation' }).click();
   await expect(
@@ -574,6 +596,7 @@ test('both audiences support original-script text,keyboard,axe and four responsi
     for (const width of [1440, 768, 390, 320]) {
       await page.setViewportSize({ width, height: 1000 });
       await page.goto(origin + (audience === 'owner' ? '?mode=owner' : ''));
+      if (audience !== 'owner') await openInvitation(page);
       await expect(
         page.getByRole('heading', {
           name: audience === 'owner' ? 'Sample participants' : 'Your sample registrations',
@@ -602,6 +625,7 @@ test('unsent participant input has an actual interrupted-navigation warning rath
     route.fulfill({ json: own() }),
   );
   await page.goto(origin);
+  await openInvitation(page);
   await page.getByLabel('Private sample invitation code', { exact: true }).fill(token);
   const warning = page.waitForEvent('dialog').then(async (prompt) => {
     expect(prompt.type()).toBe('beforeunload');
@@ -720,6 +744,7 @@ test('a participant who tries an archived programme is told it is not taking reg
     return route.fulfill({ status: 409, json: { error: archivedParticipant } });
   });
   await page.goto(origin);
+  await openInvitation(page);
   await page.getByLabel('Private sample invitation code', { exact: true }).fill(token);
   await page.getByRole('button', { name: 'Preview Sample Invitation' }).click();
   await expect(page.getByText(archivedParticipant, { exact: true }).first()).toBeVisible();

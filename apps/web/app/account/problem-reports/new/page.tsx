@@ -1,3 +1,4 @@
+import '../../page-budget.css';
 import { CustomerProblemReportForm } from '../../../../components/problem-reports/customer-problem-reports';
 import { readFromPage } from '../../../../lib/problem-report-client';
 import { ProblemReportsPage } from '../session-page';
@@ -21,7 +22,11 @@ export default async function Page({
       next="/account/problem-reports/new"
       title="Report a problem"
       filing
-      signedIn={(person) => <CustomerProblemReportForm {...person} from={from} />}
+      signedIn={(person) => (
+        <div className="account-tight">
+          <CustomerProblemReportForm {...person} from={from} />
+        </div>
+      )}
     />
   );
 }

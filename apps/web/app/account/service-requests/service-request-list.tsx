@@ -1,4 +1,5 @@
 'use client';
+import '../page-budget.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   basisText,
@@ -82,7 +83,7 @@ function ScopedList({ subject, issuer, workspaceId }: Props) {
     return () => task.current?.abort();
   }, [load]);
   return (
-    <section aria-label="Paid-service requests">
+    <section aria-label="Paid-service requests" className="account-compact">
       <p>
         Ask for paid local help from a place you already work in, such as a programme, a private
         request or an approved company. We send you a quote first. Accepting a quote records your
@@ -108,94 +109,100 @@ function ScopedList({ subject, issuer, workspaceId }: Props) {
         </div>
       )}
       {state === 'ready' && list && (
-        <>
-          <h2>Your help requests</h2>
-          {list.requests.length === 0 ? (
-            <div className="ux-state" data-state="empty">
-              <p className="ux-state-label">No requests yet</p>
-              <div role="status">
-                {list.canRequest
-                  ? 'Nothing has been requested in this workspace yet. Choose where you need help below.'
-                  : 'Nothing has been requested in this workspace yet. Only an owner or admin can ask for help.'}
+        <div className="account-split account-compact">
+          <div>
+            <h2>Your help requests</h2>
+            {list.requests.length === 0 ? (
+              <div className="ux-state" data-state="empty">
+                <p className="ux-state-label">No requests yet</p>
+                <div role="status">
+                  {list.canRequest
+                    ? 'Nothing has been requested in this workspace yet. Choose where you need help below.'
+                    : 'Nothing has been requested in this workspace yet. Only an owner or admin can ask for help.'}
+                </div>
               </div>
-            </div>
-          ) : (
-            <ul className="guide-list">
-              {list.requests.map((r) => {
-                const label = statusLabel[r.status];
-                return (
-                  <li key={r.id} className="detail-card">
-                    <h3>
-                      <a href={'/account/service-requests/' + workspaceId + '/' + r.id}>
-                        {r.serviceTitle}
-                      </a>
-                    </h3>
-                    <p>
-                      <span className="ux-status" data-tone={label.tone}>
-                        {label.text}
-                      </span>
-                    </p>
-                    <p>
-                      {contextText[r.contextKind]}: {r.contextLabel}
-                    </p>
-                    <p>
-                      {r.region} · updated{' '}
-                      <time dateTime={r.updatedAt}>{dateTimeText(r.updatedAt)}</time>
-                    </p>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-          {list.nextAfter && (
-            <button
-              type="button"
-              className="button button-secondary"
-              disabled={more}
-              onClick={() => {
-                setMore(true);
-                void load(list.nextAfter ?? undefined).finally(() => setMore(false));
-              }}
-            >
-              Show Older Requests
-            </button>
-          )}
-          {catalogue && catalogue.services.length > 0 && (
-            <details className="ux-journey-disclosure">
-              <summary>What we can help with</summary>
-              <ul>
-                {catalogue.services.map((s) => (
-                  <li key={s.key}>
-                    <strong>{s.title}</strong> · {basisText[s.quoteBasis]}
-                    <br />
-                    {s.summary}
-                    <br />
-                    Where: {s.regions.join(', ')}
-                  </li>
-                ))}
+            ) : (
+              <ul className="guide-list">
+                {list.requests.map((r) => {
+                  const label = statusLabel[r.status];
+                  return (
+                    <li key={r.id} className="detail-card">
+                      <h3>
+                        <a href={'/account/service-requests/' + workspaceId + '/' + r.id}>
+                          {r.serviceTitle}
+                        </a>
+                      </h3>
+                      <p>
+                        <span className="ux-status" data-tone={label.tone}>
+                          {label.text}
+                        </span>
+                      </p>
+                      <p>
+                        {contextText[r.contextKind]}: {r.contextLabel}
+                      </p>
+                      <p>
+                        {r.region} · updated{' '}
+                        <time dateTime={r.updatedAt}>{dateTimeText(r.updatedAt)}</time>
+                      </p>
+                    </li>
+                  );
+                })}
               </ul>
-            </details>
-          )}
-          {list.canRequest && (
-            <section aria-labelledby="start-help-title" className="detail-card">
-              <h3 id="start-help-title">Ask for help</h3>
-              <p>Help is requested from the place it is about. Open one and choose Request help.</p>
-              <ul className="ux-link-list">
-                <li>
-                  <a href={workspacePath('programmes', workspaceId)}>
-                    A programme in this workspace
-                  </a>
-                </li>
-                <li>
-                  <a href="/account/companies">An approved company</a>
-                </li>
-                <li>
-                  <a href="/account?view=work#customer-requests">A private request</a>
-                </li>
-              </ul>
-            </section>
-          )}
-        </>
+            )}
+            {list.nextAfter && (
+              <button
+                type="button"
+                className="button button-secondary"
+                disabled={more}
+                onClick={() => {
+                  setMore(true);
+                  void load(list.nextAfter ?? undefined).finally(() => setMore(false));
+                }}
+              >
+                Show Older Requests
+              </button>
+            )}
+          </div>
+          <div>
+            {catalogue && catalogue.services.length > 0 && (
+              <details className="ux-journey-disclosure">
+                <summary>What we can help with</summary>
+                <ul>
+                  {catalogue.services.map((s) => (
+                    <li key={s.key}>
+                      <strong>{s.title}</strong> · {basisText[s.quoteBasis]}
+                      <br />
+                      {s.summary}
+                      <br />
+                      Where: {s.regions.join(', ')}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+            {list.canRequest && (
+              <section aria-labelledby="start-help-title" className="detail-card">
+                <h3 id="start-help-title">Ask for help</h3>
+                <p>
+                  Help is requested from the place it is about. Open one and choose Request help.
+                </p>
+                <ul className="ux-link-list">
+                  <li>
+                    <a href={workspacePath('programmes', workspaceId)}>
+                      A programme in this workspace
+                    </a>
+                  </li>
+                  <li>
+                    <a href="/account/companies">An approved company</a>
+                  </li>
+                  <li>
+                    <a href="/account?view=work#customer-requests">A private request</a>
+                  </li>
+                </ul>
+              </section>
+            )}
+          </div>
+        </div>
       )}
       <p>
         <a className="text-link" href="/account">

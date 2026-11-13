@@ -253,6 +253,9 @@ const reads =
   (url: URL) => ({
     json: url.searchParams.get('scope') === 'plans' ? plansBody(plans) : overviewBody(overview),
   });
+// The page cuts its sections into tabs (page budget, L20): choose the one that holds what the case looks at.
+const openTab = (page: Page, id: 'plan' | 'includes' | 'plans' | 'invoices') =>
+  page.locator(`[role="tab"][data-tab="${id}"]`).click();
 const axe = async (page: Page) =>
   (
     await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()
@@ -274,11 +277,13 @@ test('the page shows the held plan, what it includes, the plans on offer and say
   await expect(
     page.getByText(/Nothing is charged, no invoice is made and no payment is taken/),
   ).toBeVisible();
+  await openTab(page, 'includes');
   const includes = page.getByRole('region', { name: 'What your plan includes' });
   await expect(includes.getByText('People in the workspace', { exact: true })).toBeVisible();
   await expect(includes.getByText(/Up to 10/)).toBeVisible();
   await expect(includes.getByText(/No limit/).first()).toBeVisible();
   await expect(includes.getByText(/Corridra does not apply these limits yet/)).toBeVisible();
+  await openTab(page, 'plans');
   const offer = page.getByRole('region', { name: 'Plans on offer' });
   await expect(offer.getByText('USD 49.00 per month')).toBeVisible();
   await expect(offer.getByText('Free', { exact: true })).toBeVisible();
@@ -290,6 +295,8 @@ test('the page shows the held plan, what it includes, the plans on offer and say
   await page.getByText('Everything in this plan').first().click();
   await expect(page.getByText('Payment collection from participants').first()).toBeVisible();
   // History shows what happened and the note the team wrote; the word synthetic is the team's own text only.
+  await openTab(page, 'plan');
+  await page.getByText(/^History \(/).click();
   await expect(page.getByText(/The plan started/)).toBeVisible();
   await expect(page.getByText(/Synthetic note: your plan starts today/)).toBeVisible();
   expect(await axe(page)).toEqual([]);
@@ -328,7 +335,9 @@ test('asking for a plan needs the acknowledgement and sends the exact version an
   });
   await page.goto(origin + '/');
   await expect(page.getByText('Your workspace does not hold a plan.')).toBeVisible();
+  await openTab(page, 'includes');
   await expect(page.getByText('No plan is active, so nothing is listed.')).toBeVisible();
+  await openTab(page, 'plans');
   await page.getByRole('button', { name: 'Ask for this plan' }).first().click();
   const form = page.getByRole('form', { name: 'Ask for Organiser monthly (sample plan)' });
   const send = form.getByRole('button', { name: 'Send request' });
@@ -356,6 +365,7 @@ test('asking for a plan needs the acknowledgement and sends the exact version an
     planDigest: digest,
     acknowledged: true,
   });
+  await openTab(page, 'plan');
   await expect(page.getByText(/You asked for Organiser/)).toBeVisible();
   await expect(page.getByText('Waiting for the Corridra team').first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Withdraw my request' })).toBeVisible();
@@ -434,6 +444,7 @@ test('a member reads the plan and sees no controls; an ended period grants nothi
     0,
   );
   await expect(page.getByRole('button', { name: 'Ask for this plan' })).toHaveCount(0);
+  await openTab(page, 'plans');
   await expect(page.getByText('Only a workspace owner or admin can ask for a plan.')).toBeVisible();
   await page.unroute('**/api/customer-billing**');
   await serve(
@@ -447,6 +458,7 @@ test('a member reads the plan and sees no controls; an ended period grants nothi
   await page.goto(origin + '/');
   await expect(page.getByText('Period ended, not renewed').first()).toBeVisible();
   await expect(page.getByText(/Nothing from this plan applies now/)).toBeVisible();
+  await openTab(page, 'includes');
   await expect(page.getByText('The period has ended, so nothing is listed.')).toBeVisible();
 });
 
@@ -561,6 +573,7 @@ for (const width of [320, 390, 768, 1440])
     await page.setViewportSize({ width, height: 1000 });
     await serve(page, reads());
     await page.goto(origin + '/');
+    await openTab(page, 'plans');
     await expect(page.getByRole('heading', { name: 'Plans on offer' })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
@@ -846,6 +859,7 @@ test('a real workspace is told its plan is a record, sees its own plans and neve
 }) => {
   await serve(page, realReads());
   await page.goto(origin + '/?real=1&view=slot');
+  await openTab(page, 'plans');
   await expect(page.getByRole('heading', { name: 'Growth monthly' }).first()).toBeVisible();
   await expect(page.getByText(/record of the plan your workspace holds/)).toBeVisible();
   await expect(page.getByText(/Invoices are not issued from this page/)).toBeVisible();
@@ -862,6 +876,7 @@ test('a sample workspace still gets the sample wording and its sample invoices',
   await serve(page, reads());
   await page.goto(origin + '/?view=slot');
   await expect(page.getByText(/Plans here are samples/)).toBeVisible();
+  await openTab(page, 'invoices');
   await expect(page.getByText('Sample invoices section')).toBeVisible();
 });
 
@@ -885,6 +900,7 @@ test('a real workspace can ask for a plan after reading it, with the exact versi
     return realReads()(url);
   });
   await page.goto(origin + '/?real=1');
+  await openTab(page, 'plans');
   await page.getByRole('button', { name: 'Ask for this plan' }).first().click();
   const form = page.getByRole('form', { name: 'Ask for Growth monthly' });
   await form.getByLabel(/I have read the price/).check();

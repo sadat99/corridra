@@ -195,11 +195,13 @@ function Glance({
         </p>
       </section>
       {checklist.length > 0 ? (
-        <section
+        <details
           className="programme-card programme-checklist-card"
           aria-label="Programme checklist"
         >
-          <h5 className="programme-card-title">Programme checklist</h5>
+          <summary>
+            <h5 className="programme-card-title">Programme checklist ({checklist.length})</h5>
+          </summary>
           <dl className="programme-tiles programme-checklist">
             {checklist.map((row) => (
               <div key={row.key} data-known={row.known ? undefined : 'false'}>
@@ -214,7 +216,7 @@ function Glance({
           <p className="programme-card-note">
             Facts from this programme&apos;s records. Corridra does not judge whether it is ready.
           </p>
-        </section>
+        </details>
       ) : null}
       {projectionsOn ? (
         <section
