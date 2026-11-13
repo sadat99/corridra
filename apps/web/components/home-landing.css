@@ -369,7 +369,7 @@
 .ac1-request {
   margin: 0 0 var(--space-2);
   font-family: var(--serif);
-  font-size: var(--text-xl);
+  font-size: var(--text-h2);
   line-height: 1.2;
 }
 .ac1-fields {
@@ -651,7 +651,7 @@
   margin: var(--space-3) 0 0;
   color: var(--ac-copper-ink);
   font-family: var(--serif);
-  font-size: var(--text-xl);
+  font-size: var(--text-h2);
   font-style: italic;
 }
 .ac1-truth {
@@ -895,7 +895,7 @@
     gap: var(--space-5);
   }
   .ac1-pass-codes {
-    font-size: 1.875rem;
+    font-size: var(--text-2xl);
   }
 }
 
@@ -1039,7 +1039,7 @@
     min-height: 3rem;
   }
   .ac1-band h2 {
-    font-size: var(--text-xl);
+    font-size: var(--text-lg);
   }
   .ac1-band p {
     font-size: var(--text-base);
@@ -1077,7 +1077,7 @@
     padding-block: var(--space-1);
   }
   .ac1-dossier-card h3 {
-    font-size: var(--text-xl);
+    font-size: var(--text-lg);
   }
   .ac1-dossier-card {
     padding: var(--space-3) var(--space-4);
@@ -1129,7 +1129,7 @@
     padding: var(--space-2) var(--space-3);
   }
   .ac1-pass-codes {
-    font-size: var(--text-xl);
+    font-size: var(--text-2xl);
   }
   .ac1-pass-text,
   .ac1-pass-stub {

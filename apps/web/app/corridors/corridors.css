@@ -97,7 +97,7 @@
     padding: var(--space-4);
   }
   .guide-routes .guide-directions h3 {
-    font-size: var(--text-xl);
+    font-size: var(--text-lg);
   }
   .guide-routes .guide-directions li p,
   .guide-routes .guide-other-route p {
@@ -108,7 +108,7 @@
     gap: var(--space-2);
   }
   .guide-routes .guide-directions h2 {
-    font-size: var(--text-xl);
+    font-size: var(--text-lg);
   }
   .guide-routes .guide-other-route {
     gap: var(--space-3);

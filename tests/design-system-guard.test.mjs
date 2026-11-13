@@ -6,7 +6,8 @@ import test from 'node:test';
 // Binding guard for new UI code. Contract: docs/agents/ui-direction.md ("How to build a new screen").
 // tests/design-system.test.mjs already covers the stylesheet colour layer, fonts, the icon family and the
 // AC/1 palette. This file covers what it does not: TypeScript colours, text-transform on actions,
-// inline spacing and type size, signed-in pages outside the shared shell, and the docs that bind builders.
+// inline spacing and type size, signed-in pages outside the shared shell, the type scale (weights, raw
+// font sizes, radius set) and the docs that bind builders.
 // Existing debt is frozen in tests/design-system-guard-baseline.json. Lower it when you remove debt;
 // never raise it. A new file with a violation is not in the baseline, so it fails.
 
@@ -185,7 +186,14 @@ test('every signed-in account page renders inside a shared shell', () => {
 });
 
 test('the baseline only lists files that still exist and still have debt', () => {
-  for (const section of ['rawColourInTypeScript', 'textTransformOnActions', 'inlineStyle']) {
+  for (const section of [
+    'rawColourInTypeScript',
+    'textTransformOnActions',
+    'inlineStyle',
+    'fontWeightOffScale',
+    'rawFontSize',
+    'radiusOffScale',
+  ]) {
     for (const file of Object.keys(baseline[section])) {
       assert.ok(existsSync(join(root, file)), `${section} lists a missing file: ${file}`);
     }
@@ -222,6 +230,174 @@ test('rule 3 flags planted inline type size and px spacing and passes a token st
   assert.equal(inlineStyleDebt('<p style={{ padding: 12 }}>x</p>').length, 1);
   assert.equal(inlineStyleDebt("<p style={{ marginBlock: '1rem' }}>x</p>").length, 0);
   assert.equal(inlineStyleDebt("<p style={{ display: 'flex' }}>x</p>").length, 0);
+});
+
+// Rule 5: the UI/UX.v3 type scale (consistency pass, owner "full approved", 13 November 2026). Weights are
+// 400, 500 and 600 only. A font size is a token (`--text-*`), never a raw px or rem value. A corner radius
+// is a token or one of 8, 12 and 16 px; `999px` is the capsule for status badges, `50%` a dot, and 1 to 3 px
+// is a hairline for a bar track or a scrollbar thumb. Custom property definitions in the token layer are
+// where raw values live, so only real declarations are checked.
+const WEIGHTS_ALLOWED = new Set(['400', '500', '600']);
+const stripCss = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '');
+const declarations = (css, property) => {
+  const found = [];
+  const re = new RegExp(`(?:^|[;{\\s])(${property})\\s*:\\s*([^;}]+)`, 'g');
+  for (const m of stripCss(css).matchAll(re)) found.push(m[2].trim());
+  return found;
+};
+
+export function offScaleWeights(css) {
+  const found = [];
+  for (const value of declarations(css, 'font-weight')) {
+    if (/^(?:inherit|initial|unset|normal|var\(.*\))$/i.test(value)) continue;
+    if (!WEIGHTS_ALLOWED.has(value)) found.push(`font-weight: ${value}`);
+  }
+  // The font shorthand starts with an optional weight: `font: 650 var(--text-base) var(--font-ui)`.
+  for (const value of declarations(css, 'font')) {
+    const w = /^(?:italic\s+)?(\d{3}|bold|bolder|lighter)\b/.exec(value);
+    if (w && !WEIGHTS_ALLOWED.has(w[1])) found.push(`font: ${value}`);
+  }
+  return found;
+}
+
+export function rawFontSizes(css) {
+  const found = [];
+  for (const value of declarations(css, 'font-size')) {
+    if (/\d(?:px|rem|pt|ch|vw|vh)\b|^[1-9]\d*$|^0?\.\d+$/.test(value))
+      found.push(`font-size: ${value}`);
+  }
+  for (const value of declarations(css, 'font')) {
+    if (/(?:^|\s)\d*\.?\d+(?:px|rem|pt)\b/.test(value)) found.push(`font: ${value}`);
+  }
+  return found;
+}
+
+const RADIUS_PROPERTY = '(?:border(?:-(?:top|bottom|start|end)-(?:left|right|start|end))?-radius)';
+export function offScaleRadius(css) {
+  const found = [];
+  for (const value of declarations(css, RADIUS_PROPERTY)) {
+    // A token, or a token with an offset, is fine; any literal next to it is still checked.
+    const literals = value
+      .replace(/calc\(\s*var\([^)]*\)[^)]*\)/g, ' ')
+      .replace(/var\([^)]*\)/g, ' ');
+    for (const part of literals.split(/[\s/]+/).filter(Boolean)) {
+      if (/^(?:0|inherit|initial|unset|50%|999px|99px|9999px)$/.test(part)) continue;
+      const px = /^(\d*\.?\d+)px$/.exec(part);
+      const rem = /^(\d*\.?\d+)rem$/.exec(part);
+      const size = px ? Number(px[1]) : rem ? Number(rem[1]) * 16 : NaN;
+      if ([1, 2, 3, 8, 12, 16].includes(size)) continue;
+      found.push(`border-radius: ${value}`);
+      break;
+    }
+  }
+  return found;
+}
+
+test('font weights are 400, 500 and 600 only', () => {
+  const found = {};
+  for (const file of styles) {
+    const n = offScaleWeights(read(file)).length;
+    if (n) found[rel(file)] = n;
+  }
+  exceeds(found, baseline.fontWeightOffScale, 'font weight outside 400, 500 and 600');
+});
+
+test('font sizes are tokens, never a raw px or rem value', () => {
+  const found = {};
+  for (const file of styles) {
+    const n = rawFontSizes(read(file)).length;
+    if (n) found[rel(file)] = n;
+  }
+  exceeds(found, baseline.rawFontSize, 'raw font size');
+});
+
+test('corner radius is a token, 8, 12 or 16 px, a capsule, a dot or a hairline', () => {
+  const found = {};
+  for (const file of styles) {
+    const n = offScaleRadius(read(file)).length;
+    if (n) found[rel(file)] = n;
+  }
+  exceeds(found, baseline.radiusOffScale, 'radius outside the set');
+});
+
+test('the type scale tokens match UI/UX.v3', () => {
+  const css = stripCss(read(join(web, 'app/globals.css')));
+  const token = (name) => {
+    const all = [...css.matchAll(new RegExp(`${name}:\\s*([^;]+);`, 'g'))].map((m) => m[1].trim());
+    return all;
+  };
+  // Steps: label 12, secondary 14, body 16, card or row title 18, figure 24 (px = rem x 16).
+  assert.equal(token('--text-xs')[0], '0.75rem');
+  assert.equal(token('--text-sm')[0], '0.875rem');
+  assert.equal(token('--text-base')[0], '1rem');
+  assert.equal(
+    token('--text-xl')[0],
+    'var(--text-lg)',
+    'the retired 20 px step lands on the card title size',
+  );
+  assert.equal(token('--text-2xl')[0], '1.5rem');
+  // Page title 40 on desktop and 29 on a phone; section title 24 and 22; home display 56 and 30 on a phone.
+  assert.match(token('--text-h1')[0], /^clamp\(1\.8125rem,.*\b2\.5rem\)$/);
+  assert.match(token('--text-h2')[0], /^clamp\(1\.375rem,.*\b1\.5rem\)$/);
+  assert.match(token('--text-display')[0], /\b3\.5rem\)$/);
+  assert.equal(token('--text-h1').at(-1), '1.8125rem', 'the phone page title is 29 px');
+  // Weights and leading are tokens too.
+  assert.equal(token('--weight-regular')[0], '400');
+  assert.equal(token('--weight-medium')[0], '500');
+  assert.equal(token('--weight-semibold')[0], '600');
+  assert.equal(token('--leading-heading')[0], '1.15');
+  assert.equal(token('--leading-title')[0], '1.3');
+  assert.equal(token('--leading-reading')[0], '1.6');
+  // Rounding B.
+  assert.equal(token('--radius-sm')[0], '0.5rem');
+  assert.equal(token('--radius-md')[0], '0.75rem');
+  assert.equal(token('--radius-lg')[0], '1rem');
+});
+
+test('rule 5 flags a planted off-scale weight, raw size and off-set radius, and passes the tokens', () => {
+  assert.equal(offScaleWeights('.a { font-weight: 650; }').length, 1);
+  assert.equal(offScaleWeights('.a { font-weight: 700; }').length, 1);
+  assert.equal(offScaleWeights('.a { font-weight: 550; }').length, 1);
+  assert.equal(offScaleWeights('.a { font-weight: bold; }').length, 1);
+  assert.equal(offScaleWeights('.a { font: 700 var(--text-xl)/1.25 var(--font-ui); }').length, 1);
+  assert.equal(
+    offScaleWeights('.a { font-weight: 400; } .b { font-weight: 500; } .c { font-weight: 600; }')
+      .length,
+    0,
+  );
+  assert.equal(offScaleWeights('.a { font: 600 var(--text-sm)/1.3 var(--font-ui); }').length, 0);
+  assert.equal(offScaleWeights('.a { font-weight: inherit; } /* font-weight: 700 */').length, 0);
+  assert.equal(rawFontSizes('.a { font-size: 15px; }').length, 1);
+  assert.equal(rawFontSizes('.a { font-size: 0.9375rem; }').length, 1);
+  assert.equal(
+    rawFontSizes('.a { font-size: clamp(1.875rem, 1.2rem + 1.5vw, 2.5rem); }').length,
+    1,
+  );
+  assert.equal(rawFontSizes('.a { font: 600 14px/1.3 var(--font-ui); }').length, 1);
+  assert.equal(
+    rawFontSizes(
+      '.a { font-size: var(--text-sm); } .b { font-size: 0.92em; } .c { font-size: 112.5%; }',
+    ).length,
+    0,
+  );
+  assert.equal(rawFontSizes(':root { --text-sm: 0.875rem; } .a { font-size: 0; }').length, 0);
+  assert.equal(offScaleRadius('.a { border-radius: 4px; }').length, 1);
+  assert.equal(offScaleRadius('.a { border-radius: 10px; }').length, 1);
+  assert.equal(offScaleRadius('.a { border-radius: 0.5625rem; }').length, 1);
+  assert.equal(offScaleRadius('.a { border-radius: 8px 8px 0 4px; }').length, 1);
+  assert.equal(offScaleRadius('.a { border-radius: var(--radius-sm); }').length, 0);
+  assert.equal(offScaleRadius('.a { border-radius: 12px; } .b { border-radius: 1rem; }').length, 0);
+  assert.equal(
+    offScaleRadius(
+      '.a { border-radius: 999px; } .b { border-radius: 50%; } .c { border-radius: 2px; }',
+    ).length,
+    0,
+  );
+  assert.equal(offScaleRadius('.a { border-radius: calc(var(--radius-sm) - 2px); }').length, 0);
+  assert.equal(
+    offScaleRadius('.a { border-radius: 4px 4px var(--radius-md) var(--radius-md); }').length,
+    1,
+  );
 });
 
 test('rule 4 does not let an ancestor page vouch for a child route', () => {

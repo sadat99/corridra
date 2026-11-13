@@ -11,12 +11,12 @@
 }
 .ux-kit-hint {
   color: var(--ac-text-secondary);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   margin: 0;
 }
 .ux-kit-error {
   color: var(--critical);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   margin: 0;
 }
 .ux-kit-input {
@@ -53,7 +53,7 @@
 .ux-kit-zone,
 .ux-kit-preview {
   color: var(--ac-text-secondary);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 .ux-kit-combo {
   position: relative;
@@ -81,7 +81,7 @@
   min-height: 44px;
   align-items: center;
   padding: 0.35rem 0.6rem;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   color: var(--ac-ink);
 }
@@ -91,7 +91,7 @@
 }
 .ux-kit-option-hint {
   color: var(--ac-text-secondary);
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
 }
 .ux-kit-divider {
   border-top: 1px solid var(--ac-border);
@@ -118,7 +118,7 @@
   color: var(--ac-ink);
 }
 .ux-kit-summary h2 {
-  font-size: 1rem;
+  font-size: var(--text-base);
   margin: 0 0 0.35rem;
 }
 .ux-kit-summary a {
@@ -131,7 +131,7 @@
   padding: 0.15rem 0.6rem;
   border-radius: 999px;
   border: 1px solid var(--ac-border-strong);
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   color: var(--ac-ink);
   background: var(--ac-surface-subtle);
@@ -190,7 +190,7 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 .ux-kit-crumbs li + li::before {
   content: '/';
@@ -247,7 +247,7 @@
   background: transparent;
   color: var(--brand);
   font: inherit;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
 }
 .ux-kit-help-toggle::before {
@@ -265,7 +265,7 @@
   border-radius: 8px;
   background: var(--ac-paper);
   color: var(--ac-ink);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   max-width: 36rem;
 }
 @media (max-width: 480px) {

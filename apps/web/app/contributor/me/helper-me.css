@@ -64,7 +64,7 @@
   line-height: var(--space-6);
 }
 .me-textsize-choice[data-step='large'] .me-textsize-glyph {
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
 }
 .me-textsize-choice[data-step='largest'] .me-textsize-glyph {
   font-size: var(--text-2xl);

@@ -38,7 +38,7 @@
 }
 .decision-card dt {
   font-size: var(--text-sm);
-  font-weight: 650;
+  font-weight: 600;
   color: var(--text-2);
 }
 .decision-card dd {

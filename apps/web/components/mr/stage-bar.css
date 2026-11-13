@@ -31,7 +31,7 @@
 }
 .mr-stage-line b {
   color: var(--ink);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 /* Named: each segment carries its stage name, the current one in the brand colour (Home's request card). */
@@ -69,7 +69,7 @@
 }
 .mr-stage li[data-state='now'] .mr-stage-name {
   color: var(--brand);
-  font-weight: 650;
+  font-weight: 600;
 }
 @media (max-width: 40rem) {
   /* Phones: the names would crowd; the line under the bar names the current stage. */
