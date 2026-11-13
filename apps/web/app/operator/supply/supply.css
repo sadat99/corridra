@@ -1,0 +1,117 @@
+/* Supply source screens (ADR-082 slice S3). Tokens only: no raw colour, no text-transform, no inline size. */
+.supply-mode {
+  margin: 0;
+}
+.supply-quiet {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  max-inline-size: 60ch;
+  overflow-wrap: anywhere;
+}
+.supply-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.supply-notice-icon {
+  flex: none;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+}
+.supply-failure {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+.supply-list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.supply-item {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  padding: var(--space-4);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.supply-item-title {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.supply-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  margin: 0;
+}
+.supply-facts > div {
+  min-inline-size: 0;
+}
+.supply-facts dt {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.supply-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.supply-check {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+}
+.supply-choices {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.supply-choice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: var(--space-12);
+}
+.supply-disclosure {
+  margin-block-start: var(--space-3);
+}
+.supply-disclosure > summary {
+  display: flex;
+  align-items: center;
+  min-block-size: var(--space-12);
+}
+.supply-table {
+  overflow-x: auto;
+  max-inline-size: 100%;
+}
+.supply-table table {
+  inline-size: 100%;
+  border-collapse: collapse;
+}
+.supply-table th,
+.supply-table td {
+  padding: var(--space-2) var(--space-3);
+  text-align: start;
+  vertical-align: top;
+  border-block-end: 1px solid var(--border-subtle);
+}
+@media (min-width: 40rem) {
+  .supply-item .operator-form {
+    max-inline-size: 40rem;
+  }
+}
