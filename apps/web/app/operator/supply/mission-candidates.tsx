@@ -69,13 +69,24 @@ export function MissionCandidates({
     );
   return (
     <section aria-labelledby="supply-candidates-heading">
-      <nav aria-label="Breadcrumb">
-        <Link prefetch={false} className="text-link" href={withWorkspace(supplyBase, tenant)}>
-          Supply Sources
-        </Link>
-      </nav>
-      <h2 id="supply-candidates-heading">Candidates for {name}</h2>
-      {profile ? <p className="supply-quiet">Profile version {profile.version}</p> : null}
+      <div className="supply-head">
+        <nav aria-label="Breadcrumb">
+          <Link prefetch={false} className="text-link" href={withWorkspace(supplyBase, tenant)}>
+            Supply Sources
+          </Link>
+        </nav>
+        <h2 id="supply-candidates-heading">Candidates for {name}</h2>
+        {profile ? <p className="supply-quiet">Profile version {profile.version}</p> : null}
+        <p className="supply-head-end">
+          <Link
+            prefetch={false}
+            className="text-link"
+            href={withWorkspace(`${supplyBase}/do-not-contact`, tenant)}
+          >
+            Do Not Contact
+          </Link>
+        </p>
+      </div>
       <PausedNotice paused={paused} />
       {screen.error ? <ReadFailure error={screen.error} onRetry={screen.reload} /> : null}
       <SubTabs
@@ -124,15 +135,6 @@ export function MissionCandidates({
           },
         ]}
       />
-      <p>
-        <Link
-          prefetch={false}
-          className="text-link"
-          href={withWorkspace(`${supplyBase}/do-not-contact`, tenant)}
-        >
-          Do Not Contact
-        </Link>
-      </p>
     </section>
   );
 }

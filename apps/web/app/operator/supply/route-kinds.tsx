@@ -24,7 +24,9 @@ export function RouteKinds({ tenant }: { tenant: string }) {
   const rows = routes.data?.routes ?? [];
   return (
     <section aria-labelledby="supply-routes-heading">
-      <h2 id="supply-routes-heading">Route Kinds</h2>
+      <h2 id="supply-routes-heading" className="sr-only">
+        Route Kinds
+      </h2>
       <p className="supply-quiet">
         Which kinds of source each route can use. Staff Research is always allowed. Other kinds
         appear only when the route&apos;s pack lists them. Change this by publishing a new route

@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useRef, useState, type FormEvent } from 'react';
 import { ActionFeedback, useActionFeedback } from '../../../components/ux/feedback';
+import { SubTabs } from '../../../components/ux/sub-tabs';
 import { formatDate } from '../../../lib/ux/format';
 import {
   canWrite,
@@ -310,21 +311,85 @@ export function CandidateRecord({
   const paused = screen.data ? !screen.data.moduleOpen : false;
   const detail = state.data?.candidate;
   const writable = canWrite(role);
+  const facts = detail ? (
+    <dl className="supply-facts">
+      <div>
+        <dt>Country</dt>
+        <dd>{detail.country}</dd>
+      </div>
+      <div>
+        <dt>Website host</dt>
+        <dd>{detail.websiteHost ?? 'Not given'}</dd>
+      </div>
+      <div>
+        <dt>Public identifier</dt>
+        <dd>{detail.publicIdentifier ?? 'Not given'}</dd>
+      </div>
+      <div>
+        <dt>Size band</dt>
+        <dd>{detail.sizeBand ? (sizeWords[detail.sizeBand] ?? detail.sizeBand) : 'Not known'}</dd>
+      </div>
+      <div>
+        <dt>Types</dt>
+        <dd>
+          {detail.counterpartyTypes.length
+            ? detail.counterpartyTypes.map((type) => typeWords[type] ?? type).join(', ')
+            : 'Not known'}
+        </dd>
+      </div>
+      <div>
+        <dt>Source</dt>
+        <dd>
+          {detail.sourceLabel} ({sourceKindWords[detail.sourceKind] ?? detail.sourceKind}), version{' '}
+          {detail.sourceVersion}
+        </dd>
+      </div>
+      <div>
+        <dt>Observed date</dt>
+        <dd>{formatDate(detail.observedAt)}</dd>
+      </div>
+      <div>
+        <dt>Keep until</dt>
+        <dd>{formatDate(detail.retentionUntil)}</dd>
+      </div>
+      <div>
+        <dt>Method</dt>
+        <dd>{methodWords[detail.method] ?? detail.method}</dd>
+      </div>
+      {detail.nominationNote ? (
+        <div>
+          <dt>Internal note (staff only)</dt>
+          <dd>{detail.nominationNote}</dd>
+        </div>
+      ) : null}
+    </dl>
+  ) : null;
   return (
     <section>
-      <nav aria-label="Breadcrumb">
-        <Link prefetch={false} className="text-link" href={withWorkspace(supplyBase, tenant)}>
-          Supply Sources
-        </Link>
-        {' / '}
-        <Link
-          prefetch={false}
-          className="text-link"
-          href={withWorkspace(`${supplyBase}/missions/${missionId}`, tenant)}
-        >
-          Mission
-        </Link>
-      </nav>
+      <div className="supply-head">
+        <nav aria-label="Breadcrumb">
+          <Link prefetch={false} className="text-link" href={withWorkspace(supplyBase, tenant)}>
+            Supply Sources
+          </Link>
+          {' / '}
+          <Link
+            prefetch={false}
+            className="text-link"
+            href={withWorkspace(`${supplyBase}/missions/${missionId}`, tenant)}
+          >
+            Mission
+          </Link>
+        </nav>
+        <p className="supply-head-end">
+          <Link
+            prefetch={false}
+            className="text-link"
+            href={withWorkspace(`${supplyBase}/do-not-contact`, tenant)}
+          >
+            Do Not Contact
+          </Link>
+        </p>
+      </div>
       <PausedNotice paused={paused} />
       {state.loading && !detail ? <Loading words="Loading candidate." /> : null}
       {state.error ? <ReadFailure error={state.error} onRetry={state.reload} /> : null}
@@ -341,76 +406,43 @@ export function CandidateRecord({
             <p className="supply-quiet">Retention date passed. Kept for history.</p>
           ) : null}
           <SourceLabelLine />
-          <dl className="supply-facts">
-            <div>
-              <dt>Country</dt>
-              <dd>{detail.country}</dd>
-            </div>
-            <div>
-              <dt>Website host</dt>
-              <dd>{detail.websiteHost ?? 'Not given'}</dd>
-            </div>
-            <div>
-              <dt>Public identifier</dt>
-              <dd>{detail.publicIdentifier ?? 'Not given'}</dd>
-            </div>
-            <div>
-              <dt>Size band</dt>
-              <dd>
-                {detail.sizeBand ? (sizeWords[detail.sizeBand] ?? detail.sizeBand) : 'Not known'}
-              </dd>
-            </div>
-            <div>
-              <dt>Types</dt>
-              <dd>
-                {detail.counterpartyTypes.length
-                  ? detail.counterpartyTypes.map((type) => typeWords[type] ?? type).join(', ')
-                  : 'Not known'}
-              </dd>
-            </div>
-            <div>
-              <dt>Source</dt>
-              <dd>
-                {detail.sourceLabel} ({sourceKindWords[detail.sourceKind] ?? detail.sourceKind}),
-                version {detail.sourceVersion}
-              </dd>
-            </div>
-            <div>
-              <dt>Observed date</dt>
-              <dd>{formatDate(detail.observedAt)}</dd>
-            </div>
-            <div>
-              <dt>Keep until</dt>
-              <dd>{formatDate(detail.retentionUntil)}</dd>
-            </div>
-            <div>
-              <dt>Method</dt>
-              <dd>{methodWords[detail.method] ?? detail.method}</dd>
-            </div>
-            {detail.nominationNote ? (
-              <div>
-                <dt>Internal note (staff only)</dt>
-                <dd>{detail.nominationNote}</dd>
-              </div>
-            ) : null}
-          </dl>
           {writable ? (
-            <>
-              <ReviewPanel tenant={tenant} detail={detail} paused={paused} onDone={state.reload} />
-              <MatchPanel tenant={tenant} detail={detail} paused={paused} onDone={state.reload} />
-            </>
+            <SubTabs
+              label="Candidate sections"
+              tabs={[
+                { id: 'details', label: 'Details', panel: facts },
+                {
+                  id: 'review',
+                  label: 'Review',
+                  panel: (
+                    <ReviewPanel
+                      tenant={tenant}
+                      detail={detail}
+                      paused={paused}
+                      onDone={state.reload}
+                    />
+                  ),
+                },
+                {
+                  id: 'match',
+                  label: 'Match',
+                  panel: (
+                    <MatchPanel
+                      tenant={tenant}
+                      detail={detail}
+                      paused={paused}
+                      onDone={state.reload}
+                    />
+                  ),
+                },
+              ]}
+            />
           ) : (
-            <DeniedNote />
+            <>
+              {facts}
+              <DeniedNote />
+            </>
           )}
-          <p>
-            <Link
-              prefetch={false}
-              className="text-link"
-              href={withWorkspace(`${supplyBase}/do-not-contact`, tenant)}
-            >
-              Do Not Contact
-            </Link>
-          </p>
         </>
       ) : null}
     </section>

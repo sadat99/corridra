@@ -138,6 +138,13 @@ export const refusalWords = {
   notInstalled: 'Supply sources are not installed yet. Ask the owner when they will be.',
 };
 
+/**
+ * How many rows each list draws before Show More (layout budget: a signed-in screen is one desktop screen and at most two
+ * phone screens with its lists full and every disclosure closed). A list with a longer row starts shorter. Show More adds five
+ * at a time and no row is ever dropped.
+ */
+export const firstRows = { sources: 3, missions: 5, candidates: 3, blocks: 3 } as const;
+
 /** True for a role that may write (owner, admin, operator). The server still decides. */
 export const canWrite = (role: string) => ['owner', 'admin', 'operator'].includes(role);
 export const canLift = (role: string) => role === 'owner' || role === 'admin';

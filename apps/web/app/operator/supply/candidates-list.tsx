@@ -6,6 +6,7 @@ import { SegmentedFilter } from '../../../components/ux/segmented-filter';
 import { formatDate } from '../../../lib/ux/format';
 import { supplyListLimit } from '@corridra/domain/supply-sources';
 import {
+  firstRows,
   listLimitWords,
   methodWords,
   reviewWords,
@@ -65,12 +66,12 @@ export function CandidatesList({
   hasProfile: boolean;
 }) {
   const [filter, setFilter] = useState<Filter>('all');
-  const [shown, setShown] = useState(5);
+  const [shown, setShown] = useState<number>(firstRows.candidates);
   const all = state.data?.candidates ?? [];
   const count = (f: Filter) => all.filter((c) => filterOf(c) === f).length;
   const rows = filter === 'all' ? all : all.filter((c) => filterOf(c) === filter);
   return (
-    <div>
+    <div className="supply-flow">
       <PersonalDataLine />
       {state.loading && !state.data ? <Loading words="Loading candidates." /> : null}
       {state.error ? <ReadFailure error={state.error} onRetry={state.reload} /> : null}
@@ -86,26 +87,28 @@ export function CandidatesList({
       ) : null}
       {all.length > 0 ? (
         <>
-          <SegmentedFilter<Filter>
-            label="Show"
-            value={filter}
-            onChange={(value) => {
-              setFilter(value);
-              setShown(5);
-            }}
-            options={[
-              { value: 'all', label: 'All' },
-              { value: 'not_reviewed', label: 'Not Reviewed' },
-              { value: 'qualified', label: 'Qualified' },
-              { value: 'wrong_fit', label: 'Wrong Fit' },
-              { value: 'expired', label: 'Expired' },
-            ]}
-          />
-          <p className="supply-quiet" role="status">
-            {count('qualified')} qualified, {count('wrong_fit')} wrong fit, {count('expired')}{' '}
-            expired, {count('not_reviewed')} not reviewed, of {all.length} candidates.
-          </p>
-          <ul className="supply-list" aria-label="Candidates">
+          <div className="supply-filter-row">
+            <SegmentedFilter<Filter>
+              label="Show"
+              value={filter}
+              onChange={(value) => {
+                setFilter(value);
+                setShown(firstRows.candidates);
+              }}
+              options={[
+                { value: 'all', label: 'All' },
+                { value: 'not_reviewed', label: 'Not Reviewed' },
+                { value: 'qualified', label: 'Qualified' },
+                { value: 'wrong_fit', label: 'Wrong Fit' },
+                { value: 'expired', label: 'Expired' },
+              ]}
+            />
+            <p className="supply-quiet" role="status">
+              {count('qualified')} qualified, {count('wrong_fit')} wrong fit, {count('expired')}{' '}
+              expired, {count('not_reviewed')} not reviewed, of {all.length} candidates.
+            </p>
+          </div>
+          <ul className="supply-list supply-list-wide" aria-label="Candidates">
             {rows.slice(0, shown).map((c) => (
               <li key={c.id} className="supply-item">
                 <p className="supply-item-title">
@@ -168,7 +171,7 @@ export function CandidatesList({
             ))}
           </ul>
           {rows.length > shown ? (
-            <div className="ux-show-more">
+            <div className="ux-show-more supply-more">
               <p role="status">
                 Showing {shown} of {rows.length} candidates.
               </p>
@@ -178,7 +181,7 @@ export function CandidatesList({
             </div>
           ) : null}
           {all.length >= supplyListLimit ? (
-            <p className="supply-quiet">{listLimitWords.candidates}</p>
+            <p className="supply-quiet supply-inline">{listLimitWords.candidates}</p>
           ) : null}
         </>
       ) : null}

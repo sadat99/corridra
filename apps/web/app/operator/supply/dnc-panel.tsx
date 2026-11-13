@@ -8,6 +8,7 @@ import { supplyListLimit } from '@corridra/domain/supply-sources';
 import {
   canLift,
   canWrite,
+  firstRows,
   listLimitWords,
   refusalWords,
   supplyGet,
@@ -267,12 +268,12 @@ export function DncPanel({ tenant, role }: { tenant: string; role: string }) {
   const screen = useScreenState(tenant);
   const paused = screen.data ? !screen.data.moduleOpen : false;
   const [acting, setActing] = useState<{ id: string; action: 'lift' | 'block' } | null>(null);
-  const [shown, setShown] = useState(5);
+  const [shown, setShown] = useState<number>(firstRows.blocks);
   const feedback = useActionFeedback();
   const rows = blocks.data?.blocks ?? [];
   const current = rows.filter((row) => row.current);
   return (
-    <section aria-labelledby="dnc-heading">
+    <section className="supply-flow" aria-labelledby="dnc-heading">
       <h2 id="dnc-heading" className="sr-only">
         Blocked companies
       </h2>
@@ -373,7 +374,7 @@ export function DncPanel({ tenant, role }: { tenant: string; role: string }) {
         })}
       </ul>
       {current.length > shown ? (
-        <div className="ux-show-more">
+        <div className="ux-show-more supply-more">
           <p role="status">
             Showing {shown} of {current.length} entries.
           </p>
@@ -383,7 +384,7 @@ export function DncPanel({ tenant, role }: { tenant: string; role: string }) {
         </div>
       ) : null}
       {rows.length >= supplyListLimit ? (
-        <p className="supply-quiet">{listLimitWords.blocks}</p>
+        <p className="supply-quiet supply-inline">{listLimitWords.blocks}</p>
       ) : null}
       {canWrite(role) ? (
         <BlockForm

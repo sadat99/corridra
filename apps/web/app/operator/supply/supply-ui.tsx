@@ -106,7 +106,7 @@ export function DeniedNote() {
 export const personalDataLine =
   "This list holds company details only. Contact details are refused. A company name can still be a person's name, so names are checked.";
 export function PersonalDataLine() {
-  return <p className="supply-quiet">{personalDataLine}</p>;
+  return <p className="supply-quiet supply-wide">{personalDataLine}</p>;
 }
 
 export const sourceLabelLine =

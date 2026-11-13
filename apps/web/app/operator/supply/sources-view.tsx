@@ -6,6 +6,7 @@ import { ReferencePicker } from '../../../components/ux/reference-picker';
 import { formatDate } from '../../../lib/ux/format';
 import {
   canWrite,
+  firstRows,
   refusalWords,
   sourceKindWords,
   sourceStatusWords,
@@ -361,11 +362,13 @@ export function SourcesView({ tenant, role }: { tenant: string; role: string }) 
   const screen = useScreenState(tenant);
   const writable = canWrite(role);
   const paused = screen.data ? !screen.data.moduleOpen : false;
-  const [shown, setShown] = useState(5);
+  const [shown, setShown] = useState<number>(firstRows.sources);
   const rows = sources.data?.sources ?? [];
   return (
-    <section aria-labelledby="supply-sources-heading">
-      <h2 id="supply-sources-heading">Sources</h2>
+    <section className="supply-flow" aria-labelledby="supply-sources-heading">
+      <h2 id="supply-sources-heading" className="sr-only">
+        Sources
+      </h2>
       <PausedNotice paused={paused} />
       {sources.loading && !sources.data ? <Loading words="Loading sources." /> : null}
       {sources.error ? <ReadFailure error={sources.error} onRetry={sources.reload} /> : null}
@@ -387,7 +390,7 @@ export function SourcesView({ tenant, role }: { tenant: string; role: string }) 
         ))}
       </ul>
       {rows.length > shown ? (
-        <div className="ux-show-more">
+        <div className="ux-show-more supply-more">
           <p role="status">
             Showing {shown} of {rows.length} sources.
           </p>
