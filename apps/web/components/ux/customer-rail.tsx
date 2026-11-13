@@ -8,6 +8,8 @@
 import './customer-rail.css';
 import Link from 'next/link';
 import {
+  Suspense,
+  use,
   useEffect,
   useRef,
   useState,
@@ -20,6 +22,11 @@ import { CorridraIcon } from '../corridra-icon';
 import { OperatorIcon } from '../operator-icon';
 import { customerGroupHere, newRequestHref } from '../../lib/ux/customer-navigation';
 import { useWorkspaces } from './customer-bar';
+import {
+  journeyCountText,
+  journeyCountWords,
+  type JourneyCounts,
+} from '../../lib/work-items/journey-counts';
 
 /** New Request: a person with a workspace goes to where requests are made, otherwise to the plan page. */
 export function NewRequestLink({ className = 'ux-rail-new' }: { className?: string }) {
@@ -114,6 +121,9 @@ export type CustomerSideItem = {
   tone?: 'action' | 'positive' | 'ornament';
   lead?: boolean;
   count?: number;
+  /** The badge of a journey: the words in the badge and what assistive technology hears (see journey-counts.ts). */
+  countText?: string;
+  countWords?: string;
 };
 
 function SideLink({ item, current }: { item: CustomerSideItem; current: boolean }) {
@@ -135,8 +145,39 @@ function SideLink({ item, current }: { item: CustomerSideItem; current: boolean 
           {item.count}
         </span>
       ) : null}
+      {item.countText ? (
+        <span className="ux-leftnav-count" data-journey-count="">
+          <span aria-hidden="true">{item.countText}</span>
+          <span className="sr-only">{item.countWords}</span>
+        </span>
+      ) : null}
     </Link>
   );
+}
+
+const journeyOf: Record<string, keyof JourneyCounts> = {
+  'journey-source': 'source',
+  'journey-organise': 'organise',
+  'journey-sell': 'sell',
+};
+
+/** The journeys with their counts, once the counts are read. They stream in: the page never waits for them. */
+function CountedJourneys({
+  id,
+  items,
+  counts,
+}: {
+  id: string;
+  items: readonly CustomerSideItem[];
+  counts: Promise<JourneyCounts | null>;
+}) {
+  const read = use(counts);
+  const counted = items.map((item) => {
+    const count = read?.[journeyOf[item.key]];
+    const countText = journeyCountText(count);
+    return countText ? { ...item, countText, countWords: journeyCountWords(count) } : item;
+  });
+  return <SideGroup id={id} label="Your Journeys" items={counted} here={null} />;
 }
 
 function SideGroup({
@@ -180,6 +221,7 @@ export function CustomerSideNav({
   items,
   current,
   journeys,
+  journeyCounts,
   groups,
 }: {
   id: string;
@@ -187,6 +229,8 @@ export function CustomerSideNav({
   items: readonly CustomerSideItem[];
   current: string;
   journeys: readonly CustomerSideItem[];
+  /** Read on the server, never awaited by the frame: the list is drawn at once and the counts appear when ready. */
+  journeyCounts?: Promise<JourneyCounts | null>;
   groups: readonly CustomerSideItem[];
 }) {
   const pathname = usePathname() ?? '';
@@ -206,7 +250,17 @@ export function CustomerSideNav({
           </li>
         ))}
       </ul>
-      <SideGroup id={`${id}-journeys`} label="Your Journeys" items={journeys} here={null} />
+      {journeyCounts && journeys.length ? (
+        <Suspense
+          fallback={
+            <SideGroup id={`${id}-journeys`} label="Your Journeys" items={journeys} here={null} />
+          }
+        >
+          <CountedJourneys id={`${id}-journeys`} items={journeys} counts={journeyCounts} />
+        </Suspense>
+      ) : (
+        <SideGroup id={`${id}-journeys`} label="Your Journeys" items={journeys} here={null} />
+      )}
       <SideGroup id={`${id}-groups`} label="Groups" items={groups} here={here} />
     </nav>
   );
