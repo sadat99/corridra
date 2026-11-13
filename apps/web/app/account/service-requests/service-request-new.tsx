@@ -1,4 +1,5 @@
 'use client';
+import '../page-budget.css';
 import { realCustomerInput, customerLabelAllowed } from '@corridra/domain/customer-input-mode';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import {
@@ -187,7 +188,7 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
       </section>
     );
   return (
-    <section aria-label="Request help">
+    <section aria-label="Request help" className="account-compact">
       <p>
         You are asking for paid local help linked to your{' '}
         <strong>{contextText[kind].toLowerCase()}</strong>. We reply with a quote that lists every
@@ -236,7 +237,7 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
                 </select>
               </div>
             )}
-            <fieldset>
+            <fieldset className="account-choices">
               <legend>Which help do you need?</legend>
               {catalogue.services.length === 0 && <p>No services are offered right now.</p>}
               {catalogue.services.map((s) => (

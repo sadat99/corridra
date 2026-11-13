@@ -1,4 +1,5 @@
 'use client';
+import '../page-budget.css';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { linkStatusText } from '../company-link-status';
@@ -266,7 +267,11 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
   const open = view && claim && ['pending', 'needs_evidence'].includes(claim.state);
   const showForm = view?.canEdit && view.canFile && (view.status !== 'approved' || changing);
   return (
-    <section aria-label="Company link" aria-busy={loading || busy} className="detail-card">
+    <section
+      aria-label="Company link"
+      aria-busy={loading || busy}
+      className="detail-card account-compact"
+    >
       <h2>Company link</h2>
       <p>
         A company link means Corridra staff checked that your company is the same as a company
@@ -488,6 +493,7 @@ export function CompanyLink(props: { subject: string; issuer: string; workspaceI
           )}
           {showForm && (
             <form
+              className="account-linkform"
               onSubmit={(e) => {
                 e.preventDefault();
                 file();

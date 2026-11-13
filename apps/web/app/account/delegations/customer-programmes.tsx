@@ -1268,7 +1268,7 @@ function ScopedProgrammes({
       {status === 'ready' && roomEnabled && (
         <SubTabs
           label="Delegation planning"
-          className="programme-page-tabs"
+          className="programme-page-tabs account-compact"
           tabs={[
             {
               id: 'programmes',

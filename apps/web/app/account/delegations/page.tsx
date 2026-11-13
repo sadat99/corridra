@@ -1,3 +1,4 @@
+import '../page-budget.css';
 import { customerProgrammeProjectionsEnabled } from '@corridra/auth/customer-programme-projections';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerProgrammeContextEnabled } from '@corridra/auth/customer-programme-context';
@@ -73,25 +74,27 @@ export default async function Page({
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
     <CustomerShell tab="work" eyebrow="REQUESTS" title="Delegation registrations">
-      {pagesOn && (
-        <ProgrammeApplications
+      <div className="account-compact">
+        {pagesOn && (
+          <ProgrammeApplications
+            subject={session.data.user.id}
+            issuer={issuer}
+            target={address ? await applyTarget(address) : null}
+            asked={typeof asked === 'string'}
+          />
+        )}
+        <ParticipantAccount
+          contextEnabled={customerProgrammeContextEnabled()}
+          missionSharesEnabled={customerMissionSharesEnabled()}
+          coordinationEnabled={customerProgrammeCoordinationEnabled()}
+          termsEnabled={customerProgrammeTermsEnabled()}
+          projectionsEnabled={customerProgrammeProjectionsEnabled()}
+          objectivePathEnabled={pagesOn && customerMissionSharesEnabled()}
+          draftsEnabled={customerMissionDraftsEnabled()}
           subject={session.data.user.id}
           issuer={issuer}
-          target={address ? await applyTarget(address) : null}
-          asked={typeof asked === 'string'}
         />
-      )}
-      <ParticipantAccount
-        contextEnabled={customerProgrammeContextEnabled()}
-        missionSharesEnabled={customerMissionSharesEnabled()}
-        coordinationEnabled={customerProgrammeCoordinationEnabled()}
-        termsEnabled={customerProgrammeTermsEnabled()}
-        projectionsEnabled={customerProgrammeProjectionsEnabled()}
-        objectivePathEnabled={pagesOn && customerMissionSharesEnabled()}
-        draftsEnabled={customerMissionDraftsEnabled()}
-        subject={session.data.user.id}
-        issuer={issuer}
-      />
+      </div>
     </CustomerShell>
   );
 }
