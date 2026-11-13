@@ -17,7 +17,15 @@ const profileKeys = (max: number) =>
     .array(profileKey)
     .max(max)
     .refine((values) => new Set(values).size === values.length, 'Duplicate keys');
-const profileText = (max: number) => z.string().trim().min(2).max(max);
+// Text the database can store: no NUL and no lone surrogate (jsonb refuses both), so a bad value is a validation message.
+const unstorable = /\u0000|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
+const profileText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .min(2)
+    .max(max)
+    .refine((value) => !unstorable.test(value), 'Text the database cannot store');
 const comparisonTermKey = z.enum(Object.keys(offerTerms.shape) as [string, ...string[]]);
 export const sourcingCategory = z
   .object({

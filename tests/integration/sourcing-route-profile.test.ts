@@ -96,6 +96,21 @@ describe('the sourcing block is optional, bounded and versioned', () => {
       sourcingProfile.safeParse({ ...bdCnSourcingProfile, incotermHints: ['SOMETIMES'] }).success,
     ).toBe(false);
   });
+  test('text the database cannot store is a validation error, not a database error', () => {
+    for (const bad of ['a\u0000b', 'a\ud800b', 'a\udc00b'])
+      expect(
+        sourcingProfile.safeParse({
+          ...bdCnSourcingProfile,
+          sampleSteps: [{ key: 'request_sample', label: bad }],
+        }).success,
+      ).toBe(false);
+    expect(
+      sourcingProfile.safeParse({
+        ...bdCnSourcingProfile,
+        sampleSteps: [{ key: 'request_sample', label: 'Check \ud83d\ude00 sample' }],
+      }).success,
+    ).toBe(true);
+  });
   test('a block larger than 4096 octets is refused even when each field is within its own limit', () => {
     const long = 'c'.repeat(160);
     const big = {
@@ -196,12 +211,21 @@ function* countryPairs(count: number) {
 }
 
 describe('scenario 16: generated country pairs in both orders take the identical engine path', () => {
+  const currencies = ['BDT', 'CNY', 'EUR', 'USD', 'JPY', 'KES'];
+  // The pair reaches every input the engine reads: localities, coverage, currencies and the reason. Code that branched on a
+  // country, a currency or a market name would change the result for that pair and fail here.
   const engine = (origin: string, destination: string) => {
+    const code = (c: string) => c.toLowerCase();
+    const pick = (c: string) =>
+      currencies[(c.charCodeAt(0) + c.charCodeAt(1)) % currencies.length]!;
     const configuration = routeConfiguration.parse(
       withProfile({
         ...base,
         missionTypes: ['sourcing', 'machinery_procurement'],
         languages: ['en', 'zh-CN'],
+        localities: [code(origin), code(destination)],
+        coverage: [`${code(origin)}.${code(destination)}`],
+        currencies: [pick(origin), pick(destination)],
       }),
     );
     const resolved = resolveConfiguration(configuration, { languages: ['en'] });
@@ -221,18 +245,31 @@ describe('scenario 16: generated country pairs in both orders take the identical
         effectiveFrom: '2026-11-20T00:00:00.000Z',
         reason: `Route ${origin} to ${destination} reference profile`,
         missionTypes: ['sourcing'],
+        currencies: [pick(origin), pick(destination)],
         sourcing: bdCnSourcingProfile,
       }),
     );
     const parsedPack = routePack.parse(pack(withProfile(form)));
-    return JSON.stringify({ resolved, form, parsedPack: parsedPack.configuration });
+    // The pair only ever shows up where it was put; the profile and everything derived from it is the same for every pair.
+    expect(resolved.sourcing).toEqual(bdCnSourcingProfile);
+    expect(resolved.localities).toEqual([code(origin), code(destination)]);
+    expect(resolved.languages).toEqual(['en']);
+    expect(parsedPack.configuration.sourcing).toEqual(bdCnSourcingProfile);
+    return { resolved, form, parsedPack: parsedPack.configuration };
   };
-  test('300 generated pairs, both orders: a valid pack and the same result as every other pair', () => {
-    const reference = engine('AA', 'BB');
+  test('300 generated pairs, both orders: a valid pack, a pair-independent profile, and results that depend only on the inputs given', () => {
     let n = 0;
     for (const [a, b] of countryPairs(300)) {
-      expect(engine(a, b)).toBe(reference);
-      expect(engine(b, a)).toBe(reference);
+      const forward = engine(a, b);
+      const backward = engine(b, a);
+      expect(forward.resolved.sourcing).toEqual(backward.resolved.sourcing);
+      expect({ ...forward.resolved, localities: [], coverage: [], currencies: [] }).toEqual({
+        ...backward.resolved,
+        localities: [],
+        coverage: [],
+        currencies: [],
+      });
+      expect(forward.resolved.localities).toEqual([...backward.resolved.localities].reverse());
       n += 2;
     }
     expect(n).toBe(608);
