@@ -2,8 +2,16 @@
 // can be tested without a browser.
 import { currencies } from '@corridra/domain/currencies';
 import { displayMoney } from '@corridra/domain/locale';
-import type { ReplyBody, ReplyReviewReason, ReplyTermName } from '@corridra/domain/reply-review';
+import type {
+  ReplyBody,
+  ReplyPrefillReason,
+  ReplyQuotationPrefill,
+  ReplyReviewReason,
+  ReplyTermName,
+} from '@corridra/domain/reply-review';
 import { replyTermNames } from '@corridra/domain/reply-review';
+
+export type EligiblePrefill = Extract<ReplyQuotationPrefill, { eligible: true }>;
 
 export const termLabels: Record<ReplyTermName, string> = {
   specification: 'Specification',
@@ -75,4 +83,61 @@ export function preparedQuotation(reply: ReplyBody) {
   lines.push(`uncertainties: ${oneLine(quotation.uncertainties ?? '')}`);
   lines.push('source: supplier reply, self-declared');
   return lines.join('\n');
+}
+
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** True only for a well-formed id, so a link's `reply` value is checked before any request is made. */
+export const isUuid = (value: unknown): value is string =>
+  typeof value === 'string' && uuidPattern.test(value);
+
+// Fixed words for each reason the prepared offer is refused (ADR-081). Nothing the supplier wrote reaches these.
+const prefillMessages: Record<ReplyPrefillReason, string> = {
+  NOT_FOUND:
+    'This reply could not be found. Refresh the list. If it is still missing, ask the Corridra team.',
+  NOT_PUBLISHED: 'Publish this reply first. Then you can prepare an offer from it.',
+  REJECTED:
+    'This reply was rejected, so no offer can be prepared. Ask the supplier again, or record your own offer.',
+  ASKED_ONLY:
+    'You asked the supplier a question about this reply. Wait for the answer, then review it again. Or record your own offer.',
+  ALREADY_RECORDED: 'This reply is already recorded as an offer.',
+  NO_QUOTATION:
+    'This reply has no price or terms to record. Ask the supplier for a quote, or record your own offer.',
+  REVIEW_CLOSED: 'This review is closed. Ask the supplier again, or record your own offer.',
+  MISSION_CLOSED: 'This mission is closed. No new offer can be recorded here.',
+  REQUIREMENT_SUPERSEDED:
+    'The request changed after this reply. Ask the supplier to answer the new request, or record your own offer.',
+  CURRENCY_NOT_ON_ROUTE:
+    'This reply uses a currency this route does not accept. Ask the supplier to quote again in an accepted currency, or record your own offer.',
+  TERM_NOT_RECORDABLE:
+    'One term in this reply cannot be recorded as sent. Ask the supplier to clarify, or record your own offer.',
+};
+export const prefillFailureMessage =
+  'We could not check this reply. Nothing was changed. Try again, or copy the prepared quotation.';
+export const prefillUnavailableMessage =
+  'Prepared offers are not available yet on this system. Copy the prepared quotation below and use it to fill the form by hand.';
+export const prefillLinkUnknownMessage =
+  'We could not check whether this offer can be opened. Nothing was changed. Copy the prepared quotation below and use it to fill the form by hand.';
+export const prefillDeniedMessage =
+  'You can review this reply, but only an owner, admin or operator can record an offer from it.';
+export const prefillMessage = (code: string) =>
+  Object.hasOwn(prefillMessages, code)
+    ? prefillMessages[code as ReplyPrefillReason]
+    : prefillFailureMessage;
+
+/**
+ * One row per known term, in the review order. The text is the supplier's exact string (money by exact integer
+ * arithmetic in its original currency); a term the supplier did not give reads "Not stated", never zero.
+ */
+export function termRows(prefill: Pick<EligiblePrefill, 'terms' | 'currency'>) {
+  return replyTermNames.map((key) => {
+    const value = prefill.terms[key];
+    let text: string;
+    try {
+      text = termText(key, value, prefill.currency);
+    } catch {
+      // A currency this build does not know: show the exact amount and the code, never a guess.
+      text = `${value} ${prefill.currency}`;
+    }
+    return { key, label: termLabels[key], text, missing: value === undefined };
+  });
 }
