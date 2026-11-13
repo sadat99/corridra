@@ -1,0 +1,56 @@
+[
+  {
+    "page": "home",
+    "w": 390,
+    "height": 986,
+    "width": 390
+  },
+  {
+    "page": "home",
+    "w": 768,
+    "height": 971,
+    "width": 768
+  },
+  {
+    "page": "home",
+    "w": 1440,
+    "height": 900,
+    "width": 1440
+  },
+  {
+    "page": "requests",
+    "w": 390,
+    "height": 1059,
+    "width": 390
+  },
+  {
+    "page": "requests",
+    "w": 768,
+    "height": 1016,
+    "width": 768
+  },
+  {
+    "page": "requests",
+    "w": 1440,
+    "height": 900,
+    "width": 1440
+  },
+  {
+    "page": "programme",
+    "w": 390,
+    "height": 844,
+    "width": 390
+  },
+  {
+    "page": "programme",
+    "w": 768,
+    "height": 900,
+    "width": 768
+  },
+  {
+    "page": "programme",
+    "w": 1440,
+    "height": 900,
+    "width": 1440
+  }
+]
