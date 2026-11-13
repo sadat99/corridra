@@ -316,14 +316,19 @@ test('every entry point names UI/UX.v3 and the contract lists its legacy', () =>
   }
 });
 
-test('the owner operating rules are recorded in AGENTS.md and linked from session rotation', () => {
+test('the owner operating rules are recorded, linked from AGENTS.md and session rotation', () => {
   const agents = read(join(root, 'AGENTS.md'));
-  assert.match(agents, /## Parallel work operating rules \(owner, 13 November 2026\)/);
+  assert.match(agents, /docs\/agents\/operating-rules\.md/, 'AGENTS.md must link the rules');
+  assert.ok(agents.includes('At most 4 builder sessions at once'));
+  assert.ok(agents.includes("Never merge before the Guardian's PASS"));
+  const rules = read(join(root, 'docs/agents/operating-rules.md'));
+  assert.match(rules, /# Parallel work operating rules \(owner, 13 November 2026\)/);
   for (const phrase of ['At most 4 builder sessions at once', '250k tokens', '$30', '$60']) {
-    assert.ok(agents.includes(phrase), `AGENTS.md must keep "${phrase}"`);
+    assert.ok(rules.includes(phrase), `operating-rules.md must keep "${phrase}"`);
   }
   assert.match(
     read(join(root, 'docs/agents/session-rotation.md')),
-    /Parallel work operating rules/,
+    /operating-rules\.md/,
+    'session rotation must point at the rules',
   );
 });

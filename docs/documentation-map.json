@@ -304,6 +304,11 @@
       "use": "Read before paid-product, tenant, billing or enterprise work; dated read-only audit"
     },
     {
+      "path": "docs/agents/operating-rules.md",
+      "classification": "Current guide/contract",
+      "use": "Owner's standing parallel work operating rules (13 Nov 2026, sections 0 to 11): roles, concurrency, routes, merges, production changes, cost stops; summarised in AGENTS.md"
+    },
+    {
       "path": "docs/agents/ui-direction.md",
       "classification": "Current guide/contract",
       "use": "UI/UX.v3, the single binding design contract (adopted 13 Nov 2026, until the owner launches UI/UX.v4): locked decisions, how to build a screen, definition of done and the Legacy list of older UI not to follow; read in full before any visible change"

@@ -4,7 +4,7 @@ This is the existing shared entry for Claude Code and Codex. Use the repository 
 
 For traced gaps and later progress comparisons, use the [current-plan gap register](qa/current-plan-gaps/README.md). It preserves 60 stable audit IDs and the immutable 1 November evidence baseline; it does not replace the current A–G execution queue or authorise owner-dependent and deferred work.
 
-Current design contract: **UI/UX.v3** ([UI direction](agents/ui-direction.md), adopted 13 November 2026, binding until the owner launches UI/UX.v4; it lists what is legacy). Current UX work: the owner-approved [V3 revamp](revamp/README.md) and its [contract](revamp/CONTRACT.md). Standing owner rules for parallel sessions: "Parallel work operating rules" in [AGENTS.md](../AGENTS.md).
+Current UX work (design contract UI/UX.v3): the owner-approved [V3 revamp](revamp/README.md) and its [contract](revamp/CONTRACT.md).
 
 ## Start a session
 
@@ -12,7 +12,7 @@ Current design contract: **UI/UX.v3** ([UI direction](agents/ui-direction.md), a
 2. Run `node scripts/v3-context.mjs` and `node scripts/v3-context.mjs verify`. State output is capped at 12 KiB. A hash/identity failure needs investigation, not refreshed hashes to conceal drift. Then `node scripts/authority.mjs`: it applies the owner's rule that the latest decision wins a conflict and names any plan whose own status line the register contradicts; `doc PATH` gives the verdict for one document.
 3. Before substantive V3 product implementation, read the full [contract](V3_CONTRACT.md), governing [product vision v2.1](product/corridra-product-vision-v2.1.md) and its [working summary](agents/product-vision.md) once in the session. Revisit affected or changed sections afterward. Documentation maintenance can inspect its relevant authorities while proving product/source text unchanged.
 4. Query affected requirement IDs with `node scripts/v3-context.mjs requirement V3-02-046`. All 507 IDs remain in the [current register](v3/phase-0/requirements.json). Discovery states are not runtime acceptance.
-5. For any visible change read [UI/UX.v3](agents/ui-direction.md) (UI direction) in full first, including its "Legacy" list ("Current locked decisions", "How to build a new screen", "Definition of done for any visible change"); it binds every agent and human and is guarded by `tests/design-system-guard.test.mjs`. Read applicable [ADRs](adr/README.md), module contracts,[verification guide](verification-guide.md). For any AC/1 Atlantic Cobalt visual work, also read the [design-system index](design-system/README.md). Read only relevant historical/log entries;`node scripts/v3-context.mjs chunk 109` returns one ledger entry. Follow the [agent protocol](agents/README.md).
+5. For any visible change read [UI/UX.v3](agents/ui-direction.md) in full first ("Current locked decisions", "How to build a new screen", "Definition of done for any visible change"); it binds every agent and human and is guarded by `tests/design-system-guard.test.mjs`. Read applicable [ADRs](adr/README.md), module contracts,[verification guide](verification-guide.md). For any AC/1 Atlantic Cobalt visual work, also read the [design-system index](design-system/README.md). Read only relevant historical/log entries;`node scripts/v3-context.mjs chunk 109` returns one ledger entry. Follow the [agent protocol](agents/README.md).
 
 ## Product and authority
 

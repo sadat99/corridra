@@ -8,7 +8,7 @@ Before product work, read the full V3 contract and product vision once per sessi
 
 Record exact verification and next action in the ledger/work log. Do not load archives, PR diffs or unrelated logs to resume. All release checks remain required.
 
-Visible change: obey the binding UI/UX.v3 contract, [ui-direction.md](docs/agents/ui-direction.md) (checklist, CI guard, legacy list). Parallel-session rules: AGENTS.md "Parallel work operating rules".
+Visible change: obey binding UI/UX.v3, [ui-direction.md](docs/agents/ui-direction.md) (checklist, CI guard, legacy).
 
 Token discipline: classify the task, then read by `node scripts/v3-context.mjs budget|outline|section` and run long checks through `node scripts/gate.mjs`, as in the [token playbook](docs/v3/CONTEXT.md). Never load the work log, documentation map, archives or requirement register whole. Before debugging CI read [known issues](docs/v3/KNOWN_ISSUES.md).
 
