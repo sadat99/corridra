@@ -303,6 +303,29 @@ test('every footer control is at least a 44 px target, at 390 and 1440', async (
   }
 });
 
+// L14 (owner, 13 November 2026): on a phone the footer with Buy Abroad open was about 1.15 screens tall. It now fits
+// one 844 px screen at 390 wide. The groups, their order and Buy Abroad as the largest tile are unchanged; wider
+// screens must not grow (their heights before L14: 884 px at 768, 567 px at 1440, with a little room for fonts).
+test('at 390 the footer with Buy Abroad open fits one 844 px screen, and 768 and 1440 do not grow', async ({
+  page,
+}) => {
+  const heights: Record<number, number> = {};
+  for (const width of [390, 768, 1440]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/about');
+    await page.evaluate(() => document.fonts.ready);
+    if (width === 390)
+      await expect(footer(page).locator('details.guide-footer-details').first()).toHaveAttribute(
+        'open',
+        '',
+      );
+    heights[width] = (await footer(page).boundingBox())!.height;
+  }
+  expect(heights[390], 'footer height at 390, Buy Abroad open').toBeLessThanOrEqual(844);
+  expect(heights[768], 'footer height at 768').toBeLessThanOrEqual(890);
+  expect(heights[1440], 'footer height at 1440').toBeLessThanOrEqual(575);
+});
+
 test('no sideways scroll at 320, 390, 768 and 1440, with every group open on a phone', async ({
   page,
 }) => {
