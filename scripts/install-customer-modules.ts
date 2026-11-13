@@ -50,6 +50,8 @@ import { migrateCounterpartyChanges } from '../packages/db/src/counterparty-chan
 import { configureCounterpartyChanges } from '../packages/auth/src/counterparty-change-configuration';
 import { migrateSourcingWorkflow } from '../packages/db/src/sourcing-workflow-migrate';
 import { configureSourcingWorkflow } from '../packages/auth/src/sourcing-workflow-configuration';
+import { migrateSupplySources } from '../packages/db/src/supply-source-migrate';
+import { configureSupplySources } from '../packages/auth/src/supply-source-configuration';
 import { configureWorkspaceLifecycle } from '../packages/auth/src/customer-workspace-lifecycle-configuration';
 import { configureAccountLifecycle } from '../packages/auth/src/customer-account-lifecycle-configuration';
 import { migrateCustomerMoves } from '../packages/db/src/customer-move-migrate';
@@ -111,6 +113,11 @@ const v = z
       .enum(['unchanged', 'install', 'enable', 'pause'])
       .default('unchanged'),
     SOURCING_WORKFLOW_REASON: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.string().trim().min(10).max(500).optional(),
+    ),
+    SUPPLY_SOURCES_ACTION: z.enum(['unchanged', 'install', 'enable', 'pause']).default('unchanged'),
+    SUPPLY_SOURCES_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
       z.string().trim().min(10).max(500).optional(),
     ),
@@ -274,6 +281,10 @@ if (v.SOURCING_WORKFLOW_ACTION !== 'unchanged' && !apply)
   throw new Error('Sourcing workflow changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.SOURCING_WORKFLOW_ACTION) && !v.SOURCING_WORKFLOW_REASON)
   throw new Error('Sourcing workflow changes require an explicit reason');
+if (v.SUPPLY_SOURCES_ACTION !== 'unchanged' && !apply)
+  throw new Error('Supply sources changes require INSTALL_APPLY=yes');
+if (['enable', 'pause'].includes(v.SUPPLY_SOURCES_ACTION) && !v.SUPPLY_SOURCES_REASON)
+  throw new Error('Supply sources changes require an explicit reason');
 if (v.MISSION_MAIL_ACTION !== 'unchanged' && !apply)
   throw new Error('Mission mail changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.MISSION_MAIL_ACTION) && !v.MISSION_MAIL_REASON)
@@ -298,6 +309,7 @@ const registries = [
   'customer_problem_report_migrations',
   'counterparty_change_migrations',
   'sourcing_workflow_migrations',
+  'supply_source_migrations',
   'customer_migrations',
   'customer_commercial_migrations',
   'customer_company_migrations',
@@ -679,6 +691,23 @@ try {
         });
         console.log(
           `Sourcing workflow ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
+        );
+      }
+    }
+    // Supply sources (ADR-082) are never part of the base run. Install leaves the module control closed; enable and pause
+    // touch only that control and need a reason. Reached through field_modules_action (supply_sources_install,
+    // supply_sources_enable, supply_sources_pause). Needs the real-use modules installed first and refuses otherwise.
+    if (v.SUPPLY_SOURCES_ACTION !== 'unchanged') {
+      await migrateSupplySources(pool);
+      if (v.SUPPLY_SOURCES_ACTION === 'install')
+        console.log('Supply sources installed or already current (module control stays closed)');
+      else {
+        const result = await configureSupplySources(pool, {
+          enabled: v.SUPPLY_SOURCES_ACTION === 'enable',
+          reason: v.SUPPLY_SOURCES_REASON,
+        });
+        console.log(
+          `Supply sources ${result.enabled ? 'enabled' : 'paused'}; changed=${result.changed}`,
         );
       }
     }

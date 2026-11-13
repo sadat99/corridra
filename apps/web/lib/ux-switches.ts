@@ -29,6 +29,7 @@ export const uxSwitchNames = [
   'CORRIDRA_ROUTE_PACK_FORM',
   // ADR-083 (sourcing workflow). Off unless the setting is exactly "true"; the database module and its control are separate.
   'CORRIDRA_SOURCING_WORKFLOW',
+  'CORRIDRA_SUPPLY_SOURCES',
 ] as const;
 export type UxSwitchName = (typeof uxSwitchNames)[number];
 

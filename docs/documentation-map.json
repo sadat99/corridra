@@ -304,9 +304,14 @@
       "use": "Read before paid-product, tenant, billing or enterprise work; dated read-only audit"
     },
     {
+      "path": "docs/agents/operating-rules.md",
+      "classification": "Current guide/contract",
+      "use": "Owner's standing parallel work operating rules (13 Nov 2026, sections 0 to 11): roles, concurrency, routes, merges, production changes, cost stops; summarised in AGENTS.md"
+    },
+    {
       "path": "docs/agents/ui-direction.md",
       "classification": "Current guide/contract",
-      "use": "Read before editing; shared protocol, design contract and append-only work log for all coding agents"
+      "use": "UI/UX.v3, the single binding design contract (adopted 13 Nov 2026, until the owner launches UI/UX.v4): locked decisions, how to build a screen, definition of done and the Legacy list of older UI not to follow; read in full before any visible change"
     },
     {
       "path": "docs/agents/work-log.md",
@@ -351,7 +356,7 @@
     {
       "path": "docs/design/public-experience.md",
       "classification": "Current guide/contract",
-      "use": "Read alongside current plan, source requirements and ADRs"
+      "use": "LEGACY look (pre-AC/1), superseded by UI/UX.v3 where it differs; read alongside current plan, source requirements and ADRs"
     },
     {
       "path": "docs/documentation-map.md",
@@ -516,7 +521,7 @@
     {
       "path": "docs/product/ux-charter.md",
       "classification": "Owner proposal",
-      "use": "Structure, principles and boundaries of the UX revamp, and the rule for giving any new capability a home; no screens, counts or dates; proposed, awaiting owner approval"
+      "use": "LEGACY in part, UI/UX.v3 wins where screen rules differ; Structure, principles and boundaries of the UX revamp, and the rule for giving any new capability a home; no screens, counts or dates; proposed, awaiting owner approval"
     },
     {
       "path": "docs/product/ux-update-plan-verification-2026-10-24.md",
@@ -646,7 +651,7 @@
     {
       "path": "docs/ux10x/README.md",
       "classification": "UX programme/contract/packet",
-      "use": "Read package historical labels and current plan; no exhaustive coverage claim"
+      "use": "LEGACY UI, superseded by UI/UX.v3 where it differs; Read package historical labels and current plan; no exhaustive coverage claim"
     },
     {
       "path": "docs/ux10x/architecture.md",
@@ -1151,7 +1156,7 @@
     {
       "path": "docs/design-system/README.md",
       "classification": "Current guide/contract",
-      "use": "Read before any AC/1 visual work; package index, reconciliation, implemented token crosswalk and bounded work packages"
+      "use": "Brand and token layer of UI/UX.v3; read before any AC/1 visual work; package index, reconciliation, implemented token crosswalk and bounded work packages"
     },
     {
       "path": "docs/design-system/ART_REVIEW.md",
@@ -1494,6 +1499,11 @@
       "use": "Exact hashed ledger at 8165ee3d (the PR 468 merge; byte-identical to the S40 records 8 merge bd3b425), before merges 458 to 468, install run 43337124311 and the 12 to 13 Nov owner decisions were recorded; preserves the S40 records 8 Resume bullets; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-g3-records-1-2026-11-13.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at 04d65799 (the PR 483 merge; unchanged since fb0cab8), before merge window 1, PRs 482 and 483, install runs 43423006437 and 43423566950 and the 13 Nov owner decisions were recorded; preserves the S40 records 9 Resume bullets; use the current ledger for live state."
+    },
+    {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"
@@ -1539,9 +1549,14 @@
       "use": "Accepted for build by the owner, 13 Nov 2026 (pre-approval met), ready to implement: the buying workflow on the shared base, an optional route profile block in the pack configuration, requirement-anchored comparison, landed cost, samples, machinery after-award records, derived readiness; supplier candidates only through ADR-082; designed only"
     },
     {
+      "path": "docs/adr/0084-delegation-guided-first-run-share-kit-notices-report-operator-desk.md",
+      "classification": "Architecture decision",
+      "use": "Proposed, awaiting owner merge approval, 13 Nov 2026; design only: delegation guided first run, share kit, notices, published results report, operator desk read, people and money views, participant home and buying-trip template (slices S0 to S7, each off by default, reusing ADR-080)"
+    },
+    {
       "path": "docs/revamp/README.md",
       "classification": "Current guide/contract",
-      "use": "Owner-approved V3 controlled revamp scope (4 Nov 2026), merge rules, session file ownership and the Wave 0 route/cleanup manifest; live state stays in the ledger"
+      "use": "Owner-approved V3 controlled revamp scope (4 Nov 2026), merge rules, session file ownership, current lanes snapshot, UI/UX.v3 as the design contract and the Wave 0 route/cleanup manifest; live state stays in the ledger"
     },
     {
       "path": "docs/revamp/specs/README.md",

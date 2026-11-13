@@ -279,3 +279,56 @@ test('every builder entry point binds the design contract', () => {
     'Codex lean exception must stay',
   );
 });
+
+// The owner named the design contract UI/UX.v3 on 13 November 2026. Every entry point must say so,
+// so no agent can follow an older look by name. (Fails on a main that predates the naming.)
+test('every entry point names UI/UX.v3 and the contract lists its legacy', () => {
+  const entryPoints = [
+    'AGENTS.md',
+    'apps/web/AGENTS.md',
+    'CLAUDE.md',
+    'docs/START_HERE.md',
+    'docs/design-system/README.md',
+    'docs/revamp/README.md',
+    'docs/PLAN_STATUS.md',
+    'docs/agents/ui-direction.md',
+    '.claude/agents/corridra-designer.md',
+    '.claude/agents/corridra-builder.md',
+    '.claude/agents/corridra-reviewer.md',
+    '.claude/skills/corridra-squad/SKILL.md',
+    '.github/pull_request_template.md',
+    'docs/documentation-map.json',
+  ];
+  for (const path of entryPoints) {
+    assert.match(read(join(root, path)), /UI\/UX\.v3/, `${path} must name UI/UX.v3`);
+  }
+  const contract = read(join(root, 'docs/agents/ui-direction.md'));
+  assert.match(contract, /^# UI\/UX\.v3/m, 'the contract title must be UI/UX.v3');
+  assert.match(contract, /## UI\/UX\.v3 version block/);
+  assert.match(
+    contract,
+    /binding until the owner launches UI\/UX\.v4|until the owner launches UI\/UX\.v4/,
+  );
+  assert.match(contract, /13 November 2026, verbatim: "lets name the the latest ui style/);
+  assert.match(contract, /## Legacy \(not to be followed for new work\)/);
+  for (const legacy of ['Pre-AC/1', 'UX10X', 'A Ledger']) {
+    assert.ok(contract.includes(legacy), `the Legacy section must name ${legacy}`);
+  }
+});
+
+test('the owner operating rules are recorded, linked from AGENTS.md and session rotation', () => {
+  const agents = read(join(root, 'AGENTS.md'));
+  assert.match(agents, /docs\/agents\/operating-rules\.md/, 'AGENTS.md must link the rules');
+  assert.ok(agents.includes('At most 4 builder sessions at once'));
+  assert.ok(agents.includes("Never merge before the Guardian's PASS"));
+  const rules = read(join(root, 'docs/agents/operating-rules.md'));
+  assert.match(rules, /# Parallel work operating rules \(owner, 13 November 2026\)/);
+  for (const phrase of ['At most 4 builder sessions at once', '250k tokens', '$30', '$60']) {
+    assert.ok(rules.includes(phrase), `operating-rules.md must keep "${phrase}"`);
+  }
+  assert.match(
+    read(join(root, 'docs/agents/session-rotation.md')),
+    /operating-rules\.md/,
+    'session rotation must point at the rules',
+  );
+});

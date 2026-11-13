@@ -91,6 +91,9 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'contact_changes_install',
     'contact_changes_enable',
     'contact_changes_pause',
+    'supply_sources_install',
+    'supply_sources_enable',
+    'supply_sources_pause',
     'sourcing_workflow_install',
     'sourcing_workflow_enable',
     'sourcing_workflow_pause',
@@ -128,6 +131,9 @@ test('each field-module choice maps to install only and reaches the exact-head c
     ['contact_changes_install', u, u, u, u, u, u, u, u],
     ['contact_changes_enable', u, u, u, u, u, u, u, u],
     ['contact_changes_pause', u, u, u, u, u, u, u, u],
+    ['supply_sources_install', u, u, u, u, u, u, u, u],
+    ['supply_sources_enable', u, u, u, u, u, u, u, u],
+    ['supply_sources_pause', u, u, u, u, u, u, u, u],
     ['sourcing_workflow_install', u, u, u, u, u, u, u, u],
     ['sourcing_workflow_enable', u, u, u, u, u, u, u, u],
     ['sourcing_workflow_pause', u, u, u, u, u, u, u, u],
@@ -192,6 +198,54 @@ test('the contact change choices install, open and pause only that module, each 
       assert.match(reason, expected === 'enable' ? /opened/ : /paused/);
     } else assert.equal(reason, '');
   }
+});
+
+test('the supply source choices install, open and pause only the module control, each open or pause with a reason', () => {
+  const workflow = parseDocument(
+    readFileSync('.github/workflows/install-customer-modules.yml', 'utf8'),
+  ).toJS();
+  const declared = workflow.on.workflow_dispatch.inputs;
+  const env = workflow.jobs.install.steps.find(
+    (step) => step.name === 'Report or install the customer modules',
+  ).env;
+  const evaluate = (expression, inputs) =>
+    runInNewContext(expression.replace(/^\$\{\{\s*|\s*\}\}$/g, ''), { inputs });
+  const defaults = Object.fromEntries(
+    Object.entries(declared).map(([name, input]) => [name, input.default]),
+  );
+  for (const choice of declared.field_modules_action.options) {
+    const inputs = { ...defaults, field_modules_action: choice };
+    const expected =
+      {
+        supply_sources_install: 'install',
+        supply_sources_enable: 'enable',
+        supply_sources_pause: 'pause',
+      }[choice] ?? 'unchanged';
+    assert.equal(evaluate(env.SUPPLY_SOURCES_ACTION, inputs), expected, choice);
+    const reason = evaluate(env.SUPPLY_SOURCES_REASON, inputs);
+    if (expected === 'enable' || expected === 'pause') {
+      assert.ok(reason.length >= 10 && reason.length <= 500, `${choice} reason length`);
+      assert.match(reason, expected === 'enable' ? /opened/ : /paused/);
+    } else assert.equal(reason, '');
+    // No other module reacts to a supply sources choice.
+    for (const name of Object.keys(env).filter(
+      (name) => name.endsWith('_ACTION') && name !== 'SUPPLY_SOURCES_ACTION',
+    ))
+      if (choice.startsWith('supply_sources_'))
+        assert.equal(
+          evaluate(env[name], inputs),
+          defaults[name.toLowerCase()] ?? 'unchanged',
+          `${choice} ${name}`,
+        );
+  }
+  // ADR-082 section 12: no input is added, and no installer value opens any of the other six controls.
+  assert.equal(Object.keys(declared).length, 25);
+  assert.deepEqual(
+    Object.keys(env)
+      .filter((name) => name.startsWith('SUPPLY_SOURCES_'))
+      .sort(),
+    ['SUPPLY_SOURCES_ACTION', 'SUPPLY_SOURCES_REASON'],
+  );
 });
 
 test('the sourcing workflow choices install, open and pause only that module, each open or pause with a reason', () => {

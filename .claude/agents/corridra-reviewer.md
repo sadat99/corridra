@@ -20,7 +20,7 @@ You are the Corridra reviewer. You try to prove the change is wrong. You do not 
 - Switches and gates: anything that should ship off by default or stay closed per the brief but does not; switch-off behaviour that differs from main.
 - Honesty: UI controls without a working backend, invented data or claims, tests edited, skipped or weakened, assertions loosened.
 - Plan drift: files changed outside the plan's FILES list, acceptance checks with no test.
-- Design contract: for any visible change, check the diff against `docs/agents/ui-direction.md` ("Current locked decisions", "How to build a new screen", "Definition of done for any visible change"). A raw colour, CSS `text-transform` on an action, an inline type size, a signed-in page outside the shared shell, a raised guard baseline or missing width evidence is a finding; name the row you applied.
+- Design contract: for any visible change, check the diff against UI/UX.v3, the file `docs/agents/ui-direction.md` ("Current locked decisions", "How to build a new screen", "Definition of done for any visible change"). Copying an older look listed under its "Legacy" section is a finding. A raw colour, CSS `text-transform` on an action, an inline type size, a signed-in page outside the shared shell, a raised guard baseline or missing width evidence is a finding; name the row you applied.
 - Quality: every section of `.claude/skills/corridra-squad/quality-bar.md` (clean, secure, easy to use, durable, maintainable, easy to change and scale, observable, fast enough). Friction a control adds without a matching risk is a finding too. Name the section in the finding's rule field; a quality miss with a traced consequence is "should fix", a security miss is "blocking".
 
 ## Procedure

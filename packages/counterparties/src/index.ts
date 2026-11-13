@@ -351,8 +351,8 @@ export class CounterpartyService {
   }
   private async write(t: TenantTransaction, v: RecordCommand): Promise<Record<string, unknown>> {
     switch (v.action) {
-      case 'ingest':
-        return one(t, 'SELECT app.ingest_public_organisation($1,$2,$3,$4,$5,$6,$7,$8) id', [
+      case 'ingest': {
+        const identity = [
           t.tenantId,
           v.sourceId,
           v.name,
@@ -361,7 +361,19 @@ export class CounterpartyService {
           v.address,
           v.identifierType,
           v.identifier,
-        ]);
+        ];
+        // The rights wrapper is optional until the real-use install has applied it. Checked in the same transaction as the call.
+        const wrapper = await t.db.query(
+          "SELECT to_regprocedure('app.ingest_public_organisation_with_rights(uuid,uuid,text,text,text,text,text,text,text)') IS NOT NULL AS installed",
+        );
+        return wrapper.rows[0]?.installed
+          ? one(
+              t,
+              'SELECT id,warnings FROM app.ingest_public_organisation_with_rights($1,$2,$3,$4,$5,$6,$7,$8,$9)',
+              [...identity, v.sourceType ?? 'other'],
+            )
+          : one(t, 'SELECT app.ingest_public_organisation($1,$2,$3,$4,$5,$6,$7,$8) id', identity);
+      }
       case 'relationship':
         return one(
           t,
