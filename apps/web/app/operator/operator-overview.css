@@ -2307,6 +2307,7 @@
   }
   .ux-operator-home .ux-workspace-body #workspace-commercial .detail-grid > .detail-card {
     display: flex;
+    flex-direction: row;
     flex-wrap: wrap;
     gap: var(--space-1) var(--space-5);
   }
@@ -2332,6 +2333,10 @@
   }
   .ux-operator-home .ux-workspace-body #workspace-commercial .detail-grid > .detail-card > * {
     margin: 0;
+    flex: 1 1 10rem;
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
   }
   .ux-operator-home .ux-workspace-body .workspace-panel.ux-panel > a.text-link:last-child {
     margin-top: var(--space-1);

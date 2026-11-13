@@ -26,3 +26,11 @@ export async function openTools(page: Page) {
     await fold.locator(':scope > summary').click();
   await expect(fold).toHaveAttribute('open', '');
 }
+
+// On a phone the jump links of a panel are folded behind one button (L21); open it before using a link.
+// Does nothing from 40rem up, where the button is not shown.
+export async function openJumpLinks(scope: Page | Locator) {
+  const toggle = scope.locator('.ux-workbench-toggle').first();
+  if ((await toggle.isVisible()) && (await toggle.getAttribute('aria-expanded')) === 'false')
+    await toggle.click();
+}

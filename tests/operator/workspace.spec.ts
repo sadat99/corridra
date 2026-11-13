@@ -1,5 +1,5 @@
 import { operatorEvidence } from './operator-evidence';
-import { openSection, openTab, openTools } from './workspace-nav';
+import { openJumpLinks, openSection, openTab, openTools } from './workspace-nav';
 import { participantEvidence } from './participant-evidence';
 import { test, expect } from '@playwright/test';
 import { Pool } from '../../packages/db/src/index';
@@ -276,9 +276,12 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await settings.getByLabel('Reviewed configuration action').selectOption('corridor-pack');
   await expect(settings.getByLabel('Reviewed command JSON')).toHaveValue('{');
   await openSection(page, 'workspace-sources');
+  // The entry forms start closed behind their summaries (one form open at a time, L21).
+  await page.getByText('Record a new source (6 fields)', { exact: true }).click();
   await page.getByLabel('Source description').fill('Synthetic browser inspection');
   await page.getByRole('button', { name: 'Record Source', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Workspace status' })).toHaveText('Saved.');
+  await page.getByText('Record a new claim (2 fields)', { exact: true }).click();
   await page
     .getByRole('combobox', { name: 'Source', exact: true })
     .selectOption({ label: 'Synthetic browser inspection' });
@@ -571,6 +574,8 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
       .getByText('Enabled', { exact: true }),
   ).toBeVisible();
   await openSection(page, 'workspace-evidence');
+  // Evidence is cut into sub-tabs (L21): the upload form is the Add Evidence tab.
+  await openTab(page, 'Add Evidence');
   await expect(
     page.getByRole('button', { name: 'Submit for Validation', exact: true }),
   ).toBeDisabled();
@@ -593,6 +598,8 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   ).toBeVisible();
   await expect(controls.getByRole('article')).toHaveCount(10);
   await openTab(controls, 'People and access');
+  // The membership form starts folded (L21); open it to see its disabled state before the members are loaded.
+  await controls.getByText('Change a Member’s Role or Access', { exact: true }).click();
   await expect(
     controls.getByRole('combobox', { name: 'Workspace member', exact: true }),
   ).toBeDisabled();
@@ -781,6 +788,7 @@ test('all 18 operator destinations render with scoped audit, working policy jump
   }
   await openSection(page, 'workspace-settings');
   const settings = page.locator('#workspace-settings');
+  await openJumpLinks(settings);
   for (const label of [
     'Mission templates',
     'Directional route',
@@ -3453,6 +3461,7 @@ test('UX-01 tenant switch isolates delayed reads, preserves navigation drafts an
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByLabel('Six-digit code', { exact: true }).fill(totp(secret));
   await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
+  await page.getByText('Record a new source (6 fields)', { exact: true }).click();
   await page
     .getByLabel('Source description', { exact: true })
     .fill('Unsaved synthetic source draft');
