@@ -3,6 +3,7 @@
 // notices and the two standing lines. Presentation only. The server decides what a person may read and change.
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { CorridraIcon } from '../../../components/corridra-icon';
+import { ModeLabel } from '../../../components/mr/mode-label';
 import { isNotInstalled, refusalWords, supplyGet } from '../../../lib/supply-screens';
 import { readFailureKind, readFailureWords } from '../read-failure';
 
@@ -130,5 +131,14 @@ export function StepHeading({ children, step }: { children: ReactNode; step: num
     <h3 ref={heading} tabIndex={-1}>
       {children}
     </h3>
+  );
+}
+
+/** The one mode label every supply screen starts with. The page and the layout fixture share it. */
+export function SupplyModeLine({ real }: { real: boolean }) {
+  return (
+    <p className="supply-mode">
+      <ModeLabel real={real} />
+    </p>
   );
 }

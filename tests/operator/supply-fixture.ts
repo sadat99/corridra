@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
 
 // The supply source screens (ADR-082 slice S3) bundled from the source with the real stylesheets and the team shell, served on a
-// local port. Every read and write is answered by the caller with page.route, so no database is needed. `?screen=` picks the
+// local port. The mode line, the hub intro and every screen body are the same components the pages draw. Every read and write is answered by the caller with page.route, so no database is needed. `?screen=` picks the
 // screen: hub, mission, candidate or dnc; `?role=` is the person's role in the workspace (default owner).
 export const supplyTenant = '00000000-0000-4000-8000-0000000000a1';
 export const supplyMission = '00000000-0000-4000-8000-0000000000b1';
@@ -34,10 +34,8 @@ export async function startSupplyFixture(root = resolve('.')) {
       import{TeamFrame}from ${source('apps/web/components/ux/team-frame.tsx')};
       import{WorkspaceShell}from ${source('apps/web/components/workspace-shell.tsx')};
       import{SiteFooterPlace}from ${source('apps/web/components/site-footer-place.tsx')};
-      import{SubTabs}from ${source('apps/web/components/ux/sub-tabs.tsx')};
-      import{SourcesView}from ${source('apps/web/app/operator/supply/sources-view.tsx')};
-      import{MissionsView}from ${source('apps/web/app/operator/supply/missions-view.tsx')};
-      import{RouteKinds}from ${source('apps/web/app/operator/supply/route-kinds.tsx')};
+      import{SupplyHub}from ${source('apps/web/app/operator/supply/supply-hub.tsx')};
+      import{SupplyModeLine}from ${source('apps/web/app/operator/supply/supply-ui.tsx')};
       import{MissionCandidates}from ${source('apps/web/app/operator/supply/mission-candidates.tsx')};
       import{CandidateRecord}from ${source('apps/web/app/operator/supply/candidate-record.tsx')};
       import{DncPanel}from ${source('apps/web/app/operator/supply/dnc-panel.tsx')};
@@ -52,17 +50,14 @@ export async function startSupplyFixture(root = resolve('.')) {
         screen === 'mission' ? <MissionCandidates tenant={tenant} role={role} missionId={mission}/>
         : screen === 'candidate' ? <CandidateRecord tenant={tenant} role={role} missionId={mission} candidateId={candidate}/>
         : screen === 'dnc' ? <DncPanel tenant={tenant} role={role}/>
-        : <SubTabs label="Supply sections" tabs={[
-            {id:'sources',label:'Sources',panel:<SourcesView tenant={tenant} role={role}/>},
-            {id:'missions',label:'Missions',panel:<MissionsView tenant={tenant}/>},
-            {id:'route-kinds',label:'Route Kinds',panel:<RouteKinds tenant={tenant}/>}]}/>;
+        : <SupplyHub tenant={tenant} role={role}/>;
       const title = screen === 'dnc' ? 'Do Not Contact' : screen === 'mission' ? 'Supply Candidates' : screen === 'candidate' ? 'Candidate' : 'Supply Sources';
       createRoot(document.getElementById('fixture')).render(
         <LanguageProvider offered={[{code:'en',draft:false}]}>
           <div className="site-shell">
             <AppHeader kind="team" live={false} notifications brandMark={<BrandLockup/>}/>
             <TeamFrame urls ownerPage={false} problemReports={false}>
-              <WorkspaceShell eyebrow="TEAM WORKSPACE" title={title}>{body}</WorkspaceShell>
+              <WorkspaceShell eyebrow="TEAM WORKSPACE" title={title}><SupplyModeLine real={false}/>{body}</WorkspaceShell>
             </TeamFrame>
             <SiteFooterPlace realUse={false} shells/>
           </div>

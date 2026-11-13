@@ -108,7 +108,12 @@ export function CandidatesList({
               expired, {count('not_reviewed')} not reviewed, of {all.length} candidates.
             </p>
           </div>
-          <ul className="supply-list supply-list-wide" aria-label="Candidates">
+          {rows.some((c) => c.warnings.includes('personal_name_check')) ? (
+            <p className="supply-quiet supply-wide">
+              <strong>Name check.</strong> {nameCheckWords}
+            </p>
+          ) : null}
+          <ul className="supply-list" aria-label="Candidates">
             {rows.slice(0, shown).map((c) => (
               <li key={c.id} className="supply-item">
                 <p className="supply-item-title">
@@ -137,6 +142,12 @@ export function CandidatesList({
                     </Link>
                   )}{' '}
                   <span className="ux-badge">{candidateStatus(c)}</span>
+                  {c.warnings.includes('personal_name_check') ? (
+                    <>
+                      {' '}
+                      <span className="ux-badge">Name check</span>
+                    </>
+                  ) : null}
                 </p>
                 <dl className="supply-facts">
                   <div>
@@ -162,11 +173,6 @@ export function CandidatesList({
                     </dd>
                   </div>
                 </dl>
-                {c.warnings.includes('personal_name_check') ? (
-                  <p className="supply-check">
-                    <span className="ux-badge">Name check</span> {nameCheckWords}
-                  </p>
-                ) : null}
               </li>
             ))}
           </ul>

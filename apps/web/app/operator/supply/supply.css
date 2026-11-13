@@ -217,9 +217,6 @@
     align-items: center;
     gap: 0 var(--space-4);
   }
-  .supply-list-wide > .supply-item {
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 2.2fr) auto auto;
-  }
   /* Row of a list: title, facts, then the actions, all on one line when the width allows. */
   .supply-item > .supply-item-title {
     grid-column: 1;

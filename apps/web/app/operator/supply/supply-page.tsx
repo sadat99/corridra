@@ -3,12 +3,12 @@ import { headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { realUseEnabled } from '@corridra/auth/customer-production';
-import { ModeLabel } from '../../../components/mr/mode-label';
 import { TeamContextPublisher } from '../../../components/ux/team-context-publisher';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { foundations } from '../../../lib/foundations';
 import { uxSwitchOn } from '../../../lib/ux-switches';
 import { operatorSignInPath } from '../../../lib/workspace-navigation';
+import { SupplyModeLine } from './supply-ui';
 import './supply.css';
 
 /**
@@ -55,9 +55,7 @@ export async function SupplyPage({
   return (
     <WorkspaceShell eyebrow={eyebrow} title={title}>
       <TeamContextPublisher tenant={tenant.id} role={tenant.role} />
-      <p className="supply-mode">
-        <ModeLabel real={realUseEnabled()} />
-      </p>
+      <SupplyModeLine real={realUseEnabled()} />
       {signedIn(tenant.id, tenant.role)}
     </WorkspaceShell>
   );
