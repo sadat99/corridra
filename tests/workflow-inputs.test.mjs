@@ -221,13 +221,12 @@ test('the sourcing workflow choices install, open and pause only that module, ea
       assert.ok(reason.length >= 10 && reason.length <= 500, `${choice} reason length`);
       assert.match(reason, expected === 'enable' ? /opened/ : /paused/);
     } else assert.equal(reason, '');
-    // No other module moves with a sourcing choice.
+    // No other module moves with a sourcing choice: every other action variable that is an expression stays unchanged.
     if (expected !== 'unchanged')
-      for (const name of Object.keys(env).filter((name) => name.endsWith('_ACTION')))
-        if (name !== 'SOURCING_WORKFLOW_ACTION' && typeof env[name] === 'string')
+      for (const [name, value] of Object.entries(env))
+        if (name.endsWith('_ACTION') && name !== 'SOURCING_WORKFLOW_ACTION')
           assert.ok(
-            ['unchanged', ''].includes(evaluate(env[name], inputs)) ||
-              /^(unchanged|no|false)$/i.test(String(evaluate(env[name], inputs))),
+            ['unchanged', 'no'].includes(String(evaluate(String(value), inputs))),
             `${choice} must not move ${name}`,
           );
   }

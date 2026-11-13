@@ -263,10 +263,7 @@ test('every refusal of the old guard still holds, with and without the block', a
       /Invalid or elevated pack configuration/,
     ],
   ];
-  for (const [name, configuration, expected] of cases) {
-    await direct(configuration, expected);
-    expect(name).toBeTruthy();
-  }
+  for (const [, configuration, expected] of cases) await direct(configuration, expected);
   await append(route, 1, base());
   version = 1;
   // Sequence and date rules, with and without the block.
