@@ -411,6 +411,13 @@ export const switchRegistry: SwitchEntry[] = [
   },
   // Safety and checks
   {
+    name: 'CORRIDRA_PWA_SERVICE_WORKER',
+    label: 'Installed app offline page',
+    line: 'Lets an installed Corridra show its own "cannot connect" page instead of the browser error. On unless set to false. It keeps no copy of any page, account or figure; setting it to false retires the worker in browsers that already have it.',
+    group: 'Safety and checks',
+    kind: 'flagDefaultOn',
+  },
+  {
     name: 'CORRIDRA_REAL_USE_ENABLED',
     label: 'Real customer use',
     line: 'On only when real data mode, this switch and the owner approval value all agree.',
