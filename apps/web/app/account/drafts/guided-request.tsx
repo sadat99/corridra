@@ -1,4 +1,5 @@
 'use client';
+import '../page-budget.css';
 import { archivedRefusalText } from '../archived-refusal';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { formatDateTime } from '../../../lib/ux/format';
@@ -678,7 +679,7 @@ function Guided(scope: Scope) {
 
   if (!form)
     return (
-      <section aria-label="Guided request drafts">
+      <section aria-label="Guided request drafts" className="account-compact">
         <p>
           {realCustomerInput()
             ? 'Start a request in a few questions, save it and come back later. What you enter is self-declared until the Corridra team checks it.'
@@ -688,9 +689,9 @@ function Guided(scope: Scope) {
         <h2 ref={heading} tabIndex={-1}>
           What do you want to do?
         </h2>
-        <ul style={{ listStyle: 'none', padding: 0 }}>
+        <ul className="account-choices account-start">
           {(Object.keys(missionDraftFamilyLabels) as MissionDraftFamily[]).map((family) => (
-            <li key={family} style={{ marginBlock: '0.75rem' }}>
+            <li key={family}>
               <button
                 type="button"
                 className="button button-primary"
@@ -699,7 +700,7 @@ function Guided(scope: Scope) {
               >
                 {missionDraftFamilyLabels[family]}
               </button>
-              <p style={{ margin: '0.25rem 0 0' }}>{familyHelp[family]}</p>
+              <p>{familyHelp[family]}</p>
             </li>
           ))}
         </ul>

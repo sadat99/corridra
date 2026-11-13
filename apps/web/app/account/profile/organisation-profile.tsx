@@ -1,4 +1,5 @@
 'use client';
+import '../page-budget.css';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { CountrySelect } from '../../../components/ux/pickers';
@@ -125,7 +126,9 @@ export function OrganisationProfile(props: {
         ? 'Loading your company profile…'
         : 'Loading your sample company profile…',
     ),
-    [pending, setPending] = useState<Record<string, unknown> | null>(null);
+    [pending, setPending] = useState<Record<string, unknown> | null>(null),
+    // The edit form opens only when asked (one form at a time); a first profile has no summary, so it starts open.
+    [editing, setEditing] = useState(false);
   const active = useRef(false),
     task = useRef<AbortController | null>(null),
     flight = useRef(false);
@@ -228,6 +231,7 @@ export function OrganisationProfile(props: {
         const revisions = v.canEdit ? await loadHistory(controller.signal).catch(() => null) : null;
         if (active.current && !controller.signal.aborted) {
           apply(v);
+          if (body) setEditing(false);
           setHistory(revisions);
           setMessage(
             body
@@ -332,7 +336,7 @@ export function OrganisationProfile(props: {
       </p>
       <p role="status">{message}</p>
       {profile && (
-        <dl>
+        <dl className="account-facts">
           <dt>Company</dt>
           <dd>{profile.legalName}</dd>
           <dt>Country</dt>
@@ -357,7 +361,17 @@ export function OrganisationProfile(props: {
           <dd>Self-reported, not verified</dd>
         </dl>
       )}
-      {view?.canEdit && (
+      {view?.canEdit && profile && !editing && !dirty && !pending && (
+        <button
+          type="button"
+          className="button button-primary"
+          disabled={busy}
+          onClick={() => setEditing(true)}
+        >
+          Edit Company Profile
+        </button>
+      )}
+      {view?.canEdit && (!profile || editing || dirty || pending) && (
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -499,19 +513,36 @@ export function OrganisationProfile(props: {
           <button type="submit" className="button button-primary" disabled={busy || !ack}>
             {pending ? 'Retry Same Save' : 'Save Company Profile'}
           </button>
+          {profile && !pending && (
+            <button
+              type="button"
+              className="text-link"
+              disabled={busy}
+              onClick={() => {
+                setDraft(toDraft(profile));
+                setAck(false);
+                setDirty(false);
+                setEditing(false);
+              }}
+            >
+              Cancel Editing
+            </button>
+          )}
         </form>
       )}
       {history && history.length > 0 && (
         <section aria-label="Profile history">
-          <h2>Change history</h2>
-          <ol>
-            {history.map((row) => (
-              <li key={row.version}>
-                Version {row.version}: {row.reason}
-                {row.byYou ? ' (by you)' : ''}
-              </li>
-            ))}
-          </ol>
+          <details className="account-fold">
+            <summary>Change history ({history.length})</summary>
+            <ol>
+              {history.map((row) => (
+                <li key={row.version}>
+                  Version {row.version}: {row.reason}
+                  {row.byYou ? ' (by you)' : ''}
+                </li>
+              ))}
+            </ol>
+          </details>
         </section>
       )}
       {!dirty && !pending && (

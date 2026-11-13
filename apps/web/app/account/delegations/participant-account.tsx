@@ -7,6 +7,7 @@ import { DelegatePath } from './delegate-path';
 import { ParticipantResults } from './participant-results';
 import { ParticipantPlace } from './participant-place';
 import { MyReminders } from './my-reminders';
+import { Fold } from '../fold';
 import { useCallback, useEffect, useState } from 'react';
 import { useParticipantView, type ParticipantScope } from './participant-client';
 import { ParticipantLabelEditor, dropLabelDrafts } from './participant-label';
@@ -234,55 +235,61 @@ function ScopedAccount(
                           onDenied={view.deny}
                         />
                       )}
-                      {props.objectivePathEnabled && props.missionSharesEnabled && (
-                        <DelegatePath
-                          subject={props.subject}
-                          issuer={props.issuer}
-                          registrationId={r.id}
-                          programmeName={r.name ?? ''}
-                          displayLabel={r.displayLabel ?? ''}
-                          draftsEnabled={!!props.draftsEnabled}
-                          onShare={(summary) => setShareStart({ registrationId: r.id, summary })}
-                        />
-                      )}
-                      {props.contextEnabled && (
-                        <ProgrammeContext
-                          subject={props.subject}
-                          issuer={props.issuer}
-                          programmeId={r.programmeId!}
-                          registrationId={r.id}
-                        />
-                      )}
-                      {props.missionSharesEnabled && (
-                        <ProgrammeObjectives
-                          subject={props.subject}
-                          issuer={props.issuer}
-                          registrationId={r.id}
-                          view="own"
-                          start={shareStart?.registrationId === r.id ? shareStart : undefined}
-                        />
-                      )}
-                      {props.termsEnabled && (
-                        <ParticipantPlace
-                          subject={props.subject}
-                          issuer={props.issuer}
-                          registrationId={r.id}
-                        />
-                      )}
-                      {props.projectionsEnabled && (
-                        <ParticipantProjectionSharing
-                          subject={props.subject}
-                          issuer={props.issuer}
-                          registrationId={r.id}
-                        />
-                      )}
-                      {props.coordinationEnabled && (
-                        <ParticipantResults
-                          subject={props.subject}
-                          issuer={props.issuer}
-                          registrationId={r.id}
-                        />
-                      )}
+                      <Fold
+                        anchor={'registration-' + r.id}
+                        open={shareStart?.registrationId === r.id}
+                        summary="Programme details, objectives and results"
+                      >
+                        {props.objectivePathEnabled && props.missionSharesEnabled && (
+                          <DelegatePath
+                            subject={props.subject}
+                            issuer={props.issuer}
+                            registrationId={r.id}
+                            programmeName={r.name ?? ''}
+                            displayLabel={r.displayLabel ?? ''}
+                            draftsEnabled={!!props.draftsEnabled}
+                            onShare={(summary) => setShareStart({ registrationId: r.id, summary })}
+                          />
+                        )}
+                        {props.contextEnabled && (
+                          <ProgrammeContext
+                            subject={props.subject}
+                            issuer={props.issuer}
+                            programmeId={r.programmeId!}
+                            registrationId={r.id}
+                          />
+                        )}
+                        {props.missionSharesEnabled && (
+                          <ProgrammeObjectives
+                            subject={props.subject}
+                            issuer={props.issuer}
+                            registrationId={r.id}
+                            view="own"
+                            start={shareStart?.registrationId === r.id ? shareStart : undefined}
+                          />
+                        )}
+                        {props.termsEnabled && (
+                          <ParticipantPlace
+                            subject={props.subject}
+                            issuer={props.issuer}
+                            registrationId={r.id}
+                          />
+                        )}
+                        {props.projectionsEnabled && (
+                          <ParticipantProjectionSharing
+                            subject={props.subject}
+                            issuer={props.issuer}
+                            registrationId={r.id}
+                          />
+                        )}
+                        {props.coordinationEnabled && (
+                          <ParticipantResults
+                            subject={props.subject}
+                            issuer={props.issuer}
+                            registrationId={r.id}
+                          />
+                        )}
+                      </Fold>
                       <button
                         type="button"
                         className="text-link"
@@ -319,7 +326,10 @@ function ScopedAccount(
             </button>
           )}
           {!view.pending && (
-            <>
+            <Fold
+              summary={realCustomerInput() ? 'Check an invitation' : 'Inspect a sample invitation'}
+              open={!!preview}
+            >
               <form
                 className="operator-form"
                 onSubmit={(e) => {
@@ -428,7 +438,7 @@ function ScopedAccount(
                   </button>
                 </form>
               )}
-            </>
+            </Fold>
           )}
         </>
       )}

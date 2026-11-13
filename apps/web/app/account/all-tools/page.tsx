@@ -8,6 +8,7 @@ import { customerParticipantsEnabled } from '@corridra/auth/customer-participant
 import { customerProgrammesEnabled } from '@corridra/auth/customer-programmes';
 import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-requests';
 import { CustomerShell } from '../../../components/customer-shell';
+import { PhoneFold } from '../../../components/phone-fold';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { groupLabel, toolGroups, toolsFor } from '../../../lib/all-tools';
 import { customerPageSession } from '../../../lib/customer-page-session';
@@ -55,17 +56,25 @@ export default async function Page() {
           const id = `tools-${group.toLowerCase().replace(/\s+/g, '-')}`;
           return (
             <section key={group} className="guide-area ux-account-groups" aria-labelledby={id}>
-              <h2 id={id}>{groupLabel(group)}</h2>
-              <ul className="ux-link-list">
-                {inGroup.map((tool) => (
-                  <li key={tool.href}>
-                    <Link prefetch={false} href={tool.href}>
-                      <strong>{tool.label}</strong>
-                      <span>{tool.line}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              <PhoneFold
+                className="ux-tools-fold"
+                summary={
+                  <h2 id={id}>
+                    {groupLabel(group)} ({inGroup.length})
+                  </h2>
+                }
+              >
+                <ul className="ux-link-list">
+                  {inGroup.map((tool) => (
+                    <li key={tool.href}>
+                      <Link prefetch={false} href={tool.href}>
+                        <strong>{tool.label}</strong>
+                        <span>{tool.line}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </PhoneFold>
             </section>
           );
         })}
