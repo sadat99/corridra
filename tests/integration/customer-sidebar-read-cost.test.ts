@@ -1,6 +1,9 @@
 import { afterAll, beforeAll, expect, test, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
-import { missionDraftObjectives } from '../../packages/domain/src/mission-drafts';
+import {
+  missionDraftObjectives,
+  type MissionDraftFamily,
+} from '../../packages/domain/src/mission-drafts';
 import { fixture } from './support';
 import { migrateCustomerAuthority } from '../../packages/db/src/customer-migrate';
 import { migrateCustomerOrganisationProfiles } from '../../packages/db/src/customer-organisation-profile-migrate';
@@ -103,7 +106,7 @@ beforeAll(async () => {
         })
       ).id,
     );
-  const families = ['SUPPLIERS_PRODUCTS', 'BUYERS_PARTNERS', 'DELEGATION'];
+  const families: MissionDraftFamily[] = ['SUPPLIERS_PRODUCTS', 'BUYERS_PARTNERS', 'DELEGATION'];
   for (const id of ids)
     for (let n = 0; n < 6; n++)
       await drafts.save({
@@ -149,10 +152,10 @@ test('loadWorkItems for a person with three workspaces runs a small, fixed numbe
   expect(first).toBeLessThanOrEqual(60);
 });
 
-const details = (family: string, n: number): MissionDraftDetails => ({
+const details = (family: MissionDraftFamily, n: number): MissionDraftDetails => ({
   title: `Synthetic measurement draft ${n}`,
   family,
-  objective: missionDraftObjectives[family as keyof typeof missionDraftObjectives][0]!,
+  objective: missionDraftObjectives[family][0]!,
   market: 'Spain',
   attendance: 'Yes',
   startDate: '2026-11-01',
