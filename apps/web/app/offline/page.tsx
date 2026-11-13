@@ -1,5 +1,3 @@
-import Link from 'next/link';
-
 /**
  * What an installed Corridra shows when the browser could not reach the network. The service worker holds
  * this one public page and nothing else, so it can say plainly what happened without keeping any copy of
@@ -23,9 +21,12 @@ export default function Offline() {
             you are back.
           </p>
           <div className="guide-page-actions">
-            <Link prefetch={false} className="primary-link" href="/">
+            {/* An empty address is this same address: the page is shown in place of the one the person
+                asked for, so trying again asks for that page, not the home page. A plain link, so it
+                works with no script, which is the state the page is usually shown in. */}
+            <a className="primary-link" href="">
               Try Again
-            </Link>
+            </a>
           </div>
         </div>
       </section>

@@ -114,7 +114,8 @@ test('with no network an installed Corridra says so, and shows nothing private',
       'Corridra cannot connect right now.',
     );
     await expect(page.getByText('Reconnect to continue.')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Try Again' })).toHaveAttribute('href', '/');
+    // Trying again asks for the page the person wanted, not the home page.
+    await expect(page.getByRole('link', { name: 'Try Again' })).toHaveAttribute('href', '');
     // The page is styled, so the precached stylesheet of the offline page was used.
     const colour = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
     expect(colour).not.toBe('rgba(0, 0, 0, 0)');
@@ -131,6 +132,11 @@ test('with no network an installed Corridra says so, and shows nothing private',
     const chrome = page.locator('.site-header, .guide-footer, .site-footer, .corner-dock');
     for (let index = 0, count = await chrome.count(); index < count; index++)
       await expect(chrome.nth(index)).toBeHidden();
+    // Back online, Try Again loads the address that was asked for, and the offline page is gone.
+    await context.setOffline(false);
+    await page.getByRole('link', { name: 'Try Again' }).click();
+    await expect(page).toHaveURL(/\/account|\/signin/);
+    await expect(page.getByText('Corridra cannot connect right now.')).toHaveCount(0);
   } finally {
     await context.setOffline(false);
   }
@@ -163,7 +169,7 @@ test('the install page explains every platform and offers no broken control', as
   await page.goto('/install');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Install Corridra as an app.');
   for (const title of ['Android (Chrome)', 'iPhone and iPad (Safari)', 'Computer (Chrome or Edge)'])
-    await expect(page.getByRole('heading', { name: title })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: title })).toBeVisible();
   // Headless Chromium does not offer an install, so no install button is drawn and nothing claims success.
   await expect(page.getByRole('button', { name: 'Install Corridra' })).toHaveCount(0);
   // No outcome is announced when nothing was asked: the page never claims an install that did not happen.

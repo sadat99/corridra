@@ -31,6 +31,12 @@
 }
 .ux-install-step .ux-install-title {
   display: none;
+  font-family: var(--font-ui);
+  font-size: inherit;
+  font-weight: 600;
+  line-height: inherit;
+  letter-spacing: normal;
+  color: var(--text-1);
 }
 .ux-install-step ol {
   display: grid;

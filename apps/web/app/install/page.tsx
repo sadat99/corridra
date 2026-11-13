@@ -66,7 +66,7 @@ export default function Page() {
           {steps.map((step) => (
             <details key={step.title} className="ux-install-step">
               <summary>{step.title}</summary>
-              <h3 className="ux-install-title">{step.title}</h3>
+              <h2 className="ux-install-title">{step.title}</h2>
               <ol>
                 {step.lines.map((line) => (
                   <li key={line}>{line}</li>
