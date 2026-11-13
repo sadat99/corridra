@@ -109,3 +109,18 @@ describe('the team problem report API and the framework header overrides', () =>
     ).toBe(true);
   });
 });
+
+// The staff supply API (ADR-082 slice S3) answers with source, candidate and do not contact records, so the framework must
+// never replace its no-store or no-referrer headers. It is not under customer-*, so it is named here. The rule is a path
+// pattern (every action under /api/supply), because the action is the last segment of the address.
+describe('the staff supply API and the framework header overrides', () => {
+  const matching = rules.filter((rule) => rule.source === '/api/supply/:path*');
+  it('has one explicit rule for every address under /api/supply with no-referrer and no-store', () => {
+    expect(
+      matching,
+      'the staff supply API is missing from the private-header overrides in next.config.ts',
+    ).toHaveLength(1);
+    expect(matching[0]!.headers).toContain("key: 'Referrer-Policy', value: 'no-referrer'");
+    expect(matching[0]!.headers).toContain("key: 'Cache-Control', value: 'no-store'");
+  });
+});

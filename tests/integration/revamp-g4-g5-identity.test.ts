@@ -295,6 +295,8 @@ describe('the account screens send the identity', () => {
       'the headers are passed in by the page that draws it, which is checked below',
     'components/ux/team-utility-menus.tsx':
       'the staff Sign Out sends the operator session cookie; it has no customer identity',
+    'lib/supply-screens.ts':
+      'the staff supply screens send the operator session cookie and no customer identity; every call goes to /api/supply, which refuses a POST whose Origin is not the app origin and answers 401 without a session before any action runs, file import included',
   };
   const named = [
     'app/account/service-requests/service-request-client.ts',
