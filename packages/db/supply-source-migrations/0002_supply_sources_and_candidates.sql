@@ -423,7 +423,10 @@ DO $$ DECLARE t text; BEGIN
  END LOOP;
 END $$;
 -- The company name, host, identifier, note and name key are not selectable by the runtime login; they are read only through
--- app.supply_candidate_read and app.supply_candidate_detail, which mask them once the retention date has passed.
+-- app.supply_candidate_read and app.supply_candidate_detail, which stop returning them once the retention date has passed. That
+-- masking covers the candidate row and this module's reads only: the same nominated facts are also written as claims in app.claim
+-- against the nomination source record, under the core claim model (ADR-082 sections 1 and 6), which this slice does not change
+-- and which carries no supply-side expiry of its own.
 GRANT SELECT(id,tenant_id,mission_id,profile_version_id,source_version_id,method,import_batch_id,network_task_id,sync_run_id,external_key,country,size_band,counterparty_types,
  warnings,nomination_source_id,observed_at,retention_until,licence_scope,created_by,command_id,created_at) ON app.supply_candidate TO corridra_runtime;
 
@@ -576,6 +579,9 @@ DECLARE done jsonb; row_id uuid:=gen_random_uuid(); rid uuid:=gen_random_uuid();
 BEGIN
  done:=app.supply_command_enter(p_tenant,p_command,p_hash,'review_candidate',ARRAY['owner','admin','operator'],false,false);
  IF done IS NOT NULL THEN RETURN done; END IF;
+ -- One decider per candidate at a time: the candidate row is only held FOR SHARE, so two sessions would otherwise read the same
+ -- latest decision and both write. The match command takes the same lock.
+ PERFORM pg_advisory_xact_lock(hashtextextended(p_tenant::text||':supply-candidate:'||p_candidate::text,0));
  SELECT * INTO cand FROM app.supply_candidate WHERE tenant_id=p_tenant AND id=p_candidate FOR SHARE;
  IF NOT FOUND THEN RAISE EXCEPTION 'Candidate unavailable'; END IF;
  IF p_decision='QUALIFIED' THEN
@@ -597,6 +603,9 @@ DECLARE done jsonb; row_id uuid:=gen_random_uuid(); mid uuid:=gen_random_uuid();
 BEGIN
  done:=app.supply_command_enter(p_tenant,p_command,p_hash,'match_candidate',ARRAY['owner','admin','operator'],false,false);
  IF done IS NOT NULL THEN RETURN done; END IF;
+ -- One decider per candidate at a time, so two concurrent matches cannot both pass the current-match test and leave two
+ -- un-reversed MATCH rows. The review command takes the same lock.
+ PERFORM pg_advisory_xact_lock(hashtextextended(p_tenant::text||':supply-candidate:'||p_candidate::text,0));
  SELECT * INTO cand FROM app.supply_candidate WHERE tenant_id=p_tenant AND id=p_candidate FOR SHARE;
  IF NOT FOUND THEN RAISE EXCEPTION 'Candidate unavailable'; END IF;
  IF p_decision='REVERSE' THEN
@@ -625,40 +634,56 @@ END $$;
 
 -- Do-not-contact. Both commands work while the module is paused: they protect a third party, and a safety exception must not be
 -- locked behind the module switch. Blocking needs research.manage; lifting needs an owner or admin with fresh MFA.
-CREATE FUNCTION app.supply_block_company(p_tenant uuid,p_command uuid,p_hash text,p_organisation uuid,p_company text,p_country text,p_reason text,p_reference text) RETURNS jsonb
+-- Either command may name an existing row of the same tenant instead of a subject. The subject is then taken from that row as it
+-- was recorded, so a block on a name whose key is not the name again (an ampersand, punctuation, a legal-form word) can still be
+-- lifted and blocked again. A row of another tenant, or none, answers 'Block unavailable'.
+CREATE FUNCTION app.supply_dnc_row(p_tenant uuid,p_block uuid) RETURNS app.supply_do_not_contact
+ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE d app.supply_do_not_contact;
+BEGIN
+ SELECT * INTO d FROM app.supply_do_not_contact WHERE tenant_id=p_tenant AND id=p_block;
+ IF NOT FOUND THEN RAISE EXCEPTION 'Block unavailable'; END IF;
+ RETURN d;
+END $$;
+
+CREATE FUNCTION app.supply_block_company(p_tenant uuid,p_command uuid,p_hash text,p_organisation uuid,p_company text,p_country text,p_reason text,p_reference text,p_block uuid) RETURNS jsonb
  LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
-DECLARE done jsonb; row_id uuid:=gen_random_uuid(); bid uuid:=gen_random_uuid(); key text; o app.organisation;
+DECLARE done jsonb; row_id uuid:=gen_random_uuid(); bid uuid:=gen_random_uuid(); v_key text; v_country text:=p_country; v_org uuid:=p_organisation; o app.organisation; d app.supply_do_not_contact;
 BEGIN
  done:=app.supply_command_enter(p_tenant,p_command,p_hash,'block_company',ARRAY['owner','admin','operator'],false,true);
  IF done IS NOT NULL THEN RETURN done; END IF;
- IF p_organisation IS NOT NULL THEN
-  SELECT * INTO o FROM app.organisation WHERE id=p_organisation;
+ IF p_block IS NOT NULL THEN
+  d:=app.supply_dnc_row(p_tenant,p_block); v_org:=d.organisation_id; v_key:=d.name_key; v_country:=d.country;
+ ELSIF v_org IS NOT NULL THEN
+  SELECT * INTO o FROM app.organisation WHERE id=v_org;
   IF NOT FOUND OR NOT customer_private.organisation_link_same_context(o.synthetic,app.tenant_is_synthetic(p_tenant)) THEN RAISE EXCEPTION 'Organisation unavailable'; END IF;
  ELSE
-  key:=customer_private.organisation_link_name_key(p_company);
-  IF key='' THEN RAISE EXCEPTION 'Enter the company name.'; END IF;
-  IF NOT EXISTS(SELECT FROM app.country WHERE code=p_country) THEN RAISE EXCEPTION 'Choose a country.'; END IF;
+  v_key:=customer_private.organisation_link_name_key(p_company);
+  IF v_key='' THEN RAISE EXCEPTION 'Enter the company name.'; END IF;
+  IF NOT EXISTS(SELECT FROM app.country WHERE code=v_country) THEN RAISE EXCEPTION 'Choose a country.'; END IF;
  END IF;
  INSERT INTO app.supply_do_not_contact(id,tenant_id,organisation_id,name_key,country,state,reason,reference,created_by,command_id)
-  VALUES(bid,p_tenant,p_organisation,key,CASE WHEN p_organisation IS NULL THEN p_country END,'BLOCKED',p_reason,p_reference,app.actor_id(),row_id);
+  VALUES(bid,p_tenant,v_org,CASE WHEN v_org IS NULL THEN v_key END,CASE WHEN v_org IS NULL THEN v_country END,'BLOCKED',p_reason,p_reference,app.actor_id(),row_id);
  RETURN app.supply_command_done(p_tenant,row_id,p_command,'block_company',p_hash,jsonb_build_object('blockId',bid));
 END $$;
 
-CREATE FUNCTION app.supply_lift_company(p_tenant uuid,p_command uuid,p_hash text,p_organisation uuid,p_company text,p_country text,p_reason text,p_reference text) RETURNS jsonb
+CREATE FUNCTION app.supply_lift_company(p_tenant uuid,p_command uuid,p_hash text,p_organisation uuid,p_company text,p_country text,p_reason text,p_reference text,p_block uuid) RETURNS jsonb
  LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $$
-DECLARE done jsonb; row_id uuid:=gen_random_uuid(); bid uuid:=gen_random_uuid(); key text; blocked boolean;
+DECLARE done jsonb; row_id uuid:=gen_random_uuid(); bid uuid:=gen_random_uuid(); v_key text; v_country text:=p_country; v_org uuid:=p_organisation; blocked boolean; d app.supply_do_not_contact;
 BEGIN
  done:=app.supply_command_enter(p_tenant,p_command,p_hash,'lift_company',ARRAY['owner','admin'],true,true);
  IF done IS NOT NULL THEN RETURN done; END IF;
- IF p_organisation IS NOT NULL THEN
-  blocked:=app.supply_org_blocked(p_tenant,p_organisation);
- ELSE
-  key:=customer_private.organisation_link_name_key(p_company);
-  blocked:=key<>'' AND app.supply_name_blocked(p_tenant,key,p_country);
+ IF p_block IS NOT NULL THEN
+  d:=app.supply_dnc_row(p_tenant,p_block); v_org:=d.organisation_id; v_key:=d.name_key; v_country:=d.country;
+ ELSIF v_org IS NULL THEN
+  v_key:=customer_private.organisation_link_name_key(p_company);
+ END IF;
+ IF v_org IS NOT NULL THEN blocked:=app.supply_org_blocked(p_tenant,v_org);
+ ELSE blocked:=coalesce(v_key,'')<>'' AND app.supply_name_blocked(p_tenant,v_key,v_country);
  END IF;
  IF NOT coalesce(blocked,false) THEN RAISE EXCEPTION 'This company is not blocked.'; END IF;
  INSERT INTO app.supply_do_not_contact(id,tenant_id,organisation_id,name_key,country,state,reason,reference,created_by,command_id)
-  VALUES(bid,p_tenant,p_organisation,key,CASE WHEN p_organisation IS NULL THEN p_country END,'LIFTED',p_reason,p_reference,app.actor_id(),row_id);
+  VALUES(bid,p_tenant,v_org,CASE WHEN v_org IS NULL THEN v_key END,CASE WHEN v_org IS NULL THEN v_country END,'LIFTED',p_reason,p_reference,app.actor_id(),row_id);
  RETURN app.supply_command_done(p_tenant,row_id,p_command,'lift_company',p_hash,jsonb_build_object('blockId',bid));
 END $$;
 
@@ -683,7 +708,10 @@ CREATE FUNCTION app.supply_candidate_json(p_tenant uuid,c app.supply_candidate) 
   'warnings',to_jsonb(c.warnings),'observedAt',c.observed_at,'retentionUntil',c.retention_until,'expired',c.retention_until<=now(),'licenceScope',c.licence_scope,
   'createdAt',c.created_at,
   'latestReview',(SELECT jsonb_build_object('decision',r.decision,'reasonCode',r.reason_code,'at',r.created_at) FROM app.supply_candidate_review r WHERE r.tenant_id=p_tenant AND r.candidate_id=c.id ORDER BY r.seq DESC LIMIT 1),
-  'latestMatch',(SELECT jsonb_build_object('id',m.id,'decision',m.decision,'organisationId',m.organisation_id,'at',m.created_at) FROM app.supply_candidate_match m WHERE m.tenant_id=p_tenant AND m.candidate_id=c.id ORDER BY m.seq DESC LIMIT 1))
+  'latestMatch',(SELECT jsonb_build_object('id',m.id,'decision',m.decision,'organisationId',m.organisation_id,'at',m.created_at) FROM app.supply_candidate_match m WHERE m.tenant_id=p_tenant AND m.candidate_id=c.id ORDER BY m.seq DESC LIMIT 1),
+  -- The newest un-reversed MATCH, which is the only decision the match command lets staff reverse. The latest match above may be
+  -- a NO_MATCH or a reversal.
+  'currentMatch',(SELECT jsonb_build_object('id',m.id,'decision',m.decision,'organisationId',m.organisation_id,'at',m.created_at) FROM app.supply_current_match(p_tenant,c.id) m WHERE m.id IS NOT NULL))
  FROM app.supply_source_version sv JOIN app.supply_source s ON s.tenant_id=sv.tenant_id AND s.id=sv.source_id WHERE sv.tenant_id=p_tenant AND sv.id=c.source_version_id
 $$;
 
@@ -725,8 +753,17 @@ BEGIN
   FROM (SELECT * FROM app.mission WHERE tenant_id=p_tenant ORDER BY created_at DESC,id LIMIT greatest(1,least(coalesce(p_limit,100),200))) m),'[]'::jsonb);
 END $$;
 
+-- True when this row is the latest of its subject, so it is the row that decides for that company.
+CREATE FUNCTION app.supply_block_current(p_tenant uuid,d app.supply_do_not_contact) RETURNS boolean
+ LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
+ SELECT d.seq=(SELECT max(x.seq) FROM app.supply_do_not_contact x WHERE x.tenant_id=p_tenant AND
+  ((d.organisation_id IS NOT NULL AND x.organisation_id IS NOT NULL AND app.supply_canonical_org(p_tenant,x.organisation_id)=app.supply_canonical_org(p_tenant,d.organisation_id))
+   OR (d.organisation_id IS NULL AND x.name_key=d.name_key AND x.country=d.country)))
+$$;
+
 -- Who is blocked now and who was, newest first. An organisation row shows the catalogue name when the organisation is of this
--- tenant's side; a name row shows the name key, which holds the letters of the name without legal-form words.
+-- tenant's side; a name row shows the name key, which holds the letters of the name without legal-form words. A company blocked
+-- now comes first, so the limit can only hide older history, never a block that still applies.
 CREATE FUNCTION app.supply_blocks_read(p_tenant uuid,p_limit integer) RETURNS jsonb
  LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
 BEGIN
@@ -734,10 +771,9 @@ BEGIN
  RETURN coalesce((SELECT jsonb_agg(jsonb_build_object('id',d.id,'state',d.state,'organisationId',d.organisation_id,
    'organisationName',CASE WHEN customer_private.organisation_link_same_context(o.synthetic,app.tenant_is_synthetic(p_tenant)) AND NOT customer_private.organisation_link_suppressed(o.id) THEN o.name END,
    'nameKey',d.name_key,'country',coalesce(d.country,o.country),'reason',d.reason,'reference',d.reference,'at',d.created_at,'by',d.created_by,
-   'current',d.seq=(SELECT max(x.seq) FROM app.supply_do_not_contact x WHERE x.tenant_id=d.tenant_id AND
-     ((d.organisation_id IS NOT NULL AND x.organisation_id IS NOT NULL AND app.supply_canonical_org(d.tenant_id,x.organisation_id)=app.supply_canonical_org(d.tenant_id,d.organisation_id))
-      OR (d.organisation_id IS NULL AND x.name_key=d.name_key AND x.country=d.country)))) ORDER BY d.seq DESC)
-  FROM (SELECT * FROM app.supply_do_not_contact WHERE tenant_id=p_tenant ORDER BY seq DESC LIMIT greatest(1,least(coalesce(p_limit,100),200))) d
+   'current',d.is_current) ORDER BY (d.is_current AND d.state='BLOCKED') DESC,d.seq DESC)
+  FROM (SELECT x.*,app.supply_block_current(p_tenant,x) AS is_current FROM app.supply_do_not_contact x WHERE x.tenant_id=p_tenant
+    ORDER BY (app.supply_block_current(p_tenant,x) AND x.state='BLOCKED') DESC,x.seq DESC LIMIT greatest(1,least(coalesce(p_limit,100),200))) d
   LEFT JOIN app.organisation o ON o.id=d.organisation_id),'[]'::jsonb);
 END $$;
 
@@ -786,7 +822,8 @@ CREATE TRIGGER communication_receipt_supply_dnc BEFORE INSERT ON app.communicati
 REVOKE ALL ON FUNCTION app.supply_row_results_ok(jsonb),app.supply_canonical_org(uuid,uuid),app.supply_org_blocked(uuid,uuid),app.supply_name_blocked(uuid,text,text),
  app.supply_source_usable(uuid,uuid,uuid),app.supply_command_enter(uuid,uuid,text,text,text[],boolean,boolean),app.supply_command_done(uuid,uuid,uuid,text,text,jsonb),
  app.supply_insert_candidate(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,text,text[],text,timestamptz,text,uuid),app.supply_intake_checks(uuid,uuid,uuid,uuid),
- app.supply_current_match(uuid,uuid),app.supply_read_allowed(uuid),app.supply_candidate_json(uuid,app.supply_candidate),
+ app.supply_current_match(uuid,uuid),app.supply_dnc_row(uuid,uuid),app.supply_block_current(uuid,app.supply_do_not_contact),
+ app.supply_read_allowed(uuid),app.supply_candidate_json(uuid,app.supply_candidate),
  app.guard_supply_source_version(),app.guard_supply_candidate(),app.supply_contact_guard() FROM PUBLIC,corridra_runtime,corridra_auth;
 REVOKE ALL ON FUNCTION app.supply_create_source(uuid,uuid,text,text,text,uuid,integer,timestamptz,text,text),
  app.supply_add_source_version(uuid,uuid,text,uuid,integer,text,text,uuid,integer,timestamptz,text),
@@ -794,8 +831,8 @@ REVOKE ALL ON FUNCTION app.supply_create_source(uuid,uuid,text,text,text,uuid,in
  app.supply_import_file(uuid,uuid,text,uuid,uuid,uuid,text,jsonb),
  app.supply_review_candidate(uuid,uuid,text,uuid,text,text,text),
  app.supply_match_candidate(uuid,uuid,text,uuid,text,uuid,uuid,text),
- app.supply_block_company(uuid,uuid,text,uuid,text,text,text,text),
- app.supply_lift_company(uuid,uuid,text,uuid,text,text,text,text),
+ app.supply_block_company(uuid,uuid,text,uuid,text,text,text,text,uuid),
+ app.supply_lift_company(uuid,uuid,text,uuid,text,text,text,text,uuid),
  app.supply_candidate_read(uuid,uuid,integer),app.supply_candidate_detail(uuid,uuid),app.supply_missions_read(uuid,integer),app.supply_blocks_read(uuid,integer),
  app.supply_route_pack(uuid,uuid) FROM PUBLIC,corridra_auth;
 GRANT EXECUTE ON FUNCTION app.supply_create_source(uuid,uuid,text,text,text,uuid,integer,timestamptz,text,text),
@@ -804,7 +841,7 @@ GRANT EXECUTE ON FUNCTION app.supply_create_source(uuid,uuid,text,text,text,uuid
  app.supply_import_file(uuid,uuid,text,uuid,uuid,uuid,text,jsonb),
  app.supply_review_candidate(uuid,uuid,text,uuid,text,text,text),
  app.supply_match_candidate(uuid,uuid,text,uuid,text,uuid,uuid,text),
- app.supply_block_company(uuid,uuid,text,uuid,text,text,text,text),
- app.supply_lift_company(uuid,uuid,text,uuid,text,text,text,text),
+ app.supply_block_company(uuid,uuid,text,uuid,text,text,text,text,uuid),
+ app.supply_lift_company(uuid,uuid,text,uuid,text,text,text,text,uuid),
  app.supply_candidate_read(uuid,uuid,integer),app.supply_candidate_detail(uuid,uuid),app.supply_missions_read(uuid,integer),app.supply_blocks_read(uuid,integer),
  app.supply_route_pack(uuid,uuid) TO corridra_runtime;

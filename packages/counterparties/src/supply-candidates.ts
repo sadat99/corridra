@@ -105,6 +105,8 @@ export type SupplyCandidateRow = {
   createdAt: string;
   latestReview: { decision: string; reasonCode: string; at: string } | null;
   latestMatch: { id: string; decision: string; organisationId: string; at: string } | null;
+  /** The newest un-reversed MATCH, the only decision that can be reversed. Null when there is none. */
+  currentMatch: { id: string; decision: string; organisationId: string; at: string } | null;
 };
 export type SupplyCandidateDetail = SupplyCandidateRow & {
   reviews: {
@@ -422,13 +424,16 @@ export class SupplyCandidateService {
 
   // ---- do not contact ------------------------------------------------------------------------------------------------
 
-  /** A company asked not to be contacted. Works while the module is paused: it protects a third party. */
+  /**
+   * A company asked not to be contacted. Works while the module is paused: it protects a third party. The subject is an
+   * organisation, a company name and country, or an earlier do-not-contact row, whose subject is then used exactly as recorded.
+   */
   async blockCompany(ctx: RequestContext, input: unknown) {
     const v = blockCompany.parse(input);
     const hash = hashOf('block_company', without(v));
     return this.write(
       ctx,
-      'app.supply_block_company($1,$2,$3,$4::uuid,$5::text,$6::text,$7,$8)',
+      'app.supply_block_company($1,$2,$3,$4::uuid,$5::text,$6::text,$7,$8,$9::uuid)',
       (tenant) => [
         tenant,
         v.commandId,
@@ -438,17 +443,18 @@ export class SupplyCandidateService {
         v.country ?? null,
         v.reason,
         v.reference,
+        v.blockId ?? null,
       ],
     ) as Promise<{ blockId: string }>;
   }
 
-  /** Lifts a block. Owner or admin with fresh MFA; also works while the module is paused. */
+  /** Lifts a block, by the same three subjects. Owner or admin with fresh MFA; also works while the module is paused. */
   async liftCompany(ctx: RequestContext, input: unknown) {
     const v = liftCompany.parse(input);
     const hash = hashOf('lift_company', without(v));
     return this.write(
       ctx,
-      'app.supply_lift_company($1,$2,$3,$4::uuid,$5::text,$6::text,$7,$8)',
+      'app.supply_lift_company($1,$2,$3,$4::uuid,$5::text,$6::text,$7,$8,$9::uuid)',
       (tenant) => [
         tenant,
         v.commandId,
@@ -458,6 +464,7 @@ export class SupplyCandidateService {
         v.country ?? null,
         v.reason,
         v.reference,
+        v.blockId ?? null,
       ],
     ) as Promise<{ blockId: string }>;
   }

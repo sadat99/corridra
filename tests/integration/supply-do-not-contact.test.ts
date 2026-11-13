@@ -265,4 +265,43 @@ describe('a blocked organisation', () => {
       });
     }
   });
+
+  test('a do-not-contact row of another tenant is no subject here, and the block it records still holds there', async () => {
+    const elsewhere = await service.blockCompany(f.users.other.ctx, {
+      commandId: randomUUID(),
+      companyName: 'Other Tenant Trading Ltd',
+      country: 'DE',
+      reason: 'The company asked the other tenant to stop',
+      reference: 'ticket 81',
+    });
+    const rows = async () =>
+      (await f.owner.query('SELECT count(*)::int n FROM app.supply_do_not_contact')).rows[0].n;
+    const before = await rows();
+    for (const refusal of [
+      await refused(
+        service.liftCompany(f.users.owner.ctx, {
+          commandId: randomUUID(),
+          blockId: elsewhere.blockId,
+          reason: 'Another tenant cannot lift this',
+          reference: 'ticket 82',
+        }),
+      ),
+      await refused(
+        service.blockCompany(f.users.operator.ctx, {
+          commandId: randomUUID(),
+          blockId: elsewhere.blockId,
+          reason: 'Another tenant cannot block this',
+          reference: 'ticket 83',
+        }),
+      ),
+    ])
+      expect(refusal).toBe(supplyWords.blockUnavailable);
+    expect(await rows()).toBe(before);
+    expect((await service.listBlocks(f.users.viewer.ctx)).map((r) => r.id)).not.toContain(
+      elsewhere.blockId,
+    );
+    expect(
+      (await service.listBlocks(f.users.other.ctx)).find((r) => r.id === elsewhere.blockId),
+    ).toMatchObject({ state: 'BLOCKED', current: true, nameKey: 'othertenanttrading' });
+  });
 });

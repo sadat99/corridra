@@ -1036,9 +1036,71 @@ describe('review and match', () => {
       ['Rematch A Ltd', true],
     ]);
     expect(detail.latestMatch).toMatchObject({ decision: 'NO_MATCH' });
+    // The current match is the newest un-reversed MATCH, which is the only decision a reverse may name.
+    expect(detail.currentMatch).toMatchObject({ id: second.matchId, decision: 'MATCH' });
+    expect(
+      (await w.candidates.listCandidates(w.users.viewer.ctx, { missionId: ids.missionId })).find(
+        (c) => c.id === m.candidateId,
+      )?.currentMatch,
+    ).toMatchObject({ id: second.matchId });
+    expect(
+      await refused(
+        matched('operator', m.candidateId, { decision: 'REVERSE', reverseOf: undone.matchId }),
+      ),
+    ).toBe(supplyWords.reverseLatest);
+    expect(
+      (await matched('operator', m.candidateId, { decision: 'REVERSE', reverseOf: second.matchId }))
+        .matchId,
+    ).toBeTruthy();
+    expect((await w.candidates.candidate(w.users.viewer.ctx, m.candidateId))!.currentMatch).toBe(
+      null,
+    );
     expect(
       await refused(w.owner.query("UPDATE app.supply_candidate_match SET reason='x y z'")),
     ).toBeTruthy();
+  });
+
+  test('two matches of one candidate at the same time leave one un-reversed match, and the candidate lock holds a second decider', async () => {
+    const m = await w.addCandidate('operator', ids, { companyName: 'Racing Trading Ltd' });
+    const a = await w.organisation('Racing A Ltd');
+    const b = await w.organisation('Racing B Ltd');
+    const results = await Promise.allSettled([
+      matched('operator', m.candidateId, { organisationId: a }),
+      matched('owner', m.candidateId, { organisationId: b }),
+    ]);
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+    expect(
+      (results.find((r) => r.status === 'rejected') as PromiseRejectedResult).reason,
+    ).toMatchObject({ message: supplyWords.reverseFirst });
+    expect(
+      await count(
+        'supply_candidate_match',
+        "candidate_id=$1 AND decision='MATCH' AND NOT EXISTS(SELECT FROM app.supply_candidate_match u WHERE u.reverse_of=app.supply_candidate_match.id)",
+        [m.candidateId],
+      ),
+    ).toBe(1);
+    // The lock is taken on the tenant and candidate: while another session holds that key, the command waits.
+    const holder = await w.owner.connect();
+    try {
+      await holder.query('BEGIN');
+      await holder.query(
+        "SELECT pg_advisory_xact_lock(hashtextextended($1||':supply-candidate:'||$2,0))",
+        [w.tenantA, m.candidateId],
+      );
+      const waiting = decided('operator', m.candidateId, {
+        decision: 'DUPLICATE',
+        reasonCode: 'same_company',
+      });
+      const raced = await Promise.race([
+        waiting.then(() => 'finished'),
+        new Promise((resolve) => setTimeout(() => resolve('waiting'), 500)),
+      ]);
+      expect(raced).toBe('waiting');
+      await holder.query('COMMIT');
+      expect((await waiting).reviewId).toBeTruthy();
+    } finally {
+      holder.release();
+    }
   });
 });
 
@@ -1368,6 +1430,50 @@ describe('do not contact at intake and review (D5)', () => {
     ]);
   });
 
+  test("a name block is lifted and blocked again by its row id, whatever the name looks like; another tenant's row is refused", async () => {
+    const name = 'A&B Ltd';
+    const put = await block('operator', { companyName: name, country: 'DE' });
+    expect(
+      (
+        await w.owner.query('SELECT name_key,country FROM app.supply_do_not_contact WHERE id=$1', [
+          put.blockId,
+        ])
+      ).rows[0],
+    ).toEqual({ name_key: 'ab', country: 'DE' });
+    expect(await refused(w.addCandidate('operator', ids, { companyName: name }))).toBe(blocked);
+    // The name key is not a company name: sending it back as one normalises to nothing and lifts nothing.
+    expect(await refused(lift('owner', { companyName: 'ab', country: 'DE' }))).toBe(
+      supplyWords.notBlocked,
+    );
+    const lifted = await lift('owner', { blockId: put.blockId });
+    expect(lifted.blockId).toBeTruthy();
+    expect((await w.addCandidate('operator', ids, { companyName: name })).candidateId).toBeTruthy();
+    // Block again by the same row id: the subject comes from the row, so the same company is covered.
+    const again = await block('operator', { blockId: put.blockId, reference: 'ticket 43' });
+    expect(
+      (
+        await w.owner.query(
+          'SELECT name_key,country,state FROM app.supply_do_not_contact WHERE id=$1',
+          [again.blockId],
+        )
+      ).rows[0],
+    ).toEqual({ name_key: 'ab', country: 'DE', state: 'BLOCKED' });
+    expect(await refused(w.addCandidate('operator', ids, { companyName: 'A & B, Ltd.' }))).toBe(
+      blocked,
+    );
+    // A row id that is not of this tenant is no subject at all, and nothing is written for it.
+    const before = await count('supply_do_not_contact');
+    expect(await refused(lift('owner', { blockId: randomUUID() }))).toBe(
+      supplyWords.blockUnavailable,
+    );
+    expect(await refused(block('operator', { blockId: randomUUID() }))).toBe(
+      supplyWords.blockUnavailable,
+    );
+    expect(await count('supply_do_not_contact')).toBe(before);
+    // Tidy: leave the company liftable for the rest of the file.
+    await lift('owner', { blockId: again.blockId });
+  });
+
   test('an organisation block: unknown and other-side organisations are refused, the block shows by name, and rows are append only', async () => {
     const org = await w.organisation('Listed Elsewhere Ltd');
     expect(await refused(block('operator', { organisationId: randomUUID() }))).toBe(
@@ -1406,6 +1512,26 @@ describe('do not contact at intake and review (D5)', () => {
     expect(
       await refused(block('operator', { organisationId: org, reference: 'call 030 1234 5678' })),
     ).toBeTruthy();
+  });
+
+  test('a company blocked now comes before older history, so the list limit can never hide a block that still applies', async () => {
+    const kept = await block('operator', { companyName: 'Kept Blocked Ltd', country: 'DE' });
+    for (const name of ['Later One Ltd', 'Later Two Ltd']) {
+      const later = await block('operator', { companyName: name, country: 'DE' });
+      await lift('owner', { blockId: later.blockId });
+    }
+    const rows = await w.candidates.listBlocks(w.users.viewer.ctx, { limit: 2 });
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({ id: kept.blockId, state: 'BLOCKED', current: true });
+    // Every row of the full read still reads as it did, newest history first after the current blocks.
+    const all = await w.candidates.listBlocks(w.users.viewer.ctx);
+    expect(all.filter((r) => r.current && r.state === 'BLOCKED').map((r) => r.id)).toContain(
+      kept.blockId,
+    );
+    expect(all.find((r) => r.nameKey === 'latertwo')).toMatchObject({
+      state: 'LIFTED',
+      current: true,
+    });
   });
 });
 

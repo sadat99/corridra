@@ -372,4 +372,46 @@ describe('the S3 commands while the module is paused', () => {
     });
     expect((await w.addCandidate('operator', ids)).candidateId).toBeTruthy();
   });
+
+  test('a name block is lifted and blocked again by its row id while the module is paused', async () => {
+    await configureSupplySources(w.owner, {
+      enabled: false,
+      reason: 'Pause for the block by id test',
+    });
+    const put = await w.candidates.blockCompany(w.users.operator.ctx, {
+      commandId: randomUUID(),
+      companyName: 'A&B Ltd',
+      country: 'DE',
+      reason: 'The company asked to be left alone',
+      reference: 'ticket 71',
+    });
+    const lifted = await w.candidates.liftCompany(w.users.owner.ctx, {
+      commandId: randomUUID(),
+      blockId: put.blockId,
+      reason: 'The company agreed to be listed',
+      reference: 'ticket 72',
+    });
+    expect(lifted.blockId).toBeTruthy();
+    const again = await w.candidates.blockCompany(w.users.operator.ctx, {
+      commandId: randomUUID(),
+      blockId: put.blockId,
+      reason: 'The company asked again',
+      reference: 'ticket 73',
+    });
+    const rows = (
+      await w.owner.query(
+        'SELECT state,name_key,country FROM app.supply_do_not_contact WHERE id=ANY($1) ORDER BY seq',
+        [[put.blockId, lifted.blockId, again.blockId]],
+      )
+    ).rows;
+    expect(rows).toEqual([
+      { state: 'BLOCKED', name_key: 'ab', country: 'DE' },
+      { state: 'LIFTED', name_key: 'ab', country: 'DE' },
+      { state: 'BLOCKED', name_key: 'ab', country: 'DE' },
+    ]);
+    await configureSupplySources(w.owner, {
+      enabled: true,
+      reason: 'Reopen after the block by id test',
+    });
+  });
 });
