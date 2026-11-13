@@ -79,7 +79,9 @@ describe('the saved request notice', () => {
     expect(access).toContain('<PendingRequestNotice where={mode} />');
     expect((access.match(/<PendingRequestNotice/g) ?? []).length).toBe(1);
     const account = readFileSync(resolve('apps/web/app/account/page.tsx'), 'utf8');
-    expect(account).toContain('<PendingRequestNotice where="account" enabled={realUseEnabled()} />');
+    expect(account).toContain(
+      '<PendingRequestNotice where="account" enabled={realUseEnabled()} />',
+    );
     expect(account).toContain('<PendingRequestNotice where="verify" enabled={realUseEnabled()} />');
   });
 
