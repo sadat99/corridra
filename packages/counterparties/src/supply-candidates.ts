@@ -5,7 +5,7 @@ import {
   type RequestContext,
   type TenantTransaction,
 } from '@corridra/db';
-import { DomainError } from '@corridra/domain';
+import { DomainError, stepUpRequired } from '@corridra/domain';
 import { canonicalJson } from '@corridra/domain/counterparty-profiles';
 import {
   addCandidate,
@@ -471,6 +471,48 @@ export class SupplyCandidateService {
         [t.tenantId, v.limit],
       );
       return rows.rows[0]?.rows ?? [];
+    });
+  }
+
+  // ---- what a screen needs to know before it offers a control ------------------------------------------------------------
+
+  /** Whether the module control is open (false while paused), and the newest profile version of a mission, if it has one. */
+  async screenState(
+    ctx: RequestContext,
+    missionId?: unknown,
+  ): Promise<{
+    moduleOpen: boolean;
+    profile: { id: string; version: number; role: string } | null;
+  }> {
+    const id = missionId === undefined ? undefined : supplyId.parse(missionId);
+    return this.read(ctx, async (t) => {
+      const open = await t.db.query<{ open: boolean }>(
+        'SELECT app.supply_module_enabled() AS open',
+      );
+      const profile = id
+        ? await t.db.query<{ id: string; version: number; role: string }>(
+            'SELECT id,version,role FROM app.counterparty_profile_version WHERE tenant_id=$1 AND mission_id=$2 ORDER BY created_at DESC LIMIT 1',
+            [t.tenantId, id],
+          )
+        : null;
+      return { moduleOpen: open.rows[0]?.open === true, profile: profile?.rows[0] ?? null };
+    });
+  }
+
+  /**
+   * Run before a lift by the web route: a person who may lift but whose authenticator check is old gets the step-up answer
+   * (401 STEP_UP_REQUIRED) so the screen can re-verify and retry; a person who may not lift gets Access denied.
+   */
+  async requireFreshLift(ctx: RequestContext): Promise<void> {
+    return withTenant(this.pool, ctx, 'research.manage', async (t) => {
+      const who = await t.db.query<{ role: string | null; fresh: boolean | null }>(
+        'SELECT app.member_role($1::uuid) AS role,app.fresh_mfa() AS fresh',
+        [t.tenantId],
+      );
+      const row = who.rows[0];
+      if (row?.role !== 'owner' && row?.role !== 'admin')
+        throw new DomainError('Access denied', 403);
+      if (!row.fresh) throw stepUpRequired();
     });
   }
 }
