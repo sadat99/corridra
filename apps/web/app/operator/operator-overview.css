@@ -3149,6 +3149,15 @@
 }
 /* Network on a phone: the paused note keeps its three parts one small step apart. */
 @media (max-width: 39.99rem) {
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading {
+    display: grid;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading > * {
+    margin: 0;
+  }
   .ux-operator-home .ux-workspace-body #workspace-network .ux-network-paused {
     gap: var(--space-1);
     padding: var(--space-1) var(--space-3);
