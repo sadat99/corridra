@@ -1536,7 +1536,7 @@
     {
       "path": "docs/adr/0083-source-workflow-on-the-shared-base.md",
       "classification": "Architecture decision",
-      "use": "Proposed, reviews pending (13 Nov 2026): the buying workflow on the shared base, an optional route profile block in the pack configuration, requirement-anchored comparison, landed cost, samples, machinery after-award records, derived readiness; supplier candidates only through ADR-082; designed only"
+      "use": "Accepted for build by the owner, 13 Nov 2026 (pre-approval met), ready to implement: the buying workflow on the shared base, an optional route profile block in the pack configuration, requirement-anchored comparison, landed cost, samples, machinery after-award records, derived readiness; supplier candidates only through ADR-082; designed only"
     },
     {
       "path": "docs/revamp/README.md",
