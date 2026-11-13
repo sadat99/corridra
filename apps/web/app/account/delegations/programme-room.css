@@ -108,6 +108,17 @@ article.room.programme-room .programme-stage .mr-stage > li > button.mr-stage-na
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+/* Vertical timeline (owner's locked look, shared with the customer Room): from 40rem the Invite name sits in
+   its own row like the others, at the same size, and keeps its 44 px tap height without the horizontal
+   bar's pull-up margin. */
+@media (min-width: 40.01rem) {
+  article.room.programme-room .programme-stage .mr-stage > li > button.mr-stage-name.text-link {
+    align-items: center;
+    margin: calc((1.25em - 44px) / 2) 0;
+    font-size: var(--text-sm);
+    line-height: 1.25;
+  }
+}
 .programme-room .room-next .programme-boarding {
   font-variant-numeric: tabular-nums;
 }

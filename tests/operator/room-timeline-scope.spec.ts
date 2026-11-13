@@ -165,17 +165,44 @@ async function open(
   await page.goto(`${origin}/?${query}`);
   await expect(page.getByRole('article', { name: programme.name })).toBeVisible();
 }
-test('the organiser programme room keeps its horizontal stage bar at 1440', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await open(page, 'room=1&proj=1', none);
-  const items = page.locator('.programme-stage .mr-stage > li');
-  await expect(items).toHaveCount(6);
-  const boxes = await items.evaluateAll((els) =>
+const stepBoxes = (page: Page) =>
+  page.locator('.programme-stage .mr-stage > li').evaluateAll((els) =>
     els.map((el) => {
       const r = el.getBoundingClientRect();
       return { x: Math.round(r.x), y: Math.round(r.y) };
     }),
   );
+// The owner's locked look: the organiser programme room draws the same vertical stage timeline as the
+// customer Room (PR 462) from 40rem. This inverts the earlier "keeps its horizontal bar" scope test.
+for (const width of [768, 1440])
+  test(`the organiser programme room stands its stages in one vertical timeline at ${width}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await open(page, 'room=1&proj=1', none);
+    await expect(page.locator('.programme-stage .mr-stage > li')).toHaveCount(6);
+    const boxes = await stepBoxes(page);
+    expect(new Set(boxes.map((b) => b.x)).size).toBe(1);
+    boxes.forEach((b, i) => {
+      if (i > 0) expect(b.y, `stage ${i} below the previous`).toBeGreaterThan(boxes[i - 1].y);
+    });
+    // The rule between the square nodes is the customer Room's own, and the six words stay in order.
+    const rule = await page
+      .locator('.programme-stage .mr-stage > li')
+      .first()
+      .evaluate((el) => getComputedStyle(el, '::after').content);
+    expect(rule).not.toBe('none');
+    await expect(page.locator('.programme-stage .mr-stage > li[aria-current="step"]')).toHaveCount(
+      0,
+    );
+  });
+test('the organiser programme room keeps its slim horizontal stage bar on a phone', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await open(page, 'room=1&proj=1', none);
+  const boxes = await stepBoxes(page);
+  expect(boxes).toHaveLength(6);
   expect(new Set(boxes.map((b) => b.y)).size).toBe(1);
   expect(new Set(boxes.map((b) => b.x)).size).toBe(6);
 });

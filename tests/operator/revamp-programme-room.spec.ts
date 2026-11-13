@@ -974,8 +974,13 @@ for (const width of [390, 1440])
     // its name sits level with the plain names (review finding on PR 288).
     const invite = await page.locator('.programme-stage button.mr-stage-name').boundingBox();
     expect(invite?.height, 'Invite tap height').toBeGreaterThanOrEqual(43.5);
-    for (const box of boxes) {
+    // The owner's locked look is a vertical timeline (same as the customer Room): the names share one left
+    // edge and each stands lower than the one before, instead of sharing one top.
+    for (const [index, box] of boxes.entries()) {
       expect(Math.abs(box.left - boxes[0].left), 'name left edge').toBeLessThanOrEqual(1);
-      expect(Math.abs(box.top - boxes[0].top), 'name top').toBeLessThanOrEqual(2);
+      if (index > 0)
+        expect(box.top, `name ${index} below the previous`).toBeGreaterThan(
+          boxes[index - 1].top + 8,
+        );
     }
   });
