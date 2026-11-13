@@ -490,72 +490,75 @@ export function WorkspaceControls({
                         : 'No existing members were returned for this workspace.'
                       : 'Load workspace members to choose whose access to update.'}
                   </p>
-                  <form
-                    className="operator-form"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      const form = new FormData(event.currentTarget);
-                      const userId = String(form.get('user') ?? '');
-                      const version = members.find((m) => m.user_id === userId)?.version;
-                      // Without the version the list was not loaded properly: do not guess it.
-                      if (version === undefined) return;
-                      onUpdateMember({
-                        userId,
-                        role: String(form.get('role') ?? ''),
-                        revoked: form.get('revoked') === 'on',
-                        expectedVersion: version,
-                      });
-                    }}
-                  >
-                    <label className="field">
-                      Workspace member
-                      <select
-                        name="user"
-                        required
-                        disabled={!members.length || busy}
-                        defaultValue=""
-                      >
-                        <option value="" disabled>
-                          Select an existing member
-                        </option>
-                        {members.map((member) => (
-                          <option key={member.user_id} value={member.user_id}>
-                            {member.name ?? 'Unnamed member'} ·{' '}
-                            {roleNames[member.role ?? ''] ?? member.role} ·{' '}
-                            {member.revoked_at ? 'Revoked' : 'Active'}
+                  <details className="ux-controls-fold">
+                    <summary>Change a Member’s Role or Access</summary>
+                    <form
+                      className="operator-form"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        const form = new FormData(event.currentTarget);
+                        const userId = String(form.get('user') ?? '');
+                        const version = members.find((m) => m.user_id === userId)?.version;
+                        // Without the version the list was not loaded properly: do not guess it.
+                        if (version === undefined) return;
+                        onUpdateMember({
+                          userId,
+                          role: String(form.get('role') ?? ''),
+                          revoked: form.get('revoked') === 'on',
+                          expectedVersion: version,
+                        });
+                      }}
+                    >
+                      <label className="field">
+                        Workspace member
+                        <select
+                          name="user"
+                          required
+                          disabled={!members.length || busy}
+                          defaultValue=""
+                        >
+                          <option value="" disabled>
+                            Select an existing member
                           </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="field">
-                      Role
-                      <select
-                        name="role"
-                        required
-                        disabled={!members.length || busy}
-                        defaultValue=""
-                      >
-                        <option value="" disabled>
-                          Select the intended role
-                        </option>
-                        {['owner', 'admin', 'operator', 'reviewer', 'viewer'].map((role) => (
-                          <option key={role} value={role}>
-                            {role[0].toUpperCase() + role.slice(1)}
+                          {members.map((member) => (
+                            <option key={member.user_id} value={member.user_id}>
+                              {member.name ?? 'Unnamed member'} ·{' '}
+                              {roleNames[member.role ?? ''] ?? member.role} ·{' '}
+                              {member.revoked_at ? 'Revoked' : 'Active'}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="field">
+                        Role
+                        <select
+                          name="role"
+                          required
+                          disabled={!members.length || busy}
+                          defaultValue=""
+                        >
+                          <option value="" disabled>
+                            Select the intended role
                           </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="ux-controls-revoke">
-                      <input type="checkbox" name="revoked" disabled={!members.length || busy} />
-                      <span>
-                        Revoke membership
-                        <small>Remove this member’s access to this workspace.</small>
-                      </span>
-                    </label>
-                    <button className="primary-link" disabled={busy || !members.length}>
-                      {busy ? 'Please Wait…' : 'Update Membership'}
-                    </button>
-                  </form>
+                          {['owner', 'admin', 'operator', 'reviewer', 'viewer'].map((role) => (
+                            <option key={role} value={role}>
+                              {role[0].toUpperCase() + role.slice(1)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="ux-controls-revoke">
+                        <input type="checkbox" name="revoked" disabled={!members.length || busy} />
+                        <span>
+                          Revoke membership
+                          <small>Remove this member’s access to this workspace.</small>
+                        </span>
+                      </label>
+                      <button className="primary-link" disabled={busy || !members.length}>
+                        {busy ? 'Please Wait…' : 'Update Membership'}
+                      </button>
+                    </form>
+                  </details>
                   <details className="ux-controls-help">
                     <summary>Membership rules and recovery</summary>
                     <p>
@@ -564,7 +567,10 @@ export function WorkspaceControls({
                       membership; it does not reactivate a suspended identity.
                     </p>
                   </details>
-                  <AuthenticatorReset tenant={tenant} members={members} />
+                  <details className="ux-controls-fold">
+                    <summary>Reset a Member’s Authenticator</summary>
+                    <AuthenticatorReset tenant={tenant} members={members} />
+                  </details>
                 </section>
               </>
             ),

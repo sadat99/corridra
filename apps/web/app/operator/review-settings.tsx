@@ -354,58 +354,62 @@ export function ReviewSettings({ tenant, role }: { tenant: string; role: string 
           },
         ]}
       />
-      <p>
-        Owner and admin reviews use existing versioned commands. Source, country, currency,
-        permission and authenticator checks still apply. Use only records and actions approved for
-        this workspace.
-      </p>
+      <div className="ux-settings-head">
+        <p>
+          Owner and admin reviews use existing versioned commands. Source, country, currency,
+          permission and authenticator checks still apply. Use only records and actions approved for
+          this workspace.
+        </p>
+        <div className="workspace-links">
+          <a href="#workspace-navigation">Back to workspace sections</a>
+          <a href="#workspace-sources">Find source references</a>
+          <a href="#workspace-authenticator">Confirm your authenticator</a>
+          {role === 'owner' && <a href="#workspace-controls">Workspace switches</a>}
+          {next && <a href={next}>Continue to the related workspace</a>}
+        </div>
+      </div>
       <p role="status" aria-live="polite">
         {message}
       </p>
-      <div className="workspace-links">
-        <a href="#workspace-navigation">Back to workspace sections</a>
-        <a href="#workspace-sources">Find source references</a>
-        <a href="#workspace-authenticator">Confirm your authenticator</a>
-        {role === 'owner' && <a href="#workspace-controls">Workspace switches</a>}
-        {next && <a href={next}>Continue to the related workspace</a>}
+      <div className="ux-settings-refresh">
+        <button
+          className="text-link"
+          disabled={busy}
+          aria-busy={busy}
+          onClick={() => {
+            if (busy) return;
+            setBusy(true);
+            void request('mission-catalogue')
+              .then(setCatalogue)
+              .catch((e) => setMessage(e.message))
+              .finally(() => setBusy(false));
+          }}
+        >
+          Refresh Reviewed Configuration
+        </button>
+        {catalogue ? (
+          <dl className="ux-settings-counts">
+            <div>
+              <dt>Routes returned</dt>
+              <dd>{catalogue.routes.length}</dd>
+            </div>
+            <div>
+              <dt>Route packs returned</dt>
+              <dd>{catalogue.packs.length}</dd>
+            </div>
+            <div>
+              <dt>Mission types returned</dt>
+              <dd>{catalogue.types.length}</dd>
+            </div>
+          </dl>
+        ) : (
+          <p className="ux-panel-empty">
+            {message
+              ? 'Reviewed references are unavailable. Refresh reviewed configuration to try again.'
+              : 'Loading reviewed references…'}
+          </p>
+        )}
       </div>
-      <button
-        className="text-link"
-        disabled={busy}
-        aria-busy={busy}
-        onClick={() => {
-          if (busy) return;
-          setBusy(true);
-          void request('mission-catalogue')
-            .then(setCatalogue)
-            .catch((e) => setMessage(e.message))
-            .finally(() => setBusy(false));
-        }}
-      >
-        Refresh Reviewed Configuration
-      </button>
-      {catalogue ? (
-        <dl className="ux-settings-counts">
-          <div>
-            <dt>Routes returned</dt>
-            <dd>{catalogue.routes.length}</dd>
-          </div>
-          <div>
-            <dt>Route packs returned</dt>
-            <dd>{catalogue.packs.length}</dd>
-          </div>
-          <div>
-            <dt>Mission types returned</dt>
-            <dd>{catalogue.types.length}</dd>
-          </div>
-        </dl>
-      ) : (
-        <p className="ux-panel-empty">
-          {message
-            ? 'Reviewed references are unavailable. Refresh reviewed configuration to try again.'
-            : 'Loading reviewed references…'}
-        </p>
-      )}
       <div className="ux-settings-sections">
         <details>
           <summary data-step="01">Prepare commercial mission templates</summary>

@@ -1,4 +1,5 @@
 'use client';
+import { SubTabs } from '../../components/ux/sub-tabs';
 import { OperatorWorkbench } from '../../components/operator-workbench';
 import { StatusBadge } from '../../components/access-state';
 import {
@@ -251,140 +252,162 @@ export function GovernedAssistance({ tenant, role }: { tenant: string; role: str
           .
         </p>
       )}
-      <h3>Prepare a source-linked draft</h3>
-      <form className="operator-form" onSubmit={run}>
-        <label className="field">
-          Task
-          <select name="task">
-            {tasks.map((task) => (
-              <option key={task} value={task}>
-                {task.replaceAll('_', ' ')}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="field">
-          Mission reference
-          <input name="mission" required />
-        </label>
-        <label className="field">
-          Reviewed model policy
-          <select name="policy" required>
-            <option value="">Choose an approved policy</option>
-            {data?.policies.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.key} v{p.version} · {p.configuration.adapter} · {p.configuration.model}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="field">
-          Approved public claim references, separated by commas
-          <input name="claims" required />
-        </label>
-        <label className="field">
-          Translation language, when translating
-          <input name="language" placeholder="bn" />
-        </label>
-        <button className="primary-link" disabled={busy || !data?.enabled}>
-          Prepare a Draft
-        </button>
-      </form>
-      <h3>Recorded draft reviews</h3>
-      {data && !data.drafts.length && (
-        <p>
-          No recorded drafts in this workspace. Continue manual mission work or prepare a draft only
-          when its reviewed policy and source rights permit it.
-        </p>
-      )}
-      {data?.drafts.map((draft, i) => (
-        <article key={draft.result_id ?? `${draft.run_id}-${i}`}>
-          <h3>{draft.task.replaceAll('_', ' ')}</h3>
-          <p>
-            {draft.status ?? 'Pending; continue manually'} · {draft.decision ?? 'Awaiting review'}
-          </p>
-          {draft.metadata && (
-            <p>
-              {draft.metadata.adapter} · {draft.metadata.model} · {draft.metadata.promptVersion} ·
-              estimated{' '}
-              {draft.metadata.estimatedMinor
-                ? displayMoney(draft.metadata.estimatedMinor, 'USD')
-                : 'cost unknown'}{' '}
-              · {draft.metadata.latencyMs} ms
-            </p>
-          )}
-          {draft.output !== null && draft.output !== undefined && (
-            <>
-              <StatusBadge tone="unknown">Unverified AI draft</StatusBadge>
-              <pre
-                className="ai-draft-preview"
-                tabIndex={0}
-                role="region"
-                aria-label={`Original ${draft.task.replaceAll('_', ' ')} draft ${i + 1}`}
-              >
-                {JSON.stringify(draft.edited_output ?? draft.output, null, 2)}
-              </pre>
-              <button
-                className="text-link"
-                disabled={busy}
-                onClick={() =>
-                  void request('ai-sources', undefined, draft.run_id)
-                    .then(setSources)
-                    .catch((e) => setMessage(e.message))
-                }
-              >
-                Inspect Original Sources
-              </button>
-              {!draft.decision && (
-                <form className="operator-form" onSubmit={(e) => review(e, draft)}>
+      <SubTabs
+        label="AI assistance sections"
+        tabs={[
+          {
+            id: 'ai-reviews',
+            label: `Recorded drafts (${data?.drafts.length ?? 0})`,
+            panel: (
+              <>
+                <h3>Recorded draft reviews</h3>
+                {data && !data.drafts.length && (
+                  <p>
+                    No recorded drafts in this workspace. Continue manual mission work or prepare a
+                    draft only when its reviewed policy and source rights permit it.
+                  </p>
+                )}
+                {data?.drafts.map((draft, i) => (
+                  <article key={draft.result_id ?? `${draft.run_id}-${i}`}>
+                    <h3>{draft.task.replaceAll('_', ' ')}</h3>
+                    <p>
+                      {draft.status ?? 'Pending; continue manually'} ·{' '}
+                      {draft.decision ?? 'Awaiting review'}
+                    </p>
+                    {draft.metadata && (
+                      <p>
+                        {draft.metadata.adapter} · {draft.metadata.model} ·{' '}
+                        {draft.metadata.promptVersion} · estimated{' '}
+                        {draft.metadata.estimatedMinor
+                          ? displayMoney(draft.metadata.estimatedMinor, 'USD')
+                          : 'cost unknown'}{' '}
+                        · {draft.metadata.latencyMs} ms
+                      </p>
+                    )}
+                    {draft.output !== null && draft.output !== undefined && (
+                      <>
+                        <StatusBadge tone="unknown">Unverified AI draft</StatusBadge>
+                        <pre
+                          className="ai-draft-preview"
+                          tabIndex={0}
+                          role="region"
+                          aria-label={`Original ${draft.task.replaceAll('_', ' ')} draft ${i + 1}`}
+                        >
+                          {JSON.stringify(draft.edited_output ?? draft.output, null, 2)}
+                        </pre>
+                        <button
+                          className="text-link"
+                          disabled={busy}
+                          onClick={() =>
+                            void request('ai-sources', undefined, draft.run_id)
+                              .then(setSources)
+                              .catch((e) => setMessage(e.message))
+                          }
+                        >
+                          Inspect Original Sources
+                        </button>
+                        {!draft.decision && (
+                          <form className="operator-form" onSubmit={(e) => review(e, draft)}>
+                            <label className="field">
+                              Review decision
+                              <select name="decision">
+                                <option value="ACCEPT">Accept as reviewed draft</option>
+                                <option value="EDIT">Edit the structured draft</option>
+                                <option value="REJECT">Reject draft</option>
+                              </select>
+                            </label>
+                            <details>
+                              <summary>Edit structured proposal</summary>
+                              <label className="field">
+                                Draft including original source references
+                                <textarea
+                                  name="edited"
+                                  defaultValue={JSON.stringify(draft.output, null, 2)}
+                                  maxLength={24000}
+                                />
+                              </label>
+                            </details>
+                            <label className="field">
+                              Review reason
+                              <input name="reason" required minLength={3} maxLength={500} />
+                            </label>
+                            <button className="primary-link" disabled={busy}>
+                              Save Human Review
+                            </button>
+                          </form>
+                        )}
+                      </>
+                    )}
+                  </article>
+                ))}
+                {sources !== null && (
+                  <details open>
+                    <summary>Authorized original source quotations and rights</summary>
+                    <pre
+                      className="ai-draft-preview"
+                      tabIndex={0}
+                      role="region"
+                      aria-label="Original source and rights data"
+                    >
+                      {JSON.stringify(sources, null, 2)}
+                    </pre>
+                    <button className="text-link" onClick={() => setSources(null)}>
+                      Close Source Inspection
+                    </button>
+                  </details>
+                )}
+              </>
+            ),
+          },
+          {
+            id: 'ai-prepare',
+            label: 'Prepare a Draft',
+            panel: (
+              <>
+                <h3>Prepare a source-linked draft</h3>
+                <form className="operator-form" onSubmit={run}>
                   <label className="field">
-                    Review decision
-                    <select name="decision">
-                      <option value="ACCEPT">Accept as reviewed draft</option>
-                      <option value="EDIT">Edit the structured draft</option>
-                      <option value="REJECT">Reject draft</option>
+                    Task
+                    <select name="task">
+                      {tasks.map((task) => (
+                        <option key={task} value={task}>
+                          {task.replaceAll('_', ' ')}
+                        </option>
+                      ))}
                     </select>
                   </label>
-                  <details>
-                    <summary>Edit structured proposal</summary>
-                    <label className="field">
-                      Draft including original source references
-                      <textarea
-                        name="edited"
-                        defaultValue={JSON.stringify(draft.output, null, 2)}
-                        maxLength={24000}
-                      />
-                    </label>
-                  </details>
                   <label className="field">
-                    Review reason
-                    <input name="reason" required minLength={3} maxLength={500} />
+                    Mission reference
+                    <input name="mission" required />
                   </label>
-                  <button className="primary-link" disabled={busy}>
-                    Save Human Review
+                  <label className="field">
+                    Reviewed model policy
+                    <select name="policy" required>
+                      <option value="">Choose an approved policy</option>
+                      {data?.policies.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.key} v{p.version} · {p.configuration.adapter} · {p.configuration.model}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field">
+                    Approved public claim references, separated by commas
+                    <input name="claims" required />
+                  </label>
+                  <label className="field">
+                    Translation language, when translating
+                    <input name="language" placeholder="bn" />
+                  </label>
+                  <button className="primary-link" disabled={busy || !data?.enabled}>
+                    Prepare a Draft
                   </button>
                 </form>
-              )}
-            </>
-          )}
-        </article>
-      ))}
-      {sources !== null && (
-        <details open>
-          <summary>Authorized original source quotations and rights</summary>
-          <pre
-            className="ai-draft-preview"
-            tabIndex={0}
-            role="region"
-            aria-label="Original source and rights data"
-          >
-            {JSON.stringify(sources, null, 2)}
-          </pre>
-          <button className="text-link" onClick={() => setSources(null)}>
-            Close Source Inspection
-          </button>
-        </details>
-      )}
+              </>
+            ),
+          },
+        ]}
+      />
     </section>
   );
 }
