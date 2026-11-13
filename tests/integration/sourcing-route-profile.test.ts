@@ -211,7 +211,7 @@ function* countryPairs(count: number) {
 }
 
 describe('scenario 16: generated country pairs in both orders take the identical engine path', () => {
-  const currencies = ['BDT', 'CNY', 'EUR', 'USD', 'JPY', 'KES'];
+  const currencies = ['BDT', 'CNY', 'EUR', 'USD', 'JPY', 'KES'] as const;
   // The pair reaches every input the engine reads: localities, coverage, currencies and the reason. Code that branched on a
   // country, a currency or a market name would change the result for that pair and fail here.
   const engine = (origin: string, destination: string) => {
