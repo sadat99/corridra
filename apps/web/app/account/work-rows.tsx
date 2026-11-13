@@ -17,7 +17,7 @@ export function WorkRows({ children }: { children: ReactNode }) {
           { name: 'Journey', width: 'minmax(0, 0.8fr)' },
           { name: 'Kind' },
           { name: 'Workspace' },
-          { name: 'Status' },
+          { name: 'Status', width: 'minmax(max-content, 1fr)' },
           { name: 'Date' },
         ]}
       >

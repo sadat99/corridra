@@ -459,6 +459,6 @@ describe('reading a whole list before saying nothing is waiting', () => {
   });
   it('Your Move keeps the saved-request recovery notice that Home shows', () => {
     const page = readFileSync(resolve('apps/web/app/account/move/page.tsx'), 'utf8');
-    expect(page).toContain('<PendingRequestNotice where="account" />');
+    expect(page).toContain('<PendingRequestNotice where="account" enabled={realUseEnabled()} />');
   });
 });

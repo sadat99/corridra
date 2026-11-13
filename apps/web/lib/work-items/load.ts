@@ -3,6 +3,7 @@
 // the same session proof, adds no table, route or write, and keeps only items in a workspace the person
 // belongs to. A source that is on and fails is named in `unreadable`; a module that is off is a true
 // empty; a list longer than the pages read sets `partial`.
+import { cache } from 'react';
 import { customerMissionDraftsEnabled } from '@corridra/auth/customer-mission-drafts';
 import { customerProgrammesEnabled } from '@corridra/auth/customer-programmes';
 import { customerRequestDetailsEnabled } from '@corridra/auth/customer-request-details';
@@ -13,7 +14,7 @@ import { foundations } from '../foundations';
 import { movePageCap, moveWorkspaceCap } from '../move-constants';
 import { followPages } from '../move-pages';
 import { requestTitle } from '../../app/account/request-words';
-import { classifyDraftFamily, classifyObjective } from './classify';
+import { classifyDraftFamily, classifyObjective, classifyServiceContext } from './classify';
 import { sortWorkItems } from './sort';
 import type { WorkItem, WorkList, WorkSource } from './types';
 
@@ -33,12 +34,29 @@ async function attempt<T>(read: () => Promise<T>): Promise<T | null> {
   }
 }
 
-export async function loadWorkItems(
+/**
+ * One read for each request. The Requests list, Home, Meetings, Your Move and the sidebar's journey counts all ask
+ * for the same list in the same render; the cache is keyed on plain values (an options object would never match),
+ * so the second and later callers share the first caller's read and the sidebar adds no extra one on those pages.
+ */
+const loadOnce = cache((subject: string, issuer: string, rooms: boolean) =>
+  readWorkItems(subject, issuer, { rooms }),
+);
+
+export function loadWorkItems(
   subject: string,
   issuer: string,
   options: {
     /** `CORRIDRA_UX_ROAD`: a request opens in its Room, as Your Move does. */ rooms?: boolean;
   } = {},
+): Promise<WorkList> {
+  return loadOnce(subject, issuer, !!options.rooms);
+}
+
+async function readWorkItems(
+  subject: string,
+  issuer: string,
+  options: { rooms?: boolean } = {},
 ): Promise<WorkList> {
   const none: WorkList = {
     items: [],
@@ -190,8 +208,8 @@ export async function loadWorkItems(
         kind: 'service_request',
         id: request.id,
         workspaceId: request.workspaceId,
-        // Display text such as the context label never classifies.
-        family: 'UNCLASSIFIED',
+        // Display text such as the context label never classifies; the stored context kind does.
+        family: classifyServiceContext(request.contextKind),
         title: text(request.serviceTitle),
         status: request.status,
         at: request.updatedAt,

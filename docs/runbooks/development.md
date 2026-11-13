@@ -46,3 +46,18 @@ Public browsers start their isolated production server on 3100; protected tests 
 `pnpm test:docs` verifies byte-preserved originals, protected working copies, V2 owner packets, UX ledger consistency and handoff links. Do not regenerate hashes to hide drift. Dated release records and evidence manifests remain historical; update current guides/matrix with new evidence instead.
 
 See [verification and continuation](../verification-guide.md) for a complete journey audit and [deployment](deployment.md) for exact-SHA release. Keep credentials, personal data, reset URLs and MFA material out of source and test artifacts.
+
+## Signed-in sweep (QA Test identities)
+
+`scripts/qa/signed-in-sweep.ts` opens every signed-in page as a customer, organiser, participant, seller and staff member at 390, 768 and 1440 px. It records sideways scroll, console errors, failed requests, missing navigation, the UX targets of `scripts/qa/ux-measure.ts` and wrong role access (a customer role must be turned away from `/operator`, staff from `/account`). Every page in `apps/web/app` is classified in `scripts/qa/sweep-routes.ts`; `tests/integration/signed-in-sweep-routes.test.ts` fails when a new page has no access rule.
+
+**Local run (the default).** Start the local PostgreSQL (`pnpm db:local`, or the native route in [KI-15](../v3/KNOWN_ISSUES.md)), run `pnpm build`, then:
+
+```sh
+PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome \
+  pnpm exec tsx scripts/qa/signed-in-sweep.ts [--roles customer,staff] [--out work/signed-in-sweep]
+```
+
+It rebuilds the throwaway database `corridra_sweep`, installs every optional module that `scripts/install-customer-modules.ts` installs (reply review 0003 included; real billing and real invoicing stay out), pins a stand-in customer issuer, seeds "QA Test" identities with passwords and session tokens generated for that run, starts the production build on port 3400 with every display switch on and the real-use switches off, enrols the staff authenticator and sweeps. Customer labels begin "Synthetic " because synthetic mode refuses any other label. Output is `work/signed-in-sweep/<time>/summary.md` and `report.jsonl`. Nothing is committed: passwords, tokens and the authenticator key exist only in that run's memory and ignored `work/` files.
+
+**Against a deployment later.** Once test accounts exist, put their session cookies (customer roles) or sign-in details and authenticator key (staff) in a file outside the repository and run `QA_SWEEP_IDENTITIES=that-file pnpm exec tsx scripts/qa/signed-in-sweep.ts --base https://host`. Remote mode seeds and starts nothing and only opens pages. Do not point it at production before the owner has allowed those accounts.
