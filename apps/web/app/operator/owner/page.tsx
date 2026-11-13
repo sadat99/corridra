@@ -166,6 +166,10 @@ export default async function Page({
                       ))}
                     </ul>
                   </section>
+                  <p className="owner-line">
+                    {deferredControls.length} controls are open. Status: {DEFERRED_LABEL}. Each one
+                    is listed under <a href="#owner-gaps">Open gaps</a> with its risk.
+                  </p>
                 </section>
               </>
             ),
@@ -175,7 +179,7 @@ export default async function Page({
             label: `Blocked (${blockedItems.length})`,
             panel: (
               <>
-                <section className="owner-board">
+                <section>
                   <section
                     aria-labelledby="owner-blocked"
                     className="owner-section owner-section-tight"
@@ -193,10 +197,6 @@ export default async function Page({
                         </li>
                       ))}
                     </ul>
-                    <p className="owner-line">
-                      {deferredControls.length} controls are open. Status: {DEFERRED_LABEL}. Each
-                      one is listed under <a href="#owner-gaps">Open gaps</a> with its risk.
-                    </p>
                   </section>
                 </section>
               </>

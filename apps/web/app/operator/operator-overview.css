@@ -1637,50 +1637,32 @@
 
 /* Signal Desk density (AC/1): the Delivery list reads as a dense table with a quiet header fill, exceptions stay in the
    columns they already have. Scoped to the workspace body; column order, headers and row actions are unchanged. */
-.ux-workspace-body #workspace-delivery .delivery-table {
-  border: 1px solid var(--ac-border);
-  border-radius: var(--radius-md);
-  background: var(--ac-paper);
-}
-.ux-workspace-body #workspace-delivery .delivery-table :is(th, td) {
-  padding: var(--space-2) var(--space-3);
-  border-bottom-color: var(--ac-border);
-  font-size: var(--text-sm);
-}
-.ux-workspace-body #workspace-delivery .delivery-table th {
-  background: var(--ac-surface-subtle);
-  color: var(--ac-text-secondary);
-  font-weight: 600;
-}
-.ux-workspace-body #workspace-delivery .delivery-table tbody tr:last-child td {
-  border-bottom: 0;
-}
-.ux-workspace-body #workspace-delivery .delivery-table tbody tr:hover td {
-  background: var(--ac-surface-subtle);
-}
-/* Today's counts: a number in the serif, the caption quiet, a late count on the critical surface with its own text. */
-.ux-operator-home .ux-today-tiles strong {
-  font-family: var(--serif);
-}
-
 /* Staff page budget (L21, owner 13 November 2026: desktop at most one screen, phone at most two, disclosures closed).
    Dense two-column head on a laptop: the workspace row and its scope note share one line, the panel title,
    its caption and the jump list sit on compact rows. Nothing is removed; every control stays. */
 @media (min-width: 1024px) {
+  /* A wrapping row, not two fixed columns: the workspace row and its scope note share a line only when both fit,
+     and the note drops to its own line when the window, the rail or the text size leaves too little room. */
   .ux-operator-home .ux-workspace-body {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
+    display: flex;
+    flex-wrap: wrap;
     column-gap: var(--space-4);
     align-items: center;
   }
   .ux-operator-home .ux-workspace-body > * {
-    grid-column: 1 / -1;
+    flex: 1 1 100%;
+    min-width: 0;
   }
   .ux-operator-home .ux-workspace-body > .operator-toolbar {
-    grid-column: 1;
+    flex: 0 1 auto;
+    flex-wrap: nowrap;
+    max-width: 100%;
+  }
+  .ux-operator-home .ux-workspace-body > .operator-toolbar > * {
+    min-width: 0;
   }
   .ux-operator-home .ux-workspace-body > :is(.ux-testmode, .operator-scope-note) {
-    grid-column: 2;
+    flex: 1 1 16rem;
     margin: 0;
   }
   .ux-operator-home .ux-workspace-body .workspace-panel .ux-panel-heading,
@@ -1769,10 +1751,6 @@
   }
 }
 @media (min-width: 1024px) {
-  .ux-operator-home .ux-workspace-body > .operator-toolbar {
-    flex-wrap: nowrap;
-    white-space: nowrap;
-  }
   .ux-operator-home .ux-workspace-body .ux-panel-heading p:last-child {
     flex: 1 1 auto;
     flex-basis: auto;
@@ -1994,10 +1972,10 @@
   }
 }
 /* Phone: two jump buttons per row, links and counts side by side, a quieter heading. 44 px targets stay. */
-@media (max-width: 1023px) {
-  /* The jump list is one scrolling row on a phone, so it costs one row instead of four. */
+@media (max-width: 39.99rem) {
+  /* The jump list keeps every chip on screen: it wraps (no sideways scroll), the label and the chips close together. */
   .ux-operator-home .ux-workspace-body .ux-operator-workbench {
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     align-items: center;
     gap: var(--space-2);
   }
@@ -2006,14 +1984,22 @@
   }
   .ux-operator-home .ux-workspace-body .ux-operator-workbench > div {
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     gap: var(--space-1);
     min-width: 0;
-    overflow-x: auto;
-    scrollbar-width: thin;
   }
-  .ux-operator-home .ux-workspace-body .ux-operator-workbench > div > button {
-    flex: 0 0 auto;
+  /* Two chips to a row. The shared phone rule for text-link buttons makes each one a full row; this one is
+     written to outrank it for the jump list only, so a long list costs a few rows and no chip leaves the screen. */
+  .ux-operator-home
+    .ux-workspace-body
+    .ux-operator-workbench
+    > div
+    > button.text-link:not(.ux-back):not([role='tab']):not([hidden]) {
+    flex: 1 1 calc(50% - var(--space-1));
+    width: auto;
+    min-height: 2.75rem;
+    padding-block: 0;
+    line-height: 1.2;
   }
   .ux-operator-home .ux-workspace-body .ux-operator-workbench button {
     min-height: 2.75rem;
@@ -2060,7 +2046,7 @@
     min-height: 2.75rem;
   }
 }
-@media (max-width: 1023px) {
+@media (max-width: 39.99rem) {
   .ux-operator-home .ux-workspace-body > .operator-toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -2070,14 +2056,8 @@
   .ux-operator-home .ux-workspace-body > .operator-toolbar > label.field {
     flex: 1 1 100%;
   }
-  .ux-operator-home .ux-workspace-body .ux-subtabs-list {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: thin;
-  }
   .ux-operator-home .ux-workspace-body .ux-subtabs-tab {
-    flex: 0 0 auto;
-    white-space: nowrap;
+    flex: 0 1 auto;
   }
 }
 .ux-operator-home .ux-workspace-body :is(.ux-panel, .ux-subtabs, .ux-subtabs-panel) {
@@ -2630,7 +2610,7 @@
   }
 }
 /* Phone density for every tool panel: smaller body text, one step between blocks, lighter card padding. Targets stay 44 px. */
-@media (max-width: 1023px) {
+@media (max-width: 39.99rem) {
   .ux-operator-home .ux-workspace-body .workspace-panel.ux-panel,
   .ux-operator-home .ux-workspace-body .ux-governance-panel {
     padding: var(--space-3);
@@ -2688,13 +2668,10 @@
     margin-block: var(--space-1);
   }
 }
-@media (max-width: 1023px) {
+@media (max-width: 39.99rem) {
   /* The workspace row keeps its 44 px targets but puts the two links beside each other. */
   .ux-operator-home .ux-workspace-body > .operator-toolbar > :is(a, button).text-link {
     flex: 1 1 auto;
-  }
-  .ux-operator-home .ux-workspace-body .ux-operator-workbench button {
-    white-space: nowrap;
   }
   .ux-operator-home .ux-workspace-body .workspace-links {
     gap: 0 var(--space-3);
@@ -2703,7 +2680,7 @@
     flex: 1 1 10rem;
   }
 }
-@media (max-width: 1023px) {
+@media (max-width: 39.99rem) {
   .ux-operator-home .ux-workspace-body .workspace-links a {
     flex: 1 1 6rem;
   }
@@ -2714,7 +2691,7 @@
     margin-top: var(--space-2);
   }
 }
-@media (max-width: 1023px) {
+@media (max-width: 39.99rem) {
   .ux-operator-home .ux-workspace-body .workspace-links {
     display: flex;
     flex-wrap: wrap;
@@ -2732,7 +2709,7 @@
     padding-inline: var(--space-3);
   }
 }
-@media (max-width: 1023px) {
+@media (max-width: 39.99rem) {
   /* The panel head reads as a title with its caption under it; the icon stays beside the title. */
   .ux-operator-home .ux-workspace-body .ux-panel-heading .eyebrow {
     margin-bottom: 0;
@@ -2776,25 +2753,23 @@
     height: 1.5rem;
   }
 }
-@media (max-width: 1023px) {
-  /* Research and Delivery keep their chip row, but it scrolls sideways instead of stacking. */
+@media (max-width: 39.99rem) {
+  /* Research and Delivery keep their chip row on screen: the chips wrap and stay whole. */
   .ux-operator-home
     .ux-workspace-body
     :is(#workspace-research, #workspace-delivery)
     .ux-operator-workbench
     > div {
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     min-width: 0;
-    overflow-x: auto;
-    scrollbar-width: thin;
   }
   .ux-operator-home
     .ux-workspace-body
     :is(#workspace-research, #workspace-delivery)
     .ux-operator-workbench
     button {
-    flex: 0 0 auto;
-    white-space: nowrap;
+    flex: 1 1 calc(50% - var(--space-1));
+    width: auto;
   }
   /* The mission counts read three to a row on a phone. */
   .ux-operator-home .ux-workspace-body .ux-operations-panel .operations-metrics {
@@ -2827,7 +2802,7 @@
     margin: 0;
   }
 }
-@media (max-width: 1023px) {
+@media (max-width: 39.99rem) {
   .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading {
     display: flex;
     flex-wrap: wrap;
@@ -2859,7 +2834,7 @@
     flex: 0 1 auto;
   }
 }
-@media (max-width: 1023px) {
+@media (max-width: 39.99rem) {
   .ux-operator-home .ux-workspace-body #workspace-commercial .detail-grid {
     gap: var(--space-2);
   }
@@ -2892,7 +2867,7 @@
     font-size: var(--text-sm);
   }
 }
-@media (max-width: 1023px) {
+@media (max-width: 39.99rem) {
   .ux-operator-home .ux-workspace-body .ux-operations-panel .ux-next-action :is(h3, h4) {
     font-size: var(--text-base);
   }
@@ -2904,7 +2879,7 @@
     margin-block: 0;
   }
 }
-@media (max-width: 1023px) {
+@media (max-width: 39.99rem) {
   .ux-operator-home
     .ux-workspace-body
     .workspace-panel
@@ -2924,7 +2899,7 @@
     flex: 1 1 100%;
   }
 }
-@media (max-width: 1023px) {
+@media (max-width: 39.99rem) {
   .ux-operator-home .ux-workspace-body .ux-settings-counts > div {
     display: flex;
     flex-direction: column;
@@ -2949,7 +2924,7 @@
     height: 1.5rem;
   }
 }
-@media (max-width: 1023px) {
+@media (max-width: 39.99rem) {
   /* The two workspace links share one row on a phone; each keeps a 44 px target and its whole label. */
   .ux-operator-home
     .ux-workspace-body
@@ -2963,7 +2938,7 @@
     white-space: normal;
   }
 }
-@media (max-width: 1023px) {
+@media (max-width: 39.99rem) {
   /* Panel link rows (Refresh, Open missions, …) pair up on a phone instead of taking a row each. */
   .ux-operator-home .ux-workspace-body .workspace-panel .workspace-links > * {
     flex: 1 1 6rem;
@@ -2974,7 +2949,7 @@
     white-space: normal;
   }
 }
-@media (max-width: 1023px) {
+@media (max-width: 39.99rem) {
   .ux-operator-home .ux-workspace-body #workspace-network .ux-network-paused > :is(h3, p) {
     font-size: var(--text-sm);
   }
@@ -2982,7 +2957,7 @@
     font-size: var(--text-sm);
   }
 }
-@media (max-width: 1023px) {
+@media (max-width: 39.99rem) {
   /* A full-width action in a link row shares the row with the links beside it. */
   .ux-operator-home .ux-workspace-body .workspace-panel .workspace-links > button {
     flex: 1 1 6rem;
@@ -2990,7 +2965,7 @@
     padding-inline: var(--space-2);
   }
   .ux-operator-home .ux-workspace-body #workspace-network .ux-network-paused > button {
-    flex: 1 1 6rem;
+    flex: 1 1 100%;
     min-height: 2.75rem;
   }
   .ux-operator-home .ux-workspace-body #workspace-network .ux-network-paused > details:not([open]) {
@@ -3000,7 +2975,7 @@
     height: 100%;
   }
 }
-@media (max-width: 1023px) {
+@media (max-width: 39.99rem) {
   .ux-operator-home .ux-workspace-body .ux-operator-workbench {
     padding: var(--space-1) var(--space-2);
   }
@@ -3009,12 +2984,9 @@
     font-size: var(--text-sm);
   }
 }
-/* Today on a laptop (L21): Needs you now and the Start card share the left column, This week the right one,
-   and the counts sit beside "Also waiting", so the overview fits one screen. Nothing is moved in the HTML. */
+/* Today on a laptop (L21): Needs you now on the left, This week over the Start card on the right, and the counts
+   beside "Also waiting", so the overview fits one screen. Nothing is moved in the HTML. */
 @media (min-width: 1024px) {
-  .ux-operator-home .ux-today > * + * {
-    margin-top: var(--space-2);
-  }
   .ux-operator-home .ux-also-waiting {
     display: flex;
     flex-wrap: wrap;
@@ -3037,25 +3009,22 @@
   }
   .ux-operator-home .ux-today-columns .ux-needs {
     grid-column: 1;
-    grid-row: 1;
-  }
-  .ux-operator-home .ux-today-columns .workspace-start {
-    grid-column: 1;
-    grid-row: 2;
+    grid-row: 1 / span 2;
   }
   .ux-operator-home .ux-today-columns .ux-week {
     grid-column: 2;
-    grid-row: 1 / span 2;
+    grid-row: 1;
+  }
+  .ux-operator-home .ux-today-columns .workspace-start {
+    grid-column: 2;
+    grid-row: 2;
   }
   .ux-operator-home .ux-today .workspace-start {
     padding: var(--space-3);
   }
-  .ux-operator-home .ux-today .workspace-start > * + * {
-    margin-top: var(--space-2);
-  }
 }
 /* Phone: a form's fields sit one step apart and hints keep their own line, so a long form costs less height. */
-@media (max-width: 1023px) {
+@media (max-width: 39.99rem) {
   .ux-operator-home .ux-workspace-body .workspace-panel form.operator-form {
     gap: var(--space-2);
   }
@@ -3100,7 +3069,7 @@
     gap: var(--space-2);
   }
 }
-@media (max-width: 1023px) {
+@media (max-width: 39.99rem) {
   .ux-operator-home .ux-workspace-body .workspace-panel .workspace-links > * {
     flex-basis: 5rem;
   }
@@ -3134,4 +3103,79 @@
   .ux-operator-home .ux-workspace-body #workspace-ai > section > p:empty {
     flex: 0 0 0;
   }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-today-columns .ux-tool-index a {
+    overflow-wrap: anywhere;
+  }
+}
+/* Phone: the jump links fold behind one button, so a page with a long list stays inside two screens. From 40rem up
+   nothing changes: the button is not shown and every link is. */
+@media (max-width: 39.99rem) {
+  .ux-operator-home .ux-workspace-body .ux-operator-workbench > .ux-workbench-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    padding-inline: var(--space-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface-1);
+    color: var(--brand-deep);
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
+  /* :not(#none) lifts the specificity above the per-panel rules that name their own section by id. */
+  .ux-operator-home .ux-workspace-body .ux-operator-workbench > div[data-shown='false']:not(#none) {
+    display: none;
+  }
+}
+/* Delivery on a laptop (L21): one step between its blocks, and the empty status line, which keeps its place for
+   screen readers, no longer adds a step of its own. */
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body #workspace-delivery section.delivery-ops {
+    gap: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body #workspace-delivery section.delivery-ops > p:empty {
+    margin-block: calc(var(--space-2) * -1);
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    #workspace-delivery
+    section.delivery-ops
+    > .ux-operator-workbench {
+    padding-block: 0;
+  }
+}
+/* Network on a phone: the paused note keeps its three parts one small step apart. */
+@media (max-width: 39.99rem) {
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-paused {
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-3);
+  }
+}
+.ux-workspace-body #workspace-delivery .delivery-table {
+  border: 1px solid var(--ac-border);
+  border-radius: var(--radius-md);
+  background: var(--ac-paper);
+}
+.ux-workspace-body #workspace-delivery .delivery-table :is(th, td) {
+  padding: var(--space-2) var(--space-3);
+  border-bottom-color: var(--ac-border);
+  font-size: var(--text-sm);
+}
+.ux-workspace-body #workspace-delivery .delivery-table th {
+  background: var(--ac-surface-subtle);
+  color: var(--ac-text-secondary);
+  font-weight: 600;
+}
+.ux-workspace-body #workspace-delivery .delivery-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.ux-workspace-body #workspace-delivery .delivery-table tbody tr:hover td {
+  background: var(--ac-surface-subtle);
+}
+/* Today's counts: a number in the serif, the caption quiet, a late count on the critical surface with its own text. */
+.ux-operator-home .ux-today-tiles strong {
+  font-family: var(--serif);
 }

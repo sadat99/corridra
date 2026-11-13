@@ -1646,6 +1646,9 @@ summary:hover {
 }
 
 /* UX-04: contextual controls retain the original mounted operator workflows. */
+.ux-workbench-toggle {
+  display: none;
+}
 .ux-operator-workbench {
   border: 1px solid var(--border-subtle);
   background: var(--surface-subtle);

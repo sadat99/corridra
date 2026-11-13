@@ -490,7 +490,7 @@ export function WorkspaceControls({
                         : 'No existing members were returned for this workspace.'
                       : 'Load workspace members to choose whose access to update.'}
                   </p>
-                  <details className="ux-controls-fold">
+                  <details className="ux-controls-fold" open={members.length > 0}>
                     <summary>Change a Member’s Role or Access</summary>
                     <form
                       className="operator-form"
@@ -567,7 +567,7 @@ export function WorkspaceControls({
                       membership; it does not reactivate a suspended identity.
                     </p>
                   </details>
-                  <details className="ux-controls-fold">
+                  <details className="ux-controls-fold" open={members.length > 0}>
                     <summary>Reset a Member’s Authenticator</summary>
                     <AuthenticatorReset tenant={tenant} members={members} />
                   </details>

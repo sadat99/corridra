@@ -225,6 +225,8 @@ test('invited operator enrolls MFA, records provenance, manages flags and signs 
   await operationNavigation
     .getByRole('link', { name: 'Mission dashboard and economics', exact: true })
     .click();
+  // The record filters start closed behind their summary (one form open at a time, L21).
+  await operations.getByText('Filter the records (10 filters)', { exact: true }).click();
   await operations
     .getByRole('textbox', { name: 'Industry', exact: true })
     .fill('unrecorded synthetic sector');

@@ -47,6 +47,20 @@ const staffPages = [
   '/operator/owner',
 ] as const;
 
+/**
+ * Staff pages are measured the way the owner sees them: with the team shell and the section addresses on, as in
+ * production. The protected operator shards start the app with both off (the old shell is taller, so its lengths say
+ * nothing about the team workspace, and /operator/<section> answers 404), so they skip this case. CI runs it in its
+ * own step with both switches set ("Staff page length with the production switches", shard 5), and a run
+ * of the whole file with them set fails in the same way as any other spec when a page is over its limit.
+ */
+const productionSwitches =
+  process.env.CORRIDRA_UX_SHELLS_V2 === 'true' && process.env.CORRIDRA_UX_OPERATOR_URLS === 'true';
+test.skip(
+  !productionSwitches,
+  'needs CORRIDRA_UX_SHELLS_V2 and CORRIDRA_UX_OPERATOR_URLS: it runs in its own CI step',
+);
+
 /** The lengths the corrected sweep of PR 480 measured before this task, used to show the test fails on old code. */
 const faults: Record<string, { desktop?: number; phone?: number }> = {
   '/operator/control-center': { desktop: 2.3, phone: 3.5 },

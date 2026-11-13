@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { fixtureTenant, startTodayFixture } from './team-today-fixture';
+import { openTab } from './workspace-nav';
 
 // Report a Problem, the staff side (docs/revamp/specs/problem-reports.md section 6, ADR-078 decisions 6 and 8): the triage
 // panel in Settings (#problem-report-queue) and the owner's removal of words under an erasure request, bundled from the
@@ -587,6 +588,8 @@ const erasureRows = [
   },
 ];
 const loadErasure = async (page: Page) => {
+  // Settings is cut into sub-tabs (L-03, L21): the erasure queue is the second one.
+  await openTab(page, 'Erasure requests');
   await page.getByRole('button', { name: 'Load Erasure Requests' }).click();
   await expect(page.getByText('ERA-2026-0071')).toBeVisible();
 };

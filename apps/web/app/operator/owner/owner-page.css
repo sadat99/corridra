@@ -288,15 +288,6 @@
   margin-block: var(--space-2) 0;
   padding-block: 0;
 }
-.ux-owner .ux-subtabs-list {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  scrollbar-width: thin;
-}
-.ux-owner .ux-subtabs-tab {
-  flex: 0 0 auto;
-  white-space: nowrap;
-}
 .ux-owner :is(.ux-subtabs, .ux-subtabs-panel) {
   min-width: 0;
   max-width: 100%;
@@ -396,7 +387,7 @@
 
 /* Phone (L21): the five founder areas read as one compact row each, and the board's blocks sit one step apart,
    so each tab of the owner page stays inside two phone screens with its disclosures closed. */
-@media (max-width: 1023px) {
+@media (max-width: 39.99rem) {
   .ux-owner .front-door ul {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-1);
@@ -442,7 +433,7 @@
     min-height: 2.75rem;
   }
 }
-@media (max-width: 1023px) {
+@media (max-width: 39.99rem) {
   .ux-owner .owner-gap-cards > li {
     gap: var(--space-1);
     padding: var(--space-2) var(--space-3);

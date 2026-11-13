@@ -303,6 +303,16 @@ jobs:
           CORRIDRA_UX_SHELLS_V2: 'true'
           UX06_EVIDENCE_STAGE: after
         run: pnpm test:operator tests/operator/zz-v2-workflow-links.spec.ts
+      # Staff page length (L21: a desktop page is at most one screen, a phone page two). The old shell and the plain
+      # addresses the shards run with are not what the owner sees, so the spec skips there and runs here with the
+      # production switches. Shard 5 is one of the shorter ones, so no job is added.
+      - name: Staff page length with the production switches (shard 5 only)
+        if: matrix.shard == 5
+        env:
+          CORRIDRA_UX_SHELLS_V2: 'true'
+          CORRIDRA_UX_OPERATOR_URLS: 'true'
+          UX06_EVIDENCE_STAGE: after
+        run: pnpm test:operator tests/operator/zz-l21-staff-page-budget.spec.ts
       - name: Synthetic UX browser evidence
         if: always()
         uses: actions/upload-artifact@v7
