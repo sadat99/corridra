@@ -326,6 +326,20 @@ async function serve(page: Page, w: World) {
     return json(route, { id: requestId, workspaceId: body.workspaceId });
   });
 }
+// The page keeps each registration's programme details closed (page budget, L20); the delegate path is inside them.
+async function openRegistration(page: Page) {
+  const summary = page.getByText('Programme details, objectives and results').first();
+  const shown = await summary
+    .waitFor({ state: 'visible', timeout: 10000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!shown) return;
+  const open = await page
+    .locator('details.account-fold')
+    .first()
+    .evaluate((el) => (el as HTMLDetailsElement).open);
+  if (!open) await summary.click();
+}
 async function clean(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(
     false,
@@ -354,6 +368,7 @@ for (const width of [390, 1440])
     const w = world();
     await serve(page, w);
     await page.goto(origin + '/');
+    await openRegistration(page);
     // The words written when applying are shown back, and exactly one step is the next one.
     await expect(path(page).getByRole('heading', { level: 4 })).toHaveText(
       'Your objective for this programme',
@@ -466,6 +481,7 @@ test('a delegate with no workspace names one and starts in the same press; a ref
   const w = world({ workspaces: [] });
   await serve(page, w);
   await page.goto(origin + '/');
+  await openRegistration(page);
   const name = step(page, 1).getByLabel('Name for your company workspace');
   // The display name they registered with is offered, and can be changed.
   await expect(name).toHaveValue('Synthetic Rahman Agro');
@@ -501,6 +517,7 @@ test('several workspaces need a choice; a code-joined delegate has no words to c
   });
   await serve(page, w);
   await page.goto(origin + '/');
+  await openRegistration(page);
   await expect(path(page)).toContainText(
     'You joined with an invitation code, so there are no application words to carry.',
   );
@@ -537,6 +554,7 @@ test('a refused or failed start says so, sends nothing further and can be retrie
     return route.fallback();
   });
   await page.goto(origin + '/');
+  await openRegistration(page);
   await step(page, 1).getByRole('button', { name: 'Find Suppliers or Products' }).click();
   await expect(step(page, 1).getByRole('alert')).toHaveText(
     'Your request could not be prepared. Nothing was sent. Try again.',
@@ -556,11 +574,13 @@ test('with guided drafts off the step links to the workspaces; with the path off
   const w = world();
   await serve(page, w);
   await page.goto(origin + '/?drafts=0');
+  await openRegistration(page);
   await expect(
     step(page, 1).getByRole('link', { name: 'Start a Request From Your Workspaces' }),
   ).toHaveAttribute('href', '/account?view=work#customer-workspaces');
   await expect(step(page, 1).getByRole('button')).toHaveCount(0);
   await page.goto(origin + '/?path=0');
+  await openRegistration(page);
   await expect(page.getByRole('heading', { name: programmeName })).toBeVisible();
   await expect(path(page)).toHaveCount(0);
   await shot(page, 'before-1440');
@@ -580,6 +600,7 @@ test('shared programme dates and destination are shown, added to the draft for e
   });
   await serve(page, w);
   await page.goto(origin + '/');
+  await openRegistration(page);
   // Said before the press, in the step the person is on, with the exact values.
   await expect(step(page, 1)).toContainText(
     'The organisers shared the destination and dates: CN, 2027-03-09 to 2027-03-13 (Asia/Shanghai). They are added to your draft. You can change them before it is sent.',
@@ -605,6 +626,7 @@ test('with nothing shared the draft keeps its market and dates empty and no pref
   const w = world();
   await serve(page, w);
   await page.goto(origin + '/');
+  await openRegistration(page);
   await expect(step(page, 1)).toBeVisible();
   await expect(page.getByTestId('delegate-path-prefill')).toHaveCount(0);
   await step(page, 1).getByRole('button', { name: 'Find Suppliers or Products' }).click();

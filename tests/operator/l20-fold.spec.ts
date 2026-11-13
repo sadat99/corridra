@@ -30,7 +30,10 @@ test.beforeAll(async () => {
 async function mount(page: Page, hash = '') {
   await page.goto('about:blank');
   await page.setContent('<div id="fixture"></div>');
-  if (hash) await page.evaluate((h) => history.replaceState(null, '', h), hash);
+  if (hash)
+    await page.evaluate((h) => {
+      location.hash = h;
+    }, hash);
   await page.addScriptTag({ content: bundle });
 }
 const details = (page: Page) => page.locator('details.account-fold');
@@ -61,7 +64,7 @@ test('it opens by itself when asked to', async ({ page }) => {
   await expect(page.locator('#inside')).toBeVisible();
 });
 test('an old link to its anchor or to an element inside it opens it', async ({ page }) => {
-  await mount(page, '/#registration-1');
+  await mount(page, '#registration-1');
   await expect(page.locator('#inside')).toBeVisible();
   await mount(page);
   await expect(page.locator('#inside')).toBeHidden();
