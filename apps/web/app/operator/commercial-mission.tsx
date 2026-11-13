@@ -5,11 +5,31 @@ import {
   useFormChangeGuard,
   formAcknowledged,
 } from '../../components/operator-workbench';
-import { createContext, useContext, useState, type FormEvent } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+} from 'react';
 import { useFormDraft } from '../../lib/ux/use-form-draft';
 import { machineryFields, missionCatalogue } from '@corridra/domain/commercial-missions';
 import { parseMoney, formatMoney, currency } from '@corridra/domain/opportunities';
-import { readJson, withStepUp } from '../../lib/ux/step-up';
+import { ActionError, readJson, withStepUp } from '../../lib/ux/step-up';
+import { useReplyPrefill } from '../../lib/ux/use-reply-prefill';
+import {
+  isUuid,
+  prefillDeniedMessage,
+  prefillFailureMessage,
+  prefillMessage,
+  prefillUnavailableMessage,
+  termRows,
+  type EligiblePrefill,
+} from '../../lib/reply-review-view';
+import '../../components/ux/row-list.css';
+import './reply-handoff.css';
 
 type Row = { id: string; version: number; created_at: string; [key: string]: unknown };
 type Snapshot = {
@@ -215,13 +235,112 @@ function Field({
     </label>
   );
 }
+
+const staleRefusals = [
+  'Reply version changed; reload before confirming',
+  'This reply changed after it was published',
+];
+/** The fixed words for a refused reply-bound save (ADR-081). Only the stale and already-recorded refusals change what is shown. */
+function boundRefusal(error: unknown) {
+  if (!(error instanceof ActionError)) return 'Could not save. Your values are kept. Try again.';
+  if (error.status === 409 && staleRefusals.includes(error.message)) return 'stale';
+  if (error.status === 409 && error.message === 'This reply is already recorded as an offer')
+    return 'recorded';
+  if (error.status === 400)
+    return 'Some values could not be saved as sent. Nothing was saved. Fill this form by hand instead.';
+  if (error.status === 403) return 'Your role cannot record this offer. Nothing was saved.';
+  if (error.status === 404 || error.status === 409)
+    return 'This reply is no longer available. Nothing was saved.';
+  return error.status === 401 ? error.message : 'Could not save. Your values are kept. Try again.';
+}
+
+const termGroups: { title: string; keys: string[] }[] = [
+  {
+    title: 'Price',
+    keys: ['unitPriceMinor', 'totalPriceMinor', 'toolingMinor', 'setupMinor', 'packagingMinor'],
+  },
+  { title: 'Quantity and unit', keys: ['quantity', 'unit', 'moq', 'specification'] },
+  { title: 'Delivery', keys: ['leadTime', 'validUntil', 'incoterm', 'shipping'] },
+  {
+    title: 'After-sales',
+    keys: ['warranty', 'installation', 'commissioning', 'training', 'spares'],
+  },
+  { title: 'Payment and notes', keys: ['paymentTerms'] },
+];
+
+/** The supplier's terms as received, read only, grouped; a missing term reads "Not stated", never zero. */
+function ReplyTerms({ prefill }: { prefill: EligiblePrefill }) {
+  const rows = termRows(prefill);
+  const missing = rows.filter((row) => row.missing);
+  return (
+    <>
+      <div className="reply-handoff-groups">
+        {termGroups.map((group) => {
+          const shown = rows.filter((row) => group.keys.includes(row.key));
+          const filled = shown.filter((row) => !row.missing).length;
+          return (
+            <section key={group.title} className="reply-handoff-group" aria-label={group.title}>
+              <h4>{group.title}</h4>
+              <dl className="reply-review-terms">
+                {group.title === 'Price' && (
+                  <div>
+                    <dt>Original currency</dt>
+                    <dd>{prefill.currency}</dd>
+                  </div>
+                )}
+                {shown.map((row) => (
+                  <div key={row.key} data-gap={row.missing ? 'true' : undefined}>
+                    <dt>{row.label}</dt>
+                    <dd className={row.missing ? 'reply-review-gap' : undefined}>
+                      {row.missing ? 'Not stated' : row.text}
+                    </dd>
+                  </div>
+                ))}
+                {group.title === 'Payment and notes' && (
+                  <div>
+                    <dt>Uncertainties</dt>
+                    <dd>{prefill.uncertainties}</dd>
+                  </div>
+                )}
+              </dl>
+              {group.title === 'After-sales' && (
+                <p className="reply-review-note">
+                  {filled} of {shown.length} filled
+                </p>
+              )}
+            </section>
+          );
+        })}
+      </div>
+      {missing.length > 0 && (
+        <div className="reply-handoff-check" role="group" aria-label="Check before saving">
+          <h4>Check before saving</h4>
+          {missing.length > 4 ? (
+            <p>Not stated: {missing.map((row) => row.label).join(', ')}.</p>
+          ) : (
+            <ul>
+              {missing.map((row) => (
+                <li key={row.key}>Not stated: {row.label}</li>
+              ))}
+            </ul>
+          )}
+          <p>These were not in the reply. They will be saved as not stated.</p>
+        </div>
+      )}
+    </>
+  );
+}
+
 export function CommercialMission({
   tenant,
   missionId,
+  replyId,
   onChanged,
 }: {
   tenant: string;
   missionId: string;
+  /** A reviewed supplier reply to prepare the offer from (ADR-081). Ignored unless it is an id and the role can record offers. */
+  replyId?: string;
   onChanged?: () => void;
 }) {
   const {
@@ -235,11 +354,15 @@ export function CommercialMission({
     [proof, setProof] = useState<Proof | null>(null),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState(''),
-    [job, setJob] = useState('requirements'),
+    [job, setJob] = useState(() => (replyId && isUuid(replyId) ? 'quotation' : 'requirements')),
     [source, setSource] = useState(''),
     [target, setTarget] = useState(''),
     [selectedPack, setSelectedPack] = useState(''),
-    [dates, setDates] = useState({ observedAt: '', dueAt: '' });
+    [dates, setDates] = useState({ observedAt: '', dueAt: '' }),
+    [handFill, setHandFill] = useState(false),
+    [outcome, setOutcome] = useState<null | 'stale' | 'recorded'>(null),
+    [boundError, setBoundError] = useState('');
+  const wantedReply = replyId && isUuid(replyId) && !handFill ? replyId : null;
   const formDraft = useFormDraft<Record<string, string>>(
     'commercial-mission:' + JSON.stringify([tenant, missionId, job]),
   );
@@ -303,6 +426,25 @@ export function CommercialMission({
       config?.assessments.includes(r.id) && (r.schema as { typeKey: string })?.typeKey === typeKey,
   );
   const manage = data && ['owner', 'admin', 'operator'].includes(data.role);
+  const prefill = useReplyPrefill(tenant, manage ? wantedReply : null);
+  const prefilled =
+    prefill.kind === 'eligible' && prefill.prefill.missionId === missionId ? prefill.prefill : null;
+  const bound = prefilled && !outcome && job === 'quotation' ? prefilled : null;
+  const boundHeading = useRef<HTMLHeadingElement>(null),
+    staleHeading = useRef<HTMLHeadingElement>(null);
+  // A link from the reply card opens the offer task and loads the mission once; nothing is requested without a reply id.
+  const wanted = Boolean(replyId && isUuid(replyId));
+  useEffect(() => {
+    if (wanted) void Promise.resolve().then(load);
+    // Once, when the link opens the page: load is recreated every render and must not restart the request.
+  }, [wanted]); // eslint-disable-line react-hooks/exhaustive-deps
+  const boundId = bound?.responseId;
+  useEffect(() => {
+    if (boundId) boundHeading.current?.focus();
+  }, [boundId]);
+  useEffect(() => {
+    if (outcome === 'stale') staleHeading.current?.focus();
+  }, [outcome]);
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!data) return;
@@ -311,12 +453,29 @@ export function CommercialMission({
       commandId = form.dataset.commandId ?? (form.dataset.commandId = crypto.randomUUID());
     setBusy(true);
     setMessage('');
+    setBoundError('');
     try {
       const base = { commandId, missionId, reason: words(f, 'reason') },
         provenance = { sourceId: source, claimId: words(f, 'claimId') };
       let action = 'commercial-mission',
         payload: unknown;
-      if (job === 'route') {
+      if (bound) {
+        // The reply's own strings, sent as received: no amount is parsed, converted or rounded on this path.
+        payload = {
+          ...base,
+          ...provenance,
+          action: 'quotation',
+          rfqId: bound.rfqId,
+          targetId: bound.targetId,
+          revision: bound.revision,
+          ...(bound.previousId ? { previousId: bound.previousId } : {}),
+          currency: bound.currency,
+          terms: bound.terms,
+          uncertainties: bound.uncertainties,
+          observedAt: bound.observedAt,
+          replyBinding: { responseId: bound.responseId, seen: bound.seen, digest: bound.digest },
+        };
+      } else if (job === 'route') {
         action = 'mission-route';
         payload = {
           id: commandId,
@@ -529,16 +688,51 @@ export function CommercialMission({
       await request(action, payload);
       delete form.dataset.commandId;
       formAcknowledged(form);
-      formDraft.clear();
+      if (!bound) formDraft.clear();
       setData(await request('commercial-mission'));
       onChanged?.();
-      setMessage('Saved with source and decision history.');
+      if (bound) {
+        setOutcome('recorded');
+        setMessage('Offer saved. It is not yet confirmed and not shown to the customer.');
+      } else setMessage('Saved with source and decision history.');
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Unable to save');
+      if (bound) {
+        const refusal = boundRefusal(e);
+        if (refusal === 'stale' || refusal === 'recorded') setOutcome(refusal);
+        else setBoundError(refusal);
+      } else setMessage(e instanceof Error ? e.message : 'Unable to save');
     } finally {
       setBusy(false);
     }
   }
+  const provenanceFields = (
+    <>
+      <label className="field">
+        Declared source
+        <select value={source} onChange={(e) => setSource(e.target.value)} required>
+          <option value="">Choose an existing source</option>
+          {proof?.sources.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.locator}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="field">
+        Source declaration
+        <select name="claimId" required>
+          <option value="">Choose a matching claim</option>
+          {proof?.claims
+            .filter((c) => c.source_id === source)
+            .map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.statement}
+              </option>
+            ))}
+        </select>
+      </label>
+    </>
+  );
   const targetSelect = (
     <label className="field">
       Counterparty
@@ -810,7 +1004,98 @@ export function CommercialMission({
               ))}
             </details>
           ))}
-          {manage && (
+          {manage && wantedReply && (
+            <div className="reply-handoff-status" role="status">
+              {prefill.kind === 'loading' && <p>Loading the prepared offer.</p>}
+              {prefill.kind === 'ineligible' && <p>{prefillMessage(prefill.code)}</p>}
+              {prefill.kind === 'unavailable' && <p>{prefillUnavailableMessage}</p>}
+              {prefill.kind === 'denied' && <p>{prefillDeniedMessage}</p>}
+              {(prefill.kind === 'error' || (prefill.kind === 'eligible' && !prefilled)) && (
+                <p>{prefillFailureMessage}</p>
+              )}
+            </div>
+          )}
+          {manage && outcome === 'stale' && (
+            <section className="reply-handoff-stale" role="alert">
+              <h4 ref={staleHeading} tabIndex={-1}>
+                This reply has changed
+              </h4>
+              <p>
+                The supplier sent a newer version after you reviewed this one. Nothing was filled in
+                and nothing was saved. Review the newer reply first.
+              </p>
+              <div className="reply-review-buttons">
+                <a
+                  className="primary-link"
+                  href={`/operator/delivery?workspace=${encodeURIComponent(tenant)}`}
+                >
+                  Review the Newer Reply
+                </a>
+                <button
+                  type="button"
+                  className="secondary-link"
+                  onClick={() => {
+                    setHandFill(true);
+                    setOutcome(null);
+                  }}
+                >
+                  Fill This Form by Hand Instead
+                </button>
+              </div>
+            </section>
+          )}
+          {manage && outcome === 'recorded' && !message && (
+            <p role="status">This reply is already recorded as an offer.</p>
+          )}
+          {manage && bound && (
+            <CommercialTextDraft value={{}}>
+              <section className="reply-handoff" aria-labelledby="reply-handoff-heading">
+                <h3 id="reply-handoff-heading" ref={boundHeading} tabIndex={-1}>
+                  Record a supplier offer
+                </h3>
+                <p className="reply-review-note">
+                  Prefilled from a reviewed supplier reply. Reply version {bound.seen}, offer
+                  revision {bound.revision}, received{' '}
+                  {bound.observedAt.slice(0, 16).replace('T', ' ')} UTC. Check every value, then
+                  save.{' '}
+                  <button type="button" className="text-link" onClick={() => setHandFill(true)}>
+                    Fill This Form by Hand Instead
+                  </button>
+                </p>
+                <div className="reply-handoff-source">
+                  <span className="ux-badge">Self-declared</span>
+                  <p>Supplier reply, self-declared. Reviewed and published by the Corridra team.</p>
+                  <p>The company stated these terms. Corridra has not checked them.</p>
+                </div>
+                <form
+                  className="operator-form"
+                  key={`reply:${bound.responseId}:${formDraft.restored}`}
+                  inert={!formDraft.restored}
+                  onSubmit={submit}
+                  onKeyDown={(event: KeyboardEvent<HTMLFormElement>) => {
+                    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && !busy)
+                      event.currentTarget.requestSubmit();
+                  }}
+                >
+                  <ReplyTerms prefill={bound} />
+                  {provenanceFields}
+                  <Field
+                    name="reason"
+                    label="Reason for recording this change"
+                    required
+                    defaultValue={`Offer from reviewed reply, revision ${bound.revision}`}
+                  />
+                  <button className="primary-link" disabled={busy} aria-busy={busy}>
+                    {busy ? 'Saving...' : 'Save Quotation'}
+                  </button>
+                  <p className="reply-review-note">Press Ctrl and Enter to save.</p>
+                  <p className="reply-review-note">Nothing reaches the customer from this form.</p>
+                  <p role="alert">{boundError}</p>
+                </form>
+              </section>
+            </CommercialTextDraft>
+          )}
+          {manage && prefill.kind !== 'loading' && !bound && !outcome && (
             <CommercialTextDraft value={typedText}>
               <label className="field">
                 Next task
@@ -896,34 +1181,7 @@ export function CommercialMission({
                     </label>
                   </>
                 ) : null}
-                {!['route', 'schedule', 'activity'].includes(job) && (
-                  <>
-                    <label className="field">
-                      Declared source
-                      <select value={source} onChange={(e) => setSource(e.target.value)} required>
-                        <option value="">Choose an existing source</option>
-                        {proof?.sources.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.locator}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="field">
-                      Source declaration
-                      <select name="claimId" required>
-                        <option value="">Choose a matching claim</option>
-                        {proof?.claims
-                          .filter((c) => c.source_id === source)
-                          .map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.statement}
-                            </option>
-                          ))}
-                      </select>
-                    </label>
-                  </>
-                )}
+                {!['route', 'schedule', 'activity'].includes(job) && provenanceFields}
                 {['assessment', 'quotation', 'decision', 'activity', 'origin'].includes(job) &&
                   targetSelect}
                 {job === 'requirements' && (

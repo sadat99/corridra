@@ -12,10 +12,22 @@ import {
   type StoredReview,
 } from '@corridra/domain/reply-review';
 import { displayDate } from '@corridra/domain/locale';
-import { preparedQuotation, reasonLabels, termLabels, termText } from '../../lib/reply-review-view';
+import {
+  preparedQuotation,
+  prefillDeniedMessage,
+  prefillFailureMessage,
+  prefillLinkUnknownMessage,
+  prefillMessage,
+  prefillUnavailableMessage,
+  reasonLabels,
+  termLabels,
+  termText,
+} from '../../lib/reply-review-view';
+import { useReplyPrefill } from '../../lib/ux/use-reply-prefill';
 import { replyLinkSuffix, type ReplyLanguage } from '../../lib/reply-terms';
 import { useOperatorFlags } from './operator-flags';
 import './reply-review.css';
+import './reply-handoff.css';
 
 // The Corridra team's review of supplier replies (ADR-069), shown only where it is switched on. Each reply
 // is set beside the requirement the supplier was shown, term by term, with the gaps the existing
@@ -103,6 +115,7 @@ export function ReplyReview({
             requirement={disclosures.find((d) => d.link_id === reply.link_id)?.shared_requirements}
             reviews={reviews.filter((r) => r.responseId === reply.id)}
             tenant={tenant}
+            canRecord={['owner', 'admin', 'operator'].includes(role)}
             canAct={canReview && open === true && !unavailable}
             onChanged={reload}
             onStale={async () => {
@@ -120,6 +133,7 @@ function ReplyCard({
   requirement,
   reviews,
   tenant,
+  canRecord,
   canAct,
   onChanged,
   onStale,
@@ -128,6 +142,8 @@ function ReplyCard({
   requirement?: string;
   reviews: StoredReview[];
   tenant: string;
+  /** Owner, admin or operator may record an offer; the database checks again. */
+  canRecord: boolean;
   canAct: boolean;
   onChanged: () => Promise<void>;
   onStale: () => Promise<void>;
@@ -196,7 +212,33 @@ function ReplyCard({
     }
   }
 
-  const prepared = state.final?.decision === 'PUBLISH' ? preparedQuotation(reply.body) : null;
+  const published = state.final?.decision === 'PUBLISH';
+  const prepared = published ? preparedQuotation(reply.body) : null;
+  const prefill = useReplyPrefill(tenant, published && canRecord ? reply.id : null);
+  // Mission pages exist only while CORRIDRA_UX_MISSIONS_V2 is on (the page answers 404 otherwise), so the link
+  // is offered only once the flag read the Missions panel uses says they are on.
+  // 'failed' is a check that could not be made, which is not the same as the pages being off.
+  const [missionPages, setMissionPages] = useState<'unknown' | 'on' | 'off' | 'failed'>('unknown');
+  const eligible = prefill.kind === 'eligible';
+  useEffect(() => {
+    if (!eligible) return;
+    let active = true;
+    fetch('/api/team-work/flags')
+      .then(async (r) => {
+        if (!r.ok) return 'failed' as const;
+        const flags = (await r.json()) as { missionsV2?: unknown } | null;
+        if (typeof flags?.missionsV2 !== 'boolean') return 'failed' as const;
+        return flags.missionsV2 ? ('on' as const) : ('off' as const);
+      })
+      .catch(() => 'failed' as const)
+      .then((next) => {
+        if (active) setMissionPages(next);
+      });
+    return () => {
+      active = false;
+    };
+  }, [eligible]);
+  const ineligible = published && canRecord && prefill.kind === 'ineligible';
   const han = (text: string) => (/\p{Script=Han}/u.test(text) ? 'zh' : undefined);
 
   return (
@@ -209,7 +251,9 @@ function ReplyCard({
         {state.final ? (
           <p className="reply-review-state" data-state={state.final.decision}>
             {state.final.decision === 'PUBLISH'
-              ? 'Published: prepared as a mission quotation, not yet confirmed.'
+              ? ineligible
+                ? 'Published. This reply cannot be prepared as an offer.'
+                : 'Published: prepared as a mission quotation, not yet confirmed.'
               : `Rejected: ${reasonLabels[state.final.reasonCode as ReplyReviewReason] ?? 'reason recorded'}.`}
           </p>
         ) : state.asked ? (
@@ -320,10 +364,39 @@ function ReplyCard({
       {prepared && (
         <div className="reply-review-prepared">
           <h4>Prepared quotation</h4>
-          <p>
-            Confirm this through Record a supplier offer on the mission. The reply is the
-            self-declared source; nothing reaches a customer until the publication path approves it.
-          </p>
+          {canRecord && (
+            <div className="reply-handoff-status" role="status">
+              {prefill.kind === 'loading' && <p>Checking whether this reply can be prepared.</p>}
+              {prefill.kind === 'eligible' && missionPages === 'on' && (
+                <a
+                  className="primary-link"
+                  href={`/operator/missions/${prefill.prefill.missionId}?workspace=${encodeURIComponent(tenant)}&reply=${reply.id}#requirements`}
+                >
+                  Open Prepared Offer
+                </a>
+              )}
+              {prefill.kind === 'eligible' && missionPages === 'unknown' && (
+                <p>Checking whether this reply can be prepared.</p>
+              )}
+              {prefill.kind === 'eligible' && missionPages === 'off' && (
+                <p>{prefillUnavailableMessage}</p>
+              )}
+              {prefill.kind === 'eligible' && missionPages === 'failed' && (
+                <p>{prefillLinkUnknownMessage}</p>
+              )}
+              {prefill.kind === 'ineligible' && <p>{prefillMessage(prefill.code)}</p>}
+              {prefill.kind === 'unavailable' && <p>{prefillUnavailableMessage}</p>}
+              {prefill.kind === 'denied' && <p>{prefillDeniedMessage}</p>}
+              {prefill.kind === 'error' && <p>{prefillFailureMessage}</p>}
+            </div>
+          )}
+          {!['eligible', 'ineligible', 'loading'].includes(prefill.kind) && (
+            <p>
+              Copy this into Record a supplier offer on the mission and confirm it there. The reply
+              is the self-declared source. Nothing reaches a customer until the publication path
+              approves it.
+            </p>
+          )}
           <pre tabIndex={0}>{prepared}</pre>
           <button
             type="button"

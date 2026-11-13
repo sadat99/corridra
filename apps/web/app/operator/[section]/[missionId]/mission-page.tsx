@@ -49,18 +49,21 @@ export function MissionPage({
   tenant,
   workspaceName,
   missionId,
+  replyId,
   moveRecords,
 }: {
   tenant: string;
   workspaceName: string;
   missionId: string;
+  /** A reviewed supplier reply to prepare an offer from (ADR-081), from the link the reply card gives. */
+  replyId?: string;
   moveRecords: boolean;
 }) {
   const [data, setData] = useState<Queue | null>(null),
     [failure, setFailure] = useState(''),
     [message, setMessage] = useState<{ kind: 'status' | 'alert'; text: string } | null>(null),
     [busy, setBusy] = useState(false),
-    [tab, setTab] = useState<Tab>('overview'),
+    [tab, setTab] = useState<Tab>(replyId ? 'requirements' : 'overview'),
     [panel, setPanel] = useState<Panel>(null),
     [revision, setRevision] = useState(0);
   const panelHeading = useRef<HTMLHeadingElement>(null),
@@ -258,6 +261,7 @@ export function MissionPage({
               <CommercialMission
                 tenant={tenant}
                 missionId={m.id}
+                replyId={replyId}
                 onChanged={() => setRevision((v) => v + 1)}
               />
             </>
