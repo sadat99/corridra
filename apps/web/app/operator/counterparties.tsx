@@ -15,6 +15,7 @@ import {
   type Changes,
 } from './record-changes';
 import { readJson } from '../../lib/ux/step-up';
+import type { IngestWarning } from '@corridra/domain/counterparties';
 type Row = { id: string; [key: string]: unknown };
 type Organisation = Row & {
   name: string;
@@ -37,6 +38,13 @@ type Detail = {
   resolutions: Row[];
   /** CRUD G11: whether withdraw, correct and hide are installed and open in this workspace. */
   changes?: Changes;
+};
+const ingestWarningWords: Record<IngestWarning, string> = {
+  licence_not_checked: 'Licence terms were not checked.',
+  source_not_classified: 'Source kind not classified.',
+  personal_name_check:
+    'The name has no company form; it may be a sole trader, check it is not a person.',
+  previously_hidden: 'A company with this name was taken down earlier; this record is hidden too.',
 };
 const txt = (r: Row, key: string) => String(r[key] ?? '');
 const when = (v: unknown) => (v ? new Date(String(v)).toLocaleString() : 'Not recorded');
@@ -126,6 +134,7 @@ export function Counterparties({
     [selected, setSelected] = useState(''),
     [detail, setDetail] = useState<Detail | null>(null),
     [message, setMessage] = useState(''),
+    [ingestNotes, setIngestNotes] = useState<IngestWarning[]>([]),
     [busy, setBusy] = useState(false);
   const [sources, setSources] = useState<Row[]>([]),
     [claims, setClaims] = useState<Row[]>([]),
@@ -362,6 +371,13 @@ export function Counterparties({
       <p role="status" aria-live="polite" aria-label="Research status">
         {message}
       </p>
+      {ingestNotes.length > 0 && (
+        <ul aria-label="Warnings for the new company record">
+          {ingestNotes.map((warning) => (
+            <li key={warning}>{ingestWarningWords[warning]}</li>
+          ))}
+        </ul>
+      )}
       <form
         className="operator-toolbar"
         onSubmit={(e) => {
@@ -503,21 +519,44 @@ export function Counterparties({
             </form>
             <form
               className="operator-form"
-              onSubmit={(e) =>
-                form(e, (f) => ({
-                  action: 'ingest',
-                  sourceId: f.get('sourceId'),
-                  name: f.get('name'),
-                  country: f.get('country'),
-                  domain: f.get('domain'),
-                  address: f.get('address'),
-                  identifierType: f.get('identifierType'),
-                  identifier: f.get('identifier'),
-                }))
-              }
+              onSubmit={(e) => {
+                e.preventDefault();
+                const f = new FormData(e.currentTarget);
+                setIngestNotes([]);
+                void act(async () => {
+                  const made = await send({
+                    action: 'ingest',
+                    sourceId: f.get('sourceId'),
+                    name: f.get('name'),
+                    country: f.get('country'),
+                    domain: f.get('domain'),
+                    address: f.get('address'),
+                    identifierType: f.get('identifierType'),
+                    identifier: f.get('identifier'),
+                    sourceType: f.get('sourceType'),
+                  });
+                  setIngestNotes(made.warnings ?? []);
+                });
+              }}
             >
               <h3>Source-reported company identity</h3>
               <Select label="Public identity source" name="sourceId" rows={publicSources} />
+              <label className="field">
+                Kind of public source
+                <select name="sourceType" defaultValue="other">
+                  <option value="government_registry">Government registry</option>
+                  <option value="company_website">Company website</option>
+                  <option value="trade_body_list">Trade body list</option>
+                  <option value="event_list">Event list</option>
+                  <option value="staff_research">Staff research</option>
+                  <option value="licensed_dataset">Licensed dataset</option>
+                  <option value="other">Other</option>
+                </select>
+              </label>
+              <p>
+                This is a note for staff review, not a legal clearance. Warnings appear after
+                saving.
+              </p>
               <Field label="Company name" name="name" />
               <label className="field">
                 Company country
