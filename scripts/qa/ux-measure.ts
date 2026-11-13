@@ -66,6 +66,8 @@ export type PageMeasure = {
   smallTargets: number;
   horizontalScroll: boolean;
   forbidden: string[];
+  /** Where each forbidden word was found: a short piece of the page text around the first match. */
+  forbiddenContext?: string[];
   isoDates: string[];
   usDates: string[];
   rawIdFields: string[];
@@ -73,9 +75,25 @@ export type PageMeasure = {
   title: string;
 };
 
+/**
+ * Signed-in page length limits of docs/agents/ui-direction.md ("Page length"): desktop 1 screen, phone 1.5 to 2
+ * screens, measured with disclosures closed, footer included. 1.5 is the target and 2 the hard limit, so a page is
+ * over its limit above 2 on a phone. The 768 px tablet width has no written limit and is not judged.
+ * Public pages have their own written limits and are not judged here.
+ */
+export const signedInScreenLimit = { desktop: 1, phone: 2 } as const;
+export function screenLimitFor(width: number): number | null {
+  if (width >= 1024) return signedInScreenLimit.desktop;
+  if (width <= 480) return signedInScreenLimit.phone;
+  return null;
+}
+
 /** Targets from the program (V-56 to V-60), applied by --strict and the WS-E specs. */
-export function targetsBroken(m: PageMeasure): string[] {
+export function targetsBroken(m: PageMeasure, options: { signedIn?: boolean } = {}): string[] {
   const broken: string[] = [];
+  const limit = options.signedIn ? screenLimitFor(m.width) : null;
+  if (limit !== null && m.screens > limit)
+    broken.push(`page length ${m.screens} screens, over the ${limit} screen limit at ${m.width}`);
   if (m.status >= 400) broken.push(`status ${m.status}`);
   if (m.horizontalScroll) broken.push('horizontal scroll');
   if (m.forbidden.length) broken.push(`forbidden words: ${m.forbidden.join(', ')}`);
@@ -88,7 +106,12 @@ export function targetsBroken(m: PageMeasure): string[] {
 }
 
 /** Measures the page as it is now. Text inside "(madeup)" panels and the deferred register is skipped. */
-export async function measurePage(page: Page, path: string, status: number): Promise<PageMeasure> {
+export async function measurePage(
+  page: Page,
+  path: string,
+  status: number,
+  options: { ignoreText?: RegExp[] } = {},
+): Promise<PageMeasure> {
   const raw = await page.evaluate(() => {
     const clone = document.body.cloneNode(true) as HTMLElement;
     clone
@@ -149,6 +172,12 @@ export async function measurePage(page: Page, path: string, status: number): Pro
     };
   });
   const width = page.viewportSize()?.width ?? 0;
+  // Text the run itself put on the page (for example the labels a sweep seeds) is data, not copy, and is not judged.
+  for (const pattern of options.ignoreText ?? [])
+    raw.text = raw.text.replace(
+      new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g'),
+      ' ',
+    );
   const matches = (pattern: RegExp) => {
     const global = new RegExp(
       pattern.source,
@@ -168,6 +197,12 @@ export async function measurePage(page: Page, path: string, status: number): Pro
     smallTargets: raw.smallTargets,
     horizontalScroll: raw.horizontalScroll,
     forbidden: forbiddenPatterns.filter((pattern) => pattern.test(raw.text)).map(String),
+    forbiddenContext: forbiddenPatterns.flatMap((pattern) => {
+      const at = raw.text.search(pattern);
+      return at < 0
+        ? []
+        : [`${pattern}: ${raw.text.slice(Math.max(0, at - 30), at + 50).replace(/\s+/g, ' ')}`];
+    }),
     isoDates: [...matches(isoTimestamp), ...matches(isoDate)],
     usDates: matches(usDate),
     rawIdFields: raw.rawIdFields,
