@@ -379,6 +379,41 @@ test.describe('the reply card', () => {
 });
 
 test.describe('the prepared offer form', () => {
+  test('links to the full original reply on the reply card it came from', async ({ page }) => {
+    await stub(page, {});
+    await openForm(page);
+    const link = page.getByRole('link', { name: 'Open the Full Original Reply' });
+    await expect(link).toHaveAttribute(
+      'href',
+      `/operator/delivery?workspace=${tenant}&reply=${replyId}`,
+    );
+    // The address ends at an element that exists on the reply card, so the link lands on the reply.
+    await openCard(page, 'owner');
+    await expect(page.locator(`li.reply-review-card#reply-${replyId}`)).toHaveCount(1);
+  });
+
+  test('brings the reply card into view on a full page load of its address', async ({ page }) => {
+    await stub(page, {});
+    // Many short replies above it, so the card is below the first screen.
+    const others = Array.from({ length: 12 }, (_, i) => ({
+      ...reply,
+      id: `44444444-4444-4444-8444-${String(i).padStart(12, '0')}`,
+    }));
+    await page.goto(
+      `${origin}/?entry=card&props=${encodeURIComponent(
+        JSON.stringify({
+          tenant,
+          role: 'owner',
+          responses: [...others, reply],
+          disclosures: [
+            { link_id: linkId, role: 'SUPPLIER', shared_requirements: 'Curtain track' },
+          ],
+        }),
+      )}&reply=${replyId}`,
+    );
+    await expect(page.locator(`li#reply-${replyId}`)).toBeInViewport();
+  });
+
   test('shows the supplier terms read only, says what is not stated, and saves the exact strings with the reply binding', async ({
     page,
   }) => {
