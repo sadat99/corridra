@@ -340,7 +340,11 @@ test('the type scale tokens match UI/UX.v3', () => {
   assert.match(token('--text-h1')[0], /^clamp\(1\.8125rem,.*\b2\.5rem\)$/);
   assert.match(token('--text-h2')[0], /^clamp\(1\.375rem,.*\b1\.5rem\)$/);
   assert.match(token('--text-display')[0], /\b3\.5rem\)$/);
-  assert.equal(token('--text-h1').at(-1), '1.8125rem', 'the phone page title is 29 px');
+  assert.equal(
+    token('--text-h1').at(-1),
+    'clamp(1.625rem, 7.4vw, 1.8125rem)',
+    'the phone page title is 29 px from 390 px wide and eases to 26 px below',
+  );
   // Weights and leading are tokens too.
   assert.equal(token('--weight-regular')[0], '400');
   assert.equal(token('--weight-medium')[0], '500');
