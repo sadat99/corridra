@@ -72,7 +72,7 @@ createRoot(document.getElementById('fixture')).render(
       <AppHeader kind="customer" live={false} notifications brandMark={<BrandLockup/>} whatsappHref={q.get('whatsapp')==='on'?'https://wa.me/8801000000000':undefined} pocket={pocket}/>
       <LeftNavFrame navId="customer-navigation" words={words} nav={<><CustomerRailTop/><LeftNavList id="customer-navigation" label="Navigation" items={items} current="home"/><CustomerRailFoot/></>}>
         <main id="main"><h1>Your move</h1>{rows.map(i=><p key={i}>Synthetic content row {i}</p>)}<a id="last" href="/account/last">Last link of the page</a></main>
-        <CustomerTabs tabs={tabs} current="home"/>
+        {q.get('tabs')!=='off'?<CustomerTabs tabs={tabs} current="home"/>:null}
         {pocket?<PocketButton signals={signals} whatsappHref={q.get('whatsapp')==='on'?'https://wa.me/8801000000000':undefined}/>:null}
       </LeftNavFrame>
     </div>
@@ -695,20 +695,49 @@ test.describe('scrolling', () => {
     await expect(main(page)).toBeVisible();
   });
 
-  for (const width of [320, 390]) {
-    test(`at the end of the page the button never covers the last link (${width})`, async ({
-      page,
-    }) => {
-      await page.setViewportSize({ width, height: 700 });
-      await mount(page, '/account', '?signals=quotes3&rows=30');
-      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-      // Even after the idle return time the button stays out of the way at the end.
-      await page.waitForTimeout(1500);
-      await expect.poll(() => hiddenNow(page)).toBe('true');
-      await page.locator('#last').click({ timeout: 5000 });
-      await expect(page).toHaveURL(/\/account\/last$/);
-    });
-  }
+  // With the bottom tabs in the page and with them gone (the owner's drawer-only decision is a later change): the button
+  // reads one property, so it must be right in both states and never cover the last row or link.
+  for (const tabs of ['on', 'off'])
+    for (const width of [320, 390]) {
+      test(`at the end of the page the button never covers the last link (${width}, tabs ${tabs})`, async ({
+        page,
+      }) => {
+        await page.setViewportSize({ width, height: 700 });
+        await mount(page, '/account', `?signals=quotes3&rows=30&tabs=${tabs}`);
+        await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+        // Even after the idle return time the button stays out of the way at the end.
+        await page.waitForTimeout(1500);
+        await expect.poll(() => hiddenNow(page)).toBe('true');
+        await page.locator('#last').click({ timeout: 5000 });
+        await expect(page).toHaveURL(/\/account\/last$/);
+      });
+    }
+
+  test('with the tabs the button sits above them; without them it drops to the bottom edge', async ({
+    page,
+  }) => {
+    await mount(page, '/account', '?signals=draft&tabs=on');
+    const withTabs = await box(main(page));
+    const tabsBox = await box(page.locator('.ux-customer-tabs'));
+    expect(tabsBox.y - (withTabs.y + withTabs.height)).toBeGreaterThanOrEqual(12);
+    expect(
+      await page
+        .locator('.ux-pocket')
+        .evaluate((el) => getComputedStyle(el).getPropertyValue('--shell-bottom-bar')),
+    ).not.toBe('');
+    await mount(page, '/account', '?signals=draft&tabs=off');
+    await expect(page.locator('.ux-customer-tabs')).toHaveCount(0);
+    const bare = await box(main(page));
+    // No bar: the gap to the bottom edge is the button's own gap (16 px) and no bar height, safe area 0 here.
+    expect(phone.height - (bare.y + bare.height)).toBeGreaterThanOrEqual(15.5);
+    expect(phone.height - (bare.y + bare.height)).toBeLessThanOrEqual(16.5);
+    expect(
+      await page
+        .locator('.ux-pocket')
+        .evaluate((el) => el.style.getPropertyValue('--shell-bottom-bar')),
+    ).toBe('');
+    expect(withTabs.y).toBeLessThan(bare.y);
+  });
 
   test('adds no page length: the document is as tall as without it', async ({ page }) => {
     await mount(page, '/account', '?signals=draft&rows=40');

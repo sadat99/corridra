@@ -64,14 +64,21 @@ function useAtEnd(enabled: boolean) {
   return atEnd;
 }
 
-/** Keeps the button above the bottom tabs, however tall they are at this text size, and above the safe area. */
+/**
+ * The stylesheet sets --shell-bottom-bar to the tabs' height at the normal text size. At a larger text size the tabs
+ * grow, so while they exist their measured height (without the safe area, which the button adds itself) replaces it.
+ * With no tabs in the page nothing is set and the button sits at the bottom edge.
+ */
 function useAboveTabs(root: React.RefObject<HTMLDivElement | null>, enabled: boolean) {
   useEffect(() => {
     const el = root.current;
     if (!el || !enabled) return;
     const tabs = document.querySelector<HTMLElement>('.ux-customer-tabs');
     if (!tabs) return;
-    const set = () => el.style.setProperty('--pocket-tabs', `${tabs.offsetHeight}px`);
+    const set = () => {
+      const safe = parseFloat(getComputedStyle(tabs).paddingBottom) || 0;
+      el.style.setProperty('--shell-bottom-bar', `${Math.max(0, tabs.offsetHeight - safe)}px`);
+    };
     set();
     const observer = new ResizeObserver(set);
     observer.observe(tabs);

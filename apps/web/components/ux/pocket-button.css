@@ -10,10 +10,11 @@
     display: block;
     position: fixed;
     inset-inline-end: var(--space-4);
-    /* Above the bottom tabs, however tall they are at this text size; the tabs' own height already holds the safe area.
-       Until the tabs are measured the same sum is written with the safe area for the installed app. */
+    /* Above the bottom bar while the page has one (--shell-bottom-bar, set where the bar is defined), and above the
+       device's safe area for the installed app. With no bar in the page the property is absent and the button sits at the
+       bottom edge. */
     inset-block-end: calc(
-      var(--pocket-tabs, calc(3.5rem + env(safe-area-inset-bottom, 0px))) + var(--space-4)
+      var(--shell-bottom-bar, 0px) + env(safe-area-inset-bottom, 0px) + var(--space-4)
     );
     z-index: 82;
     max-width: calc(100vw - 2 * var(--space-4));
