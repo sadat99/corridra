@@ -217,7 +217,7 @@ export default async function Page({
                     These {deferredControls.length} controls are open. Each one is deferred by your
                     decision to launch at small scale. None of them is passed or approved.
                   </p>
-                  <ShowMoreList className="owner-gaps owner-gap-cards" limit={2} noun="open gaps">
+                  <ShowMoreList className="owner-gaps owner-gap-cards" limit={3} noun="open gaps">
                     {deferredControls.map((control) => {
                       const gap = ownerGaps.find((g) => g.id === control.id);
                       const signal = gap ? gapSignal(gap.id) : null;

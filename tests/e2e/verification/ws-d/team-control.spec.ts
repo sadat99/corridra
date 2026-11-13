@@ -202,7 +202,8 @@ test('WS-D actions: team invite, roles, authenticator reset, audit, route pack, 
     }
     await page.goto(`/operator/sources?workspace=${tenant}`);
     const sources = page.locator('#workspace-sources');
-    // At 1280 px the source form is open; on phones it sits in a fold.
+    // The source form starts closed behind its summary at every width (one form open at a time, L21): open it.
+    await sources.getByText('Record a new source (6 fields)', { exact: true }).click();
     await expect(sources.getByRole('combobox', { name: /Mission \(optional\)/ })).toBeVisible();
     await expect(sources.getByRole('combobox', { name: /Company \(optional\)/ })).toBeVisible();
     await evidence(page, 'V-22-sources-links');

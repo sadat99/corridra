@@ -1069,6 +1069,8 @@ test('controlled buyer response progresses through durable delivery, a held meet
     ).status(),
   ).toBe(403);
   await page.getByRole('button', { name: 'Refresh Access and Meetings' }).click();
+  // Introductions and meetings are cut into sub-tabs (L21): the proposal form is the Meetings tab.
+  await openTab(page, /^Meetings \(/);
   await page.locator('summary', { hasText: 'Propose a meeting' }).click();
   const proposal = page.getByRole('form', { name: 'Propose Meeting' });
   await proposal
@@ -1124,10 +1126,13 @@ test('controlled buyer response progresses through durable delivery, a held meet
     .fill('Record observed attendance and owned follow-up');
   await card.getByRole('button', { name: 'Record Meeting Change' }).click();
   await expect(card.getByText(/State: Held/)).toBeVisible();
+  // The owned follow-up is its own tab (L21).
+  await openTab(page, /^Follow-up \(/);
   await expect(
     page.getByRole('heading', { name: 'Send the agreed requirement summary', exact: true }),
   ).toBeVisible();
   await page.reload();
+  await openTab(page, /^Meetings \(/);
   await expect(card.getByText(/State: Held/)).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   const heldSnapshot = await (
@@ -1216,6 +1221,11 @@ test('operator follows the intake and held meeting through confirmed cash, recur
   await expect(
     section.getByText('Commercial commands are disabled.', { exact: false }),
   ).toHaveCount(0);
+  // Commercial progress is cut into sub-tabs (L21): the opportunities and their forms are one tab, the totals
+  // are the Mission yield tab. Each step below opens the tab it reads.
+  const showOpportunities = () => openTab(section, /^Opportunities \(/);
+  const showTotals = () => openTab(section, 'Mission yield');
+  await showOpportunities();
   await section.getByText('Create an opportunity from a held meeting', { exact: true }).click();
   const create = section.getByRole('form', { name: 'Create Commercial Opportunity' });
   await create.getByLabel('Opportunity origin meeting').selectOption(origin.meetingId);
@@ -1296,7 +1306,9 @@ test('operator follows the intake and held meeting through confirmed cash, recur
   await advance('INVOICE');
   await evidence('CASH_RECEIPT', 'part07-cash', 'part07-invoice · EUR 125.00', '125.00');
   const totals = section.getByLabel('EUR commercial totals');
+  await showTotals();
   await expect(totals.getByText('Confirmed cash: EUR 0.00', { exact: true })).toBeVisible();
+  await showOpportunities();
   const first = card.getByLabel('part07-cash', { exact: true });
   await expect(first.getByText('Reported receipt; accounting confirmation pending')).toBeVisible();
   async function confirm(reference: string) {
@@ -1317,7 +1329,9 @@ test('operator follows the intake and held meeting through confirmed cash, recur
   }
   await confirm('part07-cash');
   await advance('CASH_COLLECTED');
+  await showTotals();
   await expect(totals.getByText('Confirmed cash: EUR 125.00', { exact: true })).toBeVisible();
+  await showOpportunities();
   await evidence(
     'INVOICE',
     'part07-repeat-invoice',
@@ -1342,8 +1356,10 @@ test('operator follows the intake and held meeting through confirmed cash, recur
     'part07-cash',
   );
   await advance('RECURRING_REVENUE');
+  await showTotals();
   await expect(totals.getByText('Confirmed cash: EUR 250.00', { exact: true })).toBeVisible();
   await expect(totals.getByText('Repeat cash within confirmed cash: EUR 125.00')).toBeVisible();
+  await showOpportunities();
   const before = await (
     await page.request.get(
       `/api/workspace/opportunities?tenant=${seed.tenantId}&mission=${origin.missionId}`,
@@ -1374,7 +1390,9 @@ test('operator follows the intake and held meeting through confirmed cash, recur
     .fill('Correct the invented repeat receipt in full');
   await reverse.getByRole('button', { name: 'Record Full Compensation' }).click();
   await expect(second.getByText(/Compensation recorded/)).toBeVisible();
+  await showTotals();
   await expect(totals.getByText('Confirmed cash: EUR 250.00', { exact: true })).toBeVisible();
+  await showOpportunities();
   const report = await (
     await page.request.get(
       `/api/workspace/opportunities?tenant=${seed.tenantId}&mission=${origin.missionId}`,
@@ -1388,10 +1406,13 @@ test('operator follows the intake and held meeting through confirmed cash, recur
       ).id,
   );
   await confirm(negative.external_reference);
+  await showTotals();
   await expect(totals.getByText('Confirmed cash: EUR 125.00', { exact: true })).toBeVisible();
   await expect(totals.getByText('Repeat cash within confirmed cash: EUR 0.00')).toBeVisible();
   await page.reload();
+  await showOpportunities();
   await expect(card.getByText(/Opportunity state: RECURRING_REVENUE/)).toBeVisible();
+  await showTotals();
   await expect(totals.getByText('Confirmed cash: EUR 125.00', { exact: true })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -2707,6 +2728,8 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
     await page.reload();
     await openSection(page, 'workspace-ai');
     const aiPanel = page.getByRole('region', { name: 'Governed AI review' });
+    // AI assistance is cut into sub-tabs (L21): the form is Prepare a Draft, the recorded drafts are the other.
+    await openTab(aiPanel, 'Prepare a Draft');
     await aiPanel.getByLabel('Mission reference', { exact: true }).fill(missionId);
     await aiPanel.getByLabel('Reviewed model policy').selectOption(policyId);
     await aiPanel.getByLabel('Approved public claim references, separated by commas').fill(claim);
@@ -2728,12 +2751,14 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
     expect(aiSubmissions[1]).toEqual(aiSubmissions[0]);
     await page.unroute('**/api/workspace/ai-run?*');
     await aiPanel.getByLabel('Approved public claim references, separated by commas').fill(claim);
+    await openTab(aiPanel, /^Recorded drafts \(/);
     await expect(
       aiPanel
         .getByText('Synthetic provider fixture only; acceptance unknown', { exact: false })
         .first(),
     ).toBeVisible();
     await expect(aiPanel.getByText('Unverified AI draft', { exact: true }).first()).toBeVisible();
+    await openTab(aiPanel, 'Prepare a Draft');
     const blockedCommands: { commandId: string }[] = [];
     await page.route('**/api/workspace/ai-run?*', async (route) => {
       blockedCommands.push(route.request().postDataJSON());
@@ -2813,6 +2838,7 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
     ).toBe(0);
     await page.unroute('**/api/workspace/ai-run?*');
     await aiPanel.getByLabel('Approved public claim references, separated by commas').fill(claim);
+    await openTab(aiPanel, /^Recorded drafts \(/);
     await aiPanel.getByRole('button', { name: 'Inspect Original Sources' }).click();
     await expect(
       aiPanel.getByText('Authorized original source quotations and rights'),
@@ -3014,6 +3040,8 @@ test('governed SDK fixture review and mobile non-member execution preserve indep
       .getByRole('region', { name: 'Execution network' })
       .locator('article')
       .filter({ hasText: 'Review only the disclosed synthetic machine capacity statement.' });
+    // The task list starts closed behind its summary (L21): open it first.
+    await reviewerPage.getByText(/^Disclosed tasks in this workspace/).click();
     await networkPanel.getByText('Original work and review history').click();
     await expect(
       networkPanel.getByText(

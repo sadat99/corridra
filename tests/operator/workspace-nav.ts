@@ -11,8 +11,9 @@ export async function openSection(page: Page, id: string) {
 }
 
 // A long section is cut into sub-tabs (L-03). Choose one before touching what is inside it.
-export async function openTab(scope: Page | Locator, name: string) {
-  const tab = scope.getByRole('tab', { name, exact: true });
+// A tab whose name carries a count ("Meetings (3)") is chosen with a pattern.
+export async function openTab(scope: Page | Locator, name: string | RegExp) {
+  const tab = scope.getByRole('tab', typeof name === 'string' ? { name, exact: true } : { name });
   await tab.click();
   await expect(tab).toHaveAttribute('aria-selected', 'true');
 }

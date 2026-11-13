@@ -1,4 +1,4 @@
-import { openSection } from './workspace-nav';
+import { openSection, openTab } from './workspace-nav';
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { createHmac, randomUUID } from 'node:crypto';
@@ -97,6 +97,9 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
     reason,
   });
   await ops.getByRole('button', { name: 'Refresh Operations', exact: true }).click();
+  await openSection(page, 'ops-center');
+  // The Control Center is cut into sub-tabs (L21): routes and readiness, then records and commands.
+  await openTab(ops, 'Routes and readiness');
   await openSection(page, 'ops-center');
   await ops
     .getByRole('combobox', { name: 'Control Center route', exact: true })
@@ -200,6 +203,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
     sourceId: null,
     reason,
   };
+  await openTab(ops, 'Records and commands');
   await ops
     .getByRole('textbox', { name: 'Operational command JSON', exact: true })
     .fill(JSON.stringify(command));
@@ -268,10 +272,13 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
   expect(sent[2]).toEqual(sent[0]);
   await page.unroute('**/api/workspace/operations?*');
   await openSection(page, 'ops-health');
+  await openTab(ops, 'Cases');
+  await openSection(page, 'ops-health');
   await expect(
     ops.getByRole('region', { name: 'Owned recovery, privacy and fraud cases', exact: true }),
   ).toContainText(caseKey);
   await openSection(page, 'ops-center');
+  await openTab(ops, 'Records and commands');
   await ops
     .getByRole('textbox', { name: 'Operational command JSON', exact: true })
     .fill(JSON.stringify({ ...command, version: 2, state: 'RESOLVED' }));
@@ -304,6 +311,10 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
   const missionId = dashboard.missions[0].id;
   const record = async (input: unknown) => {
     await openSection(page, 'ops-center');
+    await openTab(ops, 'Records and commands');
+    // A tab choice made right after a section change can write the previous section's #address back (the tabs
+    // keep the address with history.replaceState); say the section again so the next hop is a real change.
+    await openSection(page, 'ops-center');
     await ops
       .getByRole('textbox', { name: 'Operational command JSON', exact: true })
       .fill(JSON.stringify(input));
@@ -312,6 +323,7 @@ test('UX-05 governance keeps evidenced readiness, exact recovery receipts and ro
       .click();
     await expect(ops.getByRole('status')).toContainText('Recorded.');
     await openSection(page, 'ops-dashboard');
+    await openTab(ops, 'Money');
   };
   await record({
     action: 'ledger',

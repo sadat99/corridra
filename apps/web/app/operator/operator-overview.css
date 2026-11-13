@@ -1758,8 +1758,9 @@
   .ux-operator-home .ux-workspace-body .workspace-panel .ux-operator-workbench {
     padding-block: var(--space-1);
   }
-  .ux-operator-home .ux-workspace-body .workspace-panel .ux-operator-workbench button {
-    min-height: 2.25rem;
+  /* Jump chips keep the 44 px target of every width. The more specific selector outranks the laptop control rule below. */
+  .ux-operator-home .ux-workspace-body .workspace-panel .ux-operator-workbench > div > button {
+    min-height: 2.75rem;
   }
   .ux-operator-home .ux-workspace-body .ux-settings-sections > details > summary {
     min-height: 2.75rem;
@@ -1967,8 +1968,13 @@
     margin-block: 0;
     padding-block: 0;
   }
-  .ux-operator-home .ux-workspace-body .ux-governance-panel > .ux-operator-workbench button {
-    min-height: 2rem;
+  .ux-operator-home
+    .ux-workspace-body
+    .ux-governance-panel
+    > .ux-operator-workbench
+    > div
+    > button {
+    min-height: 2.75rem;
   }
 }
 /* Phone: two jump buttons per row, links and counts side by side, a quieter heading. 44 px targets stay. */
@@ -1988,14 +1994,14 @@
     gap: var(--space-1);
     min-width: 0;
   }
-  /* Two chips to a row. The shared phone rule for text-link buttons makes each one a full row; this one is
-     written to outrank it for the jump list only, so a long list costs a few rows and no chip leaves the screen. */
+  /* Chips are as wide as their words and wrap. The shared phone rule for text-link buttons makes each one a full row;
+     this one is written to outrank it for the jump list only, so a long list costs a few rows and no chip leaves the screen. */
   .ux-operator-home
     .ux-workspace-body
     .ux-operator-workbench
     > div
     > button.text-link:not(.ux-back):not([role='tab']):not([hidden]) {
-    flex: 1 1 calc(50% - var(--space-1));
+    flex: 0 1 auto;
     width: auto;
     min-height: 2.75rem;
     padding-block: 0;
@@ -2773,7 +2779,7 @@
     :is(#workspace-research, #workspace-delivery)
     .ux-operator-workbench
     button {
-    flex: 1 1 calc(50% - var(--space-1));
+    flex: 0 1 auto;
     width: auto;
   }
   /* The mission counts read three to a row on a phone. */
@@ -3192,4 +3198,73 @@
 /* Today's counts: a number in the serif, the caption quiet, a late count on the critical surface with its own text. */
 .ux-operator-home .ux-today-tiles strong {
   font-family: var(--serif);
+}
+/* Staff page length, final margin (L21). Presentation only: no element, text, id, href or payload changes.
+   Phone: the page uses the full width of the shell gutter, the Network heading puts its state beside its label,
+   and the jump button sits beside "Jump To". Together Network is about 1.9 screens, with room for a font that
+   wraps one line more (KI-28). */
+@media (max-width: 39.99rem) {
+  .ux-operator-home {
+    padding-inline: 0;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: var(--space-2);
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading > div {
+    display: contents;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading > div > * {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading > div > .label {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading > .ux-network-state {
+    grid-column: 2;
+    grid-row: 1;
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--text-xs);
+  }
+  .ux-operator-home .ux-workspace-body .ux-operator-workbench > .ux-workbench-toggle {
+    flex: 0 1 auto;
+    width: auto;
+  }
+  .ux-operator-home .ux-workspace-body .ux-operator-workbench > div {
+    flex: 1 1 100%;
+  }
+  /* Today with a full list (three late missions, four week lines) stays under two screens with room to spare. */
+  .ux-operator-home .ux-today,
+  .ux-operator-home .ux-today-columns,
+  .ux-operator-home .ux-today-side {
+    gap: var(--space-2);
+  }
+  .ux-operator-home .ux-today-tiles a {
+    padding: var(--space-2);
+  }
+}
+/* Laptop: every staff page ends well inside one 900 px screen. The page title and its small label share a line,
+   the title uses the page-title token instead of a larger one, and the page column keeps a closer bottom edge. */
+@media (min-width: 1024px) {
+  .ux-leftnav-page:has(> main.ux-operator-home) {
+    padding-bottom: var(--space-6);
+  }
+  .ux-leftnav-page:has(.ux-overview:not([hidden])) {
+    padding-block: var(--space-4) var(--space-2);
+  }
+  .ux-operator-home.ux-workspace > .ux-page-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--space-3);
+  }
+  .ux-operator-home.ux-workspace > .ux-page-heading > h1 {
+    order: -1;
+    font-size: var(--text-h1);
+  }
 }

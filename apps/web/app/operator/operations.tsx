@@ -653,6 +653,7 @@ export function Operations({
             <p>{dashboard.definitions.scope}</p>
             <SubTabs
               label="Dashboard sections"
+              dormant={activeSection !== 'ops-dashboard'}
               tabs={[
                 {
                   id: 'dash-summary',
@@ -930,6 +931,7 @@ export function Operations({
           </p>
           <SubTabs
             label="Control Center sections"
+            dormant={activeSection !== 'ops-center'}
             tabs={[
               { id: 'cc-overview', label: 'Overview', panel: <FounderOverview tenant={tenant} /> },
               {
@@ -1471,6 +1473,7 @@ export function Operations({
             </p>
             <SubTabs
               label="Recovery and health sections"
+              dormant={activeSection !== 'ops-health'}
               tabs={[
                 {
                   id: 'health-comms',
@@ -1627,6 +1630,7 @@ export function Operations({
         </p>
         <SubTabs
           label="Production readiness sections"
+          dormant={activeSection !== 'ops-gates'}
           tabs={[
             {
               id: 'deferred',
