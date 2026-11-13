@@ -5,10 +5,13 @@ import { barePublicPages, isBarePublicPage } from '../../apps/web/lib/ux/bare-pa
 // Revamp Wave 4, spec docs/revamp/specs/decision-card-ui.md: the decision card page is bare. No header,
 // footer or dock, and so nothing that asks the server who is signed in.
 describe('isBarePublicPage', () => {
-  it('is true only for the decision card page, with or without a trailing slash', () => {
-    expect(barePublicPages).toEqual(['/decision-card']);
+  it('is true for the decision card and offline pages, with or without a trailing slash', () => {
+    expect(barePublicPages).toEqual(['/decision-card', '/offline']);
     expect(isBarePublicPage('/decision-card')).toBe(true);
     expect(isBarePublicPage('/decision-card/')).toBe(true);
+    // The offline page is shown with no network, so it carries no chrome that asks the server anything.
+    expect(isBarePublicPage('/offline')).toBe(true);
+    expect(isBarePublicPage('/offline/')).toBe(true);
   });
   it.each([
     '/',
@@ -16,6 +19,8 @@ describe('isBarePublicPage', () => {
     '/decision-card/extra',
     '/decision-card-x',
     '/account/decision-card',
+    '/offline-page',
+    '/account/offline',
     '/operator',
     '/DECISION-CARD',
     '',

@@ -10,11 +10,13 @@ import { LanguageProvider } from '../components/language-provider';
 import { SkipLink } from '../components/skip-link';
 import { CanonicalLink } from '../components/ux/canonical-link';
 import { ComfortSync } from '../components/ux/use-comfort';
+import { ServiceWorkerRegistration } from '../components/ux/service-worker-registration';
 import { canonicalSiteOrigin } from '../lib/canonical-origin';
 import { supportWhatsappHref } from '../lib/ux/support-whatsapp';
 import { offeredLanguages } from '../lib/i18n/locales';
 import { languagesWithPages } from '../lib/i18n/pages';
 import { uxSwitchOn } from '../lib/ux-switches';
+import { serviceWorkerOn } from '../lib/ux/service-worker';
 import { realUseEnabled } from '@corridra/auth/customer-production';
 
 // Self-hosted variable fonts (SIL OFL, licences in fonts/). Newsreader sets public and section
@@ -94,6 +96,9 @@ export const metadata: Metadata = {
   },
   twitter: { card: 'summary_large_image' },
   robots: { index: true, follow: true },
+  // An installed Corridra opens in its own window on iPhone and iPad too, with the same name and icon
+  // (the web manifest does this for Android and desktop; Safari reads these instead).
+  appleWebApp: { capable: true, title: 'Corridra', statusBarStyle: 'default' },
 };
 
 /** Browser chrome takes AC/1 Midnight Navy (--ac-navy). */
@@ -114,6 +119,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <LanguageProvider offered={offered} pageLocales={languagesWithPages()}>
           <CanonicalLink />
           <ComfortSync />
+          <ServiceWorkerRegistration enabled={serviceWorkerOn()} />
           <SkipLink />
           <div className="site-shell">
             <ShellHeader

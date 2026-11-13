@@ -210,6 +210,10 @@ function CornerDockView({ variant }: { variant: 'corner' | 'header' | 'rail' }) 
           <Link prefetch={false} href="/plan" onClick={() => closeHelp(false)}>
             Start a request
           </Link>
+          {/* The one place installing is offered: a link in Help, never a banner or a dialog on a page. */}
+          <Link prefetch={false} href="/install" onClick={() => closeHelp(false)}>
+            Install Corridra
+          </Link>
         </div>
       )}
       <button
