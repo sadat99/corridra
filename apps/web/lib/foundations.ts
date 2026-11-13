@@ -81,6 +81,7 @@ import {
   StaffOrganisationLinkService,
   customerOrganisationLinksEnabled,
 } from '@corridra/auth/customer-organisation-links';
+import { StaffOrganisationCatalogueService } from '@corridra/auth/organisation-source-rights';
 import {
   CustomerProgrammeContextService,
   customerProgrammeContextEnabled,
@@ -660,6 +661,7 @@ function createServices() {
       readCustomerSession,
     ),
     staffOrganisationLinks: new StaffOrganisationLinkService(runtimePool),
+    staffOrganisationCatalogue: new StaffOrganisationCatalogueService(runtimePool),
     customerServiceStaff: new CustomerServiceStaffService(
       runtimePool,
       uxSwitchOn('CORRIDRA_NOTIFICATIONS_V2')

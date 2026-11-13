@@ -5,6 +5,15 @@ const text = (max: number, min = 1) => z.string().trim().min(min).max(max);
 const uuid = z.uuid();
 const base = { commandId: uuid };
 const date = z.iso.datetime({ offset: true });
+export const organisationSourceTypes = [
+  'government_registry',
+  'company_website',
+  'trade_body_list',
+  'event_list',
+  'staff_research',
+  'licensed_dataset',
+  'other',
+] as const;
 export const researchQuery = z.object({
   q: z.string().trim().max(100).default(''),
   offset: z.coerce.number().int().min(0).max(100000).default(0),
@@ -31,7 +40,18 @@ export const ingestOrganisation = z.object({
   address: text(300),
   identifier: text(100).transform((v) => v.toUpperCase()),
   identifierType: z.enum(['registry', 'tax', 'source_id']),
+  /** The kind of public source the identity came from. Stored as a staff note, never a legal clearance. */
+  sourceType: z.enum(organisationSourceTypes).optional(),
 });
+export const ingestWarnings = [
+  'licence_not_checked',
+  'source_not_classified',
+  'personal_name_check',
+  'previously_hidden',
+] as const;
+export type IngestWarning = (typeof ingestWarnings)[number];
+/** What an ingest answers with. Warnings come only from the rights wrapper; an older database answers the id alone. */
+export type IngestResult = { id: string; warnings?: IngestWarning[] };
 export const relationshipInput = z.object({
   ...base,
   action: z.literal('relationship'),
