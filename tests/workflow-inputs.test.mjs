@@ -94,6 +94,9 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'supply_sources_install',
     'supply_sources_enable',
     'supply_sources_pause',
+    'sourcing_workflow_install',
+    'sourcing_workflow_enable',
+    'sourcing_workflow_pause',
   ]);
   const defaults = Object.fromEntries(
     Object.entries(declared).map(([name, input]) => [name, input.default]),
@@ -131,6 +134,9 @@ test('each field-module choice maps to install only and reaches the exact-head c
     ['supply_sources_install', u, u, u, u, u, u, u, u],
     ['supply_sources_enable', u, u, u, u, u, u, u, u],
     ['supply_sources_pause', u, u, u, u, u, u, u, u],
+    ['sourcing_workflow_install', u, u, u, u, u, u, u, u],
+    ['sourcing_workflow_enable', u, u, u, u, u, u, u, u],
+    ['sourcing_workflow_pause', u, u, u, u, u, u, u, u],
   ]) {
     const inputs = { ...defaults, field_modules_action: choice };
     assert.equal(evaluate(env.SPECIFICATION_CONFIRMATION_ACTION, inputs), confirmation);
@@ -240,4 +246,42 @@ test('the supply source choices install, open and pause only the module control,
       .sort(),
     ['SUPPLY_SOURCES_ACTION', 'SUPPLY_SOURCES_REASON'],
   );
+});
+
+test('the sourcing workflow choices install, open and pause only that module, each open or pause with a reason', () => {
+  const workflow = parseDocument(
+    readFileSync('.github/workflows/install-customer-modules.yml', 'utf8'),
+  ).toJS();
+  const declared = workflow.on.workflow_dispatch.inputs;
+  const env = workflow.jobs.install.steps.find(
+    (step) => step.name === 'Report or install the customer modules',
+  ).env;
+  const evaluate = (expression, inputs) =>
+    runInNewContext(expression.replace(/^\$\{\{\s*|\s*\}\}$/g, ''), { inputs });
+  const defaults = Object.fromEntries(
+    Object.entries(declared).map(([name, input]) => [name, input.default]),
+  );
+  for (const choice of declared.field_modules_action.options) {
+    const inputs = { ...defaults, field_modules_action: choice };
+    const expected =
+      {
+        sourcing_workflow_install: 'install',
+        sourcing_workflow_enable: 'enable',
+        sourcing_workflow_pause: 'pause',
+      }[choice] ?? 'unchanged';
+    assert.equal(evaluate(env.SOURCING_WORKFLOW_ACTION, inputs), expected, choice);
+    const reason = evaluate(env.SOURCING_WORKFLOW_REASON, inputs);
+    if (expected === 'enable' || expected === 'pause') {
+      assert.ok(reason.length >= 10 && reason.length <= 500, `${choice} reason length`);
+      assert.match(reason, expected === 'enable' ? /opened/ : /paused/);
+    } else assert.equal(reason, '');
+    // No other module moves with a sourcing choice: every other action variable that is an expression stays unchanged.
+    if (expected !== 'unchanged')
+      for (const [name, value] of Object.entries(env))
+        if (name.endsWith('_ACTION') && name !== 'SOURCING_WORKFLOW_ACTION')
+          assert.ok(
+            ['unchanged', 'no'].includes(String(evaluate(String(value), inputs))),
+            `${choice} must not move ${name}`,
+          );
+  }
 });
