@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   replyGaps,
   replyReviewReasons,
@@ -212,6 +212,14 @@ function ReplyCard({
     }
   }
 
+  // The card is drawn after the replies load, so the browser has already looked for #reply-<id> and found nothing.
+  // A link from the offer form ends at that address: bring the card into view once it exists.
+  const card = useRef<HTMLLIElement>(null);
+  useEffect(() => {
+    if (window.location.hash === `#reply-${reply.id}`)
+      card.current?.scrollIntoView({ block: 'start' });
+  }, [reply.id]);
+
   const published = state.final?.decision === 'PUBLISH';
   const prepared = published ? preparedQuotation(reply.body) : null;
   const prefill = useReplyPrefill(tenant, published && canRecord ? reply.id : null);
@@ -242,7 +250,7 @@ function ReplyCard({
   const han = (text: string) => (/\p{Script=Han}/u.test(text) ? 'zh' : undefined);
 
   return (
-    <li className="reply-review-card" id={`reply-${reply.id}`}>
+    <li className="reply-review-card" id={`reply-${reply.id}`} ref={card}>
       <header>
         <p className="reply-review-meta">
           Recipient link {reply.link_id.slice(0, 8)}
