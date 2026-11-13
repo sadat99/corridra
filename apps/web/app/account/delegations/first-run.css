@@ -92,6 +92,19 @@
     overflow-y: auto;
     overscroll-behavior: contain;
   }
+  /* The frame is narrower than the window, so the public page inside it keeps to one reading column. */
+  .first-run-preview-page .programme-public:has(> .programme-public-apply) {
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+  }
+  .first-run-preview-page .programme-public > .programme-public-apply {
+    grid-column: 1;
+    grid-row: auto;
+    position: static;
+  }
+  .first-run-preview-page .programme-public {
+    row-gap: var(--space-4);
+  }
   .first-run-preview-page:focus-visible {
     outline: 2px solid var(--focus);
     outline-offset: 2px;

@@ -538,6 +538,15 @@ describe('the room keeps what it had', () => {
     expect(rule).toMatch(/border:\s*0;/);
     expect(room).toContain('className="text-link"');
   });
+  it('keeps the public page in the first run preview to one reading column on a wide screen', () => {
+    const css = read('apps/web/app/account/delegations/first-run.css');
+    expect(css).toMatch(
+      /\.first-run-preview-page \.programme-public:has\(> \.programme-public-apply\) \{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/,
+    );
+    expect(css).toMatch(
+      /\.first-run-preview-page \.programme-public > \.programme-public-apply \{[^}]*position:\s*static;/,
+    );
+  });
   it('keeps the vertical stage timeline in the header in both states (owner lock, 12 Nov)', () => {
     expect(room).toContain('<div className="room-stage room-stage--timeline">');
     expect(room.match(/<Stage counts=/g)).toHaveLength(1);
