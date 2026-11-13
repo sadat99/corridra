@@ -372,9 +372,9 @@ export function Counterparties({
         {message}
       </p>
       {ingestNotes.length > 0 && (
-        <ul aria-label="Warnings for the new company record">
+        <ul role="status" aria-live="polite" aria-label="Warnings for the new company record">
           {ingestNotes.map((warning) => (
-            <li key={warning}>{ingestWarningWords[warning]}</li>
+            <li key={warning}>{ingestWarningWords[warning] ?? warning}</li>
           ))}
         </ul>
       )}
