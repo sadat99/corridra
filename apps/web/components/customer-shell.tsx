@@ -17,6 +17,7 @@ import {
   customerTabs,
   type CustomerTabKey,
 } from '../lib/ux/customer-navigation';
+import { readJourneyCounts } from '../lib/work-items/journey-counts-server';
 import { notificationSettingsAvailable } from '../lib/ux/notification-settings';
 import { supportWhatsappHref } from '../lib/ux/support-whatsapp';
 import { CustomerTabs } from './ux/customer-tabs';
@@ -158,6 +159,7 @@ function CustomerFrame({ tab, eyebrow, title, count, children }: CustomerShellPr
           items={items}
           current={here ?? ''}
           journeys={journeys}
+          journeyCounts={journeys.length ? readJourneyCounts() : undefined}
           groups={groups}
         />
       }

@@ -292,3 +292,42 @@ nav.ux-team-sidebar.ux-customer-nav a span,
     border-top: 1px solid var(--line);
   }
 }
+
+/* Scrolling (owner screenshot, 13 Nov 2026: a heavy dark bar with arrow buttons on a white sidebar even with room to
+   spare). The list scrolls only when it overflows, and then with a thin quiet bar in the customer sidebar's own
+   colours; the navy track set for the team bar is not used here. Short windows are made to fit first: the rows and
+   the gaps are a little tighter, so Your Journeys is not cut off at 831 px high. */
+.ux-leftnav-panel:has(> nav.ux-customer-nav),
+.ux-leftnav-panel > nav.ux-team-sidebar.ux-customer-nav {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+.ux-leftnav-panel > nav.ux-team-sidebar.ux-customer-nav {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+.ux-leftnav-panel > nav.ux-team-sidebar.ux-customer-nav::-webkit-scrollbar {
+  width: 6px;
+}
+.ux-leftnav-panel > nav.ux-team-sidebar.ux-customer-nav::-webkit-scrollbar-button {
+  display: none;
+}
+.ux-leftnav-panel > nav.ux-team-sidebar.ux-customer-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+.ux-leftnav-panel > nav.ux-team-sidebar.ux-customer-nav::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 3px;
+}
+@media (min-width: 1024px) and (max-height: 860px) {
+  .ux-leftnav-panel nav.ux-team-sidebar.ux-customer-nav a {
+    min-height: 2.5rem;
+  }
+  .ux-leftnav-panel nav.ux-team-sidebar.ux-customer-nav a[data-lead='true'] {
+    min-height: 2.75rem;
+  }
+  .ux-customer-nav-group {
+    margin-top: var(--space-2);
+  }
+}
