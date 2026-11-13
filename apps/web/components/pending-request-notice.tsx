@@ -51,9 +51,20 @@ export function PendingRequestMessage({ where }: { where: PendingNoticeWhere }) 
  * Shows the notice only when this browser holds a saved request. The server answers with two
  * booleans and nothing about the request. Any failure shows nothing: the page works as before.
  */
-export function PendingRequestNotice({ where }: { where: PendingNoticeWhere }) {
+export function PendingRequestNotice({
+  where,
+  enabled = true,
+}: {
+  where: PendingNoticeWhere;
+  /**
+   * False when the server page already knows real request intake is closed. The route answers 503 then, which a browser
+   * logs as a console error, so nothing is asked and the page shows nothing extra (owner decision, 13 Nov 2026).
+   */
+  enabled?: boolean;
+}) {
   const [pending, setPending] = useState(false);
   useEffect(() => {
+    if (!enabled) return;
     const controller = new AbortController();
     fetch('/api/intake/pending', { cache: 'no-store', signal: controller.signal })
       .then(async (response) => {
@@ -69,6 +80,6 @@ export function PendingRequestNotice({ where }: { where: PendingNoticeWhere }) {
         /* Without the answer the page simply shows nothing extra. */
       });
     return () => controller.abort();
-  }, []);
+  }, [enabled]);
   return <div aria-live="polite">{pending && <PendingRequestMessage where={where} />}</div>;
 }
