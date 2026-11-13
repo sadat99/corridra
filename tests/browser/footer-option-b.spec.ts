@@ -303,6 +303,73 @@ test('every footer control is at least a 44 px target, at 390 and 1440', async (
   }
 });
 
+// L14 (owner, 13 November 2026): on a phone the footer with Buy Abroad open was about 1.15 screens tall. It now fits
+// one 844 px screen at 390 wide. The groups, their order and Buy Abroad as the largest tile are unchanged; wider
+// screens must not grow (their heights before L14: 884 px at 768, 567 px at 1440, with a little room for fonts).
+test('at 390 the footer with Buy Abroad open fits one 844 px screen, and 768 and 1440 do not grow', async ({
+  page,
+}) => {
+  const heights: Record<number, number> = {};
+  for (const width of [390, 768, 1440]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/about');
+    await page.evaluate(() => document.fonts.ready);
+    if (width === 390)
+      await expect(footer(page).locator('details.guide-footer-details').first()).toHaveAttribute(
+        'open',
+        '',
+      );
+    heights[width] = (await footer(page).boundingBox())!.height;
+  }
+  expect(heights[390], 'footer height at 390, Buy Abroad open').toBeLessThanOrEqual(844);
+  expect(heights[768], 'footer height at 768').toBeLessThanOrEqual(890);
+  expect(heights[1440], 'footer height at 1440').toBeLessThanOrEqual(575);
+});
+
+// L14 (owner, 13 November 2026, Meetings page at 1908 x 831): the quiet footer of the signed-in shell (How We Label
+// Facts, the copyright, the privacy notice) floated mid-page on a short page. It now sits at the bottom of the window
+// with no scrollbar added. The shell only draws it behind the signed-in switch, which the default server leaves off,
+// so the case swaps the full footer of a short page (the not-found page) for the quiet one and measures the real
+// shell and its real stylesheet. The signed-in pages themselves are covered by the verification suite.
+for (const size of [
+  { width: 1908, height: 831 },
+  { width: 390, height: 844 },
+])
+  test(`the quiet signed-in footer sits at the bottom of a short page at ${size.width} x ${size.height}, with no scrollbar added`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(size);
+    await page.goto('/this-page-does-not-exist');
+    // After hydration, so the page does not put its own footer back.
+    await page.waitForLoadState('networkidle');
+    await page.evaluate(() => {
+      const full = document.querySelector('footer.guide-footer')!;
+      const quiet = document.createElement('footer');
+      quiet.className = 'site-footer';
+      quiet.innerHTML =
+        '<span><a href="/trust">How We Label Facts</a></span><span>\u00a9 2026 Corridra</span><span><a href="/privacy">Privacy and request notice</a></span>';
+      full.replaceWith(quiet);
+    });
+    const box = await page.locator('footer.site-footer').boundingBox();
+    const scrollHeight = await page.evaluate(() => document.documentElement.scrollHeight);
+    expect(
+      scrollHeight,
+      'the page is shorter than the window, so no scrollbar',
+    ).toBeLessThanOrEqual(size.height);
+    expect(
+      box!.y + box!.height,
+      'the footer ends at the bottom of the window',
+    ).toBeGreaterThanOrEqual(size.height - 1);
+    expect(box!.y + box!.height).toBeLessThanOrEqual(size.height + 1);
+    // The page column keeps the width it had (the shell's content width), not the width of its words.
+    const widths = await page.evaluate(() =>
+      [...document.querySelector('.site-shell')!.children]
+        .filter((child) => !['fixed'].includes(getComputedStyle(child).position))
+        .map((child) => Math.round(child.getBoundingClientRect().width)),
+    );
+    expect(new Set(widths).size, `column widths ${widths.join(', ')}`).toBe(1);
+  });
+
 test('no sideways scroll at 320, 390, 768 and 1440, with every group open on a phone', async ({
   page,
 }) => {
