@@ -437,3 +437,30 @@ article.room.programme-room .programme-checklist > div > dd small {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Decisions-first Overview (ADR-084 S0): the decisions after the next one sit under it, inside the same card. */
+.programme-room .room-decisions-then {
+  display: grid;
+  flex: 1 0 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid color-mix(in srgb, var(--on-brand) 22%, transparent);
+}
+.programme-room .room-decisions-then > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-4);
+  min-height: 2.75rem;
+  color: color-mix(in srgb, var(--on-brand) 88%, transparent);
+  font-size: var(--text-sm);
+}
+.programme-room .room-decisions-then > li + li {
+  border-top: 1px solid color-mix(in srgb, var(--on-brand) 14%, transparent);
+}
+.programme-room .room-decisions-then > li > span {
+  flex: 1 1 16rem;
+  min-width: 0;
+}

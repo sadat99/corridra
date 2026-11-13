@@ -308,4 +308,51 @@ export const programmePagesWords = {
   'pp.apply.joinNeeded': 'Tick the box to join the programme.',
   'pp.apply.withdraw': 'Withdraw Application',
   'pp.apply.withdrawConfirm': 'Withdraw this application? The organiser will see it as withdrawn.',
+  // The guided first run (ADR-084 S0): three steps of at most three fields, ending on Publish. It asks for the
+  // editor's own lines and sends the existing create, template and publish commands.
+  'pp.first.title': 'Set up your delegation',
+  'pp.first.lead':
+    'Three short steps. Your answers stay in this browser until you press Publish. Nothing is saved to your workspace or made public before that.',
+  'pp.first.step.name': 'Name and place',
+  'pp.first.step.dates': 'Dates and people',
+  'pp.first.step.fee': 'Fee and places',
+  'pp.first.name.label': 'Programme name',
+  'pp.first.template.label': 'Start from a template (optional)',
+  'pp.first.template.none': 'No template',
+  'pp.first.template.hint':
+    'A template adds its tasks and planned costs to the new programme. It never adds people, fees or payments.',
+  'pp.first.dates.hint': 'For example "12 to 16 March 2027".',
+  'pp.first.dates.unsure': 'I am not sure yet',
+  'pp.first.dates.unsureValue': 'Dates to be confirmed',
+  'pp.first.more': 'More Page Lines',
+  'pp.first.more.note':
+    'Your page also shows these lines. Change any of them now, or later from the programme.',
+  'pp.first.preview.title': 'Your public page so far',
+  'pp.first.preview.note':
+    'This is what the public will read after you publish. It updates as you type.',
+  'pp.first.preview.open': 'Preview Your Page',
+  'pp.first.preview.empty': 'Not written yet',
+  'pp.first.preview.name': 'Your programme name',
+  'pp.first.ack.planning':
+    'I confirm these planning details. Arrangements and costs need separate agreement.',
+  'pp.first.ack.sample': 'I am using made-up information for sample planning only.',
+  'pp.first.ackNeeded': 'Tick both boxes before you publish.',
+  'pp.first.startAgain': 'Start Again',
+  'pp.first.startAgainConfirm': 'Clear everything typed here and start again?',
+  'pp.first.restoring': 'Checking for a draft in this browser…',
+  'pp.first.busy.create': 'Saving the programme…',
+  'pp.first.busy.template': 'Adding the template…',
+  'pp.first.error.create':
+    'The programme could not be saved. What you typed is kept. Press Publish to try again.',
+  'pp.first.error.conflict':
+    'The workspace changed while this was being saved. Reload the page, then press Publish again. What you typed is kept.',
+  'pp.first.error.template':
+    'Your programme is saved, but the template could not be added. Press Publish to try again, or choose No template in step 1.',
+  'pp.first.error.page':
+    'Your programme is saved, but its page could not be opened. Press Publish to try again.',
+  'pp.first.saved.note':
+    'Your programme is saved in this workspace. Its page is not public yet. Press Publish to finish.',
+  'pp.first.published':
+    'Published. Your programme is saved and its page is public. Copy the address below to share it.',
+  'pp.first.plain': 'Create Without a Public Page',
 } as const;

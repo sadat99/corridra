@@ -1,0 +1,96 @@
+/* The guided first run (ADR-084 S0): the form and, beside it, the page it is building. Tokens only.
+   One column on a phone with the preview one tap away; two columns from 64rem, where the preview stays in view
+   inside its own frame so the page keeps to one screen. */
+.first-run {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+.first-run-form {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  min-width: 0;
+}
+.first-run-form > h2,
+.first-run-form > p {
+  margin: 0;
+  max-width: 62ch;
+}
+.first-run-form > form {
+  width: 100%;
+}
+.first-run-form h3 {
+  margin: 0;
+  font-size: var(--text-base);
+}
+.first-run-form .check-field {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  min-height: 44px;
+  max-width: 62ch;
+}
+.first-run-more,
+.first-run-plain {
+  width: 100%;
+  max-width: 40rem;
+}
+.first-run-more > summary,
+.first-run-plain > summary,
+.first-run-preview > summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.first-run-more[open] {
+  display: grid;
+  gap: var(--space-3);
+}
+.first-run-more > p {
+  margin: 0;
+}
+.first-run-preview {
+  min-width: 0;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+.first-run-preview-page {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-2) 0 var(--space-4);
+}
+.first-run-preview-page > p {
+  margin: 0;
+}
+.first-run-preview-name {
+  font-family: var(--serif);
+  font-size: var(--text-title);
+  font-weight: 500;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.first-run-plain {
+  margin-top: var(--space-4);
+}
+@media (min-width: 64rem) {
+  .first-run {
+    grid-template-columns: minmax(0, 26rem) minmax(0, 1fr);
+    gap: var(--space-8);
+  }
+  /* The preview is as tall as the window allows and scrolls inside its frame; the frame takes keyboard focus. */
+  .first-run-preview-page {
+    max-height: max(18rem, calc(100dvh - 24rem));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .first-run-preview-page:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+}
