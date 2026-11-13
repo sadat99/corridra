@@ -1,0 +1,208 @@
+# ADR-084: Delegation: guided first run, share kit, notices, published report, operator desk
+
+Status: Proposed, reviews pending, awaiting owner merge approval. Design only, 13 November 2026. Nothing in this ADR is implemented, tested, deployed, enabled or live. Every slice ships locked and off, installs and every closed control stay separate owner steps, and no requirement becomes VERIFIED.
+
+Authority: the owner's 13 November 2026 request for a Delegation module so good that organisers "come back ... and bring others" (the Disney standard) with visual approval, and the owner's "approve all" of the four delegation decisions D1 to D4 proposed by lane D1 (artifact `VpCDnKJSVsJva5r5wDKkWm`), both relayed to this lane by Orchestrator 9 and not verified first hand by this lane (the Guardian verifies the words). V3 contract section 2 Product 3 steps 1 to 13 and section 6 (self-service delegation, participant onboarding, templates). Product vision 2.1 section 13 (institutional loop, no spam, no recruitment commissions) and section 20 (not a travel agency, not an outreach engine). Look: UI/UX.v3 (`docs/agents/ui-direction.md`) wins; the artifact visuals are the approved target, read through it.
+
+Not decided here: the install of any migration, any switch value, Bangla and Chinese words (native review gate), online fee collection (closed, no provider, no legal review), real outreach, and D01 to D06 and D08.
+
+## Context
+
+An organiser can already create a programme, publish a reviewed public page, take applications, invite, register, set terms, places and fees, coordinate tasks, record attendance and read a private results report (ADR-043, 047, 075, 080). Lane D1 found, from file evidence and fresh screenshots on main `6cb0abc` (sample data), that the parts exist but the organiser journey does not carry a person from "I want to run a delegation" to "I shared a link and people are applying":
+
+- The public entry sends organisers to the wrong page. `apps/web/app/trade-missions/organise-entry.tsx:46` links to `/account/delegations`, whose page (`apps/web/app/account/delegations/page.tsx`, title "Delegation registrations") is the participant page. The organiser route is `/account/delegations/organise` (`organise/page.tsx`, `WorkspaceChooser kind="programmes"`).
+- Create is a form, not a guided run. Nothing shows what the organiser is building.
+- A published page can be copied or opened in WhatsApp or Facebook (`share-row.tsx:5-50`), with no preview image, QR, printable flyer or calendar file. Pages are not indexed (ADR-080 decision 10, owner 11 Nov), so the forward is the whole distribution.
+- Applications and decisions produce no notice. ADR-080 line 83: "Not built: it is outbound mail and stays behind the existing mail gates."
+- The room overview is 1,525 px tall at 1440 with many "Not measured yet" tiles, against the one-screen desktop budget.
+- There is no publishable or printable results report; the signed-in report is for the organiser alone.
+- Corridra staff can read applications (ADR-080 amendment) but have no programme-level desk.
+
+The module has no real organiser or delegate behind it (ADR-080 follow-through, main risk). A code change can make the journey possible and testable; it cannot make it proven.
+
+## Decision
+
+Build eight slices, S0 to S7, in the order below, each a small reviewable PR behind its own switch, reusing what exists. The reuse table is the main constraint: no new programme backend, no new identity, no new send path.
+
+1. **One guided first run, ending on Publish.** One question per step, a live preview of the public page as the organiser types, a template choice on step one, "I am not sure yet" for dates, autosave, and Publish as the last step. It composes the existing create command, the existing page editor and the existing templates. No field, id or payload changes.
+2. **A share kit made only of published words.** A per-programme preview image, a QR code, a printable flyer, a calendar file and a quiet "Page made with Corridra Programmes" line. No tracking, no visitor logging, nothing sent by Corridra (ADR-080 decisions 4, 8 and 10 stay).
+3. **Transactional notices, off by default, only to the acting account.** An applicant is told of a decision on their own application; an organiser is told of new applications at most once an hour. Built on Notifications V2.
+4. **A published results report.** An organiser-published, immutable, aggregate snapshot with trust labels, a minimum of five shared items per section, `noindex`, take-down and a PDF, off until the organiser publishes it, plus Create Next Edition.
+5. **An Operator Delegation Desk.** Read-only metadata and counts for Corridra staff, owner or admin, fresh authenticator.
+6. **Presentation slices** for the people board, the money view and the participant home over reads that already exist.
+7. **A buying-trip template** after the ADR-082 build, so a delegation can be run as a sourcing trip without a second engine.
+
+## 1. Reuse table (file evidence, read at the line)
+
+| Need | Reused as is | Evidence | What is new |
+| --- | --- | --- | --- |
+| Public page, reader, versions, take-down, noindex | ADR-080 publication module and anonymous reader | ADR-080 decisions 1 to 4; `app/delegations/[address]/page.tsx:38,49` (`robots: { index: false, follow: false }`); `next.config.ts:51,114,122,186,194` (`X-Robots-Tag: noindex, nofollow`) | Nothing in the reader's states; a sidecar for structured dates (S1) |
+| Page layout and apply panel | `programme-page-view.tsx` | `:50` apply section, `:168` `{url && !preview && <ShareRow .../>}` | Share kit component beside `ShareRow`; attribution line |
+| Share row | `share-row.tsx` | `:5-50`: Copy Link `:21`, WhatsApp `wa.me` `:26`, Facebook sharer `:34`, status line `:41` | QR, calendar, flyer, preview image as additions; the three existing actions keep their exact behaviour |
+| Notices | `lib/notify.ts`, the `PARTICIPANT_INVITE` pattern | `notify.ts:92-113` (`notifyParticipantInvitation`: switch check, `sendEmail`, idempotency key `'participant-invitation:' + id`, `emailOnly` lines never stored); `:43-45` `notificationsOn` reads `CORRIDRA_NOTIFICATIONS_V2`; `:48-50` `notificationEmailReady` | New notification types (S2), which are a closed list in code and SQL |
+| Notification types | `packages/communications/src/inbox.ts:15-25`; `packages/db/commercial-readiness-migrations/0001_inbox_and_links.sql:14` (`CHECK(type IN (...))`) | Both lists must grow together | One additive migration in the installed notifications module |
+| PDF | `packages/delivery/src/report.ts` (pdfkit) | `:3` `import PDFDocument from 'pdfkit'`; `reportPdf` `:366`; `bookPdf` `:583`; `packages/delivery/package.json:17` pins pdfkit 0.20.2 | One new function that takes only the stored snapshot |
+| Token, expiry, noindex share pattern | `packages/domain/src/delivery.ts:29-90` | `shareInput` `:29-52` (`expiresAt` `:40`, `allowExport` `:41`, purpose, approved literal); public token `/^[a-f0-9]{64}$/` `:68,73,82`; `INSTITUTION_REPORT` export CSV or PDF | The same shapes for a separate snapshot table; the existing delivery shares and their tokens are not touched |
+| Series and templates | `programme-series.tsx`, `programme-templates.tsx` | `programme-series.tsx:118` (`ProgrammeSeries`); `programme-templates.tsx:123` (`ProgrammeTemplates`), list from `/api/customer-programme-templates` `:201` | Create Next Edition calls the template path; no new copy rule |
+| Delegate path | `delegate-path.tsx` | `:57` `DelegatePath`; header comment `:20-30` (composes existing services, adds no authority, a failed read claims nothing) | Participant home links to it; no change to its steps |
+| Publication copy and its closed key list | ADR-080 migration 0001 | `customer-programme-publication-migrations/0001_...sql:75-81` (`programme_publication_copy_valid`, exact keys, 16,384 bytes), `:88` dates as text 2 to 160; `packages/auth/src/customer-programme-publication.ts:32` `dates: line(2, 160)` | See S1: the dates field is free text, so structured dates are a sidecar, not a new key |
+| Staff read authority | ADR-080 amendment 12 Nov | `customer_private.staff_application_actor()`, permission `programme.applications.read`, `app/operator/programme-application-queue.tsx` | A sibling read function and permission for the desk (S6) |
+| Supply sources | ADR-082 | `0082:90` "Nomination is not identity"; `:137` `role` in BUYER, SUPPLIER, DISTRIBUTOR, PARTNER; `:22` partner task kind `delegation_assistance` (`packages/network/src/schema.ts:17-29`) | Candidate role SUPPLIER for factory and host visits, by staff only (S7) |
+| Buying route | ADR-083 | `0083:33` decision 1 (optional `sourcing` block in the pack configuration); `:60` slice S1 | Delegation as a buying trip uses that profile; S7 waits for it |
+| Programme economics, coordination, counts | ADR-047, ADR-075, ADR-046 | `0047` provenance (`ORGANISER_RECORDED`, `PARTICIPANT_REPORTED`, no money field in feedback); `0075` decision 5 (scheduled and qualified-held counted separately) | Read only |
+
+## 2. Slices
+
+Common to every slice: ships with its switch off and its control closed; one PR (two where a migration is separate); leaves main releasable; additive forward migration only, applied by the protected installer after the owner's approval; the PR names the original and destination paths, runs the UI/UX.v3 definition of done, and records the exact checks and what was not run. Every app switch needs `CORRIDRA_PROGRAMME_PAGES` on as well.
+
+**Installer.** `.github/workflows/install-customer-modules.yml` has exactly 25 `workflow_dispatch` inputs (counted from the file). GitHub allows 25, so no slice adds an input. Routes: S1 and S5 database parts and S6 apply through the existing `field_modules_action` option `programme_pages` (the same option that applied ADR-080 migration 0002; workflow `:208` maps it to `PROGRAMME_PAGES_ACTION`), by adding numbered files to `customer-programme-publication-migrations/`. S2 applies through the existing `notifications_action` input (`install`, with `enable` and `pause` kept) by adding a file to `customer-notification-migrations/`. S0, S3, S4 and S7 need no migration. If a slice finds it cannot reuse one of these two routes, it stops and returns to the owner; it does not retire another option and does not add an input.
+
+| Slice | Contents | Files (existing unless marked new) | Switch (new, off) | Migration and installer route |
+| --- | --- | --- | --- | --- |
+| S0 | Fix entry link; guided first run (one question a step, live preview, template choice, ends on Publish, autosave); room overview decisions-first within one screen | `app/trade-missions/organise-entry.tsx:46` (href to `/account/delegations/organise`); `app/account/delegations/customer-programmes.tsx` create form (reuse); `programme-page.tsx` editor (reuse); `programme-templates.tsx`; `programme-room.tsx` overview and `lib/programme-room.ts`; new `first-run.tsx` | Link fix: none, it is a one-line bug fix and the participant page stays reachable from its own links. First run and overview: `CORRIDRA_DELEGATION_FIRST_RUN` | None |
+| S1 | Share kit: preview image, QR, flyer print view, calendar file, quiet attribution line; optional structured `starts_on` and `ends_on` | `programme-page-view.tsx`, `share-row.tsx`; new `app/delegations/[address]/opengraph-image.tsx`, new flyer route with print CSS, new calendar route, new `share-kit.tsx` | `CORRIDRA_PROGRAMME_SHARE_KIT` | Sidecar table in publication module `0003`, via `programme_pages` |
+| S2 | Notices: applicant on decision; organiser at most one email an hour; both only to the acting account | `lib/notify.ts`, `packages/communications/src/inbox.ts`, application service in `packages/auth/src/customer-programme-publication.ts`; new notification types | `CORRIDRA_PROGRAMME_NOTICES` (and `CORRIDRA_NOTIFICATIONS_V2` and the mission mail gates, unchanged) | Type list extension in notification module `0007`, via `notifications_action` `install` |
+| S3 | People board (applications, invitations, registrations in one board with the next decision first) and money view (what the organiser recorded, in original currencies) | `programme-applications.tsx`, `programme-participants.tsx`, `programme-economics.tsx`, `programme-payment-review.tsx` (reuse reads and commands) | Same as S0 | None |
+| S4 | Participant home: where I am, what I owe, what is next, over the existing participant reads | `participant-account.tsx`, `delegate-path.tsx`, `participant-place.tsx`, `participant-results.tsx` | Same as S0 | None |
+| S5 | Published results report: snapshot table, take-down, PDF, Create Next Edition | New snapshot functions; `packages/delivery/src/report.ts` (one new function); `programme-series.tsx`, `programme-templates.tsx` | `CORRIDRA_PROGRAMME_RESULTS_REPORT` | Snapshot tables in publication module `0004`, via `programme_pages` |
+| S6 | Operator desk read function | New sibling of `programme-application-queue.tsx` in Operator Settings; new function and permission | `CORRIDRA_DELEGATION_DESK` | Read function in publication module `0005`, via `programme_pages` |
+| S7 | Buying-trip template | Template data in the existing templates path; ADR-082 candidate hook | Inherits ADR-082 and ADR-083 switches | None of its own; waits for ADR-082 build and ADR-083 S1 |
+
+Order: S0, S1, S2, S3, S4, S5, S6, S7. S1 before S5 because the report reuses the flyer and PDF styling. S2 after S1 so a notice can link to the share kit. S7 last because it reads ADR-082 and ADR-083, which are accepted but not built.
+
+### S0 detail
+
+- The link fix is the first commit and has its own test, red on main: a click on the entry action from the public trade missions page must land on `/account/delegations/organise`, not the participant page.
+- First run: three steps of one to three fields (UI/UX.v3 form rule): (1) name and destination, with the template chooser; (2) dates and who it is for; (3) fee line and places, then Publish. Each step autosaves a draft through the existing editor commands. The preview is the existing `ProgrammePageView` in its existing `preview` mode (`programme-page-view.tsx:168` already branches on `preview`) fed the draft words. "Publish" is the existing publish command with the existing 180-day closing rule. Nothing is public before that press.
+- A template adds tasks and planned costs and never people, fees or payments (the existing template rule).
+- Overview: the next real decision first (for example "Answer 3 applications"), counts only and out of a total, "Not measured yet" kept only for values that truly are unknown, the vertical stage timeline kept on desktop (owner lock 12 Nov), one screen on desktop and 1.5 to 2 on a phone, measured on a production build.
+
+### S1 detail
+
+- Preview image: Next.js `opengraph-image.tsx` for `/delegations/[address]`, built only from the published title, purpose, destination and dates, and the word "Sample" in a sample workspace. No private programme read. Unknown or closed-long pages answer the same single value as the page does (ADR-080 decision 4).
+- QR: generated on our server from the page address, never by an external service (an external service would receive every address). Adding a dependency is a decision for the S1 builder and reviewers: a small pinned library in `apps/web` only, or an in-repo encoder; either way no network call.
+- Flyer: a print view (title, destination, dates, who it is for, QR, the "stated by the organiser" sentence). It uses the published words only.
+- Calendar: an `.ics` file. The page's `dates` field is free text (`packages/auth/src/customer-programme-publication.ts:32`, `0001:88`, 2 to 160 characters, for example "If the dates are not fixed yet, say so"), so a calendar file cannot be made from it. Decision: add optional structured `starts_on` and `ends_on` as a **sidecar table keyed to the page version**, not a new key in the copy. The key list in `programme_publication_copy_valid` (`0001:75-81`) is closed and enforced on immutable rows; replacing that function would be a hash-guarded replacement of an installed object, which this ADR rejects. A new read function is called only after the existing reader returned a readable page, takes the address and version, and returns the dates or nothing, so it adds no way to tell unknown states apart. Without structured dates the calendar action is not shown (a control without a working backend is not shipped).
+- Attribution: one quiet line "Page made with Corridra Programmes" with a link to the organiser entry. No tracker, no referral code, no cookie, no count of who clicked (D1: no tracking). It is a link, not an invitation sent to anyone.
+
+### S2 detail
+
+- Applicant on decision: when an organiser records a decision on an application (events already exist: `customer.programme_application.decided`), the applicant's own account gets an inbox item and, if their email choice allows, an email. The email states the decision and the reason the applicant already reads in the account page (ADR-080 decision 6: declined always carries a reason). It contains no organiser private data.
+- Organiser: at most one email an hour per organiser, which says how many applications are waiting and links to the board. **No scheduler exists** (`vercel.json` has no crons and the web app has no cron route), so a timed digest would need new infrastructure. This ADR therefore builds coalescing instead of a timer: the first new application in an hour sends one notice, later ones in that hour only raise the in-app count and are included in the next notice. A true timed digest needs a cron and is left as an owner option.
+- Recipient is always the acting account (the account that applied, the owner or admin of the workspace). No notice goes to an address the person did not give to Corridra, none to a third party, no marketing, no reminder chain. Notifications V2 stays off by default (`notificationsOn`, `CORRIDRA_NOTIFICATIONS_V2`); the mission mail gates and `notificationEmailReady` are unchanged. A failed notice never breaks the action that caused it (the module's own rule).
+- Event and inbox payloads carry ids and the kind only. Names, statements, decision notes and reasons never enter events or inbox rows (ADR-080 decision 8); email-only lines are not stored, as in `notify.ts:92-113`.
+
+### S5 detail
+
+- What it is: a snapshot the organiser publishes on purpose, read by anyone with the link. It is not a live read of the private programme.
+- Sources and labels, one per figure: **Organiser recorded** (capacity, attendance, tasks; ADR-047 `ORGANISER_RECORDED`); **Participant reported** (satisfaction and outcomes the participant chose to share; `PARTICIPANT_REPORTED`); **Counted from Corridra records** (scheduled and qualified-held meeting counts, only from participants who permitted counts; ADR-075 decision 5). A participant-reported outcome is never written as "qualified".
+- Minimum five: a section shows its figure only when at least five shared items stand behind it; below five it says "Fewer than five shared" and shows no number. The rule is applied when the snapshot is made, from complete server-side data, never in the browser.
+- No money: fees, prices, payment status, organiser economics and trade values are not in the snapshot (ADR-046; the four money domains stay separate). No names, companies, contacts, notes or comments appear; no participant name is ever shown beside a comment.
+- Storage: an immutable snapshot row, a version number, a closing time of at most 180 days (the page rule), an unguessable 64 hex token (the `delivery.ts:68` shape) and a take-down record. Taking down withdraws the latest snapshot; publishing again makes a new snapshot at the same address. The anonymous read answers one value for unknown, taken down, expired and switch off, writes nothing and records nothing about the visitor. `noindex, nofollow` in markup and header, as for the page.
+- PDF: a new function beside `reportPdf` in `packages/delivery/src/report.ts` that accepts only the stored snapshot and renders it with pdfkit. It cannot read the live programme.
+- The organiser sees a preview of exactly what will be public and presses Publish; the confirmation states that the words are stated by the organiser and counted as labelled, and that Corridra has not verified them.
+- Create Next Edition: saves a template from this programme and opens the guided first run on it, through the existing template and series code. It never copies people, fees, payments, applications or the report.
+
+### S6 detail
+
+- One read function `customer.staff_programme_desk(after_id, page_size)` modelled on `customer.staff_programme_applications` (ADR-080 amendment): owner or admin of the staff workspace in the session, a fresh authenticator check, a live session; operator, reviewer and viewer refused. It needs a permission row (proposed `programme.desk.read`) in the existing matrix; that is a change to permission code and is named in the blast radius.
+- It returns metadata and counts only per programme: page state and version, closing time, applications by status, registrations and places, whether a report is published. No names, statements, emails, labels, prices, notes or ids of people. It writes nothing, including no audit row, as the comparable queue does (ADR-078), and no button changes anything.
+- Staff of a sample workspace see sample workspaces; staff of a real workspace see real ones while real use is open.
+
+### S7 detail
+
+- A "Buying trip" template for the existing templates path: planned factory visits and host meetings as `PLANNED` page activities and as coordination tasks.
+- A host or factory named on a page is the organiser's own statement. It is **not** linked to a company record, verified or matched by this ADR. Staff may nominate it as an ADR-082 candidate with role SUPPLIER through the ADR-082 flow ("nomination is not identity", `0082:90`); an organiser cannot create a candidate, and a nomination does not make an organisation, a verification or a supplier claim.
+- The BD to China defaults come from ADR-083's optional `sourcing` profile (decision 1), as TESTING data. No country fork. Not started until ADR-082 and ADR-083 S1 are built.
+
+## 3. Data
+
+- Additive migrations only. Builds never migrate. Each file is installed only by the protected installer after the owner's environment approval, never by production SQL (AGENTS.md; ledger "No direct production database access").
+- New objects (all in existing optional modules, none replacing an installed function, constraint or policy, so no existing function fingerprint changes): publication `0003` a page-schedule sidecar (S1); `0004` results snapshot, take-down and read functions (S5); `0005` desk read function (S6); notification module `0007` an additive replacement of the type list for new types (S2). The type list is a CHECK on `app.inbox_notification` (`0001_inbox_and_links.sql:14`); replacing a CHECK is a change to an installed object, so S2 states its hash-guard, the exact live definition it was proven against, and that an unknown drift refuses the install, as ADR-083 decision 1 requires for its guard.
+- Each new table: row security on, no grant to the runtime role, immutable rows, reads only through functions granted to the runtime role, exactly as ADR-080.
+- Each module test compares, before and after install, every existing function definition with grants and owner, every policy, table grants, row-security flags, constraints and a digest of existing rows (the ADR-080 test shape), and finds no difference except the one named replacement.
+- No new money column anywhere.
+
+## 4. Blast radius, rollback and privacy
+
+**Blast radius.** New: five app switches, three or four additive migration files, two public routes (flyer and calendar), one preview image route, one public report route, one operator panel, one permission row, a notification type extension. Existing paths changed: one link target (`organise-entry.tsx:46`), the page view (additions), the room overview (presentation). Not changed: auth, RLS on existing tables, membership, money records, events already emitted, the anonymous page read, ADR-080 decisions, original routes, ids, payloads and permissions.
+
+**Rollback.** Unset the slice's switch: its screens, routes and panels disappear or answer unavailable. Stored sidecars, snapshots and decisions stay as records. A published report stays a record but answers "not available" while its switch is off. The link fix is reverted by a one-line change. Installed migrations are not dropped.
+
+**Privacy per surface.**
+
+| Surface | Who reads | Shown | Never shown |
+| --- | --- | --- | --- |
+| Public page, preview image, flyer, calendar | Anyone with the link | Only the published words, `PLANNED` or `CONFIRMED` per visit, the "stated by the organiser" sentence | Private programme data, participants, prices, objectives, visitors |
+| Share kit actions | The person pressing | Their own started action (copy, open, download, print) | Any send by Corridra, any tracking |
+| Notices | The acting account only | Decision and reason the applicant already reads; waiting count to the organiser | Other people's names, statements, contacts; email text in events or inbox |
+| People board and money view | Owner or admin of the workspace | What they already read today, in original currencies | Participants' private offers, contacts, missions or values (ADR-075 decision 1; the organiser never gains them) |
+| Participant home | The participant | Their own place, terms, fees and path | Other participants; the organiser's private notes |
+| Published report | Anyone with the link, until taken down or expired | Aggregates with labels; at least five shared items per section | Names, companies, comments with names, money, trade values, any figure under five |
+| Operator desk | Staff owner or admin, fresh authenticator | Counts and metadata | Words, names, emails, contacts, prices, ids of people |
+
+Rules that bind every slice: participant-reported is never "qualified" or "verified"; a scheduled meeting is never a held meeting; an application is not a place and a registration is not a paid or confirmed attendance; names are never shown with comments; sample data is labelled "sample"; copy has no em dashes, fake urgency, invented counts, logos or testimonials.
+
+## 5. Acceptance tests, review history and claims
+
+**Test discipline.** Each slice lists its tests in the PR before the code. Each new test is shown failing on `main` first (red-first record in the PR body, with the failing assertion) and passing on the slice head. No test is skipped or weakened. Planned names (to be created, not existing): `tests/integration/delegation-share-kit.test.ts`, `delegation-notices.test.ts`, `delegation-results-report.test.ts`, `delegation-desk.test.ts`; browser journeys `tests/operator/delegation-first-run.spec.ts` and `delegation-share-kit.spec.ts` at 390 and 1440 (plus the UX gate widths); the existing design-system, page-length and title-case guards stay green with no baseline raised. Real database and RLS integration and the protected operator browser suite stay mandatory for database slices.
+
+**Requirement map (status today from `node scripts/v3-context.mjs requirement`).** None of these moves to VERIFIED by this ADR or by code alone; register changes follow runtime evidence and the Guardian's records.
+
+| Requirement | Today | Slices that touch it | Proof the slice adds (local, sample data) |
+| --- | --- | --- | --- |
+| V3-02-045 create a delegation | PARTIAL | S0 | Entry link lands on the organiser route; first run creates a programme through the existing command |
+| V3-02-046 objectives, dates, eligibility, terms | PARTIAL | S0, S1 | Steps carry the same fields; structured dates optional and absent-safe |
+| V3-02-047 pricing, expenses, objectives | PARTIAL | S3 | Money view reads the existing records in original currencies; no new money |
+| V3-02-048 controlled invitations, registration | PARTIAL | S0, S1, S2 | Publish, share, applicant notice; invite path unchanged |
+| V3-02-049 individual company profiles and intents | NOT VERIFIED | S4 | Participant home shows what the participant shared; nothing new collected |
+| V3-02-050 eligibility, confirmations, status | NOT VERIFIED | S3 | Board shows the existing states, never collapsed |
+| V3-02-051 shared activities, agendas | NOT VERIFIED | S1, S7 | `PLANNED` and `CONFIRMED` kept; calendar from structured dates only |
+| V3-02-052 individual engagements on shared engines | NOT VERIFIED | S4, S7 | Handoff to the existing private request; buying template uses ADR-082 and ADR-083 |
+| V3-02-053 assign responsibilities, local support | PARTIAL | S3 | Existing task board read |
+| V3-02-054 participant communications, changes | NOT VERIFIED | S2 | Decision and application notices to the acting account only |
+| V3-02-055 to 057 costs, results, reports, templates | PARTIAL | S3, S5 | Snapshot report, PDF, Create Next Edition |
+| V3-02-058 to 061 model, no separate backend | PARTIAL or NOT VERIFIED | all | No new mission system; reuse table is the test list |
+| V3-02-062 and 063 participant privacy, organiser limits | PARTIAL | all | Per-surface denial tests (section 4): organiser cannot read private offers, contacts or values; report under five hides the figure |
+| V3-02-064 organiser and participant at once | NOT VERIFIED | S4 | One account shown both roles without a shared private state |
+| V3-02-065 to 073 organiser economics and results | NOT VERIFIED or PARTIAL | S3, S5 | Labels and denominators as in ADR-047 and ADR-075; "Not measured yet" for unknown |
+| V3-02-074 accounting separation | PARTIAL | S3, S5 | Report contains no money; money view keeps the four domains apart |
+| V3-02-075 fees, refunds, collection need provider and legal review | NOT VERIFIED | none | Unchanged: no collection, no provider |
+| V3-02-076 not the travel operator or merchant of record | NOT VERIFIED | S1, S5 | The "stated by the organiser, not checked" sentence on page, flyer and report |
+
+**Pain-to-proof matrix (lane D1 baseline, 20 capabilities, severity-weighted).** Built, usable and proven are 0 to 3 as defined in the D1 artifact (proven 1 means tested locally with sample data; 2 means observed in real use once; 3 repeatedly). Baseline: built 57, usable 39, proven 13 (recomputed from the artifact rows: 56.7, 38.7, 13.3). The table assumes each slice is built, tested and reviewed but switched off: built reaches 3 for a finished capability, usable reaches 2 ("yes once enabled", never 3 until the owner enables it and a person can finish the job), proven reaches 1 only.
+
+| After slice | Rows moved | Built | Usable | Proven (as scored, level 1) |
+| --- | --- | --- | --- | --- |
+| Baseline | | 57 | 39 | 13 |
+| S0 | first run (1,1,0 to 3,2,1), one-screen overview (1,1,0 to 3,2,1) | 63 | 42 | 17 |
+| S1 | rich share (0,0,0 to 3,2,1), link share tested (proven 0 to 1), attribution (0,0,0 to 1,1,1) | 71 | 47 | 21 |
+| S2 | notices (0,0,0 to 3,2,1) | 77 | 51 | 23 |
+| S3 | none (existing rows already 3,2,1; presentation only) | 77 | 51 | 23 |
+| S4 | none (same reason) | 77 | 51 | 23 |
+| S5 | publishable report (0,0,0 to 3,2,1), room report (2,1,0 to 3,2,1) | 85 | 57 | 27 |
+| S6 | operator desk (1,1,0 to 3,2,1) | 87 | 59 | 29 |
+| S7 | none (no matrix row) | 87 | 59 | 29 |
+
+Rows that cannot move by code: online fee collection (closed gate), Bangla and Chinese (native review gate), and the participant-to-organiser loop beyond the quiet line (vision section 13, no spam). These figures are expectations from file evidence, not results, and are not owner acceptance.
+
+**"Proven" cannot be raised by code.** The 13 in the baseline is entirely level 1 (tested locally with sample data). The share of capabilities observed in real use (level 2 or 3) is 0 today and stays 0 after every slice, because no real organiser or delegate has used the module. The "proven as scored" column above rises only because new work is tested locally. Real proof needs the D1 validation sheet: one agency organiser, one individual organiser and one chamber or association, one session each, in a sample workspace first, then real use when the owner opens it. Their hypotheses (setup time is the main drop-off, the preview card drives forwarding, a published report is the strongest institutional hook) stay hypotheses until observed.
+
+**What this ADR does not claim.** It does not claim anything is built, tested, enabled or live; that any organiser or delegate wants or will use these; that a preview card, QR or report increases applications, forwarding or repeat editions; that a published report is verified, qualified or commercially meaningful; any measured time saving, count or conversion; Bangla or Chinese words; online fee collection, a provider, or legal readiness; a scheduled digest; or acceptance of ADR-080. It changes no D01 to D06 or D08 gate, makes no outreach, creates no company record or verification, adds no AI output, and sends nothing Corridra started on its own.
+
+**Rejected options.** (1) A new programme backend or participant room: more surface, same gap (ADR-080 follow-through). (2) A live public results page read from the private programme: it would expose private data and could not be taken down cleanly. (3) New copy key for dates in the page: replaces a guarded installed function. (4) An external QR or preview service: it would receive every address. (5) A timer-based digest now: no scheduler exists. (6) Public tracking of visits or referrals: D1 says no, and the page promises it records nothing about the visitor.
+
+## Owner decisions, 13 November 2026 (relayed by Orchestrator 9; to be verified first hand by the Guardian)
+
+"approve all" for the four decisions proposed by lane D1:
+
+- D1 Share kit and attribution (per-programme preview image, QR, flyer print view, calendar file, quiet "Page made with Corridra Programmes" line, no tracking): yes.
+- D2 Transactional notices (applicant on decision, organiser hourly digest, Notifications V2, off by default, only to the acting account): yes. This ADR builds the organiser notice as at most one email an hour (section S2), because no scheduler exists; a true timed digest is an owner option.
+- D3 Published results report (organiser-published aggregate snapshot, trust labels, minimum five shared items per section, noindex, take-down, PDF via pdfkit): yes, off until published.
+- D4 Operator Delegation Desk (read-only metadata and counts, owner or admin, fresh authenticator): yes.
+
+No pre-approval covers this ADR itself: it needs the owner's merge approval after clean reviews.
+
+## Review history
+
+- Draft: 13 November 2026, by lane DEL-R1, from `origin/main` `abd8bf2`. Two independent reviews and a refute pass are pending; results are recorded here before the Status line changes.
