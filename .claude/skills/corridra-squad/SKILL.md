@@ -44,6 +44,10 @@ Every change meets the [quality bar](quality-bar.md): clean, secure, easy to use
 | CI failure on a PR | authority -> verifier (diagnose with known issues) -> builder -> verifier -> scribe |
 | Review only | authority -> reviewer (two independent passes) -> reviewer (refute each finding) |
 
+## Visible-change step (mandatory)
+
+For every visible change, the conductor passes `docs/agents/ui-direction.md` to the designer and builder, and the designer must return the rows of "Current locked decisions" it applied. The builder runs "How to build a new screen" and the design guard tests; the reviewer and designer audit against "Definition of done for any visible change". A visible PR without that evidence is not finished.
+
 ## Handoffs
 
 - Pass the full Authority Brief text into every later stage, followed by the outputs of the stages it depends on. Do not summarise the brief.

@@ -1,3 +1,7 @@
+# Design is binding here
+
+Any visible change under this directory follows [UI direction](../../docs/agents/ui-direction.md): read "Current locked decisions", follow "How to build a new screen" and meet "Definition of done for any visible change". Use tokens, `CorridraIcon`, the shared shells and `components/ux/`; no raw colours, no CSS `text-transform` on actions, no inline type size or px spacing. `tests/design-system-guard.test.mjs` enforces it. `next dev` rewrites the Next.js block below; keep this section above it.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
