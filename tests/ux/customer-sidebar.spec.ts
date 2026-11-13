@@ -122,37 +122,41 @@ async function openMenuIfDrawer(page: Page, width: number) {
 
 for (const { width, height } of sizes) {
   test.describe(`${width}x${height}`, () => {
-    test('(c) only the current item looks active: Sourcing matches the other journeys and is not aria-current', async ({
+    test('(c) the active state stays distinct: only the true current item has the selected surface and aria-current, so Sourcing (the bolder lead) is never mistaken for it', async ({
       page,
     }) => {
       await open(page, width, height, '?current=requests');
       await openMenuIfDrawer(page, width);
-      const weight = (name: string) =>
-        page
-          .locator('#customer-navigation')
-          .getByRole('link', { name })
-          .evaluate((el) => {
-            const cs = getComputedStyle(el);
-            return {
-              weight: cs.fontWeight,
-              size: cs.fontSize,
-              height: el.getBoundingClientRect().height,
-            };
-          });
-      const [sourcing, organising, selling] = await Promise.all([
-        weight('Sourcing'),
-        weight('Organising'),
-        weight('Selling'),
+      const nav = page.locator('#customer-navigation');
+      const look = (name: string) =>
+        nav.getByRole('link', { name }).evaluate((el) => {
+          const cs = getComputedStyle(el);
+          return {
+            background: cs.backgroundColor,
+            color: cs.color,
+            current: el.getAttribute('aria-current'),
+          };
+        });
+      const [requests, sourcing, organising, meetings] = await Promise.all([
+        look('Requests'),
+        look(/^Sourcing/ as unknown as string),
+        look('Organising'),
+        look('Meetings'),
       ]);
-      expect(sourcing).toEqual(organising);
-      expect(selling).toEqual(organising);
       // Exactly one link is current, and it is the page's own tab.
-      await expect(page.locator('#customer-navigation [aria-current]')).toHaveCount(1);
-      await expect(
-        page.locator('#customer-navigation').getByRole('link', { name: 'Requests' }),
-      ).toHaveAttribute('aria-current', 'page');
-      const requests = await weight('Requests');
-      expect(Number(requests.weight)).toBeGreaterThan(Number(organising.weight));
+      await expect(nav.locator('[aria-current]')).toHaveCount(1);
+      expect(requests.current).toBe('page');
+      expect(sourcing.current).toBeNull();
+      // The selected surface and the cobalt words belong to the current item alone.
+      expect(requests.background).not.toBe(sourcing.background);
+      expect(requests.background).not.toBe(meetings.background);
+      expect(sourcing.background).toBe(organising.background);
+      expect(requests.color).not.toBe(sourcing.color);
+      // On its own page a journey is not current either (journeys never carry aria-current), and the lead keeps
+      // its emphasis: bolder than the other journeys.
+      const weight = (name: string) =>
+        nav.getByRole('link', { name }).evaluate((el) => Number(getComputedStyle(el).fontWeight));
+      expect(await weight('Sourcing')).toBeGreaterThan(await weight('Organising'));
     });
 
     test('(a) the list has a thin, quiet scrollbar and scrolls only when it overflows', async ({

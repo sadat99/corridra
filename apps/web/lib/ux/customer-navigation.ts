@@ -126,7 +126,7 @@ export type CustomerSideLink = {
   href: string;
   icon?: string;
   tone?: 'action' | 'positive' | 'ornament';
-  /** The lead journey (Sourcing). Not drawn differently since 13 Nov 2026: a bold row read as the current page. */
+  /** The lead journey (Sourcing) is drawn a little bolder and taller. */
   lead?: boolean;
 };
 
