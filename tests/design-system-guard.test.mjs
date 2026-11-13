@@ -78,23 +78,38 @@ export function inlineStyleDebt(text) {
 }
 
 // Rule 4: every signed-in customer page is rendered inside a shared shell. A page counts when the page,
-// a sibling module it imports from the same folder, or a folder above it up to app/account names one.
+// a local module it imports, or a layout in any folder above it names one.
 const SHELL = /\b(?:CustomerShell|WorkspaceShell|OperatorShell|ContributorShell|PublicShell)\b/;
 const signedInPages = walk(join(web, 'app/account'), (p) => /\/page\.tsx$/.test(p));
 
-export function usesShell(pagePath, readFile = read, exists = existsSync, list = readdirSync) {
-  let dir = dirname(pagePath);
-  const stop = join(web, 'app/account');
-  while (dir.startsWith(stop)) {
-    // The account root itself holds shared helpers; only its own page may rely on a file there.
-    if (dir === stop && dirname(pagePath) !== stop) break;
-    for (const name of list(dir)) {
-      if (!/\.tsx?$/.test(name) || isTest(name)) continue;
-      if (SHELL.test(readFile(join(dir, name)))) return true;
+export function usesShell(pagePath, readFile = read, exists = existsSync) {
+  // A page counts when it, or a local module it imports (two hops, relative imports only), names a shell.
+  // A parent page.tsx never vouches for a child route unless the child actually imports it.
+  const seen = new Set();
+  const resolve = (from, spec) => {
+    const base = join(dirname(from), spec);
+    return [`${base}.tsx`, `${base}.ts`, join(base, 'index.tsx'), join(base, 'index.ts')].find(
+      (c) => exists(c),
+    );
+  };
+  const visit = (file, depth) => {
+    if (seen.has(file)) return false;
+    seen.add(file);
+    const text = readFile(file);
+    if (SHELL.test(text)) return true;
+    if (depth === 0) return false;
+    for (const m of text.matchAll(/from\s+['"](\.{1,2}\/[^'"]+)['"]/g)) {
+      const target = resolve(file, m[1]);
+      if (target && target.startsWith(join(web, 'app')) && visit(target, depth - 1)) return true;
     }
-    if (exists(join(dir, 'layout.tsx')) && SHELL.test(readFile(join(dir, 'layout.tsx'))))
-      return true;
-    if (dir === stop) break;
+    return false;
+  };
+  if (visit(pagePath, 2)) return true;
+  // A layout in the page's own folder or any folder above it wraps child routes.
+  let dir = dirname(pagePath);
+  while (dir.startsWith(web) && dir !== web) {
+    const layout = join(dir, 'layout.tsx');
+    if (exists(layout) && SHELL.test(readFile(layout))) return true;
     dir = dirname(dir);
   }
   return false;
@@ -203,22 +218,37 @@ test('rule 3 flags planted inline type size and px spacing and passes a token st
   assert.equal(inlineStyleDebt("<p style={{ display: 'flex' }}>x</p>").length, 0);
 });
 
-test('rule 4 flags a planted signed-in page with no shell', () => {
-  const page = join(web, 'app/account/planted/page.tsx');
+test('rule 4 does not let an ancestor page vouch for a child route', () => {
+  const parent = join(web, 'app/account/planted/page.tsx');
+  const child = join(web, 'app/account/planted/child/page.tsx');
   const files = {
-    [page]: 'export default function P(){ return <main>hi</main>; }',
+    [parent]: 'import { CustomerShell } from "x"; export default () => <CustomerShell />;',
+    [child]: 'export default function C(){ return <main>hi</main>; }',
   };
   const fakeRead = (p) => files[p] ?? '';
-  const fakeList = (d) => (d === dirname(page) ? ['page.tsx'] : []);
-  assert.equal(
-    usesShell(page, fakeRead, () => false, fakeList),
-    false,
-  );
-  files[page] = 'import { CustomerShell } from "x"; export default () => <CustomerShell />;';
-  assert.equal(
-    usesShell(page, fakeRead, () => false, fakeList),
-    true,
-  );
+  const fakeExists = (p) => p in files;
+  assert.equal(usesShell(child, fakeRead, fakeExists), false);
+  // A layout in the ancestor folder does wrap it.
+  const layout = join(dirname(parent), 'layout.tsx');
+  files[layout] = 'import { CustomerShell } from "x"; export default CustomerShell;';
+  assert.equal(usesShell(child, fakeRead, fakeExists), true);
+});
+
+test('rule 4 follows a relative import to a shell helper, and flags a page with none', () => {
+  const page = join(web, 'app/account/planted/page.tsx');
+  const helper = join(web, 'app/account/planted/frame.tsx');
+  const files = {
+    [page]: 'import { Frame } from "./frame"; export default () => <Frame />;',
+    [helper]: 'export function Frame(){ return <main>no shell</main>; }',
+  };
+  const fakeRead = (p) => files[p] ?? '';
+  const fakeExists = (p) => p in files;
+  assert.equal(usesShell(page, fakeRead, fakeExists), false);
+  files[helper] = 'import { WorkspaceShell } from "x"; export const Frame = WorkspaceShell;';
+  assert.equal(usesShell(page, fakeRead, fakeExists), true);
+  files[page] = 'export default function P(){ return <main>hi</main>; }';
+  files[helper] = 'export const Frame = 1;';
+  assert.equal(usesShell(page, fakeRead, fakeExists), false);
 });
 
 // The contract binds every builder only if every place a builder starts points at it.
