@@ -58,6 +58,8 @@ const candidateRow = (name: string, extra: Record<string, unknown> = {}) => ({
 
 type World = {
   moduleOpen: boolean;
+  sources: (typeof source)[];
+  missions: Record<string, unknown>[];
   candidates: ReturnType<typeof candidateRow>[];
   blocks: Record<string, unknown>[];
   sent: { action: string; body: Record<string, unknown> }[];
@@ -66,6 +68,18 @@ type World = {
 async function open(page: Page, screen: string, world: Partial<World> = {}, role = 'owner') {
   const w: World = {
     moduleOpen: true,
+    sources: [source],
+    missions: [
+      {
+        id: supplyMission,
+        status: 'open',
+        nextAction: 'Review candidates',
+        createdAt: now,
+        candidates: 1,
+        candidatesLive: 1,
+        profileVersion: 3,
+      },
+    ],
     candidates: [candidateRow('Ibérica Frutas SL')],
     blocks: [],
     sent: [],
@@ -126,7 +140,7 @@ async function open(page: Page, screen: string, world: Partial<World> = {}, role
         profile: { id: '00000000-0000-4000-8000-0000000000e1', version: 3, role: 'BUYER' },
         kinds: ['staff_research'],
       });
-    if (action === 'sources') return json({ sources: [source] });
+    if (action === 'sources') return json({ sources: w.sources });
     if (action === 'source-versions')
       return json({
         versions: [
@@ -134,20 +148,7 @@ async function open(page: Page, screen: string, world: Partial<World> = {}, role
           { id: 'v1', version: 1, status: 'active', reason: 'Created by staff', createdAt: now },
         ],
       });
-    if (action === 'missions')
-      return json({
-        missions: [
-          {
-            id: supplyMission,
-            status: 'open',
-            nextAction: 'Review candidates',
-            createdAt: now,
-            candidates: 1,
-            candidatesLive: 1,
-            profileVersion: 3,
-          },
-        ],
-      });
+    if (action === 'missions') return json({ missions: w.missions });
     if (action === 'route-kinds')
       return json({
         routes: [
@@ -402,7 +403,10 @@ test.describe('candidates', () => {
         'Source-reported. These details are as stated by the source. Corridra has not verified them.',
       ),
     ).toBeVisible();
+    await expect(page.getByText('Website host')).toBeVisible();
+    await page.getByRole('tab', { name: 'Review' }).click();
     await expect(page.getByRole('group', { name: 'Decision' })).toBeVisible();
+    await page.getByRole('tab', { name: 'Match' }).click();
     await expect(
       page.getByText('Qualify this candidate before matching it to a company.'),
     ).toBeVisible();
@@ -447,6 +451,7 @@ test.describe('candidates', () => {
         }),
       ],
     });
+    await page.getByRole('tab', { name: 'Match' }).click();
     await page.getByText('Match history (3)').click();
     await expect(page.getByRole('button', { name: 'Reverse This Match' })).toHaveCount(1);
     await expect(
@@ -562,11 +567,11 @@ test.describe('do not contact', () => {
 });
 
 for (const width of [390, 1440]) {
-  test(`axe is clean on the hub, a mission and the do not contact screen at ${width}`, async ({
+  test(`axe is clean on the hub, a mission, a candidate and the do not contact screen at ${width}`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
-    for (const screen of ['hub', 'mission', 'dnc']) {
+    for (const screen of ['hub', 'mission', 'candidate', 'dnc']) {
       await open(page, screen);
       await expect(page.locator('main h1')).toHaveCount(1);
       const results = await new AxeBuilder({ page })
@@ -576,3 +581,99 @@ for (const width of [390, 1440]) {
     }
   });
 }
+
+// Layout budget (docs/revamp/specs/layout-budget.md section 2): a signed-in screen is at most 1.0 desktop screen (1440 x 900) and
+// 2.0 phone screens (390 x 844) with its lists full, the disclosures closed and the footer counted, and 30 px stay spare for the
+// CI fonts. The lists hold what the server returns at most, in their longest honest form: every source can be changed, every
+// candidate carries the name check, every block is a name the catalogue does not hold yet.
+const longName = 'Distribuciones y Comercializadora Levantina de Frutas SL';
+const full = <T>(make: (i: number) => T, count = 100) =>
+  Array.from({ length: count }, (_, i) => make(i));
+const budgets = {
+  desktop: { width: 1440, height: 900, screens: 1.0 },
+  phone: { width: 390, height: 844, screens: 2.0 },
+} as const;
+const fullWorld = (): Partial<World> => ({
+  sources: full(
+    (i) => ({
+      ...source,
+      id: `00000000-0000-4000-8000-${String(1000 + i).padStart(12, '0')}`,
+      status: i % 2 ? 'paused' : 'active',
+      label: `Trade register of ${i < 3 ? longName : 'Spain'} ${i}`,
+    }),
+    200,
+  ),
+  missions: full((i) => ({
+    id: i === 0 ? supplyMission : `00000000-0000-4000-8000-${String(3000 + i).padStart(12, '0')}`,
+    status: 'open',
+    nextAction: 'Review candidates',
+    createdAt: now,
+    candidates: 4,
+    candidatesLive: 3,
+    profileVersion: 3,
+  })),
+  candidates: full((i) =>
+    candidateRow(i === 0 ? longName : `Importadora del Norte ${i}`, {
+      id:
+        i === 0 ? supplyCandidate : `00000000-0000-4000-8000-${String(2000 + i).padStart(12, '0')}`,
+      warnings: ['personal_name_check'],
+      websiteHost: 'example.com',
+      publicIdentifier: 'B12345678',
+      nominationNote: 'Nominated by the staff researcher after a call',
+      sizeBand: 'medium',
+      counterpartyTypes: ['importer', 'distributor'],
+    }),
+  ),
+  blocks: full((i) => ({
+    id: `blk${i}`,
+    state: i % 4 === 3 ? 'LIFTED' : 'BLOCKED',
+    organisationId: null,
+    organisationName: null,
+    nameKey: `importadora del norte ${i}`,
+    country: 'ES',
+    reason: 'The company asked us in writing to stop contacting it',
+    reference: `REF-${i}`,
+    at: now,
+    by: 'u',
+    current: true,
+  })),
+});
+for (const [name, size] of Object.entries(budgets))
+  for (const screen of ['hub', 'mission', 'candidate', 'dnc'])
+    test(`the ${screen} screen with full lists is within its page budget at ${name}`, async ({
+      page,
+    }) => {
+      // Measured with a short window so the page height is the content height, not the window the shell stretches to.
+      await page.setViewportSize({ width: size.width, height: 400 });
+      await open(page, screen, fullWorld());
+      await expect(page.locator('main h1')).toHaveCount(1);
+      // A list is drawn: the first rows of the screen's own list are there before the height is read.
+      const first = {
+        hub: page.getByRole('list', { name: 'Supply sources' }),
+        mission: page.getByRole('list', { name: 'Candidates' }),
+        candidate: page.getByText('Website host'),
+        dnc: page.getByRole('list', { name: 'Do-not-contact entries' }),
+      }[screen]!;
+      await expect(first).toBeVisible();
+      await expect(page.locator('details[open]')).toHaveCount(0);
+      // The height once it has stopped changing: the lists load in turn, so wait for three equal reads.
+      let height = 0;
+      let equal = 0;
+      for (let tries = 0; tries < 50 && equal < 3; tries++) {
+        const read = await page.evaluate(() =>
+          Math.max(document.documentElement.scrollHeight, document.body.scrollHeight),
+        );
+        equal = read === height ? equal + 1 : 0;
+        height = read;
+        await page.waitForTimeout(100);
+      }
+      expect(equal, 'the page height settles').toBeGreaterThanOrEqual(3);
+      test
+        .info()
+        .annotations.push({ type: 'screens', description: (height / size.height).toFixed(2) });
+      const allowed = size.screens * size.height - 30;
+      expect(
+        height,
+        `${screen} ${name}: ${(height / size.height).toFixed(2)} screens`,
+      ).toBeLessThanOrEqual(allowed);
+    });
