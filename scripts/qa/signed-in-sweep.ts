@@ -24,15 +24,28 @@ import { seedSyntheticWorkspace } from '../../packages/auth/src/bootstrap';
 import { configureSyntheticIntake } from '../../packages/missions/src/bootstrap';
 import { installLocalModules, openLocalControls, pinLocalCustomerIssuer } from './local-install';
 import { measurePage, targetsBroken } from './ux-measure';
+
+// The sweep seeds "Synthetic QA Test ..." labels and qa-test-...@example.invalid addresses (synthetic mode refuses any
+// other label). That is data the run put there, so the forbidden-word check skips it; every other word is judged.
+const seededText = [
+  /Synthetic North/i,
+  /Synthetic QA Test[^\n]*/i,
+  /qa-test-[a-z0-9-]*@example\.invalid/i,
+];
+const measureOptions = { ignoreText: seededText };
 import { totp } from '../../tests/operator/operator-signin';
 import {
+  buildQueue,
   discoverRoutes,
   expectation,
   fillRoute,
+  harvestLinks,
   isDynamic,
   routeArea,
+  stateRoutes,
   sweepRoles,
-  sweepWidths,
+  sweepWidthOrder,
+  tabRoute,
   type SweepRole,
 } from './sweep-routes';
 
@@ -405,6 +418,7 @@ async function seedCustomers(identities: Identity[]) {
     });
     seeded['programme:customer'] = { status: own.status, body: own.json ?? own.text.slice(0, 160) };
     const programmeId = own.json?.id as string | undefined;
+    customer.ids.programmeId = programmeId;
     const key = resetPool
       ? (
           await resetPool.query(
@@ -431,6 +445,45 @@ async function seedCustomers(identities: Identity[]) {
       };
     }
   }
+  // Every role that owns a workspace keeps one open draft, so the draft page (?draft=<id>) is swept as well.
+  for (const who of [customer, organiser, participant, by('seller')]) {
+    if (!who.ids.workspaceId) continue;
+    const saved = await api(who, 'POST', '/api/customer-mission-drafts', {
+      action: 'save',
+      input: {
+        commandId: randomUUID(),
+        workspaceId: who.ids.workspaceId,
+        draftId: null,
+        expectedVersion: 0,
+        details: {
+          title: 'Synthetic QA Test open request',
+          family: 'SUPPLIERS_PRODUCTS',
+          objective: 'Source suppliers',
+          market: 'Bangladesh',
+          attendance: 'No',
+          startDate: '',
+          endDate: '',
+          timezone: 'Asia/Dhaka',
+          offer: '',
+          website: '',
+          outcomes: [],
+          notes: '',
+          requirements: [],
+          contactName: 'QA Test Person',
+          contactEmail: '',
+          profileVersion: null,
+          sourcingContext: 'MACHINERY',
+          companyName: '',
+        },
+        acknowledged: true,
+      },
+    });
+    seeded[`draft:${who.role}`] = {
+      status: saved.status,
+      body: saved.json ?? saved.text.slice(0, 200),
+    };
+    who.ids.draftId = (saved.json?.id ?? saved.json?.draftId) as string | undefined;
+  }
   writeFileSync(resolve(outDir, 'seed.json'), JSON.stringify(seeded, null, 2));
   for (const [key, value] of Object.entries(seeded)) {
     const status = (value as { status: number }).status;
@@ -452,6 +505,25 @@ type Row = {
   measure?: unknown;
 };
 const rows: Row[] = [];
+const tabRow = (
+  who: Identity,
+  width: number,
+  route: string,
+  finalPath: string,
+  status: number,
+  problems: string[],
+  measure?: unknown,
+): Row => ({
+  role: who.role,
+  width,
+  route,
+  finalPath,
+  status,
+  expected: 'content',
+  actual: 'content',
+  problems: [...new Set(problems)],
+  measure,
+});
 
 async function signInStaff(browser: Browser, who: Identity, secretFile: string) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
@@ -546,21 +618,50 @@ async function visit(
     await page.screenshot({ path: resolve(outDir, 'shots', name), fullPage: true });
   }
   let measure: unknown;
+  // Page length limits are the signed-in rule: sign-in, setup and recovery pages and the home page have their own limits.
+  const judged = { signedIn: ['customer', 'staff'].includes(routeArea(route.split('?')[0]!)) };
   if (actual === 'content') {
-    const m = await measurePage(page, route, status).catch(() => undefined);
+    // A measurement that cannot be taken is a finding, never a silent pass: it would hide every check below.
+    const m = await measurePage(page, route, status, measureOptions).catch((error: unknown) => {
+      problems.push(`measure failed: ${(error as Error).message.split('\n')[0]!.slice(0, 140)}`);
+      return undefined;
+    });
     measure = m;
-    if (m)
-      for (const broken of targetsBroken(m).filter(
-        (b) => !/^status/.test(b) || actual === 'content',
-      ))
-        problems.push(broken);
+    if (m) problems.push(...targetsBroken(m, judged));
     const nav = await page.locator('nav a[href], header a[href]').count();
     if (!nav && !/\/(signin|setup)/.test(route)) problems.push('no navigation links found');
-    if (width === 1440 && (route === '/account' || route === '/operator' || !route.includes('?')))
-      for (const href of await page
+    for (const href of harvestLinks(
+      await page
         .locator('nav a[href^="/"], main a[href^="/"]')
-        .evaluateAll((els) => els.map((el) => (el as HTMLAnchorElement).getAttribute('href')!)))
-        if (/^\/(account|operator)(\/|\?|$)/.test(href) && !href.includes('#')) links.add(href);
+        .evaluateAll((els) => els.map((el) => (el as HTMLAnchorElement).getAttribute('href'))),
+    ))
+      links.add(href);
+    // Every tab is opened and measured in its own state: a tab that is not shown first is still a page the person sees.
+    const tabs = page.locator('[role="tab"]');
+    const tabCount = await tabs.count().catch(() => 0);
+    for (let i = 0; i < tabCount; i++) {
+      const tab = tabs.nth(i);
+      const label = ((await tab.innerText().catch(() => '')) || `tab ${i + 1}`)
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 40);
+      if (!(await tab.isVisible().catch(() => false))) continue;
+      if ((await tab.getAttribute('aria-selected')) === 'true') continue;
+      const tabProblems: string[] = [];
+      try {
+        await tab.click({ timeout: 5000 });
+        await page.waitForTimeout(250);
+        const tm = await measurePage(page, tabRoute(route, label), status, measureOptions);
+        tabProblems.push(...targetsBroken(tm, judged));
+        rows.push(tabRow(who, width, tabRoute(route, label), finalPath, status, tabProblems, tm));
+      } catch (error) {
+        tabProblems.push(
+          `tab "${label}": ${(error as Error).message.split('\n')[0]!.slice(0, 120)}`,
+        );
+        rows.push(tabRow(who, width, tabRoute(route, label), finalPath, status, tabProblems));
+      }
+      appendFileSync(reportFile, JSON.stringify(rows[rows.length - 1]) + '\n');
+    }
   }
   if (expected !== actual) problems.push(`access: expected ${expected}, got ${actual}`);
   for (const f of new Set(failed))
@@ -592,17 +693,20 @@ async function sweepRole(browser: Browser, who: Identity, secretFile: string) {
     .filter((r): r is string => !!r);
   const storageState = who.staff ? await signInStaff(browser, who, secretFile) : undefined;
   const links = new Set<string>();
-  for (const width of sweepWidths) {
+  const state = stateRoutes(who.ids);
+  // 1440 first: it harvests the links that 390 and 768 then open too. Links found at a narrower width are opened there.
+  for (const width of sweepWidthOrder) {
     const context = await browser.newContext({
       viewport: { width, height: 900 },
       storageState,
     });
+    // tsx keeps function names with a __name helper; functions sent to the page need it defined.
+    await context.addInitScript('globalThis.__name = (fn) => fn;');
     if (who.cookies) await context.addCookies(who.cookies);
-    const queue = [...new Set([...base, ...dynamic, ...(width === 1440 ? [] : links)])];
+    const queue = buildQueue({ base, dynamic, state, links: [...links].slice(0, 120) });
     for (const route of queue) await visit(context, who, width, route, links);
-    if (width === 1440)
-      for (const route of [...links].filter((l) => !queue.includes(l)).slice(0, 80))
-        await visit(context, who, width, route, links);
+    for (const route of [...links].filter((l) => !queue.includes(l)).slice(0, 80))
+      await visit(context, who, width, route, links);
     await context.close();
     note(
       `  ${who.role} ${width}px done (${rows.filter((r) => r.role === who.role).length} visits)`,
