@@ -34,15 +34,15 @@ Every change meets the [quality bar](quality-bar.md): clean, secure, easy to use
 
 ## Routes
 
-| Task                                        | Stages in order (`                                                                                                                                                                      |     | ` runs in parallel) |
-| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- | ------------------- |
-| Documentation or register repair            | authority -> scribe -> verifier (docs tests)                                                                                                                                            |
-| Tooling or scripts                          | authority -> architect -> builder -> verifier \|\| reviewer -> scribe                                                                                                                   |
-| Product behaviour, no visible change        | authority -> product -> architect -> builder -> verifier \|\| reviewer -> scribe                                                                                                        |
-| Visible UI                                  | authority -> product -> architect \|\| designer (spec) -> builder -> verifier \|\| reviewer \|\| designer (audit) -> scribe                                                             |
+| Task | Stages in order (`||` runs in parallel) |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Documentation or register repair | authority -> scribe -> verifier (docs tests) |
+| Tooling or scripts | authority -> architect -> builder -> verifier \|\| reviewer -> scribe |
+| Product behaviour, no visible change | authority -> product -> architect -> builder -> verifier \|\| reviewer -> scribe |
+| Visible UI | authority -> product -> architect \|\| designer (spec) -> builder -> verifier \|\| reviewer \|\| designer (audit) -> scribe |
 | Auth, RLS, roles, money, events, migrations | As product behaviour, with two independent reviewers and a refute pass; the architect's blast radius is shown to the owner before building when the brief's owner directions require it |
-| CI failure on a PR                          | authority -> verifier (diagnose with known issues) -> builder -> verifier -> scribe                                                                                                     |
-| Review only                                 | authority -> reviewer (two independent passes) -> reviewer (refute each finding)                                                                                                        |
+| CI failure on a PR | authority -> verifier (diagnose with known issues) -> builder -> verifier -> scribe |
+| Review only | authority -> reviewer (two independent passes) -> reviewer (refute each finding) |
 
 ## Visible-change step (mandatory)
 
