@@ -17,10 +17,11 @@ import {
   customerTabs,
   type CustomerTabKey,
 } from '../lib/ux/customer-navigation';
-import { readJourneyCounts } from '../lib/work-items/journey-counts-server';
+import { readJourneyCounts, readPocketSignals } from '../lib/work-items/journey-counts-server';
 import { notificationSettingsAvailable } from '../lib/ux/notification-settings';
 import { supportWhatsappHref } from '../lib/ux/support-whatsapp';
 import { CustomerTabs } from './ux/customer-tabs';
+import { PocketButton } from './ux/pocket-button';
 import { CustomerBarNote } from './ux/customer-bar-note';
 import { CustomerBarIdentity } from './ux/customer-bar-identity';
 import { LeftNavFrame } from './ux/left-nav';
@@ -186,6 +187,13 @@ function CustomerFrame({ tab, eyebrow, title, count, children }: CustomerShellPr
         {children}
       </WorkspaceShell>
       <CustomerTabs tabs={tabs} current={here} count={here === 'home' ? count : undefined} />
+      {/* Pocket (phone): drawn at once as New Request; its words upgrade when the sidebar's work list read arrives. */}
+      {uxSwitchOn('CORRIDRA_UX_POCKET') ? (
+        <PocketButton
+          signals={readPocketSignals()}
+          whatsappHref={supportWhatsappHref() ?? undefined}
+        />
+      ) : null}
     </LeftNavFrame>
   );
 }

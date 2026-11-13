@@ -24,6 +24,7 @@ import { NotificationInbox } from './notification-inbox';
 import { teamHelpGroups, teamReportProblemHref } from '../../lib/ux/team-help';
 import { readServerTeamFlags, readTeamFlags, subscribeTeamFlags } from '../../lib/ux/team-flags';
 import { PaletteTrigger } from './team-palette';
+import { PocketTitle } from './pocket-title';
 import { TeamAccountMenu } from './team-utility-menus';
 import { HelpMenu, LanguageMenu, NotificationsPanel } from './utility-menus';
 
@@ -83,6 +84,7 @@ export function AppHeader({
   notifications,
   brandMark,
   whatsappHref,
+  pocket = false,
 }: {
   kind: SignedInShell;
   /** The wordmark drawing, passed in so the brand is drawn in one place (site-header.tsx). */
@@ -93,6 +95,8 @@ export function AppHeader({
   notifications: boolean;
   /** The support WhatsApp link, set only when the owner has given a usable number; the signed-in Help menus use it. */
   whatsappHref?: string;
+  /** CORRIDRA_UX_POCKET: the customer header carries the page title for the short phone header. Off, nothing is added. */
+  pocket?: boolean;
 }) {
   const t = useT();
   const { locale } = useLanguage();
@@ -139,7 +143,14 @@ export function AppHeader({
       <Link prefetch={false} className="brand" href={homes[kind]} aria-label={t(names[kind])}>
         {brandMark}
       </Link>
-      {customer ? null : <span className="ux-app-name">{t(names[kind])}</span>}
+      {/* One slot, as before: a new sibling would shift the generated ids of every control after it (useId encodes position). */}
+      {customer ? (
+        pocket ? (
+          <PocketTitle />
+        ) : null
+      ) : (
+        <span className="ux-app-name">{t(names[kind])}</span>
+      )}
       {kind === 'team' ? (
         <span className="ux-app-status" data-live={live ? 'true' : 'false'}>
           <span className="sr-only">{t(shellWords.statusLabel)}: </span>
