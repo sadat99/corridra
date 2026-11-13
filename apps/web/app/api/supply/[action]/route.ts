@@ -13,11 +13,37 @@ export const dynamic = 'force-dynamic';
 // that needs a fresh authenticator check answers 401 with code STEP_UP_REQUIRED.
 const maxBody = 16 * 1024;
 const maxFile = 1024 * 1024;
+// The file cap plus room for the multipart envelope: the boundaries, the part headers and the four small text fields.
+const maxUpload = maxFile + 16 * 1024;
 const fileMessages = {
   tooLarge: 'This file is over 1 MiB. Split it and try again.',
   unknownType: 'Use a CSV or XLSX file.',
   noFile: 'Choose a file to import.',
 };
+
+/**
+ * The request body, read to at most `cap` bytes. A declared length over the cap is refused before anything is read, and the
+ * stream is stopped as soon as it passes the cap, so neither a wrong Content-Length nor a missing one can buffer more.
+ */
+async function boundedBody(request: Request, cap: number, tooLarge: DomainError) {
+  const declared = Number(request.headers.get('content-length'));
+  if (Number.isFinite(declared) && declared > cap) throw tooLarge;
+  const reader = request.body?.getReader();
+  if (!reader) return Buffer.alloc(0);
+  const chunks: Buffer[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > cap) {
+      await reader.cancel();
+      throw tooLarge;
+    }
+    chunks.push(Buffer.from(value));
+  }
+  return Buffer.concat(chunks);
+}
 
 async function handle(request: Request, { params }: { params: Promise<{ action: string }> }) {
   const correlationId = randomUUID();
@@ -76,7 +102,20 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
     }
     if (request.method !== 'POST') throw new DomainError('Not found', 404);
     if (action === 'import-file') {
-      const form = await request.formData();
+      const contentType = request.headers.get('content-type') ?? '';
+      if (!contentType.toLowerCase().startsWith('multipart/form-data'))
+        throw new DomainError(fileMessages.noFile, 400);
+      const upload = await boundedBody(
+        request,
+        maxUpload,
+        new DomainError(fileMessages.tooLarge, 400),
+      );
+      let form: FormData;
+      try {
+        form = await new Response(upload, { headers: { 'content-type': contentType } }).formData();
+      } catch {
+        throw new DomainError(fileMessages.noFile, 400);
+      }
       const file = form.get('file');
       if (!(file instanceof File) || file.size === 0)
         throw new DomainError(fileMessages.noFile, 400);
@@ -98,8 +137,9 @@ async function handle(request: Request, { params }: { params: Promise<{ action: 
         201,
       );
     }
-    const text = await request.text();
-    if (text.length > maxBody) throw new DomainError('Request is too large', 413);
+    const text = (
+      await boundedBody(request, maxBody, new DomainError('Request is too large', 413))
+    ).toString('utf8');
     const body = JSON.parse(text) as unknown;
     const writes: Record<string, () => Promise<unknown>> = {
       'create-source': () => service.createSource(ctx, body),
