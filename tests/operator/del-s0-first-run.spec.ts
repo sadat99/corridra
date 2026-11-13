@@ -400,6 +400,19 @@ test('the first run goes from an empty workspace to a published page, and nothin
   await expect(run.getByLabel('What a company needs to take part')).toHaveValue('Not stated yet');
   await expect(run.getByLabel('Applications close on')).toHaveValue(utcDay(30));
   await expect(preview(page).locator('.programme-public-facts')).toContainText(workspaceName);
+  // Before Publish is pressed the preview itself shows "Not stated yet" for the two lines the organiser left:
+  // the focus, and what a company needs to take part. Nothing is published that was not on screen first.
+  const publicPage = preview(page).locator('.programme-public');
+  const focus = publicPage.locator('.programme-public-facts > div', { hasText: 'Focus' });
+  await expect(focus.locator('dd')).toHaveText('Not stated yet');
+  const who = publicPage.locator('section[aria-labelledby="programme-who-title"]');
+  await expect(who.locator('h3 + p')).toHaveText('Not stated yet');
+  await expect(preview(page)).toBeVisible();
+  // Once the organiser writes the line, the preview shows their words instead.
+  await run.getByLabel('Industry or business focus').fill('Synthetic farm machinery');
+  await expect(focus.locator('dd')).toHaveText('Synthetic farm machinery');
+  await run.getByLabel('Industry or business focus').fill('Not stated yet');
+  await expect(focus.locator('dd')).toHaveText('Not stated yet');
 
   // Publish needs both confirmations, and until then nothing is sent.
   await run.getByRole('button', { name: 'Publish the Page' }).click();
