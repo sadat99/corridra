@@ -14,7 +14,7 @@ import { foundations } from '../foundations';
 import { movePageCap, moveWorkspaceCap } from '../move-constants';
 import { followPages } from '../move-pages';
 import { requestTitle } from '../../app/account/request-words';
-import { classifyDraftFamily, classifyObjective } from './classify';
+import { classifyDraftFamily, classifyObjective, classifyServiceContext } from './classify';
 import { sortWorkItems } from './sort';
 import type { WorkItem, WorkList, WorkSource } from './types';
 
@@ -208,8 +208,8 @@ async function readWorkItems(
         kind: 'service_request',
         id: request.id,
         workspaceId: request.workspaceId,
-        // Display text such as the context label never classifies.
-        family: 'UNCLASSIFIED',
+        // Display text such as the context label never classifies; the stored context kind does.
+        family: classifyServiceContext(request.contextKind),
         title: text(request.serviceTitle),
         status: request.status,
         at: request.updatedAt,

@@ -476,18 +476,15 @@ export function CustomerWorkspaces({
                         {realCustomerInput() && row.synthetic && !row.name.includes('(madeup)')
                           ? ' (madeup)'
                           : ''}
+                        {/* The Archived banner above the table says what is paused, once (owner screenshot, 13 Nov). */}
                         {archived && (
                           <>
                             {' '}
                             <span className="ux-badge">Archived</span>
-                            <br />
-                            <span className="ux-hint">
-                              New requests are closed while this workspace is archived.
-                            </span>
                           </>
                         )}
                       </th>
-                      <td>{row.role}</td>
+                      <td className="ux-ws-role">{row.role}</td>
                       {linksEnabled && (
                         <td>
                           <CompanyLinkLine overview={linkOverview} workspaceId={row.id} />

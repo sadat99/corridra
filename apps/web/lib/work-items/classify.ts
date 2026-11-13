@@ -30,3 +30,12 @@ export function classifyObjective(
   const owners = Object.keys(table).filter((family) => table[family]!.includes(objective));
   return owners.length === 1 ? classifyDraftFamily(owners[0]!) : 'UNCLASSIFIED';
 }
+
+/**
+ * The family a paid-service request names through the kind of thing it is about. Only a programme names one: a
+ * delegation service is Organise work. A request or company context is UNCLASSIFIED here, because its family is
+ * not stored on the service request. The kind is the stored field, never the display text (owner, 13 Nov 2026).
+ */
+export function classifyServiceContext(contextKind: unknown): WorkFamily {
+  return contextKind === 'programme' ? 'ORGANISE' : 'UNCLASSIFIED';
+}

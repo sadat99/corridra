@@ -7,6 +7,7 @@ import { customerPageSession } from '../../../lib/customer-page-session';
 import { buildMoveModel } from '../../../lib/move-cards';
 import { loadMoveInput } from '../../../lib/move-loader';
 import { uxSwitchOn } from '../../../lib/ux-switches';
+import { realUseEnabled } from '@corridra/auth/customer-production';
 import { PendingRequestNotice } from '../../../components/pending-request-notice';
 import { ProgrammeApplyNotice } from '../../../components/programme-apply-notice';
 import { EmailNudge } from '../../../components/email-nudge';
@@ -94,7 +95,7 @@ export default async function Page({
       count={model.cards.length}
     >
       <AccountHashRedirect view="move" />
-      <PendingRequestNotice where="account" />
+      <PendingRequestNotice where="account" enabled={realUseEnabled()} />
       {customerProgrammePagesEnabled() && <ProgrammeApplyNotice />}
       {customerNotificationsEnabled() && <EmailNudge />}
       <MoveView

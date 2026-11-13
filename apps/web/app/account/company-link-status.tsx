@@ -60,5 +60,10 @@ export function CompanyLinkLine({
 }) {
   const row = overview?.[workspaceId];
   if (!row) return null;
-  return <p>Company link: {linkStatusText(row.status, row.organisationName)}</p>;
+  return (
+    <p>
+      <span className="ux-ws-cell-label">Company link: </span>
+      {linkStatusText(row.status, row.organisationName)}
+    </p>
+  );
 }

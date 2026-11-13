@@ -31,6 +31,7 @@ import { companyProfilesTitle } from '../../lib/workspace-choice';
 import { AccountHashRedirect } from './hash-redirect';
 import { DeliveredReports } from './delivered-reports';
 import { uxSwitchOn } from '../../lib/ux-switches';
+import { realUseEnabled } from '@corridra/auth/customer-production';
 import { PendingRequestNotice } from '../../components/pending-request-notice';
 import { customerProgrammePagesEnabled } from '@corridra/auth/customer-programme-publication';
 import { ProgrammeApplyNotice } from '../../components/programme-apply-notice';
@@ -91,7 +92,7 @@ export default async function Page({
     return (
       <WorkspaceShell eyebrow="YOUR ACCOUNT" title="Verify your email." compact>
         <p>Verify the email address on your account to continue.</p>
-        <PendingRequestNotice where="verify" />
+        <PendingRequestNotice where="verify" enabled={realUseEnabled()} />
         <Link prefetch={false} className="primary-link" href="/verify-email">
           Verify Email
         </Link>
@@ -130,7 +131,7 @@ export default async function Page({
       <AccountHashRedirect view={view} />
       {view === 'home' && (
         <>
-          <PendingRequestNotice where="account" />
+          <PendingRequestNotice where="account" enabled={realUseEnabled()} />
           {customerProgrammePagesEnabled() && <ProgrammeApplyNotice />}
           <HomeNextStep
             title="New request"

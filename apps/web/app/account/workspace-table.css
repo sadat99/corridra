@@ -113,3 +113,21 @@
     background: none;
   }
 }
+
+/* L12 (owner screenshots, 13 November 2026): the role reads "Owner", not "owner". Text only; the stored word is unchanged. */
+.ux-ws-table .ux-ws-role {
+  text-transform: capitalize;
+}
+/* The company link cell repeats its column header on desktop; the label shows only where the header row is hidden. */
+.ux-ws-table .ux-ws-cell-label {
+  display: none;
+}
+@media (max-width: 700px) {
+  .ux-ws-table .ux-ws-cell-label {
+    display: inline;
+  }
+}
+/* The Archived badge sits a space away from the workspace name in the notice (owner screenshot, 13 Nov 2026). */
+.ux-draft-notice strong + .ux-badge {
+  margin-inline-start: var(--space-2);
+}
