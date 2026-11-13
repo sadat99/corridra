@@ -58,6 +58,9 @@ export const supplyRowCodes = [
   'dnc_blocked',
   'duplicate_key',
   'source_inactive',
+  'bad_name',
+  'bad_host',
+  'bad_locator',
 ] as const;
 
 // The exact sentences the SQL commands raise and the screens show. A refusal is answered as a conflict, never a server error.
@@ -80,6 +83,10 @@ export const supplyWords = {
   blocked: 'This company asked not to be contacted.',
   notBlocked: 'This company is not blocked.',
   retentionPassed: 'The retention date for this record has passed.',
+  agreementEnded: 'The agreement end date must be in the future.',
+  chooseCountry: 'Choose a country.',
+  enterName: 'Enter the company name.',
+  futureDate: 'The observation date cannot be in the future.',
   expired: 'This candidate has expired and can no longer be decided.',
   fileClosed: 'File import is not available yet.',
   tooManyRows: `Use at most ${supplyMaxRows} candidate rows`,
@@ -197,7 +204,7 @@ export const importMeta = z
               .int()
               .min(2)
               .max(supplyMaxRows + 1),
-            cells: z.record(z.enum(supplyFileColumns), z.string().max(1000)),
+            cells: z.partialRecord(z.enum(supplyFileColumns), z.string().max(1000)),
           })
           .strict(),
       )
@@ -252,6 +259,11 @@ export const blockCompany = z
   .strict()
   .refine(oneSubject, 'Name an organisation, or a company name and a country');
 export const liftCompany = blockCompany;
+
+export const supplyId = uuid;
+export const supplyList = z
+  .object({ missionId: uuid.optional(), limit: z.number().int().min(1).max(200).default(100) })
+  .strict();
 
 export type SupplySourceInput = z.infer<typeof createSource>;
 export type AddCandidateInput = z.infer<typeof addCandidate>;
