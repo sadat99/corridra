@@ -5,8 +5,13 @@ import {
   classifySupplyHeaders,
   createSource,
   hasContactShape,
+  importMeta,
+  liftCompany,
   matchCandidate,
   supplyFileColumns,
+  supplyMaxCellLength,
+  supplyMaxRowNumber,
+  supplyMaxRows,
   supplyKindsOnRoute,
   supplyWords,
 } from '../../packages/domain/src/supply-sources';
@@ -89,6 +94,81 @@ describe('contact shapes', () => {
     );
     expect(addCandidate.safeParse({ ...base, contactName: 'Jane' }).success).toBe(false);
   });
+  test('a locator and a reason may hold long numbers; an email shape in either is refused with the exact sentence', () => {
+    const base = {
+      commandId: id(1),
+      missionId: id(2),
+      profileVersionId: id(3),
+      sourceVersionId: id(4),
+      companyName: 'Acme Trading Ltd',
+      country: 'DE',
+      observedAt: '2026-11-01T00:00:00Z',
+      sourceLocator: 'https://register.example/company/1234567890',
+    };
+    expect(addCandidate.safeParse(base).success).toBe(true);
+    expect(
+      addCandidate.safeParse({ ...base, sourceLocator: 'Register entry 030 1234 5678' }).success,
+    ).toBe(true);
+    const badLocator = addCandidate.safeParse({ ...base, sourceLocator: 'ask jane@acme.example' });
+    expect(badLocator.success).toBe(false);
+    expect(badLocator.error?.issues[0].message).toBe(supplyWords.contactDetails);
+    const reasons = {
+      commandId: id(1),
+      candidateId: id(2),
+      decision: 'MATCH',
+      organisationId: id(3),
+    };
+    expect(
+      matchCandidate.safeParse({ ...reasons, reason: 'Register entry 1234567890 matches' }).success,
+    ).toBe(true);
+    const badReason = matchCandidate.safeParse({ ...reasons, reason: 'ask jane@acme.example' });
+    expect(badReason.success).toBe(false);
+    expect(badReason.error?.issues[0].message).toBe(supplyWords.contactDetails);
+  });
+});
+
+describe('the rows of a parsed file', () => {
+  const cells = {
+    company_name: 'Acme Trading Ltd',
+    country: 'DE',
+    website_host: 'acme.example',
+    public_identifier: 'HRB 1',
+    size_band: 'small',
+    counterparty_types: 'importer',
+    observed_at: '2026-11-01T00:00:00Z',
+    source_locator: 'https://register.example/1',
+  };
+  const meta = (rows: { row: number; cells: Record<string, string> }[]) => ({
+    commandId: id(1),
+    missionId: id(2),
+    profileVersionId: id(3),
+    sourceVersionId: id(4),
+    digest: 'a'.repeat(64),
+    rows,
+  });
+  test('a row number past the row count is accepted, because a quoted newline moves the physical line', () => {
+    expect(importMeta.safeParse(meta([{ row: 2, cells }])).success).toBe(true);
+    expect(importMeta.safeParse(meta([{ row: 140, cells }])).success).toBe(true);
+    expect(importMeta.safeParse(meta([{ row: supplyMaxRowNumber, cells }])).success).toBe(true);
+    expect(importMeta.safeParse(meta([{ row: 1, cells }])).success).toBe(false);
+    expect(importMeta.safeParse(meta([{ row: supplyMaxRowNumber + 1, cells }])).success).toBe(
+      false,
+    );
+  });
+  test('an over-long cell parses, so the import answers it as one rejected row', () => {
+    const long = { ...cells, company_name: 'x'.repeat(5000) };
+    expect(importMeta.safeParse(meta([{ row: 2, cells: long }])).success).toBe(true);
+    expect(
+      importMeta.safeParse(
+        meta([{ row: 2, cells: { ...cells, company_name: 'x'.repeat(supplyMaxCellLength + 1) } }]),
+      ).success,
+    ).toBe(false);
+    expect(
+      importMeta.safeParse(
+        meta(Array.from({ length: supplyMaxRows + 1 }, (_, i) => ({ row: i + 2, cells }))),
+      ).success,
+    ).toBe(false);
+  });
 });
 
 describe('file headers', () => {
@@ -132,6 +212,18 @@ describe('commands', () => {
     ).toBe(false);
     expect(
       blockCompany.safeParse({ ...base, organisationId: id(9), reference: 'call 0301234567' })
+        .success,
+    ).toBe(false);
+  });
+  test('an earlier block is named on its own, never beside another subject', () => {
+    const base = { commandId: id(1), reason: 'Asked to stop', reference: 'ticket 41' };
+    expect(blockCompany.safeParse({ ...base, blockId: id(7) }).success).toBe(true);
+    expect(liftCompany.safeParse({ ...base, blockId: id(7) }).success).toBe(true);
+    expect(blockCompany.safeParse({ ...base, blockId: id(7), organisationId: id(9) }).success).toBe(
+      false,
+    );
+    expect(
+      blockCompany.safeParse({ ...base, blockId: id(7), companyName: 'Acme Ltd', country: 'DE' })
         .success,
     ).toBe(false);
   });

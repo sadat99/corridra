@@ -35,6 +35,14 @@ export const supplyReviewDecisions = [
 ] as const;
 export const supplyMatchDecisions = ['MATCH', 'NO_MATCH', 'REVERSE'] as const;
 export const supplyMaxRows = 100;
+// A row number is the physical line the row started on, and a quoted newline inside a cell pushes later rows past the row
+// count, so the ceiling here is the parser's physical maximum: one line per byte of a file of at most 1 MiB. The same bound
+// holds one cell, because a file may be one long cell. A cell that is too long for a column is one rejected row, not a
+// refused file.
+export const supplyMaxRowNumber = 1048576;
+export const supplyMaxCellLength = 1048576;
+// The most rows a list read answers. The screens say so when a list reaches it.
+export const supplyListLimit = 100;
 // The eight columns of a candidate file. `nomination_note` is accepted from manual staff entry only.
 export const supplyFileColumns = [
   'company_name',
@@ -74,6 +82,7 @@ export const supplyWords = {
   sourceUnavailable: 'Source unavailable',
   candidateUnavailable: 'Candidate unavailable',
   organisationUnavailable: 'Organisation unavailable',
+  blockUnavailable: 'Block unavailable',
   stale: staleProfileWords,
   staleSource: 'This source changed. Reload it and try again.',
   notActive: 'This source is not active. Check its status and agreement.',
@@ -107,7 +116,6 @@ export const supplyWords = {
 } as const;
 
 const uuid = z.uuid();
-const reason = z.string().trim().min(3).max(500);
 const key = z
   .string()
   .trim()
@@ -127,6 +135,9 @@ const free = (min: number, max: number, phone = true) =>
     .min(min)
     .max(max)
     .refine((value) => !hasContactShape(value, { phone }), supplyWords.contactDetails);
+// Staff words kept beside a record. The same email check the SQL columns carry, so a person is told what to remove instead
+// of meeting a database refusal. A reason may hold a number, such as a register entry, so the phone shape is not checked.
+const reason = free(3, 500, false);
 
 const host = z
   .string()
@@ -175,7 +186,8 @@ const candidateFacts = {
   sizeBand: z.enum(sizeBands as [string, ...string[]]).optional(),
   counterpartyTypes: counterpartyTypes.default([]),
   observedAt,
-  sourceLocator: free(1, 500),
+  // A locator is a web address or a document reference, which often holds a long run of digits, so only the email shape is refused.
+  sourceLocator: free(1, 500, false),
 };
 export const addCandidate = z
   .object({
@@ -199,12 +211,8 @@ export const importMeta = z
       .array(
         z
           .object({
-            row: z
-              .number()
-              .int()
-              .min(2)
-              .max(supplyMaxRows + 1),
-            cells: z.partialRecord(z.enum(supplyFileColumns), z.string().max(1000)),
+            row: z.number().int().min(2).max(supplyMaxRowNumber),
+            cells: z.partialRecord(z.enum(supplyFileColumns), z.string().max(supplyMaxCellLength)),
           })
           .strict(),
       )
@@ -243,6 +251,9 @@ export const matchCandidate = z
   );
 
 const dncSubject = {
+  // An existing do-not-contact row of the same tenant. The subject is then read from that row, so a name block can be
+  // lifted and blocked again exactly as it was recorded, whatever the name looked like.
+  blockId: uuid.optional(),
   organisationId: uuid.optional(),
   companyName: free(1, 160).optional(),
   country: countryCode.optional(),
@@ -250,19 +261,30 @@ const dncSubject = {
   // A ticket or note number, never a person: no email shape and no run of 7 digits.
   reference: free(3, 120),
 };
-const oneSubject = (v: { organisationId?: string; companyName?: string; country?: string }) =>
-  v.organisationId !== undefined
-    ? v.companyName === undefined && v.country === undefined
-    : v.companyName !== undefined && v.country !== undefined;
+type DncSubject = {
+  blockId?: string;
+  organisationId?: string;
+  companyName?: string;
+  country?: string;
+};
+const oneSubject = (v: DncSubject) =>
+  v.blockId !== undefined
+    ? v.organisationId === undefined && v.companyName === undefined && v.country === undefined
+    : v.organisationId !== undefined
+      ? v.companyName === undefined && v.country === undefined
+      : v.companyName !== undefined && v.country !== undefined;
 export const blockCompany = z
   .object({ commandId: uuid, ...dncSubject })
   .strict()
-  .refine(oneSubject, 'Name an organisation, or a company name and a country');
+  .refine(oneSubject, 'Name an earlier block, or an organisation, or a company name and a country');
 export const liftCompany = blockCompany;
 
 export const supplyId = uuid;
 export const supplyList = z
-  .object({ missionId: uuid.optional(), limit: z.number().int().min(1).max(200).default(100) })
+  .object({
+    missionId: uuid.optional(),
+    limit: z.number().int().min(1).max(200).default(supplyListLimit),
+  })
   .strict();
 
 export type SupplySourceInput = z.infer<typeof createSource>;
