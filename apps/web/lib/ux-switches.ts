@@ -27,6 +27,7 @@ export const uxSwitchNames = [
   'CORRIDRA_NOTIFICATIONS_V2',
   'CORRIDRA_TEAM_INVITES',
   'CORRIDRA_ROUTE_PACK_FORM',
+  'CORRIDRA_SUPPLY_SOURCES',
 ] as const;
 export type UxSwitchName = (typeof uxSwitchNames)[number];
 
