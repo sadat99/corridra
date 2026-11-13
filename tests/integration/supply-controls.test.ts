@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { randomUUID } from 'node:crypto';
-import { goodFields, refused, supplyWorld, type World } from './supply-support';
+import { candidateWorld, goodFields, iso, refused, type CandidateWorld } from './supply-support';
 import { configureSupplySources } from '../../packages/auth/src/supply-source-configuration';
 import { profileWords } from '../../packages/domain/src/counterparty-profiles';
 import { uxSwitchNames, uxSwitchOn } from '../../apps/web/lib/ux-switches';
@@ -9,9 +9,9 @@ import { switchRegistry } from '../../apps/web/lib/owner-switches';
 // ADR-082 R5 (slice S2): with the module control paused every supply command refuses and every staff read still answers;
 // the other six controls stay closed whatever the installer does; the app switch is off unless exactly "true".
 const paused = 'Supply sources are paused. Records stay readable.';
-let w: World;
+let w: CandidateWorld;
 beforeAll(async () => {
-  w = await supplyWorld({ open: false });
+  w = await candidateWorld({ open: false });
 });
 afterAll(async () => {
   await w?.close();
@@ -194,5 +194,224 @@ describe('the app switch', () => {
     expect(entry).toMatchObject({ kind: 'flag' });
     expect(entry!.line).not.toMatch(/—|–/);
     expect(process.env.CORRIDRA_SUPPLY_SOURCES).toBeUndefined();
+  });
+});
+
+// Slice S3: the candidate commands obey the same pause. Block and lift are the two safety commands that work while paused.
+describe('the S3 commands while the module is paused', () => {
+  test('every command refuses with the paused words, block and lift still work, and every read still answers', async () => {
+    await configureSupplySources(w.owner, {
+      enabled: true,
+      reason: 'Open before the paused matrix',
+    });
+    await w.openControl('staff_file_import');
+    const source = await w.staffSource();
+    const missionId = await w.mission(w.tenantA, w.users.operator.id);
+    const profileVersionId = await w.profile(missionId);
+    const ids = {
+      missionId,
+      profileVersionId,
+      sourceVersionId: source.sourceVersionId,
+    };
+    const made = await w.addCandidate('operator', ids);
+    const org = await w.organisation('Paused Matrix Ltd');
+    const orgTwo = await w.organisation('Paused Matrix Two Ltd');
+    await w.candidates.blockCompany(w.users.operator.ctx, {
+      commandId: randomUUID(),
+      organisationId: orgTwo,
+      reason: 'Blocked before the pause',
+      reference: 'ticket 61',
+    });
+    const before = {
+      candidates: (await w.owner.query('SELECT count(*)::int n FROM app.supply_candidate')).rows[0]
+        .n,
+      sources: (await w.owner.query('SELECT count(*)::int n FROM app.supply_source_version'))
+        .rows[0].n,
+      reviews: (await w.owner.query('SELECT count(*)::int n FROM app.supply_candidate_review'))
+        .rows[0].n,
+      matches: (await w.owner.query('SELECT count(*)::int n FROM app.supply_candidate_match'))
+        .rows[0].n,
+      batches: (await w.owner.query('SELECT count(*)::int n FROM app.supply_import_batch')).rows[0]
+        .n,
+    };
+    await configureSupplySources(w.owner, {
+      enabled: false,
+      reason: 'Pause for the paused matrix',
+    });
+    const commandId = () => randomUUID();
+    const attempts: [string, () => Promise<unknown>][] = [
+      [
+        'create_source',
+        () =>
+          w.candidates.createSource(w.users.operator.ctx, {
+            commandId: commandId(),
+            kind: 'staff_research',
+            status: 'active',
+            label: 'Paused source',
+            defaultRetentionMonths: 6,
+            reason: 'Refused while paused',
+          }),
+      ],
+      [
+        'add_source_version',
+        () =>
+          w.candidates.addSourceVersion(w.users.operator.ctx, {
+            commandId: commandId(),
+            sourceId: source.sourceId,
+            expectedVersion: 1,
+            status: 'paused',
+            label: 'Paused source',
+            defaultRetentionMonths: 6,
+            reason: 'Refused while paused',
+          }),
+      ],
+      ['add_candidate', () => w.addCandidate('operator', ids)],
+      [
+        'import_file',
+        () =>
+          w.candidates.importFile(w.users.operator.ctx, {
+            commandId: commandId(),
+            ...ids,
+            digest: 'e'.repeat(64),
+            rows: [
+              {
+                row: 2,
+                cells: {
+                  company_name: 'Paused File Ltd',
+                  country: 'DE',
+                  observed_at: iso(-1000),
+                  source_locator: 'https://registry.example/p',
+                },
+              },
+            ],
+          }),
+      ],
+      [
+        'review_candidate',
+        () =>
+          w.candidates.review(w.users.operator.ctx, {
+            commandId: commandId(),
+            candidateId: made.candidateId,
+            decision: 'WRONG_FIT',
+            reasonCode: 'not_a_buyer',
+            reason: 'Refused while paused',
+          }),
+      ],
+      [
+        'match_candidate',
+        () =>
+          w.candidates.match(w.users.operator.ctx, {
+            commandId: commandId(),
+            candidateId: made.candidateId,
+            decision: 'MATCH',
+            organisationId: org,
+            reason: 'Refused while paused',
+          }),
+      ],
+    ];
+    for (const [name, attempt] of attempts) expect(await refused(attempt()), name).toBe(paused);
+    expect({
+      candidates: (await w.owner.query('SELECT count(*)::int n FROM app.supply_candidate')).rows[0]
+        .n,
+      sources: (await w.owner.query('SELECT count(*)::int n FROM app.supply_source_version'))
+        .rows[0].n,
+      reviews: (await w.owner.query('SELECT count(*)::int n FROM app.supply_candidate_review'))
+        .rows[0].n,
+      matches: (await w.owner.query('SELECT count(*)::int n FROM app.supply_candidate_match'))
+        .rows[0].n,
+      batches: (await w.owner.query('SELECT count(*)::int n FROM app.supply_import_batch')).rows[0]
+        .n,
+    }).toEqual(before);
+    // The safety commands work: block by an operator, lift by an owner with fresh MFA.
+    const blocked = await w.candidates.blockCompany(w.users.operator.ctx, {
+      commandId: commandId(),
+      organisationId: org,
+      reason: 'Asked to be left alone',
+      reference: 'ticket 62',
+    });
+    expect(blocked.blockId).toBeTruthy();
+    expect(
+      (
+        await w.candidates.liftCompany(w.users.owner.ctx, {
+          commandId: commandId(),
+          organisationId: org,
+          reason: 'Agreed to be listed',
+          reference: 'ticket 63',
+        })
+      ).blockId,
+    ).toBeTruthy();
+    expect(
+      await refused(
+        w.candidates.liftCompany(w.users.operator.ctx, {
+          commandId: commandId(),
+          organisationId: orgTwo,
+          reason: 'Operators cannot lift',
+          reference: 'ticket 64',
+        }),
+      ),
+    ).toBe('Access denied');
+    // Every staff read answers.
+    for (const who of ['owner', 'operator', 'reviewer', 'viewer'] as const) {
+      const ctx = w.users[who].ctx;
+      expect(
+        (await w.candidates.listCandidates(ctx, { missionId: missionId })).map((c) => c.id),
+        who,
+      ).toEqual([made.candidateId]);
+      expect((await w.candidates.candidate(ctx, made.candidateId))?.id, who).toBe(made.candidateId);
+      expect(await w.candidates.listSources(ctx), who).toHaveLength(1);
+      expect((await w.candidates.listBlocks(ctx)).length, who).toBe(3);
+      expect(await w.candidates.kindsOnRoute(ctx, missionId), who).toEqual(['staff_research']);
+      expect(
+        (await w.candidates.listMissions(ctx)).find((m) => m.id === missionId)?.candidates,
+        who,
+      ).toBe(1);
+    }
+    await configureSupplySources(w.owner, {
+      enabled: true,
+      reason: 'Reopen after the paused matrix',
+    });
+    expect((await w.addCandidate('operator', ids)).candidateId).toBeTruthy();
+  });
+
+  test('a name block is lifted and blocked again by its row id while the module is paused', async () => {
+    await configureSupplySources(w.owner, {
+      enabled: false,
+      reason: 'Pause for the block by id test',
+    });
+    const put = await w.candidates.blockCompany(w.users.operator.ctx, {
+      commandId: randomUUID(),
+      companyName: 'A&B Ltd',
+      country: 'DE',
+      reason: 'The company asked to be left alone',
+      reference: 'ticket 71',
+    });
+    const lifted = await w.candidates.liftCompany(w.users.owner.ctx, {
+      commandId: randomUUID(),
+      blockId: put.blockId,
+      reason: 'The company agreed to be listed',
+      reference: 'ticket 72',
+    });
+    expect(lifted.blockId).toBeTruthy();
+    const again = await w.candidates.blockCompany(w.users.operator.ctx, {
+      commandId: randomUUID(),
+      blockId: put.blockId,
+      reason: 'The company asked again',
+      reference: 'ticket 73',
+    });
+    const rows = (
+      await w.owner.query(
+        'SELECT state,name_key,country FROM app.supply_do_not_contact WHERE id=ANY($1) ORDER BY seq',
+        [[put.blockId, lifted.blockId, again.blockId]],
+      )
+    ).rows;
+    expect(rows).toEqual([
+      { state: 'BLOCKED', name_key: 'ab', country: 'DE' },
+      { state: 'LIFTED', name_key: 'ab', country: 'DE' },
+      { state: 'BLOCKED', name_key: 'ab', country: 'DE' },
+    ]);
+    await configureSupplySources(w.owner, {
+      enabled: true,
+      reason: 'Reopen after the block by id test',
+    });
   });
 });
