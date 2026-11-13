@@ -281,6 +281,12 @@
     "sentences": 2,
     "words": 12
   },
+  "/operator/supply": {
+    "unavailable": true
+  },
+  "/operator/supply/do-not-contact": {
+    "unavailable": true
+  },
   "/plan": {
     "grade": 3.5,
     "hard": 0,

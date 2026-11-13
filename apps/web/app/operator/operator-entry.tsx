@@ -90,7 +90,10 @@ export async function OperatorEntry({
       {shellsV2 ? (
         <TeamSecondLevel urls={uxSwitchOn('CORRIDRA_UX_OPERATOR_URLS')} ownerPage={ownerPage} />
       ) : null}
-      <OperatorFlags replyReview={uxSwitchOn('CORRIDRA_REPLY_PAGE')}>
+      <OperatorFlags
+        replyReview={uxSwitchOn('CORRIDRA_REPLY_PAGE')}
+        supplySources={uxSwitchOn('CORRIDRA_SUPPLY_SOURCES')}
+      >
         <Workspace
           tenants={tenants}
           initialTenant={selected!}
