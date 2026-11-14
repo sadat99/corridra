@@ -1,0 +1,31 @@
+AUDIT-A3d part 1: Delegation registrations (UI/UX.v3 audit, last of nine screens)
+
+What the pictures show
+  registrations-before-<width>-<rows>row.png  origin/main 76066ca (participant-account.tsx as merged)
+  registrations-after-<width>-<rows>row.png   this branch
+  Widths 390 (viewport 844 high), 768 (1024 high), 1440 (900 high). One row is the default state; two rows shows the
+  spacing between rows.
+
+How they were taken
+  The real ParticipantAccount, the real stylesheets (globals, shells, page-frame, overflow-menu, page-budget,
+  participant-account) bundled with esbuild into a fixture page inside WorkspaceShell with the customer frame and the
+  page frame, the participant API answered by the test (sample data, no sign-in, no server). Production bundle React,
+  all details closed, sample mode. Same fixture, same data, before and after.
+
+Content height (main element, px, details closed), before -> after
+  390 x 1 row   582 -> 579   (-3)
+  390 x 2 rows  814 -> 813   (-1)
+  768 x 1 row   550 -> 538   (-12)
+  768 x 2 rows 745 -> 727    (-19)
+  1440 x 1 row  561 -> 549   (-12)
+  1440 x 2 rows 756 -> 738   (-19)
+  Whole page against the window: 1.00 screens at every width and row count before and after, because the signed-in
+  shell is at least one window high (document height equals the window). The content alone is 0.58 to 0.96 of a window.
+  Nothing is longer than before. Between rows: 16 px from 768 px up, 12 px on a phone (the old 12 px), so the phone page
+  does not grow; 24 px stays between sections (the page frame). A first version used 24 px between rows and was 11 px
+  longer at 390 x 2 rows (825); the spec now pins every height at or under the before value (+1 px for rounding) and
+  that case fails on the 24 px version.
+
+Not measured
+  The real signed-in /account/delegations route (needs a sign-in and the participant database, absent here); the
+  fixture is the KI-16 approximation of the real frame.
