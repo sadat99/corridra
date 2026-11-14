@@ -45,6 +45,13 @@ export function HomeWorkView({ list }: { list: WorkList }) {
   return (
     <section aria-labelledby="home-work-title" className="guide-area home-work">
       <h2 id="home-work-title">Active work</h2>
+      {/* The way to the whole list sits beside the heading, so it is first in reading order and one line of height
+          on a wide screen. Same link, same address (UI/UX.v3 audit A3e). */}
+      <p className="home-work-all">
+        <Link prefetch={false} className="text-link" href="/account?view=work">
+          See all your work
+        </Link>
+      </p>
       {state === 'unreadable' && (
         <p role="status">
           We could not check everything just now. Something may be waiting for you that this page
@@ -56,7 +63,11 @@ export function HomeWorkView({ list }: { list: WorkList }) {
           <RowList
             label="Active work"
             title="Request"
-            columns={[{ name: 'Kind' }, { name: 'Status' }, { name: 'Date' }]}
+            columns={[
+              { name: 'Kind', width: 'minmax(0, 3.1fr)' },
+              { name: 'Status', width: 'minmax(0, 1.4fr)' },
+              { name: 'Date', width: 'minmax(0, 1.5fr)' },
+            ]}
           >
             {shown.map((item) => {
               const heading = item.title ?? kindWords[item.kind];
@@ -96,11 +107,6 @@ export function HomeWorkView({ list }: { list: WorkList }) {
           {incomplete(list) && <p role="note">This list may not show everything.</p>}
         </>
       )}
-      <p>
-        <Link prefetch={false} className="text-link" href="/account?view=work">
-          See all your work
-        </Link>
-      </p>
     </section>
   );
 }

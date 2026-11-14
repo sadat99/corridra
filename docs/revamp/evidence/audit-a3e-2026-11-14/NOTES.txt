@@ -1,0 +1,61 @@
+Audit A3e (UI/UX.v3 audit follow-ups to A3a): Home with work on one desktop screen, and the All Tools finder without JavaScript.
+Taken 14 Nov 2026 in the cloud container.
+
+How measured
+- Real stylesheets: production build (pnpm build, next start), signed in as the seeded QA test customer (scripts/qa/signed-in-sweep.ts --serve, local PostgreSQL 16),
+  Chromium. Every details element closed. Screens = full document height (header, content, footer) divided by the viewport height:
+  390x844, 768x1024, 1440x900. 1.000 means the page is not taller than the window and the footer sits at the bottom of it.
+- before = origin/main 76066ca (PR 502 merged). after = this branch, built from its final code (merged with main before the push).
+- State "3 rows" (the seeded customer, the same state A3a measured as home-filled): Home shows exactly 3 work rows and no stage bar:
+  1. "Synthetic QA Test open request" (Draft request)   2. "Local meeting arrangement" (Service request)   3. "Synthetic QA Test buyer delegation" (Programme).
+  The seed has no submitted request, so the "Newest request" stage bar is absent. Next step row, Active work, See all your work, 4 quick links.
+
+Home, the 3-row state (before -> after)
+view          390          768          1440
+home          1.80 -> 1.75  1.46 -> 1.27  1.14 -> 1.00      (1440 document 1028 px -> 900 px; content ends at 757 px, 25 px of headroom)
+requests      1.34 -> 1.34  1.00 -> 1.00  1.00 -> 1.00      (unchanged, not touched)
+all-tools     1.26 -> 1.26  1.00 -> 1.00  1.00 -> 1.00      (unchanged, a Clear Search form is added but it only shows when a search is on)
+No width is longer than before. No horizontal scroll at any width.
+
+Home, the other states (after only; NOT measured on the old code)
+How: the real HomeWorkView is rendered with synthetic rows (react-dom/server, same stylesheets) and swapped into the live signed-in Home page. Data is made up for the measure.
+state                       390          768          1440
+3 rows + stage bar          1.85         1.35         1.07
+5 rows, no stage bar        2.11         1.53         1.10
+5 rows + stage bar          2.22         1.62         1.22
+These are OVER the desktop limit of 1.0 at 1440. The only way down is to hide rows (a cap) or the stage bar, which this PR must not do. Owner-visible follow-up.
+Five rows is what Home shows at most (homeWorkRows), and the stage bar shows for the newest submitted request, so a customer with real work will often be in these states.
+
+What changed on Home (nothing hidden, no copy change, same links and addresses)
+- "See all your work" now sits beside the Active work heading, first in reading order after it (it was last). Same link, same href. 44 px phone and tablet target kept;
+  from 1024 it is one text line.
+- Next step: title and text side by side from 1024. "Your next step" heading stays visible and on the content left edge.
+- Active work rows: the Kind column is wider so a row is one line on a wide screen (title 2.4, Kind 3.1, Status 1.4, Date 1.5 fractions).
+- 12 px between a section's heading and its content (was 16).
+- Quick links: two-up from 768 (was one column), four-up from 1280 as before, 12 px padding from 1024.
+
+All Tools without JavaScript (tests/ux/audit-a3e-all-tools-no-js.spec.ts, 30 tests: 10 at each of 390, 768, 1440)
+- Browser context javaScriptEnabled false. The page route is served by a fixture: the REAL AllToolsFinder, WorkspaceShell and stylesheets rendered on the server per request
+  from the address, answering /account/all-tools. Its two reads of the address copy app/account/all-tools/page.tsx.
+- Proves: the server markup for ?q= and ?group= filters correctly; the form in it (field names q and group, action, the noscript Find button, the radio chips, Clear Search)
+  makes a real GET in Chromium that lands on the filtered or the cleared page; all 16 tools are on the page with no query; a word with no match says so and Clear Search
+  brings all 16 back; each tool is found by its own label.
+- Does NOT prove: the Next page itself, its sign-in, CORRIDRA_UX_NAV, or that page.tsx passes searchParams (that last part is read in tests/integration/audit-a3a-screens.test.ts).
+- New in the finder: Clear Search was a JavaScript-only button, so without a script a search could not be cleared. It is now a submit button in a small GET form to
+  /account/all-tools; with a script its click handler still clears in place (button role and label unchanged).
+- Fails when the GET path is broken (temporary local breaks, all restored; run at 1440):
+  A origin/main finder (Clear is JS-only): 6 failures across the 3 widths (Clear Search tests, 2 per width)
+  B name="q" removed from the search box: 2 failures (Find loads ?q=, Find loads ?group=)
+  C address not read (initialQuery and initialGroup ignored): 7 failures
+  D noscript Find button removed: 3 failures
+
+Existing tests: every one passed unchanged (zero assertions edited)
+- vitest: audit-a3a-screens, revamp-cx2-home, revamp-work-screen, ux-teaching-layer: 88 passed.
+- UX specs: audit-a3a-all-tools 24 passed.
+- Operator fixture specs on next start 3200 (scratch config, no webServer): l12-work-list, l12-workspaces-list, revamp-cx2b-requests, revamp-cx2b-workspaces,
+  revamp-g6-muted-requests: 40 passed; revamp-cx2-components, ux-home-languages, l12-pending-notice: 61 passed.
+- Docs gate (documents, design-system, design-system-guard, brand-identity, context-tools, squad): 71 passed. Guard baseline not changed.
+- eslint over apps/web packages scripts tests/integration tests/operator *.ts: exit 0.
+
+Not run: the real e2e verification suite (tests/e2e/verification, needs its own server), the full protected operator suite, widths 320/1024/1920 for Home,
+a signed-in Home with real (non-synthetic) data, a real submitted request, axe on Home.
