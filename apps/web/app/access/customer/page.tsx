@@ -48,7 +48,11 @@ export default function Page() {
       {view.cards.length > 0 && (
         <section aria-labelledby="access-other">
           <h2 id="access-other">{page.otherWays.heading}</h2>
-          <div className="access-cards access-cards--three">
+          <div
+            className={
+              view.cards.length === 3 ? 'access-cards access-cards--three' : 'access-cards'
+            }
+          >
             {view.cards.map((card) => (
               <AccessCard key={card.id} icon={card.icon} title={card.title}>
                 <p>{card.text}</p>

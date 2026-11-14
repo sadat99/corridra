@@ -81,7 +81,7 @@ export type AccessIconName =
 
 /** Customer door: /access/customer. */
 export const customerDoorPage = {
-  eyebrow: 'CUSTOMER ACCESS',
+  eyebrow: 'Customer Access',
   title: 'Open your workspace, or start one.',
   lead: 'For business owners, teammates, organisers and participants.',
   panels: {
@@ -185,7 +185,7 @@ export function customerDoorView(input: CustomerDoorInputs): {
 
 /** Team and network door: /access/team. */
 export const teamDoorPage = {
-  eyebrow: 'TEAM AND NETWORK ACCESS',
+  eyebrow: 'Team and Network Access',
   title: 'Sign in to team or field work.',
   lead: 'For Corridra team members, reviewers, admins and invited field helpers.',
   note: 'This is separate from a customer account. You need an invitation and an authenticator app.',
@@ -195,7 +195,7 @@ export const teamDoorPage = {
       icon: 'shield' as AccessIconName,
       title: 'Corridra team',
       text: 'Operator, reviewer, viewer, admin or founder.',
-      action: { text: 'Team Sign-In', href: '/operator/signin' } as AccessAction,
+      action: { text: 'Team Sign-in', href: '/operator/signin' } as AccessAction,
       actionKind: 'primary' as const,
       textLink: { text: 'Set Up Invited Access', href: '/operator/setup' } as AccessAction,
     },
@@ -223,7 +223,7 @@ export const teamDoorPage = {
 
 /** Private link door: /access/link. Role cards carry no link on purpose: the link itself is the access. */
 export const linkDoorPage = {
-  eyebrow: 'PRIVATE LINK ACCESS',
+  eyebrow: 'Private Link Access',
   title: 'Open the link Corridra sent you.',
   lead: 'For buyers, suppliers, clients and institutions.',
   note: 'You do not need an account. The link is your access, and it works only for the person it was sent to.',

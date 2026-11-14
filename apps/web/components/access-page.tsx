@@ -5,6 +5,7 @@ import { CorridraIcon } from './corridra-icon';
 import { AccessElsewhere } from './access-elsewhere';
 import { accessDoor, type AccessDoorId, type AccessIconName } from '../lib/access-doors';
 import { uxSwitchOn } from '../lib/ux-switches';
+import './page-compact.css';
 import '../app/access/access.css';
 
 /** Title, description and sharing text from the registry; search engines may index the page only while the switch is on. */
@@ -34,7 +35,7 @@ export function AccessPage({
 }) {
   return (
     <PublicShell>
-      <section className="guide-page-hero guide-page-hero--compact access-page-hero">
+      <section className="guide-page-hero guide-page-hero--compact">
         <div>
           <nav className="guide-crumb" aria-label="Breadcrumb">
             <Link prefetch={false} href="/">

@@ -1,31 +1,28 @@
 /* The three ways in (/access/*). Tokens only; panels are --radius-lg, cards --radius-md. */
-.guide-page-hero.access-page-hero {
-  padding-block: var(--space-4) var(--space-3);
-}
-.guide-page-hero.access-page-hero > div {
-  gap: var(--space-3);
-}
 .access-page {
   display: grid;
   gap: var(--space-6);
   padding-block-end: var(--space-6);
 }
-.access-page > section,
-.access-page > nav {
+.access-page > section {
   display: grid;
   gap: var(--space-4);
   align-content: start;
+  justify-items: start;
 }
 .access-page h2 {
   margin: 0;
   color: var(--text-1);
+  font-family: var(--serif);
   font-size: var(--text-h2);
+  font-weight: var(--weight-medium);
+  line-height: 1.15;
 }
 .access-page p {
   margin: 0;
   color: var(--text-2);
   font-size: var(--text-base);
-  line-height: 1.5;
+  line-height: var(--leading-reading);
 }
 .access-page .text-link,
 .access-page .button,
@@ -51,6 +48,9 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
 }
+.access-panel > :is(.button, .text-link, .button-secondary) {
+  margin-inline-start: 0;
+}
 .access-card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -62,11 +62,13 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
 }
-.access-card h2,
-.access-card h3 {
+.access-page .access-card h2,
+.access-page .access-card h3 {
   margin: 0;
   color: var(--text-1);
+  font-family: var(--font-ui);
   font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
 }
 .access-card > :not(svg, h2, h3) {
   grid-column: 1 / -1;
@@ -100,14 +102,16 @@
   padding-block-start: var(--space-4);
   border-top: 1px solid var(--line);
 }
-.access-elsewhere h2 {
+.access-page .access-elsewhere h2 {
   flex-basis: 100%;
   margin: 0;
   color: var(--text-1);
+  font-family: var(--font-ui);
   font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
 }
 @media (min-width: 48rem) {
-  .access-elsewhere h2 {
+  .access-page .access-elsewhere h2 {
     flex-basis: auto;
   }
   .access-panels,
