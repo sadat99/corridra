@@ -14,6 +14,7 @@ export function AccessOptions({
 }: {
   label: string;
   intro?: string;
+  /** The text of each link is its key and is unique in a list, so a link whose address changes keeps its element (and its focus). */
   links: readonly AccessOptionLink[];
   className?: string;
 }) {
@@ -22,11 +23,11 @@ export function AccessOptions({
       {intro && <p>{intro}</p>}
       {links.map((link) =>
         link.plainAnchor ? (
-          <a key={link.href + link.text} className="text-link" href={link.href}>
+          <a key={link.text} className="text-link" href={link.href}>
             {link.text}
           </a>
         ) : (
-          <Link key={link.href + link.text} prefetch={false} className="text-link" href={link.href}>
+          <Link key={link.text} prefetch={false} className="text-link" href={link.href}>
             {link.text}
           </Link>
         ),

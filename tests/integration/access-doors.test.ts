@@ -217,6 +217,29 @@ describe('the shared access navs', () => {
     for (const key of Object.keys(old)) expect(got[key], key).toBe(old[key]);
   });
 
+  it('keys each link by its text so a changed address keeps the element and its focus', async () => {
+    const { accessHelp } = await load('lib/access-doors.ts');
+    const lists = [
+      accessHelp.customerOtherRoutes,
+      accessHelp.signInFallback,
+      accessHelp.operatorSetup('/a'),
+      accessHelp.operatorForgotPassword('/a'),
+      accessHelp.operatorSignIn('/x'),
+      accessHelp.operatorSignIn('/contributor?a=1'),
+      accessHelp.operatorError('/a'),
+      accessHelp.contributorSetup,
+      accessHelp.contributorError,
+      accessHelp.buyer,
+    ];
+    for (const list of lists) {
+      const texts = list.links.map((l: { text: string }) => l.text);
+      expect(new Set(texts).size, list.label).toBe(texts.length);
+    }
+    const source = readFileSync(resolve('apps/web/components/access-options.tsx'), 'utf8');
+    expect(source).not.toMatch(/key=\{[^}]*href/);
+    expect(source.match(/key=\{link\.text\}/g)).toHaveLength(2);
+  });
+
   it('renders the "Not what you need?" bar with the other two door titles', async () => {
     const { AccessElsewhere } = await load('components/access-elsewhere.tsx');
     const html = render(ce(AccessElsewhere, { current: 'team' }));
