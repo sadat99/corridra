@@ -1,4 +1,5 @@
 import { AccessCard, AccessPage, accessDoorMetadata } from '../../../components/access-page';
+import { PrivateLinkField } from '../../../components/private-link-field';
 import { linkDoorPage as page } from '../../../lib/access-doors';
 
 // The search-engine setting follows the switch as it is when the page is asked for.
@@ -11,6 +12,11 @@ export default function Page() {
   return (
     <AccessPage id="link" eyebrow={page.eyebrow} title={page.title} lead={page.lead}>
       <p>{page.note}</p>
+      <PrivateLinkField
+        label={page.field.label}
+        action={page.field.action}
+        refused={page.field.refused}
+      />
       <div className="access-cards">
         {page.cards.map((card) => (
           <AccessCard key={card.id} icon={card.icon} title={card.title} level={2}>
