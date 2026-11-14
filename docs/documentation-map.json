@@ -1514,6 +1514,11 @@
       "use": "Exact hashed ledger at d13843e (the PR 499 merge; unchanged since 0d9fe91), before merges 488 to 499, install run 43503994072, the 14 Nov switches and the Guardian 6 lane and follow-up bullets were recorded; preserves the Guardian 6 Resume bullets; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-g9-records-4-2026-11-14.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at 9e70b89 (the PR 512 merge), before merges 506 to 513, the pending programme_pages install for migration 0003, the three new off switches and the Guardian 9 lane and follow-up bullets were recorded; preserves the Guardian 8 and 9 Resume bullets; use the current ledger for live state."
+    },
+    {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"
