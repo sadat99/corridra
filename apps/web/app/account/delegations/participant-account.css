@@ -1,0 +1,56 @@
+/* Delegation registrations inside the page frame (UI/UX.v3, audit A3d). Tokens only.
+   Spacing: 12 px between the groups inside a row, 24 px between rows, the 16 px phone gutter comes from the page column.
+   Type: row title 18 px (600), section title from the section-title token, the rest keeps the body and secondary
+   sizes. Targets: 44 px on a phone. Every rule is scoped to `.ux-reg`, which only the framed page sets, so the section
+   drawn on its own (fixtures, older specs) keeps its old look. */
+.ux-customer .account-compact section.delivery-view.ux-reg > h2 {
+  font-size: var(--text-h2);
+  line-height: var(--leading-heading);
+  margin-block: 0;
+}
+.ux-customer .account-compact section.delivery-view.ux-reg > ul.ux-reg-list {
+  list-style: none;
+  margin-block: 0;
+}
+/* 24 px between rows. Margins, not a grid gap, so the first title still sits at the top of the list. */
+.ux-customer .account-compact section.delivery-view.ux-reg > ul.ux-reg-list > li + li {
+  margin-block-start: var(--space-6);
+}
+.ux-customer .account-compact section.delivery-view.ux-reg > ul.ux-reg-list > li > h3 {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  line-height: var(--leading-title);
+  margin-block-start: 0;
+}
+/* The title and its facts stay together; the closed details and the withdrawal form start a new group, 12 px below. The row menu stays close to the details it follows. */
+.ux-customer
+  .account-compact
+  section.delivery-view.ux-reg
+  > ul.ux-reg-list
+  > li
+  > :is(details, .operator-form) {
+  margin-block-start: var(--space-3);
+}
+/* The 44 px menu target is its own spacing, so the details above it give back their bottom margin. */
+.ux-customer
+  .account-compact
+  section.delivery-view.ux-reg
+  > ul.ux-reg-list
+  > li
+  > details:has(+ .ux-menu) {
+  margin-block-end: 0;
+}
+/* The row menu sits on the left edge of the row's column, like every other action. */
+.ux-reg .ux-reg-more {
+  margin-inline-start: calc(var(--space-2) * -1);
+}
+@media (min-width: 48rem) {
+  .ux-reg .ux-reg-more .ux-menu-button {
+    min-height: 2.25rem;
+  }
+}
+@media (max-width: 47.99rem) {
+  .ux-reg :is(button.text-link, button.primary-link, summary) {
+    min-height: 44px;
+  }
+}

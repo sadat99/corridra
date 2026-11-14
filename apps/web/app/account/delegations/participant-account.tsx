@@ -9,7 +9,10 @@ import { ParticipantResults } from './participant-results';
 import { ParticipantPlace } from './participant-place';
 import { MyReminders } from './my-reminders';
 import { Fold } from '../fold';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { CorridraIcon } from '../../../components/corridra-icon';
+import { MenuButton, OverflowMenu } from '../../../components/ux/overflow-menu';
+import './participant-account.css';
 import { useParticipantView, type ParticipantScope } from './participant-client';
 import { ParticipantLabelEditor, dropLabelDrafts } from './participant-label';
 export function ParticipantAccount(
@@ -53,6 +56,11 @@ function ScopedAccount(
     null,
   );
   const [withdrawError, setWithdrawError] = useState('');
+  // With the page frame the withdrawal starts from a menu that closes on its choice; focus goes to the first field.
+  const reasonField = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (props.framed && withdrawTarget) reasonField.current?.focus();
+  }, [props.framed, withdrawTarget]);
   const clear = useCallback(() => {
     // Whatever refused access, the typed label corrections go with the rest of the private details.
     dropLabelDrafts();
@@ -120,6 +128,7 @@ function ScopedAccount(
       <label className="field">
         Reason for withdrawal
         <textarea
+          ref={reasonField}
           value={reason}
           minLength={10}
           maxLength={500}
@@ -170,7 +179,11 @@ function ScopedAccount(
     );
   return (
     <section
-      className="delivery-view ux-saved-commercial-report"
+      className={
+        props.framed
+          ? 'delivery-view ux-saved-commercial-report ux-reg'
+          : 'delivery-view ux-saved-commercial-report'
+      }
       aria-label={
         realCustomerInput() ? 'My delegation participation' : 'My sample delegation participation'
       }
@@ -210,7 +223,7 @@ function ScopedAccount(
               {realCustomerInput() ? 'No registrations yet.' : 'No sample registrations yet.'}{' '}
             </p>
           ) : (
-            <ul>
+            <ul className={props.framed ? 'ux-reg-list' : undefined}>
               {view.data.registrations.map((r) => (
                 <li key={r.id} id={'registration-' + r.id}>
                   {r.status === 'REGISTERED' ? (
@@ -294,14 +307,32 @@ function ScopedAccount(
                           />
                         )}
                       </Fold>
-                      <button
-                        type="button"
-                        className="text-link"
-                        disabled={view.busy || !!view.pending}
-                        onClick={() => withdraw(r.id)}
-                      >
-                        Withdraw From Programme
-                      </button>
+                      {props.framed ? (
+                        // A rare action: one tap deeper in the row menu. The confirm step is the withdrawal form below it.
+                        <OverflowMenu
+                          label={'More actions for ' + (r.name ?? 'this programme')}
+                          trigger={<CorridraIcon name="more" />}
+                          className="ux-reg-more"
+                          align="start"
+                        >
+                          <MenuButton
+                            data-menu-close=""
+                            disabled={view.busy || !!view.pending}
+                            onClick={() => withdraw(r.id)}
+                          >
+                            Withdraw From Programme
+                          </MenuButton>
+                        </OverflowMenu>
+                      ) : (
+                        <button
+                          type="button"
+                          className="text-link"
+                          disabled={view.busy || !!view.pending}
+                          onClick={() => withdraw(r.id)}
+                        >
+                          Withdraw From Programme
+                        </button>
+                      )}
                       {!view.pending && withdrawTarget === r.id && withdrawalFields}
                     </>
                   ) : (
@@ -373,7 +404,10 @@ function ScopedAccount(
                     }}
                   />
                 </label>
-                <button className="primary-link" disabled={view.busy}>
+                <button
+                  className={props.framed && preview ? 'text-link' : 'primary-link'}
+                  disabled={view.busy}
+                >
                   {realCustomerInput() ? 'Preview Invitation' : 'Preview Sample Invitation'}{' '}
                 </button>
               </form>
