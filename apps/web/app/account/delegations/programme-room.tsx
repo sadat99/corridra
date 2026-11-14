@@ -530,7 +530,7 @@ export function ProgrammeRoom({
   termsEnabled?: boolean;
   /** ADR-084 S0: the next real decision first and counts out of a total. Off leaves the room as it was. */
   decisionsFirst?: boolean;
-  /** ADR-084 S3: applications are answered on the people board, so that decision opens the People group. */
+  /** ADR-084 S3: applications are answered on the people board, so that decision opens the People group at the board. */
   boardFirst?: boolean;
 }) {
   // An old link to one of this programme's sections (#<programme id>-<view>) opens the group that holds it
@@ -628,10 +628,47 @@ export function ProgrammeRoom({
   // A decision about applications opens the group that holds the public page and goes to that section.
   const [goTo, setGoTo] = useState<{ view: string; turn: number } | null>(null);
   useEffect(() => {
-    if (goTo) document.getElementById(`${programmeId}-${goTo.view}`)?.scrollIntoView();
+    if (!goTo) return;
+    const id = `${programmeId}-${goTo.view}`;
+    // The board is scrolled to once it has its applications (it says so with data-settled), so the page is tall enough
+    // for it to land at the top; after three seconds it is reached anyway.
+    const reach = (patient: boolean) => {
+      const target = document.getElementById(id);
+      if (!target || (goTo.view === 'board' && patient && target.dataset.settled !== 'true'))
+        return false;
+      target.scrollIntoView();
+      // The people board is a region that takes focus, so the decision lands on the applications it holds.
+      if (goTo.view === 'board') target.focus({ preventScroll: true });
+      return true;
+    };
+    if (reach(true) || goTo.view !== 'board') return;
+    // The participants panel loads the first time People opens, so the board can arrive a moment after the click.
+    const watching = new MutationObserver(() => {
+      if (reach(true)) watching.disconnect();
+    });
+    watching.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['data-settled'],
+    });
+    const stop = setTimeout(() => {
+      watching.disconnect();
+      reach(false);
+    }, 3000);
+    return () => {
+      watching.disconnect();
+      clearTimeout(stop);
+    };
   }, [goTo, programmeId]);
   const onDecision = (target: DecisionTarget) => {
-    if (boardFirst && target === 'page') return onOpen('people');
+    if (boardFirst && target === 'page')
+      return panels.people
+        ? () => {
+            choose('people');
+            setGoTo((last) => ({ view: 'board', turn: (last?.turn ?? 0) + 1 }));
+          }
+        : undefined;
     if (target !== 'page') return onOpen(target);
     return panels.people && parts.page
       ? () => {

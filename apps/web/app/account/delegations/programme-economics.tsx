@@ -211,6 +211,8 @@ function ScopedEconomics(props: Props) {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [nextBefore, setNextBefore] = useState<number | null>(null);
+  // Compact view: the entries beyond the first five sit in one disclosure; asking for older entries opens it.
+  const [entriesOpen, setEntriesOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
@@ -353,8 +355,17 @@ function ScopedEconomics(props: Props) {
         return lose('denied', 'Account or programme access changed. Private details were cleared.');
       if (!r.ok) throw Error('read failed');
       const list = parseList(await r.json(), props);
+      const added = list.entries.filter((e) => !entries.some((o) => o.id === e.id));
       setEntries((old) => [...old, ...list.entries.filter((e) => !old.some((o) => o.id === e.id))]);
       setNextBefore(list.nextBefore);
+      if (compact) {
+        setEntriesOpen(true);
+        setNotice(
+          added.length === 1
+            ? '1 older entry is shown.'
+            : `${added.length} older entries are shown.`,
+        );
+      }
     } catch {
       setError('Older entries could not be loaded. Try again.');
     } finally {
@@ -838,7 +849,7 @@ function ScopedEconomics(props: Props) {
           )}
           {compact && summary.currencies.length > 0 && (
             <details className="money-compact-more">
-              <summary>Planned costs and margins, worked out from your entries</summary>
+              <summary>Planned Costs and Margins, Worked Out From Your Entries</summary>
               <div className="money-compact-tables">
                 {summary.currencies.map((c) => (
                   <table key={c.currency}>
@@ -883,7 +894,7 @@ function ScopedEconomics(props: Props) {
               <ul>{shownPeople.map(personItem)}</ul>
               {morePeople.length > 0 && (
                 <details className="money-compact-more">
-                  <summary>Show {morePeople.length} more participants</summary>
+                  <summary>Show {morePeople.length} More Participants</summary>
                   <ul>{morePeople.map(personItem)}</ul>
                 </details>
               )}
@@ -895,7 +906,7 @@ function ScopedEconomics(props: Props) {
           {compact && error && <p role="alert">{error}</p>}
           {compact ? (
             <details className="money-compact-more">
-              <summary>Record an amount</summary>
+              <summary>Record an Amount</summary>
               {recordForm}
             </details>
           ) : (
@@ -911,8 +922,12 @@ function ScopedEconomics(props: Props) {
                 {entries.slice(0, 5).map(entryItem)}
               </ol>
               {entries.length > 5 && (
-                <details className="money-compact-more">
-                  <summary>Show {entries.length - 5} more entries</summary>
+                <details
+                  className="money-compact-more"
+                  open={entriesOpen}
+                  onToggle={(event) => setEntriesOpen(event.currentTarget.open)}
+                >
+                  <summary>Show {entries.length - 5} More Entries</summary>
                   <ol reversed start={entries[5]!.seq} className="ux-plain-list">
                     {entries.slice(5).map(entryItem)}
                   </ol>

@@ -36,17 +36,6 @@ const order: Record<BoardGroup, number> = {
   closed: 4,
 };
 
-/** The answers an organiser can give to an application, exactly the ones the public page panel offers. */
-export function decisionsFor(status: ApplicationStatus): ('INVITED' | 'WAITLISTED' | 'DECLINED')[] {
-  const answerable = ['SUBMITTED', 'WAITLISTED', 'DECLINED', 'INVITED', 'INVITATION_EXPIRED'];
-  if (!answerable.includes(status)) return [];
-  const out: ('INVITED' | 'WAITLISTED' | 'DECLINED')[] = [];
-  if (status !== 'INVITED') out.push('INVITED');
-  if (['SUBMITTED', 'DECLINED', 'INVITATION_EXPIRED'].includes(status)) out.push('WAITLISTED');
-  if (status !== 'DECLINED') out.push('DECLINED');
-  return out;
-}
-
 const time = (iso: string | undefined) => {
   const value = iso ? Date.parse(iso) : NaN;
   return Number.isFinite(value) ? value : Number.MAX_SAFE_INTEGER;
@@ -128,16 +117,43 @@ export function boardCounts(rows: readonly BoardRow[]) {
   };
 }
 
-/** The line above the list: the next decision, or the plain fact that nothing is waiting. */
-export function boardLead(rows: readonly BoardRow[], partial: boolean): string {
+/** What one read of the board's records says: not asked, in flight, read, refused or failed, or not available. */
+export type ReadState = 'none' | 'loading' | 'ready' | 'failed' | 'unavailable';
+/** The two reads the board draws on. `people` is the participants read (invitations, registrations). */
+export type BoardReads = { applications: ReadState; people: ReadState };
+
+/**
+ * The line above the list: the next decision, or the plain fact that nothing is waiting. It says only what was read.
+ * While the applications are unread, failed or unavailable it makes no claim about them, and while the participants
+ * are unread it makes no claim about invitations or registrations; with nothing read it says nothing (null).
+ * `none` means the programme has no list of that kind to read, so it counts as read and empty.
+ */
+export function boardLead(
+  rows: readonly BoardRow[],
+  partial: boolean,
+  reads: BoardReads = { applications: 'ready', people: 'ready' },
+): string | null {
+  const applications = reads.applications === 'ready' || reads.applications === 'none';
+  const people = reads.people === 'ready';
+  if ((!applications && !people) || (reads.applications === 'none' && !people)) return null;
   const counts = boardCounts(rows);
   const more = partial ? ' read so far' : '';
-  if (rows.length === 0) return 'No applications, invitations or registrations yet.';
-  if (counts.decide > 0) {
+  if (applications && counts.decide > 0) {
     const first = rows[0]!;
     return `${counts.decide} ${counts.decide === 1 ? 'application is' : 'applications are'} waiting for your answer${more}. Next: ${first.label}.`;
   }
-  if (counts.waiting > 0)
-    return `Nothing is waiting for your answer. ${counts.waiting} ${counts.waiting === 1 ? 'person has' : 'people have'} been invited and ${counts.waiting === 1 ? 'has' : 'have'} not joined yet${more}.`;
-  return `Nothing is waiting for your answer${more}.`;
+  const invited = `${counts.waiting} ${counts.waiting === 1 ? 'person has' : 'people have'} been invited and ${counts.waiting === 1 ? 'has' : 'have'} not joined yet${more}.`;
+  if (applications && people) {
+    if (rows.length === 0) return 'No applications, invitations or registrations yet.';
+    if (counts.waiting > 0) return `Nothing is waiting for your answer. ${invited}`;
+    return `Nothing is waiting for your answer${more}.`;
+  }
+  if (applications) {
+    // Applications read, invitations and registrations not: say only the applications.
+    return rows.length === 0
+      ? 'No applications yet.'
+      : `No applications are waiting for your answer${more}.`;
+  }
+  // Invitations and registrations read, applications not: say only who was invited.
+  return counts.waiting > 0 ? invited : null;
 }

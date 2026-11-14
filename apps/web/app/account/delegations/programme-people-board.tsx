@@ -7,6 +7,14 @@ import './people-board.css';
 import type { Invitation, Registration } from './participant-client';
 import { customerHeaders, useCommandIds } from './pricing-client';
 import {
+  type Decision,
+  decisionLabel,
+  decisionNote,
+  decisionPayload,
+  decisionProblem,
+  decisionsFor,
+} from './programme-application-decisions';
+import {
   type Application,
   pageRequest,
   parseApplication,
@@ -17,14 +25,16 @@ import {
   boardLead,
   boardRows,
   boardVisible,
-  decisionsFor,
   type BoardRow,
+  type ReadState,
 } from './programme-people-board-model';
 
 // ADR-084 slice S3 (CORRIDRA_DELEGATION_BOARD): applications, invitations and registrations in one list with the
-// next decision first. It reads what the organiser already reads (the page's applications list; the participants
-// list the room hands in) and sends the decision the public page panel sends, with the same payload. Original
-// controls for codes, labels, objectives and access stay in the participants panel beside it.
+// next decision first. It reads what the organiser already reads (the page's applications list, once; the participants
+// list the room hands in) and sends the decision the public page panel sends, with the same payload, through the same
+// shared rules (programme-application-decisions.ts). The board owns the applications read and does not wait for the
+// participants read: an application can be answered whether the participants list is loading, refreshing, expired or
+// failed. Original controls for codes, labels, objectives and access stay in the participants panel beside it.
 type Props = {
   subject: string;
   issuer: string;
@@ -32,6 +42,10 @@ type Props = {
   programmeId: string;
   /** True where the programme has a public page panel to read applications from. */
   applicationsOn: boolean;
+  /** The state of the participants read the room hands in. Invitations and registrations are only as read. */
+  people: ReadState;
+  /** True while the participants list is read again after a command; the rows already read stay. */
+  refreshing: boolean;
   invitations: readonly Invitation[];
   registrations: readonly Registration[];
   moreInvitations: string | null;
@@ -40,32 +54,43 @@ type Props = {
   onMore: (which: 'invitations' | 'registrations', cursor: string) => void;
 };
 
-const between = (value: string, min: number, max: number) =>
-  value.length >= min && value.length <= max;
-
 export function ProgrammePeopleBoard(props: Props) {
   const { subject, issuer, workspaceId, programmeId, applicationsOn } = props;
   const headers = useMemo(() => customerHeaders(subject, issuer), [subject, issuer]);
   const commands = useCommandIds();
   const [applications, setApplications] = useState<Application[]>([]);
   const [nextAfter, setNextAfter] = useState<string | null>(null);
-  const [read, setRead] = useState<'idle' | 'ready' | 'failed'>('idle');
+  const [read, setRead] = useState<ReadState>('loading');
+  // A later read that failed after rows were read: the rows stay, and only the failed part is named.
+  const [issue, setIssue] = useState<'more' | 'refresh' | null>(null);
   const [busy, setBusy] = useState(false);
   const [declining, setDeclining] = useState<string | null>(null);
   const [reason, setReason] = useState('');
   const [rowError, setRowError] = useState<{ id: string; message: string } | null>(null);
+  const [announce, setAnnounce] = useState('');
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [focusTurn, setFocusTurn] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
   const writing = useRef(false);
+  const region = useRef<HTMLDivElement>(null);
+  const moreButton = useRef<HTMLButtonElement>(null);
+  const everRead = useRef(false);
+  const pressedMore = useRef(false);
+  const baseline = useRef(0);
 
   const load = useCallback(
     async (after?: string) => {
+      const fail = (kind: 'failed' | 'unavailable') => {
+        if (everRead.current) setIssue(after ? 'more' : 'refresh');
+        else setRead(kind);
+      };
       try {
         const response = await fetch(
           `/api/customer-programme-pages?view=applications&workspaceId=${workspaceId}&programmeId=${programmeId}` +
             (after ? `&after=${after}` : ''),
           { cache: 'no-store', credentials: 'same-origin', headers },
         );
-        // A page that is not published, not installed or not readable has no applications to show here.
-        if (!response.ok) return setRead(response.status === 503 ? 'idle' : 'failed');
+        if (!response.ok) return fail(response.status === 503 ? 'unavailable' : 'failed');
         const body = (await response.json()) as {
           applications?: unknown[];
           nextAfter?: string | null;
@@ -75,9 +100,11 @@ export function ProgrammePeopleBoard(props: Props) {
           after ? [...old, ...rows.filter((r) => !old.some((o) => o.id === r.id))] : rows,
         );
         setNextAfter(typeof body.nextAfter === 'string' ? body.nextAfter : null);
+        everRead.current = true;
+        setIssue(null);
         setRead('ready');
       } catch {
-        setRead('failed');
+        fail('failed');
       }
     },
     [workspaceId, programmeId, headers],
@@ -88,11 +115,12 @@ export function ProgrammePeopleBoard(props: Props) {
     void Promise.resolve().then(() => load());
   }, [applicationsOn, load]);
 
-  async function decide(item: Application, decision: 'INVITED' | 'WAITLISTED' | 'DECLINED') {
+  async function decide(item: Application, decision: Decision) {
     if (writing.current) return;
-    const note = decision === 'DECLINED' ? reason.trim() : '';
-    if (decision === 'DECLINED' && !between(note, 10, 500)) {
-      setRowError({ id: item.id, message: pp('pp.org.declineReasonNeeded') });
+    const note = decisionNote(decision, reason);
+    const refusal = decisionProblem(decision, note);
+    if (refusal) {
+      setRowError({ id: item.id, message: refusal });
       return;
     }
     writing.current = true;
@@ -100,18 +128,7 @@ export function ProgrammePeopleBoard(props: Props) {
     setRowError(null);
     const result = await pageRequest(
       { subject, issuer },
-      {
-        kind: 'application',
-        action: 'decide',
-        commandId: commands.forIntent('decide' + item.id + item.decisionVersion + decision + note),
-        workspaceId,
-        programmeId,
-        applicationId: item.id,
-        expectedVersion: item.decisionVersion,
-        decision,
-        ...(note ? { note } : {}),
-        acknowledged: true,
-      },
+      decisionPayload({ workspaceId, programmeId }, item, decision, note, commands.forIntent),
     );
     writing.current = false;
     setBusy(false);
@@ -121,10 +138,15 @@ export function ProgrammePeopleBoard(props: Props) {
     }
     setDeclining(null);
     setReason('');
+    // The button that was pressed may leave the list (the row moves to another group, often into the closed part), so
+    // focus goes to the board and the result is said in the live region.
+    setFocusTurn((turn) => turn + 1);
     try {
       const updated = parseApplication(result.body);
       setApplications((rows) => rows.map((row) => (row.id === updated.id ? updated : row)));
+      setAnnounce(`${item.displayLabel}: ${statusWords[updated.status]}.`);
     } catch {
+      setAnnounce(`${item.displayLabel}: your answer was saved.`);
       await load();
     }
   }
@@ -133,9 +155,29 @@ export function ProgrammePeopleBoard(props: Props) {
     () => boardRows(applications, props.invitations, props.registrations),
     [applications, props.invitations, props.registrations],
   );
+  const applicationsRead: ReadState = applicationsOn ? read : 'none';
   const partial = nextAfter !== null || !!props.moreInvitations || !!props.moreRegistrations;
   const shown = rows.slice(0, boardVisible);
   const rest = rows.slice(boardVisible);
+  const lead = boardLead(rows, partial, { applications: applicationsRead, people: props.people });
+
+  useEffect(() => {
+    if (focusTurn) region.current?.focus();
+  }, [focusTurn]);
+  // Load More People adds rows wherever their group puts them, often inside the closed part. When every page it asked
+  // for has settled, say how many came and put focus back on the button, or on the board when it was the last page
+  // (a button that was disabled while reading, or that left, cannot keep focus).
+  useEffect(() => {
+    if (!pressedMore.current || loadingMore || props.busy) return;
+    pressedMore.current = false;
+    const added = rows.length - baseline.current;
+    setAnnounce(
+      added > 0
+        ? `${added} more ${added === 1 ? 'person' : 'people'} shown.`
+        : 'No more people were shown.',
+    );
+    (partial ? moreButton.current : region.current)?.focus();
+  }, [loadingMore, props.busy, rows.length, partial]);
 
   function row(item: BoardRow) {
     return (
@@ -223,39 +265,23 @@ export function ProgrammePeopleBoard(props: Props) {
         ) : (
           answers.length > 0 && (
             <div className="guide-actions-row">
-              {answers.map((decision) =>
-                decision === 'DECLINED' ? (
-                  <button
-                    key={decision}
-                    type="button"
-                    className="text-link"
-                    disabled={busy}
-                    onClick={() => {
-                      setDeclining(item.id);
-                      setReason('');
-                      setRowError(null);
-                    }}
-                  >
-                    {pp('pp.org.decline')}
-                    <span className="sr-only"> {item.displayLabel}</span>
-                  </button>
-                ) : (
-                  <button
-                    key={decision}
-                    type="button"
-                    className="text-link"
-                    disabled={busy}
-                    onClick={() => void decide(item, decision)}
-                  >
-                    {decision === 'WAITLISTED'
-                      ? pp('pp.org.waitlist')
-                      : item.status === 'INVITATION_EXPIRED'
-                        ? pp('pp.org.inviteAgain')
-                        : pp('pp.org.invite')}
-                    <span className="sr-only"> {item.displayLabel}</span>
-                  </button>
-                ),
-              )}
+              {answers.map((decision) => (
+                <button
+                  key={decision}
+                  type="button"
+                  className="text-link"
+                  disabled={busy}
+                  onClick={() => {
+                    if (decision !== 'DECLINED') return void decide(item, decision);
+                    setDeclining(item.id);
+                    setReason('');
+                    setRowError(null);
+                  }}
+                >
+                  {decisionLabel(decision, item.status)}
+                  <span className="sr-only"> {item.displayLabel}</span>
+                </button>
+              ))}
             </div>
           )
         )}
@@ -264,22 +290,68 @@ export function ProgrammePeopleBoard(props: Props) {
     );
   }
 
+  const unread = applicationsOn && (read === 'failed' || read === 'unavailable');
   return (
-    <div className="people-board" id={`${programmeId}-board`} tabIndex={-1}>
-      <h4>{realCustomerInput() ? 'People board' : 'Sample people board'}</h4>
-      <p className="people-board-lead">{boardLead(rows, partial)}</p>
-      {read === 'failed' && (
+    <div
+      className="people-board"
+      id={`${programmeId}-board`}
+      role="region"
+      aria-labelledby={`${programmeId}-board-title`}
+      aria-busy={props.refreshing}
+      data-settled={!applicationsOn || read !== 'loading'}
+      tabIndex={-1}
+      ref={region}
+    >
+      <h4 id={`${programmeId}-board-title`}>
+        {realCustomerInput() ? 'People board' : 'Sample people board'}
+      </h4>
+      {lead && <p className="people-board-lead">{lead}</p>}
+      {applicationsOn && read === 'loading' && (
         <p role="status" className="programme-note">
-          Applications could not be read. Invitations and registrations are shown.
+          Reading applications…
         </p>
+      )}
+      {unread && (
+        <>
+          <p role="status" className="programme-note">
+            {read === 'unavailable'
+              ? 'Applications are not available for this programme right now.'
+              : 'Applications could not be read.'}
+            {props.people === 'ready' ? ' Invitations and registrations are shown.' : ''}
+          </p>
+          <button
+            type="button"
+            className="text-link"
+            onClick={() => {
+              setRead('loading');
+              void load();
+            }}
+          >
+            Read Applications Again
+          </button>
+        </>
+      )}
+      {issue && (
+        <p role="status" className="programme-note">
+          {issue === 'more'
+            ? 'More applications could not be read. The ones already read are shown.'
+            : 'Applications could not be refreshed. The ones read earlier are shown.'}
+        </p>
+      )}
+      {props.refreshing && (
+        <p className="programme-note">Refreshing invitations and registrations…</p>
       )}
       {shown.length > 0 && <ul className="people-board-list">{shown.map(row)}</ul>}
       {rest.length > 0 && (
-        <details className="people-board-more">
+        <details
+          className="people-board-more"
+          open={moreOpen}
+          onToggle={(event) => setMoreOpen(event.currentTarget.open)}
+        >
           <summary>
-            Show {rest.length} more
+            Show {rest.length} More
             {rows.some((r, i) => i >= boardVisible && r.group === 'closed')
-              ? ', including ended'
+              ? ', Including Ended'
               : ''}
           </summary>
           <ul className="people-board-list">{rest.map(row)}</ul>
@@ -289,9 +361,17 @@ export function ProgrammePeopleBoard(props: Props) {
         <button
           type="button"
           className="text-link"
-          disabled={busy || props.busy}
+          ref={moreButton}
+          disabled={busy || props.busy || loadingMore}
           onClick={() => {
-            if (nextAfter) void load(nextAfter);
+            pressedMore.current = true;
+            baseline.current = rows.length;
+            // The new rows land wherever their group puts them, so the rest of the list opens with them.
+            setMoreOpen(true);
+            if (nextAfter) {
+              setLoadingMore(true);
+              void load(nextAfter).finally(() => setLoadingMore(false));
+            }
             // One participants page per press: the participants read starts one request at a time.
             if (props.moreInvitations) props.onMore('invitations', props.moreInvitations);
             else if (props.moreRegistrations)
@@ -301,6 +381,9 @@ export function ProgrammePeopleBoard(props: Props) {
           Load More People
         </button>
       )}
+      <p role="status" className="sr-only">
+        {announce}
+      </p>
     </div>
   );
 }

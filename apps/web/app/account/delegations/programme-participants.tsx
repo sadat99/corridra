@@ -11,6 +11,7 @@ import {
 } from './participant-client';
 import { ParticipantLabelEditor, dropLabelDrafts } from './participant-label';
 import { ProgrammePeopleBoard } from './programme-people-board';
+import type { ReadState } from './programme-people-board-model';
 type Props = ParticipantScope & {
   workspaceId: string;
   programmeId: string;
@@ -68,7 +69,10 @@ function ScopedParticipants(props: Props) {
       setAccessError('');
     }
   }, []);
-  const view = useParticipantView(props, clear, saved);
+  // The people board keeps what it already shows while the list is read again after a saved command.
+  const view = useParticipantView(props, clear, saved, props.boardEnabled === true);
+  // The invitation and access disclosure keeps its open state when the list refreshes or expires.
+  const [manageOpen, setManageOpen] = useState(false);
   const [labelNote, setLabelNote] = useState('');
   useEffect(() => {
     const protect = (event: BeforeUnloadEvent) => {
@@ -167,8 +171,15 @@ function ScopedParticipants(props: Props) {
     </p>
   );
   const data = view.data;
+  const hiddenView = !view.visible;
   const ready = view.status === 'ready' && data;
   const boardOn = props.boardEnabled === true;
+  // What the board may say about invitations and registrations: only what this read settled on.
+  const peopleRead: ReadState = hiddenView
+    ? 'loading'
+    : view.status === 'denied'
+      ? 'failed'
+      : view.status;
   const manage = ready ? (
     <>
       <h4>Invitations</h4>
@@ -426,7 +437,10 @@ function ScopedParticipants(props: Props) {
       )}
     </>
   ) : null;
-  if (!view.visible)
+  const hidden = hiddenView;
+  // The board is not part of the private participant details: its applications come from their own read, so it
+  // stays mounted (and keeps a typed decline reason) while the participant details are hidden.
+  if (hidden && !boardOn)
     return (
       <p role="status">Participant details are hidden. Access will be checked when you return.</p>
     );
@@ -437,7 +451,12 @@ function ScopedParticipants(props: Props) {
     >
       <h3> {realCustomerInput() ? 'Participants' : 'Sample participants'} </h3>
       {!boardOn && intro}
-      {view.status === 'loading' && <p role="status">Checking programme participant access…</p>}
+      {hidden && (
+        <p role="status">Participant details are hidden. Access will be checked when you return.</p>
+      )}
+      {!hidden && view.status === 'loading' && (
+        <p role="status">Checking programme participant access…</p>
+      )}
       {view.status === 'denied' && (
         <p role="alert">
           Only current programme workspace owners and administrators can manage these invitations
@@ -455,28 +474,34 @@ function ScopedParticipants(props: Props) {
       {view.status === 'failed' && (
         <p role="alert">Participant details could not be confirmed. Reload to check access.</p>
       )}
-      {boardOn && ready && (
+      {boardOn && (
         <ProgrammePeopleBoard
           subject={props.subject}
           issuer={props.issuer}
           workspaceId={props.workspaceId}
           programmeId={props.programmeId}
           applicationsOn={props.applicationsOn === true}
-          invitations={data.invitations}
-          registrations={data.registrations}
-          moreInvitations={data.nextInvitationAfter}
-          moreRegistrations={data.nextRegistrationAfter}
+          people={peopleRead}
+          refreshing={view.refreshing}
+          invitations={data?.invitations ?? []}
+          registrations={data?.registrations ?? []}
+          moreInvitations={data?.nextInvitationAfter ?? null}
+          moreRegistrations={data?.nextRegistrationAfter ?? null}
           busy={view.busy}
           onMore={(which, cursor) => void view.load(which, cursor)}
         />
       )}
       {boardOn
         ? ready && (
-            <details className="people-board-manage">
+            <details
+              className="people-board-manage"
+              open={manageOpen}
+              onToggle={(event) => setManageOpen(event.currentTarget.open)}
+            >
               <summary>
                 {realCustomerInput()
-                  ? 'Invite, edit labels or remove access'
-                  : 'Create sample invitations, edit labels or remove access'}
+                  ? 'Invite, Edit Labels or Remove Access'
+                  : 'Create Sample Invitations, Edit Labels or Remove Access'}
               </summary>
               {intro}
               {manage}
