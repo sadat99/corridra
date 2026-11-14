@@ -15,6 +15,8 @@ import { MenuButton, OverflowMenu } from '../../../components/ux/overflow-menu';
 import './participant-account.css';
 import { useParticipantView, type ParticipantScope } from './participant-client';
 import { ParticipantLabelEditor, dropLabelDrafts } from './participant-label';
+import type { OwnFeeStatus, OwnPlace } from '@corridra/auth/customer-programme-terms';
+import { homeLines } from './participant-home-model';
 export function ParticipantAccount(
   props: ParticipantScope & {
     missionSharesEnabled?: boolean;
@@ -27,6 +29,8 @@ export function ParticipantAccount(
     draftsEnabled?: boolean;
     /** The page frame shows the back link and the helper line; this section leaves them out. */
     framed?: boolean;
+    /** ADR-084 S4 (CORRIDRA_DELEGATION_FIRST_RUN): each registration says where you are, what is open and what is next. */
+    homeEnabled?: boolean;
   },
 ) {
   return <ScopedAccount key={props.issuer + ':' + props.subject} {...props} />;
@@ -42,6 +46,7 @@ function ScopedAccount(
     objectivePathEnabled?: boolean;
     draftsEnabled?: boolean;
     framed?: boolean;
+    homeEnabled?: boolean;
   },
 ) {
   const [token, setToken] = useState(''),
@@ -51,6 +56,15 @@ function ScopedAccount(
     [withdrawAck, setWithdrawAck] = useState(false),
     [error, setError] = useState('');
   const [withdrawTarget, setWithdrawTarget] = useState<string | null>(null);
+  // The place and recorded fee status each registration's own section already read, kept only to word the home line.
+  const [reads, setReads] = useState<
+    Record<string, { place: OwnPlace; fees: OwnFeeStatus | null } | undefined>
+  >({});
+  const handRead = useCallback(
+    (id: string, place: OwnPlace | null, fees: OwnFeeStatus | null) =>
+      setReads((all) => ({ ...all, [id]: place ? { place, fees } : undefined })),
+    [],
+  );
   // The delegate asked to share their objective from the path: the objective tools open with these words ready.
   const [shareStart, setShareStart] = useState<{ registrationId: string; summary: string } | null>(
     null,
@@ -64,6 +78,7 @@ function ScopedAccount(
   const clear = useCallback(() => {
     // Whatever refused access, the typed label corrections go with the rest of the private details.
     dropLabelDrafts();
+    setReads({});
     setToken('');
     setWithdrawTarget(null);
     setWithdrawError('');
@@ -224,130 +239,150 @@ function ScopedAccount(
             </p>
           ) : (
             <ul className={props.framed ? 'ux-reg-list' : undefined}>
-              {view.data.registrations.map((r) => (
-                <li key={r.id} id={'registration-' + r.id}>
-                  {r.status === 'REGISTERED' ? (
-                    <>
-                      <h3>{r.name}</h3>
-                      <p>{r.reportingPurpose}</p>
-                      <p>
-                        {r.displayLabel} ·{' '}
-                        {r.labelChangedBy === 'organiser'
-                          ? 'Label changed by the organiser'
-                          : 'Registered, self-declared'}
-                      </p>
-                      {typeof r.labelVersion === 'number' && r.displayLabel && (
-                        <ParticipantLabelEditor
-                          key={r.id}
-                          registrationId={r.id}
-                          label={r.displayLabel}
-                          version={r.labelVersion}
-                          headers={{
-                            'x-corridra-customer-subject': props.subject,
-                            'x-corridra-customer-issuer': props.issuer,
-                          }}
-                          mine={true}
-                          onChanged={() => void view.load()}
-                          onNote={setLabelNote}
-                          onDenied={view.deny}
-                        />
-                      )}
-                      <Fold
-                        anchor={'registration-' + r.id}
-                        open={shareStart?.registrationId === r.id}
-                        summary="Programme details, objectives and results"
-                      >
-                        {props.objectivePathEnabled && props.missionSharesEnabled && (
-                          <DelegatePath
-                            subject={props.subject}
-                            issuer={props.issuer}
+              {view.data.registrations.map((r) => {
+                const read = props.homeEnabled ? reads[r.id] : undefined;
+                const home = read
+                  ? homeLines({ registrationId: r.id, place: read.place, fees: read.fees })
+                  : null;
+                return (
+                  <li key={r.id} id={'registration-' + r.id}>
+                    {r.status === 'REGISTERED' ? (
+                      <>
+                        <h3>{r.name}</h3>
+                        {!home?.where && <p>{r.reportingPurpose}</p>}
+                        <p>
+                          {r.displayLabel} ·{' '}
+                          {r.labelChangedBy === 'organiser'
+                            ? 'Label changed by the organiser'
+                            : 'Registered, self-declared'}
+                        </p>
+                        {home?.where && (
+                          <p className="ux-home-line">
+                            <strong>{home.where}.</strong> {home.open}
+                          </p>
+                        )}
+                        {typeof r.labelVersion === 'number' && r.displayLabel && (
+                          <ParticipantLabelEditor
+                            key={r.id}
                             registrationId={r.id}
-                            programmeName={r.name ?? ''}
-                            displayLabel={r.displayLabel ?? ''}
-                            draftsEnabled={!!props.draftsEnabled}
-                            onShare={(summary) => setShareStart({ registrationId: r.id, summary })}
+                            label={r.displayLabel}
+                            version={r.labelVersion}
+                            headers={{
+                              'x-corridra-customer-subject': props.subject,
+                              'x-corridra-customer-issuer': props.issuer,
+                            }}
+                            mine={true}
+                            onChanged={() => void view.load()}
+                            onNote={setLabelNote}
+                            onDenied={view.deny}
                           />
                         )}
-                        {props.contextEnabled && (
-                          <ProgrammeContext
-                            subject={props.subject}
-                            issuer={props.issuer}
-                            programmeId={r.programmeId!}
-                            registrationId={r.id}
-                          />
-                        )}
-                        {props.missionSharesEnabled && (
-                          <ProgrammeObjectives
-                            subject={props.subject}
-                            issuer={props.issuer}
-                            registrationId={r.id}
-                            view="own"
-                            start={shareStart?.registrationId === r.id ? shareStart : undefined}
-                          />
-                        )}
-                        {props.termsEnabled && (
-                          <ParticipantPlace
-                            subject={props.subject}
-                            issuer={props.issuer}
-                            registrationId={r.id}
-                          />
-                        )}
-                        {props.projectionsEnabled && (
-                          <ParticipantProjectionSharing
-                            subject={props.subject}
-                            issuer={props.issuer}
-                            registrationId={r.id}
-                          />
-                        )}
-                        {props.coordinationEnabled && (
-                          <ParticipantResults
-                            subject={props.subject}
-                            issuer={props.issuer}
-                            registrationId={r.id}
-                          />
-                        )}
-                      </Fold>
-                      {props.framed ? (
-                        // A rare action: one tap deeper in the row menu. The confirm step is the withdrawal form below it.
-                        <OverflowMenu
-                          label={'More actions for ' + (r.name ?? 'this programme')}
-                          trigger={<CorridraIcon name="more" />}
-                          className="ux-reg-more"
-                          align="start"
+                        <Fold
+                          anchor={'registration-' + r.id}
+                          open={shareStart?.registrationId === r.id}
+                          summary={
+                            home?.next
+                              ? 'Next: ' + home.next.text
+                              : 'Programme details, objectives and results'
+                          }
                         >
-                          <MenuButton
-                            data-menu-close=""
+                          {home?.next && <p>Programme details, objectives and results</p>}
+                          {home?.where && <p>{r.reportingPurpose}</p>}
+                          {props.objectivePathEnabled && props.missionSharesEnabled && (
+                            <DelegatePath
+                              subject={props.subject}
+                              issuer={props.issuer}
+                              registrationId={r.id}
+                              programmeName={r.name ?? ''}
+                              displayLabel={r.displayLabel ?? ''}
+                              draftsEnabled={!!props.draftsEnabled}
+                              onShare={(summary) =>
+                                setShareStart({ registrationId: r.id, summary })
+                              }
+                            />
+                          )}
+                          {props.contextEnabled && (
+                            <ProgrammeContext
+                              subject={props.subject}
+                              issuer={props.issuer}
+                              programmeId={r.programmeId!}
+                              registrationId={r.id}
+                            />
+                          )}
+                          {props.missionSharesEnabled && (
+                            <ProgrammeObjectives
+                              subject={props.subject}
+                              issuer={props.issuer}
+                              registrationId={r.id}
+                              view="own"
+                              start={shareStart?.registrationId === r.id ? shareStart : undefined}
+                            />
+                          )}
+                          {props.termsEnabled && (
+                            <ParticipantPlace
+                              subject={props.subject}
+                              issuer={props.issuer}
+                              registrationId={r.id}
+                              onRead={props.homeEnabled ? handRead : undefined}
+                            />
+                          )}
+                          {props.projectionsEnabled && (
+                            <ParticipantProjectionSharing
+                              subject={props.subject}
+                              issuer={props.issuer}
+                              registrationId={r.id}
+                            />
+                          )}
+                          {props.coordinationEnabled && (
+                            <ParticipantResults
+                              subject={props.subject}
+                              issuer={props.issuer}
+                              registrationId={r.id}
+                            />
+                          )}
+                        </Fold>
+                        {props.framed ? (
+                          // A rare action: one tap deeper in the row menu. The confirm step is the withdrawal form below it.
+                          <OverflowMenu
+                            label={'More actions for ' + (r.name ?? 'this programme')}
+                            trigger={<CorridraIcon name="more" />}
+                            className="ux-reg-more"
+                            align="start"
+                          >
+                            <MenuButton
+                              data-menu-close=""
+                              disabled={view.busy || !!view.pending}
+                              onClick={() => withdraw(r.id)}
+                            >
+                              Withdraw From Programme
+                            </MenuButton>
+                          </OverflowMenu>
+                        ) : (
+                          <button
+                            type="button"
+                            className="text-link"
                             disabled={view.busy || !!view.pending}
                             onClick={() => withdraw(r.id)}
                           >
                             Withdraw From Programme
-                          </MenuButton>
-                        </OverflowMenu>
-                      ) : (
-                        <button
-                          type="button"
-                          className="text-link"
-                          disabled={view.busy || !!view.pending}
-                          onClick={() => withdraw(r.id)}
-                        >
-                          Withdraw From Programme
-                        </button>
-                      )}
-                      {!view.pending && withdrawTarget === r.id && withdrawalFields}
-                    </>
-                  ) : (
-                    <p>
-                      {r.status === 'WITHDRAWN'
-                        ? realCustomerInput()
-                          ? 'You withdrew from this programme.'
-                          : 'You withdrew from this sample programme.'
-                        : realCustomerInput()
-                          ? 'Access to this programme was revoked.'
-                          : 'Access to this sample programme was revoked.'}
-                    </p>
-                  )}
-                </li>
-              ))}
+                          </button>
+                        )}
+                        {!view.pending && withdrawTarget === r.id && withdrawalFields}
+                      </>
+                    ) : (
+                      <p>
+                        {r.status === 'WITHDRAWN'
+                          ? realCustomerInput()
+                            ? 'You withdrew from this programme.'
+                            : 'You withdrew from this sample programme.'
+                          : realCustomerInput()
+                            ? 'Access to this programme was revoked.'
+                            : 'Access to this sample programme was revoked.'}
+                      </p>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
           {view.data.nextRegistrationAfter && (

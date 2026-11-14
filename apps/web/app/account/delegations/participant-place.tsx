@@ -14,7 +14,13 @@ import {
   TermsError,
 } from './terms-client';
 
-type Props = { subject: string; issuer: string; registrationId: string };
+type Props = {
+  subject: string;
+  issuer: string;
+  registrationId: string;
+  /** The two reads this section already makes, handed up for the participant home. No further request is made. */
+  onRead?: (registrationId: string, place: OwnPlace | null, fees: OwnFeeStatus | null) => void;
+};
 type Phase = 'loading' | 'ready' | 'denied' | 'unavailable' | 'failed';
 
 // The participant's own side: read the terms and criteria, apply for a place, accept newer terms, give a place up.
@@ -99,7 +105,7 @@ function Terms({
   );
 }
 
-function ScopedPlace({ subject, issuer, registrationId }: Props) {
+function ScopedPlace({ subject, issuer, registrationId, onRead }: Props) {
   const [phase, setPhase] = useState<Phase>('loading');
   const [data, setData] = useState<OwnPlace | null>(null);
   const [feeStatus, setFeeStatus] = useState<OwnFeeStatus | null>(null);
@@ -116,16 +122,20 @@ function ScopedPlace({ subject, issuer, registrationId }: Props) {
   const writing = useRef(false);
   const api = useRef(termsApi(subject, issuer));
 
-  const lose = useCallback((to: Phase) => {
-    if (timer.current) clearTimeout(timer.current);
-    setData(null);
-    setFeeStatus(null);
-    setProfile('');
-    setAgree(false);
-    setConfirmCancel(false);
-    intent.current = null;
-    setPhase(to);
-  }, []);
+  const lose = useCallback(
+    (to: Phase) => {
+      if (timer.current) clearTimeout(timer.current);
+      setData(null);
+      setFeeStatus(null);
+      setProfile('');
+      setAgree(false);
+      setConfirmCancel(false);
+      intent.current = null;
+      setPhase(to);
+      onRead?.(registrationId, null, null);
+    },
+    [onRead, registrationId],
+  );
   const load = useCallback(async () => {
     task.current?.abort();
     const controller = new AbortController();
@@ -153,6 +163,7 @@ function ScopedPlace({ subject, issuer, registrationId }: Props) {
       setData(body);
       setFeeStatus(status);
       setPhase('ready');
+      onRead?.(registrationId, body, status);
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(
         () => lose('failed'),
@@ -164,7 +175,7 @@ function ScopedPlace({ subject, issuer, registrationId }: Props) {
       else if (e instanceof TermsError && e.kind === 'unavailable') lose('unavailable');
       else lose('failed');
     }
-  }, [lose, registrationId]);
+  }, [lose, onRead, registrationId]);
   useEffect(() => {
     active.current = true;
     void Promise.resolve().then(() => {

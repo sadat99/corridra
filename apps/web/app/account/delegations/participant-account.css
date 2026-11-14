@@ -58,3 +58,9 @@
     min-height: 44px;
   }
 }
+/* ADR-084 S4: where you are, what is open and what is next are one short paragraph that sits with the label above it
+   (the same group of facts), so the row is no taller than before: the purpose line it replaces moves into the closed
+   details. */
+.ux-customer .account-compact section.delivery-view.ux-reg > ul.ux-reg-list > li > p.ux-home-line {
+  margin-block-start: 0;
+}
