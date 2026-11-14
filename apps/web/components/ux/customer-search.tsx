@@ -72,6 +72,35 @@ import { useWorkspaces } from './customer-bar';
 
 /** The Search button asks the dialog to open; the dialog lives once beside it. Not the staff event. */
 const openEvent = 'corridra:open-customer-search';
+/**
+ * Ctrl K pressed before the dialog exists. The page's script is evaluated before React hydrates and the dialog is
+ * drawn one render after that (it is a portal that waits for the browser), so on a slow first load the key can arrive
+ * in a window where nothing listens. It is remembered here, with the element that had focus, and the dialog opens as
+ * soon as it exists. A key older than the hold is dropped: a person who pressed it and gave up is not surprised later.
+ */
+const pendingHoldMs = 5000;
+let pendingOpen: { opener: HTMLElement | null; at: number } | null = null;
+/** How many dialogs are listening. While one is, it handles the key itself and the early listener stands aside. */
+let listening = 0;
+function rememberOpen(opener: HTMLElement | null) {
+  pendingOpen = { opener, at: Date.now() };
+}
+function takePendingOpen(): { opener: HTMLElement | null } | null {
+  const held = pendingOpen;
+  pendingOpen = null;
+  return held && Date.now() - held.at <= pendingHoldMs ? held : null;
+}
+if (typeof window !== 'undefined') {
+  // Registered when this file is evaluated, which is before hydration. It keeps the same guard as the dialog's own
+  // listener: another open modal keeps the key, and the key is taken only for a shortcut this search will answer.
+  window.addEventListener('keydown', (event) => {
+    if (listening > 0 || !isShortcut(event)) return;
+    if (document.querySelector('dialog[open]')) return;
+    event.preventDefault();
+    const active = document.activeElement;
+    rememberOpen(active instanceof HTMLElement && active !== document.body ? active : null);
+  });
+}
 type Group = 'Search' | 'Requests' | 'Companies' | 'Pages';
 const groupOrder: Group[] = ['Search', 'Requests', 'Companies', 'Pages'];
 
@@ -286,7 +315,11 @@ function SearchDialog({ onAccount, pathname }: { onAccount: boolean; pathname: s
   const openSearch = useCallback(
     (given: HTMLElement | null) => {
       const element = dialog.current;
-      if (!element) return;
+      if (!element) {
+        // The dialog is drawn one render after hydration: keep the request and open when it exists.
+        rememberOpen(given);
+        return;
+      }
       if (element.open) {
         field.current?.focus();
         return;
@@ -328,7 +361,9 @@ function SearchDialog({ onAccount, pathname }: { onAccount: boolean; pathname: s
     };
     window.addEventListener('keydown', onKey);
     window.addEventListener(openEvent, onOpen);
+    listening += 1;
     return () => {
+      listening -= 1;
       window.removeEventListener('keydown', onKey);
       window.removeEventListener(openEvent, onOpen);
     };
@@ -361,6 +396,14 @@ function SearchDialog({ onAccount, pathname }: { onAccount: boolean; pathname: s
     if (!element) return;
     if (!open && element.open) element.close();
   }, [open, mounted]);
+
+  // A Ctrl K that arrived before the dialog existed opens it now, with the focus it was pressed from. It stays below
+  // the effect above: that one reads the state of this render, which still says closed, and would close what this opens.
+  useEffect(() => {
+    if (!mounted) return;
+    const held = takePendingOpen();
+    if (held) openSearch(held.opener);
+  }, [mounted, openSearch]);
 
   // One search at a time: a newer search cancels the older, and an answer for an old search is dropped.
   const text = query.trim();

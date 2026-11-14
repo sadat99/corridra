@@ -83,7 +83,8 @@ test.beforeAll(async () => {
   const source = (path: string) => JSON.stringify(resolve(path));
   const result = await build({
     stdin: {
-      contents: `import{createRoot}from'react-dom/client';
+      contents: `import{createRoot,hydrateRoot}from'react-dom/client';
+import{renderToString}from'react-dom/server';
 import{LanguageProvider}from ${source('apps/web/components/language-provider.tsx')};
 import{AppHeader}from ${source('apps/web/components/ux/app-header.tsx')};
 import{BrandLockup}from ${source('apps/web/components/site-header.tsx')};
@@ -103,8 +104,7 @@ store.setCustomerProblemReports(on('problems'));
 const words={navLabel:'Navigation',menuLabel:'Menu',closeLabel:'Close menu',collapseLabel:'Collapse menu',expandLabel:'Expand menu'};
 const tabs=customerTabs({companies:on('companies'),move:flags.get('move')==='on'});
 const items=tabs.map(t=>({key:t.key,label:t.label,href:t.href,icon:t.icon}));
-const root=createRoot(document.getElementById('fixture'));
-const draw=(show)=>root.render(
+const view=(show)=>(
   <LanguageProvider offered={[{code:'en',draft:false},{code:'bn',draft:false},{code:'zh',draft:false}]}>
     {show&&flags.get('identity')!=='none'?<CustomerBarIdentityNote subject="synthetic-subject-1" issuer="https://auth.example.invalid/neondb/auth"/>:null}
     <div className="site-shell">
@@ -114,7 +114,13 @@ const draw=(show)=>root.render(
       </LeftNavFrame>
     </div>
   </LanguageProvider>);
-draw(true);window.drawIdentity=draw;`,
+const host=document.getElementById('fixture');
+// hydrate=on draws the page as a server would and then hydrates it, so the dialog's mounted flag starts false.
+if(flags.get('hydrate')==='on')host.innerHTML=renderToString(view(true));
+if(flags.get('hold')==='on')await new Promise((done)=>{window.releaseFixture=done});
+const root=flags.get('hydrate')==='on'?hydrateRoot(host,view(true)):createRoot(host);
+const draw=(show)=>root.render(view(show));
+if(flags.get('hydrate')!=='on')draw(true);window.drawIdentity=draw;`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
     },
@@ -641,6 +647,65 @@ test.describe('keyboard', () => {
       other.showModal();
     });
     await page.keyboard.press('Control+K');
+    await expect(page.locator('dialog.ux-csearch[open]')).toHaveCount(0);
+  });
+
+  test('Ctrl K pressed before the dialog exists is kept and opens it as soon as it does, with focus in the field', async ({
+    page,
+  }) => {
+    // The fixture holds back its first render, as a slow first load holds back hydration: the script has run, nothing
+    // is drawn. Before the fix the key reached no listener and the dialog never opened.
+    await page.route('**/api/auth/get-session', (route) => route.fulfill({ json: { user: null } }));
+    await page.goto(`${origin}/account?hold=on`);
+    await page.waitForFunction('typeof window.releaseFixture === "function"');
+    await expect(page.locator('header.ux-app-header')).toHaveCount(0);
+    await page.keyboard.press('Control+K');
+    await page.evaluate('window.releaseFixture()');
+    await expect(dialogOf(page)).toBeVisible();
+    await expect(field(page)).toBeFocused();
+    await expect(page.locator('dialog.ux-csearch[open]')).toHaveCount(1);
+    await page.keyboard.press('Escape');
+    await expect(dialogOf(page)).toBeHidden();
+    // One key opens it once: the held request is used up.
+    await page.waitForTimeout(300);
+    await expect(dialogOf(page)).toBeHidden();
+  });
+
+  test('Ctrl K pressed after the server HTML but before hydration is kept, and opens the dialog once it is hydrated', async ({
+    page,
+  }) => {
+    // The page is drawn as a server draws it and hydration is held back: the header is on screen and nothing answers.
+    await page.route('**/api/auth/get-session', (route) => route.fulfill({ json: { user: null } }));
+    await page.goto(`${origin}/account?hold=on&hydrate=on`);
+    await page.waitForFunction('typeof window.releaseFixture === "function"');
+    await expect(page.locator('header.ux-app-header')).toHaveCount(1);
+    await expect(dialogOf(page)).toHaveCount(0);
+    await page.keyboard.press('Control+K');
+    await page.evaluate('window.releaseFixture()');
+    await expect(dialogOf(page)).toBeVisible();
+    await expect(field(page)).toBeFocused();
+    await expect(page.locator('dialog.ux-csearch[open]')).toHaveCount(1);
+    await page.keyboard.press('Escape');
+    await expect(dialogOf(page)).toBeHidden();
+  });
+
+  test('a Ctrl K before the dialog exists does not open over another modal dialog', async ({
+    page,
+  }) => {
+    await page.route('**/api/auth/get-session', (route) => route.fulfill({ json: { user: null } }));
+    await page.goto(`${origin}/account?hold=on`);
+    await page.waitForFunction('typeof window.releaseFixture === "function"');
+    await page.evaluate(() => {
+      const other = document.createElement('dialog');
+      other.setAttribute('aria-label', 'Another dialog');
+      other.innerHTML = '<button type="button">Inside</button>';
+      document.body.append(other);
+      other.showModal();
+    });
+    await page.keyboard.press('Control+K');
+    await page.evaluate('window.releaseFixture()');
+    await page.waitForSelector('header.ux-app-header');
+    await page.waitForTimeout(300);
     await expect(page.locator('dialog.ux-csearch[open]')).toHaveCount(0);
   });
 
