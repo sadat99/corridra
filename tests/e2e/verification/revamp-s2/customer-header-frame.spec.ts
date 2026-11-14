@@ -38,7 +38,9 @@ for (const [width, start, oneLine] of [
         menu: rect(header.querySelector('[aria-controls="customer-navigation"]')),
         mark: rect(header.querySelector('.brand-mark')),
         tools: rect(header.querySelector('.ux-bar-tools')),
-        tops: [...header.children].map((child) => Math.round(child.getBoundingClientRect().top)),
+        tops: Array.from(header.children).map((child) =>
+          Math.round(child.getBoundingClientRect().top),
+        ),
         scrollWidth: document.documentElement.scrollWidth,
       };
     });
