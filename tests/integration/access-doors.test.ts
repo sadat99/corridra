@@ -109,6 +109,49 @@ describe('the access door registry', () => {
   });
 });
 
+describe('what the customer door shows', () => {
+  const flags = [false, true];
+  const combos = flags.flatMap((signInAvailable) =>
+    flags.flatMap((workspaces) =>
+      flags.flatMap((participants) =>
+        flags.map((programmes) => ({ signInAvailable, workspaces, participants, programmes })),
+      ),
+    ),
+  );
+
+  it('offers only the request without an account when customer sign-in is not configured', async () => {
+    const { customerDoorView } = await load('lib/access-doors.ts');
+    for (const input of combos.filter((c) => !c.signInAvailable)) {
+      const view = customerDoorView(input);
+      expect(view.createButton).toBe(false);
+      expect(view.signInButton).toBe(false);
+      expect(view.createText).toBeNull();
+      expect(view.cards).toEqual([]);
+      expect(view.signInText).toBe(
+        'Customer sign-in is not available here yet. You can still start a request without an account.',
+      );
+    }
+  });
+
+  it('shows each card only while its own setting is on, in every combination', async () => {
+    const { customerDoorView } = await load('lib/access-doors.ts');
+    expect(combos).toHaveLength(16);
+    for (const input of combos.filter((c) => c.signInAvailable)) {
+      const view = customerDoorView(input);
+      expect(view.createButton).toBe(true);
+      expect(view.signInButton).toBe(true);
+      expect(view.signInText).toBe('Sign in with your email and password.');
+      expect(view.cards.map((card: { id: string }) => card.id)).toEqual(
+        [
+          input.workspaces && 'invitation',
+          input.participants && 'delegation',
+          input.programmes && 'organiser',
+        ].filter(Boolean),
+      );
+    }
+  });
+});
+
 describe('the words on the access pages', () => {
   it('writes every action and door title in Title Case and uses no em dash', async () => {
     const reg = await load('lib/access-doors.ts');

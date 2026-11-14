@@ -94,7 +94,7 @@ export const customerDoorPage = {
     signIn: {
       heading: 'Already have an account',
       text: 'Sign in with your email and password.',
-      /** Shown instead of `text` (and without the button) when customer sign-in is not configured here. */
+      /** Shown instead of `text` (and without the Create Account and Sign In buttons) when customer sign-in is not configured here. */
       unavailableText:
         'Customer sign-in is not available here yet. You can still start a request without an account.',
       secondary: { text: 'Sign In', href: '/signin' } as AccessAction,
@@ -109,7 +109,7 @@ export const customerDoorPage = {
         title: 'Workspace invitation',
         text: 'A workspace owner invited you as an admin or member. Sign in, then accept it from your account.',
         action: { text: 'Accept Invitation', href: '/signin' } as AccessAction,
-        gate: null,
+        gate: 'workspaces' as const,
       },
       {
         id: 'delegation',
@@ -133,6 +133,55 @@ export const customerDoorPage = {
     ],
   },
 };
+
+export type CustomerDoorInputs = {
+  /** Customer sign-in is configured here (readNeonAuthConfig() is not null). */
+  signInAvailable: boolean;
+  /** Workspace invitations are issued (customerWorkspacesEnabled()). */
+  workspaces: boolean;
+  /** Participant terms are on (customerParticipantsEnabled()). */
+  participants: boolean;
+  /** Programmes are on (customerProgrammesEnabled()). */
+  programmes: boolean;
+};
+
+type CustomerCard = (typeof customerDoorPage.otherWays.cards)[number];
+
+/**
+ * What the customer door shows for a given state. Without customer sign-in nothing here can work, so only the
+ * request without an account is offered: no Create Account, no Sign In button and no "Other ways to join".
+ * With sign-in, each card shows only while the setting behind it is on.
+ */
+export function customerDoorView(input: CustomerDoorInputs): {
+  /** The sentence above the Create Account button; null when sign-in is unavailable (it would promise an account). */
+  createText: string | null;
+  createButton: boolean;
+  signInButton: boolean;
+  signInText: string;
+  cards: CustomerCard[];
+} {
+  const { signIn, create } = customerDoorPage.panels;
+  if (!input.signInAvailable)
+    return {
+      createText: null,
+      createButton: false,
+      signInButton: false,
+      signInText: signIn.unavailableText,
+      cards: [],
+    };
+  const on = {
+    workspaces: input.workspaces,
+    participants: input.participants,
+    programmes: input.programmes,
+  };
+  return {
+    createText: create.text,
+    createButton: true,
+    signInButton: true,
+    signInText: signIn.text,
+    cards: customerDoorPage.otherWays.cards.filter((card) => on[card.gate]),
+  };
+}
 
 /** Team and network door: /access/team. */
 export const teamDoorPage = {
