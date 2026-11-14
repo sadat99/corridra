@@ -1,11 +1,13 @@
 'use client';
 import '../page-budget.css';
+import './profile-steps.css';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { CountrySelect } from '../../../components/ux/pickers';
 import { countryName } from '../../../lib/ux/options';
 import { onDeviceClock, privateViewMaxMs } from '../../../lib/server-clock';
 import { ReplyError, loadReason, withReason } from '../../../lib/load-reason';
+import { profileHelper } from '../frame-copy';
 const roleOptions = [
   ['BUYER', 'Buyer'],
   ['SELLER', 'Seller'],
@@ -15,6 +17,40 @@ const roleOptions = [
   ['ORGANISER', 'Delegation organiser'],
 ] as const;
 const sizeOptions = ['1-10', '11-50', '51-200', '201-1000', '1000+'] as const;
+// The three steps of the form when `steps` is on (UI/UX.v3: one to three controls a step). Presentation only: every
+// control stays in the one form and the one fieldset, in the same order, with the same ids, names and payload.
+const stepNames = ['Company', 'Profile', 'Confirm'] as const;
+const lastStep = stepNames.length - 1;
+type Field = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+function Step({
+  n,
+  on,
+  shown,
+  children,
+}: {
+  n: number;
+  on: boolean;
+  shown: number;
+  children: ReactNode;
+}) {
+  if (!on) return <Fragment>{children}</Fragment>;
+  return (
+    <div className="profile-step" data-step={n} hidden={shown !== n}>
+      {children}
+    </div>
+  );
+}
+/** The first control that fails its own rules (required, length) in steps `from` to `to`, with the step it is in. */
+function firstInvalid(form: HTMLFormElement, from: number, to: number) {
+  for (let n = from; n <= to; n++) {
+    const box = form.querySelector(`[data-step="${n}"]`);
+    const bad = Array.from(box?.querySelectorAll<Field>('input, select, textarea') ?? []).find(
+      (field) => !field.checkValidity(),
+    );
+    if (bad) return { field: bad, n };
+  }
+  return null;
+}
 type Details = {
   legalName: string;
   countryCode: string;
@@ -112,8 +148,12 @@ export function OrganisationProfile(props: {
   subject: string;
   issuer: string;
   workspaceId: string;
+  /** Ask for the details in three steps of one to three controls. Off, the form is the single form it always was. */
+  steps?: boolean;
+  /** The page frame shows the back link and the helper line; this section leaves them out. */
+  framed?: boolean;
 }) {
-  const { subject, issuer, workspaceId } = props;
+  const { subject, issuer, workspaceId, steps = false, framed = false } = props;
   const id = useId(),
     [view, setView] = useState<View | null>(null),
     [history, setHistory] = useState<Revision[] | null>(null),
@@ -128,7 +168,13 @@ export function OrganisationProfile(props: {
     ),
     [pending, setPending] = useState<Record<string, unknown> | null>(null),
     // The edit form opens only when asked (one form at a time); a first profile has no summary, so it starts open.
-    [editing, setEditing] = useState(false);
+    [editing, setEditing] = useState(false),
+    // Steps only: the step shown, and the sentence that says which step needs a fix and why.
+    [step, setStep] = useState(0),
+    [stepError, setStepError] = useState('');
+  const formRef = useRef<HTMLFormElement | null>(null),
+    titleRef = useRef<HTMLHeadingElement | null>(null),
+    afterStep = useRef<(() => void) | null>(null);
   const active = useRef(false),
     task = useRef<AbortController | null>(null),
     flight = useRef(false);
@@ -142,6 +188,8 @@ export function OrganisationProfile(props: {
     setAck(false);
     setDirty(false);
     setPending(null);
+    setStep(0);
+    setStepError('');
     setMessage(why);
   }, []);
   const apply = useCallback((v: View) => {
@@ -150,6 +198,8 @@ export function OrganisationProfile(props: {
     setAck(false);
     setDirty(false);
     setPending(null);
+    setStep(0);
+    setStepError('');
   }, []);
   const headers = useCallback(
     (extra?: Record<string, string>) => ({
@@ -298,6 +348,47 @@ export function OrganisationProfile(props: {
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => {
     setDraft((d) => ({ ...d, [key]: value }));
     setDirty(true);
+    setStepError('');
+  };
+  // A save that could not be confirmed is retried from the last step, where its button is.
+  const shown = pending ? lastStep : step;
+  // A step that is shown runs what was queued for it: the new step's title takes focus, or the control that needs a fix.
+  useEffect(() => {
+    const run = afterStep.current;
+    afterStep.current = null;
+    run?.();
+  }, [step]);
+  const goTo = (n: number, then: () => void) => {
+    if (n === step) then();
+    else {
+      afterStep.current = then;
+      setStep(n);
+    }
+  };
+  // A control that needs a fix is always brought into view first, so a step never hides its own error.
+  const showFix = (found: { field: Field; n: number }) => {
+    const name =
+      found.field.labels?.[0]?.textContent?.trim() ??
+      found.field.getAttribute('aria-label') ??
+      'A field';
+    setStepError(
+      `Step ${found.n + 1} of ${stepNames.length} needs a fix. ${name}: ${found.field.validationMessage}`,
+    );
+    goTo(found.n, () => {
+      found.field.focus();
+      found.field.reportValidity();
+    });
+  };
+  const move = (to: number) => {
+    setStepError('');
+    goTo(to, () => titleRef.current?.focus());
+  };
+  const next = () => {
+    const form = formRef.current;
+    if (!form) return;
+    const bad = firstInvalid(form, shown, shown);
+    if (bad) showFix(bad);
+    else move(shown + 1);
   };
   const submit = () => {
     if (!view?.canEdit || !ack || busy) return;
@@ -327,15 +418,53 @@ export function OrganisationProfile(props: {
     void request(body);
   };
   const profile = view?.profile ?? null;
+  // The form is on screen. Stepped, it takes the place of the facts it would repeat; Cancel Editing brings them back.
+  const formOpen = !!view?.canEdit && (!profile || editing || dirty || !!pending);
+  const actions = (
+    <>
+      {steps && shown > 0 && !pending && (
+        <button
+          type="button"
+          className="button-secondary"
+          disabled={busy}
+          onClick={() => move(shown - 1)}
+        >
+          Back
+        </button>
+      )}
+      {steps && shown < lastStep ? (
+        <button type="submit" className="button button-primary" disabled={busy}>
+          Next
+        </button>
+      ) : (
+        <button type="submit" className="button button-primary" disabled={busy || !ack}>
+          {pending ? 'Retry Same Save' : 'Save Company Profile'}
+        </button>
+      )}
+      {profile && !pending && (
+        <button
+          type="button"
+          className="text-link"
+          disabled={busy}
+          onClick={() => {
+            setDraft(toDraft(profile));
+            setAck(false);
+            setDirty(false);
+            setEditing(false);
+            setStep(0);
+            setStepError('');
+          }}
+        >
+          Cancel Editing
+        </button>
+      )}
+    </>
+  );
   return (
     <section aria-label={realCustomerInput() ? 'Company profile' : 'Sample company profile'}>
-      <p>
-        {realCustomerInput()
-          ? 'Company details, kept private to this workspace. Everything here is self-reported and unverified, and it is not linked to any company record.'
-          : 'Sample details only, kept private to this workspace. Everything here is self-reported and unverified, and it is not linked to any company record.'}{' '}
-      </p>
+      {!framed && <p>{profileHelper()} </p>}
       <p role="status">{message}</p>
-      {profile && (
+      {profile && !(steps && formOpen) && (
         <dl className="account-facts">
           <dt>Company</dt>
           <dd>{profile.legalName}</dd>
@@ -366,16 +495,28 @@ export function OrganisationProfile(props: {
           type="button"
           className="button button-primary"
           disabled={busy}
-          onClick={() => setEditing(true)}
+          onClick={() => {
+            setStep(0);
+            setEditing(true);
+          }}
         >
           Edit Company Profile
         </button>
       )}
-      {view?.canEdit && (!profile || editing || dirty || pending) && (
+      {formOpen && (
         <form
+          ref={formRef}
+          className={steps ? 'profile-form' : undefined}
+          // Steps check their own controls in order (below), so a hidden control never blocks the save without a word.
+          noValidate={steps || undefined}
           onSubmit={(e) => {
             e.preventDefault();
-            submit();
+            if (!steps) return submit();
+            if (shown < lastStep) return next();
+            const form = formRef.current;
+            const bad = form && firstInvalid(form, 0, lastStep);
+            if (bad) showFix(bad);
+            else submit();
           }}
         >
           <fieldset disabled={busy || !!pending}>
@@ -388,146 +529,160 @@ export function OrganisationProfile(props: {
                   ? 'Add company profile'
                   : 'Add sample company profile'}
             </legend>
-            <div>
-              <label htmlFor={id + 'legalName'}>
-                {realCustomerInput() ? 'Company name' : 'Company name (start with Synthetic)'}
-              </label>
-              <input
-                id={id + 'legalName'}
-                required
-                minLength={realCustomerInput() ? 2 : 11}
-                maxLength={200}
-                value={draft.legalName}
-                onChange={(e) => set('legalName', e.target.value)}
-              />
-            </div>
-            <div>
-              <CountrySelect
-                id={id + 'countryCode'}
-                label="Country"
-                required
-                value={draft.countryCode ? draft.countryCode.toUpperCase() : null}
-                onChange={(code) => set('countryCode', code ?? '')}
-              />
-            </div>
-            <div>
-              <label htmlFor={id + 'website'}>
-                {realCustomerInput()
-                  ? 'Website (optional)'
-                  : 'Website (optional, example, test or invalid hosts only)'}
-              </label>
-              <input
-                id={id + 'website'}
-                maxLength={200}
-                placeholder={realCustomerInput() ? 'https://' : 'https://company.example'}
-                value={draft.website}
-                onChange={(e) => set('website', e.target.value)}
-              />
-            </div>
-            <fieldset>
-              <legend>Roles this company plays</legend>
-              {roleOptions.map(([value, label]) => (
-                <label key={value}>
-                  <input
-                    type="checkbox"
-                    checked={draft.commercialRoles.includes(value)}
-                    onChange={(e) =>
-                      set(
-                        'commercialRoles',
-                        e.target.checked
-                          ? [...draft.commercialRoles, value]
-                          : draft.commercialRoles.filter((r) => r !== value),
-                      )
-                    }
-                  />{' '}
-                  {label}
-                </label>
-              ))}
-            </fieldset>
-            <div>
-              <label htmlFor={id + 'sectors'}>Sectors (comma separated, up to ten)</label>
-              <input
-                id={id + 'sectors'}
-                maxLength={700}
-                value={draft.sectors}
-                onChange={(e) => set('sectors', e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor={id + 'sizeBand'}>Company size</label>
-              <select
-                id={id + 'sizeBand'}
-                required
-                value={draft.sizeBand}
-                onChange={(e) => set('sizeBand', e.target.value)}
-              >
-                <option value="">Choose a size</option>
-                {sizeOptions.map((size) => (
-                  <option key={size} value={size}>
-                    {size} people
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor={id + 'summary'}>
-                {realCustomerInput()
-                  ? 'About the company'
-                  : 'About the company (start with Synthetic)'}
-              </label>
-              <textarea
-                id={id + 'summary'}
-                required
-                minLength={realCustomerInput() ? 2 : 11}
-                maxLength={1000}
-                rows={4}
-                value={draft.summary}
-                onChange={(e) => set('summary', e.target.value)}
-              />
-            </div>
-            {view.currentVersion > 0 && (
+            {steps && (
+              <>
+                <ol className="profile-steps" aria-label="Steps">
+                  {stepNames.map((name, n) => (
+                    <li key={name} aria-current={n === shown ? 'step' : undefined}>
+                      <span className="profile-steps-number" aria-hidden="true">
+                        {n + 1}
+                      </span>
+                      <span className="profile-steps-name">{name}</span>
+                      <span className="sr-only">
+                        {n < shown ? ' (done)' : n === shown ? ' (current step)' : ''}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+                <h2 className="profile-step-title" ref={titleRef} tabIndex={-1}>
+                  Step {shown + 1} of {stepNames.length}: {stepNames[shown]}
+                </h2>
+                {stepError && (
+                  <p className="profile-step-error" role="alert">
+                    {stepError}
+                  </p>
+                )}
+              </>
+            )}
+            <Step n={0} on={steps} shown={shown}>
               <div>
-                <label htmlFor={id + 'reason'}>Reason for this change</label>
+                <label htmlFor={id + 'legalName'}>
+                  {realCustomerInput() ? 'Company name' : 'Company name (start with Synthetic)'}
+                </label>
                 <input
-                  id={id + 'reason'}
+                  id={id + 'legalName'}
                   required
-                  minLength={3}
-                  maxLength={1000}
-                  value={draft.reason}
-                  onChange={(e) => set('reason', e.target.value)}
+                  minLength={realCustomerInput() ? 2 : 11}
+                  maxLength={200}
+                  value={draft.legalName}
+                  onChange={(e) => set('legalName', e.target.value)}
                 />
               </div>
-            )}
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '0.75rem',
-                marginBlock: '1rem',
-              }}
-            >
-              <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} /> I
-              confirm these details are accurate to the best of my knowledge.{' '}
-            </label>
+              <div>
+                <CountrySelect
+                  id={id + 'countryCode'}
+                  label="Country"
+                  required
+                  value={draft.countryCode ? draft.countryCode.toUpperCase() : null}
+                  onChange={(code) => set('countryCode', code ?? '')}
+                />
+              </div>
+              <div>
+                <label htmlFor={id + 'website'}>
+                  {realCustomerInput()
+                    ? 'Website (optional)'
+                    : 'Website (optional, example, test or invalid hosts only)'}
+                </label>
+                <input
+                  id={id + 'website'}
+                  maxLength={200}
+                  placeholder={realCustomerInput() ? 'https://' : 'https://company.example'}
+                  value={draft.website}
+                  onChange={(e) => set('website', e.target.value)}
+                />
+              </div>
+            </Step>
+            <Step n={1} on={steps} shown={shown}>
+              <fieldset>
+                <legend>Roles this company plays</legend>
+                {roleOptions.map(([value, label]) => (
+                  <label key={value}>
+                    <input
+                      type="checkbox"
+                      checked={draft.commercialRoles.includes(value)}
+                      onChange={(e) =>
+                        set(
+                          'commercialRoles',
+                          e.target.checked
+                            ? [...draft.commercialRoles, value]
+                            : draft.commercialRoles.filter((r) => r !== value),
+                        )
+                      }
+                    />{' '}
+                    {label}
+                  </label>
+                ))}
+              </fieldset>
+              <div>
+                <label htmlFor={id + 'sectors'}>Sectors (comma separated, up to ten)</label>
+                <input
+                  id={id + 'sectors'}
+                  maxLength={700}
+                  value={draft.sectors}
+                  onChange={(e) => set('sectors', e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor={id + 'sizeBand'}>Company size</label>
+                <select
+                  id={id + 'sizeBand'}
+                  required
+                  value={draft.sizeBand}
+                  onChange={(e) => set('sizeBand', e.target.value)}
+                >
+                  <option value="">Choose a size</option>
+                  {sizeOptions.map((size) => (
+                    <option key={size} value={size}>
+                      {size} people
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </Step>
+            <Step n={2} on={steps} shown={shown}>
+              <div>
+                <label htmlFor={id + 'summary'}>
+                  {realCustomerInput()
+                    ? 'About the company'
+                    : 'About the company (start with Synthetic)'}
+                </label>
+                <textarea
+                  id={id + 'summary'}
+                  required
+                  minLength={realCustomerInput() ? 2 : 11}
+                  maxLength={1000}
+                  rows={4}
+                  value={draft.summary}
+                  onChange={(e) => set('summary', e.target.value)}
+                />
+              </div>
+              {view.currentVersion > 0 && (
+                <div>
+                  <label htmlFor={id + 'reason'}>Reason for this change</label>
+                  <input
+                    id={id + 'reason'}
+                    required
+                    minLength={3}
+                    maxLength={1000}
+                    value={draft.reason}
+                    onChange={(e) => set('reason', e.target.value)}
+                  />
+                </div>
+              )}
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '0.75rem',
+                  marginBlock: '1rem',
+                }}
+              >
+                <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} /> I
+                confirm these details are accurate to the best of my knowledge.{' '}
+              </label>
+            </Step>
           </fieldset>
-          <button type="submit" className="button button-primary" disabled={busy || !ack}>
-            {pending ? 'Retry Same Save' : 'Save Company Profile'}
-          </button>
-          {profile && !pending && (
-            <button
-              type="button"
-              className="text-link"
-              disabled={busy}
-              onClick={() => {
-                setDraft(toDraft(profile));
-                setAck(false);
-                setDirty(false);
-                setEditing(false);
-              }}
-            >
-              Cancel Editing
-            </button>
-          )}
+          {steps ? <div className="profile-step-actions">{actions}</div> : actions}
         </form>
       )}
       {history && history.length > 0 && (
@@ -550,9 +705,11 @@ export function OrganisationProfile(props: {
           Reload Company Profile
         </button>
       )}
-      <a className="text-link" href="/account">
-        Return to your account
-      </a>
+      {!framed && (
+        <a className="text-link" href="/account">
+          Return to your account
+        </a>
+      )}
     </section>
   );
 }
