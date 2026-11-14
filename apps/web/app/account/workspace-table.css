@@ -5,6 +5,18 @@
   align-items: center;
   gap: var(--space-2);
 }
+/* The title, then Refresh as an icon beside it, then the actions at the end of the row (a row of their own on a phone). */
+.ux-account-missions > .ux-section-head {
+  justify-content: flex-start;
+}
+.ux-account-missions > .ux-section-head > .ux-ws-head-actions {
+  margin-inline-start: auto;
+}
+@media (max-width: 47.99rem) {
+  .ux-account-missions > .ux-section-head > .ux-ws-head-actions {
+    flex-basis: 100%;
+  }
+}
 .ux-ws-table {
   width: 100%;
   border-collapse: collapse;

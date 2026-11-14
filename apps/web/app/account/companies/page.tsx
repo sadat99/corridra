@@ -45,14 +45,14 @@ export default async function Page() {
       tab="companies"
       eyebrow="YOUR COMMERCIAL WORKSPACE"
       title="Your approved companies"
-    >
-      {customerOrganisationProfilesEnabled() && (
-        <p>
+      frame={{
+        helper: customerOrganisationProfilesEnabled() ? (
           <Link className="text-link" prefetch={false} href="/account/profile">
             Manage your {companyProfilesTitle(customerOrganisationLinksEnabled()).toLowerCase()}
           </Link>
-        </p>
-      )}
+        ) : undefined,
+      }}
+    >
       <CompanyPortfolio
         subject={session.data.user.id}
         issuer={issuer}

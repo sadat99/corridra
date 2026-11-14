@@ -316,3 +316,22 @@
 .ux-menu-note.ux-comfort-status:not(:empty) {
   padding-block: var(--space-2);
 }
+
+/* The account menu's Language row: the word, then the current language in the end column. */
+.ux-menu-row[aria-expanded] {
+  justify-content: space-between;
+}
+.ux-menu-value {
+  font-weight: 400;
+  color: var(--text-2);
+}
+/* Sign Out stays at the bottom edge of the account menu while the rest scrolls (it never drops out of reach). */
+.ux-menu-pinned {
+  position: sticky;
+  bottom: calc(var(--space-2) * -1);
+  margin-block-start: var(--space-1);
+  padding-block: var(--space-1) var(--space-2);
+  margin-block-end: calc(var(--space-2) * -1);
+  background: var(--surface-1);
+  border-top: 1px solid var(--line);
+}

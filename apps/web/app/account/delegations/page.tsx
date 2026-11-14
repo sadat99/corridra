@@ -18,6 +18,7 @@ import {
 } from '@corridra/auth/customer-programme-publication';
 import { foundations } from '../../../lib/foundations';
 import { ParticipantAccount } from './participant-account';
+import { registrationsBack, registrationsHelper } from '../frame-copy';
 import { ProgrammeApplications, type ApplyTarget } from './programme-applications';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -73,7 +74,12 @@ export default async function Page({
   if (!session.data?.user) redirect(`/signin?next=${encodeURIComponent('/account/delegations')}`);
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
-    <CustomerShell tab="work" eyebrow="REQUESTS" title="Delegation registrations">
+    <CustomerShell
+      tab="work"
+      eyebrow="REQUESTS"
+      title="Delegation registrations"
+      frame={{ back: registrationsBack, helper: registrationsHelper() }}
+    >
       <div className="account-compact">
         {pagesOn && (
           <ProgrammeApplications
@@ -93,6 +99,7 @@ export default async function Page({
           draftsEnabled={customerMissionDraftsEnabled()}
           subject={session.data.user.id}
           issuer={issuer}
+          framed
         />
       </div>
     </CustomerShell>
