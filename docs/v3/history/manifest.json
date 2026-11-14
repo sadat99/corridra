@@ -493,6 +493,14 @@
       "bytes": 10642,
       "sha256": "1e5fcce4d0d0af8ed9d0390bf7b7223572b352c9f1c8f45770acf25c543cb44c",
       "meaning": "Exact active ledger at 9e70b89 (the PR 512 merge, 14 Nov; the text of Guardian 8 records 3 as updated by Guardian 9 in PR 507), before Guardian 9 recorded merges 506 to 513, the pending programme_pages install for migration 0003, the three new switches (all off), the later orchestrator and guardian lanes and the follow-up list, including the Takeover, merged-since, production, switches, ADR, owner-words, lanes and follow-up bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "098b2a0aaa7749991a949543b7e494d03dde0f02",
+      "archive": "docs/v3/history/ledger-before-g10-records-5-2026-11-14.md",
+      "bytes": 10648,
+      "sha256": "697f8492f1104ff11e40dbcd0f19cfd95111474062603af607532ad7b74914e2",
+      "meaning": "Exact active ledger at 098b2a0 (the PR 514 merge, 14 Nov; unchanged since 083b959, the text of Guardian 9 records 4), before Guardian 10 recorded merge 514, the programme_pages install run 43619265844 (publication migrations 2 -> 3), CORRIDRA_UX_ACCESS_DOORS being true in production, the owner's widening of Guardian 10 and the access doors follow-ups, including the Takeover, merged-since, production, install, switches, ADR, owner-words and follow-up bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
