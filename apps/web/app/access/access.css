@@ -62,6 +62,11 @@
 .access-card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
+  /* Row 1 is the icon and heading, row 2 the text and takes all the spare height, so the actions (the rows
+     after it) end at the bottom edge of the card. Cards in one row are stretched to one height by their grid,
+     so the actions of a row share one top edge however many lines of text each card holds. On a phone the
+     cards stack at their natural height and there is no spare height to take. */
+  grid-template-rows: auto 1fr;
   gap: var(--space-2) var(--space-3);
   align-content: start;
   align-items: center;
@@ -69,6 +74,9 @@
   background: var(--surface-1);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
+}
+.access-card > p {
+  align-self: start;
 }
 .access-page .access-card h2,
 .access-page .access-card h3 {
