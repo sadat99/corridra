@@ -113,7 +113,7 @@ describe('people board ordering', () => {
       'Nothing is waiting for your answer.',
     );
     for (const line of [boardLead(rows, true), boardLead([], false)])
-      expect(line).not.toMatch(/[—–]/);
+      expect(line).not.toMatch(/[\u2014\u2013]/);
   });
 });
 
@@ -166,7 +166,7 @@ describe('switch and wiring', () => {
     const entry = switchRegistry.find((s) => s.name === name);
     expect(entry?.kind).toBe('flag');
     expect(entry?.group).toBe('Programmes and delegations');
-    expect(entry?.line).not.toMatch(/[—–]/);
+    expect(entry?.line).not.toMatch(/[\u2014\u2013]/);
     expect(read('scripts/qa/signed-in-sweep.ts')).toContain(`'${name}'`);
   });
   it('reaches the room as one prop that needs the room and the participants, and nothing else', () => {
