@@ -1524,6 +1524,11 @@
       "use": "Exact hashed ledger at 098b2a0 (the PR 514 merge; unchanged since 083b959), before merge 514, the programme_pages install run 43619265844, the production CORRIDRA_UX_ACCESS_DOORS setting, the owner's widening of Guardian 10 and the access doors follow-ups were recorded; preserves the Guardian 9 Resume bullets; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-g10-records-6-2026-11-14.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at f6e12d8 (the PR 517 merge; unchanged since aa27fac), before merges 516 and 517, the PR 518 organiser return and the 768 px footer headroom were recorded; preserves the Guardian 10 records 5 Resume bullets; use the current ledger for live state."
+    },
+    {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"
