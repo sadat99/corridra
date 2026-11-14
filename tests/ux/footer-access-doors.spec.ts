@@ -259,6 +259,30 @@ test('the request page keeps its compact footer, and the staff preview shows no 
   await expect(staff.locator('.guide-footer-actions')).toHaveCount(0);
 });
 
+// "ensure that concerned exisitng footer navigation links also get updated if led to the same" (owner, 14 Nov 2026):
+// Join the Corridra Network is the helper's way in, so with the switch on it goes to the team door, which links on
+// to /network. The label does not change, and with the switch off the address is the one it was.
+for (const path of ['/about', '/plan']) {
+  test(`Join the Corridra Network goes to /access/team with the switch on, on ${path}`, async ({
+    page,
+  }) => {
+    const footer = await open(page, { path, width: 768 });
+    const link = footer.getByRole('link', { name: 'Join the Corridra Network', exact: true });
+    await expect(link).toHaveCount(1);
+    await expect(link).toHaveAttribute('href', '/access/team');
+    await expect(footer.locator('a[href="/network"]')).toHaveCount(0);
+  });
+
+  test(`Join the Corridra Network keeps /network with the switch off, on ${path}`, async ({
+    page,
+  }) => {
+    const footer = await open(page, { path, width: 768, doors: false });
+    const link = footer.getByRole('link', { name: 'Join the Corridra Network', exact: true });
+    await expect(link).toHaveAttribute('href', '/network');
+    await expect(footer.locator('a[href="/access/team"]')).toHaveCount(0);
+  });
+}
+
 test('the server wrapper reads the switch and hands it down', () => {
   const read = (file: string) => readFileSync(resolve('apps/web/components', file), 'utf8');
   expect(read('site-footer.tsx')).toContain("accessDoors={uxSwitchOn('CORRIDRA_UX_ACCESS_DOORS')}");

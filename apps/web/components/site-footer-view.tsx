@@ -71,6 +71,14 @@ export const footerGroups: readonly FooterGroup[] = [
   },
 ];
 
+/**
+ * With CORRIDRA_UX_ACCESS_DOORS on, a footer link that led to the same place as an access door goes to the door
+ * (owner via the orchestrator, 14 Nov 2026: "ensure that concerned exisitng footer navigation links also get updated
+ * if led to the same"). Join the Corridra Network is the helper door's way in; the page it names links on to /network.
+ * The label and the translation key do not change.
+ */
+const doorFor: Record<string, string> = { '/network': '/access/team' };
+
 export function SiteFooterView({
   realUse,
   accessDoors = false,
@@ -195,13 +203,20 @@ export function SiteFooterView({
                   group={group}
                   open={startsOpen && index === 0}
                   realUse={realUse}
+                  accessDoors={accessDoors}
                 />
               ))}
           </div>
           {footerGroups
             .filter((group) => !group.family)
             .map((group) => (
-              <FooterGroupBox key={group.title} group={group} open={false} realUse={realUse} />
+              <FooterGroupBox
+                key={group.title}
+                group={group}
+                open={false}
+                realUse={realUse}
+                accessDoors={accessDoors}
+              />
             ))}
         </nav>
       </div>
@@ -227,10 +242,12 @@ function FooterGroupBox({
   group,
   open,
   realUse,
+  accessDoors,
 }: {
   group: FooterGroup;
   open: boolean;
   realUse: boolean;
+  accessDoors: boolean;
 }) {
   const t = useT();
   const { title, family, links } = group;
@@ -246,7 +263,7 @@ function FooterGroupBox({
         <ul>
           {links.map(({ href, key, testKey }) => (
             <li key={href}>
-              <Link prefetch={false} href={href}>
+              <Link prefetch={false} href={accessDoors ? (doorFor[href] ?? href) : href}>
                 {t(!realUse && testKey ? testKey : key)}
               </Link>
             </li>

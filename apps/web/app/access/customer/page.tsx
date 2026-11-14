@@ -4,6 +4,7 @@ import { customerWorkspacesEnabled } from '@corridra/auth/customer-workspaces';
 import { customerParticipantsEnabled } from '@corridra/auth/customer-participants';
 import { customerProgrammesEnabled } from '@corridra/auth/customer-programmes';
 import { AccessCard, AccessPage, accessDoorMetadata } from '../../../components/access-page';
+import { CreatePanel } from './create-panel';
 import { customerDoorPage as page, customerDoorView } from '../../../lib/access-doors';
 
 // The sign-in and programme words depend on settings read when the page is asked for.
@@ -13,7 +14,7 @@ export function generateMetadata() {
 }
 
 export default function Page() {
-  const { create, signIn } = page.panels;
+  const { signIn } = page.panels;
   const view = customerDoorView({
     signInAvailable: readNeonAuthConfig() !== null,
     workspaces: customerWorkspacesEnabled(),
@@ -23,18 +24,7 @@ export default function Page() {
   return (
     <AccessPage id="customer" eyebrow={page.eyebrow} title={page.title} lead={page.lead}>
       <div className="access-panels">
-        <section className="access-panel" aria-labelledby="access-new">
-          <h2 id="access-new">{create.heading}</h2>
-          {view.createText && <p>{view.createText}</p>}
-          {view.createButton && (
-            <Link prefetch={false} className="button" href={create.primary.href}>
-              {create.primary.text}
-            </Link>
-          )}
-          <Link prefetch={false} className="text-link" href={create.textLink.href}>
-            {create.textLink.text}
-          </Link>
-        </section>
+        <CreatePanel text={view.createText} button={view.createButton} />
         <section className="access-panel" aria-labelledby="access-existing">
           <h2 id="access-existing">{signIn.heading}</h2>
           <p>{view.signInText}</p>

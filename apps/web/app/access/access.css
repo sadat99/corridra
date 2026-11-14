@@ -51,6 +51,14 @@
 .access-panel > :is(.button, .text-link, .button-secondary) {
   margin-inline-start: 0;
 }
+/* Two actions one above the other, sharing one left edge. The group carries .ux-state-actions, which the global
+   sibling-margin rule leaves alone, so no margin pushes the second action sideways. */
+.access-panel > .access-panel-actions {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  margin-top: 0;
+}
 .access-card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -135,6 +143,9 @@
   }
   .access-card > :not(svg, h2, h3) {
     justify-self: stretch;
+  }
+  .access-panel > .access-panel-actions {
+    justify-items: stretch;
   }
   .access-page .button,
   .access-page .button-secondary,
