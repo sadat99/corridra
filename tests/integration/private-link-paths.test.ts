@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 // The paste-a-private-link field on /access/link (access doors, Unit E). The validator is the privacy control: it
@@ -152,5 +154,34 @@ describe('the private link validator', () => {
       expect(url.search).toBe('');
       expect(url.hash).toBe(`#${token}`);
     }
+  });
+});
+
+// The page the link is pasted on sends no referrer and is never stored. The framework's catch-all rule sets the
+// site-wide referrer policy first, so the page's own rule must come after it and carry both values (same reading of
+// next.config.ts as tests/integration/private-api-headers.test.ts).
+describe('the /access/link header rule', () => {
+  const config = readFileSync(resolve('apps/web/next.config.ts'), 'utf8');
+  const rules = [...config.matchAll(/source:\s*'([^']+)',\s*headers:\s*\[([^\]]*)\]/g)].map(
+    (m) => ({
+      source: m[1]!,
+      headers: m[2]!,
+    }),
+  );
+
+  it('sends no-referrer and no-store, after the catch-all rule', () => {
+    const rule = rules.find((r) => r.source === '/access/link');
+    expect(rule, 'next.config.ts has no rule for /access/link').toBeDefined();
+    expect(rule!.headers).toContain("key: 'Referrer-Policy', value: 'no-referrer'");
+    expect(rule!.headers).toContain("key: 'Cache-Control', value: 'no-store'");
+    const catchAll = rules.findIndex((r) => r.source === '/:path*');
+    expect(catchAll).toBeGreaterThanOrEqual(0);
+    expect(rules.indexOf(rule!)).toBeGreaterThan(catchAll);
+  });
+
+  it('does not widen to the other access pages', () => {
+    expect(rules.filter((r) => /^\/access/.test(r.source)).map((r) => r.source)).toEqual([
+      '/access/link',
+    ]);
   });
 });

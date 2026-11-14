@@ -30,7 +30,8 @@ const longest = 256;
 
 /**
  * The address to open for a pasted link, or null for anything else. `origin` is the site's own origin
- * (window.location.origin). Spaces around the whole paste are ignored; nothing is ignored inside it.
+ * (window.location.origin). Whitespace around the whole paste is ignored (String.trim, which also covers a byte-order
+ * mark and an ideographic space); nothing is ignored inside it.
  * The result is rebuilt only from the origin, a path on the list and a token of the exact shape, and it must equal
  * what was pasted, so no part of the input can reach the address except as the link it already is.
  */

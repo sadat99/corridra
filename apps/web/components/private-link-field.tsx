@@ -1,5 +1,5 @@
 'use client';
-import { useId, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { parsePrivateLink } from '../lib/private-link-paths';
 
 /**
@@ -21,6 +21,7 @@ export function PrivateLinkField({
   const errorId = `${id}-error`;
   const [value, setValue] = useState('');
   const [failed, setFailed] = useState(false);
+  const input = useRef<HTMLInputElement>(null);
 
   function open() {
     const href = parsePrivateLink(value, window.location.origin);
@@ -29,6 +30,10 @@ export function PrivateLinkField({
       return;
     }
     setFailed(false);
+    // Empty the field in the page itself before leaving, so a Back that restores this page from the browser's
+    // back/forward cache never shows the link again.
+    if (input.current) input.current.value = '';
+    setValue('');
     window.location.assign(href);
   }
 
@@ -38,6 +43,7 @@ export function PrivateLinkField({
         <label htmlFor={id}>{label}</label>
         <div className="access-link-row">
           <input
+            ref={input}
             id={id}
             type="text"
             value={value}

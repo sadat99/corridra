@@ -103,6 +103,18 @@ for (const { path, token } of links) {
   });
 }
 
+test('coming back to the page after opening a link finds the field empty', async ({ page }) => {
+  await page.route('**/buyer', (route) =>
+    route.fulfill({ contentType: 'text/html', body: '<!doctype html><title>Stub</title>' }),
+  );
+  await ready(page);
+  await field(page).fill(`${new URL(page.url()).origin}/buyer#${hex}`);
+  await Promise.all([page.waitForURL(`**/buyer#${hex}`), open(page).click()]);
+  await page.goBack();
+  await expect(field(page)).toBeVisible();
+  await expect(field(page)).toHaveValue('');
+});
+
 test('the keyboard alone pastes, opens and refuses', async ({ page }) => {
   await page.route('**/buyer', (route) =>
     route.fulfill({ contentType: 'text/html', body: '<!doctype html><title>Stub</title>' }),
