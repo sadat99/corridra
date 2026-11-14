@@ -597,3 +597,12 @@ test('rule 6 flags a planted profile form without steps and passes one with step
     0,
   );
 });
+
+// Audit unit A3d, part 1 (Delegation registrations): the rare Withdraw action sits in a "More actions" menu on the framed
+// page, and the withdrawal form below it is the confirm step and keeps every field.
+test('the registrations row keeps Withdraw From Programme in a More actions menu with its confirm form', () => {
+  const source = read(join(web, 'app/account/delegations/participant-account.tsx'));
+  assert.match(source, /<OverflowMenu[\s\S]*?'More actions for '[\s\S]*?Withdraw From Programme/);
+  assert.ok(source.includes('Confirm Withdrawal'), 'the withdrawal confirm step is kept');
+  assert.ok(source.includes('Reason for withdrawal'), 'the reason field is kept');
+});
