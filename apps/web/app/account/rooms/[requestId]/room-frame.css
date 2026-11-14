@@ -24,9 +24,9 @@
   gap: var(--space-1);
   min-height: 22px;
   padding: 0 var(--space-2);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: var(--text-xs);
-  font-weight: 650;
+  font-weight: 600;
 }
 .room-tag {
   background: var(--selected-surface);
@@ -97,7 +97,7 @@
   place-items: center;
   width: 36px;
   height: 36px;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--on-brand) 12%, transparent);
   color: var(--on-brand);
 }
@@ -114,7 +114,7 @@
 .room-next-words small {
   color: color-mix(in srgb, var(--on-brand) 78%, transparent);
   font-size: var(--text-xs);
-  font-weight: 650;
+  font-weight: 600;
 }
 .room-next-words b {
   font-family: var(--serif);
@@ -177,14 +177,14 @@
   border-radius: 0;
   background: transparent;
   color: var(--text-2);
-  font-weight: 550;
+  font-weight: 500;
   white-space: nowrap;
 }
 .room .room-lens[aria-pressed='true'] {
   border-bottom-color: var(--brand);
   background: transparent;
   color: var(--brand);
-  font-weight: 650;
+  font-weight: 600;
 }
 .room-lens[data-count]::after {
   content: attr(data-count);
@@ -193,11 +193,11 @@
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  border-radius: 9px;
+  border-radius: 999px;
   background: var(--surface-2);
   color: var(--text-2);
   font-size: var(--text-xs);
-  font-weight: 650;
+  font-weight: 600;
 }
 .room-lens[aria-pressed='true'][data-count]::after {
   background: var(--brand);
@@ -226,7 +226,7 @@
 }
 @media (max-width: 40rem) {
   .room .room-head h2 {
-    font-size: var(--text-xl);
+    font-size: var(--text-lg);
   }
   .room-next-actions,
   .room-next-actions > .button {

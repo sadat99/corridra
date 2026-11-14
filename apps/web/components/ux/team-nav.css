@@ -218,7 +218,7 @@ nav.ux-team-sidebar .operator-icon {
   background: transparent;
   color: var(--ink);
   font: inherit;
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
 }
 .ux-palette-input input::placeholder {
   color: var(--text-3);
@@ -638,7 +638,7 @@ nav.ux-team-sidebar .ux-team-group > summary > .ux-team-caption {
   min-width: 0;
   overflow-wrap: break-word;
   color: var(--ac-paper);
-  font-size: var(--text-sm, 0.875rem);
+  font-size: var(--text-sm);
   font-weight: 400;
   opacity: 1;
 }
@@ -683,7 +683,7 @@ nav.ux-team-sidebar .ux-team-group > summary > .ux-team-caption {
 .ux-team-header .ux-palette-trigger kbd {
   color: var(--text-2);
   font: inherit;
-  font-size: var(--text-sm, 0.875rem);
+  font-size: var(--text-sm);
 }
 @media (max-width: 899.98px) {
   .ux-team-header .ux-palette-trigger span,

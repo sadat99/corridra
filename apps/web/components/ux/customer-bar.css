@@ -69,7 +69,7 @@
   min-width: 1.125rem;
   height: 1.125rem;
   padding: 0 0.25rem;
-  border-radius: 0.5625rem;
+  border-radius: 999px;
   background: var(--brand);
   color: var(--paper);
   font: 600 var(--text-xs) var(--font-ui);

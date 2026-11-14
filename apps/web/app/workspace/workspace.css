@@ -12,7 +12,7 @@
   align-items: center;
   min-height: 2.75rem;
   color: var(--brand);
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
   font-weight: 600;
   cursor: pointer;
   list-style: none;
