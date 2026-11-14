@@ -237,6 +237,11 @@ export function useParticipantView(
   scope: ParticipantScope,
   clearDraft: () => void,
   onOutcome?: (command: ParticipantCommand) => void,
+  /**
+   * ADR-084 S3 (people board): keep what was read on screen while a reload runs, and say that it is refreshing, so a
+   * saved command does not unmount the lists. Expiry, a refusal, a failed read or a hidden page still clear it.
+   */
+  keepWhileReloading = false,
 ) {
   const { subject, issuer, workspaceId, programmeId } = scope;
   const [data, setData] = useState<View | null>(null),
@@ -245,7 +250,8 @@ export function useParticipantView(
     );
   const [busy, setBusy] = useState(false),
     [visible, setVisible] = useState(true),
-    [notice, setNotice] = useState('');
+    [notice, setNotice] = useState(''),
+    [refreshing, setRefreshing] = useState(false);
   const [pending, setPending] = useState<ParticipantCommand | null>(null),
     [result, setResult] = useState<Record<string, unknown> | null>(null);
   const active = useRef(false),
@@ -269,6 +275,7 @@ export function useParticipantView(
     post.current?.abort();
     reading.current = false;
     writing.current = false;
+    setRefreshing(false);
   }, []);
   const expire = useCallback(() => {
     invalidate();
@@ -298,8 +305,11 @@ export function useParticipantView(
         available.current = false;
         deadline.current = 0;
         if (timer.current) clearTimeout(timer.current);
-        setData(null);
-        setStatus('loading');
+        if (keepWhileReloading) setRefreshing(true);
+        else {
+          setData(null);
+          setStatus('loading');
+        }
         if (!preserveResult) {
           setResult(null);
           setNotice('');
@@ -394,10 +404,11 @@ export function useParticipantView(
         if (!task.signal.aborted && active.current) {
           reading.current = false;
           setBusy(false);
+          setRefreshing(false);
         }
       }
     },
-    [subject, issuer, workspaceId, programmeId, deny, expire],
+    [subject, issuer, workspaceId, programmeId, deny, expire, keepWhileReloading],
   );
   const send = useCallback(
     async (payload: ParticipantCommand) => {
@@ -567,5 +578,5 @@ export function useParticipantView(
       document.removeEventListener('visibilitychange', visibility);
     };
   }, [load, invalidate]);
-  return { data, status, busy, visible, notice, pending, result, load, send, deny };
+  return { data, status, busy, refreshing, visible, notice, pending, result, load, send, deny };
 }

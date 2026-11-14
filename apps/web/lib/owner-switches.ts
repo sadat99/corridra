@@ -588,6 +588,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'flag',
   },
   {
+    name: 'CORRIDRA_DELEGATION_BOARD',
+    label: 'Delegation people board and money view',
+    line: 'Puts applications, invitations and registrations on one board in the programme room, the next decision first, and shows the amounts you recorded in their own currencies with the forms one tap deeper. It reads the same records and sends the same commands as before and adds no new data. Needs the programme room on. With it off the programme screens are as they were.',
+    group: 'Programmes and delegations',
+    kind: 'flag',
+  },
+  {
     name: 'CORRIDRA_DELEGATION_BUYING_TRIP',
     label: 'Delegation buying trip starter',
     line: 'Offers a generic Buying trip starter plan (six tasks, no costs, no people) in the delegation first run and in the programme templates list, and pre-fills three planned page lines in the first run. Saving it makes one private template in the workspace. Needs programme templates on. With it off both screens are as they were.',
