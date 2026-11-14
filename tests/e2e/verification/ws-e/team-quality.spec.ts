@@ -338,6 +338,13 @@ test('Q-06 busy actions: a double click sends what one click sends, disabled or 
         group.open = true;
         group = group.parentElement?.closest('details') ?? null;
       }
+      // A button in a sub-tab that is not shown (L21): choose that tab first, as a person would.
+      let panel = el.closest<HTMLElement>('[role="tabpanel"]');
+      while (panel) {
+        if (panel.hidden)
+          document.getElementById(panel.getAttribute('aria-labelledby') ?? '')?.click();
+        panel = panel.parentElement?.closest<HTMLElement>('[role="tabpanel"]') ?? null;
+      }
     });
     await expect(button, name).toBeVisible({ timeout: 15000 });
     let sent = 0;
