@@ -1,0 +1,61 @@
+/* ADR-084 S3 (CORRIDRA_DELEGATION_BOARD): the people board and the compact money view. Spacing and one rule line only;
+   the status words reuse the public page's capsule. Tokens only. */
+.people-board {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+.people-board > h4,
+.people-board > p {
+  margin: 0;
+}
+.people-board-list {
+  display: grid;
+  gap: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.people-board-row {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.people-board-row > p {
+  margin: 0;
+}
+.people-board-more {
+  width: 100%;
+}
+.people-board-more > summary,
+.money-compact-more > summary {
+  min-height: 44px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.people-board-decline {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+}
+.people-board-decline .field {
+  max-width: 40rem;
+}
+.people-board-manage,
+.money-compact-more {
+  width: 100%;
+}
+.people-board-manage > summary {
+  min-height: 44px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.money-compact-tables {
+  display: grid;
+  gap: var(--space-2);
+}
+.money-compact-tables table {
+  margin: 0;
+}

@@ -74,6 +74,8 @@ type Props = {
   projectionsEnabled?: boolean;
   /** The guided first run and the decisions-first overview (ADR-084 S0). It acts only where pages are on. */
   firstRunEnabled?: boolean;
+  /** The people board and the compact money view (ADR-084 S3). It acts only where the room and participants are on. */
+  boardEnabled?: boolean;
   /** The Buying Trip starter template (ADR-084 S7). It acts only where programme templates are on. */
   buyingTripEnabled?: boolean;
   /** The page frame shows the back link, the status chips and the helper line, and rare row actions sit in a menu. */
@@ -126,11 +128,14 @@ function ScopedProgrammes({
   roomEnabled = false,
   projectionsEnabled = false,
   firstRunEnabled = false,
+  boardEnabled = false,
   buyingTripEnabled = false,
   framed = false,
 }: Props) {
   // The first run ends on Publish, so it needs the public page and the participants module under it.
   const firstRun = firstRunEnabled && pagesEnabled && participantsEnabled;
+  // ADR-084 S3: the board and the compact money view are the room's own, so they need the room and the participants.
+  const board = boardEnabled && roomEnabled && participantsEnabled;
   const [selectedProgramme, setSelectedProgramme] = useState<string | null>(null);
   // The programme the room shows, kept in ?programme= (read once; the list itself loads after the first render).
   // An old link to one programme's section (#<programme id>-<view>) still opens that programme (layout budget L-03).
@@ -748,6 +753,7 @@ function ScopedProgrammes({
                   projectionsEnabled={projectionsEnabled}
                   termsEnabled={termsEnabled}
                   decisionsFirst={firstRun}
+                  boardFirst={board}
                   panels={{
                     companies: projectionsEnabled ? (
                       <ProgrammeProjectionPanel
@@ -793,6 +799,7 @@ function ScopedProgrammes({
                             workspaceId={workspaceId}
                             programmeId={p.id}
                             programmeName={p.name}
+                            queueInBoard={board}
                           />
                         </Suspense>
                       ) : null,
@@ -822,6 +829,8 @@ function ScopedProgrammes({
                           missionSharesEnabled={missionSharesEnabled}
                           programmeId={p.id}
                           archived={p.archived === true}
+                          boardEnabled={board}
+                          applicationsOn={pagesEnabled && p.archived !== true}
                         />
                       </Suspense>
                     ) : null,
@@ -886,6 +895,7 @@ function ScopedProgrammes({
                             issuer={issuer}
                             workspaceId={workspaceId}
                             programmeId={p.id}
+                            compact={board}
                           />
                         </Suspense>
                       ) : null,

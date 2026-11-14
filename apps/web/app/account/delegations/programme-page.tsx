@@ -6,6 +6,14 @@ import '../../delegations/[address]/programme-page.css';
 import { pp } from '../../../lib/i18n/programme-pages';
 import { customerHeaders, useCommandIds } from './pricing-client';
 import {
+  type Decision,
+  decisionLabel,
+  decisionNote,
+  decisionPayload,
+  decisionProblem,
+  decisionsFor,
+} from './programme-application-decisions';
+import {
   type Application,
   type PageView,
   type PublicCopy,
@@ -22,6 +30,8 @@ type Props = {
   workspaceId: string;
   programmeId: string;
   programmeName: string;
+  /** ADR-084 S3: the people board shows the applications, so this panel does not repeat them. */
+  queueInBoard?: boolean;
 };
 // What the organiser types. Lists are typed one item per line; the planned programme marks each line.
 export type Draft = {
@@ -271,7 +281,14 @@ export function ProgrammePage(props: Props) {
   );
 }
 
-function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }: Props) {
+function ScopedPage({
+  subject,
+  issuer,
+  workspaceId,
+  programmeId,
+  programmeName,
+  queueInBoard,
+}: Props) {
   const headers = customerHeaders(subject, issuer);
   const headersRef = useRef(headers);
   const commands = useCommandIds();
@@ -300,8 +317,9 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
   const read = useCallback(async () => {
     const scope = `workspaceId=${workspaceId}&programmeId=${programmeId}`;
     try {
+      // The people board owns the applications read (one read per programme), so this panel reads only the page.
       const [page, list] = await Promise.all(
-        ['page', 'applications'].map((kind) =>
+        (queueInBoard ? ['page'] : ['page', 'applications']).map((kind) =>
           fetch(`/api/customer-programme-pages?view=${kind}&${scope}`, {
             cache: 'no-store',
             credentials: 'same-origin',
@@ -311,17 +329,21 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
       );
       if ([401, 403].includes(page!.status)) return setLoad('denied');
       if (page!.status === 503) return setLoad('unavailable');
-      if (!page!.ok || !list!.ok) return setLoad('failed');
+      if (!page!.ok || (list && !list.ok)) return setLoad('failed');
       const parsed = parsePageView(await page!.json());
-      const body = (await list!.json()) as { applications?: unknown[]; nextAfter?: string | null };
+      const body = list
+        ? ((await list.json()) as { applications?: unknown[]; nextAfter?: string | null })
+        : null;
       setView(parsed);
-      setApplications((body.applications ?? []).map(parseApplication));
-      setNextAfter(typeof body.nextAfter === 'string' ? body.nextAfter : null);
+      if (body) {
+        setApplications((body.applications ?? []).map(parseApplication));
+        setNextAfter(typeof body.nextAfter === 'string' ? body.nextAfter : null);
+      }
       setLoad('ready');
     } catch {
       setLoad('failed');
     }
-  }, [workspaceId, programmeId]);
+  }, [workspaceId, programmeId, queueInBoard]);
   useEffect(() => {
     // The read starts after this effect returns; state changes only when it settles.
     void Promise.resolve().then(() => {
@@ -476,14 +498,12 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
     setNotice(pp('pp.org.takenDown'));
     await read();
   }
-  async function decide(item: Application, decision: 'INVITED' | 'WAITLISTED' | 'DECLINED') {
+  async function decide(item: Application, decision: Decision) {
     if (writing.current) return;
-    const note = decision === 'DECLINED' ? reason.trim() : '';
-    if (decision === 'DECLINED' && !between(note, 10, 500)) {
-      setRowError({
-        id: item.id,
-        message: pp('pp.org.declineReasonNeeded'),
-      });
+    const note = decisionNote(decision, reason);
+    const refusal = decisionProblem(decision, note);
+    if (refusal) {
+      setRowError({ id: item.id, message: refusal });
       return;
     }
     writing.current = true;
@@ -491,18 +511,7 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
     setRowError(null);
     const result = await pageRequest(
       { subject, issuer },
-      {
-        kind: 'application',
-        action: 'decide',
-        commandId: commands.forIntent('decide' + item.id + item.decisionVersion + decision + note),
-        workspaceId,
-        programmeId,
-        applicationId: item.id,
-        expectedVersion: item.decisionVersion,
-        decision,
-        ...(note ? { note } : {}),
-        acknowledged: true,
-      },
+      decisionPayload({ workspaceId, programmeId }, item, decision, note, commands.forIntent),
     );
     writing.current = false;
     setBusy(false);
@@ -831,7 +840,7 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
           </button>
         )}
       </div>
-      {view.version > 0 && (
+      {view.version > 0 && !queueInBoard && (
         <section
           aria-label={pp('pp.org.applications.label')}
           className="programme-page-applications"
@@ -898,50 +907,24 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
                       </div>
                     </div>
                   ) : (
-                    [
-                      'SUBMITTED',
-                      'WAITLISTED',
-                      'DECLINED',
-                      'INVITED',
-                      'INVITATION_EXPIRED',
-                    ].includes(item.status) && (
+                    decisionsFor(item.status).length > 0 && (
                       <div className="guide-actions-row">
-                        {item.status !== 'INVITED' && (
+                        {decisionsFor(item.status).map((decision) => (
                           <button
-                            type="button"
-                            className="text-link"
-                            disabled={busy}
-                            onClick={() => void decide(item, 'INVITED')}
-                          >
-                            {item.status === 'INVITATION_EXPIRED'
-                              ? pp('pp.org.inviteAgain')
-                              : pp('pp.org.invite')}
-                          </button>
-                        )}
-                        {['SUBMITTED', 'DECLINED', 'INVITATION_EXPIRED'].includes(item.status) && (
-                          <button
-                            type="button"
-                            className="text-link"
-                            disabled={busy}
-                            onClick={() => void decide(item, 'WAITLISTED')}
-                          >
-                            {pp('pp.org.waitlist')}
-                          </button>
-                        )}
-                        {item.status !== 'DECLINED' && (
-                          <button
+                            key={decision}
                             type="button"
                             className="text-link"
                             disabled={busy}
                             onClick={() => {
+                              if (decision !== 'DECLINED') return void decide(item, decision);
                               setDeclining(item.id);
                               setReason('');
                               setRowError(null);
                             }}
                           >
-                            {pp('pp.org.decline')}
+                            {decisionLabel(decision, item.status)}
                           </button>
-                        )}
+                        ))}
                       </div>
                     )
                   )}
