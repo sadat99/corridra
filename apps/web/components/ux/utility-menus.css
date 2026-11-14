@@ -201,7 +201,7 @@
 }
 
 /* The avatar menu is the longest (on phones it holds the language and help too) and the help menu grows with the
-   text size: each scrolls within the screen, above the bottom tabs, instead of running off it. */
+   text size: each scrolls within the screen instead of running off it. */
 .ux-util-avatar .ux-menu-panel,
 .ux-util-help .ux-menu-panel {
   max-height: calc(100dvh - 8.5rem);
