@@ -569,7 +569,7 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_UX_ACCESS_DOORS',
     label: 'Three ways in pages',
-    line: 'The three pages under /access (customer, team and network, private link) are open to everyone either way. This switch only decides whether search engines may list them: on means they may, off means they are asked to stay out. Turn it off by removing the setting in Vercel and redeploying.',
+    line: 'The three pages under /access (customer, team and network, private link) are open to everyone either way. On, search engines may list them and the footer of public pages shows three links to them for visitors who are signed out, in place of the Sign In button and the "Already working with us?" line, with the footer groups closed on phones. Off, search engines are asked to stay out and the footer is as before. Turn it off by removing the setting in Vercel and redeploying.',
     group: 'Team access',
     kind: 'flag',
   },

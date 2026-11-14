@@ -7,6 +7,7 @@ import { LanguageSwitcher } from './language-switcher';
 import { useT } from './language-provider';
 import { BrandLockup } from './site-header';
 import { isQuiet, useSignedInSeen } from './use-signed-in';
+import { accessDoors as accessDoorList } from '../lib/access-doors';
 import type { MessageKey } from '../lib/i18n/messages';
 import './site-footer.css';
 
@@ -70,7 +71,26 @@ export const footerGroups: readonly FooterGroup[] = [
   },
 ];
 
-export function SiteFooterView({ realUse }: { realUse: boolean }) {
+/**
+ * With CORRIDRA_UX_ACCESS_DOORS on, a footer link that led to the same place as an access door goes to the door
+ * (Owner, 14 Nov 2026: "ensure that concerned exisitng footer navigation links also get updated
+ * if led to the same"). Join the Corridra Network is the helper door's way in; the page it names links on to /network.
+ * The label and the translation key do not change.
+ */
+const doorFor: Record<string, string> = { '/network': '/access/team' };
+
+export function SiteFooterView({
+  realUse,
+  accessDoors = false,
+}: {
+  realUse: boolean;
+  /**
+   * CORRIDRA_UX_ACCESS_DOORS (Owner, 14 Nov 2026). Signed out, outside the staff preview and the compact /plan footer,
+   * three access doors replace the Sign In button and the "Already working with us?" line, and every family group
+   * starts closed on a phone. Unset, nothing here changes.
+   */
+  accessDoors?: boolean;
+}) {
   const t = useT();
   // The public header has already asked who is signed in; a signed-in person is never offered sign-in here.
   const who = useSignedInSeen();
@@ -81,6 +101,11 @@ export function SiteFooterView({ realUse }: { realUse: boolean }) {
   // trust words, with the trust legend folded (S13 under the S5 brief, owner confirmed, 9 November 2026, relayed by
   // the conductor: "proceed with /plan proposal"). Every other page keeps the full footer.
   const compact = pathname === '/plan';
+  // The doors show in the server HTML (signed out) and give way to the workspace button once a person is known.
+  const doors = accessDoors && !compact && !preview && !who;
+  // Where the doors show, every group starts closed on a phone; signed in and in the staff preview Buy Abroad stays
+  // open as before, and the compact footer is already closed.
+  const startsOpen = !compact && !doors;
   // Folded, the summary carries the legend's own opening words, so the body does not say them twice.
   const trust = (
     <>
@@ -97,7 +122,15 @@ export function SiteFooterView({ realUse }: { realUse: boolean }) {
     </>
   );
   return (
-    <footer className={compact ? 'guide-footer guide-footer-compact' : 'guide-footer'}>
+    <footer
+      className={
+        compact
+          ? 'guide-footer guide-footer-compact'
+          : doors
+            ? 'guide-footer guide-footer-doors'
+            : 'guide-footer'
+      }
+    >
       <div className="guide-footer-top">
         <div className="guide-footer-brand">
           <Link prefetch={false} className="guide-footer-wordmark" href="/">
@@ -118,7 +151,7 @@ export function SiteFooterView({ realUse }: { realUse: boolean }) {
                 >
                   {t('footer.openWorkspace')}
                 </Link>
-              ) : (
+              ) : doors ? null : (
                 <>
                   <Link prefetch={false} className="button-secondary" href="/signin">
                     {t('footer.signIn')}
@@ -133,6 +166,30 @@ export function SiteFooterView({ realUse }: { realUse: boolean }) {
               )}
             </div>
           )}
+          {doors ? (
+            <section
+              className="guide-footer-access"
+              lang="en"
+              aria-labelledby="guide-footer-access-title"
+            >
+              <h2 id="guide-footer-access-title" className="guide-footer-access-title">
+                Find your way in.
+              </h2>
+              <ul>
+                {accessDoorList.map((door) => (
+                  <li key={door.id}>
+                    <Link
+                      prefetch={false}
+                      href={door.href}
+                      aria-current={pathname === door.href ? 'page' : undefined}
+                    >
+                      {door.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
         </div>
         {/* One copy of each link. On a phone each group is a disclosure and Buy Abroad starts open (not in the
             compact footer of the request page, which keeps its length budget); from 701 px every
@@ -145,15 +202,22 @@ export function SiteFooterView({ realUse }: { realUse: boolean }) {
                 <FooterGroupBox
                   key={group.title}
                   group={group}
-                  open={!compact && index === 0}
+                  open={startsOpen && index === 0}
                   realUse={realUse}
+                  accessDoors={accessDoors}
                 />
               ))}
           </div>
           {footerGroups
             .filter((group) => !group.family)
             .map((group) => (
-              <FooterGroupBox key={group.title} group={group} open={false} realUse={realUse} />
+              <FooterGroupBox
+                key={group.title}
+                group={group}
+                open={false}
+                realUse={realUse}
+                accessDoors={accessDoors}
+              />
             ))}
         </nav>
       </div>
@@ -179,10 +243,12 @@ function FooterGroupBox({
   group,
   open,
   realUse,
+  accessDoors,
 }: {
   group: FooterGroup;
   open: boolean;
   realUse: boolean;
+  accessDoors: boolean;
 }) {
   const t = useT();
   const { title, family, links } = group;
@@ -198,7 +264,7 @@ function FooterGroupBox({
         <ul>
           {links.map(({ href, key, testKey }) => (
             <li key={href}>
-              <Link prefetch={false} href={href}>
+              <Link prefetch={false} href={accessDoors ? (doorFor[href] ?? href) : href}>
                 {t(!realUse && testKey ? testKey : key)}
               </Link>
             </li>
