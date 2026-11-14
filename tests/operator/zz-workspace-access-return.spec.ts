@@ -734,10 +734,10 @@ test('helper sign-in uses helper words and its return lands on the task page, ne
       );
     });
 
-    await test.step('a look-alike return still falls back to the staff workspace', async () => {
+    await test.step('a look-alike return is dropped before the page: staff words and the staff workspace', async () => {
       await context.clearCookies();
       await page.goto('/operator/signin?next=' + encodeURIComponent('/contributor?evil'));
-      await expect(page.getByRole('form', { name: 'Contributor sign-in' })).toBeVisible();
+      await expect(page.getByRole('form', { name: 'Operator sign-in' })).toBeVisible();
       await signInThrough(
         '/operator/signin?next=' + encodeURIComponent('/contributor?evil'),
         '/operator',
