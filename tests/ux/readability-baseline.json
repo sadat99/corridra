@@ -20,6 +20,27 @@
     "sentences": 34,
     "words": 305
   },
+  "/access/customer": {
+    "grade": 6.8,
+    "hard": 0,
+    "long": 0,
+    "sentences": 6,
+    "words": 50
+  },
+  "/access/link": {
+    "grade": 3.4,
+    "hard": 0,
+    "long": 0,
+    "sentences": 9,
+    "words": 79
+  },
+  "/access/team": {
+    "grade": 8.6,
+    "hard": 2,
+    "long": 0,
+    "sentences": 8,
+    "words": 63
+  },
   "/account": {
     "redirectsTo": "/signin"
   },

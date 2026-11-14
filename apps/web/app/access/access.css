@@ -1,0 +1,122 @@
+/* The three ways in (/access/*). Tokens only; panels are --radius-lg, cards --radius-md. */
+.guide-page-hero.access-page-hero {
+  padding-block: var(--space-4) var(--space-3);
+}
+.guide-page-hero.access-page-hero > div {
+  gap: var(--space-3);
+}
+.access-page {
+  display: grid;
+  gap: var(--space-6);
+  padding-block-end: var(--space-6);
+}
+.access-page > section,
+.access-page > nav {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+}
+.access-page h2 {
+  margin: 0;
+  color: var(--text-1);
+  font-size: var(--text-h2);
+}
+.access-page p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-base);
+  line-height: 1.5;
+}
+.access-page .text-link,
+.access-page .button,
+.access-page .button-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 2.75rem;
+}
+.access-panels,
+.access-cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+.access-panel {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  justify-items: start;
+  padding: var(--space-6);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+.access-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-2) var(--space-3);
+  align-content: start;
+  align-items: center;
+  padding: var(--space-4);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+.access-card h2,
+.access-card h3 {
+  margin: 0;
+  color: var(--text-1);
+  font-size: var(--text-lg);
+}
+.access-card > :not(svg, h2, h3) {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+.access-card svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: none;
+  color: var(--brand);
+}
+.access-steps {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.access-steps li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--text-2);
+  font-size: var(--text-base);
+}
+.access-elsewhere {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-6);
+  padding-block-start: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+.access-elsewhere h2 {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--text-1);
+  font-size: var(--text-lg);
+}
+@media (min-width: 48rem) {
+  .access-elsewhere h2 {
+    flex-basis: auto;
+  }
+  .access-panels,
+  .access-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 64rem) {
+  .access-cards--three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

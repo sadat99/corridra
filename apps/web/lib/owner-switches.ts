@@ -567,6 +567,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'flag',
   },
   {
+    name: 'CORRIDRA_UX_ACCESS_DOORS',
+    label: 'Three ways in pages',
+    line: 'The three pages under /access (customer, team and network, private link) are open to everyone either way. This switch only decides whether search engines may list them: on means they may, off means they are asked to stay out. Turn it off by removing the setting in Vercel and redeploying.',
+    group: 'Team access',
+    kind: 'flag',
+  },
+  {
     name: 'CORRIDRA_UX_POCKET',
     label: 'Pocket button on phones',
     line: 'On phones and the installed app, signed-in customer pages get one button in the corner that says the next thing to do, a short list of the main places on a press and slide up or a tap on More, and a shorter header. The New Request and Help buttons move into that list. Wider screens, staff pages and public pages are unchanged. It reads nothing new and removes nothing.',
