@@ -518,3 +518,24 @@ test('the owner operating rules are recorded, linked from AGENTS.md and session 
     'session rotation must point at the rules',
   );
 });
+
+// A3c (pricing, series and exports): the rare series action stays in the shared row menu and asks before retiring, the
+// card keeps one primary action per view, and its stylesheet is tokens only.
+test('the pricing card keeps Retire Series in the shared row menu and its stylesheet is tokens only', () => {
+  const dir = join(web, 'app/account/delegations');
+  const menu = read(join(dir, 'series-row-actions.tsx'));
+  assert.match(menu, /components\/ux\/overflow-menu/);
+  assert.match(menu, /'More actions for ' \+ name/);
+  assert.match(menu, /aria-label=\{'Confirm retiring ' \+ name\}/);
+  const series = read(join(dir, 'programme-series.tsx'));
+  assert.match(series, /<SeriesRowActions/);
+  assert.doesNotMatch(
+    series,
+    /'Retire Series '|'Restore Series '/,
+    'Retire sits in the menu, not in the row',
+  );
+  assert.match(series, /firstNextId \? 'secondary-link' : 'primary-link'/);
+  const css = read(join(dir, 'programme-pricing.css'));
+  assert.doesNotMatch(css, /#[0-9a-fA-F]{3,8}\b|\brgba?\(|text-transform|font-size:\s*\d/);
+  assert.match(css, /gap: var\(--space-3\)/);
+});

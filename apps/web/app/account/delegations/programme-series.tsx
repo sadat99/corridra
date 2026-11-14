@@ -14,6 +14,8 @@ import {
   usePrivateView,
   uuid,
 } from './pricing-client';
+import { SeriesRowActions } from './series-row-actions';
+import './programme-pricing.css';
 
 type Code = keyof typeof currencies;
 type Series = {
@@ -364,6 +366,13 @@ function ScopedSeries({ subject, issuer, workspaceId, onChanged }: Props) {
     });
   }
 
+  // One primary action per view: the first series that can start its next edition owns it, so New Series and the
+  // other rows step down to the outlined style (a class change only, the names and the actions are the same).
+  const firstNextId =
+    (list.status === 'ready' && list.data
+      ? list.data.series.find((x) => !x.retired && x.nextEditionDate && !x.templateRetired)?.id
+      : undefined) ?? null;
+
   return (
     <div aria-busy={busy || list.status === 'loading'}>
       <h4>Series</h4>
@@ -414,48 +423,45 @@ function ScopedSeries({ subject, issuer, workspaceId, onChanged }: Props) {
                       ))}
                     </ul>
                   )}
-                  {!s.retired && s.nextEditionDate && !s.templateRetired && (
-                    <>
+                  <div className="ux-series-actions">
+                    {!s.retired && s.nextEditionDate && !s.templateRetired && (
                       <button
                         type="button"
-                        className="primary-link"
+                        className={s.id === firstNextId ? 'primary-link' : 'secondary-link'}
                         disabled={busy}
                         onClick={() => startMaking(s)}
                       >
                         Create the Next Edition of {s.name}
-                      </button>{' '}
-                    </>
-                  )}
-                  <button
-                    type="button"
-                    className="text-link"
-                    disabled={busy}
-                    onClick={() => startEdit(s)}
-                  >
-                    Edit Series {s.name}
-                  </button>{' '}
-                  <button
-                    type="button"
-                    className="text-link"
-                    disabled={busy}
-                    onClick={() => save(!s.retired, s, s)}
-                  >
-                    {s.retired ? 'Restore Series ' : 'Retire Series '}
-                    {s.name}
-                  </button>{' '}
-                  {s.editions.length > 0 && (
+                      </button>
+                    )}
                     <button
                       type="button"
                       className="text-link"
-                      aria-pressed={revenueFor === s.id}
-                      onClick={() => setRevenueFor(revenueFor === s.id ? null : s.id)}
+                      disabled={busy}
+                      onClick={() => startEdit(s)}
                     >
-                      {revenueFor === s.id
-                        ? 'Hide Repeat Revenue for '
-                        : 'Show Repeat Revenue for '}
-                      {s.name}
+                      Edit Series {s.name}
                     </button>
-                  )}
+                    {s.editions.length > 0 && (
+                      <button
+                        type="button"
+                        className="text-link"
+                        aria-pressed={revenueFor === s.id}
+                        onClick={() => setRevenueFor(revenueFor === s.id ? null : s.id)}
+                      >
+                        {revenueFor === s.id
+                          ? 'Hide Repeat Revenue for '
+                          : 'Show Repeat Revenue for '}
+                        {s.name}
+                      </button>
+                    )}
+                    <SeriesRowActions
+                      name={s.name}
+                      retired={s.retired}
+                      busy={busy}
+                      onToggleRetired={() => save(!s.retired, s, s)}
+                    />
+                  </div>
                 </li>
               ))}
             </ul>
@@ -602,7 +608,7 @@ function ScopedSeries({ subject, issuer, workspaceId, onChanged }: Props) {
           {!editing && !making && (
             <button
               type="button"
-              className="primary-link"
+              className={firstNextId ? 'secondary-link' : 'primary-link'}
               disabled={busy}
               onClick={() => startEdit(null)}
             >

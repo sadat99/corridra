@@ -1,6 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
 import { customerHeaders, deniedMessage, useCommandIds } from './pricing-client';
+import './programme-pricing.css';
 
 type Props = {
   subject: string;

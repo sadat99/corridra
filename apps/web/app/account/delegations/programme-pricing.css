@@ -1,0 +1,88 @@
+/* Pricing, series and exports (UI/UX.v3 consistency pass, unit A3c): one calm rhythm for the three tabs of the planner.
+   12 px inside a section, 24 px between sections, the tab bar and the actions as 44 px targets, type from the --text-*
+   tokens. Presentation only: every label, number and table keeps its words. Tokens only. */
+.detail-card.pricing-area {
+  display: grid;
+  gap: var(--space-3);
+}
+.detail-card.pricing-area > * {
+  margin: 0;
+}
+.detail-card.pricing-area .pricing-tabs {
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+  padding-bottom: var(--space-3);
+}
+.detail-card.pricing-area .pricing-tabs [role='tab'] {
+  min-height: 44px;
+  font-size: var(--text-base);
+  line-height: var(--leading-title);
+}
+.detail-card.pricing-area [role='tabpanel'] > div {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+}
+.detail-card.pricing-area [role='tabpanel'] > div > * {
+  margin: 0;
+  max-width: 100%;
+}
+.detail-card.pricing-area [role='tabpanel'] h4 {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  line-height: var(--leading-title);
+}
+.detail-card.pricing-area [role='tabpanel'] h5 {
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+.detail-card.pricing-area [role='tabpanel'] > div > ul,
+.detail-card.pricing-area [role='tabpanel'] > div > form,
+.detail-card.pricing-area [role='tabpanel'] > div > .delivery-table {
+  justify-self: stretch;
+  margin-top: var(--space-3);
+}
+.detail-card.pricing-area [role='tabpanel'] > div > ul {
+  display: grid;
+  gap: var(--space-6);
+  padding-inline-start: var(--space-4);
+}
+.detail-card.pricing-area [role='tabpanel'] > div > ul > li {
+  margin: 0;
+}
+.detail-card.pricing-area [role='tabpanel'] .operator-form {
+  gap: var(--space-3);
+  padding: 0;
+}
+.detail-card.pricing-area [role='tabpanel'] .operator-page .text-link,
+.detail-card.pricing-area [role='tabpanel'] .text-link {
+  margin-inline-end: 0;
+}
+/* One row of actions per series: Edit and the revenue switch stay in view, the rare one sits in the menu. */
+.ux-series-actions {
+  display: flex;
+  margin-top: var(--space-3);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space-4);
+}
+.ux-series-confirm {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+}
+@media (max-width: 768px) {
+  .detail-card.pricing-area .pricing-tabs [role='tab'] {
+    flex: 1 1 auto;
+  }
+  .detail-card.pricing-area .primary-link,
+  .detail-card.pricing-area .secondary-link {
+    min-height: 44px;
+  }
+}

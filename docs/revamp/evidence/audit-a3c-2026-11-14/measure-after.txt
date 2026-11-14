@@ -1,0 +1,9 @@
+after 390x844 Pricing: main 1119px = 1.33 screens; card 952px; primary actions 1; sideways scroll 0px
+after 390x844 Series: main 1594px = 1.89 screens; card 1427px; primary actions 1; sideways scroll 0px
+after 390x844 Exports: main 855px = 1.01 screens; card 688px; primary actions 1; sideways scroll 0px
+after 768x1024 Pricing: main 864px = 0.84 screens; card 696px; primary actions 1; sideways scroll 0px
+after 768x1024 Series: main 1092px = 1.07 screens; card 924px; primary actions 1; sideways scroll 0px
+after 768x1024 Exports: main 716px = 0.70 screens; card 547px; primary actions 1; sideways scroll 0px
+after 1440x900 Pricing: main 801px = 0.89 screens; card 622px; primary actions 1; sideways scroll 0px
+after 1440x900 Series: main 965px = 1.07 screens; card 786px; primary actions 1; sideways scroll 0px
+after 1440x900 Exports: main 677px = 0.75 screens; card 498px; primary actions 1; sideways scroll 0px
