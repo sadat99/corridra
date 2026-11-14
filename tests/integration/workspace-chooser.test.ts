@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { DomainError } from '../../packages/domain/src/index';
 
 // The workspace chooser and the company profiles entry, written out as HTML with their reads answered by the test,
 // so what is asserted is what a person reads: one next action for a person with no workspace, and wording that
@@ -19,6 +20,7 @@ const renderToStaticMarkup = web('react-dom/server').renderToStaticMarkup as (
 const state = {
   workspaces: [] as { id: string; name: string; role: string; synthetic: boolean }[],
   linksOn: false,
+  fail: null as Error | null,
 };
 vi.mock('next/link', () => ({
   default: ({
@@ -31,7 +33,8 @@ vi.mock('next/link', () => ({
     className?: string;
   }) => createElement('a', { href, className }, children as never),
 }));
-vi.mock('next/navigation', () => ({
+// Resolved from the web application, where the chooser imports it; the chooser is loaded after this.
+vi.doMock(web.resolve('next/navigation'), () => ({
   redirect: (to: string) => {
     throw new Error('redirect:' + to);
   },
@@ -39,7 +42,12 @@ vi.mock('next/navigation', () => ({
 vi.mock('../../apps/web/lib/foundations', () => ({
   foundations: () => ({
     ready: Promise.resolve(),
-    customerWorkspaces: { list: async () => state.workspaces },
+    customerWorkspaces: {
+      list: async () => {
+        if (state.fail) throw state.fail;
+        return state.workspaces;
+      },
+    },
   }),
 }));
 vi.mock('../../packages/auth/src/customer-organisation-links.ts', () => ({
@@ -121,6 +129,7 @@ const b = '22222222-2222-4222-8222-222222222222';
 beforeEach(() => {
   state.workspaces = [];
   state.linksOn = false;
+  state.fail = null;
 });
 
 describe('a person with no workspace is offered one next action', () => {
@@ -135,16 +144,60 @@ describe('a person with no workspace is offered one next action', () => {
       expect(html).not.toContain('Manage your workspaces');
       expect(html).not.toContain('Start a request');
     });
-  it('programmes: the sentence about owners and admins stays, with the workspaces link', async () => {
+  it('programmes with no workspace: why a workspace is needed, one primary action, registrations kept', async () => {
+    const html = await chooser('programmes');
+    expect(html).toContain('Organising a programme needs a workspace. Create one to continue.');
+    expect(headingOf(html)).toBe('Create a workspace');
+    expect(html).toContain('class="primary-link"');
+    expect(anchors(html)).toEqual([
+      { href: '/account?view=work#customer-workspaces', name: 'Create a Workspace' },
+      { href: '/account/delegations', name: 'Your programme registrations' },
+    ]);
+    expect(html).not.toContain('Manage your workspaces');
+  });
+  it('programmes with member-only workspaces: says only owners and admins organise, still offers Create a Workspace', async () => {
     state.workspaces = [workspace(a, 'member'), workspace(b, 'member')];
     const html = await chooser('programmes');
-    expect(html).toContain('Programme management is available to workspace owners and admins.');
-    expect(headingOf(html)).toBe('Choose a workspace');
-    expect(html).not.toContain('Create a Workspace');
-    expect(anchors(html).map((x) => x.name)).toEqual([
-      'Manage your workspaces',
-      'Your programme registrations',
+    expect(html).toContain('Only workspace owners and admins can organise programmes.');
+    expect(html).not.toContain('Organising a programme needs a workspace.');
+    expect(headingOf(html)).toBe('Create a workspace');
+    expect(anchors(html)).toEqual([
+      { href: '/account?view=work#customer-workspaces', name: 'Create a Workspace' },
+      { href: '/account/delegations', name: 'Your programme registrations' },
     ]);
+  });
+  it('programmes copy has no em dash and the action is Title Case', async () => {
+    for (const rows of [[], [workspace(a, 'member')]]) {
+      state.workspaces = rows;
+      const html = await chooser('programmes');
+      expect(html).not.toContain('\u2014');
+      expect(html).not.toContain('<button');
+      expect(html).not.toContain('<form');
+    }
+  });
+});
+
+describe('only the programmes chooser carries the person back after sign-in', () => {
+  const failWith = (error: Error) => {
+    state.fail = error;
+  };
+  it('programmes: 401 goes to sign-in with returnTo, unverified email to verify-email with returnTo', async () => {
+    failWith(new DomainError('Sign in to continue', 401));
+    await expect(chooser('programmes')).rejects.toThrow(
+      'redirect:/signin?returnTo=%2Faccount%2Fdelegations%2Forganise',
+    );
+    failWith(new DomainError('Verify your email to continue', 403));
+    await expect(chooser('programmes')).rejects.toThrow(
+      'redirect:/verify-email?returnTo=%2Faccount%2Fdelegations%2Forganise',
+    );
+  });
+  it('the other kinds keep their plain redirects', async () => {
+    for (const kind of ['profile', 'services', 'billing'] as const) {
+      failWith(new DomainError('Sign in to continue', 401));
+      await expect(chooser(kind)).rejects.toThrow(/^redirect:\/signin$/);
+      failWith(new DomainError('Verify your email to continue', 403));
+      await expect(chooser(kind)).rejects.toThrow(/^redirect:\/verify-email$/);
+    }
   });
 });
 

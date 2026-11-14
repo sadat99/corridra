@@ -1,7 +1,10 @@
 // Navigation only. This never grants access to a request or a workspace.
 const uuid = '[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}';
-// The exact pages an email may send a person back to after sign-in (ADR-067). Each is a whole path: no
-// query, no fragment, no scheme, no host. A page still checks who is signed in before it shows anything.
+/** The organiser page. Sign-in returns here whatever the Pulse switch says (ADR-067, 14 November 2026 note). */
+export const organiserPath = '/account/delegations/organise';
+// The exact pages an email may send a person back to after sign-in (ADR-067), kept only while `extended` is on.
+// Each is a whole path: no query, no fragment, no scheme, no host. A page still checks who is signed in
+// before it shows anything.
 const emailDestinations = [
   /^\/plan$/,
   /^\/account\/move$/,
@@ -11,11 +14,13 @@ const emailDestinations = [
 ];
 
 /**
- * Where to go after sign-in. By default only the request form is kept, as it always was. With `extended`
- * (the server passes it while Pulse is on) the short list of exact email destinations is kept too.
+ * Where to go after sign-in. By default the request form and the organiser page are kept, each as an exact
+ * string. With `extended` (the server passes it while Pulse is on) the short list of exact email destinations
+ * is kept too.
  */
 export function accountReturnTo(value: string | null | undefined, extended = false) {
   if (value === '/plan') return '/plan';
+  if (value === organiserPath) return organiserPath;
   if (
     extended &&
     typeof value === 'string' &&

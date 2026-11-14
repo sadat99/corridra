@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { DomainError } from '@corridra/domain';
+import { accountAccessPath, organiserPath } from '../lib/account-return';
 import { foundations } from '../lib/foundations';
 import {
   workspaceDescription,
@@ -42,13 +43,17 @@ export async function WorkspaceChooser({
     await s.ready;
     workspaces = await s.customerWorkspaces.list();
   } catch (error) {
-    if (error instanceof DomainError && error.status === 401) redirect('/signin');
+    // Only the organiser chooser carries the person back after sign-in or verification; the other kinds
+    // keep their plain redirects.
+    const back = kind === 'programmes';
+    if (error instanceof DomainError && error.status === 401)
+      redirect(back ? accountAccessPath('/signin', organiserPath) : '/signin');
     if (
       error instanceof DomainError &&
       error.status === 403 &&
       error.message === 'Verify your email to continue'
     )
-      redirect('/verify-email');
+      redirect(back ? accountAccessPath('/verify-email', organiserPath) : '/verify-email');
     return (
       <p role="status">
         Your workspaces could not be loaded.{' '}
@@ -60,12 +65,14 @@ export async function WorkspaceChooser({
     );
   }
   const visible = workspacesFor(kind, workspaces);
+  // Organising needs a workspace the person owns or manages; membership alone does not give one.
+  const memberOnly = kind === 'programmes' && visible.length === 0 && workspaces.length > 0;
   // One workspace leaves nothing to choose: go straight to it.
   if (visible.length === 1) redirect(workspacePath(kind, visible[0]!.id));
   return (
     <section aria-labelledby="workspace-choice-title">
       <h2 id="workspace-choice-title">
-        {visible.length || kind === 'programmes' ? 'Choose a workspace' : 'Create a workspace'}
+        {visible.length ? 'Choose a workspace' : 'Create a workspace'}
       </h2>
       <p>{workspaceDescription(kind, linksEnabled)}</p>
       {visible.length ? (
@@ -86,13 +93,15 @@ export async function WorkspaceChooser({
             </li>
           ))}
         </ul>
-      ) : kind === 'programmes' ? (
-        <p className="ux-empty">
-          Programme management is available to workspace owners and admins.
-        </p>
       ) : (
         <>
-          <p className="ux-empty">You do not have a workspace yet. Create one to continue.</p>
+          <p className="ux-empty">
+            {kind !== 'programmes'
+              ? 'You do not have a workspace yet. Create one to continue.'
+              : memberOnly
+                ? 'Only workspace owners and admins can organise programmes. Create a workspace of your own to organise.'
+                : 'Organising a programme needs a workspace. Create one to continue.'}
+          </p>
           <p>
             <Link
               className="primary-link"
@@ -104,7 +113,7 @@ export async function WorkspaceChooser({
           </p>
         </>
       )}
-      {(visible.length > 0 || kind === 'programmes') && (
+      {visible.length > 0 && (
         <p>
           <Link
             className="text-link"

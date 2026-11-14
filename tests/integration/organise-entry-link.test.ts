@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DomainError } from '../../packages/domain/src/index';
+import { accountAccessPath, accountReturnTo } from '../../apps/web/lib/account-return';
 
 // ADR-084 slice S0, the entry link. The organiser entry on /trade-missions must open the organiser route
 // (/account/delegations/organise), not the participant page (/account/delegations). The link is followed here the way
@@ -175,24 +176,78 @@ describe('the organiser entry on /trade-missions opens the organiser route', () 
     ).toEqual([`/account/delegations/${a}`, `/account/delegations/${b}`]);
   });
 
-  it('a signed-out visitor is sent to sign in, the chooser’s own return path', async () => {
+  it('a signed-out visitor is sent to sign in and the return to the organiser page is kept', async () => {
     state.list = async () => {
       throw new DomainError('Sign in to continue', 401);
     };
-    await expect((await follow()).render()).rejects.toThrow(/^redirect:\/signin$/);
+    await expect((await follow()).render()).rejects.toThrow(
+      /^redirect:\/signin\?returnTo=%2Faccount%2Fdelegations%2Forganise$/,
+    );
   });
 
-  it('a participant-only account gets the chooser’s own words and its link to registrations', async () => {
-    // A member of a workspace, or a person with no workspace at all, manages no programme.
-    for (const rows of [[workspace(a, 'member')], []]) {
-      state.list = async () => rows;
-      const html = await (await follow()).render();
-      expect(html).toContain('Programme management is available to workspace owners and admins.');
-      expect(anchors(html)).toEqual([
-        { href: '/account?view=work#customer-workspaces', name: 'Manage your workspaces' },
-        { href: '/account/delegations', name: 'Your programme registrations' },
-      ]);
-    }
+  it('the redirect chain ends back on the organiser page after sign-in or sign-up', async () => {
+    state.list = async () => {
+      throw new DomainError('Sign in to continue', 401);
+    };
+    const landed = await follow();
+    const error = await landed.render().then(
+      () => null,
+      (e: Error) => e,
+    );
+    const target = error!.message.replace(/^redirect:/, '');
+    const url = new URL(target, 'https://corridra.example');
+    expect(url.pathname).toBe('/signin');
+    // The sign-in form reads this one value, through the reviewed list, and goes there when sign-in succeeds.
+    const returnTo = url.searchParams.get('returnTo');
+    expect(accountReturnTo(returnTo)).toBe(landed.href);
+    // The sign-up and verify links the form draws from that value carry it on.
+    for (const page of ['/signup', '/verify-email', '/forgot-password'] as const)
+      expect(accountAccessPath(page, accountReturnTo(returnTo))).toBe(
+        `${page}?returnTo=%2Faccount%2Fdelegations%2Forganise`,
+      );
+    // The sign-in page also keeps the path when it is passed as `next`, with the email-return switch off.
+    const signinFile = '../../apps/web/app/signin/page';
+    const signin = (await import(/* @vite-ignore */ signinFile)) as {
+      default: (props: unknown) => Promise<unknown>;
+    };
+    await expect(
+      signin.default({ searchParams: Promise.resolve({ next: landed.href }) }),
+    ).rejects.toThrow(`redirect:/signin?returnTo=%2Faccount%2Fdelegations%2Forganise`);
+  });
+
+  it('an unverified email is sent to verify and keeps the return', async () => {
+    state.list = async () => {
+      throw new DomainError('Verify your email to continue', 403);
+    };
+    await expect((await follow()).render()).rejects.toThrow(
+      /^redirect:\/verify-email\?returnTo=%2Faccount%2Fdelegations%2Forganise$/,
+    );
+  });
+
+  it('a person with no workspace is offered Create a Workspace, which only links to the create place', async () => {
+    state.list = async () => [];
+    const html = await (await follow()).render();
+    expect(html).toContain('Organising a programme needs a workspace. Create one to continue.');
+    expect(html).not.toContain('Programme management is available to workspace owners and admins.');
+    expect(anchors(html)).toEqual([
+      { href: '/account?view=work#customer-workspaces', name: 'Create a Workspace' },
+      { href: '/account/delegations', name: 'Your programme registrations' },
+    ]);
+    // Nothing is created by looking at the page: no form and no button.
+    expect(html).not.toContain('<form');
+    expect(html).not.toContain('<button');
+  });
+
+  it('a member without owner or admin rights is told who can organise and can still create a workspace', async () => {
+    state.list = async () => [workspace(a, 'member')];
+    const html = await (await follow()).render();
+    expect(html).toContain('Only workspace owners and admins can organise programmes.');
+    expect(anchors(html)).toEqual([
+      { href: '/account?view=work#customer-workspaces', name: 'Create a Workspace' },
+      { href: '/account/delegations', name: 'Your programme registrations' },
+    ]);
+    expect(html).not.toContain('<form');
+    expect(html).not.toContain('<button');
   });
 });
 

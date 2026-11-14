@@ -17,6 +17,7 @@ An optional additive module, `customer_notification_migrations`, beside mission 
 - **Format.** Single column, a plain-text twin, no open-tracking pixel, safe in dark mode, ready for right-to-left. English until a language preference is stored.
 - **Controls.** Mute per request (the existing token link pattern), a daily digest, and quiet hours by time zone. Digests and quiet hours only delay; they never drop a message that is still valid.
 - **Sign-in return.** `accountReturnTo` accepts exactly `/plan` today, so an email link loses its destination at sign-in. It is extended to a short allow-list of exact internal paths with strict checks (no scheme, no host, no `//`, no encoded separators, no query or fragment beyond the exact path). It is navigation only.
+  - _Amendment, 14 November 2026._ `/account/delegations/organise` is also accepted as an exact string, like `/plan`, whatever the Pulse switch says. It is the organiser page: the programmes chooser sends a signed-out visitor to sign-in, or an unverified one to verify-email, with this path as `returnTo`, and sign-up carries it on. No query, no fragment, no prefix match. It is navigation only: the page repeats its own sign-in, workspace and role checks.
 - **Control.** A control table, closed until the owner opens it, with an offline `configure` step like mission mail's. The application switch is separate. Both must be on, and `realUseEnabled` must be true.
 - **Order.** Email first. Web push comes after, and WhatsApp is not covered here.
 
