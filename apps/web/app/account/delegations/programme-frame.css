@@ -1,0 +1,28 @@
+/* The planning page inside the page frame (UI/UX.v3, audit A3d part 2). Tokens only. Every rule is scoped to `.ux-prog`,
+   which only the framed page sets, so the section drawn on its own (fixtures, older specs) keeps its old look.
+   The row menu sits on the left edge of the programme's text column; the archive confirm is one wrapping line;
+   on a phone the menu and the archive toggle are 44 px targets. */
+.ux-prog .ux-prog-more {
+  margin-inline-start: calc(var(--space-2) * -1);
+}
+.ux-prog .ux-prog-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin-block-start: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+}
+@media (min-width: 48rem) {
+  .ux-prog .ux-prog-more .ux-menu-button {
+    min-height: 2.25rem;
+  }
+}
+@media (max-width: 47.99rem) {
+  .ux-prog :is(button.text-link, button.primary-link, .ux-menu-button) {
+    min-height: 44px;
+  }
+}

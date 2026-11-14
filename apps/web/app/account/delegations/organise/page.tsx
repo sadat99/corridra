@@ -1,6 +1,7 @@
 import { customerProgrammesEnabled } from '@corridra/auth/customer-programmes';
 import { CustomerShell } from '../../../../components/customer-shell';
 import { WorkspaceChooser } from '../../../../components/workspace-chooser';
+import { programmesChooserBack } from '../../frame-copy';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const metadata = {
@@ -9,7 +10,12 @@ export const metadata = {
 };
 export default function Page() {
   return (
-    <CustomerShell tab="work" eyebrow="PROGRAMMES" title="Programmes">
+    <CustomerShell
+      tab="work"
+      eyebrow="PROGRAMMES"
+      title="Programmes"
+      frame={{ back: programmesChooserBack }}
+    >
       <WorkspaceChooser kind="programmes" enabled={customerProgrammesEnabled()} />
     </CustomerShell>
   );
