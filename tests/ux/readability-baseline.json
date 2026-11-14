@@ -21,11 +21,11 @@
     "words": 305
   },
   "/access/customer": {
-    "grade": 6.8,
+    "grade": 8.9,
     "hard": 0,
     "long": 0,
-    "sentences": 6,
-    "words": 50
+    "sentences": 3,
+    "words": 23
   },
   "/access/link": {
     "grade": 3.4,

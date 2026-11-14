@@ -124,3 +124,28 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+/* On a phone, actions that sit one above another share one width. */
+@media (max-width: 40rem) {
+  .access-page > section {
+    justify-items: stretch;
+  }
+  .access-panel,
+  .access-card {
+    justify-items: stretch;
+  }
+  .access-card > :not(svg, h2, h3) {
+    justify-self: stretch;
+  }
+  .access-page .button,
+  .access-page .button-secondary,
+  .access-page .text-link {
+    justify-content: center;
+  }
+  .access-elsewhere {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .access-page .access-elsewhere h2 {
+    flex-basis: auto;
+  }
+}
