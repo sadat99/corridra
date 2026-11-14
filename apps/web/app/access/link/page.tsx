@@ -14,7 +14,6 @@ export default function Page() {
       <p>{page.note}</p>
       <PrivateLinkField
         label={page.field.label}
-        hint={page.field.hint}
         action={page.field.action}
         refused={page.field.refused}
       />

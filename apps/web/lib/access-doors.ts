@@ -235,7 +235,6 @@ export const linkDoorPage = {
   /** The paste field (browser only). One fixed refusal for every input it will not open. English only until a native review. */
   field: {
     label: 'Paste your private link',
-    hint: 'The link is checked in this browser and is not sent anywhere until it opens.',
     action: 'Open Link',
     refused:
       'That link cannot be opened here. Paste the whole link exactly as it was sent, or ask the person who sent it for a new one.',

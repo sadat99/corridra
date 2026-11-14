@@ -48,13 +48,22 @@
   color: var(--text-1);
   font-weight: var(--weight-semibold);
 }
+/* The input and the action share one row from the smallest phone up, so the field adds one line to the page. */
+.access-link-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: stretch;
+}
 .access-link-field .field input {
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   min-height: 2.75rem;
 }
-.access-link-hint {
-  color: var(--text-2);
-  font-size: var(--text-sm);
+.access-link-row .button {
+  flex: none;
+  justify-content: center;
+  min-height: 2.75rem;
+  margin: 0;
 }
 .access-panels,
 .access-cards {

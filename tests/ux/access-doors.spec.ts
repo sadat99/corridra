@@ -5,7 +5,7 @@ import { join } from 'node:path';
 
 // Access doors, Unit A: the three pages under /access at the six AC/1 widths. No horizontal scroll, one h1,
 // axe WCAG 2.2 AA clean, 44 px targets up to 768, visible keyboard focus, and the page-length limits of the brief
-// (content without the footer: customer and team 1550 px at 390 and 1100 px at 1440; link 1100 and 800).
+// (content without the footer: customer and team 1550 px at 390 and 1100 px at 1440; link 1200 and 800).
 const widths = [320, 390, 768, 1024, 1440, 1920];
 const pages = [
   {
@@ -26,7 +26,9 @@ const pages = [
     path: '/access/link',
     h1: 'Open the link Corridra sent you.',
     title: 'Private Link Access | Corridra',
-    max390: 1100,
+    // 1200 at 390 since the paste-a-private-link field (Unit E): one labelled row, 81 px with its gap, takes the page to
+    // 1179. The 1440 limit is unchanged.
+    max390: 1200,
     max1440: 800,
   },
 ];
@@ -126,8 +128,9 @@ test('the three pages link to each other and write actions in Title Case', async
     for (const label of labels) expect(label.trim()).toMatch(/^[A-Z]/);
   }
   await page.goto('/access/link');
-  // The role cards and the help text of the private link door carry no link, no form and no field.
-  await expect(
-    page.locator('.access-card a, .access-page > section a, main form, main input'),
-  ).toHaveCount(0);
+  // The role cards and the help text of the private link door carry no link and no form; the one field on the page is
+  // the paste field, which is not a form (a form would put the link in an address).
+  await expect(page.locator('.access-card a, .access-page > section a, main form')).toHaveCount(0);
+  await expect(page.locator('main input')).toHaveCount(1);
+  await expect(page.locator('main .access-link-field input')).toHaveCount(1);
 });

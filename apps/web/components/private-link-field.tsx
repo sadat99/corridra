@@ -10,16 +10,15 @@ import { parsePrivateLink } from '../lib/private-link-paths';
  */
 export function PrivateLinkField({
   label,
-  hint,
   action,
   refused,
 }: {
   label: string;
-  hint: string;
   action: string;
   refused: string;
 }) {
   const id = useId();
+  const errorId = `${id}-error`;
   const [value, setValue] = useState('');
   const [failed, setFailed] = useState(false);
 
@@ -37,40 +36,39 @@ export function PrivateLinkField({
     <div className="access-link-field">
       <div className="field">
         <label htmlFor={id}>{label}</label>
-        <input
-          id={id}
-          type="text"
-          value={value}
-          onChange={(e) => {
-            setValue(e.target.value);
-            if (failed) setFailed(false);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              open();
-            }
-          }}
-          autoComplete="off"
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-          inputMode="url"
-          aria-describedby={`${id}-hint`}
-          aria-invalid={failed || undefined}
-        />
-        <p id={`${id}-hint`} className="access-link-hint">
-          {hint}
-        </p>
+        <div className="access-link-row">
+          <input
+            id={id}
+            type="text"
+            value={value}
+            onChange={(e) => {
+              setValue(e.target.value);
+              if (failed) setFailed(false);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                open();
+              }
+            }}
+            autoComplete="off"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            inputMode="url"
+            aria-invalid={failed || undefined}
+            aria-describedby={failed ? errorId : undefined}
+          />
+          <button type="button" className="button" onClick={open}>
+            {action}
+          </button>
+        </div>
       </div>
       {failed ? (
-        <p role="alert" className="field-error">
+        <p id={errorId} role="alert" className="field-error">
           {refused}
         </p>
       ) : null}
-      <button type="button" className="button" onClick={open}>
-        {action}
-      </button>
     </div>
   );
 }
