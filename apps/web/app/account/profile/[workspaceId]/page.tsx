@@ -10,6 +10,7 @@ import { CustomerShell } from '../../../../components/customer-shell';
 import { neonAuth } from '../../../../lib/neon-auth';
 import { OrganisationProfile } from '../organisation-profile';
 import { CompanyLink } from '../company-link';
+import { profileBack, profileHelper } from '../../frame-copy';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const metadata = {
@@ -46,9 +47,16 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
     return unavailable('Your account could not be checked. Return to your account and try again.');
   if (!session.data?.user) redirect('/signin');
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
+  const linksOn = customerOrganisationLinksEnabled();
   return (
-    <CustomerShell tab="work" eyebrow="REQUESTS" title="Company profile">
-      {customerOrganisationLinksEnabled() ? (
+    <CustomerShell
+      tab="work"
+      eyebrow="REQUESTS"
+      title="Company profile"
+      // With company links on, the page keeps its two tabs and their own words; the frame is for the plain page.
+      frame={linksOn ? undefined : { back: profileBack, helper: profileHelper() }}
+    >
+      {linksOn ? (
         <SubTabs
           label="Company profile sections"
           tabs={[
@@ -60,6 +68,7 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
                   subject={session.data.user.id}
                   issuer={issuer}
                   workspaceId={id.data}
+                  steps
                 />
               ),
             },
@@ -73,7 +82,13 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
           ]}
         />
       ) : (
-        <OrganisationProfile subject={session.data.user.id} issuer={issuer} workspaceId={id.data} />
+        <OrganisationProfile
+          subject={session.data.user.id}
+          issuer={issuer}
+          workspaceId={id.data}
+          steps
+          framed
+        />
       )}
     </CustomerShell>
   );

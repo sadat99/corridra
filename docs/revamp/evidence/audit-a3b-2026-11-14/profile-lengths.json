@@ -1,0 +1,146 @@
+[
+  {
+    "w": 390,
+    "state": "first-profile",
+    "mode": "before",
+    "contentPx": 1705,
+    "documentPx": 1705,
+    "screens": 2.02
+  },
+  {
+    "w": 390,
+    "state": "existing-summary",
+    "mode": "before",
+    "contentPx": 955,
+    "documentPx": 955,
+    "screens": 1.13
+  },
+  {
+    "w": 390,
+    "state": "existing-edit",
+    "mode": "before",
+    "contentPx": 2168,
+    "documentPx": 2168,
+    "screens": 2.57
+  },
+  {
+    "w": 390,
+    "state": "first-profile",
+    "mode": "after",
+    "contentPx": 944,
+    "documentPx": 944,
+    "screens": 1.12
+  },
+  {
+    "w": 390,
+    "state": "existing-summary",
+    "mode": "after",
+    "contentPx": 843,
+    "documentPx": 844,
+    "screens": 1
+  },
+  {
+    "w": 390,
+    "state": "existing-edit",
+    "mode": "after",
+    "contentPx": 987,
+    "documentPx": 987,
+    "screens": 1.17
+  },
+  {
+    "w": 768,
+    "state": "first-profile",
+    "mode": "before",
+    "contentPx": 1569,
+    "documentPx": 1569,
+    "screens": 1.53
+  },
+  {
+    "w": 768,
+    "state": "existing-summary",
+    "mode": "before",
+    "contentPx": 833,
+    "documentPx": 1024,
+    "screens": 0.81
+  },
+  {
+    "w": 768,
+    "state": "existing-edit",
+    "mode": "before",
+    "contentPx": 1951,
+    "documentPx": 1951,
+    "screens": 1.91
+  },
+  {
+    "w": 768,
+    "state": "first-profile",
+    "mode": "after",
+    "contentPx": 870,
+    "documentPx": 1024,
+    "screens": 0.85
+  },
+  {
+    "w": 768,
+    "state": "existing-summary",
+    "mode": "after",
+    "contentPx": 759,
+    "documentPx": 1024,
+    "screens": 0.74
+  },
+  {
+    "w": 768,
+    "state": "existing-edit",
+    "mode": "after",
+    "contentPx": 870,
+    "documentPx": 1024,
+    "screens": 0.85
+  },
+  {
+    "w": 1440,
+    "state": "first-profile",
+    "mode": "before",
+    "contentPx": 1555,
+    "documentPx": 1555,
+    "screens": 1.73
+  },
+  {
+    "w": 1440,
+    "state": "existing-summary",
+    "mode": "before",
+    "contentPx": 704,
+    "documentPx": 900,
+    "screens": 0.78
+  },
+  {
+    "w": 1440,
+    "state": "existing-edit",
+    "mode": "before",
+    "contentPx": 1822,
+    "documentPx": 1822,
+    "screens": 2.02
+  },
+  {
+    "w": 1440,
+    "state": "first-profile",
+    "mode": "after",
+    "contentPx": 881,
+    "documentPx": 900,
+    "screens": 0.98
+  },
+  {
+    "w": 1440,
+    "state": "existing-summary",
+    "mode": "after",
+    "contentPx": 655,
+    "documentPx": 900,
+    "screens": 0.73
+  },
+  {
+    "w": 1440,
+    "state": "existing-edit",
+    "mode": "after",
+    "contentPx": 881,
+    "documentPx": 900,
+    "screens": 0.98
+  }
+]

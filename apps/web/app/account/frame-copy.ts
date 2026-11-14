@@ -23,3 +23,11 @@ export const savedRequestHelper =
 export const homeHelper = 'Start a request, or pick up where you left off.';
 export const requestsHelper = 'Everything you sent, and the workspaces it belongs to.';
 export const allToolsHelper = 'Search by name, or pick a group. Every page you can open is here.';
+
+export const profileBack = registrationsBack;
+
+export function profileHelper(): string {
+  return realCustomerInput()
+    ? 'Company details, kept private to this workspace. Everything here is self-reported and unverified, and it is not linked to any company record.'
+    : 'Sample details only, kept private to this workspace. Everything here is self-reported and unverified, and it is not linked to any company record.';
+}
