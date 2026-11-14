@@ -2,6 +2,7 @@
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { lazy, Suspense, useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { currencies, formatMoney } from '@corridra/domain/opportunities';
+import './programme-pricing.css';
 import { FeeScheduleActions } from './fee-schedule-actions';
 import { MoneyInput } from '../../../components/ux/money-input';
 import { CurrencySelect } from '../../../components/ux/pickers';
