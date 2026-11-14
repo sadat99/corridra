@@ -2320,7 +2320,6 @@ test.describe('terms no quote states, in one row', () => {
       return base;
     })(),
   });
-  const ledgerRows = (page: Page) => page.locator('.ledger-table tbody tr');
 
   test('four terms nobody states are one row that names each of them', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });

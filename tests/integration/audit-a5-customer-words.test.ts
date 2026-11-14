@@ -83,7 +83,8 @@ describe('the mission passport', () => {
     outcomes: { heldMeetings: 0 },
   };
   it('shows a Title Case status, a product style date and no internal id', async () => {
-    const { MissionPassport } = await import('../../apps/web/components/mission-passport');
+    const dir = '../../apps/web/components';
+    const { MissionPassport } = await import(/* @vite-ignore */ `${dir}/mission-passport`);
     const html = renderToStaticMarkup(createElement(MissionPassport, { mission }));
     expect(html).toContain('data-tone="neutral">Meetings</span>');
     expect(html).not.toContain('>meetings<');
