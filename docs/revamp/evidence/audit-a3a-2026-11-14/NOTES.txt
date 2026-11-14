@@ -1,0 +1,25 @@
+Audit A3a (UI/UX.v3 audit, screens batch A): Home empty state, Requests and Workspaces, All Tools finder.
+Taken 14 Nov 2026 in the cloud container.
+
+How measured
+- Real stylesheets: production build (pnpm build, next start), signed in as seeded QA test accounts (scripts/qa/signed-in-sweep.ts --serve,
+  local PostgreSQL 16), Chromium. Disclosures closed except the phone fold of All Tools, which is open by default from 640 px (default state).
+- Screens = full document height (header, content, footer) divided by the viewport height: 390x844, 768x1024, 1440x900.
+  A value of 1.00 means the content is shorter than one window and the footer sits at the bottom of the window.
+- "home-empty" is a signed-in customer with no workspace and no work (a fifth QA account made for the measure only).
+  "home-filled", "requests", "workspaces" and "all-tools" are the seeded customer (one workspace, 3 work rows).
+- before = origin/main d13843e (PR 499 merged); after = this branch merged with main 9ba6ba8 (PR 500 merged).
+
+Files
+- before-<view>-<width>.png and after-<view>-<width>.png, full page. before-lengths.json and after-lengths.json hold the numbers.
+
+Screens (before -> after)
+view          390          768          1440
+home-empty    1.26 -> 1.21  1.08 -> 1.01  1.16 -> 1.00
+home-filled   1.80 -> 1.80  1.46 -> 1.46  1.41 -> 1.14
+requests      1.36 -> 1.34  1.00 -> 1.00  1.00 -> 1.00
+workspaces    1.17 -> 1.21  1.00 -> 1.00  1.00 -> 1.00
+all-tools     1.00 -> 1.26  2.27 -> 1.55  1.00 -> 1.00
+(all-tools gains the search box and chips, so the phone grows by 0.26 screen and stays under the 1.5 target; 768 now has two columns.)
+Not within the desktop 1.0 limit after the change: home-filled at 1440 (1.14, was 1.41). It was over before.
+Not measured: Saved tab of Requests, 320 / 1024 / 1920 widths, real (non-seeded) data.

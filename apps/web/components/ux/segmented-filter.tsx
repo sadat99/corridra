@@ -14,13 +14,17 @@ export function SegmentedFilter<T extends string>({
   value,
   options,
   onChange,
+  name,
 }: {
   label: string;
   value: T;
   options: SegmentOption<T>[];
   onChange: (value: T) => void;
+  /** The field name when the group sits in a form that must work without a script. Default: a made-up one. */
+  name?: string;
 }) {
-  const name = `seg-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
+  const generated = `seg-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
+  const group = name ?? generated;
   return (
     <fieldset className="ux-segments">
       <legend>{label}</legend>
@@ -29,7 +33,7 @@ export function SegmentedFilter<T extends string>({
           <label key={option.value} className="ux-segment">
             <input
               type="radio"
-              name={name}
+              name={group}
               value={option.value}
               checked={option.value === value}
               onChange={() => onChange(option.value)}

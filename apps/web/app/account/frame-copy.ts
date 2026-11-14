@@ -19,6 +19,11 @@ export const savedRequestBack = {
 export const savedRequestHelper =
   'Your submitted information. A request is not an accepted engagement, confirmed meeting or deal.';
 
+// Home, Requests and All Tools (UI/UX.v3 audit, screens batch A): one helper line under the page title.
+export const homeHelper = 'Start a request, or pick up where you left off.';
+export const requestsHelper = 'Everything you sent, and the workspaces it belongs to.';
+export const allToolsHelper = 'Search by name, or pick a group. Every page you can open is here.';
+
 export const profileBack = registrationsBack;
 
 export function profileHelper(): string {

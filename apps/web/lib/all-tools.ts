@@ -255,6 +255,31 @@ export const excludedPages: readonly ExcludedPage[] = [
   },
 ];
 
+/** The address word for a group (`?group=your-move`). `all` means no group. */
+export const toolGroupSlug = (group: ToolGroup): string => group.toLowerCase().replace(/\s+/g, '-');
+
+/** Reads a `?group=` word back into a group; anything unknown, and `all`, is no group. */
+export function parseToolGroup(value: string | undefined): ToolGroup | undefined {
+  return toolGroups.find((group) => toolGroupSlug(group) === value);
+}
+
+/**
+ * The finder on All Tools. Every word of the search must appear in the tool's name, its line or its group's
+ * customer word (so "requests" finds the Requests group); case does not matter. A group keeps only its own
+ * tools. No search and no group keep every tool, in the same order.
+ */
+export function filterTools<T extends Pick<Tool, 'label' | 'line' | 'group'>>(
+  list: readonly T[],
+  { query = '', group }: { query?: string; group?: ToolGroup },
+): T[] {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  return list.filter((tool) => {
+    if (group && tool.group !== group) return false;
+    const text = `${tool.label} ${tool.line} ${groupLabel(tool.group)}`.toLowerCase();
+    return words.every((word) => text.includes(word));
+  });
+}
+
 export type ToolModules = Record<ToolModule, boolean>;
 
 /** The tools a person can reach: a tool whose module is off is not listed. Order is kept. */

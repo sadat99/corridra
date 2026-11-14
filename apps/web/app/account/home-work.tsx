@@ -26,6 +26,22 @@ export function HomeWorkView({ list }: { list: WorkList }) {
   const names = new Map(list.workspaces.map((workspace) => [workspace.id, workspace.name]));
   const shown = list.items.slice(0, homeWorkRows);
   const newest = list.items.find((item) => item.kind === 'request' && item.status !== '');
+  // Nothing to show yet: one quiet line with the way on, not a section of its own. The heading stays for assistive
+  // technology, so the region keeps its name (UI/UX.v3 audit, screens batch A).
+  if (state === 'empty')
+    return (
+      <section aria-labelledby="home-work-title" className="guide-area home-work home-work-empty">
+        <h2 id="home-work-title" className="sr-only">
+          Active work
+        </h2>
+        <p>
+          You have no work here yet.{' '}
+          <Link prefetch={false} className="text-link" href="/account?view=work">
+            See all your work
+          </Link>
+        </p>
+      </section>
+    );
   return (
     <section aria-labelledby="home-work-title" className="guide-area home-work">
       <h2 id="home-work-title">Active work</h2>
@@ -35,7 +51,6 @@ export function HomeWorkView({ list }: { list: WorkList }) {
           could not read. Your work is safe.
         </p>
       )}
-      {state === 'empty' && <p>You have no work here yet.</p>}
       {state === 'list' && (
         <>
           <RowList

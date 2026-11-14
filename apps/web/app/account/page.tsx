@@ -47,6 +47,8 @@ import { customerAccountLifecycleEnabled } from '@corridra/auth/customer-account
 import { customerNotificationsEnabled } from '@corridra/auth/customer-notifications';
 import { InvitationProvider, OpenInvitationButton } from './invitation-dialog';
 import { parseWorkFilter } from '../../lib/work-items/view';
+import { homeHelper, requestsHelper } from './frame-copy';
+import './calm-lists.css';
 export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Your account | Corridra',
@@ -127,7 +129,18 @@ export default async function Page({
   }
   const heading = headings[view];
   return (
-    <CustomerShell tab={view} eyebrow={heading.eyebrow} title={heading.title}>
+    <CustomerShell
+      tab={view}
+      eyebrow={heading.eyebrow}
+      title={heading.title}
+      frame={
+        view === 'home'
+          ? { helper: homeHelper }
+          : view === 'work'
+            ? { helper: requestsHelper }
+            : undefined
+      }
+    >
       <AccountHashRedirect view={view} />
       {view === 'home' && (
         <>
@@ -151,7 +164,7 @@ export default async function Page({
               />
             </Suspense>
           )}
-          <section className="guide-area ux-account-groups" aria-labelledby="open-title">
+          <section className="guide-area ux-account-groups home-open" aria-labelledby="open-title">
             <h2 id="open-title">Have something to open?</h2>
             <ul className="ux-quick-links">
               {workspaceIssuer && (
@@ -197,6 +210,7 @@ export default async function Page({
                     issuer={workspaceIssuer}
                     filter={parseWorkFilter(query.work)}
                     rooms={uxSwitchOn('CORRIDRA_UX_ROAD')}
+                    framed
                   />
                 </Suspense>
               )
@@ -217,6 +231,7 @@ export default async function Page({
                       linksEnabled={customerOrganisationLinksEnabled()}
                       serviceRequestsEnabled={customerServiceRequestsEnabled()}
                       billingEnabled={customerBillingEnabled()}
+                      framed
                     />
                   </div>
                 )}
