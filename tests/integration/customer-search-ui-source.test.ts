@@ -246,6 +246,24 @@ describe('the client files', () => {
     expect(code).not.toMatch(/^const\s+\w+\s*=\s*(?:new Map|new Set|\[\]|\{\})/m);
   });
 
+  test('the early Ctrl K module keeps only the opener and a time: no words, no request, no storage, a 5 s hold', () => {
+    const path = 'apps/web/lib/ux/customer-search-early-key.ts';
+    const code = stripComments(read(path));
+    expect(code).not.toMatch(/\bquery\b|\btext\b|\bscope\b|\banswer\b/i);
+    expect(code).not.toMatch(
+      /\bfetch\b|XMLHttpRequest|sendBeacon|\bstorage\b|sessionStorage|localStorage|indexedDB|document\.cookie/i,
+    );
+    expect(importsOf(read(path))).toEqual(['./customer-search-status']);
+    // The one piece of module state is the opener and the time of the key.
+    expect(code.match(/^(?:let|var)\s.*$/gm)).toEqual([
+      'let held: { opener: HTMLElement | null; at: number } | null = null;',
+    ]);
+    expect(code).not.toMatch(/^const\s+\w+\s*=\s*(?:new Map|new Set|\[\]|\{\})/m);
+    expect(code).toMatch(/const holdMs = 5000;/);
+    // The component imports it and holds no module state of its own for it.
+    expect(stripComments(read(component))).toContain("'../../lib/ux/customer-search-early-key'");
+  });
+
   test('the search is a POST of the words in the body: same origin, uncached, no referrer, no address', () => {
     const code = stripComments(read(component));
     expect(code).toContain("fetch('/api/customer-search', {");
