@@ -1,0 +1,152 @@
+[
+  {
+    "key": "home-empty",
+    "w": 390,
+    "status": 200,
+    "screens": 1.21,
+    "height": 1019,
+    "overflowX": false,
+    "h1": ["What would you like to do?"],
+    "url": "/account?view=home"
+  },
+  {
+    "key": "home-empty",
+    "w": 768,
+    "status": 200,
+    "screens": 1.01,
+    "height": 1035,
+    "overflowX": false,
+    "h1": ["What would you like to do?"],
+    "url": "/account?view=home"
+  },
+  {
+    "key": "home-empty",
+    "w": 1440,
+    "status": 200,
+    "screens": 1,
+    "height": 900,
+    "overflowX": false,
+    "h1": ["What would you like to do?"],
+    "url": "/account?view=home"
+  },
+  {
+    "key": "home-filled",
+    "w": 390,
+    "status": 200,
+    "screens": 1.8,
+    "height": 1521,
+    "overflowX": false,
+    "h1": ["What would you like to do?"],
+    "url": "/account?view=home"
+  },
+  {
+    "key": "home-filled",
+    "w": 768,
+    "status": 200,
+    "screens": 1.46,
+    "height": 1497,
+    "overflowX": false,
+    "h1": ["What would you like to do?"],
+    "url": "/account?view=home"
+  },
+  {
+    "key": "home-filled",
+    "w": 1440,
+    "status": 200,
+    "screens": 1.14,
+    "height": 1028,
+    "overflowX": false,
+    "h1": ["What would you like to do?"],
+    "url": "/account?view=home"
+  },
+  {
+    "key": "requests",
+    "w": 390,
+    "status": 200,
+    "screens": 1.34,
+    "height": 1129,
+    "overflowX": false,
+    "h1": ["Your requests and workspaces."],
+    "url": "/account?view=work"
+  },
+  {
+    "key": "requests",
+    "w": 768,
+    "status": 200,
+    "screens": 1,
+    "height": 1024,
+    "overflowX": false,
+    "h1": ["Your requests and workspaces."],
+    "url": "/account?view=work"
+  },
+  {
+    "key": "requests",
+    "w": 1440,
+    "status": 200,
+    "screens": 1,
+    "height": 900,
+    "overflowX": false,
+    "h1": ["Your requests and workspaces."],
+    "url": "/account?view=work"
+  },
+  {
+    "key": "workspaces",
+    "w": 390,
+    "status": 200,
+    "screens": 1.21,
+    "height": 1022,
+    "overflowX": false,
+    "h1": ["Your requests and workspaces."],
+    "url": "/account?view=work&tab=workspaces"
+  },
+  {
+    "key": "workspaces",
+    "w": 768,
+    "status": 200,
+    "screens": 1,
+    "height": 1024,
+    "overflowX": false,
+    "h1": ["Your requests and workspaces."],
+    "url": "/account?view=work&tab=workspaces"
+  },
+  {
+    "key": "workspaces",
+    "w": 1440,
+    "status": 200,
+    "screens": 1,
+    "height": 900,
+    "overflowX": false,
+    "h1": ["Your requests and workspaces."],
+    "url": "/account?view=work&tab=workspaces"
+  },
+  {
+    "key": "all-tools",
+    "w": 390,
+    "status": 200,
+    "screens": 1.26,
+    "height": 1065,
+    "overflowX": false,
+    "h1": ["Every tool you can open."],
+    "url": "/account/all-tools"
+  },
+  {
+    "key": "all-tools",
+    "w": 768,
+    "status": 200,
+    "screens": 1.55,
+    "height": 1586,
+    "overflowX": false,
+    "h1": ["Every tool you can open."],
+    "url": "/account/all-tools"
+  },
+  {
+    "key": "all-tools",
+    "w": 1440,
+    "status": 200,
+    "screens": 1,
+    "height": 900,
+    "overflowX": false,
+    "h1": ["Every tool you can open."],
+    "url": "/account/all-tools"
+  }
+]

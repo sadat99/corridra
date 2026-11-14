@@ -1,0 +1,39 @@
+/* Home, Requests and Workspaces, calmer (UI/UX.v3 audit, screens batch A). Tokens only: 12 px inside a section,
+   24 px between sections, the row title at the card and row title step, secondary words at 14 px. */
+/* The empty line is not a card: guide-area keeps it out of the customer kit's section card. */
+.home-work-empty {
+  margin: 0;
+}
+.home-work-empty p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.home-work-empty .text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.work-list .ux-row-title,
+.home-work .ux-row-title,
+.home-next .ux-row-title {
+  font-size: var(--text-lg);
+  line-height: var(--leading-title);
+}
+.work-list {
+  gap: var(--space-3);
+}
+@media (min-width: 64rem) {
+  .ux-customer .home-open .ux-quick-links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-6);
+    max-width: none;
+  }
+}
+@media (min-width: 80rem) {
+  .ux-customer .home-open .ux-quick-links {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    column-gap: var(--space-4);
+  }
+}

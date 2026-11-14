@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
 import { customerBillingEnabled } from '@corridra/auth/customer-billing';
 import { customerCompaniesEnabled } from '@corridra/auth/customer-companies';
 import { customerNotificationsEnabled } from '@corridra/auth/customer-notifications';
@@ -8,11 +7,12 @@ import { customerParticipantsEnabled } from '@corridra/auth/customer-participant
 import { customerProgrammesEnabled } from '@corridra/auth/customer-programmes';
 import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-requests';
 import { CustomerShell } from '../../../components/customer-shell';
-import { PhoneFold } from '../../../components/phone-fold';
 import { WorkspaceShell } from '../../../components/workspace-shell';
-import { groupLabel, toolGroups, toolsFor } from '../../../lib/all-tools';
+import { toolsFor } from '../../../lib/all-tools';
 import { customerPageSession } from '../../../lib/customer-page-session';
 import { uxSwitchOn } from '../../../lib/ux-switches';
+import { AllToolsFinder } from './all-tools-finder';
+import { allToolsHelper } from '../frame-copy';
 import './all-tools.css';
 
 export const dynamic = 'force-dynamic';
@@ -25,8 +25,15 @@ export const metadata = {
  * Every page a signed-in customer may open, each with a plain verb, so the shorter navigation never
  * hides one. Behind `CORRIDRA_UX_NAV`: with the switch off this address does not exist.
  */
-export default async function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string | string[]; group?: string | string[] }>;
+}) {
   if (!uxSwitchOn('CORRIDRA_UX_NAV')) notFound();
+  const query = await searchParams;
+  const word = (value: string | string[] | undefined) =>
+    (Array.isArray(value) ? value[0] : value) ?? '';
   const session = await customerPageSession();
   if (!session.ok)
     return (
@@ -48,37 +55,17 @@ export default async function Page() {
     notifications: customerNotificationsEnabled(),
   });
   return (
-    <CustomerShell tab="more" eyebrow="ALL TOOLS" title="Every tool you can open.">
-      <div className="ux-tools-grid">
-        {toolGroups.map((group) => {
-          const inGroup = listed.filter((tool) => tool.group === group);
-          if (inGroup.length === 0) return null;
-          const id = `tools-${group.toLowerCase().replace(/\s+/g, '-')}`;
-          return (
-            <section key={group} className="guide-area ux-account-groups" aria-labelledby={id}>
-              <PhoneFold
-                className="ux-tools-fold"
-                summary={
-                  <h2 id={id}>
-                    {groupLabel(group)} ({inGroup.length})
-                  </h2>
-                }
-              >
-                <ul className="ux-link-list">
-                  {inGroup.map((tool) => (
-                    <li key={tool.href}>
-                      <Link prefetch={false} href={tool.href}>
-                        <strong>{tool.label}</strong>
-                        <span>{tool.line}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </PhoneFold>
-            </section>
-          );
-        })}
-      </div>
+    <CustomerShell
+      tab="more"
+      eyebrow="ALL TOOLS"
+      title="Every tool you can open."
+      frame={{ helper: allToolsHelper }}
+    >
+      <AllToolsFinder
+        tools={listed.map(({ href, label, line, group }) => ({ href, label, line, group }))}
+        initialQuery={word(query.q).slice(0, 80)}
+        initialGroup={word(query.group)}
+      />
     </CustomerShell>
   );
 }

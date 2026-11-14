@@ -25,10 +25,10 @@
   font-size: var(--text-lg);
   font-weight: 600;
 }
-@media (min-width: 64rem) {
+@media (min-width: 40rem) {
   .ux-tools-grid {
     display: block;
-    column-count: 4;
+    column-count: 2;
     column-gap: var(--space-3);
   }
   .ux-customer .ux-tools-grid > section {
@@ -39,14 +39,91 @@
   .ux-customer .ux-tools-grid > section > .ux-tools-fold > summary {
     min-height: 2.25rem;
   }
+}
+@media (min-width: 64rem) {
+  .ux-tools-grid {
+    column-count: 4;
+  }
   .ux-tools-grid .ux-link-list {
     gap: var(--space-1);
   }
   .ux-tools-grid .ux-link-list a {
     padding-block: var(--space-1);
+    gap: 0;
   }
   .ux-tools-grid .ux-link-list strong,
   .ux-tools-grid .ux-link-list span {
     font-size: var(--text-sm);
+    line-height: var(--leading-title);
+  }
+}
+
+/* The finder (UI/UX.v3 audit, screens batch A): a search box and one chip per group, then one quiet status line that
+   only has words while a search or group is chosen. 12 px inside the finder, 24 px before the groups. Tokens only. */
+.ux-tools-find {
+  display: grid;
+  gap: var(--space-3);
+  align-items: start;
+}
+.ux-tools-search {
+  max-width: 28rem;
+}
+/* The chips stand alone, one per group, and wrap as a row of separate buttons (never a joined bar that breaks in two). */
+.ux-tools-find .ux-segments legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.ux-tools-find .ux-segments {
+  width: 100%;
+}
+.ux-tools-find .ux-segments-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+}
+.ux-tools-find .ux-segment {
+  padding-inline: var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+.ux-tools-find .ux-segment + .ux-segment {
+  border-inline-start: 1px solid var(--border-strong);
+}
+.ux-tools-status {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-2);
+}
+.ux-tools-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+}
+.ux-tools-status-row:has(> .ux-tools-status:not(:empty), > .text-link) {
+  margin-block-start: var(--space-3);
+}
+.ux-tools-grid {
+  margin-block-start: var(--space-4);
+}
+.ux-tools-status-row .text-link {
+  min-height: 44px;
+}
+@media (min-width: 64rem) {
+  .ux-tools-find {
+    grid-template-columns: minmax(16rem, 22rem) 1fr;
+    gap: var(--space-4);
+    align-items: end;
+  }
+  .ux-tools-status-row .text-link {
+    min-height: auto;
   }
 }

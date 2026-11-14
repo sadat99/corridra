@@ -15,7 +15,7 @@ describe('All Tools words for customers', () => {
   });
 
   it('draws the heading through the display label', () => {
-    const page = read('apps/web/app/account/all-tools/page.tsx');
+    const page = read('apps/web/app/account/all-tools/all-tools-finder.tsx');
     expect(page).toContain('groupLabel(group)');
     expect(page).not.toMatch(/<h2 id=\{id\}>\{group\}<\/h2>/);
   });

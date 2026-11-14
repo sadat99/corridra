@@ -109,6 +109,7 @@ export function CustomerWorkspaces({
   linksEnabled = false,
   serviceRequestsEnabled = false,
   billingEnabled = false,
+  framed = false,
 }: {
   subject: string;
   issuer: string;
@@ -120,6 +121,8 @@ export function CustomerWorkspaces({
   linksEnabled?: boolean;
   serviceRequestsEnabled?: boolean;
   billingEnabled?: boolean;
+  /** The Workspaces tab already names this card, so its heading is for assistive technology only. */
+  framed?: boolean;
 }) {
   const storageKey = `corridra.customer-workspace.v1:${issuer}:${subject}`;
   const [status, setStatus] = useState<Status>('loading');
@@ -368,7 +371,7 @@ export function CustomerWorkspaces({
       aria-busy={status === 'loading' || creating}
     >
       <div className="ux-section-head">
-        <h2>Workspaces</h2>
+        <h2 className={framed ? 'sr-only' : undefined}>Workspaces</h2>
         {status === 'ready' && (
           <RefreshButton
             label="workspaces"
