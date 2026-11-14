@@ -124,7 +124,7 @@ export const customerDoorPage = {
         id: 'organiser',
         icon: 'calendar' as AccessIconName,
         title: 'Organising a delegation',
-        text: 'You lead a group trip for your members or clients.',
+        text: 'You lead a group trip for your members or clients. Sign in, then create or choose a workspace to organise your programme.',
         action: {
           text: 'Start As an Organiser',
           href: '/account/delegations/organise',
