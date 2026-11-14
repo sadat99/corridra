@@ -17,6 +17,12 @@ import {
   type FirstRunLine,
 } from './programme-page';
 import { parseTemplate } from './programme-templates';
+import {
+  buyingTripActivityText,
+  buyingTripStarterId,
+  buyingTripStarterLabel,
+  buyingTripStarterSave,
+} from './buying-trip-starter';
 
 // The guided first run (ADR-084 slice S0): from "I want to run a delegation" to a published page in three steps of
 // at most three fields. It adds no command, field, id or payload. Publish sends, in order, the existing create
@@ -28,6 +34,8 @@ type Props = {
   issuer: string;
   workspaceId: string;
   templatesEnabled: boolean;
+  /** ADR-084 S7 (CORRIDRA_DELEGATION_BUYING_TRIP): the Buying Trip starter joins the template choice. */
+  buyingTrip?: boolean;
   /** The new programme is saved and its page is public. */
   onPublished: (programmeId: string) => void;
   /** The account or the workspace role changed; the page clears what it holds. */
@@ -58,6 +66,10 @@ export type FirstRunKept = {
   programmeId?: string;
   applyId?: string;
   appliedTemplate?: string;
+  // The Buying Trip starter, saved once with the existing template save command before it is applied.
+  starterSaveId?: string;
+  starterTemplateId?: string;
+  starterVersion?: number;
   publishId?: string;
   publishFor?: string;
 };
@@ -98,9 +110,16 @@ const fresh = (sample: boolean): FirstRunKept => ({
 });
 const day = /^\d{4}-\d{2}-\d{2}$/;
 /** The editor's own draft, filled from the first run: the same lines, so the same rules and the same public copy. */
-export function firstRunPageDraft(kept: FirstRunKept, workspaceName: string): Draft {
+export function firstRunPageDraft(
+  kept: FirstRunKept,
+  workspaceName: string,
+  starter = false,
+): Draft {
   return {
     ...emptyDraft(kept.title),
+    // The Buying Trip starter pre-fills three planned page lines. They are shown in the preview and can be edited
+    // in the page editor; none is ever confirmed here.
+    activities: starter ? buyingTripActivityText : '',
     organiser: kept.organiser ?? workspaceName,
     summary: kept.summary,
     destination: kept.destination,
@@ -136,6 +155,7 @@ function ScopedFirstRun({
   issuer,
   workspaceId,
   templatesEnabled,
+  buyingTrip = false,
   onPublished,
   onDenied,
   plain,
@@ -148,6 +168,7 @@ function ScopedFirstRun({
   const step = Math.min(Math.max(Number.isInteger(kept.step) ? kept.step : 0, 0), last);
   const [workspaceName, setWorkspaceName] = useState('');
   const [templates, setTemplates] = useState<TemplateChoice[]>([]);
+  const [listed, setListed] = useState(false);
   const [planning, setPlanning] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [busy, setBusy] = useState('');
@@ -203,6 +224,7 @@ function ScopedFirstRun({
             .filter((t) => !t.retired)
             .map((t) => ({ id: t.id, version: t.version, name: t.name })),
         );
+        setListed(true);
       } catch {
         /* No template is offered. */
       }
@@ -214,7 +236,15 @@ function ScopedFirstRun({
   }, [step]);
 
   const save = (change: Partial<FirstRunKept>) => store.save({ ...kept, ...change });
-  const page = firstRunPageDraft(kept, workspaceName);
+  // The starter is offered once the workspace's own templates were read and none of them already has its name (that
+  // one is chosen from the list instead), and stays once it was saved by a press of Publish that did not finish.
+  const starterName = buyingTripStarterSave(sample).name;
+  const showStarter =
+    buyingTrip &&
+    templatesEnabled &&
+    (!!kept.starterTemplateId || (listed && !templates.some((t) => t.name === starterName)));
+  const starterChosen = showStarter && kept.templateId === buyingTripStarterId;
+  const page = firstRunPageDraft(kept, workspaceName, starterChosen);
   const wrongIn = (lines: readonly FirstRunLine[]) => {
     for (const line of lines) {
       const wrong = lineProblem(line, page, sample);
@@ -308,7 +338,48 @@ function ScopedFirstRun({
         programmeId = made.id;
         keep({ programmeId });
       }
-      const template = templates.find((t) => t.id === now.templateId);
+      let template: TemplateChoice | undefined = templates.find((t) => t.id === now.templateId);
+      if (!template && starterChosen) {
+        if (now.starterTemplateId && now.starterVersion) {
+          template = { id: now.starterTemplateId, version: now.starterVersion, name: starterName };
+        } else {
+          // The starter becomes one private template in this workspace, once, through the existing save command.
+          setBusy(pp('pp.first.busy.template'));
+          if (!now.starterSaveId) keep({ starterSaveId: crypto.randomUUID() });
+          const starter = buyingTripStarterSave(sample);
+          const saved = await fetch('/api/customer-programme-templates', {
+            method: 'POST',
+            cache: 'no-store',
+            credentials: 'same-origin',
+            headers,
+            body: JSON.stringify({
+              action: 'save',
+              input: {
+                commandId: now.starterSaveId,
+                workspaceId,
+                templateId: null,
+                expectedVersion: 0,
+                name: starter.name,
+                description: starter.description,
+                content: starter.content,
+                retired: false,
+              },
+            }),
+          });
+          const made: unknown = await saved.json().catch(() => null);
+          if (
+            !saved.ok ||
+            !object(made) ||
+            !object(made.template) ||
+            !uuid(made.template.id) ||
+            !Number.isInteger(made.template.version)
+          )
+            return stop(pp('pp.first.error.template'));
+          const version = made.template.version as number;
+          keep({ starterTemplateId: made.template.id, starterVersion: version });
+          template = { id: made.template.id, version, name: starterName };
+        }
+      }
       if (template && now.appliedTemplate !== template.id) {
         setBusy(pp('pp.first.busy.template'));
         if (!now.applyId) keep({ applyId: crypto.randomUUID() });
@@ -485,12 +556,16 @@ function ScopedFirstRun({
                 pp('pp.edit.destination.hint'),
                 { max: 160 },
               )}
-              {templates.length > 0 && (
+              {(templates.length > 0 || showStarter) && (
                 <label className="field">
                   <span>{pp('pp.first.template.label')}</span>
                   <select
                     name="first-template"
-                    value={templates.some((t) => t.id === kept.templateId) ? kept.templateId : ''}
+                    value={
+                      templates.some((t) => t.id === kept.templateId) || starterChosen
+                        ? kept.templateId
+                        : ''
+                    }
                     disabled={locked || !!kept.appliedTemplate}
                     onChange={(event) => save({ templateId: event.target.value })}
                   >
@@ -500,6 +575,9 @@ function ScopedFirstRun({
                         {t.name}
                       </option>
                     ))}
+                    {showStarter && (
+                      <option value={buyingTripStarterId}>{buyingTripStarterLabel}</option>
+                    )}
                   </select>
                   <small>{pp('pp.first.template.hint')}</small>
                 </label>
