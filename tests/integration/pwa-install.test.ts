@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { webManifest } from '../../apps/web/lib/ux/web-manifest';
 import {
   offlineCacheName,
+  offlineCachePrefix,
   offlinePagePath,
   offlineServiceWorkerScript,
   retiredServiceWorkerScript,
@@ -82,7 +83,11 @@ describe('the service worker keeps nothing of the product', () => {
   const script = offlineServiceWorkerScript();
 
   it('holds one public page and its own stylesheets, in one owned cache', () => {
-    expect(offlineCacheName).toBe('corridra-offline-v1');
+    // One owned cache per deployment, always under the corridra- prefix (see pwa-auto-update.test.ts).
+    expect(offlineCachePrefix).toBe('corridra-offline-');
+    expect(offlineCacheName('abc123')).toBe('corridra-offline-abc123');
+    expect(script).toMatch(/const CACHE = "corridra-offline-[A-Za-z0-9_-]+";/);
+    expect(script.match(/caches\.open\(/g)).toHaveLength(2);
     expect(offlinePagePath).toBe('/offline');
     // Exactly two things are ever put into the cache: the offline page and a stylesheet of that page.
     const puts = [...script.matchAll(/cache\.put\(([^,]+),/g)].map((match) => match[1].trim());
