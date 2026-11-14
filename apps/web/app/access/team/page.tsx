@@ -16,13 +16,22 @@ export default function Page() {
         {page.cards.map((card) => (
           <AccessCard key={card.id} icon={card.icon} title={card.title} level={2}>
             <p>{card.text}</p>
-            <Link
-              prefetch={false}
-              className={card.actionKind === 'primary' ? 'button' : 'button-secondary'}
-              href={card.action.href}
-            >
-              {card.action.text}
-            </Link>
+            {card.action.plainAnchor ? (
+              <a
+                className={card.actionKind === 'primary' ? 'button' : 'button-secondary'}
+                href={card.action.href}
+              >
+                {card.action.text}
+              </a>
+            ) : (
+              <Link
+                prefetch={false}
+                className={card.actionKind === 'primary' ? 'button' : 'button-secondary'}
+                href={card.action.href}
+              >
+                {card.action.text}
+              </Link>
+            )}
             <Link prefetch={false} className="text-link" href={card.textLink.href}>
               {card.textLink.text}
             </Link>

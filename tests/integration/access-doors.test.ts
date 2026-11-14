@@ -109,6 +109,16 @@ describe('the access door registry', () => {
   });
 });
 
+describe('team sign-in', () => {
+  it('is a full page load, never a client-side Link, on the team door', async () => {
+    const reg = await load('lib/access-doors.ts');
+    const signIn = reg.teamDoorPage.cards.find((c: { id: string }) => c.id === 'team').action;
+    expect(signIn).toMatchObject({ href: '/operator/signin', plainAnchor: true });
+    const source = readFileSync(resolve('apps/web/app/access/team/page.tsx'), 'utf8');
+    expect(source).toContain('card.action.plainAnchor ? (');
+  });
+});
+
 describe('what the customer door shows', () => {
   const flags = [false, true];
   const combos = flags.flatMap((signInAvailable) =>

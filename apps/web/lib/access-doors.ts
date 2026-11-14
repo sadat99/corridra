@@ -74,7 +74,8 @@ export function otherAccessDoors(id: AccessDoorId): AccessDoor[] {
   return accessDoors.filter((entry) => entry.id !== id);
 }
 
-export type AccessAction = { text: string; href: string };
+/** `plainAnchor` keeps a full page load: sign-in into the team workspace is never reached by a client-side Link. */
+export type AccessAction = { text: string; href: string; plainAnchor?: boolean };
 
 export type AccessIconName =
   'inbox' | 'trip' | 'calendar' | 'shield' | 'network' | 'people' | 'document';
@@ -195,7 +196,11 @@ export const teamDoorPage = {
       icon: 'shield' as AccessIconName,
       title: 'Corridra team',
       text: 'Operator, reviewer, viewer, admin or founder.',
-      action: { text: 'Team Sign-in', href: '/operator/signin' } as AccessAction,
+      action: {
+        text: 'Team Sign-in',
+        href: '/operator/signin',
+        plainAnchor: true,
+      } as AccessAction,
       actionKind: 'primary' as const,
       textLink: { text: 'Set Up Invited Access', href: '/operator/setup' } as AccessAction,
     },
