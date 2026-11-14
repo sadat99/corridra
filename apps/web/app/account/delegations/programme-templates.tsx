@@ -2,6 +2,7 @@
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { currencies, formatMoney, parseMoney } from '@corridra/domain/opportunities';
+import { buyingTripStarterLabel, buyingTripStarterSave } from './buying-trip-starter';
 
 type Code = keyof typeof currencies;
 type CostKind = 'ORGANISER_EXPENSE' | 'ORGANISER_OBLIGATION' | 'CORRIDRA_SERVICE_FEE';
@@ -35,6 +36,8 @@ type Props = {
   issuer: string;
   workspaceId: string;
   programmes: { id: string; name: string }[];
+  /** ADR-084 S7 (CORRIDRA_DELEGATION_BUYING_TRIP): the Buying Trip starter is offered as one more row. */
+  buyingTrip?: boolean;
   onChanged: () => void;
 };
 
@@ -129,7 +132,14 @@ export function ProgrammeTemplates(props: Props) {
   );
 }
 
-function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }: Props) {
+function ScopedTemplates({
+  subject,
+  issuer,
+  workspaceId,
+  programmes,
+  buyingTrip = false,
+  onChanged,
+}: Props) {
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed' | 'denied' | 'unavailable'>(
     'loading',
   );
@@ -452,6 +462,26 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
       await load(true);
     });
   }
+  // The Buying Trip starter becomes an ordinary private template through the same save command, once.
+  const starter = buyingTripStarterSave(!realCustomerInput());
+  function saveStarter() {
+    setError('');
+    const input = {
+      expectedVersion: 0,
+      templateId: null,
+      name: starter.name,
+      description: starter.description,
+      content: starter.content,
+      retired: false,
+    };
+    void guard(async () => {
+      const body = await post('save', input, 'save' + JSON.stringify(input));
+      if (!body) return;
+      parseTemplate(body.template);
+      setNotice('Template created.');
+      await load(true);
+    });
+  }
   function toggleRetired(t: Template) {
     saveTemplate(!t.retired, t, t.content);
   }
@@ -647,6 +677,15 @@ function ScopedTemplates({ subject, issuer, workspaceId, programmes, onChanged }
           )}
           {mode === 'none' && (
             <>
+              {buyingTrip && !list.some((t) => t.name === starter.name) && (
+                <p>
+                  <strong>{buyingTripStarterLabel}</strong> · {starter.content.tasks.length} tasks ·
+                  no costs{' '}
+                  <button type="button" className="text-link" disabled={busy} onClick={saveStarter}>
+                    Save Buying Trip Starter
+                  </button>
+                </p>
+              )}
               <button
                 type="button"
                 className="text-link"

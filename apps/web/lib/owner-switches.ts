@@ -588,6 +588,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'flag',
   },
   {
+    name: 'CORRIDRA_DELEGATION_BUYING_TRIP',
+    label: 'Delegation buying trip starter',
+    line: 'Offers a generic Buying trip starter plan (six tasks, no costs, no people) in the delegation first run and in the programme templates list, and pre-fills three planned page lines in the first run. Saving it makes one private template in the workspace. Needs programme templates on. With it off both screens are as they were.',
+    group: 'Programmes and delegations',
+    kind: 'flag',
+  },
+  {
     name: 'CORRIDRA_PROGRAMME_SHARE_KIT',
     label: 'Programme page share kit',
     line: 'Adds a preview image, a QR code, a printable flyer and a calendar file to a public programme page, and a quiet line saying the page was made with Corridra Programmes. They use only the words the organiser published and the start and end days the organiser chose to state. Corridra sends nothing, records no visits and makes the QR code on its own server. Needs public programme pages on and the programme pages database module installed. With it off the page is as it was.',
