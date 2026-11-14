@@ -18,3 +18,11 @@ export const savedRequestBack = {
 
 export const savedRequestHelper =
   'Your submitted information. A request is not an accepted engagement, confirmed meeting or deal.';
+
+export const profileBack = registrationsBack;
+
+export function profileHelper(): string {
+  return realCustomerInput()
+    ? 'Company details, kept private to this workspace. Everything here is self-reported and unverified, and it is not linked to any company record.'
+    : 'Sample details only, kept private to this workspace. Everything here is self-reported and unverified, and it is not linked to any company record.';
+}

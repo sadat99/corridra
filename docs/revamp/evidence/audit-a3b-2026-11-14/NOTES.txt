@@ -1,0 +1,43 @@
+AUDIT-A3b part 1, Company profile in 3 steps. Evidence for UI/UX.v3, 14 November 2026.
+
+What the pictures show (all at 390, 768 and 1440 px wide):
+- profile-first-profile-*, profile-existing-summary-*, profile-existing-edit-*: before (the single form on main) and after (three steps, first step shown).
+- profile-step1-error-after-*, profile-step2-after-*, profile-step3-after-*: the steps and the alert that names the step that needs a fix.
+
+How it was measured: the real OrganisationProfile component and the real source stylesheets (globals.css, shells.css,
+page-frame.css, page-budget.css, profile-steps.css) in the real customer frame (main.ux-customer, section as a direct
+child), production esbuild bundle, profile API answered by the script. Details closed. Height is the height of main
+divided by the viewport height (844 high at 390, 1024 at 768, 900 at 1440). The fixture has no left bar and no footer, so a
+real page is a little longer (the footer is about 60 px); a signed-in page cannot be drawn without a session here.
+Script: kept outside the repository (scratchpad), the numbers are in profile-lengths.json.
+
+Lengths in screens:
+  390 px  first-profile     before  content  1705 px  2.02 screens
+  390 px  existing-summary  before  content   955 px  1.13 screens
+  390 px  existing-edit     before  content  2168 px  2.57 screens
+  390 px  first-profile     after   content   944 px  1.12 screens
+  390 px  existing-summary  after   content   843 px  1.00 screens
+  390 px  existing-edit     after   content   987 px  1.17 screens
+  768 px  first-profile     before  content  1569 px  1.53 screens
+  768 px  existing-summary  before  content   833 px  0.81 screens
+  768 px  existing-edit     before  content  1951 px  1.91 screens
+  768 px  first-profile     after   content   870 px  0.85 screens
+  768 px  existing-summary  after   content   759 px  0.74 screens
+  768 px  existing-edit     after   content   870 px  0.85 screens
+ 1440 px  first-profile     before  content  1555 px  1.73 screens
+ 1440 px  existing-summary  before  content   704 px  0.78 screens
+ 1440 px  existing-edit     before  content  1822 px  2.02 screens
+ 1440 px  first-profile     after   content   881 px  0.98 screens
+ 1440 px  existing-summary  after   content   655 px  0.73 screens
+ 1440 px  existing-edit     after   content   881 px  0.98 screens
+
+States: first-profile = no profile yet, the form is open. existing-summary = a saved profile, the form closed (the
+facts only). existing-edit = Edit Company Profile chosen. "before" is the single form on main (steps off, no frame);
+"after" is steps on and framed, step 1 shown. In the stepped edit the facts are not repeated above the open form.
+Steps 2 and 3 (full page pictures, profile-step2-after-* and profile-step3-after-*): at 390 px step 2 is 1112 px high
+(1.32 screens) and step 3 is 932 px (1.10); at 768 and 1440 px both fit the viewport (1024 and 900 px, 1.00 or less).
+The roles sit in three columns from 768 px up so that step 2 stays inside one desktop screen. The error picture
+(profile-step1-error-after-*) is the first step with the alert shown: 1060 px at 390 (1.26), 948 px at 1440 (1.05),
+which is the only state over one desktop screen, and only while the message is on screen.
+
+Checks run on this branch: see the pull request body. Real sign-in and database were not used.

@@ -518,3 +518,34 @@ test('the owner operating rules are recorded, linked from AGENTS.md and session 
     'session rotation must point at the rules',
   );
 });
+
+// Rule 6 (UI/UX.v3, audit unit A3b): the company profile form is drawn in steps of one to three controls wherever a
+// page mounts it. The steps are presentation only; the form, its ids and its payload are the same either way.
+export function unsteppedProfiles(source) {
+  return [...source.matchAll(/<OrganisationProfile\b[^>]*>/g)].filter(
+    (m) => !/\bsteps\b/.test(m[0]),
+  ).length;
+}
+
+test('every page that mounts the company profile form shows it in steps', () => {
+  const pages = walk(
+    join(web, 'app'),
+    (path) => path.endsWith('.tsx') && !isTest(path) && read(path).includes('<OrganisationProfile'),
+  );
+  assert.ok(pages.length > 0, 'no page mounts the company profile form');
+  const loose = pages.filter((path) => unsteppedProfiles(read(path)) > 0).map(rel);
+  assert.deepEqual(loose, [], `company profile form without steps: ${loose.join(', ')}`);
+});
+
+test('rule 6 flags a planted profile form without steps and passes one with steps', () => {
+  assert.equal(
+    unsteppedProfiles('<OrganisationProfile subject="a" issuer="b" workspaceId="c" />'),
+    1,
+  );
+  assert.equal(
+    unsteppedProfiles(
+      '<OrganisationProfile subject="a" issuer="b" workspaceId="c" steps framed />',
+    ),
+    0,
+  );
+});
