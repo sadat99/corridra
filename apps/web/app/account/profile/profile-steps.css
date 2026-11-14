@@ -1,0 +1,96 @@
+/* The company profile form in three steps (UI/UX.v3: one to three controls a step). Tokens only, 12 px inside a step,
+   44 px targets on a phone. The controls keep their own look; this file draws the progress row, the step title and the
+   step buttons. */
+.profile-form .profile-step {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.profile-form .profile-step[hidden] {
+  display: none;
+}
+.profile-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+  color: var(--text-2);
+}
+.profile-steps li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.profile-steps li[aria-current='step'] {
+  font-weight: 600;
+  color: var(--text-1);
+}
+.profile-steps-number {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+}
+.profile-steps li[aria-current='step'] .profile-steps-number {
+  border-color: var(--action);
+  background: var(--action);
+  color: var(--on-action);
+}
+.profile-form .profile-step-title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  line-height: var(--leading-title);
+  color: var(--text-1);
+}
+.profile-form .profile-step-title:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.profile-step-error {
+  margin: 0;
+  color: var(--critical);
+  font-size: var(--text-sm);
+}
+.profile-form {
+  display: grid;
+  gap: var(--space-3);
+}
+.profile-step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+@media (max-width: 47.99rem) {
+  .profile-step-actions > :is(button, a) {
+    min-height: 44px;
+  }
+  /* On a phone the row shows the number of every step and the word of the current one; the other words stay for a
+     screen reader. */
+  .profile-steps li:not([aria-current='step']) .profile-steps-name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+/* The six roles sit in columns where there is room, so the second step stays inside one desktop screen. */
+@media (min-width: 48rem) {
+  .profile-form .profile-step > fieldset {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-2) var(--space-4);
+  }
+  .profile-form .profile-step > fieldset > legend {
+    grid-column: 1 / -1;
+  }
+}
