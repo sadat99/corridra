@@ -20,6 +20,8 @@ import { neonAuth } from '../../../../lib/neon-auth';
 import { uxSwitchOn } from '../../../../lib/ux-switches';
 import { CustomerProgrammes } from '../customer-programmes';
 import { ProgrammeRoomStyles } from '../programme-room-styles';
+import { programmeBack } from '../../frame-copy';
+import '../programme-frame.css';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const metadata = {
@@ -62,6 +64,7 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
     <CustomerShell
       tab="work"
       eyebrow="REQUESTS"
+      frame={{ back: programmeBack }}
       title={
         // With the Organise room on, the programme's own title is the visible heading (approved work rooms).
         uxSwitchOn('CORRIDRA_UX_PROGRAMME') ? (
@@ -89,6 +92,7 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
         serviceRequestsEnabled={customerServiceRequestsEnabled()}
         roomEnabled={uxSwitchOn('CORRIDRA_UX_PROGRAMME')}
         firstRunEnabled={uxSwitchOn('CORRIDRA_DELEGATION_FIRST_RUN')}
+        framed
       />
     </CustomerShell>
   );

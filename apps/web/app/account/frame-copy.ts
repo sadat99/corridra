@@ -31,3 +31,12 @@ export function profileHelper(): string {
     ? 'Company details, kept private to this workspace. Everything here is self-reported and unverified, and it is not linked to any company record.'
     : 'Sample details only, kept private to this workspace. Everything here is self-reported and unverified, and it is not linked to any company record.';
 }
+
+// Programmes (UI/UX.v3 audit, unit A3d part 2): the programme pages. The chooser keeps its own description line, so
+// its frame has the back link only. A helper line would make the page longer than before at 768 and 1440 px, and the
+// closing paragraph beside Reload (what programme administration never grants) already says it, so neither page has one.
+export const programmesChooserBack = registrationsBack;
+export const programmeBack = {
+  label: 'Back to my workspaces',
+  href: '/account#customer-workspaces',
+};

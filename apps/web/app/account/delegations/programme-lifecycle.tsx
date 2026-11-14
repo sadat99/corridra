@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { formEn } from '../../../lib/i18n/form-words/en';
+import { CorridraIcon } from '../../../components/corridra-icon';
+import { MenuAnchor, MenuButton, OverflowMenu } from '../../../components/ux/overflow-menu';
 
 // Rename, archive and restore one programme (CRUD gap G7). The database owns every rule; this only asks and shows the answer.
 export type LifecycleProgramme = {
@@ -109,6 +111,8 @@ export function ProgrammeLifecycle({
   headers,
   onChanged,
   onStale,
+  menu = false,
+  helpHref,
 }: {
   programme: LifecycleProgramme;
   workspaceId: string;
@@ -116,7 +120,13 @@ export function ProgrammeLifecycle({
   onChanged: (change: LifecycleChange, before: LifecycleProgramme) => void;
   // A stale rename keeps the person's text and asks them to choose (null); any other stale answer comes back as words for the page.
   onStale: (message: string | null) => void;
+  /** On the framed page the rare actions sit in a "More actions" menu; archiving then asks first. */
+  menu?: boolean;
+  /** The programme's request-help address, shown as the last menu row where service requests are on. */
+  helpHref?: string;
 }) {
+  const [confirming, setConfirming] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(programme.name);
   const [purpose, setPurpose] = useState(programme.reportingPurpose);
@@ -136,7 +146,10 @@ export function ProgrammeLifecycle({
   const wasEditing = useRef(false);
   useEffect(() => {
     if (editing) nameField.current?.focus();
-    else if (wasEditing.current) renameButton.current?.focus();
+    else if (wasEditing.current)
+      (
+        renameButton.current ?? root.current?.querySelector<HTMLElement>('.ux-menu-button')
+      )?.focus();
     wasEditing.current = editing;
   }, [editing]);
   const trimmed = { name: name.trim(), purpose: purpose.trim() };
@@ -220,9 +233,71 @@ export function ProgrammeLifecycle({
       cancel();
     }
   }
+  function startRename() {
+    setName(programme.name);
+    setPurpose(programme.reportingPurpose);
+    setBase({
+      version: programme.version,
+      name: programme.name,
+      purpose: programme.reportingPurpose,
+    });
+    setServerStale(false);
+    setEditing(true);
+  }
   return (
-    <div className="programme-lifecycle">
-      {!editing && (
+    <div className="programme-lifecycle" ref={root}>
+      {!editing && menu && (
+        <>
+          <OverflowMenu
+            label={'More actions for ' + programme.name}
+            trigger={<CorridraIcon name="more" />}
+            className="ux-prog-more"
+            align="start"
+          >
+            {programme.archived ? (
+              <MenuButton data-menu-close="" disabled={busy} onClick={() => void run('restore')}>
+                Restore Programme
+              </MenuButton>
+            ) : (
+              <>
+                <MenuButton data-menu-close="" disabled={busy} onClick={startRename}>
+                  Rename Programme
+                </MenuButton>
+                <MenuButton data-menu-close="" disabled={busy} onClick={() => setConfirming(true)}>
+                  Archive Programme
+                </MenuButton>
+              </>
+            )}
+            {helpHref ? (
+              <MenuAnchor href={helpHref}>Request Help With This Programme</MenuAnchor>
+            ) : null}
+          </OverflowMenu>
+          {confirming && !programme.archived && (
+            <span
+              role="group"
+              aria-label={'Confirm archiving ' + programme.name}
+              className="ux-prog-confirm"
+            >
+              <span>Archive this programme? You can restore it later.</span>
+              <button
+                type="button"
+                className="primary-link"
+                disabled={busy}
+                onClick={() => {
+                  setConfirming(false);
+                  void run('archive');
+                }}
+              >
+                Archive {programme.name}
+              </button>
+              <button type="button" className="text-link" onClick={() => setConfirming(false)}>
+                Keep {programme.name}
+              </button>
+            </span>
+          )}
+        </>
+      )}
+      {!editing && !menu && (
         <p>
           {programme.archived ? (
             <button
@@ -240,17 +315,7 @@ export function ProgrammeLifecycle({
                 type="button"
                 className="text-link"
                 disabled={busy}
-                onClick={() => {
-                  setName(programme.name);
-                  setPurpose(programme.reportingPurpose);
-                  setBase({
-                    version: programme.version,
-                    name: programme.name,
-                    purpose: programme.reportingPurpose,
-                  });
-                  setServerStale(false);
-                  setEditing(true);
-                }}
+                onClick={startRename}
               >
                 Rename Programme
               </button>{' '}

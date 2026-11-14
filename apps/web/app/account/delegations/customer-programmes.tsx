@@ -74,6 +74,8 @@ type Props = {
   projectionsEnabled?: boolean;
   /** The guided first run and the decisions-first overview (ADR-084 S0). It acts only where pages are on. */
   firstRunEnabled?: boolean;
+  /** The page frame shows the back link, the status chips and the helper line, and rare row actions sit in a menu. */
+  framed?: boolean;
 };
 const uuid = (value: unknown): value is string =>
   typeof value === 'string' &&
@@ -122,6 +124,7 @@ function ScopedProgrammes({
   roomEnabled = false,
   projectionsEnabled = false,
   firstRunEnabled = false,
+  framed = false,
 }: Props) {
   // The first run ends on Publish, so it needs the public page and the participants module under it.
   const firstRun = firstRunEnabled && pagesEnabled && participantsEnabled;
@@ -613,6 +616,13 @@ function ScopedProgrammes({
     }
     setUndoing(false);
   }
+  // With the page frame and the room, the programme's rare actions sit in one "More actions" menu.
+  const framedRoom = framed && roomEnabled;
+  const helpLink = (id: string) =>
+    '/account/service-requests/new?kind=programme&ref=' +
+    encodeURIComponent(id) +
+    '&workspace=' +
+    encodeURIComponent(workspaceId);
   const lifecycleFor = (p: Programme) =>
     typeof p.version === 'number' ? (
       <ProgrammeLifecycle
@@ -626,6 +636,8 @@ function ScopedProgrammes({
         }}
         workspaceId={workspaceId}
         headers={headers}
+        menu={framedRoom}
+        helpHref={framedRoom && serviceRequestsEnabled ? helpLink(p.id) : undefined}
         onChanged={applyChange}
         onStale={(note) => {
           if (note) setStaleNote(note);
@@ -712,17 +724,9 @@ function ScopedProgrammes({
                           : 'Planning record only · Sample data'}{' '}
                       </p>
                       {lifecycleFor(p)}
-                      {serviceRequestsEnabled && (
+                      {serviceRequestsEnabled && !(framedRoom && typeof p.version === 'number') && (
                         <p>
-                          <a
-                            className="text-link"
-                            href={
-                              '/account/service-requests/new?kind=programme&ref=' +
-                              encodeURIComponent(p.id) +
-                              '&workspace=' +
-                              encodeURIComponent(workspaceId)
-                            }
-                          >
+                          <a className="text-link" href={helpLink(p.id)}>
                             Request help with this programme
                           </a>
                         </p>
@@ -1279,14 +1283,18 @@ function ScopedProgrammes({
     <section
       className={
         roomEnabled
-          ? 'delivery-view ux-saved-commercial-report programme-page'
+          ? framed
+            ? 'delivery-view ux-saved-commercial-report programme-page ux-prog'
+            : 'delivery-view ux-saved-commercial-report programme-page'
           : 'delivery-view ux-saved-commercial-report'
       }
       aria-label={realCustomerInput() ? 'Delegation planning' : 'Sample delegation planning'}
     >
-      <a className="text-link ux-back" href="/account#customer-workspaces">
-        Back to my workspaces
-      </a>
+      {!framed && (
+        <a className="text-link ux-back" href="/account#customer-workspaces">
+          Back to my workspaces
+        </a>
+      )}
       {!roomEnabled && intro}
       {/* With the room on the page heading is said to assistive technology only; when no programme can be shown
           the page still has a visible heading. */}

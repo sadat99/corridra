@@ -1,0 +1,31 @@
+AUDIT-A3d part 2: Programme (planning) pages (UI/UX.v3 audit, last of the nine screens)
+
+What the pictures show
+  programme-before-<width>-<rows>row-<list|new>.png  origin/main 76066ca (the room with its own back link, old DOM)
+  programme-after-<width>-<rows>row-<list|new>.png   this branch (page frame back link, rare actions in a row menu)
+  Widths 390 (844 high), 768 (1024 high), 1440 (900 high). "list" is the Programmes tab, "new" the New Sample Programme
+  tab, one or two programmes. The two-row New tab is the same page as the one-row New tab (no list on it).
+
+How they were taken
+  The real CustomerProgrammes room (room on, service requests on, every other module off), its real stylesheets
+  (collected by the bundler from the imports, plus globals and shells), inside WorkspaceShell with the customer frame; the
+  page frame is drawn around it for "after" only, as the real page does. The programme API is answered by the test (sample
+  data, no sign-in, no server). Same fixture, same data, same Chromium before and after, details closed.
+
+Content height (main element, px), before -> after
+  Programmes tab  390 x 1  630 -> 551    390 x 2  715 -> 635
+                  768 x 1  703 -> 642    768 x 2  788 -> 726
+                  1440 x 1 444 -> 436    1440 x 2 525 -> 517
+  New tab         390 770 <- 778 (-8)    768 692 <- 700 (-8)    1440 685 <- 693 (-8)
+  Nothing is longer than before at any width, tab or programme count. Whole page against the window: under one window
+  at 768 and 1440 on every tab shown, and under 1.0 phone screens at 390.
+
+Decision recorded: no helper line and no chips on these pages
+  A 14 px helper line (the old closing sentence about what programme administration never grants) made the page longer
+  than before: +15 px at 1440 and +40 px at 768 on the New tab, +26 px at 390, because the sentence next to Reload is
+  already on one row at those widths and moving it up saves nothing. The status words "Planning record only · Sample data"
+  stay where they were, under the programme name. So the frame holds the back link only; the sentence and the words are
+  unchanged. A helper or chips would need a page that has height to spare.
+
+Not measured
+  The real signed-in /account/delegations/<workspace> route (needs a sign-in and the programme database, absent here).
