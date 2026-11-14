@@ -27,10 +27,15 @@ describe('the private link validator', () => {
     );
   });
 
-  it.each(issued)('accepts $path on its own origin and keeps the fragment', async ({ path, token }) => {
-    const { parsePrivateLink } = await load();
-    expect(parsePrivateLink(`${origin}${path}#${token}`, origin)).toBe(`${origin}${path}#${token}`);
-  });
+  it.each(issued)(
+    'accepts $path on its own origin and keeps the fragment',
+    async ({ path, token }) => {
+      const { parsePrivateLink } = await load();
+      expect(parsePrivateLink(`${origin}${path}#${token}`, origin)).toBe(
+        `${origin}${path}#${token}`,
+      );
+    },
+  );
 
   it('ignores spaces and line breaks around the whole paste, never inside it', async () => {
     const { parsePrivateLink } = await load();
@@ -124,7 +129,15 @@ describe('the private link validator', () => {
   it('refuses when the site origin itself is not a plain web origin', async () => {
     const { parsePrivateLink } = await load();
     const link = `${origin}/buyer#${hex}`;
-    for (const bad of [undefined, null, '', 'null', 'javascript:alert(1)', `${origin}/`, `${origin}/x`]) {
+    for (const bad of [
+      undefined,
+      null,
+      '',
+      'null',
+      'javascript:alert(1)',
+      `${origin}/`,
+      `${origin}/x`,
+    ]) {
       expect(parsePrivateLink(link, bad)).toBeNull();
     }
   });

@@ -17,6 +17,8 @@ const refusal =
 const label = 'Paste your private link';
 
 const field = (page: Page) => page.getByLabel(label, { exact: true });
+// Scoped to the page body: Next's route announcer is a second role=alert outside it.
+const alertOf = (page: Page) => page.getByRole('main').getByRole('alert');
 const open = (page: Page) => page.getByRole('button', { name: 'Open Link', exact: true });
 
 async function ready(page: Page) {
@@ -110,12 +112,12 @@ test('the keyboard alone pastes, opens and refuses', async ({ page }) => {
   await input.focus();
   await page.keyboard.type('https://evil.example/buyer#nope');
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('alert')).toHaveText(refusal);
+  await expect(alertOf(page)).toHaveText(refusal);
   await expect(input).toBeFocused(); // focus stays where the visitor is typing
   await expect(input).toHaveAttribute('aria-invalid', 'true');
 
   await input.fill(`${new URL(page.url()).origin}/buyer#${hex}`);
-  await expect(page.getByRole('alert')).toHaveCount(0); // editing clears the message
+  await expect(alertOf(page)).toHaveCount(0); // editing clears the message
   await page.keyboard.press('Tab');
   await expect(open(page)).toBeFocused();
   await Promise.all([page.waitForURL(`**/buyer#${hex}`), page.keyboard.press('Enter')]);
@@ -155,11 +157,12 @@ test.describe('refused pastes', () => {
       await field(page).fill(text);
       await open(page).click();
 
-      const alert = page.getByRole('alert');
+      const alert = alertOf(page);
       await expect(alert).toHaveText(refusal);
       // The message never repeats what was pasted.
       const shown = (await alert.textContent()) ?? '';
-      for (const piece of [hex, 'evil', 'javascript', 'operator']) expect(shown).not.toContain(piece);
+      for (const piece of [hex, 'evil', 'javascript', 'operator'])
+        expect(shown).not.toContain(piece);
       expect(page.url()).toBe(start);
       expect(seen).toEqual([]);
       expect(dialogs).toEqual([]);
@@ -188,7 +191,7 @@ for (const width of [320, 768]) {
 
       await field(page).fill('https://evil.example/buyer');
       await open(page).click();
-      await expect(page.getByRole('alert')).toHaveText(refusal);
+      await expect(alertOf(page)).toHaveText(refusal);
       expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
       expect(
         await page.evaluate(
