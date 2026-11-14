@@ -129,7 +129,7 @@ test('signed out, the footer offers three access doors with the registry words a
   await expect(footer.locator('a[href="/signin"]')).toHaveCount(0);
 });
 
-test('the heading is the quiet mono title and nothing in the row is uppercased', async ({
+test('the heading is the quiet uppercase mono title like the group titles, and the links are not uppercased', async ({
   page,
 }) => {
   const footer = await open(page);
@@ -138,7 +138,8 @@ test('the heading is the quiet mono title and nothing in the row is uppercased',
     return { size: css.fontSize, transform: css.textTransform, weight: css.fontWeight };
   });
   expect(style.size).toBe('12px');
-  expect(style.transform).toBe('none');
+  // Like .guide-footer-title: a heading, not an action.
+  expect(style.transform).toBe('uppercase');
   expect(style.weight).toBe('600');
   // The mono face comes from the layout's font variable, which the fixture does not load; the rule must name it.
   const rule = readFileSync(resolve('apps/web/components/site-footer.css'), 'utf8').match(
@@ -227,6 +228,19 @@ test('with the switch off the footer is the one it was: Sign In, the workspace l
     footer.getByRole('link', { name: 'Open Your Workspace', exact: true }),
   ).toHaveAttribute('href', '/workspace');
   await expect(footer.locator('details.guide-footer-details').first()).toHaveAttribute('open', '');
+});
+
+// Where the doors do not show, the footer is the one it was: Buy Abroad starts open on a phone.
+test('with the switch on, signed in and in the staff preview Buy Abroad still starts open on a phone', async ({
+  page,
+}) => {
+  const signedIn = await open(page, { signedIn: true, width: 390 });
+  await expect(signedIn.locator('details.guide-footer-details').first()).toHaveAttribute(
+    'open',
+    '',
+  );
+  const staff = await open(page, { path: '/operator/view-as/customer', width: 390 });
+  await expect(staff.locator('details.guide-footer-details').first()).toHaveAttribute('open', '');
 });
 
 test('signed in, the doors give way to the workspace button and Sign In never appears', async ({

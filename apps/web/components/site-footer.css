@@ -97,7 +97,7 @@
 }
 
 /* The access doors (CORRIDRA_UX_ACCESS_DOORS, owner 14 Nov 2026): where the Sign In button and the "Already working
-   with us?" line were, a small heading in the group-title style and three text links, one row from 701 px and
+   with us?" line were, a small heading in the group-title style (uppercase, like it) and three text links, one row from 701 px and
    stacked on a phone. Every target is at least 44 px; the current door page is underlined. */
 .guide-footer-access {
   margin-top: var(--space-3);
@@ -109,11 +109,12 @@
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--footer-quiet);
 }
 .guide-footer-access ul {
   display: grid;
-  margin: 0;
+  margin: var(--space-2) 0 0;
   padding: 0;
   list-style: none;
 }
@@ -133,11 +134,14 @@
   text-decoration: underline;
   text-underline-offset: 4px;
 }
-/* From 701 px the three links are one row in the 14 px size, and the promise above gives back 16 px, so the footer
+/* From 701 px the three links are one row in the 14 px size, and the promise and the heading above give back 20 px, so the footer
    stays inside the locked heights (768: 890, 1440: 575; UI/UX.v3 "Footer phone fit (L14)"). */
 @media (min-width: 701px) {
   .guide-footer-doors .guide-footer-promise {
-    margin-block: var(--space-3);
+    margin-block: var(--space-2) var(--space-3);
+  }
+  .guide-footer-doors .guide-footer-access {
+    margin-top: var(--space-2);
   }
   .guide-footer-access ul {
     display: flex;

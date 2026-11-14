@@ -73,7 +73,7 @@ export const footerGroups: readonly FooterGroup[] = [
 
 /**
  * With CORRIDRA_UX_ACCESS_DOORS on, a footer link that led to the same place as an access door goes to the door
- * (owner via the orchestrator, 14 Nov 2026: "ensure that concerned exisitng footer navigation links also get updated
+ * (Owner, 14 Nov 2026: "ensure that concerned exisitng footer navigation links also get updated
  * if led to the same"). Join the Corridra Network is the helper door's way in; the page it names links on to /network.
  * The label and the translation key do not change.
  */
@@ -85,7 +85,7 @@ export function SiteFooterView({
 }: {
   realUse: boolean;
   /**
-   * CORRIDRA_UX_ACCESS_DOORS (owner, 14 Nov 2026). Signed out, outside the staff preview and the compact /plan footer,
+   * CORRIDRA_UX_ACCESS_DOORS (Owner, 14 Nov 2026). Signed out, outside the staff preview and the compact /plan footer,
    * three access doors replace the Sign In button and the "Already working with us?" line, and every family group
    * starts closed on a phone. Unset, nothing here changes.
    */
@@ -103,8 +103,9 @@ export function SiteFooterView({
   const compact = pathname === '/plan';
   // The doors show in the server HTML (signed out) and give way to the workspace button once a person is known.
   const doors = accessDoors && !compact && !preview && !who;
-  // With the switch on every group starts closed on a phone; the compact footer is already closed.
-  const startsOpen = !compact && !accessDoors;
+  // Where the doors show, every group starts closed on a phone; signed in and in the staff preview Buy Abroad stays
+  // open as before, and the compact footer is already closed.
+  const startsOpen = !compact && !doors;
   // Folded, the summary carries the legend's own opening words, so the body does not say them twice.
   const trust = (
     <>
