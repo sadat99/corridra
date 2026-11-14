@@ -159,6 +159,7 @@ describe('the install', () => {
     ).toEqual([
       '0001_public_programme_page_and_applications.sql',
       '0002_staff_programme_applications.sql',
+      '0003_programme_page_schedule.sql',
     ]);
     const grants = async (signature: string) =>
       (

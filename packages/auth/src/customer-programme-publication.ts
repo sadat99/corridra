@@ -11,6 +11,13 @@ export function customerProgrammePagesEnabled(env: NodeJS.ProcessEnv = process.e
   return customerParticipantsEnabled(env) && env.CORRIDRA_PROGRAMME_PAGES === 'true';
 }
 
+// ADR-084 slice S1, the share kit (preview image, QR code, flyer, calendar file, quiet attribution line). Off unless the
+// owner sets the switch to exactly 'true', and only where the public pages are on. It sends nothing, tracks nothing and
+// reads nothing but the words already published; the dates of a calendar file are stated by the organiser.
+export function customerProgrammeShareKitEnabled(env: NodeJS.ProcessEnv = process.env) {
+  return customerProgrammePagesEnabled(env) && env.CORRIDRA_PROGRAMME_SHARE_KIT === 'true';
+}
+
 // One line of public text, as the database checks it: trimmed, no control character, counted in characters.
 const line = (min: number, max: number) =>
   z
@@ -83,6 +90,16 @@ export const programmePublicationInput = z.discriminatedUnion('action', [
     action: z.literal('withdraw'),
     acknowledged: z.literal(true),
   }),
+  // The optional structured dates of one published version (ADR-084 S1). A real calendar day each; the database checks
+  // the order and the span again.
+  z.strictObject({
+    ...command,
+    ...scope,
+    action: z.literal('schedule'),
+    version: z.number().int().min(1).max(100000),
+    startsOn: z.iso.date(),
+    endsOn: z.iso.date(),
+  }),
 ]);
 export const programmeApplicationInput = z.discriminatedUnion('action', [
   z.strictObject({
@@ -133,6 +150,7 @@ export const programmePublicationRefusals = [
   'PROGRAMME_PUBLICATION_ADDRESS_TAKEN',
   'PROGRAMME_PUBLICATION_PAUSED',
   'PROGRAMME_PUBLICATION_RATE_LIMITED',
+  'PROGRAMME_SCHEDULE_ALREADY_SET',
   'PROGRAMME_APPLICATIONS_CLOSED',
   'PROGRAMME_ALREADY_REGISTERED',
   'PROGRAMME_APPLICATION_CHANGED',
@@ -173,6 +191,13 @@ export class CustomerProgrammePublicationService extends CustomerSessionBoundary
   // in practice never) it proposes another, a bounded number of times, inside the one request.
   async publication(input: unknown, subject?: string, issuer?: string) {
     const v = programmePublicationInput.parse(input);
+    if (v.action === 'schedule')
+      return this.one(
+        'SELECT customer.set_programme_schedule($1,$2,$3,$4,$5,$6) AS result',
+        [v.commandId, v.workspaceId, v.programmeId, v.version, v.startsOn, v.endsOn],
+        subject,
+        issuer,
+      );
     if (v.action === 'withdraw')
       return this.one(
         'SELECT customer.withdraw_programme_publication($1,$2,$3) AS result',
@@ -264,7 +289,32 @@ export class ProgrammePageReader {
       throw error;
     }
   }
+  // The dates of the latest version of a page that is readable now, or null. Null is the one answer for an address that
+  // opens nothing and for a page whose latest version has no dates, so it tells the two apart to nobody. Call it only
+  // after `read` returned a page. A module that is not installed answers null too, so the calendar action is not shown.
+  async schedule(address: string | null): Promise<PublicProgrammeSchedule | null> {
+    if (address === null || !programmeAddress.safeParse(address).success) return null;
+    try {
+      const result = await this.pool.query('SELECT app.read_programme_schedule($1) AS result', [
+        address,
+      ]);
+      const dates = publicSchedule.safeParse(result.rows[0]?.result);
+      return dates.success && dates.data.endsOn >= dates.data.startsOn ? dates.data : null;
+    } catch (error) {
+      if (['42883', '42P01', '3F000'].includes((error as { code?: string }).code ?? ''))
+        return null;
+      throw error;
+    }
+  }
 }
+
+// The structured dates of a published page (ADR-084 S1). Nothing here is part of the page copy.
+export const publicSchedule = z.strictObject({
+  version: z.number().int().min(1),
+  startsOn: z.iso.date(),
+  endsOn: z.iso.date(),
+});
+export type PublicProgrammeSchedule = z.infer<typeof publicSchedule>;
 
 // Corridra staff reading applications to public programme pages (ADR-080, owner decision of 12 November 2026). Read only:
 // there is no decide, edit, invite or export here. Owners and admins of the staff workspace with a fresh authenticator

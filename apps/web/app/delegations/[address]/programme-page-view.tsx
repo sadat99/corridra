@@ -1,6 +1,7 @@
 import type { PublicProgrammePage } from '@corridra/auth/customer-programme-publication';
 import { pp } from '../../../lib/i18n/programme-pages';
 import { ApplyLink } from './apply-link';
+import type { ShareKitParts } from './share-kit';
 import { ShareRow } from './share-row';
 
 const day = (iso: string) =>
@@ -19,12 +20,15 @@ export function ProgrammePageView({
   page,
   url,
   preview = false,
+  shareKit,
 }: {
   page: Pick<PublicProgrammePage, 'state' | 'programme' | 'closesAt' | 'sample'> & {
     address?: string;
   };
   url?: string;
   preview?: boolean;
+  /** The share kit (ADR-084 S1), drawn by the server and placed in the share section. Absent while its switch is off. */
+  shareKit?: ShareKitParts;
 }) {
   const p = page.programme;
   const open = page.state === 'OPEN';
@@ -163,9 +167,18 @@ export function ProgrammePageView({
       )}
       <section aria-labelledby="programme-who-runs-title">
         <h2 id="programme-who-runs-title">{pp('pp.public.responsible.title')}</h2>
-        <p>{pp('pp.public.responsible.text', { organiser: p.organiser })}</p>
+        {shareKit && !preview ? (
+          // With the share kit on, the attribution link takes the place of the sentence about Corridra's tools, so the
+          // paragraph is never longer than before.
+          <p>
+            {pp('pp.public.responsible.kitBefore', { organiser: p.organiser })}{' '}
+            {shareKit.attribution}. {pp('pp.public.responsible.kitAfter')}
+          </p>
+        ) : (
+          <p>{pp('pp.public.responsible.text', { organiser: p.organiser })}</p>
+        )}
       </section>
-      {url && !preview && <ShareRow url={url} title={p.title} />}
+      {url && !preview && <ShareRow url={url} title={p.title} kit={shareKit} />}
     </div>
   );
 }

@@ -18,17 +18,18 @@
     "@corridra/delivery": "workspace:*",
     "@corridra/domain": "workspace:*",
     "@corridra/evidence": "workspace:*",
+    "@corridra/intelligence": "workspace:*",
     "@corridra/missions": "workspace:*",
+    "@corridra/network": "workspace:*",
+    "@corridra/opportunities": "workspace:*",
     "@corridra/workflows": "workspace:*",
     "@neondatabase/auth": "0.5.0-beta",
     "next": "16.4.5",
+    "qrcode-generator": "2.0.4",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "workflow": "5.4.0",
-    "zod": "4.6.7",
-    "@corridra/opportunities": "workspace:*",
-    "@corridra/intelligence": "workspace:*",
-    "@corridra/network": "workspace:*"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.4",
