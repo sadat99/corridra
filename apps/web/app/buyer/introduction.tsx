@@ -1,5 +1,5 @@
 'use client';
-import { displayDate } from '@corridra/domain/locale';
+import { formatMoment } from '../../lib/ux/format';
 import { useEffect, useRef, useState } from 'react';
 import type { Introduction } from '@corridra/domain/access';
 import {
@@ -346,7 +346,7 @@ function ScopedIntroduction({
             </button>
           )}
           <p>You will not be added to a mailing list by responding.</p>
-          <p>Private link expires {displayDate(data.expiresAt)}.</p>
+          <p>Private link expires {formatMoment(data.expiresAt)}.</p>
         </>
       )}
     </section>

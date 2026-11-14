@@ -5,7 +5,13 @@ import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 
 import type { DeliveryReport } from '@corridra/delivery/report';
 import { MissionPassport } from '../../../components/mission-passport';
 import { MissionExperienceView } from '../../mission-experience-view';
-import { displayDate, displayMoney } from '@corridra/domain/locale';
+import { displayMoney } from '@corridra/domain/locale';
+import { formatMoment, formatUtcDay } from '../../../lib/ux/format';
+import {
+  evidenceRequestStatusWords,
+  meetingStatusWords,
+} from '../../../lib/ux/mission-status-words';
+import { SubTabs } from '../../../components/ux/sub-tabs';
 import { translate } from '../../../lib/i18n/messages';
 import { savedMissionHeaders, savedMissionRead, type SavedMissionScope } from '../saved-missions';
 import { DecisionHistory } from './decision-history';
@@ -14,6 +20,7 @@ import { BookDownloads, createPendingBooks } from './book-downloads';
 import { limitWords } from '../../../lib/account-limit';
 import { report } from '../../../lib/saved-report-check';
 import './report-page.css';
+import './report-budget.css';
 /** `none` reads and keeps the report without drawing it: the Room's Overview uses it for its summary. */
 export type ReportSection = 'all' | 'compare' | 'evidence' | 'trip' | 'none';
 type Scope = SavedMissionScope & {
@@ -264,8 +271,8 @@ function PrivateReport({
       )}
       <p>
         {realCustomerInput()
-          ? 'Your submitted information. This is the operator-approved report scope,not automatic access to every company,contact,offer or participant record.'
-          : 'Sample data only. This is the operator-approved report scope,not automatic access to every company,contact,offer or participant record.'}{' '}
+          ? 'Your submitted information. This is the operator-approved report scope, not automatic access to every company, contact, offer or participant record.'
+          : 'Sample data only. This is the operator-approved report scope, not automatic access to every company, contact, offer or participant record.'}{' '}
       </p>
       {status === 'loading' && <p role="status">Opening your approved commercial report…</p>}
       {status === 'denied' && bookDenial && (
@@ -299,218 +306,272 @@ function PrivateReport({
       {data && status === 'ready' && (
         <>
           <p>
-            Approved purpose: {data.purpose}. Original access expires {displayDate(data.expiresAt)}.
+            Approved purpose: {data.purpose}. Original access expires {formatMoment(data.expiresAt)}
+            .
           </p>
-          {data.missions.map((m) => (
-            <article className="delivery-card ux-participant-mission" key={m.publicationId}>
-              {showCompare && (
-                <>
-                  {showRest && (
-                    <>
-                      <MissionPassport mission={m} />
-                      <h2>Commercial objective</h2>
-                      <p>{m.objective}</p>
-                      <p>{m.brief}</p>
-                    </>
-                  )}
-                  {m.experience ? (
-                    <details className="ux-mission-detail" open>
-                      <summary>
-                        Companies,qualification,requirements and original quotations
-                      </summary>
-                      <MissionExperienceView experience={m.experience} lenses={lenses} />
-                    </details>
-                  ) : (
-                    <p>
-                      No company shortlist or supplier quotation has been approved for this report
-                      yet.
-                    </p>
-                  )}
-                </>
-              )}
-              {showTrip && renderTrip && renderTrip(m.itinerary)}
-              {showEvidence && decisionsEnabled && (
-                <DecisionHistory
-                  subject={subject}
-                  issuer={issuer}
-                  resourceId={resourceId}
-                  cards={decisionCards}
-                />
-              )}
-              {showEvidence && specificationConfirmationsEnabled && (
-                <SpecificationConfirmation
-                  subject={subject}
-                  issuer={issuer}
-                  resourceId={resourceId}
-                />
-              )}
-              {showRest && (
-                <>
-                  <h2>Meetings and visits</h2>
-                  {m.itinerary.length ? (
-                    <ul>
-                      {m.itinerary.map((meeting, index) => (
-                        <li key={index}>
-                          <strong>{meeting.label}</strong> · {meeting.status}
-                          <p>
-                            {meeting.scheduleChanged
-                              ? 'The schedule changed. A new reviewed itinerary is required.'
-                              : meeting.startsAt
-                                ? displayDate(meeting.startsAt, meeting.timezone ?? 'UTC') +
-                                  ' · ' +
-                                  (meeting.location ?? 'Location not supplied')
-                                : 'No confirmed appointment time supplied.'}
-                          </p>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="ux-empty">
-                      No meetings or visits have been approved for this itinerary yet.
-                    </p>
-                  )}
-                  <h2>Recorded commercial progress</h2>
+          {data.missions.map((m) => {
+            const intro = showCompare && showRest && (
+              <>
+                <MissionPassport mission={m} />
+                <h2>Commercial objective</h2>
+                <p>{m.objective}</p>
+                <p>{m.brief}</p>
+              </>
+            );
+            const companies = showCompare && (
+              <>
+                {m.experience ? (
+                  <details className="ux-mission-detail" open>
+                    <summary>
+                      Companies, qualification, requirements and original quotations
+                    </summary>
+                    <MissionExperienceView experience={m.experience} lenses={lenses} />
+                  </details>
+                ) : (
                   <p>
-                    Qualified opportunities: {m.outcomes.qualified}. Proposals:{' '}
-                    {m.outcomes.proposals}. Contracts: {m.outcomes.contracts}. Meetings held:{' '}
-                    {m.outcomes.heldMeetings}.
+                    No company shortlist or supplier quotation has been approved for this report
+                    yet.
                   </p>
-                  {m.totals.length ? (
-                    <ul>
-                      {m.totals.map((t) => (
-                        <li key={t.currency}>
-                          Customer contracts {displayMoney(t.contractMinor, t.currency)} · Invoices{' '}
-                          {displayMoney(t.invoiceMinor, t.currency)} · Confirmed cash{' '}
-                          {displayMoney(t.confirmedCashMinor, t.currency)} · Repeat cash{' '}
-                          {displayMoney(t.repeatCashMinor, t.currency)} (included in confirmed
-                          cash). These are customer trade observations,not Corridra or organiser
-                          revenue.
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p>
-                      No financial amounts are shared in this report. Missing shared amounts do not
-                      mean zero.
-                    </p>
-                  )}
-                </>
-              )}
-              {showEvidence && m.requests && (
-                <section>
-                  <h2>Evidence requests and declarations</h2>
-                  {m.requests.length === 0 ? (
-                    <p>No evidence responses are requested.</p>
-                  ) : (
-                    m.requests.map((q) => (
-                      <article key={q.id}>
-                        <h3>{q.title}</h3>
-                        <p>{q.instructions}</p>
+                )}
+              </>
+            );
+            const trip = showTrip && renderTrip && renderTrip(m.itinerary);
+            const decisions = (
+              <>
+                {showEvidence && decisionsEnabled && (
+                  <DecisionHistory
+                    subject={subject}
+                    issuer={issuer}
+                    resourceId={resourceId}
+                    cards={decisionCards}
+                  />
+                )}
+                {showEvidence && specificationConfirmationsEnabled && (
+                  <SpecificationConfirmation
+                    subject={subject}
+                    issuer={issuer}
+                    resourceId={resourceId}
+                  />
+                )}
+              </>
+            );
+            const meetings = showRest && (
+              <>
+                <h2>Meetings and visits</h2>
+                {m.itinerary.length ? (
+                  <ul>
+                    {m.itinerary.map((meeting, index) => (
+                      <li key={index}>
+                        <strong>{meeting.label}</strong> · {meetingStatusWords(meeting.status)}
                         <p>
-                          {q.status} · Due {displayDate(q.dueAt)}
+                          {meeting.scheduleChanged
+                            ? 'The schedule changed. A new reviewed itinerary is required.'
+                            : meeting.startsAt
+                              ? formatMoment(meeting.startsAt, meeting.timezone ?? 'UTC') +
+                                ' · ' +
+                                (meeting.location ?? 'Location not supplied')
+                              : 'No confirmed appointment time supplied.'}
                         </p>
-                        {q.response && <p>Your self-declared response: {q.response}</p>}
-                        {(q.status === 'OPEN' || pending?.requestId === q.id) && (
-                          <form
-                            className="operator-form"
-                            onSubmit={(event) => {
-                              event.preventDefault();
-                              void respond(q.id);
-                            }}
-                          >
-                            <fieldset disabled={busy || !!pending}>
-                              <legend>Reply to this evidence request</legend>
-                              <div className="field">
-                                <label htmlFor={responsePrefix + q.id}>Your response</label>
-                                <textarea
-                                  id={responsePrefix + q.id}
-                                  name="body"
-                                  minLength={3}
-                                  maxLength={2000}
-                                  required
-                                  value={drafts[q.id]?.body ?? ''}
-                                  onChange={(event) =>
-                                    setDrafts((old) => ({
-                                      ...old,
-                                      [q.id]: {
-                                        body: event.target.value,
-                                        acknowledged: old[q.id]?.acknowledged ?? false,
-                                      },
-                                    }))
-                                  }
-                                />
-                              </div>
-                              <label>
-                                <input
-                                  type="checkbox"
-                                  required
-                                  checked={drafts[q.id]?.acknowledged ?? false}
-                                  onChange={(event) =>
-                                    setDrafts((old) => ({
-                                      ...old,
-                                      [q.id]: {
-                                        body: old[q.id]?.body ?? '',
-                                        acknowledged: event.target.checked,
-                                      },
-                                    }))
-                                  }
-                                />{' '}
-                                This is my self-declared response. Supporting documents must follow
-                                the operator-controlled review process.
-                              </label>
-                            </fieldset>
-                            <button
-                              className="primary-link"
-                              disabled={busy || (!!pending && pending.requestId !== q.id)}
-                            >
-                              {pending?.requestId === q.id
-                                ? 'Retry Same Response'
-                                : 'Send Response'}
-                            </button>
-                            {pending?.requestId === q.id && (
-                              <button
-                                type="button"
-                                className="text-link"
-                                disabled={busy}
-                                onClick={() => {
-                                  setPending(null);
-                                  setNotice(
-                                    'Local retry cleared. This does not cancel or change any response already recorded. Refresh the report before sending different information.',
-                                  );
-                                }}
-                              >
-                                Clear Local Response Retry
-                              </button>
-                            )}
-                          </form>
-                        )}
-                      </article>
-                    ))
-                  )}
-                  <p>
-                    Your original private invitation also remains available in{' '}
-                    <a className="text-link" href="/account#customer-missions">
-                      My shared missions
-                    </a>
-                    . Responses are self-declarations,not verified conclusions or supplier
-                    quotations.
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="ux-empty">
+                    No meetings or visits have been approved for this itinerary yet.
                   </p>
-                </section>
-              )}
-              {showRest && books && (
-                <BookDownloads
-                  subject={subject}
-                  issuer={issuer}
-                  resourceId={resourceId}
-                  tripCount={m.itinerary.length}
-                  supplierCount={m.experience?.shortlist.length ?? 0}
-                  pending={pendingBooks}
-                  onDenied={bookDenied}
-                  onChanged={read}
-                />
-              )}
-            </article>
-          ))}
+                )}
+                <h2>Recorded commercial progress</h2>
+                <p>
+                  Qualified opportunities: {m.outcomes.qualified}. Proposals: {m.outcomes.proposals}
+                  . Contracts: {m.outcomes.contracts}. Meetings held: {m.outcomes.heldMeetings}.
+                </p>
+                {m.totals.length ? (
+                  <ul>
+                    {m.totals.map((t) => (
+                      <li key={t.currency}>
+                        Customer contracts {displayMoney(t.contractMinor, t.currency)} · Invoices{' '}
+                        {displayMoney(t.invoiceMinor, t.currency)} · Confirmed cash{' '}
+                        {displayMoney(t.confirmedCashMinor, t.currency)} · Repeat cash{' '}
+                        {displayMoney(t.repeatCashMinor, t.currency)} (included in confirmed cash).
+                        These are customer trade observations, not Corridra or organiser revenue.
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>
+                    No financial amounts are shared in this report. Missing shared amounts do not
+                    mean zero.
+                  </p>
+                )}
+              </>
+            );
+            const evidenceRequests = (
+              <>
+                {showEvidence && m.requests && (
+                  <section>
+                    <h2>Evidence requests and declarations</h2>
+                    {m.requests.length === 0 ? (
+                      <p>No evidence responses are requested.</p>
+                    ) : (
+                      m.requests.map((q) => (
+                        <article key={q.id}>
+                          <h3>{q.title}</h3>
+                          <p>{q.instructions}</p>
+                          <p>
+                            {evidenceRequestStatusWords(q.status)} · Due {formatUtcDay(q.dueAt)}
+                          </p>
+                          {q.response && <p>Your self-declared response: {q.response}</p>}
+                          {(q.status === 'OPEN' || pending?.requestId === q.id) && (
+                            <form
+                              className="operator-form"
+                              onSubmit={(event) => {
+                                event.preventDefault();
+                                void respond(q.id);
+                              }}
+                            >
+                              <fieldset disabled={busy || !!pending}>
+                                <legend>Reply to this evidence request</legend>
+                                <div className="field">
+                                  <label htmlFor={responsePrefix + q.id}>Your response</label>
+                                  <textarea
+                                    id={responsePrefix + q.id}
+                                    name="body"
+                                    minLength={3}
+                                    maxLength={2000}
+                                    required
+                                    value={drafts[q.id]?.body ?? ''}
+                                    onChange={(event) =>
+                                      setDrafts((old) => ({
+                                        ...old,
+                                        [q.id]: {
+                                          body: event.target.value,
+                                          acknowledged: old[q.id]?.acknowledged ?? false,
+                                        },
+                                      }))
+                                    }
+                                  />
+                                </div>
+                                <label>
+                                  <input
+                                    type="checkbox"
+                                    required
+                                    checked={drafts[q.id]?.acknowledged ?? false}
+                                    onChange={(event) =>
+                                      setDrafts((old) => ({
+                                        ...old,
+                                        [q.id]: {
+                                          body: old[q.id]?.body ?? '',
+                                          acknowledged: event.target.checked,
+                                        },
+                                      }))
+                                    }
+                                  />{' '}
+                                  This is my self-declared response. Supporting documents must
+                                  follow the operator-controlled review process.
+                                </label>
+                              </fieldset>
+                              <button
+                                className="primary-link"
+                                disabled={busy || (!!pending && pending.requestId !== q.id)}
+                              >
+                                {pending?.requestId === q.id
+                                  ? 'Retry Same Response'
+                                  : 'Send Response'}
+                              </button>
+                              {pending?.requestId === q.id && (
+                                <button
+                                  type="button"
+                                  className="text-link"
+                                  disabled={busy}
+                                  onClick={() => {
+                                    setPending(null);
+                                    setNotice(
+                                      'Local retry cleared. This does not cancel or change any response already recorded. Refresh the report before sending different information.',
+                                    );
+                                  }}
+                                >
+                                  Clear Local Response Retry
+                                </button>
+                              )}
+                            </form>
+                          )}
+                        </article>
+                      ))
+                    )}
+                    <p>
+                      Your original private invitation also remains available in{' '}
+                      <a className="text-link" href="/account#customer-missions">
+                        My shared missions
+                      </a>
+                      . Responses are self-declarations, not verified conclusions or supplier
+                      quotations.
+                    </p>
+                  </section>
+                )}
+              </>
+            );
+            const downloads = (
+              <>
+                {showRest && books && (
+                  <BookDownloads
+                    subject={subject}
+                    issuer={issuer}
+                    resourceId={resourceId}
+                    tripCount={m.itinerary.length}
+                    supplierCount={m.experience?.shortlist.length ?? 0}
+                    pending={pendingBooks}
+                    onDenied={bookDenied}
+                    onChanged={read}
+                  />
+                )}
+              </>
+            );
+            // The whole page is cut into tabs so it fits the page-length budget; the Room's lenses draw single parts and
+            // keep the plain order. Every part stays in the page, hidden unless its tab is chosen.
+            return (
+              <article className="delivery-card ux-participant-mission" key={m.publicationId}>
+                {section === 'all' ? (
+                  <>
+                    {intro}
+                    <SubTabs
+                      label="Report sections"
+                      tabs={[
+                        { id: 'companies', label: 'Companies and Quotes', panel: companies },
+                        { id: 'meetings', label: 'Meetings and Progress', panel: meetings },
+                        ...(decisionsEnabled || specificationConfirmationsEnabled || m.requests
+                          ? [
+                              {
+                                id: 'evidence',
+                                label: 'Evidence and Decisions',
+                                panel: (
+                                  <>
+                                    {decisions}
+                                    {evidenceRequests}
+                                  </>
+                                ),
+                              },
+                            ]
+                          : []),
+                        ...(books
+                          ? [{ id: 'downloads', label: 'Downloads', panel: downloads }]
+                          : []),
+                      ]}
+                    />
+                  </>
+                ) : (
+                  <>
+                    {intro}
+                    {companies}
+                    {trip}
+                    {decisions}
+                    {meetings}
+                    {evidenceRequests}
+                    {downloads}
+                  </>
+                )}
+              </article>
+            );
+          })}
           <p>{data.attribution}</p>
         </>
       )}

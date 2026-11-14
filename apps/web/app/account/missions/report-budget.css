@@ -1,0 +1,267 @@
+/* The saved report page inside the page budget (desktop 1 screen, phone 2), disclosures closed. Presentation only:
+   no element, id, name or link changes. Scoped to the whole report page (the programme page reuses the same outer
+   class and keeps its own rules). Tokens only. */
+/* Doubled class: the customer kit's frame rule for a section in the page has the same weight and comes later. */
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report.ux-saved-commercial-report:not(.programme-page) {
+  padding: var(--space-3) var(--space-4);
+  row-gap: var(--space-2);
+}
+.ux-customer section.delivery-view.ux-saved-commercial-report:not(.programme-page) > * {
+  margin-block: 0;
+}
+/* The scope sentence and the purpose line read as quiet lines, not as a lead paragraph. */
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  > p:not([class], [role]) {
+  max-width: none;
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  color: var(--text-2);
+}
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-participant-mission {
+  padding: 0;
+}
+/* The passport reads as one band: the title and its status on the left, the facts on the right, the next move
+   as a single strip underneath. */
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-participant-passport {
+  margin-block: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--space-1);
+}
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-participant-passport
+  > h2 {
+  margin-block: var(--space-1);
+}
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-participant-passport
+  > p {
+  margin-block: 0;
+}
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-participant-passport
+  > .ux-status {
+  justify-self: start;
+}
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-mission-focus-grid {
+  display: contents;
+}
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-mission-next {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  column-gap: var(--space-4);
+  align-items: baseline;
+  padding: var(--space-3) var(--space-4);
+  margin-top: var(--space-2);
+}
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-mission-next
+  .label {
+  display: none;
+}
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-mission-next
+  h3,
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-mission-next
+  > p {
+  margin-block: 0;
+}
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-mission-next
+  h3 {
+  font-size: var(--text-xs);
+}
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-mission-next
+  .ux-mission-decision {
+  font-size: var(--text-lg);
+}
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-mission-next
+  .ux-scope-note {
+  grid-column: 1 / -1;
+  font-size: var(--text-sm);
+}
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-mission-facts {
+  padding: var(--space-3);
+}
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-mission-facts
+  .label {
+  margin-block: 0 var(--space-1);
+}
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-mission-facts
+  dl {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 var(--space-3);
+}
+/* Headings inside the mission sit closer together. */
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-participant-mission
+  > :is(h2, h3),
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-participant-mission
+  > section
+  > h2 {
+  margin-block: var(--space-3) var(--space-1);
+  padding-top: var(--space-2);
+}
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-participant-mission
+  > p {
+  margin-block: var(--space-1);
+}
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  details.ux-mission-detail:not([open])
+  > summary {
+  padding-block: var(--space-2);
+}
+/* The attribution and the refresh button share a line from a tablet up. */
+@media (min-width: 40rem) {
+  .ux-customer section.delivery-view.ux-saved-commercial-report:not(.programme-page) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+  .ux-customer section.delivery-view.ux-saved-commercial-report:not(.programme-page) > * {
+    grid-column: 1 / -1;
+  }
+  .ux-customer
+    section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+    > p:has(+ button.text-link:last-child) {
+    grid-column: 1;
+  }
+  .ux-customer
+    section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+    > button.text-link:last-child {
+    grid-column: 2;
+  }
+}
+@media (min-width: 64rem) {
+  .ux-customer
+    section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+    .ux-participant-passport {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 28rem);
+    grid-template-rows: repeat(4, auto);
+    column-gap: var(--space-4);
+    align-items: start;
+  }
+  .ux-customer
+    section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+    .ux-participant-passport
+    > :is(.label, h2, .ux-status, p) {
+    grid-column: 1;
+  }
+  .ux-customer
+    section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+    .ux-mission-facts {
+    grid-column: 2;
+    grid-row: 1 / span 4;
+  }
+  .ux-customer
+    section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+    .ux-mission-next {
+    grid-column: 1;
+  }
+  .ux-customer
+    section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+    .ux-participant-passport
+    > .label {
+    grid-row: 1;
+  }
+  .ux-customer
+    section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+    .ux-participant-passport
+    > h2 {
+    grid-row: 2;
+  }
+  .ux-customer
+    section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+    .ux-participant-passport
+    > p {
+    grid-row: 3;
+  }
+  .ux-customer
+    section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+    .ux-mission-next {
+    grid-row: 4;
+  }
+  /* The status chip shares the first line with the passport label. */
+  .ux-customer
+    section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+    .ux-participant-passport
+    > .ux-status {
+    grid-row: 1;
+    justify-self: end;
+  }
+}
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-mission-facts
+  dl
+  > div {
+  padding-block: var(--space-1);
+}
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-mission-facts
+  dd {
+  margin-block: 0;
+}
+/* The objective and the brief sit under one short heading with no rule above it. */
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-participant-mission
+  > h2 {
+  margin-block: var(--space-2) 0;
+  padding-top: 0;
+  border-top: 0;
+}
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-participant-mission
+  > h2
+  + p {
+  margin-block: 0;
+}
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-participant-mission
+  > h2
+  + p
+  + p {
+  margin-block: 0 var(--space-2);
+}
+.ux-customer
+  section.delivery-view.ux-saved-commercial-report:not(.programme-page)
+  .ux-subtabs-list {
+  margin-bottom: var(--space-2);
+}
