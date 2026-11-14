@@ -231,6 +231,12 @@
        scrolls inside itself. */
     max-height: calc(100dvh - 12rem);
   }
+  /* The customer header runs edge to edge (customer-search.css), so its panel keeps 8 px from each side of the window
+     itself. The team header is not full width and keeps the rule above. */
+  .ux-customer-header .ux-menu.ux-util-avatar[data-align] .ux-menu-panel {
+    width: min(calc(100% - 16px), 22rem);
+    margin-inline: 8px;
+  }
 }
 
 /* Text Size and Less Movement (W7). Text Size is one row: the label with the step in words, then three 44 px
