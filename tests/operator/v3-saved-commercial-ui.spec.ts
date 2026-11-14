@@ -336,8 +336,12 @@ test('approved commercial report reuses requirements,qualification,original quot
   await expect(page.getByText('Synthetic supplier 工厂', { exact: true }).first()).toBeVisible();
   await expect(page.getByText(/Installation and commissioning not quoted/)).toBeVisible();
   await expect(page.getByText(/BHD.*1\.234/).first()).toBeVisible();
+  // The meetings are in their own tab of the report page.
+  await page.getByRole('tab', { name: 'Meetings and Progress' }).click();
   await expect(page.getByText('PROPOSED', { exact: false })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Send Response' })).toHaveCount(0);
+  // The link sits in the Evidence and Decisions tab.
+  await page.getByRole('tab', { name: 'Evidence and Decisions' }).click();
   await expect(page.getByRole('link', { name: 'My shared missions' })).toHaveAttribute(
     'href',
     '/account#customer-missions',
@@ -427,7 +431,7 @@ test('saved list and approved report support keyboard,axe and three responsive w
       });
     }
   await page
-    .getByText('Companies,qualification,requirements and original quotations', { exact: true })
+    .getByText('Companies, qualification, requirements and original quotations', { exact: true })
     .focus();
   await page.keyboard.press('Enter');
   await expect(
@@ -471,6 +475,8 @@ test('a 429 on sending a response says the limit was reached and keeps the same 
     });
   });
   await page.goto(origin + '/?mode=report');
+  // The evidence reply form is in the Evidence and Decisions tab of the report page.
+  await page.getByRole('tab', { name: 'Evidence and Decisions' }).click();
   await page.getByLabel('Your response', { exact: true }).fill('Fictional supporting declaration');
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Send Response', exact: true }).click();
@@ -497,6 +503,8 @@ test('uncertain evidence submission freezes exact text and command until the sam
     });
   });
   await page.goto(origin + '/?mode=report');
+  // The evidence reply form is in the Evidence and Decisions tab of the report page.
+  await page.getByRole('tab', { name: 'Evidence and Decisions' }).click();
   await page
     .getByLabel('Your response', { exact: true })
     .fill('Fictional supporting declaration বাংলা');
@@ -526,6 +534,8 @@ test('unsent declaration survives same-account page interruption but clears on a
     ),
   );
   await page.goto(origin + '/?mode=report');
+  // The evidence reply form is in the Evidence and Decisions tab of the report page.
+  await page.getByRole('tab', { name: 'Evidence and Decisions' }).click();
   await page
     .getByLabel('Your response', { exact: true })
     .fill('Private unsent fictional declaration');

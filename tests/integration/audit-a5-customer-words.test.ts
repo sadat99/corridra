@@ -56,12 +56,14 @@ describe('status words', () => {
       expect(words, code).not.toBe(code.toLowerCase());
     }
     expect(missionStatusWords('MEETINGS')).toBe('Meetings');
-    expect(missionStatusWords('FOLLOW_UP')).toBe('Follow-Up');
+    expect(missionStatusWords('FOLLOW_UP')).toBe('Follow Up');
+    expect(missionStatusWords('ON_HOLD')).toBe('On Hold');
   });
   it('an unknown code is still shown as words in Title Case', () => {
     expect(missionStatusWords('SOME_NEW_CODE')).toBe('Some New Code');
-    expect(meetingStatusWords('RESCHEDULE_REQUIRED')).toBe('New Time Needed');
-    expect(meetingStatusWords('SCHEDULED')).toBe('Time Confirmed');
+    expect(meetingStatusWords('RESCHEDULE_REQUIRED')).toBe('Reschedule Required');
+    expect(meetingStatusWords('SCHEDULED')).toBe('Scheduled');
+    expect(meetingStatusWords('PROPOSED')).toBe('Proposed');
     expect(evidenceRequestStatusWords('OPEN')).toBe('Open');
   });
 });

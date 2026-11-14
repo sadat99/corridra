@@ -2299,7 +2299,7 @@ test.describe('the saved report page in tabs', () => {
     await expect(page.getByText('pub-1', { exact: true })).toHaveCount(0);
     await expect(page.locator('[data-publication-id="pub-1"]')).toHaveCount(1);
     await page.getByRole('tab', { name: 'Meetings and Progress' }).click();
-    await expect(page.getByText('Time Confirmed')).toBeVisible();
+    await expect(page.getByText(/· Scheduled/)).toBeVisible();
     await expect(
       page.getByText('9 Nov 2026, 10:00 (Dhaka, UTC+6) · Dhaka Chamber of Commerce'),
     ).toBeVisible();
