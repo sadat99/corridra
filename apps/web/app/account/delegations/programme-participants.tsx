@@ -10,10 +10,15 @@ import {
   type ParticipantScope,
 } from './participant-client';
 import { ParticipantLabelEditor, dropLabelDrafts } from './participant-label';
+import { ProgrammePeopleBoard } from './programme-people-board';
 type Props = ParticipantScope & {
   workspaceId: string;
   programmeId: string;
   missionSharesEnabled?: boolean;
+  /** ADR-084 S3: the people board comes first and the invitation and access controls sit in one closed disclosure. */
+  boardEnabled?: boolean;
+  /** Where the programme has a public page panel, the board also reads its applications. */
+  applicationsOn?: boolean;
   // An archived programme takes no new invitations or registrations until it is restored (owner, 6 Nov 2026).
   archived?: boolean;
 };
@@ -154,6 +159,273 @@ function ScopedParticipants(props: Props) {
       </button>
     </div>
   );
+  const intro = (
+    <p>
+      {realCustomerInput()
+        ? 'A registration records interest and permission to share a display name. Eligibility, private missions, meetings and fees are not managed here.'
+        : 'Use fictional information only. A registration records interest and permission to share a display name. Eligibility, private missions, meetings and fees are not managed here.'}{' '}
+    </p>
+  );
+  const data = view.data;
+  const ready = view.status === 'ready' && data;
+  const boardOn = props.boardEnabled === true;
+  const manage = ready ? (
+    <>
+      <h4>Invitations</h4>
+      <p>
+        For your participants&apos; security, a code is shown only once, when you create it. If a
+        code is lost or has expired, create a replacement code.
+      </p>
+      {data.invitations.length === 0 ? (
+        <p className="ux-empty">
+          {' '}
+          {realCustomerInput() ? 'No invitations yet.' : 'No sample invitations yet.'}{' '}
+        </p>
+      ) : (
+        <ul>
+          {data.invitations.map((i) => (
+            <li key={i.id}>
+              <strong>{i.label}</strong>
+              <p>
+                {i.status === 'ISSUED'
+                  ? 'Invitation available'
+                  : i.status === 'USED'
+                    ? 'Invitation used'
+                    : 'Invitation unavailable'}{' '}
+                · Expires {formatDateTime(i.expiresAt)}
+              </p>
+              {!view.pending && !props.archived && (
+                <button
+                  type="button"
+                  className="text-link"
+                  disabled={view.busy}
+                  onClick={() => {
+                    setLabel(i.label);
+                    setIssueAck(false);
+                    labelInput.current?.focus();
+                  }}
+                >
+                  Create Replacement Code<span className="sr-only"> for {i.label}</span>
+                </button>
+              )}
+              {i.status === 'ISSUED' && (
+                <button
+                  data-intent="destructive"
+                  type="button"
+                  className="text-link"
+                  disabled={view.busy || !!view.pending}
+                  onClick={() => revoke(i.id, 'invitation')}
+                >
+                  Revoke Invitation
+                </button>
+              )}
+              {!view.pending &&
+                changeTarget?.id === i.id &&
+                changeTarget.kind === 'invitation' &&
+                accessFields}
+            </li>
+          ))}
+        </ul>
+      )}
+      {data.nextInvitationAfter && (
+        <button
+          type="button"
+          className="text-link"
+          disabled={view.busy}
+          onClick={() => void view.load('invitations', data.nextInvitationAfter!)}
+        >
+          Load More Invitations
+        </button>
+      )}
+      <h4>Consented registrations</h4>
+      {data.registrations.length === 0 ? (
+        <p className="ux-empty">No consented registrations yet.</p>
+      ) : (
+        <ul>
+          {data.registrations.map((r) => (
+            <li key={r.id}>
+              <strong>{r.displayLabel}</strong>
+              <p>
+                {r.status === 'REGISTERED'
+                  ? 'Registered · Self-declared'
+                  : r.status === 'WITHDRAWN'
+                    ? 'Participant withdrew'
+                    : 'Programme access revoked'}
+              </p>
+              {r.status === 'REGISTERED' &&
+                typeof r.labelVersion === 'number' &&
+                r.displayLabel && (
+                  <ParticipantLabelEditor
+                    key={r.id}
+                    registrationId={r.id}
+                    label={r.displayLabel}
+                    version={r.labelVersion}
+                    headers={{
+                      'x-corridra-customer-subject': props.subject,
+                      'x-corridra-customer-issuer': props.issuer,
+                    }}
+                    mine={false}
+                    onChanged={() => void view.load()}
+                    onNote={setLabelNote}
+                    onDenied={view.deny}
+                  />
+                )}
+              {props.missionSharesEnabled && r.status === 'REGISTERED' && (
+                <ProgrammeObjectives
+                  subject={props.subject}
+                  issuer={props.issuer}
+                  registrationId={r.id}
+                  view="manage"
+                />
+              )}
+              {r.status === 'REGISTERED' && (
+                <button
+                  data-intent="destructive"
+                  type="button"
+                  className="text-link"
+                  disabled={view.busy || !!view.pending}
+                  onClick={() => revoke(r.id, 'registration')}
+                >
+                  Revoke Programme Access
+                </button>
+              )}
+              {!view.pending &&
+                changeTarget?.id === r.id &&
+                changeTarget.kind === 'registration' &&
+                accessFields}
+            </li>
+          ))}
+        </ul>
+      )}
+      {data.nextRegistrationAfter && (
+        <button
+          type="button"
+          className="text-link"
+          disabled={view.busy}
+          onClick={() => void view.load('registrations', data.nextRegistrationAfter!)}
+        >
+          Load More Registrations
+        </button>
+      )}
+      {props.archived && <p role="status">{archivedProgrammeMessage}</p>}
+      {!view.pending && !props.archived && (
+        <form
+          className="operator-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            setError('');
+            if (
+              (!realCustomerInput() && !label.trim().startsWith('Synthetic ')) ||
+              label.trim().length < (realCustomerInput() ? 2 : 11) ||
+              label.trim().length > 120 ||
+              !issueAck
+            ) {
+              setError(
+                realCustomerInput()
+                  ? 'Enter a display label and confirm permission to share it.'
+                  : 'Use a fictional label beginning with Synthetic and confirm sample use.',
+              );
+              return;
+            }
+            void view.send({
+              action: 'invite',
+              commandId: crypto.randomUUID(),
+              workspaceId: props.workspaceId,
+              programmeId: props.programmeId,
+              label: label.trim(),
+              ...(recipientEmail.trim() ? { recipientEmail: recipientEmail.trim() } : {}),
+              acknowledged: true,
+            });
+            setIssueAck(false);
+          }}
+        >
+          <h4>
+            {' '}
+            {realCustomerInput() ? 'Create an invitation code' : 'Create a sample invitation'}{' '}
+          </h4>
+          <label className="field">
+            Invitation label
+            <input
+              ref={labelInput}
+              value={label}
+              required
+              minLength={realCustomerInput() ? 2 : 11}
+              maxLength={120}
+              disabled={view.busy}
+              onChange={(e) => setLabel(e.target.value)}
+            />
+          </label>
+          <label className="field">
+            Participant email (optional)
+            <input
+              type="email"
+              autoComplete="off"
+              maxLength={254}
+              value={recipientEmail}
+              disabled={view.busy}
+              onChange={(event) => setRecipientEmail(event.target.value)}
+            />
+          </label>
+          <label className="check-field">
+            <input
+              type="checkbox"
+              checked={issueAck}
+              required
+              disabled={view.busy}
+              onChange={(e) => setIssueAck(e.target.checked)}
+            />
+            {realCustomerInput()
+              ? 'I have permission to share this code with the participant and store their email if I enter it. Email is sent only when I choose Email invitation.'
+              : 'I have permission to share this sample code and store the participant email if I enter it. Email is sent only when I choose Email invitation.'}{' '}
+          </label>
+          <button className="primary-link" disabled={view.busy}>
+            {realCustomerInput() ? 'Create Invitation Code' : 'Create Sample Invitation Code'}{' '}
+          </button>
+        </form>
+      )}
+    </>
+  ) : null;
+  const codeResult = ready ? (
+    <>
+      {view.result?.action === 'invite' && view.result.issued === true && (
+        <div>
+          <label className="field">
+            {realCustomerInput() ? 'Private invitation code' : 'Private sample invitation code'}{' '}
+            <input readOnly autoComplete="off" value={String(view.result.token)} />
+          </label>
+          <p>
+            Select and copy this code now and send it to the participant yourself. It is shown once
+            and clears when this view is hidden or expires; after that, create a replacement code.
+            If you entered an email, you can also choose Email invitation. The recipient can use{' '}
+            <Link prefetch={false} className="text-link" href="/account/delegations">
+              Delegation registrations
+            </Link>{' '}
+            to inspect and accept it.
+          </p>
+          {view.result.canEmail === true && !props.archived && (
+            <button
+              type="button"
+              className="text-link"
+              disabled={view.busy}
+              onClick={() =>
+                void view.send({
+                  action: 'emailInvitation',
+                  commandId: crypto.randomUUID(),
+                  workspaceId: props.workspaceId,
+                  programmeId: props.programmeId,
+                  invitationId: view.result!.id,
+                  token: view.result!.token,
+                  acknowledged: true,
+                })
+              }
+            >
+              Email Invitation
+            </button>
+          )}
+        </div>
+      )}
+    </>
+  ) : null;
   if (!view.visible)
     return (
       <p role="status">Participant details are hidden. Access will be checked when you return.</p>
@@ -164,11 +436,7 @@ function ScopedParticipants(props: Props) {
       aria-label={realCustomerInput() ? 'Programme participants' : 'Sample programme participants'}
     >
       <h3> {realCustomerInput() ? 'Participants' : 'Sample participants'} </h3>
-      <p>
-        {realCustomerInput()
-          ? 'A registration records interest and permission to share a display name. Eligibility, private missions, meetings and fees are not managed here.'
-          : 'Use fictional information only. A registration records interest and permission to share a display name. Eligibility, private missions, meetings and fees are not managed here.'}{' '}
-      </p>
+      {!boardOn && intro}
       {view.status === 'loading' && <p role="status">Checking programme participant access…</p>}
       {view.status === 'denied' && (
         <p role="alert">
@@ -187,264 +455,35 @@ function ScopedParticipants(props: Props) {
       {view.status === 'failed' && (
         <p role="alert">Participant details could not be confirmed. Reload to check access.</p>
       )}
-      {view.status === 'ready' && view.data && (
-        <>
-          <h4>Invitations</h4>
-          <p>
-            For your participants&apos; security, a code is shown only once, when you create it. If
-            a code is lost or has expired, create a replacement code.
-          </p>
-          {view.data.invitations.length === 0 ? (
-            <p className="ux-empty">
-              {' '}
-              {realCustomerInput() ? 'No invitations yet.' : 'No sample invitations yet.'}{' '}
-            </p>
-          ) : (
-            <ul>
-              {view.data.invitations.map((i) => (
-                <li key={i.id}>
-                  <strong>{i.label}</strong>
-                  <p>
-                    {i.status === 'ISSUED'
-                      ? 'Invitation available'
-                      : i.status === 'USED'
-                        ? 'Invitation used'
-                        : 'Invitation unavailable'}{' '}
-                    · Expires {formatDateTime(i.expiresAt)}
-                  </p>
-                  {!view.pending && !props.archived && (
-                    <button
-                      type="button"
-                      className="text-link"
-                      disabled={view.busy}
-                      onClick={() => {
-                        setLabel(i.label);
-                        setIssueAck(false);
-                        labelInput.current?.focus();
-                      }}
-                    >
-                      Create Replacement Code<span className="sr-only"> for {i.label}</span>
-                    </button>
-                  )}
-                  {i.status === 'ISSUED' && (
-                    <button
-                      data-intent="destructive"
-                      type="button"
-                      className="text-link"
-                      disabled={view.busy || !!view.pending}
-                      onClick={() => revoke(i.id, 'invitation')}
-                    >
-                      Revoke Invitation
-                    </button>
-                  )}
-                  {!view.pending &&
-                    changeTarget?.id === i.id &&
-                    changeTarget.kind === 'invitation' &&
-                    accessFields}
-                </li>
-              ))}
-            </ul>
-          )}
-          {view.data.nextInvitationAfter && (
-            <button
-              type="button"
-              className="text-link"
-              disabled={view.busy}
-              onClick={() => void view.load('invitations', view.data!.nextInvitationAfter!)}
-            >
-              Load More Invitations
-            </button>
-          )}
-          <h4>Consented registrations</h4>
-          {view.data.registrations.length === 0 ? (
-            <p className="ux-empty">No consented registrations yet.</p>
-          ) : (
-            <ul>
-              {view.data.registrations.map((r) => (
-                <li key={r.id}>
-                  <strong>{r.displayLabel}</strong>
-                  <p>
-                    {r.status === 'REGISTERED'
-                      ? 'Registered · Self-declared'
-                      : r.status === 'WITHDRAWN'
-                        ? 'Participant withdrew'
-                        : 'Programme access revoked'}
-                  </p>
-                  {r.status === 'REGISTERED' &&
-                    typeof r.labelVersion === 'number' &&
-                    r.displayLabel && (
-                      <ParticipantLabelEditor
-                        key={r.id}
-                        registrationId={r.id}
-                        label={r.displayLabel}
-                        version={r.labelVersion}
-                        headers={{
-                          'x-corridra-customer-subject': props.subject,
-                          'x-corridra-customer-issuer': props.issuer,
-                        }}
-                        mine={false}
-                        onChanged={() => void view.load()}
-                        onNote={setLabelNote}
-                        onDenied={view.deny}
-                      />
-                    )}
-                  {props.missionSharesEnabled && r.status === 'REGISTERED' && (
-                    <ProgrammeObjectives
-                      subject={props.subject}
-                      issuer={props.issuer}
-                      registrationId={r.id}
-                      view="manage"
-                    />
-                  )}
-                  {r.status === 'REGISTERED' && (
-                    <button
-                      data-intent="destructive"
-                      type="button"
-                      className="text-link"
-                      disabled={view.busy || !!view.pending}
-                      onClick={() => revoke(r.id, 'registration')}
-                    >
-                      Revoke Programme Access
-                    </button>
-                  )}
-                  {!view.pending &&
-                    changeTarget?.id === r.id &&
-                    changeTarget.kind === 'registration' &&
-                    accessFields}
-                </li>
-              ))}
-            </ul>
-          )}
-          {view.data.nextRegistrationAfter && (
-            <button
-              type="button"
-              className="text-link"
-              disabled={view.busy}
-              onClick={() => void view.load('registrations', view.data!.nextRegistrationAfter!)}
-            >
-              Load More Registrations
-            </button>
-          )}
-          {props.archived && <p role="status">{archivedProgrammeMessage}</p>}
-          {!view.pending && !props.archived && (
-            <form
-              className="operator-form"
-              onSubmit={(event) => {
-                event.preventDefault();
-                setError('');
-                if (
-                  (!realCustomerInput() && !label.trim().startsWith('Synthetic ')) ||
-                  label.trim().length < (realCustomerInput() ? 2 : 11) ||
-                  label.trim().length > 120 ||
-                  !issueAck
-                ) {
-                  setError(
-                    realCustomerInput()
-                      ? 'Enter a display label and confirm permission to share it.'
-                      : 'Use a fictional label beginning with Synthetic and confirm sample use.',
-                  );
-                  return;
-                }
-                void view.send({
-                  action: 'invite',
-                  commandId: crypto.randomUUID(),
-                  workspaceId: props.workspaceId,
-                  programmeId: props.programmeId,
-                  label: label.trim(),
-                  ...(recipientEmail.trim() ? { recipientEmail: recipientEmail.trim() } : {}),
-                  acknowledged: true,
-                });
-                setIssueAck(false);
-              }}
-            >
-              <h4>
-                {' '}
-                {realCustomerInput()
-                  ? 'Create an invitation code'
-                  : 'Create a sample invitation'}{' '}
-              </h4>
-              <label className="field">
-                Invitation label
-                <input
-                  ref={labelInput}
-                  value={label}
-                  required
-                  minLength={realCustomerInput() ? 2 : 11}
-                  maxLength={120}
-                  disabled={view.busy}
-                  onChange={(e) => setLabel(e.target.value)}
-                />
-              </label>
-              <label className="field">
-                Participant email (optional)
-                <input
-                  type="email"
-                  autoComplete="off"
-                  maxLength={254}
-                  value={recipientEmail}
-                  disabled={view.busy}
-                  onChange={(event) => setRecipientEmail(event.target.value)}
-                />
-              </label>
-              <label className="check-field">
-                <input
-                  type="checkbox"
-                  checked={issueAck}
-                  required
-                  disabled={view.busy}
-                  onChange={(e) => setIssueAck(e.target.checked)}
-                />
-                {realCustomerInput()
-                  ? 'I have permission to share this code with the participant and store their email if I enter it. Email is sent only when I choose Email invitation.'
-                  : 'I have permission to share this sample code and store the participant email if I enter it. Email is sent only when I choose Email invitation.'}{' '}
-              </label>
-              <button className="primary-link" disabled={view.busy}>
-                {realCustomerInput()
-                  ? 'Create Invitation Code'
-                  : 'Create Sample Invitation Code'}{' '}
-              </button>
-            </form>
-          )}
-          {view.result?.action === 'invite' && view.result.issued === true && (
-            <div>
-              <label className="field">
-                {realCustomerInput() ? 'Private invitation code' : 'Private sample invitation code'}{' '}
-                <input readOnly autoComplete="off" value={String(view.result.token)} />
-              </label>
-              <p>
-                Select and copy this code now and send it to the participant yourself. It is shown
-                once and clears when this view is hidden or expires; after that, create a
-                replacement code. If you entered an email, you can also choose Email invitation. The
-                recipient can use{' '}
-                <Link prefetch={false} className="text-link" href="/account/delegations">
-                  Delegation registrations
-                </Link>{' '}
-                to inspect and accept it.
-              </p>
-              {view.result.canEmail === true && !props.archived && (
-                <button
-                  type="button"
-                  className="text-link"
-                  disabled={view.busy}
-                  onClick={() =>
-                    void view.send({
-                      action: 'emailInvitation',
-                      commandId: crypto.randomUUID(),
-                      workspaceId: props.workspaceId,
-                      programmeId: props.programmeId,
-                      invitationId: view.result!.id,
-                      token: view.result!.token,
-                      acknowledged: true,
-                    })
-                  }
-                >
-                  Email Invitation
-                </button>
-              )}
-            </div>
-          )}
-        </>
+      {boardOn && ready && (
+        <ProgrammePeopleBoard
+          subject={props.subject}
+          issuer={props.issuer}
+          workspaceId={props.workspaceId}
+          programmeId={props.programmeId}
+          applicationsOn={props.applicationsOn === true}
+          invitations={data.invitations}
+          registrations={data.registrations}
+          moreInvitations={data.nextInvitationAfter}
+          moreRegistrations={data.nextRegistrationAfter}
+          busy={view.busy}
+          onMore={(which, cursor) => void view.load(which, cursor)}
+        />
       )}
+      {boardOn
+        ? ready && (
+            <details className="people-board-manage">
+              <summary>
+                {realCustomerInput()
+                  ? 'Invite, edit labels or remove access'
+                  : 'Create sample invitations, edit labels or remove access'}
+              </summary>
+              {intro}
+              {manage}
+            </details>
+          )
+        : manage}
+      {codeResult}
       {view.pending && view.status === 'ready' && (
         <button
           type="button"

@@ -512,6 +512,7 @@ export function ProgrammeRoom({
   projectionsEnabled = false,
   termsEnabled = false,
   decisionsFirst = false,
+  boardFirst = false,
 }: {
   programmeId: string;
   name: string;
@@ -529,6 +530,8 @@ export function ProgrammeRoom({
   termsEnabled?: boolean;
   /** ADR-084 S0: the next real decision first and counts out of a total. Off leaves the room as it was. */
   decisionsFirst?: boolean;
+  /** ADR-084 S3: applications are answered on the people board, so that decision opens the People group. */
+  boardFirst?: boolean;
 }) {
   // An old link to one of this programme's sections (#<programme id>-<view>) opens the group that holds it
   // (layout budget L-03); the section is then scrolled to.
@@ -628,6 +631,7 @@ export function ProgrammeRoom({
     if (goTo) document.getElementById(`${programmeId}-${goTo.view}`)?.scrollIntoView();
   }, [goTo, programmeId]);
   const onDecision = (target: DecisionTarget) => {
+    if (boardFirst && target === 'page') return onOpen('people');
     if (target !== 'page') return onOpen(target);
     return panels.people && parts.page
       ? () => {

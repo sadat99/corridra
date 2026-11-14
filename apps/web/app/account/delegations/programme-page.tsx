@@ -22,6 +22,8 @@ type Props = {
   workspaceId: string;
   programmeId: string;
   programmeName: string;
+  /** ADR-084 S3: the people board shows the applications, so this panel does not repeat them. */
+  queueInBoard?: boolean;
 };
 // What the organiser types. Lists are typed one item per line; the planned programme marks each line.
 export type Draft = {
@@ -250,7 +252,14 @@ export function ProgrammePage(props: Props) {
   );
 }
 
-function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }: Props) {
+function ScopedPage({
+  subject,
+  issuer,
+  workspaceId,
+  programmeId,
+  programmeName,
+  queueInBoard,
+}: Props) {
   const headers = customerHeaders(subject, issuer);
   const headersRef = useRef(headers);
   const commands = useCommandIds();
@@ -755,7 +764,7 @@ function ScopedPage({ subject, issuer, workspaceId, programmeId, programmeName }
           </button>
         )}
       </div>
-      {view.version > 0 && (
+      {view.version > 0 && !queueInBoard && (
         <section
           aria-label={pp('pp.org.applications.label')}
           className="programme-page-applications"

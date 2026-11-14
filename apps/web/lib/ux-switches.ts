@@ -34,6 +34,8 @@ export const uxSwitchNames = [
   'CORRIDRA_SUPPLY_SOURCES',
   // ADR-084 delegation, off unless exactly "true": S0 first run acts where public programme pages are on, S4 participant home wherever participant terms are on; no command, permission or data.
   'CORRIDRA_DELEGATION_FIRST_RUN',
+  // ADR-084 S3 people board and money view, off unless exactly "true"; presentation over the existing reads, no command, permission or data.
+  'CORRIDRA_DELEGATION_BOARD',
 ] as const;
 export type UxSwitchName = (typeof uxSwitchNames)[number];
 
