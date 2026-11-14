@@ -403,26 +403,28 @@ function ScopedSeries({ subject, issuer, workspaceId, onChanged }: Props) {
             <ul>
               {list.data.series.map((s) => (
                 <li key={s.id}>
-                  <strong>{s.name}</strong> · version {s.version}
-                  {s.retired ? ' · retired' : ''}
-                  <br />
-                  Starts from {s.templateName} (version {s.templateVersion}
-                  {s.templateRetired ? ', retired' : ''}). {s.editions.length} of{' '}
-                  {s.startDates.length} edition
-                  {s.startDates.length === 1 ? '' : 's'} created
-                  {s.nextEditionDate
-                    ? '; next starts ' + s.nextEditionDate
-                    : '; all dates are used'}
-                  .
-                  {s.editions.length > 0 && (
-                    <ul>
-                      {s.editions.map((e) => (
-                        <li key={e.id}>
-                          Edition {e.editionNo}: {e.programmeName} · {e.startDate}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  <div className="ux-series-info">
+                    <strong>{s.name}</strong> · version {s.version}
+                    {s.retired ? ' · retired' : ''}
+                    <br />
+                    Starts from {s.templateName} (version {s.templateVersion}
+                    {s.templateRetired ? ', retired' : ''}). {s.editions.length} of{' '}
+                    {s.startDates.length} edition
+                    {s.startDates.length === 1 ? '' : 's'} created
+                    {s.nextEditionDate
+                      ? '; next starts ' + s.nextEditionDate
+                      : '; all dates are used'}
+                    .
+                    {s.editions.length > 0 && (
+                      <ul>
+                        {s.editions.map((e) => (
+                          <li key={e.id}>
+                            Edition {e.editionNo}: {e.programmeName} · {e.startDate}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                   <div className="ux-series-actions">
                     {!s.retired && s.nextEditionDate && !s.templateRetired && (
                       <button

@@ -10,8 +10,13 @@
 }
 .detail-card.pricing-area .pricing-tabs {
   gap: var(--space-2);
-  margin: var(--space-3) 0;
-  padding-bottom: var(--space-3);
+  margin: 0 0 var(--space-3);
+  padding-bottom: var(--space-1);
+}
+/* The helper and intro lines are secondary text: 14 px from the type scale. */
+.detail-card.pricing-area > p,
+.detail-card.pricing-area [role='tabpanel'] p {
+  font-size: var(--text-sm);
 }
 .detail-card.pricing-area .pricing-tabs [role='tab'] {
   min-height: 44px;
@@ -40,7 +45,6 @@
 .detail-card.pricing-area [role='tabpanel'] > div > form,
 .detail-card.pricing-area [role='tabpanel'] > div > .delivery-table {
   justify-self: stretch;
-  margin-top: var(--space-3);
 }
 .detail-card.pricing-area [role='tabpanel'] > div > ul {
   display: grid;
@@ -48,6 +52,18 @@
   padding-inline-start: var(--space-4);
 }
 .detail-card.pricing-area [role='tabpanel'] > div > ul > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-3) var(--space-6);
+  margin: 0;
+}
+/* The words of a series on the left, its actions on the right when there is room, under it when there is not. */
+.ux-series-info {
+  flex: 1 1 20rem;
+  min-width: 0;
+}
+.ux-series-info > ul {
   margin: 0;
 }
 .detail-card.pricing-area [role='tabpanel'] .operator-form {
@@ -61,7 +77,7 @@
 /* One row of actions per series: Edit and the revenue switch stay in view, the rare one sits in the menu. */
 .ux-series-actions {
   display: flex;
-  margin-top: var(--space-3);
+  flex: 0 1 auto;
   flex-wrap: wrap;
   align-items: center;
   gap: 0 var(--space-4);

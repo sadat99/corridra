@@ -247,3 +247,32 @@ test('on a phone the menu button, the actions and the tabs are 44 px targets', a
     .boundingBox();
   expect(trigger!.width).toBeGreaterThanOrEqual(44);
 });
+
+test('page length: three series rows fit one desktop screen, and Exports on a phone is no longer than before', async ({
+  page,
+}) => {
+  const edition = {
+    id: '55555555-5555-4555-8555-555555555551',
+    programmeId: '44444444-4444-4444-8444-444444444444',
+    editionNo: 1,
+    startDate: '2027-01-15',
+    programmeName: 'Sample edition 1',
+  };
+  const rows = [
+    series(1, { editions: [edition], nextEditionDate: '2027-04-15' }),
+    series(2),
+    series(3, { retired: true, nextEditionDate: null }),
+  ];
+  const mainHeight = () =>
+    page.evaluate(() => document.querySelector('main')!.getBoundingClientRect().height);
+  const { area } = await open(page, 1440, rows);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(area.getByRole('button', { name: 'Edit Series Sample series 3' })).toBeVisible();
+  // Desktop hard limit: one screen (the code before this change measured 904 px, a first version of it 965 px).
+  expect(await mainHeight()).toBeLessThanOrEqual(900);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await area.getByRole('tab', { name: 'Exports' }).click();
+  await expect(area.getByRole('button', { name: 'Download CSV' })).toBeVisible();
+  // Before this change the Exports tab measured 798 px on a phone (0.95 screens); a first version of it 855 px.
+  expect(await mainHeight()).toBeLessThanOrEqual(801);
+});

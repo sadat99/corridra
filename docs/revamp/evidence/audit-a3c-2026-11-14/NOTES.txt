@@ -9,14 +9,18 @@ What this is
 - Numbers: measure-before.txt and measure-after.txt (main height over viewport height, card height, primary actions
   in the card, sideways scroll).
 
-Page length (main height over viewport height; 390x844, 768x1024, 1440x900)
-                 before                after
-  Pricing   1.28 / 0.78 / 0.82     1.33 / 0.84 / 0.89     (default tab; inside the budget at every width)
-  Series    1.83 / 1.02 / 1.00     1.89 / 1.07 / 1.07     (three rows; not the default tab)
-  Exports   0.95 / 0.64 / 0.69     1.01 / 0.70 / 0.75
+Page length (main height over viewport height; 390x844, 768x1024, 1440x900), before = origin/main, after = this branch
+                 before                  after
+  Pricing   1.28 / 0.78 / 0.82       1.27 / 0.82 / 0.79     (default tab)
+  Series    1.83 / 1.02 / 1.00       1.82 / 0.98 / 0.88     (three rows)
+  Exports   0.95 / 0.64 / 0.69       0.95 / 0.63 / 0.68
+In pixels (main): Series 1440 904 -> 796; Exports 390 798 -> 798; Pricing 768 798 -> 844 (the only width that grew, 0.82 screens).
 Primary actions in the card: Series before 3 (one per row plus New Series), after 1. Pricing and Exports 1 and 1.
-The pages are slightly longer, not shorter: the 12 px inside and 24 px between rhythm and the 44 px targets add height.
-The Series tab on three rows is a little over one desktop screen (1.07); the default tab (Pricing) stays under one.
+Review round 1 found a first version at Series 1440 = 1.07 and Exports 390 = 1.01 (965 px and 855 px). Fixed by: the words of a
+series row and its actions side by side when there is room (under it when there is not), the intro lines at the 14 px secondary
+step, the 12 px rhythm without doubled margins. Nothing hidden, no target below 44 px, every label unchanged.
+Case "page length" in tests/ux/pricing-series-exports.spec.ts: main <= 900 px for three rows at 1440x900 and <= 801 px for
+Exports at 390x844. It fails on origin/main (903.5 px) and on the first version (965 px).
 
 What changed
 - Series row: Retire Series and Restore Series moved into the shared row menu "More actions for <series>" (one tap
