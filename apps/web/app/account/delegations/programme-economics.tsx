@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { currencies, formatMoney, parseMoney } from '@corridra/domain/opportunities';
 import { ProgrammeFeeDisputeReview } from './programme-fee-dispute-review';
 import { ProgrammePaymentReview } from './programme-payment-review';
+import { owesFirst } from './programme-money-model';
+import './people-board.css';
 
 type Code = keyof typeof currencies;
 type Kind =
@@ -51,7 +53,14 @@ type Summary = {
   }[];
   counts: { registered: number; active: number; withdrawnOrRemoved: number };
 };
-type Props = { subject: string; issuer: string; workspaceId: string; programmeId: string };
+type Props = {
+  subject: string;
+  issuer: string;
+  workspaceId: string;
+  programmeId: string;
+  /** ADR-084 S3: the compact money view. The same records and commands; the forms sit one tap deeper. */
+  compact?: boolean;
+};
 
 export const kindLabels: Record<Kind, string> = {
   PARTICIPANT_FEE: 'Fee due from a participant',
@@ -195,12 +204,15 @@ export function ProgrammeEconomics(props: Props) {
 
 function ScopedEconomics(props: Props) {
   const { subject, issuer, workspaceId, programmeId } = props;
+  const compact = props.compact === true;
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed' | 'denied' | 'unavailable'>(
     'loading',
   );
   const [summary, setSummary] = useState<Summary | null>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [nextBefore, setNextBefore] = useState<number | null>(null);
+  // Compact view: the entries beyond the first five sit in one disclosure; asking for older entries opens it.
+  const [entriesOpen, setEntriesOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
@@ -343,8 +355,17 @@ function ScopedEconomics(props: Props) {
         return lose('denied', 'Account or programme access changed. Private details were cleared.');
       if (!r.ok) throw Error('read failed');
       const list = parseList(await r.json(), props);
+      const added = list.entries.filter((e) => !entries.some((o) => o.id === e.id));
       setEntries((old) => [...old, ...list.entries.filter((e) => !old.some((o) => o.id === e.id))]);
       setNextBefore(list.nextBefore);
+      if (compact) {
+        setEntriesOpen(true);
+        setNotice(
+          added.length === 1
+            ? '1 older entry is shown.'
+            : `${added.length} older entries are shown.`,
+        );
+      }
     } catch {
       setError('Older entries could not be loaded. Try again.');
     } finally {
@@ -465,7 +486,220 @@ function ScopedEconomics(props: Props) {
 
   const money = (v: string, c: Code) => formatMoney(v, c);
   const people = summary?.participants ?? [];
+  // The compact view puts who still owes first (exact BigInt comparison inside one currency) and shows five.
+  const ordered = compact ? owesFirst(people) : people;
+  const shownPeople = ordered.slice(0, 5);
+  const morePeople = ordered.slice(5);
   const participant = kind.startsWith('PARTICIPANT_');
+
+  const entryItem = (e: Entry) => (
+    <li key={e.id}>
+      <strong>#{e.seq}</strong> · {kindLabels[e.kind]}
+      {e.costBasis ? ' (' + e.costBasis.toLowerCase() + ')' : ''}
+      {e.registrationLabel ? ' · ' + e.registrationLabel : ''} · {money(e.amountMinor, e.currency)}{' '}
+      · {e.occurredOn}
+      <br />
+      {e.description}
+      {e.reverseOf && <span> · Correction of an earlier entry</span>}
+      {e.reversedBy && <span> · Corrected by a later entry</span>}
+      {!e.reverseOf && !e.reversedBy && (
+        <>
+          {' '}
+          <button
+            type="button"
+            className="text-link"
+            disabled={busy}
+            onClick={() => {
+              setError('');
+              setCorrecting(correcting === e.id ? null : e.id);
+              setFixConfirm(false);
+            }}
+          >
+            {correcting === e.id ? 'Cancel Correction' : 'Correct This Entry'}
+          </button>
+        </>
+      )}
+      {correcting === e.id && (
+        <div className="operator-form">
+          <p>
+            A correction adds an entry that cancels this one exactly. Nothing is edited or deleted.
+          </p>
+          <label className="field">
+            Date of correction
+            <input
+              type="date"
+              value={fixDate}
+              min="2000-01-01"
+              max="2100-01-01"
+              disabled={busy}
+              onChange={(ev) => setFixDate(ev.target.value)}
+            />
+          </label>
+          <label className="field">
+            {realCustomerInput() ? 'Reason' : 'Reason (start with Synthetic)'}{' '}
+            <input
+              type="text"
+              maxLength={300}
+              value={fixText}
+              disabled={busy}
+              onChange={(ev) => setFixText(ev.target.value)}
+            />
+          </label>
+          <label className="check-field">
+            <input
+              type="checkbox"
+              checked={fixConfirm}
+              disabled={busy}
+              onChange={(ev) => setFixConfirm(ev.target.checked)}
+            />
+            I confirm this correction.
+          </label>
+          <button
+            type="button"
+            className="primary-link"
+            disabled={busy}
+            onClick={() => correct(e.id)}
+          >
+            Add Correction
+          </button>
+        </div>
+      )}
+    </li>
+  );
+  const personItem = (r: Summary['participants'][number]) => (
+    <li key={r.registrationId}>
+      <strong>{r.label}</strong>
+      {r.state !== 'ACTIVE' ? ' · ' + r.state.toLowerCase() : ''}
+      {r.amounts.length === 0 ? (
+        <span> · No fee recorded</span>
+      ) : (
+        r.amounts.map((a) => (
+          <span key={a.currency}>
+            {' '}
+            · {statusLabels[a.status]}: due {money(a.due, a.currency)}, recorded{' '}
+            {money(a.recorded, a.currency)}
+          </span>
+        ))
+      )}
+    </li>
+  );
+
+  const recordForm = (
+    <form
+      className="operator-form"
+      onSubmit={(e) => {
+        e.preventDefault();
+        submit();
+      }}
+    >
+      {!compact && <h5>Record an amount</h5>}
+      <label className="field">
+        What are you recording?
+        <select value={kind} disabled={busy} onChange={(e) => setKind(e.target.value as Kind)}>
+          {kinds.map((k) => (
+            <option key={k} value={k}>
+              {kindLabels[k]}
+            </option>
+          ))}
+        </select>
+      </label>
+      {participant && (
+        <label className="field">
+          Participant
+          <select
+            value={registrationId}
+            disabled={busy}
+            onChange={(e) => setRegistrationId(e.target.value)}
+          >
+            <option value="">Choose a participant</option>
+            {people.map((r) => (
+              <option key={r.registrationId} value={r.registrationId}>
+                {r.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {!participant && (
+        <fieldset>
+          <legend>Is this cost planned or has it happened?</legend>
+          {(['PLANNED', 'ACTUAL'] as const).map((b) => (
+            <label key={b} className="check-field">
+              <input
+                type="radio"
+                name="cost-basis"
+                checked={costBasis === b}
+                disabled={busy}
+                onChange={() => setCostBasis(b)}
+              />
+              {b === 'PLANNED' ? 'Planned (expected)' : 'Actual (incurred)'}
+            </label>
+          ))}
+        </fieldset>
+      )}
+      <label className="field">
+        Currency
+        <select
+          value={currency}
+          disabled={busy}
+          onChange={(e) => setCurrency(e.target.value as Code)}
+        >
+          {(Object.keys(currencies) as Code[]).map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="field">
+        Amount ({currencies[currency]} decimal places)
+        <input
+          type="text"
+          inputMode="decimal"
+          autoComplete="off"
+          value={amount}
+          disabled={busy}
+          onChange={(e) => setAmount(e.target.value)}
+        />
+      </label>
+      <label className="field">
+        Date
+        <input
+          type="date"
+          value={occurredOn}
+          min="2000-01-01"
+          max={kind === 'PARTICIPANT_PAYMENT' ? today() : '2100-01-01'}
+          disabled={busy}
+          onChange={(e) => setOccurredOn(e.target.value)}
+        />
+      </label>
+      <label className="field">
+        {realCustomerInput() ? 'Description' : 'Description (start with Synthetic)'}{' '}
+        <input
+          type="text"
+          maxLength={300}
+          value={description}
+          disabled={busy}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+      </label>
+      <label className="check-field">
+        <input
+          type="checkbox"
+          checked={confirm}
+          disabled={busy}
+          onChange={(e) => setConfirm(e.target.checked)}
+        />
+        {realCustomerInput()
+          ? 'I am entering this myself. It is a record, it is not verified, and no payment is collected or sent.'
+          : 'I am entering this myself. It is a sample record, it is not verified, and no payment is collected or sent.'}{' '}
+      </label>
+      {error && !compact && <p role="alert">{error}</p>}
+      <button type="submit" className="primary-link" disabled={busy}>
+        {busy ? 'Saving…' : 'Record Amount'}
+      </button>
+    </form>
+  );
 
   return (
     <section
@@ -474,10 +708,18 @@ function ScopedEconomics(props: Props) {
       aria-busy={busy || status === 'loading'}
     >
       <h4> {realCustomerInput() ? 'Programme finances' : 'Sample programme finances'} </h4>
-      <p>
-        This is your own bookkeeping, entered by you and not verified by Corridra. Corridra does not
-        collect, hold or send any money. Each currency is shown separately and nothing is converted.
-      </p>
+      {compact ? (
+        <p>
+          Recorded by you, not checked by Corridra. Corridra does not collect, hold or send any
+          money. Each currency is shown separately and nothing is converted.
+        </p>
+      ) : (
+        <p>
+          This is your own bookkeeping, entered by you and not verified by Corridra. Corridra does
+          not collect, hold or send any money. Each currency is shown separately and nothing is
+          converted.
+        </p>
+      )}
       {status === 'loading' && (
         <p role="status">
           {' '}
@@ -525,6 +767,35 @@ function ScopedEconomics(props: Props) {
                 ? 'No amounts recorded yet.'
                 : 'No sample amounts recorded yet.'}{' '}
             </p>
+          ) : compact ? (
+            summary.currencies.map((c) => (
+              <table key={c.currency}>
+                <caption>{c.currency}</caption>
+                <tbody>
+                  <tr>
+                    <th scope="row">Fees due from participants</th>
+                    <td>{money(c.feesDue, c.currency)}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Payments you recorded</th>
+                    <td>{money(c.paymentsRecorded, c.currency)}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Still outstanding</th>
+                    <td>{money(c.outstanding, c.currency)}</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Actual costs</th>
+                    <td>
+                      {money(c.actualCosts.total, c.currency)} (expenses{' '}
+                      {money(c.actualCosts.expenses, c.currency)}, owed{' '}
+                      {money(c.actualCosts.obligations, c.currency)}, Corridra service fee{' '}
+                      {money(c.actualCosts.corridraServiceFees, c.currency)})
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            ))
           ) : (
             summary.currencies.map((c) => (
               <table key={c.currency}>
@@ -576,6 +847,41 @@ function ScopedEconomics(props: Props) {
               </table>
             ))
           )}
+          {compact && summary.currencies.length > 0 && (
+            <details className="money-compact-more">
+              <summary>Planned Costs and Margins, Worked Out From Your Entries</summary>
+              <div className="money-compact-tables">
+                {summary.currencies.map((c) => (
+                  <table key={c.currency}>
+                    <caption>{c.currency}</caption>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Planned costs</th>
+                        <td>
+                          {money(c.plannedCosts.total, c.currency)} (expenses{' '}
+                          {money(c.plannedCosts.expenses, c.currency)}, owed{' '}
+                          {money(c.plannedCosts.obligations, c.currency)}, Corridra service fee{' '}
+                          {money(c.plannedCosts.corridraServiceFees, c.currency)})
+                        </td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Margin if costs are as planned</th>
+                        <td>{money(c.marginIfPlanned, c.currency)}</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Margin on actual costs</th>
+                        <td>{money(c.marginOnActual, c.currency)}</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Cash margin (payments recorded less actual costs)</th>
+                        <td>{money(c.cashMargin, c.currency)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                ))}
+              </div>
+            </details>
+          )}
           <h5>Participants</h5>
           <p>
             {summary.counts.registered} registered · {summary.counts.active} active ·{' '}
@@ -583,227 +889,54 @@ function ScopedEconomics(props: Props) {
           </p>
           {people.length === 0 ? (
             <p className="ux-empty">No registered participants yet.</p>
+          ) : compact ? (
+            <>
+              <ul>{shownPeople.map(personItem)}</ul>
+              {morePeople.length > 0 && (
+                <details className="money-compact-more">
+                  <summary>Show {morePeople.length} More Participants</summary>
+                  <ul>{morePeople.map(personItem)}</ul>
+                </details>
+              )}
+            </>
           ) : (
-            <ul>
-              {people.map((r) => (
-                <li key={r.registrationId}>
-                  <strong>{r.label}</strong>
-                  {r.state !== 'ACTIVE' ? ' · ' + r.state.toLowerCase() : ''}
-                  {r.amounts.length === 0 ? (
-                    <span> · No fee recorded</span>
-                  ) : (
-                    r.amounts.map((a) => (
-                      <span key={a.currency}>
-                        {' '}
-                        · {statusLabels[a.status]}: due {money(a.due, a.currency)}, recorded{' '}
-                        {money(a.recorded, a.currency)}
-                      </span>
-                    ))
-                  )}
-                </li>
-              ))}
-            </ul>
+            <ul>{people.map(personItem)}</ul>
           )}
 
-          <form
-            className="operator-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              submit();
-            }}
-          >
-            <h5>Record an amount</h5>
-            <label className="field">
-              What are you recording?
-              <select
-                value={kind}
-                disabled={busy}
-                onChange={(e) => setKind(e.target.value as Kind)}
-              >
-                {kinds.map((k) => (
-                  <option key={k} value={k}>
-                    {kindLabels[k]}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {participant && (
-              <label className="field">
-                Participant
-                <select
-                  value={registrationId}
-                  disabled={busy}
-                  onChange={(e) => setRegistrationId(e.target.value)}
-                >
-                  <option value="">Choose a participant</option>
-                  {people.map((r) => (
-                    <option key={r.registrationId} value={r.registrationId}>
-                      {r.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-            {!participant && (
-              <fieldset>
-                <legend>Is this cost planned or has it happened?</legend>
-                {(['PLANNED', 'ACTUAL'] as const).map((b) => (
-                  <label key={b} className="check-field">
-                    <input
-                      type="radio"
-                      name="cost-basis"
-                      checked={costBasis === b}
-                      disabled={busy}
-                      onChange={() => setCostBasis(b)}
-                    />
-                    {b === 'PLANNED' ? 'Planned (expected)' : 'Actual (incurred)'}
-                  </label>
-                ))}
-              </fieldset>
-            )}
-            <label className="field">
-              Currency
-              <select
-                value={currency}
-                disabled={busy}
-                onChange={(e) => setCurrency(e.target.value as Code)}
-              >
-                {(Object.keys(currencies) as Code[]).map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              Amount ({currencies[currency]} decimal places)
-              <input
-                type="text"
-                inputMode="decimal"
-                autoComplete="off"
-                value={amount}
-                disabled={busy}
-                onChange={(e) => setAmount(e.target.value)}
-              />
-            </label>
-            <label className="field">
-              Date
-              <input
-                type="date"
-                value={occurredOn}
-                min="2000-01-01"
-                max={kind === 'PARTICIPANT_PAYMENT' ? today() : '2100-01-01'}
-                disabled={busy}
-                onChange={(e) => setOccurredOn(e.target.value)}
-              />
-            </label>
-            <label className="field">
-              {realCustomerInput() ? 'Description' : 'Description (start with Synthetic)'}{' '}
-              <input
-                type="text"
-                maxLength={300}
-                value={description}
-                disabled={busy}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </label>
-            <label className="check-field">
-              <input
-                type="checkbox"
-                checked={confirm}
-                disabled={busy}
-                onChange={(e) => setConfirm(e.target.checked)}
-              />
-              {realCustomerInput()
-                ? 'I am entering this myself. It is a record, it is not verified, and no payment is collected or sent.'
-                : 'I am entering this myself. It is a sample record, it is not verified, and no payment is collected or sent.'}{' '}
-            </label>
-            {error && <p role="alert">{error}</p>}
-            <button type="submit" className="primary-link" disabled={busy}>
-              {busy ? 'Saving…' : 'Record Amount'}
-            </button>
-          </form>
+          {compact && error && <p role="alert">{error}</p>}
+          {compact ? (
+            <details className="money-compact-more">
+              <summary>Record an Amount</summary>
+              {recordForm}
+            </details>
+          ) : (
+            recordForm
+          )}
 
           <h5>Entries, newest first</h5>
           {entries.length === 0 ? (
             <p className="ux-empty">No entries yet.</p>
+          ) : compact ? (
+            <>
+              <ol reversed className="ux-plain-list">
+                {entries.slice(0, 5).map(entryItem)}
+              </ol>
+              {entries.length > 5 && (
+                <details
+                  className="money-compact-more"
+                  open={entriesOpen}
+                  onToggle={(event) => setEntriesOpen(event.currentTarget.open)}
+                >
+                  <summary>Show {entries.length - 5} More Entries</summary>
+                  <ol reversed start={entries[5]!.seq} className="ux-plain-list">
+                    {entries.slice(5).map(entryItem)}
+                  </ol>
+                </details>
+              )}
+            </>
           ) : (
             <ol reversed className="ux-plain-list">
-              {entries.map((e) => (
-                <li key={e.id}>
-                  <strong>#{e.seq}</strong> · {kindLabels[e.kind]}
-                  {e.costBasis ? ' (' + e.costBasis.toLowerCase() + ')' : ''}
-                  {e.registrationLabel ? ' · ' + e.registrationLabel : ''} ·{' '}
-                  {money(e.amountMinor, e.currency)} · {e.occurredOn}
-                  <br />
-                  {e.description}
-                  {e.reverseOf && <span> · Correction of an earlier entry</span>}
-                  {e.reversedBy && <span> · Corrected by a later entry</span>}
-                  {!e.reverseOf && !e.reversedBy && (
-                    <>
-                      {' '}
-                      <button
-                        type="button"
-                        className="text-link"
-                        disabled={busy}
-                        onClick={() => {
-                          setError('');
-                          setCorrecting(correcting === e.id ? null : e.id);
-                          setFixConfirm(false);
-                        }}
-                      >
-                        {correcting === e.id ? 'Cancel Correction' : 'Correct This Entry'}
-                      </button>
-                    </>
-                  )}
-                  {correcting === e.id && (
-                    <div className="operator-form">
-                      <p>
-                        A correction adds an entry that cancels this one exactly. Nothing is edited
-                        or deleted.
-                      </p>
-                      <label className="field">
-                        Date of correction
-                        <input
-                          type="date"
-                          value={fixDate}
-                          min="2000-01-01"
-                          max="2100-01-01"
-                          disabled={busy}
-                          onChange={(ev) => setFixDate(ev.target.value)}
-                        />
-                      </label>
-                      <label className="field">
-                        {realCustomerInput() ? 'Reason' : 'Reason (start with Synthetic)'}{' '}
-                        <input
-                          type="text"
-                          maxLength={300}
-                          value={fixText}
-                          disabled={busy}
-                          onChange={(ev) => setFixText(ev.target.value)}
-                        />
-                      </label>
-                      <label className="check-field">
-                        <input
-                          type="checkbox"
-                          checked={fixConfirm}
-                          disabled={busy}
-                          onChange={(ev) => setFixConfirm(ev.target.checked)}
-                        />
-                        I confirm this correction.
-                      </label>
-                      <button
-                        type="button"
-                        className="primary-link"
-                        disabled={busy}
-                        onClick={() => correct(e.id)}
-                      >
-                        Add Correction
-                      </button>
-                    </div>
-                  )}
-                </li>
-              ))}
+              {entries.map(entryItem)}
             </ol>
           )}
           {nextBefore !== null && (
