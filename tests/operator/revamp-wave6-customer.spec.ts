@@ -353,3 +353,52 @@ test('Q-05 429: saving an invitation says the limit was reached and to try later
   await page.getByRole('button', { name: /^Save/ }).last().click();
   await expect(page.getByText(limitLine).first()).toBeVisible();
 });
+
+// Audit A5 (14 November 2026): the Delivered to you card and each delivery in it share one even inset, so the text is
+// not pushed in twice. Presentation only: the card keeps its words, its button and its link.
+test('the Delivered to you card insets its text once: 16 px outside, 12 by 16 px for each delivery', async ({
+  page,
+}) => {
+  await page.route('**/api/customer-assigned-missions**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        assignments: [
+          {
+            id: '44444444-4444-4444-8444-444444444444',
+            requestId: '11111111-1111-4111-8111-111111111111',
+            available: true,
+            title: 'Cutting machine mission',
+            expiresAt: '2099-01-01T00:00:00Z',
+            savedResourceId: '33333333-3333-4333-8333-333333333333',
+          },
+        ],
+        nextAfter: null,
+        synthetic: true,
+      }),
+    }),
+  );
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(`${origin}/?screen=assigned`);
+    const card = page.locator('section[aria-label="Delivered to you"]');
+    await expect(
+      card.getByRole('link', { name: 'Open Approved Commercial Mission' }),
+    ).toBeVisible();
+    await expect(card).toContainText('Current report access expires 1 Jan 2099, 00:00 (UTC).');
+    await page.evaluate(() => document.querySelector('main')!.classList.add('ux-customer'));
+    const insets = await page.evaluate(() => {
+      const pad = (el: Element) => {
+        const s = getComputedStyle(el);
+        return [s.paddingTop, s.paddingRight, s.paddingBottom, s.paddingLeft].join(' ');
+      };
+      const section = document.querySelector('section[aria-label="Delivered to you"]')!;
+      return { outer: pad(section), inner: pad(section.querySelector('article')!) };
+    });
+    expect(insets, `${width} wide`).toEqual({
+      outer: '16px 16px 16px 16px',
+      inner: '12px 16px 12px 16px',
+    });
+  }
+});

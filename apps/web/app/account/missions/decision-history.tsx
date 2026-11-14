@@ -2,7 +2,7 @@
 import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
-import { displayDate } from '@corridra/domain/locale';
+import { formatMoment, formatUtcDay } from '../../../lib/ux/format';
 import { savedMissionHeaders, savedMissionRead, type SavedMissionScope } from '../saved-missions';
 import { DecisionCardPanel } from './decision-card-panel';
 import { limitWords } from '../../../lib/account-limit';
@@ -163,7 +163,7 @@ function PrivateHistory({ subject, issuer, resourceId, cards = false }: Scope) {
         <>
           <p className="evidence-label">
             Synthetic reviewed disclosure · version {data.version}. Access expires{' '}
-            {displayDate(data.expiresAt)}.
+            {formatMoment(data.expiresAt)}.
           </p>
           {!data.decisions.length && (
             <p>No decisions are included in the current approved revision.</p>
@@ -183,7 +183,7 @@ function PrivateHistory({ subject, issuer, resourceId, cards = false }: Scope) {
               </p>
               <p>{d.rationale}</p>
               <p>Next action: {d.nextAction}</p>
-              <p>Due {displayDate(d.dueAt)}.</p>
+              <p>Due {formatUtcDay(d.dueAt)}.</p>
               <p className="evidence-label">
                 {d.sourceKind} · {d.claimStatus}.{' '}
                 {d.requirementCurrent

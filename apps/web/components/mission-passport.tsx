@@ -1,21 +1,26 @@
 import type { DeliveryMission } from '@corridra/delivery/report';
-import { displayDate } from '@corridra/domain/locale';
 import { StatusBadge } from './access-state';
+import { formatUtcDay } from '../lib/ux/format';
+import { missionStatusWords } from '../lib/ux/mission-status-words';
 export function MissionPassport({ mission: m }: { mission: DeliveryMission }) {
   return (
-    <header className="ux-participant-passport" aria-label="Mission passport">
+    <header
+      className="ux-participant-passport"
+      aria-label="Mission passport"
+      data-publication-id={m.publicationId}
+    >
       <p className="label">MISSION PASSPORT</p>
       <h2>
         {m.company}: {m.title}
       </h2>
-      <StatusBadge>{m.status.replaceAll('_', ' ').toLowerCase()}</StatusBadge>
+      <StatusBadge>{missionStatusWords(m.status)}</StatusBadge>
       <p>{m.objective}</p>
       <div className="ux-mission-focus-grid">
         <section className="ux-next-action ux-mission-next" aria-label="Approved next action">
           <p className="label">YOUR NEXT MOVE</p>
           <h3>Next action</h3>
           <p className="ux-mission-decision">{m.nextAction}</p>
-          <p>Due {displayDate(m.dueAt)}</p>
+          <p>Due {formatUtcDay(m.dueAt)}</p>
           <p className="ux-scope-note">
             Recorded in the approved publication. This is not a confirmed commercial outcome.
           </p>
@@ -32,12 +37,8 @@ export function MissionPassport({ mission: m }: { mission: DeliveryMission }) {
               <dd>{m.outcomes.heldMeetings}</dd>
             </div>
             <div>
-              <dt>Publication reference</dt>
-              <dd>{m.publicationId}</dd>
-            </div>
-            <div>
               <dt>Reviewed</dt>
-              <dd>{displayDate(m.reviewedAt)}</dd>
+              <dd>{formatUtcDay(m.reviewedAt)}</dd>
             </div>
             <div>
               <dt>Requirement</dt>

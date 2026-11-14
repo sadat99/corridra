@@ -6,11 +6,12 @@ import type { Page } from '@playwright/test';
 // UtilityMenus), run on a production build with the test-only customer sign-in. Supersedes the CX PR 1 shell cases
 // that described the left drawer and the account menu at the foot of the bar; the case ids are kept.
 // Case ids: L-01 (sidebar from 1024 px; below it the same sidebar as a left drawer from the header's Menu button,
-// owner rule of 12 Nov 2026, with the labelled bottom tabs kept as a shortcut), CX-02 (every old destination is still
+// owner rule of 12 Nov 2026; the phone bottom tab bar is gone, owner 14 Nov 2026 "B": drawer only), CX-02 (every old destination is still
 // reachable), CX-03 (the header row and its menus), CX-06 (no banner, no eyebrow, no tab row).
 const sidebar = (page: Page) => page.getByRole('navigation', { name: 'Customer navigation' });
 // The five destinations are the sidebar's first list; Your Journeys and Groups follow it under their own switches.
 const mainLinks = (page: Page) => sidebar(page).locator(':scope > ul').getByRole('link');
+// The phone bottom tab bar no longer exists (owner, 14 Nov 2026, "B"): nothing may be drawn under this name at any width.
 const tabs = (page: Page) => page.getByRole('navigation', { name: 'Customer tabs' });
 const header = (page: Page) => page.locator('header.ux-app-header');
 // Companies appears only where the approved-companies module is on, and Home is Your Move only with its switch,
@@ -56,7 +57,7 @@ test('L-01 at 1440 the destinations are a sidebar beside the page, with New Requ
   });
   expect(beside.barRight).toBeLessThanOrEqual(beside.mainLeft + 1);
   await expect(page.getByRole('button', { name: 'Menu', exact: true })).toHaveCount(0);
-  await expect(tabs(page)).toBeHidden();
+  await expect(tabs(page)).toHaveCount(0);
   // Help on WhatsApp has no owner-configured number: plain text with a tag, never a link.
   const whatsapp = page.locator('.ux-rail-soon');
   await expect(whatsapp).toContainText('Help on WhatsApp');
@@ -67,23 +68,13 @@ test('L-01 at 1440 the destinations are a sidebar beside the page, with New Requ
 });
 
 for (const width of [320, 390, 768]) {
-  test(`L-01 at ${width} the destinations are labelled bottom tabs, 48 px high, and the same sidebar opens as a drawer from Menu, with no sideways scroll`, async ({
+  test(`L-01 at ${width} the destinations are in the drawer opened from Menu, there is no bottom tab bar, and nothing scrolls sideways`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 844 });
     await page.goto('/account');
-    await expect(tabs(page)).toBeVisible();
-    const links = tabs(page).getByRole('link');
-    await expect(links).toHaveText(destinations.map(([name]) => name));
-    expect(await hrefsOf(links)).toEqual(destinations.map(([, href]) => href));
-    await expect(tabs(page).getByRole('link', { name: 'Home' })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
-    for (const box of await links.evaluateAll((all) =>
-      all.map((a) => a.getBoundingClientRect().toJSON()),
-    ))
-      expect(box.height).toBeGreaterThanOrEqual(47.5);
+    await expect(tabs(page)).toHaveCount(0);
+    await expect(page.locator('.ux-customer-tabs')).toHaveCount(0);
     // The sidebar is a closed drawer, out of view and out of the tab order, until Menu opens it.
     const menu = page.getByRole('button', { name: 'Menu', exact: true });
     await expect(menu).toBeVisible();
@@ -94,6 +85,14 @@ for (const width of [320, 390, 768]) {
     await expect(drawer).toBeVisible();
     await expect(mainLinks(page)).toHaveText(destinations.map(([name]) => name));
     expect(await hrefsOf(mainLinks(page))).toEqual(destinations.map(([, href]) => href));
+    await expect(mainLinks(page).filter({ hasText: 'Home' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    for (const box of await mainLinks(page).evaluateAll((all) =>
+      all.map((a) => a.getBoundingClientRect().toJSON()),
+    ))
+      expect(box.height).toBeGreaterThanOrEqual(43.5);
     await expect(drawer.getByRole('link', { name: 'New Request' })).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(page.locator('.ux-leftnav-panel')).toBeHidden();
@@ -101,15 +100,19 @@ for (const width of [320, 390, 768]) {
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);
-    // The last of the page is not hidden behind the tabs.
+    // The last of the page is not covered by anything fixed to the bottom edge: the footer's link is the top element
+    // at its own centre once the page is scrolled to its end.
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     const clear = await page.evaluate(() => {
-      const tabsTop = document.querySelector('.ux-customer-tabs')!.getBoundingClientRect().top;
-      const main = document.querySelector('main')!.getBoundingClientRect();
-      return main.bottom <= tabsTop + 1;
+      const link = document.querySelector('footer.site-footer a')!;
+      const box = link.getBoundingClientRect();
+      const top = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+      return box.bottom <= window.innerHeight && !!top && link.contains(top);
     });
     expect(clear).toBe(true);
-    await tabs(page).getByRole('link', { name: 'Requests' }).click();
+    // Reaching another destination takes the drawer: open it, choose Requests.
+    await menu.click();
+    await mainLinks(page).filter({ hasText: 'Requests' }).click();
     await expect(page).toHaveURL(/\/account\?view=work/);
   });
 }
@@ -183,13 +186,17 @@ test('CX-03 the avatar menu is Account, Company Profile, Plan and Billing, Notif
   await expect(trigger).toBeFocused();
 });
 
-test('CX-03 the phone tabs follow the chosen language as the sidebar does, and a new word is marked English', async ({
+test('CX-03 the phone drawer follows the chosen language as the sidebar does, and a new word is marked English', async ({
   page,
 }) => {
   await page.addInitScript(() => localStorage.setItem('corridra.language', 'bn'));
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/account');
-  const links = tabs(page).getByRole('link');
+  await page
+    .getByRole('button', { name: /Menu|মেনু/ })
+    .first()
+    .click();
+  const links = mainLinks(page);
   await expect(links.nth(0)).toHaveText('হোম');
   await expect(links.nth(1)).toHaveText('আমার কাজ');
   await expect(links.nth(3)).toHaveText('ফলাফল');

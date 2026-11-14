@@ -4,7 +4,7 @@ import { Dialog } from '../../components/ux/dialog';
 import { InvitationSlot, useInvitationDialog } from './invitation-dialog';
 import { RefreshButton } from './refresh-button';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { displayDate } from '@corridra/domain/locale';
+import { formatMoment } from '../../lib/ux/format';
 import { limitWords } from '../../lib/account-limit';
 import './library-ac1.css';
 export type SavedMissionScope = { subject: string; issuer: string };
@@ -350,7 +350,7 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
             <h3>{m.available ? m.title : 'Saved invitation unavailable'}</h3>
             {m.available && m.expiresAt ? (
               <>
-                <p>Original access expires {displayDate(m.expiresAt)}.</p>
+                <p>Original access expires {formatMoment(m.expiresAt)}.</p>
                 <a className="primary-link" href={'/account/missions/' + m.id}>
                   Open Approved Commercial Report
                 </a>

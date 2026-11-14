@@ -9,7 +9,8 @@ import AxeBuilder from '@axe-core/playwright';
 // on 14 November 2026 ("i asked for one +, u got me two buttons, New request and More, which cover the content on the
 // screen. why cant u put just + with all these option, including New Request in blue"): ONE round plus in the end corner,
 // one compact list above it with the Next Move first in the primary cobalt, and the short phone header. The real header,
-// tabs, sidebar frame, Pocket button and the real stylesheets are mounted as a fixture (the pattern of
+// sidebar frame (the phone has no bottom tab bar since the owner's 14 November 2026 "B"), Pocket button and the real
+// stylesheets are mounted as a fixture (the pattern of
 // customer-search-ui.spec.ts), so every behaviour below is the shipped component's. What the signals say is scripted by
 // the address (`?signals=`); the rules themselves are tested in tests/integration/pocket-next-move.test.ts, and the real
 // signed-in pages are proved by scripts/qa/signed-in-sweep.ts.
@@ -44,7 +45,6 @@ import{AppHeader}from ${source('apps/web/components/ux/app-header.tsx')};
 import{BrandLockup}from ${source('apps/web/components/site-header.tsx')};
 import{LeftNavFrame,LeftNavList}from ${source('apps/web/components/ux/left-nav.tsx')};
 import{customerTabs}from ${source('apps/web/lib/ux/customer-navigation.ts')};
-import{CustomerTabs}from ${source('apps/web/components/ux/customer-tabs.tsx')};
 import{CustomerRailTop,CustomerRailFoot}from ${source('apps/web/components/ux/customer-rail.tsx')};
 import{PocketButton}from ${source('apps/web/components/ux/pocket-button.tsx')};
 import*as store from ${source('apps/web/components/ux/customer-bar-store.ts')};
@@ -75,7 +75,6 @@ createRoot(document.getElementById('fixture')).render(
       <AppHeader kind="customer" live={false} notifications brandMark={<BrandLockup/>} whatsappHref={q.get('whatsapp')==='on'?'https://wa.me/8801000000000':undefined} pocket={pocket}/>
       <LeftNavFrame navId="customer-navigation" words={words} nav={<><CustomerRailTop/><LeftNavList id="customer-navigation" label="Navigation" items={items} current="home"/><CustomerRailFoot/></>}>
         <main id="main"><h1>Your move</h1>{rows.map(i=><p key={i}>Synthetic content row {i}</p>)}<a id="last" href="/account/last">Last link of the page</a></main>
-        {q.get('tabs')!=='off'?<CustomerTabs tabs={tabs} current="home"/>:null}
         {pocket?<PocketButton signals={signals} whatsappHref={q.get('whatsapp')==='on'?'https://wa.me/8801000000000':undefined}/>:null}
       </LeftNavFrame>
     </div>
@@ -263,11 +262,11 @@ test.describe('phone width, switch on', () => {
       expect(target.height).toBeGreaterThanOrEqual(55.9);
       expect(target.height).toBeLessThanOrEqual(56.1);
       expect(await plus(page).evaluate((el) => getComputedStyle(el).borderRadius)).toBe('50%');
-      // The end corner (16 px in), above the bottom tabs while the page has them, inside the window.
+      // The end corner (16 px in), 16 px above the bottom edge (no bottom bar, safe area 0 here), inside the window.
       expect(target.x + target.width).toBeGreaterThanOrEqual(width - 16.5);
       expect(target.x + target.width).toBeLessThanOrEqual(width - 15.5);
-      const tabs = await box(page.locator('.ux-customer-tabs'));
-      expect(target.y + target.height).toBeLessThanOrEqual(tabs.y);
+      expect(await page.locator('.ux-customer-tabs').count()).toBe(0);
+      expect(844 - (target.y + target.height)).toBeGreaterThanOrEqual(15.5);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
         width,
       );
@@ -313,7 +312,7 @@ test.describe('phone width, switch on', () => {
       page,
     }) => {
       await page.setViewportSize(phone);
-      await mount(page, '/account', '?signals=draft&tabs=off');
+      await mount(page, '/account', '?signals=draft');
       if (state === 'open') await openList(page);
       const fixed = await page.evaluate(() =>
         Array.from(document.querySelectorAll<HTMLElement>('body *'))
@@ -926,63 +925,53 @@ test.describe('scrolling', () => {
     await expect(plus(page)).toBeVisible();
   });
 
-  // With the bottom tabs in the page and with them gone (the owner's drawer-only decision is a later change): the plus
-  // reads one property, so it must be right in both states and never cover the last row or link.
-  for (const tabs of ['on', 'off'])
-    for (const width of [320, 390]) {
-      test(`at the end of the page the plus never covers the last link (${width}, tabs ${tabs})`, async ({
-        page,
-      }) => {
-        await page.setViewportSize({ width, height: 700 });
-        await mount(page, '/account', `?signals=quotes3&rows=30&tabs=${tabs}`);
-        await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-        // Even after the idle return time the plus stays out of the way at the end.
-        await page.waitForTimeout(1500);
-        await expect.poll(() => hiddenNow(page)).toBe('true');
-        await expect
-          .poll(() => page.locator('.ux-pocket').evaluate((el) => getComputedStyle(el).opacity))
-          .toBe('0');
-        await page.locator('#last').click({ timeout: 5000 });
-        await expect(page).toHaveURL(/\/account\/last$/);
-      });
-    }
+  // The phone has no bottom bar (owner, 14 November 2026, "B"): the plus never covers the last row or link.
+  for (const width of [320, 390]) {
+    test(`at the end of the page the plus never covers the last link (${width})`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 700 });
+      await mount(page, '/account', `?signals=quotes3&rows=30`);
+      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      // Even after the idle return time the plus stays out of the way at the end.
+      await page.waitForTimeout(1500);
+      await expect.poll(() => hiddenNow(page)).toBe('true');
+      await expect
+        .poll(() => page.locator('.ux-pocket').evaluate((el) => getComputedStyle(el).opacity))
+        .toBe('0');
+      await page.locator('#last').click({ timeout: 5000 });
+      await expect(page).toHaveURL(/\/account\/last$/);
+    });
+  }
 
-  test('with the tabs the plus sits above them; without them it drops to the bottom edge', async ({
+  test('the plus sits at the bottom edge, 16 px up, and no bottom bar is in the page', async ({
     page,
   }) => {
-    await mount(page, '/account', '?signals=draft&tabs=on');
-    const withTabs = await box(plus(page));
-    const tabsBox = await box(page.locator('.ux-customer-tabs'));
-    expect(tabsBox.y - (withTabs.y + withTabs.height)).toBeGreaterThanOrEqual(12);
+    await mount(page, '/account', '?signals=draft');
+    await expect(page.locator('.ux-customer-tabs')).toHaveCount(0);
+    const bare = await box(plus(page));
+    // No bar: the gap to the bottom edge is the plus's own gap (16 px), safe area 0 here.
+    expect(phone.height - (bare.y + bare.height)).toBeGreaterThanOrEqual(15.5);
+    expect(phone.height - (bare.y + bare.height)).toBeLessThanOrEqual(16.5);
+    // Nothing sets or reads a bottom bar height any more: the source no longer knows the tab bar.
+    for (const file of ['pocket-button.css', 'pocket-button.tsx'])
+      expect(readFileSync(resolve('apps/web/components/ux', file), 'utf8')).not.toMatch(
+        /shell-bottom-bar|ux-customer-tabs/,
+      );
     expect(
       await page
         .locator('.ux-pocket')
         .evaluate((el) => getComputedStyle(el).getPropertyValue('--shell-bottom-bar')),
-    ).not.toBe('');
-    await mount(page, '/account', '?signals=draft&tabs=off');
-    await expect(page.locator('.ux-customer-tabs')).toHaveCount(0);
-    const bare = await box(plus(page));
-    // No bar: the gap to the bottom edge is the plus's own gap (16 px) and no bar height, safe area 0 here.
-    expect(phone.height - (bare.y + bare.height)).toBeGreaterThanOrEqual(15.5);
-    expect(phone.height - (bare.y + bare.height)).toBeLessThanOrEqual(16.5);
-    expect(
-      await page
-        .locator('.ux-pocket')
-        .evaluate((el) => el.style.getPropertyValue('--shell-bottom-bar')),
     ).toBe('');
-    expect(withTabs.y).toBeLessThan(bare.y);
   });
 
-  test('the open list never covers the bottom tabs: it sits above the plus, which sits above them', async ({
-    page,
-  }) => {
-    await mount(page, '/account', '?signals=quotes3&tabs=on');
+  test('the open list sits above the plus and stays inside the window', async ({ page }) => {
+    await mount(page, '/account', '?signals=quotes3');
     await openList(page);
-    const tabsBox = await box(page.locator('.ux-customer-tabs'));
     const list = await box(panel(page));
     const target = await box(plus(page));
     expect(list.y + list.height).toBeLessThanOrEqual(target.y);
-    expect(target.y + target.height).toBeLessThanOrEqual(tabsBox.y);
+    expect(list.y).toBeGreaterThanOrEqual(0);
   });
 
   test('adds no page length: the document is as tall as without it', async ({ page }) => {
@@ -993,14 +982,13 @@ test.describe('scrolling', () => {
     expect(on).toBe(off);
   });
 
-  test('the plus is above the bottom tabs, and the safe area is part of that place', async ({
+  test('the plus is above the device safe area, and that is its only bottom offset', async ({
     page,
   }) => {
     await mount(page, '/account', '?signals=draft');
     const target = await box(plus(page));
-    const tabs = await box(page.locator('.ux-customer-tabs'));
-    expect(tabs.y - (target.y + target.height)).toBeGreaterThanOrEqual(12);
-    // Both the tabs and the plus place themselves above the device's bottom edge.
+    expect(phone.height - (target.y + target.height)).toBeGreaterThanOrEqual(12);
+    // The plus places itself above the device's bottom edge by the safe area plus its own gap.
     expect(componentCss + globalCss).toContain('env(safe-area-inset-bottom');
     expect(readFileSync(resolve('apps/web/components/ux/pocket-button.css'), 'utf8')).toContain(
       'env(safe-area-inset-bottom',

@@ -380,3 +380,9 @@
 .ledger .ledger-foot {
   padding: var(--space-3) var(--space-4);
 }
+
+/* Terms no quote states, folded into one row that still names each term. */
+.ledger-unstated-terms {
+  color: var(--text-2);
+  font-weight: 500;
+}

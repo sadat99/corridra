@@ -478,8 +478,6 @@ describe('colours that components take straight from the palette', () => {
     'components/home-landing.css|color|--ac-copper-ink',
     'components/ux/field-tabs.css|color|--ac-cobalt-pressed',
     'components/ux/field-tabs.css|box-shadow|--ac-cobalt',
-    'components/ux/customer-tabs.css|color|--ac-cobalt-pressed',
-    'components/ux/customer-tabs.css|box-shadow|--ac-cobalt',
     'components/ux/utility-menus.css|background|--ac-cobalt',
     'app/globals.css|background|--ac-copper',
     'app/globals.css|border-top|--ac-copper',

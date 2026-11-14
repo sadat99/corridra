@@ -74,28 +74,6 @@ function useAtEnd(enabled: boolean) {
   return atEnd;
 }
 
-/**
- * The stylesheet sets --shell-bottom-bar to the tabs' height at the normal text size. At a larger text size the tabs
- * grow, so while they exist their measured height (without the safe area, which the button adds itself) replaces it.
- * With no tabs in the page nothing is set and the button sits at the bottom edge.
- */
-function useAboveTabs(root: React.RefObject<HTMLDivElement | null>, enabled: boolean) {
-  useEffect(() => {
-    const el = root.current;
-    if (!el || !enabled) return;
-    const tabs = document.querySelector<HTMLElement>('.ux-customer-tabs');
-    if (!tabs) return;
-    const set = () => {
-      const safe = parseFloat(getComputedStyle(tabs).paddingBottom) || 0;
-      el.style.setProperty('--shell-bottom-bar', `${Math.max(0, tabs.offsetHeight - safe)}px`);
-    };
-    set();
-    const observer = new ResizeObserver(set);
-    observer.observe(tabs);
-    return () => observer.disconnect();
-  }, [root, enabled]);
-}
-
 export function PocketButton({
   signals,
   whatsappHref,
@@ -146,7 +124,6 @@ function PocketView({
 
   const scrolledAway = useScrollHide(true);
   const atEnd = useAtEnd(true);
-  useAboveTabs(root, true);
   const helpGroups = useCustomerHelpGroups(whatsappHref);
   const listen = useListen();
 

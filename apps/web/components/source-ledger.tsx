@@ -72,6 +72,14 @@ export function SourceLedger({
   );
   const hiddenTerms = ledger.rows.length - keyRows.length;
   const count = ledger.columns.length;
+  // Terms no quote states are one row that still names every term, so a short comparison is not a column of
+  // "Not stated". It is data driven: a term that any quote states is its own row again. One such term stays a row.
+  const missingEverywhere = (row: (typeof shown)[number]) =>
+    row.cells.every((cell) => cell.value === null || cell.value === undefined);
+  const unstated = shown.filter(missingEverywhere);
+  const folded = unstated.length >= 2;
+  const rowsShown = folded ? shown.filter((row) => !missingEverywhere(row)) : shown;
+  const unstatedTerms = unstated.map((row) => row.label).join(', ');
   return (
     <section className="ledger" aria-label="Compare quotes">
       <div className="ledger-scroll" role="region" aria-label="Quotes side by side" tabIndex={0}>
@@ -104,7 +112,7 @@ export function SourceLedger({
             </tr>
           </thead>
           <tbody>
-            {shown.map((row) => (
+            {rowsShown.map((row) => (
               <tr key={row.label}>
                 <th scope="row">{row.label}</th>
                 {row.cells.map((cell, index) => (
@@ -114,6 +122,14 @@ export function SourceLedger({
                 ))}
               </tr>
             ))}
+            {folded ? (
+              <tr className="ledger-unstated">
+                <th scope="row">Not stated yet</th>
+                <td colSpan={count}>
+                  <span className="ledger-unstated-terms">{unstatedTerms}</span>
+                </td>
+              </tr>
+            ) : null}
             <tr className="ledger-verdict">
               <th scope="row">Can be compared</th>
               {ledger.columns.map((column) => (
@@ -157,7 +173,7 @@ export function SourceLedger({
                   ) : null}
                 </header>
                 <dl>
-                  {shown.map((row) => (
+                  {rowsShown.map((row) => (
                     <div key={row.label}>
                       <dt>{row.label}</dt>
                       <dd>
@@ -165,6 +181,14 @@ export function SourceLedger({
                       </dd>
                     </div>
                   ))}
+                  {folded ? (
+                    <div>
+                      <dt>Not stated yet</dt>
+                      <dd>
+                        <span className="ledger-unstated-terms">{unstatedTerms}</span>
+                      </dd>
+                    </div>
+                  ) : null}
                 </dl>
                 <footer>
                   <span className="ledger-badge" data-ok={column.comparable ? 'true' : 'false'}>

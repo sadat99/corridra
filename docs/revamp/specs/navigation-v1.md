@@ -2,6 +2,8 @@
 
 Document status: CURRENT.
 
+Amended 14 November 2026 (owner, "B", answering "bottom bar or drawer"): the customer shell's phone bottom tab bar is removed. Wherever this spec says the customer shell uses bottom tabs on phones, read: the phone uses the left drawer opened from the header's Menu button, which lists the same destinations. The contributor field helper's own bottom tabs are unchanged.
+
 ## Owner directive (6 November 2026, verbatim)
 
 > "update all the menu and navigation section across the system except footer as per the design here 100% correctly, without damaging, orphaning anything https://claude.ai/artifact/LeWuzAw5QX9d4zqgCsv11y#page-dcb81aee8d83"
