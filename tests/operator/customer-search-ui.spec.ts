@@ -118,9 +118,11 @@ const host=document.getElementById('fixture');
 // hydrate=on draws the page as a server would and then hydrates it, so the dialog's mounted flag starts false.
 if(flags.get('hydrate')==='on')host.innerHTML=renderToString(view(true));
 if(flags.get('hold')==='on')await new Promise((done)=>{window.releaseFixture=done});
-const root=flags.get('hydrate')==='on'?hydrateRoot(host,view(true)):createRoot(host);
+let root=flags.get('hydrate')==='on'?hydrateRoot(host,view(true)):createRoot(host);
 const draw=(show)=>root.render(view(show));
-if(flags.get('hydrate')!=='on')draw(true);window.drawIdentity=draw;`,
+if(flags.get('hydrate')!=='on')draw(true);window.drawIdentity=draw;
+window.unmountFixture=()=>root.unmount();
+window.remountFixture=()=>{root=createRoot(host);root.render(view(true))};`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
     },
@@ -687,6 +689,26 @@ test.describe('keyboard', () => {
     await expect(page.locator('dialog.ux-csearch[open]')).toHaveCount(1);
     await page.keyboard.press('Escape');
     await expect(dialogOf(page)).toBeHidden();
+  });
+
+  test("after the customer frame is gone Ctrl K is the browser's again: nothing is taken, nothing is parked, nothing opens on return", async ({
+    page,
+  }) => {
+    // A client-side move to a page without the customer header unmounts the dialog. The early listener that caught a
+    // key before hydration must not outlive the dialog's own, or it takes every Ctrl K on that page and parks it.
+    await mount(page);
+    await page.evaluate(`window.seen = [];
+      window.addEventListener('keydown', (event) => window.seen.push(event.defaultPrevented));`);
+    await page.evaluate('window.unmountFixture()');
+    await expect(page.locator('header.ux-app-header')).toHaveCount(0);
+    await page.keyboard.press('Control+K');
+    await page.keyboard.press('Meta+K');
+    expect(await page.evaluate('window.seen.filter(Boolean).length')).toBe(0);
+    // Back on a customer page within the hold: the earlier key does not open it by surprise.
+    await page.evaluate('window.remountFixture()');
+    await page.waitForSelector('header.ux-app-header');
+    await page.waitForTimeout(300);
+    await expect(page.locator('dialog.ux-csearch[open]')).toHaveCount(0);
   });
 
   test('a Ctrl K before the dialog exists does not open over another modal dialog', async ({

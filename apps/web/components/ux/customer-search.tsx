@@ -80,8 +80,6 @@ const openEvent = 'corridra:open-customer-search';
  */
 const pendingHoldMs = 5000;
 let pendingOpen: { opener: HTMLElement | null; at: number } | null = null;
-/** How many dialogs are listening. While one is, it handles the key itself and the early listener stands aside. */
-let listening = 0;
 function rememberOpen(opener: HTMLElement | null) {
   pendingOpen = { opener, at: Date.now() };
 }
@@ -90,17 +88,24 @@ function takePendingOpen(): { opener: HTMLElement | null } | null {
   pendingOpen = null;
   return held && Date.now() - held.at <= pendingHoldMs ? held : null;
 }
-if (typeof window !== 'undefined') {
-  // Registered when this file is evaluated, which is before hydration. It keeps the same guard as the dialog's own
-  // listener: another open modal keeps the key, and the key is taken only for a shortcut this search will answer.
-  window.addEventListener('keydown', (event) => {
-    if (listening > 0 || !isShortcut(event)) return;
-    if (document.querySelector('dialog[open]')) return;
-    event.preventDefault();
-    const active = document.activeElement;
-    rememberOpen(active instanceof HTMLElement && active !== document.body ? active : null);
-  });
+/**
+ * The early listener exists only for the window before a dialog attaches its own: the first dialog to listen removes
+ * it (`stopEarlyListener`), and for good, so a page without the customer header, reached by a client-side move after
+ * the dialog is gone, keeps the browser's own Ctrl K and parks nothing.
+ */
+function onEarlyKey(event: KeyboardEvent) {
+  if (!isShortcut(event)) return;
+  if (document.querySelector('dialog[open]')) return;
+  event.preventDefault();
+  const active = document.activeElement;
+  rememberOpen(active instanceof HTMLElement && active !== document.body ? active : null);
 }
+function stopEarlyListener() {
+  if (typeof window !== 'undefined') window.removeEventListener('keydown', onEarlyKey);
+}
+// Registered when this file is evaluated, which is before hydration. It keeps the same guard as the dialog's own
+// listener: another open modal keeps the key, and the key is taken only for a shortcut this search will answer.
+if (typeof window !== 'undefined') window.addEventListener('keydown', onEarlyKey);
 type Group = 'Search' | 'Requests' | 'Companies' | 'Pages';
 const groupOrder: Group[] = ['Search', 'Requests', 'Companies', 'Pages'];
 
@@ -361,9 +366,8 @@ function SearchDialog({ onAccount, pathname }: { onAccount: boolean; pathname: s
     };
     window.addEventListener('keydown', onKey);
     window.addEventListener(openEvent, onOpen);
-    listening += 1;
+    stopEarlyListener();
     return () => {
-      listening -= 1;
       window.removeEventListener('keydown', onKey);
       window.removeEventListener(openEvent, onOpen);
     };
