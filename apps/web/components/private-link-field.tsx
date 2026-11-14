@@ -1,0 +1,76 @@
+'use client';
+import { useId, useState } from 'react';
+import { parsePrivateLink } from '../lib/private-link-paths';
+
+/**
+ * Paste a private link and open it. Browser only: there is no <form>, no request and no storage, because a form
+ * would put the link in the address bar, history and server logs. The check runs here against this site's own origin
+ * and a closed list of paths, then location.assign opens the link, so the part after the # never reaches a server.
+ * Whatever is refused, the one fixed message is shown and the pasted text is never repeated in it.
+ */
+export function PrivateLinkField({
+  label,
+  hint,
+  action,
+  refused,
+}: {
+  label: string;
+  hint: string;
+  action: string;
+  refused: string;
+}) {
+  const id = useId();
+  const [value, setValue] = useState('');
+  const [failed, setFailed] = useState(false);
+
+  function open() {
+    const href = parsePrivateLink(value, window.location.origin);
+    if (!href) {
+      setFailed(true);
+      return;
+    }
+    setFailed(false);
+    window.location.assign(href);
+  }
+
+  return (
+    <div className="access-link-field">
+      <div className="field">
+        <label htmlFor={id}>{label}</label>
+        <input
+          id={id}
+          type="text"
+          value={value}
+          onChange={(e) => {
+            setValue(e.target.value);
+            if (failed) setFailed(false);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              open();
+            }
+          }}
+          autoComplete="off"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          inputMode="url"
+          aria-describedby={`${id}-hint`}
+          aria-invalid={failed || undefined}
+        />
+        <p id={`${id}-hint`} className="access-link-hint">
+          {hint}
+        </p>
+      </div>
+      {failed ? (
+        <p role="alert" className="field-error">
+          {refused}
+        </p>
+      ) : null}
+      <button type="button" className="button" onClick={open}>
+        {action}
+      </button>
+    </div>
+  );
+}

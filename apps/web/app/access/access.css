@@ -32,6 +32,30 @@
   justify-content: flex-start;
   min-height: 2.75rem;
 }
+/* The paste-a-private-link field (/access/link). One column, left edge shared with the text above; the action is a
+   44 px target from the shared .button. */
+.access-link-field {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  width: 100%;
+  max-width: 40rem;
+}
+.access-link-field .field {
+  width: 100%;
+}
+.access-link-field .field label {
+  color: var(--text-1);
+  font-weight: var(--weight-semibold);
+}
+.access-link-field .field input {
+  width: 100%;
+  min-height: 2.75rem;
+}
+.access-link-hint {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
 .access-panels,
 .access-cards {
   display: grid;

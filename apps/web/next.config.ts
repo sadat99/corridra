@@ -81,6 +81,15 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // The page where a private link is pasted: it sends no referrer and is never cached (the link itself stays in the
+        // address fragment, which no server receives).
+        source: '/access/link',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
         source: '/contributor/:path*',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },
