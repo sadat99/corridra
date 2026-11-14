@@ -155,7 +155,7 @@ for (const width of [390, 768, 1440]) {
       });
     });
 
-    test('rows are 12 px inside and 24 px apart, the row title is 18 px and the section title follows the scale', async ({
+    test('rows are 12 px inside and 16 px apart (12 on a phone), the row title is 18 px and the section title follows the scale', async ({
       page,
     }) => {
       await open(page, width, { rows: 2 });
@@ -177,7 +177,7 @@ for (const width of [390, 768, 1440]) {
           sectionTitle: getComputedStyle(section).fontSize,
         };
       });
-      expect(sizes.between).toBe(24);
+      expect(sizes.between).toBe(width < 768 ? 12 : 16);
       expect(sizes.inside).toBe(12);
       expect(sizes.rowTitle).toBe('18px');
       expect(sizes.rowTitleWeight).toBe('600');
@@ -246,3 +246,25 @@ test('the section drawn on its own keeps the direct Withdraw button; only the fr
     page.getByRole('button', { name: 'Withdraw From Programme', exact: true }),
   ).toHaveCount(0);
 });
+
+// The owner's rule for the audit: no page longer than before at any width. The heights are the content (main) of the same
+// fixture on origin/main (76066ca), details closed, measured in the same Chromium; one pixel of room for rounding.
+const before: Record<number, [number, number]> = {
+  390: [582.2, 814.0],
+  768: [550.5, 745.4],
+  1440: [561.5, 756.4],
+};
+for (const width of [390, 768, 1440])
+  for (const rows of [1, 2])
+    test(`${width} px, ${rows} registration${rows === 1 ? '' : 's'}: the page is no longer than before`, async ({
+      page,
+    }) => {
+      await open(page, width, { rows });
+      await page.evaluate(() =>
+        document.querySelectorAll('details').forEach((d) => (d.open = false)),
+      );
+      const height = await page.evaluate(
+        () => document.querySelector('main')!.getBoundingClientRect().height,
+      );
+      expect(height).toBeLessThanOrEqual(before[width]![rows - 1]! + 1);
+    });

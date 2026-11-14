@@ -14,15 +14,17 @@ How they were taken
 
 Content height (main element, px, details closed), before -> after
   390 x 1 row   582 -> 579   (-3)
-  390 x 2 rows  814 -> 825   (+11)
+  390 x 2 rows  814 -> 813   (-1)
   768 x 1 row   550 -> 538   (-12)
-  768 x 2 rows 745 -> 735    (-10)
+  768 x 2 rows 745 -> 727    (-19)
   1440 x 1 row  561 -> 549   (-12)
-  1440 x 2 rows 756 -> 746   (-10)
+  1440 x 2 rows 756 -> 738   (-19)
   Whole page against the window: 1.00 screens at every width and row count before and after, because the signed-in
-  shell is at least one window high (document height equals the window). The content alone is 0.58 to 0.98 of a window.
-  Only 390 x 2 rows is longer than before (+11 px, 0.013 of a phone screen): the owner's 24 px between rows is 12 px
-  more than the old 12 px between rows, and the row menu is a 44 px target on a phone. It stays under the phone limit.
+  shell is at least one window high (document height equals the window). The content alone is 0.58 to 0.96 of a window.
+  Nothing is longer than before. Between rows: 16 px from 768 px up, 12 px on a phone (the old 12 px), so the phone page
+  does not grow; 24 px stays between sections (the page frame). A first version used 24 px between rows and was 11 px
+  longer at 390 x 2 rows (825); the spec now pins every height at or under the before value (+1 px for rounding) and
+  that case fails on the 24 px version.
 
 Not measured
   The real signed-in /account/delegations route (needs a sign-in and the participant database, absent here); the

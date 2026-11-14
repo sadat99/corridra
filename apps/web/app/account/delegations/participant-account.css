@@ -1,5 +1,5 @@
 /* Delegation registrations inside the page frame (UI/UX.v3, audit A3d). Tokens only.
-   Spacing: 12 px between the groups inside a row, 24 px between rows, the 16 px phone gutter comes from the page column.
+   Spacing: 12 px between the groups inside a row, 16 px between rows (12 px on a phone), the 16 px phone gutter comes from the page column.
    Type: row title 18 px (600), section title from the section-title token, the rest keeps the body and secondary
    sizes. Targets: 44 px on a phone. Every rule is scoped to `.ux-reg`, which only the framed page sets, so the section
    drawn on its own (fixtures, older specs) keeps its old look. */
@@ -12,9 +12,9 @@
   list-style: none;
   margin-block: 0;
 }
-/* 24 px between rows. Margins, not a grid gap, so the first title still sits at the top of the list. */
+/* 16 px between rows (24 px stays between sections). Margins, not a grid gap, so the first title still sits at the top of the list. */
 .ux-customer .account-compact section.delivery-view.ux-reg > ul.ux-reg-list > li + li {
-  margin-block-start: var(--space-6);
+  margin-block-start: var(--space-4);
 }
 .ux-customer .account-compact section.delivery-view.ux-reg > ul.ux-reg-list > li > h3 {
   font-size: var(--text-lg);
@@ -50,6 +50,10 @@
   }
 }
 @media (max-width: 47.99rem) {
+  /* On a phone the rows keep the 12 px they had, so the page is no longer than before. */
+  .ux-customer .account-compact section.delivery-view.ux-reg > ul.ux-reg-list > li + li {
+    margin-block-start: var(--space-3);
+  }
   .ux-reg :is(button.text-link, button.primary-link, summary) {
     min-height: 44px;
   }
