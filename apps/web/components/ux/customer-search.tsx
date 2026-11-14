@@ -30,6 +30,11 @@ import {
   type CustomerFound,
   type CustomerHit,
 } from '../../lib/ux/customer-search-facts';
+import {
+  rememberOpen,
+  stopEarlyListener,
+  takePendingOpen,
+} from '../../lib/ux/customer-search-early-key';
 import { customerSearchPages, pagesFor, type PageMatch } from '../../lib/ux/customer-search-pages';
 import {
   companyDetailLine,
@@ -286,7 +291,11 @@ function SearchDialog({ onAccount, pathname }: { onAccount: boolean; pathname: s
   const openSearch = useCallback(
     (given: HTMLElement | null) => {
       const element = dialog.current;
-      if (!element) return;
+      if (!element) {
+        // The dialog is drawn one render after hydration: keep the request and open when it exists.
+        rememberOpen(given);
+        return;
+      }
       if (element.open) {
         field.current?.focus();
         return;
@@ -328,6 +337,7 @@ function SearchDialog({ onAccount, pathname }: { onAccount: boolean; pathname: s
     };
     window.addEventListener('keydown', onKey);
     window.addEventListener(openEvent, onOpen);
+    stopEarlyListener();
     return () => {
       window.removeEventListener('keydown', onKey);
       window.removeEventListener(openEvent, onOpen);
@@ -361,6 +371,14 @@ function SearchDialog({ onAccount, pathname }: { onAccount: boolean; pathname: s
     if (!element) return;
     if (!open && element.open) element.close();
   }, [open, mounted]);
+
+  // A Ctrl K that arrived before the dialog existed opens it now, with the focus it was pressed from. It stays below
+  // the effect above: that one reads the state of this render, which still says closed, and would close what this opens.
+  useEffect(() => {
+    if (!mounted) return;
+    const held = takePendingOpen();
+    if (held) openSearch(held.opener);
+  }, [mounted, openSearch]);
 
   // One search at a time: a newer search cancels the older, and an answer for an old search is dropped.
   const text = query.trim();
