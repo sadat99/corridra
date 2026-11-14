@@ -370,7 +370,24 @@ export function CustomerWorkspaces({
       <div className="ux-section-head">
         <h2>Workspaces</h2>
         {status === 'ready' && (
+          <RefreshButton
+            label="workspaces"
+            iconOnly
+            disabled={creating}
+            onClick={() => void reload()}
+          />
+        )}
+        {status === 'ready' && (
           <div className="ux-ws-head-actions">
+            {rows.length > 0 && (
+              <button
+                type="button"
+                className="primary-link"
+                onClick={() => setDialog({ kind: 'create' })}
+              >
+                Create a Workspace
+              </button>
+            )}
             <button
               type="button"
               className="button button-secondary"
@@ -378,16 +395,6 @@ export function CustomerWorkspaces({
             >
               Join a Workspace
             </button>
-            {rows.length > 0 && (
-              <button
-                type="button"
-                className="button button-secondary"
-                onClick={() => setDialog({ kind: 'create' })}
-              >
-                Create a Workspace
-              </button>
-            )}
-            <RefreshButton label="workspaces" disabled={creating} onClick={() => void reload()} />
           </div>
         )}
       </div>
@@ -425,7 +432,7 @@ export function CustomerWorkspaces({
               action={
                 <button
                   type="button"
-                  className="button button-secondary"
+                  className="primary-link"
                   onClick={() => setDialog({ kind: 'create' })}
                 >
                   Create a Workspace

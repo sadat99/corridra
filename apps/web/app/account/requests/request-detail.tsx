@@ -1,6 +1,7 @@
 'use client';
 import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
+import { savedRequestBack, savedRequestHelper } from '../frame-copy';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RefreshButton } from '../refresh-button';
 import {
@@ -33,6 +34,8 @@ type Scope = {
   subject: string;
   issuer: string;
   serviceRequestsEnabled?: boolean;
+  /** The page frame shows the back link and the helper line; this section leaves them out. */
+  framed?: boolean;
 };
 const labels: Record<string, string> = {
   objective: 'Goal',
@@ -156,7 +159,13 @@ export function CustomerRequestDetail(props: Scope) {
     />
   );
 }
-function PrivateDetail({ requestId, subject, issuer, serviceRequestsEnabled = false }: Scope) {
+function PrivateDetail({
+  requestId,
+  subject,
+  issuer,
+  serviceRequestsEnabled = false,
+  framed = false,
+}: Scope) {
   const [detail, setDetail] = useState<Detail | null>(null);
   const [status, setStatus] = useState('loading');
   const controller = useRef<AbortController | null>(null);
@@ -228,15 +237,14 @@ function PrivateDetail({ requestId, subject, issuer, serviceRequestsEnabled = fa
   const requirements = original?.experience?.requirements;
   return (
     <section aria-label="Private saved request" className="ux-request-page">
-      <a className="text-link ux-back" href="/account#customer-requests">
-        Back to my saved requests
-      </a>
-      <p>
-        {' '}
-        {realCustomerInput()
-          ? 'Your submitted information. A request is not an accepted engagement, confirmed meeting or deal.'
-          : 'Your submitted information. A request is not an accepted engagement, confirmed meeting or deal.'}{' '}
-      </p>
+      {!framed && (
+        <>
+          <a className="text-link ux-back" href={savedRequestBack.href}>
+            {savedRequestBack.label}
+          </a>
+          <p> {savedRequestHelper} </p>
+        </>
+      )}
       {status === 'loading' && <p role="status">Loading your saved request…</p>}
       {status === 'denied' && (
         <div role="alert">

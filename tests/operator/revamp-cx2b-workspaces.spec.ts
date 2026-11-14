@@ -442,3 +442,31 @@ test('CX-05 a Join that succeeded leaves no lock behind when the dialog is opene
   await page.keyboard.press('Escape');
   await expect(again).toBeHidden();
 });
+
+// UI/UX.v3 consistency pass, unit A2 (action hierarchy): one primary per view. Create a Workspace is the cobalt action,
+// Join a Workspace is outlined, Refresh is an icon beside the title with its name kept, and the primary comes first.
+for (const width of [390, 768, 1440])
+  test(`A2 the Workspaces header has one primary, Join outlined and Refresh as an icon beside the title at ${width} px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await open(page);
+    const create = page.getByRole('button', { name: 'Create a Workspace', exact: true });
+    const join = page.getByRole('button', { name: 'Join a Workspace', exact: true });
+    const refresh = page.getByRole('button', { name: 'Refresh workspaces', exact: true });
+    await expect(create).toHaveClass(/primary-link/);
+    await expect(join).not.toHaveClass(/primary-link/);
+    await expect(page.locator('.ux-section-head .primary-link')).toHaveCount(1);
+    expect(((await refresh.textContent()) ?? '').trim()).toBe('');
+    const [title, c, j, r] = await Promise.all([
+      page.getByRole('heading', { name: 'Workspaces', exact: true }).boundingBox(),
+      create.boundingBox(),
+      join.boundingBox(),
+      refresh.boundingBox(),
+    ]);
+    // Refresh sits on the title's row; the primary comes before Join (left of it, or above it on a phone).
+    expect(Math.abs(r!.y + r!.height / 2 - (title!.y + title!.height / 2))).toBeLessThan(16);
+    expect(r!.x).toBeGreaterThan(title!.x);
+    expect(c!.y < j!.y || c!.x < j!.x).toBe(true);
+    if (width < 768) expect(c!.height).toBeGreaterThanOrEqual(44);
+  });

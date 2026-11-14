@@ -1,0 +1,19 @@
+/* One fee schedule row: Edit and a More actions menu side by side, the confirm step on its own line. Tokens only. */
+.ux-fee-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space-2);
+  vertical-align: middle;
+}
+.ux-fee-confirm {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+}

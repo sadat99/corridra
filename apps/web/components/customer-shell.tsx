@@ -32,6 +32,7 @@ import {
   type CustomerSideItem,
 } from './ux/customer-rail';
 import { WorkspaceShell } from './workspace-shell';
+import { pageFrameSlots, type PageFrameProps } from './ux/page-frame';
 import { IdentifiedClosedAccountGate } from './customer-closed-account-server';
 
 const navId = 'customer-navigation';
@@ -74,10 +75,13 @@ type CustomerShellProps = {
    * use (reading its problem reports and removing their words, ADR-078 decision 4); every other page keeps the gate.
    */
   closedAccountReads?: boolean;
+  /** The page frame (components/ux/page-frame.tsx): back link, chips, helper, the one primary action and tabs. */
+  frame?: PageFrameProps;
   children: ReactNode;
 };
 
-function CustomerFrame({ tab, eyebrow, title, count, children }: CustomerShellProps) {
+function CustomerFrame({ tab, eyebrow, title, count, frame, children }: CustomerShellProps) {
+  const slots = pageFrameSlots(frame);
   const plainNames = uxSwitchOn('CORRIDRA_UX_NAV');
   const move = uxSwitchOn('CORRIDRA_UX_MOVE');
   const translated = uxSwitchOn('CORRIDRA_UX_SHELLS_V2');
@@ -87,6 +91,8 @@ function CustomerFrame({ tab, eyebrow, title, count, children }: CustomerShellPr
       <WorkspaceShell
         eyebrow={eyebrow}
         title={title}
+        above={slots.above}
+        lead={slots.lead}
         notice={
           <p className="ux-testmode" role="note">
             {real ? (
@@ -99,13 +105,16 @@ function CustomerFrame({ tab, eyebrow, title, count, children }: CustomerShellPr
           </p>
         }
         nav={
-          <CustomerNav
-            current={tab}
-            companies={customerCompaniesEnabled()}
-            plainNames={plainNames}
-            move={move}
-            translated={false}
-          />
+          <>
+            <CustomerNav
+              current={tab}
+              companies={customerCompaniesEnabled()}
+              plainNames={plainNames}
+              move={move}
+              translated={false}
+            />
+            {slots.tabs}
+          </>
         }
       >
         {children}
@@ -183,7 +192,13 @@ function CustomerFrame({ tab, eyebrow, title, count, children }: CustomerShellPr
       <Suspense fallback={null}>
         <CustomerBarIdentity />
       </Suspense>
-      <WorkspaceShell title={title} customer>
+      <WorkspaceShell
+        title={title}
+        customer
+        above={slots.above}
+        lead={slots.lead}
+        nav={slots.tabs || undefined}
+      >
         {children}
       </WorkspaceShell>
       <CustomerTabs tabs={tabs} current={here} count={here === 'home' ? count : undefined} />

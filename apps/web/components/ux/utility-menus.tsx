@@ -24,6 +24,7 @@ import {
   type MenuEntry,
 } from '../../lib/ux/customer-navigation';
 import { workspacePage } from '../../lib/ux/workspace-pages';
+import { localeMeta } from '../../lib/i18n/locales';
 import {
   readCustomerBilling,
   readCustomerNotificationSettings,
@@ -277,6 +278,27 @@ function WorkspaceRadios({
 }
 
 /**
+ * Language as one row of the account menu: "Language" with the current language beside it. Choosing the row shows the
+ * same radios the header menu has, so every offered language stays one tap away; choosing one closes the menu, as before.
+ */
+function LanguageRow() {
+  const { locale, offered } = useLanguage();
+  const [open, setOpen] = useState(false);
+  if (offered.length < 2) return null;
+  return (
+    <div className="ux-menu-group">
+      <MenuButton aria-expanded={open} onClick={() => setOpen((value) => !value)}>
+        <span>Language</span>
+        <span className="ux-menu-value" lang={localeMeta[locale].html} dir={localeMeta[locale].dir}>
+          {localeMeta[locale].name}
+        </span>
+      </MenuButton>
+      {open ? <LanguageMenuGroup /> : null}
+    </div>
+  );
+}
+
+/**
  * The customer's account menu behind the avatar: who is signed in, the workspace (the one switcher, which keeps
  * the person in the same section of the chosen workspace), then Account, Company Profile, Plan and Billing,
  * Notification Settings and Sign Out. The privacy or preview line of the page stays here as a quiet note. Off a
@@ -397,12 +419,7 @@ export function AvatarMenu({
         ))}
       {/* Below 640 px the language and help menus are not in the header row; they are here, so nothing is lost. */}
       <div className="ux-phone-only">
-        <div className="ux-menu-group">
-          <p className="ux-menu-heading" aria-hidden="true">
-            Language
-          </p>
-          <LanguageMenuGroup />
-        </div>
+        <LanguageRow />
         {helpGroups.map((group) => (
           <div key={group.label} role="group" aria-label={group.label} className="ux-menu-group">
             <p className="ux-menu-heading" aria-hidden="true">
@@ -415,11 +432,13 @@ export function AvatarMenu({
         ))}
       </div>
       {/* Sign Out is always last, as on the board. */}
-      {items
-        .filter((entry) => entry.kind === 'signout')
-        .map((entry) => (
-          <Entry key={entry.label} entry={entry} />
-        ))}
+      <div className="ux-menu-pinned">
+        {items
+          .filter((entry) => entry.kind === 'signout')
+          .map((entry) => (
+            <Entry key={entry.label} entry={entry} />
+          ))}
+      </div>
     </OverflowMenu>
   );
 }

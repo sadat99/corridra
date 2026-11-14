@@ -2,6 +2,7 @@
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { lazy, Suspense, useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { currencies, formatMoney } from '@corridra/domain/opportunities';
+import { FeeScheduleActions } from './fee-schedule-actions';
 import { MoneyInput } from '../../../components/ux/money-input';
 import { CurrencySelect } from '../../../components/ux/pickers';
 import { useFormDraft } from '../../../lib/ux/use-form-draft';
@@ -734,23 +735,13 @@ function PricingSection({ subject, issuer, workspaceId, programmes, onChanged }:
                         .join('; ')}
                     </span>
                   )}{' '}
-                  <button
-                    type="button"
-                    className="text-link"
-                    disabled={busy}
-                    onClick={() => startEdit(t)}
-                  >
-                    Edit Fee Schedule {t.name}
-                  </button>{' '}
-                  <button
-                    type="button"
-                    className="text-link"
-                    disabled={busy}
-                    onClick={() => save(!t.retired, t, t)}
-                  >
-                    {t.retired ? 'Restore Fee Schedule ' : 'Retire Fee Schedule '}
-                    {t.name}
-                  </button>
+                  <FeeScheduleActions
+                    name={t.name}
+                    retired={t.retired}
+                    busy={busy}
+                    onEdit={() => startEdit(t)}
+                    onToggleRetired={() => save(!t.retired, t, t)}
+                  />
                 </li>
               ))}
             </ul>
