@@ -12,6 +12,7 @@ import { readNeonAuthConfig } from '@corridra/config';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { CustomerShell } from '../../../components/customer-shell';
 import { neonAuth } from '../../../lib/neon-auth';
+import { uxSwitchOn } from '../../../lib/ux-switches';
 import {
   customerProgrammePagesEnabled,
   programmeAddress,
@@ -97,6 +98,7 @@ export default async function Page({
           projectionsEnabled={customerProgrammeProjectionsEnabled()}
           objectivePathEnabled={pagesOn && customerMissionSharesEnabled()}
           draftsEnabled={customerMissionDraftsEnabled()}
+          homeEnabled={uxSwitchOn('CORRIDRA_DELEGATION_FIRST_RUN')}
           subject={session.data.user.id}
           issuer={issuer}
           framed
