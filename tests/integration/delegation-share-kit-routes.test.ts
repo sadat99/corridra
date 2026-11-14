@@ -258,7 +258,10 @@ test('with the share kit off, every share kit route answers the one 404, even fo
   // The public page itself is as it was: no kit, no flyer or calendar link, no attribution, no image of its own.
   const markup = await html(publicPage.default(params(address)));
   expect(markup).toContain('Copy Link');
-  expect(markup).not.toMatch(/programme-kit|\/flyer|calendar\.ics|Corridra Programmes|<img/);
+  expect(markup).not.toMatch(
+    /programme-kit|programme-share-more|More Options|\/flyer|calendar\.ics|Corridra Programmes|<img/,
+  );
+  expect(markup).toContain('Corridra provides the tools the organiser uses.');
   const meta = await publicPage.generateMetadata(params(address));
   expect(meta.openGraph).not.toHaveProperty('images');
   expect(meta.twitter).toMatchObject({ card: 'summary' });
@@ -327,7 +330,7 @@ test('the preview image is a 1200 by 630 picture of a readable page, and the sam
   );
 });
 
-test('the public page with the kit on: flyer and QR, a calendar link only with days, one quiet line, nothing sent or tracked', async () => {
+test('the public page with the kit on: one closed More Options button, a calendar link only with days, the attribution inside a sentence, nothing sent or tracked', async () => {
   kitOn();
   // Version 3 with a fee line and days.
   expect((await pages().publication(publish(2, { fee: 'BDT 45,000 per company' }))).version).toBe(
@@ -340,13 +343,17 @@ test('the public page with the kit on: flyer and QR, a calendar link only with d
   expect(markup).toContain('Open Flyer');
   expect(markup).toContain(`href="/delegations/${address}/calendar.ics"`);
   expect(markup).toContain('Add to Calendar');
-  expect(markup).toContain('Show QR Code');
-  expect(markup).toContain('aria-controls="programme-kit-qr"');
+  // The kit adds one closed button to the share row and keeps its actions behind it; no QR code is on the page itself.
+  expect(markup).toContain('More Options');
+  expect(markup).toContain('aria-controls="programme-share-more"');
   expect(markup).toContain('aria-expanded="false"');
-  expect(markup).toContain('id="programme-kit-qr" hidden=""');
-  expect(markup).toContain('<img class="programme-qr" src="data:image/svg+xml');
-  expect(markup).toContain('href="/trade-missions#organise-entry-title"');
-  expect(markup).toContain('Page made with Corridra Programmes');
+  expect(markup).toContain('id="programme-share-more" class="guide-actions-row" hidden=""');
+  expect(markup).not.toMatch(/<img|programme-qr|Show QR Code/);
+  // The attribution is a link inside the sentence about who is responsible, which it shortens instead of lengthening.
+  expect(markup).toMatch(
+    /<p>Synthetic Dhaka Agro Traders Association runs this programme[^<]*stated by the organiser\. <a class="programme-kit-attribution" href="\/trade-missions#organise-entry-title">Page made with Corridra Programmes<\/a>\. Corridra is not the travel operator and has not checked these details\.<\/p>/,
+  );
+  expect(markup).not.toContain('Corridra provides the tools the organiser uses');
   // The three existing actions are unchanged.
   expect(markup).toContain('Copy Link');
   expect(markup).toContain('https://wa.me/?text=');
@@ -356,12 +363,6 @@ test('the public page with the kit on: flyer and QR, a calendar link only with d
     (m) => m[1],
   );
   expect(external.every((url) => /^https:\/\/(wa\.me|www\.facebook\.com)\//.test(url!))).toBe(true);
-  // The one image is the QR code, which holds its own picture; there is no other image, script, frame or form.
-  expect(
-    [...markup.matchAll(/<img[^>]* src="([^"]+)"/g)].every((m) =>
-      m[1]!.startsWith('data:image/svg+xml'),
-    ),
-  ).toBe(true);
   expect(markup).not.toMatch(/<script|<iframe|<form|ping=|\bref=|utm_|referral/i);
   const meta = await publicPage.generateMetadata(params(address));
   expect(meta.openGraph).toMatchObject({

@@ -7,11 +7,11 @@ import { resolve } from 'node:path';
 import jsQR from 'jsqr';
 import { isTitleCase } from '../../apps/web/lib/ux/title-case';
 
-// ADR-084 slice S1, behind CORRIDRA_PROGRAMME_SHARE_KIT: the share section of the public programme page as the real
-// components with the real stylesheets, at a phone and a desktop width. The kit is switched on or off by the page
-// address (?kit=1, ?days=1), because the switch itself is read on the server by the real page. Whole page length is
-// measured on a production build of the real route, not here: a fixture has no header or footer.
-// The QR code is proven by decoding the picture the browser actually shows back to the page address.
+// ADR-084 slice S1, behind CORRIDRA_PROGRAMME_SHARE_KIT: the share section and the responsible paragraph of the public
+// programme page as the real components with the real stylesheets, at 390, 768 and 1440. The kit is switched on or off by
+// the page address (?kit=1, ?days=1), because the switch itself is read on the server by the real page. Owner rule: the
+// page with the kit on is never taller than with it off, closed state, at every width, with and without stated days. The
+// QR code lives on the flyer; it is proven by decoding the picture the browser actually shows back to the page address.
 const css = readFileSync(resolve('apps/web/app/globals.css'), 'utf8');
 const url =
   'http://127.0.0.1:3200/delegations/synthetic-china-agricultural-machinery-delegation-k3x9q2m7ab';
@@ -24,6 +24,8 @@ test.beforeAll(async () => {
       import ${JSON.stringify(resolve('apps/web/app/delegations/[address]/programme-page.css'))};
       import{ProgrammePageView}from ${JSON.stringify(resolve('apps/web/app/delegations/[address]/programme-page-view.tsx'))};
       import{shareKitParts}from ${JSON.stringify(resolve('apps/web/app/delegations/[address]/share-kit.tsx'))};
+      import{QrCode}from ${JSON.stringify(resolve('apps/web/app/delegations/[address]/qr-code.tsx'))};
+      import ${JSON.stringify(resolve('apps/web/app/delegations/[address]/share-kit.css'))};
       const q=new URLSearchParams(location.search);
       const page={state:'OPEN',closesAt:'2027-03-01T23:59:00.000Z',sample:true,address:'synthetic-china-agricultural-machinery-delegation-k3x9q2m7ab',
         programme:{title:'Synthetic China agricultural machinery delegation',organiser:'Synthetic Dhaka Agro Traders Association',
@@ -37,8 +39,8 @@ test.beforeAll(async () => {
       createRoot(document.getElementById('fixture')).render(
         <main id="main" className="operator-page ux-workspace programme-page">
           <h1>{page.programme.title}</h1>
-          <ProgrammePageView page={page} url={url}
-            shareKit={q.get('kit')==='1'?shareKitParts({address:page.address,url,title:page.programme.title,calendar:q.get('days')==='1'}):undefined}/>
+          {q.get('qr')==='1'?<QrCode text={url} label="QR code that opens the page"/>:<ProgrammePageView page={page} url={url}
+            shareKit={q.get('kit')==='1'?shareKitParts({address:page.address,url,title:page.programme.title,calendar:q.get('days')==='1'}):undefined}/>}
         </main>);`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
@@ -108,14 +110,18 @@ const open = async (page: Page, query: string) => {
 };
 const share = (page: Page) => page.locator('.programme-public-share');
 
-for (const [name, width, height] of [
+const widths = [
   ['phone', 390, 844],
+  ['tablet', 768, 1024],
   ['desktop', 1440, 900],
-] as const) {
-  test.describe(name, () => {
-    test.use({ viewport: { width, height } });
+] as const;
+const height = (page: Page) => page.evaluate(() => document.documentElement.scrollHeight);
 
-    test('with the kit off the share section is exactly the three actions it had', async ({
+for (const [name, width, tall] of widths) {
+  test.describe(name, () => {
+    test.use({ viewport: { width, height: tall } });
+
+    test('with the kit off the share row is exactly the three actions it had and the sentence is unchanged', async ({
       page,
     }) => {
       await open(page, 'kit=0');
@@ -124,22 +130,35 @@ for (const [name, width, height] of [
         'Share on WhatsApp',
         'Share on Facebook',
       ]);
-      await expect(page.locator('.programme-qr, .programme-kit-attribution')).toHaveCount(0);
+      await expect(page.locator('.programme-kit-attribution, #programme-share-more')).toHaveCount(
+        0,
+      );
+      await expect(page.getByText('Corridra provides the tools the organiser uses.')).toBeVisible();
     });
 
-    test('with the kit on it adds Open Flyer, a calendar link only with days, Show QR Code and one quiet line', async ({
+    test('the page with the kit on is never taller than with it off, with and without stated days', async ({
+      page,
+    }) => {
+      await open(page, 'kit=0');
+      const off = await height(page);
+      for (const days of ['0', '1']) {
+        await open(page, `kit=1&days=${days}`);
+        expect(await height(page), `days=${days}`).toBeLessThanOrEqual(off + 1);
+      }
+    });
+
+    test('the kit adds one closed More Options button; Open Flyer and a calendar link only with days open under it', async ({
       page,
     }) => {
       await open(page, 'kit=1&days=1');
-      await expect(share(page).locator('a, button')).toHaveText([
-        'Copy Link',
-        'Share on WhatsApp',
-        'Share on Facebook',
-        'Open Flyer',
-        'Add to Calendar',
-        'Show QR Code',
-        'Page made with Corridra Programmes',
-      ]);
+      await expect(share(page).getByRole('button')).toHaveText(['Copy Link', 'More Options']);
+      const more = page.getByRole('button', { name: 'More Options' });
+      await expect(more).toHaveAttribute('aria-expanded', 'false');
+      await expect(page.getByRole('link', { name: 'Open Flyer' })).toBeHidden();
+      // Keyboard: focus the button and press Enter.
+      await more.focus();
+      await page.keyboard.press('Enter');
+      await expect(more).toHaveAttribute('aria-expanded', 'true');
       await expect(page.getByRole('link', { name: 'Open Flyer' })).toHaveAttribute(
         'href',
         '/delegations/synthetic-china-agricultural-machinery-delegation-k3x9q2m7ab/flyer',
@@ -148,23 +167,37 @@ for (const [name, width, height] of [
         'href',
         '/delegations/synthetic-china-agricultural-machinery-delegation-k3x9q2m7ab/calendar.ics',
       );
-      await expect(
-        page.getByRole('link', { name: 'Page made with Corridra Programmes' }),
-      ).toHaveAttribute('href', '/trade-missions#organise-entry-title');
+      await page.keyboard.press('Enter');
+      await expect(more).toHaveAttribute('aria-expanded', 'false');
+      await expect(page.getByRole('link', { name: 'Open Flyer' })).toBeHidden();
       await open(page, 'kit=1&days=0');
+      await page.getByRole('button', { name: 'More Options' }).click();
+      await expect(page.getByRole('link', { name: 'Open Flyer' })).toBeVisible();
       await expect(page.getByRole('link', { name: 'Add to Calendar' })).toHaveCount(0);
-      // Actions are Title Case; the attribution is a sentence the ADR words exactly, not an action.
-      const labels = (await share(page).locator('a, button').allInnerTexts()).filter(
-        (label) => label !== 'Page made with Corridra Programmes',
-      );
+      const labels = await share(page).locator('a, button').allInnerTexts();
       expect(labels.filter((label) => !isTitleCase(label))).toEqual([]);
+    });
+
+    test('the attribution is a link inside the responsible sentence, in place of the sentence about Corridra tools', async ({
+      page,
+    }) => {
+      await open(page, 'kit=1&days=0');
+      const link = page.getByRole('link', { name: 'Page made with Corridra Programmes' });
+      await expect(link).toHaveAttribute('href', '/trade-missions#organise-entry-title');
+      await expect(page.locator('p', { has: link })).toContainText(
+        'Everything on this page is stated by the organiser. Page made with Corridra Programmes. Corridra is not the travel operator and has not checked these details.',
+      );
+      await expect(page.getByText('Corridra provides the tools the organiser uses.')).toHaveCount(
+        0,
+      );
     });
 
     test('every share action is at least 44 px high up to 768 px, the page does not scroll sideways and axe is clean', async ({
       page,
     }) => {
       await open(page, 'kit=1&days=1');
-      for (const control of await share(page).locator('a, button').all()) {
+      await page.getByRole('button', { name: 'More Options' }).click();
+      for (const control of await share(page).locator('a:visible, button:visible').all()) {
         const box = (await control.boundingBox())!;
         expect(box.height, await control.innerText()).toBeGreaterThanOrEqual(
           width <= 768 ? 44 : 24,
@@ -175,52 +208,38 @@ for (const [name, width, height] of [
           () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
         ),
       ).toBe(true);
-      await page.getByRole('button', { name: 'Show QR Code' }).click();
-      expect(
-        await page.evaluate(
-          () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
-        ),
-      ).toBe(true);
-      const axe = await new AxeBuilder({ page }).include('.programme-public-share').analyze();
+      const axe = await new AxeBuilder({ page })
+        .include('.programme-public-share')
+        .include('#programme-who-runs-title')
+        .analyze();
       expect(axe.violations).toEqual([]);
-    });
-
-    test('Show QR Code opens a picture that scans back to the page address, and loads nothing', async ({
-      page,
-    }) => {
-      const requests: string[] = [];
-      page.on('request', (request) => requests.push(request.url()));
-      await open(page, 'kit=1&days=0');
-      const toggle = page.getByRole('button', { name: 'Show QR Code' });
-      await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-      await expect(page.locator('.programme-qr')).toBeHidden();
-      const before = requests.length;
-      await toggle.click();
-      await expect(page.getByRole('button', { name: 'Hide QR Code' })).toHaveAttribute(
-        'aria-expanded',
-        'true',
-      );
-      const code = page.getByRole('img', {
-        name: 'QR code that opens Synthetic China agricultural machinery delegation',
-      });
-      await expect(code).toBeVisible();
-      // The picture the browser shows, drawn onto a canvas and read back.
-      const pixels = await code.evaluate(async (element) => {
-        const image = element as HTMLImageElement;
-        await image.decode();
-        const canvas = document.createElement('canvas');
-        canvas.width = canvas.height = 420;
-        const context = canvas.getContext('2d')!;
-        context.fillStyle = 'white';
-        context.fillRect(0, 0, 420, 420);
-        context.drawImage(image, 0, 0, 420, 420);
-        return Array.from(context.getImageData(0, 0, 420, 420).data);
-      });
-      expect(jsQR(new Uint8ClampedArray(pixels), 420, 420)?.data).toBe(url);
-      // Opening it made no request at all, to us or anyone else.
-      expect(requests.length).toBe(before);
-      await page.getByRole('button', { name: 'Hide QR Code' }).click();
-      await expect(page.locator('.programme-qr')).toBeHidden();
+      const whole = await new AxeBuilder({ page }).include('.programme-public').analyze();
+      expect(whole.violations).toEqual([]);
     });
   });
 }
+
+test('the QR code on the flyer is a picture that scans back to the page address, and loads nothing', async ({
+  page,
+}) => {
+  const requests: string[] = [];
+  page.on('request', (request) => requests.push(request.url()));
+  await page.goto(`${origin}/?qr=1`);
+  const code = page.getByRole('img', { name: 'QR code that opens the page' });
+  await expect(code).toBeVisible();
+  const pixels = await code.evaluate(async (element) => {
+    const image = element as HTMLImageElement;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 420;
+    const context = canvas.getContext('2d')!;
+    context.fillStyle = 'white';
+    context.fillRect(0, 0, 420, 420);
+    context.drawImage(image, 0, 0, 420, 420);
+    return Array.from(context.getImageData(0, 0, 420, 420).data);
+  });
+  expect(jsQR(new Uint8ClampedArray(pixels), 420, 420)?.data).toBe(url);
+  expect(
+    requests.every((request) => request.startsWith(origin) || request.startsWith('data:')),
+  ).toBe(true);
+});

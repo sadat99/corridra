@@ -4,11 +4,11 @@ import { pp } from '../../../lib/i18n/programme-pages';
 import type { ShareKitParts } from './share-kit';
 
 /** Ways to pass the page on. Each one is started by the person: nothing is sent by Corridra. The share kit (ADR-084 S1),
- * when it is switched on, is drawn by the server and handed in, so the code that makes a QR code stays on the server. Its
- * links join the same row; the QR code opens under the row when the person asks for it. */
+ * when it is switched on, is drawn by the server and handed in. It adds one closed button to this row, so the page is no
+ * taller than before; the kit's actions open under the row when the person asks for them. */
 export function ShareRow({ url, title, kit }: { url: string; title: string; kit?: ShareKitParts }) {
   const [copied, setCopied] = useState<'idle' | 'done' | 'failed'>('idle');
-  const [showCode, setShowCode] = useState(false);
+  const [showMore, setShowMore] = useState(false);
   const text = encodeURIComponent(`${title} ${url}`);
   async function copy() {
     try {
@@ -41,22 +41,21 @@ export function ShareRow({ url, title, kit }: { url: string; title: string; kit?
         >
           {pp('pp.share.facebook')}
         </a>
-        {kit?.links}
         {kit && (
           <button
             type="button"
             className="text-link"
-            aria-expanded={showCode}
-            aria-controls="programme-kit-qr"
-            onClick={() => setShowCode((open) => !open)}
+            aria-expanded={showMore}
+            aria-controls="programme-share-more"
+            onClick={() => setShowMore((open) => !open)}
           >
-            {showCode ? pp('pp.kit.qr.hide') : pp('pp.kit.qr.show')}
+            {pp('pp.kit.more')}
           </button>
         )}
       </div>
       {kit && (
-        <div id="programme-kit-qr" hidden={!showCode}>
-          {kit.qr}
+        <div id="programme-share-more" className="guide-actions-row" hidden={!showMore}>
+          {kit.more}
         </div>
       )}
       <p role="status" className={copied === 'idle' ? 'sr-only' : 'programme-public-note'}>
@@ -66,7 +65,6 @@ export function ShareRow({ url, title, kit }: { url: string; title: string; kit?
             ? pp('pp.share.copyManually', { url })
             : ''}
       </p>
-      {kit?.after}
     </section>
   );
 }

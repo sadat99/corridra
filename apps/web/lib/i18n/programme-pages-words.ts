@@ -53,6 +53,11 @@ export const programmePagesWords = {
   'pp.public.responsible.title': 'Who is responsible',
   'pp.public.responsible.text':
     '{organiser} runs this programme and is responsible for it, its fee and what it includes. Everything on this page is stated by the organiser. Corridra provides the tools the organiser uses. Corridra is not the travel operator and has not checked these details.',
+  // The same paragraph with the share kit on: the attribution link takes the place of the sentence about Corridra's tools.
+  'pp.public.responsible.kitBefore':
+    '{organiser} runs this programme and is responsible for it, its fee and what it includes. Everything on this page is stated by the organiser.',
+  'pp.public.responsible.kitAfter':
+    'Corridra is not the travel operator and has not checked these details.',
   // Sharing, started by the person
   'pp.share.title': 'Share this page',
   'pp.share.copy': 'Copy Link',
@@ -63,10 +68,8 @@ export const programmePagesWords = {
   // The share kit (ADR-084 S1): all of it is started by the person pressing, and built from the published words only
   'pp.kit.flyer': 'Open Flyer',
   'pp.kit.calendar': 'Add to Calendar',
-  'pp.kit.qr.show': 'Show QR Code',
-  'pp.kit.qr.hide': 'Hide QR Code',
+  'pp.kit.more': 'More Options',
   'pp.kit.qr.label': 'QR code that opens {title}',
-  'pp.kit.qr.hint': 'Scan with a phone camera to open this page.',
   'pp.kit.attribution': 'Page made with Corridra Programmes',
   'pp.flyer.title': 'Flyer for {title}',
   'pp.flyer.print': 'Print Flyer',

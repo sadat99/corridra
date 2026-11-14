@@ -167,7 +167,16 @@ export function ProgrammePageView({
       )}
       <section aria-labelledby="programme-who-runs-title">
         <h2 id="programme-who-runs-title">{pp('pp.public.responsible.title')}</h2>
-        <p>{pp('pp.public.responsible.text', { organiser: p.organiser })}</p>
+        {shareKit && !preview ? (
+          // With the share kit on, the attribution link takes the place of the sentence about Corridra's tools, so the
+          // paragraph is never longer than before.
+          <p>
+            {pp('pp.public.responsible.kitBefore', { organiser: p.organiser })}{' '}
+            {shareKit.attribution}. {pp('pp.public.responsible.kitAfter')}
+          </p>
+        ) : (
+          <p>{pp('pp.public.responsible.text', { organiser: p.organiser })}</p>
+        )}
       </section>
       {url && !preview && <ShareRow url={url} title={p.title} kit={shareKit} />}
     </div>

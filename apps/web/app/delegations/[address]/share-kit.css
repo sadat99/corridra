@@ -1,9 +1,5 @@
-/* The share kit of a public programme page (ADR-084 S1). Tokens only. The code itself is drawn black on white inside the
-   image, so a scanner always has the contrast it needs, whatever the theme. */
-.programme-kit-qr {
-  display: grid;
-  gap: var(--space-2);
-}
+/* The share kit of a public programme page (ADR-084 S1). Tokens only. The QR code (on the flyer) is drawn black on white inside
+   the image, so a scanner always has the contrast it needs, whatever the theme. */
 .programme-qr {
   display: block;
   width: min(100%, 16rem);
@@ -11,6 +7,20 @@
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
 }
+/* The attribution sits inside a sentence and adds no height. Its touch area is a 44 px tall band around the text that takes
+   no room, so a finger finds it on a phone. */
 .programme-kit-attribution {
-  margin: 0;
+  position: relative;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.programme-kit-attribution::after {
+  content: '';
+  position: absolute;
+  inset-block: -0.75rem;
+  inset-inline: -0.25rem;
+}
+/* The kit's actions stay out of the page until the person opens them. A flex row would otherwise override `hidden`. */
+.programme-public-share [hidden] {
+  display: none;
 }

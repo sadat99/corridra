@@ -1,37 +1,31 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { pp } from '../../../lib/i18n/programme-pages';
-import { QrCode } from './qr-code';
 import './share-kit.css';
 
-/** The pieces of the share kit, drawn by the server and placed by the share row. */
+/** The pieces of the share kit, drawn by the server and placed by the page. They add no height to the page as it first
+ * shows: the actions wait behind one closed button in the existing share row, and the attribution replaces a sentence. */
 export type ShareKitParts = {
-  /** Links that sit in the same row as Copy Link and the two share actions. */
-  links: ReactNode;
-  /** The QR code, shown when the person presses Show QR Code. */
-  qr: ReactNode;
-  /** The one quiet line under the row. */
-  after: ReactNode;
+  /** The actions behind the share row's "More Options" button. */
+  more: ReactNode;
+  /** The one quiet line: a link that takes the place of the sentence "Corridra provides the tools the organiser uses". */
+  attribution: ReactNode;
 };
 
 /**
- * The share kit of a public programme page (ADR-084 S1): a printable flyer, a calendar file when the organiser stated the
- * days, a QR code, and one quiet line saying where the page was made. Every action is started by the person pressing it.
- * Nothing here sends anything, counts a visit, carries a referral code or reads more than the published words.
+ * The share kit of a public programme page (ADR-084 S1): a printable flyer (which carries the QR code), a calendar file when
+ * the organiser stated the days, and one quiet line saying where the page was made. Every action is started by the person
+ * pressing it. Nothing here sends anything, counts a visit, carries a referral code or reads more than the published words.
  */
 export function shareKitParts({
   address,
-  url,
-  title,
   calendar,
 }: {
   address: string;
-  url: string;
-  title: string;
   calendar: boolean;
 }): ShareKitParts {
   return {
-    links: (
+    more: (
       <>
         <a
           className="text-link"
@@ -48,18 +42,14 @@ export function shareKitParts({
         )}
       </>
     ),
-    qr: (
-      <div className="programme-kit-qr">
-        <QrCode text={url} label={pp('pp.kit.qr.label', { title })} />
-        <p className="programme-public-note">{pp('pp.kit.qr.hint')}</p>
-      </div>
-    ),
-    after: (
-      <p className="programme-public-note programme-kit-attribution">
-        <Link prefetch={false} className="text-link" href="/trade-missions#organise-entry-title">
-          {pp('pp.kit.attribution')}
-        </Link>
-      </p>
+    attribution: (
+      <Link
+        prefetch={false}
+        className="programme-kit-attribution"
+        href="/trade-missions#organise-entry-title"
+      >
+        {pp('pp.kit.attribution')}
+      </Link>
     ),
   };
 }

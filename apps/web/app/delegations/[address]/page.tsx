@@ -72,14 +72,7 @@ export default async function Page({ params }: { params: Promise<{ address: stri
         page={page}
         url={url}
         shareKit={
-          kit
-            ? shareKitParts({
-                address: page.address,
-                url,
-                title: page.programme.title,
-                calendar: schedule !== null,
-              })
-            : undefined
+          kit ? shareKitParts({ address: page.address, calendar: schedule !== null }) : undefined
         }
       />
     </WorkspaceShell>
