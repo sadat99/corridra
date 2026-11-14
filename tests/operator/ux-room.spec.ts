@@ -930,7 +930,8 @@ test('the whole saved report page is byte for byte what it was before the Trip l
   const html = await page.locator('#fixture').innerHTML();
   const path = resolve('tests/operator/golden/saved-report-all.golden');
   expect(html).toBe(readFileSync(path, 'utf8'));
-  // The meetings are still the old list: label, status, then the sentence with its zone.
+  // The meetings are still the old list: label, status, then the sentence with its zone. They sit in the Meetings tab.
+  await page.getByRole('tab', { name: 'Meetings and Progress' }).click();
   await expect(page.getByRole('heading', { name: 'Meetings and visits' })).toBeVisible();
   await expect(
     page.getByText('The schedule changed. A new reviewed itinerary is required.'),
@@ -2223,4 +2224,152 @@ test('AC/1: in forced colours the next-step card keeps a visible border and its 
   await expect(page.locator('.room-next')).toHaveCSS('border-inline-start-width', '1px');
   await expect(page.locator('.room-next')).not.toHaveCSS('border-top-width', '0px');
   await expect(page.locator('.room-next .button-primary')).not.toHaveCSS('border-top-width', '0px');
+});
+
+// Audit A5 (14 November 2026): the whole saved report page is cut into tabs so it fits the page budget. Nothing is removed:
+// every part stays in the page, hidden until its tab is chosen, and a ?tab= address opens its tab.
+test.describe('the saved report page in tabs', () => {
+  const openReport = async (page: Page, query = '') => {
+    await page.route('**/api/customer-saved-missions', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(reportBody(everyKindOfMeeting)),
+      }),
+    );
+    await page.goto(
+      `${origin}/?mode=report&props=${encodeURIComponent(JSON.stringify(props({})))}&resourceId=${resourceId}${query}`,
+    );
+    await page.getByRole('button', { name: 'Refresh Approved Commercial Report' }).waitFor();
+  };
+
+  test('three tabs, the first open, every other part kept in the page and reachable', async ({
+    page,
+  }) => {
+    await openReport(page);
+    const tabs = page.getByRole('tablist', { name: 'Report sections' }).getByRole('tab');
+    await expect(tabs).toHaveText([
+      'Companies and Quotes',
+      'Meetings and Progress',
+      'Evidence and Decisions',
+    ]);
+    await expect(tabs.nth(0)).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('heading', { name: 'Meetings and visits' })).toBeHidden();
+    // Hidden parts are left out of role queries, so presence in the page is checked by the element.
+    await expect(page.locator('h2', { hasText: 'Meetings and visits' })).toHaveCount(1);
+    await tabs.nth(1).click();
+    await expect(page.getByRole('heading', { name: 'Meetings and visits' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Recorded commercial progress' })).toBeVisible();
+    await tabs.nth(2).click();
+    await expect(
+      page.getByRole('heading', { name: 'Evidence requests and declarations' }),
+    ).toBeVisible();
+    await expect(page.getByLabel('Your response')).toBeVisible();
+  });
+
+  test('an address with #meetings opens the Meetings tab', async ({ page }) => {
+    await openReport(page, '#meetings');
+    await expect(page.getByRole('tab', { name: 'Meetings and Progress' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    await expect(page.getByRole('heading', { name: 'Meetings and visits' })).toBeVisible();
+  });
+
+  test('a ?tab= address opens its tab', async ({ page }) => {
+    await openReport(page, '&tab=evidence');
+    await expect(
+      page.getByRole('heading', { name: 'Evidence requests and declarations' }),
+    ).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Evidence and Decisions' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+  });
+
+  test('the status chip and the dates read in the product style, and the internal id is not shown', async ({
+    page,
+  }) => {
+    await openReport(page);
+    await expect(page.locator('header.ux-participant-passport .ux-status')).toHaveText('Meetings');
+    await expect(
+      page.locator('header.ux-participant-passport').getByText('Due 5 Nov 2026'),
+    ).toBeVisible();
+    await expect(page.getByText('Publication reference')).toHaveCount(0);
+    await expect(page.getByText('pub-1', { exact: true })).toHaveCount(0);
+    await expect(page.locator('[data-publication-id="pub-1"]')).toHaveCount(1);
+    await page.getByRole('tab', { name: 'Meetings and Progress' }).click();
+    await expect(page.getByText('Time Confirmed')).toBeVisible();
+    await expect(
+      page.getByText('9 Nov 2026, 10:00 (Dhaka, UTC+6) · Dhaka Chamber of Commerce'),
+    ).toBeVisible();
+  });
+});
+
+// Audit A5 (14 November 2026): terms that no quote states are one row that still names every term, so a short
+// comparison fits the desktop page. It is data driven: a term any quote states is its own row again.
+test.describe('terms no quote states, in one row', () => {
+  const quotes = (qbTerms: Record<string, unknown>) => ({
+    body: (() => {
+      const base = reportBody();
+      const experience = base.report.missions[0]!.experience;
+      experience.quotations = [
+        quote('qa', 't1', terms),
+        quote('qb', 't2', { ...terms, ...qbTerms }),
+      ];
+      return base;
+    })(),
+  });
+
+  test('four terms nobody states are one row that names each of them', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open(page, {}, {}, quotes({}));
+    await lens(page, 'Compare').click();
+    const folded = page.locator('.ledger-table .ledger-unstated');
+    await expect(folded).toHaveCount(1);
+    await expect(folded.getByRole('rowheader')).toHaveText('Not stated yet');
+    await expect(folded).toContainText('Installation, Warranty, Training, Spares');
+    // No separate row for any of those terms.
+    for (const term of ['Installation', 'Warranty', 'Training', 'Spares'])
+      await expect(
+        page.locator('.ledger-table tbody th[scope="row"]', { hasText: new RegExp(`^${term}$`) }),
+      ).toHaveCount(0);
+    // "See All Terms" still shows every term as before.
+    await page.getByRole('button', { name: /^See All \d+ Terms$/ }).click();
+    await expect(folded).toContainText('Installation, Warranty, Training, Spares');
+  });
+
+  test('a term that a quote states comes out of the fold and shows as its own row', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open(page, {}, {}, quotes({ warranty: 'One year' }));
+    await lens(page, 'Compare').click();
+    const warranty = page.locator('.ledger-table tbody tr', {
+      has: page.getByRole('rowheader', { name: 'Warranty', exact: true }),
+    });
+    await expect(warranty).toContainText('One year');
+    const folded = page.locator('.ledger-table .ledger-unstated');
+    await expect(folded).toContainText('Installation, Training, Spares');
+    await expect(folded).not.toContainText('Warranty');
+  });
+
+  test('with only one term unstated there is nothing to fold: it stays its own row', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open(
+      page,
+      {},
+      {},
+      quotes({ warranty: 'One year', installation: 'Included', training: 'Two days' }),
+    );
+    await lens(page, 'Compare').click();
+    await expect(page.locator('.ledger-table .ledger-unstated')).toHaveCount(0);
+    await expect(
+      page.locator('.ledger-table tbody tr', {
+        has: page.getByRole('rowheader', { name: 'Spares', exact: true }),
+      }),
+    ).toContainText('Not stated');
+  });
 });

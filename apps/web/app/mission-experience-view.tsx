@@ -11,7 +11,8 @@ import {
   experienceOfferContext,
   isCurrentOffer,
 } from '../lib/experience-offers';
-import { displayMoney, displayDate } from '@corridra/domain/locale';
+import { displayMoney } from '@corridra/domain/locale';
+import { formatMoment, formatUtcDay } from '../lib/ux/format';
 const offerFieldLabels: Record<string, string> = {
   specification: 'Quoted specification',
   quantity: 'Quantity',
@@ -46,7 +47,7 @@ export function AgendaView({
         <li key={a.id}>
           <strong>{a.label}</strong> · {a.state.replaceAll('_', ' ').toLowerCase()}
           <p>
-            {a.nextAction} · {a.responsibility} · due {displayDate(a.dueAt, 'UTC', language)}
+            {a.nextAction} · {a.responsibility} · due {formatUtcDay(a.dueAt, language)}
           </p>
           {a.meetings.map((m) => (
             <p key={m.id}>
@@ -55,7 +56,7 @@ export function AgendaView({
               {m.scheduleChanged
                 ? 'Schedule changed. An updated review is required.'
                 : m.startsAt
-                  ? `${displayDate(m.startsAt, m.timezone ?? 'UTC', language)} · ${m.location ?? 'Location not supplied'}`
+                  ? `${formatMoment(m.startsAt, m.timezone ?? 'UTC', language)} · ${m.location ?? 'Location not supplied'}`
                   : 'No confirmed appointment time supplied.'}
             </p>
           ))}
@@ -312,7 +313,7 @@ export function MissionExperienceView({
                           {key.endsWith('Minor') ? (
                             displayMoney(String(value), q.currency, language)
                           ) : key === 'validUntil' ? (
-                            displayDate(String(value), 'UTC', language)
+                            formatUtcDay(String(value), language)
                           ) : (
                             <span lang={/\p{Script=Han}/u.test(String(value)) ? 'zh' : undefined}>
                               {String(value)}

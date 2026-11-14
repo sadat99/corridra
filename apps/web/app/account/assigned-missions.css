@@ -1,0 +1,8 @@
+/* The Delivered to you card: one even inset for the card and for each delivery inside it, so the text is not
+   pushed in twice. Presentation only. Tokens only. */
+.ux-customer .ux-delivered-card.ux-delivered-card {
+  padding: var(--space-4);
+}
+.ux-customer .ux-delivered-card > .delivery-card {
+  padding: var(--space-3) var(--space-4);
+}

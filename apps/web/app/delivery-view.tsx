@@ -2,7 +2,8 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { DeliveryReport } from '@corridra/delivery/report';
-import { displayMoney as amount, displayDate } from '@corridra/domain/locale';
+import { displayMoney as amount } from '@corridra/domain/locale';
+import { formatMoment, formatUtcDay } from '../lib/ux/format';
 import {
   usePrivateCapability,
   checkedResponse,
@@ -317,7 +318,7 @@ function ScopedDeliveryView({
       </p>
       <p>Purpose: {report.purpose}</p>
       <p>
-        Updated {displayDate(report.generatedAt)} · Link expires {displayDate(report.expiresAt)}
+        Updated {formatUtcDay(report.generatedAt)} · Link expires {formatMoment(report.expiresAt)}
       </p>
       <button
         disabled={busy}
@@ -418,12 +419,12 @@ function ScopedDeliveryView({
               <p>Organiser: {report.delegation.context.organiser}</p>
               <p>{report.delegation.context.purpose}</p>
               <p>
-                {displayDate(
+                {formatMoment(
                   report.delegation.context.startsAt,
                   report.delegation.context.timezone,
                 )}{' '}
                 to{' '}
-                {displayDate(report.delegation.context.endsAt, report.delegation.context.timezone)}
+                {formatMoment(report.delegation.context.endsAt, report.delegation.context.timezone)}
               </p>
             </>
           )}
@@ -485,7 +486,7 @@ function ScopedDeliveryView({
                   <h4>{r.title}</h4>
                   <p>{r.instructions}</p>
                   <p>
-                    {r.status.toLowerCase()} · Due {displayDate(r.dueAt)}
+                    {r.status.toLowerCase()} · Due {formatUtcDay(r.dueAt)}
                   </p>
                   {r.response && <p>Your declaration: {r.response}</p>}
                   {r.status === 'OPEN' && (

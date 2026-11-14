@@ -27,6 +27,7 @@ import { RoomSave } from './room-save';
 import { TripList } from './trip-list';
 import './room-view.css';
 import './room-frame.css';
+import './room-budget.css';
 
 type Lens = 'overview' | 'compare' | 'evidence' | 'trip';
 const lensKey: Record<Lens, MessageKey> = {
