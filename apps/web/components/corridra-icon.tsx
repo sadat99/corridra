@@ -11,6 +11,9 @@ export const iconPaths = {
   company: 'M4 16V4h7v12M11 8h5v8M2.5 16h15M6.5 7h2M6.5 10h2M6.5 13h2',
   progress: 'M3 16h14M5 16v-4M9 16V8M13 16V5',
   more: 'M4 9h2v2H4zM9 9h2v2H9zM14 9h2v2h-2z',
+  // The quick menu: a plus to open it, a close mark while it is open.
+  plus: 'M10 3.5v13M3.5 10h13',
+  close: 'M4.5 4.5l11 11M15.5 4.5l-11 11',
   library: 'M4 3.5h8a3 3 0 0 1 3 3V17H7a3 3 0 0 1-3-3zM4 14a3 3 0 0 1 3-3h8M7 6.5h5',
   list: 'M4 5h12M4 10h12M4 15h8',
   // Three commercial starts
