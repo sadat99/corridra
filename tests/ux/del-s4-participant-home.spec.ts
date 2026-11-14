@@ -204,13 +204,12 @@ for (const width of [390, 1440]) {
       await expect(row.locator('.ux-home-line').first()).toContainText(
         'Place confirmed. Outstanding as recorded by the organiser: 1000.00 USD, 5000 BDT.',
       );
-      await expect(row.locator('.ux-home-line').first()).toContainText(
-        'Next: Review the recorded fee',
-      );
-      await expect(row.getByRole('link', { name: 'Review the recorded fee' })).toHaveAttribute(
-        'href',
-        '#registration-' + rid(1),
-      );
+      // The next step is the closed details' summary; the original summary words stay inside it.
+      const fold = row.locator('details.account-fold').first();
+      await expect(fold.locator('> summary')).toHaveText('Next: Review the recorded fee');
+      await expect(fold).not.toHaveAttribute('open', '');
+      await fold.locator('> summary').click();
+      await expect(row.getByText('Programme details, objectives and results')).toBeVisible();
       const text = (await row.innerText()).replace(/\s+/g, ' ');
       expect(text).not.toMatch(/—|6000|total|urgent|overdue|verified/i);
     });
@@ -289,16 +288,20 @@ for (const width of [390, 768, 1440])
       expect(await mainHeight(page)).toBeLessThanOrEqual(before[width]![rows - 1]! + 1);
     });
 
-// With every line to say (a place, outstanding fees in two currencies and a next step), each row carries one short
-// paragraph in place of the purpose line it no longer shows: at most one line of body text taller per row, measured at
-// +8 to +22 px a row. Recorded here as the measured bound, not as "no longer than before".
+// With every line to say (a place, outstanding fees in two currencies and a next step) the page is still no longer than
+// before: the purpose line moves into the closed details, the next step is the details' summary, and place plus
+// outstanding are one short paragraph under the label. Same table, same one pixel of room.
 for (const width of [390, 768, 1440])
   for (const rows of [1, 2])
-    test(`${width} px, ${rows} registration${rows === 1 ? '' : 's'}: a full home block adds at most one line a row`, async ({
+    test(`${width} px, ${rows} registration${rows === 1 ? '' : 's'}: a full home block is no longer than before`, async ({
       page,
     }) => {
       await open(page, width, { rows });
       await expect(page.locator('.ux-home-line').first()).toBeVisible();
+      await expect(
+        page.locator('summary', { hasText: 'Next: Review the recorded fee' }).first(),
+      ).toBeVisible();
       await closeDetails(page);
-      expect(await mainHeight(page)).toBeLessThanOrEqual(before[width]![rows - 1]! + rows * 24);
+      const height = await mainHeight(page);
+      expect(height).toBeLessThanOrEqual(before[width]![rows - 1]! + 1);
     });

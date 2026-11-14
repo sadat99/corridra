@@ -54,9 +54,9 @@ export function homeLines({ registrationId, place, fees }: HomeInput): HomeLines
   const parts: string[] = [];
   if (termsChanged) parts.push('Changed terms to accept');
   if (owed.length > 0) parts.push('Outstanding as recorded by the organiser: ' + owed.join(', '));
-  for (const t of tasks.slice(0, 2))
+  for (const t of tasks.slice(0, 1))
     parts.push('Task ' + t.title + (t.dueOn ? ', due ' + t.dueOn : ''));
-  if (tasks.length > 2) parts.push(tasks.length - 2 + ' more tasks');
+  if (tasks.length > 1) parts.push(tasks.length - 1 + ' more tasks');
   let next: HomeLines['next'] = null;
   if (termsChanged) next = { text: 'Read and accept the changed terms', href };
   else if (status === 'NOT_APPLIED' && (place.placesAvailable || place.waitlist))

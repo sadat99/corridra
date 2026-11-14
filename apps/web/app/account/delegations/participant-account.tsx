@@ -259,12 +259,6 @@ function ScopedAccount(
                         {home?.where && (
                           <p className="ux-home-line">
                             <strong>{home.where}.</strong> {home.open}
-                            {home.next && (
-                              <>
-                                {' '}
-                                <strong>Next:</strong> <a href={home.next.href}>{home.next.text}</a>
-                              </>
-                            )}
                           </p>
                         )}
                         {typeof r.labelVersion === 'number' && r.displayLabel && (
@@ -286,8 +280,13 @@ function ScopedAccount(
                         <Fold
                           anchor={'registration-' + r.id}
                           open={shareStart?.registrationId === r.id}
-                          summary="Programme details, objectives and results"
+                          summary={
+                            home?.next
+                              ? 'Next: ' + home.next.text
+                              : 'Programme details, objectives and results'
+                          }
                         >
+                          {home?.next && <p>Programme details, objectives and results</p>}
                           {props.homeEnabled && <p>{r.reportingPurpose}</p>}
                           {props.objectivePathEnabled && props.missionSharesEnabled && (
                             <DelegatePath
