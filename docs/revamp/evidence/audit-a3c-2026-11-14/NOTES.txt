@@ -1,0 +1,37 @@
+AUDIT-A3c: Pricing, Series and Exports (card "Pricing, series and exports"), UI/UX.v3 consistency pass.
+
+What this is
+- The real ProgrammePricing component (with the lazy Series and Exports tabs), the real stylesheets, mounted inside
+  WorkspaceShell customer on a bundled page (esbuild), the API answered by page.route. Sample data only.
+- before = origin/main 9ba6ba8 sources (the three components stashed); after = this branch.
+- Each series list has three sample rows: one with an edition and a next edition, one with a next edition, one retired.
+- Screenshots: <before|after>-<width>-<pricing|series|exports>.png, full page, device scale 2.
+- Numbers: measure-before.txt and measure-after.txt (main height over viewport height, card height, primary actions
+  in the card, sideways scroll).
+
+Page length (main height over viewport height; 390x844, 768x1024, 1440x900), before = origin/main, after = this branch
+                 before                  after
+  Pricing   1.28 / 0.78 / 0.82       1.27 / 0.82 / 0.79     (default tab)
+  Series    1.83 / 1.02 / 1.00       1.82 / 0.98 / 0.88     (three rows)
+  Exports   0.95 / 0.64 / 0.69       0.95 / 0.63 / 0.68
+In pixels (main): Series 1440 904 -> 796; Exports 390 798 -> 798; Pricing 768 798 -> 844 (the only width that grew, 0.82 screens).
+Primary actions in the card: Series before 3 (one per row plus New Series), after 1. Pricing and Exports 1 and 1.
+Review round 1 found a first version at Series 1440 = 1.07 and Exports 390 = 1.01 (965 px and 855 px). Fixed by: the words of a
+series row and its actions side by side when there is room (under it when there is not), the intro lines at the 14 px secondary
+step, the 12 px rhythm without doubled margins. Nothing hidden, no target below 44 px, every label unchanged.
+Case "page length" in tests/ux/pricing-series-exports.spec.ts: main <= 900 px for three rows at 1440x900 and <= 801 px for
+Exports at 390x844. It fails on origin/main (903.5 px) and on the first version (965 px).
+
+What changed
+- Series row: Retire Series and Restore Series moved into the shared row menu "More actions for <series>" (one tap
+  deeper). Retire asks first ("Confirm retiring <series>"); Restore changes nothing that cannot be undone and has no confirm.
+- One primary action per view: the first series that can start its next edition keeps the cobalt button, later rows and
+  New Series use the outlined style (class change only, same names, same behaviour).
+- New stylesheet programme-pricing.css (tokens only): 12 px inside, 24 px between, 44 px targets, card title 18 px.
+- Not changed: every label, number, table, formatMoney output, the "Nothing is converted" line, the word "synthetic",
+  routes, payloads, ids, permissions.
+
+Not run here
+- The operator browser suite against the local database (database server not available); the fixture spec
+  tests/operator/v3-programme-pricing-ui.spec.ts was run against a production build on port 3200 with a scratch config.
+- The full UX gate, the real programme page frame (PR 3 owns it), a signed-in run on the live site.
