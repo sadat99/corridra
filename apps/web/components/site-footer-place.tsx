@@ -12,12 +12,23 @@ import { isBarePublicPage } from '../lib/ux/bare-pages';
  * header follows. With it on, a page inside a signed-in workspace shows no marketing footer, only a quiet line
  * with the copyright and the privacy notice, so the notice stays one click away. Public pages, the sign-in and
  * recovery pages and the staff customer preview keep the full footer, and with the switch off nothing changes.
+ * `accessDoors` is CORRIDRA_UX_ACCESS_DOORS: it only changes the actions column of the full footer (see the view).
  */
-export function SiteFooterPlace({ realUse, shells }: { realUse: boolean; shells: boolean }) {
+export function SiteFooterPlace({
+  realUse,
+  shells,
+  accessDoors = false,
+}: {
+  realUse: boolean;
+  shells: boolean;
+  /** CORRIDRA_UX_ACCESS_DOORS, read on the server: a signed-out visitor sees the three access doors in the footer. */
+  accessDoors?: boolean;
+}) {
   const t = useT();
   const pathname = usePathname();
   if (isBarePublicPage(pathname)) return null;
-  if (!shells || !signedInShellFor(pathname)) return <SiteFooterView realUse={realUse} />;
+  if (!shells || !signedInShellFor(pathname))
+    return <SiteFooterView realUse={realUse} accessDoors={accessDoors} />;
   return (
     <footer className="site-footer">
       {/* Owner decision, 12 Nov 2026 (locked mockups revision 2): the quiet footer gains How We Label Facts. */}
