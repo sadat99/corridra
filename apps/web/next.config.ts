@@ -16,7 +16,11 @@ const nextConfig: NextConfig = {
     '@corridra/communications',
     '@corridra/workflows',
   ],
-  outputFileTracingIncludes: { '/api/delivery': ['../../packages/delivery/assets/*.ttf'] },
+  outputFileTracingIncludes: {
+    '/api/delivery': ['../../packages/delivery/assets/*.ttf'],
+    // The preview image of a programme page (ADR-084 S1) draws the owned reversed orb file.
+    '/delegations/[address]/preview-image': ['./public/brand/corridra-orb-reversed.svg'],
+  },
   async headers() {
     const isDevelopment = process.env.NODE_ENV === 'development';
     const csp = [
@@ -49,6 +53,15 @@ const nextConfig: NextConfig = {
         // Public programme pages are never offered to search engines (owner decision, 11 November 2026, ADR-080).
         source: '/delegations/:path*',
         headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      },
+      {
+        // The share kit routes of a programme page (ADR-084 S1): the flyer, the calendar file and the preview image carry the
+        // page address, so they send no referrer, and they are never offered to search engines either.
+        source: '/delegations/:address/:kit(flyer|calendar.ics|preview-image)',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
+        ],
       },
       {
         source: '/api/intake/pending/:path*',

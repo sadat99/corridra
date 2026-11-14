@@ -1,0 +1,16 @@
+/* The share kit of a public programme page (ADR-084 S1). Tokens only. The code itself is drawn black on white inside the
+   image, so a scanner always has the contrast it needs, whatever the theme. */
+.programme-kit-qr {
+  display: grid;
+  gap: var(--space-2);
+}
+.programme-qr {
+  display: block;
+  width: min(100%, 16rem);
+  height: auto;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+.programme-kit-attribution {
+  margin: 0;
+}

@@ -1,0 +1,51 @@
+/* The printable flyer (ADR-084 S1). On screen it is a plain reading column; printed, only the flyer and its title are left:
+   no header, footer, dock or buttons. Tokens only. */
+.programme-flyer {
+  display: grid;
+  gap: var(--space-6);
+  max-width: 44rem;
+}
+.programme-flyer p {
+  margin: 0;
+}
+.programme-flyer-facts {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding-top: var(--space-4);
+  border-top: 2px solid var(--editorial-accent);
+}
+.programme-flyer-facts dt {
+  font: 600 var(--text-xs) var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.programme-flyer-facts dd {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-lg);
+  overflow-wrap: anywhere;
+}
+.programme-flyer-code {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+.programme-flyer-code .programme-qr {
+  width: min(100%, 14rem);
+}
+.programme-flyer-address {
+  font: var(--text-sm) var(--font-mono);
+  overflow-wrap: anywhere;
+}
+@media print {
+  body:has(.programme-flyer) .site-shell > :not(main) {
+    display: none;
+  }
+  .programme-flyer-page .programme-flyer-actions {
+    display: none;
+  }
+  .programme-flyer-page {
+    padding: 0;
+  }
+}
