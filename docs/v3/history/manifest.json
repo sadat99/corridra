@@ -477,6 +477,14 @@
       "bytes": 7975,
       "sha256": "e4650dc95b7da47bdc721963954504c11b67a51002e84497162deafed6c6191a",
       "meaning": "Exact active ledger at 0689b7d1 (the PR 489 merge, 13 Nov), unchanged since 97543d3 (Guardian 3 records 1, PR 484) through PRs 485, 486 and 489, before Guardian 5 recorded merge window 2 (485, 486), the sourcing workflow install run 43442829587, PR 489 (the installable app), the Orchestrator and Guardian rotations and the later 13 Nov owner words, including the Guardian 3 records 1 Takeover, merges, installs, installed counts, lanes and follow-up bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "d13843e26ace8da363abd7a2ffb17e264456cd16",
+      "archive": "docs/v3/history/ledger-before-g7-records-3-2026-11-14.md",
+      "bytes": 10659,
+      "sha256": "c5766e16517e288dfe733a62730580bac9963ae78ef9ce77585d72c24fe226a1",
+      "meaning": "Exact active ledger at d13843e (the PR 499 merge, 14 Nov), byte-identical (cmp) to the PR 491 merge 0d9fe91 and unchanged through PRs 488, 490 and 492 to 499, before Guardian 8 recorded merges 488 to 499, install run 43503994072 (supply_source_migrations 1 -> 2), the 14 Nov switches CORRIDRA_UX_POCKET and CORRIDRA_DELEGATION_FIRST_RUN, the lane costs, the SELL-S4a hold and the follow-up list, including the Guardian 6 Takeover, merges, installed counts, owner words, lanes and follow-up bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",
