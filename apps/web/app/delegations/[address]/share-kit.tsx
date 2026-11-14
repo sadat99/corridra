@@ -6,7 +6,7 @@ import './share-kit.css';
 /** The pieces of the share kit, drawn by the server and placed by the page. They add no height to the page as it first
  * shows: the actions wait behind one closed button in the existing share row, and the attribution replaces a sentence. */
 export type ShareKitParts = {
-  /** The actions behind the share row's "More Options" button. */
+  /** The actions behind the share row's "More" button. */
   more: ReactNode;
   /** The one quiet line: a link that takes the place of the sentence "Corridra provides the tools the organiser uses". */
   attribution: ReactNode;

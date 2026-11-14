@@ -45,6 +45,7 @@ export function ShareRow({ url, title, kit }: { url: string; title: string; kit?
           <button
             type="button"
             className="text-link"
+            aria-label={pp('pp.kit.moreLabel')}
             aria-expanded={showMore}
             aria-controls="programme-share-more"
             onClick={() => setShowMore((open) => !open)}

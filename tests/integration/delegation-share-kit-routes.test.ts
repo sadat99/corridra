@@ -259,7 +259,7 @@ test('with the share kit off, every share kit route answers the one 404, even fo
   const markup = await html(publicPage.default(params(address)));
   expect(markup).toContain('Copy Link');
   expect(markup).not.toMatch(
-    /programme-kit|programme-share-more|More Options|\/flyer|calendar\.ics|Corridra Programmes|<img/,
+    /programme-kit|programme-share-more|More ways to share|\/flyer|calendar\.ics|Corridra Programmes|<img/,
   );
   expect(markup).toContain('Corridra provides the tools the organiser uses.');
   const meta = await publicPage.generateMetadata(params(address));
@@ -330,7 +330,7 @@ test('the preview image is a 1200 by 630 picture of a readable page, and the sam
   );
 });
 
-test('the public page with the kit on: one closed More Options button, a calendar link only with days, the attribution inside a sentence, nothing sent or tracked', async () => {
+test('the public page with the kit on: one closed More button, a calendar link only with days, the attribution inside a sentence, nothing sent or tracked', async () => {
   kitOn();
   // Version 3 with a fee line and days.
   expect((await pages().publication(publish(2, { fee: 'BDT 45,000 per company' }))).version).toBe(
@@ -344,7 +344,7 @@ test('the public page with the kit on: one closed More Options button, a calenda
   expect(markup).toContain(`href="/delegations/${address}/calendar.ics"`);
   expect(markup).toContain('Add to Calendar');
   // The kit adds one closed button to the share row and keeps its actions behind it; no QR code is on the page itself.
-  expect(markup).toContain('More Options');
+  expect(markup).toContain('aria-label="More ways to share"');
   expect(markup).toContain('aria-controls="programme-share-more"');
   expect(markup).toContain('aria-expanded="false"');
   expect(markup).toContain('id="programme-share-more" class="guide-actions-row" hidden=""');

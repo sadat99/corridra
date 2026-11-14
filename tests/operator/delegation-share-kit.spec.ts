@@ -147,12 +147,12 @@ for (const [name, width, tall] of widths) {
       }
     });
 
-    test('the kit adds one closed More Options button; Open Flyer and a calendar link only with days open under it', async ({
+    test('the kit adds one closed More button; Open Flyer and a calendar link only with days open under it', async ({
       page,
     }) => {
       await open(page, 'kit=1&days=1');
-      await expect(share(page).getByRole('button')).toHaveText(['Copy Link', 'More Options']);
-      const more = page.getByRole('button', { name: 'More Options' });
+      await expect(share(page).getByRole('button')).toHaveText(['Copy Link', 'More']);
+      const more = page.getByRole('button', { name: 'More ways to share' });
       await expect(more).toHaveAttribute('aria-expanded', 'false');
       await expect(page.getByRole('link', { name: 'Open Flyer' })).toBeHidden();
       // Keyboard: focus the button and press Enter.
@@ -171,7 +171,7 @@ for (const [name, width, tall] of widths) {
       await expect(more).toHaveAttribute('aria-expanded', 'false');
       await expect(page.getByRole('link', { name: 'Open Flyer' })).toBeHidden();
       await open(page, 'kit=1&days=0');
-      await page.getByRole('button', { name: 'More Options' }).click();
+      await page.getByRole('button', { name: 'More ways to share' }).click();
       await expect(page.getByRole('link', { name: 'Open Flyer' })).toBeVisible();
       await expect(page.getByRole('link', { name: 'Add to Calendar' })).toHaveCount(0);
       const labels = await share(page).locator('a, button').allInnerTexts();
@@ -196,7 +196,7 @@ for (const [name, width, tall] of widths) {
       page,
     }) => {
       await open(page, 'kit=1&days=1');
-      await page.getByRole('button', { name: 'More Options' }).click();
+      await page.getByRole('button', { name: 'More ways to share' }).click();
       for (const control of await share(page).locator('a:visible, button:visible').all()) {
         const box = (await control.boundingBox())!;
         expect(box.height, await control.innerText()).toBeGreaterThanOrEqual(

@@ -68,7 +68,9 @@ export const programmePagesWords = {
   // The share kit (ADR-084 S1): all of it is started by the person pressing, and built from the published words only
   'pp.kit.flyer': 'Open Flyer',
   'pp.kit.calendar': 'Add to Calendar',
-  'pp.kit.more': 'More Options',
+  // Short on purpose: it has to fit the share row without wrapping at 390, 768 and 1440. The spoken name says more.
+  'pp.kit.more': 'More',
+  'pp.kit.moreLabel': 'More ways to share',
   'pp.kit.qr.label': 'QR code that opens {title}',
   'pp.kit.attribution': 'Page made with Corridra Programmes',
   'pp.flyer.title': 'Flyer for {title}',
