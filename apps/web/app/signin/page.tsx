@@ -6,6 +6,8 @@ import { readNeonAuthConfig } from '@corridra/config';
 import { AccountAccess } from '../../components/account-access';
 import { accountAccessPath, accountReturnTo } from '../../lib/account-return';
 import { emailReturnPagesOn } from '../../lib/ux-switches';
+import { AccessOptions } from '../../components/access-options';
+import { accessHelp } from '../../lib/access-doors';
 export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Sign in | Corridra',
@@ -59,17 +61,7 @@ export default async function Page({ searchParams }: { searchParams?: Promise<Qu
           </div>
         </div>
       </section>
-      <nav className="guide-links" aria-label="Other ways in">
-        <Link prefetch={false} className="text-link" href="/operator">
-          Team Sign-in
-        </Link>
-        <Link prefetch={false} className="text-link" href="/contributor">
-          Local Helper Tasks
-        </Link>
-        <Link prefetch={false} className="text-link" href="/">
-          Back to Corridra
-        </Link>
-      </nav>
+      <AccessOptions {...accessHelp.signInFallback} className="guide-links" />
     </PublicShell>
   );
 }

@@ -1,7 +1,8 @@
 import { WorkspaceShell } from '../../components/workspace-shell';
+import { AccessOptions } from '../../components/access-options';
+import { accessHelp } from '../../lib/access-doors';
 import type { Metadata } from 'next';
 import { BuyerIntroduction } from './introduction';
-import Link from 'next/link';
 import { uxSwitchOn } from '../../lib/ux-switches';
 import { offeredLanguages } from '../../lib/i18n/locales';
 export const metadata: Metadata = {
@@ -19,14 +20,7 @@ export default function BuyerPage() {
         replyPage={uxSwitchOn('CORRIDRA_REPLY_PAGE')}
         chineseReleased={offeredLanguages().some((language) => language.code === 'zh')}
       />
-      <nav className="access-options" aria-label="Private introduction help">
-        <Link prefetch={false} className="text-link" href="/workspace">
-          Workspace and invitation help
-        </Link>
-        <Link prefetch={false} className="text-link" href="/">
-          Back to Corridra
-        </Link>
-      </nav>
+      <AccessOptions {...accessHelp.buyer} />
     </WorkspaceShell>
   );
 }

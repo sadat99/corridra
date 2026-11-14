@@ -7,6 +7,8 @@ import { AccountForm, type AccountFormMode } from './account-form';
 import { PendingRequestNotice } from './pending-request-notice';
 import { realUseEnabled } from '@corridra/auth/customer-production';
 import { emailReturnPagesOn } from '../lib/ux-switches';
+import { AccessOptions } from './access-options';
+import { accessHelp } from '../lib/access-doors';
 export function AccountAccess({ title, mode }: { title: string; mode: AccountFormMode }) {
   const config = readNeonAuthConfig();
   return (
@@ -51,24 +53,7 @@ export function AccountAccess({ title, mode }: { title: string; mode: AccountFor
         {mode === 'signin' && (
           <details className="ux-journey-disclosure">
             <summary>Not a Customer?</summary>
-            <nav className="access-options" aria-label="Other access routes">
-              <p>
-                Team members sign in separately. For a shared mission, programme or task, use the
-                private link we sent you.
-              </p>
-              <Link prefetch={false} className="text-link" href="/operator">
-                Team Sign-in
-              </Link>
-              <Link prefetch={false} className="text-link" href="/workspace">
-                Start Page
-              </Link>
-              <Link prefetch={false} className="text-link" href="/contributor">
-                Local Helper Tasks
-              </Link>
-              <Link prefetch={false} className="text-link" href="/plan">
-                Plan a Mission
-              </Link>
-            </nav>
+            <AccessOptions {...accessHelp.customerOtherRoutes} />
           </details>
         )}
       </section>

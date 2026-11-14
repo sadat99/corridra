@@ -21,6 +21,8 @@ export const uxSwitchNames = [
   'CORRIDRA_UX_FAIRS',
   'CORRIDRA_UX_BOOKS',
   'CORRIDRA_UX_FRONT_DOORS',
+  // The three access pages under /access: in Unit A it only decides whether search engines may index them.
+  'CORRIDRA_UX_ACCESS_DOORS',
   // Pocket (phone): the Next Move button and the short phone header on signed-in customer pages. Presentation only.
   'CORRIDRA_UX_POCKET',
   // Commercial readiness program (31 Oct 2026, section 5.4). Off in production until the owner sets them.

@@ -1,4 +1,5 @@
-import Link from 'next/link';
+import { AccessOptions } from '../../../components/access-options';
+import { accessHelp } from '../../../lib/access-doors';
 import { operatorSignInPage } from '../../../lib/workspace-navigation';
 import { Suspense } from 'react';
 import { WorkspaceShell } from '../../../components/workspace-shell';
@@ -29,17 +30,7 @@ export default function Page() {
           your workspace owner for reviewed recovery.
         </p>
       )}
-      <nav className="access-options" aria-label="Recovery options">
-        <Link prefetch={false} className="text-link" href="/operator/setup">
-          Finish a pending invitation
-        </Link>
-        <a className="text-link" href={operatorSignInPage}>
-          Back to operator sign-in
-        </a>
-        <Link prefetch={false} className="text-link" href="/forgot-password">
-          Reset a customer account password
-        </Link>
-      </nav>
+      <AccessOptions {...accessHelp.operatorForgotPassword(operatorSignInPage)} />
     </WorkspaceShell>
   );
 }

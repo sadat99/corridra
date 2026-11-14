@@ -1,4 +1,5 @@
-import Link from 'next/link';
+import { AccessOptions } from '../../../components/access-options';
+import { accessHelp } from '../../../lib/access-doors';
 import { operatorSignInPage } from '../../../lib/workspace-navigation';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { SetupForm } from './setup-form';
@@ -16,17 +17,7 @@ export default function Page() {
         signups into administrators.
       </p>
       <SetupForm />
-      <nav className="access-options" aria-label="Operator setup help">
-        <Link prefetch={false} className="text-link" href="/account">
-          Customer account and email verification
-        </Link>
-        <a className="text-link" href={operatorSignInPage}>
-          Operator sign-in and authenticator
-        </a>
-        <Link prefetch={false} className="text-link" href="/workspace">
-          All workspaces and tools
-        </Link>
-      </nav>
+      <AccessOptions {...accessHelp.operatorSetup(operatorSignInPage)} />
     </WorkspaceShell>
   );
 }
