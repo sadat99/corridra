@@ -22,7 +22,12 @@ async function ready(page: Page) {
       () =>
         page.evaluate(async () => {
           if (!navigator.serviceWorker.controller) return false;
-          const cache = await caches.open('corridra-offline-v1');
+          // One cache per deployment: corridra-offline-<deployment id>.
+          const owned = (await caches.keys()).filter((name) =>
+            name.startsWith('corridra-offline-'),
+          );
+          if (owned.length !== 1) return false;
+          const cache = await caches.open(owned[0]);
           const held = (await cache.keys()).map((request) => new URL(request.url).pathname);
           return (
             held.includes('/offline') && held.some((path) => path.startsWith('/_next/static/'))
@@ -157,7 +162,8 @@ test('the worker stores only the offline page and its own stylesheets', async ({
     }
     return { names, entries };
   });
-  expect(held.names).toEqual(['corridra-offline-v1']);
+  expect(held.names).toHaveLength(1);
+  expect(held.names[0]).toMatch(/^corridra-offline-[A-Za-z0-9_-]+$/);
   expect(held.entries).toContain('/offline');
   for (const entry of held.entries)
     expect(entry === '/offline' || entry.startsWith('/_next/static/'), entry).toBe(true);
