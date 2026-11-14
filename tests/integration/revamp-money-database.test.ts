@@ -1,6 +1,7 @@
 import { beforeAll, afterAll, expect, test } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { fixture } from './support';
+import { findLeaks } from './money-leaks';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateCustomerCommercialArrangements } from '../../packages/db/src/customer-commercial-arrangement-migrate';
 import { admitSyntheticCustomer } from '../../packages/auth/src/customer-admission';
@@ -166,10 +167,7 @@ afterAll(async () => {
   if (f) await Promise.all([f.owner.end(), f.runtime.end(), f.auth.end()]);
 });
 
-const leaks = (value: unknown) => {
-  const text = JSON.stringify(value);
-  return secrets.filter((word) => text.includes(word));
-};
+const leaks = (value: unknown) => findLeaks(value, secrets);
 const sentQuote = async () => {
   const r = await newRequest();
   const input = await body(r.id, terms('SEPARATE_FEE'));
