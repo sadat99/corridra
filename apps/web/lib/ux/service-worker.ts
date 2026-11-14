@@ -12,8 +12,37 @@
  * deployment cannot be broken by an old worker: every real page still comes from the network.
  */
 
-/** The cache this worker owns. Raise the number to retire the previous one on the next activation. */
-export const offlineCacheName = 'corridra-offline-v1';
+/** The start of every cache this worker owns. Activation deletes each cache with this prefix that is not its own. */
+export const offlineCachePrefix = 'corridra-offline-';
+
+/** The identifier used when the platform gives no deployment identifier (local and test builds). */
+export const unknownDeploymentId = 'local';
+
+/**
+ * The identifier of the deployment that is serving this file: the Git commit of the deployment, else the
+ * platform's deployment identifier, else a fixed word. It is read only from the server's environment, never
+ * from request data, and is reduced to letters, digits, hyphen and underscore (at most 40 characters) so it
+ * can sit in a file name and a comment without changing what the worker does. One deployment always
+ * answers with the same identifier, so a browser that asks twice receives identical bytes and installs
+ * nothing new; the next deployment answers with a different one, so the browser installs the new worker.
+ */
+export function deploymentId(env: NodeJS.ProcessEnv = process.env): string {
+  for (const candidate of [env.VERCEL_GIT_COMMIT_SHA, env.VERCEL_DEPLOYMENT_ID]) {
+    const id = (candidate ?? '').trim();
+    if (/^[A-Za-z0-9_-]{1,40}$/.test(id)) return id;
+  }
+  return unknownDeploymentId;
+}
+
+/** Any other text given where an identifier is expected is replaced by the fixed word, never written into the worker. */
+function safeId(id: string): string {
+  return /^[A-Za-z0-9_-]{1,40}$/.test(id) ? id : unknownDeploymentId;
+}
+
+/** The cache one deployment's worker owns. A new deployment names a new cache and so refreshes the offline page. */
+export function offlineCacheName(id: string = deploymentId()): string {
+  return `${offlineCachePrefix}${safeId(id)}`;
+}
 
 /** The page an installed Corridra shows when the network cannot be reached. */
 export const offlinePagePath = '/offline';
@@ -34,13 +63,16 @@ export function serviceWorkerOn(env: NodeJS.ProcessEnv = process.env): boolean {
 /**
  * The worker that answers a failed page load with the offline page.
  *
+ * The text carries the deployment identifier, so each deployment is a new worker: the browser installs it,
+ * fetches a fresh offline page and stylesheets, and activation drops the previous deployment's cache.
  * Install fetches the offline page and its own stylesheets. Activation drops every older Corridra cache and
  * takes over open pages, which is safe here because the worker serves no page of the product from a cache:
  * nothing a person is reading is replaced and no unsaved work is discarded.
  */
-export function offlineServiceWorkerScript(): string {
+export function offlineServiceWorkerScript(id: string = deploymentId()): string {
   return `// Corridra offline fallback worker. Source: apps/web/lib/ux/service-worker.ts
-const CACHE = ${JSON.stringify(offlineCacheName)};
+// Deployment ${safeId(id)}: every deployment serves different text, so an installed app updates itself.
+const CACHE = ${JSON.stringify(offlineCacheName(id))};
 const OFFLINE = ${JSON.stringify(offlinePagePath)};
 
 /** The offline page and the stylesheets it links. Public, same origin, fetched without credentials. */
