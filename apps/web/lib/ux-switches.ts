@@ -34,6 +34,8 @@ export const uxSwitchNames = [
   'CORRIDRA_SUPPLY_SOURCES',
   // ADR-084 delegation, off unless exactly "true": S0 first run acts where public programme pages are on, S4 participant home wherever participant terms are on; no command, permission or data.
   'CORRIDRA_DELEGATION_FIRST_RUN',
+  // ADR-084 S7: the Buying Trip starter template, off unless exactly "true"; it also needs the programme templates module on
+  'CORRIDRA_DELEGATION_BUYING_TRIP',
 ] as const;
 export type UxSwitchName = (typeof uxSwitchNames)[number];
 

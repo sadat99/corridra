@@ -588,6 +588,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'flag',
   },
   {
+    name: 'CORRIDRA_DELEGATION_BUYING_TRIP',
+    label: 'Delegation buying trip starter',
+    line: 'Offers a generic Buying trip starter plan (six tasks, no costs, no people) in the delegation first run and in the programme templates list, and pre-fills three planned page lines in the first run. Saving it makes one private template in the workspace. Needs programme templates on. With it off both screens are as they were.',
+    group: 'Programmes and delegations',
+    kind: 'flag',
+  },
+  {
     name: 'CORRIDRA_UX_FAIRS',
     label: 'Fair pages and Countdown',
     line: 'Fair pages with dates the Corridra team has checked, and the days to each date. The list stays empty until a checked entry is added.',
