@@ -1,0 +1,231 @@
+/* The guided first run (ADR-084 S0): the form and, beside it, the page it is building. Tokens only.
+   One column on a phone with the preview one tap away; two columns from 64rem, where the preview stays in view
+   inside its own frame so the page keeps to one screen; the folded plain form sits under it. */
+.first-run {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+.first-run-form {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+  min-width: 0;
+}
+.first-run-side {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  min-width: 0;
+}
+.first-run-head {
+  display: grid;
+  gap: var(--space-1);
+}
+.first-run-head > h2,
+.first-run-head > p {
+  margin: 0;
+  max-width: 90ch;
+}
+.first-run-form > p {
+  margin: 0;
+  max-width: 62ch;
+}
+.first-run-form > form {
+  width: 100%;
+}
+.first-run-form h3 {
+  margin: 0;
+  font-size: var(--text-base);
+}
+.first-run-form .check-field {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  min-height: 44px;
+  max-width: 62ch;
+}
+.first-run-more,
+.first-run-plain {
+  width: 100%;
+  max-width: 40rem;
+}
+.first-run-more > summary,
+.first-run-plain > summary,
+.first-run-preview > summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.first-run-more[open] {
+  display: grid;
+  gap: var(--space-3);
+}
+.first-run-more > p {
+  margin: 0;
+}
+.first-run-preview {
+  min-width: 0;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+}
+.first-run-preview-page {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-2) 0 var(--space-4);
+}
+.first-run-preview-page > p {
+  margin: 0;
+}
+.first-run-preview-name {
+  font-family: var(--serif);
+  font-size: var(--text-title);
+  font-weight: 500;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+/* The review step (L-04): every answer of the earlier steps in three groups, each with its own Edit action beside
+   its name. On a phone each answer sits beside its label; from 64rem the three groups sit side by side. */
+.first-run-review {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+}
+.first-run-review-group {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'name edit' 'lines lines';
+  align-items: center;
+  column-gap: var(--space-2);
+  row-gap: 0;
+  min-width: 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.first-run-review-group > h4 {
+  grid-area: name;
+  margin: 0;
+  font-size: var(--text-base);
+}
+.first-run-review-group > button {
+  grid-area: edit;
+  justify-self: end;
+}
+.first-run-review-group > dl {
+  grid-area: lines;
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  min-width: 0;
+  width: 100%;
+}
+.first-run-review-group dl > div {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 2fr) 3fr;
+  column-gap: var(--space-2);
+  min-width: 0;
+}
+.first-run-review-group dt,
+.first-run-review-group dd {
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+  line-height: 1.3;
+}
+.first-run-review-group dt {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  line-height: 1.2;
+}
+.first-run-review-group dd {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.first-run-form > form {
+  gap: var(--space-2);
+}
+/* The disclosure stays whole; it only reads a size smaller so the heading, the form and the actions share a screen. */
+.first-run .first-run-head > p.programme-note {
+  max-width: none;
+  font-size: var(--text-sm);
+}
+@media (min-width: 64rem) {
+  .first-run {
+    grid-template-columns: minmax(0, 40rem) minmax(0, 1fr);
+    gap: var(--space-3) var(--space-6);
+  }
+  .first-run-head {
+    grid-column: 1 / -1;
+  }
+  /* Short lines sit two to a row, so each step stays short; a template choice, the folds, the ticks and the
+     actions take the whole row. */
+  .first-run-form > form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-4);
+  }
+  .first-run-form > form > * {
+    grid-column: 1 / -1;
+  }
+  .first-run-form > form > .field:not(:has(select)),
+  .first-run-form > form > .check-field:has(input[name='first-dates-unsure']) {
+    grid-column: auto;
+  }
+  .first-run-form > form > .check-field:has(input[name='first-dates-unsure']) {
+    align-self: center;
+  }
+  /* The step heading and its progress bar share a row, and the two ticks of the last step sit side by side. */
+  .first-run-form > form > h3 {
+    grid-column: 1;
+    align-self: center;
+  }
+  .first-run-form > form > progress {
+    grid-column: 2;
+    align-self: center;
+  }
+  .first-run-form > form > .check-field:has(input[name^='first-ack']) {
+    grid-column: auto;
+  }
+  .first-run-form > form:has(.first-run-review) {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  }
+  .first-run-review {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: var(--space-4);
+  }
+  .first-run-review-group dl > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .first-run-review-group dd {
+    -webkit-line-clamp: 1;
+  }
+  /* The preview is as tall as the window allows and scrolls inside its frame; the frame takes keyboard focus. */
+  .first-run-preview-page {
+    max-height: max(14rem, calc(100dvh - 38rem));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  /* The frame is narrower than the window, so the public page inside it keeps to one reading column. */
+  .first-run-preview-page .programme-public:has(> .programme-public-apply) {
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+  }
+  .first-run-preview-page .programme-public > .programme-public-apply {
+    grid-column: 1;
+    grid-row: auto;
+    position: static;
+  }
+  .first-run-preview-page .programme-public {
+    row-gap: var(--space-4);
+  }
+  .first-run-preview-page:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+}

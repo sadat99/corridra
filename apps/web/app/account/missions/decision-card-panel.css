@@ -22,7 +22,7 @@
 .decision-card-owner legend {
   padding: 0;
   margin-bottom: var(--space-2);
-  font-weight: 650;
+  font-weight: 600;
 }
 .decision-card-choice {
   display: flex;
@@ -71,7 +71,7 @@
 }
 .decision-card-preview dt {
   font-size: var(--text-sm);
-  font-weight: 650;
+  font-weight: 600;
   color: var(--text-2);
 }
 .decision-card-preview dd {

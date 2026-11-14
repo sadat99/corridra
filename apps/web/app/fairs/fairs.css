@@ -46,7 +46,7 @@
   margin: 0;
 }
 .fairs-dates dt {
-  font-weight: 700;
+  font-weight: 600;
 }
 .fairs-dates dd {
   margin-inline-start: 0;
@@ -54,5 +54,5 @@
 }
 .countdown[data-state='today'],
 .countdown[data-state='future'] {
-  font-weight: 700;
+  font-weight: 600;
 }

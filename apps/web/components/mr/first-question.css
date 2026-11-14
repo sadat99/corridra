@@ -84,5 +84,5 @@
   opacity: 1;
 }
 .mr-fq-card[data-checked='true'] b {
-  font-weight: 700;
+  font-weight: 600;
 }

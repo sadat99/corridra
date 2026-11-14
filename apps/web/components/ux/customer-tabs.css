@@ -30,7 +30,7 @@
     min-height: 3rem;
     padding: 4px 2px;
     color: var(--ac-text-secondary);
-    font-size: 0.75rem;
+    font-size: var(--text-xs);
     font-weight: 500;
     line-height: 1rem;
     text-align: center;
@@ -65,10 +65,16 @@
     border-radius: 8px;
     background: var(--brand);
     color: var(--on-brand);
-    font-size: 0.6875rem;
+    font-size: var(--text-xs);
     font-weight: 600;
     line-height: 16px;
     text-align: center;
+  }
+  /* How much of the bottom edge the tabs take (the safe area is added by whatever sits above them). A floating control
+     such as the Pocket button reads this one property, so it sits above the tabs while they exist and drops to the
+     bottom edge on its own the day they are not in the page. */
+  .site-shell:has(.ux-customer-tabs) {
+    --shell-bottom-bar: 3.0625rem;
   }
   /* The page must not hide behind the tabs. */
   .ux-leftnav-page:has(> .ux-customer-tabs) {

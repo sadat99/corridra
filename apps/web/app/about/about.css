@@ -96,7 +96,7 @@
   padding-top: var(--space-12);
 }
 .about-opening h2 {
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
 }
 .about-opening p {
   font-size: var(--text-base);
@@ -126,7 +126,7 @@
 }
 .about-fold > summary::before {
   content: '+' / '';
-  font: 500 var(--text-xl) / 1 var(--font-ui);
+  font: 500 var(--text-lg) / 1 var(--font-ui);
 }
 .about-fold[open] > summary::before {
   content: '\2212' / '';
@@ -189,7 +189,7 @@
   padding: var(--space-3) var(--space-4) var(--space-4);
   border: 1px solid var(--line);
   border-top: 3px solid var(--brand);
-  border-radius: 4px 4px var(--radius-md) var(--radius-md);
+  border-radius: var(--radius-sm) var(--radius-sm) var(--radius-md) var(--radius-md);
   background: var(--ac-porcelain);
 }
 .about-uses h3 {
@@ -337,7 +337,7 @@
   align-items: center;
   gap: var(--space-2);
   min-height: 2.75rem;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   color: var(--brand);
   font-size: var(--text-base);
   font-weight: 500;
@@ -561,7 +561,7 @@
   }
   .about-head h2,
   .about-section h2 {
-    font-size: var(--text-xl);
+    font-size: var(--text-lg);
   }
   .about-head p {
     font-size: var(--text-sm);
@@ -679,7 +679,7 @@
     width: auto;
     height: auto;
     border: 0;
-    font: 500 var(--text-xl) / 1 var(--font-ui);
+    font: 500 var(--text-lg) / 1 var(--font-ui);
   }
   .about-more > summary > span {
     position: absolute;

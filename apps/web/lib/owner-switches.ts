@@ -567,9 +567,23 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'flag',
   },
   {
+    name: 'CORRIDRA_UX_POCKET',
+    label: 'Pocket button on phones',
+    line: 'On phones and the installed app, signed-in customer pages get one button in the corner that says the next thing to do, a short list of the main places on a press and slide up or a tap on More, and a shorter header. The New Request and Help buttons move into that list. Wider screens, staff pages and public pages are unchanged. It reads nothing new and removes nothing.',
+    group: 'Accounts and requests',
+    kind: 'flag',
+  },
+  {
     name: 'CORRIDRA_UX_PROGRAMME',
     label: 'Programme Room',
     line: 'Groups every programme panel into one room per programme. Nothing is removed.',
+    group: 'Programmes and delegations',
+    kind: 'flag',
+  },
+  {
+    name: 'CORRIDRA_DELEGATION_FIRST_RUN',
+    label: 'Delegation guided first run',
+    line: 'Lets an organiser set up a delegation in three short steps with a live preview of the public page, ending on Publish, and puts the next decision first in the programme overview. It sends the same create, template and publish commands as before and adds no new data. Needs public programme pages on. With it off the programme screens are as they were.',
     group: 'Programmes and delegations',
     kind: 'flag',
   },

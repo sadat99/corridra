@@ -10,7 +10,8 @@ import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { customerProvenanceAllowed } from '@corridra/domain/customer-input-mode';
 import { ProgrammeContext } from './programme-context';
 import { ProgrammeRoom } from './programme-room';
-import { SubTabs } from '../../../components/ux/sub-tabs';
+import { SubTabs, resolveSubTabsAgain } from '../../../components/ux/sub-tabs';
+import { pp } from '../../../lib/i18n/programme-pages';
 import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { useFormDraft } from '../../../lib/ux/use-form-draft';
 import { ProgrammeSharedObjectiveCount } from './programme-shared-objective-count';
@@ -32,6 +33,7 @@ const ProgrammeTerms = lazy(() =>
 const ProgrammePage = lazy(() =>
   import('./programme-page').then((module) => ({ default: module.ProgrammePage })),
 );
+const FirstRun = lazy(() => import('./first-run').then((module) => ({ default: module.FirstRun })));
 const ProgrammeEconomics = lazy(() =>
   import('./programme-economics').then((module) => ({ default: module.ProgrammeEconomics })),
 );
@@ -70,6 +72,8 @@ type Props = {
   serviceRequestsEnabled?: boolean;
   roomEnabled?: boolean;
   projectionsEnabled?: boolean;
+  /** The guided first run and the decisions-first overview (ADR-084 S0). It acts only where pages are on. */
+  firstRunEnabled?: boolean;
 };
 const uuid = (value: unknown): value is string =>
   typeof value === 'string' &&
@@ -117,7 +121,10 @@ function ScopedProgrammes({
   serviceRequestsEnabled = false,
   roomEnabled = false,
   projectionsEnabled = false,
+  firstRunEnabled = false,
 }: Props) {
+  // The first run ends on Publish, so it needs the public page and the participants module under it.
+  const firstRun = firstRunEnabled && pagesEnabled && participantsEnabled;
   const [selectedProgramme, setSelectedProgramme] = useState<string | null>(null);
   // The programme the room shows, kept in ?programme= (read once; the list itself loads after the first render).
   // An old link to one programme's section (#<programme id>-<view>) still opens that programme (layout budget L-03).
@@ -537,6 +544,23 @@ function ScopedProgrammes({
     url.searchParams.set('programme', id);
     window.history.replaceState(window.history.state, '', url);
   };
+  // The first run published a new programme: show it, on its public page section, where the address to share is.
+  const published = (id: string) => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('archived');
+    url.searchParams.set('programme', id);
+    if (roomEnabled) {
+      url.searchParams.set('tab', 'programmes');
+      url.hash = `${id}-page`;
+    }
+    window.history.replaceState(window.history.state, '', url);
+    setShowArchived(false);
+    setChosenId(id);
+    setLinkTarget(null);
+    setMessage(pp('pp.first.published'));
+    if (roomEnabled) resolveSubTabsAgain();
+    void load();
+  };
   // Rename, archive and restore. The answer replaces the row in place, so the room, tabs and typed text stay where they are.
   // An archive keeps an Undo for ten seconds; a restore that the cap refuses says so in plain words.
   const archiveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -710,6 +734,7 @@ function ScopedProgrammes({
                   sharedMoneyNote={templatesEnabled && pricingEnabled}
                   projectionsEnabled={projectionsEnabled}
                   termsEnabled={termsEnabled}
+                  decisionsFirst={firstRun}
                   panels={{
                     companies: projectionsEnabled ? (
                       <ProgrammeProjectionPanel
@@ -1192,6 +1217,32 @@ function ScopedProgrammes({
           : 'Participant invitations, private missions, dates, agendas, meetings, fees and costs are not available here yet.'}
     </p>
   );
+  // With the first run on it takes the create form's place. The plain form stays, folded, for a programme that is
+  // to have no public page yet: the original action is kept.
+  const newProgramme = firstRun ? (
+    <>
+      <Suspense fallback={<p role="status">{pp('pp.first.restoring')}</p>}>
+        <FirstRun
+          subject={subject}
+          issuer={issuer}
+          workspaceId={workspaceId}
+          templatesEnabled={templatesEnabled}
+          onPublished={published}
+          onDenied={deny}
+          plain={
+            <details className="first-run-plain">
+              <summary>{pp('pp.first.plain')}</summary>
+              {intro}
+              {createForm}
+            </details>
+          }
+        />
+      </Suspense>
+    </>
+  ) : null;
+  // A workspace with no programme opens on the first run: it is the first tab there, and the list comes second.
+  const startHere =
+    firstRun && status === 'ready' && !next && !rows.some((p) => p.archived !== true);
   // The page's last lines: reload the list, and what programme administration never grants.
   const pageFoot = (
     <>
@@ -1216,6 +1267,10 @@ function ScopedProgrammes({
       </p>
     </>
   );
+  const roomTabs = <T extends { id: string }>(tabs: T[]): T[] =>
+    startHere
+      ? [...tabs.filter((t) => t.id === 'new'), ...tabs.filter((t) => t.id !== 'new')]
+      : tabs;
   if (!visible)
     return (
       <p role="status">Planning details are hidden. Access will be checked when you return.</p>
@@ -1262,14 +1317,14 @@ function ScopedProgrammes({
           {programmeTemplates}
           {programmePricing}
           {morePrograms}
-          {createForm}
+          {newProgramme ?? createForm}
         </>
       )}
       {status === 'ready' && roomEnabled && (
         <SubTabs
           label="Delegation planning"
           className="programme-page-tabs account-compact"
-          tabs={[
+          tabs={roomTabs([
             {
               id: 'programmes',
               label: 'Programmes',
@@ -1305,14 +1360,14 @@ function ScopedProgrammes({
             {
               id: 'new',
               label: realCustomerInput() ? 'New Programme' : 'New Sample Programme',
-              panel: (
+              panel: newProgramme ?? (
                 <>
                   {intro}
                   {createForm}
                 </>
               ),
             },
-          ]}
+          ])}
         />
       )}
       {message && <p role="status">{message}</p>}

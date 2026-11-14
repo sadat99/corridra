@@ -24,7 +24,7 @@ type Props = {
   programmeName: string;
 };
 // What the organiser types. Lists are typed one item per line; the planned programme marks each line.
-type Draft = {
+export type Draft = {
   title: string;
   organiser: string;
   summary: string;
@@ -54,9 +54,9 @@ const lines = (text: string) =>
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean);
-const isoDay = (offsetDays: number) =>
+export const isoDay = (offsetDays: number) =>
   new Date(Date.now() + offsetDays * 86400000).toISOString().slice(0, 10);
-function emptyDraft(name: string): Draft {
+export function emptyDraft(name: string): Draft {
   return {
     title: name,
     organiser: '',
@@ -95,7 +95,7 @@ function draftFrom(copy: PublicCopy, closesAt?: string): Draft {
     closes: later ? closesAt.slice(0, 10) : isoDay(30),
   };
 }
-function copyFrom(draft: Draft): PublicCopy {
+export function copyFrom(draft: Draft): PublicCopy {
   const capacity = Number.parseInt(draft.capacity, 10);
   return {
     title: draft.title.trim(),
@@ -121,7 +121,7 @@ const between = (text: string, min: number, max: number) => {
   return n >= min && n <= max;
 };
 // The first thing wrong with one step, in plain words, or nothing. The database checks all of it again.
-function problem(step: number, draft: Draft, sample: boolean): string {
+export function problem(step: number, draft: Draft, sample: boolean): string {
   const mark = (text: string) => !sample || text.trim().startsWith('Synthetic ');
   if (step === 0) {
     if (!between(draft.title, sample ? 11 : 3, 160)) return pp('pp.edit.problem.title');
@@ -162,6 +162,73 @@ function problem(step: number, draft: Draft, sample: boolean): string {
       return pp('pp.edit.problem.closes');
   }
   return '';
+}
+/** The lines the guided first run asks for (ADR-084 S0). Each is one of the editor's own lines. */
+export type FirstRunLine =
+  | 'title'
+  | 'organiser'
+  | 'summary'
+  | 'destination'
+  | 'dates'
+  | 'focus'
+  | 'audience'
+  | 'eligibility'
+  | 'capacity'
+  | 'fee'
+  | 'closes';
+/** The editor step that holds each of those lines, so both screens judge a line by the same rule. */
+export const lineStep: Record<FirstRunLine, number> = {
+  title: 0,
+  organiser: 0,
+  summary: 0,
+  destination: 1,
+  dates: 1,
+  focus: 1,
+  audience: 2,
+  eligibility: 2,
+  capacity: 2,
+  fee: 4,
+  closes: 5,
+};
+/**
+ * What is wrong with one line, or nothing: the same rules and the same words as `problem`, asked one line at a
+ * time, so a screen that shows the lines in another order (the guided first run) can point at the right one.
+ * `tests/integration/programme-first-run.test.ts` holds the two together.
+ */
+export function lineProblem(key: FirstRunLine, draft: Draft, sample: boolean): string {
+  const mark = (text: string) => !sample || text.trim().startsWith('Synthetic ');
+  switch (key) {
+    case 'title':
+      if (!between(draft.title, sample ? 11 : 3, 160)) return pp('pp.edit.problem.title');
+      return mark(draft.title) ? '' : pp('pp.edit.problem.sample');
+    case 'organiser':
+      if (!between(draft.organiser, sample ? 11 : 2, 160)) return pp('pp.edit.problem.organiser');
+      return mark(draft.organiser) ? '' : pp('pp.edit.problem.sample');
+    case 'summary':
+      return between(draft.summary, 10, 1200) ? '' : pp('pp.edit.problem.summary');
+    case 'destination':
+      return between(draft.destination, 2, 160) ? '' : pp('pp.edit.problem.destination');
+    case 'dates':
+      return between(draft.dates, 2, 160) ? '' : pp('pp.edit.problem.dates');
+    case 'focus':
+      return between(draft.focus, 2, 300) ? '' : pp('pp.edit.problem.focus');
+    case 'audience':
+      return between(draft.audience, 10, 600) ? '' : pp('pp.edit.problem.audience');
+    case 'eligibility':
+      return between(draft.eligibility, 10, 600) ? '' : pp('pp.edit.problem.eligibility');
+    case 'capacity':
+      return draft.capacity.trim() && !/^([1-9][0-9]{0,2}|1000)$/.test(draft.capacity.trim())
+        ? pp('pp.edit.problem.capacity')
+        : '';
+    case 'fee':
+      return draft.fee.trim() && !between(draft.fee, 2, 300) ? pp('pp.edit.problem.fee') : '';
+    case 'closes':
+      return !/^\d{4}-\d{2}-\d{2}$/.test(draft.closes) ||
+        draft.closes < isoDay(1) ||
+        draft.closes > isoDay(179)
+        ? pp('pp.edit.problem.closes')
+        : '';
+  }
 }
 const stateWords: Record<PageView['state'], string> = {
   NONE: pp('pp.state.NONE'),

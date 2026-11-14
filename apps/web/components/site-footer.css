@@ -55,7 +55,7 @@
   max-width: 14ch;
   margin: var(--space-5) 0 var(--space-5);
   font-family: var(--serif);
-  font-size: clamp(1.875rem, 1.2rem + 1.5vw, 2.5rem);
+  font-size: var(--text-h1);
   font-weight: 500;
   line-height: 1.08;
   letter-spacing: -0.01em;
@@ -142,7 +142,7 @@
   margin-inline-start: auto;
   padding-inline-end: var(--space-1);
   font-family: var(--font-mono);
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
   font-weight: 400;
   color: var(--footer-quiet);
 }
@@ -468,7 +468,7 @@
 .guide-footer-compact .guide-footer-promise {
   max-width: none;
   margin-top: var(--space-1);
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
   line-height: 1.2;
 }
 .guide-footer-compact .guide-footer-groups {
@@ -490,7 +490,7 @@
 .guide-footer-trust-fold > summary::after {
   content: '+';
   font-family: var(--font-mono);
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
   color: var(--footer-quiet);
 }
 .guide-footer-trust-fold[open] > summary::after {

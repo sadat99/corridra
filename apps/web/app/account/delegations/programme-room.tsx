@@ -8,20 +8,25 @@ import {
   meetingCoverage,
   programmeChecklist,
   programmeAttention,
+  programmeDecisions,
+  programmeFacts,
   programmeGlance,
   programmeNextStep,
   programmeRoadSteps,
   programmeStage,
   roomGroups,
   roomViewLabels,
+  type ApplicationCounts,
   type BoardingCounts,
   type ChecklistTerms,
+  type DecisionTarget,
   type ProgrammeGlanceSource,
   type RoomGroupKey,
   type RoomLensKey,
 } from '../../../lib/programme-room';
 import { useParticipantView, type ParticipantScope } from './participant-client';
 import { useChecklistTerms } from './programme-checklist';
+import { useApplicationCounts } from './programme-page-client';
 import { useProgrammeGlance } from './programme-projections';
 
 // The Programme Room (Lane 10; the Organise work room, owner-approved mockups of 5 Nov 2026): one programme in
@@ -262,6 +267,143 @@ function Glance({
   );
 }
 
+// The decisions-first Overview (ADR-084 S0, behind CORRIDRA_DELEGATION_FIRST_RUN). The next real decision takes the
+// next-step card's place, with any other decision listed under it; the facts follow as counts out of a total. It
+// reads what the room already reads plus the two application counts of the organiser's own page read.
+const decisionIcon = { page: 'inbox', people: 'people', plan: 'calendar' } as const;
+function Decisions({
+  live,
+  projection,
+  applications,
+  onOpen,
+  onRefresh,
+}: {
+  live: Live;
+  projection: ProgrammeGlanceSource | null;
+  applications: ApplicationCounts | null;
+  onOpen: (target: DecisionTarget) => (() => void) | undefined;
+  onRefresh?: () => void;
+}) {
+  const [first, ...rest] = programmeDecisions(live.counts, projection, applications);
+  const open = onOpen(first!.target);
+  return (
+    <section className="room-next room-decisions" aria-label="Your next decision">
+      <span className="room-next-mark" aria-hidden="true">
+        <CorridraIcon name={decisionIcon[first!.target]} />
+      </span>
+      <span className="room-next-words">
+        <small>Your next decision</small>
+        <b>{first!.title}</b>
+        {!live.counts && live.notice ? <span className="programme-note">{live.notice}</span> : null}
+      </span>
+      <span className="room-next-actions">
+        {open ? (
+          <button type="button" className="button" onClick={open}>
+            {first!.action}
+          </button>
+        ) : null}
+        {onRefresh && (
+          <button type="button" className="text-link programme-refresh" onClick={onRefresh}>
+            Refresh Counts
+          </button>
+        )}
+      </span>
+      {rest.length > 0 ? (
+        <ul className="room-decisions-then" aria-label="Then">
+          {rest.map((item) => {
+            const go = onOpen(item.target);
+            return (
+              <li key={item.key}>
+                <span>{item.title}</span>
+                {go ? (
+                  <button type="button" className="text-link" onClick={go}>
+                    {item.action}
+                  </button>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+    </section>
+  );
+}
+
+// The facts under the decisions: counts out of a total, and the checklist of facts already read, folded.
+function Facts({
+  counts,
+  projection,
+  terms,
+  applications,
+  checklistOn,
+  host,
+}: {
+  counts: BoardingCounts | null;
+  projection: ProgrammeGlanceSource | null;
+  terms: ChecklistTerms | null;
+  applications: ApplicationCounts | null;
+  checklistOn: boolean;
+  host?: (node: HTMLElement | null) => void;
+}) {
+  const tiles = programmeFacts(counts, projection, terms, applications);
+  const coverage = meetingCoverage(projection);
+  // Only facts that were read: a row whose record is not loaded is left out, not called unknown.
+  const checklist = checklistOn
+    ? programmeChecklist(counts, projection, terms).filter((row) => row.known)
+    : [];
+  return (
+    <>
+      <section ref={host} className="programme-card programme-glance-card" aria-label="At a glance">
+        <h5 className="programme-card-title">At a glance</h5>
+        {tiles.length > 0 ? (
+          <dl className="programme-tiles">
+            {tiles.map((tile) => (
+              <div key={tile.key} data-known={tile.known ? undefined : 'false'}>
+                <dt>{tile.label}</dt>
+                <dd>
+                  {tile.value}
+                  {tile.of ? <small> {tile.of}</small> : null}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        ) : (
+          <p className="programme-quiet">No counts yet. They appear here as people are invited.</p>
+        )}
+        {coverage ? <p className="programme-card-note">{coverage}</p> : null}
+        <p className="programme-card-foot">
+          <CorridraIcon name="lock" />
+          Counts only. Participants&apos; quotes, contacts and costs stay private to them.
+        </p>
+      </section>
+      {checklist.length > 0 ? (
+        <details
+          className="programme-card programme-checklist-card"
+          aria-label="Programme checklist"
+        >
+          <summary>
+            <h5 className="programme-card-title">Programme checklist ({checklist.length})</h5>
+          </summary>
+          <dl className="programme-tiles programme-checklist">
+            {checklist.map((row) => (
+              <div key={row.key}>
+                <dt>{row.fact}</dt>
+                <dd>
+                  {row.value}
+                  {row.note ? <small> {row.note}</small> : null}
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <p className="programme-card-note">
+            Facts from this programme&apos;s records. Corridra does not judge whether it is ready.
+          </p>
+        </details>
+      ) : null}
+    </>
+  );
+}
+
 function LiveGlance(props: {
   scope: ParticipantScope;
   counts: BoardingCounts | null;
@@ -269,6 +411,8 @@ function LiveGlance(props: {
   termsOn: boolean;
   onProjection: (projection: ProgrammeGlanceSource | null) => void;
   onOpen: (target: 'people' | 'plan') => (() => void) | undefined;
+  /** Decisions-first: the facts replace the glance and attention cards. */
+  facts?: { applications: ApplicationCounts | null };
 }) {
   const { subject, issuer, workspaceId, programmeId } = props.scope;
   const { host, ...view } = useProgrammeGlance(
@@ -284,15 +428,26 @@ function LiveGlance(props: {
   }, [projection, onProjection]);
   return (
     <>
-      <Glance
-        counts={props.counts}
-        projection={projection}
-        projectionsOn
-        terms={props.terms}
-        termsOn={props.termsOn}
-        onOpen={props.onOpen}
-        host={host}
-      />
+      {props.facts ? (
+        <Facts
+          counts={props.counts}
+          projection={projection}
+          terms={props.terms}
+          applications={props.facts.applications}
+          checklistOn
+          host={host}
+        />
+      ) : (
+        <Glance
+          counts={props.counts}
+          projection={projection}
+          projectionsOn
+          terms={props.terms}
+          termsOn={props.termsOn}
+          onOpen={props.onOpen}
+          host={host}
+        />
+      )}
       {!view.data && view.notice ? <p className="programme-note">{view.notice}</p> : null}
     </>
   );
@@ -356,6 +511,7 @@ export function ProgrammeRoom({
   sharedMoneyNote = false,
   projectionsEnabled = false,
   termsEnabled = false,
+  decisionsFirst = false,
 }: {
   programmeId: string;
   name: string;
@@ -371,6 +527,8 @@ export function ProgrammeRoom({
   projectionsEnabled?: boolean;
   /** True where the terms panel is on: the checklist then reads terms, places and minimum from it. */
   termsEnabled?: boolean;
+  /** ADR-084 S0: the next real decision first and counts out of a total. Off leaves the room as it was. */
+  decisionsFirst?: boolean;
 }) {
   // An old link to one of this programme's sections (#<programme id>-<view>) opens the group that holds it
   // (layout budget L-03); the section is then scrolled to.
@@ -461,6 +619,23 @@ export function ProgrammeRoom({
   const onOpen = (target: 'people' | 'plan') => (panels[target] ? () => choose(target) : undefined);
   const glanceOn = participantsEnabled || projectionsEnabled;
   const registered = live.counts?.complete ? live.counts.registered : null;
+  // Decisions-first reads the page's two application counts where this programme has a public page panel.
+  const decisions = decisionsFirst && participantsEnabled;
+  const applications = useApplicationCounts(scope, decisions && reading && !!parts.page, reads);
+  // A decision about applications opens the group that holds the public page and goes to that section.
+  const [goTo, setGoTo] = useState<{ view: string; turn: number } | null>(null);
+  useEffect(() => {
+    if (goTo) document.getElementById(`${programmeId}-${goTo.view}`)?.scrollIntoView();
+  }, [goTo, programmeId]);
+  const onDecision = (target: DecisionTarget) => {
+    if (target !== 'page') return onOpen(target);
+    return panels.people && parts.page
+      ? () => {
+          choose('people');
+          setGoTo((last) => ({ view: 'page', turn: (last?.turn ?? 0) + 1 }));
+        }
+      : undefined;
+  };
   function choose(key: RoomGroupKey) {
     if (key !== lens) refresh();
     if (key !== lens) setArrived(key);
@@ -483,7 +658,15 @@ export function ProgrammeRoom({
         </div>
       </header>
       {reading ? <LiveStatus key={reads} scope={scope} onRead={onRead} /> : null}
-      {participantsEnabled ? (
+      {decisions ? (
+        <Decisions
+          live={live}
+          projection={projection}
+          applications={applications}
+          onOpen={onDecision}
+          onRefresh={reading ? refresh : undefined}
+        />
+      ) : participantsEnabled ? (
         <NextStep live={live} onOpen={onOpen} onRefresh={reading ? refresh : undefined} />
       ) : (
         // Without the participants panel there is nothing to read or do next, so the room says only that.
@@ -544,6 +727,15 @@ export function ProgrammeRoom({
                     termsOn={termsOn}
                     onProjection={onProjection}
                     onOpen={onOpen}
+                    facts={decisions ? { applications } : undefined}
+                  />
+                ) : decisions ? (
+                  <Facts
+                    counts={live.counts}
+                    projection={null}
+                    terms={terms}
+                    applications={applications}
+                    checklistOn={termsOn}
                   />
                 ) : (
                   <Glance

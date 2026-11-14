@@ -45,7 +45,7 @@
 .ux-segment:has(input:checked) {
   background: var(--selected-surface);
   color: var(--brand-deep);
-  font-weight: 650;
+  font-weight: 600;
 }
 .ux-segment:has(input:focus-visible) {
   outline: 3px solid var(--focus);

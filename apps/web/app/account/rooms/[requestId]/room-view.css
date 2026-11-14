@@ -10,7 +10,7 @@
 }
 .room-head h2 {
   margin: 0;
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
   line-height: 1.25;
   overflow-wrap: anywhere;
 }

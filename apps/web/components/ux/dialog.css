@@ -21,7 +21,7 @@
 }
 .ux-dialog-head h2 {
   margin: 0;
-  font-size: var(--text-lg, 1.25rem);
+  font-size: var(--text-lg);
 }
 .ux-dialog-close {
   min-height: 44px;

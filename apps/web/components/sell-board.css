@@ -35,8 +35,8 @@
 }
 .sellb :is(.sellb-funnel, .sellb-outreach) > div > dd {
   margin: 0;
-  font-size: var(--text-xl);
-  font-weight: 650;
+  font-size: var(--text-2xl);
+  font-weight: 600;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
 }

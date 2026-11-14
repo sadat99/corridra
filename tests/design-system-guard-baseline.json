@@ -2,5 +2,16 @@
   "rawColourInTypeScript": {},
   "textTransformOnActions": {},
   "inlineStyle": {},
-  "signedInPagesOutsideShell": []
+  "signedInPagesOutsideShell": [],
+  "fontWeightOffScale": {
+    "apps/web/app/account/delegations/programme-room.css": 3,
+    "apps/web/app/operator/view-as/view-as.css": 1
+  },
+  "rawFontSize": {
+    "apps/web/app/account/delegations/programme-room.css": 1,
+    "apps/web/app/operator/operator-overview.css": 8
+  },
+  "radiusOffScale": {
+    "apps/web/app/account/delegations/programme-room.css": 2
+  }
 }

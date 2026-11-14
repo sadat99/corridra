@@ -18,7 +18,7 @@
 }
 .ux-co-table tbody th {
   color: var(--ink);
-  font: 650 var(--text-base) var(--font-ui);
+  font: 600 var(--text-base) var(--font-ui);
   letter-spacing: normal;
   text-transform: none;
 }
