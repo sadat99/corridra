@@ -15,8 +15,8 @@ export const dynamic = 'force-dynamic';
 
 // The printable flyer of a public programme page (ADR-084 S1). It uses the published words only: title, where, when, who it
 // is for, the fee line only exactly as the organiser wrote it (or none), the QR code of the page address and the sentence
-// that the organiser states all of it. Nothing is converted, totalled or added. An address that is not a readable page, and
-// the share kit switched off, are not found.
+// that the organiser states all of it. Nothing is converted, totalled or added. A page that is closed says so, in the page's
+// own words, and invites no application. An address that is not a readable page, and the share kit switched off, are not found.
 export async function generateMetadata({
   params,
 }: {
@@ -37,6 +37,7 @@ export default async function Page({ params }: { params: Promise<{ address: stri
   if (!found) notFound();
   const { page, origin } = found;
   const p = page.programme;
+  const open = page.state === 'OPEN';
   const url = `${origin}/delegations/${page.address}`;
   return (
     <WorkspaceShell
@@ -72,7 +73,8 @@ export default async function Page({ params }: { params: Promise<{ address: stri
         </dl>
         <div className="programme-flyer-code">
           <QrCode text={url} label={pp('pp.kit.qr.label', { title: p.title })} />
-          <p>{pp('pp.flyer.scan')}</p>
+          {!open && <p className="programme-public-note">{pp('pp.public.apply.closedTitle')}</p>}
+          <p>{open ? pp('pp.flyer.scan') : pp('pp.flyer.scanClosed')}</p>
           <p className="programme-flyer-address">
             <span>{pp('pp.flyer.addressLabel')}</span> {url}
           </p>

@@ -22,15 +22,20 @@ const { QrCode } = (await loadTsx('app/delegations/[address]/qr-code.tsx')) as {
   QrCode: unknown;
 };
 const { previewImage } = (await loadTsx('lib/programme-preview-image.tsx')) as {
-  previewImage: (input: {
-    title: string;
-    destination: string;
-    dates: string;
-    organiser: string;
-    sample: boolean;
-    mark: string | null;
-  }) => unknown;
+  previewImage: (
+    input: {
+      title: string;
+      destination: string;
+      dates: string;
+      organiser: string;
+      sample: boolean;
+      mark: string | null;
+    },
+    covers: (codePoint: number) => boolean,
+  ) => unknown;
 };
+// Any ASCII letter, digit and punctuation: what the bundled font certainly draws (the font itself is proven in the preview test).
+const ascii = (codePoint: number) => codePoint >= 0x20 && codePoint < 0x7f;
 const read = (path: string) => readFileSync(path, 'utf8');
 const address = 'synthetic-china-agricultural-machinery-delegation-k3x9q2m7ab';
 const urls = [
@@ -153,7 +158,9 @@ describe('the calendar file', () => {
         'CALSCALE:GREGORIAN',
         'METHOD:PUBLISH',
         'BEGIN:VEVENT',
-        `UID:${address}-v2@www.example.invalid`,
+        // The event belongs to the page, not to a version; SEQUENCE is the published version.
+        `UID:${address}@www.example.invalid`,
+        'SEQUENCE:2',
         'DTSTAMP:20261114T093015Z',
         'DTSTART;VALUE=DATE:20270412',
         'DTEND;VALUE=DATE:20270419',
@@ -198,13 +205,57 @@ describe('the calendar file', () => {
   });
 
   it('escapes text values and folds long lines at 75 octets without splitting a character', () => {
-    expect(icsText('a;b,c\\d\ne')).toBe('a\;b\\,c\\\\d\\ne');
+    expect(icsText('a;b,c\\d\ne')).toBe('a\\;b\\,c\\\\d\\ne');
     const folded = foldLine('SUMMARY:' + '中'.repeat(40));
     for (const part of folded.split('\r\n'))
       expect(new TextEncoder().encode(part).length).toBeLessThanOrEqual(75);
     expect(folded.replace(/\r\n /g, '')).toBe('SUMMARY:' + '中'.repeat(40));
     const injected = programmeCalendar({ ...sample, title: 'Title\r\nATTENDEE:mailto:x@y.z' })!;
     expect(injected).not.toMatch(/^ATTENDEE/m);
+  });
+
+  it('escapes a semicolon in the title and the destination, so a calendar reads them as text, not as a value separator', () => {
+    const file = programmeCalendar({
+      ...sample,
+      title: 'Machinery; farms and mills',
+      destination: 'Guangzhou; Foshan, China',
+    })!.replace(/\r\n /g, '');
+    expect(file).toContain('SUMMARY:Machinery\\; farms and mills\r\n');
+    expect(file).toContain('LOCATION:Guangzhou\\; Foshan\\, China\r\n');
+    // No semicolon is left unescaped in a text value.
+    for (const line of file.split('\r\n').filter((l) => /^(SUMMARY|LOCATION|DESCRIPTION):/.test(l)))
+      expect(line.replace(/\\\\|\\;/g, ''), line).not.toContain(';');
+  });
+
+  it('turns the Unicode line separators U+2028, U+2029 and U+0085 into a space, so no calendar splits a line there', () => {
+    expect(icsText('a\u2028b\u2029c\u0085d')).toBe('a b c d');
+    const file = programmeCalendar({
+      ...sample,
+      title: 'Title\u2028ATTENDEE:mailto:x@y.z',
+      destination: 'Place\u2029SEQUENCE:99\u0085X',
+    })!;
+    expect(file).not.toMatch(/[\u2028\u2029\u0085]/);
+    expect(file).not.toMatch(/^(ATTENDEE|SEQUENCE:99)/m);
+    expect(file).toContain('SUMMARY:Title ATTENDEE:mailto:x@y.z');
+    expect(file.match(/^SEQUENCE:/gm)).toHaveLength(1);
+  });
+
+  it('keeps one event id for the page and counts the published version, so a republish updates the event in a calendar', () => {
+    const first = programmeCalendar({ ...sample, version: 1 })!;
+    const third = programmeCalendar({
+      ...sample,
+      version: 3,
+      publishedAt: '2026-12-01T10:00:00.000Z',
+    })!;
+    const line = (file: string, name: string) =>
+      file
+        .replace(/\r\n /g, '')
+        .split('\r\n')
+        .find((l) => l.startsWith(name));
+    expect(line(first, 'UID:')).toBe(`UID:${address}@www.example.invalid`);
+    expect(line(third, 'UID:')).toBe(line(first, 'UID:'));
+    expect(line(first, 'SEQUENCE:')).toBe('SEQUENCE:1');
+    expect(line(third, 'SEQUENCE:')).toBe('SEQUENCE:3');
   });
 });
 
@@ -226,13 +277,13 @@ describe('the preview image', () => {
     mark: null,
   };
   it('says only the published title, where, when and organiser', () => {
-    const all = texts(previewImage(input)).join(' | ');
+    const all = texts(previewImage(input, ascii)).join(' | ');
     for (const word of [input.title, input.destination, input.dates, input.organiser])
       expect(all).toContain(word);
     expect(all).not.toMatch(/sample/i);
   });
   it('says Sample, in the page words, for a sample workspace', () => {
-    expect(texts(previewImage({ ...input, sample: true })).join(' ')).toContain('SAMPLE');
+    expect(texts(previewImage({ ...input, sample: true }, ascii)).join(' ')).toContain('SAMPLE');
   });
   it('has no input that could carry a fee, price, place count, person or payment', () => {
     expect(Object.keys(input).sort()).toEqual(
@@ -240,8 +291,25 @@ describe('the preview image', () => {
     );
   });
   it('clips a very long title instead of overflowing', () => {
-    const long = texts(previewImage({ ...input, title: 'x'.repeat(160) })).join('');
+    const long = texts(previewImage({ ...input, title: 'x'.repeat(160) }, ascii)).join('');
     expect(long).toContain('…');
+  });
+  it('draws only what the font can draw: other letters and emoji are removed, and an emptied title is the word Programme', () => {
+    const all = texts(
+      previewImage(
+        {
+          ...input,
+          title: 'Trip \u{1F680} \u4E2D\u6587 \u09AC\u09BE\u0982\u09B2\u09BE',
+          destination: '\u4E2D\u6587',
+        },
+        ascii,
+      ),
+    ).join(' | ');
+    expect(all).toContain('Trip');
+    expect(all).not.toMatch(/[^\x20-\x7e\u00b7\u2026]/);
+    expect(all).not.toContain('Where');
+    const bare = texts(previewImage({ ...input, title: '\u{1F680}\u{1F680}' }, ascii)).join(' | ');
+    expect(bare).toContain('Programme');
   });
 });
 
@@ -278,11 +346,8 @@ describe('the editor and the calendar days', () => {
     expect(Object.keys(published)).not.toContain('endsOn');
     expect(JSON.stringify(published)).not.toContain('2027-04-1');
   });
-  it('starts with no days, and shows the fields only where the server says the kit is on', () => {
+  it('starts with no days; whether the fields show and whether the days are sent is proven in the browser spec (programme-pages-ui.spec.ts)', () => {
     const empty = emptyDraft('Synthetic delegation');
     expect([empty.startsOn, empty.endsOn]).toEqual(['', '']);
-    const source = read('apps/web/app/account/delegations/programme-page.tsx');
-    expect(source).toMatch(/view\.shareKit &&/);
-    expect(source).toContain("action: 'schedule'");
   });
 });

@@ -22,9 +22,7 @@ export type PublishedPage = {
  * archived, long closed, the switch off) answers null, the single value the page answers, so no route can tell those
  * apart. The dates are asked for only after the page itself was readable, and only while the share kit is on.
  */
-export const readPublishedPage = cache(async function readPublishedPage(
-  address: string,
-): Promise<PublishedPage | null> {
+async function load(address: string): Promise<PublishedPage | null> {
   if (!customerProgrammePagesEnabled()) return null;
   const s = foundations();
   if (!s) return null;
@@ -36,7 +34,17 @@ export const readPublishedPage = cache(async function readPublishedPage(
   // Two reads: use the dates only if they belong to the version of the page just read.
   const schedule = stated && stated.version === page.version ? stated : null;
   return { page, origin: s.config.APP_ORIGIN, kit, schedule };
-});
+}
+// One read per request while the kit is on, so the page, its metadata and the kit routes do not each ask the database.
+const loadOnce = cache(load);
+
+/**
+ * With the share kit off this is exactly the page's own read as it was before the kit: every call reads on its own, so a
+ * read that fails for the metadata is not reused for the page. Only with the kit on are the reads of one request shared.
+ */
+export function readPublishedPage(address: string): Promise<PublishedPage | null> {
+  return customerProgrammeShareKitEnabled() ? loadOnce(address) : load(address);
+}
 
 /** The same read for a share kit route: null as well while the share kit is off, so those routes do not exist then. */
 export async function readShareKitPage(address: string): Promise<PublishedPage | null> {

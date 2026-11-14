@@ -40,7 +40,7 @@ test.beforeAll(async () => {
         <main id="main" className="operator-page ux-workspace programme-page">
           <h1>{page.programme.title}</h1>
           {q.get('qr')==='1'?<QrCode text={url} label="QR code that opens the page"/>:<ProgrammePageView page={page} url={url}
-            shareKit={q.get('kit')==='1'?shareKitParts({address:page.address,url,title:page.programme.title,calendar:q.get('days')==='1'}):undefined}/>}
+            shareKit={q.get('kit')==='1'?shareKitParts({address:page.address,calendar:q.get('days')==='1'}):undefined}/>}
         </main>);`,
       loader: 'tsx',
       resolveDir: resolve('apps/web'),
@@ -192,6 +192,35 @@ for (const [name, width, tall] of widths) {
       );
     });
 
+    test('Escape closes the More actions, from the button or from an action inside them, returns focus to the button and does not move the page', async ({
+      page,
+    }) => {
+      await open(page, 'kit=1&days=1');
+      const closedHeight = await height(page);
+      const more = page.getByRole('button', { name: 'More ways to share' });
+      const flyer = page.getByRole('link', { name: 'Open Flyer' });
+      // Closed: Escape does nothing.
+      await more.focus();
+      await page.keyboard.press('Escape');
+      await expect(more).toHaveAttribute('aria-expanded', 'false');
+      await expect(more).toBeFocused();
+      // Open, focus on the button.
+      await page.keyboard.press('Enter');
+      await expect(more).toHaveAttribute('aria-expanded', 'true');
+      await page.keyboard.press('Escape');
+      await expect(more).toHaveAttribute('aria-expanded', 'false');
+      await expect(flyer).toBeHidden();
+      await expect(more).toBeFocused();
+      // Open, focus on an action inside.
+      await page.keyboard.press('Enter');
+      await flyer.focus();
+      await expect(flyer).toBeFocused();
+      await page.keyboard.press('Escape');
+      await expect(more).toHaveAttribute('aria-expanded', 'false');
+      await expect(more).toBeFocused();
+      expect(await height(page)).toBe(closedHeight);
+    });
+
     test('every share action is at least 44 px high up to 768 px, the page does not scroll sideways and axe is clean', async ({
       page,
     }) => {
@@ -218,6 +247,35 @@ for (const [name, width, tall] of widths) {
     });
   });
 }
+
+// The attribution is a link inside a sentence. It keeps a 44 px target on every line it covers without adding height: the
+// band is the link's own vertical padding, measured here by asking the browser which element is at each point of it.
+for (const width of [320, 390, 768, 1440])
+  test(`the attribution link is a 44 px target on every line it covers, at ${width}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await open(page, 'kit=1&days=0');
+    await page.locator('.programme-kit-attribution').scrollIntoViewIfNeeded();
+    const lines = await page.evaluate(() => {
+      const link = document.querySelector('.programme-kit-attribution')!;
+      return Array.from(link.getClientRects()).map((box) => {
+        const misses: string[] = [];
+        for (const x of [box.left + 2, box.left + box.width / 2, box.right - 2])
+          for (let y = box.top + 1; y < box.bottom; y += 2) {
+            const hit = document.elementFromPoint(x, y);
+            if (!hit || !(hit === link || link.contains(hit)))
+              misses.push(`${Math.round(x)},${Math.round(y)} ${hit?.tagName}`);
+          }
+        return { height: box.height, misses };
+      });
+    });
+    expect(lines.length).toBeGreaterThan(0);
+    for (const line of lines) {
+      expect(line.height).toBeGreaterThanOrEqual(44);
+      expect(line.misses).toEqual([]);
+    }
+  });
 
 test('the QR code on the flyer is a picture that scans back to the page address, and loads nothing', async ({
   page,

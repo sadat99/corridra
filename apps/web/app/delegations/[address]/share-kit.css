@@ -7,18 +7,16 @@
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
 }
-/* The attribution sits inside a sentence and adds no height. Its touch area is a 44 px tall band around the text that takes
-   no room, so a finger finds it on a phone. */
+/* The attribution sits inside a sentence and adds no height. Its touch area is at least 44 px tall on every line the link
+   covers: vertical padding on an inline link is part of its box, so it is hit-tested and follows the link when it wraps,
+   and, unlike a block's, it never changes the height of the line. The link is positioned so that its band, which overlaps
+   the lines above and below, wins the tap over the sentence around it. Measured with elementFromPoint at 320, 390, 768 and
+   1440 px in tests/operator/delegation-share-kit.spec.ts. */
 .programme-kit-attribution {
   position: relative;
+  padding-block: 1rem;
   text-decoration: underline;
   text-underline-offset: 3px;
-}
-.programme-kit-attribution::after {
-  content: '';
-  position: absolute;
-  inset-block: -0.75rem;
-  inset-inline: -0.25rem;
 }
 /* The kit's actions stay out of the page until the person opens them. A flex row would otherwise override `hidden`. */
 .programme-public-share [hidden] {

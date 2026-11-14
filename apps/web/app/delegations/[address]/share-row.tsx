@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { pp } from '../../../lib/i18n/programme-pages';
 import type { ShareKitParts } from './share-kit';
 
@@ -9,6 +9,7 @@ import type { ShareKitParts } from './share-kit';
 export function ShareRow({ url, title, kit }: { url: string; title: string; kit?: ShareKitParts }) {
   const [copied, setCopied] = useState<'idle' | 'done' | 'failed'>('idle');
   const [showMore, setShowMore] = useState(false);
+  const moreButton = useRef<HTMLButtonElement>(null);
   const text = encodeURIComponent(`${title} ${url}`);
   async function copy() {
     try {
@@ -19,7 +20,18 @@ export function ShareRow({ url, title, kit }: { url: string; title: string; kit?
     }
   }
   return (
-    <section className="programme-public-share" aria-labelledby="programme-share-title">
+    <section
+      className="programme-public-share"
+      aria-labelledby="programme-share-title"
+      onKeyDown={(event) => {
+        // Escape closes the kit's actions from the button or from any action inside them, and puts focus back on the button.
+        if (event.key === 'Escape' && showMore) {
+          event.stopPropagation();
+          setShowMore(false);
+          moreButton.current?.focus();
+        }
+      }}
+    >
       <h2 id="programme-share-title">{pp('pp.share.title')}</h2>
       <div className="guide-actions-row">
         <button type="button" className="text-link" onClick={() => void copy()}>
@@ -43,6 +55,7 @@ export function ShareRow({ url, title, kit }: { url: string; title: string; kit?
         </a>
         {kit && (
           <button
+            ref={moreButton}
             type="button"
             className="text-link"
             aria-label={pp('pp.kit.moreLabel')}

@@ -73,10 +73,14 @@ export const programmePagesWords = {
   'pp.kit.moreLabel': 'More ways to share',
   'pp.kit.qr.label': 'QR code that opens {title}',
   'pp.kit.attribution': 'Page made with Corridra Programmes',
+  // The word on the preview picture when the title has no letters the picture can draw
+  'pp.kit.preview.untitled': 'Programme',
   'pp.flyer.title': 'Flyer for {title}',
   'pp.flyer.print': 'Print Flyer',
   'pp.flyer.back': 'Back to the Page',
   'pp.flyer.scan': 'Scan to read the page and apply.',
+  // A closed page keeps its flyer, which invites no application (the page itself says "Applications are closed")
+  'pp.flyer.scanClosed': 'Scan to read the page.',
   'pp.flyer.addressLabel': 'Page address',
   'pp.flyer.stated':
     'Everything on this flyer is stated by the organiser. Corridra has not checked these details and is not the travel operator.',

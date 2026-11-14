@@ -18,8 +18,11 @@ const nextConfig: NextConfig = {
   ],
   outputFileTracingIncludes: {
     '/api/delivery': ['../../packages/delivery/assets/*.ttf'],
-    // The preview image of a programme page (ADR-084 S1) draws the owned reversed orb file.
-    '/delegations/[address]/preview-image': ['./public/brand/corridra-orb-reversed.svg'],
+    // The preview image of a programme page (ADR-084 S1) draws the owned reversed orb file with the one bundled font.
+    '/delegations/[address]/preview-image': [
+      './public/brand/corridra-orb-reversed.svg',
+      '../../packages/delivery/assets/NotoSans.ttf',
+    ],
   },
   async headers() {
     const isDevelopment = process.env.NODE_ENV === 'development';
