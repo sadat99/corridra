@@ -1,6 +1,7 @@
 import { DomainError } from '@corridra/domain';
 import {
   customerProgrammePagesEnabled,
+  customerProgrammeShareKitEnabled,
   programmeApplicationInput,
   programmePublicationInput,
   programmePublicationRefusal,
@@ -56,10 +57,19 @@ export async function GET(request: Request) {
       return Response.json(await s.customerProgrammePages.own(input, ...who), {
         headers: deliveryHeaders,
       });
-    if (view === 'page')
-      return Response.json(await s.customerProgrammePages.view(input, ...who), {
-        headers: deliveryHeaders,
-      });
+    if (view === 'page') {
+      const page = await s.customerProgrammePages.view(input, ...who);
+      // With the share kit on, the organiser also reads the dates already stated for the version that is live, so the
+      // editor can offer them again. They come from the same read the public page uses, so no new door opens.
+      if (!customerProgrammeShareKitEnabled())
+        return Response.json(page, { headers: deliveryHeaders });
+      const live = page.state === 'OPEN' || page.state === 'CLOSED';
+      const schedule =
+        live && typeof page.address === 'string'
+          ? await s.programmePageReader.schedule(page.address)
+          : null;
+      return Response.json({ ...page, shareKit: true, schedule }, { headers: deliveryHeaders });
+    }
     if (view === 'applications')
       return Response.json(await s.customerProgrammePages.applications(input, ...who), {
         headers: deliveryHeaders,
@@ -87,14 +97,18 @@ export async function POST(request: Request) {
         : '';
     const { kind: _kind, ...rest } = (input ?? {}) as Record<string, unknown>;
     void _kind;
-    if (kind === 'page')
+    if (kind === 'page') {
+      const parsed = programmePublicationInput.parse(rest);
+      // Stating the dates of a version belongs to the share kit: with its switch off the action answers unavailable.
+      if (parsed.action === 'schedule' && !customerProgrammeShareKitEnabled())
+        throw new DomainError(off, 503);
       return Response.json(
-        await s.customerProgrammePages.publication(
-          programmePublicationInput.parse(rest),
-          ...context(request),
-        ),
-        { headers: deliveryHeaders },
+        await s.customerProgrammePages.publication(parsed, ...context(request)),
+        {
+          headers: deliveryHeaders,
+        },
       );
+    }
     if (kind === 'application')
       return Response.json(
         await s.customerProgrammePages.application(

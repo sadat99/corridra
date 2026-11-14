@@ -595,6 +595,13 @@ export const switchRegistry: SwitchEntry[] = [
     kind: 'flag',
   },
   {
+    name: 'CORRIDRA_PROGRAMME_SHARE_KIT',
+    label: 'Programme page share kit',
+    line: 'Adds a preview image, a QR code, a printable flyer and a calendar file to a public programme page, and a quiet line saying the page was made with Corridra Programmes. They use only the words the organiser published and the start and end days the organiser chose to state. Corridra sends nothing, records no visits and makes the QR code on its own server. Needs public programme pages on and the programme pages database module installed. With it off the page is as it was.',
+    group: 'Programmes and delegations',
+    kind: 'flag',
+  },
+  {
     name: 'CORRIDRA_UX_FAIRS',
     label: 'Fair pages and Countdown',
     line: 'Fair pages with dates the Corridra team has checked, and the days to each date. The list stays empty until a checked entry is added.',
