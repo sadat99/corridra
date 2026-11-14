@@ -1,13 +1,19 @@
 'use client';
-// Pocket (phone), UI/UX.v3 "Pocket (phone)": one floating button on signed-in customer pages that says the next thing
-// to do (lib/ux/next-move.ts) and opens it on a tap. Press, slide up and release on a row of the list chooses it; the
-// visible More button opens the same list for people who tap or use a keyboard. The list holds New Request, Continue
-// Draft (only when a draft exists), Meetings, Search and Get Help, and Get Help is the whole existing help content
-// (customerHelpGroups, the same rows the header Help menu draws), so nothing that left the phone header is lost.
+// Pocket (phone), UI/UX.v3 "Pocket (phone)": ONE round "+" button in the end corner of signed-in customer pages (owner,
+// 14 November 2026: "i asked for one +, u got me two buttons ... why cant u put just + with all these option, including
+// New Request in blue"). A tap, Enter or Space opens one compact list above it; the plus turns into a close mark while
+// it is open. Press, slide up and release on a row of the list chooses it too, but nothing needs the gesture.
 //
-// It reads nothing of its own: the signals come from the sidebar's work list through the shell, streamed, so the button
-// is drawn at once as New Request and its words upgrade when the signals arrive. Every destination is an existing page
-// that still checks on the server. Drawn on phones only (the stylesheet), never on a form step (lib/ux/pocket-pages.ts).
+// The list, in this order: the Next Move first and in the primary cobalt (lib/ux/next-move.ts: Review N Quotes, Finish
+// Your Draft or New Request), then Get Help (the whole existing help content, customerHelpGroups, the same rows the header
+// Help menu draws), Search, Meetings, Continue Draft (only when a draft exists and it is not already the Next Move) and
+// New Request (only when it is not already the Next Move), so no row is ever drawn twice. The first row is the one
+// nearest the thumb, and the first in reading and Tab order.
+//
+// It reads nothing of its own: the signals come from the sidebar's work list through the shell, streamed, so the list
+// is drawn at once with New Request first and its words upgrade when the signals arrive. Every destination is an
+// existing page that still checks on the server. Drawn on phones only (the stylesheet), never on a form step
+// (lib/ux/pocket-pages.ts). Nothing here commits money, a permission or personal data, and no gesture is the only way in.
 import './pocket-button.css';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -41,6 +47,10 @@ type Row = {
   href?: string;
   /** For a row that is an action, not a page. */
   run?: () => void;
+  /** The Next Move: first, and drawn in the primary cobalt. */
+  primary?: boolean;
+  /** A small count after the words, only above zero; read aloud as "N waiting". */
+  badge?: string | null;
 };
 
 /** True when the document is scrolled to its end, where the button gives way so the last row is never covered. */
@@ -104,12 +114,12 @@ function PocketView({
   const [view, setView] = useState<'list' | 'help'>('list');
   const [hot, setHot] = useState(-1);
   const root = useRef<HTMLDivElement>(null);
-  const main = useRef<HTMLAnchorElement>(null);
-  const more = useRef<HTMLButtonElement>(null);
+  const plus = useRef<HTMLButtonElement>(null);
   const list = useRef<HTMLUListElement>(null);
   const help = useRef<HTMLDivElement>(null);
   const press = useRef<{ y: number; slid: boolean; hot: number } | null>(null);
   const suppressUntil = useRef(0);
+  const focusFirst = useRef(false);
   const listId = `pocket-list-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
 
   const scrolledAway = useScrollHide(true);
@@ -117,7 +127,17 @@ function PocketView({
   const helpGroups = useCustomerHelpGroups(whatsappHref);
   const listen = useListen();
 
+  // The Next Move is the first row. Continue Draft and New Request are listed only when the Next Move is not already
+  // that same thing, so neither is ever drawn twice.
   const rows: Row[] = [
+    {
+      key: 'move',
+      label: move.label,
+      icon: move.icon,
+      href: move.href,
+      primary: true,
+      badge: move.badge,
+    },
     { key: 'help', label: 'Get Help', icon: 'help', run: () => setView('help') },
     {
       key: 'search',
@@ -126,23 +146,26 @@ function PocketView({
       run: () => window.dispatchEvent(new Event(openSearchEvent)),
     },
     { key: 'meetings', label: 'Meetings', icon: 'calendar', href: '/account/meetings' },
-    ...(read?.drafts.href
+    ...(read?.drafts.href && move.key !== 'draft'
       ? [{ key: 'draft', label: 'Continue Draft', icon: 'draft', href: read.drafts.href }]
       : []),
-    {
-      key: 'new',
-      label: 'New Request',
-      icon: 'draft',
-      href: newRequestHref(read?.hasWorkspace ?? false),
-    },
+    ...(move.key !== 'new'
+      ? [
+          {
+            key: 'new',
+            label: 'New Request',
+            icon: 'draft',
+            href: newRequestHref(read?.hasWorkspace ?? false),
+          },
+        ]
+      : []),
   ];
 
-  const close = useCallback((returnFocus: 'more' | 'main' | null) => {
+  const close = useCallback((returnFocus: boolean) => {
     setOpen(false);
     setView('list');
     setHot(-1);
-    if (returnFocus === 'more') more.current?.focus();
-    if (returnFocus === 'main') main.current?.focus();
+    if (returnFocus) plus.current?.focus();
   }, []);
 
   // While a slide is in progress no text is selected and no long press menu opens.
@@ -156,10 +179,27 @@ function PocketView({
     return () => el.removeEventListener('selectstart', guard);
   }, []);
 
-  // Choosing a page from the list closes it with the page; the help panel takes focus when it opens.
+  // Escape closes the list and puts focus back on the plus, wherever focus is.
   useEffect(() => {
-    if (open && view === 'help')
+    if (!open) return;
+    const onKey = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.stopPropagation();
+      close(true);
+    };
+    document.addEventListener('keydown', onKey, true);
+    return () => document.removeEventListener('keydown', onKey, true);
+  }, [open, close]);
+
+  // Opened with the keyboard: focus goes to the first row. The help panel takes focus when it opens.
+  useEffect(() => {
+    if (!open) return;
+    if (view === 'help') {
       help.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+    } else if (focusFirst.current) {
+      focusFirst.current = false;
+      list.current?.querySelector<HTMLElement>('[data-pocket-row]')?.focus();
+    }
   }, [open, view]);
 
   const rowAt = useCallback((y: number) => {
@@ -172,16 +212,16 @@ function PocketView({
     return found;
   }, []);
 
-  function onPointerDown(event: ReactPointerEvent<HTMLAnchorElement>) {
+  function onPointerDown(event: ReactPointerEvent<HTMLButtonElement>) {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     press.current = { y: event.clientY, slid: false, hot: -1 };
     try {
       event.currentTarget.setPointerCapture(event.pointerId);
     } catch {
-      // A browser that cannot capture still gets the tap and the More button.
+      // A browser that cannot capture still gets the tap and the keyboard.
     }
   }
-  function onPointerMove(event: ReactPointerEvent<HTMLAnchorElement>) {
+  function onPointerMove(event: ReactPointerEvent<HTMLButtonElement>) {
     const current = press.current;
     if (!current) return;
     if (!current.slid && current.y - event.clientY > slideThreshold) {
@@ -194,7 +234,7 @@ function PocketView({
       setHot(current.hot);
     }
   }
-  function onPointerUp(event: ReactPointerEvent<HTMLAnchorElement>) {
+  function onPointerUp(event: ReactPointerEvent<HTMLButtonElement>) {
     const current = press.current;
     press.current = null;
     try {
@@ -203,40 +243,51 @@ function PocketView({
       // Already released.
     }
     if (!current?.slid) return;
-    // A slide never runs the Next Move: the click that follows the release is cancelled.
+    // A slide never also toggles the plus: the click that follows the release is cancelled.
     suppressUntil.current = performance.now() + 400;
     const chosen = list.current?.querySelectorAll<HTMLElement>('[data-pocket-row]')[current.hot];
     setHot(-1);
     if (chosen) chosen.click();
-    else close(null);
+    else close(false);
   }
   function onPointerCancel() {
     press.current = null;
-    close(null);
+    close(false);
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.key === 'Escape' && open) {
-      event.stopPropagation();
-      close('more');
-    } else if (
-      event.key === 'Tab' &&
-      open &&
-      !event.shiftKey &&
-      document.activeElement === main.current
-    ) {
-      // The button is the last stop of the group: tabbing on leaves it, so the list goes too.
-      close(null);
-    }
+    if (event.key !== 'Tab' || !open) return;
+    // Tabbing off either end of the group (the plus, the last row) leaves it, so the list goes too. The browser gives
+    // the blur no target when focus leaves the page itself, so the end is decided here.
+    const stops = [
+      ...(root.current?.querySelectorAll<HTMLElement>(
+        'button:not([tabindex="-1"]), a[href]:not([tabindex="-1"]), [role="menuitem"]:not([tabindex="-1"]), [role="menuitemcheckbox"], [role="menuitemradio"]',
+      ) ?? []),
+    ].filter((item) => item.offsetParent !== null);
+    const edge = event.shiftKey ? stops[0] : stops[stops.length - 1];
+    if (edge && document.activeElement === edge) close(false);
   }
+
   function onBlur(event: FocusEvent<HTMLDivElement>) {
-    // Tabbing out of the button, the list and the help panel closes the list. A press with no focus target (Safari does
+    // Tabbing out of the plus, the list and the help panel closes the list. A press with no focus target (Safari does
     // not focus a tapped link) is the scrim's to handle, so the list is never torn down under a tap.
     const next = event.relatedTarget as Node | null;
-    if (open && next && !event.currentTarget.contains(next)) close(null);
+    if (open && next && !event.currentTarget.contains(next)) close(false);
   }
 
   const hidden = (scrolledAway || atEnd) && !open;
+  const rowBody = (row: Row) => (
+    <>
+      <CorridraIcon name={row.icon} />
+      <span className="ux-pocket-label">{row.label}</span>
+      {row.badge ? (
+        <span className="ux-pocket-badge" aria-hidden="true">
+          {row.badge}
+        </span>
+      ) : null}
+      {row.badge ? <span className="sr-only">, {row.badge} waiting</span> : null}
+    </>
+  );
   return (
     <div
       ref={root}
@@ -247,11 +298,40 @@ function PocketView({
       onBlur={onBlur}
     >
       {open ? (
-        <div className="ux-pocket-scrim" aria-hidden="true" onClick={() => close(null)} />
+        <div className="ux-pocket-scrim" aria-hidden="true" onClick={() => close(true)} />
       ) : null}
+      <button
+        ref={plus}
+        type="button"
+        className="ux-pocket-plus"
+        aria-label={open ? 'Close Quick Menu' : 'Open Quick Menu'}
+        aria-expanded={open}
+        aria-controls={open ? listId : undefined}
+        draggable={false}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
+        onContextMenu={(event) => event.preventDefault()}
+        onClick={(event) => {
+          if (performance.now() < suppressUntil.current) {
+            event.preventDefault();
+            return;
+          }
+          if (open) close(true);
+          else {
+            // Enter and Space arrive as a click with no pointer: focus then goes into the list.
+            focusFirst.current = event.detail === 0;
+            setView('list');
+            setOpen(true);
+          }
+        }}
+      >
+        <CorridraIcon name={open ? 'close' : 'plus'} />
+      </button>
       {open ? (
         view === 'list' ? (
-          <div className="ux-pocket-panel" id={listId} role="group" aria-label="Quick Actions">
+          <div className="ux-pocket-panel" id={listId} role="group" aria-label="Quick Menu">
             <p className="ux-pocket-why">{move.reason}</p>
             <ul ref={list} className="ux-pocket-list">
               {rows.map((row, index) => (
@@ -261,23 +341,22 @@ function PocketView({
                       prefetch={false}
                       href={row.href}
                       className="ux-pocket-row"
-                      data-pocket-row=""
+                      data-pocket-row={row.key}
+                      data-primary={row.primary ? 'true' : undefined}
                       data-hot={hot === index ? 'true' : undefined}
-                      onClick={() => close(null)}
+                      onClick={() => close(false)}
                     >
-                      <CorridraIcon name={row.icon} />
-                      <span>{row.label}</span>
+                      {rowBody(row)}
                     </Link>
                   ) : (
                     <button
                       type="button"
                       className="ux-pocket-row"
-                      data-pocket-row=""
+                      data-pocket-row={row.key}
                       data-hot={hot === index ? 'true' : undefined}
                       onClick={row.run}
                     >
-                      <CorridraIcon name={row.icon} />
-                      <span>{row.label}</span>
+                      {rowBody(row)}
                     </button>
                   )}
                 </li>
@@ -293,7 +372,7 @@ function PocketView({
             aria-label="Get Help"
             onClick={(event) => {
               const target = event.target as HTMLElement;
-              if (target.closest('a[href], [data-menu-close]')) close(null);
+              if (target.closest('a[href], [data-menu-close]')) close(false);
             }}
             onKeyDown={(event) => {
               const items = [
@@ -320,7 +399,7 @@ function PocketView({
               onClick={() => {
                 setView('list');
                 requestAnimationFrame(() =>
-                  list.current?.querySelector<HTMLElement>('[data-pocket-row]')?.focus(),
+                  list.current?.querySelector<HTMLElement>('[data-pocket-row="help"]')?.focus(),
                 );
               }}
             >
@@ -344,65 +423,6 @@ function PocketView({
           </div>
         )
       ) : null}
-      <div className="ux-pocket-dock">
-        <button
-          ref={more}
-          type="button"
-          className="ux-pocket-more"
-          aria-expanded={open}
-          aria-controls={open ? listId : undefined}
-          onClick={() => {
-            if (open) close('more');
-            else {
-              setView('list');
-              setOpen(true);
-              requestAnimationFrame(() => {
-                const rowsNow = list.current?.querySelectorAll<HTMLElement>('[data-pocket-row]');
-                rowsNow?.[rowsNow.length - 1]?.focus();
-              });
-            }
-          }}
-        >
-          <CorridraIcon name="more" />
-          <span>More</span>
-        </button>
-        <Link
-          ref={main}
-          prefetch={false}
-          href={move.href}
-          className="ux-pocket-main"
-          draggable={false}
-          data-move={move.key}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerCancel}
-          onContextMenu={(event) => event.preventDefault()}
-          onClick={(event) => {
-            if (performance.now() < suppressUntil.current) {
-              event.preventDefault();
-              return;
-            }
-            close(null);
-          }}
-          onKeyDown={(event) => {
-            // A link answers Enter; the button the person pressed also answers Space.
-            if (event.key === ' ') {
-              event.preventDefault();
-              event.currentTarget.click();
-            }
-          }}
-        >
-          <CorridraIcon name={move.icon} />
-          <span className="ux-pocket-label">{move.label}</span>
-          {move.badge ? (
-            <span className="ux-pocket-badge" aria-hidden="true">
-              {move.badge}
-            </span>
-          ) : null}
-          {move.badge ? <span className="sr-only">, {move.badge} waiting</span> : null}
-        </Link>
-      </div>
     </div>
   );
 }
