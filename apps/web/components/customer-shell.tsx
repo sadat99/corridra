@@ -20,7 +20,6 @@ import {
 import { readJourneyCounts, readPocketSignals } from '../lib/work-items/journey-counts-server';
 import { notificationSettingsAvailable } from '../lib/ux/notification-settings';
 import { supportWhatsappHref } from '../lib/ux/support-whatsapp';
-import { CustomerTabs } from './ux/customer-tabs';
 import { PocketButton } from './ux/pocket-button';
 import { CustomerBarNote } from './ux/customer-bar-note';
 import { CustomerBarIdentity } from './ux/customer-bar-identity';
@@ -122,7 +121,7 @@ function CustomerFrame({ tab, eyebrow, title, count, frame, children }: Customer
     );
   // Navigation v1 and the owner's 12 Nov 2026 rule (main navigation on the left for every signed-in user): the
   // sidebar beside the page from 1024 px, and below that the same sidebar as a left drawer opened from the header's
-  // Menu button, with the labelled bottom tabs kept as a shortcut. Both list the five destinations from one model. Account, Company Profile, Plan and Billing and the rest are under the avatar.
+  // Menu button (owner, 14 Nov 2026, "B": the phone bottom tab bar is gone, one navigation). Both list the five destinations from one model. Account, Company Profile, Plan and Billing and the rest are under the avatar.
   // Home is Your Move only with both the navigation and the Move switches, exactly as the old list decided.
   const companies = customerCompaniesEnabled();
   const homeIsMove = plainNames && move;
@@ -201,7 +200,6 @@ function CustomerFrame({ tab, eyebrow, title, count, frame, children }: Customer
       >
         {children}
       </WorkspaceShell>
-      <CustomerTabs tabs={tabs} current={here} count={here === 'home' ? count : undefined} />
       {/* Pocket (phone): drawn at once as New Request; its words upgrade when the sidebar's work list read arrives. */}
       {uxSwitchOn('CORRIDRA_UX_POCKET') ? (
         <PocketButton

@@ -132,21 +132,22 @@ test('CX-03 still holds with the button: the header is at most 64 px at 1440 and
 });
 
 for (const width of [320, 390, 768] as const)
-  test(`below 1024 px at ${width} the bottom tabs are as they were: 48 px targets and one current page`, async ({
+  test(`below 1024 px at ${width} there is no bottom tab bar, and the drawer lists the same destinations as 44 px targets with one current page`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 844 });
     await page.goto('/account');
-    await expect(phoneTabs(page)).toBeVisible();
-    const links = phoneTabs(page).getByRole('link');
+    await expect(phoneTabs(page)).toHaveCount(0);
+    await page.getByRole('button', { name: 'Menu', exact: true }).click();
+    const links = sidebar(page).locator(':scope > ul').getByRole('link');
     const count = await links.count();
-    // Five tabs, or four where the approved-companies module is off (it is off on this server).
+    // Five destinations, or four where the approved-companies module is off (it is off on this server).
     expect([4, 5]).toContain(count);
     for (const box of await links.evaluateAll((all) =>
       all.map((link) => link.getBoundingClientRect().height),
     ))
-      expect(box).toBeGreaterThanOrEqual(48);
-    await expect(phoneTabs(page).locator('[aria-current]')).toHaveCount(1);
+      expect(box).toBeGreaterThanOrEqual(44);
+    await expect(sidebar(page).locator(':scope > ul [aria-current]')).toHaveCount(1);
   });
 
 for (const width of [1024, 1440] as const)
@@ -158,7 +159,7 @@ for (const width of [1024, 1440] as const)
     await expect(sidebar(page)).toBeVisible();
     const names = await sidebar(page).getByRole('link').allInnerTexts();
     expect(names.map((name) => name.trim())).toEqual(['Home', 'Requests', 'Meetings', 'Reports']);
-    await expect(phoneTabs(page)).toBeHidden();
+    await expect(phoneTabs(page)).toHaveCount(0);
   });
 
 test('at 1024 and wider the field starts where the page column starts', async ({ page }) => {

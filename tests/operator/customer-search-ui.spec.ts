@@ -89,7 +89,6 @@ import{AppHeader}from ${source('apps/web/components/ux/app-header.tsx')};
 import{BrandLockup}from ${source('apps/web/components/site-header.tsx')};
 import{LeftNavFrame,LeftNavList}from ${source('apps/web/components/ux/left-nav.tsx')};
 import{customerTabs}from ${source('apps/web/lib/ux/customer-navigation.ts')};
-import{CustomerTabs}from ${source('apps/web/components/ux/customer-tabs.tsx')};
 import{CustomerRailTop,CustomerRailFoot}from ${source('apps/web/components/ux/customer-rail.tsx')};
 import*as store from ${source('apps/web/components/ux/customer-bar-store.ts')};
 import{CustomerBarIdentityNote}from ${source('apps/web/components/ux/customer-bar-note.tsx')};
@@ -112,7 +111,7 @@ const draw=(show)=>root.render(
       <AppHeader kind="customer" live={false} notifications brandMark={<BrandLockup/>}/>
       <LeftNavFrame navId="customer-navigation" words={words} nav={<><CustomerRailTop/><LeftNavList id="customer-navigation" label="Navigation" items={items} current="home"/><CustomerRailFoot/></>}>
         <main><h1>Synthetic page</h1><p>Synthetic content</p><button id="outside" type="button">Outside</button></main>
-      </LeftNavFrame><CustomerTabs tabs={tabs} current="home"/>
+      </LeftNavFrame>
     </div>
   </LanguageProvider>);
 draw(true);window.drawIdentity=draw;`,
@@ -1406,18 +1405,20 @@ test.describe('header geometry (M4)', () => {
     }
   });
 
-  test('the phone tabs, the left bar and New Request in the rail are as they were', async ({
+  test('the phone has no bottom tab bar, the drawer lists the five destinations, and the left bar is as it was', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 390, height: 800 });
     await mount(page);
-    const tabs = page.getByRole('navigation', { name: 'Customer tabs' });
-    await expect(tabs.getByRole('link')).toHaveCount(5);
-    for (const box of await tabs
+    await expect(page.getByRole('navigation', { name: 'Customer tabs' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Menu', exact: true }).click();
+    const drawer = page.getByRole('navigation', { name: 'Navigation' });
+    await expect(drawer.getByRole('link')).toHaveCount(5);
+    for (const box of await drawer
       .getByRole('link')
       .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().height)))
-      expect(box).toBeGreaterThanOrEqual(48);
-    await expect(tabs.locator('[aria-current]')).toHaveCount(1);
+      expect(box).toBeGreaterThanOrEqual(44);
+    await expect(drawer.locator('[aria-current]')).toHaveCount(1);
     await page.setViewportSize({ width: 1440, height: 800 });
     await expect(
       page.getByRole('navigation', { name: 'Navigation' }).getByRole('link', { name: 'Home' }),

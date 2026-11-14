@@ -70,10 +70,11 @@ describe('CX PR 1: the customer frame follows the shells switch', () => {
       [...html.matchAll(/<a[^>]*href="([^"]*)"[^>]*>(?:(?!<\/a>).)*?Home/g)].map((m) => m[1]);
     vi.stubEnv('CORRIDRA_UX_MOVE', 'true');
     vi.stubEnv('CORRIDRA_UX_NAV', '');
-    expect(home(await render())).toEqual(['/account', '/account']);
+    // One Home link now (the sidebar, which is also the phone drawer): the bottom tab bar's second Home link is gone.
+    expect(home(await render())).toEqual(['/account']);
     vi.stubEnv('CORRIDRA_UX_NAV', 'true');
-    expect(home(await render())).toEqual(['/account/move', '/account/move']);
+    expect(home(await render())).toEqual(['/account/move']);
     vi.stubEnv('CORRIDRA_UX_MOVE', '');
-    expect(home(await render())).toEqual(['/account', '/account']);
+    expect(home(await render())).toEqual(['/account']);
   });
 });
