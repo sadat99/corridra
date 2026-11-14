@@ -83,11 +83,18 @@ export function SubTabs({
   tabs,
   label,
   className,
+  dormant = false,
 }: {
   tabs: readonly SubTab[];
   /** The accessible name of the tablist. */
   label: string;
   className?: string;
+  /**
+   * True while the section that holds these tabs is not the one on screen (several sections share one mounted
+   * panel and the others are `hidden`). No tab then claims to be selected, so a page never lists a selected tab
+   * from a section nobody can see. The panels, their state and their tab choice are untouched.
+   */
+  dormant?: boolean;
 }) {
   const base = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const { locale } = useLanguage();
@@ -166,9 +173,9 @@ export function SubTabs({
             role="tab"
             className="ux-subtabs-tab"
             data-tab={tab.id}
-            aria-selected={tab.id === active}
+            aria-selected={!dormant && tab.id === active}
             aria-controls={panelDomId(tab)}
-            tabIndex={tab.id === active ? 0 : -1}
+            tabIndex={!dormant && tab.id === active ? 0 : -1}
             onClick={() => select(tab.id)}
           >
             {tab.label}

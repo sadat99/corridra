@@ -7,6 +7,7 @@ import { mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import AxeBuilder from '@axe-core/playwright';
+import { openTab } from './workspace-nav';
 import { createIdentity } from '../../packages/auth/src/index';
 import { AccessService } from '../../packages/auth/src/access';
 import { configureNetworkRealUse } from '../../packages/auth/src/network-real-use-configuration';
@@ -376,6 +377,8 @@ test('Network invitation form supports scoped submission and an editable paused 
   test.setTimeout(90000);
   await page.context().addCookies([{ name: 'fixture_owner', value: 'authorized', url: origin }]);
   await page.goto(origin + '/network-owner');
+  // The Network page is cut into sub-tabs (L21): invitations are the last one.
+  await openTab(page, 'Invite a Contributor');
   const invitations = page.getByRole('region', { name: 'Contributor invitations', exact: true });
   await expect(
     invitations.getByRole('button', { name: 'Send Contributor Invitation' }),
@@ -535,6 +538,7 @@ test('expired five-minute MFA permits drafting but denies invitation reads and w
   );
   try {
     await page.goto(origin + '/network-owner');
+    await openTab(page, 'Invite a Contributor');
     const invitations = page.getByRole('region', { name: 'Contributor invitations', exact: true });
     await expect(page.getByText('Network enabled', { exact: true })).toBeVisible();
     await expect(invitations.getByRole('alert')).toContainText('last five minutes');

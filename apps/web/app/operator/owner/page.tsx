@@ -166,6 +166,20 @@ export default async function Page({
                       ))}
                     </ul>
                   </section>
+                  <p className="owner-line">
+                    {deferredControls.length} controls are open. Status: {DEFERRED_LABEL}. Each one
+                    is listed under <a href="#owner-gaps">Open gaps</a> with its risk.
+                  </p>
+                </section>
+              </>
+            ),
+          },
+          {
+            id: 'blocked',
+            label: `Blocked (${blockedItems.length})`,
+            panel: (
+              <>
+                <section>
                   <section
                     aria-labelledby="owner-blocked"
                     className="owner-section owner-section-tight"
@@ -183,10 +197,6 @@ export default async function Page({
                         </li>
                       ))}
                     </ul>
-                    <p className="owner-line">
-                      {deferredControls.length} controls are open. Status: {DEFERRED_LABEL}. Each
-                      one is listed under <a href="#owner-gaps">Open gaps</a> with its risk.
-                    </p>
                   </section>
                 </section>
               </>
@@ -286,6 +296,14 @@ export default async function Page({
                     </details>
                   ))}
                 </section>
+              </div>
+            ),
+          },
+          {
+            id: 'records',
+            label: `Installed Records (${installOnlyModules.length})`,
+            panel: (
+              <div className="owner-technical">
                 <section aria-labelledby="owner-installed-records" className="owner-section">
                   <h2 id="owner-installed-records">Optional installed records</h2>
                   {installOnlyModules.map((module) => (

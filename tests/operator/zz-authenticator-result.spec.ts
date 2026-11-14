@@ -119,6 +119,8 @@ test('the authenticator panel says each check result beside the field and keeps 
 
     await test.step('an entry typed in another panel is the one to keep', async () => {
       await openSection(page, 'workspace-sources');
+      // The source entry form starts closed behind its summary (one form open at a time, L21).
+      await page.getByText('Record a new source (6 fields)', { exact: true }).click();
       await locator.fill(unsaved);
     });
 

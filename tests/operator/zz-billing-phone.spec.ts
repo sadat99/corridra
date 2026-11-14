@@ -521,6 +521,10 @@ type Selects = Awaited<ReturnType<typeof measureSelects>>;
 // The chips of a panel's jump bar: size, whether a word breaks across lines, and whether a chip
 // reaches past the bar's content box.
 async function measureChips(page: Page, panel: string) {
+  // On a phone the jump links are folded behind one button (L21); open it so the chips themselves are measured.
+  const toggle = page.locator(`${panel} .ux-operator-workbench .ux-workbench-toggle`).first();
+  if ((await toggle.isVisible()) && (await toggle.getAttribute('aria-expanded')) === 'false')
+    await toggle.click();
   return page
     .locator(`${panel} .ux-operator-workbench`)
     .first()
