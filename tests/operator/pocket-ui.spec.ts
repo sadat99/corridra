@@ -6,7 +6,8 @@ import { basename, resolve } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
 
 // Pocket (phone), Step 1 (owner, 13 November 2026, "implement the corridra pocket 100% correctly"): the Next Move button,
-// its list, and the short phone header. The real header, tabs, sidebar frame, Pocket button and the real stylesheets are
+// its list, and the short phone header. The real header, sidebar frame (the phone has no bottom tab bar since the owner's
+// 14 November 2026 "B"), Pocket button and the real stylesheets are
 // mounted as a fixture (the pattern of customer-search-ui.spec.ts), so every behaviour below is the shipped component's.
 // What the signals say is scripted by the address (`?signals=`); the rules themselves are tested in
 // tests/integration/pocket-next-move.test.ts, and the real signed-in pages are proved by scripts/qa/signed-in-sweep.ts.
@@ -41,7 +42,6 @@ import{AppHeader}from ${source('apps/web/components/ux/app-header.tsx')};
 import{BrandLockup}from ${source('apps/web/components/site-header.tsx')};
 import{LeftNavFrame,LeftNavList}from ${source('apps/web/components/ux/left-nav.tsx')};
 import{customerTabs}from ${source('apps/web/lib/ux/customer-navigation.ts')};
-import{CustomerTabs}from ${source('apps/web/components/ux/customer-tabs.tsx')};
 import{CustomerRailTop,CustomerRailFoot}from ${source('apps/web/components/ux/customer-rail.tsx')};
 import{PocketButton}from ${source('apps/web/components/ux/pocket-button.tsx')};
 import*as store from ${source('apps/web/components/ux/customer-bar-store.ts')};
@@ -72,7 +72,6 @@ createRoot(document.getElementById('fixture')).render(
       <AppHeader kind="customer" live={false} notifications brandMark={<BrandLockup/>} whatsappHref={q.get('whatsapp')==='on'?'https://wa.me/8801000000000':undefined} pocket={pocket}/>
       <LeftNavFrame navId="customer-navigation" words={words} nav={<><CustomerRailTop/><LeftNavList id="customer-navigation" label="Navigation" items={items} current="home"/><CustomerRailFoot/></>}>
         <main id="main"><h1>Your move</h1>{rows.map(i=><p key={i}>Synthetic content row {i}</p>)}<a id="last" href="/account/last">Last link of the page</a></main>
-        {q.get('tabs')!=='off'?<CustomerTabs tabs={tabs} current="home"/>:null}
         {pocket?<PocketButton signals={signals} whatsappHref={q.get('whatsapp')==='on'?'https://wa.me/8801000000000':undefined}/>:null}
       </LeftNavFrame>
     </div>
@@ -244,10 +243,10 @@ test.describe('phone width, switch on', () => {
       const small = await box(more(page));
       expect(small.height).toBeGreaterThanOrEqual(43.9);
       expect(small.width).toBeGreaterThanOrEqual(43.9);
-      // The end corner, above the bottom tabs, inside the window.
+      // The end corner, 16 px above the bottom edge (no bottom bar, safe area 0 here), inside the window.
       expect(target.x + target.width).toBeLessThanOrEqual(width - 15);
-      const tabs = await box(page.locator('.ux-customer-tabs'));
-      expect(target.y + target.height).toBeLessThanOrEqual(tabs.y);
+      expect(await page.locator('.ux-customer-tabs').count()).toBe(0);
+      expect(844 - (target.y + target.height)).toBeGreaterThanOrEqual(15.5);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
         width,
       );
@@ -695,48 +694,41 @@ test.describe('scrolling', () => {
     await expect(main(page)).toBeVisible();
   });
 
-  // With the bottom tabs in the page and with them gone (the owner's drawer-only decision is a later change): the button
-  // reads one property, so it must be right in both states and never cover the last row or link.
-  for (const tabs of ['on', 'off'])
-    for (const width of [320, 390]) {
-      test(`at the end of the page the button never covers the last link (${width}, tabs ${tabs})`, async ({
-        page,
-      }) => {
-        await page.setViewportSize({ width, height: 700 });
-        await mount(page, '/account', `?signals=quotes3&rows=30&tabs=${tabs}`);
-        await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-        // Even after the idle return time the button stays out of the way at the end.
-        await page.waitForTimeout(1500);
-        await expect.poll(() => hiddenNow(page)).toBe('true');
-        await page.locator('#last').click({ timeout: 5000 });
-        await expect(page).toHaveURL(/\/account\/last$/);
-      });
-    }
+  // The phone has no bottom bar (owner, 14 November 2026, "B"): the button never covers the last row or link.
+  for (const width of [320, 390]) {
+    test(`at the end of the page the button never covers the last link (${width})`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 700 });
+      await mount(page, '/account', `?signals=quotes3&rows=30`);
+      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      // Even after the idle return time the button stays out of the way at the end.
+      await page.waitForTimeout(1500);
+      await expect.poll(() => hiddenNow(page)).toBe('true');
+      await page.locator('#last').click({ timeout: 5000 });
+      await expect(page).toHaveURL(/\/account\/last$/);
+    });
+  }
 
-  test('with the tabs the button sits above them; without them it drops to the bottom edge', async ({
+  test('the button sits at the bottom edge, 16 px up, and no bottom bar is in the page', async ({
     page,
   }) => {
-    await mount(page, '/account', '?signals=draft&tabs=on');
-    const withTabs = await box(main(page));
-    const tabsBox = await box(page.locator('.ux-customer-tabs'));
-    expect(tabsBox.y - (withTabs.y + withTabs.height)).toBeGreaterThanOrEqual(12);
+    await mount(page, '/account', '?signals=draft');
+    await expect(page.locator('.ux-customer-tabs')).toHaveCount(0);
+    const bare = await box(main(page));
+    // No bar: the gap to the bottom edge is the button's own gap (16 px), safe area 0 here.
+    expect(phone.height - (bare.y + bare.height)).toBeGreaterThanOrEqual(15.5);
+    expect(phone.height - (bare.y + bare.height)).toBeLessThanOrEqual(16.5);
+    // Nothing sets or reads a bottom bar height any more: the button's own source no longer knows the tab bar.
+    for (const file of ['pocket-button.css', 'pocket-button.tsx'])
+      expect(readFileSync(resolve('apps/web/components/ux', file), 'utf8')).not.toMatch(
+        /shell-bottom-bar|ux-customer-tabs/,
+      );
     expect(
       await page
         .locator('.ux-pocket')
         .evaluate((el) => getComputedStyle(el).getPropertyValue('--shell-bottom-bar')),
-    ).not.toBe('');
-    await mount(page, '/account', '?signals=draft&tabs=off');
-    await expect(page.locator('.ux-customer-tabs')).toHaveCount(0);
-    const bare = await box(main(page));
-    // No bar: the gap to the bottom edge is the button's own gap (16 px) and no bar height, safe area 0 here.
-    expect(phone.height - (bare.y + bare.height)).toBeGreaterThanOrEqual(15.5);
-    expect(phone.height - (bare.y + bare.height)).toBeLessThanOrEqual(16.5);
-    expect(
-      await page
-        .locator('.ux-pocket')
-        .evaluate((el) => el.style.getPropertyValue('--shell-bottom-bar')),
     ).toBe('');
-    expect(withTabs.y).toBeLessThan(bare.y);
   });
 
   test('adds no page length: the document is as tall as without it', async ({ page }) => {
@@ -747,14 +739,13 @@ test.describe('scrolling', () => {
     expect(on).toBe(off);
   });
 
-  test('the button is above the bottom tabs, and the safe area is part of that place', async ({
+  test('the button is above the device safe area, and that is its only bottom offset', async ({
     page,
   }) => {
     await mount(page, '/account', '?signals=draft');
     const target = await box(main(page));
-    const tabs = await box(page.locator('.ux-customer-tabs'));
-    expect(tabs.y - (target.y + target.height)).toBeGreaterThanOrEqual(12);
-    // Both the tabs and the button place themselves above the device's bottom edge.
+    expect(phone.height - (target.y + target.height)).toBeGreaterThanOrEqual(12);
+    // The button places itself above the device's bottom edge by the safe area plus its own gap.
     expect(componentCss + globalCss).toContain('env(safe-area-inset-bottom');
     expect(readFileSync(resolve('apps/web/components/ux/pocket-button.css'), 'utf8')).toContain(
       'env(safe-area-inset-bottom',

@@ -1,4 +1,4 @@
-import { displayDate } from '@corridra/domain/locale';
+import { formatMoment, formatUtcDay } from '../lib/ux/format';
 import { StatusBadge } from './access-state';
 export function ParticipantScope({
   purpose,
@@ -23,12 +23,12 @@ export function ParticipantScope({
         </div>
         <div>
           <dt>Link expires</dt>
-          <dd>{displayDate(expiresAt)}</dd>
+          <dd>{formatMoment(expiresAt)}</dd>
         </div>
         {generatedAt && (
           <div>
             <dt>View updated</dt>
-            <dd>{displayDate(generatedAt)}</dd>
+            <dd>{formatUtcDay(generatedAt)}</dd>
           </div>
         )}
       </dl>

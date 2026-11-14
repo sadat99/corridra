@@ -201,7 +201,7 @@
 }
 
 /* The avatar menu is the longest (on phones it holds the language and help too) and the help menu grows with the
-   text size: each scrolls within the screen, above the bottom tabs, instead of running off it. */
+   text size: each scrolls within the screen instead of running off it. */
 .ux-util-avatar .ux-menu-panel,
 .ux-util-help .ux-menu-panel {
   max-height: calc(100dvh - 8.5rem);
@@ -230,6 +230,12 @@
        a 12 rem reserve leaves the panel's bottom inside the window; rem makes it grow with the text size. The panel
        scrolls inside itself. */
     max-height: calc(100dvh - 12rem);
+  }
+  /* The customer header runs edge to edge (customer-search.css), so its panel keeps 8 px from each side of the window
+     itself. The team header is not full width and keeps the rule above. */
+  .ux-customer-header .ux-menu.ux-util-avatar[data-align] .ux-menu-panel {
+    width: min(calc(100% - 16px), 22rem);
+    margin-inline: 8px;
   }
 }
 

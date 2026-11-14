@@ -344,6 +344,13 @@ async function openPage(page: Page, options: OpenOptions = {}): Promise<Rig> {
     }
   });
   await page.goto(`${origin}/?books=${options.books ?? '1'}`);
+  // The whole report page is cut into tabs and the downloads panel lives in its own tab: open it once the report is in.
+  // A report that is denied or unavailable has no tab, which several tests rely on.
+  if ((options.books ?? '1') === '1')
+    await page
+      .getByRole('tab', { name: 'Downloads' })
+      .click({ timeout: 5000 })
+      .catch(() => undefined);
   return rig;
 }
 
@@ -355,6 +362,8 @@ const refresh = (page: Page) =>
   page.getByRole('button', { name: 'Refresh approved commercial report' });
 /** Wait for the exact rendered state: the report is in, the panel is there, and it is open. */
 async function openPanel(page: Page) {
+  // The panel is in its own tab of the report page; choosing a tab that is already chosen changes nothing.
+  await page.getByRole('tab', { name: 'Downloads' }).click();
   await expect(summary(page)).toBeVisible();
   await summary(page).click();
   await expect(page.locator('details.book-downloads[open]')).toHaveCount(1);
@@ -974,6 +983,7 @@ test('a book denial is forgotten once the report is read again, so a later denia
   await openPanel(page);
   await trip(page).click();
   await expect(alert(page)).toHaveText(retryText);
+  await page.getByRole('tab', { name: 'Evidence and Decisions' }).click();
   await page.getByLabel('Your response').fill('Our licence number is 12345.');
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Send response' }).click();
@@ -1179,10 +1189,13 @@ test('scroll budget: the closed panel adds almost nothing to the longest saved r
       await openPage(page, { books, shape: long });
       // Wait for the exact rendered report before anything is measured.
       await expect(page.getByRole('heading', { name: 'Commercial objective' })).toBeVisible();
+      // The evidence requests are in their own tab; the downloads panel is in another.
+      await page.getByRole('tab', { name: 'Evidence and Decisions' }).click();
       await expect(
         page.getByRole('heading', { name: 'Evidence requests and declarations' }),
       ).toBeVisible();
       await expect(refresh(page)).toBeVisible();
+      if (books === '1') await page.getByRole('tab', { name: 'Downloads' }).click();
       if (books === '1') await expect(summary(page)).toBeVisible();
       else await expect(panel(page)).toHaveCount(0);
       await toCustomerFrame(page);

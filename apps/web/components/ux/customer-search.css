@@ -130,10 +130,21 @@
     outline-color: Highlight;
   }
 }
-/* The header reaches 8 px into the page margin, so the icon fits on the row at 320 px without a second row. */
+/* Below 1024 px the header runs edge to edge, so its rule reaches both sides of the window (it used to start 16 px in and
+   stop 32 px short of the end, because the page margin was only half taken back). The page margin is 24 px up to 760 px
+   and 40 px above (globals.css); the header takes it back and pads its row by the same amount less 8 px, so the menu
+   button and the tools keep their places and the icons fit on the row at 320 px without a second row. */
 @media (max-width: 1023.98px) {
   .ux-customer-header {
-    margin-inline: calc(min(var(--space-2), 8px) * -1);
+    margin-inline: -40px;
+    padding-inline: 32px;
+    width: auto;
+  }
+}
+@media (max-width: 760px) {
+  .ux-customer-header {
+    margin-inline: -24px;
+    padding-inline: 16px;
   }
 }
 @media (min-width: 701px) and (max-width: 1023.98px) {

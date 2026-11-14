@@ -150,3 +150,19 @@ function zoneOffsetMs(date: Date, zone: string): number {
   const [, y, mo, d, h, mi] = m.map(Number) as number[];
   return Date.UTC(y!, mo! - 1, d!, h!, mi!) - Math.floor(date.getTime() / 60000) * 60000;
 }
+
+/**
+ * A customer-facing day, "5 Nov 2026", for a stored instant that means a date (a due day, a review day,
+ * an offer's last day). It reads the instant in UTC, as the older display did, so the day never shifts.
+ */
+export function formatUtcDay(value: DateInput, locale?: string): string {
+  return formatDate(value, { timeZone: 'UTC', locale });
+}
+
+/**
+ * A customer-facing moment, "9 Nov 2026, 10:00 (Dhaka, UTC+6)", for an instant where the time itself
+ * matters (a meeting, the moment access ends). The zone is the one the record names, never the viewer's.
+ */
+export function formatMoment(value: DateInput, zone = 'UTC', locale?: string): string {
+  return formatDateTime(value, { timeZone: zone, locale });
+}

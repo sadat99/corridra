@@ -4,7 +4,7 @@ import { RefreshButton } from './refresh-button';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
-import { displayDate } from '@corridra/domain/locale';
+import { formatMoment } from '../../lib/ux/format';
 import { savedMissionHeaders, savedMissionRead, type SavedMissionScope } from './saved-missions';
 import {
   acceptAssignedMission,
@@ -12,6 +12,7 @@ import {
   type AcceptCommand,
 } from './assigned-mission-accept';
 import { limitWords } from '../../lib/account-limit';
+import './assigned-missions.css';
 const unavailable = z
   .object({ id: z.uuid(), requestId: z.uuid(), available: z.literal(false) })
   .strict();
@@ -204,7 +205,7 @@ function PrivateAssignments({ subject, issuer }: SavedMissionScope) {
   }
   return (
     <section
-      className="detail-card ux-mission-detail"
+      className="detail-card ux-mission-detail ux-delivered-card"
       aria-label="Delivered to you"
       style={{ overflowWrap: 'anywhere' }}
     >
@@ -255,7 +256,7 @@ function PrivateAssignments({ subject, issuer }: SavedMissionScope) {
               {item.available ? (
                 <>
                   <h3>{item.title}</h3>
-                  <p>Current report access expires {displayDate(item.expiresAt)}.</p>
+                  <p>Current report access expires {formatMoment(item.expiresAt)}.</p>
                   {item.savedResourceId ? (
                     <a className="primary-link" href={'/account/missions/' + item.savedResourceId}>
                       Open Approved Commercial Mission

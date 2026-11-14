@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { displayDate } from '@corridra/domain/locale';
+import { formatMoment } from '../../../../lib/ux/format';
 import type { RoomReport } from '../../../../lib/room';
 import { limitWords } from '../../../../lib/account-limit';
 import {
@@ -90,7 +90,7 @@ export function RoomSave({
         many ? (
           <article className="room-save-item" key={report.assignmentId}>
             <h3 dir="auto">{report.title}</h3>
-            <p>Current report access expires {displayDate(report.expiresAt)}.</p>
+            <p>Current report access expires {formatMoment(report.expiresAt)}.</p>
             <SaveReportForm busy={busy} onSave={(e) => submit(e, report.assignmentId)} />
           </article>
         ) : (
