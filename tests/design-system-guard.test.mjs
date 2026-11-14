@@ -598,6 +598,28 @@ test('rule 6 flags a planted profile form without steps and passes one with step
   );
 });
 
+// Audit unit A3d, part 2 (Programmes): both programme pages pass the page frame, the planning page tells the room it is
+// framed (so the room draws no second back link), and the rare programme actions sit in a "More actions" menu where
+// archiving asks first. The rename form, its payloads and the Undo are the existing ones.
+test('the programme pages use the shared page frame and the room keeps its rare actions in a menu', () => {
+  const chooser = read(join(web, 'app/account/delegations/organise/page.tsx'));
+  assert.match(
+    chooser,
+    /frame=\{\{ back: programmesChooserBack \}\}/,
+    'the chooser passes a frame',
+  );
+  const planning = read(join(web, 'app/account/delegations/[workspaceId]/page.tsx'));
+  assert.match(planning, /frame=\{\{ back: programmeBack \}\}/, 'the planning page passes a frame');
+  assert.match(planning, /\n\s+framed\n/, 'the planning page marks the room as framed');
+  const lifecycle = read(join(web, 'app/account/delegations/programme-lifecycle.tsx'));
+  assert.match(lifecycle, /<OverflowMenu[\s\S]*?'More actions for '[\s\S]*?Archive Programme/);
+  assert.ok(
+    lifecycle.includes('Archive this programme? You can restore it later.'),
+    'archive asks',
+  );
+  assert.ok(lifecycle.includes('Rename programme'), 'the rename form is kept');
+});
+
 // Audit unit A3d, part 1 (Delegation registrations): the rare Withdraw action sits in a "More actions" menu on the framed
 // page, and the withdrawal form below it is the confirm step and keeps every field.
 test('the registrations row keeps Withdraw From Programme in a More actions menu with its confirm form', () => {
