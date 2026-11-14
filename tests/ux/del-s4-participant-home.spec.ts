@@ -210,6 +210,11 @@ for (const width of [390, 1440]) {
       await expect(fold).not.toHaveAttribute('open', '');
       await fold.locator('> summary').click();
       await expect(row.getByText('Programme details, objectives and results')).toBeVisible();
+      // With a home line the purpose line is in the details, not repeated in the row.
+      await expect(row.locator('> p', { hasText: 'Sample shared programme purpose' })).toHaveCount(
+        0,
+      );
+      await expect(fold.getByText('Sample shared programme purpose')).toBeVisible();
       const text = (await row.innerText()).replace(/\s+/g, ' ');
       expect(text).not.toMatch(/—|6000|total|urgent|overdue|verified/i);
     });
@@ -218,7 +223,9 @@ for (const width of [390, 1440]) {
       page,
     }) => {
       const on = await open(page, width, { rows: 2 });
-      await expect(page.getByText('Outstanding as recorded').first()).toBeVisible();
+      // Both rows' home lines are drawn and the network is quiet before counting, so a late extra read would show.
+      await expect(page.locator('.ux-home-line')).toHaveCount(2);
+      await page.waitForLoadState('networkidle');
       const count = (list: string[]) =>
         list.reduce<Record<string, number>>((all, k) => ({ ...all, [k]: (all[k] ?? 0) + 1 }), {});
       const withHome = count(on);
@@ -230,6 +237,7 @@ for (const width of [390, 1440]) {
       });
       const page2 = await page.context().newPage();
       const off = await open(page2, width, { rows: 2, home: false });
+      await expect.poll(() => off.length).toBe(Object.values(withHome).reduce((a, b) => a + b, 0));
       await page2.waitForLoadState('networkidle');
       expect(count(off)).toEqual(withHome);
     });
@@ -240,6 +248,19 @@ for (const width of [390, 1440]) {
       await page.getByText('Your place could not be loaded').waitFor({ state: 'attached' });
       await expect(page.locator('.ux-home-line')).toHaveCount(0);
       await expect(page.getByText('Place confirmed')).toHaveCount(0);
+      // No home line is drawn, so the row is as on main: the purpose line stays in it, not in the details.
+      await expect(
+        page.locator('.ux-reg-list > li > p', { hasText: 'Sample shared programme purpose' }),
+      ).toBeVisible();
+    });
+
+    test('with no read at all the purpose line stays in the row, as on main', async ({ page }) => {
+      await open(page, width, { terms: false });
+      await expect(page.locator('.ux-home-line')).toHaveCount(0);
+      await expect(
+        page.locator('.ux-reg-list > li > p', { hasText: 'Sample shared programme purpose' }),
+      ).toBeVisible();
+      await expect(page.locator('details.account-fold > p')).toHaveCount(0);
     });
 
     test('the recorded fee read failing keeps the place line and claims no money', async ({

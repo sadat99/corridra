@@ -18,7 +18,7 @@ export type HomeLines = {
   /** What is open for me, from the records. Null when nothing is open or the read is missing. */
   open: string | null;
   /** The one next step, linking to the control that already exists. Null when none is offered. */
-  next: { text: string; href: string } | null;
+  next: { text: string } | null;
 };
 
 const positive = (minor: string) => BigInt(minor) > BigInt(0);
@@ -44,7 +44,6 @@ export function placeWords(place: OwnPlace): string {
 export function homeLines({ registrationId, place, fees }: HomeInput): HomeLines {
   if (!place || place.registrationId !== registrationId)
     return { where: null, open: null, next: null };
-  const href = '#registration-' + registrationId;
   const status = place.enrolment.status;
   const holding = status === 'PLACED' || status === 'WAITLISTED';
   const termsChanged = holding && !!place.terms && place.termsCurrent === false;
@@ -56,12 +55,13 @@ export function homeLines({ registrationId, place, fees }: HomeInput): HomeLines
   if (owed.length > 0) parts.push('Outstanding as recorded by the organiser: ' + owed.join(', '));
   for (const t of tasks.slice(0, 1))
     parts.push('Task ' + t.title + (t.dueOn ? ', due ' + t.dueOn : ''));
-  if (tasks.length > 1) parts.push(tasks.length - 1 + ' more tasks');
+  if (tasks.length > 1)
+    parts.push(tasks.length - 1 + (tasks.length === 2 ? ' more task' : ' more tasks'));
   let next: HomeLines['next'] = null;
-  if (termsChanged) next = { text: 'Read and accept the changed terms', href };
+  if (termsChanged) next = { text: 'Read and accept the changed terms' };
   else if (status === 'NOT_APPLIED' && (place.placesAvailable || place.waitlist))
-    next = { text: 'Apply for a place', href };
-  else if (owed.length > 0) next = { text: 'Review the recorded fee', href };
-  else if (tasks.length > 0) next = { text: 'Next task: ' + tasks[0]!.title, href };
+    next = { text: 'Apply for a place' };
+  else if (owed.length > 0) next = { text: 'Review the recorded fee' };
+  else if (tasks.length > 0) next = { text: 'Next task: ' + tasks[0]!.title };
   return { where: placeWords(place), open: parts.length ? parts.join('; ') + '.' : null, next };
 }

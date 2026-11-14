@@ -16,6 +16,8 @@ const terms = {
   changeTerms: 'Sample changes',
   feesApply: true,
   feeNote: null,
+  reason: 'Sample first publication',
+  publishedAt: '2026-11-01T00:00:00Z',
 };
 const place = (over: Partial<OwnPlace> = {}): OwnPlace => ({
   registrationId: id,
@@ -106,15 +108,13 @@ describe('participant home lines', () => {
     );
   });
 
-  it('picks one next step in a fixed order and links only to the existing controls', () => {
-    const href = '#registration-' + id;
+  it('picks one next step in a fixed order', () => {
     const changed = place({
       termsCurrent: false,
       tasks: [{ title: 'Send forms', dueOn: '2026-12-01' }],
     });
     expect(homeLines({ registrationId: id, place: changed, fees: fees([usd]) }).next).toEqual({
       text: 'Read and accept the changed terms',
-      href,
     });
     const open = place({ enrolment: { status: 'NOT_APPLIED', position: null, reasons: [] } });
     expect(homeLines({ registrationId: id, place: open, fees: null }).next?.text).toBe(
@@ -128,13 +128,25 @@ describe('participant home lines', () => {
     expect(homeLines({ registrationId: id, place: full, fees: null }).next).toBeNull();
     expect(homeLines({ registrationId: id, place: place(), fees: fees([usd]) }).next).toEqual({
       text: 'Review the recorded fee',
-      href,
     });
     const tasks = place({ tasks: [{ title: 'Send forms', dueOn: '2026-12-01' }] });
     expect(homeLines({ registrationId: id, place: tasks, fees: null }).next?.text).toBe(
       'Next task: Send forms',
     );
     expect(homeLines({ registrationId: id, place: place(), fees: null }).next).toBeNull();
+  });
+
+  it('counts the tasks it does not name with the right noun', () => {
+    const task = (n: number) => ({ title: 'Task ' + n, dueOn: null });
+    const open = (n: number) =>
+      homeLines({
+        registrationId: id,
+        place: place({ tasks: Array.from({ length: n }, (_, i) => task(i + 1)) }),
+        fees: null,
+      }).open;
+    expect(open(1)).toBe('Task Task 1.');
+    expect(open(2)).toBe('Task Task 1; 1 more task.');
+    expect(open(3)).toBe('Task Task 1; 2 more tasks.');
   });
 
   it('uses neutral wording: no urgency, no em dash, no verified or paid claim', () => {

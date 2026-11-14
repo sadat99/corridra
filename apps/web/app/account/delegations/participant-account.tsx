@@ -249,7 +249,7 @@ function ScopedAccount(
                     {r.status === 'REGISTERED' ? (
                       <>
                         <h3>{r.name}</h3>
-                        {!props.homeEnabled && <p>{r.reportingPurpose}</p>}
+                        {!home?.where && <p>{r.reportingPurpose}</p>}
                         <p>
                           {r.displayLabel} ·{' '}
                           {r.labelChangedBy === 'organiser'
@@ -287,7 +287,7 @@ function ScopedAccount(
                           }
                         >
                           {home?.next && <p>Programme details, objectives and results</p>}
-                          {props.homeEnabled && <p>{r.reportingPurpose}</p>}
+                          {home?.where && <p>{r.reportingPurpose}</p>}
                           {props.objectivePathEnabled && props.missionSharesEnabled && (
                             <DelegatePath
                               subject={props.subject}

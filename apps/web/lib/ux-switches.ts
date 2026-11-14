@@ -32,8 +32,7 @@ export const uxSwitchNames = [
   // ADR-083 (sourcing workflow). Off unless the setting is exactly "true"; the database module and its control are separate.
   'CORRIDRA_SOURCING_WORKFLOW',
   'CORRIDRA_SUPPLY_SOURCES',
-  // ADR-084 (delegation: guided first run and decisions-first overview). Off unless exactly "true"; it only
-  // acts where public programme pages are on, and adds no command, permission or data.
+  // ADR-084 delegation, off unless exactly "true": S0 first run acts where public programme pages are on, S4 participant home wherever participant terms are on; no command, permission or data.
   'CORRIDRA_DELEGATION_FIRST_RUN',
 ] as const;
 export type UxSwitchName = (typeof uxSwitchNames)[number];
