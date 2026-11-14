@@ -19,6 +19,16 @@ const header = (page: Page) => page.locator('header.ux-app-header');
 const search = (page: Page) => header(page).getByRole('button', { name: 'Search', exact: true });
 const dialog = (page: Page) =>
   page.getByRole('dialog', { name: 'Search Requests, Companies and pages' });
+/**
+ * Waits for the dialog's opening fade to finish. Axe blends a text colour with the opacity of the element it sits in, so a
+ * scan taken while the dialog is still fading in (about 0.8 opaque on a slow runner) sees muted text below 4.5 to 1 where
+ * the finished dialog is above it. The scan is of the dialog as it stays on screen. Same shape as `steady` in
+ * tests/operator/customer-search-ui.spec.ts.
+ */
+const steady = (page: Page) =>
+  dialog(page).evaluate((element) =>
+    Promise.all(element.getAnimations({ subtree: true }).map((animation) => animation.finished)),
+  );
 const phoneTabs = (page: Page) => page.getByRole('navigation', { name: 'Customer tabs' });
 const sidebar = (page: Page) => page.getByRole('navigation', { name: 'Customer navigation' });
 
@@ -262,6 +272,7 @@ test('the dialog is a full page load to the page it opens, and axe is clean on t
   expect(headerResult.violations.map((item) => item.id)).toEqual([]);
   await search(page).click();
   await expect(dialog(page)).toBeVisible();
+  await steady(page);
   const dialogResult = await new AxeBuilder({ page })
     .include('dialog.ux-csearch')
     .withTags(tags)
