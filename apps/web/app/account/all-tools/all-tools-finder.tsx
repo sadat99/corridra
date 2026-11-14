@@ -119,9 +119,20 @@ export function AllToolsFinder({
           ) : null}
         </p>
         {active ? (
-          <button type="button" className="text-link" onClick={clear}>
-            Clear Search
-          </button>
+          // Still one button. With a script it clears in place; without one it submits this empty GET form, which
+          // loads the page with no search and no group, so a search can always be cleared (UI/UX.v3 audit A3e).
+          <form method="get" action="/account/all-tools" className="ux-tools-clear">
+            <button
+              type="submit"
+              className="text-link"
+              onClick={(event) => {
+                event.preventDefault();
+                clear();
+              }}
+            >
+              Clear Search
+            </button>
+          </form>
         ) : null}
       </div>
       <div className="ux-tools-grid">

@@ -23,7 +23,38 @@
 .work-list {
   gap: var(--space-3);
 }
+/* Home with work fits one desktop screen (UI/UX.v3 audit A3e). Nothing is hidden or removed: 12 px inside a section,
+   the way to the whole list beside its heading, the next step as one line, the Kind cell on one line, and the quick
+   links two-up from 768 and four-up from 1280. Tokens only. */
+.guide-area:is(.home-next, .home-work, .home-open) {
+  gap: var(--space-3);
+}
+.guide-area.home-work:not(.home-work-empty) {
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: var(--space-4);
+  align-items: center;
+}
+.guide-area.home-work:not(.home-work-empty) > :not(h2, .home-work-all) {
+  grid-column: 1 / -1;
+}
+.home-work-all,
+.home-work-all .text-link {
+  margin: 0;
+}
 @media (min-width: 64rem) {
+  .home-next .ux-row-link {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2.4fr);
+  }
+  /* Phone and tablet keep the 44 px target; from 1024 the link is one text line, as every other text link is. */
+  .home-work-all .text-link {
+    min-height: 0;
+    padding-block: 0;
+  }
+  .ux-customer .home-open .ux-quick-links a {
+    padding-block: var(--space-3);
+  }
+}
+@media (min-width: 48rem) {
   .ux-customer .home-open .ux-quick-links {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));

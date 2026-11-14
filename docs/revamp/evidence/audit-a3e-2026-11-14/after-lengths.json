@@ -1,0 +1,92 @@
+{
+  "home-390": {
+    "doc": 1473,
+    "main": 1339,
+    "mainBottom": 1412,
+    "rows": 3,
+    "h1": "What would you like to do?",
+    "hscroll": 0,
+    "screens": 1.745,
+    "contentScreens": 1.673
+  },
+  "requests-390": {
+    "doc": 1129,
+    "main": 995,
+    "mainBottom": 1068,
+    "rows": 0,
+    "h1": "Your requests and workspaces.",
+    "hscroll": 0,
+    "screens": 1.338,
+    "contentScreens": 1.265
+  },
+  "all-tools-390": {
+    "doc": 1065,
+    "main": 931,
+    "mainBottom": 1004,
+    "rows": 0,
+    "h1": "Every tool you can open.",
+    "hscroll": 0,
+    "screens": 1.262,
+    "contentScreens": 1.19
+  },
+  "home-768": {
+    "doc": 1303,
+    "main": 1108,
+    "mainBottom": 1233,
+    "rows": 3,
+    "h1": "What would you like to do?",
+    "hscroll": 0,
+    "screens": 1.272,
+    "contentScreens": 1.204
+  },
+  "requests-768": {
+    "doc": 1024,
+    "main": 729,
+    "mainBottom": 854,
+    "rows": 0,
+    "h1": "Your requests and workspaces.",
+    "hscroll": 0,
+    "screens": 1,
+    "contentScreens": 0.834
+  },
+  "all-tools-768": {
+    "doc": 1024,
+    "main": 554,
+    "mainBottom": 679,
+    "rows": 0,
+    "h1": "Every tool you can open.",
+    "hscroll": 0,
+    "screens": 1,
+    "contentScreens": 0.663
+  },
+  "home-1440": {
+    "doc": 900,
+    "main": 661,
+    "mainBottom": 757,
+    "rows": 3,
+    "h1": "What would you like to do?",
+    "hscroll": 0,
+    "screens": 1,
+    "contentScreens": 0.841
+  },
+  "requests-1440": {
+    "doc": 900,
+    "main": 598,
+    "mainBottom": 694,
+    "rows": 0,
+    "h1": "Your requests and workspaces.",
+    "hscroll": 0,
+    "screens": 1,
+    "contentScreens": 0.771
+  },
+  "all-tools-1440": {
+    "doc": 900,
+    "main": 275,
+    "mainBottom": 371,
+    "rows": 0,
+    "h1": "Every tool you can open.",
+    "hscroll": 0,
+    "screens": 1,
+    "contentScreens": 0.412
+  }
+}
