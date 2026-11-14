@@ -5,6 +5,7 @@ import { realUseEnabled } from '@corridra/auth/customer-production';
 import { customerSpecificationConfirmationEnabled } from '@corridra/auth/customer-specification-confirmation';
 import { customerServiceRequestsEnabled } from '@corridra/auth/customer-service-requests';
 import { customerProgrammePagesEnabled } from '@corridra/auth/customer-programme-publication';
+import { helperInterestEnabled } from '@corridra/auth/helper-interest';
 import { customerMissionSharesEnabled } from '@corridra/auth/customer-mission-shares';
 import { PublicShell } from '../../components/public-shell';
 import { languagesWithForm } from '../../lib/i18n/pages';
@@ -29,6 +30,7 @@ const contents = [
   ['access', 'Who can see the work'],
   ['contributors', 'Invited contributor work'],
   ['programme-applications', 'Public programme pages and applications'],
+  ['helper-interest', 'Telling us you want to be a field helper'],
   ['sharing', 'Who we share information with'],
   ['storage', 'Cookies and browser storage'],
   ['transfers', 'Where information is stored'],
@@ -60,7 +62,13 @@ export default function Page() {
   const programmePages = customerProgrammePagesEnabled();
   // Starting a request from an application is described only while the objective path that offers it is shown.
   const objectivePath = programmePages && customerMissionSharesEnabled();
-  const updated = programmePages ? '12 November 2026' : `${updatedDay} October 2026`;
+  // Telling us you want to be a field helper (ADR-0085) is described only while the form can be shown: both of its switches are on.
+  const helperInterest = helperInterestEnabled();
+  const updated = helperInterest
+    ? '14 November 2026'
+    : programmePages
+      ? '12 November 2026'
+      : `${updatedDay} October 2026`;
   const noticeVersion = real ? 'real-intake-2026-10-21-v1' : 'synthetic-intake-2026-10-05-v1';
   return (
     <PublicShell>
@@ -104,7 +112,8 @@ export default function Page() {
                   .filter(
                     ([id]) =>
                       (id !== 'contributors' || process.env.CORRIDRA_NETWORK_ENABLED === 'true') &&
-                      (id !== 'programme-applications' || programmePages),
+                      (id !== 'programme-applications' || programmePages) &&
+                      (id !== 'helper-interest' || helperInterest),
                   )
                   .map(([id, title]) => (
                     <li key={id}>
@@ -468,6 +477,36 @@ export default function Page() {
                     the request and follows what this notice says about requests, including
                     deletion; it is separate from your application.
                   </p>
+                )}
+                {helperInterest && (
+                  <article id="helper-interest">
+                    <h2>Telling us you want to be a field helper</h2>
+                    <div>
+                      <p>
+                        If you are not invited yet, you can tell us you would like to become a
+                        Corridra field helper. This is only a note of interest. It is not an
+                        invitation, a job or a reward, it does not create an account and it does not
+                        put you on a list for work.
+                      </p>
+                      <p>
+                        You send your name, your email address, your country and a few words about
+                        why. Corridra stores exactly those four things and the time you sent them.
+                        It does not store your internet address, and it does not email you to
+                        confirm. Sending the same email address again changes nothing.
+                      </p>
+                      <p>
+                        Only owners and administrators of the Corridra team can read these entries.
+                        They use them to decide whom to invite, and an invitation is a separate step
+                        with its own checks. Corridra records that an entry was made and that it was
+                        deleted, but the record does not contain your name, email address or words.
+                      </p>
+                      <p>
+                        Entries are deleted automatically after 180 days. To have yours deleted
+                        sooner, write to the contact in <a href="#contact">Who is responsible</a>{' '}
+                        and give the email address you used; we delete it and record that we did.
+                      </p>
+                    </div>
+                  </article>
                 )}
               </div>
             </article>

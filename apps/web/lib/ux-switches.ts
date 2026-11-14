@@ -43,6 +43,9 @@ export const uxSwitchNames = [
   // ADR-084 S1 (programme page share kit). Off unless exactly "true"; it only acts where public programme pages are on
   // and adds no tracking, no send and no data beyond the optional structured dates of a page version.
   'CORRIDRA_PROGRAMME_SHARE_KIT',
+  // The helper interest register (ADR-0085). Off unless exactly "true", and it also needs CORRIDRA_NETWORK_ENABLED to be "true";
+  // the database module is separate and the form stays hidden while it is not installed.
+  'CORRIDRA_HELPER_INTEREST',
 ] as const;
 export type UxSwitchName = (typeof uxSwitchNames)[number];
 

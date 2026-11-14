@@ -3,6 +3,7 @@ import { SubTabs } from '../../components/ux/sub-tabs';
 import { OperatorWorkbench } from '../../components/operator-workbench';
 import { PhoneFold } from '../../components/phone-fold';
 import { ContributorInvitations } from './contributor-invitations';
+import { HelperInterestList } from './helper-interest-list';
 import {
   SubmissionFailure,
   submissionMessage,
@@ -926,6 +927,7 @@ export function ExecutionNetwork({
                   panel: (
                     <>
                       <ContributorInvitations tenant={tenant} />
+                      <HelperInterestList tenant={tenant} role={role} />
                       {admin && (
                         <details>
                           <summary>Review an invited contributor profile</summary>

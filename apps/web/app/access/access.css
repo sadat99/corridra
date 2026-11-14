@@ -201,3 +201,92 @@
     flex-basis: auto;
   }
 }
+/* The helper interest form (ADR-0085): a disclosure on the team door, two short steps. Tokens only. */
+.access-interest {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+}
+.access-interest details {
+  width: 100%;
+  max-width: 40rem;
+}
+.access-interest summary {
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.access-interest summary h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+.access-interest details > :not(summary) {
+  margin-block-start: var(--space-3);
+}
+.access-helper-form {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 40rem;
+}
+.access-helper-form fieldset {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.access-helper-form fieldset[hidden] {
+  display: none;
+}
+.access-helper-form legend {
+  padding: 0;
+  margin-bottom: var(--space-2);
+  color: var(--text-1);
+  font-weight: var(--weight-semibold);
+}
+.access-helper-form .field label {
+  color: var(--text-1);
+  font-weight: var(--weight-semibold);
+}
+.access-helper-form .field :is(input, select, textarea) {
+  width: 100%;
+  min-height: 2.75rem;
+}
+.access-helper-count {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.access-helper-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: flex-start;
+}
+.access-helper-actions > :is(.button, .button-secondary) {
+  min-height: 2.75rem;
+  margin: 0;
+}
+.access-helper-done {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 40rem;
+  padding: var(--space-4);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+.access-helper-done p {
+  margin: 0;
+}
+/* For programs only: out of sight and out of reach of a person, never display:none, so a program that reads the page fills it. */
+.access-hp {
+  position: absolute;
+  inset-inline-start: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}

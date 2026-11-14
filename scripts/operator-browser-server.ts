@@ -37,6 +37,31 @@ const seed = await seedSyntheticWorkspace(db, {
   name: 'Synthetic Browser Operator',
 });
 await configureSyntheticIntake(db, seed.tenantId, seed.principalId);
+// The helper interest register fixture (ADR-085). Only while HELPER_INTEREST_FIXTURE is "true", which one CI step sets: the
+// real-use modules, the real intake workspace and the register module are installed and real admission is opened on this
+// throwaway local database, so the public form can be shown. Every other run is exactly as it was.
+if (process.env.HELPER_INTEREST_FIXTURE === 'true') {
+  const { migrateCustomerRealUse } = await import('../packages/db/src/customer-real-use-migrate');
+  const { migrateHelperInterest } = await import('../packages/db/src/helper-interest-migrate');
+  const { admitSyntheticCustomer } = await import('../packages/auth/src/customer-admission');
+  const { configureCustomerRealUse } =
+    await import('../packages/auth/src/customer-real-use-configuration');
+  await migrateCustomerRealUse(db);
+  const executor = (await db.query('SELECT service_id FROM app.intake_destination WHERE singleton'))
+    .rows[0].service_id as string;
+  await admitSyntheticCustomer(db, {
+    issuer:
+      'https://ep-helper-interest-browser.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth',
+    subject: 'helper-interest-browser-fixture',
+    executorId: executor,
+    reason: 'Local browser fixture authority only; never a production customer',
+  });
+  await configureCustomerRealUse(db, {
+    enabled: true,
+    reason: 'Local browser fixture with real admission open for the helper interest form',
+  });
+  await migrateHelperInterest(db);
+}
 await db.end();
 await writeFile('.cache/part03-browser.json', JSON.stringify({ password, ...seed }), {
   mode: 0o600,
