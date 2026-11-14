@@ -34,11 +34,11 @@ async function clean(page: Page) {
     true,
   );
   const small = await page.evaluate(() =>
-    [
-      ...document.querySelectorAll(
+    Array.from(
+      document.querySelectorAll(
         'main a, main button, main summary, main input, main select, main textarea',
       ),
-    ]
+    )
       .map((el) => ({ el, box: el.getBoundingClientRect(), style: getComputedStyle(el) }))
       .filter(
         ({ box, style }) =>
