@@ -93,6 +93,7 @@ export default async function Page({ params }: { params: Promise<{ workspaceId: 
         roomEnabled={uxSwitchOn('CORRIDRA_UX_PROGRAMME')}
         firstRunEnabled={uxSwitchOn('CORRIDRA_DELEGATION_FIRST_RUN')}
         boardEnabled={uxSwitchOn('CORRIDRA_DELEGATION_BOARD')}
+        buyingTripEnabled={uxSwitchOn('CORRIDRA_DELEGATION_BUYING_TRIP')}
         framed
       />
     </CustomerShell>

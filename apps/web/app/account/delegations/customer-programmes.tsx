@@ -76,6 +76,8 @@ type Props = {
   firstRunEnabled?: boolean;
   /** The people board and the compact money view (ADR-084 S3). It acts only where the room and participants are on. */
   boardEnabled?: boolean;
+  /** The Buying Trip starter template (ADR-084 S7). It acts only where programme templates are on. */
+  buyingTripEnabled?: boolean;
   /** The page frame shows the back link, the status chips and the helper line, and rare row actions sit in a menu. */
   framed?: boolean;
 };
@@ -127,6 +129,7 @@ function ScopedProgrammes({
   projectionsEnabled = false,
   firstRunEnabled = false,
   boardEnabled = false,
+  buyingTripEnabled = false,
   framed = false,
 }: Props) {
   // The first run ends on Publish, so it needs the public page and the participants module under it.
@@ -1131,6 +1134,7 @@ function ScopedProgrammes({
             subject={subject}
             issuer={issuer}
             workspaceId={workspaceId}
+            buyingTrip={buyingTripEnabled}
             programmes={rows
               .filter((p) => p.archived !== true)
               .map((p) => ({ id: p.id, name: p.name }))}
@@ -1247,6 +1251,7 @@ function ScopedProgrammes({
           issuer={issuer}
           workspaceId={workspaceId}
           templatesEnabled={templatesEnabled}
+          buyingTrip={buyingTripEnabled}
           onPublished={published}
           onDenied={deny}
           plain={
