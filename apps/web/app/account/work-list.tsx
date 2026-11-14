@@ -72,14 +72,25 @@ function Row({ item, names }: { item: WorkItem; names: Map<string, string> }) {
 }
 
 /** What the person sees for a read work list. Every state has its own words; none is borrowed. */
-export function WorkListView({ list, filter }: { list: WorkListData; filter: WorkFilter }) {
+export function WorkListView({
+  list,
+  filter,
+  framed = false,
+}: {
+  list: WorkListData;
+  filter: WorkFilter;
+  /** The page frame already names this list (its tab and title), so the heading is for assistive technology only. */
+  framed?: boolean;
+}) {
   const state = workState(list, filter);
   const counts = workCounts(list);
   const names = new Map(list.workspaces.map((workspace) => [workspace.id, workspace.name]));
   const retry = here(filter);
   return (
     <section id="work-list" className="work-list" aria-labelledby="work-list-title">
-      <h2 id="work-list-title">Your work</h2>
+      <h2 id="work-list-title" className={framed ? 'sr-only' : undefined}>
+        Your work
+      </h2>
       {state === 'unreadable' && (
         <div role="status" className="work-note">
           <p>
@@ -175,11 +186,19 @@ export async function WorkList({
   issuer,
   filter,
   rooms,
+  framed,
 }: {
   subject: string;
   issuer: string;
   filter: WorkFilter;
   rooms: boolean;
+  framed?: boolean;
 }) {
-  return <WorkListView list={await loadWorkItems(subject, issuer, { rooms })} filter={filter} />;
+  return (
+    <WorkListView
+      list={await loadWorkItems(subject, issuer, { rooms })}
+      filter={filter}
+      framed={framed}
+    />
+  );
 }

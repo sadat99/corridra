@@ -518,3 +518,30 @@ test('the owner operating rules are recorded, linked from AGENTS.md and session 
     'session rotation must point at the rules',
   );
 });
+
+// UI/UX.v3 audit, screens batch A (owner, 13 November 2026, "full approved"): Home, Requests and All Tools use the page
+// frame, and the All Tools finder is built from native controls (a labelled search box, a radio group and links), so
+// the keyboard and screen readers work and the list stays reachable without a script.
+test('Home, Requests and All Tools use the shared page frame, and the finder is native and works without a script', () => {
+  const account = read(join(web, 'app/account/page.tsx'));
+  assert.match(
+    account,
+    /frame=\{[\s\S]*?homeHelper[\s\S]*?requestsHelper/,
+    'Home and Requests pass a frame',
+  );
+  const allTools = read(join(web, 'app/account/all-tools/page.tsx'));
+  assert.match(allTools, /frame=\{\{ helper: allToolsHelper \}\}/, 'All Tools passes a frame');
+  assert.ok(
+    allTools.includes('searchParams'),
+    'All Tools reads ?q and ?group for the no-script path',
+  );
+  const finder = read(join(web, 'app/account/all-tools/all-tools-finder.tsx'));
+  assert.match(finder, /role="search"/);
+  assert.match(finder, /method="get"/);
+  assert.match(finder, /action="\/account\/all-tools"/);
+  assert.match(finder, /type="search"/);
+  assert.match(finder, /<label htmlFor=\{searchId\}/, 'the search box has a label');
+  assert.match(finder, /<SegmentedFilter/, 'the group chips are the shared radio group');
+  assert.ok(!/<div[^>]*onClick/.test(finder), 'no clickable div in the finder');
+  assert.ok(!/[–—]/.test(finder), 'no dash in the finder words');
+});

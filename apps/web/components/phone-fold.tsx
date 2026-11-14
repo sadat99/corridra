@@ -13,24 +13,28 @@ export function PhoneFold({
   summary,
   className,
   fold = 'phone',
+  keepOpen = false,
   children,
 }: {
   summary: ReactNode;
   className?: string;
   fold?: 'phone' | 'always' | 'off';
+  /** Holds the section open at every width, for a section the person just asked for (a search result). */
+  keepOpen?: boolean;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     const query = window.matchMedia(phone);
     const apply = () => {
-      if (ref.current) ref.current.open = fold === 'off' || (fold === 'phone' && !query.matches);
+      if (ref.current)
+        ref.current.open = keepOpen || fold === 'off' || (fold === 'phone' && !query.matches);
     };
     apply();
     if (fold !== 'phone') return;
     query.addEventListener('change', apply);
     return () => query.removeEventListener('change', apply);
-  }, [fold]);
+  }, [fold, keepOpen]);
   return (
     <details
       ref={ref}
