@@ -133,6 +133,11 @@ type World = {
   rows: Row[];
   posts: Record<string, unknown>[];
   failNext: { status: number; body: Record<string, unknown> } | 'offline' | null;
+  /** The share kit (ADR-084 S1) is on: the view offers the calendar days and the route takes them. */
+  shareKit: boolean;
+  schedule: { version: number; startsOn: string; endsOn: string } | null;
+  /** The next request to state the calendar days is answered as unavailable. */
+  failSchedule: boolean;
 };
 const world = (over: Partial<World> = {}): World => ({
   version: 0,
@@ -142,6 +147,9 @@ const world = (over: Partial<World> = {}): World => ({
   rows: [],
   posts: [],
   failNext: null,
+  shareKit: false,
+  schedule: null,
+  failSchedule: false,
   ...over,
 });
 const applicant = (id: string, status: string, over: Partial<Row> = {}): Row => ({
@@ -177,6 +185,7 @@ async function serve(page: Page, w: World) {
         applications: w.rows.length,
         awaiting: w.rows.filter((row) => row.status === 'SUBMITTED').length,
         sample: true,
+        ...(w.shareKit ? { shareKit: true, schedule: w.schedule } : {}),
       });
     }
     const body = request.postDataJSON() as Record<string, unknown>;
@@ -199,6 +208,18 @@ async function serve(page: Page, w: World) {
       w.copy = body.copy as Record<string, unknown>;
       w.closesAt = String(body.closesAt).replace('.000Z', '.000000Z');
       return json(route, { programmeId, version: w.version, state: 'OPEN', address });
+    }
+    if (body.kind === 'page' && body.action === 'schedule') {
+      if (!w.shareKit || w.failSchedule) {
+        w.failSchedule = false;
+        return json(route, { error: 'x', code: 'PROGRAMME_PUBLICATION_PAUSED' }, 503);
+      }
+      w.schedule = {
+        version: Number(body.version),
+        startsOn: String(body.startsOn),
+        endsOn: String(body.endsOn),
+      };
+      return json(route, { programmeId, ...w.schedule });
     }
     if (body.kind === 'page' && body.action === 'withdraw') {
       w.state = 'WITHDRAWN';
@@ -359,6 +380,96 @@ for (const width of [390, 1440])
     await expect(page.getByRole('button', { name: 'Edit and Publish Again' })).toBeVisible();
     await expect(link).toHaveCount(0);
   });
+
+// ADR-084 S1: the optional calendar days of the editor, against the stand-in route. The days are offered only where the server
+// says the share kit is on; they are stated for the version just published; and if that second step fails the page stays
+// published and the organiser is told in different words, so a missing calendar file is never a surprise.
+async function writeThroughToPublish(
+  page: Page,
+  days: { startsOn: string; endsOn: string } | null,
+) {
+  await page.getByRole('button', { name: 'Write the Public Page' }).click();
+  await fill(page, 'title', 'Synthetic China machinery delegation');
+  await fill(page, 'organiser', 'Synthetic Dhaka Agro Traders Association');
+  await fill(page, 'summary', 'A ten company buying delegation to compare harvesters.');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page.getByRole('heading', { name: 'Step 2 of 6: Where and when' })).toBeFocused();
+  await fill(page, 'destination', 'Guangzhou and Foshan, China');
+  await fill(page, 'dates', '12 to 18 April 2027, to be confirmed');
+  if (days) {
+    await expect(calendarFields(page)).toHaveCount(2);
+    await fill(page, 'startsOn', days.startsOn);
+    await fill(page, 'endsOn', days.endsOn);
+  }
+  await fill(page, 'focus', 'Agricultural machinery');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await fill(page, 'audience', 'Owners and buyers of importers and dealers.');
+  await fill(page, 'eligibility', 'A registered business that imports farm machinery.');
+  await fill(page, 'capacity', '10');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await fill(page, 'activities', 'Factory visits in Foshan');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await fill(page, 'fee', 'BDT 45,000 per company, paid to the organiser');
+  await fill(page, 'included', 'Programme coordination');
+  await fill(page, 'excluded', 'Flights');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page.getByRole('heading', { name: 'Step 6 of 6: Check and publish' })).toBeFocused();
+  await page.getByRole('checkbox', { name: /I checked this page/ }).check();
+  await page.getByRole('button', { name: 'Publish the Page' }).click();
+}
+const calendarFields = (page: Page) => page.locator('[name="page-startsOn"], [name="page-endsOn"]');
+
+test('with the share kit off the editor has no calendar days and sends none', async ({ page }) => {
+  const w = world();
+  await serve(page, w);
+  await page.goto(`${origin}/?mode=organiser`);
+  await page.getByRole('button', { name: 'Write the Public Page' }).click();
+  await fill(page, 'title', 'Synthetic China machinery delegation');
+  await fill(page, 'organiser', 'Synthetic Dhaka Agro Traders Association');
+  await fill(page, 'summary', 'A ten company buying delegation to compare harvesters.');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page.getByRole('heading', { name: 'Step 2 of 6: Where and when' })).toBeFocused();
+  await expect(calendarFields(page)).toHaveCount(0);
+  await expect(page.getByText('First day (optional)')).toHaveCount(0);
+});
+
+test('with the share kit on the editor states the days for the version just published', async ({
+  page,
+}) => {
+  const w = world({ shareKit: true });
+  await serve(page, w);
+  await page.goto(`${origin}/?mode=organiser`);
+  const days = { startsOn: '2027-04-12', endsOn: '2027-04-18' };
+  await writeThroughToPublish(page, days);
+  await expect(page.getByRole('status').first()).toContainText(
+    'Published. The page is public at its address below.',
+  );
+  expect(w.posts.map((post) => post.action)).toEqual(['publish', 'schedule']);
+  expect(w.posts[1]).toMatchObject({ kind: 'page', action: 'schedule', version: 1, ...days });
+  // The days are not page words: the publish request carries no day fields.
+  expect(JSON.stringify(w.posts[0])).not.toContain('2027-04-1');
+  expect(w.schedule).toEqual({ version: 1, ...days });
+});
+
+test('if the days cannot be saved the page stays published and the organiser is told in other words', async ({
+  page,
+}) => {
+  const w = world({ shareKit: true, failSchedule: true });
+  await serve(page, w);
+  await page.goto(`${origin}/?mode=organiser`);
+  await writeThroughToPublish(page, { startsOn: '2027-04-12', endsOn: '2027-04-18' });
+  await expect(page.getByRole('status').first()).toContainText(
+    'The page is published, but the calendar days could not be saved. Edit the page to add them again.',
+  );
+  await expect(page.getByText('Published. The page is public at its address below.')).toHaveCount(
+    0,
+  );
+  // The page itself is published and shown as such; only the days are missing.
+  expect(w.state).toBe('OPEN');
+  expect(w.schedule).toBeNull();
+  expect(w.posts.map((post) => post.action)).toEqual(['publish', 'schedule']);
+  await expect(page.getByText('Public page: Published and taking applications')).toBeVisible();
+});
 
 test('organiser answers applications; each state offers only its own actions; a stale answer is said plainly', async ({
   page,

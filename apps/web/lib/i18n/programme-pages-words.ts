@@ -53,6 +53,11 @@ export const programmePagesWords = {
   'pp.public.responsible.title': 'Who is responsible',
   'pp.public.responsible.text':
     '{organiser} runs this programme and is responsible for it, its fee and what it includes. Everything on this page is stated by the organiser. Corridra provides the tools the organiser uses. Corridra is not the travel operator and has not checked these details.',
+  // The same paragraph with the share kit on: the attribution link takes the place of the sentence about Corridra's tools.
+  'pp.public.responsible.kitBefore':
+    '{organiser} runs this programme and is responsible for it, its fee and what it includes. Everything on this page is stated by the organiser.',
+  'pp.public.responsible.kitAfter':
+    'Corridra is not the travel operator and has not checked these details.',
   // Sharing, started by the person
   'pp.share.title': 'Share this page',
   'pp.share.copy': 'Copy Link',
@@ -60,6 +65,28 @@ export const programmePagesWords = {
   'pp.share.facebook': 'Share on Facebook',
   'pp.share.copied': 'Link copied.',
   'pp.share.copyManually': 'Copy this link: {url}',
+  // The share kit (ADR-084 S1): all of it is started by the person pressing, and built from the published words only
+  'pp.kit.flyer': 'Open Flyer',
+  'pp.kit.calendar': 'Add to Calendar',
+  // Short on purpose: it has to fit the share row without wrapping at 390, 768 and 1440. The spoken name says more.
+  'pp.kit.more': 'More',
+  'pp.kit.moreLabel': 'More ways to share',
+  'pp.kit.qr.label': 'QR code that opens {title}',
+  'pp.kit.attribution': 'Page made with Corridra Programmes',
+  // The word on the preview picture when the title has no letters the picture can draw
+  'pp.kit.preview.untitled': 'Programme',
+  'pp.flyer.title': 'Flyer for {title}',
+  'pp.flyer.print': 'Print Flyer',
+  'pp.flyer.back': 'Back to the Page',
+  'pp.flyer.scan': 'Scan to read the page and apply.',
+  // A closed page keeps its flyer, which invites no application (the page itself says "Applications are closed")
+  'pp.flyer.scanClosed': 'Scan to read the page.',
+  'pp.flyer.addressLabel': 'Page address',
+  'pp.flyer.stated':
+    'Everything on this flyer is stated by the organiser. Corridra has not checked these details and is not the travel operator.',
+  'pp.flyer.sample':
+    'Sample. The programme and the organiser on this flyer are examples, not real offers.',
+  'pp.flyer.feeStated': 'Fee as the organiser states it',
   // The line on the account pages for a visitor who chose a programme before signing in
   'pp.notice.text': 'You chose to apply to {title}. Your application has not been sent yet.',
   'pp.notice.continue': 'Continue Your Application',
@@ -126,6 +153,8 @@ export const programmePagesWords = {
     'This page changed since you opened it. Nothing was saved. Reload to see the latest version.',
   'pp.refusal.PROGRAMME_PUBLICATION_PAUSED':
     'This programme or its workspace is archived. Restore it before publishing, inviting or joining.',
+  'pp.refusal.PROGRAMME_SCHEDULE_ALREADY_SET':
+    'These days are already set for this version of the page. Publish a new version to change them.',
   'pp.refusal.PROGRAMME_PUBLICATION_RATE_LIMITED':
     'This page was published many times in the last hour. Wait a while, then publish again.',
   'pp.refusal.PROGRAMME_APPLICATIONS_CLOSED':
@@ -212,6 +241,14 @@ export const programmePagesWords = {
   'pp.edit.destination.hint': 'City and country, for example "Guangzhou, China".',
   'pp.edit.dates.label': 'When',
   'pp.edit.dates.hint': 'If the dates are not fixed yet, say so.',
+  'pp.edit.schedule.starts': 'First day (optional)',
+  'pp.edit.schedule.ends': 'Last day (optional)',
+  'pp.edit.schedule.hint':
+    'Both days, or neither. They make the calendar file on the public page. They are not shown on the page itself.',
+  'pp.edit.problem.schedule':
+    'Give both days, with the last day on or after the first, no more than a year apart. Or leave both empty.',
+  'pp.edit.schedule.failed':
+    'The page is published, but the calendar days could not be saved. Edit the page to add them again.',
   'pp.edit.focus.label': 'Industry or business focus',
   'pp.edit.focus.hint': 'For example "Agricultural machinery".',
   'pp.edit.audience.label': 'Who should apply',

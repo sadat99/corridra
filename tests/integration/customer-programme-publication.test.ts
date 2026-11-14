@@ -215,14 +215,15 @@ test('a proposed address is readable, well formed and different every time', () 
 test('installing the module changes no existing function, policy, table, constraint or row, and is repeatable', async () => {
   expect(preserved).toBe(true);
   await migrateCustomerProgrammePublication(f.owner);
-  // Two files: 0001 (page and applications) and 0002 (the read only staff list, ADR-080 owner decision of 12 November 2026).
+  // Three files: 0001 (page and applications), 0002 (the read only staff list, ADR-080 owner decision of 12 November 2026)
+  // and 0003 (the optional structured dates of a page version, ADR-084 slice S1).
   expect(
     (
       await f.owner.query(
         'SELECT count(*)::int n FROM customer_programme_publication_migrations.applied',
       )
     ).rows[0].n,
-  ).toBe(2);
+  ).toBe(3);
   // The runtime role reads none of the new tables directly and may call only the seven granted functions.
   for (const t of [
     'programme_public_address',
@@ -294,7 +295,7 @@ test('the install refuses, and creates nothing, when a table it writes to has a 
           'SELECT count(*)::int n FROM customer_programme_publication_migrations.applied',
         )
       ).rows[0].n,
-    ).toBe(2);
+    ).toBe(3);
   } finally {
     await g.close();
   }

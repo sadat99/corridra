@@ -36,6 +36,9 @@ export const uxSwitchNames = [
   'CORRIDRA_DELEGATION_FIRST_RUN',
   // ADR-084 S3 people board and money view, off unless exactly "true"; presentation over the existing reads, no command, permission or data.
   'CORRIDRA_DELEGATION_BOARD',
+  // ADR-084 S1 (programme page share kit). Off unless exactly "true"; it only acts where public programme pages are on
+  // and adds no tracking, no send and no data beyond the optional structured dates of a page version.
+  'CORRIDRA_PROGRAMME_SHARE_KIT',
 ] as const;
 export type UxSwitchName = (typeof uxSwitchNames)[number];
 

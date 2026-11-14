@@ -31,6 +31,10 @@ export type PageView = {
   applications: number;
   awaiting: number;
   sample: boolean;
+  /** Present and true when the share kit is on (ADR-084 S1): the editor then offers the optional calendar days. */
+  shareKit?: boolean;
+  /** The days already stated for the live version, or null. */
+  schedule?: { version: number; startsOn: string; endsOn: string } | null;
 };
 export type ApplicationStatus =
   | 'SUBMITTED'
@@ -107,6 +111,7 @@ export const refusalWords: Record<string, string> = {
   PROGRAMME_PUBLICATION_CHANGED: pp('pp.refusal.PROGRAMME_PUBLICATION_CHANGED'),
   PROGRAMME_PUBLICATION_PAUSED: pp('pp.refusal.PROGRAMME_PUBLICATION_PAUSED'),
   PROGRAMME_PUBLICATION_RATE_LIMITED: pp('pp.refusal.PROGRAMME_PUBLICATION_RATE_LIMITED'),
+  PROGRAMME_SCHEDULE_ALREADY_SET: pp('pp.refusal.PROGRAMME_SCHEDULE_ALREADY_SET'),
   PROGRAMME_APPLICATIONS_CLOSED: pp('pp.refusal.PROGRAMME_APPLICATIONS_CLOSED'),
   PROGRAMME_ALREADY_REGISTERED: pp('pp.refusal.PROGRAMME_ALREADY_REGISTERED'),
   PROGRAMME_APPLICATION_CHANGED: pp('pp.refusal.PROGRAMME_APPLICATION_CHANGED'),

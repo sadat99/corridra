@@ -32,6 +32,9 @@ export type Draft = {
   summary: string;
   destination: string;
   dates: string;
+  /** Optional calendar days (ADR-084 S1). Kept apart from the free text above, which the page shows as written. */
+  startsOn: string;
+  endsOn: string;
   focus: string;
   audience: string;
   eligibility: string;
@@ -65,6 +68,8 @@ export function emptyDraft(name: string): Draft {
     summary: '',
     destination: '',
     dates: '',
+    startsOn: '',
+    endsOn: '',
     focus: '',
     audience: '',
     eligibility: '',
@@ -77,7 +82,11 @@ export function emptyDraft(name: string): Draft {
     closes: isoDay(30),
   };
 }
-function draftFrom(copy: PublicCopy, closesAt?: string): Draft {
+function draftFrom(
+  copy: PublicCopy,
+  closesAt?: string,
+  schedule?: { startsOn: string; endsOn: string } | null,
+): Draft {
   const later = closesAt && Date.parse(closesAt) > Date.now() + 86400000;
   return {
     title: copy.title,
@@ -85,6 +94,8 @@ function draftFrom(copy: PublicCopy, closesAt?: string): Draft {
     summary: copy.summary,
     destination: copy.destination,
     dates: copy.dates,
+    startsOn: schedule?.startsOn ?? '',
+    endsOn: schedule?.endsOn ?? '',
     focus: copy.focus,
     audience: copy.audience,
     eligibility: copy.eligibility,
@@ -164,6 +175,16 @@ export function problem(step: number, draft: Draft, sample: boolean): string {
       return pp('pp.edit.problem.closes');
   }
   return '';
+}
+/** What is wrong with the optional calendar days, or nothing: both or neither, in order, at most a year apart. */
+export function scheduleProblem(draft: Pick<Draft, 'startsOn' | 'endsOn'>): string {
+  const { startsOn, endsOn } = draft;
+  if (!startsOn && !endsOn) return '';
+  const day = /^\d{4}-\d{2}-\d{2}$/;
+  if (!day.test(startsOn) || !day.test(endsOn) || endsOn < startsOn)
+    return pp('pp.edit.problem.schedule');
+  const days = (Date.parse(`${endsOn}T00:00:00Z`) - Date.parse(`${startsOn}T00:00:00Z`)) / 86400000;
+  return Number.isNaN(days) || days > 365 ? pp('pp.edit.problem.schedule') : '';
 }
 /** The lines the guided first run asks for (ADR-084 S0). Each is one of the editor's own lines. */
 export type FirstRunLine =
@@ -339,7 +360,10 @@ function ScopedPage({
       kept = null;
     }
     setDraft(
-      kept ?? (view?.copy ? draftFrom(view.copy, view.closesAt) : emptyDraft(programmeName)),
+      kept ??
+        (view?.copy
+          ? draftFrom(view.copy, view.closesAt, view.schedule)
+          : emptyDraft(programmeName)),
     );
     setStep(0);
     setAgreed(false);
@@ -355,7 +379,8 @@ function ScopedPage({
 
   function forward() {
     if (!draft) return;
-    const wrong = problem(step, draft, sample);
+    const wrong =
+      problem(step, draft, sample) || (step === 1 && view?.shareKit ? scheduleProblem(draft) : '');
     setError(wrong);
     if (!wrong) setStep((s) => Math.min(s + 1, steps.length - 1));
   }
@@ -368,6 +393,12 @@ function ScopedPage({
         setError(wrong);
         return;
       }
+    }
+    const wrongDays = view.shareKit ? scheduleProblem(draft) : '';
+    if (wrongDays) {
+      setStep(1);
+      setError(wrongDays);
+      return;
     }
     if (!agreed) {
       setError(pp('pp.edit.agreeNeeded'));
@@ -392,12 +423,34 @@ function ScopedPage({
         acknowledged: true,
       },
     );
-    writing.current = false;
-    setBusy(false);
     if (!result.ok) {
+      writing.current = false;
+      setBusy(false);
       setError(result.message);
       return;
     }
+    // The optional calendar days belong to the version just published (ADR-084 S1). If saving them fails the page stays
+    // published and the organiser is told, so a missing calendar file is never a surprise.
+    let daysSaved = true;
+    const published = result.body.version;
+    if (view.shareKit && draft.startsOn && draft.endsOn && typeof published === 'number') {
+      const days = await pageRequest(
+        { subject, issuer },
+        {
+          kind: 'page',
+          action: 'schedule',
+          commandId: commands.forIntent('schedule' + published + draft.startsOn + draft.endsOn),
+          workspaceId,
+          programmeId,
+          version: published,
+          startsOn: draft.startsOn,
+          endsOn: draft.endsOn,
+        },
+      );
+      daysSaved = days.ok;
+    }
+    writing.current = false;
+    setBusy(false);
     commands.clear();
     try {
       window.sessionStorage.removeItem(storageKey);
@@ -405,7 +458,7 @@ function ScopedPage({
       /* Nothing to clear. */
     }
     setDraft(null);
-    setNotice(pp('pp.org.published'));
+    setNotice(daysSaved ? pp('pp.org.published') : pp('pp.edit.schedule.failed'));
     await read();
   }
   async function takeDown() {
@@ -578,6 +631,29 @@ function ScopedPage({
               max: 160,
             })}
             {field('dates', pp('pp.edit.dates.label'), pp('pp.edit.dates.hint'), { max: 160 })}
+            {view.shareKit && (
+              <>
+                <label className="field">
+                  <span>{pp('pp.edit.schedule.starts')}</span>
+                  <input
+                    name="page-startsOn"
+                    type="date"
+                    value={draft.startsOn}
+                    onChange={(event) => set('startsOn')(event.target.value)}
+                  />
+                </label>
+                <label className="field">
+                  <span>{pp('pp.edit.schedule.ends')}</span>
+                  <input
+                    name="page-endsOn"
+                    type="date"
+                    value={draft.endsOn}
+                    onChange={(event) => set('endsOn')(event.target.value)}
+                  />
+                  <small>{pp('pp.edit.schedule.hint')}</small>
+                </label>
+              </>
+            )}
             {field('focus', pp('pp.edit.focus.label'), pp('pp.edit.focus.hint'), {
               max: 300,
             })}
