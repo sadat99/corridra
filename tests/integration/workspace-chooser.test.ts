@@ -66,8 +66,16 @@ vi.mock('../../apps/web/app/account/companies/company-portfolio', () => ({
   CompanyPortfolio: () => null,
 }));
 vi.mock('../../apps/web/components/customer-shell', () => ({
-  CustomerShell: ({ children, title }: { children: unknown; title: string }) =>
-    createElement('main', { 'data-title': title }, children),
+  // The real shell draws the page frame's helper line under the title, before the page body.
+  CustomerShell: ({
+    children,
+    title,
+    frame,
+  }: {
+    children: unknown;
+    title: string;
+    frame?: { helper?: unknown };
+  }) => createElement('main', { 'data-title': title }, frame?.helper, children),
 }));
 
 const chooserPath = '../../apps/web/components/workspace-chooser';

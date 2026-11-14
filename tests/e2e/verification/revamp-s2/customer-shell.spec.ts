@@ -859,6 +859,7 @@ test('CX-02 on a phone the language and help menus are inside the avatar menu, s
   await expect(header(page).getByRole('button', { name: 'Help and accessibility' })).toBeHidden();
   await header(page).getByRole('button', { name: 'Account menu' }).click();
   const menu = page.getByRole('menu', { name: 'Account menu' });
+  await menu.getByRole('menuitem', { name: /^Language/ }).click();
   await expect(menu.getByRole('menuitemradio', { name: 'English' })).toBeVisible();
   await expect(menu.getByRole('menuitem', { name: 'See How It Works' })).toHaveAttribute(
     'href',

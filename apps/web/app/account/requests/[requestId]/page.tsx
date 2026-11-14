@@ -9,6 +9,7 @@ import { CustomerShell } from '../../../../components/customer-shell';
 import { EmailNudge } from '../../../../components/email-nudge';
 import { neonAuth } from '../../../../lib/neon-auth';
 import { CustomerRequestDetail } from '../request-detail';
+import { savedRequestBack, savedRequestHelper } from '../../frame-copy';
 import { uxSwitchOn } from '../../../../lib/ux-switches';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -44,7 +45,12 @@ export default async function Page({ params }: { params: Promise<{ requestId: st
     redirect(`/signin?next=${encodeURIComponent(`/account/requests/${parsed.data}`)}`);
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
   return (
-    <CustomerShell tab="work" eyebrow="REQUESTS" title="Your saved request">
+    <CustomerShell
+      tab="work"
+      eyebrow="REQUESTS"
+      title="Your saved request"
+      frame={{ back: savedRequestBack, helper: savedRequestHelper }}
+    >
       {uxSwitchOn('CORRIDRA_UX_ROAD') && (
         <p>
           <a className="text-link" href={`/account/rooms/${parsed.data}`}>
@@ -58,6 +64,7 @@ export default async function Page({ params }: { params: Promise<{ requestId: st
         subject={session.data.user.id}
         issuer={issuer}
         serviceRequestsEnabled={customerServiceRequestsEnabled()}
+        framed
       />
     </CustomerShell>
   );

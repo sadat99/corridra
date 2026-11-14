@@ -1,0 +1,6 @@
+/* Refresh drawn as an icon alone (the accessible name stays "Refresh ..."): a square 44 px target. Tokens only. */
+.ux-refresh.ux-refresh-icon {
+  justify-content: center;
+  min-width: 2.75rem;
+  padding: 0;
+}

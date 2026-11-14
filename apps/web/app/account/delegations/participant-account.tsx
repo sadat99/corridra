@@ -1,6 +1,7 @@
 'use client';
 import { ParticipantProjectionSharing } from './programme-projections';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
+import { registrationsBack, registrationsHelper } from '../frame-copy';
 import { ProgrammeContext } from './programme-context';
 import { ProgrammeObjectives } from './programme-objectives';
 import { DelegatePath } from './delegate-path';
@@ -21,6 +22,8 @@ export function ParticipantAccount(
     /** Programme pages and shared objectives are both on: the delegate's objective path is shown. */
     objectivePathEnabled?: boolean;
     draftsEnabled?: boolean;
+    /** The page frame shows the back link and the helper line; this section leaves them out. */
+    framed?: boolean;
   },
 ) {
   return <ScopedAccount key={props.issuer + ':' + props.subject} {...props} />;
@@ -35,6 +38,7 @@ function ScopedAccount(
     /** Programme pages and shared objectives are both on: the delegate's objective path is shown. */
     objectivePathEnabled?: boolean;
     draftsEnabled?: boolean;
+    framed?: boolean;
   },
 ) {
   const [token, setToken] = useState(''),
@@ -171,14 +175,14 @@ function ScopedAccount(
         realCustomerInput() ? 'My delegation participation' : 'My sample delegation participation'
       }
     >
-      <a className="text-link ux-back" href="/account">
-        Back to my account
-      </a>
-      <p>
-        {realCustomerInput()
-          ? 'An invitation gives no access to the organiser’s workspace or private commercial details. Organisers see only the display name you agree to share.'
-          : 'Fictional sample registration only. An invitation grants no organiser workspace membership or private commercial access. Only the display name you consent to share is visible to programme organisers.'}{' '}
-      </p>
+      {!props.framed && (
+        <>
+          <a className="text-link ux-back" href={registrationsBack.href}>
+            {registrationsBack.label}
+          </a>
+          <p>{registrationsHelper()} </p>
+        </>
+      )}
       {props.termsEnabled && <MyReminders subject={props.subject} issuer={props.issuer} />}
       {view.status === 'loading' && <p role="status">Checking your programme access…</p>}
       {view.status === 'denied' && (

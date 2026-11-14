@@ -235,6 +235,9 @@ for (const kind of kinds)
           : language;
         if (!folded(width)) await expect(language).toBeVisible();
         await opener.click();
+        // The customer account menu keeps Language as one row (A2): open it first, then every language is one tap away.
+        if (folded(width) && kind === 'customer')
+          await page.getByRole('menuitem', { name: /^Language/ }).click();
         for (const name of ['English', 'বাংলা', '中文'])
           await expect(page.getByRole('menuitemradio', { name, exact: true })).toBeVisible();
         await expect(
@@ -301,3 +304,52 @@ for (const kind of kinds)
     const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
     expect(axe.violations.map((v) => v.id)).toEqual([]);
   });
+
+// UI/UX.v3 consistency pass, unit A2: the customer account menu keeps Sign Out pinned and Language as one row.
+test.describe('the customer account menu', () => {
+  test('Language is one row showing the current language; its languages open from that row and stay reachable', async ({
+    page,
+  }) => {
+    await open(page, 'customer', 390, false);
+    await page.getByRole('button', { name: 'Account menu', exact: true }).click();
+    const row = page.getByRole('menuitem', { name: /^Language/ });
+    await expect(row).toBeVisible();
+    await expect(row).toContainText('English');
+    await expect(row).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.getByRole('menuitemradio', { name: '中文', exact: true })).toHaveCount(0);
+    await row.click();
+    await expect(row).toHaveAttribute('aria-expanded', 'true');
+    for (const name of ['English', 'বাংলা', '中文'])
+      await expect(page.getByRole('menuitemradio', { name, exact: true })).toBeVisible();
+    await expect(page.getByRole('menuitemradio', { name: 'English', exact: true })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    expect((await row.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  });
+
+  for (const height of [900, 480])
+    test(`Sign Out is the last row and stays inside the visible menu at ${height} px high, before and after scrolling`, async ({
+      page,
+    }) => {
+      await open(page, 'customer', 390, false);
+      await page.setViewportSize({ width: 390, height });
+      await page.getByRole('button', { name: 'Account menu', exact: true }).click();
+      const menu = page.getByRole('menu', { name: 'Account menu' });
+      const signOut = menu.getByRole('menuitem', { name: 'Sign Out', exact: true });
+      await expect(signOut).toBeVisible();
+      const last = await menu.getByRole('menuitem').last().textContent();
+      expect(last).toBe('Sign Out');
+      const inside = async () =>
+        menu.evaluate((panel) => {
+          const out = panel.querySelector('.ux-menu-pinned')!.getBoundingClientRect();
+          const box = panel.getBoundingClientRect();
+          return { top: out.top >= box.top - 0.5, bottom: out.bottom <= box.bottom + 0.5 };
+        });
+      expect(await inside()).toEqual({ top: true, bottom: true });
+      await menu.evaluate((panel) => panel.scrollTo(0, panel.scrollHeight));
+      expect(await inside()).toEqual({ top: true, bottom: true });
+      if (height === 480)
+        expect(await menu.evaluate((panel) => panel.scrollHeight > panel.clientHeight)).toBe(true);
+    });
+});
