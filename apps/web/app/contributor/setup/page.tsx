@@ -1,4 +1,5 @@
-import Link from 'next/link';
+import { AccessOptions } from '../../../components/access-options';
+import { accessHelp } from '../../../lib/access-doors';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { SetupForm } from '../../operator/setup/setup-form';
 export const metadata = {
@@ -23,17 +24,7 @@ export default function Page() {
         do not use anywhere else, including your customer account.
       </p>
       <SetupForm kind="contributor" />
-      <nav className="access-options" aria-label="Contributor setup help">
-        <Link prefetch={false} className="text-link" href="/account">
-          Account and email verification
-        </Link>
-        <Link prefetch={false} className="text-link" href="/contributor">
-          Assigned-task access help
-        </Link>
-        <Link prefetch={false} className="text-link" href="/network">
-          About Corridra Network
-        </Link>
-      </nav>
+      <AccessOptions {...accessHelp.contributorSetup} />
     </WorkspaceShell>
   );
 }

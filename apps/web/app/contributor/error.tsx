@@ -1,5 +1,6 @@
 'use client';
-import Link from 'next/link';
+import { AccessOptions } from '../../components/access-options';
+import { accessHelp } from '../../lib/access-doors';
 import { WorkspaceShell } from '../../components/workspace-shell';
 import { AccessState } from '../../components/access-state';
 export default function ContributorError() {
@@ -25,14 +26,7 @@ export default function ContributorError() {
       >
         Retry Assigned Work
       </a>
-      <nav className="access-options" aria-label="Assigned work recovery">
-        <Link prefetch={false} className="text-link" href="/signin">
-          Choose your sign-in route
-        </Link>
-        <Link prefetch={false} className="text-link" href="/workspace">
-          All workspaces and tools
-        </Link>
-      </nav>
+      <AccessOptions {...accessHelp.contributorError} />
     </WorkspaceShell>
   );
 }

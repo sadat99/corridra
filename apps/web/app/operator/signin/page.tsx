@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { AccessOptions } from '../../../components/access-options';
+import { accessHelp } from '../../../lib/access-doors';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { foundations } from '../../../lib/foundations';
 import { OperatorSignin } from './signin-form';
@@ -31,29 +33,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
       <Link prefetch={false} className="text-link" href="/operator/forgot-password">
         Forgot operator password?
       </Link>
-      <nav className="access-options" aria-label="Sign-in alternatives">
-        <Link
-          prefetch={false}
-          className="text-link"
-          href={returnTo.startsWith('/contributor?') ? '/contributor/setup' : '/operator/setup'}
-        >
-          {returnTo.startsWith('/contributor?')
-            ? 'Set up invited contributor access'
-            : 'Set up invited operator access'}
-        </Link>
-        <Link prefetch={false} className="text-link" href="/workspace">
-          All workspaces and tools
-        </Link>
-        <Link prefetch={false} className="text-link" href="/signin">
-          Customer account sign-in
-        </Link>
-        <Link prefetch={false} className="text-link" href="/contributor">
-          Assigned-task invitation help
-        </Link>
-        <Link prefetch={false} className="text-link" href="/">
-          Back to Corridra
-        </Link>
-      </nav>
+      <AccessOptions {...accessHelp.operatorSignIn(returnTo)} />
     </WorkspaceShell>
   );
 }

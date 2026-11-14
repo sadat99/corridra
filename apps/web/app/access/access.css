@@ -1,0 +1,151 @@
+/* The three ways in (/access/*). Tokens only; panels are --radius-lg, cards --radius-md. */
+.access-page {
+  display: grid;
+  gap: var(--space-6);
+  padding-block-end: var(--space-6);
+}
+.access-page > section {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  justify-items: start;
+}
+.access-page h2 {
+  margin: 0;
+  color: var(--text-1);
+  font-family: var(--serif);
+  font-size: var(--text-h2);
+  font-weight: var(--weight-medium);
+  line-height: 1.15;
+}
+.access-page p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-base);
+  line-height: var(--leading-reading);
+}
+.access-page .text-link,
+.access-page .button,
+.access-page .button-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 2.75rem;
+}
+.access-panels,
+.access-cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+.access-panel {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  justify-items: start;
+  padding: var(--space-6);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+.access-panel > :is(.button, .text-link, .button-secondary) {
+  margin-inline-start: 0;
+}
+.access-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-2) var(--space-3);
+  align-content: start;
+  align-items: center;
+  padding: var(--space-4);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+.access-page .access-card h2,
+.access-page .access-card h3 {
+  margin: 0;
+  color: var(--text-1);
+  font-family: var(--font-ui);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+.access-card > :not(svg, h2, h3) {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+.access-card svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: none;
+  color: var(--brand);
+}
+.access-steps {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.access-steps li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--text-2);
+  font-size: var(--text-base);
+}
+.access-elsewhere {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-6);
+  padding-block-start: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+.access-page .access-elsewhere h2 {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--text-1);
+  font-family: var(--font-ui);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+@media (min-width: 48rem) {
+  .access-page .access-elsewhere h2 {
+    flex-basis: auto;
+  }
+  .access-panels,
+  .access-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 64rem) {
+  .access-cards--three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+/* On a phone, actions that sit one above another share one width. */
+@media (max-width: 40rem) {
+  .access-page > section {
+    justify-items: stretch;
+  }
+  .access-panel,
+  .access-card {
+    justify-items: stretch;
+  }
+  .access-card > :not(svg, h2, h3) {
+    justify-self: stretch;
+  }
+  .access-page .button,
+  .access-page .button-secondary,
+  .access-page .text-link {
+    justify-content: center;
+  }
+  .access-elsewhere {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .access-page .access-elsewhere h2 {
+    flex-basis: auto;
+  }
+}

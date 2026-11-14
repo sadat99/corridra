@@ -20,6 +20,7 @@ import {
 } from '../../apps/web/lib/workspace-navigation';
 import { switchRegistry } from '../../apps/web/lib/owner-switches';
 import { signInNavigationFindingsIn } from './sign-in-navigation-guard';
+import { accessHelp } from '../../apps/web/lib/access-doors';
 
 // Operator section addresses and view as stage 2 (Lane 9 of the UX update): the closed list of
 // addresses, the rule that a `#` part wins, and every switch-off path.
@@ -249,8 +250,14 @@ describe('the error page signs in again to the workspace and section it was show
     expect(page).toMatch(
       /useSyncExternalStore\(\s*subscribeToHash,\s*\(\) => window\.location\.href,\s*\(\) => '',\s*\)/,
     );
-    expect(page).toContain(
-      'href={place ? operatorSignInPath(place.workspace, place.section) : operatorSignInPage}',
+    // The shared access list gets the same address and renders the sign-in entry as a plain anchor.
+    expect(page).toMatch(
+      /accessHelp\.operatorError\(\s*place \? operatorSignInPath\(place\.workspace, place\.section\) : operatorSignInPage,?\s*\)/,
+    );
+    const entry = accessHelp.operatorError('/operator/signin?w=x').links[0];
+    expect(entry).toMatchObject({ href: '/operator/signin?w=x', plainAnchor: true });
+    expect(read('apps/web/components/access-options.tsx')).toMatch(
+      /link\.plainAnchor \? \(\s*<a key=\{[^}]*\} className="text-link" href=\{link\.href\}>/,
     );
     for (const [element] of page.matchAll(/<Link\b[\s\S]*?(?:<\/Link>|\/>)/g))
       expect(element).not.toMatch(/operatorSignIn|\/operator\/signin/);
@@ -411,24 +418,12 @@ describe('signing in again from the workspace comes back to the same workspace a
         '<a className="text-link" href={operatorSignInPage}>\n            Invited Operator Sign-in\n          </a>',
       ],
       [
-        'apps/web/app/operator/forgot-password/page.tsx',
-        '<a className="text-link" href={operatorSignInPage}>\n          Back to operator sign-in\n        </a>',
-      ],
-      [
-        'apps/web/app/operator/error.tsx',
-        '<a\n          className="text-link"\n          href={place ? operatorSignInPath(place.workspace, place.section) : operatorSignInPage}\n        >\n          Verify operator access\n        </a>',
-      ],
-      [
         'apps/web/app/operator/reset-password/page.tsx',
         '<a className="text-link" href={operatorSignInPage}>\n        Back to operator sign-in\n      </a>',
       ],
       [
         'apps/web/app/operator/recovery-form.tsx',
         '<a className="primary-link" href={operatorSignInPage}>\n          Return to Operator Sign-in\n        </a>',
-      ],
-      [
-        'apps/web/app/operator/setup/page.tsx',
-        '<a className="text-link" href={operatorSignInPage}>\n          Operator sign-in and authenticator\n        </a>',
       ],
       [
         'apps/web/app/operator/opportunities.tsx',
@@ -440,6 +435,22 @@ describe('signing in again from the workspace comes back to the same workspace a
       ],
     ];
     for (const [path, link] of links) expect(read(path), path).toContain(link);
+    // The setup and recovery pages moved their sign-in entry into the shared access list, which renders a plain anchor.
+    for (const [path, call] of [
+      [
+        'apps/web/app/operator/forgot-password/page.tsx',
+        'accessHelp.operatorForgotPassword(operatorSignInPage)',
+      ],
+      ['apps/web/app/operator/setup/page.tsx', 'accessHelp.operatorSetup(operatorSignInPage)'],
+    ] as const)
+      expect(read(path), path).toContain(call);
+    for (const help of [
+      accessHelp.operatorForgotPassword(operatorSignInPage),
+      accessHelp.operatorSetup(operatorSignInPage),
+    ])
+      expect(help.links.find((l) => l.href === operatorSignInPage)).toMatchObject({
+        plainAnchor: true,
+      });
     expect(read('apps/web/app/operator/reset-password/page.tsx')).not.toContain("from 'next/link'");
   });
   it('no client-side Link anywhere in the web app goes into operator sign-in', () => {

@@ -1,6 +1,9 @@
 {
   "/": {},
   "/about": {},
+  "/access/customer": {},
+  "/access/link": {},
+  "/access/team": {},
   "/account": {
     "redirectsTo:/signin": 1
   },

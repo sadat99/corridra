@@ -1,5 +1,6 @@
 'use client';
-import Link from 'next/link';
+import { AccessOptions } from '../../components/access-options';
+import { accessHelp } from '../../lib/access-doors';
 import { useSyncExternalStore } from 'react';
 import { operatorSignInPage, operatorSignInPath } from '../../lib/workspace-navigation';
 import { operatorPlaceFor } from '../../lib/operator-urls';
@@ -38,20 +39,11 @@ export default function WorkspaceError() {
       >
         Retry Workspace
       </a>
-      <nav className="access-options" aria-label="Workspace recovery">
-        <a
-          className="text-link"
-          href={place ? operatorSignInPath(place.workspace, place.section) : operatorSignInPage}
-        >
-          Verify operator access
-        </a>
-        <Link prefetch={false} className="text-link" href="/workspace">
-          All workspaces and tools
-        </Link>
-        <Link prefetch={false} className="text-link" href="/">
-          Back to Corridra
-        </Link>
-      </nav>
+      <AccessOptions
+        {...accessHelp.operatorError(
+          place ? operatorSignInPath(place.workspace, place.section) : operatorSignInPage,
+        )}
+      />
     </WorkspaceShell>
   );
 }
