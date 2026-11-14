@@ -324,6 +324,23 @@ const before: Record<number, Record<number, { people: number; money: number }>> 
     8: { people: 5524.5, money: 3311.6 },
   },
 };
+// The board and the money view are far shorter than the old groups, so the "no longer than before" pin alone would let
+// them grow a long way (an uncapped board still passes it). This second pin holds them near what was measured on the
+// slice head (same fixture), with 60 px of room for font and rounding differences.
+const measured: Record<number, Record<number, { people: number; money: number }>> = {
+  390: {
+    0: { people: 1332.1, money: 2322.2 },
+    1: { people: 1858.8, money: 2384.8 },
+    3: { people: 2324, money: 2616.8 },
+    8: { people: 2566.3, money: 2953.5 },
+  },
+  1440: {
+    0: { people: 1022, money: 1601.9 },
+    1: { people: 1421.3, money: 1648.3 },
+    3: { people: 1864, money: 1857.9 },
+    8: { people: 1956, money: 2127.4 },
+  },
+};
 const boardHeading = (page: Page) => page.getByRole('heading', { name: 'Sample people board' });
 const recordedWords = 'Recorded by you, not checked by Corridra.';
 const openPeople = async (page: Page) => {
@@ -345,12 +362,14 @@ for (const width of [390, 1440])
         await openPeople(page);
         await closeDetails(page);
         expect(await mainHeight(page)).toBeLessThanOrEqual(before[width]![rows]!.people + 1);
+        expect(await mainHeight(page)).toBeLessThanOrEqual(measured[width]![rows]!.people + 60);
       });
       test(`${rows} rows: the money view is no longer than before`, async ({ page }) => {
         await open(page, width, { rows });
         await openMoney(page);
         await closeDetails(page);
         expect(await mainHeight(page)).toBeLessThanOrEqual(before[width]![rows]!.money + 1);
+        expect(await mainHeight(page)).toBeLessThanOrEqual(measured[width]![rows]!.money + 60);
       });
     }
 
