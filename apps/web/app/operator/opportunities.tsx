@@ -2,6 +2,7 @@
 import { DateTimeField } from '../../components/ux/date-time-input';
 import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { operatorSignInPath } from '../../lib/workspace-navigation';
+import { SubTabs } from '../../components/ux/sub-tabs';
 import { OperatorWorkbench } from '../../components/operator-workbench';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { missionHintNote, takeMissionHint } from './mission-hint';
@@ -562,426 +563,510 @@ export function CommercialProgress({ tenant, revision }: { tenant: string; revis
         </button>
       </div>
       {missionNote && <p role="note">{missionHintNote}</p>}
-      <h3>Mission yield</h3>
-      <p>
-        Scope: {mission ? 'Selected mission' : 'All accessible missions'}. Attribution is
-        association with a mission, not proof of causation. Counts show historical stages attained;
-        amounts reflect recorded corrections. Only records you may access are included.
-      </p>
-      <div className="detail-grid">
-        <div className="detail-card">
-          <h4>Activity and access</h4>
-          <p>
-            {data.activity.targets} targets researched · {data.activity.introductions} introductions
-          </p>
-          <p>
-            {data.activity.held_meetings}/{data.activity.accepted_meetings} accepted meetings held
-          </p>
-          <p>
-            {data.activity.rfqs} RFQs · {data.activity.samples} sample records
-          </p>
-        </div>
-        <div className="detail-card">
-          <h4>Commercial progression</h4>
-          <p>
-            {data.metrics.qualified}/{data.metrics.opportunities} opportunities qualified
-          </p>
-          <p>
-            {data.metrics.proposals}/{data.metrics.qualified} qualified opportunities reached
-            proposal
-          </p>
-          <p>
-            {data.metrics.contracts}/{data.metrics.proposals} proposal opportunities reached
-            contract
-          </p>
-          <p>
-            {data.metrics.cash}/{data.metrics.contracts} contract opportunities reached confirmed
-            cash
-          </p>
-          <p>
-            {data.metrics.recurrence}/{data.metrics.cash} cash opportunities reached recurrence ·{' '}
-            {data.metrics.lost} lost
-          </p>
-        </div>
-      </div>
-      {data.totals.length === 0 ? (
-        <p>No commercial amounts recorded.</p>
-      ) : (
-        data.totals.map((t) => (
-          <div
-            className="detail-card"
-            key={t.currency}
-            aria-label={`${t.currency} commercial totals`}
-          >
-            <h4>{t.currency} amounts</h4>
-            <p>
-              Proposals: {formatMoney(t.proposal_minor, t.currency)} · Commitments:{' '}
-              {formatMoney(t.commitment_minor, t.currency)}
-            </p>
-            <p>
-              Recorded contracts: {formatMoney(t.contract_minor, t.currency)} · Invoiced:{' '}
-              {formatMoney(t.invoice_minor, t.currency)}
-            </p>
-            <p>Reported receipts: {formatMoney(t.reported_cash_minor, t.currency)}</p>
-            <p>Confirmed cash: {formatMoney(t.confirmed_cash_minor, t.currency)}</p>
-            <p>Repeat cash within confirmed cash: {formatMoney(t.repeat_cash_minor, t.currency)}</p>
-          </div>
-        ))
-      )}
-      <p>
-        Currencies are shown separately. Repeat cash is already included in confirmed cash. Recorded
-        contract and invoice evidence is distinct from independent verification.
-      </p>
-      <h3>Overdue follow-up</h3>
-      {!data.overdue.length && !data.meetingFollowups.length ? (
-        <p>No overdue commercial or meeting follow-up in this scope.</p>
-      ) : (
-        <ul>
-          {[...data.overdue, ...data.meetingFollowups].map((f, i) => (
-            <li key={`${i}-${f.id}`}>
-              {f.next_action} · {name(f.owner_id)} · due{' '}
-              {new Date(f.due_at).toLocaleString('en-GB', { timeZone: 'UTC' })} UTC
-            </li>
-          ))}
-        </ul>
-      )}
-      {!data.enabled && (
-        <p>
-          Commercial commands are disabled. A workspace owner can enable opportunities.commands in
-          feature controls after release acceptance.
-        </p>
-      )}
-      {['owner', 'admin'].includes(data.role) && data.enabled && !data.freshMfa && (
-        <p>
-          <a href={operatorSignInPath(tenant, 'workspace-commercial')}>
-            Sign in and verify your authenticator again
-          </a>{' '}
-          before confirming cash, correcting money or rebuilding reports.
-        </p>
-      )}
-      {manage && (
-        <details>
-          <summary>Create an opportunity from a sourcing observation</summary>
-          <form
-            className="operator-form"
-            aria-label="Create sourcing opportunity"
-            onSubmit={(e) =>
-              submit(e, (f) => ({
-                action: 'createFromOrigin',
-                originId: f.get('originId'),
-                title: f.get('title'),
-                attribution: f.get('attribution'),
-                ...own(f),
-              }))
-            }
-          >
-            <label className="field">
-              Opportunity origin observation
-              <select name="originId" required>
-                <option value="">Choose a documented observation</option>
-                {data.origins.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.kind.replaceAll('_', ' ')}: {o.summary}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              Sourcing opportunity title
-              <input name="title" required minLength={3} maxLength={160} />
-            </label>
-            <label className="field">
-              Sourcing attribution and limits
-              <textarea name="attribution" required minLength={3} maxLength={1000} />
-            </label>
-            <Ownership owners={data.owners} defaultDue={defaults.due} />
-            <Reason />
-            <button className="primary-link" disabled={busy}>
-              Create Sourcing Opportunity
-            </button>
-          </form>
-        </details>
-      )}
-      {manage && (
-        <details>
-          <summary>Create an opportunity from a held meeting</summary>
-          <form
-            className="operator-form"
-            aria-label="Create commercial opportunity"
-            onSubmit={(e) =>
-              submit(e, (f) => ({
-                action: 'create',
-                meetingId: f.get('meetingId'),
-                title: f.get('title'),
-                attribution: f.get('attribution'),
-                ...own(f),
-              }))
-            }
-          >
-            <label className="field">
-              Opportunity origin meeting
-              <select name="meetingId" required>
-                <option value="">Choose a held meeting</option>
-                {data.meetings.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.title}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              Opportunity title
-              <input name="title" required minLength={3} maxLength={160} />
-            </label>
-            <label className="field">
-              Mission attribution and limits
-              <textarea name="attribution" required minLength={3} maxLength={1000} />
-            </label>
-            <Ownership owners={data.owners} defaultDue={defaults.due} />
-            <Reason />
-            <button className="primary-link" disabled={busy}>
-              Create Commercial Opportunity
-            </button>
-          </form>
-        </details>
-      )}
-      <p>
-        {data.opportunities.length} of {data.total} accessible opportunities shown. At most 500
-        records are shown on this page.
-      </p>
-      {data.recordsTruncated && (
-        <p>Commercial record display is truncated. Report totals include all accessible records.</p>
-      )}
-      <div className="hero-actions">
-        <button disabled={busy || offset === 0} onClick={() => setOffset(Math.max(0, offset - 50))}>
-          Previous Opportunities
-        </button>
-        <button disabled={busy || offset + 50 >= data.total} onClick={() => setOffset(offset + 50)}>
-          Next Opportunities
-        </button>
-      </div>
-      {data.opportunities.map((o) => {
-        const records = data.records.filter((r) => r.opportunity_id === o.id);
-        return (
-          <article className="detail-card opportunity-card" key={o.id} aria-label={o.title}>
-            <h3>{o.title}</h3>
-            <p>
-              Opportunity state: {o.status} · version {o.version}
-            </p>
-            <p>{o.attribution}</p>
-            <p>
-              Next: {o.next_action} · {name(o.owner_id)} · due{' '}
-              {new Date(o.due_at).toLocaleString('en-GB', { timeZone: 'UTC' })} UTC
-            </p>
-            {o.loss_reason && <p>Loss reason: {o.loss_reason}</p>}
-            {manage && o.status !== 'LOST' && (
+      <SubTabs
+        label="Commercial progress sections"
+        tabs={[
+          {
+            id: 'commercial-yield',
+            label: 'Mission yield',
+            panel: (
               <>
-                <details>
-                  <summary>Change opportunity or follow-up</summary>
-                  <form
-                    key={o.version}
-                    className="operator-form"
-                    aria-label={`Change opportunity ${o.title}`}
-                    onSubmit={(e) =>
-                      submit(e, (f) => ({
-                        action: f.get('status') === 'followup' ? 'followup' : 'transition',
-                        id: o.id,
-                        version: o.version,
-                        ...own(f),
-                        ...(f.get('status') !== 'followup' ? { status: f.get('status') } : {}),
-                        ...(f.get('status') === 'LOST' ? { lossReason: f.get('lossReason') } : {}),
-                      }))
-                    }
-                  >
-                    <label className="field">
-                      Next opportunity action
-                      <select name="status">
-                        <option value="followup">Update owner and follow-up</option>
-                        {opportunityTransitions[o.status].map((s) => (
-                          <option key={s}>{s}</option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="field">
-                      Opportunity loss reason
-                      <textarea name="lossReason" minLength={3} maxLength={500} />
-                    </label>
-                    <Ownership owners={data.owners} opportunity={o} defaultDue={defaults.due} />
-                    <Reason />
-                    <button className="primary-link" disabled={busy}>
-                      Save Opportunity Change
-                    </button>
-                  </form>
-                </details>
-                <details>
-                  <summary>Record RFQ, sample or commercial evidence</summary>
-                  <RecordForm
-                    data={data}
-                    o={o}
-                    busy={busy}
-                    defaultDate={defaults.observed}
-                    submit={submit}
-                  />
+                <h3>Mission yield</h3>
+                <p>Scope: {mission ? 'Selected mission' : 'All accessible missions'}.</p>
+                <div className="detail-grid">
+                  <div className="detail-card">
+                    <h4>Activity and access</h4>
+                    <p>
+                      {data.activity.targets} targets researched · {data.activity.introductions}{' '}
+                      introductions
+                    </p>
+                    <p>
+                      {data.activity.held_meetings}/{data.activity.accepted_meetings} accepted
+                      meetings held
+                    </p>
+                    <p>
+                      {data.activity.rfqs} RFQs · {data.activity.samples} sample records
+                    </p>
+                  </div>
+                  <div className="detail-card">
+                    <h4>Commercial progression</h4>
+                    <p>
+                      {data.metrics.qualified}/{data.metrics.opportunities} opportunities qualified
+                    </p>
+                    <p>
+                      {data.metrics.proposals}/{data.metrics.qualified} qualified opportunities
+                      reached proposal
+                    </p>
+                    <p>
+                      {data.metrics.contracts}/{data.metrics.proposals} proposal opportunities
+                      reached contract
+                    </p>
+                    <p>
+                      {data.metrics.cash}/{data.metrics.contracts} contract opportunities reached
+                      confirmed cash
+                    </p>
+                    <p>
+                      {data.metrics.recurrence}/{data.metrics.cash} cash opportunities reached
+                      recurrence · {data.metrics.lost} lost
+                    </p>
+                  </div>
+                </div>
+                {data.totals.length === 0 ? (
+                  <p>No commercial amounts recorded.</p>
+                ) : (
+                  data.totals.map((t) => (
+                    <div
+                      className="detail-card"
+                      key={t.currency}
+                      aria-label={`${t.currency} commercial totals`}
+                    >
+                      <h4>{t.currency} amounts</h4>
+                      <p>
+                        Proposals: {formatMoney(t.proposal_minor, t.currency)} · Commitments:{' '}
+                        {formatMoney(t.commitment_minor, t.currency)}
+                      </p>
+                      <p>
+                        Recorded contracts: {formatMoney(t.contract_minor, t.currency)} · Invoiced:{' '}
+                        {formatMoney(t.invoice_minor, t.currency)}
+                      </p>
+                      <p>Reported receipts: {formatMoney(t.reported_cash_minor, t.currency)}</p>
+                      <p>Confirmed cash: {formatMoney(t.confirmed_cash_minor, t.currency)}</p>
+                      <p>
+                        Repeat cash within confirmed cash:{' '}
+                        {formatMoney(t.repeat_cash_minor, t.currency)}
+                      </p>
+                    </div>
+                  ))
+                )}
+                <details className="ux-yield-notes">
+                  <summary>How to Read Mission Yield (2 notes)</summary>
+                  <p>
+                    Attribution is association with a mission, not proof of causation. Counts show
+                    historical stages attained; amounts reflect recorded corrections. Only records
+                    you may access are included.
+                  </p>
+                  <p>
+                    Currencies are shown separately. Repeat cash is already included in confirmed
+                    cash. Recorded contract and invoice evidence is distinct from independent
+                    verification.
+                  </p>
                 </details>
               </>
-            )}
-            <h4>Evidence and accounting history</h4>
-            <p>
-              {records.length} of {data.recordCounts.find((c) => c.opportunity_id === o.id)?.n ?? 0}{' '}
-              commercial records shown.
-            </p>
-            {records.length <
-              (data.recordCounts.find((c) => c.opportunity_id === o.id)?.n ?? 0) && (
-              <button disabled={busy} onClick={() => void moreRecords(o.id)}>
-                Load More Evidence for {o.title}
-              </button>
-            )}
-            {records.length === 0 ? (
-              <p>No commercial evidence recorded.</p>
-            ) : (
-              records.map((r) => {
-                const a = data.confirmations.find((a) => a.record_id === r.id),
-                  reversed = records.some((rv) => rv.reverse_of === r.id);
-                return (
-                  <div
-                    className="evidence-row commercial-record"
-                    key={r.id}
-                    aria-label={r.external_reference}
+            ),
+          },
+          {
+            id: 'commercial-followup',
+            label: 'Follow-up',
+            panel: (
+              <>
+                <h3>Overdue follow-up</h3>
+                {!data.overdue.length && !data.meetingFollowups.length ? (
+                  <p>No overdue commercial or meeting follow-up in this scope.</p>
+                ) : (
+                  <ul>
+                    {[...data.overdue, ...data.meetingFollowups].map((f, i) => (
+                      <li key={`${i}-${f.id}`}>
+                        {f.next_action} · {name(f.owner_id)} · due{' '}
+                        {new Date(f.due_at).toLocaleString('en-GB', { timeZone: 'UTC' })} UTC
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            ),
+          },
+          {
+            id: 'commercial-opportunities',
+            label: `Opportunities (${data.opportunities.length})`,
+            panel: (
+              <>
+                {!data.enabled && (
+                  <p>
+                    Commercial commands are disabled. A workspace owner can enable
+                    opportunities.commands in feature controls after release acceptance.
+                  </p>
+                )}
+                {['owner', 'admin'].includes(data.role) && data.enabled && !data.freshMfa && (
+                  <p>
+                    <a href={operatorSignInPath(tenant, 'workspace-commercial')}>
+                      Sign in and verify your authenticator again
+                    </a>{' '}
+                    before confirming cash, correcting money or rebuilding reports.
+                  </p>
+                )}
+                {manage && (
+                  <details>
+                    <summary>Create an opportunity from a sourcing observation</summary>
+                    <form
+                      className="operator-form"
+                      aria-label="Create sourcing opportunity"
+                      onSubmit={(e) =>
+                        submit(e, (f) => ({
+                          action: 'createFromOrigin',
+                          originId: f.get('originId'),
+                          title: f.get('title'),
+                          attribution: f.get('attribution'),
+                          ...own(f),
+                        }))
+                      }
+                    >
+                      <label className="field">
+                        Opportunity origin observation
+                        <select name="originId" required>
+                          <option value="">Choose a documented observation</option>
+                          {data.origins.map((o) => (
+                            <option key={o.id} value={o.id}>
+                              {o.kind.replaceAll('_', ' ')}: {o.summary}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="field">
+                        Sourcing opportunity title
+                        <input name="title" required minLength={3} maxLength={160} />
+                      </label>
+                      <label className="field">
+                        Sourcing attribution and limits
+                        <textarea name="attribution" required minLength={3} maxLength={1000} />
+                      </label>
+                      <Ownership owners={data.owners} defaultDue={defaults.due} />
+                      <Reason />
+                      <button className="primary-link" disabled={busy}>
+                        Create Sourcing Opportunity
+                      </button>
+                    </form>
+                  </details>
+                )}
+                {manage && (
+                  <details>
+                    <summary>Create an opportunity from a held meeting</summary>
+                    <form
+                      className="operator-form"
+                      aria-label="Create commercial opportunity"
+                      onSubmit={(e) =>
+                        submit(e, (f) => ({
+                          action: 'create',
+                          meetingId: f.get('meetingId'),
+                          title: f.get('title'),
+                          attribution: f.get('attribution'),
+                          ...own(f),
+                        }))
+                      }
+                    >
+                      <label className="field">
+                        Opportunity origin meeting
+                        <select name="meetingId" required>
+                          <option value="">Choose a held meeting</option>
+                          {data.meetings.map((m) => (
+                            <option key={m.id} value={m.id}>
+                              {m.title}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="field">
+                        Opportunity title
+                        <input name="title" required minLength={3} maxLength={160} />
+                      </label>
+                      <label className="field">
+                        Mission attribution and limits
+                        <textarea name="attribution" required minLength={3} maxLength={1000} />
+                      </label>
+                      <Ownership owners={data.owners} defaultDue={defaults.due} />
+                      <Reason />
+                      <button className="primary-link" disabled={busy}>
+                        Create Commercial Opportunity
+                      </button>
+                    </form>
+                  </details>
+                )}
+                <p>
+                  {data.opportunities.length} of {data.total} accessible opportunities shown. At
+                  most 500 records are shown on this page.
+                </p>
+                {data.recordsTruncated && (
+                  <p>
+                    Commercial record display is truncated. Report totals include all accessible
+                    records.
+                  </p>
+                )}
+                <div className="hero-actions">
+                  <button
+                    disabled={busy || offset === 0}
+                    onClick={() => setOffset(Math.max(0, offset - 50))}
                   >
-                    <div>
-                      <strong>
-                        {r.kind} · {r.external_reference}
-                      </strong>
-                      <p>{r.summary}</p>
+                    Previous Opportunities
+                  </button>
+                  <button
+                    disabled={busy || offset + 50 >= data.total}
+                    onClick={() => setOffset(offset + 50)}
+                  >
+                    Next Opportunities
+                  </button>
+                </div>
+                {data.opportunities.map((o) => {
+                  const records = data.records.filter((r) => r.opportunity_id === o.id);
+                  return (
+                    <article
+                      className="detail-card opportunity-card"
+                      key={o.id}
+                      aria-label={o.title}
+                    >
+                      <h3>{o.title}</h3>
                       <p>
-                        {r.amount_minor && r.currency
-                          ? formatMoney(r.amount_minor, r.currency)
-                          : 'No monetary amount'}{' '}
-                        · observed{' '}
-                        {new Date(r.occurred_at).toLocaleString('en-GB', { timeZone: 'UTC' })} UTC
+                        Opportunity state: {o.status} · version {o.version}
                       </p>
+                      <p>{o.attribution}</p>
                       <p>
-                        {r.reverse_of
-                          ? 'Compensating record'
-                          : reversed
-                            ? 'Compensation recorded'
-                            : 'Original record'}{' '}
-                        · Source{' '}
-                        {data.sources.find((s) => s.id === r.source_id)?.locator ?? r.source_id} ·{' '}
-                        {r.evidence_id
-                          ? 'Supporting file recorded'
-                          : 'Source observation; no supporting file'}
+                        Next: {o.next_action} · {name(o.owner_id)} · due{' '}
+                        {new Date(o.due_at).toLocaleString('en-GB', { timeZone: 'UTC' })} UTC
                       </p>
-                      {r.kind === 'CASH_RECEIPT' && (
-                        <p>
-                          {a
-                            ? 'Accounting confirmed: ' + a.basis
-                            : 'Reported receipt; accounting confirmation pending'}
-                        </p>
-                      )}
-                      {accounting &&
-                        r.kind === 'CASH_RECEIPT' &&
-                        !a &&
-                        (!reversed || r.reverse_of) && (
+                      {o.loss_reason && <p>Loss reason: {o.loss_reason}</p>}
+                      {manage && o.status !== 'LOST' && (
+                        <>
                           <details>
-                            <summary>Confirm this cash observation</summary>
+                            <summary>Change opportunity or follow-up</summary>
                             <form
+                              key={o.version}
                               className="operator-form"
-                              aria-label={`Confirm cash ${r.external_reference}`}
+                              aria-label={`Change opportunity ${o.title}`}
                               onSubmit={(e) =>
                                 submit(e, (f) => ({
-                                  action: 'confirm',
-                                  recordId: r.id,
-                                  sourceId: f.get('sourceId'),
-                                  occurredAt: fromField(f.get('occurredAt')),
-                                  basis: f.get('basis'),
+                                  action:
+                                    f.get('status') === 'followup' ? 'followup' : 'transition',
+                                  id: o.id,
+                                  version: o.version,
+                                  ...own(f),
+                                  ...(f.get('status') !== 'followup'
+                                    ? { status: f.get('status') }
+                                    : {}),
+                                  ...(f.get('status') === 'LOST'
+                                    ? { lossReason: f.get('lossReason') }
+                                    : {}),
                                 }))
                               }
                             >
-                              <Observation
-                                sources={data.sources.filter((s) => s.kind !== 'self_declaration')}
-                                defaultDate={defaults.observed}
-                              />
                               <label className="field">
-                                Accounting confirmation basis
-                                <textarea name="basis" required minLength={3} maxLength={1000} />
+                                Next opportunity action
+                                <select name="status">
+                                  <option value="followup">Update owner and follow-up</option>
+                                  {opportunityTransitions[o.status].map((s) => (
+                                    <option key={s}>{s}</option>
+                                  ))}
+                                </select>
                               </label>
+                              <label className="field">
+                                Opportunity loss reason
+                                <textarea name="lossReason" minLength={3} maxLength={500} />
+                              </label>
+                              <Ownership
+                                owners={data.owners}
+                                opportunity={o}
+                                defaultDue={defaults.due}
+                              />
                               <Reason />
                               <button className="primary-link" disabled={busy}>
-                                Confirm Observed Cash
+                                Save Opportunity Change
                               </button>
                             </form>
                           </details>
-                        )}
-                      {accounting && r.amount_minor && !r.reverse_of && !reversed && (
-                        <details>
-                          <summary>Correct this amount with full compensation</summary>
-                          <form
-                            className="operator-form"
-                            aria-label={`Compensate ${r.external_reference}`}
-                            onSubmit={(e) =>
-                              submit(e, (f) => ({
-                                action: 'reverse',
-                                recordId: r.id,
-                                sourceId: f.get('sourceId'),
-                                occurredAt: fromField(f.get('occurredAt')),
-                              }))
-                            }
-                          >
-                            <p>
-                              This records{' '}
-                              {formatMoney((-BigInt(r.amount_minor)).toString(), r.currency!)} and
-                              preserves the original. Cash compensation requires separate accounting
-                              confirmation before changing confirmed totals.
-                            </p>
-                            <Observation sources={data.sources} defaultDate={defaults.observed} />
-                            <Reason />
-                            <button className="primary-link" disabled={busy}>
-                              Record Full Compensation
-                            </button>
-                          </form>
-                        </details>
+                          <details>
+                            <summary>Record RFQ, sample or commercial evidence</summary>
+                            <RecordForm
+                              data={data}
+                              o={o}
+                              busy={busy}
+                              defaultDate={defaults.observed}
+                              submit={submit}
+                            />
+                          </details>
+                        </>
                       )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-            <details>
-              <summary>Commercial command history</summary>
-              <ul>
-                {data.history
-                  .filter((h) => h.opportunity_id === o.id)
-                  .map((h) => (
-                    <li key={h.id}>
-                      {h.action} · {h.reason} ·{' '}
-                      {new Date(h.created_at).toLocaleString('en-GB', { timeZone: 'UTC' })} UTC
-                    </li>
-                  ))}
-              </ul>
-            </details>
-          </article>
-        );
-      })}
-      {accounting && (
-        <details>
-          <summary>Rebuild commercial reports from retained events</summary>
-          <form
-            className="operator-form"
-            aria-label="Rebuild commercial projections"
-            onSubmit={(e) => submit(e, () => ({ action: 'rebuild' }))}
-          >
-            <p>
-              Replays retained commercial outcomes for this workspace. Records and financial history
-              stay intact.
-            </p>
-            <Reason />
-            <button className="primary-link" disabled={busy}>
-              Rebuild Commercial Reports
-            </button>
-          </form>
-        </details>
-      )}
+                      <h4>Evidence and accounting history</h4>
+                      <p>
+                        {records.length} of{' '}
+                        {data.recordCounts.find((c) => c.opportunity_id === o.id)?.n ?? 0}{' '}
+                        commercial records shown.
+                      </p>
+                      {records.length <
+                        (data.recordCounts.find((c) => c.opportunity_id === o.id)?.n ?? 0) && (
+                        <button disabled={busy} onClick={() => void moreRecords(o.id)}>
+                          Load More Evidence for {o.title}
+                        </button>
+                      )}
+                      {records.length === 0 ? (
+                        <p>No commercial evidence recorded.</p>
+                      ) : (
+                        records.map((r) => {
+                          const a = data.confirmations.find((a) => a.record_id === r.id),
+                            reversed = records.some((rv) => rv.reverse_of === r.id);
+                          return (
+                            <div
+                              className="evidence-row commercial-record"
+                              key={r.id}
+                              aria-label={r.external_reference}
+                            >
+                              <div>
+                                <strong>
+                                  {r.kind} · {r.external_reference}
+                                </strong>
+                                <p>{r.summary}</p>
+                                <p>
+                                  {r.amount_minor && r.currency
+                                    ? formatMoney(r.amount_minor, r.currency)
+                                    : 'No monetary amount'}{' '}
+                                  · observed{' '}
+                                  {new Date(r.occurred_at).toLocaleString('en-GB', {
+                                    timeZone: 'UTC',
+                                  })}{' '}
+                                  UTC
+                                </p>
+                                <p>
+                                  {r.reverse_of
+                                    ? 'Compensating record'
+                                    : reversed
+                                      ? 'Compensation recorded'
+                                      : 'Original record'}{' '}
+                                  · Source{' '}
+                                  {data.sources.find((s) => s.id === r.source_id)?.locator ??
+                                    r.source_id}{' '}
+                                  ·{' '}
+                                  {r.evidence_id
+                                    ? 'Supporting file recorded'
+                                    : 'Source observation; no supporting file'}
+                                </p>
+                                {r.kind === 'CASH_RECEIPT' && (
+                                  <p>
+                                    {a
+                                      ? 'Accounting confirmed: ' + a.basis
+                                      : 'Reported receipt; accounting confirmation pending'}
+                                  </p>
+                                )}
+                                {accounting &&
+                                  r.kind === 'CASH_RECEIPT' &&
+                                  !a &&
+                                  (!reversed || r.reverse_of) && (
+                                    <details>
+                                      <summary>Confirm this cash observation</summary>
+                                      <form
+                                        className="operator-form"
+                                        aria-label={`Confirm cash ${r.external_reference}`}
+                                        onSubmit={(e) =>
+                                          submit(e, (f) => ({
+                                            action: 'confirm',
+                                            recordId: r.id,
+                                            sourceId: f.get('sourceId'),
+                                            occurredAt: fromField(f.get('occurredAt')),
+                                            basis: f.get('basis'),
+                                          }))
+                                        }
+                                      >
+                                        <Observation
+                                          sources={data.sources.filter(
+                                            (s) => s.kind !== 'self_declaration',
+                                          )}
+                                          defaultDate={defaults.observed}
+                                        />
+                                        <label className="field">
+                                          Accounting confirmation basis
+                                          <textarea
+                                            name="basis"
+                                            required
+                                            minLength={3}
+                                            maxLength={1000}
+                                          />
+                                        </label>
+                                        <Reason />
+                                        <button className="primary-link" disabled={busy}>
+                                          Confirm Observed Cash
+                                        </button>
+                                      </form>
+                                    </details>
+                                  )}
+                                {accounting && r.amount_minor && !r.reverse_of && !reversed && (
+                                  <details>
+                                    <summary>Correct this amount with full compensation</summary>
+                                    <form
+                                      className="operator-form"
+                                      aria-label={`Compensate ${r.external_reference}`}
+                                      onSubmit={(e) =>
+                                        submit(e, (f) => ({
+                                          action: 'reverse',
+                                          recordId: r.id,
+                                          sourceId: f.get('sourceId'),
+                                          occurredAt: fromField(f.get('occurredAt')),
+                                        }))
+                                      }
+                                    >
+                                      <p>
+                                        This records{' '}
+                                        {formatMoney(
+                                          (-BigInt(r.amount_minor)).toString(),
+                                          r.currency!,
+                                        )}{' '}
+                                        and preserves the original. Cash compensation requires
+                                        separate accounting confirmation before changing confirmed
+                                        totals.
+                                      </p>
+                                      <Observation
+                                        sources={data.sources}
+                                        defaultDate={defaults.observed}
+                                      />
+                                      <Reason />
+                                      <button className="primary-link" disabled={busy}>
+                                        Record Full Compensation
+                                      </button>
+                                    </form>
+                                  </details>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                      <details>
+                        <summary>Commercial command history</summary>
+                        <ul>
+                          {data.history
+                            .filter((h) => h.opportunity_id === o.id)
+                            .map((h) => (
+                              <li key={h.id}>
+                                {h.action} · {h.reason} ·{' '}
+                                {new Date(h.created_at).toLocaleString('en-GB', {
+                                  timeZone: 'UTC',
+                                })}{' '}
+                                UTC
+                              </li>
+                            ))}
+                        </ul>
+                      </details>
+                    </article>
+                  );
+                })}
+                {accounting && (
+                  <details>
+                    <summary>Rebuild commercial reports from retained events</summary>
+                    <form
+                      className="operator-form"
+                      aria-label="Rebuild commercial projections"
+                      onSubmit={(e) => submit(e, () => ({ action: 'rebuild' }))}
+                    >
+                      <p>
+                        Replays retained commercial outcomes for this workspace. Records and
+                        financial history stay intact.
+                      </p>
+                      <Reason />
+                      <button className="primary-link" disabled={busy}>
+                        Rebuild Commercial Reports
+                      </button>
+                    </form>
+                  </details>
+                )}
+              </>
+            ),
+          },
+        ]}
+      />
     </section>
   );
 }

@@ -37,7 +37,7 @@ import {
   sectionOfFragment,
 } from '../../lib/operator-urls';
 import { subscribeToHash } from '../../lib/address-store';
-import { resolveSubTabsAgain } from '../../components/ux/sub-tabs';
+import { SubTabs, resolveSubTabsAgain } from '../../components/ux/sub-tabs';
 import { authenticatorReturnTarget } from '../../lib/authenticator-check';
 import { AuthenticatorCheck } from './authenticator-check';
 import { SourcesPanel } from './sources-panel';
@@ -810,27 +810,61 @@ function TenantWorkspace({
           )}
           {shown('workspace-settings') && ['owner', 'admin'].includes(data.role) && (
             <div className="ux-panel" hidden={view !== 'workspace-settings'}>
-              <ReviewSettings key={`settings-${tenant}`} tenant={tenant} role={data.role} />
-              <ErasureQueue
-                key={`erasure-${tenant}`}
-                tenant={tenant}
-                role={data.role}
-                problemReports={problemReports}
+              <SubTabs
+                label="Settings sections"
+                tabs={[
+                  {
+                    id: 'settings-policies',
+                    label: 'Corridors and policies',
+                    panel: (
+                      <ReviewSettings key={`settings-${tenant}`} tenant={tenant} role={data.role} />
+                    ),
+                  },
+                  {
+                    id: 'settings-erasure',
+                    label: 'Erasure requests',
+                    aliases: ['erasure-queue-title'],
+                    panel: (
+                      <ErasureQueue
+                        key={`erasure-${tenant}`}
+                        tenant={tenant}
+                        role={data.role}
+                        problemReports={problemReports}
+                      />
+                    ),
+                  },
+                  ...(problemReports
+                    ? [
+                        {
+                          id: 'settings-reports',
+                          label: 'Problem reports',
+                          panel: (
+                            <ProblemReportQueue
+                              key={`problem-reports-${tenant}`}
+                              tenant={tenant}
+                              role={data.role}
+                            />
+                          ),
+                        },
+                      ]
+                    : []),
+                  ...(programmeApplications
+                    ? [
+                        {
+                          id: 'settings-applications',
+                          label: 'Programme applications',
+                          panel: (
+                            <ProgrammeApplicationQueue
+                              key={`programme-applications-${tenant}`}
+                              tenant={tenant}
+                              role={data.role}
+                            />
+                          ),
+                        },
+                      ]
+                    : []),
+                ]}
               />
-              {problemReports ? (
-                <ProblemReportQueue
-                  key={`problem-reports-${tenant}`}
-                  tenant={tenant}
-                  role={data.role}
-                />
-              ) : null}
-              {programmeApplications ? (
-                <ProgrammeApplicationQueue
-                  key={`programme-applications-${tenant}`}
-                  tenant={tenant}
-                  role={data.role}
-                />
-              ) : null}
             </div>
           )}
           {shown('workspace-audit') && ['owner', 'admin'].includes(data.role) && (

@@ -1,4 +1,5 @@
 'use client';
+import { SubTabs } from '../../components/ux/sub-tabs';
 import { OperatorWorkbench } from '../../components/operator-workbench';
 import { PhoneFold } from '../../components/phone-fold';
 import { ContributorInvitations } from './contributor-invitations';
@@ -442,15 +443,18 @@ export function ExecutionNetwork({
       {data && !data.enabled && (
         <aside className="ux-network-paused" aria-label="Network readiness">
           <h3>Network is paused{workspaceName ? ` in ${workspaceName}` : ' in this workspace'}.</h3>
-          <p>
-            Activation applies to each workspace separately. New invitations, assignments and
-            rewards require an enabled workspace. Existing history remains available.
-          </p>
-          <p>
-            Choose an enabled workspace using the Workspace selector above. If your workspace is not
-            available, ask its owner to confirm your membership. A customer account does not grant
-            operator access.
-          </p>
+          <details className="ux-network-paused-notes">
+            <summary>What This Means and What to Do (2 notes)</summary>
+            <p>
+              Activation applies to each workspace separately. New invitations, assignments and
+              rewards require an enabled workspace. Existing history remains available.
+            </p>
+            <p>
+              Choose an enabled workspace using the Workspace selector above. If your workspace is
+              not available, ask its owner to confirm your membership. A customer account does not
+              grant operator access.
+            </p>
+          </details>
           {onChooseWorkspace && (
             <button className="text-link" type="button" onClick={onChooseWorkspace}>
               Choose Workspace
@@ -458,464 +462,528 @@ export function ExecutionNetwork({
           )}
         </aside>
       )}
-      {admin && <ContributorInvitations tenant={tenant} />}
       <OperatorWorkbench
         label="Execution work sections"
         sections={[
           { label: 'Tasks and decisions', heading: 'Current disclosed tasks' },
-          { label: 'Quality and timeliness', heading: 'Reviewed work dimensions by task category' },
+          {
+            label: 'Quality and timeliness',
+            heading: 'Reviewed work dimensions by task category',
+          },
           ...(admin
             ? [
                 { label: 'Contributor invitations', heading: 'Invite a contributor' },
-                { label: 'Eligibility and status', heading: 'Current private work profiles' },
+                {
+                  label: 'Eligibility and status',
+                  heading: 'Current private work profiles',
+                },
                 { label: 'Reward obligations', heading: 'Independent reward approval' },
-                { label: 'Compensations', heading: 'Compensate an unreconciled reward obligation' },
+                {
+                  label: 'Compensations',
+                  heading: 'Compensate an unreconciled reward obligation',
+                },
               ]
             : []),
         ]}
       />
-      <p>
-        Review capabilities and work eligibility, assign only the disclosed task, and assess
-        submitted evidence. Completion and rewards require separate decisions.
-      </p>
-      <div className="workspace-links">
-        <button
-          className="text-link"
-          disabled={busy}
-          aria-busy={busy}
-          onClick={() => {
-            if (busy) return;
-            setBusy(true);
-            void request('network')
-              .then(setData)
-              .catch((e) => setMessage(e.message))
-              .finally(() => setBusy(false));
-          }}
-        >
-          Refresh Execution Work
-        </button>
-        <a href="#workspace-missions">Open missions</a>
-        <a href="#workspace-sources">Open sources and claims</a>
-        <a href="#workspace-authenticator">Verify current access</a>
-        <Link
-          prefetch={false}
-          className="text-link"
-          href={'/contributor?workspace=' + encodeURIComponent(tenant)}
-        >
-          Open assigned task access
-        </Link>
-      </div>
-      {admin && (
-        <details>
-          <summary>Review an invited contributor profile</summary>
-          <p>
-            The identity must already be invited with an authenticator. This review creates no
-            tenant membership. Choose the eligibility evidence from your recorded sources.
-          </p>
-          <form className="operator-form" onSubmit={createProfile}>
-            <Fields
-              tenant={tenant}
-              names={[
-                'principalId',
-                'alias',
-                'capabilities',
-                'markets',
-                'workCountries',
-                'languages',
-                'sectors',
-                'eligibilitySourceId',
-                'expiresAt',
-                'reason',
-              ]}
-            />
-            <label className="field">
-              Work category
-              <select name="category">
-                {[
-                  'local_operator',
-                  'sourcing_expert',
-                  'connector',
-                  'interpreter',
-                  'technical_adviser',
-                  'factory_coordinator',
-                  'field_researcher',
-                  'verification_professional',
-                  'institution_operator',
-                  'private_connector',
-                ].map((k) => (
-                  <option key={k} value={k}>
-                    {k.replaceAll('_', ' ')}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button className="primary-link" disabled={busy}>
-              Save Reviewed Invitation Profile
-            </button>
-          </form>
-        </details>
-      )}
-      {['owner', 'admin', 'operator'].includes(role) && (
-        <details>
-          <summary>Create a scoped task</summary>
-          <form className="operator-form" onSubmit={createTask}>
-            <label className="field">
-              Work type
-              <select name="kind">
-                {taskKinds.map((k) => (
-                  <option key={k} value={k}>
-                    {k.replaceAll('_', ' ')}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <Fields
-              tenant={tenant}
-              names={[
-                'missionId',
-                'market',
-                'workCountry',
-                'location',
-                'language',
-                'sector',
-                'capabilities',
-                'instructions',
-                'deadline',
-                'expiresAt',
-                'evidenceRequired',
-                'effort',
-                'dataHandling',
-                'cancellationTerms',
-                'disputeTerms',
-                'reviewerId',
-                'rewardRuleId',
-                'reason',
-              ]}
-            />
-            <details className="ops-advanced-filters">
-              <summary>Advanced (developers)</summary>
-              <label className="field">
-                Route assignment reference (optional; the mission&apos;s current route is used)
-                <input name="routeAssignmentId" />
-              </label>
-            </details>
-            <button className="primary-link" disabled={busy || !data?.enabled}>
-              Create Task for Reviewed Assignment
-            </button>
-          </form>
-        </details>
-      )}
-      <PhoneFold
-        summary={`Disclosed tasks in this workspace (${data?.tasks.length ?? 0})`}
-        className="ux-network-tasks"
-      >
-        <h3>Current disclosed tasks</h3>
-        {data && !data.tasks.length && (
-          <p>
-            No disclosed tasks are recorded in this workspace. Eligibility and exact assignment
-            remain required before work can start.
-          </p>
-        )}
-        {data?.tasks.map((task) => (
-          <article key={task.id}>
-            <h3>
-              {task.configuration.kind.replaceAll('_', ' ')} · {task.configuration.market}
-            </h3>
-            <p>{task.configuration.instructions}</p>
-            {task.late_submission && (
-              <p>
-                Submitted after the original deadline. Assess timeliness and the disclosed
-                late-submission terms.
-              </p>
-            )}
-            <p>
-              {task.status} · version {task.version} · reference {task.id}
-            </p>
-            <details>
-              <summary>Original work and review history</summary>
-              {task.history?.map((h) => (
-                <div key={h.version}>
-                  <p>
-                    {h.action}: {h.reason}
-                  </p>
-                  {h.details.body && <p>{h.details.body}</p>}
-                  {h.details.rationale && <p>{h.details.rationale}</p>}
+      <SubTabs
+        label="Network sections"
+        tabs={[
+          {
+            id: 'network-work',
+            label: 'Tasks',
+            panel: (
+              <>
+                <p>
+                  Review capabilities and work eligibility, assign only the disclosed task, and
+                  assess submitted evidence. Completion and rewards require separate decisions.
+                </p>
+                <div className="workspace-links">
+                  <button
+                    className="text-link"
+                    disabled={busy}
+                    aria-busy={busy}
+                    onClick={() => {
+                      if (busy) return;
+                      setBusy(true);
+                      void request('network')
+                        .then(setData)
+                        .catch((e) => setMessage(e.message))
+                        .finally(() => setBusy(false));
+                    }}
+                  >
+                    Refresh Execution Work
+                  </button>
+                  <a href="#workspace-missions">Open missions</a>
+                  <a href="#workspace-sources">Open sources and claims</a>
+                  <a href="#workspace-authenticator">Verify current access</a>
+                  <Link
+                    prefetch={false}
+                    className="text-link"
+                    href={'/contributor?workspace=' + encodeURIComponent(tenant)}
+                  >
+                    Open assigned task access
+                  </Link>
                 </div>
-              ))}
-            </details>
-            {task.status === 'CREATED' && admin && (
-              <form className="operator-form" onSubmit={(e) => taskEvent(e, task)}>
-                <input type="hidden" name="action" value="ASSIGN" />
-                <label className="field">
-                  Reviewed profile
-                  <select name="profileId" required>
-                    <option value="">Choose eligible work profile</option>
-                    {data.profiles
+                {['owner', 'admin', 'operator'].includes(role) && (
+                  <details>
+                    <summary>Create a scoped task</summary>
+                    <form className="operator-form" onSubmit={createTask}>
+                      <label className="field">
+                        Work type
+                        <select name="kind">
+                          {taskKinds.map((k) => (
+                            <option key={k} value={k}>
+                              {k.replaceAll('_', ' ')}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <Fields
+                        tenant={tenant}
+                        names={[
+                          'missionId',
+                          'market',
+                          'workCountry',
+                          'location',
+                          'language',
+                          'sector',
+                          'capabilities',
+                          'instructions',
+                          'deadline',
+                          'expiresAt',
+                          'evidenceRequired',
+                          'effort',
+                          'dataHandling',
+                          'cancellationTerms',
+                          'disputeTerms',
+                          'reviewerId',
+                          'rewardRuleId',
+                          'reason',
+                        ]}
+                      />
+                      <details className="ops-advanced-filters">
+                        <summary>Advanced (developers)</summary>
+                        <label className="field">
+                          Route assignment reference (optional; the mission&apos;s current route is
+                          used)
+                          <input name="routeAssignmentId" />
+                        </label>
+                      </details>
+                      <button className="primary-link" disabled={busy || !data?.enabled}>
+                        Create Task for Reviewed Assignment
+                      </button>
+                    </form>
+                  </details>
+                )}
+                <PhoneFold
+                  summary={`Disclosed tasks in this workspace (${data?.tasks.length ?? 0})`}
+                  className="ux-network-tasks"
+                  fold="always"
+                >
+                  <h3>Current disclosed tasks</h3>
+                  {data && !data.tasks.length && (
+                    <p>
+                      No disclosed tasks are recorded in this workspace. Eligibility and exact
+                      assignment remain required before work can start.
+                    </p>
+                  )}
+                  {data?.tasks.map((task) => (
+                    <article key={task.id}>
+                      <h3>
+                        {task.configuration.kind.replaceAll('_', ' ')} · {task.configuration.market}
+                      </h3>
+                      <p>{task.configuration.instructions}</p>
+                      {task.late_submission && (
+                        <p>
+                          Submitted after the original deadline. Assess timeliness and the disclosed
+                          late-submission terms.
+                        </p>
+                      )}
+                      <p>
+                        {task.status} · version {task.version} · reference {task.id}
+                      </p>
+                      <details>
+                        <summary>Original work and review history</summary>
+                        {task.history?.map((h) => (
+                          <div key={h.version}>
+                            <p>
+                              {h.action}: {h.reason}
+                            </p>
+                            {h.details.body && <p>{h.details.body}</p>}
+                            {h.details.rationale && <p>{h.details.rationale}</p>}
+                          </div>
+                        ))}
+                      </details>
+                      {task.status === 'CREATED' && admin && (
+                        <form className="operator-form" onSubmit={(e) => taskEvent(e, task)}>
+                          <input type="hidden" name="action" value="ASSIGN" />
+                          <label className="field">
+                            Reviewed profile
+                            <select name="profileId" required>
+                              <option value="">Choose eligible work profile</option>
+                              {data.profiles
+                                .filter(
+                                  (p) =>
+                                    p.configuration.status === 'ACTIVE' &&
+                                    !data.profiles.some(
+                                      (other) =>
+                                        other.principal_id === p.principal_id &&
+                                        other.version > p.version,
+                                    ),
+                                )
+                                .map((p) => (
+                                  <option key={p.id} value={p.id}>
+                                    {p.configuration.alias} ·{' '}
+                                    {p.configuration.capabilities.join(', ')}
+                                  </option>
+                                ))}
+                            </select>
+                          </label>
+                          <label className="field">
+                            Relationship disclosure
+                            <input
+                              name="relationshipDisclosure"
+                              required
+                              minLength={3}
+                              maxLength={500}
+                            />
+                          </label>
+                          <Fields tenant={tenant} names={['reason']} />
+                          <button className="primary-link" disabled={busy || !data.enabled}>
+                            Approve Exact Assignment
+                          </button>
+                        </form>
+                      )}
+                      {task.status === 'SUBMIT' && (
+                        <form className="operator-form" onSubmit={(e) => review(e, task)}>
+                          <label className="field">
+                            Evidence quality (0–4)
+                            <input type="number" name="quality" min={0} max={4} required />
+                          </label>
+                          <label className="field">
+                            Timeliness (0–4)
+                            <input type="number" name="timeliness" min={0} max={4} required />
+                          </label>
+                          <label className="field">
+                            Review rationale
+                            <input name="rationale" required minLength={3} maxLength={500} />
+                          </label>
+                          <Fields tenant={tenant} names={['reason']} />
+                          <button className="primary-link" disabled={busy || !data.enabled}>
+                            Review Original Submitted Declaration
+                          </button>
+                        </form>
+                      )}
+                      {['SUBMIT', 'REVIEW', 'DISPUTE'].includes(task.status) && (
+                        <form className="operator-form" onSubmit={(e) => taskEvent(e, task)}>
+                          <label className="field">
+                            Evidence decision
+                            <select name="action">
+                              {task.status === 'REVIEW' && (
+                                <option value="COMPLETE">Complete reviewed task</option>
+                              )}
+                              {task.status === 'DISPUTE' ? (
+                                <option value="RESOLVE">Resolve dispute, preserve history</option>
+                              ) : (
+                                <>
+                                  <option value="REQUEST_CORRECTION">
+                                    Request corrected evidence
+                                  </option>
+                                  <option value="REJECT">Reject submitted work</option>
+                                </>
+                              )}
+                            </select>
+                          </label>
+                          {task.status === 'DISPUTE' && (
+                            <label className="field">
+                              Dispute disposition
+                              <select name="resolution">
+                                <option value="REOPEN">Reopen evidence review</option>
+                                <option value="REJECT">Reject disputed work</option>
+                                <option value="UPHOLD">Uphold previously completed work</option>
+                              </select>
+                            </label>
+                          )}
+                          <Fields tenant={tenant} names={['reason']} />
+                          <button className="primary-link" disabled={busy || !data.enabled}>
+                            Save Independent Decision
+                          </button>
+                        </form>
+                      )}
+                      {task.status === 'COMPLETE' &&
+                        ['owner', 'admin', 'operator'].includes(role) && (
+                          <form
+                            className="operator-form"
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              void act(
+                                'network-assess',
+                                {
+                                  taskId: task.id,
+                                  reason: new FormData(e.currentTarget).get('reason'),
+                                },
+                                e.currentTarget,
+                              );
+                            }}
+                          >
+                            <Fields tenant={tenant} names={['reason']} />
+                            <button className="primary-link" disabled={busy || !data.enabled}>
+                              Assess Contribution Once
+                            </button>
+                          </form>
+                        )}
+                    </article>
+                  ))}
+                  <ShowMore
+                    shown={data?.tasks.length ?? 0}
+                    total={data?.tasksTotal}
+                    next={data?.tasksNext}
+                    busy={busy}
+                    label="Tasks"
+                    onMore={() => void showMore('tasks')}
+                  />
+                </PhoneFold>
+              </>
+            ),
+          },
+          {
+            id: 'network-quality',
+            label: 'Quality',
+            panel: (
+              <>
+                <details>
+                  <summary>Reviewed work dimensions by task category</summary>
+                  <p>
+                    These human-reviewed dimensions are evidence of task work, with no universal
+                    ranking or inferred financial attribution.
+                  </p>
+                  {data?.performance.map((p) => (
+                    <article key={p.principal_id + p.task_kind + p.market}>
+                      <h3>
+                        {p.task_kind.replaceAll('_', ' ')} · {p.market}
+                      </h3>
+                      <p>
+                        {p.completed_reviewed_tasks} completed reviewed tasks · evidence quality{' '}
+                        {p.evidence_quality}/4 · timeliness {p.timeliness}/4
+                      </p>
+                      <ul>
+                        {p.rationale.map((r) => (
+                          <li key={r.taskId}>{r.rationale}</li>
+                        ))}
+                      </ul>
+                    </article>
+                  ))}
+                </details>
+                {admin && (
+                  <details>
+                    <summary>Current private work profiles</summary>
+                    {data?.profiles
                       .filter(
                         (p) =>
-                          p.configuration.status === 'ACTIVE' &&
                           !data.profiles.some(
-                            (other) =>
-                              other.principal_id === p.principal_id && other.version > p.version,
+                            (n) => n.principal_id === p.principal_id && n.version > p.version,
                           ),
                       )
                       .map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.configuration.alias} · {p.configuration.capabilities.join(', ')}
-                        </option>
+                        <form
+                          className="operator-form"
+                          key={p.id}
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            const f = new FormData(e.currentTarget);
+                            void act(
+                              'network-profile',
+                              {
+                                ...p.configuration,
+                                id: crypto.randomUUID(),
+                                principalId: p.principal_id,
+                                version: p.version + 1,
+                                status: f.get('status'),
+                                reason: f.get('reason'),
+                              },
+                              e.currentTarget,
+                            );
+                          }}
+                        >
+                          <p>
+                            {p.configuration.alias} · {p.configuration.status} · reviewed countries{' '}
+                            {p.configuration.workCountries.join(', ')}
+                          </p>
+                          <label className="field">
+                            Reviewed profile status
+                            <select name="status">
+                              <option value="SUSPENDED">Suspend task access</option>
+                              <option value="RETIRED">Retire profile</option>
+                              <option value="ACTIVE">Renew reviewed eligibility</option>
+                            </select>
+                          </label>
+                          <Fields tenant={tenant} names={['reason']} />
+                          <button className="text-link" disabled={busy}>
+                            Append Status Review
+                          </button>
+                        </form>
                       ))}
-                  </select>
-                </label>
-                <label className="field">
-                  Relationship disclosure
-                  <input name="relationshipDisclosure" required minLength={3} maxLength={500} />
-                </label>
-                <Fields tenant={tenant} names={['reason']} />
-                <button className="primary-link" disabled={busy || !data.enabled}>
-                  Approve Exact Assignment
-                </button>
-              </form>
-            )}
-            {task.status === 'SUBMIT' && (
-              <form className="operator-form" onSubmit={(e) => review(e, task)}>
-                <label className="field">
-                  Evidence quality (0–4)
-                  <input type="number" name="quality" min={0} max={4} required />
-                </label>
-                <label className="field">
-                  Timeliness (0–4)
-                  <input type="number" name="timeliness" min={0} max={4} required />
-                </label>
-                <label className="field">
-                  Review rationale
-                  <input name="rationale" required minLength={3} maxLength={500} />
-                </label>
-                <Fields tenant={tenant} names={['reason']} />
-                <button className="primary-link" disabled={busy || !data.enabled}>
-                  Review Original Submitted Declaration
-                </button>
-              </form>
-            )}
-            {['SUBMIT', 'REVIEW', 'DISPUTE'].includes(task.status) && (
-              <form className="operator-form" onSubmit={(e) => taskEvent(e, task)}>
-                <label className="field">
-                  Evidence decision
-                  <select name="action">
-                    {task.status === 'REVIEW' && (
-                      <option value="COMPLETE">Complete reviewed task</option>
-                    )}
-                    {task.status === 'DISPUTE' ? (
-                      <option value="RESOLVE">Resolve dispute, preserve history</option>
-                    ) : (
-                      <>
-                        <option value="REQUEST_CORRECTION">Request corrected evidence</option>
-                        <option value="REJECT">Reject submitted work</option>
-                      </>
-                    )}
-                  </select>
-                </label>
-                {task.status === 'DISPUTE' && (
-                  <label className="field">
-                    Dispute disposition
-                    <select name="resolution">
-                      <option value="REOPEN">Reopen evidence review</option>
-                      <option value="REJECT">Reject disputed work</option>
-                      <option value="UPHOLD">Uphold previously completed work</option>
-                    </select>
-                  </label>
+                    <ShowMore
+                      shown={data?.profiles.length ?? 0}
+                      total={data?.profilesTotal}
+                      next={data?.profilesNext}
+                      busy={busy}
+                      label="Profiles"
+                      onMore={() => void showMore('profiles')}
+                    />
+                  </details>
                 )}
-                <Fields tenant={tenant} names={['reason']} />
-                <button className="primary-link" disabled={busy || !data.enabled}>
-                  Save Independent Decision
-                </button>
-              </form>
-            )}
-            {task.status === 'COMPLETE' && ['owner', 'admin', 'operator'].includes(role) && (
-              <form
-                className="operator-form"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void act(
-                    'network-assess',
-                    {
-                      taskId: task.id,
-                      reason: new FormData(e.currentTarget).get('reason'),
-                    },
-                    e.currentTarget,
-                  );
-                }}
-              >
-                <Fields tenant={tenant} names={['reason']} />
-                <button className="primary-link" disabled={busy || !data.enabled}>
-                  Assess Contribution Once
-                </button>
-              </form>
-            )}
-          </article>
-        ))}
-        <ShowMore
-          shown={data?.tasks.length ?? 0}
-          total={data?.tasksTotal}
-          next={data?.tasksNext}
-          busy={busy}
-          label="Tasks"
-          onMore={() => void showMore('tasks')}
-        />
-      </PhoneFold>
-      <details>
-        <summary>Reviewed work dimensions by task category</summary>
-        <p>
-          These human-reviewed dimensions are evidence of task work, with no universal ranking or
-          inferred financial attribution.
-        </p>
-        {data?.performance.map((p) => (
-          <article key={p.principal_id + p.task_kind + p.market}>
-            <h3>
-              {p.task_kind.replaceAll('_', ' ')} · {p.market}
-            </h3>
-            <p>
-              {p.completed_reviewed_tasks} completed reviewed tasks · evidence quality{' '}
-              {p.evidence_quality}/4 · timeliness {p.timeliness}/4
-            </p>
-            <ul>
-              {p.rationale.map((r) => (
-                <li key={r.taskId}>{r.rationale}</li>
-              ))}
-            </ul>
-          </article>
-        ))}
-      </details>
-      {admin && (
-        <details>
-          <summary>Current private work profiles</summary>
-          {data?.profiles
-            .filter(
-              (p) =>
-                !data.profiles.some(
-                  (n) => n.principal_id === p.principal_id && n.version > p.version,
-                ),
-            )
-            .map((p) => (
-              <form
-                className="operator-form"
-                key={p.id}
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const f = new FormData(e.currentTarget);
-                  void act(
-                    'network-profile',
-                    {
-                      ...p.configuration,
-                      id: crypto.randomUUID(),
-                      principalId: p.principal_id,
-                      version: p.version + 1,
-                      status: f.get('status'),
-                      reason: f.get('reason'),
-                    },
-                    e.currentTarget,
-                  );
-                }}
-              >
-                <p>
-                  {p.configuration.alias} · {p.configuration.status} · reviewed countries{' '}
-                  {p.configuration.workCountries.join(', ')}
-                </p>
-                <label className="field">
-                  Reviewed profile status
-                  <select name="status">
-                    <option value="SUSPENDED">Suspend task access</option>
-                    <option value="RETIRED">Retire profile</option>
-                    <option value="ACTIVE">Renew reviewed eligibility</option>
-                  </select>
-                </label>
-                <Fields tenant={tenant} names={['reason']} />
-                <button className="text-link" disabled={busy}>
-                  Append Status Review
-                </button>
-              </form>
-            ))}
-          <ShowMore
-            shown={data?.profiles.length ?? 0}
-            total={data?.profilesTotal}
-            next={data?.profilesNext}
-            busy={busy}
-            label="Profiles"
-            onMore={() => void showMore('profiles')}
-          />
-        </details>
-      )}
-      {admin && (
-        <details>
-          <summary>Independent reward approval</summary>
-          <p>
-            Use the assessed contribution reference and current source. The disclosed
-            original-currency rule determines the obligation. No automatic payout is performed.
-          </p>
-          <form
-            className="operator-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const f = new FormData(e.currentTarget);
-              void act(
-                'network-reward',
+              </>
+            ),
+          },
+          {
+            id: 'network-rewards',
+            label: 'Rewards',
+            panel: (
+              <>
+                {admin && (
+                  <details>
+                    <summary>Independent reward approval</summary>
+                    <p>
+                      Use the assessed contribution reference and current source. The disclosed
+                      original-currency rule determines the obligation. No automatic payout is
+                      performed.
+                    </p>
+                    <form
+                      className="operator-form"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        const f = new FormData(e.currentTarget);
+                        void act(
+                          'network-reward',
+                          {
+                            commandId: crypto.randomUUID(),
+                            contributionId: f.get('contributionId'),
+                            sourceId: f.get('sourceId'),
+                            reason: f.get('reason'),
+                          },
+                          e.currentTarget,
+                        );
+                      }}
+                    >
+                      <label className="field">
+                        Contribution reference
+                        <input name="contributionId" required />
+                      </label>
+                      <PickerField name="sourceId" tenant={tenant} />
+                      <Fields tenant={tenant} names={['reason']} />
+                      <button className="primary-link" disabled={busy || !data?.enabled}>
+                        Record Independently Approved Obligation
+                      </button>
+                    </form>
+                  </details>
+                )}
+                {admin && (
+                  <details>
+                    <summary>Compensate an unreconciled reward obligation</summary>
+                    <p>
+                      This appends an exact negative entry to the existing ledger. It does not
+                      reverse a bank payment or remove the original obligation.
+                    </p>
+                    <form
+                      className="operator-form"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        const f = new FormData(e.currentTarget);
+                        void act(
+                          'network-reverse',
+                          {
+                            commandId: crypto.randomUUID(),
+                            ledgerId: f.get('ledgerId'),
+                            sourceId: f.get('sourceId'),
+                            reason: f.get('reason'),
+                          },
+                          e.currentTarget,
+                        );
+                      }}
+                    >
+                      <label className="field">
+                        Original reward ledger reference
+                        <input name="ledgerId" required />
+                      </label>
+                      <PickerField name="sourceId" tenant={tenant} />
+                      <Fields tenant={tenant} names={['reason']} />
+                      <button className="primary-link" disabled={busy || !data?.enabled}>
+                        Record Compensating Obligation
+                      </button>
+                    </form>
+                  </details>
+                )}
+              </>
+            ),
+          },
+          ...(admin
+            ? [
                 {
-                  commandId: crypto.randomUUID(),
-                  contributionId: f.get('contributionId'),
-                  sourceId: f.get('sourceId'),
-                  reason: f.get('reason'),
+                  id: 'network-invite',
+                  label: 'Invite a Contributor',
+                  panel: (
+                    <>
+                      <ContributorInvitations tenant={tenant} />
+                      {admin && (
+                        <details>
+                          <summary>Review an invited contributor profile</summary>
+                          <p>
+                            The identity must already be invited with an authenticator. This review
+                            creates no tenant membership. Choose the eligibility evidence from your
+                            recorded sources.
+                          </p>
+                          <form className="operator-form" onSubmit={createProfile}>
+                            <Fields
+                              tenant={tenant}
+                              names={[
+                                'principalId',
+                                'alias',
+                                'capabilities',
+                                'markets',
+                                'workCountries',
+                                'languages',
+                                'sectors',
+                                'eligibilitySourceId',
+                                'expiresAt',
+                                'reason',
+                              ]}
+                            />
+                            <label className="field">
+                              Work category
+                              <select name="category">
+                                {[
+                                  'local_operator',
+                                  'sourcing_expert',
+                                  'connector',
+                                  'interpreter',
+                                  'technical_adviser',
+                                  'factory_coordinator',
+                                  'field_researcher',
+                                  'verification_professional',
+                                  'institution_operator',
+                                  'private_connector',
+                                ].map((k) => (
+                                  <option key={k} value={k}>
+                                    {k.replaceAll('_', ' ')}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <button className="primary-link" disabled={busy}>
+                              Save Reviewed Invitation Profile
+                            </button>
+                          </form>
+                        </details>
+                      )}
+                    </>
+                  ),
                 },
-                e.currentTarget,
-              );
-            }}
-          >
-            <label className="field">
-              Contribution reference
-              <input name="contributionId" required />
-            </label>
-            <PickerField name="sourceId" tenant={tenant} />
-            <Fields tenant={tenant} names={['reason']} />
-            <button className="primary-link" disabled={busy || !data?.enabled}>
-              Record Independently Approved Obligation
-            </button>
-          </form>
-        </details>
-      )}
-      {admin && (
-        <details>
-          <summary>Compensate an unreconciled reward obligation</summary>
-          <p>
-            This appends an exact negative entry to the existing ledger. It does not reverse a bank
-            payment or remove the original obligation.
-          </p>
-          <form
-            className="operator-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const f = new FormData(e.currentTarget);
-              void act(
-                'network-reverse',
-                {
-                  commandId: crypto.randomUUID(),
-                  ledgerId: f.get('ledgerId'),
-                  sourceId: f.get('sourceId'),
-                  reason: f.get('reason'),
-                },
-                e.currentTarget,
-              );
-            }}
-          >
-            <label className="field">
-              Original reward ledger reference
-              <input name="ledgerId" required />
-            </label>
-            <PickerField name="sourceId" tenant={tenant} />
-            <Fields tenant={tenant} names={['reason']} />
-            <button className="primary-link" disabled={busy || !data?.enabled}>
-              Record Compensating Obligation
-            </button>
-          </form>
-        </details>
-      )}
+              ]
+            : []),
+        ]}
+      />
     </section>
   );
 }

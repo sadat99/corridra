@@ -261,3 +261,184 @@
   display: inline;
   margin: 0;
 }
+
+/* Staff page budget (L21): the owner page within one laptop screen and two phone screens, disclosures closed.
+   The five founder areas sit on one row (two to a row on a phone); sections sit one step apart. Nothing is removed. */
+.ux-owner .front-door {
+  margin-block: 0 var(--space-2);
+}
+.ux-owner .front-door ul {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.ux-owner .front-door-card {
+  padding: var(--space-2) var(--space-3);
+  min-height: 2.75rem;
+}
+.ux-owner .front-door-card span {
+  font-size: var(--text-sm);
+  line-height: 1.35;
+}
+.ux-owner .owner-board > * + *,
+.ux-owner .owner-technical > * + * {
+  margin-block-start: var(--space-2);
+}
+.ux-owner .owner-section.owner-section-tight,
+.ux-owner .owner-section {
+  margin-block: var(--space-2) 0;
+  padding-block: 0;
+}
+.ux-owner :is(.ux-subtabs, .ux-subtabs-panel) {
+  min-width: 0;
+  max-width: 100%;
+}
+@media (min-width: 1024px) {
+  .ux-owner .front-door ul {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .ux-owner > .ux-page-heading {
+    margin-bottom: var(--space-2);
+  }
+  .ux-owner .owner-board h2,
+  .ux-owner .owner-section h2 {
+    margin-block: 0;
+    font-size: var(--text-lg);
+  }
+  .ux-owner .owner-live {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-3);
+    margin-block: 0;
+  }
+  .ux-owner .owner-count,
+  .ux-owner .owner-section > p {
+    margin-block: 0;
+    font-size: var(--text-sm);
+  }
+  .ux-owner .owner-waiting {
+    gap: var(--space-2);
+    margin-block: var(--space-1) 0;
+  }
+  .ux-owner .owner-waiting > li {
+    padding: var(--space-2) var(--space-3);
+    gap: 0 var(--space-3);
+  }
+  .ux-owner > a.text-link:last-child {
+    min-height: 2.25rem;
+    margin-top: var(--space-2);
+  }
+}
+@media (min-width: 1024px) {
+  .ux-owner .owner-technical > .owner-section {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0 var(--space-5);
+    align-items: start;
+  }
+  .ux-owner .owner-technical > .owner-section > :is(h2, p) {
+    grid-column: 1 / -1;
+  }
+  .ux-owner .owner-technical > .owner-section > details[open] {
+    grid-column: 1 / -1;
+  }
+  .ux-owner .owner-technical > .owner-section > article > * {
+    margin-block: 0;
+  }
+  .ux-owner .owner-group > summary {
+    min-height: 2.25rem;
+    padding-block: var(--space-1);
+  }
+  .ux-owner .owner-note {
+    margin-block: 0;
+    font-size: var(--text-sm);
+  }
+}
+@media (min-width: 1024px) {
+  .ux-owner .owner-technical > .owner-section:has(> article) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ux-owner .owner-technical > .owner-section > article :is(h3, p) {
+    font-size: var(--text-sm);
+  }
+  .ux-owner .front-door-card b {
+    font-size: var(--text-base);
+  }
+  .ux-owner .front-door-card {
+    gap: 0;
+    padding-block: var(--space-1);
+  }
+  .ux-owner > .ux-team-second {
+    margin-bottom: var(--space-2);
+  }
+}
+@media (min-width: 1024px) {
+  .ux-owner .owner-note {
+    max-width: none;
+  }
+  .ux-owner .owner-group {
+    margin-block: 0;
+  }
+  .ux-owner .owner-group > summary {
+    min-height: 2rem;
+    padding-block: 0;
+  }
+}
+
+/* Phone (L21): the five founder areas read as one compact row each, and the board's blocks sit one step apart,
+   so each tab of the owner page stays inside two phone screens with its disclosures closed. */
+@media (max-width: 39.99rem) {
+  .ux-owner .front-door ul {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+  .ux-owner .front-door-card {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--space-2);
+    padding: var(--space-2) var(--space-3);
+  }
+  .ux-owner .front-door-card b {
+    font-size: var(--text-base);
+  }
+  .ux-owner .front-door-card span {
+    font-size: var(--text-xs);
+  }
+  .ux-owner .owner-waiting > li {
+    padding: var(--space-2) var(--space-3);
+    gap: 0 var(--space-2);
+  }
+  .ux-owner .owner-board > * + *,
+  .ux-owner .owner-technical > * + * {
+    margin-block-start: var(--space-2);
+  }
+  .ux-owner .owner-section {
+    margin-block: var(--space-2) 0;
+  }
+  .ux-owner .owner-live {
+    margin-block: var(--space-1);
+  }
+  .ux-owner .owner-count,
+  .ux-owner .owner-section > p {
+    margin-block: var(--space-1);
+    font-size: var(--text-sm);
+  }
+  .ux-owner .owner-board h2,
+  .ux-owner .owner-section h2 {
+    margin-block: 0;
+    font-size: var(--text-lg);
+  }
+  .ux-owner > a.text-link:last-child {
+    min-height: 2.75rem;
+  }
+}
+@media (max-width: 39.99rem) {
+  .ux-owner .owner-gap-cards > li {
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
+  }
+  .ux-owner .owner-gap-cards > li > * {
+    margin: 0;
+  }
+}

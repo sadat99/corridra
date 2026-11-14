@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useState, type FormEvent } from 'react';
+import { useId, useRef, useState, type FormEvent } from 'react';
 import { revealInSubTabs } from './ux/sub-tabs';
 export function OperatorWorkbench({
   label,
@@ -10,6 +10,10 @@ export function OperatorWorkbench({
 }) {
   const nav = useRef<HTMLElement>(null);
   const [notice, setNotice] = useState('');
+  // On a phone the jump links start folded behind one button (staff page length, L21); from 40rem up they are
+  // always shown and the button is not.
+  const [shown, setShown] = useState(false);
+  const listId = useId();
   function open(heading: string) {
     const root = nav.current?.closest('[data-operator-workbench]');
     const target = Array.from(root?.querySelectorAll<HTMLElement>('h2,h3,h4,summary') ?? []).find(
@@ -40,7 +44,16 @@ export function OperatorWorkbench({
   return (
     <nav ref={nav} className="ux-operator-workbench" aria-label={label}>
       <p className="label">JUMP TO</p>
-      <div>
+      <button
+        className="ux-workbench-toggle"
+        type="button"
+        aria-expanded={shown}
+        aria-controls={listId}
+        onClick={() => setShown((value) => !value)}
+      >
+        {shown ? 'Hide Jump Links' : `Show Jump Links (${sections.length})`}
+      </button>
+      <div id={listId} data-shown={shown ? 'true' : 'false'}>
         {sections.map((s) => (
           <button className="text-link" type="button" key={s.label} onClick={() => open(s.heading)}>
             {s.label}

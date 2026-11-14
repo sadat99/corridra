@@ -1637,6 +1637,1612 @@
 
 /* Signal Desk density (AC/1): the Delivery list reads as a dense table with a quiet header fill, exceptions stay in the
    columns they already have. Scoped to the workspace body; column order, headers and row actions are unchanged. */
+/* Staff page budget (L21, owner 13 November 2026: desktop at most one screen, phone at most two, disclosures closed).
+   Dense two-column head on a laptop: the workspace row and its scope note share one line, the panel title,
+   its caption and the jump list sit on compact rows. Nothing is removed; every control stays. */
+@media (min-width: 1024px) {
+  /* A wrapping row, not two fixed columns: the workspace row and its scope note share a line only when both fit,
+     and the note drops to its own line when the window, the rail or the text size leaves too little room. */
+  .ux-operator-home .ux-workspace-body {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: var(--space-4);
+    align-items: center;
+  }
+  .ux-operator-home .ux-workspace-body > * {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .ux-operator-home .ux-workspace-body > .operator-toolbar {
+    flex: 0 1 auto;
+    flex-wrap: nowrap;
+    max-width: 100%;
+  }
+  .ux-operator-home .ux-workspace-body > .operator-toolbar > * {
+    min-width: 0;
+  }
+  .ux-operator-home .ux-workspace-body > :is(.ux-testmode, .operator-scope-note) {
+    flex: 1 1 16rem;
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .ux-panel-heading,
+  .ux-operator-home .ux-workspace-body .ux-panel .ux-panel-heading {
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body .ux-panel-heading > div {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body .ux-panel-heading .eyebrow {
+    order: 2;
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body .ux-panel-heading h2 {
+    order: 1;
+    font-size: var(--text-lg);
+  }
+  .ux-operator-home .ux-workspace-body .ux-panel-heading p:last-child {
+    order: 3;
+    flex-basis: 100%;
+    margin: var(--space-1) 0 0;
+    font-size: var(--text-sm);
+  }
+  .ux-operator-home .ux-workspace-body .ux-panel-heading-icon {
+    width: 2rem;
+    height: 2rem;
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .ux-settings-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: var(--space-2) var(--space-5);
+    margin-block: var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-head > p {
+    margin: 0;
+    font-size: var(--text-sm);
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-head .workspace-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
+    max-width: 30rem;
+    margin: 0;
+    font-size: var(--text-sm);
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-refresh {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    margin-block: var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-refresh .ux-settings-counts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-refresh .ux-settings-counts > div {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    padding: 0;
+    background: none;
+    border: 0;
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-sections {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2) var(--space-3);
+    align-items: start;
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-sections > details {
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-sections > details[open] {
+    grid-column: 1 / -1;
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .ux-panel-heading p:last-child {
+    flex: 1 1 auto;
+    flex-basis: auto;
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .ux-operator-workbench {
+    padding-block: var(--space-1);
+  }
+  /* Jump chips keep the 44 px target of every width. The more specific selector outranks the laptop control rule below. */
+  .ux-operator-home .ux-workspace-body .workspace-panel .ux-operator-workbench > div > button {
+    min-height: 2.75rem;
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-sections > details > summary {
+    min-height: 2.75rem;
+    padding-block: var(--space-2);
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .ux-settings-sections > details > summary {
+    min-height: 0;
+    padding-block: var(--space-2);
+  }
+}
+/* Closed disclosures read as one dense row each, and the card around a tab panel gives its padding back. */
+@media (min-width: 1024px) {
+  .ux-operator-home
+    .ux-workspace-body
+    .workspace-panel
+    details:not(.ux-journey-disclosure)
+    > summary {
+    min-height: 2.5rem;
+    padding-block: var(--space-2);
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    .ux-panel
+    > .ux-subtabs
+    > .ux-subtabs-panel
+    > .workspace-panel {
+    padding-block: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-sections {
+    margin-top: var(--space-3);
+    gap: var(--space-2) var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-sections > details > summary::before {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .workspace-panel .workspace-links a {
+    min-height: 0;
+    padding-block: 0;
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-head,
+  .ux-operator-home .ux-workspace-body .ux-settings-refresh {
+    margin-block: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel > .ux-panel-heading {
+    margin-bottom: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .ux-subtabs > .ux-subtabs-panel {
+    margin-top: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel > .ux-operator-workbench {
+    margin-block: var(--space-1);
+  }
+}
+/* Precision Ledger operator density on a laptop: smaller body text, 36 px controls (44 px stays below 1024 px). */
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .workspace-panel {
+    font-size: var(--text-sm);
+    line-height: 1.45;
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    .workspace-panel
+    :is(button, select, input:not([type='checkbox'], [type='radio'])) {
+    min-height: 2.25rem;
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    .workspace-panel
+    details:not(.ux-journey-disclosure)
+    > summary {
+    min-height: 2.25rem;
+    font-size: var(--text-sm);
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-sections {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .ux-settings-head,
+  .ux-operator-home .ux-workspace-body .ux-settings-refresh {
+    margin-block: var(--space-1);
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-sections {
+    margin-top: var(--space-2);
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .ux-governance-panel {
+    padding: var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body .ux-governance-panel > .ux-operator-workbench {
+    margin-block: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .ux-governance-panel > p {
+    margin-block: var(--space-1) var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel {
+    margin-block: var(--space-2);
+    padding-top: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel > h3 {
+    margin-bottom: var(--space-2);
+    font-size: var(--text-lg);
+  }
+}
+/* Operations pages on a laptop: the title, refresh and jump list share a row; the section title shares a row with its filter. */
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .ux-governance-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+  }
+  .ux-operator-home .ux-workspace-body .ux-governance-panel > * {
+    flex: 1 1 100%;
+    margin-block: 0;
+  }
+  .ux-operator-home .ux-workspace-body .ux-governance-panel > .ops-heading {
+    flex: 0 0 auto;
+    gap: var(--space-4);
+  }
+  .ux-operator-home .ux-workspace-body .ux-governance-panel > .ux-operator-workbench {
+    flex: 1 1 24rem;
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: start;
+    gap: var(--space-2) var(--space-4);
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel > * {
+    flex: 1 1 100%;
+    margin-block: 0;
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel > h3 {
+    flex: 0 0 auto;
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel > details.ops-filters {
+    flex: 1 1 20rem;
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel .ops-summary-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel .ops-summary-grid .operations-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-1);
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel .ux-next-action {
+    padding: var(--space-2) var(--space-3);
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .workspace-panel :is(p, li, label, dd, dt) {
+    font-size: var(--text-sm);
+  }
+  .ux-operator-home .ux-workspace-body .ux-governance-panel > section {
+    margin-top: var(--space-2);
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body :is(.ux-governance-panel, .ux-operations-panel) > p:empty {
+    flex: 0 0 0;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+  }
+}
+.ux-operator-home .ux-workspace-body .ux-operations-panel[hidden] {
+  display: none;
+}
+/* The operations panel put two rem above and below every nested section; one step is enough on every width. */
+.ux-operator-home #workspace-operations section {
+  margin-block: var(--space-2);
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .ux-operations-panel .detail-card {
+    padding: var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel .detail-card > * + * {
+    margin-top: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel > p.ops-live-state {
+    flex: 1 1 24rem;
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel > :is(h3, h3 + p) {
+    align-self: center;
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .ux-governance-panel .ops-heading h2 {
+    font-size: var(--text-lg);
+  }
+  .ux-operator-home .ux-workspace-body .ux-governance-panel > .ux-operations-panel {
+    border-width: 1px;
+    padding-inline: var(--space-3);
+    padding-bottom: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .ux-governance-panel > .ux-operator-workbench {
+    margin-block: 0;
+    padding-block: 0;
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    .ux-governance-panel
+    > .ux-operator-workbench
+    > div
+    > button {
+    min-height: 2.75rem;
+  }
+}
+/* Phone: two jump buttons per row, links and counts side by side, a quieter heading. 44 px targets stay. */
+@media (max-width: 39.99rem) {
+  /* The jump list keeps every chip on screen: it wraps (no sideways scroll), the label and the chips close together. */
+  .ux-operator-home .ux-workspace-body .ux-operator-workbench {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .ux-operator-workbench > .label {
+    flex: 0 0 auto;
+  }
+  .ux-operator-home .ux-workspace-body .ux-operator-workbench > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    min-width: 0;
+  }
+  /* Chips are as wide as their words and wrap. The shared phone rule for text-link buttons makes each one a full row;
+     this one is written to outrank it for the jump list only, so a long list costs a few rows and no chip leaves the screen. */
+  .ux-operator-home
+    .ux-workspace-body
+    .ux-operator-workbench
+    > div
+    > button.text-link:not(.ux-back):not([role='tab']):not([hidden]) {
+    flex: 0 1 auto;
+    width: auto;
+    min-height: 2.75rem;
+    padding-block: 0;
+    line-height: 1.2;
+  }
+  .ux-operator-home .ux-workspace-body .ux-operator-workbench button {
+    min-height: 2.75rem;
+    padding: var(--space-1);
+    font-size: var(--text-sm);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-4);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-links a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-counts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-1);
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-counts > div {
+    padding: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .ux-panel-heading {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .ux-panel-heading-icon {
+    width: 2rem;
+    height: 2rem;
+  }
+  .ux-operator-home .ux-workspace-body .ux-panel-heading p:last-child {
+    margin-top: var(--space-1);
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    .workspace-panel
+    details:not(.ux-journey-disclosure)
+    > summary {
+    padding-block: var(--space-2);
+    min-height: 2.75rem;
+  }
+}
+@media (max-width: 39.99rem) {
+  .ux-operator-home .ux-workspace-body > .operator-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-4);
+  }
+  .ux-operator-home .ux-workspace-body > .operator-toolbar > label.field {
+    flex: 1 1 100%;
+  }
+  .ux-operator-home .ux-workspace-body .ux-subtabs-tab {
+    flex: 0 1 auto;
+  }
+}
+.ux-operator-home .ux-workspace-body :is(.ux-panel, .ux-subtabs, .ux-subtabs-panel) {
+  min-width: 0;
+  max-width: 100%;
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .ux-governance-panel > p {
+    max-width: none;
+  }
+  .ux-operator-home .ux-workspace-body .ux-governance-panel .ops-heading {
+    align-items: center;
+  }
+  .ux-operator-home .ux-workspace-body .ux-governance-panel .ops-heading button {
+    min-height: 2rem;
+    padding-block: var(--space-1);
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .ux-governance-panel {
+    padding: var(--space-2);
+    gap: var(--space-1) var(--space-4);
+  }
+  .ux-operator-home .ux-workspace-body > .operator-toolbar {
+    margin-bottom: var(--space-1);
+  }
+  .ux-operator-home .ux-workspace-body .ux-subtabs-list {
+    margin-bottom: 0;
+  }
+  .ux-operator-home .ux-workspace-body .ux-subtabs > .ux-subtabs-panel {
+    margin-top: var(--space-1);
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel {
+    gap: var(--space-1) var(--space-4);
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .ux-operations-panel > details.ops-filters {
+    flex: 0 1 20rem;
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel > details.ops-filters[open] {
+    flex-basis: 100%;
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel > p:not(.ops-live-state, :empty) {
+    flex: 1 1 18rem;
+    align-self: center;
+  }
+}
+/* Workspace controls on a laptop: the title and the scope note share one row. */
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .ux-workspace-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+  }
+  .ux-operator-home .ux-workspace-body .ux-workspace-controls > * {
+    flex: 1 1 100%;
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body .ux-workspace-controls > .ux-controls-heading {
+    flex: 1 1 22rem;
+    padding: 0;
+  }
+  .ux-operator-home .ux-workspace-body .ux-workspace-controls > .ux-controls-heading h2 {
+    font-size: var(--text-lg);
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body .ux-workspace-controls > .ux-controls-heading p {
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body .ux-workspace-controls > .ux-controls-boundary {
+    flex: 1 1 22rem;
+    padding: var(--space-2) var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body #workspace-controls {
+    padding-block: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .ux-controls-section-heading {
+    margin-bottom: var(--space-1);
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .ux-controls-members > * + * {
+    margin-top: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .ux-controls-members > details {
+    margin-block: var(--space-2) 0;
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home.ux-workspace > .ux-page-heading {
+    margin-bottom: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body {
+    row-gap: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body > :is(.operator-toolbar, .ux-panel, .workspace-panel, p) {
+    margin-block: 0;
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .ux-subtabs-tab {
+    min-height: 2.25rem;
+    padding-block: var(--space-1);
+  }
+  .ux-operator-home .ux-workspace-body .operations-table :is(th, td) {
+    padding-block: var(--space-1);
+    font-size: var(--text-sm);
+  }
+}
+/* A table that fills a tab alone is already named by the tab: its caption stays for assistive technology only. */
+.ux-operator-home .ux-workspace-body .ux-subtabs-panel > .operations-table:only-child caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.ux-operator-home #workspace-operations .ux-subtabs-panel > section.detail-card {
+  margin-block: 0;
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .ux-operations-panel .detail-card {
+    padding-block: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel .detail-card > * + * {
+    margin-top: var(--space-1);
+  }
+}
+/* Every tool panel on a laptop: the title and its jump list share a row, text blocks sit one step apart, cards are
+   padded one step less, and the way back to the section list is a quiet line under the panel. */
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .workspace-panel.ux-panel {
+    padding: var(--space-3);
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    .workspace-panel
+    > .operator-section[data-operator-workbench] {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+    padding: 0;
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    .workspace-panel
+    > .operator-section[data-operator-workbench]
+    > * {
+    flex: 1 1 100%;
+    margin-block: 0;
+    max-width: none;
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    .workspace-panel
+    > .operator-section[data-operator-workbench]
+    > h2 {
+    flex: 0 0 auto;
+    font-size: var(--text-lg);
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    .workspace-panel
+    > .operator-section[data-operator-workbench]
+    > .ux-operator-workbench {
+    flex: 1 1 24rem;
+    padding-block: 0;
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    .workspace-panel
+    > .operator-section[data-operator-workbench]
+    > p:empty {
+    flex: 0 0 0;
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .detail-grid > .detail-card {
+    padding: var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .detail-grid > .detail-card > * + * {
+    margin-top: var(--space-1);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .ux-subtabs-panel > * + * {
+    margin-top: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel.ux-panel > a.text-link:last-child {
+    display: inline-flex;
+    min-height: 0;
+    margin-top: var(--space-2);
+    padding: 0;
+    border: 0;
+    font-size: var(--text-sm);
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .workspace-panel .detail-grid {
+    gap: var(--space-3);
+    margin-block: 0;
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    .workspace-panel
+    .detail-grid
+    > .detail-card
+    :is(p, li, h3, h4) {
+    margin-block: 0;
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .hero-actions {
+    margin-block: 0;
+    gap: var(--space-2) var(--space-3);
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .workspace-panel .detail-grid > .detail-card {
+    gap: var(--space-1);
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .workspace-panel .hero-actions {
+    align-items: center;
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .hero-actions > label.field {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-3);
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .ux-subtabs-panel > h3:first-child {
+    float: left;
+    margin: 0 var(--space-3) 0 0;
+    font-size: var(--text-base);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .ux-subtabs-panel > h3:first-child + * {
+    margin-top: 0;
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    .workspace-panel
+    .ux-subtabs-panel
+    > h3:first-child
+    ~ :is(div, details, form, ul, table) {
+    clear: both;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-commercial .detail-grid > .detail-card {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-5);
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    #workspace-commercial
+    .detail-grid
+    > .detail-card
+    > :is(h3, h4) {
+    flex: 1 1 100%;
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home
+    .ux-workspace-body
+    .workspace-panel
+    details:not(.ux-journey-disclosure)
+    > summary {
+    padding-block: var(--space-1);
+  }
+  .ux-operator-home .ux-workspace-body #workspace-commercial .detail-grid > .detail-card {
+    align-content: start;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-commercial .detail-grid > .detail-card > * {
+    margin: 0;
+    flex: 1 1 10rem;
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel.ux-panel > a.text-link:last-child {
+    margin-top: var(--space-1);
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .workspace-panel.ux-panel {
+    gap: var(--space-1);
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .workspace-panel .ux-subtabs-panel > * + * {
+    margin-top: var(--space-1);
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    .workspace-panel
+    > .operator-section[data-operator-workbench] {
+    row-gap: var(--space-1);
+  }
+}
+.ux-operator-home .ux-workspace-body .workspace-panel,
+.ux-operator-home .ux-workspace-body .workspace-panel > :is(section, div) {
+  min-width: 0;
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .workspace-panel .section-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--space-3);
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .section-heading > * {
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .section-heading h2 {
+    order: -1;
+    font-size: var(--text-lg);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel > .operator-section > * + * {
+    margin-top: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel > .operator-section {
+    padding: 0;
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel > .operator-section > p {
+    max-width: none;
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home
+    .ux-workspace-body
+    .workspace-panel
+    > .operator-section:not([data-operator-workbench]) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    .workspace-panel
+    > .operator-section:not([data-operator-workbench])
+    > * {
+    flex: 1 1 100%;
+    margin-block: 0;
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    .workspace-panel
+    > .operator-section:not([data-operator-workbench])
+    > .section-heading {
+    flex: 1 1 24rem;
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    .workspace-panel
+    > .operator-section:not([data-operator-workbench])
+    > .section-heading
+    + p:empty {
+    flex: 0 0 0;
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    .workspace-panel
+    > .operator-section:not([data-operator-workbench])
+    > button.text-link {
+    flex: 0 0 auto;
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .ux-empty {
+    padding: var(--space-2) var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .ux-subtabs-panel > button.secondary-link {
+    min-height: 2.25rem;
+    padding-block: var(--space-1);
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body > .operator-toolbar :is(select, a, button) {
+    min-height: 2.25rem;
+  }
+  .ux-operator-home.ux-workspace > .ux-team-second {
+    margin-bottom: var(--space-2);
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .workspace-panel > .missions-home {
+    margin-bottom: 0;
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .missions-home .hero-actions > label.field {
+    flex: 1 1 9rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .ux-state {
+    margin-block: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .ux-state > * {
+    margin-block: 0;
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home
+    .ux-workspace-body
+    #workspace-research
+    .research-workspace
+    > .ux-operator-workbench {
+    flex: 1 1 100%;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-research .research-records {
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-research .research-records > .research-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-4);
+    padding: var(--space-2) var(--space-3);
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-research .research-records > .research-panel > * {
+    margin: 0;
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    #workspace-research
+    .research-records
+    > .research-panel
+    > label.field {
+    display: flex;
+    flex: 1 1 20rem;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    #workspace-research
+    .research-records
+    > .research-panel
+    > details {
+    flex: 1 1 100%;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-research form.operator-toolbar {
+    margin: 0;
+    padding-block: 0;
+  }
+}
+/* Network on a laptop: a one-line title, a compact paused note, closed tools two to a row. */
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--space-3);
+    margin: 0;
+    padding: 0;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading > * {
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading h2 {
+    order: -1;
+    font-size: var(--text-lg);
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-paused {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-4);
+    margin: 0;
+    padding: var(--space-2) var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-paused > * {
+    flex: 1 1 100%;
+    margin: 0;
+    max-width: none;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-paused > h3 {
+    flex: 1 1 20rem;
+    font-size: var(--text-base);
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-paused > button {
+    flex: 0 0 auto;
+    order: -1;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-subtabs-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: start;
+    gap: var(--space-1) var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-subtabs-panel[hidden] {
+    display: none;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-subtabs-panel > * {
+    flex: 1 1 100%;
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-subtabs-panel > details:not([open]) {
+    flex: 1 1 calc(50% - var(--space-3));
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-subtabs-panel > p {
+    flex: 1 1 24rem;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-subtabs-panel > .workspace-links {
+    flex: 0 1 auto;
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading > div {
+    display: flex;
+    flex: 1 1 24rem;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading > div > * {
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading > div > h2 {
+    order: -1;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-paused > p {
+    flex: 1 1 24rem;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-operator-workbench {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-operator-workbench > .label {
+    flex: 0 0 auto;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-operator-workbench > div {
+    flex-wrap: nowrap;
+    gap: 0 var(--space-1);
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-operator-workbench button {
+    padding-inline: var(--space-1);
+    white-space: nowrap;
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-paused > details {
+    flex: 1 1 22rem;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-paused > details[open] {
+    flex-basis: 100%;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-operator-workbench > div {
+    min-width: 0;
+    overflow-x: auto;
+  }
+}
+/* Phone density for every tool panel: smaller body text, one step between blocks, lighter card padding. Targets stay 44 px. */
+@media (max-width: 39.99rem) {
+  .ux-operator-home .ux-workspace-body .workspace-panel.ux-panel,
+  .ux-operator-home .ux-workspace-body .ux-governance-panel {
+    padding: var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel :is(p, li, label, dd, dt) {
+    font-size: var(--text-sm);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel > .operator-section {
+    padding: 0;
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel > .operator-section > * + *,
+  .ux-operator-home .ux-workspace-body .ux-governance-panel > * + *,
+  .ux-operator-home .ux-workspace-body .ux-operations-panel > * + *,
+  .ux-operator-home .ux-workspace-body .workspace-panel .ux-subtabs-panel > * + * {
+    margin-top: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel :is(h2, .ops-heading h2) {
+    font-size: var(--text-lg);
+    margin-block: 0;
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel h3 {
+    font-size: var(--text-base);
+    margin-block: 0;
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .section-heading > * {
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .ux-operator-workbench {
+    margin-block: var(--space-2);
+    padding: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel {
+    padding-top: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .ux-state {
+    margin-block: var(--space-2);
+    padding: var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .detail-card {
+    padding: var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .detail-card > * + * {
+    margin-top: var(--space-1);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel > .missions-home {
+    margin-bottom: 0;
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel.ux-panel > a.text-link:last-child {
+    margin-top: var(--space-1);
+  }
+  .ux-operator-home.ux-workspace > .ux-page-heading {
+    margin-bottom: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body > :is(.ux-testmode, .operator-scope-note) {
+    margin-block: var(--space-1);
+  }
+}
+@media (max-width: 39.99rem) {
+  /* The workspace row keeps its 44 px targets but puts the two links beside each other. */
+  .ux-operator-home .ux-workspace-body > .operator-toolbar > :is(a, button).text-link {
+    flex: 1 1 auto;
+  }
+  .ux-operator-home .ux-workspace-body .workspace-links {
+    gap: 0 var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-links a {
+    flex: 1 1 10rem;
+  }
+}
+@media (max-width: 39.99rem) {
+  .ux-operator-home .ux-workspace-body .workspace-links a {
+    flex: 1 1 6rem;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-paused {
+    padding: var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-paused > * + * {
+    margin-top: var(--space-2);
+  }
+}
+@media (max-width: 39.99rem) {
+  .ux-operator-home .ux-workspace-body .workspace-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-links > * {
+    flex: 1 1 6rem;
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    .workspace-panel
+    details:not(.ux-journey-disclosure)
+    > summary {
+    padding-inline: var(--space-3);
+  }
+}
+@media (max-width: 39.99rem) {
+  /* The panel head reads as a title with its caption under it; the icon stays beside the title. */
+  .ux-operator-home .ux-workspace-body .ux-panel-heading .eyebrow {
+    margin-bottom: 0;
+    font-size: var(--text-xs);
+  }
+  .ux-operator-home .ux-workspace-body .ux-panel-heading h2 {
+    font-size: var(--text-lg);
+  }
+  .ux-operator-home .ux-workspace-body .ux-panel-heading p:last-child {
+    font-size: var(--text-sm);
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-head,
+  .ux-operator-home .ux-workspace-body .ux-settings-refresh {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-block: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-head > *,
+  .ux-operator-home .ux-workspace-body .ux-settings-refresh > * {
+    flex: 1 1 100%;
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-counts {
+    gap: var(--space-1);
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-counts > div {
+    padding: var(--space-1);
+    font-size: var(--text-xs);
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-counts dd {
+    font-size: var(--text-base);
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-sections {
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-sections > details > summary::before {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+}
+@media (max-width: 39.99rem) {
+  /* Research and Delivery keep their chip row on screen: the chips wrap and stay whole. */
+  .ux-operator-home
+    .ux-workspace-body
+    :is(#workspace-research, #workspace-delivery)
+    .ux-operator-workbench
+    > div {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    :is(#workspace-research, #workspace-delivery)
+    .ux-operator-workbench
+    button {
+    flex: 0 1 auto;
+    width: auto;
+  }
+  /* The mission counts read three to a row on a phone. */
+  .ux-operator-home .ux-workspace-body .ux-operations-panel .operations-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-1);
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel .operations-metrics > div {
+    padding: var(--space-1);
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel .operations-metrics dt {
+    font-size: var(--text-xs);
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel .ops-summary-grid {
+    display: grid;
+    gap: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel .ux-next-action {
+    padding: var(--space-2) var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel .ux-next-action > * + * {
+    margin-top: var(--space-1);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .operator-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .operator-toolbar > * {
+    flex: 1 1 8rem;
+    margin: 0;
+  }
+}
+@media (max-width: 39.99rem) {
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-3);
+    padding: 0;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading > * {
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading h2 {
+    font-size: var(--text-lg);
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-paused {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-paused > * {
+    flex: 1 1 100%;
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-paused > h3 {
+    font-size: var(--text-base);
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-paused > button {
+    flex: 0 1 auto;
+  }
+}
+@media (max-width: 39.99rem) {
+  .ux-operator-home .ux-workspace-body #workspace-commercial .detail-grid {
+    gap: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body #workspace-commercial .detail-grid > .detail-card {
+    padding: var(--space-2) var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body #workspace-commercial .detail-grid > .detail-card > * {
+    margin: 0;
+    min-width: 0;
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    #workspace-commercial
+    .detail-grid
+    > .detail-card
+    > :is(h3, h4) {
+    font-size: var(--text-base);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-block: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .hero-actions > * {
+    flex: 1 1 8rem;
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel .ux-next-action p {
+    font-size: var(--text-sm);
+  }
+}
+@media (max-width: 39.99rem) {
+  .ux-operator-home .ux-workspace-body .ux-operations-panel .ux-next-action :is(h3, h4) {
+    font-size: var(--text-base);
+  }
+  .ux-operator-home .ux-workspace-body .ux-operations-panel > p,
+  .ux-operator-home .ux-workspace-body .ux-operations-panel .ops-notes p {
+    margin-block: 0;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-subtabs-panel > p {
+    margin-block: 0;
+  }
+}
+@media (max-width: 39.99rem) {
+  .ux-operator-home
+    .ux-workspace-body
+    .workspace-panel
+    details:not(.ux-journey-disclosure)
+    > summary {
+    font-size: var(--text-sm);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel .ux-subtabs-tab {
+    font-size: var(--text-sm);
+  }
+  .ux-operator-home .ux-workspace-body > .operator-toolbar > :is(a, button).text-link {
+    flex: 1 1 6rem;
+    min-width: 0;
+    font-size: var(--text-sm);
+  }
+  .ux-operator-home .ux-workspace-body > .operator-toolbar > label.field {
+    flex: 1 1 100%;
+  }
+}
+@media (max-width: 39.99rem) {
+  .ux-operator-home .ux-workspace-body .ux-settings-counts > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-counts dt {
+    font-size: var(--text-xs);
+    line-height: 1.2;
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-counts dd {
+    font-size: var(--text-sm);
+    line-height: 1.2;
+  }
+  .ux-operator-home .ux-workspace-body .ux-settings-head .workspace-links > a {
+    flex: 1 1 7rem;
+  }
+  .ux-operator-home .ux-workspace-body .ux-panel-heading {
+    gap: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .ux-panel-heading-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+}
+@media (max-width: 39.99rem) {
+  /* The two workspace links share one row on a phone; each keeps a 44 px target and its whole label. */
+  .ux-operator-home
+    .ux-workspace-body
+    > .operator-toolbar:has(#operator-workspace-select)
+    > :is(a, button).text-link {
+    flex: 1 1 6rem;
+    min-width: 0;
+    font-size: var(--text-sm);
+    line-height: 1.25;
+    text-align: start;
+    white-space: normal;
+  }
+}
+@media (max-width: 39.99rem) {
+  /* Panel link rows (Refresh, Open missions, …) pair up on a phone instead of taking a row each. */
+  .ux-operator-home .ux-workspace-body .workspace-panel .workspace-links > * {
+    flex: 1 1 6rem;
+    min-width: 0;
+    font-size: var(--text-sm);
+    line-height: 1.25;
+    text-align: start;
+    white-space: normal;
+  }
+}
+@media (max-width: 39.99rem) {
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-paused > :is(h3, p) {
+    font-size: var(--text-sm);
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-subtabs-panel > p {
+    font-size: var(--text-sm);
+  }
+}
+@media (max-width: 39.99rem) {
+  /* A full-width action in a link row shares the row with the links beside it. */
+  .ux-operator-home .ux-workspace-body .workspace-panel .workspace-links > button {
+    flex: 1 1 6rem;
+    min-height: 2.75rem;
+    padding-inline: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-paused > button {
+    flex: 1 1 100%;
+    min-height: 2.75rem;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-paused > details:not([open]) {
+    flex: 1 1 8rem;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-paused > details > summary {
+    height: 100%;
+  }
+}
+@media (max-width: 39.99rem) {
+  .ux-operator-home .ux-workspace-body .ux-operator-workbench {
+    padding: var(--space-1) var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .ux-operator-workbench button {
+    min-height: 2.75rem;
+    font-size: var(--text-sm);
+  }
+}
+/* Today on a laptop (L21): Needs you now on the left, This week over the Start card on the right, and the counts
+   beside "Also waiting", so the overview fits one screen. Nothing is moved in the HTML. */
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-also-waiting {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+  }
+  .ux-operator-home .ux-also-waiting > * {
+    margin: 0;
+  }
+  .ux-operator-home .ux-also-waiting .ux-today-tiles {
+    flex: 1 1 20rem;
+  }
+  .ux-operator-home .ux-today-columns {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-3);
+    align-items: start;
+  }
+  .ux-operator-home .ux-today-columns > :is(.ux-today-main, .ux-today-side) {
+    display: contents;
+  }
+  .ux-operator-home .ux-today-columns .ux-needs {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+  .ux-operator-home .ux-today-columns .ux-week {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .ux-operator-home .ux-today-columns .workspace-start {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .ux-operator-home .ux-today .workspace-start {
+    padding: var(--space-3);
+  }
+}
+/* Phone: a form's fields sit one step apart and hints keep their own line, so a long form costs less height. */
+@media (max-width: 39.99rem) {
+  .ux-operator-home .ux-workspace-body .workspace-panel form.operator-form {
+    gap: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel form.operator-form > label.field {
+    gap: var(--space-1);
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body .workspace-panel form.operator-form :is(.guide-hint, small) {
+    line-height: 1.3;
+  }
+}
+/* The assistance state notes (provider activation, reviewed policy) read as a counted disclosure, open on demand. */
+.ux-operator-home .ux-workspace-body .workspace-panel details.ux-ai-state {
+  margin-block: var(--space-2);
+}
+.ux-operator-home .ux-workspace-body .workspace-panel details.ux-ai-state > p {
+  margin-top: var(--space-2);
+  max-width: 72ch;
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body .ux-controls-heading > div {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body .ux-controls-heading > div > * {
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body .ux-controls-heading > div > h2 {
+    order: -1;
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    .ux-controls-invites
+    form.operator-form
+    fieldset
+    > label.field {
+    margin-block: 0;
+  }
+  .ux-operator-home .ux-workspace-body .ux-controls-invites form.operator-form fieldset {
+    gap: var(--space-2);
+  }
+}
+@media (max-width: 39.99rem) {
+  .ux-operator-home .ux-workspace-body .workspace-panel .workspace-links > * {
+    flex-basis: 5rem;
+  }
+}
+/* AI assistance on a laptop: the title, the jump list, the links and the state notes share the head rows. */
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body #workspace-ai > section {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+    padding: var(--space-3);
+  }
+  .ux-operator-home .ux-workspace-body #workspace-ai > section > * {
+    flex: 1 1 100%;
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-ai > section > h2 {
+    flex: 0 0 auto;
+    font-size: var(--text-lg);
+  }
+  .ux-operator-home .ux-workspace-body #workspace-ai > section > nav.ux-operator-workbench {
+    flex: 1 1 22rem;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-ai > section > .workspace-links {
+    flex: 1 1 20rem;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-ai > section > details.ux-ai-state {
+    flex: 1 1 18rem;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-ai > section > p:empty {
+    flex: 0 0 0;
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-today-columns .ux-tool-index a {
+    overflow-wrap: anywhere;
+  }
+}
+/* Phone: the jump links fold behind one button, so a page with a long list stays inside two screens. From 40rem up
+   nothing changes: the button is not shown and every link is. */
+@media (max-width: 39.99rem) {
+  .ux-operator-home .ux-workspace-body .ux-operator-workbench > .ux-workbench-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    padding-inline: var(--space-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface-1);
+    color: var(--brand-deep);
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
+  /* :not(#none) lifts the specificity above the per-panel rules that name their own section by id. */
+  .ux-operator-home .ux-workspace-body .ux-operator-workbench > div[data-shown='false']:not(#none) {
+    display: none;
+  }
+}
+/* Delivery on a laptop (L21): one step between its blocks, and the empty status line, which keeps its place for
+   screen readers, no longer adds a step of its own. */
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body #workspace-delivery section.delivery-ops {
+    gap: var(--space-2);
+  }
+  .ux-operator-home .ux-workspace-body #workspace-delivery section.delivery-ops > p:empty {
+    margin-block: calc(var(--space-2) * -1);
+  }
+  .ux-operator-home
+    .ux-workspace-body
+    #workspace-delivery
+    section.delivery-ops
+    > .ux-operator-workbench {
+    padding-block: 0;
+  }
+}
+/* Network on a phone: the paused note keeps its three parts one small step apart. */
+@media (max-width: 39.99rem) {
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading {
+    display: grid;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading > * {
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-paused {
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-3);
+  }
+}
+/* Staff page length, final margin (L21). Presentation only: no element, text, id, href or payload changes.
+   Phone: the page uses the full width of the shell gutter, the Network heading puts its state beside its label,
+   and the jump button sits beside "Jump To". Together Network is about 1.9 screens, with room for a font that
+   wraps one line more (KI-28). */
+@media (max-width: 39.99rem) {
+  .ux-operator-home {
+    padding-inline: 0;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: var(--space-2);
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading > div {
+    display: contents;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading > div > * {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading > div > .label {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-network-heading > .ux-network-state {
+    grid-column: 2;
+    grid-row: 1;
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--text-xs);
+  }
+  .ux-operator-home .ux-workspace-body .ux-operator-workbench > .ux-workbench-toggle {
+    flex: 0 1 auto;
+    width: auto;
+  }
+  .ux-operator-home .ux-workspace-body .ux-operator-workbench > div {
+    flex: 1 1 100%;
+  }
+  /* Today with a full list (three late missions, four week lines) stays under two screens with room to spare. */
+  .ux-operator-home .ux-today,
+  .ux-operator-home .ux-today-columns,
+  .ux-operator-home .ux-today-side {
+    gap: var(--space-2);
+  }
+  .ux-operator-home .ux-today-tiles a {
+    padding: var(--space-2);
+  }
+}
+/* Laptop: every staff page ends well inside one 900 px screen. The page title and its small label share a line,
+   the title uses the page-title token instead of a larger one, and the page column keeps a closer bottom edge. */
+@media (min-width: 1024px) {
+  .ux-leftnav-page:has(> main.ux-operator-home) {
+    padding-bottom: var(--space-6);
+  }
+  .ux-leftnav-page:has(.ux-overview:not([hidden])) {
+    padding-block: var(--space-4) var(--space-2);
+  }
+  .ux-operator-home.ux-workspace > .ux-page-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--space-3);
+  }
+  .ux-operator-home.ux-workspace > .ux-page-heading > h1 {
+    order: -1;
+    font-size: var(--text-h1);
+  }
+}
 .ux-workspace-body #workspace-delivery .delivery-table {
   border: 1px solid var(--ac-border);
   border-radius: var(--radius-md);

@@ -1,5 +1,6 @@
 'use client';
 import { DateTimeField } from '../../components/ux/date-time-input';
+import { PhoneFold } from '../../components/phone-fold';
 import { OperatorWorkbench, useFormChangeGuard } from '../../components/operator-workbench';
 import { useEffect, useState, type FormEvent } from 'react';
 import { AccessState, StatusBadge } from '../../components/access-state';
@@ -480,72 +481,74 @@ export function Missions({
         sections={[{ label: 'Queue and filters', heading: 'Mission review queue' }]}
       />
       <p aria-live="polite">{message}</p>
-      <div className="hero-actions">
-        {(['route', 'job', 'owner', 'stage'] as const).map((key) => (
-          <label className="field" key={key}>
-            Filter by {key}
+      <PhoneFold summary="Filter the queue (5 filters)" className="missions-filters">
+        <div className="hero-actions">
+          {(['route', 'job', 'owner', 'stage'] as const).map((key) => (
+            <label className="field" key={key}>
+              Filter by {key}
+              <select
+                disabled={busy}
+                value={selected[key]}
+                onChange={(e) => {
+                  if (busy || !confirmChange()) return;
+                  setSelected((v) => ({ ...v, [key]: e.target.value }));
+                  setOffset(0);
+                }}
+              >
+                <option value="">All {key}s</option>
+                {(key === 'route'
+                  ? routes
+                  : key === 'job'
+                    ? missionCatalogue.map((t) => ({ id: t.key, label: t.label }))
+                    : key === 'owner'
+                      ? (queue?.owners.map((o) => ({ id: o.user_id, label: o.name })) ?? [])
+                      : missionStatus.options.map((s) => ({ id: s, label: stageLabel(s) }))
+                ).map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ))}
+          <label className="field">
+            Show missions
             <select
               disabled={busy}
-              value={selected[key]}
+              value={filter}
               onChange={(e) => {
                 if (busy || !confirmChange()) return;
-                setSelected((v) => ({ ...v, [key]: e.target.value }));
+                setFilter(e.target.value);
                 setOffset(0);
               }}
             >
-              <option value="">All {key}s</option>
-              {(key === 'route'
-                ? routes
-                : key === 'job'
-                  ? missionCatalogue.map((t) => ({ id: t.key, label: t.label }))
-                  : key === 'owner'
-                    ? (queue?.owners.map((o) => ({ id: o.user_id, label: o.name })) ?? [])
-                    : missionStatus.options.map((s) => ({ id: s, label: stageLabel(s) }))
-              ).map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.label}
-                </option>
-              ))}
+              <option value="open">Open</option>
+              <option value="all">All</option>
+              <option value="overdue">Overdue</option>
+              <option value="stale">No update in 7+ days</option>
             </select>
           </label>
-        ))}
-        <label className="field">
-          Show missions
-          <select
+          <button
+            className="text-link"
+            type="button"
             disabled={busy}
-            value={filter}
-            onChange={(e) => {
-              if (busy || !confirmChange()) return;
-              setFilter(e.target.value);
-              setOffset(0);
+            aria-busy={busy}
+            onClick={() => {
+              if (busy) return;
+              setBusy(true);
+              void Promise.all([request('missions'), request('mission-catalogue')])
+                .then(([missions, catalogue]) => {
+                  setQueue(missions);
+                  setRoutes(routeOptions(catalogue));
+                })
+                .catch((e) => setMessage(e.message))
+                .finally(() => setBusy(false));
             }}
           >
-            <option value="open">Open</option>
-            <option value="all">All</option>
-            <option value="overdue">Overdue</option>
-            <option value="stale">No update in 7+ days</option>
-          </select>
-        </label>
-        <button
-          className="text-link"
-          type="button"
-          disabled={busy}
-          aria-busy={busy}
-          onClick={() => {
-            if (busy) return;
-            setBusy(true);
-            void Promise.all([request('missions'), request('mission-catalogue')])
-              .then(([missions, catalogue]) => {
-                setQueue(missions);
-                setRoutes(routeOptions(catalogue));
-              })
-              .catch((e) => setMessage(e.message))
-              .finally(() => setBusy(false));
-          }}
-        >
-          Refresh missions
-        </button>
-      </div>
+            Refresh missions
+          </button>
+        </div>
+      </PhoneFold>
       <div className="hero-actions" aria-label="Mission focus views">
         {[
           { label: 'Awaiting qualification', stage: 'QUALIFICATION', job: '', direction: '' },

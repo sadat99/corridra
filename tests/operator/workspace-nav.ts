@@ -11,8 +11,9 @@ export async function openSection(page: Page, id: string) {
 }
 
 // A long section is cut into sub-tabs (L-03). Choose one before touching what is inside it.
-export async function openTab(scope: Page | Locator, name: string) {
-  const tab = scope.getByRole('tab', { name, exact: true });
+// A tab whose name carries a count ("Meetings (3)") is chosen with a pattern.
+export async function openTab(scope: Page | Locator, name: string | RegExp) {
+  const tab = scope.getByRole('tab', typeof name === 'string' ? { name, exact: true } : { name });
   await tab.click();
   await expect(tab).toHaveAttribute('aria-selected', 'true');
 }
@@ -25,4 +26,12 @@ export async function openTools(page: Page) {
   if (!(await fold.evaluate((details) => (details as HTMLDetailsElement).open)))
     await fold.locator(':scope > summary').click();
   await expect(fold).toHaveAttribute('open', '');
+}
+
+// On a phone the jump links of a panel are folded behind one button (L21); open it before using a link.
+// Does nothing from 40rem up, where the button is not shown.
+export async function openJumpLinks(scope: Page | Locator) {
+  const toggle = scope.locator('.ux-workbench-toggle').first();
+  if ((await toggle.isVisible()) && (await toggle.getAttribute('aria-expanded')) === 'false')
+    await toggle.click();
 }

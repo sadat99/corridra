@@ -248,6 +248,13 @@ test('Q-05 every section says its data could not be loaded when every read fails
     await page.goto(`/operator/${slug}?workspace=${tenant}`, { waitUntil: 'domcontentloaded' });
     await expect(page.locator('h1').first()).toBeVisible({ timeout: 20000 });
     await page.waitForTimeout(2500);
+    // Entry forms and filters start closed behind a summary (one form open at a time, L21). The sweep reads the
+    // whole section, as it did when they were open at this width.
+    await page.evaluate(() =>
+      document
+        .querySelectorAll('main details')
+        .forEach((fold) => ((fold as HTMLDetailsElement).open = true)),
+    );
     const text = (await page.locator('main').innerText()).replace(/\s+/g, ' ');
     expect
       .soft(text, `${slug} (${id}): no failure words with every read failing`)
@@ -330,6 +337,13 @@ test('Q-06 busy actions: a double click sends what one click sends, disabled or 
       while (group) {
         group.open = true;
         group = group.parentElement?.closest('details') ?? null;
+      }
+      // A button in a sub-tab that is not shown (L21): choose that tab first, as a person would.
+      let panel = el.closest<HTMLElement>('[role="tabpanel"]');
+      while (panel) {
+        if (panel.hidden)
+          document.getElementById(panel.getAttribute('aria-labelledby') ?? '')?.click();
+        panel = panel.parentElement?.closest<HTMLElement>('[role="tabpanel"]') ?? null;
       }
     });
     await expect(button, name).toBeVisible({ timeout: 15000 });

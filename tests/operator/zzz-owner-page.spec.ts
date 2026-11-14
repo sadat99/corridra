@@ -49,8 +49,11 @@ test('the Owner page lists what is on and off, read only, for an owner', async (
   await expect(page.getByRole('heading', { level: 1, name: 'What is on and off.' })).toBeVisible();
   // The status board comes first; the setting tables sit under "Technical details" (UX-03).
   await expect(page.getByText('Live, small scale', { exact: true })).toBeVisible();
-  for (const name of ['Status', 'Waiting on the Corridra team', 'Blocked'])
+  for (const name of ['Status', 'Waiting on the Corridra team'])
     await expect(page.getByRole('heading', { level: 2, name, exact: true })).toBeVisible();
+  // Blocked is its own tab (L21), one choice away.
+  await page.getByRole('tab', { name: /^Blocked \(/ }).click();
+  await expect(page.getByRole('heading', { level: 2, name: 'Blocked', exact: true })).toBeVisible();
   // Open gaps and Technical details are their own tabs (L-03), one choice away.
   await page.getByRole('tab', { name: 'Open gaps', exact: true }).click();
   await expect(

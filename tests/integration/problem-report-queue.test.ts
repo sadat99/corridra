@@ -481,7 +481,10 @@ describe('where the panel sits and how it is reached', () => {
     expect(text).toContain('problemReports = false,');
     expect(text).not.toMatch(/subscribeTeamFlags|readTeamFlags/);
     expect(text).toMatch(/<ErasureQueue[^>]*problemReports=\{problemReports\}/s);
-    expect(text).toMatch(/\{problemReports \? \(\s+<ProblemReportQueue/);
+    // Settings is cut into sub-tabs (L21): the panel is a tab that exists only when the flag is on.
+    expect(text).toMatch(
+      /\.\.\.\(problemReports\s+\? \[\s*\{\s*id: 'settings-reports',[\s\S]{0,200}<ProblemReportQueue/,
+    );
     // Not offered, the address fails the same section check as any unknown fragment and lands on the navigation.
     expect(text).toMatch(/const unavailableSection =\s+!!fragment && fragment !== 'main'/);
     // The server entry reads the probe once, for the workspace itself, whether or not the team frame is there.

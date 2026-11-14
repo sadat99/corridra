@@ -236,7 +236,7 @@ export function SourcesPanel({
           />
         )}
         {data.role !== 'viewer' && (
-          <PhoneFold summary="Record a new source (6 fields)">
+          <PhoneFold summary="Record a new source (6 fields)" fold="always">
             {/* `source` stays the workspace's original handler; this form adds the optional links. */}
             <form
               className="operator-form"
@@ -324,7 +324,7 @@ export function SourcesPanel({
           />
         )}
         {data.role !== 'viewer' && (
-          <PhoneFold summary="Record a new claim (2 fields)">
+          <PhoneFold summary="Record a new claim (2 fields)" fold="always">
             <form className="operator-form" onSubmit={claim}>
               <label className="field">
                 Source

@@ -432,7 +432,7 @@ describe('signing in again from the workspace comes back to the same workspace a
       ],
       [
         'apps/web/app/operator/opportunities.tsx',
-        "<a href={operatorSignInPath(tenant, 'workspace-commercial')}>\n            Sign in and verify your authenticator again\n          </a>",
+        "<a href={operatorSignInPath(tenant, 'workspace-commercial')}>\n                      Sign in and verify your authenticator again\n                    </a>",
       ],
       [
         'apps/web/app/operator/setup/setup-form.tsx',
