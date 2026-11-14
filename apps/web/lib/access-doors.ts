@@ -232,6 +232,13 @@ export const linkDoorPage = {
   title: 'Open the link Corridra sent you.',
   lead: 'For buyers, suppliers, clients and institutions.',
   note: 'You do not need an account. The link is your access, and it works only for the person it was sent to.',
+  /** The paste field (browser only). One fixed refusal for every input it will not open. English only until a native review. */
+  field: {
+    label: 'Paste your private link',
+    action: 'Open Link',
+    refused:
+      'That link cannot be opened here. Paste the whole link exactly as it was sent, or ask the person who sent it for a new one.',
+  },
   cards: [
     {
       id: 'introduction',
