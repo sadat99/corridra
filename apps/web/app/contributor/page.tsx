@@ -90,6 +90,9 @@ export default async function Page({
             </Link>
           </>
         )}
+        <a className="text-link" href="/contributor/signin">
+          Helper Sign-In
+        </a>
         <Link prefetch={false} className="text-link" href="/">
           Back to Corridra
         </Link>

@@ -69,7 +69,7 @@ test('the start page offers three plain choices and links each kind of person to
 test('protected access entries explain unavailable configuration and offer a way back', async ({
   page,
 }) => {
-  for (const route of ['/operator', '/operator/signin', '/contributor']) {
+  for (const route of ['/operator', '/operator/signin', '/contributor', '/contributor/signin']) {
     const response = await page.goto(route);
     expect(response?.status()).toBe(200);
     await expect(page.getByRole('main')).toContainText(/not configured/);
@@ -130,4 +130,30 @@ test('the start page holds at every width without overflow or accessibility prob
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     await page.screenshot({ path: `.cache/ux06/public-after/start-${width}.png` });
   }
+});
+test('helper sign-in fails closed without configuration, collects nothing and is never cached', async ({
+  page,
+}) => {
+  const response = await page.goto('/contributor/signin');
+  expect(response?.status()).toBe(200);
+  expect(response?.headers()['cache-control']).toContain('no-store');
+  expect(response?.headers()['referrer-policy']).toBe('no-referrer');
+  const main = page.getByRole('main');
+  await expect(page.getByRole('heading', { name: 'Helper sign-in is unavailable.' })).toBeVisible();
+  await expect(main).toContainText('This page does not collect credentials.');
+  await expect(main.locator('input, form')).toHaveCount(0);
+  await expect(main).not.toContainText(/operator account|customer account/i);
+  // The same address with a return the page may not honour still shows no form and no staff words.
+  await page.goto('/contributor/signin?next=' + encodeURIComponent('/operator#ops-center'));
+  await expect(main.locator('input, form')).toHaveCount(0);
+});
+test('the helper door on the team page opens helper sign-in as a new page', async ({ page }) => {
+  await page.goto('/access/team');
+  const door = page.getByRole('link', { name: 'Open Helper Tasks', exact: true });
+  await expect(door).toHaveAttribute('href', '/contributor/signin');
+  await page.evaluate(() => Object.assign(window, { beforeSignIn: true }));
+  await door.click();
+  await expect(page).toHaveURL(/\/contributor\/signin$/);
+  expect(await page.evaluate(() => 'beforeSignIn' in window)).toBe(false);
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 });
