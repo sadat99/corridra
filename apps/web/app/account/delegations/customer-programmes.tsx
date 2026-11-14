@@ -618,6 +618,11 @@ function ScopedProgrammes({
   }
   // With the page frame and the room, the programme's rare actions sit in one "More actions" menu.
   const framedRoom = framed && roomEnabled;
+  // The archived programme's row is gone from the list, so focus goes to the Undo that appears in its place.
+  const undoButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (framedRoom && archivedNotice) undoButton.current?.focus();
+  }, [framedRoom, archivedNotice]);
   const helpLink = (id: string) =>
     '/account/service-requests/new?kind=programme&ref=' +
     encodeURIComponent(id) +
@@ -683,6 +688,7 @@ function ScopedProgrammes({
         <p role="status">
           Programme archived: {archivedNotice.name}.{' '}
           <button
+            ref={undoButton}
             type="button"
             className="text-link"
             disabled={undoing}

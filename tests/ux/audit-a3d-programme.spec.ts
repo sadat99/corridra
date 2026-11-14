@@ -176,6 +176,60 @@ test('Archive asks first, sends nothing until confirmed and then sends the same 
   await expect(page.getByRole('button', { name: 'Undo' })).toBeVisible();
 });
 
+test('the archive confirm takes focus when it opens, and Keep or Escape gives it back to the menu button', async ({
+  page,
+}) => {
+  const posts = await open(page, 1440);
+  const group = page.getByRole('group', { name: 'Confirm archiving ' + firstName });
+  await menuButton(page).click();
+  await page.getByRole('menuitem', { name: 'Archive Programme' }).click();
+  await expect(group).toBeFocused();
+  await group.getByRole('button', { name: 'Keep ' + firstName }).click();
+  await expect(group).toHaveCount(0);
+  await expect(menuButton(page)).toBeFocused();
+  await menuButton(page).click();
+  await page.getByRole('menuitem', { name: 'Archive Programme' }).click();
+  await expect(group).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(group).toHaveCount(0);
+  await expect(menuButton(page)).toBeFocused();
+  expect(posts).toHaveLength(0);
+});
+
+test('a confirmed archive moves focus to the Undo that replaces the row', async ({ page }) => {
+  const posts = await open(page, 1440);
+  await menuButton(page).click();
+  await page.getByRole('menuitem', { name: 'Archive Programme' }).click();
+  await page.getByRole('button', { name: 'Archive ' + firstName }).click();
+  await expect.poll(() => posts.length).toBe(1);
+  await expect(page.getByRole('button', { name: 'Undo' })).toBeFocused();
+});
+
+test('an unanswered archive confirm does not come back after a rename is cancelled or the menu is opened again', async ({
+  page,
+}) => {
+  await open(page, 1440);
+  const group = page.getByRole('group', { name: 'Confirm archiving ' + firstName });
+  await menuButton(page).click();
+  await page.getByRole('menuitem', { name: 'Archive Programme' }).click();
+  await expect(group).toBeVisible();
+  // Opening the menu again ends the confirm.
+  await menuButton(page).click();
+  await expect(group).toHaveCount(0);
+  await page.getByRole('menuitem', { name: 'Rename Programme' }).click();
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(page.getByLabel('New programme name', { exact: true })).toHaveCount(0);
+  await expect(group).toHaveCount(0);
+  await expect(menuButton(page)).toBeFocused();
+  // The same by keyboard: the arrow keys open the menu and end an open confirm too.
+  await menuButton(page).click();
+  await page.getByRole('menuitem', { name: 'Archive Programme' }).click();
+  await expect(group).toBeVisible();
+  await menuButton(page).focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(group).toHaveCount(0);
+});
+
 test('Rename opens the same form from the menu, focus returns to the menu button, and the payload is unchanged', async ({
   page,
 }) => {
