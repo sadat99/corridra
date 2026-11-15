@@ -331,6 +331,18 @@
   font-weight: 400;
   color: var(--text-2);
 }
+/* The "Archived" label on an archived workspace's own radio (D4). Scoped to the menu so the header never loads the
+   row list's global badge rule onto other screens; the look matches that badge. */
+.ux-menu-row .ux-badge {
+  display: inline-block;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1.6;
+}
 /* Sign Out stays at the bottom edge of the account menu while the rest scrolls (it never drops out of reach). */
 .ux-menu-pinned {
   position: sticky;

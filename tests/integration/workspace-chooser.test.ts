@@ -227,7 +227,7 @@ describe('archived workspaces are not offered to start new work', () => {
         '/account/' + kind + '/' + a,
         '/account?view=work#customer-workspaces',
       ]);
-      expect(anchors(html)[1]!.name).toBe('Name ' + a + 'ArchivedYou own this workspace.');
+      expect(anchors(html)[1]!.name).toBe('Name ' + a + ' ArchivedYou own this workspace.');
       expect(html).toContain('<span class="ux-badge">Archived</span>');
       expect(html.match(/ux-badge/g)).toHaveLength(1);
     }

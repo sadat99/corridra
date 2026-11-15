@@ -94,7 +94,12 @@ export async function WorkspaceChooser({
             <li key={workspace.id}>
               <Link prefetch={false} href={workspacePath(kind, workspace.id)}>
                 <strong>{workspace.name}</strong>
-                {workspace.archived ? <span className="ux-badge">Archived</span> : null}
+                {workspace.archived ? (
+                  <>
+                    {' '}
+                    <span className="ux-badge">Archived</span>
+                  </>
+                ) : null}
                 <span>
                   {workspace.synthetic ? 'Example workspace. ' : ''}
                   {workspace.role === 'owner'

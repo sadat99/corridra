@@ -9,7 +9,6 @@
 // nothing here decides access, and every page and action still checks on the server. A feature that is not real
 // yet is plain text tagged Coming soon and announced as unavailable, never a link or a button that does nothing.
 import './utility-menus.css';
-import './row-list.css';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useId, useState, useSyncExternalStore } from 'react';
 import { CorridraIcon } from '../corridra-icon';
