@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { founderDoor, helperDoor, withWorkspace } from '../../apps/web/lib/front-doors';
+import { helperWays, teamDoorPage } from '../../apps/web/lib/access-doors';
 import { operatorReturnTo, workspaceSections } from '../../apps/web/lib/workspace-navigation';
 import { switchRegistry } from '../../apps/web/lib/owner-switches';
 import { uxSwitchNames } from '../../apps/web/lib/ux-switches';
@@ -59,13 +60,46 @@ describe('the helper door', () => {
     const pages: Record<string, string> = {
       '/contributor/setup': 'apps/web/app/contributor/setup/page.tsx',
       '/network': 'apps/web/app/network/page.tsx',
-      '/signin': 'apps/web/app/signin/page.tsx',
+      '/contributor/signin': 'apps/web/app/contributor/signin/page.tsx',
     };
     for (const item of helperDoor) {
       expect(pages[item.href], item.href).toBeTruthy();
       expect(existsSync(resolve(pages[item.href])), item.href).toBe(true);
     }
     expect(helperDoor.filter((item) => item.primary)).toHaveLength(1);
+  });
+});
+
+describe('the helper door and the team access door name the helper places once', () => {
+  it('takes every helper address and title from the access doors, so the two cannot drift', () => {
+    const helper = teamDoorPage.cards.find((card) => card.id === 'helper')!;
+    expect(helper.action).toMatchObject({ ...helperWays.signIn });
+    expect(helper.textLink).toEqual(helperWays.setup);
+    expect(teamDoorPage.steps.more).toEqual(helperWays.network);
+    const byId = Object.fromEntries(helperDoor.map((item) => [item.id, item]));
+    expect([byId.accept!.title, byId.accept!.href]).toEqual([
+      helperWays.setup.text,
+      helperWays.setup.href,
+    ]);
+    expect([byId.how!.title, byId.how!.href]).toEqual([
+      helperWays.network.text,
+      helperWays.network.href,
+    ]);
+    expect([byId.signin!.title, byId.signin!.href]).toEqual([
+      helperWays.signIn.text,
+      helperWays.signIn.href,
+    ]);
+    // The helper sign-in is the helper door, not the customer sign-in route.
+    expect(helperDoor.map((item) => item.href)).toEqual([
+      '/contributor/setup',
+      '/network',
+      '/contributor/signin',
+    ]);
+  });
+  it('does not write a helper address or title out a second time', () => {
+    const source = read('apps/web/lib/front-doors.ts');
+    expect(source).not.toMatch(/'\/contributor\/(setup|signin)'|'\/network'|'\/signin'/);
+    expect(source).toContain("from './access-doors'");
   });
 });
 

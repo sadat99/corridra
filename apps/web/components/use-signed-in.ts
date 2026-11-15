@@ -17,6 +17,15 @@ function publish(next: SignedIn) {
   for (const listener of listeners) listener();
 }
 
+// True once the header's own check has answered at least once (signed in or not). It adds no request: it only records
+// that the answer above is now known, so the footer can tell "not signed in" from "not asked yet".
+let settled = false;
+function settle() {
+  if (settled) return;
+  settled = true;
+  for (const listener of listeners) listener();
+}
+
 function subscribe(listener: () => void) {
   listeners.add(listener);
   return () => {
@@ -66,7 +75,10 @@ export function useSignedIn(accounts: boolean): SignedIn {
           : (await readSignedIn('/api/operator-auth/get-session', asked.signal))
             ? 'staff'
             : null;
-        if (!asked.signal.aborted) publish(next);
+        if (!asked.signal.aborted) {
+          publish(next);
+          settle();
+        }
       })();
     }
     function refocus() {
@@ -90,4 +102,12 @@ export function useSignedIn(accounts: boolean): SignedIn {
 export function useSignedInSeen(): SignedIn {
   const who = useSyncExternalStore(subscribe, current, signedOutOnServer);
   return isQuiet(usePathname()) ? null : who;
+}
+
+const settledNow = () => settled;
+const notSettledOnServer = () => false;
+
+/** Whether the header's check has answered yet, for the footer: it makes no request of its own. */
+export function useSignedInSettled(): boolean {
+  return useSyncExternalStore(subscribe, settledNow, notSettledOnServer);
 }

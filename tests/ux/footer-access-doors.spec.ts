@@ -74,17 +74,44 @@ const doors = [
 
 async function open(
   page: Page,
-  options: { doors?: boolean; path?: string; signedIn?: boolean; width?: number } = {},
+  options: {
+    doors?: boolean;
+    path?: string;
+    signedIn?: boolean;
+    width?: number;
+    /** Each session read answers this many milliseconds late (or never, when `hang`). */
+    delay?: number;
+    hang?: boolean;
+  } = {},
 ) {
+  // Every animation frame, note whether the doors row was ever really visible (shown, not just in the page).
+  await page.addInitScript(() => {
+    const seen = { visible: false };
+    (window as unknown as { __doorsSeen: typeof seen }).__doorsSeen = seen;
+    const tick = () => {
+      const row = document.querySelector('section.guide-footer-access');
+      if (row && getComputedStyle(row).visibility === 'visible') seen.visible = true;
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  const later = async () => {
+    if (options.hang) await new Promise(() => {});
+    if (options.delay) await new Promise((done) => setTimeout(done, options.delay));
+  };
   await page.route('**' + fixturePath + '*', (route) =>
     route.fulfill({ contentType: 'text/html', body: html }),
   );
-  await page.route('**/api/auth/get-session', (route) =>
-    route.fulfill({
+  await page.route('**/api/auth/get-session', async (route) => {
+    await later();
+    await route.fulfill({
       json: options.signedIn ? { user: { id: 'synthetic-user' }, session: { id: 's' } } : {},
-    }),
-  );
-  await page.route('**/api/operator-auth/get-session', (route) => route.fulfill({ json: {} }));
+    });
+  });
+  await page.route('**/api/operator-auth/get-session', async (route) => {
+    await later();
+    await route.fulfill({ json: {} });
+  });
   const width = options.width ?? 1440;
   await page.setViewportSize({ width, height: width < 700 ? 844 : 900 });
   const query = new URLSearchParams({
@@ -95,7 +122,7 @@ async function open(
   await page.evaluate(() => document.fonts.ready);
   const footer = page.locator('footer.guide-footer');
   await expect(footer).toBeVisible();
-  if (options.signedIn)
+  if (options.signedIn && !options.hang)
     await expect(
       footer.getByRole('link', { name: 'Open Your Workspace', exact: true }),
     ).toBeVisible();
@@ -301,4 +328,54 @@ test('the server wrapper reads the switch and hands it down', () => {
   const read = (file: string) => readFileSync(resolve('apps/web/components', file), 'utf8');
   expect(read('site-footer.tsx')).toContain("accessDoors={uxSwitchOn('CORRIDRA_UX_ACCESS_DOORS')}");
   expect(read('site-footer-place.tsx')).toContain('accessDoors={accessDoors}');
+});
+
+// The row waits for the header's own answer (no new read), so a signed-in person never sees it flash and nothing moves.
+// Fallback: it appears by itself after 800 ms (CSS animation), so a slow or missing answer cannot hide it for good.
+const doorsSeen = (page: Page) =>
+  page.evaluate(
+    () => (window as unknown as { __doorsSeen: { visible: boolean } }).__doorsSeen.visible,
+  );
+
+test('signed out, the doors row is in the page at once, keeps its place and shows when the answer is in', async ({
+  page,
+}) => {
+  const footer = await open(page, { delay: 250, width: 768 });
+  const row = footer.locator('section.guide-footer-access');
+  // Two reads at 250 ms each: the row is in the page but not yet shown.
+  await expect(row).toHaveCount(1);
+  await expect(row).toHaveAttribute('data-pending', 'true');
+  const before = (await footer.boundingBox())!.height;
+  await expect(row).toBeHidden();
+  await expect(row).toBeVisible({ timeout: 1500 });
+  await expect(row).not.toHaveAttribute('data-pending', 'true');
+  // No layout move between hidden and shown.
+  expect((await footer.boundingBox())!.height).toBeCloseTo(before, 0);
+});
+
+test('signed out, the doors row shows within 800 ms even if the answer never comes', async ({
+  page,
+}) => {
+  const footer = await open(page, { hang: true });
+  const row = footer.locator('section.guide-footer-access');
+  await expect(row).toBeVisible({ timeout: 1800 });
+  await expect(row).toHaveAttribute('data-pending', 'true');
+});
+
+test('signed in, the doors row is never shown, not even while the answer is on its way', async ({
+  page,
+}) => {
+  const footer = await open(page, { signedIn: true, delay: 300 });
+  await expect(footer.locator('section.guide-footer-access')).toHaveCount(0);
+  await page.waitForTimeout(1200);
+  expect(await doorsSeen(page)).toBe(false);
+});
+
+test('the server HTML of the pending row is plain: links and heading present, hidden only by the pending rule', async () => {
+  const css = readFileSync(resolve('apps/web/components/site-footer.css'), 'utf8');
+  expect(css).toMatch(
+    /\.guide-footer-access\[data-pending='true'\]\s*\{[^}]*visibility:\s*hidden;[^}]*animation:[^;]*800ms/,
+  );
+  const view = readFileSync(resolve('apps/web/components/site-footer-view.tsx'), 'utf8');
+  expect(view).toContain("data-pending={known ? undefined : 'true'}");
 });

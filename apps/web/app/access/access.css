@@ -168,6 +168,14 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+/* From 768 px the two panels sit side by side and each is about 336 px wide: a 16 px text link in the create panel
+   ("Start a Request Without an Account", about 309 px) no longer fits beside the 24 px padding and wraps. The small size
+   keeps it on one line; the 44 px target and the words do not change. From 1024 px the panels are wide enough. */
+@media (min-width: 48rem) and (max-width: 63.99rem) {
+  .access-panel > .access-panel-actions .text-link {
+    font-size: var(--text-sm);
+  }
+}
 @media (min-width: 64rem) {
   .access-cards--three {
     grid-template-columns: repeat(3, minmax(0, 1fr));
