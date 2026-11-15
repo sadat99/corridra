@@ -1,5 +1,6 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import {
+  purgeIntakeRateLimit,
   withTenant,
   type DatabaseClient,
   type DatabasePool,
@@ -108,6 +109,7 @@ export class MissionService {
         this.hash(`${this.intakeMode === 'real' ? 'real-' : ''}intake-global`),
       ],
     );
+    await purgeIntakeRateLimit(this.pool);
     if (!r.rows[0].client || !r.rows[0].global)
       throw new DomainError('Too many requests. Try again in an hour.', 429);
   }

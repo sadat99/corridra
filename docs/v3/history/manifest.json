@@ -517,6 +517,14 @@
       "bytes": 10672,
       "sha256": "51dae52e04987cf383b5a8d1794f0f745996ef9cfeb9cf2b8aaf4cf37b43a090",
       "meaning": "Exact active ledger at 6266b74 (the PR 522 merge, 15 Nov; unchanged since 1051ac7, the text of Guardian 10 records 6), before Guardian 10 recorded merges 518, 520, 519 and 522 with receipts, the helper interest register decisions and review of PR 521, and the access doors follow-ups, including the Takeover, merged-since, production, ADR, owner-words and follow-up bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "5d9470165abe22ab9d7999a7df147619473a0df8",
+      "archive": "docs/v3/history/ledger-before-g10-records-8-2026-11-15.md",
+      "bytes": 10653,
+      "sha256": "f8e7b36157c600294c347a5c8b3011e758058696e25a15bd8adb6c37b1a1e2f6",
+      "meaning": "Exact active ledger at 5d94701 (the PR 523 merge, 15 Nov; the text of Guardian 10 records 7), before Guardian 10 recorded the main CI of merges 521 to 523, the PR 524 core 0030 purge and privacy section decisions, the owner words relayed by Orchestrator 12 on 15 Nov and the go-live ordering for the helper interest switch, including the Takeover, merged-since, owner-words and owner-decision bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

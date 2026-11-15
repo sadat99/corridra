@@ -78,7 +78,7 @@ test('the module installs once, repeats safely and records its exact hash', asyn
     },
   ]);
   expect((await f.owner.query('SELECT count(*)::int n FROM migrations.applied')).rows[0].n).toBe(
-    29,
+    30,
   );
 });
 
