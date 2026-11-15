@@ -409,6 +409,13 @@ export const switchRegistry: SwitchEntry[] = [
     group: 'Network',
     kind: 'flag',
   },
+  {
+    name: 'CORRIDRA_HELPER_INTEREST',
+    label: 'Helper interest form',
+    line: 'Adds a short form to the Team and Network Access page where a person who has not been invited can say they would like to become a field helper (name, email, country and a few words). It says clearly that this is not an invitation, a job or a reward, sends no email and creates no account. Owners and admins can read and delete the entries; entries are removed automatically after 180 days. Needs Corridra Network on and the helper interest database module installed, and stays hidden without them. Turn it off by removing the setting in Vercel and redeploying. Do not turn it on until the privacy notice wording has been approved.',
+    group: 'Network',
+    kind: 'flag',
+  },
   // Safety and checks
   {
     name: 'CORRIDRA_PWA_SERVICE_WORKER',

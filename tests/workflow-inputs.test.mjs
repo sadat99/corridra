@@ -87,6 +87,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'lifecycle_pause',
     'problem_reports',
     'programme_pages',
+    'helper_interest',
     'programme_erasure',
     'contact_changes_install',
     'contact_changes_enable',
@@ -127,6 +128,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     ['lifecycle_pause', u, u, u, u, u, 'pause', u, u],
     ['problem_reports', u, u, u, u, u, u, 'install', u],
     ['programme_pages', u, u, u, u, u, u, u, 'install'],
+    ['helper_interest', u, u, u, u, u, u, u, u],
     ['programme_erasure', u, u, u, u, u, u, u, u],
     ['contact_changes_install', u, u, u, u, u, u, u, u],
     ['contact_changes_enable', u, u, u, u, u, u, u, u],
@@ -151,6 +153,10 @@ test('each field-module choice maps to install only and reaches the exact-head c
     assert.equal(evaluate(env.PROBLEM_REPORTS_ACTION, inputs), reports);
     // Programme pages (ADR-080): the choice installs the database module and nothing else; the app switch is separate.
     assert.equal(evaluate(env.PROGRAMME_PAGES_ACTION, inputs), pages);
+    assert.equal(
+      evaluate(env.HELPER_INTEREST_ACTION, inputs),
+      choice === 'helper_interest' ? 'install' : u,
+    );
     // Programme words erasure: its own choice installs the database module and nothing else.
     assert.equal(
       evaluate(env.PROGRAMME_ERASURE_ACTION, inputs),

@@ -34,6 +34,7 @@ import { migrateCustomerRequestWithdrawal } from '../../packages/db/src/customer
 import { migrateCustomerProgrammeLifecycle } from '../../packages/db/src/customer-programme-lifecycle-migrate';
 import { migrateCustomerParticipantLabels } from '../../packages/db/src/customer-participant-label-migrate';
 import { migrateCustomerProgrammePublication } from '../../packages/db/src/customer-programme-publication-migrate';
+import { migrateHelperInterest } from '../../packages/db/src/helper-interest-migrate';
 import { migrateRecipientResponseRevision } from '../../packages/db/src/recipient-response-revision-migrate';
 import { migrateCustomerSpecificationConfirmation } from '../../packages/db/src/customer-specification-confirmation-migrate';
 import { migrateCustomerCommercialArrangements } from '../../packages/db/src/customer-commercial-arrangement-migrate';
@@ -109,6 +110,7 @@ export const localInstallers: Installer[] = [
   ['programme erasure', migrateCustomerProgrammeErasure],
   ['counterparty changes', migrateCounterpartyChanges],
   ['supply sources', migrateSupplySources],
+  ['helper interest register', migrateHelperInterest],
   ['simulated payments', migrateCustomerPaymentsSimulated],
   ['view as', migrateViewAs],
 ];

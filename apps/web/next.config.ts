@@ -118,6 +118,14 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // The helper interest register (ADR-085): the owner and admin list answers with names, email addresses and reasons.
+        source: '/api/helper-interest',
+        headers: [
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
+      },
+      {
         source: '/api/workspace/network-invitation',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },

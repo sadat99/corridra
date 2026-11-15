@@ -99,6 +99,9 @@ export const permissions = {
   'problems.triage': ['owner', 'admin'],
   // Reading public programme applications (ADR-080, owner decision 12 Nov 2026): read only, owners and admins with a fresh authenticator check.
   'programme.applications.read': ['owner', 'admin'],
+  // The helper interest register (ADR-0085): owners and admins read the entries and delete one on request, with a fresh authenticator check.
+  'helper.interest.read': ['owner', 'admin'],
+  'helper.interest.remove': ['owner', 'admin'],
   // Opening a read-only preview of what a customer, delegate or supplier sees. Always logged.
   'viewas.open': ['owner', 'admin'],
 } satisfies Record<string, Role[]>;

@@ -1,6 +1,24 @@
 import Link from 'next/link';
 import { AccessCard, AccessPage, accessDoorMetadata } from '../../../components/access-page';
-import { teamDoorPage as page } from '../../../lib/access-doors';
+import { HelperInterestForm } from '../../../components/helper-interest-form';
+import { helperInterestCopy as interest, teamDoorPage as page } from '../../../lib/access-doors';
+import { foundations } from '../../../lib/foundations';
+import { CountryOptions } from '../../operator/country-options';
+import { helperInterestEnabled } from '@corridra/auth/helper-interest';
+
+// The form is offered only while both of its switches are on and the register is installed and open; any failure to find
+// that out means it is not shown, and the page is exactly what it was.
+async function interestOffered() {
+  if (!helperInterestEnabled()) return false;
+  try {
+    const s = foundations();
+    if (!s) return false;
+    await s.ready;
+    return await s.helperInterest.offered();
+  } catch {
+    return false;
+  }
+}
 
 // The search-engine setting follows the switch as it is when the page is asked for.
 export const dynamic = 'force-dynamic';
@@ -8,7 +26,8 @@ export function generateMetadata() {
   return accessDoorMetadata('team', page.title, page.lead);
 }
 
-export default function Page() {
+export default async function Page() {
+  const offerInterest = await interestOffered();
   return (
     <AccessPage id="team" eyebrow={page.eyebrow} title={page.title} lead={page.lead}>
       <p>{page.note}</p>
@@ -54,6 +73,23 @@ export default function Page() {
           {page.steps.more.text}
         </Link>
       </section>
+      {offerInterest && (
+        <section aria-labelledby="access-interest" className="access-interest">
+          <details>
+            <summary>
+              <h2 id="access-interest">{interest.heading}</h2>
+            </summary>
+            <p>{interest.lead}</p>
+            <p>{interest.notice}</p>
+            <HelperInterestForm copy={interest}>
+              <CountryOptions />
+            </HelperInterestForm>
+            <Link prefetch={false} className="text-link" href={interest.privacy.href}>
+              {interest.privacy.text}
+            </Link>
+          </details>
+        </section>
+      )}
     </AccessPage>
   );
 }
