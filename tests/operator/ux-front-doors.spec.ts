@@ -105,7 +105,7 @@ test('each card is one link to the page it names, and the primary card is marked
   await expect(founder.locator('[data-primary="true"]')).toHaveCount(1);
   const helper = page.getByRole('navigation', { name: 'Ways in for a helper' });
   await expect(helper.getByRole('link')).toHaveCount(3);
-  await expect(helper.getByRole('link', { name: /^Accept a reviewed invitation/ })).toHaveAttribute(
+  await expect(helper.getByRole('link', { name: /^Accept an Invitation/ })).toHaveAttribute(
     'href',
     '/contributor/setup',
   );
