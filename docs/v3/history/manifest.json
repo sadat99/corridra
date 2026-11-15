@@ -509,6 +509,14 @@
       "bytes": 10648,
       "sha256": "8b45021eff2c3d37797b8fedbb605c6ac7305344922f0c842425791964cd7991",
       "meaning": "Exact active ledger at f6e12d8 (the PR 517 merge, 14 Nov; unchanged since aa27fac, the text of Guardian 10 records 5), before Guardian 10 recorded merges 516 and 517, the PR 518 organiser return and the 768 px footer headroom, including the Takeover, merged-since, production, switches and follow-up bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "6266b74f0f12eb1d8fa5c9962016226cb4b5db1b",
+      "archive": "docs/v3/history/ledger-before-g10-records-7-2026-11-15.md",
+      "bytes": 10672,
+      "sha256": "51dae52e04987cf383b5a8d1794f0f745996ef9cfeb9cf2b8aaf4cf37b43a090",
+      "meaning": "Exact active ledger at 6266b74 (the PR 522 merge, 15 Nov; unchanged since 1051ac7, the text of Guardian 10 records 6), before Guardian 10 recorded merges 518, 520, 519 and 522 with receipts, the helper interest register decisions and review of PR 521, and the access doors follow-ups, including the Takeover, merged-since, production, ADR, owner-words and follow-up bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

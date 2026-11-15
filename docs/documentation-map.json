@@ -1529,6 +1529,11 @@
       "use": "Exact hashed ledger at f6e12d8 (the PR 517 merge; unchanged since aa27fac), before merges 516 and 517, the PR 518 organiser return and the 768 px footer headroom were recorded; preserves the Guardian 10 records 5 Resume bullets; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-g10-records-7-2026-11-15.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at 6266b74 (the PR 522 merge; unchanged since 1051ac7), before merges 518, 520, 519 and 522 with receipts, the helper interest register decisions and the PR 521 review were recorded; preserves the Guardian 10 records 6 Resume bullets; use the current ledger for live state."
+    },
+    {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"
