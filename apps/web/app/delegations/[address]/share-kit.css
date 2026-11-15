@@ -7,19 +7,14 @@
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
 }
-/* The attribution is an inline link in running text (ui-direction row 10 asks 44 px for a control; an inline link in a sentence
-   is the exception WCAG 2.5.8 makes, so the target is its own line instead). Its box is exactly one line of the sentence:
-   the vertical padding fills the line pitch around the text, so the target is at least 24 px tall on every line the link
-   covers, never reaches the lines above or below, and adds no height. The sentence's line pitch is never less than 24 px
-   (1.5rem), which is what makes 24 px possible without more height. The padding is the pitch less the height of the text
-   (about 1.07 em), halved; the first value is for a browser that does not know the lh unit. Measured with elementFromPoint at
-   320, 390, 768 and 1440 px in tests/operator/delegation-share-kit.spec.ts. */
-.programme-public .programme-kit-sentence {
-  line-height: max(1.7em, 1.5rem);
-}
+/* The attribution is one quiet link on a line of its own under the sentence about who is responsible (UI/UX.v3 row 10: a 44 px
+   target up to 768 px). Being a row of its own, its target never reaches the text above it. It starts at the left and is only as
+   wide as its words, so it is no wider than a link needs to be; the 44 px is its height. */
 .programme-kit-attribution {
-  padding-block: 0.28rem;
-  padding-block: calc((1lh - 1.07em) / 2);
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  min-height: 2.75rem;
   text-decoration: underline;
   text-underline-offset: 3px;
 }

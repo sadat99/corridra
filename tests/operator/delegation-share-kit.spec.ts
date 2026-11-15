@@ -10,8 +10,10 @@ import { isTitleCase } from '../../apps/web/lib/ux/title-case';
 // ADR-084 slice S1, behind CORRIDRA_PROGRAMME_SHARE_KIT: the share section and the responsible paragraph of the public
 // programme page as the real components with the real stylesheets, at 390, 768 and 1440. The kit is switched on or off by
 // the page address (?kit=1, ?days=1), because the switch itself is read on the server by the real page. Owner rule: the
-// page with the kit on is never taller than with it off, closed state, at every width, with and without stated days. The
-// QR code lives on the flyer; it is proven by decoding the picture the browser actually shows back to the page address.
+// share section with the kit on is exactly as tall as with it off, closed state, at every width, with and without stated
+// days (the More button takes no room); the one place the page grows is the attribution link, a 44 px line of its own, so
+// the whole page grows by at most that line and its gap. The QR code lives on the flyer; it is proven by decoding the
+// picture the browser actually shows back to the page address.
 const css = readFileSync(resolve('apps/web/app/globals.css'), 'utf8');
 const url =
   'http://127.0.0.1:3200/delegations/synthetic-china-agricultural-machinery-delegation-k3x9q2m7ab';
@@ -117,6 +119,9 @@ const widths = [
   ['desktop', 1440, 900],
 ] as const;
 const height = (page: Page) => page.evaluate(() => document.documentElement.scrollHeight);
+const shareHeight = async (page: Page) => (await share(page).boundingBox())!.height;
+// The attribution is a 44 px line in a 12 px grid gap: the most the page may grow with the kit on.
+const attributionLine = 44 + 12;
 
 for (const [name, width, tall] of widths) {
   test.describe(name, () => {
@@ -137,14 +142,20 @@ for (const [name, width, tall] of widths) {
       await expect(page.getByText('Corridra provides the tools the organiser uses.')).toBeVisible();
     });
 
-    test('the page with the kit on is never taller than with it off, with and without stated days', async ({
+    test('the share section with the kit on is exactly as tall as with it off, and the page grows by at most the attribution line, with and without stated days', async ({
       page,
     }) => {
       await open(page, 'kit=0');
       const off = await height(page);
+      const offShare = await shareHeight(page);
       for (const days of ['0', '1']) {
         await open(page, `kit=1&days=${days}`);
-        expect(await height(page), `days=${days}`).toBeLessThanOrEqual(off + 1);
+        expect(await shareHeight(page), `share section, days=${days}`).toBeLessThanOrEqual(
+          offShare + 1,
+        );
+        expect(await height(page), `page, days=${days}`).toBeLessThanOrEqual(
+          off + attributionLine + 1,
+        );
       }
     });
 
@@ -179,15 +190,18 @@ for (const [name, width, tall] of widths) {
       expect(labels.filter((label) => !isTitleCase(label))).toEqual([]);
     });
 
-    test('the attribution is a link inside the responsible sentence, in place of the sentence about Corridra tools', async ({
+    test('the attribution is one link on a line of its own under the responsible sentence, in place of the sentence about Corridra tools', async ({
       page,
     }) => {
       await open(page, 'kit=1&days=0');
       const link = page.getByRole('link', { name: 'Page made with Corridra Programmes' });
       await expect(link).toHaveAttribute('href', '/trade-missions#organise-entry-title');
-      await expect(page.locator('p', { has: link })).toContainText(
-        'Everything on this page is stated by the organiser. Page made with Corridra Programmes. Corridra is not the travel operator and has not checked these details.',
-      );
+      await expect(page.locator('p', { has: link })).toHaveCount(0);
+      await expect(
+        page.getByText(
+          'Everything on this page is stated by the organiser. Corridra is not the travel operator and has not checked these details.',
+        ),
+      ).toBeVisible();
       await expect(page.getByText('Corridra provides the tools the organiser uses.')).toHaveCount(
         0,
       );
@@ -261,12 +275,11 @@ for (const [name, width, tall] of widths) {
   });
 }
 
-// The attribution is a link inside a sentence, so it is the inline-link exception of WCAG 2.5.8, not the 44 px control of
-// ui-direction row 10. Its target is its own line: at least 24 px tall on every line it covers, and never reaching the line
-// above or below (it used to be a 1 rem band that overlapped both and won their taps). Measured by asking the browser which
-// element is at each point of the target and just outside it.
+// The attribution is one quiet link on a line of its own: a 44 px target (UI/UX.v3 row 10: up to 768 px) that reaches none of
+// the lines around it (it used to be a 1 rem band inside a sentence that overlapped both neighbours and won their taps).
+// Measured by asking the browser which element is at each point of the target and just outside it.
 for (const width of [320, 390, 768, 1440])
-  test(`the attribution link is a 24 px target on its own line, clear of the lines around it, at ${width}`, async ({
+  test(`the attribution link is a 44 px target on a line of its own, clear of the text above it, at ${width}`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
@@ -274,49 +287,43 @@ for (const width of [320, 390, 768, 1440])
     await page.locator('.programme-kit-attribution').scrollIntoViewIfNeeded();
     const result = await page.evaluate(() => {
       const link = document.querySelector('.programme-kit-attribution')!;
-      const sentence = link.closest('p')!;
-      const pitch = parseFloat(getComputedStyle(sentence).lineHeight);
+      const sentence = link.previousElementSibling!;
       const hit = (x: number, y: number) => {
         const element = document.elementFromPoint(x, y);
         return !!element && (element === link || link.contains(element));
       };
-      const rects = Array.from(link.getClientRects());
+      const boxes = Array.from(link.getClientRects());
+      const box = link.getBoundingClientRect();
+      const x = box.left + box.width / 2;
+      const misses: string[] = [];
+      for (const px of [box.left + 2, x, box.right - 2])
+        for (let y = box.top + 1; y < box.bottom - 0.5; y += 2)
+          if (!hit(px, y)) misses.push(`${Math.round(px)},${Math.round(y)}`);
       return {
-        pitch,
-        lines: rects.map((box, index) => {
-          const x = box.left + box.width / 2;
-          const inside: string[] = [];
-          for (const px of [box.left + 2, x, box.right - 2])
-            for (let y = box.top + 1; y < box.bottom - 0.5; y += 2)
-              if (!hit(px, y)) inside.push(`${Math.round(px)},${Math.round(y)}`);
-          // Just outside the target on a line that has text above or below it: the tap belongs to the sentence.
-          const above = index > 0 || sentence.getBoundingClientRect().top < box.top - 2;
-          const below =
-            index < rects.length - 1 || sentence.getBoundingClientRect().bottom > box.bottom + 2;
-          return {
-            height: box.height,
-            inside,
-            outsideAbove: above ? hit(x, box.top - 3) : false,
-            outsideBelow: below ? hit(x, box.bottom + 3) : false,
-          };
-        }),
+        lines: boxes.length,
+        height: box.height,
+        misses,
+        sentenceIsText: sentence.tagName === 'P',
+        gapAbove: box.top - sentence.getBoundingClientRect().bottom,
+        // Just above and below the target: the tap is not the link's.
+        outsideAbove: hit(x, box.top - 2),
+        outsideBelow: hit(x, box.bottom + 2),
       };
     });
-    expect(result.lines.length).toBeGreaterThan(0);
-    // One line of the sentence is never shorter than 24 px, so a target that fills it is a 24 px target.
-    expect(result.pitch).toBeGreaterThanOrEqual(24);
-    for (const line of result.lines) {
-      expect(line.height).toBeGreaterThanOrEqual(23.5);
-      expect(line.height).toBeLessThanOrEqual(result.pitch + 0.5);
-      expect(line.inside).toEqual([]);
-      expect(line.outsideAbove).toBe(false);
-      expect(line.outsideBelow).toBe(false);
-    }
+    // One line: the words never wrap onto a second one, so there is one target and no line of it reaches another.
+    expect(result.lines).toBe(1);
+    expect(result.height).toBeGreaterThanOrEqual(44);
+    expect(result.misses).toEqual([]);
+    expect(result.sentenceIsText).toBe(true);
+    expect(result.gapAbove).toBeGreaterThanOrEqual(0);
+    expect(result.outsideAbove).toBe(false);
+    expect(result.outsideBelow).toBe(false);
   });
 
 // The kit's button once wrapped onto a row of its own between about 510 and 610 px and made the page 56 px taller. Every width
-// from a small phone to a wide tablet, in steps that cannot step over a band like that one, with and without stated days.
-test('the page with the kit on is never taller than with it off at any width from 320 to 800 px', async ({
+// from a small phone to a wide tablet, in steps that cannot step over a band like that one, with and without stated days: the
+// share section is exactly as tall as without the kit, and the page grows by at most the attribution line.
+test('the share section with the kit on is never taller than with it off at any width from 320 to 800 px', async ({
   page,
 }) => {
   test.setTimeout(240_000);
@@ -325,10 +332,13 @@ test('the page with the kit on is never taller than with it off at any width fro
     await page.setViewportSize({ width, height: 800 });
     await open(page, 'kit=0');
     const off = await height(page);
+    const offShare = await shareHeight(page);
     for (const days of ['0', '1']) {
       await open(page, `kit=1&days=${days}`);
-      const on = await height(page);
-      if (on > off + 1) taller.push(`${width}px days=${days}: +${on - off}`);
+      const growth = (await height(page)) - off;
+      const shareGrowth = (await shareHeight(page)) - offShare;
+      if (shareGrowth > 1 || growth > attributionLine + 1)
+        taller.push(`${width}px days=${days}: share +${shareGrowth}, page +${growth}`);
     }
   }
   expect(taller).toEqual([]);
