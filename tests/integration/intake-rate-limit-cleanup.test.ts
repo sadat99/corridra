@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
-import { fixture } from './support';
+import { connection, fixture, sandbox } from './support';
+import { Pool } from '../../packages/db/src/index';
 import { migrate } from '../../packages/db/src/migrate';
 
 // Core migration 0030: a rate limit key no longer outlives its hour. A row of an earlier hour has no effect (the next call resets
@@ -88,6 +89,42 @@ describe('stale keys leave the table', () => {
     await budget(key('batch-caller'), 6);
     expect(await count()).toBe(1);
   });
+});
+
+describe('concurrent calls at an hour rollover', () => {
+  test('many callers whose own counters are stale, with a backlog of stale counters, never deadlock or fail', async () => {
+    // Thirty connections call at once right after an hour ends, each with its own stale counter inside a backlog larger than one
+    // cleanup batch. Cleaning before counting let two calls each lock the other's stale counter and then wait on each other (40P01).
+    const wide = new Pool({
+      ...connection('corridra_integration', 'corridra_runtime_local', sandbox.runtimePassword),
+      max: 30,
+    });
+    try {
+      const failures: string[] = [];
+      for (let round = 0; round < 60; round++) {
+        await f.owner.query('DELETE FROM app.intake_rate_limit');
+        await seedStale('rollover-', 1500);
+        const results = await Promise.all(
+          Array.from({ length: 30 }, (_, i) =>
+            wide
+              .query('SELECT app.intake_budget($1,6) AS ok', [
+                createHash('sha256')
+                  .update('rollover-' + (i * 41 + 1 + round))
+                  .digest('hex'),
+              ])
+              .then(
+                (r) => (r.rows[0].ok === true ? 'ok' : 'refused'),
+                (e: { code?: string; message?: string }) => `${e.code}: ${e.message}`,
+              ),
+          ),
+        );
+        for (const r of results) if (r !== 'ok') failures.push(r);
+      }
+      expect(failures).toEqual([]);
+    } finally {
+      await wide.end();
+    }
+  }, 300000);
 });
 
 describe('what did not change', () => {
