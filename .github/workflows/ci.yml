@@ -313,6 +313,16 @@ jobs:
           CORRIDRA_UX_OPERATOR_URLS: 'true'
           UX06_EVIDENCE_STAGE: after
         run: pnpm test:operator tests/operator/zz-l21-staff-page-budget.spec.ts
+      # The helper interest form (ADR-085) exists only while its two switches are on and its database module is installed, so
+      # the spec skips in every other run. This step starts the same local server with a throwaway real-admission fixture
+      # (HELPER_INTEREST_FIXTURE) and the form's switch on. Shard 6 is one of the shorter ones, so no job is added.
+      - name: Helper interest form with its switches on (shard 6 only)
+        if: matrix.shard == 6
+        env:
+          CORRIDRA_HELPER_INTEREST: 'true'
+          HELPER_INTEREST_FIXTURE: 'true'
+          UX06_EVIDENCE_STAGE: after
+        run: pnpm test:operator tests/operator/zz-helper-interest.spec.ts
       - name: Synthetic UX browser evidence
         if: always()
         uses: actions/upload-artifact@v7

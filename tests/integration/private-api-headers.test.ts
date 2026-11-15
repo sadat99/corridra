@@ -74,6 +74,23 @@ describe('the public decision card API and the framework header overrides', () =
   });
 });
 
+// The helper interest register API (ADR-085) answers, to an owner or admin, with applicants' names, email addresses and
+// reasons, so the framework must never replace its no-store or no-referrer headers. The compiled response is checked by
+// running the built app (see the pull request).
+describe('the helper interest API and the framework header overrides', () => {
+  const matching = rules.filter((rule) => rule.source === '/api/helper-interest');
+  it('has one explicit rule for /api/helper-interest', () => {
+    expect(
+      matching,
+      'the helper interest API is missing from the private-header overrides',
+    ).toHaveLength(1);
+  });
+  it('sends no-referrer and no-store', () => {
+    expect(matching[0]!.headers).toContain("key: 'Referrer-Policy', value: 'no-referrer'");
+    expect(matching[0]!.headers).toContain("key: 'Cache-Control', value: 'no-store'");
+  });
+});
+
 // The team command palette's search (Navigation v1, Sensitive: yes) answers with mission and company names, so the
 // framework must never replace its no-store or no-referrer headers. Registered here, checked here, and the compiled
 // response is checked in tests/e2e/verification/ws-e/team-shell.spec.ts.

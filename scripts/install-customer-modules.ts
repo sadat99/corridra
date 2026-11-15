@@ -51,6 +51,7 @@ import { configureCounterpartyChanges } from '../packages/auth/src/counterparty-
 import { migrateSourcingWorkflow } from '../packages/db/src/sourcing-workflow-migrate';
 import { configureSourcingWorkflow } from '../packages/auth/src/sourcing-workflow-configuration';
 import { migrateSupplySources } from '../packages/db/src/supply-source-migrate';
+import { migrateHelperInterest } from '../packages/db/src/helper-interest-migrate';
 import { configureSupplySources } from '../packages/auth/src/supply-source-configuration';
 import { configureWorkspaceLifecycle } from '../packages/auth/src/customer-workspace-lifecycle-configuration';
 import { configureAccountLifecycle } from '../packages/auth/src/customer-account-lifecycle-configuration';
@@ -101,6 +102,7 @@ const v = z
       .default('unchanged'),
     PROBLEM_REPORTS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     PROGRAMME_PAGES_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
+    HELPER_INTEREST_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     PROGRAMME_ERASURE_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     COUNTERPARTY_CHANGES_ACTION: z
       .enum(['unchanged', 'install', 'enable', 'pause'])
@@ -271,6 +273,8 @@ if (v.PROBLEM_REPORTS_ACTION !== 'unchanged' && !apply)
   throw new Error('Problem report installation requires INSTALL_APPLY=yes');
 if (v.PROGRAMME_PAGES_ACTION !== 'unchanged' && !apply)
   throw new Error('Programme page installation requires INSTALL_APPLY=yes');
+if (v.HELPER_INTEREST_ACTION !== 'unchanged' && !apply)
+  throw new Error('Helper interest installation requires INSTALL_APPLY=yes');
 if (v.PROGRAMME_ERASURE_ACTION !== 'unchanged' && !apply)
   throw new Error('Programme words erasure installation requires INSTALL_APPLY=yes');
 if (v.COUNTERPARTY_CHANGES_ACTION !== 'unchanged' && !apply)
@@ -310,6 +314,7 @@ const registries = [
   'counterparty_change_migrations',
   'sourcing_workflow_migrations',
   'supply_source_migrations',
+  'helper_interest_migrations',
   'customer_migrations',
   'customer_commercial_migrations',
   'customer_company_migrations',
@@ -652,6 +657,16 @@ try {
       await migrateCustomerProgrammePublication(pool);
       console.log(
         'installed or already current: programme pages and applications, with the read only staff list (application switch unchanged)',
+      );
+    }
+    // The helper interest register (ADR-0085) is never part of the base run. Installing the database module exposes nothing:
+    // the form needs CORRIDRA_HELPER_INTEREST and CORRIDRA_NETWORK_ENABLED, both separate and both the owner's, and nothing
+    // is stored until real use is enabled. It installs no other module and refuses, naming the step, unless the real-use
+    // modules are installed first. Reached only through field_modules_action=helper_interest.
+    if (v.HELPER_INTEREST_ACTION === 'install') {
+      await migrateHelperInterest(pool);
+      console.log(
+        'Helper interest register installed or already current (application switches unchanged)',
       );
     }
     // Redaction of the applicant's and participant's words under an erasure request (privacy). Never part of the base run. It

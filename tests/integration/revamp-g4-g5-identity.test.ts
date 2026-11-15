@@ -295,6 +295,8 @@ describe('the account screens send the identity', () => {
       'the headers are passed in by the page that draws it, which is checked below',
     'components/ux/team-utility-menus.tsx':
       'the staff Sign Out sends the operator session cookie; it has no customer identity',
+    'components/helper-interest-form.tsx':
+      'the helper interest form (ADR-085) is public and anonymous on purpose: it creates no account, session or membership and sends no customer identity; /api/helper-interest answers 404 unless both switches are on, refuses a POST whose Origin is not the app origin, and stores one entry through a database function that records no address and no session',
     'lib/supply-screens.ts':
       'the staff supply screens send the operator session cookie and no customer identity; every call goes to /api/supply, which refuses a POST whose Origin is not the app origin and answers 401 without a session before any action runs, file import included',
   };

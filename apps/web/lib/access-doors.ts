@@ -239,6 +239,38 @@ export const teamDoorPage = {
   },
 };
 
+/**
+ * The helper interest form on the team door (ADR-0085). Shown only while CORRIDRA_HELPER_INTEREST and CORRIDRA_NETWORK_ENABLED
+ * are both on and the register is installed. Plain strings only: they travel to the browser form. English only until a native review.
+ */
+export const helperInterestCopy = {
+  id: 'interest',
+  heading: 'Not invited yet? Tell us you are interested',
+  lead: 'You can tell us you would like to become a field helper. This is not an invitation, a job or a reward.',
+  notice:
+    'Sending this does not create an account, and we do not email you to confirm. Only the Corridra team can read it, and it is deleted after 180 days.',
+  privacy: { text: 'How We Use Your Details', href: '/privacy#helper-interest' } as AccessAction,
+  aboutLegend: 'About you',
+  nameLabel: 'Your name',
+  emailLabel: 'Your email',
+  countryLabel: 'Your country',
+  countryPlaceholder: 'Choose a country',
+  next: 'Continue',
+  reasonLegend: 'In your words',
+  reasonLabel: 'Why would you like to help?',
+  count: '{n} characters left',
+  send: 'Send My Interest',
+  sending: 'Sending',
+  back: 'Back',
+  check: 'Check the highlighted fields and try again.',
+  tooMany: 'Too many tries just now. Please try again later.',
+  closed: 'This form is not available right now.',
+  failed: 'It could not be sent. Your words are still here, so you can try again.',
+  doneTitle: 'Thank you. We have your note.',
+  doneText:
+    'This is not an invitation. If the Corridra team decides to invite you, they will use the email you gave. We will not email you before that.',
+};
+
 /** Private link door: /access/link. Role cards carry no link on purpose: the link itself is the access. */
 export const linkDoorPage = {
   eyebrow: 'Private Link Access',

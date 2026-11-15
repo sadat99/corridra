@@ -153,6 +153,7 @@ import {
   customerSpecificationConfirmationEnabled,
 } from '@corridra/auth/customer-specification-confirmation';
 import { CustomerBookService, customerBooksEnabled } from '@corridra/auth/customer-books';
+import { HelperInterestService } from '@corridra/auth/helper-interest';
 import {
   CustomerProgrammePublicationService,
   ProgrammePageReader,
@@ -635,6 +636,7 @@ function createServices() {
     problemReportsOffered: () => problemReportsOffered(runtimePool),
     staffProblemReports: new StaffProblemReports(runtimePool),
     staffProgrammeApplications: new StaffProgrammeApplications(runtimePool),
+    helperInterest: new HelperInterestService(runtimePool, config.AUTH_SECRET),
     customerAccountLifecycle: new CustomerAccountLifecycleService(
       runtimePool,
       authPool,
