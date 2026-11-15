@@ -229,12 +229,13 @@ type Seen = {
   urls: string[];
   /** Set by a test: every participants read from now on takes this long (a reload that can be acted on while it runs). */
   delayMs: number;
+  /** Set once the page was published or taken down: from then on the applications read has one more application in it. */
+  pageChanged: boolean;
   posts: { path: string; body: Record<string, unknown> }[];
 };
 async function open(page: Page, width: number, options: Options = {}) {
   const rows = options.rows ?? 3;
-  const seen: Seen = { gets: [], api: [], urls: [], delayMs: 0, posts: [] };
-  let participantReads = 0;
+  const seen: Seen = { gets: [], api: [], urls: [], delayMs: 0, pageChanged: false, posts: [] };
   let applicationFailures = 0;
   let invitesMade = 0;
   await page.route('**' + fixturePath + '*', (route) =>
@@ -270,7 +271,6 @@ async function open(page: Page, width: number, options: Options = {}) {
     const url = new URL(request.url());
     seen.gets.push('participants');
     seen.urls.push(url.pathname + url.search);
-    participantReads += 1;
     if (options.denyParticipants) return route.fulfill({ status: 403, json: {} });
     if (options.participants === 'fail') return route.fulfill({ status: 500, json: {} });
     if (options.participants === '503') return route.fulfill({ status: 503, json: {} });
@@ -305,6 +305,10 @@ async function open(page: Page, width: number, options: Options = {}) {
     if (request.method() === 'POST') {
       const body = request.postDataJSON() as Record<string, unknown>;
       seen.posts.push({ path: '/api/customer-programme-pages', body });
+      if (body.kind === 'page') {
+        seen.pageChanged = true;
+        return route.fulfill({ json: { version: 2, state: 'WITHDRAWN' } });
+      }
       const row = application(Number(String(body.applicationId).slice(-8)));
       const decision = String(body.decision);
       return route.fulfill({
@@ -327,6 +331,7 @@ async function open(page: Page, width: number, options: Options = {}) {
       const all = Array.from({ length: rows + (options.applicationPages ? 2 : 0) }, (_, i) =>
         application(i + 1),
       );
+      if (seen.pageChanged) all.unshift(application(9, { status: 'SUBMITTED' }));
       return route.fulfill({
         json: {
           applications: after ? all.slice(rows) : all.slice(0, rows),
@@ -617,6 +622,24 @@ for (const width of [390, 1440])
       });
       expect(order).toBe(true);
       await expect(board.getByText('Show 4 More', { exact: true })).toBeVisible();
+    });
+
+    test('taking the page down in the page panel reads the applications again, so the board list is current', async ({
+      page,
+    }) => {
+      const seen = await open(page, width, { rows: 3 });
+      await openPeople(page);
+      const reads = () =>
+        seen.api.filter((call) => call === 'GET /api/customer-programme-pages?view=applications');
+      await expect.poll(reads).toHaveLength(1);
+      await expect(page.getByText('Synthetic applicant 9')).toHaveCount(0);
+      page.once('dialog', (dialog) => void dialog.accept());
+      await page.getByRole('button', { name: 'Take the Page Down' }).click();
+      await expect.poll(reads).toHaveLength(2);
+      // The board keeps working while it reads: the new row arrives without a reload of the page.
+      await expect(page.locator('.people-board')).toContainText('Synthetic applicant 9');
+      // The same read as the first: no new route, and nothing else was read or written beyond the one page command.
+      expect(seen.posts.map((post) => post.body.action)).toEqual(['withdraw']);
     });
 
     test('the old queue is not repeated on the public page panel; the board holds it', async ({

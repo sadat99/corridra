@@ -304,6 +304,24 @@ describe('switch and wiring', () => {
     expect(entry?.line).not.toMatch(/[\u2014\u2013]/);
     expect(read('scripts/qa/signed-in-sweep.ts')).toContain(`'${name}'`);
   });
+  it('reads the applications again after the page panel publishes or takes the page down, with no new route', () => {
+    const panel = read('apps/web/app/account/delegations/programme-page.tsx');
+    // One signal after the page command succeeded, from publish and from take down, and nowhere else.
+    expect(panel.match(/onChanged\?\.\(\)/g)).toHaveLength(2);
+    const publish = panel.slice(
+      panel.indexOf('async function publish()'),
+      panel.indexOf('async function takeDown()'),
+    );
+    const takeDown = panel.slice(panel.indexOf('async function takeDown()'));
+    expect(publish).toContain('onChanged?.()');
+    expect(takeDown).toContain('onChanged?.()');
+    expect(read('apps/web/app/account/delegations/customer-programmes.tsx')).toContain(
+      'pageChanges={pageChanges[p.id] ?? 0}',
+    );
+    expect(read('apps/web/app/account/delegations/programme-people-board.tsx')).toContain(
+      'props.pageChanges',
+    );
+  });
   it('is read from the one switch where the page is rendered (the only wiring a browser test cannot reach)', () => {
     // The room-and-participants condition is proved in the browser (tests/ux/del-s3-people-board.spec.ts: the
     // switch alone shows nothing when either is off); this server page cannot be rendered here.

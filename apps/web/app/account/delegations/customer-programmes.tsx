@@ -137,6 +137,9 @@ function ScopedProgrammes({
   // ADR-084 S3: the board and the compact money view are the room's own, so they need the room and the participants.
   const board = boardEnabled && roomEnabled && participantsEnabled;
   const [selectedProgramme, setSelectedProgramme] = useState<string | null>(null);
+  // Per programme, how many times its public page was published or taken down in this visit. The people board reads its
+  // applications again when its programme's count grows (ADR-084 S3).
+  const [pageChanges, setPageChanges] = useState<Readonly<Record<string, number>>>({});
   // The programme the room shows, kept in ?programme= (read once; the list itself loads after the first render).
   // An old link to one programme's section (#<programme id>-<view>) still opens that programme (layout budget L-03).
   // Only a programme in this workspace's own list can be chosen; anything else shows the first one.
@@ -800,6 +803,9 @@ function ScopedProgrammes({
                             programmeId={p.id}
                             programmeName={p.name}
                             queueInBoard={board}
+                            onChanged={() =>
+                              setPageChanges((all) => ({ ...all, [p.id]: (all[p.id] ?? 0) + 1 }))
+                            }
                           />
                         </Suspense>
                       ) : null,
@@ -831,6 +837,7 @@ function ScopedProgrammes({
                           archived={p.archived === true}
                           boardEnabled={board}
                           applicationsOn={pagesEnabled && p.archived !== true}
+                          pageChanges={pageChanges[p.id] ?? 0}
                         />
                       </Suspense>
                     ) : null,

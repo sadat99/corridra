@@ -170,7 +170,7 @@ export function ProgrammePageView({
         {shareKit && !preview ? (
           // With the share kit on, the attribution link takes the place of the sentence about Corridra's tools, so the
           // paragraph is never longer than before.
-          <p>
+          <p className="programme-kit-sentence">
             {pp('pp.public.responsible.kitBefore', { organiser: p.organiser })}{' '}
             {shareKit.attribution}. {pp('pp.public.responsible.kitAfter')}
           </p>

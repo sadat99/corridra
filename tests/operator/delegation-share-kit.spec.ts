@@ -111,6 +111,7 @@ const open = async (page: Page, query: string) => {
 const share = (page: Page) => page.locator('.programme-public-share');
 
 const widths = [
+  ['narrow phone', 320, 640],
   ['phone', 390, 844],
   ['tablet', 768, 1024],
   ['desktop', 1440, 900],
@@ -151,7 +152,7 @@ for (const [name, width, tall] of widths) {
       page,
     }) => {
       await open(page, 'kit=1&days=1');
-      await expect(share(page).getByRole('button')).toHaveText(['Copy Link', 'More']);
+      await expect(share(page).getByRole('button')).toHaveText(['More', 'Copy Link']);
       const more = page.getByRole('button', { name: 'More ways to share' });
       await expect(more).toHaveAttribute('aria-expanded', 'false');
       await expect(page.getByRole('link', { name: 'Open Flyer' })).toBeHidden();
@@ -232,6 +233,18 @@ for (const [name, width, tall] of widths) {
           width <= 768 ? 44 : 24,
         );
       }
+      // No two actions reach into each other, the More button beside the heading included.
+      const boxes = await share(page)
+        .locator('a:visible, button:visible')
+        .evaluateAll((all) => all.map((element) => element.getBoundingClientRect().toJSON()));
+      for (const [i, one] of boxes.entries())
+        for (const other of boxes.slice(i + 1))
+          expect(
+            one.left < other.right &&
+              other.left < one.right &&
+              one.top < other.bottom &&
+              other.top < one.bottom,
+          ).toBe(false);
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
@@ -248,34 +261,78 @@ for (const [name, width, tall] of widths) {
   });
 }
 
-// The attribution is a link inside a sentence. It keeps a 44 px target on every line it covers without adding height: the
-// band is the link's own vertical padding, measured here by asking the browser which element is at each point of it.
+// The attribution is a link inside a sentence, so it is the inline-link exception of WCAG 2.5.8, not the 44 px control of
+// ui-direction row 10. Its target is its own line: at least 24 px tall on every line it covers, and never reaching the line
+// above or below (it used to be a 1 rem band that overlapped both and won their taps). Measured by asking the browser which
+// element is at each point of the target and just outside it.
 for (const width of [320, 390, 768, 1440])
-  test(`the attribution link is a 44 px target on every line it covers, at ${width}`, async ({
+  test(`the attribution link is a 24 px target on its own line, clear of the lines around it, at ${width}`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
     await open(page, 'kit=1&days=0');
     await page.locator('.programme-kit-attribution').scrollIntoViewIfNeeded();
-    const lines = await page.evaluate(() => {
+    const result = await page.evaluate(() => {
       const link = document.querySelector('.programme-kit-attribution')!;
-      return Array.from(link.getClientRects()).map((box) => {
-        const misses: string[] = [];
-        for (const x of [box.left + 2, box.left + box.width / 2, box.right - 2])
-          for (let y = box.top + 1; y < box.bottom; y += 2) {
-            const hit = document.elementFromPoint(x, y);
-            if (!hit || !(hit === link || link.contains(hit)))
-              misses.push(`${Math.round(x)},${Math.round(y)} ${hit?.tagName}`);
-          }
-        return { height: box.height, misses };
-      });
+      const sentence = link.closest('p')!;
+      const pitch = parseFloat(getComputedStyle(sentence).lineHeight);
+      const hit = (x: number, y: number) => {
+        const element = document.elementFromPoint(x, y);
+        return !!element && (element === link || link.contains(element));
+      };
+      const rects = Array.from(link.getClientRects());
+      return {
+        pitch,
+        lines: rects.map((box, index) => {
+          const x = box.left + box.width / 2;
+          const inside: string[] = [];
+          for (const px of [box.left + 2, x, box.right - 2])
+            for (let y = box.top + 1; y < box.bottom - 0.5; y += 2)
+              if (!hit(px, y)) inside.push(`${Math.round(px)},${Math.round(y)}`);
+          // Just outside the target on a line that has text above or below it: the tap belongs to the sentence.
+          const above = index > 0 || sentence.getBoundingClientRect().top < box.top - 2;
+          const below =
+            index < rects.length - 1 || sentence.getBoundingClientRect().bottom > box.bottom + 2;
+          return {
+            height: box.height,
+            inside,
+            outsideAbove: above ? hit(x, box.top - 3) : false,
+            outsideBelow: below ? hit(x, box.bottom + 3) : false,
+          };
+        }),
+      };
     });
-    expect(lines.length).toBeGreaterThan(0);
-    for (const line of lines) {
-      expect(line.height).toBeGreaterThanOrEqual(44);
-      expect(line.misses).toEqual([]);
+    expect(result.lines.length).toBeGreaterThan(0);
+    // One line of the sentence is never shorter than 24 px, so a target that fills it is a 24 px target.
+    expect(result.pitch).toBeGreaterThanOrEqual(24);
+    for (const line of result.lines) {
+      expect(line.height).toBeGreaterThanOrEqual(23.5);
+      expect(line.height).toBeLessThanOrEqual(result.pitch + 0.5);
+      expect(line.inside).toEqual([]);
+      expect(line.outsideAbove).toBe(false);
+      expect(line.outsideBelow).toBe(false);
     }
   });
+
+// The kit's button once wrapped onto a row of its own between about 510 and 610 px and made the page 56 px taller. Every width
+// from a small phone to a wide tablet, in steps that cannot step over a band like that one, with and without stated days.
+test('the page with the kit on is never taller than with it off at any width from 320 to 800 px', async ({
+  page,
+}) => {
+  test.setTimeout(240_000);
+  const taller: string[] = [];
+  for (let width = 320; width <= 800; width += 6) {
+    await page.setViewportSize({ width, height: 800 });
+    await open(page, 'kit=0');
+    const off = await height(page);
+    for (const days of ['0', '1']) {
+      await open(page, `kit=1&days=${days}`);
+      const on = await height(page);
+      if (on > off + 1) taller.push(`${width}px days=${days}: +${on - off}`);
+    }
+  }
+  expect(taller).toEqual([]);
+});
 
 test('the QR code on the flyer is a picture that scans back to the page address, and loads nothing', async ({
   page,
