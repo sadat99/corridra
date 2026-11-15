@@ -94,6 +94,7 @@ describe('with the lifecycle module installed', () => {
     expect(await flags('carol')).toEqual({ [quay]: true });
     expect(await flags('dave')).toEqual({ [separate]: false });
     expect(Object.keys(await flags('alice'))).not.toContain(separate);
+    expect(await flags('erin')).toEqual({ [quay]: true });
     await h.workspaces('alice').access({
       action: 'revoke',
       commandId: randomUUID(),

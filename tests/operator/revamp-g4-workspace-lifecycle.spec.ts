@@ -110,6 +110,8 @@ type Setup = {
   answer?: (sent: Sent) => { status: number; json: unknown } | undefined;
   /** The workspace list itself flags these workspaces as archived (the server flag). */
   listArchived?: string[];
+  /** Switches turned on for this test only, on top of the usual ones. */
+  props?: Record<string, unknown>;
 };
 const stateFor = (id: string, role: string, extra: Record<string, unknown> = {}) => ({
   open: true,
@@ -217,7 +219,9 @@ async function open(page: Page, setup: Setup = {}) {
       json: { workspaceId: id, operation: String(body.action), expiresAt: '2099-01-01T10:00:00Z' },
     });
   });
-  await page.goto(`${origin}/?props=${encodeURIComponent(JSON.stringify(on))}`);
+  await page.goto(
+    `${origin}/?props=${encodeURIComponent(JSON.stringify({ ...on, ...setup.props }))}`,
+  );
   await expect(
     page
       .getByRole('table', { name: 'Your workspaces' })
@@ -879,4 +883,21 @@ test('G4-22 with every workspace archived Active says so and Archived lists them
   await page.getByRole('radio', { name: /Archived/ }).check();
   await expect(page.locator('tbody tr')).toHaveCount(3);
   await expect(page.locator('tbody .ux-badge')).toHaveText(['Archived', 'Archived', 'Archived']);
+});
+
+test('G4-23 an archived workspace offers no Plan Delegations, while its owner keeps Manage Team', async ({
+  page,
+}) => {
+  await open(page, {
+    props: { programmesEnabled: true },
+    states: { [ids.own]: stateFor(ids.own, 'owner', { archived: true, version: 5 }) },
+  });
+  // An active workspace the person administers still plans delegations.
+  expect(await menuNames(page, 'Synthetic Chattogram Dyers')).toContain('Plan Delegations');
+  await page.keyboard.press('Escape');
+  await page.getByRole('radio', { name: /Archived/ }).check();
+  const items = await menuNames(page, owner);
+  expect(items).not.toContain('Plan Delegations');
+  expect(items).toContain('Manage Team');
+  expect(items).toContain('Restore Workspace');
 });

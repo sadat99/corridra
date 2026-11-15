@@ -473,6 +473,8 @@ export function CustomerWorkspaces({
                   // Archived, or its status could not be read: either way no new request is offered from here.
                   const closedToNew = archived || lifecycle.statusUnknown(row.id);
                   const admin = ['owner', 'admin'].includes(row.role);
+                  // Planning delegations starts new programme work, which an archived workspace refuses.
+                  const plansDelegations = programmesEnabled && admin && !closedToNew;
                   const start = closedToNew
                     ? null
                     : draftsEnabled
@@ -483,7 +485,7 @@ export function CustomerWorkspaces({
                   const hasMenu =
                     !!start ||
                     profilesEnabled ||
-                    (programmesEnabled && admin) ||
+                    plansDelegations ||
                     serviceRequestsEnabled ||
                     billingEnabled ||
                     row.role === 'owner' ||
@@ -533,7 +535,7 @@ export function CustomerWorkspaces({
                                 {admin ? 'Edit Company Profile' : 'View Company Profile'}
                               </MenuAnchor>
                             )}
-                            {programmesEnabled && admin && (
+                            {plansDelegations && (
                               <MenuAnchor href={'/account/delegations/' + row.id}>
                                 Plan Delegations
                               </MenuAnchor>
