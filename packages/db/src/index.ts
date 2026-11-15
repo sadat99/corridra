@@ -158,12 +158,22 @@ export async function rollback(db: DatabaseClient): Promise<Error | undefined> {
  * Best effort removal of rate limit rows more than two hours old (core migration 0030). Callers run it as its own statement, on the
  * pool and so in its own transaction, after their budget query and never inside one: a delete inside a budget transaction could
  * wait on a row another budget call is about to take (deadlock). The purge itself never waits (SKIP LOCKED). Every error is ignored
- * (for example before 0030 is installed), so it can never change a caller's answer, and nothing is logged.
+ * and nothing is logged, so it can never change a caller's answer.
+ * Before 0030 is installed the function does not exist (42883), and pg-pool discards a connection that returns any error, so
+ * calling it on every request would churn connections. On that one error the pool skips the purge for ten minutes, then tries again.
  */
-export async function purgeIntakeRateLimit(pool: Pick<Pool, 'query'>): Promise<void> {
+const purgeRetryAfter = new WeakMap<object, number>();
+export const purgeMissingBackoffMs = 10 * 60 * 1000;
+export async function purgeIntakeRateLimit(
+  pool: Pick<Pool, 'query'>,
+  now: () => number = Date.now,
+): Promise<void> {
+  if (now() < (purgeRetryAfter.get(pool) ?? 0)) return;
   try {
     await pool.query('SELECT app.intake_rate_limit_purge()');
-  } catch {
-    // Best effort only.
+    purgeRetryAfter.delete(pool);
+  } catch (error) {
+    if ((error as { code?: string }).code === '42883')
+      purgeRetryAfter.set(pool, now() + purgeMissingBackoffMs);
   }
 }
