@@ -478,36 +478,37 @@ export default function Page() {
                     deletion; it is separate from your application.
                   </p>
                 )}
-                {helperInterest && (
-                  <article id="helper-interest">
-                    <h2>Telling us you want to be a field helper</h2>
-                    <div>
-                      <p>
-                        If you are not invited yet, you can tell us you would like to become a
-                        Corridra field helper. This is only a note of interest. It is not an
-                        invitation, a job or a reward, it does not create an account and it does not
-                        put you on a list for work.
-                      </p>
-                      <p>
-                        You send your name, your email address, your country and a few words about
-                        why. Corridra stores exactly those four things and the time you sent them.
-                        It does not store your internet address, and it does not email you to
-                        confirm. Sending the same email address again changes nothing.
-                      </p>
-                      <p>
-                        Only owners and administrators of the Corridra team can read these entries.
-                        They use them to decide whom to invite, and an invitation is a separate step
-                        with its own checks. Corridra records that an entry was made and that it was
-                        deleted, but the record does not contain your name, email address or words.
-                      </p>
-                      <p>
-                        Entries are deleted automatically after 180 days. To have yours deleted
-                        sooner, write to the contact in <a href="#contact">Who is responsible</a>{' '}
-                        and give the email address you used; we delete it and record that we did.
-                      </p>
-                    </div>
-                  </article>
-                )}
+              </div>
+            </article>
+          )}
+          {helperInterest && (
+            <article id="helper-interest">
+              <h2>Telling us you want to be a field helper</h2>
+              <div>
+                <p>
+                  If you are not invited yet, you can tell us you would like to become a Corridra
+                  field helper. This is only a note of interest. It is not an invitation, a job or a
+                  reward, it does not create an account and it does not put you on a list for work.
+                </p>
+                <p>
+                  You send your name, your email address, your country and a few words about why.
+                  Corridra stores those four things and the time you sent them. It does not store
+                  your internet address, and it does not email you to confirm. Sending the same
+                  email address again changes nothing. To limit repeated sign-ups, Corridra also
+                  keeps a scrambled, one-way form of your email address. It cannot be turned back
+                  into the address, and it is not deleted when your entry is.
+                </p>
+                <p>
+                  Only owners and administrators of the Corridra team can read these entries. They
+                  use them to decide whom to invite, and an invitation is a separate step with its
+                  own checks. Corridra records that an entry was made and that it was deleted, but
+                  the record does not contain your name, email address or words.
+                </p>
+                <p>
+                  Entries are deleted automatically after 180 days. To have yours deleted sooner,
+                  write to the contact in <a href="#contact">Who is responsible</a> and give the
+                  email address you used; we delete it and record that we did.
+                </p>
               </div>
             </article>
           )}

@@ -76,7 +76,7 @@ export class HelperInterestService {
     private readonly secret: string,
   ) {}
 
-  // A key that identifies a client or an address without ever being one: keyed, one way, never stored with the person.
+  // A key that identifies an email address (or everyone) without ever being one: keyed, one way, never stored with the person.
   private key(kind: string, value: string) {
     return createHmac('sha256', this.secret)
       .update(`helper-interest:${kind}:${value}`)
@@ -96,13 +96,16 @@ export class HelperInterestService {
     }
   }
 
-  /** The per-client and global budget, spent before the body is read, so a flood is turned away early. */
-  async clientBudget(client: string) {
-    const r = await this.pool.query<{ client: boolean; every: boolean }>(
-      'SELECT app.intake_budget($1,6) AS client,app.intake_budget($2,60) AS every',
-      [this.key('ip', client), this.key('all', 'all')],
-    );
-    if (!r.rows[0]?.client || !r.rows[0]?.every) throw new DomainError(tooMany, 429);
+  /**
+   * The global budget (60 sign-ups an hour in all), spent before the body is read, so a flood is turned away early. There is no
+   * per-client key: no address of any client is read, hashed or kept (the owner control is that only a hashed email address and
+   * one global key are ever in the rate limit table).
+   */
+  async globalBudget() {
+    const r = await this.pool.query<{ ok: boolean }>('SELECT app.intake_budget($1,60) AS ok', [
+      this.key('all', 'all'),
+    ]);
+    if (!r.rows[0]?.ok) throw new DomainError(tooMany, 429);
   }
 
   /**

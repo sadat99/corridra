@@ -145,7 +145,7 @@ test('a program that fills the hidden field gets the same answer and nothing els
   for (let i = 0; i < 8 && limited === 0; i++) {
     const response = await page.request.post('/api/helper-interest', {
       headers: { Origin: origin },
-      data: { ...entry, email: `limit${i}@example.test`, website: '' },
+      data: { ...entry, email: 'limit.browser@example.test', website: '' },
     });
     if (response.status() === 429) limited = i + 1;
   }

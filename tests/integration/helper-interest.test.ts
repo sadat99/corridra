@@ -277,18 +277,21 @@ describe('retention', () => {
 });
 
 describe('limits and switches', () => {
-  test('the per-client budget answers 429 after its limit and the per-address budget does too', async () => {
+  test('the global budget answers 429 after 60 an hour, and the per-email budget after 6, with no client key', async () => {
     const limited = new HelperInterestService(s.f.runtime, 'rate-secret-one');
     let last: unknown;
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 61; i++) {
       try {
-        await limited.clientBudget('203.0.113.9');
+        await limited.globalBudget();
       } catch (error) {
         last = error;
       }
     }
     expect(last).toBeInstanceOf(DomainError);
     expect((last as DomainError).status).toBe(429);
+    // The service has no way to take a client address at all.
+    expect(limited.globalBudget.length).toBe(0);
+    expect((limited as unknown as Record<string, unknown>).clientBudget).toBeUndefined();
     const perAddress = new HelperInterestService(s.f.runtime, 'rate-secret-two');
     let status = 0;
     for (let i = 0; i < 8; i++) {

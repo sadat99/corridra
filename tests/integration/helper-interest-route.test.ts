@@ -3,11 +3,29 @@ import { fixture } from './support';
 import { HelperInterestService } from '../../packages/auth/src/helper-interest';
 import { POST } from '../../apps/web/app/api/helper-interest/route';
 
-// The route reads its services through foundations(); a build without a database has none.
-vi.mock('../../apps/web/lib/foundations', () => ({ foundations: () => null }));
-
-// ADR-085. The public route answers 404, as if it did not exist, unless both switches are "true" and the module is
-// installed and open. Each case fails on a build without the route.
+// The route reads its services through foundations(). Here they are a working stub, so a 404 can only come from the
+// switches themselves: with the stub the request would be answered 202. Remove the switch check from the route and the
+// switch cases below fail. `services` is null for the case of a build without a database.
+const calls: string[] = [];
+let services: unknown = null;
+vi.mock('../../apps/web/lib/foundations', () => ({ foundations: () => services }));
+const working = () => ({
+  ready: Promise.resolve(),
+  config: { APP_ORIGIN: 'http://localhost' },
+  helperInterest: {
+    offered: async () => {
+      calls.push('offered');
+      return true;
+    },
+    globalBudget: async () => {
+      calls.push('globalBudget');
+    },
+    submit: async () => {
+      calls.push('submit');
+      return { received: true };
+    },
+  },
+});
 const request = () =>
   new Request('http://localhost/api/helper-interest', {
     method: 'POST',
@@ -23,7 +41,18 @@ const request = () =>
 afterEach(() => vi.unstubAllEnvs());
 
 describe('the public route', () => {
-  test('answers 404 with everything off, with only one switch on, and with the Network switch off', async () => {
+  test('answers 202 with both switches on and a working service, so the 404s below are the switches', async () => {
+    services = working();
+    calls.length = 0;
+    vi.stubEnv('CORRIDRA_HELPER_INTEREST', 'true');
+    vi.stubEnv('CORRIDRA_NETWORK_ENABLED', 'true');
+    const response = await POST(request());
+    expect(response.status).toBe(202);
+    expect(await response.json()).toEqual({ received: true });
+    expect(calls).toEqual(['offered', 'globalBudget', 'submit']);
+  });
+
+  test('answers 404 and touches nothing with everything off, one switch only, Network off, "TRUE" and "1"', async () => {
     for (const env of [
       {},
       { CORRIDRA_HELPER_INTEREST: 'true' },
@@ -32,20 +61,35 @@ describe('the public route', () => {
       { CORRIDRA_HELPER_INTEREST: 'TRUE', CORRIDRA_NETWORK_ENABLED: 'true' },
       { CORRIDRA_HELPER_INTEREST: '1', CORRIDRA_NETWORK_ENABLED: 'true' },
     ]) {
+      services = working();
+      calls.length = 0;
       vi.unstubAllEnvs();
       vi.stubEnv('CORRIDRA_HELPER_INTEREST', '');
       vi.stubEnv('CORRIDRA_NETWORK_ENABLED', '');
       for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value);
       const response = await POST(request());
-      expect(response.status).toBe(404);
+      expect(response.status, JSON.stringify(env)).toBe(404);
       expect(await response.json()).toEqual({ error: 'Not found' });
+      expect(calls).toEqual([]);
     }
   });
 
   test('answers 404 with both switches on when the application has no database', async () => {
+    services = null;
     vi.stubEnv('CORRIDRA_HELPER_INTEREST', 'true');
     vi.stubEnv('CORRIDRA_NETWORK_ENABLED', 'true');
     expect((await POST(request())).status).toBe(404);
+  });
+
+  test('answers 404 with both switches on when the register is not open, before any budget is spent', async () => {
+    const closed = working();
+    closed.helperInterest.offered = async () => false;
+    services = closed;
+    calls.length = 0;
+    vi.stubEnv('CORRIDRA_HELPER_INTEREST', 'true');
+    vi.stubEnv('CORRIDRA_NETWORK_ENABLED', 'true');
+    expect((await POST(request())).status).toBe(404);
+    expect(calls).toEqual([]);
   });
 });
 

@@ -44,12 +44,8 @@ export async function POST(request: Request) {
     if (!request.headers.get('content-type')?.startsWith('application/json'))
       throw new DomainError('JSON required', 415);
     if (!(await s.helperInterest.offered())) return notFound();
-    // Vercel overwrites x-vercel-forwarded-for. Do not trust a caller-selected X-Forwarded-For. The address is only
-    // ever used as a keyed one-way hash for the budget and is never stored.
-    const client = process.env.VERCEL
-      ? (request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown')
-      : 'local';
-    await s.helperInterest.clientBudget(client);
+    // No client address is read, hashed or stored: the budget is one global key and one hashed email key.
+    await s.helperInterest.globalBudget();
     const input: unknown = JSON.parse((await boundedBody(request, 4096)).toString('utf8'));
     await s.helperInterest.submit(input);
     return Response.json({ received: true }, { status: 202, headers: deliveryHeaders });
