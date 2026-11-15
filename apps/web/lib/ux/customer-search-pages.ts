@@ -17,6 +17,7 @@ import {
   type MenuEntry,
 } from './customer-navigation';
 import type { CustomerScopeId } from './customer-search-status';
+import { activeWorkspaces } from '../workspace-choice';
 
 export type PageEntry = {
   /** Stable key: `page:<label>` (two pages may share an address, as New Request and Manage Workspaces do). */
@@ -52,13 +53,14 @@ export function customerSearchPages(
   from: string = '/account',
 ): PageEntry[] {
   const hasWorkspace = input.workspaces.length > 0;
+  const canStart = activeWorkspaces(input.workspaces).length > 0;
   const help = customerHelpGroups(
     null,
     input.problemReports ? reportProblemHref(customerProblemReportsPath, from) : null,
   );
   const all = [
     ...customerTabs(input).map((tab) => entry(tab.label, 'Main navigation', tab.href, tab.key)),
-    entry('New Request', 'Starts a new Request', newRequestHref(hasWorkspace)),
+    entry('New Request', 'Starts a new Request', newRequestHref(canStart)),
     ...(hasWorkspace ? [entry('Manage Workspaces', 'Account menu', manageWorkspacesHref)] : []),
     ...links(customerAvatarItems(input), 'Account menu'),
     ...help.flatMap((group) => links(group.items, 'Help menu')),

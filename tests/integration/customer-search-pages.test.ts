@@ -105,6 +105,18 @@ describe('P3 the pages are the shell pages and nothing more', () => {
       '/account?view=work#customer-workspaces',
     );
   });
+  test('with every workspace archived New Request goes to the plan page and Manage Workspaces stays', () => {
+    const archived = { ...everything, workspaces: [{ ...workspace, archived: true }] };
+    const pages = customerSearchPages({ ...archived, currentWorkspaceId: undefined });
+    expect(pages.find((p) => p.label === 'New Request')?.href).toBe('/plan');
+    expect(pages.find((p) => p.label === 'Manage Workspaces')?.href).toBe(
+      '/account?view=work#customer-workspaces',
+    );
+    const active = customerSearchPages({ ...everything, currentWorkspaceId: undefined });
+    expect(active.find((p) => p.label === 'New Request')?.href).toBe(
+      '/account?view=work#customer-workspaces',
+    );
+  });
   test('the Report a Problem form carries the page the person is on', () => {
     const page = customerSearchPages(everything, '/account/companies').find(
       (p) => p.label === 'Report a Problem',

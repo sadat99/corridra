@@ -8,6 +8,7 @@
 // one row that can be either: a "soon" row until the owner sets a support number, then an "external" link.
 
 import type { MessageKey } from '../i18n/messages';
+import { activeWorkspaces } from '../workspace-choice';
 
 export type CustomerTabKey = 'home' | 'requests' | 'companies' | 'meetings' | 'reports';
 export type CustomerTab = {
@@ -38,7 +39,7 @@ export type MenuEntry =
   | { kind: 'signout'; label: string };
 export type HelpGroup = { label: string; items: MenuEntry[] };
 
-export type CustomerWorkspace = { id: string; name: string };
+export type CustomerWorkspace = { id: string; name: string; archived?: boolean };
 export type CustomerNavigationInput = {
   /** True where the approved-companies module is on. */
   companies: boolean;
@@ -220,10 +221,12 @@ export function customerAvatarItems(
 ): MenuEntry[] {
   // With its module off the profile page only says the profile is unavailable, so the entry is plain Coming soon.
   // With the module on it is always a link: to the chosen workspace's profile, or else to the chooser, which lists
-  // the person's workspaces (or says there are none) and opens the only one directly.
+  // the person's workspaces (or says there are none) and opens the only one directly. An archived workspace is
+  // chosen only when the page belongs to it; otherwise only an active one is opened directly.
+  const active = activeWorkspaces(input.workspaces);
   const profile =
     input.workspaces.find((w) => w.id === input.currentWorkspaceId) ??
-    (input.workspaces.length === 1 ? input.workspaces[0] : undefined);
+    (active.length === 1 ? active[0] : undefined);
   return [
     { kind: 'link', label: 'Account', href: '/account?view=more' },
     input.organisationProfiles
@@ -312,7 +315,7 @@ export function customerNavigation(input: CustomerNavigationInput) {
     ...tabs.map((tab) => tab.href),
     ...journeys.map((link) => link.href),
     ...groups.map((link) => link.href),
-    newRequestHref(input.workspaces.length > 0),
+    newRequestHref(activeWorkspaces(input.workspaces).length > 0),
     manageWorkspacesHref,
     // With the profiles module on, the chooser and each workspace's profile (the avatar's workspace rows).
     ...(input.organisationProfiles

@@ -11,7 +11,7 @@ import { localeMeta } from '../../lib/i18n/locales';
 import { NotificationInbox } from './notification-inbox';
 import { MenuRadio } from './overflow-menu';
 
-export type Workspace = { id: string; name: string };
+export type Workspace = { id: string; name: string; archived: boolean };
 type Item = { readAt: string | null };
 
 /** Read only on the customer account pages, where New request and the switcher need them. */
@@ -22,11 +22,15 @@ export function useWorkspaces(active: boolean) {
     const controller = new AbortController();
     fetch('/api/customer-workspaces', { cache: 'no-store', signal: controller.signal })
       .then((r) => (r.ok ? r.json() : null))
-      .then((body: { workspaces?: Workspace[] } | null) => {
+      .then((body: { workspaces?: Partial<Workspace>[] } | null) => {
         if (controller.signal.aborted) return;
         setList(
           Array.isArray(body?.workspaces)
-            ? body.workspaces.filter((w) => typeof w.id === 'string' && typeof w.name === 'string')
+            ? body.workspaces.flatMap((w) =>
+                typeof w.id === 'string' && typeof w.name === 'string'
+                  ? [{ id: w.id, name: w.name, archived: w.archived === true }]
+                  : [],
+              )
             : null,
         );
       })

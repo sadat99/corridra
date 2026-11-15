@@ -22,13 +22,17 @@ import { CorridraIcon } from '../corridra-icon';
 import { OperatorIcon } from '../operator-icon';
 import { customerGroupHere, newRequestHref } from '../../lib/ux/customer-navigation';
 import { useWorkspaces } from './customer-bar';
+import { activeWorkspaces } from '../../lib/workspace-choice';
 import {
   journeyCountText,
   journeyCountWords,
   type JourneyCounts,
 } from '../../lib/work-items/journey-counts';
 
-/** New Request: a person with a workspace goes to where requests are made, otherwise to the plan page. */
+/**
+ * New Request: a person with a workspace that is not archived goes to where requests are made, otherwise to the plan
+ * page.
+ */
 export function NewRequestLink({ className = 'ux-rail-new' }: { className?: string }) {
   const pathname = usePathname() ?? '';
   const workspaces = useWorkspaces(pathname.startsWith('/account'));
@@ -36,7 +40,7 @@ export function NewRequestLink({ className = 'ux-rail-new' }: { className?: stri
     <Link
       prefetch={false}
       className={className}
-      href={newRequestHref(!!workspaces && workspaces.length > 0)}
+      href={newRequestHref(!!workspaces && activeWorkspaces(workspaces).length > 0)}
     >
       <CorridraIcon name="draft" className="ux-rail-new-icon" />
       <span>New Request</span>
