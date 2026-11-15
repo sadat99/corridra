@@ -146,6 +146,14 @@ export async function reauthorize(tx: TenantTransaction, permission: Permission)
  * Ends a failed transaction. A failed ROLLBACK leaves the connection in an unknown state, so its error is returned
  * for release() to discard the connection, and the caller still reports the error that started the rollback.
  */
+export async function rollback(db: DatabaseClient): Promise<Error | undefined> {
+  try {
+    await db.query('ROLLBACK');
+    return undefined;
+  } catch (error) {
+    return error instanceof Error ? error : new Error('Rollback failed');
+  }
+}
 /**
  * Best effort removal of rate limit rows more than two hours old (core migration 0030). Callers run it as its own statement, on the
  * pool and so in its own transaction, after their budget query and never inside one: a delete inside a budget transaction could
@@ -157,13 +165,5 @@ export async function purgeIntakeRateLimit(pool: Pick<Pool, 'query'>): Promise<v
     await pool.query('SELECT app.intake_rate_limit_purge()');
   } catch {
     // Best effort only.
-  }
-}
-export async function rollback(db: DatabaseClient): Promise<Error | undefined> {
-  try {
-    await db.query('ROLLBACK');
-    return undefined;
-  } catch (error) {
-    return error instanceof Error ? error : new Error('Rollback failed');
   }
 }

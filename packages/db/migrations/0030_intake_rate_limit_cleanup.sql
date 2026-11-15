@@ -1,6 +1,6 @@
--- Rate limit keys no longer outlive their use. 15 November 2026, follow-up to ADR-085 (owner direction relayed by Orchestrator 12:
--- "u update the privacy section to best extent and approve by yourself"; the hashed email key kept for the helper interest form
--- must not be kept).
+-- Rate limit keys no longer outlive their use. 15 November 2026, follow-up to ADR-085. The owner delegated the choice about the
+-- hashed email key kept for the helper interest form ("i can approved the best option", as written) and the privacy wording
+-- ("u upadte the privacy section to best extent and approve by yourself"); Orchestrator 12 chose deletion.
 --
 -- app.intake_rate_limit holds one counter per keyed hash per hour. Two functions write it, app.intake_budget (0007: mission intake,
 -- buyer replies, delivery, helper interest) and customer.real_request_budget (real-use module, real mode intake). Neither ever

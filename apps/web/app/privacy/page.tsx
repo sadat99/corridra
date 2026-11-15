@@ -514,8 +514,8 @@ export default function Page() {
                   ordinary technical logs. To stop one person filling in the form again and again,
                   Corridra keeps a scrambled, one-way form of your email address. It cannot be
                   turned back into your address and it is used for nothing else. It is removed
-                  automatically after about two hours, the next time one of our public forms is used
-                  after that.
+                  automatically after about two hours, the next time someone sends one of our
+                  request, reply, delivery or helper forms after that.
                 </p>
                 <p>
                   Entries are deleted after 180 days. From then on our team can no longer see an

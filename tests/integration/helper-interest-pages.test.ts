@@ -95,7 +95,9 @@ describe('the privacy notice section', () => {
     expect(text).toContain('cannot be turned back into your address');
     expect(text).toContain('used for nothing else');
     expect(text).toContain('removed automatically after about two hours');
-    expect(text).toContain('the next time one of our public forms is used after that');
+    expect(text).toContain(
+      'the next time someone sends one of our request, reply, delivery or helper forms after that',
+    );
     // The old wording, which said the hash was kept for good, is gone.
     expect(text).not.toContain('not deleted when your entry is');
   });
