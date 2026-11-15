@@ -351,7 +351,7 @@ test('the public page with the kit on: one closed More button, a calendar link o
   expect(markup).not.toMatch(/<img|programme-qr|Show QR Code/);
   // The attribution is a link inside the sentence about who is responsible, which it shortens instead of lengthening.
   expect(markup).toMatch(
-    /<p>Synthetic Dhaka Agro Traders Association runs this programme[^<]*stated by the organiser\. <a class="programme-kit-attribution" href="\/trade-missions#organise-entry-title">Page made with Corridra Programmes<\/a>\. Corridra is not the travel operator and has not checked these details\.<\/p>/,
+    /<p class="programme-kit-sentence">Synthetic Dhaka Agro Traders Association runs this programme[^<]*stated by the organiser\. <a class="programme-kit-attribution" href="\/trade-missions#organise-entry-title">Page made with Corridra Programmes<\/a>\. Corridra is not the travel operator and has not checked these details\.<\/p>/,
   );
   expect(markup).not.toContain('Corridra provides the tools the organiser uses');
   // The three existing actions are unchanged.
