@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  isContributorReturn,
   operatorReturnTo,
   operatorSignInPage,
   operatorSignInPath,
@@ -31,6 +32,78 @@ describe('protected tool return destinations', () => {
       '/operator\\example.invalid',
     ]) {
       expect(operatorReturnTo(next)).toBe('/operator');
+    }
+  });
+});
+
+describe('the helper return list', () => {
+  const workspace = '12345678-abcd-1234-abcd-123456789abc';
+  it('keeps the bare task page and the task page of one workspace, as exact strings', () => {
+    expect(operatorReturnTo('/contributor')).toBe('/contributor');
+    expect(operatorReturnTo('/contributor?workspace=' + workspace)).toBe(
+      '/contributor?workspace=' + workspace,
+    );
+  });
+  it('falls back to /operator for anything that only looks like it', () => {
+    for (const next of [
+      '/contributor/',
+      '/contributor/signin',
+      '/contributor/setup',
+      '/contributor?x',
+      '/contributor?evil',
+      '/contributor?workspace=',
+      '/contributor?workspace=' + workspace + '&next=//evil',
+      '/contributor#x',
+      '/contributor?workspace=' + workspace + '#x',
+      '/Contributor',
+      ' /contributor',
+      '/contributor ',
+      '/contributor\\evil',
+      '/contributor\n',
+      '/contributor%2F',
+      '/contributor%2f..%2foperator',
+      '%2Fcontributor',
+      '/%63ontributor',
+      '/contributor/..',
+      '/contributor/../operator',
+      '/contributor/%2e%2e/operator',
+      '//evil',
+      '//contributor',
+      'https://evil',
+      'https://evil/contributor',
+      'javascript:alert(1)',
+      '..',
+      '/..',
+      '/../contributor',
+      '',
+    ]) {
+      expect(operatorReturnTo(next), JSON.stringify(next)).toBe('/operator');
+    }
+    expect(operatorReturnTo(undefined)).toBe('/operator');
+    expect(operatorReturnTo('/contributor' + 'x'.repeat(240))).toBe('/operator');
+  });
+  it('chooses wording only: a look-alike gets helper words but never a helper destination', () => {
+    expect(isContributorReturn('/contributor')).toBe(true);
+    expect(isContributorReturn('/contributor?workspace=' + workspace)).toBe(true);
+    expect(isContributorReturn('/contributor?evil')).toBe(true);
+    expect(operatorReturnTo('/contributor?evil')).toBe('/operator');
+    expect(isContributorReturn('/operator')).toBe(false);
+    expect(isContributorReturn('/contributors')).toBe(false);
+    expect(isContributorReturn('/contributor/signin')).toBe(false);
+    expect(isContributorReturn('')).toBe(false);
+  });
+  it('is never produced by the staff sign-in address builder', () => {
+    for (const [workspaceId, section] of [
+      ['', ''],
+      [workspace, ''],
+      [workspace, 'workspace-sources'],
+      ['/contributor', ''],
+    ] as const) {
+      const next = new URL(
+        operatorSignInPath(workspaceId, section),
+        'http://corridra.invalid',
+      ).searchParams.get('next');
+      expect(next === null || next.startsWith('/operator')).toBe(true);
     }
   });
 });

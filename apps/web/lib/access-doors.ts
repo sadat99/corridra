@@ -6,6 +6,8 @@
  * This is separate from `front-doors.ts` (the founder and helper cards), which is unchanged.
  * Words are English only for now and are not part of the translation catalogues.
  */
+import { isContributorReturn } from './workspace-navigation';
+
 export type AccessDoorId = 'customer' | 'team' | 'link';
 
 export type AccessRole = { id: string; label: string };
@@ -209,7 +211,11 @@ export const teamDoorPage = {
       icon: 'network' as AccessIconName,
       title: 'Field helper',
       text: 'You were invited to do local tasks for the Corridra Network.',
-      action: { text: 'Open Helper Tasks', href: '/contributor' } as AccessAction,
+      action: {
+        text: 'Open Helper Tasks',
+        href: '/contributor/signin',
+        plainAnchor: true,
+      } as AccessAction,
       actionKind: 'secondary' as const,
       textLink: { text: 'Accept an Invitation', href: '/contributor/setup' } as AccessAction,
     },
@@ -341,7 +347,7 @@ export const accessHelp = {
   }),
   /** Under the operator sign-in form. A contributor return address points the first link at contributor setup. */
   operatorSignIn: (returnTo: string): AccessHelp => {
-    const contributor = returnTo.startsWith('/contributor?');
+    const contributor = isContributorReturn(returnTo);
     return {
       label: 'Sign-in alternatives',
       links: [

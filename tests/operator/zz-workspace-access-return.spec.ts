@@ -658,3 +658,98 @@ test('signing out is a full page load and the next sign-in opens the overview, n
     await clearSignInLimits(local.ownerPassword);
   }
 });
+
+test('helper sign-in uses helper words and its return lands on the task page, never the staff workspace', async ({
+  page,
+  context,
+}) => {
+  test.setTimeout(300000);
+  const seed = JSON.parse(await readFile('.cache/part03-browser.json', 'utf8'));
+  const { secret } = JSON.parse(await readFile('.cache/part06-browser-authenticator.json', 'utf8'));
+  const local = JSON.parse(await readFile('.cache/part03-local.json', 'utf8'));
+  const main = page.getByRole('main');
+  const code = page.getByLabel('Six-digit code', { exact: true });
+  let usedCounter = 0;
+  async function signInThrough(path: string, landed: string, ready: Locator) {
+    await page.goto('about:blank');
+    await page.goto(path);
+    await expect(page.getByLabel('Email', { exact: true })).toBeVisible();
+    await clearSignInLimits(local.ownerPassword);
+    await page.getByLabel('Email', { exact: true }).fill('browser@example.invalid');
+    await page.getByLabel('Password', { exact: true }).fill(seed.password);
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+    await expect(code).toBeVisible();
+    // A code is used once per window: wait past the window used last.
+    await expect
+      .poll(() => Math.floor(Date.now() / 30000), { timeout: 35000, intervals: [500] })
+      .toBeGreaterThan(usedCounter);
+    await code.fill(totp(secret));
+    usedCounter = Math.floor(Date.now() / 30000);
+    await markPage(page);
+    await page.getByRole('button', { name: 'Verify and Open Workspace' }).click();
+    await expect(page).toHaveURL(origin + landed);
+    await expectNewDocument(page, ready);
+  }
+  await clearSignInLimits(local.ownerPassword);
+  try {
+    await test.step('the page shows helper words and only the work account fields', async () => {
+      await page.goto('/contributor/signin');
+      await expect(
+        page.getByRole('heading', { name: 'Sign in to your assigned tasks.', exact: true }),
+      ).toBeVisible();
+      await expect(page.getByRole('form', { name: 'Contributor sign-in' })).toBeVisible();
+      await expect(
+        page.getByRole('heading', { name: 'Use your contributor work account' }),
+      ).toBeVisible();
+      await expect(main.getByLabel('Email', { exact: true })).toBeVisible();
+      await expect(main.getByLabel('Password', { exact: true })).toBeVisible();
+      await expect(main.locator('input')).toHaveCount(2);
+      await expect(main.getByRole('link', { name: 'Forgot your work password?' })).toHaveAttribute(
+        'href',
+        '/operator/forgot-password',
+      );
+      await expect(main).toContainText('Your customer account does not grant');
+      await expect(main).not.toContainText(/operator account|OPERATOR ACCESS/);
+      await expect(
+        main.getByRole('link', { name: 'Set up invited contributor access' }),
+      ).toHaveAttribute('href', '/contributor/setup');
+      expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    });
+
+    await test.step('its return lands on /contributor, also when asked for a staff return', async () => {
+      await page.waitForTimeout(30000 - (Date.now() % 30000) + 1000);
+      await signInThrough(
+        '/contributor/signin?next=' + encodeURIComponent('/operator#ops-center'),
+        '/contributor',
+        page.getByRole('heading', { name: 'Your assigned tasks.' }),
+      );
+      expect(new URL(page.url()).hash).toBe('');
+    });
+
+    await test.step('operator sign-in with next=/contributor now returns to /contributor with helper words', async () => {
+      await context.clearCookies();
+      await page.goto('about:blank');
+      await page.goto('/operator/signin?next=' + encodeURIComponent('/contributor'));
+      await expect(page.getByRole('form', { name: 'Contributor sign-in' })).toBeVisible();
+      await signInThrough(
+        '/operator/signin?next=' + encodeURIComponent('/contributor'),
+        '/contributor',
+        page.getByRole('heading', { name: 'Your assigned tasks.' }),
+      );
+    });
+
+    await test.step('a look-alike return is dropped before the page: staff words and the staff workspace', async () => {
+      await context.clearCookies();
+      await page.goto('/operator/signin?next=' + encodeURIComponent('/contributor?evil'));
+      await expect(page.getByRole('form', { name: 'Operator sign-in' })).toBeVisible();
+      await signInThrough(
+        '/operator/signin?next=' + encodeURIComponent('/contributor?evil'),
+        '/operator',
+        page.getByRole('heading', { name: 'Your workspace.', exact: true }),
+      );
+    });
+  } finally {
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
+    await clearSignInLimits(local.ownerPassword);
+  }
+});
