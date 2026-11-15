@@ -42,6 +42,8 @@ type Props = {
   programmeId: string;
   /** True where the programme has a public page panel to read applications from. */
   applicationsOn: boolean;
+  /** Counts the changes made in the public page panel (published, taken down). A new value reads the applications again. */
+  pageChanges?: number;
   /** The state of the participants read the room hands in. Invitations and registrations are only as read. */
   people: ReadState;
   /** True while the participants list is read again after a command; the rows already read stay. */
@@ -114,6 +116,17 @@ export function ProgrammePeopleBoard(props: Props) {
     // The read starts after this effect returns; state changes only when it settles.
     void Promise.resolve().then(() => load());
   }, [applicationsOn, load]);
+
+  // Publishing or taking down the page changes what can be applied for, so the list is read again when the page panel says
+  // it changed. It is the same read as the first one: no new route, and rows already read stay if the read fails.
+  const seenPageChanges = useRef(props.pageChanges ?? 0);
+  useEffect(() => {
+    const changes = props.pageChanges ?? 0;
+    if (changes === seenPageChanges.current) return;
+    seenPageChanges.current = changes;
+    // The read starts after this effect returns; state changes only when it settles.
+    if (applicationsOn) void Promise.resolve().then(() => load());
+  }, [props.pageChanges, applicationsOn, load]);
 
   async function decide(item: Application, decision: Decision) {
     if (writing.current) return;

@@ -32,6 +32,8 @@ type Props = {
   programmeName: string;
   /** ADR-084 S3: the people board shows the applications, so this panel does not repeat them. */
   queueInBoard?: boolean;
+  /** Called once after the page was published or taken down, so a list built from the page's applications can read again. */
+  onChanged?: () => void;
 };
 // What the organiser types. Lists are typed one item per line; the planned programme marks each line.
 export type Draft = {
@@ -288,6 +290,7 @@ function ScopedPage({
   programmeId,
   programmeName,
   queueInBoard,
+  onChanged,
 }: Props) {
   const headers = customerHeaders(subject, issuer);
   const headersRef = useRef(headers);
@@ -472,6 +475,7 @@ function ScopedPage({
     }
     setDraft(null);
     setNotice(daysSaved ? pp('pp.org.published') : pp('pp.edit.schedule.failed'));
+    onChanged?.();
     await read();
   }
   async function takeDown() {
@@ -496,6 +500,7 @@ function ScopedPage({
     if (!result.ok) return setError(result.message);
     commands.clear();
     setNotice(pp('pp.org.takenDown'));
+    onChanged?.();
     await read();
   }
   async function decide(item: Application, decision: Decision) {
