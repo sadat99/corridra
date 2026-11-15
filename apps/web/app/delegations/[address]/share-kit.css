@@ -7,16 +7,45 @@
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
 }
-/* The attribution sits inside a sentence and adds no height. Its touch area is at least 44 px tall on every line the link
-   covers: vertical padding on an inline link is part of its box, so it is hit-tested and follows the link when it wraps,
-   and, unlike a block's, it never changes the height of the line. The link is positioned so that its band, which overlaps
-   the lines above and below, wins the tap over the sentence around it. Measured with elementFromPoint at 320, 390, 768 and
-   1440 px in tests/operator/delegation-share-kit.spec.ts. */
+/* The attribution is one quiet link on a line of its own under the sentence about who is responsible (UI/UX.v3 row 10: a 44 px
+   target up to 768 px). Being a row of its own, its target never reaches the text above it. It starts at the left and is only as
+   wide as its words, so it is no wider than a link needs to be; the 44 px is its height. */
 .programme-kit-attribution {
-  position: relative;
-  padding-block: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  min-height: 2.75rem;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+/* The kit's one closed button sits at the end of the share heading's line, drawn like the actions in the row below it, and takes
+   no room of its own: it is placed out of the flow and centred on the heading, so the section is exactly as tall as before
+   whatever the width or the font. The heading leaves room for it. The 44 px button reaches about 9 px above and below the
+   heading line, into the 12 px gaps around it, so it stays clear of every other target. It is a header and not a div on
+   purpose: the phone rule for a lone button directly inside a section or div would stretch it over the whole line. */
+.programme-share-head {
+  position: relative;
+}
+.programme-share-head h2 {
+  padding-inline-end: 5.5rem;
+}
+.programme-share-head .text-link {
+  position: absolute;
+  inset-inline-end: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 var(--space-4);
+  text-decoration: none;
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--guided-control-radius);
+}
+.programme-share-head .text-link:hover {
+  background: var(--surface-2);
+  border-color: var(--brand);
 }
 /* The kit's actions stay out of the page until the person opens them. A flex row would otherwise override `hidden`. */
 .programme-public-share [hidden] {

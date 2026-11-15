@@ -130,6 +130,13 @@ describe('the starter is a switch, off by default, and adds no server surface', 
     expect(entry?.line).not.toMatch(/[—–]/);
   });
 
+  it('is in the signed-in sweep, like every other delegation switch, so the starter is swept with the switch on', () => {
+    const sweep = read('scripts/qa/signed-in-sweep.ts');
+    expect(sweep).toContain(`'${switchName}'`);
+    for (const name of uxSwitchNames.filter((n) => n.startsWith('CORRIDRA_DELEGATION_')))
+      expect(sweep, name).toContain(`'${name}'`);
+  });
+
   it('is passed down as one prop from the page and acts only where programme templates are on', () => {
     expect(page).toContain(`buyingTripEnabled={uxSwitchOn('${switchName}')}`);
     expect(list).toContain('buyingTripEnabled = false');

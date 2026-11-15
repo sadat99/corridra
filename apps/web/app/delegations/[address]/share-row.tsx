@@ -32,7 +32,26 @@ export function ShareRow({ url, title, kit }: { url: string; title: string; kit?
         }
       }}
     >
-      <h2 id="programme-share-title">{pp('pp.share.title')}</h2>
+      {kit ? (
+        // The kit's one closed button sits beside the heading, not as a fourth action in the row: a fourth action wraps
+        // onto a line of its own between about 510 and 610 px and made the page 56 px taller. Here it never does.
+        <header className="programme-share-head">
+          <h2 id="programme-share-title">{pp('pp.share.title')}</h2>
+          <button
+            ref={moreButton}
+            type="button"
+            className="text-link"
+            aria-label={pp('pp.kit.moreLabel')}
+            aria-expanded={showMore}
+            aria-controls="programme-share-more"
+            onClick={() => setShowMore((open) => !open)}
+          >
+            {pp('pp.kit.more')}
+          </button>
+        </header>
+      ) : (
+        <h2 id="programme-share-title">{pp('pp.share.title')}</h2>
+      )}
       <div className="guide-actions-row">
         <button type="button" className="text-link" onClick={() => void copy()}>
           {pp('pp.share.copy')}
@@ -53,19 +72,6 @@ export function ShareRow({ url, title, kit }: { url: string; title: string; kit?
         >
           {pp('pp.share.facebook')}
         </a>
-        {kit && (
-          <button
-            ref={moreButton}
-            type="button"
-            className="text-link"
-            aria-label={pp('pp.kit.moreLabel')}
-            aria-expanded={showMore}
-            aria-controls="programme-share-more"
-            onClick={() => setShowMore((open) => !open)}
-          >
-            {pp('pp.kit.more')}
-          </button>
-        )}
       </div>
       {kit && (
         <div id="programme-share-more" className="guide-actions-row" hidden={!showMore}>

@@ -3,12 +3,13 @@ import Link from 'next/link';
 import { pp } from '../../../lib/i18n/programme-pages';
 import './share-kit.css';
 
-/** The pieces of the share kit, drawn by the server and placed by the page. They add no height to the page as it first
- * shows: the actions wait behind one closed button in the existing share row, and the attribution replaces a sentence. */
+/** The pieces of the share kit, drawn by the server and placed by the page. The actions wait behind one closed button beside
+ * the share heading, which takes no room of its own, and the attribution replaces a sentence with one quiet link on a line of
+ * its own (the one place the page grows, by that line less the sentence it replaces). */
 export type ShareKitParts = {
   /** The actions behind the share row's "More" button. */
   more: ReactNode;
-  /** The one quiet line: a link that takes the place of the sentence "Corridra provides the tools the organiser uses". */
+  /** The one quiet link, on a line of its own, that takes the place of the sentence "Corridra provides the tools the organiser uses". */
   attribution: ReactNode;
 };
 

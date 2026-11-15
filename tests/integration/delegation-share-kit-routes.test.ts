@@ -349,9 +349,9 @@ test('the public page with the kit on: one closed More button, a calendar link o
   expect(markup).toContain('aria-expanded="false"');
   expect(markup).toContain('id="programme-share-more" class="guide-actions-row" hidden=""');
   expect(markup).not.toMatch(/<img|programme-qr|Show QR Code/);
-  // The attribution is a link inside the sentence about who is responsible, which it shortens instead of lengthening.
+  // The attribution is one link on a line of its own after the sentence about who is responsible, which it shortens.
   expect(markup).toMatch(
-    /<p>Synthetic Dhaka Agro Traders Association runs this programme[^<]*stated by the organiser\. <a class="programme-kit-attribution" href="\/trade-missions#organise-entry-title">Page made with Corridra Programmes<\/a>\. Corridra is not the travel operator and has not checked these details\.<\/p>/,
+    /<p>Synthetic Dhaka Agro Traders Association runs this programme[^<]*stated by the organiser\. Corridra is not the travel operator and has not checked these details\.<\/p><a class="programme-kit-attribution" href="\/trade-missions#organise-entry-title">Page made with Corridra Programmes<\/a>/,
   );
   expect(markup).not.toContain('Corridra provides the tools the organiser uses');
   // The three existing actions are unchanged.

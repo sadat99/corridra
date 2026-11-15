@@ -20,6 +20,8 @@ type Props = ParticipantScope & {
   boardEnabled?: boolean;
   /** Where the programme has a public page panel, the board also reads its applications. */
   applicationsOn?: boolean;
+  /** Counts the changes made in the public page panel; the board reads its applications again when it grows. */
+  pageChanges?: number;
   // An archived programme takes no new invitations or registrations until it is restored (owner, 6 Nov 2026).
   archived?: boolean;
 };
@@ -481,6 +483,7 @@ function ScopedParticipants(props: Props) {
           workspaceId={props.workspaceId}
           programmeId={props.programmeId}
           applicationsOn={props.applicationsOn === true}
+          pageChanges={props.pageChanges}
           people={peopleRead}
           refreshing={view.refreshing}
           invitations={data?.invitations ?? []}
