@@ -224,6 +224,33 @@ test('private guided submission retains structured original inputs and uses the 
   await expect(page.getByLabel('Private receipt code', { exact: true })).toHaveCount(0);
 });
 
+test('an archived workspace opened by its address loads, and a submission shows the archived sentence without a crash', async ({
+  page,
+}) => {
+  const sentence =
+    'This workspace is archived. Restore it to send new private requests, invitations and registrations.';
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  const writes: unknown[] = [];
+  await page.route('**/api/customer-requests', async (route) => {
+    writes.push(route.request().postDataJSON());
+    await route.fulfill({ status: 409, json: { error: sentence, code: 'archived' } });
+  });
+  await page.goto(origin + start);
+  await complete(page);
+  await page.getByRole('button', { name: 'Submit Mission Request', exact: true }).click();
+  await expect(page.getByRole('alert').filter({ hasText: sentence })).toHaveText(sentence);
+  expect(writes).toHaveLength(1);
+  await expect(
+    page.getByRole('heading', { name: 'Your private sample request is saved.', exact: true }),
+  ).toHaveCount(0);
+  // The original request is kept for a retry once the owner restores the workspace.
+  await expect(
+    page.getByRole('button', { name: 'Retry Original Request', exact: true }),
+  ).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
 test('lost response and reload freeze the original command and payload for an exact safe retry', async ({
   page,
 }) => {

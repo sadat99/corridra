@@ -183,6 +183,8 @@ export function useWorkspaceLifecycle({
   const [reloadTick, setReloadTick] = useState(0);
   const [problem, setProblem] = useState<string | null>(null);
   const [refreshFailed, setRefreshFailed] = useState(false);
+  // The control answered that it is absent (switched off): Restore cannot be offered, the list's flag still holds.
+  const [controlOff, setControlOff] = useState(false);
   const key = rows.map((row) => row.id).join(',');
 
   useEffect(() => {
@@ -196,9 +198,11 @@ export function useWorkspaceLifecycle({
           if (!controller.signal.aborted) {
             setStates({});
             setRefreshFailed(false);
+            setControlOff(true);
           }
           return;
         }
+        if (!controller.signal.aborted) setControlOff(false);
         const read = await Promise.all(
           key.split(',').map(async (id) => {
             try {
@@ -231,10 +235,12 @@ export function useWorkspaceLifecycle({
     return () => clearTimeout(timer);
   }, [undo]);
 
-  const archivedCount = rows.filter((row) => states[row.id]?.archived).length;
+  // The lifecycle read wins; without it the list's own flag decides, so an archived workspace is never drawn active.
+  const archivedOf = (row: CustomerWorkspace) => states[row.id]?.archived ?? row.archived === true;
+  const archivedCount = rows.filter(archivedOf).length;
   const showFilter = archivedCount > 0;
   const mode: Filter = showFilter ? filter : 'active';
-  const visibleRows = rows.filter((row) => !!states[row.id]?.archived === (mode === 'archived'));
+  const visibleRows = rows.filter((row) => archivedOf(row) === (mode === 'archived'));
   const nameOf = (id: string) => rows.find((row) => row.id === id)?.name ?? states[id]?.name ?? '';
   const onBusyChange = useCallback((busy: boolean) => setWorking(busy), []);
   const finished = (message: string, undoId?: string) => {
@@ -325,6 +331,11 @@ export function useWorkspaceLifecycle({
           Could not refresh workspace status. Showing the last known status.
         </p>
       )}
+      {controlOff && mode === 'archived' && (
+        <p role="status" className="ux-hint">
+          Restoring a workspace is not available right now. The workspace and its records are kept.
+        </p>
+      )}
       {problem && (
         <p role="alert" className="ux-error-summary">
           {problem}
@@ -396,7 +407,10 @@ export function useWorkspaceLifecycle({
   return {
     /** Rows to draw for the chosen filter. */
     visibleRows,
-    isArchived: (id: string) => !!states[id]?.archived,
+    isArchived: (id: string) => {
+      const row = rows.find((candidate) => candidate.id === id);
+      return row ? archivedOf(row) : !!states[id]?.archived;
+    },
     /** The status of this workspace could not be read, so it is not known to accept new requests. */
     statusUnknown: (id: string) => refreshFailed && !states[id],
     /** The person holds an owner or admin membership here: Leave removes nothing, so it is not offered. */
