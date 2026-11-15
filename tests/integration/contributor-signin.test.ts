@@ -39,7 +39,7 @@ describe('the helper sign-in page', () => {
   });
   it('links its recovery option to the operator password reset, as the work account is the same', () => {
     expect(page).toMatch(
-      /<Link[^>]*href="\/operator\/forgot-password"[^>]*>\s*Forgot your work password\?\s*<\/Link>/,
+      /<Link[^>]*href="\/operator\/forgot-password\?for=helper"[^>]*>\s*Forgot your work password\?\s*<\/Link>/,
     );
   });
   it('is private, uncached and never sends a helper to the staff workspace', () => {
@@ -101,5 +101,43 @@ describe('the helper door on the team page', () => {
     // The new link is a plain anchor (a full page load, KI-30), kept beside the invitation links.
     expect(task).toContain('<a className="text-link" href="/contributor/signin">');
     expect(task).toContain('href="/contributor/setup"');
+  });
+});
+
+describe('the recovery page reached from the helper door', () => {
+  it('is told by ?for=helper, so the page says work account and goes back to the helper sign-in', async () => {
+    const page = read('apps/web/app/operator/forgot-password/page.tsx');
+    expect(page).toContain("(await searchParams).for === 'helper'");
+    expect(page).toContain('Reset your work password.');
+    expect(page).toContain('<OperatorRecoveryForm mode="request" helper={helper} />');
+    // Words and links only: it reads no session and adds no sign-in call of its own.
+    expect(page).not.toMatch(/getSession|identityClient|headers\(\)|cookies\(\)/);
+    const operatorPage = page.slice(page.indexOf(": 'OPERATOR ACCESS'"));
+    expect(operatorPage).toContain('Reset your operator password.');
+  });
+  it('lists helper links only, with the way back on the helper sign-in', async () => {
+    const { AccessOptions } = await load('components/access-options.tsx');
+    const { accessHelp } = await load('lib/access-doors.ts');
+    const html = render(ce(AccessOptions, accessHelp.helperForgotPassword));
+    expect(html).toContain('href="/contributor/signin"');
+    expect(html).toContain('Back to helper sign-in');
+    expect(html).toContain('href="/contributor/setup"');
+    expect(html).not.toMatch(/operator/i);
+    // The operator page keeps its own list.
+    const staff = render(ce(AccessOptions, accessHelp.operatorForgotPassword('/operator/signin')));
+    expect(staff).toContain('Back to operator sign-in');
+    expect(staff).toContain('href="/operator/signin"');
+  });
+  it('keeps the operator words for the operator and says "work account" in the request form for a helper', () => {
+    const form = read('apps/web/app/operator/recovery-form.tsx');
+    expect(form).toContain("'Operator email'");
+    expect(form).toContain("'Work account email'");
+    expect(form).toContain("'Request Operator Reset Email'");
+    expect(form).toContain("'Request Reset Email'");
+    expect(form).toContain('Return to Helper Sign-in');
+    expect(form).toContain('href="/contributor/signin"');
+    expect(form).toContain('If this address has an active work account');
+    // No auth change: the same request call and redirect, whoever asks.
+    expect(form).toContain('redirectTo: `${window.location.origin}/operator/reset-password`');
   });
 });
