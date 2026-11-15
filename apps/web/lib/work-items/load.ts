@@ -279,6 +279,6 @@ async function readWorkItems(
       ? { requestsIncomplete: true as const }
       : {}),
     skippedWorkspaces: Math.max(0, listed.length - read.length),
-    workspaces: listed.map(({ id, name }) => ({ id, name })),
+    workspaces: listed.map(({ id, name, archived }) => ({ id, name, archived })),
   };
 }

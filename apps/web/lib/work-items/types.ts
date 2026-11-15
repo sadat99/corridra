@@ -37,6 +37,9 @@ export type WorkList = {
   requestsIncomplete?: true;
   /** Workspaces beyond the cap, not read. */
   skippedWorkspaces: number;
-  /** The person's workspaces by id, for display only. A name never classifies or joins anything. */
-  workspaces: { id: string; name: string }[];
+  /**
+   * The person's workspaces by id, for display only. A name never classifies or joins anything. `archived` only
+   * decides whether a workspace is offered for new work; names of archived workspaces still label their history.
+   */
+  workspaces: { id: string; name: string; archived?: boolean }[];
 };
