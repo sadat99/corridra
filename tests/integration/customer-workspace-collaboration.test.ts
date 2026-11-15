@@ -184,7 +184,7 @@ test('populated additive collaboration upgrade preserves every old row, function
     (await f.owner.query('SELECT name,sha256 FROM customer_migrations.applied ORDER BY name')).rows,
   ).toEqual(expected);
   expect((await f.owner.query('SELECT count(*)::int n FROM migrations.applied')).rows[0].n).toBe(
-    29,
+    30,
   );
   expect((await service().list()).map((w) => w.id)).toEqual([workspaceId]);
 });

@@ -65,7 +65,7 @@ export default function Page() {
   // Telling us you want to be a field helper (ADR-0085) is described only while the form can be shown: both of its switches are on.
   const helperInterest = helperInterestEnabled();
   const updated = helperInterest
-    ? '14 November 2026'
+    ? '15 November 2026'
     : programmePages
       ? '12 November 2026'
       : `${updatedDay} October 2026`;
@@ -488,26 +488,39 @@ export default function Page() {
                 <p>
                   If you are not invited yet, you can tell us you would like to become a Corridra
                   field helper. This is only a note of interest. It is not an invitation, a job or a
-                  reward, it does not create an account and it does not put you on a list for work.
+                  reward. It does not create an account and it does not put you on a list for work.
+                  The form is shown only while the Corridra Network is switched on.
                 </p>
                 <p>
-                  You send your name, your email address, your country and a few words about why.
-                  Corridra stores those four things and the time you sent them. It does not store
-                  your internet address, and it does not email you to confirm. Sending the same
-                  email address again changes nothing. To limit repeated sign-ups, Corridra also
-                  keeps a scrambled, one-way form of your email address. It cannot be turned back
-                  into the address, and it is not deleted when your entry is.
+                  You send your name, your email address, your country and a few words about why. We
+                  use them for one purpose: so that the Corridra team can get in touch with people
+                  who are interested in helping the network. We store those four things and the time
+                  you sent them. We do not use them for marketing, we do not sell them or share them
+                  for anyone else’s purposes, and we do not email you to confirm your note. Sending
+                  the same email address again changes nothing.
                 </p>
                 <p>
-                  Only owners and administrators of the Corridra team can read these entries. They
-                  use them to decide whom to invite, and an invitation is a separate step with its
-                  own checks. Corridra records that an entry was made and that it was deleted, but
-                  the record does not contain your name, email address or words.
+                  Only owners and administrators of the Corridra team workspace that receives
+                  requests can read these entries. They are stored with our database provider, as
+                  described under <a href="#sharing">Who we share information with</a>. We record
+                  that an entry was made and that it was deleted, but that record holds no name,
+                  email address or words.
+                </p>
+                <p>
+                  The form sets no cookies and keeps nothing in your browser, and Corridra’s own
+                  record of your entry holds no internet address. See{' '}
+                  <a href="#storage">Cookies and browser storage</a> for the rest of the site. Like
+                  any website, our hosting provider handles the requests made to it and may keep
+                  ordinary technical logs. To stop one person filling in the form again and again,
+                  Corridra keeps a scrambled, one-way form of your email address. It cannot be
+                  turned back into your address and it is used for nothing else. It is removed
+                  automatically after about two hours, the next time one of our public forms is used
+                  after that.
                 </p>
                 <p>
                   Entries are deleted automatically after 180 days. To have yours deleted sooner,
-                  write to the contact in <a href="#contact">Who is responsible</a> and give the
-                  email address you used; we delete it and record that we did.
+                  write to the contact under <a href="#contact">Who is responsible</a> and tell us
+                  the email address you used. We delete it and record that we did.
                 </p>
               </div>
             </article>

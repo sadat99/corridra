@@ -78,11 +78,55 @@ describe('the privacy notice section', () => {
     expect(page).toContain('Telling us you want to be a field helper');
   });
 
-  it('says a hashed form of the email is kept for abuse limits and is not deleted with the entry', async () => {
+  // The visible words of the section only: the markup of the article, with tags removed and spaces collapsed.
+  const section = (page: string) => {
+    const start = page.indexOf('id="helper-interest"');
+    const end = page.indexOf('</article>', start);
+    return page
+      .slice(start, end)
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&#x27;|&#39;/g, "'")
+      .replace(/\s+/g, ' ');
+  };
+
+  it('says the anonymous hashed email is kept only to limit repeat sign-ups and is removed after about two hours', async () => {
+    const text = section(await markup(privacyPath, { ...real, ...on }));
+    expect(text).toContain('scrambled, one-way form of your email address');
+    expect(text).toContain('cannot be turned back into your address');
+    expect(text).toContain('used for nothing else');
+    expect(text).toContain('removed automatically after about two hours');
+    expect(text).toContain('the next time one of our public forms is used after that');
+    // The old wording, which said the hash was kept for good, is gone.
+    expect(text).not.toContain('not deleted when your entry is');
+  });
+
+  it('covers what is collected and why, who sees it, how long it is kept, how to ask for deletion, and what it is not used for', async () => {
+    const text = section(await markup(privacyPath, { ...real, ...on }));
+    for (const part of [
+      'your name, your email address, your country and a few words about why',
+      'get in touch with people who are interested in helping the network',
+      'the time you sent them',
+      'Only owners and administrators of the Corridra team workspace that receives requests can read these entries',
+      'Entries are deleted automatically after 180 days',
+      'To have yours deleted sooner, write to the contact under Who is responsible',
+      'tell us the email address you used',
+      'We do not use them for marketing',
+      'we do not sell them or share them for anyone else',
+      'we do not email you to confirm your note',
+      'The form sets no cookies and keeps nothing in your browser',
+      'holds no internet address',
+      'It is not an invitation, a job or a reward',
+      'The form is shown only while the Corridra Network is switched on',
+    ])
+      expect(text, part).toContain(part);
+    // Links to the sections it points at exist on the page.
     const page = await markup(privacyPath, { ...real, ...on });
-    expect(page).toContain('one-way form of your email address');
-    expect(page).toContain('it is not deleted when your entry is');
-    expect(page).not.toMatch(/internet address, and it does not email you[^<]*hashed/);
+    for (const id of ['contact', 'sharing', 'storage']) expect(page).toContain(`id="${id}"`);
+    expect(section(page)).not.toMatch(/owner must approve|awaits the owner|draft/i);
+  });
+
+  it('is written in plain words: no em dash, no en dash', async () => {
+    expect(section(await markup(privacyPath, { ...real, ...on }))).not.toMatch(/[\u2013\u2014]/);
   });
 
   it('is a section of its own, not inside the programme applications section, with programme pages on', async () => {
