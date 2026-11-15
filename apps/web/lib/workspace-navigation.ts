@@ -97,6 +97,8 @@ export const workspaceSections = [
 
 export function operatorReturnTo(value: string | undefined): string {
   if (!value || value.length > 240) return '/operator';
+  // Helper (contributor) returns: the bare task page, or the task page of one workspace. Exact strings only.
+  if (value === '/contributor') return value;
   if (/^\/contributor\?workspace=[0-9a-f-]{36}$/i.test(value)) return value;
   const match = /^\/operator(?:\?workspace=[0-9a-f-]{36})?(?:#([a-z-]+))?$/i.exec(value);
   if (!match) return '/operator';
@@ -105,6 +107,14 @@ export function operatorReturnTo(value: string | undefined): string {
     match[1] === 'workspace-navigation'
     ? value
     : '/operator';
+}
+
+/**
+ * True when a return address points at the helper task page. It only chooses the wording of a sign-in
+ * page. The place a person lands is always the one `operatorReturnTo` returns.
+ */
+export function isContributorReturn(value: string): boolean {
+  return value === '/contributor' || value.startsWith('/contributor?');
 }
 
 // Every link into operator sign-in, and signing out, is a full page load (a plain anchor or location

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { identityClient } from '@corridra/auth/client';
-import { operatorReturnTo } from '../../../lib/workspace-navigation';
+import { isContributorReturn, operatorReturnTo } from '../../../lib/workspace-navigation';
 export function OperatorSignin({ returnTo = '/operator' }: { returnTo?: string }) {
   const [stage, setStage] = useState<'password' | 'enrol' | 'verify'>('password');
   const heading = useRef<HTMLHeadingElement>(null);
@@ -69,7 +69,7 @@ export function OperatorSignin({ returnTo = '/operator' }: { returnTo?: string }
       }
     }
   }
-  const contributor = returnTo.startsWith('/contributor?');
+  const contributor = isContributorReturn(returnTo);
   return (
     <form
       method="post"
