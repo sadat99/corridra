@@ -86,3 +86,15 @@ export async function deleteHelperInterest(
 
 export const helperInterestFailure = (error: unknown, fallback: string) =>
   error instanceof ActionError && error.message ? error.message : fallback;
+
+export type HelperInterestPage = { total: number; nextOffset: number | null };
+
+/**
+ * The paging state after one loaded entry was deleted. The list pages by position, so every later entry moves up by one: the next
+ * page starts one earlier, and there is no next page once everything left has been read.
+ */
+export function pageAfterDelete(current: HelperInterestPage): HelperInterestPage {
+  const total = Math.max(0, current.total - 1);
+  const next = current.nextOffset === null ? null : Math.max(0, current.nextOffset - 1);
+  return { total, nextOffset: next !== null && next < total ? next : null };
+}

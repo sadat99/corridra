@@ -10,6 +10,7 @@ import {
   helperInterestFragment as fragment,
   helperInterestInstalled,
   helperInterestWords as words,
+  pageAfterDelete,
   readHelperInterest,
 } from '../../lib/helper-interest-client';
 
@@ -69,9 +70,7 @@ function Panel({ tenant }: { tenant: string }) {
     try {
       await deleteHelperInterest(tenant, id);
       setRows((current) => current.filter((row) => row.id !== id));
-      setPage((current) =>
-        current ? { ...current, total: Math.max(0, current.total - 1) } : current,
-      );
+      setPage((current) => (current ? pageAfterDelete(current) : current));
       setConfirming(null);
       setNotice(words.deleted);
     } catch (error) {

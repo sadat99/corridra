@@ -8,6 +8,7 @@ import {
 } from '../../packages/auth/src/helper-interest';
 import { configureCustomerRealUse } from '../../packages/auth/src/customer-real-use-configuration';
 import { DomainError } from '../../packages/domain/src/index';
+import { pageAfterDelete } from '../../apps/web/lib/helper-interest-client';
 
 // ADR-0085, the helper interest register, on a real PostgreSQL database in real data mode (the register is anchored to
 // the real intake workspace). Each test below fails on a build without the module.
@@ -347,6 +348,42 @@ describe('limits and switches', () => {
         reason: 'Fixture reopen after the pause test',
       });
     }
+  });
+});
+
+describe('paging the list while entries are deleted', () => {
+  test('after a delete the next page starts one earlier, so no entry is ever skipped', async () => {
+    for (let i = 0; i < 55; i++)
+      await s.f.owner.query(
+        "INSERT INTO app.helper_interest(tenant_id,name,email,country,reason,created_at) VALUES($1,$2,$3,'BD','A reason that is long enough to store',now()-make_interval(mins=>$4))",
+        [anchor, `Paged Person ${i}`, `paged${i}@example.test`, i + 1],
+      );
+    const all = (await rows()).map((row) => row.email as string);
+    const first = await service.list(staff('owner'), { offset: 0 });
+    expect(first.rows).toHaveLength(50);
+    expect(first.nextOffset).toBe(50);
+    // Delete one loaded entry, then load the next page at the offset the screen now holds.
+    await service.remove(staff('owner'), { id: first.rows[3]!.id });
+    const state = pageAfterDelete({ total: first.total, nextOffset: first.nextOffset });
+    expect(state.nextOffset).toBe(49);
+    const second = await service.list(staff('owner'), { offset: state.nextOffset! });
+    const seen = new Set([...first.rows.map((r) => r.email), ...second.rows.map((r) => r.email)]);
+    const deleted = first.rows[3]!.email;
+    const expected = all.filter((email) => email !== deleted);
+    for (const email of expected) expect(seen.has(email), email).toBe(true);
+    // Without the adjustment the first entry after the first page would have been skipped.
+    const unadjusted = await service.list(staff('owner'), { offset: 50 });
+    expect(unadjusted.rows.length).toBeLessThan(second.rows.length);
+  });
+
+  test('the paging state after a delete: one earlier, none left to read, never below zero', () => {
+    expect(pageAfterDelete({ total: 51, nextOffset: 50 })).toEqual({ total: 50, nextOffset: 49 });
+    expect(pageAfterDelete({ total: 50, nextOffset: null })).toEqual({
+      total: 49,
+      nextOffset: null,
+    });
+    expect(pageAfterDelete({ total: 1, nextOffset: 0 })).toEqual({ total: 0, nextOffset: null });
+    expect(pageAfterDelete({ total: 100, nextOffset: 50 })).toEqual({ total: 99, nextOffset: 49 });
   });
 });
 
