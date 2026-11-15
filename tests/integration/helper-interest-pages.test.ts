@@ -107,7 +107,7 @@ describe('the privacy notice section', () => {
       'get in touch with people who are interested in helping the network',
       'the time you sent them',
       'Only owners and administrators of the Corridra team workspace that receives requests can read these entries',
-      'Entries are deleted automatically after 180 days',
+      'Entries are deleted after 180 days. From then on our team can no longer see an entry, and it is removed the next time the form is used or our team opens the list',
       'To have yours deleted sooner, write to the contact under Who is responsible',
       'tell us the email address you used',
       'We do not use them for marketing',

@@ -1,6 +1,7 @@
 import { createHash, createHmac, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import {
+  purgeIntakeRateLimit,
   withTenant,
   type DatabasePool,
   type RequestContext,
@@ -454,6 +455,7 @@ export class DeliveryService {
       'SELECT app.intake_budget($1,60) a,app.intake_budget($2,60) b',
       [h(`delivery-client:${client}`), h(`delivery-capability:${token}`)],
     );
+    await purgeIntakeRateLimit(this.pool);
     if (!r.rows[0].a || !r.rows[0].b)
       throw new DomainError('Too many requests. Try again in an hour.', 429);
   }

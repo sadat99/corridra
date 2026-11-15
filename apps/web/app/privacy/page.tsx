@@ -518,9 +518,11 @@ export default function Page() {
                   after that.
                 </p>
                 <p>
-                  Entries are deleted automatically after 180 days. To have yours deleted sooner,
-                  write to the contact under <a href="#contact">Who is responsible</a> and tell us
-                  the email address you used. We delete it and record that we did.
+                  Entries are deleted after 180 days. From then on our team can no longer see an
+                  entry, and it is removed the next time the form is used or our team opens the
+                  list. To have yours deleted sooner, write to the contact under{' '}
+                  <a href="#contact">Who is responsible</a> and tell us the email address you used.
+                  We delete it and record that we did.
                 </p>
               </div>
             </article>
