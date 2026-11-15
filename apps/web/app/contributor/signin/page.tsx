@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { AccessOptions } from '../../../components/access-options';
+import { ContributorUnavailable } from '../../../components/contributor-unavailable';
 import { WorkspaceShell } from '../../../components/workspace-shell';
 import { accessHelp } from '../../../lib/access-doors';
 import { foundations } from '../../../lib/foundations';
@@ -20,22 +21,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
   const next = (await searchParams).next;
   const checked = operatorReturnTo(next);
   const returnTo = isContributorReturn(checked) ? checked : '/contributor';
-  if (!foundations())
-    return (
-      <WorkspaceShell
-        eyebrow="ASSIGNED EXECUTION WORK"
-        title="Helper sign-in is unavailable."
-        compact
-      >
-        <p>Assigned-task access is not configured here. This page does not collect credentials.</p>
-        <Link prefetch={false} className="text-link" href="/signin">
-          Other sign-in options
-        </Link>
-        <Link prefetch={false} className="text-link" href="/">
-          Back to Corridra
-        </Link>
-      </WorkspaceShell>
-    );
+  if (!foundations()) return <ContributorUnavailable />;
   return (
     <WorkspaceShell
       eyebrow="ASSIGNED EXECUTION WORK"

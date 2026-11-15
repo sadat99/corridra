@@ -24,7 +24,23 @@ describe('the helper sign-in page', () => {
     const guard = page.indexOf('if (!foundations())');
     expect(guard).toBeGreaterThan(-1);
     expect(guard).toBeLessThan(page.indexOf('<OperatorSignin'));
-    expect(page).toContain('This page does not collect credentials.');
+    // The same page as the task page shows, from one component, so the two cannot drift.
+    expect(page).toContain('if (!foundations()) return <ContributorUnavailable />;');
+    expect(read('apps/web/app/contributor/page.tsx')).toContain(
+      'if (!s) return <ContributorUnavailable />;',
+    );
+    const shared = read('apps/web/components/contributor-unavailable.tsx');
+    expect(shared).toContain('title="Your assigned tasks."');
+    expect(shared).toContain('Assigned-task access is not configured in this environment.');
+    expect(shared).toContain('Keep the invitation supplied by');
+    expect(shared).toContain('href="/network"');
+    expect(shared).not.toMatch(/<form|<input|OperatorSignin|type="password"/);
+    expect(page).not.toContain('Assigned-task access is not configured');
+  });
+  it('links its recovery option to the operator password reset, as the work account is the same', () => {
+    expect(page).toMatch(
+      /<Link[^>]*href="\/operator\/forgot-password"[^>]*>\s*Forgot your work password\?\s*<\/Link>/,
+    );
   });
   it('is private, uncached and never sends a helper to the staff workspace', () => {
     expect(page).toContain("export const dynamic = 'force-dynamic'");

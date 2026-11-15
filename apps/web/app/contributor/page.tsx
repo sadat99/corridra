@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
+import { ContributorUnavailable } from '../../components/contributor-unavailable';
 import { FrontDoor } from '../../components/front-door';
 import { foundations } from '../../lib/foundations';
 import { helperDoor } from '../../lib/front-doors';
@@ -29,24 +30,7 @@ export default async function Page({
   searchParams: Promise<{ workspace?: string; view?: string }>;
 }) {
   const s = foundations();
-  if (!s)
-    return (
-      <WorkspaceShell eyebrow="ASSIGNED EXECUTION WORK" title="Your assigned tasks." compact>
-        <p>
-          Assigned-task access is not configured in this environment. Keep the invitation supplied
-          by your operator.
-        </p>
-        <Link prefetch={false} className="text-link" href="/network">
-          How assigned work works
-        </Link>
-        <Link prefetch={false} className="text-link" href="/signin">
-          Other sign-in options
-        </Link>
-        <Link prefetch={false} className="text-link" href="/">
-          Back to Corridra
-        </Link>
-      </WorkspaceShell>
-    );
+  if (!s) return <ContributorUnavailable />;
   const query = await searchParams;
   const workspace = z.uuid().safeParse(query.workspace);
   const today = query.view === 'today';

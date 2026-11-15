@@ -139,8 +139,19 @@ test('helper sign-in fails closed without configuration, collects nothing and is
   expect(response?.headers()['cache-control']).toContain('no-store');
   expect(response?.headers()['referrer-policy']).toBe('no-referrer');
   const main = page.getByRole('main');
-  await expect(page.getByRole('heading', { name: 'Helper sign-in is unavailable.' })).toBeVisible();
-  await expect(main).toContainText('This page does not collect credentials.');
+  await expect(page.getByRole('heading', { name: 'Your assigned tasks.' })).toBeVisible();
+  await expect(main).toContainText(
+    'Assigned-task access is not configured in this environment. Keep the invitation supplied by your operator.',
+  );
+  await expect(main.getByRole('link', { name: 'How assigned work works' })).toHaveAttribute(
+    'href',
+    '/network',
+  );
+  // The same words as the task page itself shows without configuration.
+  const signInText = await main.innerText();
+  await page.goto('/contributor');
+  expect(await page.getByRole('main').innerText()).toBe(signInText);
+  await page.goto('/contributor/signin');
   await expect(main.locator('input, form')).toHaveCount(0);
   await expect(main).not.toContainText(/operator account|customer account/i);
   // The same address with a return the page may not honour still shows no form and no staff words.
