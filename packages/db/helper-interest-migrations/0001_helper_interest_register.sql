@@ -124,7 +124,7 @@ END $$;
 -- register is refused (55000); a full register is refused (54000).
 CREATE FUNCTION app.helper_interest_submit(p_name text,p_email text,p_country text,p_reason text) RETURNS void
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
-DECLARE a record; e text; n text; c text; r text; rid uuid;
+DECLARE a record; e text; n text; c text; r text; rid uuid; stale uuid;
 BEGIN
  SELECT * INTO a FROM app.helper_interest_anchor();
  IF a.anchor_tenant IS NULL THEN RAISE EXCEPTION 'The helper interest register is not open' USING ERRCODE='55000'; END IF;
@@ -139,6 +139,15 @@ BEGIN
  -- One writer at a time: the duplicate rule, the cap and the purge all see the same rows.
  PERFORM pg_advisory_xact_lock(hashtext('corridra:helper_interest'));
  PERFORM app.helper_interest_purge();
+ -- The purge removes 200 rows a call. If this visitor's own entry has expired but is still waiting outside that batch, it is removed
+ -- now, with its retention event, so it can never suppress the new entry and leave an acknowledged sign-up that nobody can read.
+ SELECT h.id INTO stale FROM app.helper_interest h
+  WHERE h.tenant_id=a.anchor_tenant AND h.email=e AND h.created_at<=clock_timestamp()-app.helper_interest_retention() FOR UPDATE;
+ IF stale IS NOT NULL THEN
+  DELETE FROM app.helper_interest WHERE id=stale;
+  PERFORM app.helper_interest_event(a.anchor_tenant,a.anchor_executor,'helper_interest.deleted',stale,2,
+   jsonb_build_object('id',stale,'reason','retention','initiator_kind','retention'));
+ END IF;
  IF (SELECT count(*) FROM app.helper_interest)>=app.helper_interest_cap() THEN
   RAISE EXCEPTION 'The helper interest register is full' USING ERRCODE='54000';
  END IF;

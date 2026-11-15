@@ -387,4 +387,47 @@ describe('paging the list while entries are deleted', () => {
   });
 });
 
+describe('a returning visitor whose own entry has expired', () => {
+  test('gets a fresh entry even when more than 200 expired entries are waiting to be purged', async () => {
+    // 205 expired entries. The purge removes the 200 oldest per call, so the visitor's own expired entry, the newest of them, is
+    // outside that batch and would still be in the table when the new entry is inserted.
+    const target = 'returning.visitor@example.test';
+    for (let i = 0; i < 205; i++)
+      await s.f.owner.query(
+        "INSERT INTO app.helper_interest(tenant_id,name,email,country,reason,created_at) VALUES($1,$2,$3,'BD','An old reason that is long enough',now()-make_interval(days=>$4))",
+        [
+          anchor,
+          `Old Person ${i}`,
+          i === 0 ? target : `old${i}@example.test`,
+          i === 0 ? 181 : 200 + i,
+        ],
+      );
+    const old = (await rows()).find((row) => row.email === target);
+    await service.submit(
+      form({
+        email: target,
+        name: 'Returning Visitor',
+        reason: 'I am back with a new reason now.',
+      }),
+    );
+    const fresh = (await rows()).filter((row) => row.email === target);
+    expect(fresh).toHaveLength(1);
+    expect(fresh[0].id).not.toBe(old.id);
+    expect(fresh[0].reason).toBe('I am back with a new reason now.');
+    // The old entry went with one retention delete event, and the new one has its own create event.
+    const gone = (await events('helper_interest.deleted')).filter((e) => e.aggregate_id === old.id);
+    expect(gone).toHaveLength(1);
+    expect(gone[0].payload).toEqual({
+      id: old.id,
+      reason: 'retention',
+      initiator_kind: 'retention',
+    });
+    expect(
+      (await events('helper_interest.created')).filter((e) => e.aggregate_id === fresh[0].id),
+    ).toHaveLength(1);
+    // And the owner and admin list shows the fresh entry.
+    expect((await service.list(staff('owner'), {})).rows.map((row) => row.email)).toContain(target);
+  });
+});
+
 vi.setConfig({ testTimeout: 60000 });
