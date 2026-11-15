@@ -13,6 +13,7 @@ import {
 } from '../../../lib/delegate-objective';
 import { customerHeaders } from './pricing-client';
 import { isUuid } from './participant-client';
+import { activeWorkspaces } from '../../../lib/workspace-choice';
 import './delegate-path.css';
 
 /**
@@ -28,7 +29,7 @@ import './delegate-path.css';
  * existing objective tools with the same explicit consent. A read that fails claims nothing: that step simply shows
  * its action without a state.
  */
-type Workspace = { id: string; name: string };
+type Workspace = { id: string; name: string; archived?: boolean };
 type Loaded = {
   statement: string | null;
   displayLabel: string;
@@ -114,11 +115,12 @@ export function DelegatePath(props: {
         workspaces.status === 'fulfilled' &&
         object(workspaces.value) &&
         Array.isArray(workspaces.value.workspaces)
-          ? workspaces.value.workspaces
-              .filter(
+          ? // An archived workspace cannot start new work, so it is not offered or preselected.
+            activeWorkspaces(
+              workspaces.value.workspaces.filter(
                 (w): w is Workspace => object(w) && isUuid(w.id) && typeof w.name === 'string',
-              )
-              .map((w) => ({ id: w.id, name: w.name }))
+              ),
+            ).map((w) => ({ id: w.id, name: w.name }))
           : null;
       const count = (
         settled: PromiseSettledResult<unknown>,

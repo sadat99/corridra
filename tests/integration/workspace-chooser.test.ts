@@ -18,7 +18,13 @@ const renderToStaticMarkup = web('react-dom/server').renderToStaticMarkup as (
 ) => string;
 
 const state = {
-  workspaces: [] as { id: string; name: string; role: string; synthetic: boolean }[],
+  workspaces: [] as {
+    id: string;
+    name: string;
+    role: string;
+    synthetic: boolean;
+    archived?: boolean;
+  }[],
   linksOn: false,
   fail: null as Error | null,
 };
@@ -174,6 +180,61 @@ describe('a person with no workspace is offered one next action', () => {
       expect(html).not.toContain('<button');
       expect(html).not.toContain('<form');
     }
+  });
+});
+
+describe('archived workspaces are not offered to start new work', () => {
+  const archived = (id: string, role = 'owner') => ({ ...workspace(id, role), archived: true });
+  const manage = { href: '/account?view=work#customer-workspaces', name: 'Manage your workspaces' };
+  const create = { href: '/account?view=work#customer-workspaces', name: 'Create a Workspace' };
+  it('programmes with only an archived owned workspace: no active workspace, never membership alone, no redirect', async () => {
+    state.workspaces = [archived(a), workspace(b, 'member')];
+    const html = await chooser('programmes');
+    expect(headingOf(html)).toBe('No active workspace');
+    expect(html).toContain(
+      'Your workspaces that can organise programmes are archived. The owner can restore one from your workspaces, or you can create a new one.',
+    );
+    expect(html).not.toContain('Only workspace owners and admins can organise programmes.');
+    expect(html).not.toContain('/account/delegations/' + a);
+    expect(anchors(html)).toEqual([
+      create,
+      manage,
+      { href: '/account/delegations', name: 'Your programme registrations' },
+    ]);
+    expect(html).not.toContain('\u2014');
+  });
+  it('help requests with every workspace archived: no active workspace and a way to restore', async () => {
+    state.workspaces = [archived(a), archived(b, 'member')];
+    const html = await chooser('services');
+    expect(headingOf(html)).toBe('No active workspace');
+    expect(html).toContain(
+      'Your workspaces are archived. The owner can restore one from your workspaces, or you can create a new one.',
+    );
+    expect(anchors(html)).toEqual([create, manage]);
+  });
+  it('one active and one archived workspace: help requests open the active one directly', async () => {
+    state.workspaces = [archived(a), workspace(b)];
+    await expect(chooser('services')).rejects.toThrow('redirect:/account/service-requests/' + b);
+    await expect(chooser('programmes')).rejects.toThrow('redirect:/account/delegations/' + b);
+  });
+  it('billing and the profile keep archived workspaces, labelled and after the active ones', async () => {
+    state.workspaces = [archived(a), workspace(b)];
+    for (const kind of ['billing', 'profile'] as const) {
+      const html = await chooser(kind);
+      expect(headingOf(html)).toBe('Choose a workspace');
+      expect(anchors(html).map((link) => link.href)).toEqual([
+        '/account/' + kind + '/' + b,
+        '/account/' + kind + '/' + a,
+        '/account?view=work#customer-workspaces',
+      ]);
+      expect(anchors(html)[1]!.name).toBe('Name ' + a + 'ArchivedYou own this workspace.');
+      expect(html).toContain('<span class="ux-badge">Archived</span>');
+      expect(html.match(/ux-badge/g)).toHaveLength(1);
+    }
+  });
+  it('billing with only an archived workspace still opens it, so money stays reachable', async () => {
+    state.workspaces = [archived(a)];
+    await expect(chooser('billing')).rejects.toThrow('redirect:/account/billing/' + a);
   });
 });
 

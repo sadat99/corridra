@@ -1,9 +1,11 @@
+import './ux/row-list.css';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { DomainError } from '@corridra/domain';
 import { accountAccessPath, organiserPath } from '../lib/account-return';
 import { foundations } from '../lib/foundations';
 import {
+  activeWorkspaces,
   workspaceDescription,
   workspacePath,
   workspacesFor,
@@ -64,15 +66,26 @@ export async function WorkspaceChooser({
       </p>
     );
   }
-  const visible = workspacesFor(kind, workspaces);
+  // Billing and the profile keep archived workspaces (money and history), after the active ones. The other
+  // destinations start new work, so they offer only active workspaces.
+  const offered = workspacesFor(kind, workspaces);
+  const active = activeWorkspaces(offered);
+  const visible = [...active, ...offered.filter((workspace) => !active.includes(workspace))];
+  const eligible = workspacesFor(kind, workspaces, true);
+  // Every workspace that could be chosen is archived: say so, never "membership alone".
+  const archivedOnly = visible.length === 0 && eligible.length > 0;
   // Organising needs a workspace the person owns or manages; membership alone does not give one.
-  const memberOnly = kind === 'programmes' && visible.length === 0 && workspaces.length > 0;
+  const memberOnly = kind === 'programmes' && eligible.length === 0 && workspaces.length > 0;
   // One workspace leaves nothing to choose: go straight to it.
   if (visible.length === 1) redirect(workspacePath(kind, visible[0]!.id));
   return (
     <section aria-labelledby="workspace-choice-title">
       <h2 id="workspace-choice-title">
-        {visible.length ? 'Choose a workspace' : 'Create a workspace'}
+        {visible.length
+          ? 'Choose a workspace'
+          : archivedOnly
+            ? 'No active workspace'
+            : 'Create a workspace'}
       </h2>
       <p>{workspaceDescription(kind, linksEnabled)}</p>
       {visible.length ? (
@@ -81,6 +94,7 @@ export async function WorkspaceChooser({
             <li key={workspace.id}>
               <Link prefetch={false} href={workspacePath(kind, workspace.id)}>
                 <strong>{workspace.name}</strong>
+                {workspace.archived ? <span className="ux-badge">Archived</span> : null}
                 <span>
                   {workspace.synthetic ? 'Example workspace. ' : ''}
                   {workspace.role === 'owner'
@@ -96,11 +110,15 @@ export async function WorkspaceChooser({
       ) : (
         <>
           <p className="ux-empty">
-            {kind !== 'programmes'
-              ? 'You do not have a workspace yet. Create one to continue.'
-              : memberOnly
-                ? 'Only workspace owners and admins can organise programmes. Create a workspace of your own to organise.'
-                : 'Organising a programme needs a workspace. Create one to continue.'}
+            {archivedOnly
+              ? kind === 'programmes'
+                ? 'Your workspaces that can organise programmes are archived. The owner can restore one from your workspaces, or you can create a new one.'
+                : 'Your workspaces are archived. The owner can restore one from your workspaces, or you can create a new one.'
+              : kind !== 'programmes'
+                ? 'You do not have a workspace yet. Create one to continue.'
+                : memberOnly
+                  ? 'Only workspace owners and admins can organise programmes. Create a workspace of your own to organise.'
+                  : 'Organising a programme needs a workspace. Create one to continue.'}
           </p>
           <p>
             <Link
@@ -113,7 +131,7 @@ export async function WorkspaceChooser({
           </p>
         </>
       )}
-      {visible.length > 0 && (
+      {(visible.length > 0 || archivedOnly) && (
         <p>
           <Link
             className="text-link"

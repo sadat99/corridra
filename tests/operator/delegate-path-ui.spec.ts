@@ -127,7 +127,7 @@ type World = {
   joinedByApplication: boolean;
   /** What the organisers shared of the programme dates and destination; null until they share it. */
   context: { marketCode: string; startsAt: string; endsAt: string; timezone: string } | null;
-  workspaces: { id: string; name: string }[];
+  workspaces: { id: string; name: string; archived?: boolean }[];
   requests: { id: string; label: string; available: boolean }[];
   shared: { summary: string; requestId: string } | null;
   draft: Record<string, unknown> | null;
@@ -535,6 +535,26 @@ test('several workspaces need a choice; a code-joined delegate has no words to c
       offer: '',
     },
   });
+});
+
+test('an archived room is not offered and one active room is preselected', async ({ page }) => {
+  const archivedId = '00000000-0000-4000-8000-0000000000a1';
+  const w = world({
+    workspaces: [
+      { id: archivedId, name: 'Synthetic Archived Company', archived: true },
+      { id: workspaceId, name: 'Synthetic Rahman Agro', archived: false },
+    ],
+  });
+  await serve(page, w);
+  await page.goto(origin + '/');
+  await openRegistration(page);
+  // One active room is left, so there is nothing to choose and it is used for the start.
+  await expect(step(page, 1).getByLabel('Workspace for the request')).toHaveCount(0);
+  await expect(path(page).getByText('Synthetic Archived Company')).toHaveCount(0);
+  await step(page, 1).getByRole('button', { name: 'Something Else' }).click();
+  await page.waitForURL(`**/account/drafts/${workspaceId}?draft=${draftId}`);
+  expect(w.posts.map((p) => p.url)).toEqual(['/api/customer-mission-drafts']);
+  expect(w.posts[0]!.body.input).toMatchObject({ workspaceId });
 });
 
 test('a refused or failed start says so, sends nothing further and can be retried as the same change', async ({

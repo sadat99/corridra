@@ -5310,6 +5310,11 @@ th {
   font-size: var(--text-base);
   color: var(--text-2);
 }
+.ux-quick-links .ux-badge {
+  justify-self: start;
+  color: var(--ink);
+  font-size: var(--text-sm);
+}
 .ux-refresh {
   display: inline-flex;
   align-items: center;

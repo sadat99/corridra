@@ -569,6 +569,57 @@ test('without a workspace in the link the customer picks one they can act in, an
   await expect(page.getByRole('alert')).toContainText('not switched on');
 });
 
+test('an archived owned workspace is not offered and not auto-picked', async ({ page }) => {
+  const archivedId = randomUUID();
+  let workspaces: Record<string, unknown>[] = [
+    { id: archivedId, name: 'Synthetic archived workspace', role: 'owner', archived: true },
+    { id: workspaceId, name: 'Synthetic active workspace', role: 'admin', archived: false },
+  ];
+  await page.route('**/api/customer-workspaces', (route) =>
+    route.fulfill({ json: { synthetic: true, workspaces } }),
+  );
+  const posts: Record<string, unknown>[] = [];
+  await serve(page, (url, method, body) => {
+    if (method === 'POST') {
+      posts.push(body!);
+      return { json: summary({ status: 'requested' }) };
+    }
+    return { json: catalogue() };
+  });
+  await page.goto(origin + '/?view=new&anyworkspace=1');
+  // The one active workspace is chosen for the customer; the archived one is never a choice.
+  await page.getByRole('radio', { name: /Interpreter day/ }).check();
+  await expect(page.getByLabel('Workspace')).toHaveCount(0);
+  await expect(page.getByText('Synthetic archived workspace')).toHaveCount(0);
+  await page.getByLabel('Where do you need it?').selectOption('Dhaka');
+  await page
+    .getByLabel(/What do you need/)
+    .fill('Synthetic need: an interpreter for two supplier meetings');
+  await page.getByRole('button', { name: 'Send help request' }).click();
+  await expect.poll(() => posts.length).toBe(1);
+  expect(posts[0]).toMatchObject({ workspaceId });
+  // Every owned workspace archived: a calm state that says why and where to restore, never the owner-needed denial.
+  workspaces = [
+    { id: archivedId, name: 'Synthetic archived workspace', role: 'owner', archived: true },
+    { id: randomUUID(), name: 'Synthetic joined workspace', role: 'member', archived: false },
+  ];
+  await page.goto(origin + '/?view=new&anyworkspace=1');
+  const empty = page.locator('.ux-state[data-state="empty"]');
+  await expect(empty.locator('.ux-state-label')).toHaveText('No active workspace');
+  await expect(empty.getByRole('status')).toHaveText(
+    'Your workspaces are archived, so a new help request cannot start from them. The owner can restore one.',
+  );
+  await expect(empty.getByRole('link', { name: 'Manage Workspaces' })).toHaveAttribute(
+    'href',
+    '/account?view=work#customer-workspaces',
+  );
+  await expect(
+    page.getByText('Only an owner or admin of a workspace can ask for paid help.'),
+  ).toHaveCount(0);
+  await expect(page.getByRole('form', { name: 'Help request details' })).toHaveCount(0);
+  expect(await axe(page)).toEqual([]);
+});
+
 test('the quote shows every cost, everything left out and every assumption before acceptance, and acceptance records an order intent only', async ({
   page,
 }) => {
