@@ -29,7 +29,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ n
       compact
     >
       <OperatorSignin returnTo={returnTo} />
-      <Link prefetch={false} className="text-link" href="/operator/forgot-password">
+      <Link prefetch={false} className="text-link" href="/operator/forgot-password?for=helper">
         Forgot your work password?
       </Link>
       <AccessOptions {...accessHelp.operatorSignIn(returnTo)} />

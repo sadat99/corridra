@@ -5,7 +5,14 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { identityClient } from '@corridra/auth/client';
 
-export function OperatorRecoveryForm({ mode }: { mode: 'request' | 'reset' }) {
+export function OperatorRecoveryForm({
+  mode,
+  helper = false,
+}: {
+  mode: 'request' | 'reset';
+  /** Reached from the helper sign-in: the request words say "work account" and the way back is the helper sign-in. */
+  helper?: boolean;
+}) {
   const query = useSearchParams();
   const [token, setToken] = useState(() => {
     const candidate = query.get('token') ?? '';
@@ -63,6 +70,21 @@ export function OperatorRecoveryForm({ mode }: { mode: 'request' | 'reset' }) {
       setBusy(false);
     }
   }
+  if (done && helper && mode === 'request')
+    return (
+      <div role="status">
+        <p>
+          If this address has an active work account, you will receive a password reset email. Check
+          spam too. A pending invitation needs setup instead.
+        </p>
+        <a className="primary-link" href="/contributor/signin">
+          Return to Helper Sign-in
+        </a>
+        <Link prefetch={false} className="text-link" href="/contributor/setup">
+          Finish a pending invitation
+        </Link>
+      </div>
+    );
   if (done)
     return (
       <div role="status">
@@ -97,12 +119,12 @@ export function OperatorRecoveryForm({ mode }: { mode: 'request' | 'reset' }) {
     <form
       method="post"
       className="operator-form"
-      aria-label="Operator password recovery"
+      aria-label={helper ? 'Work password recovery' : 'Operator password recovery'}
       onSubmit={submit}
     >
       {mode === 'request' ? (
         <label className="field">
-          Operator email
+          {helper ? 'Work account email' : 'Operator email'}
           <input name="email" type="email" autoComplete="username" required disabled={busy} />
         </label>
       ) : (
@@ -146,7 +168,9 @@ export function OperatorRecoveryForm({ mode }: { mode: 'request' | 'reset' }) {
         {busy
           ? 'Please Wait…'
           : mode === 'request'
-            ? 'Request Operator Reset Email'
+            ? helper
+              ? 'Request Reset Email'
+              : 'Request Operator Reset Email'
             : 'Set New Operator Password'}
       </button>
     </form>

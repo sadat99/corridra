@@ -6,7 +6,7 @@ import { FactLabel, NotConfirmedLabel } from './fact-label';
 import { LanguageSwitcher } from './language-switcher';
 import { useT } from './language-provider';
 import { BrandLockup } from './site-header';
-import { isQuiet, useSignedInSeen } from './use-signed-in';
+import { isQuiet, useSignedInSeen, useSignedInSettled } from './use-signed-in';
 import { accessDoors as accessDoorList } from '../lib/access-doors';
 import type { MessageKey } from '../lib/i18n/messages';
 import './site-footer.css';
@@ -94,6 +94,7 @@ export function SiteFooterView({
   const t = useT();
   // The public header has already asked who is signed in; a signed-in person is never offered sign-in here.
   const who = useSignedInSeen();
+  const known = useSignedInSettled();
   // The staff customer preview is inert and offers no account actions (the header hides them there too).
   const pathname = usePathname();
   const preview = isQuiet(pathname);
@@ -169,6 +170,7 @@ export function SiteFooterView({
           {doors ? (
             <section
               className="guide-footer-access"
+              data-pending={known ? undefined : 'true'}
               lang="en"
               aria-labelledby="guide-footer-access-title"
             >

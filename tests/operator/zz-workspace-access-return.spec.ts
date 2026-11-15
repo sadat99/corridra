@@ -706,7 +706,7 @@ test('helper sign-in uses helper words and its return lands on the task page, ne
       await expect(main.locator('input')).toHaveCount(2);
       await expect(main.getByRole('link', { name: 'Forgot your work password?' })).toHaveAttribute(
         'href',
-        '/operator/forgot-password',
+        '/operator/forgot-password?for=helper',
       );
       await expect(main).toContainText('Your customer account does not grant');
       await expect(main).not.toContainText(/operator account|OPERATOR ACCESS/);

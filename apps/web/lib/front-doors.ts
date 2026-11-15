@@ -3,6 +3,8 @@
 // reads nothing and counts nothing, so it cannot claim a number it does not have. The words for the
 // founder come from the locked navigation in UI direction (Business, Operations, Routes and settings,
 // People and access, Ready to start?).
+import { helperWays } from './access-doors';
+
 export type DoorItem = {
   id: string;
   title: string;
@@ -61,24 +63,26 @@ export function withWorkspace(items: readonly DoorItem[], workspace: string): re
   );
 }
 
+// The helper addresses and titles come from the access doors (`access-doors.ts`), so they are named once. Only the
+// one-line explanations live here.
 export const helperDoor: readonly DoorItem[] = [
   {
     id: 'accept',
-    title: 'Accept a reviewed invitation',
+    title: helperWays.setup.text,
     line: 'Set up your separate contributor access from the invitation your operator sent.',
-    href: '/contributor/setup',
+    href: helperWays.setup.href,
     primary: true,
   },
   {
     id: 'how',
-    title: 'How assigned work works',
+    title: helperWays.network.text,
     line: 'What a task holds, how evidence is reviewed and what a reward does and does not mean.',
-    href: '/network',
+    href: helperWays.network.href,
   },
   {
     id: 'signin',
-    title: 'Choose your sign-in route',
-    line: 'A customer account and a contributor invitation use different sign-in routes.',
-    href: '/signin',
+    title: helperWays.signIn.text,
+    line: 'Sign in with your work account to open the tasks assigned to you.',
+    href: helperWays.signIn.href,
   },
 ];

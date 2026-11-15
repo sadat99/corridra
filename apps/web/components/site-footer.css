@@ -134,6 +134,18 @@
   text-decoration: underline;
   text-underline-offset: 4px;
 }
+/* Until the header's check has answered, the row keeps its place but is not shown (no flash for a signed-in person, no
+   layout move for anyone). The links stay in the page for a signed-out visitor, and the row appears by itself after
+   800 ms even if the answer never comes or scripts are off (the header's two reads normally finish well inside that). */
+.guide-footer-access[data-pending='true'] {
+  visibility: hidden;
+  animation: guide-footer-access-reveal 1ms linear 800ms forwards;
+}
+@keyframes guide-footer-access-reveal {
+  to {
+    visibility: visible;
+  }
+}
 /* From 701 px the three links are one row in the 14 px size, and the promise and the heading above give back 20 px, so the footer
    stays inside the locked heights (768: 890, 1440: 575; UI/UX.v3 "Footer phone fit (L14)"). */
 @media (min-width: 701px) {

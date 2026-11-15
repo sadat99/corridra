@@ -3,7 +3,8 @@
  * that page. The three pages under /access, the shared "Not what you need?" bar and the help-link lists that
  * sit under the sign-in forms all read from here, so a link or a role is named once.
  *
- * This is separate from `front-doors.ts` (the founder and helper cards), which is unchanged.
+ * `front-doors.ts` (the founder and helper cards behind CORRIDRA_UX_FRONT_DOORS) reads the helper addresses and
+ * titles from `helperWays` below, so the helper door is named once. The founder cards are unchanged.
  * Words are English only for now and are not part of the translation catalogues.
  */
 import { isContributorReturn } from './workspace-navigation';
@@ -186,6 +187,16 @@ export function customerDoorView(input: CustomerDoorInputs): {
   };
 }
 
+/**
+ * The three places a field helper goes, named once: the sign-in, the invitation and the page that explains the work.
+ * The team door below and the helper cards on /contributor (`front-doors.ts`) both read these.
+ */
+export const helperWays = {
+  signIn: { text: 'Open Helper Tasks', href: '/contributor/signin' } as AccessAction,
+  setup: { text: 'Accept an Invitation', href: '/contributor/setup' } as AccessAction,
+  network: { text: 'How the Corridra Network Works', href: '/network' } as AccessAction,
+};
+
 /** Team and network door: /access/team. */
 export const teamDoorPage = {
   eyebrow: 'Team and Network Access',
@@ -211,13 +222,9 @@ export const teamDoorPage = {
       icon: 'network' as AccessIconName,
       title: 'Field helper',
       text: 'You were invited to do local tasks for the Corridra Network.',
-      action: {
-        text: 'Open Helper Tasks',
-        href: '/contributor/signin',
-        plainAnchor: true,
-      } as AccessAction,
+      action: { ...helperWays.signIn, plainAnchor: true } as AccessAction,
       actionKind: 'secondary' as const,
-      textLink: { text: 'Accept an Invitation', href: '/contributor/setup' } as AccessAction,
+      textLink: helperWays.setup,
     },
   ],
   steps: {
@@ -228,7 +235,7 @@ export const teamDoorPage = {
       'Set a separate password of 14 to 128 characters.',
       'Add an authenticator app to your phone.',
     ],
-    more: { text: 'How the Corridra Network Works', href: '/network' } as AccessAction,
+    more: helperWays.network,
   },
 };
 
@@ -345,6 +352,15 @@ export const accessHelp = {
       { href: '/forgot-password', text: 'Reset a customer account password' },
     ],
   }),
+  /** The same page reached from the helper sign-in (?for=helper): helper words, and the way back is the helper door. */
+  helperForgotPassword: {
+    label: 'Recovery options',
+    links: [
+      { href: helperWays.setup.href, text: 'Finish a pending invitation' },
+      { href: helperWays.signIn.href, text: 'Back to helper sign-in', plainAnchor: true },
+      { href: '/forgot-password', text: 'Reset a customer account password' },
+    ],
+  },
   /** Under the operator sign-in form. A contributor return address points the first link at contributor setup. */
   operatorSignIn: (returnTo: string): AccessHelp => {
     const contributor = isContributorReturn(returnTo);

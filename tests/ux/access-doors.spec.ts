@@ -134,3 +134,27 @@ test('the three pages link to each other and write actions in Title Case', async
   await expect(page.locator('main input')).toHaveCount(1);
   await expect(page.locator('main .access-link-field input')).toHaveCount(1);
 });
+
+// "Start a Request Without an Account" is one line from 768 px up, where the two panels sit side by side (it wrapped to
+// two lines at 768). Measured on the real page, in its real font, on the text itself; the 44 px target and the words stay.
+for (const width of [768, 1024, 1440]) {
+  test(`Start a Request Without an Account is one line and a 44 px target at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/access/customer');
+    await page.evaluate(() => document.fonts.ready);
+    const link = page.getByRole('link', {
+      name: 'Start a Request Without an Account',
+      exact: true,
+    });
+    await expect(link).toHaveAttribute('href', '/plan');
+    const lines = await link.evaluate((node) => {
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size;
+    });
+    expect(lines, 'rendered lines of the link text').toBe(1);
+    expect((await link.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  });
+}
