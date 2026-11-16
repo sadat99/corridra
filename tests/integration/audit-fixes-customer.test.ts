@@ -7,7 +7,7 @@ import { buildMoveModel, type MoveInput } from '../../apps/web/lib/move-cards';
 // Audit fixes 1, customer set (owner-approved packet, 16 Nov 2026). Each case fails on the code before the fix.
 //   23  one colour per journey: the sidebar dots, the room tags and the Home tags read the journey tokens;
 //   25  the Move switch draws no zero, and a count is spoken as what needs the person;
-//   26  "Waiting on others" is newest first, rows without a date last, in a stable order;
+//   26  "Waiting on others" is newest first, rows without a date last, ties kept in the order given;
 //   29  the Reports empty line names the Requests page, not "My Work";
 //   32  /plan does not ask a signed-in customer to create an account;
 //   34  a real programme says "Planning record only", never a stray "data".
@@ -188,7 +188,7 @@ describe('26: Waiting on others order', () => {
     ]);
   });
 
-  it('breaks a tie on the same day by id, so the order never changes between loads', () => {
+  it('orders two requests on the same day by time, so the order never changes between loads', () => {
     const one = buildMoveModel({
       ...empty,
       workspaces: [owner],
@@ -229,6 +229,25 @@ describe('26: Waiting on others order', () => {
       'request:rb',
       'request:ra',
     ]);
+  });
+
+  it("keeps a request's waiting Moves in the order the team set, even where the ids sort the other way", () => {
+    const model = buildMoveModel({
+      ...empty,
+      workspaces: [owner],
+      requests: [request('ra', '2026-10-29T08:00:00Z')],
+      // Given in position order (moves.ts ORDER BY m.position); "m2" sorts after "m1" as text.
+      moves: [
+        {
+          requestId: 'ra',
+          moves: [
+            { id: 'm2', verb: 'Confirm', object: 'the dates', holder: 'team', dueOn: null },
+            { id: 'm1', verb: 'Send', object: 'the hall plan', holder: 'third', dueOn: null },
+          ],
+        },
+      ],
+    });
+    expect(model.waiting.map((row) => row.id)).toEqual(['move:m2', 'move:m1', 'request:ra']);
   });
 });
 

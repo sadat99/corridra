@@ -280,7 +280,8 @@ export function buildMoveModel(
   }
 
   // Four sources feed the waiting list, so it gets one stable order: newest received first (by time, not by the
-  // date text), rows without a readable date last, the id breaking ties.
+  // date text), rows without a readable date last. The sort is stable, so rows received at the same time keep the
+  // order they were given in: a request's Moves stay in the order the team set (moves.ts reads them by position).
   const time = (row: WaitingRow) => {
     const value = waitingTime.get(row.id);
     return value === undefined || Number.isNaN(value) ? null : value;
@@ -288,9 +289,7 @@ export function buildMoveModel(
   waiting.sort((a, b) => {
     const at = time(a);
     const bt = time(b);
-    return (
-      Number(at === null) - Number(bt === null) || (bt ?? 0) - (at ?? 0) || a.id.localeCompare(b.id)
-    );
+    return Number(at === null) - Number(bt === null) || (bt ?? 0) - (at ?? 0);
   });
   const newest = [...input.requests].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
   cards.sort((a, b) => Number(b.kind === 'move') - Number(a.kind === 'move'));
