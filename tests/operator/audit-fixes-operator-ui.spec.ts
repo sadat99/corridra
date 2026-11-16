@@ -23,8 +23,9 @@ const dashboardMissions = [
   {
     id: id(11),
     mission_name: 'Invented Machinery Co',
-    origin_market: 'Bangladesh',
-    destination_market: 'Germany',
+    // Market keys as app.market_scope holds them (0020_versioned_corridors.sql), never display names.
+    origin_market: 'BD',
+    destination_market: 'DE',
     owner_id: owner.user_id,
     due_at: '2026-11-02T13:36:00Z',
     next_action: 'Call the invented buyer',
@@ -194,6 +195,20 @@ test('Next actions name the mission and its owner and use the house date, never 
   await expect(items.nth(0)).toContainText(
     'Invented Machinery Co · Bangladesh to Germany · Owner: Invented Owner Ada · Due 2 Nov 2026',
   );
+  await expect(items.nth(0)).not.toContainText('BD to DE');
+  // The name is drawn in the link colour (cobalt), not in the navy of the page text.
+  const colours = await items
+    .nth(0)
+    .getByRole('link')
+    .evaluate((link) => {
+      const probe = document.createElement('span');
+      probe.style.color = 'var(--brand)';
+      link.parentElement!.append(probe);
+      const brand = getComputedStyle(probe).color;
+      probe.remove();
+      return { link: getComputedStyle(link).color, brand };
+    });
+  expect(colours.link).toBe(colours.brand);
   await expect(items.nth(0).getByRole('link', { name: 'Invented Machinery Co' })).toHaveAttribute(
     'href',
     `/operator/missions/${id(11)}?workspace=${fixtureTenant}`,

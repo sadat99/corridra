@@ -13,6 +13,7 @@ import { displayDate } from '@corridra/domain/locale';
 import { formatDate } from '../../lib/ux/format';
 import { ownerName, type Owner } from './missions';
 import { missionHref } from './[section]/[missionId]/mission-labels';
+import { placeName } from '../account/request-words';
 import { useCallback, useEffect, useRef, useState, type FormEvent, type MouseEvent } from 'react';
 import { formatMoney, currency } from '@corridra/domain/opportunities';
 import {
@@ -745,8 +746,13 @@ export function Operations({
                                       : 'Unnamed mission'}
                                   </a>
                                   {' · '}
-                                  {m.origin_market && m.destination_market
-                                    ? `${String(m.origin_market)} to ${String(m.destination_market)}`
+                                  {/* Markets are app.market_scope keys (a country code or a bloc such
+                                      as EU); the shared helper names them and keeps any other key. */}
+                                  {typeof m.origin_market === 'string' &&
+                                  m.origin_market &&
+                                  typeof m.destination_market === 'string' &&
+                                  m.destination_market
+                                    ? `${placeName(m.origin_market)} to ${placeName(m.destination_market)}`
                                     : 'No route yet'}
                                   {' · '}Owner:{' '}
                                   {ownerName(
