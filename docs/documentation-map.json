@@ -1564,6 +1564,11 @@
       "use": "Exact hashed ledger at aee8c62 (PR 525 fix round 2 head), before Guardian 10 records 9 recorded the main CI of 524, the helper interest install run 43837198806 with the live checks and the PR 525 reviews; preserves the Takeover, Open and installs bullets of that date; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-g11-records-10-2026-11-16.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at 6635a1d (unchanged through 6d5e3de), before Guardian 11 records 10 recorded the takeover, the 525 and 528 merges, the owner's 16 Nov words and the conductor copy; preserves the Guardian 10 Takeover, Open and follow-up bullets; use the current ledger for live state."
+    },
+    {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"
