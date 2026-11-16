@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { CorridraIcon } from '../../../components/corridra-icon';
 import { mrLabels } from '../../../components/mr/labels';
 import {
@@ -115,10 +115,13 @@ function Stage({
 // "Refresh Counts" reads again.
 function NextStep({
   live,
+  checking = false,
   onOpen,
   onRefresh,
 }: {
   live: Live;
+  /** True until the first participants read answers: the line then says it is checking, not "Not measured yet". */
+  checking?: boolean;
   onOpen: (target: 'people' | 'plan') => (() => void) | undefined;
   onRefresh?: () => void;
 }) {
@@ -133,7 +136,7 @@ function NextStep({
         <small>Your next step</small>
         <b>{next.title}</b>
         <span className="programme-boarding">
-          <strong>Boarding</strong> {boardingLine(live.counts)}
+          <strong>Boarding</strong> {checking ? 'Checking…' : boardingLine(live.counts)}
           {onRefresh && (
             <button type="button" className="text-link programme-refresh" onClick={onRefresh}>
               Refresh Counts
@@ -163,6 +166,7 @@ function Glance({
   termsOn,
   onOpen,
   host,
+  checking = false,
 }: {
   counts: BoardingCounts | null;
   projection: Parameters<typeof programmeGlance>[1];
@@ -173,6 +177,8 @@ function Glance({
   onOpen: (target: 'people' | 'plan') => (() => void) | undefined;
   /** Where the projection read watches whether the Overview is on screen. */
   host?: (node: HTMLElement | null) => void;
+  /** True while the first projection read is on its way and nothing is known yet. */
+  checking?: boolean;
 }) {
   const tiles = programmeGlance(counts, projection, projectionsOn);
   const coverage = meetingCoverage(projection);
@@ -236,7 +242,11 @@ function Glance({
           </h5>
           {attention.length === 0 ? (
             <p className="programme-quiet">
-              {projection ? 'Nothing needs you right now.' : 'Not measured yet.'}
+              {projection
+                ? 'Nothing needs you right now.'
+                : checking
+                  ? 'Checking…'
+                  : 'Not measured yet.'}
             </p>
           ) : (
             <ul className="programme-attention">
@@ -409,6 +419,8 @@ function LiveGlance(props: {
   counts: BoardingCounts | null;
   terms: ChecklistTerms | null;
   termsOn: boolean;
+  /** The last projection the room heard, shown while this read is on its way, so a refresh never blanks it. */
+  last: ProgrammeGlanceSource | null;
   onProjection: (projection: ProgrammeGlanceSource | null) => void;
   onOpen: (target: 'people' | 'plan') => (() => void) | undefined;
   /** Decisions-first: the facts replace the glance and attention cards. */
@@ -421,11 +433,16 @@ function LiveGlance(props: {
     programmeId ?? '',
   );
   const { onProjection } = props;
-  const projection = view.data;
+  // A read has answered once it has data or a notice. Until then the room keeps the last projection it heard. Once
+  // this read has had data, losing it (expiry, a hidden page) is passed on, so an old projection is never kept.
+  const answered = view.data !== null || view.notice !== '';
+  const had = useRef(false);
   useEffect(() => {
-    onProjection(projection);
-    return () => onProjection(null);
-  }, [projection, onProjection]);
+    if (view.data) had.current = true;
+    if (answered || had.current) onProjection(view.data);
+  }, [answered, view.data, onProjection]);
+  const projection = answered ? view.data : props.last;
+  const checking = !answered && !props.last;
   return (
     <>
       {props.facts ? (
@@ -446,6 +463,7 @@ function LiveGlance(props: {
           termsOn={props.termsOn}
           onOpen={props.onOpen}
           host={host}
+          checking={checking}
         />
       )}
       {!view.data && view.notice ? <p className="programme-note">{view.notice}</p> : null}
@@ -496,7 +514,11 @@ function LiveStatus({ scope, onRead }: { scope: ParticipantScope; onRead: (live:
         : null,
     [status, data],
   );
-  useEffect(() => onRead({ counts, notice }), [counts, notice, onRead]);
+  // Only an answered read is passed on, so the room keeps its last counts while a new read is on its way. A failed
+  // or denied read answers with no counts, and the room then says the counts are not measured.
+  useEffect(() => {
+    if (status !== 'loading') onRead({ counts, notice });
+  }, [status, counts, notice, onRead]);
   return null;
 }
 
@@ -604,9 +626,19 @@ export function ProgrammeRoom({
   const lenses = roomGroups;
   const available = lenses.filter((item) => item.key === 'overview' || panels[item.key]);
   const [read, setRead] = useState<Live>(nothingRead);
-  const onRead = useCallback((live: Live) => setRead(live), []);
+  // Which read last answered (the `reads` count), or null before the first answer. While the newest read is on its
+  // way the stage keeps the last step and says it is busy; before any answer it says it is checking.
+  const [heard, setHeard] = useState<number | null>(null);
+  const onRead = useCallback(
+    (live: Live) => {
+      setRead(live);
+      setHeard(reads);
+    },
+    [reads],
+  );
   const reading = participantsEnabled && onScreen;
   const live = reading ? read : nothingRead;
+  const checking = reading && heard === null;
   const refresh = () => setReads((count) => count + 1);
   // The programme projection is read inside the glance; its agenda also marks the "Plan the days" stage. The
   // terms read runs here, beside it, so neither waits for the other (nor does the Overview wait for either).
@@ -694,8 +726,17 @@ export function ProgrammeRoom({
         <h3>{name}</h3>
         <p className="room-meta">{purpose}</p>
         <div className="programme-notes">{notes}</div>
-        <div className="room-stage room-stage--timeline">
-          <Stage counts={live.counts} projection={projection} onInvite={onInvite} />
+        <div
+          className="room-stage room-stage--timeline"
+          aria-busy={reading && heard !== null && heard !== reads ? true : undefined}
+        >
+          {checking ? (
+            <p className="mr-stage-line" role="status">
+              Checking where this programme stands…
+            </p>
+          ) : (
+            <Stage counts={live.counts} projection={projection} onInvite={onInvite} />
+          )}
         </div>
       </header>
       {reading ? <LiveStatus key={reads} scope={scope} onRead={onRead} /> : null}
@@ -708,7 +749,12 @@ export function ProgrammeRoom({
           onRefresh={reading ? refresh : undefined}
         />
       ) : participantsEnabled ? (
-        <NextStep live={live} onOpen={onOpen} onRefresh={reading ? refresh : undefined} />
+        <NextStep
+          live={live}
+          checking={checking}
+          onOpen={onOpen}
+          onRefresh={reading ? refresh : undefined}
+        />
       ) : (
         // Without the participants panel there is nothing to read or do next, so the room says only that.
         <p className="programme-boarding">
@@ -766,6 +812,7 @@ export function ProgrammeRoom({
                     counts={live.counts}
                     terms={terms}
                     termsOn={termsOn}
+                    last={readProjection}
                     onProjection={onProjection}
                     onOpen={onOpen}
                     facts={decisions ? { applications } : undefined}

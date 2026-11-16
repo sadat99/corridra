@@ -2111,6 +2111,19 @@ summary:hover {
   --info-surface: var(--ac-surface-selected);
   --unknown: var(--ac-unknown);
   --unknown-surface: var(--ac-surface-subtle);
+  /* audit-fixes-1 (AF-1) start: one colour per journey (item 23), aliases of the roles above and nothing new.
+     The sidebar dots, the room tags and the Home tags all read these. Organising is green, as the approved
+     sidebar shows; Selling is copper (text in copper ink, never plain copper); Sourcing is cobalt. */
+  --journey-source: var(--brand);
+  --journey-source-surface: var(--selected-surface);
+  --journey-source-text: var(--brand);
+  --journey-sell: var(--editorial-accent);
+  --journey-sell-surface: var(--caution-surface);
+  --journey-sell-text: var(--ac-copper-ink);
+  --journey-organise: var(--positive);
+  --journey-organise-surface: var(--positive-surface);
+  --journey-organise-text: var(--positive);
+  /* audit-fixes-1 (AF-1) end */
   /* Type scale (UI/UX.v3, owner "full approved" 13 Nov 2026). Label 12, secondary 14, body and controls 16,
      card or row title 18, section title and key figure 24 (22 on a phone), page title 40 (29 on a phone),
      home display 56. Weights 400, 500 and 600 only. Every font size in a stylesheet is one of these tokens. */
@@ -9032,3 +9045,30 @@ samp {
   margin: 0;
   padding: 0;
 }
+
+/* audit-fixes-1 (AF-1) start */
+/* Item 33: in the plain request page layout from 1001 px the receipt check sits under the summary in the same
+   column, so the summary is not sticky there: a sticky panel would be drawn over the receipt heading. A jump to
+   #receipt-check lands with its heading clear of the sticky site header. */
+@media (min-width: 1001px) {
+  .guide-plan-body:has(.ux-brief-summary):not(
+      :has(.ux-job-choice, .receipt-saved, .receipt-panel:not(#receipt-check))
+    )
+    .ux-brief-summary {
+    position: static;
+  }
+}
+#receipt-check {
+  scroll-margin-top: 7rem;
+}
+/* Item 35: wherever the floating corner dock shows (above 700 px, on pages without the customer or team header),
+   the quiet footer keeps the dock's corner clear (20 px offset, 44 px button, 16 px gap), so no footer link sits
+   under it. The public footer (.guide-footer) is not touched. */
+@media (min-width: 701px) {
+  body:not(:has(.ux-customer-header, .ux-team-header))
+    .site-shell:has(> .corner-dock:not(.header-help))
+    > .site-footer {
+    padding-inline-end: var(--space-20);
+  }
+}
+/* audit-fixes-1 (AF-1) end */

@@ -511,7 +511,6 @@
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  border-radius: 999px;
   background: var(--line);
   color: var(--text-2);
   font-size: var(--text-xs);
@@ -1063,22 +1062,22 @@
   background: var(--text-3);
 }
 .move-tag[data-journey='source']::before {
-  background: var(--brand);
+  background: var(--journey-source);
 }
 .move-tag[data-journey='sell']::before {
-  background: var(--editorial-accent);
+  background: var(--journey-sell);
 }
 .move-tag[data-journey='organise']::before {
-  background: var(--brand-deep);
+  background: var(--journey-organise);
 }
 .move-tag[data-journey='source'] {
-  color: var(--brand);
+  color: var(--journey-source-text);
 }
 .move-tag[data-journey='sell'] {
-  color: var(--ac-copper-ink);
+  color: var(--journey-sell-text);
 }
 .move-tag[data-journey='organise'] {
-  color: var(--brand-deep);
+  color: var(--journey-organise-text);
 }
 
 /* The switch: the segmented control, counts in mono. */

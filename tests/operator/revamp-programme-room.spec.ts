@@ -984,3 +984,72 @@ for (const width of [390, 1440])
         );
     }
   });
+
+// Audit fixes 1, item 21 (owner-approved packet, 16 Nov 2026): choosing a group reads the counts again. While that
+// read is on its way the stage keeps the last step it knew and says it is busy; it never drops to "Not measured
+// yet" in between. Before the first answer it says it is checking. A failed read still says not measured.
+async function openSlowly(page: Page, answer: { participants: () => number; status?: number }) {
+  await page.route('**/api/customer-programme-*', (route) =>
+    route.fulfill({ status: 503, json: { error: 'unavailable' } }),
+  );
+  await page.route('**/api/customer-programme-projections**', async (route) => {
+    await new Promise((done) => setTimeout(done, answer.participants()));
+    await route.fulfill({ json: projection(none) });
+  });
+  await page.route('**/api/customer-programme-participants*', async (route) => {
+    await new Promise((done) => setTimeout(done, answer.participants()));
+    await route.fulfill(
+      answer.status
+        ? { status: answer.status, json: { error: 'unavailable' } }
+        : { json: sampleParticipants },
+    );
+  });
+  await page.route('**/api/customer-programmes*', (route) =>
+    route.fulfill({
+      json: { workspaceId, programmes: [programme], nextAfter: null, synthetic: true },
+    }),
+  );
+  await page.goto(`${origin}/?room=1&proj=1`);
+  await expect(page.getByRole('article', { name: programme.name })).toBeVisible();
+}
+
+for (const width of [390, 1440])
+  test(`item 21 at ${width}: the stage keeps its step while a group change reads again, and says it is checking before the first answer`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    let delay = 900;
+    const answer = { participants: () => delay, status: undefined as number | undefined };
+    await openSlowly(page, answer);
+    const room = page.getByRole('article', { name: programme.name });
+    const stage = room.locator('.room-head > .room-stage');
+    // First load: nothing is known yet, so the stage says it is checking, never "Not measured yet". These reads are
+    // taken at once, while the 900 ms read is still on its way, so they cannot pass by waiting for the answer.
+    await expect(stage.getByRole('status')).toHaveText('Checking where this programme stands…');
+    const said = room.locator('.room-head, .room-next, .programme-attention-card');
+    expect(await said.getByText(/Not measured yet/).count()).toBe(0);
+    expect(await room.locator('.programme-attention-card').textContent()).toContain('Checking…');
+    const step = stage.locator('li[aria-current="step"]');
+    await expect(step).toHaveCount(1);
+    await expect(stage).not.toHaveAttribute('aria-busy', 'true');
+    const known = await step.textContent();
+    // Every later read is slow: the step stays while it runs, the stage says it is busy, and nothing says unknown.
+    for (const group of [groups[1], groups[0]]) {
+      await room.getByRole('button', { name: group, exact: true }).click();
+      await page.waitForTimeout(300);
+      expect(await stage.getAttribute('aria-busy')).toBe('true');
+      expect(await step.count()).toBe(1);
+      expect(await step.textContent()).toBe(known);
+      expect(await said.getByText(/Not measured yet/).count()).toBe(0);
+      await expect(stage).not.toHaveAttribute('aria-busy', 'true');
+    }
+    expect(await room.locator('.programme-attention-card').textContent()).not.toContain(
+      'Not measured yet',
+    );
+    // A failed read is honest: the counts are gone and the next step says they are not measured.
+    answer.status = 503;
+    delay = 0;
+    await room.getByRole('button', { name: groups[1], exact: true }).click();
+    await expect(room.locator('.room-next')).toContainText('Not measured yet');
+    await expect(stage).not.toHaveAttribute('aria-busy', 'true');
+  });

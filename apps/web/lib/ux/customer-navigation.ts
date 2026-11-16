@@ -197,11 +197,16 @@ export function customerGroupLinks({
   ];
 }
 
+/** A programme room, /account/delegations/<workspace id>, and anything under it belongs to Programmes. */
+const PROGRAMME_ROOM_PATH =
+  /^\/account\/delegations\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(\/|$)/i;
+
 /** Which sidebar group link a path belongs to, so it, not the destination above it, is marked current. */
 export function customerGroupHere(pathname: string): string | null {
   if (
     pathname === '/account/delegations/organise' ||
-    pathname.startsWith('/account/delegations/organise/')
+    pathname.startsWith('/account/delegations/organise/') ||
+    PROGRAMME_ROOM_PATH.test(pathname)
   )
     return 'programmes';
   if (pathname === '/account/delegations') return 'registrations';

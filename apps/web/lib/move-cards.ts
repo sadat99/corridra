@@ -267,6 +267,14 @@ export function buildMoveModel(
       });
   }
 
+  // Four sources feed the waiting list, so it gets one stable order: newest received first, rows without a
+  // date last, the id breaking ties.
+  waiting.sort(
+    (a, b) =>
+      Number(a.received === null) - Number(b.received === null) ||
+      (b.received ?? '').localeCompare(a.received ?? '') ||
+      a.id.localeCompare(b.id),
+  );
   const newest = [...input.requests].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
   cards.sort((a, b) => Number(b.kind === 'move') - Number(a.kind === 'move'));
   return {
