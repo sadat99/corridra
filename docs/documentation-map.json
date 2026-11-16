@@ -1539,6 +1539,11 @@
       "use": "Exact hashed ledger at 5d94701 (the PR 523 merge), before the main CI of merges 521 to 523, the PR 524 core 0030 purge and privacy decisions and the owner words relayed by Orchestrator 12 were recorded; preserves the Guardian 10 records 7 Resume bullets; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-aw1-records-2026-11-16.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at ec73437 (the PR 524 merge; unchanged since ca27a1a), before Builder AW-1 recorded PR 525 and the PR 524 merge; preserves the Guardian 10 records 8 Resume bullets; use the current ledger for live state."
+    },
+    {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"
