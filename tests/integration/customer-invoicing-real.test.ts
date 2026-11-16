@@ -7,6 +7,7 @@ import { configureRealBilling } from '../../packages/auth/src/customer-billing-r
 import {
   configureRealInvoicing,
   defaultRealInvoicingEntity,
+  realInvoicingEntityInput,
 } from '../../packages/auth/src/customer-invoicing-real-configuration';
 import { CustomerWorkspaceService } from '../../packages/auth/src/customer-workspaces';
 import { CustomerBillingService, type BillingPlan } from '../../packages/auth/src/customer-billing';
@@ -1741,4 +1742,61 @@ test('pausing closes customers and staff and keeps every record; opening again r
   });
   expect((await customer().overview({ workspaceId })).invoices.length).toBeGreaterThan(0);
   expect(await count()).toBe(before);
+});
+
+// The shape the owner passes to set_supplier once every field is real: no named approver and no made-up field. Every value
+// here is an invented test value, never a real supplier.
+const testSupplier = {
+  legalName: 'Example Test Supplier Pte Ltd',
+  address: '1 Marina View, Test Tower 00-00, Singapore 000000',
+  country: 'SG',
+  uen: 'T00TEST000X',
+  gstRegistered: true,
+  gstRegistrationNo: 'TEST-GST-000000',
+  taxLabel: 'GST',
+  gstRateBps: 900,
+  paymentTermsDays: 30,
+  paymentInstructions: 'Pay by bank transfer to the test account, quoting the invoice number',
+  financeLabel: 'Sadat Finance',
+  approverEmail: null,
+  madeupFields: [],
+};
+
+test('the set_supplier shape with no named approver and no made-up field is accepted as written', () => {
+  expect(realInvoicingEntityInput.parse(testSupplier)).toEqual(testSupplier);
+});
+
+test('set_supplier writes those details, and allow_single_approver leaves a closed control closed', async () => {
+  await control({ enabled: false });
+  expect(await control({ entity: testSupplier })).toMatchObject({
+    enabled: false,
+    entityChanged: true,
+  });
+  const latest = (
+    await s.f.owner.query(
+      'SELECT legal_name,address,country,gst_registered,gst_registration_no,tax_label,gst_rate_bps,payment_terms_days,finance_label,approver_principal_id,placeholder_fields FROM customer_private.real_invoicing_entity ORDER BY version DESC LIMIT 1',
+    )
+  ).rows[0];
+  expect(latest).toEqual({
+    legal_name: testSupplier.legalName,
+    address: testSupplier.address,
+    country: 'SG',
+    gst_registered: true,
+    gst_registration_no: testSupplier.gstRegistrationNo,
+    tax_label: 'GST',
+    gst_rate_bps: 900,
+    payment_terms_days: 30,
+    finance_label: 'Sadat Finance',
+    approver_principal_id: null,
+    placeholder_fields: [],
+  });
+  const single = await control({ requireSecondApprover: false });
+  expect(single).toMatchObject({
+    enabled: false,
+    requireSecondApprover: false,
+    controlChanged: true,
+  });
+  expect((await s.f.owner.query('SELECT customer_private.real_invoicing_open() o')).rows[0].o).toBe(
+    false,
+  );
 });

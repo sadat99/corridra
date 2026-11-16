@@ -98,6 +98,9 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'sourcing_workflow_install',
     'sourcing_workflow_enable',
     'sourcing_workflow_pause',
+    'data_cleanup_inventory',
+    'data_cleanup_archive',
+    'data_cleanup_restore',
   ]);
   const defaults = Object.fromEntries(
     Object.entries(declared).map(([name, input]) => [name, input.default]),
@@ -139,6 +142,9 @@ test('each field-module choice maps to install only and reaches the exact-head c
     ['sourcing_workflow_install', u, u, u, u, u, u, u, u],
     ['sourcing_workflow_enable', u, u, u, u, u, u, u, u],
     ['sourcing_workflow_pause', u, u, u, u, u, u, u, u],
+    ['data_cleanup_inventory', u, u, u, u, u, u, u, u],
+    ['data_cleanup_archive', u, u, u, u, u, u, u, u],
+    ['data_cleanup_restore', u, u, u, u, u, u, u, u],
   ]) {
     const inputs = { ...defaults, field_modules_action: choice };
     assert.equal(evaluate(env.SPECIFICATION_CONFIRMATION_ACTION, inputs), confirmation);
@@ -290,4 +296,43 @@ test('the sourcing workflow choices install, open and pause only that module, ea
             `${choice} must not move ${name}`,
           );
   }
+});
+
+test('the data cleanup choices list, archive or restore only, each archive or restore with a reason', () => {
+  const workflow = parseDocument(
+    readFileSync('.github/workflows/install-customer-modules.yml', 'utf8'),
+  ).toJS();
+  const declared = workflow.on.workflow_dispatch.inputs;
+  const env = workflow.jobs.install.steps.find(
+    (step) => step.name === 'Report or install the customer modules',
+  ).env;
+  const evaluate = (expression, inputs) =>
+    runInNewContext(expression.replace(/^\$\{\{\s*|\s*\}\}$/g, ''), { inputs });
+  const defaults = Object.fromEntries(
+    Object.entries(declared).map(([name, input]) => [name, input.default]),
+  );
+  for (const choice of declared.field_modules_action.options) {
+    const inputs = { ...defaults, field_modules_action: choice };
+    const expected =
+      {
+        data_cleanup_inventory: 'inventory',
+        data_cleanup_archive: 'archive',
+        data_cleanup_restore: 'restore',
+      }[choice] ?? 'unchanged';
+    assert.equal(evaluate(env.DATA_CLEANUP_ACTION, inputs), expected, choice);
+    const reason = evaluate(env.DATA_CLEANUP_REASON, inputs);
+    if (expected === 'archive' || expected === 'restore') {
+      assert.ok(reason.length >= 10 && reason.length <= 500, `${choice} reason length`);
+      assert.match(reason, expected === 'archive' ? /archived/ : /restored/);
+    } else assert.equal(reason, '');
+    // No other module moves with a data cleanup choice.
+    if (choice.startsWith('data_cleanup_'))
+      for (const [name, value] of Object.entries(env))
+        if (name.endsWith('_ACTION') && name !== 'DATA_CLEANUP_ACTION')
+          assert.ok(
+            ['unchanged', 'no'].includes(String(evaluate(String(value), inputs))),
+            `${choice} must not move ${name}`,
+          );
+  }
+  assert.equal(Object.keys(declared).length, 25);
 });
