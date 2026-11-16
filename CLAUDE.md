@@ -2,6 +2,8 @@
 
 Follow [AGENTS.md](AGENTS.md), applicable nested instructions and the shared [developer handoff](docs/START_HERE.md).
 
+Operating rules: load skill `operating-conductor:conductor` first.
+
 Start: `git status --short`, fetch main and open PRs, then `node scripts/v3-context.mjs` and `node scripts/v3-context.mjs verify`. The ledger is current state; historical plans and old next-task prose are not.
 
 Before product work, read the full V3 contract and product vision once per session. Query affected requirements and relevant ADR/module/UI instructions first. Preserve original actions, authority, sources, exact money/history and closed real-operation gates. Never infer acceptance from a plan, deployed code or old totals.
@@ -16,4 +18,4 @@ Rotation: see [session rotation](docs/agents/session-rotation.md); at 250k token
 
 Agent squad: for build, fix, review or record work use `corridra-squad`. Every run starts with `corridra-authority` and carries its stamped brief; act only on plans the brief lists under FOLLOW. **Codex follows the owner's later lean-work exception in `AGENTS.md`: no subagents unless explicitly requested.**
 
-Owner,3 Nov2026: continue approved batches sequentially; merge after checks, verify release and update docs after each merge. AGENTS.md records this bounded exception and unchanged disclosure, protected review, activation/provider and payment controls.
+Owner, 3 Nov 2026: continue approved batches sequentially; merge after checks, verify release, update docs after each merge. Exception and unchanged controls: AGENTS.md.

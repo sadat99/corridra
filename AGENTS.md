@@ -20,7 +20,7 @@ New public copy must sound natural, use concrete wording and contain no em dashe
 
 Never print credentials or production personal information. Use secure settings for values, separate production/preview credentials and sanitized non-production data. Never bypass authorization/RLS to make tests pass. AI cannot control permission, money, verified facts or legal decisions.
 
-Use the existing isolated checkout; no Git worktree unless requested. Use short-lived PR branches and the current plan's release gates. Open draft PRs only. The owner gives a merge command for each PR (owner decisions 2026-10-25 and 2026-10-29, which replaced the earlier standing authorization for agents to merge and deploy their own PRs). Without his command, do not merge, dispatch workflows, change production settings, call providers or redeploy. Nothing here authorizes real operations, provider activation or bypassing checks. Main Git auto-deployment is on (owner decision, 2026-10-20): a merge to main deploys itself, so do not deploy by hand. Verify the deployment for the merged SHA is READY and serves the intended revision; deploy the exact merged SHA explicitly only if a merge did not deploy. Do not bypass existing branch protection or force-push shared history.
+Use the existing isolated checkout; no Git worktree unless requested. Use short-lived PR branches and the current plan's release gates. Open draft PRs only. The Guardian merges once the conductor Merge Gate passes, never past a closed gate (owner, 16 November 2026; replaced the per-PR merge command of 25 and 29 October 2026). Without the owner's word, do not dispatch workflows, change production settings, call providers or redeploy. Nothing here authorizes real operations, provider activation or bypassing checks. Main Git auto-deployment is on (owner decision, 2026-10-20): a merge to main deploys itself, so do not deploy by hand. Verify the deployment for the merged SHA is READY and serves the intended revision; deploy the exact merged SHA explicitly only if a merge did not deploy. Do not bypass existing branch protection or force-push shared history.
 
 The owner authorizes routine deletion of completed temporary Neon branches after required checks and sanitized evidence are preserved. First inspect exact project/branch IDs, parents, children, PR status and environment bindings; remove only retired preview settings, verify deletion and production health, and keep production/default branches, sterile parents, open-PR environments and branches needed for unfinished work. Clean up at the end of each task, never by age or name alone.
 
@@ -38,7 +38,7 @@ Claude Code and Codex share repository memory. Use [the existing handoff](docs/S
 
 Owner, 13 November 2026: **"everything that gets built from now should stick to this UI/UX.v3 unless we launch the v4"** ([version block](docs/agents/ui-direction.md)). LEGACY documents are history.
 
-Standing owner [parallel work rules](docs/agents/operating-rules.md), 13 November 2026: one orchestrator, one Guardian who merges and keeps records, "At most 4 builder sessions at once", "Never merge before the Guardian's PASS", "$30" per builder, "$60" orchestrator. Codex lean exception stays.
+Standing owner [parallel work rules](docs/agents/operating-rules.md), 13 November 2026: one orchestrator, one Guardian who merges and keeps records, "At most 4 builder sessions at once", "Never merge before the Guardian's PASS", "$30" per builder, "$60" orchestrator. Codex lean exception stays. Roles updated 16 Nov 2026, see operating-rules.md.
 
 # V3 execution rules
 
@@ -56,7 +56,7 @@ Standing owner [parallel work rules](docs/agents/operating-rules.md), 13 Novembe
 - Discover connector names with a bounded result first; shared description boilerplate can match every tool and defeat filtering.
 - Use discovered file paths and navigation IDs in inventories and verification; never guess them.
 - After a patch context mismatch, read the exact target lines before retrying.
-- Identity: branch commits are authored as `Claude <noreply@anthropic.com>` (set once in the clone's local git config; the session stop hook requires it and previews deploy fine). What is published on main is the squash commit GitHub creates when the owner's account opens and merges the PR, so it carries the owner identity. Before publishing, verify that squash commit on main shows the owner; correct inherited local configuration forward without rewriting pushed history.
+- Identity: branch commits are authored as `Claude <noreply@anthropic.com>` (set once in the clone's local git config; the session stop hook requires it and previews deploy fine). What is published on main is the squash commit GitHub creates when the PR is merged. Before publishing, verify that squash commit's author on main; correct inherited local configuration forward without rewriting pushed history.
 - After a missing path or unsupported CLI field, inspect available paths/fields before retrying; never substitute another guessed name.
 - Verify rendered accessible names, including descriptive descendants, before writing exact navigation selectors; preserve every behavior and denial assertion when correcting a driver.
 - Select country/workspace controls by the rendered combobox role/name; exact label text can include option descendants even when the computed accessible name does not.
