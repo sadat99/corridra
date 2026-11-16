@@ -1569,6 +1569,11 @@
       "use": "Exact hashed ledger at 6635a1d (unchanged through 6d5e3de), before Guardian 11 records 10 recorded the takeover, the 525 and 528 merges, the owner's 16 Nov words and the conductor copy; preserves the Guardian 10 Takeover, Open and follow-up bullets; use the current ledger for live state."
     },
     {
+      "path": "docs/v3/history/ledger-before-g12-records-13-2026-11-16.md",
+      "classification": "Historical evidence snapshot",
+      "use": "Exact hashed ledger at c095cb8 (Guardian 11 records 10 and the simplify decision), before Guardian 12 records 13 recorded the takeover, the 529 and 531 merges and the PR 530 scope; preserves the Guardian 11 Takeover, Main, Lanes and follow-up bullets; use the current ledger for live state."
+    },
+    {
       "path": "docs/adr/0075-programme-projections-and-consented-meeting-counts.md",
       "classification": "Architecture decision",
       "use": "Accepted Batch D company/readiness/agenda/meeting disclosure contract; explicit owner defaults approved, implementation and release evidence remain separately tracked"
