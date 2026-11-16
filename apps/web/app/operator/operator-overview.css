@@ -3365,8 +3365,9 @@
 }
 /* Next actions (audit fixes 1, item 8): the mission name opens the mission page. It sits inside the sentence, so it
    is drawn as a link in the text (underlined, the link colour) rather than as a separate button row. */
+/* An inline link inside a sentence is exempt from the 44 px target size (WCAG 2.2, 2.5.8 inline exception). */
 #ops-dashboard .ux-next-action li > p > a {
-  color: var(--brand-deep);
+  color: var(--brand);
   font-weight: 600;
   text-decoration: underline;
 }
