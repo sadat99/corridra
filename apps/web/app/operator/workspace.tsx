@@ -444,8 +444,9 @@ function TenantWorkspace({
             ))}
           </select>
         </label>
-        <Link prefetch={false} className="text-link" href="/workspace">
-          <OperatorIcon name="help" /> All workspaces and access help
+        {/* Staff stay in staff space (ADR-020): the access help every staff role can open is the Authenticator section. */}
+        <Link prefetch={false} className="text-link" href="#workspace-authenticator">
+          <OperatorIcon name="help" /> Sign-In and Access Help
         </Link>
         <button className="text-link" disabled={busy} onClick={signOut}>
           <OperatorIcon name="exit" /> Sign Out

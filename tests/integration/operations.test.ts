@@ -536,3 +536,29 @@ test('operational metadata never widens the classification of its backing source
     ).rows,
   ).toEqual([{ id }]);
 });
+test('the dashboard names each mission and only this workspace’s mission owners; other roles stay denied', async () => {
+  const t = await f.target();
+  const company = (
+    await f.owner.query("SELECT brief->>'company' AS company FROM app.mission_intake WHERE id=$1", [
+      t.missionId,
+    ])
+  ).rows[0].company;
+  expect(company).toEqual(expect.any(String));
+  for (const user of ['owner', 'operator']) {
+    const d = await s.dashboard(f.users[user]!.ctx);
+    expect(d.missions.find((m) => m.id === t.missionId)?.mission_name).toBe(company);
+    // Only the id and the display name of each owner, and never a member of another workspace.
+    expect(d.owners).toContainEqual({ user_id: f.users.operator.id, name: 'Synthetic operator' });
+    expect(d.owners.every((o) => Object.keys(o).sort().join() === 'name,user_id')).toBe(true);
+    expect(d.owners.map((o) => o.user_id)).not.toContain(f.users.other.id);
+    expect(JSON.stringify(d.owners)).not.toContain('Synthetic other');
+    expect(d.owners.map((o) => o.user_id)).not.toContain(f.users.viewer.id);
+  }
+  // The other workspace's owner sees its own owners only.
+  const other = await s.dashboard(f.users.other!.ctx);
+  expect(other.owners.map((o) => o.user_id)).toEqual([f.users.other!.id]);
+  expect(other.missions.map((m) => m.id)).not.toContain(t.missionId);
+  // A role outside owner, admin and operator is still refused, as is a person outside the workspace.
+  await expect(s.dashboard(f.users.viewer!.ctx)).rejects.toThrow('Operations access denied');
+  await expect(s.dashboard({ ...f.users.other!.ctx, tenantId: f.tenantA })).rejects.toThrow();
+});

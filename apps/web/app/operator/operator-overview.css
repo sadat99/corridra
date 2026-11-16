@@ -3268,3 +3268,105 @@
 .ux-operator-home .ux-today-tiles strong {
   font-family: var(--serif);
 }
+/* Missions pager (audit fixes 1, item 13): the count, then Previous Missions and Next Missions. A text link after
+   a paragraph gets a top margin elsewhere, which dropped Previous 16 px below Next; here none of the three has a
+   margin (the id outranks the system-wide phone rule that spaces a second button below the first). Tablet and
+   phone: the count on its own line, both buttons on one 44 px row from the left edge.
+   Desktop: all three on one centre line. */
+.ux-operator-home .ux-workspace-body #workspace-missions .missions-home .mission-pager {
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+.ux-operator-home .ux-workspace-body #workspace-missions .missions-home .mission-pager > p {
+  flex: 1 1 100%;
+  margin: 0;
+}
+.ux-operator-home
+  .ux-workspace-body
+  #workspace-missions
+  .missions-home
+  .mission-pager
+  > .text-link {
+  flex: 0 0 auto;
+  min-height: 2.75rem;
+  margin: 0;
+}
+@media (max-width: 39.99rem) {
+  /* Small enough that both buttons share one row on a 360 px phone. */
+  .ux-operator-home
+    .ux-workspace-body
+    #workspace-missions
+    .missions-home
+    .mission-pager
+    > .text-link {
+    width: auto;
+    padding-inline: var(--space-3);
+    font-size: var(--text-sm);
+  }
+}
+@media (min-width: 64rem) {
+  .ux-operator-home .ux-workspace-body #workspace-missions .missions-home .mission-pager {
+    gap: var(--space-4);
+  }
+  .ux-operator-home .ux-workspace-body #workspace-missions .missions-home .mission-pager > p {
+    flex: 0 1 auto;
+  }
+}
+/* Deferred controls (audit fixes 1, item 14): a control ID is one word, so its column fits the longest ID and
+   never breaks inside it ("OUTREAC" and "H"). The table grows by the same amount, so the other columns keep
+   their width; below 640 px the table keeps its own sideways scroll. */
+#ops-gates .operations-table.ops-deferred table {
+  min-width: 59rem;
+}
+#ops-gates .operations-table.ops-deferred :is(th, td):nth-child(1) {
+  width: 9rem;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+/* Network jump list (audit fixes 1, item 15): on a laptop the links wrap onto a second row instead of
+   scrolling the last ones out of view. Each label stays on one line. */
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-operator-workbench > div {
+    flex-wrap: wrap;
+    gap: 0 var(--space-4);
+    min-width: 0;
+    overflow-x: visible;
+  }
+  /* The gap spaces the links, so a link that starts the second row lines up with the first. */
+  .ux-operator-home .ux-workspace-body #workspace-network .ux-operator-workbench > div > button {
+    margin: 0;
+  }
+}
+/* Header strip (audit fixes 1, item 16): the strip wraps whole items, never the words of a link. From a tablet up a
+   link keeps its own width; on a laptop the workspace select gives way first (it may narrow to 12rem), and only
+   then does an item move to the next row. A link wider than the whole row (a very large text size) may still wrap
+   inside it, so nothing leaves the screen. */
+@media (min-width: 40rem) {
+  .ux-operator-home .ux-workspace-body > .operator-toolbar > :is(a, button).text-link {
+    flex: 0 0 auto;
+    max-width: 100%;
+  }
+}
+@media (min-width: 1024px) {
+  .ux-operator-home .ux-workspace-body > .operator-toolbar {
+    flex-wrap: wrap;
+  }
+  .ux-operator-home .ux-workspace-body > .operator-toolbar > .field {
+    flex: 1 1 12rem;
+  }
+}
+@media (max-width: 39.99rem) {
+  .ux-operator-home
+    .ux-workspace-body
+    > .operator-toolbar:has(#operator-workspace-select)
+    > :is(a, button).text-link {
+    flex: 0 1 auto;
+  }
+}
+/* Next actions (audit fixes 1, item 8): the mission name opens the mission page. It sits inside the sentence, so it
+   is drawn as a link in the text (underlined, the link colour) rather than as a separate button row. */
+#ops-dashboard .ux-next-action li > p > a {
+  color: var(--brand-deep);
+  font-weight: 600;
+  text-decoration: underline;
+}
