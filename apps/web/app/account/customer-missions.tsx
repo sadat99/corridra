@@ -6,7 +6,7 @@ import { RefreshButton } from './refresh-button';
 export function CustomerMissions() {
   const [missions, setMissions] = useState<{ token: string; label: string }[]>([]),
     [error, setError] = useState(''),
-    // Bumped by Refresh: every open mission view is drawn afresh and reads its mission again.
+    // Bumped by Refresh: every open mission view reads its mission again in place, keeping any typed response.
     [reads, setReads] = useState(0);
   const feedback = useRef<HTMLParagraphElement>(null);
   const invite = useInvitationDialog();
@@ -77,7 +77,7 @@ export function CustomerMissions() {
         <article key={m.token}>
           <h3>{m.label}</h3>
           <DeliveryView
-            key={reads}
+            reload={reads}
             audience="CLIENT_PROGRESS"
             capability={m.token}
             endpoint="/api/customer-missions"

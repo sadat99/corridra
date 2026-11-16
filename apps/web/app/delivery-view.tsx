@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useEffectEvent, useRef, useState, type FormEvent } from 'react';
 import type { DeliveryReport } from '@corridra/delivery/report';
 import { displayMoney as amount } from '@corridra/domain/locale';
 import { formatMoment, formatUtcDay } from '../lib/ux/format';
@@ -21,10 +21,13 @@ export function DeliveryView({
   audience,
   capability,
   endpoint = '/api/delivery',
+  reload = 0,
 }: {
   audience: DeliveryReport['audience'];
   capability?: string;
   endpoint?: string;
+  /** Raised by a Refresh outside this view: read the report again in place, keeping typed and retained responses. */
+  reload?: number;
 }) {
   const scope = usePrivateCapability(capability);
   return (
@@ -33,6 +36,7 @@ export function DeliveryView({
       audience={audience}
       capability={scope}
       endpoint={endpoint}
+      reload={reload}
     />
   );
 }
@@ -40,10 +44,12 @@ function ScopedDeliveryView({
   audience,
   capability,
   endpoint,
+  reload,
 }: {
   audience: DeliveryReport['audience'];
   capability: string;
   endpoint: string;
+  reload: number;
 }) {
   const [report, setReport] = useState<DeliveryReport | null>(null),
     [error, setError] = useState(''),
@@ -86,6 +92,25 @@ function ScopedDeliveryView({
     setReadInterrupted(false);
     setError('');
   }
+  function reread() {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setBusy(true);
+    refresh()
+      .catch((e) => {
+        setError(e.message);
+        setReadInterrupted(true);
+      })
+      .finally(() => {
+        inFlight.current = false;
+        setBusy(false);
+      });
+  }
+  // The view stays mounted on an outside Refresh, so a typed response and a retained retry are not lost.
+  const rereadFromOutside = useEffectEvent(reread);
+  useEffect(() => {
+    if (reload > 0) rereadFromOutside();
+  }, [reload]);
   useEffect(() => {
     token.current = capability;
     let active = true;
@@ -320,23 +345,7 @@ function ScopedDeliveryView({
       <p>
         Updated {formatUtcDay(report.generatedAt)} · Link expires {formatMoment(report.expiresAt)}
       </p>
-      <button
-        disabled={busy}
-        onClick={() => {
-          if (inFlight.current) return;
-          inFlight.current = true;
-          setBusy(true);
-          refresh()
-            .catch((e) => {
-              setError(e.message);
-              setReadInterrupted(true);
-            })
-            .finally(() => {
-              inFlight.current = false;
-              setBusy(false);
-            });
-        }}
-      >
+      <button disabled={busy} onClick={reread}>
         Refresh progress
       </button>
       {audience === 'INSTITUTION_REPORT' && (

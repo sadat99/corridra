@@ -10,7 +10,8 @@ import AxeBuilder from '@axe-core/playwright';
 //   20  a programme room (/account/delegations/<workspace id>) marks Programmes in the sidebar, never Requests;
 //   22  on a desktop the request room's stage timeline starts on the same line as the left column;
 //   23  each journey has one colour: the sidebar dot, the room tag and the Home tag agree;
-//   28  Shared With Me gets a Refresh once a shared mission is open, and Refresh reads every open mission again.
+//   28  Shared With Me gets a Refresh once a shared mission is open, and Refresh reads every open mission again
+//       in place, keeping a typed evidence response and a retained retry.
 // AUDIT_SHOTS_DIR=<folder> also writes screenshots at 360, 390, 768, 1280 and 1440. Every name is invented.
 let server: Server, origin: string;
 let bundle = '';
@@ -310,6 +311,96 @@ test.describe('28: Shared With Me reads open missions again', () => {
       await expect.poll(() => reads).toBeGreaterThan(before);
       expect(await axe(page)).toEqual([]);
       await shot(page, `28-shared-open-${width}`);
+    });
+  }
+});
+
+// An invented approved report with one open evidence request, as /api/customer-missions answers a view.
+const sharedReport = {
+  schemaVersion: 1,
+  scopeId: 'scope-1',
+  audience: 'CLIENT_PROGRESS',
+  purpose: 'synthetic_validation',
+  programme: 'Invented Textile Mission',
+  generatedAt: '2026-11-10T09:00:00Z',
+  expiresAt: '2026-12-10T09:00:00Z',
+  allowExport: false,
+  approvedParticipants: 1,
+  approvedCompanies: 1,
+  qualifiedCounterparties: 0,
+  totals: [],
+  attribution: 'Prepared by Corridra from approved records.',
+  missions: [
+    {
+      publicationId: 'publication-1',
+      title: 'Fabric buyers',
+      company: 'Invented Mills',
+      objective: 'Meet fabric buyers',
+      brief: 'An invented brief.',
+      nextAction: 'Send the fabric sample list',
+      dueAt: '2026-11-20T09:00:00Z',
+      reviewedAt: '2026-11-09T09:00:00Z',
+      status: 'ACTIVE',
+      updatedAt: '2026-11-09T09:00:00Z',
+      itinerary: [],
+      outcomes: {
+        opportunities: 0,
+        qualified: 0,
+        proposals: 0,
+        contracts: 0,
+        rfqs: 0,
+        samples: 0,
+        heldMeetings: 0,
+      },
+      totals: [],
+      requests: [
+        {
+          id: 'request-1',
+          title: 'Sample list',
+          instructions: 'List the fabric samples you will bring.',
+          dueAt: '2026-11-20T09:00:00Z',
+          status: 'OPEN',
+        },
+      ],
+    },
+  ],
+};
+
+test.describe('28: Refresh keeps a typed evidence response and a retained retry', () => {
+  for (const width of [390, 1280]) {
+    test(`at ${width} Refresh reads again without dropping the draft`, async ({ page }) => {
+      await page.setViewportSize({ width, height: width < 1024 ? 844 : 900 });
+      let views = 0;
+      await page.route('**/api/customer-missions*', (route) => {
+        const input = route.request().postDataJSON();
+        if (input.action === 'respond')
+          return route.fulfill({ status: 503, json: { error: 'Invented interruption' } });
+        views += 1;
+        return route.fulfill({ json: sharedReport });
+      });
+      await page.goto(`${origin}/account?mode=shared&current=reports`);
+      const section = page.getByRole('region', { name: 'Shared missions' });
+      await section.getByLabel('Private mission invitation').fill(`${origin}/client#${token}`);
+      await section.getByRole('button', { name: 'Open Shared Mission' }).click();
+      const response = section.getByLabel('Response', { exact: true });
+      await expect(response).toBeVisible();
+      const draft = 'Twelve invented fabric samples.';
+      await response.fill(draft);
+      const refresh = section.getByRole('button', { name: 'Refresh shared missions' });
+      let before = views;
+      await refresh.click();
+      await expect.poll(() => views).toBeGreaterThan(before);
+      await expect(response).toHaveValue(draft);
+      // A send that fails is kept for the same retry; Refresh must not drop it either.
+      await section.getByLabel('This response is my declaration', { exact: false }).check();
+      await section.getByRole('button', { name: 'Send response' }).click();
+      const retry = section.getByRole('button', { name: 'Retry same evidence response' });
+      await expect(retry).toBeVisible();
+      before = views;
+      await refresh.click();
+      await expect.poll(() => views).toBeGreaterThan(before);
+      await expect(retry).toBeVisible();
+      await expect(response).toHaveValue(draft);
     });
   }
 });
