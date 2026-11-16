@@ -106,10 +106,15 @@ function ScopedDeliveryView({
         setBusy(false);
       });
   }
-  // The view stays mounted on an outside Refresh, so a typed response and a retained retry are not lost.
+  // The view stays mounted on an outside Refresh, so a typed response and a retained retry are not lost. Only a
+  // change of `reload` after mount reads again: a view that mounts after a Refresh reads once, through its first load
+  // below, with its own token (and a second run of the effect in development finds nothing changed).
   const rereadFromOutside = useEffectEvent(reread);
+  const lastReload = useRef(reload);
   useEffect(() => {
-    if (reload > 0) rereadFromOutside();
+    if (reload === lastReload.current) return;
+    lastReload.current = reload;
+    rereadFromOutside();
   }, [reload]);
   useEffect(() => {
     token.current = capability;

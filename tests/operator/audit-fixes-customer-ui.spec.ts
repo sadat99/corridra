@@ -404,3 +404,37 @@ test.describe('28: Refresh keeps a typed evidence response and a retained retry'
     });
   }
 });
+
+test('28: a mission opened after Refresh reads once with its own token', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  const second = 'd'.repeat(64);
+  const views: string[] = [];
+  await page.route('**/api/customer-missions*', (route) => {
+    const input = route.request().postDataJSON();
+    views.push(input.token);
+    // A view without a valid token is refused, as the route refuses it.
+    if (!/^[a-f0-9]{64}$/.test(input.token))
+      return route.fulfill({ status: 400, json: { error: 'Check the submitted values' } });
+    return route.fulfill({ json: sharedReport });
+  });
+  await page.goto(`${origin}/account?mode=shared&current=reports`);
+  const section = page.getByRole('region', { name: 'Shared missions' });
+  const invitation = section.getByLabel('Private mission invitation');
+  await invitation.fill(`${origin}/client#${token}`);
+  await section.getByRole('button', { name: 'Open Shared Mission' }).click();
+  await expect(section.getByLabel('Response', { exact: true })).toBeVisible();
+  const before = views.length;
+  await section.getByRole('button', { name: 'Refresh shared missions' }).click();
+  await expect.poll(() => views.length).toBeGreaterThan(before);
+  await invitation.fill(`${origin}/client#${second}`);
+  await section.getByRole('button', { name: 'Open Shared Mission' }).click();
+  const mission = section.locator('article').filter({
+    has: page.getByRole('heading', { name: 'Mission invitation 2' }),
+  });
+  await expect(mission.getByLabel('Response', { exact: true })).toBeEnabled();
+  await expect(mission.getByRole('button', { name: 'Send response' })).toBeEnabled();
+  await expect(mission.getByRole('alert')).toHaveCount(0);
+  // Exactly one view for the new mission, sent with its own token, and none with an empty one.
+  expect(views.filter((sent) => sent === second)).toHaveLength(1);
+  expect(views.filter((sent) => sent !== token && sent !== second)).toEqual([]);
+});
