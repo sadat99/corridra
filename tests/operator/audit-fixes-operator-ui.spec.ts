@@ -347,7 +347,7 @@ test('the network jump list wraps instead of clipping its last link at laptop wi
   }
 });
 
-test('the header strip keeps each link on one line and its access link stays in staff space', async ({
+test('the header strip keeps each link on one line, keeps the start page and its access link stays in staff space', async ({
   page,
 }) => {
   // The words wrapped from 1024 to 1180 px (and at 1280 and 1600 in the audited workspace) with the scope note
@@ -356,20 +356,31 @@ test('the header strip keeps each link on one line and its access link stays in 
     for (const width of [360, 390, 768, 1024, 1180, 1280, 1440, 1600]) {
       await page.setViewportSize({ width, height: 900 });
       await open(page, '', 'owner', purpose);
-      await expect(page.locator('.operator-toolbar a.text-link')).toHaveText(
+      await expect(page.locator('.operator-toolbar a.text-link')).toHaveText([
+        'All Workspaces',
         'Sign-In and Access Help',
-      );
+      ]);
       for (const selector of [
-        '.operator-toolbar a.text-link',
+        '.operator-toolbar a.text-link[href="/workspace"]',
+        '.operator-toolbar a.text-link[href="#workspace-authenticator"]',
         '.operator-toolbar button.text-link',
       ])
         expect(await textLines(page, selector), `${selector} at ${width}, ${purpose}`).toBe(1);
+      // Each link sits whole inside the screen, and on a phone each keeps a 44 px target.
+      for (const link of await page.locator('.operator-toolbar > .text-link').all()) {
+        const box = (await link.boundingBox())!;
+        expect(box.x, `inside at ${width}`).toBeGreaterThanOrEqual(0);
+        expect(box.x + box.width, `inside at ${width}`).toBeLessThanOrEqual(width);
+        if (width <= 768) expect(box.height, `target at ${width}`).toBeGreaterThanOrEqual(44);
+      }
     }
+  // Nothing is removed: the start page is still one tap away, beside the staff access help.
+  const start = page.locator('.operator-toolbar').getByRole('link', { name: 'All Workspaces' });
+  await expect(start).toHaveAttribute('href', '/workspace');
   const help = page.locator('.operator-toolbar').getByRole('link', {
     name: 'Sign-In and Access Help',
   });
   await expect(help).toHaveAttribute('href', '#workspace-authenticator');
-  await expect(page.locator('.operator-toolbar a[href="/workspace"]')).toHaveCount(0);
   await help.click();
   await expect(page.locator('#workspace-authenticator')).toBeVisible();
 });
