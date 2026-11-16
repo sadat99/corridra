@@ -567,12 +567,7 @@ function Quotes({
       <button type="button" className="text-link" onClick={onRecord}>
         Record or Revise a Supplier Offer
       </button>{' '}
-      <SectionLink
-        tenant={tenant}
-        slug="commercial"
-        label="Quotes and billing"
-        missionId={missionId}
-      />
+      <SectionLink tenant={tenant} slug="commercial" label="Money" missionId={missionId} />
     </>
   );
 }

@@ -6,7 +6,7 @@ import { MISSION_A, MISSION_B, NOTE, UNLISTED, commercial, listed } from './miss
 
 // W5: operator section links keep the mission. The real components are mounted with the data their
 // own endpoints return (mocked at the network edge). What is proved: the mission page links for
-// "Find and add companies" and "Quotes and billing" carry the mission; the two sections preselect a
+// "Find and add companies" and "Money" carry the mission; the two sections preselect a
 // mission that is in the list they already load; a malformed id is ignored; a mission that is not
 // listed shows one plain note and changes nothing else; the person's own choice always wins; and
 // nothing new is fetched. Meetings and delivery keep the links they had.
@@ -191,7 +191,7 @@ test('W5-links: the mission page sends research and commercial links with the mi
     `/operator?workspace=${TENANT}&mission=${MISSION_A}#workspace-research`,
   );
   await page.getByRole('tab', { name: 'Quotes' }).click();
-  await expect(page.getByRole('link', { name: 'Quotes and billing' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'Money' })).toHaveAttribute(
     'href',
     `/operator?workspace=${TENANT}&mission=${MISSION_A}#workspace-commercial`,
   );

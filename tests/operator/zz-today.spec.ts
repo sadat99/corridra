@@ -172,6 +172,10 @@ test('Operator Today panel reads the real mission list, shows new and overdue wo
   await page.reload();
   // Without the meetings read two counts drop (six of eight remain; CQ-34 and CQ-73 add two, W3 adds one).
   await expect(today.getByRole('list', { name: 'Counts' }).getByRole('listitem')).toHaveCount(6);
+  // The chosen filter is kept in the address (?needs=overdue), so the reload keeps "Past due"; All shows the new request again.
+  await expect(needs.getByRole('radio', { name: 'Past due 2' })).toBeChecked();
+  await expect(needs.getByText('Invented Towels Ltd')).toHaveCount(0);
+  await needs.getByRole('radio', { name: 'All 3' }).check();
   await expect(today.getByText('Invented Towels Ltd')).toBeVisible();
   // A failed read says so and leaves the mission list working.
   await page.unroute('**/api/workspace/missions?*view=today*');

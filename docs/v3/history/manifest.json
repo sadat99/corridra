@@ -549,6 +549,14 @@
       "bytes": 10635,
       "sha256": "1100f033b53bcfbb7e63efb5c0462eab12482cd38a7d6d4c2059883963afd9e5",
       "meaning": "Exact active ledger at 6635a1d (Guardian 10 records 9, unchanged through c819367 and 6d5e3de), before Guardian 11 records 10 recorded the Guardian 11 takeover, the 525 and 528 merges, the owner's 16 Nov words, the branch deletion and the conductor copy, including the Takeover, Open, owner words and follow-up bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "c095cb8bff03ccb7695abe6a28e31d6a165f380f",
+      "archive": "docs/v3/history/ledger-before-g12-records-13-2026-11-16.md",
+      "bytes": 9674,
+      "sha256": "2fc0354071574585f971f8ea98964f2f1426a8a251f3f8553ac5374c56c63d8a",
+      "meaning": "Exact active ledger at c095cb8 (Guardian 11 records 10 and the simplify decision), before Guardian 12 records 13 recorded the Guardian 12 takeover, the 529 and 531 merges and the PR 530 scope, including the Takeover, Main, Lanes and follow-up bullets later replaced. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

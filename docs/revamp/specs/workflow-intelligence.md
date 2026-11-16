@@ -146,7 +146,7 @@ Owner, 10 Nov 2026, in S17: "use the free branch slots to run W3 & others in par
 The mission page's links to whole workspace sections (`apps/web/app/operator/[section]/[missionId]/mission-page.tsx`, `sectionHref`) did not carry the mission, so the operator had to find it again. Each destination was checked first (GO or STOP):
 
 1. Research (`apps/web/app/operator/counterparties.tsx`): GO. It already holds a selected mission and lists missions it is allowed to read (one read of up to 100). The link "Find and add companies" now adds `&mission=<id>`.
-2. Commercial progress (`apps/web/app/operator/opportunities.tsx`): GO. Its first response already lists the missions. The link "Quotes and billing" now adds `&mission=<id>`.
+2. Commercial progress (`apps/web/app/operator/opportunities.tsx`): GO. Its first response already lists the missions. The link "Quotes and billing" now adds `&mission=<id>`. (Superseded, replaced by 16 Nov 2026 (Money): the staff label is now "Money"; the link, ids and routes are unchanged.)
 3. Meetings (`apps/web/app/operator/access.tsx`): STOP. It has no selected-mission state, only meeting targets, so its link is unchanged.
 4. Delivery (`apps/web/app/operator/delivery.tsx`): STOP. Its mission choice sits in a closed disclosure on another tab and only for owners and admins, so a preselection would be invisible or wrong for other roles. Its link is unchanged.
 

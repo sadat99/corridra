@@ -77,7 +77,7 @@ const teamTitles: Record<string, string> = {
   'workspace-missions': 'Missions',
   'workspace-research': 'Companies',
   'workspace-meetings': 'Meetings',
-  'workspace-commercial': 'Quotes and billing',
+  'workspace-commercial': 'Money',
   'workspace-delivery': 'Reports',
   'workspace-network': 'Network',
   'workspace-evidence': 'Evidence',

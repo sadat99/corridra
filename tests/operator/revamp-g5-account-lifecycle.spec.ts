@@ -345,7 +345,9 @@ test('G5-10 the closed-account screen replaces the pages, shows the date, Reopen
   await expect(page.getByRole('heading', { name: 'Your Account Is Closed' })).toBeFocused();
   await expect(page.getByText('Customer pages')).toHaveCount(0);
   await expect(
-    page.getByText('You can undo this until 6 Dec 2026, 10:00 UTC. After that it is final.'),
+    page.getByText(
+      'Your account is closed. You can undo this until 6 Dec 2026, 10:00 UTC. After that you cannot reopen it. Closing does not delete anything.',
+    ),
   ).toBeVisible();
   await expect(
     page.getByText('You also have an erasure request open. Reference ERA-2026-0042.'),

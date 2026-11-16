@@ -162,7 +162,7 @@ describe('the closure card in each state', () => {
   test('available: a danger card titled by the section heading, one row per action, each with its button', async () => {
     const html = outsideDialog(await renderClosure(active));
     expect(html).toContain('class="ux-account-card ux-account-zone" data-tone="danger"');
-    expect(html).toContain('<h3 tabindex="-1">Close Account or Erase Data</h3>');
+    expect(html).toContain('<h3 tabindex="-1">Close Account or Ask for Erasure</h3>');
     expect(html.match(/class="ux-account-row"/g)).toHaveLength(2);
     expect(html).toContain(
       '<h4>Close Account</h4><p>Close your account. You can undo this for 30 days.</p>',
@@ -248,7 +248,7 @@ describe('the closure card in each state', () => {
       expect(html).not.toContain('data-tone="danger"');
       expect(html).not.toContain('<button');
       expect(html).toContain('Coming soon.');
-      expect(html).toContain('<h3>Close Account or Erase Data</h3>');
+      expect(html).toContain('<h3>Close Account or Ask for Erasure</h3>');
       expect(html).toMatch(/<a [^>]*href="\/privacy"[^>]*>privacy page<\/a>/);
       expect(html).toContain('We reply within 30 days.');
     }

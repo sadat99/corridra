@@ -69,10 +69,7 @@ export function CustomerClosedAccount({
           {accountWords.closedHeading}
         </h1>
         {state.canUndo && state.undoUntil ? (
-          <p>
-            Your account is closed. You can undo this until {whenWords(state.undoUntil)}. After that
-            it is final.
-          </p>
+          <p>{accountWords.closedUndo(whenWords(state.undoUntil))}</p>
         ) : (
           <p>{accountWords.finalNotice}</p>
         )}

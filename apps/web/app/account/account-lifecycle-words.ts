@@ -1,7 +1,11 @@
 // The words a person reads and types when closing an account or asking for erasure. Wording A and wording B, the
 // two dialog texts (closeBody and erasureBody, not their titles), were approved by the owner, 10 November 2026
-// (answer to the conductor: "Approve both as live (Recommended)"); the rest, titles included, is pending the owner's named review
-// of the privacy wording. A changed word is a change to this file only,
+// (answer to the conductor: "Approve both as live (Recommended)"). On 16 November 2026 every sentence here was checked
+// against what the code does (customer-account-lifecycle migration 0001): closing deletes nothing, day 30 only
+// ends the undo, erasure is a request staff answer by hand, and a closed person can still file one.
+// closeBody, closedUndo (the closed screen line) and sectionHeading were changed to say exactly that; no other
+// string changed. Owner, 16 November 2026: "Get them(1,2,4,5,,24,27,G5) done as per your best judgement".
+// No legal review is recorded. A changed word is a change to this file only,
 // and any later wording change needs the owner again. The phrase to type must equal accountLifecycleWords.closePhrase
 // in packages/auth (a test holds the two together).
 export const accountWords = {
@@ -11,14 +15,14 @@ export const accountWords = {
   closeTitle: 'Close Your Account?',
   // wording A, approved by the owner, 10 November 2026 (answer to the conductor: "Approve both as live (Recommended)")
   closeBody:
-    'You have 30 days to undo this. After that it is final. While your account is closed you cannot use it, but you can still ask for erasure. We keep records the law requires, such as invoices and signed decisions.',
+    'You have 30 days to undo this. After that you cannot reopen it. Closing does not delete anything. While your account is closed you cannot use it, but you can still ask for erasure. Even then we keep records the law requires, such as invoices and signed decisions.',
   // pending the owner's named review
   erasureTitle: 'Ask Us to Erase Your Personal Data',
   // wording B, approved by the owner, 10 November 2026 (answer to the conductor: "Approve both as live (Recommended)")
   erasureBody:
     'Staff will reply within 30 days. We keep records we must keep by law, for example invoices, signed decisions and audit history, and we will tell you which ones and why.',
   // pending the owner's named review
-  sectionHeading: 'Close Account or Erase Data',
+  sectionHeading: 'Close Account or Ask for Erasure',
   closeRow: 'Close your account. You can undo this for 30 days.',
   erasureRow: 'Ask the Corridra team to erase your personal data.',
   blockedNotice:
@@ -27,6 +31,8 @@ export const accountWords = {
   reopened: 'Your account is open again.',
   closedNotice: 'You can still ask us to erase your personal data while your account is closed.',
   finalNotice: 'Your account was closed and can no longer be reopened.',
+  closedUndo: (until: string) =>
+    `Your account is closed. You can undo this until ${until}. After that you cannot reopen it. Closing does not delete anything.`,
 } as const;
 
 export const erasureStatusWords = {

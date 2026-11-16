@@ -21,6 +21,24 @@ export type NeedsRow = {
 };
 export type NeedsFilter = 'all' | 'new' | 'overdue';
 
+/** The query parameter that keeps the Home list filter across reload and back. */
+export const NEEDS_FILTER_PARAM = 'needs';
+
+/** The filter named by a URL query string; anything missing or unknown opens on All. */
+export function needsFilterFromSearch(search: string): NeedsFilter {
+  const value = new URLSearchParams(search).get(NEEDS_FILTER_PARAM);
+  return value === 'new' || value === 'overdue' ? value : 'all';
+}
+
+/** The query string for a filter on top of an existing one: All leaves no parameter behind. */
+export function searchWithNeedsFilter(search: string, filter: NeedsFilter): string {
+  const params = new URLSearchParams(search);
+  if (filter === 'all') params.delete(NEEDS_FILTER_PARAM);
+  else params.set(NEEDS_FILTER_PARAM, filter);
+  const text = params.toString();
+  return text ? `?${text}` : '';
+}
+
 const day = 24 * 60 * 60 * 1000;
 
 /**

@@ -170,7 +170,9 @@ test.describe('closure block layout (account module on)', () => {
     await signInCustomer(context);
     await mock(page, active(null));
     await page.goto('/account?view=more&tab=security');
-    await expect(page.getByRole('heading', { name: 'Close Account or Erase Data' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Close Account or Ask for Erasure' }),
+    ).toBeVisible();
     for (const name of ['Close Account', 'Ask for Erasure']) {
       const row = page.locator('.ux-account-row', {
         has: page.getByRole('heading', { name, level: 4 }),
