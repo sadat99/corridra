@@ -529,7 +529,7 @@ describe('the room keeps what it had', () => {
     expect(room).toContain('decisionsFirst = false');
     expect(room).toContain('const decisions = decisionsFirst && participantsEnabled;');
     expect(room).toMatch(
-      /\{decisions \? \(\s+<Decisions[\s\S]+?\) : participantsEnabled \? \(\s+<NextStep live=\{live\}/,
+      /\{decisions \? \(\s+<Decisions[\s\S]+?\) : participantsEnabled \? \(\s+<NextStep\s+live=\{live\}/,
     );
   });
   it('styles the action of a later decision as a plain link on the navy card, not as a light box', () => {
@@ -563,8 +563,10 @@ describe('the room keeps what it had', () => {
     );
   });
   it('keeps the vertical stage timeline in the header in both states (owner lock, 12 Nov)', () => {
-    expect(room).toContain('<div className="room-stage room-stage--timeline">');
-    expect(room.match(/<Stage counts=/g)).toHaveLength(1);
+    expect(room).toMatch(
+      /<div\s+className="room-stage room-stage--timeline"[^>]*>\s*<Stage\s+counts=\{live\.counts\}/,
+    );
+    expect(room.match(/<Stage\s+counts=/g)).toHaveLength(1);
   });
   it('reads the application counts through the page client, counts only', () => {
     expect(room).toContain("import { useApplicationCounts } from './programme-page-client';");
