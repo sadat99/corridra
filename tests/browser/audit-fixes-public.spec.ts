@@ -40,6 +40,13 @@ test.describe('33: the receipt check is never covered by the summary', () => {
         .first()
         .evaluate((element) => element.getBoundingClientRect().bottom);
       expect(covered.top).toBeGreaterThanOrEqual(headerBottom);
+      // The request recap stays sticky beside the form: the receipt check is layered above it, not unstuck.
+      expect(
+        await page
+          .locator('.ux-brief-summary')
+          .first()
+          .evaluate((element) => getComputedStyle(element).position),
+      ).toBe('sticky');
       await shot(page, `33-plan-receipt-${width}`);
     });
   }

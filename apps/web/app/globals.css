@@ -9047,15 +9047,14 @@ samp {
 }
 
 /* audit-fixes-1 (AF-1) start */
-/* Item 33: in the plain request page layout from 1001 px the receipt check sits under the summary in the same
-   column, so the summary is not sticky there: a sticky panel would be drawn over the receipt heading. A jump to
-   #receipt-check lands with its heading clear of the sticky site header. */
+/* Item 33: in the plain request page layout from 1001 px the receipt check sits under the sticky summary in the
+   same column. The summary stays sticky; the receipt check (an opaque panel) is drawn above it, under the site
+   header (z-index 40), so the summary never covers the receipt heading. A jump to #receipt-check lands with its
+   heading below the sticky header, at the summary's own sticky offset. */
 @media (min-width: 1001px) {
-  .guide-plan-body:has(.ux-brief-summary):not(
-      :has(.ux-job-choice, .receipt-saved, .receipt-panel:not(#receipt-check))
-    )
-    .ux-brief-summary {
-    position: static;
+  #receipt-check {
+    position: relative;
+    z-index: 1;
   }
 }
 #receipt-check {
