@@ -24,6 +24,7 @@ import {
   type MenuEntry,
 } from '../../lib/ux/customer-navigation';
 import { workspacePage } from '../../lib/ux/workspace-pages';
+import { offeredWorkspaces } from '../../lib/workspace-choice';
 import { localeMeta } from '../../lib/i18n/locales';
 import {
   readCustomerBilling,
@@ -255,7 +256,7 @@ function WorkspaceRadios({
   current,
   section,
 }: {
-  list: readonly { id: string; name: string }[];
+  list: readonly { id: string; name: string; archived?: boolean }[];
   current: { id: string };
   section: string;
 }) {
@@ -271,6 +272,12 @@ function WorkspaceRadios({
           data-menu-close=""
         >
           {w.name}
+          {w.archived ? (
+            <>
+              {' '}
+              <span className="ux-badge">Archived</span>
+            </>
+          ) : null}
         </MenuRadio>
       ))}
     </>
@@ -359,14 +366,18 @@ export function AvatarMenu({
   const match = workspacePage.exec(pathname);
   const section = match?.[1];
   const current = match ? list.find((w) => w.id === match[2]) : undefined;
-  const shown = current ?? (list.length === 1 ? list[0] : undefined);
+  // Archived workspaces are not offered for new work. The archived workspace whose page this is stays in the menu,
+  // checked and last, with its label, so the switcher never loses the page the person is on.
+  const offered = offeredWorkspaces(list, current);
+  const shown = current ?? (offered.length === 1 ? offered[0] : undefined);
+  const radios = !!(current && section);
   // Off a workspace page with the profiles module off, the workspace names are plain text, not links.
-  const plainNames = !(current && section) && !organisationProfiles;
+  const plainNames = !radios && !organisationProfiles && offered.length > 0;
   const items = customerAvatarItems({
     billing,
     notificationSettings,
     organisationProfiles,
-    workspaces: list,
+    workspaces: offered,
     currentWorkspaceId: shown?.id,
   });
   return (
@@ -390,16 +401,18 @@ export function AvatarMenu({
       {list.length > 0 ? (
         <div role="group" aria-label="Workspace" className="ux-menu-group">
           {current && section ? (
-            <WorkspaceRadios list={list} current={current} section={section} />
+            <WorkspaceRadios list={offered} current={current} section={section} />
+          ) : offered.length === 0 ? (
+            <p className="ux-menu-note">All your workspaces are archived.</p>
           ) : organisationProfiles ? (
-            list.map((w) => (
+            offered.map((w) => (
               <MenuLink key={w.id} href={`/account/profile/${w.id}`}>
                 {w.name}
               </MenuLink>
             ))
           ) : (
             <div id={workspaceNamesId} className="ux-menu-who">
-              {list.map((w) => (
+              {offered.map((w) => (
                 <span key={w.id}>{w.name}</span>
               ))}
             </div>

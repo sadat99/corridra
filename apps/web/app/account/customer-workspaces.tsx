@@ -21,9 +21,11 @@ type Status =
   'loading' | 'ready' | 'signed-out' | 'denied' | 'changed' | 'unavailable' | 'limit' | 'error';
 type DialogKind = { kind: 'create' } | { kind: 'join' } | { kind: 'team' | 'leave'; id: string };
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
-function workspace(value: unknown): value is CustomerWorkspace {
+// An answer without the archived flag (an older server) is read as not archived.
+type ListedWorkspace = Omit<CustomerWorkspace, 'archived'> & { archived?: boolean };
+function workspace(value: unknown): value is ListedWorkspace {
   if (!value || typeof value !== 'object') return false;
-  const w = value as CustomerWorkspace;
+  const w = value as ListedWorkspace;
   return (
     typeof w.id === 'string' &&
     uuid.test(w.id) &&
@@ -33,7 +35,8 @@ function workspace(value: unknown): value is CustomerWorkspace {
     !/[\u0000-\u001f\u007f]/u.test(w.name) &&
     ['owner', 'admin', 'member'].includes(w.role) &&
     customerProvenanceAllowed(w.synthetic) &&
-    w.organisationId === null
+    w.organisationId === null &&
+    (w.archived === undefined || typeof w.archived === 'boolean')
   );
 }
 function readDraft(key: string): Draft | null {
@@ -95,7 +98,10 @@ async function fetchWorkspaces(subject: string, issuer: string, signal: AbortSig
     !body.workspaces.every(workspace)
   )
     throw new Error('Invalid workspace response');
-  return { status: response.status, rows: body.workspaces };
+  return {
+    status: response.status,
+    rows: body.workspaces.map((w): CustomerWorkspace => ({ ...w, archived: w.archived === true })),
+  };
 }
 
 export function CustomerWorkspaces({
@@ -444,6 +450,10 @@ export function CustomerWorkspaces({
             >
               No workspaces yet. Create your first one below.
             </EmptyState>
+          ) : lifecycle.visibleRows.length === 0 ? (
+            <p className="ux-empty">
+              All your workspaces are archived. Choose Archived to see them.
+            </p>
           ) : (
             <table className="ux-ws-table">
               <caption className="sr-only">Your workspaces</caption>
@@ -463,6 +473,8 @@ export function CustomerWorkspaces({
                   // Archived, or its status could not be read: either way no new request is offered from here.
                   const closedToNew = archived || lifecycle.statusUnknown(row.id);
                   const admin = ['owner', 'admin'].includes(row.role);
+                  // Planning delegations starts new programme work, which an archived workspace refuses.
+                  const plansDelegations = programmesEnabled && admin && !closedToNew;
                   const start = closedToNew
                     ? null
                     : draftsEnabled
@@ -473,7 +485,7 @@ export function CustomerWorkspaces({
                   const hasMenu =
                     !!start ||
                     profilesEnabled ||
-                    (programmesEnabled && admin) ||
+                    plansDelegations ||
                     serviceRequestsEnabled ||
                     billingEnabled ||
                     row.role === 'owner' ||
@@ -523,7 +535,7 @@ export function CustomerWorkspaces({
                                 {admin ? 'Edit Company Profile' : 'View Company Profile'}
                               </MenuAnchor>
                             )}
-                            {programmesEnabled && admin && (
+                            {plansDelegations && (
                               <MenuAnchor href={'/account/delegations/' + row.id}>
                                 Plan Delegations
                               </MenuAnchor>

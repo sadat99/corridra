@@ -2,6 +2,7 @@
 // the person's answer and open drafts. Both are rows of the Requests page's own "Your work" list, so the numbers are
 // the numbers that page shows, with the same workspace and role scoping and the same "or more" rule. Pure.
 import { incomplete } from './view';
+import { activeWorkspaces } from '../workspace-choice';
 import type { WorkList } from './types';
 import type { PocketSignals } from '../ux/next-move';
 
@@ -21,6 +22,7 @@ export function pocketSignalsOf(list: WorkList): PocketSignals {
     },
     drafts: { count: drafts.length, href: drafts[0]?.href ?? null },
     partial: incomplete(list),
-    hasWorkspace: list.workspaces.length > 0,
+    // New Request starts new work, so only a workspace that is not archived counts (as on the rail).
+    hasWorkspace: activeWorkspaces(list.workspaces).length > 0,
   };
 }

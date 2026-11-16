@@ -112,6 +112,11 @@ export const programmePagesWords = {
   'pp.path.workspace.new': 'Name for your company workspace',
   'pp.path.workspace.new.hint':
     'A private space for your own company’s requests. The organisers cannot see it.',
+  'pp.path.archived.label': 'No active workspace',
+  'pp.path.archived.text':
+    'Your workspaces are archived, so a new request cannot start from them. An owner can restore one from Manage Workspaces.',
+  'pp.path.archived.manage': 'Manage Workspaces',
+  'pp.path.archived.create': 'Create a New Workspace',
   'pp.path.find.suppliers': 'Find Suppliers or Products',
   'pp.path.find.buyers': 'Find Buyers or Partners',
   'pp.path.find.other': 'Something Else',

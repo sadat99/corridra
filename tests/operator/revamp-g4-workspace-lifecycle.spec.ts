@@ -108,6 +108,10 @@ type Setup = {
   /** Set failReads while the test runs and every read of the lifecycle answers 500. */
   control?: { failReads: boolean };
   answer?: (sent: Sent) => { status: number; json: unknown } | undefined;
+  /** The workspace list itself flags these workspaces as archived (the server flag). */
+  listArchived?: string[];
+  /** Switches turned on for this test only, on top of the usual ones. */
+  props?: Record<string, unknown>;
 };
 const stateFor = (id: string, role: string, extra: Record<string, unknown> = {}) => ({
   open: true,
@@ -131,8 +135,11 @@ async function open(page: Page, setup: Setup = {}) {
     ...setup.states,
   };
   const sent: Sent[] = [];
+  const listed = setup.listArchived
+    ? workspaces.map((w) => ({ ...w, archived: setup.listArchived!.includes(w.id) }))
+    : workspaces;
   await page.route('**/api/customer-workspaces', (route) =>
-    route.fulfill({ json: { synthetic: true, workspaces } }),
+    route.fulfill({ json: { synthetic: true, workspaces: listed } }),
   );
   await page.route('**/api/customer-workspace-access*', (route) =>
     route.fulfill({
@@ -212,8 +219,14 @@ async function open(page: Page, setup: Setup = {}) {
       json: { workspaceId: id, operation: String(body.action), expiresAt: '2099-01-01T10:00:00Z' },
     });
   });
-  await page.goto(`${origin}/?props=${encodeURIComponent(JSON.stringify(on))}`);
-  await expect(page.getByRole('table', { name: 'Your workspaces' })).toBeVisible();
+  await page.goto(
+    `${origin}/?props=${encodeURIComponent(JSON.stringify({ ...on, ...setup.props }))}`,
+  );
+  await expect(
+    page
+      .getByRole('table', { name: 'Your workspaces' })
+      .or(page.getByText('All your workspaces are archived. Choose Archived to see them.')),
+  ).toBeVisible();
   return { sent };
 }
 const trigger = (page: Page, name: string) =>
@@ -790,4 +803,101 @@ test('G4-18 Leave Workspace is offered to an invited admin, and not to an admin 
   await page.unrouteAll();
   await open(page, { states: { [ids.adm]: stateFor(ids.adm, 'admin', { keepsAccess: true }) } });
   expect(await menuNames(page, 'Synthetic Chattogram Dyers')).not.toContain('Leave Workspace');
+});
+
+const offNote =
+  'Restoring a workspace is not available right now. The workspace and its records are kept.';
+
+test('G4-19 with the lifecycle control off the list flag keeps an archived workspace under Archived, with no new work and no Restore', async ({
+  page,
+}) => {
+  await open(page, { closed: 503, listArchived: [ids.own] });
+  await expect(page.getByRole('radio', { name: /Active/ })).toBeChecked();
+  await expect(page.getByRole('row', { name: new RegExp(owner) })).toHaveCount(0);
+  await expect(page.getByText(offNote)).toHaveCount(0);
+  await page.getByRole('radio', { name: /Archived/ }).check();
+  const row = page.getByRole('row', { name: new RegExp(owner) });
+  await expect(row.locator('.ux-badge')).toHaveText('Archived');
+  await expect(page.getByRole('status').filter({ hasText: offNote })).toBeVisible();
+  const items = await menuNames(page, owner);
+  for (const item of [
+    'New Request',
+    'Continue a Saved Draft',
+    'Send a Private Request',
+    'Restore Workspace',
+    ...lifecycleItems,
+  ])
+    expect(items).not.toContain(item);
+  await page.keyboard.press('Escape');
+  expect(await axe(page)).toEqual([]);
+});
+
+test('G4-20 when the lifecycle read fails from the start the list flag still keeps an archived workspace out of Active', async ({
+  page,
+}) => {
+  await open(page, { control: { failReads: true }, listArchived: [ids.mem] });
+  await expect(page.getByText('Could not refresh workspace status')).toBeVisible();
+  await expect(page.getByRole('radio', { name: /Active/ })).toBeChecked();
+  await expect(page.getByRole('row', { name: /Synthetic Gazipur Wovens/ })).toHaveCount(0);
+  await page.getByRole('radio', { name: /Archived/ }).check();
+  const row = page.getByRole('row', { name: /Synthetic Gazipur Wovens/ });
+  await expect(row.locator('.ux-badge')).toHaveText('Archived');
+  const items = await menuNames(page, 'Synthetic Gazipur Wovens');
+  for (const item of ['New Request', 'Continue a Saved Draft', 'Send a Private Request'])
+    expect(items).not.toContain(item);
+});
+
+test('G4-21 a stale Restore says the workspace changed and keeps it archived', async ({ page }) => {
+  const { sent } = await open(page, {
+    listArchived: [ids.own],
+    states: { [ids.own]: stateFor(ids.own, 'owner', { archived: true, version: 5 }) },
+    answer: () => ({
+      status: 409,
+      json: { error: 'changed', code: 'stale', currentName: owner, currentVersion: 6 },
+    }),
+  });
+  await page.getByRole('radio', { name: /Archived/ }).check();
+  await trigger(page, owner).click();
+  await page.getByRole('menuitem', { name: 'Restore Workspace' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Restore ' + owner + '?' });
+  await dialog.getByRole('button', { name: 'Restore Workspace' }).click();
+  await expect(dialog.getByRole('alert')).toContainText(
+    'This workspace was changed since you opened this.',
+  );
+  expect(sent).toEqual([
+    { action: 'restore', workspaceId: ids.own, expectedVersion: 5, commandId: expect.any(String) },
+  ]);
+  await dialog.getByRole('button', { name: 'Not Now' }).click();
+  await expect(page.getByRole('row', { name: new RegExp(owner) })).toContainText('Archived');
+});
+
+test('G4-22 with every workspace archived Active says so and Archived lists them all', async ({
+  page,
+}) => {
+  await open(page, { closed: 503, listArchived: [ids.own, ids.adm, ids.mem] });
+  await expect(page.getByRole('radio', { name: /Active/ })).toBeChecked();
+  await expect(
+    page.getByText('All your workspaces are archived. Choose Archived to see them.'),
+  ).toBeVisible();
+  await expect(page.getByRole('table', { name: 'Your workspaces' })).toHaveCount(0);
+  await page.getByRole('radio', { name: /Archived/ }).check();
+  await expect(page.locator('tbody tr')).toHaveCount(3);
+  await expect(page.locator('tbody .ux-badge')).toHaveText(['Archived', 'Archived', 'Archived']);
+});
+
+test('G4-23 an archived workspace offers no Plan Delegations, while its owner keeps Manage Team', async ({
+  page,
+}) => {
+  await open(page, {
+    props: { programmesEnabled: true },
+    states: { [ids.own]: stateFor(ids.own, 'owner', { archived: true, version: 5 }) },
+  });
+  // An active workspace the person administers still plans delegations.
+  expect(await menuNames(page, 'Synthetic Chattogram Dyers')).toContain('Plan Delegations');
+  await page.keyboard.press('Escape');
+  await page.getByRole('radio', { name: /Archived/ }).check();
+  const items = await menuNames(page, owner);
+  expect(items).not.toContain('Plan Delegations');
+  expect(items).toContain('Manage Team');
+  expect(items).toContain('Restore Workspace');
 });

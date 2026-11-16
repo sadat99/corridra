@@ -34,9 +34,42 @@ export function workspaceDescription(kind: WorkspaceKind, linksEnabled: boolean)
 export const companyProfilesTitle = (linksEnabled: boolean) =>
   linksEnabled ? 'Company profiles and links' : 'Company profiles';
 
-/** Programme management is for owners and admins; the other sections are open to every member. */
-export function workspacesFor<T extends { role: string }>(kind: WorkspaceKind, rows: T[]): T[] {
-  return kind === 'programmes' ? rows.filter((row) => ['owner', 'admin'].includes(row.role)) : rows;
+/**
+ * The workspaces that can start new work, in the order given. An archived workspace stays readable by its own
+ * address but is not offered as a choice. A row without the flag is not archived. Display only: it grants nothing.
+ */
+export function activeWorkspaces<T extends { archived?: boolean }>(rows: readonly T[]): T[] {
+  return rows.filter((row) => row.archived !== true);
+}
+
+/**
+ * The workspaces a menu offers: the active ones, plus the archived workspace whose page the person is on (`current`),
+ * last, so a switcher never loses the page it is drawn on.
+ */
+export function offeredWorkspaces<T extends { archived?: boolean }>(
+  rows: readonly T[],
+  current?: T,
+): T[] {
+  const active = activeWorkspaces(rows);
+  return current?.archived === true ? [...active, current] : active;
+}
+
+/** Billing and the company profile hold money and history, so their choosers keep archived workspaces. */
+export const keepsArchived = (kind: WorkspaceKind) => kind === 'billing' || kind === 'profile';
+
+/**
+ * The workspaces a destination offers. Programme management is for owners and admins; the other sections are open
+ * to every member. Archived workspaces are left out unless the destination keeps them (`includeArchived`).
+ */
+export function workspacesFor<T extends { role: string; archived?: boolean }>(
+  kind: WorkspaceKind,
+  rows: readonly T[],
+  includeArchived = keepsArchived(kind),
+): T[] {
+  const offered = includeArchived ? [...rows] : activeWorkspaces(rows);
+  return kind === 'programmes'
+    ? offered.filter((row) => ['owner', 'admin'].includes(row.role))
+    : offered;
 }
 
 export const workspacePath = (kind: WorkspaceKind, workspaceId: string) =>

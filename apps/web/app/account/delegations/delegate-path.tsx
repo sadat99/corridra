@@ -13,6 +13,7 @@ import {
 } from '../../../lib/delegate-objective';
 import { customerHeaders } from './pricing-client';
 import { isUuid } from './participant-client';
+import { activeWorkspaces } from '../../../lib/workspace-choice';
 import './delegate-path.css';
 
 /**
@@ -28,11 +29,13 @@ import './delegate-path.css';
  * existing objective tools with the same explicit consent. A read that fails claims nothing: that step simply shows
  * its action without a state.
  */
-type Workspace = { id: string; name: string };
+type Workspace = { id: string; name: string; archived?: boolean };
 type Loaded = {
   statement: string | null;
   displayLabel: string;
   workspaces: Workspace[] | null;
+  /** The person has workspaces and every one is archived: none can start new work. */
+  allArchived: boolean;
   privateRequests: number | null;
   sharedObjectives: number | null;
   /** The programme's destination and dates, only if the organisers shared them with this registration. */
@@ -72,6 +75,12 @@ export function DelegatePath(props: {
   const [workspaceName, setWorkspaceName] = useState(props.displayLabel);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // With every workspace archived, a new workspace is a second choice the person opens on purpose.
+  const [creating, setCreating] = useState(false);
+  const nameField = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (creating) nameField.current?.focus();
+  }, [creating]);
   // One command id for the workspace and one for the draft, kept until the result is known, so a retry after an
   // uncertain answer repeats the same change instead of making a second workspace or a second draft.
   const commands = useRef<{ workspace?: string; draft?: string }>({});
@@ -110,16 +119,16 @@ export function DelegatePath(props: {
               (a) => object(a) && a.registrationId === registrationId && a.status === 'JOINED',
             )
           : undefined;
-      const rooms =
+      const held =
         workspaces.status === 'fulfilled' &&
         object(workspaces.value) &&
         Array.isArray(workspaces.value.workspaces)
-          ? workspaces.value.workspaces
-              .filter(
-                (w): w is Workspace => object(w) && isUuid(w.id) && typeof w.name === 'string',
-              )
-              .map((w) => ({ id: w.id, name: w.name }))
+          ? workspaces.value.workspaces.filter(
+              (w): w is Workspace => object(w) && isUuid(w.id) && typeof w.name === 'string',
+            )
           : null;
+      // An archived workspace cannot start new work, so it is not offered or preselected.
+      const rooms = held && activeWorkspaces(held).map((w) => ({ id: w.id, name: w.name }));
       const count = (
         settled: PromiseSettledResult<unknown>,
         list: string,
@@ -141,6 +150,7 @@ export function DelegatePath(props: {
             ? mine.displayLabel
             : props.displayLabel,
         workspaces: rooms,
+        allArchived: !!held && held.length > 0 && rooms?.length === 0,
         privateRequests: count(choices, 'requests', (r) => object(r) && r.available === true),
         sharedObjectives: count(own, 'objectives', (o) => object(o) && o.status === 'SHARED'),
         context: shared.status === 'fulfilled' ? sharedContext(shared.value, registrationId) : null,
@@ -278,6 +288,20 @@ export function DelegatePath(props: {
     ['BUYERS_PARTNERS', pp('pp.path.find.buyers')],
     ['OTHER', pp('pp.path.find.other')],
   ] as const;
+  const allArchivedState = rooms && loaded.allArchived && !creating && (
+    <div className="ux-state" data-state="empty">
+      <p className="ux-state-label">{pp('pp.path.archived.label')}</p>
+      <div role="status">{pp('pp.path.archived.text')}</div>
+      <div className="ux-state-actions">
+        <a className="text-link" href="/account?view=work#customer-workspaces">
+          {pp('pp.path.archived.manage')}
+        </a>
+        <button type="button" className="button button-secondary" onClick={() => setCreating(true)}>
+          {pp('pp.path.archived.create')}
+        </button>
+      </div>
+    </div>
+  );
   const startControls = rooms && (
     <>
       {rooms.length > 1 && (
@@ -302,6 +326,7 @@ export function DelegatePath(props: {
         <label className="field" htmlFor={fieldId + 'n'}>
           {pp('pp.path.workspace.new')}
           <input
+            ref={nameField}
             id={fieldId + 'n'}
             value={workspaceName}
             maxLength={120}
@@ -374,10 +399,10 @@ export function DelegatePath(props: {
             state('request') === 'done' ? (
               <details>
                 <summary>{pp('pp.path.step.request.another')}</summary>
-                <div className="delegate-path-start">{startControls}</div>
+                <div className="delegate-path-start">{allArchivedState || startControls}</div>
               </details>
             ) : (
-              <div className="delegate-path-start">{startControls}</div>
+              <div className="delegate-path-start">{allArchivedState || startControls}</div>
             )
           ) : (
             <a className="text-link" href="/account?view=work#customer-workspaces">

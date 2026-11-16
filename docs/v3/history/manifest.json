@@ -525,6 +525,22 @@
       "bytes": 10653,
       "sha256": "f8e7b36157c600294c347a5c8b3011e758058696e25a15bd8adb6c37b1a1e2f6",
       "meaning": "Exact active ledger at 5d94701 (the PR 523 merge, 15 Nov; the text of Guardian 10 records 7), before Guardian 10 recorded the main CI of merges 521 to 523, the PR 524 core 0030 purge and privacy section decisions, the owner words relayed by Orchestrator 12 on 15 Nov and the go-live ordering for the helper interest switch, including the Takeover, merged-since, owner-words and owner-decision bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "ec7343719c746a81f6dd956fb8b3859ba9a2f2de",
+      "archive": "docs/v3/history/ledger-before-aw1-records-2026-11-16.md",
+      "bytes": 10663,
+      "sha256": "1dd246d8e35f0276d0ea74ab8ea0bd54a99e648c55a2c633832eb84a8d957d3f",
+      "meaning": "Exact active ledger at ec73437 (the PR 524 merge, 15 Nov; unchanged since ca27a1a, the text of Guardian 10 records 8), before Builder AW-1 recorded PR 525 (archived workspaces hidden from menus and new-work pickers) and the PR 524 merge, including the header link, Takeover and merged-since bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "aee8c623d9d2774ec88fd1e30bd36c1aefd34d1c",
+      "archive": "docs/v3/history/ledger-before-g10-records-9-2026-11-16.md",
+      "bytes": 10674,
+      "sha256": "ed7d9c320e51168e0fd86f78b9be4b3a6310e2044d9090f8d84ee89d2ca28f79",
+      "meaning": "Exact active ledger at aee8c62 (PR 525 fix round 2 head, 16 Nov), before Guardian 10 records 9 recorded the main CI of 524, the helper interest install run 43837198806 (core 29 -> 30, helper_interest 0 -> 1) with the live checks, and the PR 525 reviews, including the header link, Takeover, Open, installs and ADR bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

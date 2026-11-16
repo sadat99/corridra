@@ -162,6 +162,45 @@ describe('the customer navigation model', () => {
       expect(profile(input).kind).not.toBe('soon');
   });
 
+  it('archived workspaces are not offered for new work, but a page of one still opens its own profile', () => {
+    const second = '1f8fad5b-d9cb-469f-a165-70867728950e';
+    const archived = [
+      { id: workspace, name: 'Aurora Textiles', archived: true },
+      { id: second, name: 'Second Mill', archived: true },
+    ];
+    const profileHref = (input: Partial<typeof all>) => {
+      const item = customerAvatarItems({ ...all, ...input }).find(
+        (entry) => entry.label === 'Company Profile',
+      );
+      return item?.kind === 'link' ? item.href : undefined;
+    };
+    // Every workspace archived: New Request goes to the plan page and Company Profile to the chooser.
+    const allArchived = customerNavigation({
+      ...all,
+      workspaces: archived,
+      currentWorkspaceId: undefined,
+    });
+    expect(allArchived.reachable).toContain('/plan');
+    expect(profileHref({ workspaces: archived, currentWorkspaceId: undefined })).toBe(
+      '/account/profile',
+    );
+    // Manage Workspaces stays, so the archived workspaces can still be found and restored.
+    expect(allArchived.reachable).toContain('/account?view=work#customer-workspaces');
+    // One active and one archived: Company Profile opens the active one.
+    const oneActive = [{ ...archived[0]!, archived: false }, archived[1]!];
+    expect(profileHref({ workspaces: oneActive, currentWorkspaceId: undefined })).toBe(
+      `/account/profile/${workspace}`,
+    );
+    expect(
+      customerNavigation({ ...all, workspaces: oneActive, currentWorkspaceId: undefined })
+        .reachable,
+    ).not.toContain('/plan');
+    // On an archived workspace's own page: that workspace.
+    expect(profileHref({ workspaces: oneActive, currentWorkspaceId: second })).toBe(
+      `/account/profile/${second}`,
+    );
+  });
+
   it('Company Profile is a link only where the profiles module is on, otherwise plain Coming soon', () => {
     const off = customerAvatarItems({ ...all, organisationProfiles: false });
     expect(off.find((item) => item.label === 'Company Profile')!.kind).toBe('soon');

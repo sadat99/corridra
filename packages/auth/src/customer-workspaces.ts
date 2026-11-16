@@ -3,7 +3,7 @@ import { customerWorkspacesSwitchOn } from './customer-production';
 import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
-import { sessionHash } from '@corridra/db';
+import { sessionHash, type DatabaseClient } from '@corridra/db';
 import { CustomerSessionBoundary } from './customer-session';
 export {
   customerIssuer,
@@ -29,6 +29,8 @@ export type CustomerWorkspace = {
   role: 'owner' | 'admin' | 'member';
   synthetic: boolean;
   organisationId: null;
+  // Display only: archived workspaces are not offered for new work. Never grants or refuses.
+  archived: boolean;
 };
 
 export const customerAccessInput = z.discriminatedUnion('action', [
@@ -101,6 +103,27 @@ export function customerWorkspacesEnabled(env: NodeJS.ProcessEnv = process.env) 
   return customerWorkspacesSwitchOn(env);
 }
 
+// The archive flag comes from the database whenever the lifecycle module is installed,
+// even while its control is paused: the open guard refuses new work on archive alone.
+// The probe keeps the transaction usable when the module is absent (no 42883 to catch).
+async function archivedWorkspaceIds(db: DatabaseClient): Promise<Set<string>> {
+  const {
+    rows: [probe],
+  } = await db.query<{ installed: boolean }>(
+    "SELECT to_regprocedure('customer.workspace_lifecycle_state(uuid)') IS NOT NULL AS installed",
+  );
+  const archived = new Set<string>();
+  if (!probe?.installed) return archived;
+  const {
+    rows: [state],
+  } = await db.query<{ states: { workspaceId: string; archived: boolean }[] | null }>(
+    'SELECT customer.workspace_lifecycle_state(NULL) AS states',
+  );
+  for (const entry of state?.states ?? [])
+    if (entry.archived === true) archived.add(entry.workspaceId);
+  return archived;
+}
+
 // This service is server-only: readSession must fetch the actual current provider
 // session. No handler may deserialize CustomerSession from a request body/header.
 export class CustomerWorkspaceService extends CustomerSessionBoundary {
@@ -108,12 +131,14 @@ export class CustomerWorkspaceService extends CustomerSessionBoundary {
     return this.transaction(
       async (db) => {
         const result = await db.query('SELECT * FROM customer.collaborative_workspaces()');
+        const archived = await archivedWorkspaceIds(db);
         return result.rows.map((row) => ({
           id: row.id,
           name: row.name,
           role: row.role,
           synthetic: row.synthetic,
           organisationId: row.organisation_id,
+          archived: archived.has(row.id),
         }));
       },
       expectedSubject,
@@ -144,6 +169,7 @@ export class CustomerWorkspaceService extends CustomerSessionBoundary {
           role: workspace.role,
           synthetic: workspace.synthetic,
           organisationId: workspace.organisation_id,
+          archived: false,
         };
       },
       expectedSubject,
@@ -217,6 +243,7 @@ export class CustomerWorkspaceService extends CustomerSessionBoundary {
               role: workspace.role,
               synthetic: workspace.synthetic,
               organisationId: workspace.organisation_id,
+              archived: false,
             },
           };
         }

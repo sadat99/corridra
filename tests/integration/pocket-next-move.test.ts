@@ -188,6 +188,20 @@ describe('the signals come from the list the sidebar already reads', () => {
     expect(read.hasWorkspace).toBe(false);
     expect(nextMove(read).href).toBe('/plan');
   });
+
+  it('counts only workspaces that are not archived, so every archived workspace sends New Request to the plan page', () => {
+    const archived = { id: 'w2', name: 'Archived workspace', archived: true };
+    const allArchived = pocketSignalsOf(
+      list([], { workspaces: [{ id: 'w1', name: 'Workspace', archived: true }, archived] }),
+    );
+    expect(allArchived.hasWorkspace).toBe(false);
+    expect(nextMove(allArchived).href).toBe('/plan');
+    const oneActive = pocketSignalsOf(
+      list([], { workspaces: [{ id: 'w1', name: 'Workspace', archived: false }, archived] }),
+    );
+    expect(oneActive.hasWorkspace).toBe(true);
+    expect(nextMove(oneActive).href).toBe('/account?view=work#customer-workspaces');
+  });
 });
 
 describe('where the button is not drawn', () => {

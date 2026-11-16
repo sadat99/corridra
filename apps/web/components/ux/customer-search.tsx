@@ -74,6 +74,7 @@ import {
   subscribeCustomerNote,
 } from './customer-bar-store';
 import { useWorkspaces } from './customer-bar';
+import { offeredWorkspaces } from '../../lib/workspace-choice';
 
 /** The Search button asks the dialog to open; the dialog lives once beside it. Not the staff event. */
 const openEvent = 'corridra:open-customer-search';
@@ -251,6 +252,9 @@ function SearchDialog({ onAccount, pathname }: { onAccount: boolean; pathname: s
     const list = workspaces ?? [];
     const match = workspacePage.exec(pathname);
     const current = match ? list.find((item) => item.id === match[2]) : undefined;
+    // Archived workspaces never start new work and are not picked for Company Profile unless this is their page. The
+    // whole list is passed so Manage Workspaces, where they are restored, stays a page.
+    const offered = offeredWorkspaces(list, current);
     return customerSearchPages(
       {
         companies,
@@ -260,7 +264,7 @@ function SearchDialog({ onAccount, pathname }: { onAccount: boolean; pathname: s
         organisationProfiles,
         problemReports,
         workspaces: list,
-        currentWorkspaceId: (current ?? (list.length === 1 ? list[0] : undefined))?.id,
+        currentWorkspaceId: (current ?? (offered.length === 1 ? offered[0] : undefined))?.id,
       },
       pathname || '/account',
     );

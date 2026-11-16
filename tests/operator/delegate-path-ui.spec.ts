@@ -127,7 +127,7 @@ type World = {
   joinedByApplication: boolean;
   /** What the organisers shared of the programme dates and destination; null until they share it. */
   context: { marketCode: string; startsAt: string; endsAt: string; timezone: string } | null;
-  workspaces: { id: string; name: string }[];
+  workspaces: { id: string; name: string; archived?: boolean }[];
   requests: { id: string; label: string; available: boolean }[];
   shared: { summary: string; requestId: string } | null;
   draft: Record<string, unknown> | null;
@@ -536,6 +536,75 @@ test('several workspaces need a choice; a code-joined delegate has no words to c
     },
   });
 });
+
+test('an archived room is not offered and one active room is preselected', async ({ page }) => {
+  const archivedId = '00000000-0000-4000-8000-0000000000a1';
+  const w = world({
+    workspaces: [
+      { id: archivedId, name: 'Synthetic Archived Company', archived: true },
+      { id: workspaceId, name: 'Synthetic Rahman Agro', archived: false },
+    ],
+  });
+  await serve(page, w);
+  await page.goto(origin + '/');
+  await openRegistration(page);
+  // One active room is left, so there is nothing to choose and it is used for the start.
+  await expect(step(page, 1).getByLabel('Workspace for the request')).toHaveCount(0);
+  await expect(path(page).getByText('Synthetic Archived Company')).toHaveCount(0);
+  await step(page, 1).getByRole('button', { name: 'Something Else' }).click();
+  await page.waitForURL(`**/account/drafts/${workspaceId}?draft=${draftId}`);
+  expect(w.posts.map((p) => p.url)).toEqual(['/api/customer-mission-drafts']);
+  expect(w.posts[0]!.body.input).toMatchObject({ workspaceId });
+});
+
+for (const width of [390, 1440])
+  test(`with every workspace archived the path says so, links to the workspaces and makes a new one only on request, at ${width}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const w = world({
+      workspaces: [{ id: workspaceId, name: 'Synthetic Rahman Agro', archived: true }],
+    });
+    await serve(page, w);
+    await page.goto(origin + '/');
+    await openRegistration(page);
+    const empty = step(page, 1).locator('.ux-state[data-state="empty"]');
+    await expect(empty.locator('.ux-state-label')).toHaveText('No active workspace');
+    await expect(empty.getByRole('status')).toHaveText(
+      'Your workspaces are archived, so a new request cannot start from them. An owner can restore one from Manage Workspaces.',
+    );
+    await expect(empty.getByRole('link', { name: 'Manage Workspaces' })).toHaveAttribute(
+      'href',
+      '/account?view=work#customer-workspaces',
+    );
+    // Nothing offers to start a request or to name a workspace until the person asks for a new one.
+    await expect(step(page, 1).getByLabel('Name for your company workspace')).toHaveCount(0);
+    await expect(
+      step(page, 1).getByRole('button', { name: 'Find Buyers or Partners' }),
+    ).toHaveCount(0);
+    await expect(path(page).getByText('Synthetic Rahman Agro', { exact: true })).toHaveCount(0);
+    for (const target of [
+      empty.getByRole('link', { name: 'Manage Workspaces' }),
+      empty.getByRole('button', { name: 'Create a New Workspace' }),
+    ])
+      expect((await target.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    await clean(page);
+    await shot(page, `all-archived-${width}`);
+    expect(w.posts).toEqual([]);
+    // The second choice opens the existing name field, focused, and starts as before.
+    await empty.getByRole('button', { name: 'Create a New Workspace' }).click();
+    const name = step(page, 1).getByLabel('Name for your company workspace');
+    await expect(name).toBeFocused();
+    await expect(empty).toHaveCount(0);
+    await name.fill('Synthetic Rahman Agro Imports');
+    await step(page, 1).getByRole('button', { name: 'Find Buyers or Partners' }).click();
+    await page.waitForURL(`**/account/drafts/${newWorkspaceId}?draft=${draftId}`);
+    expect(w.posts.map((p) => p.url)).toEqual([
+      '/api/customer-workspaces',
+      '/api/customer-mission-drafts',
+    ]);
+    expect(w.posts[0]!.body).toMatchObject({ name: 'Synthetic Rahman Agro Imports' });
+  });
 
 test('a refused or failed start says so, sends nothing further and can be retried as the same change', async ({
   page,

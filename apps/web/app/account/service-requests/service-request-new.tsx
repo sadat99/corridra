@@ -13,12 +13,13 @@ import {
   type ServiceRequestSummary,
 } from './service-request-client';
 import { formatDate } from '../../../lib/ux/format';
+import { activeWorkspaces } from '../../../lib/workspace-choice';
 
 // D11: the chosen day in one style ("24 Oct 2026"), whatever the browser shows in the date field.
 const chosenDay = (value: string) =>
   /^\d{4}-\d{2}-\d{2}$/.test(value) ? formatDate(`${value}T00:00:00Z`, { timeZone: 'UTC' }) : '';
 
-type Workspace = { id: string; name: string; role: string };
+type Workspace = { id: string; name: string; role: string; archived?: boolean };
 type Props = {
   subject: string;
   issuer: string;
@@ -41,6 +42,7 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
   const [catalogue, setCatalogue] = useState<CatalogueResult | null>(null),
     [workspaces, setWorkspaces] = useState<Workspace[] | null>(workspaceId ? [] : null),
     [workspace, setWorkspace] = useState(workspaceId ?? ''),
+    [allArchived, setAllArchived] = useState(false),
     [service, setService] = useState(''),
     [region, setRegion] = useState(''),
     [need, setNeed] = useState(starter),
@@ -90,9 +92,14 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
           });
           if (!response.ok) throw new Error('workspaces');
           const body = (await response.json()) as { workspaces?: Workspace[] };
-          const mine = (body.workspaces ?? []).filter((w) => ['owner', 'admin'].includes(w.role));
+          const managed = (body.workspaces ?? []).filter((w) =>
+            ['owner', 'admin'].includes(w.role),
+          );
+          // An archived workspace cannot start new work, so it is not offered or picked.
+          const mine = activeWorkspaces(managed);
           if (controller.signal.aborted) return;
           setWorkspaces(mine);
+          setAllArchived(mine.length === 0 && managed.length > 0);
           if (mine.length === 1) setWorkspace(mine[0].id);
         } catch {
           if (controller.signal.aborted) return;
@@ -207,15 +214,37 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
           </div>
         </div>
       )}
-      {state === 'ready' && workspaces && workspaces.length === 0 && !workspaceId && (
-        <div className="ux-state" data-state="denied">
-          <p className="ux-state-label">Owner or admin needed</p>
-          <div role="alert">
-            Only an owner or admin of a workspace can ask for paid help. You have no workspace like
-            that.
+      {state === 'ready' &&
+        workspaces &&
+        workspaces.length === 0 &&
+        !workspaceId &&
+        allArchived && (
+          <div className="ux-state" data-state="empty">
+            <p className="ux-state-label">No active workspace</p>
+            <div role="status">
+              The workspaces you own or manage are archived, so a new help request cannot start from
+              them. An owner can restore one from Manage Workspaces.
+            </div>
+            <div className="ux-state-actions">
+              <a className="text-link" href="/account?view=work#customer-workspaces">
+                Manage Workspaces
+              </a>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      {state === 'ready' &&
+        workspaces &&
+        workspaces.length === 0 &&
+        !workspaceId &&
+        !allArchived && (
+          <div className="ux-state" data-state="denied">
+            <p className="ux-state-label">Owner or admin needed</p>
+            <div role="alert">
+              Only an owner or admin of a workspace can ask for paid help. You have no workspace
+              like that.
+            </div>
+          </div>
+        )}
       {state === 'ready' && catalogue && (workspaceId || (workspaces && workspaces.length > 0)) && (
         <form onSubmit={(e) => void submit(e)} aria-label="Help request details">
           <fieldset disabled={busy}>
