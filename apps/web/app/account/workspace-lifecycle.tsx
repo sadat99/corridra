@@ -21,6 +21,7 @@ import {
   whenWords,
   type LifecycleState,
 } from './workspace-lifecycle-client';
+import { announceWorkspacesChanged } from '../../lib/ux/workspaces-changed';
 
 type Kind = 'rename' | 'archive' | 'restore' | 'transfer' | 'cancel' | 'accept' | 'decline';
 type Filter = 'active' | 'archived';
@@ -252,6 +253,7 @@ export function useWorkspaceLifecycle({
     setUndo(undoId && id ? { id, name: nameOf(id) } : null);
     setReloadTick((tick) => tick + 1);
     void refreshRows();
+    announceWorkspacesChanged();
   };
 
   const filterControl = showFilter ? (
@@ -353,6 +355,7 @@ export function useWorkspaceLifecycle({
             setAnnounce(`${undo.name} was restored.`);
             setReloadTick((tick) => tick + 1);
             void refreshRows();
+            announceWorkspacesChanged();
           }}
         />
       )}

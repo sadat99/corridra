@@ -170,6 +170,7 @@ async function serve(page: Page, world: World) {
     const body = request.postDataJSON() as { action: string; workspaceId: string };
     const row = world.rows.find((candidate) => candidate.id === body.workspaceId)!;
     if (body.action === 'restore') row.archived = false;
+    if (body.action === 'archive') row.archived = true;
     world.versions[row.id] = (world.versions[row.id] ?? 1) + 1;
     return route.fulfill({ json: { workspaceId: row.id, operation: body.action } });
   });
@@ -341,6 +342,59 @@ test('/account keeps archived workspaces under Archived with the label, the owne
   await expect(
     workspaceGroup(menu).getByRole('menuitem', { name: names[archived], exact: true }),
   ).toBeVisible();
+});
+
+test('on /account a restore and an archive change the menu and the rail New Request without a reload', async ({
+  page,
+}) => {
+  const world: World = {
+    rows: [
+      { id: archived, role: 'owner', archived: true },
+      { id: memberArchived, role: 'member', archived: true },
+    ],
+    versions: { [archived]: 4 },
+  };
+  await serve(page, world);
+  await visit(page, '/account');
+  let menu = await openMenu(page);
+  await expect(
+    workspaceGroup(menu).getByText('All your workspaces are archived.', { exact: true }),
+  ).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(railNew(page)).toHaveAttribute('href', '/plan');
+  await page.getByRole('radio', { name: /Archived/ }).check();
+  // Restore: the menu reads again and lists the workspace, with no reload.
+  await page.getByRole('button', { name: 'Actions for ' + names[archived] }).click();
+  await page.getByRole('menuitem', { name: 'Restore Workspace' }).click();
+  const reread = page.waitForResponse('**/api/customer-workspaces');
+  await page
+    .getByRole('dialog', { name: 'Restore ' + names[archived] + '?' })
+    .getByRole('button', { name: 'Restore Workspace' })
+    .click();
+  await expect(page.getByText(names[archived] + ' was restored.')).toBeVisible();
+  await reread;
+  menu = await openMenu(page);
+  await expect(
+    workspaceGroup(menu).getByRole('menuitem', { name: names[archived], exact: true }),
+  ).toBeVisible();
+  await expect(workspaceGroup(menu).getByText('All your workspaces are archived.')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(railNew(page)).toHaveAttribute('href', workHref);
+  // Archive: it leaves the menu again, still with no reload.
+  await page.getByRole('radio', { name: /Active/ }).check();
+  await page.getByRole('button', { name: 'Actions for ' + names[archived] }).click();
+  await page.getByRole('menuitem', { name: 'Archive Workspace' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Archive ' + names[archived] + '?' });
+  await dialog.getByLabel('Type the workspace name to confirm').fill(names[archived]!);
+  await dialog.getByRole('button', { name: 'Archive Workspace' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'was archived.' })).toBeVisible();
+  menu = await openMenu(page);
+  await expect(
+    workspaceGroup(menu).getByText('All your workspaces are archived.', { exact: true }),
+  ).toBeVisible();
+  await expect(workspaceGroup(menu).getByText(names[archived]!)).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(railNew(page)).toHaveAttribute('href', '/plan');
 });
 
 for (const width of [390, 768]) {

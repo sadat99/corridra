@@ -8,6 +8,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { CorridraIcon } from '../corridra-icon';
 import { useLanguage } from '../language-provider';
 import { localeMeta } from '../../lib/i18n/locales';
+import { workspacesChangedEvent } from '../../lib/ux/workspaces-changed';
 import { NotificationInbox } from './notification-inbox';
 import { MenuRadio } from './overflow-menu';
 
@@ -17,6 +18,14 @@ type Item = { readAt: string | null };
 /** Read only on the customer account pages, where New request and the switcher need them. */
 export function useWorkspaces(active: boolean) {
   const [list, setList] = useState<Workspace[] | null>(null);
+  // Bumped when this page archives or restores a workspace, so the menus read again without a reload.
+  const [changes, setChanges] = useState(0);
+  useEffect(() => {
+    if (!active) return;
+    const changed = () => setChanges((count) => count + 1);
+    window.addEventListener(workspacesChangedEvent, changed);
+    return () => window.removeEventListener(workspacesChangedEvent, changed);
+  }, [active]);
   useEffect(() => {
     if (!active) return;
     const controller = new AbortController();
@@ -38,7 +47,7 @@ export function useWorkspaces(active: boolean) {
         if (!controller.signal.aborted) setList(null);
       });
     return () => controller.abort();
-  }, [active]);
+  }, [active, changes]);
   return active ? list : null;
 }
 
