@@ -3292,7 +3292,8 @@
   margin: 0;
 }
 @media (max-width: 39.99rem) {
-  /* Small enough that both buttons share one row on a 360 px phone. */
+  /* Both buttons share one row on a 360 px phone. Controls keep their 16 px text, so the row is made to fit
+     by a narrow side padding instead. */
   .ux-operator-home
     .ux-workspace-body
     #workspace-missions
@@ -3300,8 +3301,7 @@
     .mission-pager
     > .text-link {
     width: auto;
-    padding-inline: var(--space-3);
-    font-size: var(--text-sm);
+    padding-inline: var(--space-1);
   }
 }
 @media (min-width: 64rem) {

@@ -308,6 +308,9 @@ test('Previous Missions and Next Missions share one line on desktop and one 44 p
     );
     expect(Math.abs(centre(before) - centre(after)), `one row at ${width}`).toBeLessThanOrEqual(1);
     expect(after.x, `Next after Previous at ${width}`).toBeGreaterThan(before.x + before.width - 1);
+    // Controls are 16 px at every width; the phone row is made to fit by padding, never by smaller text.
+    for (const button of [previous, next])
+      await expect(button, `16 px text at ${width}`).toHaveCSS('font-size', '16px');
     if (width >= 1280) {
       // Desktop: the count text, then both buttons, all on one centre line.
       expect(Math.abs(centre(count) - centre(before)), `count at ${width}`).toBeLessThanOrEqual(1);
