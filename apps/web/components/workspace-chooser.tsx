@@ -117,8 +117,8 @@ export async function WorkspaceChooser({
           <p className="ux-empty">
             {archivedOnly
               ? kind === 'programmes'
-                ? 'Your workspaces that can organise programmes are archived. The owner can restore one from your workspaces, or you can create a new one.'
-                : 'Your workspaces are archived. The owner can restore one from your workspaces, or you can create a new one.'
+                ? 'Your workspaces that can organise programmes are archived. An owner can restore one from Manage your workspaces.'
+                : 'Your workspaces are archived. An owner can restore one from Manage your workspaces.'
               : kind !== 'programmes'
                 ? 'You do not have a workspace yet. Create one to continue.'
                 : memberOnly

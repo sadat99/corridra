@@ -222,8 +222,8 @@ function ScopedNew({ subject, issuer, kind, contextRef, workspaceId }: Props) {
           <div className="ux-state" data-state="empty">
             <p className="ux-state-label">No active workspace</p>
             <div role="status">
-              Your workspaces are archived, so a new help request cannot start from them. The owner
-              can restore one.
+              The workspaces you own or manage are archived, so a new help request cannot start from
+              them. An owner can restore one from Manage Workspaces.
             </div>
             <div className="ux-state-actions">
               <a className="text-link" href="/account?view=work#customer-workspaces">

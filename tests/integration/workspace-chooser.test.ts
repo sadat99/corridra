@@ -192,7 +192,7 @@ describe('archived workspaces are not offered to start new work', () => {
     const html = await chooser('programmes');
     expect(headingOf(html)).toBe('No active workspace');
     expect(html).toContain(
-      'Your workspaces that can organise programmes are archived. The owner can restore one from your workspaces, or you can create a new one.',
+      'Your workspaces that can organise programmes are archived. An owner can restore one from Manage your workspaces.',
     );
     expect(html).not.toContain('Only workspace owners and admins can organise programmes.');
     expect(html).not.toContain('/account/delegations/' + a);
@@ -208,7 +208,7 @@ describe('archived workspaces are not offered to start new work', () => {
     const html = await chooser('services');
     expect(headingOf(html)).toBe('No active workspace');
     expect(html).toContain(
-      'Your workspaces are archived. The owner can restore one from your workspaces, or you can create a new one.',
+      'Your workspaces are archived. An owner can restore one from Manage your workspaces.',
     );
     expect(anchors(html)).toEqual([create, manage]);
   });

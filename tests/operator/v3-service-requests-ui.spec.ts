@@ -607,7 +607,7 @@ test('an archived owned workspace is not offered and not auto-picked', async ({ 
   const empty = page.locator('.ux-state[data-state="empty"]');
   await expect(empty.locator('.ux-state-label')).toHaveText('No active workspace');
   await expect(empty.getByRole('status')).toHaveText(
-    'Your workspaces are archived, so a new help request cannot start from them. The owner can restore one.',
+    'The workspaces you own or manage are archived, so a new help request cannot start from them. An owner can restore one from Manage Workspaces.',
   );
   await expect(empty.getByRole('link', { name: 'Manage Workspaces' })).toHaveAttribute(
     'href',
