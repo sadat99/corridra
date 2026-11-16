@@ -320,6 +320,7 @@ describe('every customer route reaches data through the session boundary', () =>
       'customer-account-gate.ts',
       'customer-admission.ts',
       'customer-authority-pin.ts',
+      'customer-data-cleanup.ts',
       'customer-request-admission.ts',
       'customer-erasure-queue.ts',
       'customer-session.ts',
