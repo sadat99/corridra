@@ -202,6 +202,34 @@ describe('26: Waiting on others order', () => {
     expect(one.waiting.map((row) => row.id)).toEqual(['request:ra', 'request:rb']);
     expect(two.waiting.map((row) => row.id)).toEqual(['request:ra', 'request:rb']);
   });
+
+  it('orders by the received time, not the date text: same-day requests and offset timestamps sort newest first', () => {
+    const model = buildMoveModel({
+      ...empty,
+      workspaces: [owner],
+      requests: [
+        // Same day: the id order (ra before rb) disagrees with the time order.
+        request('ra', '2026-10-29T08:00:00Z'),
+        request('rb', '2026-10-29T17:00:00Z'),
+        // "2026-10-31" as text, but 22:00 on 30 Oct in UTC: older than rd at 23:00 on 30 Oct.
+        request('rc', '2026-10-31T03:00:00+05:00'),
+        request('rd', '2026-10-30T23:00:00Z'),
+      ],
+      moves: [
+        {
+          requestId: 'rb',
+          moves: [{ id: 'm1', verb: 'Confirm', object: 'the dates', holder: 'team', dueOn: null }],
+        },
+      ],
+    });
+    expect(model.waiting.map((row) => row.id)).toEqual([
+      'request:rd',
+      'request:rc',
+      'move:m1',
+      'request:rb',
+      'request:ra',
+    ]);
+  });
 });
 
 describe('29 and 34: plain labels', () => {
