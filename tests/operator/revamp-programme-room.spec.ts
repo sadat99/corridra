@@ -997,6 +997,8 @@ async function openSlowly(
     projection?: () => number;
     /** How long each projection answer stays valid, from the moment it is sent. */
     expiresIn?: number;
+    /** How long each participants answer stays valid (its open invitation's expiry), from the moment it is sent. */
+    participantsExpireIn?: number;
   },
 ) {
   await page.route('**/api/customer-programme-*', (route) =>
@@ -1018,7 +1020,23 @@ async function openSlowly(
     await route.fulfill(
       answer.status
         ? { status: answer.status, json: { error: 'unavailable' } }
-        : { json: sampleParticipants },
+        : {
+            json: answer.participantsExpireIn
+              ? {
+                  ...sampleParticipants,
+                  invitations: sampleParticipants.invitations.map((invitation) =>
+                    invitation.status === 'ISSUED'
+                      ? {
+                          ...invitation,
+                          expiresAt: new Date(
+                            Date.now() + answer.participantsExpireIn!,
+                          ).toISOString(),
+                        }
+                      : invitation,
+                  ),
+                }
+              : sampleParticipants,
+          },
     );
   });
   await page.route('**/api/customer-programmes*', (route) =>
@@ -1141,4 +1159,32 @@ test('item 21: a projection that expires while a refresh reads again is not draw
   await room.getByRole('button', { name: groups[0], exact: true }).click();
   await expect(ready).toHaveText('1 of 4');
   await expect(ready).toHaveText('Checking…', { timeout: 5000 });
+});
+
+// Audit fixes 1, item 21, fix round 2: the counts kept across a refresh expire with the read they came from. A
+// refresh draws a new participants read, which ends the old read's own timer, so the room keeps the deadline itself.
+test('item 21: counts kept across a refresh are dropped when their read expires and the new read stalls', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  let slow = 0;
+  await openSlowly(page, {
+    participants: () => slow,
+    projection: () => 0,
+    participantsExpireIn: 3000,
+  });
+  const room = page.getByRole('article', { name: programme.name });
+  const registered = glanceTile(room, 'registered');
+  await expect(registered).not.toHaveText(/Checking|Not measured/);
+  const kept = await registered.textContent();
+  // A group change reads again; the new participants read takes far longer than the old answer stays valid.
+  slow = 10000;
+  await room.getByRole('button', { name: groups[1], exact: true }).click();
+  await room.getByRole('button', { name: groups[0], exact: true }).click();
+  await expect(registered).toHaveText(kept!);
+  await expect(registered).toHaveText('Checking…', { timeout: 5000 });
+  await expect(room.locator('.room-head > .room-stage').getByRole('status')).toHaveText(
+    'Checking where this programme stands…',
+  );
+  await expect(room.locator('.room-next b')).toHaveText('Checking…');
 });

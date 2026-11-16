@@ -251,7 +251,9 @@ export function useParticipantView(
   const [busy, setBusy] = useState(false),
     [visible, setVisible] = useState(true),
     [notice, setNotice] = useState(''),
-    [refreshing, setRefreshing] = useState(false);
+    [refreshing, setRefreshing] = useState(false),
+    // When what was read stops being valid (epoch milliseconds), so a holder of a copy can drop it on time too.
+    [validUntil, setValidUntil] = useState<number | null>(null);
   const [pending, setPending] = useState<ParticipantCommand | null>(null),
     [result, setResult] = useState<Record<string, unknown> | null>(null);
   const active = useRef(false),
@@ -369,6 +371,7 @@ export function useParticipantView(
         }
         if (timer.current) clearTimeout(timer.current);
         timer.current = setTimeout(expire, deadline.current - Date.now());
+        setValidUntil(deadline.current);
         setData((old) => {
           if (!which || !old) return value;
           if (which === 'invitations')
@@ -493,6 +496,7 @@ export function useParticipantView(
           deadline.current = Math.min(deadline.current, Date.parse(value.expiresAt));
           if (timer.current) clearTimeout(timer.current);
           timer.current = setTimeout(expire, Math.max(0, deadline.current - Date.now()));
+          setValidUntil(deadline.current);
         }
         if (command.action === 'preview')
           previewName.current = typeof value.name === 'string' ? value.name : null;
@@ -578,5 +582,18 @@ export function useParticipantView(
       document.removeEventListener('visibilitychange', visibility);
     };
   }, [load, invalidate]);
-  return { data, status, busy, refreshing, visible, notice, pending, result, load, send, deny };
+  return {
+    data,
+    status,
+    busy,
+    refreshing,
+    visible,
+    notice,
+    pending,
+    result,
+    load,
+    send,
+    deny,
+    validUntil,
+  };
 }

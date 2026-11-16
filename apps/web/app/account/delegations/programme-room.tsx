@@ -38,7 +38,8 @@ import { useProgrammeGlance } from './programme-projections';
 // projection do not already read, and shows only counts and states, never a participant's own answers.
 type LensKey = RoomLensKey | 'companies' | 'agenda' | 'results' | 'page';
 export type RoomPanels = Partial<Record<LensKey, ReactNode>>;
-type Live = { counts: BoardingCounts | null; notice: string };
+/** `until`: when the read the counts came from stops being valid (epoch milliseconds), where it set a deadline. */
+type Live = { counts: BoardingCounts | null; notice: string; until?: number | null };
 /** A projection as the room heard it, with the moment it stops being valid. */
 type HeardProjection = ProgrammeGlanceSource & { expiresAt: string };
 
@@ -548,7 +549,7 @@ function useOnScreen() {
 // nothing itself: it hands the counts to the room, which shows them in the stage, the next step and the glance.
 function LiveStatus({ scope, onRead }: { scope: ParticipantScope; onRead: (live: Live) => void }) {
   const view = useParticipantView(scope, noop);
-  const { status, data, notice } = view;
+  const { status, data, notice, validUntil } = view;
   const counts = useMemo(
     () =>
       status === 'ready' && data
@@ -562,10 +563,13 @@ function LiveStatus({ scope, onRead }: { scope: ParticipantScope; onRead: (live:
     [status, data],
   );
   // Only an answered read is passed on, so the room keeps its last counts while a new read is on its way. A failed
-  // or denied read answers with no counts, and the room then says the counts are not measured.
+  // or denied read answers with no counts, and the room then says the counts are not measured. The read's deadline
+  // goes with the counts: a Refresh draws a new LiveStatus, which ends this read's own expiry timer, so the room keeps
+  // the deadline itself.
   useEffect(() => {
-    if (status !== 'loading') onRead({ counts, notice });
-  }, [status, counts, notice, onRead]);
+    if (status !== 'loading')
+      onRead({ counts, notice, until: status === 'ready' ? validUntil : null });
+  }, [status, counts, notice, validUntil, onRead]);
   return null;
 }
 
@@ -719,6 +723,20 @@ export function ProgrammeRoom({
     );
     return () => clearTimeout(expiry);
   }, [readProjection]);
+  // The counts kept across a refresh expire with the read they came from: if the new read stalls past that
+  // deadline, they are dropped and the stage says it is checking again, never showing old counts with no deadline.
+  const until = read.until;
+  useEffect(() => {
+    if (!until) return;
+    const expiry = setTimeout(
+      () => {
+        setRead(nothingRead);
+        setHeard(null);
+      },
+      Math.max(0, until - Date.now()),
+    );
+    return () => clearTimeout(expiry);
+  }, [until]);
   const termsOn = participantsEnabled && termsEnabled;
   const terms = useChecklistTerms(scope, termsOn && reading, reads);
   const projection = reading && projectionsEnabled ? readProjection : null;
