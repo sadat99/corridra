@@ -1,6 +1,11 @@
 import { createHmac } from 'node:crypto';
 import { z } from 'zod';
-import { withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
+import {
+  purgeIntakeRateLimit,
+  withTenant,
+  type DatabasePool,
+  type RequestContext,
+} from '@corridra/db';
 import { DomainError } from '@corridra/domain';
 import { countryCodes } from '@corridra/domain/countries';
 
@@ -105,6 +110,7 @@ export class HelperInterestService {
     const r = await this.pool.query<{ ok: boolean }>('SELECT app.intake_budget($1,60) AS ok', [
       this.key('all', 'all'),
     ]);
+    await purgeIntakeRateLimit(this.pool);
     if (!r.rows[0]?.ok) throw new DomainError(tooMany, 429);
   }
 
@@ -118,6 +124,7 @@ export class HelperInterestService {
     const budget = await this.pool.query<{ ok: boolean }>('SELECT app.intake_budget($1,6) AS ok', [
       this.key('email', v.email),
     ]);
+    await purgeIntakeRateLimit(this.pool);
     if (!budget.rows[0]?.ok) throw new DomainError(tooMany, 429);
     try {
       await this.pool.query('SELECT app.helper_interest_submit($1,$2,$3,$4)', [

@@ -1,5 +1,10 @@
 import { createHash, createHmac } from 'node:crypto';
-import { withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
+import {
+  purgeIntakeRateLimit,
+  withTenant,
+  type DatabasePool,
+  type RequestContext,
+} from '@corridra/db';
 import { DomainError } from '@corridra/domain';
 import { buyerRequest, communicationCommand } from '@corridra/domain/access';
 import { decodeCursor, keysetPage, pageLimit } from '@corridra/domain/paging';
@@ -22,6 +27,7 @@ export class CommunicationService {
       'SELECT app.intake_budget($1,60) AS client,app.intake_budget($2,60) AS token,app.intake_budget($3,60) AS global',
       [key(client), key(token), key('global')],
     );
+    await purgeIntakeRateLimit(this.pool);
     if (!r.rows[0].client || !r.rows[0].token || !r.rows[0].global)
       throw new DomainError('Too many requests. Try again in an hour.', 429);
   }

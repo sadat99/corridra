@@ -130,7 +130,7 @@ test('explicit customer install preserves populated core rows, ACLs, functions, 
   // The unchanged original runner still owns its original registry.
   await migrate(f.owner);
   expect((await f.owner.query('SELECT count(*)::int AS n FROM migrations.applied')).rows[0].n).toBe(
-    29,
+    30,
   );
 });
 test('fresh module install is explicit and repeatable', async () => {
