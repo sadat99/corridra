@@ -438,3 +438,38 @@ test('28: a mission opened after Refresh reads once with its own token', async (
   expect(views.filter((sent) => sent === second)).toHaveLength(1);
   expect(views.filter((sent) => sent !== token && sent !== second)).toEqual([]);
 });
+
+for (const first of ['report', 'failure'] as const)
+  test(`28: a slow first read never overwrites a newer Refresh (held first ${first})`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    let release: () => void = () => {};
+    const held = new Promise<void>((done) => (release = done));
+    let views = 0;
+    await page.route('**/api/customer-missions*', async (route) => {
+      views += 1;
+      if (views === 1) {
+        // The first load is held until the Refresh has answered, then answers with the older state.
+        await held;
+        return first === 'report'
+          ? route.fulfill({ json: { ...sharedReport, programme: 'Older Textile Mission' } })
+          : route.fulfill({ status: 503, json: { error: 'Invented slow failure' } });
+      }
+      return route.fulfill({ json: { ...sharedReport, programme: 'Newer Textile Mission' } });
+    });
+    await page.goto(`${origin}/account?mode=shared&current=reports`);
+    const section = page.getByRole('region', { name: 'Shared missions' });
+    await section.getByLabel('Private mission invitation').fill(`${origin}/client#${token}`);
+    await section.getByRole('button', { name: 'Open Shared Mission' }).click();
+    await expect.poll(() => views).toBe(1);
+    await section.getByRole('button', { name: 'Refresh shared missions' }).click();
+    await expect(section.getByText(/^Newer Textile Mission/)).toBeVisible();
+    release();
+    // Give the held answer time to arrive; it must change nothing.
+    await page.waitForTimeout(500);
+    await expect(section.getByText(/^Newer Textile Mission/)).toBeVisible();
+    await expect(section.getByText(/Older Textile Mission/)).toHaveCount(0);
+    await expect(section.getByRole('alert')).toHaveCount(0);
+    await expect(section.getByLabel('Response', { exact: true })).toBeEnabled();
+  });

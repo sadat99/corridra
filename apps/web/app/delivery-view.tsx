@@ -64,6 +64,8 @@ function ScopedDeliveryView({
     commandId: string;
   } | null>(null);
   const inFlight = useRef(false);
+  // The first load's request: a reread ends it, so a slow first answer never overwrites a newer one.
+  const firstLoad = useRef<AbortController | null>(null);
   const feedback = useRef<HTMLParagraphElement>(null);
   useEffect(() => {
     if (error) feedback.current?.focus();
@@ -94,6 +96,7 @@ function ScopedDeliveryView({
   }
   function reread() {
     if (inFlight.current) return;
+    firstLoad.current?.abort();
     inFlight.current = true;
     setBusy(true);
     refresh()
@@ -120,6 +123,7 @@ function ScopedDeliveryView({
     token.current = capability;
     let active = true;
     const controller = new AbortController();
+    firstLoad.current = controller;
     if (!/^[a-f0-9]{64}$/.test(token.current)) {
       Promise.resolve().then(() => {
         if (active) {
@@ -141,10 +145,11 @@ function ScopedDeliveryView({
       .then(async (r) => {
         await checkedResponse(r);
         const value = await r.json();
-        if (active) setReport(value);
+        if (active && !controller.signal.aborted) setReport(value);
       })
       .catch((e) => {
-        if (active) {
+        // An ended first load (left, or superseded by a reread) says nothing.
+        if (active && !controller.signal.aborted) {
           setFailureKind(accessDenied(e) ? 'denied' : 'unavailable');
           setError(e.message);
         }
