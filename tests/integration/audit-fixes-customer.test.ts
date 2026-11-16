@@ -156,6 +156,16 @@ describe('25: the Move switch counts', () => {
       '999px',
     );
   });
+
+  it('draws the switch count as a plain number: no fill, box size or padding, selected or not', () => {
+    const css = read('apps/web/app/account/move/move-view.css');
+    for (const selector of ['.move-seg em', ".move-seg a[aria-current='page'] em"]) {
+      const found = css.split(`${selector} {`).slice(1);
+      expect(found.length, selector).toBeGreaterThan(0);
+      for (const block of found.map((rest) => rest.slice(0, rest.indexOf('}'))))
+        expect(block, selector).not.toMatch(/(^|[\s;])(background|min-width|height|padding)\s*:/);
+    }
+  });
 });
 
 describe('26: Waiting on others order', () => {
