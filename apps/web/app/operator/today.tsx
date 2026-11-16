@@ -6,6 +6,8 @@ import { formatDate, formatDateTime } from '../../lib/ux/format';
 import {
   filterRows,
   filterTotal,
+  needsFilterFromSearch,
+  searchWithNeedsFilter,
   lateLabel,
   needsSummary,
   needsYouNow,
@@ -237,8 +239,31 @@ function NeedsYouNow({
   tenant: string;
   nothing: boolean;
 }) {
+  // The list opens on All; the chosen filter lives in the address (?needs=new|overdue) so reload and
+  // back keep it. It is read after mount, so the server render and the first client render agree.
   const [filter, setFilter] = useState<NeedsFilter>('all');
   const [all, setAll] = useState(false);
+  useEffect(() => {
+    const read = () => {
+      setFilter(needsFilterFromSearch(window.location.search));
+      setAll(false);
+    };
+    read();
+    window.addEventListener('popstate', read);
+    return () => window.removeEventListener('popstate', read);
+  }, []);
+  const choose = (value: NeedsFilter) => {
+    setFilter(value);
+    setAll(false);
+    const search = searchWithNeedsFilter(window.location.search, value);
+    if (search !== window.location.search) {
+      window.history.pushState(
+        null,
+        '',
+        `${window.location.pathname}${search}${window.location.hash}`,
+      );
+    }
+  };
   // Mission pages exist only while CORRIDRA_UX_MISSIONS_V2 is on (the page answers 404 otherwise), so rows
   // open the mission list until the same flag read the Missions panel uses says they are on.
   const [missionPages, setMissionPages] = useState(false);
@@ -300,10 +325,7 @@ function NeedsYouNow({
             <SegmentedFilter<NeedsFilter>
               label="Show"
               value={filter}
-              onChange={(value) => {
-                setFilter(value);
-                setAll(false);
-              }}
+              onChange={choose}
               options={[
                 { value: 'all', label: 'All', count: count('all') },
                 { value: 'new', label: 'New', count: count('new') },

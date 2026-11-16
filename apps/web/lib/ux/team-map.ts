@@ -65,7 +65,7 @@ export const teamMap: readonly TeamItem[] = [
     label: 'Money',
     icon: 'progress',
     places: [
-      { id: 'workspace-commercial', label: 'Quotes and billing' },
+      { id: 'workspace-commercial', label: 'Money' },
       { id: 'ops-dashboard', label: 'Dashboard' },
     ],
   },
