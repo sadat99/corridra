@@ -39,6 +39,8 @@ import { useProgrammeGlance } from './programme-projections';
 type LensKey = RoomLensKey | 'companies' | 'agenda' | 'results' | 'page';
 export type RoomPanels = Partial<Record<LensKey, ReactNode>>;
 type Live = { counts: BoardingCounts | null; notice: string };
+/** A projection as the room heard it, with the moment it stops being valid. */
+type HeardProjection = ProgrammeGlanceSource & { expiresAt: string };
 
 const noop = () => {};
 const nothingRead: Live = { counts: null, notice: '' };
@@ -50,11 +52,30 @@ function Stage({
   counts,
   projection,
   onInvite,
+  checking = false,
 }: {
   counts: BoardingCounts | null;
   projection?: ProgrammeGlanceSource | null;
   onInvite?: () => void;
+  /** Before the first read answers: the six stages stand grey, unnamed for assistive technology, and the line says
+   *  the room is checking. The layout is the stage's own, so nothing moves when the answer draws the real stage. */
+  checking?: boolean;
 }) {
+  if (checking)
+    return (
+      <div className="mr-stage-wrap programme-stage" data-named="true">
+        <ol className="mr-stage" aria-hidden="true">
+          {programmeRoadSteps.map((step) => (
+            <li key={step.key} data-state="grey">
+              <span className="mr-stage-name">{step.label}</span>
+            </li>
+          ))}
+        </ol>
+        <p className="mr-stage-line">
+          <span role="status">Checking where this programme stands…</span>
+        </p>
+      </div>
+    );
   const { states, current } = programmeStage(counts, projection);
   const labels = mrLabels.road;
   const at = current ? programmeRoadSteps.findIndex((step) => step.key === current) : -1;
@@ -126,7 +147,11 @@ function NextStep({
   onRefresh?: () => void;
 }) {
   const next = programmeNextStep(live.counts);
-  const open = onOpen(next.target);
+  // Until the first read answers, no step is chosen: the card says it is checking and offers no button. The button's
+  // place is held, unseen, so the card keeps its height when the answer arrives.
+  const choice = onOpen(next.target);
+  const open = checking ? undefined : choice;
+  const label = next.target === 'plan' ? 'Open Programme and Meetings' : 'Open Participants';
   return (
     <section className="room-next" aria-label="Your next step">
       <span className="room-next-mark" aria-hidden="true">
@@ -134,7 +159,7 @@ function NextStep({
       </span>
       <span className="room-next-words">
         <small>Your next step</small>
-        <b>{next.title}</b>
+        <b>{checking ? 'Checking…' : next.title}</b>
         <span className="programme-boarding">
           <strong>Boarding</strong> {checking ? 'Checking…' : boardingLine(live.counts)}
           {onRefresh && (
@@ -148,13 +173,20 @@ function NextStep({
       <span className="room-next-actions">
         {open ? (
           <button type="button" className="button" onClick={open}>
-            {next.target === 'plan' ? 'Open Programme and Meetings' : 'Open Participants'}
+            {label}
           </button>
+        ) : choice ? (
+          <span className="button room-next-held" aria-hidden="true">
+            {label}
+          </span>
         ) : null}
       </span>
     </section>
   );
 }
+
+// The "At a glance" tiles that come from the participants read; the others come from the programme projection.
+const boardingTiles = new Set(['registered', 'open']);
 
 // "At a glance" and "Needs your attention" (Overview). The boarding tiles come from the participants read; the
 // readiness, meeting and attention lines come from the programme projection where the projections are on.
@@ -167,6 +199,7 @@ function Glance({
   onOpen,
   host,
   checking = false,
+  countsChecking = false,
 }: {
   counts: BoardingCounts | null;
   projection: Parameters<typeof programmeGlance>[1];
@@ -179,8 +212,15 @@ function Glance({
   host?: (node: HTMLElement | null) => void;
   /** True while the first projection read is on its way and nothing is known yet. */
   checking?: boolean;
+  /** True until the first participants read answers; the boarding tiles then say they are checking. */
+  countsChecking?: boolean;
 }) {
-  const tiles = programmeGlance(counts, projection, projectionsOn);
+  // A tile not known yet says "Checking…" while its read is still on its way, and "Not measured yet" only after it.
+  const tiles = programmeGlance(counts, projection, projectionsOn).map((tile) =>
+    !tile.known && (boardingTiles.has(tile.key) ? countsChecking : checking)
+      ? { ...tile, value: 'Checking…' }
+      : tile,
+  );
   const coverage = meetingCoverage(projection);
   const attention = programmeAttention(projection);
   const checklist = projectionsOn || termsOn ? programmeChecklist(counts, projection, terms) : [];
@@ -419,9 +459,12 @@ function LiveGlance(props: {
   counts: BoardingCounts | null;
   terms: ChecklistTerms | null;
   termsOn: boolean;
-  /** The last projection the room heard, shown while this read is on its way, so a refresh never blanks it. */
-  last: ProgrammeGlanceSource | null;
-  onProjection: (projection: ProgrammeGlanceSource | null) => void;
+  /** The last projection the room heard, shown while this read is on its way, so a refresh never blanks it. The room
+   *  drops it when it stops reading, when the page is hidden and when it expires. */
+  last: HeardProjection | null;
+  onProjection: (projection: HeardProjection | null) => void;
+  /** True until the first participants read answers. */
+  countsChecking: boolean;
   onOpen: (target: 'people' | 'plan') => (() => void) | undefined;
   /** Decisions-first: the facts replace the glance and attention cards. */
   facts?: { applications: ApplicationCounts | null };
@@ -464,6 +507,7 @@ function LiveGlance(props: {
           onOpen={props.onOpen}
           host={host}
           checking={checking}
+          countsChecking={props.countsChecking}
         />
       )}
       {!view.data && view.notice ? <p className="programme-note">{view.notice}</p> : null}
@@ -642,11 +686,36 @@ export function ProgrammeRoom({
   const refresh = () => setReads((count) => count + 1);
   // The programme projection is read inside the glance; its agenda also marks the "Plan the days" stage. The
   // terms read runs here, beside it, so neither waits for the other (nor does the Overview wait for either).
-  const [readProjection, setReadProjection] = useState<ProgrammeGlanceSource | null>(null);
-  const onProjection = useCallback(
-    (value: ProgrammeGlanceSource | null) => setReadProjection(value),
-    [],
-  );
+  const [readProjection, setReadProjection] = useState<HeardProjection | null>(null);
+  const onProjection = useCallback((value: HeardProjection | null) => setReadProjection(value), []);
+  // The last step is kept only across a refresh, never beyond what the reads themselves keep: everything heard is
+  // dropped when the room stops reading (scrolled away, panel off) or the page is hidden, so it is never redrawn
+  // when reading starts again, and the projection is dropped when it expires.
+  const forget = useCallback(() => {
+    setRead(nothingRead);
+    setHeard(null);
+    setReadProjection(null);
+  }, []);
+  const [wasReading, setWasReading] = useState(reading);
+  if (wasReading !== reading) {
+    setWasReading(reading);
+    if (!reading) forget();
+  }
+  useEffect(() => {
+    const hidden = () => {
+      if (document.hidden) forget();
+    };
+    document.addEventListener('visibilitychange', hidden);
+    return () => document.removeEventListener('visibilitychange', hidden);
+  }, [forget]);
+  useEffect(() => {
+    if (!readProjection) return;
+    const expiry = setTimeout(
+      () => setReadProjection(null),
+      Math.max(0, Date.parse(readProjection.expiresAt) - Date.now()),
+    );
+    return () => clearTimeout(expiry);
+  }, [readProjection]);
   const termsOn = participantsEnabled && termsEnabled;
   const terms = useChecklistTerms(scope, termsOn && reading, reads);
   const projection = reading && projectionsEnabled ? readProjection : null;
@@ -730,13 +799,12 @@ export function ProgrammeRoom({
           className="room-stage room-stage--timeline"
           aria-busy={reading && heard !== null && heard !== reads ? true : undefined}
         >
-          {checking ? (
-            <p className="mr-stage-line" role="status">
-              Checking where this programme stands…
-            </p>
-          ) : (
-            <Stage counts={live.counts} projection={projection} onInvite={onInvite} />
-          )}
+          <Stage
+            counts={live.counts}
+            projection={projection}
+            onInvite={onInvite}
+            checking={checking}
+          />
         </div>
       </header>
       {reading ? <LiveStatus key={reads} scope={scope} onRead={onRead} /> : null}
@@ -814,6 +882,7 @@ export function ProgrammeRoom({
                     termsOn={termsOn}
                     last={readProjection}
                     onProjection={onProjection}
+                    countsChecking={checking}
                     onOpen={onOpen}
                     facts={decisions ? { applications } : undefined}
                   />
@@ -833,6 +902,7 @@ export function ProgrammeRoom({
                     terms={terms}
                     termsOn={termsOn}
                     onOpen={onOpen}
+                    countsChecking={checking}
                   />
                 )
               ) : null}

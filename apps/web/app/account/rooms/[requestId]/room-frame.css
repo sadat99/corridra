@@ -149,6 +149,10 @@
 .room-next-actions > * {
   min-height: 44px;
 }
+/* The programme room holds its next-step button's place, unseen, until the first read answers. */
+.room-next-actions > .room-next-held {
+  visibility: hidden;
+}
 /* AC/1: the next-step card is navy and carries ONE light button; cobalt stays the primary fill elsewhere.
    The ring keeps the base width and offset and takes the light colour so it shows on navy. */
 .room .room-next .button-primary {
