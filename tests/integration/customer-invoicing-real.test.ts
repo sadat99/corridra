@@ -1744,8 +1744,8 @@ test('pausing closes customers and staff and keeps every record; opening again r
   expect(await count()).toBe(before);
 });
 
-// The shape the owner passes to set_supplier once every field is real: no named approver and no made-up field. Every value
-// here is an invented test value, never a real supplier.
+// Characterisation of behaviour that already exists: the shape the owner passes to set_supplier once every field is real,
+// with no named approver and no made-up field. Every value here is invented, never a real supplier.
 const testSupplier = {
   legalName: 'Example Test Supplier Pte Ltd',
   address: '1 Marina View, Test Tower 00-00, Singapore 000000',
@@ -1757,7 +1757,7 @@ const testSupplier = {
   gstRateBps: 900,
   paymentTermsDays: 30,
   paymentInstructions: 'Pay by bank transfer to the test account, quoting the invoice number',
-  financeLabel: 'Sadat Finance',
+  financeLabel: 'Example Finance Desk',
   approverEmail: null,
   madeupFields: [],
 };
@@ -1786,7 +1786,7 @@ test('set_supplier writes those details, and allow_single_approver leaves a clos
     tax_label: 'GST',
     gst_rate_bps: 900,
     payment_terms_days: 30,
-    finance_label: 'Sadat Finance',
+    finance_label: 'Example Finance Desk',
     approver_principal_id: null,
     placeholder_fields: [],
   });

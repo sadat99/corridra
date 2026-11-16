@@ -75,11 +75,7 @@ import { configureRealInvoicing } from '../packages/auth/src/customer-invoicing-
 import { migrateCustomerPaymentsSimulated } from '../packages/db/src/customer-payments-simulated-migrate';
 import { configureSimulatedPayments } from '../packages/auth/src/customer-payments-simulated-configuration';
 import { migrateViewAs } from '../packages/db/src/view-as-migrate';
-import { migrateCustomerDataCleanup } from '../packages/db/src/customer-data-cleanup-migrate';
-import {
-  configureDataCleanup,
-  inventoryDataCleanup,
-} from '../packages/auth/src/customer-data-cleanup';
+import { inventoryDataCleanup } from '../packages/auth/src/customer-data-cleanup';
 import {
   assertNoneBehind,
   refreshInstalledOptionalModules,
@@ -186,13 +182,7 @@ const v = z
       z.coerce.number().int().min(1).max(90).optional(),
     ),
     VIEW_AS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
-    DATA_CLEANUP_ACTION: z
-      .enum(['unchanged', 'inventory', 'archive', 'restore'])
-      .default('unchanged'),
-    DATA_CLEANUP_REASON: z.preprocess(
-      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
-      z.string().trim().min(10).max(500).optional(),
-    ),
+    DATA_CLEANUP_ACTION: z.enum(['unchanged', 'inventory']).default('unchanged'),
     WORKSPACE_LIFECYCLE_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
       z.string().trim().min(10).max(500).optional(),
@@ -317,11 +307,6 @@ if (v.NOTIFICATIONS_ACTION !== 'unchanged' && !apply)
   throw new Error('Notification changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.NOTIFICATIONS_ACTION) && !v.NOTIFICATIONS_REASON)
   throw new Error('Notification changes require an explicit reason');
-// The inventory only reads, so it runs on a dry run too. Archive and restore write, so they need apply and a reason.
-if (['archive', 'restore'].includes(v.DATA_CLEANUP_ACTION) && !apply)
-  throw new Error('Data cleanup archive and restore require INSTALL_APPLY=yes');
-if (['archive', 'restore'].includes(v.DATA_CLEANUP_ACTION) && !v.DATA_CLEANUP_REASON)
-  throw new Error('Data cleanup archive and restore require an explicit reason');
 
 const registries = [
   'customer_request_withdrawal_migrations',
@@ -377,7 +362,6 @@ const registries = [
   'recipient_reply_review_migrations',
   'view_as_migrations',
   'commercial_readiness_migrations',
-  'customer_data_cleanup_migrations',
 ];
 // Order matters only for readability: each installer first installs what it depends on.
 const installers: [string, (pool: ReturnType<typeof databasePool>) => Promise<void>][] = [
@@ -454,8 +438,9 @@ async function report(label: string) {
 }
 try {
   await report(apply ? 'Before install' : 'Read-only report (nothing written)');
-  // Read only, in a read-only transaction: what a data cleanup would archive, keep and hold back. Ids are shortened to
-  // 8 characters and no email or personal detail is printed.
+  // Data cleanup inventory (U2), reached only through field_modules_action=data_cleanup_inventory. Read only, in a read-only
+  // transaction, so it runs on a dry run too and writes nothing. The log is public: counts and 8-character ids only, and a
+  // workspace name only when it is on the keep list. No email or personal detail is printed.
   if (v.DATA_CLEANUP_ACTION !== 'unchanged')
     console.log(
       `Data cleanup inventory (nothing written)\n${(await inventoryDataCleanup(pool)).lines.join('\n')}`,
@@ -809,23 +794,6 @@ try {
     if (v.VIEW_AS_ACTION !== 'unchanged') {
       await migrateViewAs(pool);
       console.log('View-as audit function: installed or already current');
-    }
-    // Data cleanup (U2) is never part of the base run. Archive appends one archive row per made-up workspace that is not
-    // kept or held back, all in one transaction; restore appends one restore row for each workspace a cleanup archive still
-    // holds, and is the rollback. Installing it installs the workspace lifecycle first (control left as it was). Reached
-    // through field_modules_action (data_cleanup_inventory, data_cleanup_archive, data_cleanup_restore).
-    if (v.DATA_CLEANUP_ACTION === 'archive' || v.DATA_CLEANUP_ACTION === 'restore') {
-      await migrateCustomerDataCleanup(pool);
-      const result = await configureDataCleanup(pool, {
-        action: v.DATA_CLEANUP_ACTION,
-        reason: v.DATA_CLEANUP_REASON,
-      });
-      console.log(
-        `Data cleanup ${v.DATA_CLEANUP_ACTION}: archived ${result.archived}, restored ${result.restored}; batch ${result.batchId ?? 'none (nothing to change)'}`,
-      );
-      console.log(
-        `Data cleanup inventory after ${v.DATA_CLEANUP_ACTION}\n${(await inventoryDataCleanup(pool)).lines.join('\n')}`,
-      );
     }
     await report('After install');
     // Once more after every mail, notifications and withdrawal step above, so a run that also passes
