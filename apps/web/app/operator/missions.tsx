@@ -19,7 +19,7 @@ import {
   isOverdue,
   isStale,
   latestHandover,
-  quietDays,
+  quietLabel,
   missionHref,
   sourceLabel,
   stageChip,
@@ -85,8 +85,10 @@ const routeOptions = (catalogue: {
       }));
 export const canManage = (role: string | undefined) =>
   !!role && ['owner', 'admin', 'operator'].includes(role);
-export const ownerName = (owners: Owner[], id: string | null | undefined) =>
-  owners.find((o) => o.user_id === id)?.name ?? (id ? 'Former team member' : 'Not assigned');
+export const ownerName = (
+  owners: Pick<Owner, 'user_id' | 'name'>[],
+  id: string | null | undefined,
+) => owners.find((o) => o.user_id === id)?.name ?? (id ? 'Former team member' : 'Not assigned');
 
 /** POSTs one mission command to the existing workspace API and throws the server's message. */
 export async function missionRequest(tenant: string, action: string, body: unknown) {
@@ -158,9 +160,7 @@ export function MissionFacts({
             <dt>Last mission update</dt>
             <dd>
               <time dateTime={m.updated_at}>{formatDate(m.updated_at)}</time>
-              {isStale(m.updated_at, m.status)
-                ? ` · No mission update in ${quietDays(m.updated_at)} days`
-                : ''}
+              {isStale(m.updated_at, m.status) ? ` · ${quietLabel(m.updated_at)}` : ''}
             </dd>
           </>
         )}
@@ -583,7 +583,7 @@ export function Missions({
         ))}
       </div>
       {queue && (
-        <div className="hero-actions">
+        <div className="hero-actions mission-pager">
           <p>
             {queue.total} matching missions · showing {queue.missions.length ? offset + 1 : 0} to{' '}
             {offset + queue.missions.length}
@@ -711,7 +711,7 @@ function CompactQueue({ queue, tenant }: { queue: Queue; tenant: string }) {
                 <td>
                   <time dateTime={m.due_at}>{formatDate(m.due_at)}</time>
                   {isStale(m.updated_at, m.status) && m.updated_at && (
-                    <span data-stale> · No mission update in {quietDays(m.updated_at)} days</span>
+                    <span data-stale> · {quietLabel(m.updated_at)}</span>
                   )}
                 </td>
                 <td>{m.next_action || 'Not recorded'}</td>

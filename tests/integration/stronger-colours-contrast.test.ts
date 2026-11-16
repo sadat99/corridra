@@ -223,7 +223,7 @@ const pairs: Pair[] = [
   ...text('--paper', ['--accent', '--brand-hover']),
   // The selected tab's text is the pressed cobalt, which Stronger Colours does not change.
   { fg: '--ac-cobalt-pressed', bg: '--ac-surface-selected', min: 7 },
-  // The copper ink text (home hook and number, the organise tags) is mixed toward Ink.
+  // The copper ink text (home hook and number, the sell tags) is mixed toward Ink.
   ...['--paper', '--surface-1', '--caution-surface'].map((bg) => ({
     fg: copperInkMode,
     defaultFg: 'var(--ac-copper-ink)',
@@ -472,8 +472,6 @@ describe('colours that components take straight from the palette', () => {
   // file | property | primitive. Each is either not text (a mark, a dot, a rule) or covered by a pair above.
   const allowed = new Set([
     'app/account/move/move-view.css|background|--ac-warning',
-    'app/account/move/move-view.css|color|--ac-copper-ink',
-    'app/account/rooms/[requestId]/room-frame.css|color|--ac-copper-ink',
     'app/account/delegations/programme-room.css|color|--ac-copper-ink',
     'components/home-landing.css|color|--ac-copper-ink',
     'components/ux/field-tabs.css|color|--ac-cobalt-pressed',

@@ -214,7 +214,8 @@ test('the sample form completes in German and Arabic against the real intake and
               contents:
                 args.path === 'next/link'
                   ? 'export default function Link({prefetch,...props}){return <a {...props}/>}'
-                  : 'const router={replace:()=>{},refresh:()=>{},push:()=>{}};export function useRouter(){return router}',
+                  : // The plan header reads who is signed in (use-signed-in.ts), which reads the path.
+                    "const router={replace:()=>{},refresh:()=>{},push:()=>{}};export function useRouter(){return router}export const usePathname=()=>'/plan';",
             }));
           },
         },

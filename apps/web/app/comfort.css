@@ -67,8 +67,8 @@ html[data-contrast='more']
   :is(
     .ac1-hook,
     .ac1-truth-number,
-    .move-tag[data-journey='organise'],
-    .room-tag[data-journey='organise']
+    .move-tag[data-journey='sell'],
+    .room-tag[data-journey='sell']
   ) {
   color: color-mix(in srgb, var(--ac-copper-ink) 85%, var(--ink));
 }
@@ -169,8 +169,8 @@ html[data-contrast='more'] :is(.ux-menu-panel, .ux-notice-panel) {
     :is(
       .ac1-hook,
       .ac1-truth-number,
-      .move-tag[data-journey='organise'],
-      .room-tag[data-journey='organise']
+      .move-tag[data-journey='sell'],
+      .room-tag[data-journey='sell']
     ) {
     color: color-mix(in srgb, var(--ac-copper-ink) 85%, var(--ink));
   }

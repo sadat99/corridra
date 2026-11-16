@@ -735,10 +735,9 @@ function ScopedProgrammes({
                   notes={
                     <>
                       <p>
-                        {' '}
                         {realCustomerInput()
-                          ? 'Planning record only · data'
-                          : 'Planning record only · Sample data'}{' '}
+                          ? 'Planning record only'
+                          : 'Planning record only · Sample data'}
                       </p>
                       {lifecycleFor(p)}
                       {serviceRequestsEnabled && !(framedRoom && typeof p.version === 'number') && (
@@ -913,10 +912,9 @@ function ScopedProgrammes({
                   <h3>{p.name}</h3>
                   <p>{p.reportingPurpose}</p>
                   <p>
-                    {' '}
                     {realCustomerInput()
-                      ? 'Planning record only · data'
-                      : 'Planning record only · Sample data'}{' '}
+                      ? 'Planning record only'
+                      : 'Planning record only · Sample data'}
                   </p>
                   {lifecycleFor(p)}
                   {serviceRequestsEnabled && (
