@@ -1035,8 +1035,9 @@
   color: var(--text-3);
 }
 
-/* Journey tags: a neutral tag with a coloured dot. Status colours carry meaning only, so none is used for a
-   journey; each word keeps an ink-safe colour of its own. */
+/* Journey tags: a neutral tag with a coloured dot, one colour per journey from the --journey-* tokens. Organising
+   reads --journey-organise, an alias of --positive (Guardian-approved, one colour per journey); each word keeps an
+   ink-safe text colour of its own. */
 .move-tag[data-journey] {
   gap: 6px;
   border: 1px solid var(--line);
