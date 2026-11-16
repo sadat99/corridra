@@ -444,9 +444,11 @@ function TenantWorkspace({
             ))}
           </select>
         </label>
-        {/* The start page stays one tap away: nothing else on a signed-in staff workspace links to it. */}
-        <Link prefetch={false} className="text-link" href="/workspace">
-          <OperatorIcon name="grid" /> All Workspaces
+        {/* The start page stays one tap away: nothing else on a signed-in staff workspace links to it. On a phone it
+            shows its icon only (the words stay its name), so the three links share one row. */}
+        <Link prefetch={false} className="text-link operator-toolbar-compact" href="/workspace">
+          <OperatorIcon name="grid" />{' '}
+          <span className="operator-toolbar-words">All Workspaces</span>
         </Link>
         {/* Staff stay in staff space (ADR-020): the access help every staff role can open is the Authenticator section. */}
         <Link prefetch={false} className="text-link" href="#workspace-authenticator">
