@@ -478,6 +478,9 @@ function LiveGlance(props: {
   const { onProjection } = props;
   // A read has answered once it has data or a notice. Until then the room keeps the last projection it heard. Once
   // this read has had data, losing it (expiry, a hidden page) is passed on, so an old projection is never kept.
+  // There is deliberately no unmount cleanup: every Refresh draws a new glance (key={reads}), and clearing on unmount
+  // would wipe the projection the new glance shows while it reads. The room itself drops what it heard when it stops
+  // reading, when the page is hidden and when the projection expires, which covers every other unmount.
   const answered = view.data !== null || view.notice !== '';
   const had = useRef(false);
   useEffect(() => {
