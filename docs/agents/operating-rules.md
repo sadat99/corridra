@@ -1,6 +1,6 @@
 # Parallel work operating rules (owner, 13 November 2026)
 
-Document status: CURRENT. Standing owner rules, recorded from the owner's message in the orchestrator session (`session_0187kU9uRvNguE7Dz4mt8zgM`, 13 November 2026, about 08:40 UTC). Summary and entry point: [AGENTS.md](../../AGENTS.md).
+Document status: CURRENT. Superseded in part by the owner on 16 November 2026 (replaced by the `operating-conductor:conductor` skill, which wins on any conflict): the orchestrator now runs on Sonnet and only relays, the Guardian (Opus or higher) plans, reviews and decides, and merges after the Merge Gate with no per-PR owner merge command. Standing owner rules, recorded from the owner's message in the orchestrator session (`session_0187kU9uRvNguE7Dz4mt8zgM`, 13 November 2026, about 08:40 UTC). Summary and entry point: [AGENTS.md](../../AGENTS.md).
 
 Standing owner rules for parallel Claude Code sessions, typed by the owner in the orchestrator session at about 08:40 UTC and marked "apply automatically, do not ask me to confirm them". They apply until the owner revokes them. The Codex lean-work exception above is unchanged: Codex still uses no subagents unless asked. Rotation numbers are also in [session rotation](docs/agents/session-rotation.md).
 
