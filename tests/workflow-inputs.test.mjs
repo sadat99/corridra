@@ -98,6 +98,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'sourcing_workflow_install',
     'sourcing_workflow_enable',
     'sourcing_workflow_pause',
+    'data_cleanup_inventory',
   ]);
   const defaults = Object.fromEntries(
     Object.entries(declared).map(([name, input]) => [name, input.default]),
@@ -139,6 +140,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     ['sourcing_workflow_install', u, u, u, u, u, u, u, u],
     ['sourcing_workflow_enable', u, u, u, u, u, u, u, u],
     ['sourcing_workflow_pause', u, u, u, u, u, u, u, u],
+    ['data_cleanup_inventory', u, u, u, u, u, u, u, u],
   ]) {
     const inputs = { ...defaults, field_modules_action: choice };
     assert.equal(evaluate(env.SPECIFICATION_CONFIRMATION_ACTION, inputs), confirmation);
@@ -290,4 +292,42 @@ test('the sourcing workflow choices install, open and pause only that module, ea
             `${choice} must not move ${name}`,
           );
   }
+});
+
+test('the data cleanup choice only lists, moves no other module and carries no reason', () => {
+  const workflow = parseDocument(
+    readFileSync('.github/workflows/install-customer-modules.yml', 'utf8'),
+  ).toJS();
+  const declared = workflow.on.workflow_dispatch.inputs;
+  const env = workflow.jobs.install.steps.find(
+    (step) => step.name === 'Report or install the customer modules',
+  ).env;
+  const evaluate = (expression, inputs) =>
+    runInNewContext(expression.replace(/^\$\{\{\s*|\s*\}\}$/g, ''), { inputs });
+  const defaults = Object.fromEntries(
+    Object.entries(declared).map(([name, input]) => [name, input.default]),
+  );
+  for (const choice of declared.field_modules_action.options) {
+    const inputs = { ...defaults, field_modules_action: choice };
+    const expected = choice === 'data_cleanup_inventory' ? 'inventory' : 'unchanged';
+    assert.equal(evaluate(env.DATA_CLEANUP_ACTION, inputs), expected, choice);
+    if (expected === 'inventory')
+      for (const [name, value] of Object.entries(env))
+        if (name.endsWith('_ACTION') && name !== 'DATA_CLEANUP_ACTION')
+          assert.ok(
+            ['unchanged', 'no'].includes(String(evaluate(String(value), inputs))),
+            `${choice} must not move ${name}`,
+          );
+  }
+  // No archive or restore is wired, and no input is added.
+  assert.deepEqual(
+    Object.keys(env).filter((name) => name.startsWith('DATA_CLEANUP_')),
+    ['DATA_CLEANUP_ACTION'],
+  );
+  assert.equal(
+    declared.field_modules_action.options.filter((option) => option.startsWith('data_cleanup_'))
+      .length,
+    1,
+  );
+  assert.equal(Object.keys(declared).length, 25);
 });

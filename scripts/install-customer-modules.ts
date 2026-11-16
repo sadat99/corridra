@@ -75,6 +75,7 @@ import { configureRealInvoicing } from '../packages/auth/src/customer-invoicing-
 import { migrateCustomerPaymentsSimulated } from '../packages/db/src/customer-payments-simulated-migrate';
 import { configureSimulatedPayments } from '../packages/auth/src/customer-payments-simulated-configuration';
 import { migrateViewAs } from '../packages/db/src/view-as-migrate';
+import { inventoryDataCleanup } from '../packages/auth/src/customer-data-cleanup';
 import {
   assertNoneBehind,
   refreshInstalledOptionalModules,
@@ -181,6 +182,7 @@ const v = z
       z.coerce.number().int().min(1).max(90).optional(),
     ),
     VIEW_AS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
+    DATA_CLEANUP_ACTION: z.enum(['unchanged', 'inventory']).default('unchanged'),
     WORKSPACE_LIFECYCLE_REASON: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
       z.string().trim().min(10).max(500).optional(),
@@ -436,6 +438,13 @@ async function report(label: string) {
 }
 try {
   await report(apply ? 'Before install' : 'Read-only report (nothing written)');
+  // Data cleanup inventory (U2), reached only through field_modules_action=data_cleanup_inventory. Read only, in a read-only
+  // transaction, so it runs on a dry run too and writes nothing. The log is public: counts and 8-character ids only, and a
+  // workspace name only when it is on the keep list. No email or personal detail is printed.
+  if (v.DATA_CLEANUP_ACTION !== 'unchanged')
+    console.log(
+      `Data cleanup inventory (nothing written)\n${(await inventoryDataCleanup(pool)).lines.join('\n')}`,
+    );
   if (apply) {
     // Each migrator runs at most once in this run, instead of once per module that depends on it (KI-51). Ended in the
     // finally below. migrateCustomerWorkspaceLifecycle and refreshCustomerWorkspaceLifecycle are deliberately not covered:
