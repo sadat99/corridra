@@ -652,7 +652,7 @@ export class OperationsService {
       const page = (
         await db.query(
           cte +
-            ` SELECT * FROM base ORDER BY created_at DESC,id LIMIT 50 OFFSET $${args.length + 1}`,
+            ` SELECT b.*,(SELECT i.brief->>'company' FROM app.mission_intake i WHERE i.tenant_id=$1 AND i.id=b.id) AS mission_name FROM base b ORDER BY b.created_at DESC,b.id LIMIT 50 OFFSET $${args.length + 1}`,
           [...args, f.offset],
         )
       ).rows;
@@ -712,10 +712,15 @@ export class OperationsService {
           args,
         )
       ).rows;
+      // Names for the owner ids of the mission list, the same list the mission queue reads for these roles.
+      const owners = (
+        await db.query('SELECT user_id,name FROM app.mission_owners($1)', [ctx.tenantId])
+      ).rows;
       return {
         role,
         summary,
         missions: page,
+        owners,
         corridraMoney: money,
         economics,
         financeAvailable: ['owner', 'admin'].includes(role),

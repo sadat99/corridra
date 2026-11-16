@@ -247,8 +247,8 @@ function PrivateAssignments({ subject, issuer }: SavedMissionScope) {
         <>
           {!data.assignments.length && (
             <p>
-              No commercial report has been delivered to this account yet. Your existing requests
-              remain available in My Work.
+              No commercial report has been delivered to this account yet. Your requests are still
+              on the Requests page.
             </p>
           )}
           {data.assignments.map((item) => (

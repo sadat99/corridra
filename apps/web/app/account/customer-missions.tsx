@@ -2,9 +2,12 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { DeliveryView } from '../delivery-view';
 import { InvitationSlot, useInvitationDialog } from './invitation-dialog';
+import { RefreshButton } from './refresh-button';
 export function CustomerMissions() {
   const [missions, setMissions] = useState<{ token: string; label: string }[]>([]),
-    [error, setError] = useState('');
+    [error, setError] = useState(''),
+    // Bumped by Refresh: every open mission view reads its mission again in place, keeping any typed response.
+    [reads, setReads] = useState(0);
   const feedback = useRef<HTMLParagraphElement>(null);
   const invite = useInvitationDialog();
   const place = useRef<HTMLElement>(null);
@@ -41,7 +44,13 @@ export function CustomerMissions() {
       className="detail-card ux-account-missions"
       aria-label="Shared missions"
     >
-      <h2>Shared missions</h2>
+      <div className="ux-section-head">
+        <h2>Shared missions</h2>
+        {/* Only an open mission can be read again, so with none open there is no Refresh. */}
+        {missions.length > 0 && (
+          <RefreshButton label="shared missions" onClick={() => setReads((n) => n + 1)} />
+        )}
+      </div>
       <p>
         {invite
           ? 'Missions are shared with you by private invitation. Use Open an Invitation to add one. '
@@ -68,6 +77,7 @@ export function CustomerMissions() {
         <article key={m.token}>
           <h3>{m.label}</h3>
           <DeliveryView
+            reload={reads}
             audience="CLIENT_PROGRESS"
             capability={m.token}
             endpoint="/api/customer-missions"

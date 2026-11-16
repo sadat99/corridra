@@ -29,16 +29,18 @@
   font-weight: 600;
 }
 .room-tag {
-  background: var(--selected-surface);
-  color: var(--brand);
+  background: var(--journey-source-surface);
+  color: var(--journey-source-text);
 }
-.room-tag[data-journey='sell'] {
-  background: var(--positive-surface);
-  color: var(--positive);
-}
+/* One colour per journey (audit item 23): Organising is green here as in the sidebar and on Home. */
 .room-tag[data-journey='organise'] {
-  background: var(--caution-surface);
-  color: var(--ac-copper-ink);
+  background: var(--journey-organise-surface);
+  color: var(--journey-organise-text);
+}
+/* Selling is copper here as in the sidebar and on Home (it was green, the Organising colour). */
+.room-tag[data-journey='sell'] {
+  background: var(--journey-sell-surface);
+  color: var(--journey-sell-text);
 }
 .room-route {
   border: 1px solid var(--line);
@@ -76,6 +78,19 @@
     grid-column: 2;
     grid-row: 1 / 4;
     align-self: end;
+  }
+  /* A request room: the stage timeline is taller than the tags, title and date beside it, so both columns start
+     on one line instead of the left column sinking to the foot of its rows (audit item 22). The Programme Room
+     keeps its own head layout (programme-room-budget.css). */
+  .room:not(.programme-room) > .room-head {
+    /* The tags, title and date keep their own height; the last row takes what the taller stage adds. */
+    grid-template-rows: auto auto 1fr;
+    align-items: start;
+    /* With the 12 px the frame gives, 24 px from the top bar to the head (Sizes in use). */
+    padding-top: var(--space-3);
+  }
+  .room:not(.programme-room) > .room-head > .room-stage {
+    align-self: start;
   }
 }
 
@@ -133,6 +148,10 @@
 }
 .room-next-actions > * {
   min-height: 44px;
+}
+/* The programme room holds its next-step button's place, unseen, until the first read answers. */
+.room-next-actions > .room-next-held {
+  visibility: hidden;
 }
 /* AC/1: the next-step card is navy and carries ONE light button; cobalt stays the primary fill elsewhere.
    The ring keeps the base width and offset and takes the light colour so it shows on navy. */

@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useEffectEvent, useRef, useState, type FormEvent } from 'react';
 import type { DeliveryReport } from '@corridra/delivery/report';
 import { displayMoney as amount } from '@corridra/domain/locale';
 import { formatMoment, formatUtcDay } from '../lib/ux/format';
@@ -21,10 +21,13 @@ export function DeliveryView({
   audience,
   capability,
   endpoint = '/api/delivery',
+  reload = 0,
 }: {
   audience: DeliveryReport['audience'];
   capability?: string;
   endpoint?: string;
+  /** Raised by a Refresh outside this view: read the report again in place, keeping typed and retained responses. */
+  reload?: number;
 }) {
   const scope = usePrivateCapability(capability);
   return (
@@ -33,6 +36,7 @@ export function DeliveryView({
       audience={audience}
       capability={scope}
       endpoint={endpoint}
+      reload={reload}
     />
   );
 }
@@ -40,10 +44,12 @@ function ScopedDeliveryView({
   audience,
   capability,
   endpoint,
+  reload,
 }: {
   audience: DeliveryReport['audience'];
   capability: string;
   endpoint: string;
+  reload: number;
 }) {
   const [report, setReport] = useState<DeliveryReport | null>(null),
     [error, setError] = useState(''),
@@ -58,6 +64,8 @@ function ScopedDeliveryView({
     commandId: string;
   } | null>(null);
   const inFlight = useRef(false);
+  // The first load's request: a reread ends it, so a slow first answer never overwrites a newer one.
+  const firstLoad = useRef<AbortController | null>(null);
   const feedback = useRef<HTMLParagraphElement>(null);
   useEffect(() => {
     if (error) feedback.current?.focus();
@@ -86,10 +94,36 @@ function ScopedDeliveryView({
     setReadInterrupted(false);
     setError('');
   }
+  function reread() {
+    if (inFlight.current) return;
+    firstLoad.current?.abort();
+    inFlight.current = true;
+    setBusy(true);
+    refresh()
+      .catch((e) => {
+        setError(e.message);
+        setReadInterrupted(true);
+      })
+      .finally(() => {
+        inFlight.current = false;
+        setBusy(false);
+      });
+  }
+  // The view stays mounted on an outside Refresh, so a typed response and a retained retry are not lost. Only a
+  // change of `reload` after mount reads again: a view that mounts after a Refresh reads once, through its first load
+  // below, with its own token (and a second run of the effect in development finds nothing changed).
+  const rereadFromOutside = useEffectEvent(reread);
+  const lastReload = useRef(reload);
+  useEffect(() => {
+    if (reload === lastReload.current) return;
+    lastReload.current = reload;
+    rereadFromOutside();
+  }, [reload]);
   useEffect(() => {
     token.current = capability;
     let active = true;
     const controller = new AbortController();
+    firstLoad.current = controller;
     if (!/^[a-f0-9]{64}$/.test(token.current)) {
       Promise.resolve().then(() => {
         if (active) {
@@ -111,10 +145,11 @@ function ScopedDeliveryView({
       .then(async (r) => {
         await checkedResponse(r);
         const value = await r.json();
-        if (active) setReport(value);
+        if (active && !controller.signal.aborted) setReport(value);
       })
       .catch((e) => {
-        if (active) {
+        // An ended first load (left, or superseded by a reread) says nothing.
+        if (active && !controller.signal.aborted) {
           setFailureKind(accessDenied(e) ? 'denied' : 'unavailable');
           setError(e.message);
         }
@@ -320,23 +355,7 @@ function ScopedDeliveryView({
       <p>
         Updated {formatUtcDay(report.generatedAt)} · Link expires {formatMoment(report.expiresAt)}
       </p>
-      <button
-        disabled={busy}
-        onClick={() => {
-          if (inFlight.current) return;
-          inFlight.current = true;
-          setBusy(true);
-          refresh()
-            .catch((e) => {
-              setError(e.message);
-              setReadInterrupted(true);
-            })
-            .finally(() => {
-              inFlight.current = false;
-              setBusy(false);
-            });
-        }}
-      >
+      <button disabled={busy} onClick={reread}>
         Refresh progress
       </button>
       {audience === 'INSTITUTION_REPORT' && (
