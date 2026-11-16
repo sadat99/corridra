@@ -297,14 +297,29 @@ export default async function Page({
                             className="text-link ux-action"
                             href="/account/companies"
                           >
-                            Browse approved companies
+                            Browse Approved Companies
                           </Link>
                         </p>
                       )}
                     </div>
                   )
                 }
-                shared={<CustomerMissions key={data.user.id} />}
+                shared={
+                  <>
+                    <CustomerMissions key={data.user.id} />
+                    {customerCompaniesEnabled() && (
+                      <p>
+                        <Link
+                          prefetch={false}
+                          className="text-link ux-action"
+                          href="/account/companies"
+                        >
+                          Browse Approved Companies
+                        </Link>
+                      </p>
+                    )}
+                  </>
+                }
               />
             </InvitationProvider>
           </div>

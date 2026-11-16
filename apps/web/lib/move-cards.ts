@@ -198,6 +198,14 @@ export function buildMoveModel(
   const received = new Map(
     input.requests.map((r) => [r.id, r.progress?.receivedAt.slice(0, 10) ?? null] as const),
   );
+  // When each waiting row's request was received, as a time value: the label shows only the date, so the order is
+  // read from the full timestamp (two requests on one day, or a timestamp with an offset, still sort correctly).
+  const receivedTime = new Map(
+    input.requests.map(
+      (r) => [r.id, r.progress ? Date.parse(r.progress.receivedAt) : NaN] as const,
+    ),
+  );
+  const waitingTime = new Map<string, number>();
   for (const entry of input.moves ?? [])
     for (const move of entry.moves) {
       const href = requestHref(entry.requestId);
@@ -215,7 +223,8 @@ export function buildMoveModel(
           dueOn: move.dueOn,
           requestId: entry.requestId,
         });
-      else
+      else {
+        waitingTime.set(`move:${move.id}`, receivedTime.get(entry.requestId) ?? NaN);
         waiting.push({
           id: `move:${move.id}`,
           holder: move.holder,
@@ -226,6 +235,7 @@ export function buildMoveModel(
           href,
           requestId: entry.requestId,
         });
+      }
     }
 
   // A new report comes first among the person's own cards: it is the result they asked for.
@@ -255,7 +265,8 @@ export function buildMoveModel(
         received,
         href,
       });
-    if ((teamStatuses as readonly string[]).includes(request.progress.status))
+    if ((teamStatuses as readonly string[]).includes(request.progress.status)) {
+      waitingTime.set(`request:${request.id}`, receivedTime.get(request.id) ?? NaN);
       waiting.push({
         id: `request:${request.id}`,
         holder: 'team',
@@ -265,8 +276,21 @@ export function buildMoveModel(
         received,
         href,
       });
+    }
   }
 
+  // Four sources feed the waiting list, so it gets one stable order: newest received first (by time, not by the
+  // date text), rows without a readable date last. The sort is stable, so rows received at the same time keep the
+  // order they were given in: a request's Moves stay in the order the team set (moves.ts reads them by position).
+  const time = (row: WaitingRow) => {
+    const value = waitingTime.get(row.id);
+    return value === undefined || Number.isNaN(value) ? null : value;
+  };
+  waiting.sort((a, b) => {
+    const at = time(a);
+    const bt = time(b);
+    return Number(at === null) - Number(bt === null) || (bt ?? 0) - (at ?? 0);
+  });
   const newest = [...input.requests].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
   cards.sort((a, b) => Number(b.kind === 'move') - Number(a.kind === 'move'));
   return {

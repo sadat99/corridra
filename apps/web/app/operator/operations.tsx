@@ -10,6 +10,10 @@ import {
 } from '../../components/operator-workbench';
 import { SubmissionFailure } from '../../components/retained-submission';
 import { displayDate } from '@corridra/domain/locale';
+import { formatDate } from '../../lib/ux/format';
+import { ownerName, type Owner } from './missions';
+import { missionHref } from './[section]/[missionId]/mission-labels';
+import { placeName } from '../account/request-words';
 import { useCallback, useEffect, useRef, useState, type FormEvent, type MouseEvent } from 'react';
 import { formatMoney, currency } from '@corridra/domain/opportunities';
 import {
@@ -22,6 +26,8 @@ type Row = Record<string, unknown>;
 type Dashboard = {
   summary: Row;
   missions: Row[];
+  /** Names for the owner ids of `missions`, from the workspace's mission owners. */
+  owners: Pick<Owner, 'user_id' | 'name'>[];
   corridraMoney: Row[];
   customerTrade: Row[];
   economics: Row[];
@@ -161,22 +167,39 @@ function value(v: unknown) {
         ? JSON.stringify(v)
         : String(v);
 }
+/** The empty line of a fee table for a role that may not read fee records: hidden is not zero. */
+const financeHidden = 'Fee records are shown to owners and admins only. This does not mean zero.';
+/** The words of the button that opens or folds the rows past `limit`. */
+export function showRowsLabel(all: boolean, limit: number, total: number) {
+  if (!all) return `Show All ${total} Rows`;
+  return limit === 1 ? 'Show the First Row' : `Show the First ${limit} Rows`;
+}
 function Table({
   rows,
   columns,
   label,
   limit,
+  empty = 'No matching recorded observations. Missing financial or readiness evidence remains unknown.',
+  className,
 }: {
   rows: Row[];
   columns: [string, string][];
   label: string;
-  /** Rows shown at first; the rest stay in the page and open with "Show all" (layout budget, page length). */
+  /** Rows shown at first; the rest stay in the page and open with "Show All" (layout budget, page length). */
   limit?: number;
+  /** What this table says when it has no rows, so each empty table names the record it is missing. */
+  empty?: string;
+  className?: string;
 }) {
   const [all, setAll] = useState(false);
   const shown = limit && !all ? limit : rows.length;
   return rows.length ? (
-    <div className="operations-table" tabIndex={0} role="region" aria-label={label}>
+    <div
+      className={['operations-table', className].filter(Boolean).join(' ')}
+      tabIndex={0}
+      role="region"
+      aria-label={label}
+    >
       <table>
         <caption>{label}</caption>
         <thead>
@@ -205,14 +228,12 @@ function Table({
           aria-expanded={all}
           onClick={() => setAll((value) => !value)}
         >
-          {all ? `Show the first ${limit} rows` : `Show all ${rows.length} rows`}
+          {showRowsLabel(all, limit, rows.length)}
         </button>
       ) : null}
     </div>
   ) : (
-    <p>
-      No matching recorded observations. Missing financial or readiness evidence remains unknown.
-    </p>
+    <p>{empty}</p>
   );
 }
 export function Operations({
@@ -719,8 +740,27 @@ export function Operations({
                               <li key={String(m.id)}>
                                 <strong>{value(m.next_action)}</strong>
                                 <p>
-                                  Mission {value(m.id)} · Owner {value(m.owner_id)} · Due{' '}
-                                  {m.due_at ? displayDate(String(m.due_at)) : 'Unknown'}
+                                  <a href={missionHref(String(m.id), tenant)}>
+                                    {typeof m.mission_name === 'string' && m.mission_name
+                                      ? m.mission_name
+                                      : 'Unnamed mission'}
+                                  </a>
+                                  {' · '}
+                                  {/* Markets are app.market_scope keys (a country code or a bloc such
+                                      as EU); the shared helper names them and keeps any other key. */}
+                                  {typeof m.origin_market === 'string' &&
+                                  m.origin_market &&
+                                  typeof m.destination_market === 'string' &&
+                                  m.destination_market
+                                    ? `${placeName(m.origin_market)} to ${placeName(m.destination_market)}`
+                                    : 'No route yet'}
+                                  {' · '}Owner:{' '}
+                                  {ownerName(
+                                    dashboard.owners,
+                                    typeof m.owner_id === 'string' ? m.owner_id : null,
+                                  )}
+                                  {' · '}
+                                  {m.due_at ? `Due ${formatDate(String(m.due_at))}` : 'No due date'}
                                 </p>
                               </li>
                             ))}
@@ -756,6 +796,11 @@ export function Operations({
                         <Table
                           label="Corridra financial observations"
                           rows={dashboard.corridraMoney}
+                          empty={
+                            dashboard.financeAvailable
+                              ? 'No Corridra fee records match these filters. A missing record means unknown, not zero.'
+                              : financeHidden
+                          }
                           columns={[
                             ['origin_market', 'Origin'],
                             ['destination_market', 'Destination'],
@@ -770,6 +815,11 @@ export function Operations({
                         />
                         <Table
                           label="Per-mission contribution and effort"
+                          empty={
+                            dashboard.financeAvailable
+                              ? 'No mission has recorded fees, costs or effort for these filters. Missing amounts mean unknown, not zero.'
+                              : financeHidden
+                          }
                           rows={dashboard.economics.map((r) => ({
                             ...r,
                             contribution_margin:
@@ -811,6 +861,7 @@ export function Operations({
                         </p>
                         <Table
                           label="Customer trade amounts"
+                          empty="No customer contract, invoice or cash record matches these filters."
                           rows={dashboard.customerTrade}
                           columns={[
                             ['kind', 'Record'],
@@ -821,6 +872,7 @@ export function Operations({
                         />
                         <Table
                           label="Commercial activity totals"
+                          empty="No commercial activity is recorded for these filters."
                           rows={dashboard.commercialActivityTotals}
                           columns={[
                             ['kind', 'Activity'],
@@ -830,6 +882,7 @@ export function Operations({
                         />
                         <Table
                           label="Programme yield and denominators"
+                          empty="No programme has participants that match these filters."
                           rows={dashboard.programmes}
                           columns={[
                             ['name', 'Programme'],
@@ -841,6 +894,7 @@ export function Operations({
                         />
                         <Table
                           label="Recorded repeat missions"
+                          empty="No repeat missions are recorded for these filters."
                           rows={dashboard.repeat}
                           columns={[
                             ['customer_reference', 'Customer reference'],
@@ -1639,6 +1693,7 @@ export function Operations({
                 <>
                   <Table
                     label="Deferred controls"
+                    className="ops-deferred"
                     limit={1}
                     rows={deferredControls.map((control) => ({
                       id: control.id,

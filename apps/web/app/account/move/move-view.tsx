@@ -154,6 +154,20 @@ const unreadWords = {
 } as const;
 
 /**
+ * A switch link's count of things that need the person. A zero is not drawn (the sidebar journey rule, L16), so the
+ * switch never shows 0 beside work that is waiting on others. The words are spoken: "Sourcing, 2 need you".
+ */
+function NeedCount({ n }: { n: number }) {
+  if (n <= 0) return null;
+  return (
+    <>
+      <span className="sr-only">,</span> <em>{n}</em>
+      <span className="sr-only">{n === 1 ? ' needs you' : ' need you'}</span>
+    </>
+  );
+}
+
+/**
  * Your Move, drawn. The server decides what exists (see `buildMoveModel`); this only chooses words
  * and shows them in the person's language. The region says which language it is written in, so a
  * page whose main text is still English never mislabels it.
@@ -383,7 +397,8 @@ export function MoveView({
               aria-current={journey ? undefined : 'page'}
               onClick={() => remember('all')}
             >
-              All <em>{allItems.length}</em>
+              All
+              <NeedCount n={allItems.length} />
             </Link>
             {present.map((j) => (
               <Link
@@ -393,7 +408,8 @@ export function MoveView({
                 aria-current={journey === j ? 'page' : undefined}
                 onClick={() => remember(j)}
               >
-                {journeyWords[j]} <em>{perJourney[j]}</em>
+                {journeyWords[j]}
+                <NeedCount n={perJourney[j]} />
               </Link>
             ))}
           </nav>

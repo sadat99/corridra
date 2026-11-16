@@ -541,6 +541,14 @@
       "bytes": 10674,
       "sha256": "ed7d9c320e51168e0fd86f78b9be4b3a6310e2044d9090f8d84ee89d2ca28f79",
       "meaning": "Exact active ledger at aee8c62 (PR 525 fix round 2 head, 16 Nov), before Guardian 10 records 9 recorded the main CI of 524, the helper interest install run 43837198806 (core 29 -> 30, helper_interest 0 -> 1) with the live checks, and the PR 525 reviews, including the header link, Takeover, Open, installs and ADR bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
+    },
+    {
+      "sourcePath": "docs/V3_LEDGER.md",
+      "sourceCommit": "6635a1df17f73c6d916f2dc8dc99bea0d3ab0d47",
+      "archive": "docs/v3/history/ledger-before-g11-records-10-2026-11-16.md",
+      "bytes": 10635,
+      "sha256": "1100f033b53bcfbb7e63efb5c0462eab12482cd38a7d6d4c2059883963afd9e5",
+      "meaning": "Exact active ledger at 6635a1d (Guardian 10 records 9, unchanged through c819367 and 6d5e3de), before Guardian 11 records 10 recorded the Guardian 11 takeover, the 525 and 528 merges, the owner's 16 Nov words, the branch deletion and the conductor copy, including the Takeover, Open, owner words and follow-up bullets later condensed or replaced. Historical evidence and recovery references remain preserved; not current acceptance."
     }
   ],
   "productVision": "docs/product/corridra-product-vision-v2.1.md",

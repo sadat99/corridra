@@ -506,22 +506,11 @@
   outline-offset: 1px;
 }
 .move-seg em {
-  display: inline-grid;
-  place-items: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 999px;
-  background: var(--line);
   color: var(--text-2);
   font-size: var(--text-xs);
   font-style: normal;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-}
-.move-seg a[aria-current='page'] em {
-  background: var(--brand);
-  color: var(--paper);
 }
 
 /* A task's journey, before its title. */
@@ -1046,8 +1035,9 @@
   color: var(--text-3);
 }
 
-/* Journey tags: a neutral tag with a coloured dot. Status colours carry meaning only, so none is used for a
-   journey; each word keeps an ink-safe colour of its own. */
+/* Journey tags: a neutral tag with a coloured dot, one colour per journey from the --journey-* tokens. Organising
+   reads --journey-organise, an alias of --positive (Guardian-approved, one colour per journey); each word keeps an
+   ink-safe text colour of its own. */
 .move-tag[data-journey] {
   gap: 6px;
   border: 1px solid var(--line);
@@ -1063,36 +1053,34 @@
   background: var(--text-3);
 }
 .move-tag[data-journey='source']::before {
-  background: var(--brand);
+  background: var(--journey-source);
 }
 .move-tag[data-journey='sell']::before {
-  background: var(--editorial-accent);
+  background: var(--journey-sell);
 }
 .move-tag[data-journey='organise']::before {
-  background: var(--brand-deep);
+  background: var(--journey-organise);
 }
 .move-tag[data-journey='source'] {
-  color: var(--brand);
+  color: var(--journey-source-text);
 }
 .move-tag[data-journey='sell'] {
-  color: var(--ac-copper-ink);
+  color: var(--journey-sell-text);
 }
 .move-tag[data-journey='organise'] {
-  color: var(--brand-deep);
+  color: var(--journey-organise-text);
 }
 
-/* The switch: the segmented control, counts in mono. */
+/* The switch: the segmented control, counts as plain mono numbers with no fill (never a capsule). */
 .move-seg {
   flex-wrap: wrap;
   overflow-x: visible;
 }
 .move-seg em {
-  background: transparent;
   color: var(--text-3);
   font-family: var(--font-mono);
 }
 .move-seg a[aria-current='page'] em {
-  background: transparent;
   color: var(--ink);
 }
 

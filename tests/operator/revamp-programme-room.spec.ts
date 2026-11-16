@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { build } from 'esbuild';
 import { createServer, type Server } from 'node:http';
@@ -984,3 +984,207 @@ for (const width of [390, 1440])
         );
     }
   });
+
+// Audit fixes 1, item 21 (owner-approved packet, 16 Nov 2026): choosing a group reads the counts again. While that
+// read is on its way the stage keeps the last step it knew and says it is busy; it never drops to "Not measured
+// yet" in between. Before the first answer it says it is checking. A failed read still says not measured.
+async function openSlowly(
+  page: Page,
+  answer: {
+    participants: () => number;
+    status?: number;
+    /** How long the projection read takes; the participants delay where not given. */
+    projection?: () => number;
+    /** How long each projection answer stays valid, from the moment it is sent. */
+    expiresIn?: number;
+    /** How long each participants answer stays valid (its open invitation's expiry), from the moment it is sent. */
+    participantsExpireIn?: number;
+  },
+) {
+  await page.route('**/api/customer-programme-*', (route) =>
+    route.fulfill({ status: 503, json: { error: 'unavailable' } }),
+  );
+  await page.route('**/api/customer-programme-projections**', async (route) => {
+    await new Promise((done) => setTimeout(done, (answer.projection ?? answer.participants)()));
+    await route.fulfill({
+      json: {
+        ...projection(none),
+        ...(answer.expiresIn
+          ? { expiresAt: new Date(Date.now() + answer.expiresIn).toISOString() }
+          : {}),
+      },
+    });
+  });
+  await page.route('**/api/customer-programme-participants*', async (route) => {
+    await new Promise((done) => setTimeout(done, answer.participants()));
+    await route.fulfill(
+      answer.status
+        ? { status: answer.status, json: { error: 'unavailable' } }
+        : {
+            json: answer.participantsExpireIn
+              ? {
+                  ...sampleParticipants,
+                  invitations: sampleParticipants.invitations.map((invitation) =>
+                    invitation.status === 'ISSUED'
+                      ? {
+                          ...invitation,
+                          expiresAt: new Date(
+                            Date.now() + answer.participantsExpireIn!,
+                          ).toISOString(),
+                        }
+                      : invitation,
+                  ),
+                }
+              : sampleParticipants,
+          },
+    );
+  });
+  await page.route('**/api/customer-programmes*', (route) =>
+    route.fulfill({
+      json: { workspaceId, programmes: [programme], nextAfter: null, synthetic: true },
+    }),
+  );
+  await page.goto(`${origin}/?room=1&proj=1`);
+  await expect(page.getByRole('article', { name: programme.name })).toBeVisible();
+}
+
+for (const width of [390, 1440])
+  test(`item 21 at ${width}: the stage keeps its step while a group change reads again, and says it is checking before the first answer`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    let delay = 900;
+    const answer = { participants: () => delay, status: undefined as number | undefined };
+    await openSlowly(page, answer);
+    const room = page.getByRole('article', { name: programme.name });
+    const stage = room.locator('.room-head > .room-stage');
+    // First load: nothing is known yet, so the stage says it is checking, never "Not measured yet". These reads are
+    // taken at once, while the 900 ms read is still on its way, so they cannot pass by waiting for the answer.
+    await expect(stage.getByRole('status')).toHaveText('Checking where this programme stands…');
+    const said = room.locator(
+      '.room-head, .room-next, .programme-glance-card, .programme-attention-card',
+    );
+    expect(await said.getByText(/Not measured yet/).count()).toBe(0);
+    expect(await room.locator('.programme-attention-card').textContent()).toContain('Checking…');
+    // The tiles and the next step say they are checking too, and no step is offered before the answer.
+    for (const tile of ['registered', 'participants ready'])
+      expect(await glanceTile(room, tile).textContent()).toBe('Checking…');
+    const next = room.locator('.room-next');
+    expect(await next.locator('b').textContent()).toBe('Checking…');
+    expect(await next.getByRole('button', { name: /^Open / }).count()).toBe(0);
+    // The checking stage holds the stage's own place, so the answer moves nothing below it.
+    const held = (await next.boundingBox())!;
+    const step = stage.locator('li[aria-current="step"]');
+    await expect(step).toHaveCount(1);
+    const settled = (await next.boundingBox())!;
+    expect(Math.abs(settled.y - held.y)).toBeLessThanOrEqual(1);
+    await expect(next.getByRole('button', { name: 'Open Participants' })).toBeVisible();
+    await expect(stage).not.toHaveAttribute('aria-busy', 'true');
+    const known = await step.textContent();
+    // Every later read is slow: the step stays while it runs, the stage says it is busy, and nothing says unknown.
+    for (const group of [groups[1], groups[0]]) {
+      await room.getByRole('button', { name: group, exact: true }).click();
+      await page.waitForTimeout(300);
+      expect(await stage.getAttribute('aria-busy')).toBe('true');
+      expect(await step.count()).toBe(1);
+      expect(await step.textContent()).toBe(known);
+      expect(await said.getByText(/Not measured yet/).count()).toBe(0);
+      await expect(stage).not.toHaveAttribute('aria-busy', 'true');
+    }
+    expect(await room.locator('.programme-attention-card').textContent()).not.toContain(
+      'Not measured yet',
+    );
+    // A failed read is honest: the counts are gone and the next step says they are not measured.
+    answer.status = 503;
+    delay = 0;
+    await room.getByRole('button', { name: groups[1], exact: true }).click();
+    await expect(room.locator('.room-next')).toContainText('Not measured yet');
+    await expect(stage).not.toHaveAttribute('aria-busy', 'true');
+  });
+
+// One "At a glance" tile's value, found by its label.
+const glanceTile = (room: Locator, label: string) =>
+  room
+    .locator('.programme-glance-card .programme-tiles > div')
+    .filter({ has: room.page().locator('dt', { hasText: new RegExp(`^${label}$`) }) })
+    .locator('dd');
+
+// Pretend the tab was hidden, then shown again, as a browser does on a tab switch.
+async function switchTabAway(page: Page) {
+  for (const hidden of [true, false])
+    await page.evaluate((value) => {
+      Object.defineProperty(document, 'hidden', { configurable: true, get: () => value });
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        get: () => (value ? 'hidden' : 'visible'),
+      });
+      document.dispatchEvent(new Event('visibilitychange'));
+    }, hidden);
+}
+
+// Audit fixes 1, item 21, fix round 1: the room keeps the last step only across a refresh. Counts and a projection
+// heard before the page was hidden, or a projection past its expiry, are never drawn again while new reads run.
+test('item 21: after a tab switch the room says it is checking and never redraws the counts or projection it had', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  let delay = 0;
+  await openSlowly(page, { participants: () => delay });
+  const room = page.getByRole('article', { name: programme.name });
+  await expect(glanceTile(room, 'participants ready')).toHaveText('1 of 4');
+  await expect(glanceTile(room, 'registered')).not.toHaveText(/Checking|Not measured/);
+  delay = 8000;
+  await switchTabAway(page);
+  // The new reads take eight seconds, so what shows now is what the room kept through the hidden page.
+  await expect(room.locator('.room-head > .room-stage').getByRole('status')).toHaveText(
+    'Checking where this programme stands…',
+  );
+  for (const tile of ['registered', 'participants ready'])
+    await expect(glanceTile(room, tile)).toHaveText('Checking…');
+  await expect(room.locator('.room-next b')).toHaveText('Checking…');
+});
+
+test('item 21: a projection that expires while a refresh reads again is not drawn after its expiry', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  let slow = 0;
+  await openSlowly(page, { participants: () => 0, projection: () => slow, expiresIn: 3000 });
+  const room = page.getByRole('article', { name: programme.name });
+  const ready = glanceTile(room, 'participants ready');
+  await expect(ready).toHaveText('1 of 4');
+  // A group change reads again; the new projection read takes far longer than the old answer stays valid.
+  slow = 10000;
+  await room.getByRole('button', { name: groups[1], exact: true }).click();
+  await room.getByRole('button', { name: groups[0], exact: true }).click();
+  await expect(ready).toHaveText('1 of 4');
+  await expect(ready).toHaveText('Checking…', { timeout: 5000 });
+});
+
+// Audit fixes 1, item 21, fix round 2: the counts kept across a refresh expire with the read they came from. A
+// refresh draws a new participants read, which ends the old read's own timer, so the room keeps the deadline itself.
+test('item 21: counts kept across a refresh are dropped when their read expires and the new read stalls', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  let slow = 0;
+  await openSlowly(page, {
+    participants: () => slow,
+    projection: () => 0,
+    participantsExpireIn: 3000,
+  });
+  const room = page.getByRole('article', { name: programme.name });
+  const registered = glanceTile(room, 'registered');
+  await expect(registered).not.toHaveText(/Checking|Not measured/);
+  const kept = await registered.textContent();
+  // A group change reads again; the new participants read takes far longer than the old answer stays valid.
+  slow = 10000;
+  await room.getByRole('button', { name: groups[1], exact: true }).click();
+  await room.getByRole('button', { name: groups[0], exact: true }).click();
+  await expect(registered).toHaveText(kept!);
+  await expect(registered).toHaveText('Checking…', { timeout: 5000 });
+  await expect(room.locator('.room-head > .room-stage').getByRole('status')).toHaveText(
+    'Checking where this programme stands…',
+  );
+  await expect(room.locator('.room-next b')).toHaveText('Checking…');
+});

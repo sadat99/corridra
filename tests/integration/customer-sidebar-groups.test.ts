@@ -63,12 +63,17 @@ describe('the customer sidebar groups', () => {
     expect(shell).toContain('NEON_AUTH_BASE_URL');
   });
 
-  it('a Groups link is current only on its own page', () => {
+  it('a Groups link is current on its own page and Programmes on a programme room', () => {
     expect(customerGroupHere('/account/delegations/organise')).toBe('programmes');
     expect(customerGroupHere('/account/delegations')).toBe('registrations');
+    // Audit item 20 (owner-approved packet, 16 Nov 2026): a programme room belongs to Programmes, not Requests.
+    expect(customerGroupHere('/account/delegations/0f8fad5b-d9cb-469f-a165-70867728950e')).toBe(
+      'programmes',
+    );
     expect(
-      customerGroupHere('/account/delegations/0f8fad5b-d9cb-469f-a165-70867728950e'),
-    ).toBeNull();
+      customerGroupHere('/account/delegations/0f8fad5b-d9cb-469f-a165-70867728950e/people'),
+    ).toBe('programmes');
+    expect(customerGroupHere('/account/delegations/not-a-workspace')).toBeNull();
     expect(customerGroupHere('/account')).toBeNull();
   });
 

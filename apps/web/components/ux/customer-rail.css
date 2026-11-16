@@ -252,13 +252,13 @@ nav.ux-team-sidebar.ux-customer-nav a span,
   height: 0.5625rem;
   margin-inline: 0.34375rem;
   border-radius: 50%;
-  background: var(--brand);
+  background: var(--journey-source);
 }
 .ux-customer-nav-dot[data-tone='positive'] {
-  background: var(--positive);
+  background: var(--journey-organise);
 }
 .ux-customer-nav-dot[data-tone='ornament'] {
-  background: var(--editorial-accent);
+  background: var(--journey-sell);
 }
 .ux-leftnav-panel nav.ux-team-sidebar.ux-customer-nav a[data-lead='true'] {
   min-height: 3rem;

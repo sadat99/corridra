@@ -89,6 +89,15 @@ export function quietDays(updatedAt: string, now = Date.now()) {
   return Math.max(0, Math.floor((now - new Date(updatedAt).getTime()) / 86_400_000));
 }
 
+/**
+ * "Last changed 37 days ago": how long the mission has been quiet. It is read from the last change, not the due
+ * date, so it never reads as a second count of days late beside Today's "N days late".
+ */
+export function quietLabel(updatedAt: string, now = Date.now()) {
+  const days = quietDays(updatedAt, now);
+  return `Last changed ${days} ${days === 1 ? 'day' : 'days'} ago`;
+}
+
 type HandoverSource = {
   reason: string;
   created_at: string;
