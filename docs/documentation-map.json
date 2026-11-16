@@ -309,6 +309,21 @@
       "use": "Owner's standing parallel work operating rules (13 Nov 2026, sections 0 to 11): roles, concurrency, routes, merges, production changes, cost stops; summarised in AGENTS.md"
     },
     {
+      "path": "docs/agents/conductor/SKILL.md",
+      "classification": "Current guide/contract",
+      "use": "Verbatim repository copy of the owner's operating-conductor:conductor skill (16 Nov 2026): roles, model table, planning, Merge Gate, builder rules, hygiene, Corridra and VisaStack profiles; read only when the skill cannot be loaded"
+    },
+    {
+      "path": "docs/agents/conductor/references/coordination.md",
+      "classification": "Current guide/contract",
+      "use": "Verbatim copy of the conductor coordination reference (Guardian only): work graph, hotspots, claims and records, merge queue, failure handling"
+    },
+    {
+      "path": "docs/agents/conductor/references/experience.md",
+      "classification": "Current guide/contract",
+      "use": "Verbatim copy of the conductor experience standard for visible work; UI/UX.v3 wins over it"
+    },
+    {
       "path": "docs/agents/ui-direction.md",
       "classification": "Current guide/contract",
       "use": "UI/UX.v3, the single binding design contract (adopted 13 Nov 2026, until the owner launches UI/UX.v4): locked decisions, how to build a screen, definition of done and the Legacy list of older UI not to follow; read in full before any visible change"
