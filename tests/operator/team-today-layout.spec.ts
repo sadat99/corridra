@@ -298,6 +298,44 @@ test('Needs you now lists each new or late mission once, most overdue first, wit
   ).toBeVisible();
 });
 
+test('the Needs you now filter opens on All and is kept in the address, so back and reload keep it', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, operatorRows);
+  await loaded(page);
+  const show = needs(page).getByRole('group', { name: 'Show' });
+  const rows = needs(page).getByRole('listitem');
+  await expect(show.getByRole('radio', { name: 'All 3' })).toBeChecked();
+  expect(new URL(page.url()).searchParams.has('needs')).toBe(false);
+  await show.getByRole('radio', { name: 'Past due 2' }).check();
+  await expect(rows).toHaveCount(2);
+  expect(new URL(page.url()).searchParams.get('needs')).toBe('overdue');
+  await page.reload();
+  await loaded(page);
+  await expect(show.getByRole('radio', { name: 'Past due 2' })).toBeChecked();
+  await expect(rows).toHaveCount(2);
+  await page.goBack();
+  await expect(show.getByRole('radio', { name: 'All 3' })).toBeChecked();
+  await expect(rows).toHaveCount(3);
+  await page.goForward();
+  await expect(show.getByRole('radio', { name: 'Past due 2' })).toBeChecked();
+});
+
+test('an address that names the New filter opens on it, and an unknown one opens on All', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, operatorRows, '?needs=new');
+  await loaded(page);
+  const show = needs(page).getByRole('group', { name: 'Show' });
+  await expect(show.getByRole('radio', { name: 'New 1' })).toBeChecked();
+  await expect(needs(page).getByRole('listitem')).toHaveCount(1);
+  await page.goto(origin + '?needs=nonsense');
+  await loaded(page);
+  await expect(show.getByRole('radio', { name: 'All 3' })).toBeChecked();
+});
+
 test('Needs you now shows five rows, then Show N More, and says when not every row was loaded', async ({
   page,
 }) => {

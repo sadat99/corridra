@@ -134,16 +134,6 @@ test('Operator Today panel reads the real mission list, shows new and overdue wo
   await expect(needs.getByText('Invented Machinery Co')).toBeVisible();
   await expect(needs.getByText('Invented Foods Co')).toBeVisible();
   await expect(needs.getByText('Invented Towels Ltd')).toHaveCount(0);
-  // The chosen filter is kept in the address (?needs=overdue): back returns to All, forward and reload keep it.
-  await expect(page).toHaveURL(/[?&]needs=overdue(&|$)/);
-  await page.goBack();
-  await expect(needs.getByText('Invented Towels Ltd')).toBeVisible();
-  await expect(page).not.toHaveURL(/needs=/);
-  await page.goForward();
-  await expect(needs.getByText('Invented Machinery Co')).toBeVisible();
-  await page.reload();
-  await expect(needs.getByRole('radio', { name: 'Past due 2' })).toBeChecked();
-  await expect(needs.getByText('Invented Towels Ltd')).toHaveCount(0);
   await expect(today.getByText('follow-up past its due date', { exact: true })).toBeVisible();
   await expect(today.getByText('meeting in the next 7 days', { exact: true })).toBeVisible();
   await expect(
