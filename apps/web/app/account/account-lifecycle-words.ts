@@ -2,9 +2,10 @@
 // two dialog texts (closeBody and erasureBody, not their titles), were approved by the owner, 10 November 2026
 // (answer to the conductor: "Approve both as live (Recommended)"). On 16 November 2026 every sentence here was checked
 // against what the code does (customer-account-lifecycle migration 0001): closing deletes nothing, day 30 only
-// ends the undo, erasure is a request staff answer by hand, and a closed person can still file one. closeBody,
-// closeTitle, sectionHeading and the closed screen were corrected to say exactly that, under the owner's delegation
-// ("as per your best judgement"). No legal review is recorded. A changed word is a change to this file only,
+// ends the undo, erasure is a request staff answer by hand, and a closed person can still file one.
+// closeBody, closedUndo (the closed screen line) and sectionHeading were changed to say exactly that; no other
+// string changed. Owner, 16 November 2026: "Get them(1,2,4,5,,24,27,G5) done as per your best judgement".
+// No legal review is recorded. A changed word is a change to this file only,
 // and any later wording change needs the owner again. The phrase to type must equal accountLifecycleWords.closePhrase
 // in packages/auth (a test holds the two together).
 export const accountWords = {
