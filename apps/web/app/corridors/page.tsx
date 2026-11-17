@@ -26,9 +26,9 @@ export default function Page() {
           <p className="label">Routes</p>
           <h1>The job comes first. The route gives it context.</h1>
           <p className="guide-lead">
-            From Bangladesh we run missions to China, the EU, the UK, the US, Australia and key
-            Asian markets. Pick where your company is and the market you want to reach, and every
-            request follows the same steps.
+            We run missions from Bangladesh. Open now: China, the EU, the UK, the US, Australia and
+            key Asian markets. Pick where your company is and the market you want to reach, and
+            every request follows the same steps.
           </p>
           <Link prefetch={false} className="primary-link guide-hero-start" href="/plan">
             Start a Request
@@ -52,27 +52,29 @@ export default function Page() {
             ))}
             {(
               [
-                ['Bangladesh–UK', 'GB', 'the UK'],
-                ['Bangladesh–US', 'US', 'the US'],
-                ['Bangladesh–Australia', 'AU', 'Australia'],
+                ['Bangladesh to the UK', 'GB'],
+                ['Bangladesh to the US', 'US'],
+                ['Bangladesh to Australia', 'AU'],
               ] as const
-            ).map(([title, market, name]) => (
+            ).map(([name, market]) => (
               <li key={market} className="guide-direction-compact">
-                <h3>{title}</h3>
-                <Link
-                  prefetch={false}
-                  href={`/plan?companyCountry=BD&marketCode=${market}`}
-                  className="text-link"
-                >
-                  Request for {name} <Arrow />
-                </Link>
+                <h3>
+                  <Link
+                    prefetch={false}
+                    href={`/plan?companyCountry=BD&marketCode=${market}`}
+                    className="text-link"
+                  >
+                    {name} <Arrow />
+                  </Link>
+                </h3>
               </li>
             ))}
             <li key="asia" className="guide-direction-compact">
-              <h3>Bangladesh–Key Asian markets</h3>
-              <Link prefetch={false} href="/plan?companyCountry=BD" className="text-link">
-                Request for key Asian markets <Arrow />
-              </Link>
+              <h3>
+                <Link prefetch={false} href="/plan?companyCountry=BD" className="text-link">
+                  Bangladesh to key Asian markets <Arrow />
+                </Link>
+              </h3>
             </li>
           </ul>
           <div className="guide-other-route">

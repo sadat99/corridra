@@ -46,7 +46,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     label: 'Sell in a new market',
     title: 'Make the trip commercially useful.',
     description:
-      'We are building a way to find and qualify buyers in China, the EU, the UK, the US, Australia and key Asian markets before you arrive. We are also building a way to follow up after you leave.',
+      'We are building a way to find and qualify buyers before you arrive. Open now: China, the EU, the UK, the US, Australia and key Asian markets. We are also building a way to follow up after you leave.',
     introduction: {
       title: 'A booth gives visibility. It does not decide who you meet.',
       text: 'Start with your offer and the buyer you want. An attendee list is only one place to look.',

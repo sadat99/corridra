@@ -43,10 +43,11 @@ test('keeps every fact, caveat and link of the About page, with no em dash', asy
     'Neither tells you which company fits, what is known or who will take the next step.',
     'A mission is a planned piece of work to meet the right companies and advance a commercial objective.',
     'Exporters, importers, machinery buyers, companies exploring a new market and organisations running business delegations.',
-    'First priority: Bangladesh to China sourcing and business delegations.',
+    // owner decision 17 Nov 2026, routes and markets: no lead route, the open destinations are equals
+    'Open now: China, the EU, the UK, the US, Australia and key Asian markets.',
     'A listed route does not mean every service is available there. We confirm fit for each request.',
     // owner decision 17 Nov 2026, routes and markets
-    'Bangladesh to China, the EU, the UK, the US, Australia and key Asian markets are the routes open now. Each route needs its own reviewed scope and delivery capacity.',
+    'We run missions from Bangladesh to each of these. Each route needs its own reviewed scope and delivery capacity. Missions into Bangladesh are taken case by case.',
     'A scheduled meeting is not a meeting held. A proposal is not an order, and an order is not cash collected.',
     'Corridra supports decisions and execution. It does not guarantee introductions, company quality, regulatory approval or commercial results.',
     'We publish no unverified client list, network size or success rate.',
@@ -103,9 +104,8 @@ for (const [name, size] of Object.entries(sizes)) {
     await page.goto('/about');
     const section = page.locator('#where');
     const summary = section.locator('details > summary');
-    const detail = section.getByText(
-      'Bangladesh to China, the EU, the UK, the US, Australia and key Asian markets are the routes open now',
-    );
+    // owner decision 17 Nov 2026, routes and markets
+    const detail = section.getByText('We run missions from Bangladesh to each of these');
     await expect(summary).toHaveAccessibleName(/^Show Details/);
     await expect(detail).toBeHidden();
     const box = (await summary.boundingBox())!;
