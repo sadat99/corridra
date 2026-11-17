@@ -98,12 +98,15 @@ export function PublicPage({
   content,
   after,
   more,
+  moreAfter,
 }: {
   content: PublicPageContent;
   /** An optional section shown after the approach and before Show More. Nothing is rendered when absent. */
   after?: ReactNode;
   /** Optional sections added at the end of the closed Show More disclosure, so the page length is unchanged. */
   more?: ReactNode;
+  /** Sections with their own disclosures: kept outside the Show More element and shown only while it is open. */
+  moreAfter?: ReactNode;
 }) {
   const labelled = content.sections.some((section) => section.tag);
   const heroHref =
@@ -272,6 +275,7 @@ export function PublicPage({
 
         {more}
       </details>
+      {moreAfter ? <div className="guide-more-after">{moreAfter}</div> : null}
     </PublicShell>
   );
 }

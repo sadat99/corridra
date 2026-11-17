@@ -1,4 +1,4 @@
-import { HomeMissionMore, HomeRoutesMore } from '../../components/home-more';
+import { HomeFaqMore, HomeMissionMore, HomeRoutesMore } from '../../components/home-more';
 import { PublicPage } from '../../components/public-page';
 import { publicPages } from '../../content/public-pages';
 const content = publicPages['how-it-works'];
@@ -17,6 +17,7 @@ export default function Page() {
           <HomeRoutesMore />
         </>
       }
+      moreAfter={<HomeFaqMore />}
     />
   );
 }

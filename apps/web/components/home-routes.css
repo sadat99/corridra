@@ -1005,9 +1005,8 @@
   gap: var(--space-1);
   align-content: start;
   padding: min(var(--space-3), 3vw) min(var(--space-4), 4vw);
-  border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: var(--surface-1);
+  background: var(--surface-2);
 }
 .tr-nevers span,
 .tr-nots span {
@@ -1017,8 +1016,6 @@
 .tr-nots > div {
   display: grid;
   gap: var(--space-1);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--line);
 }
 .tr-goals {
   display: grid;
@@ -1061,6 +1058,7 @@
 }
 .tr-ledger {
   display: grid;
+  gap: var(--space-1);
   margin-top: var(--space-4);
   border-radius: var(--radius-lg);
   background: var(--surface-1);
@@ -1084,7 +1082,7 @@
   justify-items: start;
   margin: 0;
   padding: min(var(--space-3), 3vw) min(var(--space-4), 4vw);
-  border-top: 1px solid var(--line);
+  background: var(--surface-2);
 }
 .tr-ledger s {
   color: var(--text-2);
@@ -1137,9 +1135,8 @@
   gap: var(--space-2);
   align-content: start;
   padding: min(var(--space-4), 4vw);
-  border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  background: var(--surface-1);
+  background: var(--surface-2);
 }
 .tr-people p {
   margin: 0;
@@ -1151,7 +1148,6 @@
   font-size: var(--text-xs);
 }
 .tr-people .is-get {
-  border-color: var(--action);
   background: var(--action);
   color: var(--on-action);
 }
@@ -1159,9 +1155,8 @@
   color: var(--on-action);
 }
 .tr-faq details {
-  border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: var(--surface-1);
+  background: var(--surface-2);
 }
 .tr-faq summary {
   display: flex;
@@ -1186,9 +1181,14 @@
 .tr-faq ul {
   padding-left: min(var(--space-4), 4vw);
 }
+/* On a tinted section the cards are lifted to white, so they read as cards with no edge drawn. */
+.tr-alt :is(.tr-nevers > div, .tr-routes > div, .tr-people > div:not(.is-get), .tr-faq details) {
+  background: var(--surface-1);
+}
 .tr-routes .is-mine {
-  border: 2px solid var(--action);
-  box-shadow: 0 0 0 3px var(--selected-surface);
+  box-shadow:
+    0 0 0 2px var(--action),
+    0 0 0 5px var(--selected-surface);
 }
 .tr-routes p {
   margin: 0;
@@ -1514,8 +1514,8 @@
 @media (max-width: 47.99rem) {
   .tr-home .tr-hero,
   .tr-home .tr-section {
-    margin-top: var(--space-3);
-    padding-block: var(--space-4);
+    margin-top: var(--space-2);
+    padding-block: var(--space-3);
   }
   .tr-doors legend {
     font-size: var(--text-lg);

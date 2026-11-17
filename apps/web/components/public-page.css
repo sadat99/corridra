@@ -69,3 +69,8 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* Sections that carry their own disclosures sit after Show More in the page and appear only while it is open. */
+.guide-more:not([open]) + .guide-more-after {
+  display: none;
+}

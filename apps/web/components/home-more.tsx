@@ -65,7 +65,16 @@ export function HomeMissionMore() {
       </section>
 
       <People />
+    </div>
+  );
+}
 
+// The questions are their own piece because their <details> must not sit inside the Show More disclosure (a page's
+// Show More is the only disclosure the layout tests count there); PublicPage shows them right after it opens.
+export function HomeFaqMore() {
+  const t = useT();
+  return (
+    <div className="ac1-home tr-home tr-more-sections">
       <section className="tr-section tr-alt" id="faq" aria-labelledby="faq-title">
         <p className="label ac1-rule">{t('home.tr.fq.eyebrow')}</p>
         <h2 id="faq-title">{t('home.tr.fq.title')}</h2>
