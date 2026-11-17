@@ -91,6 +91,8 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'programme_erasure',
     'personal_profile',
     'profile_picture',
+    'viewer_reply_metadata',
+    'viewer_export_access',
     'contact_changes_install',
     'contact_changes_enable',
     'contact_changes_pause',
@@ -135,6 +137,8 @@ test('each field-module choice maps to install only and reaches the exact-head c
     ['programme_erasure', u, u, u, u, u, u, u, u],
     ['personal_profile', u, u, u, u, u, u, u, u],
     ['profile_picture', u, u, u, u, u, u, u, u],
+    ['viewer_reply_metadata', u, u, u, u, u, u, u, u],
+    ['viewer_export_access', u, u, u, u, u, u, u, u],
     ['contact_changes_install', u, u, u, u, u, u, u, u],
     ['contact_changes_enable', u, u, u, u, u, u, u, u],
     ['contact_changes_pause', u, u, u, u, u, u, u, u],
@@ -178,9 +182,20 @@ test('each field-module choice maps to install only and reaches the exact-head c
       evaluate(env.PROFILE_PICTURE_ACTION, inputs),
       choice === 'profile_picture' ? 'install' : u,
     );
+    // ADR-087 U2 and U3: each own choice installs its database module and nothing else.
+    assert.equal(
+      evaluate(env.VIEWER_REPLY_METADATA_ACTION, inputs),
+      choice === 'viewer_reply_metadata' ? 'install' : u,
+    );
+    assert.equal(
+      evaluate(env.VIEWER_EXPORT_ACCESS_ACTION, inputs),
+      choice === 'viewer_export_access' ? 'install' : u,
+    );
     for (const [own, line] of [
       ['personal_profile', 'PERSONAL_PROFILE_ACTION'],
       ['profile_picture', 'PROFILE_PICTURE_ACTION'],
+      ['viewer_reply_metadata', 'VIEWER_REPLY_METADATA_ACTION'],
+      ['viewer_export_access', 'VIEWER_EXPORT_ACCESS_ACTION'],
     ])
       if (choice === own)
         for (const [name, value] of Object.entries(env))

@@ -168,8 +168,12 @@ function ReplyHeader({
         </p>
       ) : state.asked ? (
         <p className="reply-review-state" data-state="ASK">
-          Asked for {state.asked.askTerms?.map((t) => termLabels[t]).join(', ')}. Waiting for a new
-          reply.
+          {/* A role without the body permission gets an Ask without its terms (ADR-087 U2), so it reads "more detail". */}
+          Asked for{' '}
+          {state.asked.askTerms?.length
+            ? state.asked.askTerms.map((t) => termLabels[t]).join(', ')
+            : 'more detail'}
+          . Waiting for a new reply.
         </p>
       ) : (
         <p className="reply-review-state" data-state="OPEN">

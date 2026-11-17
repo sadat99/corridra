@@ -3,6 +3,7 @@ import {
   withTenant,
   type DatabasePool,
   type RequestContext,
+  type DatabaseClient,
   type TenantTransaction,
 } from '@corridra/db';
 import { DomainError, permits } from '@corridra/domain';
@@ -96,23 +97,42 @@ export class DeliveryExperienceService {
       // Where recipient response revision is installed, the latest correction is what the team reads, with how many were made.
       // A role without delivery.read_body (staff viewer, ADR-087 U1) gets that the reply exists, its kind, dates and
       // revision count, and body null: the words never leave the service.
-      responses: (
-        await db.query(
-          (
-            await db.query(
-              "SELECT to_regclass('app.recipient_detail_response_revision') IS NOT NULL AS ok",
-            )
-          ).rows[0]?.ok
-            ? `SELECT d.id,d.link_id,coalesce(x.body,d.body) AS body,d.source_kind,d.created_at,coalesce(x.version,0)::int AS revision,x.created_at AS revised_at
-               FROM app.recipient_detail_response d
-               LEFT JOIN LATERAL(SELECT y.body,y.version,y.created_at FROM app.recipient_detail_response_revision y
-                 WHERE y.tenant_id=d.tenant_id AND y.response_id=d.id ORDER BY y.version DESC LIMIT 1) x ON true
-               WHERE d.tenant_id=$1 ORDER BY d.created_at DESC LIMIT 100`
-            : 'SELECT id,link_id,body,source_kind,created_at FROM app.recipient_detail_response WHERE tenant_id=$1 ORDER BY created_at DESC LIMIT 100',
-          [ctx.tenantId],
-        )
-      ).rows.map((row) => (permits(role, 'delivery.read_body') ? row : { ...row, body: null })),
+      responses: await this.responses(db, ctx.tenantId, permits(role, 'delivery.read_body')),
     }));
+  }
+  // Where ADR-087 U2 is installed, a viewer's read policy returns no reply row at all, so a role without delivery.read_body
+  // reads the same rows through app.reply_meta_list (existence, kind, dates and the latest correction's version and date, never a
+  // body). Before U2 the function does not exist: one catalogue check, then today's query with the body dropped here.
+  private async responses(db: DatabaseClient, tenantId: string, bodies: boolean) {
+    const found = await db.query(
+      `SELECT to_regclass('app.recipient_detail_response_revision') IS NOT NULL AS revisable,
+        to_regprocedure('app.reply_meta_list(uuid)') IS NOT NULL AS meta`,
+    );
+    const { revisable, meta } = found.rows[0] as { revisable: boolean; meta: boolean };
+    if (!bodies && meta)
+      return (
+        await db.query(
+          `SELECT d.id,d.link_id,NULL::jsonb AS body,d.source_kind,d.created_at,
+             coalesce(d.latest_version,0)::int AS revision,d.latest_at AS revised_at
+           FROM app.reply_meta_list($1) d ORDER BY d.created_at DESC,d.id LIMIT 100`,
+          [tenantId],
+        )
+      ).rows.map(({ revision, revised_at, ...row }) =>
+        revisable ? { ...row, revision, revised_at } : row,
+      );
+    const rows = (
+      await db.query(
+        revisable
+          ? `SELECT d.id,d.link_id,coalesce(x.body,d.body) AS body,d.source_kind,d.created_at,coalesce(x.version,0)::int AS revision,x.created_at AS revised_at
+             FROM app.recipient_detail_response d
+             LEFT JOIN LATERAL(SELECT y.body,y.version,y.created_at FROM app.recipient_detail_response_revision y
+               WHERE y.tenant_id=d.tenant_id AND y.response_id=d.id ORDER BY y.version DESC LIMIT 1) x ON true
+             WHERE d.tenant_id=$1 ORDER BY d.created_at DESC LIMIT 100`
+          : 'SELECT id,link_id,body,source_kind,created_at FROM app.recipient_detail_response WHERE tenant_id=$1 ORDER BY created_at DESC LIMIT 100',
+        [tenantId],
+      )
+    ).rows;
+    return rows.map((row) => (bodies ? row : { ...row, body: null }));
   }
   context(ctx: RequestContext, input: unknown) {
     const { commandId, programmeId, version, ...details } = delegationContextInput.parse(input);

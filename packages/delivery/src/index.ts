@@ -5,6 +5,7 @@ import {
   withTenant,
   type DatabasePool,
   type RequestContext,
+  type DatabaseClient,
   type TenantTransaction,
 } from '@corridra/db';
 import { DomainError, permits } from '@corridra/domain';
@@ -103,18 +104,39 @@ export class DeliveryService {
           [ctx.tenantId, programmeId ?? null],
         )
       ).rows,
-      requests: (
-        await db.query(
-          `SELECT r.*,coalesce(c.status,CASE WHEN s.id IS NULL THEN 'OPEN' ELSE 'RESPONDED' END) status,s.body response,s.claim_status FROM app.delivery_request r LEFT JOIN app.delivery_response s ON s.tenant_id=r.tenant_id AND s.request_id=r.id LEFT JOIN app.delivery_request_close c ON c.tenant_id=r.tenant_id AND c.request_id=r.id WHERE r.tenant_id=$1 ORDER BY r.created_at DESC LIMIT 1000`,
-          [ctx.tenantId],
-        )
-      ).rows.map(({ response, ...row }) => ({
-        ...row,
-        // Whether an answer exists is metadata for every role; its text needs delivery.read_body (ADR-087 U1).
-        answered: response !== null,
-        response: permits(role, 'delivery.read_body') ? response : null,
-      })),
+      requests: await this.requests(db, ctx.tenantId, permits(role, 'delivery.read_body')),
       owners: (await db.query('SELECT * FROM app.mission_owners($1)', [ctx.tenantId])).rows,
+    }));
+  }
+  // Whether an answer exists is metadata for every role; its text needs delivery.read_body (ADR-087 U1). Where ADR-087 U2 is
+  // installed a viewer's read policy returns no answer row, so a role without delivery.read_body learns that an answer exists
+  // (and its claim status) through app.delivery_response_meta, never its text. Before U2 the function does not exist: one
+  // catalogue check, then today's query with the text dropped here.
+  private async requests(db: DatabaseClient, tenantId: string, bodies: boolean) {
+    const meta =
+      !bodies &&
+      Boolean(
+        (
+          await db.query(
+            "SELECT to_regprocedure('app.delivery_response_meta(uuid,uuid)') IS NOT NULL AS ok",
+          )
+        ).rows[0]?.ok,
+      );
+    const rows = (
+      await db.query(
+        meta
+          ? `SELECT r.*,coalesce(c.status,CASE WHEN s.id IS NULL THEN 'OPEN' ELSE 'RESPONDED' END) status,NULL::text response,s.claim_status,s.id IS NOT NULL AS answered
+             FROM app.delivery_request r
+             LEFT JOIN LATERAL(SELECT m.id,m.claim_status FROM app.delivery_response_meta(r.tenant_id,r.id) m) s ON true
+             LEFT JOIN app.delivery_request_close c ON c.tenant_id=r.tenant_id AND c.request_id=r.id WHERE r.tenant_id=$1 ORDER BY r.created_at DESC LIMIT 1000`
+          : `SELECT r.*,coalesce(c.status,CASE WHEN s.id IS NULL THEN 'OPEN' ELSE 'RESPONDED' END) status,s.body response,s.claim_status FROM app.delivery_request r LEFT JOIN app.delivery_response s ON s.tenant_id=r.tenant_id AND s.request_id=r.id LEFT JOIN app.delivery_request_close c ON c.tenant_id=r.tenant_id AND c.request_id=r.id WHERE r.tenant_id=$1 ORDER BY r.created_at DESC LIMIT 1000`,
+        [tenantId],
+      )
+    ).rows;
+    return rows.map(({ response, answered, ...row }) => ({
+      ...row,
+      answered: meta ? answered === true : response !== null,
+      response: bodies ? response : null,
     }));
   }
   programme(ctx: RequestContext, input: unknown) {

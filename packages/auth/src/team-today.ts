@@ -4,6 +4,7 @@ import {
   type DatabasePool,
   type RequestContext,
 } from '@corridra/db';
+import { permits } from '@corridra/domain';
 
 // getTeamToday (commercial readiness program, 5.2, CQ-34, CQ-40, CQ-73). Counts for the team Today
 // page, read inside withTenant with the person's own access and row level security. Owner: WS-D.
@@ -68,7 +69,7 @@ async function serviceRequestCounts(db: DatabaseClient) {
 }
 
 export async function getTeamToday(pool: DatabasePool, ctx: RequestContext): Promise<TeamToday> {
-  return withTenant(pool, ctx, 'missions.read', async ({ db }) => {
+  return withTenant(pool, ctx, 'missions.read', async ({ db, role }) => {
     const {
       rows: [m],
     } = await db.query(
@@ -88,9 +89,25 @@ export async function getTeamToday(pool: DatabasePool, ctx: RequestContext): Pro
     const replies = await optional(db, 'today_replies', async () => {
       const installed = await db.query(
         `SELECT to_regclass('app.recipient_reply_review') IS NOT NULL AS ok,
-                to_regclass('app.recipient_detail_response_revision') IS NOT NULL AS revisable`,
+                to_regclass('app.recipient_detail_response_revision') IS NOT NULL AS revisable,
+                to_regprocedure('app.reply_review_meta(uuid)') IS NOT NULL AS meta`,
       );
       if (!installed.rows[0]?.ok) throw new Error('not installed');
+      // Where ADR-087 U2 is installed a viewer's read policies return no reply and no review row, so a role without
+      // delivery.read_body counts the same replies from app.reply_meta_list and their review state from app.reply_review_meta
+      // (existence, decisions and dates, never a body or a note). Retention is the same on both paths: the meta functions
+      // apply the retention that the reply and correction read policies apply.
+      if (!permits(role, 'delivery.read_body') && installed.rows[0].meta) {
+        const r = await db.query(
+          `WITH v AS (SELECT * FROM app.reply_review_meta($1))
+          SELECT count(*)::int AS n FROM app.reply_meta_list($1) d
+          WHERE NOT EXISTS(SELECT FROM v WHERE v.response_id=d.id)
+            OR (NOT EXISTS(SELECT FROM v WHERE v.response_id=d.id AND v.decision<>'ASK')
+              AND d.latest_at>(SELECT max(v.created_at) FROM v WHERE v.response_id=d.id))`,
+          [ctx.tenantId],
+        );
+        return r.rows[0].n;
+      }
       // Where answer correction is installed, an answer corrected after the team's latest Ask is waiting for review again.
       const r = await db.query(
         installed.rows[0].revisable

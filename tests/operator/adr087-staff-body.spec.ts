@@ -137,7 +137,7 @@ test.afterAll(async () => {
   await new Promise<void>((done) => server.close(() => done()));
 });
 
-async function answer(page: Page, role: string, body: boolean) {
+async function answer(page: Page, role: string, body: boolean, reviews: unknown[] = []) {
   await page.route('**/api/**', (route) => {
     const url = new URL(route.request().url());
     const json =
@@ -146,7 +146,7 @@ async function answer(page: Page, role: string, body: boolean) {
           ? experience(body)
           : workspace(role, body)
         : url.pathname === '/api/reply/review'
-          ? { open: true, reviews: [] }
+          ? { open: true, reviews }
           : url.pathname === '/api/workspace/missions'
             ? { missions: [], total: 0 }
             : url.pathname.endsWith('/meetings')
@@ -223,6 +223,32 @@ test('with reply review on, a viewer gets a card that the reply exists and its r
   await expect(page.getByText(replyText)).toHaveCount(0);
   await expect(page.getByText(quotationNote)).toHaveCount(0);
   await expect(card.getByRole('button')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('with U2 installed, a viewer sees an Ask without its terms as "more detail", never an empty list', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  // What ReplyReviewService.list gives a viewer through app.reply_review_meta: the decision and date, no terms or note.
+  await answer(page, 'viewer', false, [
+    {
+      id: '55555555-5555-4555-8555-555555555555',
+      responseId: '22222222-2222-4222-8222-222222222222',
+      decision: 'ASK',
+      reasonCode: null,
+      askTerms: null,
+      note: null,
+      createdAt: '2026-11-17T09:00:00.000Z',
+    },
+  ]);
+  await page.goto(`${origin}/?page=experience&role=viewer&review=1`);
+  const card = page.getByRole('region', { name: 'Review supplier replies' });
+  const state = card.locator('.reply-review-state[data-state="ASK"]');
+  await expect(state).toHaveText('Asked for more detail. Waiting for a new reply.');
+  await expect(card.getByText(/Asked for \./)).toHaveCount(0);
+  await expect(card.getByText(hidden, { exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });
 
