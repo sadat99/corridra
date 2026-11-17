@@ -150,3 +150,18 @@
     overflow-wrap: anywhere;
   }
 }
+
+/* The "Any other route" block wraps its sentence and its action at the largest text sizes, so nothing runs past the
+   card on a narrow phone (owner decision 17 November 2026 made the sentence longer). */
+.guide-other-route > div {
+  flex: 1 1 12rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.guide-other-route > a {
+  max-width: 100%;
+  min-width: 0;
+  padding-block: var(--space-2);
+  text-align: center;
+  white-space: normal;
+}
