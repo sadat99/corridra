@@ -8,6 +8,7 @@ import { formatDateTime } from '../../lib/ux/format';
 import { readJson } from '../../lib/ux/step-up';
 import { safeInternalPath } from '../../lib/ux/safe-path';
 import { groupNotifications } from '../../lib/ux/notification-groups';
+import { memberNoticeHref, memberNoticeInboxTitle } from '../../lib/member-notice-words';
 
 type Item = {
   id: string;
@@ -30,7 +31,11 @@ const typeTitle: Record<string, string> = {
   REPORT_PUBLISHED: 'New report ready',
   REQUEST_RECEIVED: 'Request received',
   REPLY_POSTED: 'New reply',
+  // ADR-087 U4: its payload carries only the workspace id and the time; the words and the link live here.
+  MEMBER_NOTICE: memberNoticeInboxTitle,
 };
+/** Where an item leads when its payload names no link of its own. */
+const typeHref: Record<string, string> = { MEMBER_NOTICE: memberNoticeHref };
 
 export function NotificationInbox({
   endpoint,
@@ -155,7 +160,7 @@ export function NotificationInbox({
   }
   function row(item: Item) {
     const title = item.payload.title ?? typeTitle[item.type] ?? 'Update';
-    const target = safeInternalPath(item.payload.href);
+    const target = safeInternalPath(item.payload.href ?? typeHref[item.type]);
     return (
       <li key={item.id} data-unread={!item.readAt}>
         {!item.readAt ? <span className="ux-notice-dot" aria-hidden="true" /> : null}
@@ -239,7 +244,7 @@ export function NotificationInbox({
             <li key={item.id} data-unread={!item.readAt}>
               {(() => {
                 const title = item.payload.title ?? typeTitle[item.type] ?? 'Update';
-                const target = safeInternalPath(item.payload.href);
+                const target = safeInternalPath(item.payload.href ?? typeHref[item.type]);
                 return target ? (
                   <a className="text-link" href={target} onClick={() => markRead(item)}>
                     {title}

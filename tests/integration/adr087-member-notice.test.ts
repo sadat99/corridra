@@ -16,6 +16,8 @@ import { configureCustomerRealUse } from '../../packages/auth/src/customer-real-
 import { admitSyntheticCustomer } from '../../packages/auth/src/customer-admission';
 import { CustomerWorkspaceService } from '../../packages/auth/src/customer-workspaces';
 import { configureSyntheticIntake } from '../../packages/missions/src/bootstrap';
+import { CustomerMemberNoticeService } from '../../apps/web/lib/member-notice';
+import { inboxSafePayload } from '../../apps/web/lib/ux/notify-mail';
 
 // ADR-087 U4, the member notice, on a real PostgreSQL database with the real restricted logins and invented synthetic people.
 // The tests run in order: the module refuses before its prerequisites and against a changed inbox type check, installs once,
@@ -225,6 +227,26 @@ describe('delivery, state and dismissal', () => {
     W3 = await provision('stranger', 'Synthetic other workspace');
   });
 
+  test('with the module missing the app service shows nothing and dismiss is unavailable, switch on', async () => {
+    const service = new CustomerMemberNoticeService(f.runtime, f.auth, options, async () =>
+      session('olive'),
+    );
+    const on = { CORRIDRA_MEMBER_NOTICE: 'true' } as NodeJS.ProcessEnv;
+    await f.owner.query(
+      'ALTER FUNCTION customer.member_notice_state(uuid) RENAME TO member_notice_state_hidden',
+    );
+    try {
+      expect(await service.list(undefined, undefined, on)).toEqual({ notices: [] });
+      await expect(service.dismiss(W, undefined, undefined, on)).rejects.toMatchObject({
+        status: 503,
+      });
+    } finally {
+      await f.owner.query(
+        'ALTER FUNCTION customer.member_notice_state_hidden(uuid) RENAME TO member_notice_state',
+      );
+    }
+  });
+
   test('the runtime role cannot deliver', async () => {
     await expect(
       f.runtime.query("SELECT * FROM customer_private.member_notice_deliver($1,'runtime')", [W]),
@@ -370,6 +392,41 @@ describe('delivery, state and dismissal', () => {
       deliverMemberNotice(f.owner, { targets: [W, randomUUID()], deliveredBy: 'bad run' }),
     ).rejects.toThrow('Unknown workspace');
     expect(await count()).toBe(before);
+  });
+
+  test('the app service: nothing with the switch off; after switch-on the notice stays until that member dismisses it', async () => {
+    const service = (person: Person) =>
+      new CustomerMemberNoticeService(f.runtime, f.auth, options, async () => session(person));
+    const on = { CORRIDRA_MEMBER_NOTICE: 'true' } as NodeJS.ProcessEnv;
+    expect(await service('olive').list(undefined, undefined, {})).toEqual({ notices: [] });
+    await expect(service('olive').dismiss(W, undefined, undefined, {})).rejects.toMatchObject({
+      status: 503,
+    });
+    // Move the clock past switch-on: the notice is still there for olive, and gone for lena only (she dismissed it).
+    await f.owner.query(
+      `UPDATE customer_private.member_notice_delivery SET delivered_at=now()-interval '2 days',
+        opens_at=now()-interval '1 day' WHERE workspace_id=$1`,
+      [W],
+    );
+    const olive = (await service('olive').list(undefined, undefined, on)).notices;
+    expect(olive).toHaveLength(1);
+    expect(olive[0]).toMatchObject({
+      workspaceId: W,
+      workspaceName: 'Synthetic member notice workspace',
+    });
+    expect(Date.parse(olive[0]!.opensAt)).toBeLessThan(Date.now());
+    expect((await service('lena').list(undefined, undefined, on)).notices).toEqual([]);
+    expect((await service('rex').list(undefined, undefined, on)).notices).toEqual([]);
+    await service('olive').dismiss(W, undefined, undefined, on);
+    expect((await service('olive').list(undefined, undefined, on)).notices).toEqual([]);
+    await expect(service('rex').dismiss(W, undefined, undefined, on)).rejects.toMatchObject({
+      code: '42501',
+    });
+  });
+
+  test('the inbox write sanitiser keeps the notice payload whole', async () => {
+    const [row] = await noticesOf('olive');
+    expect(inboxSafePayload(row.payload)).toEqual(row.payload);
   });
 
   test('the rollback refuses once notices exist, and deletes nothing', async () => {

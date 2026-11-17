@@ -1,3 +1,4 @@
+import { CustomerMemberNoticeService } from './member-notice';
 import {
   CustomerProgrammeProjectionsService,
   customerProgrammeProjectionsEnabled,
@@ -873,6 +874,20 @@ function createServices() {
         : undefined,
     ),
     customerSavedMissions: new CustomerSavedMissionService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerSavedMissionsEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
+        issuer: customerIssuerFromEnv(),
+      },
+      readCustomerSession,
+    ),
+    // ADR-087 U4: the member notice state and dismissal. Same options as saved reports; CORRIDRA_MEMBER_NOTICE is read inside.
+    customerMemberNotice: new CustomerMemberNoticeService(
       runtimePool,
       authPool,
       {

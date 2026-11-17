@@ -49,7 +49,7 @@ export class CustomerMemberNoticeService extends CustomerSessionBoundary {
     );
   }
   /** Records this person's own dismissal for one workspace. Refused unless they are a current member and it was delivered. */
-  dismiss(
+  async dismiss(
     workspaceId: string,
     subject?: string,
     issuer?: string,

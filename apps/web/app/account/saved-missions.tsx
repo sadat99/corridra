@@ -6,6 +6,12 @@ import { RefreshButton } from './refresh-button';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { formatMoment } from '../../lib/ux/format';
 import { limitWords } from '../../lib/account-limit';
+import {
+  memberNoticeInboxTitle,
+  memberNoticeList,
+  memberNoticeText,
+  type MemberNotice,
+} from '../../lib/member-notice-words';
 import './library-ac1.css';
 export type SavedMissionScope = { subject: string; issuer: string };
 type Item = {
@@ -51,6 +57,91 @@ export function savedMissionHeaders(scope: SavedMissionScope) {
     'x-corridra-customer-issuer': scope.issuer,
   };
 }
+/**
+ * ADR-087 U4: the member notice (decision 4b words, the time it names in the viewer's time zone) for each workspace whose
+ * notice was delivered and that this person has not dismissed. It stays after that time until they dismiss it. Renders nothing
+ * when there is no notice, which is also the answer while CORRIDRA_MEMBER_NOTICE is off or the module is not installed.
+ */
+export function MemberNoticeView({
+  notices,
+  busy = null,
+  failed = false,
+  onDismiss,
+}: {
+  notices: MemberNotice[];
+  busy?: string | null;
+  failed?: boolean;
+  onDismiss?: (workspaceId: string) => void;
+}) {
+  if (notices.length === 0) return null;
+  return (
+    <section className="member-notice" aria-labelledby="member-notice-title">
+      <h3 id="member-notice-title">{memberNoticeInboxTitle}</h3>
+      {notices.map((notice) => (
+        <div
+          key={notice.workspaceId}
+          className="member-notice-item"
+          data-workspace={notice.workspaceId}
+        >
+          {notices.length > 1 && (
+            <p>
+              <strong>{notice.workspaceName}</strong>
+            </p>
+          )}
+          <p>{memberNoticeText(notice.opensAt)}</p>
+          <button
+            type="button"
+            className="button button-secondary"
+            disabled={busy === notice.workspaceId}
+            aria-busy={busy === notice.workspaceId}
+            onClick={() => onDismiss?.(notice.workspaceId)}
+          >
+            Dismiss
+          </button>
+        </div>
+      ))}
+      {failed && <p role="alert">The notice could not be dismissed. Try again.</p>}
+    </section>
+  );
+}
+
+/** Loads the member notices from /api/customer-member-notice and records a dismissal there. Any failure to load shows nothing. */
+export function MemberNotices({ subject, issuer }: SavedMissionScope) {
+  const [notices, setNotices] = useState<MemberNotice[]>([]),
+    [busy, setBusy] = useState<string | null>(null),
+    [failed, setFailed] = useState(false);
+  useEffect(() => {
+    const task = new AbortController();
+    void fetch('/api/customer-member-notice', {
+      cache: 'no-store',
+      signal: task.signal,
+      headers: savedMissionHeaders({ subject, issuer }),
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((value) => {
+        if (!task.signal.aborted) setNotices(memberNoticeList(value));
+      })
+      .catch(() => undefined);
+    return () => task.abort();
+  }, [subject, issuer]);
+  function dismiss(workspaceId: string) {
+    setBusy(workspaceId);
+    setFailed(false);
+    void fetch('/api/customer-member-notice', {
+      method: 'POST',
+      headers: savedMissionHeaders({ subject, issuer }),
+      body: JSON.stringify({ workspaceId }),
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error('failed');
+        setNotices((old) => old.filter((notice) => notice.workspaceId !== workspaceId));
+      })
+      .catch(() => setFailed(true))
+      .finally(() => setBusy(null));
+  }
+  return <MemberNoticeView notices={notices} busy={busy} failed={failed} onDismiss={dismiss} />;
+}
+
 export function SavedMissions(props: SavedMissionScope) {
   return <PrivateSavedMissions key={JSON.stringify([props.issuer, props.subject])} {...props} />;
 }
@@ -324,6 +415,7 @@ function PrivateSavedMissions({ subject, issuer }: SavedMissionScope) {
         Keep approved private mission reports in this account across visits. Saving an invitation
         does not extend its expiry or grant access to other people or records.
       </p>
+      <MemberNotices subject={subject} issuer={issuer} />
       {status === 'loading' && <p role="status">Loading your saved missions…</p>}
       {status === 'denied' && (
         <p role="alert">
