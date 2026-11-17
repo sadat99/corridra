@@ -1,4 +1,4 @@
-/* Holder badge: a status capsule with a fixed shape per holder (circle, square, diamond). */
+/* Holder badge: a status capsule with a fixed shape per holder (circle, square, diamond, half-disc). */
 .mr-holder {
   display: inline-flex;
   align-items: center;
@@ -24,12 +24,17 @@
   height: 0.625rem;
   background: currentColor;
 }
-.mr-holder[data-holder='you'] .mr-holder-shape {
+.mr-holder-shape[data-holder='you'] {
   border-radius: 50%;
 }
-.mr-holder[data-holder='team'] .mr-holder-shape {
+.mr-holder-shape[data-holder='team'] {
   border-radius: 0;
 }
-.mr-holder[data-holder='third'] .mr-holder-shape {
+/* Workspace owner or admin: a diamond. */
+.mr-holder-shape[data-holder='owner'] {
   transform: rotate(45deg) scale(0.85);
+}
+/* Supplier or Buyer: a half-disc, a dome with its flat edge down. */
+.mr-holder-shape[data-holder='third'] {
+  border-radius: 50% 50% 0 0;
 }

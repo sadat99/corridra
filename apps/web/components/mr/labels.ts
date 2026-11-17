@@ -37,6 +37,13 @@ function build(say: Say) {
         later: say('mr.explain.state.later'),
         notTracked: say('mr.explain.state.notTracked'),
       },
+      /** The holder shapes the legend explains: circle, square, diamond and half-disc. */
+      holders: {
+        you: { name: say('mr.holder.you'), text: say('mr.explain.holder.you') },
+        team: { name: say('mr.holder.team'), text: say('mr.explain.holder.team') },
+        owner: { name: say('move.wait.owner'), text: say('mr.explain.holder.owner') },
+        third: { name: say('mr.holder.third'), text: say('mr.explain.holder.third') },
+      },
       sublines: {
         // D6: a mission exists only once the customer has sent the request, so a DRAFT mission is a
         // received request waiting for review, never an unsent draft.
@@ -61,6 +68,7 @@ function build(say: Say) {
     holder: {
       you: say('mr.holder.you'),
       team: say('mr.holder.team'),
+      owner: say('move.wait.owner'),
       third: say('mr.holder.third'),
     },
     move: {
