@@ -7,14 +7,13 @@ import {
   assertTransition,
   type EvidenceStatus,
 } from '@corridra/domain';
+import { quotationLinkedClaimSql } from '@corridra/domain/commercial-missions';
 import { decodeCursor, keysetPage, pageLimit } from '@corridra/domain/paging';
 import { withTenant, type Pool, type RequestContext } from '@corridra/db';
-// ADR-087 U1r (owner, 17 November 2026, relayed: "yes to both"): a claim is linked to a quotation when a quotation names it
-// or names its source. A staff role without delivery.read_body (staff viewer) gets such a claim with its statement null,
-// the verified fact copied from it null, and is refused the file of any evidence object on it. Nothing else changes.
-// The expressions passed in are SQL column references written in this file, never input.
-const quotationLinkedClaim = (tenant: string, claimId: string) =>
-  `EXISTS(SELECT FROM app.mission_quotation q JOIN app.claim lc ON lc.tenant_id=q.tenant_id AND (lc.id=q.claim_id OR lc.source_id=q.source_id) WHERE lc.tenant_id=${tenant} AND lc.id=${claimId})`;
+// ADR-087 U1r (owner, 17 November 2026, relayed: "yes to both"): a staff role without delivery.read_body (staff viewer) gets a
+// claim linked to a quotation with its statement null, the verified fact copied from it null, and is refused the file of any
+// evidence object on it. Nothing else changes. The link check is quotationLinkedClaimSql (see its residue note).
+const quotationLinkedClaim = quotationLinkedClaimSql;
 export const withheldEvidenceMessage = 'Not available for your role';
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** Optional mission and company links on a new source (CQ-80). Both are checked before saving. */
@@ -398,7 +397,8 @@ export class EvidenceService {
           `SELECT ${quotationLinkedClaim('$1::uuid', '$2::uuid')} AS withheld`,
           [t.tenantId, r.rows[0].claim_id],
         );
-        // Fail closed: anything but a plain "not linked" answer withholds the file.
+        // Anything but a plain false withholds the file. A quotation the viewer cannot see under row security answers a real
+        // false, so that file is served: the residue ADR-087 U1r leaves to the quotation link database unit.
         if (withheld.rows[0]?.withheld !== false)
           throw new DomainError(withheldEvidenceMessage, 403);
       }

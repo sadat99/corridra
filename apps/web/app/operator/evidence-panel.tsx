@@ -52,7 +52,9 @@ export function EvidencePanel({
   const claimText = (id?: string) => {
     const claim = data.claims.find((c) => c.id === id);
     // ADR-087 U1r: a staff viewer reads no statement of a claim linked to a quotation.
-    return claim?.statement === null ? bodyNotAvailable : (claim?.statement ?? 'a claim');
+    return claim?.statement === null
+      ? `a claim (${bodyNotAvailable.toLowerCase()})`
+      : (claim?.statement ?? 'a claim');
   };
   const describe = (r: EvidenceRow) =>
     `${mimeLabels[r.mime ?? ''] ?? 'File'} for ${claimText(r.claim_id)}`;

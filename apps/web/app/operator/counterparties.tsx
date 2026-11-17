@@ -15,6 +15,7 @@ import {
   type Changes,
 } from './record-changes';
 import { readJson } from '../../lib/ux/step-up';
+import { bodyNotAvailable } from '../../lib/body-access';
 import type { IngestWarning } from '@corridra/domain/counterparties';
 type Row = { id: string; [key: string]: unknown };
 type Organisation = Row & {
@@ -47,6 +48,8 @@ const ingestWarningWords: Record<IngestWarning, string> = {
   previously_hidden: 'A company with this name was taken down earlier; this record is hidden too.',
 };
 const txt = (r: Row, key: string) => String(r[key] ?? '');
+// ADR-087 U1r: a staff viewer receives the statement of a quotation-linked claim as null.
+const statement = (r: Row) => (r.statement === null ? bodyNotAvailable : txt(r, 'statement'));
 const when = (v: unknown) => (v ? new Date(String(v)).toLocaleString() : 'Not recorded');
 function Field({
   label,
@@ -629,7 +632,7 @@ export function Counterparties({
               {attrs.map((a) => (
                 <article className="research-evidence" key={a.id}>
                   <strong>
-                    {txt(a, 'kind')}: {txt(a, 'statement')}
+                    {txt(a, 'kind')}: {statement(a)}
                   </strong>
                   <p className="evidence-label">
                     {txt(a, 'status')} · Original claim: {txt(a, 'claim_status')}
@@ -1117,7 +1120,7 @@ export function Counterparties({
                 </p>
                 {(t.sources as Row[]).map((s, i) => (
                   <p key={i}>
-                    {txt(s, 'statement')} · {txt(s, 'evidence_status')} · Original claim:{' '}
+                    {statement(s)} · {txt(s, 'evidence_status')} · Original claim:{' '}
                     {txt(s, 'status')} · {txt(s, 'locator')} · Observed {when(s.observed_at)} ·
                     Retention {when(s.retention_until)}
                   </p>

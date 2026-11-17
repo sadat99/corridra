@@ -196,7 +196,7 @@ test('the evidence panel shows a viewer no quotation-linked claim and no downloa
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await open(page, 'evidence', 'viewer', false);
-  await expect(page.getByText(`PDF for ${hidden}`)).toBeVisible();
+  await expect(page.getByText('PDF for a claim (not available for your role)')).toBeVisible();
   await expect(page.getByText(`Download: ${hidden}`)).toHaveCount(1);
   // The unlinked file keeps its download; the linked one offers none.
   await expect(page.getByRole('link', { name: 'Download evidence' })).toHaveCount(1);
@@ -267,5 +267,32 @@ test('the commercial mission page shows an operator the selection rationale and 
   await expect(page.getByText(new RegExp(rationale))).toBeVisible();
   await expect(page.getByText(nextAction)).toBeVisible();
   await expect(page.getByText(hidden)).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('the Proof claim picker is not offered to a viewer and the linked statement never shows', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await open(page, 'commercial', 'viewer', false);
+  await page.getByRole('button', { name: 'Review Requirements, Offers and Visits' }).click();
+  // The records are loaded (the decision list is there) and still no claim picker is offered.
+  await expect(page.getByText('decisions (1)')).toBeVisible();
+  await expect(page.getByLabel('Declared source')).toHaveCount(0);
+  await expect(page.getByLabel('Source declaration')).toHaveCount(0);
+  await expect(page.getByText(statement)).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('the Proof claim picker lists the linked statement for an operator', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await open(page, 'commercial', 'operator', true);
+  await page.getByRole('button', { name: 'Review Requirements, Offers and Visits' }).click();
+  await page.getByLabel('Declared source').first().selectOption(sourceId);
+  const claims = page.getByLabel('Source declaration').first();
+  await expect(claims.locator('option', { hasText: statement })).toHaveCount(1);
+  await expect(claims.locator('option', { hasText: unlinkedStatement })).toHaveCount(1);
   expect(errors).toEqual([]);
 });

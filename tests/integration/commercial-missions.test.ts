@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { beforeAll, afterAll, beforeEach, test, expect } from 'vitest';
+import { beforeAll, afterAll, beforeEach, test, expect, vi } from 'vitest';
 import { commercialFixture } from './commercial-fixture';
 import { command, future } from './access-fixture';
 import { rawContext } from './support';
@@ -16,6 +16,21 @@ import {
 } from '../../packages/domain/src/commercial-missions';
 import { assertBranchBudget } from '../../scripts/branch-budget';
 import { migrate } from '../../packages/db/src/migrate';
+// ADR-087 U1r: the staff download route, read through the real handler with only foundations replaced.
+const session = vi.fn();
+const routeServices = { evidence: undefined as unknown };
+vi.mock('server-only', () => ({}));
+vi.mock('../../apps/web/lib/communication-orchestrator', () => ({ communicationOrchestrator: {} }));
+vi.mock('../../apps/web/lib/notify', () => ({ notify: vi.fn() }));
+vi.mock('../../apps/web/lib/foundations', () => ({
+  foundations: () => ({
+    ready: Promise.resolve(),
+    provider: { getSession: session },
+    config: { APP_ORIGIN: 'https://app.corridra.test' },
+    access: { config: async () => [] },
+    evidence: routeServices.evidence,
+  }),
+}));
 let f: Awaited<ReturnType<typeof commercialFixture>>,
   routes: CorridorService,
   service: CommercialMissionService;
@@ -1099,6 +1114,37 @@ test('a staff viewer reads no quotation evidence, selection rationale or RFQ ter
     scope: 'Synthetic quotation evidence',
     validUntil: future(3),
   });
+  // A third supplier carries the quotation's claim as a company detail and in its fit assessment (counterparty paths).
+  const third = await f.target('CN');
+  const thirdOrg = (
+    await f.owner.query('SELECT organisation_id FROM app.relationship WHERE id=$1', [
+      third.relationshipId,
+    ])
+  ).rows[0].organisation_id as string;
+  await f.research.command(
+    f.ctx,
+    command('attribute', {
+      organisationId: thirdOrg,
+      kind: 'requirement',
+      claimId: j.base.claimId,
+      validUntil: future(6),
+    }),
+  );
+  await f.research.command(
+    f.ctx,
+    command('target', {
+      missionId: j.missionId,
+      relationshipId: third.relationshipId,
+      contactId: third.contactId,
+      claimIds: [j.base.claimId],
+      fit: 'RESEARCH',
+      rationale: 'Synthetic third candidate on the quoted claim',
+      uncertainty: 'Supplier evidence incomplete',
+      gaps: 'Need supplier documentation',
+      nextAction: 'Request the missing evidence',
+      dueAt: future(),
+    }),
+  );
   await rawContext(
     f.runtime,
     f.users.owner.ctx,
@@ -1163,6 +1209,72 @@ test('a staff viewer reads no quotation evidence, selection rationale or RFQ ter
   expect(JSON.stringify(viewerEvidence.claims.find((c) => c.id === j.base.claimId))).not.toContain(
     linkedStatement,
   );
+
+  // Counterparty paths: company details, shortlist sources and the shortlist JSON export.
+  type Sourced = { claim_id: string; statement: string | null };
+  for (const [ctx, expected] of [
+    [f.ctx, linkedStatement],
+    [f.users.viewer.ctx, null],
+  ] as const) {
+    const detail = await f.research.detail(ctx, thirdOrg);
+    const attribute = (detail.attributes as Sourced[]).find((a) => a.claim_id === j.base.claimId);
+    expect(attribute).toBeDefined();
+    expect(attribute!.statement).toBe(expected);
+    for (const list of [
+      await f.research.shortlist(ctx, j.missionId),
+      await f.research.shortlistExport(ctx, j.missionId),
+    ]) {
+      const sources = (list.targets as { sources: Sourced[] }[])
+        .flatMap((t) => t.sources)
+        .filter((x) => x.claim_id === j.base.claimId);
+      expect(sources.length).toBeGreaterThan(0);
+      for (const x of sources) expect(x.statement).toBe(expected);
+      if (expected === null) expect(JSON.stringify(list)).not.toContain(linkedStatement);
+    }
+  }
+
+  // The staff download route answers a viewer 403 with the words on the linked file and serves the unlinked one.
+  routeServices.evidence = evidence;
+  const { GET } = await import('../../apps/web/app/api/workspace/[action]/route');
+  const download = (id: string) =>
+    GET(
+      new Request(`https://app.corridra.test/api/workspace/download?tenant=${f.tenantA}&id=${id}`),
+      { params: Promise.resolve({ action: 'download' }) },
+    );
+  session.mockResolvedValue({ token: f.users.viewer.token });
+  const refused = await download(linkedFile.id);
+  expect(refused.status).toBe(403);
+  expect((await refused.json()).error).toBe('Not available for your role');
+  const served = await download(unlinkedFile.id);
+  expect(served.status).toBe(200);
+  expect(Buffer.from(await served.arrayBuffer()).toString()).toContain('Unlinked evidence');
+  session.mockResolvedValue({ token: f.users.operator.token });
+  expect((await download(linkedFile.id)).status).toBe(200);
+
+  // Residue: a quotation on a target the viewer cannot see (relationship visibility OWNER, the default) does not mark its
+  // claim, so the viewer still reads it. residue: closed by the quotation link database unit (ADR-087 U1r), which must flip
+  // this expectation to null.
+  const hidden = await journey('JP', 'KE', 'sourcing', 'KES');
+  await offers(hidden);
+  const residueView = await evidence.workspace(f.users.viewer.ctx);
+  expect(residueView.claims.find((c) => c.id === hidden.base.claimId)?.statement).toBe(
+    linkedStatement,
+  );
+  // Apart from those residue claims, the viewer's whole evidence snapshot holds no quotation-linked statement.
+  const residueIds = new Set<string>();
+  for (const c of residueView.claims) {
+    const all = (await f.owner.query(linkedSql, [f.tenantA, c.id])).rows[0].linked;
+    const seen = (await rawContext(f.runtime, f.users.viewer.ctx, linkedSql, [f.tenantA, c.id]))
+      .rows[0].linked;
+    if (all && !seen) residueIds.add(c.id);
+  }
+  expect(residueIds.has(hidden.base.claimId)).toBe(true);
+  expect(
+    JSON.stringify({
+      ...residueView,
+      claims: residueView.claims.filter((c) => !residueIds.has(c.id)),
+    }),
+  ).not.toContain(linkedStatement);
 
   const viewerMission = await service.workspace(f.users.viewer.ctx, j.missionId);
   expect(viewerMission.decisions).toEqual(

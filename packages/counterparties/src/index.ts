@@ -5,7 +5,8 @@ import {
   type RequestContext,
   type TenantTransaction,
 } from '@corridra/db';
-import { DomainError, stepUpRequired } from '@corridra/domain';
+import { DomainError, permits, stepUpRequired, type Role } from '@corridra/domain';
+import { quotationLinkedClaimSql } from '@corridra/domain/commercial-missions';
 import {
   recordChangeActions,
   researchCommand,
@@ -41,6 +42,13 @@ async function enabled(t: TenantTransaction, key: string) {
   );
   if (r.rows[0]?.value.enabled === false)
     throw new DomainError('This research command is disabled', 409);
+}
+// ADR-087 U1r: a staff role without delivery.read_body reads no statement of a claim linked to a quotation (company details,
+// shortlist sources and the shortlist export alike); the row stays with the statement null.
+function claimStatement(role: Role) {
+  return permits(role, 'delivery.read_body')
+    ? 'c.statement'
+    : `CASE WHEN ${quotationLinkedClaimSql('c.tenant_id', 'c.id')} THEN NULL ELSE c.statement END AS statement`;
 }
 export class CounterpartyService {
   constructor(private pool: DatabasePool) {}
@@ -109,7 +117,7 @@ export class CounterpartyService {
           ).rows;
       const attributes = (
         await t.db.query(
-          `SELECT a.id,a.organisation_id,a.kind,a.claim_id,c.statement,c.status claim_status,s.id source_id,s.kind source_kind,s.locator,s.observed_at,s.retention_until,s.ai_policy,s.classification,a.valid_until,CASE WHEN least(a.valid_until,s.retention_until)<=now() THEN 'EXPIRED' WHEN f.id IS NOT NULL THEN 'VERIFIED' ELSE 'SELF_DECLARED' END status,f.id fact_id,v.method,v.scope,v.valid_until verification_valid_until,es.scan_status
+          `SELECT a.id,a.organisation_id,a.kind,a.claim_id,${claimStatement(t.role)},c.status claim_status,s.id source_id,s.kind source_kind,s.locator,s.observed_at,s.retention_until,s.ai_policy,s.classification,a.valid_until,CASE WHEN least(a.valid_until,s.retention_until)<=now() THEN 'EXPIRED' WHEN f.id IS NOT NULL THEN 'VERIFIED' ELSE 'SELF_DECLARED' END status,f.id fact_id,v.method,v.scope,v.valid_until verification_valid_until,es.scan_status
        FROM app.organisation_attribute a JOIN app.claim c ON c.tenant_id=a.tenant_id AND c.id=a.claim_id JOIN app.source_record s ON s.tenant_id=c.tenant_id AND s.id=c.source_id
        LEFT JOIN LATERAL(SELECT f.id,v.method,v.scope,v.valid_until,e.id evidence_id FROM app.canonical_fact f JOIN app.verification v ON v.tenant_id=f.tenant_id AND v.id=f.verification_id JOIN app.evidence_object e ON e.tenant_id=v.tenant_id AND e.id=v.evidence_id JOIN app.evidence_state st ON st.tenant_id=e.tenant_id AND st.id=e.id WHERE e.tenant_id=c.tenant_id AND e.claim_id=c.id AND v.valid_until>now() AND e.retention_until>now() AND st.status='VERIFIED' ORDER BY v.created_at DESC LIMIT 1) v ON true LEFT JOIN app.canonical_fact f ON f.tenant_id=a.tenant_id AND f.id=v.id LEFT JOIN app.evidence_state es ON es.tenant_id=a.tenant_id AND es.id=v.evidence_id
        WHERE a.tenant_id=$1 AND a.organisation_id=ANY($2::uuid[]) ORDER BY a.created_at DESC,a.id LIMIT 100`,
@@ -178,7 +186,7 @@ export class CounterpartyService {
       const sources = (
         await t.db.query(
           `WITH linked AS MATERIALIZED(SELECT assessment_id,claim_id,attribute_id FROM app.assessment_claim WHERE tenant_id=$1 AND assessment_id=ANY($2::uuid[])),
-          claims AS MATERIALIZED(SELECT c.id,c.statement,c.status,c.source_id,s.locator,s.observed_at,s.retention_until,s.ai_policy FROM app.claim c JOIN app.source_record s ON s.tenant_id=c.tenant_id AND s.id=c.source_id WHERE c.tenant_id=$1 AND c.id IN(SELECT claim_id FROM linked)),
+          claims AS MATERIALIZED(SELECT c.id,${claimStatement(t.role)},c.status,c.source_id,s.locator,s.observed_at,s.retention_until,s.ai_policy FROM app.claim c JOIN app.source_record s ON s.tenant_id=c.tenant_id AND s.id=c.source_id WHERE c.tenant_id=$1 AND c.id IN(SELECT claim_id FROM linked)),
           attrs AS MATERIALIZED(SELECT id,organisation_id,valid_until FROM app.organisation_attribute WHERE tenant_id=$1 AND id IN(SELECT attribute_id FROM linked)),
           verified AS MATERIALIZED(SELECT DISTINCT ON(e.claim_id) e.claim_id,f.id,v.method,v.scope,v.valid_until,st.scan_status FROM app.canonical_fact f JOIN app.verification v ON v.tenant_id=f.tenant_id AND v.id=f.verification_id JOIN app.evidence_object e ON e.tenant_id=v.tenant_id AND e.id=v.evidence_id JOIN app.evidence_state st ON st.tenant_id=e.tenant_id AND st.id=e.id WHERE e.tenant_id=$1 AND e.claim_id IN(SELECT claim_id FROM linked) AND v.valid_until>now() AND e.retention_until>now() AND st.status='VERIFIED' ORDER BY e.claim_id,v.created_at DESC)
           SELECT ac.assessment_id,c.id claim_id,c.statement,c.status,c.locator,c.observed_at,c.retention_until,c.ai_policy,oa.organisation_id original_organisation_id,CASE WHEN least(c.retention_until,oa.valid_until)<=now() THEN 'EXPIRED' WHEN v.id IS NOT NULL THEN 'VERIFIED' ELSE 'SELF_DECLARED' END evidence_status,v.method,v.scope,v.valid_until verification_valid_until,v.scan_status FROM linked ac JOIN claims c ON c.id=ac.claim_id JOIN attrs oa ON oa.id=ac.attribute_id LEFT JOIN verified v ON v.claim_id=ac.claim_id ORDER BY c.id`,
