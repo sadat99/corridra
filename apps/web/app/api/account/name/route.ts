@@ -1,5 +1,6 @@
 import { DomainError } from '@corridra/domain';
 import { z } from 'zod';
+import { personalProfileNoWorkspaceMessage } from '@corridra/auth/customer-personal-profiles';
 import { foundations } from '../../../../lib/foundations';
 import { boundedBody, deliveryHeaders } from '../../../../lib/delivery-http';
 import { accountSecurityCapabilities } from '../../../../lib/account-security-capabilities';
@@ -84,7 +85,15 @@ export async function POST(request: Request) {
       );
     } catch (error) {
       // The provider already changed the name: never a 500 for a change that happened.
-      log('account_name_missing_audit', Number((error as { status?: number }).status ?? 0));
+      const reason = (error as { code?: unknown }).code;
+      console.warn(
+        JSON.stringify({
+          code: 'account_name_missing_audit',
+          status: 200,
+          reason:
+            typeof reason === 'string' && /^[A-Za-z0-9_]{1,40}$/.test(reason) ? reason : 'unknown',
+        }),
+      );
     }
     return answer(200, { commandId, replayed: false });
   } catch (error) {
@@ -93,6 +102,8 @@ export async function POST(request: Request) {
       return refuse(error.status, error.code ?? 'refused', error.message);
     if (['42P01', '3F000', '42883'].includes(code))
       return refuse(503, 'module_unavailable', 'Personal details are not available yet.');
+    if (code === '23514' && (error as Error).message === personalProfileNoWorkspaceMessage)
+      return refuse(409, 'no_workspace', personalProfileNoWorkspaceMessage);
     if (code === '42501') return refuse(403, 'account_inactive', 'This account cannot be changed.');
     log('account_name_failed', 500);
     return refuse(500, 'failed', 'The request could not be completed. Please try again.');

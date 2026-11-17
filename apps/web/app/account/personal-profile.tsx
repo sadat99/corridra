@@ -51,6 +51,7 @@ const words = {
   saved: 'Saved.',
   conflict: 'This changed in another window. Review the latest and try again.',
   lost: 'We could not confirm the save. Your details may or may not have changed.',
+  providerRefused: 'The sign-in service did not accept this name. Your name was not changed.',
   providerDown:
     'We cannot reach the sign-in service. Your name was not changed. Try again in a few minutes.',
   noWorkspace:
@@ -180,7 +181,7 @@ export function PersonalProfile({
   const stored = view?.profile ?? null;
 
   const read = useCallback(
-    async (signal?: AbortSignal): Promise<View | 'missing' | 'failed' | 'session'> => {
+    async (signal?: AbortSignal): Promise<View | 'missing' | 'failed' | 'session' | 'inactive'> => {
       try {
         const response = await fetch(endpoint, {
           credentials: 'same-origin',
@@ -188,7 +189,11 @@ export function PersonalProfile({
           signal,
           headers: sessionHeaders(subject, issuer),
         });
-        if (response.status === 503) return 'missing';
+        if (response.status === 503) {
+          const answer = (await response.json().catch(() => ({}))) as { code?: string };
+          return answer.code === 'module_unavailable' ? 'missing' : 'failed';
+        }
+        if (response.status === 403) return 'inactive';
         if (response.status === 401 || response.status === 409) return 'session';
         if (!response.ok) return 'failed';
         return (await response.json()) as View;
@@ -199,10 +204,13 @@ export function PersonalProfile({
     [subject, issuer],
   );
 
-  const apply = useCallback((result: View | 'missing' | 'failed' | 'session') => {
+  const apply = useCallback((result: View | 'missing' | 'failed' | 'session' | 'inactive') => {
     if (result === 'missing') setLoad('missing');
     else if (result === 'failed') setLoad('failed');
-    else if (result === 'session') {
+    else if (result === 'inactive') {
+      setLoad('failed');
+      setMessage(words.inactive);
+    } else if (result === 'session') {
       setLoad('failed');
       setMessage(lifecycleWords.signInAgain);
     } else {
@@ -261,7 +269,12 @@ export function PersonalProfile({
       setMessage(lifecycleWords.signInAgain);
       return true;
     }
+    if (code === 'email_unverified') {
+      setMessage(lifecycleWords.signInAgain);
+      return true;
+    }
     if (code === 'provider_unavailable') setMessage(words.providerDown);
+    else if (code === 'provider_refused') setMessage(words.providerRefused);
     else if (code === 'module_unavailable') setMessage(words.missing);
     else if (code === 'no_workspace') setMessage(words.noWorkspace);
     else if (code === 'account_inactive' || code === 'account_closed') setMessage(words.inactive);
@@ -308,7 +321,10 @@ export function PersonalProfile({
     }
     if (response.ok) {
       if (next.section === 'name') setShownName(String(next.body.name));
-      else await reload();
+      else {
+        const latest = await read();
+        if (typeof latest === 'object') setView(latest);
+      }
       setSaving(false);
       setStatus(words.saved);
       close(next.section);
@@ -317,7 +333,7 @@ export function PersonalProfile({
     if (answer.code === 'stale') {
       const latest = await read();
       setSaving(false);
-      if (latest === 'missing' || latest === 'failed' || latest === 'session') {
+      if (typeof latest !== 'object') {
         setMessage(words.conflict);
         return;
       }
@@ -417,7 +433,10 @@ export function PersonalProfile({
             }}
           >
             <ErrorSummary errors={errors} attempt={attempt} />
-            <fieldset disabled={saving} style={{ border: 'none', margin: 0, padding: 0 }}>
+            <fieldset
+              disabled={saving || lost !== null}
+              style={{ border: 'none', margin: 0, padding: 0 }}
+            >
               {form}
             </fieldset>
             {conflict && (

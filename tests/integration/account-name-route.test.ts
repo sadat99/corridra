@@ -19,6 +19,7 @@ const state = {
   services: true,
 };
 const calls = {
+  session: 0,
   update: [] as unknown[],
   preflight: 0,
   note: [] as unknown[],
@@ -42,6 +43,7 @@ vi.mock('../../apps/web/lib/neon-auth', () => ({
   neonAuth: () => ({
     getSession: async (args: unknown) => {
       expect(args).toEqual({ query: { disableCookieCache: true } });
+      calls.session += 1;
       if (state.sessionThrows) throw new Error('down');
       return state.session;
     },
@@ -112,6 +114,7 @@ beforeEach(() => {
   calls.update.length = 0;
   calls.note.length = 0;
   calls.preflight = 0;
+  calls.session = 0;
   logs.length = 0;
   for (const level of ['log', 'warn', 'error', 'info'] as const)
     vi.spyOn(console, level).mockImplementation((...args: unknown[]) => {
@@ -155,11 +158,17 @@ describe('the name route', () => {
       '{not json',
     ])
       expect((await send(request(body))).status, JSON.stringify(body)).toBe(400);
+    // None of these reached the provider session, the database or the provider.
+    expect(calls.session).toBe(0);
     state.capability = false;
     expect(await send(request())).toEqual({
       status: 404,
       body: { error: 'Not found', code: 'not_found' },
     });
+    // A refused capability is answered before the session guard is asked.
+    expect(calls.session).toBe(0);
+    // An invalid body is refused before the capability: 400, not 404.
+    expect((await send(request({ commandId: randomUUID(), name: '' }))).status).toBe(400);
     expect(calls.update).toEqual([]);
     expect(calls.preflight).toBe(0);
   });
@@ -228,7 +237,25 @@ describe('the name route', () => {
   test('a record that fails after the provider changed the name still answers 200 and logs a code only', async () => {
     state.noteError = Object.assign(new Error('boom'), { code: '40001' });
     expect((await send(request())).status).toBe(200);
-    expect(logs.some((line) => line.includes('account_name_missing_audit'))).toBe(true);
+    const line = logs.find((entry) => entry.includes('account_name_missing_audit'));
+    expect(JSON.parse(line!)).toEqual({
+      code: 'account_name_missing_audit',
+      status: 200,
+      reason: '40001',
+    });
+  });
+
+  test('a person with no workspace is refused 409 before the provider is asked', async () => {
+    state.preflightError = Object.assign(
+      new Error(
+        'Personal details need a workspace on this account. Create or join a workspace first.',
+      ),
+      { code: '23514' },
+    );
+    const result = await send(request());
+    expect(result.status).toBe(409);
+    expect(result.body.code).toBe('no_workspace');
+    expect(calls.update).toEqual([]);
   });
 
   test('a module that is not installed answers 503 module_unavailable', async () => {
