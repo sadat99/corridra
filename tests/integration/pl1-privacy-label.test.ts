@@ -47,9 +47,8 @@ const expected: Record<PrivacySurface, [string, 'confirmed' | 'not_stated'][]> =
   ],
   // Visual grammar PR 5 (V3-05-033): the evidence reply, read through the report link.
   evidenceReply: [
-    ['privacy.reader.anyoneWithLink', 'confirmed'],
-    ['privacy.reader.workspace', 'not_stated'],
-    ['privacy.reader.corridra', 'not_stated'],
+    ['privacy.reader.anyoneWithThisLink', 'confirmed'],
+    ['privacy.reader.sendingTeam', 'confirmed'],
   ],
 };
 
@@ -319,7 +318,13 @@ describe('on each surface, the label informs and changes no control', () => {
     expect(report).toMatch(
       /Original access expires \{formatMoment\(data\.expiresAt\)\}\s*\.\s*<\/p>\s*<PrivacyLabel surface="savedReport" \/>/,
     );
-    // The evidence reply is VG5's later unit and is not touched here.
-    expect(read('apps/web/app/delivery-view.tsx')).not.toContain('PrivacyLabel');
+    // The evidence reply (visual grammar PR 5) draws its label through ConsequencePreview, once per page, never
+    // through PrivacyLabel directly; tests/integration/vg5-consequence-preview.test.ts holds the rest.
+    const delivery = read('apps/web/app/delivery-view.tsx');
+    expect(delivery).not.toContain('<PrivacyLabel');
+    expect(delivery.match(/<ConsequencePreview /g)).toHaveLength(1);
+    expect(read('apps/web/components/consequence-preview.tsx')).toContain(
+      '<PrivacyLabel surface="evidenceReply" locale={locale} />',
+    );
   });
 });

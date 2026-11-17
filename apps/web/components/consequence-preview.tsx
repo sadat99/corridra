@@ -1,5 +1,5 @@
-// What happens when you send this (visual grammar PR 5, V3-05-033). A quiet, read-only preview right before "Send
-// response" on an evidence request: who can read the response (the PL1 label for this surface), what is sent, and
+// What happens when you press Send response (visual grammar PR 5, V3-05-033). One quiet, read-only preview per page,
+// above the evidence requests and so before every "Send response" button: who can read the response (the PL1 label for this surface), what is sent, and
 // until when. It holds no control, adds no step and changes nothing about the request the button sends. Every line
 // is a fact the database enforces (see apps/web/lib/consequence-preview.ts). It speaks the page's own language and
 // reuses the PL1 card's classes, so it adds no colour, size, space or layer.
@@ -34,9 +34,6 @@ export function ConsequencePreview({
         <ul>
           <li>
             <span>{say('consequence.what')}</span> <span>{say('consequence.whatBody')}</span>
-          </li>
-          <li>
-            <span>{say('consequence.once')}</span> <span>{say('consequence.onceBody')}</span>
           </li>
           <li>
             <span>{say('consequence.until')}</span>{' '}

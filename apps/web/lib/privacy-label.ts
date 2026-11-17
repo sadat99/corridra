@@ -89,19 +89,23 @@ const surfaces = {
     // No code fact says whether the customer who asked for the introduction can read the reply.
     notStated('privacy.reader.requester'),
   ],
-  // The evidence reply (apps/web/app/delivery-view.tsx, "Send response" on an evidence request). The response is
-  // stored by app.delivery_respond and read back in app.delivery_report (the request's `response`) for whoever
-  // holds the private link, with no sign-in, until the link expires or is withdrawn (delivery_authorized).
+  // The evidence reply (apps/web/app/delivery-view.tsx, "Send response" on an evidence request), seen by a link
+  // holder with no workspace. app.delivery_respond stores the response and app.delivery_report returns it for
+  // whoever holds the private link, with no sign-in, until the link expires or is withdrawn; the team whose
+  // workspace sent the link reads it under the delivery_response read policy (the page already says the team reviews it).
   evidenceReply: [
     {
-      reader: 'privacy.reader.anyoneWithLink',
+      reader: 'privacy.reader.anyoneWithThisLink',
       status: 'confirmed',
       sourceNote:
-        'packages/db/customer-real-use-migrations/0009_real_report_links.sql:app.delivery_authorized',
+        'packages/db/customer-real-use-migrations/0009_real_report_links.sql:23-24 (app.delivery_authorized)',
     },
-    // No code fact says whether other people in the sender's workspace, or Corridra staff, can read the response.
-    notStated('privacy.reader.workspace'),
-    notStated('privacy.reader.corridra'),
+    {
+      reader: 'privacy.reader.sendingTeam',
+      status: 'confirmed',
+      sourceNote:
+        'packages/db/customer-real-use-migrations/0002_real_request_authority.sql:266 (real_use_read on app.delivery_response)',
+    },
   ],
 } as const satisfies Record<string, readonly PrivacyReader[]>;
 

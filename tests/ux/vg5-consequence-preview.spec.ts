@@ -13,6 +13,7 @@ import { translate } from '../../apps/web/lib/i18n/messages';
 const say = (key: Parameters<typeof translate>[1]) => translate('en', key);
 const token = 'a'.repeat(64);
 const requestId = '11111111-1111-4111-8111-111111111111';
+const secondRequestId = '44444444-4444-4444-8444-444444444444';
 const typed = 'Our certificate renewal is in progress.';
 const widths = [320, 390, 768, 1440] as const;
 let script = '';
@@ -87,6 +88,13 @@ const mission = {
       dueAt: '2026-12-05T00:00:00.000Z',
       status: 'OPEN',
     },
+    {
+      id: secondRequestId,
+      title: 'Confirm your export licence',
+      instructions: 'Tell us in your own words where the licence stands.',
+      dueAt: '2026-12-06T00:00:00.000Z',
+      status: 'OPEN',
+    },
   ],
 };
 const report = {
@@ -153,9 +161,9 @@ test.describe('the evidence reply says what Send response will do', () => {
     page,
   }) => {
     const bodies = await mount(page, 1440);
-    await page.getByLabel('Response', { exact: true }).fill(typed);
-    await page.getByLabel('This response is my declaration', { exact: false }).check();
-    await page.getByRole('button', { name: 'Send response', exact: true }).click();
+    await page.getByLabel('Response', { exact: true }).first().fill(typed);
+    await page.getByLabel('This response is my declaration', { exact: false }).first().check();
+    await page.getByRole('button', { name: 'Send response', exact: true }).first().click();
     await expect(page.getByRole('status').filter({ hasText: 'Response received' })).toBeVisible();
     expect(bodies).toHaveLength(1);
     // Captured on main before the preview existed: same keys, same order, same values, one fresh command id.
@@ -165,35 +173,40 @@ test.describe('the evidence reply says what Send response will do', () => {
     );
   });
 
-  test('a preview sits right before Send response: who can read it, what is sent, until when', async ({
+  test('two open requests show exactly one preview, above every Send response button', async ({
     page,
   }) => {
     await mount(page, 1440);
-    const form = page.locator('form.operator-form');
-    const preview = form.getByRole('group', { name: say('consequence.heading') });
+    await expect(page.locator('form.operator-form')).toHaveCount(2);
+    const preview = page.getByRole('group', { name: say('consequence.heading') });
+    await expect(preview).toHaveCount(1);
     await expect(preview).toBeVisible();
     await expect(preview).toContainText(say('consequence.whatBody'));
-    await expect(preview).toContainText(say('consequence.onceBody'));
     await expect(preview).toContainText(say('consequence.untilBody'));
     await expect(preview).toContainText('17 Dec 2026');
-    const who = form.getByRole('group', { name: say('privacy.heading') });
-    await expect(who).toContainText(say('privacy.reader.anyoneWithLink'));
-    await expect(who).toContainText(say('privacy.canSee'));
-    // Order inside the form: the fields, then who can see it, then the preview, then the button.
-    const order = await form.evaluate((node) => {
-      const at = (el: Element | null) => (el ? [...node.querySelectorAll('*')].indexOf(el) : -1);
-      return [
-        at(node.querySelector('fieldset')),
-        at(node.querySelector('.privacy-label')),
-        at(node.querySelectorAll('.privacy-label')[1] ?? null),
-        at(node.querySelector('button')),
-      ];
+    const who = page.getByRole('group', { name: say('privacy.heading') });
+    await expect(who).toHaveCount(1);
+    // Each reader the code confirms carries its word, and nothing is claimed for anyone else.
+    await expect(who).toContainText(say('privacy.reader.anyoneWithThisLink'));
+    await expect(who).toContainText(say('privacy.reader.sendingTeam'));
+    await expect(who.getByText(say('privacy.canSee'), { exact: true })).toHaveCount(2);
+    await expect(who).not.toContainText(say('privacy.notStated'));
+    // Order on the page: the Evidence requests heading, who can see it, the preview, then both forms.
+    const order = await page.evaluate(() => {
+      const all = [...document.querySelectorAll('*')];
+      const at = (el: Element | null | undefined) => (el ? all.indexOf(el) : -1);
+      const forms = [...document.querySelectorAll('form.operator-form')];
+      const heading = [...document.querySelectorAll('h3')].find(
+        (h) => h.textContent === 'Evidence requests',
+      );
+      const cards = document.querySelectorAll('.privacy-label');
+      return [at(heading), at(cards[0]), at(cards[1]), at(forms[0]), at(forms[1])];
     });
     expect(order.every((n) => n >= 0)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
-    // It adds no control: the form still holds the one textarea, the one checkbox and the one button.
+    // It adds no control: the preview holds none, and the page still has the same two forms and their controls.
     await expect(preview.locator('button, input, a, select, textarea, [tabindex]')).toHaveCount(0);
-    await expect(form.locator('button, input, textarea')).toHaveCount(3);
+    await expect(page.locator('form.operator-form button')).toHaveCount(2);
   });
 
   for (const width of widths)
@@ -201,19 +214,22 @@ test.describe('the evidence reply says what Send response will do', () => {
       page,
     }, info) => {
       await mount(page, width);
-      await expect(page.locator('form.operator-form')).toBeVisible();
+      await expect(page.locator('form.operator-form').first()).toBeVisible();
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
       );
       expect(overflow).toBeLessThanOrEqual(0);
-      const found = (
-        await new AxeBuilder({ page }).include('form.operator-form').analyze()
-      ).violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`);
-      expect(found).toEqual([]);
       // Measured, not asserted against a new budget: the screen height in pixels at this width.
       const h = await height(page);
       info.annotations.push({ type: 'page-height', description: `${width}px: ${h}px` });
       console.log(`PAGE_HEIGHT ${width} ${h}`);
+      const found = (
+        await new AxeBuilder({ page })
+          .include('.privacy-label')
+          .include('form.operator-form')
+          .analyze()
+      ).violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`);
+      expect(found).toEqual([]);
     });
 
   test('in Arabic the preview reads right to left, with its own language and no extra control', async ({

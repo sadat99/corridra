@@ -17,18 +17,11 @@ export const evidenceReplyFacts: readonly ConsequenceFact[] = [
   {
     // app.delivery_respond stores exactly the typed body (3 to 2000 characters) and returns claimStatus
     // 'self_declared'; the page already says so after sending.
+    // One row per request: a closed request and a different second response are both refused (lines 192 to 196).
     label: 'consequence.what',
     body: 'consequence.whatBody',
     sourceNote:
-      'packages/db/migrations/0016_scoped_delivery.sql:198-200 (app.delivery_respond, INSERT ... body, returns self_declared)',
-  },
-  {
-    // One row per request: a retry with a different id, link or body raises 'Response already recorded or retry
-    // changed', and a request the team closed raises 'Request closed'.
-    label: 'consequence.once',
-    body: 'consequence.onceBody',
-    sourceNote:
-      'packages/db/migrations/0016_scoped_delivery.sql:192-196 (app.delivery_respond, Request closed, Response already recorded or retry changed)',
+      'packages/db/migrations/0016_scoped_delivery.sql:192-200 (app.delivery_respond, refusals, INSERT body, self_declared)',
   },
   {
     // The link opens only while expires_at>now() and no delivery_revocation row names it, in the real-use
