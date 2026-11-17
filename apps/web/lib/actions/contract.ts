@@ -17,8 +17,17 @@ export type ActionId =
 /** What an action may read from the person's situation. */
 export type ContextKey = 'workspace' | 'request' | 'draft' | 'page' | 'locale';
 
+/** The switches an action may name. Each has one mapping in gates.ts to the gate that already exists. */
+export type ActionSwitchKey = 'delegations';
+/** The modules an action may name. Each has one mapping in gates.ts. */
+export type ActionModuleKey = 'problem_reports' | 'support_case';
+
 export interface ActionContract {
   id: ActionId;
+  /** What the row says and what following it really does, in plain Title Case words. */
+  label: string;
+  /** True while the destination does not exist yet: the action is never matched or shown until it is built. */
+  planned?: true;
   intent: {
     phrases: { en: readonly string[]; bn: readonly string[]; zh: readonly string[] };
     synonyms: readonly string[];
@@ -26,7 +35,7 @@ export interface ActionContract {
   context: readonly ContextKey[];
   inputs: readonly { key: string; required: boolean; reuseFrom?: ContextKey; notSure?: boolean }[];
   /** Every switch and module named here must be on, or the action is hidden. */
-  authority: { switches: readonly string[]; modules: readonly string[] };
+  authority: { switches: readonly ActionSwitchKey[]; modules: readonly ActionModuleKey[] };
   /** The route is a fixed table value, never built from typed text. Empty until the destination exists. */
   service: { kind: 'navigate' | 'command'; route: string };
   confirm: 'none' | 'review' | 'approval';

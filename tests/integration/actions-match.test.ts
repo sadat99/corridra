@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { actionCatalogue } from '../../apps/web/lib/actions/catalogue';
+import { liveActions } from '../../apps/web/lib/actions/catalogue';
 import { matchActions, type MatchContext } from '../../apps/web/lib/actions/match';
 
 const all: MatchContext = {
@@ -10,7 +10,7 @@ const all: MatchContext = {
 const first = (text: string, ctx = all) => matchActions(text, ctx)[0]?.id ?? null;
 
 describe('matchActions', () => {
-  for (const entry of actionCatalogue) {
+  for (const entry of liveActions) {
     test(`${entry.id}: nine phrases put it first`, () => {
       const phrases = [...entry.intent.phrases.en, ...entry.intent.synonyms].slice(0, 9);
       expect(phrases).toHaveLength(9);
@@ -42,7 +42,6 @@ describe('matchActions', () => {
   test('gates hide entries', () => {
     const off: MatchContext = { switches: {}, modules: {}, hasWorkspace: true };
     expect(matchActions('plan a trip', off).map((r) => r.id)).not.toContain('start_organise');
-    expect(matchActions('talk to a person', off).map((r) => r.id)).not.toContain('ask_team');
     expect(matchActions('report a problem', off).map((r) => r.id)).not.toContain('report_problem');
     expect(first('plan a trip', { ...all, switches: { delegations: false } })).not.toBe(
       'start_organise',
@@ -84,5 +83,30 @@ describe('matchActions', () => {
 
   test('is pure: same input, same output', () => {
     expect(matchActions('sell abroad', all)).toEqual(matchActions('sell abroad', all));
+  });
+
+  test('ask_team is planned and never matches, even with support_case on', () => {
+    for (const text of ['talk to a person', 'need help from your team', 'speak to someone'])
+      expect(matchActions(text, all).map((r) => r.id)).not.toContain('ask_team');
+    for (const row of matchActions('help', all)) expect(row.href).not.toBeNull();
+  });
+
+  test('every returned row has an href when a workspace is present', () => {
+    for (const text of ['help', 'my', 'plan', 'what', 'find', 'report', 'trip', 'draft'])
+      for (const row of matchActions(text, all))
+        expect(row.href, `${text} ${row.id}`).not.toBeNull();
+  });
+
+  test('sell and source need no workspace', () => {
+    const none: MatchContext = { ...all, hasWorkspace: false };
+    const sell = matchActions('meet buyers', none)[0];
+    expect(sell).toMatchObject({ id: 'start_sell', href: '/plan?job=buyers', state: 'ready' });
+    const source = matchActions('find a supplier', none)[0];
+    expect(source).toMatchObject({
+      id: 'start_source',
+      href: '/plan?job=sourcing',
+      state: 'ready',
+    });
+    expect(matchActions('buy machinery', none)[0]?.href).toBe('/plan?job=machinery_procurement');
   });
 });

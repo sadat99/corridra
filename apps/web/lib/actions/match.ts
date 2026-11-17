@@ -2,13 +2,13 @@
 // It reuses the customer search ranking: a row needs every typed word at the substring tier or better, and a near
 // miss (fuzzy) never counts, so text Corridra does not cover returns nothing instead of a guess.
 import { foldText, queryWords, rankFields } from '../palette-rank';
-import { actionCatalogue, machineryRoute, machineryWords } from './catalogue';
-import type { ActionContract, ActionId } from './contract';
+import { liveActions, machineryRoute, machineryWords } from './catalogue';
+import type { ActionContract, ActionId, ActionModuleKey, ActionSwitchKey } from './contract';
 import type { ActionState } from './states';
 
 export type MatchContext = {
-  switches: Readonly<Record<string, boolean>>;
-  modules: Readonly<Record<string, boolean>>;
+  switches: Readonly<Partial<Record<ActionSwitchKey, boolean>>>;
+  modules: Readonly<Partial<Record<ActionModuleKey, boolean>>>;
   hasWorkspace: boolean;
 };
 
@@ -31,7 +31,6 @@ function scoreEntry(words: string[], entry: ActionContract): number {
 
 function hrefFor(entry: ActionContract, words: string[], ctx: MatchContext): string | null {
   if (entry.context.includes('workspace') && !ctx.hasWorkspace) return null;
-  if (entry.service.route === '') return null;
   if (
     entry.id === 'start_source' &&
     words.some((word) => machineryWords.some((m) => word.startsWith(m)))
@@ -40,10 +39,8 @@ function hrefFor(entry: ActionContract, words: string[], ctx: MatchContext): str
   return entry.service.route;
 }
 
-function stateFor(entry: ActionContract, href: string | null, ctx: MatchContext): ActionState {
-  if (entry.context.includes('workspace') && !ctx.hasWorkspace) return 'needs_info';
-  if (entry.escalation.to === 'support_case' && href === null) return 'needs_team';
-  return href === null ? 'unavailable' : 'ready';
+function stateFor(entry: ActionContract, ctx: MatchContext): ActionState {
+  return entry.context.includes('workspace') && !ctx.hasWorkspace ? 'needs_info' : 'ready';
 }
 
 /** Ranked rows for the typed text, best first; empty for empty, one-character or uncovered text. */
@@ -52,12 +49,12 @@ export function matchActions(text: string, ctx: MatchContext): ActionRow[] {
   const words = queryWords(text);
   if (words.length === 0) return [];
   const rows: (ActionRow & { order: number })[] = [];
-  actionCatalogue.forEach((entry, order) => {
+  liveActions.forEach((entry, order) => {
     if (!visible(entry, ctx)) return;
     const score = scoreEntry(words, entry);
     if (score <= 0) return;
     const href = hrefFor(entry, words, ctx);
-    rows.push({ id: entry.id, score, href, state: stateFor(entry, href, ctx), order });
+    rows.push({ id: entry.id, score, href, state: stateFor(entry, ctx), order });
   });
   rows.sort((a, b) => b.score - a.score || a.order - b.order);
   return rows.map((row) => ({ id: row.id, score: row.score, href: row.href, state: row.state }));

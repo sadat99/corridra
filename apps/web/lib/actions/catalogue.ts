@@ -18,6 +18,7 @@ export const actionIds: readonly ActionId[] = [
 export const actionCatalogue: readonly ActionContract[] = [
   {
     id: 'find_request',
+    label: 'Open Your Requests',
     intent: {
       phrases: {
         en: [
@@ -50,6 +51,7 @@ export const actionCatalogue: readonly ActionContract[] = [
   },
   {
     id: 'start_sell',
+    label: 'Meet Buyers Abroad',
     intent: {
       phrases: {
         en: [
@@ -73,7 +75,7 @@ export const actionCatalogue: readonly ActionContract[] = [
         'meet overseas customers',
       ],
     },
-    context: ['workspace'],
+    context: [],
     inputs: [],
     authority: { switches: [], modules: [] },
     service: { kind: 'navigate', route: '/plan?job=buyers' },
@@ -87,6 +89,7 @@ export const actionCatalogue: readonly ActionContract[] = [
   },
   {
     id: 'start_source',
+    label: 'Find a Supplier',
     intent: {
       phrases: {
         en: [
@@ -111,7 +114,7 @@ export const actionCatalogue: readonly ActionContract[] = [
         'procure equipment',
       ],
     },
-    context: ['workspace'],
+    context: [],
     inputs: [],
     authority: { switches: [], modules: [] },
     service: { kind: 'navigate', route: '/plan?job=sourcing' },
@@ -125,6 +128,7 @@ export const actionCatalogue: readonly ActionContract[] = [
   },
   {
     id: 'start_organise',
+    label: 'Organise a Group Trip',
     intent: {
       phrases: {
         en: [
@@ -157,6 +161,7 @@ export const actionCatalogue: readonly ActionContract[] = [
   },
   {
     id: 'continue_draft',
+    label: 'Open Your Workspaces to Pick Up a Draft',
     intent: {
       phrases: {
         en: [
@@ -189,6 +194,7 @@ export const actionCatalogue: readonly ActionContract[] = [
   },
   {
     id: 'explain_next',
+    label: 'Open Your Home to See What Is Next',
     intent: {
       phrases: {
         en: [
@@ -221,6 +227,7 @@ export const actionCatalogue: readonly ActionContract[] = [
   },
   {
     id: 'explain_blocked',
+    label: 'Open Your Requests to See What Is Waiting',
     intent: {
       phrases: {
         en: [
@@ -253,6 +260,8 @@ export const actionCatalogue: readonly ActionContract[] = [
   },
   {
     id: 'ask_team',
+    label: 'Talk to Our Team',
+    planned: true,
     intent: {
       phrases: {
         en: [
@@ -285,6 +294,7 @@ export const actionCatalogue: readonly ActionContract[] = [
   },
   {
     id: 'report_problem',
+    label: 'Report a Problem',
     intent: {
       phrases: {
         en: [
@@ -320,3 +330,12 @@ export const actionCatalogue: readonly ActionContract[] = [
 /** Machinery wording sends start_source to its own job; a fixed value, chosen only by a word match. */
 export const machineryRoute = '/plan?job=machinery_procurement';
 export const machineryWords: readonly string[] = ['machine', 'machines', 'machinery', 'equipment'];
+
+/** Actions with a destination today: the only ones the matcher may return, so a row never lacks a link. */
+export const liveActions: readonly ActionContract[] = actionCatalogue.filter(
+  (entry) => entry.planned !== true && entry.service.route.startsWith('/'),
+);
+/** Actions whose destination is still to be built (ask_team waits for the support-case module). */
+export const plannedActions: readonly ActionContract[] = actionCatalogue.filter(
+  (entry) => !liveActions.includes(entry),
+);
