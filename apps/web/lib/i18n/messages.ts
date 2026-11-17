@@ -141,6 +141,21 @@ const headerWords = {
   'header.job.enterMarket.line': 'Test a market before you commit to it.',
 } as const;
 
+// TC1 Today card words. English is the source. bn, zh, es, ar, fr and de are drafts: native review pending (D16),
+// never shown to the public before a native reviewer is recorded (see locales.ts).
+const todayWords = {
+  'today.heading': 'Today',
+  'today.holds': 'Request held by',
+} as const;
+const todayDrafts = {
+  bn: { 'today.heading': 'আজ', 'today.holds': 'অনুরোধটি যাঁর কাছে আছে:' },
+  zh: { 'today.heading': '今天', 'today.holds': '需求目前由以下方负责：' },
+  es: { 'today.heading': 'Hoy', 'today.holds': 'Solicitud a cargo de:' },
+  ar: { 'today.heading': 'اليوم', 'today.holds': 'الطلب لدى:' },
+  fr: { 'today.heading': "Aujourd'hui", 'today.holds': 'Demande suivie par :' },
+  de: { 'today.heading': 'Heute', 'today.holds': 'Anfrage liegt bei:' },
+} as const;
+
 export const en = {
   ...homeEn,
   // Commercial readiness stream blocks (one file per stream, so streams never edit the same lines).
@@ -287,6 +302,7 @@ export const en = {
   ...bookWords,
   ...footerWords,
   ...headerWords,
+  ...todayWords,
   'room.lens.overview': 'Overview',
   'room.lens.compare': 'Compare',
   'room.lens.evidence': 'Evidence',
@@ -470,6 +486,7 @@ const bn: Catalog = {
   ...bookWords,
   ...footerWords,
   ...headerWords,
+  ...todayDrafts.bn,
   'room.lens.overview': 'সারসংক্ষেপ',
   'room.lens.compare': 'তুলনা',
   'room.lens.evidence': 'প্রমাণ',
@@ -640,6 +657,7 @@ const zh: Catalog = {
   ...bookWords,
   ...footerWords,
   ...headerWords,
+  ...todayDrafts.zh,
   'room.lens.overview': '概览',
   'room.lens.compare': '比较',
   'room.lens.evidence': '证据',
@@ -816,6 +834,7 @@ const es: Catalog = {
   ...bookWords,
   ...footerWords,
   ...headerWords,
+  ...todayDrafts.es,
   'room.lens.overview': 'Resumen',
   'room.lens.compare': 'Comparar',
   'room.lens.evidence': 'Pruebas',
@@ -990,6 +1009,7 @@ const ar: Catalog = {
   ...bookWords,
   ...footerWords,
   ...headerWords,
+  ...todayDrafts.ar,
   'room.lens.overview': 'نظرة عامة',
   'room.lens.compare': 'المقارنة',
   'room.lens.evidence': 'الأدلة',
@@ -1167,6 +1187,7 @@ const fr: Catalog = {
   ...bookWords,
   ...footerWords,
   ...headerWords,
+  ...todayDrafts.fr,
   'room.lens.overview': 'Aperçu',
   'room.lens.compare': 'Comparer',
   'room.lens.evidence': 'Preuves',
@@ -1349,6 +1370,7 @@ const de: Catalog = {
   ...bookWords,
   ...footerWords,
   ...headerWords,
+  ...todayDrafts.de,
   'room.lens.overview': 'Übersicht',
   'room.lens.compare': 'Vergleichen',
   'room.lens.evidence': 'Nachweise',
