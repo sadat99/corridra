@@ -533,11 +533,12 @@ describe('U2 installed (viewer reply metadata)', () => {
     const r = await s.f.owner.query(
       `SELECT p.oid::regprocedure::text f,p.prosecdef,p.proconfig,has_function_privilege('corridra_runtime',p.oid,'EXECUTE') runtime,
         has_function_privilege('corridra_auth',p.oid,'EXECUTE') auth FROM pg_proc p
-       WHERE p.oid=ANY($1::regprocedure[]) ORDER BY 1`,
+       WHERE p.oid=ANY($1::regprocedure[]) ORDER BY p.oid::regprocedure::text COLLATE "C"`,
       [names],
     );
     expect(r.rows).toEqual(
-      names.map((f) => ({
+      // Both sides in C (code unit) order, so the database collation cannot reorder '(' against '_'.
+      [...names].sort().map((f) => ({
         f,
         prosecdef: true,
         proconfig: ['search_path=pg_catalog'],
