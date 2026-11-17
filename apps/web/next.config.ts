@@ -82,6 +82,15 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // ADR-088: the person's own profile picture. Never cached by a shared cache or kept by the browser, never sniffed.
+        source: '/api/account/picture',
+        headers: [
+          { key: 'Cache-Control', value: 'private, no-store' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+        ],
+      },
+      {
         source: '/api/intake/pending/:path*',
         headers: [
           { key: 'Cache-Control', value: 'no-store' },

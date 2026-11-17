@@ -35,6 +35,11 @@ import {
 } from '@corridra/auth/customer-organisation-profiles';
 import { CustomerPersonalProfileService } from '@corridra/auth/customer-personal-profiles';
 import {
+  CustomerProfilePictureErasure,
+  CustomerProfilePictureService,
+} from '@corridra/auth/customer-profile-pictures';
+import { createAvatarStorage } from '@corridra/evidence/avatar-storage';
+import {
   CustomerProgrammeTermsService,
   customerProgrammeTermsEnabled,
 } from '@corridra/auth/customer-programme-terms';
@@ -211,6 +216,13 @@ function createServices() {
     sendPasswordRecovery: operatorRecoveryMailer(),
   });
   const configuredStorage = createEvidenceStorage();
+  // A broken picture store configuration must not take down every other service: pictures are then unavailable (503).
+  let avatarStorage: ReturnType<typeof createAvatarStorage> = null;
+  try {
+    avatarStorage = createAvatarStorage();
+  } catch {
+    console.warn(JSON.stringify({ code: 'profile_picture_storage_unconfigured', status: 503 }));
+  }
   const storage = configuredStorage ?? {
     async put() {
       throw new Error('Evidence storage is not configured');
@@ -799,6 +811,24 @@ function createServices() {
       readCustomerSession,
       config.AUTH_SECRET,
     ),
+    // ADR-088: the person's own profile picture, on the private store evidence uses (same settings, own path). The routes
+    // answer 404 until the reviewed profilePicture capability is on, and 503 until the database module is installed.
+    customerProfilePictures: new CustomerProfilePictureService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerWorkspacesEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
+        issuer: customerIssuerFromEnv(),
+      },
+      readCustomerSession,
+      config.AUTH_SECRET,
+    ),
+    customerProfilePictureErasure: new CustomerProfilePictureErasure(runtimePool),
+    avatarStorage,
     customerProgrammeContext: new CustomerProgrammeContextService(
       runtimePool,
       authPool,
