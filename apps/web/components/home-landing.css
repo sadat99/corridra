@@ -821,6 +821,39 @@
 .ac1-route-tag {
   font-size: var(--text-xs);
 }
+/* An open destination: one compact card with no stub, so six equals and the ask-us card stay short. */
+.ac1-pass.ac1-pass-open {
+  /* One column: the open card has no stub, so it must not inherit the pass's text-and-stub columns. */
+  grid-template-columns: minmax(0, 1fr);
+  display: grid;
+  gap: 2px;
+  align-content: center;
+  padding: var(--space-3) var(--space-4);
+}
+.ac1-pass-open::before,
+.ac1-pass-open::after {
+  display: none;
+}
+.ac1-pass-open .ac1-pass-codes {
+  font-size: var(--text-lg);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ac1-routes-ask {
+  margin-top: var(--space-3);
+}
+.ac1-routes-ask.ac1-routes {
+  grid-template-columns: minmax(0, 1fr);
+}
+.ac1-other .ac1-pass-main {
+  padding-block: var(--space-2);
+}
+/* From a tablet up: three open destinations a row, six in one row on a wide screen. */
+@media (min-width: 40.0625rem) {
+  .ac1-routes {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  }
+}
 .ac1-pass-codes {
   display: flex;
   flex-wrap: wrap;
@@ -891,11 +924,14 @@
     font-size: var(--text-2xl);
   }
   .ac1-routes {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-5);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+    gap: var(--space-3);
   }
   .ac1-pass-codes {
     font-size: var(--text-2xl);
+  }
+  .ac1-pass-open .ac1-pass-codes {
+    font-size: var(--text-lg);
   }
 }
 
@@ -1116,7 +1152,16 @@
     padding-top: var(--space-2);
   }
   .ac1-routes {
+    /* Two a row on a phone; one a row when the text is enlarged, so nothing scrolls sideways. */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
     gap: var(--space-2);
+  }
+  .ac1-pass-open {
+    padding: var(--space-2) var(--space-3);
+  }
+  .ac1-pass-open .ac1-pass-codes {
+    font-size: var(--text-sm);
+    gap: var(--space-1);
   }
   .ac1-pass {
     grid-template-columns: minmax(0, 1fr) 4.5rem;

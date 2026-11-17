@@ -36,8 +36,9 @@ test('global selector retains an unsupported operating direction and opens the a
   await page.getByRole('tab', { name: 'Pick Your Route' }).click(); // the picker is its own tab
   await page.getByRole('combobox', { name: 'My company is in', exact: true }).selectOption('JP');
   await page.getByRole('combobox', { name: 'I want to reach', exact: true }).selectOption('KE');
+  // owner decision 17 Nov 2026, routes and markets: the canonical ask-us sentence
   await expect(page.getByLabel('Route map', { exact: true })).toContainText(
-    'No operating offer is announced',
+    'No operating offer announced',
   );
   await page.getByRole('link', { name: 'Plan a Mission on This Route', exact: true }).click();
   await page
