@@ -1,6 +1,6 @@
 # ADR-087: Who on staff and in a workspace can read each share
 
-Status: Accepted, 17 November 2026, on the owner answers recorded under Authority. Two sub-questions stay open (decisions 4a and 4c, below). Accepting this ADR changes nothing by itself. No code, migration, policy, grant or switch changes with this document. Every change below ships later through the implementation plan, in reviewed units, and reaches production only through the installer with the owner's install approval. Until the unit that enforces a row is installed, the TODAY column is what is true, and the PL1 "who can see it" label may quote only TODAY.
+Status: Accepted, 17 November 2026, on the owner answers recorded under Authority. One item stays open: the interval between the member notice and switch-on (decision 4d, below). Accepting this ADR changes nothing by itself. No code, migration, policy, grant or switch changes with this document. Every change below ships later through the implementation plan, in reviewed units, and reaches production only through the installer with the owner's install approval. Until the unit that enforces a row is installed, the TODAY column is what is true, and the PL1 "who can see it" label may quote only TODAY.
 
 Authority:
 
@@ -11,6 +11,8 @@ Authority:
   3. Q3, report exports and snapshots: "Everyone except viewers".
   4. Q4, customer owners and admins seeing a member's shares: "Owners and admins see everything". Guardian 14 relayed the scope as: same workspace only; tenant isolation, row security and the creator's withdraw rights stay; no cross-workspace reading.
   5. Q5, intake receipt: "Keep, and say so (Recommended)".
+  6. Sub-question 4a, items saved before activation, 17 November 2026, relayed by Guardian 14 as first hand via the orchestrator: "Everything, including older". This is not the recommendation, which was "only after activation". Owners and admins see members' items saved before activation too.
+  7. Sub-question 4c, books, same date and relay: "Yes". This is not the recommendation, which was "no". Owners and admins may download a member's Trip Book or Supplier Book.
 
 The proposal at a6e7bd1 is kept in the PR history.
 
@@ -99,15 +101,15 @@ Records:
 - Real report switches (`customer-real-use-migrations/0010_real_report_switches.sql:5-17`).
 - Exports: `app.delivery_export`, which holds the `snapshot`, and `app.delivery_export_artifact` (`0016:205-226`; real policies `0002:226,228`).
 
-| Reader                     | TODAY                                                                                                                                                                                                                                                                                    | DECIDED                                                                                                                                |
-| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| LH                         | Sample tenant: anyone with the link. Real tenant: only while `CORRIDRA_REAL_REPORT_PUBLIC_LINK_ENABLED` is on (`0010:12-17`; the switch is read at `packages/auth/src/real-report-access.ts:16` and sets `corridra.real_report_public` at `packages/delivery/src/index.ts:38`; ADR-063). | Unchanged                                                                                                                              |
-| CR (customer who saved it) | Only that customer: `principal_id=actor` in the list and open reads (`0001_saved_mission_invitations.sql:94,107`), with the actor from `saved_mission_actor` (`:33-41`)                                                                                                                  | Unchanged, and keeps sole right to remove their save                                                                                   |
-| WO                         | No: the save is personal                                                                                                                                                                                                                                                                 | **Yes, in full** (Q4): the saved reports of current members of the same workspace, read only; not removing them; scope per decision 4a |
-| WM                         | No                                                                                                                                                                                                                                                                                       | No                                                                                                                                     |
-| SO, SA, SP, SR             | Link meta (`0016:132`); export snapshot and artifact (`0016:132`)                                                                                                                                                                                                                        | Link meta unchanged; **exports and snapshots: yes** (Q3, everyone except viewers)                                                      |
-| SV                         | Link meta; export snapshot and artifact                                                                                                                                                                                                                                                  | Link meta; **exports and snapshots: no** (Q3)                                                                                          |
-| EX                         | No                                                                                                                                                                                                                                                                                       | No                                                                                                                                     |
+| Reader                     | TODAY                                                                                                                                                                                                                                                                                    | DECIDED                                                                                                                                                       |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| LH                         | Sample tenant: anyone with the link. Real tenant: only while `CORRIDRA_REAL_REPORT_PUBLIC_LINK_ENABLED` is on (`0010:12-17`; the switch is read at `packages/auth/src/real-report-access.ts:16` and sets `corridra.real_report_public` at `packages/delivery/src/index.ts:38`; ADR-063). | Unchanged                                                                                                                                                     |
+| CR (customer who saved it) | Only that customer: `principal_id=actor` in the list and open reads (`0001_saved_mission_invitations.sql:94,107`), with the actor from `saved_mission_actor` (`:33-41`)                                                                                                                  | Unchanged, and keeps sole right to remove their save                                                                                                          |
+| WO                         | No: the save is personal                                                                                                                                                                                                                                                                 | **Yes, in full** (Q4): the saved reports of current members of the same workspace, read only; not removing them; including items saved before activation (4a) |
+| WM                         | No                                                                                                                                                                                                                                                                                       | No                                                                                                                                                            |
+| SO, SA, SP, SR             | Link meta (`0016:132`); export snapshot and artifact (`0016:132`)                                                                                                                                                                                                                        | Link meta unchanged; **exports and snapshots: yes** (Q3, everyone except viewers)                                                                             |
+| SV                         | Link meta; export snapshot and artifact                                                                                                                                                                                                                                                  | Link meta; **exports and snapshots: no** (Q3)                                                                                                                 |
+| EX                         | No                                                                                                                                                                                                                                                                                       | No                                                                                                                                                            |
 
 Relayed wording: Guardian 14 relayed Q3 as "staff owner, admin and operator may read report exports and snapshots; viewers may not". The owner's own words are "Everyone except viewers", which also includes `reviewer`. This ADR follows the owner's words (owner, admin, operator, reviewer), and Guardian 14 confirmed that reading on 17 November 2026. Narrowing to exclude reviewers needs a new owner word.
 
@@ -119,14 +121,14 @@ Records:
 - Creator check `:92-114`, public read `app.read_decision_card` `:298-329`, creator-only withdraw `:271-294`.
 - Sample workspaces only (`:101,106`). Switch `CORRIDRA_SHARE_CARD`. Module not installed in production.
 
-| Reader               | TODAY                                                                                                                          | DECIDED                                                                                                                                    |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| LH                   | Six fields of one decision for at most 168 hours, until withdrawn, re-derived live (`:298-329`)                                | Unchanged                                                                                                                                  |
-| CR                   | Lists and withdraws own cards. Must be `writer` (WO) of the request's workspace and hold the saved report (`:96,107,177-191`). | Unchanged; withdraw stays the creator's only                                                                                               |
-| WO (not the creator) | No                                                                                                                             | **Yes, in full** (Q4): the card list, fields and state for cards made in the same workspace; read only, no withdraw; scope per decision 4a |
-| WM                   | No (cannot create, `:107`)                                                                                                     | No                                                                                                                                         |
-| All staff            | No path (tables revoked)                                                                                                       | No                                                                                                                                         |
-| EX                   | No                                                                                                                             | No                                                                                                                                         |
+| Reader               | TODAY                                                                                                                          | DECIDED                                                                                                                                                          |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| LH                   | Six fields of one decision for at most 168 hours, until withdrawn, re-derived live (`:298-329`)                                | Unchanged                                                                                                                                                        |
+| CR                   | Lists and withdraws own cards. Must be `writer` (WO) of the request's workspace and hold the saved report (`:96,107,177-191`). | Unchanged; withdraw stays the creator's only                                                                                                                     |
+| WO (not the creator) | No                                                                                                                             | **Yes, in full** (Q4): the card list, fields and state for cards made in the same workspace; read only, no withdraw; including cards made before activation (4a) |
+| WM                   | No (cannot create, `:107`)                                                                                                     | No                                                                                                                                                               |
+| All staff            | No path (tables revoked)                                                                                                       | No                                                                                                                                                               |
+| EX                   | No                                                                                                                             | No                                                                                                                                                               |
 
 ### S5. Programme pages and share kit (`/delegations/[address]`, ADR-080, ADR-084 S1)
 
@@ -189,16 +191,16 @@ TODAY and DECIDED are the same:
 
 ### S10. Other outward surfaces
 
-| Surface                                                                                                                                                        | TODAY                                                                                      | DECIDED                                                                                         |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| Trip Book and Supplier Book PDF (ADR-076 items 1-3), `customer.saved_mission_book` (`customer-book-migrations/0001_trip_and_supplier_books.sql:15-96`)         | Only the customer who saved the report; a download                                         | Unchanged: only the saver (WO access to books is open sub-question 4c)                          |
-| Intake receipt lookup, `app.mission_receipt` (`migrations/0007_mission_core.sql:139-142`)                                                                      | Anyone holding the receipt reads the status and staff reply bodies until `retention_until` | **Kept** (Q5), and stated in the label and the privacy notice                                   |
-| Workspace invitation (`customer-migrations/0002_workspace_collaboration.sql:114-148`)                                                                          | Signed-in invitee with the token, 24 hours                                                 | Unchanged                                                                                       |
-| Participant invitation and email (`customer-participant-migrations/0001...:66-72`; `customer-real-use-migrations/0012_participant_invitation_email.sql:32-34`) | Signed-in invitee with the token, 7 days                                                   | Unchanged                                                                                       |
-| `/access/link` field (`apps/web/components/private-link-field.tsx:8,27-37`)                                                                                    | Adds no access                                                                             | Unchanged                                                                                       |
-| Published results report (ADR-084 S5)                                                                                                                          | Not built                                                                                  | When built: LH by token, CR and WO; staff meta only, except SO, SA, SP, SR for any export of it |
-| Emailed status link (ADR-076 item 5)                                                                                                                           | Not a token; opens the signed-in page                                                      | Unchanged                                                                                       |
-| Invoices (`customer-invoicing-real-migrations/0001_real_invoicing.sql:396-402`)                                                                                | No outward link found                                                                      | Out of scope; label "Not stated"                                                                |
+| Surface                                                                                                                                                        | TODAY                                                                                      | DECIDED                                                                                                        |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| Trip Book and Supplier Book PDF (ADR-076 items 1-3), `customer.saved_mission_book` (`customer-book-migrations/0001_trip_and_supplier_books.sql:15-96`)         | Only the customer who saved the report; a download                                         | Also WO of the same workspace, for a current member's saved report (4c), with a book record and an audit event |
+| Intake receipt lookup, `app.mission_receipt` (`migrations/0007_mission_core.sql:139-142`)                                                                      | Anyone holding the receipt reads the status and staff reply bodies until `retention_until` | **Kept** (Q5), and stated in the label and the privacy notice                                                  |
+| Workspace invitation (`customer-migrations/0002_workspace_collaboration.sql:114-148`)                                                                          | Signed-in invitee with the token, 24 hours                                                 | Unchanged                                                                                                      |
+| Participant invitation and email (`customer-participant-migrations/0001...:66-72`; `customer-real-use-migrations/0012_participant_invitation_email.sql:32-34`) | Signed-in invitee with the token, 7 days                                                   | Unchanged                                                                                                      |
+| `/access/link` field (`apps/web/components/private-link-field.tsx:8,27-37`)                                                                                    | Adds no access                                                                             | Unchanged                                                                                                      |
+| Published results report (ADR-084 S5)                                                                                                                          | Not built                                                                                  | When built: LH by token, CR and WO; staff meta only, except SO, SA, SP, SR for any export of it                |
+| Emailed status link (ADR-076 item 5)                                                                                                                           | Not a token; opens the signed-in page                                                      | Unchanged                                                                                                      |
+| Invoices (`customer-invoicing-real-migrations/0001_real_invoicing.sql:396-402`)                                                                                | No outward link found                                                                      | Out of scope; label "Not stated"                                                                               |
 
 ## Decisions
 
@@ -206,44 +208,49 @@ TODAY and DECIDED are the same:
 2. **Staff viewers see metadata only** on S1 and S2 (Q1). They never see a third party's typed words, quoted terms, revision text or evidence answer.
 3. **Report exports and snapshots** are readable by staff owner, admin, operator and reviewer, and not by viewers (Q3).
 4. **Customer workspace owners and admins read members' saved reports and decision cards in full** (Q4). This applies to the same workspace only, and is read only. The creator keeps the sole right to remove a save and to withdraw a card. Tenant isolation and row security are unchanged, and nothing crosses workspaces. A member who is removed stops being a source at once. Their items fall under the ADR-033 amendment of 11 November 2026 and are read by nobody on the customer side.
-   - **4a, open owner sub-question.** Does this apply to items saved before the change is switched on?
-     - (a) **Recommended:** only items saved or created after activation. Members saved under a "personal" rule, and changing that silently afterwards breaks a reasonable expectation. Each item records its creation time, so the rule is a single comparison.
-     - (b) All items, past and future, after the member notice has been live for 14 days.
-     - (c) All items at once.
-   - **4b, member notice.** Before activation, every workspace member sees a plain notice on their saved reports and decision cards: "Owners and admins of this workspace can see the reports you save and the decision cards you make here. They cannot remove or withdraw them." The notice ships in the same unit, behind the same switch, and is visible for the whole notice period chosen in 4a.
-   - **4c, open owner sub-question.** The owner's answer covers saved reports and decision cards, read only. It does not cover the Trip Book and Supplier Book downloads made from a saved report (ADR-076 items 1-3), which are a copy the reader can keep. Should owners and admins also download a member's book?
-     - (a) **Recommended:** no. They read the saved report on screen; the book stays the saver's own download. A copy that leaves Corridra should not be wider than the owner's words.
-     - (b) Yes, with one ids-only event per download.
+   - **4a, decided ("Everything, including older").** The rule covers every item a current member saved or made in the workspace, including those from before activation.
+   - **4b, member notice, required before go-live.** Every workspace member is told before the switch is turned on. The notice is shown in product on `/account` (saved reports and decision cards) and sent through the existing in-app inbox, `app.inbox_notification` with `recipient_kind='customer'` (`commercial-readiness-migrations/0001_inbox_and_links.sql:9-28`). Its `type` check (`:13`) needs one new value through a forward migration. Whether the inbox also triggers an email depends on `emailDecision` in `apps/web/lib/notify.ts`, which is not proven, so email is not relied on. Plain words: "Owners and admins of this workspace can read the reports you save and the decision cards you make here, and download the Trip Book and Supplier Book of your saved reports. This includes items you saved before today. They cannot remove or withdraw them. If there is anything you do not want them to see, you can remove it before [date and time]."
+   - **4c, decided ("Yes").** Owners and admins of the same workspace may download a current member's Trip Book or Supplier Book. Each download writes the existing book record and event, plus an audit event naming the reader.
+   - **4d, open owner item: the interval between the notice and switch-on.** Recommended: 72 hours after the notice is first shown. Because older items are included (4a), the notice is the members' only chance to remove something before it becomes visible. 72 hours covers three working days in any time zone for someone who signs in a few times a week. It is also short enough not to stall the change. The switch is turned on only after the interval has passed, and the date and time in the notice are that moment.
+   - **Protections kept.**
+     - Tenant isolation and row security are unchanged, and there is no cross-workspace reading.
+     - The creator keeps the sole right to remove a save and to withdraw a card.
+     - Expiry and revocation still end links.
+     - A removed member's items are read by nobody on the customer side (ADR-033 amendment of 11 November 2026).
+     - Every owner or admin read or download of a member's item writes one audit event (who, what, when). It reuses the existing writer `customer_private.workspace_access_event` (`customer-migrations/0002_workspace_collaboration.sql:82-95`; real-use replacement `customer-real-use-migrations/0003_real_customer_modules.sql:2620`). That writer adds an `app.domain_event` and an `app.audit_event` row with `initiator_id` (who), the item ids (what) and `occurred_at` (when). No new audit mechanism is proposed.
 5. **Intake receipts stay as they are** (Q5). The label says "Anyone with your receipt can see the status and the team's replies until it expires." The privacy notice says the same in one sentence. Its wording goes to the owner before it ships.
 6. **Nothing here weakens the authenticator rules.** Every staff read stays behind `app.actor_id`. Fresh checks stay where they are today, and no read gains one.
 
 ### Label wording once each unit is installed
 
-| Surface           | Label                                                                                                                                                                                                   |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| S1 reply link     | "The person you sent it to, and the Corridra team working on your request"                                                                                                                              |
-| S2 evidence link  | "Anyone with this link until it expires, and the Corridra team working on your request"                                                                                                                 |
-| S3 saved report   | Sample: "Anyone with this link until it expires". Real: "You, when signed in", or with the public switch on, "Anyone with this link until it expires". Both add "and your workspace owners and admins". |
-| S4 decision card  | "Anyone with this link for up to 7 days, until you withdraw it. Your workspace owners and admins can also see it. Not the Corridra team."                                                               |
-| S5 programme page | "Public: anyone with the address"                                                                                                                                                                       |
-| S6 export         | "You and your workspace owners and admins. Once downloaded, whoever holds the file."                                                                                                                    |
-| S7 summaries      | "You and the programme's organisers"                                                                                                                                                                    |
-| S8, S9            | "Only you"                                                                                                                                                                                              |
-| Intake receipt    | "Anyone with your receipt, until it expires"                                                                                                                                                            |
-| Anything unproven | "Not stated" (PL1 rule, unchanged)                                                                                                                                                                      |
+| Surface           | Label                                                                                                                                                                                                                                                                           |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S1 reply link     | "The person you sent it to, and the Corridra team working on your request"                                                                                                                                                                                                      |
+| S2 evidence link  | "Anyone with this link until it expires, and the Corridra team working on your request"                                                                                                                                                                                         |
+| S3 saved report   | Sample: "Anyone with this link until it expires". Real: "You, when signed in", or with the public switch on, "Anyone with this link until it expires". Both add "Owners and admins of your workspace can also read it and download its books, including reports saved earlier." |
+| S4 decision card  | "Anyone with this link for up to 7 days, until you withdraw it. Owners and admins of your workspace can also read it, including cards made earlier. Not the Corridra team."                                                                                                     |
+| S5 programme page | "Public: anyone with the address"                                                                                                                                                                                                                                               |
+| S6 export         | "You and your workspace owners and admins. Once downloaded, whoever holds the file."                                                                                                                                                                                            |
+| S7 summaries      | "You and the programme's organisers"                                                                                                                                                                                                                                            |
+| S8, S9            | "Only you"                                                                                                                                                                                                                                                                      |
+| Intake receipt    | "Anyone with your receipt, until it expires"                                                                                                                                                                                                                                    |
+| Anything unproven | "Not stated" (PL1 rule, unchanged)                                                                                                                                                                                                                                              |
 
-Before unit U2 is installed, the honest staff wording for S1 and S2 is "anyone on the Corridra team". Before unit U4 is installed, the S3 and S4 rows drop the workspace owners and admins clause.
+Before unit U2 is installed, the honest staff wording for S1 and S2 is "anyone on the Corridra team". Before unit U5 is switched on, the S3 and S4 rows drop the workspace owners and admins clause.
 
 ## Amendment of ADR-033, ADR-036 and ADR-076 item 4 (17 November 2026)
 
 Owner's words, 17 November 2026, relayed by Guardian 14: "Owners and admins see everything".
 
-Until now these ADRs kept a customer's requests, saved reports and decision cards personal to their creator. From unit U4's activation, a current owner or admin of the same workspace also reads, in full and read only, the saved reports (ADR-036) and decision cards (ADR-076 item 4) of current members in that workspace. The scope of past items is set by decision 4a.
+Until now these ADRs kept a customer's requests, saved reports and decision cards personal to their creator. Owner's words on the sub-questions, 17 November 2026, relayed by Guardian 14: 4a "Everything, including older"; 4c "Yes".
+
+From unit U5's activation, which follows the member notice (unit U4) and the interval in decision 4d, a current owner or admin of the same workspace also reads, in full and read only, the saved reports (ADR-036) and decision cards (ADR-076 item 4) of current members in that workspace, including items from before activation. They may also download those reports' Trip Book and Supplier Book (ADR-076 items 1-3). Each read or download writes an audit event.
 
 What does not change:
 
 - Requests (ADR-033) stay personal: this amendment covers saved reports and decision cards only.
 - The creator's sole right to remove a save and to withdraw a card.
+- Expiry and revocation of links.
 - The ADR-033 amendment of 11 November 2026: a removed member reads nothing from that workspace, and is read by nobody on the customer side.
 - No cross-workspace reading.
 
@@ -251,17 +258,17 @@ A one-line forward note is added to each amended ADR.
 
 ## Implementation plan (units in order, all Class A)
 
-Every unit that touches the database (U2, U3, U4):
+Every unit that touches the database (U2, U3, U4, U5):
 
 - is an additive forward migration in its own module folder, hash-guarded against the definition it replaces, and replaces only the named policies or functions;
 - is applied only by the reviewed installer through a new `field_modules_action` value;
 - needs the owner's install approval before any production change.
 
-U1 and U5 change no database object. They ship as normal reviewed code changes, with no installer action.
+U1 and U6 change no database object. They ship as normal reviewed code changes, with no installer action.
 
 Every unit:
 
-- writes no customer data, except U4's ids-only read events;
+- writes no customer data, except U4's inbox notices and U5's ids-only audit events and book records;
 - changes no switch default;
 - carries tests that fail on the code before it;
 - states its rollback (a forward migration restoring the hashed original text).
@@ -333,43 +340,56 @@ Tests that fail today:
 1. A viewer selecting from either table gets a row today and must get none.
 2. Owner, admin, operator and reviewer still do.
 
-### U4. Customer: workspace owners and admins read members' saved reports and decision cards (new module, behind a new switch, off)
+### U4. Member notice (required before U5; new optional module and inbox type)
 
-Decisions 4a and 4c must be answered before U4 is built. Work:
+- A forward migration adds one value to the `app.inbox_notification` type check (`commercial-readiness-migrations/0001_inbox_and_links.sql:13`).
+- It adds a function, owner-installed and run once per workspace by the owner's activation step, that writes one customer inbox row per current member with the decision 4b words and the switch-on time.
+- The same words show on `/account` saved reports and decision cards, behind a "notice" switch that is separate from the U5 switch.
+- No access changes.
+
+Tests that fail today:
+
+1. Every current member of a workspace receives exactly one notice row, and a removed member receives none.
+2. The `/account` banner renders the 4b words with the time.
+
+### U5. Customer: workspace owners and admins read members' saved reports and decision cards and download their books (new module, behind a new switch, off)
+
+The switch is turned on only after U4's notice has been shown for the interval in 4d. Work:
 
 - A new optional module adds read-only functions:
   - `customer.workspace_saved_missions(workspace)`;
   - `customer.workspace_decision_cards(workspace)`;
-  - a WO path into the existing saved-report read. Not the book (`customer-book-migrations/0001:15-96`), which stays the saver's only, unless the owner answers 4c otherwise.
+  - a WO path into the existing saved-report read;
+  - a WO path into the book (`customer-book-migrations/0001_trip_and_supplier_books.sql:15-96`). It writes the existing book record (`customer_private.saved_mission_command`, `:85-87`, with the reader as principal) and the existing `delivery.book.generated` event (`:89`), within the existing limit of 30 an hour (`:79-82`).
 - Each function requires:
   - a current owner or admin of that workspace (`customer.collaborative_workspaces()` role IN ('owner','admin'));
-  - a source item made in that workspace by a current member (`customer_private.workspace_member_current`, ADR-033 amendment);
-  - a creation time that meets decision 4a.
-- The creator-only functions are not replaced: `customer.remove_saved_mission` and `customer.withdraw_decision_card` (`0001_decision_cards.sql:271-294`). The public card read is also unchanged.
-- One event per owner or admin read of a member's item, with ids only.
-- The member notice (decision 4b), shown on `/account` saved reports and decision cards behind the same switch.
+  - a source item made in that workspace by a current member (`customer_private.workspace_member_current`, ADR-033 amendment).
+  - Creation time is not filtered (4a).
+- Every read and download calls `customer_private.workspace_access_event` (see Protections kept) with kind `customer.member_item.read` or `customer.member_item.book`, and ids only.
+- The creator-only functions are not replaced: `customer.remove_saved_mission` and `customer.withdraw_decision_card` (`0001_decision_cards.sql:271-294`). The public card read, expiry and revocation are unchanged.
 - The PL1 label rows for S3 and S4 switch to the decided wording only when the switch is on.
 
 Tests that fail today:
 
-1. WO reading a member's saved report in the same workspace is refused today and must succeed.
+1. WO reading a member's saved report, card or book in the same workspace is refused today and must succeed, including an item saved before the module was installed.
 2. WO in another workspace is refused on both versions.
 3. A member reading another member's item is refused on both versions.
 4. WO cannot remove a save or withdraw a card.
-5. An item before activation is hidden under option 4a(a).
-6. A removed member's items are read by nobody.
+5. A removed member's items are read by nobody.
+6. Each WO read or download writes exactly one audit event naming the reader and the item ids.
+7. An expired or revoked link still ends the item's report for everyone.
 
-### U5. Records and words
+### U6. Records and words
 
 - PL1 label constants move from TODAY to DECIDED, row by row, in the same PR as the unit that enforces each row.
 - The intake receipt sentence goes into the label and the privacy notice. The privacy wording is shown to the owner before it ships.
 - Ledger and work log entries record each unit's installation.
 
-Order: U1, then U2 and U3 (they can run in parallel; they touch different policies), then U4 after 4a is answered. U5 travels with each unit.
+Order: U1, then U2 and U3 (they can run in parallel; they touch different policies), then U4 (the notice), then U5 (switched on only after the 4d interval). U6 travels with each unit.
 
 ## Blast radius
 
-**Gains access:** customer workspace owners and admins, to their own workspace members' saved reports and decision cards (U4, switch off until the owner turns it on).
+**Gains access:** customer workspace owners and admins, to their own workspace members' saved reports, decision cards and books, including older items (U5, switch off until the notice interval has passed and the owner turns it on).
 
 **Loses access:**
 
@@ -387,15 +407,15 @@ Order: U1, then U2 and U3 (they can run in parallel; they touch different polici
 **Risk:**
 
 - A viewer screen that renders a body shows an empty state. U1 lists and changes those screens before U2.
-- U4 changes a privacy expectation, which decision 4b's notice and option 4a(a) address.
+- U5 changes a privacy expectation, including for older items. The required notice (U4), the interval (4d) and the audit event per read address it.
 
 ## Rollback
 
-Each unit has a forward migration that restores the hashed original policy or function text, plus a revert of its application change. No unit writes or deletes customer data, so each rollback is exact for every access rule. U4's ids-only read events stay after its rollback: they are history and are never deleted. U4 can also be paused at once by its switch.
+Each unit has a forward migration that restores the hashed original policy or function text, plus a revert of its application change. No unit writes or deletes customer data, so each rollback is exact for every access rule. U4's inbox notices and U5's audit events and book records stay after a rollback: they are history and are never deleted. U4 and U5 can also be paused at once by their switches.
 
 ## Not decided here
 
-- Decisions 4a and 4c (open, owner).
+- Decision 4d, the interval between the notice and switch-on (open, owner).
 - Legal review of the label and privacy wording.
 - Translations beyond English (native review).
 - Staff reads of non-share records (missions, research, opportunities).
