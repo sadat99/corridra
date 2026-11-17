@@ -14,6 +14,7 @@ const ce = web('react').createElement as (type: unknown, props?: unknown) => unk
 const render = web('react-dom/server').renderToStaticMarkup as (element: unknown) => string;
 const read = (path: string) => readFileSync(resolve(path), 'utf8');
 const loadWeb = async (path: string) => await import(/* @vite-ignore */ `../../apps/web/${path}`);
+const dashes = new RegExp(`[${String.fromCharCode(0x2013, 0x2014)}]`);
 const keys = Object.keys(en).filter((k) => k.startsWith('consequence.'));
 
 describe('the preview only says what the database enforces', () => {
@@ -70,7 +71,7 @@ describe('the words', () => {
   });
   it('contains no em or en dash in any language', () => {
     for (const catalog of Object.values(catalogs))
-      for (const key of keys) expect((catalog as Record<string, string>)[key]).not.toMatch(/[–—]/);
+      for (const key of keys) expect((catalog as Record<string, string>)[key]).not.toMatch(dashes);
   });
 });
 
