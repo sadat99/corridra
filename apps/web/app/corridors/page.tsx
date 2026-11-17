@@ -27,8 +27,8 @@ export default function Page() {
           <h1>The job comes first. The route gives it context.</h1>
           <p className="guide-lead">
             From Bangladesh we run missions to China, the EU, the UK, the US, Australia and key
-            Asian markets. Ask us about any other route. Pick where your company is and the market
-            you want to reach, and every request follows the same steps.
+            Asian markets. Pick where your company is and the market you want to reach, and every
+            request follows the same steps.
           </p>
         </div>
       </section>

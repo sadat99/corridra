@@ -99,7 +99,8 @@ test('the home example switches between selling and sourcing by pointer and keyb
   await expect(
     page.getByRole('table', { name: 'Example price quote comparison' }).getByRole('row'),
   ).toHaveCount(5);
-  for (const href of ['/corridors/bangladesh-china', '/corridors/bangladesh-spain', '/corridors'])
+  // owner decision 17 Nov 2026, routes and markets: the home's EU destination opens the EU page, not the Spain page
+  for (const href of ['/corridors/bangladesh-china', '/corridors/bangladesh-eu', '/corridors'])
     await expect(page.locator(`main a[href="${href}"]`).first()).toBeVisible();
   expect(
     (
@@ -236,7 +237,9 @@ test('trust distinguishes declarations, evidence, verification and observed outc
 test('/sell shows the EU route, the reverse direction and what is recorded', async ({ page }) => {
   await page.goto('/sell');
   await page.locator('details.guide-more > summary').click(); // the closing sections sit behind Show more
-  await expect(page.getByText('Bangladesh to the EU', { exact: true })).toBeVisible();
+  await expect(
+    page.locator('main').getByText('Bangladesh to the EU', { exact: true }),
+  ).toBeVisible();
   const reverse = page.getByRole('region', { name: 'It also works the other way.' });
   await expect(reverse).toContainText('seller from the EU can reach suitable buyers in Bangladesh');
   await expect(reverse.getByRole('link', { name: /Plan a Mission From the EU/ })).toHaveAttribute(

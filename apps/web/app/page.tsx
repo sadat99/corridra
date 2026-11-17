@@ -135,6 +135,8 @@ export default function Home() {
               </span>
             </Link>
           ))}
+        </div>
+        <div className="ac1-routes ac1-routes-ask">
           <Link prefetch={false} href="/corridors" className="ac1-pass ac1-other">
             <span className="ac1-pass-main">
               <span className="label ac1-route-tag">{t('home.other.title')}</span>
