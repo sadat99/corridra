@@ -118,12 +118,15 @@ test.beforeAll(async () => {
       import{DeliveryExperience}from ${JSON.stringify(resolve('apps/web/app/operator/delivery-experience.tsx'))};
       import{CommercialMission}from ${JSON.stringify(resolve('apps/web/app/operator/commercial-mission.tsx'))};
       import{OperatorFlags}from ${JSON.stringify(resolve('apps/web/app/operator/operator-flags.tsx'))};
+      import{MissionPage}from ${JSON.stringify(resolve('apps/web/app/operator/[section]/[missionId]/mission-page.tsx'))};
       const q=new URLSearchParams(location.search);
       const role=q.get('role');
       createRoot(document.getElementById('fixture')).render(
         <main id="main" className="operator-page ux-workspace"><h1>Mission</h1>
         <OperatorFlags replyReview={false}>
-        {q.get('page')==='experience'
+        {q.get('page')==='mission'
+          ?<MissionPage tenant="${tenant}" workspaceName="Sample team" missionId="${mission}" moveRecords={false}/>
+          :q.get('page')==='experience'
           ?<DeliveryExperience role={role} tenant="${tenant}" programme="" mission="${mission}" participants={[]} publications={[]} owners={[]}/>
           :<CommercialMission tenant="${tenant}" missionId="${mission}"/>}</OperatorFlags></main>);`,
       loader: 'tsx',
@@ -183,6 +186,33 @@ test.afterAll(async () => {
   await new Promise<void>((done) => server.close(() => done()));
 });
 
+const teamMission = (role: string) => ({
+  role,
+  owners: [],
+  missions: [
+    {
+      id: mission,
+      status: 'OPEN',
+      version: 1,
+      reason: '',
+      notice_version: 'v1',
+      acknowledged_at: '2026-11-01T00:00:00.000Z',
+      source_kind: 'SELF_SERVE',
+      claim_status: 'SELF_DECLARED',
+      country_code: 'ES',
+      target_profile: null,
+      owner_id: null,
+      due_at: '2026-12-01T00:00:00.000Z',
+      next_action: 'Call the buyer',
+      route_label: null,
+      brief: { company: 'Acme Textiles', objective: 'Sell', market: 'Spain', outcomes: [] },
+    },
+  ],
+  total: 1,
+  history: [],
+  replies: [],
+});
+
 async function answer(page: Page, role: string, full: boolean) {
   await page.route('**/api/**', (route) => {
     const url = new URL(route.request().url());
@@ -195,7 +225,11 @@ async function answer(page: Page, role: string, full: boolean) {
             ? { sources: [], claims: [] }
             : url.pathname === '/api/workspace/delivery'
               ? experience(full)
-              : {};
+              : url.pathname === '/api/team-work/mission'
+                ? teamMission(role)
+                : url.pathname === '/api/workspace/meetings'
+                  ? { meetings: [], meetingsTotal: 0, next: null }
+                  : {};
     return route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -271,5 +305,32 @@ test('the participant approval list shows an operator the quotation uncertaintie
     list.getByText(`Synthetic Supplier Works · USD · revision 2 · ${uncertainty}`),
   ).toBeVisible();
   await expect(list.getByText(hidden)).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('the mission page Quotes list shows a viewer the currency and no money', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await answer(page, 'viewer', false);
+  await page.goto(`${origin}/?page=mission`);
+  await page.getByRole('tab', { name: 'Quotes' }).click();
+  const item = page.getByRole('listitem').filter({ hasText: 'Synthetic Supplier Works' });
+  await expect(item).toContainText(`revision 2 · USD · ${hidden}`);
+  await expect(item).not.toContainText('1,234');
+  await expect(item).not.toContainText('total');
+  await expect(item).not.toContainText('per unit');
+  expect(errors).toEqual([]);
+});
+
+test('the mission page Quotes list shows an operator the quoted total', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await answer(page, 'operator', true);
+  await page.goto(`${origin}/?page=mission`);
+  await page.getByRole('tab', { name: 'Quotes' }).click();
+  const item = page.getByRole('listitem').filter({ hasText: 'Synthetic Supplier Works' });
+  await expect(item).toContainText('1,234');
+  await expect(item).toContainText('total');
+  await expect(item).not.toContainText(hidden);
   expect(errors).toEqual([]);
 });

@@ -312,7 +312,13 @@ export function offerContext(typeKey: string | null | undefined): 'GENERAL' | 'M
 // Reads keep the row and send these as null, so exact money and history are untouched and only who may read changes.
 export const quotationTermFields = ['terms', 'uncertainties', 'reason'] as const;
 export function withholdQuotationTerms<T extends Record<string, unknown>>(row: T) {
-  return { ...row, terms: null, uncertainties: null, reason: null };
+  return {
+    ...row,
+    ...(Object.fromEntries(quotationTermFields.map((field) => [field, null])) as Record<
+      (typeof quotationTermFields)[number],
+      null
+    >),
+  };
 }
 /** The comparison of one offer without anything derived from its terms: the offer exists, in its currency, and nothing else. */
 export function withheldComparison(offer: {
