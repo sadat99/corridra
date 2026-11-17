@@ -5,6 +5,7 @@ import {
   personalProfileNoWorkspaceMessage,
   personalProfileStaleMessage,
 } from '@corridra/auth/customer-personal-profiles';
+import { customerWorkspacesEnabled } from '@corridra/auth/customer-workspaces';
 import { foundations } from '../../../lib/foundations';
 import { boundedBody, deliveryHeaders } from '../../../lib/delivery-http';
 export const runtime = 'nodejs';
@@ -50,7 +51,11 @@ function context(request: Request) {
     request.headers.get('x-corridra-customer-issuer') ?? undefined,
   ] as const;
 }
+// With customer workspaces off the account page shows no personal details, and the route answers as if it did not exist,
+// before any database call.
+const notAvailable = () => refuse(404, 'not_available', 'Personal details are not available.');
 export async function GET(request: Request) {
+  if (!customerWorkspacesEnabled()) return notAvailable();
   try {
     const s = await services();
     const { scope, ...query } = Object.fromEntries(new URL(request.url).searchParams);
@@ -66,6 +71,7 @@ export async function GET(request: Request) {
   }
 }
 export async function POST(request: Request) {
+  if (!customerWorkspacesEnabled()) return notAvailable();
   try {
     const s = await services();
     if (request.headers.get('origin') !== s.config.APP_ORIGIN)

@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { createHash, createHmac, randomUUID } from 'node:crypto';
 import { fixture, rawContext } from './support';
 import { harness, options, type Fixture, type Row } from './revamp-g4-support';
@@ -566,6 +566,13 @@ describe('erasure placeholder', () => {
 });
 
 describe('the route', () => {
+  // Customer workspaces on, as the account page needs them; the switch-off case below turns them off.
+  beforeEach(() => {
+    vi.stubEnv('CORRIDRA_CUSTOMER_WORKSPACES_ENABLED', 'true');
+    vi.stubEnv('DATA_ENVIRONMENT', 'synthetic');
+    vi.stubEnv('VERCEL_ENV', '');
+  });
+  afterEach(() => vi.unstubAllEnvs());
   const load = () => import('../../apps/web/app/api/customer-personal-profile/route');
   const serviceFor = (person: string) =>
     new CustomerPersonalProfileService(
@@ -633,6 +640,36 @@ describe('the route', () => {
     expect(response.status).toBe(409);
     expect(await response.json()).toMatchObject({ code: 'no_workspace', error: noWorkspace });
   });
+  test('with customer workspaces off, GET and POST answer 404 not_available and never reach the service', async () => {
+    const r = await load();
+    const calls: string[] = [];
+    using({
+      view: async () => calls.push('view'),
+      history: async () => calls.push('history'),
+      command: async () => calls.push('command'),
+    });
+    route.services = {
+      ...(route.services as object),
+      missions: { budget: async () => calls.push('budget') },
+    };
+    for (const value of ['', 'false', 'TRUE']) {
+      vi.stubEnv('CORRIDRA_CUSTOMER_WORKSPACES_ENABLED', value);
+      for (const response of [
+        await r.GET(new Request('http://localhost/api/customer-personal-profile')),
+        await r.GET(new Request('http://localhost/api/customer-personal-profile?scope=history')),
+        await r.POST(post({ commandId: randomUUID(), expectedVersion: 0, title: 'Synthetic x' })),
+      ]) {
+        expect(response.status, value).toBe(404);
+        expect(response.headers.get('cache-control')).toBe('no-store');
+        expect(await response.json()).toEqual({
+          code: 'not_available',
+          error: 'Personal details are not available.',
+        });
+      }
+    }
+    expect(calls).toEqual([]);
+  });
+
   test('a module that is not installed answers 503 module_unavailable', async () => {
     const r = await load();
     const missing = Object.assign(new Error('function does not exist'), { code: '42883' });
