@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useReducer, useRef, useState } from 'react';
 import { Dialog } from '../../../components/ux/dialog';
+import { PrivacyLabel } from '../../../components/privacy-label';
 import {
   canCreate,
   canPreview,
@@ -74,6 +75,7 @@ export function DecisionCardPanelView({
         Make a private link to one decision you have reviewed. You see exactly what it shows before
         anything is made.
       </p>
+      <PrivacyLabel surface="decisionCard" />
       {offered.length === 0 ? (
         <p>There is no reviewed decision to share yet.</p>
       ) : (

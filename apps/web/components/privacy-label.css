@@ -1,0 +1,40 @@
+/* Who can see it (PL1): a quiet card in the design layer's tokens. Each reader and its word sit on one line of a plain list; on a wide
+   screen the readers share two columns so the block stays short. The word carries the meaning, never a colour. */
+.privacy-label {
+  display: grid;
+  gap: var(--space-1);
+  margin-block: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+.privacy-label-title {
+  margin: 0;
+  font-weight: 600;
+}
+.privacy-label ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: 0 var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.privacy-label li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0 var(--space-2);
+  min-width: 0;
+}
+.privacy-label li > span {
+  overflow-wrap: anywhere;
+}
+.privacy-label li > span:first-child {
+  color: var(--text-2);
+}
+.privacy-label-status {
+  font-weight: 500;
+}

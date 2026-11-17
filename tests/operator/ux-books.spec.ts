@@ -1221,3 +1221,41 @@ test('scroll budget: the closed panel adds almost nothing to the longest saved r
   info.annotations.push({ type: 'scroll-budget', description: JSON.stringify(figures) });
   console.log(`scroll budget (longest saved report, panel closed): ${JSON.stringify(figures)}`);
 });
+
+// PL1 (owner, 17 Nov 2026): "Who can see it" on the saved report, beside the report's own access line. It holds no
+// control and changes nothing else. Its length is recorded on the longest saved report in the real customer frame,
+// with and without it, and the page stays inside the same budget wherever it was inside before.
+test('PL1 who can see it on the saved report: the readers, no control, axe clean, page length recorded', async ({
+  page,
+}, info) => {
+  const long: Shape = { trip: 5, suppliers: 5, long: true };
+  const figures: Record<string, Record<string, number>> = {};
+  for (const [width, height, limit] of budgets) {
+    await page.setViewportSize({ width, height });
+    await openPage(page, { books: '0', shape: long });
+    await expect(page.getByRole('heading', { name: 'Commercial objective' })).toBeVisible();
+    const label = page.getByRole('group', { name: 'Who can see it' });
+    await expect(label).toBeVisible();
+    await expect(label.getByRole('listitem')).toHaveText([
+      'You, who saved this report Can see it',
+      'Anyone with the original report link until it expires or is withdrawn Can see it',
+      'Other people in your workspace Not stated',
+      'The Corridra team Not stated',
+    ]);
+    await expect(label.locator('button, a, input, select, textarea, [tabindex]')).toHaveCount(0);
+    expect(
+      (await new AxeBuilder({ page }).include('.privacy-label').analyze()).violations.map(
+        (v) => v.id,
+      ),
+    ).toEqual([]);
+    await toCustomerFrame(page);
+    const withLabel = (await page.evaluate(() => document.documentElement.scrollHeight)) / height;
+    await page.addStyleTag({ content: '.privacy-label{display:none}' });
+    const without = (await page.evaluate(() => document.documentElement.scrollHeight)) / height;
+    const round = (n: number) => Math.round(n * 100) / 100;
+    figures[`${width}`] = { without: round(without), withLabel: round(withLabel), limit };
+    if (without <= limit) expect(withLabel, `${width} wide`).toBeLessThanOrEqual(limit);
+  }
+  info.annotations.push({ type: 'page-length', description: JSON.stringify(figures) });
+  console.log(`PL1 page length (longest saved report, screens): ${JSON.stringify(figures)}`);
+});
