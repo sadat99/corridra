@@ -3,6 +3,24 @@ import type { ObjectStorage } from './index';
 
 export type BlobClient = Pick<typeof import('@vercel/blob'), 'put' | 'get'>;
 const maximumBytes = 4194304;
+// The checks every private Blob store in Corridra passes before any network call (evidence and, ADR-088, profile pictures).
+export function assertPrivateBlobConfiguration(token: string, region: string, storeId: string) {
+  // The SDK cannot attest region. Configuration must match the reviewed store settings.
+  if (!['fra1', 'cdg1', 'dub1', 'arn1', 'mad1'].includes(region))
+    throw new Error('An approved EU Blob region is required');
+  if (!token) throw new Error('Private Blob credentials are required');
+  if (!/^store_[a-zA-Z0-9]+$/.test(storeId))
+    throw new Error('An explicit Blob store ID is required');
+  // Match the pinned SDK's read-write token store selector before any network write.
+  if (
+    !token.startsWith('vercel_blob_rw_') ||
+    token.split('_')[3]?.toLowerCase() !== storeId.slice(6).toLowerCase()
+  )
+    throw new Error('Blob credentials do not match the selected store');
+}
+// The host a private object of this store must be served from.
+export const privateBlobHost = (storeId: string) =>
+  `${storeId.slice(6).toLowerCase()}.private.blob.vercel-storage.com`;
 export class BlobEvidenceStorage implements ObjectStorage {
   constructor(
     private token: string,
@@ -10,18 +28,7 @@ export class BlobEvidenceStorage implements ObjectStorage {
     private storeId: string,
     private client: BlobClient = { put, get },
   ) {
-    // The SDK cannot attest region. Configuration must match the reviewed store settings.
-    if (!['fra1', 'cdg1', 'dub1', 'arn1', 'mad1'].includes(region))
-      throw new Error('An approved EU Blob region is required');
-    if (!token) throw new Error('Private Blob credentials are required');
-    if (!/^store_[a-zA-Z0-9]+$/.test(storeId))
-      throw new Error('An explicit Blob store ID is required');
-    // Match the pinned SDK's read-write token store selector before any network write.
-    if (
-      !token.startsWith('vercel_blob_rw_') ||
-      token.split('_')[3]?.toLowerCase() !== storeId.slice(6).toLowerCase()
-    )
-      throw new Error('Blob credentials do not match the selected store');
+    assertPrivateBlobConfiguration(token, region, storeId);
   }
   private path(key: string) {
     // SDK reads accept URLs too. Only internal paths may reach it from this adapter.

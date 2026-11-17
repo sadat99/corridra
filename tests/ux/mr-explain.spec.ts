@@ -179,6 +179,11 @@ test.describe('Explain with a mouse and a keyboard', () => {
     await later.dispatchEvent('pointerdown', { pointerType: 'touch', bubbles: true });
     await later.dispatchEvent('pointercancel', { pointerType: 'touch', bubbles: true });
     await page.locator('#outside').focus();
+    // The four holder shapes (PR 3) sit between the step shapes and the field.
+    for (const word of ['Supplier or Buyer', 'Workspace owner or admin', 'Corridra team', 'You']) {
+      await page.keyboard.press('Shift+Tab');
+      await expect(page.getByRole('button', { name: word, exact: true })).toBeFocused();
+    }
     await page.keyboard.press('Shift+Tab');
     await expect(page.getByRole('button', { name: 'Not tracked yet', exact: true })).toBeFocused();
     await page.keyboard.press('Shift+Tab');
@@ -301,4 +306,77 @@ test.describe('Explain on a touch screen', () => {
     );
     expect(small).toBe(0);
   });
+});
+
+// Visual grammar PR 3: the holder shapes in the Road legend, at the four widths.
+const holderKeys = [
+  ['you', 'You', say('mr.explain.holder.you')],
+  ['team', 'Corridra team', say('mr.explain.holder.team')],
+  ['owner', 'Workspace owner or admin', say('mr.explain.holder.owner')],
+  ['third', 'Supplier or Buyer', say('mr.explain.holder.third')],
+] as const;
+
+test.describe('Road legend holder shapes', () => {
+  for (const width of [320, 390, 768, 1440]) {
+    test(`four explained holder shapes, distinct, no sideways scroll, axe clean at ${width}`, async ({
+      page,
+    }) => {
+      await mount(page, width);
+      for (const [holder, word, hint] of holderKeys) {
+        const button = page.getByRole('button', { name: word, exact: true });
+        await expect(button).toBeVisible();
+        await expect(button).toHaveAccessibleDescription(hint);
+        await expect(button.locator(`.mr-holder-shape[data-holder="${holder}"]`)).toBeVisible();
+      }
+      const look = async (holder: string) =>
+        page
+          .locator(`.mr-road-keys[data-keys="holders"] .mr-holder-shape[data-holder="${holder}"]`)
+          .evaluate((el) => {
+            const style = getComputedStyle(el);
+            return {
+              radius: style.borderTopLeftRadius,
+              topRight: style.borderTopRightRadius,
+              bottom: style.borderBottomLeftRadius,
+              bottomRight: style.borderBottomRightRadius,
+              width: parseFloat(style.width),
+              height: parseFloat(style.height),
+              transform: style.transform,
+            };
+          });
+      const diamond = await look('owner');
+      const dome = await look('third');
+      expect(diamond.transform).not.toBe('none');
+      expect(dome.transform).toBe('none');
+      // A true half-disc: half as tall as wide, a semicircle on top, a flat edge below.
+      expect(dome.height).toBeCloseTo(dome.width / 2, 1);
+      // Computed radii are the specified 999px; the drawn radius is scaled by the CSS overlap rule.
+      const rTL = parseFloat(dome.radius);
+      const rTR = parseFloat(dome.topRight);
+      const scale = Math.min(
+        1,
+        dome.width / (rTL + rTR),
+        dome.height / (rTL + parseFloat(dome.bottom)),
+      );
+      expect(rTL).toBe(rTR);
+      expect(rTL * scale).toBeCloseTo(dome.width / 2, 1);
+      expect(parseFloat(dome.bottom)).toBe(0);
+      expect(parseFloat(dome.bottomRight)).toBe(0);
+      expect(dome.radius).not.toBe((await look('team')).radius);
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+      ).toBe(true);
+      const height = await page.evaluate(() => document.documentElement.scrollHeight);
+      const rows = await page.evaluate(() => ({
+        road: document.querySelector('.mr-road-wrap')!.getBoundingClientRect().height,
+        holders: document
+          .querySelector('.mr-road-keys[data-keys="holders"]')!
+          .getBoundingClientRect().height,
+      }));
+      console.log(`page height ${width}: ${height}, road ${rows.road}, holder row ${rows.holders}`);
+      await page.getByRole('button', { name: 'Supplier or Buyer', exact: true }).focus();
+      await expect(popup(page, 'Supplier or Buyer')).toBeVisible();
+      const axe = await new AxeBuilder({ page }).include('#mr-explain-fixture').analyze();
+      expect(axe.violations.map((v) => `${v.id}: ${v.nodes.length}`)).toEqual([]);
+    });
+  }
 });

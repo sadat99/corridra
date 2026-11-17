@@ -10,15 +10,46 @@ import { CorridorMap } from './corridor-map';
 import { WorldRouteMap } from './world-route-map';
 import { SubTabs } from './ux/sub-tabs';
 
+// Open destinations from Bangladesh, as equals (owner decision 17 November 2026, routes and markets). China and the EU
+// have their own pages; the UK, the US and Australia have none yet and open the request with both countries filled in.
+// The Spain page stays reachable at its own address but is no longer offered as a route here.
+const openNote = 'Open now from Bangladesh. Describe your mission and we will review it.';
 const directions = [
-  ...Object.entries(corridorPages).map(([slug, content]) => ({
-    key: slug,
-    label: `Bangladesh → ${content.market === 'EU' ? 'European Union' : content.market === 'CN' ? 'China' : 'Spain'}`,
+  {
+    key: 'bangladesh-china',
+    label: 'Bangladesh → China',
     company: 'BD',
-    market: content.market,
-    slug,
-    note: content.qualification,
+    market: 'CN',
+    slug: 'bangladesh-china',
+    note: corridorPages['bangladesh-china'].qualification,
     reverse: false,
+    world: false,
+  },
+  {
+    key: 'bangladesh-eu',
+    label: 'Bangladesh → European Union',
+    company: 'BD',
+    market: 'EU',
+    slug: 'bangladesh-eu',
+    note: corridorPages['bangladesh-eu'].qualification,
+    reverse: false,
+    world: false,
+  },
+  ...(
+    [
+      ['bangladesh-uk', 'the UK', 'GB'],
+      ['bangladesh-us', 'the US', 'US'],
+      ['bangladesh-au', 'Australia', 'AU'],
+    ] as const
+  ).map(([key, name, market]) => ({
+    key,
+    label: `Bangladesh → ${name}`,
+    company: 'BD',
+    market,
+    slug: '',
+    note: openNote,
+    reverse: false,
+    world: true,
   })),
   {
     key: 'china-bangladesh',
@@ -28,15 +59,17 @@ const directions = [
     slug: 'bangladesh-china',
     note: corridorPages['bangladesh-china'].reverse,
     reverse: true,
+    world: false,
   },
   {
-    key: 'spain-bangladesh',
-    label: 'Spain → Bangladesh',
-    company: 'ES',
+    key: 'eu-bangladesh',
+    label: 'European Union → Bangladesh',
+    company: 'EU',
     market: 'BD',
-    slug: 'bangladesh-spain',
-    note: corridorPages['bangladesh-spain'].reverse,
+    slug: 'bangladesh-eu',
+    note: corridorPages['bangladesh-eu'].reverse,
     reverse: true,
+    world: false,
   },
 ];
 /** The five situations from the Public Experience. Each presets the existing selectors. */
@@ -71,7 +104,7 @@ const situations = [
     text: 'Find customers and partners without a local office.',
     role: 'exporter',
     job: 'market_entry',
-    direction: 'spain-bangladesh',
+    direction: 'eu-bangladesh',
   },
 ] as const;
 const exampleSteps = [
@@ -130,15 +163,16 @@ export function DiscoveryExperience({ children }: { children?: ReactNode }) {
           company: custom.company,
           market: custom.market,
           slug: '',
-          note: 'No operating offer is announced for this route yet. You can still describe your mission and we will review it.',
+          note: 'No operating offer announced. We tell you plainly if we can help. You can still describe your mission and we will review it.',
           reverse: false,
+          world: true,
         }
       : (directions.find((item) => item.key === direction) ?? directions[0]));
   const clearOther = () => setOther({ company: '', market: '' });
   useEffect(() => {
     // The world outline is only needed for routes beyond the two spotlight corridors.
-    if (custom && !world) void import('./world-geography').then((m) => setWorld(m.world));
-  }, [custom, world]);
+    if (route.world && !world) void import('./world-geography').then((m) => setWorld(m.world));
+  }, [route.world, world]);
   const selectedJob = missionCatalogue.find((item) => item.key === job) ?? missionCatalogue[0];
   const sourcing = [
     'sourcing',
@@ -146,7 +180,8 @@ export function DiscoveryExperience({ children }: { children?: ReactNode }) {
     'supplier_evaluation',
     'factory_visits',
   ].includes(job);
-  const briefUrl = `/plan?companyCountry=${route.company}&marketCode=${route.market}&job=${selectedJob.key}`;
+  // The EU is a bloc, not a company country, so a request from the EU leaves the company country for the person to name.
+  const briefUrl = `/plan?${route.company === 'EU' ? '' : `companyCountry=${route.company}&`}marketCode=${route.market}&job=${selectedJob.key}`;
   const fromValue = other.company || route.company;
   const toValue = other.market || route.market;
   const routePanel = (
@@ -161,6 +196,7 @@ export function DiscoveryExperience({ children }: { children?: ReactNode }) {
             value={fromValue}
             onChange={(e) => setOther({ company: e.target.value, market: toValue })}
           >
+            <option value="EU">European Union (trade bloc)</option>
             {countryCodes.map((code) => (
               <option key={code} value={code}>
                 {mounted ? placeName(code) : code}
@@ -208,7 +244,7 @@ export function DiscoveryExperience({ children }: { children?: ReactNode }) {
         </div>
       </div>
       <div className="ux-atlas" aria-label="Route map">
-        {custom && world ? (
+        {route.world && world ? (
           <WorldRouteMap
             world={world}
             from={route.company}
@@ -397,8 +433,8 @@ export function DiscoveryExperience({ children }: { children?: ReactNode }) {
           </div>
           <p>
             {route.reverse
-              ? 'This route runs the other way and needs its own review. No operating offer is announced yet.'
-              : 'This is one of the routes we start with.'}
+              ? 'This route runs the other way and is taken case by case. No operating offer announced. We tell you plainly if we can help.'
+              : 'This route is open now.'}
           </p>
           <Link prefetch={false} className="text-link" href={briefUrl}>
             Start a request on this route <Arrow />

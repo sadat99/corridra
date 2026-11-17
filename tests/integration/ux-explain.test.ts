@@ -89,10 +89,11 @@ describe('Explain', () => {
 });
 
 describe('the Road legend', () => {
-  it('shows four explained shapes with the step words and the catalogue sentences', async () => {
+  it('shows four step shapes and four holder shapes, each explained, with the catalogue sentences', async () => {
     const { Road } = await load('road');
     const html = renderToStaticMarkup(createElement(Road, { status: 'MEETINGS' }));
-    expect(html.match(/class="mr-explain"/g)).toHaveLength(4);
+    // Four step states, then (PR 3) the four holder shapes.
+    expect(html.match(/class="mr-explain"/g)).toHaveLength(8);
     for (const [state, word] of [
       ['done', 'Done'],
       ['now', 'Now'],

@@ -312,7 +312,13 @@ export function offerContext(typeKey: string | null | undefined): 'GENERAL' | 'M
 // Reads keep the row and send these as null, so exact money and history are untouched and only who may read changes.
 export const quotationTermFields = ['terms', 'uncertainties', 'reason'] as const;
 export function withholdQuotationTerms<T extends Record<string, unknown>>(row: T) {
-  return { ...row, terms: null, uncertainties: null, reason: null };
+  return {
+    ...row,
+    ...(Object.fromEntries(quotationTermFields.map((field) => [field, null])) as Record<
+      (typeof quotationTermFields)[number],
+      null
+    >),
+  };
 }
 // ADR-087 U1r (owner, 17 November 2026, relayed: "yes to both"): the staff-written selection rationale and next action, and
 // the terms an RFQ asked for, are read with delivery.read_body too. A staff viewer keeps each row with these fields null.

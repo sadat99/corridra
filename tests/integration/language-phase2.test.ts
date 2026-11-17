@@ -86,11 +86,14 @@ describe('the teaching layer takes its words from the message module', () => {
     },
   );
 
-  it('keeps the five trust words for the holders: you, the team and the other side', async () => {
+  it('keeps four distinct trust words for the holders: you, the team, the workspace owner and the other side', async () => {
     const { mrLabelsFor } = await load('mr/labels');
+    const { holders } = await load('mr/types');
     for (const code of localeCodes) {
       const { holder } = mrLabelsFor(code);
-      expect(new Set(Object.values(holder)).size).toBe(3);
+      expect(Object.keys(holder), code).toEqual(['you', 'team', 'owner', 'third']);
+      expect(Object.keys(holder), code).toEqual([...holders]);
+      expect(new Set(Object.values(holder)).size, code).toBe(4);
       expect(holder.team, code).toMatch(/corridra/i);
     }
   });

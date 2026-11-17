@@ -92,7 +92,8 @@ test('UX-06 legacy example fragment opens the real synthetic flow and close rest
     '/plan?companyCountry=CN&marketCode=BD&job=sourcing',
   );
   await page.getByRole('tab', { name: 'Sample Mission' }).click();
-  await expect(example).toContainText('No operating offer is announced');
+  // owner decision 17 Nov 2026, routes and markets: the canonical ask-us sentence
+  await expect(example).toContainText('No operating offer announced');
 });
 
 test('UX-06 discovery preserves keyboard and content at all required widths and reduced motion', async ({

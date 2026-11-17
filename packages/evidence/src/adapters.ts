@@ -1,22 +1,22 @@
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { createConnection } from 'node:net';
 import type { ObjectStorage, MalwareScanner } from './index';
+// The EU regions an S3 bucket in Corridra may be in (evidence and, ADR-088, profile pictures).
+export const approvedS3Regions: readonly string[] = [
+  'eu-central-1',
+  'eu-west-1',
+  'eu-west-3',
+  'eu-north-1',
+  'eu-south-1',
+  'eu-south-2',
+];
 export class S3EvidenceStorage implements ObjectStorage {
   constructor(
     private client: S3Client,
     private bucket: string,
     private region: string,
   ) {
-    if (
-      ![
-        'eu-central-1',
-        'eu-west-1',
-        'eu-west-3',
-        'eu-north-1',
-        'eu-south-1',
-        'eu-south-2',
-      ].includes(region)
-    )
+    if (!approvedS3Regions.includes(region))
       throw new Error('An approved EU storage region is required');
   }
   async put(key: string, body: Uint8Array, mime: string) {

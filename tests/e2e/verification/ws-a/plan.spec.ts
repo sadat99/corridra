@@ -98,7 +98,8 @@ test('A-3 a link naming another job asks before replacing a saved draft, and Cle
   const first = await page
     .getByRole('option')
     .evaluateAll((options) => options.slice(0, 3).map((option) => option.textContent));
-  expect(first).toEqual(['Bangladesh', 'China', 'Spain']);
+  // owner decision 17 Nov 2026, routes and markets: the pinned countries are now Bangladesh, China, the UK, the US and Australia
+  expect(first).toEqual(['Bangladesh', 'China', 'United Kingdom']);
 });
 
 test('V-10 a sent request gets a receipt and reads as received, never as a draft', async ({
