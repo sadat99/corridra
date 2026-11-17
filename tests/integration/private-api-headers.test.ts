@@ -141,3 +141,20 @@ describe('the staff supply API and the framework header overrides', () => {
     expect(matching[0]!.headers).toContain("key: 'Cache-Control', value: 'no-store'");
   });
 });
+
+// ADR-086: the account name route is not under customer-*, and it answers about the signed-in person's own account.
+describe('the account name API and the framework header overrides', () => {
+  it('has a rule for /api/account/name with no-referrer and no-store', () => {
+    const matching = rules.filter(
+      (rule) => rule.source === '/api/account/name' || rule.source === '/api/account/:path*',
+    );
+    expect(
+      matching,
+      'the name route is missing from the private-header overrides',
+    ).not.toHaveLength(0);
+    for (const rule of matching) {
+      expect(rule.headers).toContain("key: 'Referrer-Policy', value: 'no-referrer'");
+      expect(rule.headers).toContain("key: 'Cache-Control', value: 'no-store'");
+    }
+  });
+});

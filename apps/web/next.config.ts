@@ -67,6 +67,21 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // ADR-086: the person's own personal details and the account name route answer about the signed-in account.
+        source: '/api/customer-personal-profile',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+        ],
+      },
+      {
+        source: '/api/account/name',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+        ],
+      },
+      {
         source: '/api/intake/pending/:path*',
         headers: [
           { key: 'Cache-Control', value: 'no-store' },

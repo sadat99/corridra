@@ -52,6 +52,7 @@ import { migrateSourcingWorkflow } from '../packages/db/src/sourcing-workflow-mi
 import { configureSourcingWorkflow } from '../packages/auth/src/sourcing-workflow-configuration';
 import { migrateSupplySources } from '../packages/db/src/supply-source-migrate';
 import { migrateHelperInterest } from '../packages/db/src/helper-interest-migrate';
+import { migrateCustomerPersonalProfiles } from '../packages/db/src/customer-personal-profile-migrate';
 import { configureSupplySources } from '../packages/auth/src/supply-source-configuration';
 import { configureWorkspaceLifecycle } from '../packages/auth/src/customer-workspace-lifecycle-configuration';
 import { configureAccountLifecycle } from '../packages/auth/src/customer-account-lifecycle-configuration';
@@ -111,6 +112,7 @@ const v = z
     PROGRAMME_PAGES_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     HELPER_INTEREST_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     PROGRAMME_ERASURE_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
+    PERSONAL_PROFILE_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     COUNTERPARTY_CHANGES_ACTION: z
       .enum(['unchanged', 'install', 'enable', 'pause'])
       .default('unchanged'),
@@ -287,6 +289,8 @@ if (v.HELPER_INTEREST_ACTION !== 'unchanged' && !apply)
   throw new Error('Helper interest installation requires INSTALL_APPLY=yes');
 if (v.PROGRAMME_ERASURE_ACTION !== 'unchanged' && !apply)
   throw new Error('Programme words erasure installation requires INSTALL_APPLY=yes');
+if (v.PERSONAL_PROFILE_ACTION !== 'unchanged' && !apply)
+  throw new Error('Personal profile installation requires INSTALL_APPLY=yes');
 if (v.COUNTERPARTY_CHANGES_ACTION !== 'unchanged' && !apply)
   throw new Error('Contact and note changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.COUNTERPARTY_CHANGES_ACTION) && !v.COUNTERPARTY_CHANGES_REASON)
@@ -359,6 +363,7 @@ const registries = [
   'customer_participant_label_migrations',
   'customer_programme_publication_migrations',
   'customer_programme_erasure_migrations',
+  'customer_personal_profile_migrations',
   'recipient_response_revision_migrations',
   'network_real_use_migrations',
   'customer_billing_real_migrations',
@@ -691,6 +696,13 @@ try {
     if (v.PROGRAMME_ERASURE_ACTION === 'install') {
       await migrateCustomerProgrammeErasure(pool);
       console.log('installed or already current: programme words erasure');
+    }
+    // Private personal details and the account security record (ADR-086) are never part of the base run. Installing the
+    // database module exposes nothing until the account page reads it. It installs no other module and refuses, naming the
+    // step, unless the account lifecycle modules are installed first. Reached only through field_modules_action=personal_profile.
+    if (v.PERSONAL_PROFILE_ACTION === 'install') {
+      await migrateCustomerPersonalProfiles(pool);
+      console.log('installed or already current: personal profile');
     }
     // Withdraw, correct and hide for private contacts and notes (CRUD G11) are never part of the base run. Install leaves
     // the one control closed; enable and pause are owner decisions with a reason. Reached through field_modules_action

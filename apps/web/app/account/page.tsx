@@ -31,7 +31,7 @@ import { companyProfilesTitle } from '../../lib/workspace-choice';
 import { AccountHashRedirect } from './hash-redirect';
 import { DeliveredReports } from './delivered-reports';
 import { uxSwitchOn } from '../../lib/ux-switches';
-import { realUseEnabled } from '@corridra/auth/customer-production';
+import { customerIssuerFromEnv, realUseEnabled } from '@corridra/auth/customer-production';
 import { PendingRequestNotice } from '../../components/pending-request-notice';
 import { customerProgrammePagesEnabled } from '@corridra/auth/customer-programme-publication';
 import { ProgrammeApplyNotice } from '../../components/programme-apply-notice';
@@ -42,6 +42,8 @@ import { HomeWork } from './home-work';
 import { RequestsTabs } from './requests-tabs';
 import { ReportsTabs } from './reports-tabs';
 import { AccountSettings } from './account-settings';
+import { PersonalProfile } from './personal-profile';
+import { accountSecurityCapabilities } from '../../lib/account-security-capabilities';
 import { AccountClosure, AccountClosureComingSoon } from './account-closure';
 import { ContrastRow, LessMovementRow, TextSizeRow } from '../../components/ux/comfort-controls';
 import { customerAccountLifecycleEnabled } from '@corridra/auth/customer-account-lifecycle';
@@ -335,12 +337,14 @@ export default async function Page({
                 aria-label="Your verified profile"
               >
                 <h2>Profile and Identity</h2>
-                <span className="ux-status" data-tone="positive">
-                  Verified account email
-                </span>
-                <h3>{data.user.name}</h3>
-                <p>{data.user.email}</p>
-                <p>Your email address is verified. This does not verify your company.</p>
+                <PersonalProfile
+                  subject={data.user.id}
+                  issuer={customerIssuerFromEnv()}
+                  name={typeof data.user.name === 'string' ? data.user.name.trim() || null : null}
+                  email={data.user.email}
+                  nameEditable={accountSecurityCapabilities.updateName}
+                  detailsEnabled={customerWorkspacesEnabled()}
+                />
               </section>
             }
             security={
