@@ -232,26 +232,24 @@ test('trust distinguishes declarations, evidence, verification and observed outc
   ).toBeVisible();
 });
 
-test('/sell shows the Spain and EU route, the reverse direction and what is recorded', async ({
-  page,
-}) => {
+// owner decision 17 Nov 2026, routes and markets: the sell and enter pages name the EU, not Spain
+test('/sell shows the EU route, the reverse direction and what is recorded', async ({ page }) => {
   await page.goto('/sell');
   await page.locator('details.guide-more > summary').click(); // the closing sections sit behind Show more
-  await expect(page.getByText('Bangladesh to Spain and the EU', { exact: true })).toBeVisible();
+  await expect(page.getByText('Bangladesh to the EU', { exact: true })).toBeVisible();
   const reverse = page.getByRole('region', { name: 'It also works the other way.' });
-  await expect(reverse).toContainText(
-    'Spanish or EU seller can reach suitable buyers in Bangladesh',
+  await expect(reverse).toContainText('seller from the EU can reach suitable buyers in Bangladesh');
+  await expect(reverse.getByRole('link', { name: /Plan a Mission From the EU/ })).toHaveAttribute(
+    'href',
+    '/plan?companyCountry=ES&marketCode=BD&job=buyers',
   );
   await expect(
-    reverse.getByRole('link', { name: /Plan a Mission From Spain or the EU/ }),
-  ).toHaveAttribute('href', '/plan?companyCountry=ES&marketCode=BD&job=buyers');
-  await expect(
-    reverse.getByRole('link', { name: 'Read the Spain to Bangladesh scope' }),
+    reverse.getByRole('link', { name: 'Read the EU to Bangladesh scope' }),
   ).toHaveAttribute('href', '/corridors/bangladesh-spain');
   await expect(
     page.getByRole('region', { name: 'What we record for every introduction' }),
   ).toContainText('Who the buyer is and why they fit your offer.');
-  await reverse.getByRole('link', { name: /Plan a Mission From Spain or the EU/ }).click();
+  await reverse.getByRole('link', { name: /Plan a Mission From the EU/ }).click();
   await expect(page).toHaveURL('/plan?companyCountry=ES&marketCode=BD&job=buyers');
   await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue(
     'buyers',
@@ -263,10 +261,11 @@ test('/enter-market and /trade-missions name their route and what is recorded', 
 }) => {
   await page.goto('/enter-market');
   await page.locator('details.guide-more > summary').click(); // the closing sections sit behind Show more
-  await expect(page.getByText('Spain and the EU to Bangladesh', { exact: true })).toBeVisible();
-  await expect(
-    page.getByRole('link', { name: 'Read the Spain to Bangladesh scope' }),
-  ).toHaveAttribute('href', '/corridors/bangladesh-spain');
+  await expect(page.getByText('The EU to Bangladesh', { exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Read the EU to Bangladesh scope' })).toHaveAttribute(
+    'href',
+    '/corridors/bangladesh-spain',
+  );
   await expect(
     page.getByRole('region', { name: 'What we record for every market visit' }),
   ).toBeVisible();

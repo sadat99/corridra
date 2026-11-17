@@ -226,8 +226,8 @@ export default function Page() {
           }
           detail={
             <p>
-              Bangladesh, Spain and wider European market relationships form part of the product
-              direction. Each route needs its own reviewed scope and delivery capacity.
+              Bangladesh to China, the EU, the UK, the US, Australia and key Asian markets are the
+              routes open now. Each route needs its own reviewed scope and delivery capacity.
             </p>
           }
           link={{ href: '/corridors', label: 'Explore the Routes' }}

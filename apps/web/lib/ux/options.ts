@@ -5,8 +5,15 @@ import { timeZoneLabel } from './format';
 
 export type PickerOption = { value: string; label: string; hint?: string };
 
-/** Bangladesh, China and Spain first; the EU follows them as a group. */
-export const pinnedCountries = ['BD', 'CN', 'ES'] as const;
+/**
+ * Bangladesh, China, the UK, the US and Australia first (owner decision 17 November 2026, routes and markets); the EU is
+ * pinned by the market picker and its member states follow as a group. Spain stays searchable. Display order only: the
+ * request body carries the chosen codes unchanged.
+ */
+export const pinnedCountries = ['BD', 'CN', 'GB', 'US', 'AU'] as const;
+
+/** The markets open now from Bangladesh, by request code (owner decision 17 November 2026). The EU member states count with the EU. */
+export const openMarketCodes = ['CN', 'EU', 'GB', 'US', 'AU'] as const;
 export const euCountries = [
   'AT',
   'BE',

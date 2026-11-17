@@ -90,11 +90,13 @@ describe('money (D10)', () => {
 });
 
 describe('pickers', () => {
-  test('countries start with Bangladesh, China, Spain, then the EU, labelled by name', () => {
+  // owner decision 17 Nov 2026, routes and markets: the open-route countries are pinned, the EU member states follow
+  test('countries start with Bangladesh, China, the UK, the US and Australia, then the EU, labelled by name', () => {
     const options = countryOptions();
-    expect(options.slice(0, 3).map((o) => o.value)).toEqual(['BD', 'CN', 'ES']);
+    expect(options.slice(0, 5).map((o) => o.value)).toEqual(['BD', 'CN', 'GB', 'US', 'AU']);
     expect(options[0]!.label).toBe('Bangladesh');
-    expect(options[3]!.hint).toBe('EU');
+    expect(options[5]!.hint).toBe('EU');
+    expect(options.some((o) => o.value === 'ES')).toBe(true);
     expect(new Set(options.map((o) => o.value)).size).toBe(options.length);
   });
   test('time zones start with Dhaka, Madrid, Shanghai and UTC', () => {

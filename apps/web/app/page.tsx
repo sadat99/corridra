@@ -35,40 +35,16 @@ const dossier: readonly { field: MessageKey; fact?: Fact }[] = [
   { field: 'home.dossier.volume' },
 ];
 
-// Boarding passes for the two spotlighted routes and the way to any other. Airport codes are the same in
-// every language.
-const passes = [
-  {
-    href: '/corridors/bangladesh-china',
-    tag: 'home.route.tag',
-    number: '01',
-    to: 'CAN',
-    text: 'home.pass.bdcn',
-    stub: 'home.pass.open',
-  },
-  {
-    href: '/corridors/bangladesh-spain',
-    tag: 'home.route.tag',
-    number: '02',
-    to: 'MAD',
-    text: 'home.pass.bdes',
-    stub: 'home.pass.open',
-  },
-  {
-    href: '/corridors',
-    tag: 'home.other.title',
-    to: '???',
-    text: 'home.other.text',
-    stub: 'home.other.link',
-  },
-] as const satisfies readonly {
-  href: string;
-  tag: MessageKey;
-  number?: string;
-  to: string;
-  text: MessageKey;
-  stub: MessageKey;
-}[];
+// Boarding passes for the open destinations, shown as equals (owner decision, 17 November 2026, routes and markets),
+// and the way to any other route. China and the EU keep their detail pages; the others open the routes page.
+const openPasses = [
+  { href: '/corridors/bangladesh-china', to: 'home.country.cn' },
+  { href: '/corridors/bangladesh-eu', to: 'home.country.eu' },
+  { href: '/corridors', to: 'home.country.uk' },
+  { href: '/corridors', to: 'home.country.us' },
+  { href: '/corridors', to: 'home.country.au' },
+  { href: '/corridors', to: 'home.country.asia' },
+] as const satisfies readonly { href: string; to: MessageKey }[];
 
 export default function Home() {
   const t = useT();
@@ -144,26 +120,28 @@ export default function Home() {
         <h2 id="routes-title">{t('home.routes.title')}</h2>
         <p className="ac1-section-note">{t('home.routes.lead')}</p>
         <div className="ac1-routes">
-          {passes.map((pass) => (
+          {openPasses.map((pass) => (
             <Link
               prefetch={false}
-              key={pass.href}
+              key={pass.to}
               href={pass.href}
-              className={pass.href === '/corridors' ? 'ac1-pass ac1-other' : 'ac1-pass'}
+              className="ac1-pass ac1-pass-open"
             >
-              <span className="ac1-pass-main">
-                <span className="label ac1-route-tag">
-                  {t(pass.tag)}
-                  {'number' in pass ? ` ${pass.number}` : null}
-                </span>
-                <span className="ac1-pass-codes" lang="en" aria-hidden="true">
-                  DAC <CorridraIcon name="arrow" className="ac1-route-arrow" /> {pass.to}
-                </span>
-                <span className="ac1-pass-text">{t(pass.text)}</span>
+              <span className="label ac1-route-tag">{t('home.route.tag')}</span>
+              <span className="ac1-pass-codes">
+                <span>{t('home.country.bd')}</span>
+                <CorridraIcon name="arrow" className="ac1-route-arrow" />
+                <span>{t(pass.to)}</span>
               </span>
-              <span className="ac1-pass-stub">{t(pass.stub)}</span>
             </Link>
           ))}
+          <Link prefetch={false} href="/corridors" className="ac1-pass ac1-other">
+            <span className="ac1-pass-main">
+              <span className="label ac1-route-tag">{t('home.other.title')}</span>
+              <span className="ac1-pass-text">{t('home.other.text')}</span>
+            </span>
+            <span className="ac1-pass-stub">{t('home.other.link')}</span>
+          </Link>
         </div>
       </section>
 

@@ -3,10 +3,10 @@ export function Corridor() {
   return (
     <div
       className="corridor"
-      aria-label="Initial directions: Bangladesh–China, Bangladesh–Spain and Bangladesh–EU"
+      aria-label="Open directions: Bangladesh to China, the EU, the UK, the US, Australia and key Asian markets"
     >
       <div className="corridor-heading">
-        <span className="label">INITIAL COMMERCIAL DIRECTIONS</span>
+        <span className="label">OPEN COMMERCIAL DIRECTIONS</span>
         <span className="corridor-index">03 / DIRECTIONS</span>
       </div>
       <div className="corridor-path" aria-hidden="true">
@@ -39,8 +39,8 @@ export function Corridor() {
           →
         </span>
         <div>
-          <span className="location-code">CN / ES / EU</span>
-          <strong>China, Spain & EU</strong>
+          <span className="location-code">CN / EU / GB / US / AU</span>
+          <strong>China, the EU, the UK, the US, Australia and key Asian markets</strong>
         </div>
       </div>
       <p className="corridor-caption">

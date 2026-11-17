@@ -105,7 +105,7 @@ const footerWords = {
   'footer.group.sell': 'Sell and Expand',
   'footer.group.trips': 'Groups and Trips',
   'footer.link.china': 'Bangladesh to China',
-  'footer.link.spain': 'Bangladesh to Spain',
+  'footer.link.spain': 'Bangladesh to the EU',
   'footer.link.sample': 'See a Sample Mission',
   'footer.link.network': 'Join the Corridra Network',
   'footer.link.routes': 'Explore Every Route',
@@ -115,7 +115,8 @@ const footerWords = {
   'footer.facts': 'Every fact says where it comes from:',
   'footer.factsMore': 'How We Label Facts',
   'footer.private': 'Your work stays private to the people given access',
-  'footer.routes': 'First routes: Bangladesh to China, Spain and the EU',
+  'footer.routes':
+    'Open now from Bangladesh: China, the EU, the UK, the US, Australia, key Asian markets',
 } as const;
 
 /**

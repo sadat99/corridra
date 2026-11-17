@@ -46,7 +46,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     label: 'Sell in a new market',
     title: 'Make the trip commercially useful.',
     description:
-      'We are building a way to find and qualify buyers in Spain and the European Union (EU) before you arrive. We are also building a way to follow up after you leave.',
+      'We are building a way to find and qualify buyers in China, the EU, the UK, the US, Australia and key Asian markets before you arrive. We are also building a way to follow up after you leave.',
     introduction: {
       title: 'A booth gives visibility. It does not decide who you meet.',
       text: 'Start with your offer and the buyer you want. An attendee list is only one place to look.',
@@ -71,16 +71,16 @@ export const publicPages: Record<string, PublicPageContent> = {
     },
     cta: 'Plan My Mission',
     route: {
-      label: 'Bangladesh to Spain and the EU',
+      label: 'Bangladesh to the EU',
       href: '/corridors/bangladesh-eu',
-      linkLabel: 'Read the Spain and EU scope',
+      linkLabel: 'Read the EU scope',
     },
     reverse: {
       title: 'It also works the other way.',
-      text: 'A Spanish or EU seller can reach suitable buyers in Bangladesh. Each case is set up and reviewed separately.',
-      cta: 'Plan a Mission From Spain or the EU',
+      text: 'A seller from the EU can reach suitable buyers in Bangladesh. Each case is set up and reviewed separately.',
+      cta: 'Plan a Mission From the EU',
       href: '/plan?companyCountry=ES&marketCode=BD&job=buyers',
-      scopeLabel: 'Read the Spain to Bangladesh scope',
+      scopeLabel: 'Read the EU to Bangladesh scope',
       scopeHref: '/corridors/bangladesh-spain',
     },
     record: {
@@ -167,9 +167,9 @@ export const publicPages: Record<string, PublicPageContent> = {
     },
     cta: 'Plan a Market-Entry Mission',
     route: {
-      label: 'Spain and the EU to Bangladesh',
+      label: 'The EU to Bangladesh',
       href: '/corridors/bangladesh-spain',
-      linkLabel: 'Read the Spain to Bangladesh scope',
+      linkLabel: 'Read the EU to Bangladesh scope',
     },
     record: {
       title: 'What we record for every market visit',
@@ -417,7 +417,7 @@ export const publicPages: Record<string, PublicPageContent> = {
       },
       {
         title: 'Earn depth before claiming breadth',
-        text: 'We start with Bangladesh to China, Spain and the EU. Each needs its own reviewed scope. We claim no global coverage.',
+        text: 'From Bangladesh we run missions to China, the EU, the UK, the US, Australia and key Asian markets. Each needs its own reviewed scope. We claim no global coverage.',
       },
       {
         title: 'Keep the evidence close',

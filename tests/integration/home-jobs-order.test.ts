@@ -20,12 +20,14 @@ describe('home jobs order', () => {
     expect(Object.values(homeJobs).map((job) => translate('en', job.route))).toEqual([
       'Bangladesh to China',
       'Delegations and trade missions',
-      'Bangladesh to Spain and the EU',
+      // owner decision 17 Nov 2026, routes and markets
+      'Bangladesh to the EU, the UK, the US and more',
     ]);
-    // The footer's first-routes line is where the repository states its routes.
+    // The footer's open-routes line is where the repository states its routes.
     const messages = readFileSync('apps/web/lib/i18n/messages.ts', 'utf8');
     expect(messages).toContain(
-      "'footer.routes': 'First routes: Bangladesh to China, Spain and the EU'",
+      // owner decision 17 Nov 2026, routes and markets
+      "'footer.routes': 'Open now from Bangladesh: China, the EU, the UK, the US, Australia, key Asian markets'",
     );
   });
 
