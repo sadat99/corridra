@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, test } from 'vitest';
 
-// ADR-087 U2 and U3 install wiring. Each module is reached only through its own field_modules_action value, never by a base
+// ADR-087 U2, U3 and the quotation link check install wiring. Each module is reached only through its own field_modules_action value, never by a base
 // run, and needs apply. U2's answer-correction file waits for that module, whose install re-runs U2. The modules' behaviour
 // on a database (guard, idempotence, viewer reads, rollback) is proven in adr087-viewer-policies.test.ts.
 describe('the ADR-087 viewer module install wiring', () => {
@@ -21,6 +21,12 @@ describe('the ADR-087 viewer module install wiring', () => {
       'migrateViewerExportAccess',
       'Viewer export access installation requires INSTALL_APPLY=yes',
     ],
+    [
+      'QUOTATION_LINK_CHECK_ACTION',
+      'quotation_link_check',
+      'migrateQuotationLinkCheck',
+      'Quotation link check installation requires INSTALL_APPLY=yes',
+    ],
   ] as const;
 
   test('the script takes a two-valued action per module that needs apply, and lists both registries', () => {
@@ -31,6 +37,7 @@ describe('the ADR-087 viewer module install wiring', () => {
     }
     expect(script).toContain("'viewer_reply_metadata_migrations'");
     expect(script).toContain("'viewer_export_access_migrations'");
+    expect(script).toContain("'quotation_link_check_migrations'");
   });
 
   test('each installer runs only inside its own block (U2 also after answer correction), never in a base run', () => {
@@ -38,7 +45,7 @@ describe('the ADR-087 viewer module install wiring', () => {
       script.indexOf('const installers'),
       script.indexOf('const pool = databasePool'),
     );
-    expect(installers).not.toMatch(/viewer/i);
+    expect(installers).not.toMatch(/viewer|quotation/i);
     for (const [line, , call] of modules) {
       const at = script.indexOf(`const result = await ${call}(pool);`);
       expect(at).toBeGreaterThan(script.indexOf("await report(apply ? 'Before install'"));
@@ -46,6 +53,7 @@ describe('the ADR-087 viewer module install wiring', () => {
       expect(script.slice(at - 120, at)).toContain(`v.${line} === 'install'`);
     }
     expect(script.split('migrateViewerExportAccess(pool)').length - 1).toBe(1);
+    expect(script.split('migrateQuotationLinkCheck(pool)').length - 1).toBe(1);
     // U2 runs in its own block, and is refreshed (only where already installed) right after the answer-correction module.
     expect(script.split('migrateViewerReplyMetadata(pool)').length - 1).toBe(1);
     expect(script.split('refreshViewerReplyMetadata(pool)').length - 1).toBe(1);
@@ -72,7 +80,11 @@ describe('the ADR-087 viewer module install wiring', () => {
   });
 
   test('the migrators read only the .sql files directly in each module folder, so the rollback text is never applied', () => {
-    for (const folder of ['viewer-reply-metadata-migrations', 'viewer-export-access-migrations']) {
+    for (const folder of [
+      'viewer-reply-metadata-migrations',
+      'viewer-export-access-migrations',
+      'quotation-link-check-migrations',
+    ]) {
       const top = readdirSync(resolve('packages/db', folder)).filter((name) =>
         name.endsWith('.sql'),
       );
@@ -86,5 +98,14 @@ describe('the ADR-087 viewer module install wiring', () => {
       /readdir\(module\.directory\)\)\s*\.filter\(\(name\) => name\.endsWith\('\.sql'\)\)/,
     );
     expect(migrator).not.toMatch(/recursive/);
+    // The quotation link check uses that same migrator, so it refuses without the real-use modules like the viewer modules.
+    const linkCheck = readFileSync(
+      resolve('packages/db/src/quotation-link-check-migrate.ts'),
+      'utf8',
+    );
+    expect(linkCheck).toContain("import { migrateViewerModule } from './viewer-module-run';");
+    expect(linkCheck).toContain("new URL('../quotation-link-check-migrations/', import.meta.url)");
+    expect(linkCheck).toContain("schema: 'quotation_link_check_migrations'");
+    expect(migrator).toContain('The customer real-use modules are not installed');
   });
 });
