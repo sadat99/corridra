@@ -11,6 +11,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 're
 import type { ImportRow } from '@corridra/delivery/import';
 import { DeliveryExperience } from './delivery-experience';
 import { DateTimeInput } from '../../components/ux/date-time-input';
+import { bodyNotAvailable } from '../../lib/body-access';
 import { formatDateTime } from '../../lib/ux/format';
 import { readJson, withStepUp } from '../../lib/ux/step-up';
 import { useFormDraft } from '../../lib/ux/use-form-draft';
@@ -56,7 +57,9 @@ type Snapshot = {
     title: string;
     instructions: string;
     status: string;
-    response?: string;
+    /** Null when unanswered, and for a role without delivery.read_body (staff viewer, ADR-087 U1). */
+    response?: string | null;
+    answered?: boolean;
   }[];
   owners: { user_id: string; name: string }[];
 };
@@ -1013,7 +1016,11 @@ export function Delivery({ tenant, revision }: { tenant: string; revision: numbe
                     <li key={r.id}>
                       <strong>{r.title}</strong> · {r.status.toLowerCase()}
                       <p>{r.instructions}</p>
-                      {r.response && <p>Self-declared response: {r.response}</p>}
+                      {r.response ? (
+                        <p>Self-declared response: {r.response}</p>
+                      ) : (
+                        r.answered && <p>Self-declared response: {bodyNotAvailable}</p>
+                      )}
                       {manages && !['COMPLETED', 'CANCELLED'].includes(r.status) && (
                         <>
                           <button

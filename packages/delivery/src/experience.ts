@@ -5,7 +5,7 @@ import {
   type RequestContext,
   type TenantTransaction,
 } from '@corridra/db';
-import { DomainError } from '@corridra/domain';
+import { DomainError, permits } from '@corridra/domain';
 import {
   delegationContextInput,
   agendaInput,
@@ -91,6 +91,8 @@ export class DeliveryExperienceService {
         )
       ).rows,
       // Where recipient response revision is installed, the latest correction is what the team reads, with how many were made.
+      // A role without delivery.read_body (staff viewer, ADR-087 U1) gets that the reply exists, its kind, dates and
+      // revision count, and body null: the words never leave the service.
       responses: (
         await db.query(
           (
@@ -106,7 +108,7 @@ export class DeliveryExperienceService {
             : 'SELECT id,link_id,body,source_kind,created_at FROM app.recipient_detail_response WHERE tenant_id=$1 ORDER BY created_at DESC LIMIT 100',
           [ctx.tenantId],
         )
-      ).rows,
+      ).rows.map((row) => (permits(role, 'delivery.read_body') ? row : { ...row, body: null })),
     }));
   }
   context(ctx: RequestContext, input: unknown) {

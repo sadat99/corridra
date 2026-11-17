@@ -13,6 +13,7 @@ import { ReplyReview } from './reply-review';
 import { useEffect, useState, type FormEvent } from 'react';
 import { countryCodes } from '@corridra/domain/countries';
 import { displayMoney } from '@corridra/domain/locale';
+import { bodyNotAvailable } from '../../lib/body-access';
 type Experience = {
   specificationConfirmationsAvailable?: boolean;
   organisations: { id: string; name: string; source_id: string; claim_id: string }[];
@@ -43,11 +44,12 @@ type Experience = {
     link_id: string;
     created_at?: string;
     revision?: number;
+    /** Null for a role without delivery.read_body (staff viewer, ADR-087 U1): the reply exists, its words are not sent. */
     body: {
       body: string;
       meetingInterest: boolean;
       quotation: null | { currency: string; terms: Record<string, string>; uncertainties: string };
-    };
+    } | null;
     source_kind: string;
   }[];
 };
@@ -636,7 +638,7 @@ export function DeliveryExperience(props: Props) {
       {data.responses.length ? (
         data.responses.map((r) => (
           <article key={r.id}>
-            <p>{r.body.body}</p>
+            <p>{r.body ? r.body.body : bodyNotAvailable}</p>
             {!!r.revision && (
               <p className="evidence-label">
                 The recipient corrected this answer {r.revision} time{r.revision === 1 ? '' : 's'}.
@@ -647,7 +649,7 @@ export function DeliveryExperience(props: Props) {
               {r.source_kind} · recipient link {r.link_id}. Review source and evidence before
               recording a mission quotation or confirming a meeting.
             </p>
-            {r.body.quotation && (
+            {r.body?.quotation && (
               <p>
                 Original offer:{' '}
                 {r.body.quotation.terms.unitPriceMinor !== undefined
@@ -656,7 +658,7 @@ export function DeliveryExperience(props: Props) {
                 · {r.body.quotation.uncertainties}
               </p>
             )}
-            {r.body.meetingInterest && (
+            {r.body?.meetingInterest && (
               <p>Meeting or visit interest expressed. No appointment inferred.</p>
             )}
           </article>
