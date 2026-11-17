@@ -15,4 +15,6 @@ export type QuoteTerm = {
   label: string;
   value: string | null | undefined;
   state?: 'excluded';
+  /** True for an amount in the offer's own currency; such a row never folds across different currencies. */
+  money?: true;
 };

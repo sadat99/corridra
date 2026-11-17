@@ -72,3 +72,45 @@
     outline-offset: -2px;
   }
 }
+
+/* CMP1: differences-only. The control and the count line sit at the top of the term area; the state is the pressed
+   attribute and the words, never colour alone. Same segment look as the lens switch, at least 44 px. */
+.compare-lens-diff {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+.compare-lens-diff-toggle,
+.compare-lens-diff-show {
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  padding-inline: var(--space-4);
+  font: inherit;
+  color: var(--text-1);
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.compare-lens-diff-toggle[aria-pressed='true'] {
+  font-weight: 600;
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+.compare-lens-diff-count {
+  display: flex;
+  flex: 1 1 14rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+@media (forced-colors: active) {
+  .compare-lens-diff-toggle[aria-pressed='true'] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+}
