@@ -318,3 +318,46 @@ export function unreadReplies(
     return !mark || c.latestReplyAt > mark;
   });
 }
+
+/**
+ * Who holds a request, from its status word: the Corridra team for every status the team works in, and nobody
+ * (null) for a word it does not know, so a screen shows no holder rather than a guessed one.
+ */
+export function requestHolder(status: string | null | undefined): Holder | null {
+  return status && (teamStatuses as readonly string[]).includes(status) ? 'team' : null;
+}
+
+export type TodayMove = {
+  card: MoveCardData;
+  /** For a Move the team set: its words as written. Other kinds take their words from the message module. */
+  title?: string;
+  /** A real due date (year-month-day), only where the Move has one. */
+  dueOn?: string;
+  /** Who holds the request this Move belongs to, only where the status is known. */
+  holder?: Holder;
+};
+
+/**
+ * The one Move the Today card puts first. It is always one of the person's own cards (`buildMoveModel` already
+ * keeps back anything a workspace member cannot act on). A Move with a real due date comes first, the earliest
+ * date first; then Moves without one; then the other cards, in the order the model gave them. Nothing is
+ * computed from the clock, so the choice never changes between renders and no date is called late or soon.
+ */
+export function pickTodayMove(model: MoveModel): TodayMove | null {
+  const mine = model.cards.filter((card) => card.holder === 'you');
+  const dated = mine
+    .filter((card) => card.kind === 'move' && card.dueOn)
+    .sort((a, b) => (a.dueOn as string).localeCompare(b.dueOn as string));
+  const card = dated[0] ?? mine.find((c) => c.kind === 'move') ?? mine[0];
+  if (!card) return null;
+  const status = card.requestId
+    ? model.waiting.find((row) => row.id === `request:${card.requestId}`)?.status
+    : null;
+  const holder = requestHolder(status);
+  return {
+    card,
+    ...(card.kind === 'move' && card.object ? { title: `${card.verb} ${card.object}` } : {}),
+    ...(card.dueOn ? { dueOn: card.dueOn } : {}),
+    ...(holder ? { holder } : {}),
+  };
+}

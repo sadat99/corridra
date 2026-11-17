@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useSyncExternalStore } from 'react';
-import { MoveCard, StageBar, mrLabelsFor, type MoveVerb } from '../../../components/mr';
+import { MoveCard, StageBar, mrLabelsFor, movePhrase, type MoveVerb } from '../../../components/mr';
 import { RowLink, RowList } from '../../../components/ux/row-list';
+import { TodayCard } from '../../../components/today-card';
 import { CorridraIcon } from '../../../components/corridra-icon';
 import { useLanguage } from '../../../components/language-provider';
 import { fill } from '../../../lib/i18n/fill';
@@ -12,6 +13,7 @@ import { translate, type MessageKey } from '../../../lib/i18n/messages';
 import { moveWorkspaceCap } from '../../../lib/move-constants';
 import { formatDate } from '../../../lib/ux/format';
 import {
+  pickTodayMove,
   unreadReplies,
   type MoveCardData,
   type MoveModel,
@@ -331,6 +333,13 @@ export function MoveView({
   ];
   const items = allItems.filter((item) => shown(String(item.key)));
   const nothing = items.length === 0;
+  // The Today card takes the one most important Move out of the list below it, so the same link is never shown
+  // twice and the page is no longer. It is picked from the cards this view shows (a journey view picks within it).
+  const today = pickTodayMove({ ...model, cards: model.cards.filter((card) => shown(card.id)) });
+  const rest = today ? items.filter((item) => String(item.key) !== today.card.id) : items;
+  const todayCard = today ? today.card : null;
+  // The Today card is the first thing shown, so one row fewer opens before "Show more": the page is no longer.
+  const rowsShown = today ? firstShown - 2 : firstShown;
   const cards = leadFirst(journey ? journeys.filter((card) => card.journey === journey) : journeys);
   const waiting = model.waiting.filter((row) => shown(row.id));
   const participant = !journey ? (facts?.participant ?? null) : null;
@@ -481,11 +490,45 @@ export function MoveView({
             </div>
           ) : (
             <div className="move-items">
-              <ul className="move-list">{items.slice(0, firstShown)}</ul>
-              {items.length > firstShown ? (
+              <ul className="move-list">
+                {today && todayCard ? (
+                  <li key="today" data-kind="today">
+                    <TodayCard
+                      heading={say('today.heading')}
+                      title={
+                        today.title ??
+                        movePhrase(
+                          labels.move.phrase,
+                          labels.move.verbs[verbOf[todayCard.kind as keyof typeof verbOf]],
+                          say(objectKey[todayCard.kind as keyof typeof objectKey]),
+                        )
+                      }
+                      titleLang={today.title ? 'en' : undefined}
+                      context={
+                        todayCard.kind === 'report'
+                          ? `${say('wsb.move.report.title')}: ${todayCard.context ?? ''}`
+                          : todayCard.context
+                      }
+                      holder={today.holder}
+                      holderLabel={say('today.holds')}
+                      holderWords={labels.holder}
+                      dueLabel={labels.move.due}
+                      due={today.dueOn ? day(today.dueOn, locale) : null}
+                      href={todayCard.href}
+                      action={
+                        todayCard.kind === 'draft'
+                          ? say('wsb.move.draft.action')
+                          : say(actionKey[todayCard.kind])
+                      }
+                    />
+                  </li>
+                ) : null}
+                {rest.slice(0, rowsShown)}
+              </ul>
+              {rest.length > rowsShown ? (
                 <details className="move-more">
-                  <summary>{fill(say('move.more'), { count: items.length - firstShown })}</summary>
-                  <ul className="move-list">{items.slice(firstShown)}</ul>
+                  <summary>{fill(say('move.more'), { count: rest.length - rowsShown })}</summary>
+                  <ul className="move-list">{rest.slice(rowsShown)}</ul>
                 </details>
               ) : null}
             </div>

@@ -140,6 +140,13 @@ const headerWords = {
   'header.job.enterMarket.line': 'Test a market before you commit to it.',
 } as const;
 
+// TC1 Today card words. English placeholder in every catalogue until native review (D16): bn, zh, es, ar, fr
+// and de show these English words, so no unreviewed translation is shown. Native review pending.
+const todayWords = {
+  'today.heading': 'Today',
+  'today.holds': 'Request held by',
+} as const;
+
 export const en = {
   ...homeEn,
   // Commercial readiness stream blocks (one file per stream, so streams never edit the same lines).
@@ -280,6 +287,7 @@ export const en = {
   ...bookWords,
   ...footerWords,
   ...headerWords,
+  ...todayWords,
   'room.lens.overview': 'Overview',
   'room.lens.compare': 'Compare',
   'room.lens.evidence': 'Evidence',
@@ -456,6 +464,7 @@ const bn: Catalog = {
   ...bookWords,
   ...footerWords,
   ...headerWords,
+  ...todayWords,
   'room.lens.overview': 'সারসংক্ষেপ',
   'room.lens.compare': 'তুলনা',
   'room.lens.evidence': 'প্রমাণ',
@@ -619,6 +628,7 @@ const zh: Catalog = {
   ...bookWords,
   ...footerWords,
   ...headerWords,
+  ...todayWords,
   'room.lens.overview': '概览',
   'room.lens.compare': '比较',
   'room.lens.evidence': '证据',
@@ -788,6 +798,7 @@ const es: Catalog = {
   ...bookWords,
   ...footerWords,
   ...headerWords,
+  ...todayWords,
   'room.lens.overview': 'Resumen',
   'room.lens.compare': 'Comparar',
   'room.lens.evidence': 'Pruebas',
@@ -955,6 +966,7 @@ const ar: Catalog = {
   ...bookWords,
   ...footerWords,
   ...headerWords,
+  ...todayWords,
   'room.lens.overview': 'نظرة عامة',
   'room.lens.compare': 'المقارنة',
   'room.lens.evidence': 'الأدلة',
@@ -1125,6 +1137,7 @@ const fr: Catalog = {
   ...bookWords,
   ...footerWords,
   ...headerWords,
+  ...todayWords,
   'room.lens.overview': 'Aperçu',
   'room.lens.compare': 'Comparer',
   'room.lens.evidence': 'Preuves',
@@ -1300,6 +1313,7 @@ const de: Catalog = {
   ...bookWords,
   ...footerWords,
   ...headerWords,
+  ...todayWords,
   'room.lens.overview': 'Übersicht',
   'room.lens.compare': 'Vergleichen',
   'room.lens.evidence': 'Nachweise',
