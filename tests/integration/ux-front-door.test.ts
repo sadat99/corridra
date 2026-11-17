@@ -298,7 +298,6 @@ describe('the Your Move screen', () => {
     expect(html.match(/class="mr-move"/g)).toHaveLength(6);
     expect(html.match(/today-action/g)).toHaveLength(1);
     expect(html).toContain('<details class="move-more">');
-    for (const draft of drafts) expect(html).toContain(`href="/account/drafts/${owner.id}"`);
     expect(html.match(new RegExp(`href="/account/drafts/${owner.id}"`, 'g'))).toHaveLength(7);
   });
 
