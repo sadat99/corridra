@@ -7,7 +7,7 @@ import {
   type RequestContext,
   type TenantTransaction,
 } from '@corridra/db';
-import { DomainError } from '@corridra/domain';
+import { DomainError, permits } from '@corridra/domain';
 import {
   programmeInput,
   publicationInput,
@@ -108,7 +108,12 @@ export class DeliveryService {
           `SELECT r.*,coalesce(c.status,CASE WHEN s.id IS NULL THEN 'OPEN' ELSE 'RESPONDED' END) status,s.body response,s.claim_status FROM app.delivery_request r LEFT JOIN app.delivery_response s ON s.tenant_id=r.tenant_id AND s.request_id=r.id LEFT JOIN app.delivery_request_close c ON c.tenant_id=r.tenant_id AND c.request_id=r.id WHERE r.tenant_id=$1 ORDER BY r.created_at DESC LIMIT 1000`,
           [ctx.tenantId],
         )
-      ).rows,
+      ).rows.map(({ response, ...row }) => ({
+        ...row,
+        // Whether an answer exists is metadata for every role; its text needs delivery.read_body (ADR-087 U1).
+        answered: response !== null,
+        response: permits(role, 'delivery.read_body') ? response : null,
+      })),
       owners: (await db.query('SELECT * FROM app.mission_owners($1)', [ctx.tenantId])).rows,
     }));
   }

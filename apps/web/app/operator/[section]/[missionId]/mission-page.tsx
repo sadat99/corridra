@@ -20,6 +20,7 @@ import {
   type Queue,
 } from '../../missions';
 import { isOverdue, plainCode, stageChip } from './mission-labels';
+import { bodyNotAvailable } from '../../../../lib/body-access';
 
 // D15: one mission, seven tabs plus replies (CQ-40), and one side panel where actions open one at a time.
 // Every action here posts to the same reviewed workspace endpoints as the queue cards, so nothing gains
@@ -554,6 +555,8 @@ function Quotes({
               <li key={quote.id}>
                 {value.targets.find((t) => t.id === quote.target_id)?.name ?? 'Supplier'} · revision{' '}
                 {String(quote.revision)}
+                {/* ADR-087 U1q: a staff viewer receives the quotation with its terms null. */}
+                {quote.terms === null ? ` · ${String(quote.currency)} · ${bodyNotAvailable}` : ''}
                 {total ? ` · ${safeMoney(total, String(quote.currency))}` : ''}
                 {terms.totalPriceMinor ? ' total' : total ? ' per unit' : ''}
                 {quote.created_at ? ` · recorded ${formatDateTime(String(quote.created_at))}` : ''}

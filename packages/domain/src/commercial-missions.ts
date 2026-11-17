@@ -306,6 +306,39 @@ export const commercialMissionCommand = z.discriminatedUnion('action', [
 export function offerContext(typeKey: string | null | undefined): 'GENERAL' | 'MACHINERY' {
   return typeKey === 'machinery_procurement' ? 'MACHINERY' : 'GENERAL';
 }
+// ADR-087 U1q (owner, 17 November 2026: "Yes, hide from viewers"): a staff role without delivery.read_body sees that a
+// quotation exists (id, target, currency code, revision, state and dates) and never its terms. The fields below carry the
+// price and amount fields, the delivery and shipping terms, the uncertainties and the recorded reason that restates them.
+// Reads keep the row and send these as null, so exact money and history are untouched and only who may read changes.
+export const quotationTermFields = ['terms', 'uncertainties', 'reason'] as const;
+export function withholdQuotationTerms<T extends Record<string, unknown>>(row: T) {
+  return {
+    ...row,
+    ...(Object.fromEntries(quotationTermFields.map((field) => [field, null])) as Record<
+      (typeof quotationTermFields)[number],
+      null
+    >),
+  };
+}
+/** The comparison of one offer without anything derived from its terms: the offer exists, in its currency, and nothing else. */
+export function withheldComparison(offer: {
+  id: string;
+  currency: string;
+  requirementId: string;
+  evidenceCurrent?: boolean;
+}) {
+  return {
+    ...offer,
+    terms: null,
+    uncertainties: null,
+    missing: null,
+    differences: null,
+    status: null,
+    inconsistentTotal: null,
+    expired: null,
+    derivedTotal: null,
+  };
+}
 export function compareOffers(
   offers: {
     id: string;
