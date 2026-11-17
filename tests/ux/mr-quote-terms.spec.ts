@@ -26,6 +26,7 @@ function App() {
   return (
     <main id="mr-quote-fixture" lang="en" className="ux-workspace ux-customer">
       <h1>Quote terms fixture</h1>
+      <h2>Offers</h2>
       <div style={{ maxInlineSize: '20rem' }}>
         <QuoteCard supplier="Lantern Cutting Works" revision={2} currency="USD" comparable={false} reason="Missing: Installation" terms={terms} />
       </div>
@@ -134,5 +135,8 @@ test('reduced motion: the fills and the hint do not animate', async ({ page }) =
   const durations = await page.$$eval('.mr-quote-fill, .mr-explain-pop', (els) =>
     els.map((el) => getComputedStyle(el).transitionDuration),
   );
-  for (const duration of durations) expect(duration).toMatch(/^0s(, 0s)*$/);
+  expect(durations.length).toBeGreaterThan(0);
+  // The product's reduced-motion rule shortens every transition to a hundred-thousandth of a second.
+  for (const duration of durations)
+    for (const part of duration.split(',')) expect(parseFloat(part)).toBeLessThanOrEqual(0.001);
 });
