@@ -11,7 +11,7 @@ export async function migrateViewerModule(pool: DatabasePool, module: ViewerModu
     .filter((name) => name.endsWith('.sql'))
     .sort()) {
     const sql = await readFile(new URL(name, module.directory), 'utf8');
-    const requires = [...sql.matchAll(/^-- requires-table: ([a-z_]+\.[a-z_]+)$/gm)].map(
+    const requires = [...sql.matchAll(/^-- requires-table: ([a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*)$/gm)].map(
       (m) => m[1]!,
     );
     sources.set(name, { sql, hash: createHash('sha256').update(sql).digest('hex'), requires });
@@ -61,6 +61,13 @@ export async function migrateViewerModule(pool: DatabasePool, module: ViewerModu
         waiting.push(name);
         continue;
       }
+      // A file that waited may not land behind a later file already recorded (for example a rollback copy): the order the
+      // files were reviewed in would no longer hold. Refuse and name both; a reviewed change decides what happens next.
+      const later = recorded.rows.find((row) => row.name > name);
+      if (later)
+        throw new Error(
+          `${module.label}: ${name} waited for ${source.requires.join(', ')}, but the later file ${later.name} is already recorded. Review the order before installing.`,
+        );
       await db.query(source.sql);
       await db.query(`INSERT INTO ${module.schema}.applied(name,sha256) VALUES($1,$2)`, [
         name,

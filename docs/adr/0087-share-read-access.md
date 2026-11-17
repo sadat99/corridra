@@ -425,6 +425,8 @@ Order: U1, then U2 and U3 (they can run in parallel; they touch different polici
 **Risk:**
 
 - A viewer screen that renders a body shows an empty state. U1 lists and changes those screens before U2.
+- U2 also hides from a viewer the rows of tables whose read policies reach a reply through its read policy: the team's reply reviews (`app.recipient_reply_review`) and reply-to-offer bindings (`app.reply_quotation_binding`). Review state reaches a viewer as metadata through `app.reply_review_meta` (decision and date only); no staff screen reads bindings. The staff readers (delivery experience, delivery workspace, Today and the reply review list) read through the meta functions for a role without the body permission (PR 554).
+- The meta functions restate the read scope of these tables. Any later change to the read policies of `app.recipient_detail_response`, its corrections, `app.delivery_response` or `app.recipient_reply_review` must change the meta functions in the same reviewed unit.
 - U5 changes a privacy expectation, including for older items. The required notice (U4), the interval (4d) and the audit event per read address it.
 
 ## Rollback

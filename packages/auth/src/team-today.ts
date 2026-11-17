@@ -90,18 +90,20 @@ export async function getTeamToday(pool: DatabasePool, ctx: RequestContext): Pro
       const installed = await db.query(
         `SELECT to_regclass('app.recipient_reply_review') IS NOT NULL AS ok,
                 to_regclass('app.recipient_detail_response_revision') IS NOT NULL AS revisable,
-                to_regprocedure('app.reply_meta(uuid,uuid)') IS NOT NULL AS meta`,
+                to_regprocedure('app.reply_review_meta(uuid)') IS NOT NULL AS meta`,
       );
       if (!installed.rows[0]?.ok) throw new Error('not installed');
-      // Where ADR-087 U2 is installed a viewer's read policy returns no reply row, so a role without delivery.read_body
-      // counts the same replies through app.reply_meta (existence and the latest correction's date, never a body).
+      // Where ADR-087 U2 is installed a viewer's read policies return no reply and no review row, so a role without
+      // delivery.read_body counts the same replies from app.reply_meta_list and their review state from app.reply_review_meta
+      // (existence, decisions and dates, never a body or a note). Retention is the same on both paths: the meta functions
+      // apply the retention that the reply and correction read policies apply.
       if (!permits(role, 'delivery.read_body') && installed.rows[0].meta) {
         const r = await db.query(
-          `SELECT count(*)::int AS n FROM app.buyer_link l CROSS JOIN LATERAL app.reply_meta(l.tenant_id,l.id) d
-          WHERE l.tenant_id=$1
-          AND (NOT EXISTS(SELECT FROM app.recipient_reply_review v WHERE v.tenant_id=l.tenant_id AND v.response_id=d.id)
-            OR (NOT EXISTS(SELECT FROM app.recipient_reply_review v WHERE v.tenant_id=l.tenant_id AND v.response_id=d.id AND v.decision<>'ASK')
-              AND d.latest_at>(SELECT max(v.created_at) FROM app.recipient_reply_review v WHERE v.tenant_id=l.tenant_id AND v.response_id=d.id)))`,
+          `WITH v AS (SELECT * FROM app.reply_review_meta($1))
+          SELECT count(*)::int AS n FROM app.reply_meta_list($1) d
+          WHERE NOT EXISTS(SELECT FROM v WHERE v.response_id=d.id)
+            OR (NOT EXISTS(SELECT FROM v WHERE v.response_id=d.id AND v.decision<>'ASK')
+              AND d.latest_at>(SELECT max(v.created_at) FROM v WHERE v.response_id=d.id))`,
           [ctx.tenantId],
         );
         return r.rows[0].n;

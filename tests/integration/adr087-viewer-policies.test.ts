@@ -415,7 +415,9 @@ describe('U2 installed (viewer reply metadata)', () => {
     expect(without(after.policies, named)).toEqual(without(before.policies, named));
     expect(
       without(after.functions, [
+        'app.reply_meta_list(uuid)',
         'app.reply_meta(uuid,uuid)',
+        'app.reply_review_meta(uuid)',
         'app.delivery_response_meta(uuid,uuid)',
       ]),
     ).toEqual(before.functions);
@@ -522,27 +524,63 @@ describe('U2 installed (viewer reply metadata)', () => {
     expect(JSON.stringify(linkAnswer)).not.toContain('second week of November');
   });
   test('the meta reads are definer functions with a fixed path that only the runtime role may call', async () => {
+    const names = [
+      'app.delivery_response_meta(uuid,uuid)',
+      'app.reply_meta(uuid,uuid)',
+      'app.reply_meta_list(uuid)',
+      'app.reply_review_meta(uuid)',
+    ];
     const r = await s.f.owner.query(
       `SELECT p.oid::regprocedure::text f,p.prosecdef,p.proconfig,has_function_privilege('corridra_runtime',p.oid,'EXECUTE') runtime,
         has_function_privilege('corridra_auth',p.oid,'EXECUTE') auth FROM pg_proc p
-       WHERE p.oid IN ('app.reply_meta(uuid,uuid)'::regprocedure,'app.delivery_response_meta(uuid,uuid)'::regprocedure) ORDER BY 1`,
+       WHERE p.oid=ANY($1::regprocedure[]) ORDER BY 1`,
+      [names],
     );
-    expect(r.rows).toEqual([
-      {
-        f: 'app.delivery_response_meta(uuid,uuid)',
+    expect(r.rows).toEqual(
+      names.map((f) => ({
+        f,
         prosecdef: true,
         proconfig: ['search_path=pg_catalog'],
         runtime: true,
         auth: false,
-      },
-      {
-        f: 'app.reply_meta(uuid,uuid)',
-        prosecdef: true,
-        proconfig: ['search_path=pg_catalog'],
-        runtime: true,
-        auth: false,
-      },
-    ]);
+      })),
+    );
+  });
+  test('a call naming another workspace returns nothing from any meta read', async () => {
+    for (const [from, to] of [
+      [sample, real],
+      [real, sample],
+    ] as const)
+      for (const who of ['owner', 'viewer'] as const) {
+        const ctx = ctxFor(who, from);
+        for (const [sql, args] of [
+          ['SELECT * FROM app.reply_meta_list($1)', [to.tenant]],
+          ['SELECT * FROM app.reply_meta($1,$2)', [to.tenant, to.replies.team]],
+          ['SELECT * FROM app.reply_review_meta($1)', [to.tenant]],
+          ['SELECT * FROM app.delivery_response_meta($1,$2)', [to.tenant, to.request]],
+        ] as const)
+          expect((await rawContext(s.f.runtime, ctx, sql, [...args])).rows).toEqual([]);
+      }
+    // The same calls naming the reader's own workspace do return rows, so the empty answers above are the scope check.
+    expect(
+      (await read('viewer', sample, 'SELECT * FROM app.reply_meta_list($1)')).length,
+    ).toBeGreaterThan(0);
+  });
+  test('the reply list gives exactly the rows each role read before U2, without bodies', async () => {
+    for (const [, place] of places()) {
+      expect(links(await read('viewer', place, 'SELECT * FROM app.reply_meta_list($1)'))).toEqual([
+        place.replies.team,
+      ]);
+      expect(links(await read('operator', place, 'SELECT * FROM app.reply_meta_list($1)'))).toEqual(
+        [place.replies.team, place.replies.ownPrivate].sort(),
+      );
+      for (const who of ['owner', 'admin', 'reviewer'] as const)
+        expect(links(await read(who, place, 'SELECT * FROM app.reply_meta_list($1)'))).toEqual(
+          Object.values(place.replies).sort(),
+        );
+      expect(await read('removed', place, 'SELECT * FROM app.reply_meta_list($1)')).toEqual([]);
+      expect(await read('viewer', place, 'SELECT * FROM app.reply_review_meta($1)')).toEqual([]);
+    }
   });
   test('the rollback text restores the original policies exactly and gives the viewer the rows back', async () => {
     const before = await definitions();
@@ -664,6 +702,40 @@ describe('U3 installed (viewer export access)', () => {
     } finally {
       await db.query('ROLLBACK');
       db.release();
+    }
+  });
+});
+
+describe('the module runner', () => {
+  test('a file that waited is refused once a later file of the module is recorded', async () => {
+    const { mkdtemp, writeFile: write } = await import('node:fs/promises');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const { pathToFileURL } = await import('node:url');
+    const { migrateViewerModule } = await import('../../packages/db/src/viewer-module-run');
+    const dir = await mkdtemp(join(tmpdir(), 'adr087-order-'));
+    await write(
+      join(dir, '0001_waits.sql'),
+      '-- requires-table: app.adr087_order_probe\nSELECT 1;\n',
+    );
+    await write(join(dir, '0002_later.sql'), 'SELECT 2;\n');
+    const module = {
+      directory: pathToFileURL(dir + '/'),
+      schema: 'adr087_order_test_migrations',
+      label: 'Order test',
+    };
+    expect(await migrateViewerModule(s.f.owner, module)).toEqual({
+      applied: ['0002_later.sql'],
+      waiting: ['0001_waits.sql'],
+    });
+    await s.f.owner.query('CREATE TABLE app.adr087_order_probe(id int)');
+    try {
+      await expect(migrateViewerModule(s.f.owner, module)).rejects.toThrow(
+        /0001_waits\.sql waited for app\.adr087_order_probe, but the later file 0002_later\.sql is already recorded/,
+      );
+    } finally {
+      await s.f.owner.query('DROP TABLE app.adr087_order_probe');
+      await s.f.owner.query('DROP SCHEMA adr087_order_test_migrations CASCADE');
     }
   });
 });

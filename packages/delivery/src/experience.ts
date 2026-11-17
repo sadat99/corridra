@@ -98,12 +98,12 @@ export class DeliveryExperienceService {
     }));
   }
   // Where ADR-087 U2 is installed, a viewer's read policy returns no reply row at all, so a role without delivery.read_body
-  // reads the same rows through app.reply_meta (existence, kind, dates and the latest correction's version and date, never a
+  // reads the same rows through app.reply_meta_list (existence, kind, dates and the latest correction's version and date, never a
   // body). Before U2 the function does not exist: one catalogue check, then today's query with the body dropped here.
   private async responses(db: DatabaseClient, tenantId: string, bodies: boolean) {
     const found = await db.query(
       `SELECT to_regclass('app.recipient_detail_response_revision') IS NOT NULL AS revisable,
-        to_regprocedure('app.reply_meta(uuid,uuid)') IS NOT NULL AS meta`,
+        to_regprocedure('app.reply_meta_list(uuid)') IS NOT NULL AS meta`,
     );
     const { revisable, meta } = found.rows[0] as { revisable: boolean; meta: boolean };
     if (!bodies && meta)
@@ -111,8 +111,7 @@ export class DeliveryExperienceService {
         await db.query(
           `SELECT d.id,d.link_id,NULL::jsonb AS body,d.source_kind,d.created_at,
              coalesce(d.latest_version,0)::int AS revision,d.latest_at AS revised_at
-           FROM app.buyer_link l CROSS JOIN LATERAL app.reply_meta(l.tenant_id,l.id) d
-           WHERE l.tenant_id=$1 ORDER BY d.created_at DESC LIMIT 100`,
+           FROM app.reply_meta_list($1) d ORDER BY d.created_at DESC,d.id LIMIT 100`,
           [tenantId],
         )
       ).rows.map(({ revision, revised_at, ...row }) =>

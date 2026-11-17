@@ -7,6 +7,7 @@
 -- No row is written, changed or deleted. No switch or control changes.
 -- Guard and proof in the shape of commercial readiness 0012 and viewer reply metadata 0001: each live policy must equal the
 -- constant below or the file stops with an error and nothing changes; afterwards the new fingerprints are proved.
+-- The fingerprint strips parentheses, which is sound because every compared expression is a chain of ANDs.
 -- Rollback: rollback/0001_restore_original_export_reads.sql restores the four original expressions, guarded by the
 -- fingerprints this file leaves, as the next numbered file of this module. It is applied only with the owner's word.
 DO $guard$

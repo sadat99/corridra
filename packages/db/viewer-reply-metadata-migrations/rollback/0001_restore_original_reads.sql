@@ -5,6 +5,8 @@
 -- the one 0001 installed, restores the four original expressions word for word (core 0025 and real-use 0002), and proves the
 -- original fingerprints that 0001 guarded. The two meta functions stay: they show only metadata, which every role that can
 -- read a row could already see. Where 0002 is applied, roll it back first with 0002_restore_original_revision_reads.sql.
+-- Where 0002 is still waiting (answer correction not installed), the migrator will then refuse to apply 0002 behind this
+-- copy, so installing answer correction afterwards needs a reviewed decision on 0002 first.
 DO $guard$
 DECLARE spec record;
 BEGIN
