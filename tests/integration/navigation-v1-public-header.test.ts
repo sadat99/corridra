@@ -93,12 +93,12 @@ describe('the public header on the server (navigation v1)', () => {
       expect(html, word).not.toContain(word);
   });
 
-  it('N5 the menu words are the boards words, English in every catalog, with no em dash', () => {
+  it('N5 the menu words are the boards words in English, and every other catalog has its own translated words', () => {
     for (const [key, words] of Object.entries(boardWords)) {
       expect(en[key as MessageKey], key).toBe(words);
       expect(words).not.toContain('—');
     }
-    // New words have no translation yet: every catalog carries the English words and claims nothing.
+    // Every other catalog carries its own words for the 14 menu keys (drafts until the owner approves them).
     const added = Object.keys(en).filter(
       (key) =>
         key.startsWith('header.job') ||
@@ -106,7 +106,10 @@ describe('the public header on the server (navigation v1)', () => {
     ) as MessageKey[];
     expect(added.length).toBe(14);
     for (const code of localeCodes)
-      for (const key of added) expect(catalogs[code][key], `${code}.${key}`).toBe(en[key]);
+      for (const key of added) {
+        if (code === 'en') expect(catalogs[code][key], `${code}.${key}`).toBe(en[key]);
+        else expect(catalogs[code][key], `${code}.${key}`).not.toBe(en[key]);
+      }
     // The board's word replaced Routes; the old key is gone, so no unused word is left behind.
     expect(Object.keys(en)).not.toContain('header.routes');
   });
