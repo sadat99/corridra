@@ -219,15 +219,17 @@ export default function Page() {
           title="Where we focus"
           lead={
             <p className="about-key">
-              <strong>First priority: Bangladesh to China</strong> sourcing and business
-              delegations. A listed route does not mean every service is available there. We confirm
-              fit for each request.
+              <strong>
+                Open now: China, the EU, the UK, the US, Australia and key Asian markets.
+              </strong>{' '}
+              A listed route does not mean every service is available there. We confirm fit for each
+              request.
             </p>
           }
           detail={
             <p>
-              Bangladesh, Spain and wider European market relationships form part of the product
-              direction. Each route needs its own reviewed scope and delivery capacity.
+              We run missions from Bangladesh to each of these. Each route needs its own reviewed
+              scope and delivery capacity. Missions into Bangladesh are taken case by case.
             </p>
           }
           link={{ href: '/corridors', label: 'Explore the Routes' }}

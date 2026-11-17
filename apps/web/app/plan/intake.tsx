@@ -23,7 +23,12 @@ import { useFormWords } from './form-words';
 import { rememberSentRequest } from '../../lib/private-request-storage';
 import { customerStatusLabel } from '../../lib/ux/customer-road';
 import { formatDateTime } from '../../lib/ux/format';
-import { countryOptions, pinnedCountries } from '../../lib/ux/options';
+import {
+  countryOptions,
+  euCountries,
+  openMarketCodes,
+  pinnedCountries,
+} from '../../lib/ux/options';
 import { SearchSelect } from '../../components/ux/search-select';
 import { missionCatalogue } from '@corridra/domain/commercial-missions';
 import { countryCodes } from '@corridra/domain/countries';
@@ -918,7 +923,7 @@ function IntakeForm({
     ) : null;
   const regionNames = new Intl.DisplayNames([tag], { type: 'region' });
   const chosenJob = missionCatalogue.find((item) => item.key === draft.job);
-  // Countries by name in the shown language (CQ-15): the three route countries first, then the EU, then the rest.
+  // Countries by name in the shown language (CQ-15): the open-route countries first, then the EU, then the rest.
   const countries = countryOptions(tag);
   const countryGroupLabel = (option: (typeof countries)[number]) =>
     option.value === 'EU' || (pinnedCountries as readonly string[]).includes(option.value)
@@ -1238,7 +1243,9 @@ function IntakeForm({
                       draft.marketCode &&
                       !(
                         draft.companyCountry === 'BD' &&
-                        ['CN', 'ES', 'EU'].includes(draft.marketCode)
+                        ([...openMarketCodes, ...euCountries] as string[]).includes(
+                          draft.marketCode,
+                        )
                       ) &&
                       (realMode ? say('form.where.realOther') : say('form.where.sampleOther'))}
                   </p>
