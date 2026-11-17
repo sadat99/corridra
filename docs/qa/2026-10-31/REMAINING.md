@@ -43,7 +43,7 @@ After A to G: a verification pass with a live customer session on production (V-
 
 ## 3. Owner only (agents never do these)
 
-- Real GST number, bank account and finance label (and the final UEN if it changes). Then an agent updates `packages/auth/src/customer-invoicing-real-configuration.ts`, and the owner approves a `set_supplier` run.
+- Real GST number, bank account and finance label (and the final UEN if it changes). Then an agent updates `packages/auth/src/customer-invoicing-real-configuration.ts`, and the owner approves a `set_supplier` run. Superseded, replaced by the ADR-064 amendment of 17 November 2026: the owner puts the real details in the environment secret `REAL_INVOICING_SUPPLIER_JSON` and runs `set_supplier`; no agent writes real details into the repository.
 - V-02: admins sending team invites. D8 asks owner and admin, the existing permission and RLS allow owners only. Changing it needs an owner decision and an ADR first.
 - V-20 malware scanner (gate D01), V-48 code sign-in check before `CORRIDRA_CUSTOMER_CODE_SIGNIN`, V-51 restore drill (`docs/runbooks/backup-pitr.md`), V-55 production speed measurement.
 - CQ-78: the public report link switch is on; a live check of a fresh link closes it.

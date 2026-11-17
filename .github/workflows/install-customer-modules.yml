@@ -115,7 +115,7 @@ on:
         required: false
         default: ''
       real_invoicing_action:
-        description: 'Optional ADR-064 operation for real invoices (billing stage 2). Install changes nothing for anyone and seeds the supplier details with made-up fields marked; enable opens the database side only; set_supplier writes new supplier details from the JSON below; allow_single_approver lets one person prepare and approve (recorded with the reason); require_second_approver restores the default.'
+        description: 'Optional ADR-064 operation for real invoices (billing stage 2). Install changes nothing for anyone and seeds the supplier details with made-up fields marked; enable opens the database side only; set_supplier writes new supplier details from the REAL_INVOICING_SUPPLIER_JSON secret of the customer-modules-install environment (never an input; the run log shows only field names, the version and a count); allow_single_approver lets one person prepare and approve (recorded with the reason); require_second_approver restores the default.'
         type: choice
         options:
           [
@@ -130,10 +130,6 @@ on:
         default: unchanged
       real_invoicing_reason:
         description: 'Required reason for any real invoicing operation other than install.'
-        required: false
-        default: ''
-      real_invoicing_supplier_json:
-        description: 'Only for set_supplier: the supplier details as JSON (legalName, address, country, uen, gstRegistered, gstRegistrationNo, taxLabel, gstRateBps, paymentTermsDays, paymentInstructions, financeLabel, approverEmail, madeupFields). Leave out madeupFields entries once the value is real.'
         required: false
         default: ''
       simulated_payments_action:
@@ -227,7 +223,9 @@ jobs:
           REAL_BILLING_REASON: ${{ inputs.real_billing_reason }}
           REAL_INVOICING_ACTION: ${{ inputs.real_invoicing_action }}
           REAL_INVOICING_REASON: ${{ inputs.real_invoicing_reason }}
-          REAL_INVOICING_SUPPLIER_JSON: ${{ inputs.real_invoicing_supplier_json }}
+          # Supplier details come only from the protected environment secret, and only when set_supplier is chosen. The
+          # repository is public, so they are never a dispatch input; the installer prints no part of them.
+          REAL_INVOICING_SUPPLIER_JSON: ${{ inputs.real_invoicing_action == 'set_supplier' && secrets.REAL_INVOICING_SUPPLIER_JSON || '' }}
           SIMULATED_PAYMENTS_ACTION: ${{ inputs.simulated_payments_action }}
           SIMULATED_PAYMENTS_REASON: ${{ inputs.simulated_payments_reason }}
           SIMULATED_PAYMENTS_REFUND_DAYS: ${{ inputs.simulated_payments_refund_days }}
