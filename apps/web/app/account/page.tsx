@@ -413,43 +413,7 @@ export default async function Page({
             workspaces={
               <section aria-label="Workspaces and billing" className="ux-account-panel">
                 <h2>Workspaces and Billing</h2>
-                <section aria-label="Manage your work">
-                  <h3>Manage your work</h3>
-                  <ul className="ux-link-list">
-                    <li>
-                      <Link prefetch={false} href="/account?view=work&tab=workspaces">
-                        <strong>Workspaces and team</strong>
-                        <span>Your workspaces, who is on each team and your role.</span>
-                      </Link>
-                    </li>
-                    {customerOrganisationProfilesEnabled() && (
-                      <li>
-                        <Link prefetch={false} href="/account/profile">
-                          <strong>
-                            {companyProfilesTitle(customerOrganisationLinksEnabled())}
-                          </strong>
-                          <span>Your company details and supporting statements.</span>
-                        </Link>
-                      </li>
-                    )}
-                    {customerProgrammesEnabled() && (
-                      <li>
-                        <Link prefetch={false} href="/account/delegations/organise">
-                          <strong>Programmes</strong>
-                          <span>Programme terms, places, pricing and coordination.</span>
-                        </Link>
-                      </li>
-                    )}
-                    {customerServiceRequestsEnabled() && (
-                      <li>
-                        <Link prefetch={false} href="/account/service-requests">
-                          <strong>Service requests</strong>
-                          <span>Help requests, questions and quotes.</span>
-                        </Link>
-                      </li>
-                    )}
-                  </ul>
-                </section>
+                <ManageYourWork />
                 {customerBillingEnabled() && (
                   <ul className="ux-link-list">
                     <li>
@@ -474,6 +438,47 @@ export default async function Page({
         </div>
       )}
     </CustomerShell>
+  );
+}
+
+/** The Manage your work list in the Workspaces group: every link keeps its own switch. */
+function ManageYourWork() {
+  return (
+    <section aria-label="Manage your work">
+      <h3>Manage your work</h3>
+      <ul className="ux-link-list">
+        <li>
+          <Link prefetch={false} href="/account?view=work&tab=workspaces">
+            <strong>Workspaces and team</strong>
+            <span>Your workspaces, who is on each team and your role.</span>
+          </Link>
+        </li>
+        {customerOrganisationProfilesEnabled() && (
+          <li>
+            <Link prefetch={false} href="/account/profile">
+              <strong>{companyProfilesTitle(customerOrganisationLinksEnabled())}</strong>
+              <span>Your company details and supporting statements.</span>
+            </Link>
+          </li>
+        )}
+        {customerProgrammesEnabled() && (
+          <li>
+            <Link prefetch={false} href="/account/delegations/organise">
+              <strong>Programmes</strong>
+              <span>Programme terms, places, pricing and coordination.</span>
+            </Link>
+          </li>
+        )}
+        {customerServiceRequestsEnabled() && (
+          <li>
+            <Link prefetch={false} href="/account/service-requests">
+              <strong>Service requests</strong>
+              <span>Help requests, questions and quotes.</span>
+            </Link>
+          </li>
+        )}
+      </ul>
+    </section>
   );
 }
 
