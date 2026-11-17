@@ -18,7 +18,9 @@ function evidence(overrides = {}) {
   const ci = [
     'changes',
     'checks',
-    'integration',
+    'integration (1)',
+    'integration (2)',
+    'integration (3)',
     'browser (1)',
     'browser (2)',
     'browser (3)',

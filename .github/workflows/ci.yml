@@ -94,12 +94,16 @@ jobs:
         run: node scripts/v3-context.mjs verify
 
   # Integration tests (PostgreSQL, identity, adapters, recovery) ran inside the browser job until 17 Nov 2026, when that job
-  # took 44m38s (PR 534) and was then cancelled at its 45-minute limit (PR 537). They need no build or browser, so they run here.
+  # took 44m38s (PR 534) and was then cancelled at its 45-minute limit (PR 537). They need no build or browser, so they run here, in three shards: the suite alone took more than 30 minutes (run 44018564826, cancelled at the limit). Each shard has its own fresh database; together they run exactly the files `pnpm test:integration` runs.
   integration:
     needs: changes
     if: ${{ needs.changes.outputs.docs_only != 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -127,8 +131,8 @@ jobs:
         run: pnpm db:prepare-local
       - name: Real malware scanner readiness
         run: pnpm scanner:local
-      - name: Database, identity, adapter and recovery integration tests
-        run: pnpm test:integration
+      - name: Database, identity, adapter and recovery integration tests (shard ${{ matrix.shard }} of ${{ strategy.job-total }})
+        run: pnpm test:integration --shard=${{ matrix.shard }}/${{ strategy.job-total }}
 
   # Three browser shards. Every spec in tests/browser is independent (fullyParallel), so Playwright shares the tests out;
   # together the shards run exactly the tests `pnpm test:e2e` runs. `integration` above holds the vitest suite.
