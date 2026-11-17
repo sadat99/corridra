@@ -384,6 +384,8 @@ Tests that fail today, PostgreSQL 16 tests in `packages/db`:
 
 U1 ships first, so no screen breaks when U2 is installed.
 
+**Status (17 November 2026): built in PR 554, not installed.** Module `packages/db/viewer-reply-metadata-migrations` (0001 for the reply and answer tables and four meta reads: `app.reply_meta_list`, `app.reply_meta`, `app.reply_review_meta` and `app.delivery_response_meta`, 0002 for the answer-correction table, applied only where that module exists and re-run by its install), reached only through `field_modules_action=viewer_reply_metadata`. Each file is hash-guarded against the policies it replaces. Rollback text: `packages/db/viewer-reply-metadata-migrations/rollback/` (copied to the next free number only on the owner's word). Installing needs the owner's word.
+
 ### U3. Database: exports and snapshots, everyone except viewers
 
 Replace the read policies, sample and real, of `app.delivery_export` and `app.delivery_export_artifact` (`0016:132`; `0002:226,228`) with the same text plus `AND app.member_role(tenant_id) <> 'viewer'`.
@@ -394,6 +396,8 @@ Tests that fail today:
 
 1. A viewer selecting from either table gets a row today and must get none.
 2. Owner, admin, operator and reviewer still do.
+
+**Status (17 November 2026): built in PR 554, not installed.** Module `packages/db/viewer-export-access-migrations`, reached only through `field_modules_action=viewer_export_access`, hash-guarded against the four policies it replaces. Rollback text: `packages/db/viewer-export-access-migrations/rollback/0001_restore_original_export_reads.sql`. Installing needs the owner's word.
 
 ### U4. Member notice (required before U5; new optional module and inbox type)
 
@@ -467,6 +471,8 @@ Order: U1, then U2 and U3 (they can run in parallel; they touch different polici
 **Risk:**
 
 - A viewer screen that renders a body shows an empty state. U1 lists and changes those screens before U2.
+- U2 also hides from a viewer the rows of tables whose read policies reach a reply through its read policy: the team's reply reviews (`app.recipient_reply_review`) and reply-to-offer bindings (`app.reply_quotation_binding`). Review state reaches a viewer as metadata through `app.reply_review_meta` (decision and date only); no staff screen reads bindings. The staff readers (delivery experience, delivery workspace, Today and the reply review list) read through the meta functions for a role without the body permission (PR 554).
+- The meta functions restate the read scope of these tables. Any later change to the read policies of `app.recipient_detail_response`, its corrections, `app.delivery_response` or `app.recipient_reply_review` must change the meta functions in the same reviewed unit.
 - U5 changes a privacy expectation, including for older items. The required notice (U4), the interval (4d) and the audit event per read address it.
 
 ## Rollback

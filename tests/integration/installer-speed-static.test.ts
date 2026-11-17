@@ -14,7 +14,11 @@ const migratorFiles = readdirSync(resolve(directory)).filter((name) =>
 );
 // Re-run on purpose in one installer run: the programme lifecycle install re-runs the workspace lifecycle so its programme
 // guard gets the archive gate, and its _late files repeat on every call. Memoising either would skip that.
-const rerunOnPurpose = ['customer-workspace-lifecycle-migrate.ts'];
+// ADR-087 U2 is refreshed after the answer-correction install, so its waiting 0002 applies in the same run.
+const rerunOnPurpose = [
+  'customer-workspace-lifecycle-migrate.ts',
+  'viewer-reply-metadata-migrate.ts',
+];
 
 describe('the install script', () => {
   test('starts the run at the beginning of the apply path and ends it in the finally, before the pool closes', () => {
@@ -86,6 +90,14 @@ describe('the migrators', () => {
     expect(text).toContain(
       'export async function refreshCustomerWorkspaceLifecycle(pool: DatabasePool)',
     );
+  });
+
+  test('the ADR-087 U2 installer and its refresh stay un-memoised', () => {
+    const text = source(`${directory}/viewer-reply-metadata-migrate.ts`);
+    expect(text).not.toContain('migrateOnce');
+    expect(text).not.toContain('migration-run');
+    expect(text).toContain('export async function migrateViewerReplyMetadata(pool: DatabasePool)');
+    expect(text).toContain('export async function refreshViewerReplyMetadata(pool: DatabasePool)');
   });
 
   test('no refresh or configure function is wrapped anywhere', () => {
