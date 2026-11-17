@@ -1,6 +1,7 @@
 import { randomUUID, createHash } from 'node:crypto';
 import {
   DomainError,
+  permits,
   sourceInput,
   claimInput,
   assertTransition,
@@ -8,6 +9,13 @@ import {
 } from '@corridra/domain';
 import { decodeCursor, keysetPage, pageLimit } from '@corridra/domain/paging';
 import { withTenant, type Pool, type RequestContext } from '@corridra/db';
+// ADR-087 U1r (owner, 17 November 2026, relayed: "yes to both"): a claim is linked to a quotation when a quotation names it
+// or names its source. A staff role without delivery.read_body (staff viewer) gets such a claim with its statement null,
+// the verified fact copied from it null, and is refused the file of any evidence object on it. Nothing else changes.
+// The expressions passed in are SQL column references written in this file, never input.
+const quotationLinkedClaim = (tenant: string, claimId: string) =>
+  `EXISTS(SELECT FROM app.mission_quotation q JOIN app.claim lc ON lc.tenant_id=q.tenant_id AND (lc.id=q.claim_id OR lc.source_id=q.source_id) WHERE lc.tenant_id=${tenant} AND lc.id=${claimId})`;
+export const withheldEvidenceMessage = 'Not available for your role';
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** Optional mission and company links on a new source (CQ-80). Both are checked before saving. */
 function sourceLinks(input: unknown) {
@@ -73,6 +81,7 @@ export class EvidenceService {
     const wants = (k: 'sources' | 'claims' | 'evidence') =>
       !continuing.length || continuing[0] === k;
     return withTenant(this.pool, ctx, 'trust.read', async (t) => {
+      const readsBody = permits(t.role, 'delivery.read_body');
       const linked = !!(
         await t.db.query(
           "SELECT EXISTS(SELECT FROM information_schema.columns WHERE table_schema='app' AND table_name='source_record' AND column_name='mission_id') AS linked",
@@ -98,7 +107,9 @@ export class EvidenceService {
         : null;
       const claims = wants('claims')
         ? await keysetPage(t.db, {
-            select: 'c.id,c.source_id,c.statement,c.status',
+            select: readsBody
+              ? 'c.id,c.source_id,c.statement,c.status'
+              : `c.id,c.source_id,CASE WHEN ${quotationLinkedClaim('c.tenant_id', 'c.id')} THEN NULL ELSE c.statement END AS statement,c.status`,
             from: 'app.claim c',
             where: 'c.tenant_id=$1',
             values: [t.tenantId],
@@ -110,8 +121,9 @@ export class EvidenceService {
         : null;
       const objects = wants('evidence')
         ? await keysetPage(t.db, {
-            select:
-              'e.id,e.claim_id,e.mime,e.size_bytes,e.created_by,s.status,s.scan_status,s.version',
+            select: readsBody
+              ? 'e.id,e.claim_id,e.mime,e.size_bytes,e.created_by,s.status,s.scan_status,s.version'
+              : `e.id,e.claim_id,e.mime,e.size_bytes,e.created_by,s.status,s.scan_status,s.version,${quotationLinkedClaim('e.tenant_id', 'e.claim_id')} AS withheld`,
             from: 'app.evidence_object e JOIN app.evidence_state s USING(tenant_id,id)',
             where: 'e.tenant_id=$1',
             values: [t.tenantId],
@@ -140,7 +152,7 @@ export class EvidenceService {
           ? []
           : (
               await t.db.query(
-                "SELECT f.id,f.statement,v.valid_until FROM app.canonical_fact f JOIN app.verification v ON v.tenant_id=f.tenant_id AND v.id=f.verification_id JOIN app.evidence_state s ON s.tenant_id=v.tenant_id AND s.id=v.evidence_id JOIN app.evidence_object e ON e.tenant_id=s.tenant_id AND e.id=s.id WHERE f.tenant_id=$1 AND v.valid_until>now() AND e.retention_until>now() AND s.status='VERIFIED'",
+                `SELECT f.id,${readsBody ? 'f.statement' : `CASE WHEN ${quotationLinkedClaim('e.tenant_id', 'e.claim_id')} THEN NULL ELSE f.statement END AS statement`},v.valid_until FROM app.canonical_fact f JOIN app.verification v ON v.tenant_id=f.tenant_id AND v.id=f.verification_id JOIN app.evidence_state s ON s.tenant_id=v.tenant_id AND s.id=v.evidence_id JOIN app.evidence_object e ON e.tenant_id=s.tenant_id AND e.id=s.id WHERE f.tenant_id=$1 AND v.valid_until>now() AND e.retention_until>now() AND s.status='VERIFIED'`,
                 [t.tenantId],
               )
             ).rows,
@@ -381,6 +393,15 @@ export class EvidenceService {
         [t.tenantId, id, this.allowUnscannedEvidence],
       );
       if (!r.rowCount) throw new DomainError('Evidence unavailable', 404);
+      if (!permits(t.role, 'delivery.read_body')) {
+        const withheld = await t.db.query(
+          `SELECT ${quotationLinkedClaim('$1::uuid', '$2::uuid')} AS withheld`,
+          [t.tenantId, r.rows[0].claim_id],
+        );
+        // Fail closed: anything but a plain "not linked" answer withholds the file.
+        if (withheld.rows[0]?.withheld !== false)
+          throw new DomainError(withheldEvidenceMessage, 403);
+      }
       return r.rows[0];
     });
     const body = await this.storage.get(e.object_key);

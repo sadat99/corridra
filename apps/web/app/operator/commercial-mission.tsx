@@ -71,7 +71,8 @@ type Snapshot = {
 type Catalogue = { packs: Row[]; types: Row[]; requirements: Row[]; assessments: Row[] };
 type Proof = {
   sources: { id: string; locator: string }[];
-  claims: { id: string; source_id: string; statement: string }[];
+  /** statement is null for a staff viewer when the claim is linked to a quotation (ADR-087 U1r). */
+  claims: { id: string; source_id: string; statement: string | null }[];
 };
 const labels: Record<string, string> = {
   application: 'Purpose and application',
@@ -739,7 +740,7 @@ export function CommercialMission({
             .filter((c) => c.source_id === source)
             .map((c) => (
               <option key={c.id} value={c.id}>
-                {c.statement}
+                {c.statement ?? bodyNotAvailable}
               </option>
             ))}
         </select>
@@ -1009,11 +1010,18 @@ export function CommercialMission({
               {data[k as 'assessments'].map((r) => (
                 <div key={r.id}>
                   <p>
-                    {String(r.rationale ?? r.reason)} · {r.created_at}
+                    {k === 'decisions' && r.rationale === null
+                      ? bodyNotAvailable
+                      : String(r.rationale ?? r.reason)}{' '}
+                    · {r.created_at}
                   </p>
                   <Values
                     value={
-                      r.results ?? r.entries ?? { decision: r.decision, nextAction: r.next_action }
+                      r.results ??
+                      r.entries ?? {
+                        decision: r.decision,
+                        nextAction: r.next_action ?? bodyNotAvailable,
+                      }
                     }
                   />
                   {k === 'assessments' && <Values value={r.technical_results} />}

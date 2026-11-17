@@ -1,7 +1,10 @@
 // Shared record shapes of the team workspace snapshot (moved from workspace.tsx unchanged).
 export type OperatorRecordRow = {
   id: string;
-  statement?: string;
+  /** Null for a staff viewer when the claim is linked to a quotation (ADR-087 U1r). */
+  statement?: string | null;
+  /** True for a staff viewer when the evidence file's claim is linked to a quotation; the file is refused (ADR-087 U1r). */
+  withheld?: boolean;
   locator?: string;
   status?: string;
   scan_status?: string;

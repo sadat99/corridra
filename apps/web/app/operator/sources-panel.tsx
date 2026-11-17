@@ -8,6 +8,7 @@ import type { PickerOption } from '../../lib/ux/options';
 import { PanelHeading } from './panel-heading';
 import type { MoreKind, OperatorSnapshot } from './workspace-types';
 import { ShowMore } from './show-more';
+import { bodyNotAvailable } from '../../lib/body-access';
 
 type SourceRow = {
   id: string;
@@ -305,7 +306,8 @@ export function SourcesPanel({
         <ul>
           {data.claims.map((r) => (
             <li key={r.id}>
-              {r.statement} <span className="evidence-label">Self-declared</span>
+              {r.statement ?? bodyNotAvailable}{' '}
+              <span className="evidence-label">Self-declared</span>
               <details>
                 <summary>Claim reference</summary>
                 <CopyReference label="Claim reference" value={r.id} />
@@ -351,7 +353,7 @@ export function SourcesPanel({
       <section className="detail-card">
         <h3>Verified facts</h3>
         {data.facts.length ? (
-          data.facts.map((r) => <p key={r.id}>{r.statement}</p>)
+          data.facts.map((r) => <p key={r.id}>{r.statement ?? bodyNotAvailable}</p>)
         ) : (
           <p>No current verified facts.</p>
         )}

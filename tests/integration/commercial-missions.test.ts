@@ -6,6 +6,7 @@ import { rawContext } from './support';
 import { CorridorService, initialRouteConfiguration } from '../../packages/missions/src/corridors';
 import { CommercialMissionService } from '../../packages/missions/src/commercial';
 import { DeliveryExperienceService } from '../../packages/delivery/src/experience';
+import { EvidenceService } from '../../packages/evidence/src/index';
 import { initialRoutes } from '../../packages/domain/src/corridors';
 import {
   commercialMissionCommand,
@@ -1033,6 +1034,177 @@ test('a staff viewer reads quotation metadata only; owner and admin read the ful
     'No engineering or audit approval is established',
   );
   expect(viewerRows).toEqual(ownerRows.map((r) => ({ ...r, uncertainties: null })));
+});
+// ADR-087 U1r (owner, 17 November 2026, relayed: "yes to both, drop the rest"): a staff viewer reads no claim, verified fact or
+// evidence file linked to a quotation, and no selection rationale, next action or RFQ requested terms. Unlinked evidence stays
+// readable. Owner, admin, operator and reviewer read everything whole. Rows, money and history are unchanged.
+test('a staff viewer reads no quotation evidence, selection rationale or RFQ terms; other roles read them whole', async () => {
+  const j = await journey('JP', 'KE', 'sourcing', 'KES'),
+    q = await offers(j);
+  await service.command(
+    f.ctx,
+    command('decision', {
+      ...j.base,
+      requirementId: j.requirement.id,
+      targetId: j.targetId,
+      assessmentId: q.assessment.id,
+      quotationId: q.quote.id,
+      decision: 'NEED_INFORMATION',
+      rationale: 'Viewer must not read this rationale',
+      ...f.next(),
+      nextAction: 'Viewer must not read this next action',
+    }),
+  );
+  const pdf = (text: string) => new TextEncoder().encode('%PDF-1.7\n' + text);
+  const files = new Map<string, Uint8Array>();
+  const evidence = new EvidenceService(
+    f.runtime,
+    {
+      async put(key, body) {
+        files.set(key, body);
+      },
+      async get(key) {
+        return files.get(key)!;
+      },
+    },
+    {
+      async scan() {
+        return { verdict: 'CLEAN', engine: 'synthetic' };
+      },
+    },
+  );
+  // The quotation names j.base's source and claim; a second source carries an unlinked claim.
+  const unlinkedSource = await f.source();
+  const unlinkedClaim = await evidence.createClaim(f.ctx, {
+    sourceId: unlinkedSource.id,
+    statement: 'Unlinked synthetic claim stays readable',
+  });
+  const linkedFile = await evidence.upload(
+    f.ctx,
+    j.base.claimId,
+    pdf('Linked quotation evidence'),
+    'application/pdf',
+  );
+  const unlinkedFile = await evidence.upload(
+    f.ctx,
+    unlinkedClaim.id,
+    pdf('Unlinked evidence'),
+    'application/pdf',
+  );
+  await evidence.scan(f.ctx, linkedFile.id);
+  await evidence.scan(f.ctx, unlinkedFile.id);
+  await evidence.verify(f.users.owner.ctx, linkedFile.id, {
+    decision: 'VERIFIED',
+    method: 'Synthetic document review',
+    scope: 'Synthetic quotation evidence',
+    validUntil: future(3),
+  });
+  await rawContext(
+    f.runtime,
+    f.users.owner.ctx,
+    "UPDATE app.relationship SET visibility='TEAM' WHERE tenant_id=$1 AND id IN (SELECT relationship_id FROM app.target_account WHERE tenant_id=$1 AND mission_id=$2)",
+    [f.tenantA, j.missionId],
+  );
+  const linkedStatement =
+    'Declared synthetic requirement and supplier response, no independent verification';
+
+  // Owner and operator read everything whole.
+  for (const ctx of [f.users.owner.ctx, f.ctx]) {
+    const w = await evidence.workspace(ctx);
+    expect(w.claims.find((c) => c.id === j.base.claimId)?.statement).toBe(linkedStatement);
+    expect(w.evidence.find((e) => e.id === linkedFile.id)).not.toHaveProperty('withheld');
+    expect(w.facts.some((x) => x.statement === linkedStatement)).toBe(true);
+    expect(new TextDecoder().decode((await evidence.download(ctx, linkedFile.id)).body)).toContain(
+      'Linked quotation evidence',
+    );
+    const m = await service.workspace(ctx, j.missionId);
+    expect(m.decisions[0]?.rationale).toBe('Viewer must not read this rationale');
+    expect(m.decisions[0]?.next_action).toBe('Viewer must not read this next action');
+    expect(m.rfqs.find((r) => r.id === q.rfq.id)?.requested_terms).toBe(
+      'Same specification, hundred pieces, explicit shipping and costs',
+    );
+  }
+  const ownerEvidence = await evidence.workspace(f.users.owner.ctx);
+  const ownerMission = await service.workspace(f.users.owner.ctx, j.missionId);
+
+  // The viewer keeps every row; the protected fields are null and the linked file is refused.
+  const viewerEvidence = await evidence.workspace(f.users.viewer.ctx);
+  expect(viewerEvidence.claims.map((c) => c.id)).toEqual(ownerEvidence.claims.map((c) => c.id));
+  for (const c of viewerEvidence.claims) {
+    const original = ownerEvidence.claims.find((o) => o.id === c.id)!;
+    const linked = (
+      await f.owner.query(
+        'SELECT EXISTS(SELECT FROM app.mission_quotation q JOIN app.claim c ON c.tenant_id=q.tenant_id AND (c.id=q.claim_id OR c.source_id=q.source_id) WHERE c.id=$1) linked',
+        [c.id],
+      )
+    ).rows[0].linked;
+    expect(c).toEqual(linked ? { ...original, statement: null } : original);
+  }
+  expect(viewerEvidence.claims.find((c) => c.id === j.base.claimId)?.statement).toBeNull();
+  expect(viewerEvidence.claims.find((c) => c.id === unlinkedClaim.id)?.statement).toBe(
+    'Unlinked synthetic claim stays readable',
+  );
+  expect(viewerEvidence.evidence.find((e) => e.id === linkedFile.id)?.withheld).toBe(true);
+  expect(viewerEvidence.evidence.find((e) => e.id === unlinkedFile.id)?.withheld).toBe(false);
+  expect(viewerEvidence.facts.map((x) => x.id)).toEqual(ownerEvidence.facts.map((x) => x.id));
+  expect(viewerEvidence.facts.some((x) => x.statement === linkedStatement)).toBe(false);
+  await expect(evidence.download(f.users.viewer.ctx, linkedFile.id)).rejects.toMatchObject({
+    message: 'Not available for your role',
+    status: 403,
+  });
+  expect(
+    new TextDecoder().decode((await evidence.download(f.users.viewer.ctx, unlinkedFile.id)).body),
+  ).toContain('Unlinked evidence');
+  expect(JSON.stringify(viewerEvidence)).not.toContain(linkedStatement);
+
+  const viewerMission = await service.workspace(f.users.viewer.ctx, j.missionId);
+  expect(viewerMission.decisions).toEqual(
+    ownerMission.decisions.map((d) => ({ ...d, rationale: null, next_action: null })),
+  );
+  expect(viewerMission.rfqs).toEqual(
+    ownerMission.rfqs.map((r) => ({ ...r, requested_terms: null })),
+  );
+  expect(viewerMission.rfqs.find((r) => r.id === q.rfq.id)?.buyer_context).toBe(
+    'Original synthetic importer relationship',
+  );
+  for (const words of [
+    'Viewer must not read this rationale',
+    'Viewer must not read this next action',
+    'Same specification, hundred pieces, explicit shipping and costs',
+  ])
+    expect(JSON.stringify(viewerMission)).not.toContain(words);
+
+  // Admin and reviewer read whole: the same member as admin, then back to reviewer as it was.
+  const setRole = (role: string) =>
+    rawContext(
+      f.runtime,
+      f.users.owner.ctx,
+      'UPDATE app.membership SET role=$3 WHERE tenant_id=$1 AND user_id=$2',
+      [f.tenantA, f.users.reviewer.id, role],
+    );
+  const original = (
+    await f.owner.query('SELECT role FROM app.membership WHERE tenant_id=$1 AND user_id=$2', [
+      f.tenantA,
+      f.users.reviewer.id,
+    ])
+  ).rows[0].role;
+  expect(original).toBe('reviewer');
+  for (const role of ['admin', 'reviewer']) {
+    await setRole(role);
+    try {
+      const w = await evidence.workspace(f.users.reviewer.ctx);
+      expect(w.role).toBe(role);
+      expect(w.claims.find((c) => c.id === j.base.claimId)?.statement).toBe(linkedStatement);
+      expect((await evidence.download(f.users.reviewer.ctx, linkedFile.id)).mime).toBe(
+        'application/pdf',
+      );
+      const m = await service.workspace(f.users.reviewer.ctx, j.missionId);
+      expect(m.decisions).toEqual(ownerMission.decisions);
+      expect(m.rfqs).toEqual(ownerMission.rfqs);
+    } finally {
+      await setRole(original);
+    }
+  }
 });
 test('populated Part 1 upgrade preserves old mission, money, evidence, identity and event history', async () => {
   await f.close();
