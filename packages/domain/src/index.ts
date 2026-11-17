@@ -71,12 +71,15 @@ export const claimInput = z.object({
 });
 export const permissions = {
   'delivery.read': ['owner', 'admin', 'operator', 'reviewer', 'viewer'],
+  // ADR-087 U1: the words a participant, buyer or supplier typed. Every staff role except viewer; *.read stays metadata for all five.
+  'delivery.read_body': ['owner', 'admin', 'operator', 'reviewer'],
   'delivery.manage': ['owner', 'admin', 'operator'],
   'delivery.share': ['owner', 'admin'],
   'opportunities.read': ['owner', 'admin', 'operator', 'reviewer', 'viewer'],
   'opportunities.manage': ['owner', 'admin', 'operator'],
   'opportunities.accounting': ['owner', 'admin'],
   'communications.read': ['owner', 'admin', 'operator', 'reviewer', 'viewer'],
+  'communications.read_body': ['owner', 'admin', 'operator', 'reviewer'],
   'communications.manage': ['owner', 'admin', 'operator'],
   'communications.approve': ['owner', 'admin'],
   'meetings.read': ['owner', 'admin', 'operator', 'reviewer', 'viewer'],
@@ -106,6 +109,10 @@ export const permissions = {
   'viewas.open': ['owner', 'admin'],
 } satisfies Record<string, Role[]>;
 export type Permission = keyof typeof permissions;
+/** Whether a role holds a permission, for reads that keep metadata and drop what a role may not see. */
+export function permits(role: Role, permission: Permission) {
+  return (permissions[permission] as Role[]).includes(role);
+}
 export function authorize(role: Role, permission: Permission) {
-  if (!(permissions[permission] as Role[]).includes(role)) throw new DomainError('Access denied');
+  if (!permits(role, permission)) throw new DomainError('Access denied');
 }

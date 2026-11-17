@@ -25,6 +25,7 @@ import {
 } from '../../lib/reply-review-view';
 import { useReplyPrefill } from '../../lib/ux/use-reply-prefill';
 import { replyLinkSuffix, type ReplyLanguage } from '../../lib/reply-terms';
+import { bodyNotAvailable } from '../../lib/body-access';
 import { useOperatorFlags } from './operator-flags';
 import './reply-review.css';
 import './reply-handoff.css';
@@ -37,7 +38,8 @@ import './reply-handoff.css';
 type Reply = {
   id: string;
   link_id: string;
-  body: ReplyBody & { body?: string };
+  /** Null for a role without delivery.read_body (staff viewer, ADR-087 U1). */
+  body: (ReplyBody & { body?: string }) | null;
   created_at?: string;
   revision?: number;
   revised_at?: string;
@@ -108,23 +110,86 @@ export function ReplyReview({
         </p>
       )}
       <ul className="reply-review-list">
-        {responses.map((reply) => (
-          <ReplyCard
-            key={reply.id}
-            reply={reply}
-            requirement={disclosures.find((d) => d.link_id === reply.link_id)?.shared_requirements}
-            reviews={reviews.filter((r) => r.responseId === reply.id)}
-            tenant={tenant}
-            canRecord={['owner', 'admin', 'operator'].includes(role)}
-            canAct={canReview && open === true && !unavailable}
-            onChanged={reload}
-            onStale={async () => {
-              await Promise.all([reload(), onRefresh?.()]);
-            }}
-          />
-        ))}
+        {responses.map((reply) =>
+          reply.body === null ? (
+            <WithheldReply
+              key={reply.id}
+              reply={reply}
+              reviews={reviews.filter((r) => r.responseId === reply.id)}
+            />
+          ) : (
+            <ReplyCard
+              key={reply.id}
+              reply={{ ...reply, body: reply.body }}
+              requirement={
+                disclosures.find((d) => d.link_id === reply.link_id)?.shared_requirements
+              }
+              reviews={reviews.filter((r) => r.responseId === reply.id)}
+              tenant={tenant}
+              canRecord={['owner', 'admin', 'operator'].includes(role)}
+              canAct={canReview && open === true && !unavailable}
+              onChanged={reload}
+              onStale={async () => {
+                await Promise.all([reload(), onRefresh?.()]);
+              }}
+            />
+          ),
+        )}
       </ul>
     </section>
+  );
+}
+
+type ReviewState = ReturnType<typeof reviewState>;
+
+/** Who sent the reply, when, and where its review stands. Shown to every role that may see the reply exists. */
+function ReplyHeader({
+  reply,
+  state,
+  ineligible,
+}: {
+  reply: Reply;
+  state: ReviewState;
+  ineligible: boolean;
+}) {
+  return (
+    <header>
+      <p className="reply-review-meta">
+        Recipient link {reply.link_id.slice(0, 8)}
+        {reply.created_at ? ` · received ${displayDate(reply.created_at)}` : ''} · Self-declared
+      </p>
+      {state.final ? (
+        <p className="reply-review-state" data-state={state.final.decision}>
+          {state.final.decision === 'PUBLISH'
+            ? ineligible
+              ? 'Published. This reply cannot be prepared as an offer.'
+              : 'Published: prepared as a mission quotation, not yet confirmed.'
+            : `Rejected: ${reasonLabels[state.final.reasonCode as ReplyReviewReason] ?? 'reason recorded'}.`}
+        </p>
+      ) : state.asked ? (
+        <p className="reply-review-state" data-state="ASK">
+          Asked for {state.asked.askTerms?.map((t) => termLabels[t]).join(', ')}. Waiting for a new
+          reply.
+        </p>
+      ) : (
+        <p className="reply-review-state" data-state="OPEN">
+          Awaiting review.
+        </p>
+      )}
+    </header>
+  );
+}
+
+/** A reply whose words this role may not read (staff viewer, ADR-087 U1): that it exists and its review state only. */
+function WithheldReply({ reply, reviews }: { reply: Reply; reviews: StoredReview[] }) {
+  return (
+    <li className="reply-review-card" id={`reply-${reply.id}`}>
+      <ReplyHeader reply={reply} state={reviewState(reviews)} ineligible={false} />
+      <section aria-label="The reply">
+        <h4>The reply</h4>
+        <p>{bodyNotAvailable}</p>
+      </section>
+    </li>
   );
 }
 
@@ -138,7 +203,7 @@ function ReplyCard({
   onChanged,
   onStale,
 }: {
-  reply: Reply;
+  reply: Reply & { body: NonNullable<Reply['body']> };
   requirement?: string;
   reviews: StoredReview[];
   tenant: string;
@@ -251,30 +316,7 @@ function ReplyCard({
 
   return (
     <li className="reply-review-card" id={`reply-${reply.id}`} ref={card}>
-      <header>
-        <p className="reply-review-meta">
-          Recipient link {reply.link_id.slice(0, 8)}
-          {reply.created_at ? ` · received ${displayDate(reply.created_at)}` : ''} · Self-declared
-        </p>
-        {state.final ? (
-          <p className="reply-review-state" data-state={state.final.decision}>
-            {state.final.decision === 'PUBLISH'
-              ? ineligible
-                ? 'Published. This reply cannot be prepared as an offer.'
-                : 'Published: prepared as a mission quotation, not yet confirmed.'
-              : `Rejected: ${reasonLabels[state.final.reasonCode as ReplyReviewReason] ?? 'reason recorded'}.`}
-          </p>
-        ) : state.asked ? (
-          <p className="reply-review-state" data-state="ASK">
-            Asked for {state.asked.askTerms?.map((t) => termLabels[t]).join(', ')}. Waiting for a
-            new reply.
-          </p>
-        ) : (
-          <p className="reply-review-state" data-state="OPEN">
-            Awaiting review.
-          </p>
-        )}
-      </header>
+      <ReplyHeader reply={reply} state={state} ineligible={ineligible} />
 
       <div className="reply-review-columns">
         <section aria-label="Requirement shown to the supplier">
