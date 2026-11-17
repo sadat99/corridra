@@ -111,7 +111,29 @@ describe('CX PR 2a: Move, the stage and the actions', () => {
   it('has no filled in-page button: card actions and the start link are quiet, the header holds the primary', async () => {
     const { MoveView } = await load('app/account/move/move-view');
     const withCards = render(MoveView, { model: busy, startHref: '/plan' });
-    expect(withCards).toContain('mr-move-action');
+    // TC1: the top card is the Today card. Its action keeps the same address and label the list card had, as the
+    // page's one filled action; a card that stays in the list keeps its quiet mr-move-action.
+    expect(withCards).toMatch(
+      new RegExp(
+        `<a class="primary-link today-action" href="/account/drafts/${owner.id}">Finish and Send</a>`,
+      ),
+    );
+    const two = buildMoveModel({
+      ...empty,
+      workspaces: [owner],
+      drafts: [
+        {
+          id: 'd1',
+          workspaceId: owner.id,
+          title: 'Cutting machine',
+          updatedAt: '2026-10-01T00:00:00Z',
+        },
+        { id: 'd2', workspaceId: owner.id, title: 'Loom', updatedAt: '2026-10-02T00:00:00Z' },
+      ],
+    });
+    const listed = render(MoveView, { model: two, startHref: '/plan' });
+    expect(listed).toContain('mr-move-action');
+    expect(listed.match(/today-action/g)).toHaveLength(1);
     expect(withCards).not.toMatch(/class="button mr-move-action"/);
     const empty2 = render(MoveView, { model: buildMoveModel(empty), startHref: '/plan' });
     expect(empty2).toContain('href="/plan"');
