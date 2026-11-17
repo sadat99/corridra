@@ -334,9 +334,9 @@ export default async function Page({
             profile={
               <section
                 className="ux-account-profile ux-account-card"
-                aria-labelledby="profile-identity-heading"
+                aria-label="Your verified profile"
               >
-                <h2 id="profile-identity-heading">Profile and Identity</h2>
+                <h2>Profile and Identity</h2>
                 <PersonalProfile
                   subject={data.user.id}
                   issuer={customerIssuerFromEnv()}
