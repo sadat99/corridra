@@ -7,13 +7,16 @@ import {
   assertTransition,
   type EvidenceStatus,
 } from '@corridra/domain';
-import { quotationLinkedClaimSql } from '@corridra/domain/commercial-missions';
+import {
+  quotationLinkCheckInstalled,
+  quotationLinkedClaimSql,
+} from '@corridra/domain/commercial-missions';
 import { decodeCursor, keysetPage, pageLimit } from '@corridra/domain/paging';
 import { withTenant, type Pool, type RequestContext } from '@corridra/db';
 // ADR-087 U1r (owner, 17 November 2026, relayed: "yes to both"): a staff role without delivery.read_body (staff viewer) gets a
 // claim linked to a quotation with its statement null, the verified fact copied from it null, and is refused the file of any
-// evidence object on it. Nothing else changes. The link check is quotationLinkedClaimSql (see its residue note).
-const quotationLinkedClaim = quotationLinkedClaimSql;
+// evidence object on it. Nothing else changes. The link check is quotationLinkedClaimSql (see its residue note); each reader
+// asks quotationLinkCheckInstalled once whether the ADR-087 quotation link check module is installed.
 export const withheldEvidenceMessage = 'Not available for your role';
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** Optional mission and company links on a new source (CQ-80). Both are checked before saving. */
@@ -81,6 +84,9 @@ export class EvidenceService {
       !continuing.length || continuing[0] === k;
     return withTenant(this.pool, ctx, 'trust.read', async (t) => {
       const readsBody = permits(t.role, 'delivery.read_body');
+      const installed = !readsBody && (await quotationLinkCheckInstalled(t.db));
+      const quotationLinkedClaim = (tenant: string, claim: string) =>
+        quotationLinkedClaimSql(tenant, claim, installed);
       const linked = !!(
         await t.db.query(
           "SELECT EXISTS(SELECT FROM information_schema.columns WHERE table_schema='app' AND table_name='source_record' AND column_name='mission_id') AS linked",
@@ -393,12 +399,14 @@ export class EvidenceService {
       );
       if (!r.rowCount) throw new DomainError('Evidence unavailable', 404);
       if (!permits(t.role, 'delivery.read_body')) {
+        const installed = await quotationLinkCheckInstalled(t.db);
         const withheld = await t.db.query(
-          `SELECT ${quotationLinkedClaim('$1::uuid', '$2::uuid')} AS withheld`,
+          `SELECT ${quotationLinkedClaimSql('$1::uuid', '$2::uuid', installed)} AS withheld`,
           [t.tenantId, r.rows[0].claim_id],
         );
-        // Anything but a plain false withholds the file. A quotation the viewer cannot see under row security answers a real
-        // false, so that file is served: the residue ADR-087 U1r leaves to the quotation link database unit.
+        // Anything but a plain false withholds the file. Without the ADR-087 quotation link check module, a quotation the
+        // viewer cannot see under row security answers a real false, so that file is served (the U1r residue); with it, any
+        // quotation in the workspace counts.
         if (withheld.rows[0]?.withheld !== false)
           throw new DomainError(withheldEvidenceMessage, 403);
       }
