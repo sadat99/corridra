@@ -395,7 +395,7 @@ describe('the hash guard', () => {
 
 describe('U2 installed (viewer reply metadata)', () => {
   let linkHolder: Awaited<ReturnType<typeof linkHolderReads>>;
-  test('install changes only the four named policies and adds the two meta reads; answer correction waits', async () => {
+  test('install changes only the four named policies and adds the four meta reads; answer correction waits', async () => {
     linkHolder = await linkHolderReads();
     const before = await definitions();
     expect(await refreshViewerReplyMetadata(s.f.owner)).toBeNull();
@@ -708,7 +708,7 @@ describe('U3 installed (viewer export access)', () => {
 
 describe('the module runner', () => {
   test('a file that waited is refused once a later file of the module is recorded', async () => {
-    const { mkdtemp, writeFile: write } = await import('node:fs/promises');
+    const { mkdtemp, rm, writeFile: write } = await import('node:fs/promises');
     const { tmpdir } = await import('node:os');
     const { join } = await import('node:path');
     const { pathToFileURL } = await import('node:url');
@@ -733,6 +733,17 @@ describe('the module runner', () => {
       await expect(migrateViewerModule(s.f.owner, orderModule)).rejects.toThrow(
         /0001_waits\.sql waited for app\.adr087_order_probe, but the later file 0002_later\.sql is already recorded/,
       );
+      // A file with no requirement that arrives behind a recorded later file is refused in plain words too.
+      await write(join(dir, '0001a_added_late.sql'), 'SELECT 3;\n');
+      await s.f.owner.query('DROP TABLE app.adr087_order_probe');
+      await s.f.owner.query(
+        "DELETE FROM adr087_order_test_migrations.applied WHERE name='0001_waits.sql'",
+      );
+      await rm(join(dir, '0001_waits.sql'));
+      await expect(migrateViewerModule(s.f.owner, orderModule)).rejects.toThrow(
+        'Order test: 0001a_added_late.sql is not recorded, but the later file 0002_later.sql is already recorded. Review the order before installing.',
+      );
+      await s.f.owner.query('CREATE TABLE app.adr087_order_probe(id int)');
     } finally {
       await s.f.owner.query('DROP TABLE app.adr087_order_probe');
       await s.f.owner.query('DROP SCHEMA adr087_order_test_migrations CASCADE');

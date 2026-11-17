@@ -736,7 +736,7 @@ try {
       await migrateCustomerProfilePictures(pool);
       console.log('installed or already current: profile picture');
     }
-    // ADR-087 U2 and U3 are never part of the base run. Each replaces only named read policies (and U2 adds two meta reads),
+    // ADR-087 U2 and U3 are never part of the base run. Each replaces only named read policies (and U2 adds four meta reads),
     // refuses unless every replaced policy is exactly the one it was written against, and refuses unless the real-use modules
     // are installed. Installing changes what a staff viewer reads at once, so each needs the owner's word. Reached only through
     // field_modules_action=viewer_reply_metadata and field_modules_action=viewer_export_access.

@@ -3,7 +3,7 @@
 -- unchanged to the next free number of the module (for example 0003_restore_original_reads.sql), review and merge it, and
 -- run field_modules_action=viewer_reply_metadata again. It is a forward migration: it refuses unless each policy is exactly
 -- the one 0001 installed, restores the four original expressions word for word (core 0025 and real-use 0002), and proves the
--- original fingerprints that 0001 guarded. The two meta functions stay: they show only metadata, which every role that can
+-- original fingerprints that 0001 guarded. The four meta functions stay: they show only metadata, which every role that can
 -- read a row could already see. Where 0002 is applied, roll it back first with 0002_restore_original_revision_reads.sql.
 -- Where 0002 is still waiting (answer correction not installed), the migrator will then refuse to apply 0002 behind this
 -- copy, so installing answer correction afterwards needs a reviewed decision on 0002 first.

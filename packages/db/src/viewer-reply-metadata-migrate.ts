@@ -2,7 +2,7 @@ import type { DatabasePool } from './index';
 import { migrateViewerModule } from './viewer-module-run';
 
 // ADR-087 U2. Explicit optional installation, reached only through field_modules_action=viewer_reply_metadata: staff viewers
-// read reply and answer metadata only (two read policy pairs gain the viewer clause, and two typed meta reads are added). It
+// read reply and answer metadata only (two read policy pairs gain the viewer clause, and four typed meta reads are added). It
 // refuses unless the customer real-use modules that hold the real read policies are installed (it never installs them), and
 // each SQL file refuses unless every policy it replaces is exactly the one it was written against. A file whose header names a
 // table with "-- requires-table:" is applied only where that table exists, and is otherwise left unrecorded so a later run

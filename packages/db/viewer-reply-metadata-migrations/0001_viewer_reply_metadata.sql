@@ -21,8 +21,8 @@
 -- constant below (command, permissive kind, role names, and the expressions with string literals taken out and casts, schema
 -- names, parentheses, quotes and spaces removed, so the result is the same on every PostgreSQL major version; parentheses are
 -- stripped, which is sound here because every compared expression is a chain of ANDs). A policy that is
--- missing or differs stops the file with an error and nothing changes. The two function names must be free. After the change a
--- second block proves the new fingerprints, the role lists, and the definer, search path and grants of both functions.
+-- missing or differs stops the file with an error and nothing changes. The four function names must be free. After the change
+-- a second block proves the new fingerprints, the role lists, and the definer, search path and grants of all four functions.
 -- Rollback: rollback/0001_restore_original_reads.sql restores the four original expressions, guarded by the fingerprints this
 -- file leaves, as the next numbered file of this module. It is applied only with the owner's word.
 DO $guard$
@@ -133,8 +133,8 @@ $$;
 REVOKE ALL ON FUNCTION app.reply_meta_list(uuid),app.reply_meta(uuid,uuid),app.reply_review_meta(uuid),app.delivery_response_meta(uuid,uuid) FROM PUBLIC,corridra_auth;
 GRANT EXECUTE ON FUNCTION app.reply_meta_list(uuid),app.reply_meta(uuid,uuid),app.reply_review_meta(uuid),app.delivery_response_meta(uuid,uuid) TO corridra_runtime;
 
--- Proof: the four policies now carry the viewer clause and nothing else changed in them; both functions are definer, with the
--- fixed search path, and only the owner and corridra_runtime may execute them.
+-- Proof: the four policies now carry the viewer clause and nothing else changed in them; all four functions are definer, with
+-- the fixed search path, and only the owner and corridra_runtime may execute them.
 DO $proof$
 DECLARE spec record; f text;
 BEGIN

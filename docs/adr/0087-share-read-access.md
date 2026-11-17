@@ -357,7 +357,7 @@ Tests that fail today, PostgreSQL 16 tests in `packages/db`:
 
 U1 ships first, so no screen breaks when U2 is installed.
 
-**Status (17 November 2026): built in PR 554, not installed.** Module `packages/db/viewer-reply-metadata-migrations` (0001 for the reply and answer tables and the two meta reads, 0002 for the answer-correction table, applied only where that module exists and re-run by its install), reached only through `field_modules_action=viewer_reply_metadata`. Each file is hash-guarded against the policies it replaces. Rollback text: `packages/db/viewer-reply-metadata-migrations/rollback/` (copied to the next free number only on the owner's word). Installing needs the owner's word.
+**Status (17 November 2026): built in PR 554, not installed.** Module `packages/db/viewer-reply-metadata-migrations` (0001 for the reply and answer tables and four meta reads: `app.reply_meta_list`, `app.reply_meta`, `app.reply_review_meta` and `app.delivery_response_meta`, 0002 for the answer-correction table, applied only where that module exists and re-run by its install), reached only through `field_modules_action=viewer_reply_metadata`. Each file is hash-guarded against the policies it replaces. Rollback text: `packages/db/viewer-reply-metadata-migrations/rollback/` (copied to the next free number only on the owner's word). Installing needs the owner's word.
 
 ### U3. Database: exports and snapshots, everyone except viewers
 
