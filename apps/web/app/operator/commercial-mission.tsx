@@ -28,6 +28,7 @@ import {
   termRows,
   type EligiblePrefill,
 } from '../../lib/reply-review-view';
+import { bodyNotAvailable } from '../../lib/body-access';
 import '../../components/ux/row-list.css';
 import './reply-handoff.css';
 
@@ -45,15 +46,27 @@ type Snapshot = {
   meetings: Row[];
   targets: { id: string; name: string }[];
   owners: { user_id: string; name: string }[];
-  comparison: {
-    id: string;
-    currency: string;
-    terms: Record<string, string>;
-    missing: string[];
-    status: string;
-    uncertainties: string;
-    derivedTotal: { amountMinor: string; scope: string; calculatedAt: string } | null;
-  }[];
+  /** Terms and everything derived from them are null for a role without delivery.read_body (staff viewer, ADR-087 U1q). */
+  comparison: (
+    | {
+        id: string;
+        currency: string;
+        terms: Record<string, string>;
+        missing: string[];
+        status: string;
+        uncertainties: string;
+        derivedTotal: { amountMinor: string; scope: string; calculatedAt: string } | null;
+      }
+    | {
+        id: string;
+        currency: string;
+        terms: null;
+        missing: null;
+        status: null;
+        uncertainties: null;
+        derivedTotal: null;
+      }
+  )[];
 };
 type Catalogue = { packs: Row[]; types: Row[]; requirements: Row[]; assessments: Row[] };
 type Proof = {
@@ -894,57 +907,68 @@ export function CommercialMission({
                           (t) => t.id === data.quotations.find((q) => q.id === o.id)?.target_id,
                         )?.name ?? 'Unavailable target'}
                       </td>
-                      <td>
-                        {o.terms.unitPriceMinor
-                          ? formatMoney(o.terms.unitPriceMinor, currency.parse(o.currency))
-                          : 'NOT SUPPLIED'}
-                      </td>
-                      <td>
-                        {o.status}
-                        <br />
-                        {o.missing.join(', ')}
-                      </td>
-                      <td>
-                        {o.uncertainties}
-                        <details>
-                          <summary>Terms and calculation basis</summary>
-                          <dl>
-                            {[
-                              'specification',
-                              'quantity',
-                              'moq',
-                              'unit',
-                              'unitPriceMinor',
-                              'totalPriceMinor',
-                              'toolingMinor',
-                              'setupMinor',
-                              'packagingMinor',
-                              'leadTime',
-                              'validUntil',
-                              'incoterm',
-                              'shipping',
-                              'warranty',
-                              'installation',
-                              'commissioning',
-                              'training',
-                              'spares',
-                              'paymentTerms',
-                            ].map((k) => (
-                              <div key={k}>
-                                <dt>{labelFor(k)}</dt>
-                                <dd>{o.terms[k] ?? 'NOT SUPPLIED'}</dd>
-                              </div>
-                            ))}
-                          </dl>
-                          {o.derivedTotal && (
-                            <p>
-                              {formatMoney(o.derivedTotal.amountMinor, currency.parse(o.currency))}{' '}
-                              derived from unit price × quantity at {o.derivedTotal.calculatedAt}.{' '}
-                              {o.derivedTotal.scope}
-                            </p>
-                          )}
-                        </details>
-                      </td>
+                      {o.terms === null ? (
+                        <td colSpan={3}>
+                          {o.currency} · {bodyNotAvailable}
+                        </td>
+                      ) : (
+                        <>
+                          <td>
+                            {o.terms.unitPriceMinor
+                              ? formatMoney(o.terms.unitPriceMinor, currency.parse(o.currency))
+                              : 'NOT SUPPLIED'}
+                          </td>
+                          <td>
+                            {o.status}
+                            <br />
+                            {o.missing.join(', ')}
+                          </td>
+                          <td>
+                            {o.uncertainties}
+                            <details>
+                              <summary>Terms and calculation basis</summary>
+                              <dl>
+                                {[
+                                  'specification',
+                                  'quantity',
+                                  'moq',
+                                  'unit',
+                                  'unitPriceMinor',
+                                  'totalPriceMinor',
+                                  'toolingMinor',
+                                  'setupMinor',
+                                  'packagingMinor',
+                                  'leadTime',
+                                  'validUntil',
+                                  'incoterm',
+                                  'shipping',
+                                  'warranty',
+                                  'installation',
+                                  'commissioning',
+                                  'training',
+                                  'spares',
+                                  'paymentTerms',
+                                ].map((k) => (
+                                  <div key={k}>
+                                    <dt>{labelFor(k)}</dt>
+                                    <dd>{o.terms[k] ?? 'NOT SUPPLIED'}</dd>
+                                  </div>
+                                ))}
+                              </dl>
+                              {o.derivedTotal && (
+                                <p>
+                                  {formatMoney(
+                                    o.derivedTotal.amountMinor,
+                                    currency.parse(o.currency),
+                                  )}{' '}
+                                  derived from unit price × quantity at{' '}
+                                  {o.derivedTotal.calculatedAt}. {o.derivedTotal.scope}
+                                </p>
+                              )}
+                            </details>
+                          </td>
+                        </>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -962,12 +986,18 @@ export function CommercialMission({
                   revision {String(q.revision)} · {String(q.currency)} · {q.created_at}
                 </p>
                 <p>
-                  {String(q.reason)}. Source:{' '}
+                  {q.reason === null ? bodyNotAvailable : String(q.reason)}. Source:{' '}
                   {proof?.sources.find((s) => s.id === q.source_id)?.locator ??
                     'Retained source reference'}
                 </p>
-                <Values value={q.terms} />
-                <p>Uncertainty: {String(q.uncertainties)}</p>
+                {q.terms === null ? (
+                  <p>Terms and uncertainty: {bodyNotAvailable}</p>
+                ) : (
+                  <>
+                    <Values value={q.terms} />
+                    <p>Uncertainty: {String(q.uncertainties)}</p>
+                  </>
+                )}
               </div>
             ))}
           </details>

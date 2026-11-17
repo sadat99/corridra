@@ -5,6 +5,7 @@ import { command, future } from './access-fixture';
 import { rawContext } from './support';
 import { CorridorService, initialRouteConfiguration } from '../../packages/missions/src/corridors';
 import { CommercialMissionService } from '../../packages/missions/src/commercial';
+import { DeliveryExperienceService } from '../../packages/delivery/src/experience';
 import { initialRoutes } from '../../packages/domain/src/corridors';
 import {
   commercialMissionCommand,
@@ -989,4 +990,84 @@ test('populated Part 1 upgrade preserves old mission, money, evidence, identity 
     }
     expect(after[i]).toEqual(before[i]);
   }
+});
+// ADR-087 U1q (owner, 17 November 2026, relayed: "Yes, hide from viewers"): a staff viewer sees that a quotation exists,
+// with its target, currency code, revision and dates, and never its terms. Owner, admin, operator and reviewer read it whole.
+test('a staff viewer reads quotation metadata only; owner and admin read the full terms', async () => {
+  const j = await journey('JP', 'KE', 'sourcing', 'KES'),
+    q = await offers(j);
+  const full = await service.workspace(f.users.owner.ctx, j.missionId);
+  const quote = full.quotations.find((r) => r.id === q.quote.id)!;
+  expect(quote.terms).toEqual(q.terms);
+  expect(quote.uncertainties).toBe('No engineering or audit approval is established');
+  expect(full.comparison.find((o) => o.id === q.quote.id)?.terms).toEqual(q.terms);
+
+  // Shared with the team, so row security lets a viewer see that the quotations exist; the terms rule is the service's.
+  await rawContext(
+    f.runtime,
+    f.users.owner.ctx,
+    "UPDATE app.relationship SET visibility='TEAM' WHERE tenant_id=$1 AND id IN (SELECT relationship_id FROM app.target_account WHERE tenant_id=$1 AND mission_id=$2)",
+    [f.tenantA, j.missionId],
+  );
+  const viewer = await service.workspace(f.users.viewer.ctx, j.missionId);
+  expect(viewer.quotations.length).toBeGreaterThan(0);
+  expect(viewer.quotations).toHaveLength(full.quotations.length);
+  for (const row of viewer.quotations) {
+    const original = full.quotations.find((r) => r.id === row.id)!;
+    expect(row).toEqual({ ...original, terms: null, uncertainties: null, reason: null });
+  }
+  for (const offer of viewer.comparison)
+    expect(offer).toEqual({
+      id: offer.id,
+      currency: 'KES',
+      requirementId: j.requirement.id,
+      evidenceCurrent: true,
+      terms: null,
+      uncertainties: null,
+      missing: null,
+      differences: null,
+      status: null,
+      inconsistentTotal: null,
+      expired: null,
+      derivedTotal: null,
+    });
+  expect(viewer.comparison.map((o) => o.id).sort()).toEqual(
+    full.comparison.map((o) => o.id).sort(),
+  );
+  expect(JSON.stringify(viewer)).not.toContain('No engineering or audit approval is established');
+  expect(JSON.stringify(viewer)).not.toContain('Thirty days after confirmation');
+
+  // The same tenant member as admin reads it whole, then the membership returns to what it was.
+  const setRole = (role: string) =>
+    rawContext(
+      f.runtime,
+      f.users.owner.ctx,
+      'UPDATE app.membership SET role=$3 WHERE tenant_id=$1 AND user_id=$2',
+      [f.tenantA, f.users.reviewer.id, role],
+    );
+  await setRole('admin');
+  try {
+    const admin = await service.workspace(f.users.reviewer.ctx, j.missionId);
+    expect(admin.role).toBe('admin');
+    expect(admin.quotations.find((r) => r.id === q.quote.id)).toEqual(quote);
+    const adminOffer = admin.comparison.find((o) => o.id === q.quote.id)!;
+    expect(adminOffer.terms).toEqual(q.terms);
+    expect(adminOffer.status).toBe(full.comparison.find((o) => o.id === q.quote.id)?.status);
+    expect(adminOffer.derivedTotal?.amountMinor).toBe('100000');
+  } finally {
+    await setRole('reviewer');
+  }
+  const reviewer = await service.workspace(f.users.reviewer.ctx, j.missionId);
+  expect(reviewer.quotations.find((r) => r.id === q.quote.id)).toEqual(quote);
+
+  // The delivery experience lists the same quotations for client approval; the viewer gets them without uncertainties.
+  const experience = new DeliveryExperienceService(f.runtime);
+  const ownerRows = (await experience.workspace(f.users.owner.ctx, undefined, j.missionId))
+    .quotations;
+  const viewerRows = (await experience.workspace(f.users.viewer.ctx, undefined, j.missionId))
+    .quotations;
+  expect(ownerRows.find((r) => r.id === q.quote.id)?.uncertainties).toBe(
+    'No engineering or audit approval is established',
+  );
+  expect(viewerRows).toEqual(ownerRows.map((r) => ({ ...r, uncertainties: null })));
 });
