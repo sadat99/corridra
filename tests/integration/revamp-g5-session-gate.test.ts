@@ -321,6 +321,8 @@ describe('every customer route reaches data through the session boundary', () =>
       'customer-admission.ts',
       'customer-authority-pin.ts',
       'customer-data-cleanup.ts',
+      // Offline: set_supplier reads the environment secret for the installer only (U3, ADR-064 amendment 17 Nov 2026).
+      'customer-invoicing-real-supplier-secret.ts',
       'customer-request-admission.ts',
       'customer-erasure-queue.ts',
       'customer-session.ts',
@@ -350,7 +352,7 @@ describe('every customer route reaches data through the session boundary', () =>
     );
     for (const path of pages)
       expect(text(path), path).not.toMatch(
-        /customer-account-lifecycle-configuration|customer-account-lifecycle-migrate/,
+        /customer-account-lifecycle-configuration|customer-account-lifecycle-migrate|customer-invoicing-real-supplier-secret/,
       );
   });
 });

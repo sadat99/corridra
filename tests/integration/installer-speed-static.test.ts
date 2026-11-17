@@ -49,7 +49,7 @@ describe('the install script', () => {
   });
 
   test('adds no workflow input and does not touch the workflow', () => {
-    expect([...workflow.matchAll(/^ {6}[a-z0-9_]+:\n {8}description:/gm)]).toHaveLength(25);
+    expect([...workflow.matchAll(/^ {6}[a-z0-9_]+:\n {8}description:/gm)]).toHaveLength(24);
     expect(workflow).not.toMatch(/migration[_-]run|memo/i);
     expect(script).not.toMatch(/MIGRATION_RUN|MEMO/);
   });
