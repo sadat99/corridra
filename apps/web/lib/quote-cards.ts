@@ -170,6 +170,7 @@ export function quoteCardsFrom({
       }
       terms.push({
         label: termLabels[key] ?? key,
+        ...(key.endsWith('Minor') ? { money: true as const } : {}),
         value: missing
           ? null
           : key.endsWith('Minor')

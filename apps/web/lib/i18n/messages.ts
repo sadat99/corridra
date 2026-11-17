@@ -268,6 +268,11 @@ export const en = {
   'compare.table': 'Table',
   'compare.note':
     'The verdict on each card comes from the comparison itself. The table shows the original terms side by side.',
+  'compare.diffOnly': 'Differences only',
+  'compare.sameHidden': '{count} terms are the same in every offer',
+  'compare.sameHiddenOne': '1 term is the same in every offer',
+  'compare.showAll': 'Show them',
+  'compare.allSame': 'Every term is the same in all offers',
   'room.received': 'Received {date}',
   'room.replies.heading': 'Replies from the Corridra team',
   'room.replies.none': 'No replies yet.',
@@ -444,6 +449,12 @@ const bn: Catalog = {
   'compare.table': 'টেবিল',
   'compare.note':
     'প্রতিটি কার্ডের সিদ্ধান্ত তুলনা থেকেই আসে। টেবিলে মূল শর্তগুলো পাশাপাশি দেখানো হয়।',
+  // Draft, native review pending (D16)
+  'compare.diffOnly': 'শুধু পার্থক্য',
+  'compare.sameHidden': '{count}টি শর্ত প্রতিটি অফারে একই',
+  'compare.sameHiddenOne': '১টি শর্ত প্রতিটি অফারে একই',
+  'compare.showAll': 'দেখান',
+  'compare.allSame': 'সব শর্ত সব অফারে একই',
   'room.received': '{date} তারিখে পাওয়া গেছে',
   'room.replies.heading': 'Corridra টিমের উত্তর',
   'room.replies.none': 'এখনও কোনো উত্তর নেই।',
@@ -607,6 +618,12 @@ const zh: Catalog = {
   'compare.cards': '卡片',
   'compare.table': '表格',
   'compare.note': '每张卡片上的结论来自比较本身。表格并排显示原始条款。',
+  // Draft, native review pending (D16)
+  'compare.diffOnly': '仅看差异',
+  'compare.sameHidden': '有 {count} 项条款在每个报价中都相同',
+  'compare.sameHiddenOne': '有 1 项条款在每个报价中都相同',
+  'compare.showAll': '显示',
+  'compare.allSame': '所有报价的条款都相同',
   'room.received': '收到于 {date}',
   'room.replies.heading': 'Corridra 团队的回复',
   'room.replies.none': '暂无回复。',
@@ -776,6 +793,12 @@ const es: Catalog = {
   'compare.table': 'Tabla',
   'compare.note':
     'El veredicto de cada tarjeta proviene de la propia comparación. La tabla muestra los términos originales lado a lado.',
+  // Draft, native review pending (D16)
+  'compare.diffOnly': 'Solo diferencias',
+  'compare.sameHidden': '{count} condiciones son iguales en todas las ofertas',
+  'compare.sameHiddenOne': '1 condición es igual en todas las ofertas',
+  'compare.showAll': 'Mostrarlas',
+  'compare.allSame': 'Todas las condiciones son iguales en todas las ofertas',
   'room.received': 'Recibida el {date}',
   'room.replies.heading': 'Respuestas del equipo de Corridra',
   'room.replies.none': 'Aún no hay respuestas.',
@@ -943,6 +966,12 @@ const ar: Catalog = {
   'compare.table': 'جدول',
   'compare.note':
     'الحكم على كل بطاقة يأتي من المقارنة نفسها. يعرض الجدول الشروط الأصلية جنبًا إلى جنب.',
+  // Draft, native review pending (D16)
+  'compare.diffOnly': 'الاختلافات فقط',
+  'compare.sameHidden': '{count} من الشروط متطابقة في كل العروض',
+  'compare.sameHiddenOne': 'شرط واحد متطابق في كل العروض',
+  'compare.showAll': 'إظهارها',
+  'compare.allSame': 'كل الشروط متطابقة في جميع العروض',
   'room.received': 'تم الاستلام في {date}',
   'room.replies.heading': 'ردود فريق Corridra',
   'room.replies.none': 'لا توجد ردود بعد.',
@@ -1113,6 +1142,12 @@ const fr: Catalog = {
   'compare.table': 'Tableau',
   'compare.note':
     "Le verdict de chaque carte provient de la comparaison elle-même. Le tableau présente côte à côte les conditions d'origine.",
+  // Draft, native review pending (D16)
+  'compare.diffOnly': 'Différences seulement',
+  'compare.sameHidden': '{count} conditions sont identiques dans toutes les offres',
+  'compare.sameHiddenOne': '1 condition est identique dans toutes les offres',
+  'compare.showAll': 'Les afficher',
+  'compare.allSame': 'Toutes les conditions sont identiques dans toutes les offres',
   'room.received': 'Reçue le {date}',
   'room.replies.heading': "Réponses de l'équipe Corridra",
   'room.replies.none': 'Aucune réponse pour le moment.',
@@ -1288,6 +1323,12 @@ const de: Catalog = {
   'compare.table': 'Tabelle',
   'compare.note':
     'Das Urteil auf jeder Karte stammt aus dem Vergleich selbst. Die Tabelle zeigt die ursprünglichen Bedingungen nebeneinander.',
+  // Draft, native review pending (D16)
+  'compare.diffOnly': 'Nur Unterschiede',
+  'compare.sameHidden': '{count} Bedingungen sind in allen Angeboten gleich',
+  'compare.sameHiddenOne': '1 Bedingung ist in allen Angeboten gleich',
+  'compare.showAll': 'Anzeigen',
+  'compare.allSame': 'Alle Bedingungen sind in allen Angeboten gleich',
   'room.received': 'Erhalten am {date}',
   'room.replies.heading': 'Antworten des Corridra-Teams',
   'room.replies.none': 'Noch keine Antworten.',
