@@ -16,7 +16,7 @@
   font-size: var(--text-sm);
   color: color-mix(in srgb, var(--on-brand) 82%, transparent);
 }
-.today-heading {
+.move-view .today-card .today-heading {
   margin: 0;
   font-size: var(--text-sm);
   font-weight: 600;

@@ -173,6 +173,11 @@ test('the cards show what is waiting for the person and who holds the rest', asy
   await open(page, 'full');
   await expect(page.getByRole('heading', { name: 'Waiting for you', exact: true })).toBeVisible();
   await expect(page.getByText('Send your draft request')).toBeVisible();
+  // TC1: the unread reply is the Today card and one row opens beside it; the company link waits behind Show More,
+  // still reachable.
+  await expect(page.getByTestId('today-card')).toHaveCount(1);
+  await expect(page.getByText('Add Evidence for your company link')).toBeHidden();
+  await page.getByText('Show 1 more').click();
   await expect(page.getByText('Add Evidence for your company link')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Finish and Send' })).toHaveAttribute(
     'href',
@@ -202,21 +207,25 @@ test('shows a Move the team set as a card with its real date, and folds the othe
   page,
 }) => {
   await open(page, 'moves');
-  const card = page.locator('.mr-move').filter({ hasText: 'Add your import licence number' });
+  // TC1: the Move the person holds is the Today card: same words, same date, same address, one filled action.
+  const card = page.getByTestId('today-card');
   await expect(card).toBeVisible();
-  await expect(card).toContainText('You');
+  await expect(card.getByRole('heading', { name: 'Today' })).toBeVisible();
+  await expect(card).toContainText('Add your import licence number');
+  await expect(card).toContainText('Corridra team');
   await expect(card.locator('time')).toHaveText('5 Nov 2026');
   await expect(card.getByRole('link', { name: 'Open the Request' })).toHaveAttribute(
     'href',
     '/account/requests/r1',
   );
+  await expect(card.locator('.today-action')).toHaveCount(1);
   const waiting = page.getByRole('heading', { name: 'Waiting on others' }).locator('..');
   await expect(waiting.getByText('Confirm the visit dates')).toBeVisible();
   await expect(waiting.getByText('Corridra team', { exact: true }).first()).toBeVisible();
   await expect(waiting.getByText('Send the quotation')).toBeVisible();
   await expect(waiting.getByText('Supplier or Buyer')).toBeVisible();
   // The team's words are theirs: shown as written, marked as English in any language.
-  await expect(card.locator('h3')).toHaveAttribute('lang', 'en');
+  await expect(card.locator('.today-move')).toHaveAttribute('lang', 'en');
 });
 
 test('a new reply is kept on this device only, and can be marked read and forgotten', async ({
@@ -318,13 +327,16 @@ test('when nothing waits it says so, shows where the latest request stands and o
 });
 
 // Three show first since the role-aware Home (owner rule: one desktop screen); the rest are one control away.
-test('shows three cards and the rest behind one control', async ({ page }) => {
+test('shows the Today card and one row, and the rest behind one control', async ({ page }) => {
   await open(page, 'many');
-  await expect(page.locator('.mr-move')).toHaveCount(7);
-  await expect(page.locator('.mr-move').filter({ visible: true })).toHaveCount(3);
+  // Seven drafts: one is the Today card (one filled action), six stay rows, one of them open.
+  await expect(page.getByTestId('today-card')).toHaveCount(1);
+  await expect(page.locator('.today-action')).toHaveCount(1);
+  await expect(page.locator('.mr-move')).toHaveCount(6);
+  await expect(page.locator('.mr-move').filter({ visible: true })).toHaveCount(1);
   await expect(page.locator('.move-more')).toHaveJSProperty('open', false);
-  await page.getByText('Show 4 more').click();
-  await expect(page.locator('.mr-move').filter({ visible: true })).toHaveCount(7);
+  await page.getByText('Show 5 more').click();
+  await expect(page.locator('.mr-move').filter({ visible: true })).toHaveCount(6);
   await expect(page.locator('.move-more')).toHaveJSProperty('open', true);
 });
 
