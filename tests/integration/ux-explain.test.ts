@@ -62,10 +62,13 @@ describe('Explain', () => {
     expect(html).toContain(
       '<span class="mr-explain-symbol" aria-hidden="true"><span class="shape"></span></span>',
     );
-    // The symbol is hidden, so the only text inside the button, and so its name, is the word.
+    // The button holds exactly the hidden symbol and the word, so its only text, and its name, is
+    // the word.
     const button = /<button[^>]*>([\s\S]*?)<\/button>/.exec(html)![1];
-    const named = button.replace(/<span class="mr-explain-symbol"[\s\S]*?<\/span><\/span>/, '');
-    expect(named.replace(/<[^>]+>/g, '')).toBe('Done');
+    expect(button).toBe(
+      '<span class="mr-explain-symbol" aria-hidden="true"><span class="shape"></span></span>' +
+        '<span class="mr-explain-word">Done</span>',
+    );
     expect(html).not.toMatch(/\btitle=/);
     // Closed in the server HTML; no data-js until hydrated, so CSS hover and focus work without JS.
     expect(html).not.toContain('data-open');
