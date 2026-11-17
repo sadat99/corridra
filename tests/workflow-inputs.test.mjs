@@ -247,7 +247,7 @@ test('the supply source choices install, open and pause only the module control,
         );
   }
   // ADR-082 section 12: no input is added, and no installer value opens any of the other six controls.
-  assert.equal(Object.keys(declared).length, 25);
+  assert.equal(Object.keys(declared).length, 24);
   assert.deepEqual(
     Object.keys(env)
       .filter((name) => name.startsWith('SUPPLY_SOURCES_'))
@@ -329,5 +329,30 @@ test('the data cleanup choice only lists, moves no other module and carries no r
       .length,
     1,
   );
-  assert.equal(Object.keys(declared).length, 25);
+  assert.equal(Object.keys(declared).length, 24);
+});
+
+test('set_supplier takes the supplier details only from the protected environment secret, never an input', () => {
+  const source = readFileSync('.github/workflows/install-customer-modules.yml', 'utf8');
+  const workflow = parseDocument(source).toJS();
+  const declared = workflow.on.workflow_dispatch.inputs;
+  // Owner, 17 Nov 2026: the repository is public, so the supplier JSON (UEN, bank details) must never be an input.
+  assert.equal(
+    Object.keys(declared).some((name) => /supplier/i.test(name)),
+    false,
+  );
+  assert.equal(workflow.jobs.install.environment, 'customer-modules-install');
+  const step = workflow.jobs.install.steps.find(
+    (candidate) => candidate.name === 'Report or install the customer modules',
+  );
+  assert.equal(
+    step.env.REAL_INVOICING_SUPPLIER_JSON,
+    "${{ inputs.real_invoicing_action == 'set_supplier' && secrets.REAL_INVOICING_SUPPLIER_JSON || '' }}",
+  );
+  // The secret reaches the job only through env, never a run line, and no step traces commands or dumps the environment.
+  for (const candidate of workflow.jobs.install.steps) {
+    const run = candidate.run ?? '';
+    assert.doesNotMatch(run, /secrets\.|SUPPLIER|set -x|\benv\b|printenv|toJSON/);
+  }
+  assert.doesNotMatch(source, /toJSON\(\s*(secrets|env|inputs)/);
 });

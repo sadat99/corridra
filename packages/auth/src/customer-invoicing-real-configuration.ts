@@ -48,15 +48,17 @@ export const realInvoicingEntityInput = z
     'A GST registered supplier needs its number',
   );
 
-// What the owner supplied on 24 October 2026, with the UEN the owner confirmed as real on 1 November 2026 and the
-// other missing organisation details made up. Each made-up field is listed in madeupFields and carries the text
-// "(madeup)", so every document issued with it says so and the production guard refuses real documents until the
-// owner replaces it.
+// What the owner supplied on 24 October 2026, with every missing organisation detail made up. Each made-up field is
+// listed in madeupFields and carries the text "(madeup)", so every document issued with it says so and the production
+// guard refuses real documents until the owner replaces it with set_supplier (ADR-064 amendment, 17 November 2026).
+// The UEN seeded here until 17 November 2026 was described as confirmed real on 1 November 2026; that was superseded on
+// 16 November 2026 and it is not the company's UEN, so the seed now carries an invented placeholder marked made up.
+// The seed is written only when no supplier version exists, so this changes no installed data and no issued document.
 export const defaultRealInvoicingEntity = {
   legalName: 'Corridra Pte Ltd',
   address: '101 Robinson Road, Singapore 180239',
   country: 'SG',
-  uen: '202612345X',
+  uen: '202600000A (madeup)',
   gstRegistered: true,
   gstRegistrationNo: 'M9-0000000-0 (madeup)',
   taxLabel: 'GST',
@@ -66,7 +68,13 @@ export const defaultRealInvoicingEntity = {
     'Pay by bank transfer to Corridra Pte Ltd, account 000-000000-0 (madeup), quoting the invoice number',
   financeLabel: 'Sadat FPA (madeup)',
   approverEmail: null,
-  madeupFields: ['gst_registration_no', 'gst_registered', 'payment_instructions', 'finance_label'],
+  madeupFields: [
+    'uen',
+    'gst_registration_no',
+    'gst_registered',
+    'payment_instructions',
+    'finance_label',
+  ],
 } satisfies z.input<typeof realInvoicingEntityInput>;
 
 export async function configureRealInvoicing(pool: DatabasePool, input: unknown) {
