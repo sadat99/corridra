@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { DomainError } from '../../packages/domain/src/index';
 
 // CI-U2: the read-only commercial facts service (apps/web/lib/commercial-identity). It returns the facts the
 // signed-in person may reuse for ONE workspace they chose, each with its source, provenance and time, and says
@@ -497,6 +498,37 @@ describe('provenance', () => {
     ).not.toHaveProperty('complete');
   });
 
+  it('a plain member cannot see programmes, so families are never not_provided or complete for a member', async () => {
+    // The adapter reads programmes for owners and admins only: a member whose workspace's only Organise record is a
+    // programme gets no item for it.
+    memberships = [{ id: A, name: 'Atelier Rahman', role: 'member' }];
+    workItems.items = [];
+    let result = present(await factsFor(A));
+    expect(result.facts.map((f) => f.key)).not.toContain('work.families');
+    expect(result.absent).toContainEqual({
+      key: 'work.families',
+      reason: 'not_visible',
+      workspaceId: A,
+    });
+    workItems.items = [{ workspaceId: A, family: 'SELL', title: 't', status: 'OPEN', id: 'a1' }];
+    result = present(await factsFor(A));
+    expect(result.facts.find((f) => f.key === 'work.families')).toMatchObject({
+      value: ['SELL'],
+      complete: false,
+    });
+    // An owner with the same records sees everything the adapter reads: complete, and not_provided when empty.
+    memberships = [{ id: A, name: 'Atelier Rahman', role: 'owner' }];
+    expect(
+      present(await factsFor(A)).facts.find((f) => f.key === 'work.families'),
+    ).not.toHaveProperty('complete');
+    workItems.items = [];
+    expect(present(await factsFor(A)).absent).toContainEqual({
+      key: 'work.families',
+      reason: 'not_provided',
+      workspaceId: A,
+    });
+  });
+
   it('only unclassified own items: the families are unreadable, never absent as not_provided', async () => {
     workItems.items = [
       { workspaceId: A, family: 'UNCLASSIFIED', title: 't', status: 'OPEN', id: 'a2' },
@@ -593,7 +625,6 @@ describe('missing values', () => {
       Object.assign(new Error('Workspace unavailable'), { code: '42501' }),
       Object.assign(new Error('Profile access expired'), { code: '42501' }),
       Object.assign(new Error('Not found'), { status: 404 }),
-      Object.assign(new Error('Forbidden'), { status: 403 }),
     ]) {
       services = {
         ...healthy(),
@@ -610,6 +641,50 @@ describe('missing values', () => {
         message: expect.any(String),
         workspaceId: A,
       });
+    }
+  });
+
+  it('a 403 from the session boundary keeps its own meaning and is never not_a_member', async () => {
+    const cases: [unknown, string][] = [
+      [new DomainError('Verify your email to continue', 403), 'email_not_verified'],
+      [
+        new DomainError(
+          'For your safety, sign in again to do this, then try again.',
+          403,
+          'recent_sign_in_required',
+        ),
+        'recent_sign_in_required',
+      ],
+      [new DomainError('Your account is closed.', 403, 'account_closed'), 'account_closed'],
+      [new DomainError('Something else refused', 403), 'unavailable'],
+      [new DomainError('Sign in to continue', 401), 'signed_out'],
+      [new DomainError('Your account changed. Reload before continuing.', 409), 'session_changed'],
+    ];
+    for (const [thrown, code] of cases) {
+      for (const where of ['list', 'view'] as const) {
+        const base = healthy();
+        services =
+          where === 'view'
+            ? {
+                ...base,
+                customerOrganisationProfiles: guarded('customerOrganisationProfiles', {
+                  view: async () => {
+                    throw thrown;
+                  },
+                }),
+              }
+            : {
+                ...base,
+                customerWorkspaces: guarded('customerWorkspaces', {
+                  list: async () => {
+                    throw thrown;
+                  },
+                }),
+              };
+        const result = await factsFor(A);
+        expect(result, `${where} ${code}`).toMatchObject({ ok: false, code, workspaceId: A });
+        expect(result).not.toHaveProperty('facts');
+      }
     }
   });
 

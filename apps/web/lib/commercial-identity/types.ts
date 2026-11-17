@@ -46,7 +46,8 @@ export type CommercialFact = {
   workspaceId: string;
   /**
    * Set when the value may be missing parts: the list was longer than the pages read, or an own record's family could
-   * not be told. The value is then a lower bound. Its absence is not a claim of completeness beyond the records read.
+   * not be told, or the person's role cannot see every record (a member does not see programmes). The value is then
+   * a lower bound. Its absence is not a claim of completeness beyond the records read.
    */
   complete?: false;
 };
@@ -58,9 +59,10 @@ export type CommercialFact = {
  * - not_established: nothing in Corridra establishes it (authority to represent).
  * - module_off: the module that holds it is switched off.
  * - unreadable: the module is on and the read failed; the value may exist.
+ * - not_visible: this person's role cannot see every record the value would come from; the value may exist.
  */
 export type AbsentReason =
-  'not_provided' | 'not_verified' | 'not_established' | 'module_off' | 'unreadable';
+  'not_provided' | 'not_verified' | 'not_established' | 'module_off' | 'unreadable' | 'not_visible';
 
 export type AbsentFact = {
   key: CommercialFactKey | UnestablishedKey;
@@ -77,8 +79,14 @@ export type CommercialFactsRefusalCode =
   | 'not_a_member'
   /** The signed-in account is no longer the one the actor was read for. */
   | 'session_changed'
-  /** Signed out or unverified at read time. */
+  /** Signed out at read time. */
   | 'signed_out'
+  /** The account's email is not verified at read time. */
+  | 'email_not_verified'
+  /** The session boundary asked for a recent sign-in. */
+  | 'recent_sign_in_required'
+  /** The account is closed. */
+  | 'account_closed'
   /** Workspaces are switched off, the services are missing or a read failed. */
   | 'unavailable';
 

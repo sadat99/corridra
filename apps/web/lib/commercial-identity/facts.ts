@@ -9,6 +9,8 @@ import 'server-only';
 import { readNeonAuthConfig } from '@corridra/config';
 import { customerOrganisationProfilesEnabled } from '@corridra/auth/customer-organisation-profiles';
 import { customerWorkspacesEnabled } from '@corridra/auth/customer-workspaces';
+import { recentSignInCode } from '@corridra/auth/customer-session';
+import { accountClosedCode } from '@corridra/auth/customer-account-gate';
 import { foundations } from '../foundations';
 import { neonAuth } from '../neon-auth';
 import { loadWorkItems } from '../work-items/load';
@@ -89,6 +91,9 @@ const refusalWords: Record<CommercialFactsRefusalCode, string> = {
   not_a_member: 'You are not a current member of that workspace.',
   session_changed: 'Your account changed. Reload before continuing.',
   signed_out: 'Sign in with a verified email to continue.',
+  email_not_verified: 'Verify your email to continue.',
+  recent_sign_in_required: 'For your safety, sign in again, then try again.',
+  account_closed: 'Your account is closed.',
   unavailable: 'Company details cannot be read right now.',
 };
 const refuse = (
@@ -98,12 +103,27 @@ const refuse = (
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-// A refusal from the session boundary keeps its meaning; anything else is an unreadable source.
-function refusalFor(error: unknown): CommercialFactsRefusalCode {
-  const status = (error as { status?: unknown } | null)?.status;
+// The session boundary's refusals keep their own meaning. Its unverified-email refusal carries no code, so it is
+// matched by its exact words; if they ever change it degrades to 'unavailable', still a refusal.
+const emailNotVerifiedWords = 'Verify your email to continue';
+function boundaryRefusal(error: unknown): CommercialFactsRefusalCode | null {
+  const { status, code, message } = (error ?? {}) as {
+    status?: unknown;
+    code?: unknown;
+    message?: unknown;
+  };
   if (status === 409) return 'session_changed';
-  if (status === 401 || status === 403) return 'signed_out';
-  return 'unavailable';
+  if (status === 401) return 'signed_out';
+  if (status === 403) {
+    if (code === recentSignInCode) return 'recent_sign_in_required';
+    if (code === accountClosedCode) return 'account_closed';
+    if (message === emailNotVerifiedWords) return 'email_not_verified';
+    return 'unavailable';
+  }
+  return null;
+}
+function refusalFor(error: unknown): CommercialFactsRefusalCode {
+  return boundaryRefusal(error) ?? 'unavailable';
 }
 
 // PostgreSQL insufficient_privilege: the customer functions raise it when the person has no current access.
@@ -263,12 +283,13 @@ export async function loadCommercialFacts(input: {
       );
     } catch (error) {
       // Lost access between the two reads: fail closed rather than serve facts for a former member. The profile
-      // view raises SQLSTATE 42501 when the membership is gone (or changed) at read time.
-      const code = refusalFor(error);
-      if (code === 'session_changed') return refuse(code, workspaceId);
+      // view raises SQLSTATE 42501 when the membership is gone (or changed) at read time. Any refusal of the
+      // session boundary keeps its own code; only a plain failure leaves the profile unreadable.
       const status = (error as { status?: unknown } | null)?.status;
-      if (code === 'signed_out' || status === 404 || accessDenied(error))
-        return refuse('not_a_member', workspaceId);
+      if (status === 404 || accessDenied(error)) return refuse('not_a_member', workspaceId);
+      const code = boundaryRefusal(error);
+      if (code) return refuse(code, workspaceId);
+      if (typeof status === 'number') return refuse('unavailable', workspaceId);
     }
     if (view && view.workspaceId !== workspaceId) return refuse('unavailable', workspaceId);
     const profile = view?.profile ?? null;
@@ -311,11 +332,17 @@ export async function loadCommercialFacts(input: {
     // An own item left UNCLASSIFIED may be one whose detail could not be read (the adapter does not flag it), so
     // its family is unknown: the known families are then a lower bound, and none known is unreadable, not absent.
     const unknownOwn = own.some((item) => item.family === 'UNCLASSIFIED');
-    const incomplete =
+    // The adapter reads programmes for owners and admins only, so a plain member's list can miss Organise work.
+    const programmesHidden = membership.role === 'member';
+    const readIncomplete =
       unknownOwn || list.partial || list.requestsIncomplete === true || list.skippedWorkspaces > 0;
+    const incomplete = readIncomplete || programmesHidden;
     if (list.unreadable.length > 0) missing('work.families', 'unreadable');
     else if (families.length === 0)
-      missing('work.families', incomplete ? 'unreadable' : 'not_provided');
+      missing(
+        'work.families',
+        readIncomplete ? 'unreadable' : programmesHidden ? 'not_visible' : 'not_provided',
+      );
     else
       facts.push({
         key: 'work.families',

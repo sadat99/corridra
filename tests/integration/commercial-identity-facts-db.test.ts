@@ -325,6 +325,33 @@ test('a membership revoked between the workspace list and the profile read fails
   }
 });
 
+test('the signed-in account changing mid-call is refused as session_changed', async () => {
+  const before = services!;
+  const real = before.customerWorkspaces as CustomerWorkspaceService;
+  services = {
+    ...before,
+    customerWorkspaces: {
+      // The real list read as Alice; then the provider session becomes Carol's before the profile read.
+      list: async (...args: Parameters<CustomerWorkspaceService['list']>) => {
+        const listed = await real.list(...args);
+        current = 'carol';
+        return listed;
+      },
+    },
+  };
+  try {
+    const result = await factsAs('alice', A);
+    expect(result).toEqual({
+      ok: false,
+      code: 'session_changed',
+      message: expect.any(String),
+      workspaceId: A,
+    });
+  } finally {
+    services = before;
+  }
+});
+
 test('a removed member loses the facts at once', async () => {
   const before = await factsAs('bob', A);
   expect(before.ok).toBe(true);
