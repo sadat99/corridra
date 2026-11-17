@@ -257,6 +257,44 @@ describe('the quote card', () => {
     expect(html).not.toMatch(/>0(\.00)?</);
   });
 
+  it('draws a not stated term as the hatched fill with its word and one sentence, never zero (visual grammar PR 2)', async () => {
+    const { QuoteCard } = await load('quote-card');
+    const html = render(QuoteCard, {
+      supplier: 'Verde',
+      revision: 1,
+      currency: 'CNY',
+      comparable: false,
+      terms: [{ label: 'Installation', value: null }],
+    });
+    expect(html).toContain('class="mr-quote-fill" data-fill="hatched"');
+    expect(html).toContain('<span class="mr-explain-word">Not stated</span>');
+    expect(html).toContain('The supplier left this term blank. It is not zero.');
+    expect(html).toContain('role="tooltip"');
+    expect(html).not.toContain('data-fill="striped"');
+  });
+
+  it('draws an excluded term as the striped fill with the word Excluded and its sentence (visual grammar PR 2)', async () => {
+    const { QuoteCard } = await load('quote-card');
+    const html = render(QuoteCard, {
+      supplier: 'Verde',
+      revision: 1,
+      currency: 'CNY',
+      unitPrice: 'CNY 10.00',
+      total: 'CNY 100.00',
+      comparable: false,
+      terms: [
+        { label: 'Shipping scope', value: null, state: 'excluded' },
+        { label: 'Lead time', value: '45 days' },
+      ],
+    });
+    expect(html).toContain('class="mr-quote-fill" data-fill="striped"');
+    expect(html).toContain('<span class="mr-explain-word">Excluded</span>');
+    expect(html).toContain('Shipping is not included in the price.');
+    expect(html).not.toContain('Not stated');
+    expect(html).not.toContain('EXCLUDED');
+    expect(html).toContain('45 days');
+  });
+
   it('marks a supplier name in another language so it is read in that language', async () => {
     const { QuoteCard } = await load('quote-card');
     const html = render(QuoteCard, {
