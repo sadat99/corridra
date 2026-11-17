@@ -121,7 +121,8 @@ const cards = quoteCardsFrom({
   shortlist: shortlist as never,
 });
 const rows = (html: string) => [...html.matchAll(/<dt>(.*?)<\/dt>/g)].map((m) => m[1]);
-const strip = (html: string) => html.replace(/<dl[\s\S]*?<\/dl>/g, '').replace(/ /g, ' ');
+const strip = (html: string) =>
+  html.replace(/<dl[\s\S]*?<\/dl>/g, '').replace(/[\u00a0\u202f]/g, ' ');
 
 describe('Compare lens, differences only', () => {
   it('hides identical rows, keeps differing rows, states the count, and leaves the verdicts alone', async () => {
@@ -147,6 +148,8 @@ describe('Compare lens, differences only', () => {
     // Verdict, seal, engine reason and currency are byte-identical outside the term list.
     const verdictParts = (html: string) =>
       strip(html).match(/<p class="mr-quote-verdict">[\s\S]*?<\/p>/g);
+    // Not vacuous: one verdict per card is found, and the money strings carry real non-breaking spaces to normalise.
+    expect(verdictParts(folded)).toHaveLength(2);
     expect(verdictParts(folded)).toEqual(verdictParts(unfolded));
     expect(folded).toContain('Missing: Lead time, Payment terms.');
     expect(folded).toContain('Comparable on supplied terms');
