@@ -136,7 +136,9 @@ vi.mock('next/link', () => ({
   }) => createElement('a', { href, className, ...rest }, children as never),
 }));
 const view = async (model: ReturnType<typeof buildMoveModel>) => {
-  const { MoveView } = await import(/* @vite-ignore */ '../../apps/web/app/account/move/move-view');
+  const { MoveView } = await import(
+    /* @vite-ignore */ `../../apps/web/${'app/account/move/move-view'}`
+  );
   return renderToStaticMarkup(createElement(MoveView, { model, startHref: '/plan' }));
 };
 const busy = buildMoveModel({
