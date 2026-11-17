@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, expect, test, vi } from 'vitest';
 import { accessFixture, future } from './access-fixture';
 import { rawContext } from './support';
+import { addMember } from './counterparty-changes-support';
 import { DeliveryService } from '../../packages/delivery/src/index';
 import { DeliveryExperienceService } from '../../packages/delivery/src/experience';
 import { permissions } from '../../packages/domain/src/index';
@@ -194,4 +195,15 @@ test('the staff delivery route never sends either body to a viewer, and sends bo
   expect(viewerDelivery).not.toContain(answerText);
   expect(await get(f.users.operator, 'experience')).toContain(replyText);
   expect(await get(f.users.operator)).toContain(answerText);
+});
+
+test('the owner and an admin read the reply and the evidence answer in full from both services', async () => {
+  const admin = await addMember(f, 'admin');
+  for (const ctx of [f.users.owner.ctx, admin.ctx]) {
+    const reply = (await experience.workspace(ctx)).responses.find((r) => r.link_id === replyLink);
+    expect(reply?.body?.body).toBe(replyText);
+    const request = (await delivery.workspace(ctx)).requests.find((r) => r.id === requestId);
+    expect(request?.response).toBe(answerText);
+    expect(request?.answered).toBe(true);
+  }
 });
