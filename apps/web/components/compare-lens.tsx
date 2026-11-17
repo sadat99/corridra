@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useMemo, useState, type ReactNode } from 'react';
+import { useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { QuoteCard } from './mr/quote-card';
 import { useMrLabels } from './mr/use-labels';
 import { useLanguage } from './language-provider';
@@ -28,20 +28,26 @@ export function CompareLens({ cards, matrix }: { cards: QuoteCardView[]; matrix:
       | 'compare.sameHidden'
       | 'compare.sameHiddenOne'
       | 'compare.showAll'
-      | 'compare.allSame',
+      | 'compare.allSame'
+      | 'compare.shownAll',
   ) => translate(locale, key);
   const noteId = useId();
   const diff = useMemo(() => termDiff(cards), [cards]);
   // The control exists only when there is something to fold: two or more offers with a term they all state the same.
   const canFold = diff.same.length > 0;
   const folding = canFold && diffOnly;
-  const sameCount = String(diff.same.length);
-  const countText = diff.allSame
-    ? say('compare.allSame')
-    : (diff.same.length === 1 ? say('compare.sameHiddenOne') : say('compare.sameHidden')).replace(
-        '{count}',
-        sameCount,
-      );
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  // Counted in the reader's own digits, so a Bengali sentence does not mix digit sets.
+  const sameCount = new Intl.NumberFormat(locale).format(diff.same.length);
+  const foldedText = (
+    diff.same.length === 1 ? say('compare.sameHiddenOne') : say('compare.sameHidden')
+  ).replace('{count}', sameCount);
+  // One persistent live region: only its words change, so a screen reader hears both the fold and the unfold.
+  const statusText = !folding
+    ? say('compare.shownAll')
+    : diff.allSame
+      ? `${foldedText} ${say('compare.allSame')}`
+      : foldedText;
   if (!cards.length) return <>{matrix}</>;
   return (
     <div className="compare-lens">
@@ -66,6 +72,7 @@ export function CompareLens({ cards, matrix }: { cards: QuoteCardView[]; matrix:
           {canFold ? (
             <div className="compare-lens-diff">
               <button
+                ref={toggleRef}
                 type="button"
                 className="compare-lens-diff-toggle"
                 aria-pressed={diffOnly}
@@ -73,17 +80,21 @@ export function CompareLens({ cards, matrix }: { cards: QuoteCardView[]; matrix:
               >
                 {say('compare.diffOnly')}
               </button>
+              <p role="status" className="compare-lens-diff-count">
+                {statusText}
+              </p>
               {folding ? (
-                <p role="status" className="compare-lens-diff-count">
-                  <span>{countText}</span>
-                  <button
-                    type="button"
-                    className="compare-lens-diff-show"
-                    onClick={() => setDiffOnly(false)}
-                  >
-                    {say('compare.showAll')}
-                  </button>
-                </p>
+                <button
+                  type="button"
+                  className="compare-lens-diff-show"
+                  onClick={() => {
+                    setDiffOnly(false);
+                    // The button leaves with the fold: keep the keyboard place on the control that undoes it.
+                    toggleRef.current?.focus();
+                  }}
+                >
+                  {say('compare.showAll')}
+                </button>
               ) : null}
             </div>
           ) : null}

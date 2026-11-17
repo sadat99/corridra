@@ -119,7 +119,10 @@ test('keyboard toggle folds and restores every row in the original order', async
     'aria-pressed',
     'false',
   );
-  await expect(page.locator('.compare-lens-diff-count')).toHaveCount(0);
+  await expect(page.locator('[role="status"].compare-lens-diff-count')).toHaveText(
+    'Showing every term',
+  );
+  await expect(page.getByRole('button', { name: 'Show them' })).toHaveCount(0);
   const all = (await labels(page)).slice(0, 11);
   expect(all).toEqual([
     'Quoted specification',
@@ -135,11 +138,15 @@ test('keyboard toggle folds and restores every row in the original order', async
     'Warranty',
   ]);
   await page.keyboard.press('Space');
-  await expect(page.locator('.compare-lens-diff-count')).toBeVisible();
+  await expect(page.locator('.compare-lens-diff-count')).toContainText('7 terms');
   // The show control in the count line restores them too.
   await page.getByRole('button', { name: 'Show them', exact: true }).focus();
   await page.keyboard.press('Enter');
   expect(await labels(page)).toContain('Incoterm');
+  // The button left with the fold: focus must land on the control that undoes it, never fall to the page.
+  expect(await page.evaluate(() => document.activeElement?.textContent)).toBe('Differences only');
+  // One persistent live region: the same element carries both states.
+  await expect(page.locator('[role="status"]')).toHaveCount(1);
 });
 
 test('no row leaves the content without the count line, and the page gets shorter', async ({

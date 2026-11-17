@@ -153,12 +153,21 @@ describe('Compare lens, differences only', () => {
     expect(folded).toContain('Not comparable yet');
     expect(folded.match(/USD/g)?.length).toBeGreaterThan(0);
   });
-  it('says every term is the same when nothing differs', async () => {
+  it('says every term is the same when nothing differs, built from quoteCardsFrom output', async () => {
     const { CompareLens } = await loadWeb('components/compare-lens');
+    const stated = {
+      ...full,
+      moq: '1',
+      warranty: '12 months',
+      installation: 'Included',
+      training: 'On site',
+      spares: '2 years',
+    };
+    const pair = [offer('a', stated), offer('b', stated)];
     const same = quoteCardsFrom({
-      offers: [offer('a', full), offer('b', full)] as never[],
+      offers: pair as never[],
       verdicts: compareOffers(
-        [offer('a', full), offer('b', full)].map((x) => ({
+        pair.map((x) => ({
           id: x.id,
           currency: 'USD',
           terms: x.terms as never,
@@ -169,13 +178,24 @@ describe('Compare lens, differences only', () => {
       ),
       shortlist: shortlist as never,
     });
-    const html = render(
-      ce(CompareLens, {
-        cards: same.map((c) => ({ ...c, terms: c.terms.filter((x) => x.value && !x.state) })),
-        matrix: ce('table'),
-      }),
-    );
-    expect(html).toContain('Every term is the same in all offers');
+    const diff = termDiff(same);
+    // Shipping is excluded in the sample, so that one row always shows; the rest are identical.
+    expect(diff.same.length).toBe(diff.total - 1);
+    const html = render(ce(CompareLens, { cards: same, matrix: ce('table') }));
+    expect(html).toContain(`${diff.same.length} terms are the same in every offer`);
+    const allSame = same.map((c) => ({
+      ...c,
+      terms: c.terms.filter((x) => x.state !== 'excluded'),
+    }));
+    const every = render(ce(CompareLens, { cards: allSame, matrix: ce('table') }));
+    expect(every).toContain('terms are the same in every offer');
+    expect(every).toContain('Every term is the same in all offers');
+  });
+  it('keeps one live status region and counts in the locale digits', async () => {
+    const { CompareLens } = await loadWeb('components/compare-lens');
+    const html = render(ce(CompareLens, { cards, matrix: ce('table') }));
+    expect(html.match(/role="status"/g)).toHaveLength(1);
+    expect(new Intl.NumberFormat('bn').format(7)).toBe('৭');
   });
   it('shows no control for a single offer', async () => {
     const { CompareLens } = await loadWeb('components/compare-lens');
@@ -191,6 +211,7 @@ describe('Compare lens, differences only', () => {
         'compare.sameHiddenOne',
         'compare.showAll',
         'compare.allSame',
+        'compare.shownAll',
       ] as const)
         expect((cat as Record<string, string>)[k]).toBeTruthy();
   });
