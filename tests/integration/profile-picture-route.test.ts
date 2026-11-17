@@ -25,6 +25,7 @@ const state = {
   putFails: false,
   deleteFails: false,
   pending: [] as { id: string; storageRef: string }[],
+  readyAt: null as Date | null,
 };
 const calls = {
   service: 0,
@@ -33,6 +34,7 @@ const calls = {
   purged: [] as string[][],
   reserve: [] as unknown[][],
   erase: [] as unknown[][],
+  transitions: 0,
 };
 vi.mock('server-only', () => ({}));
 vi.mock('../../apps/web/lib/profile-picture-capability', () => ({
@@ -104,10 +106,14 @@ vi.mock('../../apps/web/lib/foundations', () => ({
     },
     customerErasureQueue: {
       async transition() {
+        calls.transitions += 1;
         return { requestId: 'r', state: 'in_progress' };
       },
     },
     customerProfilePictureErasure: {
+      async readyAt() {
+        return state.readyAt;
+      },
       async erase(...args: unknown[]) {
         calls.erase.push(args);
         return { reference: 'ER-1', retired: 1, pending: state.pending };
@@ -159,8 +165,17 @@ beforeEach(() => {
     putFails: false,
     deleteFails: false,
     pending: [],
+    readyAt: null,
   });
-  Object.assign(calls, { service: 0, puts: [], deletes: [], purged: [], reserve: [], erase: [] });
+  Object.assign(calls, {
+    service: 0,
+    puts: [],
+    deletes: [],
+    purged: [],
+    reserve: [],
+    erase: [],
+    transitions: 0,
+  });
   logs = [];
   vi.spyOn(console, 'warn').mockImplementation((line: string) => void logs.push(line));
 });
@@ -441,5 +456,37 @@ describe('staff erasure', () => {
     expect(commands[1]).toBe(commands[0]);
     expect(commands[2]).not.toBe(commands[0]);
     expect(calls.erase.map((args) => args[2])).toEqual([requestId, requestId, requestId]);
+  });
+  test('completing waits while a picture upload is younger than an hour: 409, nothing moved or erased', async () => {
+    state.readyAt = new Date('2026-11-17T14:05:30Z');
+    state.pending = [{ id: randomUUID(), storageRef: 'vercel-blob:store_synthetic' }];
+    const send = (toState: string) =>
+      erasureRoute.POST(
+        new Request(`${origin}/api/workspace/customer-erasure-queue?tenant=${randomUUID()}`, {
+          method: 'POST',
+          headers: { origin, 'content-type': 'application/json' },
+          body: JSON.stringify({
+            commandId: randomUUID(),
+            requestId: randomUUID(),
+            expectedState: toState === 'completed' ? 'in_progress' : 'received',
+            toState,
+            ...(toState === 'completed' ? { note: 'Synthetic note: nothing kept.' } : {}),
+          }),
+        }),
+      );
+    const refused = await send('completed');
+    expect(refused.status).toBe(409);
+    expect((await refused.json()).error).toBe(
+      'A profile picture upload was still in progress when this request was filed. Complete this request after 2026-11-17 14:05 UTC.',
+    );
+    expect(calls.transitions).toBe(0);
+    expect(calls.erase).toEqual([]);
+    expect(calls.deletes).toEqual([]);
+    // Starting work is not held back.
+    expect((await send('in_progress')).status).toBe(200);
+    expect(calls.transitions).toBe(1);
+    state.readyAt = null;
+    expect((await send('completed')).status).toBe(200);
+    expect(calls.transitions).toBe(2);
   });
 });

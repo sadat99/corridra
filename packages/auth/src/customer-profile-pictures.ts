@@ -212,6 +212,19 @@ export class CustomerProfilePictureErasure {
       ).rows[0]!.result;
     });
   }
+  // The earliest time the erasure request may be moved to completed, or null when it may be now: while the person has a
+  // picture upload younger than an hour, its files may still be being written.
+  readyAt(ctx: RequestContext, erasureRequest: string) {
+    return withTenant(this.runtime, ctx, 'members.manage', async (t) => {
+      const at = (
+        await t.db.query<{ result: Date | string | null }>(
+          'SELECT customer.profile_picture_erase_ready_at($1) AS result',
+          [z.uuid().parse(erasureRequest)],
+        )
+      ).rows[0]!.result;
+      return at === null ? null : new Date(at);
+    });
+  }
   purged(ctx: RequestContext, erasureRequest: string, objects: string[]) {
     return withTenant(this.runtime, ctx, 'members.manage', async (t) => {
       return (

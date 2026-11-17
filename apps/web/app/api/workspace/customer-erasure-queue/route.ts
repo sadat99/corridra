@@ -48,6 +48,26 @@ async function erasePictures(
     return { retired: 0, pending: null };
   }
 }
+const missingModule = (error: unknown) =>
+  ['42P01', '3F000', '42883'].includes((error as { code?: string }).code ?? '');
+// ADR-088: a request is not completed while the person has a picture upload younger than an hour, so the completed run
+// always retires and deletes it. Without the picture module there is nothing to wait for.
+async function pictureWait(
+  s: Services,
+  ctx: Parameters<typeof erasePictures>[1],
+  requestId: string,
+) {
+  // A deployment wired without the picture service has no pictures to wait for.
+  if (!s.customerProfilePictureErasure) return null;
+  try {
+    return await s.customerProfilePictureErasure.readyAt(ctx, requestId);
+  } catch (error) {
+    if (missingModule(error)) return null;
+    throw error;
+  }
+}
+const pictureWaitMessage = (at: Date) =>
+  `A profile picture upload was still in progress when this request was filed. Complete this request after ${at.toISOString().slice(0, 16).replace('T', ' ')} UTC.`;
 const statuses = z.enum(['received', 'in_progress', 'completed', 'declined']);
 const page = z.coerce.number().int().min(1).max(100);
 const after = z.coerce.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
@@ -102,6 +122,10 @@ async function handle(request: Request) {
     const noteProblem = erasureNoteProblem((body as { note?: unknown } | null)?.note);
     if (noteProblem) throw new DomainError(noteProblem, 400);
     const input = erasureTransitionInput.parse(body);
+    if (input.toState === 'completed') {
+      const wait = await pictureWait(s, ctx, input.requestId);
+      if (wait) throw new DomainError(pictureWaitMessage(wait), 409);
+    }
     const done = await s.customerErasureQueue.transition(ctx, input);
     // ADR-088: once a request is in progress or completed, the person's profile picture goes with it: every picture is
     // retired and its stored files are deleted, then the rows. Sending the same transition again retries any file that

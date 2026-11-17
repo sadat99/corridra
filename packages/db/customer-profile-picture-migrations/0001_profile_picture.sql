@@ -314,14 +314,32 @@ BEGIN
  RETURN removed;
 END $$;
 
+-- Staff only, before an erasure request is moved to completed: the earliest time it may be, or null when it may be now.
+-- While the person has a reservation younger than an hour its upload may still be writing files, so completing waits until
+-- the reservation is an hour old and the completed run retires and lists it. Once an erasure request is filed the person
+-- can start no new upload, so the wait is at most an hour.
+CREATE FUNCTION customer.profile_picture_erase_ready_at(erasure_request uuid) RETURNS timestamptz
+ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
+DECLARE staff uuid;filed customer_private.erasure_request%ROWTYPE;
+BEGIN
+ staff:=customer_private.staff_privacy_actor();
+ IF erasure_request IS NULL THEN RAISE EXCEPTION 'Invalid profile picture change' USING ERRCODE='22023'; END IF;
+ SELECT * INTO filed FROM customer_private.erasure_request r WHERE r.id=erasure_request;
+ IF NOT FOUND OR NOT customer_private.erasure_in_scope(filed.principal_id) THEN RAISE EXCEPTION 'Erasure request not found' USING ERRCODE='23514'; END IF;
+ RETURN (SELECT max(o.created_at)+interval '1 hour' FROM customer_private.profile_picture_object o
+  WHERE o.principal_id=filed.principal_id AND o.state='reserved' AND o.created_at>=clock_timestamp()-interval '1 hour');
+END $$;
+
 REVOKE ALL ON FUNCTION customer_private.profile_picture_locked_actor(),customer_private.profile_picture_pending(uuid),
  customer_private.profile_picture_shape(uuid),customer_private.profile_picture_bump(uuid),
  customer_private.profile_picture_replay(uuid,uuid,text,text) FROM PUBLIC,corridra_runtime,corridra_auth;
 REVOKE ALL ON FUNCTION customer.profile_picture_view(),customer.profile_picture_reserve(uuid,integer,text,text),
  customer.profile_picture_commit(uuid,integer,text,uuid,text,integer,text,integer),customer.profile_picture_remove(uuid,integer,text),
- customer.profile_picture_purged(uuid[]),customer.profile_picture_erase(uuid,uuid),customer.profile_picture_erase_purged(uuid,uuid[])
+ customer.profile_picture_purged(uuid[]),customer.profile_picture_erase(uuid,uuid),customer.profile_picture_erase_purged(uuid,uuid[]),
+ customer.profile_picture_erase_ready_at(uuid)
  FROM PUBLIC,corridra_auth;
 GRANT EXECUTE ON FUNCTION customer.profile_picture_view(),customer.profile_picture_reserve(uuid,integer,text,text),
  customer.profile_picture_commit(uuid,integer,text,uuid,text,integer,text,integer),customer.profile_picture_remove(uuid,integer,text),
- customer.profile_picture_purged(uuid[]),customer.profile_picture_erase(uuid,uuid),customer.profile_picture_erase_purged(uuid,uuid[])
+ customer.profile_picture_purged(uuid[]),customer.profile_picture_erase(uuid,uuid),customer.profile_picture_erase_purged(uuid,uuid[]),
+ customer.profile_picture_erase_ready_at(uuid)
  TO corridra_runtime;
