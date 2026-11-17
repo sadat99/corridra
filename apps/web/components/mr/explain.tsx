@@ -42,6 +42,7 @@ export function Explain({
 }) {
   const id = useId();
   const popId = `${id}-pop`;
+  const textId = `${id}-text`;
   const root = useRef<HTMLSpanElement>(null);
   const pop = useRef<HTMLSpanElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -68,7 +69,10 @@ export function Explain({
     const wrapper = root.current;
     if (wrapper) wrapper.dataset.js = '';
     const onOther = (event: Event) => {
-      if ((event as CustomEvent<string>).detail !== id) setOpenedBy(null);
+      if ((event as CustomEvent<string>).detail === id) return;
+      // A hover still waiting to open must not open over the newer one.
+      clearTimeout(timer.current);
+      setOpenedBy(null);
     };
     window.addEventListener(openEvent, onOther);
     return () => {
@@ -77,22 +81,30 @@ export function Explain({
     };
   }, [id]);
 
-  // While open: Escape (capture phase, so a dialog behind it keeps its own Escape) and a tap outside.
+  // While open: Escape, a tap outside and a change of screen size (a rotated phone) close it. Escape
+  // is caught in the capture phase and kept from the page only when focus is on this hint; a hint
+  // opened by hover alone closes and lets the key reach the focused widget or dialog.
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
-      event.stopPropagation();
+      if (root.current?.contains(document.activeElement)) {
+        event.stopPropagation();
+        event.preventDefault();
+      }
       setOpenedBy(null);
     };
+    const onResize = () => setOpenedBy(null);
     const onPointer = (event: PointerEvent) => {
       if (!root.current?.contains(event.target as Node)) setOpenedBy(null);
     };
     document.addEventListener('keydown', onKey, true);
     document.addEventListener('pointerdown', onPointer);
+    window.addEventListener('resize', onResize);
     return () => {
       document.removeEventListener('keydown', onKey, true);
       document.removeEventListener('pointerdown', onPointer);
+      window.removeEventListener('resize', onResize);
     };
   }, [open]);
 
@@ -140,15 +152,19 @@ export function Explain({
       <button
         type="button"
         className="mr-explain-trigger"
-        aria-describedby={popId}
+        aria-describedby={textId}
         onPointerDown={(event) => {
           pointer.current = event.pointerType;
+        }}
+        onPointerCancel={() => {
+          pointer.current = null;
         }}
         onFocus={() => {
           // A touch tap also focuses the button; the tap itself toggles, so focus waits for it.
           if (pointer.current !== 'touch') show('focus');
         }}
         onBlur={(event) => {
+          pointer.current = null;
           if (!root.current?.contains(event.relatedTarget as Node | null)) hide();
         }}
         onClick={(event) => {
@@ -167,9 +183,18 @@ export function Explain({
         </span>
         <span className="mr-explain-word">{name}</span>
       </button>
-      <span ref={pop} role="tooltip" id={popId} className="mr-explain-pop">
+      <span
+        ref={pop}
+        role="tooltip"
+        id={popId}
+        className="mr-explain-pop"
+        // A press on the sentence keeps focus on the button, so reading it never closes it.
+        onPointerDown={(event) => event.preventDefault()}
+      >
         <span className="mr-explain-name">{name}</span>
-        <span className="mr-explain-text">{text}</span>
+        <span className="mr-explain-text" id={textId}>
+          {text}
+        </span>
       </span>
     </span>
   );

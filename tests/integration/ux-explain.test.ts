@@ -52,9 +52,13 @@ describe('Explain', () => {
     );
     expect(html.match(/<button/g)).toHaveLength(1);
     expect(html).toContain('type="button"');
+    // The description is the sentence alone, so the word is not read twice.
     const describedBy = /aria-describedby="([^"]+)"/.exec(html)?.[1];
     expect(describedBy).toBeTruthy();
-    expect(html).toContain(`role="tooltip" id="${describedBy}"`);
+    expect(html).toContain(
+      `<span class="mr-explain-text" id="${describedBy}">This step is finished.</span>`,
+    );
+    expect(html).toMatch(/role="tooltip" id="[^"]+" class="mr-explain-pop">/);
     expect(html).toContain(
       '<span class="mr-explain-symbol" aria-hidden="true"><span class="shape"></span></span>',
     );
@@ -62,7 +66,6 @@ describe('Explain', () => {
     const button = /<button[^>]*>([\s\S]*?)<\/button>/.exec(html)![1];
     const named = button.replace(/<span class="mr-explain-symbol"[\s\S]*?<\/span><\/span>/, '');
     expect(named.replace(/<[^>]+>/g, '')).toBe('Done');
-    expect(html).toContain('<span class="mr-explain-text">This step is finished.</span>');
     expect(html).not.toMatch(/\btitle=/);
     // Closed in the server HTML; no data-js until hydrated, so CSS hover and focus work without JS.
     expect(html).not.toContain('data-open');
@@ -93,12 +96,28 @@ describe('the Road legend', () => {
     ]) {
       expect(html).toContain(`data-key="${state}"`);
       expect(html).toContain(`<span class="mr-explain-word">${word}</span>`);
-      expect(html).toContain(
-        `<span class="mr-explain-text">${say(`mr.explain.state.${state}`)}</span>`,
+      expect(html).toMatch(
+        new RegExp(
+          `<span class="mr-explain-text" id="[^"]+">${say(`mr.explain.state.${state}`)}</span>`,
+        ),
       );
     }
     expect(html).toContain(`<p class="mr-road-legend-note">${say('mr.road.legend')}</p>`);
     expect(html).not.toMatch(/\btitle=/);
+  });
+
+  it('takes its sentences from the same language as its words', async () => {
+    const { Road } = await load('road');
+    const { mrLabelsFor } = await load('labels');
+    const html = renderToStaticMarkup(
+      createElement(Road, { status: 'MEETINGS', labels: mrLabelsFor('bn').road }),
+    );
+    expect(html).toContain(
+      `<span class="mr-explain-word">${translate('bn', 'mr.road.state.done')}</span>`,
+    );
+    expect(html).toContain(translate('bn', 'mr.explain.state.done'));
+    expect(html).toContain(translate('bn', 'mr.explain.state.notTracked'));
+    expect(html).not.toContain(say('mr.explain.state.done'));
   });
 
   it('renders no explanation when the legend is off', async () => {

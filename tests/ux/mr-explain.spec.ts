@@ -24,6 +24,9 @@ function App() {
     <main id="mr-explain-fixture" lang="en" className="ux-workspace ux-customer">
       <h1>Explain fixture</h1>
       <Road status="MEETINGS" records={{ compare: true, decide: false }} />
+      <label>
+        Outside field <input id="outside" />
+      </label>
       <p id="corner" style={{ position: 'fixed', insetBlockEnd: 0, insetInlineEnd: 0, margin: 0 }}>
         <Explain name="Corner" text="An explanation in the bottom end corner of the screen, long enough to need room on both sides.">
           <span className="mr-road-key" data-key="later" />
@@ -104,7 +107,8 @@ test.describe('Explain with a mouse and a keyboard', () => {
       const button = page.getByRole('button', { name: word, exact: true });
       await expect(button).toBeFocused();
       await expect(button).toHaveAccessibleName(word);
-      await expect(button).toHaveAccessibleDescription(new RegExp(hint.replaceAll('.', '\\.')));
+      // The sentence alone, so a screen reader does not say the word twice.
+      await expect(button).toHaveAccessibleDescription(hint);
       await expect(popup(page, word)).toBeVisible();
       await expect(popup(page, word).locator('.mr-explain-text')).toHaveText(hint);
       await page.keyboard.press('Escape');
@@ -136,6 +140,61 @@ test.describe('Explain with a mouse and a keyboard', () => {
     expect(await escapes()).toBe(0);
     await page.keyboard.press('Escape');
     expect(await escapes()).toBe(1);
+  });
+
+  test('a hover still waiting to open does not take over a hint opened by focus', async ({
+    page,
+  }) => {
+    await mount(page, 1440);
+    await page.getByRole('button', { name: 'Done', exact: true }).hover();
+    await page.getByRole('button', { name: 'Later', exact: true }).focus();
+    await page.waitForTimeout(400);
+    await expect(popup(page, 'Later')).toBeVisible();
+    await expect(popup(page, 'Done')).toBeHidden();
+  });
+
+  test('Escape closes a hover-only hint and still reaches the focused field', async ({ page }) => {
+    await mount(page, 1440);
+    await page.evaluate(() => {
+      (window as unknown as { escapes: number }).escapes = 0;
+      document.getElementById('outside')!.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !event.defaultPrevented)
+          (window as unknown as { escapes: number }).escapes += 1;
+      });
+    });
+    await page.locator('#outside').focus();
+    await page.getByRole('button', { name: 'Done', exact: true }).hover();
+    await expect(popup(page, 'Done')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(popup(page, 'Done')).toBeHidden();
+    await expect(page.locator('#outside')).toBeFocused();
+    expect(await page.evaluate(() => (window as unknown as { escapes: number }).escapes)).toBe(1);
+  });
+
+  test('a cancelled touch does not stop the next keyboard focus from opening it', async ({
+    page,
+  }) => {
+    await mount(page, 1440);
+    const later = page.getByRole('button', { name: 'Later', exact: true });
+    await later.dispatchEvent('pointerdown', { pointerType: 'touch', bubbles: true });
+    await later.dispatchEvent('pointercancel', { pointerType: 'touch', bubbles: true });
+    await page.locator('#outside').focus();
+    await page.keyboard.press('Shift+Tab');
+    await expect(page.getByRole('button', { name: 'Not tracked yet', exact: true })).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(later).toBeFocused();
+    await expect(popup(page, 'Later')).toBeVisible();
+  });
+
+  test('pressing on the sentence keeps it open and focus on the button', async ({ page }) => {
+    await mount(page, 1440);
+    await page.locator('h1').click();
+    await page.keyboard.press('Tab');
+    const done = page.getByRole('button', { name: 'Done', exact: true });
+    await expect(popup(page, 'Done')).toBeVisible();
+    await popup(page, 'Done').locator('.mr-explain-text').click();
+    await expect(popup(page, 'Done')).toBeVisible();
+    await expect(done).toBeFocused();
   });
 
   test('hover opens, moving onto the explanation keeps it open, leaving both closes it', async ({
@@ -228,6 +287,12 @@ test.describe('Explain on a touch screen', () => {
     expect(box.x + box.width).toBeLessThanOrEqual(320);
     await page.locator('h1').tap();
     await expect(popup(page, 'Done')).toBeHidden();
+    // A rotated phone or a resized window closes an open hint, so no stale position is kept.
+    await done.tap();
+    await expect(popup(page, 'Done')).toBeVisible();
+    await page.setViewportSize({ width: 568, height: 320 });
+    await expect(popup(page, 'Done')).toBeHidden();
+    await page.setViewportSize({ width: 320, height: 900 });
     const small = await page.evaluate(
       () =>
         [...document.querySelectorAll('.mr-explain-trigger')]

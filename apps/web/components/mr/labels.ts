@@ -30,6 +30,13 @@ function build(say: Say) {
         notTracked: say('mr.road.state.notTracked'),
       },
       legend: say('mr.road.legend'),
+      /** The legend's sentences, in the same language as the words above. */
+      hints: {
+        done: say('mr.explain.state.done'),
+        now: say('mr.explain.state.now'),
+        later: say('mr.explain.state.later'),
+        notTracked: say('mr.explain.state.notTracked'),
+      },
       sublines: {
         // D6: a mission exists only once the customer has sent the request, so a DRAFT mission is a
         // received request waiting for review, never an unsent draft.
