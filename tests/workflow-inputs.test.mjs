@@ -94,6 +94,8 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'viewer_reply_metadata',
     'viewer_export_access',
     'quotation_link_check',
+    'member_notice',
+    'member_notice_deliver',
     'contact_changes_install',
     'contact_changes_enable',
     'contact_changes_pause',
@@ -141,6 +143,8 @@ test('each field-module choice maps to install only and reaches the exact-head c
     ['viewer_reply_metadata', u, u, u, u, u, u, u, u],
     ['viewer_export_access', u, u, u, u, u, u, u, u],
     ['quotation_link_check', u, u, u, u, u, u, u, u],
+    ['member_notice', u, u, u, u, u, u, u, u],
+    ['member_notice_deliver', u, u, u, u, u, u, u, u],
     ['contact_changes_install', u, u, u, u, u, u, u, u],
     ['contact_changes_enable', u, u, u, u, u, u, u, u],
     ['contact_changes_pause', u, u, u, u, u, u, u, u],
@@ -204,6 +208,8 @@ test('each field-module choice maps to install only and reaches the exact-head c
       ['viewer_reply_metadata', 'VIEWER_REPLY_METADATA_ACTION'],
       ['viewer_export_access', 'VIEWER_EXPORT_ACCESS_ACTION'],
       ['quotation_link_check', 'QUOTATION_LINK_CHECK_ACTION'],
+      ['member_notice', 'MEMBER_NOTICE_ACTION'],
+      ['member_notice_deliver', 'MEMBER_NOTICE_ACTION'],
     ])
       if (choice === own)
         for (const [name, value] of Object.entries(env))
@@ -294,8 +300,10 @@ test('the supply source choices install, open and pause only the module control,
           `${choice} ${name}`,
         );
   }
-  // ADR-082 section 12: no input is added, and no installer value opens any of the other six controls.
-  assert.equal(Object.keys(declared).length, 24);
+  // ADR-082 section 12: supply sources add no input (the 25th, member_notice_workspaces, is ADR-087 U4's), and no installer value
+  // opens any of the other six controls.
+  assert.equal(Object.keys(declared).length, 25);
+  assert.ok(Object.keys(declared).every((name) => !name.startsWith('supply_sources')));
   assert.deepEqual(
     Object.keys(env)
       .filter((name) => name.startsWith('SUPPLY_SOURCES_'))
@@ -377,7 +385,43 @@ test('the data cleanup choice only lists, moves no other module and carries no r
       .length,
     1,
   );
-  assert.equal(Object.keys(declared).length, 24);
+  // Data cleanup adds no input: the 25th, member_notice_workspaces, belongs to ADR-087 U4.
+  assert.equal(Object.keys(declared).length, 25);
+  assert.ok(Object.keys(declared).every((name) => !name.startsWith('data_cleanup')));
+});
+
+test('the member notice choices install or deliver only that module, and only deliver passes the workspace list', () => {
+  const workflow = parseDocument(
+    readFileSync('.github/workflows/install-customer-modules.yml', 'utf8'),
+  ).toJS();
+  const declared = workflow.on.workflow_dispatch.inputs;
+  const env = workflow.jobs.install.steps.find(
+    (step) => step.name === 'Report or install the customer modules',
+  ).env;
+  const evaluate = (expression, inputs) =>
+    runInNewContext(expression.replace(/^\$\{\{\s*|\s*\}\}$/g, ''), { inputs });
+  const defaults = Object.fromEntries(
+    Object.entries(declared).map(([name, input]) => [name, input.default]),
+  );
+  assert.equal(declared.member_notice_workspaces.default, '');
+  assert.equal(declared.member_notice_workspaces.required, false);
+  assert.equal(declared.member_notice_workspaces.type, undefined);
+  for (const choice of declared.field_modules_action.options) {
+    const inputs = { ...defaults, field_modules_action: choice, member_notice_workspaces: 'all' };
+    const expected =
+      { member_notice: 'install', member_notice_deliver: 'deliver' }[choice] ?? 'unchanged';
+    assert.equal(evaluate(env.MEMBER_NOTICE_ACTION, inputs), expected, choice);
+    assert.equal(
+      evaluate(env.MEMBER_NOTICE_WORKSPACES, inputs),
+      choice === 'member_notice_deliver' ? 'all' : '',
+      choice,
+    );
+  }
+  // The deliver choice warns that it waits for U5 and the owner's install approval.
+  assert.match(
+    declared.field_modules_action.description,
+    /member_notice_deliver[^)]*only after U5 is merged and its install approved by the owner/,
+  );
 });
 
 test('set_supplier takes the supplier details only from the protected environment secret, never an input', () => {
