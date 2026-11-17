@@ -9,6 +9,10 @@ import {
   defaultRealInvoicingEntity,
   realInvoicingEntityInput,
 } from '../../packages/auth/src/customer-invoicing-real-configuration';
+import {
+  describeSupplierChange,
+  setSupplierFromSecret,
+} from '../../packages/auth/src/customer-invoicing-real-supplier-secret';
 import { CustomerWorkspaceService } from '../../packages/auth/src/customer-workspaces';
 import { CustomerBillingService, type BillingPlan } from '../../packages/auth/src/customer-billing';
 import {
@@ -1799,4 +1803,55 @@ test('set_supplier writes those details, and allow_single_approver leaves a clos
   expect((await s.f.owner.query('SELECT customer_private.real_invoicing_open() o')).rows[0].o).toBe(
     false,
   );
+});
+
+// Owner, 17 Nov 2026: "hide supplier input". The installer's set_supplier path, run against the real database with the
+// JSON as the secret would hold it: the details are written, and the only output names fields, the version and a count.
+// Every value is invented for this test.
+const secretSupplier = {
+  ...testSupplier,
+  legalName: 'Example Secret Path Supplier Pte Ltd',
+  uen: 'T00SECRETPATHX',
+  paymentInstructions:
+    'Pay by bank transfer to account TEST-777-123456-0, quoting the invoice number',
+  madeupFields: ['finance_label'],
+};
+
+test('set_supplier from the secret writes the details and prints no value', async () => {
+  const printed: string[] = [];
+  const spy = vi.spyOn(console, 'log').mockImplementation((...args) => {
+    printed.push(args.join(' '));
+  });
+  try {
+    const change = await setSupplierFromSecret(s.f.owner, {
+      raw: JSON.stringify(secretSupplier),
+      reason: 'Local fixture set_supplier from the environment secret',
+    });
+    console.log(describeSupplierChange(change));
+  } finally {
+    spy.mockRestore();
+  }
+  const latest = (
+    await s.f.owner.query(
+      'SELECT version,legal_name,uen,payment_instructions,placeholder_fields FROM customer_private.real_invoicing_entity ORDER BY version DESC LIMIT 1',
+    )
+  ).rows[0];
+  expect(latest).toMatchObject({
+    legal_name: secretSupplier.legalName,
+    uen: secretSupplier.uen,
+    payment_instructions: secretSupplier.paymentInstructions,
+    placeholder_fields: ['finance_label'],
+  });
+  expect(printed).toEqual([
+    `Supplier details: new version written; changed fields: legalName, uen, paymentInstructions, madeupFields; version ${latest.version}; madeupFields count 1`,
+  ]);
+  const text = printed.join('\n');
+  for (const value of [
+    secretSupplier.legalName,
+    secretSupplier.uen,
+    secretSupplier.address,
+    'TEST-777-123456-0',
+    secretSupplier.gstRegistrationNo,
+  ])
+    expect(text).not.toContain(value);
 });
