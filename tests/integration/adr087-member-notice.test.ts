@@ -97,6 +97,14 @@ describe('install', () => {
     );
     expect(await objects()).toEqual(none);
   });
+  test('delivery refuses while the module is not installed, and writes nothing', async () => {
+    await expect(
+      deliverMemberNotice(f.owner, { targets: 'all', deliveredBy: 'before install' }),
+    ).rejects.toThrow(
+      'The member notice module is not installed, so no notice was delivered. Run field_modules_action=member_notice first.',
+    );
+    expect(await objects()).toEqual(none);
+  });
   test('refuses without the inbox and leaves nothing behind', async () => {
     await migrateCustomerRealUse(f.owner);
     await expect(migrateMemberNotice(f.owner)).rejects.toThrow(
