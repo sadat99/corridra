@@ -1,7 +1,9 @@
 import './road.css';
 import './scripts.css';
+import './holder-badge.css';
 import { Explain } from './explain';
 import { mrLabels } from './labels';
+import { holders } from './types';
 import {
   roadSteps,
   roadStates,
@@ -98,6 +100,24 @@ export function Road({
               ) : (
                 <Explain key={state} name={labels.states[state]} text={labels.hints[state]}>
                   <span className="mr-road-key" data-key={state} />
+                </Explain>
+              ),
+            )}
+          </div>
+          <div className="mr-road-keys" data-keys="holders">
+            {holders.map((holder) =>
+              decorative ? (
+                <span key={holder} className="mr-road-key-static">
+                  <span className="mr-holder-shape" data-holder={holder} aria-hidden="true" />
+                  {labels.holders[holder].name}
+                </span>
+              ) : (
+                <Explain
+                  key={holder}
+                  name={labels.holders[holder].name}
+                  text={labels.holders[holder].text}
+                >
+                  <span className="mr-holder-shape" data-holder={holder} />
                 </Explain>
               ),
             )}

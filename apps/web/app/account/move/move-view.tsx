@@ -363,7 +363,6 @@ export function MoveView({
           ? say('move.wait.company')
           : (labels.road.sublines[row.status as keyof typeof labels.road.sublines] ??
             labels.road.sublines.ACTIVE);
-  const ownerHolders = { ...labels.holder, third: say('move.wait.owner') };
 
   const count = items.length;
   // The summary never claims more than the page could read: an unreadable source, a list cut short or
@@ -611,7 +610,6 @@ export function MoveView({
                   lang="en"
                 >
                   {waiting.map((row) => {
-                    const holders = row.holder === 'owner' ? ownerHolders : labels.holder;
                     const title =
                       row.kind !== 'move' && row.title
                         ? row.title
@@ -626,7 +624,7 @@ export function MoveView({
                         cells={[
                           {
                             name: 'Held by',
-                            value: holders[row.holder === 'team' ? 'team' : 'third'],
+                            value: labels.holder[row.holder],
                           },
                           {
                             name: 'Where it stands',
