@@ -13,6 +13,7 @@ import { AccessState } from '../components/access-state';
 import { ParticipantScope } from '../components/participant-scope';
 import { OperatorWorkbench } from '../components/operator-workbench';
 import { MissionPassport } from '../components/mission-passport';
+import { ConsequencePreview } from '../components/consequence-preview';
 import { MissionExperienceView, AgendaView } from './mission-experience-view';
 /** CQ-42: one plain line for a link that no longer opens (expired, replaced or withdrawn). */
 export const linkGone =
@@ -290,6 +291,10 @@ function ScopedDeliveryView({
     }),
     { held: 0, qualified: 0, proposals: 0, contracts: 0 },
   );
+  // One preview for the whole page, above the first mission that has a request still open to answer.
+  const firstOpenMission = report.missions.findIndex((m) =>
+    m.requests?.some((r) => r.status === 'OPEN'),
+  );
   return (
     <div className="delivery-view ux-delivery" data-operator-workbench>
       {error && (
@@ -450,7 +455,7 @@ function ScopedDeliveryView({
           <AgendaView agenda={report.delegation.agenda} />
         </section>
       )}
-      {report.missions.map((m) => (
+      {report.missions.map((m, index) => (
         <article key={m.publicationId} className="delivery-card ux-participant-mission">
           <MissionPassport mission={m} />
           <h3>Mission request</h3>
@@ -499,6 +504,9 @@ function ScopedDeliveryView({
           {m.requests && (
             <>
               <h3>Evidence requests</h3>
+              {index === firstOpenMission && (
+                <ConsequencePreview expires={formatMoment(report.expiresAt)} />
+              )}
               {m.requests.length === 0 && <p>No evidence responses are requested.</p>}
               {m.requests.map((r) => (
                 <section key={r.id}>
