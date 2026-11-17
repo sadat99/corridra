@@ -145,6 +145,16 @@
   border-style: dashed;
   background: var(--paper);
 }
+/* The legend inside a read-only sample: the same shape and word, no control. */
+.mr-road-key-static {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: 2.75rem;
+  padding-inline: var(--space-1) var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-strong);
+}
 .mr-road-legend-note {
   margin: 0;
   font-size: var(--text-xs);

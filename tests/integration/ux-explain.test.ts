@@ -123,6 +123,36 @@ describe('the Road legend', () => {
     expect(html).not.toContain(say('mr.explain.state.done'));
   });
 
+  it('renders no control at all when decorative, keeping the shapes and words', async () => {
+    const { Road } = await load('road');
+    const html = renderToStaticMarkup(
+      createElement(Road, { status: 'MEETINGS', decorative: true }),
+    );
+    expect(html).not.toMatch(/<(button|a|input|form)\b/);
+    expect(html).not.toContain('role="tooltip"');
+    expect(html).not.toContain('tabindex');
+    for (const [state, word] of [
+      ['done', 'Done'],
+      ['now', 'Now'],
+      ['later', 'Later'],
+      ['notTracked', 'Not tracked yet'],
+    ])
+      expect(html).toContain(
+        `<span class="mr-road-key-static"><span class="mr-road-key" data-key="${state}" aria-hidden="true"></span>${word}</span>`,
+      );
+    expect(html).toContain(`<p class="mr-road-legend-note">${say('mr.road.legend')}</p>`);
+  });
+
+  it('is decorative wherever the read-only view-as samples draw it', () => {
+    const source = readFileSync(
+      resolve('apps/web/app/operator/view-as/[role]/sample-screens.tsx'),
+      'utf8',
+    );
+    const roads = source.match(/<Road\b[^>]*>/g) ?? [];
+    expect(roads.length).toBeGreaterThan(0);
+    for (const road of roads) expect(road).toMatch(/\bdecorative\b/);
+  });
+
   it('renders no explanation when the legend is off', async () => {
     const { Road } = await load('road');
     const html = renderToStaticMarkup(
