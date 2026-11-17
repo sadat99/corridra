@@ -58,12 +58,11 @@ describe('holder badge shapes', () => {
     expect(rule('third')).not.toMatch(/rotate/);
     expect(rule('you')).toMatch(/border-radius:\s*50%/);
     expect(rule('team')).toMatch(/border-radius:\s*0/);
-    // Half-disc geometry: the height is half the width, only the top corners are round, each by half
-    // the width, so the top is a semicircle and the bottom edge is flat.
+    // Half-disc geometry: the height is half the width, only the top corners are round, rounded at 999px,
+    // which the browser scales to half the width (CSS radius overlap rule), so the top is a semicircle
+    // and the bottom edge is flat.
     expect(rule('third')).toMatch(/height:\s*calc\(0\.625rem \/ 2\)/);
-    expect(rule('third')).toMatch(
-      /border-radius:\s*calc\(0\.625rem \/ 2\) calc\(0\.625rem \/ 2\) 0 0/,
-    );
+    expect(rule('third')).toMatch(/border-radius:\s*999px 999px 0 0/);
     expect(css).toMatch(/background:\s*currentColor/);
     expect(css).not.toMatch(/#[0-9a-f]{3,8}\b|rgb\(/i);
   });
