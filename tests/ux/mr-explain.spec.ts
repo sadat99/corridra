@@ -335,7 +335,9 @@ test.describe('Road legend holder shapes', () => {
             const style = getComputedStyle(el);
             return {
               radius: style.borderTopLeftRadius,
+              topRight: style.borderTopRightRadius,
               bottom: style.borderBottomLeftRadius,
+              bottomRight: style.borderBottomRightRadius,
               width: parseFloat(style.width),
               height: parseFloat(style.height),
               transform: style.transform,
@@ -347,8 +349,18 @@ test.describe('Road legend holder shapes', () => {
       expect(dome.transform).toBe('none');
       // A true half-disc: half as tall as wide, a semicircle on top, a flat edge below.
       expect(dome.height).toBeCloseTo(dome.width / 2, 1);
-      expect(parseFloat(dome.radius)).toBeCloseTo(dome.width / 2, 1);
+      // Computed radii are the specified 999px; the drawn radius is scaled by the CSS overlap rule.
+      const rTL = parseFloat(dome.radius);
+      const rTR = parseFloat(dome.topRight);
+      const scale = Math.min(
+        1,
+        dome.width / (rTL + rTR),
+        dome.height / (rTL + parseFloat(dome.bottom)),
+      );
+      expect(rTL).toBe(rTR);
+      expect(rTL * scale).toBeCloseTo(dome.width / 2, 1);
       expect(parseFloat(dome.bottom)).toBe(0);
+      expect(parseFloat(dome.bottomRight)).toBe(0);
       expect(dome.radius).not.toBe((await look('team')).radius);
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
