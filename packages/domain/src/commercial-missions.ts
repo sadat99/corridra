@@ -320,6 +320,22 @@ export function withholdQuotationTerms<T extends Record<string, unknown>>(row: T
     >),
   };
 }
+// ADR-087 U1r (owner, 17 November 2026, relayed: "yes to both"): the staff-written selection rationale and next action, and
+// the terms an RFQ asked for, are read with delivery.read_body too. A staff viewer keeps each row with these fields null.
+/**
+ * ADR-087 U1r: SQL that is true when a claim is linked to a quotation, that is a quotation names the claim (claim_id) or its
+ * source (source_id). Both arguments are column references or parameter placeholders written by the caller, never input.
+ * The check runs with the reader's own row security, so a quotation on a target the reader cannot see does not count; the
+ * later database unit replaces it with a SECURITY DEFINER app.quotation_linked_claim(tenant, claim).
+ */
+export const quotationLinkedClaimSql = (tenant: string, claimId: string) =>
+  `EXISTS(SELECT FROM app.mission_quotation q JOIN app.claim lc ON lc.tenant_id=q.tenant_id AND (lc.id=q.claim_id OR lc.source_id=q.source_id) WHERE lc.tenant_id=${tenant} AND lc.id=${claimId})`;
+export function withholdSelectionRationale<T extends Record<string, unknown>>(row: T) {
+  return { ...row, rationale: null, next_action: null };
+}
+export function withholdRequestedTerms<T extends Record<string, unknown>>(row: T) {
+  return { ...row, requested_terms: null };
+}
 /** The comparison of one offer without anything derived from its terms: the offer exists, in its currency, and nothing else. */
 export function withheldComparison(offer: {
   id: string;

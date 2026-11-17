@@ -328,6 +328,33 @@ Checked and unchanged: `app.reply_quotation_prefill` runs under `missions.manage
 
 Tests: `tests/integration/commercial-missions.test.ts` ("a staff viewer reads quotation metadata only; owner and admin read the full terms") and `tests/operator/adr087-staff-quotations.spec.ts`; both viewer cases fail on the U1 head.
 
+### U1r. Staff viewers lose quotation evidence, selection rationale and RFQ terms (application only, no migration, no switch)
+
+Owner, 17 November 2026, answered first hand to the orchestrator and relayed: "yes to both, drop the rest". (1) Hide from staff viewers the claims and evidence files linked to a quotation. (2) Hide from staff viewers the staff-written selection rationale (`mission_selection.rationale` and `next_action`) and the RFQ `requested_terms` (`mission_rfq`). This changes who may read, not the data: no row, amount, currency or history changes. It amends forward the U1q sentence that called these selection and RFQ fields "not decided here", and narrows the "Not decided here" bullet on staff reads of non-share records for these fields only. "Drop the rest" drops the other proposed units (CI-U3, CI-U5 and C1-U2 to C1-U4); they come back only with an owner one-line scope.
+
+Rule, as U1 and U1q: a role holding `delivery.read_body` (owner, admin, operator, reviewer) reads everything unchanged. Any other role (staff viewer) gets the same rows with the protected fields null, and the screens say "Not available for your role". The check is `permits()`, fail closed, never a role-name compare. No new permission.
+
+A claim is linked to a quotation when a `mission_quotation` row names it (`claim_id`) or names its source (`source_id`). Those are the only quotation link columns; `mission_selection` and `mission_rfq` also carry `source_id` and `claim_id`, but they are provenance of a decision or an RFQ, not of a quotation, and are unchanged. Claims and evidence not linked to a quotation are unchanged for a viewer.
+
+| Path                                                                                                                                     | Before, for a viewer                         | Now for a viewer                                                        |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | ----------------------------------------------------------------------- |
+| `packages/evidence/src/index.ts` `EvidenceService.workspace` (`trust.read`), `claims`                                                    | statement of every claim                     | statement null on a linked claim                                        |
+| same, `evidence`                                                                                                                         | evidence rows                                | the same rows with `withheld` true on a file whose claim is linked      |
+| same, `facts` (verified facts copy the claim statement)                                                                                  | statement                                    | statement null when the verified file's claim is linked                 |
+| `EvidenceService.download` (`trust.read`), `/api/workspace/download`                                                                     | the file                                     | refused, 403 "Not available for your role"; unlinked files still served |
+| `packages/missions/src/commercial.ts` `CommercialMissionService.workspace` (`missions.read`), `decisions`                                | `rationale`, `next_action`                   | null                                                                    |
+| same, `rfqs`                                                                                                                             | `requested_terms`                            | null; `buyer_context` stays (who the buyer is, not terms)               |
+| `apps/web/app/operator/evidence-panel.tsx`, `sources-panel.tsx`, `commercial-mission.tsx` (Proof, Records)                               | rendered the statement, file link, rationale | "Not available for your role"; no download link on a withheld file      |
+| `packages/counterparties/src/index.ts` `CounterpartyService.detail` (`research.read`), company details (`organisation_attribute` claims) | statement                                    | statement null on a linked claim                                        |
+| same, `shortlist` sources (`assessment_claim` claims) and `shortlistExport` (`/api/workspace/shortlist-export`)                          | statement                                    | statement null on a linked claim, in the page and the JSON export       |
+| `apps/web/app/operator/counterparties.tsx` company details and shortlist sources                                                         | rendered the statement                       | "Not available for your role"                                           |
+
+Checked and unchanged: `packages/delivery/src/decision-disclosures.ts:33` reads rationale and next action for owner and admin only (`options`, existing role check, no viewer); the picker `source` kind lists source locators, not claims; the claim picker on `counterparties.tsx` is in a form shown to managers only; the staff audit list (`packages/auth/src/access.ts` `audit`) reads event metadata, never payloads, and `commercial_mission_command` stores an input hash only; decision cards, saved reports, delivery decisions and their exports are customer or link surfaces (S3, S4, U3). The SQL link test is one shared function, `quotationLinkedClaimSql` in `packages/domain/src/commercial-missions.ts`, used by the evidence and counterparty services.
+
+Residue, not closed by U1r: the link test reads `mission_quotation` under the viewer's own row security (`research_target_access`). A quotation on a target the viewer cannot see does not mark its claim, so the viewer still reads that claim's statement and its verified fact and can download its evidence file. Relationship visibility defaults to OWNER, so this is the common case, not a corner: in most workspaces U1r hides only claims behind quotations on relationships shared with the team. The closing fix is a SECURITY DEFINER `app.quotation_linked_claim(tenant, claim)` in a later database unit, called by `quotationLinkedClaimSql`; until it is installed, U1r must not be described as hiding all quotation evidence from viewers. The integration test asserts today's residue explicitly so that unit has to flip it.
+
+Tests: `tests/integration/commercial-missions.test.ts` ("a staff viewer reads no quotation evidence, selection rationale or RFQ terms; other roles read them whole") and `tests/operator/adr087-staff-evidence.spec.ts`. The viewer service and panel cases fail on the U1q head. Two cases are regression guards: the viewer Proof picker case passes on the U1q head too (the picker was already manage-only), and the route 403 case passes on the first U1r head c13b0fe (its service already refused the file).
+
 ### U2. Database: viewers read metadata only (core forward migration, next free number)
 
 Replace the read policies, sample and real, of:
@@ -456,4 +483,4 @@ Each unit has a forward migration that restores the hashed original policy or fu
 
 - Legal review of the label and privacy wording.
 - Translations beyond English (native review).
-- Staff reads of non-share records (missions, research, opportunities).
+- Staff reads of non-share records (missions, research, opportunities), except the selection rationale, next action and RFQ requested terms that U1r withholds from viewers.

@@ -2,6 +2,7 @@ import { SCANNER_LINE } from '@corridra/auth/deferred-controls';
 import type { MoreKind, OperatorRecordRow, OperatorSnapshot } from './workspace-types';
 import { ShowMore } from './show-more';
 import { SubTabs } from '../../components/ux/sub-tabs';
+import { bodyNotAvailable } from '../../lib/body-access';
 
 const mimeLabels: Record<string, string> = {
   'application/pdf': 'PDF',
@@ -48,7 +49,13 @@ export function EvidencePanel({
 }) {
   const actorId = (data as OperatorSnapshot & { actorId?: string }).actorId;
   const evidence = data.evidence as EvidenceRow[];
-  const claimText = (id?: string) => data.claims.find((c) => c.id === id)?.statement ?? 'a claim';
+  const claimText = (id?: string) => {
+    const claim = data.claims.find((c) => c.id === id);
+    // ADR-087 U1r: a staff viewer reads no statement of a claim linked to a quotation.
+    return claim?.statement === null
+      ? `a claim (${bodyNotAvailable.toLowerCase()})`
+      : (claim?.statement ?? 'a claim');
+  };
   const describe = (r: EvidenceRow) =>
     `${mimeLabels[r.mime ?? ''] ?? 'File'} for ${claimText(r.claim_id)}`;
   const mine = actorId ? evidence.filter((r) => r.created_by === actorId) : [];
@@ -97,21 +104,23 @@ export function EvidencePanel({
                       {describe(r)} · {statusLabels[r.status ?? ''] ?? r.status} · File check:{' '}
                       {scanLabels[r.scan_status ?? ''] ?? r.scan_status}
                     </span>
-                    {(r.scan_status === 'CLEAN' ||
-                      (r.scan_status === 'BYPASSED' &&
-                        data.scanMode === 'bypass' &&
-                        flags.some(
-                          (f) => f.key === 'evidence.scan_bypass' && f.value?.enabled,
-                        ))) && (
-                      <a
-                        className="text-link"
-                        href={`/api/workspace/download?${new URLSearchParams({ tenant, id: r.id })}`}
-                      >
-                        {r.scan_status === 'BYPASSED'
-                          ? 'Download unscanned evidence'
-                          : 'Download evidence'}
-                      </a>
-                    )}
+                    {r.withheld && <span>Download: {bodyNotAvailable}</span>}
+                    {!r.withheld &&
+                      (r.scan_status === 'CLEAN' ||
+                        (r.scan_status === 'BYPASSED' &&
+                          data.scanMode === 'bypass' &&
+                          flags.some(
+                            (f) => f.key === 'evidence.scan_bypass' && f.value?.enabled,
+                          ))) && (
+                        <a
+                          className="text-link"
+                          href={`/api/workspace/download?${new URLSearchParams({ tenant, id: r.id })}`}
+                        >
+                          {r.scan_status === 'BYPASSED'
+                            ? 'Download unscanned evidence'
+                            : 'Download evidence'}
+                        </a>
+                      )}
                     {(r.status === 'SUBMITTED' ||
                       (r.scan_status === 'BYPASSED' &&
                         ['UNDER_REVIEW', 'VERIFIED'].includes(r.status ?? '') &&
@@ -167,7 +176,7 @@ export function EvidencePanel({
                           <option value="">Choose a claim</option>
                           {data.claims.map((r) => (
                             <option key={r.id} value={r.id}>
-                              {r.statement}
+                              {r.statement ?? bodyNotAvailable}
                             </option>
                           ))}
                         </select>
