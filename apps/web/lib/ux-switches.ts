@@ -46,6 +46,9 @@ export const uxSwitchNames = [
   // The helper interest register (ADR-0085). Off unless exactly "true", and it also needs CORRIDRA_NETWORK_ENABLED to be "true";
   // the database module is separate and the form stays hidden while it is not installed.
   'CORRIDRA_HELPER_INTEREST',
+  // ADR-087 U4, the member notice on /account and in the inbox. Off unless exactly "true"; separate from any U5 switch, and it
+  // shows nothing while the member notice database module is not installed or no notice was delivered. It opens no access.
+  'CORRIDRA_MEMBER_NOTICE',
 ] as const;
 export type UxSwitchName = (typeof uxSwitchNames)[number];
 
