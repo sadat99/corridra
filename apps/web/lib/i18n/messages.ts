@@ -7,6 +7,7 @@ import { sellWords } from './sell-words';
 import { consequenceDrafts, consequenceEn } from './consequence-words';
 import { privacyDrafts, privacyEn } from './privacy-words';
 import { defaultLocale, type Locale } from './locales';
+import { headerFooterDrafts } from './header-footer-words';
 import { homeEn, homeWords } from './home-words';
 import { programmePagesWords } from './programme-pages-words';
 import { wsA, wsAEn } from './ws/ws-a';
@@ -95,8 +96,9 @@ const bookWords = {
 
 /**
  * Footer words added with the Ledger footer (owner decision of 6 November 2026; regrouped by Option B, owner decision
- * of 12 November 2026, which renamed Groups and Partners to Groups and Trips). English only: no translation
- * has been written or reviewed, so every catalog carries these English words and no screen claims a translation.
+ * of 12 November 2026, which renamed Groups and Partners to Groups and Trips). These are the English words. The
+ * bn, zh, es, ar, fr and de words are in header-footer-words.ts: drafts by an AI builder, not native-reviewed
+ * until the owner approves them, and shown only for a language the owner lists as reviewed.
  */
 const footerWords = {
   'footer.signIn': 'Sign In',
@@ -123,8 +125,8 @@ const footerWords = {
 
 /**
  * Public header words added with navigation v1 (owner directive of 6 November 2026, boards PublicHeader and
- * PublicMobile). English only: no translation has been written or reviewed, so every catalog carries these English
- * words and no screen claims a translation. Menu words are written exactly as the boards write them.
+ * PublicMobile). These are the English words, written exactly as the boards write them. The bn, zh, es, ar, fr and
+ * de words are in header-footer-words.ts: drafts by an AI builder, not native-reviewed until the owner approves them.
  */
 const headerWords = {
   'header.whatWeDo': 'What we do',
@@ -490,8 +492,7 @@ const bn: Catalog = {
   ...bookWords,
   ...privacyDrafts.bn,
   ...consequenceDrafts.bn,
-  ...footerWords,
-  ...headerWords,
+  ...headerFooterDrafts.bn,
   ...todayDrafts.bn,
   'room.lens.overview': 'সারসংক্ষেপ',
   'room.lens.compare': 'তুলনা',
@@ -663,8 +664,7 @@ const zh: Catalog = {
   ...bookWords,
   ...privacyDrafts.zh,
   ...consequenceDrafts.zh,
-  ...footerWords,
-  ...headerWords,
+  ...headerFooterDrafts.zh,
   ...todayDrafts.zh,
   'room.lens.overview': '概览',
   'room.lens.compare': '比较',
@@ -842,8 +842,7 @@ const es: Catalog = {
   ...bookWords,
   ...privacyDrafts.es,
   ...consequenceDrafts.es,
-  ...footerWords,
-  ...headerWords,
+  ...headerFooterDrafts.es,
   ...todayDrafts.es,
   'room.lens.overview': 'Resumen',
   'room.lens.compare': 'Comparar',
@@ -1019,8 +1018,7 @@ const ar: Catalog = {
   ...bookWords,
   ...privacyDrafts.ar,
   ...consequenceDrafts.ar,
-  ...footerWords,
-  ...headerWords,
+  ...headerFooterDrafts.ar,
   ...todayDrafts.ar,
   'room.lens.overview': 'نظرة عامة',
   'room.lens.compare': 'المقارنة',
@@ -1199,8 +1197,7 @@ const fr: Catalog = {
   ...bookWords,
   ...privacyDrafts.fr,
   ...consequenceDrafts.fr,
-  ...footerWords,
-  ...headerWords,
+  ...headerFooterDrafts.fr,
   ...todayDrafts.fr,
   'room.lens.overview': 'Aperçu',
   'room.lens.compare': 'Comparer',
@@ -1384,8 +1381,7 @@ const de: Catalog = {
   ...bookWords,
   ...privacyDrafts.de,
   ...consequenceDrafts.de,
-  ...footerWords,
-  ...headerWords,
+  ...headerFooterDrafts.de,
   ...todayDrafts.de,
   'room.lens.overview': 'Übersicht',
   'room.lens.compare': 'Vergleichen',
