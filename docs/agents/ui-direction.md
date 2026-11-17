@@ -308,7 +308,7 @@ Record change classes (10 November 2026, CRUD G11, `apps/web/app/globals.css`): 
 
 Explain classes (17 November 2026, visual grammar PR 1, `apps/web/components/mr/explain.css`, component `Explain` in `explain.tsx`): `mr-explain` (the wrapper; `data-js` once hydrated, `data-open` while open, `data-side` top or bottom), `mr-explain-trigger` (one native `button`, at least 2.75rem, its accessible name equal to the visible word), `mr-explain-symbol` (the shape, hidden from screen readers), `mr-explain-word` (the visible word), `mr-explain-pop` (`role="tooltip"`, in the server HTML and always in the page, hidden when closed, never `display: none`, linked by `aria-describedby`; `--surface-raised`, 1 px `--border-strong`, `--shadow-2`, `--radius-sm`), `mr-explain-name` (the name line, Geist Mono caps, weight 500) and `mr-explain-text` (the sentence). Road legend classes in `road.css`: `mr-road-keys` (the four explained shapes), `mr-road-key` with `data-key` (the small shape) and `mr-road-legend-note` (the existing legend line). Rules are in "Visual grammar and explanations" below.
 
-Move lane classes (17 November 2026, visual grammar PR 4, move-view.css): move-lanes, move-lane (data-holder), move-lane-head
+Move lane classes (17 November 2026, visual grammar PR 4, move-view.css): `move-lanes` (the wrapper under "Waiting on others"), `move-lane` (one section per non-empty holder, `data-holder` team, owner or third, labelled by its head), `move-lane-head` (the h3 that holds the holder's Explain: shape, word and sentence) and `move-head-key` (the Explain circle key for You beside the "Waiting for you" heading; it sits in the card's head row, so the link moves one column over).
 
 ## Visual grammar and explanations (owner decision, 17 November 2026)
 

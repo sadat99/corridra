@@ -238,7 +238,9 @@ test('shows a Move the team set as a card with its real date, and folds the othe
   await expect(card.locator('.today-action')).toHaveCount(1);
   const waiting = page.getByRole('heading', { name: 'Waiting on others' }).locator('..');
   await expect(waiting.getByText('Confirm the visit dates')).toBeVisible();
-  await expect(waiting.getByText('Corridra team', { exact: true }).first()).toBeVisible();
+  await expect(
+    waiting.locator('.ux-row-value', { hasText: 'Corridra team' }).first(),
+  ).toBeVisible();
   await expect(waiting.getByText('Send the quotation')).toBeVisible();
   // The word is also the lane head now, so the row's own "Held by" value is what this checks.
   await expect(waiting.locator('.ux-row-value', { hasText: 'Supplier or Buyer' })).toBeVisible();
@@ -401,6 +403,26 @@ test('groups what others hold into lanes by holder, with the word and sentence o
       `${width}`,
     ).toBeLessThanOrEqual(width);
     expect((await new AxeBuilder({ page }).analyze()).violations, `axe lanes ${width}`).toEqual([]);
+  }
+});
+
+test('the head row of Waiting for you (heading, count, key, link) is not clipped at 320 wide', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 900 });
+  await open(page, 'full');
+  const card = page.locator('.move-card', { has: page.locator('#move-you') });
+  const box = (await card.boundingBox())!;
+  for (const part of [
+    card.locator('#move-you'),
+    card.locator('.move-count').first(),
+    card.locator('.move-head-key .mr-explain-trigger'),
+    card.locator('.move-card-link').first(),
+  ]) {
+    await expect(part).toBeVisible();
+    const b = (await part.boundingBox())!;
+    expect(b.x).toBeGreaterThanOrEqual(box.x - 0.5);
+    expect(b.x + b.width).toBeLessThanOrEqual(box.x + box.width + 0.5);
   }
 });
 
