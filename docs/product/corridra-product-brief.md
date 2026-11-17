@@ -144,7 +144,7 @@ A supplier claiming a capacity does not mean Corridra verified it. A scheduled m
 
 ### Where and when
 
-- **Where:** **Bangladesh ↔ China**, led by sourcing and machinery from China. **Bangladesh ↔ Spain and the EU**, led by export buyer access. Reverse directions are opened case by case. Another route? Ask, and we tell you plainly if we can help. We claim no global coverage.
+- **Where:** (Amended 17 November 2026, owner decision, replaces the October wording; the Spain line before it is superseded.) From Bangladesh we run missions to China, the EU, the UK, the US, Australia and key Asian markets, as equal destinations. Missions in the other direction, into Bangladesh, are taken case by case. For any other route, we tell you plainly if we can help. We claim no global coverage.
 - **Online:** Start a request on the web, from a phone or a laptop. The site is in English. Bangla, Chinese, Spanish, Arabic, French and German are being prepared.
 - **When:** Before the trip, not after. The best moments: a China sourcing trip, the Canton Fair or an industrial show, a machinery decision, a European trade fair, a distributor search, or a delegation being planned.
 - **Pricing:** Paid, scoped missions. We agree the scope and an itemised quote with you before work starts. Online payment is not available yet.

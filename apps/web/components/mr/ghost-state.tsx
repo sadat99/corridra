@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import './ghost-state.css';
 import './scripts.css';
 import { mrLabels } from './labels';
@@ -13,16 +13,21 @@ export function GhostState({
   text,
   children,
   labels = mrLabels.ghost,
+  id: idProp,
 }: {
   title: string;
   text: string;
   /** The faded example, built from the same components as the real screen. */
   children: ReactNode;
   labels?: typeof mrLabels.ghost;
+  /** The heading's id. Left out, each ghost state makes its own, so two on one page never share one. */
+  id?: string;
 }) {
+  const generated = useId();
+  const id = idProp ?? generated;
   return (
-    <section className="mr-ghost" aria-labelledby="mr-ghost-title">
-      <h2 id="mr-ghost-title">{title}</h2>
+    <section className="mr-ghost" aria-labelledby={id}>
+      <h2 id={id}>{title}</h2>
       <p>{text}</p>
       <div className="mr-ghost-example" aria-hidden="true" inert>
         <span className="mr-ghost-tag">{labels.example}</span>

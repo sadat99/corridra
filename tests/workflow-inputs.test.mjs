@@ -90,6 +90,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'helper_interest',
     'programme_erasure',
     'personal_profile',
+    'profile_picture',
     'viewer_reply_metadata',
     'viewer_export_access',
     'contact_changes_install',
@@ -135,6 +136,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     ['helper_interest', u, u, u, u, u, u, u, u],
     ['programme_erasure', u, u, u, u, u, u, u, u],
     ['personal_profile', u, u, u, u, u, u, u, u],
+    ['profile_picture', u, u, u, u, u, u, u, u],
     ['viewer_reply_metadata', u, u, u, u, u, u, u, u],
     ['viewer_export_access', u, u, u, u, u, u, u, u],
     ['contact_changes_install', u, u, u, u, u, u, u, u],
@@ -175,6 +177,11 @@ test('each field-module choice maps to install only and reaches the exact-head c
       evaluate(env.PERSONAL_PROFILE_ACTION, inputs),
       choice === 'personal_profile' ? 'install' : u,
     );
+    // Profile picture (ADR-088): its own choice installs the database module and nothing else.
+    assert.equal(
+      evaluate(env.PROFILE_PICTURE_ACTION, inputs),
+      choice === 'profile_picture' ? 'install' : u,
+    );
     // ADR-087 U2 and U3: each own choice installs its database module and nothing else.
     assert.equal(
       evaluate(env.VIEWER_REPLY_METADATA_ACTION, inputs),
@@ -186,6 +193,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     );
     for (const [own, line] of [
       ['personal_profile', 'PERSONAL_PROFILE_ACTION'],
+      ['profile_picture', 'PROFILE_PICTURE_ACTION'],
       ['viewer_reply_metadata', 'VIEWER_REPLY_METADATA_ACTION'],
       ['viewer_export_access', 'VIEWER_EXPORT_ACCESS_ACTION'],
     ])

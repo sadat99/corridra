@@ -86,11 +86,12 @@ export const metadata: Metadata = {
   metadataBase: new URL(canonicalSiteOrigin),
   title: 'Corridra | Cross-border market access',
   description:
-    'Know who is worth meeting before you arrive. Corridra is being built for cross-border market access, starting with Bangladesh and Spain/EU.',
+    'Corridra helps Bangladeshi businesses enter China, the EU, the UK, the US, Australia and key Asian markets with qualified buyers and clear next steps.',
   applicationName: 'Corridra',
   openGraph: {
     title: 'Corridra | Know who is worth meeting.',
-    description: 'Cross-border market access. Starting with Bangladesh and Spain/EU.',
+    description:
+      'Cross-border market access from Bangladesh to China, the EU, the UK, the US, Australia and key Asian markets.',
     type: 'website',
     locale: 'en_GB',
   },

@@ -53,6 +53,7 @@ import { configureSourcingWorkflow } from '../packages/auth/src/sourcing-workflo
 import { migrateSupplySources } from '../packages/db/src/supply-source-migrate';
 import { migrateHelperInterest } from '../packages/db/src/helper-interest-migrate';
 import { migrateCustomerPersonalProfiles } from '../packages/db/src/customer-personal-profile-migrate';
+import { migrateCustomerProfilePictures } from '../packages/db/src/customer-profile-picture-migrate';
 import {
   migrateViewerReplyMetadata,
   refreshViewerReplyMetadata,
@@ -118,6 +119,7 @@ const v = z
     HELPER_INTEREST_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     PROGRAMME_ERASURE_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     PERSONAL_PROFILE_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
+    PROFILE_PICTURE_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     VIEWER_REPLY_METADATA_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     VIEWER_EXPORT_ACCESS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     COUNTERPARTY_CHANGES_ACTION: z
@@ -298,6 +300,8 @@ if (v.PROGRAMME_ERASURE_ACTION !== 'unchanged' && !apply)
   throw new Error('Programme words erasure installation requires INSTALL_APPLY=yes');
 if (v.PERSONAL_PROFILE_ACTION !== 'unchanged' && !apply)
   throw new Error('Personal profile installation requires INSTALL_APPLY=yes');
+if (v.PROFILE_PICTURE_ACTION !== 'unchanged' && !apply)
+  throw new Error('Profile picture installation requires INSTALL_APPLY=yes');
 if (v.VIEWER_REPLY_METADATA_ACTION !== 'unchanged' && !apply)
   throw new Error('Viewer reply metadata installation requires INSTALL_APPLY=yes');
 if (v.VIEWER_EXPORT_ACCESS_ACTION !== 'unchanged' && !apply)
@@ -375,6 +379,7 @@ const registries = [
   'customer_programme_publication_migrations',
   'customer_programme_erasure_migrations',
   'customer_personal_profile_migrations',
+  'customer_profile_picture_migrations',
   'viewer_reply_metadata_migrations',
   'viewer_export_access_migrations',
   'recipient_response_revision_migrations',
@@ -722,6 +727,14 @@ try {
     if (v.PERSONAL_PROFILE_ACTION === 'install') {
       await migrateCustomerPersonalProfiles(pool);
       console.log('installed or already current: personal profile');
+    }
+    // The private profile picture references (ADR-088) are never part of the base run. Installing the database module
+    // exposes nothing: the picture stays hidden until the reviewed profilePicture code switch is turned on. It installs no
+    // other module and refuses, naming the step, unless the personal profile module is installed first. Reached only
+    // through field_modules_action=profile_picture.
+    if (v.PROFILE_PICTURE_ACTION === 'install') {
+      await migrateCustomerProfilePictures(pool);
+      console.log('installed or already current: profile picture');
     }
     // ADR-087 U2 and U3 are never part of the base run. Each replaces only named read policies (and U2 adds two meta reads),
     // refuses unless every replaced policy is exactly the one it was written against, and refuses unless the real-use modules

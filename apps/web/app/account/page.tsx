@@ -44,6 +44,7 @@ import { ReportsTabs } from './reports-tabs';
 import { AccountSettings } from './account-settings';
 import { PersonalProfile } from './personal-profile';
 import { accountSecurityCapabilities } from '../../lib/account-security-capabilities';
+import { profilePictureCapability } from '../../lib/profile-picture-capability';
 import { AccountClosure, AccountClosureComingSoon } from './account-closure';
 import { ContrastRow, LessMovementRow, TextSizeRow } from '../../components/ux/comfort-controls';
 import { customerAccountLifecycleEnabled } from '@corridra/auth/customer-account-lifecycle';
@@ -344,6 +345,7 @@ export default async function Page({
                   email={data.user.email}
                   nameEditable={accountSecurityCapabilities.updateName}
                   detailsEnabled={customerWorkspacesEnabled()}
+                  pictureEnabled={profilePictureCapability.profilePicture}
                 />
               </section>
             }
