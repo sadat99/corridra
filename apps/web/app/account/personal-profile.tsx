@@ -7,6 +7,8 @@ import { countryName } from '../../lib/ux/options';
 import { fieldAnchor } from '../../lib/ux/focus';
 import { LifecycleErrorLine } from './lifecycle-error-line';
 import { lifecycleWords, sessionHeaders } from './workspace-lifecycle-client';
+import { ProfilePicture } from './profile-picture';
+import { pictureSource } from '../../lib/profile-picture-client';
 
 // ADR-086. My Profile on the account Profile tab: the verified email, the name and the person's own optional,
 // self-declared details, each edited in place. Nothing is mandatory and nothing is scored. The details are read from and
@@ -158,6 +160,7 @@ export function PersonalProfile({
   email,
   nameEditable,
   detailsEnabled,
+  pictureEnabled = false,
 }: {
   subject: string;
   issuer: string;
@@ -166,8 +169,11 @@ export function PersonalProfile({
   nameEditable: boolean;
   /** False while customer workspaces are off: the card shows only the verified email and name, as before. */
   detailsEnabled: boolean;
+  /** ADR-088: the profile picture row, shown only while the reviewed profilePicture capability is on. */
+  pictureEnabled?: boolean;
 }) {
   const headers = sessionHeaders(subject, issuer);
+  const [pictureVersion, setPictureVersion] = useState<number | null>(null);
   const [load, setLoad] = useState<Load>(detailsEnabled ? 'loading' : 'off');
   const [view, setView] = useState<View | null>(null);
   const [shownName, setShownName] = useState(name ?? '');
@@ -529,19 +535,35 @@ export function PersonalProfile({
 
   const header = (
     <div style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'center' }}>
-      {initials && (
-        <span
-          aria-hidden="true"
+      {pictureVersion !== null ? (
+        // eslint-disable-next-line @next/next/no-img-element -- a private, session-checked image; no optimiser may fetch it
+        <img
+          src={pictureSource(pictureVersion, 'large')}
+          alt=""
           className="ux-avatar-face"
           style={{
             inlineSize: '3rem',
             blockSize: '3rem',
-            borderRadius: 'var(--guided-hero-radius)',
+            borderRadius: '50%',
+            objectFit: 'cover',
             flex: 'none',
           }}
-        >
-          {initials}
-        </span>
+        />
+      ) : (
+        initials && (
+          <span
+            aria-hidden="true"
+            className="ux-avatar-face"
+            style={{
+              inlineSize: '3rem',
+              blockSize: '3rem',
+              borderRadius: 'var(--guided-hero-radius)',
+              flex: 'none',
+            }}
+          >
+            {initials}
+          </span>
+        )
       )}
       <div style={{ display: 'grid', gap: 'var(--space-1)', minWidth: 0 }}>
         <span className="ux-status" data-tone="positive">
@@ -558,6 +580,14 @@ export function PersonalProfile({
       {header}
       {!(nameEditable && detailsEnabled) && shownName && <p>{shownName}</p>}
       <p>{words.emailNote}</p>
+      {pictureEnabled && detailsEnabled && (
+        <ProfilePicture
+          subject={subject}
+          issuer={issuer}
+          initials={initials || initialsOf(shownName || email)}
+          onChange={setPictureVersion}
+        />
+      )}
       {nameEditable &&
         detailsEnabled &&
         row(

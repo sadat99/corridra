@@ -121,7 +121,8 @@ test('the footer on the request page keeps every link and action, with the trust
     '/sell',
     '/enter-market',
     '/business-trips',
-    '/corridors/bangladesh-spain',
+    // owner decision 17 Nov 2026, routes and markets: the footer's EU link opens the EU page
+    '/corridors/bangladesh-eu',
     '/trade-missions',
     '/institutions',
     '/network',

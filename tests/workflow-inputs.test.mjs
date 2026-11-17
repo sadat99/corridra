@@ -90,6 +90,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'helper_interest',
     'programme_erasure',
     'personal_profile',
+    'profile_picture',
     'contact_changes_install',
     'contact_changes_enable',
     'contact_changes_pause',
@@ -133,6 +134,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     ['helper_interest', u, u, u, u, u, u, u, u],
     ['programme_erasure', u, u, u, u, u, u, u, u],
     ['personal_profile', u, u, u, u, u, u, u, u],
+    ['profile_picture', u, u, u, u, u, u, u, u],
     ['contact_changes_install', u, u, u, u, u, u, u, u],
     ['contact_changes_enable', u, u, u, u, u, u, u, u],
     ['contact_changes_pause', u, u, u, u, u, u, u, u],
@@ -171,13 +173,22 @@ test('each field-module choice maps to install only and reaches the exact-head c
       evaluate(env.PERSONAL_PROFILE_ACTION, inputs),
       choice === 'personal_profile' ? 'install' : u,
     );
-    if (choice === 'personal_profile')
-      for (const [name, value] of Object.entries(env))
-        if (name.endsWith('_ACTION') && name !== 'PERSONAL_PROFILE_ACTION')
-          assert.ok(
-            ['unchanged', 'no'].includes(String(evaluate(String(value), inputs))),
-            `${choice} must not move ${name}`,
-          );
+    // Profile picture (ADR-088): its own choice installs the database module and nothing else.
+    assert.equal(
+      evaluate(env.PROFILE_PICTURE_ACTION, inputs),
+      choice === 'profile_picture' ? 'install' : u,
+    );
+    for (const [own, line] of [
+      ['personal_profile', 'PERSONAL_PROFILE_ACTION'],
+      ['profile_picture', 'PROFILE_PICTURE_ACTION'],
+    ])
+      if (choice === own)
+        for (const [name, value] of Object.entries(env))
+          if (name.endsWith('_ACTION') && name !== line)
+            assert.ok(
+              ['unchanged', 'no'].includes(String(evaluate(String(value), inputs))),
+              `${choice} must not move ${name}`,
+            );
     for (const reason of [env.WORKSPACE_LIFECYCLE_REASON, env.ACCOUNT_LIFECYCLE_REASON]) {
       const value = evaluate(reason, inputs);
       if (g4g5 === 'enable' || g4g5 === 'pause') {
