@@ -48,7 +48,7 @@
 .move-card > .move-count {
   margin-inline-start: var(--space-3);
 }
-.move-card > :not(h2, .move-count, .move-card-link, .move-head-tag) {
+.move-card > :not(h2, .move-count, .move-card-link, .move-head-tag, .move-head-key) {
   grid-column: 1 / -1;
   align-self: stretch;
   border-top: 1px solid var(--line);
@@ -1102,4 +1102,44 @@
    widens the page. */
 .move-journeys {
   position: relative;
+}
+
+/* The circle key beside "Waiting for you": the word and its sentence for the holder of everything in that card. */
+.move-card > .move-head-key {
+  margin-inline-start: var(--space-3);
+  min-width: 0;
+}
+/* With the key in the head row the link moves one column over, so the head stays one line. */
+.move-card:has(> .move-head-key) {
+  grid-template-columns: auto auto auto minmax(0, 1fr);
+}
+.move-card:has(> .move-head-key) > .move-card-link {
+  grid-column: 4;
+}
+
+/* What others hold, grouped by who holds it: one lane per holder (team, owner, third party), each with its
+   holder shape and word as the lane head. A holder with nothing waiting draws no lane. */
+.move-lanes {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  padding-block: var(--space-1) 0;
+}
+.move-lane {
+  display: grid;
+  min-width: 0;
+}
+/* Stated with the lane's own class in front so a section heading rule elsewhere never adds margin or type size. */
+.move-lanes .move-lane > .move-lane-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0 var(--space-5);
+  color: var(--text-2);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1.3;
 }

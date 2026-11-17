@@ -58,6 +58,23 @@ const cases = {
     requests: [],
   },
   nothing: { workspaces: [], drafts: [], quotes: [], companyLinks: [], requests: [] },
+  // One row for each holder under "Waiting on others": the team (the request), a workspace owner (the
+  // member's quote) and a third party (the Move held by the supplier or buyer).
+  lanes: {
+    workspaces: [owner, member],
+    drafts: [],
+    quotes: [
+      { id: 'q2', workspaceId: member.id, title: 'Interpreter in Guangzhou', contextLabel: 'M' },
+    ],
+    companyLinks: [],
+    requests: [request('r1', 'MEETINGS')],
+    moves: [
+      {
+        requestId: 'r1',
+        moves: [{ id: 'm3', verb: 'Send', object: 'the quotation', holder: 'third', dueOn: null }],
+      },
+    ],
+  },
   moves: {
     workspaces: [owner],
     drafts: [],
@@ -223,7 +240,8 @@ test('shows a Move the team set as a card with its real date, and folds the othe
   await expect(waiting.getByText('Confirm the visit dates')).toBeVisible();
   await expect(waiting.getByText('Corridra team', { exact: true }).first()).toBeVisible();
   await expect(waiting.getByText('Send the quotation')).toBeVisible();
-  await expect(waiting.getByText('Supplier or Buyer')).toBeVisible();
+  // The word is also the lane head now, so the row's own "Held by" value is what this checks.
+  await expect(waiting.locator('.ux-row-value', { hasText: 'Supplier or Buyer' })).toBeVisible();
   // The team's words are theirs: shown as written, marked as English in any language.
   await expect(card.locator('.today-move')).toHaveAttribute('lang', 'en');
 });
@@ -358,12 +376,58 @@ test('says when a list was too long to read in full, and says nothing otherwise'
   await expect(page.getByText('too long to read in full')).toHaveCount(0);
 });
 
+test('groups what others hold into lanes by holder, with the word and sentence on hover and focus', async ({
+  page,
+}) => {
+  for (const width of [320, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await open(page, 'lanes');
+    const lanes = page.locator('.move-lanes > .move-lane');
+    await expect(lanes).toHaveCount(3);
+    await expect(
+      lanes.evaluateAll((els) => els.map((el) => el.getAttribute('data-holder'))),
+    ).resolves.toEqual(['team', 'owner', 'third']);
+    for (const lane of await lanes.all()) await expect(lane).toBeVisible();
+    // Explain opens on keyboard focus inside a lane head, with the holder's sentence.
+    const trigger = lanes.nth(0).locator('.mr-explain-trigger');
+    await expect(trigger).toHaveAccessibleName('Corridra team');
+    await trigger.focus();
+    await expect(
+      lanes.nth(0).getByRole('tooltip').getByText('The Corridra team needs to do the next thing.'),
+    ).toBeVisible();
+    await page.keyboard.press('Escape');
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+      `${width}`,
+    ).toBeLessThanOrEqual(width);
+    expect((await new AxeBuilder({ page }).analyze()).violations, `axe lanes ${width}`).toEqual([]);
+  }
+});
+
+test('mirrors the lanes right to left', async ({ page }) => {
+  await open(page, 'lanes', '&offered=en,ar');
+  await page.evaluate(() => window.localStorage.setItem('corridra.language', 'ar'));
+  await page.reload();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const head = page.locator('.move-lane-head').first();
+  await expect(head).toBeVisible();
+  const [lane, trigger] = await Promise.all([
+    page.locator('.move-lane').first().boundingBox(),
+    head.locator('.mr-explain-trigger').boundingBox(),
+  ]);
+  // The head starts at the right edge of its lane in a right to left language.
+  expect(lane!.x + lane!.width - (trigger!.x + trigger!.width)).toBeLessThan(trigger!.x - lane!.x);
+  await page.setViewportSize({ width: 320, height: 900 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+});
+
 for (const width of [320, 390, 768, 1440]) {
   test(`fits at ${width} wide: no sideways scroll, 44 pixel targets, no accessibility violation`, async ({
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
-    for (const name of ['full', 'quiet', 'many'] as const) {
+    for (const name of ['full', 'quiet', 'many', 'lanes'] as const) {
       await open(page, name);
       await expect(
         page.getByRole('heading', { name: 'Waiting for you', exact: true }),

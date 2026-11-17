@@ -14,7 +14,9 @@ const fixturePath = '/__today-card-fixture';
 let html = '';
 
 // Document height of the fixture on main (px), measured with TC1_BASELINE=1 on origin/main 0fb1223 (viewport height 400).
-const mainHeight: Record<number, number> = { 320: 1188, 390: 1062, 1440: 549 };
+// 1440 was 549 on main; visual grammar PR 4 (17 November 2026) adds one lane head, a 44 px Explain target, to
+// the one lane this fixture has under "Waiting on others", so 1440 is 599 (measured, +50). 320 and 390 stay under.
+const mainHeight: Record<number, number> = { 320: 1188, 390: 1062, 1440: 599 };
 
 test.beforeAll(async () => {
   const bundle = await build({
@@ -82,6 +84,7 @@ test.beforeAll(async () => {
     'components/ux/ux-kit.css',
     'components/mr/move-card.css',
     'components/mr/holder-badge.css',
+    'components/mr/explain.css',
     'components/mr/scripts.css',
     'components/mr/stage-bar.css',
     'app/account/move/move-view.css',
