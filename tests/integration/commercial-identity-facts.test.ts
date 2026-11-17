@@ -468,20 +468,53 @@ describe('provenance', () => {
   });
 
   it('the work families are derived, from this workspace only, without the unclassified bucket', async () => {
+    workItems.items = workItems.items.filter((item) => item.family !== 'UNCLASSIFIED');
     const a = present(await factsFor(A));
-    expect(a.facts.find((f) => f.key === 'work.families')).toMatchObject({
+    const fact = a.facts.find((f) => f.key === 'work.families');
+    expect(fact).toMatchObject({
       value: ['SELL'],
       provenance: 'DERIVED',
       source: { kind: 'work_items', id: A, version: null },
     });
+    expect(fact).not.toHaveProperty('complete');
     const b = present(await factsFor(B));
     expect(b.facts.find((f) => f.key === 'work.families')?.value).toEqual(['ORGANISE', 'SOURCE']);
   });
 
+  it('an unclassified own item (e.g. an unreadable request detail) marks the families incomplete', async () => {
+    const a = present(await factsFor(A));
+    expect(a.facts.find((f) => f.key === 'work.families')).toMatchObject({
+      value: ['SELL'],
+      complete: false,
+    });
+    // Another workspace's unclassified item says nothing about this one.
+    workItems.items = [
+      { workspaceId: A, family: 'SELL', title: 't', status: 'OPEN', id: 'a1' },
+      { workspaceId: B, family: 'UNCLASSIFIED', title: 't', status: 'OPEN', id: 'b9' },
+    ];
+    expect(
+      present(await factsFor(A)).facts.find((f) => f.key === 'work.families'),
+    ).not.toHaveProperty('complete');
+  });
+
+  it('only unclassified own items: the families are unreadable, never absent as not_provided', async () => {
+    workItems.items = [
+      { workspaceId: A, family: 'UNCLASSIFIED', title: 't', status: 'OPEN', id: 'a2' },
+    ];
+    const result = present(await factsFor(A));
+    expect(result.facts.map((f) => f.key)).not.toContain('work.families');
+    expect(result.absent).toContainEqual({
+      key: 'work.families',
+      reason: 'unreadable',
+      workspaceId: A,
+    });
+  });
+
   it('a partial or unreadable work list is never presented as complete', async () => {
     workItems.partial = true;
+    workItems.items = workItems.items.filter((item) => item.family !== 'UNCLASSIFIED');
     expect(present(await factsFor(A)).facts.find((f) => f.key === 'work.families')).toMatchObject({
-      partial: true,
+      complete: false,
     });
     workItems.unreadable = ['drafts'];
     const result = present(await factsFor(A));
@@ -553,6 +586,31 @@ describe('missing values', () => {
       workspaceId: A,
     });
     expect(calls).not.toContain('customerOrganisationProfiles.view');
+  });
+
+  it('membership revoked between the list and the profile read (SQLSTATE 42501) fails closed', async () => {
+    for (const thrown of [
+      Object.assign(new Error('Workspace unavailable'), { code: '42501' }),
+      Object.assign(new Error('Profile access expired'), { code: '42501' }),
+      Object.assign(new Error('Not found'), { status: 404 }),
+      Object.assign(new Error('Forbidden'), { status: 403 }),
+    ]) {
+      services = {
+        ...healthy(),
+        customerOrganisationProfiles: guarded('customerOrganisationProfiles', {
+          view: async () => {
+            throw thrown;
+          },
+        }),
+      };
+      const result = await factsFor(A);
+      expect(result).toEqual({
+        ok: false,
+        code: 'not_a_member',
+        message: expect.any(String),
+        workspaceId: A,
+      });
+    }
   });
 
   it('a failing profile read is unreadable, never not_provided', async () => {

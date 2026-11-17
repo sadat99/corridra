@@ -279,6 +279,52 @@ test('representable workspaces are the current memberships with role only', asyn
   );
 });
 
+test('a membership revoked between the workspace list and the profile read fails closed', async () => {
+  const invitation = await raw('carol').workspaces.access({
+    action: 'invite',
+    commandId: randomUUID(),
+    workspaceId: C,
+    label: 'Synthetic racing member',
+  });
+  await raw('bob').workspaces.access({
+    action: 'accept',
+    commandId: randomUUID(),
+    token: invitation.token,
+  });
+  const before = services!;
+  const real = before.customerWorkspaces as CustomerWorkspaceService;
+  services = {
+    ...before,
+    customerWorkspaces: {
+      // The real list read, then the owner removes Bob before the profile read runs.
+      list: async (...args: Parameters<CustomerWorkspaceService['list']>) => {
+        const listed = await real.list(...args);
+        const page = await raw('carol').workspaces.listAccess({ workspaceId: C });
+        const membership = page.memberships.find((m) => m.status === 'active');
+        await raw('carol').workspaces.access({
+          action: 'revoke',
+          commandId: randomUUID(),
+          workspaceId: C,
+          kind: 'membership',
+          targetId: membership!.id,
+        });
+        return listed;
+      },
+    },
+  };
+  try {
+    const result = await factsAs('bob', C);
+    expect(result).toEqual({
+      ok: false,
+      code: 'not_a_member',
+      message: expect.any(String),
+      workspaceId: C,
+    });
+  } finally {
+    services = before;
+  }
+});
+
 test('a removed member loses the facts at once', async () => {
   const before = await factsAs('bob', A);
   expect(before.ok).toBe(true);

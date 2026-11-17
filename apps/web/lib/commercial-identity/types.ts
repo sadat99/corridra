@@ -44,8 +44,11 @@ export type CommercialFact = {
   asOf: string;
   /** The one workspace the facts were requested for. */
   workspaceId: string;
-  /** Set when the value was computed from a list longer than the pages read: a lower bound, not the whole. */
-  partial?: true;
+  /**
+   * Set when the value may be missing parts: the list was longer than the pages read, or an own record's family could
+   * not be told. The value is then a lower bound. Its absence is not a claim of completeness beyond the records read.
+   */
+  complete?: false;
 };
 
 /**

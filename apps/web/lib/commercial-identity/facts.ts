@@ -106,6 +106,9 @@ function refusalFor(error: unknown): CommercialFactsRefusalCode {
   return 'unavailable';
 }
 
+// PostgreSQL insufficient_privilege: the customer functions raise it when the person has no current access.
+const accessDenied = (error: unknown) => (error as { code?: unknown } | null)?.code === '42501';
+
 type Services = NonNullable<ReturnType<typeof foundations>>;
 async function readyServices(): Promise<Services | null> {
   if (!customerWorkspacesEnabled()) return null;
@@ -259,10 +262,13 @@ export async function loadCommercialFacts(input: {
         actor.issuer,
       );
     } catch (error) {
+      // Lost access between the two reads: fail closed rather than serve facts for a former member. The profile
+      // view raises SQLSTATE 42501 when the membership is gone (or changed) at read time.
       const code = refusalFor(error);
-      // Lost access between the two reads: fail closed rather than serve a partial answer.
       if (code === 'session_changed') return refuse(code, workspaceId);
-      if (code === 'signed_out') return refuse('not_a_member', workspaceId);
+      const status = (error as { status?: unknown } | null)?.status;
+      if (code === 'signed_out' || status === 404 || accessDenied(error))
+        return refuse('not_a_member', workspaceId);
     }
     if (view && view.workspaceId !== workspaceId) return refuse('unavailable', workspaceId);
     const profile = view?.profile ?? null;
@@ -302,10 +308,14 @@ export async function loadCommercialFacts(input: {
     const list = await loadWorkItems(actor.subject, actor.issuer);
     const own = list.items.filter((item) => item.workspaceId === workspaceId);
     const families = familyOrder.filter((family) => own.some((item) => item.family === family));
-    const partial = list.partial || list.requestsIncomplete === true || list.skippedWorkspaces > 0;
+    // An own item left UNCLASSIFIED may be one whose detail could not be read (the adapter does not flag it), so
+    // its family is unknown: the known families are then a lower bound, and none known is unreadable, not absent.
+    const unknownOwn = own.some((item) => item.family === 'UNCLASSIFIED');
+    const incomplete =
+      unknownOwn || list.partial || list.requestsIncomplete === true || list.skippedWorkspaces > 0;
     if (list.unreadable.length > 0) missing('work.families', 'unreadable');
     else if (families.length === 0)
-      missing('work.families', partial ? 'unreadable' : 'not_provided');
+      missing('work.families', incomplete ? 'unreadable' : 'not_provided');
     else
       facts.push({
         key: 'work.families',
@@ -314,7 +324,7 @@ export async function loadCommercialFacts(input: {
         provenance: 'DERIVED',
         asOf: readAt,
         workspaceId,
-        ...(partial ? { partial: true as const } : {}),
+        ...(incomplete ? { complete: false as const } : {}),
       });
   } catch {
     missing('work.families', 'unreadable');
