@@ -32,7 +32,10 @@ for (const [width, height] of [
     await expect(
       card.getByText('Your email address is verified. This does not verify your company.'),
     ).toBeVisible();
-    await page.waitForLoadState('networkidle');
+    // The panel would ask on mount; give the page time to hydrate and any such request to start (the account page
+    // polls elsewhere, so the network never goes idle).
+    await page.waitForLoadState('load');
+    await page.waitForTimeout(2000);
     expect(asked).toEqual([]);
     await expect(card.getByRole('button', { name: /^Edit / })).toHaveCount(0);
     await expect(card.getByText('Loading your details...')).toHaveCount(0);
