@@ -33,6 +33,7 @@ import {
   CustomerOrganisationProfileService,
   customerOrganisationProfilesEnabled,
 } from '@corridra/auth/customer-organisation-profiles';
+import { CustomerPersonalProfileService } from '@corridra/auth/customer-personal-profiles';
 import {
   CustomerProgrammeTermsService,
   customerProgrammeTermsEnabled,
@@ -774,6 +775,21 @@ function createServices() {
       authPool,
       {
         enabled: customerOrganisationProfilesEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
+        issuer: customerIssuerFromEnv(),
+      },
+      readCustomerSession,
+    ),
+    // ADR-086: the signed-in person's own optional details and account security record. On with customer workspaces;
+    // the routes answer 503 module_unavailable until the optional database module is installed.
+    customerPersonalProfiles: new CustomerPersonalProfileService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerWorkspacesEnabled(),
         synthetic: config.DATA_ENVIRONMENT === 'synthetic',
         dataMode: realUseEnabled() ? 'real' : 'synthetic',
         production: customerProductionLocked(),

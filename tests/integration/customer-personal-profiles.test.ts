@@ -1,11 +1,16 @@
-import { afterAll, beforeAll, describe, expect, test } from 'vitest';
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { fixture, rawContext } from './support';
-import { harness, type Fixture, type Row } from './revamp-g4-support';
+import { harness, options, type Fixture, type Row } from './revamp-g4-support';
 import type { RequestContext } from '../../packages/db/src/index';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateCustomerAccountLifecycle } from '../../packages/db/src/customer-account-lifecycle-migrate';
 import { migrateCustomerPersonalProfiles } from '../../packages/db/src/customer-personal-profile-migrate';
+import { CustomerPersonalProfileService } from '../../packages/auth/src/customer-personal-profiles';
+
+// The route reads its service through foundations(); here it is the real service on this database.
+const route = { services: null as unknown };
+vi.mock('../../apps/web/lib/foundations', () => ({ foundations: () => route.services }));
 
 // ADR-086, real database, real restricted roles, invented people only: optional self-reported personal details, append-only
 // with an expected version and command replay, readable only by the person, refused for a closed account or one with an
@@ -443,5 +448,90 @@ describe('erasure placeholder', () => {
       )
     ).rows[0].n;
     expect(left).toBe(0);
+  });
+});
+
+describe('the route', () => {
+  const load = () => import('../../apps/web/app/api/customer-personal-profile/route');
+  const serviceFor = (person: string) =>
+    new CustomerPersonalProfileService(f.runtime, f.auth, options, async () => h.session(person));
+  const using = (service: unknown) => {
+    route.services = {
+      ready: Promise.resolve(),
+      config: { APP_ORIGIN: 'http://localhost' },
+      missions: { budget: async () => undefined },
+      customerPersonalProfiles: service,
+    };
+  };
+  const post = (body: unknown) =>
+    new Request('http://localhost/api/customer-personal-profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Origin: 'http://localhost' },
+      body: JSON.stringify(body),
+    });
+  test('reads and saves through the real service, with a code for a stale save, no-store always', async () => {
+    const r = await load();
+    using(serviceFor('bob'));
+    const read = await r.GET(new Request('http://localhost/api/customer-personal-profile'));
+    expect(read.status).toBe(200);
+    expect(read.headers.get('cache-control')).toBe('no-store');
+    const current = (await read.json()) as { currentVersion: number };
+    const saved = await r.POST(
+      post({
+        commandId: randomUUID(),
+        expectedVersion: current.currentVersion,
+        contactMethod: 'EMAIL',
+      }),
+    );
+    expect(saved.status).toBe(200);
+    const stale = await r.POST(
+      post({
+        commandId: randomUUID(),
+        expectedVersion: current.currentVersion,
+        contactMethod: 'IN_APP',
+      }),
+    );
+    expect(stale.status).toBe(409);
+    expect(await stale.json()).toMatchObject({ code: 'stale' });
+    const bad = await r.POST(post({ commandId: randomUUID(), expectedVersion: 0, phone: '1' }));
+    expect(bad.status).toBe(400);
+    const wrongOrigin = await r.POST(
+      new Request('http://localhost/api/customer-personal-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: 'https://evil.example' },
+        body: '{}',
+      }),
+    );
+    expect(wrongOrigin.status).toBe(403);
+  });
+  test('a person with no workspace gets the no_workspace code', async () => {
+    const r = await load();
+    using(serviceFor('nina'));
+    const response = await r.POST(
+      post({ commandId: randomUUID(), expectedVersion: 0, title: 'Synthetic x' }),
+    );
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({ code: 'no_workspace', error: noWorkspace });
+  });
+  test('a module that is not installed answers 503 module_unavailable', async () => {
+    const r = await load();
+    const missing = Object.assign(new Error('function does not exist'), { code: '42883' });
+    using({
+      view: async () => {
+        throw missing;
+      },
+      command: async () => {
+        throw missing;
+      },
+    });
+    const read = await r.GET(new Request('http://localhost/api/customer-personal-profile'));
+    expect(read.status).toBe(503);
+    expect(await read.json()).toEqual({
+      code: 'module_unavailable',
+      error: 'Personal details are not available yet.',
+    });
+    route.services = null;
+    const none = await r.GET(new Request('http://localhost/api/customer-personal-profile'));
+    expect(none.status).toBe(503);
   });
 });
