@@ -14,7 +14,9 @@ const fixturePath = '/__today-card-fixture';
 let html = '';
 
 // Document height of the fixture on main (px), measured with TC1_BASELINE=1 on origin/main 0fb1223 (viewport height 400).
-const mainHeight: Record<number, number> = { 320: 1188, 390: 1062, 1440: 549 };
+// 1440 re-measured 17 November 2026 on VG4 (Move lanes, +50 px: one lane head with a 44 px Explain target);
+// 320 and 390 from main 0fb1223.
+const mainHeight: Record<number, number> = { 320: 1188, 390: 1062, 1440: 599 };
 
 test.beforeAll(async () => {
   const bundle = await build({
@@ -82,6 +84,7 @@ test.beforeAll(async () => {
     'components/ux/ux-kit.css',
     'components/mr/move-card.css',
     'components/mr/holder-badge.css',
+    'components/mr/explain.css',
     'components/mr/scripts.css',
     'components/mr/stage-bar.css',
     'app/account/move/move-view.css',

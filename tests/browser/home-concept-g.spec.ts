@@ -131,7 +131,7 @@ test('every job link opens its request with the contract name in its accessible 
       '/plan?job=delegations',
     ],
     [
-      'Sell my products Find buyers and partners abroad. Bangladesh to Spain and the EU Find Buyers & Partners',
+      'Sell my products Find buyers and partners abroad. Bangladesh to the EU, the UK, the US, Australia and key Asian markets Find Buyers & Partners',
       '/plan?job=buyers',
     ],
   ] as const;
@@ -147,17 +147,22 @@ test('every job link opens its request with the contract name in its accessible 
   ).toHaveAttribute('href', '/plan');
 });
 
-test('the route passes open both routes and every route', async ({ page }) => {
+// owner decision 17 Nov 2026, routes and markets: six open destinations as equals, then the way to any other route
+test('the route passes open every destination and every route', async ({ page }) => {
   await page.goto('/');
-  const routes = page.getByRole('region', { name: 'Two routes to start.' });
+  const routes = page.getByRole('region', { name: 'Open destinations.' });
   for (const [name, href] of [
-    [/^Route 01 Bangladesh to China\..*Open Route$/, '/corridors/bangladesh-china'],
-    [/^Route 02 Bangladesh to Spain\..*Open Route$/, '/corridors/bangladesh-spain'],
+    ['Bangladesh to China', '/corridors/bangladesh-china'],
+    ['Bangladesh to the EU', '/corridors/bangladesh-eu'],
+    ['Bangladesh to the UK', '/corridors'],
+    ['Bangladesh to the US', '/corridors'],
+    ['Bangladesh to Australia', '/corridors'],
+    ['Bangladesh to Key Asian markets', '/corridors'],
     [/^Another route\? .*Explore Every Route$/, '/corridors'],
   ] as const)
     await expect(routes.getByRole('link', { name })).toHaveAttribute('href', href);
-  await routes.getByRole('link', { name: /Bangladesh to Spain/ }).click();
-  await expect(page).toHaveURL('/corridors/bangladesh-spain');
+  await routes.getByRole('link', { name: 'Bangladesh to the EU' }).click();
+  await expect(page).toHaveURL('/corridors/bangladesh-eu');
 });
 
 test('the example switch changes the shortlist and the quote table, and every sample says it is an example', async ({

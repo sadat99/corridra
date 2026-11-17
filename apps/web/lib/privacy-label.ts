@@ -3,7 +3,7 @@
 // decides that this reader can read what is shared, and its `sourceNote` names that fact. Every other reader the
 // person may wonder about is `not_stated`: nothing in the code confirms it either way, so the page says "Not stated"
 // and claims nothing. The label only informs. It never blocks, delays, disables or adds a step to a share or a send.
-// The evidence reply (apps/web/app/delivery-view.tsx) is a later unit and is deliberately absent here.
+// The evidence reply (apps/web/app/delivery-view.tsx) joined in visual grammar PR 5 (V3-05-033), with its preview.
 import type { MessageKey } from './i18n/messages';
 
 export type PrivacyStatus = 'confirmed' | 'not_stated';
@@ -88,6 +88,24 @@ const surfaces = {
     },
     // No code fact says whether the customer who asked for the introduction can read the reply.
     notStated('privacy.reader.requester'),
+  ],
+  // The evidence reply (apps/web/app/delivery-view.tsx, "Send response" on an evidence request), seen by a link
+  // holder with no workspace. app.delivery_respond stores the response and app.delivery_report returns it for
+  // whoever holds the private link, with no sign-in, until the link expires or is withdrawn; the team whose
+  // workspace sent the link reads it under the delivery_response read policy (the page already says the team reviews it).
+  evidenceReply: [
+    {
+      reader: 'privacy.reader.anyoneWithThisLink',
+      status: 'confirmed',
+      sourceNote:
+        'packages/db/customer-real-use-migrations/0009_real_report_links.sql:23-24 (app.delivery_authorized)',
+    },
+    {
+      reader: 'privacy.reader.sendingTeam',
+      status: 'confirmed',
+      sourceNote:
+        'packages/db/customer-real-use-migrations/0002_real_request_authority.sql:266 (real_use_read on app.delivery_response)',
+    },
   ],
 } as const satisfies Record<string, readonly PrivacyReader[]>;
 

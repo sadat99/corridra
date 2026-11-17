@@ -1651,6 +1651,8 @@ test.describe('GAP-010 request country search with touch', () => {
     await form.locator('.guide-actions .primary-link').tap();
     await form.locator('#brief-companyCountry').tap();
     await expect(form.getByRole('option').first()).toHaveText('Bangladesh');
+    // owner decision 17 Nov 2026, routes and markets: Spain is no longer pinned, so it is found by search, as the EU is below
+    await form.locator('#brief-companyCountry').fill('Spain');
     await form.locator('[role="option"][data-value="ES"]').tap();
     await form.locator('#brief-marketCode').fill('European Union');
     await form.locator('[role="option"][data-value="EU"]').tap();

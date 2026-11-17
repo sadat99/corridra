@@ -15,7 +15,10 @@ test('any pair of countries shows on the world map with an honest, non-operating
   await page.getByLabel('My company is in', { exact: true }).selectOption('JP');
   await page.getByLabel('I want to reach', { exact: true }).selectOption('KE');
   await expect(atlas.getByRole('heading', { name: 'Japan → Kenya' })).toBeVisible();
-  await expect(atlas).toContainText('No operating offer is announced for this route yet.');
+  // owner decision 17 Nov 2026, routes and markets: the canonical ask-us sentence
+  await expect(atlas).toContainText(
+    'No operating offer announced. We tell you plainly if we can help.',
+  );
   await expect(atlas.getByRole('link', { name: 'Plan a Mission on This Route' })).toHaveAttribute(
     'href',
     '/plan?companyCountry=JP&marketCode=KE&job=sourcing',

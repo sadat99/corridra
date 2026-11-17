@@ -45,11 +45,21 @@ const expected: Record<PrivacySurface, [string, 'confirmed' | 'not_stated'][]> =
     ['privacy.reader.sendingTeam', 'confirmed'],
     ['privacy.reader.requester', 'not_stated'],
   ],
+  // Visual grammar PR 5 (V3-05-033): the evidence reply, read through the report link.
+  evidenceReply: [
+    ['privacy.reader.anyoneWithThisLink', 'confirmed'],
+    ['privacy.reader.sendingTeam', 'confirmed'],
+  ],
 };
 
 describe('who can see it: the readers come only from confirmed code facts', () => {
-  it('names exactly the three customer share and send surfaces', () => {
-    expect([...privacySurfaces]).toEqual(['decisionCard', 'savedReport', 'recipientReply']);
+  it('names exactly the customer share and send surfaces', () => {
+    expect([...privacySurfaces]).toEqual([
+      'decisionCard',
+      'savedReport',
+      'recipientReply',
+      'evidenceReply',
+    ]);
   });
   for (const surface of Object.keys(expected) as PrivacySurface[]) {
     it(`${surface}: returns exactly the confirmed and unstated readers, in order`, () => {
@@ -308,7 +318,13 @@ describe('on each surface, the label informs and changes no control', () => {
     expect(report).toMatch(
       /Original access expires \{formatMoment\(data\.expiresAt\)\}\s*\.\s*<\/p>\s*<PrivacyLabel surface="savedReport" \/>/,
     );
-    // The evidence reply is VG5's later unit and is not touched here.
-    expect(read('apps/web/app/delivery-view.tsx')).not.toContain('PrivacyLabel');
+    // The evidence reply (visual grammar PR 5) draws its label through ConsequencePreview, once per page, never
+    // through PrivacyLabel directly; tests/integration/vg5-consequence-preview.test.ts holds the rest.
+    const delivery = read('apps/web/app/delivery-view.tsx');
+    expect(delivery).not.toContain('<PrivacyLabel');
+    expect(delivery.match(/<ConsequencePreview /g)).toHaveLength(1);
+    expect(read('apps/web/components/consequence-preview.tsx')).toContain(
+      '<PrivacyLabel surface="evidenceReply" locale={locale} />',
+    );
   });
 });

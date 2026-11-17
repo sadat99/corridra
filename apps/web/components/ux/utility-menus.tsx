@@ -25,6 +25,8 @@ import {
 } from '../../lib/ux/customer-navigation';
 import { workspacePage } from '../../lib/ux/workspace-pages';
 import { offeredWorkspaces } from '../../lib/workspace-choice';
+import { pictureChangedEvent, pictureSource } from '../../lib/profile-picture-client';
+import { profilePictureCapability } from '../../lib/profile-picture-capability';
 import { localeMeta } from '../../lib/i18n/locales';
 import {
   readCustomerBilling,
@@ -346,6 +348,29 @@ export function AvatarMenu({
   );
   const helpGroups = useCustomerHelpGroups(whatsappHref);
   const [who, setWho] = useState<{ name: string; email: string } | null>(null);
+  // ADR-088: the person's own picture, only while the reviewed capability is on and only on the account pages. A
+  // number is the picture version to draw; null shows the initials (no picture, or it could not be loaded).
+  const [picture, setPicture] = useState<number | null>(null);
+  useEffect(() => {
+    if (!active || !profilePictureCapability.profilePicture) return;
+    const controller = new AbortController();
+    fetch('/api/account/picture?scope=view', { cache: 'no-store', signal: controller.signal })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body: { currentVersion?: unknown; picture?: unknown } | null) => {
+        if (!controller.signal.aborted && body?.picture && typeof body.currentVersion === 'number')
+          setPicture(body.currentVersion);
+      })
+      .catch(() => undefined);
+    const changed = (event: Event) => {
+      const version = (event as CustomEvent<number | null>).detail;
+      setPicture(typeof version === 'number' ? version : null);
+    };
+    window.addEventListener(pictureChangedEvent, changed);
+    return () => {
+      controller.abort();
+      window.removeEventListener(pictureChangedEvent, changed);
+    };
+  }, [active]);
   useEffect(() => {
     // Like the workspaces, the person's own session is read only on the customer account pages. Elsewhere the
     // avatar is the plain person icon and the header makes no calls but its inbox.
@@ -385,9 +410,19 @@ export function AvatarMenu({
       label="Account menu"
       className="ux-util-avatar"
       trigger={
-        <span className="ux-avatar-face" aria-hidden="true">
-          {who ? initials(who.name || who.email) : <CorridraIcon name="people" />}
-        </span>
+        who && picture !== null ? (
+          // eslint-disable-next-line @next/next/no-img-element -- a private, session-checked image; no optimiser may fetch it
+          <img
+            className="ux-avatar-face ux-avatar-picture"
+            src={pictureSource(picture, 'small')}
+            alt=""
+            onError={() => setPicture(null)}
+          />
+        ) : (
+          <span className="ux-avatar-face" aria-hidden="true">
+            {who ? initials(who.name || who.email) : <CorridraIcon name="people" />}
+          </span>
+        )
       }
     >
       {who ? (

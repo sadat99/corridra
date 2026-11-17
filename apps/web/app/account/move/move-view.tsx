@@ -1,8 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useSyncExternalStore } from 'react';
-import { MoveCard, StageBar, mrLabelsFor, movePhrase, type MoveVerb } from '../../../components/mr';
+import { useEffect, useId, useMemo, useSyncExternalStore } from 'react';
+import {
+  Explain,
+  MoveCard,
+  StageBar,
+  mrLabelsFor,
+  movePhrase,
+  type MoveVerb,
+} from '../../../components/mr';
 import { RowLink, RowList } from '../../../components/ux/row-list';
 import { TodayCard } from '../../../components/today-card';
 import { CorridraIcon } from '../../../components/corridra-icon';
@@ -174,6 +181,9 @@ function NeedCount({ n }: { n: number }) {
  * and shows them in the person's language. The region says which language it is written in, so a
  * page whose main text is still English never mislabels it.
  */
+/** The order the lanes are drawn in under "Waiting on others": the team, then a workspace owner, then a third party. */
+const laneHolders = ['team', 'owner', 'third'] as const;
+
 export function MoveView({
   model,
   startHref,
@@ -345,6 +355,7 @@ export function MoveView({
   const rowsShown = today ? firstShown - 2 : firstShown;
   const cards = leadFirst(journey ? journeys.filter((card) => card.journey === journey) : journeys);
   const waiting = model.waiting.filter((row) => shown(row.id));
+  const lanesId = useId();
   const participant = !journey ? (facts?.participant ?? null) : null;
   // The latest request has its own card only when no journey card already shows it.
   const latestShown =
@@ -363,7 +374,6 @@ export function MoveView({
           ? say('move.wait.company')
           : (labels.road.sublines[row.status as keyof typeof labels.road.sublines] ??
             labels.road.sublines.ACTIVE);
-  const ownerHolders = { ...labels.holder, third: say('move.wait.owner') };
 
   const count = items.length;
   // The summary never claims more than the page could read: an unreadable source, a list cut short or
@@ -435,6 +445,13 @@ export function MoveView({
             <span className="sr-only">: </span>
             {count}
           </span>
+          <Explain
+            className="move-head-key"
+            name={labels.explain.holder.you.name}
+            text={labels.explain.holder.you.text}
+          >
+            <i className="mr-holder-shape" data-holder="you" aria-hidden="true" />
+          </Explain>
           {/* With work on the page the shortcuts give way, so the way to start a request stays here. */}
           {!nothing ? (
             <Link prefetch={false} className="move-card-link" href={startHref}>
@@ -604,40 +621,61 @@ export function MoveView({
               <section className="move-card" aria-labelledby="move-others">
                 <h2 id="move-others">{say('move.others.heading')}</h2>
                 <span className="move-count">{waiting.length}</span>
-                <RowList
-                  label={say('move.others.heading')}
-                  title="Request"
-                  columns={[{ name: 'Held by' }, { name: 'Where it stands' }]}
-                  lang="en"
-                >
-                  {waiting.map((row) => {
-                    const holders = row.holder === 'owner' ? ownerHolders : labels.holder;
-                    const title =
-                      row.kind !== 'move' && row.title
-                        ? row.title
-                        : fill(say('move.received'), {
-                            date: row.received ? day(row.received, locale) : '',
-                          });
-                    return (
-                      <RowLink
-                        key={row.id}
-                        href={row.href}
-                        title={title}
-                        cells={[
-                          {
-                            name: 'Held by',
-                            value: holders[row.holder === 'team' ? 'team' : 'third'],
-                          },
-                          {
-                            name: 'Where it stands',
-                            value: waitingLine(row),
-                            lang: row.kind === 'move' ? 'en' : undefined,
-                          },
-                        ]}
-                      />
-                    );
-                  })}
-                </RowList>
+                <div className="move-lanes">
+                  {laneHolders
+                    .map((h) => ({ h, rows: waiting.filter((row) => row.holder === h) }))
+                    .filter((lane) => lane.rows.length > 0)
+                    .map(({ h, rows }) => (
+                      <section
+                        key={h}
+                        className="move-lane"
+                        data-holder={h}
+                        aria-labelledby={`${lanesId}-${h}`}
+                      >
+                        <h3 className="move-lane-head" id={`${lanesId}-${h}`}>
+                          <Explain
+                            name={labels.explain.holder[h].name}
+                            text={labels.explain.holder[h].text}
+                          >
+                            <i className="mr-holder-shape" data-holder={h} aria-hidden="true" />
+                          </Explain>
+                        </h3>
+                        <RowList
+                          label={say('move.others.heading')}
+                          title="Request"
+                          columns={[{ name: 'Held by' }, { name: 'Where it stands' }]}
+                          lang="en"
+                        >
+                          {rows.map((row) => {
+                            const title =
+                              row.kind !== 'move' && row.title
+                                ? row.title
+                                : fill(say('move.received'), {
+                                    date: row.received ? day(row.received, locale) : '',
+                                  });
+                            return (
+                              <RowLink
+                                key={row.id}
+                                href={row.href}
+                                title={title}
+                                cells={[
+                                  {
+                                    name: 'Held by',
+                                    value: labels.holder[row.holder],
+                                  },
+                                  {
+                                    name: 'Where it stands',
+                                    value: waitingLine(row),
+                                    lang: row.kind === 'move' ? 'en' : undefined,
+                                  },
+                                ]}
+                              />
+                            );
+                          })}
+                        </RowList>
+                      </section>
+                    ))}
+                </div>
               </section>
             ) : null}
           </div>

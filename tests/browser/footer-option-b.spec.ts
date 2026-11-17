@@ -36,7 +36,8 @@ const groups = [
     links: [
       ['Sell in a New Market', '/sell'],
       ['Enter a New Market', '/enter-market'],
-      ['Bangladesh to Spain', '/corridors/bangladesh-spain'],
+      // owner decision 17 Nov 2026, routes and markets (review F3): label and destination both name the EU
+      ['Bangladesh to the EU', '/corridors/bangladesh-eu'],
       ['Explore Every Route', '/corridors'],
     ],
   },
@@ -147,7 +148,8 @@ test('nothing is dropped: 16 links, three actions, four trust labels and four bo
     for (const words of [
       '© 2026 Corridra',
       'Your work stays private to the people given access',
-      'First routes: Bangladesh to China, Spain and the EU',
+      // owner decision 17 Nov 2026, routes and markets
+      'Open now from Bangladesh: China, the EU, the UK, the US, Australia, key Asian markets',
     ])
       await expect(
         bottom.getByText(words, { exact: true }),
@@ -194,14 +196,22 @@ test('the last line keeps the copyright and the privacy line, and the first rout
     bottom.getByText('Your work stays private to the people given access', { exact: true }),
   ).toBeVisible();
   await expect(
-    bottom.getByText('First routes: Bangladesh to China, Spain and the EU', { exact: true }),
+    bottom.getByText(
+      // owner decision 17 Nov 2026, routes and markets
+      'Open now from Bangladesh: China, the EU, the UK, the US, Australia, key Asian markets',
+      { exact: true },
+    ),
   ).toBeVisible();
   await page.setViewportSize(sizes.phone);
   await expect(
     bottom.getByText('Your work stays private to the people given access', { exact: true }),
   ).toBeVisible();
   await expect(
-    bottom.getByText('First routes: Bangladesh to China, Spain and the EU', { exact: true }),
+    bottom.getByText(
+      // owner decision 17 Nov 2026, routes and markets
+      'Open now from Bangladesh: China, the EU, the UK, the US, Australia, key Asian markets',
+      { exact: true },
+    ),
   ).toBeHidden();
 });
 
