@@ -1,6 +1,6 @@
 # ADR-087: Who on staff and in a workspace can read each share
 
-Status: Accepted, 17 November 2026, on the owner answers recorded under Authority. One item stays open: the interval between the member notice and switch-on (decision 4d, below). Accepting this ADR changes nothing by itself. No code, migration, policy, grant or switch changes with this document. Every change below ships later through the implementation plan, in reviewed units, and reaches production only through the installer with the owner's install approval. Until the unit that enforces a row is installed, the TODAY column is what is true, and the PL1 "who can see it" label may quote only TODAY.
+Status: Accepted, 17 November 2026, on the owner answers recorded under Authority. No owner item stays open; decision 4d (the interval between the member notice and switch-on) was answered on 17 November 2026. Accepting this ADR changes nothing by itself. No code, migration, policy, grant or switch changes with this document. Every change below ships later through the implementation plan, in reviewed units, and reaches production only through the installer with the owner's install approval. Until the unit that enforces a row is installed, the TODAY column is what is true, and the PL1 "who can see it" label may quote only TODAY.
 
 Authority:
 
@@ -13,6 +13,7 @@ Authority:
   5. Q5, intake receipt: "Keep, and say so (Recommended)".
   6. Sub-question 4a, items saved before activation, 17 November 2026, relayed by Guardian 14 as first hand via the orchestrator: "Everything, including older". This is not the recommendation, which was "only after activation". Owners and admins see members' items saved before activation too.
   7. Sub-question 4c, books, same date and relay: "Yes". This is not the recommendation, which was "no". Owners and admins may download a member's Trip Book or Supplier Book.
+  8. Item 4d, the interval between the member notice and switch-on, 17 November 2026, relayed by Guardian 15 as from the owner via the orchestrator: "24 hours". This is not the recommendation, which was 72 hours.
 
 The proposal at a6e7bd1 is kept in the PR history.
 
@@ -211,7 +212,11 @@ TODAY and DECIDED are the same:
    - **4a, decided ("Everything, including older").** The rule covers every item a current member saved or made in the workspace, including those from before activation.
    - **4b, member notice, required before go-live.** Every workspace member is told before the switch is turned on. The notice is shown in product on `/account` (saved reports and decision cards) and sent through the existing in-app inbox, `app.inbox_notification` with `recipient_kind='customer'` (`commercial-readiness-migrations/0001_inbox_and_links.sql:9-28`). Its `type` check (`:13`) needs one new value through a forward migration. Whether the inbox also triggers an email depends on `emailDecision` in `apps/web/lib/notify.ts`, which is not proven, so email is not relied on. Plain words: "Owners and admins of this workspace can read the reports you save and the decision cards you make here, and download the Trip Book and Supplier Book of your saved reports. This includes items you saved before today. They cannot remove or withdraw them. If there is anything you do not want them to see, you can remove it before [date and time]."
    - **4c, decided ("Yes").** Owners and admins of the same workspace may download a current member's Trip Book or Supplier Book. Each download writes the existing book record and event, plus an audit event naming the reader.
-   - **4d, open owner item: the interval between the notice and switch-on.** Recommended: 72 hours after the notice is first shown. Because older items are included (4a), the notice is the members' only chance to remove something before it becomes visible. 72 hours covers three working days in any time zone for someone who signs in a few times a week. It is also short enough not to stall the change. The switch is turned on only after the interval has passed, and the date and time in the notice are that moment.
+   - **4d, decided ("24 hours", owner, 17 November 2026).**
+     - The clock is per workspace. It starts only when the notice has actually been delivered in product to that workspace's members: the inbox rows are written and the `/account` notice is live. It does not start from a deploy or an install.
+     - Access switches on per workspace, 24 hours after that delivery. The date and time in the notice are that moment.
+     - After switch-on, the notice stays visible to each member until that member dismisses it.
+     - Nothing switches on in any workspace before its notice has been delivered and the owner has approved the install.
    - **Protections kept.**
      - Tenant isolation and row security are unchanged, and there is no cross-workspace reading.
      - The creator keeps the sole right to remove a save and to withdraw a card.
@@ -343,18 +348,19 @@ Tests that fail today:
 ### U4. Member notice (required before U5; new optional module and inbox type)
 
 - A forward migration adds one value to the `app.inbox_notification` type check (`commercial-readiness-migrations/0001_inbox_and_links.sql:13`).
-- It adds a function, owner-installed and run once per workspace by the owner's activation step, that writes one customer inbox row per current member with the decision 4b words and the switch-on time.
-- The same words show on `/account` saved reports and decision cards, behind a "notice" switch that is separate from the U5 switch.
+- It adds a function, owner-installed and run once per workspace by the owner's activation step. It writes one customer inbox row per current member, with the decision 4b words and the switch-on time (delivery time plus 24 hours). It records that workspace's notice delivery time, which is the start of the 4d clock.
+- The same words show on `/account` saved reports and decision cards, behind a "notice" switch that is separate from the U5 switch. They stay visible after switch-on until each member dismisses them, and a dismissal is recorded per member.
 - No access changes.
 
 Tests that fail today:
 
 1. Every current member of a workspace receives exactly one notice row, and a removed member receives none.
 2. The `/account` banner renders the 4b words with the time.
+3. The banner stays after switch-on until that member dismisses it.
 
 ### U5. Customer: workspace owners and admins read members' saved reports and decision cards and download their books (new module, behind a new switch, off)
 
-The switch is turned on only after U4's notice has been shown for the interval in 4d. Work:
+Access opens per workspace, and only 24 hours after that workspace's recorded notice delivery (4d). The global switch and the owner's install approval are also required. A workspace with no delivery record never opens. Work:
 
 - A new optional module adds read-only functions:
   - `customer.workspace_saved_missions(workspace)`;
@@ -378,6 +384,7 @@ Tests that fail today:
 5. A removed member's items are read by nobody.
 6. Each WO read or download writes exactly one audit event naming the reader and the item ids.
 7. An expired or revoked link still ends the item's report for everyone.
+8. A workspace is refused before its notice delivery time plus 24 hours and with no delivery record, and allowed after that time; another workspace's delivery has no effect.
 
 ### U6. Records and words
 
@@ -385,7 +392,7 @@ Tests that fail today:
 - The intake receipt sentence goes into the label and the privacy notice. The privacy wording is shown to the owner before it ships.
 - Ledger and work log entries record each unit's installation.
 
-Order: U1, then U2 and U3 (they can run in parallel; they touch different policies), then U4 (the notice), then U5 (switched on only after the 4d interval). U6 travels with each unit.
+Order: U1, then U2 and U3 (they can run in parallel; they touch different policies), then U4 (the notice), then U5 (opening per workspace 24 hours after that workspace's notice delivery). U6 travels with each unit.
 
 ## Blast radius
 
@@ -415,7 +422,6 @@ Each unit has a forward migration that restores the hashed original policy or fu
 
 ## Not decided here
 
-- Decision 4d, the interval between the notice and switch-on (open, owner).
 - Legal review of the label and privacy wording.
 - Translations beyond English (native review).
 - Staff reads of non-share records (missions, research, opportunities).
