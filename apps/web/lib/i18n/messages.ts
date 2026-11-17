@@ -4,6 +4,7 @@
 // are never shown to the public before that.
 import { organiseEntryWords } from './organise-entry-words';
 import { sellWords } from './sell-words';
+import { consequenceDrafts, consequenceEn } from './consequence-words';
 import { privacyDrafts, privacyEn } from './privacy-words';
 import { defaultLocale, type Locale } from './locales';
 import { homeEn, homeWords } from './home-words';
@@ -106,7 +107,7 @@ const footerWords = {
   'footer.group.sell': 'Sell and Expand',
   'footer.group.trips': 'Groups and Trips',
   'footer.link.china': 'Bangladesh to China',
-  'footer.link.spain': 'Bangladesh to Spain',
+  'footer.link.spain': 'Bangladesh to the EU',
   'footer.link.sample': 'See a Sample Mission',
   'footer.link.network': 'Join the Corridra Network',
   'footer.link.routes': 'Explore Every Route',
@@ -116,7 +117,8 @@ const footerWords = {
   'footer.facts': 'Every fact says where it comes from:',
   'footer.factsMore': 'How We Label Facts',
   'footer.private': 'Your work stays private to the people given access',
-  'footer.routes': 'First routes: Bangladesh to China, Spain and the EU',
+  'footer.routes':
+    'Open now from Bangladesh: China, the EU, the UK, the US, Australia, key Asian markets',
 } as const;
 
 /**
@@ -301,6 +303,7 @@ export const en = {
   ...programmePagesWords,
   ...bookWords,
   ...privacyEn,
+  ...consequenceEn,
   ...footerWords,
   ...headerWords,
   ...todayWords,
@@ -486,6 +489,7 @@ const bn: Catalog = {
   ...programmePagesWords,
   ...bookWords,
   ...privacyDrafts.bn,
+  ...consequenceDrafts.bn,
   ...footerWords,
   ...headerWords,
   ...todayDrafts.bn,
@@ -658,6 +662,7 @@ const zh: Catalog = {
   ...programmePagesWords,
   ...bookWords,
   ...privacyDrafts.zh,
+  ...consequenceDrafts.zh,
   ...footerWords,
   ...headerWords,
   ...todayDrafts.zh,
@@ -836,6 +841,7 @@ const es: Catalog = {
   ...programmePagesWords,
   ...bookWords,
   ...privacyDrafts.es,
+  ...consequenceDrafts.es,
   ...footerWords,
   ...headerWords,
   ...todayDrafts.es,
@@ -1012,6 +1018,7 @@ const ar: Catalog = {
   ...programmePagesWords,
   ...bookWords,
   ...privacyDrafts.ar,
+  ...consequenceDrafts.ar,
   ...footerWords,
   ...headerWords,
   ...todayDrafts.ar,
@@ -1191,6 +1198,7 @@ const fr: Catalog = {
   ...programmePagesWords,
   ...bookWords,
   ...privacyDrafts.fr,
+  ...consequenceDrafts.fr,
   ...footerWords,
   ...headerWords,
   ...todayDrafts.fr,
@@ -1375,6 +1383,7 @@ const de: Catalog = {
   ...programmePagesWords,
   ...bookWords,
   ...privacyDrafts.de,
+  ...consequenceDrafts.de,
   ...footerWords,
   ...headerWords,
   ...todayDrafts.de,
