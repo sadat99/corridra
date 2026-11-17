@@ -7,10 +7,8 @@ import { Probe, issuer, options } from './removed-member-support';
 import type { DatabaseClient } from '../../packages/db/src/index';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateCommercialReadiness } from '../../packages/db/src/commercial-readiness-migrate';
-import {
-  deliverMemberNotice,
-  migrateMemberNotice,
-} from '../../packages/db/src/member-notice-migrate';
+import { migrateMemberNotice } from '../../packages/db/src/member-notice-migrate';
+import { deliverMemberNotice } from '../../packages/db/src/member-notice-deliver';
 import { pinCustomerAuthority } from '../../packages/auth/src/customer-authority-pin';
 import { configureCustomerRealUse } from '../../packages/auth/src/customer-real-use-configuration';
 import { admitSyntheticCustomer } from '../../packages/auth/src/customer-admission';

@@ -60,7 +60,8 @@ import {
 } from '../packages/db/src/viewer-reply-metadata-migrate';
 import { migrateViewerExportAccess } from '../packages/db/src/viewer-export-access-migrate';
 import { migrateQuotationLinkCheck } from '../packages/db/src/quotation-link-check-migrate';
-import { deliverMemberNotice, migrateMemberNotice } from '../packages/db/src/member-notice-migrate';
+import { migrateMemberNotice } from '../packages/db/src/member-notice-migrate';
+import { deliverMemberNotice } from '../packages/db/src/member-notice-deliver';
 import { configureSupplySources } from '../packages/auth/src/supply-source-configuration';
 import { configureWorkspaceLifecycle } from '../packages/auth/src/customer-workspace-lifecycle-configuration';
 import { configureAccountLifecycle } from '../packages/auth/src/customer-account-lifecycle-configuration';
