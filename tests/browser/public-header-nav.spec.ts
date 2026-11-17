@@ -13,12 +13,12 @@ const sizes = {
 // Every destination the header reached before navigation v1, then the new ones.
 const oldRoutes = ['/', '/how-it-works', '/corridors', '/signin', '/plan'];
 const jobs = [
-  ['Sell in a new market', '/sell'],
-  ['Source products and suppliers', '/source'],
-  ['Procure machinery', '/machinery'],
-  ['Run a trade mission', '/trade-missions'],
-  ['Plan a business trip', '/business-trips'],
-  ['Enter a new market', '/enter-market'],
+  ['Sell in a New Market', '/sell'],
+  ['Source Products and Suppliers', '/source'],
+  ['Procure Machinery', '/machinery'],
+  ['Run a Trade Mission', '/trade-missions'],
+  ['Plan a Business Trip', '/business-trips'],
+  ['Enter a New Market', '/enter-market'],
 ] as const;
 const publicPages = [
   '/',
@@ -36,7 +36,7 @@ const publicPages = [
 const header = (page: Page) => page.locator('header.public-header');
 const nav = (page: Page) => page.getByRole('navigation', { name: 'Main navigation' });
 const menu = (page: Page) => page.getByRole('button', { name: /^(Menu|Close)$/ });
-const whatWeDo = (page: Page) => nav(page).getByRole('button', { name: 'What we do' });
+const whatWeDo = (page: Page) => nav(page).getByRole('button', { name: 'What We Do' });
 
 /** Header controls that run past either edge of the window. */
 const headerOutside = (page: Page) =>
@@ -73,10 +73,10 @@ test('N1 every old header route is still reachable from the wide bar', async ({ 
     '/',
   );
   for (const [name, href] of [
-    ['How it works', '/how-it-works'],
+    ['How It Works', '/how-it-works'],
     ['Markets', '/corridors'],
     ['Trust', '/trust'],
-    ['Sign in', '/signin'],
+    ['Sign In', '/signin'],
   ])
     await expect(nav(page).getByRole('link', { name, exact: true })).toHaveAttribute('href', href);
   const start = nav(page).getByRole('link', { name: /^Start a Request/ });
@@ -104,7 +104,7 @@ test('N1 What we do opens the six jobs, each to its page, and Something else to 
   await expect(panel).toBeHidden();
   await whatWeDo(page).click();
   await expect(whatWeDo(page)).toHaveAttribute('aria-expanded', 'true');
-  await expect(panel.getByText('What do you need to do?')).toBeVisible();
+  await expect(panel.getByText('What Do You Need to Do?')).toBeVisible();
   for (const [name, href] of jobs) {
     const link = panel.getByRole('link', { name: new RegExp(`^${name}`) });
     await expect(link).toBeVisible();
@@ -114,7 +114,7 @@ test('N1 What we do opens the six jobs, each to its page, and Something else to 
     panel.getByRole('link', { name: 'Something else? Tell us your business goal' }),
   ).toHaveAttribute('href', '/plan');
   await expect(panel.getByText('No account needed to begin')).toBeVisible();
-  await panel.getByRole('link', { name: /^Procure machinery/ }).click();
+  await panel.getByRole('link', { name: /^Procure Machinery/ }).click();
   await expect(page).toHaveURL('/machinery');
   await expect(page.locator('#public-jobs')).toBeHidden();
 });
@@ -137,10 +137,10 @@ test('N1 every old header route is reachable from the phone menu, with Sign in a
       href,
     );
   for (const [name, href] of [
-    ['How it works', '/how-it-works'],
+    ['How It Works', '/how-it-works'],
     ['Markets', '/corridors'],
     ['Trust', '/trust'],
-    ['Sign in', '/signin'],
+    ['Sign In', '/signin'],
   ]) {
     const link = nav(page).getByRole('link', { name, exact: true });
     await expect(link).toBeVisible();
@@ -149,7 +149,7 @@ test('N1 every old header route is reachable from the phone menu, with Sign in a
   const start = nav(page).getByRole('link', { name: /^Start a Request/ });
   await expect(start).toHaveAttribute('href', '/plan');
   // Sign in and Start a Request sit side by side in the bar at the foot of the window.
-  const signIn = await nav(page).getByRole('link', { name: 'Sign in', exact: true }).boundingBox();
+  const signIn = await nav(page).getByRole('link', { name: 'Sign In', exact: true }).boundingBox();
   const startBox = await start.boundingBox();
   expect(Math.abs(signIn!.y - startBox!.y)).toBeLessThan(2);
   expect(startBox!.y + startBox!.height).toBeGreaterThan(sizes.phone.height - 48);
@@ -173,11 +173,11 @@ test('N1 signed in, the header opens the workspace instead of Sign in, on a wide
   const workspace = nav(page).getByRole('link', { name: 'Team workspace', exact: true });
   await expect(workspace).toHaveAttribute('href', '/operator');
   await expect(workspace).toBeVisible();
-  await expect(nav(page).getByRole('link', { name: 'Sign in', exact: true })).toHaveCount(0);
+  await expect(nav(page).getByRole('link', { name: 'Sign In', exact: true })).toHaveCount(0);
   await page.setViewportSize(sizes.phone);
   await menu(page).click();
   await expect(workspace).toBeVisible();
-  await expect(nav(page).getByRole('link', { name: 'Sign in', exact: true })).toHaveCount(0);
+  await expect(nav(page).getByRole('link', { name: 'Sign In', exact: true })).toHaveCount(0);
 });
 
 test('N2 each header level holds five items or fewer', async ({ page }) => {
@@ -186,7 +186,7 @@ test('N2 each header level holds five items or fewer', async ({ page }) => {
   const top = await nav(page)
     .locator(':scope > a, :scope > button')
     .evaluateAll((items) => items.map((item) => item.textContent?.trim()));
-  expect(top).toEqual(['What we do', 'How it works', 'Markets', 'Trust']);
+  expect(top).toEqual(['What We Do', 'How It Works', 'Markets', 'Trust']);
   const actions = nav(page).locator('.public-nav-actions > :is(a, button, details)');
   expect(await actions.count()).toBeLessThanOrEqual(5);
 });
@@ -238,7 +238,7 @@ test('N6 the current page is marked with aria-current on the wide bar and in the
 }) => {
   await page.setViewportSize(sizes.desktop);
   await page.goto('/how-it-works');
-  await expect(nav(page).getByRole('link', { name: 'How it works', exact: true })).toHaveAttribute(
+  await expect(nav(page).getByRole('link', { name: 'How It Works', exact: true })).toHaveAttribute(
     'aria-current',
     'page',
   );
@@ -249,7 +249,7 @@ test('N6 the current page is marked with aria-current on the wide bar and in the
   await page.goto('/source');
   await whatWeDo(page).click();
   await expect(
-    nav(page).getByRole('link', { name: /^Source products and suppliers/ }),
+    nav(page).getByRole('link', { name: /^Source Products and Suppliers/ }),
   ).toHaveAttribute('aria-current', 'page');
   await page.setViewportSize(sizes.phone);
   await page.goto('/trust');

@@ -68,13 +68,13 @@ test('the header shows Your account and Sign out for a signed-in visitor and Sig
     const account = nav.getByRole('link', { name: 'Your account', exact: true });
     await expect(account).toBeVisible();
     await expect(account).toHaveAttribute('href', '/account');
-    await expect(nav.getByRole('link', { name: 'Sign in', exact: true })).toHaveCount(0);
+    await expect(nav.getByRole('link', { name: 'Sign In', exact: true })).toHaveCount(0);
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-    await nav.getByRole('button', { name: 'Sign out', exact: true }).click();
+    await nav.getByRole('button', { name: 'Sign Out', exact: true }).click();
     await expect(page).toHaveURL('http://127.0.0.1:3402/signin');
-    await expect(nav.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
+    await expect(nav.getByRole('link', { name: 'Sign In', exact: true })).toBeVisible();
     await expect(nav.getByRole('link', { name: 'Your account', exact: true })).toHaveCount(0);
-    await expect(nav.getByRole('button', { name: 'Sign out', exact: true })).toHaveCount(0);
+    await expect(nav.getByRole('button', { name: 'Sign Out', exact: true })).toHaveCount(0);
     expect(signOuts).toEqual(['POST']);
   } finally {
     server.kill('SIGTERM');
@@ -113,13 +113,13 @@ test('the header treats a failed or malformed session answer as signed out', asy
     );
     await page.goto('http://127.0.0.1:3403/forgot-password');
     const nav = page.getByRole('navigation', { name: 'Main navigation' });
-    await expect(nav.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
+    await expect(nav.getByRole('link', { name: 'Sign In', exact: true })).toBeVisible();
     await page.unroute('**/api/auth/get-session');
     await page.route('**/api/auth/get-session', (route) =>
       route.fulfill({ status: 200, contentType: 'text/plain', body: 'not json' }),
     );
     await page.reload();
-    await expect(nav.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
+    await expect(nav.getByRole('link', { name: 'Sign In', exact: true })).toBeVisible();
     await expect(nav.getByRole('link', { name: 'Your account', exact: true })).toHaveCount(0);
   } finally {
     server.kill('SIGTERM');
@@ -191,9 +191,9 @@ test('the header shows the team workspace link, not Sign in, for a signed-in tea
     const workspace = nav.getByRole('link', { name: 'Team workspace', exact: true });
     await expect(workspace).toBeVisible();
     await expect(workspace).toHaveAttribute('href', '/operator');
-    await expect(nav.getByRole('link', { name: 'Sign in', exact: true })).toHaveCount(0);
+    await expect(nav.getByRole('link', { name: 'Sign In', exact: true })).toHaveCount(0);
     await expect(nav.getByRole('link', { name: 'Your account', exact: true })).toHaveCount(0);
-    await expect(nav.getByRole('button', { name: 'Sign out', exact: true })).toHaveCount(0);
+    await expect(nav.getByRole('button', { name: 'Sign Out', exact: true })).toHaveCount(0);
     expect(signOuts).toEqual([]);
   } finally {
     server.kill('SIGTERM');

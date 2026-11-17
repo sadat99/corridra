@@ -110,7 +110,7 @@ async function pick(page: Page, name: string) {
 
 test('with only English offered there is no chip and the page is English', async ({ page }) => {
   await page.goto(`${origin}/?offered=en`);
-  await expect(page.getByRole('link', { name: 'How it works', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'How It Works', exact: true }).first()).toBeVisible();
   await expect(page.locator('.lang-switcher')).toHaveCount(0);
   expect((await attrs(page)).lang).toBe('en');
 });
@@ -130,7 +130,7 @@ test('choosing a language changes the words, the page language and survives a re
   await expect(page.getByRole('link', { name: 'কীভাবে কাজ করে' })).toBeVisible();
   expect((await attrs(page)).lang).toBe('bn');
   await pick(page, 'English');
-  await expect(page.getByRole('link', { name: 'How it works', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'How It Works', exact: true }).first()).toBeVisible();
   expect(await attrs(page)).toEqual({ lang: 'en', dir: 'ltr', stored: 'en' });
 });
 
@@ -152,7 +152,7 @@ test('a language that is not offered is never applied, even if it was remembered
 }) => {
   await page.addInitScript(() => window.localStorage.setItem('corridra.language', 'bn'));
   await page.goto(`${origin}/?offered=en,es`);
-  await expect(page.getByRole('link', { name: 'How it works', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'How It Works', exact: true }).first()).toBeVisible();
   expect((await attrs(page)).lang).toBe('en');
 });
 
@@ -213,7 +213,9 @@ test.describe('first visit, matching the browser language', () => {
     // Matching the browser is not a choice: nothing is stored until the person picks.
     expect((await attrs(page)).stored).toBeNull();
     await page.goto(`${origin}/?offered=en,bn`);
-    await expect(page.getByRole('link', { name: 'How it works', exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: 'How It Works', exact: true }).first(),
+    ).toBeVisible();
   });
 });
 
@@ -221,7 +223,9 @@ test.describe('Traditional Chinese browsers', () => {
   test.use({ locale: 'zh-TW' });
   test('are not given Simplified Chinese on their behalf', async ({ page }) => {
     await page.goto(`${origin}/?offered=en,zh`);
-    await expect(page.getByRole('link', { name: 'How it works', exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: 'How It Works', exact: true }).first(),
+    ).toBeVisible();
   });
 });
 
@@ -230,7 +234,7 @@ test('every language fits at 320, 390, 768 and 1440 wide and passes the accessib
 }) => {
   await page.goto(`${origin}/?offered=${all}&draft=bn,zh,es,ar`);
   for (const [html, name, label] of [
-    ['en', 'English', 'How it works'],
+    ['en', 'English', 'How It Works'],
     ['bn', 'বাংলা', 'কীভাবে কাজ করে'],
     ['zh-Hans', '中文', '运作方式'],
     ['es', 'Español', 'Cómo funciona'],
@@ -238,7 +242,7 @@ test('every language fits at 320, 390, 768 and 1440 wide and passes the accessib
   ] as const) {
     await pickCode(page, html);
     await page.setViewportSize({ width: 1440, height: 900 });
-    await expect(page.getByRole('link', { name: label, exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: label, exact: true }).first()).toBeVisible();
     for (const width of [1440, 768, 390, 320]) {
       await page.setViewportSize({ width, height: 900 });
       expect(

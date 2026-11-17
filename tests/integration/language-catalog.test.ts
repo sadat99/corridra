@@ -38,9 +38,9 @@ describe('message files', () => {
 
   it('English has no dashes either, and keeps the exact words the pages and tests use', () => {
     for (const key of keys) expect(en[key]).not.toMatch(/[—–]| - /);
-    expect(en['header.howItWorks']).toBe('How it works');
+    expect(en['header.howItWorks']).toBe('How It Works');
     expect(en['header.start']).toBe('Start a Request');
-    expect(en['header.signIn']).toBe('Sign in');
+    expect(en['header.signIn']).toBe('Sign In');
     expect(en['footer.tagline']).toBe('Make market entry deliberate.');
   });
 

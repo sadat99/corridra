@@ -34,20 +34,20 @@ const read = (path: string) => readFileSync(resolve(path), 'utf8');
 
 // The new header words, written exactly as the boards write them.
 const boardWords: Partial<Record<MessageKey, string>> = {
-  'header.whatWeDo': 'What we do',
+  'header.whatWeDo': 'What We Do',
   'header.markets': 'Markets',
   'header.trust': 'Trust',
-  'header.jobs': 'What do you need to do?',
-  'header.job.sell': 'Sell in a new market',
-  'header.job.source': 'Source products and suppliers',
-  'header.job.machinery': 'Procure machinery',
-  'header.job.tradeMission': 'Run a trade mission',
-  'header.job.businessTrip': 'Plan a business trip',
-  'header.job.enterMarket': 'Enter a new market',
+  'header.jobs': 'What Do You Need to Do?',
+  'header.job.sell': 'Sell in a New Market',
+  'header.job.source': 'Source Products and Suppliers',
+  'header.job.machinery': 'Procure Machinery',
+  'header.job.tradeMission': 'Run a Trade Mission',
+  'header.job.businessTrip': 'Plan a Business Trip',
+  'header.job.enterMarket': 'Enter a New Market',
   'header.menu': 'Menu',
   'header.menuClose': 'Close',
-  'header.howItWorks': 'How it works',
-  'header.signIn': 'Sign in',
+  'header.howItWorks': 'How It Works',
+  'header.signIn': 'Sign In',
   'header.start': 'Start a Request',
 };
 
