@@ -262,9 +262,14 @@ for (const path of publicPaths)
   test(`change 3 ${path} makes no proof claim`, async ({ page }) => {
     const response = await page.goto(path);
     expect(response?.status()).toBe(200);
-    // The sample mission on the home page is labelled Example and is not scanned; its label must be there.
-    if (path === '/') await expect(page.locator('.ac1-record .ac1-example-tag')).toBeVisible();
     const blocks = await page.locator('main').evaluate(readBlocks);
     expect(blocks.length, path).toBeGreaterThan(3);
     expect(proofClaimsIn(blocks), path).toEqual([]);
+    // The examples on the home page (Two Routes, 17 November 2026) are labelled Example: choose a door, open the first
+    // worked example and its label must be there.
+    if (path === '/') {
+      await page.getByText('Buying from China', { exact: true }).click();
+      await page.locator('#route-china summary').first().click();
+      await expect(page.locator('#route-china .ac1-example-tag').first()).toBeVisible();
+    }
   });

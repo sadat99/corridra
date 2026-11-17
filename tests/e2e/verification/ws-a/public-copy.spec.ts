@@ -1,5 +1,4 @@
 import { test, expect, expectNoForbiddenCopy, evidence } from '../fixtures';
-import type { Page } from '@playwright/test';
 
 // WS-A public site (program 6.A). A-1: no Appendix B wording on the public pages; A-5: the not found page
 // has its own title. The server runs without real use, so the request form is a made-up data panel there and
@@ -37,11 +36,11 @@ test('A-1 public pages carry no test, sample or invented wording and one main he
     await expect(page.locator('h1'), path).toHaveCount(1);
     await expectNoForbiddenCopy(page);
   }
-  // The six road names appear on the home page and on How it works (D5).
-  for (const path of ['/', '/how-it-works']) {
+  // The six road names appear on How it works (D5). The home page's Mission Player, which also drew them, was replaced
+  // by the Two Routes home on 17 November 2026.
+  for (const path of ['/how-it-works']) {
     await page.goto(path);
-    const steps = page.locator(path === '/' ? '.ac1-steps' : '#main');
-    // On the home page the steps are the step list of the example player (concept G).
+    const steps = page.locator('#main');
     for (const name of ['Define', 'Find', 'Compare', 'Visit', 'Decide', 'Follow through']) {
       // On How it works the steps are in two tabs (layout budget): choose the tab that holds the step.
       if (path === '/how-it-works')
@@ -90,52 +89,5 @@ test('A-5 the not found page has its own title and answers 404', async ({ page }
   await evidence(page, `A-5-${info.project.name}`);
 });
 
-// Home concept G (owner, 6 Nov 2026) replaced the scrolling examples row with the Mission Player, whose Previous
-// Step and Next Step buttons are the examples' controls at every width. CQ-53 keeps its intent on them: working
-// previous and next buttons on narrow screens, 44 px targets, no sideways page scroll.
-const currentStep = (page: Page) =>
-  page
-    .getByRole('article', { name: 'Example missions, not real companies' })
-    .locator('li[aria-current="step"]')
-    .evaluate((li) => Array.from(li.parentElement?.children ?? []).indexOf(li));
-
-test('CQ-53 the home examples row has working previous and next buttons on narrow screens', async ({
-  page,
-}, info) => {
-  await page.goto('/');
-  const next = page.getByRole('button', { name: 'Next Step', exact: true });
-  const previous = page.getByRole('button', { name: 'Previous Step', exact: true });
-  await next.scrollIntoViewIfNeeded();
-  await expect(next).toBeVisible();
-  await expect(previous).toBeVisible();
-  for (const control of [next, previous]) {
-    const box = await control.boundingBox();
-    expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
-    expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
-  }
-  // The first press also stops the player, so the step only moves when a button is pressed.
-  await next.click();
-  const from = await currentStep(page);
-  await next.click();
-  await expect.poll(() => currentStep(page)).toBe((from + 1) % 6);
-  await previous.click();
-  await expect.poll(() => currentStep(page)).toBe(from);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await evidence(page, `CQ-53-${info.project.name}`);
-});
-
-// Codex review of PR 311: in a right-to-left page (Arabic preview) Next must still move to the next example step.
-test('CQ-53 in a right-to-left page Next still moves to the next example', async ({ page }) => {
-  await page.goto('/');
-  await page
-    .getByRole('article', { name: 'Example missions, not real companies' })
-    .evaluate((el) => el.closest('main')?.setAttribute('dir', 'rtl'));
-  const next = page.getByRole('button', { name: 'Next Step', exact: true });
-  await next.scrollIntoViewIfNeeded();
-  await next.click();
-  const from = await currentStep(page);
-  await next.click();
-  await expect.poll(() => currentStep(page)).toBe((from + 1) % 6);
-  await page.getByRole('button', { name: 'Previous Step', exact: true }).click();
-  await expect.poll(() => currentStep(page)).toBe(from);
-});
+// The CQ-53 cases for the home Mission Player (Previous and Next buttons, right to left) were removed with the player on
+// 17 November 2026: the Two Routes home has nothing that steps or moves by itself.

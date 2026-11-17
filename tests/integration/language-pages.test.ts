@@ -17,6 +17,13 @@ import { describeSwitches, switchRegistry } from '../../apps/web/lib/owner-switc
 // CORRIDRA_LANGUAGES_PAGES. Until the owner records a review of the words and turns the switch on, every page key
 // shows its English words in every language, so releasing a language never releases words nobody has reviewed.
 const read = (path: string) => readFileSync(resolve(path), 'utf8');
+// The home page, Two Routes (owner decision of 17 November 2026): the page and the components that carry its words.
+const homePageFiles = [
+  'apps/web/app/page.tsx',
+  'apps/web/components/home-routes.tsx',
+  'apps/web/components/home-sell.tsx',
+  'apps/web/components/home-shared.tsx',
+];
 const others = localeCodes.filter((code) => code !== defaultLocale);
 
 describe('the page switch', () => {
@@ -111,18 +118,20 @@ describe('the home page words', () => {
 
   it('are not written into the page as literal English any more', () => {
     // Comments may quote the words; only the code counts.
-    const source =
-      `${read('apps/web/app/page.tsx')}\n${read('apps/web/components/home-mission-player.tsx')}`
-        .replace(/\/\*[\s\S]*?\*\//g, '')
-        .replace(/^\s*\/\/.*$/gm, '');
+    const source = homePageFiles
+      .map(read)
+      .join('\n')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/^\s*\/\/.*$/gm, '');
     for (const [key, words] of Object.entries(homeEn))
       if (words.length > 14) expect(source, key).not.toContain(words);
   });
 
   it('use only home keys, so that with the page switch off no word of the page changes language', () => {
-    for (const file of ['apps/web/app/page.tsx', 'apps/web/components/home-mission-player.tsx']) {
+    for (const file of homePageFiles) {
       const keys = [...read(file).matchAll(/\bt\('([^']+)'\)/g)].map((m) => m[1]);
-      expect(keys.length, file).toBeGreaterThan(0);
+      // The page file only places the shell; its words are in the three Two Routes components.
+      if (file !== 'apps/web/app/page.tsx') expect(keys.length, file).toBeGreaterThan(0);
       for (const key of keys) expect(key.startsWith('home.'), `${file} ${key}`).toBe(true);
       // Keys held in lists and tables count as well: no other message key may be named in these files.
       const source = read(file);
@@ -150,7 +159,7 @@ describe('the home page words', () => {
 
   it('make the page follow the language only through the translated main region', () => {
     const page = read('apps/web/app/page.tsx');
-    expect(page).toContain('<PublicShell className="ux-guide-home ac1-home" translated>');
+    expect(page).toContain('<PublicShell className="ux-guide-home ac1-home tr-home" translated>');
     const shell = read('apps/web/components/public-shell.tsx');
     // Every other public page is still written in English and says so.
     expect(shell).toContain('lang="en" dir="ltr"');

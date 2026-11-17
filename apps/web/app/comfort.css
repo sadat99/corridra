@@ -131,6 +131,15 @@ html[data-contrast='more'] :is(.ux-menu-panel, .ux-notice-panel) {
     var(--shadow-3),
     0 0 0 1px var(--border-strong);
 }
+/* The Two Routes home (17 November 2026): the ring is white with a navy edge in its navy regions, and an action filled
+   control there is edged in white. Rules of their own, so the sidebar rules above stay as they were. */
+html[data-contrast='more'] :is(.tr-hero, .tr-navy, .tr-reaction, .tr-result) :focus-visible {
+  outline-color: var(--on-brand);
+  box-shadow: 0 0 0 2px var(--brand-deep);
+}
+html[data-contrast='more'] :is(.tr-hero, .tr-navy, .tr-reaction, .tr-result) .primary-link {
+  border-color: var(--on-brand);
+}
 @media (prefers-contrast: more) {
   html:root {
     /* The four neutral colour names the design system already declares, set toward Ink so text and lines are darker.
@@ -230,5 +239,12 @@ html[data-contrast='more'] :is(.ux-menu-panel, .ux-notice-panel) {
     box-shadow:
       var(--shadow-3),
       0 0 0 1px var(--border-strong);
+  }
+  html:root :is(.tr-hero, .tr-navy, .tr-reaction, .tr-result) :focus-visible {
+    outline-color: var(--on-brand);
+    box-shadow: 0 0 0 2px var(--brand-deep);
+  }
+  html:root :is(.tr-hero, .tr-navy, .tr-reaction, .tr-result) .primary-link {
+    border-color: var(--on-brand);
   }
 }

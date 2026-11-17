@@ -19,10 +19,7 @@ test('UX-06 the home is one question, and the route explorer and mission guide k
   await expect(
     page.getByRole('navigation', { name: 'Choose your commercial objective' }).getByRole('link'),
   ).toHaveCount(3);
-  // The six road steps (D5): Define, Find, Compare, Visit, Decide, Follow through (the example player).
-  await expect(page.getByRole('list', { name: 'How a mission works' }).locator('li')).toHaveCount(
-    6,
-  );
+  // The mission line (fourteen steps, six of them optional) moved from the home to /how-it-works on 17 November 2026.
   // The footer has its own How We Label Facts link, so the home's link is found in the page content.
   await expect(
     page.getByRole('main').getByRole('link', { name: 'How we label facts' }),

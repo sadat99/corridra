@@ -1,165 +1,21 @@
 'use client';
 
-import { Arrow } from '../components/arrow';
-import { CorridraIcon } from '../components/corridra-icon';
-import { FactLabel, NotConfirmedLabel, type factLabels } from '../components/fact-label';
-import { HomeJobs } from '../components/home-jobs';
-import { HomeMissionPlayer } from '../components/home-mission-player';
-import Link from 'next/link';
+import '../components/home-landing.css';
+import '../components/home-routes.css';
+import { HomeRoutes } from '../components/home-routes';
 import { LegacyHashRedirect } from '../components/legacy-hash-redirect';
 import { PublicShell } from '../components/public-shell';
-import '../components/home-landing.css';
-import { useT } from '../components/language-provider';
-import { fill } from '../lib/i18n/fill';
-import type { MessageKey } from '../lib/i18n/messages';
 
-// The home page, concept G (owner decision of 6 November 2026: "E with F"). The words are keys in the message
+// The home page, Two Routes (owner decision of 17 November 2026, design board "Corridra Two Routes", revision 3c;
+// it replaces concept G of 6 November 2026, docs/revamp/specs/public-home.md). The words are keys in the message
 // files (lib/i18n/home-words.ts). They show in the chosen language only while `CORRIDRA_LANGUAGES_PAGES` is on;
-// until then every key shows its English words. The five trust names, airport codes and company letters stay as
-// written. The three jobs and their order are in lib/home-jobs.ts (one constant sets which job leads).
-type Fact = (typeof factLabels)[number]['label'];
-
-// The labels a company record shows. The first three are trust names; the fourth says a fact was asked for and
-// not yet answered, so it is a state, not a trust name, and is shown in the reader's words.
-const labels: readonly { fact?: Fact; line: MessageKey }[] = [
-  { fact: 'Self-declared', line: 'home.fact.selfDeclared' },
-  { fact: 'Evidence available', line: 'home.fact.evidence' },
-  { fact: 'Verified', line: 'home.fact.verified' },
-  { line: 'home.fact.notConfirmed' },
-];
-
-// The example record beside the labels: Importer C from the buyer shortlist, with every label on one field.
-const dossier: readonly { field: MessageKey; fact?: Fact }[] = [
-  { field: 'home.dossier.registration', fact: 'Verified' },
-  { field: 'home.dossier.privateLabel', fact: 'Self-declared' },
-  { field: 'home.dossier.priceList', fact: 'Evidence available' },
-  { field: 'home.dossier.volume' },
-];
-
-// Boarding passes for the open destinations, shown as equals (owner decision, 17 November 2026, routes and markets),
-// and the way to any other route. China and the EU keep their detail pages; the others open the routes page.
-const openPasses = [
-  { href: '/corridors/bangladesh-china', to: 'home.country.cn' },
-  { href: '/corridors/bangladesh-eu', to: 'home.country.eu' },
-  { href: '/corridors', to: 'home.country.uk' },
-  { href: '/corridors', to: 'home.country.us' },
-  { href: '/corridors', to: 'home.country.au' },
-  { href: '/corridors', to: 'home.country.asia' },
-] as const satisfies readonly { href: string; to: MessageKey }[];
-
+// until then every key shows its English words. The first action everywhere is Start a Request, to /plan or to a
+// /plan?job=... link; the examples are labelled and send nothing.
 export default function Home() {
-  const t = useT();
   return (
-    <PublicShell className="ux-guide-home ac1-home" translated>
+    <PublicShell className="ux-guide-home ac1-home tr-home" translated>
       <LegacyHashRedirect />
-      <section className="ac1-hero" aria-labelledby="home-title">
-        <div className="ac1-hero-copy">
-          <p className="label ac1-rule">{t('home.eyebrow')}</p>
-          <h1 id="home-title">{t('home.title')}</h1>
-          <p className="ac1-lead">{t('home.lead.watch')}</p>
-          <HomeJobs />
-          <Link prefetch={false} className="ac1-quiet" href="/plan">
-            {t('home.else')} <Arrow />
-          </Link>
-          <ul className="ac1-calm">
-            <li>
-              <CorridraIcon name="check" size={16} />
-              {t('home.calm.account')}
-            </li>
-            <li>
-              <CorridraIcon name="check" size={16} />
-              {t('home.calm.check')}
-            </li>
-          </ul>
-        </div>
-        <HomeMissionPlayer />
-      </section>
-
-      <section className="ac1-section ac1-facts" aria-labelledby="facts-title">
-        <div className="ac1-facts-copy">
-          <p className="label ac1-rule">{t('home.facts.eyebrow')}</p>
-          <p className="ac1-hook">{t('home.facts.hook')}</p>
-          <h2 id="facts-title">{t('home.facts.title')}</h2>
-          <ol className="ac1-truth">
-            {labels.map(({ fact, line }, index) => (
-              <li key={line}>
-                <span className="ac1-truth-number" aria-hidden="true">
-                  {index + 1}
-                </span>
-                {fact ? <FactLabel label={fact} english /> : <NotConfirmedLabel />}
-                <span>{t(line)}</span>
-              </li>
-            ))}
-          </ol>
-          <Link prefetch={false} className="ac1-quiet" href="/trust">
-            {t('home.facts.more')} <Arrow />
-          </Link>
-        </div>
-        <div className="ac1-dossier">
-          <figure className="ac1-dossier-card">
-            <figcaption>
-              <span>{t('home.dossier.list')}</span>
-              <span className="ac1-example-tag">{t('home.example')}</span>
-            </figcaption>
-            <h3>{t('home.buyer.c.name')}</h3>
-            <p className="ac1-dossier-sub">{t('home.dossier.sub')}</p>
-            <ul className="ac1-evidence">
-              {dossier.map(({ field, fact }) => (
-                <li key={field}>
-                  <span>{t(field)}</span>
-                  {fact ? <FactLabel label={fact} english /> : <NotConfirmedLabel />}
-                </li>
-              ))}
-            </ul>
-            <p className="ac1-stamp">{t('home.buyer.c.state')}</p>
-          </figure>
-        </div>
-      </section>
-
-      <section className="ac1-section" aria-labelledby="routes-title">
-        <p className="label ac1-rule">{t('home.routes.eyebrow')}</p>
-        <h2 id="routes-title">{t('home.routes.title')}</h2>
-        <p className="ac1-section-note">{t('home.routes.lead')}</p>
-        <div className="ac1-routes">
-          {openPasses.map((pass) => (
-            <Link
-              prefetch={false}
-              key={pass.to}
-              href={pass.href}
-              className="ac1-pass ac1-pass-open"
-            >
-              <span className="sr-only">{fill(t('home.pass.label'), { to: t(pass.to) })}</span>
-              <span className="label ac1-route-tag" aria-hidden="true">
-                {t('home.route.tag')}
-              </span>
-              <span className="ac1-pass-codes" aria-hidden="true">
-                <span>{t('home.country.bd')}</span>
-                <CorridraIcon name="arrow" className="ac1-route-arrow" />
-                <span>{t(pass.to)}</span>
-              </span>
-            </Link>
-          ))}
-        </div>
-        <div className="ac1-routes ac1-routes-ask">
-          <Link prefetch={false} href="/corridors" className="ac1-pass ac1-other">
-            <span className="ac1-pass-main">
-              <span className="label ac1-route-tag">{t('home.other.title')}</span>
-              <span className="ac1-pass-text">{t('home.other.text')}</span>
-            </span>
-            <span className="ac1-pass-stub">{t('home.other.link')}</span>
-          </Link>
-        </div>
-      </section>
-
-      <section className="guide-band ac1-band" aria-labelledby="close-title">
-        <div>
-          <h2 id="close-title">{t('home.close.title')}</h2>
-          <p>{t('home.close.text')}</p>
-        </div>
-        <Link prefetch={false} className="primary-link" href="/plan">
-          {t('home.start')}
-        </Link>
-      </section>
+      <HomeRoutes />
     </PublicShell>
   );
 }

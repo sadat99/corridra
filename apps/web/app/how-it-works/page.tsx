@@ -1,3 +1,4 @@
+import { HomeFaqMore, HomeMissionMore, HomeRoutesMore } from '../../components/home-more';
 import { PublicPage } from '../../components/public-page';
 import { publicPages } from '../../content/public-pages';
 const content = publicPages['how-it-works'];
@@ -7,5 +8,16 @@ export const metadata = {
   openGraph: { title: content.title, description: content.description },
 };
 export default function Page() {
-  return <PublicPage content={content} />;
+  return (
+    <PublicPage
+      content={content}
+      more={
+        <>
+          <HomeMissionMore />
+          <HomeRoutesMore />
+        </>
+      }
+      moreAfter={<HomeFaqMore />}
+    />
+  );
 }

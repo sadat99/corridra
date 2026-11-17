@@ -157,56 +157,28 @@ test('the choices are never sent to a server: no cookie and no request carries t
   );
 });
 
-test('the home player does not move on by itself with Less Movement saved, and moves again once it is cleared', async ({
+// The home (Two Routes, 17 November 2026) has no Mission Player and nothing that moves by itself, so there is no
+// Pause to draw: the page must hold still whatever the Less Movement setting says.
+test('nothing on the home moves by itself, with Less Movement saved, cleared or the system setting on', async ({
   page,
 }) => {
-  const step = () =>
-    page
-      .locator('.ac1-steps li')
-      .evaluateAll((items) => items.findIndex((li) => li.getAttribute('aria-current') === 'step'));
+  const snapshot = () => page.locator('main').innerHTML();
   await page.clock.install();
   await page.addInitScript(() => localStorage.setItem('corridra.less-movement', 'on'));
   await page.goto('/');
-  // The Pause button is drawn only while the player can move, so its absence shows the page has settled on reduced.
-  await expect(page.locator('.ac1-play')).toHaveCount(0);
+  await expect(page.locator('.ac1-play, [aria-label*="Pause"]')).toHaveCount(0);
+  const saved = await snapshot();
   await page.clock.runFor(30_000);
-  expect(await step()).toBe(0);
-  // Another tab clears the choice: this page follows, and the player starts to move.
+  expect(await snapshot()).toBe(saved);
   await page.evaluate(() => {
     localStorage.removeItem('corridra.less-movement');
     window.dispatchEvent(new StorageEvent('storage', { key: 'corridra.less-movement' }));
   });
-  await expect(page.locator('.ac1-play')).toHaveCount(1);
-  await expect
-    .poll(async () => {
-      await page.clock.runFor(4_100);
-      return step();
-    })
-    .not.toBe(0);
-});
-
-test('the home player moves by itself with nothing saved, and the system setting alone still stops it', async ({
-  page,
-}) => {
-  const step = () =>
-    page
-      .locator('.ac1-steps li')
-      .evaluateAll((items) => items.findIndex((li) => li.getAttribute('aria-current') === 'step'));
-  await page.clock.install();
-  await page.goto('/');
-  await expect(page.locator('.ac1-play')).toHaveCount(1);
-  await expect
-    .poll(async () => {
-      await page.clock.runFor(4_100);
-      return step();
-    })
-    .not.toBe(0);
-
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await expect(page.locator('.ac1-play')).toHaveCount(0);
-  const held = await step();
   await page.clock.runFor(30_000);
-  expect(await step()).toBe(held);
+  expect(await snapshot()).toBe(saved);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.clock.runFor(30_000);
+  expect(await snapshot()).toBe(saved);
 });
 
 test('a browser that blocks its storage still loads the page with no error and the normal size', async ({

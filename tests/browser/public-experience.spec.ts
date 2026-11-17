@@ -30,7 +30,14 @@ for (const [route, heading] of routes) {
     // point where details are entered (asserted below).
     await expect(page.getByRole('complementary', { name: 'Service availability' })).toHaveCount(0);
     expect(await page.locator('body').innerText()).not.toContain('\u2014');
-    if (route !== '/plan') await expect(page.locator('input, textarea, form')).toHaveCount(0);
+    // The home's radios only choose a route and send nothing (Two Routes, 17 Nov 2026); no field or form is on it.
+    if (route === '/') {
+      // Only the four door radios inside the doors fieldset; any other input, radio, field or form fails.
+      const doorRadios = 'fieldset.tr-doors input[type="radio"]';
+      await expect(page.locator(doorRadios)).toHaveCount(4);
+      await expect(page.locator(`input:not(${doorRadios}), textarea, form`)).toHaveCount(0);
+    } else if (route !== '/plan')
+      await expect(page.locator('input, textarea, form')).toHaveCount(0);
     else
       await expect(
         page.getByText('Test intake is open. Real customer mission admission is unavailable.', {
@@ -55,52 +62,33 @@ for (const [route, heading] of routes) {
   });
 }
 
-test('the home example switches between selling and sourcing by pointer and keyboard', async ({
+test('the home doors choose a route by pointer and keyboard, and the routes page stays linked', async ({
   page,
 }) => {
   const writes: string[] = [];
   page.on('request', (request) => {
     if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method())) writes.push(request.method());
   });
-  // The example player stays on the step this test chooses (it never moves on by itself under reduced motion).
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
-  const record = page.getByRole('article', { name: 'Example missions, not real companies' });
-  const tabs = record.getByRole('tablist', { name: 'Example mission' });
-  const selling = tabs.getByRole('tab', { name: 'Selling', exact: true });
-  const sourcing = tabs.getByRole('tab', { name: 'Sourcing', exact: true });
-  await expect(selling).toHaveAttribute('aria-selected', 'true');
-  await expect(record.getByRole('tabpanel')).toHaveCount(1);
-  await expect(record.getByRole('tabpanel')).toContainText('knitwear buyers');
-  await sourcing.click();
-  await expect(sourcing).toHaveAttribute('aria-selected', 'true');
-  await expect(record.getByRole('tabpanel')).toContainText('circular knitting machines');
-  // A third example, Delegation, follows Sourcing (owner decision, 12 November 2026).
-  const delegation = tabs.getByRole('tab', { name: 'Delegation', exact: true });
-  await sourcing.press('ArrowRight');
-  await expect(delegation).toBeFocused();
-  await expect(delegation).toHaveAttribute('aria-selected', 'true');
-  await expect(record.getByRole('tabpanel')).toContainText('garment exporters');
-  await delegation.press('ArrowRight');
-  await expect(selling).toBeFocused();
-  await expect(selling).toHaveAttribute('aria-selected', 'true');
-  await selling.press('End');
-  await expect(delegation).toBeFocused();
-  // Selling and buying carry equal weight: a buyer shortlist (step Find) and a price quote comparison (step
-  // Compare) are screens of the example player (concept G); the routes are on the page.
-  await selling.press('Home');
-  await expect(selling).toHaveAttribute('aria-selected', 'true');
-  await record.getByRole('button', { name: 'Next Step' }).click();
+  const doors = page.getByRole('group', { name: 'Which way is your business moving?' });
+  const china = doors.getByRole('radio', { name: /Buying from China/ });
+  const sell = doors.getByRole('radio', { name: /Sell Abroad/ });
+  await china.focus();
+  await page.keyboard.press('Space');
+  await expect(china).toBeChecked();
+  await expect(page.locator('#home-start')).toHaveAttribute('href', '/plan?job=sourcing');
+  await page.keyboard.press('ArrowRight');
+  await expect(sell).toBeChecked();
+  await expect(page.locator('#home-start')).toHaveAttribute('href', '/plan?job=buyers');
   await expect(
-    page.getByRole('list', { name: 'Example buyer shortlist' }).locator('li'),
-  ).toHaveCount(4);
-  await sourcing.click();
-  await record.getByRole('button', { name: 'Next Step' }).click();
-  await expect(
-    page.getByRole('table', { name: 'Example price quote comparison' }).getByRole('row'),
-  ).toHaveCount(5);
-  // owner decision 17 Nov 2026, routes and markets: the home's EU destination opens the EU page, not the Spain page
-  for (const href of ['/corridors/bangladesh-china', '/corridors/bangladesh-eu', '/corridors'])
+    page.getByRole('heading', { level: 2, name: 'A fair list is not a buyer list.' }),
+  ).toBeVisible();
+  // The home links to the routes page; the China and EU route links moved there with the route statuses (17 Nov 2026).
+  await expect(page.locator('main a[href="/corridors"]').first()).toBeVisible();
+  await page.goto('/corridors');
+  // owner decision 17 Nov 2026, routes and markets: the EU destination opens the EU page, not the Spain page
+  for (const href of ['/corridors/bangladesh-china', '/corridors/bangladesh-eu'])
     await expect(page.locator(`main a[href="${href}"]`).first()).toBeVisible();
   expect(
     (

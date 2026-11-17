@@ -404,14 +404,17 @@ test('N6 with 200% text the header keeps every control on the screen, closed and
   }
 });
 
-test('Q-02 the home facts strip reflows at 320, 390, 768, 1280 and 1440 with 200% text, with nothing cut off', async ({
+test('Q-02 the trust section (moved to /trust from the home) reflows at 320, 390, 768, 1280 and 1440 with 200% text, with nothing cut off', async ({
   page,
 }) => {
   for (const width of [320, 390, 768, 1280, 1440]) {
     await page.setViewportSize({ width, height: 900 });
-    await page.goto('/');
+    await page.goto('/trust');
+    await page.evaluate(() =>
+      document.querySelectorAll('details').forEach((fold) => (fold.open = true)),
+    );
     await page.evaluate(() => (document.documentElement.style.fontSize = '200%'));
-    const problems = await page.locator('section.ac1-facts').evaluate((section) => {
+    const problems = await page.locator('section#trust').evaluate((section) => {
       const edge = document.documentElement.clientWidth;
       return Array.from(section.querySelectorAll<HTMLElement>('*'))
         .filter((el) => {
@@ -424,10 +427,7 @@ test('Q-02 the home facts strip reflows at 320, 390, 768, 1280 and 1440 with 200
         .map((el) => `${el.tagName}.${el.className} ${el.textContent?.trim().slice(0, 30)}`);
     });
     expect(problems, `${width}px`).toEqual([]);
-    // Every label and the link to How We Label Facts are still there.
-    await expect(page.locator('section.ac1-facts .ac1-truth li')).toHaveCount(4);
-    await expect(
-      page.locator('section.ac1-facts').getByRole('link', { name: /How We Label Facts/ }),
-    ).toBeVisible();
+    // Every label is still there.
+    await expect(page.locator('section#trust .tr-five li')).toHaveCount(5);
   }
 });

@@ -33,10 +33,7 @@ describe('home jobs order', () => {
 
   it('every catalogue carries the new words in English until a native review is recorded', () => {
     const added = Object.keys(homeEn).filter(
-      (key) =>
-        key.startsWith('home.player.trip.') ||
-        key.startsWith('home.ex.trip.') ||
-        key.endsWith('.route'),
+      (key) => key.startsWith('home.tr.') || key.endsWith('.route'),
     ) as (keyof typeof homeEn)[];
     expect(added.length).toBeGreaterThan(30);
     for (const words of Object.values(homeWords))
