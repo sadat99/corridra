@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
 import { customerAccountLifecycleEnabled } from '@corridra/auth/customer-account-lifecycle';
@@ -13,6 +14,35 @@ export const dynamic = 'force-dynamic';
 // and POST and reads and changes nothing: module 0001 alone has the queue functions WITHOUT the sample or real split.
 // So this route is safe to deploy before that install, and starts working soon after it (the service checks again
 // within a minute) without a redeploy.
+type Services = NonNullable<ReturnType<typeof foundations>>;
+async function erasePictures(
+  s: Services,
+  ctx: { token: string; tenantId: string; purpose: string },
+  requestId: string,
+) {
+  try {
+    const erased = await s.customerProfilePictureErasure.erase(ctx, randomUUID(), requestId);
+    const deleted: string[] = [];
+    for (const item of erased.pending) {
+      try {
+        if (!s.avatarStorage) break;
+        await s.avatarStorage.delete(item.storageRef, item.id);
+        deleted.push(item.id);
+      } catch {
+        console.warn(JSON.stringify({ code: 'profile_picture_erase_delete_pending', status: 200 }));
+      }
+    }
+    if (deleted.length)
+      await s.customerProfilePictureErasure.purged(ctx, requestId, deleted.slice(0, 100));
+    return { retired: erased.retired, pending: erased.pending.length - deleted.length };
+  } catch (error) {
+    // The picture module is not installed: there is no picture to remove.
+    if (['42P01', '3F000', '42883'].includes((error as { code?: string }).code ?? ''))
+      return { retired: 0, pending: 0 };
+    console.warn(JSON.stringify({ code: 'profile_picture_erase_failed', status: 200 }));
+    return { retired: 0, pending: null };
+  }
+}
 const statuses = z.enum(['received', 'in_progress', 'completed', 'declined']);
 const page = z.coerce.number().int().min(1).max(100);
 const after = z.coerce.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
@@ -66,10 +96,18 @@ async function handle(request: Request) {
     // A note with a line break or tab is refused by the database with no useful words, so say it here.
     const noteProblem = erasureNoteProblem((body as { note?: unknown } | null)?.note);
     if (noteProblem) throw new DomainError(noteProblem, 400);
-    return Response.json(
-      await s.customerErasureQueue.transition(ctx, erasureTransitionInput.parse(body)),
-      { headers: deliveryHeaders },
-    );
+    const input = erasureTransitionInput.parse(body);
+    const done = await s.customerErasureQueue.transition(ctx, input);
+    // ADR-088: once a request is in progress or completed, the person's profile picture goes with it: every picture is
+    // retired and its stored files are deleted, then the rows. Sending the same transition again retries any file that
+    // could not be deleted. It never undoes or fails the transition, which has already happened.
+    const profilePicture =
+      input.toState === 'in_progress' || input.toState === 'completed'
+        ? await erasePictures(s, ctx, input.requestId)
+        : undefined;
+    return Response.json(profilePicture ? { ...done, profilePicture } : done, {
+      headers: deliveryHeaders,
+    });
   } catch (error) {
     return deliveryError(
       ['42P01', '3F000', '42883'].includes((error as { code?: string }).code ?? '')
