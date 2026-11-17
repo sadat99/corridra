@@ -61,11 +61,20 @@ export function TextSizeRow({
   const steps = useRef<HTMLSpanElement>(null);
   const page = variant === 'page';
   const move = (event: KeyboardEvent, index: number) => {
-    const forward = event.key === 'ArrowRight' || event.key === 'ArrowDown';
-    const back = event.key === 'ArrowLeft' || event.key === 'ArrowUp';
-    if (!forward && !back) return;
+    const last = textSizes.length - 1;
+    const target =
+      event.key === 'Home'
+        ? 0
+        : event.key === 'End'
+          ? last
+          : event.key === 'ArrowRight' || event.key === 'ArrowDown'
+            ? (index + 1) % textSizes.length
+            : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+              ? (index + last) % textSizes.length
+              : null;
+    if (target === null) return;
     event.preventDefault();
-    const next = textSizes[(index + (forward ? 1 : textSizes.length - 1)) % textSizes.length]!;
+    const next = textSizes[target]!;
     setSize(next);
     steps.current?.querySelector<HTMLElement>(`[data-step="${next}"]`)?.focus();
   };

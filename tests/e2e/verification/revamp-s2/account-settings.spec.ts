@@ -79,6 +79,22 @@ test('CI-U4 reading comfort on the Preferences page works by keyboard and has no
   const large = panel.getByRole('radio', { name: /Large Text/ });
   await large.click();
   await expect(large).toHaveAttribute('aria-checked', 'true');
+  await page.keyboard.press('End');
+  await expect(panel.getByRole('radio', { name: /Largest Text/ })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  await page.keyboard.press('Home');
+  await expect(panel.getByRole('radio', { name: /Normal Text/ })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  const left = async (name: string | RegExp, role: 'radiogroup' | 'switch') =>
+    (await panel.getByRole(role, { name }).boundingBox())!.x;
+  expect(await left('Text Size', 'radiogroup')).toBe(await left('Stronger Colours', 'switch'));
+  expect(
+    (await panel.getByRole('heading', { name: 'Reading comfort', level: 3 }).boundingBox())!.x,
+  ).toBe(await left('Stronger Colours', 'switch'));
   await expect(panel.getByText('These choices are kept on this device only.')).toBeVisible();
   const results = await new AxeBuilder({ page }).include('.ux-account-settings').analyze();
   expect(results.violations).toEqual([]);

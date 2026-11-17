@@ -14,12 +14,14 @@
 }
 
 /* CI-U4: reading comfort as a page group (components/ux/comfort-controls.tsx, variant page). Tokens only. */
-.ux-customer .ux-account-panel > h3 {
+.ux-customer .ux-account-panel h3 {
   font-family: var(--font-ui);
   font-size: var(--text-md);
   font-weight: 600;
 }
-.ux-comfort-page-row {
+/* The page rows set their own padding. The doubled class raises the rule above .ux-textsize (utility-menus.css) on
+   purpose, so the Text Size row lines up with the two switches whatever the load order. */
+.ux-comfort-page-row.ux-comfort-page-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
