@@ -343,6 +343,7 @@ export default async function Page({
                   name={typeof data.user.name === 'string' ? data.user.name.trim() || null : null}
                   email={data.user.email}
                   nameEditable={accountSecurityCapabilities.updateName}
+                  detailsEnabled={customerWorkspacesEnabled()}
                 />
               </section>
             }

@@ -29,7 +29,7 @@ type View = {
   profile: (Details & { version: number; updatedAt: string }) | null;
 };
 type Section = 'name' | 'about' | 'interests' | 'contact';
-type Load = 'loading' | 'ready' | 'missing' | 'failed';
+type Load = 'loading' | 'ready' | 'missing' | 'failed' | 'off';
 type Draft = {
   name: string;
   title: string;
@@ -157,15 +157,18 @@ export function PersonalProfile({
   name,
   email,
   nameEditable,
+  detailsEnabled,
 }: {
   subject: string;
   issuer: string;
   name: string | null;
   email: string;
   nameEditable: boolean;
+  /** False while customer workspaces are off: the card shows only the verified email and name, as before. */
+  detailsEnabled: boolean;
 }) {
   const headers = sessionHeaders(subject, issuer);
-  const [load, setLoad] = useState<Load>('loading');
+  const [load, setLoad] = useState<Load>(detailsEnabled ? 'loading' : 'off');
   const [view, setView] = useState<View | null>(null);
   const [shownName, setShownName] = useState(name ?? '');
   const [editing, setEditing] = useState<Section | null>(null);
@@ -227,12 +230,13 @@ export function PersonalProfile({
   }
 
   useEffect(() => {
+    if (!detailsEnabled) return;
     const controller = new AbortController();
     void read(controller.signal).then((result) => {
       if (!controller.signal.aborted) apply(result);
     });
     return () => controller.abort();
-  }, [read, apply]);
+  }, [read, apply, detailsEnabled]);
 
   const base = draftFrom(shownName, stored);
   const changed = editing !== null && !same(draft, base, editing);
@@ -552,9 +556,10 @@ export function PersonalProfile({
   return (
     <>
       {header}
-      {!nameEditable && shownName && <p>{shownName}</p>}
+      {!(nameEditable && detailsEnabled) && shownName && <p>{shownName}</p>}
       <p>{words.emailNote}</p>
       {nameEditable &&
+        detailsEnabled &&
         row(
           'name',
           <p>{valueOr(shownName)}</p>,
