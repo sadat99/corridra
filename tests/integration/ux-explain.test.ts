@@ -38,6 +38,8 @@ const explainKeys = [
   'mr.explain.fill.notStated',
   'mr.explain.fill.notMeasured',
   'mr.explain.fill.excluded',
+  'mr.quote.excluded',
+  'mr.quote.notMeasured',
 ];
 
 describe('Explain', () => {
@@ -187,5 +189,8 @@ describe('the explanation words', () => {
     });
     expect(mrLabels.explain.state.notTracked.name).toBe('Not tracked yet');
     expect(mrLabels.explain.fill.notStated.name).toBe('Not stated');
+    expect(mrLabels.explain.fill.excluded.name).toBe('Excluded');
+    expect(mrLabels.explain.fill.notMeasured.name).toBe('Not measured yet');
+    expect(mrLabels.quote.excluded).toBe('Excluded');
   });
 });

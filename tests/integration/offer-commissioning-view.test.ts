@@ -176,6 +176,59 @@ describe('the quote reference', () => {
   });
 });
 
+describe('shipping scope on the card (visual grammar PR 2)', () => {
+  const shippingTerm = (shipping: string) => {
+    const offers = [offer('q1', { terms: { ...baseTerms, shipping } as never })];
+    return quoteCardsFrom({
+      offers,
+      verdicts: compareOffers(
+        offers.map((o) => ({
+          id: o.id,
+          currency: o.currency,
+          terms: o.terms,
+          requirementId: '1',
+          uncertainties: o.uncertainties,
+        })),
+        at,
+        'MACHINERY',
+      ),
+      shortlist: experience(machinery, offers).shortlist,
+    })[0]!.terms.find((t) => t.label === 'Shipping scope');
+  };
+  it('turns EXCLUDED into an excluded state with no value, and leaves every other value as it was', () => {
+    expect(shippingTerm('EXCLUDED')).toEqual({
+      label: 'Shipping scope',
+      value: null,
+      state: 'excluded',
+    });
+    expect(shippingTerm('INCLUDED')).toEqual({ label: 'Shipping scope', value: 'INCLUDED' });
+    expect(shippingTerm('NOT_SUPPLIED')).toEqual({ label: 'Shipping scope', value: null });
+  });
+});
+
+describe('shipping scope in the source ledger (visual grammar PR 2)', () => {
+  const ledgerRow = (...scopes: string[]) =>
+    sourceLedger(
+      experience(
+        machinery,
+        scopes.map((shipping, i) =>
+          offer(`q${i + 1}`, { terms: { ...baseTerms, shipping } as never }),
+        ),
+      ),
+      { at },
+    ).rows.find((r) => r.label === 'Shipping scope')!;
+  it('keeps the stored word for EXCLUDED and INCLUDED and shows NOT_SUPPLIED as not stated', () => {
+    expect(ledgerRow('EXCLUDED').cells[0]!.value).toBe('EXCLUDED');
+    expect(ledgerRow('INCLUDED').cells[0]!.value).toBe('INCLUDED');
+    expect(ledgerRow('NOT_SUPPLIED').cells[0]!.value).toBeNull();
+  });
+  it('reports a difference between EXCLUDED, NOT_SUPPLIED and INCLUDED', () => {
+    expect(ledgerRow('EXCLUDED', 'NOT_SUPPLIED').differs).toBe(true);
+    expect(ledgerRow('EXCLUDED', 'INCLUDED').differs).toBe(true);
+    expect(ledgerRow('EXCLUDED', 'EXCLUDED').differs).toBe(false);
+  });
+});
+
 describe('commissioning in the comparison', () => {
   const cards = (context: 'GENERAL' | 'MACHINERY', over: Record<string, string> = {}) => {
     const offers = [offer('q1', { terms: { ...baseTerms, ...over } })];

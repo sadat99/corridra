@@ -163,8 +163,14 @@ export function quoteCardsFrom({
     const add = (key: string) => {
       const value = (offer.terms as Record<string, unknown>)[key];
       const missing = value === undefined || value === null || value === 'NOT_SUPPLIED';
+      // Shipping the price leaves out is data, not a blank: it keeps its own state and shows no raw word.
+      if (key === 'shipping' && value === 'EXCLUDED') {
+        terms.push({ label: termLabels[key] ?? key, value: null, state: 'excluded' });
+        return;
+      }
       terms.push({
         label: termLabels[key] ?? key,
+        ...(key.endsWith('Minor') ? { money: true as const } : {}),
         value: missing
           ? null
           : key.endsWith('Minor')

@@ -318,3 +318,76 @@ export function unreadReplies(
     return !mark || c.latestReplyAt > mark;
   });
 }
+
+/**
+ * Who holds a request, from its status word: the Corridra team for every status the team works in, and nobody
+ * (null) for a word it does not know, so a screen shows no holder rather than a guessed one.
+ */
+export function requestHolder(status: string | null | undefined): Holder | null {
+  return status && (teamStatuses as readonly string[]).includes(status) ? 'team' : null;
+}
+
+export type TodayMove = {
+  /** The id the list uses for this item (`move:`, `draft:`, `report:` ... or `reply:<request>`), so it can leave the list. */
+  id: string;
+  href: string;
+  /** Set when the item is one of the model's cards. */
+  card?: MoveCardData;
+  /** Set when the item is a team reply the person has not read on this device. */
+  reply?: MoveModel['replyCandidates'][number];
+  /** For a Move the team set: its words as written. Other kinds take their words from the message module. */
+  title?: string;
+  /** A real due date (year-month-day), only where the Move has one. */
+  dueOn?: string;
+  /** Who holds the request this item belongs to, only where the status is known. */
+  holder?: Holder;
+};
+
+/**
+ * The one item the Today card puts first, in the order Your Move already uses:
+ * 1. A reply the person has not read (`unread`, known only on the device). The view has always listed these before
+ *    every card, and its stylesheet keeps a reply that is the next step as the lead card (move-view.css, "A reply
+ *    that is the next step keeps its quiet Mark As Read").
+ * 2. A new report, "the result they asked for" (the rule at the report cards in `buildMoveModel`).
+ * 3. A Move with a real due date, the earliest first; equal dates keep the order the team set them in.
+ * 4. A Move with no date, then drafts, quotes and company links, in the order the model gave them.
+ * Nothing is computed from the clock, so the choice never changes between renders and no date is called late or
+ * soon. `buildMoveModel` already keeps back whatever a workspace member cannot act on.
+ */
+export function pickTodayMove(
+  model: MoveModel,
+  options: { unread?: MoveModel['replyCandidates'] } = {},
+): TodayMove | null {
+  const holderOf = (requestId: string | undefined) =>
+    requestHolder(
+      requestId ? model.waiting.find((row) => row.id === `request:${requestId}`)?.status : null,
+    );
+  const reply = options.unread?.[0];
+  if (reply) {
+    const holder = holderOf(reply.requestId);
+    return {
+      id: `reply:${reply.requestId}`,
+      href: reply.href,
+      reply,
+      ...(holder ? { holder } : {}),
+    };
+  }
+  const dated = model.cards
+    .filter((card) => card.kind === 'move' && card.dueOn)
+    .sort((a, b) => (a.dueOn as string).localeCompare(b.dueOn as string));
+  const card =
+    model.cards.find((c) => c.kind === 'report') ??
+    dated[0] ??
+    model.cards.find((c) => c.kind === 'move') ??
+    model.cards[0];
+  if (!card) return null;
+  const holder = holderOf(card.requestId);
+  return {
+    id: card.id,
+    href: card.href,
+    card,
+    ...(card.kind === 'move' && card.object ? { title: `${card.verb} ${card.object}` } : {}),
+    ...(card.dueOn ? { dueOn: card.dueOn } : {}),
+    ...(holder ? { holder } : {}),
+  };
+}

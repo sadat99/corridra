@@ -98,12 +98,49 @@
   font-weight: 500;
   overflow-wrap: anywhere;
 }
-.mr-quote-terms [data-missing='true'] dd {
-  padding-inline: var(--space-2);
-  font-weight: 600;
-  color: var(--caution-text);
-  background: var(--caution-surface);
+/* Known versus unknown is a fill (visual grammar, 17 November 2026). Hatched: the supplier left the
+   term blank. Striped: shipping the price leaves out. Lines on --surface-raised, always beside the
+   word the Explain button carries, so colour is never alone. */
+.mr-quote-fill {
+  display: block;
+  inline-size: 1.75rem;
+  block-size: 0.875rem;
+  background-color: var(--surface-raised);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
+}
+.mr-quote-fill[data-fill='hatched'] {
+  background-image:
+    repeating-linear-gradient(45deg, var(--unknown) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(-45deg, var(--unknown) 0 1px, transparent 1px 5px);
+}
+.mr-quote-fill[data-fill='striped'] {
+  background-image: repeating-linear-gradient(90deg, var(--caution) 0 3px, transparent 3px 6px);
+}
+.mr-quote-terms [data-missing='true'] dd,
+.mr-quote-terms [data-excluded='true'] dd {
+  display: flex;
+  justify-content: flex-end;
+  font-weight: 600;
+}
+.mr-quote-terms dd .mr-explain {
+  max-inline-size: 100%;
+}
+.mr-quote-terms dd .mr-explain-trigger {
+  color: var(--text-strong);
+}
+@media (forced-colors: active) {
+  .mr-quote-fill {
+    border-color: CanvasText;
+  }
+  .mr-quote-fill[data-fill='hatched'] {
+    background-image:
+      repeating-linear-gradient(45deg, CanvasText 0 1px, transparent 1px 5px),
+      repeating-linear-gradient(-45deg, CanvasText 0 1px, transparent 1px 5px);
+  }
+  .mr-quote-fill[data-fill='striped'] {
+    background-image: repeating-linear-gradient(90deg, CanvasText 0 3px, transparent 3px 6px);
+  }
 }
 .mr-quote-price small {
   font-size: var(--text-sm);

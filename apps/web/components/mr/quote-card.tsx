@@ -1,6 +1,7 @@
 import './quote-card.css';
 import './scripts.css';
 import { FactLabel } from '../fact-label';
+import { Explain } from './explain';
 import { mrLabels } from './labels';
 
 import type { QuoteTerm } from './types';
@@ -10,7 +11,8 @@ export type { QuoteTerm } from './types';
  * One supplier offer, drawn as a card. Pure presentation: it takes the result of the existing
  * comparison engine and adds no verdict of its own. A filled seal and the words "Comparable on
  * supplied terms" only when the engine says so; otherwise an open ring and "Not comparable yet"
- * with the reason exactly as the engine reports it. A missing term says "Not stated", never zero.
+ * with the reason exactly as the engine reports it. A missing term is the hatched fill with "Not stated", never zero; shipping the price leaves out is
+ * the striped fill with "Excluded". Each is wrapped in `Explain` so its sentence opens on hover, focus and tap.
  * Original currency, tabular figures, and the price carries its trust label through `FactLabel`.
  */
 export function QuoteCard({
@@ -77,17 +79,33 @@ export function QuoteCard({
         </span>
         {trust ? <FactLabel label={trust} /> : provenance ? <small>{provenance}</small> : null}
       </div>
-      <dl className="mr-quote-terms">
-        {terms.map((term) => {
-          const missing = term.value === null || term.value === undefined || term.value === '';
-          return (
-            <div key={term.label} data-missing={missing}>
-              <dt>{term.label}</dt>
-              <dd>{missing ? labels.notStated : term.value}</dd>
-            </div>
-          );
-        })}
-      </dl>
+      {terms.length ? (
+        <dl className="mr-quote-terms">
+          {terms.map((term) => {
+            const excluded = term.state === 'excluded';
+            const missing =
+              !excluded && (term.value === null || term.value === undefined || term.value === '');
+            return (
+              <div key={term.label} data-missing={missing} data-excluded={excluded}>
+                <dt>{term.label}</dt>
+                <dd>
+                  {excluded ? (
+                    <Explain name={labels.excluded} text={labels.hints.excluded}>
+                      <span className="mr-quote-fill" data-fill="striped" />
+                    </Explain>
+                  ) : missing ? (
+                    <Explain name={labels.notStated} text={labels.hints.notStated}>
+                      <span className="mr-quote-fill" data-fill="hatched" />
+                    </Explain>
+                  ) : (
+                    term.value
+                  )}
+                </dd>
+              </div>
+            );
+          })}
+        </dl>
+      ) : null}
     </article>
   );
 }

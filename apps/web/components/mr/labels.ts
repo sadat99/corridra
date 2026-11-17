@@ -83,6 +83,12 @@ function build(say: Say) {
       unitPrice: say('mr.quote.unitPrice'),
       total: say('mr.quote.total'),
       notStated: say('mr.quote.notStated'),
+      excluded: say('mr.quote.excluded'),
+      /** The one sentence each term fill carries (the same words the Explain hints use). */
+      hints: {
+        notStated: say('mr.explain.fill.notStated'),
+        excluded: say('mr.explain.fill.excluded'),
+      },
       revision: say('mr.quote.revision'),
       missing: say('mr.quote.missing'),
     },
@@ -110,8 +116,11 @@ function build(say: Say) {
       },
       fill: {
         notStated: { name: say('mr.quote.notStated'), text: say('mr.explain.fill.notStated') },
-        notMeasured: { text: say('mr.explain.fill.notMeasured') },
-        excluded: { text: say('mr.explain.fill.excluded') },
+        notMeasured: {
+          name: say('mr.quote.notMeasured'),
+          text: say('mr.explain.fill.notMeasured'),
+        },
+        excluded: { name: say('mr.quote.excluded'), text: say('mr.explain.fill.excluded') },
       },
     },
     mode: { sample: say('mr.mode.sample'), real: say('mr.mode.real') },
