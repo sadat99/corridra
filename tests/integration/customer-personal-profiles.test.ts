@@ -261,6 +261,12 @@ describe('nobody else', () => {
     });
     expect(await counts()).toEqual(before);
   });
+  test('the name preflight refuses a person with no workspace, so no unrecorded change reaches the provider', async () => {
+    await expect(
+      h.sql('nina', 'SELECT customer.account_security_noted($1)', [randomUUID()]),
+    ).rejects.toMatchObject({ code: '23514', message: noWorkspace });
+    await expect(note('nina', 'name_changed')).rejects.toMatchObject({ code: '23514' });
+  });
 });
 
 describe('records cannot be rewritten', () => {
@@ -438,6 +444,13 @@ describe('erasure placeholder', () => {
     await expect(
       f.owner.query(
         `UPDATE customer_private.personal_profile_revision SET details=details||'{"baseCountry":"BD"}' WHERE principal_id=$1`,
+        [ids.erin],
+      ),
+    ).rejects.toMatchObject({ code: '23514' });
+    // The placeholder cannot be turned into null: null is allowed only where the title already was null.
+    await expect(
+      f.owner.query(
+        `UPDATE customer_private.personal_profile_revision SET details=details||'{"title":null}' WHERE principal_id=$1`,
         [ids.erin],
       ),
     ).rejects.toMatchObject({ code: '23514' });

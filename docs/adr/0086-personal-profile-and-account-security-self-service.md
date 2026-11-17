@@ -20,7 +20,7 @@ A signed-in customer could see their verified email and nothing else about thems
 
 ## Blast radius
 
-- New: four tables, eight private functions and six customer functions in one additive file; one installer (`migrateCustomerPersonalProfiles`, registry `customer_personal_profile_migrations`) reached only by `field_modules_action = personal_profile`, never by a base run. No workflow input is added (the count stays 24).
+- New: four tables, seven private functions and six customer functions (including `account_security_noted`, the name route's preflight) in one additive file; one installer (`migrateCustomerPersonalProfiles`, registry `customer_personal_profile_migrations`) reached only by `field_modules_action = personal_profile`, never by a base run. No workflow input is added (the count stays 24).
 - Application: `packages/auth/src/customer-personal-profiles.ts`; `/api/customer-personal-profile` (GET view or history, POST save; module missing answers 503 `module_unavailable`); `/api/account/name` (POST, server only); `apps/web/lib/account-provider-guard.ts`; `apps/web/lib/account-security-capabilities.ts`; the My Profile panel on the account Profile tab.
 - Existing objects: no table, policy, grant, trigger or function is changed or replaced. The auth proxy, `lib/i18n/messages.ts` and `customer-optional-refresh.ts` are untouched.
 

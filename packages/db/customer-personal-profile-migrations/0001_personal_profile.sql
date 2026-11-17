@@ -94,7 +94,9 @@ BEGIN
     ok:=(new_row-'request')=(old_row-'request') AND (new_row->'request')-'details'=(old_row->'request')-'details';
    END IF;
    ok:=ok AND jsonb_typeof(after)='object' AND (after-ARRAY['title','interests'])=(before-ARRAY['title','interests'])
-    AND (NOT(after ? 'title') OR jsonb_typeof(after->'title')='null' OR after->>'title'=customer_private.personal_profile_placeholder())
+    AND (NOT(after ? 'title')
+     OR (jsonb_typeof(after->'title')='null' AND jsonb_typeof(before->'title')='null')
+     OR (jsonb_typeof(before->'title')='string' AND after->>'title'=customer_private.personal_profile_placeholder()))
     AND (after ? 'title')=(before ? 'title')
     AND (NOT(after ? 'interests') OR after->'interests'='[]'::jsonb)
     AND (after ? 'interests')=(before ? 'interests');
@@ -260,13 +262,15 @@ BEGIN
 END $$;
 
 -- Whether this person already recorded this command: the name route answers a lost response without calling the provider
--- again. It applies the same account refusals as a save.
+-- again. It applies the same account refusals as a save, and the same workspace refusal, so a change that could not be
+-- recorded is refused before the provider is asked.
 CREATE FUNCTION customer.account_security_noted(command uuid) RETURNS boolean
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE actor uuid;
 BEGIN
  IF command IS NULL THEN RAISE EXCEPTION 'Invalid account security change' USING ERRCODE='23514'; END IF;
  actor:=customer_private.personal_profile_actor();
+ PERFORM customer_private.personal_profile_tenant(actor);
  RETURN EXISTS(SELECT FROM customer_private.account_security_note n WHERE n.actor_id=actor AND n.command_id=command);
 END $$;
 
@@ -280,7 +284,10 @@ BEGIN
  IF command IS NULL OR kind IS NULL OR kind NOT IN ('name_changed','password_changed','session_revoked','other_sessions_revoked') THEN
   RAISE EXCEPTION 'Invalid account security change' USING ERRCODE='23514';
  END IF;
- PERFORM pg_advisory_xact_lock(hashtextextended('customer.account_security:'||actor::text||':'||command::text,0));
+ -- The same per-person locks, in the same order, as a save: one person's events get distinct versions and the first workspace
+ -- pin cannot race a close or a save.
+ PERFORM pg_advisory_xact_lock(hashtextextended('customer.account.lifecycle:'||actor::text,0));
+ PERFORM pg_advisory_xact_lock(hashtextextended('customer.personal_profile:'||actor::text,0));
  SELECT * INTO prior FROM customer_private.account_security_note n WHERE n.actor_id=actor AND n.command_id=command;
  IF FOUND THEN
   IF prior.kind<>kind THEN RAISE EXCEPTION 'Command conflicts with original request' USING ERRCODE='23514'; END IF;
