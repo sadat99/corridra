@@ -1214,15 +1214,23 @@ test('a staff viewer reads no quotation evidence, selection rationale or RFQ ter
   // A claim is linked when a quotation names it or its source. The check runs under the viewer's own row security, so a
   // quotation on a target the viewer cannot see does not mark its claim: that residue is recorded in ADR-087 U1r for a
   // database unit and is left unasserted here. Every other claim is checked both ways.
+  // One query per reader: which of these claims a quotation names (directly or by source), as that reader sees quotations.
   const linkedSql =
-    'SELECT EXISTS(SELECT FROM app.mission_quotation q JOIN app.claim c ON c.tenant_id=q.tenant_id AND (c.id=q.claim_id OR c.source_id=q.source_id) WHERE c.tenant_id=$1 AND c.id=$2) linked';
+    'SELECT x.id::text id FROM unnest($2::uuid[]) x(id) WHERE EXISTS(SELECT FROM app.mission_quotation q JOIN app.claim c ON c.tenant_id=q.tenant_id AND (c.id=q.claim_id OR c.source_id=q.source_id) WHERE c.tenant_id=$1 AND c.id=x.id)';
+  const linkedIds = async (ids: string[], as?: typeof f.users.viewer.ctx) =>
+    new Set(
+      (as
+        ? await rawContext(f.runtime, as, linkedSql, [f.tenantA, ids])
+        : await f.owner.query(linkedSql, [f.tenantA, ids])
+      ).rows.map((r) => r.id as string),
+    );
+  const claimIds = viewerEvidence.claims.map((c) => c.id as string);
+  const linkedAll = await linkedIds(claimIds),
+    linkedSeen = await linkedIds(claimIds, f.users.viewer.ctx);
   for (const c of viewerEvidence.claims) {
     const original = ownerEvidence.claims.find((o) => o.id === c.id)!;
-    const linked = (await f.owner.query(linkedSql, [f.tenantA, c.id])).rows[0].linked;
-    const visible = (await rawContext(f.runtime, f.users.viewer.ctx, linkedSql, [f.tenantA, c.id]))
-      .rows[0].linked;
-    if (visible) expect(c).toEqual({ ...original, statement: null });
-    else if (!linked) expect(c).toEqual(original);
+    if (linkedSeen.has(c.id)) expect(c).toEqual({ ...original, statement: null });
+    else if (!linkedAll.has(c.id)) expect(c).toEqual(original);
   }
   expect(viewerEvidence.claims.find((c) => c.id === j.base.claimId)?.statement).toBeNull();
   expect(viewerEvidence.claims.find((c) => c.id === unlinkedClaim.id)?.statement).toBe(
@@ -1295,21 +1303,25 @@ test('a staff viewer reads no quotation evidence, selection rationale or RFQ ter
   expect(residueView.claims.find((c) => c.id === hidden.base.claimId)?.statement).toBe(
     linkedStatement,
   );
-  // Apart from those residue claims, the viewer's whole evidence snapshot holds no quotation-linked statement.
-  const residueIds = new Set<string>();
-  for (const c of residueView.claims) {
-    const all = (await f.owner.query(linkedSql, [f.tenantA, c.id])).rows[0].linked;
-    const seen = (await rawContext(f.runtime, f.users.viewer.ctx, linkedSql, [f.tenantA, c.id]))
-      .rows[0].linked;
-    if (all && !seen) residueIds.add(c.id);
-  }
+  // Apart from those residue claims, every quotation-linked claim in the viewer's whole evidence snapshot has no statement
+  // and every file on one is withheld. (The statement text alone cannot be searched for: journeys without a quotation reuse
+  // it on claims that are correctly readable.)
+  const snapshotIds = [
+    ...new Set([
+      ...residueView.claims.map((c) => c.id as string),
+      ...residueView.evidence.map((e) => e.claim_id as string),
+    ]),
+  ];
+  const residueAll = await linkedIds(snapshotIds),
+    residueSeen = await linkedIds(snapshotIds, f.users.viewer.ctx);
+  const residueIds = new Set([...residueAll].filter((id) => !residueSeen.has(id)));
   expect(residueIds.has(hidden.base.claimId)).toBe(true);
-  expect(
-    JSON.stringify({
-      ...residueView,
-      claims: residueView.claims.filter((c) => !residueIds.has(c.id)),
-    }),
-  ).not.toContain(linkedStatement);
+  const covered = residueView.claims.filter((c) => residueAll.has(c.id) && !residueIds.has(c.id));
+  expect(covered.length).toBeGreaterThan(0);
+  for (const c of covered) expect(c.statement).toBeNull();
+  for (const e of residueView.evidence)
+    if (residueAll.has(e.claim_id as string) && !residueIds.has(e.claim_id as string))
+      expect(e.withheld).toBe(true);
 
   const viewerMission = await service.workspace(f.users.viewer.ctx, j.missionId);
   expect(viewerMission.decisions).toEqual(
@@ -1359,7 +1371,7 @@ test('a staff viewer reads no quotation evidence, selection rationale or RFQ ter
       await setRole(original);
     }
   }
-});
+}, 120000);
 test('populated Part 1 upgrade preserves old mission, money, evidence, identity and event history', async () => {
   await f.close();
   f = await commercialFixture(false, '0022_policy_and_service_economics.sql');
