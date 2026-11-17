@@ -21,7 +21,7 @@ describe('home jobs order', () => {
       'Bangladesh to China',
       'Delegations and trade missions',
       // owner decision 17 Nov 2026, routes and markets
-      'Bangladesh to the EU, the UK, the US and more',
+      'Bangladesh to the EU, the UK, the US, Australia and key Asian markets',
     ]);
     // The footer's open-routes line is where the repository states its routes.
     const messages = readFileSync('apps/web/lib/i18n/messages.ts', 'utf8');

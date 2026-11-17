@@ -10,6 +10,7 @@ import { LegacyHashRedirect } from '../components/legacy-hash-redirect';
 import { PublicShell } from '../components/public-shell';
 import '../components/home-landing.css';
 import { useT } from '../components/language-provider';
+import { fill } from '../lib/i18n/fill';
 import type { MessageKey } from '../lib/i18n/messages';
 
 // The home page, concept G (owner decision of 6 November 2026: "E with F"). The words are keys in the message
@@ -127,8 +128,11 @@ export default function Home() {
               href={pass.href}
               className="ac1-pass ac1-pass-open"
             >
-              <span className="label ac1-route-tag">{t('home.route.tag')}</span>
-              <span className="ac1-pass-codes">
+              <span className="sr-only">{fill(t('home.pass.label'), { to: t(pass.to) })}</span>
+              <span className="label ac1-route-tag" aria-hidden="true">
+                {t('home.route.tag')}
+              </span>
+              <span className="ac1-pass-codes" aria-hidden="true">
                 <span>{t('home.country.bd')}</span>
                 <CorridraIcon name="arrow" className="ac1-route-arrow" />
                 <span>{t(pass.to)}</span>

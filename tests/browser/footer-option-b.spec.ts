@@ -36,8 +36,8 @@ const groups = [
     links: [
       ['Sell in a New Market', '/sell'],
       ['Enter a New Market', '/enter-market'],
-      // owner decision 17 Nov 2026, routes and markets: the link text names the EU, the address is unchanged
-      ['Bangladesh to the EU', '/corridors/bangladesh-spain'],
+      // owner decision 17 Nov 2026, routes and markets (review F3): label and destination both name the EU
+      ['Bangladesh to the EU', '/corridors/bangladesh-eu'],
       ['Explore Every Route', '/corridors'],
     ],
   },

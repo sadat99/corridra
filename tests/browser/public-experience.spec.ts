@@ -244,16 +244,16 @@ test('/sell shows the EU route, the reverse direction and what is recorded', asy
   await expect(reverse).toContainText('seller from the EU can reach suitable buyers in Bangladesh');
   await expect(reverse.getByRole('link', { name: /Plan a Mission From the EU/ })).toHaveAttribute(
     'href',
-    '/plan?companyCountry=ES&marketCode=BD&job=buyers',
+    '/plan?marketCode=BD&job=buyers',
   );
   await expect(
     reverse.getByRole('link', { name: 'Read the EU to Bangladesh scope' }),
-  ).toHaveAttribute('href', '/corridors/bangladesh-spain');
+  ).toHaveAttribute('href', '/corridors/bangladesh-eu');
   await expect(
     page.getByRole('region', { name: 'What we record for every introduction' }),
   ).toContainText('Who the buyer is and why they fit your offer.');
   await reverse.getByRole('link', { name: /Plan a Mission From the EU/ }).click();
-  await expect(page).toHaveURL('/plan?companyCountry=ES&marketCode=BD&job=buyers');
+  await expect(page).toHaveURL('/plan?marketCode=BD&job=buyers');
   await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue(
     'buyers',
   );
@@ -267,14 +267,19 @@ test('/enter-market and /trade-missions name their route and what is recorded', 
   await expect(page.getByText('The EU to Bangladesh', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Read the EU to Bangladesh scope' })).toHaveAttribute(
     'href',
-    '/corridors/bangladesh-spain',
+    '/corridors/bangladesh-eu',
   );
   await expect(
     page.getByRole('region', { name: 'What we record for every market visit' }),
   ).toBeVisible();
   await page.goto('/trade-missions');
   await page.locator('details.guide-more > summary').click(); // the closing sections sit behind Show more
-  await expect(page.getByText('Starting with Bangladesh to China', { exact: true })).toBeVisible();
+  // owner decision 17 Nov 2026, routes and markets (review F6): the route label no longer says "Starting with"
+  await expect(
+    page
+      .getByRole('complementary', { name: 'Route for this page' })
+      .getByText('Bangladesh to China', { exact: true }),
+  ).toBeVisible();
   await expect(page.getByRole('link', { name: 'Read the China scope' })).toHaveAttribute(
     'href',
     '/corridors/bangladesh-china',

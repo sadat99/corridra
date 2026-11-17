@@ -79,9 +79,9 @@ export const publicPages: Record<string, PublicPageContent> = {
       title: 'It also works the other way.',
       text: 'A seller from the EU can reach suitable buyers in Bangladesh. Each case is set up and reviewed separately.',
       cta: 'Plan a Mission From the EU',
-      href: '/plan?companyCountry=ES&marketCode=BD&job=buyers',
+      href: '/plan?marketCode=BD&job=buyers',
       scopeLabel: 'Read the EU to Bangladesh scope',
-      scopeHref: '/corridors/bangladesh-spain',
+      scopeHref: '/corridors/bangladesh-eu',
     },
     record: {
       title: 'What we record for every introduction',
@@ -168,7 +168,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     cta: 'Plan a Market-Entry Mission',
     route: {
       label: 'The EU to Bangladesh',
-      href: '/corridors/bangladesh-spain',
+      href: '/corridors/bangladesh-eu',
       linkLabel: 'Read the EU to Bangladesh scope',
     },
     record: {
@@ -211,7 +211,7 @@ export const publicPages: Record<string, PublicPageContent> = {
     },
     cta: 'Plan a Trade Mission',
     route: {
-      label: 'Starting with Bangladesh to China',
+      label: 'Bangladesh to China',
       href: '/corridors/bangladesh-china',
       linkLabel: 'Read the China scope',
     },

@@ -31,14 +31,16 @@ test('UX-02 Atlas selects an actual direction and synthetic example without crea
   await expect(example).toContainText('Evidence not established');
   await expect(example).toContainText('Unknown terms stay unknown');
   await page.getByRole('tab', { name: 'Pick Your Route' }).click();
-  await page.getByRole('combobox', { name: 'Route', exact: true }).selectOption('spain-bangladesh');
-  await expect(atlas).toContainText('Spanish companies entering Bangladesh is a separate route');
+  // owner decision 17 Nov 2026, routes and markets: the reverse direction offered is EU to Bangladesh, case by case
+  await page.getByRole('combobox', { name: 'Route', exact: true }).selectOption('eu-bangladesh');
+  await expect(atlas).toContainText('For work from an EU country into Bangladesh');
   await page.getByRole('tab', { name: 'Sample Mission' }).click();
-  await expect(example).toContainText('No operating offer is announced');
+  // owner decision 17 Nov 2026, routes and markets: the canonical ask-us sentence
+  await expect(example).toContainText('No operating offer announced');
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   expect(writes).toEqual([]);
   await example.getByRole('link', { name: 'Start a Request on This Route' }).click();
-  await expect(page).toHaveURL('/plan?companyCountry=ES&marketCode=BD&job=delegations');
+  await expect(page).toHaveURL('/plan?marketCode=BD&job=delegations');
   await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toHaveValue(
     'delegations',
   );
@@ -207,11 +209,11 @@ test('UX-02 situation cards preset the role, job and route and prefill the examp
   await group.getByRole('button', { name: /Enter Bangladesh/ }).click();
   await expect(page.getByRole('link', { name: 'Plan a Mission on This Route' })).toHaveAttribute(
     'href',
-    '/plan?companyCountry=ES&marketCode=BD&job=market_entry',
+    '/plan?marketCode=BD&job=market_entry',
   );
   await openFineTune(page);
   await expect(page.getByRole('combobox', { name: 'Route', exact: true })).toHaveValue(
-    'spain-bangladesh',
+    'eu-bangladesh',
   );
   await expect(group.getByRole('link', { name: /Help locally/ })).toHaveAttribute(
     'href',

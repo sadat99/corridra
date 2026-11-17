@@ -131,7 +131,7 @@ test('every job link opens its request with the contract name in its accessible 
       '/plan?job=delegations',
     ],
     [
-      'Sell my products Find buyers and partners abroad. Bangladesh to the EU, the UK, the US and more Find Buyers & Partners',
+      'Sell my products Find buyers and partners abroad. Bangladesh to the EU, the UK, the US, Australia and key Asian markets Find Buyers & Partners',
       '/plan?job=buyers',
     ],
   ] as const;
@@ -152,16 +152,16 @@ test('the route passes open every destination and every route', async ({ page })
   await page.goto('/');
   const routes = page.getByRole('region', { name: 'Open destinations.' });
   for (const [name, href] of [
-    [/^Route Bangladesh China$/, '/corridors/bangladesh-china'],
-    [/^Route Bangladesh the EU$/, '/corridors/bangladesh-eu'],
-    [/^Route Bangladesh the UK$/, '/corridors'],
-    [/^Route Bangladesh the US$/, '/corridors'],
-    [/^Route Bangladesh Australia$/, '/corridors'],
-    [/^Route Bangladesh Key Asian markets$/, '/corridors'],
+    ['Bangladesh to China', '/corridors/bangladesh-china'],
+    ['Bangladesh to the EU', '/corridors/bangladesh-eu'],
+    ['Bangladesh to the UK', '/corridors'],
+    ['Bangladesh to the US', '/corridors'],
+    ['Bangladesh to Australia', '/corridors'],
+    ['Bangladesh to Key Asian markets', '/corridors'],
     [/^Another route\? .*Explore Every Route$/, '/corridors'],
   ] as const)
     await expect(routes.getByRole('link', { name })).toHaveAttribute('href', href);
-  await routes.getByRole('link', { name: /Bangladesh the EU/ }).click();
+  await routes.getByRole('link', { name: 'Bangladesh to the EU' }).click();
   await expect(page).toHaveURL('/corridors/bangladesh-eu');
 });
 

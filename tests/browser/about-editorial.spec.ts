@@ -45,7 +45,8 @@ test('keeps every fact, caveat and link of the About page, with no em dash', asy
     'Exporters, importers, machinery buyers, companies exploring a new market and organisations running business delegations.',
     'First priority: Bangladesh to China sourcing and business delegations.',
     'A listed route does not mean every service is available there. We confirm fit for each request.',
-    'Bangladesh, Spain and wider European market relationships form part of the product direction. Each route needs its own reviewed scope and delivery capacity.',
+    // owner decision 17 Nov 2026, routes and markets
+    'Bangladesh to China, the EU, the UK, the US, Australia and key Asian markets are the routes open now. Each route needs its own reviewed scope and delivery capacity.',
     'A scheduled meeting is not a meeting held. A proposal is not an order, and an order is not cash collected.',
     'Corridra supports decisions and execution. It does not guarantee introductions, company quality, regulatory approval or commercial results.',
     'We publish no unverified client list, network size or success rate.',
@@ -102,7 +103,9 @@ for (const [name, size] of Object.entries(sizes)) {
     await page.goto('/about');
     const section = page.locator('#where');
     const summary = section.locator('details > summary');
-    const detail = section.getByText('Bangladesh, Spain and wider European market relationships');
+    const detail = section.getByText(
+      'Bangladesh to China, the EU, the UK, the US, Australia and key Asian markets are the routes open now',
+    );
     await expect(summary).toHaveAccessibleName(/^Show Details/);
     await expect(detail).toBeHidden();
     const box = (await summary.boundingBox())!;

@@ -56,7 +56,7 @@ export const footerGroups: readonly FooterGroup[] = [
     links: [
       { href: '/sell', key: 'way.sell' },
       { href: '/enter-market', key: 'way.enterMarket' },
-      { href: '/corridors/bangladesh-spain', key: 'footer.link.spain' },
+      { href: '/corridors/bangladesh-eu', key: 'footer.link.spain' },
       { href: '/corridors', key: 'footer.link.routes' },
     ],
   },

@@ -48,7 +48,7 @@ export function Corridor() {
       </p>
       <p>
         <Link prefetch={false} href="/corridors">
-          Explore the initial directions
+          Explore the open destinations
         </Link>
       </p>
     </div>

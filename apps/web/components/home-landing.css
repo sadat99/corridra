@@ -822,7 +822,9 @@
   font-size: var(--text-xs);
 }
 /* An open destination: one compact card with no stub, so six equals and the ask-us card stay short. */
-.ac1-pass-open {
+.ac1-pass.ac1-pass-open {
+  /* One column: the open card has no stub, so it must not inherit the pass's text-and-stub columns. */
+  grid-template-columns: minmax(0, 1fr);
   display: grid;
   gap: 2px;
   align-content: center;
