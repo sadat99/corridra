@@ -66,18 +66,18 @@ describe('where the shell and the Account page link to All Tools', () => {
       '<CustomerRailFoot href={supportWhatsappHref()} allTools={plainNames} />',
     );
   });
-  test('the Account page names /account/all-tools once, outside the Security panel, under the same switch', () => {
+  test('the Account page names /account/all-tools once, outside the Security and Privacy panels, under the same switch', () => {
     const page = read('apps/web/app/account/page.tsx');
     expect(page.match(/\/account\/all-tools/g)).toHaveLength(1);
-    const security = page.slice(
-      page.indexOf('security={'),
-      page.indexOf('<AccountClosureComingSoon />'),
-    );
+    const security = page.slice(page.indexOf('security={'), page.indexOf('privacy={'));
+    const privacy = page.slice(page.indexOf('privacy={'), page.indexOf('preferences={'));
     expect(security).not.toContain('/account/all-tools');
+    expect(privacy).not.toContain('/account/all-tools');
+    expect(privacy).toContain('<AccountClosureComingSoon />');
     expect(security).toContain("{!uxSwitchOn('CORRIDRA_UX_NAV') && <WaysIn />}");
     const row = page.slice(page.lastIndexOf("{uxSwitchOn('CORRIDRA_UX_NAV') ? ("));
     expect(row).toContain("{uxSwitchOn('CORRIDRA_UX_NAV') ? (");
-    expect(page.indexOf('ux-account-alltools')).toBeGreaterThan(page.indexOf('security={'));
+    expect(page.indexOf('ux-account-alltools')).toBeGreaterThan(page.indexOf('privacy={'));
   });
   test('the row is hidden only when a rail carrying All Tools is present, at the rail breakpoint in px', () => {
     const css = read('apps/web/app/globals.css');

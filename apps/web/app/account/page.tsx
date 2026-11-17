@@ -43,6 +43,7 @@ import { RequestsTabs } from './requests-tabs';
 import { ReportsTabs } from './reports-tabs';
 import { AccountSettings } from './account-settings';
 import { AccountClosure, AccountClosureComingSoon } from './account-closure';
+import { ContrastRow, LessMovementRow, TextSizeRow } from '../../components/ux/comfort-controls';
 import { customerAccountLifecycleEnabled } from '@corridra/auth/customer-account-lifecycle';
 import { customerNotificationsEnabled } from '@corridra/auth/customer-notifications';
 import { InvitationProvider, OpenInvitationButton } from './invitation-dialog';
@@ -333,70 +334,123 @@ export default async function Page({
                 className="ux-account-profile ux-account-card"
                 aria-label="Your verified profile"
               >
+                <h2>Profile and Identity</h2>
                 <span className="ux-status" data-tone="positive">
                   Verified account email
                 </span>
-                <h2>{data.user.name}</h2>
+                <h3>{data.user.name}</h3>
                 <p>{data.user.email}</p>
                 <p>Your email address is verified. This does not verify your company.</p>
               </section>
             }
-            workspaces={
-              <section aria-label="Manage your work" className="ux-account-panel">
-                <h2>Manage your work</h2>
-                <ul className="ux-link-list">
-                  <li>
-                    <Link prefetch={false} href="/account?view=work&tab=workspaces">
-                      <strong>Workspaces and team</strong>
-                      <span>Your workspaces, who is on each team and your role.</span>
-                    </Link>
-                  </li>
-                  {customerOrganisationProfilesEnabled() && (
-                    <li>
-                      <Link prefetch={false} href="/account/profile">
-                        <strong>{companyProfilesTitle(customerOrganisationLinksEnabled())}</strong>
-                        <span>Your company details and supporting statements.</span>
-                      </Link>
-                    </li>
-                  )}
-                  {customerProgrammesEnabled() && (
-                    <li>
-                      <Link prefetch={false} href="/account/delegations/organise">
-                        <strong>Programmes</strong>
-                        <span>Programme terms, places, pricing and coordination.</span>
-                      </Link>
-                    </li>
-                  )}
-                  {customerServiceRequestsEnabled() && (
-                    <li>
-                      <Link prefetch={false} href="/account/service-requests">
-                        <strong>Service requests</strong>
-                        <span>Help requests, questions and quotes.</span>
-                      </Link>
-                    </li>
-                  )}
-                </ul>
+            security={
+              <section aria-label="Sign-in and security" className="ux-account-panel">
+                <h2>Sign-in and Security</h2>
+                <div className="ux-account-actions">
+                  <AccountSignout />
+                </div>
+                <p>
+                  <Link prefetch={false} className="text-link ux-action" href="/forgot-password">
+                    Reset Your Password
+                  </Link>
+                </p>
+                <p>We email you a link to choose a new password.</p>
+                <OperatorInvitationHint
+                  key={data.user.id}
+                  headingLevel={3}
+                  className="ux-account-card ux-account-row"
+                />
+                {!uxSwitchOn('CORRIDRA_UX_NAV') && <WaysIn />}
               </section>
             }
-            notifications={
-              customerNotificationsEnabled() && (
-                <section aria-label="Notifications" className="ux-account-panel">
-                  <h2>Notifications</h2>
+            privacy={
+              <section aria-label="Privacy and data" className="ux-account-panel">
+                <h2>Privacy and Data</h2>
+                <p>Read how we use and keep your data.</p>
+                <p>
+                  <Link prefetch={false} className="text-link ux-action" href="/privacy">
+                    Read the Privacy Notice
+                  </Link>
+                </p>
+                <p>
+                  Data export is not available yet. To ask for a copy of your data, use the contact
+                  on the{' '}
+                  <Link prefetch={false} className="text-link" href="/privacy#rights">
+                    privacy page
+                  </Link>
+                  .
+                </p>
+                {customerAccountLifecycleEnabled() && accountIssuer ? (
+                  <AccountClosure subject={data.user.id} issuer={accountIssuer} />
+                ) : (
+                  <AccountClosureComingSoon />
+                )}
+              </section>
+            }
+            preferences={
+              <section aria-label="Preferences and notifications" className="ux-account-panel">
+                <h2>Preferences and Notifications</h2>
+                {customerNotificationsEnabled() && (
+                  <>
+                    <ul className="ux-link-list">
+                      <li>
+                        <Link prefetch={false} href="/account/notifications">
+                          <strong>Choose what we email you</strong>
+                          <span>Turn each kind of email on or off.</span>
+                        </Link>
+                      </li>
+                    </ul>
+                    <p>Emails sent one at a time have a link to mute that request.</p>
+                  </>
+                )}
+                <h3>Reading comfort</h3>
+                <TextSizeRow label="Text Size" variant="page" />
+                <ContrastRow label="Stronger Colours" variant="page" />
+                <LessMovementRow label="Less Movement" variant="page" />
+                <p>These choices are kept on this device only.</p>
+              </section>
+            }
+            workspaces={
+              <section aria-label="Workspaces and billing" className="ux-account-panel">
+                <h2>Workspaces and Billing</h2>
+                <section aria-label="Manage your work">
+                  <h3>Manage your work</h3>
                   <ul className="ux-link-list">
                     <li>
-                      <Link prefetch={false} href="/account/notifications">
-                        <strong>Choose what we email you</strong>
-                        <span>Turn each kind of email on or off.</span>
+                      <Link prefetch={false} href="/account?view=work&tab=workspaces">
+                        <strong>Workspaces and team</strong>
+                        <span>Your workspaces, who is on each team and your role.</span>
                       </Link>
                     </li>
+                    {customerOrganisationProfilesEnabled() && (
+                      <li>
+                        <Link prefetch={false} href="/account/profile">
+                          <strong>
+                            {companyProfilesTitle(customerOrganisationLinksEnabled())}
+                          </strong>
+                          <span>Your company details and supporting statements.</span>
+                        </Link>
+                      </li>
+                    )}
+                    {customerProgrammesEnabled() && (
+                      <li>
+                        <Link prefetch={false} href="/account/delegations/organise">
+                          <strong>Programmes</strong>
+                          <span>Programme terms, places, pricing and coordination.</span>
+                        </Link>
+                      </li>
+                    )}
+                    {customerServiceRequestsEnabled() && (
+                      <li>
+                        <Link prefetch={false} href="/account/service-requests">
+                          <strong>Service requests</strong>
+                          <span>Help requests, questions and quotes.</span>
+                        </Link>
+                      </li>
+                    )}
                   </ul>
                 </section>
-              )
-            }
-            billing={
-              customerBillingEnabled() && (
-                <section aria-label="Plan and billing" className="ux-account-panel">
-                  <h2>Plan and billing</h2>
+                {customerBillingEnabled() && (
                   <ul className="ux-link-list">
                     <li>
                       <Link prefetch={false} href="/account/billing">
@@ -405,25 +459,6 @@ export default async function Page({
                       </Link>
                     </li>
                   </ul>
-                </section>
-              )
-            }
-            security={
-              <section aria-label="Security" className="ux-account-panel">
-                <h2>Security</h2>
-                <div className="ux-account-actions">
-                  <AccountSignout />
-                </div>
-                <OperatorInvitationHint
-                  key={data.user.id}
-                  headingLevel={3}
-                  className="ux-account-card ux-account-row"
-                />
-                {!uxSwitchOn('CORRIDRA_UX_NAV') && <WaysIn />}
-                {customerAccountLifecycleEnabled() && accountIssuer ? (
-                  <AccountClosure subject={data.user.id} issuer={accountIssuer} />
-                ) : (
-                  <AccountClosureComingSoon />
                 )}
               </section>
             }

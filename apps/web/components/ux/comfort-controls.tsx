@@ -3,7 +3,7 @@
 // with three steps, and the Stronger Colours and Less Movement switches. All are kept in this browser only
 // (lib/ux/comfort.ts); a browser that will not save them still gets the choice for the current page, and says so.
 // A switch whose effect the device already asks for reads On and does nothing. Owner: W7, W10.
-import { useId } from 'react';
+import { useId, useRef, type KeyboardEvent } from 'react';
 import { CorridraIcon } from '../corridra-icon';
 import {
   deviceAsksNote,
@@ -45,28 +45,54 @@ export function UnsavedChoiceNote({ className, inMenu }: { className: string; in
   );
 }
 
-/** Text Size: the label and the step in force in words, then Normal, Large and Largest as radio buttons. */
-export function TextSizeRow({ label }: { label: string }) {
+/**
+ * Text Size: the label and the step in force in words, then Normal, Large and Largest as radio buttons. The menu
+ * variant keeps the menu's roving focus; the page variant (Account, Preferences) is a radio group of its own with
+ * one tab stop and the arrow keys moving the choice.
+ */
+export function TextSizeRow({
+  label,
+  variant = 'menu',
+}: {
+  label: string;
+  variant?: 'menu' | 'page';
+}) {
   const [size, setSize] = useTextSize();
+  const steps = useRef<HTMLSpanElement>(null);
+  const page = variant === 'page';
+  const move = (event: KeyboardEvent, index: number) => {
+    const forward = event.key === 'ArrowRight' || event.key === 'ArrowDown';
+    const back = event.key === 'ArrowLeft' || event.key === 'ArrowUp';
+    if (!forward && !back) return;
+    event.preventDefault();
+    const next = textSizes[(index + (forward ? 1 : textSizes.length - 1)) % textSizes.length]!;
+    setSize(next);
+    steps.current?.querySelector<HTMLElement>(`[data-step="${next}"]`)?.focus();
+  };
   return (
-    <div role="group" aria-label={label} className="ux-textsize">
+    <div
+      role={page ? 'radiogroup' : 'group'}
+      aria-label={label}
+      className={page ? 'ux-textsize ux-comfort-page-row' : 'ux-textsize'}
+    >
       <span className="ux-textsize-text">
         <span>{label}</span>
         <span className="ux-textsize-current">{textSizeNames[size]}</span>
       </span>
-      <span className="ux-textsize-steps">
-        {textSizes.map((step) => (
+      <span className="ux-textsize-steps" ref={steps}>
+        {textSizes.map((step, index) => (
           <button
             key={step}
             type="button"
-            role="menuitemradio"
+            role={page ? 'radio' : 'menuitemradio'}
             aria-checked={size === step}
             // The name starts with the visible character, so the visible text is in the name (WCAG 2.5.3).
             aria-label={`A, ${textSizeNames[step]} Text`}
-            tabIndex={-1}
+            tabIndex={page ? (size === step ? 0 : -1) : -1}
             className="ux-textsize-step"
             data-step={step}
             onClick={() => setSize(step)}
+            onKeyDown={page ? (event) => move(event, index) : undefined}
           >
             <span aria-hidden="true">A</span>
           </button>
@@ -86,24 +112,29 @@ function ComfortSwitchRow({
   on,
   bySystem,
   onToggle,
+  variant,
 }: {
   label: string;
   on: boolean;
   bySystem: boolean;
   onToggle: () => void;
+  variant: 'menu' | 'page';
 }) {
   const labelId = useId();
   const noteId = useId();
+  const page = variant === 'page';
   return (
     <button
       type="button"
-      role="menuitemcheckbox"
+      role={page ? 'switch' : 'menuitemcheckbox'}
       aria-checked={on || bySystem}
       aria-disabled={bySystem || undefined}
       aria-labelledby={labelId}
       aria-describedby={bySystem ? noteId : undefined}
-      tabIndex={-1}
-      className="ux-menu-row ux-menu-toggle"
+      tabIndex={page ? 0 : -1}
+      className={
+        page ? 'ux-menu-toggle ux-comfort-page-row ux-comfort-switch' : 'ux-menu-row ux-menu-toggle'
+      }
       onClick={() => {
         if (!bySystem) onToggle();
       }}
@@ -125,7 +156,13 @@ function ComfortSwitchRow({
 }
 
 /** Stronger Colours: darker text, clearer lines and underlined links (comfort.css). On when chosen or the device asks. */
-export function ContrastRow({ label }: { label: string }) {
+export function ContrastRow({
+  label,
+  variant = 'menu',
+}: {
+  label: string;
+  variant?: 'menu' | 'page';
+}) {
   const [value, setValue] = useContrast();
   const bySystem = useSystemSetting(systemContrastQuery);
   return (
@@ -134,6 +171,7 @@ export function ContrastRow({ label }: { label: string }) {
       on={value === 'more'}
       bySystem={bySystem}
       onToggle={() => setValue(value === 'more' ? 'normal' : 'more')}
+      variant={variant}
     />
   );
 }
@@ -142,7 +180,13 @@ export function ContrastRow({ label }: { label: string }) {
  * Less Movement. It is last in the group, so it carries the group's one save-failed note (an empty live region until a
  * save fails).
  */
-export function LessMovementRow({ label }: { label: string }) {
+export function LessMovementRow({
+  label,
+  variant = 'menu',
+}: {
+  label: string;
+  variant?: 'menu' | 'page';
+}) {
   const [value, setValue] = useLessMovement();
   const bySystem = useSystemSetting(systemReducedMotionQuery);
   return (
@@ -152,8 +196,13 @@ export function LessMovementRow({ label }: { label: string }) {
         on={value === 'on'}
         bySystem={bySystem}
         onToggle={() => setValue(value === 'on' ? 'off' : 'on')}
+        variant={variant}
       />
-      <UnsavedChoiceNote className="ux-menu-note ux-comfort-status" inMenu />
+      {variant === 'page' ? (
+        <UnsavedChoiceNote className="ux-comfort-page-note ux-comfort-status" />
+      ) : (
+        <UnsavedChoiceNote className="ux-menu-note ux-comfort-status" inMenu />
+      )}
     </>
   );
 }

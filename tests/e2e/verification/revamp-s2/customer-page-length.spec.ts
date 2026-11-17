@@ -15,6 +15,8 @@ const pages = [
   { name: 'Requests', url: '/account?view=work', held: true },
   { name: 'Reports', url: '/account?view=results', held: true },
   { name: 'Account', url: '/account?view=more', held: true },
+  { name: 'Account Privacy', url: '/account?view=more&tab=privacy', held: true },
+  { name: 'Account Workspaces', url: '/account?view=more&tab=workspaces', held: true },
   { name: 'Meetings', url: '/account/meetings', held: true },
 ];
 

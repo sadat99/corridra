@@ -3,30 +3,47 @@ import { SubTabs, type SubTab } from '../../components/ux/sub-tabs';
 import './account-settings.css';
 
 /**
- * The Account page as a settings layout on the shared sub-tabs (customer experience spec): Profile, Workspaces
- * and Team, Notifications, Plan and Billing, and Security. The tab is kept in ?tab=. A tab appears only when
- * its area is on, and a single one is shown without a tab list. Nothing is removed and no access is added.
+ * The tab ids and the old names that still land. ?tab=notifications opens Preferences; ?tab=billing and ?tab=team
+ * open Workspaces; #account-closure opens Privacy through the panel's anchor. Navigation only.
+ */
+export const accountTabKeys = [
+  { id: 'profile' },
+  { id: 'security' },
+  { id: 'privacy' },
+  { id: 'preferences', aliases: ['notifications'] },
+  { id: 'workspaces', aliases: ['billing', 'team'] },
+] as const;
+
+/**
+ * The Account page as a settings layout on the shared sub-tabs, in five groups: Profile, Security, Privacy,
+ * Preferences and Workspaces. The tab is kept in ?tab=. A group appears only when its area is on, and a single one
+ * is shown without a tab list. Nothing is removed and no access is added.
  */
 export function AccountSettings({
   profile,
-  workspaces,
-  notifications,
-  billing,
   security,
+  privacy,
+  preferences,
+  workspaces,
 }: {
   profile?: ReactNode;
-  workspaces?: ReactNode;
-  notifications?: ReactNode;
-  billing?: ReactNode;
   security?: ReactNode;
+  privacy?: ReactNode;
+  preferences?: ReactNode;
+  workspaces?: ReactNode;
 }) {
   const tabs: SubTab[] = [];
-  if (profile) tabs.push({ id: 'profile', label: 'Profile', panel: profile });
-  if (workspaces) tabs.push({ id: 'workspaces', label: 'Workspaces and Team', panel: workspaces });
-  if (notifications)
-    tabs.push({ id: 'notifications', label: 'Notifications', panel: notifications });
-  if (billing) tabs.push({ id: 'billing', label: 'Plan and Billing', panel: billing });
-  if (security) tabs.push({ id: 'security', label: 'Security', panel: security });
+  const add = (id: string, label: string, panel: ReactNode, anchor?: string) => {
+    const key = accountTabKeys.find((tab) => tab.id === id);
+    if (!panel || !key) return;
+    const aliases = 'aliases' in key ? key.aliases : undefined;
+    tabs.push({ id, label, panel, aliases, anchor });
+  };
+  add('profile', 'Profile', profile);
+  add('security', 'Security', security);
+  add('privacy', 'Privacy', privacy, 'account-closure');
+  add('preferences', 'Preferences', preferences);
+  add('workspaces', 'Workspaces', workspaces);
   if (tabs.length === 0) return null;
   if (tabs.length === 1) return <div className="ux-account-tabs">{tabs[0]!.panel}</div>;
   return (
