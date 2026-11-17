@@ -170,7 +170,7 @@ test('N1 signed in, the header opens the workspace instead of Sign in, on a wide
   );
   await page.setViewportSize(sizes.desktop);
   await page.goto('/about');
-  const workspace = nav(page).getByRole('link', { name: 'Team workspace', exact: true });
+  const workspace = nav(page).getByRole('link', { name: 'Team Workspace', exact: true });
   await expect(workspace).toHaveAttribute('href', '/operator');
   await expect(workspace).toBeVisible();
   await expect(nav(page).getByRole('link', { name: 'Sign In', exact: true })).toHaveCount(0);

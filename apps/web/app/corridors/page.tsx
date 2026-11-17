@@ -49,7 +49,7 @@ export default function Page() {
                   Explore this route <Arrow />
                 </Link>
                 {slug === 'bangladesh-eu' ? (
-                  <p>
+                  <p className="guide-route-note">
                     Selling in Spain?{' '}
                     <Link prefetch={false} href="/corridors/bangladesh-spain" className="text-link">
                       Spain
