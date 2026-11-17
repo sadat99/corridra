@@ -93,6 +93,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'profile_picture',
     'viewer_reply_metadata',
     'viewer_export_access',
+    'quotation_link_check',
     'contact_changes_install',
     'contact_changes_enable',
     'contact_changes_pause',
@@ -139,6 +140,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     ['profile_picture', u, u, u, u, u, u, u, u],
     ['viewer_reply_metadata', u, u, u, u, u, u, u, u],
     ['viewer_export_access', u, u, u, u, u, u, u, u],
+    ['quotation_link_check', u, u, u, u, u, u, u, u],
     ['contact_changes_install', u, u, u, u, u, u, u, u],
     ['contact_changes_enable', u, u, u, u, u, u, u, u],
     ['contact_changes_pause', u, u, u, u, u, u, u, u],
@@ -191,11 +193,17 @@ test('each field-module choice maps to install only and reaches the exact-head c
       evaluate(env.VIEWER_EXPORT_ACCESS_ACTION, inputs),
       choice === 'viewer_export_access' ? 'install' : u,
     );
+    // ADR-087 quotation link check: its own choice installs its database module and nothing else.
+    assert.equal(
+      evaluate(env.QUOTATION_LINK_CHECK_ACTION, inputs),
+      choice === 'quotation_link_check' ? 'install' : u,
+    );
     for (const [own, line] of [
       ['personal_profile', 'PERSONAL_PROFILE_ACTION'],
       ['profile_picture', 'PROFILE_PICTURE_ACTION'],
       ['viewer_reply_metadata', 'VIEWER_REPLY_METADATA_ACTION'],
       ['viewer_export_access', 'VIEWER_EXPORT_ACCESS_ACTION'],
+      ['quotation_link_check', 'QUOTATION_LINK_CHECK_ACTION'],
     ])
       if (choice === own)
         for (const [name, value] of Object.entries(env))

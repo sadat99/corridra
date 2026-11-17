@@ -325,11 +325,18 @@ export function withholdQuotationTerms<T extends Record<string, unknown>>(row: T
 /**
  * ADR-087 U1r: SQL that is true when a claim is linked to a quotation, that is a quotation names the claim (claim_id) or its
  * source (source_id). Both arguments are column references or parameter placeholders written by the caller, never input.
- * The check runs with the reader's own row security, so a quotation on a target the reader cannot see does not count; the
- * later database unit replaces it with a SECURITY DEFINER app.quotation_linked_claim(tenant, claim).
+ * The first branch runs with the reader's own row security, so on its own a quotation on a target the reader cannot see does
+ * not count (the U1r residue). ADR-087 quotation link check: once the optional module has installed the SECURITY DEFINER
+ * app.quotation_linked_claim(tenant, claim), the remaining claims ask it, and every quotation in the reader's tenant counts.
+ * The function may not exist, and a statement that names a missing function fails to parse, so it is reached by name only
+ * after to_regprocedure finds it, through query_to_xml with both values quoted by format(%L); the boolean is read back from
+ * the one cell. Not installed (or rolled back), the expression is exactly today's row-security check.
  */
+export const quotationLinkedClaimFunction = 'app.quotation_linked_claim(uuid,uuid)';
 export const quotationLinkedClaimSql = (tenant: string, claimId: string) =>
-  `EXISTS(SELECT FROM app.mission_quotation q JOIN app.claim lc ON lc.tenant_id=q.tenant_id AND (lc.id=q.claim_id OR lc.source_id=q.source_id) WHERE lc.tenant_id=${tenant} AND lc.id=${claimId})`;
+  `(CASE WHEN EXISTS(SELECT FROM app.mission_quotation q JOIN app.claim lc ON lc.tenant_id=q.tenant_id AND (lc.id=q.claim_id OR lc.source_id=q.source_id) WHERE lc.tenant_id=${tenant} AND lc.id=${claimId}) THEN true` +
+  ` WHEN to_regprocedure('${quotationLinkedClaimFunction}') IS NULL THEN false` +
+  ` ELSE strpos(query_to_xml(format('SELECT app.quotation_linked_claim(%L::uuid,%L::uuid) AS v',${tenant},${claimId}),true,false,'')::text,'<v>true</v>')>0 END)`;
 export function withholdSelectionRationale<T extends Record<string, unknown>>(row: T) {
   return { ...row, rationale: null, next_action: null };
 }

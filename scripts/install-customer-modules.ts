@@ -59,6 +59,7 @@ import {
   refreshViewerReplyMetadata,
 } from '../packages/db/src/viewer-reply-metadata-migrate';
 import { migrateViewerExportAccess } from '../packages/db/src/viewer-export-access-migrate';
+import { migrateQuotationLinkCheck } from '../packages/db/src/quotation-link-check-migrate';
 import { configureSupplySources } from '../packages/auth/src/supply-source-configuration';
 import { configureWorkspaceLifecycle } from '../packages/auth/src/customer-workspace-lifecycle-configuration';
 import { configureAccountLifecycle } from '../packages/auth/src/customer-account-lifecycle-configuration';
@@ -122,6 +123,7 @@ const v = z
     PROFILE_PICTURE_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     VIEWER_REPLY_METADATA_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     VIEWER_EXPORT_ACCESS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
+    QUOTATION_LINK_CHECK_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     COUNTERPARTY_CHANGES_ACTION: z
       .enum(['unchanged', 'install', 'enable', 'pause'])
       .default('unchanged'),
@@ -306,6 +308,8 @@ if (v.VIEWER_REPLY_METADATA_ACTION !== 'unchanged' && !apply)
   throw new Error('Viewer reply metadata installation requires INSTALL_APPLY=yes');
 if (v.VIEWER_EXPORT_ACCESS_ACTION !== 'unchanged' && !apply)
   throw new Error('Viewer export access installation requires INSTALL_APPLY=yes');
+if (v.QUOTATION_LINK_CHECK_ACTION !== 'unchanged' && !apply)
+  throw new Error('Quotation link check installation requires INSTALL_APPLY=yes');
 if (v.COUNTERPARTY_CHANGES_ACTION !== 'unchanged' && !apply)
   throw new Error('Contact and note changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.COUNTERPARTY_CHANGES_ACTION) && !v.COUNTERPARTY_CHANGES_REASON)
@@ -382,6 +386,7 @@ const registries = [
   'customer_profile_picture_migrations',
   'viewer_reply_metadata_migrations',
   'viewer_export_access_migrations',
+  'quotation_link_check_migrations',
   'recipient_response_revision_migrations',
   'network_real_use_migrations',
   'customer_billing_real_migrations',
@@ -750,6 +755,15 @@ try {
       const result = await migrateViewerExportAccess(pool);
       console.log(
         `installed or already current: viewer export access (applied ${result.applied.join(', ') || 'nothing new'})`,
+      );
+    }
+    // ADR-087 quotation link check is never part of the base run either. It adds one SECURITY DEFINER boolean and two indexes,
+    // refuses unless the real-use modules are installed, and from then on a staff viewer reads no statement or file of a claim
+    // any quotation in the workspace names. Reached only through field_modules_action=quotation_link_check, with the owner's word.
+    if (v.QUOTATION_LINK_CHECK_ACTION === 'install') {
+      const result = await migrateQuotationLinkCheck(pool);
+      console.log(
+        `installed or already current: quotation link check (applied ${result.applied.join(', ') || 'nothing new'})`,
       );
     }
     // Withdraw, correct and hide for private contacts and notes (CRUD G11) are never part of the base run. Install leaves
