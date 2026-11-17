@@ -79,31 +79,33 @@ export function QuoteCard({
         </span>
         {trust ? <FactLabel label={trust} /> : provenance ? <small>{provenance}</small> : null}
       </div>
-      <dl className="mr-quote-terms">
-        {terms.map((term) => {
-          const excluded = term.state === 'excluded';
-          const missing =
-            !excluded && (term.value === null || term.value === undefined || term.value === '');
-          return (
-            <div key={term.label} data-missing={missing} data-excluded={excluded}>
-              <dt>{term.label}</dt>
-              <dd>
-                {excluded ? (
-                  <Explain name={labels.excluded} text={labels.hints.excluded}>
-                    <span className="mr-quote-fill" data-fill="striped" />
-                  </Explain>
-                ) : missing ? (
-                  <Explain name={labels.notStated} text={labels.hints.notStated}>
-                    <span className="mr-quote-fill" data-fill="hatched" />
-                  </Explain>
-                ) : (
-                  term.value
-                )}
-              </dd>
-            </div>
-          );
-        })}
-      </dl>
+      {terms.length ? (
+        <dl className="mr-quote-terms">
+          {terms.map((term) => {
+            const excluded = term.state === 'excluded';
+            const missing =
+              !excluded && (term.value === null || term.value === undefined || term.value === '');
+            return (
+              <div key={term.label} data-missing={missing} data-excluded={excluded}>
+                <dt>{term.label}</dt>
+                <dd>
+                  {excluded ? (
+                    <Explain name={labels.excluded} text={labels.hints.excluded}>
+                      <span className="mr-quote-fill" data-fill="striped" />
+                    </Explain>
+                  ) : missing ? (
+                    <Explain name={labels.notStated} text={labels.hints.notStated}>
+                      <span className="mr-quote-fill" data-fill="hatched" />
+                    </Explain>
+                  ) : (
+                    term.value
+                  )}
+                </dd>
+              </div>
+            );
+          })}
+        </dl>
+      ) : null}
     </article>
   );
 }
