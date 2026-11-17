@@ -3,10 +3,11 @@
 -- (source_id), whatever target or relationship visibility that quotation sits on. Before this module the check ran under the
 -- reader's own row security, so a quotation on a target the reader cannot see did not count.
 -- What this file adds, and nothing else: app.quotation_linked_claim(tenant, claim), a SECURITY DEFINER function that answers
--- one boolean, and two indexes on app.mission_quotation when they are missing. It returns plain false unless the tenant equals
+-- one boolean, and two new indexes on app.mission_quotation. It returns plain false unless the tenant equals
 -- the caller's corridra.tenant_id setting (the setting every read policy uses), so it never answers for another tenant. It
--- returns no row, no id, no count and no text. quotationLinkedClaimSql calls it once it exists and keeps the row-security
--- check before it, so nothing a reader already withheld becomes readable.
+-- returns no row, no id, no count and no text. quotationLinkedClaimSql ORs it with the row-security check once the reader
+-- learns it exists, so nothing a reader already withheld becomes readable. The installer creates the index without CONCURRENTLY
+-- inside its one transaction: mission_quotation is small, so writes to it wait only briefly while the two indexes build.
 -- No row is written, changed or deleted. No policy, switch or control changes.
 -- Rollback: rollback/0001_drop_quotation_linked_claim.sql drops the function and the two indexes this file created; the
 -- application then falls back to the row-security check by itself. It is applied only with the owner's word.
@@ -59,6 +60,16 @@ BEGIN
  END IF;
  IF NOT has_function_privilege('corridra_runtime','app.quotation_linked_claim(uuid,uuid)','EXECUTE') THEN
   RAISE EXCEPTION 'Quotation link check: the runtime role must execute the function';
+ END IF;
+ -- The function reads every row of both tables only because its owner is not held to their row security: it owns both, or
+ -- has BYPASSRLS (or is a superuser), and neither table has FORCE ROW LEVEL SECURITY. Otherwise its answer would quietly
+ -- depend on the owner's own policies, so refuse.
+ IF EXISTS(
+  SELECT FROM pg_class c, pg_proc p, pg_roles r
+  WHERE c.oid IN ('app.claim'::regclass,'app.mission_quotation'::regclass)
+   AND p.oid=to_regprocedure('app.quotation_linked_claim(uuid,uuid)') AND r.oid=p.proowner
+   AND (c.relforcerowsecurity OR NOT (c.relowner=p.proowner OR r.rolbypassrls OR r.rolsuper))) THEN
+  RAISE EXCEPTION 'Quotation link check: the function owner must own app.claim and app.mission_quotation or bypass row security, and neither may force row security';
  END IF;
 END
 $proof$;

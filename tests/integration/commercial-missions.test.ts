@@ -13,6 +13,7 @@ import { initialRoutes } from '../../packages/domain/src/corridors';
 import {
   commercialMissionCommand,
   compareOffers,
+  forgetQuotationLinkCheck,
   missionCatalogue,
   machineryFields,
 } from '../../packages/domain/src/commercial-missions';
@@ -1330,6 +1331,62 @@ test('a staff viewer reads no quotation evidence, selection rationale or RFQ ter
       scope: 'Synthetic hidden quotation evidence',
       validUntil: future(3),
     });
+    // A fourth supplier, shared with the team, carries the hidden quotation's claim as a company detail and in its fit
+    // assessment on the visible mission, so the counterparty readers meet the residue too. Its visibility is restored with
+    // the others at the end.
+    const fourth = await f.target('CN');
+    const fourthOrg = (
+      await f.owner.query('SELECT organisation_id,visibility FROM app.relationship WHERE id=$1', [
+        fourth.relationshipId,
+      ])
+    ).rows[0] as { organisation_id: string; visibility: string };
+    visibility.push({ id: fourth.relationshipId, visibility: fourthOrg.visibility });
+    await f.research.command(
+      f.ctx,
+      command('attribute', {
+        organisationId: fourthOrg.organisation_id,
+        kind: 'requirement',
+        claimId: hidden.base.claimId,
+        validUntil: future(6),
+      }),
+    );
+    await f.research.command(
+      f.ctx,
+      command('target', {
+        missionId: j.missionId,
+        relationshipId: fourth.relationshipId,
+        contactId: fourth.contactId,
+        claimIds: [hidden.base.claimId],
+        fit: 'RESEARCH',
+        rationale: 'Synthetic fourth candidate on the hidden quotation claim',
+        uncertainty: 'Supplier evidence incomplete',
+        gaps: 'Need supplier documentation',
+        nextAction: 'Request the missing evidence',
+        dueAt: future(),
+      }),
+    );
+    await setVisibility(fourth.relationshipId, 'TEAM');
+    // Every statement of the hidden claim the counterparty readers return: company details, shortlist sources and export.
+    const hiddenStatements = async (ctx: typeof f.ctx) => {
+      const detail = await f.research.detail(ctx, fourthOrg.organisation_id);
+      const found = (detail.attributes as Sourced[])
+        .filter((a) => a.claim_id === hidden.base.claimId)
+        .map((a) => a.statement);
+      for (const list of [
+        await f.research.shortlist(ctx, j.missionId),
+        await f.research.shortlistExport(ctx, j.missionId),
+      ])
+        found.push(
+          ...(list.targets as { sources: Sourced[] }[])
+            .flatMap((t) => t.sources)
+            .filter((x) => x.claim_id === hidden.base.claimId)
+            .map((x) => x.statement),
+        );
+      expect(found.length).toBeGreaterThanOrEqual(3);
+      return [...new Set(found)];
+    };
+    expect(await hiddenStatements(f.users.viewer.ctx)).toEqual([linkedStatement]);
+    expect(await hiddenStatements(f.ctx)).toEqual([linkedStatement]);
     const residueView = await evidence.workspace(f.users.viewer.ctx);
     expect(residueView.claims.find((c) => c.id === hidden.base.claimId)?.statement).toBe(
       linkedStatement,
@@ -1366,6 +1423,14 @@ test('a staff viewer reads no quotation evidence, selection rationale or RFQ ter
       readFileSync(resolve('packages/db/quotation-link-check-migrations', name), 'utf8');
     await f.owner.query(linkCheck('0001_quotation_linked_claim.sql'));
     try {
+      // Each process asks at most once a minute whether the module is installed. While it still holds the answer from before
+      // the install, a viewer reads exactly what it read before; once it asks again, the reads close.
+      expect(
+        (await evidence.workspace(f.users.viewer.ctx)).claims.find(
+          (c) => c.id === hidden.base.claimId,
+        )?.statement,
+      ).toBe(linkedStatement);
+      forgetQuotationLinkCheck();
       const closed = await evidence.workspace(f.users.viewer.ctx);
       expect(closed.claims.map((c) => c.id)).toEqual(residueView.claims.map((c) => c.id));
       expect(closed.claims.find((c) => c.id === hidden.base.claimId)?.statement).toBeNull();
@@ -1409,6 +1474,9 @@ test('a staff viewer reads no quotation evidence, selection rationale or RFQ ter
             .filter((x) => x.claim_id === j.base.claimId))
             expect(x.statement).toBe(expected);
       }
+      // The counterparty readers withhold the hidden quotation's claim from the viewer too, and nothing from the operator.
+      expect(await hiddenStatements(f.users.viewer.ctx)).toEqual([null]);
+      expect(await hiddenStatements(f.ctx)).toEqual([linkedStatement]);
       // Roles that read bodies read exactly what they read before.
       for (const ctx of [f.users.owner.ctx, f.ctx]) {
         const w = await evidence.workspace(ctx);
@@ -1447,7 +1515,21 @@ test('a staff viewer reads no quotation evidence, selection rationale or RFQ ter
     } finally {
       await f.owner.query(linkCheck('rollback/0001_drop_quotation_linked_claim.sql'));
     }
+    // Rolled back while the process still holds "installed": every viewer read names the dropped function and fails with an
+    // error, so nothing is revealed early. Read-body roles never ask, so they are untouched.
+    await expect(evidence.workspace(f.users.viewer.ctx)).rejects.toThrow(
+      /function app\.quotation_linked_claim\(uuid, uuid\) does not exist/,
+    );
+    await expect(evidence.download(f.users.viewer.ctx, hiddenFile.id)).rejects.toThrow(
+      /quotation_linked_claim/,
+    );
+    await expect(f.research.detail(f.users.viewer.ctx, fourthOrg.organisation_id)).rejects.toThrow(
+      /quotation_linked_claim/,
+    );
+    expect(await hiddenStatements(f.ctx)).toEqual([linkedStatement]);
+    forgetQuotationLinkCheck();
     // Rolled back: the function is gone and the reads fall back to the row-security check, so today's residue is back.
+    expect(await hiddenStatements(f.users.viewer.ctx)).toEqual([linkedStatement]);
     const fallback = await evidence.workspace(f.users.viewer.ctx);
     expect(fallback.claims).toEqual(residueView.claims);
     expect(fallback.evidence).toEqual(residueView.evidence);

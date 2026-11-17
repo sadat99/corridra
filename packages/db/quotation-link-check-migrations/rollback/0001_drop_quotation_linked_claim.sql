@@ -2,8 +2,9 @@
 -- reads only the .sql files directly in the module folder, never this rollback folder. To roll back, with the owner's word,
 -- copy this file unchanged to the next free number of the module (0002_drop_quotation_linked_claim.sql), review and merge it,
 -- and run field_modules_action=quotation_link_check again. It drops the function and the two indexes 0001 created, and
--- nothing else. quotationLinkedClaimSql sees the function is gone and falls back to the row-security check by itself, so a
--- staff viewer reads again what it read before 0001 (the U1r residue). No customer row is written, changed or deleted.
+-- nothing else. Each application process learns the function is gone within a minute (until then a staff viewer's read fails
+-- with an error and reveals nothing), then falls back to the row-security check by itself, so a staff viewer reads again
+-- what it read before 0001 (the U1r residue). No customer row is written, changed or deleted.
 DROP FUNCTION IF EXISTS app.quotation_linked_claim(uuid, uuid);
 DROP INDEX IF EXISTS app.mission_quotation_tenant_claim_link;
 DROP INDEX IF EXISTS app.mission_quotation_tenant_source_link;

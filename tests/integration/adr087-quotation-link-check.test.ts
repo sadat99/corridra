@@ -5,7 +5,11 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { fixture, rawContext } from './support';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateQuotationLinkCheck } from '../../packages/db/src/quotation-link-check-migrate';
-import { quotationLinkedClaimSql } from '../../packages/domain/src/commercial-missions';
+import {
+  forgetQuotationLinkCheck,
+  quotationLinkCheckInstalled,
+  quotationLinkedClaimSql,
+} from '../../packages/domain/src/commercial-missions';
 
 // ADR-087 quotation link check on a real PostgreSQL database. The tests run in order: the module refuses before the customer
 // real-use modules, the link check works without it (today's row-security check), then the module installs once, its function
@@ -15,11 +19,11 @@ let f: Awaited<ReturnType<typeof fixture>>;
 const fn = 'app.quotation_linked_claim(uuid,uuid)';
 const moduleFile = (name: string) =>
   readFileSync(resolve('packages/db/quotation-link-check-migrations', name), 'utf8');
-const linkCheck = (claim: string, tenant = f.tenantA) =>
+const linkCheck = (claim: string, installed: boolean, tenant = f.tenantA) =>
   rawContext(
     f.runtime,
     f.users.viewer!.ctx,
-    `SELECT ${quotationLinkedClaimSql('$1::uuid', '$2::uuid')} AS v`,
+    `SELECT ${quotationLinkedClaimSql('$1::uuid', '$2::uuid', installed)} AS v`,
     [tenant, claim],
   ).then((r) => r.rows);
 const present = async () =>
@@ -52,8 +56,11 @@ describe('before the module', () => {
     });
   });
   test('the link check is the row-security check alone and answers false for an unlinked claim', async () => {
-    expect(await linkCheck(randomUUID())).toEqual([{ v: false }]);
-    expect(await linkCheck(randomUUID(), f.tenantB)).toEqual([{ v: false }]);
+    forgetQuotationLinkCheck();
+    expect(await quotationLinkCheckInstalled(f.owner)).toBe(false);
+    expect(quotationLinkedClaimSql('a', 'b', false)).not.toContain('quotation_linked_claim');
+    expect(await linkCheck(randomUUID(), false)).toEqual([{ v: false }]);
+    expect(await linkCheck(randomUUID(), false, f.tenantB)).toEqual([{ v: false }]);
   });
 });
 
@@ -65,6 +72,11 @@ describe('the module installed', () => {
       waiting: [],
     });
     expect(await migrateQuotationLinkCheck(f.owner)).toEqual({ applied: [], waiting: [] });
+    // The process keeps its earlier answer for a minute, then asks again and sees the function.
+    expect(await quotationLinkCheckInstalled(f.owner)).toBe(false);
+    expect(await quotationLinkCheckInstalled(f.owner, Date.now() + 60_000)).toBe(true);
+    forgetQuotationLinkCheck();
+    expect(await quotationLinkCheckInstalled(f.owner)).toBe(true);
     expect(await present()).toEqual({
       fn: true,
       claim_index: true,
@@ -121,8 +133,72 @@ describe('the module installed', () => {
       ).rows,
     ).toEqual([{ v: false }]);
     // The link check reaches the function and still answers false, with no error, for an unlinked claim in either tenant.
-    expect(await linkCheck(randomUUID())).toEqual([{ v: false }]);
-    expect(await linkCheck(randomUUID(), f.tenantB)).toEqual([{ v: false }]);
+    expect(await linkCheck(randomUUID(), true)).toEqual([{ v: false }]);
+    expect(await linkCheck(randomUUID(), true, f.tenantB)).toEqual([{ v: false }]);
+  });
+  test('the proof refuses an owner held to row security, and either table forcing row security', async () => {
+    const source = moduleFile('0001_quotation_linked_claim.sql');
+    const proof = source.slice(source.indexOf('DO $proof$'), source.lastIndexOf('$proof$;') + 8);
+    expect(proof).toContain('relforcerowsecurity');
+    const refusal =
+      'the function owner must own app.claim and app.mission_quotation or bypass row security, and neither may force row security';
+    const db = await f.owner.connect();
+    try {
+      await db.query('BEGIN');
+      await db.query(proof);
+      await db.query('SAVEPOINT owner');
+      // An owner that owns neither table and does not bypass row security.
+      await db.query(`ALTER FUNCTION ${fn} OWNER TO corridra_auth`);
+      expect(
+        (
+          await db.query(
+            "SELECT rolbypassrls OR rolsuper AS bypass FROM pg_roles WHERE rolname='corridra_auth'",
+          )
+        ).rows,
+      ).toEqual([{ bypass: false }]);
+      await expect(db.query(proof)).rejects.toThrow(refusal);
+      await db.query('ROLLBACK TO SAVEPOINT owner');
+      for (const table of ['app.claim', 'app.mission_quotation']) {
+        await db.query('SAVEPOINT force');
+        await db.query(`ALTER TABLE ${table} FORCE ROW LEVEL SECURITY`);
+        await db.query('SAVEPOINT proof');
+        await expect(db.query(proof)).rejects.toThrow(refusal);
+        await db.query('ROLLBACK TO SAVEPOINT proof');
+        // The whole file refuses the same way, so an install on such a database changes nothing.
+        await db.query(moduleFile('rollback/0001_drop_quotation_linked_claim.sql'));
+        await expect(db.query(source)).rejects.toThrow(refusal);
+        await db.query('ROLLBACK TO SAVEPOINT force');
+      }
+    } finally {
+      await db.query('ROLLBACK');
+      db.release();
+    }
+    expect(await present()).toEqual({
+      fn: true,
+      claim_index: true,
+      source_index: true,
+      registry: true,
+    });
+  });
+  test('a stale "installed" answer after a rollback fails the read with an error, never a fallback', async () => {
+    forgetQuotationLinkCheck();
+    expect(await quotationLinkCheckInstalled(f.owner)).toBe(true);
+    const db = await f.owner.connect();
+    try {
+      await db.query('BEGIN');
+      await db.query(moduleFile('rollback/0001_drop_quotation_linked_claim.sql'));
+      // The cached answer is still true: the expression names the dropped function and the statement fails.
+      expect(await quotationLinkCheckInstalled(db)).toBe(true);
+      await expect(
+        db.query(`SELECT ${quotationLinkedClaimSql('$1::uuid', '$2::uuid', true)} AS v`, [
+          f.tenantA,
+          randomUUID(),
+        ]),
+      ).rejects.toThrow(/function app\.quotation_linked_claim\(uuid, uuid\) does not exist/);
+    } finally {
+      await db.query('ROLLBACK');
+      db.release();
+    }
   });
   test('each lookup the function makes has its own module index, and the planner uses an index for it', async () => {
     const indexes = await f.owner.query(
@@ -176,7 +252,7 @@ describe('the module installed', () => {
       expect(gone.rows).toEqual([{ fn: true, claim_index: true, source_index: true }]);
       // Without the function the same expression is the row-security check alone and still parses and runs.
       const fallback = await db.query(
-        `SELECT ${quotationLinkedClaimSql('$1::uuid', '$2::uuid')} AS v`,
+        `SELECT ${quotationLinkedClaimSql('$1::uuid', '$2::uuid', false)} AS v`,
         [f.tenantA, randomUUID()],
       );
       expect(fallback.rows).toEqual([{ v: false }]);
