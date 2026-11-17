@@ -39,8 +39,8 @@ export default function Page() {
         <section className="guide-directions" aria-labelledby="directions-title">
           <h2 id="directions-title">Explore a route</h2>
           <ul>
-            {/* Owner decision 17 Nov 2026, routes and markets: the open destinations are shown as equals. The Spain page stays
-                reachable at its own address but is not offered as a route here. */}
+            {/* Owner decision 17 Nov 2026, routes and markets: the open destinations are shown as equals. Spain stays
+                a plain link inside the EU card, so its page is never orphaned. */}
             {(['bangladesh-china', 'bangladesh-eu'] as const).map((slug) => (
               <li key={slug}>
                 <h3>{corridorPages[slug].title}</h3>
@@ -48,6 +48,14 @@ export default function Page() {
                 <Link prefetch={false} href={`/corridors/${slug}`} className="text-link">
                   Explore this route <Arrow />
                 </Link>
+                {slug === 'bangladesh-eu' ? (
+                  <p className="guide-route-note">
+                    Selling in Spain?{' '}
+                    <Link prefetch={false} href="/corridors/bangladesh-spain" className="text-link">
+                      Spain
+                    </Link>
+                  </p>
+                ) : null}
               </li>
             ))}
             {(
