@@ -3,7 +3,7 @@
 // decides that this reader can read what is shared, and its `sourceNote` names that fact. Every other reader the
 // person may wonder about is `not_stated`: nothing in the code confirms it either way, so the page says "Not stated"
 // and claims nothing. The label only informs. It never blocks, delays, disables or adds a step to a share or a send.
-// The evidence reply (apps/web/app/delivery-view.tsx) is a later unit and is deliberately absent here.
+// The evidence reply (apps/web/app/delivery-view.tsx) joined in visual grammar PR 5 (V3-05-033), with its preview.
 import type { MessageKey } from './i18n/messages';
 
 export type PrivacyStatus = 'confirmed' | 'not_stated';
@@ -88,6 +88,20 @@ const surfaces = {
     },
     // No code fact says whether the customer who asked for the introduction can read the reply.
     notStated('privacy.reader.requester'),
+  ],
+  // The evidence reply (apps/web/app/delivery-view.tsx, "Send response" on an evidence request). The response is
+  // stored by app.delivery_respond and read back in app.delivery_report (the request's `response`) for whoever
+  // holds the private link, with no sign-in, until the link expires or is withdrawn (delivery_authorized).
+  evidenceReply: [
+    {
+      reader: 'privacy.reader.anyoneWithLink',
+      status: 'confirmed',
+      sourceNote:
+        'packages/db/customer-real-use-migrations/0009_real_report_links.sql:app.delivery_authorized',
+    },
+    // No code fact says whether other people in the sender's workspace, or Corridra staff, can read the response.
+    notStated('privacy.reader.workspace'),
+    notStated('privacy.reader.corridra'),
   ],
 } as const satisfies Record<string, readonly PrivacyReader[]>;
 

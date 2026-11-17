@@ -45,11 +45,22 @@ const expected: Record<PrivacySurface, [string, 'confirmed' | 'not_stated'][]> =
     ['privacy.reader.sendingTeam', 'confirmed'],
     ['privacy.reader.requester', 'not_stated'],
   ],
+  // Visual grammar PR 5 (V3-05-033): the evidence reply, read through the report link.
+  evidenceReply: [
+    ['privacy.reader.anyoneWithLink', 'confirmed'],
+    ['privacy.reader.workspace', 'not_stated'],
+    ['privacy.reader.corridra', 'not_stated'],
+  ],
 };
 
 describe('who can see it: the readers come only from confirmed code facts', () => {
-  it('names exactly the three customer share and send surfaces', () => {
-    expect([...privacySurfaces]).toEqual(['decisionCard', 'savedReport', 'recipientReply']);
+  it('names exactly the customer share and send surfaces', () => {
+    expect([...privacySurfaces]).toEqual([
+      'decisionCard',
+      'savedReport',
+      'recipientReply',
+      'evidenceReply',
+    ]);
   });
   for (const surface of Object.keys(expected) as PrivacySurface[]) {
     it(`${surface}: returns exactly the confirmed and unstated readers, in order`, () => {

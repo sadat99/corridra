@@ -13,6 +13,7 @@ import { AccessState } from '../components/access-state';
 import { ParticipantScope } from '../components/participant-scope';
 import { OperatorWorkbench } from '../components/operator-workbench';
 import { MissionPassport } from '../components/mission-passport';
+import { ConsequencePreview } from '../components/consequence-preview';
 import { MissionExperienceView, AgendaView } from './mission-experience-view';
 /** CQ-42: one plain line for a link that no longer opens (expired, replaced or withdrawn). */
 export const linkGone =
@@ -522,6 +523,7 @@ function ScopedDeliveryView({
                           controlled collection and review process.
                         </label>
                       </fieldset>
+                      <ConsequencePreview expires={formatMoment(report.expiresAt)} />
                       <button
                         disabled={
                           busy ||

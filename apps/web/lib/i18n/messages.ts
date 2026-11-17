@@ -4,6 +4,7 @@
 // are never shown to the public before that.
 import { organiseEntryWords } from './organise-entry-words';
 import { sellWords } from './sell-words';
+import { consequenceDrafts, consequenceEn } from './consequence-words';
 import { privacyDrafts, privacyEn } from './privacy-words';
 import { defaultLocale, type Locale } from './locales';
 import { homeEn, homeWords } from './home-words';
@@ -301,6 +302,7 @@ export const en = {
   ...programmePagesWords,
   ...bookWords,
   ...privacyEn,
+  ...consequenceEn,
   ...footerWords,
   ...headerWords,
   ...todayWords,
@@ -486,6 +488,7 @@ const bn: Catalog = {
   ...programmePagesWords,
   ...bookWords,
   ...privacyDrafts.bn,
+  ...consequenceDrafts.bn,
   ...footerWords,
   ...headerWords,
   ...todayDrafts.bn,
@@ -658,6 +661,7 @@ const zh: Catalog = {
   ...programmePagesWords,
   ...bookWords,
   ...privacyDrafts.zh,
+  ...consequenceDrafts.zh,
   ...footerWords,
   ...headerWords,
   ...todayDrafts.zh,
@@ -836,6 +840,7 @@ const es: Catalog = {
   ...programmePagesWords,
   ...bookWords,
   ...privacyDrafts.es,
+  ...consequenceDrafts.es,
   ...footerWords,
   ...headerWords,
   ...todayDrafts.es,
@@ -1012,6 +1017,7 @@ const ar: Catalog = {
   ...programmePagesWords,
   ...bookWords,
   ...privacyDrafts.ar,
+  ...consequenceDrafts.ar,
   ...footerWords,
   ...headerWords,
   ...todayDrafts.ar,
@@ -1191,6 +1197,7 @@ const fr: Catalog = {
   ...programmePagesWords,
   ...bookWords,
   ...privacyDrafts.fr,
+  ...consequenceDrafts.fr,
   ...footerWords,
   ...headerWords,
   ...todayDrafts.fr,
@@ -1375,6 +1382,7 @@ const de: Catalog = {
   ...programmePagesWords,
   ...bookWords,
   ...privacyDrafts.de,
+  ...consequenceDrafts.de,
   ...footerWords,
   ...headerWords,
   ...todayDrafts.de,
