@@ -4,7 +4,7 @@
 // are never shown to the public before that.
 import { organiseEntryWords } from './organise-entry-words';
 import { sellWords } from './sell-words';
-import { privacyWords } from './privacy-words';
+import { privacyDrafts, privacyEn } from './privacy-words';
 import { defaultLocale, type Locale } from './locales';
 import { homeEn, homeWords } from './home-words';
 import { programmePagesWords } from './programme-pages-words';
@@ -277,7 +277,7 @@ export const en = {
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
-  ...privacyWords,
+  ...privacyEn,
   ...footerWords,
   ...headerWords,
   'room.lens.overview': 'Overview',
@@ -452,7 +452,7 @@ const bn: Catalog = {
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
-  ...privacyWords,
+  ...privacyDrafts.bn,
   ...footerWords,
   ...headerWords,
   'room.lens.overview': 'সারসংক্ষেপ',
@@ -614,7 +614,7 @@ const zh: Catalog = {
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
-  ...privacyWords,
+  ...privacyDrafts.zh,
   ...footerWords,
   ...headerWords,
   'room.lens.overview': '概览',
@@ -782,7 +782,7 @@ const es: Catalog = {
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
-  ...privacyWords,
+  ...privacyDrafts.es,
   ...footerWords,
   ...headerWords,
   'room.lens.overview': 'Resumen',
@@ -948,7 +948,7 @@ const ar: Catalog = {
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
-  ...privacyWords,
+  ...privacyDrafts.ar,
   ...footerWords,
   ...headerWords,
   'room.lens.overview': 'نظرة عامة',
@@ -1117,7 +1117,7 @@ const fr: Catalog = {
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
-  ...privacyWords,
+  ...privacyDrafts.fr,
   ...footerWords,
   ...headerWords,
   'room.lens.overview': 'Aperçu',
@@ -1291,7 +1291,7 @@ const de: Catalog = {
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
-  ...privacyWords,
+  ...privacyDrafts.de,
   ...footerWords,
   ...headerWords,
   'room.lens.overview': 'Übersicht',

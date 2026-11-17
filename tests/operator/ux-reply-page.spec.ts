@@ -425,6 +425,10 @@ test('the Chinese catalogue covers the page words, and the page sets its own lan
   const shared = page.locator('.reply-shared');
   await expect(shared).toHaveAttribute('lang', 'en');
   await expect(shared).toContainText('Curtain track, 4 metres, white');
+  // PL1: the label speaks the page's language, never English on a Chinese page.
+  const zhLabel = page.getByRole('group', { name: '谁可以看到' });
+  await expect(zhLabel).toHaveAttribute('lang', 'zh-Hans');
+  await expect(zhLabel).not.toContainText(/Can see it|Not stated|Who can see it/);
   await page.getByRole('button', { name: '有兴趣' }).click();
   await expect(page.getByRole('heading', { name: '您的留言' })).toBeVisible();
   await page.getByLabel('给团队的留言').fill('我们可以报价。');
@@ -440,6 +444,7 @@ test('the Chinese catalogue covers the page words, and the page sets its own lan
   await page.getByLabel('此报价中缺少或不确定的内容').fill('运费尚未确定');
   await page.getByRole('button', { name: '下一步' }).click();
   await expect(page.getByRole('heading', { name: '请检查您填写的内容' })).toBeVisible();
+  await expect(page.getByRole('group', { name: '谁可以看到' })).toHaveCount(1);
   await page.getByLabel(/这是我对此请求的个人声明/).check();
   await page.getByRole('button', { name: '发送', exact: true }).click();
   await expect(page.getByRole('heading', { name: '您的回答已记录' })).toBeVisible();
@@ -758,7 +763,20 @@ for (const width of [390, 1440]) {
   }) => {
     await page.setViewportSize({ width, height: 900 });
     const sent = await open(page);
+    // The answer phase: the same label once, before the opt-out and the three answers, which stay enabled.
+    const first = page.getByRole('group', { name: 'Who can see it' });
+    await expect(first).toHaveCount(1);
+    await expect(first.getByRole('listitem')).toHaveText([
+      'Anyone with this link until it expires Can see it',
+      'The team that sent you this request Can see it',
+      'The customer who asked for this introduction Not stated',
+    ]);
+    for (const answer of ['Interested', 'Need more information', 'Not relevant'])
+      await expect(page.getByRole('button', { name: answer, exact: true })).toBeEnabled();
+    expect((await new AxeBuilder({ page }).analyze()).violations.map((v) => v.id)).toEqual([]);
     await toMessage(page);
+    // The message step has no label: one per screen.
+    await expect(page.getByRole('group', { name: 'Who can see it' })).toHaveCount(0);
     await page.getByLabel('Your message to the team').fill('Please send more detail.');
     await page.getByRole('button', { name: 'Send my message without a quote' }).click();
     await expect(page.getByRole('heading', { name: 'Check what you typed' })).toBeVisible();

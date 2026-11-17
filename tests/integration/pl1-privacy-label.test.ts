@@ -94,6 +94,21 @@ describe('who can see it: the readers come only from confirmed code facts', () =
       ],
       // The reply link is bearer access only while the message has not expired.
       ['packages/db/migrations/0009_controlled_communications.sql', /AND c\.expires_at>now\(\)/],
+      // The decision card ends at withdrawal too; the report link at expiry or revocation (also in real use).
+      [
+        'packages/db/customer-decision-card-migrations/0001_decision_cards.sql',
+        /expires_at<=clock_timestamp\(\) OR EXISTS\(SELECT FROM customer_private\.decision_card_withdrawal WHERE card_id=card\.id\)/,
+      ],
+      [
+        'packages/db/customer-real-use-migrations/0009_real_report_links.sql',
+        /expires_at>now\(\);\s*\n[^\n]*EXISTS\(SELECT FROM app\.delivery_revocation WHERE tenant_id=l\.tenant_id AND link_id=l\.id\)/,
+      ],
+      // The answer phase writes buyer_response: read by the link (buyer_view) and by the sending workspace.
+      ['packages/db/migrations/0009_controlled_communications.sql', /'decision',answer\.status/],
+      [
+        'packages/db/migrations/0009_controlled_communications.sql',
+        /IF tbl IN \('buyer_link_revocation','buyer_response'\) THEN extra:='app\.buyer_link_access\(tenant_id,link_id\)'/,
+      ],
       // The sending workspace's members read replies (classification and purpose), and its owner or admin reviews.
       [
         'packages/db/migrations/0025_scoped_product_experience.sql',
@@ -124,10 +139,25 @@ describe('the words', () => {
       for (const key of keys)
         expect((catalog as Record<string, string>)[key], `${code} ${key}`).toBeTruthy();
   });
-  it('shows no unreviewed translation: every other language carries the English draft placeholder', () => {
-    for (const catalog of Object.values(catalogs))
+  it('has its own draft in every other language, so a non-English page never shows the English label', () => {
+    for (const [code, catalog] of Object.entries(catalogs)) {
+      if (code === 'en') continue;
       for (const key of keys)
-        expect((catalog as Record<string, string>)[key]).toBe((en as Record<string, string>)[key]);
+        expect((catalog as Record<string, string>)[key], `${code} ${key}`).not.toBe(
+          (en as Record<string, string>)[key],
+        );
+    }
+  });
+  it('says when a link stops working, in the same style for every link', () => {
+    expect(translate('en', 'privacy.reader.anyoneWithLink' as never)).toBe(
+      'Anyone with the link until it expires or is withdrawn',
+    );
+    expect(translate('en', 'privacy.reader.anyoneWithReportLink' as never)).toBe(
+      'Anyone with the original report link until it expires or is withdrawn',
+    );
+    expect(translate('en', 'privacy.reader.anyoneWithReplyLink' as never)).toBe(
+      'Anyone with this link until it expires',
+    );
   });
   it('has a word for every reader the lib can return', () => {
     for (const surface of privacySurfaces)
@@ -187,6 +217,20 @@ const panel = {
 };
 const decisions = [{ id: 'd1', company: 'A', decision: 'SELECT', requirementCurrent: true }];
 
+describe('in the page language', () => {
+  it('speaks the page language and sets its language and direction', async () => {
+    const { PrivacyLabel } = await loadWeb('components/privacy-label.tsx');
+    const zh = render(ce(PrivacyLabel, { surface: 'recipientReply', locale: 'zh' }));
+    expect(zh).toContain('lang="zh-Hans"');
+    expect(zh).toContain('谁可以看到');
+    expect(zh).not.toMatch(/Who can see it|Can see it|Not stated/);
+    const ar = render(ce(PrivacyLabel, { surface: 'recipientReply', locale: 'ar' }));
+    expect(ar).toContain('lang="ar"');
+    expect(ar).toContain('dir="rtl"');
+    expect(ar).not.toContain('Who can see it');
+  });
+});
+
 describe('on each surface, the label informs and changes no control', () => {
   it('decision card: shown with the preview and with the link, and the controls are exactly those on main', async () => {
     const { DecisionCardPanelView } = await loadWeb('app/account/missions/decision-card-panel.tsx');
@@ -236,8 +280,25 @@ describe('on each surface, the label informs and changes no control', () => {
   });
   it('reply journey and saved report: placed beside the existing send and report words, handlers untouched', () => {
     const journey = read('apps/web/app/buyer/reply-journey.tsx');
-    expect(journey).toMatch(
-      /<PrivacyLabel surface="recipientReply" \/>\s*<h3>\{words\.checkYourAnswer\}<\/h3>/,
+    // Once in the answer phase (before the opt-out and the three answers) and once on the check step: two screens,
+    // one label each, both in the page's language.
+    expect(
+      journey.match(/<PrivacyLabel surface="recipientReply" locale=\{language\} \/>/g),
+    ).toHaveLength(2);
+    const answer = journey.slice(
+      journey.indexOf("effective === 'answer'"),
+      journey.indexOf("effective === 'message'"),
+    );
+    expect(answer).toMatch(
+      /<PrivacyLabel surface="recipientReply" locale=\{language\} \/>\s*<label className="check-field">/,
+    );
+    expect(answer).toContain('onClick={() => onRespond(decision)}');
+    const check = journey.slice(
+      journey.indexOf("effective === 'check'"),
+      journey.indexOf("effective === 'receipt'"),
+    );
+    expect(check).toMatch(
+      /<PrivacyLabel surface="recipientReply" locale=\{language\} \/>\s*<h3>\{words\.checkYourAnswer\}<\/h3>/,
     );
     expect(journey).toContain(
       '<form onSubmit={(event) => void send(event)} noValidate aria-labelledby="reply-h">',

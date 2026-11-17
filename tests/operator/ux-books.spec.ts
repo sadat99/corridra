@@ -1238,7 +1238,7 @@ test('PL1 who can see it on the saved report: the readers, no control, axe clean
     await expect(label).toBeVisible();
     await expect(label.getByRole('listitem')).toHaveText([
       'You, who saved this report Can see it',
-      'Anyone with the original report link Can see it',
+      'Anyone with the original report link until it expires or is withdrawn Can see it',
       'Other people in your workspace Not stated',
       'The Corridra team Not stated',
     ]);

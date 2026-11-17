@@ -246,7 +246,7 @@ for (const width of [390, 1440]) {
     const label = page.getByRole('group', { name: 'Who can see it' });
     await expect(label).toBeVisible();
     await expect(label.getByRole('listitem')).toHaveText([
-      'Anyone with the link Can see it',
+      'Anyone with the link until it expires or is withdrawn Can see it',
       'You, who made the link Can see it',
       'Other people in your workspace Not stated',
       'The Corridra team Not stated',

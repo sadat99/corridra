@@ -25,7 +25,7 @@ const surfaces = {
   decisionCard: [
     {
       // app.read_decision_card(h) reads a card by the SHA-256 of its link secret, with no sign-in, until it expires
-      // (at most 168 hours after it was made) or is withdrawn. The panel already says so in its own words.
+      // (at most 168 hours after it was made) or is withdrawn (decision_card_withdrawal). The panel already says so.
       reader: 'privacy.reader.anyoneWithLink',
       status: 'confirmed',
       sourceNote:
@@ -54,7 +54,8 @@ const surfaces = {
     },
     {
       // The saved report is the original private report link: app.delivery_authorized(h, audience) opens it for
-      // whoever holds that link's token, until it expires or is revoked.
+      // whoever holds that link's token, until it expires (expires_at>now()) or is withdrawn (a delivery_revocation
+      // row); real-use 0009 keeps both conditions.
       reader: 'privacy.reader.anyoneWithReportLink',
       status: 'confirmed',
       sourceNote: 'packages/db/migrations/0016_scoped_delivery.sql:app.delivery_authorized',
@@ -62,7 +63,10 @@ const surfaces = {
     notStated('privacy.reader.workspace'),
     notStated('privacy.reader.corridra'),
   ],
-  // The recipient's reply (apps/web/app/buyer/recipient-response.tsx and reply-journey.tsx).
+  // The recipient's answer and reply (apps/web/app/buyer/recipient-response.tsx and reply-journey.tsx). The answer
+  // phase sends app.buyer_decide into app.buyer_response, the message and quote go to recipient_detail_response; both
+  // are read back by the link (app.buyer_view, app.recipient_detail_view) and by the sending workspace (0009:157-166
+  // buyer_response read policy; 0025 recipient_detail_response read policy), so one list is true for both.
   recipientReply: [
     {
       // Bearer access: app.recipient_detail_view(h) returns the recorded reply to whoever holds the link, with no
