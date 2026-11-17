@@ -4,6 +4,7 @@ import { realCustomerInput } from '@corridra/domain/customer-input-mode';
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import type { DeliveryReport } from '@corridra/delivery/report';
 import { MissionPassport } from '../../../components/mission-passport';
+import { PrivacyLabel } from '../../../components/privacy-label';
 import { MissionExperienceView } from '../../mission-experience-view';
 import { displayMoney } from '@corridra/domain/locale';
 import { formatMoment, formatUtcDay } from '../../../lib/ux/format';
@@ -309,6 +310,7 @@ function PrivateReport({
             Approved purpose: {data.purpose}. Original access expires {formatMoment(data.expiresAt)}
             .
           </p>
+          <PrivacyLabel surface="savedReport" />
           {data.missions.map((m) => {
             const intro = showCompare && showRest && (
               <>

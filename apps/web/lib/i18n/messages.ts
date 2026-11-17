@@ -4,6 +4,7 @@
 // are never shown to the public before that.
 import { organiseEntryWords } from './organise-entry-words';
 import { sellWords } from './sell-words';
+import { privacyDrafts, privacyEn } from './privacy-words';
 import { defaultLocale, type Locale } from './locales';
 import { homeEn, homeWords } from './home-words';
 import { programmePagesWords } from './programme-pages-words';
@@ -299,6 +300,7 @@ export const en = {
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
+  ...privacyEn,
   ...footerWords,
   ...headerWords,
   ...todayWords,
@@ -483,6 +485,7 @@ const bn: Catalog = {
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
+  ...privacyDrafts.bn,
   ...footerWords,
   ...headerWords,
   ...todayDrafts.bn,
@@ -654,6 +657,7 @@ const zh: Catalog = {
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
+  ...privacyDrafts.zh,
   ...footerWords,
   ...headerWords,
   ...todayDrafts.zh,
@@ -831,6 +835,7 @@ const es: Catalog = {
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
+  ...privacyDrafts.es,
   ...footerWords,
   ...headerWords,
   ...todayDrafts.es,
@@ -1006,6 +1011,7 @@ const ar: Catalog = {
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
+  ...privacyDrafts.ar,
   ...footerWords,
   ...headerWords,
   ...todayDrafts.ar,
@@ -1184,6 +1190,7 @@ const fr: Catalog = {
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
+  ...privacyDrafts.fr,
   ...footerWords,
   ...headerWords,
   ...todayDrafts.fr,
@@ -1367,6 +1374,7 @@ const de: Catalog = {
   ...tripWords,
   ...programmePagesWords,
   ...bookWords,
+  ...privacyDrafts.de,
   ...footerWords,
   ...headerWords,
   ...todayDrafts.de,

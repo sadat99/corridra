@@ -8,6 +8,7 @@ import {
   ParticipantRequestError,
 } from '../../components/private-capability';
 import { ParticipantScope } from '../../components/participant-scope';
+import { PrivacyLabel } from '../../components/privacy-label';
 import {
   buildReplyTerms,
   incoterms,
@@ -583,6 +584,7 @@ export function ReplyJourney({
               {data.sharedUncertainty && <p>{data.sharedUncertainty}</p>}
             </div>
           )}
+          <PrivacyLabel surface="recipientReply" locale={language} />
           <label className="check-field">
             <input
               type="checkbox"
@@ -771,6 +773,7 @@ export function ReplyJourney({
             {words.stepCheck}
           </h2>
           <p>{words.checkIntro}</p>
+          <PrivacyLabel surface="recipientReply" locale={language} />
           <h3>{words.checkYourAnswer}</h3>
           <p className="reply-typed">{body}</p>
           {meeting && <p>{words.checkMeeting}</p>}
