@@ -1,6 +1,7 @@
 import { geography as g } from './corridor-geography';
 
-const [dhaka, beijing, madrid] = [g.points.dhaka, g.points.beijing, g.points.madrid];
+// The EU is drawn to Brussels, where its institutions sit (owner decision 17 November 2026: Spain is no longer the route).
+const [dhaka, beijing, brussels] = [g.points.dhaka, g.points.beijing, g.points.brussels];
 
 /** A gentle curve between two projected points, bowed upward so the two corridors leave Bangladesh at clearly different angles. */
 function arc(from: readonly [number, number], to: readonly [number, number], bow: number) {
@@ -25,7 +26,7 @@ function arc(from: readonly [number, number], to: readonly [number, number], bow
 const band = '0 74 600 206';
 
 const chinaArc = arc(dhaka, beijing, 0.3);
-const europeArc = arc(dhaka, madrid, 0.2);
+const europeArc = arc(dhaka, brussels, 0.2);
 
 /**
  * Real country outlines with both commercial directions from Bangladesh always visible.
@@ -34,7 +35,7 @@ const europeArc = arc(dhaka, madrid, 0.2);
 export function CorridorMap({ company, market }: { company: string; market: string }) {
   const reverse = company !== 'BD';
   const chinaActive = market === 'CN' || company === 'CN';
-  const europeActive = market === 'ES' || market === 'EU' || company === 'ES';
+  const europeActive = market === 'ES' || market === 'EU' || company === 'ES' || company === 'EU';
   const arrow = reverse ? { markerStart: 'url(#map-arrow)' } : { markerEnd: 'url(#map-arrow)' };
   return (
     <svg viewBox={band} aria-hidden="true" className="ux-atlas-map" focusable="false">
@@ -53,7 +54,8 @@ export function CorridorMap({ company, market }: { company: string; market: stri
       </defs>
       <path className="ux-map-land" d={g.paths.other} />
       <path className={'ux-map-eu' + (europeActive ? ' is-active' : '')} d={g.paths.eu} />
-      <path className={'ux-map-spain' + (europeActive ? ' is-active' : '')} d={g.paths.spain} />
+      {/* Spain is one of the EU member states, drawn and coloured as the rest of the bloc. */}
+      <path className={'ux-map-eu' + (europeActive ? ' is-active' : '')} d={g.paths.spain} />
       <path className={'ux-map-china' + (chinaActive ? ' is-active' : '')} d={g.paths.china} />
       <path className="ux-map-bangladesh" d={g.paths.bangladesh} />
       <path
@@ -69,15 +71,12 @@ export function CorridorMap({ company, market }: { company: string; market: stri
       <circle className="ux-map-halo" cx={dhaka[0]} cy={dhaka[1]} r="13" />
       <circle className="ux-map-pin ux-map-pin-home" cx={dhaka[0]} cy={dhaka[1]} r="5" />
       <circle className="ux-map-pin" cx={beijing[0]} cy={beijing[1]} r="4" />
-      <circle className="ux-map-pin" cx={madrid[0]} cy={madrid[1]} r="4" />
+      <circle className="ux-map-pin" cx={brussels[0]} cy={brussels[1]} r="4" />
       <text className="ux-map-label" x={dhaka[0] - 28} y={dhaka[1] + 34}>
         Bangladesh
       </text>
       <text className="ux-map-label ux-map-label-dark" x={beijing[0] - 10} y={beijing[1] + 34}>
         China
-      </text>
-      <text className="ux-map-label ux-map-label-dark" x={madrid[0] - 14} y={madrid[1] + 30}>
-        Spain
       </text>
       <text className="ux-map-label" x={g.points.brussels[0] + 20} y={g.points.brussels[1] - 4}>
         EU
