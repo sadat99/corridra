@@ -97,10 +97,13 @@ function Steps({ content }: { content: PublicPageContent }) {
 export function PublicPage({
   content,
   after,
+  more,
 }: {
   content: PublicPageContent;
   /** An optional section shown after the approach and before Show More. Nothing is rendered when absent. */
   after?: ReactNode;
+  /** Optional sections added at the end of the closed Show More disclosure, so the page length is unchanged. */
+  more?: ReactNode;
 }) {
   const labelled = content.sections.some((section) => section.tag);
   const heroHref =
@@ -266,6 +269,8 @@ export function PublicPage({
             </Link>
           </section>
         )}
+
+        {more}
       </details>
     </PublicShell>
   );

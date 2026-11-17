@@ -58,132 +58,139 @@ export function HomeSell() {
         </div>
       </div>
 
-      <fieldset className="tr-market">
-        <legend>{t('home.tr.mk.legend')}</legend>
-        <div className="tr-chips">
-          {marketKeys.map((m) => (
-            <Choice
-              key={m}
-              name="home-market"
-              value={m}
-              checked={market === m}
-              onChoose={() => setMarket(m)}
-              label={t(key(`home.tr.mk.${m}`))}
-            />
-          ))}
-        </div>
-        <p className="tr-market-line" aria-live="polite">
-          <strong>{t(key(`home.tr.mk.${market}.line.head`))}</strong>{' '}
-          {t(key(`home.tr.mk.${market}.line`))}
-        </p>
-      </fieldset>
+      <details className="tr-fold">
+        <summary>{t('home.tr.w.title')}</summary>
+        <div className="tr-fold-body">
+          <fieldset className="tr-market">
+            <legend>{t('home.tr.mk.legend')}</legend>
+            <div className="tr-chips">
+              {marketKeys.map((m) => (
+                <Choice
+                  key={m}
+                  name="home-market"
+                  value={m}
+                  checked={market === m}
+                  onChoose={() => setMarket(m)}
+                  label={t(key(`home.tr.mk.${m}`))}
+                />
+              ))}
+            </div>
+            <p className="tr-market-line" aria-live="polite">
+              <strong>{t(key(`home.tr.mk.${market}.line.head`))}</strong>{' '}
+              {t(key(`home.tr.mk.${market}.line`))}
+            </p>
+          </fieldset>
 
-      <h3 className="tr-h3">{t('home.tr.w.title')}</h3>
-      <p className="tr-brief">
-        <span className="ac1-example-tag">{t('home.tr.w.brief')}</span>
-        <span>
-          <strong>{t('home.tr.w.brief.lead')}</strong> {t(key(`home.tr.mk.${market}.brief`))}
-        </span>
-      </p>
-      <fieldset className="tr-steps">
-        <legend>{t('home.tr.w.steps')}</legend>
-        <div className="tr-chips">
-          {([1, 2, 3] as const).map((n) => (
-            <Choice
-              key={n}
-              name="home-worth-step"
-              value={String(n)}
-              checked={step === n}
-              onChoose={() => setStep(n)}
-              label={`${n}. ${t(key(`home.tr.w.step${n}`))}`}
-            />
-          ))}
-        </div>
-      </fieldset>
-      <p className="tr-sum" aria-live="polite">
-        <span className="tr-big">{summary}</span> {t(key(`home.tr.w.sum${step}`))}
-      </p>
-      <div className="tr-scroll" tabIndex={0} role="region" aria-label={t('home.tr.w.aria')}>
-        <table className="tr-table tr-worth">
-          <thead>
-            <tr>
-              <th scope="col">{t('home.tr.w.col.company')}</th>
-              <th scope="col">{t('home.tr.w.col.fair')}</th>
-              <th scope="col">{t('home.tr.w.col.read')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {step === 3
-              ? example.outside.map((company, i) => (
-                  <tr key={company.name} className="is-out">
-                    <th scope="row">
-                      <strong>{company.name}</strong>
-                      <span>{company.place}</span>
-                    </th>
-                    <td>
-                      <span className="tr-off">{t('home.tr.w.off')}</span>
-                    </td>
-                    <td>
-                      <p className="tr-read">
-                        <span className="tr-state is-yes">{t('home.tr.w.worth')}</span>
-                        <FactLabel label={outsideLabels[i]} english />
-                      </p>
-                      <p>{t(key(`home.tr.w.out.why.${i}`))}</p>
-                      <p className="tr-small">
-                        {t(key(`home.tr.w.note.o${i}`))}. {t('home.tr.w.example')}
-                      </p>
-                    </td>
-                  </tr>
-                ))
-              : null}
-            {ordered.map(({ company, index }) => {
-              const fit = fairFits[index];
-              const label = fairLabels[index];
-              return (
-                <tr key={company.name} className={step > 1 && !fit ? 'is-no' : undefined}>
-                  <th scope="row">
-                    <strong>{company.name}</strong>
-                    <span>{company.place}</span>
-                  </th>
-                  <td>{t(key(`home.tr.w.as.${index}`))}</td>
-                  <td>
-                    {step === 1 ? (
-                      <span className="guide-tag" data-tone="unknown">
-                        {t('home.tr.w.notChecked')}
-                      </span>
-                    ) : (
-                      <>
-                        <p className="tr-read">
-                          <span className={fit ? 'tr-state is-yes' : 'tr-state is-no'}>
-                            {t(fit ? 'home.tr.w.worth' : 'home.tr.w.notFit')}
-                          </span>
-                          {fit && label ? <FactLabel label={label} english /> : null}
-                        </p>
-                        <p>{t(key(`home.tr.w.why.${index}`))}</p>
-                        {fit ? (
-                          <p className="tr-small">
-                            {t(key(`home.tr.w.note.f${index}`))}. {t('home.tr.w.example')}
-                          </p>
-                        ) : null}
-                      </>
-                    )}
-                  </td>
+          <p className="tr-brief">
+            <span className="ac1-example-tag">{t('home.tr.w.brief')}</span>
+            <span>
+              <strong>{t('home.tr.w.brief.lead')}</strong> {t(key(`home.tr.mk.${market}.brief`))}
+            </span>
+          </p>
+          <fieldset className="tr-steps">
+            <legend>{t('home.tr.w.steps')}</legend>
+            <div className="tr-chips">
+              {([1, 2, 3] as const).map((n) => (
+                <Choice
+                  key={n}
+                  name="home-worth-step"
+                  value={String(n)}
+                  checked={step === n}
+                  onChoose={() => setStep(n)}
+                  label={`${n}. ${t(key(`home.tr.w.step${n}`))}`}
+                />
+              ))}
+            </div>
+          </fieldset>
+          <p className="tr-sum" aria-live="polite">
+            <span className="tr-big">{summary}</span> {t(key(`home.tr.w.sum${step}`))}
+          </p>
+          <div className="tr-scroll" tabIndex={0} role="region" aria-label={t('home.tr.w.aria')}>
+            <table className="tr-table tr-worth">
+              <thead>
+                <tr>
+                  <th scope="col">{t('home.tr.w.col.company')}</th>
+                  <th scope="col">{t('home.tr.w.col.fair')}</th>
+                  <th scope="col">{t('home.tr.w.col.read')}</th>
                 </tr>
-              );
+              </thead>
+              <tbody>
+                {step === 3
+                  ? example.outside.map((company, i) => (
+                      <tr key={company.name} className="is-out">
+                        <th scope="row">
+                          <strong>{company.name}</strong>
+                          <span>{company.place}</span>
+                        </th>
+                        <td>
+                          <span className="tr-off">{t('home.tr.w.off')}</span>
+                        </td>
+                        <td>
+                          <p className="tr-read">
+                            <span className="tr-state is-yes">{t('home.tr.w.worth')}</span>
+                            <FactLabel label={outsideLabels[i]} english />
+                          </p>
+                          <p>{t(key(`home.tr.w.out.why.${i}`))}</p>
+                          <p className="tr-small">
+                            {t(key(`home.tr.w.note.o${i}`))}. {t('home.tr.w.example')}
+                          </p>
+                        </td>
+                      </tr>
+                    ))
+                  : null}
+                {ordered.map(({ company, index }) => {
+                  const fit = fairFits[index];
+                  const label = fairLabels[index];
+                  return (
+                    <tr key={company.name} className={step > 1 && !fit ? 'is-no' : undefined}>
+                      <th scope="row">
+                        <strong>{company.name}</strong>
+                        <span>{company.place}</span>
+                      </th>
+                      <td>{t(key(`home.tr.w.as.${index}`))}</td>
+                      <td>
+                        {step === 1 ? (
+                          <span className="guide-tag" data-tone="unknown">
+                            {t('home.tr.w.notChecked')}
+                          </span>
+                        ) : (
+                          <>
+                            <p className="tr-read">
+                              <span className={fit ? 'tr-state is-yes' : 'tr-state is-no'}>
+                                {t(fit ? 'home.tr.w.worth' : 'home.tr.w.notFit')}
+                              </span>
+                              {fit && label ? <FactLabel label={label} english /> : null}
+                            </p>
+                            <p>{t(key(`home.tr.w.why.${index}`))}</p>
+                            {fit ? (
+                              <p className="tr-small">
+                                {t(key(`home.tr.w.note.f${index}`))}. {t('home.tr.w.example')}
+                              </p>
+                            ) : null}
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="tr-small">
+            <span className="ac1-example-tag">{t('home.tr.q.example')}</span>{' '}
+            {fill(t('home.tr.w.note'), {
+              selfDeclared: 'Self-declared',
+              evidence: 'Evidence available',
+              verified: 'Verified',
             })}
-          </tbody>
-        </table>
-      </div>
-      <p className="tr-small">
-        <span className="ac1-example-tag">{t('home.tr.q.example')}</span>{' '}
-        {fill(t('home.tr.w.note'), {
-          selfDeclared: 'Self-declared',
-          evidence: 'Evidence available',
-          verified: 'Verified',
-        })}
-      </p>
+          </p>
+        </div>
+      </details>
 
       <Calculator market={market} />
+      <Link prefetch={false} className="primary-link" href={routeHref.sell}>
+        {t('home.tr.cta.sell')} <Arrow />
+      </Link>
     </section>
   );
 }
@@ -290,116 +297,124 @@ function Calculator({ market }: { market: MarketKey }) {
         : `${t(key(`home.tr.fc.cur.${market}`))} ${t('home.tr.fc.cur.change')}`;
   return (
     <>
-      <h3 className="tr-h3">{t('home.tr.fc.title')}</h3>
-      <p className="tr-sub">{t('home.tr.fc.lead')}</p>
-      <div className="tr-calc">
-        <div className="tr-panel">
-          <fieldset className="tr-steps">
-            <legend>{t('home.tr.fc.currency')}</legend>
-            <div className="tr-chips">
-              {calculatorCurrencies.map((c) => (
-                <Choice
-                  key={c}
-                  name="home-currency"
-                  value={c}
-                  checked={currency === c}
-                  onChoose={() => setChosen(c)}
-                  label={c}
-                />
-              ))}
-            </div>
-          </fieldset>
-          <p className="tr-small" aria-live="polite">
-            {note}
-          </p>
-          <div className="tr-fields">
-            {fields.map((f) => {
-              const id = `${prefix}-${f.id}`;
-              return (
-                <div className="tr-field" key={f.id}>
-                  <label htmlFor={id}>
-                    {t(f.label)}
-                    {f.money ? <span> ({currency})</span> : null}
-                  </label>
-                  <input
-                    id={id}
-                    type="number"
-                    inputMode={f.whole ? 'numeric' : 'decimal'}
-                    min={0}
-                    step={f.whole ? 1 : 'any'}
-                    value={values[f.id]}
-                    aria-invalid={errors[f.id] ? true : undefined}
-                    aria-describedby={`${id}-error`}
-                    onChange={(event) => set(f.id, event.target.value)}
-                  />
-                  <p className="tr-error" id={`${id}-error`} aria-live="polite">
-                    {errors[f.id] ? t(errors[f.id]!) : null}
-                  </p>
+      <details className="tr-fold">
+        <summary>{t('home.tr.fc.title')}</summary>
+        <div className="tr-fold-body">
+          <p className="tr-sub">{t('home.tr.fc.lead')}</p>
+          <div className="tr-calc">
+            <div className="tr-panel">
+              <fieldset className="tr-steps">
+                <legend>{t('home.tr.fc.currency')}</legend>
+                <div className="tr-chips">
+                  {calculatorCurrencies.map((c) => (
+                    <Choice
+                      key={c}
+                      name="home-currency"
+                      value={c}
+                      checked={currency === c}
+                      onChoose={() => setChosen(c)}
+                      label={c}
+                    />
+                  ))}
                 </div>
-              );
-            })}
+              </fieldset>
+              <p className="tr-small" aria-live="polite">
+                {note}
+              </p>
+              <div className="tr-fields">
+                {fields.map((f) => {
+                  const id = `${prefix}-${f.id}`;
+                  return (
+                    <div className="tr-field" key={f.id}>
+                      <label htmlFor={id}>
+                        {t(f.label)}
+                        {f.money ? <span> ({currency})</span> : null}
+                      </label>
+                      <input
+                        id={id}
+                        type="number"
+                        inputMode={f.whole ? 'numeric' : 'decimal'}
+                        min={0}
+                        step={f.whole ? 1 : 'any'}
+                        value={values[f.id]}
+                        aria-invalid={errors[f.id] ? true : undefined}
+                        aria-describedby={`${id}-error`}
+                        onChange={(event) => set(f.id, event.target.value)}
+                      />
+                      <p className="tr-error" id={`${id}-error`} aria-live="polite">
+                        {errors[f.id] ? t(errors[f.id]!) : null}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="tr-small">{t('home.tr.fc.help')}</p>
+            </div>
+            <div className="tr-result" aria-live="polite">
+              <p className="label">{t('home.tr.fc.result')}</p>
+              <p className="tr-total">
+                <small>
+                  {total > 0
+                    ? fill(t('home.tr.fc.total.in'), { cur: currency })
+                    : t('home.tr.fc.total')}
+                </small>
+                {total > 0 ? money(total) : t('home.tr.fc.add')}
+              </p>
+              <dl className="tr-breakdown">
+                <div>
+                  <dt>{t('home.tr.fc.b.stand')}</dt>
+                  <dd>{line(stand)}</dd>
+                </div>
+                <div>
+                  <dt>{t('home.tr.fc.b.flights')}</dt>
+                  <dd>{line(flights)}</dd>
+                </div>
+                <div>
+                  <dt>{t('home.tr.fc.b.hotel')}</dt>
+                  <dd>{line(hotel)}</dd>
+                </div>
+                <div>
+                  <dt>{t('home.tr.fc.b.samples')}</dt>
+                  <dd>{line(samples)}</dd>
+                </div>
+                <div>
+                  <dt>{t('home.tr.fc.b.meeting')}</dt>
+                  <dd>
+                    {total > 0 && meetings > 0
+                      ? money(total / meetings)
+                      : t('home.tr.fc.b.addMeet')}
+                  </dd>
+                </div>
+              </dl>
+              {left.length ? (
+                <p className="tr-warn">{fill(t('home.tr.fc.left'), { names: left.join(', ') })}</p>
+              ) : null}
+              <p className="tr-frame">
+                {total > 0
+                  ? fill(t('home.tr.fc.frame.n'), { amount: money(total) })
+                  : t('home.tr.fc.frame')}
+              </p>
+              {total > 0 && meetings > 1 ? (
+                <p className="tr-small">
+                  {fill(t('home.tr.fc.half'), {
+                    m: meetings,
+                    each: money(total / meetings),
+                    half,
+                    each2: money(total / half),
+                  })}
+                </p>
+              ) : null}
+              {total > 0 && meetings === 1 ? (
+                <p className="tr-small">{t('home.tr.fc.one')}</p>
+              ) : null}
+              <p className="tr-small">{t('home.tr.fc.after')}</p>
+              <Link prefetch={false} className="primary-link" href={routeHref.sell}>
+                {t('home.tr.fc.cta')} <Arrow />
+              </Link>
+            </div>
           </div>
-          <p className="tr-small">{t('home.tr.fc.help')}</p>
         </div>
-        <div className="tr-result" aria-live="polite">
-          <p className="label">{t('home.tr.fc.result')}</p>
-          <p className="tr-total">
-            <small>
-              {total > 0
-                ? fill(t('home.tr.fc.total.in'), { cur: currency })
-                : t('home.tr.fc.total')}
-            </small>
-            {total > 0 ? money(total) : t('home.tr.fc.add')}
-          </p>
-          <dl className="tr-breakdown">
-            <div>
-              <dt>{t('home.tr.fc.b.stand')}</dt>
-              <dd>{line(stand)}</dd>
-            </div>
-            <div>
-              <dt>{t('home.tr.fc.b.flights')}</dt>
-              <dd>{line(flights)}</dd>
-            </div>
-            <div>
-              <dt>{t('home.tr.fc.b.hotel')}</dt>
-              <dd>{line(hotel)}</dd>
-            </div>
-            <div>
-              <dt>{t('home.tr.fc.b.samples')}</dt>
-              <dd>{line(samples)}</dd>
-            </div>
-            <div>
-              <dt>{t('home.tr.fc.b.meeting')}</dt>
-              <dd>
-                {total > 0 && meetings > 0 ? money(total / meetings) : t('home.tr.fc.b.addMeet')}
-              </dd>
-            </div>
-          </dl>
-          {left.length ? (
-            <p className="tr-warn">{fill(t('home.tr.fc.left'), { names: left.join(', ') })}</p>
-          ) : null}
-          <p className="tr-frame">
-            {total > 0
-              ? fill(t('home.tr.fc.frame.n'), { amount: money(total) })
-              : t('home.tr.fc.frame')}
-          </p>
-          {total > 0 && meetings > 1 ? (
-            <p className="tr-small">
-              {fill(t('home.tr.fc.half'), {
-                m: meetings,
-                each: money(total / meetings),
-                half,
-                each2: money(total / half),
-              })}
-            </p>
-          ) : null}
-          {total > 0 && meetings === 1 ? <p className="tr-small">{t('home.tr.fc.one')}</p> : null}
-          <p className="tr-small">{t('home.tr.fc.after')}</p>
-          <Link prefetch={false} className="primary-link" href={routeHref.sell}>
-            {t('home.tr.fc.cta')} <Arrow />
-          </Link>
-        </div>
-      </div>
+      </details>
     </>
   );
 }

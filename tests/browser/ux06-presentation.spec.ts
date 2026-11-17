@@ -19,8 +19,7 @@ test('UX-06 the home is one question, and the route explorer and mission guide k
   await expect(
     page.getByRole('navigation', { name: 'Choose your commercial objective' }).getByRole('link'),
   ).toHaveCount(3);
-  // The mission line of the Two Routes home (17 November 2026) lists its fourteen steps, seven of them optional.
-  await expect(page.getByRole('list', { name: 'Mission steps' }).locator('li')).toHaveCount(14);
+  // The mission line (fourteen steps, six of them optional) moved from the home to /how-it-works on 17 November 2026.
   // The footer has its own How We Label Facts link, so the home's link is found in the page content.
   await expect(
     page.getByRole('main').getByRole('link', { name: 'How we label facts' }),

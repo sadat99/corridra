@@ -1375,3 +1375,208 @@
 .tr-ledger-row p {
   margin: 0;
 }
+
+.tr-pointers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tr-more-sections {
+  display: grid;
+  gap: var(--space-4);
+}
+.tr-more-sections .tr-section {
+  margin-top: 0;
+}
+
+/* The worked examples sit behind closed disclosures, so the page is measured with them closed (UI direction). */
+.tr-fold {
+  margin-top: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+}
+.tr-fold > summary {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: var(--space-2) min(var(--space-4), 4vw);
+  font-family: var(--serif);
+  font-size: var(--text-lg);
+  line-height: 1.3;
+  cursor: pointer;
+}
+.tr-fold-body {
+  padding: 0 min(var(--space-4), 4vw) var(--space-4);
+}
+.tr-fold-body > :first-child {
+  margin-top: 0;
+}
+
+/* Compact layout, so the home fits its length budget with the long sections moved off it. */
+.tr-reverse {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tr-reverse > div {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.tr-reverse strong {
+  margin-right: var(--space-2);
+}
+.tr-navy .primary-link {
+  margin-top: var(--space-3);
+}
+.tr-jobs-lead {
+  margin: var(--space-3) 0 var(--space-2);
+}
+.tr-jobs.ac1-jobs {
+  gap: var(--space-1);
+}
+.tr-jobs .ac1-job {
+  min-height: 3.25rem;
+  padding-block: var(--space-1);
+}
+.tr-pointers {
+  gap: 0 var(--space-4);
+}
+.tr-light-link {
+  margin-top: 0;
+}
+@media (max-width: 47.99rem) {
+  .tr-doors-small {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+  .tr-doors-small .tr-door label {
+    padding: var(--space-2);
+  }
+  .tr-bar-buttons {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .tr-bar-buttons button {
+    padding-inline: var(--space-1);
+  }
+  .tr-home .tr-hero {
+    gap: var(--space-2);
+  }
+  .tr-three li {
+    padding: var(--space-2) var(--space-3);
+  }
+  .tr-opens button {
+    padding: var(--space-2) var(--space-3);
+  }
+}
+@media (min-width: 48rem) {
+  .tr-jobs.ac1-jobs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 47.99rem) {
+  .tr-opens {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+  .tr-more {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-1);
+  }
+  .tr-more p {
+    grid-column: 1 / -1;
+  }
+  .tr-three {
+    gap: var(--space-2);
+  }
+  .tr-home .tr-section h2 {
+    margin-block: var(--space-1) var(--space-2);
+  }
+  .tr-jobs .ac1-job {
+    grid-template-columns: minmax(0, 1fr) 1.25rem;
+    min-height: 0;
+  }
+  .tr-jobs .ac1-job-icon {
+    display: none;
+  }
+}
+
+@media (max-width: 47.99rem) {
+  .tr-home .tr-hero,
+  .tr-home .tr-section {
+    margin-top: var(--space-3);
+    padding-block: var(--space-4);
+  }
+  .tr-doors legend {
+    font-size: var(--text-lg);
+  }
+  .tr-door label {
+    padding-block: var(--space-2);
+  }
+  .tr-intro {
+    gap: var(--space-2);
+  }
+  .tr-tests {
+    padding: var(--space-2) var(--space-3);
+  }
+  .tr-pointers {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 47.99rem) {
+  .tr-fold {
+    margin-top: var(--space-2);
+  }
+  .tr-fold > summary {
+    padding-block: var(--space-1);
+  }
+  .tr-home .tr-section h2 {
+    font-size: var(--text-2xl);
+  }
+}
+
+/* A section that moved off the home sits closed under its own heading, so its page keeps its length budget. */
+.tr-fold-section {
+  padding: 0;
+}
+.tr-fold-section > summary {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: var(--space-2) min(var(--space-4), 4vw);
+  cursor: pointer;
+}
+.tr-home .tr-fold-section > summary h2 {
+  margin: 0;
+  font-size: var(--text-h2);
+  line-height: 1.2;
+}
+.tr-fold-section > .tr-fold-body {
+  padding: 0 min(var(--space-4), 4vw) var(--space-4);
+}
+.tr-fold-section > .tr-fold-body > .label {
+  margin-bottom: var(--space-2);
+}
+
+/* Controls that sit side by side or one above another keep at least 8 px between them. */
+.tr-jobs.ac1-jobs {
+  gap: var(--space-2);
+}
+.tr-pointers {
+  gap: var(--space-2) var(--space-4);
+}
+@media (max-width: 47.99rem) {
+  .tr-more {
+    gap: var(--space-2);
+  }
+}

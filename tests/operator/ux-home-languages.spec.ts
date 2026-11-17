@@ -24,7 +24,6 @@ const fontCss = `
 @font-face{font-family:'FxBengaliSans';src:url('/fonts/noto-sans-bengali-variable.woff2') format('woff2');font-weight:100 900}
 @font-face{font-family:'FxBengaliSerif';src:url('/fonts/noto-serif-bengali-variable.woff2') format('woff2');font-weight:100 900}
 :root{--font-geist:'FxGeist';--font-newsreader:'FxNewsreader';--font-bengali-sans:'FxBengaliSans';--font-bengali:'FxBengaliSerif';--font-geist-mono:'DejaVu Sans Mono'}`;
-const trustNames = ['Self-declared', 'Evidence available', 'Verified'];
 
 test.beforeAll(async () => {
   const result = await build({
@@ -128,15 +127,8 @@ for (const code of localeCodes) {
     await expect(main).toHaveAttribute('dir', localeMeta[code].dir);
     await expect(page.locator('h1')).toHaveText(translate(code, 'home.title'));
     await expect(page.locator('.tr-lead')).toHaveText(translate(code, 'home.tr.lead'));
-    // Two Routes (17 November 2026): the five trust names stay English in every language.
-    await expect(page.locator('.tr-five .guide-tag')).toHaveCount(5);
-    for (const tag of await page.locator('.tr-five .guide-tag').all())
-      await expect(tag).toHaveAttribute('lang', 'en');
-    expect(await page.locator('.tr-five .guide-tag').allInnerTexts()).toEqual([
-      ...trustNames,
-      'Derived',
-      'Outcome observed',
-    ]);
+    // The five trust labels moved to /trust on 17 November 2026; the home draws none of them any more.
+    await expect(page.locator('.tr-five')).toHaveCount(0);
     if (code !== 'en')
       await expect(page.locator('h1')).not.toHaveText(translate('en', 'home.title'));
   });
@@ -261,7 +253,7 @@ test('a reading stops when the page or its language changes, so it is never left
   await expect(page.getByRole('button', { name: 'Stop Reading' })).toHaveCount(0);
 });
 
-test('read right to left, arrows point the other way and the arrow keys swap on the people tabs', async ({
+test('read right to left, arrows point the other way (the people tabs, with their swapped arrow keys, moved to /how-it-works)', async ({
   page,
 }) => {
   const transform = () =>
@@ -273,14 +265,6 @@ test('read right to left, arrows point the other way and the arrow keys swap on 
   await page.goto(`${origin}/?pages=1`);
   await expect(page.locator('main#main')).toHaveAttribute('dir', 'rtl');
   expect(await transform()).toBe('matrix(-1, 0, 0, 1, 0, 0)');
-  const tabs = page.getByRole('tab');
-  await tabs.first().focus();
-  await page.keyboard.press('ArrowLeft');
-  await expect(tabs.nth(1)).toBeFocused();
-  await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true');
-  await page.keyboard.press('ArrowRight');
-  await expect(tabs.first()).toBeFocused();
-
   const english = await page.context().newPage();
   await english.addInitScript((v) => localStorage.setItem('corridra.language', v), 'en');
   await english.goto(`${origin}/?pages=1`);
@@ -290,10 +274,6 @@ test('read right to left, arrows point the other way and the arrow keys swap on 
       .first()
       .evaluate((el) => getComputedStyle(el).transform),
   ).toBe('none');
-  const englishTabs = english.getByRole('tab');
-  await englishTabs.first().focus();
-  await english.keyboard.press('ArrowRight');
-  await expect(englishTabs.nth(1)).toBeFocused();
 });
 
 for (const width of [320, 390, 768, 1440]) {

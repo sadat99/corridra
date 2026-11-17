@@ -48,30 +48,37 @@ test('the first screen says what Corridra is, offers the doors and the first act
   }
 });
 
-// Interim ceiling, not the owner budget. The board holds far more than 3.0 and 4.25 screens: the measured lengths are
-// in the PR and the owner decides what goes. This ceiling only stops the page growing further meanwhile.
-test('page length stays at or under the measured ceiling, for every route', async ({ page }) => {
+// Owner, 17 November 2026, "go ahead with the height": the home fits the standing budget, 3.0 screens at 1440 x 900
+// and 4.25 at 390 x 844, footer included, with the worked examples closed. The long sections moved to /how-it-works,
+// /trust and /corridors. All Routes (a reviewer's view of three routes at once) is measured and reported, not held.
+test('the home fits 3.0 screens at 1440 x 900 and 4.25 at 390 x 844, first visit and every door', async ({
+  page,
+}) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const measured: string[] = [];
   for (const [name, size] of Object.entries(sizes)) {
     await page.setViewportSize(size);
     await page.goto('/');
     await page.evaluate(() => document.fonts.ready);
-    for (const route of [
-      'China Route',
-      'Sell Abroad',
-      'Delegation',
-      'Something Else',
-      'All Routes',
-    ]) {
+    const limit = name === 'desktop' ? 3.0 : 4.25;
+    const first = await screens(page);
+    measured.push(`${name} first visit ${first.toFixed(2)}`);
+    expect(first, `${name} first visit`).toBeLessThanOrEqual(limit);
+    for (const route of ['China Route', 'Sell Abroad', 'Delegation', 'Something Else']) {
       await bar(page).getByRole('button', { name: route, exact: true }).click();
       const length = await screens(page);
       measured.push(`${name} ${route} ${length.toFixed(2)}`);
-      expect(length, `${name} ${route}`).toBeLessThanOrEqual(name === 'desktop' ? 11 : 22);
+      expect(length, `${name} ${route}`).toBeLessThanOrEqual(limit);
     }
+    await bar(page).getByRole('button', { name: 'All Routes', exact: true }).click();
+    measured.push(`${name} All Routes ${(await screens(page)).toFixed(2)} (not held)`);
   }
   test.info().annotations.push({ type: 'page-length', description: measured.join(', ') });
 });
+
+// The worked examples are closed disclosures; a test that uses one opens it first.
+const openFold = (scope: Locator, name: string | RegExp) =>
+  scope.locator('summary', { hasText: name }).click();
 
 for (const [label, route, cta, href, section] of [
   [
@@ -160,6 +167,7 @@ test('the quote check names what each price leaves out, tags every quote Example
   await page.goto('/');
   await door(page, 'Buying from China').click();
   const china = page.locator('#route-china');
+  await openFold(china, 'Three suppliers quote');
   await expect(china.locator('.ac1-example-tag', { hasText: 'Example' }).first()).toBeVisible();
   await expect(china.getByRole('article')).toHaveCount(3);
   await expect(china.getByText('Not stated', { exact: true }).first()).toBeVisible();
@@ -184,6 +192,7 @@ test('the quote check names what each price leaves out, tags every quote Example
 test('the visit day shows both clocks, Dhaka two hours behind Guangzhou', async ({ page }) => {
   await page.goto('/');
   await door(page, 'Buying from China').click();
+  await openFold(page.locator('#route-china'), 'A factory-visit day');
   const stops = page.getByRole('list', { name: 'Stops in the visit day' });
   await expect(stops.getByRole('button')).toHaveCount(6);
   for (const [stop, gz, dh] of [
@@ -208,6 +217,7 @@ test('Sell Abroad follows the market, steps from 8 names to 5 worth meeting and 
   await page.goto('/');
   await door(page, 'Sell Abroad').click();
   const sell = page.locator('#route-sell');
+  await openFold(sell, 'Who is worth meeting?');
   const rows = sell
     .getByRole('region', { name: 'Example companies: fair list compared with a qualified list' })
     .locator('tbody tr');
@@ -237,6 +247,8 @@ test('the fair calculator adds the numbers on the page, never converts and keeps
   await page.goto('/');
   await door(page, 'Sell Abroad').click();
   const sell = page.locator('#route-sell');
+  await openFold(sell, 'Who is worth meeting?');
+  await openFold(sell, 'What would one unproductive fair cost you?');
   await expect(sell.getByRole('radio', { name: 'EUR' })).toBeChecked();
   await sell.getByLabel('People going').fill('2');
   await sell.getByLabel('Days away, with travel').fill('5');
@@ -271,6 +283,7 @@ test('the delegation example shows private rows, a programme total and what the 
   await page.goto('/');
   await door(page, 'Leading a delegation').click();
   const del = page.locator('#route-delegation');
+  await openFold(del, 'Example programme view');
   await expect(del.getByRole('row')).toHaveCount(5);
   await expect(
     del.getByText('Programme total: 4 companies, 3 met at least one counterpart'),
@@ -279,8 +292,11 @@ test('the delegation example shows private rows, a programme total and what the 
   await expect(del.locator('.ac1-example-tag')).toHaveText('Example');
 });
 
-test('the eight people work by keyboard as one tab group', async ({ page }) => {
-  await page.goto('/');
+test('the eight people (now on /how-it-works) work by keyboard as one tab group', async ({
+  page,
+}) => {
+  await page.goto('/how-it-works');
+  await page.locator('details.guide-more > summary').click();
   const tabs = page.getByRole('tablist', { name: 'Who are you?' });
   await expect(tabs.getByRole('tab')).toHaveCount(8);
   await tabs.getByRole('tab', { name: 'Exporter' }).focus();
@@ -295,7 +311,7 @@ test('the eight people work by keyboard as one tab group', async ({ page }) => {
     'aria-selected',
     'true',
   );
-  await expect(page.getByRole('tabpanel')).toContainText('Your skills. Your time. Your location.');
+  await expect(page.locator('#who-panel')).toContainText('Your skills. Your time. Your location.');
   await page.keyboard.press('Home');
   await expect(tabs.getByRole('tab', { name: 'Exporter' })).toHaveAttribute(
     'aria-selected',
@@ -303,10 +319,14 @@ test('the eight people work by keyboard as one tab group', async ({ page }) => {
   );
 });
 
-test('the five trust labels, eight questions and eight statements of what Corridra is not are on the page', async ({
+const openAll = (page: Page) =>
+  page.evaluate(() => document.querySelectorAll('details').forEach((fold) => (fold.open = true)));
+
+test('the long sections moved off the home keep their words, behind Show More on /how-it-works and /trust', async ({
   page,
 }) => {
-  await page.goto('/');
+  await page.goto('/trust');
+  await openAll(page);
   const trust = page.locator('#trust');
   for (const label of [
     'Self-declared',
@@ -316,13 +336,23 @@ test('the five trust labels, eight questions and eight statements of what Corrid
     'Outcome observed',
   ])
     await expect(trust.locator('.tr-five').getByText(label, { exact: true })).toBeVisible();
-  await expect(trust.getByRole('link', { name: 'How We Label Facts' })).toHaveAttribute(
-    'href',
-    '/trust',
-  );
+  await expect(trust.getByText('History: what happened stays what happened')).toBeVisible();
+  await page.goto('/how-it-works');
+  await openAll(page);
   await expect(page.locator('#faq details')).toHaveCount(8);
-  await expect(page.locator('.tr-nots > div')).toHaveCount(8);
+  await expect(page.getByRole('list', { name: 'Mission steps' }).locator('li')).toHaveCount(14);
   await expect(page.locator('#start').getByRole('link')).toHaveCount(6);
+  await expect(page.locator('.tr-nevers > div')).toHaveCount(4);
+  await expect(page.locator('.tr-nots > div')).toHaveCount(8);
+  await expect(page.locator('#routes .tr-routes > div')).toHaveCount(4);
+  for (const [href, name] of [
+    ['/how-it-works', 'See the Full Process'],
+    ['/trust', 'How We Label Facts'],
+    ['/corridors', 'Explore Every Route'],
+  ] as const) {
+    await page.goto('/');
+    await expect(page.locator('#final').getByRole('link', { name })).toHaveAttribute('href', href);
+  }
 });
 
 test('the three job links keep their names and links (P-07) and Something else goes to /plan', async ({
@@ -407,12 +437,14 @@ for (const width of widths)
     };
     await check('first visit');
     await bar(page).getByRole('button', { name: 'All Routes' }).click();
+    await page.evaluate(() =>
+      document.querySelectorAll('details').forEach((fold) => (fold.open = true)),
+    );
     await page.getByRole('button', { name: 'B Is Cheapest' }).click();
     await page.getByLabel('People going').fill('2');
     await page.getByLabel(/Stand and registration/).fill('6000');
     await choose(page.getByRole('radio', { name: /Show companies outside/ }));
-    await page.locator('#faq summary').first().click();
-    await check('every route open, examples used');
+    await check('every route open, every example open and used');
   });
 
 // Owner goal: "get a visitor to start a request". The action is on the first screen of a phone, 320 and 390 wide.

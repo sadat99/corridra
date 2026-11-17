@@ -457,6 +457,24 @@ export const homeRoutesKeys = [
   'home.tr.fn.r2.text',
   'home.tr.fn.r3',
   'home.tr.fn.r3.text',
+  'home.tr.more.how',
   'home.tr.fn.jobs',
 ] as const;
 export type HomeRoutesKey = (typeof homeRoutesKeys)[number];
+
+// The route words the home, the footer and the routes page share (owner decision of 17 November 2026, routes and
+// markets), with their draft translations in every other language. The Two Routes home keeps them in the catalogue
+// for its route labels; tests/integration/routes-and-markets-copy.test.ts reads them in every language.
+export const homeRouteWordKeys = [
+  'home.country.bd',
+  'home.country.cn',
+  'home.country.es',
+  'home.country.eu',
+  'home.country.uk',
+  'home.country.us',
+  'home.country.au',
+  'home.country.asia',
+  'home.pass.label',
+  'home.other.title',
+  'home.other.text',
+] as const;

@@ -58,7 +58,7 @@ for (const [route, heading] of routes) {
   });
 }
 
-test('the home doors choose a route by pointer and keyboard, and its route pages stay linked', async ({
+test('the home doors choose a route by pointer and keyboard, and the routes page stays linked', async ({
   page,
 }) => {
   const writes: string[] = [];
@@ -80,8 +80,11 @@ test('the home doors choose a route by pointer and keyboard, and its route pages
   await expect(
     page.getByRole('heading', { level: 2, name: 'A fair list is not a buyer list.' }),
   ).toBeVisible();
-  // owner decision 17 Nov 2026, routes and markets: the home's EU destination opens the EU page, not the Spain page
-  for (const href of ['/corridors/bangladesh-china', '/corridors/bangladesh-eu', '/corridors'])
+  // The home links to the routes page; the China and EU route links moved there with the route statuses (17 Nov 2026).
+  await expect(page.locator('main a[href="/corridors"]').first()).toBeVisible();
+  await page.goto('/corridors');
+  // owner decision 17 Nov 2026, routes and markets: the EU destination opens the EU page, not the Spain page
+  for (const href of ['/corridors/bangladesh-china', '/corridors/bangladesh-eu'])
     await expect(page.locator(`main a[href="${href}"]`).first()).toBeVisible();
   expect(
     (

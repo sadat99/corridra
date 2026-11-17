@@ -273,188 +273,196 @@ function China() {
         <Tests name="cn" />
       </div>
 
-      <h3 className="tr-h3">{t('home.tr.q.title')}</h3>
-      <p className="tr-sub">{t('home.tr.q.lead')}</p>
-      <div className="tr-quotes">
-        {letters.map((letter) => {
-          const q = quotes[letter];
-          const reveal = pick !== null;
-          const ns = q.coverage.filter((c) => c[1] === 'ns').length;
-          const out = q.coverage.filter((c) => c[1] === 'out').length;
-          const word = {
-            yes: 'home.tr.q.inPrice',
-            out: 'home.tr.q.notInPrice',
-            ns: 'home.tr.q.notStated',
-          } as const;
-          const installWords = {
-            included: 'home.tr.q.included',
-            notIncluded: 'home.tr.q.notIncluded',
-            notConfirmed: 'home.tr.q.notConfirmed',
-          } as const;
-          return (
-            <article
-              key={letter}
-              className={`tr-quote${pick === letter ? ' is-picked' : ''}`}
-              aria-labelledby={`quote-${letter}`}
-            >
-              <header>
-                <strong id={`quote-${letter}`}>
-                  {fill(t('home.tr.q.supplier'), { letter: letter.toUpperCase() })}
-                </strong>
-                <span className="ac1-example-tag">{t('home.tr.q.example')}</span>
-              </header>
-              <p className="tr-price">
-                <small>USD</small> {q.price}
-              </p>
-              <dl>
-                <div>
-                  <dt>{t('home.tr.q.delivery')}</dt>
-                  <dd>{q.delivery ?? <NotStated />}</dd>
-                </div>
-                <div>
-                  <dt>{t('home.tr.q.install')}</dt>
-                  <dd>
-                    {q.install === 'notConfirmed' ? (
-                      <NotConfirmedLabel />
-                    ) : (
-                      t(installWords[q.install])
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt>{t('home.tr.q.lead.time')}</dt>
-                  <dd>{fill(t('home.tr.q.days'), { n: q.days })}</dd>
-                </div>
-              </dl>
-              <FactLabel label="Self-declared" english />
-              {reveal ? (
-                <div className="tr-reveal">
-                  <p className="tr-gap">
-                    {fill(t(ns === 1 ? 'home.tr.q.gap.one' : 'home.tr.q.gap.many'), { n: ns })}
-                    <br />
-                    {fill(t(out === 1 ? 'home.tr.q.gap.out.one' : 'home.tr.q.gap.out.many'), {
-                      n: out,
-                    })}
+      <details className="tr-fold">
+        <summary>{t('home.tr.q.title')}</summary>
+        <div className="tr-fold-body">
+          <p className="tr-sub">{t('home.tr.q.lead')}</p>
+          <div className="tr-quotes">
+            {letters.map((letter) => {
+              const q = quotes[letter];
+              const reveal = pick !== null;
+              const ns = q.coverage.filter((c) => c[1] === 'ns').length;
+              const out = q.coverage.filter((c) => c[1] === 'out').length;
+              const word = {
+                yes: 'home.tr.q.inPrice',
+                out: 'home.tr.q.notInPrice',
+                ns: 'home.tr.q.notStated',
+              } as const;
+              const installWords = {
+                included: 'home.tr.q.included',
+                notIncluded: 'home.tr.q.notIncluded',
+                notConfirmed: 'home.tr.q.notConfirmed',
+              } as const;
+              return (
+                <article
+                  key={letter}
+                  className={`tr-quote${pick === letter ? ' is-picked' : ''}`}
+                  aria-labelledby={`quote-${letter}`}
+                >
+                  <header>
+                    <strong id={`quote-${letter}`}>
+                      {fill(t('home.tr.q.supplier'), { letter: letter.toUpperCase() })}
+                    </strong>
+                    <span className="ac1-example-tag">{t('home.tr.q.example')}</span>
+                  </header>
+                  <p className="tr-price">
+                    <small>USD</small> {q.price}
                   </p>
-                  <p className="label">{t('home.tr.q.covers')}</p>
-                  <ul className="tr-cover">
-                    {q.coverage.map(([name, state]) => (
-                      <li key={name} data-state={state}>
-                        <span>{t(name)}</span>
-                        <span>{t(word[state])}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="tr-verdict">{t(q.verdict)}</p>
-                </div>
-              ) : null}
-              <button
-                type="button"
-                className="tr-pick"
-                aria-pressed={pick === letter}
-                onClick={() => setPick(letter)}
-              >
-                {fill(t('home.tr.q.pick'), { letter: letter.toUpperCase() })}
-              </button>
-            </article>
-          );
-        })}
-      </div>
-      <div className="tr-actions">
-        <button
-          type="button"
-          className="tr-pick tr-pick-ghost"
-          aria-pressed={pick === 'x'}
-          onClick={() => setPick('x')}
-        >
-          {t('home.tr.q.unsure')}
-        </button>
-        {pick ? (
-          <button type="button" className="tr-quiet-button" onClick={() => setPick(null)}>
-            {t('home.tr.q.reset')}
-          </button>
-        ) : null}
-      </div>
-      <div className="tr-reaction" aria-live="polite">
-        {pick ? (
-          <>
-            <p className="label">{t('home.tr.q.react.kicker')}</p>
-            <p className="tr-reaction-title">
-              {fill(t(key(`home.tr.q.react.${pick}.title`)), {
-                price: pick === 'x' ? '' : `USD ${quotes[pick].price}`,
-              })}
-            </p>
-            <p>{fill(t(key(`home.tr.q.react.${pick}.body`)), terms)}</p>
-            <p>
-              <strong>{t('home.tr.q.none')}</strong> {t('home.tr.q.ask')}
-            </p>
-            <ul>
-              {letters.map((l) => (
-                <li key={l}>{t(key(`home.tr.q.ask.${l}`))}</li>
-              ))}
-            </ul>
-            <p>{t('home.tr.q.keep')}</p>
-            <Link prefetch={false} className="primary-link" href={routeHref.china}>
-              {t('home.tr.q.cta')} <Arrow />
-            </Link>
-          </>
-        ) : null}
-      </div>
-      <p className="tr-rule">
-        <span className="ac1-example-tag">{t('home.tr.q.rule')}</span>
-        <span>
-          <strong>{t('home.tr.q.rule.title')}</strong> {t('home.tr.q.rule.text')}
-        </span>
-      </p>
-
-      <h3 className="tr-h3" id="visit-title">
-        {t('home.tr.visit.title')}
-      </h3>
-      <p className="tr-sub">{t('home.tr.visit.lead')}</p>
-      <div className="tr-day" role="group" aria-labelledby="visit-title">
-        <div className="tr-day-head">
-          <strong>{t('home.tr.visit.day')}</strong>
-          <span className="ac1-example-tag">{t('home.tr.q.example')}</span>
-        </div>
-        <div className="tr-clocks">
-          <Clock city={t('home.tr.visit.gz')} tz={t('home.tr.visit.gz.tz')} time={gz} />
-          <Clock city={t('home.tr.visit.dh')} tz={t('home.tr.visit.dh.tz')} time={dh} />
-        </div>
-        <ol className="tr-stops" aria-label={t('home.tr.visit.stops')}>
-          {visitStops.map((time, i) => (
-            <li key={time}>
-              <button type="button" aria-pressed={stop === i} onClick={() => setStop(i)}>
-                <span className="tr-time">{time}</span>
-                <span>{t(key(`home.tr.visit.s${i}.title`))}</span>
-              </button>
-            </li>
-          ))}
-        </ol>
-        <div className="tr-day-detail" aria-live="polite">
-          <strong>
-            {fill(t('home.tr.visit.at'), {
-              gz,
-              dh,
-              stop: t(key(`home.tr.visit.s${stop}.title`)),
+                  <dl>
+                    <div>
+                      <dt>{t('home.tr.q.delivery')}</dt>
+                      <dd>{q.delivery ?? <NotStated />}</dd>
+                    </div>
+                    <div>
+                      <dt>{t('home.tr.q.install')}</dt>
+                      <dd>
+                        {q.install === 'notConfirmed' ? (
+                          <NotConfirmedLabel />
+                        ) : (
+                          t(installWords[q.install])
+                        )}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>{t('home.tr.q.lead.time')}</dt>
+                      <dd>{fill(t('home.tr.q.days'), { n: q.days })}</dd>
+                    </div>
+                  </dl>
+                  <FactLabel label="Self-declared" english />
+                  {reveal ? (
+                    <div className="tr-reveal">
+                      <p className="tr-gap">
+                        {fill(t(ns === 1 ? 'home.tr.q.gap.one' : 'home.tr.q.gap.many'), { n: ns })}
+                        <br />
+                        {fill(t(out === 1 ? 'home.tr.q.gap.out.one' : 'home.tr.q.gap.out.many'), {
+                          n: out,
+                        })}
+                      </p>
+                      <p className="label">{t('home.tr.q.covers')}</p>
+                      <ul className="tr-cover">
+                        {q.coverage.map(([name, state]) => (
+                          <li key={name} data-state={state}>
+                            <span>{t(name)}</span>
+                            <span>{t(word[state])}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="tr-verdict">{t(q.verdict)}</p>
+                    </div>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="tr-pick"
+                    aria-pressed={pick === letter}
+                    onClick={() => setPick(letter)}
+                  >
+                    {fill(t('home.tr.q.pick'), { letter: letter.toUpperCase() })}
+                  </button>
+                </article>
+              );
             })}
-          </strong>
-          <p>{t(key(`home.tr.visit.s${stop}.text`))}</p>
-        </div>
-      </div>
-      <p className="tr-small">{t('home.tr.visit.note')}</p>
-
-      <h3 className="tr-h3">{t('home.tr.comp.title')}</h3>
-      <ol className="tr-three">
-        {[1, 2, 3].map((n) => (
-          <li key={n}>
-            <span className="tr-n" aria-hidden="true">
-              {n}
+          </div>
+          <div className="tr-actions">
+            <button
+              type="button"
+              className="tr-pick tr-pick-ghost"
+              aria-pressed={pick === 'x'}
+              onClick={() => setPick('x')}
+            >
+              {t('home.tr.q.unsure')}
+            </button>
+            {pick ? (
+              <button type="button" className="tr-quiet-button" onClick={() => setPick(null)}>
+                {t('home.tr.q.reset')}
+              </button>
+            ) : null}
+          </div>
+          <div className="tr-reaction" aria-live="polite">
+            {pick ? (
+              <>
+                <p className="label">{t('home.tr.q.react.kicker')}</p>
+                <p className="tr-reaction-title">
+                  {fill(t(key(`home.tr.q.react.${pick}.title`)), {
+                    price: pick === 'x' ? '' : `USD ${quotes[pick].price}`,
+                  })}
+                </p>
+                <p>{fill(t(key(`home.tr.q.react.${pick}.body`)), terms)}</p>
+                <p>
+                  <strong>{t('home.tr.q.none')}</strong> {t('home.tr.q.ask')}
+                </p>
+                <ul>
+                  {letters.map((l) => (
+                    <li key={l}>{t(key(`home.tr.q.ask.${l}`))}</li>
+                  ))}
+                </ul>
+                <p>{t('home.tr.q.keep')}</p>
+                <Link prefetch={false} className="primary-link" href={routeHref.china}>
+                  {t('home.tr.q.cta')} <Arrow />
+                </Link>
+              </>
+            ) : null}
+          </div>
+          <p className="tr-rule">
+            <span className="ac1-example-tag">{t('home.tr.q.rule')}</span>
+            <span>
+              <strong>{t('home.tr.q.rule.title')}</strong> {t('home.tr.q.rule.text')}
             </span>
-            <strong>{t(key(`home.tr.comp.${n}.title`))}</strong>
-            <p>{fill(t(key(`home.tr.comp.${n}.text`)), terms)}</p>
-          </li>
-        ))}
-      </ol>
+          </p>
+        </div>
+      </details>
+      <details className="tr-fold">
+        <summary>{t('home.tr.visit.title')}</summary>
+        <div className="tr-fold-body">
+          <p className="tr-sub">{t('home.tr.visit.lead')}</p>
+          <div className="tr-day" role="group" aria-label={t('home.tr.visit.title')}>
+            <div className="tr-day-head">
+              <strong>{t('home.tr.visit.day')}</strong>
+              <span className="ac1-example-tag">{t('home.tr.q.example')}</span>
+            </div>
+            <div className="tr-clocks">
+              <Clock city={t('home.tr.visit.gz')} tz={t('home.tr.visit.gz.tz')} time={gz} />
+              <Clock city={t('home.tr.visit.dh')} tz={t('home.tr.visit.dh.tz')} time={dh} />
+            </div>
+            <ol className="tr-stops" aria-label={t('home.tr.visit.stops')}>
+              {visitStops.map((time, i) => (
+                <li key={time}>
+                  <button type="button" aria-pressed={stop === i} onClick={() => setStop(i)}>
+                    <span className="tr-time">{time}</span>
+                    <span>{t(key(`home.tr.visit.s${i}.title`))}</span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+            <div className="tr-day-detail" aria-live="polite">
+              <strong>
+                {fill(t('home.tr.visit.at'), {
+                  gz,
+                  dh,
+                  stop: t(key(`home.tr.visit.s${stop}.title`)),
+                })}
+              </strong>
+              <p>{t(key(`home.tr.visit.s${stop}.text`))}</p>
+            </div>
+          </div>
+          <p className="tr-small">{t('home.tr.visit.note')}</p>
+        </div>
+      </details>
+      <details className="tr-fold">
+        <summary>{t('home.tr.comp.title')}</summary>
+        <div className="tr-fold-body">
+          <ol className="tr-three">
+            {[1, 2, 3].map((n) => (
+              <li key={n}>
+                <span className="tr-n" aria-hidden="true">
+                  {n}
+                </span>
+                <strong>{t(key(`home.tr.comp.${n}.title`))}</strong>
+                <p>{fill(t(key(`home.tr.comp.${n}.text`)), terms)}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </details>
       <Link prefetch={false} className="primary-link" href={routeHref.china}>
         {t('home.tr.cta.china')} <Arrow />
       </Link>
@@ -509,61 +517,66 @@ function Delegation() {
         {t('home.tr.dl.title')}
       </h2>
       <p className="tr-sub">{t('home.tr.dl.lead')}</p>
-      <div className="tr-scroll" tabIndex={0} role="region" aria-label={t('home.tr.dl.aria')}>
-        <table className="tr-table">
-          <thead>
-            <tr>
-              <th scope="col">{t('home.tr.dl.col.company')}</th>
-              {stages.map((s) => (
-                <th scope="col" key={s}>
-                  {t(`home.tr.dl.col.${s}` as MessageKey)}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {programmeRows.map((row, i) => (
-              <tr key={i}>
-                <th scope="row">
-                  <CorridraIcon name="lock" size={16} />{' '}
-                  {fill(t('home.tr.dl.private'), { n: i + 1 })}
-                </th>
-                {row.map((done, j) => (
-                  <td key={j}>
-                    <span className={done ? 'tr-dot' : 'tr-dot is-open'} aria-hidden="true" />
-                    <span className="sr-only">
-                      {t(done ? 'home.tr.dl.done' : 'home.tr.dl.notYet')}
-                    </span>
-                  </td>
+      <details className="tr-fold">
+        <summary>{t('home.tr.dl.aria')}</summary>
+        <div className="tr-fold-body">
+          <div className="tr-scroll" tabIndex={0} role="region" aria-label={t('home.tr.dl.aria')}>
+            <table className="tr-table">
+              <thead>
+                <tr>
+                  <th scope="col">{t('home.tr.dl.col.company')}</th>
+                  {stages.map((s) => (
+                    <th scope="col" key={s}>
+                      {t(`home.tr.dl.col.${s}` as MessageKey)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {programmeRows.map((row, i) => (
+                  <tr key={i}>
+                    <th scope="row">
+                      <CorridraIcon name="lock" size={16} />{' '}
+                      {fill(t('home.tr.dl.private'), { n: i + 1 })}
+                    </th>
+                    {row.map((done, j) => (
+                      <td key={j}>
+                        <span className={done ? 'tr-dot' : 'tr-dot is-open'} aria-hidden="true" />
+                        <span className="sr-only">
+                          {t(done ? 'home.tr.dl.done' : 'home.tr.dl.notYet')}
+                        </span>
+                      </td>
+                    ))}
+                  </tr>
                 ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <div className="tr-table-foot">
-          <span>{t('home.tr.dl.total')}</span>
-          <span className="ac1-example-tag">{t('home.tr.q.example')}</span>
+              </tbody>
+            </table>
+            <div className="tr-table-foot">
+              <span>{t('home.tr.dl.total')}</span>
+              <span className="ac1-example-tag">{t('home.tr.q.example')}</span>
+            </div>
+          </div>
+          <p className="tr-small">{t('home.tr.dl.key')}</p>
+          <div className="tr-two">
+            <div>
+              <strong>{t('home.tr.dl.sees')}</strong>
+              <ul>
+                {[1, 2, 3].map((n) => (
+                  <li key={n}>{t(key(`home.tr.dl.sees.${n}`))}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <strong>{t('home.tr.dl.not')}</strong>
+              <ul>
+                {[1, 2, 3].map((n) => (
+                  <li key={n}>{t(key(`home.tr.dl.not.${n}`))}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
-      </div>
-      <p className="tr-small">{t('home.tr.dl.key')}</p>
-      <div className="tr-two">
-        <div>
-          <strong>{t('home.tr.dl.sees')}</strong>
-          <ul>
-            {[1, 2, 3].map((n) => (
-              <li key={n}>{t(key(`home.tr.dl.sees.${n}`))}</li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <strong>{t('home.tr.dl.not')}</strong>
-          <ul>
-            {[1, 2, 3].map((n) => (
-              <li key={n}>{t(key(`home.tr.dl.not.${n}`))}</li>
-            ))}
-          </ul>
-        </div>
-      </div>
+      </details>
       <Link prefetch={false} className="primary-link" href={routeHref.delegation}>
         {t('home.tr.dl.cta')} <Arrow />
       </Link>

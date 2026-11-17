@@ -83,16 +83,7 @@ html[data-contrast='more'] :focus-visible {
 }
 /* On the navy regions the ring is white with a navy edge: cobalt on navy is only 2.41 to 1. */
 html[data-contrast='more']
-  :is(
-    .guide-footer,
-    .guide-band,
-    .ac1-player,
-    nav.ux-team-sidebar,
-    .tr-hero,
-    .tr-navy,
-    .tr-reaction,
-    .tr-result
-  )
+  :is(.guide-footer, .guide-band, .ac1-player, nav.ux-team-sidebar)
   :focus-visible {
   outline-color: var(--on-brand);
   box-shadow: 0 0 0 2px var(--brand-deep);
@@ -114,10 +105,6 @@ html[data-contrast='more'] .guide-footer .guide-footer-actions .primary-link {
 }
 html[data-contrast='more'] .ac1-play {
   border: 2px solid var(--on-brand);
-}
-/* The same white edge on the action filled controls of the Two Routes home's navy regions. */
-html[data-contrast='more'] :is(.tr-hero, .tr-navy, .tr-reaction, .tr-result) .primary-link {
-  border-color: var(--on-brand);
 }
 /* A link in running text (a paragraph, a definition or a caption) is underlined, so it is not found by colour alone, and
    so is a link that stands alone as a text link. A row, a tile or a badge made of a link is not text: its shape tells it
@@ -143,6 +130,15 @@ html[data-contrast='more'] :is(.ux-menu-panel, .ux-notice-panel) {
   box-shadow:
     var(--shadow-3),
     0 0 0 1px var(--border-strong);
+}
+/* The Two Routes home (17 November 2026): the ring is white with a navy edge in its navy regions, and an action filled
+   control there is edged in white. Rules of their own, so the sidebar rules above stay as they were. */
+html[data-contrast='more'] :is(.tr-hero, .tr-navy, .tr-reaction, .tr-result) :focus-visible {
+  outline-color: var(--on-brand);
+  box-shadow: 0 0 0 2px var(--brand-deep);
+}
+html[data-contrast='more'] :is(.tr-hero, .tr-navy, .tr-reaction, .tr-result) .primary-link {
+  border-color: var(--on-brand);
 }
 @media (prefers-contrast: more) {
   html:root {
@@ -197,18 +193,7 @@ html[data-contrast='more'] :is(.ux-menu-panel, .ux-notice-panel) {
     box-shadow: 0 0 0 2px var(--surface-1);
   }
   /* On the navy regions the ring is white with a navy edge: cobalt on navy is only 2.41 to 1. */
-  html:root
-    :is(
-      .guide-footer,
-      .guide-band,
-      .ac1-player,
-      nav.ux-team-sidebar,
-      .tr-hero,
-      .tr-navy,
-      .tr-reaction,
-      .tr-result
-    )
-    :focus-visible {
+  html:root :is(.guide-footer, .guide-band, .ac1-player, nav.ux-team-sidebar) :focus-visible {
     outline-color: var(--on-brand);
     box-shadow: 0 0 0 2px var(--brand-deep);
   }
@@ -229,10 +214,6 @@ html[data-contrast='more'] :is(.ux-menu-panel, .ux-notice-panel) {
   }
   html:root .ac1-play {
     border: 2px solid var(--on-brand);
-  }
-  /* The same white edge on the action filled controls of the Two Routes home's navy regions. */
-  html:root :is(.tr-hero, .tr-navy, .tr-reaction, .tr-result) .primary-link {
-    border-color: var(--on-brand);
   }
   /* A link in running text (a paragraph, a definition or a caption) is underlined, so it is not found by colour alone, and
      so is a link that stands alone as a text link. A row, a tile or a badge made of a link is not text: its shape tells it
@@ -258,5 +239,12 @@ html[data-contrast='more'] :is(.ux-menu-panel, .ux-notice-panel) {
     box-shadow:
       var(--shadow-3),
       0 0 0 1px var(--border-strong);
+  }
+  html:root :is(.tr-hero, .tr-navy, .tr-reaction, .tr-result) :focus-visible {
+    outline-color: var(--on-brand);
+    box-shadow: 0 0 0 2px var(--brand-deep);
+  }
+  html:root :is(.tr-hero, .tr-navy, .tr-reaction, .tr-result) .primary-link {
+    border-color: var(--on-brand);
   }
 }
