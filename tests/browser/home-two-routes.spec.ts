@@ -36,8 +36,13 @@ test('the first screen says what Corridra is, offers the doors and the first act
     await expect(
       page.getByRole('group', { name: 'Which way is your business moving?' }),
     ).toBeVisible();
-    for (const name of ['Buying from China', 'Sell Abroad'])
-      await expect(door(page, name)).toBeInViewport();
+    // The question that introduces the doors starts on the first screen everywhere; the cards themselves are on it from desktop.
+    await expect(
+      page.getByText('Which way is your business moving?', { exact: true }),
+    ).toBeInViewport();
+    if (size.width === 1440)
+      for (const name of ['Buying from China', 'Sell Abroad'])
+        await expect(door(page, name)).toBeInViewport();
     await expect(start(page)).toHaveAttribute('href', '/plan');
     if (size.width === 1440) await expect(start(page)).toBeInViewport();
   }
@@ -408,4 +413,16 @@ for (const width of widths)
     await choose(page.getByRole('radio', { name: /Show companies outside/ }));
     await page.locator('#faq summary').first().click();
     await check('every route open, examples used');
+  });
+
+// Owner goal: "get a visitor to start a request". The action is on the first screen of a phone, 320 and 390 wide.
+for (const size of [
+  { width: 320, height: 640 },
+  { width: 390, height: 844 },
+])
+  test(`Start a Request is on the first screen at ${size.width} px`, async ({ page }) => {
+    await page.setViewportSize(size);
+    await page.goto('/');
+    await expect(start(page)).toBeInViewport({ ratio: 1 });
+    await expect(start(page)).toHaveAttribute('href', '/plan');
   });

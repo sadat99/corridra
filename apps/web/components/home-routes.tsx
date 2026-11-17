@@ -77,6 +77,29 @@ export function HomeRoutes() {
         <p className="label ac1-rule">{t('home.eyebrow')}</p>
         <h1 id="home-title">{t('home.title')}</h1>
         <p className="tr-lead">{t('home.tr.lead')}</p>
+        <div className="tr-start">
+          <Link prefetch={false} className="primary-link" href={href} id="home-start">
+            {t(ctaWords[shown])} <Arrow />
+          </Link>
+          <ul className="ac1-calm">
+            {(['account', 'send', 'stop'] as const).map((name) => (
+              <li key={name}>
+                <CorridraIcon name="check" size={16} />
+                {t(`home.tr.assure.${name}` as MessageKey)}
+              </li>
+            ))}
+          </ul>
+          <p className="tr-feedback" aria-live="polite">
+            {opened ? (
+              <>
+                {fill(t('home.tr.opened'), { route: t(key(`home.tr.door.${opened}.title`)) })}{' '}
+                <a className="ac1-quiet" href={`#route-${opened}`}>
+                  {t('home.tr.goto')}
+                </a>
+              </>
+            ) : null}
+          </p>
+        </div>
         <fieldset className="tr-doors">
           <legend>{t('home.tr.q')}</legend>
           <p className="tr-doors-sub">{t('home.tr.q.sub')}</p>
@@ -102,29 +125,6 @@ export function HomeRoutes() {
             ))}
           </div>
         </fieldset>
-        <div className="tr-start">
-          <Link prefetch={false} className="primary-link" href={href} id="home-start">
-            {t(ctaWords[shown])} <Arrow />
-          </Link>
-          <ul className="ac1-calm">
-            {(['account', 'send', 'stop'] as const).map((name) => (
-              <li key={name}>
-                <CorridraIcon name="check" size={16} />
-                {t(`home.tr.assure.${name}` as MessageKey)}
-              </li>
-            ))}
-          </ul>
-          <p className="tr-feedback" aria-live="polite">
-            {opened ? (
-              <>
-                {fill(t('home.tr.opened'), { route: t(key(`home.tr.door.${opened}.title`)) })}{' '}
-                <a className="ac1-quiet" href={`#route-${opened}`}>
-                  {t('home.tr.goto')}
-                </a>
-              </>
-            ) : null}
-          </p>
-        </div>
       </section>
 
       <div className="tr-bar">
