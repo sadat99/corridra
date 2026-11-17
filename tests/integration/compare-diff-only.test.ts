@@ -138,7 +138,7 @@ describe('Compare lens, differences only', () => {
     expect(shown).not.toContain('Incoterm');
     expect(diff.same).toContain('Incoterm');
     expect(folded).toContain(`${diff.same.length} terms are the same in every offer`);
-    expect(folded).toContain('Differences only');
+    expect(folded).toContain('Differences Only');
     expect(folded).toContain('aria-pressed="true"');
     // Nothing leaves the accessible content without the count line.
     const hidden = rows(unfolded).filter((l, i, a) => a.indexOf(l) === i && !shown.includes(l));
@@ -200,7 +200,7 @@ describe('Compare lens, differences only', () => {
   it('shows no control for a single offer', async () => {
     const { CompareLens } = await loadWeb('components/compare-lens');
     const html = render(ce(CompareLens, { cards: cards.slice(0, 1), matrix: ce('table') }));
-    expect(html).not.toContain('Differences only');
+    expect(html).not.toContain('Differences Only');
     expect(rows(html)).toContain('Incoterm');
   });
   it('carries the five keys in all seven catalogues', () => {

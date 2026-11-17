@@ -268,10 +268,10 @@ export const en = {
   'compare.table': 'Table',
   'compare.note':
     'The verdict on each card comes from the comparison itself. The table shows the original terms side by side.',
-  'compare.diffOnly': 'Differences only',
+  'compare.diffOnly': 'Differences Only',
   'compare.sameHidden': '{count} terms are the same in every offer',
   'compare.sameHiddenOne': '1 term is the same in every offer',
-  'compare.showAll': 'Show them',
+  'compare.showAll': 'Show Them',
   'compare.allSame': 'Every term is the same in all offers',
   'compare.shownAll': 'Showing every term',
   'room.received': 'Received {date}',
