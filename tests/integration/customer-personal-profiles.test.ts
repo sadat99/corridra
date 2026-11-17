@@ -451,8 +451,9 @@ describe('closed and erasure-pending accounts', () => {
   test('a closed account is refused', async () => {
     await save('carol', 0, { title: 'Synthetic carol' });
     await f.owner.query(
-      `INSERT INTO customer_private.account_closure_event(principal_id,state,occurred_at,final_at,command_id)
-       SELECT $1,'closed',clock_timestamp(),clock_timestamp()+interval '720 hours',$2`,
+      `WITH t AS (SELECT clock_timestamp() AS at)
+       INSERT INTO customer_private.account_closure_event(principal_id,state,occurred_at,final_at,command_id)
+       SELECT $1,'closed',t.at,t.at+interval '720 hours',$2 FROM t`,
       [ids.carol, randomUUID()],
     );
     await expect(view('carol')).rejects.toMatchObject({ code: '42501' });
