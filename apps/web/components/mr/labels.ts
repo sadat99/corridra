@@ -80,6 +80,33 @@ function build(say: Say) {
       missing: say('mr.quote.missing'),
     },
     ghost: { example: say('mr.ghost.example') },
+    /**
+     * Explain hints (visual grammar, 17 November 2026): the name a symbol shows and one plain
+     * sentence. Names reuse the words the product already shows; a fill without an existing name
+     * gets one in the PR that first draws it.
+     */
+    explain: {
+      holder: {
+        you: { name: say('mr.holder.you'), text: say('mr.explain.holder.you') },
+        team: { name: say('mr.holder.team'), text: say('mr.explain.holder.team') },
+        owner: { name: say('move.wait.owner'), text: say('mr.explain.holder.owner') },
+        third: { name: say('mr.holder.third'), text: say('mr.explain.holder.third') },
+      },
+      state: {
+        done: { name: say('mr.road.state.done'), text: say('mr.explain.state.done') },
+        now: { name: say('mr.road.state.now'), text: say('mr.explain.state.now') },
+        later: { name: say('mr.road.state.later'), text: say('mr.explain.state.later') },
+        notTracked: {
+          name: say('mr.road.state.notTracked'),
+          text: say('mr.explain.state.notTracked'),
+        },
+      },
+      fill: {
+        notStated: { name: say('mr.quote.notStated'), text: say('mr.explain.fill.notStated') },
+        notMeasured: { text: say('mr.explain.fill.notMeasured') },
+        excluded: { text: say('mr.explain.fill.excluded') },
+      },
+    },
     mode: { sample: say('mr.mode.sample'), real: say('mr.mode.real') },
   };
 }

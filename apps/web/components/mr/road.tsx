@@ -1,5 +1,6 @@
 import './road.css';
 import './scripts.css';
+import { Explain } from './explain';
 import { mrLabels } from './labels';
 import {
   roadSteps,
@@ -12,6 +13,9 @@ import {
 } from './road-status';
 
 type RoadLabels = typeof mrLabels.road;
+
+/** The legend shows each state once, in reading order, with its shape, word and explanation. */
+const legendStates: readonly RoadStepState[] = ['done', 'now', 'later', 'notTracked'];
 
 const marks: Record<RoadStepState, (index: number) => string> = {
   done: () => '✓',
@@ -32,12 +36,15 @@ export function Road({
   records = { compare: false, decide: false },
   labels = mrLabels.road,
   showLegend = true,
+  explain = mrLabels.explain.state,
 }: {
   /** The mission status a customer may read, exactly as returned (for example `MEETINGS`). */
   status: string;
   records?: RoadRecords;
   labels?: RoadLabels;
   showLegend?: boolean;
+  /** The legend's explanations, in the same language as `labels`. */
+  explain?: typeof mrLabels.explain.state;
 }) {
   const marker: RoadMarker = statusToRoadStep(status);
   const states = roadStates(marker, records);
@@ -76,7 +83,18 @@ export function Road({
           {aside}
         </p>
       ) : null}
-      {showLegend ? <p className="mr-road-legend">{labels.legend}</p> : null}
+      {showLegend ? (
+        <div className="mr-road-legend">
+          <div className="mr-road-keys">
+            {legendStates.map((state) => (
+              <Explain key={state} name={labels.states[state]} text={explain[state].text}>
+                <span className="mr-road-key" data-key={state} />
+              </Explain>
+            ))}
+          </div>
+          <p className="mr-road-legend-note">{labels.legend}</p>
+        </div>
+      ) : null}
     </div>
   );
 }
