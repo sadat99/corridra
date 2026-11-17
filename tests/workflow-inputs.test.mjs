@@ -300,10 +300,8 @@ test('the supply source choices install, open and pause only the module control,
           `${choice} ${name}`,
         );
   }
-  // ADR-082 section 12: supply sources add no input (the 25th, member_notice_workspaces, is ADR-087 U4's), and no installer value
-  // opens any of the other six controls.
-  assert.equal(Object.keys(declared).length, 25);
-  assert.ok(Object.keys(declared).every((name) => !name.startsWith('supply_sources')));
+  // ADR-082 section 12: no input is added, and no installer value opens any of the other six controls.
+  assert.equal(Object.keys(declared).length, 24);
   assert.deepEqual(
     Object.keys(env)
       .filter((name) => name.startsWith('SUPPLY_SOURCES_'))
@@ -385,12 +383,10 @@ test('the data cleanup choice only lists, moves no other module and carries no r
       .length,
     1,
   );
-  // Data cleanup adds no input: the 25th, member_notice_workspaces, belongs to ADR-087 U4.
-  assert.equal(Object.keys(declared).length, 25);
-  assert.ok(Object.keys(declared).every((name) => !name.startsWith('data_cleanup')));
+  assert.equal(Object.keys(declared).length, 24);
 });
 
-test('the member notice choices install or deliver only that module, and only deliver passes the workspace list', () => {
+test('the member notice choices install or deliver only that module and add no input', () => {
   const workflow = parseDocument(
     readFileSync('.github/workflows/install-customer-modules.yml', 'utf8'),
   ).toJS();
@@ -403,20 +399,19 @@ test('the member notice choices install or deliver only that module, and only de
   const defaults = Object.fromEntries(
     Object.entries(declared).map(([name, input]) => [name, input.default]),
   );
-  assert.equal(declared.member_notice_workspaces.default, '');
-  assert.equal(declared.member_notice_workspaces.required, false);
-  assert.equal(declared.member_notice_workspaces.type, undefined);
   for (const choice of declared.field_modules_action.options) {
-    const inputs = { ...defaults, field_modules_action: choice, member_notice_workspaces: 'all' };
+    const inputs = { ...defaults, field_modules_action: choice };
     const expected =
       { member_notice: 'install', member_notice_deliver: 'deliver' }[choice] ?? 'unchanged';
     assert.equal(evaluate(env.MEMBER_NOTICE_ACTION, inputs), expected, choice);
-    assert.equal(
-      evaluate(env.MEMBER_NOTICE_WORKSPACES, inputs),
-      choice === 'member_notice_deliver' ? 'all' : '',
-      choice,
-    );
   }
+  // Guardian G27, 17 Nov 2026: no 25th input. Delivery takes no list; it covers every real workspace not yet delivered.
+  assert.equal(Object.keys(declared).length, 24);
+  assert.ok(Object.keys(declared).every((name) => !/notice/.test(name)));
+  assert.deepEqual(
+    Object.keys(env).filter((name) => name.startsWith('MEMBER_NOTICE_')),
+    ['MEMBER_NOTICE_ACTION'],
+  );
   // The deliver choice warns that it waits for U5 and the owner's install approval.
   assert.match(
     declared.field_modules_action.description,

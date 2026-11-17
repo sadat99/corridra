@@ -9,7 +9,6 @@ import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-
 import { migrateCommercialReadiness } from '../../packages/db/src/commercial-readiness-migrate';
 import {
   deliverMemberNotice,
-  memberNoticeTargets,
   migrateMemberNotice,
 } from '../../packages/db/src/member-notice-migrate';
 import { pinCustomerAuthority } from '../../packages/auth/src/customer-authority-pin';
@@ -384,20 +383,9 @@ describe('delivery, state and dismissal', () => {
   });
 });
 
-describe('the workspace list the owner types', () => {
-  test('takes all or workspace ids, and refuses anything else', () => {
-    const a = randomUUID(),
-      b = randomUUID();
-    expect(memberNoticeTargets(' ALL ')).toBe('all');
-    expect(memberNoticeTargets(`${a}, ${b}\n${a}`)).toEqual([a, b]);
-    expect(() => memberNoticeTargets('')).toThrow('needs the word all');
-    expect(() => memberNoticeTargets(undefined)).toThrow('needs the word all');
-    expect(() => memberNoticeTargets(`${a} everyone`)).toThrow('not a workspace id: everyone');
-  });
-});
-
 // Installer wiring, like the other ADR-087 modules: reached only through field_modules_action, never by a base run, and only
-// with apply. Delivery parses its list before anything is written, and the log prints counts and 8-character ids only.
+// with apply. Delivery takes no list (no 25th workflow input): every real workspace not yet delivered. The log prints counts and
+// 8-character ids only.
 describe('the member notice install wiring', () => {
   const script = readFileSync(resolve('scripts/install-customer-modules.ts'), 'utf8');
   const workflow = readFileSync(resolve('.github/workflows/install-customer-modules.yml'), 'utf8');
@@ -427,25 +415,19 @@ describe('the member notice install wiring', () => {
     expect(script.slice(deliver - 120, deliver)).toContain("v.MEMBER_NOTICE_ACTION === 'deliver'");
     expect(script.split('migrateMemberNotice(pool)').length - 1).toBe(1);
     expect(script.split('deliverMemberNotice(pool').length - 1).toBe(1);
-    const parse = script.indexOf('memberNoticeTargets(v.MEMBER_NOTICE_WORKSPACES)');
-    expect(parse).toBeGreaterThan(0);
-    expect(parse).toBeLessThan(script.indexOf('const pool = databasePool'));
+    expect(script).toContain("targets: 'all',");
     // Counts and short ids only in the public log.
     expect(script).toContain('row.workspaceId.slice(0, 8)');
     expect(script).not.toMatch(/console\.log\([^)]*row\.workspaceId[^.]/);
   });
-  test('the workflow derives both lines from field_modules_action, and the list only for deliver', () => {
+  test('the workflow derives the action from field_modules_action alone and adds no input', () => {
     expect(workflow).toMatch(/^\s{12}member_notice,$/m);
     expect(workflow).toMatch(/^\s{12}member_notice_deliver,$/m);
-    const action = workflow.split('\n').filter((text) => text.includes('MEMBER_NOTICE_ACTION'));
+    expect(workflow).not.toMatch(/^\s{6}member_notice[a-z_]*:/m);
+    const action = workflow.split('\n').filter((text) => text.includes('MEMBER_NOTICE_'));
     expect(action).toHaveLength(1);
     expect(action[0]).toContain(
       "inputs.field_modules_action == 'member_notice' && 'install' || inputs.field_modules_action == 'member_notice_deliver' && 'deliver' || 'unchanged'",
-    );
-    const list = workflow.split('\n').filter((text) => text.includes('MEMBER_NOTICE_WORKSPACES'));
-    expect(list).toHaveLength(1);
-    expect(list[0]).toContain(
-      "inputs.field_modules_action == 'member_notice_deliver' && inputs.member_notice_workspaces || ''",
     );
   });
   test('the migrator reads only the top-level files, so the rollback text is never applied', () => {

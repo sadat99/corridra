@@ -27,24 +27,6 @@ export type MemberNoticeDelivery = {
   notices: number;
 };
 
-const workspaceId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-
-/**
- * Parses the owner's workspace list for member_notice_deliver: the word all, or workspace ids separated by commas, spaces or
- * new lines. Anything else refuses before the database is touched.
- */
-export function memberNoticeTargets(text: string | undefined): 'all' | string[] {
-  const value = (text ?? '').trim().toLowerCase();
-  if (value === 'all') return 'all';
-  const ids = [...new Set(value.split(/[\s,]+/).filter(Boolean))];
-  if (ids.length === 0)
-    throw new Error('Member notice delivery needs the word all or at least one workspace id');
-  for (const id of ids)
-    if (!workspaceId.test(id))
-      throw new Error(`Member notice delivery: not a workspace id: ${id.slice(0, 8)}`);
-  return ids;
-}
-
 /**
  * ADR-087 4d: delivers the member notice, one workspace at a time, in one transaction, through the owner-run database function.
  * all means every real (not synthetic) workspace without a delivery record. A workspace delivered before keeps its first time
