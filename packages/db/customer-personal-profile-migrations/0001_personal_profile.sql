@@ -54,6 +54,9 @@ CREATE TABLE customer_private.account_security_note (
  actor_id uuid NOT NULL REFERENCES customer_private.principal(id),
  command_id uuid NOT NULL,
  kind text NOT NULL CHECK(kind IN ('name_changed','password_changed','session_revoked','other_sessions_revoked')),
+ -- A keyed one-way hash of what was asked (for a name, made with the server secret), so the same command with another
+ -- request is refused. It cannot be turned back into the name.
+ request_sha256 text NOT NULL CHECK(request_sha256 ~ '^[a-f0-9]{64}$'),
  created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
  PRIMARY KEY(actor_id,command_id)
 );
@@ -121,7 +124,8 @@ ALTER TABLE customer_private.personal_profile_erasure ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON customer_private.personal_profile_revision,customer_private.personal_profile_command,
  customer_private.account_security_note,customer_private.personal_profile_erasure FROM PUBLIC,corridra_runtime,corridra_auth;
 
--- Only these keys, each optional. title: 1 to 80 characters, trimmed, no control characters, or null. baseCountry: a code in
+-- Only these keys, each optional. Lengths count characters (code points), as the server check does; no control character
+-- (C0, C1) and no line or paragraph separator. title: 1 to 80 characters, trimmed, or null. baseCountry: a code in
 -- app.country, or null. interests: at most 10, each 2 to 60 trimmed characters, unique ignoring case. contactMethod: EMAIL,
 -- IN_APP or NO_PREFERENCE (there is no phone). initialsPreference: NAME_INITIALS, EMAIL_INITIALS or NONE.
 CREATE FUNCTION customer_private.personal_profile_valid(d jsonb) RETURNS boolean
@@ -130,7 +134,7 @@ DECLARE words text[];
 BEGIN
  IF d IS NULL OR jsonb_typeof(d)<>'object' OR d-ARRAY['title','baseCountry','interests','contactMethod','initialsPreference']<>'{}'::jsonb THEN RETURN false; END IF;
  IF d ? 'title' AND jsonb_typeof(d->'title')<>'null' AND (jsonb_typeof(d->'title')<>'string' OR d->>'title'<>btrim(d->>'title')
-  OR length(d->>'title') NOT BETWEEN 1 AND 80 OR d->>'title' ~ '[[:cntrl:]]') THEN RETURN false; END IF;
+  OR length(d->>'title') NOT BETWEEN 1 AND 80 OR d->>'title' ~ '[[:cntrl:]\u0080-\u009f\u2028\u2029]') THEN RETURN false; END IF;
  IF d ? 'baseCountry' AND jsonb_typeof(d->'baseCountry')<>'null' AND (jsonb_typeof(d->'baseCountry')<>'string'
   OR NOT EXISTS(SELECT FROM app.country c WHERE c.code=d->>'baseCountry')) THEN RETURN false; END IF;
  IF d ? 'contactMethod' AND (jsonb_typeof(d->'contactMethod')<>'string' OR d->>'contactMethod' NOT IN ('EMAIL','IN_APP','NO_PREFERENCE')) THEN RETURN false; END IF;
@@ -139,7 +143,7 @@ BEGIN
   IF jsonb_typeof(d->'interests')<>'array' OR jsonb_array_length(d->'interests')>10
    OR EXISTS(SELECT FROM jsonb_array_elements(d->'interests') v WHERE jsonb_typeof(v)<>'string') THEN RETURN false; END IF;
   SELECT coalesce(array_agg(value),ARRAY[]::text[]) INTO words FROM jsonb_array_elements_text(d->'interests');
-  IF EXISTS(SELECT FROM unnest(words) w WHERE w<>btrim(w) OR length(w) NOT BETWEEN 2 AND 60 OR w ~ '[[:cntrl:]]')
+  IF EXISTS(SELECT FROM unnest(words) w WHERE w<>btrim(w) OR length(w) NOT BETWEEN 2 AND 60 OR w ~ '[[:cntrl:]\u0080-\u009f\u2028\u2029]')
    OR (SELECT count(DISTINCT lower(w)) FROM unnest(words) w)<>cardinality(words) THEN RETURN false; END IF;
  END IF;
  RETURN true;
@@ -170,6 +174,18 @@ BEGIN
  RETURN customer_private.account_chain_tenant(person);
 EXCEPTION WHEN check_violation THEN
  RAISE EXCEPTION 'Personal details need a workspace on this account. Create or join a workspace first.' USING ERRCODE='23514';
+END $$;
+
+-- The same workspace refusal, read only: the preflight answers it without pinning the account chain workspace. It accepts
+-- exactly the people account_chain_tenant would accept (a pinned chain, or any workspace the person holds or ever held).
+CREATE FUNCTION customer_private.personal_profile_workspace_check(person uuid) RETURNS void
+ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog AS $$
+BEGIN
+ IF NOT EXISTS(SELECT FROM customer_private.account_chain c WHERE c.principal_id=person)
+  AND NOT EXISTS(SELECT FROM customer.membership m JOIN customer.workspace w ON w.tenant_id=m.tenant_id WHERE m.principal_id=person)
+  AND NOT EXISTS(SELECT FROM customer_private.workspace_member x JOIN customer.workspace w ON w.tenant_id=x.tenant_id WHERE x.principal_id=person) THEN
+  RAISE EXCEPTION 'Personal details need a workspace on this account. Create or join a workspace first.' USING ERRCODE='23514';
+ END IF;
 END $$;
 
 CREATE FUNCTION customer_private.personal_profile_event(person uuid,command uuid,kind text,aggregate text,payload jsonb) RETURNS void
@@ -262,26 +278,35 @@ BEGIN
 END $$;
 
 -- Whether this person already recorded this command: the name route answers a lost response without calling the provider
--- again. It applies the same account refusals as a save, and the same workspace refusal, so a change that could not be
--- recorded is refused before the provider is asked.
-CREATE FUNCTION customer.account_security_noted(command uuid) RETURNS boolean
+-- again. It applies the same account refusals and workspace refusal as a save, so a change that could not be recorded is
+-- refused before the provider is asked, and the same command with another request is refused. It writes nothing: the
+-- account chain workspace is pinned only when the change is recorded. It takes the same per-person locks, in the same
+-- order, as every other caller.
+CREATE FUNCTION customer.account_security_noted(command uuid,request text) RETURNS boolean
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
-DECLARE actor uuid;
+DECLARE actor uuid;prior customer_private.account_security_note;
 BEGIN
- IF command IS NULL THEN RAISE EXCEPTION 'Invalid account security change' USING ERRCODE='23514'; END IF;
+ IF command IS NULL OR request IS NULL OR request !~ '^[a-f0-9]{64}$' THEN RAISE EXCEPTION 'Invalid account security change' USING ERRCODE='23514'; END IF;
  actor:=customer_private.personal_profile_actor();
- PERFORM customer_private.personal_profile_tenant(actor);
- RETURN EXISTS(SELECT FROM customer_private.account_security_note n WHERE n.actor_id=actor AND n.command_id=command);
+ PERFORM pg_advisory_xact_lock(hashtextextended('customer.account.lifecycle:'||actor::text,0));
+ PERFORM pg_advisory_xact_lock(hashtextextended('customer.personal_profile:'||actor::text,0));
+ IF customer_private.personal_profile_actor() IS DISTINCT FROM actor THEN RAISE EXCEPTION 'Customer access expired' USING ERRCODE='42501'; END IF;
+ PERFORM customer_private.personal_profile_workspace_check(actor);
+ SELECT * INTO prior FROM customer_private.account_security_note n WHERE n.actor_id=actor AND n.command_id=command;
+ IF NOT FOUND THEN RETURN false; END IF;
+ IF prior.request_sha256<>request THEN RAISE EXCEPTION 'Command conflicts with original request' USING ERRCODE='23514'; END IF;
+ RETURN true;
 END $$;
 
 -- Records a change the sign-in provider already made. A repeat of the same command and kind answers the first record; the
 -- same command with another kind is refused. It does not refuse a closed account: the change has already happened.
-CREATE FUNCTION customer.account_security_note(command uuid,kind text) RETURNS jsonb
+CREATE FUNCTION customer.account_security_note(command uuid,kind text,request text) RETURNS jsonb
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE actor uuid:=customer.actor_id();prior customer_private.account_security_note;
 BEGIN
  IF actor IS NULL THEN RAISE EXCEPTION 'Customer access denied' USING ERRCODE='42501'; END IF;
- IF command IS NULL OR kind IS NULL OR kind NOT IN ('name_changed','password_changed','session_revoked','other_sessions_revoked') THEN
+ IF command IS NULL OR kind IS NULL OR kind NOT IN ('name_changed','password_changed','session_revoked','other_sessions_revoked')
+  OR request IS NULL OR request !~ '^[a-f0-9]{64}$' THEN
   RAISE EXCEPTION 'Invalid account security change' USING ERRCODE='23514';
  END IF;
  -- The same per-person locks, in the same order, as a save: one person's events get distinct versions and the first workspace
@@ -290,10 +315,10 @@ BEGIN
  PERFORM pg_advisory_xact_lock(hashtextextended('customer.personal_profile:'||actor::text,0));
  SELECT * INTO prior FROM customer_private.account_security_note n WHERE n.actor_id=actor AND n.command_id=command;
  IF FOUND THEN
-  IF prior.kind<>kind THEN RAISE EXCEPTION 'Command conflicts with original request' USING ERRCODE='23514'; END IF;
+  IF prior.kind<>kind OR prior.request_sha256<>request THEN RAISE EXCEPTION 'Command conflicts with original request' USING ERRCODE='23514'; END IF;
   RETURN jsonb_build_object('commandId',command,'kind',kind,'replayed',true);
  END IF;
- INSERT INTO customer_private.account_security_note(actor_id,command_id,kind) VALUES(actor,command,kind);
+ INSERT INTO customer_private.account_security_note(actor_id,command_id,kind,request_sha256) VALUES(actor,command,kind,request);
  PERFORM customer_private.personal_profile_event(actor,command,'customer.account_security.changed','customer_account_security',
   jsonb_build_object('kind',kind));
  RETURN jsonb_build_object('commandId',command,'kind',kind,'replayed',false);
@@ -349,11 +374,12 @@ END $$;
 
 REVOKE ALL ON FUNCTION customer_private.personal_profile_placeholder(),customer_private.personal_profile_guard(),
  customer_private.personal_profile_valid(jsonb),customer_private.personal_profile_actor(),customer_private.personal_profile_tenant(uuid),
+ customer_private.personal_profile_workspace_check(uuid),
  customer_private.personal_profile_event(uuid,uuid,text,text,jsonb),customer_private.personal_profile_shape(customer_private.personal_profile_revision)
  FROM PUBLIC,corridra_runtime,corridra_auth;
 REVOKE ALL ON FUNCTION customer.personal_profile_view(),customer.personal_profile_command(uuid,integer,jsonb),
- customer.personal_profile_history(integer,integer),customer.account_security_noted(uuid),customer.account_security_note(uuid,text),
+ customer.personal_profile_history(integer,integer),customer.account_security_noted(uuid,text),customer.account_security_note(uuid,text,text),
  customer.personal_profile_remove_words(uuid,uuid) FROM PUBLIC,corridra_auth;
 GRANT EXECUTE ON FUNCTION customer.personal_profile_view(),customer.personal_profile_command(uuid,integer,jsonb),
- customer.personal_profile_history(integer,integer),customer.account_security_noted(uuid),customer.account_security_note(uuid,text),
+ customer.personal_profile_history(integer,integer),customer.account_security_noted(uuid,text),customer.account_security_note(uuid,text,text),
  customer.personal_profile_remove_words(uuid,uuid) TO corridra_runtime;

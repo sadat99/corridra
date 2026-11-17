@@ -78,7 +78,9 @@ const initialsWords: Record<Initials, string> = {
   EMAIL_INITIALS: 'From your email',
   NONE: 'Do not show',
 };
-const control = /[\u0000-\u001f\u007f]/u;
+// The same characters the server refuses (C0, C1, line and paragraph separators); lengths count characters.
+const control = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/u;
+const count = (text: string) => [...text].length;
 const interestLimit = 10;
 const shownInterests = 5;
 const editId = (section: Section) => `profile-${section}-edit`;
@@ -138,12 +140,12 @@ function checkDraft(draft: Draft, section: Section): FieldError[] {
   const errors: FieldError[] = [];
   if (section === 'name') {
     const name = draft.name.trim();
-    if (name.length < 1 || name.length > 100 || control.test(name))
+    if (count(name) < 1 || count(name) > 100 || control.test(name))
       errors.push({ field: 'profile-name', message: 'Enter a name of 1 to 100 characters.' });
   }
   if (section === 'about') {
     const title = draft.title.trim();
-    if (title.length > 80 || control.test(title))
+    if (count(title) > 80 || control.test(title))
       errors.push({ field: 'profile-title', message: 'Keep the job title to 80 characters.' });
   }
   return errors;
@@ -384,7 +386,7 @@ export function PersonalProfile({
   }
   function addInterest() {
     const word = interestText.trim();
-    if (word.length < 2 || word.length > 60 || control.test(word)) {
+    if (count(word) < 2 || count(word) > 60 || control.test(word)) {
       setInterestError('Use 2 to 60 characters.');
       return;
     }
@@ -564,7 +566,6 @@ export function PersonalProfile({
             <input
               id={fieldAnchor('profile-name')}
               value={draft.name}
-              maxLength={100}
               autoComplete="name"
               aria-invalid={errors.some((e) => e.field === 'profile-name') || undefined}
               aria-describedby="profile-name-help"
@@ -603,7 +604,6 @@ export function PersonalProfile({
                 <input
                   id={fieldAnchor('profile-title')}
                   value={draft.title}
-                  maxLength={80}
                   autoComplete="organization-title"
                   aria-invalid={errors.some((e) => e.field === 'profile-title') || undefined}
                   onChange={(event) => setDraft({ ...draft, title: event.target.value })}
@@ -670,7 +670,6 @@ export function PersonalProfile({
                 <input
                   id={fieldAnchor('profile-interest')}
                   value={interestText}
-                  maxLength={60}
                   aria-invalid={interestError ? true : undefined}
                   aria-describedby="profile-interest-help profile-interest-error"
                   onChange={(event) => setInterestText(event.target.value)}

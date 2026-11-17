@@ -797,6 +797,7 @@ function createServices() {
         issuer: customerIssuerFromEnv(),
       },
       readCustomerSession,
+      config.AUTH_SECRET,
     ),
     customerProgrammeContext: new CustomerProgrammeContextService(
       runtimePool,

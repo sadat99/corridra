@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { DomainError } from '../../packages/domain/src/index';
 
 // ADR-086. The name route, with the sign-in provider and the database answered by the test: every check in its fixed
@@ -20,6 +20,7 @@ const state = {
 };
 const calls = {
   session: 0,
+  preflightArgs: [] as unknown[][],
   update: [] as unknown[],
   preflight: 0,
   note: [] as unknown[],
@@ -59,10 +60,14 @@ vi.mock('../../apps/web/lib/foundations', () => ({
     state.services
       ? {
           ready: Promise.resolve(),
-          config: { APP_ORIGIN: 'http://localhost' },
+          config: {
+            APP_ORIGIN: 'http://localhost',
+            AUTH_SECRET: 'test-secret-for-the-name-route-hmac-0123456789',
+          },
           customerPersonalProfiles: {
-            nameChangePreflight: async () => {
+            nameChangePreflight: async (...args: unknown[]) => {
               calls.preflight += 1;
+              calls.preflightArgs.push(args);
               if (state.preflightError) throw state.preflightError;
               return { limited: state.limited, noted: state.noted };
             },
@@ -115,7 +120,10 @@ beforeEach(() => {
   calls.note.length = 0;
   calls.preflight = 0;
   calls.session = 0;
+  calls.preflightArgs.length = 0;
   logs.length = 0;
+  vi.stubEnv('NEON_AUTH_BASE_URL', issuer);
+  vi.stubEnv('CORRIDRA_CUSTOMER_ISSUER', '');
   for (const level of ['log', 'warn', 'error', 'info'] as const)
     vi.spyOn(console, level).mockImplementation((...args: unknown[]) => {
       logs.push(args.map(String).join(' '));
@@ -123,6 +131,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllEnvs();
   for (const line of logs) expect(line).not.toContain('Quokkaname');
 });
 async function send(req: Request) {
@@ -138,12 +147,32 @@ describe('the name route', () => {
     expect(result).toEqual({ status: 200, body: { commandId, replayed: false } });
     expect(calls.update).toEqual([{ name: secretName }]);
     expect(calls.note).toHaveLength(1);
-    expect(calls.note[0]).toEqual([commandId, 'name_changed', 'user-1', issuer]);
+    expect(calls.note[0]).toEqual([
+      commandId,
+      'name_changed',
+      expect.stringMatching(/^[a-f0-9]{64}$/),
+      'user-1',
+      issuer,
+    ]);
     expect(JSON.stringify(result.body)).not.toContain('Quokkaname');
   });
 
-  test('checks in order: origin 403, JSON 415, size 413, name 400, capability 404', async () => {
+  test('checks in order: origin 403, capability 404, JSON 415, size 413, name 400', async () => {
     expect((await send(request(undefined, { Origin: 'https://evil.example' }))).status).toBe(403);
+    // A disabled route answers 404 before it reads anything, so it reveals no other answer.
+    state.capability = false;
+    for (const req of [
+      request(),
+      request(undefined, { 'Content-Type': 'text/plain' }),
+      request({ commandId: randomUUID(), name: 'x'.repeat(2000) }),
+      request({ commandId: randomUUID(), name: '' }),
+      request('{not json'),
+    ])
+      expect(await send(req)).toEqual({
+        status: 404,
+        body: { error: 'Not found', code: 'not_found' },
+      });
+    state.capability = true;
     expect((await send(request(undefined, { 'Content-Type': 'text/plain' }))).status).toBe(415);
     expect((await send(request({ commandId: randomUUID(), name: 'x'.repeat(2000) }))).status).toBe(
       413,
@@ -153,6 +182,9 @@ describe('the name route', () => {
       { commandId: randomUUID(), name: '   ' },
       { commandId: randomUUID(), name: 'x'.repeat(101) },
       { commandId: randomUUID(), name: 'tab\there' },
+      { commandId: randomUUID(), name: 'c1\u0085control' },
+      { commandId: randomUUID(), name: 'line\u2028separator' },
+      { commandId: randomUUID(), name: 'para\u2029separator' },
       { commandId: 'not-a-uuid', name: secretName },
       { commandId: randomUUID(), name: secretName, email: 'a@example.test' },
       '{not json',
@@ -160,17 +192,43 @@ describe('the name route', () => {
       expect((await send(request(body))).status, JSON.stringify(body)).toBe(400);
     // None of these reached the provider session, the database or the provider.
     expect(calls.session).toBe(0);
-    state.capability = false;
-    expect(await send(request())).toEqual({
-      status: 404,
-      body: { error: 'Not found', code: 'not_found' },
-    });
-    // A refused capability is answered before the session guard is asked.
-    expect(calls.session).toBe(0);
-    // An invalid body is refused before the capability: 400, not 404.
-    expect((await send(request({ commandId: randomUUID(), name: '' }))).status).toBe(400);
     expect(calls.update).toEqual([]);
     expect(calls.preflight).toBe(0);
+  });
+
+  test('counts a name in characters, not UTF-16 units: 100 emoji are accepted, 101 are not', async () => {
+    expect((await send(request({ commandId: randomUUID(), name: '😀'.repeat(100) }))).status).toBe(
+      200,
+    );
+    expect((await send(request({ commandId: randomUUID(), name: '😀'.repeat(101) }))).status).toBe(
+      400,
+    );
+  });
+
+  test('takes the issuer from CORRIDRA_CUSTOMER_ISSUER first, as the session boundary does', async () => {
+    vi.stubEnv('CORRIDRA_CUSTOMER_ISSUER', 'https://customer.example');
+    expect(
+      (await send(request(undefined, { 'x-corridra-customer-issuer': 'https://customer.example' })))
+        .status,
+    ).toBe(200);
+    expect((await send(request())).status).toBe(409);
+  });
+
+  test('passes a keyed request hash, never the name, and a reused command with another name is refused', async () => {
+    const commandId = randomUUID();
+    expect((await send(request({ commandId, name: secretName }))).status).toBe(200);
+    const preflightHash = calls.preflightArgs[0]![1] as string;
+    expect(preflightHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(preflightHash).not.toBe(createHash('sha256').update(secretName).digest('hex'));
+    expect(calls.note[0]).toEqual([commandId, 'name_changed', preflightHash, 'user-1', issuer]);
+    expect(JSON.stringify([calls.preflightArgs, calls.note])).not.toContain('Quokkaname');
+    state.preflightError = Object.assign(new Error('Command conflicts with original request'), {
+      code: '23514',
+    });
+    const conflict = await send(request({ commandId, name: 'Someone Else' }));
+    expect(conflict.status).toBe(409);
+    expect(conflict.body.code).toBe('command_conflict');
+    expect(calls.update).toHaveLength(1);
   });
 
   test('refuses a missing, unverified or different session before the provider is asked', async () => {

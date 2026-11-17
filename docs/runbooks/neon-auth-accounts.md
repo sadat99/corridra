@@ -27,6 +27,15 @@ Production customer signup/email recovery was activated and accepted in PR 26 on
 
 A customer changes their display name only through the Corridra server route `POST /api/account/name`, which calls the pinned SDK server method `updateUser({ name })` with the person's fresh session. The auth proxy allowlist in `app/api/auth/[...all]` is unchanged, so the browser never reaches the provider's update endpoint. The route checks origin, JSON, a 1 KB body and a name of 1 to 100 characters, then a fresh provider session (signed in, verified, the same person the page was drawn for), the account state (closed or erasure filed is refused), six changes an hour per person, and a replay of the same command id. A provider error answers 503 `provider_unavailable` and changes nothing. The change is recorded by command id in the account security record (`customer.account_security_note`); if that record fails after the provider changed the name, the route still answers 200 and logs `account_name_missing_audit` (a code and status only, never the name). The route answers 404 and the screen hides the name edit until `updateName` in `apps/web/lib/account-security-capabilities.ts` is set true after the preview probe.
 
+### Staff erasure: removing a person's words
+
+No application screen runs these; a privacy owner or admin of the staff workspace (fresh authenticator check, the erasure queue authority) runs them for one erasure request, once its status is `in_progress` (or `completed`), after reading the request in the erasure queue:
+
+1. `customer.programme_words_remove(command, erasure_request)`: the words in programme applications and registration labels (ADR-080).
+2. `customer.personal_profile_remove_words(command, erasure_request)`: the job title and interests in the person's personal details (ADR-086), in every saved version and replay record, replaced by "Removed at request" and an empty list. The country, preferred contact and initials choice stay: they are codes chosen from a list, not the person's words.
+
+Each takes a new command id (a random UUID) and answers with counts only; running it again with the same command answers the same counts and changes nothing, and running it with a new command skips what is already done. Note the counts in the erasure request's staff note when it is completed.
+
 ## Separate staff password recovery
 
 Staff recovery uses the existing Better Auth token store and separate Resend HTTPS sending configuration. Set only through secure deployment settings: `CORRIDRA_OPERATOR_RECOVERY_ENABLED`, sensitive `OPERATOR_RECOVERY_EMAIL_KEY` and `OPERATOR_RECOVERY_EMAIL_FROM`. A saved Neon SMTP credential is not automatically available to this transport; never copy a management API key into runtime. Missing configuration disables recovery rather than collecting an unusable credential.

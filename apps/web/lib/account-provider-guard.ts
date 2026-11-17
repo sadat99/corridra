@@ -1,6 +1,6 @@
 import 'server-only';
 import { DomainError } from '@corridra/domain';
-import { readNeonAuthConfig } from '@corridra/config';
+import { customerIssuerFromEnv } from '@corridra/auth/customer-production';
 import { neonAuth } from './neon-auth';
 
 // ADR-086. The check every account security route makes before it asks the sign-in provider to change anything: a fresh
@@ -9,7 +9,9 @@ import { neonAuth } from './neon-auth';
 // Errors carry a code the screen maps to words; nothing here logs or returns a name or an email.
 export const providerUnavailableCode = 'provider_unavailable';
 export async function accountProviderGuard(request: Request) {
-  const issuer = readNeonAuthConfig()?.NEON_AUTH_BASE_URL;
+  // The same issuer the customer session boundary pins (CORRIDRA_CUSTOMER_ISSUER, else NEON_AUTH_BASE_URL), so the guard
+  // and the database proof always agree on who the person is.
+  const issuer = customerIssuerFromEnv();
   const auth = neonAuth();
   if (!issuer || !auth)
     throw new DomainError('The sign-in service is unavailable', 503, providerUnavailableCode);

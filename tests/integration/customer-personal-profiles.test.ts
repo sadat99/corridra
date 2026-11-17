@@ -1,12 +1,16 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
-import { randomUUID } from 'node:crypto';
+import { createHash, createHmac, randomUUID } from 'node:crypto';
 import { fixture, rawContext } from './support';
 import { harness, options, type Fixture, type Row } from './revamp-g4-support';
 import type { RequestContext } from '../../packages/db/src/index';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateCustomerAccountLifecycle } from '../../packages/db/src/customer-account-lifecycle-migrate';
 import { migrateCustomerPersonalProfiles } from '../../packages/db/src/customer-personal-profile-migrate';
-import { CustomerPersonalProfileService } from '../../packages/auth/src/customer-personal-profiles';
+import {
+  CustomerPersonalProfileService,
+  accountNameBudgetKey,
+  customerPersonalProfileDetails,
+} from '../../packages/auth/src/customer-personal-profiles';
 
 // The route reads its service through foundations(); here it is the real service on this database.
 const route = { services: null as unknown };
@@ -39,9 +43,15 @@ const save = (
       JSON.stringify(details),
     ])
     .then((row) => row.r);
-const note = (person: string, kind: string, command = randomUUID()) =>
+// A keyed hash of what was asked (the route makes it with the server secret); here any 64 hex characters.
+const requestHash = (text = 'same') => createHash('sha256').update(`fixture:${text}`).digest('hex');
+const note = (person: string, kind: string, command = randomUUID(), hash = requestHash()) =>
   h
-    .sql<{ r: Row }>(person, 'SELECT customer.account_security_note($1,$2) AS r', [command, kind])
+    .sql<{ r: Row }>(person, 'SELECT customer.account_security_note($1,$2,$3) AS r', [
+      command,
+      kind,
+      hash,
+    ])
     .then((row) => row.r);
 const staffCtx = (): RequestContext => f.users.owner!.ctx;
 const staff = (text: string, params: unknown[] = []) =>
@@ -194,6 +204,10 @@ describe('the person edits their own details', () => {
       { title: '' },
       { title: ' padded' },
       { title: 'tab\there' },
+      { title: 'c1\u0085control' },
+      { title: 'line\u2028separator' },
+      { interests: ['para\u2029separator'] },
+      { interests: ['c1\u009fcontrol'] },
       { title: 5 },
       { baseCountry: 'XX' },
       { baseCountry: 'bd' },
@@ -231,6 +245,37 @@ describe('the person edits their own details', () => {
   });
 });
 
+describe('the server-side rules agree with the database', () => {
+  test('counts characters, not UTF-16 units, and refuses C1 controls and line separators', async () => {
+    const title = '😀'.repeat(80);
+    expect(customerPersonalProfileDetails.safeParse({ title }).success).toBe(true);
+    expect(customerPersonalProfileDetails.safeParse({ title: '😀'.repeat(81) }).success).toBe(
+      false,
+    );
+    for (const bad of ['c1\u0085x', 'a\u2028b', 'a\u2029b', 'a\u009fb'])
+      expect(customerPersonalProfileDetails.safeParse({ title: bad }).success, bad).toBe(false);
+    await h.admit(['emma']);
+    await h.provision('emma', 'Synthetic emma workspace');
+    expect(await save('emma', 0, { title })).toMatchObject({ currentVersion: 1 });
+  });
+  test('the name budget key is keyed with the server secret, never a plain hash', () => {
+    const plain = createHash('sha256')
+      .update('account:name:https://i.example:subject-1')
+      .digest('hex');
+    const keyed = accountNameBudgetKey('secret-one-0123456789', 'https://i.example', 'subject-1');
+    expect(keyed).toMatch(/^[a-f0-9]{64}$/);
+    expect(keyed).toBe(
+      createHmac('sha256', 'secret-one-0123456789')
+        .update('account:name:https://i.example:subject-1')
+        .digest('hex'),
+    );
+    expect(keyed).not.toBe(plain);
+    expect(
+      accountNameBudgetKey('secret-two-0123456789', 'https://i.example', 'subject-1'),
+    ).not.toBe(keyed);
+  });
+});
+
 describe('nobody else', () => {
   test('another principal reads only their own empty details and cannot reuse a command', async () => {
     expect(await view('bob')).toMatchObject({ currentVersion: 0, profile: null });
@@ -263,7 +308,7 @@ describe('nobody else', () => {
   });
   test('the name preflight refuses a person with no workspace, so no unrecorded change reaches the provider', async () => {
     await expect(
-      h.sql('nina', 'SELECT customer.account_security_noted($1)', [randomUUID()]),
+      h.sql('nina', 'SELECT customer.account_security_noted($1,$2)', [randomUUID(), requestHash()]),
     ).rejects.toMatchObject({ code: '23514', message: noWorkspace });
     await expect(note('nina', 'name_changed')).rejects.toMatchObject({ code: '23514' });
   });
@@ -325,14 +370,28 @@ describe('events', () => {
     await expect(note('bob', 'email_changed')).rejects.toMatchObject({ code: '23514' });
     const noted = await h.sql<{ r: boolean }>(
       'bob',
-      'SELECT customer.account_security_noted($1) AS r',
-      [command],
+      'SELECT customer.account_security_noted($1,$2) AS r',
+      [command, requestHash()],
     );
     expect(noted.r).toBe(true);
+    // The same command with another request (another name) is refused, before the provider is asked again.
+    await expect(
+      h.sql('bob', 'SELECT customer.account_security_noted($1,$2)', [
+        command,
+        requestHash('other'),
+      ]),
+    ).rejects.toMatchObject({ code: '23514', message: conflict });
+    await expect(note('bob', 'name_changed', command, requestHash('other'))).rejects.toMatchObject({
+      code: '23514',
+      message: conflict,
+    });
+    await expect(
+      h.sql('bob', 'SELECT customer.account_security_noted($1,$2)', [randomUUID(), 'not-a-hash']),
+    ).rejects.toMatchObject({ code: '23514' });
     const otherNoted = await h.sql<{ r: boolean }>(
       'alice',
-      'SELECT customer.account_security_noted($1) AS r',
-      [command],
+      'SELECT customer.account_security_noted($1,$2) AS r',
+      [command, requestHash()],
     );
     expect(otherNoted.r).toBe(false);
     const after = await counts();
@@ -350,6 +409,44 @@ describe('events', () => {
   });
 });
 
+describe('the name preflight and concurrent records', () => {
+  test('the preflight is read only: it never pins the account chain workspace', async () => {
+    const [fresh] = Object.values(await h.admit(['pina']));
+    await h.provision('pina', 'Synthetic pina workspace');
+    const pinned = async () =>
+      (
+        await f.owner.query(
+          'SELECT count(*)::int n FROM customer_private.account_chain WHERE principal_id=$1',
+          [fresh],
+        )
+      ).rows[0].n as number;
+    expect(await pinned()).toBe(0);
+    const noted = await h.sql<{ r: boolean }>(
+      'pina',
+      'SELECT customer.account_security_noted($1,$2) AS r',
+      [randomUUID(), requestHash()],
+    );
+    expect(noted.r).toBe(false);
+    expect(await pinned()).toBe(0);
+    await note('pina', 'name_changed');
+    expect(await pinned()).toBe(1);
+  });
+  test('concurrent records of one person get distinct event versions', async () => {
+    await Promise.all(
+      ['name_changed', 'password_changed', 'session_revoked', 'other_sessions_revoked'].map(
+        (kind) => note('alice', kind),
+      ),
+    );
+    const versions = (
+      await f.owner.query(
+        "SELECT aggregate_version v FROM app.domain_event WHERE aggregate_type='customer_account_security' AND aggregate_id=$1",
+        [ids.alice],
+      )
+    ).rows.map((row) => row.v as number);
+    expect(new Set(versions).size).toBe(versions.length);
+  });
+});
+
 describe('closed and erasure-pending accounts', () => {
   test('a closed account is refused', async () => {
     await save('carol', 0, { title: 'Synthetic carol' });
@@ -363,7 +460,10 @@ describe('closed and erasure-pending accounts', () => {
       code: '42501',
     });
     await expect(
-      h.sql('carol', 'SELECT customer.account_security_noted($1)', [randomUUID()]),
+      h.sql('carol', 'SELECT customer.account_security_noted($1,$2)', [
+        randomUUID(),
+        requestHash(),
+      ]),
     ).rejects.toMatchObject({ code: '42501' });
   });
   test('an account with a filed erasure request is refused', async () => {
@@ -467,7 +567,13 @@ describe('erasure placeholder', () => {
 describe('the route', () => {
   const load = () => import('../../apps/web/app/api/customer-personal-profile/route');
   const serviceFor = (person: string) =>
-    new CustomerPersonalProfileService(f.runtime, f.auth, options, async () => h.session(person));
+    new CustomerPersonalProfileService(
+      f.runtime,
+      f.auth,
+      options,
+      async () => h.session(person),
+      'fixture-secret-0123456789',
+    );
   const using = (service: unknown) => {
     route.services = {
       ready: Promise.resolve(),
