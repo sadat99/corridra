@@ -83,6 +83,30 @@ describe('message files', () => {
       for (const key of chrome) expect(catalogs[code][key], `${code}.${key}`).not.toBe(en[key]);
   });
 
+  it.each(others)(
+    '%s names each header job exactly as its way word, so the two never drift',
+    (code) => {
+      const pairs = [
+        ['header.job.sell', 'way.sell'],
+        ['header.job.source', 'way.source'],
+        ['header.job.machinery', 'way.machinery'],
+        ['header.job.tradeMission', 'way.tradeMissions'],
+        ['header.job.businessTrip', 'way.businessTrips'],
+        ['header.job.enterMarket', 'way.enterMarket'],
+      ] as const satisfies readonly (readonly [MessageKey, MessageKey])[];
+      for (const [header, way] of pairs) {
+        const word = catalogs[code][header];
+        const wayWord = catalogs[code][way];
+        // One named exception: the full French word is one character over the header budget (32 for the
+        // English "Run a trade mission"), so the header shows its word-boundary prefix; the line below
+        // carries "commerciale" as context.
+        if (code === 'fr' && header === 'header.job.tradeMission')
+          expect(`${wayWord} `.startsWith(`${word} `), `${code}.${header}`).toBe(true);
+        else expect(word, `${code}.${header}`).toBe(wayWord);
+      }
+    },
+  );
+
   it('keeps Arabic header and footer words in Arabic script and the brand name as written', () => {
     for (const key of keys.filter((k) =>
       /^(header\.job|footer\.(group|link\.(china|spain|routes)))/.test(k),
