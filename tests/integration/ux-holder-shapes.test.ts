@@ -48,7 +48,7 @@ describe('holder badge shapes', () => {
     expect(html).toContain(word);
   });
 
-  it('keeps the shapes distinct in CSS: diamond for owner, dome for third, on currentColor', () => {
+  it('keeps the shapes distinct in CSS: diamond for owner, true half-disc for third, on currentColor', () => {
     const css = source('apps/web/components/mr/holder-badge.css');
     const rule = (holder: string) =>
       new RegExp(`\\.mr-holder-shape\\[data-holder='${holder}'\\]\\s*\\{([^}]*)\\}`).exec(
@@ -56,11 +56,23 @@ describe('holder badge shapes', () => {
       )?.[1] ?? '';
     expect(rule('owner')).toMatch(/rotate\(45deg\)/);
     expect(rule('third')).not.toMatch(/rotate/);
-    expect(rule('third')).toMatch(/border-radius:\s*50% 50% 0 0/);
     expect(rule('you')).toMatch(/border-radius:\s*50%/);
     expect(rule('team')).toMatch(/border-radius:\s*0/);
+    // Half-disc geometry: the height is half the width, only the top corners are round, each by half
+    // the width, so the top is a semicircle and the bottom edge is flat.
+    expect(rule('third')).toMatch(/height:\s*calc\(0\.625rem \/ 2\)/);
+    expect(rule('third')).toMatch(
+      /border-radius:\s*calc\(0\.625rem \/ 2\) calc\(0\.625rem \/ 2\) 0 0/,
+    );
     expect(css).toMatch(/background:\s*currentColor/);
     expect(css).not.toMatch(/#[0-9a-f]{3,8}\b|rgb\(/i);
+  });
+
+  it('stays visible in forced colours', () => {
+    const css = source('apps/web/components/mr/holder-badge.css');
+    const block = /@media \(forced-colors: active\)\s*\{([\s\S]*?)\n\}/.exec(css)?.[1] ?? '';
+    expect(block).toContain('forced-color-adjust: none');
+    expect(block).toContain('CanvasText');
   });
 });
 

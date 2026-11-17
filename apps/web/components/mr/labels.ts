@@ -12,6 +12,13 @@ import { defaultLocale, type Locale } from '../../lib/i18n/locales';
 type Say = (key: MessageKey) => string;
 
 function build(say: Say) {
+  /** One source for the four holder shapes: the word and the sentence, used by the Road legend and Explain. */
+  const holderHints = {
+    you: { name: say('mr.holder.you'), text: say('mr.explain.holder.you') },
+    team: { name: say('mr.holder.team'), text: say('mr.explain.holder.team') },
+    owner: { name: say('move.wait.owner'), text: say('mr.explain.holder.owner') },
+    third: { name: say('mr.holder.third'), text: say('mr.explain.holder.third') },
+  };
   return {
     road: {
       title: say('mr.road.title'),
@@ -38,12 +45,7 @@ function build(say: Say) {
         notTracked: say('mr.explain.state.notTracked'),
       },
       /** The holder shapes the legend explains: circle, square, diamond and half-disc. */
-      holders: {
-        you: { name: say('mr.holder.you'), text: say('mr.explain.holder.you') },
-        team: { name: say('mr.holder.team'), text: say('mr.explain.holder.team') },
-        owner: { name: say('move.wait.owner'), text: say('mr.explain.holder.owner') },
-        third: { name: say('mr.holder.third'), text: say('mr.explain.holder.third') },
-      },
+      holders: holderHints,
       sublines: {
         // D6: a mission exists only once the customer has sent the request, so a DRAFT mission is a
         // received request waiting for review, never an unsent draft.
@@ -107,12 +109,7 @@ function build(say: Say) {
      * gets one in the PR that first draws it.
      */
     explain: {
-      holder: {
-        you: { name: say('mr.holder.you'), text: say('mr.explain.holder.you') },
-        team: { name: say('mr.holder.team'), text: say('mr.explain.holder.team') },
-        owner: { name: say('move.wait.owner'), text: say('mr.explain.holder.owner') },
-        third: { name: say('mr.holder.third'), text: say('mr.explain.holder.third') },
-      },
+      holder: holderHints,
       state: {
         done: { name: say('mr.road.state.done'), text: say('mr.explain.state.done') },
         now: { name: say('mr.road.state.now'), text: say('mr.explain.state.now') },

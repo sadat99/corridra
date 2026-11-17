@@ -34,7 +34,15 @@
 .mr-holder-shape[data-holder='owner'] {
   transform: rotate(45deg) scale(0.85);
 }
-/* Supplier or Buyer: a half-disc, a dome with its flat edge down. */
+/* Supplier or Buyer: a half-disc, a dome with its flat edge down. Same width, half the height, and
+   the top corners rounded to half the width, so the top is a true semicircle. */
 .mr-holder-shape[data-holder='third'] {
-  border-radius: 50% 50% 0 0;
+  height: calc(0.625rem / 2);
+  border-radius: calc(0.625rem / 2) calc(0.625rem / 2) 0 0;
+}
+@media (forced-colors: active) {
+  .mr-holder-shape {
+    forced-color-adjust: none;
+    background: CanvasText;
+  }
 }

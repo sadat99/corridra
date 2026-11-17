@@ -333,12 +333,22 @@ test.describe('Road legend holder shapes', () => {
           .locator(`.mr-road-keys[data-keys="holders"] .mr-holder-shape[data-holder="${holder}"]`)
           .evaluate((el) => {
             const style = getComputedStyle(el);
-            return { radius: style.borderTopLeftRadius, transform: style.transform };
+            return {
+              radius: style.borderTopLeftRadius,
+              bottom: style.borderBottomLeftRadius,
+              width: parseFloat(style.width),
+              height: parseFloat(style.height),
+              transform: style.transform,
+            };
           });
       const diamond = await look('owner');
       const dome = await look('third');
       expect(diamond.transform).not.toBe('none');
       expect(dome.transform).toBe('none');
+      // A true half-disc: half as tall as wide, a semicircle on top, a flat edge below.
+      expect(dome.height).toBeCloseTo(dome.width / 2, 1);
+      expect(parseFloat(dome.radius)).toBeCloseTo(dome.width / 2, 1);
+      expect(parseFloat(dome.bottom)).toBe(0);
       expect(dome.radius).not.toBe((await look('team')).radius);
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
