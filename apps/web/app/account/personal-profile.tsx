@@ -42,7 +42,7 @@ type Pending = { section: Section; commandId: string; body: Record<string, unkno
 
 const endpoint = '/api/customer-personal-profile';
 const words = {
-  heading: 'Profile and Identity',
+  emailNote: 'Your email address is verified. This does not verify your company.',
   chip: 'Verified account email',
   notAdded: 'Not added',
   selfDeclared: 'Self-declared: you entered these. Corridra has not checked them.',
@@ -548,15 +548,12 @@ export function PersonalProfile({
     </div>
   );
 
+  // The account page draws the card and its "Profile and Identity" heading; this fills it.
   return (
-    <section
-      className="ux-account-profile ux-account-card"
-      aria-labelledby="profile-identity-heading"
-      aria-busy={load === 'loading'}
-    >
-      <h2 id="profile-identity-heading">{words.heading}</h2>
+    <>
       {header}
       {!nameEditable && shownName && <p>{shownName}</p>}
+      <p>{words.emailNote}</p>
       {nameEditable &&
         row(
           'name',
@@ -773,6 +770,6 @@ export function PersonalProfile({
           </button>
         </div>
       </Dialog>
-    </section>
+    </>
   );
 }
