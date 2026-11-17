@@ -1629,6 +1629,11 @@
       "use": "Proposed, 14 Nov 2026; the helper interest register on /access/team: a public note of interest (name, email, country, reason) that is not an invitation, stored for owner and admin only for 180 days, behind CORRIDRA_HELPER_INTEREST and CORRIDRA_NETWORK_ENABLED, optional database module, install pending"
     },
     {
+      "path": "docs/adr/0086-personal-profile-and-account-security-self-service.md",
+      "classification": "Architecture decision",
+      "use": "Accepted by the owner 17 Nov 2026; personal profile and account security self-service: optional self-reported details, server-only name route, controls off until probed, install pending"
+    },
+    {
       "path": "docs/revamp/README.md",
       "classification": "Current guide/contract",
       "use": "Owner-approved V3 controlled revamp scope (4 Nov 2026), merge rules, session file ownership, current lanes snapshot, UI/UX.v3 as the design contract and the Wave 0 route/cleanup manifest; live state stays in the ledger"
