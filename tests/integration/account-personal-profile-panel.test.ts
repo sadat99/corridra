@@ -28,6 +28,8 @@ describe('the account page mounts My Profile with the workspaces switch', () => 
   });
 });
 
+const panelPath = '../../apps/web/app/account/personal-profile';
+
 describe('the panel with details off', () => {
   const props = {
     subject: 'user-1',
@@ -36,7 +38,8 @@ describe('the panel with details off', () => {
     email: 'amina@example.test',
   };
   const render = async (over: Record<string, unknown>) => {
-    const { PersonalProfile } = await import('../../apps/web/app/account/personal-profile');
+    // Imported by path, as the other component tests do, so the packages type check does not compile the web app's TSX.
+    const { PersonalProfile } = await import(/* @vite-ignore */ panelPath);
     return renderToStaticMarkup(createElement(PersonalProfile, { ...props, ...over }));
   };
 
