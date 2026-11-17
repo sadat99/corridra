@@ -3,6 +3,7 @@ export { MoveCard, moveVerbs, type MoveVerb } from './move-card';
 export { QuoteCard, type QuoteTerm } from './quote-card';
 export { GhostState } from './ghost-state';
 export { ModeLabel } from './mode-label';
+export { Explain } from './explain';
 export { Road } from './road';
 export { StageBar } from './stage-bar';
 export {

@@ -75,7 +75,7 @@ export function SampleScreens() {
             <HolderBadge holder="team" />
           </div>
         </header>
-        <Road status="MEETINGS" records={{ compare: false, decide: false }} />
+        <Road status="MEETINGS" records={{ compare: false, decide: false }} decorative />
       </section>
     </>
   );

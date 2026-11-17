@@ -1,5 +1,6 @@
 import './road.css';
 import './scripts.css';
+import { Explain } from './explain';
 import { mrLabels } from './labels';
 import {
   roadSteps,
@@ -12,6 +13,9 @@ import {
 } from './road-status';
 
 type RoadLabels = typeof mrLabels.road;
+
+/** The legend shows each state once, in reading order, with its shape, word and explanation. */
+const legendStates: readonly RoadStepState[] = ['done', 'now', 'later', 'notTracked'];
 
 const marks: Record<RoadStepState, (index: number) => string> = {
   done: () => '✓',
@@ -32,12 +36,18 @@ export function Road({
   records = { compare: false, decide: false },
   labels = mrLabels.road,
   showLegend = true,
+  decorative = false,
 }: {
   /** The mission status a customer may read, exactly as returned (for example `MEETINGS`). */
   status: string;
   records?: RoadRecords;
   labels?: RoadLabels;
   showLegend?: boolean;
+  /**
+   * A picture of the Road inside a read-only sample (the operator view-as stage): the legend keeps its
+   * shapes and words but renders no control, so nothing in the sample can be pressed or focused.
+   */
+  decorative?: boolean;
 }) {
   const marker: RoadMarker = statusToRoadStep(status);
   const states = roadStates(marker, records);
@@ -76,7 +86,25 @@ export function Road({
           {aside}
         </p>
       ) : null}
-      {showLegend ? <p className="mr-road-legend">{labels.legend}</p> : null}
+      {showLegend ? (
+        <div className="mr-road-legend">
+          <div className="mr-road-keys">
+            {legendStates.map((state) =>
+              decorative ? (
+                <span key={state} className="mr-road-key-static">
+                  <span className="mr-road-key" data-key={state} aria-hidden="true" />
+                  {labels.states[state]}
+                </span>
+              ) : (
+                <Explain key={state} name={labels.states[state]} text={labels.hints[state]}>
+                  <span className="mr-road-key" data-key={state} />
+                </Explain>
+              ),
+            )}
+          </div>
+          <p className="mr-road-legend-note">{labels.legend}</p>
+        </div>
+      ) : null}
     </div>
   );
 }
