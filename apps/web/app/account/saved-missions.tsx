@@ -75,7 +75,7 @@ export function MemberNoticeView({
 }) {
   if (notices.length === 0) return null;
   return (
-    <section className="member-notice" aria-labelledby="member-notice-title">
+    <section className="ux-draft-notice member-notice" aria-labelledby="member-notice-title">
       <h3 id="member-notice-title">{memberNoticeInboxTitle}</h3>
       {notices.map((notice) => (
         <div
