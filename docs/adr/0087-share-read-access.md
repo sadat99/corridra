@@ -424,6 +424,8 @@ Tests that fail today:
 2. The `/account` banner renders the 4b words with the time.
 3. The banner stays after switch-on until that member dismisses it.
 
+**Status (17 November 2026): built, not installed, nothing delivered.** Module `packages/db/member-notice-migrations`, reached only through `field_modules_action=member_notice` (install, writes no row) and `field_modules_action=member_notice_deliver` (every real workspace not yet delivered; no workspace list, so the install workflow keeps 24 inputs). The inbox type check is found by its column and hash-guarded. Rollback text: `packages/db/member-notice-migrations/rollback/0001_drop_member_notice.sql`; it refuses once any notice was delivered or dismissed. App switch `CORRIDRA_MEMBER_NOTICE`, off. Delivery waits for U5 to be merged and its install approved by the owner. Members who join after delivery see the `/account` notice but get no inbox row.
+
 ### U5. Customer: workspace owners and admins read members' saved reports and decision cards and download their books (new module, behind a new switch, off)
 
 Access opens per workspace, and only 24 hours after that workspace's recorded notice delivery (4d). The global switch and the owner's install approval are also required. A workspace with no delivery record never opens. Work:
