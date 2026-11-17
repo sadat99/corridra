@@ -1,5 +1,6 @@
+import { existsSync } from 'node:fs';
 import { describe, expect, test } from 'vitest';
-import { actionCatalogue, actionIds } from '../../apps/web/lib/actions/catalogue';
+import { actionCatalogue, actionIds, machineryRoute } from '../../apps/web/lib/actions/catalogue';
 import { actionStates, stateCopy } from '../../apps/web/lib/actions/states';
 
 describe('action catalogue shape', () => {
@@ -45,6 +46,14 @@ describe('action catalogue shape', () => {
     for (const entry of actionCatalogue) {
       expect(entry.service.route === '' || entry.service.route.startsWith('/')).toBe(true);
       expect(entry.ai.fillable).not.toContain('route');
+    }
+  });
+
+  test('every route points at a page that exists', () => {
+    const routes = [...actionCatalogue.map((entry) => entry.service.route), machineryRoute];
+    for (const route of routes.filter((value) => value !== '')) {
+      const path = route.split(/[?#]/)[0]!;
+      expect(existsSync(`apps/web/app${path === '/' ? '' : path}/page.tsx`), route).toBe(true);
     }
   });
 });

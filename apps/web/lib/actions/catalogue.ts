@@ -178,7 +178,7 @@ export const actionCatalogue: readonly ActionContract[] = [
     context: ['workspace', 'draft'],
     inputs: [],
     authority: { switches: [], modules: [] },
-    service: { kind: 'navigate', route: '/account/drafts' },
+    service: { kind: 'navigate', route: '/account?view=work#customer-workspaces' },
     confirm: 'none',
     persisted: 'none',
     idempotency: 'none',
