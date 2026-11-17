@@ -292,9 +292,14 @@ describe('the Your Move screen', () => {
       model: buildMoveModel({ ...empty, workspaces: [owner], drafts }),
       startHref: '/plan',
     });
-    expect(html).toContain('Show 4 more');
-    expect(html.match(/class="mr-move"/g)).toHaveLength(7);
+    // TC1: the newest draft is the Today card (one filled action), one row opens beside it and five wait under
+    // Show More; all seven drafts stay linked.
+    expect(html).toContain('Show 5 more');
+    expect(html.match(/class="mr-move"/g)).toHaveLength(6);
+    expect(html.match(/today-action/g)).toHaveLength(1);
     expect(html).toContain('<details class="move-more">');
+    for (const draft of drafts) expect(html).toContain(`href="/account/drafts/${owner.id}"`);
+    expect(html.match(new RegExp(`href="/account/drafts/${owner.id}"`, 'g'))).toHaveLength(7);
   });
 
   it('keeps no read mark on the server: the component reads it only in the browser', () => {
