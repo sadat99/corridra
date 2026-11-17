@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
 // CX PR 3c, the Account page (docs/revamp/specs/customer-experience.md): a settings layout with sub-tabs Profile,
-// Workspaces and Team, Notifications, Plan and Billing, and Security. The tools and entry points move to All tools.
+// Security, Privacy, Preferences and Workspaces (CI-U4). The tools and entry points move to All tools.
 // Case ids: CX-01 (page length), CX-02 (action parity: nothing is lost) and CX-04 (tabs keep ?tab=).
 const web = createRequire(resolve('apps/web/package.json'));
 const createElement = web('react').createElement as (
@@ -22,38 +22,93 @@ const load = async (path: string) => await import(/* @vite-ignore */ `../../apps
 const read = (path: string) => readFileSync(resolve(path), 'utf8');
 
 const panels = (extra: Record<string, unknown> = {}) => ({
-  profile: createElement('h2', null, 'Ada Lovelace'),
-  workspaces: createElement('a', { href: '/account/profile' }, 'Company profiles and links'),
-  notifications: createElement('a', { href: '/account/notifications' }, 'Choose what we email you'),
-  billing: createElement('a', { href: '/account/billing' }, 'Plan and billing'),
+  profile: createElement('h3', null, 'Ada Lovelace'),
   security: createElement('button', null, 'Sign Out'),
+  privacy: createElement('p', null, 'Data export is not available yet.'),
+  preferences: createElement('a', { href: '/account/notifications' }, 'Choose what we email you'),
+  workspaces: createElement('a', { href: '/account/profile' }, 'Company profiles and links'),
   ...extra,
 });
 
 describe('CX-04 the Account settings tabs', () => {
-  it('shows the five tabs in the locked order, the first chosen, every panel in the page', async () => {
+  it('shows the five groups in the locked order, the first chosen, every panel in the page', async () => {
     const { AccountSettings } = await load('app/account/account-settings');
     const html = render(createElement(AccountSettings, panels()));
     const names = [...html.matchAll(/role="tab"[^>]*>([^<]+)<\/button>/g)].map((m) => m[1]);
-    expect(names).toEqual([
-      'Profile',
-      'Workspaces and Team',
-      'Notifications',
-      'Plan and Billing',
-      'Security',
-    ]);
+    expect(names).toEqual(['Profile', 'Security', 'Privacy', 'Preferences', 'Workspaces']);
     expect(html.match(/role="tabpanel"/g)).toHaveLength(5);
     expect(html).toMatch(/role="tab"[^>]*aria-selected="true"[^>]*>Profile</);
   });
 
-  it('leaves out a tab whose area is off, and keeps every link it is given', async () => {
+  it('maps the old tab names and the closure anchor to the new groups', async () => {
+    const { accountTabKeys } = await load('app/account/account-settings');
+    const { resolveSubTab } = await load('lib/ux/sub-tabs');
+    const go = (search: string, hash = '') => resolveSubTab(accountTabKeys, search, hash);
+    expect(accountTabKeys.map((t: { id: string }) => t.id)).toEqual([
+      'profile',
+      'security',
+      'privacy',
+      'preferences',
+      'workspaces',
+    ]);
+    expect(go('?tab=notifications')).toBe('preferences');
+    expect(go('?tab=billing')).toBe('workspaces');
+    expect(go('?tab=team')).toBe('workspaces');
+    expect(go('?tab=security')).toBe('security');
+    expect(go('?tab=privacy')).toBe('privacy');
+    expect(go('?tab=workspaces')).toBe('workspaces');
+    expect(go('')).toBe('profile');
+  });
+
+  it('opens Privacy for #account-closure', async () => {
     const { AccountSettings } = await load('app/account/account-settings');
-    const html = render(
-      createElement(AccountSettings, panels({ billing: undefined, notifications: undefined })),
-    );
-    expect(html).not.toContain('>Plan and Billing<');
-    expect(html).not.toContain('>Notifications<');
+    const html = render(createElement(AccountSettings, panels()));
+    expect(html).toMatch(/id="account-closure"[^>]*role="tabpanel"[^>]*data-subtab="privacy"/);
+  });
+
+  it('leaves out a group whose area is off, and keeps every link it is given', async () => {
+    const { AccountSettings } = await load('app/account/account-settings');
+    const html = render(createElement(AccountSettings, panels({ preferences: undefined })));
+    expect(html).not.toContain('>Preferences<');
     expect(html).toContain('href="/account/profile"');
+  });
+});
+
+describe('CX-04 the five groups in the Account page', () => {
+  const page = read('apps/web/app/account/page.tsx');
+  const more = page.slice(page.indexOf("{view === 'more' && ("));
+  const group = (from: string, to: string) => more.slice(more.indexOf(from), more.indexOf(to));
+  const security = group('security={', 'privacy={');
+  const privacy = group('privacy={', 'preferences={');
+  it('names each panel with its heading', () => {
+    for (const h of [
+      'Profile and Identity',
+      'Sign-in and Security',
+      'Privacy and Data',
+      'Preferences and Notifications',
+      'Workspaces and Billing',
+    ])
+      expect(more, h).toContain(`<h2>${h}</h2>`);
+  });
+  it('Privacy holds the closure block and says plainly that data export is not available yet', () => {
+    expect(privacy).toContain('<AccountClosure subject');
+    expect(privacy).toContain('<AccountClosureComingSoon />');
+    expect(privacy).toContain('Data export is not available yet.');
+    expect(privacy).toContain('href="/privacy#rights"');
+    expect(privacy).toContain('Read the Privacy Notice');
+    expect(security).not.toContain('AccountClosure');
+  });
+  it('Security offers only what exists: no MFA, passkey, session or change-email control', () => {
+    expect(security).toContain('<AccountSignout />');
+    expect(security).toContain('href="/forgot-password"');
+    for (const word of [
+      /\bMFA\b/i,
+      /two-step|2FA/i,
+      /passkey/i,
+      /sessions?\b/i,
+      /change (your )?email/i,
+    ])
+      expect(security).not.toMatch(word);
   });
 });
 

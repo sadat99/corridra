@@ -9,7 +9,7 @@ test.beforeEach(({}, info) => {
   test.skip(info.project.name !== 'w1280', 'Runs once; it switches viewports itself.');
 });
 
-const tabs = ['Profile', 'Workspaces and Team', 'Notifications', 'Plan and Billing', 'Security'];
+const tabs = ['Profile', 'Security', 'Privacy', 'Preferences', 'Workspaces'];
 const allToolsLinks = (page: Page) => page.locator('a[href="/account/all-tools"]');
 
 async function visibleCount(page: Page, selector: string) {
@@ -169,7 +169,7 @@ test.describe('closure block layout (account module on)', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await signInCustomer(context);
     await mock(page, active(null));
-    await page.goto('/account?view=more&tab=security');
+    await page.goto('/account?view=more&tab=privacy');
     await expect(
       page.getByRole('heading', { name: 'Close Account or Ask for Erasure' }),
     ).toBeVisible();
@@ -195,7 +195,7 @@ test.describe('closure block layout (account module on)', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await signInCustomer(context);
     await mock(page, active(null));
-    await page.goto('/account?view=more&tab=security');
+    await page.goto('/account?view=more&tab=privacy');
     const row = page.locator('.ux-account-row', {
       has: page.getByRole('heading', { name: 'Close Account', level: 4 }),
     });
@@ -219,7 +219,7 @@ test.describe('closure block layout (account module on)', () => {
       await page.setViewportSize({ width, height: 900 });
       await signInCustomer(context);
       await mock(page, active(filed));
-      await page.goto('/account?view=more&tab=security');
+      await page.goto('/account?view=more&tab=privacy');
       await expect(page.locator('dl')).toHaveCount(1);
       const terms = await page.locator('dl dt').allTextContents();
       expect(terms).toEqual(['Reference', 'Sent', 'Staff reply due by', 'Status']);

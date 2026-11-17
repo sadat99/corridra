@@ -91,12 +91,12 @@ describe('the phone row is never shown twice and never orphaned', () => {
   test('the phone row exists only under the navigation switch, below the tabs and outside every tab panel', () => {
     const start = page.indexOf('<AccountSettings');
     const end = page.indexOf('</CustomerShell>');
-    const after = page.slice(page.indexOf('/>', page.indexOf('security={')), end);
+    const after = page.slice(page.indexOf('/>', page.indexOf('privacy={')), end);
     expect(after).toContain("{uxSwitchOn('CORRIDRA_UX_NAV') ? (");
     expect(after).toContain('ux-account-alltools');
     expect(after).toContain('href="/account/all-tools"');
     expect(after.match(/>\s*All Tools\s*</g)).toHaveLength(1);
-    expect(page.slice(start, page.indexOf('security={'))).not.toContain('All Tools');
+    expect(page.slice(start, page.indexOf('privacy={'))).not.toContain('All Tools');
   });
   test('it hides at the rail breakpoint, and only when a rail that carries All Tools is on the page', () => {
     const hides = globals.match(
