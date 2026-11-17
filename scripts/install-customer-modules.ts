@@ -72,6 +72,12 @@ import { migrateCustomerBillingReal } from '../packages/db/src/customer-billing-
 import { configureRealBilling } from '../packages/auth/src/customer-billing-real-configuration';
 import { migrateCustomerInvoicingReal } from '../packages/db/src/customer-invoicing-real-migrate';
 import { configureRealInvoicing } from '../packages/auth/src/customer-invoicing-real-configuration';
+import {
+  describeSupplierChange,
+  parseSupplierSecret,
+  setSupplierFromSecret,
+  supplierSecretName,
+} from '../packages/auth/src/customer-invoicing-real-supplier-secret';
 import { migrateCustomerPaymentsSimulated } from '../packages/db/src/customer-payments-simulated-migrate';
 import { configureSimulatedPayments } from '../packages/auth/src/customer-payments-simulated-configuration';
 import { migrateViewAs } from '../packages/db/src/view-as-migrate';
@@ -166,10 +172,6 @@ const v = z
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
       z.string().trim().min(10).max(500).optional(),
     ),
-    REAL_INVOICING_SUPPLIER_JSON: z.preprocess(
-      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
-      z.string().max(4000).optional(),
-    ),
     SIMULATED_PAYMENTS_ACTION: z
       .enum(['unchanged', 'install', 'enable', 'pause', 'set_refund_window'])
       .default('unchanged'),
@@ -213,6 +215,11 @@ const v = z
     CUSTOMER_EXECUTOR_ID: z.string().optional(),
   })
   .parse(process.env);
+// The supplier details for set_supplier come only from the secret REAL_INVOICING_SUPPLIER_JSON of the protected
+// customer-modules-install environment (owner, 17 Nov 2026). They are read here, outside the schema above, and removed
+// from the environment at once, so no validation error or later step can carry them. Nothing prints any part of them.
+const supplierSecret = process.env[supplierSecretName];
+delete process.env[supplierSecretName];
 const url = new URL(v.MIGRATION_DATABASE_URL);
 if (
   url.hostname !== v.MIGRATION_DATABASE_HOST ||
@@ -251,8 +258,9 @@ if (v.REAL_INVOICING_ACTION !== 'unchanged' && !apply)
   throw new Error('Real invoicing changes require INSTALL_APPLY=yes');
 if (!['unchanged', 'install'].includes(v.REAL_INVOICING_ACTION) && !v.REAL_INVOICING_REASON)
   throw new Error('Real invoicing changes require an explicit reason');
-if (v.REAL_INVOICING_ACTION === 'set_supplier' && !v.REAL_INVOICING_SUPPLIER_JSON)
-  throw new Error('Setting the supplier details needs the supplier JSON');
+// Fails closed before anything is written: a missing, malformed or invalid secret stops the run here, before the report,
+// any migration or any write. The error names the secret, field names and problem codes only.
+if (v.REAL_INVOICING_ACTION === 'set_supplier') parseSupplierSecret(supplierSecret);
 if (v.SIMULATED_PAYMENTS_ACTION !== 'unchanged' && !apply)
   throw new Error('Simulated payments changes require INSTALL_APPLY=yes');
 if (!['unchanged', 'install'].includes(v.SIMULATED_PAYMENTS_ACTION) && !v.SIMULATED_PAYMENTS_REASON)
@@ -759,19 +767,25 @@ try {
         );
       } else {
         const action = v.REAL_INVOICING_ACTION;
-        const result = await configureRealInvoicing(pool, {
-          reason: v.REAL_INVOICING_REASON,
-          ...(action === 'enable' || action === 'pause' ? { enabled: action === 'enable' } : {}),
-          ...(action === 'allow_single_approver' || action === 'require_second_approver'
-            ? { requireSecondApprover: action === 'require_second_approver' }
-            : {}),
-          ...(action === 'set_supplier'
-            ? { entity: JSON.parse(v.REAL_INVOICING_SUPPLIER_JSON ?? 'null') }
-            : {}),
-        });
-        console.log(
-          `Real invoices: control ${result.enabled ? 'open' : 'closed'}; second approver ${result.requireSecondApprover ? 'required' : 'not required'}; control changed=${result.controlChanged}; supplier changed=${result.entityChanged}`,
-        );
+        if (action === 'set_supplier') {
+          // Prints only the changed field names, the new version and the made-up field count; never a value.
+          const change = await setSupplierFromSecret(pool, {
+            raw: supplierSecret,
+            reason: v.REAL_INVOICING_REASON,
+          });
+          console.log(describeSupplierChange(change));
+        } else {
+          const result = await configureRealInvoicing(pool, {
+            reason: v.REAL_INVOICING_REASON,
+            ...(action === 'enable' || action === 'pause' ? { enabled: action === 'enable' } : {}),
+            ...(action === 'allow_single_approver' || action === 'require_second_approver'
+              ? { requireSecondApprover: action === 'require_second_approver' }
+              : {}),
+          });
+          console.log(
+            `Real invoices: control ${result.enabled ? 'open' : 'closed'}; second approver ${result.requireSecondApprover ? 'required' : 'not required'}; control changed=${result.controlChanged}; supplier changed=${result.entityChanged}`,
+          );
+        }
       }
     }
     if (v.SIMULATED_PAYMENTS_ACTION !== 'unchanged') {

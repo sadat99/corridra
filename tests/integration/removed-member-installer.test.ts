@@ -446,7 +446,7 @@ describe('the install script and the workflow', () => {
     fileSql('realUse');
     expect(workflow).not.toMatch(/removed|refresh|optional_modules/i);
     expect(script).not.toMatch(/\bREMOVED_[A-Z_]+: z\./);
-    expect([...workflow.matchAll(/^ {6}[a-z0-9_]+:\n {8}description:/gm)]).toHaveLength(25);
+    expect([...workflow.matchAll(/^ {6}[a-z0-9_]+:\n {8}description:/gm)]).toHaveLength(24);
     // The migrators the refresh calls are not in the base list, so a base run (every action unchanged) never reaches them.
     const installers = script.slice(
       script.indexOf('const installers'),
