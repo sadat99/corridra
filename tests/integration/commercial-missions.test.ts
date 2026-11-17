@@ -954,43 +954,6 @@ test('quotation corrections retain originals and reject stale decisions, unsuppo
     ).rowCount,
   ).toBe(0);
 });
-test('populated Part 1 upgrade preserves old mission, money, evidence, identity and event history', async () => {
-  await f.close();
-  f = await commercialFixture(false, '0022_policy_and_service_economics.sql');
-  await f.invoice();
-  const tables = [
-    'mission',
-    'meeting',
-    'commercial_record',
-    'source_record',
-    'claim',
-    'domain_event',
-    'outbox',
-    'membership',
-    'opportunity',
-  ];
-  const snapshot = () =>
-    Promise.all(
-      tables.map(
-        async (t) =>
-          (await f.owner.query(`SELECT to_jsonb(t) row FROM app.${t} t ORDER BY to_jsonb(t)::text`))
-            .rows,
-      ),
-    );
-  const before = await snapshot();
-  await migrate(f.owner);
-  const after = await snapshot();
-  for (let i = 0; i < tables.length; i++) {
-    if (tables[i] === 'meeting') {
-      for (const r of after[i]) {
-        delete r.row.target_id;
-        delete r.row.activity_kind;
-        delete r.row.activity_context;
-      }
-    }
-    expect(after[i]).toEqual(before[i]);
-  }
-});
 // ADR-087 U1q (owner, 17 November 2026, relayed: "Yes, hide from viewers"): a staff viewer sees that a quotation exists,
 // with its target, currency code, revision and dates, and never its terms. Owner, admin, operator and reviewer read it whole.
 test('a staff viewer reads quotation metadata only; owner and admin read the full terms', async () => {
@@ -1070,4 +1033,41 @@ test('a staff viewer reads quotation metadata only; owner and admin read the ful
     'No engineering or audit approval is established',
   );
   expect(viewerRows).toEqual(ownerRows.map((r) => ({ ...r, uncertainties: null })));
+});
+test('populated Part 1 upgrade preserves old mission, money, evidence, identity and event history', async () => {
+  await f.close();
+  f = await commercialFixture(false, '0022_policy_and_service_economics.sql');
+  await f.invoice();
+  const tables = [
+    'mission',
+    'meeting',
+    'commercial_record',
+    'source_record',
+    'claim',
+    'domain_event',
+    'outbox',
+    'membership',
+    'opportunity',
+  ];
+  const snapshot = () =>
+    Promise.all(
+      tables.map(
+        async (t) =>
+          (await f.owner.query(`SELECT to_jsonb(t) row FROM app.${t} t ORDER BY to_jsonb(t)::text`))
+            .rows,
+      ),
+    );
+  const before = await snapshot();
+  await migrate(f.owner);
+  const after = await snapshot();
+  for (let i = 0; i < tables.length; i++) {
+    if (tables[i] === 'meeting') {
+      for (const r of after[i]) {
+        delete r.row.target_id;
+        delete r.row.activity_kind;
+        delete r.row.activity_context;
+      }
+    }
+    expect(after[i]).toEqual(before[i]);
+  }
 });
