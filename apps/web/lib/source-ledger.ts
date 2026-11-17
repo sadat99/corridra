@@ -85,7 +85,8 @@ export function sourceLedger(
 
   const value = (cardIndex: number, label: string) => {
     const term = cards[cardIndex]!.terms.find((t) => t.label === label);
-    return term?.value ?? null;
+    // Shipping the price leaves out keeps the stored word here, so it is neither "not stated" nor equal to it.
+    return term?.state === 'excluded' ? 'EXCLUDED' : (term?.value ?? null);
   };
   const differs = (cells: LedgerCell[]) =>
     cells.length > 1 && new Set(cells.map((c) => `${c.value ?? ''}|${c.sub ?? ''}`)).size > 1;
