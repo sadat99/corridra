@@ -353,7 +353,7 @@ Checked and unchanged: `packages/delivery/src/decision-disclosures.ts:33` reads 
 
 Residue, not closed by U1r: the link test reads `mission_quotation` under the viewer's own row security (`research_target_access`). A quotation on a target the viewer cannot see does not mark its claim, so the viewer still reads that claim's statement and its verified fact and can download its evidence file. Relationship visibility defaults to OWNER, so this is the common case, not a corner: in most workspaces U1r hides only claims behind quotations on relationships shared with the team. The closing fix is a SECURITY DEFINER `app.quotation_linked_claim(tenant, claim)` in a later database unit, called by `quotationLinkedClaimSql`; until it is installed, U1r must not be described as hiding all quotation evidence from viewers. The integration test asserts today's residue explicitly so that unit has to flip it.
 
-Tests: `tests/integration/commercial-missions.test.ts` ("a staff viewer reads no quotation evidence, selection rationale or RFQ terms; other roles read them whole") and `tests/operator/adr087-staff-evidence.spec.ts`; the viewer cases fail on the U1q head.
+Tests: `tests/integration/commercial-missions.test.ts` ("a staff viewer reads no quotation evidence, selection rationale or RFQ terms; other roles read them whole") and `tests/operator/adr087-staff-evidence.spec.ts`. The viewer service and panel cases fail on the U1q head. Two cases are regression guards: the viewer Proof picker case passes on the U1q head too (the picker was already manage-only), and the route 403 case passes on the first U1r head c13b0fe (its service already refused the file).
 
 ### U2. Database: viewers read metadata only (core forward migration, next free number)
 

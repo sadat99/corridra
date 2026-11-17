@@ -48,7 +48,7 @@ const ingestWarningWords: Record<IngestWarning, string> = {
   previously_hidden: 'A company with this name was taken down earlier; this record is hidden too.',
 };
 const txt = (r: Row, key: string) => String(r[key] ?? '');
-// ADR-087 U1r: a staff viewer receives the statement of a quotation-linked claim as null.
+// ADR-087 U1r: a staff viewer receives the statement of a quotation-linked claim as null (residue: quotationLinkedClaimSql).
 const statement = (r: Row) => (r.statement === null ? bodyNotAvailable : txt(r, 'statement'));
 const when = (v: unknown) => (v ? new Date(String(v)).toLocaleString() : 'Not recorded');
 function Field({

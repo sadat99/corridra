@@ -1180,197 +1180,221 @@ test('a staff viewer reads no quotation evidence, selection rationale or RFQ ter
       dueAt: future(),
     }),
   );
-  await rawContext(
-    f.runtime,
-    f.users.owner.ctx,
-    "UPDATE app.relationship SET visibility='TEAM' WHERE tenant_id=$1 AND id IN (SELECT relationship_id FROM app.target_account WHERE tenant_id=$1 AND mission_id=$2)",
-    [f.tenantA, j.missionId],
-  );
-  const linkedStatement =
-    'Declared synthetic requirement and supplier response, no independent verification';
-
-  // Owner and operator read everything whole.
-  for (const ctx of [f.users.owner.ctx, f.ctx]) {
-    const w = await evidence.workspace(ctx);
-    expect(w.claims.find((c) => c.id === j.base.claimId)?.statement).toBe(linkedStatement);
-    expect(w.evidence.find((e) => e.id === linkedFile.id)).not.toHaveProperty('withheld');
-    expect(w.facts.some((x) => x.statement === linkedStatement)).toBe(true);
-    expect(new TextDecoder().decode((await evidence.download(ctx, linkedFile.id)).body)).toContain(
-      'Linked quotation evidence',
-    );
-    const m = await service.workspace(ctx, j.missionId);
-    expect(m.decisions[0]?.rationale).toBe('Viewer must not read this rationale');
-    expect(m.decisions[0]?.next_action).toBe('Viewer must not read this next action');
-    expect(m.rfqs.find((r) => r.id === q.rfq.id)?.requested_terms).toBe(
-      'Same specification, hundred pieces, explicit shipping and costs',
-    );
-  }
-  const ownerEvidence = await evidence.workspace(f.users.owner.ctx);
-  const ownerMission = await service.workspace(f.users.owner.ctx, j.missionId);
-
-  // The viewer keeps every row; the protected fields are null and the linked file is refused.
-  const viewerEvidence = await evidence.workspace(f.users.viewer.ctx);
-  expect(viewerEvidence.claims.map((c) => c.id)).toEqual(ownerEvidence.claims.map((c) => c.id));
-  // A claim is linked when a quotation names it or its source. The check runs under the viewer's own row security, so a
-  // quotation on a target the viewer cannot see does not mark its claim: that residue is recorded in ADR-087 U1r for a
-  // database unit and is left unasserted here. Every other claim is checked both ways.
-  // One query per reader: which of these claims a quotation names (directly or by source), as that reader sees quotations.
-  const linkedSql =
-    'SELECT x.id::text id FROM unnest($2::uuid[]) x(id) WHERE EXISTS(SELECT FROM app.mission_quotation q JOIN app.claim c ON c.tenant_id=q.tenant_id AND (c.id=q.claim_id OR c.source_id=q.source_id) WHERE c.tenant_id=$1 AND c.id=x.id)';
-  const linkedIds = async (ids: string[], as?: typeof f.users.viewer.ctx) =>
-    new Set(
-      (as
-        ? await rawContext(f.runtime, as, linkedSql, [f.tenantA, ids])
-        : await f.owner.query(linkedSql, [f.tenantA, ids])
-      ).rows.map((r) => r.id as string),
-    );
-  const claimIds = viewerEvidence.claims.map((c) => c.id as string);
-  const linkedAll = await linkedIds(claimIds),
-    linkedSeen = await linkedIds(claimIds, f.users.viewer.ctx);
-  for (const c of viewerEvidence.claims) {
-    const original = ownerEvidence.claims.find((o) => o.id === c.id)!;
-    if (linkedSeen.has(c.id)) expect(c).toEqual({ ...original, statement: null });
-    else if (!linkedAll.has(c.id)) expect(c).toEqual(original);
-  }
-  expect(viewerEvidence.claims.find((c) => c.id === j.base.claimId)?.statement).toBeNull();
-  expect(viewerEvidence.claims.find((c) => c.id === unlinkedClaim.id)?.statement).toBe(
-    'Unlinked synthetic claim stays readable',
-  );
-  expect(viewerEvidence.evidence.find((e) => e.id === linkedFile.id)?.withheld).toBe(true);
-  expect(viewerEvidence.evidence.find((e) => e.id === unlinkedFile.id)?.withheld).toBe(false);
-  expect(viewerEvidence.facts.map((x) => x.id)).toEqual(ownerEvidence.facts.map((x) => x.id));
-  expect(viewerEvidence.facts.some((x) => x.statement === linkedStatement)).toBe(false);
-  await expect(evidence.download(f.users.viewer.ctx, linkedFile.id)).rejects.toMatchObject({
-    message: 'Not available for your role',
-    status: 403,
-  });
-  expect(
-    new TextDecoder().decode((await evidence.download(f.users.viewer.ctx, unlinkedFile.id)).body),
-  ).toContain('Unlinked evidence');
-  // Other missions in this file reuse the same statement on targets the viewer cannot see (the residue above), so the
-  // text check is scoped to this mission's claim and its verified fact.
-  expect(JSON.stringify(viewerEvidence.claims.find((c) => c.id === j.base.claimId))).not.toContain(
-    linkedStatement,
-  );
-
-  // Counterparty paths: company details, shortlist sources and the shortlist JSON export.
-  type Sourced = { claim_id: string; statement: string | null };
-  for (const [ctx, expected] of [
-    [f.ctx, linkedStatement],
-    [f.users.viewer.ctx, null],
-  ] as const) {
-    const detail = await f.research.detail(ctx, thirdOrg);
-    const attribute = (detail.attributes as Sourced[]).find((a) => a.claim_id === j.base.claimId);
-    expect(attribute).toBeDefined();
-    expect(attribute!.statement).toBe(expected);
-    for (const list of [
-      await f.research.shortlist(ctx, j.missionId),
-      await f.research.shortlistExport(ctx, j.missionId),
-    ]) {
-      const sources = (list.targets as { sources: Sourced[] }[])
-        .flatMap((t) => t.sources)
-        .filter((x) => x.claim_id === j.base.claimId);
-      expect(sources.length).toBeGreaterThan(0);
-      for (const x of sources) expect(x.statement).toBe(expected);
-      if (expected === null) expect(JSON.stringify(list)).not.toContain(linkedStatement);
-    }
-  }
-
-  // The staff download route answers a viewer 403 with the words on the linked file and serves the unlinked one.
-  routeServices.evidence = evidence;
-  const { GET } = await import('../../apps/web/app/api/workspace/[action]/route');
-  const download = (id: string) =>
-    GET(
-      new Request(`https://app.corridra.test/api/workspace/download?tenant=${f.tenantA}&id=${id}`),
-      { params: Promise.resolve({ action: 'download' }) },
-    );
-  session.mockResolvedValue({ token: f.users.viewer.token });
-  const refused = await download(linkedFile.id);
-  expect(refused.status).toBe(403);
-  expect((await refused.json()).error).toBe('Not available for your role');
-  const served = await download(unlinkedFile.id);
-  expect(served.status).toBe(200);
-  expect(Buffer.from(await served.arrayBuffer()).toString()).toContain('Unlinked evidence');
-  session.mockResolvedValue({ token: f.users.operator.token });
-  expect((await download(linkedFile.id)).status).toBe(200);
-
-  // Residue: a quotation on a target the viewer cannot see (relationship visibility OWNER, the default) does not mark its
-  // claim, so the viewer still reads it. residue: closed by the quotation link database unit (ADR-087 U1r), which must flip
-  // this expectation to null.
-  const hidden = await journey('JP', 'KE', 'sourcing', 'KES');
-  await offers(hidden);
-  const residueView = await evidence.workspace(f.users.viewer.ctx);
-  expect(residueView.claims.find((c) => c.id === hidden.base.claimId)?.statement).toBe(
-    linkedStatement,
-  );
-  // Apart from those residue claims, every quotation-linked claim in the viewer's whole evidence snapshot has no statement
-  // and every file on one is withheld. (The statement text alone cannot be searched for: journeys without a quotation reuse
-  // it on claims that are correctly readable.)
-  const snapshotIds = [
-    ...new Set([
-      ...residueView.claims.map((c) => c.id as string),
-      ...residueView.evidence.map((e) => e.claim_id as string),
-    ]),
-  ];
-  const residueAll = await linkedIds(snapshotIds),
-    residueSeen = await linkedIds(snapshotIds, f.users.viewer.ctx);
-  const residueIds = new Set([...residueAll].filter((id) => !residueSeen.has(id)));
-  expect(residueIds.has(hidden.base.claimId)).toBe(true);
-  const covered = residueView.claims.filter((c) => residueAll.has(c.id) && !residueIds.has(c.id));
-  expect(covered.length).toBeGreaterThan(0);
-  for (const c of covered) expect(c.statement).toBeNull();
-  for (const e of residueView.evidence)
-    if (residueAll.has(e.claim_id as string) && !residueIds.has(e.claim_id as string))
-      expect(e.withheld).toBe(true);
-
-  const viewerMission = await service.workspace(f.users.viewer.ctx, j.missionId);
-  expect(viewerMission.decisions).toEqual(
-    ownerMission.decisions.map((d) => ({ ...d, rationale: null, next_action: null })),
-  );
-  expect(viewerMission.rfqs).toEqual(
-    ownerMission.rfqs.map((r) => ({ ...r, requested_terms: null })),
-  );
-  expect(viewerMission.rfqs.find((r) => r.id === q.rfq.id)?.buyer_context).toBe(
-    'Original synthetic importer relationship',
-  );
-  for (const words of [
-    'Viewer must not read this rationale',
-    'Viewer must not read this next action',
-    'Same specification, hundred pieces, explicit shipping and costs',
-  ])
-    expect(JSON.stringify(viewerMission)).not.toContain(words);
-
-  // Admin and reviewer read whole: the same member as admin, then back to reviewer as it was.
-  const setRole = (role: string) =>
+  // Shared with the team so row security lets the viewer see these quotations. Each relationship's visibility is read first
+  // and restored at the end, as in the U1q test, so later tests see the fixture as it was.
+  const visibility = (
+    await f.owner.query(
+      'SELECT r.id,r.visibility FROM app.relationship r WHERE r.tenant_id=$1 AND r.id IN (SELECT relationship_id FROM app.target_account WHERE tenant_id=$1 AND mission_id=$2)',
+      [f.tenantA, j.missionId],
+    )
+  ).rows as { id: string; visibility: string }[];
+  expect(visibility.length).toBeGreaterThan(0);
+  const setVisibility = (id: string, value: string) =>
     rawContext(
       f.runtime,
       f.users.owner.ctx,
-      'UPDATE app.membership SET role=$3 WHERE tenant_id=$1 AND user_id=$2',
-      [f.tenantA, f.users.reviewer.id, role],
+      'UPDATE app.relationship SET visibility=$3 WHERE tenant_id=$1 AND id=$2',
+      [f.tenantA, id, value],
     );
-  const original = (
-    await f.owner.query('SELECT role FROM app.membership WHERE tenant_id=$1 AND user_id=$2', [
-      f.tenantA,
-      f.users.reviewer.id,
-    ])
-  ).rows[0].role;
-  expect(original).toBe('reviewer');
-  for (const role of ['admin', 'reviewer']) {
-    await setRole(role);
-    try {
-      const w = await evidence.workspace(f.users.reviewer.ctx);
-      expect(w.role).toBe(role);
+  for (const r of visibility) await setVisibility(r.id, 'TEAM');
+  try {
+    const linkedStatement =
+      'Declared synthetic requirement and supplier response, no independent verification';
+
+    // Owner and operator read everything whole.
+    for (const ctx of [f.users.owner.ctx, f.ctx]) {
+      const w = await evidence.workspace(ctx);
       expect(w.claims.find((c) => c.id === j.base.claimId)?.statement).toBe(linkedStatement);
-      expect((await evidence.download(f.users.reviewer.ctx, linkedFile.id)).mime).toBe(
-        'application/pdf',
+      expect(w.evidence.find((e) => e.id === linkedFile.id)).not.toHaveProperty('withheld');
+      expect(w.facts.some((x) => x.statement === linkedStatement)).toBe(true);
+      expect(
+        new TextDecoder().decode((await evidence.download(ctx, linkedFile.id)).body),
+      ).toContain('Linked quotation evidence');
+      const m = await service.workspace(ctx, j.missionId);
+      expect(m.decisions[0]?.rationale).toBe('Viewer must not read this rationale');
+      expect(m.decisions[0]?.next_action).toBe('Viewer must not read this next action');
+      expect(m.rfqs.find((r) => r.id === q.rfq.id)?.requested_terms).toBe(
+        'Same specification, hundred pieces, explicit shipping and costs',
       );
-      const m = await service.workspace(f.users.reviewer.ctx, j.missionId);
-      expect(m.decisions).toEqual(ownerMission.decisions);
-      expect(m.rfqs).toEqual(ownerMission.rfqs);
-    } finally {
-      await setRole(original);
     }
+    const ownerEvidence = await evidence.workspace(f.users.owner.ctx);
+    const ownerMission = await service.workspace(f.users.owner.ctx, j.missionId);
+
+    // The viewer keeps every row; the protected fields are null and the linked file is refused.
+    const viewerEvidence = await evidence.workspace(f.users.viewer.ctx);
+    expect(viewerEvidence.claims.map((c) => c.id)).toEqual(ownerEvidence.claims.map((c) => c.id));
+    // A claim is linked when a quotation names it or its source. The check runs under the viewer's own row security, so a
+    // quotation on a target the viewer cannot see does not mark its claim: that residue is recorded in ADR-087 U1r for a
+    // database unit and is left unasserted here. Every other claim is checked both ways.
+    // One query per reader: which of these claims a quotation names (directly or by source), as that reader sees quotations.
+    const linkedSql =
+      'SELECT x.id::text id FROM unnest($2::uuid[]) x(id) WHERE EXISTS(SELECT FROM app.mission_quotation q JOIN app.claim c ON c.tenant_id=q.tenant_id AND (c.id=q.claim_id OR c.source_id=q.source_id) WHERE c.tenant_id=$1 AND c.id=x.id)';
+    const linkedIds = async (ids: string[], as?: typeof f.users.viewer.ctx) =>
+      new Set(
+        (as
+          ? await rawContext(f.runtime, as, linkedSql, [f.tenantA, ids])
+          : await f.owner.query(linkedSql, [f.tenantA, ids])
+        ).rows.map((r) => r.id as string),
+      );
+    const claimIds = viewerEvidence.claims.map((c) => c.id as string);
+    const linkedAll = await linkedIds(claimIds),
+      linkedSeen = await linkedIds(claimIds, f.users.viewer.ctx);
+    for (const c of viewerEvidence.claims) {
+      const original = ownerEvidence.claims.find((o) => o.id === c.id)!;
+      if (linkedSeen.has(c.id)) expect(c).toEqual({ ...original, statement: null });
+      else if (!linkedAll.has(c.id)) expect(c).toEqual(original);
+    }
+    expect(viewerEvidence.claims.find((c) => c.id === j.base.claimId)?.statement).toBeNull();
+    expect(viewerEvidence.claims.find((c) => c.id === unlinkedClaim.id)?.statement).toBe(
+      'Unlinked synthetic claim stays readable',
+    );
+    expect(viewerEvidence.evidence.find((e) => e.id === linkedFile.id)?.withheld).toBe(true);
+    expect(viewerEvidence.evidence.find((e) => e.id === unlinkedFile.id)?.withheld).toBe(false);
+    expect(viewerEvidence.facts.map((x) => x.id)).toEqual(ownerEvidence.facts.map((x) => x.id));
+    expect(viewerEvidence.facts.some((x) => x.statement === linkedStatement)).toBe(false);
+    await expect(evidence.download(f.users.viewer.ctx, linkedFile.id)).rejects.toMatchObject({
+      message: 'Not available for your role',
+      status: 403,
+    });
+    expect(
+      new TextDecoder().decode((await evidence.download(f.users.viewer.ctx, unlinkedFile.id)).body),
+    ).toContain('Unlinked evidence');
+    // Other missions in this file reuse the same statement on targets the viewer cannot see (the residue above), so the
+    // text check is scoped to this mission's claim and its verified fact.
+    expect(
+      JSON.stringify(viewerEvidence.claims.find((c) => c.id === j.base.claimId)),
+    ).not.toContain(linkedStatement);
+
+    // Counterparty paths: company details, shortlist sources and the shortlist JSON export.
+    type Sourced = { claim_id: string; statement: string | null };
+    for (const [ctx, expected] of [
+      [f.ctx, linkedStatement],
+      [f.users.viewer.ctx, null],
+    ] as const) {
+      const detail = await f.research.detail(ctx, thirdOrg);
+      const attribute = (detail.attributes as Sourced[]).find((a) => a.claim_id === j.base.claimId);
+      expect(attribute).toBeDefined();
+      expect(attribute!.statement).toBe(expected);
+      for (const list of [
+        await f.research.shortlist(ctx, j.missionId),
+        await f.research.shortlistExport(ctx, j.missionId),
+      ]) {
+        const sources = (list.targets as { sources: Sourced[] }[])
+          .flatMap((t) => t.sources)
+          .filter((x) => x.claim_id === j.base.claimId);
+        expect(sources.length).toBeGreaterThan(0);
+        for (const x of sources) expect(x.statement).toBe(expected);
+        if (expected === null) expect(JSON.stringify(list)).not.toContain(linkedStatement);
+      }
+    }
+
+    // The staff download route answers a viewer 403 with the words on the linked file and serves the unlinked one.
+    routeServices.evidence = evidence;
+    const { GET } = await import('../../apps/web/app/api/workspace/[action]/route');
+    const download = (id: string) =>
+      GET(
+        new Request(
+          `https://app.corridra.test/api/workspace/download?tenant=${f.tenantA}&id=${id}`,
+        ),
+        { params: Promise.resolve({ action: 'download' }) },
+      );
+    session.mockResolvedValue({ token: f.users.viewer.token });
+    const refused = await download(linkedFile.id);
+    expect(refused.status).toBe(403);
+    expect((await refused.json()).error).toBe('Not available for your role');
+    const served = await download(unlinkedFile.id);
+    expect(served.status).toBe(200);
+    expect(Buffer.from(await served.arrayBuffer()).toString()).toContain('Unlinked evidence');
+    session.mockResolvedValue({ token: f.users.operator.token });
+    expect((await download(linkedFile.id)).status).toBe(200);
+
+    // Residue: a quotation on a target the viewer cannot see (relationship visibility OWNER, the default) does not mark its
+    // claim, so the viewer still reads it. residue: closed by the quotation link database unit (ADR-087 U1r), which must flip
+    // this expectation to null.
+    const hidden = await journey('JP', 'KE', 'sourcing', 'KES');
+    await offers(hidden);
+    const residueView = await evidence.workspace(f.users.viewer.ctx);
+    expect(residueView.claims.find((c) => c.id === hidden.base.claimId)?.statement).toBe(
+      linkedStatement,
+    );
+    // Apart from those residue claims, every quotation-linked claim in the viewer's whole evidence snapshot has no statement
+    // and every file on one is withheld. (The statement text alone cannot be searched for: journeys without a quotation reuse
+    // it on claims that are correctly readable.)
+    const snapshotIds = [
+      ...new Set([
+        ...residueView.claims.map((c) => c.id as string),
+        ...residueView.evidence.map((e) => e.claim_id as string),
+      ]),
+    ];
+    const residueAll = await linkedIds(snapshotIds),
+      residueSeen = await linkedIds(snapshotIds, f.users.viewer.ctx);
+    const residueIds = new Set([...residueAll].filter((id) => !residueSeen.has(id)));
+    expect(residueIds.has(hidden.base.claimId)).toBe(true);
+    const covered = residueView.claims.filter((c) => residueAll.has(c.id) && !residueIds.has(c.id));
+    expect(covered.length).toBeGreaterThan(0);
+    for (const c of covered) expect(c.statement).toBeNull();
+    for (const e of residueView.evidence)
+      if (residueAll.has(e.claim_id as string) && !residueIds.has(e.claim_id as string))
+        expect(e.withheld).toBe(true);
+
+    const viewerMission = await service.workspace(f.users.viewer.ctx, j.missionId);
+    expect(viewerMission.decisions).toEqual(
+      ownerMission.decisions.map((d) => ({ ...d, rationale: null, next_action: null })),
+    );
+    expect(viewerMission.rfqs).toEqual(
+      ownerMission.rfqs.map((r) => ({ ...r, requested_terms: null })),
+    );
+    expect(viewerMission.rfqs.find((r) => r.id === q.rfq.id)?.buyer_context).toBe(
+      'Original synthetic importer relationship',
+    );
+    for (const words of [
+      'Viewer must not read this rationale',
+      'Viewer must not read this next action',
+      'Same specification, hundred pieces, explicit shipping and costs',
+    ])
+      expect(JSON.stringify(viewerMission)).not.toContain(words);
+
+    // Admin and reviewer read whole: the same member as admin, then back to reviewer as it was.
+    const setRole = (role: string) =>
+      rawContext(
+        f.runtime,
+        f.users.owner.ctx,
+        'UPDATE app.membership SET role=$3 WHERE tenant_id=$1 AND user_id=$2',
+        [f.tenantA, f.users.reviewer.id, role],
+      );
+    const original = (
+      await f.owner.query('SELECT role FROM app.membership WHERE tenant_id=$1 AND user_id=$2', [
+        f.tenantA,
+        f.users.reviewer.id,
+      ])
+    ).rows[0].role;
+    expect(original).toBe('reviewer');
+    for (const role of ['admin', 'reviewer']) {
+      await setRole(role);
+      try {
+        const w = await evidence.workspace(f.users.reviewer.ctx);
+        expect(w.role).toBe(role);
+        expect(w.claims.find((c) => c.id === j.base.claimId)?.statement).toBe(linkedStatement);
+        expect((await evidence.download(f.users.reviewer.ctx, linkedFile.id)).mime).toBe(
+          'application/pdf',
+        );
+        const m = await service.workspace(f.users.reviewer.ctx, j.missionId);
+        expect(m.decisions).toEqual(ownerMission.decisions);
+        expect(m.rfqs).toEqual(ownerMission.rfqs);
+      } finally {
+        await setRole(original);
+      }
+    }
+  } finally {
+    for (const r of visibility) await setVisibility(r.id, r.visibility);
   }
+  expect(
+    (
+      await f.owner.query('SELECT id,visibility FROM app.relationship WHERE id = ANY($1::uuid[])', [
+        visibility.map((r) => r.id),
+      ])
+    ).rows.sort((a, b) => a.id.localeCompare(b.id)),
+  ).toEqual([...visibility].sort((a, b) => a.id.localeCompare(b.id)));
 }, 120000);
 test('populated Part 1 upgrade preserves old mission, money, evidence, identity and event history', async () => {
   await f.close();

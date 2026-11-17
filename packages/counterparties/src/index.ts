@@ -44,7 +44,8 @@ async function enabled(t: TenantTransaction, key: string) {
     throw new DomainError('This research command is disabled', 409);
 }
 // ADR-087 U1r: a staff role without delivery.read_body reads no statement of a claim linked to a quotation (company details,
-// shortlist sources and the shortlist export alike); the row stays with the statement null.
+// shortlist sources and the shortlist export alike); the row stays with the statement null. Residue: a quotation on a target the
+// viewer cannot see does not count (see quotationLinkedClaimSql).
 function claimStatement(role: Role) {
   return permits(role, 'delivery.read_body')
     ? 'c.statement'
