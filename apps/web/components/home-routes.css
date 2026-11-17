@@ -1501,11 +1501,13 @@
     margin-block: var(--space-1) var(--space-2);
   }
   .tr-jobs .ac1-job {
-    grid-template-columns: minmax(0, 1fr) 1.25rem;
-    min-height: 0;
+    grid-template-columns: 1.25rem minmax(0, 1fr) 1.25rem;
+    min-height: 2.75rem;
   }
   .tr-jobs .ac1-job-icon {
-    display: none;
+    width: 1.25rem;
+    height: 1.25rem;
+    padding: 0;
   }
 }
 

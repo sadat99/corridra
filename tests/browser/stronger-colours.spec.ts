@@ -208,6 +208,15 @@ for (const way of ['the saved choice', 'the device setting'] as const) {
           expect(names).toMatch(/input\.sr-only/);
           expect(names).toMatch(/guide-footer-actions|primary-link/);
           expect(names).toMatch(/^a.*primary-link/m);
+          // Every door in turn is the checked one; its ring must reach 3 to 1 in each state.
+          const doors = page.locator('fieldset.tr-doors input[type="radio"]');
+          expect(await doors.count()).toBe(4);
+          for (let index = 0; index < 4; index += 1) {
+            await doors.nth(index).locator('xpath=following-sibling::label').click();
+            await expect(doors.nth(index)).toBeChecked();
+            const { rings: doorRings } = await measureColours(page, navyRegions);
+            expect(weakRings(doorRings), `door ${index} checked at ${width}`).toEqual([]);
+          }
         }
       }
       expect(found.length).toBeGreaterThan(50);
@@ -215,19 +224,32 @@ for (const way of ['the saved choice', 'the device setting'] as const) {
   }
 }
 
-test('the ring check can fail: a white ring drawn on a white selected door would measure 1 to 1', async ({
+test('the ring check can fail: a weak outline on a door ring is measured, whichever door is checked', async ({
   page,
 }) => {
   await page.addInitScript(() => localStorage.setItem('corridra.contrast', 'more'));
   await open(page, '/', 1440);
-  // The ring of the checked door is drawn outside its white fill, on the navy hero (white on navy is 15 to 1).
-  await page
-    .getByRole('radio', { name: /Sell Abroad/ })
-    .locator('xpath=following-sibling::label')
-    .click();
-  const { rings } = await measureColours(page, '.tr-hero');
-  expect(weakRings(rings)).toEqual([]);
-  expect(rings.map((row) => row.element).join('\n')).toMatch(/input\.sr-only/);
+  // Healthy first: with each door checked in turn the rings pass and the door ring is among those measured.
+  const doors = page.locator('fieldset.tr-doors input[type="radio"]');
+  expect(await doors.count()).toBe(4);
+  for (let index = 0; index < 4; index += 1) {
+    await doors.nth(index).locator('xpath=following-sibling::label').click();
+    const { rings } = await measureColours(page, '.tr-hero');
+    expect(weakRings(rings), `door ${index}`).toEqual([]);
+    expect(rings.map((row) => row.element).join('\n')).toMatch(/input\.sr-only/);
+  }
+  // Then a navy ring on the navy hero (1 to 1) must be caught for every checked door.
+  await page.addStyleTag({
+    content:
+      "html[data-contrast='more'] .tr-door input:focus-visible { outline-color: var(--brand-deep) !important; box-shadow: 0 0 0 2px var(--brand-deep) !important; }",
+  });
+  for (let index = 0; index < 4; index += 1) {
+    await doors.nth(index).locator('xpath=following-sibling::label').click();
+    const { rings } = await measureColours(page, '.tr-hero');
+    const weak = weakRings(rings);
+    expect(weak, `door ${index} with a weak ring`).not.toEqual([]);
+    expect(weak.join('\n')).toMatch(/input\.sr-only/);
+  }
 });
 
 for (const way of ['the saved choice', 'the device setting'] as const) {

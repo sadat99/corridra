@@ -31,9 +31,13 @@ for (const [route, heading] of routes) {
     await expect(page.getByRole('complementary', { name: 'Service availability' })).toHaveCount(0);
     expect(await page.locator('body').innerText()).not.toContain('\u2014');
     // The home's radios only choose a route and send nothing (Two Routes, 17 Nov 2026); no field or form is on it.
-    if (route === '/')
-      await expect(page.locator('input:not([type="radio"]), textarea, form')).toHaveCount(0);
-    else if (route !== '/plan') await expect(page.locator('input, textarea, form')).toHaveCount(0);
+    if (route === '/') {
+      // Only the four door radios inside the doors fieldset; any other input, radio, field or form fails.
+      const doorRadios = 'fieldset.tr-doors input[type="radio"]';
+      await expect(page.locator(doorRadios)).toHaveCount(4);
+      await expect(page.locator(`input:not(${doorRadios}), textarea, form`)).toHaveCount(0);
+    } else if (route !== '/plan')
+      await expect(page.locator('input, textarea, form')).toHaveCount(0);
     else
       await expect(
         page.getByText('Test intake is open. Real customer mission admission is unavailable.', {
