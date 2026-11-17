@@ -34,7 +34,8 @@ type Experience = {
     target_id: string;
     currency: string;
     revision: number;
-    uncertainties: string;
+    /** Null for a role without delivery.read_body (staff viewer, ADR-087 U1q). */
+    uncertainties: string | null;
   }[];
   links: { id: string; company: string; mission_id: string }[];
   rfqs: { id: string; target_ids: string[] }[];
@@ -441,7 +442,7 @@ export function DeliveryExperience(props: Props) {
                 <label className="check-field" key={q.id}>
                   <input name="quotationIds" type="checkbox" value={q.id} />
                   {data.targets.find((t) => t.id === q.target_id)?.name ?? 'Supplier'} ·{' '}
-                  {q.currency} · revision {q.revision} · {q.uncertainties}
+                  {q.currency} · revision {q.revision} · {q.uncertainties ?? bodyNotAvailable}
                 </label>
               ))}
             </fieldset>

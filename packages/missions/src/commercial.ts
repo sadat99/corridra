@@ -5,11 +5,13 @@ import {
   type RequestContext,
   type TenantTransaction,
 } from '@corridra/db';
-import { DomainError } from '@corridra/domain';
+import { DomainError, permits } from '@corridra/domain';
 import {
   commercialMissionCommand,
   compareOffers,
   offerContext,
+  withheldComparison,
+  withholdQuotationTerms,
 } from '@corridra/domain/commercial-missions';
 import { replyQuotationPrefill } from '@corridra/domain/reply-review';
 import { z } from 'zod';
@@ -69,6 +71,9 @@ export class CommercialMissionService {
             [ctx.tenantId, missionId],
           )
         ).rows;
+      // ADR-087 U1q: quoted terms need delivery.read_body; a staff viewer keeps every quotation row with its terms null.
+      const readsTerms = permits(role, 'delivery.read_body');
+      if (!readsTerms) data.quotations = data.quotations.map(withholdQuotationTerms);
       const offers = (
         await db.query(
           `SELECT q.*,EXISTS(SELECT FROM app.source_record s JOIN app.claim c ON c.tenant_id=s.tenant_id AND c.source_id=s.id JOIN app.mission_requirements req ON req.tenant_id=s.tenant_id AND req.id=q.requirement_id WHERE s.tenant_id=q.tenant_id AND s.id=q.source_id AND c.id=q.claim_id AND s.retention_until>now() AND req.version=(SELECT max(version) FROM app.mission_requirements WHERE tenant_id=q.tenant_id AND mission_id=q.mission_id) AND req.assignment_id=(SELECT id FROM app.mission_route_assignment WHERE tenant_id=q.tenant_id AND mission_id=q.mission_id ORDER BY version DESC LIMIT 1)) evidence_current FROM app.mission_quotation q WHERE q.tenant_id=$1 AND q.mission_id=$2 AND NOT EXISTS(SELECT FROM app.mission_quotation n WHERE n.tenant_id=q.tenant_id AND n.previous_id=q.id) ORDER BY q.created_at DESC,q.id LIMIT 100`,
@@ -107,18 +112,29 @@ export class CommercialMissionService {
             [ctx.tenantId, missionId],
           )
         ).rows,
-        comparison: compareOffers(
-          offers.map((o) => ({
-            id: o.id,
-            currency: o.currency,
-            terms: o.terms,
-            requirementId: o.requirement_id,
-            uncertainties: o.uncertainties,
-            evidenceCurrent: o.evidence_current,
-          })),
-          undefined,
-          offerContext(assignments[0]?.type_key),
-        ),
+        // A viewer's comparison names each current offer and its currency only: status, missing terms, differences
+        // and the derived total are all read from the terms, so none of them is computed for that role.
+        comparison: readsTerms
+          ? compareOffers(
+              offers.map((o) => ({
+                id: o.id,
+                currency: o.currency,
+                terms: o.terms,
+                requirementId: o.requirement_id,
+                uncertainties: o.uncertainties,
+                evidenceCurrent: o.evidence_current,
+              })),
+              undefined,
+              offerContext(assignments[0]?.type_key),
+            )
+          : offers.map((o) =>
+              withheldComparison({
+                id: o.id,
+                currency: o.currency,
+                requirementId: o.requirement_id,
+                evidenceCurrent: o.evidence_current,
+              }),
+            ),
       };
     });
   }
