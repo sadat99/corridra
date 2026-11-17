@@ -5,7 +5,10 @@ import { pathToFileURL } from 'node:url';
 export const REQUIRED_CI_JOBS = [
   'changes',
   'checks',
-  'browser',
+  'integration',
+  'browser (1)',
+  'browser (2)',
+  'browser (3)',
   'ux (1)',
   'ux (2)',
   'ux (3)',
