@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import './today-card.css';
 import { HolderBadge, type Holder } from './mr/holder-badge';
 
@@ -9,6 +10,7 @@ import { HolderBadge, type Holder } from './mr/holder-badge';
  */
 export function TodayCard({
   heading,
+  tag,
   title,
   titleLang,
   context,
@@ -21,6 +23,8 @@ export function TodayCard({
   action,
 }: {
   heading: string;
+  /** The journey the Move belongs to, shown before the title as the list row shows it. */
+  tag?: ReactNode;
   title: string;
   titleLang?: string;
   context?: string;
@@ -53,6 +57,7 @@ export function TodayCard({
         ) : null}
       </div>
       <p className="today-move" lang={titleLang} dir="auto">
+        {tag}
         {title}
       </p>
       {context ? <p className="today-context">{context}</p> : null}

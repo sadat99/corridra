@@ -335,9 +335,12 @@ export function MoveView({
   const nothing = items.length === 0;
   // The Today card takes the one most important Move out of the list below it, so the same link is never shown
   // twice and the page is no longer. It is picked from the cards this view shows (a journey view picks within it).
-  const today = pickTodayMove({ ...model, cards: model.cards.filter((card) => shown(card.id)) });
-  const rest = today ? items.filter((item) => String(item.key) !== today.card.id) : items;
-  const todayCard = today ? today.card : null;
+  const today = pickTodayMove(
+    { ...model, cards: model.cards.filter((card) => shown(card.id)) },
+    { unread: unread.filter((reply) => shown(`reply:${reply.requestId}`)) },
+  );
+  const rest = today ? items.filter((item) => String(item.key) !== today.id) : items;
+  const todayCard = today?.card ?? null;
   // The Today card is the first thing shown, so one row fewer opens before "Show more": the page is no longer.
   const rowsShown = today ? firstShown - 2 : firstShown;
   const cards = leadFirst(journey ? journeys.filter((card) => card.journey === journey) : journeys);
@@ -491,36 +494,64 @@ export function MoveView({
           ) : (
             <div className="move-items">
               <ul className="move-list">
-                {today && todayCard ? (
-                  <li key="today" data-kind="today">
+                {today ? (
+                  <li
+                    key="today"
+                    data-kind={today.reply ? 'reply' : 'today'}
+                    className={today.reply ? 'move-reply' : undefined}
+                  >
                     <TodayCard
                       heading={say('today.heading')}
+                      tag={tag(today.id)}
                       title={
-                        today.title ??
-                        movePhrase(
-                          labels.move.phrase,
-                          labels.move.verbs[verbOf[todayCard.kind as keyof typeof verbOf]],
-                          say(objectKey[todayCard.kind as keyof typeof objectKey]),
-                        )
+                        today.reply
+                          ? movePhrase(
+                              labels.move.phrase,
+                              labels.move.verbs.Read,
+                              say('move.card.reply.object'),
+                            )
+                          : (today.title ??
+                            movePhrase(
+                              labels.move.phrase,
+                              labels.move.verbs[verbOf[todayCard!.kind as keyof typeof verbOf]],
+                              say(objectKey[todayCard!.kind as keyof typeof objectKey]),
+                            ))
                       }
                       titleLang={today.title ? 'en' : undefined}
                       context={
-                        todayCard.kind === 'report'
-                          ? `${say('wsb.move.report.title')}: ${todayCard.context ?? ''}`
-                          : todayCard.context
+                        today.reply
+                          ? fill(say('move.received'), { date: day(today.reply.received, locale) })
+                          : todayCard!.kind === 'report'
+                            ? `${say('wsb.move.report.title')}: ${todayCard!.context ?? ''}`
+                            : todayCard!.kind === 'draft'
+                              ? [todayCard!.context, labels.road.draftSubline]
+                                  .filter(Boolean)
+                                  .join(' · ')
+                              : todayCard!.context
                       }
                       holder={today.holder}
                       holderLabel={say('today.holds')}
                       holderWords={labels.holder}
                       dueLabel={labels.move.due}
                       due={today.dueOn ? day(today.dueOn, locale) : null}
-                      href={todayCard.href}
+                      href={today.href}
                       action={
-                        todayCard.kind === 'draft'
-                          ? say('wsb.move.draft.action')
-                          : say(actionKey[todayCard.kind])
+                        today.reply
+                          ? say('move.card.reply.action')
+                          : todayCard!.kind === 'draft'
+                            ? say('wsb.move.draft.action')
+                            : say(actionKey[todayCard!.kind])
                       }
                     />
+                    {today.reply ? (
+                      <button
+                        type="button"
+                        className="button button-secondary"
+                        onClick={() => mark(today.reply!.requestId, today.reply!.latestReplyAt)}
+                      >
+                        {say('move.card.reply.read')}
+                      </button>
+                    ) : null}
                   </li>
                 ) : null}
                 {rest.slice(0, rowsShown)}

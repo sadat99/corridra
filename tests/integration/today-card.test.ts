@@ -59,7 +59,7 @@ describe('pickTodayMove', () => {
       ],
     });
     const today = pickTodayMove(model);
-    expect(today?.card.id).toBe('move:c');
+    expect(today?.id).toBe('move:c');
     expect(today?.title).toBe('Answer question c');
     expect(today?.dueOn).toBe('2026-11-20');
     expect(today?.holder).toBe('team');
@@ -87,7 +87,7 @@ describe('pickTodayMove', () => {
     const owner = pickTodayMove(
       buildMoveModel({ ...member, workspaces: [{ id: 'w1', name: 'Studio', role: 'owner' }] }),
     );
-    expect(owner?.card.kind).toBe('quote');
+    expect(owner?.card?.kind).toBe('quote');
   });
 
   it('never picks a move the team or a third party holds', () => {
@@ -109,7 +109,56 @@ describe('pickTodayMove', () => {
       ...base,
       drafts: [{ id: 'd1', workspaceId: 'w1', title: 'Draft', updatedAt: '2026-11-10T00:00:00Z' }],
     });
-    expect(pickTodayMove(model)?.card.id).toBe('draft:d1');
+    expect(pickTodayMove(model)?.id).toBe('draft:d1');
+  });
+});
+
+describe('pickTodayMove order', () => {
+  const reportModel = () =>
+    buildMoveModel({
+      ...base,
+      drafts: [{ id: 'd1', workspaceId: 'w1', title: 'Draft', updatedAt: '2026-11-10T00:00:00Z' }],
+      reports: [
+        {
+          id: 'p1',
+          title: 'Report',
+          requestId: 'r1',
+          publishedAt: '2026-11-12T00:00:00Z',
+          href: '/x',
+        },
+      ],
+      requests: [request('r1')],
+      moves: [{ requestId: 'r1', moves: [move('a', '2026-12-10')] }],
+    });
+  it('puts a new report before a draft and before a dated move (the result they asked for)', () => {
+    expect(pickTodayMove(reportModel())?.card?.kind).toBe('report');
+  });
+  it('puts an unread reply before every card, as the Move view has always listed it', () => {
+    const model = reportModel();
+    const today = pickTodayMove(model, {
+      unread: [
+        {
+          requestId: 'r1',
+          latestReplyAt: '2026-11-13T00:00:00Z',
+          received: '2026-11-01',
+          href: '/r',
+        },
+      ],
+    });
+    expect(today?.id).toBe('reply:r1');
+    expect(today?.reply?.href).toBe('/r');
+    expect(today?.card).toBeUndefined();
+    expect(today?.holder).toBe('team');
+  });
+  it('keeps the team order when two moves share a due date', () => {
+    const model = buildMoveModel({
+      ...base,
+      requests: [request('r1')],
+      moves: [
+        { requestId: 'r1', moves: [move('first', '2026-11-20'), move('second', '2026-11-20')] },
+      ],
+    });
+    expect(pickTodayMove(model)?.id).toBe('move:first');
   });
 });
 
@@ -135,11 +184,14 @@ vi.mock('next/link', () => ({
     className?: string;
   }) => createElement('a', { href, className, ...rest }, children as never),
 }));
-const view = async (model: ReturnType<typeof buildMoveModel>) => {
+const view = async (
+  model: ReturnType<typeof buildMoveModel>,
+  extra: Record<string, unknown> = {},
+) => {
   const { MoveView } = await import(
     /* @vite-ignore */ `../../apps/web/${'app/account/move/move-view'}`
   );
-  return renderToStaticMarkup(createElement(MoveView, { model, startHref: '/plan' }));
+  return renderToStaticMarkup(createElement(MoveView, { model, startHref: '/plan', ...extra }));
 };
 const busy = buildMoveModel({
   ...base,
@@ -182,5 +234,17 @@ describe('Your Move with the Today card', () => {
   it('draws no Today card when nothing is open', async () => {
     const html = await view(buildMoveModel(base));
     expect(html).not.toContain('today-card');
+  });
+  it('keeps what the row showed: the journey tag and the draft subline', async () => {
+    const model = buildMoveModel({
+      ...base,
+      drafts: [{ id: 'd1', workspaceId: 'w1', title: 'Draft', updatedAt: '2026-11-10T00:00:00Z' }],
+    });
+    const html = await view(model, { taskJourneys: { 'draft:d1': 'source' } });
+    const card = html.slice(html.indexOf('data-testid="today-card"'));
+    const inside = card.slice(0, card.indexOf('</section>'));
+    expect(inside).toContain('move-tag');
+    expect(inside).toContain('Sourcing');
+    expect(inside).toContain('The request is saved as a draft.');
   });
 });
