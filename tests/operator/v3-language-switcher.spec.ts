@@ -110,7 +110,9 @@ async function pick(page: Page, name: string) {
 
 test('with only English offered there is no chip and the page is English', async ({ page }) => {
   await page.goto(`${origin}/?offered=en`);
-  await expect(page.getByRole('link', { name: 'How It Works', exact: true }).first()).toBeVisible();
+  await expect(
+    page.locator('header.public-header').getByRole('link', { name: 'How It Works', exact: true }),
+  ).toBeVisible();
   await expect(page.locator('.lang-switcher')).toHaveCount(0);
   expect((await attrs(page)).lang).toBe('en');
 });
@@ -130,7 +132,9 @@ test('choosing a language changes the words, the page language and survives a re
   await expect(page.getByRole('link', { name: 'কীভাবে কাজ করে' })).toBeVisible();
   expect((await attrs(page)).lang).toBe('bn');
   await pick(page, 'English');
-  await expect(page.getByRole('link', { name: 'How It Works', exact: true }).first()).toBeVisible();
+  await expect(
+    page.locator('header.public-header').getByRole('link', { name: 'How It Works', exact: true }),
+  ).toBeVisible();
   expect(await attrs(page)).toEqual({ lang: 'en', dir: 'ltr', stored: 'en' });
 });
 
@@ -152,7 +156,9 @@ test('a language that is not offered is never applied, even if it was remembered
 }) => {
   await page.addInitScript(() => window.localStorage.setItem('corridra.language', 'bn'));
   await page.goto(`${origin}/?offered=en,es`);
-  await expect(page.getByRole('link', { name: 'How It Works', exact: true }).first()).toBeVisible();
+  await expect(
+    page.locator('header.public-header').getByRole('link', { name: 'How It Works', exact: true }),
+  ).toBeVisible();
   expect((await attrs(page)).lang).toBe('en');
 });
 
@@ -214,7 +220,7 @@ test.describe('first visit, matching the browser language', () => {
     expect((await attrs(page)).stored).toBeNull();
     await page.goto(`${origin}/?offered=en,bn`);
     await expect(
-      page.getByRole('link', { name: 'How It Works', exact: true }).first(),
+      page.locator('header.public-header').getByRole('link', { name: 'How It Works', exact: true }),
     ).toBeVisible();
   });
 });
@@ -224,7 +230,7 @@ test.describe('Traditional Chinese browsers', () => {
   test('are not given Simplified Chinese on their behalf', async ({ page }) => {
     await page.goto(`${origin}/?offered=en,zh`);
     await expect(
-      page.getByRole('link', { name: 'How It Works', exact: true }).first(),
+      page.locator('header.public-header').getByRole('link', { name: 'How It Works', exact: true }),
     ).toBeVisible();
   });
 });
@@ -242,7 +248,9 @@ test('every language fits at 320, 390, 768 and 1440 wide and passes the accessib
   ] as const) {
     await pickCode(page, html);
     await page.setViewportSize({ width: 1440, height: 900 });
-    await expect(page.getByRole('link', { name: label, exact: true }).first()).toBeVisible();
+    await expect(
+      page.locator('header.public-header').getByRole('link', { name: label, exact: true }),
+    ).toBeVisible();
     for (const width of [1440, 768, 390, 320]) {
       await page.setViewportSize({ width, height: 900 });
       expect(
