@@ -338,6 +338,8 @@ Tests that fail today, PostgreSQL 16 tests in `packages/db`:
 
 U1 ships first, so no screen breaks when U2 is installed.
 
+**Status (17 November 2026): built in PR 554, not installed.** Module `packages/db/viewer-reply-metadata-migrations` (0001 for the reply and answer tables and the two meta reads, 0002 for the answer-correction table, applied only where that module exists and re-run by its install), reached only through `field_modules_action=viewer_reply_metadata`. Each file is hash-guarded against the policies it replaces. Rollback text: `packages/db/viewer-reply-metadata-migrations/rollback/` (copied to the next free number only on the owner's word). Installing needs the owner's word.
+
 ### U3. Database: exports and snapshots, everyone except viewers
 
 Replace the read policies, sample and real, of `app.delivery_export` and `app.delivery_export_artifact` (`0016:132`; `0002:226,228`) with the same text plus `AND app.member_role(tenant_id) <> 'viewer'`.
@@ -348,6 +350,8 @@ Tests that fail today:
 
 1. A viewer selecting from either table gets a row today and must get none.
 2. Owner, admin, operator and reviewer still do.
+
+**Status (17 November 2026): built in PR 554, not installed.** Module `packages/db/viewer-export-access-migrations`, reached only through `field_modules_action=viewer_export_access`, hash-guarded against the four policies it replaces. Rollback text: `packages/db/viewer-export-access-migrations/rollback/0001_restore_original_export_reads.sql`. Installing needs the owner's word.
 
 ### U4. Member notice (required before U5; new optional module and inbox type)
 

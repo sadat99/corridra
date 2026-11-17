@@ -53,6 +53,11 @@ import { configureSourcingWorkflow } from '../packages/auth/src/sourcing-workflo
 import { migrateSupplySources } from '../packages/db/src/supply-source-migrate';
 import { migrateHelperInterest } from '../packages/db/src/helper-interest-migrate';
 import { migrateCustomerPersonalProfiles } from '../packages/db/src/customer-personal-profile-migrate';
+import {
+  migrateViewerReplyMetadata,
+  viewerReplyMetadataInstalled,
+} from '../packages/db/src/viewer-reply-metadata-migrate';
+import { migrateViewerExportAccess } from '../packages/db/src/viewer-export-access-migrate';
 import { configureSupplySources } from '../packages/auth/src/supply-source-configuration';
 import { configureWorkspaceLifecycle } from '../packages/auth/src/customer-workspace-lifecycle-configuration';
 import { configureAccountLifecycle } from '../packages/auth/src/customer-account-lifecycle-configuration';
@@ -113,6 +118,8 @@ const v = z
     HELPER_INTEREST_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     PROGRAMME_ERASURE_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     PERSONAL_PROFILE_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
+    VIEWER_REPLY_METADATA_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
+    VIEWER_EXPORT_ACCESS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     COUNTERPARTY_CHANGES_ACTION: z
       .enum(['unchanged', 'install', 'enable', 'pause'])
       .default('unchanged'),
@@ -291,6 +298,10 @@ if (v.PROGRAMME_ERASURE_ACTION !== 'unchanged' && !apply)
   throw new Error('Programme words erasure installation requires INSTALL_APPLY=yes');
 if (v.PERSONAL_PROFILE_ACTION !== 'unchanged' && !apply)
   throw new Error('Personal profile installation requires INSTALL_APPLY=yes');
+if (v.VIEWER_REPLY_METADATA_ACTION !== 'unchanged' && !apply)
+  throw new Error('Viewer reply metadata installation requires INSTALL_APPLY=yes');
+if (v.VIEWER_EXPORT_ACCESS_ACTION !== 'unchanged' && !apply)
+  throw new Error('Viewer export access installation requires INSTALL_APPLY=yes');
 if (v.COUNTERPARTY_CHANGES_ACTION !== 'unchanged' && !apply)
   throw new Error('Contact and note changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.COUNTERPARTY_CHANGES_ACTION) && !v.COUNTERPARTY_CHANGES_REASON)
@@ -364,6 +375,8 @@ const registries = [
   'customer_programme_publication_migrations',
   'customer_programme_erasure_migrations',
   'customer_personal_profile_migrations',
+  'viewer_reply_metadata_migrations',
+  'viewer_export_access_migrations',
   'recipient_response_revision_migrations',
   'network_real_use_migrations',
   'customer_billing_real_migrations',
@@ -514,6 +527,13 @@ try {
     }
     if (v.RESPONSE_REVISION_ACTION !== 'unchanged') {
       await migrateRecipientResponseRevision(pool);
+      // Where ADR-087 U2 is already installed, its answer-correction file waits for this table; bring it current now.
+      if (await viewerReplyMetadataInstalled(pool)) {
+        const viewer = await migrateViewerReplyMetadata(pool);
+        console.log(
+          `viewer reply metadata re-run for answer correction: applied ${viewer.applied.join(', ') || 'nothing new'}`,
+        );
+      }
       if (v.RESPONSE_REVISION_ACTION === 'install') {
         console.log(
           'installed or already current: recipient response revision, closed (needs real-use installed first)',
@@ -703,6 +723,22 @@ try {
     if (v.PERSONAL_PROFILE_ACTION === 'install') {
       await migrateCustomerPersonalProfiles(pool);
       console.log('installed or already current: personal profile');
+    }
+    // ADR-087 U2 and U3 are never part of the base run. Each replaces only named read policies (and U2 adds two meta reads),
+    // refuses unless every replaced policy is exactly the one it was written against, and refuses unless the real-use modules
+    // are installed. Installing changes what a staff viewer reads at once, so each needs the owner's word. Reached only through
+    // field_modules_action=viewer_reply_metadata and field_modules_action=viewer_export_access.
+    if (v.VIEWER_REPLY_METADATA_ACTION === 'install') {
+      const result = await migrateViewerReplyMetadata(pool);
+      console.log(
+        `installed or already current: viewer reply metadata (applied ${result.applied.join(', ') || 'nothing new'}; waiting for answer correction: ${result.waiting.join(', ') || 'none'})`,
+      );
+    }
+    if (v.VIEWER_EXPORT_ACCESS_ACTION === 'install') {
+      const result = await migrateViewerExportAccess(pool);
+      console.log(
+        `installed or already current: viewer export access (applied ${result.applied.join(', ') || 'nothing new'})`,
+      );
     }
     // Withdraw, correct and hide for private contacts and notes (CRUD G11) are never part of the base run. Install leaves
     // the one control closed; enable and pause are owner decisions with a reason. Reached through field_modules_action
