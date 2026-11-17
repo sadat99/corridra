@@ -1,4 +1,5 @@
-import { afterEach, expect, test, vi } from 'vitest';
+import { spawnSync } from 'node:child_process';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 import type { DatabasePool } from '../../packages/db/src/index';
 import {
   describeSupplierChange,
@@ -269,4 +270,112 @@ test('the installer never logs the supplier secret or its parsed details', async
   expect(source).toContain('delete process.env[supplierSecretName]');
   expect(source).not.toMatch(/console\.\w+\([^)]*supplierSecret/);
   expect(source).not.toMatch(/JSON\.parse\(/);
+});
+
+test('a failed summary read after the write says the version was saved, not that nothing was written', async () => {
+  let reads = 0;
+  const failingAfter = {
+    query: vi.fn(async () => {
+      reads += 1;
+      if (reads === 1) return { rows: [row(6)] };
+      throw Object.assign(new Error(`connection lost while reading ${uen}`), { code: '08006' });
+    }),
+  } as unknown as DatabasePool;
+  const configure = vi.fn(async () => ({
+    enabled: false,
+    requireSecondApprover: true,
+    controlChanged: false,
+    entityChanged: true,
+  }));
+  const { text, error } = await captured(() =>
+    setSupplierFromSecret(
+      failingAfter,
+      { raw: JSON.stringify(sample), reason: 'Owner replaced the supplier details' },
+      configure,
+    ),
+  );
+  expect(configure).toHaveBeenCalledOnce();
+  const message = (error as Error).message;
+  expect(message).toBe(
+    'The supplier details were saved as a new version, but the summary could not be read: database error 08006. Run the workflow with apply=no to see the installed state; do not run set_supplier again for this.',
+  );
+  expect(message).not.toContain('Nothing was written');
+  expect((error as Error & { cause?: unknown }).cause).toBeUndefined();
+  expectNoValue(text);
+});
+
+// Runs the real installer script as the workflow would, with a network guard preloaded: any database connection attempt
+// is refused and reported. A missing or bad secret must stop the run before the first query, so before the report, any
+// migration and any write.
+describe('the installer with set_supplier and a missing or bad secret', () => {
+  const run = (extra: Record<string, string>) => {
+    const host = 'ep-u3-fixture.eu-central-1.aws.neon.tech';
+    const result = spawnSync(
+      process.execPath,
+      [
+        '--import',
+        'tsx',
+        '--import',
+        './tests/integration/fixtures/forbid-network.mjs',
+        'scripts/install-customer-modules.ts',
+      ],
+      {
+        encoding: 'utf8',
+        timeout: 60000,
+        env: {
+          PATH: process.env.PATH,
+          HOME: process.env.HOME,
+          MIGRATION_DATABASE_URL: `postgresql://corridra_migrator:fixture-only@${host}/corridra?sslmode=verify-full`,
+          MIGRATION_DATABASE_HOST: host,
+          INSTALL_APPLY: 'yes',
+          REAL_INVOICING_REASON: 'Fixture run of set_supplier with a bad secret',
+          ...extra,
+        },
+      },
+    );
+    return { status: result.status, output: `${result.stdout}\n${result.stderr}` };
+  };
+  const noRunStarted = (output: string) => {
+    expect(output).not.toContain('NETWORK_ATTEMPT');
+    expect(output).not.toContain('Before install');
+    expect(output).not.toContain('core migrations applied');
+    expect(output).not.toContain('Real invoices');
+    expect(output).not.toContain('Install complete');
+  };
+
+  test('the network guard does see a run that reaches the database (control case)', () => {
+    const { status, output } = run({ REAL_INVOICING_ACTION: 'unchanged' });
+    expect(status).not.toBe(0);
+    expect(output).toContain('NETWORK_ATTEMPT');
+  });
+
+  test('a missing secret stops before any connection, names the secret and writes nothing', () => {
+    for (const secret of [undefined, '', '  ']) {
+      const { status, output } = run({
+        REAL_INVOICING_ACTION: 'set_supplier',
+        ...(secret === undefined ? {} : { REAL_INVOICING_SUPPLIER_JSON: secret }),
+      });
+      expect(status).not.toBe(0);
+      expect(output).toContain(supplierSecretMissingMessage);
+      noRunStarted(output);
+    }
+  });
+
+  test('malformed or invalid JSON stops before any connection and prints no value', () => {
+    for (const secret of [
+      JSON.stringify(sample).slice(0, -1) + ', uen: ' + uen,
+      JSON.stringify({ ...sample, country: `Singapore ${uen}`, gstRateBps: account }),
+    ]) {
+      const { status, output } = run({
+        REAL_INVOICING_ACTION: 'set_supplier',
+        REAL_INVOICING_SUPPLIER_JSON: secret,
+      });
+      expect(status).not.toBe(0);
+      expect(output).toMatch(
+        /REAL_INVOICING_SUPPLIER_JSON secret (is not valid JSON|does not match)/,
+      );
+      noRunStarted(output);
+      expectNoValue(output);
+    }
+  });
 });

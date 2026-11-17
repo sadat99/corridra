@@ -118,33 +118,49 @@ export async function setSupplierFromSecret(
   configure: typeof configureRealInvoicing = configureRealInvoicing,
 ): Promise<SupplierChange> {
   const entity = parseSupplierSecret(input.raw);
+  // configureRealInvoicing commits its own transaction. Until it returns, a failure means nothing was written; after it
+  // returns, the write is saved and only the summary read can fail, so the message must say so.
+  let result: Awaited<ReturnType<typeof configureRealInvoicing>>;
+  let before: EntityRow | undefined;
   try {
-    const before = await latestEntity(pool);
-    const result = await configure(pool, { reason: input.reason, entity });
-    const after = await latestEntity(pool);
-    const changedFields = result.entityChanged
-      ? Object.entries(columnToField)
-          .filter(([column]) => comparable(before?.[column]) !== comparable(after?.[column]))
-          .map(([, field]) => field)
-      : [];
-    return {
-      changedFields,
-      version: after?.version ?? null,
-      madeupFieldCount: entity.madeupFields.length,
-      entityChanged: result.entityChanged,
-    };
+    before = await latestEntity(pool);
+    result = await configure(pool, { reason: input.reason, entity });
   } catch (error) {
-    // Rebuilt, never rethrown: a database error can carry the failing row in its detail, and a validation error the input.
-    const message = error instanceof Error ? error.message : '';
-    const code =
-      error && typeof error === 'object' && 'code' in error && typeof error.code === 'string'
-        ? error.code
-        : '';
-    const safe = safeConfigurationMessages.has(message)
-      ? message
-      : /^[0-9A-Z]{5}$/.test(code)
-        ? `database error ${code}`
-        : 'unexpected error';
-    throw new Error(`Setting the supplier details failed: ${safe}. Nothing was written.`);
+    throw new Error(
+      `Setting the supplier details failed: ${safeFailure(error)}. Nothing was written.`,
+    );
   }
+  let after: EntityRow | undefined;
+  try {
+    after = await latestEntity(pool);
+  } catch (error) {
+    throw new Error(
+      `The supplier details were ${result.entityChanged ? 'saved as a new version' : 'already current and left as they are'}, but the summary could not be read: ${safeFailure(error)}. Run the workflow with apply=no to see the installed state; do not run set_supplier again for this.`,
+    );
+  }
+  const changedFields = result.entityChanged
+    ? Object.entries(columnToField)
+        .filter(([column]) => comparable(before?.[column]) !== comparable(after?.[column]))
+        .map(([, field]) => field)
+    : [];
+  return {
+    changedFields,
+    version: after?.version ?? null,
+    madeupFieldCount: entity.madeupFields.length,
+    entityChanged: result.entityChanged,
+  };
+}
+
+// Rebuilt, never rethrown: a database error can carry the failing row in its detail, and a validation error the input.
+function safeFailure(error: unknown) {
+  const message = error instanceof Error ? error.message : '';
+  const code =
+    error && typeof error === 'object' && 'code' in error && typeof error.code === 'string'
+      ? error.code
+      : '';
+  return safeConfigurationMessages.has(message)
+    ? message
+    : /^[0-9A-Z]{5}$/.test(code)
+      ? `database error ${code}`
+      : 'unexpected error';
 }

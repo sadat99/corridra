@@ -317,15 +317,22 @@ test('install seeds the supplier details with every made-up field marked, and th
     legal_name: 'Corridra Pte Ltd',
     address: '101 Robinson Road, Singapore 180239',
     country: 'SG',
-    uen: '202612345X',
+    uen: '202600000A (madeup)',
     gst_rate_bps: 900,
     payment_terms_days: 30,
   });
-  // The UEN is real (owner, 1 Nov 2026); the other organisation details stay made up and marked.
+  // Every organisation detail the seed carries is made up and marked, the UEN included (the UEN once seeded as real was
+  // superseded on 16 Nov 2026 and is not the company's).
   expect(entity[0].placeholder_fields.sort()).toEqual(
-    ['finance_label', 'gst_registered', 'gst_registration_no', 'payment_instructions'].sort(),
+    [
+      'finance_label',
+      'gst_registered',
+      'gst_registration_no',
+      'payment_instructions',
+      'uen',
+    ].sort(),
   );
-  for (const field of ['gst_registration_no', 'payment_instructions', 'finance_label'])
+  for (const field of ['uen', 'gst_registration_no', 'payment_instructions', 'finance_label'])
     expect(entity[0][field]).toContain('(madeup)');
   // Running install again changes nothing.
   expect(await control({})).toMatchObject({ entityChanged: false, controlChanged: false });
