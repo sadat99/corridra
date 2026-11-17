@@ -11,9 +11,9 @@ test('the header offers Sign in and never asks for a session when customer accou
   const menu = page.getByRole('button', { name: /^Menu/ });
   if (await menu.isVisible()) await menu.click();
   const nav = page.getByRole('navigation', { name: 'Main navigation' });
-  await expect(nav.getByRole('link', { name: 'Sign in', exact: true })).toBeVisible();
-  await expect(nav.getByRole('link', { name: 'Your account', exact: true })).toHaveCount(0);
-  await expect(nav.getByRole('button', { name: 'Sign out', exact: true })).toHaveCount(0);
+  await expect(nav.getByRole('link', { name: 'Sign In', exact: true })).toBeVisible();
+  await expect(nav.getByRole('link', { name: 'Your Account', exact: true })).toHaveCount(0);
+  await expect(nav.getByRole('button', { name: 'Sign Out', exact: true })).toHaveCount(0);
   await page.waitForLoadState('networkidle');
   expect(sessionRequests).toEqual([]);
 });

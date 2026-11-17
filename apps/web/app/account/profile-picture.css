@@ -1,0 +1,128 @@
+/* ADR-088. The profile picture row on My Profile and its framing dialog. Tokens only. */
+.ux-picture-row {
+  display: grid;
+  gap: var(--space-3);
+  justify-self: stretch;
+  min-width: 0;
+}
+.ux-picture-row > h3 {
+  margin: 0;
+}
+.ux-picture-line:empty {
+  display: none;
+}
+.ux-picture-line > p,
+.ux-picture-current p {
+  margin: 0;
+}
+.ux-picture-current {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+.ux-picture-face {
+  inline-size: 4rem;
+  block-size: 4rem;
+  border-radius: 50%;
+  flex: none;
+  object-fit: cover;
+  background: var(--ac-surface-subtle);
+}
+.ux-picture-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ac-navy);
+  color: var(--ac-paper);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+.ux-picture-hint {
+  margin: 0;
+  color: var(--ac-text-secondary);
+  font-size: var(--text-sm);
+}
+.ux-picture-drop {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px dashed var(--ac-border-strong);
+  border-radius: var(--radius-md);
+}
+.ux-picture-drop[data-dragging] {
+  border-color: var(--selected);
+  background: var(--ac-surface-selected);
+}
+.ux-picture-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+.ux-picture-input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.ux-picture-editor {
+  display: grid;
+  gap: var(--space-3);
+}
+.ux-picture-stage {
+  position: relative;
+  inline-size: min(100%, 18rem);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--ac-surface-subtle);
+  touch-action: none;
+  cursor: grab;
+  justify-self: center;
+}
+.ux-picture-stage:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.ux-picture-source {
+  position: absolute;
+  max-inline-size: none;
+  user-select: none;
+  pointer-events: none;
+}
+/* Dims everything outside the circle the picture will be shown in. */
+.ux-picture-mask {
+  position: absolute;
+  inset: 0;
+  background: var(--ac-ink);
+  opacity: 0.55;
+  mask-image: radial-gradient(circle closest-side, transparent 99%, var(--ac-ink) 100%);
+  pointer-events: none;
+}
+.ux-picture-progress {
+  display: grid;
+  gap: var(--space-1);
+}
+.ux-picture-progress progress {
+  inline-size: 100%;
+  accent-color: var(--action);
+}
+.ux-picture-progress p,
+.ux-picture-problem {
+  margin: 0;
+}
+.ux-picture-problem {
+  color: var(--critical);
+}
+@media (max-width: 639px) {
+  .ux-picture-actions > * {
+    inline-size: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ux-picture-stage {
+    cursor: default;
+  }
+}

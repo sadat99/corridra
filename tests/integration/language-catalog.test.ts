@@ -38,13 +38,13 @@ describe('message files', () => {
 
   it('English has no dashes either, and keeps the exact words the pages and tests use', () => {
     for (const key of keys) expect(en[key]).not.toMatch(/[—–]| - /);
-    expect(en['header.howItWorks']).toBe('How it works');
+    expect(en['header.howItWorks']).toBe('How It Works');
     expect(en['header.start']).toBe('Start a Request');
-    expect(en['header.signIn']).toBe('Sign in');
+    expect(en['header.signIn']).toBe('Sign In');
     expect(en['footer.tagline']).toBe('Make market entry deliberate.');
   });
 
-  it('shows the Ledger footer words in English in every language, so no translation is claimed', () => {
+  it('has translated Ledger footer words in every language, and English keeps its own', () => {
     const footerOnly = [
       'footer.signIn',
       'footer.already',
@@ -67,9 +67,52 @@ describe('message files', () => {
       'footer.routes',
     ] as const satisfies readonly MessageKey[];
     for (const key of footerOnly)
-      for (const code of others) expect(catalogs[code][key], `${code}.${key}`).toBe(en[key]);
+      for (const code of others) expect(catalogs[code][key], `${code}.${key}`).not.toBe(en[key]);
     expect(en['footer.signIn']).toBe('Sign In');
     expect(en['footer.link.privacyTest']).toBe('Test Intake Notice');
+  });
+
+  it('has a non-English value for every header menu key and footer key in all six languages', () => {
+    const chrome = keys.filter((key) =>
+      /^(header\.(whatWeDo|markets|trust|jobs|job\.)|footer\.(signIn|already|openWorkspace|nav|group\.|link\.|facts|factsMore|private|routes))/.test(
+        key,
+      ),
+    );
+    expect(chrome.length).toBe(33);
+    for (const code of others)
+      for (const key of chrome) expect(catalogs[code][key], `${code}.${key}`).not.toBe(en[key]);
+  });
+
+  it.each(others)(
+    '%s names each header job exactly as its way word, so the two never drift',
+    (code) => {
+      const pairs = [
+        ['header.job.sell', 'way.sell'],
+        ['header.job.source', 'way.source'],
+        ['header.job.machinery', 'way.machinery'],
+        ['header.job.tradeMission', 'way.tradeMissions'],
+        ['header.job.businessTrip', 'way.businessTrips'],
+        ['header.job.enterMarket', 'way.enterMarket'],
+      ] as const satisfies readonly (readonly [MessageKey, MessageKey])[];
+      for (const [header, way] of pairs) {
+        const word = catalogs[code][header];
+        const wayWord = catalogs[code][way];
+        // One named exception: the full French word is one character over the header budget (32 for the
+        // English "Run a trade mission"), so the header shows its word-boundary prefix; the line below
+        // carries "commerciale" as context.
+        if (code === 'fr' && header === 'header.job.tradeMission')
+          expect(`${wayWord} `.startsWith(`${word} `), `${code}.${header}`).toBe(true);
+        else expect(word, `${code}.${header}`).toBe(wayWord);
+      }
+    },
+  );
+
+  it('keeps Arabic header and footer words in Arabic script and the brand name as written', () => {
+    for (const key of keys.filter((k) =>
+      /^(header\.job|footer\.(group|link\.(china|spain|routes)))/.test(k),
+    ))
+      expect(catalogs.ar[key], key).toMatch(/[\u0600-\u06FF]/);
+    expect(catalogs.ar['footer.link.network']).toContain('Corridra');
   });
 
   it('falls back to English for an empty entry and never returns an empty string', () => {

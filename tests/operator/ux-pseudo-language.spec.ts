@@ -117,8 +117,16 @@ test('the pseudo language is really longer than English and is the language show
 }) => {
   await page.goto(origin);
   await expect(page.locator('.move-view')).toHaveAttribute('lang', 'de');
-  await expect(page.getByText(/lorem ipsum/).first()).toBeVisible();
-  await expect(page.getByText('Arbeitsbereichsverwaltungsberechtigung').first()).toBeVisible();
+  // The closed Explain sentences also carry the pseudo text, so only a shown one counts.
+  await expect(
+    page
+      .getByText(/lorem ipsum/)
+      .filter({ visible: true })
+      .first(),
+  ).toBeVisible();
+  await expect(
+    page.getByText('Arbeitsbereichsverwaltungsberechtigung').filter({ visible: true }).first(),
+  ).toBeVisible();
 });
 
 for (const width of [320, 390, 768, 1440]) {

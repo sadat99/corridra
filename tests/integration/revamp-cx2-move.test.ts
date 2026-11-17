@@ -296,3 +296,71 @@ describe('Home summary never claims more than the page could read (Codex review 
     expect(html).toContain('href="/account?view=results&amp;tab=shared"');
   });
 });
+
+describe('Visual grammar PR 4: Move lanes', () => {
+  const row = (id: string, holder: 'team' | 'owner' | 'third') => ({
+    id,
+    holder,
+    kind: 'move' as const,
+    title: `Row ${id}`,
+    status: null,
+    received: null,
+    href: `/account/move/${id}`,
+  });
+  const modelOf = (rows: ReturnType<typeof row>[]) => ({
+    cards: [],
+    waiting: rows,
+    replyCandidates: [],
+    latest: null,
+  });
+  const lanesOf = (html: string) =>
+    [
+      ...html.matchAll(
+        /<section class="move-lane" data-holder="([a-z]+)"[^>]*>([\s\S]*?)<\/section>/g,
+      ),
+    ].map((m) => ({ holder: m[1], html: m[2] }));
+
+  it('draws one lane per holder in the order team, owner, third, each named and explained', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const html = render(MoveView, {
+      model: modelOf([row('t1', 'third'), row('o1', 'owner'), row('m1', 'team')]),
+      startHref: '/plan',
+    });
+    expect(html).toContain('class="move-lanes"');
+    const lanes = lanesOf(html);
+    expect(lanes.map((l) => l.holder)).toEqual(['team', 'owner', 'third']);
+    const words = {
+      team: ['Corridra team', 'The Corridra team needs to do the next thing.'],
+      owner: [
+        'Workspace owner or admin',
+        'Your workspace owner or an admin needs to do the next thing.',
+      ],
+      third: ['Supplier or Buyer', 'The supplier or the buyer needs to do the next thing.'],
+    } as const;
+    for (const lane of lanes) {
+      const [word, sentence] = words[lane.holder as keyof typeof words];
+      expect(lane.html).toContain('mr-explain-trigger');
+      expect(lane.html).toContain(`<span class="mr-explain-word">${word}</span>`);
+      expect(lane.html).toContain(sentence);
+      expect(lane.html).toContain(`<i class="mr-holder-shape" data-holder="${lane.holder}"`);
+    }
+  });
+
+  it('keeps model order inside a lane and leaves a holder with no rows undrawn', async () => {
+    const { MoveView } = await load('app/account/move/move-view');
+    const html = render(MoveView, {
+      model: modelOf([row('a', 'team'), row('b', 'third'), row('c', 'team'), row('d', 'team')]),
+      startHref: '/plan',
+    });
+    const lanes = lanesOf(html);
+    expect(lanes.map((l) => l.holder)).toEqual(['team', 'third']);
+    expect(html).not.toContain('data-holder="owner" aria-labelledby');
+    const team = lanes[0].html;
+    expect(team.indexOf('/account/move/a')).toBeGreaterThan(-1);
+    expect(team.indexOf('/account/move/a')).toBeLessThan(team.indexOf('/account/move/c'));
+    expect(team.indexOf('/account/move/c')).toBeLessThan(team.indexOf('/account/move/d'));
+    expect(team).not.toContain('/account/move/b');
+    expect(lanes[1].html).toContain('/account/move/b');
+    expect(html).toContain('id="move-others"');
+  });
+});

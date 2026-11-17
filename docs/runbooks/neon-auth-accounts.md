@@ -34,6 +34,8 @@ No application screen runs these; a privacy owner or admin of the staff workspac
 1. `customer.programme_words_remove(command, erasure_request)`: the words in programme applications and registration labels (ADR-080).
 2. `customer.personal_profile_remove_words(command, erasure_request)`: the job title and interests in the person's personal details (ADR-086), in every saved version and replay record, replaced by "Removed at request" and an empty list. The country, preferred contact and initials choice stay: they are codes chosen from a list, not the person's words.
 
+Profile pictures (ADR-088) need no step here: when staff move an erasure request to in progress or completed in the erasure queue, the queue retires the person's pictures, deletes the stored files and then the rows, and its answer carries `profilePicture: { retired, pending }`. A `pending` above 0 means a file could not be deleted yet; send the same transition again to retry.
+
 Each takes a new command id (a random UUID) and answers with counts only; running it again with the same command answers the same counts and changes nothing, and running it with a new command skips what is already done. Note the counts in the erasure request's staff note when it is completed.
 
 ## Separate staff password recovery

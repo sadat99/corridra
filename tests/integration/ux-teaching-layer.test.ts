@@ -321,6 +321,35 @@ describe('the ghost state and the mode label', () => {
     expect(html).toContain('Example');
   });
 
+  it('gives every ghost state its own heading id, so two on one page never share one', async () => {
+    const { GhostState } = await load('ghost-state');
+    const html = renderToStaticMarkup(
+      createElement(
+        'div',
+        null,
+        createElement(GhostState, { title: 'First', text: 'One.' }),
+        createElement(GhostState, { title: 'Second', text: 'Two.' }),
+      ),
+    ) as string;
+    const ids = [...html.matchAll(/<h2 id="([^"]+)"/g)].map((m) => m[1]);
+    const labelled = [...html.matchAll(/aria-labelledby="([^"]+)"/g)].map((m) => m[1]);
+    expect(ids).toHaveLength(2);
+    expect(new Set(ids).size).toBe(2);
+    expect(labelled).toEqual(ids);
+    for (const id of ids) expect(html.split(`id="${id}"`)).toHaveLength(2);
+  });
+
+  it('uses the id it is given exactly', async () => {
+    const { GhostState } = await load('ghost-state');
+    const html = render(GhostState, {
+      title: 'Offers',
+      text: 'Soon.',
+      id: 'offers-ghost',
+    }) as string;
+    expect(html).toContain('<h2 id="offers-ghost"');
+    expect(html).toContain('aria-labelledby="offers-ghost"');
+  });
+
   it('says Sample or Real once, with the word', async () => {
     const { ModeLabel } = await load('mode-label');
     expect(render(ModeLabel, { real: false })).toContain('>Sample<');
