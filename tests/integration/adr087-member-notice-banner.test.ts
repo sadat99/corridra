@@ -31,10 +31,10 @@ const notice = (opensAt: string, workspaceId = W, workspaceName = 'Sample Export
   deliveredAt: new Date(Date.parse(opensAt) - 86400000).toISOString(),
   opensAt,
 });
+// Imported by path, as the other component tests do, so the packages type check does not compile the web app's TSX.
+const bannerPath = '../../apps/web/app/account/saved-missions';
 const render = async (props: Record<string, unknown>) => {
-  const { MemberNoticeView } = await import(
-    /* @vite-ignore */ '../../apps/web/app/account/saved-missions'
-  );
+  const { MemberNoticeView } = await import(/* @vite-ignore */ bannerPath);
   return renderToStaticMarkup(createElement(MemberNoticeView, props));
 };
 afterAll(() => setViewerTimeZone(undefined));
