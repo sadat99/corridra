@@ -93,11 +93,17 @@ jobs:
       - name: Bounded shared handoff and historical integrity
         run: node scripts/v3-context.mjs verify
 
-  browser:
+  # Integration tests (PostgreSQL, identity, adapters, recovery) ran inside the browser job until 17 Nov 2026, when that job
+  # took 44m38s (PR 534) and was then cancelled at its 45-minute limit (PR 537). They need no build or browser, so they run here, in three shards: the suite alone took more than 30 minutes (run 44018564826, cancelled at the limit). Each shard has its own fresh database; together they run exactly the files `pnpm test:integration` runs.
+  integration:
     needs: changes
     if: ${{ needs.changes.outputs.docs_only != 'true' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@v7
         with:
@@ -125,8 +131,47 @@ jobs:
         run: pnpm db:prepare-local
       - name: Real malware scanner readiness
         run: pnpm scanner:local
-      - name: Database, identity, adapter and recovery integration tests
-        run: pnpm test:integration
+      - name: Database, identity, adapter and recovery integration tests (shard ${{ matrix.shard }} of ${{ strategy.job-total }})
+        run: pnpm test:integration --shard=${{ matrix.shard }}/${{ strategy.job-total }}
+
+  # Three browser shards. Every spec in tests/browser is independent (fullyParallel), so Playwright shares the tests out;
+  # together the shards run exactly the tests `pnpm test:e2e` runs. `integration` above holds the vitest suite.
+  browser:
+    needs: changes
+    if: ${{ needs.changes.outputs.docs_only != 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - name: Install pinned pnpm
+        run: npm install --global pnpm@11.19.0
+      # Speed (31 Oct 2026): reuse the pnpm store between runs; the lockfile still decides every version.
+      - name: Locate pnpm store
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: pnpm store cache
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
+      - name: Isolated PostgreSQL
+        run: pnpm db:local
+      - name: Reviewed database migrations and roles
+        run: pnpm db:prepare-local
+      - name: Real malware scanner readiness
+        run: pnpm scanner:local
       # Speed: Next.js keeps its compiler cache between runs. A stale entry only costs a rebuild.
       - name: Next.js build cache
         uses: actions/cache@v5
@@ -183,12 +228,12 @@ jobs:
           fonts=$(fc-list --format '%{file}|%{family}|%{style}\n' | sort | sha256sum | cut -c1-16)
           packages=$(dpkg-query -W -f '${Package}=${Version}\n' | grep -E '^(fonts-|fontconfig|libfontconfig|libfreetype|libharfbuzz)' | sort | sha256sum | cut -c1-16)
           echo "::notice title=Browser runtime fingerprint::playwright=$PLAYWRIGHT_VERSION browsers=$browsers cache-hit=${CACHE_HIT:-false} fonts=$fonts font-packages=$packages image=$ImageOS-$ImageVersion"
-      - name: Browser and accessibility tests
-        run: pnpm test:e2e
+      - name: Browser and accessibility tests (shard ${{ matrix.shard }} of ${{ strategy.job-total }})
+        run: pnpm test:e2e --shard=${{ matrix.shard }}/${{ strategy.job-total }}
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: browser-failure-evidence
+          name: browser-failure-evidence-${{ matrix.shard }}
           path: |
             test-results/
             !test-results/workspace-*/**
@@ -550,24 +595,25 @@ jobs:
   # superseded head never reports a false failure; a failed or timed-out job still fails it.
   validate:
     if: ${{ !cancelled() }}
-    needs: [changes, checks, browser, operator, ux, verification]
+    needs: [changes, checks, integration, browser, operator, ux, verification]
     runs-on: ubuntu-latest
     steps:
       - name: Every job must have succeeded
         env:
           CHANGES: ${{ needs.changes.result }}
           CHECKS: ${{ needs.checks.result }}
+          INTEGRATION: ${{ needs.integration.result }}
           BROWSER: ${{ needs.browser.result }}
           OPERATOR: ${{ needs.operator.result }}
           UX: ${{ needs.ux.result }}
           VERIFICATION: ${{ needs.verification.result }}
           DOCS_ONLY: ${{ needs.changes.outputs.docs_only }}
         run: |
-          echo "changes=$CHANGES checks=$CHECKS browser=$BROWSER operator=$OPERATOR ux=$UX verification=$VERIFICATION docs_only=$DOCS_ONLY"
+          echo "changes=$CHANGES checks=$CHECKS integration=$INTEGRATION browser=$BROWSER operator=$OPERATOR ux=$UX verification=$VERIFICATION docs_only=$DOCS_ONLY"
           [ "$CHANGES" = "success" ] || exit 1
           [ "$CHECKS" = "success" ] || exit 1
           # The app jobs may be skipped only when the change is documentation only.
-          for r in "$BROWSER" "$OPERATOR" "$UX" "$VERIFICATION"; do
+          for r in "$INTEGRATION" "$BROWSER" "$OPERATOR" "$UX" "$VERIFICATION"; do
             [ "$r" = "success" ] && continue
             [ "$r" = "skipped" ] && [ "$DOCS_ONLY" = "true" ] && continue
             exit 1
