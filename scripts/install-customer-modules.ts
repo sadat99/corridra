@@ -55,7 +55,7 @@ import { migrateHelperInterest } from '../packages/db/src/helper-interest-migrat
 import { migrateCustomerPersonalProfiles } from '../packages/db/src/customer-personal-profile-migrate';
 import {
   migrateViewerReplyMetadata,
-  viewerReplyMetadataInstalled,
+  refreshViewerReplyMetadata,
 } from '../packages/db/src/viewer-reply-metadata-migrate';
 import { migrateViewerExportAccess } from '../packages/db/src/viewer-export-access-migrate';
 import { configureSupplySources } from '../packages/auth/src/supply-source-configuration';
@@ -528,12 +528,11 @@ try {
     if (v.RESPONSE_REVISION_ACTION !== 'unchanged') {
       await migrateRecipientResponseRevision(pool);
       // Where ADR-087 U2 is already installed, its answer-correction file waits for this table; bring it current now.
-      if (await viewerReplyMetadataInstalled(pool)) {
-        const viewer = await migrateViewerReplyMetadata(pool);
+      const viewer = await refreshViewerReplyMetadata(pool);
+      if (viewer)
         console.log(
           `viewer reply metadata re-run for answer correction: applied ${viewer.applied.join(', ') || 'nothing new'}`,
         );
-      }
       if (v.RESPONSE_REVISION_ACTION === 'install') {
         console.log(
           'installed or already current: recipient response revision, closed (needs real-use installed first)',

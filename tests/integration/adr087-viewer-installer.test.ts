@@ -46,18 +46,16 @@ describe('the ADR-087 viewer module install wiring', () => {
       expect(script.slice(at - 120, at)).toContain(`v.${line} === 'install'`);
     }
     expect(script.split('migrateViewerExportAccess(pool)').length - 1).toBe(1);
-    // U2 runs in its own block, and again right after the answer-correction module only where U2 is already installed.
-    expect(script.split('migrateViewerReplyMetadata(pool)').length - 1).toBe(2);
+    // U2 runs in its own block, and is refreshed (only where already installed) right after the answer-correction module.
+    expect(script.split('migrateViewerReplyMetadata(pool)').length - 1).toBe(1);
+    expect(script.split('refreshViewerReplyMetadata(pool)').length - 1).toBe(1);
     const revision = script.indexOf('await migrateRecipientResponseRevision(pool);');
     const rerun = script.indexOf(
-      'const viewer = await migrateViewerReplyMetadata(pool);',
+      'const viewer = await refreshViewerReplyMetadata(pool);',
       revision,
     );
     expect(rerun).toBeGreaterThan(revision);
-    expect(script.slice(revision, rerun)).toContain(
-      'if (await viewerReplyMetadataInstalled(pool))',
-    );
-    expect(rerun - revision).toBeLessThan(400);
+    expect(rerun - revision).toBeLessThan(300);
   });
 
   test('the workflow derives each line from field_modules_action alone and adds no input', () => {
@@ -83,10 +81,7 @@ describe('the ADR-087 viewer module install wiring', () => {
       expect(rollback.length).toBeGreaterThan(0);
       for (const name of rollback) expect(top).not.toContain(name);
     }
-    const migrator = readFileSync(
-      resolve('packages/db/src/viewer-reply-metadata-migrate.ts'),
-      'utf8',
-    );
+    const migrator = readFileSync(resolve('packages/db/src/viewer-module-run.ts'), 'utf8');
     expect(migrator).toMatch(
       /readdir\(module\.directory\)\)\s*\.filter\(\(name\) => name\.endsWith\('\.sql'\)\)/,
     );

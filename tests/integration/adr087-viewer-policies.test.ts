@@ -9,7 +9,7 @@ import { realReportPublicLinkEnabled } from '../../packages/auth/src/real-report
 import { migrateRecipientResponseRevision } from '../../packages/db/src/recipient-response-revision-migrate';
 import {
   migrateViewerReplyMetadata,
-  viewerReplyMetadataInstalled,
+  refreshViewerReplyMetadata,
 } from '../../packages/db/src/viewer-reply-metadata-migrate';
 import { migrateViewerExportAccess } from '../../packages/db/src/viewer-export-access-migrate';
 
@@ -373,7 +373,7 @@ describe('the hash guard', () => {
     }
     expect(await definitions()).toEqual(before);
     // The whole install was one transaction: not even the registry was left behind.
-    expect(await viewerReplyMetadataInstalled(s.f.owner)).toBe(false);
+    expect(await refreshViewerReplyMetadata(s.f.owner)).toBeNull();
   });
   test('U3 refuses a changed policy and changes nothing', async () => {
     const before = await definitions();
@@ -398,12 +398,12 @@ describe('U2 installed (viewer reply metadata)', () => {
   test('install changes only the four named policies and adds the two meta reads; answer correction waits', async () => {
     linkHolder = await linkHolderReads();
     const before = await definitions();
-    expect(await viewerReplyMetadataInstalled(s.f.owner)).toBe(false);
+    expect(await refreshViewerReplyMetadata(s.f.owner)).toBeNull();
     expect(await migrateViewerReplyMetadata(s.f.owner)).toEqual({
       applied: ['0001_viewer_reply_metadata.sql'],
       waiting: ['0002_viewer_revision_metadata.sql'],
     });
-    expect(await viewerReplyMetadataInstalled(s.f.owner)).toBe(true);
+
     const after = await definitions();
     const named = [
       'app.recipient_detail_response:read',
@@ -581,8 +581,8 @@ describe('U2 after answer correction is installed', () => {
     for (const [, place] of places())
       expect(links(await revisionBodies('viewer', place))).toEqual([place.replies.team]);
     const before = await definitions();
-    // The install workflow re-runs this module after installing answer correction; this is that call.
-    expect(await migrateViewerReplyMetadata(s.f.owner)).toEqual({
+    // The install workflow refreshes this module after installing answer correction; this is that call.
+    expect(await refreshViewerReplyMetadata(s.f.owner)).toEqual({
       applied: ['0002_viewer_revision_metadata.sql'],
       waiting: [],
     });
