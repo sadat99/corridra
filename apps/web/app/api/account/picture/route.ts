@@ -199,28 +199,45 @@ export async function POST(request: Request) {
     );
     if (reserved.replayed)
       return answer(200, { ...publicPicture(reserved), commandId, replayed: true });
+    // Files written for a reservation that never becomes the picture are deleted at once, best effort. A file that cannot
+    // be deleted keeps its reservation row and is offered for deletion again once the reservation is an hour old.
+    const discard = async () => {
+      try {
+        await storage.delete(storage.storageRef, reserved.objectId);
+      } catch {
+        log('profile_picture_discard_pending', 200);
+      }
+    };
     try {
       await storage.put(storage.storageRef, reserved.objectId, 'large', picture.large.body);
       await storage.put(storage.storageRef, reserved.objectId, 'small', picture.small.body);
     } catch {
       log('profile_picture_store_failed', 503);
+      await discard();
       return refuse(
         503,
         'storage_unavailable',
         'The picture could not be stored. Try again in a few minutes.',
       );
     }
-    const result = await s.customerProfilePictures.commit(
-      {
-        commandId,
-        expectedVersion,
-        requestHash,
-        objectId: reserved.objectId,
-        large: picture.large,
-        small: picture.small,
-      },
-      ...context(request),
-    );
+    let result: Awaited<ReturnType<typeof s.customerProfilePictures.commit>>;
+    try {
+      result = await s.customerProfilePictures.commit(
+        {
+          commandId,
+          expectedVersion,
+          requestHash,
+          objectId: reserved.objectId,
+          large: picture.large,
+          small: picture.small,
+        },
+        ...context(request),
+      );
+    } catch (error) {
+      // A stale version, a conflicting command, a closed account or an erasure request: nothing points at these files.
+      await discard();
+      throw error;
+    }
     await purge(storage, result.pending, (ids) =>
       s.customerProfilePictures.purged(ids, ...context(request)),
     );

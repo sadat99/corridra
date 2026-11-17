@@ -98,8 +98,8 @@ beforeAll(async () => {
   f = await fixture();
   await migrateCustomerRealUse(f.owner);
   h = harness(f, 'ppic');
-  ids = await h.admit(['alice', 'bob', 'carol', 'dave', 'erin', 'nina', 'omar']);
-  for (const person of ['alice', 'bob', 'carol', 'dave', 'erin', 'omar'])
+  ids = await h.admit(['alice', 'bob', 'carol', 'dave', 'erin', 'faye', 'nina', 'omar']);
+  for (const person of ['alice', 'bob', 'carol', 'dave', 'erin', 'faye', 'omar'])
     await h.provision(person, `Synthetic ${person} workspace`);
   await migrateCustomerAccountLifecycle(f.owner);
   await migrateCustomerPersonalProfiles(f.owner);
@@ -318,5 +318,60 @@ describe('closed and erasure', () => {
       )
     ).rows;
     expect(record[0].rest).toEqual({ retired: 1 });
+  });
+  test('an upload still writing its files when staff erase keeps its reservation until it is an hour old', async () => {
+    await setAccountControl(true);
+    await setPicture('faye', 0, hex('faye'));
+    // The upload has reserved and is writing its files when the erasure runs.
+    const command = randomUUID();
+    const writing = (await reserve('faye', 1, command, hex('faye-2'))).objectId as string;
+    const request = await fileErasure('faye');
+    await staff('SELECT customer.erasure_transition($1,$2,$3,$4,$5) AS r', [
+      randomUUID(),
+      request,
+      'received',
+      'in_progress',
+      null,
+    ]);
+    const eraseCommand = randomUUID();
+    const erase = async () =>
+      (await staff('SELECT customer.profile_picture_erase($1,$2) AS r', [eraseCommand, request]))
+        .r as { retired: number; pending: { id: string }[] };
+    const first = await erase();
+    // Only the current picture is retired and listed; the young reservation is neither.
+    expect(first.retired).toBe(1);
+    expect(first.pending.map((p) => p.id)).not.toContain(writing);
+    expect(first.pending).toHaveLength(1);
+    const purge = (objects: string[]) =>
+      staff('SELECT customer.profile_picture_erase_purged($1,$2::uuid[]) AS r', [
+        request,
+        objects,
+      ]).then((row) => row.r);
+    // Even when named, the staff purge does not drop the reservation the upload is still writing.
+    expect(await purge([writing, ...first.pending.map((p) => p.id)])).toBe(1);
+    expect(await objects('faye')).toEqual([{ id: writing, state: 'reserved' }]);
+    // The upload finishes its files and commits: refused, so the server deletes the files it wrote.
+    await expect(commit('faye', 1, writing, command, hex('faye-2'))).rejects.toMatchObject({
+      code: '42501',
+    });
+    expect(await objects('faye')).toEqual([{ id: writing, state: 'reserved' }]);
+    // An hour later the same transition sent again replays and lists the reservation; its row then goes.
+    await f.owner.query(
+      "UPDATE customer_private.profile_picture_object SET created_at=created_at-interval '61 minutes' WHERE id=$1",
+      [writing],
+    );
+    const later = await erase();
+    expect(later.retired).toBe(1);
+    expect(later.pending.map((p) => p.id)).toEqual([writing]);
+    expect(await purge([writing])).toBe(1);
+    expect(await objects('faye')).toEqual([]);
+    expect(
+      (
+        await f.owner.query(
+          'SELECT count(*)::int AS n FROM customer_private.profile_picture_erasure WHERE erasure_request_id=$1',
+          [request],
+        )
+      ).rows[0].n,
+    ).toBe(1);
   });
 });

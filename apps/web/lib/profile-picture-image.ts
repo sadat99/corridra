@@ -96,6 +96,8 @@ export type ProcessedPicture = {
 };
 const digest = (body: Uint8Array) => createHash('sha256').update(body).digest('hex');
 sharp.cache(false);
+// One decode thread per picture: a large picture costs one core and its own working memory, never every core at once.
+sharp.concurrency(1);
 
 export async function processPicture(bytes: Uint8Array): Promise<ProcessedPicture> {
   const kind = sniffPicture(bytes);
@@ -105,6 +107,8 @@ export async function processPicture(bytes: Uint8Array): Promise<ProcessedPictur
       limitInputPixels: pictureLimits.maxPixels,
       failOn: 'error',
       animated: false,
+      // Decode top to bottom in strips instead of holding the whole decoded picture for random access.
+      sequentialRead: true,
     }).timeout({ seconds: 10 });
   let meta: Awaited<ReturnType<ReturnType<typeof open>['metadata']>>;
   try {
@@ -124,7 +128,7 @@ export async function processPicture(bytes: Uint8Array): Promise<ProcessedPictur
   if (width * height > pictureLimits.maxPixels) throw new PictureRejected('too_big_in_pixels');
   if (width < pictureLimits.minSide || height < pictureLimits.minSide)
     throw new PictureRejected('too_small');
-  let large: Buffer;
+  let large: Buffer, small: Buffer;
   try {
     // rotate() applies the camera orientation, then nothing of the original metadata is written: sharp keeps no EXIF, XMP,
     // ICC or comment unless asked with keepMetadata or withMetadata, and neither is used here.
@@ -134,13 +138,13 @@ export async function processPicture(bytes: Uint8Array): Promise<ProcessedPictur
       .toColourspace('srgb')
       .webp({ quality: 82, effort: 4 })
       .toBuffer();
+    small = await sharp(large, { failOn: 'error' })
+      .resize(pictureLimits.small, pictureLimits.small, { fit: 'cover' })
+      .webp({ quality: 80, effort: 4 })
+      .toBuffer();
   } catch {
     throw new PictureRejected('unreadable');
   }
-  const small = await sharp(large, { failOn: 'error' })
-    .resize(pictureLimits.small, pictureLimits.small, { fit: 'cover' })
-    .webp({ quality: 80, effort: 4 })
-    .toBuffer();
   return {
     uploadSha256: digest(input),
     large: { body: large, sha256: digest(large), bytes: large.length },

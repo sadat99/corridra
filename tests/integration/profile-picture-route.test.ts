@@ -21,6 +21,8 @@ const state = {
   limited: false,
   reserveError: null as unknown,
   removeError: null as unknown,
+  commitError: null as unknown,
+  putFails: false,
   deleteFails: false,
   pending: [] as { id: string; storageRef: string }[],
 };
@@ -30,6 +32,7 @@ const calls = {
   deletes: [] as string[],
   purged: [] as string[][],
   reserve: [] as unknown[][],
+  erase: [] as unknown[][],
 };
 vi.mock('server-only', () => ({}));
 vi.mock('../../apps/web/lib/profile-picture-capability', () => ({
@@ -44,6 +47,7 @@ const storage = {
   storageRef: 'vercel-blob:store_synthetic',
   async put(_ref: string, id: string, size: string) {
     calls.puts.push(`${id}/${size}`);
+    if (state.putFails && size === 'small') throw new Error('store down');
   },
   async get() {
     return state.stored!;
@@ -81,6 +85,7 @@ vi.mock('../../apps/web/lib/foundations', () => ({
         return { commandId: args[0], replayed: false, objectId, currentVersion: 0, pending: [] };
       },
       async commit() {
+        if (state.commitError) throw state.commitError;
         return changed(1, {
           id: objectId,
           updatedAt: '2026-11-17T00:00:00Z',
@@ -103,7 +108,8 @@ vi.mock('../../apps/web/lib/foundations', () => ({
       },
     },
     customerProfilePictureErasure: {
-      async erase() {
+      async erase(...args: unknown[]) {
+        calls.erase.push(args);
         return { reference: 'ER-1', retired: 1, pending: state.pending };
       },
       async purged(_ctx: unknown, _request: string, ids: string[]) {
@@ -149,10 +155,12 @@ beforeEach(() => {
     limited: false,
     reserveError: null,
     removeError: null,
+    commitError: null,
+    putFails: false,
     deleteFails: false,
     pending: [],
   });
-  Object.assign(calls, { service: 0, puts: [], deletes: [], purged: [], reserve: [] });
+  Object.assign(calls, { service: 0, puts: [], deletes: [], purged: [], reserve: [], erase: [] });
   logs = [];
   vi.spyOn(console, 'warn').mockImplementation((line: string) => void logs.push(line));
 });
@@ -291,6 +299,51 @@ describe('uploading', () => {
     state.reserveError = Object.assign(new Error('x'), { code: '42883' });
     expect((await upload(await png())).status).toBe(503);
   });
+  test('a commit refused after both files were written deletes those files at once', async () => {
+    const refusals = [
+      [
+        Object.assign(new Error('Picture changed; reload before saving'), { code: '23514' }),
+        409,
+        'stale',
+      ],
+      [
+        Object.assign(new Error('Command conflicts with original request'), { code: '23514' }),
+        409,
+        'command_conflict',
+      ],
+      [
+        Object.assign(new Error('Customer access expired'), { code: '42501' }),
+        403,
+        'account_inactive',
+      ],
+    ] as const;
+    for (const [error, status, code] of refusals) {
+      calls.deletes = [];
+      calls.puts = [];
+      state.commitError = error;
+      const response = await upload(await png());
+      expect(response.status).toBe(status);
+      expect((await response.json()).code).toBe(code);
+      expect(calls.puts).toEqual([`${objectId}/large`, `${objectId}/small`]);
+      expect(calls.deletes).toEqual([objectId]);
+      expect(calls.purged).toEqual([]);
+    }
+  });
+  test('a failed delete after a refused commit still answers the refusal, and the log has no id', async () => {
+    state.commitError = Object.assign(new Error('Customer access expired'), { code: '42501' });
+    state.deleteFails = true;
+    const response = await upload(await png());
+    expect(response.status).toBe(403);
+    expect(logs.join('\n')).toContain('profile_picture_discard_pending');
+    expect(logs.join('\n')).not.toContain(objectId);
+  });
+  test('a file write that fails answers 503 and deletes what was written', async () => {
+    state.putFails = true;
+    const response = await upload(await png());
+    expect(response.status).toBe(503);
+    expect((await response.json()).code).toBe('storage_unavailable');
+    expect(calls.deletes).toEqual([objectId]);
+  });
   test('a replaced picture has its files deleted, then its row', async () => {
     const old = randomUUID();
     state.pending = [{ id: old, storageRef: 'vercel-blob:store_synthetic' }];
@@ -361,5 +414,32 @@ describe('staff erasure', () => {
     expect((await response.json()).profilePicture).toEqual({ retired: 1, pending: 0 });
     expect(calls.deletes).toEqual([old]);
     expect(calls.purged).toEqual([[old]]);
+  });
+  test('sending the same transition again uses the same picture erasure command, so it replays', async () => {
+    const requestId = randomUUID();
+    const send = (toState: string, expectedState: string) =>
+      erasureRoute.POST(
+        new Request(`${origin}/api/workspace/customer-erasure-queue?tenant=${randomUUID()}`, {
+          method: 'POST',
+          headers: { origin, 'content-type': 'application/json' },
+          body: JSON.stringify({
+            commandId: randomUUID(),
+            requestId,
+            expectedState,
+            toState,
+            ...(toState === 'completed' ? { note: 'Synthetic note: nothing kept.' } : {}),
+          }),
+        }),
+      );
+    expect((await send('in_progress', 'received')).status).toBe(200);
+    expect((await send('in_progress', 'received')).status).toBe(200);
+    expect((await send('completed', 'in_progress')).status).toBe(200);
+    const commands = calls.erase.map((args) => args[1] as string);
+    expect(commands[0]).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    );
+    expect(commands[1]).toBe(commands[0]);
+    expect(commands[2]).not.toBe(commands[0]);
+    expect(calls.erase.map((args) => args[2])).toEqual([requestId, requestId, requestId]);
   });
 });

@@ -1,8 +1,8 @@
-import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { DomainError } from '@corridra/domain';
 import { customerAccountLifecycleEnabled } from '@corridra/auth/customer-account-lifecycle';
 import { erasureNoteProblem, erasureTransitionInput } from '@corridra/auth/customer-erasure-queue';
+import { profilePictureErasureCommandId } from '@corridra/auth/customer-profile-pictures';
 import { foundations } from '../../../../lib/foundations';
 import { boundedBody, deliveryError, deliveryHeaders } from '../../../../lib/delivery-http';
 export const runtime = 'nodejs';
@@ -19,9 +19,14 @@ async function erasePictures(
   s: Services,
   ctx: { token: string; tenantId: string; purpose: string },
   requestId: string,
+  toState: string,
 ) {
   try {
-    const erased = await s.customerProfilePictureErasure.erase(ctx, randomUUID(), requestId);
+    const erased = await s.customerProfilePictureErasure.erase(
+      ctx,
+      profilePictureErasureCommandId(requestId, toState),
+      requestId,
+    );
     const deleted: string[] = [];
     for (const item of erased.pending) {
       try {
@@ -103,7 +108,7 @@ async function handle(request: Request) {
     // could not be deleted. It never undoes or fails the transition, which has already happened.
     const profilePicture =
       input.toState === 'in_progress' || input.toState === 'completed'
-        ? await erasePictures(s, ctx, input.requestId)
+        ? await erasePictures(s, ctx, input.requestId, input.toState)
         : undefined;
     return Response.json(profilePicture ? { ...done, profilePicture } : done, {
       headers: deliveryHeaders,

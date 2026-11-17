@@ -30,7 +30,10 @@ const outputSide = 1024;
 const slowAfterMs = 8000;
 type View = { currentVersion: number; picture: { version: number; updatedAt: string } | null };
 type Load = 'loading' | 'ready' | 'missing' | 'failed';
-type Crop = { bitmap: ImageBitmap; url: string; zoom: number; x: number; y: number };
+type Crop = { bitmap: ImageBitmap; zoom: number; x: number; y: number };
+// The framing preview is drawn from the decoded bitmap onto a canvas, at most this many pixels on its longer side. No
+// address made from the chosen file is ever put into the page.
+const previewSide = 2048;
 const words = {
   empty: 'No picture yet. Your initials are shown instead.',
   who: 'Only you can see your picture.',
@@ -137,14 +140,21 @@ export function ProfilePicture({
     return () => window.clearTimeout(timer);
   }, [reload]);
   // The chosen file is released when another is chosen or the framing closes; moving and zooming keep it.
-  const bitmap = crop?.bitmap,
-    preview = crop?.url;
-  useEffect(
-    () => () => {
-      if (preview) URL.revokeObjectURL(preview);
-      bitmap?.close();
+  const bitmap = crop?.bitmap;
+  useEffect(() => () => bitmap?.close(), [bitmap]);
+  // The preview canvas is drawn once per chosen picture; moving and zooming only change its position and size.
+  const drawPreview = useCallback(
+    (canvas: HTMLCanvasElement | null) => {
+      if (!canvas || !bitmap) return;
+      const scale = Math.min(1, previewSide / Math.max(bitmap.width, bitmap.height));
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      const context = canvas.getContext('2d');
+      if (!context) return;
+      context.imageSmoothingQuality = 'high';
+      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     },
-    [bitmap, preview],
+    [bitmap],
   );
 
   async function choose(file: File | undefined) {
@@ -164,7 +174,7 @@ export function ProfilePicture({
       return setProblem(words.tooSmall);
     }
     pending.current = null;
-    setCrop({ bitmap, url: URL.createObjectURL(file), zoom: 1, x: 0, y: 0 });
+    setCrop({ bitmap, zoom: 1, x: 0, y: 0 });
   }
 
   // The visible square shows the picture scaled to cover it, then zoomed; x and y move it in square units (-0.5 to 0.5),
@@ -500,13 +510,12 @@ export function ProfilePicture({
               onPointerCancel={() => (drag.current = null)}
               onKeyDown={onStageKey}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element -- a local preview of the chosen file */}
-              <img
-                src={crop.url}
-                alt=""
+              <canvas
+                ref={drawPreview}
+                aria-hidden="true"
+                data-testid="profile-picture-preview"
                 className="ux-picture-source"
                 style={cropStyle}
-                draggable={false}
               />
               <span className="ux-picture-mask" aria-hidden="true" />
             </div>

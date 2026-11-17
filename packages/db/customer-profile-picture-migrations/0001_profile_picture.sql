@@ -254,9 +254,11 @@ BEGIN
  RETURN removed;
 END $$;
 
--- Staff only, inside the erasure queue: every object of the person named by an erasure request (in progress or completed)
--- is retired, and their picture head and commands are removed. Safe to run again: a new command finds nothing more to
--- retire, and the answer always lists the objects whose files are still to be deleted.
+-- Staff only, inside the erasure queue: the current picture of the person named by an erasure request (in progress or
+-- completed) and every reservation older than an hour are retired, and their picture head and commands are removed. A
+-- reservation younger than an hour may still be writing its files: it stays reserved (its commit is refused, the erasure
+-- request blocks it) and is listed and purged by a later run once it is an hour old. Safe to run again: the same command
+-- replays, and the answer always lists, at most 100 at a time, the objects whose files are still to be deleted.
 CREATE FUNCTION customer.profile_picture_erase(command uuid,erasure_request uuid) RETURNS jsonb
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE staff uuid;filed customer_private.erasure_request%ROWTYPE;current_state text;retired_count integer;prior customer_private.profile_picture_erasure;
@@ -276,7 +278,8 @@ BEGIN
    RAISE EXCEPTION 'Pictures can be removed only for an erasure request that is in progress or completed' USING ERRCODE='23514';
   END IF;
   UPDATE customer_private.profile_picture_object SET state='retired',retired_at=clock_timestamp()
-  WHERE principal_id=filed.principal_id AND state<>'retired';
+  WHERE principal_id=filed.principal_id
+   AND (state='current' OR (state='reserved' AND created_at<clock_timestamp()-interval '1 hour'));
   GET DIAGNOSTICS retired_count=ROW_COUNT;
   DELETE FROM customer_private.profile_picture_command WHERE actor_id=filed.principal_id;
   DELETE FROM customer_private.profile_picture_head WHERE principal_id=filed.principal_id;
@@ -285,11 +288,14 @@ BEGIN
  END IF;
  RETURN jsonb_build_object('reference',filed.reference,'retired',prior.retired,
   'pending',(SELECT coalesce(jsonb_agg(jsonb_build_object('id',o.id,'storageRef',o.storage_ref) ORDER BY o.created_at),'[]'::jsonb)
-   FROM customer_private.profile_picture_object o WHERE o.principal_id=filed.principal_id));
+   FROM (SELECT * FROM customer_private.profile_picture_object o WHERE o.principal_id=filed.principal_id
+    AND (o.state='retired' OR (o.state='reserved' AND o.created_at<clock_timestamp()-interval '1 hour'))
+    ORDER BY o.created_at LIMIT 100) o));
 END $$;
 
 -- Staff only: after the files of these objects were deleted, their rows go. Only objects of the person named by the
--- erasure request, all of them retired by then.
+-- erasure request that are retired, or reservations older than an hour; a younger reservation is never removed here, since
+-- an upload may still be writing its files.
 CREATE FUNCTION customer.profile_picture_erase_purged(erasure_request uuid,objects uuid[]) RETURNS integer
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
 DECLARE staff uuid;filed customer_private.erasure_request%ROWTYPE;removed integer;
@@ -302,7 +308,8 @@ BEGIN
   RAISE EXCEPTION 'Erasure request not found' USING ERRCODE='23514';
  END IF;
  PERFORM pg_advisory_xact_lock(hashtextextended('customer.profile_picture:'||filed.principal_id::text,0));
- DELETE FROM customer_private.profile_picture_object o WHERE o.principal_id=filed.principal_id AND o.id=ANY(objects) AND o.state='retired';
+ DELETE FROM customer_private.profile_picture_object o WHERE o.principal_id=filed.principal_id AND o.id=ANY(objects)
+  AND (o.state='retired' OR (o.state='reserved' AND o.created_at<clock_timestamp()-interval '1 hour'));
  GET DIAGNOSTICS removed=ROW_COUNT;
  RETURN removed;
 END $$;

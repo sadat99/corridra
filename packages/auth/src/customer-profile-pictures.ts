@@ -1,4 +1,4 @@
-import { createHmac } from 'node:crypto';
+import { createHash, createHmac } from 'node:crypto';
 import { z } from 'zod';
 import { withTenant, type DatabasePool, type RequestContext } from '@corridra/db';
 import {
@@ -67,6 +67,15 @@ export function profilePictureBudgetKey(secret: string, issuer: string, subject:
   return createHmac('sha256', secret)
     .update('account:picture:' + issuer + ':' + subject)
     .digest('hex');
+}
+// One picture erasure command per request and state, so sending the same transition again replays the first run (and
+// retries its files) instead of adding another immutable erasure row.
+export function profilePictureErasureCommandId(requestId: string, toState: string) {
+  const hex = createHash('sha256')
+    .update(`corridra:profile-picture-erasure:${requestId}:${toState}`)
+    .digest('hex');
+  const variant = ((parseInt(hex[16]!, 16) & 0x3) | 0x8).toString(16);
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-${variant}${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
 }
 // A keyed one-way hash of what was asked: for a new picture the SHA-256 of the uploaded bytes, for a removal a fixed word.
 // The same command with another picture is refused; the hash cannot be turned back into the picture.

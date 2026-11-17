@@ -131,6 +131,44 @@ describe('the redraw', () => {
     }
     expect(out.uploadSha256).toMatch(/^[a-f0-9]{64}$/);
   });
+  test('drops an embedded colour profile from both files', async () => {
+    const profiled = await solid(600, 400).jpeg().withIccProfile('p3').toBuffer();
+    const before = await sharp(profiled).metadata();
+    expect(before.icc).toBeDefined();
+    expect(before.icc!.length).toBeGreaterThan(100);
+    const out = await processPicture(profiled);
+    for (const file of [out.large, out.small]) {
+      const meta = await sharp(file.body).metadata();
+      expect(meta.format).toBe('webp');
+      expect(meta.icc).toBeUndefined();
+      expect(file.body.toString('latin1')).not.toContain('ICCP');
+    }
+  });
+  test('a 16-bit PNG of 40 million pixels is redrawn within the time and memory bounds', async () => {
+    // ADR-088 keeps 40 million pixels: measured on 17 November 2026 at about 0.5 s and 89 MiB of extra memory; the bound
+    // stated here is under 10 s and under 256 MiB of extra resident memory.
+    const deep = await sharp({
+      create: { width: 8000, height: 5000, channels: 3, background: { r: 30, g: 80, b: 200 } },
+    })
+      .toColourspace('rgb16')
+      .png({ compressionLevel: 9 })
+      .toBuffer();
+    const meta = await sharp(deep).metadata();
+    expect(meta).toMatchObject({ format: 'png', width: 8000, height: 5000, depth: 'ushort' });
+    expect(deep.length).toBeLessThanOrEqual(pictureLimits.maxBytes);
+    let peak = process.memoryUsage().rss;
+    const start = process.memoryUsage().rss,
+      began = Date.now();
+    const sample = setInterval(() => (peak = Math.max(peak, process.memoryUsage().rss)), 5);
+    try {
+      const out = await processPicture(deep);
+      expect(await sharp(out.large.body).metadata()).toMatchObject({ width: 512, height: 512 });
+    } finally {
+      clearInterval(sample);
+    }
+    expect(Date.now() - began).toBeLessThan(10_000);
+    expect(peak - start).toBeLessThan(256 * 1024 * 1024);
+  });
   test('applies the camera orientation before dropping it', async () => {
     // A tall left half red, right half blue, stored sideways with orientation 6 (rotate 90 degrees clockwise to show).
     const half = await sharp({

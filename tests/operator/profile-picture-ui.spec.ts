@@ -224,6 +224,19 @@ test('frame, upload with progress and a slow notice, then success everywhere on 
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText('This circle is how your picture will look.')).toBeVisible();
   const stage = dialog.getByRole('group', { name: /Picture position/ });
+  // The preview is drawn from the decoded picture onto a canvas: no image element and no address made from the file.
+  await expect(stage.locator('img')).toHaveCount(0);
+  const preview = stage.getByTestId('profile-picture-preview');
+  await expect(preview).toBeVisible();
+  expect(
+    await preview.evaluate((canvas: HTMLCanvasElement) => {
+      const pixel = canvas
+        .getContext('2d')!
+        .getImageData(canvas.width >> 1, canvas.height >> 1, 1, 1);
+      return canvas.width > 0 && canvas.height > 0 && pixel.data[3]! > 0;
+    }),
+  ).toBe(true);
+  expect(await page.locator('[src^="blob:"]').count()).toBe(0);
   await stage.focus();
   await page.keyboard.press('ArrowRight');
   await page.keyboard.press('+');
