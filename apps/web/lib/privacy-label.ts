@@ -65,7 +65,8 @@ const surfaces = {
   // The recipient's reply (apps/web/app/buyer/recipient-response.tsx and reply-journey.tsx).
   recipientReply: [
     {
-      // app.recipient_detail_view(h) returns the recorded reply to whoever holds the private reply link.
+      // Bearer access: app.recipient_detail_view(h) returns the recorded reply to whoever holds the link, with no
+      // sign-in (/api/buyer), and app.communication_allowed ends it once the message expires (c.expires_at>now()).
       reader: 'privacy.reader.anyoneWithReplyLink',
       status: 'confirmed',
       sourceNote:

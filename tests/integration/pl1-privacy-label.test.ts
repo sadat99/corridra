@@ -92,6 +92,8 @@ describe('who can see it: the readers come only from confirmed code facts', () =
         'packages/db/migrations/0025_scoped_product_experience.sql',
         /CREATE FUNCTION app\.recipient_detail_view\(h text\)[\s\S]*?'detailResponse'/,
       ],
+      // The reply link is bearer access only while the message has not expired.
+      ['packages/db/migrations/0009_controlled_communications.sql', /AND c\.expires_at>now\(\)/],
       // The sending workspace's members read replies (classification and purpose), and its owner or admin reviews.
       [
         'packages/db/migrations/0025_scoped_product_experience.sql',

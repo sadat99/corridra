@@ -765,7 +765,7 @@ for (const width of [390, 1440]) {
     const label = page.getByRole('group', { name: 'Who can see it' });
     await expect(label).toBeVisible();
     await expect(label.getByRole('listitem')).toHaveText([
-      'Anyone with your private reply link Can see it',
+      'Anyone with this link until it expires Can see it',
       'The team that sent you this request Can see it',
       'The customer who asked for this introduction Not stated',
     ]);

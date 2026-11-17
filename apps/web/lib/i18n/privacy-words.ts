@@ -13,7 +13,7 @@ export const privacyWords = {
   'privacy.reader.anyoneWithReportLink': 'Anyone with the original report link',
   'privacy.reader.workspace': 'Other people in your workspace',
   'privacy.reader.corridra': 'The Corridra team',
-  'privacy.reader.anyoneWithReplyLink': 'Anyone with your private reply link',
+  'privacy.reader.anyoneWithReplyLink': 'Anyone with this link until it expires',
   'privacy.reader.sendingTeam': 'The team that sent you this request',
   'privacy.reader.requester': 'The customer who asked for this introduction',
 } as const;
