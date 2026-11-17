@@ -8,6 +8,7 @@ import {
   ParticipantRequestError,
 } from '../../components/private-capability';
 import { ParticipantScope } from '../../components/participant-scope';
+import { PrivacyLabel } from '../../components/privacy-label';
 import {
   buildReplyTerms,
   incoterms,
@@ -771,6 +772,7 @@ export function ReplyJourney({
             {words.stepCheck}
           </h2>
           <p>{words.checkIntro}</p>
+          <PrivacyLabel surface="recipientReply" />
           <h3>{words.checkYourAnswer}</h3>
           <p className="reply-typed">{body}</p>
           {meeting && <p>{words.checkMeeting}</p>}

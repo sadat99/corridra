@@ -203,3 +203,77 @@ test('CRUD-4 discarded drafts are hidden by default and one button shows them ag
   await page.getByRole('button', { name: 'Hide Discarded Drafts (1)', exact: true }).click();
   await expect(page.getByText('Synthetic old sourcing idea', { exact: true })).toHaveCount(0);
 });
+
+// PL1 (owner, 17 Nov 2026): "Who can see it" on the decision card share. It only informs: Preview, the
+// acknowledgement, Create Link and Copy Link work exactly as before, with no added step, and axe stays clean. The
+// page length with and without the label is recorded at 390 and 1440.
+for (const width of [390, 1440]) {
+  test(`PL1 who can see it at ${width}: the share keeps its exact steps and the label informs only`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const actions: string[] = [];
+    await page.route('**/api/customer-decision-cards', async (route) => {
+      const body = route.request().postDataJSON();
+      actions.push(body.action);
+      if (body.action === 'state')
+        return route.fulfill({ json: { canShare: true, maxActive: 5, cards: [] } });
+      if (body.action === 'preview')
+        return route.fulfill({
+          json: {
+            fields: {
+              company: 'Synthetic Dhaka Knits',
+              decision: 'GO',
+              rationale: 'Best fit',
+              nextAction: 'Send the order',
+              dueAt: '2026-12-01T00:00:00.000Z',
+              provenance: { sourceKind: 'self_declaration', claimStatus: 'self_declared' },
+            },
+            digest: 'a'.repeat(64),
+            expiresAt: '2026-12-01T10:00:00.000Z',
+          },
+        });
+      return route.fulfill({
+        json: {
+          cardId,
+          state: 'ACTIVE',
+          expiresAt: '2026-12-01T10:00:00.000Z',
+          token: 'b'.repeat(43),
+        },
+      });
+    });
+    await page.goto(`${origin}/?kind=card`);
+    const label = page.getByRole('group', { name: 'Who can see it' });
+    await expect(label).toBeVisible();
+    await expect(label.getByRole('listitem')).toHaveText([
+      'Anyone with the link Can see it',
+      'You, who made the link Can see it',
+      'Other people in your workspace Not stated',
+      'The Corridra team Not stated',
+    ]);
+    await expect(label.locator('button, a, input, select, textarea, [tabindex]')).toHaveCount(0);
+    await page.getByRole('radio').check();
+    await page.getByRole('button', { name: 'Preview', exact: true }).click();
+    await expect(page.getByRole('heading', { name: '2. Check what will be shared' })).toBeVisible();
+    // Create Link waits only for the acknowledgement, exactly as before.
+    const create = page.getByRole('button', { name: 'Create Link', exact: true });
+    await expect(create).toBeDisabled();
+    await page
+      .getByLabel('I understand that anyone with the link can see these six fields.')
+      .check();
+    await expect(create).toBeEnabled();
+    const length = async () =>
+      page.evaluate(() => document.documentElement.scrollHeight / window.innerHeight);
+    const withLabel = await length();
+    await page.addStyleTag({ content: '.privacy-label{display:none}' });
+    const without = await length();
+    await page.addStyleTag({ content: '.privacy-label{display:grid}' });
+    expect(await axe(page)).toEqual([]);
+    await create.click();
+    await expect(page.getByRole('button', { name: 'Copy Link', exact: true })).toBeEnabled();
+    expect(actions).toEqual(['state', 'preview', 'create']);
+    console.log(
+      `PL1 page length (screens) decision card ${width}: ${JSON.stringify({ without, withLabel })}`,
+    );
+  });
+}

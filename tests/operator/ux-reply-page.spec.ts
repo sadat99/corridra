@@ -748,3 +748,67 @@ test('once the team has decided on an answer the page says so and offers no more
   await page.getByRole('button', { name: 'Keep My Current Answer' }).click();
   await expect(page.getByRole('button', { name: 'Change My Answer' })).toHaveCount(0);
 });
+
+// PL1 (owner, 17 Nov 2026): "Who can see it" on the recipient's send. It only informs: the same Send, enabled the
+// same way, one click sends, and no accessibility violation. The page length with and without the label is recorded.
+const pl1Lengths: Record<string, Record<string, number>> = {};
+for (const width of [390, 1440]) {
+  test(`PL1 who can see it at ${width}: beside an unchanged Send on the check step and the older form`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const sent = await open(page);
+    await toMessage(page);
+    await page.getByLabel('Your message to the team').fill('Please send more detail.');
+    await page.getByRole('button', { name: 'Send my message without a quote' }).click();
+    await expect(page.getByRole('heading', { name: 'Check what you typed' })).toBeVisible();
+    const label = page.getByRole('group', { name: 'Who can see it' });
+    await expect(label).toBeVisible();
+    await expect(label.getByRole('listitem')).toHaveText([
+      'Anyone with your private reply link Can see it',
+      'The team that sent you this request Can see it',
+      'The customer who asked for this introduction Not stated',
+    ]);
+    await expect(label.locator('button, a, input, select, textarea, [tabindex]')).toHaveCount(0);
+    const length = async () =>
+      page.evaluate(() => document.documentElement.scrollHeight / window.innerHeight);
+    const withLabel = await length();
+    await page.addStyleTag({ content: '.privacy-label{display:none}' });
+    const without = await length();
+    await page.addStyleTag({ content: '.privacy-label{display:grid}' });
+    pl1Lengths[`reply-check-${width}`] = { without, withLabel };
+    expect((await new AxeBuilder({ page }).analyze()).violations.map((v) => v.id)).toEqual([]);
+    // The send is exactly as before: the acknowledgement, then one Send.
+    await page.getByLabel(/This is my own declaration/).check();
+    await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeEnabled();
+    await page.getByRole('button', { name: 'Send', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Your answer is recorded' })).toBeVisible();
+    expect(detail(sent)).toHaveLength(1);
+
+    // The older form (switch off): the label above the fields, Record Response unchanged.
+    const page2 = await page.context().newPage();
+    await page2.setViewportSize({ width, height: 900 });
+    const sent2 = await open(page2, { hash: token, old: true, view: { decision: 'INTERESTED' } });
+    const old = page2.getByRole('group', { name: 'Who can see it' });
+    await expect(old).toBeVisible();
+    const oldWith = await page2.evaluate(
+      () => document.documentElement.scrollHeight / window.innerHeight,
+    );
+    await page2.addStyleTag({ content: '.privacy-label{display:none}' });
+    const oldWithout = await page2.evaluate(
+      () => document.documentElement.scrollHeight / window.innerHeight,
+    );
+    await page2.addStyleTag({ content: '.privacy-label{display:grid}' });
+    pl1Lengths[`reply-older-${width}`] = { without: oldWithout, withLabel: oldWith };
+    expect((await new AxeBuilder({ page: page2 }).analyze()).violations.map((v) => v.id)).toEqual(
+      [],
+    );
+    await page2.getByLabel('Your response').fill('Please send more detail.');
+    await page2.getByLabel(/This is my declaration for this request/).check();
+    await expect(page2.getByRole('button', { name: 'Record Response' })).toBeEnabled();
+    await page2.getByRole('button', { name: 'Record Response' }).click();
+    await expect(page2.getByRole('heading', { name: 'Your recorded response' })).toBeVisible();
+    expect(detail(sent2)).toHaveLength(1);
+    console.log(`PL1 page length (screens): ${JSON.stringify(pl1Lengths)}`);
+  });
+}

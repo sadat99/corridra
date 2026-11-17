@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { checkedResponse, accessDenied } from '../../components/private-capability';
+import { PrivacyLabel } from '../../components/privacy-label';
 import { currencies } from '@corridra/domain/currencies';
 import { displayMoney, originalAmountToMinor } from '@corridra/domain/locale';
 export function RecipientResponse({
@@ -171,6 +172,7 @@ export function RecipientResponse({
           open.
         </p>
       )}
+      <PrivacyLabel surface="recipientReply" />
       <fieldset disabled={busy || !!pending}>
         <legend className="sr-only">Original declaration</legend>
         <label className="field">
