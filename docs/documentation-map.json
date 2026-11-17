@@ -1636,7 +1636,7 @@
     {
       "path": "docs/adr/0087-share-read-access.md",
       "classification": "Architecture decision",
-      "use": "Accepted 17 Nov 2026 (owner answers relayed by Guardian 14, including 4a and 4c; 4d "24 hours"); who can read each outward share today with file:line proof, the decided rule, label wording and a six-unit implementation plan; nothing built"
+      "use": "Accepted 17 Nov 2026 (owner answers relayed by Guardian 14, including 4a and 4c; 4d 24 hours); who can read each outward share today with file:line proof, the decided rule, label wording and a six-unit implementation plan; nothing built"
     },
     {
       "path": "docs/revamp/README.md",
