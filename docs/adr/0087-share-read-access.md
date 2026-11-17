@@ -210,7 +210,7 @@ TODAY and DECIDED are the same:
 3. **Report exports and snapshots** are readable by staff owner, admin, operator and reviewer, and not by viewers (Q3).
 4. **Customer workspace owners and admins read members' saved reports and decision cards in full** (Q4). This applies to the same workspace only, and is read only. The creator keeps the sole right to remove a save and to withdraw a card. Tenant isolation and row security are unchanged, and nothing crosses workspaces. A member who is removed stops being a source at once. Their items fall under the ADR-033 amendment of 11 November 2026 and are read by nobody on the customer side.
    - **4a, decided ("Everything, including older").** The rule covers every item a current member saved or made in the workspace, including those from before activation.
-   - **4b, member notice, required before go-live.** Every workspace member is told before the switch is turned on. The notice is shown in product on `/account` (saved reports and decision cards) and sent through the existing in-app inbox, `app.inbox_notification` with `recipient_kind='customer'` (`commercial-readiness-migrations/0001_inbox_and_links.sql:9-28`). Its `type` check (`:13`) needs one new value through a forward migration. Whether the inbox also triggers an email depends on `emailDecision` in `apps/web/lib/notify.ts`, which is not proven, so email is not relied on. Plain words: "Owners and admins of this workspace can read the reports you save and the decision cards you make here, and download the Trip Book and Supplier Book of your saved reports. This includes items you saved before today. They cannot remove or withdraw them. If there is anything you do not want them to see, you can remove it before [date and time]."
+   - **4b, member notice, required before go-live.** Every workspace member is told before the switch is turned on. The notice is shown in product on `/account` (saved reports and decision cards) and sent through the existing in-app inbox, `app.inbox_notification` with `recipient_kind='customer'` (`commercial-readiness-migrations/0001_inbox_and_links.sql:9-28`). Its `type` check (`:14`) needs one new value through a forward migration. Whether the inbox also triggers an email depends on `emailDecision` in `apps/web/lib/notify.ts`, which is not proven, so email is not relied on. Plain words: "Owners and admins of this workspace can read the reports you save and the decision cards you make here, and download the Trip Book and Supplier Book of your saved reports. This includes items you saved before today. They cannot remove or withdraw them. If there is anything you do not want them to see, you can remove it before [date and time]."
    - **4c, decided ("Yes").** Owners and admins of the same workspace may download a current member's Trip Book or Supplier Book. Each download writes the existing book record and event, plus an audit event naming the reader.
    - **4d, decided ("24 hours", owner, 17 November 2026).**
      - The clock is per workspace. It starts only when the notice has actually been delivered in product to that workspace's members: the inbox rows are written and the `/account` notice is live. It does not start from a deploy or an install.
@@ -222,7 +222,11 @@ TODAY and DECIDED are the same:
      - The creator keeps the sole right to remove a save and to withdraw a card.
      - Expiry and revocation still end links.
      - A removed member's items are read by nobody on the customer side (ADR-033 amendment of 11 November 2026).
-     - Every owner or admin read or download of a member's item writes one audit event (who, what, when). It reuses the existing writer `customer_private.workspace_access_event` (`customer-migrations/0002_workspace_collaboration.sql:82-95`; real-use replacement `customer-real-use-migrations/0003_real_customer_modules.sql:2620`). That writer adds an `app.domain_event` and an `app.audit_event` row with `initiator_id` (who), the item ids (what) and `occurred_at` (when). No new audit mechanism is proposed.
+     - Every owner or admin read or download of a member's item writes one audit event (who, what, when). It reuses the existing writer `customer_private.workspace_access_event` (`customer-migrations/0002_workspace_collaboration.sql:82-95`; real-use replacement `customer-real-use-migrations/0003_real_customer_modules.sql:2620-2640`). That writer adds:
+       - an `app.domain_event` row: the reader is `initiator_id` in its payload, the item ids are in its payload, and the time is `occurred_at`;
+       - an `app.audit_event` row: its `actor_id` is the service executor, not the reader, and it carries `domain_event_id` and `action`.
+         Audit queries for "who read what, when" must therefore join `app.audit_event` to `app.domain_event`. No new audit mechanism is proposed.
+     - Removed saves and withdrawn cards stay unreadable. The owner and admin reads (workspace saved reports, workspace decision cards and the book path) exclude a save with `removed_at` set and a withdrawn card, as the existing reads do: the saved report list and open filter `removed_at IS NULL` (`customer-commercial-migrations/0001_saved_mission_invitations.sql:94,107`), and the public card read refuses a withdrawn card (`customer-decision-card-migrations/0001_decision_cards.sql:304`). The creator's own card list still shows withdrawn cards as not live (`:185-186`); the owner and admin view shows them not at all. This keeps the notice's promise that a member can remove something before access opens.
 5. **Intake receipts stay as they are** (Q5). The label says "Anyone with your receipt can see the status and the team's replies until it expires." The privacy notice says the same in one sentence. Its wording goes to the owner before it ships.
 6. **Nothing here weakens the authenticator rules.** Every staff read stays behind `app.actor_id`. Fresh checks stay where they are today, and no read gains one.
 
@@ -347,7 +351,7 @@ Tests that fail today:
 
 ### U4. Member notice (required before U5; new optional module and inbox type)
 
-- A forward migration adds one value to the `app.inbox_notification` type check (`commercial-readiness-migrations/0001_inbox_and_links.sql:13`).
+- A forward migration adds one value to the `app.inbox_notification` type check (`commercial-readiness-migrations/0001_inbox_and_links.sql:14`).
 - It adds a function, owner-installed and run once per workspace by the owner's activation step. It writes one customer inbox row per current member, with the decision 4b words and the switch-on time (delivery time plus 24 hours). It records that workspace's notice delivery time, which is the start of the 4d clock.
 - The same words show on `/account` saved reports and decision cards, behind a "notice" switch that is separate from the U5 switch. They stay visible after switch-on until each member dismisses them, and a dismissal is recorded per member.
 - No access changes.
@@ -371,6 +375,7 @@ Access opens per workspace, and only 24 hours after that workspace's recorded no
   - a current owner or admin of that workspace (`customer.collaborative_workspaces()` role IN ('owner','admin'));
   - a source item made in that workspace by a current member (`customer_private.workspace_member_current`, ADR-033 amendment).
   - Creation time is not filtered (4a).
+  - The save is not removed (`removed_at IS NULL`) and the card is not withdrawn.
 - Every read and download calls `customer_private.workspace_access_event` (see Protections kept) with kind `customer.member_item.read` or `customer.member_item.book`, and ids only.
 - The creator-only functions are not replaced: `customer.remove_saved_mission` and `customer.withdraw_decision_card` (`0001_decision_cards.sql:271-294`). The public card read, expiry and revocation are unchanged.
 - The PL1 label rows for S3 and S4 switch to the decided wording only when the switch is on.
@@ -384,7 +389,9 @@ Tests that fail today:
 5. A removed member's items are read by nobody.
 6. Each WO read or download writes exactly one audit event naming the reader and the item ids.
 7. An expired or revoked link still ends the item's report for everyone.
-8. A workspace is refused before its notice delivery time plus 24 hours and with no delivery record, and allowed after that time; another workspace's delivery has no effect.
+8. A save removed by its member, and a card withdrawn by its creator, are unreadable to owners and admins (list, open and book).
+9. The reused writer, in its real-use version (`customer-real-use-migrations/0003_real_customer_modules.sql:2620-2640`), records a `domain_event` and an `audit_event` for a non-synthetic workspace. If it cannot, U5 stops and reports to the owner rather than adding a new mechanism.
+10. A workspace is refused before its notice delivery time plus 24 hours and with no delivery record, and allowed after that time; another workspace's delivery has no effect.
 
 ### U6. Records and words
 
