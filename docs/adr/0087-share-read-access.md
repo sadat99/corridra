@@ -309,6 +309,25 @@ Tests that fail today, in `packages/delivery` service tests and an operator page
 2. The same for `DeliveryService.workspace` `requests[].response`.
 3. The operator delivery and experience pages render no body text for a viewer, and do render it for an operator.
 
+### U1q. Staff viewers see quotation metadata only (application only, no migration, no switch)
+
+Owner, 17 November 2026, answered first hand to the orchestrator and relayed: "Yes, hide from viewers". Decision 2 covers a published quotation's terms too: price, shipping, delivery terms and uncertainties. This changes who may read, not the data. Exact money, the original currency and every revision stay as recorded.
+
+Rule: a role holding `delivery.read_body` (owner, admin, operator, reviewer, as U1 defines it) reads every quotation whole. Any other role (staff viewer) gets the same rows with the term fields null: `terms` (every price, amount, quantity, shipping, delivery and payment term), `uncertainties` and `reason` (the recorded reason, which can restate the terms). Id, target, requirement, currency code, revision, previous revision, source and claim references, state and dates stay, so a viewer still sees that a quotation exists. The comparison for a viewer names each current offer, its currency and evidence state only: status, missing terms, differences, inconsistency, expiry and the derived total are all read from the terms and are null. No new permission; U1's `delivery.read_body` and its words "Not available for your role" are reused (`withholdQuotationTerms` and `withheldComparison` in `packages/domain/src/commercial-missions.ts`).
+
+| Path                                                                                                                                                | Before                                                            | Now for a viewer                                                                             |
+| --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `packages/missions/src/commercial.ts` `CommercialMissionService.workspace` (`missions.read`), `data.quotations` (`SELECT *` on `mission_quotation`) | terms, uncertainties, reason                                      | null                                                                                         |
+| same, `offers` (`q.*`) into `comparison` (`compareOffers`)                                                                                          | terms, uncertainties, status, missing, differences, derived total | null; id, currency, requirement, evidence state kept                                         |
+| `packages/delivery/src/experience.ts` `DeliveryExperienceService.workspace`, `quotations`                                                           | uncertainties                                                     | null                                                                                         |
+| `apps/web/app/operator/commercial-mission.tsx` comparison table and "Original offers and revision history"                                          | rendered the terms                                                | "USD · Not available for your role" and "Terms and uncertainty: Not available for your role" |
+| `apps/web/app/operator/delivery-experience.tsx` "Explicitly approved quotations"                                                                    | rendered the uncertainties                                        | "Not available for your role"                                                                |
+| `apps/web/app/operator/[section]/[missionId]/mission-page.tsx` Quotes                                                                               | price from terms                                                  | currency and "Not available for your role"                                                   |
+
+Checked and unchanged: `app.reply_quotation_prefill` runs under `missions.manage` (no viewer); the quotation and selection forms are manage-only; `packages/missions/src/operations.ts` counts quotes; `mission_rfq.requested_terms` and `mission_selection.rationale`/`next_action` are staff-written, not supplier terms (staff reads of non-share records are not decided here); the experience snapshot, saved reports, decision cards, report links and their exports are link or customer surfaces (S3, S4, U3), not staff viewer reads.
+
+Tests: `tests/integration/commercial-missions.test.ts` ("a staff viewer reads quotation metadata only; owner and admin read the full terms") and `tests/operator/adr087-staff-quotations.spec.ts`; both viewer cases fail on the U1 head.
+
 ### U2. Database: viewers read metadata only (core forward migration, next free number)
 
 Replace the read policies, sample and real, of:
