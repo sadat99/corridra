@@ -128,42 +128,24 @@ test('at normal text the phone keeps its two-column phase step, with the heading
   expect(heading!.x).toBeGreaterThan(number!.x + number!.width - 1);
 });
 
-// At normal text size these parts of the page keep the layout they had before the large-text fixes. The player's
-// request fields stay two columns wide, the caption keeps its controls beside its words, the closing band keeps its
-// words and its button side by side, and the phone keeps its two-column phase step (above).
-test('at normal text the player fields stay two columns wide at every width', async ({ page }) => {
-  for (const width of [320, 390, 768, 1024, 1280, 1440]) {
-    await page.setViewportSize({ width, height: 900 });
-    await page.goto('/');
-    const columns = await page
-      .locator('.ac1-fields')
-      .first()
-      .evaluate((dl) => getComputedStyle(dl).gridTemplateColumns.split(' ').length);
-    expect(columns, `${width}px`).toBe(2);
-  }
-});
-
-test('at normal text the player caption keeps its controls beside its words', async ({ page }) => {
-  for (const width of [320, 390, 768, 1280]) {
-    await page.setViewportSize({ width, height: 900 });
-    await page.goto('/');
-    const words = await page.locator('.ac1-player-caption p').first().boundingBox();
-    const controls = await page.locator('.ac1-player-controls').first().boundingBox();
-    // Same row: the controls start within the height of the words, and to the right of them.
-    expect(controls!.y, `${width}px`).toBeLessThan(words!.y + words!.height);
-    expect(controls!.x, `${width}px`).toBeGreaterThan(words!.x + words!.width - 1);
-  }
-});
-
-test('at normal text the closing band keeps its words and its button side by side', async ({
+// At normal text size the home keeps its layout: the two big doors sit side by side from 768 px and stack below it,
+// and the closing section keeps its button under its words. (The Mission Player, its caption and the closing band of
+// concept G were replaced by Two Routes on 17 November 2026.)
+test('at normal text the two big doors sit side by side from 768 px and stack below it', async ({
   page,
 }) => {
-  for (const width of [1024, 1280, 1440]) {
+  for (const [width, columns] of [
+    [320, 1],
+    [390, 1],
+    [768, 2],
+    [1024, 2],
+    [1440, 2],
+  ] as const) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
-    const text = await page.locator('.guide-band h2').first().boundingBox();
-    const button = await page.locator('.guide-band .primary-link').first().boundingBox();
-    expect(button!.x, `${width}px`).toBeGreaterThan(text!.x + text!.width - 1);
-    expect(button!.y, `${width}px`).toBeLessThan(text!.y + text!.height + 120);
+    const found = await page
+      .locator('.tr-doors-big')
+      .evaluate((grid) => getComputedStyle(grid).gridTemplateColumns.split(' ').length);
+    expect(found, `${width}px`).toBe(columns);
   }
 });

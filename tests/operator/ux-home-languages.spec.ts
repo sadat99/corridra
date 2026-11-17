@@ -113,9 +113,7 @@ for (const code of localeCodes) {
     await expect(main).toHaveAttribute('lang', 'en');
     await expect(main).toHaveAttribute('dir', 'ltr');
     await expect(page.locator('h1')).toHaveText(translate('en', 'home.title'));
-    await expect(page.locator('.ac1-hero .ac1-lead')).toHaveText(
-      translate('en', 'home.lead.watch'),
-    );
+    await expect(page.locator('.tr-lead')).toHaveText(translate('en', 'home.tr.lead'));
   });
 }
 
@@ -129,20 +127,15 @@ for (const code of localeCodes) {
     await expect(main).toHaveAttribute('lang', localeMeta[code].html);
     await expect(main).toHaveAttribute('dir', localeMeta[code].dir);
     await expect(page.locator('h1')).toHaveText(translate(code, 'home.title'));
-    await expect(page.locator('.ac1-hero .ac1-lead')).toHaveText(
-      translate(code, 'home.lead.watch'),
-    );
-    // Concept G: four labels, three trust names and the Not confirmed state, which is in the reader's words.
-    await expect(page.locator('.ac1-truth .guide-tag')).toHaveCount(4);
-    for (const tag of await page
-      .locator(
-        '.ac1-truth li:not(:last-child) .guide-tag, .ac1-buyers .guide-tag, .ac1-compare .guide-tag',
-      )
-      .all())
+    await expect(page.locator('.tr-lead')).toHaveText(translate(code, 'home.tr.lead'));
+    // Two Routes (17 November 2026): the five trust names stay English in every language.
+    await expect(page.locator('.tr-five .guide-tag')).toHaveCount(5);
+    for (const tag of await page.locator('.tr-five .guide-tag').all())
       await expect(tag).toHaveAttribute('lang', 'en');
-    expect(await page.locator('.ac1-truth .guide-tag').allInnerTexts()).toEqual([
+    expect(await page.locator('.tr-five .guide-tag').allInnerTexts()).toEqual([
       ...trustNames,
-      translate(code, 'home.value.notConfirmed'),
+      'Derived',
+      'Outcome observed',
     ]);
     if (code !== 'en')
       await expect(page.locator('h1')).not.toHaveText(translate('en', 'home.title'));
@@ -178,11 +171,11 @@ test('no word on the page is written by the stylesheet, so every word is transla
       .filter((content) => content && !['none', 'normal', '""', "''"].includes(content)),
   );
   expect(generated).toEqual([]);
-  await expect(page.locator('.ac1-route-tag').first()).toContainText(
-    translate('ar', 'home.route.tag'),
+  await expect(page.locator('.tr-door label strong').first()).toHaveText(
+    translate('ar', 'home.tr.door.china.title'),
   );
-  await expect(page.locator('.ac1-other .ac1-route-tag')).toHaveText(
-    translate('ar', 'home.other.title'),
+  await expect(page.locator('.tr-door label strong').last()).toHaveText(
+    translate('ar', 'home.tr.door.other.title'),
   );
 });
 
@@ -268,12 +261,12 @@ test('a reading stops when the page or its language changes, so it is never left
   await expect(page.getByRole('button', { name: 'Stop Reading' })).toHaveCount(0);
 });
 
-test('read right to left, arrows point the other way and the arrow keys swap on the example tabs', async ({
+test('read right to left, arrows point the other way and the arrow keys swap on the people tabs', async ({
   page,
 }) => {
   const transform = () =>
     page
-      .locator('.ac1-route-arrow')
+      .locator('.arrow-icon')
       .first()
       .evaluate((el) => getComputedStyle(el).transform);
   await page.addInitScript((v) => localStorage.setItem('corridra.language', v), 'ar');
@@ -293,7 +286,7 @@ test('read right to left, arrows point the other way and the arrow keys swap on 
   await english.goto(`${origin}/?pages=1`);
   expect(
     await english
-      .locator('.ac1-route-arrow')
+      .locator('.arrow-icon')
       .first()
       .evaluate((el) => getComputedStyle(el).transform),
   ).toBe('none');
@@ -318,7 +311,7 @@ for (const width of [320, 390, 768, 1440]) {
       const offenders = await page.evaluate(() => {
         const width = document.documentElement.clientWidth;
         return Array.from(document.querySelectorAll('main *'))
-          .filter((el) => !el.parentElement?.closest('.ac1-proofs'))
+          .filter((el) => !el.parentElement?.closest('.tr-scroll'))
           .filter((el) => {
             const box = el.getBoundingClientRect();
             return box.width > 0 && (box.right > width + 0.5 || box.left < -0.5);

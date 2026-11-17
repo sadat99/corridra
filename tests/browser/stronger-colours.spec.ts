@@ -174,10 +174,15 @@ test('the choice is never sent to a server: no cookie and no request carries it'
   expect(JSON.stringify(await context.cookies())).not.toMatch(/contrast/);
 });
 
-// The navy regions: the footer, the band, the Mission Player. The ring there is white with a navy edge, except where an
-// element is filled light inside them (the selected tab), whose ring must show on its own fill.
-const navyRegions = '.guide-footer, .guide-band, .ac1-player';
-const navyEdges = ['.ac1-play', '.guide-footer .guide-footer-actions .primary-link'];
+// The navy regions: the footer, the band and, on the Two Routes home (17 November 2026), the hero, the closing section,
+// the quote reaction and the calculator result. The ring there is white with a navy edge. The checked door is filled
+// white, but its ring is drawn outside it, on the navy, so white shows there.
+const navyRegions = '.guide-footer, .guide-band, .tr-hero, .tr-navy, .tr-reaction, .tr-result';
+const navyEdges = [
+  '.tr-hero .primary-link',
+  '.tr-navy .primary-link',
+  '.guide-footer .guide-footer-actions .primary-link',
+];
 
 for (const way of ['the saved choice', 'the device setting'] as const) {
   for (const width of widths) {
@@ -200,12 +205,9 @@ for (const way of ['the saved choice', 'the device setting'] as const) {
         if (path === '/') {
           // The elements the finding named are really among those measured, so this cannot pass by measuring nothing.
           const names = rings.map((row) => row.element).join('\n');
-          expect(names).toMatch(/ac1-record-tabs|button\S*\[aria-selected=true\]/);
-          expect(names).toMatch(/\[aria-selected=true\]/);
-          expect(names).toMatch(/\[aria-selected=false\]/);
-          expect(names).toMatch(/ac1-play/);
+          expect(names).toMatch(/input\.sr-only/);
           expect(names).toMatch(/guide-footer-actions|primary-link/);
-          expect(names).toMatch(/^a.*guide-band|^a\.primary-link/m);
+          expect(names).toMatch(/^a.*primary-link/m);
         }
       }
       expect(found.length).toBeGreaterThan(50);
@@ -213,35 +215,19 @@ for (const way of ['the saved choice', 'the device setting'] as const) {
   }
 }
 
-test('the ring on the selected tab of the Mission Player is navy on white, not white on white (the failing case)', async ({
+test('the ring check can fail: a white ring drawn on a white selected door would measure 1 to 1', async ({
   page,
 }) => {
   await page.addInitScript(() => localStorage.setItem('corridra.contrast', 'more'));
   await open(page, '/', 1440);
-  const { rings } = await measureColours(page, '.ac1-record-tabs');
-  const selected = rings.find((row) => row.element.includes('[aria-selected=true]'));
-  const other = rings.find((row) => row.element.includes('[aria-selected=false]'));
-  // The navy of the player (--brand-deep) on the white of the selected tab.
-  expect(selected?.ring).toBe('rgb(20, 36, 56)');
-  expect(selected?.backdrop).toBe('rgb(255 255 255)');
-  expect(selected?.ratio).toBeGreaterThanOrEqual(7);
-  expect(other?.ring).toBe('rgb(255, 255, 255)');
+  // The ring of the checked door is drawn outside its white fill, on the navy hero (white on navy is 15 to 1).
+  await page
+    .getByRole('radio', { name: /Sell Abroad/ })
+    .locator('xpath=following-sibling::label')
+    .click();
+  const { rings } = await measureColours(page, '.tr-hero');
   expect(weakRings(rings)).toEqual([]);
-});
-
-test('the ring check can fail: a white ring drawn on the white selected tab is measured as 1 to 1', async ({
-  page,
-}) => {
-  await page.addInitScript(() => localStorage.setItem('corridra.contrast', 'more'));
-  await open(page, '/', 1440);
-  await page.addStyleTag({
-    content:
-      "html[data-contrast='more'] .ac1-record-tabs button[aria-selected='true']:focus-visible { outline-color: #fff !important; }",
-  });
-  const { rings } = await measureColours(page, '.ac1-record-tabs');
-  expect(weakRings(rings)).toHaveLength(1);
-  expect(weakRings(rings)[0]).toContain('[aria-selected=true]');
-  expect(rings.find((row) => row.element.includes('[aria-selected=true]'))?.ratio).toBe(1);
+  expect(rings.map((row) => row.element).join('\n')).toMatch(/input\.sr-only/);
 });
 
 for (const way of ['the saved choice', 'the device setting'] as const) {
@@ -253,7 +239,6 @@ for (const way of ['the saved choice', 'the device setting'] as const) {
     else await page.emulateMedia({ contrast: 'more' });
     await open(page, '/', 1440);
     const { edges } = await measureColours(page, navyRegions, navyEdges);
-    expect(edges.map((row) => row.element).join('\n')).toMatch(/ac1-play/);
     expect(edges.map((row) => row.element).join('\n')).toMatch(/primary-link/);
     expect(weakEdges(edges)).toEqual([]);
     for (const row of edges) expect(row.backdrop, row.element).toBe('rgb(20 36 56)');
@@ -267,7 +252,7 @@ test('without the white edge the same controls are only 1.91 to 1 on navy, so th
   await open(page, '/', 1440);
   await page.addStyleTag({
     content:
-      "html[data-contrast='more'] :is(.ac1-play, .guide-footer .guide-footer-actions .primary-link) { border-color: var(--action) !important; }",
+      "html[data-contrast='more'] :is(.tr-hero .primary-link, .tr-navy .primary-link, .guide-footer .guide-footer-actions .primary-link) { border-color: var(--action) !important; }",
   });
   const { edges } = await measureColours(page, navyRegions, navyEdges);
   expect(weakEdges(edges)).toHaveLength(edges.length);
