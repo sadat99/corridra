@@ -264,9 +264,7 @@ function ownerAs(owner: Seen, place: Place, who: Exclude<Role, 'removed'>, words
   const ids = new Set(responses.map((r: { id: string }) => r.id));
   return {
     responses: words ? responses : responses.map((r: object) => ({ ...r, body: null })),
-    requests: words
-      ? owner.requests
-      : owner.requests.map((r: Record<string, unknown>) => ({ ...r, response: null })),
+    requests: words ? owner.requests : owner.requests.map((r) => ({ ...r, response: null })),
     reviews: owner.reviews
       .filter((r) => ids.has(r.responseId))
       .map((r) => (words ? r : { ...r, reasonCode: null, askTerms: null, note: null })),

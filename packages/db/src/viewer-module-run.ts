@@ -11,9 +11,9 @@ export async function migrateViewerModule(pool: DatabasePool, module: ViewerModu
     .filter((name) => name.endsWith('.sql'))
     .sort()) {
     const sql = await readFile(new URL(name, module.directory), 'utf8');
-    const requires = [...sql.matchAll(/^-- requires-table: ([a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*)$/gm)].map(
-      (m) => m[1]!,
-    );
+    const requires = [
+      ...sql.matchAll(/^-- requires-table: ([a-z_][a-z0-9_]*\.[a-z_][a-z0-9_]*)$/gm),
+    ].map((m) => m[1]!);
     sources.set(name, { sql, hash: createHash('sha256').update(sql).digest('hex'), requires });
   }
   const db = await pool.connect();

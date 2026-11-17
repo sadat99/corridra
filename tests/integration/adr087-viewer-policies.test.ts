@@ -719,18 +719,18 @@ describe('the module runner', () => {
       '-- requires-table: app.adr087_order_probe\nSELECT 1;\n',
     );
     await write(join(dir, '0002_later.sql'), 'SELECT 2;\n');
-    const module = {
+    const orderModule = {
       directory: pathToFileURL(dir + '/'),
       schema: 'adr087_order_test_migrations',
       label: 'Order test',
     };
-    expect(await migrateViewerModule(s.f.owner, module)).toEqual({
+    expect(await migrateViewerModule(s.f.owner, orderModule)).toEqual({
       applied: ['0002_later.sql'],
       waiting: ['0001_waits.sql'],
     });
     await s.f.owner.query('CREATE TABLE app.adr087_order_probe(id int)');
     try {
-      await expect(migrateViewerModule(s.f.owner, module)).rejects.toThrow(
+      await expect(migrateViewerModule(s.f.owner, orderModule)).rejects.toThrow(
         /0001_waits\.sql waited for app\.adr087_order_probe, but the later file 0002_later\.sql is already recorded/,
       );
     } finally {
