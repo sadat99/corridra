@@ -53,9 +53,13 @@
     min-height: var(--bottom-action-h);
   }
   /* The page keeps room for the bar under the footer too, so it never covers the last field, a footer link or the
-     end of the page. */
+     end of the page. The room is fixed, so the page does not change height when the script reports the bar's real height;
+     only a bar taller than that room (large text) makes it grow. */
   body:has(.plan-action-bar:not([data-flow])) {
-    padding-bottom: calc(var(--plan-action-bar-h, var(--bottom-action-h)) + var(--space-24));
+    padding-bottom: max(
+      calc(var(--bottom-action-h) + var(--space-24) + var(--space-8)),
+      calc(var(--plan-action-bar-h, 0px) + var(--space-8))
+    );
   }
   /* A field that takes focus, or is scrolled to, stops above the bar instead of under it (focus is never covered). */
   html:has(.plan-action-bar:not([data-flow])) {

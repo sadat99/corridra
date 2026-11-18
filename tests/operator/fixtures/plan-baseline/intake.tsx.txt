@@ -1038,7 +1038,7 @@ function IntakeForm({
   const bengaliGuidance = useMemo(
     () => (
       <section lang="bn" dir="ltr" className="language-sheet-guide" data-plan-guidance="">
-        <h3>বাংলায় সংক্ষিপ্ত নির্দেশনা</h3>
+        <h3>বাংলায় সংক্ষিপ্ত নির্দেশনা</h3>
         {bengaliBody}
       </section>
     ),
@@ -1094,7 +1094,7 @@ function IntakeForm({
         ) : (
           // Only English is offered, so there is no language button to hold the Bangla guidance: it stays here.
           <details lang="bn" className="guide-bn" data-plan-guidance="" dir="ltr">
-            <summary>বাংলায় সংক্ষিপ্ত নির্দেশনা</summary>
+            <summary>বাংলায় সংক্ষিপ্ত নির্দেশনা</summary>
             {bengaliBody}
           </details>
         )}
