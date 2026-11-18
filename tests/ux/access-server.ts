@@ -1,4 +1,5 @@
 import { spawn, type ChildProcess } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 
 // A production server on its own port, started from the existing build with customer sign-in configured and the three
 // customer switches on. The shared UX test server has no sign-in, so the screens that show only with it (the customer
@@ -15,7 +16,7 @@ export function configuredServer(port: number) {
           ...process.env,
           CORRIDRA_NEON_AUTH_ENABLED: 'true',
           NEON_AUTH_BASE_URL: 'https://ep-test.neonauth.eu-central-1.aws.neon.tech/neondb/auth',
-          NEON_AUTH_COOKIE_SECRET: '0123456789abcdef0123456789abcdef0123',
+          NEON_AUTH_COOKIE_SECRET: randomBytes(32).toString('hex'),
           APP_ORIGIN: base,
           DATA_ENVIRONMENT: 'synthetic',
           CORRIDRA_CUSTOMER_WORKSPACES_ENABLED: 'true',
