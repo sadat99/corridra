@@ -1,0 +1,63 @@
+/* /plan in UI/UX.v4 (W1-C): progress as words, the job disclosure and the phone bottom action area.
+   Tokens only. Every motion is under 300 ms and is switched off under reduced motion. */
+.plan-progress-line {
+  margin: 0;
+  color: var(--text-1);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-title);
+}
+.plan-job-fold {
+  display: grid;
+  gap: var(--space-3);
+}
+.plan-job-toggle {
+  justify-self: start;
+  min-height: 2.75rem;
+}
+.plan-action-bar {
+  display: grid;
+  gap: var(--space-2);
+}
+.plan-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.plan-action-row .primary-link {
+  min-height: 3rem;
+  transition: background-color var(--dur-step) var(--ease-product);
+}
+.plan-action-note {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+@media (max-width: 700px) {
+  .plan-action-bar {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 20;
+    padding: var(--space-3) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--paper) 94%, transparent);
+    border-top: 1px solid var(--border-strong);
+    backdrop-filter: blur(8px);
+  }
+  .plan-action-row {
+    flex-wrap: nowrap;
+  }
+  .plan-action-row .primary-link {
+    flex: 1 1 auto;
+    min-height: var(--bottom-action-h);
+  }
+  /* The page keeps room for the bar, so it never covers the last field or the footer. */
+  .ux-intake-page:has(.plan-action-bar) {
+    padding-bottom: calc(var(--bottom-action-h) + var(--space-12));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .plan-action-row .primary-link {
+    transition: none;
+  }
+}
