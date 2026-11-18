@@ -304,20 +304,35 @@ test('Listen starts and stops the reading, as the corner Listen did', async ({ p
   );
 });
 
-test('the wide bar keeps the links and ends with Listen and the language code', async ({
+test('the wide bar reads Listen, English, Sign In, Start a Request, with the language by its own name', async ({
   page,
 }) => {
   await open(page, 1440);
   const bar = header(page);
   await expect(bar.getByRole('button', { name: 'What We Do' })).toBeVisible();
   await expect(listen(page)).toBeVisible();
-  await expect(language(page)).toContainText('EN');
+  await expect(language(page)).toHaveText('English');
   await expect(menu(page)).toBeHidden();
   await expect(bar.getByRole('button', { name: 'Help', exact: true })).toBeHidden();
-  const start = (await bar.getByRole('link', { name: /^Start a Request/ }).boundingBox())!;
-  const tool = (await language(page).boundingBox())!;
-  expect(tool.x).toBeGreaterThan(start.x);
+  const xs = [
+    (await listen(page).boundingBox())!.x,
+    (await language(page).boundingBox())!.x,
+    (await bar.getByRole('link', { name: 'Sign In', exact: true }).boundingBox())!.x,
+    (await bar.getByRole('link', { name: /^Start a Request/ }).boundingBox())!.x,
+  ];
+  expect(xs).toEqual([...xs].sort((a, b) => a - b));
   expect(await small(page)).toEqual([]);
   const results = await new AxeBuilder({ page }).include('header').analyze();
   expect(results.violations.map((v) => v.id)).toEqual([]);
+  // A language chosen on the wide bar shows its own script, and the phone bar its code.
+  await language(page).click();
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: /BN\s*বাংলা/ })
+    .click();
+  await expect(language(page)).toHaveText('বাংলা');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(language(page)).toHaveText('BN');
+  const bnListen = header(page).getByRole('button', { name: 'এই পাতা শুনুন' });
+  await expect(bnListen).toContainText('শুনুন');
 });

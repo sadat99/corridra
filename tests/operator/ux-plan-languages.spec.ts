@@ -1145,7 +1145,8 @@ test.describe('with the form released', () => {
       else await openTranslated(page, code, query);
       return page;
     };
-    const listen = (page: Page) => page.getByRole('button', { name: 'Listen to This Page' });
+    // Listen is in the top bar (UI/UX.v4 screen 10); its name follows the chosen language, so it is found by its place.
+    const listen = (page: Page) => page.locator('header .top-bar-tool[aria-pressed]:visible');
     const arabic = await tab(['en-US'], 'ar', 'form=true&dock=1');
     await expect(listen(arabic)).toHaveCount(0);
     const englishForm = await tab(['en-US'], 'ar', 'dock=1');

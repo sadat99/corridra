@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
 import { usePathname } from 'next/navigation';
 import { CorridraIcon } from './corridra-icon';
+import { useLanguage } from './language-provider';
 import { isBarePublicPage } from '../lib/ux/bare-pages';
 
 /** What Listen reads: the main region and its language. A change in either means support must be asked again. */
@@ -154,6 +155,7 @@ export function useListenControl() {
 
 function CornerDockView({ variant }: { variant: 'corner' | 'header' | 'rail' | 'drawer' }) {
   const { supported, speaking, toggle: toggleListen } = useListenControl();
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const helpButton = useRef<HTMLButtonElement>(null);
   const sheet = useRef<HTMLDivElement>(null);
@@ -237,15 +239,16 @@ function CornerDockView({ variant }: { variant: 'corner' | 'header' | 'rail' | '
       <button
         ref={helpButton}
         type="button"
-        className="dock-button"
-        data-tip={rail || drawer ? undefined : 'Help'}
-        aria-label="Help"
+        className={variant === 'corner' ? 'dock-button dock-help' : 'dock-button'}
+        data-tip={variant === 'header' ? t('header.help') : undefined}
+        aria-label={t('header.help')}
         aria-expanded={open}
         aria-controls={open ? sheetId : undefined}
         onClick={() => setOpen(!open)}
       >
         <CorridraIcon name="help" />
-        {rail || drawer ? <span aria-hidden="true">Help</span> : null}
+        {/* UI/UX.v4 principle 5: no icon stands alone. Only the phone header icon (contributor) keeps its tooltip. */}
+        {variant === 'header' ? null : <span aria-hidden="true">{t('header.help')}</span>}
       </button>
       {supported && !header && (
         <button

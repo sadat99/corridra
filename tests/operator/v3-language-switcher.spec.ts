@@ -130,7 +130,8 @@ test('choosing a language changes the words, the page language and survives a re
 }) => {
   await page.goto(`${origin}/?offered=${all}&draft=bn,zh,es,ar`);
   await expect(chip(page)).toHaveAccessibleName('EN, Language: English');
-  await expect(chip(page)).toContainText('EN');
+  // The wide bar shows the language's own name; phones show the code.
+  await expect(chip(page)).toContainText('English');
   await pick(page, 'বাংলা');
   await expect(headerLink(page, 'কীভাবে কাজ করে')).toBeVisible();
   await expect(footerLink(page, 'কীভাবে কাজ করে')).toBeVisible();

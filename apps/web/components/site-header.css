@@ -35,7 +35,8 @@
 .public-bar-tools {
   flex: none;
 }
-.public-drawer-tools {
+.public-drawer-tools,
+.public-wide-tools {
   display: none;
 }
 /* Under 360 px Listen and the language move into the drawer. */
@@ -372,9 +373,14 @@
   .public-header .public-drawer-tools {
     display: none;
   }
-  /* The top bar tools close the wide bar, after Sign In and Start a Request. */
+  /* On the wide bar the tools sit in the actions row, before Sign In: Listen, English, Sign In, Start a Request. */
+  .public-header .public-bar-tools {
+    display: none;
+  }
+  .public-header .public-wide-tools {
+    display: block;
+  }
   .public-header .public-nav {
-    order: 1;
     position: relative;
     display: flex;
     flex: 1 1 auto;
@@ -425,9 +431,6 @@
   }
   .public-nav-account:hover {
     background: var(--surface-2);
-  }
-  .public-header .public-bar-tools {
-    order: 2;
   }
   .public-jobs {
     position: absolute;

@@ -127,8 +127,11 @@ function Sheet({ onClose, extra }: { onClose: () => void; extra?: ReactNode }) {
 export function LanguageButton({
   className = 'top-bar-tool',
   extra,
+  showName = false,
 }: {
   className?: string;
+  /** Show the language's own name (English, বাংলা) beside the icon instead of its code; the wide bar does. */
+  showName?: boolean;
   /** Optional content shown under the language rows in the sheet. */
   extra?: ReactNode;
 }) {
@@ -152,9 +155,15 @@ export function LanguageButton({
         onClick={() => setOpen(true)}
       >
         <CorridraIcon name="globe" size={20} />
-        <span aria-hidden="true" dir="ltr">
-          {localeCode(locale)}
-        </span>
+        {showName ? (
+          <span aria-hidden="true" lang={localeMeta[locale].html} dir={localeMeta[locale].dir}>
+            {localeMeta[locale].name}
+          </span>
+        ) : (
+          <span aria-hidden="true" dir="ltr">
+            {localeCode(locale)}
+          </span>
+        )}
       </button>
       {open && createPortal(<Sheet onClose={close} extra={extra} />, document.body)}
     </>

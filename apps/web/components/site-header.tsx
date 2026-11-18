@@ -350,6 +350,10 @@ export function SiteHeader({
           </Link>
         ))}
         <div className="public-nav-actions">
+          {/* Wide bar order (board 10): Listen, the language by name, Sign In, Start a Request. */}
+          <div className="public-wide-tools">
+            <TopBarTools variant="wide" />
+          </div>
           {who ? (
             <>
               <Link
