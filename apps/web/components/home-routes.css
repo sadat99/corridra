@@ -906,7 +906,7 @@
 .tr-alt .tr-track .is-optional .tr-track-dot {
   background: var(--surface-2);
 }
-@container (min-width: 66rem) {
+@container (min-width: 74rem) {
   .tr-track {
     display: flex;
     align-items: flex-start;
@@ -2129,7 +2129,7 @@
 
 /* On one line the step names break between words only, over the page's wrap-anywhere rule for the largest text
    (the rail is one line only when it has room, so a name never needs to split). */
-@container (min-width: 66rem) {
+@container (min-width: 74rem) {
   .ux-guide-home.tr-home .tr-track li,
   .tr-home .tr-track li {
     overflow-wrap: normal;
