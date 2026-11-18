@@ -45,6 +45,9 @@ test.beforeAll(async () => {
     write: false,
     outdir: 'out',
     loader: { '.css': 'css' },
+    // Files under public/ are served by Next at the site root (the flag pictures and the region mark, LP3); the
+    // fixture leaves those addresses as they are instead of bundling them.
+    external: ['/flags/*'],
     format: 'esm',
     platform: 'browser',
     jsx: 'automatic',
