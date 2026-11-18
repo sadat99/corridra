@@ -57,13 +57,22 @@ const planLimits: Record<Viewport['name'], Limits> = {
 };
 /**
  * Routes (`/corridors`) shows every section open on one page: the six destination rows, the Another Route block, the
- * route picker with its map and the sample mission (owner, 18 November 2026, no tabs; Guardian G29 final decision:
- * "if over, raise the limit for /corridors only"). Measured on a production build at 4.71 phone and 3.06 desktop
+ * route picker with its map and the sample mission (owner choice 2a, 18 November 2026: "every route section open on one page, nothing
+ * removed"; Guardian G29 approved these limits). Measured on a production build at 4.71 phone and 3.06 desktop
  * screens, so the limits are the measure rounded up to the next 0.05. Every other public page keeps 3.0 and 2.0.
  */
 export const routesLimits: Record<Viewport['name'], Limits> = {
   phone: { target: 4.75, hard: 4.75 },
   desktop: { target: 3.1, hard: 3.1 },
+};
+/**
+ * The route pages (`/corridors/[corridor]`) show their three sections open (owner choice 2a, 18 November 2026: "every
+ * route section open on one page, nothing removed"; Guardian G29 ruling). Measured at 3.22 to 3.25 phone screens
+ * (over the public 3.0) and 1.88 desktop screens (inside 2.0), so only the phone limit moves, to 3.3.
+ */
+export const routePageLimits: Record<Viewport['name'], Limits> = {
+  phone: { target: 3.3, hard: 3.3 },
+  desktop: { target: 2.0, hard: 2.0 },
 };
 /** Sign-in and account recovery pages show the public footer, so they follow the public page limits. `/plan` has its own limits. */
 const publicIdentityPages = [
@@ -135,6 +144,7 @@ export function limitsFor(
   if (entry.audience === 'public') {
     if (entry.route === '/') return homeLimits[viewport.name];
     if (entry.route === '/corridors') return routesLimits[viewport.name];
+    if (entry.route === '/corridors/[corridor]') return routePageLimits[viewport.name];
     return publicPageLimits[viewport.name];
   }
   if (entry.route === '/plan') return planLimits[viewport.name];
