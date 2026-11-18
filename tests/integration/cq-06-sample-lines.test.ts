@@ -95,7 +95,6 @@ const renderIntake = async (realMode: boolean) => {
   );
 };
 const intakeSampleLines = [
-  'Test mode',
   'Test intake is open. Real customer mission admission is unavailable.',
   'Use invented details and an email ending in',
   '@example.invalid',
@@ -116,7 +115,9 @@ describe('CQ-06: the request form notice says sample mode only where real use is
     const html = await renderIntake(true);
     for (const line of intakeSampleLines) expect(html, line).not.toContain(line);
     expect(html).not.toContain('data-madeup-panel');
-    expect(html).toContain('intake-notice');
+    // Owner 2a, 18 Nov 2026: the callout box is gone; the real form carries its privacy line under the choices.
+    expect(html).not.toContain('intake-notice');
+    expect(html).toContain('plan-privacy-line');
   });
   it('CQ-06: the /plan page chooses the form mode from the shared real-use helper', async () => {
     const { default: Page } = await load('app/plan/page.tsx');

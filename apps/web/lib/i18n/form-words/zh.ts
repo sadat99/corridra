@@ -9,9 +9,6 @@ export const words: FormCatalog = {
   'form.head.realLead': '请从您的目标开始。',
   'form.head.sampleLead': '简短的需求就够了。无需账户。',
 
-  'form.notice.realPill': '您的需求',
-  'form.notice.realLead': '请从您需要的工作开始。',
-  'form.notice.samplePill': '示例模式',
   'form.notice.sampleLead': '示例需求已开放。不接受真实的客户任务。',
   'form.notice.sampleUse': '请使用虚构的信息和以 {domain} 结尾的邮箱地址。',
   'form.notice.sampleReceipt': '请保留回执以查看回复。',
@@ -28,7 +25,6 @@ export const words: FormCatalog = {
   'form.pending.codeSignIn': '用验证码登录并查看需求',
   'form.pending.return': '返回表单',
 
-  'form.step.counter': '第 {step} 步，共 {total} 步',
   'form.step.goal': '目标',
   'form.step.where': '地点',
   'form.step.details': '详情',
@@ -269,17 +265,4 @@ export const words: FormCatalog = {
   'form.message.offline': '没有网络连接。您填写的内容仍然保留。联网后请重试。',
   'form.message.offlineFirefox': '没有网络连接。您填写的内容仍然保留。联网后请重试。',
   'form.message.offlineSafari': '没有网络连接。您填写的内容仍然保留。联网后请重试。',
-  // UI/UX.v4 /plan (W1-C, owner 18 Nov 2026). English until a native review; shown marked as English in translated forms.
-  'form.plan.pick': 'Pick one. You can change it later.',
-  'form.plan.stepLine': 'Step {step} of {total}: {name}',
-  'form.plan.nextLine': 'Next: {name}',
-  'form.plan.exactJob': 'Know the exact job? Choose it',
-  'form.plan.pickToContinue': 'Pick One to Continue',
-  'form.plan.savedTab': 'Saved in this tab for up to 24 hours.',
-  'form.plan.privacy':
-    'Nothing is sent until you check it. You make an account at the last step, so your request stays private.',
-  'form.plan.privacySignedIn':
-    'Nothing is sent until you check it. You are signed in, so your request stays private in your account.',
-  'form.plan.privacySample': 'Nothing is sent until you check it.',
-  'form.plan.privacyLink': 'Read the privacy and request notice',
 };

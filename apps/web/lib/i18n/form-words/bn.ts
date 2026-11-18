@@ -10,9 +10,6 @@ export const words: FormCatalog = {
   'form.head.realLead': 'আপনার লক্ষ্য দিয়ে শুরু করুন।',
   'form.head.sampleLead': 'ছোট একটি অনুরোধই যথেষ্ট। কোনো অ্যাকাউন্ট লাগবে না।',
 
-  'form.notice.realPill': 'আপনার অনুরোধ',
-  'form.notice.realLead': 'যে কাজটি দরকার, তা দিয়ে শুরু করুন।',
-  'form.notice.samplePill': 'নমুনা মোড',
   'form.notice.sampleLead': 'নমুনা অনুরোধ চালু আছে। প্রকৃত গ্রাহকের মিশন গ্রহণ করা হচ্ছে না।',
   'form.notice.sampleUse':
     'কাল্পনিক তথ্য এবং {domain} দিয়ে শেষ হওয়া একটি ইমেইল ঠিকানা ব্যবহার করুন।',
@@ -31,7 +28,6 @@ export const words: FormCatalog = {
   'form.pending.codeSignIn': 'কোড দিয়ে সাইন ইন করে অনুরোধ দেখুন',
   'form.pending.return': 'ফর্মে ফিরে যান',
 
-  'form.step.counter': 'ধাপ {step} / {total}',
   'form.step.goal': 'লক্ষ্য',
   'form.step.where': 'কোথায়',
   'form.step.details': 'বিবরণ',
@@ -301,17 +297,4 @@ export const words: FormCatalog = {
     'সংযোগ নেই। আপনার দেওয়া তথ্য এখানেই আছে। সংযোগ পেলে আবার চেষ্টা করুন।',
   'form.message.offlineSafari':
     'সংযোগ নেই। আপনার দেওয়া তথ্য এখানেই আছে। সংযোগ পেলে আবার চেষ্টা করুন।',
-  // UI/UX.v4 /plan (W1-C, owner 18 Nov 2026). English until a native review; shown marked as English in translated forms.
-  'form.plan.pick': 'Pick one. You can change it later.',
-  'form.plan.stepLine': 'Step {step} of {total}: {name}',
-  'form.plan.nextLine': 'Next: {name}',
-  'form.plan.exactJob': 'Know the exact job? Choose it',
-  'form.plan.pickToContinue': 'Pick One to Continue',
-  'form.plan.savedTab': 'Saved in this tab for up to 24 hours.',
-  'form.plan.privacy':
-    'Nothing is sent until you check it. You make an account at the last step, so your request stays private.',
-  'form.plan.privacySignedIn':
-    'Nothing is sent until you check it. You are signed in, so your request stays private in your account.',
-  'form.plan.privacySample': 'Nothing is sent until you check it.',
-  'form.plan.privacyLink': 'Read the privacy and request notice',
 };

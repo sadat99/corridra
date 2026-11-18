@@ -9,9 +9,6 @@ export const words: FormCatalog = {
   'form.head.realLead': 'Commencez par votre objectif.',
   'form.head.sampleLead': 'Une demande courte suffit. Aucun compte n’est nécessaire.',
 
-  'form.notice.realPill': 'Votre demande',
-  'form.notice.realLead': 'Commencez par le travail dont vous avez besoin.',
-  'form.notice.samplePill': 'Mode exemple',
   'form.notice.sampleLead':
     'Les demandes d’exemple sont ouvertes. Les vraies missions clients ne sont pas acceptées.',
   'form.notice.sampleUse':
@@ -31,7 +28,6 @@ export const words: FormCatalog = {
   'form.pending.codeSignIn': 'Se connecter avec un code pour voir votre demande',
   'form.pending.return': 'Revenir au formulaire',
 
-  'form.step.counter': 'Étape {step} sur {total}',
   'form.step.goal': 'Objectif',
   'form.step.where': 'Lieu',
   'form.step.details': 'Détails',
@@ -315,17 +311,4 @@ export const words: FormCatalog = {
     'Pas de connexion. Vos saisies sont conservées. Réessayez une fois connecté.',
   'form.message.offlineSafari':
     'Pas de connexion. Vos saisies sont conservées. Réessayez une fois connecté.',
-  // UI/UX.v4 /plan (W1-C, owner 18 Nov 2026). English until a native review; shown marked as English in translated forms.
-  'form.plan.pick': 'Pick one. You can change it later.',
-  'form.plan.stepLine': 'Step {step} of {total}: {name}',
-  'form.plan.nextLine': 'Next: {name}',
-  'form.plan.exactJob': 'Know the exact job? Choose it',
-  'form.plan.pickToContinue': 'Pick One to Continue',
-  'form.plan.savedTab': 'Saved in this tab for up to 24 hours.',
-  'form.plan.privacy':
-    'Nothing is sent until you check it. You make an account at the last step, so your request stays private.',
-  'form.plan.privacySignedIn':
-    'Nothing is sent until you check it. You are signed in, so your request stays private in your account.',
-  'form.plan.privacySample': 'Nothing is sent until you check it.',
-  'form.plan.privacyLink': 'Read the privacy and request notice',
 };

@@ -17,9 +17,6 @@ export const formEn = {
   'form.head.realLead': 'Start with your objective.',
   'form.head.sampleLead': 'A short request is enough. No account needed.',
 
-  'form.notice.realPill': 'YOUR REQUEST',
-  'form.notice.realLead': 'Start with the work you need.',
-  'form.notice.samplePill': 'Test mode',
   'form.notice.sampleLead': 'Test intake is open. Real customer mission admission is unavailable.',
   'form.notice.sampleUse': 'Use invented details and an email ending in {domain}.',
   'form.notice.sampleReceipt': 'Keep your receipt to read replies.',
@@ -37,7 +34,6 @@ export const formEn = {
   'form.pending.codeSignIn': 'Sign in with a code to see your request',
   'form.pending.return': 'Return to the form',
 
-  'form.step.counter': 'STEP {step} OF {total}',
   'form.step.goal': 'Goal',
   'form.step.where': 'Where',
   'form.step.details': 'Details',
@@ -307,19 +303,6 @@ export const formEn = {
   'form.message.offline': 'Failed to fetch',
   'form.message.offlineFirefox': 'NetworkError when attempting to fetch resource.',
   'form.message.offlineSafari': 'Load failed',
-  // UI/UX.v4 /plan (W1-C, owner 18 Nov 2026). English until a native review; shown marked as English in translated forms.
-  'form.plan.pick': 'Pick one. You can change it later.',
-  'form.plan.stepLine': 'Step {step} of {total}: {name}',
-  'form.plan.nextLine': 'Next: {name}',
-  'form.plan.exactJob': 'Know the exact job? Choose it',
-  'form.plan.pickToContinue': 'Pick One to Continue',
-  'form.plan.savedTab': 'Saved in this tab for up to 24 hours.',
-  'form.plan.privacy':
-    'Nothing is sent until you check it. You make an account at the last step, so your request stays private.',
-  'form.plan.privacySignedIn':
-    'Nothing is sent until you check it. You are signed in, so your request stays private in your account.',
-  'form.plan.privacySample': 'Nothing is sent until you check it.',
-  'form.plan.privacyLink': 'Read the privacy and request notice',
 } as const;
 
 export type FormKey = keyof typeof formEn;

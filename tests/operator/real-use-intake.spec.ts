@@ -365,8 +365,14 @@ test.afterAll(async () => {
     else process.env[key] = value;
   Reflect.deleteProperty(globalThis, '__realUseFixtureServices');
 });
+/** The exact job sits behind "Know the exact job? Choose it" (UI/UX.v4); open it only if it is closed. */
+async function openExactJob(page: Page) {
+  const toggle = page.getByRole('button', { name: 'Know the exact job? Choose it' });
+  if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+}
 async function fillRequest(page: Page, email: string) {
   await page.goto(origin + '/plan');
+  await openExactJob(page);
   await page
     .getByRole('combobox', { name: 'Commercial job', exact: true })
     .selectOption('sourcing');
@@ -490,12 +496,13 @@ async function chooseLanguage(page: Page, code: Locale) {
  * password to set. */
 async function fillRequestInAnyLanguage(page: Page, email: string, password?: string) {
   const form = page.locator('form.intake-form');
-  const next = form.locator('.guide-actions .primary-link');
+  const next = form.locator('.plan-action-bar .primary-link');
   const step = async () => {
     const before = await form.locator('h2').textContent();
     await next.click();
     await expect(form.locator('h2')).not.toHaveText(before ?? '');
   };
+  await openExactJob(page);
   await form.locator('select').first().selectOption('sourcing');
   await step();
   await form.locator('#brief-companyCountry').fill('BD');

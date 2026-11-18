@@ -13,6 +13,12 @@ import { localeMeta, type Locale } from '../../apps/web/lib/i18n/locales';
 import { words as ar } from '../../apps/web/lib/i18n/form-words/ar';
 import { words as de } from '../../apps/web/lib/i18n/form-words/de';
 
+/** The exact job sits behind "Know the exact job? Choose it" (UI/UX.v4); open it only if it is closed. */
+async function openExactJob(page: Page) {
+  const toggle = page.getByRole('button', { name: 'Know the exact job? Choose it' });
+  if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+}
+
 async function openFineTune(page: Page) {
   const details = page.locator('.ux-fine-tune');
   if ((await details.getAttribute('open')) === null) await details.locator('summary').click();
@@ -251,7 +257,7 @@ test('the sample form completes in German and Arabic against the real intake and
       );
       await page.goto(`${origin}/fixture-plan?${query}`);
       const form = page.locator('form.intake-form');
-      const next = form.locator('.guide-actions .primary-link');
+      const next = form.locator('.plan-action-bar .primary-link');
       await expect(next).toBeEnabled();
       if (code !== 'en') {
         await expect(page.locator('#main')).toHaveAttribute('lang', localeMeta[code].html);
@@ -266,7 +272,10 @@ test('the sample form completes in German and Arabic against the real intake and
         await next.click();
         await expect(form.locator('h2')).not.toHaveText(before ?? '');
       };
-      await step(() => form.locator('select').first().selectOption('machinery_procurement'));
+      await step(async () => {
+        await openExactJob(page);
+        await form.locator('select').first().selectOption('machinery_procurement');
+      });
       await step(async () => {
         await form.locator('#brief-companyCountry').fill('BD');
         await form.locator('[role="option"][data-value="BD"]').click();

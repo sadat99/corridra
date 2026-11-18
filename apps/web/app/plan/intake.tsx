@@ -997,17 +997,12 @@ function IntakeForm({
     );
   const progressLine = (
     <>
-      {english(
-        sayWith('form.plan.stepLine', {
-          step: String(step + 1),
-          total: String(groups.length),
-          name: stepName(step),
-        }),
-      )}
+      {english(`Step ${step + 1} of ${groups.length}: `)}
+      {stepName(step)}
       {step + 1 < stepWords.length && (
         <>
-          {' · '}
-          {english(sayWith('form.plan.nextLine', { name: stepName(step + 1) }))}
+          {english(' · Next: ')}
+          {stepName(step + 1)}
         </>
       )}
     </>
@@ -1018,10 +1013,10 @@ function IntakeForm({
   const signedIn = account !== null;
   const privacyLine = englishIsland(
     !realMode
-      ? formEn['form.plan.privacySample']
+      ? 'Nothing is sent until you check it.'
       : signedIn
-        ? formEn['form.plan.privacySignedIn']
-        : formEn['form.plan.privacy'],
+        ? 'Nothing is sent until you check it. You are signed in, so your request stays private in your account.'
+        : 'Nothing is sent until you check it. You make an account at the last step, so your request stays private.',
   );
   // The summary line counts the three answers the summary shows, out of three.
   const chosenCount =
@@ -1243,7 +1238,7 @@ function IntakeForm({
                     />
                   ) : (
                     <>
-                      <p className="guide-hint">{english(formEn['form.plan.pick'])}</p>
+                      <p className="guide-hint">{english('Pick one. You can change it later.')}</p>
                       <div className="guide-options">
                         {objectiveOptions.map((v) => (
                           <label className="choice" key={v}>
@@ -1265,7 +1260,7 @@ function IntakeForm({
                     id="plan-job-fold"
                     open={jobFoldOpen}
                     onToggle={() => setJobFoldChoice(!jobFoldOpen)}
-                    label={english(formEn['form.plan.exactJob'])}
+                    label={english('Know the exact job? Choose it')}
                   >
                     <label className="field guide-more">
                       {say('form.goal.job')}
@@ -1295,7 +1290,7 @@ function IntakeForm({
                         {' '}
                         {englishIsland(
                           <Link prefetch={false} href="/privacy">
-                            {formEn['form.plan.privacyLink']}
+                            Read the privacy and request notice
                           </Link>,
                         )}
                       </>
@@ -1622,7 +1617,7 @@ function IntakeForm({
                 waiting={step === 0 && nothingChosen}
                 note={
                   <>
-                    {draftSaved && <>{english(formEn['form.plan.savedTab'])} </>}
+                    {draftSaved && <>{english('Saved in this tab for up to 24 hours.')} </>}
                     <button
                       className="text-link"
                       type="button"
@@ -1671,7 +1666,7 @@ function IntakeForm({
                         ? say('form.action.createAccount')
                         : say('form.action.submit')
                       : step === 0 && nothingChosen && !translated
-                        ? formEn['form.plan.pickToContinue']
+                        ? 'Pick One to Continue'
                         : say('form.action.continue')}
                 </button>
               </PlanActionBar>
