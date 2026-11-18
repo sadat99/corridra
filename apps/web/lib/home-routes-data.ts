@@ -235,3 +235,43 @@ export const goalLinks: readonly { key: string; label: MessageKey; href: string 
   { key: 'delegation', label: 'home.tr.br.g.delegation', href: '/plan?job=delegations' },
   { key: 'other', label: 'home.tr.br.g.other', href: '/plan' },
 ];
+
+/** The six goals of the home page brief (board 3c), in the board's order. */
+export const briefGoals = ['china', 'machinery', 'sell', 'fair', 'delegation', 'other'] as const;
+export type GoalKey = (typeof briefGoals)[number];
+/** The four timing answers of the brief, by number (words: home.b3.br.when.N). */
+export const briefTimings = [1, 2, 3, 4] as const;
+
+/**
+ * The request job each goal opens. Every value is a key of the request form's job list (missionCatalogue), so the
+ * form selects it exactly as `/plan?job=` links already do (P-05); "Something else" opens the form with no job.
+ */
+export const goalJob: Record<GoalKey, string | null> = {
+  china: 'sourcing',
+  machinery: 'machinery_procurement',
+  sell: 'buyers',
+  fair: 'trade_fairs',
+  delegation: 'delegations',
+  other: null,
+};
+
+/** Which route sentence the brief's draft card shows for a goal. */
+export const goalRoute: Record<GoalKey, 'china' | 'sell' | 'delegation' | 'other'> = {
+  china: 'china',
+  machinery: 'china',
+  sell: 'sell',
+  fair: 'sell',
+  delegation: 'delegation',
+  other: 'other',
+};
+
+/** The request address the brief opens: the job, and the visitor's own words as a note for the form's notes field. */
+export function briefHref(goal: GoalKey | null, note: string): string {
+  const query = new URLSearchParams();
+  const job = goal ? goalJob[goal] : null;
+  if (job) query.set('job', job);
+  const words = note.trim().slice(0, 1000);
+  if (words) query.set('note', words);
+  const text = query.toString();
+  return text ? `/plan?${text}` : '/plan';
+}

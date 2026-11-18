@@ -222,10 +222,19 @@ const foldedFields = {
   results: ['worthwhile', 'notes'],
 } as const;
 type FoldGroup = keyof typeof foldedFields;
-/** The choices a link can make (`?job`, `?companyCountry` and `?marketCode`), applied to a draft. */
+/**
+ * The home page brief (owner board "Corridra Two Routes" 3c, LP3) can carry the visitor's own words as `?note`. They
+ * fill the optional notes field of a fresh draft only, trimmed to the field's limit; a saved draft is never touched.
+ */
+export function linkNote(query: URLSearchParams): string {
+  return (query.get('note') ?? '').trim().slice(0, 1000);
+}
+/** The choices a link can make (`?job`, `?companyCountry`, `?marketCode` and `?note`), applied to a draft. */
 function withLinkChoices(base: Draft): Draft {
   const query = new URLSearchParams(window.location.search);
   const next = { ...base };
+  const note = linkNote(query);
+  if (note && !next.notes) next.notes = note;
   const job = query.get('job');
   if (job && missionCatalogue.some((t) => t.key === job)) {
     next.job = job;
@@ -411,6 +420,9 @@ function IntakeForm({
           saved.draft.job !== suggestedJob
         )
           setJobChoice(suggestedJob);
+        const note = linkNote(query);
+        if (!restored && note)
+          setDraft((current) => (current.notes ? current : { ...current, notes: note }));
         if (!restored && suggestedJob && missionCatalogue.some((t) => t.key === suggestedJob))
           setDraft((current) => ({
             ...current,
