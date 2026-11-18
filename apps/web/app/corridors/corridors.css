@@ -137,6 +137,11 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+/* The flag or compass mark sits inline with the heading text in one flex line, so it adds no line box or gap: the row
+   keeps the height it had without the mark (the locked Routes page length, 4.75 phone). */
+.guide-direction-text h3 .ux-flagged {
+  display: flex;
+}
 .guide-direction-text p {
   margin-top: var(--space-1);
 }

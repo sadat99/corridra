@@ -4519,6 +4519,6 @@ Built: `destinationRows` in content/corridors.ts gains `mark` (cn, eu, gb, us, a
 
 Tests: `routes-open-destinations.spec.ts` replaces the "slots are empty" assertion with one that checks five flags in order (cn, eu, gb, us, au) loaded and decorative, the compass mark only on Key Asian Markets, each mark before its written name in the heading, and the names unchanged. It fails on the previous build (expected 5 flags, received 0).
 
-Measure: the flags took the /corridors phone length from 4.729 to 4.752 screens (about 20 px), over the 4.75 limit, so `routesLimits` phone moved to 4.8 in tests/ux/page-length-lib.ts (desktop 3.1 unchanged; Guardian G29 allowed headroom if the measure changed). See the PR body for exact exit codes.
+Measure: the first version of the flags took the /corridors phone length from 4.729 to 4.752 screens (about 20 px), over the locked 4.75 (UI/UX.v4 Routes pages row). Guardian G29 refused a limit raise, so `routesLimits` phone stays 4.75 and the change recovers the height: `.guide-direction-text h3 .ux-flagged` is `display: flex`, so the mark sits inline with the heading text and adds no line box. Re-measured on a production build: /corridors at 390 is 3991 px (4.729 screens), the same as without the flags; at 1440 2731 px (3.034).
 
 Not verified: a real device, WebKit and Firefox, signed-in pages. Follow-ups: align the rows to the shared route-row component if one is added; the board raw-height targets remain unmet (footer included).
