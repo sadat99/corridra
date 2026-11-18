@@ -133,6 +133,21 @@ export default async function Page({
         /* The independent request section provides the bounded unavailable/denied state. */
       }
   }
+  // ADR-087 U5: the Members' Reports tab only for someone who owns or manages a workspace. The probe reads no member item and
+  // records nothing; any failure means no tab.
+  let memberReportsVisible = false;
+  if (savedMissionIssuer && memberAccessOn()) {
+    const services = foundations();
+    if (services)
+      try {
+        await services.ready;
+        memberReportsVisible =
+          ((await services.customerMemberAccess.workspaces(data.user.id, savedMissionIssuer))
+            ?.workspaces.length ?? 0) > 0;
+      } catch {
+        /* No tab: the person owns or manages nothing reachable, or the module is not installed. */
+      }
+  }
   const heading = headings[view];
   return (
     <CustomerShell
@@ -328,7 +343,7 @@ export default async function Page({
                 }
                 members={
                   savedMissionIssuer &&
-                  memberAccessOn() && (
+                  memberReportsVisible && (
                     <MemberReports subject={data.user.id} issuer={savedMissionIssuer} />
                   )
                 }

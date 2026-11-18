@@ -396,7 +396,12 @@ describe("Members' Reports", () => {
     expect(tabs).toContain('label: "Members\' Reports"');
     const page = read('apps/web/app/account/page.tsx');
     expect(page).toMatch(
-      /members=\{\s*savedMissionIssuer &&\s*memberAccessOn\(\) && \(\s*<MemberReports subject=\{data\.user\.id\} issuer=\{savedMissionIssuer\} \/>/,
+      /members=\{\s*savedMissionIssuer &&\s*memberReportsVisible && \(\s*<MemberReports subject=\{data\.user\.id\} issuer=\{savedMissionIssuer\} \/>/,
+    );
+    // The tab shows only with the switch on and for someone who owns or manages a workspace: the server asks the member access
+    // service for the workspaces (a read of no member item, recorded nowhere) and any failure means no tab.
+    expect(page).toMatch(
+      /let memberReportsVisible = false;\s*if \(savedMissionIssuer && memberAccessOn\(\)\) \{[\s\S]*?customerMemberAccess\.workspaces\(data\.user\.id, savedMissionIssuer\)\)\s*\?\.workspaces\.length \?\? 0\) > 0;/,
     );
   });
 });
