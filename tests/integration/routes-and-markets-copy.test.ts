@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { translate } from '../../apps/web/lib/i18n/messages';
+import { homeEn } from '../../apps/web/lib/i18n/home-words';
 import { localeCodes } from '../../apps/web/lib/i18n/locales';
 
 // Owner decision 17 Nov 2026, routes and markets: five open destinations beside China, shown as equals, and Spain is
@@ -47,5 +48,28 @@ describe('routes and markets copy', () => {
         expect(translate(code, key as never), `${code}.${key}`).not.toBe(
           translate('en', key as never),
         );
+  });
+
+  // Owner words, 18 Nov 2026 (LP2): "fix copy and unsolicited redundancy and unfitness".
+  it('writes the open markets one way and never repeats the list inside one card', () => {
+    const list = 'the EU, the UK, the US, Australia and key Asian markets';
+    const values = Object.entries(homeEn);
+    for (const [key, value] of values) {
+      expect(value, key).not.toMatch(/\bEU, UK\b/);
+      if (/Australia and key Asian markets/.test(value)) expect(value, key).toContain(list);
+    }
+    // The Sell Abroad door names the markets once, in its route line, not again in its sentence.
+    expect(homeEn['home.tr.door.sell.route']).toContain(list);
+    expect(homeEn['home.tr.door.sell.text']).not.toMatch(/EU|UK|US|Australia|Asian/);
+    // "Key Asian markets" stays an open label that names no country.
+    expect(homeEn['home.tr.mk.asia']).toBe('Key Asian markets');
+  });
+
+  it('has no internal-control bar text and no second block of route cards on the home', () => {
+    for (const [key, value] of Object.entries(homeEn)) {
+      expect(value, key).not.toMatch(/Showing:|shared sections/);
+      expect(value, key).not.toMatch(/—/);
+    }
+    expect(Object.keys(homeEn).filter((key) => key.startsWith('home.tr.open.'))).toEqual([]);
   });
 });

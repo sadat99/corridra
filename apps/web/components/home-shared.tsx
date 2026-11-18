@@ -8,7 +8,8 @@ import type { HomeRoutesKey } from '../lib/home-routes-keys';
 import type { Shown } from './home-routes';
 
 // The closing section of the home page: the one first action again, the three job links and one short link to each
-// page the long sections moved to (17 November 2026).
+// page the long sections moved to (17 November 2026). LP2 (18 November 2026): the two assurances the hero already
+// gives (nothing is sent, stop any time) are not repeated here; only the one the hero does not give stays.
 const key = (name: string) => name as HomeRoutesKey;
 
 export function HomeShared({ shown, href, cta }: { shown: Shown; href: string; cta: string }) {
@@ -27,7 +28,7 @@ export function HomeShared({ shown, href, cta }: { shown: Shown; href: string; c
         <p className="label ac1-rule">{t('home.tr.fn.eyebrow')}</p>
         <h2 id="final-title">{t(finalTitle[shown])}</h2>
         <div className="tr-reverse">
-          {[1, 2, 3].map((n) => (
+          {[3].map((n) => (
             <div key={n}>
               <strong>{t(key(`home.tr.fn.r${n}`))}</strong>
               <span>{t(key(`home.tr.fn.r${n}.text`))}</span>

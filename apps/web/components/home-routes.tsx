@@ -51,26 +51,6 @@ export function HomeRoutes() {
     setOpened(fromDoor && next !== 'all' && next !== 'none' ? next : null);
   };
   const show = (route: RouteKey) => shown === route || (shown === 'all' && route !== 'other');
-  const open = (route: Shown) => {
-    choose(route);
-    // The section is drawn on the next frame, so the move waits for it.
-    requestAnimationFrame(() => {
-      const target = document.getElementById(route === 'all' ? 'route-china' : `route-${route}`);
-      target?.scrollIntoView({
-        behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
-        block: 'start',
-      });
-      target?.querySelector<HTMLElement>('h2')?.focus({ preventScroll: true });
-    });
-  };
-  const showingText: Record<Shown, MessageKey> = {
-    none: 'home.tr.bar.none',
-    all: 'home.tr.bar.allText',
-    china: 'home.tr.bar.china',
-    sell: 'home.tr.bar.sell',
-    delegation: 'home.tr.bar.delegationText',
-    other: 'home.tr.bar.otherText',
-  };
   return (
     <>
       <section className="tr-hero" aria-labelledby="home-title">
@@ -128,9 +108,6 @@ export function HomeRoutes() {
       </section>
 
       <div className="tr-bar">
-        <p className="tr-bar-label" aria-live="polite">
-          {t('home.tr.bar.showing')} <span>{t(showingText[shown])}</span>
-        </p>
         <div className="tr-bar-buttons" role="group" aria-label={t('home.tr.bar.aria')}>
           {(['china', 'sell', 'delegation', 'other', 'all'] as const).map((route) => (
             <button
@@ -160,26 +137,6 @@ export function HomeRoutes() {
               </li>
             ))}
           </ol>
-          <div className="tr-opens">
-            {(['china', 'sell'] as const).map((route) => (
-              <button key={route} type="button" onClick={() => open(route)}>
-                <strong>{t(`home.tr.open.${route}` as MessageKey)}</strong>
-                <span>{t(`home.tr.open.${route}.text` as MessageKey)}</span>
-              </button>
-            ))}
-          </div>
-          <div className="tr-more">
-            <p>{t('home.tr.open.more')}</p>
-            <button type="button" className="tr-linkbtn" onClick={() => open('delegation')}>
-              {t('home.tr.open.delegation')}
-            </button>
-            <button type="button" className="tr-linkbtn" onClick={() => open('other')}>
-              {t('home.tr.open.other')}
-            </button>
-            <button type="button" className="tr-linkbtn" onClick={() => open('all')}>
-              {t('home.tr.open.everything')}
-            </button>
-          </div>
         </section>
       ) : null}
 

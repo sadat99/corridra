@@ -146,16 +146,78 @@ test('the route bar switches routes and All Routes opens China, Sell Abroad and 
   await expect(page.locator('#route-sell')).toBeVisible();
 });
 
-test('the how-it-works strip opens a route, moves to it and focuses its heading', async ({
+// Replaces the old "how-it-works strip opens a route" case (LP2, 18 Nov 2026): the strip's duplicate route cards were
+// removed, because the four doors and the route bar already open every route. The stronger check is that each door
+// still opens its route and offers a move to it, and nothing is left that duplicates the doors.
+test('a door opens its route and offers a move to it; no second block of route cards remains', async ({
   page,
 }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: /Open the China Route/ }).click();
+  await expect(page.getByRole('button', { name: /^Open / })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Show Every Route' })).toHaveCount(0);
+  await expect(page.locator('.tr-opens, .tr-more')).toHaveCount(0);
+  await door(page, 'Buying from China').click();
   await expect(
     page.getByRole('heading', { level: 2, name: 'Too many suppliers. Too few you can compare.' }),
-  ).toBeFocused();
-  await expect(page.locator('#pick')).toHaveCount(0);
+  ).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Go to It' })).toHaveAttribute(
+    'href',
+    '#route-china',
+  );
+  await expect(page.locator('#pick-title')).toHaveCount(0);
 });
+
+// LP2 condition: nothing became unreachable when the duplicate route cards went. Every destination the page linked to
+// is still linked, and the route bar still names its choices and which one is pressed.
+test('every original destination link is still on the default home', async ({ page }) => {
+  await page.goto('/');
+  const hrefs = await page
+    .locator('main a[href]')
+    .evaluateAll((links) => links.map((link) => link.getAttribute('href')));
+  for (const href of [
+    '/plan',
+    '/plan?job=sourcing',
+    '/plan?job=delegations',
+    '/plan?job=buyers',
+    '/how-it-works',
+    '/trust',
+    '/corridors',
+  ])
+    expect(hrefs, href).toContain(href);
+  await expect(bar(page).getByRole('button')).toHaveCount(5);
+  await bar(page).getByRole('button', { name: 'Delegation' }).click();
+  await expect(bar(page).getByRole('button', { pressed: true })).toHaveText('Delegation');
+});
+
+// LP2, 18 Nov 2026 (owner: "fix copy and unsolicited redundancy and unfitness"), default state.
+for (const [name, size] of Object.entries(sizes))
+  test(`the default home repeats nothing it should not at ${name}`, async ({ page }) => {
+    await page.setViewportSize(size);
+    await page.goto('/');
+    const main = page.locator('main');
+    const text = await main.innerText();
+    expect(text).not.toMatch(/Showing:|shared sections/);
+    // Sell Abroad door: the market list appears once on the card.
+    const card = (await door(page, 'Sell Abroad').textContent()) ?? '';
+    expect(card.match(/Australia/g)).toHaveLength(1);
+    expect(card.match(/key Asian markets/gi)).toHaveLength(1);
+    // One wording for the markets, everywhere on the page.
+    expect(text).not.toMatch(/\bEU, UK\b/);
+    // At most one primary Start a Request per visual section.
+    const perSection = await page.evaluate(() =>
+      [...document.querySelectorAll('main section')].map(
+        (section) =>
+          [...section.querySelectorAll('a, button')].filter((el) =>
+            /^start a request\b/i.test((el.textContent ?? '').trim()),
+          ).length,
+      ),
+    );
+    expect(Math.max(...perSection)).toBeLessThanOrEqual(1);
+    await expect(main.getByRole('link', { name: /^Start a Request/ })).toHaveCount(2);
+    // No second block of route cards.
+    await expect(page.locator('.tr-opens, .tr-more')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /^Open / })).toHaveCount(0);
+  });
 
 test('the quote check names what each price leaves out, tags every quote Example and sends nothing', async ({
   page,

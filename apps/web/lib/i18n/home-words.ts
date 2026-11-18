@@ -27,10 +27,13 @@ const homeLandingEn = {
 // other language shows these English words (spread into each language below) and no screen claims a translation.
 // Native review pending (docs/product/language-review-record.md). Company names, cities and amounts are invented
 // examples and stay in lib/home-routes-data.ts. The five trust names stay English (ADR-066, decision 3).
+// LP2 (18 November 2026): the repeated market list, the route-bar status text, the second route-card block and two
+// repeated assurances were removed from these words in every catalog at once; no new sentence was translated, so
+// every other language still shows the English draft and the same native review is pending.
 const homeTwoEn = {
   // Hero
   'home.tr.lead':
-    'Corridra turns an international business goal. Into the right people. Into trusted conversations. Into progress you can measure. We run missions from Bangladesh to China, the EU, the UK, the US, Australia and key Asian markets. Choose yours.',
+    'Corridra turns an international business goal. Into the right people. Into trusted conversations. Into progress you can measure.',
   'home.tr.q': 'Which way is your business moving?',
   'home.tr.q.sub': 'Choose one. The page below opens that route.',
   'home.tr.side.supply': 'Supply side',
@@ -40,8 +43,7 @@ const homeTwoEn = {
     'Many suppliers, technical checks, quotes you can compare, factory visits.',
   'home.tr.door.china.route': 'Bangladesh to China',
   'home.tr.door.sell.title': 'Sell Abroad',
-  'home.tr.door.sell.text':
-    'The EU, UK, US, Australia and key Asian markets. Who is worth meeting, and how to reach them.',
+  'home.tr.door.sell.text': 'Who is worth meeting abroad, and how to reach them.',
   'home.tr.door.sell.route':
     'Bangladesh to the EU, the UK, the US, Australia and key Asian markets',
   'home.tr.door.delegation.title': 'Leading a delegation',
@@ -62,34 +64,20 @@ const homeTwoEn = {
   'home.tr.hint': 'Each door opens its own worked example further down this page.',
   // Route bar and how it works
   'home.tr.bar.aria': 'Choose which route this page shows',
-  'home.tr.bar.showing': 'Showing:',
-  'home.tr.bar.none': 'shared sections. Choose a route to open it.',
   'home.tr.bar.all': 'All Routes',
   'home.tr.bar.china': 'China Route',
   'home.tr.bar.sell': 'Sell Abroad',
   'home.tr.bar.delegation': 'Delegation',
   'home.tr.bar.other': 'Something Else',
-  'home.tr.bar.allText': 'all routes',
-  'home.tr.bar.delegationText': 'delegation',
-  'home.tr.bar.otherText': 'something else',
   'home.tr.pick.eyebrow': 'How it works',
-  'home.tr.pick.title': 'Choose a door. This page opens that route.',
+  'home.tr.pick.title': 'From a route to a request in three steps.',
   'home.tr.pick.1.title': 'Choose your route',
   'home.tr.pick.1.text': 'Buying from China, Sell Abroad, a delegation, or something else.',
   'home.tr.pick.2.title': 'Try a worked example',
   'home.tr.pick.2.text':
     'Quotes that do not compare, or a fair list that is not a buyer list, for your own market.',
-  'home.tr.pick.3.title': 'Start a request',
+  'home.tr.pick.3.title': 'Send it to us',
   'home.tr.pick.3.text': 'A person reads it, asks a few questions, then sends a scoped quote.',
-  'home.tr.open.china': 'Open the China Route',
-  'home.tr.open.china.text': 'A quote check you can try, and a factory-visit day on two clocks.',
-  'home.tr.open.sell': 'Open Sell Abroad',
-  'home.tr.open.sell.text':
-    'A buyer shortlist and a fair-cost calculator, for the market you pick.',
-  'home.tr.open.more': 'Leading a delegation, or something else?',
-  'home.tr.open.delegation': 'Open the Delegation Route',
-  'home.tr.open.other': 'Something Else',
-  'home.tr.open.everything': 'Show Every Route',
   // China Route
   'home.tr.cn.eyebrow': 'China Route · supply side',
   'home.tr.cn.title': 'Too many suppliers. Too few you can compare.',
@@ -577,10 +565,6 @@ const homeTwoEn = {
     'The programme is coming either way. Give each company its own plan.',
   'home.tr.fn.title.other':
     'Whatever is coming up, start with a plain answer on whether we can help.',
-  'home.tr.fn.r1': 'Nothing is sent until you press Send.',
-  'home.tr.fn.r1.text': 'Your draft stays with you until then.',
-  'home.tr.fn.r2': 'Stop any time.',
-  'home.tr.fn.r2.text': 'No account, no commitment to start a request.',
   'home.tr.fn.r3': 'We tell you if we cannot help.',
   'home.tr.fn.r3.text': 'Plainly, and early.',
   'home.tr.more.how': 'See the Full Process',
