@@ -37,7 +37,9 @@ import { countryCodes } from '@corridra/domain/countries';
 import { currencies } from '@corridra/domain/currencies';
 import { intakeExperience } from '@corridra/domain/experience';
 import { originalAmountToMinor } from '@corridra/domain/locale';
-import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
+import { useLanguage } from '../../components/language-provider';
+import { LanguageSheetExtra } from '../../components/ux/language-sheet-slot';
 import { subscribeToHash } from '../../lib/address-store';
 import {
   briefSchema,
@@ -370,6 +372,8 @@ function IntakeForm({
     englishProps,
     wsa,
   } = useFormWords();
+  // The language button exists only when more than one language is offered (language-sheet.tsx).
+  const languageChip = useLanguage().offered.length > 1;
   const draftStorageKey =
     privateSubmission?.draftStorageKey ??
     (realMode ? 'corridra-real-mission-draft' : 'corridra-mission-draft');
@@ -1015,6 +1019,32 @@ function IntakeForm({
   const nothingChosen = draft.objective === '' && draft.job === '';
   // One privacy line under the choices. The account sentence lives in the page heading (owner 2a, 18 Nov 2026).
   const privacyLine = englishIsland('Nothing is sent until you check it.');
+  // The Bangla guidance (board screen 10: it lives in the language button's sheet, W1-A's language sheet `extra` slot).
+  // The same words stay on the page as a disclosure only when no language button is offered.
+  const bengaliBody = (
+    <>
+      <p>
+        আপনি কী অর্জন করতে চান, প্রতিষ্ঠান কোন দেশে এবং কোন বাজারে কাজ করতে চান তা জানান। পণ্য,
+        যন্ত্রপাতির প্রয়োজন, সময় এবং প্রত্যাশিত ফল সংক্ষেপে লিখুন। প্রতিটি প্রতিষ্ঠানের কাজ ও গোপন
+        তথ্য আলাদা রাখা হয়।
+      </p>
+      <p>
+        {realMode
+          ? 'শেষ ধাপে আপনার যোগাযোগের তথ্য দিন এবং অ্যাকাউন্ট তৈরি করুন বা সাইন ইন করুন। ইমেইল যাচাই করার পরে আপনার ব্যক্তিগত অ্যাকাউন্টে অনুরোধ এবং উত্তর দেখতে পারবেন। এখন নথি আপলোড করতে হবে না।'
+          : 'শুধু কাল্পনিক পরীক্ষামূলক তথ্য এবং @example.invalid ঠিকানা ব্যবহার করুন। প্রকৃত গ্রাহকের কাজ এখানে গ্রহণ করা হচ্ছে না। নথি এখন আপলোড করতে হবে না।'}
+      </p>
+    </>
+  );
+  const bengaliGuidance = useMemo(
+    () => (
+      <section lang="bn" dir="ltr" className="language-sheet-guide" data-plan-guidance="">
+        <h3>বাংলায় সংক্ষিপ্ত নির্দেশনা</h3>
+        {bengaliBody}
+      </section>
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the body only changes with realMode
+    [realMode],
+  );
   // The summary line counts the three answers the summary shows, out of three.
   const chosenCount =
     (chosenJob ? 1 : 0) +
@@ -1059,24 +1089,15 @@ function IntakeForm({
             {translated && <p>{say('form.notice.englishParts')}</p>}
           </div>
         )}
-        <details
-          lang="bn"
-          className="guide-bn"
-          data-plan-guidance=""
-          dir={dir === 'rtl' ? 'ltr' : undefined}
-        >
-          <summary>বাংলায় সংক্ষিপ্ত নির্দেশনা</summary>
-          <p>
-            আপনি কী অর্জন করতে চান, প্রতিষ্ঠান কোন দেশে এবং কোন বাজারে কাজ করতে চান তা জানান। পণ্য,
-            যন্ত্রপাতির প্রয়োজন, সময় এবং প্রত্যাশিত ফল সংক্ষেপে লিখুন। প্রতিটি প্রতিষ্ঠানের কাজ ও
-            গোপন তথ্য আলাদা রাখা হয়।
-          </p>
-          <p>
-            {realMode
-              ? 'শেষ ধাপে আপনার যোগাযোগের তথ্য দিন এবং অ্যাকাউন্ট তৈরি করুন বা সাইন ইন করুন। ইমেইল যাচাই করার পরে আপনার ব্যক্তিগত অ্যাকাউন্টে অনুরোধ এবং উত্তর দেখতে পারবেন। এখন নথি আপলোড করতে হবে না।'
-              : 'শুধু কাল্পনিক পরীক্ষামূলক তথ্য এবং @example.invalid ঠিকানা ব্যবহার করুন। প্রকৃত গ্রাহকের কাজ এখানে গ্রহণ করা হচ্ছে না। নথি এখন আপলোড করতে হবে না।'}
-          </p>
-        </details>
+        {languageChip ? (
+          <LanguageSheetExtra>{bengaliGuidance}</LanguageSheetExtra>
+        ) : (
+          // Only English is offered, so there is no language button to hold the Bangla guidance: it stays here.
+          <details lang="bn" className="guide-bn" data-plan-guidance="" dir="ltr">
+            <summary>বাংলায় সংক্ষিপ্ত নির্দেশনা</summary>
+            {bengaliBody}
+          </details>
+        )}
         <p role="status" aria-live="polite" className="guide-status" hidden={!message}>
           {showMessage(message)}
         </p>

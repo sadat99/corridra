@@ -112,3 +112,36 @@ test('on desktop Continue sits on the left edge of the form column', async ({ pa
   ]);
   expect(Math.abs(button!.x - row!.x)).toBeLessThanOrEqual(1);
 });
+
+test('with only English offered the Bangla guidance stays on the page as one disclosure', async ({
+  page,
+}) => {
+  // No language button exists then (it needs a second language), so the guidance must not disappear with it.
+  await page.setViewportSize(sizes.phone);
+  await page.goto('/plan');
+  await expect(page.locator('header button[aria-haspopup="dialog"]:visible')).toHaveCount(0);
+  const guidance = page.locator('[data-plan-guidance]');
+  await expect(guidance).toHaveCount(1);
+  await expect(guidance).toHaveAttribute('lang', 'bn');
+  await guidance.locator('summary').click();
+  await expect(guidance.locator('p').first()).toBeVisible();
+});
+
+test('with text at twice the size no choice is ever under the bar', async ({ page }) => {
+  await page.setViewportSize(sizes.phone);
+  await page.goto('/plan');
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = '200%';
+  });
+  // A real click reaches the last choice, and once it has scrolled into view it ends above the bar when the bar
+  // is fixed (the bar joins the page flow instead when it would take too much of the window).
+  const last = page.getByRole('radio').last();
+  await last.check();
+  await expect(last).toBeChecked();
+  const bar = page.locator('.plan-action-bar');
+  if ((await bar.evaluate((el) => getComputedStyle(el).position)) === 'fixed') {
+    const radio = await last.boundingBox();
+    const area = await bar.boundingBox();
+    expect(radio && area && radio.y + radio.height <= area.y + 1).toBe(true);
+  }
+});

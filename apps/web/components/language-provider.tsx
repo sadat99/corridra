@@ -20,6 +20,7 @@ import {
 } from '../lib/i18n/locales';
 import { translate, type MessageKey } from '../lib/i18n/messages';
 import { localeFor } from '../lib/i18n/pages';
+import { LanguageSheetSlotProvider } from './ux/language-sheet-slot';
 
 type LanguageState = {
   locale: Locale;
@@ -128,7 +129,11 @@ export function LanguageProvider({
     }),
     [locale, offered, pages, choose],
   );
-  return <Context.Provider value={value}>{children}</Context.Provider>;
+  return (
+    <Context.Provider value={value}>
+      <LanguageSheetSlotProvider>{children}</LanguageSheetSlotProvider>
+    </Context.Provider>
+  );
 }
 
 export function useLanguage() {

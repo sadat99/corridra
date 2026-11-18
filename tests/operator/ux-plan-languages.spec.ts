@@ -525,6 +525,9 @@ function progressWords(names: readonly string[], step: number) {
 }
 
 /** The exact job sits behind "Know the Exact Job? Choose It" (UI/UX.v4); open it if it is closed, then choose. */
+// The language button of the top bar, which opens the language sheet.
+const languageChip = (page: Page) => page.locator('header button[aria-haspopup="dialog"]:visible');
+
 async function chooseJob(form: Locator, job: string) {
   const toggle = form.getByRole('button', { name: 'Know the Exact Job? Choose It' });
   if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
@@ -553,7 +556,7 @@ async function englishLeft(page: Page, code: FormLanguage) {
     .filter((text) => text.length >= 12);
   return page.locator('#main').evaluate((main, list) => {
     const clone = main.cloneNode(true) as HTMLElement;
-    clone.querySelectorAll('[lang="en"], .guide-bn, .mr-fq').forEach((el) => el.remove());
+    clone.querySelectorAll('[lang="en"], .mr-fq').forEach((el) => el.remove());
     const text = clone.textContent ?? '';
     return list.filter((words) => text.includes(words));
   }, english);
@@ -625,7 +628,14 @@ test.describe('with the form released', () => {
       await expect(page.locator('.plan-action-note button')).toHaveText(
         words['form.action.clearDraft'],
       );
-      await expect(page.locator('.guide-bn')).toHaveAttribute('lang', 'bn');
+      // The Bangla guidance is in the language sheet now, not on the page (board screen 10).
+      await expect(page.locator('#main [data-plan-guidance]')).toHaveCount(0);
+      await languageChip(page).first().click();
+      await expect(page.locator('.language-sheet [data-plan-guidance]')).toHaveAttribute(
+        'lang',
+        'bn',
+      );
+      await page.keyboard.press('Escape');
       await walk(page, 'sample', async (state) => {
         expect(await englishLeft(page, code), `${code} ${state}`).toEqual([]);
         if (state === 'receipt')
@@ -703,9 +713,14 @@ test.describe('with the form released', () => {
     await open(page, 'de', 'mode=private&form=true');
     await expect(page.locator('#main')).toHaveAttribute('lang', 'en');
     await expect(page.locator('form.intake-form h2')).toHaveText(formEn['form.step.titleGoal']);
-    // No language or direction is added anywhere inside: only the Bangla guide says its own language.
-    await expect(page.locator('#main [lang]')).toHaveCount(1);
-    await expect(page.locator('#main .guide-bn')).toHaveAttribute('lang', 'bn');
+    // No language or direction is added anywhere inside the form; the Bangla guidance is in the language sheet.
+    await expect(page.locator('#main [lang]')).toHaveCount(0);
+    await expect(page.locator('#main [data-plan-guidance]')).toHaveCount(0);
+    await languageChip(page).first().click();
+    await expect(page.locator('.language-sheet [data-plan-guidance]')).toHaveAttribute(
+      'lang',
+      'bn',
+    );
     await expect(page.locator('#main [dir]')).toHaveCount(0);
   });
 
