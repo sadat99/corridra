@@ -3,6 +3,7 @@ import { DiscoveryExperience } from '../../components/discovery-experience';
 import Link from 'next/link';
 import { destinationRows } from '../../content/corridors';
 import { Arrow } from '../../components/arrow';
+import { Flagged } from '../../components/ux/flag';
 import '../../components/page-compact.css';
 import './corridors.css';
 import '../../components/public-body.css';
@@ -52,13 +53,15 @@ export default function Page() {
             Explore a route
           </h2>
           {/* Owner decisions 17 and 18 Nov 2026, routes and markets and the step 2 board: six rows of the same size,
-              weight and action in this order. The flag slot is empty until the shared flag mark exists. */}
+              weight and action in this order. Each name has its flag, or the compass mark for
+              Key Asian Markets, beside it and never alone (UI/UX.v4 flag policy). */}
           <ul>
             {destinationRows.map((row) => (
               <li key={row.key} className="guide-direction-row">
-                <span className="guide-direction-flag" aria-hidden="true" data-flag={row.key} />
                 <div className="guide-direction-text">
-                  <h3>{row.name}</h3>
+                  <h3>
+                    <Flagged code={row.mark}>{row.name}</Flagged>
+                  </h3>
                   <p>{row.tagline}</p>
                 </div>
                 <Link
