@@ -1,0 +1,47 @@
+/* Top bar tools (UI/UX.v4 row "Top bar"): Listen and the language code, each an icon plus a word, 44 px high and wide.
+   Tokens only; logical properties so right to left mirrors the bar. */
+.top-bar-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.top-bar-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0 var(--space-2);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-1);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.top-bar-tool:hover {
+  background: var(--surface-2);
+}
+.top-bar-tool[data-active='true'] {
+  color: var(--on-action);
+  background: var(--selected);
+}
+/* Under 360 px the two tools sit side by side in the drawer, as two full-size buttons. */
+.top-bar-tools-drawer {
+  gap: var(--space-2);
+}
+.top-bar-row {
+  flex: 1 1 0;
+  min-height: 3.25rem;
+  font-size: var(--text-base);
+  font-weight: 600;
+  border: 1px solid var(--border-strong);
+}
+
+/* The top bar replaces the floating Listen button on pages that have it (the corner dock keeps Help). */
+body:has(.public-header) .corner-dock .dock-listen {
+  display: none;
+}

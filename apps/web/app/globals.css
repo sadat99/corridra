@@ -3661,6 +3661,18 @@ th {
   box-shadow: var(--shadow-2);
   cursor: pointer;
 }
+/* UI/UX.v4 principle 5: the floating Help carries its word, icon plus word, 44 px high. */
+.dock-button.dock-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: auto;
+  min-width: 2.75rem;
+  padding-inline: var(--space-3);
+  font: 600 var(--text-base) var(--font-ui);
+  border-radius: var(--radius-control);
+}
 .dock-button svg {
   width: 1.25rem;
   height: 1.25rem;
@@ -8456,6 +8468,9 @@ samp {
   opacity: 0;
   transform: translateY(1rem);
   pointer-events: none;
+  /* Gone at once, not faded: the floating Help now carries a word, and a word caught mid-fade is a contrast failure and
+     a control nobody can see. It is back after the page stops scrolling (useScrollHide), so Tab always finds it. */
+  visibility: hidden;
 }
 .header-help {
   display: none;
@@ -9081,7 +9096,8 @@ samp {
   body:not(:has(.ux-customer-header, .ux-team-header))
     .site-shell:has(> .corner-dock:not(.header-help))
     > .site-footer {
-    padding-inline-end: var(--space-20);
+    /* Clear of the floating Help, which now carries its word (UI/UX.v4 principle 5). */
+    padding-inline-end: calc(var(--space-20) + var(--space-12));
   }
 }
 /* audit-fixes-1 (AF-1) end */

@@ -49,10 +49,21 @@
   .ux-pocket-plus[aria-expanded='true'] {
     background: var(--brand-hover);
   }
+  .ux-pocket-plus {
+    align-content: center;
+    gap: 0;
+  }
+  /* The icon gives up some height to the word; the button keeps its 56 px and its place (UI/UX.v4 "Quick"). */
   .ux-pocket-plus .corridra-icon {
-    width: 1.75rem;
-    height: 1.75rem;
+    width: 1.5rem;
+    height: 1.5rem;
     stroke-width: 2;
+  }
+  .ux-pocket-word {
+    font-size: var(--text-xs);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.02em;
   }
   .ux-pocket-plus:focus-visible,
   .ux-pocket-row:focus-visible {

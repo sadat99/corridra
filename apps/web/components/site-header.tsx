@@ -6,11 +6,11 @@ import { useEffect, useRef, useState } from 'react';
 import './site-header.css';
 import { CornerDock } from './corner-dock';
 import { CorridraIcon } from './corridra-icon';
-import { LanguageSwitcher } from './language-switcher';
+import { TopBarTools } from './ux/top-bar';
 import { useLanguage } from './language-provider';
 import { useSignedIn } from './use-signed-in';
 import { useSignOut } from './use-sign-out';
-import { defaultLocale, localeMeta } from '../lib/i18n/locales';
+import { defaultLocale } from '../lib/i18n/locales';
 import { translate, type MessageKey } from '../lib/i18n/messages';
 import { WORDMARK } from './brand-paths';
 
@@ -147,38 +147,6 @@ function reachable(root: HTMLElement) {
 }
 
 /**
- * The language chips of the phone menu (board PublicMobile, Menu open). The same offered languages and the same
- * stored choice as the language chip on a wide screen, so a language that is not offered never appears. With
- * English alone there are no chips.
- */
-function LanguageChips() {
-  const { locale, offered, choose, t } = useLanguage();
-  if (offered.length < 2) return null;
-  return (
-    <div className="public-nav-languages" role="group" aria-labelledby="public-languages">
-      <p id="public-languages" className="public-nav-label">
-        {t('language.label')}
-      </p>
-      <div className="public-nav-chips">
-        {offered.map(({ code, draft }) => (
-          <button
-            type="button"
-            key={code}
-            lang={localeMeta[code].html}
-            dir={localeMeta[code].dir}
-            aria-pressed={code === locale}
-            onClick={() => choose(code)}
-          >
-            {localeMeta[code].name}
-            {draft && <small> ({t('language.draft')})</small>}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/**
  * The public header (navigation v1, boards PublicHeader and PublicMobile). A wide screen shows one bar: What we do
  * (a panel with the six jobs), How it works, Markets and Trust, then the language chip, Sign in and Start a Request.
  * A narrower screen shows Menu, which opens the same links as a sheet over the page: focus stays inside it, Escape
@@ -294,7 +262,10 @@ export function SiteHeader({
       <Link prefetch={false} className="brand" href="/" aria-label={t('header.home')}>
         <BrandLockup />
       </Link>
-      <CornerDock variant="header" />
+      {/* UI/UX.v4 top bar: Listen and the language code, each an icon plus a word. Under 360 px the drawer holds them. */}
+      <div className="public-bar-tools">
+        <TopBarTools />
+      </div>
       <button
         ref={toggle}
         type="button"
@@ -315,6 +286,10 @@ export function SiteHeader({
         className={open ? 'public-nav is-open' : 'public-nav'}
         aria-label={t('header.nav')}
       >
+        {/* Under 360 px: Listen and the language, a group of their own above the choices (they are not choices). */}
+        <div className="public-drawer-tools">
+          <TopBarTools variant="drawer" />
+        </div>
         <button
           ref={whatWeDo}
           type="button"
@@ -374,9 +349,11 @@ export function SiteHeader({
             <CorridraIcon name="chevron" size={16} className="public-nav-chevron" />
           </Link>
         ))}
-        <LanguageChips />
         <div className="public-nav-actions">
-          <LanguageSwitcher />
+          {/* Wide bar order (board 10): Listen, the language by name, Sign In, Start a Request. */}
+          <div className="public-wide-tools">
+            <TopBarTools variant="wide" />
+          </div>
           {who ? (
             <>
               <Link
@@ -426,6 +403,8 @@ export function SiteHeader({
             )}
           </Link>
         </div>
+        {/* The last row of the drawer (UI/UX.v4 screen 10): Help, opening the same sheet the header Help always did. */}
+        <CornerDock variant="drawer" />
       </nav>
       {message && (
         <p role="alert" className="nav-message">

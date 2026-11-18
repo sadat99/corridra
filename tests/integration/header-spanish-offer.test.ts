@@ -23,10 +23,12 @@ describe('Spanish in the headers', () => {
     expect(layout).toContain('<LanguageProvider offered={offered}');
     for (const file of [
       'apps/web/components/language-switcher.tsx',
+      'apps/web/components/ux/language-sheet.tsx',
       'apps/web/components/ux/utility-menus.tsx',
     ])
       expect(read(file), file).toContain('useLanguage()');
-    expect(read('apps/web/components/site-header.tsx')).toContain('<LanguageSwitcher />');
+    expect(read('apps/web/components/site-header.tsx')).toContain('<TopBarTools />');
+    expect(read('apps/web/components/ux/top-bar.tsx')).toContain('<LanguageButton');
     const app = read('apps/web/components/ux/app-header.tsx');
     expect(app).toContain('<LanguageMenu />');
     expect(app).toContain('<LanguageSwitcher />');
