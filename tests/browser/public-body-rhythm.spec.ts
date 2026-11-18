@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { routesLimits } from '../ux/page-length-lib';
 
 // Owner, 9 November 2026, on How it works, Routes and Trust: "contents are too compressed. even too many
 // straightlines". Below the hero the sections are separated by space, not by rules: the hero keeps its one hairline
@@ -42,6 +43,13 @@ for (const path of pages) {
       await page.goto(path);
       const found = await rules(page);
       // The hero's hairline and the tab list's underline are the only full-width rules; route cards keep their edges.
+      // The open route picker on /corridors (since the tabs left, 18 November 2026) adds a bordered card, its selects
+      // and its Fine-Tune fold; every other page keeps the old filter.
+      const routesOnly = (rule: string) =>
+        path === '/corridors' &&
+        (rule.includes('guide-route-box') ||
+          rule.includes('ux-fine-tune') ||
+          /\bselect\./.test(rule));
       const fullWidth = found.filter(
         (rule) =>
           !rule.includes('guide-page-hero') &&
@@ -49,6 +57,7 @@ for (const path of pages) {
           !rule.startsWith('top li.') &&
           !rule.startsWith('bottom li.') &&
           !rule.includes('guide-other-route') &&
+          !routesOnly(rule) &&
           !/\b(a|button)\./.test(rule),
       );
       expect(fullWidth, `${path} rules below the hero`).toEqual([]);
@@ -63,7 +72,9 @@ for (const path of pages) {
       const height = await page.evaluate(() =>
         Math.max(document.documentElement.scrollHeight, document.body.scrollHeight),
       );
-      expect(height / size.height, `${path} ${name} screens`).toBeLessThanOrEqual(size.limit);
+      // Routes shows every section open, so it has its own limit (owner, 18 November 2026; page-length-lib routesLimits).
+      const limit = path === '/corridors' ? routesLimits[name].hard : size.limit;
+      expect(height / size.height, `${path} ${name} screens`).toBeLessThanOrEqual(limit);
     });
   }
 }

@@ -2,13 +2,13 @@ export const corridorPages = {
   'bangladesh-china': {
     title: 'Bangladesh–China',
     market: 'CN',
-    heading: 'Start with the requirement. Make each supplier conversation count.',
+    heading: 'Start with the requirement. Then every supplier conversation counts.',
     description:
       'Source products and machinery. Start with a clear specification, evidence of fit and a named next step.',
     jobs: [
       'Product and component sourcing',
       'Machinery and technical evaluation',
-      'Factory visits and supplier discussions',
+      'Factory visits and supplier talks',
       'Commercial delegations',
     ],
     qualification:
@@ -31,9 +31,9 @@ export const corridorPages = {
       'Commercial missions',
     ],
     qualification:
-      'Spain is one country. A buyer in Spain does not give you access to every EU country, so we plan each country on its own.',
+      'Spain is one country. A buyer in Spain does not give you access to every EU country. So we plan each country on its own.',
     reverse:
-      'Spanish companies entering Bangladesh is a separate route. Tell us about it in a request and we will say whether we can take it on.',
+      'Work from Spain into Bangladesh is a separate route. Tell us about it in a request and we will say whether we can take it on.',
     available:
       'Requests to reach buyers and distributors in Spain. Each conversation, sample and follow-up stays on one record with a named owner.',
   },
@@ -54,6 +54,55 @@ export const corridorPages = {
     reverse:
       'For work from an EU country into Bangladesh, name the actual country in your request. We review each one on its own.',
     available:
-      'Requests to reach buyers and distributors in the EU countries you choose, with each conversation and follow-up kept on one record.',
+      'Requests to reach buyers and distributors in the EU countries you choose. Each conversation and follow-up stays on one record.',
   },
 } as const;
+
+/** The sentence every open destination without a page of its own carries, in the picker and in its row. */
+export const openNote = 'Open now from Bangladesh. Describe your mission and we will review it.';
+
+/**
+ * The six open destinations from Bangladesh, as rows of the same size, weight and action in this order (owner step 2
+ * board, screen 02, 18 November 2026, on the 17 November routes and markets wording). Key Asian Markets is an open
+ * label that names no countries. A row with a `slug` has its own page; the others open the request with the countries
+ * filled in. `flag` is the slot for the shared flag mark: it stays empty until that component exists, and Key Asian
+ * Markets never gets a country flag.
+ */
+export const destinationRows = [
+  {
+    key: 'china',
+    name: 'China',
+    tagline: 'Buy products and machinery',
+    href: '/corridors/bangladesh-china',
+  },
+  {
+    key: 'eu',
+    name: 'EU',
+    tagline: 'Sell to buyers in EU countries',
+    href: '/corridors/bangladesh-eu',
+  },
+  {
+    key: 'uk',
+    name: 'UK',
+    tagline: 'Sell your products',
+    href: '/plan?companyCountry=BD&marketCode=GB',
+  },
+  {
+    key: 'us',
+    name: 'US',
+    tagline: 'Sell your products',
+    href: '/plan?companyCountry=BD&marketCode=US',
+  },
+  {
+    key: 'au',
+    name: 'Australia',
+    tagline: 'Sell your products',
+    href: '/plan?companyCountry=BD&marketCode=AU',
+  },
+  {
+    key: 'asia',
+    name: 'Key Asian Markets',
+    tagline: 'Name the market in your request',
+    href: '/plan?companyCountry=BD',
+  },
+] as const;

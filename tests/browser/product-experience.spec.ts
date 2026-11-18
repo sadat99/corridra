@@ -5,13 +5,12 @@ test('corridor pages explain the actual direction, status and geographic limits'
   page,
 }) => {
   for (const [slug, name] of [
-    ['bangladesh-china', 'Bangladesh–China'],
-    ['bangladesh-spain', 'Bangladesh–Spain'],
-    ['bangladesh-eu', 'Bangladesh–EU'],
+    ['bangladesh-china', 'Bangladesh China'],
+    ['bangladesh-spain', 'Bangladesh Spain'],
+    ['bangladesh-eu', 'Bangladesh EU'],
   ]) {
     await page.goto(`/corridors/${slug}`);
     await expect(page.getByText(name, { exact: true })).toBeVisible();
-    await page.getByRole('tab', { name: 'Current Availability' }).click(); // each card is a tab
     await expect(page.getByRole('heading', { name: 'Current availability' })).toBeVisible();
     await expect(page.getByText('Available now', { exact: true })).toBeVisible();
     await expect(page.getByText('What happens', { exact: true })).toBeVisible();
@@ -20,7 +19,6 @@ test('corridor pages explain the actual direction, status and geographic limits'
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     expect(await page.locator('body').innerText()).not.toContain('—');
   }
-  await page.getByRole('tab', { name: 'Where the Work Happens' }).click();
   await expect(
     page.getByText('The EU is a group of countries, not one market and not all of Europe.', {
       exact: false,
@@ -33,7 +31,6 @@ test('global selector retains an unsupported operating direction and opens the a
   page,
 }, info) => {
   await page.goto('/corridors');
-  await page.getByRole('tab', { name: 'Pick Your Route' }).click(); // the picker is its own tab
   await page.getByRole('combobox', { name: 'My company is in', exact: true }).selectOption('JP');
   await page.getByRole('combobox', { name: 'I want to reach', exact: true }).selectOption('KE');
   // owner decision 17 Nov 2026, routes and markets: the canonical ask-us sentence
