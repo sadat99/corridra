@@ -380,7 +380,8 @@ function allowed(html: string) {
       .replace(/\s+/g, ' ')
       .trim();
   // W1-C (owner 2a, 18 Nov 2026): the callout box is gone. The sample notice is one block, "plan-sample-note".
-  const noticeTest = /<div class="plan-sample-note"[^>]*>[\s\S]*?<\/details><\/div>/;
+  const noticeTest =
+    /<div class="plan-sample-note"[^>]*>[\s\S]*?<\/details>(?:<p[^>]*>[\s\S]*?<\/p>)?<\/div>/;
   const summaryTest = /<aside class="ux-brief-summary"[^>]*>[\s\S]*?<\/aside>/;
   const notice = html.match(noticeTest)?.[0] ?? '';
   const summary = html.match(summaryTest)?.[0] ?? '';
@@ -523,9 +524,9 @@ function progressWords(names: readonly string[], step: number) {
   return `Step ${step} of 5: ${names[step - 1]}${names[step] ? ` · Next: ${names[step]}` : ''}`;
 }
 
-/** The exact job sits behind "Know the exact job? Choose it" (UI/UX.v4); open it if it is closed, then choose. */
+/** The exact job sits behind "Know the Exact Job? Choose It" (UI/UX.v4); open it if it is closed, then choose. */
 async function chooseJob(form: Locator, job: string) {
-  const toggle = form.getByRole('button', { name: 'Know the exact job? Choose it' });
+  const toggle = form.getByRole('button', { name: 'Know the Exact Job? Choose It' });
   if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
   await form.locator('select').first().selectOption(job);
 }
@@ -992,7 +993,8 @@ test.describe('with the form released', () => {
           ),
         );
       const hyphens = ['de', 'fr', 'es'].includes(code) ? 'auto' : 'manual';
-      expect(notice, code).toEqual([`anywhere ${hyphens}`, `anywhere ${hyphens}`]);
+      // W1-C (G29 round 1, D2): the notice is one summary line, so only its English-parts sentence is a direct paragraph.
+      expect(notice, code).toEqual([`anywhere ${hyphens}`]);
       const english = await page
         .locator('#main [lang="en"]')
         .evaluateAll((parts) => parts.map((part) => getComputedStyle(part).hyphens));
@@ -1085,7 +1087,7 @@ test.describe('with the form released', () => {
       if (code === 'en') await open(page, 'en', 'form=true');
       else await openTranslated(page, code, 'form=true');
       await page.evaluate(() => document.fonts.ready);
-      await page.getByRole('button', { name: 'Know the exact job? Choose it' }).click();
+      await page.getByRole('button', { name: 'Know the Exact Job? Choose It' }).click();
       const jobs = page.locator('form.intake-form select').first();
       await expect(jobs.locator('option[value="sourcing"]')).toHaveCount(1);
       const { box, labels } = await jobs.evaluate((select: HTMLSelectElement) => {
@@ -1131,7 +1133,9 @@ test.describe('with the form released', () => {
     expect(cutsByLanguage).toEqual({});
   });
 
-  test('ar: right to left, and the main button sits at the inline end', async ({ page }) => {
+  test('ar: right to left, and the actions start at the inline start with Continue after Back', async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 768, height: 900 });
     await openTranslated(page, 'ar', 'form=true');
     const form = page.locator('form.intake-form');
@@ -1141,9 +1145,11 @@ test.describe('with the form released', () => {
     await expect(form.locator('h2')).toHaveText(ar['form.step.titleWhere']);
     const primary = (await form.locator('.plan-action-bar .primary-link').boundingBox())!;
     const back = (await form.locator('.plan-action-bar .button-secondary').boundingBox())!;
+    // G29 round 1 (D3): the actions start at the start edge of their column (right in Arabic), Back first and Continue
+    // after it, never pushed to the far end.
     expect(primary.x).toBeLessThan(back.x);
     const actions = (await form.locator('.plan-action-row').boundingBox())!;
-    expect(Math.abs(primary.x - actions.x)).toBeLessThanOrEqual(1);
+    expect(Math.abs(back.x + back.width - (actions.x + actions.width))).toBeLessThanOrEqual(1);
     const transforms = await page.evaluate(() =>
       Array.from(document.querySelectorAll('#main svg')).map(
         (svg) => getComputedStyle(svg).transform,

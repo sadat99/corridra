@@ -1008,7 +1008,10 @@ function IntakeForm({
     </>
   );
   // The job disclosure is open when a job is set, when the job has an error, or when the person opened it.
-  const jobFoldOpen = jobFoldChoice ?? (draft.job !== '' || !!errors.job?.length);
+  // A job error forces it open (the field must be visible); "Something else" has no default job, so it opens too.
+  const jobFoldOpen =
+    !!errors.job?.length ||
+    (jobFoldChoice ?? (draft.job !== '' || draft.objective === 'Something else'));
   const nothingChosen = draft.objective === '' && draft.job === '';
   // One privacy line under the choices. The account sentence lives in the page heading (owner 2a, 18 Nov 2026).
   const privacyLine = englishIsland('Nothing is sent until you check it.');
@@ -1029,12 +1032,14 @@ function IntakeForm({
             sentence in view and the rest of it one toggle away. */}
         {!realMode && (
           <div className="plan-sample-note" data-plan-sample="">
-            <p>
-              <strong>{say('form.notice.sampleLead')}</strong>
-            </p>
-            {translated && <p>{say('form.notice.englishParts')}</p>}
-            <details className="intake-notice-more">
-              <summary>{english('Read the Test Notice')}</summary>
+            {/* One short line under the heading (G29 round 1, D2): the availability sentence and the way to the whole
+                notice, which holds the old lead and the rest. */}
+            <details>
+              <summary>
+                <strong>{say('form.notice.sampleLead')}</strong>{' '}
+                <span className="plan-sample-link">{english('Read the Test Notice')}</span>
+              </summary>
+              <p>{say('form.head.sampleLead')}</p>
               <p>
                 {sayWith('form.notice.sampleUse', { domain: english('@example.invalid') })}{' '}
                 {privateMode
@@ -1051,6 +1056,7 @@ function IntakeForm({
                 )}
               </p>
             </details>
+            {translated && <p>{say('form.notice.englishParts')}</p>}
           </div>
         )}
         <details
@@ -1254,7 +1260,7 @@ function IntakeForm({
                     id="plan-job-fold"
                     open={jobFoldOpen}
                     onToggle={() => setJobFoldChoice(!jobFoldOpen)}
-                    label={english('Know the exact job? Choose it')}
+                    label={english('Know the Exact Job? Choose It')}
                   >
                     <label className="field guide-more">
                       {say('form.goal.job')}
@@ -1888,8 +1894,11 @@ function IntakeForm({
               <p>
                 {withEnglish(
                   'form.side.draftOnly',
-                  'Nothing here is an offer, a quote or a promise. Nothing is sent until you check it.',
+                  'Nothing here is an offer, a quote or a promise.',
                 )}
+                {/* Board 01: the English summary also says nothing is sent until checked. Translated forms say it in the
+                    privacy line under the choices, so the summary does not grow by an English line there. */}
+                {!translated && ' Nothing is sent until you check it.'}
               </p>
             </details>
           </aside>

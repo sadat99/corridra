@@ -1,9 +1,9 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-/** The exact job sits behind "Know the exact job? Choose it" until a job is chosen; open it only if it is closed. */
+/** The exact job sits behind "Know the Exact Job? Choose It" until a job is chosen; open it only if it is closed. */
 async function openExactJob(page: import('@playwright/test').Page) {
-  const toggle = page.getByRole('button', { name: 'Know the exact job? Choose it' });
+  const toggle = page.getByRole('button', { name: 'Know the Exact Job? Choose It' });
   if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
 }
 

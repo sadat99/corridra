@@ -365,9 +365,9 @@ test.afterAll(async () => {
     else process.env[key] = value;
   Reflect.deleteProperty(globalThis, '__realUseFixtureServices');
 });
-/** The exact job sits behind "Know the exact job? Choose it" (UI/UX.v4); open it only if it is closed. */
+/** The exact job sits behind "Know the Exact Job? Choose It" (UI/UX.v4); open it only if it is closed. */
 async function openExactJob(page: Page) {
-  const toggle = page.getByRole('button', { name: 'Know the exact job? Choose it' });
+  const toggle = page.getByRole('button', { name: 'Know the Exact Job? Choose It' });
   if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
 }
 async function fillRequest(page: Page, email: string) {

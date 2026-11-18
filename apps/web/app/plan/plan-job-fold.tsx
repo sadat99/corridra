@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 /**
- * "Know the exact job? Choose it": the job select behind one named disclosure. The content stays mounted
+ * "Know the Exact Job? Choose It": the job select behind one named disclosure. The content stays mounted
  * (hidden, never removed), so the field, its label, its value and its error keep working. The parent opens it when
  * a job is already chosen, when a link asked for one and when the job field has an error.
  */

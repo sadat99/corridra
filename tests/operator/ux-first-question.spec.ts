@@ -134,8 +134,8 @@ const open = async (page: Page, query = '') => {
   await expect(
     page.getByRole('heading', { name: 'What are you trying to achieve?' }),
   ).toBeVisible();
-  // UI/UX.v4: the job list sits behind "Know the exact job? Choose it"; every job stays selectable once it is open.
-  const toggle = page.getByRole('button', { name: 'Know the exact job? Choose it' });
+  // UI/UX.v4: the job list sits behind "Know the Exact Job? Choose It"; every job stays selectable once it is open.
+  const toggle = page.getByRole('button', { name: 'Know the Exact Job? Choose It' });
   if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
 };
 const job = (page: Page) => page.getByLabel('Commercial job');
@@ -173,6 +173,42 @@ test('shows five pictures that choose a start, and keeps every job type selectab
   await expect(job(page)).toHaveValue('factory_visits');
   // Every one of the fifteen jobs, plus the prompt, is still there.
   await expect(job(page).locator('option')).toHaveCount(16);
+});
+
+// G29 round 1 (D1): production runs with CORRIDRA_UX_FIRSTQ on, so this is the page the board shows (screen 01).
+test('board 01 with the switch on: five choices with their sub-lines, the exact job closed, and the first card above the fold', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${origin}/?fq=1`);
+  const cards = page.locator('.mr-fq-card');
+  await expect(cards).toHaveCount(5);
+  await expect(cards.locator('b')).toHaveText([
+    'Buy products',
+    'Buy a machine',
+    'Sell abroad',
+    'Lead a group trip',
+    'Trips, visits or fairs',
+  ]);
+  await expect(cards.locator('small')).toHaveText([
+    'Find suppliers for goods or materials.',
+    'Find suppliers for machinery.',
+    'Find buyers, distributors or partners.',
+    'Plan the programme and the meetings.',
+    'Or another business goal abroad.',
+  ]);
+  expect((await cards.first().boundingBox())!.y).toBeLessThan(844);
+  const toggle = page.getByRole('button', { name: 'Know the Exact Job? Choose It' });
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('.plan-action-bar button.primary-link')).toHaveText(
+    'Pick One to Continue',
+  );
+  // "Trips, visits or fairs" has no default job (its existing mapping), so the job list opens for the person to choose.
+  await page.getByRole('radio', { name: /Trips, visits or fairs/ }).check();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(job(page)).toBeVisible();
+  await expect(job(page)).toHaveValue('');
+  await expect(page.locator('.plan-action-bar button.primary-link')).toHaveText('Continue');
 });
 
 test('choosing a job from the list moves the picture to the one that opens it', async ({

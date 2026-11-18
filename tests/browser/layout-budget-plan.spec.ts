@@ -37,9 +37,10 @@ for (const [name, size] of Object.entries(sizes))
     expect(await screens(page), `${name} screens`).toBeLessThanOrEqual(limit);
   });
 
-// Owner 2a, 18 Nov 2026 (UI/UX.v4 row "Plan page"): the callout box and its "Test mode" pill are gone. The sample
-// availability sentence stays in view as one line, and the rest of the notice is still one toggle away.
-test('the test notice has no callout box, keeps its availability sentence in view, and the rest opens from one toggle', async ({
+// Owner 2a, 18 Nov 2026 (UI/UX.v4 row "Plan page"): the callout box and its "Test mode" pill are gone. G29 round 1 (D2):
+// the availability sentence and the way to the whole notice are ONE summary line under the heading; the old lead and
+// the rest open from it.
+test('the test notice is one summary line with its availability sentence, and the rest opens from it', async ({
   page,
 }) => {
   await page.setViewportSize(sizes.phone);
@@ -47,15 +48,19 @@ test('the test notice has no callout box, keeps its availability sentence in vie
   await expect(page.locator('aside.intake-notice')).toHaveCount(0);
   await expect(page.locator('.guide-pill')).toHaveCount(0);
   const notice = page.locator('.plan-sample-note');
+  const more = notice.locator('details');
+  const summary = more.locator('summary');
   await expect(
-    notice.getByText('Test intake is open. Real customer mission admission is unavailable.'),
+    summary.getByText('Test intake is open. Real customer mission admission is unavailable.'),
   ).toBeVisible();
-  const more = notice.locator('details.intake-notice-more');
+  await expect(summary.getByText('Read the Test Notice')).toBeVisible();
   await expect(more).not.toHaveAttribute('open', '');
-  expect((await more.locator('summary').boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
+  expect((await summary.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
   await expect(notice.getByText('Email delivery is not enabled.')).toBeHidden();
-  await more.locator('summary').click();
+  await expect(notice.getByText('A short request is enough. No account needed.')).toBeHidden();
+  await summary.click();
   await expect(notice.getByText('Email delivery is not enabled.')).toBeVisible();
+  await expect(notice.getByText('A short request is enough. No account needed.')).toBeVisible();
   await expect(notice.getByText(/Use invented details/)).toBeVisible();
   await expect(notice.locator('a[href="/privacy"]')).toHaveText('Read the test intake notice');
   await expect(page.locator('.plan-privacy-line')).toHaveText(

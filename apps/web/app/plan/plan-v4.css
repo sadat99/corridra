@@ -25,7 +25,6 @@
   gap: var(--space-3);
 }
 .plan-action-row .primary-link {
-  margin-inline-start: auto;
   min-width: min(10rem, 100%);
   max-width: 100%;
   min-height: 3rem;
@@ -74,8 +73,8 @@
   cursor: pointer;
   font-size: var(--text-sm);
 }
-/* The sample notice (UI/UX.v4, owner 2a): no framed box. The availability sentence stays in view and the rest is
-   one toggle away. */
+/* The sample notice (UI/UX.v4, owner 2a; one short line, G29 round 1 D2): the availability sentence and the link to
+   the whole notice are one summary line; the old lead and the rest open from it. */
 .plan-sample-note {
   display: grid;
   gap: var(--space-1);
@@ -86,8 +85,43 @@
   line-height: var(--leading-reading);
   color: var(--text-2);
 }
-.plan-sample-note strong {
+.plan-sample-note details {
+  display: grid;
+  gap: var(--space-2);
+}
+.plan-sample-note summary {
+  display: block;
+  min-height: 2.75rem;
+  font-size: var(--text-sm);
+  line-height: var(--leading-reading);
+  color: var(--text-2);
+  cursor: pointer;
+}
+.plan-sample-note summary strong {
   color: var(--text-1);
+}
+/* Above phone width the summary line and the translated English-parts sentence share one row, as the old notice did,
+   so a translated page is no taller than the English one. */
+@media (min-width: 701px) {
+  .plan-sample-note {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-4);
+  }
+  .plan-sample-note > details {
+    flex: 2 1 0;
+    min-width: 0;
+  }
+  .plan-sample-note > p {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+.plan-sample-link {
+  color: var(--brand-deep);
+  font-weight: var(--weight-semibold);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
 }
 .plan-privacy-line {
   margin: 0;

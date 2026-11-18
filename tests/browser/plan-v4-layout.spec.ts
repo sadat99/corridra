@@ -32,7 +32,7 @@ test('the Your Request callout is gone and one privacy line sits under the choic
 test('the exact job lives behind one named disclosure and keeps its select', async ({ page }) => {
   await page.setViewportSize(sizes.phone);
   await page.goto('/plan');
-  const toggle = page.getByRole('button', { name: 'Know the exact job? Choose it' });
+  const toggle = page.getByRole('button', { name: 'Know the Exact Job? Choose It' });
   await expect(toggle).toHaveAttribute('aria-expanded', 'false');
   await toggle.click();
   await expect(page.getByRole('combobox', { name: /job/i })).toBeVisible();
@@ -76,4 +76,39 @@ test('on desktop Continue sits in the flow and the summary speaks in words', asy
   const bar = page.locator('.plan-action-bar');
   expect(await bar.evaluate((el) => getComputedStyle(el).position)).not.toBe('fixed');
   await expect(page.locator('.ux-brief-summary')).toContainText('Not chosen yet');
+});
+
+// G29 round 1 (C1): a job error forces the exact job open, even after the person closed it.
+test('a job error opens the exact job disclosure again, with the select visible and the error summary focused', async ({
+  page,
+}) => {
+  await page.setViewportSize(sizes.phone);
+  await page.goto('/plan');
+  const toggle = page.getByRole('button', { name: 'Know the Exact Job? Choose It' });
+  await toggle.click();
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await page.locator('.plan-action-bar button.primary-link').click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('combobox', { name: 'Commercial job', exact: true })).toBeVisible();
+  await expect(page.getByRole('alert').filter({ hasText: 'Check this step.' })).toBeFocused();
+});
+
+// G29 round 1 (D2): the first choice sits above the fold at 390 x 844.
+test('the first choice is above the fold on a phone', async ({ page }) => {
+  await page.setViewportSize(sizes.phone);
+  await page.goto('/plan');
+  const first = page.locator('form.intake-form input[type="radio"]').first();
+  expect((await first.locator('xpath=ancestor::label').boundingBox())!.y).toBeLessThan(844);
+});
+
+// G29 round 1 (D3, UI/UX.v4 "Action alignment"): Continue sits on the left edge of its column on wide screens.
+test('on desktop Continue sits on the left edge of the form column', async ({ page }) => {
+  await page.setViewportSize(sizes.desktop);
+  await page.goto('/plan');
+  const [row, button] = await Promise.all([
+    page.locator('.plan-action-row').boundingBox(),
+    page.locator('.plan-action-bar button.primary-link').boundingBox(),
+  ]);
+  expect(Math.abs(button!.x - row!.x)).toBeLessThanOrEqual(1);
 });
