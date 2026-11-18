@@ -8,6 +8,7 @@ import { consequenceDrafts, consequenceEn } from './consequence-words';
 import { privacyDrafts, privacyEn } from './privacy-words';
 import { defaultLocale, type Locale } from './locales';
 import { headerFooterDrafts } from './header-footer-words';
+import { topBarDrafts, topBarEn } from './top-bar-words';
 import { homeEn, homeWords } from './home-words';
 import { programmePagesWords } from './programme-pages-words';
 import { wsA, wsAEn } from './ws/ws-a';
@@ -308,6 +309,7 @@ export const en = {
   ...consequenceEn,
   ...footerWords,
   ...headerWords,
+  ...topBarEn,
   ...todayWords,
   'room.lens.overview': 'Overview',
   'room.lens.compare': 'Compare',
@@ -493,6 +495,7 @@ const bn: Catalog = {
   ...privacyDrafts.bn,
   ...consequenceDrafts.bn,
   ...headerFooterDrafts.bn,
+  ...topBarDrafts.bn,
   ...todayDrafts.bn,
   'room.lens.overview': 'সারসংক্ষেপ',
   'room.lens.compare': 'তুলনা',
@@ -665,6 +668,7 @@ const zh: Catalog = {
   ...privacyDrafts.zh,
   ...consequenceDrafts.zh,
   ...headerFooterDrafts.zh,
+  ...topBarDrafts.zh,
   ...todayDrafts.zh,
   'room.lens.overview': '概览',
   'room.lens.compare': '比较',
@@ -843,6 +847,7 @@ const es: Catalog = {
   ...privacyDrafts.es,
   ...consequenceDrafts.es,
   ...headerFooterDrafts.es,
+  ...topBarDrafts.es,
   ...todayDrafts.es,
   'room.lens.overview': 'Resumen',
   'room.lens.compare': 'Comparar',
@@ -1019,6 +1024,7 @@ const ar: Catalog = {
   ...privacyDrafts.ar,
   ...consequenceDrafts.ar,
   ...headerFooterDrafts.ar,
+  ...topBarDrafts.ar,
   ...todayDrafts.ar,
   'room.lens.overview': 'نظرة عامة',
   'room.lens.compare': 'المقارنة',
@@ -1198,6 +1204,7 @@ const fr: Catalog = {
   ...privacyDrafts.fr,
   ...consequenceDrafts.fr,
   ...headerFooterDrafts.fr,
+  ...topBarDrafts.fr,
   ...todayDrafts.fr,
   'room.lens.overview': 'Aperçu',
   'room.lens.compare': 'Comparer',
@@ -1382,6 +1389,7 @@ const de: Catalog = {
   ...privacyDrafts.de,
   ...consequenceDrafts.de,
   ...headerFooterDrafts.de,
+  ...topBarDrafts.de,
   ...todayDrafts.de,
   'room.lens.overview': 'Übersicht',
   'room.lens.compare': 'Vergleichen',

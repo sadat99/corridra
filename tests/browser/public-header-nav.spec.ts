@@ -119,7 +119,7 @@ test('N1 What we do opens the six jobs, each to its page, and Something else to 
   await expect(page.locator('#public-jobs')).toBeHidden();
 });
 
-test('N1 every old header route is reachable from the phone menu, with Sign in and Start a Request in its bar', async ({
+test('N1 every old header route is reachable from the phone menu, with Sign in, Start a Request and Help as its last rows', async ({
   page,
 }) => {
   await page.setViewportSize(sizes.phone);
@@ -148,11 +148,14 @@ test('N1 every old header route is reachable from the phone menu, with Sign in a
   }
   const start = nav(page).getByRole('link', { name: /^Start a Request/ });
   await expect(start).toHaveAttribute('href', '/plan');
-  // Sign in and Start a Request sit side by side in the bar at the foot of the window.
+  // UI/UX.v4 screen 10: the last rows, in order, are Sign In, Start a Request and Help, all in the window.
   const signIn = await nav(page).getByRole('link', { name: 'Sign In', exact: true }).boundingBox();
   const startBox = await start.boundingBox();
-  expect(Math.abs(signIn!.y - startBox!.y)).toBeLessThan(2);
-  expect(startBox!.y + startBox!.height).toBeGreaterThan(sizes.phone.height - 48);
+  const helpBox = await nav(page).getByRole('button', { name: 'Help', exact: true }).boundingBox();
+  expect(signIn!.y).toBeLessThan(startBox!.y);
+  expect(startBox!.y).toBeLessThan(helpBox!.y);
+  expect(helpBox!.y + helpBox!.height).toBeLessThanOrEqual(sizes.phone.height);
+  expect(helpBox!.y + helpBox!.height).toBeGreaterThan(sizes.phone.height - 48);
   await expect(header(page).getByRole('link', { name: 'Corridra home' })).toHaveAttribute(
     'href',
     '/',
@@ -200,7 +203,7 @@ test('N3 nothing the boards show that does not work yet is offered: no WhatsApp,
     if (await menu(page).isVisible()) await menu(page).click();
     else await whatWeDo(page).click();
     const text = await header(page).innerText();
-    for (const word of ['WhatsApp', 'Data saver', 'Español', 'Listen'])
+    for (const word of ['WhatsApp', 'Data saver', 'Español'])
       expect(text, `${word} at ${size.width}`).not.toContain(word);
     // Every link goes somewhere real.
     const hrefs = await header(page)
@@ -276,11 +279,11 @@ test('N6 the phone menu keeps focus inside, makes the page inert, closes on Esca
       `Tab ${index + 1}`,
     ).toBe(true);
   }
-  // Shift+Tab from the first control (the logo) goes to the last (Start a Request), and Tab goes back.
+  // Shift+Tab from the first control (the logo) goes to the last (Help, the last row), and Tab goes back.
   const home = header(page).getByRole('link', { name: 'Corridra home' });
   await home.focus();
   await page.keyboard.press('Shift+Tab');
-  await expect(nav(page).getByRole('link', { name: /^Start a Request/ })).toBeFocused();
+  await expect(nav(page).getByRole('button', { name: 'Help', exact: true })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(home).toBeFocused();
   await page.keyboard.press('Escape');
@@ -338,14 +341,19 @@ test('N6 every header control is at least 44 px, with the panel open and with th
   }
 });
 
-test('N6 the help dock stays and Listen is never in the header', async ({ page }) => {
+test('N6 Help is the last row of the phone menu, and Listen sits in the top bar (UI/UX.v4 screen 10)', async ({
+  page,
+}) => {
   await page.setViewportSize(sizes.phone);
   await page.goto('/');
-  await expect(header(page).getByRole('button', { name: 'Help', exact: true })).toBeVisible();
-  await expect(header(page).getByRole('button', { name: /listen/i })).toHaveCount(0);
+  // Listen is in the bar wherever this browser can read the page aloud; Help waits in the menu.
+  await expect(header(page).getByRole('button', { name: 'Help', exact: true })).toBeHidden();
+  await menu(page).click();
+  await expect(nav(page).getByRole('button', { name: 'Help', exact: true })).toBeVisible();
   await page.setViewportSize(sizes.desktop);
-  await expect(page.locator('.corner-dock:not(.header-help)')).toBeVisible();
-  await expect(header(page).getByRole('button', { name: /listen/i })).toHaveCount(0);
+  // On a wide screen the corner Help stays; the corner Listen gives way to the one in the bar.
+  await expect(page.locator('.corner-dock:not(.header-help):not(.drawer-help)')).toBeVisible();
+  await expect(page.locator('.corner-dock .dock-listen')).toBeHidden();
 });
 
 for (const [name, size] of Object.entries(sizes))

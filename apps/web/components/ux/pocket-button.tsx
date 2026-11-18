@@ -328,6 +328,10 @@ function PocketView({
         }}
       >
         <CorridraIcon name={open ? 'close' : 'plus'} />
+        {/* UI/UX.v4 "Quick": the visible word. The accessible name stays "Open Quick Menu" / "Close Quick Menu". */}
+        <span className="ux-pocket-word" aria-hidden="true">
+          Quick
+        </span>
       </button>
       {open ? (
         view === 'list' ? (

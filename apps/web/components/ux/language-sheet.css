@@ -1,0 +1,118 @@
+/* The language sheet (UI/UX.v4 row "Language chooser"): a bottom sheet, light scrim, 44 px rows, one row per language
+   in its own script. Tokens only; logical properties so Arabic stays right to left in its own row. */
+.language-sheet-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.language-sheet-scrim {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--ink) 22%, transparent);
+}
+.language-sheet {
+  position: relative;
+  width: min(100%, 32rem);
+  max-height: 85dvh;
+  padding: var(--space-4) var(--space-4) calc(var(--space-4) + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow-3);
+  animation: language-sheet-rise var(--dur-step) var(--ease-product) both;
+}
+@keyframes language-sheet-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-4));
+  }
+}
+.language-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+.language-sheet-head h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+.language-sheet-close {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 2.75rem;
+  padding: 0 var(--space-3);
+  font: inherit;
+  font-size: var(--text-base);
+  color: var(--text-1);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.language-sheet-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.language-sheet-list li {
+  margin: 0;
+}
+.language-sheet-list button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 3rem;
+  padding: 0 var(--space-3);
+  font: inherit;
+  font-size: var(--text-lg);
+  color: var(--text-1);
+  text-align: start;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  cursor: pointer;
+}
+.language-sheet-list button:hover {
+  background: var(--surface-2);
+}
+.language-sheet-list button[aria-pressed='true'] {
+  font-weight: 600;
+  background: var(--selected-surface);
+}
+.language-sheet-code {
+  flex: none;
+  min-width: 2.25rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-2);
+}
+.language-sheet-name {
+  flex: 1 1 auto;
+}
+.language-sheet-list small {
+  font-size: var(--text-sm);
+  color: var(--text-2);
+}
+.language-sheet-note {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+  color: var(--text-2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .language-sheet {
+    animation: none;
+  }
+}

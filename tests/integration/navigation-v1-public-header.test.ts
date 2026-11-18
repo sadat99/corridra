@@ -71,8 +71,10 @@ describe('the public header on the server (navigation v1)', () => {
     expect(html).toContain('class="menu-toggle"');
     expect(html).toContain('aria-label="Main navigation"');
     expect(html).toContain('class="primary-link nav-cta"');
-    // The help dock stays in the header for phones.
-    expect(html).toContain('header-help');
+    // Help is the last row of the drawer (UI/UX.v4 screen 10); Listen and the language sit in the top bar.
+    expect(html).toContain('drawer-help');
+    expect(html).toContain('public-bar-tools');
+    expect(html).toContain('public-drawer-tools');
     // Every job page the header links to exists.
     for (const page of ['sell', 'source', 'machinery', 'trade-missions', 'business-trips'])
       expect(existsSync(resolve(`apps/web/app/${page}/page.tsx`)), page).toBe(true);
@@ -126,7 +128,8 @@ describe('the public header on the server (navigation v1)', () => {
     expect(source).toContain('export function BrandLockup()');
     expect(source).toContain('useSignedIn(accounts)');
     expect(source).toContain('useSignOut()');
-    expect(source).toContain('<LanguageSwitcher />');
-    expect(source).toContain('<CornerDock variant="header" />');
+    expect(source).toContain('<TopBarTools />');
+    expect(source).toContain('<TopBarTools variant="drawer" />');
+    expect(source).toContain('<CornerDock variant="drawer" />');
   });
 });
