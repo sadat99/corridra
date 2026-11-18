@@ -8,6 +8,8 @@ import { neonAuth } from '../../lib/neon-auth';
 import { AccountSignout } from './signout';
 import { CustomerMissions } from './customer-missions';
 import { SavedMissions } from './saved-missions';
+import { MemberReports } from './member-reports';
+import { memberAccessOn } from '../../lib/member-access';
 import { customerSavedMissionsEnabled } from '@corridra/auth/customer-saved-missions';
 import { customerCompaniesEnabled } from '@corridra/auth/customer-companies';
 import { OperatorInvitationHint } from '../../components/operator-invitation-hint';
@@ -129,6 +131,22 @@ export default async function Page({
         requestCreationEnabled = true;
       } catch {
         /* The independent request section provides the bounded unavailable/denied state. */
+      }
+  }
+  // ADR-087 U5: the Members' Reports tab only for someone who owns or manages a workspace with at least one other current
+  // member. The probe reads no member item and records nothing; any failure means no tab.
+  let memberReportsVisible = false;
+  if (savedMissionIssuer && memberAccessOn()) {
+    const services = foundations();
+    if (services)
+      try {
+        await services.ready;
+        memberReportsVisible =
+          (
+            await services.customerMemberAccess.workspaces(data.user.id, savedMissionIssuer)
+          )?.workspaces.some((workspace) => workspace.others > 0) ?? false;
+      } catch {
+        /* No tab: the person owns or manages nothing reachable, or the module is not installed. */
       }
   }
   const heading = headings[view];
@@ -323,6 +341,12 @@ export default async function Page({
                       </p>
                     )}
                   </>
+                }
+                members={
+                  savedMissionIssuer &&
+                  memberReportsVisible && (
+                    <MemberReports subject={data.user.id} issuer={savedMissionIssuer} />
+                  )
                 }
               />
             </InvitationProvider>

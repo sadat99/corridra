@@ -36,6 +36,12 @@ export function createPendingBooks(): PendingBooks {
     any: () => ids.size > 0,
   };
 }
+/**
+ * Where a download is asked for. Absent: the member's own book route. A workspace owner or admin reading a member's
+ * saved report (ADR-087 U5) asks the member access route, which takes the same body plus its own fields.
+ */
+export type BookTarget = { endpoint: string; fields: Record<string, string> };
+const ownBooks: BookTarget = { endpoint: '/api/customer-books', fields: {} };
 type Message = { tone: 'status' | 'alert'; text: ReactNode };
 
 // The panel sits in the page's English frame, so its fixed words are the English words.
@@ -92,6 +98,7 @@ export function BookDownloads({
   pending,
   onDenied,
   onChanged,
+  target = ownBooks,
 }: {
   subject: string;
   issuer: string;
@@ -103,6 +110,7 @@ export function BookDownloads({
   onDenied: (message: string, signedOut: boolean) => void;
   /** The reviewed content changed: the parent reads the report again without closing this panel. */
   onChanged: () => void;
+  target?: BookTarget;
 }) {
   const noticeId = useId();
   const emptyId = useId();
@@ -136,12 +144,12 @@ export function BookDownloads({
     };
     const forget = () => pending.forget(kind);
     try {
-      const response = await fetch('/api/customer-books', {
+      const response = await fetch(target.endpoint, {
         method: 'POST',
         cache: 'no-store',
         signal: controller.signal,
         headers: savedMissionHeaders({ subject, issuer }),
-        body: JSON.stringify({ resourceId, commandId, kind, acknowledged: true }),
+        body: JSON.stringify({ ...target.fields, resourceId, commandId, kind, acknowledged: true }),
       });
       if (response.ok) {
         const code = response.headers.get('X-Corridra-Book-Digest') ?? '';

@@ -1,5 +1,10 @@
 import { CustomerMemberNoticeService } from './member-notice';
 import {
+  CustomerMemberAccessService,
+  memberAccessAvailable,
+  type MemberAccessLabels,
+} from './member-access';
+import {
   CustomerProgrammeProjectionsService,
   customerProgrammeProjectionsEnabled,
 } from '@corridra/auth/customer-programme-projections';
@@ -900,6 +905,21 @@ function createServices() {
       },
       readCustomerSession,
     ),
+    // ADR-087 U5: owners and admins read members' saved reports and decision cards. Same options as saved reports;
+    // CORRIDRA_MEMBER_ACCESS is read inside, and the database decides every read.
+    customerMemberAccess: new CustomerMemberAccessService(
+      runtimePool,
+      authPool,
+      {
+        enabled: customerSavedMissionsEnabled(),
+        synthetic: config.DATA_ENVIRONMENT === 'synthetic',
+        dataMode: realUseEnabled() ? 'real' : 'synthetic',
+        production: customerProductionLocked(),
+        openAdmission: customerOpenAdmission(),
+        issuer: customerIssuerFromEnv(),
+      },
+      readCustomerSession,
+    ),
     customerRequestDetails: new CustomerRequestDetailService(
       runtimePool,
       authPool,
@@ -984,3 +1004,14 @@ function createServices() {
   };
 }
 export const foundations = recoverableResource(createServices);
+
+// ADR-087 U5, for server pages: the S3 label names workspace owners and admins only when CORRIDRA_MEMBER_ACCESS is on and part 1
+// of the member access module is installed; the S4 label also needs part 2 (decision cards). Fails closed to today's labels.
+export function memberAccessForPage(): Promise<MemberAccessLabels> {
+  return memberAccessAvailable(async () => {
+    const services = foundations();
+    if (!services) return { reports: false, cards: false };
+    await services.ready;
+    return services.customerMemberAccess.installedForLabels();
+  });
+}
