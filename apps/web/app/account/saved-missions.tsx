@@ -83,11 +83,9 @@ export function MemberNoticeView({
           className="member-notice-item"
           data-workspace={notice.workspaceId}
         >
-          {notices.length > 1 && (
-            <p>
-              <strong>{notice.workspaceName}</strong>
-            </p>
-          )}
+          <p>
+            <strong>{notice.workspaceName}</strong>
+          </p>
           <p>{memberNoticeText(notice.opensAt)}</p>
           <button
             type="button"
@@ -105,25 +103,35 @@ export function MemberNoticeView({
   );
 }
 
-/** Loads the member notices from /api/customer-member-notice and records a dismissal there. Any failure to load shows nothing. */
-export function MemberNotices({ subject, issuer }: SavedMissionScope) {
+/**
+ * Loads the member notices from /api/customer-member-notice and records a dismissal there. Any failure to load shows nothing.
+ * With savedId (a saved report's page) only the notice of that report's workspace is shown.
+ */
+export function MemberNotices({
+  subject,
+  issuer,
+  savedId,
+}: SavedMissionScope & { savedId?: string }) {
   const [notices, setNotices] = useState<MemberNotice[]>([]),
     [busy, setBusy] = useState<string | null>(null),
     [failed, setFailed] = useState(false);
   useEffect(() => {
     const task = new AbortController();
-    void fetch('/api/customer-member-notice', {
-      cache: 'no-store',
-      signal: task.signal,
-      headers: savedMissionHeaders({ subject, issuer }),
-    })
+    void fetch(
+      '/api/customer-member-notice' + (savedId ? '?saved=' + encodeURIComponent(savedId) : ''),
+      {
+        cache: 'no-store',
+        signal: task.signal,
+        headers: savedMissionHeaders({ subject, issuer }),
+      },
+    )
       .then((response) => (response.ok ? response.json() : null))
       .then((value) => {
         if (!task.signal.aborted) setNotices(memberNoticeList(value));
       })
       .catch(() => undefined);
     return () => task.abort();
-  }, [subject, issuer]);
+  }, [subject, issuer, savedId]);
   function dismiss(workspaceId: string) {
     setBusy(workspaceId);
     setFailed(false);

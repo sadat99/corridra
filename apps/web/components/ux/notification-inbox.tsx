@@ -8,12 +8,16 @@ import { formatDateTime } from '../../lib/ux/format';
 import { readJson } from '../../lib/ux/step-up';
 import { safeInternalPath } from '../../lib/ux/safe-path';
 import { groupNotifications } from '../../lib/ux/notification-groups';
-import { memberNoticeHref, memberNoticeInboxTitle } from '../../lib/member-notice-words';
+import {
+  memberNoticeHref,
+  memberNoticeInboxTitle,
+  memberNoticeInboxText,
+} from '../../lib/member-notice-words';
 
 type Item = {
   id: string;
   type: string;
-  payload: { title?: string; href?: string };
+  payload: { title?: string; href?: string; words?: string; opensAt?: string };
   readAt: string | null;
   createdAt: string;
 };
@@ -36,6 +40,10 @@ const typeTitle: Record<string, string> = {
 };
 /** Where an item leads when its payload names no link of its own. */
 const typeHref: Record<string, string> = { MEMBER_NOTICE: memberNoticeHref };
+/** The words an item carries under its title: for the member notice, the decision 4b words with the time it names. */
+function itemText(item: Item): string | null {
+  return item.type === 'MEMBER_NOTICE' ? memberNoticeInboxText(item.payload) : null;
+}
 
 export function NotificationInbox({
   endpoint,
@@ -175,6 +183,7 @@ export function NotificationInbox({
           </button>
         )}
         <span className="ux-kit-hint"> {formatDateTime(item.createdAt)}</span>
+        {itemText(item) ? <p>{itemText(item)}</p> : null}
       </li>
     );
   }
@@ -256,6 +265,7 @@ export function NotificationInbox({
                 );
               })()}
               <span className="ux-kit-hint"> {formatDateTime(item.createdAt)}</span>
+              {itemText(item) ? <p>{itemText(item)}</p> : null}
             </li>
           ))}
         </ul>

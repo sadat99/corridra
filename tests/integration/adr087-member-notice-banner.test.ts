@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import {
   memberNoticeHref,
+  memberNoticeInboxText,
   memberNoticeInboxTitle,
   memberNoticeList,
   memberNoticeText,
@@ -67,8 +68,8 @@ describe('the banner', () => {
     expect(html).toContain(memberNoticeText('2026-11-20T06:30:00.000Z'));
     expect(html).toContain('06:30');
     expect(html).toContain('>Dismiss</button>');
-    // One workspace: its name is not repeated above the words.
-    expect(html).not.toContain('Sample Exports');
+    // The workspace is always named, so a member of several knows which one the words are about.
+    expect(html).toContain('<strong>Sample Exports</strong>');
   });
   it('stays after switch-on: a time in the past still renders', async () => {
     const past = new Date(Date.now() - 3 * 86400000).toISOString();
@@ -101,14 +102,17 @@ describe('the banner', () => {
     ).toEqual([]);
     expect(memberNoticeList({ notices: [notice('2026-11-20T06:30:00.000Z')] })).toHaveLength(1);
   });
-  it('is mounted on the saved reports list and the decision card panel', () => {
+  it('is mounted on the saved reports list, and on the decision card panel for that report only', () => {
     const saved = readFileSync(resolve('apps/web/app/account/saved-missions.tsx'), 'utf8');
     expect(saved).toContain('<MemberNotices subject={subject} issuer={issuer} />');
+    expect(saved).toContain("'?saved=' + encodeURIComponent(savedId)");
     const card = readFileSync(
       resolve('apps/web/app/account/missions/decision-card-panel.tsx'),
       'utf8',
     );
-    expect(card).toContain('<MemberNotices subject={subject} issuer={issuer} />');
+    expect(card).toContain(
+      '<MemberNotices subject={subject} issuer={issuer} savedId={resourceId} />',
+    );
   });
 });
 
@@ -125,6 +129,45 @@ describe('the switch, the route and the inbox', () => {
     expect(route).toContain("request.headers.get('origin') !== s.config.APP_ORIGIN");
     expect(route).toContain("startsWith('application/json')");
     expect(route).toContain('z.object({ workspaceId: z.uuid() }).strict()');
+  });
+  it('the inbox item shows the 4b words with the time it carries, in the reader time zone', () => {
+    setViewerTimeZone('Asia/Dhaka');
+    const payload = {
+      workspaceId: W,
+      opensAt: '2026-11-20T06:30:00.000Z',
+      words: DECISION_4B,
+    };
+    expect(memberNoticeInboxText(payload)).toBe(memberNoticeText(payload.opensAt));
+    expect(memberNoticeInboxText(payload)).toContain('12:30');
+    expect(memberNoticeInboxText({ words: DECISION_4B })).toBeNull();
+    expect(memberNoticeInboxText({ opensAt: 'never' })).toBeNull();
+    const inbox = readFileSync(resolve('apps/web/components/ux/notification-inbox.tsx'), 'utf8');
+    expect(inbox.split('{itemText(item) ? <p>{itemText(item)}</p> : null}').length - 1).toBe(2);
+    // The row stores exactly the decided words, the same as the ADR and the app.
+    const sql = readFileSync(
+      resolve('packages/db/member-notice-migrations/0001_member_notice.sql'),
+      'utf8',
+    );
+    const block = sql.slice(sql.indexOf('-- decision-4b-begin'), sql.indexOf('-- decision-4b-end'));
+    expect(block).toContain(`'words','${DECISION_4B}'`);
+  });
+  it('the switch hides the inbox item too, and its owner-page line says so', () => {
+    const inbox = readFileSync(resolve('apps/web/lib/customer-inbox.ts'), 'utf8');
+    expect(inbox).toContain(
+      'const visibleSql = "AND (type<>\'MEMBER_NOTICE\' OR NOT $1::boolean)";',
+    );
+    expect(inbox.split('[noticeHidden()]').length - 1).toBe(2);
+    const owner = readFileSync(resolve('apps/web/lib/owner-switches.ts'), 'utf8');
+    expect(owner).toContain('Turning it off hides the account notice and the inbox item at once');
+  });
+  it('the route needs saved reports, private requests and the inbox, so a signed-out 401 means the notice is live', () => {
+    const route = readFileSync(resolve('apps/web/app/api/customer-member-notice/route.ts'), 'utf8');
+    expect(route).toContain(
+      'if (!customerSavedMissionsEnabled() || !customerRequestsEnabled() || !notificationsOn())',
+    );
+    expect(route.indexOf("throw new DomainError('Not found', 404)")).toBeLessThan(
+      route.indexOf('customerSavedMissionsEnabled() ||'),
+    );
   });
   it('the inbox shows the notice with a short title and leads to the saved reports', () => {
     const inbox = readFileSync(resolve('apps/web/components/ux/notification-inbox.tsx'), 'utf8');

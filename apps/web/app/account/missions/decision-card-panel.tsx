@@ -326,7 +326,7 @@ export function DecisionCardPanel({
   const asked = panel.cards.find((card) => card.id === asking);
   return (
     <>
-      <MemberNotices subject={subject} issuer={issuer} />
+      <MemberNotices subject={subject} issuer={issuer} savedId={resourceId} />
       <DecisionCardPanelView
         panel={panel}
         decisions={decisions}

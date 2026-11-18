@@ -408,14 +408,19 @@ test('the member notice choices install or deliver only that module and add no i
   // Guardian G27, 17 Nov 2026: no 25th input. Delivery takes no list; it covers every real workspace not yet delivered.
   assert.equal(Object.keys(declared).length, 24);
   assert.ok(Object.keys(declared).every((name) => !/notice/.test(name)));
+  // The live app origin (a repository variable, not an input) reaches the job only for deliver.
   assert.deepEqual(
     Object.keys(env).filter((name) => name.startsWith('MEMBER_NOTICE_')),
-    ['MEMBER_NOTICE_ACTION'],
+    ['MEMBER_NOTICE_ACTION', 'MEMBER_NOTICE_APP_ORIGIN'],
+  );
+  assert.equal(
+    env.MEMBER_NOTICE_APP_ORIGIN,
+    "${{ inputs.field_modules_action == 'member_notice_deliver' && vars.APP_ORIGIN || '' }}",
   );
   // The deliver choice warns that it waits for U5 and the owner's install approval.
   assert.match(
     declared.field_modules_action.description,
-    /member_notice_deliver[^)]*only after U5 is merged and its install approved by the owner/,
+    /member_notice_deliver[^)]*turn CORRIDRA_MEMBER_NOTICE on in the live app first[^)]*only after U5 is merged and its install approved by the owner/,
   );
 });
 

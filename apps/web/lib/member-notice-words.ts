@@ -13,6 +13,19 @@ export function memberNoticeText(opensAt: string, options: DateTimeOptions = {})
   return memberNoticeWords.replace('[date and time]', when);
 }
 
+/**
+ * The inbox item's words: the decided 4b words (the row carries the same text, tested equal) with the row's opensAt in the
+ * reader's time zone. Without a valid time it shows nothing beyond the title.
+ */
+export function memberNoticeInboxText(payload: {
+  words?: unknown;
+  opensAt?: unknown;
+}): string | null {
+  if (typeof payload.opensAt !== 'string' || !Number.isFinite(Date.parse(payload.opensAt)))
+    return null;
+  return memberNoticeText(payload.opensAt);
+}
+
 /** The short inbox title and where the inbox item leads: the saved reports on /account. */
 export const memberNoticeInboxTitle = 'Who can read your saved reports';
 export const memberNoticeHref = '/account?view=results&tab=saved';

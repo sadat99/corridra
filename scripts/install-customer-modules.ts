@@ -61,7 +61,11 @@ import {
 import { migrateViewerExportAccess } from '../packages/db/src/viewer-export-access-migrate';
 import { migrateQuotationLinkCheck } from '../packages/db/src/quotation-link-check-migrate';
 import { migrateMemberNotice } from '../packages/db/src/member-notice-migrate';
-import { deliverMemberNotice } from '../packages/db/src/member-notice-deliver';
+import {
+  assertMemberNoticeLive,
+  deliverMemberNotice,
+  memberNoticeDispatcher,
+} from '../packages/db/src/member-notice-deliver';
 import { configureSupplySources } from '../packages/auth/src/supply-source-configuration';
 import { configureWorkspaceLifecycle } from '../packages/auth/src/customer-workspace-lifecycle-configuration';
 import { configureAccountLifecycle } from '../packages/auth/src/customer-account-lifecycle-configuration';
@@ -128,6 +132,8 @@ const v = z
     QUOTATION_LINK_CHECK_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     // ADR-087 U4: install writes no row; deliver writes the notices for the listed workspaces (or all) and starts their 4d clock.
     MEMBER_NOTICE_ACTION: z.enum(['unchanged', 'install', 'deliver']).default('unchanged'),
+    // Only for deliver: the live app's https origin (repository variable APP_ORIGIN), asked before anything is written.
+    MEMBER_NOTICE_APP_ORIGIN: z.string().optional(),
     COUNTERPARTY_CHANGES_ACTION: z
       .enum(['unchanged', 'install', 'enable', 'pause'])
       .default('unchanged'),
@@ -316,6 +322,8 @@ if (v.QUOTATION_LINK_CHECK_ACTION !== 'unchanged' && !apply)
   throw new Error('Quotation link check installation requires INSTALL_APPLY=yes');
 if (v.MEMBER_NOTICE_ACTION !== 'unchanged' && !apply)
   throw new Error('Member notice installation or delivery requires INSTALL_APPLY=yes');
+// ADR-087 4d: the clock may start only while the /account notice is live. Asked before the report and before any write.
+if (v.MEMBER_NOTICE_ACTION === 'deliver') await assertMemberNoticeLive(v.MEMBER_NOTICE_APP_ORIGIN);
 if (v.COUNTERPARTY_CHANGES_ACTION !== 'unchanged' && !apply)
   throw new Error('Contact and note changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.COUNTERPARTY_CHANGES_ACTION) && !v.COUNTERPARTY_CHANGES_REASON)
@@ -786,13 +794,16 @@ try {
       );
     }
     if (v.MEMBER_NOTICE_ACTION === 'deliver') {
-      const done = await deliverMemberNotice(pool, {
+      // Real workspaces only: the data cleanup classifier's made-up, demo and QA workspaces (reused, read only, never printed
+      // here) and archived workspaces are left out. Synthetic workspaces are never candidates.
+      const { deliveries: done, skipped } = await deliverMemberNotice(pool, {
         targets: 'all',
-        deliveredBy: 'install-customer-modules member_notice_deliver',
+        deliveredBy: memberNoticeDispatcher(),
+        classify: inventoryDataCleanup,
       });
       const fresh = done.filter((row) => row.delivered);
       console.log(
-        `Member notice delivery: workspaces ${done.length}, delivered now ${fresh.length}, already delivered ${done.length - fresh.length}, notices written ${fresh.reduce((n, row) => n + row.notices, 0)}`,
+        `Member notice delivery: workspaces ${done.length}, delivered now ${fresh.length}, already delivered ${done.length - fresh.length}, notices written ${fresh.reduce((n, row) => n + row.notices, 0)}, excluded as made-up, demo or QA ${skipped.listed}, excluded as archived ${skipped.archived}`,
       );
       for (const row of done)
         console.log(

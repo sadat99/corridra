@@ -639,7 +639,7 @@ export const switchRegistry: SwitchEntry[] = [
   {
     name: 'CORRIDRA_MEMBER_NOTICE',
     label: 'Workspace reading notice',
-    line: 'Shows the ADR-087 member notice to each member of a workspace whose notice was delivered: on the saved reports and decision cards in their account, and as one inbox item. It tells them that owners and admins of the workspace will be able to read their saved reports and decision cards from the time it names, and each member can dismiss it. It opens no access by itself: that is a separate later change. Off by default. Shows nothing until the member notice database module is installed and the notice delivered. Turn it off by removing the setting in Vercel and redeploying.',
+    line: 'Shows the ADR-087 member notice to each member of a workspace whose notice was delivered: on the saved reports and decision cards in their account, and as one inbox item with the same words and time. It tells them that owners and admins of the workspace will be able to read their saved reports and decision cards from the time it names, and each member can dismiss it. It opens no access by itself: that is a separate later change. Off by default. Shows nothing until the member notice database module is installed and the notice delivered. Turn it on before the owner delivers the notice: delivery refuses while it is off. Turning it off hides the account notice and the inbox item at once; nothing is deleted. Turn it off by removing the setting in Vercel and redeploying.',
     group: 'Accounts and requests',
     kind: 'flag',
   },

@@ -8,7 +8,14 @@ import type { DatabaseClient } from '../../packages/db/src/index';
 import { migrateCustomerRealUse } from '../../packages/db/src/customer-real-use-migrate';
 import { migrateCommercialReadiness } from '../../packages/db/src/commercial-readiness-migrate';
 import { migrateMemberNotice } from '../../packages/db/src/member-notice-migrate';
-import { deliverMemberNotice } from '../../packages/db/src/member-notice-deliver';
+import {
+  assertMemberNoticeLive,
+  deliverMemberNotice,
+  memberNoticeDispatcher,
+} from '../../packages/db/src/member-notice-deliver';
+import { inventoryDataCleanup } from '../../packages/auth/src/customer-data-cleanup';
+import { CustomerInboxService } from '../../apps/web/lib/customer-inbox';
+import { InboxService } from '../../packages/communications/src/inbox';
 import { pinCustomerAuthority } from '../../packages/auth/src/customer-authority-pin';
 import { configureCustomerRealUse } from '../../packages/auth/src/customer-real-use-configuration';
 import { admitSyntheticCustomer } from '../../packages/auth/src/customer-admission';
@@ -43,6 +50,8 @@ const objects = async () =>
         to_regprocedure('customer.member_notice_dismiss(uuid)') IS NOT NULL AS dismiss`,
     )
   ).rows[0];
+const DECISION_4B =
+  'Owners and admins of this workspace can read the reports you save and the decision cards you make here, and download the Trip Book and Supplier Book of your saved reports. This includes items you saved before today. They cannot remove or withdraw them. If there is anything you do not want them to see, you can remove it before [date and time].';
 const none = { delivery: false, dismissal: false, deliver: false, state: false, dismiss: false };
 const all = { delivery: true, dismissal: true, deliver: true, state: true, dismiss: true };
 
@@ -112,8 +121,21 @@ describe('install', () => {
     );
     expect(await objects()).toEqual(none);
   });
-  test('refuses a changed inbox type check, found by its column and not its name', async () => {
+  test('refuses without the inbox event key index, and leaves nothing behind', async () => {
     await migrateCommercialReadiness(f.owner);
+    await f.owner.query('ALTER INDEX app.inbox_notification_event_idx RENAME TO hidden_event_idx');
+    try {
+      await expect(migrateMemberNotice(f.owner)).rejects.toThrow(
+        'Member notice needs commercial readiness 0002 first: app.inbox_notification.event_key and inbox_notification_event_idx',
+      );
+      expect(await objects()).toEqual(none);
+    } finally {
+      await f.owner.query(
+        'ALTER INDEX app.hidden_event_idx RENAME TO inbox_notification_event_idx',
+      );
+    }
+  });
+  test('refuses a changed inbox type check, found by its column and not its name', async () => {
     expect(await typeCheck()).toEqual([{ name: 'inbox_notification_type_check', hash: ORIGINAL }]);
     // The same definition under another name is accepted by the guard; a changed definition is not.
     await f.owner.query(
@@ -275,9 +297,11 @@ describe('delivery, state and dismissal', () => {
   });
 
   test('every current member gets exactly one notice, a removed member none, opens_at is 24 hours later', async () => {
-    const [first] = await deliverMemberNotice(f.owner, {
+    const {
+      deliveries: [first],
+    } = await deliverMemberNotice(f.owner, {
       targets: [W],
-      deliveredBy: 'member notice test',
+      deliveredBy: memberNoticeDispatcher({ GITHUB_ACTOR: 'owner-handle', GITHUB_RUN_ID: '42' }),
     });
     expect(first).toMatchObject({ workspaceId: W, delivered: true, notices: 2 });
     expect(first!.opensAt.getTime() - first!.deliveredAt.getTime()).toBe(24 * 3600 * 1000);
@@ -285,7 +309,12 @@ describe('delivery, state and dismissal', () => {
       const rows = await noticesOf(person);
       expect(rows).toHaveLength(1);
       expect(rows[0].event_key).toBe(`member-notice:${W}`);
-      expect(rows[0].payload).toEqual({ workspaceId: W, opensAt: first!.opensAt.toISOString() });
+      // The row carries the decision 4b words and the switch-on time (ADR-087 U4).
+      expect(rows[0].payload).toEqual({
+        workspaceId: W,
+        opensAt: first!.opensAt.toISOString(),
+        words: DECISION_4B,
+      });
       expect(new Date(rows[0].created_at).getTime()).toBe(first!.deliveredAt.getTime());
     }
     expect(await noticesOf('rex')).toEqual([]);
@@ -316,7 +345,9 @@ describe('delivery, state and dismissal', () => {
   test('a second delivery writes nothing and keeps the first time; another workspace is untouched', async () => {
     const before = (await f.owner.query('SELECT * FROM customer_private.member_notice_delivery'))
       .rows;
-    const [again] = await deliverMemberNotice(f.owner, {
+    const {
+      deliveries: [again],
+    } = await deliverMemberNotice(f.owner, {
       targets: [W],
       deliveredBy: 'second run',
     });
@@ -326,7 +357,10 @@ describe('delivery, state and dismissal', () => {
       (await f.owner.query('SELECT * FROM customer_private.member_notice_delivery')).rows,
     ).toEqual(before);
     expect(before.map((row) => row.workspace_id)).toEqual([W]);
-    expect(before[0].delivered_by).toBe('member notice test');
+    // The record names who dispatched it (F7).
+    expect(before[0].delivered_by).toBe(
+      'owner-handle via install-customer-modules member_notice_deliver run 42',
+    );
     expect(await noticesOf('olive')).toHaveLength(1);
     expect(await state('stranger', W3)).toEqual([]);
   });
@@ -371,19 +405,54 @@ describe('delivery, state and dismissal', () => {
       });
   });
 
-  test('all delivers every real workspace without a record and skips synthetic ones', async () => {
-    expect(await deliverMemberNotice(f.owner, { targets: 'all', deliveredBy: 'all run' })).toEqual(
-      [],
-    );
-    await f.owner.query('UPDATE app.tenant SET synthetic=false WHERE id=$1', [W3]);
-    const done = await deliverMemberNotice(f.owner, { targets: 'all', deliveredBy: 'all run' });
-    expect(done.map((row) => [row.workspaceId, row.delivered, row.notices])).toEqual([
-      [W3, true, 1],
+  test('all delivers every real workspace without a record, and skips synthetic, archived, made-up, demo and QA ones', async () => {
+    const run = (classify?: typeof inventoryDataCleanup) =>
+      deliverMemberNotice(f.owner, { targets: 'all', deliveredBy: 'all run', classify });
+    expect(await run()).toEqual({ deliveries: [], skipped: { listed: 0, archived: 0 } });
+    // A real workspace with a QA test name, classified by the existing data cleanup inventory (reused, not copied).
+    const qa = (
+      await workspaces('stranger').provision({
+        commandId: randomUUID(),
+        name: 'Synthetic QA Test Real Exporters',
+      })
+    ).id as string;
+    const archived = (
+      await workspaces('stranger').provision({
+        commandId: randomUUID(),
+        name: 'Synthetic archived exporters workspace',
+      })
+    ).id as string;
+    await f.owner.query('UPDATE app.tenant SET synthetic=false WHERE id = ANY($1::uuid[])', [
+      [W3, qa, archived],
     ]);
-    expect(await noticesOf('stranger')).toHaveLength(1);
-    expect(await deliverMemberNotice(f.owner, { targets: 'all', deliveredBy: 'all run' })).toEqual(
-      [],
+    const inventory = await inventoryDataCleanup(f.owner);
+    expect([...inventory.qa.kept.map((row) => row.id), ...inventory.qa.listedOnly]).toEqual([qa]);
+    // The archived answer comes from customer_private.workspace_archived when the workspace lifecycle is installed; this
+    // fixture does not install it, so a stand-in answers true for one workspace only.
+    expect(
+      (
+        await f.owner.query(
+          "SELECT to_regprocedure('customer_private.workspace_archived(uuid)') AS f",
+        )
+      ).rows[0].f,
+    ).toBeNull();
+    await f.owner.query(
+      `CREATE FUNCTION customer_private.workspace_archived(target uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT target='${archived}'::uuid $$`,
     );
+    try {
+      const done = await run(inventoryDataCleanup);
+      expect(done.skipped).toEqual({ listed: 1, archived: 1 });
+      expect(done.deliveries.map((row) => [row.workspaceId, row.delivered, row.notices])).toEqual([
+        [W3, true, 1],
+      ]);
+      expect(await noticesOf('stranger')).toHaveLength(1);
+      expect(await run(inventoryDataCleanup)).toEqual({
+        deliveries: [],
+        skipped: { listed: 1, archived: 1 },
+      });
+    } finally {
+      await f.owner.query('DROP FUNCTION customer_private.workspace_archived(uuid)');
+    }
   });
 
   test('an unknown workspace refuses and the whole run writes nothing', async () => {
@@ -408,26 +477,85 @@ describe('delivery, state and dismissal', () => {
     await expect(service('olive').dismiss(W, undefined, undefined, {})).rejects.toMatchObject({
       status: 503,
     });
-    // Move the clock past switch-on: the notice is still there for olive, and gone for lena only (she dismissed it).
+    // A workspace whose switch-on time has passed (the record is written that way, never changed): the notice is still
+    // there for olive until she dismisses it, and lena (who dismissed W) sees nothing.
+    const W4 = (
+      await workspaces('olive').provision({
+        commandId: randomUUID(),
+        name: 'Synthetic opened workspace',
+      })
+    ).id as string;
     await f.owner.query(
-      `UPDATE customer_private.member_notice_delivery SET delivered_at=now()-interval '2 days',
-        opens_at=now()-interval '1 day' WHERE workspace_id=$1`,
-      [W],
+      `INSERT INTO customer_private.member_notice_delivery(workspace_id,delivered_at,opens_at,delivered_by)
+       VALUES($1,now()-interval '2 days',now()-interval '1 day','member notice test')`,
+      [W4],
     );
     const olive = (await service('olive').list(undefined, undefined, on)).notices;
-    expect(olive).toHaveLength(1);
-    expect(olive[0]).toMatchObject({
-      workspaceId: W,
-      workspaceName: 'Synthetic member notice workspace',
-    });
-    expect(Date.parse(olive[0]!.opensAt)).toBeLessThan(Date.now());
+    expect(olive.map((row) => row.workspaceId).sort()).toEqual([W, W4].sort());
+    const opened = olive.find((row) => row.workspaceId === W4)!;
+    expect(opened.workspaceName).toBe('Synthetic opened workspace');
+    expect(Date.parse(opened.opensAt)).toBeLessThan(Date.now());
     expect((await service('lena').list(undefined, undefined, on)).notices).toEqual([]);
     expect((await service('rex').list(undefined, undefined, on)).notices).toEqual([]);
+    await service('olive').dismiss(W4, undefined, undefined, on);
+    expect(
+      (await service('olive').list(undefined, undefined, on)).notices.map((row) => row.workspaceId),
+    ).toEqual([W]);
     await service('olive').dismiss(W, undefined, undefined, on);
     expect((await service('olive').list(undefined, undefined, on)).notices).toEqual([]);
+    // A saved report that is not theirs answers nothing.
+    expect((await service('olive').list(undefined, undefined, on, randomUUID())).notices).toEqual(
+      [],
+    );
     await expect(service('rex').dismiss(W, undefined, undefined, on)).rejects.toMatchObject({
       code: '42501',
     });
+  });
+
+  test('both tables are history: UPDATE and DELETE are refused, even for the owner', async () => {
+    for (const sql of [
+      "UPDATE customer_private.member_notice_delivery SET delivered_at=delivered_at-interval '1 day',opens_at=opens_at-interval '1 day'",
+      'DELETE FROM customer_private.member_notice_delivery',
+      'UPDATE customer_private.member_notice_dismissal SET dismissed_at=now()',
+      'DELETE FROM customer_private.member_notice_dismissal',
+    ])
+      await expect(f.owner.query(sql), sql).rejects.toThrow();
+    expect(
+      (
+        await f.owner.query(
+          'SELECT count(*)::int AS n FROM customer_private.member_notice_dismissal',
+        )
+      ).rows[0].n,
+    ).toBeGreaterThan(0);
+  });
+
+  test('CORRIDRA_MEMBER_NOTICE off hides the inbox item from the list, the unread count and Mark All Read', async () => {
+    const inbox = new CustomerInboxService(
+      f.runtime,
+      f.auth,
+      options,
+      async () => session('stranger'),
+      new InboxService(f.runtime),
+    );
+    const saved = process.env.CORRIDRA_MEMBER_NOTICE;
+    try {
+      delete process.env.CORRIDRA_MEMBER_NOTICE;
+      expect(
+        (await inbox.list()).filter((item) => item.type === ('MEMBER_NOTICE' as string)),
+      ).toEqual([]);
+      expect(await inbox.unreadCount()).toBe(0);
+      expect(await inbox.markAllRead()).toBe(0);
+      process.env.CORRIDRA_MEMBER_NOTICE = 'true';
+      const shown = (await inbox.list()).filter(
+        (item) => item.type === ('MEMBER_NOTICE' as string),
+      );
+      expect(shown).toHaveLength(1);
+      expect(shown[0]!.readAt).toBeNull();
+      expect(await inbox.unreadCount()).toBe(1);
+    } finally {
+      if (saved === undefined) delete process.env.CORRIDRA_MEMBER_NOTICE;
+      else process.env.CORRIDRA_MEMBER_NOTICE = saved;
+    }
   });
 
   test('the inbox write sanitiser keeps the notice payload whole', async () => {
@@ -469,28 +597,49 @@ describe('the member notice install wiring', () => {
     const report = script.indexOf("await report(apply ? 'Before install'");
     const after = script.indexOf("await report('After install');");
     const install = script.indexOf('const result = await migrateMemberNotice(pool);');
-    const deliver = script.indexOf('const done = await deliverMemberNotice(pool, {');
+    const deliver = script.indexOf(
+      'const { deliveries: done, skipped } = await deliverMemberNotice(pool, {',
+    );
     for (const at of [install, deliver]) {
       expect(at).toBeGreaterThan(report);
       expect(at).toBeLessThan(after);
     }
     expect(script.slice(install - 120, install)).toContain("v.MEMBER_NOTICE_ACTION === 'install'");
-    expect(script.slice(deliver - 120, deliver)).toContain("v.MEMBER_NOTICE_ACTION === 'deliver'");
+    expect(script.slice(deliver - 600, deliver)).toContain(
+      "if (v.MEMBER_NOTICE_ACTION === 'deliver') {",
+    );
     expect(script.split('migrateMemberNotice(pool)').length - 1).toBe(1);
     expect(script.split('deliverMemberNotice(pool').length - 1).toBe(1);
+    // F1: the live notice is asked before the report and before anything is written; F6 and F7 in the call.
+    const live = script.indexOf(
+      "if (v.MEMBER_NOTICE_ACTION === 'deliver') await assertMemberNoticeLive(v.MEMBER_NOTICE_APP_ORIGIN);",
+    );
+    expect(live).toBeGreaterThan(0);
+    expect(live).toBeLessThan(report);
+    expect(script.slice(deliver, deliver + 400)).toContain(
+      'deliveredBy: memberNoticeDispatcher(),',
+    );
+    expect(script.slice(deliver, deliver + 400)).toContain('classify: inventoryDataCleanup,');
     expect(script).toContain("targets: 'all',");
     // Counts and short ids only in the public log.
     expect(script).toContain('row.workspaceId.slice(0, 8)');
     expect(script).not.toMatch(/console\.log\([^)]*row\.workspaceId[^.]/);
   });
-  test('the workflow derives the action from field_modules_action alone and adds no input', () => {
+  test('the workflow derives the action from field_modules_action alone, adds no input, and passes the app origin only to deliver', () => {
     expect(workflow).toMatch(/^\s{12}member_notice,$/m);
     expect(workflow).toMatch(/^\s{12}member_notice_deliver,$/m);
     expect(workflow).not.toMatch(/^\s{6}member_notice[a-z_]*:/m);
-    const action = workflow.split('\n').filter((text) => text.includes('MEMBER_NOTICE_'));
-    expect(action).toHaveLength(1);
-    expect(action[0]).toContain(
-      "inputs.field_modules_action == 'member_notice' && 'install' || inputs.field_modules_action == 'member_notice_deliver' && 'deliver' || 'unchanged'",
+    const lines = workflow.split('\n').filter((text) => text.includes('MEMBER_NOTICE_'));
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toContain(
+      "MEMBER_NOTICE_ACTION: ${{ inputs.field_modules_action == 'member_notice' && 'install' || inputs.field_modules_action == 'member_notice_deliver' && 'deliver' || 'unchanged' }}",
+    );
+    expect(lines[1]).toContain(
+      "MEMBER_NOTICE_APP_ORIGIN: ${{ inputs.field_modules_action == 'member_notice_deliver' && vars.APP_ORIGIN || '' }}",
+    );
+    expect(workflow).toContain('turn CORRIDRA_MEMBER_NOTICE on in the live app first');
+    expect(workflow).toContain(
+      'run it only after U5 is merged and its install approved by the owner',
     );
   });
   test('the migrator reads only the top-level files, so the rollback text is never applied', () => {
@@ -504,5 +653,50 @@ describe('the member notice install wiring', () => {
     const migrator = readFileSync(resolve('packages/db/src/member-notice-migrate.ts'), 'utf8');
     expect(migrator).toContain("import { migrateViewerModule } from './viewer-module-run';");
     expect(migrator).toContain("schema: 'member_notice_migrations'");
+  });
+});
+
+// F1: the 24-hour clock may start only while the /account notice is live. The installer asks the live app first and refuses,
+// with a plain message and before any write, unless a signed-out GET of the notice route answers 401.
+describe('the live notice check before delivery', () => {
+  const answer = (status: number) => async () => ({ status });
+  test('only a 401 from the live route lets delivery go on', async () => {
+    const seen: string[] = [];
+    await assertMemberNoticeLive('https://app.example.test', async (url) => {
+      seen.push(url);
+      return { status: 401 };
+    });
+    expect(seen).toEqual(['https://app.example.test/api/customer-member-notice']);
+  });
+  test('switch off, notice unavailable, unreachable or no address: refused before anything is written', async () => {
+    await expect(assertMemberNoticeLive('https://app.example.test', answer(404))).rejects.toThrow(
+      'CORRIDRA_MEMBER_NOTICE is off on the live app',
+    );
+    for (const status of [503, 200, 500, 403])
+      await expect(
+        assertMemberNoticeLive('https://app.example.test', answer(status)),
+      ).rejects.toThrow(`the live app answered ${status}`);
+    await expect(
+      assertMemberNoticeLive('https://app.example.test', async () => {
+        throw new Error('offline');
+      }),
+    ).rejects.toThrow('the live app could not be reached');
+    for (const origin of [undefined, '', 'not a url'])
+      await expect(assertMemberNoticeLive(origin, answer(401))).rejects.toThrow(
+        'the live app address is not set',
+      );
+    for (const origin of ['http://app.example.test', 'https://app.example.test/path'])
+      await expect(assertMemberNoticeLive(origin, answer(401))).rejects.toThrow(
+        'APP_ORIGIN must be the https origin of the live app',
+      );
+  });
+  test('the record names the dispatcher', () => {
+    expect(memberNoticeDispatcher({ GITHUB_ACTOR: 'someone', GITHUB_RUN_ID: '7' })).toBe(
+      'someone via install-customer-modules member_notice_deliver run 7',
+    );
+    expect(memberNoticeDispatcher({})).toBe(
+      'install-customer-modules member_notice_deliver (no GitHub actor)',
+    );
+    expect(memberNoticeDispatcher({ GITHUB_ACTOR: 'x'.repeat(300) })).toHaveLength(200);
   });
 });

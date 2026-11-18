@@ -5,6 +5,12 @@ import {
 } from '@corridra/auth/customer-session';
 import type { DatabasePool } from '@corridra/db';
 import type { InboxService } from '@corridra/communications/inbox';
+import { memberNoticeOn } from './member-notice';
+
+// ADR-087 U4: while CORRIDRA_MEMBER_NOTICE is off, MEMBER_NOTICE items are hidden from the list, the unread count and Mark
+// All Read, so the switch pauses the notice everywhere at once. The rows stay; turning it on shows them again.
+const noticeHidden = (env: NodeJS.ProcessEnv = process.env) => !memberNoticeOn(env);
+const visibleSql = "AND (type<>'MEMBER_NOTICE' OR NOT $1::boolean)";
 
 /** Reuses inbox SQL inside a fresh verified customer transaction, including its recipient RLS. */
 export class CustomerInboxService extends CustomerSessionBoundary {
@@ -19,7 +25,12 @@ export class CustomerInboxService extends CustomerSessionBoundary {
   }
   list(subject?: string, issuer?: string) {
     return this.transaction(
-      (db, proof) => this.inbox.list({ kind: 'customer', proofHash: proof.hash }, 30, db),
+      async (db, proof) => {
+        const items = await this.inbox.list({ kind: 'customer', proofHash: proof.hash }, 30, db);
+        return noticeHidden()
+          ? items.filter((item) => item.type !== ('MEMBER_NOTICE' as string))
+          : items;
+      },
       subject,
       issuer,
     );
@@ -42,7 +53,8 @@ export class CustomerInboxService extends CustomerSessionBoundary {
         (
           await db.query(
             `UPDATE app.inbox_notification SET read_at=clock_timestamp()
-             WHERE recipient_kind='customer' AND recipient_account_id=customer.actor_id() AND read_at IS NULL`,
+             WHERE recipient_kind='customer' AND recipient_account_id=customer.actor_id() AND read_at IS NULL ${visibleSql}`,
+            [noticeHidden()],
           )
         ).rowCount ?? 0,
       subject,
@@ -57,7 +69,8 @@ export class CustomerInboxService extends CustomerSessionBoundary {
           (
             await db.query(
               `SELECT count(*)::int AS n FROM app.inbox_notification
-               WHERE recipient_kind='customer' AND recipient_account_id=customer.actor_id() AND read_at IS NULL`,
+               WHERE recipient_kind='customer' AND recipient_account_id=customer.actor_id() AND read_at IS NULL ${visibleSql}`,
+              [noticeHidden()],
             )
           ).rows[0].n,
         ),

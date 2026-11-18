@@ -6,7 +6,7 @@
 -- It deletes nothing. It refuses once any notice was delivered or dismissed: MEMBER_NOTICE inbox rows, delivery records and
 -- dismissals are history and are never deleted (ADR-087 Rollback). Otherwise it restores the exact original inbox type check
 -- (same name, found by the column it constrains), only when the live check is exactly the one 0001 created, and drops the two
--- tables and three functions 0001 created, and nothing else.
+-- tables (with their triggers) and four functions 0001 created, and nothing else.
 DO $guard$
 DECLARE live text;
 BEGIN
@@ -27,6 +27,7 @@ END
 $guard$;
 
 DROP FUNCTION customer.member_notice_dismiss(uuid);
+DROP FUNCTION customer.member_notice_for_saved(uuid);
 DROP FUNCTION customer.member_notice_state(uuid);
 DROP FUNCTION customer_private.member_notice_deliver(uuid,text);
 DROP TABLE customer_private.member_notice_dismissal;
@@ -58,6 +59,7 @@ BEGIN
   OR to_regclass('customer_private.member_notice_dismissal') IS NOT NULL
   OR to_regprocedure('customer_private.member_notice_deliver(uuid,text)') IS NOT NULL
   OR to_regprocedure('customer.member_notice_state(uuid)') IS NOT NULL
+  OR to_regprocedure('customer.member_notice_for_saved(uuid)') IS NOT NULL
   OR to_regprocedure('customer.member_notice_dismiss(uuid)') IS NOT NULL THEN
   RAISE EXCEPTION 'Member notice rollback: an object of the module is still present';
  END IF;

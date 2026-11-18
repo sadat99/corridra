@@ -15,8 +15,16 @@ const installedSql =
   "SELECT to_regprocedure('customer.member_notice_state(uuid)') IS NOT NULL AS present";
 
 export class CustomerMemberNoticeService extends CustomerSessionBoundary {
-  /** The notices this person has not dismissed, one per workspace they are a current member of and that was delivered. */
-  async list(subject?: string, issuer?: string, env: NodeJS.ProcessEnv = process.env) {
+  /**
+   * The notices this person has not dismissed, one per workspace they are a current member of and that was delivered. With
+   * a saved report id, only the notice of the workspace that report belongs to (nothing when it is not theirs).
+   */
+  async list(
+    subject?: string,
+    issuer?: string,
+    env: NodeJS.ProcessEnv = process.env,
+    savedId?: string,
+  ) {
     if (!memberNoticeOn(env)) return { notices: [] as MemberNotice[] };
     return this.transaction(
       async (db) => {
@@ -29,9 +37,14 @@ export class CustomerMemberNoticeService extends CustomerSessionBoundary {
           opens_at: Date;
           dismissed: boolean;
         }>(
-          `SELECT w.id,w.name,s.delivered_at,s.opens_at,s.dismissed
-           FROM customer.collaborative_workspaces() w, LATERAL customer.member_notice_state(w.id) s
-           ORDER BY s.delivered_at,w.id`,
+          savedId
+            ? `SELECT w.id,w.name,s.delivered_at,s.opens_at,s.dismissed
+               FROM customer.member_notice_for_saved($1::uuid) s
+               JOIN customer.collaborative_workspaces() w ON w.id=s.workspace_id`
+            : `SELECT w.id,w.name,s.delivered_at,s.opens_at,s.dismissed
+               FROM customer.collaborative_workspaces() w, LATERAL customer.member_notice_state(w.id) s
+               ORDER BY s.delivered_at,w.id`,
+          savedId ? [savedId] : [],
         );
         return {
           notices: rows.rows
