@@ -47,7 +47,9 @@ test('with the switch off the sign-in form has no code option at all', async ({ 
     const form = page.getByRole('form', { name: 'Account access' });
     await expect(form.getByLabel('Email', { exact: true })).toBeVisible();
     await expect(form.getByLabel('Password', { exact: true })).toBeVisible();
-    await expect(form.getByRole('button')).toHaveCount(1);
+    // Two buttons: Sign In and the Show password toggle (owner board screen 03). Neither is a code option.
+    await expect(form.getByRole('button')).toHaveCount(2);
+    await expect(form.getByRole('button', { name: /show password|hide password/i })).toHaveCount(1);
     await expect(form.getByRole('button', { name: 'Sign In', exact: true })).toBeVisible();
     await expect(page.getByText(/code/i)).toHaveCount(0);
     await expect(page.getByRole('button', { name: /sign in with a code/i })).toHaveCount(0);
