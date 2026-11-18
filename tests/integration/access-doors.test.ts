@@ -242,6 +242,14 @@ describe('the shared access navs', () => {
     expect(source.match(/key=\{link\.text\}/g)).toHaveLength(2);
   });
 
+  it('renders the single "Not a customer?" line with the other two door titles', async () => {
+    const { AccessNotCustomer } = await load('components/access-elsewhere.tsx');
+    const html = render(ce(AccessNotCustomer, { current: 'customer' }));
+    expect(html).toContain('aria-label="Not a customer?"');
+    expect(html).toContain('href="/access/team">Team and Network Access</a>');
+    expect(html).toContain('href="/access/link">Private Link Access</a>');
+    expect(html).not.toContain('Not what you need?');
+  });
   it('renders the "Not what you need?" bar with the other two door titles', async () => {
     const { AccessElsewhere } = await load('components/access-elsewhere.tsx');
     const html = render(ce(AccessElsewhere, { current: 'team' }));

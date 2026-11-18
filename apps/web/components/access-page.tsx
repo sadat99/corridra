@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { PublicShell } from './public-shell';
 import { CorridraIcon } from './corridra-icon';
-import { AccessElsewhere } from './access-elsewhere';
+import { AccessElsewhere, AccessNotCustomer } from './access-elsewhere';
 import { accessDoor, type AccessDoorId, type AccessIconName } from '../lib/access-doors';
 import { uxSwitchOn } from '../lib/ux-switches';
 import './page-compact.css';
@@ -25,12 +25,15 @@ export function AccessPage({
   eyebrow,
   title,
   lead,
+  notCustomer = false,
   children,
 }: {
   id: AccessDoorId;
   eyebrow: string;
   title: string;
   lead: string;
+  /** The customer door shows the single "Not a customer?" line instead of the shared bar. Other pages keep the bar. */
+  notCustomer?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -51,7 +54,7 @@ export function AccessPage({
       </section>
       <div className="access-page">
         {children}
-        <AccessElsewhere current={id} />
+        {notCustomer ? <AccessNotCustomer current={id} /> : <AccessElsewhere current={id} />}
       </div>
     </PublicShell>
   );
