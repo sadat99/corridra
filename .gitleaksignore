@@ -1,3 +1,6 @@
 # Verified false positive: evidence/evidence-secret-scan.json SHA-256 checksum.
 # The flagged value equals SHA256 of the committed [] report; no credential is present.
 21410efbd657536d2a95bcdb45f4e9f230537971:docs/ux10x/evidence-sha256.json:generic-api-key:3
+
+# Verified false positive: fixed fake test cookie secret in tests/ux/access-server.ts, replaced by randomBytes in the next commit; no credential is present.
+8780493e199dee51452928022572528680679ec8:tests/ux/access-server.ts:generic-api-key:18
