@@ -2,8 +2,12 @@
 
 import Link from 'next/link';
 import { useId, useState } from 'react';
-import { Arrow } from './arrow';
 import { FactLabel } from './fact-label';
+import { ChoiceChip, ChoiceChipRow } from './ux/choice-chip';
+import { ExampleTag, Eyebrow } from './ux/example-tag';
+import { Flagged, type FlagCode } from './ux/flag';
+import { NumberField } from './ux/number-field';
+import { marketFlag } from './home-route-line';
 import { useT } from './language-provider';
 import { fill } from '../lib/i18n/fill';
 import type { HomeRoutesKey } from '../lib/home-routes-keys';
@@ -27,9 +31,15 @@ import {
 const key = (name: string) => name as HomeRoutesKey;
 const number = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
 
-export function HomeSell() {
+export function HomeSell({
+  market,
+  onMarket,
+}: {
+  market: MarketKey;
+  onMarket: (market: MarketKey) => void;
+}) {
   const t = useT();
-  const [market, setMarket] = useState<MarketKey>('eu');
+  const setMarket = onMarket;
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const example = marketExamples[market];
   const rows = example.fair.map((company, index) => ({ company, index }));
@@ -42,7 +52,11 @@ export function HomeSell() {
     <section className="tr-section" id="route-sell" aria-labelledby="sell-title">
       <div className="tr-intro">
         <div>
-          <p className="label ac1-rule">{t('home.tr.sl.eyebrow')}</p>
+          <Eyebrow>{t('home.tr.sl.eyebrow')}</Eyebrow>
+          <p className="tr-side">
+            <Flagged code="bd">{t('home.country.bd')}</Flagged> {t('home.b3.to')}{' '}
+            <Flagged code={marketFlag(market)}>{t(key(`home.tr.mk.${market}`))}</Flagged>
+          </p>
           <h2 id="sell-title" tabIndex={-1}>
             {t('home.tr.sl.title')}
           </h2>
@@ -58,40 +72,41 @@ export function HomeSell() {
         </div>
       </div>
 
-      <details className="tr-fold">
-        <summary>{t('home.tr.w.title')}</summary>
-        <div className="tr-fold-body">
-          <fieldset className="tr-market">
-            <legend>{t('home.tr.mk.legend')}</legend>
-            <div className="tr-chips">
-              {marketKeys.map((m) => (
-                <Choice
-                  key={m}
-                  name="home-market"
-                  value={m}
-                  checked={market === m}
-                  onChoose={() => setMarket(m)}
-                  label={t(key(`home.tr.mk.${m}`))}
-                />
-              ))}
-            </div>
-            <p className="tr-market-line" aria-live="polite">
-              <strong>{t(key(`home.tr.mk.${market}.line.head`))}</strong>{' '}
-              {t(key(`home.tr.mk.${market}.line`))}
-            </p>
-          </fieldset>
-
+      <fieldset className="tr-market">
+        <legend>{t('home.tr.mk.legend')}</legend>
+        <ChoiceChipRow>
+          {marketKeys.map((m) => (
+            <ChoiceChip
+              key={m}
+              name="home-market"
+              value={m}
+              checked={market === m}
+              onChoose={() => setMarket(m)}
+              label={<Flagged code={marketFlag(m)}>{t(key(`home.tr.mk.${m}`))}</Flagged>}
+            />
+          ))}
+        </ChoiceChipRow>
+        <p className="tr-market-line" aria-live="polite">
+          <strong>{t(key(`home.tr.mk.${market}.line.head`))}</strong>{' '}
+          {t(key(`home.tr.mk.${market}.line`))}
+        </p>
+      </fieldset>
+      <div className="tr-block">
+        <h3 className="tr-h3" id="worth-title">
+          {t('home.tr.w.title')}
+        </h3>
+        <div className="tr-block-body">
           <p className="tr-brief">
-            <span className="ac1-example-tag">{t('home.tr.w.brief')}</span>
+            <ExampleTag>{t('home.tr.w.brief')}</ExampleTag>
             <span>
               <strong>{t('home.tr.w.brief.lead')}</strong> {t(key(`home.tr.mk.${market}.brief`))}
             </span>
           </p>
           <fieldset className="tr-steps">
             <legend>{t('home.tr.w.steps')}</legend>
-            <div className="tr-chips">
+            <ChoiceChipRow>
               {([1, 2, 3] as const).map((n) => (
-                <Choice
+                <ChoiceChip
                   key={n}
                   name="home-worth-step"
                   value={String(n)}
@@ -100,7 +115,7 @@ export function HomeSell() {
                   label={`${n}. ${t(key(`home.tr.w.step${n}`))}`}
                 />
               ))}
-            </div>
+            </ChoiceChipRow>
           </fieldset>
           <p className="tr-sum" aria-live="polite">
             <span className="tr-big">{summary}</span> {t(key(`home.tr.w.sum${step}`))}
@@ -120,7 +135,7 @@ export function HomeSell() {
                       <tr key={company.name} className="is-out">
                         <th scope="row">
                           <strong>{company.name}</strong>
-                          <span>{company.place}</span>
+                          <Place place={company.place} />
                         </th>
                         <td>
                           <span className="tr-off">{t('home.tr.w.off')}</span>
@@ -145,7 +160,7 @@ export function HomeSell() {
                     <tr key={company.name} className={step > 1 && !fit ? 'is-no' : undefined}>
                       <th scope="row">
                         <strong>{company.name}</strong>
-                        <span>{company.place}</span>
+                        <Place place={company.place} />
                       </th>
                       <td>{t(key(`home.tr.w.as.${index}`))}</td>
                       <td>
@@ -177,7 +192,7 @@ export function HomeSell() {
             </table>
           </div>
           <p className="tr-small">
-            <span className="ac1-example-tag">{t('home.tr.q.example')}</span>{' '}
+            <ExampleTag>{t('home.tr.q.example')}</ExampleTag>{' '}
             {fill(t('home.tr.w.note'), {
               selfDeclared: 'Self-declared',
               evidence: 'Evidence available',
@@ -185,43 +200,10 @@ export function HomeSell() {
             })}
           </p>
         </div>
-      </details>
+      </div>
 
       <Calculator market={market} />
-      <Link prefetch={false} className="primary-link" href={routeHref.sell}>
-        {t('home.tr.cta.sell')} <Arrow />
-      </Link>
     </section>
-  );
-}
-
-function Choice({
-  name,
-  value,
-  checked,
-  onChoose,
-  label,
-}: {
-  name: string;
-  value: string;
-  checked: boolean;
-  onChoose: () => void;
-  label: string;
-}) {
-  const id = useId();
-  return (
-    <span className="tr-choice">
-      <input
-        className="sr-only"
-        type="radio"
-        name={name}
-        id={id}
-        value={value}
-        checked={checked}
-        onChange={onChoose}
-      />
-      <label htmlFor={id}>{label}</label>
-    </span>
   );
 }
 
@@ -249,23 +231,31 @@ function Calculator({ market }: { market: MarketKey }) {
     meet: '',
   });
   // The currency follows the market until an amount is typed or the visitor chooses one; it never changes under typed
-  // numbers, so a figure never silently changes meaning.
+  // numbers, so a figure never silently changes meaning. Once every amount is cleared, it follows the market again.
   const [chosen, setChosen] = useState<CalculatorCurrency | null>(null);
-  const typed = (['stand', 'flight', 'hotel', 'samples'] as const).some((f) => values[f] !== '');
+  const [unreadable, setUnreadable] = useState<Partial<Record<FieldId, boolean>>>({});
+  const moneyFields = ['stand', 'flight', 'hotel', 'samples'] as const;
+  const typed = moneyFields.some((f) => values[f] !== '' || unreadable[f]);
   const [locked, setLocked] = useState<CalculatorCurrency | null>(null);
-  const currency: CalculatorCurrency = chosen ?? locked ?? marketCurrency[market];
-  const money = (n: number) => `${currency} ${number.format(Math.round(n))}`;
+  const currency: CalculatorCurrency =
+    chosen ?? (typed && locked ? locked : marketCurrency[market]);
+  const money = (n: number) => `${currency} ${number.format(n)}`;
 
   const errors: Partial<Record<FieldId, MessageKey>> = {};
   const read = (id: FieldId, whole: boolean): number => {
     const raw = values[id];
-    if (raw === '') return 0;
+    if (!unreadable[id] && raw === '') return 0;
     const x = Number(raw);
-    let error: MessageKey | null = null;
-    if (!Number.isFinite(x)) error = 'home.tr.fc.err.digits';
-    else if (x < 0) error = 'home.tr.fc.err.zero';
-    else if (whole && Math.floor(x) !== x) error = 'home.tr.fc.err.whole';
-    else if (x >= 1e11) error = 'home.tr.fc.err.large';
+    const error: MessageKey | null =
+      unreadable[id] || !Number.isFinite(x)
+        ? 'home.tr.fc.err.digits'
+        : x < 0
+          ? 'home.tr.fc.err.zero'
+          : whole && Math.floor(x) !== x
+            ? 'home.tr.fc.err.whole'
+            : x >= 1e11
+              ? 'home.tr.fc.err.large'
+              : null;
     if (error) {
       errors[id] = error;
       return 0;
@@ -274,18 +264,32 @@ function Calculator({ market }: { market: MarketKey }) {
   };
   const people = read('people', true);
   const days = read('days', true);
-  const stand = read('stand', false);
-  const flights = people * read('flight', false);
-  const hotel = people * days * read('hotel', false);
-  const samples = read('samples', false);
+  const rawStand = read('stand', false);
+  const rawFlights = people * read('flight', false);
+  const rawHotel = people * days * read('hotel', false);
+  const rawSamples = read('samples', false);
   const meetings = read('meet', true);
+  // Every line is rounded to a whole amount first and the total is the sum of the rounded lines, so the lines always
+  // add up to the total shown. A product or total too large to be real is not shown as a figure.
+  const tooLarge =
+    [rawStand, rawFlights, rawHotel, rawSamples].some((n) => n >= 1e11) ||
+    rawStand + rawFlights + rawHotel + rawSamples >= 1e11;
+  const round = (n: number) => (tooLarge ? 0 : Math.round(n));
+  const stand = round(rawStand);
+  const flights = round(rawFlights);
+  const hotel = round(rawHotel);
+  const samples = round(rawSamples);
   const total = stand + flights + hotel + samples;
   const left = fields.filter((f) => errors[f.id]).map((f) => t(f.label));
   const line = (n: number) => (n > 0 ? money(n) : t('home.tr.fc.b.none'));
-  const set = (id: FieldId, value: string) => {
-    setValues((current) => ({ ...current, [id]: value }));
-    if (!typed && !chosen && fields.find((f) => f.id === id)?.money && value !== '')
-      setLocked(marketCurrency[market]);
+  const set = (id: FieldId, value: string, bad: boolean) => {
+    const next = { ...values, [id]: value };
+    const nextBad = { ...unreadable, [id]: bad };
+    setValues(next);
+    setUnreadable(nextBad);
+    const stillTyped = moneyFields.some((f) => next[f] !== '' || nextBad[f]);
+    if (!stillTyped) setLocked(null);
+    else if (!locked && !chosen) setLocked(currency);
   };
   const half = Math.floor(meetings / 2);
   const note = chosen
@@ -297,17 +301,19 @@ function Calculator({ market }: { market: MarketKey }) {
         : `${t(key(`home.tr.fc.cur.${market}`))} ${t('home.tr.fc.cur.change')}`;
   return (
     <>
-      <details className="tr-fold">
-        <summary>{t('home.tr.fc.title')}</summary>
-        <div className="tr-fold-body">
+      <div className="tr-block">
+        <h3 className="tr-h3" id="faircost-title">
+          {t('home.tr.fc.title')}
+        </h3>
+        <div className="tr-block-body">
           <p className="tr-sub">{t('home.tr.fc.lead')}</p>
           <div className="tr-calc">
             <div className="tr-panel">
               <fieldset className="tr-steps">
                 <legend>{t('home.tr.fc.currency')}</legend>
-                <div className="tr-chips">
+                <ChoiceChipRow>
                   {calculatorCurrencies.map((c) => (
-                    <Choice
+                    <ChoiceChip
                       key={c}
                       name="home-currency"
                       value={c}
@@ -316,37 +322,24 @@ function Calculator({ market }: { market: MarketKey }) {
                       label={c}
                     />
                   ))}
-                </div>
+                </ChoiceChipRow>
               </fieldset>
               <p className="tr-small" aria-live="polite">
                 {note}
               </p>
               <div className="tr-fields">
-                {fields.map((f) => {
-                  const id = `${prefix}-${f.id}`;
-                  return (
-                    <div className="tr-field" key={f.id}>
-                      <label htmlFor={id}>
-                        {t(f.label)}
-                        {f.money ? <span> ({currency})</span> : null}
-                      </label>
-                      <input
-                        id={id}
-                        type="number"
-                        inputMode={f.whole ? 'numeric' : 'decimal'}
-                        min={0}
-                        step={f.whole ? 1 : 'any'}
-                        value={values[f.id]}
-                        aria-invalid={errors[f.id] ? true : undefined}
-                        aria-describedby={`${id}-error`}
-                        onChange={(event) => set(f.id, event.target.value)}
-                      />
-                      <p className="tr-error" id={`${id}-error`} aria-live="polite">
-                        {errors[f.id] ? t(errors[f.id]!) : null}
-                      </p>
-                    </div>
-                  );
-                })}
+                {fields.map((f) => (
+                  <NumberField
+                    key={f.id}
+                    id={`${prefix}-${f.id}`}
+                    label={t(f.label)}
+                    unit={f.money ? currency : undefined}
+                    whole={f.whole}
+                    value={values[f.id]}
+                    onChange={(value, bad) => set(f.id, value, bad)}
+                    error={errors[f.id] ? t(errors[f.id]!) : null}
+                  />
+                ))}
               </div>
               <p className="tr-small">{t('home.tr.fc.help')}</p>
             </div>
@@ -381,7 +374,7 @@ function Calculator({ market }: { market: MarketKey }) {
                   <dt>{t('home.tr.fc.b.meeting')}</dt>
                   <dd>
                     {total > 0 && meetings > 0
-                      ? money(total / meetings)
+                      ? line(Math.round(total / meetings))
                       : t('home.tr.fc.b.addMeet')}
                   </dd>
                 </div>
@@ -389,6 +382,7 @@ function Calculator({ market }: { market: MarketKey }) {
               {left.length ? (
                 <p className="tr-warn">{fill(t('home.tr.fc.left'), { names: left.join(', ') })}</p>
               ) : null}
+              {tooLarge ? <p className="tr-warn">{t('home.b3.fc.tooLarge')}</p> : null}
               <p className="tr-frame">
                 {total > 0
                   ? fill(t('home.tr.fc.frame.n'), { amount: money(total) })
@@ -398,9 +392,9 @@ function Calculator({ market }: { market: MarketKey }) {
                 <p className="tr-small">
                   {fill(t('home.tr.fc.half'), {
                     m: meetings,
-                    each: money(total / meetings),
+                    each: line(Math.round(total / meetings)),
                     half,
-                    each2: money(total / half),
+                    each2: line(Math.round(total / half)),
                   })}
                 </p>
               ) : null}
@@ -409,12 +403,31 @@ function Calculator({ market }: { market: MarketKey }) {
               ) : null}
               <p className="tr-small">{t('home.tr.fc.after')}</p>
               <Link prefetch={false} className="primary-link" href={routeHref.sell}>
-                {t('home.tr.fc.cta')} <Arrow />
+                {t('home.tr.fc.cta')}
               </Link>
             </div>
           </div>
         </div>
-      </details>
+      </div>
     </>
+  );
+}
+
+/** Countries the example places name, for the flag beside them. A region or an Asian market shows the name only. */
+const placeFlags: Record<string, FlagCode> = {
+  Spain: 'es',
+  France: 'fr',
+  Italy: 'it',
+  'United Kingdom': 'gb',
+  'United States': 'us',
+  Australia: 'au',
+};
+
+function Place({ place }: { place: string }) {
+  const country = place.split(', ').pop() ?? '';
+  return (
+    <span className="tr-place">
+      <Flagged code={placeFlags[country] ?? null}>{place}</Flagged>
+    </span>
   );
 }

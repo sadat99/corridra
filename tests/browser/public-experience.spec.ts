@@ -30,12 +30,17 @@ for (const [route, heading] of routes) {
     // point where details are entered (asserted below).
     await expect(page.getByRole('complementary', { name: 'Service availability' })).toHaveCount(0);
     expect(await page.locator('body').innerText()).not.toContain('\u2014');
-    // The home's radios only choose a route and send nothing (Two Routes, 17 Nov 2026); no field or form is on it.
+    // The home's radios only choose a route and send nothing (Two Routes, 17 Nov 2026). The board 3c brief (owner,
+    // 18 Nov 2026) adds its three answers, which only build a link to /plan: still no form, and no field elsewhere.
     if (route === '/') {
-      // Only the four door radios inside the doors fieldset; any other input, radio, field or form fails.
       const doorRadios = 'fieldset.tr-doors input[type="radio"]';
       await expect(page.locator(doorRadios)).toHaveCount(4);
-      await expect(page.locator(`input:not(${doorRadios}), textarea, form`)).toHaveCount(0);
+      await expect(page.locator('form')).toHaveCount(0);
+      await expect(
+        page.locator(`input:not(${doorRadios}):not(#brief input), textarea:not(#brief textarea)`),
+      ).toHaveCount(0);
+      await expect(page.locator('#brief input[type="radio"]')).toHaveCount(10);
+      await expect(page.locator('#brief textarea')).toHaveCount(1);
     } else if (route !== '/plan')
       await expect(page.locator('input, textarea, form')).toHaveCount(0);
     else

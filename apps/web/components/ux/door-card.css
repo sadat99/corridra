@@ -1,0 +1,130 @@
+/* Door cards (board 3c hero). Drawn for a navy band: light words on a raised navy card; the chosen door turns to the
+   paper surface. Tokens only. */
+.ux-door {
+  position: relative;
+  display: grid;
+}
+.ux-door label {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  min-height: 2.75rem;
+  padding: min(var(--space-3), 3vw) min(var(--space-4), 4vw);
+  padding-inline-end: calc(min(var(--space-4), 4vw) + 1.75rem);
+  border: 1px solid color-mix(in srgb, var(--on-brand) 35%, transparent);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--on-brand) 8%, transparent);
+  color: var(--on-brand);
+  cursor: pointer;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ux-door label {
+    transition:
+      background var(--dur) var(--ease),
+      border-color var(--dur) var(--ease);
+  }
+}
+.ux-door label:hover {
+  border-color: var(--on-brand);
+}
+.ux-door label strong {
+  font-family: var(--serif);
+  font-size: var(--text-lg);
+  font-weight: 500;
+  line-height: 1.2;
+}
+.ux-door.is-big label strong {
+  font-size: var(--text-2xl);
+}
+@media (min-width: 48rem) {
+  .ux-door.is-big label {
+    min-block-size: 12rem;
+    padding: var(--space-6);
+  }
+}
+.ux-door-side {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  color: color-mix(in srgb, var(--on-brand) 80%, transparent);
+}
+.ux-door-route {
+  display: block;
+}
+.ux-door-route,
+.ux-door-text {
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  color: color-mix(in srgb, var(--on-brand) 82%, transparent);
+}
+.ux-door .ux-flag {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--on-brand) 40%, transparent);
+}
+.ux-door input:checked + label {
+  border-color: var(--surface-1);
+  background: var(--surface-1);
+  color: var(--text-1);
+}
+.ux-door input:checked + label :is(.ux-door-side, .ux-door-route, .ux-door-text) {
+  color: var(--text-2);
+}
+.ux-door input:checked + label .ux-flag {
+  box-shadow: 0 0 0 1px var(--border-strong);
+}
+.ux-door input:focus-visible + label {
+  outline: 3px solid var(--on-brand);
+  outline-offset: 3px;
+}
+.ux-door-picked {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--action);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+@media (max-width: 47.99rem) {
+  .ux-door label {
+    padding-block: var(--space-2);
+  }
+}
+/* The radio circle: an empty ring until chosen, then an action ring with a filled centre. */
+.ux-door-dot {
+  position: absolute;
+  inset-block-start: min(var(--space-3), 3vw);
+  inset-inline-end: min(var(--space-4), 4vw);
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  border: 2px solid color-mix(in srgb, var(--on-brand) 75%, transparent);
+  border-radius: 50%;
+  background: transparent;
+}
+.ux-door input:checked + label .ux-door-dot {
+  border-color: var(--action);
+  background: radial-gradient(circle, var(--action) 0 45%, transparent 50%);
+}
+@media (min-width: 48rem) {
+  .ux-door.is-big .ux-door-dot {
+    inset-block-start: var(--space-6);
+    inset-inline-end: var(--space-6);
+  }
+  .ux-door.is-big label {
+    padding-inline-end: calc(var(--space-6) + 1.75rem);
+  }
+}
+/* A narrow door at a large text size: the circle takes its own line at the top end instead of a reserved column, so
+   the words keep the whole width. */
+.ux-door {
+  container-type: inline-size;
+}
+@container (max-width: 16rem) {
+  .ux-door label,
+  .ux-door.is-big label {
+    padding-inline-end: min(var(--space-4), 4vw);
+  }
+  .ux-door-dot {
+    position: static;
+    justify-self: end;
+  }
+}

@@ -5,9 +5,32 @@ import { CorridraIcon } from './corridra-icon';
 import { useT } from './language-provider';
 import { orderedJobs } from '../lib/home-jobs';
 
-/** The three jobs as links, as on the home page. The navigation keeps its name `Choose your commercial objective`. */
-export function HomeJobs({ className = 'ac1-jobs' }: { className?: string }) {
+/**
+ * The three jobs as links, as on the home page. The navigation keeps its name `Choose your commercial objective`.
+ * `quiet` (board 3c close): each is a text link showing its title only; the line, the route and the job's name stay
+ * in the link's accessible name, in the same order, so P-07 names and addresses are unchanged.
+ */
+export function HomeJobs({
+  className = 'ac1-jobs',
+  quiet = false,
+}: {
+  className?: string;
+  quiet?: boolean;
+}) {
   const t = useT();
+  if (quiet)
+    return (
+      <nav className={className} aria-label={t('home.jobs.aria')}>
+        {orderedJobs().map((job) => (
+          <Link prefetch={false} key={job.href} href={job.href} className="ac1-quiet tr-light-link">
+            <span>{t(job.title)}</span>
+            <span className="sr-only"> {t(job.text)}</span>
+            <span className="sr-only"> {t(job.route)}</span>
+            <span className="sr-only"> {t(job.name)}</span>
+          </Link>
+        ))}
+      </nav>
+    );
   return (
     <nav className={className} aria-label={t('home.jobs.aria')}>
       {orderedJobs().map((job) => (

@@ -1,0 +1,1551 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Corridra Two Routes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@500&family=Noto+Sans+Bengali:wght@400;600;700&display=swap">
+<style>
+/* Merged Version 3, Two corridors: A's calm brand story, B's working hooks, organised as two corridors. the China Route tests supply-side complexity; Sell Abroad (the EU, the UK, the US, Australia and key Asian markets) tests demand-side scarcity. Revision 3b, owner decision of 17 Nov 2026. Revision 3c, owner feedback of 17 Nov 2026: Title Case route labels, Spanish draft added to the language switch. Every illustrative figure and company is tagged Example. */
+:root{
+  --navy:#142438;--navy-s:#1c3048;--navy-line:#304866;--on-navy:#f3f6fb;--on-navy2:#bccae0;
+  --cobalt:#2856c5;--cobalt-h:#234eb0;--on-cobalt:#ffffff;--link:#2856c5;
+  --bg:#ffffff;--alt:#f6f8fb;--subtle:#eff3f8;--sel:#e7eeff;--surface:#ffffff;
+  --ink:#18283c;--ink2:#4b5a6c;--line:#d8e0ea;--line2:#a4b1c2;--field:#76849a;
+  --pos:#116653;--pos-s:#e8f5f0;--warn:#865018;--warn-s:#fff2e2;--crit:#a52f43;--crit-s:#fbecef;--unk:#526073;
+  --copper:#bf7548;--copper-ink:#85451e;
+  --hdr:rgba(20,36,56,.94);--shadow:0 18px 50px rgba(20,36,56,.12);
+  --display:'Inter Tight','Inter',system-ui,-apple-system,'Segoe UI',Roboto,'Noto Sans Bengali','Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,'Noto Sans Bengali','Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+  --mono:'Geist Mono',ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --navy:#0f1d31;--navy-s:#182b45;--navy-line:#2d4565;--on-navy:#f1f5fb;--on-navy2:#b4c3d9;
+  --cobalt:#3563d6;--cobalt-h:#2f5ac4;--on-cobalt:#ffffff;--link:#93b4ff;
+  --bg:#0b121c;--alt:#0f1825;--subtle:#121d2c;--sel:#1a2d52;--surface:#142133;
+  --ink:#edf2f8;--ink2:#a8b5c7;--line:#26364b;--line2:#4a5e78;--field:#7088a8;
+  --pos:#5cc9a7;--pos-s:#10332b;--warn:#e9ad66;--warn-s:#3a2914;--crit:#f08a9b;--crit-s:#3d1a22;--unk:#a3b3c7;
+  --copper:#d08a5c;--copper-ink:#e2a57e;--hdr:rgba(12,22,38,.94);--shadow:0 18px 50px rgba(0,0,0,.45);color-scheme:dark}}
+:root[data-theme="dark"]{
+  --navy:#0f1d31;--navy-s:#182b45;--navy-line:#2d4565;--on-navy:#f1f5fb;--on-navy2:#b4c3d9;
+  --cobalt:#3563d6;--cobalt-h:#2f5ac4;--on-cobalt:#ffffff;--link:#93b4ff;
+  --bg:#0b121c;--alt:#0f1825;--subtle:#121d2c;--sel:#1a2d52;--surface:#142133;
+  --ink:#edf2f8;--ink2:#a8b5c7;--line:#26364b;--line2:#4a5e78;--field:#7088a8;
+  --pos:#5cc9a7;--pos-s:#10332b;--warn:#e9ad66;--warn-s:#3a2914;--crit:#f08a9b;--crit-s:#3d1a22;--unk:#a3b3c7;
+  --copper:#d08a5c;--copper-ink:#e2a57e;--hdr:rgba(12,22,38,.94);--shadow:0 18px 50px rgba(0,0,0,.45);color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--navy)}
+h1,h2,h3{margin:0;font-family:var(--display);letter-spacing:-.035em;text-wrap:balance}
+p{margin:0}
+a{color:var(--link)}
+:focus-visible{outline:3px solid var(--cobalt);outline-offset:3px;border-radius:8px}
+.navy :focus-visible,.hdr :focus-visible,.hero :focus-visible{outline-color:#9fbcff}
+section[id]{scroll-margin-top:calc(72px + env(safe-area-inset-top,0px))}
+.in{max-width:1180px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+.band{padding-block:clamp(48px,6vw,84px)}
+.band.alt{background:var(--alt)}
+.band.navy{background:var(--navy);color:var(--on-navy)}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font:500 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink2);margin-bottom:18px}
+.eyebrow::before{content:"";width:22px;height:3px;border-radius:2px;background:var(--copper)}
+.navy .eyebrow{color:var(--on-navy2)}
+.h2{font-size:clamp(32px,5vw,60px);line-height:1.03;font-weight:800}
+.h3{font-size:clamp(24px,2.8vw,34px);line-height:1.1;font-weight:800}
+.lead{font-size:clamp(18px,2vw,22px);line-height:1.4;color:var(--ink2);max-width:36em;margin-top:18px}
+.navy .lead{color:var(--on-navy2)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;margin:0;opacity:0}
+.skip{position:absolute;left:12px;top:-60px;z-index:90;background:var(--cobalt);color:#fff;padding:12px 16px;border-radius:10px;font-weight:600}
+.skip:focus{top:calc(12px + env(safe-area-inset-top,0px))}
+.tag{font:500 10.5px/1 var(--mono);letter-spacing:.09em;text-transform:uppercase;padding:5px 8px;border-radius:6px;display:inline-block;background:var(--warn-s);color:var(--warn);vertical-align:middle;white-space:nowrap}
+.tag.trule{background:var(--sel);color:var(--link)}
+.num{font-family:var(--display);font-variant-numeric:tabular-nums;font-weight:800;letter-spacing:-.04em}
+.small{font-size:13.5px;color:var(--ink2);line-height:1.45}
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 26px;border-radius:999px;font:600 17px/1.2 var(--sans);text-decoration:none;cursor:pointer;border:0;background:var(--cobalt);color:var(--on-cobalt);text-align:center;transition:background .15s,transform .15s}
+.btn:hover{background:var(--cobalt-h)}
+.btn:active{transform:scale(.98)}
+.btn.line{background:transparent;color:var(--link);box-shadow:inset 0 0 0 2px currentColor}
+.btn.line:hover{background:var(--sel)}
+.navy .btn,.hero .btn{box-shadow:0 0 0 1px rgba(255,255,255,.22)}
+.navy .btn.line,.hero .btn.line{color:var(--on-navy);box-shadow:inset 0 0 0 2px rgba(255,255,255,.6)}
+.navy .btn.line:hover,.hero .btn.line:hover{background:rgba(255,255,255,.08)}
+.btn.sm{min-height:44px;padding:0 18px;font-size:15px}
+.btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.btns{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+/* board annotation strip (not part of the real page) */
+.board{background:var(--warn-s);color:var(--ink);border-bottom:2px dashed var(--warn);padding-top:env(safe-area-inset-top,0px);font-size:14px;line-height:1.4}
+.board .in{display:flex;align-items:center;gap:12px;min-height:56px;padding-block:6px}
+.board .bl{flex:none;font:600 10.5px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--warn);border:1.5px solid currentColor;border-radius:6px;padding:5px 7px}
+.board p{flex:1;min-width:0}
+.board p b{font-weight:700}
+.board button{flex:none;width:44px;height:44px;border-radius:50%;border:1.5px solid var(--warn);background:transparent;color:var(--warn);font:600 22px/1 var(--sans);cursor:pointer;display:grid;place-items:center}
+.board button:hover{background:rgba(134,80,24,.1)}
+@media (max-width:620px){.board .bl{display:none}.board{font-size:13px}}
+/* header */
+.hdr{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:var(--hdr);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:var(--on-navy);border-bottom:1px solid var(--navy-line)}
+.hdr .in{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:60px}
+.wm{display:flex;align-items:center;gap:8px;color:var(--on-navy);text-decoration:none;font:800 19px var(--display);letter-spacing:-.04em;min-height:44px}
+.wm i{width:18px;height:18px;border-radius:50%;background:var(--cobalt);position:relative;box-shadow:0 0 0 2px rgba(255,255,255,.2)}
+.wm i::after{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--navy)}
+.hr{display:flex;align-items:center;gap:10px}
+.hnav{display:flex;gap:4px}
+.hnav a{color:var(--on-navy2);text-decoration:none;font:600 14px var(--sans);padding:0 10px;min-height:44px;display:inline-flex;align-items:center;border-radius:10px}
+.hnav a:hover{color:var(--on-navy)}
+@media (max-width:980px){.hnav{display:none}}
+.lang{display:flex;border:1px solid var(--navy-line);border-radius:999px;padding:2px}
+.lang button{border:0;background:transparent;color:var(--on-navy2);font:600 13px var(--sans);min-width:44px;min-height:44px;padding:0 8px;border-radius:999px;cursor:pointer}
+.lang button[aria-pressed=true]{background:var(--on-navy);color:#142438}
+.hdr .btn{min-height:44px;padding:0 18px;font-size:15px}
+.hdr .short{display:none}
+@media (max-width:480px){.hdr .long{display:none}.hdr .short{display:inline}.hdr .btn{padding:0 14px}.wm{font-size:17px}.lang button{min-width:44px;padding:0 6px}}
+@media (max-width:360px){.hr{gap:6px}.hdr .in{gap:6px}.hdr .btn{padding:0 12px}.wm{font-size:16px;gap:6px}.wm i{width:16px;height:16px}.wm i::after{inset:4px}.lang button{padding:0 4px}}
+/* 3c: four languages (EN, বাংলা, 中文, ES). Phones keep one row with tighter spacing; below 375 px the switch takes its own full-width row, so no option is dropped and every target stays 44 px. */
+@media (max-width:480px){.hdr .in{gap:6px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}.hr{gap:6px}.lang{padding:1px}.hdr .btn{padding:0 10px}}
+@media (max-width:400px){.wm{font-size:16px;gap:6px}}
+@media (max-width:374px){.hdr .in{flex-wrap:wrap;row-gap:0;min-height:54px}.hr{display:contents}.lang{order:3;flex:1 0 100%;margin-bottom:6px}.lang button{flex:1 1 0;padding:0 4px}#hdr-cta{margin-left:auto}section[id]{scroll-margin-top:calc(124px + env(safe-area-inset-top,0px))}}
+/* hero */
+.hero{background:var(--navy);color:var(--on-navy);padding-top:clamp(40px,6vw,84px);padding-bottom:clamp(44px,6vw,80px);position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-14%;top:-36%;width:60vw;height:60vw;max-width:760px;max-height:760px;border-radius:50%;border:2px solid rgba(191,117,72,.28);pointer-events:none}
+.hero .in{position:relative;z-index:1}
+.hhead{text-align:center;max-width:980px;margin-inline:auto}
+.strat{display:inline-flex;align-items:center;gap:10px;font:600 15px var(--sans);color:var(--on-navy);background:rgba(255,255,255,.07);border:1px solid var(--navy-line);border-radius:999px;padding:7px 14px 7px 10px;margin-bottom:22px}
+.strat::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--copper)}
+.h1{font-size:clamp(42px,7vw,90px);line-height:.98;font-weight:800;letter-spacing:-.05em;transition:opacity .25s}
+.hsub{font-size:clamp(18px,2vw,23px);line-height:1.42;color:var(--on-navy2);margin:22px auto 0;max-width:34em;transition:opacity .25s}
+.fade{opacity:.15}
+.dnote{font-size:13px;color:#ffd9bd;margin-top:12px}
+fieldset{border:0;margin:0;padding:0;min-width:0}
+.doors{margin-top:clamp(32px,4.4vw,52px)}
+.doors legend{font:700 clamp(20px,2.2vw,26px)/1.2 var(--display);letter-spacing:-.03em;margin:0 auto 6px;padding:0;text-align:center;width:100%}
+.doors .sub2{font-size:15px;color:var(--on-navy2);text-align:center;margin-bottom:18px}
+.bigdoors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.smalldoors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+@media (max-width:760px){.bigdoors,.smalldoors{grid-template-columns:1fr}}
+.door{display:grid;gap:10px;align-content:start;border-radius:26px;background:var(--navy-s);border:1.5px solid var(--navy-line);cursor:pointer;transition:background .15s,border-color .15s,transform .15s;color:var(--on-navy);position:relative}
+.door:hover{border-color:#6f8bb3;transform:translateY(-2px)}
+.door.big{padding:clamp(20px,2.6vw,28px);min-height:clamp(170px,17vw,210px)}
+.door.big b{font:800 clamp(28px,3.2vw,40px)/1.04 var(--display);letter-spacing:-.04em}
+.door.big small{font-size:16px;line-height:1.4;color:var(--on-navy2);max-width:30em}
+.door .droute{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font:600 14.5px var(--sans);color:var(--on-navy2)}
+.door .droute .pl{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.door .dtop{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.door .side{font:500 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:#e8b896}
+.door .dk{width:28px;height:28px;border-radius:50%;border:2px solid #6f8bb3;position:relative;flex:none}
+.door.small{grid-template-columns:auto 1fr;align-items:center;gap:14px;min-height:64px;padding:12px 18px;border-radius:18px}
+.door.small b{font:600 18px/1.25 var(--sans);letter-spacing:-.015em;display:block}
+.door.small small{display:block;font-size:13.5px;color:var(--on-navy2);margin-top:2px}
+.door .flag{box-shadow:0 0 0 1px rgba(255,255,255,.35)}
+.sr:checked+.door{background:#ffffff;color:#18283c;border-color:#ffffff}
+.sr:checked+.door small,.sr:checked+.door .droute{color:#4b5a6c}
+.sr:checked+.door .side{color:#85451e}
+.sr:checked+.door .dk{background:#2856c5;border-color:#2856c5}
+.sr:checked+.door .dk::after{content:"";position:absolute;left:8px;top:4px;width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
+.sr:focus-visible+.door{outline:3px solid #9fbcff;outline-offset:3px}
+.door .sel{display:none;font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#2856c5}
+.sr:checked+.door .sel{display:block}
+.hcta{margin-top:26px;display:grid;justify-items:center;text-align:center;gap:16px}
+.assure{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 18px;font-size:14.5px;color:var(--on-navy2)}
+.assure span{display:inline-flex;align-items:center;gap:7px}
+.assure span::before{content:"";width:14px;height:8px;border-left:2px solid #8fd3bd;border-bottom:2px solid #8fd3bd;transform:rotate(-45deg) translateY(-3px)}
+.hfb{font-size:15px;color:var(--on-navy)}
+.hfb:empty{display:none}
+.hfb a{color:#a9c3ff;display:inline-flex;align-items:center;min-height:44px;padding:0 4px;font-weight:600}
+/* track bar */
+.tbar{background:var(--alt);border-bottom:1px solid var(--line)}
+.tbar .in{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding-block:14px}
+.tbar .tl{font:600 15px var(--sans)}
+.tbar .tl span{color:var(--ink2);font-weight:500}
+.tbtns{display:flex;flex-wrap:wrap;gap:8px}
+.tbtns button{min-height:44px;padding:0 16px;border-radius:999px;border:1.5px solid var(--field);background:var(--surface);color:var(--ink);font:600 14.5px var(--sans);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.tbtns button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tbtns .flag{width:18px;height:12px}
+/* design notes */
+.note{display:none;margin-top:28px;border-left:3px solid var(--cobalt);padding:10px 14px;font:400 13.5px/1.5 var(--sans);color:var(--ink);background:var(--sel);border-radius:0 12px 12px 0;max-width:680px}
+.note b{display:block;font:500 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--link);margin-bottom:3px}
+.navy .note,.hero .note{background:rgba(255,255,255,.08);color:var(--on-navy);border-left-color:#9fbcff}
+.navy .note b,.hero .note b{color:#a9c3ff}
+.hero .note{margin-inline:auto}
+body.notes .note{display:block}
+.dock{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:70;background:var(--ink);color:var(--bg);border-radius:999px;padding:4px 6px 4px 14px;display:flex;align-items:center;gap:6px;font:600 13px var(--sans);box-shadow:0 0 0 1px rgba(255,255,255,.28),0 10px 30px rgba(0,0,0,.28);transition:bottom .25s}
+.dock label{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:8px}
+.dock input{width:40px;height:24px;accent-color:var(--cobalt);margin:0}
+/* chips, statuses */
+.chip{display:inline-flex;align-items:center;gap:6px;font:600 12.5px/1.2 var(--sans);padding:5px 10px;border-radius:999px;background:var(--subtle);color:var(--ink2);width:fit-content;white-space:nowrap}
+.chip svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.chip.unk{background:var(--subtle);color:var(--unk)}
+.chip.info{background:var(--sel);color:var(--link)}
+.chip.pos{background:var(--pos-s);color:var(--pos)}
+.chip.warn{background:var(--warn-s);color:var(--warn)}
+.chip.ink{background:var(--ink);color:var(--bg)}
+.ns{display:inline-flex;align-items:center;gap:7px;border:1.5px dashed var(--unk);border-radius:8px;padding:3px 9px;font:600 13.5px/1.3 var(--sans);color:var(--unk);background:var(--surface);white-space:nowrap}
+.ns::before{content:"";width:16px;height:11px;border-radius:2px;flex:none;background:repeating-linear-gradient(135deg,var(--unk) 0 1.5px,transparent 1.5px 4px)}
+.st{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--sans);white-space:nowrap}
+.st::before{content:"";width:14px;height:14px;border-radius:50%;flex:none}
+.st.yes{color:var(--pos)}.st.yes::before{background:var(--pos);box-shadow:inset 0 0 0 4px var(--pos-s)}
+.st.out{color:var(--crit)}.st.out::before{border:2px solid var(--crit);background:linear-gradient(var(--crit),var(--crit)) center/7px 2px no-repeat}
+.st.ns2{color:var(--unk);border:1.5px dashed var(--unk);border-radius:7px;padding:2px 7px}
+.st.ns2::before{border-radius:2px;width:14px;height:10px;background:repeating-linear-gradient(135deg,var(--unk) 0 1.5px,transparent 1.5px 4px)}
+.flag{display:inline-block;width:22px;height:15px;border-radius:2px;vertical-align:-2px;box-shadow:0 0 0 1px var(--line2);overflow:hidden;flex:none}
+.flag svg{display:block;width:100%;height:100%}
+/* track intro */
+.tintro{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:clamp(20px,4vw,56px);align-items:end}
+@media (max-width:900px){.tintro{grid-template-columns:1fr}}
+.tside{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font:600 15px var(--sans);color:var(--ink2);margin-bottom:14px}
+.tside .pl{display:inline-flex;align-items:center;gap:7px}
+.tests{border-radius:22px;border:1px solid var(--line);background:var(--surface);padding:18px 20px;display:grid;gap:8px}
+.tests .k{font:500 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink2)}
+.tests ul{margin:0;padding:0;list-style:none;display:grid;gap:6px;font-size:15.5px}
+.tests li{display:flex;gap:10px;align-items:baseline}
+.tests li::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--cobalt);flex:none;transform:translateY(-2px)}
+.sub-h{margin-top:clamp(40px,5vw,60px)}
+/* hook: quotes */
+.qgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:24px}
+@media (max-width:900px){.qgrid{grid-template-columns:1fr}}
+.qc{background:var(--surface);border:1.5px solid var(--line);border-radius:26px;padding:22px 22px 20px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--shadow);transition:border-color .2s}
+.qc.picked{border-color:var(--cobalt);box-shadow:0 0 0 3px var(--sel),var(--shadow)}
+.qhd{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.qhd b{font:700 19px var(--display);letter-spacing:-.02em}
+.qp{font-size:clamp(44px,5vw,58px);line-height:1}
+.qp small{font:600 15px var(--sans);letter-spacing:0;color:var(--ink2);margin-right:6px;vertical-align:.9em}
+.qrows{display:grid;gap:0;border-top:1px solid var(--line)}
+.qr{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;min-height:46px;border-bottom:1px solid var(--line);font-size:15px}
+.qr>span:first-child{color:var(--ink2)}
+.qr b{font-weight:600;text-align:right}
+.qpick{margin-top:auto;min-height:48px;border-radius:14px;border:2px solid var(--cobalt);background:transparent;color:var(--link);font:600 16px var(--sans);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.qpick:hover{background:var(--sel)}
+.qpick[aria-pressed=true]{background:var(--cobalt);color:var(--on-cobalt)}
+.qpick[aria-pressed=true]::before{content:"";width:6px;height:11px;border:solid currentColor;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translateY(-2px)}
+.qalt{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:18px}
+.qalt .qpick{margin:0;padding:0 22px;width:auto}
+.qalt .qpick.ghost{border-style:dashed}
+.cov{display:grid;gap:6px;padding:14px;border-radius:16px;background:var(--alt);border:1px solid var(--line)}
+.cov .ch{font:500 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin-bottom:2px}
+.cv{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;font-size:14.5px;min-height:30px}
+.gapn{display:flex;align-items:center;gap:12px}
+.gapn .num{font-size:44px;line-height:1}
+.gapn span{font-size:14px;color:var(--ink2);line-height:1.3}
+.verdict{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:var(--crit-s);color:var(--crit);font-size:14.5px;font-weight:600;line-height:1.35}
+.verdict::before{content:"!";flex:none;width:22px;height:22px;border-radius:50%;border:2px solid currentColor;display:grid;place-items:center;font:800 13px/1 var(--sans)}
+.reaction{margin-top:28px;border-radius:26px;background:var(--navy);color:var(--on-navy);padding:clamp(22px,3.4vw,36px);display:grid;gap:14px}
+.reaction .rk,.result .rk{display:inline-flex;align-items:center;gap:10px;font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--on-navy2)}
+.reaction .rk::before,.result .rk::before{content:"";width:22px;height:3px;border-radius:2px;background:var(--copper);flex:none}
+.reaction .rt{font:700 clamp(22px,2.8vw,32px)/1.2 var(--display);letter-spacing:-.03em;color:var(--on-navy)}
+.reaction p:not(.rt){color:var(--on-navy2);font-size:16.5px;max-width:52em}
+.reaction ul{margin:0;padding:0;list-style:none;display:grid;gap:8px;font-size:16px}
+.reaction li{display:flex;gap:10px;align-items:baseline}
+.reaction li::before{content:"";width:8px;height:8px;border-radius:50%;background:#9fbcff;flex:none;transform:translateY(-2px)}
+.reaction :focus-visible{outline-color:#9fbcff}
+.rule{display:flex;gap:12px;align-items:flex-start;margin-top:22px;font-size:15.5px;color:var(--ink2);max-width:52em}
+.rule b{color:var(--ink)}
+/* factory-visit day */
+.day{margin-top:32px;background:var(--surface);border:1px solid var(--line);border-radius:28px;overflow:hidden}
+.day .dh{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:center;padding:16px 22px;border-bottom:1px solid var(--line);background:var(--alt)}
+.day .dh b{font:700 17px var(--display);letter-spacing:-.02em}
+.clocks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:18px 22px}
+@media (max-width:560px){.clocks{grid-template-columns:1fr}}
+.clk{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;border:1px solid var(--line);border-radius:22px;padding:14px 18px}
+.clk>svg{width:88px;height:88px}
+.clk .cn{font:600 15px var(--sans);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.clk .cn .pl{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.clk .ct{font-size:clamp(36px,4vw,48px);line-height:1;margin-top:4px}
+.clk .tz{font-size:13px;color:var(--ink2);margin-top:4px}
+.clk .face{fill:var(--surface);stroke:var(--line2);stroke-width:2}
+.clk .tick{stroke:var(--ink2);stroke-width:2;stroke-linecap:round}
+.clk .hh{stroke:var(--ink);stroke-width:4;stroke-linecap:round}
+.clk .mh{stroke:var(--cobalt);stroke-width:3;stroke-linecap:round}
+.clk .hub{fill:var(--ink)}
+.stops{list-style:none;margin:0;padding:0 22px 22px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+@media (max-width:900px){.stops{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:520px){.stops{grid-template-columns:1fr}}
+.stops button{width:100%;min-height:76px;border-radius:16px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);text-align:left;padding:10px 12px;cursor:pointer;display:grid;gap:3px;align-content:start;font:600 14px/1.3 var(--sans)}
+.stops button .tm{font:800 20px/1 var(--display);font-variant-numeric:tabular-nums;color:var(--cobalt)}
+.stops button[aria-pressed=true]{border-color:var(--cobalt);background:var(--sel);box-shadow:inset 0 0 0 1px var(--cobalt)}
+@media (max-width:520px){.stops button{min-height:56px;grid-template-columns:64px 1fr;align-items:center}}
+.dd{margin:0 22px 22px;padding:16px 18px;border-radius:18px;background:var(--alt);border:1px solid var(--line);display:grid;gap:6px}
+.dd b{font:700 19px/1.25 var(--display);letter-spacing:-.02em}
+.dd p{color:var(--ink2);font-size:15.5px}
+/* comparable */
+.cmp3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:20px}
+@media (max-width:900px){.cmp3{grid-template-columns:1fr}}
+.cmp3>div{border-radius:20px;border:1px solid var(--line);background:var(--surface);padding:16px 20px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;align-content:start}
+.cmp3 p{grid-column:2}
+.cmp3 .n{font:800 26px/1 var(--display);color:var(--cobalt)}
+.cmp3 b{font:700 20px/1.2 var(--display);letter-spacing:-.02em}
+.cmp3 p{color:var(--ink2);font-size:15.5px}
+/* who is worth meeting */
+.brief-ex{margin-top:28px;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;padding:14px 18px;border-radius:18px;background:var(--surface);border:1px dashed var(--line2);font-size:15.5px}
+.brief-ex b{font-weight:700}
+.wsteps{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.wsteps legend{font:600 15px var(--sans);margin-bottom:10px;padding:0}
+.wsteps label{min-height:48px;padding:6px 16px;display:inline-flex;align-items:center;gap:10px;border-radius:14px;border:1.5px solid var(--field);font:600 15px/1.25 var(--sans);cursor:pointer;background:var(--surface)}
+.wsteps label .n{font:800 18px/1 var(--display);color:var(--cobalt)}
+.wsteps .sr:checked+label{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.wsteps .sr:checked+label .n{color:var(--bg)}
+.wsteps .sr:focus-visible+label,.seg .sr:focus-visible+label,.chips .sr:focus-visible+label{outline:3px solid var(--cobalt);outline-offset:2px}
+.wsum{margin-top:16px;display:flex;flex-wrap:wrap;gap:10px 22px;align-items:baseline}
+.wsum .big{font-size:clamp(34px,4vw,48px);line-height:1}
+.wsum p{font-size:16.5px;color:var(--ink);max-width:40em;font-weight:500}
+.wl{margin-top:16px;border:1px solid var(--line);border-radius:24px;overflow:hidden;background:var(--surface)}
+.wl .wh,.wl .wr{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.9fr) minmax(0,1.85fr);gap:16px;padding:10px 20px;align-items:start}
+.wl .wh{background:var(--alt);font:500 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);padding-block:12px}
+.wl .wr{border-top:1px solid var(--line)}
+.wr .co b{display:block;font:600 16.5px/1.3 var(--sans)}
+.wr .co small{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;color:var(--ink2);margin-top:3px}
+.wr .ls{font-size:15px;color:var(--ink2)}
+.wr .rd{display:grid;gap:6px;font-size:15px;justify-items:start}
+.wr .rd p{color:var(--ink)}
+.wr .rd .lb{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.wr.no .co b,.wr.no .rd p{color:var(--ink2)}
+.wr.no{background:repeating-linear-gradient(135deg,transparent 0 10px,var(--subtle) 10px 11px)}
+.wr.out{background:var(--sel);box-shadow:inset 4px 0 0 var(--cobalt)}
+.outb{display:inline-flex;align-items:center;gap:6px;font:600 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--link);border:1.5px solid currentColor;border-radius:6px;padding:4px 7px;width:fit-content}
+.wr .mob{display:none}
+@media (max-width:760px){.wl .wh{display:none}.wl .wr{grid-template-columns:1fr;gap:8px}.wr .mob{display:block;font:500 10px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink2)}}
+/* calculators */
+.calc{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:20px;margin-top:32px;align-items:start}
+@media (max-width:900px){.calc{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:26px;padding:clamp(18px,3vw,28px)}
+.seg{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.seg legend{font:600 15px var(--sans);margin-bottom:10px;padding:0}
+.seg label{min-height:44px;min-width:64px;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;border:1.5px solid var(--field);font:600 15px var(--sans);cursor:pointer;background:var(--surface)}
+.seg .sr:checked+label{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
+@media (max-width:520px){.fields{grid-template-columns:1fr}}
+.f{display:grid;gap:6px;align-content:start}
+.f label{font:600 14.5px/1.3 var(--sans)}
+.f label span{font-weight:500;color:var(--ink2)}
+.inp,.ta{width:100%;min-height:50px;border-radius:14px;border:1.5px solid var(--field);background:var(--surface);color:var(--ink);font:500 18px var(--sans);padding:0 14px;font-variant-numeric:tabular-nums}
+.ta{min-height:110px;padding:12px 14px;font-size:16px;line-height:1.45;resize:vertical}
+.inp[aria-invalid=true]{border-color:var(--crit);box-shadow:inset 0 0 0 1px var(--crit)}
+.ferr{font:600 13.5px/1.35 var(--sans);color:var(--crit);display:flex;gap:6px;align-items:flex-start}
+.ferr::before{content:"!";flex:none;width:16px;height:16px;border-radius:50%;border:1.5px solid currentColor;display:grid;place-items:center;font:800 10px/1 var(--sans);margin-top:1px}
+.ferr:empty{display:none}
+.cwarn{border-radius:14px;padding:10px 12px;background:rgba(240,138,155,.14);color:#ffd0d8;font-size:14.5px;line-height:1.4}
+.cwarn:empty{display:none}
+.inp:focus-visible,.ta:focus-visible{outline:3px solid var(--cobalt);outline-offset:1px;border-color:var(--cobalt)}
+.result{background:var(--navy);color:var(--on-navy);border-radius:26px;padding:clamp(22px,3.4vw,34px);display:grid;gap:14px;position:sticky;top:calc(80px + env(safe-area-inset-top,0px))}
+@media (max-width:900px){.result{position:static}}
+.result :focus-visible{outline-color:#9fbcff}
+.total{font-size:clamp(44px,6vw,74px);line-height:1;word-break:break-word}
+.total small{display:block;font:600 16px var(--sans);letter-spacing:0;color:var(--on-navy2);margin-bottom:6px}
+.empty .total{font-size:clamp(28px,3.4vw,40px);color:var(--on-navy2)}
+.bk{display:grid;gap:0;border-top:1px solid var(--navy-line)}
+.bk div{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--navy-line);font-size:15px;color:var(--on-navy2)}
+.bk b{color:var(--on-navy);font-variant-numeric:tabular-nums;font-weight:600;text-align:right}
+.frame{font:600 18px/1.35 var(--sans);letter-spacing:-.01em}
+.result .small{color:var(--on-navy2)}
+/* delegation */
+.prog{margin-top:32px;background:var(--surface);border:1px solid var(--line);border-radius:26px;overflow:hidden;font-size:14px}
+.progscroll{overflow-x:auto;position:relative}.progin{min-width:620px}
+.prog .ph,.prog .pr{display:grid;grid-template-columns:1.4fr repeat(5,1fr);align-items:center}
+.prog .ph{background:var(--alt);font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
+.prog .ph>div,.prog .pr>div{padding:14px 12px;text-align:center}
+.prog .ph>div:first-child,.prog .pr>div:first-child{text-align:left;padding-left:22px}
+.prog .pr{border-top:1px solid var(--line)}
+.dotc{width:16px;height:16px;border-radius:50%;display:inline-block;background:var(--cobalt)}
+.dotc.o{background:transparent;border:2px solid var(--line2)}
+.lock{display:inline-flex;gap:8px;align-items:center;color:var(--ink2);font-size:14px}
+.lock svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.prog .pt{display:flex;justify-content:space-between;gap:10px;padding:12px 22px;border-top:1px solid var(--line);background:var(--alt);font-weight:600;font-size:14.5px;flex-wrap:wrap}
+.seeno{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:20px}
+@media (max-width:760px){.seeno{grid-template-columns:1fr}}
+.seeno>div{border-radius:22px;padding:20px 22px;border:1px solid var(--line);background:var(--surface);display:grid;gap:8px;align-content:start}
+.seeno b{font:700 19px var(--display);letter-spacing:-.02em}
+.seeno ul{margin:0;padding-left:20px;display:grid;gap:4px;font-size:15.5px;color:var(--ink2)}
+.band.slim{padding-block:clamp(36px,4.6vw,60px)}
+/* how it works, before a door is chosen */
+.hw3{list-style:none;margin:22px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.hw3{grid-template-columns:1fr}}
+.hw3 li{border:1px solid var(--line);border-radius:20px;padding:16px 18px;background:var(--surface);display:grid;grid-template-columns:auto 1fr;column-gap:14px;row-gap:4px;align-content:start}
+.hw3 .n{font:800 28px/1 var(--display);color:var(--cobalt);grid-row:span 2;min-width:20px}
+.hw3 b{font:700 18px/1.25 var(--display);letter-spacing:-.02em}
+.hw3 li>span:last-child{color:var(--ink2);font-size:15px;line-height:1.4}
+.opens{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:22px}
+@media (max-width:760px){.opens{grid-template-columns:1fr}}
+.opens button{display:grid;grid-template-columns:1fr auto;gap:4px 14px;align-items:center;text-align:left;min-height:76px;padding:14px 18px;border-radius:20px;border:2px solid var(--cobalt);background:var(--surface);color:var(--ink);cursor:pointer;font:inherit}
+.opens button:hover{background:var(--sel)}
+.opens button b{font:700 18px/1.25 var(--display);letter-spacing:-.02em}
+.opens button span{grid-column:1;color:var(--ink2);font-size:14.5px;line-height:1.4}
+.opens button svg{grid-column:2;grid-row:1 / span 2;width:24px;height:24px;fill:none;stroke:var(--link);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transform:rotate(90deg)}
+.morebelow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:14px;font-size:15px;color:var(--ink2)}
+.linkbtn{border:0;background:none;color:var(--link);font:600 15px var(--sans);text-decoration:underline;text-underline-offset:3px;cursor:pointer;min-height:44px;padding:0 4px}
+.hint{font-size:15px;color:var(--on-navy2);display:inline-flex;align-items:center;gap:8px}
+.hint svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transform:rotate(90deg)}
+/* market selector */
+.mkt{margin-top:clamp(28px,3.4vw,40px);padding:16px 18px 18px;border-radius:22px;background:var(--surface);border:1px solid var(--line)}
+.mkt .mlg{font:600 15px var(--sans);margin-bottom:10px;padding:0;float:left;width:100%}
+.mkt .mchips{clear:both}
+.mchips{display:flex;flex-wrap:wrap;gap:8px}
+.mchips label{min-height:48px;padding:0 16px;display:inline-flex;align-items:center;gap:9px;border-radius:999px;border:1.5px solid var(--field);font:600 15.5px var(--sans);cursor:pointer;background:var(--surface);color:var(--ink)}
+.mchips label:hover{background:var(--sel)}
+.mchips .sr:checked+label{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.mchips .sr:checked+label .flag{box-shadow:0 0 0 1px rgba(255,255,255,.5)}
+.mchips .sr:focus-visible+label{outline:3px solid var(--cobalt);outline-offset:2px}
+.mline{margin-top:14px;font-size:16px;line-height:1.5;color:var(--ink);max-width:52em}
+.mline b{font-weight:700}
+.curnote{margin-top:-8px;margin-bottom:16px}
+.curnote:empty{display:none}
+.droute .rgn{font-weight:600}
+.rg .stsub{font:600 12.5px var(--sans);color:var(--ink2)}
+/* other */
+.othr{border-radius:28px;border:2px dashed var(--line2);padding:clamp(22px,3vw,34px);display:grid;gap:14px;background:var(--surface)}
+/* mission line */
+.track{display:flex;min-width:1060px;padding:36px 8px 10px;align-items:flex-start;margin:0;list-style:none}
+.trackwrap{overflow-x:auto;position:relative;margin-top:12px;border-radius:12px}
+.step{flex:1;display:grid;justify-items:center;gap:12px;position:relative;text-align:center;font-size:13.5px;font-weight:600;letter-spacing:-.01em;padding:0 3px}
+.step::before{content:"";position:absolute;top:13px;left:-50%;right:50%;height:3px;background:var(--cobalt);opacity:.5}
+.step:first-child::before{display:none}
+.step i{width:28px;height:28px;border-radius:50%;background:var(--cobalt);position:relative;z-index:1;display:block}
+.step.opt i{background:var(--bg);border:3px dashed var(--cobalt)}
+.step.opt::before{background:repeating-linear-gradient(90deg,var(--cobalt) 0 6px,transparent 6px 12px);opacity:.6}
+.nevers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:28px}
+@media (max-width:900px){.nevers{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.nevers{grid-template-columns:1fr}}
+.nevers>div{border:1px solid var(--line);border-radius:20px;padding:16px 18px;background:var(--surface);font:600 16px/1.3 var(--sans);letter-spacing:-.02em;display:grid;gap:4px}
+.nevers span{font-weight:400;color:var(--ink2);font-size:14px;letter-spacing:0}
+/* brief */
+.bgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;margin-top:36px;align-items:start}
+@media (max-width:900px){.bgrid{grid-template-columns:1fr}}
+.step3{display:grid;gap:12px;padding:20px 0;border-top:1px solid var(--line)}
+.step3:first-child{border-top:0;padding-top:0}
+.sh{display:flex;gap:14px;align-items:baseline}
+.sh .num{font-size:34px;line-height:1;color:var(--cobalt);min-width:30px}
+.sh legend,.sh label{font:700 20px/1.25 var(--display);letter-spacing:-.02em;padding:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips label{min-height:44px;padding:8px 16px;display:inline-flex;align-items:center;border-radius:14px;border:1.5px solid var(--field);font:500 15px/1.3 var(--sans);cursor:pointer;background:var(--surface)}
+.chips .sr:checked+label{background:var(--sel);border-color:var(--cobalt);color:var(--ink);font-weight:600;box-shadow:inset 0 0 0 1px var(--cobalt)}
+.chips .sr:checked+label::before{content:"";width:6px;height:11px;border:solid var(--cobalt);border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translateY(-2px);margin-right:10px}
+.bcard{border-radius:26px;border:2px dashed var(--line2);background:repeating-linear-gradient(135deg,var(--surface) 0 10px,var(--subtle) 10px 12px);padding:clamp(18px,3vw,28px);display:grid;gap:14px;position:sticky;top:calc(80px + env(safe-area-inset-top,0px))}
+@media (max-width:900px){.bcard{position:static}}
+.bcard .stamp{justify-self:start;transform:rotate(-2deg);border:2px dashed var(--unk);border-radius:8px;padding:4px 10px;font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--unk);background:var(--surface)}
+.bcard h3{font-size:clamp(24px,2.6vw,30px);font-weight:800}
+.bdl{margin:0;display:grid;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.bdl>div{display:grid;grid-template-columns:130px 1fr;gap:12px;padding:12px 16px;border-top:1px solid var(--line);font-size:15.5px;align-items:start}
+.bdl>div:first-child{border-top:0}
+.bdl dt{color:var(--ink2);font-size:14px}
+.bdl dd{margin:0;font-weight:600;overflow-wrap:anywhere;white-space:pre-line}
+@media (max-width:460px){.bdl>div{grid-template-columns:1fr;gap:4px}}
+.meter{display:flex;align-items:center;gap:12px;font:600 14px var(--sans)}
+.meter .bar{flex:1;height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.meter .bar i{display:block;height:100%;width:0;background:var(--cobalt);border-radius:99px;transition:width .3s}
+.sendline{display:flex;gap:10px;align-items:center;font:600 14.5px var(--sans);color:var(--ink)}
+.sendline svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.acts{display:grid;gap:10px}
+.acts .btn{width:100%}
+.status{border-radius:14px;padding:12px 14px;background:var(--sel);color:var(--ink);font-size:14.5px;line-height:1.45}
+.status:empty{display:none}
+.status b{color:var(--link)}
+.navy .status{background:rgba(255,255,255,.1);color:var(--on-navy)}
+.navy .status b{color:#a9c3ff}
+/* trust */
+.five{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:36px}
+@media (max-width:1000px){.five{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:480px){.five{grid-template-columns:1fr}}
+.five>div{background:var(--navy-s);border:1px solid var(--navy-line);border-radius:22px;padding:20px 18px;display:grid;gap:10px;align-content:start}
+.five .chip{background:rgba(255,255,255,.12);color:#e4ecf8;font-size:14px;padding:6px 12px}
+.five p{color:var(--on-navy2);font-size:15px;line-height:1.4}
+.ledger{display:grid;gap:0;margin-top:20px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:24px;overflow:hidden}
+.ledger .lh{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:12px 22px;background:var(--alt);font:500 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);flex-wrap:wrap}
+.ledger .lr{display:grid;grid-template-columns:90px 1fr auto;gap:14px;padding:16px 22px;border-top:1px solid var(--line);align-items:center;font-size:16px}
+.ledger .d{font:500 12px var(--mono);color:var(--ink2)}
+.ledger s{color:var(--ink2)}
+@media (max-width:700px){.ledger .lr{grid-template-columns:1fr;gap:4px}}
+.proofrow{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:center;margin-top:24px}
+.proofrow .status{flex-basis:100%}
+/* personas */
+.ptabs{display:flex;flex-wrap:wrap;gap:8px;margin-top:32px}
+.ptabs button{border:1.5px solid var(--field);background:var(--surface);color:var(--ink);border-radius:999px;padding:0 16px;min-height:44px;font:600 15px var(--sans);cursor:pointer}
+.ptabs button[aria-selected=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.pp{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+@media (max-width:760px){.pp{grid-template-columns:1fr}}
+.pp>div{border-radius:24px;padding:24px 24px;background:var(--surface);border:1px solid var(--line);display:grid;gap:10px;align-content:start;min-height:160px}
+.pp .k{font:500 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink2)}
+.pp p{font:600 clamp(18px,2vw,22px)/1.3 var(--sans);letter-spacing:-.02em}
+.pp .get{background:var(--cobalt);color:var(--on-cobalt);border-color:var(--cobalt)}
+.pp .get .k{color:var(--on-cobalt);opacity:.85}
+/* faq */
+.faq{margin-top:32px;display:grid;gap:10px;align-items:start}
+@media (min-width:900px){.faq{grid-template-columns:1fr 1fr}}
+.faq details{background:var(--surface);border:1px solid var(--line);border-radius:18px}
+.faq summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:16px;align-items:center;padding:16px 20px;min-height:60px;font:700 clamp(17px,1.8vw,20px)/1.3 var(--display);letter-spacing:-.015em;border-radius:18px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"";width:12px;height:12px;border:solid var(--ink2);border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-3px,-3px);flex:none;transition:transform .2s}
+.faq details[open] summary::after{transform:rotate(225deg)}
+.faq details>div{padding:0 20px 18px;font-size:16px;color:var(--ink2);max-width:46em;display:grid;gap:10px}
+.faq ul{margin:0;padding-left:20px;display:grid;gap:4px}
+/* nots */
+.nots2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0 32px;margin-top:20px}
+.nots2 div{padding:14px 0;border-top:1px solid var(--line);font:600 18px/1.25 var(--sans);letter-spacing:-.025em;display:grid;gap:3px}
+.nots2 span{font-size:14.5px;font-weight:400;color:var(--ink2);letter-spacing:0}
+/* routes */
+.rg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:32px}
+@media (max-width:1060px){.rg{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px){.rg{grid-template-columns:1fr}}
+.rg>div{border-radius:24px;padding:22px;background:var(--surface);border:1px solid var(--line);display:grid;gap:10px;align-content:start}
+.rg .rn{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font:700 19px/1.3 var(--display);letter-spacing:-.02em}
+.rg .rn .pl{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.rg .rn .to{font-weight:500;color:var(--ink2);font-size:16px}
+.rg p{color:var(--ink2);font-size:15.5px}
+.rg .mine{border:2px solid var(--cobalt);box-shadow:0 0 0 4px var(--sel)}
+.rg .mt{display:none}
+.rg .mine .mt{display:inline-flex}
+.st2{font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:5px 8px;border-radius:6px;width:fit-content}
+.st2.a{background:var(--sel);color:var(--link)}.st2.b{background:var(--subtle);color:var(--ink2)}.st2.c{border:1.5px dashed var(--line2);color:var(--ink2)}
+.ready{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:14.5px;color:var(--ink2)}
+.ready span.r{border:1px solid var(--line2);border-radius:999px;padding:4px 10px;font-size:13px;color:var(--ink)}
+/* final */
+.final .h2{font-size:clamp(36px,5.6vw,72px);max-width:14em}
+.rev{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:32px 0}
+@media (max-width:760px){.rev{grid-template-columns:1fr}}
+.rev div{border:1px solid var(--navy-line);background:var(--navy-s);border-radius:18px;padding:16px 18px;font:600 17px/1.3 var(--sans)}
+.rev span{display:block;font:400 14px/1.4 var(--sans);color:var(--on-navy2);margin-top:4px}
+footer{padding:36px 0 110px;font-size:13px;color:var(--ink2);border-top:1px solid var(--line)}
+footer .disc{max-width:72ch;margin-top:10px}
+/* mobile bottom bar */
+.mbar{position:fixed;left:0;right:0;bottom:0;z-index:65;background:var(--hdr);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--navy-line);padding:10px max(14px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px));display:none;gap:10px;transform:translateY(110%);visibility:hidden;transition:transform .25s,visibility 0s linear .25s}
+.mbar .btn{flex:1;min-height:48px;font-size:16px;padding:0 14px;white-space:nowrap}
+.mbar .short{display:none}
+@media (max-width:380px){.mbar .long{display:none}.mbar .short{display:inline}.mbar .btn{font-size:15px;min-width:0}.mbar .btn:first-child{white-space:normal;line-height:1.15;padding:0 12px}}
+.mbar .btn.line{flex:0 0 auto;color:var(--on-navy);box-shadow:inset 0 0 0 2px rgba(255,255,255,.6)}
+.mbar :focus-visible{outline-color:#9fbcff}
+@media (max-width:760px){
+  .mbar{display:flex}
+  body.mb-on .mbar{transform:none;visibility:visible;transition:transform .25s,visibility 0s}
+  body.mb-on{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))}
+  body.mb-on .dock{bottom:calc(80px + env(safe-area-inset-bottom,0px))}
+}
+/* dialog */
+dialog{border:0;border-radius:26px;padding:0;max-width:min(520px,calc(100vw - 32px));width:100%;background:var(--surface);color:var(--ink);box-shadow:0 30px 80px rgba(0,0,0,.4)}
+dialog::backdrop{background:rgba(10,18,30,.6)}
+.dlg{padding:24px;display:grid;gap:14px}
+.dlg h2{font-size:28px;font-weight:800}
+.dlg p{color:var(--ink2);font-size:16px}
+.dlg .acts .btn.line{color:var(--link)}
+.x{justify-self:end;margin:-8px -8px 0 0;width:44px;height:44px;border-radius:50%;border:0;background:var(--subtle);color:var(--ink);font:600 22px/1 var(--sans);cursor:pointer}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-claim" viewBox="0 0 16 16"><path d="M2 3h12v8H7l-3 3v-3H2z"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 16 16"><path d="M4 1.5h6l3 3V14.5H4z M10 1.5v3h3"/></symbol>
+    <symbol id="i-check" viewBox="0 0 16 16"><path d="M2.5 2.5h11v11h-11z M5 8l2.2 2.2L11 6"/></symbol>
+    <symbol id="i-trend" viewBox="0 0 16 16"><path d="M2 12l4-4 3 3 5-6 M10 5h4v4"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 16 16"><path d="M4 14V2 M4 3h8l-2 3 2 3H4"/></symbol>
+    <symbol id="i-person" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  </defs>
+</svg>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="board" id="board" role="note" aria-label="Design board annotation">
+  <div class="in">
+    <span class="bl">Design board</span>
+    <p><b>Version 3 of 3 · Two corridors, wider markets</b> · Best for: the open routes, chamber and bilateral channels, visitors who know their market · Trade-off: asks the visitor to self-select early</p>
+    <button type="button" id="board-x" aria-label="Dismiss the design board note">×</button>
+  </div>
+</div>
+
+<header class="hdr">
+  <div class="in">
+    <a class="wm" href="#hero" id="wm"><i></i>Corridra</a>
+    <div class="hr">
+      <nav class="hnav" aria-label="Main"><a href="#t-china">China Route</a><a href="#t-sell">Sell Abroad</a><a href="#faq">Questions</a></nav>
+      <div class="lang" role="group" aria-label="Language"><button type="button" data-l="en" aria-pressed="true" lang="en">EN</button><button type="button" data-l="bn" aria-pressed="false" lang="bn" aria-label="বাংলা">বাংলা</button><button type="button" data-l="zh" aria-pressed="false" lang="zh" aria-label="中文">中文</button><button type="button" data-l="es" aria-pressed="false" lang="es" aria-label="Español">ES</button></div>
+      <a class="btn" href="#brief" id="hdr-cta"><span class="long" data-ui="hdr">Start a request</span><span class="short" data-ui="hdrS">Start</span></a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+<!-- 1. HERO: two corridor doors -->
+<section class="hero" id="hero" aria-labelledby="h1">
+  <div class="in">
+    <div class="hhead">
+      <span class="strat" id="strat" data-ui="line">Cross-border market access</span>
+      <h1 class="h1" id="h1" lang="en">Make market entry deliberate.</h1>
+      <p class="hsub" id="hsub" lang="en">Corridra turns an international business goal into the right people, trusted conversations and progress you can measure. We run missions from Bangladesh to China, the EU, the UK, the US, Australia and key Asian markets. Choose yours.</p>
+      <p class="dnote" id="langnote" hidden><span lang="en">Draft translation. Native review pending.</span><span id="langnote-es" lang="es" hidden> Traducción provisional. Pendiente de revisión por un hablante nativo.</span></p>
+    </div>
+    <fieldset class="doors">
+      <legend data-ui="q">Which way is your business moving?</legend>
+      <p class="sub2">Choose one. The page below opens that route.</p>
+      <div class="bigdoors">
+        <input class="sr" type="radio" name="trk" id="d-china" value="china"><label class="door big" for="d-china">
+          <span class="dtop"><span class="side">Supply side</span><span class="dk" aria-hidden="true"></span></span>
+          <span class="droute"><span class="pl"><span class="flag" data-c="bd" data-dec></span>Bangladesh</span><span>to</span><span class="pl"><span class="flag" data-c="cn" data-dec></span>China</span></span>
+          <b data-door="china">Buying from China</b>
+          <small>Many suppliers, technical checks, quotes you can compare, factory visits.</small>
+          <span class="sel">Selected · China Route</span>
+        </label>
+        <input class="sr" type="radio" name="trk" id="d-sell" value="sell"><label class="door big" for="d-sell">
+          <span class="dtop"><span class="side">Demand side</span><span class="dk" aria-hidden="true"></span></span>
+          <span class="droute"><span class="pl"><span class="flag" data-c="bd" data-dec></span>Bangladesh</span><span>to</span><span class="pl"><span class="flag" data-c="eu" data-dec></span>EU</span><span class="pl"><span class="flag" data-c="gb" data-dec></span>UK</span><span class="pl"><span class="flag" data-c="us" data-dec></span>US</span><span class="pl"><span class="flag" data-c="au" data-dec></span>Australia</span><span class="rgn">Key Asian markets</span></span>
+          <b data-door="sell">Sell Abroad</b>
+          <small>The EU, UK, US, Australia and key Asian markets. Who is worth meeting, and how to reach them.</small>
+          <span class="sel">Selected · Sell Abroad</span>
+        </label>
+      </div>
+      <div class="smalldoors">
+        <input class="sr" type="radio" name="trk" id="d-delegation" value="delegation"><label class="door small" for="d-delegation"><span class="dk" aria-hidden="true"></span><span><b data-door="delegation">Leading a delegation</b><small>Many companies, each with its own private plan</small><span class="sel">Selected</span></span></label>
+        <input class="sr" type="radio" name="trk" id="d-other" value="other"><label class="door small" for="d-other"><span class="dk" aria-hidden="true"></span><span><b data-door="other">Something else</b><small>Tell us in your own words</small><span class="sel">Selected</span></span></label>
+      </div>
+    </fieldset>
+    <div class="hcta">
+      <div class="btns">
+        <a class="btn" href="#brief" id="hero-cta"><span id="hero-cta-t" lang="en">Start a request</span><svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <button type="button" class="btn line" data-talk><svg aria-hidden="true"><use href="#i-person"/></svg><span data-ui="talk">Talk to a person</span></button>
+      </div>
+      <div class="assure"><span>No account needed</span><span>Nothing is sent until you press Send</span><span>Stop any time</span></div>
+      <p class="hint" id="hint"><svg aria-hidden="true"><use href="#i-arrow"/></svg>Each door opens its own worked example further down this page.</p>
+      <p class="hfb" id="hfb" aria-live="polite"></p>
+    </div>
+    <div class="note"><b>Design note · hero</b>The brand line stays the headline until the visitor picks a door; then the headline becomes that route's own proposition. Two very large doors because buying and selling are opposite problems: the China Route tests supply (too many suppliers, hard to compare), Sell Abroad tests demand (too few buyers worth meeting). The Sell Abroad door names the EU, the UK, the US and Australia with a flag beside each name, the EU as a bloc; "Key Asian markets" is a region, so it gets a name and no flag. Until a door is chosen the page shows only the shared sections, so the choice is the obvious next move. Delegation and "Something else" stay smaller so the two corridors lead.</div>
+  </div>
+</section>
+
+<!-- TRACK BAR -->
+<div class="tbar" id="tracks">
+  <div class="in">
+    <p class="tl" id="tb-label" aria-live="polite">Showing: <span>shared sections. Choose a route to open it.</span></p>
+    <div class="tbtns" role="group" aria-label="Choose which route this page shows">
+      <button type="button" id="tb-china" data-trk="china" aria-pressed="false"><span class="flag" data-c="cn" data-dec></span>China Route</button>
+      <button type="button" id="tb-sell" data-trk="sell" aria-pressed="false">Sell Abroad</button>
+      <button type="button" id="tb-delegation" data-trk="delegation" aria-pressed="false">Delegation</button>
+      <button type="button" id="tb-other" data-trk="other" aria-pressed="false">Something else</button>
+      <button type="button" id="tb-all" data-trk="all" aria-pressed="false">All routes</button>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS STRIP: shown until a door is chosen -->
+<section class="band slim" id="pick" aria-labelledby="pick-h">
+  <div class="in">
+    <span class="eyebrow">How it works</span>
+    <h2 class="h3" id="pick-h">Choose a door. This page opens that route.</h2>
+    <ol class="hw3">
+      <li><span class="n" aria-hidden="true">1</span><b>Choose your route</b><span>Buying from China, Sell Abroad, a delegation, or something else.</span></li>
+      <li><span class="n" aria-hidden="true">2</span><b>Try a worked example</b><span>Quotes that do not compare, or a fair list that is not a buyer list, for your own market.</span></li>
+      <li><span class="n" aria-hidden="true">3</span><b>Send a 60-second brief</b><span>A person reads it, asks a few questions, then sends a scoped quote.</span></li>
+    </ol>
+    <div class="opens">
+      <button type="button" data-open="china" id="open-china"><b>Open the China Route</b><span>A quote check you can try, and a factory-visit day on two clocks.</span><svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+      <button type="button" data-open="sell" id="open-sell"><b>Open Sell Abroad</b><span>A buyer shortlist and a fair-cost calculator, for the market you pick.</span><svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+    </div>
+    <p class="morebelow">Leading a delegation, or something else? <button type="button" class="linkbtn" data-open="delegation" id="open-delegation">Open the delegation route</button><button type="button" class="linkbtn" data-open="other" id="open-other">Something else</button><button type="button" class="linkbtn" data-open="all" id="open-all">Show every route</button></p>
+    <div class="note"><b>Design note · first screen</b>Before this revision, every track showed at once, about 13.6 desktop screens before anyone had said what they wanted. Now the page waits for the choice: hero, doors, this short strip, then the shared sections. The strip says what each door opens, so it is clear more is below, and "Show every route" keeps the long page one click away for reviewers.</div>
+  </div>
+</section>
+
+<!-- 2. CHINA TRACK -->
+<section class="band alt" id="t-china" data-track="china" aria-labelledby="china-h" hidden>
+  <div class="in">
+    <div class="tintro">
+      <div>
+        <span class="eyebrow">China Route · supply side</span>
+        <p class="tside"><span class="pl"><span class="flag" data-c="bd"></span>Bangladesh</span> to <span class="pl"><span class="flag" data-c="cn"></span>China</span></p>
+        <h2 class="h2" id="china-h">Too many suppliers. Too few you can compare.</h2>
+        <p class="lead">Go to China knowing which suppliers, factories and price terms deserve your attention. Guangzhou, Foshan, Shenzhen and Yiwu have more factories than any trip can visit.</p>
+      </div>
+      <div class="tests"><span class="k">What this route tests</span><ul><li>Many suppliers saying similar things</li><li>Technical qualification of machines and factories</li><li>Quotes that can be compared like for like</li><li>Factory and showroom visits worth the day</li></ul></div>
+    </div>
+
+    <h3 class="h3 sub-h" id="gaps">Three suppliers quote for the same machine. Which one is cheapest?</h3>
+    <p class="lead">Read them the way you would read them on WhatsApp. Then pick.</p>
+    <div class="qgrid" id="qgrid">
+      <article class="qc" id="qc-a" aria-labelledby="qa-h">
+        <div class="qhd"><b id="qa-h">Supplier A</b><span class="tag">Example</span></div>
+        <div class="qp num"><small>USD</small>42,000</div>
+        <div class="qrows">
+          <div class="qr"><span>Delivery terms</span><b>FOB Ningbo</b></div>
+          <div class="qr"><span>Installation</span><b>Included</b></div>
+          <div class="qr"><span>Lead time</span><b>90 days</b></div>
+        </div>
+        <span class="chip unk"><svg aria-hidden="true"><use href="#i-claim"/></svg>Self-declared</span>
+        <div class="reveal" hidden></div>
+        <button type="button" class="qpick" data-pick="a" aria-pressed="false">A is cheapest</button>
+      </article>
+      <article class="qc" id="qc-b" aria-labelledby="qb-h">
+        <div class="qhd"><b id="qb-h">Supplier B</b><span class="tag">Example</span></div>
+        <div class="qp num"><small>USD</small>38,500</div>
+        <div class="qrows">
+          <div class="qr"><span>Delivery terms</span><span class="ns">Not stated</span></div>
+          <div class="qr"><span>Installation</span><b>Not included</b></div>
+          <div class="qr"><span>Lead time</span><b>75 days</b></div>
+        </div>
+        <span class="chip unk"><svg aria-hidden="true"><use href="#i-claim"/></svg>Self-declared</span>
+        <div class="reveal" hidden></div>
+        <button type="button" class="qpick" data-pick="b" aria-pressed="false">B is cheapest</button>
+      </article>
+      <article class="qc" id="qc-c" aria-labelledby="qc-h">
+        <div class="qhd"><b id="qc-h">Supplier C</b><span class="tag">Example</span></div>
+        <div class="qp num"><small>USD</small>45,700</div>
+        <div class="qrows">
+          <div class="qr"><span>Delivery terms</span><b>CIF Chattogram</b></div>
+          <div class="qr"><span>Installation</span><span class="ns">Not confirmed</span></div>
+          <div class="qr"><span>Lead time</span><b>120 days</b></div>
+        </div>
+        <span class="chip unk"><svg aria-hidden="true"><use href="#i-claim"/></svg>Self-declared</span>
+        <div class="reveal" hidden></div>
+        <button type="button" class="qpick" data-pick="c" aria-pressed="false">C is cheapest</button>
+      </article>
+    </div>
+    <div class="qalt">
+      <button type="button" class="qpick ghost" data-pick="x" aria-pressed="false">I cannot tell yet</button>
+      <button type="button" class="btn line sm" id="q-reset" hidden>Start over</button>
+    </div>
+    <div class="reaction" id="reaction" aria-live="polite" hidden>
+      <span class="rk">What each price leaves out</span>
+      <p class="rt" id="r-title"></p>
+      <p id="r-body"></p>
+      <p><b style="color:var(--on-navy)">None of the three can be ranked on price yet.</b> Before you decide, Corridra would ask, in writing:</p>
+      <ul>
+        <li>Supplier A for sea freight and insurance from Ningbo to Chattogram</li>
+        <li>Supplier B for its delivery terms and an installation price</li>
+        <li>Supplier C to confirm whether installation is included</li>
+      </ul>
+      <p>The original quotes stay untouched. Answers are added beside them, so you always see who said what.</p>
+      <div class="btns"><a class="btn" href="#brief">Get my offers compared<svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+    </div>
+    <p class="rule"><span class="tag trule">Rule</span><span><b>Two quotes are not equivalent if one leaves out critical costs or technical obligations.</b> Example quotes, invented for illustration. They are not market prices, and no cost is guessed here: an unknown stays "Not stated", never zero.</span></p>
+    <div class="note"><b>Design note · supply hook</b>Machinery buyers already hold quotes like these. Picking one is a small commitment, and the reveal shows Corridra's core supply-side skill on the visitor's own decision instead of claiming it. "I cannot tell yet" is rewarded as the right answer.</div>
+
+    <h3 class="h3 sub-h" id="visit-h">A factory-visit day, on two clocks.</h3>
+    <p class="lead">You are on the factory floor in Foshan. Your engineer and your finance team are in Dhaka, two hours behind. Choose a stop to see both clocks.</p>
+    <div class="day" aria-labelledby="visit-h">
+      <div class="dh"><b>One visit day, Guangzhou and Foshan</b><span class="tag">Example</span></div>
+      <div class="clocks">
+        <div class="clk">
+          <svg viewBox="0 0 100 100" role="img" id="clk-gz" aria-label="Guangzhou clock"><circle class="face" cx="50" cy="50" r="46"/><g class="ticks"></g><line class="hh" x1="50" y1="50" x2="50" y2="26"/><line class="mh" x1="50" y1="50" x2="50" y2="14"/><circle class="hub" cx="50" cy="50" r="4"/></svg>
+          <div><span class="cn">Guangzhou, <span class="pl"><span class="flag" data-c="cn"></span>China</span></span><div class="ct num" id="t-gz">09:30</div><div class="tz">China Standard Time, UTC+8</div></div>
+        </div>
+        <div class="clk">
+          <svg viewBox="0 0 100 100" role="img" id="clk-dh" aria-label="Dhaka clock"><circle class="face" cx="50" cy="50" r="46"/><g class="ticks"></g><line class="hh" x1="50" y1="50" x2="50" y2="26"/><line class="mh" x1="50" y1="50" x2="50" y2="14"/><circle class="hub" cx="50" cy="50" r="4"/></svg>
+          <div><span class="cn">Dhaka, <span class="pl"><span class="flag" data-c="bd"></span>Bangladesh</span></span><div class="ct num" id="t-dh">07:30</div><div class="tz">Bangladesh Standard Time, UTC+6</div></div>
+        </div>
+      </div>
+      <ol class="stops" id="stops" aria-label="Stops in the visit day"></ol>
+      <div class="dd" id="stop-d" aria-live="polite"><b id="stop-t"></b><p id="stop-p"></p></div>
+    </div>
+    <p class="small" style="margin-top:12px">Example day, invented for illustration. Times and stops are not a plan and no travel is arranged: Corridra does not book flights, hotels or visas.</p>
+    <div class="note"><b>Design note · visit day</b>Two clocks make a real constraint visible: the people who approve a machine purchase are often at home. The strip turns "factory visit" from a vague promise into a day the buyer can picture, and every stop names what goes into the record.</div>
+
+    <h3 class="h3 sub-h">What "comparable" means here.</h3>
+    <div class="cmp3">
+      <div><span class="n">1</span><b>Same delivery point</b><p>FOB Ningbo and CIF Chattogram are different prices for different jobs. Both are kept as quoted, then the gap is asked about.</p></div>
+      <div><span class="n">2</span><b>Same scope</b><p>Installation, training, spare parts and warranty, each marked In the price, Not in the price, or Not stated.</p></div>
+      <div><span class="n">3</span><b>Same kind of proof</b><p>A stated capacity is Self-declared until there is evidence or a defined check. The label travels with the number.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. SELL ABROAD TRACK -->
+<section class="band" id="t-sell" data-track="sell" aria-labelledby="sell-h" hidden>
+  <div class="in">
+    <div class="tintro">
+      <div>
+        <span class="eyebrow">Sell Abroad · demand side</span>
+        <p class="tside" id="sell-side"></p>
+        <h2 class="h2" id="sell-h">A fair list is not a buyer list.</h2>
+        <p class="lead">Know who is worth meeting before you travel, including companies outside the fair list. Pick your market: the example, the currency and the notes below follow it.</p>
+      </div>
+      <div class="tests"><span class="k">What this route tests</span><ul><li>Who is actually worth meeting</li><li>Getting access to them</li><li>Whether a trade fair pays for itself</li><li>Buyers who never appear on the fair list</li></ul></div>
+    </div>
+
+    <fieldset class="mkt" id="mkt">
+      <legend class="mlg">Your market</legend>
+      <div class="mchips">
+        <input class="sr" type="radio" name="mkt" id="mk-eu" value="eu" checked><label for="mk-eu"><span class="flag" data-c="eu" data-dec></span>EU</label>
+        <input class="sr" type="radio" name="mkt" id="mk-gb" value="gb"><label for="mk-gb"><span class="flag" data-c="gb" data-dec></span>UK</label>
+        <input class="sr" type="radio" name="mkt" id="mk-us" value="us"><label for="mk-us"><span class="flag" data-c="us" data-dec></span>US</label>
+        <input class="sr" type="radio" name="mkt" id="mk-au" value="au"><label for="mk-au"><span class="flag" data-c="au" data-dec></span>Australia</label>
+        <input class="sr" type="radio" name="mkt" id="mk-asia" value="asia"><label for="mk-asia">Key Asian markets</label>
+      </div>
+      <p class="mline" id="mk-line" aria-live="polite"></p>
+    </fieldset>
+    <div class="note"><b>Design note · market selector</b>Reach is broad, proof stays specific. One selector switches the example shortlist, the calculator's default currency and one sentence about that market, so a seller aiming at Manchester and one aiming at Melbourne each see a worked example in their own terms. Breadth never stands in for proof: every company is invented and tagged Example, every kept name carries a trust label, and no market size, buyer count, fair name or local rule is asserted for any market. EU-only facts, such as national laws staying separate inside the bloc, appear only when the EU is selected. Key Asian markets is a region, so its chip has no flag.</div>
+
+    <h3 class="h3 sub-h" id="worth-h">Who is worth meeting?</h3>
+    <div class="brief-ex"><span class="tag">Example brief</span><span id="mk-brief"></span></div>
+    <fieldset class="wsteps" id="wsteps">
+      <legend>Step through what changes</legend>
+      <input class="sr" type="radio" name="wstep" id="ws-1" value="1" checked><label for="ws-1"><span class="n" aria-hidden="true">1</span>The fair list</label>
+      <input class="sr" type="radio" name="wstep" id="ws-2" value="2"><label for="ws-2"><span class="n" aria-hidden="true">2</span>Checked against your brief</label>
+      <input class="sr" type="radio" name="wstep" id="ws-3" value="3"><label for="ws-3"><span class="n" aria-hidden="true">3</span>Show companies outside the fair list</label>
+    </fieldset>
+    <div class="wsum" aria-live="polite"><span class="big num" id="w-big">8</span><p id="w-sum"></p></div>
+    <div class="wl" id="wlist" role="table" aria-label="Example companies: fair list compared with a qualified list">
+      <div class="wh" role="row"><span role="columnheader">Company</span><span role="columnheader">On the fair list as</span><span role="columnheader">Corridra's read for this brief</span></div>
+      <div id="wrows" role="rowgroup"></div>
+    </div>
+    <p class="small" style="margin-top:12px"><span class="tag">Example</span> All company names are invented, for every market. Any likeness to a real company is accidental. Trust labels show how each line would be known: Self-declared, Evidence available or Verified.</p>
+    <div class="note"><b>Design note · demand hook</b>The visitor feels the gap in three steps: eight names that all look equal, then most of them falling away with a reason each, then three better names that were never on the list. Every kept name carries a trust label, and the "Not a fit" rows stay visible with their reasons, because a rejected target is useful knowledge, not a failure.</div>
+
+    <h3 class="h3 sub-h" id="faircost-h">What would one unproductive fair cost you?</h3>
+    <p class="lead">Put in your own numbers. Nothing is stored or sent. It all stays on this page.</p>
+    <div class="calc">
+      <div class="panel">
+        <fieldset class="seg">
+          <legend>Currency for every amount</legend>
+          <input class="sr" type="radio" name="fcur" id="fc-bdt" value="BDT"><label for="fc-bdt">BDT</label>
+          <input class="sr" type="radio" name="fcur" id="fc-usd" value="USD"><label for="fc-usd">USD</label>
+          <input class="sr" type="radio" name="fcur" id="fc-eur" value="EUR" checked><label for="fc-eur">EUR</label>
+          <input class="sr" type="radio" name="fcur" id="fc-gbp" value="GBP"><label for="fc-gbp">GBP</label>
+          <input class="sr" type="radio" name="fcur" id="fc-aud" value="AUD"><label for="fc-aud">AUD</label>
+          <input class="sr" type="radio" name="fcur" id="fc-sgd" value="SGD"><label for="fc-sgd">SGD</label>
+        </fieldset>
+        <p class="small curnote" id="f-curnote" aria-live="polite"></p>
+        <div class="fields">
+          <div class="f"><label for="f-ppl">People going</label><input class="inp" id="f-ppl" type="number" inputmode="numeric" min="0" step="1" aria-describedby="f-ppl-e"><p class="ferr" id="f-ppl-e" aria-live="polite"></p></div>
+          <div class="f"><label for="f-days">Days away, with travel</label><input class="inp" id="f-days" type="number" inputmode="numeric" min="0" step="1" aria-describedby="f-days-e"><p class="ferr" id="f-days-e" aria-live="polite"></p></div>
+          <div class="f"><label for="f-stand">Stand and registration, total <span class="fcu">(EUR)</span></label><input class="inp" id="f-stand" type="number" inputmode="decimal" min="0" aria-describedby="f-stand-e"><p class="ferr" id="f-stand-e" aria-live="polite"></p></div>
+          <div class="f"><label for="f-flight">Flights per person <span class="fcu">(EUR)</span></label><input class="inp" id="f-flight" type="number" inputmode="decimal" min="0" aria-describedby="f-flight-e"><p class="ferr" id="f-flight-e" aria-live="polite"></p></div>
+          <div class="f"><label for="f-hotel">Hotel per person per night <span class="fcu">(EUR)</span></label><input class="inp" id="f-hotel" type="number" inputmode="decimal" min="0" aria-describedby="f-hotel-e"><p class="ferr" id="f-hotel-e" aria-live="polite"></p></div>
+          <div class="f"><label for="f-samp">Samples and shipping, total <span class="fcu">(EUR)</span></label><input class="inp" id="f-samp" type="number" inputmode="decimal" min="0" aria-describedby="f-samp-e"><p class="ferr" id="f-samp-e" aria-live="polite"></p></div>
+          <div class="f"><label for="f-meet">Useful buyer meetings you expect</label><input class="inp" id="f-meet" type="number" inputmode="numeric" min="0" step="1" aria-describedby="f-meet-e"><p class="ferr" id="f-meet-e" aria-live="polite"></p></div>
+        </div>
+        <p class="small" style="margin-top:16px">Enter every amount in the same currency. Nothing is converted between currencies. Hotel is counted for each person on each day away. Lost working days at home are not counted, so the real figure is higher.</p>
+      </div>
+      <div class="result empty" id="fresult" aria-live="polite">
+        <span class="rk">Your fair, before any buyer orders</span>
+        <div class="total num" id="f-total"><small>Total</small>Add your numbers</div>
+        <div class="bk">
+          <div><span>Stand and registration</span><b id="fb-st">Not added</b></div>
+          <div><span>Flights</span><b id="fb-fl">Not added</b></div>
+          <div><span>Hotel</span><b id="fb-ho">Not added</b></div>
+          <div><span>Samples and shipping</span><b id="fb-sa">Not added</b></div>
+          <div><span>Per useful meeting</span><b id="fb-pm">Add expected meetings</b></div>
+        </div>
+        <p class="cwarn" id="f-warn"></p>
+        <p class="frame" id="f-frame">This is what a fair costs before a single buyer has ordered anything.</p>
+        <p class="small" id="f-half"></p>
+        <p class="small">A scoped mission works on the meetings, so more of them are with companies that fit, on the fair list or off it.</p>
+        <div class="btns"><a class="btn" href="#brief">Scope a mission for this fair<svg aria-hidden="true"><use href="#i-arrow"/></svg></a><button type="button" class="btn line" data-talk style="color:var(--on-navy);box-shadow:inset 0 0 0 2px rgba(255,255,255,.6)">Talk to a person</button></div>
+      </div>
+    </div>
+    <div class="note"><b>Design note · fair cost</b>Adapted from the wasted-trip calculator. The reader supplies every number, including how many meetings they expect, so the cost per useful meeting is theirs, not ours. One currency at a time, no conversion, matching the product's money rules. Each market sets a default currency, but once an amount is typed the currency stays put, so a number never silently changes meaning.</div>
+  </div>
+</section>
+
+<!-- 4. DELEGATION TRACK -->
+<section class="band alt" id="t-delegation" data-track="delegation" aria-labelledby="del-h" hidden>
+  <div class="in">
+    <span class="eyebrow">For organisers · delegations and programmes</span>
+    <h2 class="h2" id="del-h">One programme. Many companies. Each one private.</h2>
+    <p class="lead">Chambers, trade bodies and delegation leaders see how the programme is moving, without opening any company's private mission.</p>
+    <div class="prog" role="table" aria-label="Example programme view for an organiser"><div class="progscroll"><div class="progin">
+      <div class="ph" role="row"><div role="columnheader">Company</div><div role="columnheader">Defined</div><div role="columnheader">Matched</div><div role="columnheader">Met</div><div role="columnheader">Offers</div><div role="columnheader">Followed up</div></div>
+      <div class="pr" role="row"><div role="cell"><span class="lock"><svg aria-hidden="true"><use href="#i-lock"/></svg>Company 1, private</span></div><div role="cell"><i class="dotc" title="Done"></i><span class="sr">Done</span></div><div role="cell"><i class="dotc"></i><span class="sr">Done</span></div><div role="cell"><i class="dotc"></i><span class="sr">Done</span></div><div role="cell"><i class="dotc o"></i><span class="sr">Not yet</span></div><div role="cell"><i class="dotc o"></i><span class="sr">Not yet</span></div></div>
+      <div class="pr" role="row"><div role="cell"><span class="lock"><svg aria-hidden="true"><use href="#i-lock"/></svg>Company 2, private</span></div><div role="cell"><i class="dotc"></i><span class="sr">Done</span></div><div role="cell"><i class="dotc"></i><span class="sr">Done</span></div><div role="cell"><i class="dotc o"></i><span class="sr">Not yet</span></div><div role="cell"><i class="dotc o"></i><span class="sr">Not yet</span></div><div role="cell"><i class="dotc o"></i><span class="sr">Not yet</span></div></div>
+      <div class="pr" role="row"><div role="cell"><span class="lock"><svg aria-hidden="true"><use href="#i-lock"/></svg>Company 3, private</span></div><div role="cell"><i class="dotc"></i><span class="sr">Done</span></div><div role="cell"><i class="dotc"></i><span class="sr">Done</span></div><div role="cell"><i class="dotc"></i><span class="sr">Done</span></div><div role="cell"><i class="dotc"></i><span class="sr">Done</span></div><div role="cell"><i class="dotc o"></i><span class="sr">Not yet</span></div></div>
+      <div class="pr" role="row"><div role="cell"><span class="lock"><svg aria-hidden="true"><use href="#i-lock"/></svg>Company 4, private</span></div><div role="cell"><i class="dotc"></i><span class="sr">Done</span></div><div role="cell"><i class="dotc o"></i><span class="sr">Not yet</span></div><div role="cell"><i class="dotc o"></i><span class="sr">Not yet</span></div><div role="cell"><i class="dotc o"></i><span class="sr">Not yet</span></div><div role="cell"><i class="dotc o"></i><span class="sr">Not yet</span></div></div>
+    </div></div>
+    <div class="pt"><span>Programme total: 4 companies, 3 met at least one counterpart</span><span class="tag">Example</span></div></div>
+    <p class="small" style="margin-top:10px">Filled circle: stage done. Empty circle: not yet. Names, offers and notes stay with each company.</p>
+    <div class="seeno">
+      <div><b>The organiser sees</b><ul><li>Which stage each company has reached</li><li>Programme totals and overall outcomes</li><li>Activity each company allows to be shared</li></ul></div>
+      <div><b>The organiser does not see</b><ul><li>Who each company is talking to</li><li>Prices, offers and private notes</li><li>Anything a company has not permitted</li></ul></div>
+    </div>
+    <div class="btns" style="margin-top:22px"><a class="btn" href="#brief">Plan my programme<svg aria-hidden="true"><use href="#i-arrow"/></svg></a><button type="button" class="btn line" data-talk>Talk to a person</button></div>
+    <div class="note"><b>Design note · programmes</b>The vision's rule that an organiser sees permitted activity and aggregate outcomes, never participants' private data, drawn as locked rows with stages. A lock is drawn, never a blank. This is the page a chamber or bilateral body forwards to its members.</div>
+  </div>
+</section>
+
+<!-- OTHER TRACK -->
+<section class="band alt" id="t-other" data-track="other" aria-labelledby="oth-h" hidden>
+  <div class="in">
+    <div class="othr">
+      <span class="eyebrow">Something else</span>
+      <h2 class="h2" id="oth-h">Tell us what is coming up. We say plainly if we can help.</h2>
+      <p class="lead" style="margin-top:0">A trip, a purchase, a fair or a first look at a new market. Corridra runs missions from Bangladesh to China, the EU, the UK, the US, Australia and key Asian markets. For a route outside that list, no operating offer is announced. Ask us, and we tell you plainly in the first conversation whether we can help.</p>
+      <div class="btns"><a class="btn" href="#brief">Describe it in the brief<svg aria-hidden="true"><use href="#i-arrow"/></svg></a><button type="button" class="btn line" data-talk>Talk to a person</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. SHARED: MISSION LINE -->
+<section class="band" id="how" aria-labelledby="how-h">
+  <div class="in">
+    <span class="eyebrow">How it works, on every route</span>
+    <h2 class="h2" id="how-h">One mission, from first intent to repeat business.</h2>
+    <p class="lead">A mission is what Corridra organises around: a clear goal, the people who matter, the evidence, the meetings, the offers, and what became of them.</p>
+    <div class="trackwrap" tabindex="0" role="region" aria-label="Mission steps, scrolls sideways on small screens"><ol class="track">
+      <li class="step"><i></i>Intent</li><li class="step"><i></i>Requirement</li><li class="step"><i></i>Market</li><li class="step"><i></i>Discovery</li><li class="step"><i></i>Qualification</li><li class="step"><i></i>Access</li><li class="step"><i></i>Meeting or visit</li><li class="step opt"><i></i>Opportunity</li><li class="step opt"><i></i>Quote or RFQ</li><li class="step opt"><i></i>Proposal</li><li class="step opt"><i></i>Contract</li><li class="step opt"><i></i>Invoice</li><li class="step opt"><i></i>Cash</li><li class="step"><i></i>Repeat</li>
+    </ol></div>
+    <p class="small" style="margin-top:6px">Dashed steps are optional. A mission can start from a quote, and it can end well with a decision not to enter.</p>
+    <div class="nevers">
+      <div>A scheduled meeting is not a meeting held.<span>Each step has its own record.</span></div>
+      <div>An RFQ is not a purchase.<span>Interest and commitment stay apart.</span></div>
+      <div>A contract is not cash.<span>Money is counted only when it arrives.</span></div>
+      <div>A claim is not proof.<span>A supplier saying it is not Corridra checking it.</span></div>
+    </div>
+    <div class="note"><b>Design note · mission</b>A's mission line, shared by every route: the same object runs a sourcing trip and a buyer search. Solid and dashed steps carry the rule that not every mission needs every step.</div>
+  </div>
+</section>
+
+<!-- 6. SHARED: BRIEF -->
+<section class="band alt" id="brief" aria-labelledby="brief-h">
+  <div class="in">
+    <span class="eyebrow">Small first step</span>
+    <h2 class="h2" id="brief-h">Your first mission brief in 60 seconds.</h2>
+    <p class="lead">Three answers. Watch your draft build as you answer. No account, no form wall.</p>
+    <div class="bgrid">
+      <div class="panel">
+        <fieldset class="step3">
+          <div class="sh"><span class="num" aria-hidden="true">1</span><legend>What is the goal?</legend></div>
+          <div class="chips">
+            <input class="sr" type="radio" name="goal" id="g-china" value="china"><label for="g-china">Buy from China</label>
+            <input class="sr" type="radio" name="goal" id="g-machinery" value="machinery"><label for="g-machinery">Buy machinery</label>
+            <input class="sr" type="radio" name="goal" id="g-sell" value="sell"><label for="g-sell">Find buyers abroad</label>
+            <input class="sr" type="radio" name="goal" id="g-fair" value="fair"><label for="g-fair">Get more from a trade fair abroad</label>
+            <input class="sr" type="radio" name="goal" id="g-delegation" value="delegation"><label for="g-delegation">Run a delegation</label>
+            <input class="sr" type="radio" name="goal" id="g-other" value="other"><label for="g-other">Something else</label>
+          </div>
+        </fieldset>
+        <div class="step3">
+          <div class="sh"><span class="num" aria-hidden="true">2</span><label for="need">What do you need?</label></div>
+          <textarea class="ta" id="need" maxlength="600" aria-describedby="need-h"></textarea>
+          <p class="small" id="need-h">In your own words, any language. Product, quantity, budget, places, people. Rough is fine.</p>
+        </div>
+        <fieldset class="step3">
+          <div class="sh"><span class="num" aria-hidden="true">3</span><legend>When is it happening?</legend></div>
+          <div class="chips">
+            <input class="sr" type="radio" name="when" id="w-1" value="Within a month"><label for="w-1">Within a month</label>
+            <input class="sr" type="radio" name="when" id="w-2" value="In 1 to 3 months"><label for="w-2">In 1 to 3 months</label>
+            <input class="sr" type="radio" name="when" id="w-3" value="In 3 to 6 months"><label for="w-3">In 3 to 6 months</label>
+            <input class="sr" type="radio" name="when" id="w-4" value="Not decided yet"><label for="w-4">Not decided yet</label>
+          </div>
+        </fieldset>
+      </div>
+      <div class="bcard" aria-labelledby="bc-h">
+        <span class="stamp">Draft, not sent</span>
+        <h3 id="bc-h">Mission brief</h3>
+        <div class="meter"><span id="bc-count">0 of 3 answered</span><span class="bar" aria-hidden="true"><i id="bc-bar"></i></span></div>
+        <dl class="bdl" id="bc-dl" aria-live="polite">
+          <div><dt>Route chosen</dt><dd id="bc-trig"></dd></div>
+          <div><dt>Goal</dt><dd id="bc-goal"></dd></div>
+          <div><dt>Route</dt><dd id="bc-route"></dd></div>
+          <div><dt>What you need</dt><dd id="bc-need"></dd></div>
+          <div><dt>Timing</dt><dd id="bc-when"></dd></div>
+          <div><dt>What happens next</dt><dd style="font-weight:500">A person reads it, asks a few questions, then sends you a scoped quote. Nothing starts until you agree.</dd></div>
+        </dl>
+        <span class="chip unk"><svg aria-hidden="true"><use href="#i-claim"/></svg>Self-declared · stated by you</span>
+        <p class="sendline"><svg aria-hidden="true"><use href="#i-lock"/></svg>Nothing is sent until you press Send.</p>
+        <div class="acts">
+          <button type="button" class="btn" id="b-send">Send to Corridra<svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+          <button type="button" class="btn line" id="b-chat">Message us on WhatsApp or WeChat</button>
+          <button type="button" class="btn line" data-talk>Talk to a person</button>
+        </div>
+        <p class="status" id="b-status" role="status"></p>
+      </div>
+    </div>
+    <div class="note"><b>Design note · brief</b>B's progressive intake, unchanged in spirit: three answers, no account, a draft that visibly belongs to the visitor. The corridor chosen at the top pre-fills the goal, so the self-selection the visitor already made carries forward instead of being asked twice.</div>
+  </div>
+</section>
+
+<!-- 7. SHARED: TRUST -->
+<section class="band navy" id="trust" aria-labelledby="trust-h">
+  <div class="in">
+    <span class="eyebrow">Trust, on every route</span>
+    <h2 class="h2" id="trust-h">Every fact says how it is known.</h2>
+    <p class="lead">A supplier's claim in Foshan and a buyer's interest in Manchester or Madrid get the same five labels, always an icon and a word.</p>
+    <div class="five">
+      <div><span class="chip"><svg aria-hidden="true"><use href="#i-claim"/></svg>Self-declared</span><p>Stated by the company.</p></div>
+      <div><span class="chip"><svg aria-hidden="true"><use href="#i-doc"/></svg>Evidence available</span><p>Proof was provided.</p></div>
+      <div><span class="chip"><svg aria-hidden="true"><use href="#i-check"/></svg>Verified</span><p>Checked by a defined process.</p></div>
+      <div><span class="chip"><svg aria-hidden="true"><use href="#i-trend"/></svg>Derived</span><p>Worked out from available data.</p></div>
+      <div><span class="chip"><svg aria-hidden="true"><use href="#i-flag"/></svg>Outcome observed</span><p>A real result was recorded.</p></div>
+    </div>
+    <div class="ledger" aria-label="Example history ledger">
+      <div class="lh"><span>History: what happened stays what happened</span><span class="tag">Example</span></div>
+      <div class="lr"><span class="d">DAY 1</span><span>Request received</span><span class="chip unk"><svg aria-hidden="true"><use href="#i-claim"/></svg>Self-declared</span></div>
+      <div class="lr"><span class="d">DAY 6</span><span>Offer received, revision 1, <b>USD 36,800</b></span><span class="chip unk"><svg aria-hidden="true"><use href="#i-claim"/></svg>Self-declared</span></div>
+      <div class="lr"><span class="d">DAY 11</span><span>Correction: revision 2, <b>USD 37,400</b>. <s>Revision 1 is kept.</s></span><span class="chip">New entry</span></div>
+    </div>
+    <div class="proofrow">
+      <button type="button" class="btn line" id="proof-link">Read the proof page<svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+      <span class="tag">Demo link</span>
+      <p class="status" id="proof-status" role="status"></p>
+    </div>
+    <div class="note"><b>Design note · trust</b>A's trust strip and ledger, kept short because the full case lives on the separate proof page. Original words, documents and currencies stay as they were, and a correction is a new entry beside the old one.</div>
+  </div>
+</section>
+
+<!-- 8. SHARED: PERSONAS -->
+<section class="band" id="who" aria-labelledby="who-h">
+  <div class="in">
+    <span class="eyebrow">Who it is for</span>
+    <h2 class="h2" id="who-h">Eight people. One clear promise each.</h2>
+    <div class="ptabs" role="tablist" aria-label="Who are you?" id="ptabs">
+      <button type="button" role="tab" id="pt-0" aria-controls="pp" aria-selected="true" data-p="0">Exporter</button>
+      <button type="button" role="tab" id="pt-1" aria-controls="pp" aria-selected="false" tabindex="-1" data-p="1">Importer</button>
+      <button type="button" role="tab" id="pt-2" aria-controls="pp" aria-selected="false" tabindex="-1" data-p="2">Machinery buyer</button>
+      <button type="button" role="tab" id="pt-3" aria-controls="pp" aria-selected="false" tabindex="-1" data-p="3">Company entering Bangladesh</button>
+      <button type="button" role="tab" id="pt-4" aria-controls="pp" aria-selected="false" tabindex="-1" data-p="4">Overseas buyer</button>
+      <button type="button" role="tab" id="pt-5" aria-controls="pp" aria-selected="false" tabindex="-1" data-p="5">Supplier</button>
+      <button type="button" role="tab" id="pt-6" aria-controls="pp" aria-selected="false" tabindex="-1" data-p="6">Delegation leader</button>
+      <button type="button" role="tab" id="pt-7" aria-controls="pp" aria-selected="false" tabindex="-1" data-p="7">Local contributor</button>
+    </div>
+    <div class="pp" id="pp" role="tabpanel" aria-labelledby="pt-0" tabindex="0"><div><span class="k">You give</span><p id="pg"></p></div><div class="get"><span class="k">You get</span><p id="pr"></p></div></div>
+    <div class="note"><b>Design note · people</b>A's eight personas, condensed to one control. Choosing a corridor at the top pre-selects the matching person, so an importer lands on "Importer" and a seller on "Exporter". Arrow keys move between tabs.</div>
+  </div>
+</section>
+
+<!-- 9. SHARED: FAQ -->
+<section class="band alt" id="faq" aria-labelledby="faq-h">
+  <div class="in">
+    <span class="eyebrow">Straight answers</span>
+    <h2 class="h2" id="faq-h">Questions people ask before they start.</h2>
+    <div class="faq">
+      <details><summary>Who is Corridra?</summary><div><p>A cross-border market access service. We run scoped missions for companies in Bangladesh that buy from China or sell to the EU, the UK, the US, Australia and key Asian markets: we find the companies that matter, check what they claim, compare offers and set up meetings and visits.</p><p>For any other route, we say plainly whether we can help.</p></div></details>
+      <details><summary>Which markets do you work in?</summary><div><p>From Bangladesh, we run missions to China for buying, and to the EU, the UK, the US, Australia and key Asian markets for selling.</p><ul><li>Open now: those routes, from Bangladesh.</li><li>Selective: the reverse directions, into Bangladesh, taken case by case.</li><li>Any other route: ask us. We tell you plainly if we can help.</li></ul><p>The page has two big doors because buying and selling are opposite problems: too many suppliers to compare, or too few buyers worth meeting.</p></div></details>
+      <details><summary>What does it cost?</summary><div><p>Missions are paid and scoped to what you need. After a short conversation we send you a quote for that mission. We do not publish prices, because checking two suppliers and comparing a full machinery purchase are different pieces of work.</p><p>You see the quote and decide before any work starts.</p></div></details>
+      <details><summary>Will you replace my agent, my chamber or my fair?</summary><div><p>No. Keep the people you trust. Corridra works alongside your agent, your suppliers, chambers and fairs, and fills the gaps: who else is worth meeting, what an offer leaves out, and what happened after each meeting.</p></div></details>
+      <details><summary>Do you work with chambers and trade bodies?</summary><div><p>We want to, and the delegation view is built for them. We do not name any organisation as a partner unless it has agreed, and none is named on this page.</p></div></details>
+      <details><summary>Is my data safe?</summary><div><p>These are the rules the product is built to:</p><ul><li>Your mission is visible only to the people you allow.</li><li>Every access is checked on our server, with the least access needed.</li><li>Sensitive actions need a person to approve them.</li><li>Shared links are limited and expire.</li><li>Logs avoid personal details.</li></ul><p>These are principles we hold, not a certification. We will not claim one we do not have.</p></div></details>
+      <details><summary>Do you arrange visas or hotels?</summary><div><p>No. We do not arrange visas, hotels or tourism, and we cannot promise any visa outcome. We work on who to meet, what to compare, and what happens next.</p></div></details>
+      <details><summary>What happens after I send a request?</summary><div><p>A person reads your brief and contacts you with a few questions. After a short conversation you get a scoped quote. Nothing starts until you agree to it, and you can stop at any point before that.</p></div></details>
+    </div>
+    <div class="note"><b>Design note · objections</b>B's honest FAQ plus two questions this version invites: which markets, and whether chambers are involved. The markets answer repeats the three route tiers word for word, so the FAQ and the route block can never disagree. Partnerships are hypotheses, so the answer names none.</div>
+  </div>
+</section>
+
+<!-- 10. SHARED: ROUTE STATUSES AND WHAT CORRIDRA IS NOT -->
+<section class="band" id="routes" aria-labelledby="routes-h">
+  <div class="in">
+    <span class="eyebrow">Route statuses</span>
+    <h2 class="h2" id="routes-h">Open routes now. Plain answers on the rest.</h2>
+    <div class="rg">
+      <div id="rs-china"><span class="chip info mt">Matches your route</span><span class="rn"><span class="pl"><span class="flag" data-c="bd"></span>Bangladesh</span><span class="to">to</span><span class="pl"><span class="flag" data-c="cn"></span>China</span></span><span class="st2 a">Open now</span><p>Sourcing, machinery, supplier quote comparison, factory and showroom visits, Canton Fair and exhibition-linked missions.</p></div>
+      <div id="rs-sell"><span class="chip info mt">Matches your route</span><span class="rn"><span class="pl"><span class="flag" data-c="bd"></span>Bangladesh</span><span class="to">to</span><span class="pl"><span class="flag" data-c="eu"></span>EU</span><span class="pl"><span class="flag" data-c="gb"></span>UK</span><span class="pl"><span class="flag" data-c="us"></span>US</span><span class="pl"><span class="flag" data-c="au"></span>Australia</span><span class="to">and key Asian markets</span></span><span class="st2 a">Open now</span><p>Export buyer access, distributor search and trade-fair effectiveness, read market by market.</p></div>
+      <div id="rs-rev"><span class="rn">Into Bangladesh</span><span class="st2 b">Selective</span><p>The reverse directions, from China or from any of the selling markets into Bangladesh, are routes of their own, taken case by case.</p></div>
+      <div id="rs-other"><span class="chip info mt">Matches your route</span><span class="rn">Any other route</span><span class="st2 c">Ask us</span><span class="stsub">No operating offer announced</span><p>Routes outside the open list can be added by configuration, not rebuilt. Ask us. We tell you plainly if we can help.</p></div>
+    </div>
+    <p class="ready">Readiness is tracked as separate statuses, never one "complete": <span class="r">Built</span><span class="r">Tested</span><span class="r">Deployed</span><span class="r">Enabled</span><span class="r">Legally approved</span><span class="r">Commercially operating</span> "Open now" means we take and run missions on those routes today. It does not claim any single status above, such as legal approval, for any route.</p>
+    <h3 class="h3 sub-h" id="not-h">What Corridra is not.</h3>
+    <div class="nots2">
+      <div>Not a directory.<span>A list of names is not access.</span></div>
+      <div>Not a marketplace.<span>We are not trying to replace one.</span></div>
+      <div>Not a CRM or an ERP.<span>We feed your tools, we do not replace them.</span></div>
+      <div>Not a travel agency or visa service.<span>Tourism and visas are not our work.</span></div>
+      <div>Not a mass-outreach engine.<span>No unsolicited messages on your behalf.</span></div>
+      <div>Not an autonomous negotiator.<span>People decide, always.</span></div>
+      <div>Not a payment processor or lender.<span>We record money. We do not move it.</span></div>
+      <div>Not a social network.<span>Introductions have a purpose and a scope.</span></div>
+    </div>
+    <div class="note"><b>Design note · routes</b>Three honest tiers replace "Launch route": Open now, Selective and Ask us. "No operating offer announced" applies only to routes outside the open list. The six readiness statuses stay as principles, so nobody reads "Open now" as every status reached. The "is not" list sits beside the routes because both say where Corridra stops.</div>
+    <div class="note"><b>Design note · owner decision, 17 Nov 2026</b>First hand from the owner: Corridra is not limited to Spain and the EU. The EU, the UK, the US, Australia and key Asian markets are presented as equal open destinations, and the owner states that Corridra can run missions in all of them today. This board cannot verify that statement; it is shown because the owner made it, and the page claims nothing beyond it. Product vision v2.1 still names Spain and the EU as the second launch corridor, so the vision needs a forward amendment before this page ships. The China supply-side route stays, the reverse directions into Bangladesh stay Selective, and any other route stays "Ask us. We tell you plainly if we can help."</div>
+  </div>
+</section>
+
+<!-- 12. FINAL CTA -->
+<section class="band navy final" id="final" aria-labelledby="final-h">
+  <div class="in">
+    <span class="eyebrow">Start now, decide later</span>
+    <h2 class="h2" id="final-h">Begin with one question: what do you want to do abroad?</h2>
+    <div class="rev">
+      <div>Nothing is sent until you press Send.<span>Your draft stays with you until then.</span></div>
+      <div>Stop any time.<span>No account, no commitment to start a brief.</span></div>
+      <div>We tell you if we cannot help.<span>Plainly, and early.</span></div>
+    </div>
+    <div class="btns"><a class="btn" href="#brief" id="final-cta"><span id="final-cta-t">Start my brief</span><svg aria-hidden="true"><use href="#i-arrow"/></svg></a><button type="button" class="btn line" data-talk>Talk to a person</button></div>
+    <div class="note"><b>Design note · close</b>The closing line follows the chosen corridor. Only true risk reversal, no deadline, no scarcity: the visitor's own trip or fair supplies the timing.</div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="in">
+    <b style="color:var(--ink)">Corridra</b> · Cross-border market access
+    <p class="disc">Merged Version 3 of a design board, not a live page. Companies, quotes, prices, times and records shown are examples, and every company name is invented. Buttons marked as demos do not send anything. The Bangla, Chinese and Spanish lines are drafts pending native review. Not affiliated with or endorsed by Apple.</p>
+  </div>
+</footer>
+
+<div class="mbar" id="mbar" role="group" aria-label="Quick start">
+  <a class="btn" href="#brief"><span id="mbar-t">Start my brief</span></a>
+  <button type="button" class="btn line" data-talk><span class="long">Talk to a person</span><span class="short">Talk to us</span></button>
+</div>
+
+<div class="dock"><label for="nt">Design notes <input type="checkbox" id="nt"></label></div>
+
+<dialog id="talk" aria-labelledby="talk-h">
+  <div class="dlg">
+    <button type="button" class="x" id="talk-x" aria-label="Close">×</button>
+    <h2 id="talk-h">Talk to a person</h2>
+    <p>You talk to someone who scopes missions, not a script. Tell us what is coming up and we say plainly whether we can help.</p>
+    <div class="acts">
+      <button type="button" class="btn" data-demo="call">Ask for a call back</button>
+      <button type="button" class="btn line" data-demo="video">Book a short video call</button>
+      <button type="button" class="btn line" data-demo="chat">Message on WhatsApp or WeChat</button>
+    </div>
+    <p class="status" id="talk-status" role="status"></p>
+    <p class="small">Demo. This design board shows no phone number and sends nothing.</p>
+  </div>
+</dialog>
+
+<script>
+(function(){
+  function $(id){return document.getElementById(id);}
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* flags: inline SVG beside a country name, never alone */
+  function star(cx,cy,r,deg,pts){var n=pts||5,p=[],i,a,step=180/n,inner=n===5?0.382:0.45;for(i=0;i<n*2;i++){a=(deg+i*step)*Math.PI/180;var rr=i%2?r*inner:r;p.push((cx+rr*Math.cos(a)).toFixed(2)+','+(cy+rr*Math.sin(a)).toFixed(2));}return '<polygon points="'+p.join(' ')+'"/>';}
+  /* Union Jack, simplified for 20x14: saltires without the counterchange */
+  var UJ='<rect width="30" height="20" fill="#012169"/><path d="M0,0L30,20M30,0L0,20" stroke="#fff" stroke-width="4"/><path d="M0,0L30,20M30,0L0,20" stroke="#c8102e" stroke-width="1.5"/><path d="M15,0V20M0,10H30" stroke="#fff" stroke-width="6"/><path d="M15,0V20M0,10H30" stroke="#c8102e" stroke-width="3.4"/>';
+  var FLAGS={
+    bd:'<rect width="30" height="20" fill="#006a4e"/><circle cx="13.5" cy="10" r="6" fill="#f42a41"/>',
+    cn:(function(){var o='<rect width="30" height="20" fill="#de2910"/><g fill="#ffde00">'+star(5,5.2,3.2,-90);[[10,2],[12,4.2],[12,7],[10,9.2]].forEach(function(p){o+=star(p[0],p[1],1,Math.atan2(5.2-p[1],5-p[0])*180/Math.PI)});return o+'</g>';})(),
+    eu:(function(){var o='<rect width="30" height="20" fill="#039"/><g fill="#fc0">';for(var i=0;i<12;i++){var a=i*30*Math.PI/180;o+=star(15+6.2*Math.cos(a),10+6.2*Math.sin(a),1.1,-90);}return o+'</g>';})(),
+    es:'<rect width="30" height="20" fill="#aa151b"/><rect y="5" width="30" height="10" fill="#f1bf00"/>',
+    de:'<rect width="30" height="20" fill="#000"/><rect y="6.67" width="30" height="6.67" fill="#dd0000"/><rect y="13.33" width="30" height="6.67" fill="#ffce00"/>',
+    fr:'<rect width="30" height="20" fill="#fff"/><rect width="10" height="20" fill="#0055a4"/><rect x="20" width="10" height="20" fill="#ef4135"/>',
+    it:'<rect width="30" height="20" fill="#fff"/><rect width="10" height="20" fill="#009246"/><rect x="20" width="10" height="20" fill="#ce2b37"/>',
+    gb:UJ,
+    us:(function(){var o='<rect width="30" height="20" fill="#b22234"/>',h=20/13,r,c;for(r=1;r<13;r+=2){o+='<rect y="'+(r*h).toFixed(3)+'" width="30" height="'+h.toFixed(3)+'" fill="#fff"/>';}
+      o+='<rect width="12.5" height="'+(7*h).toFixed(3)+'" fill="#3c3b6e"/><g fill="#fff">';for(r=0;r<4;r++){for(c=0;c<5;c++){o+='<circle cx="'+(1.5+c*2.2+(r%2?1.1:0)).toFixed(2)+'" cy="'+(1.5+r*2.55).toFixed(2)+'" r=".55"/>';}}return o+'</g>';})(),
+    au:'<rect width="30" height="20" fill="#012169"/><g transform="scale(.5)">'+UJ+'</g><g fill="#fff">'+star(7.5,15,2.4,-90,7)+star(22.5,16.6,1.25,-90,7)+star(19.2,9.4,1.25,-90,7)+star(22.5,3.6,1.25,-90,7)+star(26,8.2,1.25,-90,7)+star(24.2,11.6,.75,-90,5)+'</g>'
+  };
+  var FN={bd:'Bangladesh',cn:'China',eu:'European Union',es:'Spain',de:'Germany',fr:'France',it:'Italy',gb:'United Kingdom',us:'United States',au:'Australia'};
+  function paintFlags(root){(root||document).querySelectorAll('.flag[data-c]').forEach(function(f){if(f.firstChild)return;var c=f.dataset.c;f.innerHTML='<svg viewBox="0 0 30 20" aria-hidden="true" focusable="false">'+FLAGS[c]+'</svg>';
+    if(f.hasAttribute('data-dec')){f.setAttribute('aria-hidden','true');}else{f.setAttribute('role','img');f.setAttribute('aria-label',FN[c]+' flag');}});}
+  paintFlags();
+
+  /* board strip */
+  $('board-x').addEventListener('click',function(){$('board').hidden=true;$('wm').focus();});
+
+  /* hero copy per track and language (bn, zh and es are drafts) */
+  var HERO={
+    all:{en:['Make market entry deliberate.','Corridra turns an international business goal into the right people, trusted conversations and progress you can measure. We run missions from Bangladesh to China, the EU, the UK, the US, Australia and key Asian markets. Choose yours.','Start a request'],
+         bn:['বাজারে প্রবেশ হোক সুপরিকল্পিত।','Corridra আন্তর্জাতিক ব্যবসার লক্ষ্যকে সঠিক মানুষ, বিশ্বস্ত আলোচনা এবং পরিমাপযোগ্য অগ্রগতিতে রূপ দেয়। আমরা বাংলাদেশ থেকে চীন, ইইউ, যুক্তরাজ্য, যুক্তরাষ্ট্র, অস্ট্রেলিয়া এবং এশিয়ার প্রধান বাজারগুলোতে মিশন পরিচালনা করি। আপনারটি বেছে নিন।','অনুরোধ শুরু করুন'],
+         zh:['让进入市场，有备而来。','Corridra 把国际业务目标变成合适的人、可信的沟通和可衡量的进展。我们开展从孟加拉国到中国、欧盟、英国、美国、澳大利亚和亚洲主要市场的任务。请选择您的路线。','开始提交需求'],
+         es:['Entre en nuevos mercados con un plan claro.', 'Corridra convierte un objetivo de negocio internacional en las personas adecuadas, conversaciones de confianza y avances que se pueden medir. Organizamos misiones desde Bangladés a China, la UE, el Reino Unido, Estados Unidos, Australia y los principales mercados de Asia. Elija la suya.', 'Iniciar una solicitud']},
+    china:{en:['Go to China knowing which suppliers deserve your time.','Many suppliers, few you can compare. We find and check suppliers, put their original quotes side by side, and plan factory visits in Guangzhou, Foshan, Shenzhen or Yiwu.','Plan my China sourcing'],
+         bn:['চীনে যান জেনে, কোন সরবরাহকারী আপনার সময়ের যোগ্য।','সরবরাহকারী অনেক, তুলনা করা যায় অল্প কয়েকটি। আমরা সরবরাহকারী খুঁজি ও যাচাই করি, মূল কোটেশন পাশাপাশি রাখি, আর গুয়াংজু, ফোশান, শেনজেন বা ইউউ-তে কারখানা পরিদর্শনের পরিকল্পনা করি।','আমার চীন সোর্সিং পরিকল্পনা করুন'],
+         zh:['去中国之前，先知道哪些供应商值得您花时间。','供应商很多，能直接比较的很少。我们寻找并核查供应商，把原始报价并排比较，并规划您在广州、佛山、深圳或义乌的看厂行程。','规划我的中国采购'],
+         es:['Vaya a China sabiendo qué proveedores merecen su tiempo.', 'Muchos proveedores, pocos que se puedan comparar. Buscamos y comprobamos proveedores, ponemos sus cotizaciones originales una al lado de otra y planificamos visitas a fábricas en Guangzhou, Foshan, Shenzhen o Yiwu.', 'Planificar mis compras en China']},
+    sell:{en:['Know who is worth meeting before you travel.','Including companies outside the fair list. We research buyers and distributors in the EU, the UK, the US, Australia and key Asian markets, check what they claim, and help you set up meetings worth the flight.','Plan my buyer meetings'],
+         bn:['যাত্রার আগেই জানুন কার সঙ্গে দেখা করা মূল্যবান।','মেলার তালিকার বাইরের কোম্পানিসহ। আমরা ইইউ, যুক্তরাজ্য, যুক্তরাষ্ট্র, অস্ট্রেলিয়া ও এশিয়ার প্রধান বাজারে ক্রেতা ও পরিবেশক খুঁজি, তাদের দাবি যাচাই করি এবং কাজের মিটিং ঠিক করতে সাহায্য করি।','আমার ক্রেতা-মিটিং পরিকল্পনা করুন'],
+         zh:['出发之前，先知道谁值得见。','包括展会名单之外的公司。我们在欧盟、英国、美国、澳大利亚和亚洲主要市场调研买家与分销商，核实其说法，并协助安排值得一趟的会面。','规划我的买家会面'],
+         es:['Sepa a quién vale la pena conocer antes de viajar.', 'Incluidas empresas que no están en la lista de la feria. Investigamos compradores y distribuidores en la UE, el Reino Unido, Estados Unidos, Australia y los principales mercados de Asia, comprobamos lo que afirman y le ayudamos a organizar reuniones que justifiquen el viaje.', 'Planificar mis reuniones con compradores']},
+    delegation:{en:['Give every company in your delegation its own plan.','Each company keeps a private mission with its own targets and meetings. You see programme activity and overall outcomes, never their private data.','Plan my programme'],
+         bn:['আপনার প্রতিনিধিদলের প্রতিটি কোম্পানিকে দিন নিজস্ব পরিকল্পনা।','প্রতিটি কোম্পানির নিজস্ব গোপন মিশন থাকে। আপনি দেখেন কর্মসূচির কার্যক্রম ও সামগ্রিক ফলাফল, কখনো তাদের ব্যক্তিগত তথ্য নয়।','আমার কর্মসূচি পরিকল্পনা করুন'],
+         zh:['让代表团里的每家公司都有自己的计划。','每家公司都有独立、私密的任务。您能看到项目活动和整体成果，但看不到它们的私密数据。','规划我的项目'],
+         es:['Dé a cada empresa de su delegación su propio plan.', 'Cada empresa mantiene una misión privada, con sus propios objetivos y reuniones. Usted ve la actividad del programa y los resultados generales, nunca sus datos privados.', 'Planificar mi programa']},
+    other:{en:['Tell us what is coming up. We say plainly if we can help.','A trip, a purchase, a fair or a first look at a new market. Describe it in your own words. If it is not something we do well, we tell you.','Describe what I need'],
+         bn:['সামনে কী আছে বলুন। আমরা সাহায্য করতে পারব কি না, সোজাসুজি জানাব।','একটি সফর, একটি কেনাকাটা, একটি মেলা বা নতুন বাজারে প্রথম দৃষ্টি। নিজের ভাষায় লিখুন। আমরা ভালো না পারলে জানিয়ে দেব।','আমার প্রয়োজন লিখুন'],
+         zh:['告诉我们接下来要做什么。能否帮忙，我们直说。','一次出行、一次采购、一场展会，或初步了解新市场。用您自己的话描述。如果不是我们擅长的，我们会直接告诉您。','描述我的需求'],
+         es:['Cuéntenos qué tiene por delante. Le diremos con claridad si podemos ayudarle.', 'Un viaje, una compra, una feria o una primera mirada a un mercado nuevo. Descríbalo con sus propias palabras. Si no es algo que hagamos bien, se lo diremos.', 'Describir lo que necesito']}
+  };
+  var UI={
+    en:{q:'Which way is your business moving?',talk:'Talk to a person',hdr:'Start a request',hdrS:'Start',line:'Cross-border market access',line2:'Make market entry deliberate.',door:{china:'Buying from China',sell:'Sell Abroad',delegation:'Leading a delegation',other:'Something else'}},
+    bn:{q:'আপনার ব্যবসা কোন দিকে যাচ্ছে?',talk:'একজন মানুষের সঙ্গে কথা বলুন',hdr:'অনুরোধ শুরু করুন',hdrS:'শুরু',line:'আন্তঃসীমান্ত বাজারে প্রবেশ',line2:'বাজারে প্রবেশ হোক সুপরিকল্পিত।',door:{china:'চীন থেকে কেনা',sell:'বিদেশে বিক্রি',delegation:'প্রতিনিধিদলের নেতৃত্ব',other:'অন্য কিছু'}},
+    zh:{q:'您的业务往哪个方向走？',talk:'与真人沟通',hdr:'开始提交需求',hdrS:'开始',line:'跨境市场准入',line2:'让进入市场，有备而来。',door:{china:'从中国采购',sell:'向海外销售',delegation:'带领代表团',other:'其他'}},
+    es:{q:'¿Hacia dónde avanza su empresa?',talk:'Hablar con una persona',hdr:'Iniciar una solicitud',hdrS:'Iniciar',line:'Acceso a mercados internacionales',line2:'Entre en nuevos mercados con un plan claro.',door:{china:'Comprar en China',sell:'Vender en el extranjero',delegation:'Dirigir una delegación',other:'Otra cosa'}}
+  };
+  var TRK_NAME={none:'shared sections. Choose a route to open it.',all:'all routes',china:'China Route',sell:'Sell Abroad',delegation:'delegation',other:'something else'};
+  var S={lang:'en',trk:'none',mkt:'eu',mktPicked:false};
+  var h1=$('h1'),hsub=$('hsub'),hct=$('hero-cta-t');
+  function paintHero(){
+    var t=HERO[S.trk==='none'?'all':S.trk][S.lang],u=UI[S.lang];
+    h1.textContent=t[0];hsub.textContent=t[1];hct.textContent=t[2];
+    [h1,hsub,hct].forEach(function(e){e.setAttribute('lang',S.lang)});
+    document.querySelectorAll('[data-ui]').forEach(function(e){var k=e.dataset.ui;if(k==='line'){e.textContent=(S.trk==='all'||S.trk==='none')?u.line:u.line2;e.setAttribute('lang',S.lang);return;}if(u[k]){e.textContent=u[k];e.setAttribute('lang',S.lang);}});
+    document.querySelectorAll('[data-door]').forEach(function(e){e.textContent=u.door[e.dataset.door];e.setAttribute('lang',S.lang);});
+    $('langnote').hidden=S.lang==='en';$('langnote-es').hidden=S.lang!=='es';
+  }
+  function heroSwap(){
+    if(reduce){paintHero();return;}
+    h1.classList.add('fade');hsub.classList.add('fade');
+    setTimeout(function(){paintHero();h1.classList.remove('fade');hsub.classList.remove('fade');},160);
+  }
+  document.querySelectorAll('[data-l]').forEach(function(b){b.addEventListener('click',function(){
+    S.lang=b.dataset.l;
+    document.querySelectorAll('[data-l]').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false')});
+    paintHero();
+  })});
+
+  /* track switching: the whole page follows the chosen corridor */
+  var FINAL={none:'Begin with one question: what do you want to do abroad?',all:'Begin with one question: what do you want to do abroad?',
+    china:'The sourcing trip is coming either way. Arrive knowing which suppliers matter.',
+    sell:'The fair is coming either way. Arrive knowing who is worth meeting.',
+    delegation:'The programme is coming either way. Give each company its own plan.',
+    other:'Whatever is coming up, start with a plain answer on whether we can help.'};
+  var FINALCTA={none:'Start my brief',all:'Start my brief',china:'Plan my China sourcing',sell:'Plan my buyer meetings',delegation:'Plan my programme',other:'Describe what I need'};
+  var MINE={china:'rs-china',sell:'rs-sell',other:'rs-other'};
+  var PERS_FOR={china:1,sell:0,delegation:6};
+  var JUMP={china:'t-china',sell:'t-sell',delegation:'t-delegation',other:'t-other',all:'t-china'};
+  function setTrack(t,fromHero,quiet){
+    S.trk=t;
+    document.querySelectorAll('input[name=trk]').forEach(function(r){r.checked=(r.value===t);});
+    document.querySelectorAll('[data-trk]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.trk===t?'true':'false');});
+    document.querySelectorAll('section[data-track]').forEach(function(s){var k=s.dataset.track;s.hidden=!(k===t||(t==='all'&&k!=='other'));});
+    $('pick').hidden=(t!=='none');$('hint').hidden=(t!=='none');
+    var lab=$('tb-label');lab.textContent='Showing: ';var sp=document.createElement('span');sp.textContent=TRK_NAME[t];lab.appendChild(sp);
+    if(quiet){paintHero();}else{heroSwap();}
+    $('final-h').textContent=FINAL[t];$('final-cta-t').textContent=FINALCTA[t];
+    $('mbar-t').textContent=FINALCTA[t];
+    ['rs-china','rs-sell','rs-other'].forEach(function(id){$(id).classList.toggle('mine',MINE[t]===id)});
+    if(t!=='all'&&t!=='none'){var g=$('g-'+t);if(g){g.checked=true;$('b-status').textContent='';}}
+    if(PERS_FOR[t]!==undefined){setP(PERS_FOR[t],false);}
+    renderBrief();
+    var fb=$('hfb');fb.textContent='';
+    if(fromHero&&t!=='all'&&t!=='none'){
+      fb.appendChild(document.createTextNode('Opened below: '+UI.en.door[t]+'. '));
+      var a=document.createElement('a');a.href='#'+JUMP[t];a.textContent='Go to it';fb.appendChild(a);
+    }
+  }
+  document.querySelectorAll('input[name=trk]').forEach(function(r){r.addEventListener('change',function(){if(r.checked)setTrack(r.value,true);})});
+  document.querySelectorAll('[data-trk]').forEach(function(b){b.addEventListener('click',function(){setTrack(b.dataset.trk,false);})});
+  /* the how-it-works strip opens a route and moves to it */
+  document.querySelectorAll('[data-open]').forEach(function(b){b.addEventListener('click',function(){var t=b.dataset.open;setTrack(t,false);
+    var target=$(JUMP[t]);if(target){target.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});var h=target.querySelector('h2');if(h){h.setAttribute('tabindex','-1');h.focus({preventScroll:true});}}});});
+  /* a link to a route section that is hidden by the current track switches the page to that track first */
+  document.querySelectorAll('a[href^="#t-"]').forEach(function(l){l.addEventListener('click',function(){var t=document.querySelector(l.getAttribute('href'));if(t&&t.hidden&&t.dataset.track){setTrack(t.dataset.track,false);}})});
+
+  /* CHINA: quotes (from Version B) */
+  var COV={
+    a:[['Machine','yes'],['Installation','yes'],['Sea freight to Chattogram','out'],['Insurance in transit','out'],['Import duty and clearance in Bangladesh','out']],
+    b:[['Machine','yes'],['Installation','out'],['Sea freight to Chattogram','ns'],['Insurance in transit','ns'],['Import duty and clearance in Bangladesh','ns']],
+    c:[['Machine','yes'],['Installation','ns'],['Sea freight to Chattogram','yes'],['Insurance in transit','yes'],['Import duty and clearance in Bangladesh','out']]
+  };
+  var VERDICT={
+    a:'Not yet comparable. Terms are clear, but freight and insurance after Ningbo are not in the price.',
+    b:'Not yet comparable. Delivery terms are not stated, and installation is extra at a price not stated.',
+    c:'Not yet comparable. Installation is not confirmed.'
+  };
+  var WORD={yes:'In the price',out:'Not in the price',ns:'Not stated'};
+  var REACT={
+    a:['You picked A, USD 42,000.','A fair choice: A states every term. But FOB Ningbo means sea freight and insurance after Ningbo are yours to pay, so A cannot be set beside C\'s delivered price yet.'],
+    b:['You picked B, USD 38,500, the lowest number.','It is also the offer with the most gaps: three costs not stated, because there are no delivery terms, and installation not included. The lowest number is not yet the lowest cost.'],
+    c:['You picked C, USD 45,700.','It looks the most expensive, but it is the only price that includes freight and insurance to Chattogram. Installation is not confirmed, so it cannot be ranked yet either.'],
+    x:['Right answer. Nobody can tell yet.','As they stand, none of the three can be ranked on price. The lowest number, B, carries the most gaps: three costs not stated, and installation not included.']
+  };
+  function buildReveal(k){
+    var box=document.querySelector('#qc-'+k+' .reveal');
+    if(box.dataset.built)return;
+    var nsC=COV[k].filter(function(x){return x[1]==='ns'}).length,outC=COV[k].filter(function(x){return x[1]==='out'}).length;
+    var h='<div class="gapn"><span class="num">'+nsC+'</span><span>'+(nsC===1?'cost':'costs')+' not stated<br>'+outC+' known '+(outC===1?'cost':'costs')+' not in the price</span></div><div class="cov"><span class="ch">What the price covers</span>';
+    COV[k].forEach(function(x){h+='<div class="cv"><span>'+x[0]+'</span><span class="st '+(x[1]==='ns'?'ns2':x[1])+'">'+WORD[x[1]]+'</span></div>'});
+    h+='</div><div class="verdict">'+VERDICT[k]+'</div>';
+    box.innerHTML=h;box.dataset.built='1';
+  }
+  var picks=document.querySelectorAll('[data-pick]');
+  picks.forEach(function(b){b.addEventListener('click',function(){
+    var k=b.dataset.pick;
+    picks.forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false')});
+    ['a','b','c'].forEach(function(q){buildReveal(q);document.querySelector('#qc-'+q+' .reveal').hidden=false;$('qc-'+q).classList.toggle('picked',q===k);});
+    $('r-title').textContent=REACT[k][0];$('r-body').textContent=REACT[k][1];
+    $('reaction').hidden=false;$('q-reset').hidden=false;
+  })});
+  $('q-reset').addEventListener('click',function(){
+    picks.forEach(function(x){x.setAttribute('aria-pressed','false')});
+    ['a','b','c'].forEach(function(q){document.querySelector('#qc-'+q+' .reveal').hidden=true;$('qc-'+q).classList.remove('picked');});
+    $('reaction').hidden=true;$('q-reset').hidden=true;
+    document.querySelector('[data-pick=a]').focus();
+  });
+
+  /* CHINA: visit day on two clocks (Dhaka is UTC+6, Guangzhou UTC+8) */
+  var STOPS=[
+    ['08:00','Leave the hotel','Driver and interpreter confirmed the day before. Foshan is next to Guangzhou, so the first factory is a short drive.'],
+    ['09:30','Factory 1: running test','You watch the quoted machine run on your own fabric sample. Photos and video go into the mission record.'],
+    ['12:30','Lunch with sales','The gaps from the quote comparison are asked in person: freight, installation, training.'],
+    ['14:30','Factory 2: site check','Address and nameplate checked against the business licence it sent. A field check, not an external audit.'],
+    ['16:30','Call with Dhaka','Your engineer joins by video at 14:30 Dhaka time to see the line and ask technical questions.'],
+    ['20:00','Notes written up','Both visits are recorded the same day, so the two factories can be compared like for like.']
+  ];
+  function pad(n){return (n<10?'0':'')+n;}
+  function dhaka(t){var p=t.split(':'),h=(+p[0]-2+24)%24;return pad(h)+':'+p[1];}
+  document.querySelectorAll('.clk .ticks').forEach(function(g){var o='';for(var i=0;i<12;i++){var a=i*30*Math.PI/180;o+='<line class="tick" x1="'+(50+38*Math.sin(a)).toFixed(1)+'" y1="'+(50-38*Math.cos(a)).toFixed(1)+'" x2="'+(50+42*Math.sin(a)).toFixed(1)+'" y2="'+(50-42*Math.cos(a)).toFixed(1)+'"/>';}g.innerHTML=o;});
+  function setClock(svg,t,city){var p=t.split(':'),h=+p[0],m=+p[1];
+    svg.querySelector('.hh').setAttribute('transform','rotate('+((h%12)*30+m*0.5)+' 50 50)');
+    svg.querySelector('.mh').setAttribute('transform','rotate('+(m*6)+' 50 50)');
+    svg.setAttribute('aria-label',city+' clock showing '+t);}
+  var stopsEl=$('stops');
+  STOPS.forEach(function(s,i){var li=document.createElement('li');var b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed','false');b.dataset.stop=i;b.id='stop-'+i;
+    var tm=document.createElement('span');tm.className='tm';tm.textContent=s[0];var nm=document.createElement('span');nm.textContent=s[1];b.appendChild(tm);b.appendChild(nm);
+    b.addEventListener('click',function(){setStop(i);});li.appendChild(b);stopsEl.appendChild(li);});
+  function setStop(i){var s=STOPS[i],d=dhaka(s[0]);
+    stopsEl.querySelectorAll('button').forEach(function(b){b.setAttribute('aria-pressed',+b.dataset.stop===i?'true':'false')});
+    setClock($('clk-gz'),s[0],'Guangzhou');setClock($('clk-dh'),d,'Dhaka');
+    $('t-gz').textContent=s[0];$('t-dh').textContent=d;
+    $('stop-t').textContent=s[0]+' in Guangzhou, '+d+' in Dhaka: '+s[1];$('stop-p').textContent=s[2];}
+  setStop(1);
+
+  /* SELL ABROAD: who is worth meeting, per market (every company invented, every set tagged Example) */
+  var LAB={sd:['unk','i-claim','Self-declared'],ev:['info','i-doc','Evidence available'],ver:['pos','i-check','Verified']};
+  var MK={
+    eu:{to:'the EU',city:'Madrid',cur:'EUR',
+      side:[['bd','Bangladesh'],'to',['eu','EU']],
+      brief:'Spain first, with a stand at a trade fair in Madrid, then meetings in France and Italy. Capacity about 20,000 pieces a month.',
+      line:'<b>The EU is a bloc, not a country.</b> National laws stay separate inside it, so a buyer in Lyon and a buyer in Milan are read one country at a time.',
+      fair:[
+        {n:'Moda Brezo SA',c:'es',city:'Madrid',as:'Retail chain, womenswear',st:'fit',why:'Buys mid-price knitwear and already sources from South Asia.',lab:'ev',lnote:'Shared recent purchase orders'},
+        {n:'Hilaturas Arenal SL',c:'es',city:'Valencia',as:'Yarn spinner',st:'no',why:'Sells yarn. Does not buy finished knitwear.'},
+        {n:'Punto Calma SL',c:'es',city:'Barcelona',as:'Knitwear brand',st:'fit',why:'Owns a brand and outsources production. Its stated minimum order fits your capacity.',lab:'sd',lnote:'Stated in its first reply'},
+        {n:'Tissages Combelle SARL',c:'fr',city:'Lyon',as:'Fabric wholesaler',st:'no',why:'Buys woven fabric, not knitwear.'},
+        {n:'Casa Olmeda Hogar SL',c:'es',city:'Valencia',as:'Home textiles',st:'no',why:'Home textiles only. Outside your product.'},
+        {n:'Stamperia Velluti Srl',c:'it',city:'Milan',as:'Printing services',st:'no',why:'Sells a service to brands. Not a buyer.'},
+        {n:'Agenzia Corvetto Moda Srl',c:'it',city:'Milan',as:'Fashion agency',st:'no',why:'Says it is tied to one supplier this season.'},
+        {n:'Maison Vellaure SAS',c:'fr',city:'Lyon',as:'Luxury knitwear',st:'no',why:'Price point far above your range.'}],
+      out:[
+        {n:'Casa Vireo Distribución SL',c:'es',city:'Valencia',why:'Supplies independent shops in eastern Spain and is looking for a second knitwear source.',lab:'sd',lnote:'Stated by the company'},
+        {n:'Maglieria Ostrano Srl',c:'it',city:'Milan',why:'Private-label importer for department stores. Not exhibiting this year.',lab:'ver',lnote:'Registry record and address checked'},
+        {n:'Lumbre Infantil SL',c:'es',city:'Barcelona',why:'Children\'s knitwear brand buying from Asian suppliers today.',lab:'ev',lnote:'Shared supplier invoices, prices hidden'}]},
+    gb:{to:'the UK',city:'Manchester',cur:'GBP',
+      side:[['bd','Bangladesh'],'to',['gb','United Kingdom']],
+      brief:'A stand at a trade fair in Manchester, then meetings in Leeds, Bristol and Glasgow. Capacity about 20,000 pieces a month.',
+      line:'<b>The UK is read as a market of its own.</b> Buyers from Manchester to Glasgow are qualified one by one against your brief, not against a list.',
+      fair:[
+        {n:'Hallow and Finch Retail Ltd',c:'gb',city:'Manchester',as:'Retail chain, womenswear',st:'fit',why:'Buys mid-price knitwear and already sources from South Asia.',lab:'ev',lnote:'Shared recent purchase orders'},
+        {n:'Pennine Yarnworks Ltd',c:'gb',city:'Leeds',as:'Yarn spinner',st:'no',why:'Sells yarn. Does not buy finished knitwear.'},
+        {n:'Brackenmoor Knit Co Ltd',c:'gb',city:'Glasgow',as:'Knitwear brand',st:'fit',why:'Owns a brand and outsources production. Its stated minimum order fits your capacity.',lab:'sd',lnote:'Stated in its first reply'},
+        {n:'Tolland Cloth Merchants Ltd',c:'gb',city:'Bristol',as:'Fabric wholesaler',st:'no',why:'Buys woven fabric, not knitwear.'},
+        {n:'Ashgrove Home Textiles Ltd',c:'gb',city:'Leeds',as:'Home textiles',st:'no',why:'Home textiles only. Outside your product.'},
+        {n:'Redbrook Print Studio Ltd',c:'gb',city:'Manchester',as:'Printing services',st:'no',why:'Sells a service to brands. Not a buyer.'},
+        {n:'Calderwick Fashion Agency Ltd',c:'gb',city:'Leeds',as:'Fashion agency',st:'no',why:'Says it is tied to one supplier this season.'},
+        {n:'Thistlecombe Luxury Knit Ltd',c:'gb',city:'Glasgow',as:'Luxury knitwear',st:'no',why:'Price point far above your range.'}],
+      out:[
+        {n:'Larkhollow Wholesale Ltd',c:'gb',city:'Bristol',why:'Supplies independent shops in the south-west and is looking for a second knitwear source.',lab:'sd',lnote:'Stated by the company'},
+        {n:'Cobblestow Private Label Ltd',c:'gb',city:'Manchester',why:'Private-label importer for department stores. Not exhibiting this year.',lab:'ver',lnote:'Registry record and address checked'},
+        {n:'Wrenfield Kids Knitwear Ltd',c:'gb',city:'Glasgow',why:'Children\'s knitwear brand buying from Asian suppliers today.',lab:'ev',lnote:'Shared supplier invoices, prices hidden'}]},
+    us:{to:'the US',city:'Chicago',cur:'USD',
+      side:[['bd','Bangladesh'],'to',['us','United States']],
+      brief:'A stand at a trade fair in Chicago, then meetings in Atlanta, Dallas and Portland. Capacity about 20,000 pieces a month.',
+      line:'<b>The US is a big country to cover in one trip.</b> The shortlist starts from the cities and sales channels in your brief, not from the whole map.',
+      fair:[
+        {n:'Westbrine Apparel Inc',c:'us',city:'Chicago',as:'Retail chain, womenswear',st:'fit',why:'Buys mid-price knitwear and already sources from South Asia.',lab:'ev',lnote:'Shared recent purchase orders'},
+        {n:'Pinecastle Yarn Mills Inc',c:'us',city:'Atlanta',as:'Yarn spinner',st:'no',why:'Sells yarn. Does not buy finished knitwear.'},
+        {n:'Juniper Row Knitwear LLC',c:'us',city:'Portland',as:'Knitwear brand',st:'fit',why:'Owns a brand and outsources production. Its stated minimum order fits your capacity.',lab:'sd',lnote:'Stated in its first reply'},
+        {n:'Trinity Bolt Fabrics Inc',c:'us',city:'Dallas',as:'Fabric wholesaler',st:'no',why:'Buys woven fabric, not knitwear.'},
+        {n:'Hearthline Home Goods Inc',c:'us',city:'Dallas',as:'Home textiles',st:'no',why:'Home textiles only. Outside your product.'},
+        {n:'Mossgate Print Works LLC',c:'us',city:'Portland',as:'Printing services',st:'no',why:'Sells a service to brands. Not a buyer.'},
+        {n:'Wabash Lane Showrooms LLC',c:'us',city:'Chicago',as:'Fashion agency',st:'no',why:'Says it is tied to one supplier this season.'},
+        {n:'Peachline Luxe Knits LLC',c:'us',city:'Atlanta',as:'Luxury knitwear',st:'no',why:'Price point far above your range.'}],
+      out:[
+        {n:'Prairiemoor Wholesale Inc',c:'us',city:'Chicago',why:'Supplies independent boutiques in the Midwest and is looking for a second knitwear source.',lab:'sd',lnote:'Stated by the company'},
+        {n:'Caddo Ridge Private Label LLC',c:'us',city:'Dallas',why:'Private-label importer for department stores. Not exhibiting this year.',lab:'ver',lnote:'Registry record and address checked'},
+        {n:'Cedar Sprout Kids Inc',c:'us',city:'Portland',why:'Children\'s knitwear brand buying from Asian suppliers today.',lab:'ev',lnote:'Shared supplier invoices, prices hidden'}]},
+    au:{to:'Australia',city:'Melbourne',cur:'AUD',
+      side:[['bd','Bangladesh'],'to',['au','Australia']],
+      brief:'A stand at a trade fair in Melbourne, then meetings in Sydney, Brisbane and Perth. Capacity about 20,000 pieces a month.',
+      line:'<b>From Dhaka, Australia is a long trip.</b> Knowing who is worth meeting before you fly matters more when each extra day away is expensive.',
+      fair:[
+        {n:'Kestrel Bay Retail Pty Ltd',c:'au',city:'Melbourne',as:'Retail chain, womenswear',st:'fit',why:'Buys mid-price knitwear and already sources from South Asia.',lab:'ev',lnote:'Shared recent purchase orders'},
+        {n:'Wattlegum Yarns Pty Ltd',c:'au',city:'Brisbane',as:'Yarn spinner',st:'no',why:'Sells yarn. Does not buy finished knitwear.'},
+        {n:'Coolabah Row Knitwear Pty Ltd',c:'au',city:'Sydney',as:'Knitwear brand',st:'fit',why:'Owns a brand and outsources production. Its stated minimum order fits your capacity.',lab:'sd',lnote:'Stated in its first reply'},
+        {n:'Karri Point Cloth Pty Ltd',c:'au',city:'Perth',as:'Fabric wholesaler',st:'no',why:'Buys woven fabric, not knitwear.'},
+        {n:'Harbourfold Home Textiles Pty Ltd',c:'au',city:'Sydney',as:'Home textiles',st:'no',why:'Home textiles only. Outside your product.'},
+        {n:'Tallowwood Print House Pty Ltd',c:'au',city:'Melbourne',as:'Printing services',st:'no',why:'Sells a service to brands. Not a buyer.'},
+        {n:'Gallery Row Fashion Agency Pty Ltd',c:'au',city:'Melbourne',as:'Fashion agency',st:'no',why:'Says it is tied to one supplier this season.'},
+        {n:'Bellbird Luxe Knitwear Pty Ltd',c:'au',city:'Sydney',as:'Luxury knitwear',st:'no',why:'Price point far above your range.'}],
+      out:[
+        {n:'Mulgara Wholesale Pty Ltd',c:'au',city:'Brisbane',why:'Supplies independent shops in Queensland and is looking for a second knitwear source.',lab:'sd',lnote:'Stated by the company'},
+        {n:'Quandong Private Label Pty Ltd',c:'au',city:'Perth',why:'Private-label importer for department stores. Not exhibiting this year.',lab:'ver',lnote:'Registry record and address checked'},
+        {n:'Possumwood Kids Pty Ltd',c:'au',city:'Melbourne',why:'Children\'s knitwear brand buying from Asian suppliers today.',lab:'ev',lnote:'Shared supplier invoices, prices hidden'}]},
+    asia:{to:'key Asian markets',city:'Singapore',cur:'USD',
+      side:[['bd','Bangladesh'],'to','key Asian markets'],
+      brief:'A stand at a trade fair in Singapore, then meetings in Tokyo, Seoul and Kuala Lumpur. Capacity about 20,000 pieces a month.',
+      line:'<b>Key Asian markets are several countries, not one.</b> Tell us which, and each is read on its own: Singapore, Tokyo, Seoul and Kuala Lumpur are different conversations.',
+      fair:[
+        {n:'Larchmere Retail Pte Ltd',cn:'Singapore',city:'Singapore',as:'Retail chain, womenswear',st:'fit',why:'Buys mid-price knitwear and already sources from South Asia.',lab:'ev',lnote:'Shared recent purchase orders'},
+        {n:'Hoshizora Spinning Co., Ltd.',cn:'Japan',city:'Tokyo',as:'Yarn spinner',st:'no',why:'Sells yarn. Does not buy finished knitwear.'},
+        {n:'Danbi Knit Co., Ltd.',cn:'South Korea',city:'Seoul',as:'Knitwear brand',st:'fit',why:'Owns a brand and outsources production. Its stated minimum order fits your capacity.',lab:'sd',lnote:'Stated in its first reply'},
+        {n:'Seri Tenun Fabrics Sdn Bhd',cn:'Malaysia',city:'Kuala Lumpur',as:'Fabric wholesaler',st:'no',why:'Buys woven fabric, not knitwear.'},
+        {n:'Sakuranomori Home Textiles Co., Ltd.',cn:'Japan',city:'Tokyo',as:'Home textiles',st:'no',why:'Home textiles only. Outside your product.'},
+        {n:'Garam Print Studio Co., Ltd.',cn:'South Korea',city:'Seoul',as:'Printing services',st:'no',why:'Sells a service to brands. Not a buyer.'},
+        {n:'Merbau Fashion Agency Sdn Bhd',cn:'Malaysia',city:'Kuala Lumpur',as:'Fashion agency',st:'no',why:'Says it is tied to one supplier this season.'},
+        {n:'Kumoya Luxury Knit Co., Ltd.',cn:'Japan',city:'Tokyo',as:'Luxury knitwear',st:'no',why:'Price point far above your range.'}],
+      out:[
+        {n:'Tanjong Vale Distribution Pte Ltd',cn:'Singapore',city:'Singapore',why:'Supplies independent shops across the region and is looking for a second knitwear source.',lab:'sd',lnote:'Stated by the company'},
+        {n:'Sorabi Private Label Co., Ltd.',cn:'South Korea',city:'Seoul',why:'Private-label importer for department stores. Not exhibiting this year.',lab:'ver',lnote:'Registry record and address checked'},
+        {n:'Pokok Kecil Kids Sdn Bhd',cn:'Malaysia',city:'Kuala Lumpur',why:'Children\'s knitwear brand buying from Asian suppliers today.',lab:'ev',lnote:'Shared supplier invoices, prices hidden'}]}
+  };
+  var WSUM={1:[8,'names on the fair list, all presented the same way. A list tells you who paid for a stand, not who buys what you make.'],
+    2:[2,'of 8 fit this brief. The other 6 are not a fit, each with a reason you can check.'],
+    3:[5,'worth meeting: 2 from the fair list, and 3 that were never on it. Each one says how it is known.']};
+  function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
+  function labChip(k){var L=LAB[k],s=el('span','chip '+L[0]);s.innerHTML='<svg aria-hidden="true"><use href="#'+L[1]+'"/></svg>';s.appendChild(document.createTextNode(L[2]));return s;}
+  function row(o,step,out){
+    var r=el('div','wr'+(out?' out':(step>1?(o.st==='fit'?' fit':' no'):'')));r.setAttribute('role','row');
+    var c1=el('div','co');c1.setAttribute('role','cell');c1.appendChild(el('b',null,o.n));var sm=el('small');
+    if(o.c){var f=el('span','flag');f.dataset.c=o.c;sm.appendChild(f);}
+    sm.appendChild(document.createTextNode(o.city===(o.cn||FN[o.c])?o.city:o.city+', '+(o.cn||FN[o.c])));c1.appendChild(sm);
+    var c2=el('div','ls');c2.setAttribute('role','cell');if(!out){c2.appendChild(el('span','mob','On the fair list as'));}
+    if(out){c2.appendChild(el('span','outb','Not on the fair list'));}else{c2.appendChild(document.createTextNode(o.as));}
+    var c3=el('div','rd');c3.setAttribute('role','cell');c3.appendChild(el('span','mob','Corridra\'s read'));
+    if(step===1&&!out){c3.appendChild(el('span','ns','Not checked yet'));}
+    else{var top=el('div','lb');top.appendChild(el('span','st '+((out||o.st==='fit')?'yes':'out'),(out||o.st==='fit')?'Worth meeting':'Not a fit'));
+      if(o.lab){top.appendChild(labChip(o.lab));}
+      c3.appendChild(top);c3.appendChild(el('p',null,o.why));if(o.lnote){c3.appendChild(el('span','small',o.lnote+'. Example.'));}}
+    r.appendChild(c1);r.appendChild(c2);r.appendChild(c3);return r;
+  }
+  function renderWorth(){
+    var step=+document.querySelector('input[name=wstep]:checked').value,box=$('wrows');box.textContent='';
+    var M=MK[S.mkt],list=M.fair.slice();
+    if(step>1){list.sort(function(a,b){return (a.st==='fit'?0:1)-(b.st==='fit'?0:1);});}
+    if(step===3){M.out.forEach(function(o){box.appendChild(row(o,step,true));});}
+    list.forEach(function(o){box.appendChild(row(o,step,false));});
+    paintFlags(box);
+    $('w-big').textContent=WSUM[step][0];$('w-sum').textContent=WSUM[step][1];
+  }
+  document.querySelectorAll('input[name=wstep]').forEach(function(r){r.addEventListener('change',renderWorth);});
+  function renderMarket(){
+    var M=MK[S.mkt],side=$('sell-side');side.textContent='';
+    M.side.forEach(function(x){if(typeof x==='string'){side.appendChild(document.createTextNode(' '+x+' '));return;}
+      var pl=el('span','pl');var f=el('span','flag');f.dataset.c=x[0];pl.appendChild(f);pl.appendChild(document.createTextNode(x[1]));side.appendChild(pl);});
+    paintFlags(side);
+    var bx=$('mk-brief');bx.textContent='';bx.appendChild(el('b',null,'Knitwear for mid-price retail. '));bx.appendChild(document.createTextNode(M.brief));
+    $('mk-line').innerHTML=M.line;
+    renderWorth();
+  }
+  document.querySelectorAll('input[name=mkt]').forEach(function(r){r.addEventListener('change',function(){if(!r.checked)return;S.mkt=r.value;S.mktPicked=true;renderMarket();marketCurrency();renderBrief();});});
+
+  /* number field reader shared by the calculator (from Version B) */
+  var nf=new Intl.NumberFormat('en-US',{maximumFractionDigits:0});
+  var WHOLE={'f-ppl':1,'f-days':1,'f-meet':1};
+  var LBL={'f-ppl':'People going','f-days':'Days away','f-stand':'Stand and registration','f-flight':'Flights per person','f-hotel':'Hotel per night','f-samp':'Samples and shipping','f-meet':'Useful meetings'};
+  var bad=[];
+  function v(id){
+    var e=$(id),raw=e.value,whole=!!WHOLE[id],msg='';
+    var x=raw===''?NaN:Number(raw);
+    if(raw===''&&e.validity&&e.validity.badInput){msg='Use digits only.';}
+    else if(raw!==''&&!isFinite(x)){msg='Use digits only.';}
+    else if(raw!==''&&x<0){msg='Use 0 or more.';}
+    else if(raw!==''&&whole&&Math.floor(x)!==x){msg='Use a whole number.';}
+    else if(raw!==''&&x>=1e11){msg='That looks too large. Check the number.';}
+    $(id+'-e').textContent=msg;
+    if(msg){e.setAttribute('aria-invalid','true');bad.push(LBL[id]);return 0;}
+    e.removeAttribute('aria-invalid');
+    return raw===''?0:x;
+  }
+  /* SELL ABROAD: wasted fair cost */
+  var FCUR='EUR';
+  function fmoney(n){return FCUR+' '+nf.format(Math.round(n));}
+  function fcalc(){
+    bad=[];
+    var p=v('f-ppl'),d=v('f-days'),st=v('f-stand'),fl=p*v('f-flight'),ho=p*d*v('f-hotel'),sa=v('f-samp'),m=v('f-meet'),tot=st+fl+ho+sa;
+    function line(id,n){$(id).textContent=n>0?fmoney(n):'Not added';}
+    line('fb-st',st);line('fb-fl',fl);line('fb-ho',ho);line('fb-sa',sa);
+    $('f-warn').textContent=bad.length?('Left out until fixed: '+bad.join(', ')+'.'):'';
+    $('fb-pm').textContent=(tot>0&&m>0)?fmoney(tot/m):'Add expected meetings';
+    var tt=$('f-total'),res=$('fresult');tt.textContent='';var sm=document.createElement('small');tt.appendChild(sm);
+    if(tot>0){res.classList.remove('empty');sm.textContent='Your total, in '+FCUR;tt.appendChild(document.createTextNode(fmoney(tot)));
+      $('f-frame').textContent='That is '+fmoney(tot)+' spent before a single buyer has ordered anything.';
+      if(m>1){var half=Math.floor(m/2);$('f-half').textContent='With '+m+' useful meetings, each one costs '+fmoney(tot/m)+'. If only '+half+' of them turn out to be with the right people, each costs '+fmoney(tot/half)+'.';}
+      else if(m===1){$('f-half').textContent='With one useful meeting, that one meeting carries the whole cost.';}
+      else{$('f-half').textContent='';}}
+    else{res.classList.add('empty');sm.textContent='Total';tt.appendChild(document.createTextNode('Add your numbers'));
+      $('f-frame').textContent='This is what a fair costs before a single buyer has ordered anything.';$('f-half').textContent='';}
+  }
+  ['f-ppl','f-days','f-stand','f-flight','f-hotel','f-samp','f-meet'].forEach(function(id){$(id).addEventListener('input',fcalc)});
+  function setCur(c){FCUR=c;var r=$('fc-'+c.toLowerCase());if(r)r.checked=true;document.querySelectorAll('.fcu').forEach(function(s){s.textContent='('+FCUR+')'});fcalc();}
+  document.querySelectorAll('input[name=fcur]').forEach(function(r){r.addEventListener('change',function(){
+    setCur(r.value);$('f-curnote').textContent='Every amount is read as '+FCUR+'. Nothing is converted.';
+  })});
+  var CURWHY={EUR:'Set to EUR for the EU.',GBP:'Set to GBP for the UK.',USD:'Set to USD for the US.',AUD:'Set to AUD for Australia.'};
+  function marketCurrency(){
+    var M=MK[S.mkt],typed=['f-stand','f-flight','f-hotel','f-samp'].some(function(id){return $(id).value!=='';});
+    if(typed&&FCUR!==M.cur){$('f-curnote').textContent='Kept in '+FCUR+' because you have typed amounts. Nothing is converted. Change the currency yourself if you need to.';return;}
+    setCur(M.cur);
+    $('f-curnote').textContent=S.mkt==='asia'?'Set to USD, because key Asian markets use several currencies. Choose SGD or BDT if that is how you budget. Nothing is converted.':CURWHY[M.cur]+' Change it to the currency you budget in. Nothing is converted.';
+  }
+
+  /* brief (from Version B) */
+  var GOAL={
+    china:{t:'Buy from China on a sourcing trip',r:'Bangladesh to China',h:'Example: 5,000 cotton tote bags with our logo. Samples first, then visit two factories.'},
+    machinery:{t:'Buy machinery and compare offers like for like',r:'Bangladesh to China',h:'Example: two dyeing machines, installed, with staff training at our factory.'},
+    sell:{t:'Find buyers or distributors abroad',r:'sell',h:'Example: knitwear for mid-price retail. We want meetings outside the fair list too.'},
+    fair:{t:'Get more from a trade fair abroad',r:'sell',h:'fair'},
+    delegation:{t:'Run a delegation or programme',r:'To agree with you',h:'Example: twelve companies from different sectors. Each needs its own meetings.'},
+    other:{t:'Something else',r:'Tell us. We say plainly if we can help.',h:'Describe it in your own words.'}
+  };
+  function nsSpan(txt){var s=document.createElement('span');s.className='ns';s.textContent=txt||'Not stated yet';return s;}
+  function setDD(id,val){var d=$(id);d.textContent='';if(val){d.textContent=val;}else{d.appendChild(nsSpan());}}
+  var need=$('need');
+  function curGoal(){var g=document.querySelector('input[name=goal]:checked');return g?g.value:null;}
+  function curWhen(){var w=document.querySelector('input[name=when]:checked');return w?w.value:null;}
+  function renderBrief(){
+    var g=curGoal(),w=curWhen(),n=need.value.trim();
+    setDD('bc-trig',(S.trk==='all'||S.trk==='none')?'':UI.en.door[S.trk]);
+    setDD('bc-goal',g?GOAL[g].t:'');
+    var rt=g?GOAL[g].r:'';
+    if(rt==='sell'){rt=S.mktPicked?'Bangladesh to '+MK[S.mkt].to:'Bangladesh to the EU, the UK, the US, Australia or key Asian markets. Which one comes next.';}
+    setDD('bc-route',rt);
+    setDD('bc-need',n.length>280?n.slice(0,280)+'...':n);
+    setDD('bc-when',w||'');
+    var c=(g?1:0)+(n?1:0)+(w?1:0);
+    $('bc-count').textContent=c+' of 3 answered';
+    $('bc-bar').style.width=(c/3*100)+'%';
+    var ph=g?GOAL[g].h:'Example: what you want to buy or sell, how much, and where.';
+    if(ph==='fair'){ph='Example: we have a stand at a trade fair in '+MK[S.mkt].city+' and want meetings with buyers who fit, before we fly.';}
+    need.placeholder=ph;
+  }
+  document.querySelectorAll('input[name=goal],input[name=when]').forEach(function(r){r.addEventListener('change',function(){$('b-status').textContent='';renderBrief();})});
+  need.addEventListener('input',renderBrief);
+  function demoMsg(st,lead,txt){st.textContent='';var b=document.createElement('b');b.textContent=lead;st.appendChild(b);st.appendChild(document.createTextNode(txt));}
+  $('b-send').addEventListener('click',function(){
+    var st=$('b-status');
+    if(!curGoal()){demoMsg(st,'Choose a goal first. ','It is the only answer needed to start.');$('g-china').focus();return;}
+    demoMsg(st,'Demo only. ','The real Send button would pass this draft to a Corridra person, who reads it and replies with a few questions before any quote. Nothing was sent from this page.');
+  });
+  $('b-chat').addEventListener('click',function(){
+    demoMsg($('b-status'),'Demo only. ','The real button would open WhatsApp or WeChat with this brief ready to paste, so you can send it yourself. No number is shown on this design board.');
+  });
+
+  /* proof page demo link */
+  $('proof-link').addEventListener('click',function(){
+    demoMsg($('proof-status'),'Demo link. ','On the design board this opens Version C, the separate proof page, which shows a full example mission record, the sharing rules and what AI may and may not do. Nothing opens from this preview.');
+  });
+
+  /* personas (from Version A), with arrow-key tabs */
+  var PERS=[
+    ['Your product, your capacity, your target market and goals, and optional travel details.','A qualified target list, relevant introductions and meetings, an assessment that shows its evidence, and documented progress.'],
+    ['What you need, the category, quantity, budget and specifications, and optional trip details.','Supplier research and qualification, original quotations, side-by-side comparisons, visit coordination, and a structured buying decision.'],
+    ['What the machine is for, the capacity you need, and your technical and commercial limits.','Machinery options you can compare, the evidence still missing, factory and engineering visit support, and follow-through after.'],
+    ['What you offer, the customers or channels you prefer, and what you want from entering Bangladesh.','A structured market assessment, potential customers and distributors, local validation, qualified access, and accountable delivery.'],
+    ['The exact supplier you need, and how you screen them.','A shortlist with reasons and doubts, the evidence behind each name, and visit and meeting support.'],
+    ['Nothing to start. You do not need to register to consider an introduction.','A specific, permitted requirement or introduction. You can say it is relevant, ask for details, and answer within your own scope.'],
+    ['Your programme, and the group you lead. Each company brings its own goals.','What is happening across the programme and the overall outcomes, without access to any company\'s private data.'],
+    ['Your skills, your time, and your location.','Precisely scoped tasks with eligibility, deadline, expected evidence and reward stated first, plus review, attribution and a way to dispute a decision.']
+  ];
+  var tabs=Array.prototype.slice.call(document.querySelectorAll('#ptabs [role=tab]'));
+  function setP(i,focus){$('pg').textContent=PERS[i][0];$('pr').textContent=PERS[i][1];
+    tabs.forEach(function(t){var on=+t.dataset.p===i;t.setAttribute('aria-selected',on?'true':'false');t.tabIndex=on?0:-1;});
+    $('pp').setAttribute('aria-labelledby','pt-'+i);if(focus)tabs[i].focus();}
+  tabs.forEach(function(t){t.addEventListener('click',function(){setP(+t.dataset.p,false)});
+    t.addEventListener('keydown',function(e){var i=+t.dataset.p,n=tabs.length,j=null;
+      if(e.key==='ArrowRight'||e.key==='ArrowDown')j=(i+1)%n;else if(e.key==='ArrowLeft'||e.key==='ArrowUp')j=(i-1+n)%n;else if(e.key==='Home')j=0;else if(e.key==='End')j=n-1;
+      if(j!==null){e.preventDefault();setP(j,true);}});});
+  setP(0,false);
+
+  /* talk dialog (from Version B) */
+  var dlg=$('talk'),lastFocus=null;
+  var DEMO={call:'The real button would ask for your name and number, then a person calls you back.',video:'The real button would show open times for a short video call with a person who scopes missions.',chat:'The real button would open WhatsApp or WeChat to message a person directly.'};
+  document.querySelectorAll('[data-talk]').forEach(function(b){b.addEventListener('click',function(){
+    lastFocus=b;$('talk-status').textContent='';
+    if(dlg.showModal){dlg.showModal();}else{dlg.setAttribute('open','');}
+  })});
+  $('talk-x').addEventListener('click',function(){dlg.close?dlg.close():dlg.removeAttribute('open');});
+  dlg.addEventListener('close',function(){if(lastFocus)lastFocus.focus();});
+  dlg.addEventListener('click',function(e){if(e.target===dlg){dlg.close();}});
+  document.querySelectorAll('[data-demo]').forEach(function(b){b.addEventListener('click',function(){demoMsg($('talk-status'),'Demo only. ',DEMO[b.dataset.demo]);})});
+
+  /* design notes */
+  var nt=$('nt');nt.addEventListener('change',function(){document.body.classList.toggle('notes',nt.checked)});
+
+  /* mobile bottom bar: after the hero, hidden where the page shows its own actions */
+  if('IntersectionObserver' in window){
+    var vis={hero:true,acts:false,final:false};
+    var watch=[[$('hero'),'hero'],[document.querySelector('.bcard .acts'),'acts'],[$('final'),'final']];
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){vis[e.target.dataset.mb]=e.isIntersecting});
+      document.body.classList.toggle('mb-on',!vis.hero&&!vis.acts&&!vis.final);},{threshold:0,rootMargin:'-64px 0px 0px 0px'});
+    watch.forEach(function(w){w[0].dataset.mb=w[1];io.observe(w[0]);});
+  }
+
+  renderMarket();marketCurrency();setTrack('none',false,true);fcalc();
+})();
+</script>
+
+</body></html>

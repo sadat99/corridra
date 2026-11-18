@@ -1,0 +1,50 @@
+/* Flags, the region mark and route lines (UI/UX.v3 flag policy, 17 November 2026). Tokens only: the flag picture holds
+   its own colours; the region mark is drawn in the text colour. */
+.ux-flag {
+  display: inline-block;
+  inline-size: 1.375rem;
+  block-size: 0.9375rem;
+  flex: none;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px var(--border-strong);
+  vertical-align: -0.125rem;
+  object-fit: cover;
+}
+.ux-region-mark {
+  display: inline-block;
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+  flex: none;
+  background-color: currentColor;
+  -webkit-mask: url('/flags/region.svg') center / contain no-repeat;
+  mask: url('/flags/region.svg') center / contain no-repeat;
+}
+.ux-flagged {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+/* The mark never leaves its name; a long name may wrap inside its own box on a narrow screen. */
+.ux-flagged > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ux-route-line {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+.ux-route-place {
+  display: inline-flex;
+}
+.ux-route-to {
+  font-weight: 400;
+}
+@media (forced-colors: active) {
+  .ux-region-mark {
+    forced-color-adjust: none;
+    background-color: CanvasText;
+  }
+}

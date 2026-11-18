@@ -1,13 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import { useId, useState, type CSSProperties } from 'react';
-import { Arrow } from './arrow';
+import { useState, type CSSProperties } from 'react';
 import { CorridraIcon } from './corridra-icon';
 import { FactLabel, NotConfirmedLabel } from './fact-label';
+import { HomeBrief, type GoalKey } from './home-brief';
+import { FaqSection, MissionSection, People, RoutesSection, TrustSection } from './home-more';
+import { DoorCard } from './ux/door-card';
+import { ExampleTag, Eyebrow } from './ux/example-tag';
+import { OpenCard, QuietButton } from './ux/open-card';
+import { Flagged, type FlagCode } from './ux/flag';
+import { RouteLine } from './home-route-line';
 import { HomeSell } from './home-sell';
 import { HomeShared } from './home-shared';
-import { useT } from './language-provider';
+import { TalkLink } from './home-talk';
+import { useLanguage } from './language-provider';
 import { fill } from '../lib/i18n/fill';
 import type { HomeRoutesKey } from '../lib/home-routes-keys';
 import type { MessageKey } from '../lib/i18n/messages';
@@ -17,14 +24,17 @@ import {
   quotes,
   routeHref,
   visitStops,
+  type MarketKey,
   type QuoteKey,
   type RouteKey,
 } from '../lib/home-routes-data';
 
-// The home page, Two Routes (owner decision of 17 November 2026, design board "Corridra Two Routes", revision 3c).
-// The visitor picks a door; that route opens below and the first action becomes the real request for it. Every
-// example is tagged Example and sends nothing. The only actions that leave the page are links to /plan.
-export type Shown = 'none' | 'all' | RouteKey;
+// The home page as the owner's design board "Corridra Two Routes", revision 3c, in full (owner, 17 and 18 November
+// 2026; LP3). The visitor picks a door; the headline becomes that route's proposition, its route opens below, the
+// brief and the people follow the choice, and the first action becomes the real request for it. Every example is
+// tagged Example and sends nothing. The only actions that leave the page are links to /plan and, when the owner has
+// set a support number, WhatsApp.
+export type Shown = 'none' | RouteKey;
 const key = (name: string) => name as HomeRoutesKey;
 // Delivery codes and the trust name stay as written, outside the words (they are not translated).
 const terms = {
@@ -32,55 +42,102 @@ const terms = {
   cif: quotes.c.delivery ?? '',
   selfDeclared: 'Self-declared',
 };
+/** The person each door preselects in "Eight people" (board 3c): Importer, Exporter, Delegation leader. */
+const personFor: Partial<Record<RouteKey, number>> = { china: 1, sell: 0, delegation: 6 };
+/** The brief goal each door preselects. */
+const goalFor: Record<RouteKey, GoalKey> = {
+  china: 'china',
+  sell: 'sell',
+  delegation: 'delegation',
+  other: 'other',
+};
+export const ctaWords: Record<Shown, MessageKey> = {
+  none: 'home.tr.cta.none',
+  china: 'home.tr.cta.china',
+  sell: 'home.tr.cta.sell',
+  delegation: 'home.tr.cta.delegation',
+  other: 'home.tr.cta.other',
+};
 
-export function HomeRoutes() {
-  const t = useT();
+export function HomeRoutes({ whatsapp = null }: { whatsapp?: string | null }) {
+  const { t, locale, offered, pages } = useLanguage();
   const [shown, setShown] = useState<Shown>('none');
   const [opened, setOpened] = useState<RouteKey | null>(null);
-  const href = shown === 'none' || shown === 'all' ? '/plan' : routeHref[shown];
-  const ctaWords: Record<Shown, MessageKey> = {
-    none: 'home.tr.cta.none',
-    all: 'home.tr.cta.none',
-    china: 'home.tr.cta.china',
-    sell: 'home.tr.cta.sell',
-    delegation: 'home.tr.cta.delegation',
-    other: 'home.tr.cta.other',
-  };
+  const [market, setMarket] = useState<MarketKey>('eu');
+  const [marketPicked, setMarketPicked] = useState(false);
+  const [goal, setGoal] = useState<GoalKey | null>(null);
+  const [person, setPerson] = useState(0);
+  // A door preselects the brief goal and the person only until the visitor has chosen them.
+  const [goalTouched, setGoalTouched] = useState(false);
+  const [personTouched, setPersonTouched] = useState(false);
+  const route = shown === 'none' ? null : shown;
+  const href = route ? routeHref[route] : '/plan';
   const choose = (next: Shown, fromDoor = false) => {
     setShown(next);
-    setOpened(fromDoor && next !== 'all' && next !== 'none' ? next : null);
+    setOpened(fromDoor && next !== 'none' ? next : null);
+    if (next !== 'none') {
+      if (!goalTouched) setGoal(goalFor[next]);
+      const p = personFor[next];
+      if (p !== undefined && !personTouched) setPerson(p);
+    }
   };
-  const show = (route: RouteKey) => shown === route || (shown === 'all' && route !== 'other');
-  const open = (route: Shown) => {
-    choose(route);
-    // The section is drawn on the next frame, so the move waits for it.
+  // A choice made lower on the page opens the route in place and brings it into view (the hero is far above).
+  const openHere = (next: Shown) => {
+    choose(next);
+    if (next === 'none') return;
     requestAnimationFrame(() => {
-      const target = document.getElementById(route === 'all' ? 'route-china' : `route-${route}`);
-      target?.scrollIntoView({
-        behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
-        block: 'start',
-      });
-      target?.querySelector<HTMLElement>('h2')?.focus({ preventScroll: true });
+      const target = document.getElementById(`route-${next}`);
+      if (!target) return;
+      const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      target.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
+      target.querySelector<HTMLElement>('h2')?.focus({ preventScroll: true });
     });
   };
   const showingText: Record<Shown, MessageKey> = {
     none: 'home.tr.bar.none',
-    all: 'home.tr.bar.allText',
     china: 'home.tr.bar.china',
     sell: 'home.tr.bar.sell',
     delegation: 'home.tr.bar.delegationText',
     other: 'home.tr.bar.otherText',
   };
+  // The headline is the brand line until a door is chosen; then it is that route's own proposition (board 3c).
+  const title = route ? t(key(`home.b3.hero.${route}.title`)) : t('home.title');
+  const lead = route ? t(key(`home.b3.hero.${route}.sub`)) : t('home.tr.lead');
+  const draft = pages && locale !== 'en' && offered.some((o) => o.code === locale && o.draft);
   return (
     <>
-      <section className="tr-hero" aria-labelledby="home-title">
-        <p className="label ac1-rule">{t('home.eyebrow')}</p>
-        <h1 id="home-title">{t('home.title')}</h1>
-        <p className="tr-lead">{t('home.tr.lead')}</p>
+      <section className="tr-hero" id="hero" aria-labelledby="home-title">
+        <div className="tr-hero-head">
+          <p className="tr-brandline">{route ? t('home.title') : t('home.eyebrow')}</p>
+          <h1 id="home-title">{title}</h1>
+          <p className="tr-lead">{lead}</p>
+          {draft ? (
+            <p className="tr-draft" lang="en" dir="ltr">
+              {t('home.b3.draft')}
+            </p>
+          ) : null}
+        </div>
+        <fieldset className="tr-doors">
+          <legend>{t('home.tr.q')}</legend>
+          <p className="tr-note">{t('home.tr.q.sub')}</p>
+          <div className="tr-doors-big">
+            {(['china', 'sell'] as const).map((r) => (
+              <Door key={r} route={r} checked={shown === r} onChoose={() => choose(r, true)} big />
+            ))}
+          </div>
+          <div className="tr-doors-small">
+            {(['delegation', 'other'] as const).map((r) => (
+              <Door key={r} route={r} checked={shown === r} onChoose={() => choose(r, true)} />
+            ))}
+          </div>
+        </fieldset>
         <div className="tr-start">
-          <Link prefetch={false} className="primary-link" href={href} id="home-start">
-            {t(ctaWords[shown])} <Arrow />
-          </Link>
+          <div className="tr-start-actions">
+            <Link prefetch={false} className="primary-link" href={href} id="home-start">
+              {t(ctaWords[shown])}
+            </Link>
+            <TalkLink href={whatsapp} />
+          </div>
           <ul className="ac1-calm">
             {(['account', 'send', 'stop'] as const).map((name) => (
               <li key={name}>
@@ -89,6 +146,7 @@ export function HomeRoutes() {
               </li>
             ))}
           </ul>
+          <p className="tr-note">{t('home.tr.hint')}</p>
           <p className="tr-feedback" aria-live="polite">
             {opened ? (
               <>
@@ -100,54 +158,29 @@ export function HomeRoutes() {
             ) : null}
           </p>
         </div>
-        <fieldset className="tr-doors">
-          <legend>{t('home.tr.q')}</legend>
-          <p className="tr-doors-sub">{t('home.tr.q.sub')}</p>
-          <div className="tr-doors-big">
-            {(['china', 'sell'] as const).map((route) => (
-              <Door
-                key={route}
-                route={route}
-                checked={shown === route}
-                onChoose={() => choose(route, true)}
-                big
-              />
-            ))}
-          </div>
-          <div className="tr-doors-small">
-            {(['delegation', 'other'] as const).map((route) => (
-              <Door
-                key={route}
-                route={route}
-                checked={shown === route}
-                onChoose={() => choose(route, true)}
-              />
-            ))}
-          </div>
-        </fieldset>
       </section>
 
       <div className="tr-bar">
+        {/* The route state, on screen and told to screen readers (board 3c; Guardian 29 review round 2, D13). */}
         <p className="tr-bar-label" aria-live="polite">
-          {t('home.tr.bar.showing')} <span>{t(showingText[shown])}</span>
+          <span className="label">{t('home.tr.bar.showing')}</span> {t(showingText[shown])}
         </p>
         <div className="tr-bar-buttons" role="group" aria-label={t('home.tr.bar.aria')}>
-          {(['china', 'sell', 'delegation', 'other', 'all'] as const).map((route) => (
-            <button
-              key={route}
-              type="button"
-              aria-pressed={shown === route}
-              onClick={() => choose(route)}
-            >
-              {t(`home.tr.bar.${route}` as MessageKey)}
+          {/* All Routes is the page with no route open: the shared sections only (one route at a time). */}
+          <button type="button" aria-pressed={shown === 'none'} onClick={() => choose('none')}>
+            {t('home.tr.bar.all')}
+          </button>
+          {(['china', 'sell', 'delegation', 'other'] as const).map((r) => (
+            <button key={r} type="button" aria-pressed={shown === r} onClick={() => choose(r)}>
+              {t(`home.tr.bar.${r}` as MessageKey)}
             </button>
           ))}
         </div>
       </div>
 
       {shown === 'none' ? (
-        <section className="tr-section tr-choose" aria-labelledby="pick-title">
-          <p className="label ac1-rule">{t('home.tr.pick.eyebrow')}</p>
+        <section className="tr-section tr-choose" id="pick" aria-labelledby="pick-title">
+          <Eyebrow>{t('home.tr.pick.eyebrow')}</Eyebrow>
           <h2 id="pick-title">{t('home.tr.pick.title')}</h2>
           <ol className="tr-three">
             {[1, 2, 3].map((n) => (
@@ -160,35 +193,78 @@ export function HomeRoutes() {
               </li>
             ))}
           </ol>
-          <div className="tr-opens">
-            {(['china', 'sell'] as const).map((route) => (
-              <button key={route} type="button" onClick={() => open(route)}>
-                <strong>{t(`home.tr.open.${route}` as MessageKey)}</strong>
-                <span>{t(`home.tr.open.${route}.text` as MessageKey)}</span>
-              </button>
+          {/* The board's closing row: open a route here, in place. Outlined cards, not primary actions. */}
+          <div className="tr-open-row">
+            {(['china', 'sell'] as const).map((r) => (
+              <OpenCard
+                key={r}
+                title={t(key(`home.tr.open.${r}`))}
+                text={t(key(`home.tr.open.${r}.text`))}
+                onOpen={() => openHere(r)}
+              />
             ))}
           </div>
-          <div className="tr-more">
+          <div className="tr-open-more">
             <p>{t('home.tr.open.more')}</p>
-            <button type="button" className="tr-linkbtn" onClick={() => open('delegation')}>
+            <QuietButton onClick={() => openHere('delegation')}>
               {t('home.tr.open.delegation')}
-            </button>
-            <button type="button" className="tr-linkbtn" onClick={() => open('other')}>
-              {t('home.tr.open.other')}
-            </button>
-            <button type="button" className="tr-linkbtn" onClick={() => open('all')}>
+            </QuietButton>
+            <QuietButton onClick={() => openHere('other')}>{t('home.tr.open.other')}</QuietButton>
+            <QuietButton onClick={() => openHere('none')}>
               {t('home.tr.open.everything')}
-            </button>
+            </QuietButton>
           </div>
         </section>
       ) : null}
 
-      {show('china') ? <China /> : null}
-      {show('sell') ? <HomeSell /> : null}
-      {show('delegation') ? <Delegation /> : null}
-      {shown === 'other' ? <Other /> : null}
+      {shown === 'china' ? <China /> : null}
+      {shown === 'sell' ? (
+        <HomeSell
+          market={market}
+          onMarket={(m) => {
+            setMarket(m);
+            setMarketPicked(true);
+          }}
+        />
+      ) : null}
+      {shown === 'delegation' ? <Delegation whatsapp={whatsapp} /> : null}
+      {shown === 'other' ? <Other whatsapp={whatsapp} /> : null}
 
-      <HomeShared shown={shown} href={href} cta={t(ctaWords[shown])} />
+      <MissionSection />
+      <HomeBrief
+        route={route}
+        goal={goal}
+        onGoal={(g) => {
+          setGoal(g);
+          setGoalTouched(true);
+        }}
+        market={marketPicked ? market : null}
+        whatsapp={whatsapp}
+      />
+      <TrustSection>
+        {/* The board's proof link. Its words are How We Label Facts, the name the home's /trust link keeps (UX-06). */}
+        <div className="tr-proof">
+          <Link prefetch={false} className="ac1-quiet tr-light-link" href="/trust">
+            {t('home.facts.more')}
+          </Link>
+        </div>
+      </TrustSection>
+      <People
+        current={person}
+        onChange={(p) => {
+          setPerson(p);
+          setPersonTouched(true);
+        }}
+      />
+      <FaqSection />
+      <RoutesSection
+        mine={route === 'delegation' ? null : route}
+        flags
+        links={false}
+        readyLead={t('home.b3.rs.ready')}
+      />
+
+      <HomeShared shown={shown} href={href} cta={t(ctaWords[shown])} whatsapp={whatsapp} />
     </>
   );
 }
@@ -204,43 +280,26 @@ function Door({
   onChoose: () => void;
   big?: boolean;
 }) {
-  const t = useT();
-  const id = useId();
+  const t = useLanguage().t;
   return (
-    <div className={big ? 'tr-door tr-door-big' : 'tr-door'}>
-      <input
-        className="sr-only"
-        type="radio"
-        name="home-route"
-        id={id}
-        value={route}
-        checked={checked}
-        onChange={onChoose}
-      />
-      <label htmlFor={id}>
-        {big ? (
-          <span className="tr-door-side">
-            {t(route === 'china' ? 'home.tr.side.supply' : 'home.tr.side.demand')}
-          </span>
-        ) : null}
-        <strong>{t(key(`home.tr.door.${route}.title`))}</strong>
-        {big ? (
-          <span className="tr-door-route">{t(key(`home.tr.door.${route}.route`))}</span>
-        ) : null}
-        <span className="tr-door-text">{t(key(`home.tr.door.${route}.text`))}</span>
-        {checked ? (
-          <span className="tr-door-picked">
-            <CorridraIcon name="check" size={16} />
-            {t('home.tr.selected')}
-          </span>
-        ) : null}
-      </label>
-    </div>
+    <DoorCard
+      className="tr-door"
+      name="home-route"
+      value={route}
+      checked={checked}
+      onChoose={onChoose}
+      size={big ? 'big' : 'small'}
+      side={big ? t(route === 'china' ? 'home.tr.side.supply' : 'home.tr.side.demand') : undefined}
+      route={big ? <RouteLine route={route as 'china' | 'sell'} /> : undefined}
+      title={t(key(`home.tr.door.${route}.title`))}
+      text={t(key(`home.tr.door.${route}.text`))}
+      picked={t('home.tr.selected')}
+    />
   );
 }
 
 function Tests({ name, count = 4 }: { name: 'cn' | 'sl'; count?: number }) {
-  const t = useT();
+  const t = useLanguage().t;
   return (
     <div className="tr-tests">
       <p className="label">{t('home.tr.tests')}</p>
@@ -254,7 +313,7 @@ function Tests({ name, count = 4 }: { name: 'cn' | 'sl'; count?: number }) {
 }
 
 function China() {
-  const t = useT();
+  const t = useLanguage().t;
   const [pick, setPick] = useState<QuoteKey | 'x' | null>(null);
   const [stop, setStop] = useState(1);
   const gz = visitStops[stop];
@@ -264,7 +323,10 @@ function China() {
     <section className="tr-section tr-alt" id="route-china" aria-labelledby="china-title">
       <div className="tr-intro">
         <div>
-          <p className="label ac1-rule">{t('home.tr.cn.eyebrow')}</p>
+          <Eyebrow>{t('home.tr.cn.eyebrow')}</Eyebrow>
+          <p className="tr-side">
+            <RouteLine route="china" />
+          </p>
           <h2 id="china-title" tabIndex={-1}>
             {t('home.tr.cn.title')}
           </h2>
@@ -273,9 +335,11 @@ function China() {
         <Tests name="cn" />
       </div>
 
-      <details className="tr-fold">
-        <summary>{t('home.tr.q.title')}</summary>
-        <div className="tr-fold-body">
+      <div className="tr-block">
+        <h3 className="tr-h3" id="gaps">
+          {t('home.tr.q.title')}
+        </h3>
+        <div className="tr-block-body">
           <p className="tr-sub">{t('home.tr.q.lead')}</p>
           <div className="tr-quotes">
             {letters.map((letter) => {
@@ -303,7 +367,7 @@ function China() {
                     <strong id={`quote-${letter}`}>
                       {fill(t('home.tr.q.supplier'), { letter: letter.toUpperCase() })}
                     </strong>
-                    <span className="ac1-example-tag">{t('home.tr.q.example')}</span>
+                    <ExampleTag>{t('home.tr.q.example')}</ExampleTag>
                   </header>
                   <p className="tr-price">
                     <small>USD</small> {q.price}
@@ -397,31 +461,43 @@ function China() {
                 </ul>
                 <p>{t('home.tr.q.keep')}</p>
                 <Link prefetch={false} className="primary-link" href={routeHref.china}>
-                  {t('home.tr.q.cta')} <Arrow />
+                  {t('home.tr.q.cta')}
                 </Link>
               </>
             ) : null}
           </div>
           <p className="tr-rule">
-            <span className="ac1-example-tag">{t('home.tr.q.rule')}</span>
+            <ExampleTag>{t('home.tr.q.rule')}</ExampleTag>
             <span>
               <strong>{t('home.tr.q.rule.title')}</strong> {t('home.tr.q.rule.text')}
             </span>
           </p>
         </div>
-      </details>
-      <details className="tr-fold">
-        <summary>{t('home.tr.visit.title')}</summary>
-        <div className="tr-fold-body">
+      </div>
+      <div className="tr-block">
+        <h3 className="tr-h3" id="visit-title">
+          {t('home.tr.visit.title')}
+        </h3>
+        <div className="tr-block-body">
           <p className="tr-sub">{t('home.tr.visit.lead')}</p>
           <div className="tr-day" role="group" aria-label={t('home.tr.visit.title')}>
             <div className="tr-day-head">
               <strong>{t('home.tr.visit.day')}</strong>
-              <span className="ac1-example-tag">{t('home.tr.q.example')}</span>
+              <ExampleTag>{t('home.tr.q.example')}</ExampleTag>
             </div>
             <div className="tr-clocks">
-              <Clock city={t('home.tr.visit.gz')} tz={t('home.tr.visit.gz.tz')} time={gz} />
-              <Clock city={t('home.tr.visit.dh')} tz={t('home.tr.visit.dh.tz')} time={dh} />
+              <Clock
+                city={t('home.tr.visit.gz')}
+                tz={t('home.tr.visit.gz.tz')}
+                time={gz}
+                flag="cn"
+              />
+              <Clock
+                city={t('home.tr.visit.dh')}
+                tz={t('home.tr.visit.dh.tz')}
+                time={dh}
+                flag="bd"
+              />
             </div>
             <ol className="tr-stops" aria-label={t('home.tr.visit.stops')}>
               {visitStops.map((time, i) => (
@@ -446,10 +522,12 @@ function China() {
           </div>
           <p className="tr-small">{t('home.tr.visit.note')}</p>
         </div>
-      </details>
-      <details className="tr-fold">
-        <summary>{t('home.tr.comp.title')}</summary>
-        <div className="tr-fold-body">
+      </div>
+      <div className="tr-block">
+        <h3 className="tr-h3" id="comparable-title">
+          {t('home.tr.comp.title')}
+        </h3>
+        <div className="tr-block-body">
           <ol className="tr-three">
             {[1, 2, 3].map((n) => (
               <li key={n}>
@@ -462,16 +540,13 @@ function China() {
             ))}
           </ol>
         </div>
-      </details>
-      <Link prefetch={false} className="primary-link" href={routeHref.china}>
-        {t('home.tr.cta.china')} <Arrow />
-      </Link>
+      </div>
     </section>
   );
 }
 
 function NotStated() {
-  const t = useT();
+  const t = useLanguage().t;
   return (
     <span className="guide-tag" data-tone="unknown">
       {t('home.tr.q.notStated')}
@@ -480,8 +555,18 @@ function NotStated() {
 }
 
 /** An analog face plus the time in digits, so the hands are never the only way to read it. */
-function Clock({ city, tz, time }: { city: string; tz: string; time: string }) {
-  const t = useT();
+function Clock({
+  city,
+  tz,
+  time,
+  flag,
+}: {
+  city: string;
+  tz: string;
+  time: string;
+  flag: FlagCode;
+}) {
+  const t = useLanguage().t;
   const [h, m] = time.split(':').map(Number);
   const hands = {
     '--tr-hour': `${(h % 12) * 30 + m * 0.5}deg`,
@@ -499,7 +584,9 @@ function Clock({ city, tz, time }: { city: string; tz: string; time: string }) {
         <span className="tr-hand tr-minute" />
       </div>
       <div>
-        <p className="tr-clock-city">{city}</p>
+        <p className="tr-clock-city">
+          <Flagged code={flag}>{city}</Flagged>
+        </p>
         <p className="tr-clock-time">{time}</p>
         <p className="tr-small">{tz}</p>
       </div>
@@ -507,19 +594,18 @@ function Clock({ city, tz, time }: { city: string; tz: string; time: string }) {
   );
 }
 
-function Delegation() {
-  const t = useT();
+function Delegation({ whatsapp }: { whatsapp: string | null }) {
+  const t = useLanguage().t;
   const stages = ['defined', 'matched', 'met', 'offers', 'followed'] as const;
   return (
     <section className="tr-section tr-alt" id="route-delegation" aria-labelledby="del-title">
-      <p className="label ac1-rule">{t('home.tr.dl.eyebrow')}</p>
+      <Eyebrow>{t('home.tr.dl.eyebrow')}</Eyebrow>
       <h2 id="del-title" tabIndex={-1}>
         {t('home.tr.dl.title')}
       </h2>
       <p className="tr-sub">{t('home.tr.dl.lead')}</p>
-      <details className="tr-fold">
-        <summary>{t('home.tr.dl.aria')}</summary>
-        <div className="tr-fold-body">
+      <div className="tr-block">
+        <div className="tr-block-body">
           <div className="tr-scroll" tabIndex={0} role="region" aria-label={t('home.tr.dl.aria')}>
             <table className="tr-table">
               <thead>
@@ -553,7 +639,7 @@ function Delegation() {
             </table>
             <div className="tr-table-foot">
               <span>{t('home.tr.dl.total')}</span>
-              <span className="ac1-example-tag">{t('home.tr.q.example')}</span>
+              <ExampleTag>{t('home.tr.q.example')}</ExampleTag>
             </div>
           </div>
           <p className="tr-small">{t('home.tr.dl.key')}</p>
@@ -576,27 +662,33 @@ function Delegation() {
             </div>
           </div>
         </div>
-      </details>
-      <Link prefetch={false} className="primary-link" href={routeHref.delegation}>
-        {t('home.tr.dl.cta')} <Arrow />
-      </Link>
+      </div>
+      <div className="tr-actions">
+        <Link prefetch={false} className="primary-link" href={routeHref.delegation}>
+          {t('home.tr.dl.cta')}
+        </Link>
+        <TalkLink href={whatsapp} />
+      </div>
     </section>
   );
 }
 
-function Other() {
-  const t = useT();
+function Other({ whatsapp }: { whatsapp: string | null }) {
+  const t = useLanguage().t;
   return (
     <section className="tr-section tr-alt" id="route-other" aria-labelledby="oth-title">
       <div className="tr-other">
-        <p className="label ac1-rule">{t('home.tr.ot.eyebrow')}</p>
+        <Eyebrow>{t('home.tr.ot.eyebrow')}</Eyebrow>
         <h2 id="oth-title" tabIndex={-1}>
           {t('home.tr.ot.title')}
         </h2>
         <p className="tr-sub">{t('home.tr.ot.lead')}</p>
-        <Link prefetch={false} className="primary-link" href={routeHref.other}>
-          {t('home.tr.ot.cta')} <Arrow />
-        </Link>
+        <div className="tr-actions">
+          <Link prefetch={false} className="primary-link" href={routeHref.other}>
+            {t('home.tr.ot.cta')}
+          </Link>
+          <TalkLink href={whatsapp} />
+        </div>
       </div>
     </section>
   );

@@ -265,11 +265,13 @@ for (const path of publicPaths)
     const blocks = await page.locator('main').evaluate(readBlocks);
     expect(blocks.length, path).toBeGreaterThan(3);
     expect(proofClaimsIn(blocks), path).toEqual([]);
-    // The examples on the home page (Two Routes, 17 November 2026) are labelled Example: choose a door, open the first
-    // worked example and its label must be there.
+    // The examples on the home page (Two Routes, 17 November 2026) are labelled Example: choose a door and the first
+    // worked example and its label must be there. Since the board 3c in full (owner, 18 November 2026) the worked
+    // examples are open under their own headings, so there is no disclosure to open first.
     if (path === '/') {
       await page.getByText('Buying from China', { exact: true }).click();
-      await page.locator('#route-china summary').first().click();
       await expect(page.locator('#route-china .ac1-example-tag').first()).toBeVisible();
+      const opened = await page.locator('main').evaluate(readBlocks);
+      expect(proofClaimsIn(opened), `${path} with the China Route open`).toEqual([]);
     }
   });

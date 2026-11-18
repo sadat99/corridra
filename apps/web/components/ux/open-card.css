@@ -1,0 +1,51 @@
+/* Open cards and quiet buttons: in-page choices drawn as an outlined card or as a link-like line. Never a cobalt fill:
+   cobalt fill is kept for the one primary action. Tokens only. */
+.ux-open-card {
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  min-block-size: 2.75rem;
+  padding: var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  color: var(--text-1);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.ux-open-card strong {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--action);
+}
+.ux-open-card span {
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--text-2);
+}
+.ux-open-card:hover {
+  border-color: var(--action);
+}
+.ux-open-card:focus-visible,
+.ux-quiet-button:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ux-open-card {
+    transition: border-color var(--dur) var(--ease);
+  }
+}
+.ux-quiet-button {
+  min-block-size: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--action);
+  font: inherit;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
