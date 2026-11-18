@@ -37,13 +37,16 @@ for (const [name, size] of Object.entries(sizes))
     expect(await screens(page), `${name} screens`).toBeLessThanOrEqual(limit);
   });
 
-test('the test notice keeps the pill and the availability sentence in view, and the rest opens from one toggle', async ({
+// Owner 2a, 18 Nov 2026 (UI/UX.v4 row "Plan page"): the callout box and its "Test mode" pill are gone. The sample
+// availability sentence stays in view as one line, and the rest of the notice is still one toggle away.
+test('the test notice has no callout box, keeps its availability sentence in view, and the rest opens from one toggle', async ({
   page,
 }) => {
   await page.setViewportSize(sizes.phone);
   await page.goto('/plan');
-  const notice = page.locator('aside.intake-notice');
-  await expect(notice.locator('.guide-pill')).toHaveText('Test mode');
+  await expect(page.locator('aside.intake-notice')).toHaveCount(0);
+  await expect(page.locator('.guide-pill')).toHaveCount(0);
+  const notice = page.locator('.plan-sample-note');
   await expect(
     notice.getByText('Test intake is open. Real customer mission admission is unavailable.'),
   ).toBeVisible();
@@ -55,6 +58,9 @@ test('the test notice keeps the pill and the availability sentence in view, and 
   await expect(notice.getByText('Email delivery is not enabled.')).toBeVisible();
   await expect(notice.getByText(/Use invented details/)).toBeVisible();
   await expect(notice.locator('a[href="/privacy"]')).toHaveText('Read the test intake notice');
+  await expect(page.locator('.plan-privacy-line')).toHaveText(
+    'Nothing is sent until you check it.',
+  );
 });
 
 test('on a phone the example request is a closed line with the live count, and opens to its facts', async ({
@@ -72,9 +78,9 @@ test('on a phone the example request is a closed line with the live count, and o
   await expect(page.locator('.ux-brief-details dl')).toBeVisible();
   // The budget row stays hidden until a budget is given, so three facts show.
   await expect(page.locator('.ux-brief-details dt:visible')).toHaveText([
-    'Objective',
-    'Company country',
-    'Target market',
+    'What you want',
+    "Your company's country",
+    'Market you want to reach',
   ]);
 });
 
@@ -156,16 +162,20 @@ test('every other public page keeps the full footer with the legend in view', as
   await expect(footer(page).locator('.guide-footer-legend')).toBeVisible();
 });
 
-test('on a phone the draft line and Clear Draft stay one line under Continue, with a 44 px target', async ({
+// Owner 2a and the board's phone bottom action area: the reassurance line sits under Continue in the fixed bar, says
+// "Saved in this tab for up to 24 hours." only once a draft exists, and Clear Draft stays a 44 px target.
+test('on a phone the reassurance line and Clear Draft sit under Continue in the action area, with a 44 px target', async ({
   page,
 }) => {
   await page.setViewportSize(sizes.phone);
   await page.goto('/plan');
-  const line = page.locator('.guide-draft-line');
-  await expect(line).toContainText('Drafts stay in this tab for 24 hours.');
+  const line = page.locator('.plan-action-note');
+  await expect(line).not.toContainText('Saved in this tab');
   const clear = line.getByRole('button', { name: 'Clear Draft' });
   await expect(clear).toBeVisible();
   expect((await clear.boundingBox())!.height).toBeGreaterThanOrEqual(43.5);
+  await page.locator('form.intake-form input[type="radio"]').first().check({ force: true });
+  await expect(line).toContainText('Saved in this tab for up to 24 hours.');
   const [c, l] = await Promise.all([
     page.locator('form.intake-form .primary-link').boundingBox(),
     line.boundingBox(),

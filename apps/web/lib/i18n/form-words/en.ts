@@ -181,13 +181,13 @@ export const formEn = {
 
   'form.side.realLabel': 'Your request',
   'form.side.sampleLabel': 'Your example request',
-  'form.side.realHeading': 'YOUR REQUEST',
-  'form.side.sampleHeading': 'YOUR EXAMPLE REQUEST',
-  'form.side.objective': 'Objective',
-  'form.side.country': 'Company country',
-  'form.side.market': 'Target market',
+  'form.side.realHeading': 'Your request',
+  'form.side.sampleHeading': 'Your example request',
+  'form.side.objective': 'What you want',
+  'form.side.country': "Your company's country",
+  'form.side.market': 'Market you want to reach',
   'form.side.budget': 'Original budget',
-  'form.side.notChosen': 'Not chosen',
+  'form.side.notChosen': 'Not chosen yet',
   'form.side.noCurrency': '(currency not chosen)',
   'form.side.notSupplied': 'Not supplied',
   'form.side.draftOnly': 'Draft only.',
@@ -307,6 +307,18 @@ export const formEn = {
   'form.message.offline': 'Failed to fetch',
   'form.message.offlineFirefox': 'NetworkError when attempting to fetch resource.',
   'form.message.offlineSafari': 'Load failed',
+  // UI/UX.v4 /plan (W1-C, owner 18 Nov 2026). English until a native review; shown marked as English in translated forms.
+  'form.plan.stepLine': 'Step {step} of {total}: {name}',
+  'form.plan.nextLine': 'Next: {name}',
+  'form.plan.exactJob': 'Know the exact job? Choose it',
+  'form.plan.pickToContinue': 'Pick One to Continue',
+  'form.plan.savedTab': 'Saved in this tab for up to 24 hours.',
+  'form.plan.privacy':
+    'Nothing is sent until you check it. You make an account at the last step, so your request stays private.',
+  'form.plan.privacySignedIn':
+    'Nothing is sent until you check it. You are signed in, so your request stays private in your account.',
+  'form.plan.privacySample': 'Nothing is sent until you check it.',
+  'form.plan.privacyLink': 'Read the privacy and request notice',
 } as const;
 
 export type FormKey = keyof typeof formEn;

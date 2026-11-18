@@ -15,7 +15,7 @@ export function PlanJobFold({
   id: string;
   open: boolean;
   onToggle: () => void;
-  label: string;
+  label: ReactNode;
   children: ReactNode;
 }) {
   return (

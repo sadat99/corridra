@@ -61,3 +61,36 @@
     transition: none;
   }
 }
+.plan-action-note .text-link {
+  min-height: 2.75rem;
+  padding-inline: var(--space-1);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-size: var(--text-sm);
+}
+/* The sample notice (UI/UX.v4, owner 2a): no framed box. The availability sentence stays in view and the rest is
+   one toggle away. */
+.plan-sample-note {
+  display: grid;
+  gap: var(--space-1);
+}
+.plan-sample-note p {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-reading);
+  color: var(--text-2);
+}
+.plan-sample-note strong {
+  color: var(--text-1);
+}
+.plan-privacy-line {
+  margin: 0;
+  max-width: 62ch;
+}
+.plan-summary-heading {
+  margin: 0;
+  color: var(--text-1);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
