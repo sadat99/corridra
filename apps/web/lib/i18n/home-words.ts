@@ -30,7 +30,7 @@ const homeLandingEn = {
 const homeTwoEn = {
   // Hero
   'home.tr.lead':
-    'Corridra turns an international business goal into the right people, trusted conversations and progress you can measure. We run missions from Bangladesh to China, the EU, the UK, the US, Australia and key Asian markets. Choose yours.',
+    'Corridra turns your goal abroad into the right people, trusted talks and progress you can see. We run missions from Bangladesh to China, the EU, the UK, the US, Australia and key Asian markets. Choose yours.',
   'home.tr.q': 'Which way is your business moving?',
   'home.tr.q.sub': 'Choose one. The page below opens that route.',
   'home.tr.side.supply': 'Supply side',
@@ -452,9 +452,9 @@ const homeTwoEn = {
   'home.tr.pe.6': 'Delegation leader',
   'home.tr.pe.7': 'Local contributor',
   'home.tr.pe.0.give':
-    'Your product. Your capacity. Your target market and goals. Optional travel details.',
+    'Your product. How much you can make. The market you want and your goals. Travel details if you have them.',
   'home.tr.pe.0.get':
-    'A qualified target list. Relevant introductions and meetings. An assessment that shows its evidence. Documented progress.',
+    'A list of who to meet and why. The right people and meetings. A view that shows its proof. Progress you can show.',
   'home.tr.pe.1.give':
     'What you need. The category, quantity, budget and specifications. Optional trip details.',
   'home.tr.pe.1.get':
@@ -524,9 +524,9 @@ const homeTwoEn = {
   'home.tr.rs.title': 'Open routes now. Plain answers on the rest.',
   'home.tr.rs.match': 'Matches your route',
   'home.tr.rs.china.text':
-    'Sourcing and machinery. Supplier quote comparison. Factory and showroom visits. Canton Fair and exhibition-linked missions.',
+    'Buying goods and machines. Quotes set side by side. Factory and showroom visits. Trips to the Canton Fair and other trade shows.',
   'home.tr.rs.sell.text':
-    'Export buyer access. Distributor search. Trade-fair effectiveness, read market by market.',
+    'Reaching export buyers. Help to find distributors. Getting more from trade fairs, one market at a time.',
   'home.tr.rs.rev': 'Into Bangladesh',
   'home.tr.rs.rev.text':
     'The reverse directions are routes of their own, taken case by case. They run from China, or from any of the selling markets, into Bangladesh.',
@@ -611,7 +611,7 @@ const homeBoardEn = {
   'home.b3.mbar.note': 'No account needed. Stop any time.',
   'home.b3.mine': 'Matches your route',
   'home.b3.fc.tooLarge': 'That total looks too large. Check the numbers.',
-  'home.b3.rs.ready': 'Readiness is tracked as separate statuses, never one "complete":',
+  'home.b3.rs.ready': 'Each part of being ready is tracked on its own, never as one "complete":',
   // The brief: three answers that build a draft the visitor owns, then open the real request form with them.
   'home.b3.br.title': 'Your first mission brief in 60 seconds.',
   'home.b3.br.lead':

@@ -1470,7 +1470,7 @@
   background-image: radial-gradient(
     circle min(30vw, 23.75rem) at calc(100% + min(6vw, 4rem)) calc(-1 * min(6vw, 4rem)),
     transparent calc(100% - 2px),
-    color-mix(in srgb, var(--ac-copper) 40%, transparent) calc(100% - 2px) 100%,
+    color-mix(in srgb, var(--editorial-accent) 40%, transparent) calc(100% - 2px) 100%,
     transparent 100%
   );
 }
@@ -1504,7 +1504,7 @@
   inline-size: 0.625rem;
   block-size: 0.625rem;
   border-radius: 50%;
-  background: var(--ac-copper);
+  background: var(--editorial-accent);
 }
 .tr-hero-head .tr-lead {
   max-inline-size: 38rem;
