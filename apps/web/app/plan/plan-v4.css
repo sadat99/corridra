@@ -51,9 +51,10 @@
     flex: 1 1 auto;
     min-height: var(--bottom-action-h);
   }
-  /* The page keeps room for the bar, so it never covers the last field or the footer. */
-  .ux-intake-page:has(.plan-action-bar) {
-    padding-bottom: calc(var(--bottom-action-h) + var(--space-12));
+  /* The page keeps room for the bar under the footer too, so it never covers the last field, a footer link or the
+     end of the page. */
+  body:has(.plan-action-bar) {
+    padding-bottom: calc(var(--bottom-action-h) + var(--space-24));
   }
 }
 @media (prefers-reduced-motion: reduce) {
