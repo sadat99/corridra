@@ -200,6 +200,25 @@ test('/corridors/bangladesh-china: the board words, four jobs, three open sectio
   );
 });
 
+// The route pages keep their primary action in the hero, above the fold on a phone and on a desktop. /corridors has no
+// hero primary by board design: its one primary, Start a Request, closes the Another Route block.
+for (const size of [
+  { name: 'phone', width: 390, height: 844 },
+  { name: 'desktop', width: 1440, height: 900 },
+])
+  for (const slug of ['bangladesh-china', 'bangladesh-eu', 'bangladesh-spain'])
+    test(`/corridors/${slug}: Start a Request on This Route is above the fold at ${size.name}`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: size.width, height: size.height });
+      await page.goto(`/corridors/${slug}`);
+      const action = page.getByRole('link', { name: 'Start a Request on This Route' });
+      await expect(action).toBeVisible();
+      const box = (await action.boundingBox())!;
+      expect(box.y).toBeGreaterThanOrEqual(0);
+      expect(box.y + box.height).toBeLessThanOrEqual(size.height);
+    });
+
 for (const slug of ['bangladesh-eu', 'bangladesh-spain'])
   test(`/corridors/${slug}: the three sections are open without a click`, async ({ page }) => {
     await page.goto(`/corridors/${slug}`);

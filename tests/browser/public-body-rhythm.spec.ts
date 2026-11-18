@@ -42,7 +42,14 @@ for (const path of pages) {
       await page.setViewportSize({ width: size.width, height: size.height });
       await page.goto(path);
       const found = await rules(page);
-      // The hero's hairline and the tab list's underline are the only full-width rules; route cards keep their edges (the route picker card is open on /corridors since the tabs left, 18 November 2026).
+      // The hero's hairline and the tab list's underline are the only full-width rules; route cards keep their edges.
+      // The open route picker on /corridors (since the tabs left, 18 November 2026) adds a bordered card, its selects
+      // and its Fine-Tune fold; every other page keeps the old filter.
+      const routesOnly = (rule: string) =>
+        path === '/corridors' &&
+        (rule.includes('guide-route-box') ||
+          rule.includes('ux-fine-tune') ||
+          /\bselect\./.test(rule));
       const fullWidth = found.filter(
         (rule) =>
           !rule.includes('guide-page-hero') &&
@@ -50,9 +57,8 @@ for (const path of pages) {
           !rule.startsWith('top li.') &&
           !rule.startsWith('bottom li.') &&
           !rule.includes('guide-other-route') &&
-          !rule.includes('guide-route-box') &&
-          !rule.includes('ux-fine-tune') &&
-          !/\b(a|button|select)\./.test(rule),
+          !routesOnly(rule) &&
+          !/\b(a|button)\./.test(rule),
       );
       expect(fullWidth, `${path} rules below the hero`).toEqual([]);
       if (path === '/trust') {

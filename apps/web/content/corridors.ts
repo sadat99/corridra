@@ -31,9 +31,9 @@ export const corridorPages = {
       'Commercial missions',
     ],
     qualification:
-      'Spain is one country. A buyer in Spain does not give you access to every EU country, so we plan each country on its own.',
+      'Spain is one country. A buyer in Spain does not give you access to every EU country. So we plan each country on its own.',
     reverse:
-      'Spanish companies entering Bangladesh is a separate route. Tell us about it in a request and we will say whether we can take it on.',
+      'Work from Spain into Bangladesh is a separate route. Tell us about it in a request and we will say whether we can take it on.',
     available:
       'Requests to reach buyers and distributors in Spain. Each conversation, sample and follow-up stays on one record with a named owner.',
   },
@@ -54,7 +54,7 @@ export const corridorPages = {
     reverse:
       'For work from an EU country into Bangladesh, name the actual country in your request. We review each one on its own.',
     available:
-      'Requests to reach buyers and distributors in the EU countries you choose, with each conversation and follow-up kept on one record.',
+      'Requests to reach buyers and distributors in the EU countries you choose. Each conversation and follow-up stays on one record.',
   },
 } as const;
 

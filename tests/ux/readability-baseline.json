@@ -178,25 +178,25 @@
     "words": 98
   },
   "/corridors/bangladesh-china": {
-    "grade": 6.4,
-    "hard": 1,
-    "long": 1,
-    "sentences": 16,
-    "words": 174
+    "grade": 6,
+    "hard": 0,
+    "long": 0,
+    "sentences": 6,
+    "words": 45
   },
   "/corridors/bangladesh-eu": {
-    "grade": 6.4,
-    "hard": 2,
-    "long": 2,
-    "sentences": 13,
-    "words": 168
+    "grade": 6.1,
+    "hard": 0,
+    "long": 0,
+    "sentences": 4,
+    "words": 39
   },
   "/corridors/bangladesh-spain": {
-    "grade": 6.1,
-    "hard": 2,
-    "long": 2,
-    "sentences": 15,
-    "words": 170
+    "grade": 6.6,
+    "hard": 0,
+    "long": 0,
+    "sentences": 5,
+    "words": 38
   },
   "/decision-card": {
     "grade": 0,

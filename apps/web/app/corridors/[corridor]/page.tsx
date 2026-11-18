@@ -66,15 +66,15 @@ export default async function Page({ params }: { params: Promise<{ corridor: str
               <dd>{c.available}</dd>
               <dt data-tone="info">What happens</dt>
               <dd>
-                Send a request and follow it in your account. Our team reviews it, agrees the scope
-                and a written quote with you, and only then starts the research and meeting
-                planning.
+                Send a request and follow it in your account. Our team reviews it and agrees the
+                scope and a written quote with you. Only then does our team start the research and
+                meeting planning.
               </dd>
               <dt data-tone="unknown">Not offered</dt>
               <dd>
-                Online payment, automated outreach and AI assistance are switched off. We do not
-                claim local coverage we have not checked, and a visit counts only once the meeting
-                is confirmed.
+                Online payment is switched off. So are automated outreach and AI assistance. We do
+                not claim local coverage we have not checked, and a visit counts only once the
+                meeting is confirmed.
               </dd>
             </dl>
           </article>
