@@ -57,3 +57,40 @@ export const corridorPages = {
       'Requests to reach buyers and distributors in the EU countries you choose, with each conversation and follow-up kept on one record.',
   },
 } as const;
+
+/** The sentence every open destination without a page of its own carries, in the picker and in its row. */
+export const openNote = 'Open now from Bangladesh. Describe your mission and we will review it.';
+
+/**
+ * The six open destinations from Bangladesh, as equal rows in this order (owner decision, 18 November 2026, on the
+ * 17 November routes and markets wording). Key Asian Markets is an open label that names no countries. A row with a
+ * `slug` has its own page; the others open the request with the countries filled in.
+ */
+export const destinationRows = [
+  { key: 'china', name: 'China', slug: 'bangladesh-china' },
+  { key: 'eu', name: 'EU', slug: 'bangladesh-eu' },
+  {
+    key: 'uk',
+    name: 'UK',
+    link: 'Bangladesh to the UK',
+    href: '/plan?companyCountry=BD&marketCode=GB',
+  },
+  {
+    key: 'us',
+    name: 'US',
+    link: 'Bangladesh to the US',
+    href: '/plan?companyCountry=BD&marketCode=US',
+  },
+  {
+    key: 'au',
+    name: 'Australia',
+    link: 'Bangladesh to Australia',
+    href: '/plan?companyCountry=BD&marketCode=AU',
+  },
+  {
+    key: 'asia',
+    name: 'Key Asian Markets',
+    link: 'Bangladesh to key Asian markets',
+    href: '/plan?companyCountry=BD',
+  },
+] as const;

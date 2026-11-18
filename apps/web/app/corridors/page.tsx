@@ -1,7 +1,7 @@
 import { PublicShell } from '../../components/public-shell';
 import { DiscoveryExperience } from '../../components/discovery-experience';
 import Link from 'next/link';
-import { corridorPages } from '../../content/corridors';
+import { corridorPages, destinationRows, openNote } from '../../content/corridors';
 import { Arrow } from '../../components/arrow';
 import '../../components/page-compact.css';
 import './corridors.css';
@@ -39,16 +39,22 @@ export default function Page() {
         <section className="guide-directions" aria-labelledby="directions-title">
           <h2 id="directions-title">Explore a route</h2>
           <ul>
-            {/* Owner decision 17 Nov 2026, routes and markets: the open destinations are shown as equals. Spain stays
-                a plain link inside the EU card, so its page is never orphaned. */}
-            {(['bangladesh-china', 'bangladesh-eu'] as const).map((slug) => (
-              <li key={slug}>
-                <h3>{corridorPages[slug].title}</h3>
-                <p>{corridorPages[slug].description}</p>
-                <Link prefetch={false} href={`/corridors/${slug}`} className="text-link">
-                  Explore this route <Arrow />
-                </Link>
-                {slug === 'bangladesh-eu' ? (
+            {/* Owner decisions 17 and 18 Nov 2026, routes and markets: six open destinations as equal rows in this
+                order. Spain stays a plain link inside the EU row, so its page is never orphaned. */}
+            {destinationRows.map((row) => (
+              <li key={row.key} className="guide-direction-row">
+                <h3>{row.name}</h3>
+                <p>{'slug' in row ? corridorPages[row.slug].description : openNote}</p>
+                {'slug' in row ? (
+                  <Link prefetch={false} href={`/corridors/${row.slug}`} className="text-link">
+                    Explore this route <Arrow />
+                  </Link>
+                ) : (
+                  <Link prefetch={false} href={row.href} className="text-link">
+                    {row.link} <Arrow />
+                  </Link>
+                )}
+                {row.key === 'eu' ? (
                   <p className="guide-route-note">
                     Selling in Spain?{' '}
                     <Link prefetch={false} href="/corridors/bangladesh-spain" className="text-link">
@@ -58,32 +64,6 @@ export default function Page() {
                 ) : null}
               </li>
             ))}
-            {(
-              [
-                ['Bangladesh to the UK', 'GB'],
-                ['Bangladesh to the US', 'US'],
-                ['Bangladesh to Australia', 'AU'],
-              ] as const
-            ).map(([name, market]) => (
-              <li key={market} className="guide-direction-compact">
-                <h3>
-                  <Link
-                    prefetch={false}
-                    href={`/plan?companyCountry=BD&marketCode=${market}`}
-                    className="text-link"
-                  >
-                    {name} <Arrow />
-                  </Link>
-                </h3>
-              </li>
-            ))}
-            <li key="asia" className="guide-direction-compact">
-              <h3>
-                <Link prefetch={false} href="/plan?companyCountry=BD" className="text-link">
-                  Bangladesh to key Asian markets <Arrow />
-                </Link>
-              </h3>
-            </li>
           </ul>
           <div className="guide-other-route">
             <div>

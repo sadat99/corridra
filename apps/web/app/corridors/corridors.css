@@ -116,41 +116,39 @@
   }
 }
 
-/* Three short tab labels fit one row on a phone with a little less side padding (scoped to this page). */
-@media (max-width: 700px) {
-  .guide-routes .ux-subtabs-tab {
-    padding-inline: var(--space-2);
+/* Six destinations as equal rows, in this order: China, EU, UK, US, Australia, Key Asian Markets (owner decisions 17 and
+   18 November 2026, routes and markets). Every row gets the same height; on a wide screen a row reads name, statement,
+   link, on a phone it stacks. */
+.guide-routes .guide-directions ul {
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: 1fr;
+}
+@media (min-width: 701px) {
+  .ux-public .guide-routes .guide-directions li.guide-direction-row {
+    display: grid;
+    grid-template-columns: minmax(8rem, 2fr) minmax(0, 5fr) auto;
+    align-items: center;
+    align-content: center;
+    gap: var(--space-2) var(--space-5);
+    padding: var(--space-4) var(--space-6);
+  }
+  .ux-public .guide-routes .guide-directions li.guide-direction-row > .guide-route-note {
+    grid-column: 2 / -1;
+  }
+  .ux-public .guide-routes .guide-directions li.guide-direction-row > a {
+    align-self: center;
+    margin-top: 0;
   }
 }
-
-/* Open destinations without a page of their own are compact cards (title and one link); on a phone they sit two a row so
-   the page keeps its length budget (owner decision 17 November 2026, routes and markets). */
 @media (max-width: 700px) {
-  .ux-public .guide-routes .guide-directions ul {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .ux-public .guide-routes .guide-directions li {
-    grid-column: 1 / -1;
-  }
-  .ux-public .guide-routes .guide-directions li.guide-direction-compact {
-    grid-column: auto;
-    padding: var(--space-3);
-  }
   .ux-public .guide-page-hero a.primary-link.guide-hero-start {
     display: none;
   }
-  .ux-public .guide-routes .guide-directions li.guide-direction-compact {
+  .ux-public .guide-routes .guide-directions li.guide-direction-row {
     gap: var(--space-2);
-    padding: var(--space-2) var(--space-3);
-  }
-  .ux-public .guide-routes .guide-directions li.guide-direction-compact h3,
-  .ux-public .guide-routes .guide-directions li.guide-direction-compact a {
-    font-size: var(--text-sm);
-    line-height: 1.3;
-    overflow-wrap: anywhere;
+    padding: var(--space-3) var(--space-4);
   }
 }
-
 /* The "Any other route" block wraps its sentence and its action at the largest text sizes, so nothing runs past the
    card on a narrow phone (owner decision 17 November 2026 made the sentence longer). */
 .guide-other-route > div {
