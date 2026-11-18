@@ -1,17 +1,30 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { Arrow } from './arrow';
 import { HomeJobs } from './home-jobs';
+import type { Shown } from './home-routes';
+import { TalkLink } from './home-talk';
 import { useT } from './language-provider';
 import type { HomeRoutesKey } from '../lib/home-routes-keys';
-import type { Shown } from './home-routes';
 
-// The closing section of the home page: the one first action again, the three job links and one short link to each
-// page the long sections moved to (17 November 2026).
+// The close of the home page (board 3c): the line follows the chosen route, only true risk reversal, the one first
+// action again (with Talk when the support number is set), then the three job links (P-07). Below it, on a phone,
+// the quick-start bar: shown once the hero has scrolled away, hidden wherever the page shows its own actions.
 const key = (name: string) => name as HomeRoutesKey;
 
-export function HomeShared({ shown, href, cta }: { shown: Shown; href: string; cta: string }) {
+export function HomeShared({
+  shown,
+  href,
+  cta,
+  whatsapp,
+}: {
+  shown: Shown;
+  href: string;
+  cta: string;
+  whatsapp: string | null;
+}) {
   const t = useT();
   const finalTitle: Record<Shown, HomeRoutesKey> = {
     none: 'home.tr.fn.title.none',
@@ -34,9 +47,12 @@ export function HomeShared({ shown, href, cta }: { shown: Shown; href: string; c
             </div>
           ))}
         </div>
-        <Link prefetch={false} className="primary-link" href={href} id="final-start">
-          {cta} <Arrow />
-        </Link>
+        <div className="tr-actions">
+          <Link prefetch={false} className="primary-link" href={href} id="final-start">
+            {cta} <Arrow />
+          </Link>
+          <TalkLink href={whatsapp} className="secondary-link tr-on-navy" />
+        </div>
         <p className="tr-jobs-lead">{t('home.tr.fn.jobs')}</p>
         <HomeJobs className="ac1-jobs tr-jobs" />
         <Link prefetch={false} className="ac1-quiet tr-light-link" href="/plan">
@@ -60,6 +76,54 @@ export function HomeShared({ shown, href, cta }: { shown: Shown; href: string; c
           </li>
         </ul>
       </section>
+      <QuickStart href={href} cta={cta} whatsapp={whatsapp} />
     </>
+  );
+}
+
+/** The phone quick-start bar (board 3c, up to 760 px wide). It never covers the page's own actions or the footer. */
+function QuickStart({
+  href,
+  cta,
+  whatsapp,
+}: {
+  href: string;
+  cta: string;
+  whatsapp: string | null;
+}) {
+  const t = useT();
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    if (!('IntersectionObserver' in window)) return;
+    const watched = [
+      document.getElementById('hero'),
+      document.getElementById('brief-start')?.parentElement ?? null,
+      document.getElementById('final'),
+      document.querySelector('footer'),
+    ].filter((el): el is HTMLElement => el !== null);
+    const visible = new Map<Element, boolean>(watched.map((el) => [el, el.id === 'hero']));
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) visible.set(entry.target, entry.isIntersecting);
+        setOn(![...visible.values()].some(Boolean));
+      },
+      { threshold: 0, rootMargin: '-64px 0px 0px 0px' },
+    );
+    for (const el of watched) observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return (
+    <div
+      className="tr-mbar"
+      role="group"
+      aria-label={t('home.b3.mbar')}
+      data-on={on ? 'true' : undefined}
+      inert={!on}
+    >
+      <Link prefetch={false} className="primary-link" href={href}>
+        {cta}
+      </Link>
+      <TalkLink href={whatsapp} short className="secondary-link tr-on-navy" />
+    </div>
   );
 }

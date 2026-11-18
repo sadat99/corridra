@@ -1,9 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useId, useState } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { Arrow } from './arrow';
 import { FactLabel } from './fact-label';
+import { Flagged, type FlagCode } from './flag';
+import { marketFlag } from './home-route-line';
 import { useT } from './language-provider';
 import { fill } from '../lib/i18n/fill';
 import type { HomeRoutesKey } from '../lib/home-routes-keys';
@@ -27,9 +29,15 @@ import {
 const key = (name: string) => name as HomeRoutesKey;
 const number = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
 
-export function HomeSell() {
+export function HomeSell({
+  market,
+  onMarket,
+}: {
+  market: MarketKey;
+  onMarket: (market: MarketKey) => void;
+}) {
   const t = useT();
-  const [market, setMarket] = useState<MarketKey>('eu');
+  const setMarket = onMarket;
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const example = marketExamples[market];
   const rows = example.fair.map((company, index) => ({ company, index }));
@@ -43,6 +51,10 @@ export function HomeSell() {
       <div className="tr-intro">
         <div>
           <p className="label ac1-rule">{t('home.tr.sl.eyebrow')}</p>
+          <p className="tr-side">
+            <Flagged code="bd">{t('home.country.bd')}</Flagged> {t('home.b3.to')}{' '}
+            <Flagged code={marketFlag(market)}>{t(key(`home.tr.mk.${market}`))}</Flagged>
+          </p>
           <h2 id="sell-title" tabIndex={-1}>
             {t('home.tr.sl.title')}
           </h2>
@@ -58,29 +70,30 @@ export function HomeSell() {
         </div>
       </div>
 
-      <details className="tr-fold">
-        <summary>{t('home.tr.w.title')}</summary>
-        <div className="tr-fold-body">
-          <fieldset className="tr-market">
-            <legend>{t('home.tr.mk.legend')}</legend>
-            <div className="tr-chips">
-              {marketKeys.map((m) => (
-                <Choice
-                  key={m}
-                  name="home-market"
-                  value={m}
-                  checked={market === m}
-                  onChoose={() => setMarket(m)}
-                  label={t(key(`home.tr.mk.${m}`))}
-                />
-              ))}
-            </div>
-            <p className="tr-market-line" aria-live="polite">
-              <strong>{t(key(`home.tr.mk.${market}.line.head`))}</strong>{' '}
-              {t(key(`home.tr.mk.${market}.line`))}
-            </p>
-          </fieldset>
-
+      <fieldset className="tr-market">
+        <legend>{t('home.tr.mk.legend')}</legend>
+        <div className="tr-chips">
+          {marketKeys.map((m) => (
+            <Choice
+              key={m}
+              name="home-market"
+              value={m}
+              checked={market === m}
+              onChoose={() => setMarket(m)}
+              label={t(key(`home.tr.mk.${m}`))}
+            />
+          ))}
+        </div>
+        <p className="tr-market-line" aria-live="polite">
+          <strong>{t(key(`home.tr.mk.${market}.line.head`))}</strong>{' '}
+          {t(key(`home.tr.mk.${market}.line`))}
+        </p>
+      </fieldset>
+      <div className="tr-block">
+        <h3 className="tr-h3" id="worth-title">
+          {t('home.tr.w.title')}
+        </h3>
+        <div className="tr-block-body">
           <p className="tr-brief">
             <span className="ac1-example-tag">{t('home.tr.w.brief')}</span>
             <span>
@@ -120,7 +133,7 @@ export function HomeSell() {
                       <tr key={company.name} className="is-out">
                         <th scope="row">
                           <strong>{company.name}</strong>
-                          <span>{company.place}</span>
+                          <Place place={company.place} />
                         </th>
                         <td>
                           <span className="tr-off">{t('home.tr.w.off')}</span>
@@ -145,7 +158,7 @@ export function HomeSell() {
                     <tr key={company.name} className={step > 1 && !fit ? 'is-no' : undefined}>
                       <th scope="row">
                         <strong>{company.name}</strong>
-                        <span>{company.place}</span>
+                        <Place place={company.place} />
                       </th>
                       <td>{t(key(`home.tr.w.as.${index}`))}</td>
                       <td>
@@ -185,7 +198,7 @@ export function HomeSell() {
             })}
           </p>
         </div>
-      </details>
+      </div>
 
       <Calculator market={market} />
       <Link prefetch={false} className="primary-link" href={routeHref.sell}>
@@ -206,7 +219,7 @@ function Choice({
   value: string;
   checked: boolean;
   onChoose: () => void;
-  label: string;
+  label: ReactNode;
 }) {
   const id = useId();
   return (
@@ -297,9 +310,11 @@ function Calculator({ market }: { market: MarketKey }) {
         : `${t(key(`home.tr.fc.cur.${market}`))} ${t('home.tr.fc.cur.change')}`;
   return (
     <>
-      <details className="tr-fold">
-        <summary>{t('home.tr.fc.title')}</summary>
-        <div className="tr-fold-body">
+      <div className="tr-block">
+        <h3 className="tr-h3" id="faircost-title">
+          {t('home.tr.fc.title')}
+        </h3>
+        <div className="tr-block-body">
           <p className="tr-sub">{t('home.tr.fc.lead')}</p>
           <div className="tr-calc">
             <div className="tr-panel">
@@ -414,7 +429,26 @@ function Calculator({ market }: { market: MarketKey }) {
             </div>
           </div>
         </div>
-      </details>
+      </div>
     </>
+  );
+}
+
+/** Countries the example places name, for the flag beside them. A region or an Asian market shows the name only. */
+const placeFlags: Record<string, FlagCode> = {
+  Spain: 'es',
+  France: 'fr',
+  Italy: 'it',
+  'United Kingdom': 'gb',
+  'United States': 'us',
+  Australia: 'au',
+};
+
+function Place({ place }: { place: string }) {
+  const country = place.split(', ').pop() ?? '';
+  return (
+    <span className="tr-place">
+      <Flagged code={placeFlags[country] ?? null}>{place}</Flagged>
+    </span>
   );
 }

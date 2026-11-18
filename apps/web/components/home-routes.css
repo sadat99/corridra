@@ -1582,3 +1582,482 @@
     gap: var(--space-2);
   }
 }
+
+/* ===== LP3: the home as the owner's board 3c in full (owner, 18 November 2026: "the page size limit is not
+   applicable here"). The worked examples are open again, the hero is the board's centred navy block with two big
+   doors and two small ones, and every shared section is back on the page. Tokens only; weights 400, 500 and 600. */
+.ux-guide-home.tr-home .tr-hero {
+  position: relative;
+  overflow: hidden;
+  gap: var(--space-6);
+  padding: var(--space-12) min(var(--space-6), 5vw) var(--space-12);
+}
+.ux-guide-home.tr-home .tr-hero::after {
+  content: '';
+  position: absolute;
+  inset: -36% -14% auto auto;
+  inline-size: min(60vw, 47.5rem);
+  aspect-ratio: 1;
+  border: 2px solid color-mix(in srgb, var(--ac-copper) 40%, transparent);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.tr-hero > * {
+  position: relative;
+  z-index: 1;
+}
+.tr-hero-head {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  max-inline-size: 61rem;
+  margin-inline: auto;
+  text-align: center;
+}
+.tr-brandline {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-2);
+  border: 1px solid color-mix(in srgb, var(--on-brand) 25%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--on-brand) 7%, transparent);
+  color: var(--on-brand);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.tr-brandline::before {
+  content: '';
+  inline-size: 0.625rem;
+  block-size: 0.625rem;
+  border-radius: 50%;
+  background: var(--ac-copper);
+}
+.tr-hero-head .tr-lead {
+  max-inline-size: 38rem;
+}
+.tr-draft {
+  margin: 0;
+  color: var(--on-brand);
+  font-size: var(--text-sm);
+}
+.tr-doors legend,
+.tr-doors-sub {
+  inline-size: 100%;
+  text-align: center;
+}
+@media (min-width: 48rem) {
+  .tr-doors-big,
+  .tr-doors-small {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .tr-door-big label {
+    min-block-size: 12rem;
+    padding: var(--space-6);
+  }
+}
+.tr-door label {
+  border-radius: var(--radius-lg);
+}
+.tr-door-route {
+  display: block;
+}
+.tr-route-line {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+.tr-route-place {
+  display: inline-flex;
+}
+.tr-route-to {
+  font-weight: 400;
+}
+.tr-door .cr-flag {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--on-brand) 40%, transparent);
+}
+.tr-door input:checked + label .cr-flag {
+  box-shadow: 0 0 0 1px var(--border-strong);
+}
+.tr-start {
+  justify-items: center;
+  text-align: center;
+}
+.tr-start-actions,
+.tr-actions,
+.tr-brief-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.tr-start-actions {
+  justify-content: center;
+}
+.tr-start .ac1-calm {
+  justify-content: center;
+}
+.tr-hint {
+  margin: 0;
+  color: color-mix(in srgb, var(--on-brand) 82%, transparent);
+  font-size: var(--text-sm);
+}
+.tr-hero .secondary-link,
+.tr-on-navy.secondary-link {
+  border-color: color-mix(in srgb, var(--on-brand) 60%, transparent);
+  background: transparent;
+  color: var(--on-brand);
+}
+.tr-hero .secondary-link:hover,
+.tr-on-navy.secondary-link:hover {
+  background: color-mix(in srgb, var(--on-brand) 8%, transparent);
+}
+
+/* Sections breathe as on the board. */
+.ux-guide-home.tr-home .tr-section {
+  padding: var(--space-12) min(var(--space-6), 5vw);
+}
+@media (max-width: 47.99rem) {
+  .ux-guide-home.tr-home .tr-hero {
+    padding: var(--space-8) var(--space-4);
+    gap: var(--space-4);
+  }
+  .ux-guide-home.tr-home .tr-section {
+    padding: var(--space-8) var(--space-4);
+  }
+}
+.tr-side {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  color: var(--text-2);
+  font-weight: 600;
+}
+.tr-block {
+  margin-top: var(--space-12);
+}
+.tr-block > .tr-h3 {
+  margin: 0 0 var(--space-3);
+  font-family: var(--serif);
+  font-size: var(--text-2xl);
+  font-weight: 500;
+  line-height: 1.2;
+}
+.tr-block-body {
+  display: grid;
+  gap: var(--space-4);
+}
+.tr-block-body > * {
+  margin-block: 0;
+}
+.tr-place {
+  display: block;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.tr-clock-city .cr-flagged {
+  white-space: normal;
+}
+.tr-chips label .cr-flagged {
+  gap: var(--space-2);
+}
+.tr-chips input:checked + label .cr-flag {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--on-brand) 50%, transparent);
+}
+.tr-reaction .primary-link,
+.tr-section > .primary-link,
+.tr-section > .tr-actions {
+  margin-top: var(--space-6);
+}
+
+/* Trust: the link to the full page sits under the ledger. */
+.tr-proof {
+  margin-top: var(--space-6);
+}
+
+/* Route statuses: the chosen route's card is marked. */
+.tr-routes > .is-mine {
+  border: 2px solid var(--action);
+  box-shadow: 0 0 0 4px var(--selected-surface);
+}
+.tr-mine {
+  justify-self: start;
+  padding: var(--space-1) var(--space-2);
+  border-radius: 999px;
+  background: var(--selected-surface);
+  color: var(--action);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+/* The brief: three answers beside a draft card that belongs to the visitor. */
+.tr-brief-grid {
+  display: grid;
+  gap: var(--space-6);
+  margin-top: var(--space-8);
+  align-items: start;
+}
+@media (min-width: 56.25rem) {
+  .tr-brief-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .tr-brief-card {
+    position: sticky;
+    top: var(--space-20);
+  }
+}
+.tr-brief-form {
+  display: grid;
+  gap: 0;
+}
+.tr-brief-step {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  margin: 0;
+  padding: var(--space-5) 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+.tr-brief-step:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+.tr-brief-step legend,
+.tr-brief-q {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  float: left;
+  inline-size: 100%;
+  margin-bottom: var(--space-3);
+  padding: 0;
+  font-family: var(--serif);
+  font-size: var(--text-xl);
+  font-weight: 500;
+  line-height: 1.25;
+}
+.tr-brief-step .tr-chips {
+  clear: both;
+}
+.tr-brief-step .tr-n {
+  color: var(--action);
+  font-family: var(--font-ui);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  line-height: 1;
+}
+.tr-brief-need {
+  clear: both;
+  inline-size: 100%;
+  min-block-size: 7rem;
+  padding: var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  color: var(--text-1);
+  font: 400 var(--text-base) / 1.5 var(--font-ui);
+  resize: vertical;
+}
+.tr-brief-need:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 1px;
+}
+.tr-brief-card {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: repeating-linear-gradient(
+    135deg,
+    var(--surface-1) 0 0.625rem,
+    var(--surface-subtle) 0.625rem 0.75rem
+  );
+}
+.tr-brief-card > .tr-h3 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: var(--text-2xl);
+  font-weight: 500;
+}
+.tr-stamp {
+  justify-self: start;
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+  border: 2px dashed var(--unknown);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  color: var(--unknown);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  transform: rotate(-2deg);
+}
+.tr-meter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.tr-meter-bar {
+  flex: 1;
+  block-size: 0.5rem;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+.tr-meter-bar > span {
+  display: block;
+  block-size: 100%;
+  inline-size: 0;
+  border-radius: 999px;
+  background: var(--action);
+  transition: inline-size var(--dur) var(--ease);
+}
+.tr-meter-bar > span[data-answered='1'] {
+  inline-size: 33.333%;
+}
+.tr-meter-bar > span[data-answered='2'] {
+  inline-size: 66.667%;
+}
+.tr-meter-bar > span[data-answered='3'] {
+  inline-size: 100%;
+}
+.tr-brief-dl {
+  display: grid;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  overflow: hidden;
+}
+.tr-brief-dl > div {
+  display: grid;
+  grid-template-columns: 8rem minmax(0, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--line);
+}
+.tr-brief-dl > div:first-child {
+  border-top: 0;
+}
+.tr-brief-dl dt {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.tr-brief-dl dd {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.tr-brief-words {
+  white-space: pre-line;
+}
+.tr-brief-next {
+  font-weight: 400;
+}
+@media (max-width: 28.75rem) {
+  .tr-brief-dl > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+}
+.tr-brief-stated {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+
+/* The close: three reassurances as cards, as on the board. */
+@media (min-width: 48rem) {
+  .tr-reverse {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-3);
+    margin-block: var(--space-6);
+  }
+  .tr-reverse > div {
+    display: grid;
+    gap: var(--space-1);
+    padding: var(--space-4);
+    border: 1px solid color-mix(in srgb, var(--on-brand) 22%, transparent);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--on-brand) 6%, transparent);
+  }
+}
+.tr-navy .tr-actions .primary-link {
+  margin-top: 0;
+}
+
+/* The phone quick-start bar (board 3c). Up to 760 px wide, only while the page shows no action of its own. */
+.tr-mbar {
+  display: none;
+}
+@media (max-width: 47.5rem) {
+  .tr-mbar {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 40;
+    display: flex;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4) calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid color-mix(in srgb, var(--on-brand) 25%, transparent);
+    background: var(--brand-deep);
+    transform: translateY(110%);
+    visibility: hidden;
+  }
+  .tr-mbar[data-on='true'] {
+    transform: none;
+    visibility: visible;
+  }
+  .tr-mbar .primary-link {
+    flex: 1;
+    justify-content: center;
+    min-height: 3rem;
+  }
+  .tr-mbar .secondary-link {
+    flex: none;
+    min-height: 3rem;
+  }
+}
+@media (max-width: 47.5rem) and (prefers-reduced-motion: no-preference) {
+  .tr-mbar {
+    transition:
+      transform var(--dur) var(--ease),
+      visibility 0s linear var(--dur);
+  }
+  .tr-mbar[data-on='true'] {
+    transition:
+      transform var(--dur) var(--ease),
+      visibility 0s;
+  }
+}
+
+/* Bands run edge to edge, as on the board: the band colour bleeds past the content column without adding width. */
+.ux-guide-home.tr-home .tr-hero,
+.ux-guide-home.tr-home .tr-alt,
+.ux-guide-home.tr-home .tr-navy {
+  border-radius: 0;
+  box-shadow: 0 0 0 100vmax var(--tr-band);
+  clip-path: inset(0 -100vmax);
+}
+.ux-guide-home.tr-home .tr-hero,
+.ux-guide-home.tr-home .tr-navy {
+  --tr-band: var(--brand-deep);
+}
+.ux-guide-home.tr-home .tr-alt {
+  --tr-band: var(--surface-2);
+}
+.ux-guide-home.tr-home .tr-hero::after {
+  inset: -36% -24% auto auto;
+}
