@@ -1,15 +1,15 @@
 import { test, expect, type Page } from '@playwright/test';
 
-// W1-D (owner, 18 November 2026): Routes shows every section open on one page, so its page length is measured here
-// and not per tab. /corridors may be longer than the other public pages, only as far as the open content needs; the
-// limits are the ones recorded in tests/ux/page-length-lib.ts (routesLimits) and in docs/revamp/specs/layout-budget.md.
-// The three route pages stay inside the public limits (3.0 phone, 2.0 desktop). The primary action stays in view.
+// W1-D (owner step 2 board, 18 November 2026): Routes and the route pages have no tabs, so their length is measured
+// here and not per tab. Both stay inside the public limits (3.0 phone, 2.0 desktop), so no budget changes. The board
+// targets are about 1,800 px phone and 1,350 px desktop for /corridors and about 1,680 px phone for the China page;
+// the measure is recorded as a test annotation. The primary action stays in view.
 const sizes = {
   phone: { width: 390, height: 844 },
   desktop: { width: 1440, height: 900 },
 } as const;
 const limit = {
-  '/corridors': { phone: 6.5, desktop: 4.0 },
+  '/corridors': { phone: 3.0, desktop: 2.0 },
   '/corridors/bangladesh-china': { phone: 3.0, desktop: 2.0 },
   '/corridors/bangladesh-eu': { phone: 3.0, desktop: 2.0 },
   '/corridors/bangladesh-spain': { phone: 3.0, desktop: 2.0 },
@@ -28,6 +28,10 @@ for (const [path, max] of Object.entries(limit))
     test(`${path}: open page length is within its budget at ${name}`, async ({ page }) => {
       await page.setViewportSize(size);
       await page.goto(path);
+      const height = await page.evaluate(() => document.documentElement.scrollHeight);
+      test
+        .info()
+        .annotations.push({ type: 'page-height-px', description: `${path} ${name} ${height}` });
       expect(await screens(page), `${path} ${name}`).toBeLessThanOrEqual(
         max[name as keyof typeof max],
       );

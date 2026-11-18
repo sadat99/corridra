@@ -112,7 +112,13 @@ const exampleSteps = [
 ] as const;
 
 /** Educational selectors only. No identity, readiness decision, persisted mission or API call. */
-export function DiscoveryExperience({ children }: { children?: ReactNode }) {
+export function DiscoveryExperience({
+  children,
+  about,
+}: {
+  children?: ReactNode;
+  about?: ReactNode;
+}) {
   const [direction, setDirection] = useState(directions[0].key);
   // Any other route: a company country and a target market chosen freely. Empty means none.
   const [other, setOther] = useState({ company: '', market: '' });
@@ -120,14 +126,26 @@ export function DiscoveryExperience({ children }: { children?: ReactNode }) {
   const [role, setRole] = useState('buyer');
   const [job, setJob] = useState<string>('sourcing');
   const [example, setExample] = useState(false);
+  // The three disclosures under the destination rows. A link to one of their parts opens the one that holds it.
+  const [open, setOpen] = useState({ about: false, pick: false, sample: false });
   const [step, setStep] = useState(0);
   const exampleHeading = useRef<HTMLHeadingElement>(null);
   const exampleTrigger = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     function openFromHash() {
-      if (window.location.hash === '#mission-example') {
+      const hash = window.location.hash;
+      if (hash === '#mission-example') {
+        setOpen((current) => ({ ...current, sample: true }));
         setExample(true);
-        requestAnimationFrame(() => exampleHeading.current?.focus());
+        requestAnimationFrame(() => {
+          document.getElementById('mission-example')?.scrollIntoView();
+          exampleHeading.current?.focus();
+        });
+      } else if (hash === '#commercial-objective') {
+        setOpen((current) => ({ ...current, pick: true }));
+        requestAnimationFrame(() =>
+          document.getElementById('commercial-objective')?.scrollIntoView(),
+        );
       }
     }
     openFromHash();
@@ -452,11 +470,31 @@ export function DiscoveryExperience({ children }: { children?: ReactNode }) {
   );
   return (
     <section className="ux-discovery guide-routes" aria-label="Explore a commercial objective">
-      {/* Every part is open on one page, in this order: the six destinations, the picker, the sample (owner decision
-          18 November 2026: no tabs on Routes). */}
+      {/* The six destinations come first. Everything else stays on the page behind three named disclosures, so no
+          word is lost and a link to one of its parts opens it (owner decision 18 November 2026: no tabs on Routes). */}
       {children}
-      {routePanel}
-      {samplePanel}
+      {(
+        [
+          ['about', 'About These Routes', about],
+          ['pick', 'Pick Your Route', routePanel],
+          ['sample', 'Sample Mission', samplePanel],
+        ] as const
+      ).map(([key, label, body]) =>
+        body ? (
+          <details
+            key={key}
+            className="guide-more guide-routes-more"
+            open={open[key]}
+            onToggle={(event) => {
+              const next = event.currentTarget.open;
+              setOpen((current) => (current[key] === next ? current : { ...current, [key]: next }));
+            }}
+          >
+            <summary>{label}</summary>
+            {body}
+          </details>
+        ) : null,
+      )}
     </section>
   );
 }

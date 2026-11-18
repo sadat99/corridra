@@ -33,7 +33,7 @@ export default async function Page({ params }: { params: Promise<{ corridor: str
               Routes
             </Link>
           </nav>
-          <p className="label">{c.title}</p>
+          <p className="label">{c.title.replace('\u2013', ' ')}</p>
           <h1>
             <Lines text={c.heading} />
           </h1>
@@ -50,17 +50,19 @@ export default async function Page({ params }: { params: Promise<{ corridor: str
         </div>
       </section>
       <section className="guide-detail-open" aria-label="About this route">
-        <div className="guide-detail">
-          <article className="guide-detail-card">
-            <h2>What we help with</h2>
-            <ul>
-              {c.jobs.map((job) => (
-                <li key={job}>{job}</li>
-              ))}
-            </ul>
-          </article>
-          <article className="guide-detail-card">
-            <h2>Current availability</h2>
+        <article className="guide-detail-card">
+          <h2>What we help with</h2>
+          <ul>
+            {c.jobs.map((job) => (
+              <li key={job}>{job}</li>
+            ))}
+          </ul>
+        </article>
+        {/* The three tabs left (owner step 2 board, 18 November 2026): the first card stays open and the other two
+            are named disclosures, so the page is one short scroll and nothing is removed. */}
+        <details className="guide-more" id="current-availability">
+          <summary>Current Availability</summary>
+          <div className="guide-detail-card">
             <dl>
               <dt data-tone="positive">Available now</dt>
               <dd>{c.available}</dd>
@@ -77,13 +79,15 @@ export default async function Page({ params }: { params: Promise<{ corridor: str
                 is confirmed.
               </dd>
             </dl>
-          </article>
-          <article className="guide-detail-card">
-            <h2>Where the work happens</h2>
+          </div>
+        </details>
+        <details className="guide-more" id="where-the-work-happens">
+          <summary>Where the Work Happens</summary>
+          <div className="guide-detail-card">
             <p>{c.qualification}</p>
             <p>{c.reverse}</p>
-          </article>
-        </div>
+          </div>
+        </details>
       </section>
       <section className="guide-note">
         <p>
@@ -91,7 +95,7 @@ export default async function Page({ params }: { params: Promise<{ corridor: str
           certification. We do not guarantee buyers.
         </p>
         <Link prefetch={false} href="/trust" className="text-link">
-          How evidence and uncertainty are handled
+          How We Label Facts
         </Link>
       </section>
     </PublicShell>

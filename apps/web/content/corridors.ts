@@ -2,13 +2,13 @@ export const corridorPages = {
   'bangladesh-china': {
     title: 'Bangladesh–China',
     market: 'CN',
-    heading: 'Start with the requirement. Make each supplier conversation count.',
+    heading: 'Start with the requirement. Then every supplier conversation counts.',
     description:
       'Source products and machinery. Start with a clear specification, evidence of fit and a named next step.',
     jobs: [
       'Product and component sourcing',
       'Machinery and technical evaluation',
-      'Factory visits and supplier discussions',
+      'Factory visits and supplier talks',
       'Commercial delegations',
     ],
     qualification:
@@ -62,35 +62,47 @@ export const corridorPages = {
 export const openNote = 'Open now from Bangladesh. Describe your mission and we will review it.';
 
 /**
- * The six open destinations from Bangladesh, as equal rows in this order (owner decision, 18 November 2026, on the
- * 17 November routes and markets wording). Key Asian Markets is an open label that names no countries. A row with a
- * `slug` has its own page; the others open the request with the countries filled in.
+ * The six open destinations from Bangladesh, as rows of the same size, weight and action in this order (owner step 2
+ * board, screen 02, 18 November 2026, on the 17 November routes and markets wording). Key Asian Markets is an open
+ * label that names no countries. A row with a `slug` has its own page; the others open the request with the countries
+ * filled in. `flag` is the slot for the shared flag mark: it stays empty until that component exists, and Key Asian
+ * Markets never gets a country flag.
  */
 export const destinationRows = [
-  { key: 'china', name: 'China', slug: 'bangladesh-china' },
-  { key: 'eu', name: 'EU', slug: 'bangladesh-eu' },
+  {
+    key: 'china',
+    name: 'China',
+    tagline: 'Buy products and machinery',
+    href: '/corridors/bangladesh-china',
+  },
+  {
+    key: 'eu',
+    name: 'EU',
+    tagline: 'Sell to buyers in EU countries',
+    href: '/corridors/bangladesh-eu',
+  },
   {
     key: 'uk',
     name: 'UK',
-    link: 'Bangladesh to the UK',
+    tagline: 'Sell your products',
     href: '/plan?companyCountry=BD&marketCode=GB',
   },
   {
     key: 'us',
     name: 'US',
-    link: 'Bangladesh to the US',
+    tagline: 'Sell your products',
     href: '/plan?companyCountry=BD&marketCode=US',
   },
   {
     key: 'au',
     name: 'Australia',
-    link: 'Bangladesh to Australia',
+    tagline: 'Sell your products',
     href: '/plan?companyCountry=BD&marketCode=AU',
   },
   {
     key: 'asia',
     name: 'Key Asian Markets',
-    link: 'Bangladesh to key Asian markets',
+    tagline: 'Name the market in your request',
     href: '/plan?companyCountry=BD',
   },
 ] as const;
