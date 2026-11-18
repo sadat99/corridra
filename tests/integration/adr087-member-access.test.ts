@@ -438,6 +438,17 @@ describe('1. owners and admins read members items, including older ones', () => 
       digest: mine.digest,
     });
     expect(result.projection).toEqual(mine.projection);
+    // The member book passes the same strict refusal checks as the member's own book (revamp-money-screens M-10): the
+    // projection admits no price, quote, markup or contact field, for both kinds.
+    const { bookProjection, bookResult } = await import('../../packages/domain/src/books');
+    expect(bookProjection.safeParse(result.projection).success).toBe(true);
+    expect(bookResult.safeParse(result).success).toBe(true);
+    const trip = await book('alice', W, items.bob.resourceId, 'TRIP');
+    expect(trip.state === 'EMPTY' || bookProjection.safeParse(trip.projection).success).toBe(true);
+    for (const key of ['price', 'currency', 'quote', 'markup', 'email', 'phone', 'contact'])
+      expect(bookProjection.safeParse({ ...result.projection, [key]: 'x' }).success, key).toBe(
+        false,
+      );
     const record = (
       await w.f.owner.query(
         'SELECT principal_id,resource_id,input FROM customer_private.saved_mission_command WHERE command_id=$1',

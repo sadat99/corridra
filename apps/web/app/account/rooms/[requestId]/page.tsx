@@ -10,6 +10,7 @@ import { customerPageSession } from '../../../../lib/customer-page-session';
 import { initialLensFor } from '../../../../lib/room';
 import { loadRoomLink } from '../../../../lib/room-loader';
 import { uxSwitchOn } from '../../../../lib/ux-switches';
+import { memberAccessForPage } from '../../../../lib/foundations';
 import { RoomView } from './room-view';
 
 export const dynamic = 'force-dynamic';
@@ -90,6 +91,7 @@ export default async function Page({
         specificationConfirmationsEnabled={await specificationConfirmationForPage()}
         lenses={uxSwitchOn('CORRIDRA_UX_LENSES')}
         trip={uxSwitchOn('CORRIDRA_UX_TRIP')}
+        memberAccess={await memberAccessForPage()}
         initialLens={initialLens}
       />
     </CustomerShell>

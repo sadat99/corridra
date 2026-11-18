@@ -133,6 +133,13 @@ describe('PL1 with member access off or absent: byte for byte what it was', () =
     expect(read('apps/web/app/account/missions/[resourceId]/page.tsx')).toContain(
       'memberAccess={await memberAccessForPage()}',
     );
+    // The Room draws the same saved report, so its label follows the same server check (S3 matches /account/missions/X).
+    expect(read('apps/web/app/account/rooms/[requestId]/page.tsx')).toContain(
+      'memberAccess={await memberAccessForPage()}',
+    );
+    const room = read('apps/web/app/account/rooms/[requestId]/room-view.tsx');
+    expect(room).toContain('memberAccess = false,');
+    expect(room).toMatch(/<SavedCommercialReport[\s\S]*?memberAccess=\{memberAccess\}[\s\S]*?\/>/);
   });
   it('the server check: off, not installed or unreadable keep the labels as they are; only on and installed names owners', async () => {
     const { memberAccessAvailable } = await import('../../apps/web/lib/member-access');
@@ -292,7 +299,7 @@ describe('PL1 with member access on (ADR-087 U6)', () => {
       ]) {
         const words = (catalog as Record<string, string>)[key];
         expect(words, `${code} ${key}`).toBeTruthy();
-        expect(words, `${code} ${key}`).not.toContain('—');
+        expect(words, `${code} ${key}`).not.toContain('\u2014');
       }
   });
   it('the label draws the new rows when told, by option or by scope, and still holds no control', async () => {
@@ -450,7 +457,7 @@ describe("Members' Reports", () => {
     expect(source).not.toMatch(/Remove|Withdraw|Edit|Send Response|Save Invitation/);
     const actions = [...source.matchAll(/action: '([a-z]+)'/g)].map((m) => m[1]).sort();
     expect(actions).toEqual(['card', 'cards', 'reports']);
-    expect(source).not.toContain('—');
+    expect(source).not.toContain('\u2014');
     // A card's date says when the card itself ends, not a link.
     expect(source).not.toContain('Link works until');
     expect(source).toMatch(
