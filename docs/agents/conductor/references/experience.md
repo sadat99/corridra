@@ -1,12 +1,12 @@
 Document status: CURRENT (owner, 16 November 2026: "2-add copy")
 
-Source: verbatim copy of `references/experience.md` from the account plugin `operating-conductor:conductor` (files dated 16 November 2026, 10:32 to 10:40 UTC; source sha256 dbc689e452c49954ab50dcd3e1adb85042999a521ac6b724ea2deab84abb1f07). Relayed in full on 16 November 2026 by the owner's desktop session `session_0187kU9uKyhb8HUAkBxqLLNm` and recorded by Guardian 11. HTML escapes added in transit are restored to `&`, `<` and `>`. Nothing else is changed. Use this copy only when the skill cannot be loaded; the loaded skill wins on any difference. In Corridra the binding design contract, [UI/UX.v3](../../ui-direction.md), wins over this file. Entry: [SKILL.md](../SKILL.md).
+Source: verbatim copy of `references/experience.md` from the account plugin `operating-conductor:conductor` (files dated 16 November 2026, 10:32 to 10:40 UTC; source sha256 dbc689e452c49954ab50dcd3e1adb85042999a521ac6b724ea2deab84abb1f07). Relayed in full on 16 November 2026 by the owner's desktop session `session_0187kU9uKyhb8HUAkBxqLLNm` and recorded by Guardian 11. HTML escapes added in transit are restored to `&`, `<` and `>`. Nothing else is changed. Use this copy only when the skill cannot be loaded; the loaded skill wins on any difference. In Corridra the binding design contract, [UI/UX.v4](../../ui-direction.md), wins over this file. Entry: [SKILL.md](../SKILL.md).
 
 ---
 
 # Experience standard (load only for visible work)
 
-Precedence: the repository's current brand and design contract at HEAD always wins, newest dated owner decision first (VisaStack: docs/uiux/DESIGN-CONTRACT.md and the approved mockup PDF, flat refinement, scroll budget, plain-language rules. Corridra: docs/agents/ui-direction.md, UI/UX.v3, the AC/1 brand lock, .claude/skills/corridra-brand and the design-system guard test), then the latest published guidelines of any external platform the product ships on (verify at use). Build only inside the governing sections the plan packet names. This file is the universal floor and the ambition above it. Where a standard below has a version, check its current status at use.
+Precedence: the repository's current brand and design contract at HEAD always wins, newest dated owner decision first (VisaStack: docs/uiux/DESIGN-CONTRACT.md and the approved mockup PDF, flat refinement, scroll budget, plain-language rules. Corridra: docs/agents/ui-direction.md, UI/UX.v4, the AC/1 brand lock, .claude/skills/corridra-brand and the design-system guard test), then the latest published guidelines of any external platform the product ships on (verify at use). Build only inside the governing sections the plan packet names. This file is the universal floor and the ambition above it. Where a standard below has a version, check its current status at use.
 
 ## 1. Principles for every screen
 

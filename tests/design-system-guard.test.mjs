@@ -466,9 +466,10 @@ test('every builder entry point binds the design contract', () => {
   );
 });
 
-// The owner named the design contract UI/UX.v3 on 13 November 2026. Every entry point must say so,
-// so no agent can follow an older look by name. (Fails on a main that predates the naming.)
-test('every entry point names UI/UX.v3 and the contract lists its legacy', () => {
+// The owner named the design contract UI/UX.v3 on 13 November 2026 and launched UI/UX.v4 on 18 November 2026
+// ("v4"). Every entry point must name UI/UX.v4, so no agent can follow an older version by name, and the contract
+// keeps the UI/UX.v3 block as superseded history. (Fails on a main that predates UI/UX.v4.)
+test('every entry point names UI/UX.v4 and the contract keeps UI/UX.v3 as superseded history', () => {
   const entryPoints = [
     'AGENTS.md',
     'apps/web/AGENTS.md',
@@ -484,22 +485,263 @@ test('every entry point names UI/UX.v3 and the contract lists its legacy', () =>
     '.claude/skills/corridra-squad/SKILL.md',
     '.github/pull_request_template.md',
     'docs/documentation-map.json',
+    'docs/agents/conductor/SKILL.md',
+    'docs/agents/conductor/references/experience.md',
   ];
   for (const path of entryPoints) {
-    assert.match(read(join(root, path)), /UI\/UX\.v3/, `${path} must name UI/UX.v3`);
+    const text = read(join(root, path));
+    assert.match(text, /UI\/UX\.v4/, `${path} must name UI/UX.v4`);
+    // No pointer may still call UI/UX.v3 the current or binding contract.
+    assert.doesNotMatch(
+      text,
+      /(?:binding|current|obey binding|Built to|contract:|design contract) UI\/UX\.v3\b/i,
+      `${path} still names UI/UX.v3 as current`,
+    );
   }
   const contract = read(join(root, 'docs/agents/ui-direction.md'));
-  assert.match(contract, /^# UI\/UX\.v3/m, 'the contract title must be UI/UX.v3');
-  assert.match(contract, /## UI\/UX\.v3 version block/);
+  assert.match(contract, /^# UI\/UX\.v4/m, 'the contract title must be UI/UX.v4');
+  assert.match(contract, /## UI\/UX\.v4 version block/);
+  assert.match(contract, /until the owner launches UI\/UX\.v5/);
   assert.match(
     contract,
-    /binding until the owner launches UI\/UX\.v4|until the owner launches UI\/UX\.v4/,
+    /asked "keep v3 with a dated amendment, or launch v4", the owner answered: "v4"/,
+  );
+  assert.match(
+    contract,
+    /## UI\/UX\.v3 version block \(superseded, replaced by UI\/UX\.v4 \(18 November 2026\)\)/,
+    'the UI/UX.v3 block is kept, marked superseded',
   );
   assert.match(contract, /13 November 2026, verbatim: "lets name the the latest ui style/);
+  assert.ok(
+    contract.indexOf('## UI/UX.v4 version block') < contract.indexOf('## UI/UX.v3 version block'),
+    'the UI/UX.v4 block comes first',
+  );
+  assert.match(contract, /## Current locked decisions \(UI\/UX\.v4/);
+  assert.match(contract, /### Shared components \(UI\/UX\.v4\)/);
   assert.match(contract, /## Legacy \(not to be followed for new work\)/);
   for (const legacy of ['Pre-AC/1', 'UX10X', 'A Ledger']) {
     assert.ok(contract.includes(legacy), `the Legacy section must name ${legacy}`);
   }
+  // The rows UI/UX.v4 replaced are listed as superseded, never silently dropped.
+  const superseded = contract.slice(
+    contract.indexOf('### Superseded, do not follow'),
+    contract.indexOf('### Shared components (UI/UX.v4)'),
+  );
+  for (const row of [
+    /Pocket plus with no visible words/,
+    /home page inside a page-length budget/,
+    /numbered dots/,
+    /Listen inside the "\?" popover/,
+  ]) {
+    assert.match(superseded, row, `"Superseded, do not follow" must list ${row}`);
+  }
+  const plan = read(join(root, 'docs/revamp/apple-grade-plan.md'));
+  assert.match(plan, /^Document status: CURRENT\./m);
+  assert.ok(
+    plan.includes(
+      read(join(root, 'docs/revamp/evidence/owner-2026-11-18/apple-grade-step2-board.txt')).trim(),
+    ),
+    'the Apple-grade plan carries the step two board text verbatim',
+  );
+});
+
+// Rule 7, UI/UX.v4 motion (owner, 18 November 2026, "v4"; ui-direction.md row "Motion"): every behaviour is under
+// 300 ms, the Done tick is 420 ms, nothing starts on its own, and reduced motion shows the still end state. No CSS
+// transition or animation may run longer than 420 ms, and every keyframe animation has its own reduced-motion off
+// switch. Only the exceptions below may differ; each names why. (Fails on a main without the UI/UX.v4 tokens.)
+export const MOTION_LIMIT_MS = 420;
+export const MOTION_EXCEPTIONS = [
+  {
+    file: 'apps/web/app/globals.css',
+    selector: ":is(.button, .button-secondary)[aria-busy='true']::after",
+    why: 'the busy ring (ac1-busy, 0.8 s a turn): a progress indicator the person started; reduced motion and Less Movement stop it after one turn',
+  },
+  {
+    file: 'apps/web/components/site-footer.css',
+    selector: ".guide-footer-access[data-pending='true']",
+    why: 'the footer access row reveal: visibility only, no movement, 1 ms after an 800 ms wait',
+  },
+];
+
+// Split on top-level commas only, so cubic-bezier(a, b, c, d) stays whole.
+function splitTop(value) {
+  const parts = [];
+  let depth = 0;
+  let cur = '';
+  for (const ch of value) {
+    if (ch === '(') depth += 1;
+    if (ch === ')') depth -= 1;
+    if (ch === ',' && depth === 0) {
+      parts.push(cur.trim());
+      cur = '';
+    } else cur += ch;
+  }
+  if (cur.trim()) parts.push(cur.trim());
+  return parts;
+}
+
+export function cssTokens(css) {
+  const tokens = {};
+  for (const m of stripCss(css).matchAll(/(--[\w-]+)\s*:\s*([^;{}]+);/g)) {
+    if (!(m[1] in tokens)) tokens[m[1]] = m[2].trim();
+  }
+  return tokens;
+}
+
+export function resolveToken(value, tokens, depth = 0) {
+  if (depth > 8) return value;
+  return value.replace(/var\(\s*(--[\w-]+)\s*(?:,\s*([^()]*))?\)/g, (all, name, fallback) =>
+    name in tokens
+      ? resolveToken(tokens[name], tokens, depth + 1)
+      : fallback !== undefined
+        ? fallback.trim()
+        : all,
+  );
+}
+
+const TIME = /^(-?\d*\.?\d+)(ms|s)$/;
+const toMs = (time) => {
+  const m = TIME.exec(time);
+  return m ? Number(m[1]) * (m[2] === 's' ? 1000 : 1) : null;
+};
+
+// Every transition or animation duration in a stylesheet, with its selector. In a shorthand the first time is the
+// duration and the second the delay; a delay is a wait, not motion, so it is not counted.
+export function motionDurations(css, tokens) {
+  const found = [];
+  for (const m of stripCss(css).matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const selector = m[1].trim().replace(/\s+/g, ' ');
+    for (const d of m[2].matchAll(/(?:^|;|\s)(transition|animation)(-duration)?\s*:\s*([^;}]+)/g)) {
+      const value = resolveToken(d[3].replace(/!important/, '').trim(), tokens);
+      for (const part of splitTop(value)) {
+        const times = part
+          .split(/\s+/)
+          .map(toMs)
+          .filter((t) => t !== null);
+        const durations = d[2] ? times : times.slice(0, 1);
+        for (const ms of durations) found.push({ selector, ms, value: d[3].trim() });
+      }
+    }
+  }
+  return found;
+}
+
+function reducedMotionBlocks(css) {
+  const clean = stripCss(css);
+  const blocks = [];
+  for (const m of clean.matchAll(/@media[^{]*prefers-reduced-motion\s*:\s*reduce[^{]*\{/g)) {
+    let depth = 1;
+    let i = m.index + m[0].length;
+    const startAt = i;
+    while (i < clean.length && depth > 0) {
+      if (clean[i] === '{') depth += 1;
+      if (clean[i] === '}') depth -= 1;
+      i += 1;
+    }
+    blocks.push(clean.slice(startAt, i - 1));
+  }
+  return blocks;
+}
+
+// Selectors that run a keyframe animation defined in the same stylesheet but have no reduced-motion rule in that
+// stylesheet setting their animation to none.
+export function animationsWithoutReducedMotion(css) {
+  const clean = stripCss(css);
+  const names = new Set([...clean.matchAll(/@keyframes\s+([\w-]+)/g)].map((m) => m[1]));
+  const off = new Set();
+  for (const block of reducedMotionBlocks(css)) {
+    for (const m of block.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      if (!/animation(?:-name)?\s*:\s*none/.test(m[2])) continue;
+      for (const s of splitTop(m[1])) off.add(s.trim().replace(/\s+/g, ' '));
+    }
+  }
+  const missing = [];
+  for (const m of clean.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const decl = /(?:^|;|\s)animation(?:-name)?\s*:\s*([^;}]+)/.exec(m[2]);
+    if (!decl || ![...names].some((n) => new RegExp(`(^|[\\s,])${n}([\\s,]|$)`).test(decl[1])))
+      continue;
+    for (const s of splitTop(m[1])) {
+      const selector = s.trim().replace(/\s+/g, ' ');
+      if (!off.has(selector)) missing.push(selector);
+    }
+  }
+  return missing;
+}
+
+const isException = (file, selector) =>
+  MOTION_EXCEPTIONS.some((e) => e.file === file && e.selector === selector);
+
+test('CSS motion stays inside the UI/UX.v4 motion spec: at most 420 ms, off under reduced motion', () => {
+  const globals = read(join(web, 'app/globals.css'));
+  const tokens = cssTokens(globals);
+  // The UI/UX.v4 motion and phone frame tokens.
+  assert.equal(resolveToken('var(--dur-short)', tokens), '160ms');
+  assert.ok(toMs(resolveToken('var(--dur-step)', tokens)) < 300, 'a behaviour is under 300 ms');
+  assert.equal(resolveToken('var(--dur-tick)', tokens), '420ms');
+  assert.equal(resolveToken('var(--ease-product)', tokens), 'cubic-bezier(0.2, 0.7, 0.2, 1)');
+  assert.equal(resolveToken('var(--bottom-action-h)', tokens), '60px');
+  assert.equal(resolveToken('var(--header-h-phone)', tokens), '60px');
+  // The site-wide reduced-motion switch stays in place.
+  assert.ok(
+    reducedMotionBlocks(globals).some((b) =>
+      /\*,\s*\*::before,\s*\*::after\s*\{[^}]*animation-duration\s*:/.test(b),
+    ),
+    'globals.css keeps the reduced-motion catch-all',
+  );
+  const tooLong = [];
+  const noOffSwitch = [];
+  for (const path of styles) {
+    const file = rel(path);
+    const css = read(path);
+    for (const d of motionDurations(css, tokens)) {
+      if (d.ms > MOTION_LIMIT_MS && !isException(file, d.selector))
+        tooLong.push(`${file} ${d.selector}: ${d.value} (${d.ms} ms)`);
+    }
+    for (const selector of animationsWithoutReducedMotion(css)) {
+      if (!isException(file, selector)) noOffSwitch.push(`${file} ${selector}`);
+    }
+  }
+  assert.deepEqual(tooLong, [], `motion longer than ${MOTION_LIMIT_MS} ms`);
+  assert.deepEqual(noOffSwitch, [], 'keyframe animation without a reduced-motion off switch');
+  // An exception that animates still stops under reduced motion: the busy ring turns once and rests.
+  const busy = MOTION_EXCEPTIONS[0].selector;
+  assert.ok(
+    reducedMotionBlocks(globals).some(
+      (b) =>
+        b.includes(busy) && /animation-iteration-count\s*:\s*1\b/.test(b.slice(b.indexOf(busy))),
+    ),
+    'the busy ring stops after one turn under reduced motion',
+  );
+  // Every listed exception still exists, so the list can only shrink.
+  for (const e of MOTION_EXCEPTIONS) {
+    assert.ok(
+      stripCss(read(join(root, e.file))).includes(e.selector),
+      `stale exception ${e.selector}`,
+    );
+  }
+});
+
+test('rule 7 flags planted long and unswitched motion, and passes the tokens', () => {
+  const tokens = { '--dur': '160ms', '--dur-tick': '420ms', '--slow': '0.6s' };
+  const ms = (css) => motionDurations(css, tokens).map((d) => d.ms);
+  assert.deepEqual(
+    ms('.a { transition: color var(--dur) var(--ease), opacity var(--dur-tick); }'),
+    [160, 420],
+  );
+  assert.deepEqual(
+    ms('.a { transition: opacity 500ms cubic-bezier(0.2, 0.7, 0.2, 1) 1s; }'),
+    [500],
+  );
+  assert.deepEqual(ms('.a { animation: spin var(--slow) linear infinite; }'), [600]);
+  assert.deepEqual(ms('.a { animation-duration: 0.01ms !important; }'), [0.01]);
+  const unswitched = '.a { animation: rise var(--dur); } @keyframes rise { to { opacity: 1; } }';
+  assert.deepEqual(animationsWithoutReducedMotion(unswitched), ['.a']);
+  assert.deepEqual(
+    animationsWithoutReducedMotion(
+      `${unswitched} @media (prefers-reduced-motion: reduce) { .a { animation: none; } }`,
+    ),
+    [],
+  );
 });
 
 test('the owner operating rules are recorded, linked from AGENTS.md and session rotation', () => {
