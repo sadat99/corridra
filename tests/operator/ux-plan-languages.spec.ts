@@ -86,7 +86,7 @@ test.beforeAll(async () => {
         // buttons, headings and pills keep to their own length limits (checked in language-form.test.ts), so they
         // are made longer but get no compound.
         const {words}=await import(${JSON.stringify(resolve('apps/web/lib/i18n/form-words/de.ts'))});
-        const limited=/^form\.(step|action|head|pending|receipt|check)\.|^form\.plan\.(stepLine|nextLine|exactJob|pickToContinue|savedTab)$|(Pill|Heading)$/;
+        const limited=/^form\.(step|action|head|pending|receipt|check)\.|(Pill|Heading)$/;
         let n=0;
         for(const key of Object.keys(formEn)){
           const text=formEn[key],extra=Math.ceil(text.length*0.4);
@@ -407,11 +407,10 @@ function allowed(html: string) {
 }
 
 /**
- * The aria snapshot without exactly the two named landmarks, which are compared by their words and attributes above:
- * the example request summary (a complementary landmark named "Your example request" or "Your request") and, in the
- * sample form, the test notice (the complementary landmark with no name that holds the pill "Test mode"). Every other
- * landmark, the real form's notice included, stays in the snapshot. It also returns how many it dropped, so a snapshot
- * cannot lose a third landmark unseen.
+ * The aria snapshot without exactly the one named landmark, which is compared by its words and attributes above: the
+ * example request summary (a complementary landmark named "Your example request" or "Your request"). Every other
+ * landmark stays in the snapshot. W1-C (owner 2a, 18 Nov 2026): the sample notice is no longer a landmark, so it is no
+ * longer dropped. The function also returns how many it dropped, so a snapshot cannot lose a second landmark unseen.
  */
 function withoutAside(aria: string) {
   const lines = aria.split('\n');
@@ -424,10 +423,9 @@ function withoutAside(aria: string) {
       let end = i + 1;
       while (end < lines.length && lines[end]!.length - lines[end]!.trimStart().length > indent)
         end++;
-      const block = lines.slice(i, end).join('\n');
       const summary = /^\s*- complementary "Your (example )?request"/.test(line);
-      const testNotice = false; // the sample notice is no longer a landmark (owner 2a, 18 Nov 2026)
-      if (summary || testNotice) {
+      // The sample notice is no longer a landmark (owner 2a, 18 Nov 2026), so only the summary is dropped.
+      if (summary) {
         dropped++;
         i = end - 1;
         continue;
@@ -702,7 +700,7 @@ test.describe('with the form released', () => {
     await expect(page.locator('h1')).toHaveText(formEn['form.head.title']);
     // UI/UX.v4: before a choice the English button says why it waits.
     await expect(page.locator('form.intake-form .plan-action-bar .primary-link')).toHaveText(
-      formEn['form.plan.pickToContinue'],
+      'Pick One to Continue',
     );
   });
 
