@@ -110,6 +110,8 @@ test('a door changes the headline to its proposition, preselects the person, the
   await expect(page.locator('#routes .is-mine')).toContainText('Any other route');
 });
 
+// The owner's board 3c draws "Showing:" on screen ("board 3c in full" supersedes the LP2 finding; Guardian 29, round
+// 2). The line stays aria-live polite, so screen readers still hear each change.
 test('the route state is shown and told: "Showing:" names the open route (review round 2, D13)', async ({
   page,
 }) => {
@@ -459,15 +461,17 @@ test('chosen states use the selected token; titles, sub-heads and key sentences 
         body: px('main p:not([class])') || 16,
       };
     });
+  // UI/UX.v3's locked section title (24, 22 on a phone) wins over the board; sub-heads are smaller (18).
   let s = await sizes();
-  expect(s.h2).toBe(40);
-  expect(s.h3).toBe(24);
+  expect(s.h2).toBe(24);
+  expect(s.h3).toBe(18);
+  expect(s.h3).toBeLessThan(s.h2);
   expect(s.sub).toBe(18);
   await page.setViewportSize({ width: 390, height: 844 });
   s = await sizes();
-  expect(s.h2).toBeGreaterThan(s.h3);
-  expect(s.h3).toBe(22);
-  expect(s.sub).toBeGreaterThan(16);
+  expect(s.h2).toBe(22);
+  expect(s.h3).toBeLessThan(s.h2);
+  expect(s.sub).toBe(18);
   // Weights stay in the locked set.
   for (const selector of ['#sell-title', '#worth-title'])
     expect(await page.locator(selector).evaluate((el) => getComputedStyle(el).fontWeight)).toBe(
