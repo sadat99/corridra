@@ -134,6 +134,9 @@ const open = async (page: Page, query = '') => {
   await expect(
     page.getByRole('heading', { name: 'What are you trying to achieve?' }),
   ).toBeVisible();
+  // UI/UX.v4: the job list sits behind "Know the exact job? Choose it"; every job stays selectable once it is open.
+  const toggle = page.getByRole('button', { name: 'Know the exact job? Choose it' });
+  if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
 };
 const job = (page: Page) => page.getByLabel('Commercial job');
 
@@ -320,7 +323,7 @@ test('notes validation keeps its context hint and exposes the error on the texta
 }) => {
   await open(page);
   await job(page).selectOption('sourcing');
-  const next = page.getByRole('button', { name: 'Continue', exact: true });
+  const next = page.getByRole('button', { name: /^(Continue|Pick One to Continue)$/ });
   await expect(next).toBeEnabled();
   await next.click();
   await page

@@ -270,6 +270,7 @@ export const words: FormCatalog = {
   'form.message.offlineFirefox': '没有网络连接。您填写的内容仍然保留。联网后请重试。',
   'form.message.offlineSafari': '没有网络连接。您填写的内容仍然保留。联网后请重试。',
   // UI/UX.v4 /plan (W1-C, owner 18 Nov 2026). English until a native review; shown marked as English in translated forms.
+  'form.plan.pick': 'Pick one. You can change it later.',
   'form.plan.stepLine': 'Step {step} of {total}: {name}',
   'form.plan.nextLine': 'Next: {name}',
   'form.plan.exactJob': 'Know the exact job? Choose it',

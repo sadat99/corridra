@@ -302,6 +302,7 @@ export const words: FormCatalog = {
   'form.message.offlineSafari':
     'সংযোগ নেই। আপনার দেওয়া তথ্য এখানেই আছে। সংযোগ পেলে আবার চেষ্টা করুন।',
   // UI/UX.v4 /plan (W1-C, owner 18 Nov 2026). English until a native review; shown marked as English in translated forms.
+  'form.plan.pick': 'Pick one. You can change it later.',
   'form.plan.stepLine': 'Step {step} of {total}: {name}',
   'form.plan.nextLine': 'Next: {name}',
   'form.plan.exactJob': 'Know the exact job? Choose it',

@@ -25,6 +25,9 @@
   gap: var(--space-3);
 }
 .plan-action-row .primary-link {
+  margin-inline-start: auto;
+  min-width: min(10rem, 100%);
+  max-width: 100%;
   min-height: 3rem;
   transition: background-color var(--dur-step) var(--ease-product);
 }

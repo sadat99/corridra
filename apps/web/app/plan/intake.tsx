@@ -1242,20 +1242,23 @@ function IntakeForm({
                       }}
                     />
                   ) : (
-                    <div className="guide-options">
-                      {objectiveOptions.map((v) => (
-                        <label className="choice" key={v}>
-                          <input
-                            type="radio"
-                            name="objective"
-                            value={v}
-                            checked={draft.objective === v}
-                            onChange={() => change('objective', v)}
-                          />
-                          {say(objectiveWords[v])}
-                        </label>
-                      ))}
-                    </div>
+                    <>
+                      <p className="guide-hint">{english(formEn['form.plan.pick'])}</p>
+                      <div className="guide-options">
+                        {objectiveOptions.map((v) => (
+                          <label className="choice" key={v}>
+                            <input
+                              type="radio"
+                              name="objective"
+                              value={v}
+                              checked={draft.objective === v}
+                              onChange={() => change('objective', v)}
+                            />
+                            {say(objectiveWords[v])}
+                          </label>
+                        ))}
+                      </div>
+                    </>
                   )}
                   {error('objective')}
                   <PlanJobFold
@@ -1667,8 +1670,8 @@ function IntakeForm({
                       ? realMode && !privateMode && !account
                         ? say('form.action.createAccount')
                         : say('form.action.submit')
-                      : step === 0 && nothingChosen
-                        ? english(formEn['form.plan.pickToContinue'])
+                      : step === 0 && nothingChosen && !translated
+                        ? formEn['form.plan.pickToContinue']
                         : say('form.action.continue')}
                 </button>
               </PlanActionBar>

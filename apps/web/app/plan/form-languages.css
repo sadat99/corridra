@@ -22,7 +22,7 @@
     .label,
     .guide-hint,
     .guide-status,
-    .intake-notice p,
+    .plan-sample-note p,
     .ux-draft-notice,
     .ux-error-summary,
     .field-error,
@@ -43,7 +43,7 @@
     .label,
     .guide-hint,
     .guide-status,
-    .intake-notice p,
+    .plan-sample-note p,
     .ux-draft-notice,
     .ux-error-summary,
     .field-error,
@@ -52,7 +52,7 @@
   ):not(:lang(en)):not(.mr-fq *, .guide-bn *) {
   hyphens: auto;
 }
-.ux-intake-page:not(:lang(en)) :is(button, .primary-link, .guide-journey-bar b) {
+.ux-intake-page:not(:lang(en)) :is(button, .primary-link) {
   overflow-wrap: normal;
   hyphens: manual;
 }
@@ -74,9 +74,9 @@
    word may break, so that no button pushes the page sideways. (A media query counts in the browser's own text size, so it
    matches the 320 px phone whatever the text is set to, and nothing changes at the larger widths.) */
 @media (max-width: 22.5rem) {
-  .ux-intake-page:not(:lang(en)) .intake-notice [lang='en']:not(.ux-brief-summary dd *),
+  .ux-intake-page:not(:lang(en)) .plan-sample-note [lang='en']:not(.ux-brief-summary dd *),
   .ux-intake-page .guide-bn p,
-  .ux-intake-page .intake-notice p {
+  .ux-intake-page .plan-sample-note p {
     overflow-wrap: anywhere;
   }
   .ux-intake-page :is(button, .primary-link, .button),
@@ -120,42 +120,9 @@
 /* The one long English token in the sample-mode notice and in the Bengali guidance is the test address. Text at twice its size on a
    320 px phone is narrower than that address, so these two places let it break rather than push the page sideways. */
 
-/* On a phone only the current step word shows. It stays on one line, and for the last two steps it lines up with
-   the end of the bar so it never runs past the card. Its column may be narrower than the word, and the word still
-   ends at the column's end, so it spills back over the bar rather than past the card. */
-@media (max-width: 700px) {
-  .ux-intake-page:not(:lang(en)) .guide-journey-bar li[aria-current='step'] {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .ux-intake-page:not(:lang(en)) .guide-journey-bar li[aria-current='step'] b {
-    white-space: nowrap;
-  }
-  .ux-intake-page:not(:lang(en)) .guide-journey-bar li:nth-child(n + 4)[aria-current='step'] b {
-    justify-self: unsafe end;
-    text-align: end;
-  }
-}
-
-/* Above phone width the notice is one row. The notice keeps two thirds of it so its English sentences do not wrap
-   early. */
-@media (min-width: 701px) {
-  .ux-intake-page:not(:lang(en)) .intake-notice > p {
-    flex: 2 1 0;
-    min-width: 0;
-  }
-  .ux-intake-page:not(:lang(en)) .intake-notice > p + p {
-    flex: 1 1 0;
-  }
-}
-
-/* A translated pill may wrap, so it still fits with text at twice its size. */
-.ux-intake-page:not(:lang(en)) .guide-pill {
-  white-space: normal;
-}
-
 /* Bengali, Chinese and Arabic letters need more room between lines than Latin ones. */
 .ux-intake-page:is(:lang(bn), :lang(zh), :lang(ar))
-  :is(.choice, .field > label, label.field, .guide-journey-bar b):not(:lang(en)):not(
+  :is(.choice, .field > label, label.field, .plan-progress-line):not(:lang(en)):not(
     .mr-fq *,
     .guide-bn *
   ) {
