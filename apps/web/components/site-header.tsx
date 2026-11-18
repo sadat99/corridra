@@ -286,6 +286,10 @@ export function SiteHeader({
         className={open ? 'public-nav is-open' : 'public-nav'}
         aria-label={t('header.nav')}
       >
+        {/* Under 360 px: Listen and the language, a group of their own above the choices (they are not choices). */}
+        <div className="public-drawer-tools">
+          <TopBarTools variant="drawer" />
+        </div>
         <button
           ref={whatWeDo}
           type="button"
@@ -346,9 +350,6 @@ export function SiteHeader({
           </Link>
         ))}
         <div className="public-nav-actions">
-          <div className="public-drawer-tools">
-            <TopBarTools variant="drawer" />
-          </div>
           {who ? (
             <>
               <Link

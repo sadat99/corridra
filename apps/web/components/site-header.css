@@ -45,7 +45,8 @@
   }
   .public-drawer-tools {
     display: block;
-    padding: var(--space-3) 0 0;
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--line);
   }
 }
 .public-header .brand {

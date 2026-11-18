@@ -172,6 +172,12 @@ test('under 360 px Listen and the language move into the drawer; from 360 px the
   await menu(page).click();
   await expect(listen(page)).toBeVisible();
   await expect(language(page)).toBeVisible();
+  // They are a group of their own above the choices, not choices themselves.
+  const what = page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button', {
+    name: 'What We Do',
+  });
+  expect((await listen(page).boundingBox())!.y).toBeLessThan((await what.boundingBox())!.y);
+  expect((await language(page).boundingBox())!.y).toBeLessThan((await what.boundingBox())!.y);
   expect(await small(page)).toEqual([]);
   expect(await sideways(page)).toBeLessThanOrEqual(0);
 });

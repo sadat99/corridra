@@ -5,7 +5,7 @@
 // The line "Six of seven are draft translations. Native review pending." is written from the offered languages
 // themselves, so it is shown only while drafts are offered and the numbers are the real ones.
 import './language-sheet.css';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { localeMeta, type Locale, type OfferedLanguage } from '../../lib/i18n/locales';
 import { useLanguage } from '../language-provider';
@@ -29,7 +29,7 @@ export function draftLine(offered: readonly OfferedLanguage[]) {
 
 const focusable = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-function Sheet({ onClose }: { onClose: () => void }) {
+function Sheet({ onClose, extra }: { onClose: () => void; extra?: ReactNode }) {
   const { locale, offered, choose, t } = useLanguage();
   const titleId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const panel = useRef<HTMLDivElement>(null);
@@ -113,6 +113,8 @@ function Sheet({ onClose }: { onClose: () => void }) {
             {line}
           </p>
         )}
+        {/* Optional room under the rows for a page's own language help; nothing uses it yet. */}
+        {extra}
       </div>
     </div>
   );
@@ -122,7 +124,14 @@ function Sheet({ onClose }: { onClose: () => void }) {
  * The language control of the top bar: an icon, the short code of the chosen language and a sheet that lists every
  * offered language. It appears only when more than one language is offered, so with English alone the bar is unchanged.
  */
-export function LanguageButton({ className = 'top-bar-tool' }: { className?: string }) {
+export function LanguageButton({
+  className = 'top-bar-tool',
+  extra,
+}: {
+  className?: string;
+  /** Optional content shown under the language rows in the sheet. */
+  extra?: ReactNode;
+}) {
   const { locale, offered, t } = useLanguage();
   const [open, setOpen] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
@@ -147,7 +156,7 @@ export function LanguageButton({ className = 'top-bar-tool' }: { className?: str
           {localeCode(locale)}
         </span>
       </button>
-      {open && createPortal(<Sheet onClose={close} />, document.body)}
+      {open && createPortal(<Sheet onClose={close} extra={extra} />, document.body)}
     </>
   );
 }
