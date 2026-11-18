@@ -35,7 +35,7 @@ const endpoint = '/api/customer-member-access';
 const helper =
   'Reports saved and decision cards made by other members of workspaces you own or manage. You can read them and download their books. Only the member can remove a report or withdraw a card. Each list, report or card you open and each book you download is recorded with your account.';
 type Failure = 'denied' | 'unavailable' | 'limit' | 'failed';
-type Status = 'loading' | 'ready' | Failure;
+type Status = 'loading' | 'ready' | 'closed' | Failure;
 const failure = (error: unknown): Failure =>
   error instanceof Error && ['denied', 'unavailable', 'limit'].includes(error.message)
     ? (error.message as Failure)
@@ -44,6 +44,10 @@ const iso = (value: unknown): value is string =>
   typeof value === 'string' && Number.isFinite(Date.parse(value));
 const label = (value: unknown) => value === null || typeof value === 'string';
 const id = (value: unknown): value is string => typeof value === 'string' && uuid.test(value);
+// A card has ended when it expired, or when the report link it was made from ended first (the list gives the earlier of
+// the two as expiresAt).
+const cardEnded = (card: MemberDecisionCard, now = Date.now()) =>
+  card.state === 'EXPIRED' || Date.parse(card.expiresAt) <= now;
 const cardTones: Record<MemberDecisionCard['state'], 'positive' | 'unknown' | 'caution'> = {
   ACTIVE: 'positive',
   EXPIRED: 'unknown',
@@ -148,31 +152,27 @@ function PrivateMemberReports({ subject, issuer }: SavedMissionScope) {
       });
   }, [subject, issuer]);
   useEffect(() => {
-    // Nothing read is kept on a page the person has left or hidden; the lists that were open are read again on return.
+    // Every list a reader opens here is recorded, so the lists are read once, when the panel is shown: switching tabs
+    // neither clears nor reads them again. Nothing is kept on a page the person has left; a page restored from the
+    // back-forward cache stays closed until the person asks for the lists again.
     function clear() {
       controller.current?.abort();
       setWorkspaces(null);
       setStatus('loading');
     }
-    function visible() {
-      if (document.hidden) clear();
-      else load();
-    }
     function show(event: PageTransitionEvent) {
       if (event.persisted) {
         clear();
-        load();
+        setStatus('closed');
       }
     }
     load();
     window.addEventListener('pagehide', clear);
     window.addEventListener('pageshow', show);
-    document.addEventListener('visibilitychange', visible);
     return () => {
       controller.current?.abort();
       window.removeEventListener('pagehide', clear);
       window.removeEventListener('pageshow', show);
-      document.removeEventListener('visibilitychange', visible);
     };
   }, [load]);
   // A person who owns or manages no workspace has nothing here.
@@ -209,6 +209,12 @@ function PrivateMemberReports({ subject, issuer }: SavedMissionScope) {
       {status === 'limit' && (
         <>
           <p role="alert">{limitWords}</p>
+          {refresh}
+        </>
+      )}
+      {status === 'closed' && (
+        <>
+          <p role="status">These lists closed when you left the page.</p>
           {refresh}
         </>
       )}
@@ -527,8 +533,7 @@ function CardList({ workspaceId, scope }: { workspaceId: string; scope: SavedMis
             </span>
             <span>{madeBy(card.memberLabel)}</span>
             <span>
-              {card.state === 'EXPIRED' ? 'Card ended' : 'Card expires'}{' '}
-              {formatDateTime(card.expiresAt)}.
+              {cardEnded(card) ? 'Card ended' : 'Card expires'} {formatDateTime(card.expiresAt)}.
             </span>
             {card.state === 'ACTIVE' && (
               <button

@@ -20,7 +20,11 @@ import { CustomerWorkspaceService } from '../../packages/auth/src/customer-works
 import { CustomerMemberRoleService } from '../../packages/auth/src/customer-member-roles';
 import { admitSyntheticCustomer } from '../../packages/auth/src/customer-admission';
 import { admitSyntheticCustomerRequests } from '../../packages/auth/src/customer-request-admission';
-import { CustomerMemberAccessService } from '../../apps/web/lib/member-access';
+import {
+  CustomerMemberAccessService,
+  memberAccessBudgetKeys,
+  type MemberAccessSpend,
+} from '../../apps/web/lib/member-access';
 import { uxSwitchNames } from '../../apps/web/lib/ux-switches';
 import { switchRegistry } from '../../apps/web/lib/owner-switches';
 
@@ -524,6 +528,36 @@ describe('the application service behind CORRIDRA_MEMBER_ACCESS', () => {
       return `${e.status} ${e.code ?? ''}`.trim();
     }
   };
+  test('the budget is spent per verified reader: reads never use up the member own report budget or an admin budget', async () => {
+    // The route's spend, on the real delivery budget (60 an hour per key).
+    const spend =
+      (workspace: string, item: string): MemberAccessSpend =>
+      (identity) =>
+        w.delivery.budget(...memberAccessBudgetKeys(identity, workspace, item));
+    const R = items.bob.resourceId;
+    for (let i = 0; i < 60; i++)
+      expect(
+        await status(service('alice').report(W, R, undefined, undefined, on, spend(W, R))),
+      ).toBe('allowed');
+    expect(await status(service('alice').report(W, R, undefined, undefined, on, spend(W, R)))).toBe(
+      '429',
+    );
+    // The member's own budget for R (the saved missions route spends the client and the resource for remove and respond)
+    // is untouched by those 61 reads.
+    await expect(w.delivery.budget('local', R)).resolves.toBeUndefined();
+    // A plain member refused again and again spends only her own reader budget: the admin still reads that report.
+    const A = items.alice.resourceId;
+    for (let i = 0; i < 65; i++)
+      expect(
+        await status(service('carol').report(W, A, undefined, undefined, on, spend(W, A))),
+      ).toMatch(/^(undefined 42501|429)$/);
+    expect(await status(service('bob').report(W, A, undefined, undefined, on, spend(W, A)))).toBe(
+      'allowed',
+    );
+    expect(
+      await status(service('bob').savedReports(W, null, undefined, undefined, on, spend(W, W))),
+    ).toBe('allowed');
+  });
   test('the switch is its own, off unless exactly true, and listed for the owner', () => {
     expect(uxSwitchNames).toContain('CORRIDRA_MEMBER_ACCESS');
     expect(switchRegistry.find((entry) => entry.name === 'CORRIDRA_MEMBER_ACCESS')).toMatchObject({
@@ -703,7 +737,6 @@ describe('access changed while a read waited for the workspace lock', () => {
           ),
         ),
       ).toMatch(/^42501 /);
-      // bob is invited again: the same read succeeds, so the refusal above came from the removal.
       // bob is invited again and made admin again (his cards resolve with a writer's authority): the same read succeeds, so the
       // refusal above came from the removal.
       await join('alice', 'bob', W);
@@ -712,10 +745,18 @@ describe('access changed while a read waited for the workspace lock', () => {
     }
   });
   test('a reader who stopped being an admin meanwhile is refused, with no event', async () => {
+    // A card of another member for bob to read: the owner's, on her own saved report.
+    const aliceCard = await makeCard('alice', items.alice.resourceId, items.alice.decisionId);
+    expect(
+      (await cards('bob', W)).cards.map((c: { id: string }) => c.id),
+      'the card list has something to read',
+    ).toContain(aliceCard);
     for (const read of [
       () => list('bob', W),
       () => open('bob', W, items.carol.resourceId),
       () => book('bob', W, items.carol.resourceId),
+      () => cards('bob', W),
+      () => card('bob', W, aliceCard),
     ]) {
       // The gate, asked again after the wait, refuses as it refuses any reader who is not an owner or admin.
       expect(await raced(read, (db) => role(db as never, 'member'))).toBe(
@@ -888,6 +929,32 @@ describe('7. an expired or revoked link ends the report for everyone', () => {
     expect(await refusal(card('alice', W, items.bobSecondCard))).toBe(
       '42501 Decision card unavailable',
     );
+  });
+});
+
+describe('a card whose report link ended', () => {
+  test('is listed as unavailable with the date its link ended, not the later card expiry', async () => {
+    const built = await w.build('bob' as never, W);
+    const made = await makeCard('bob', built.resourceId, built.decisionId);
+    const cardExpiry = (
+      await w.f.owner.query('SELECT expires_at FROM customer_private.decision_card WHERE id=$1', [
+        made,
+      ])
+    ).rows[0].expires_at as Date;
+    await mutate(
+      w.f.owner,
+      'app.delivery_link',
+      "UPDATE app.delivery_link SET created_at=clock_timestamp()-interval '2 hours',expires_at=clock_timestamp()-interval '1 hour' WHERE id=$1",
+      [built.link.id],
+    );
+    const linkEnd = (
+      await w.f.owner.query('SELECT expires_at FROM app.delivery_link WHERE id=$1', [built.link.id])
+    ).rows[0].expires_at as Date;
+    expect(cardExpiry.getTime()).toBeGreaterThan(Date.now());
+    const row = (await cards('alice', W)).cards.find((c: { id: string }) => c.id === made);
+    expect(row).toMatchObject({ state: 'UNAVAILABLE', company: null, decision: null });
+    expect(Date.parse(row.expiresAt)).toBe(linkEnd.getTime());
+    expect(await refusal(card('alice', W, made))).toBe('42501 Decision card unavailable');
   });
 });
 

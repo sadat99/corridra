@@ -129,13 +129,19 @@ describe('PL1 with member access off or absent: byte for byte what it was', () =
     expect(render(ce(DecisionCardPanelView, { panel, decisions, memberAccess: false }))).toBe(
       plain,
     );
-    // The pages that pass the switch pass it only from the server: CORRIDRA_MEMBER_ACCESS on and the module installed.
-    expect(read('apps/web/app/account/missions/[resourceId]/page.tsx')).toContain(
-      'memberAccess={await memberAccessForPage()}',
+    // The pages that pass the switch pass it only from the server: CORRIDRA_MEMBER_ACCESS on and the module installed, with
+    // the decision card label on its own flag (part 2 installed too).
+    const missions = read('apps/web/app/account/missions/[resourceId]/page.tsx');
+    expect(missions).toContain('const access = await memberAccessForPage();');
+    expect(missions).toContain('memberAccess={access.memberAccess}');
+    expect(missions).toContain('memberAccessCards={access.memberAccessCards}');
+    // The saved report label follows the scope; the card label inside the decision history gets the cards flag only.
+    expect(read('apps/web/app/account/missions/saved-commercial-report.tsx')).toMatch(
+      /<DecisionHistory[\s\S]*?cards=\{decisionCards\}\s*memberAccess=\{memberAccessCards\}/,
     );
     // The Room draws the same saved report, so its label follows the same server check (S3 matches /account/missions/X).
     expect(read('apps/web/app/account/rooms/[requestId]/page.tsx')).toContain(
-      'memberAccess={await memberAccessForPage()}',
+      'memberAccess={(await memberAccessForPage()).memberAccess}',
     );
     const room = read('apps/web/app/account/rooms/[requestId]/room-view.tsx');
     expect(room).toContain('memberAccess = false,');
@@ -144,29 +150,59 @@ describe('PL1 with member access off or absent: byte for byte what it was', () =
   it('the server check: off, not installed or unreadable keep the labels as they are; only on and installed names owners', async () => {
     const { memberAccessAvailable } = await import('../../apps/web/lib/member-access');
     let asked = 0;
-    const installed = (answer: boolean | Error) => async () => {
+    const installed = (answer: { reports: boolean; cards: boolean } | Error) => async () => {
       asked++;
       if (answer instanceof Error) throw answer;
       return answer;
     };
+    const off = { memberAccess: false, memberAccessCards: false };
+    const both = { reports: true, cards: true };
     // Off: the installation is not even read.
-    expect(await memberAccessAvailable(installed(true), {})).toBe(false);
-    expect(await memberAccessAvailable(installed(true), { CORRIDRA_MEMBER_ACCESS: 'false' })).toBe(
-      false,
-    );
+    expect(await memberAccessAvailable(installed(both), {})).toEqual(off);
+    expect(
+      await memberAccessAvailable(installed(both), { CORRIDRA_MEMBER_ACCESS: 'false' }),
+    ).toEqual(off);
     expect(asked).toBe(0);
     const on = { CORRIDRA_MEMBER_ACCESS: 'true' } as NodeJS.ProcessEnv;
-    expect(await memberAccessAvailable(installed(false), on)).toBe(false);
-    expect(await memberAccessAvailable(installed(new Error('no database')), on)).toBe(false);
-    expect(await memberAccessAvailable(installed(true), on)).toBe(true);
-    expect(asked).toBe(3);
-    // The installation check is the module's own list function, read as metadata only.
+    expect(await memberAccessAvailable(installed({ reports: false, cards: false }), on)).toEqual(
+      off,
+    );
+    expect(await memberAccessAvailable(installed(new Error('no database')), on)).toEqual(off);
+    // Part 1 installed, part 2 (decision cards) not: the saved report label names owners, the card label stays as off.
+    expect(await memberAccessAvailable(installed({ reports: true, cards: false }), on)).toEqual({
+      memberAccess: true,
+      memberAccessCards: false,
+    });
+    // Part 2 alone never counts: it cannot be installed without part 1.
+    expect(await memberAccessAvailable(installed({ reports: false, cards: true }), on)).toEqual(
+      off,
+    );
+    expect(await memberAccessAvailable(installed(both), on)).toEqual({
+      memberAccess: true,
+      memberAccessCards: true,
+    });
+    expect(asked).toBe(5);
+    // With the saved report label on (scope) and the card flag off, the card label is byte for byte the label of today.
+    const { PrivacyLabel, PrivacyLabelScope } = await loadWeb('components/privacy-label.tsx');
+    expect(
+      render(
+        ce(
+          PrivacyLabelScope,
+          { value: { memberAccess: true } },
+          ce(PrivacyLabel, { surface: 'decisionCard', memberAccess: false }),
+        ),
+      ),
+    ).toBe(labelHtml('decisionCard'));
+    // The installation check reads each part's own list function, as metadata only.
     const lib = read('apps/web/lib/member-access.ts');
     expect(lib).toContain(
-      "SELECT to_regprocedure('customer.workspace_saved_missions(uuid,uuid,integer)') IS NOT NULL AS present",
+      "to_regprocedure('customer.workspace_saved_missions(uuid,uuid,integer)') IS NOT NULL AS reports",
+    );
+    expect(lib).toContain(
+      "to_regprocedure('customer.workspace_decision_cards(uuid,uuid,integer)') IS NOT NULL AS cards",
     );
     expect(read('apps/web/lib/foundations.ts')).toMatch(
-      /export function memberAccessForPage\(\): Promise<boolean> \{\s*return memberAccessAvailable\(/,
+      /export function memberAccessForPage\(\): Promise<MemberAccessLabels> \{\s*return memberAccessAvailable\(/,
     );
   });
 });
@@ -178,66 +214,99 @@ describe('the member access route: the shared delivery budget on every action', 
     vi.resetModules();
     process.env = { ...saved };
   });
-  it('every list, open and book is counted per client before any read, and a spent budget reads nothing', async () => {
+  const origin = 'https://app.example';
+  const C = '44444444-4444-4444-8444-444444444444';
+  const reader = { issuer: 'https://auth.example', subject: 'verified-reader' };
+  const cases: [Record<string, unknown>, string, string][] = [
+    [{ action: 'reports', workspaceId: W, after: null }, 'savedReports', W],
+    [{ action: 'cards', workspaceId: W, after: null }, 'decisionCards', W],
+    [{ action: 'report', workspaceId: W, resourceId: R }, 'report', R],
+    [{ action: 'card', workspaceId: W, cardId: C }, 'decisionCard', C],
+    [
+      {
+        action: 'book',
+        workspaceId: W,
+        resourceId: R,
+        commandId: C,
+        kind: 'TRIP',
+        acknowledged: true,
+      },
+      'book',
+      R,
+    ],
+  ];
+  // The service stands in for the session boundary: `verified` says whether the fresh provider session is accepted. Only
+  // then does it call the route's spend, with the verified identity, before any read.
+  async function routeWith(verified: boolean) {
     process.env.CORRIDRA_MEMBER_ACCESS = 'true';
     process.env.CORRIDRA_UX_BOOKS = 'true';
-    delete process.env.VERCEL;
-    const origin = 'https://app.example';
     const budget = vi.fn();
-    const service = {
-      savedReports: vi.fn(),
-      report: vi.fn(),
-      decisionCards: vi.fn(),
-      decisionCard: vi.fn(),
-      book: vi.fn(),
-    };
+    const calls: string[] = [];
     vi.resetModules();
     vi.doMock('../../apps/web/lib/foundations', async () => {
       const { DomainError } = await import('../../packages/domain/src/index');
       budget.mockImplementation(async () => {
         throw new DomainError('Too many requests. Try again in an hour.', 429);
       });
+      const method =
+        (name: string) =>
+        async (...args: unknown[]) => {
+          calls.push(name);
+          if (!verified) throw new DomainError('Customer session is invalid', 401);
+          const spend = args.at(-1) as (identity: typeof reader) => Promise<void>;
+          await spend(reader);
+          throw new Error(`${name} read after a refused budget`);
+        };
       return {
         foundations: () => ({
           ready: Promise.resolve(),
           config: { APP_ORIGIN: origin },
           delivery: { budget },
-          customerMemberAccess: service,
+          customerMemberAccess: Object.fromEntries(
+            ['savedReports', 'report', 'decisionCards', 'decisionCard', 'book'].map((name) => [
+              name,
+              method(name),
+            ]),
+          ),
         }),
       };
     });
     const { POST } = await loadWeb('app/api/customer-member-access/route.ts');
-    const C = '44444444-4444-4444-8444-444444444444';
-    const cases: [Record<string, unknown>, string][] = [
-      [{ action: 'reports', workspaceId: W, after: null }, W],
-      [{ action: 'cards', workspaceId: W, after: null }, W],
-      [{ action: 'report', workspaceId: W, resourceId: R }, R],
-      [{ action: 'card', workspaceId: W, cardId: C }, C],
-      [
-        {
-          action: 'book',
-          workspaceId: W,
-          resourceId: R,
-          commandId: C,
-          kind: 'TRIP',
-          acknowledged: true,
-        },
-        R,
-      ],
-    ];
-    for (const [body, key] of cases) {
-      const response = (await POST(
+    const post = async (body: Record<string, unknown>) =>
+      (await POST(
         new Request(`${origin}/api/customer-member-access`, {
           method: 'POST',
           headers: { origin, 'content-type': 'application/json' },
           body: JSON.stringify(body),
         }),
       )) as Response;
+    return { budget, calls, post };
+  }
+  it('every list, open and book spends the budget after the session is verified, per reader and item, and a spent budget reads nothing', async () => {
+    const { budget, calls, post } = await routeWith(true);
+    for (const [body, method, item] of cases) {
+      const response = await post(body);
       expect(response.status, String(body.action)).toBe(429);
-      expect(budget).toHaveBeenLastCalledWith('local', key);
+      expect(calls.at(-1)).toBe(method);
+      // Namespaced to member access and the verified reader: never the member's own report key (the bare resource id
+      // with the client), so no member access read can use up the member's remove or respond budget.
+      expect(budget).toHaveBeenLastCalledWith(
+        `member-access:${reader.issuer}:${reader.subject}`,
+        `member-access:${W}:${item}:${reader.issuer}:${reader.subject}`,
+      );
     }
     expect(budget).toHaveBeenCalledTimes(5);
-    for (const [name, fn] of Object.entries(service)) expect(fn, name).not.toHaveBeenCalled();
+    for (const [first, second] of budget.mock.calls) {
+      expect(first).toMatch(/^member-access:/);
+      expect(second).toMatch(/^member-access:/);
+      expect([first, second]).not.toContain(R);
+    }
+  });
+  it('a session that is not verified spends nothing', async () => {
+    const { budget, calls, post } = await routeWith(false);
+    for (const [body] of cases) expect((await post(body)).status).toBe(401);
+    expect(calls).toHaveLength(5);
+    expect(budget).not.toHaveBeenCalled();
   });
 });
 
@@ -461,8 +530,10 @@ describe("Members' Reports", () => {
     // A card's date says when the card itself ends, not a link.
     expect(source).not.toContain('Link works until');
     expect(source).toMatch(
-      /\{card\.state === 'EXPIRED' \? 'Card ended' : 'Card expires'\}\{' '\}\s*\{formatDateTime\(card\.expiresAt\)\}\./,
+      /\{cardEnded\(card\) \? 'Card ended' : 'Card expires'\} \{formatDateTime\(card\.expiresAt\)\}\./,
     );
+    // Ended: expired, or its report link ended first (the list gives that earlier date as expiresAt, which is then past).
+    expect(source).toContain("card.state === 'EXPIRED' || Date.parse(card.expiresAt) <= now;");
   });
   it('opens a card only from its button, and shows the six fields read only', async () => {
     const { CardDetail } = await loadWeb('app/account/member-reports.tsx');

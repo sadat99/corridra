@@ -91,7 +91,7 @@ export default async function Page({
         specificationConfirmationsEnabled={await specificationConfirmationForPage()}
         lenses={uxSwitchOn('CORRIDRA_UX_LENSES')}
         trip={uxSwitchOn('CORRIDRA_UX_TRIP')}
-        memberAccess={await memberAccessForPage()}
+        memberAccess={(await memberAccessForPage()).memberAccess}
         initialLens={initialLens}
       />
     </CustomerShell>

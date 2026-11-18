@@ -4,7 +4,12 @@ import { customerSavedMissionsEnabled } from '@corridra/auth/customer-saved-miss
 import { customerBooksEnabled } from '@corridra/auth/customer-books';
 import { bookPdf } from '@corridra/delivery/report';
 import { foundations } from '../../../lib/foundations';
-import { memberAccessOn, memberBookInput } from '../../../lib/member-access';
+import {
+  memberAccessBudgetKeys,
+  memberAccessOn,
+  memberBookInput,
+  type MemberAccessSpend,
+} from '../../../lib/member-access';
 import { boundedBody, deliveryError, deliveryHeaders } from '../../../lib/delivery-http';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -83,11 +88,13 @@ export async function POST(request: Request) {
       action?: unknown;
     };
     const [subject, issuer] = who(request);
-    // The original shared per-client delivery budget, on every action: each list, open and book is a read that writes an audit
-    // event, so none may be repeated without bound. Keyed by the item read, or the workspace for a list.
-    const client = process.env.VERCEL
-      ? (request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown')
-      : 'local';
+    // Every list, open and book is a read that writes an audit event, so each spends the shared delivery budget. It is spent
+    // only after the fresh provider session is verified, with keys namespaced to member access and to that verified reader
+    // (memberAccessBudgetKeys): no member access call can spend the member's own report budget or another reader's.
+    const spend =
+      (workspaceId: string, item: string): MemberAccessSpend =>
+      (identity) =>
+        s.delivery.budget(...memberAccessBudgetKeys(identity, workspaceId, item));
     if (body?.action === 'book') {
       if (!customerBooksEnabled())
         throw new DomainError('Trip and Supplier books are unavailable', 503);
@@ -99,12 +106,13 @@ export async function POST(request: Request) {
         kind: parsed.kind,
         acknowledged: parsed.acknowledged,
       };
-      await s.delivery.budget(client, input.resourceId);
       const { record: book, file: pdf } = await s.customerMemberAccess.book(
         input,
         bookPdf,
         subject,
         issuer,
+        process.env,
+        spend(input.workspaceId, input.resourceId),
       );
       const name = book.kind === 'TRIP' ? 'trip' : 'supplier';
       return new Response(new Uint8Array(pdf), {
@@ -120,23 +128,44 @@ export async function POST(request: Request) {
       });
     }
     const input = readInput.parse(body);
-    await s.delivery.budget(
-      client,
-      'resourceId' in input
-        ? input.resourceId
-        : 'cardId' in input
-          ? input.cardId
-          : input.workspaceId,
-    );
     const service = s.customerMemberAccess;
+    const env = process.env;
     const result =
       input.action === 'reports'
-        ? await service.savedReports(input.workspaceId, input.after, subject, issuer)
+        ? await service.savedReports(
+            input.workspaceId,
+            input.after,
+            subject,
+            issuer,
+            env,
+            spend(input.workspaceId, input.workspaceId),
+          )
         : input.action === 'report'
-          ? await service.report(input.workspaceId, input.resourceId, subject, issuer)
+          ? await service.report(
+              input.workspaceId,
+              input.resourceId,
+              subject,
+              issuer,
+              env,
+              spend(input.workspaceId, input.resourceId),
+            )
           : input.action === 'cards'
-            ? await service.decisionCards(input.workspaceId, input.after, subject, issuer)
-            : await service.decisionCard(input.workspaceId, input.cardId, subject, issuer);
+            ? await service.decisionCards(
+                input.workspaceId,
+                input.after,
+                subject,
+                issuer,
+                env,
+                spend(input.workspaceId, input.workspaceId),
+              )
+            : await service.decisionCard(
+                input.workspaceId,
+                input.cardId,
+                subject,
+                issuer,
+                env,
+                spend(input.workspaceId, input.cardId),
+              );
     return Response.json(result, { headers: deliveryHeaders });
   } catch (error) {
     return failure(error);

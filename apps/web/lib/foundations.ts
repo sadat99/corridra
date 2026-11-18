@@ -1,5 +1,9 @@
 import { CustomerMemberNoticeService } from './member-notice';
-import { CustomerMemberAccessService, memberAccessAvailable } from './member-access';
+import {
+  CustomerMemberAccessService,
+  memberAccessAvailable,
+  type MemberAccessLabels,
+} from './member-access';
 import {
   CustomerProgrammeProjectionsService,
   customerProgrammeProjectionsEnabled,
@@ -1001,12 +1005,12 @@ function createServices() {
 }
 export const foundations = recoverableResource(createServices);
 
-// ADR-087 U5, for server pages: the S3 and S4 privacy labels name workspace owners and admins only when CORRIDRA_MEMBER_ACCESS
-// is on and the member access module is installed. Fails closed to today's labels.
-export function memberAccessForPage(): Promise<boolean> {
+// ADR-087 U5, for server pages: the S3 label names workspace owners and admins only when CORRIDRA_MEMBER_ACCESS is on and part 1
+// of the member access module is installed; the S4 label also needs part 2 (decision cards). Fails closed to today's labels.
+export function memberAccessForPage(): Promise<MemberAccessLabels> {
   return memberAccessAvailable(async () => {
     const services = foundations();
-    if (!services) return false;
+    if (!services) return { reports: false, cards: false };
     await services.ready;
     return services.customerMemberAccess.installedForLabels();
   });

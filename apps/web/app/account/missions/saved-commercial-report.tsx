@@ -45,6 +45,8 @@ type Scope = SavedMissionScope & {
   onReport?: (report: DeliveryReport | null, status: string) => void;
   /** Member access (`CORRIDRA_MEMBER_ACCESS`, read on the server) is on: the labels name the workspace's owners and admins. */
   memberAccess?: boolean;
+  /** The same for the decision card label (S4): on only when part 2 of the module (decision cards) is installed too. */
+  memberAccessCards?: boolean;
   /**
    * ADR-087 U5: a workspace owner or admin reads a member's saved report, read only, through the member access route.
    * There is no response form, no decision or confirmation panel and no label: only the report and its books.
@@ -77,7 +79,7 @@ function PrivateReport({
   section = 'all',
   renderTrip,
   onReport,
-  memberAccess = false,
+  memberAccessCards = false,
   member,
 }: Scope) {
   const responsePrefix = useId();
@@ -409,7 +411,7 @@ function PrivateReport({
                     issuer={issuer}
                     resourceId={resourceId}
                     cards={decisionCards}
-                    memberAccess={memberAccess}
+                    memberAccess={memberAccessCards}
                   />
                 )}
                 {showEvidence && showConfirmations && (

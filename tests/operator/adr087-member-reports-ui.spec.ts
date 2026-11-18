@@ -306,6 +306,50 @@ const lists = (body: Record<string, unknown>): Answer =>
         : { status: 500, body: {} };
 const membersPanel = (page: Page) => page.locator('.member-reports');
 
+test('a tab switch reads nothing again, and a page restored from history stays closed until asked', async ({
+  page,
+}) => {
+  const state = await rig(page, lists);
+  await page.goto(`${origin}/?mode=members`);
+  await expect(
+    page.getByRole('heading', { name: 'Cutting machine mission', level: 4 }),
+  ).toBeVisible();
+  expect(state.gets).toBe(1);
+  expect(state.posts).toHaveLength(1);
+  // Hidden, then visible again: every list read is recorded, so nothing is read again and the lists stay as they were.
+  for (const hidden of [true, false])
+    await page.evaluate((value) => {
+      Object.defineProperty(document, 'hidden', { configurable: true, get: () => value });
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        get: () => (value ? 'hidden' : 'visible'),
+      });
+      document.dispatchEvent(new Event('visibilitychange'));
+    }, hidden);
+  await expect(
+    page.getByRole('heading', { name: 'Cutting machine mission', level: 4 }),
+  ).toBeVisible();
+  expect(state.gets).toBe(1);
+  expect(state.posts).toHaveLength(1);
+  // Restored from the back-forward cache: the lists are closed and read again only when the person asks.
+  await page.evaluate(() => {
+    window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true }));
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+  });
+  await expect(page.getByText('These lists closed when you left the page.')).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Cutting machine mission', level: 4 }),
+  ).toHaveCount(0);
+  expect(state.gets).toBe(1);
+  expect(state.posts).toHaveLength(1);
+  await page.getByRole('button', { name: "Refresh members' reports" }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Cutting machine mission', level: 4 }),
+  ).toBeVisible();
+  expect(state.gets).toBe(2);
+  expect(state.posts).toHaveLength(2);
+});
+
 test('lists only the first open workspace, reads nothing else until asked, and says when the others open', async ({
   page,
 }) => {

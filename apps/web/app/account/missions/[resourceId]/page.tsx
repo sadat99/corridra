@@ -44,6 +44,7 @@ export default async function Page({ params }: { params: Promise<{ resourceId: s
     );
   if (!session.data?.user) redirect('/signin');
   if (session.data.user.emailVerified !== true) redirect('/verify-email');
+  const access = await memberAccessForPage();
   return (
     <CustomerShell tab="results" eyebrow="REPORTS" title="Your commercial mission">
       <SavedCommercialReport
@@ -55,7 +56,8 @@ export default async function Page({ params }: { params: Promise<{ resourceId: s
         books={await booksForPage()}
         decisionCards={customerDecisionCardsEnabled()}
         lenses={uxSwitchOn('CORRIDRA_UX_LENSES')}
-        memberAccess={await memberAccessForPage()}
+        memberAccess={access.memberAccess}
+        memberAccessCards={access.memberAccessCards}
       />
     </CustomerShell>
   );

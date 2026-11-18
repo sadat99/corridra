@@ -13,20 +13,25 @@ import { uxSwitchOn } from './ux-switches';
 export const memberAccessOn = (env: NodeJS.ProcessEnv = process.env) =>
   uxSwitchOn('CORRIDRA_MEMBER_ACCESS', env);
 
+export type MemberAccessLabels = { memberAccess: boolean; memberAccessCards: boolean };
+const labelsOff: MemberAccessLabels = { memberAccess: false, memberAccessCards: false };
 /**
- * Whether the privacy labels may name workspace owners and admins as readers: only when the switch is on and the member access
- * module is installed. Off, not installed or not checkable: false, so the labels stay exactly as they are without U5. The
- * installation is read only after the switch is on.
+ * Whether the privacy labels may name workspace owners and admins as readers. The saved report label (S3) needs the switch on
+ * and part 1 installed (0001, saved reports); the decision card label (S4) also needs part 2 (0002, decision cards), which waits
+ * for the decision card module. Off, not installed or not checkable: both false, so the labels stay exactly as they are
+ * without U5. The installation is read only after the switch is on.
  */
 export async function memberAccessAvailable(
-  readInstalled: () => Promise<boolean>,
+  readInstalled: () => Promise<{ reports: boolean; cards: boolean }>,
   env: NodeJS.ProcessEnv = process.env,
-): Promise<boolean> {
-  if (!memberAccessOn(env)) return false;
+): Promise<MemberAccessLabels> {
+  if (!memberAccessOn(env)) return labelsOff;
   try {
-    return (await readInstalled()) === true;
+    const installed = await readInstalled();
+    const reports = installed?.reports === true;
+    return { memberAccess: reports, memberAccessCards: reports && installed.cards === true };
   } catch {
-    return false;
+    return labelsOff;
   }
 }
 
@@ -75,6 +80,25 @@ export type MemberDecisionCard = {
   memberLabel: string | null;
 };
 
+/** The verified reader, as the session boundary passes it once the fresh provider session is checked. */
+export type MemberAccessIdentity = { issuer: string; subject: string };
+/** Spends the request budget for one read, after the session is verified and before any pool connection is taken. */
+export type MemberAccessSpend = (identity: MemberAccessIdentity) => Promise<void>;
+/**
+ * The two budget keys of one member access read. Both are namespaced to member access and to the verified reader, so no member
+ * access call can spend the member's own report budget (`delivery-capability:<resourceId>`, used by remove and respond) or
+ * another reader's: one per reader, and one per reader and item (the workspace for a list).
+ */
+export const memberAccessBudgetKeys = (
+  identity: MemberAccessIdentity,
+  workspaceId: string,
+  item: string,
+) =>
+  [
+    `member-access:${identity.issuer}:${identity.subject}`,
+    `member-access:${workspaceId}:${item}:${identity.issuer}:${identity.subject}`,
+  ] as const;
+
 const unavailable = () => new DomainError('Members’ reports are unavailable', 503);
 const notFound = () => new DomainError('Not found', 404);
 
@@ -101,11 +125,15 @@ export class CustomerMemberAccessService extends CustomerSessionBoundary {
     super(...args);
     this.runtimePool = args[0];
   }
-  /** Installation metadata only: whether the module's saved report list exists. Reads no customer data. */
-  async installedForLabels(): Promise<boolean> {
-    return (
-      (await this.runtimePool.query<{ present: boolean }>(installedSql)).rows[0]?.present === true
-    );
+  /** Installation metadata only: whether part 1 (saved reports) and part 2 (decision cards) exist. Reads no customer data. */
+  async installedForLabels(): Promise<{ reports: boolean; cards: boolean }> {
+    const row = (
+      await this.runtimePool.query<{ reports: boolean; cards: boolean }>(
+        `SELECT to_regprocedure('customer.workspace_saved_missions(uuid,uuid,integer)') IS NOT NULL AS reports,
+          to_regprocedure('customer.workspace_decision_cards(uuid,uuid,integer)') IS NOT NULL AS cards`,
+      )
+    ).rows[0];
+    return { reports: row?.reports === true, cards: row?.cards === true };
   }
   // Off: not found. In real data mode the report switch that guards the member's own saved reports guards these too.
   private guard(env: NodeJS.ProcessEnv) {
@@ -163,6 +191,7 @@ export class CustomerMemberAccessService extends CustomerSessionBoundary {
     subject?: string,
     issuer?: string,
     env: NodeJS.ProcessEnv = process.env,
+    spend?: MemberAccessSpend,
   ) {
     this.guard(env);
     try {
@@ -176,6 +205,7 @@ export class CustomerMemberAccessService extends CustomerSessionBoundary {
           ).rows[0].result as { missions: MemberSavedReport[]; nextAfter: string | null },
         subject,
         issuer,
+        spend,
       );
     } catch (error) {
       refusal(error);
@@ -188,6 +218,7 @@ export class CustomerMemberAccessService extends CustomerSessionBoundary {
     subject?: string,
     issuer?: string,
     env: NodeJS.ProcessEnv = process.env,
+    spend?: MemberAccessSpend,
   ) {
     this.guard(env);
     try {
@@ -209,6 +240,7 @@ export class CustomerMemberAccessService extends CustomerSessionBoundary {
         },
         subject,
         issuer,
+        spend,
       );
     } catch (error) {
       refusal(error);
@@ -221,6 +253,7 @@ export class CustomerMemberAccessService extends CustomerSessionBoundary {
     subject?: string,
     issuer?: string,
     env: NodeJS.ProcessEnv = process.env,
+    spend?: MemberAccessSpend,
   ) {
     this.guard(env);
     try {
@@ -236,6 +269,7 @@ export class CustomerMemberAccessService extends CustomerSessionBoundary {
         },
         subject,
         issuer,
+        spend,
       );
     } catch (error) {
       refusal(error);
@@ -248,6 +282,7 @@ export class CustomerMemberAccessService extends CustomerSessionBoundary {
     subject?: string,
     issuer?: string,
     env: NodeJS.ProcessEnv = process.env,
+    spend?: MemberAccessSpend,
   ) {
     this.guard(env);
     try {
@@ -268,6 +303,7 @@ export class CustomerMemberAccessService extends CustomerSessionBoundary {
         },
         subject,
         issuer,
+        spend,
       );
     } catch (error) {
       refusal(error);
@@ -281,6 +317,7 @@ export class CustomerMemberAccessService extends CustomerSessionBoundary {
     subject?: string,
     issuer?: string,
     env: NodeJS.ProcessEnv = process.env,
+    spend?: MemberAccessSpend,
   ): Promise<{ record: BookRecord; file: File }> {
     this.guard(env);
     const v = memberBookInput.parse(input);
@@ -302,6 +339,7 @@ export class CustomerMemberAccessService extends CustomerSessionBoundary {
         },
         subject,
         issuer,
+        spend,
       );
     } catch (error) {
       refusal(error);

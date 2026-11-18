@@ -33,7 +33,7 @@ $guard$;
 
 CREATE FUNCTION customer.workspace_decision_cards(workspace uuid,after_id uuid DEFAULT NULL,page_size integer DEFAULT 25) RETURNS jsonb
  LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog AS $$
-DECLARE reader uuid:=customer_private.member_access_reader(workspace);c customer_private.decision_card;resolved jsonb;live text;
+DECLARE reader uuid:=customer_private.member_access_reader(workspace);c customer_private.decision_card;resolved jsonb;live text;ends timestamptz;
  items jsonb:='[]'::jsonb;ids jsonb:='[]'::jsonb;last_id uuid;more boolean:=false;members uuid[]:='{}';
 BEGIN
  IF page_size IS NULL OR page_size NOT BETWEEN 1 AND 25 THEN RAISE EXCEPTION 'Invalid page size' USING ERRCODE='23514'; END IF;
@@ -49,6 +49,11 @@ BEGIN
   ORDER BY d.id LIMIT page_size+1 LOOP
   IF jsonb_array_length(ids)=page_size THEN more:=true; EXIT; END IF;
   resolved:=NULL;
+  -- The moment the card stops being readable: its own expiry, or the end of the report link it was made from if that comes
+  -- first, so a card whose link ended is listed with the date it ended, not a later card expiry.
+  SELECT least(c.expires_at,l.expires_at) INTO ends FROM customer_private.saved_mission s
+   JOIN app.delivery_link l ON l.tenant_id=s.link_tenant_id AND l.id=s.link_id WHERE s.id=c.saved_mission_id;
+  ends:=coalesce(ends,c.expires_at);
   IF c.expires_at<=clock_timestamp() THEN live:='EXPIRED';
   ELSE
    resolved:=customer_private.decision_card_resolve(c.saved_mission_id,c.decision_id,c.principal_id);
@@ -56,7 +61,7 @@ BEGIN
     OR (resolved->>'expiresAt')::timestamptz<=clock_timestamp() THEN 'UNAVAILABLE' ELSE 'ACTIVE' END;
   END IF;
   items:=items||jsonb_build_array(jsonb_build_object('id',c.id,'resourceId',c.saved_mission_id,'decisionId',c.decision_id,'state',live,
-   'createdAt',customer_private.decision_card_iso(c.created_at),'expiresAt',customer_private.decision_card_iso(c.expires_at),
+   'createdAt',customer_private.decision_card_iso(c.created_at),'expiresAt',customer_private.decision_card_iso(ends),
    'company',CASE WHEN live='ACTIVE' THEN resolved->'fields'->>'company' END,
    'decision',CASE WHEN live='ACTIVE' THEN resolved->'fields'->>'decision' END,
    'memberLabel',customer_private.member_access_label(workspace,c.principal_id)));
