@@ -66,7 +66,10 @@ function refusal(error: unknown): never {
     throw new DomainError('Members’ items are not open in this workspace yet', 403, 'NOT_OPEN');
   if (['42P01', '3F000', '42883'].includes(e.code ?? '')) throw unavailable();
   if (e.code === '54000')
-    throw new DomainError('Too many downloads for this mission just now. Try again in a while.', 429);
+    throw new DomainError(
+      'Too many downloads for this mission just now. Try again in a while.',
+      429,
+    );
   // The session boundary answers 409 when the browser's account differs from the signed-in one: a loss of access.
   if (error instanceof DomainError && error.status === 409)
     throw new DomainError('Access denied or link unavailable', 403);
@@ -91,23 +94,26 @@ export class CustomerMemberAccessService extends CustomerSessionBoundary {
         async (db) => {
           if (!(await this.installed(db))) throw unavailable();
           const cards = await this.installed(db, cardsInstalledSql);
-          const rows = await db.query<{ id: string; name: string; role: 'owner' | 'admin'; opens_at: Date | null }>(
+          const rows = await db.query<{
+            id: string;
+            name: string;
+            role: 'owner' | 'admin';
+            opens_at: Date | null;
+          }>(
             `SELECT w.id,w.name,w.role,s.opens_at FROM customer.collaborative_workspaces() w
              LEFT JOIN LATERAL customer.member_notice_state(w.id) s ON true
              WHERE w.role IN ('owner','admin') ORDER BY w.id`,
           );
           const now = Date.now();
           return {
-            workspaces: rows.rows.map(
-              (row): MemberAccessWorkspace => ({
-                workspaceId: row.id,
-                name: row.name,
-                role: row.role,
-                opensAt: row.opens_at ? row.opens_at.toISOString() : null,
-                open: !!row.opens_at && row.opens_at.getTime() <= now,
-                cards,
-              }),
-            ),
+            workspaces: rows.rows.map((row): MemberAccessWorkspace => ({
+              workspaceId: row.id,
+              name: row.name,
+              role: row.role,
+              opensAt: row.opens_at ? row.opens_at.toISOString() : null,
+              open: !!row.opens_at && row.opens_at.getTime() <= now,
+              cards,
+            })),
           };
         },
         subject,
@@ -130,10 +136,10 @@ export class CustomerMemberAccessService extends CustomerSessionBoundary {
       return await this.transaction(
         async (db) =>
           (
-            await db.query('SELECT customer.workspace_saved_missions($1::uuid,$2::uuid,25) AS result', [
-              workspaceId,
-              after,
-            ])
+            await db.query(
+              'SELECT customer.workspace_saved_missions($1::uuid,$2::uuid,25) AS result',
+              [workspaceId, after],
+            )
           ).rows[0].result as { missions: MemberSavedReport[]; nextAfter: string | null },
         subject,
         issuer,
@@ -189,10 +195,10 @@ export class CustomerMemberAccessService extends CustomerSessionBoundary {
         async (db) => {
           if (!(await this.installed(db, cardsInstalledSql))) throw unavailable();
           return (
-            await db.query('SELECT customer.workspace_decision_cards($1::uuid,$2::uuid,25) AS result', [
-              workspaceId,
-              after,
-            ])
+            await db.query(
+              'SELECT customer.workspace_decision_cards($1::uuid,$2::uuid,25) AS result',
+              [workspaceId, after],
+            )
           ).rows[0].result as { cards: MemberDecisionCard[]; nextAfter: string | null };
         },
         subject,
@@ -220,7 +226,12 @@ export class CustomerMemberAccessService extends CustomerSessionBoundary {
               workspaceId,
               cardId,
             ])
-          ).rows[0].result as { cardId: string; fields: Record<string, unknown>; expiresAt: string; memberLabel: string | null };
+          ).rows[0].result as {
+            cardId: string;
+            fields: Record<string, unknown>;
+            expiresAt: string;
+            memberLabel: string | null;
+          };
         },
         subject,
         issuer,

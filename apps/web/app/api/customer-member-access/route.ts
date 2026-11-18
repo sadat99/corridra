@@ -27,7 +27,8 @@ const bookAction = memberBookInput.extend({ action: z.literal('book') }).strict(
 const listInput = z.object({}).strict();
 async function services() {
   if (!memberAccessOn()) throw new DomainError('Not found', 404);
-  if (!customerSavedMissionsEnabled()) throw new DomainError('Members’ reports are unavailable', 503);
+  if (!customerSavedMissionsEnabled())
+    throw new DomainError('Members’ reports are unavailable', 503);
   const s = foundations();
   if (!s) throw new DomainError('Members’ reports are unavailable', 503);
   await s.ready;
@@ -35,11 +36,20 @@ async function services() {
 }
 function failure(error: unknown) {
   if (error instanceof DomainError && error.code === 'NOT_OPEN')
-    return Response.json({ error: error.message, reason: 'NOT_OPEN' }, { status: 403, headers: deliveryHeaders });
+    return Response.json(
+      { error: error.message, reason: 'NOT_OPEN' },
+      { status: 403, headers: deliveryHeaders },
+    );
   if (error instanceof DomainError && error.status === 422 && error.code === 'EMPTY')
-    return Response.json({ error: error.message, reason: 'EMPTY' }, { status: 422, headers: deliveryHeaders });
+    return Response.json(
+      { error: error.message, reason: 'EMPTY' },
+      { status: 422, headers: deliveryHeaders },
+    );
   if (error instanceof DomainError && error.status === 422 && error.code === 'UNSUPPORTED_TEXT')
-    return Response.json({ error: error.message, reason: 'UNSUPPORTED_TEXT' }, { status: 422, headers: deliveryHeaders });
+    return Response.json(
+      { error: error.message, reason: 'UNSUPPORTED_TEXT' },
+      { status: 422, headers: deliveryHeaders },
+    );
   return deliveryError(
     ['42P01', '3F000', '42883'].includes((error as { code?: string }).code ?? '')
       ? new DomainError('Members’ reports are unavailable', 503)
@@ -55,7 +65,9 @@ export async function GET(request: Request) {
   try {
     const s = await services();
     listInput.parse(Object.fromEntries(new URL(request.url).searchParams));
-    return Response.json(await s.customerMemberAccess.workspaces(...who(request)), { headers: deliveryHeaders });
+    return Response.json(await s.customerMemberAccess.workspaces(...who(request)), {
+      headers: deliveryHeaders,
+    });
   } catch (error) {
     return failure(error);
   }
@@ -67,16 +79,31 @@ export async function POST(request: Request) {
       throw new DomainError('Request origin is not allowed', 403);
     if (!request.headers.get('content-type')?.startsWith('application/json'))
       throw new DomainError('JSON required', 415);
-    const body = JSON.parse((await boundedBody(request, 2048)).toString('utf8')) as { action?: unknown };
+    const body = JSON.parse((await boundedBody(request, 2048)).toString('utf8')) as {
+      action?: unknown;
+    };
     const [subject, issuer] = who(request);
     if (body?.action === 'book') {
-      if (!customerBooksEnabled()) throw new DomainError('Trip and Supplier books are unavailable', 503);
-      const { action: _book, ...input } = bookAction.parse(body);
+      if (!customerBooksEnabled())
+        throw new DomainError('Trip and Supplier books are unavailable', 503);
+      const parsed = bookAction.parse(body);
+      const input = {
+        workspaceId: parsed.workspaceId,
+        resourceId: parsed.resourceId,
+        commandId: parsed.commandId,
+        kind: parsed.kind,
+        acknowledged: parsed.acknowledged,
+      };
       const client = process.env.VERCEL
         ? (request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown')
         : 'local';
       await s.delivery.budget(client, input.resourceId);
-      const { record: book, file: pdf } = await s.customerMemberAccess.book(input, bookPdf, subject, issuer);
+      const { record: book, file: pdf } = await s.customerMemberAccess.book(
+        input,
+        bookPdf,
+        subject,
+        issuer,
+      );
       const name = book.kind === 'TRIP' ? 'trip' : 'supplier';
       return new Response(new Uint8Array(pdf), {
         headers: {

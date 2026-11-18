@@ -645,7 +645,7 @@ export const switchRegistry: SwitchEntry[] = [
   },
   {
     name: 'CORRIDRA_MEMBER_ACCESS',
-    label: 'Owners and admins read members\' reports',
+    label: "Owners and admins read members' reports",
     line: 'Lets the owners and admins of a workspace read, without changing, the saved reports and decision cards of its current members and download the Trip Book and Supplier Book of those reports (ADR-087 U5). Each read and download is recorded with the reader. A workspace opens only 24 hours after its member notice was delivered; with no notice delivered it never opens. Members keep the only right to remove a report or withdraw a card, and a member who leaves or is removed is read by nobody. Off by default. Shows nothing until the member access database module is installed. Separate from the workspace reading notice switch, which must be on, and the notice delivered, before this is turned on. Turning it off hides the view and closes every route at once; nothing is deleted. Turn it off by removing the setting in Vercel and redeploying.',
     group: 'Accounts and requests',
     kind: 'flag',

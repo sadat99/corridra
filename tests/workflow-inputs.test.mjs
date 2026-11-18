@@ -428,7 +428,9 @@ test('the member notice choices install or deliver only that module and add no i
 });
 
 test('ADR-087 U5: member_access installs only the member access module, through no new input', () => {
-  const workflow = parseDocument(readFileSync('.github/workflows/install-customer-modules.yml', 'utf8')).toJS();
+  const workflow = parseDocument(
+    readFileSync('.github/workflows/install-customer-modules.yml', 'utf8'),
+  ).toJS();
   const declared = workflow.on.workflow_dispatch.inputs;
   const env = workflow.jobs.install.steps.find(
     (step) => step.name === 'Report or install the customer modules',
@@ -456,8 +458,14 @@ test('ADR-087 U5: member_access installs only the member access module, through 
     /member_access \(ADR-087 U5:[^)]*needs member_notice installed first[^)]*only while CORRIDRA_MEMBER_ACCESS is on; only when the owner approves\)/,
   );
   const script = readFileSync('scripts/install-customer-modules.ts', 'utf8');
-  assert.match(script, /MEMBER_ACCESS_ACTION: z\.enum\(\['unchanged', 'install'\]\)\.default\('unchanged'\)/);
-  assert.match(script, /if \(v\.MEMBER_ACCESS_ACTION !== 'unchanged' && !apply\)\n\s+throw new Error\('Member access installation requires INSTALL_APPLY=yes'\);/);
+  assert.match(
+    script,
+    /MEMBER_ACCESS_ACTION: z\.enum\(\['unchanged', 'install'\]\)\.default\('unchanged'\)/,
+  );
+  assert.match(
+    script,
+    /if \(v\.MEMBER_ACCESS_ACTION !== 'unchanged' && !apply\)\n\s+throw new Error\('Member access installation requires INSTALL_APPLY=yes'\);/,
+  );
 });
 
 test('set_supplier takes the supplier details only from the protected environment secret, never an input', () => {

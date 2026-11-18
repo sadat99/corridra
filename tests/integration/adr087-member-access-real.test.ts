@@ -15,7 +15,8 @@ import { CustomerDeliveryService } from '../../packages/delivery/src/customer-de
 // app.domain_event and an app.audit_event when a workspace owner reads a member's saved report in a workspace that is not a
 // sample, with a real session, real staff delivery and the restricted logins. If it could not, U5 would stop and report to the
 // owner instead of adding a mechanism. Fails on main: the module and its functions do not exist there.
-const issuer = 'https://ep-real-member-access.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth';
+const issuer =
+  'https://ep-real-member-access.neonauth.c-5.eu-central-1.aws.neon.tech/corridra/auth';
 const options = {
   enabled: true,
   synthetic: false,
@@ -36,7 +37,8 @@ let W = '';
 let resourceId = '';
 const as = <T>(who: string, work: (db: DatabaseClient) => Promise<T>) =>
   new Probe(s.f.runtime, s.f.auth, options, session(who)).run(work);
-const workspaces = (who: string) => new CustomerWorkspaceService(s.f.runtime, s.f.auth, options, session(who));
+const workspaces = (who: string) =>
+  new CustomerWorkspaceService(s.f.runtime, s.f.auth, options, session(who));
 
 beforeAll(async () => {
   s = await realStaffFixture(issuer, 'real-member-access-secret');
@@ -44,16 +46,28 @@ beforeAll(async () => {
   await migrateCustomerBooks(s.f.owner);
   await migrateMemberNotice(s.f.owner);
   await migrateMemberAccess(s.f.owner);
-  W = (await workspaces('access-owner').provision({ commandId: randomUUID(), name: 'Dhaka sourcing team' })).id;
+  W = (
+    await workspaces('access-owner').provision({
+      commandId: randomUUID(),
+      name: 'Dhaka sourcing team',
+    })
+  ).id;
   const invitation = await workspaces('access-owner').access({
     action: 'invite',
     commandId: randomUUID(),
     workspaceId: W,
     label: 'Invited buyer',
   });
-  await workspaces('access-bob').access({ action: 'accept', commandId: randomUUID(), token: invitation.token! });
+  await workspaces('access-bob').access({
+    action: 'accept',
+    commandId: randomUUID(),
+    token: invitation.token!,
+  });
   const bob = (
-    await s.f.owner.query('SELECT principal_id FROM customer_private.workspace_member WHERE tenant_id=$1', [W])
+    await s.f.owner.query(
+      'SELECT principal_id FROM customer_private.workspace_member WHERE tenant_id=$1',
+      [W],
+    )
   ).rows[0].principal_id as string;
   // Staff deliver an approved report for bob's request in the real workspace, as in production.
   const missionId = await s.mission('Bob sourcing company');
@@ -85,7 +99,17 @@ beforeAll(async () => {
   await s.f.owner.query(
     `INSERT INTO customer_private.owned_request(id,principal_id,command_id,workspace_id,mission_tenant_id,mission_id,request_key,brief_digest,receipt_hash)
      VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-    [requestId, bob, randomUUID(), W, s.intakeTenantId, missionId, randomUUID(), hex(randomUUID()), hex(randomUUID())],
+    [
+      requestId,
+      bob,
+      randomUUID(),
+      W,
+      s.intakeTenantId,
+      missionId,
+      randomUUID(),
+      hex(randomUUID()),
+      hex(randomUUID()),
+    ],
   );
   await new CustomerDeliveryService(s.f.runtime).assign(s.ctx, {
     commandId: randomUUID(),
@@ -95,7 +119,12 @@ beforeAll(async () => {
     approved: true,
   });
   resourceId = (
-    await new CustomerSavedMissionService(s.f.runtime, s.f.auth, options, session('access-bob')).command({
+    await new CustomerSavedMissionService(
+      s.f.runtime,
+      s.f.auth,
+      options,
+      session('access-bob'),
+    ).command({
       action: 'save',
       commandId: randomUUID(),
       token: link.token,
@@ -113,16 +142,26 @@ afterAll(async () => {
 });
 
 test('9. the real-use writer records a domain event and an audit event for an owner read in a real workspace', async () => {
-  expect((await s.f.owner.query('SELECT synthetic FROM app.tenant WHERE id=$1', [W])).rows[0].synthetic).toBe(false);
+  expect(
+    (await s.f.owner.query('SELECT synthetic FROM app.tenant WHERE id=$1', [W])).rows[0].synthetic,
+  ).toBe(false);
   const owner = (
-    await s.f.owner.query("SELECT principal_id FROM customer.membership WHERE tenant_id=$1 AND role='owner'", [W])
+    await s.f.owner.query(
+      "SELECT principal_id FROM customer.membership WHERE tenant_id=$1 AND role='owner'",
+      [W],
+    )
   ).rows[0].principal_id as string;
-  const listed = await as('access-owner', async (db) =>
-    (await db.query('SELECT customer.workspace_saved_missions($1) AS r', [W])).rows[0].r,
+  const listed = await as(
+    'access-owner',
+    async (db) =>
+      (await db.query('SELECT customer.workspace_saved_missions($1) AS r', [W])).rows[0].r,
   );
   expect(listed.missions.map((m: { id: string }) => m.id)).toEqual([resourceId]);
-  const read = await as('access-owner', async (db) =>
-    (await db.query('SELECT customer.workspace_saved_mission($1,$2) AS r', [W, resourceId])).rows[0].r,
+  const read = await as(
+    'access-owner',
+    async (db) =>
+      (await db.query('SELECT customer.workspace_saved_mission($1,$2) AS r', [W, resourceId]))
+        .rows[0].r,
   );
   expect(read.report.missions[0].title).toBe('Approved machinery sourcing scope');
   const rows = (
@@ -136,7 +175,11 @@ test('9. the real-use writer records a domain event and an audit event for an ow
   expect(rows).toHaveLength(2);
   expect(rows.map((r) => r.payload.view)).toEqual(['saved_list', 'saved_report']);
   for (const row of rows) {
-    expect(row.payload).toMatchObject({ synthetic: false, initiator_kind: 'customer', initiator_id: owner });
+    expect(row.payload).toMatchObject({
+      synthetic: false,
+      initiator_kind: 'customer',
+      initiator_id: owner,
+    });
     expect(row.action).toBe('customer.member_item.read');
     expect(row.audit_tenant).toBe(W);
     expect(row.audit_actor).toBe(row.actor_id);
