@@ -96,6 +96,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'quotation_link_check',
     'member_notice',
     'member_notice_deliver',
+    'member_access',
     'contact_changes_install',
     'contact_changes_enable',
     'contact_changes_pause',
@@ -145,6 +146,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
     ['quotation_link_check', u, u, u, u, u, u, u, u],
     ['member_notice', u, u, u, u, u, u, u, u],
     ['member_notice_deliver', u, u, u, u, u, u, u, u],
+    ['member_access', u, u, u, u, u, u, u, u],
     ['contact_changes_install', u, u, u, u, u, u, u, u],
     ['contact_changes_enable', u, u, u, u, u, u, u, u],
     ['contact_changes_pause', u, u, u, u, u, u, u, u],
@@ -210,6 +212,7 @@ test('each field-module choice maps to install only and reaches the exact-head c
       ['quotation_link_check', 'QUOTATION_LINK_CHECK_ACTION'],
       ['member_notice', 'MEMBER_NOTICE_ACTION'],
       ['member_notice_deliver', 'MEMBER_NOTICE_ACTION'],
+      ['member_access', 'MEMBER_ACCESS_ACTION'],
     ])
       if (choice === own)
         for (const [name, value] of Object.entries(env))
@@ -422,6 +425,39 @@ test('the member notice choices install or deliver only that module and add no i
     declared.field_modules_action.description,
     /member_notice_deliver[^)]*turn CORRIDRA_MEMBER_NOTICE on in the live app first[^)]*only after U5 is merged and its install approved by the owner/,
   );
+});
+
+test('ADR-087 U5: member_access installs only the member access module, through no new input', () => {
+  const workflow = parseDocument(readFileSync('.github/workflows/install-customer-modules.yml', 'utf8')).toJS();
+  const declared = workflow.on.workflow_dispatch.inputs;
+  const env = workflow.jobs.install.steps.find(
+    (step) => step.name === 'Report or install the customer modules',
+  ).env;
+  const evaluate = (expression, inputs) =>
+    runInNewContext(expression.replace(/^\$\{\{\s*|\s*\}\}$/g, ''), { inputs });
+  const defaults = Object.fromEntries(
+    Object.entries(declared).map(([name, input]) => [name, input.default]),
+  );
+  for (const choice of declared.field_modules_action.options) {
+    const inputs = { ...defaults, field_modules_action: choice };
+    assert.equal(
+      evaluate(env.MEMBER_ACCESS_ACTION, inputs),
+      choice === 'member_access' ? 'install' : 'unchanged',
+      choice,
+    );
+  }
+  assert.equal(Object.keys(declared).length, 24);
+  assert.deepEqual(
+    Object.keys(env).filter((name) => name.startsWith('MEMBER_ACCESS_')),
+    ['MEMBER_ACCESS_ACTION'],
+  );
+  assert.match(
+    declared.field_modules_action.description,
+    /member_access \(ADR-087 U5:[^)]*needs member_notice installed first[^)]*only while CORRIDRA_MEMBER_ACCESS is on; only when the owner approves\)/,
+  );
+  const script = readFileSync('scripts/install-customer-modules.ts', 'utf8');
+  assert.match(script, /MEMBER_ACCESS_ACTION: z\.enum\(\['unchanged', 'install'\]\)\.default\('unchanged'\)/);
+  assert.match(script, /if \(v\.MEMBER_ACCESS_ACTION !== 'unchanged' && !apply\)\n\s+throw new Error\('Member access installation requires INSTALL_APPLY=yes'\);/);
 });
 
 test('set_supplier takes the supplier details only from the protected environment secret, never an input', () => {
