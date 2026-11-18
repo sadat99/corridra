@@ -1459,8 +1459,14 @@
   gap: var(--space-6);
   padding: var(--space-12) min(var(--space-6), 5vw) var(--space-12);
 }
-/* The copper ring of the board is painted as a background, so it never widens the hero or is counted as overflow. */
-.ux-guide-home.tr-home .tr-hero {
+/* The copper ring of the board is painted on a layer that covers the hero exactly, so it never widens the hero, is
+   never counted as overflow, and leaves the hero's own background a plain navy for the contrast checks. */
+.ux-guide-home.tr-home .tr-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
   background-image: radial-gradient(
     circle min(30vw, 23.75rem) at calc(100% + min(6vw, 4rem)) calc(-1 * min(6vw, 4rem)),
     transparent calc(100% - 2px),
