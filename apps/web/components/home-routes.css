@@ -1970,7 +1970,8 @@
 }
 
 /* LP3 review (Guardian 29): the locked UI/UX.v3 states, sizes and shapes on the home. */
-/* Chosen states use the selected token (cobalt), never a navy fill (the home and the sections /how-it-works borrows). */
+/* Chosen states (not actions) take the tinted selected surface with a selected edge (UI/UX.v4: selected is a tinted
+   fill; cobalt fill is for real actions only). The home and the sections /how-it-works borrows. */
 .tr-home
   :is(
     .tr-bar-buttons button[aria-pressed='true'],
@@ -1979,26 +1980,26 @@
     .tr-stops button[aria-pressed='true']
   ) {
   border-color: var(--selected);
-  background: var(--selected);
-  color: var(--on-action);
+  background: var(--selected-surface);
+  color: var(--text-1);
 }
 .tr-home .tr-stops button[aria-pressed='true'] .tr-time {
-  color: var(--on-action);
+  color: var(--text-2);
 }
 /* Hierarchy (review round 2, D14; Guardian 29): section titles stay at the locked section-title size (24, 22 on a
    phone, UI/UX.v3), sub-heads step down to the card-title size (18), and the key sentence under a title is 18. The
    hero headline stays display. */
-.ux-guide-home.tr-home .tr-section h2 {
+.tr-home .tr-section h2 {
   font-size: var(--text-h2);
   font-weight: 500;
   line-height: 1.2;
 }
-.ux-guide-home.tr-home .tr-h3 {
+.tr-home .tr-h3 {
   font-size: var(--text-lg);
   font-weight: 500;
   line-height: 1.3;
 }
-.ux-guide-home.tr-home .tr-section .tr-sub {
+.tr-home .tr-section .tr-sub {
   font-size: var(--text-lg);
   line-height: 1.5;
 }

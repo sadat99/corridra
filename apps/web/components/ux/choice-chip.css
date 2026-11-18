@@ -1,4 +1,4 @@
-/* Choice chips (board 3c). Rounding B, 44 px targets; the chosen chip uses the selected token. Tokens only. */
+/* Choice chips (board 3c). Rounding B, 44 px targets; the chosen chip takes the tinted selected surface and a selected edge (UI/UX.v4). Tokens only. */
 .ux-chip-row {
   display: flex;
   flex-wrap: wrap;
@@ -28,11 +28,9 @@
 }
 .ux-chip input:checked + label {
   border-color: var(--selected);
-  background: var(--selected);
-  color: var(--on-action);
-}
-.ux-chip input:checked + label .ux-flag {
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--on-brand) 50%, transparent);
+  background: var(--selected-surface);
+  color: var(--text-1);
+  box-shadow: inset 0 0 0 1px var(--selected);
 }
 .ux-chip input:focus-visible + label {
   outline: 3px solid var(--focus);

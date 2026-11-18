@@ -440,12 +440,29 @@ test('chosen states use the selected token; titles, sub-heads and key sentences 
     probe.remove();
     return colour;
   });
-  const pressed = page.locator('.tr-bar-buttons button[aria-pressed="true"]');
-  expect(await pressed.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(selected);
-  const chip = page.getByRole('group', { name: 'Your market' }).locator('input:checked + label');
-  expect(await chip.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(selected);
-  const tab = page.getByRole('tab', { selected: true });
-  expect(await tab.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(selected);
+  // Chosen states are a tinted fill with a selected edge, never a cobalt fill (UI/UX.v4; Guardian 29 re-check, F2).
+  const surface = await page.evaluate(() => {
+    const probe = document.createElement('span');
+    probe.style.color = 'var(--selected-surface)';
+    document.body.append(probe);
+    const colour = getComputedStyle(probe).color;
+    probe.remove();
+    return colour;
+  });
+  const chosen = [
+    page.locator('.tr-bar-buttons button[aria-pressed="true"]'),
+    page.getByRole('group', { name: 'Your market' }).locator('input:checked + label'),
+    page.getByRole('tab', { selected: true }),
+  ];
+  for (const control of chosen) {
+    const look = await control.evaluate((el) => {
+      const style = getComputedStyle(el);
+      return { fill: style.backgroundColor, edge: style.borderTopColor };
+    });
+    expect(look.fill).toBe(surface);
+    expect(look.fill).not.toBe(selected);
+    expect(look.edge).toBe(selected);
+  }
   // What a person gets is a selected surface with a selected edge, never a cobalt fill (review round 2, D9).
   const get = page.locator('.tr-people .is-get');
   expect(await get.evaluate((el) => getComputedStyle(el).backgroundColor)).not.toBe(selected);
@@ -902,4 +919,20 @@ test('"What this route tests" lines start with a small action-coloured dot (D15)
   });
   expect(marker.colour).toBe(action);
   expect(marker.width).toBeLessThanOrEqual(8);
+});
+
+test('the sections /how-it-works borrows keep the same sizes: titles 24, sub-heads 18 at 1440 (F1)', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/how-it-works');
+  await page.evaluate(() => document.querySelectorAll('details').forEach((d) => (d.open = true)));
+  const px = (selector: string) =>
+    page
+      .locator(selector)
+      .first()
+      .evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  expect(await px('.tr-home .tr-section h2')).toBe(24);
+  expect(await px('.tr-home .tr-h3')).toBe(18);
+  expect(await px('.tr-home .tr-section .tr-sub')).toBe(18);
 });
