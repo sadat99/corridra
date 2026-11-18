@@ -94,6 +94,8 @@ test('each field-module choice maps to install only and reaches the exact-head c
     'viewer_reply_metadata',
     'viewer_export_access',
     'quotation_link_check',
+    'member_notice',
+    'member_notice_deliver',
     'contact_changes_install',
     'contact_changes_enable',
     'contact_changes_pause',
@@ -141,6 +143,8 @@ test('each field-module choice maps to install only and reaches the exact-head c
     ['viewer_reply_metadata', u, u, u, u, u, u, u, u],
     ['viewer_export_access', u, u, u, u, u, u, u, u],
     ['quotation_link_check', u, u, u, u, u, u, u, u],
+    ['member_notice', u, u, u, u, u, u, u, u],
+    ['member_notice_deliver', u, u, u, u, u, u, u, u],
     ['contact_changes_install', u, u, u, u, u, u, u, u],
     ['contact_changes_enable', u, u, u, u, u, u, u, u],
     ['contact_changes_pause', u, u, u, u, u, u, u, u],
@@ -204,6 +208,8 @@ test('each field-module choice maps to install only and reaches the exact-head c
       ['viewer_reply_metadata', 'VIEWER_REPLY_METADATA_ACTION'],
       ['viewer_export_access', 'VIEWER_EXPORT_ACCESS_ACTION'],
       ['quotation_link_check', 'QUOTATION_LINK_CHECK_ACTION'],
+      ['member_notice', 'MEMBER_NOTICE_ACTION'],
+      ['member_notice_deliver', 'MEMBER_NOTICE_ACTION'],
     ])
       if (choice === own)
         for (const [name, value] of Object.entries(env))
@@ -378,6 +384,44 @@ test('the data cleanup choice only lists, moves no other module and carries no r
     1,
   );
   assert.equal(Object.keys(declared).length, 24);
+});
+
+test('the member notice choices install or deliver only that module and add no input', () => {
+  const workflow = parseDocument(
+    readFileSync('.github/workflows/install-customer-modules.yml', 'utf8'),
+  ).toJS();
+  const declared = workflow.on.workflow_dispatch.inputs;
+  const env = workflow.jobs.install.steps.find(
+    (step) => step.name === 'Report or install the customer modules',
+  ).env;
+  const evaluate = (expression, inputs) =>
+    runInNewContext(expression.replace(/^\$\{\{\s*|\s*\}\}$/g, ''), { inputs });
+  const defaults = Object.fromEntries(
+    Object.entries(declared).map(([name, input]) => [name, input.default]),
+  );
+  for (const choice of declared.field_modules_action.options) {
+    const inputs = { ...defaults, field_modules_action: choice };
+    const expected =
+      { member_notice: 'install', member_notice_deliver: 'deliver' }[choice] ?? 'unchanged';
+    assert.equal(evaluate(env.MEMBER_NOTICE_ACTION, inputs), expected, choice);
+  }
+  // Guardian G27, 17 Nov 2026: no 25th input. Delivery takes no list; it covers every real workspace not yet delivered.
+  assert.equal(Object.keys(declared).length, 24);
+  assert.ok(Object.keys(declared).every((name) => !/notice/.test(name)));
+  // The live app origin (a repository variable, not an input) reaches the job only for deliver.
+  assert.deepEqual(
+    Object.keys(env).filter((name) => name.startsWith('MEMBER_NOTICE_')),
+    ['MEMBER_NOTICE_ACTION', 'MEMBER_NOTICE_APP_ORIGIN'],
+  );
+  assert.equal(
+    env.MEMBER_NOTICE_APP_ORIGIN,
+    "${{ inputs.field_modules_action == 'member_notice_deliver' && vars.APP_ORIGIN || '' }}",
+  );
+  // The deliver choice warns that it waits for U5 and the owner's install approval.
+  assert.match(
+    declared.field_modules_action.description,
+    /member_notice_deliver[^)]*turn CORRIDRA_MEMBER_NOTICE on in the live app first[^)]*only after U5 is merged and its install approved by the owner/,
+  );
 });
 
 test('set_supplier takes the supplier details only from the protected environment secret, never an input', () => {

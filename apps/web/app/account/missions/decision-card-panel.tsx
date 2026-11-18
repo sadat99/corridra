@@ -21,7 +21,7 @@ import {
 import { decisionLabel, provenanceLabel } from '../../../lib/decision-card-page';
 import { contentLang } from '../../../lib/work-items/view';
 import { formatDate, formatDateTime } from '../../../lib/ux/format';
-import { savedMissionHeaders } from '../saved-missions';
+import { MemberNotices, savedMissionHeaders } from '../saved-missions';
 import './decision-card-panel.css';
 
 type Decision = {
@@ -326,6 +326,7 @@ export function DecisionCardPanel({
   const asked = panel.cards.find((card) => card.id === asking);
   return (
     <>
+      <MemberNotices subject={subject} issuer={issuer} savedId={resourceId} />
       <DecisionCardPanelView
         panel={panel}
         decisions={decisions}

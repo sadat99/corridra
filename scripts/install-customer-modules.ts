@@ -60,6 +60,12 @@ import {
 } from '../packages/db/src/viewer-reply-metadata-migrate';
 import { migrateViewerExportAccess } from '../packages/db/src/viewer-export-access-migrate';
 import { migrateQuotationLinkCheck } from '../packages/db/src/quotation-link-check-migrate';
+import { migrateMemberNotice } from '../packages/db/src/member-notice-migrate';
+import {
+  assertMemberNoticeLive,
+  deliverMemberNotice,
+  memberNoticeDispatcher,
+} from '../packages/db/src/member-notice-deliver';
 import { configureSupplySources } from '../packages/auth/src/supply-source-configuration';
 import { configureWorkspaceLifecycle } from '../packages/auth/src/customer-workspace-lifecycle-configuration';
 import { configureAccountLifecycle } from '../packages/auth/src/customer-account-lifecycle-configuration';
@@ -124,6 +130,10 @@ const v = z
     VIEWER_REPLY_METADATA_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     VIEWER_EXPORT_ACCESS_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
     QUOTATION_LINK_CHECK_ACTION: z.enum(['unchanged', 'install']).default('unchanged'),
+    // ADR-087 U4: install writes no row; deliver writes the notices for the listed workspaces (or all) and starts their 4d clock.
+    MEMBER_NOTICE_ACTION: z.enum(['unchanged', 'install', 'deliver']).default('unchanged'),
+    // Only for deliver: the live app's https origin (repository variable APP_ORIGIN), asked before anything is written.
+    MEMBER_NOTICE_APP_ORIGIN: z.string().optional(),
     COUNTERPARTY_CHANGES_ACTION: z
       .enum(['unchanged', 'install', 'enable', 'pause'])
       .default('unchanged'),
@@ -310,6 +320,10 @@ if (v.VIEWER_EXPORT_ACCESS_ACTION !== 'unchanged' && !apply)
   throw new Error('Viewer export access installation requires INSTALL_APPLY=yes');
 if (v.QUOTATION_LINK_CHECK_ACTION !== 'unchanged' && !apply)
   throw new Error('Quotation link check installation requires INSTALL_APPLY=yes');
+if (v.MEMBER_NOTICE_ACTION !== 'unchanged' && !apply)
+  throw new Error('Member notice installation or delivery requires INSTALL_APPLY=yes');
+// ADR-087 4d: the clock may start only while the /account notice is live. Asked before the report and before any write.
+if (v.MEMBER_NOTICE_ACTION === 'deliver') await assertMemberNoticeLive(v.MEMBER_NOTICE_APP_ORIGIN);
 if (v.COUNTERPARTY_CHANGES_ACTION !== 'unchanged' && !apply)
   throw new Error('Contact and note changes require INSTALL_APPLY=yes');
 if (['enable', 'pause'].includes(v.COUNTERPARTY_CHANGES_ACTION) && !v.COUNTERPARTY_CHANGES_REASON)
@@ -387,6 +401,7 @@ const registries = [
   'viewer_reply_metadata_migrations',
   'viewer_export_access_migrations',
   'quotation_link_check_migrations',
+  'member_notice_migrations',
   'recipient_response_revision_migrations',
   'network_real_use_migrations',
   'customer_billing_real_migrations',
@@ -765,6 +780,35 @@ try {
       console.log(
         `installed or already current: quotation link check (applied ${result.applied.join(', ') || 'nothing new'})`,
       );
+    }
+    // ADR-087 U4, the member notice, is never part of the base run. member_notice installs the module and writes no row.
+    // member_notice_deliver installs nothing: it refuses unless the module is installed, then writes one inbox notice to each
+    // current member of every real (not synthetic) workspace not yet delivered and records the delivery time, which starts that
+    // workspace's 24-hour clock. Never reset; a workspace delivered before is left as it was. It takes no list (Guardian G27,
+    // 17 Nov 2026: no 25th workflow input); the database function takes one workspace, so a list can be added later. Run deliver only after U5 is merged and its
+    // install approved by the owner: the notice names a switch-on time that must come true. Counts and 8-character ids only.
+    if (v.MEMBER_NOTICE_ACTION === 'install') {
+      const result = await migrateMemberNotice(pool);
+      console.log(
+        `installed or already current: member notice (applied ${result.applied.join(', ') || 'nothing new'}; no notice delivered)`,
+      );
+    }
+    if (v.MEMBER_NOTICE_ACTION === 'deliver') {
+      // Real workspaces only: the data cleanup classifier's made-up, demo and QA workspaces (reused, read only, never printed
+      // here) and archived workspaces are left out. Synthetic workspaces are never candidates.
+      const { deliveries: done, skipped } = await deliverMemberNotice(pool, {
+        targets: 'all',
+        deliveredBy: memberNoticeDispatcher(),
+        classify: inventoryDataCleanup,
+      });
+      const fresh = done.filter((row) => row.delivered);
+      console.log(
+        `Member notice delivery: workspaces ${done.length}, delivered now ${fresh.length}, already delivered ${done.length - fresh.length}, notices written ${fresh.reduce((n, row) => n + row.notices, 0)}, excluded as made-up, demo or QA ${skipped.listed}, excluded as archived ${skipped.archived}`,
+      );
+      for (const row of done)
+        console.log(
+          `  ${row.workspaceId.slice(0, 8)} ${row.delivered ? 'delivered' : 'already delivered'} ${row.deliveredAt.toISOString()} opens ${row.opensAt.toISOString()} notices ${row.notices}`,
+        );
     }
     // Withdraw, correct and hide for private contacts and notes (CRUD G11) are never part of the base run. Install leaves
     // the one control closed; enable and pause are owner decisions with a reason. Reached through field_modules_action
