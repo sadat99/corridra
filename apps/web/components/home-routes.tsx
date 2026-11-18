@@ -8,6 +8,7 @@ import { HomeBrief, type GoalKey } from './home-brief';
 import { FaqSection, MissionSection, People, RoutesSection, TrustSection } from './home-more';
 import { DoorCard } from './ux/door-card';
 import { ExampleTag, Eyebrow } from './ux/example-tag';
+import { OpenCard, QuietButton } from './ux/open-card';
 import { Flagged, type FlagCode } from './ux/flag';
 import { RouteLine } from './home-route-line';
 import { HomeSell } from './home-sell';
@@ -80,6 +81,18 @@ export function HomeRoutes({ whatsapp = null }: { whatsapp?: string | null }) {
       if (p !== undefined && !personTouched) setPerson(p);
     }
   };
+  // A choice made lower on the page opens the route in place and brings it into view (the hero is far above).
+  const openHere = (next: Shown) => {
+    choose(next);
+    if (next === 'none') return;
+    requestAnimationFrame(() => {
+      const target = document.getElementById(`route-${next}`);
+      if (!target) return;
+      const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      target.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
+      target.querySelector<HTMLElement>('h2')?.focus({ preventScroll: true });
+    });
+  };
   const showingText: Record<Shown, MessageKey> = {
     none: 'home.tr.bar.none',
     china: 'home.tr.bar.china',
@@ -106,6 +119,7 @@ export function HomeRoutes({ whatsapp = null }: { whatsapp?: string | null }) {
         </div>
         <fieldset className="tr-doors">
           <legend>{t('home.tr.q')}</legend>
+          <p className="tr-note">{t('home.tr.q.sub')}</p>
           <div className="tr-doors-big">
             {(['china', 'sell'] as const).map((r) => (
               <Door key={r} route={r} checked={shown === r} onChoose={() => choose(r, true)} big />
@@ -132,6 +146,7 @@ export function HomeRoutes({ whatsapp = null }: { whatsapp?: string | null }) {
               </li>
             ))}
           </ul>
+          <p className="tr-note">{t('home.tr.hint')}</p>
           <p className="tr-feedback" aria-live="polite">
             {opened ? (
               <>
@@ -146,11 +161,15 @@ export function HomeRoutes({ whatsapp = null }: { whatsapp?: string | null }) {
       </section>
 
       <div className="tr-bar">
-        {/* The route state is for screen readers; the pressed button shows it on screen (LP2 finding). */}
-        <p className="sr-only" aria-live="polite">
-          {t('home.tr.bar.showing')} {t(showingText[shown])}
+        {/* The route state, on screen and told to screen readers (board 3c; Guardian 29 review round 2, D13). */}
+        <p className="tr-bar-label" aria-live="polite">
+          <span className="label">{t('home.tr.bar.showing')}</span> {t(showingText[shown])}
         </p>
         <div className="tr-bar-buttons" role="group" aria-label={t('home.tr.bar.aria')}>
+          {/* All Routes is the page with no route open: the shared sections only (one route at a time). */}
+          <button type="button" aria-pressed={shown === 'none'} onClick={() => choose('none')}>
+            {t('home.tr.bar.all')}
+          </button>
           {(['china', 'sell', 'delegation', 'other'] as const).map((r) => (
             <button key={r} type="button" aria-pressed={shown === r} onClick={() => choose(r)}>
               {t(`home.tr.bar.${r}` as MessageKey)}
@@ -174,6 +193,27 @@ export function HomeRoutes({ whatsapp = null }: { whatsapp?: string | null }) {
               </li>
             ))}
           </ol>
+          {/* The board's closing row: open a route here, in place. Outlined cards, not primary actions. */}
+          <div className="tr-open-row">
+            {(['china', 'sell'] as const).map((r) => (
+              <OpenCard
+                key={r}
+                title={t(key(`home.tr.open.${r}`))}
+                text={t(key(`home.tr.open.${r}.text`))}
+                onOpen={() => openHere(r)}
+              />
+            ))}
+          </div>
+          <p className="tr-open-more">
+            <span>{t('home.tr.open.more')}</span>
+            <QuietButton onClick={() => openHere('delegation')}>
+              {t('home.tr.open.delegation')}
+            </QuietButton>
+            <QuietButton onClick={() => openHere('other')}>{t('home.tr.open.other')}</QuietButton>
+            <QuietButton onClick={() => openHere('none')}>
+              {t('home.tr.open.everything')}
+            </QuietButton>
+          </p>
         </section>
       ) : null}
 

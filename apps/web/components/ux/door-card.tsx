@@ -49,6 +49,8 @@ export function DoorCard({
         onChange={onChoose}
       />
       <label htmlFor={id}>
+        {/* The radio circle drawn on the card, so the choice reads as a radio at a glance (the native radio is hidden). */}
+        <span className="ux-door-dot" aria-hidden="true" />
         {side ? <span className="ux-door-side">{side}</span> : null}
         {route ? <span className="ux-door-route">{route}</span> : null}
         <strong>{title}</strong>

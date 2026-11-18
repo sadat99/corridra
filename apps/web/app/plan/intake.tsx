@@ -238,6 +238,8 @@ function wholeCharacters(text: string, limit: number): string {
   }
   return out;
 }
+// The saved-draft prompt for a link that brings notes but no job of its own (no job is named).
+const noteOnlyChoice = '#note';
 /** The choices a link can make (`?job`, `?companyCountry`, `?marketCode` and `?note`), applied to a draft. */
 function withLinkChoices(base: Draft): Draft {
   const query = new URLSearchParams(window.location.search);
@@ -431,12 +433,12 @@ function IntakeForm({
           setJobChoice(suggestedJob);
         const note = linkNote(query);
         // A link that carries new words (the home page brief) and a saved draft: offer the same choice as a new job,
-        // continue the saved request (its notes kept) or start a new one, which takes the link's job and words.
-        const choiceJob =
-          suggestedJob && missionCatalogue.some((t) => t.key === suggestedJob)
-            ? suggestedJob
-            : saved?.draft?.job;
-        if (restored && note && saved.draft.notes !== note && choiceJob) setJobChoice(choiceJob);
+        // continue the saved request (its notes kept) or start a new one, which takes the link's job and words. The
+        // prompt names a job only when the link chose it; otherwise it speaks of the link's notes.
+        const linkJob =
+          suggestedJob && missionCatalogue.some((t) => t.key === suggestedJob) ? suggestedJob : '';
+        if (restored && note && saved.draft.notes !== note)
+          setJobChoice((current) => current || linkJob || noteOnlyChoice);
         if (!restored && note)
           setDraft((current) => (current.notes ? current : { ...current, notes: note }));
         if (!restored && suggestedJob && missionCatalogue.some((t) => t.key === suggestedJob))
@@ -1128,9 +1130,11 @@ function IntakeForm({
           {jobChoice && !finished && !pendingReady && (
             <section className="ux-job-choice" role="group" aria-labelledby="job-choice-text">
               <p id="job-choice-text">
-                {fill(wsa('wsa.plan.jobChoice'), {
-                  job: say(jobWord(jobChoice as (typeof missionCatalogue)[number]['key'])),
-                })}
+                {jobChoice === noteOnlyChoice
+                  ? wsa('wsa.plan.noteChoice')
+                  : fill(wsa('wsa.plan.jobChoice'), {
+                      job: say(jobWord(jobChoice as (typeof missionCatalogue)[number]['key'])),
+                    })}
               </p>
               <div className="guide-actions">
                 <button type="button" className="button-secondary" onClick={() => setJobChoice('')}>

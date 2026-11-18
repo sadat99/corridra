@@ -116,24 +116,34 @@ for (const [label, route, cta, href, section] of [
     await expect(page).toHaveURL(href);
   });
 
-test('the route bar switches routes, one at a time (no All Routes, Guardian 29 review D6)', async ({
+test('the route bar switches routes, one at a time; All Routes is the page with none open (review rounds 1 and 2)', async ({
   page,
 }) => {
   await page.goto('/');
-  await expect(bar(page).getByRole('button')).toHaveCount(4);
+  await expect(bar(page).getByRole('button')).toHaveCount(5);
+  await expect(bar(page).getByRole('button', { name: 'All Routes', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
   await bar(page).getByRole('button', { name: 'China Route', exact: true }).click();
   await expect(page.locator('#route-china')).toBeVisible();
   await bar(page).getByRole('button', { name: 'Sell Abroad', exact: true }).click();
   await expect(page.locator('#route-china')).toHaveCount(0);
   await expect(page.locator('#route-sell')).toBeVisible();
+  await bar(page).getByRole('button', { name: 'All Routes', exact: true }).click();
+  await expect(page.locator('main section[id^="route-"]')).toHaveCount(0);
+  await expect(page.locator('#pick')).toBeVisible();
 });
 
-test('the how-it-works strip explains the three steps and repeats no door (review D5)', async ({
+test('the how-it-works strip explains the three steps and closes with in-page choices, never a request link (review round 2, D12)', async ({
   page,
 }) => {
   await page.goto('/');
   await expect(page.locator('#pick li')).toHaveCount(3);
-  await expect(page.locator('#pick').getByRole('button')).toHaveCount(0);
+  // Two outlined cards and three quiet choices; none is a link or a primary action.
+  await expect(page.locator('#pick').getByRole('button')).toHaveCount(5);
+  await expect(page.locator('#pick').getByRole('link')).toHaveCount(0);
+  await expect(page.locator('#pick .primary-link')).toHaveCount(0);
   await bar(page).getByRole('button', { name: 'China Route', exact: true }).click();
   await expect(page.locator('#pick')).toHaveCount(0);
 });
@@ -334,6 +344,16 @@ test('the long sections moved off the home keep their words, behind Show More on
   await expect(
     page.locator('#trust').getByRole('link', { name: 'How We Label Facts' }),
   ).toHaveAttribute('href', '/trust');
+  // The pages that hold the full process and every route stay one click from the home, in its header or footer
+  // (review round 2, K2), and the routes block still names /corridors.
+  for (const href of ['/how-it-works', '/corridors'])
+    expect(
+      await page.locator(`header a[href="${href}"], footer a[href="${href}"]`).count(),
+      `${href} is linked from the home's header or footer`,
+    ).toBeGreaterThan(0);
+  await expect(
+    page.locator('#routes').getByRole('link', { name: 'Explore Every Route' }),
+  ).toHaveAttribute('href', '/corridors');
 });
 
 test('the three job links keep their names and links (P-07) and Something else goes to /plan', async ({

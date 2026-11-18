@@ -20,7 +20,7 @@ const door = (page: Page, name: string | RegExp) =>
     .locator('xpath=following-sibling::label');
 const bar = (page: Page) => page.getByRole('group', { name: 'Choose which route this page shows' });
 const h2 = (page: Page, name: string) => page.getByRole('heading', { level: 2, name });
-// One route at a time: the route bar has no "All Routes" (board note: that view was for reviewers; Guardian 29).
+// One route at a time. All Routes shows the shared sections with no route open (review round 2, D13).
 const routeButtons = ['China Route', 'Sell Abroad', 'Delegation', 'Something Else'] as const;
 const showRoute = (page: Page, name: (typeof routeButtons)[number]) =>
   bar(page).getByRole('button', { name, exact: true }).click();
@@ -40,8 +40,7 @@ test('every product section of the board is on the home, in board order', async 
     await showRoute(page, name);
     expect(await sectionIds(page)).toEqual(['hero', id, ...shared]);
   }
-  await expect(bar(page).getByRole('button')).toHaveCount(4);
-  await expect(page.getByRole('button', { name: /All Routes|Show Every Route/ })).toHaveCount(0);
+  await expect(bar(page).getByRole('button')).toHaveCount(5);
   await page.goto('/');
   await expect(page.locator('#pick')).toBeVisible();
   for (const title of [
@@ -111,13 +110,14 @@ test('a door changes the headline to its proposition, preselects the person, the
   await expect(page.locator('#routes .is-mine')).toContainText('Any other route');
 });
 
-test('the route state is told to screen readers, not as "Showing:" text on screen (LP2)', async ({
+test('the route state is shown and told: "Showing:" names the open route (review round 2, D13)', async ({
   page,
 }) => {
   await page.goto('/');
-  await expect(page.locator('.tr-bar-label')).toHaveCount(0);
-  const live = page.locator('.tr-bar .sr-only');
-  await expect(live).toHaveText(/Showing: shared sections/);
+  const live = page.locator('.tr-bar-label');
+  await expect(live).toBeVisible();
+  await expect(live).toHaveAttribute('aria-live', 'polite');
+  await expect(live).toHaveText('Showing: shared sections. Choose a route to open it.');
   await bar(page).getByRole('button', { name: 'Sell Abroad', exact: true }).click();
   await expect(live).toHaveText('Showing: Sell Abroad');
   await expect(bar(page).getByRole('button', { name: 'Sell Abroad', exact: true })).toHaveAttribute(
@@ -424,7 +424,7 @@ test('the four doors are on the first screen: both big doors start at 390, all f
   expect(order).toEqual(['P', 'H1#home-title', 'P', 'FIELDSET', 'A#home-start']);
 });
 
-test('chosen states use the selected token and section titles use the section-title size', async ({
+test('chosen states use the selected token; titles, sub-heads and key sentences step down in size (D14)', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -444,17 +444,35 @@ test('chosen states use the selected token and section titles use the section-ti
   expect(await chip.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(selected);
   const tab = page.getByRole('tab', { selected: true });
   expect(await tab.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(selected);
-  expect(
-    await h2(page, 'A fair list is not a buyer list.').evaluate(
-      (el) => getComputedStyle(el).fontSize,
-    ),
-  ).toBe('24px');
+  // What a person gets is a selected surface with a selected edge, never a cobalt fill (review round 2, D9).
+  const get = page.locator('.tr-people .is-get');
+  expect(await get.evaluate((el) => getComputedStyle(el).backgroundColor)).not.toBe(selected);
+  expect(await get.evaluate((el) => getComputedStyle(el).borderTopColor)).toBe(selected);
+  const sizes = () =>
+    page.evaluate(() => {
+      const px = (selector: string) =>
+        parseFloat(getComputedStyle(document.querySelector(selector) as Element).fontSize);
+      return {
+        h2: px('#sell-title'),
+        h3: px('#worth-title'),
+        sub: px('#route-sell .tr-sub'),
+        body: px('main p:not([class])') || 16,
+      };
+    });
+  let s = await sizes();
+  expect(s.h2).toBe(40);
+  expect(s.h3).toBe(24);
+  expect(s.sub).toBe(18);
   await page.setViewportSize({ width: 390, height: 844 });
-  expect(
-    await h2(page, 'A fair list is not a buyer list.').evaluate(
-      (el) => getComputedStyle(el).fontSize,
-    ),
-  ).toBe('22px');
+  s = await sizes();
+  expect(s.h2).toBeGreaterThan(s.h3);
+  expect(s.h3).toBe(22);
+  expect(s.sub).toBeGreaterThan(16);
+  // Weights stay in the locked set.
+  for (const selector of ['#sell-title', '#worth-title'])
+    expect(await page.locator(selector).evaluate((el) => getComputedStyle(el).fontWeight)).toBe(
+      '500',
+    );
 });
 
 test('one action per view, and no repeated block, control text or wrong promise', async ({
@@ -469,8 +487,7 @@ test('one action per view, and no repeated block, control text or wrong promise'
   ).toBeLessThanOrEqual(2);
   expect(text).not.toContain('press Send');
   expect(text.match(/Nothing is sent until you check your request/g)?.length).toBe(2);
-  await expect(page.locator('.tr-bar :not(.sr-only)', { hasText: 'Showing:' })).toHaveCount(0);
-  await expect(page.locator('#pick').getByRole('button')).toHaveCount(0);
+  await expect(page.locator('#pick .primary-link')).toHaveCount(0);
   await expect(
     page.locator('#final').getByRole('link', { name: /See the Full Process|Explore Every Route/ }),
   ).toHaveCount(0);
@@ -684,4 +701,201 @@ test('without a note the /plan draft is the same as before (no notes added)', as
       .filter((value) => value !== undefined),
   );
   expect(notes).toEqual(['']);
+});
+
+// Review round 2 (Guardian 29), K1: a saved draft never silently drops the words a link brings, and the prompt names
+// a job only when the link chose one.
+const savedNotes = (page: Page) =>
+  page.evaluate(() =>
+    Object.values(sessionStorage)
+      .map((value) => {
+        try {
+          return JSON.parse(value)?.draft as { notes?: string; job?: string } | undefined;
+        } catch {
+          return undefined;
+        }
+      })
+      .find((value) => value !== undefined),
+  );
+const saveDraft = async (page: Page, path: string) => {
+  await page.goto(path);
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect
+    .poll(() => page.evaluate(() => Object.keys(sessionStorage).length))
+    .toBeGreaterThan(0);
+};
+
+test('a saved draft with no job and a link with a note but no job: the person is asked, no job is named (K1)', async ({
+  page,
+}) => {
+  // A real saved draft, then its job cleared as a draft saved before any job was chosen holds it.
+  await saveDraft(page, '/plan?job=sourcing');
+  await page.evaluate(() => {
+    for (const name of Object.keys(sessionStorage)) {
+      try {
+        const saved = JSON.parse(sessionStorage.getItem(name) ?? 'null');
+        if (saved?.draft) {
+          saved.draft.job = '';
+          sessionStorage.setItem(name, JSON.stringify(saved));
+        }
+      } catch {
+        // not a draft
+      }
+    }
+  });
+  expect((await savedNotes(page))?.job).toBe('');
+  await page.goto(`/plan?note=${encodeURIComponent('Route: Something else')}`);
+  const choice = page.getByRole('group', { name: /You have a saved request/ });
+  await expect(choice).toBeVisible();
+  await expect(choice).toContainText('the notes from the link you opened');
+  await expect(choice).not.toContainText('“');
+  await choice.getByRole('button', { name: 'Start a new request' }).click();
+  await expect.poll(async () => (await savedNotes(page))?.notes).toBe('Route: Something else');
+});
+
+test('a saved buyers draft and a link with a note but no job: the prompt does not name the saved job (K1)', async ({
+  page,
+}) => {
+  await saveDraft(page, '/plan?job=buyers');
+  expect((await savedNotes(page))?.job).toBe('buyers');
+  await page.goto(`/plan?note=${encodeURIComponent('What I need: one fair')}`);
+  const choice = page.getByRole('group', { name: /You have a saved request/ });
+  await expect(choice).toBeVisible();
+  await expect(choice).toContainText('the notes from the link you opened');
+  await expect(choice).not.toContainText('“');
+  await choice.getByRole('button', { name: 'Continue saved request' }).click();
+  await expect(choice).toHaveCount(0);
+  const kept = await savedNotes(page);
+  expect(kept?.job).toBe('buyers');
+  expect(kept?.notes).toBe('');
+});
+
+test('the pick strip opens a route in place, brings it into view and focuses its title; Show Every Route resets (D12)', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const pick = page.locator('#pick');
+  await pick.getByRole('button', { name: /Open the China Route/ }).click();
+  await expect(h2(page, 'Too many suppliers. Too few you can compare.')).toBeFocused();
+  await expect(bar(page).getByRole('button', { name: 'China Route', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await bar(page).getByRole('button', { name: 'All Routes', exact: true }).click();
+  await pick.getByRole('button', { name: /Open Sell Abroad/ }).click();
+  await expect(page.locator('#route-sell')).toBeVisible();
+  await expect(page.locator('#sell-title')).toBeFocused();
+  for (const [name, id] of [
+    ['Open the Delegation Route', 'route-delegation'],
+    ['Something Else', 'route-other'],
+  ] as const) {
+    await bar(page).getByRole('button', { name: 'All Routes', exact: true }).click();
+    await pick.getByRole('button', { name, exact: true }).click();
+    await expect(page.locator(`#${id}`)).toBeVisible();
+  }
+  await bar(page).getByRole('button', { name: 'All Routes', exact: true }).click();
+  await pick.getByRole('button', { name: 'Show Every Route', exact: true }).click();
+  await expect(page.locator('main section[id^="route-"]')).toHaveCount(0);
+  // Outlined, never a cobalt fill.
+  const selected = await page.evaluate(() => {
+    const probe = document.createElement('span');
+    probe.style.color = 'var(--action)';
+    document.body.append(probe);
+    const colour = getComputedStyle(probe).color;
+    probe.remove();
+    return colour;
+  });
+  for (const card of await pick.locator('.ux-open-card').all())
+    expect(await card.evaluate((el) => getComputedStyle(el).backgroundColor)).not.toBe(selected);
+});
+
+test('the hero says how the doors work, and each door shows a radio circle that fills when chosen (D13)', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const hero = page.locator('#hero');
+  await expect(hero.getByText('Choose one. The page below opens that route.')).toBeVisible();
+  await expect(
+    hero.getByText('Each door opens its own worked example further down this page.'),
+  ).toBeVisible();
+  const dots = hero.locator('.ux-door-dot');
+  await expect(dots).toHaveCount(4);
+  for (const dot of await dots.all()) await expect(dot).toBeVisible();
+  const fill = () =>
+    hero
+      .locator('.ux-door input:checked + label .ux-door-dot')
+      .evaluate((el) => getComputedStyle(el).backgroundImage);
+  await door(page, 'Sell Abroad').click();
+  expect(await fill()).toContain('radial-gradient');
+  // The doors' accessible names are unchanged by the circle.
+  await expect(
+    page
+      .getByRole('group', { name: 'Which way is your business moving?' })
+      .getByRole('radio', { name: /Sell Abroad/ }),
+  ).toBeChecked();
+});
+
+test('the mission steps are one connected rail, dashed into and out of optional steps; the page never scrolls sideways (D11)', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const steps = page.getByRole('list', { name: 'Mission steps' }).locator('li');
+  await expect(steps).toHaveCount(14);
+  const connectors = await steps.evaluateAll((items) =>
+    items.map((li) => {
+      const before = getComputedStyle(li, '::before');
+      return { shown: before.display !== 'none', dashed: before.backgroundImage !== 'none' };
+    }),
+  );
+  expect(connectors[0].shown).toBe(false);
+  expect(connectors.slice(1).every((c) => c.shown)).toBe(true);
+  // Steps 8 to 13 are optional: the lines into them and the line out of the last are dashed.
+  expect(connectors.map((c) => c.dashed)).toEqual([
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+  ]);
+  const top = await steps.evaluateAll((items) => items.map((li) => li.getBoundingClientRect().top));
+  expect(new Set(top).size).toBe(1);
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBe(true);
+  }
+});
+
+test('"What this route tests" lines start with a small action-coloured dot (D15)', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await showRoute(page, 'China Route');
+  const marker = await page
+    .locator('.tr-tests li')
+    .first()
+    .evaluate((li) => {
+      const before = getComputedStyle(li, '::before');
+      return { colour: before.backgroundColor, width: parseFloat(before.width) };
+    });
+  const action = await page.evaluate(() => {
+    const probe = document.createElement('span');
+    probe.style.color = 'var(--action)';
+    document.body.append(probe);
+    const colour = getComputedStyle(probe).color;
+    probe.remove();
+    return colour;
+  });
+  expect(marker.colour).toBe(action);
+  expect(marker.width).toBeLessThanOrEqual(8);
 });

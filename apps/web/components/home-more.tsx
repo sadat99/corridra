@@ -156,17 +156,26 @@ export function MissionSection() {
       <p className="label ac1-rule">{t('home.tr.ms.eyebrow')}</p>
       <h2 id="how-title">{t('home.tr.ms.title')}</h2>
       <p className="tr-sub">{t('home.tr.ms.lead')}</p>
-      <ol className="tr-track" aria-label={t('home.tr.ms.list')}>
-        {Array.from({ length: 14 }, (_, i) => (
-          <li key={i} className={i >= 7 && i <= 12 ? 'is-optional' : undefined}>
-            <span className="tr-track-dot" aria-hidden="true" />
-            {t(key(`home.tr.ms.s${i}`))}
-            {i >= 7 && i <= 12 ? (
-              <span className="sr-only"> ({t('home.tr.ms.optional')})</span>
-            ) : null}
-          </li>
-        ))}
-      </ol>
+      {/* One connected rail, as on the board: solid between required steps, dashed into and out of optional ones. It
+          scrolls sideways inside its own region on narrow screens; the page never does. */}
+      <div
+        className="tr-scroll tr-track-wrap"
+        tabIndex={0}
+        role="region"
+        aria-label={t('home.tr.ms.list')}
+      >
+        <ol className="tr-track" aria-label={t('home.tr.ms.list')}>
+          {Array.from({ length: 14 }, (_, i) => (
+            <li key={i} className={i >= 7 && i <= 12 ? 'is-optional' : undefined}>
+              <span className="tr-track-dot" aria-hidden="true" />
+              {t(key(`home.tr.ms.s${i}`))}
+              {i >= 7 && i <= 12 ? (
+                <span className="sr-only"> ({t('home.tr.ms.optional')})</span>
+              ) : null}
+            </li>
+          ))}
+        </ol>
+      </div>
       <p className="tr-small">{t('home.tr.ms.note')}</p>
       <div className="tr-nevers">
         {[1, 2, 3, 4].map((n) => (

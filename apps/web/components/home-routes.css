@@ -133,12 +133,6 @@
   font: 600 var(--text-sm) / 1.2 var(--font-ui);
   cursor: pointer;
 }
-.tr-bar-buttons button[aria-pressed='true'],
-.tr-pick[aria-pressed='true'] {
-  border-color: var(--brand-deep);
-  background: var(--brand-deep);
-  color: var(--on-brand);
-}
 
 /* Sections */
 .tr-home .tr-section {
@@ -841,39 +835,72 @@
 }
 
 /* Shared sections */
+/* The mission rail: fourteen steps on one line joined by an action-coloured connector (board 3c; review round 2,
+   D11). Required steps have a filled dot and a solid line; optional ones an empty dashed dot and a dashed line. */
+.tr-track-wrap {
+  margin-top: var(--space-3);
+  overflow-x: auto;
+}
 .tr-track {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(8.5rem, 100%), 1fr));
-  gap: var(--space-2);
-  margin: var(--space-3) 0 0;
-  padding: 0;
+  display: flex;
+  align-items: flex-start;
+  min-inline-size: 66rem;
+  margin: 0;
+  padding: var(--space-3) var(--space-1) var(--space-2);
   list-style: none;
 }
 .tr-track li {
-  display: flex;
-  align-items: center;
+  position: relative;
+  display: grid;
+  flex: 1 1 0;
+  justify-items: center;
   gap: var(--space-2);
-  min-height: 2.75rem;
-  padding: var(--space-1) min(var(--space-3), 3vw);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  background: var(--surface-1);
+  padding: 0 var(--space-1);
   font-size: var(--text-sm);
   font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  /* Words break between words only: a step name is never split mid-word (the rail scrolls instead). */
+  overflow-wrap: normal;
+  word-break: normal;
 }
-.tr-track-dot {
-  flex: none;
-  width: 1rem;
-  height: 1rem;
-  border-radius: 50%;
+.ux-guide-home.tr-home .tr-track li,
+.tr-home .tr-track li {
+  overflow-wrap: normal;
+}
+.tr-track li::before {
+  content: '';
+  position: absolute;
+  inset-block-start: calc(0.625rem - 1px);
+  inset-inline: -50% 50%;
+  block-size: 2px;
   background: var(--action);
 }
-.tr-track .is-optional {
-  border-style: dashed;
+.tr-track li:first-child::before {
+  display: none;
+}
+.tr-track li:is(.is-optional, .is-optional + li)::before {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--action) 0 0.375rem,
+    transparent 0.375rem 0.75rem
+  );
+}
+.tr-track-dot {
+  position: relative;
+  z-index: 1;
+  display: block;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  border-radius: 50%;
+  background: var(--action);
 }
 .tr-track .is-optional .tr-track-dot {
   border: 2px dashed var(--action);
   background: var(--surface-1);
+}
+.tr-alt .tr-track .is-optional .tr-track-dot {
+  background: var(--surface-2);
 }
 .tr-nevers,
 .tr-nots,
@@ -1006,11 +1033,6 @@
   font: 600 var(--text-sm) var(--font-ui);
   cursor: pointer;
 }
-.tr-tabs button[aria-selected='true'] {
-  border-color: var(--brand-deep);
-  background: var(--brand-deep);
-  color: var(--on-brand);
-}
 .tr-people {
   display: grid;
   gap: var(--space-3);
@@ -1033,12 +1055,14 @@
 .tr-people p.label {
   font-size: var(--text-xs);
 }
+/* What they get: the selected surface with a selected edge, never a cobalt fill (cobalt fill is for actions only). */
 .tr-people .is-get {
-  background: var(--action);
-  color: var(--on-action);
+  border: 1px solid var(--selected);
+  background: var(--selected-surface);
+  color: var(--text-1);
 }
 .tr-people .is-get .label {
-  color: var(--on-action);
+  color: var(--text-2);
 }
 .tr-faq details {
   border-radius: var(--radius-md);
@@ -1906,8 +1930,8 @@
 }
 
 /* LP3 review (Guardian 29): the locked UI/UX.v3 states, sizes and shapes on the home. */
-/* Chosen states use the selected token (cobalt), never a navy fill. */
-.ux-guide-home.tr-home
+/* Chosen states use the selected token (cobalt), never a navy fill (the home and the sections /how-it-works borrows). */
+.tr-home
   :is(
     .tr-bar-buttons button[aria-pressed='true'],
     .tr-pick[aria-pressed='true'],
@@ -1918,13 +1942,24 @@
   background: var(--selected);
   color: var(--on-action);
 }
-.ux-guide-home.tr-home .tr-stops button[aria-pressed='true'] .tr-time {
+.tr-home .tr-stops button[aria-pressed='true'] .tr-time {
   color: var(--on-action);
 }
-/* Section titles at the locked section-title size (24, 22 on a phone); only the hero headline is display size. */
+/* Hierarchy (review round 2, D14): route and section titles at the page-title token, sub-heads at the
+   section-title token, the key sentence under a title larger than body text. The hero headline stays display. */
 .ux-guide-home.tr-home .tr-section h2 {
+  font-size: var(--text-h1);
+  font-weight: 500;
+  line-height: 1.15;
+}
+.ux-guide-home.tr-home .tr-h3 {
   font-size: var(--text-h2);
+  font-weight: 500;
   line-height: 1.2;
+}
+.ux-guide-home.tr-home .tr-section .tr-sub {
+  font-size: var(--text-lg);
+  line-height: 1.5;
 }
 /* Company names read as names: normal case in the interface face. */
 .ux-guide-home.tr-home .tr-table tbody th,
@@ -1985,4 +2020,65 @@
   flex-wrap: wrap;
   gap: var(--space-2) var(--space-6);
   margin-block: var(--space-2) var(--space-3);
+}
+
+/* What this route tests: each line starts with a small action-coloured dot (review round 2, D15). */
+.tr-tests ul {
+  padding-inline-start: 0;
+  list-style: none;
+}
+.tr-tests li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--space-2);
+}
+.tr-tests li::before {
+  content: '';
+  inline-size: 0.4375rem;
+  block-size: 0.4375rem;
+  border-radius: 50%;
+  background: var(--action);
+  transform: translateY(-0.0625rem);
+}
+
+/* Hero notes (review round 2, D13): one line under the question and one under the reassurance row, small and
+   secondary. The hero is a navy band, so secondary text is the light secondary, not --text-2 (contrast). */
+.tr-note {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--text-2);
+}
+.tr-hero .tr-note {
+  color: color-mix(in srgb, var(--on-brand) 85%, transparent);
+}
+.tr-doors > .tr-note {
+  margin-block-end: var(--space-2);
+  text-align: center;
+}
+
+/* The pick section's closing row (board 3c; review round 2, D12): two outlined cards, then a line of quiet choices. */
+.tr-open-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+@media (min-width: 48rem) {
+  .tr-open-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.tr-open-more {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space-4);
+  margin: var(--space-3) 0 0;
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.tr-open-more > * {
+  min-inline-size: 0;
 }

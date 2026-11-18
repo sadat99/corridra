@@ -5,11 +5,13 @@
   display: grid;
 }
 .ux-door label {
+  position: relative;
   display: grid;
   align-content: start;
   gap: var(--space-1);
   min-height: 2.75rem;
   padding: min(var(--space-3), 3vw) min(var(--space-4), 4vw);
+  padding-inline-end: calc(min(var(--space-4), 4vw) + 1.75rem);
   border: 1px solid color-mix(in srgb, var(--on-brand) 35%, transparent);
   border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--on-brand) 8%, transparent);
@@ -85,5 +87,29 @@
 @media (max-width: 47.99rem) {
   .ux-door label {
     padding-block: var(--space-2);
+  }
+}
+/* The radio circle: an empty ring until chosen, then an action ring with a filled centre. */
+.ux-door-dot {
+  position: absolute;
+  inset-block-start: min(var(--space-3), 3vw);
+  inset-inline-end: min(var(--space-4), 4vw);
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  border: 2px solid color-mix(in srgb, var(--on-brand) 75%, transparent);
+  border-radius: 50%;
+  background: transparent;
+}
+.ux-door input:checked + label .ux-door-dot {
+  border-color: var(--action);
+  background: radial-gradient(circle, var(--action) 0 45%, transparent 50%);
+}
+@media (min-width: 48rem) {
+  .ux-door.is-big .ux-door-dot {
+    inset-block-start: var(--space-6);
+    inset-inline-end: var(--space-6);
+  }
+  .ux-door.is-big label {
+    padding-inline-end: calc(var(--space-6) + 1.75rem);
   }
 }
