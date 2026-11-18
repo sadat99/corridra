@@ -113,3 +113,17 @@ test('the page is shorter than before: at most 1.6 screens at 390 and 1 screen a
   );
   expect(bottomWide).toBeLessThanOrEqual(tall);
 });
+
+for (const width of [390, 768, 1440]) {
+  test(`Start a Request and Create Account share one left edge at ${width}px`, async ({ page }) => {
+    await open(page, width);
+    const main = page.locator('main');
+    const start = (await main
+      .getByRole('link', { name: 'Start a Request', exact: true })
+      .boundingBox())!;
+    const create = (await main
+      .getByRole('link', { name: 'Create Account', exact: true })
+      .boundingBox())!;
+    expect(Math.abs(start.x - create.x)).toBeLessThanOrEqual(1);
+  });
+}

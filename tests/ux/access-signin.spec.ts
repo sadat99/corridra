@@ -161,3 +161,57 @@ test('a failed sign-in shows an icon, the words and a red edge, and sends the sa
     'That email and password do not match. Check both and try again.',
   );
 });
+
+const mismatch = 'That email and password do not match. Check both and try again.';
+async function failWith(page: Page, status: number | 'abort') {
+  await page.route('**/sign-in/email', (route) =>
+    status === 'abort'
+      ? route.abort()
+      : route.fulfill({
+          status,
+          contentType: 'application/json',
+          body: JSON.stringify({ message: 'Provider words' }),
+        }),
+  );
+  await open(page, 390);
+  await page.getByLabel('Email', { exact: true }).fill('someone@example.com');
+  await page.getByLabel('Password', { exact: true }).fill('not the password');
+  await page.locator('main form button.primary-link').click();
+  await expect(page.locator('main p.ux-error-summary')).toBeVisible();
+}
+
+for (const status of [429, 500, 'abort'] as const) {
+  test(`a ${status} failure keeps its own banner and does not mark the fields or show the password hint`, async ({
+    page,
+  }) => {
+    await failWith(page, status);
+    await expect(page.locator('main p.ux-error-summary')).not.toHaveText(mismatch);
+    await expect(page.getByLabel('Email', { exact: true })).not.toHaveAttribute(
+      'aria-invalid',
+      'true',
+    );
+    await expect(page.getByLabel('Password', { exact: true })).not.toHaveAttribute(
+      'aria-invalid',
+      'true',
+    );
+    await expect(page.locator('#account-password-hint')).toHaveCount(0);
+  });
+}
+
+test('a 403 shows the mismatch sentence, and Verify Your Email stays in More ways in', async ({
+  page,
+}) => {
+  await failWith(page, 403);
+  await expect(page.locator('main p.ux-error-summary')).toHaveText(mismatch);
+  await expect(page.getByLabel('Password', { exact: true })).toHaveAttribute(
+    'aria-invalid',
+    'true',
+  );
+  const more = page.locator('main form details.account-more');
+  expect(await more.evaluate((node) => (node as HTMLDetailsElement).open)).toBe(false);
+  await more.locator('summary').click();
+  await expect(more.getByRole('link', { name: 'Verify Your Email', exact: true })).toHaveAttribute(
+    'href',
+    '/verify-email',
+  );
+});

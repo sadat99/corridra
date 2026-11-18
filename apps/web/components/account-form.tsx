@@ -55,6 +55,8 @@ export function AccountForm({
   const [sent, setSent] = useState(mode === 'verify');
   const [codeRequested, setCodeRequested] = useState(false);
   const [failed, setFailed] = useState(false);
+  // True only while the banner is the refused-credentials sentence. Only then are the fields marked and the hint shown.
+  const [credentialRefused, setCredentialRefused] = useState(false);
   // Sign-in only: the password shows as text while this is on. It changes the input type and nothing else.
   const [showPassword, setShowPassword] = useState(false);
   // Sign in with a code: a second route into the same sign-in form. Password stays the default.
@@ -114,6 +116,7 @@ export function AccountForm({
     if (inFlight.current) return;
     inFlight.current = true;
     setFailed(false);
+    setCredentialRefused(false);
     setBusy(true);
     setMessage('');
     try {
@@ -205,6 +208,13 @@ export function AccountForm({
         !(codeEnabled && viaCode) &&
         typeof status === 'number' &&
         refusedStatuses.includes(status);
+      setCredentialRefused(
+        refused ||
+          (mode === 'signin' &&
+            !(codeEnabled && viaCode) &&
+            error instanceof Error &&
+            error.message === credentialsMismatch),
+      );
       setMessage(
         refused
           ? credentialsMismatch
@@ -264,7 +274,7 @@ export function AccountForm({
             autoComplete="email"
             required
             maxLength={254}
-            aria-invalid={mode === 'signin' && failed ? true : undefined}
+            aria-invalid={credentialRefused ? true : undefined}
           />
         </label>
       )}
@@ -281,11 +291,11 @@ export function AccountForm({
               minLength={mode === 'signin' ? undefined : 14}
               maxLength={128}
               required
-              aria-invalid={mode === 'signin' && failed ? true : undefined}
+              aria-invalid={credentialRefused ? true : undefined}
               aria-describedby={
                 mode === 'reset'
                   ? 'account-password-rule'
-                  : mode === 'signin' && failed
+                  : credentialRefused
                     ? 'account-password-hint'
                     : undefined
               }
@@ -305,7 +315,7 @@ export function AccountForm({
               <Link prefetch={false} className="text-link" href={accessPath('/forgot-password')}>
                 Forgot Your Password?
               </Link>
-              {failed && (
+              {credentialRefused && (
                 <span className="field-error" id="account-password-hint">
                   Check your password.
                 </span>
