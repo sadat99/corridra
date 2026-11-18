@@ -46,7 +46,7 @@ Every change meets the [quality bar](quality-bar.md): clean, secure, easy to use
 
 ## Visible-change step (mandatory)
 
-For every visible change, the conductor passes UI/UX.v3 (`docs/agents/ui-direction.md`, binding until the owner launches UI/UX.v4) to the designer and builder, and the designer must return the rows of "Current locked decisions" it applied. The builder runs "How to build a new screen" and the design guard tests; the reviewer and designer audit against "Definition of done for any visible change". A visible PR without that evidence is not finished.
+For every visible change, the conductor passes UI/UX.v4 (`docs/agents/ui-direction.md`, binding until the owner launches UI/UX.v5) to the designer and builder, and the designer must return the rows of "Current locked decisions" it applied. The builder runs "How to build a new screen" and the design guard tests; the reviewer and designer audit against "Definition of done for any visible change". A visible PR without that evidence is not finished.
 
 ## Handoffs
 

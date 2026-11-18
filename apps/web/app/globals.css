@@ -2164,6 +2164,15 @@ summary:hover {
   --shadow-3: 0 24px 48px -16px rgb(20 36 56 / 28%), 0 4px 10px rgb(20 36 56 / 8%);
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --dur: 160ms;
+  /* UI/UX.v4 motion and phone frame (owner, 18 Nov 2026, "v4"; docs/agents/ui-direction.md rows "Motion", "Top bar"
+     and "Phone bottom action area"). Every behaviour is under 300 ms, the Done tick is 420 ms, nothing starts on its own,
+     and reduced motion shows the still end state. tests/design-system-guard.test.mjs fails any CSS duration above 420 ms. */
+  --dur-short: var(--dur);
+  --dur-step: 260ms;
+  --dur-tick: 420ms;
+  --ease-product: var(--ease);
+  --bottom-action-h: 60px;
+  --header-h-phone: 60px;
   /* Corridra Meridian line icons (owner decision 22 Oct 2026): 1.5 px stroke, square ends. */
   --icon-stroke: 1.5px;
   --radius-panel: var(--radius-md);
@@ -2541,6 +2550,11 @@ th {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  /* UI/UX.v4 motion: the busy ring is the one infinite animation; under reduced motion it turns once and rests,
+     as Less Movement already does (comfort.css), instead of flickering. */
+  :is(.button, .button-secondary)[aria-busy='true']::after {
+    animation-iteration-count: 1 !important;
   }
   .primary-link:hover,
   .button:hover {

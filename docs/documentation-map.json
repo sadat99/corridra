@@ -321,12 +321,12 @@
     {
       "path": "docs/agents/conductor/references/experience.md",
       "classification": "Current guide/contract",
-      "use": "Verbatim copy of the conductor experience standard for visible work; UI/UX.v3 wins over it"
+      "use": "Verbatim copy of the conductor experience standard for visible work; UI/UX.v4 wins over it"
     },
     {
       "path": "docs/agents/ui-direction.md",
       "classification": "Current guide/contract",
-      "use": "UI/UX.v3, the single binding design contract (adopted 13 Nov 2026, until the owner launches UI/UX.v4): locked decisions, how to build a screen, definition of done and the Legacy list of older UI not to follow; read in full before any visible change"
+      "use": "UI/UX.v4, the single binding design contract (adopted 18 Nov 2026, replacing UI/UX.v3 of 13 Nov 2026, until the owner launches UI/UX.v5): locked decisions, how to build a screen, definition of done and the Legacy list of older UI not to follow; read in full before any visible change"
     },
     {
       "path": "docs/agents/work-log.md",
@@ -1171,7 +1171,7 @@
     {
       "path": "docs/design-system/README.md",
       "classification": "Current guide/contract",
-      "use": "Brand and token layer of UI/UX.v3; read before any AC/1 visual work; package index, reconciliation, implemented token crosswalk and bounded work packages"
+      "use": "Brand and token layer of UI/UX.v4; read before any AC/1 visual work; package index, reconciliation, implemented token crosswalk and bounded work packages"
     },
     {
       "path": "docs/design-system/ART_REVIEW.md",
@@ -1651,7 +1651,12 @@
     {
       "path": "docs/revamp/README.md",
       "classification": "Current guide/contract",
-      "use": "Owner-approved V3 controlled revamp scope (4 Nov 2026), merge rules, session file ownership, current lanes snapshot, UI/UX.v3 as the design contract and the Wave 0 route/cleanup manifest; live state stays in the ledger"
+      "use": "Owner-approved V3 controlled revamp scope (4 Nov 2026), merge rules, session file ownership, current lanes snapshot, UI/UX.v4 as the design contract and the Wave 0 route/cleanup manifest; live state stays in the ledger"
+    },
+    {
+      "path": "docs/revamp/apple-grade-plan.md",
+      "classification": "Current guide/contract",
+      "use": "Apple-grade platform plan (UI/UX.v4 step two, 18 Nov 2026): the owner's step two board verbatim, the owner's decisions with exact words and dates, and the Wave order and status; the binding rules are in UI/UX.v4 (docs/agents/ui-direction.md)"
     },
     {
       "path": "docs/revamp/specs/README.md",
